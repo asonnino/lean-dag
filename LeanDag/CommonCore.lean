@@ -7,7 +7,7 @@ import Mathlib
 /-!
 # A common correct ancestor
 
-`spec.md` §4, Phase 1b — T3a, T3b, T3c.
+`spec.md` §4, Phase 1b — T3a and T3c.
 
 Persistence (T3) says a block *already backed by a quorum* survives forever.
 This file says something is **always** backed, whether or not anyone arranged
@@ -16,10 +16,9 @@ block ends up in the causal history of every round-`(r+2)` block. The
 argument is a counting one, in the spirit of the Gather protocol's
 common-core lemma.
 
-Nothing here uses T3 — only T0, T1 and T2. The independence is the point:
-T3b needs far fewer supporters than T3 needs quorum members, because its
-supporters are *correct*, and dodging a correct validator means dodging its
-one and only block.
+This file *produces* the correct supporters that coverage (`Support.lean`)
+consumes; `Persistence.lean` instead gets its supporters free from a quorum
+hypothesis. Neither file imports the other.
 
 Everything is parameterised by `p := (authorsAt U (r+1)).card`, the number of
 validators holding a round-`(r+1)` block. A round-`(r+2)` block draws its
@@ -108,7 +107,7 @@ theorem supporters_subset_authorsAt {b : BlockId} {n : ℕ} :
   Finset.image_subset_image (Finset.filter_subset _ _)
 
 /-- Validators that are both correct and back `b` with their round-`n`
-block. This is exactly what T3b consumes. -/
+block. This is exactly what the coverage lemmas consume. -/
 def correctSupporters (U : BlockUniverse Validator BlockId Payload) (b : BlockId) (n : ℕ) :
     Finset Validator :=
   supporters U b n ∩ (Correct : Finset Validator)
@@ -124,8 +123,8 @@ theorem correctSupporters_correct {b : BlockId} {n : ℕ} {v : Validator}
 
 With `f` the fault bound, `b = |Byzantine|`, `c = |Correct|`, `l` the number
 of correct round-`(r+1)` blocks, `k` the largest support degree and `p` the
-author-pool size: the double count gives `hA`, and the conclusion is T3b's
-threshold. The contradiction is `c² ≤ f(l+c)`, which `l ≤ c` collapses to
+author-pool size: the double count gives `hA`, and the conclusion is the
+`p - 2f` coverage threshold. The contradiction is `c² ≤ f(l+c)`, which `l ≤ c` collapses to
 `c ≤ 2f` — impossible, since `b ≤ f` forces `c ≥ 2f+1`. -/
 private theorem support_threshold_arith {f b c l k p : ℕ}
     (hbf : b ≤ f) (hcb : c + b = 3 * f + 1) (hlc : l ≤ c)
@@ -140,8 +139,8 @@ private theorem support_threshold_arith {f b c l k p : ℕ}
   nlinarith [key, hlc, hcge]
 
 /-- **T3a (Correct-support counting).** Some correct validator's round-`r`
-block is backed by enough correct round-`(r+1)` validators to satisfy T3b's
-threshold.
+block is backed by enough correct round-`(r+1)` validators to satisfy the
+`p - 2f` coverage threshold.
 
 Double counting: each correct round-`(r+1)` block names at least `2f+1 - b`
 correct round-`r` authors, and there are `l` such blocks spread over
@@ -253,9 +252,9 @@ The only premise is that a round-`(r+2)` block exists — a fact about the DAG
 in hand, not an assumption that anyone makes progress. Its own reference
 quorum supplies the `2f+1` author bound T3a needs.
 
-Note the statement mentions no `Finset BlockId` operation, so unlike T3a and
-T3b it does **not** require decidable equality on ids; the proof supplies
-that classically. -/
+Note the statement mentions no `Finset BlockId` operation, so unlike T3a it
+does **not** require decidable equality on ids; the proof supplies that
+classically. -/
 theorem exists_common_correct_ancestor {r : ℕ} {c₀ : BlockId}
     (hc₀ : c₀ ∈ U.ids) (hc₀r : (U.block c₀).round = r + 2) :
     ∃ bw ∈ U.ids, (U.block bw).round = r ∧
