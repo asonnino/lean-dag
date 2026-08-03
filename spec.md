@@ -84,10 +84,10 @@ Remaining notes:
   Introduce it locally in the two places that do need it, both being a
   `Finset.filter` over a predicate of the form `i ∈ (U.block q).refs`:
   `CommonCore.lean`, for `supporters` / `correctSupporters`, and
-  `Mysticeti.lean`, for the vote and certificate sets. `Support.lean` deliberately avoids it:
-  its coverage lemmas take the support set as a plain `Finset Validator` with
-  a witness per member rather than as `supporters`, so the shared layer stays
-  instance-free.
+  `Mysticeti.lean`, for the vote and certificate sets. `Support.lean`
+  deliberately avoids it: its coverage lemmas take the support set as a plain
+  `Finset Validator` with a witness per member rather than as `supporters`,
+  so the shared layer stays instance-free.
 - **(assumption)** `Fintype.card Validator = 3 * f + 1` exactly (notes say
   "3f+1 validators").
 - Rounds are plain `ℕ` throughout. No `Round` abbreviation — it would buy
@@ -115,9 +115,9 @@ Five consequences worth naming once rather than re-deriving at each use:
   wanted rather than their existence.
 - `card_correct : 2 * F.f + 1 ≤ Correct.card`. Used by **nothing** — T0, T3,
   and the commit-agreement arguments route through `F.card_byzantine`, and
-  T3a needs the additive form
-  above rather than this one. Kept because liveness (T7) would want it, but
-  it is on no currently-built path; do not reach for it in the counting argument.
+  T3a needs the additive form above rather than this one. Kept because
+  liveness (T7) would want it, but it is on no currently-built path; do not
+  reach for it in the counting argument.
 
 ## 3. Blocks and the DAG
 
@@ -151,7 +151,7 @@ The cost is that a `BlockId` means nothing on its own — it must be resolved
 through a lookup function to yield a `Block`, so validity (§3.2) and causal
 history (§3.4) both take that lookup as a parameter. The benefit is that
 "same block" becomes **same id**, which is what every uniqueness claim below
-(non-equivocation, T1, T5) actually wants; content equality is strictly
+(non-equivocation, T1, M5) actually wants; content equality is strictly
 weaker and never needed.
 
 **(assumption)** Ids are *not* assumed collision-free — `U.block` need not
@@ -189,8 +189,8 @@ creators blk b : Finset Validator := creatorsOf blk b.refs
 
 The generalized form is not cosmetic. T3's hypothesis, `authorsAt` (§4
 *Coverage*), and Phase 2's vote and certificate sets all quantify over
-id-sets that are *not* any block's refs; a block-only `creators` would force each of them to inline
-the image by hand.
+id-sets that are *not* any block's refs; a block-only `creators` would force
+each of them to inline the image by hand.
 
 Then `ValidWrt blk b` holds iff:
 
@@ -215,9 +215,10 @@ form every downstream proof wants, and it is the more faithful reading of
 removes any `card_creators` bridge from the critical path. With distinctness
 also present `b.refs.card ≥ 2f+1` still follows, so nothing is lost.
 
-**Distinct creators earns its keep only at commit agreement.** It is a genuine protocol
-rule — a block must not cite the same author twice — but it is worth being
-precise about where it is needed, because the natural guess is wrong. T3
+**Distinct creators earns its keep only at commit agreement.** It is a
+genuine protocol rule — a block must not cite the same author twice — but it
+is worth being precise about where it is needed, because the guess is
+wrong. T3
 does *not* use it: coverage requires its supporters to be **correct**, and
 universe-level non-equivocation (§3.3) already makes a correct validator's
 block unique. Distinctness is needed only where an *equivocating* author
@@ -240,7 +241,8 @@ a particular DAG happens to contain. Stating it per-DAG would be too weak:
 two DAGs could each satisfy "at most one block per correct validator per
 round" while containing *different* such blocks — a correct validator
 equivocating, with both DAGs looking well-formed. That would silently break
-T5. So the constraint lives one level up.
+every cross-view result — M6, and T5 in Appendix A. So the constraint lives
+one level up.
 
 A **`BlockUniverse` `U`** is every block that exists, authored by anyone:
 
@@ -332,7 +334,7 @@ argument — it would need fresh `BlockId`s, hence an `Infinite BlockId`
 hypothesis and a universe-extension construction, for a theorem statement
 that comes out identical.)
 
-**Generalisation pending (the hitting lemma).** Phase 3's M2 needs "every
+**Generalisation pending (the hitting lemma).** Phase 2's M2 needs "every
 later block reaches *some certificate*" — a set, not a fixed block. The right
 primitive is: if a set `S` of round-`n` blocks has `f+1` correct creators,
 every round-`(n+1)` block references a member of `S`. Both coverage lemmas
@@ -541,6 +543,17 @@ skip it unconditionally — even where another validator directly committed
 it. The `+3` spacing is exactly what puts every anchor at round `≥ r+3`,
 which is what M2 needs. Any schedule change that narrows it breaks M4.
 
+The work splits cleanly, and the split is worth respecting because the
+stages need very different machinery:
+
+- **Stage A — M1, M2, M3, M5.** Universe-level, and needing neither views
+  nor a leader function: M5 is stated as *same round, same creator* rather
+  than *same slot*. Pure combinatorics on top of `Support.lean`, the same
+  character as Phase 1b. Nothing below blocks it.
+- **Stage B — T6a.** Makes the per-view certificate check well-defined.
+- **Stage C — M4, M6.** The decision procedure, the slot schedule, and
+  agreement.
+
 - **T6a — Causal history is view-closed.** For a complete view `V` and
   `i ∈ V`, `Reaches U i j` implies `j ∈ V`, and reachability computed inside
   `V` coincides with reachability in `U`.
@@ -549,8 +562,8 @@ which is what M2 needs. Any schedule change that narrows it breaks M4.
   and M6**: the indirect rule asks whether a certificate lies in an anchor's
   causal history, and each validator evaluates that against its own view.
   Two validators with the same anchor agree only because views are
-  downward-closed. Cheap — an induction along `Reaches` — but it gates
-  Stage B.
+  downward-closed. Cheap — an induction along `Reaches` — and it is the
+  whole of Stage B.
 
 - **M1 — Commit and skip are exclusive.** No slot admits both a direct
   commit and a direct skip. Immediate from M3.
@@ -594,7 +607,7 @@ which is what M2 needs. Any schedule change that narrows it breaks M4.
   for each; those vote sets intersect in a correct `w` (T0 again); `w`'s
   unique round-`(r+1)` block references both candidates — same creator, same
   round — so **distinctness** (§3.2) forces them equal. Distinctness is
-  load-bearing at precisely the point it is in T5.
+  load-bearing at precisely the point it is in T5 (Appendix A).
 
 - **M6 — Agreement (the hard one).** All correct validators produce the same
   decision for every slot.
@@ -612,16 +625,16 @@ which is what M2 needs. Any schedule change that narrows it breaks M4.
   This is the only part of the development that is not static combinatorics.
   The decision procedure recurses backwards from anchors, so `decide(slot)`
   depends on `decide(later slot)`, and the induction measure is not the
-  round number. Expect this to dominate the Phase 3 effort; M1–M3 and M5 are
-  independent of it and can be built first.
+  round number. Expect this to dominate the Phase 2 effort; Stage A is
+  independent of it.
 
 ### Phase 3 (stretch)
 
 - **T6 — Total order safety.** The sequence of committed leaders, and blocks
   ordered via their causal history, is agreed upon by all correct
-  validators. The actual end-to-end safety property; T5 is close but total
-  order needs one more step (ordering non-leader blocks relative to
-  committed leaders).
+  validators. The actual end-to-end safety property; M6 decides *which*
+  leaders commit, and total order needs one more step — placing non-leader
+  blocks relative to the committed ones.
 
 - **T7 — Liveness.** Under partial synchrony, leaders eventually get
   committed. Needs timing/network axioms, not just DAG structure — an
@@ -642,8 +655,7 @@ which is what M2 needs. Any schedule change that narrows it breaks M4.
 
 ## 6. Layout
 
-- `LeanDag/Validators.lean` — §2 (`card_correct`, `exists_correct_of_card`),
-  T0
+- `LeanDag/Validators.lean` — §2 (all five fault-counting consequences), T0
 - `LeanDag/Block.lean` — §3.1 (`Block`), §3.2 (`creatorsOf`, `creators`,
   `ValidWrt`), T0'
 - `LeanDag/BlockDag.lean` — §3.3 (universe), T1
@@ -661,13 +673,14 @@ which is what M2 needs. Any schedule change that narrows it breaks M4.
   `BlockUniverse` fails the build rather than silently making every theorem
   vacuously true. Worth extending with a model at each new layer.
 
-Imports form a chain down to `Support.lean`, which then branches:
+Imports form a chain down to `Support.lean`, which then branches (solid = as
+built, dashed = planned):
 
 ```
 Validators → Block → BlockDag → CausalHistory → Support
                                                    │
-                                    ┌──────────────┴──────────────┐
-                                Persistence                  CommonCore
+                                    ┌──────────────┼──────────────┐
+                                Persistence   CommonCore   ┄ Mysticeti
 ```
 
 `Persistence.lean` and `CommonCore.lean` are **siblings**; neither imports
@@ -675,17 +688,12 @@ the other. T3 and T3c are two consequences of one coverage principle,
 differing only in how their supporters are obtained — assumed (T3) or
 counted (T3a).
 
-Parameterizing validity by the lookup function (§3.2) keeps `ValidWrt`,
-`creatorsOf`, and T0' free of any `BlockUniverse` dependency — T0' quantifies
-over bare `Finset BlockId`s and never mentions a universe — so all of them
-sit beside `Block` rather than being pushed into `BlockDag.lean` to dodge a
-circular import. `BlockDag.lean` is left holding only what genuinely needs
-the universe: the structure itself and T1.
-
 Parameterizing validity by a lookup function (§3.2) is what keeps this
-acyclic: `ValidWrt` and `creatorsOf` never mention `BlockUniverse`, so they
-sit beside `Block` instead of being pushed downstream to dodge a circular
-import.
+acyclic: `ValidWrt`, `creatorsOf` and T0' never mention `BlockUniverse` — T0'
+quantifies over bare `Finset BlockId`s — so all three sit beside `Block`
+instead of being pushed downstream to dodge a circular import.
+`BlockDag.lean` is left holding only what genuinely needs the universe: the
+structure itself and T1.
 
 **Where the weight is.** Everything through `CausalHistory.lean` is
 definitional or near-definitional. `Support.lean` holds the coverage
@@ -698,9 +706,9 @@ condition, the creator-set quorum, and non-equivocation — four conditions.
 Not distinctness, not views, not view-closure. This holds for Phase 1b too:
 T3a takes its 2f+1 distinct validators straight from the creator-set quorum,
 and coverage runs on correctness plus non-equivocation. So distinctness is
-load-bearing only at commit agreement (M5, and T5 in Appendix A), exactly
-as §3.2 claims — and that is checkable
-rather than aspirational: `distinct_creators` is consumed only by
+load-bearing only at commit agreement (M5, and T5 in Appendix A), exactly as
+§3.2 claims — and that is checkable rather than aspirational:
+`distinct_creators` is consumed only by
 `card_creators`, which is consumed only by `card_refs`, which nothing calls.
 Grep for those three when in doubt. If a Phase 1 or 1b proof reaches for
 distinctness, views, or view-closure, something has gone sideways.
@@ -752,8 +760,8 @@ These need views (§3.5) and T6a, which Phase 2 introduces anyway.
   since the predicate dereferences ids through `U.block` while quantifying
   over `V` — holds when `i ∈ V` is a round-`r` block by `leader r`, and the
   *support set* `Q := {q ∈ V | (U.block q).round = r+1 ∧ i ∈ (U.block q).refs}`
-  satisfies `2 * F.f + 1 ≤ (creatorsOf U.block Q).card`. That is T3's hypothesis
-  instantiated at the leader block and evaluated inside `V`.
+  satisfies `2 * F.f + 1 ≤ (creatorsOf U.block Q).card`. That is T3's
+  hypothesis instantiated at the leader block and evaluated inside `V`.
 
   The predicate must be **view-relative**: committing is a decision an
   individual validator makes from its own local DAG. Were it universe-level,
@@ -761,9 +769,9 @@ These need views (§3.5) and T6a, which Phase 2 introduces anyway.
 
 - **T5 — Commit agreement.** If `DirectlyCommittedIn U V₁ r i₁` and
   `DirectlyCommittedIn U V₂ r i₂` for two complete views of the *same*
-  universe `U`, then `i₁ = i₂`. This is *no-conflicting-commit*, not "both decide" — a
-  validator whose view lacks the quorum simply has not decided yet, which is
-  not disagreement.
+  universe `U`, then `i₁ = i₂`. This is *no-conflicting-commit*, not "both
+  decide" — a validator whose view lacks the quorum simply has not decided
+  yet, which is not disagreement.
 
   **One uniform proof — no case split on whether the leader is honest.**
   Let `Q₁, Q₂` be the two support sets. Their creator sets are quorums, so
