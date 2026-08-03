@@ -626,24 +626,65 @@ stages need very different machinery:
   round — so **distinctness** (§3.2) forces them equal. Distinctness is
   load-bearing at precisely the point it is in T5 (Appendix A).
 
-- **M6 — Agreement (the hard one).** All correct validators produce the same
-  decision for every slot.
+- **M6 — Agreement.** No two correct validators reach conflicting decisions
+  for a slot. As with T5 this is *no-conflicting-decision*, not "both
+  decide": a validator that has not yet decided is not in disagreement.
 
-  The crux is **anchor agreement**: validators must not use different
-  anchors for the same undecided slot, since a later anchor sees strictly
-  more and could find a certificate an earlier one missed. It holds because
-  *any direct commit is recoverable indirectly*: if validator 1 directly
-  commits slot `s₁` and validator 2 does not, M2 forces validator 2's own
-  anchor to reach a certificate for `s₁`, so validator 2 commits `s₁`
-  indirectly. The committed *set* is therefore agreed even though "directly
-  committed" is not — which is exactly why the sweep resolves slots
-  **earliest first** rather than jumping to the triggering commit.
+  **The anchor is the nearest committed slot after `k`** — not the slot whose
+  direct commit happened to trigger the sweep. That distinction is not
+  cosmetic; the other reading is unsound. Slots at rounds 0, 3, 6, with
+  exactly one certificate `C` for slot 0 — too few to commit it directly, so
+  slot 0 is undecided. Validator 1 directly commits slot 1, whose leader
+  block references 2f+1 round-2 blocks but misses `C`, and skips slot 0.
+  Validator 2 instead directly commits slot 2, whose leader block does reach
+  `C`, and commits slot 0. Two validators, opposite verdicts.
 
-  This is the only part of the development that is not static combinatorics.
-  The decision procedure recurses backwards from anchors, so `decide(slot)`
-  depends on `decide(later slot)`, and the induction measure is not the
-  round number. Expect this to dominate the Phase 2 effort; Stage A is
-  independent of it.
+  Anchoring on the *nearest* committed slot closes it. Validator 2 must
+  resolve slot 1 first, and M2 forces its hand: slot 1 was directly
+  committed by someone, so 2f+1 certificates for it exist and validator 2's
+  anchor reaches one, so validator 2 commits slot 1 indirectly. Slot 1 is
+  then the nearest committed slot after 0 for **both** validators, so both
+  evaluate slot 0 against the same subgraph.
+
+  So the engine of M6 is *any direct commit is recoverable indirectly* — M2
+  — and the sweep resolves slots downward from the trigger precisely so the
+  nearest anchor is known when each slot is reached.
+
+  **(assumption)** Decisions are modelled as an **inductive relation**,
+  `Decided V k v`, not a function. A `decide` function recurses upward in
+  slot index with no a-priori bound, so it would need fuel or a partiality
+  wrapper, and nothing here needs to compute.
+
+  The "nearest" side-condition looks like it needs a *negative* premise —
+  no slot strictly between `k` and `j` is committed — which an inductive
+  definition cannot carry. It is stated positively instead: **every slot
+  strictly between is `Decided` *skip***. That is equivalent, since the sweep
+  decides every slot it passes, and it keeps every recursive occurrence
+  positive.
+
+  **(assumption)** The direct rules become **view-relative** here
+  (`DirectCommitIn V`), since a validator applies them to the certificates it
+  can actually see. They are monotone into the universe-level versions of
+  Stage A — `V ⊆ U.ids` — so M4 and M5 lift to views for free, and no
+  counting is redone.
+
+  Which leader block is "the" slot-`k` candidate is left open: for a correct
+  leader T1 gives uniqueness, but a Byzantine one may have several. The
+  definitions quantify over round-`slotRound k` blocks by `leader k` rather
+  than selecting one, and M5 supplies the uniqueness where it is needed.
+
+  Staging, in dependency order:
+
+  | | | risk |
+  |---|---|---|
+  | C1 | slot schedule, leader blocks, `DirectCommitIn`, the `Decided` relation | low — definitions |
+  | C2 | view-relative M4 and M5, by monotonicity | low |
+  | C3 | **anchor agreement** | **high** — the crux |
+  | C4 | M6 from C2 and C3 | low |
+
+  C3 is the only part that is not static combinatorics. Its induction runs
+  over *slots between `k` and its anchor* rather than over rounds, so the
+  measure is not the round number, and the well-foundedness needs care.
 
 ### Phase 3 (stretch)
 
