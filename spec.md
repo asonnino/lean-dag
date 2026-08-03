@@ -800,9 +800,11 @@ stages need very different machinery:
 - `LeanDag/BlockDag.lean` — §3.3 (universe), §3.5 (`View`), T1
 - `LeanDag/CausalHistory.lean` — §3.4, T2, T6a
 - `LeanDag/Support.lean` — `blocksAt`, `authorsAt`, `supporters`,
-  `correctSupporters`, and **both coverage lemmas** (§4 *Coverage*). The
-  common foundation under T3, T3c and the Mysticeti rules — Mysticeti's
-  *voters* are exactly `supporters` at the following round.
+  `correctSupporters`, `blames`, the hitting/propagation/coverage lemmas
+  (§4 *Coverage*), and the counting fact that a quorum of blamers caps
+  supporters below a quorum. The whole "who backs what" layer: Mysticeti's
+  *voters* are exactly `supporters` at the following round, and its *blames*
+  are the complement.
 - `LeanDag/Persistence.lean` — T3
 - `LeanDag/CommonCore.lean` — `correctBlocksAt`, T3a and T3c (Phase 1b)
 - `LeanDag/Mysticeti.lean` — the whole of Phase 2: the vote/certificate
@@ -862,8 +864,10 @@ Spec label to Lean identifier, for the parts that are built.
 |---|---|---|
 | T0 | `exists_correct_mem_inter` | `Validators.lean` |
 | T0' | `exists_correct_mem_creators_inter` | `Block.lean` |
+| — | `nonempty_of_creatorsOf_card_pos` | `Block.lean` |
 | T1 | `BlockUniverse.eq_of_creator_eq` | `BlockDag.lean` |
 | — | `View` | `BlockDag.lean` |
+| — | `exists_common_mem_of_quorums` | `BlockDag.lean` |
 | T2 | `round_le_of_reaches` | `CausalHistory.lean` |
 | T6a | `View.mem_of_reaches` | `CausalHistory.lean` |
 | T6a (usable form) | `View.exists_reaches_iff` | `CausalHistory.lean` |
@@ -872,6 +876,8 @@ Spec label to Lean identifier, for the parts that are built.
 | Propagation | `reaches_pred_of_round_le` | `Support.lean` |
 | Coverage, `p − 2f` | `reaches_of_correct_support` | `Support.lean` |
 | Coverage, `f+1` | `reaches_of_correct_support_of_card` | `Support.lean` |
+| — | `blames`, `blames_inter_supporters_subset_byzantine` | `Support.lean` |
+| — | `card_supporters_le_of_card_blames` | `Support.lean` |
 | T3 | `reaches_of_quorum_support` | `Persistence.lean` |
 | T3a | `exists_correct_common_support` | `CommonCore.lean` |
 | T3c | `exists_common_correct_ancestor` | `CommonCore.lean` |

@@ -49,11 +49,8 @@ theorem mem_ids_and_round_of_quorum_support
     (hQref : ∀ q ∈ Q, b ∈ (U.block q).refs)
     (hQquorum : 2 * F.f + 1 ≤ (creatorsOf U.block Q).card) :
     b ∈ U.ids ∧ (U.block b).round = r := by
-  have hQne : Q.Nonempty := by
-    rw [Finset.nonempty_iff_ne_empty]
-    rintro rfl
-    simp [creatorsOf] at hQquorum
-  obtain ⟨q, hq⟩ := hQne
+  have hpos : 0 < (creatorsOf U.block Q).card := by omega
+  obtain ⟨q, hq⟩ := nonempty_of_creatorsOf_card_pos hpos
   have hq_ids := hQ hq
   have hb_ref := hQref q hq
   refine ⟨U.complete q hq_ids b hb_ref, ?_⟩

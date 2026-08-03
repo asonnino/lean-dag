@@ -32,42 +32,43 @@ variable [F : Faults Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {U : BlockUniverse Validator BlockId Payload}
 
-/-- The validators whose round-`n` block declines to reference `L`.
+/-- The references of `C` that vote for `L`. -/
+def votesIn (U : BlockUniverse Validator BlockId Payload) (C L : BlockId) : Finset BlockId :=
+  (U.block C).refs.filter (fun q => L ∈ (U.block q).refs)
 
-The complement of `supporters U L n` *within the round-`n` author pool* —
-but only for correct validators. A Byzantine author can appear in both, by
-publishing one round-`n` block that votes and another that does not; ruling
-that out for correct validators is exactly what `blames_inter_supporters`
-does, and is the whole content of M3. -/
-def blames (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (n : ℕ) :
-    Finset Validator :=
-  creatorsOf U.block ((blocksAt U n).filter (fun q => L ∉ (U.block q).refs))
-
-theorem mem_blames {L : BlockId} {n : ℕ} {v : Validator} :
-    v ∈ blames U L n ↔
-      ∃ q ∈ U.ids, (U.block q).round = n ∧ L ∉ (U.block q).refs ∧ (U.block q).creator = v := by
-  simp [blames, mem_creatorsOf]
-  tauto
-
-/-- A round-`(r+2)` block certifies `L` when the votes for `L` among its own
-references come from a quorum of distinct validators. -/
+/-- A round-`(r+2)` block certifies `L` when its votes for `L` come from a
+quorum of distinct validators. -/
 def Certifies (U : BlockUniverse Validator BlockId Payload) (C L : BlockId) : Prop :=
-  2 * F.f + 1 ≤
-    (creatorsOf U.block ((U.block C).refs.filter (fun q => L ∈ (U.block q).refs))).card
+  2 * F.f + 1 ≤ (creatorsOf U.block (votesIn U C L)).card
 
 /-- All three rule predicates are cardinality comparisons and so decidable,
 but as `Prop`-valued `def`s Lean will not see that unaided. `certificates`
 needs this to filter on `Certifies`, and concrete models need it to settle
 the rules by `decide`. -/
 instance decidableCertifies (C L : BlockId) : Decidable (Certifies U C L) :=
-  inferInstanceAs (Decidable (2 * F.f + 1 ≤
-    (creatorsOf U.block ((U.block C).refs.filter (fun q => L ∈ (U.block q).refs))).card))
+  inferInstanceAs (Decidable (2 * F.f + 1 ≤ (creatorsOf U.block (votesIn U C L)).card))
 
 /-- The certificates for a round-`r` block `L`: the round-`(r+2)` blocks that
 certify it. -/
 def certificates (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) :
     Finset BlockId :=
   (blocksAt U (r + 2)).filter (fun C => Certifies U C L)
+
+@[simp]
+theorem mem_certificates {C L : BlockId} {r : ℕ} :
+    C ∈ certificates U L r ↔ C ∈ U.ids ∧ (U.block C).round = r + 2 ∧ Certifies U C L := by
+  simp [certificates, and_assoc]
+
+/-- A vote counted by a round-`(r+2)` certificate really is a round-`(r+1)`
+block of the universe that references `L`. Used wherever a certificate has to
+be turned back into the supporters behind it. -/
+theorem mem_votesIn_spec {C L q : BlockId} {r : ℕ}
+    (hC : C ∈ U.ids) (hCr : (U.block C).round = r + 2) (hq : q ∈ votesIn U C L) :
+    q ∈ U.ids ∧ (U.block q).round = r + 1 ∧ L ∈ (U.block q).refs := by
+  rw [votesIn, Finset.mem_filter] at hq
+  refine ⟨U.complete C hC q hq.1, ?_, hq.2⟩
+  have := U.round_of_mem_refs hC hq.1
+  omega
 
 /-- `L` is directly committed when its certificates come from a quorum of
 distinct validators. -/
@@ -85,28 +86,6 @@ instance decidableDirectCommit (L : BlockId) (r : ℕ) : Decidable (DirectCommit
 instance decidableDirectSkip (L : BlockId) (r : ℕ) : Decidable (DirectSkip U L r) :=
   inferInstanceAs (Decidable (2 * F.f + 1 ≤ (blames U L (r + 1)).card))
 
-/-- A correct validator cannot both vote for `L` and blame it: that would be
-two distinct round-`n` blocks by one correct author. So the overlap between
-blamers and supporters is confined to the Byzantine set.
-
-This is the only place non-equivocation enters M3, and it is what stops a
-Byzantine author from being counted on both sides of the ledger. -/
-theorem blames_inter_supporters_subset_byzantine {L : BlockId} {n : ℕ} :
-    blames U L n ∩ supporters U L n ⊆ F.byzantine := by
-  intro v hv
-  rw [Finset.mem_inter] at hv
-  obtain ⟨hb, hs⟩ := hv
-  obtain ⟨q, hq_ids, hq_round, hq_noref, hq_creator⟩ := mem_blames.mp hb
-  obtain ⟨q', hq'_ids, hq'_round, hq'_ref, hq'_creator⟩ := mem_supporters.mp hs
-  by_contra hcorrect
-  -- If `v` were correct, `q` and `q'` would be the same block — but one
-  -- references `L` and the other does not.
-  have hv_correct : v ∈ (Correct : Finset Validator) := by simpa using hcorrect
-  have : q = q' :=
-    U.eq_of_creator_eq hq_ids hq'_ids hv_correct hq_creator hq'_creator
-      (by rw [hq_round, hq'_round])
-  exact hq_noref (this ▸ hq'_ref)
-
 /-- **M3.** A directly skipped block has **no certificate anywhere** in the
 universe — not merely none in some view.
 
@@ -120,37 +99,20 @@ justify it, and it is what makes the indirect rule agree with the direct one
 (M4). -/
 theorem certificates_eq_empty_of_directSkip {L : BlockId} {r : ℕ}
     (h : DirectSkip U L r) : certificates U L r = ∅ := by
-  -- Supporters are squeezed by the blamers.
-  have hcap : (supporters U L (r + 1)).card ≤ 2 * F.f := by
-    have hunion : (blames U L (r + 1) ∪ supporters U L (r + 1)).card ≤ 3 * F.f + 1 := by
-      have := Finset.card_le_univ (blames U L (r + 1) ∪ supporters U L (r + 1))
-      have := F.card_validators
-      omega
-    have hinter : (blames U L (r + 1) ∩ supporters U L (r + 1)).card ≤ F.f := by
-      refine le_trans (Finset.card_le_card blames_inter_supporters_subset_byzantine) ?_
-      exact F.card_byzantine
-    have hadd := Finset.card_union_add_card_inter (blames U L (r + 1)) (supporters U L (r + 1))
-    rw [DirectSkip] at h
-    omega
-  -- So no round-(r+2) block can gather a quorum of votes.
+  -- A quorum of blamers caps the supporters below a quorum (Support.lean) ...
+  have hcap := card_supporters_le_of_card_blames (U := U) (L := L) (n := r + 1) h
   rw [Finset.eq_empty_iff_forall_notMem]
   intro C hC
-  rw [certificates, Finset.mem_filter, mem_blocksAt] at hC
-  obtain ⟨⟨hC_ids, hC_round⟩, hCert⟩ := hC
+  rw [mem_certificates] at hC
+  obtain ⟨hC_ids, hC_round, hCert⟩ := hC
   rw [Certifies] at hCert
-  -- Every voting reference of `C` is a round-(r+1) supporter of `L`.
-  have hsub :
-      creatorsOf U.block ((U.block C).refs.filter (fun q => L ∈ (U.block q).refs))
-        ⊆ supporters U L (r + 1) := by
+  -- ... and every vote a certificate counts is a genuine supporter.
+  have hsub : creatorsOf U.block (votesIn U C L) ⊆ supporters U L (r + 1) := by
     intro v hv
     rw [mem_creatorsOf] at hv
     obtain ⟨q, hq, hq_creator⟩ := hv
-    rw [Finset.mem_filter] at hq
-    obtain ⟨hq_mem, hq_ref⟩ := hq
-    rw [mem_supporters]
-    refine ⟨q, U.complete C hC_ids q hq_mem, ?_, hq_ref, hq_creator⟩
-    have := U.round_of_mem_refs hC_ids hq_mem
-    omega
+    obtain ⟨hq_ids, hq_round, hq_ref⟩ := mem_votesIn_spec hC_ids hC_round hq
+    exact mem_supporters.mpr ⟨q, hq_ids, hq_round, hq_ref, hq_creator⟩
   have := Finset.card_le_card hsub
   omega
 
@@ -189,9 +151,8 @@ theorem exists_certificate_reaches_of_directCommit {L : BlockId} {r : ℕ}
       intro v hv
       rw [hT_def, Finset.mem_inter, mem_creatorsOf] at hv
       obtain ⟨⟨q, hq_cert, hq_creator⟩, _⟩ := hv
-      have hq := hq_cert
-      rw [certificates, Finset.mem_filter, mem_blocksAt] at hq
-      exact ⟨q, hq.1.1, hq.1.2, hq_cert, hq_creator⟩
+      obtain ⟨hq_ids, hq_round, -⟩ := mem_certificates.mp hq_cert
+      exact ⟨q, hq_ids, hq_round, hq_cert, hq_creator⟩
     have hTc : ∀ v ∈ T, v ∈ (Correct : Finset Validator) :=
       fun _ hv => Finset.mem_of_mem_inter_right hv
     have hcard : F.f + 1 ≤ T.card := card_inter_correct_of_quorum h
@@ -232,29 +193,22 @@ theorem eq_of_certificates_nonempty {L₁ L₂ : BlockId} {r : ℕ}
     L₁ = L₂ := by
   obtain ⟨C₁, hC₁⟩ := h₁
   obtain ⟨C₂, hC₂⟩ := h₂
-  rw [certificates, Finset.mem_filter, mem_blocksAt] at hC₁ hC₂
-  obtain ⟨⟨hC₁_ids, hC₁_round⟩, hC₁_cert⟩ := hC₁
-  obtain ⟨⟨hC₂_ids, hC₂_round⟩, hC₂_cert⟩ := hC₂
-  rw [Certifies] at hC₁_cert hC₂_cert
-  -- The two vote quorums share a correct author.
-  obtain ⟨w, hw_inter, hw_correct⟩ := exists_correct_mem_creators_inter hC₁_cert hC₂_cert
-  rw [Finset.mem_inter] at hw_inter
-  obtain ⟨hw₁, hw₂⟩ := hw_inter
-  rw [mem_creatorsOf] at hw₁ hw₂
-  obtain ⟨q₁, hq₁, hq₁_creator⟩ := hw₁
-  obtain ⟨q₂, hq₂, hq₂_creator⟩ := hw₂
-  rw [Finset.mem_filter] at hq₁ hq₂
-  obtain ⟨hq₁_mem, hq₁_ref⟩ := hq₁
-  obtain ⟨hq₂_mem, hq₂_ref⟩ := hq₂
-  have hq₁_ids : q₁ ∈ U.ids := U.complete _ hC₁_ids _ hq₁_mem
-  have hq₂_ids : q₂ ∈ U.ids := U.complete _ hC₂_ids _ hq₂_mem
-  have hq₁_round := U.round_of_mem_refs hC₁_ids hq₁_mem
-  have hq₂_round := U.round_of_mem_refs hC₂_ids hq₂_mem
-  -- That author has one round-`(r+1)` block, and it votes for both.
-  have hqq : q₁ = q₂ :=
-    U.eq_of_creator_eq hq₁_ids hq₂_ids hw_correct hq₁_creator hq₂_creator (by omega)
-  subst hqq
-  exact (U.valid q₁ hq₁_ids).distinct_creators L₁ hq₁_ref L₂ hq₂_ref hcreator
+  rw [mem_certificates] at hC₁ hC₂
+  obtain ⟨hC₁_ids, hC₁_round, hC₁_cert⟩ := hC₁
+  obtain ⟨hC₂_ids, hC₂_round, hC₂_cert⟩ := hC₂
+  -- The two vote quorums share a block: one round-`(r+1)` block votes for
+  -- both candidates.
+  obtain ⟨q, hq₁, hq₂⟩ :=
+    U.exists_common_mem_of_quorums (n := r + 1)
+      (fun _ hq => ⟨(mem_votesIn_spec hC₁_ids hC₁_round hq).1,
+        (mem_votesIn_spec hC₁_ids hC₁_round hq).2.1⟩)
+      (fun _ hq => ⟨(mem_votesIn_spec hC₂_ids hC₂_round hq).1,
+        (mem_votesIn_spec hC₂_ids hC₂_round hq).2.1⟩)
+      hC₁_cert hC₂_cert
+  -- Distinctness forbids it referencing two round-`r` blocks by one author.
+  exact (U.valid q (mem_votesIn_spec hC₁_ids hC₁_round hq₁).1).distinct_creators
+    L₁ (mem_votesIn_spec hC₁_ids hC₁_round hq₁).2.2
+    L₂ (mem_votesIn_spec hC₂_ids hC₂_round hq₂).2.2 hcreator
 
 /-- **M5.** At most one block per slot is directly committed.
 

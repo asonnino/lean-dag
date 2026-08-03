@@ -72,6 +72,19 @@ structure ValidWrt (blk : BlockId → Block Validator BlockId Payload)
   /-- Non-genesis blocks reference a quorum of distinct validators. -/
   quorum : 0 < b.round → 2 * F.f + 1 ≤ (creators blk b).card
 
+omit [Fintype Validator] F in
+/-- A nonempty creator set can only come from a nonempty set of ids: the
+image of `∅` is `∅`.
+
+Small, but it was inlined in three places — `ValidWrt.refs_nonempty` here,
+and the two "a quorum implies at least one block" steps in `Persistence` and
+`Mysticeti`. -/
+theorem nonempty_of_creatorsOf_card_pos {blk : BlockId → Block Validator BlockId Payload}
+    {s : Finset BlockId} (h : 0 < (creatorsOf blk s).card) : s.Nonempty := by
+  rcases Finset.eq_empty_or_nonempty s with rfl | hne
+  · simp [creatorsOf] at h
+  · exact hne
+
 /-- `ValidWrt` is decidable on concrete data. Not needed by any proof below,
 but it lets a small hand-built DAG be checked by `decide`, which is how the
 definitions here are confirmed to be satisfiable rather than vacuous. -/
@@ -117,11 +130,9 @@ Routing through `card_refs` would drag `distinct_creators` onto T3's
 dependency path, and the whole point of §3.2's analysis is that Phase 1 and
 1b never need it. -/
 theorem refs_nonempty (h : ValidWrt blk b) (h0 : 0 < b.round) : b.refs.Nonempty := by
-  rcases Finset.eq_empty_or_nonempty b.refs with hempty | hne
-  · exfalso
-    have hq := h.quorum h0
-    simp [creators, creatorsOf, hempty] at hq
-  · exact hne
+  have hq : 2 * F.f + 1 ≤ (creatorsOf blk b.refs).card := h.quorum h0
+  have hpos : 0 < (creatorsOf blk b.refs).card := by omega
+  exact nonempty_of_creatorsOf_card_pos hpos
 
 end ValidWrt
 

@@ -242,4 +242,63 @@ theorem correctSupporters_correct {b : BlockId} {n : ℕ} {v : Validator}
     (hv : v ∈ correctSupporters U b n) : v ∈ (Correct : Finset Validator) :=
   Finset.mem_of_mem_inter_right hv
 
+
+/-- The validators whose round-`n` block declines to reference `L`.
+
+The complement of `supporters U L n` *within the round-`n` author pool* —
+but only for correct validators. A Byzantine author can appear in both, by
+publishing one round-`n` block that votes and another that does not; ruling
+that out for correct validators is exactly what `blames_inter_supporters`
+does, and is the whole content of M3. -/
+def blames (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (n : ℕ) :
+    Finset Validator :=
+  creatorsOf U.block ((blocksAt U n).filter (fun q => L ∉ (U.block q).refs))
+
+theorem mem_blames {L : BlockId} {n : ℕ} {v : Validator} :
+    v ∈ blames U L n ↔
+      ∃ q ∈ U.ids, (U.block q).round = n ∧ L ∉ (U.block q).refs ∧ (U.block q).creator = v := by
+  simp [blames, mem_creatorsOf]
+  tauto
+
+/-- A correct validator cannot both vote for `L` and blame it: that would be
+two distinct round-`n` blocks by one correct author. So the overlap between
+blamers and supporters is confined to the Byzantine set.
+
+This is the only place non-equivocation enters M3, and it is what stops a
+Byzantine author from being counted on both sides of the ledger. -/
+theorem blames_inter_supporters_subset_byzantine {L : BlockId} {n : ℕ} :
+    blames U L n ∩ supporters U L n ⊆ F.byzantine := by
+  intro v hv
+  rw [Finset.mem_inter] at hv
+  obtain ⟨hb, hs⟩ := hv
+  obtain ⟨q, hq_ids, hq_round, hq_noref, hq_creator⟩ := mem_blames.mp hb
+  obtain ⟨q', hq'_ids, hq'_round, hq'_ref, hq'_creator⟩ := mem_supporters.mp hs
+  by_contra hcorrect
+  -- If `v` were correct, `q` and `q'` would be the same block — but one
+  -- references `L` and the other does not.
+  have hv_correct : v ∈ (Correct : Finset Validator) := by simpa using hcorrect
+  have : q = q' :=
+    U.eq_of_creator_eq hq_ids hq'_ids hv_correct hq_creator hq'_creator
+      (by rw [hq_round, hq'_round])
+  exact hq_noref (this ▸ hq'_ref)
+
+/-- **The counting core of M3.** A quorum of blamers caps the supporters at
+`2f`, one short of a quorum.
+
+A correct validator sits on at most one side, so the overlap is confined to
+the Byzantine set: `|supporters| ≤ (3f+1) − (2f+1) + f = 2f`. Nothing about
+certificates enters, which is why this belongs here rather than beside the
+commit rules that consume it. -/
+theorem card_supporters_le_of_card_blames {L : BlockId} {n : ℕ}
+    (h : 2 * F.f + 1 ≤ (blames U L n).card) :
+    (supporters U L n).card ≤ 2 * F.f := by
+  have hunion : (blames U L n ∪ supporters U L n).card ≤ 3 * F.f + 1 := by
+    have := Finset.card_le_univ (blames U L n ∪ supporters U L n)
+    have := F.card_validators
+    omega
+  have hinter : (blames U L n ∩ supporters U L n).card ≤ F.f :=
+    le_trans (Finset.card_le_card blames_inter_supporters_subset_byzantine) F.card_byzantine
+  have hadd := Finset.card_union_add_card_inter (blames U L n) (supporters U L n)
+  omega
+
 end LeanDag

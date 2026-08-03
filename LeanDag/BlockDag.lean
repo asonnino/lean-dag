@@ -101,6 +101,32 @@ theorem refs_nonempty {i : BlockId} (hi : i ∈ U.ids) (hround : 0 < (U.block i)
     (U.block i).refs.Nonempty :=
   (U.valid i hi).refs_nonempty hround
 
+/-- **Two quorum-backed sets of round-`n` blocks must share a block.**
+
+T0' gives a correct author common to both creator sets, and T1 makes that
+author's round-`n` block unique — so the two blocks it contributes coincide.
+
+This is the recurring "peel off one certification layer" step: it is exactly
+what M5′ does to two certificates' vote sets, and what an earlier draft of M5
+did a second time to two certificate sets. -/
+theorem exists_common_mem_of_quorums {s t : Finset BlockId} {n : ℕ}
+    (hs : ∀ q ∈ s, q ∈ U.ids ∧ (U.block q).round = n)
+    (ht : ∀ q ∈ t, q ∈ U.ids ∧ (U.block q).round = n)
+    (hsq : 2 * F.f + 1 ≤ (creatorsOf U.block s).card)
+    (htq : 2 * F.f + 1 ≤ (creatorsOf U.block t).card) :
+    ∃ q, q ∈ s ∧ q ∈ t := by
+  obtain ⟨v, hv_inter, hv_correct⟩ := exists_correct_mem_creators_inter hsq htq
+  rw [Finset.mem_inter] at hv_inter
+  obtain ⟨hv_s, hv_t⟩ := hv_inter
+  rw [mem_creatorsOf] at hv_s hv_t
+  obtain ⟨q₁, hq₁, hq₁_creator⟩ := hv_s
+  obtain ⟨q₂, hq₂, hq₂_creator⟩ := hv_t
+  obtain ⟨hq₁_ids, hq₁_round⟩ := hs q₁ hq₁
+  obtain ⟨hq₂_ids, hq₂_round⟩ := ht q₂ hq₂
+  have hqq : q₁ = q₂ :=
+    U.eq_of_creator_eq hq₁_ids hq₂_ids hv_correct hq₁_creator hq₂_creator (by omega)
+  exact ⟨q₁, hq₁, hqq ▸ hq₂⟩
+
 end BlockUniverse
 
 end LeanDag
