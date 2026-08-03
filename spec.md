@@ -16,12 +16,18 @@ original notes were open-ended — flag any you want changed.
 - **Phase 1b:** the counting argument giving a common correct ancestor
   across any three consecutive rounds (T3a–T3c). Still pure DAG
   combinatorics, and independent of Phase 2.
-- **Phase 2:** views, round leaders, the direct-commit rule, and agreement
-  between correct validators on committed blocks (T4–T5).
-- **Phase 3 (stretch):** total-order safety across the commit sequence;
+- **Phase 2 — certified DAGs:** views, round leaders, the single-level
+  direct-commit rule, and agreement on committed blocks (T4–T5, T6a). This
+  is the commit rule for DAG-Rider/Bullshark-style protocols, where a block
+  only enters the DAG once 2f+1 validators have signed it — of independent
+  interest, not a stepping stone.
+- **Phase 3 — uncertified DAGs (Mysticeti):** the two-level certification
+  rule, direct commit and skip, and the indirect rule (M1–M6). What one must
+  do once blocks are no longer certificates.
+- **Phase 4 (stretch):** total-order safety across the commit sequence;
   liveness under partial synchrony. Liveness needs network timing axioms
   (GST, message delay bounds) rather than pure DAG combinatorics — scope it
-  separately once Phase 1–2 land.
+  separately once Phases 1–3 land.
 
 ## 2. System model
 
@@ -112,7 +118,7 @@ Five consequences worth naming once rather than re-deriving at each use:
 - `card_correct : 2 * F.f + 1 ≤ Correct.card`. Used by **nothing** — T0, T3,
   and T5 route through `F.card_byzantine`, and T3a needs the additive form
   above rather than this one. Kept because liveness (T7) would want it, but
-  it is on no Phase 1–2 path; do not reach for it in the counting argument.
+  it is on no currently-built path; do not reach for it in the counting argument.
 
 ## 3. Blocks and the DAG
 
@@ -326,6 +332,15 @@ argument — it would need fresh `BlockId`s, hence an `Infinite BlockId`
 hypothesis and a universe-extension construction, for a theorem statement
 that comes out identical.)
 
+**Generalisation pending (the hitting lemma).** Phase 3's M2 needs "every
+later block reaches *some certificate*" — a set, not a fixed block. The right
+primitive is: if a set `S` of round-`n` blocks has `f+1` correct creators,
+every round-`(n+1)` block references a member of `S`. Both coverage lemmas
+below are then the corollary where every member of `S` references the same
+`b`. Worth doing when Phase 3 starts; it serves T3, T5 and M2 alike, and
+makes precise that both commit rules are instances of *a quorum of correct
+support cannot be dodged* — differing only in how many layers deep it runs.
+
 Which form to use is determined by how supporters are obtained:
 
 - **assumed** → `f+1`. T3's quorum of 2f+1 distinct creators contains `f+1`
@@ -358,9 +373,9 @@ Which form to use is determined by how supporters are obtained:
   than two quorums. Phase 1 and 1b therefore reach a correct validator via
   `card_inter_correct_of_quorum` instead.
 
-  All three are retained for T5, which intersects `Q₁` with `Q₂` — genuinely
-  two quorums, and exactly T0's shape. If Phase 2 lands without touching
-  them, delete the chain.
+  All three are needed again from Phase 2 on: T5 intersects `Q₁` with `Q₂`,
+  and M5 runs the same intersection twice, once per certification layer —
+  genuinely two quorums each time, exactly T0's shape. Keep the chain.
 
 - **T1 — Non-equivocation as id equality.** For `v ∈ Correct`, any two ids
   `i j ∈ U.ids` with creator `v` at the same round satisfy `i = j`.
@@ -493,7 +508,15 @@ into an apparently provable one.
   `p = 2f+1` every round-`(r+2)` block names all of them and the conclusion
   is immediate.
 
-### Phase 2
+### Phase 2 — certified DAGs
+
+In DAG-Rider, Bullshark and Narwhal-style protocols a block enters the DAG
+only once 2f+1 validators have signed it: **the block is itself a
+certificate**. There, "referenced by 2f+1 validators at the next round" is
+the entire commit rule, and T5 is its safety proof.
+
+This is not a simplification of Mysticeti but the rule for a different DAG
+discipline — Phase 3 is what one must do after giving that discipline up.
 
 - **T4 — Round leaders and the commit rule.** A deterministic
   `leader : ℕ → Validator` (mechanism TBD — round-robin is simplest to
@@ -534,13 +557,114 @@ into an apparently provable one.
   **distinctness** rather than non-equivocation that buys it — the one place
   in the development where that invariant is load-bearing.
 
-### Phase 3 (stretch)
-
 - **T6a — Causal history is view-closed.** For a complete view `V` and
   `i ∈ V`, `Reaches U i j` implies `j ∈ V`, and reachability computed inside
-  `V` coincides with reachability in `U`. Not needed for T3 or T5, both of
-  which stay universe-level; it becomes necessary once conclusions of the
-  form "and therefore `b` is in *my* view" are wanted, i.e. for ordering.
+  `V` coincides with reachability in `U`.
+
+  Not needed for T3 or T5, which stay universe-level. It becomes
+  **required** in Phase 3: the indirect rule asks whether a certificate lies
+  in an anchor's causal history, and each validator evaluates that against
+  its own view. Two validators with the same anchor agree only because views
+  are downward-closed. Cheap — an induction along `Reaches` — but it must be
+  proved before M4.
+
+### Phase 3 — uncertified DAGs (Mysticeti)
+
+Mysticeti drops the per-block certification round for latency, so a block
+carries no independent authority. That authority has to be rebuilt inside
+the DAG, as a **second certification layer** one round further on. This
+section is that rule and its safety.
+
+Fix a slot with leader block `L` by `leader k` at round `r`:
+
+- a round-`(r+1)` block **votes** for `L` if `L ∈ refs`, and **blames**
+  otherwise;
+- a round-`(r+2)` block **certifies** `L` if its refs include votes for `L`
+  from **2f+1 distinct validators**;
+- **direct commit**: certificates for `L` come from 2f+1 distinct validators;
+- **direct skip**: blames come from 2f+1 distinct validators;
+- otherwise **undecided**. A later direct commit triggers a backward sweep
+  over the undecided slots in the causal history of *that* leader block,
+  **earliest first**: each is committed if a certificate for it lies in that
+  causal history, and skipped otherwise.
+
+**(assumption) Leader slots are not every round.** Write `slotRound k` for
+the round of slot `k`, with
+
+> `slotRound (k+1) ≥ slotRound k + 3`
+
+**This spacing is load-bearing for safety, not merely scheduling.** A
+certificate for `L` sits at round `r+2`, and by T2 a block's causal history
+reaches only strictly lower rounds. An anchor whose leader block sat at
+round `≤ r+2` could therefore never see a certificate for `L`, and would
+skip it unconditionally — even where another validator directly committed
+it. The `+3` spacing is exactly what puts every anchor at round `≥ r+3`,
+which is what M2 needs. Any schedule change that narrows it breaks M4.
+
+- **M1 — Commit and skip are exclusive.** No slot admits both a direct
+  commit and a direct skip. Immediate from M3.
+
+- **M2 — Direct commit ⟹ the certificate is unavoidable.** If `L` is
+  directly committed, every block at round `≥ r+3` reaches some certificate
+  for `L`.
+
+  The certificates sit at round `r+2` with 2f+1 distinct creators, so `f+1`
+  of them are correct (`card_inter_correct_of_quorum`). A round-`(r+3)`
+  block names 2f+1 of the 3f+1 validators and so misses at most `f`, hence
+  names one of those correct certifiers, whose round-`(r+2)` block is unique
+  (T1) and therefore *is* that certificate. Later rounds follow by
+  induction. This is the **hitting lemma** — coverage generalised from a
+  fixed block to a set — and it is the same argument as T3's base case.
+
+- **M3 — Direct skip ⟹ no certificate exists anywhere.** If 2f+1 validators
+  blame, no certificate for `L` exists in the entire universe.
+
+  A *correct* validator's single round-`(r+1)` block either votes or blames,
+  never both, so `blames ∩ votes ⊆ Byzantine` and
+
+  > `|votes| ≤ (3f+1) − (2f+1) + f = 2f  <  2f+1`
+
+  and a certificate requires 2f+1 distinct vote-creators. Note the
+  conclusion is universe-wide, not view-relative: this is why a skip needs
+  no anchor to justify it.
+
+- **M4 — Direct and indirect never disagree.** If `L` is directly committed
+  by anyone, every anchor's causal history contains a certificate for `L`
+  (M2, using the `≥ r+3` spacing), so the indirect rule commits it too. If
+  `L` is directly skipped, no certificate exists at all (M3), so no anchor's
+  history contains one and the indirect rule skips it too.
+
+- **M5 — One block per slot.** Two blocks directly committed for the same
+  slot are equal.
+
+  T5's proof run twice, once through each certification layer. The two
+  certificate quorums intersect in a correct `v` (T0); `v`'s unique
+  round-`(r+2)` block certifies both candidates, so it references 2f+1 votes
+  for each; those vote sets intersect in a correct `w` (T0 again); `w`'s
+  unique round-`(r+1)` block references both candidates — same creator, same
+  round — so **distinctness** (§3.2) forces them equal. Distinctness is
+  load-bearing at precisely the point it is in T5.
+
+- **M6 — Agreement (the hard one).** All correct validators produce the same
+  decision for every slot.
+
+  The crux is **anchor agreement**: validators must not use different
+  anchors for the same undecided slot, since a later anchor sees strictly
+  more and could find a certificate an earlier one missed. It holds because
+  *any direct commit is recoverable indirectly*: if validator 1 directly
+  commits slot `s₁` and validator 2 does not, M2 forces validator 2's own
+  anchor to reach a certificate for `s₁`, so validator 2 commits `s₁`
+  indirectly. The committed *set* is therefore agreed even though "directly
+  committed" is not — which is exactly why the sweep resolves slots
+  **earliest first** rather than jumping to the triggering commit.
+
+  This is the only part of the development that is not static combinatorics.
+  The decision procedure recurses backwards from anchors, so `decide(slot)`
+  depends on `decide(later slot)`, and the induction measure is not the
+  round number. Expect this to dominate the Phase 3 effort; M1–M3 and M5 are
+  independent of it and can be built first.
+
+### Phase 4 (stretch)
 
 - **T6 — Total order safety.** The sequence of committed leaders, and blocks
   ordered via their causal history, is agreed upon by all correct
@@ -575,7 +699,9 @@ into an apparently provable one.
 - `LeanDag/Persistence.lean` — T3
 - `LeanDag/CommonCore.lean` — `supporters`, `correctSupporters`,
   `correctBlocksAt`, T3a and T3c (Phase 1b)
-- `LeanDag/Commit.lean` — §3.5 (views), T4–T5 (Phase 2)
+- `LeanDag/Commit.lean` — §3.5 (views), T6a, T4–T5 (Phase 2)
+- `LeanDag/Mysticeti.lean` — votes, certificates, the direct and indirect
+  rules, M1–M6 (Phase 3)
 - `LeanDagTest/` — concrete models confirming the definitions are
   satisfiable. Built by default, so a change that empties `ValidWrt` or
   `BlockUniverse` fails the build rather than silently making every theorem
@@ -639,7 +765,8 @@ Spec label to Lean identifier, for the parts that are built.
 | T3 | `reaches_of_quorum_support` | `Persistence.lean` |
 | T3a | `exists_correct_common_support` | `CommonCore.lean` |
 | T3c | `exists_common_correct_ancestor` | `CommonCore.lean` |
-| T4–T5 | *(not yet built)* | `Commit.lean` |
+| T4–T5, T6a | *(not yet built)* | `Commit.lean` |
+| M1–M6 | *(not yet built)* | `Mysticeti.lean` |
 
 `CommonCore.lean` is the one file importing `Mathlib` wholesale rather than
 targeted modules: the counting argument draws on big operators, ordered
