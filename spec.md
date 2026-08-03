@@ -565,5 +565,12 @@ Spec label to Lean identifier, for the parts that are built.
 | T1 | `BlockUniverse.eq_of_creator_eq` | `BlockDag.lean` |
 | T2 | `round_le_of_reaches` | `CausalHistory.lean` |
 | T3 | `reaches_of_quorum_support` | `Persistence.lean` |
-| T3a–T3c | *(not yet built)* | `CommonCore.lean` |
+| T3a | `exists_correct_common_support` | `CommonCore.lean` |
+| T3b | `reaches_of_correct_support` | `CommonCore.lean` |
+| T3c | `exists_common_correct_ancestor` | `CommonCore.lean` |
 | T4–T5 | *(not yet built)* | `Commit.lean` |
+
+`CommonCore.lean` is the one file importing `Mathlib` wholesale rather than
+targeted modules: the counting argument draws on big operators, ordered
+sums, pigeonhole and `nlinarith`, and chasing individual module paths cost
+more than the build time it saved. Everything else keeps narrow imports.

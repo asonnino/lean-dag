@@ -1,10 +1,13 @@
 import LeanDag.Persistence
+import LeanDag.CommonCore
 open LeanDag
 
 #print axioms LeanDag.BlockUniverse.eq_of_creator_eq
 #print axioms LeanDag.BlockUniverse.creators_quorum
 #print axioms LeanDag.round_le_of_reaches
 #print axioms LeanDag.reaches_of_quorum_support
+#print axioms LeanDag.exists_correct_common_support
+#print axioms LeanDag.exists_common_correct_ancestor
 
 instance : Faults (Fin 4) where
   f := 1
@@ -132,3 +135,23 @@ example : (0 : Fin 12) ∈ U3.ids ∧ (U3.block 0).round = 0 :=
 example :
     (Correct : Finset (Fin 4)).card + (Faults.byzantine : Finset (Fin 4)).card = 3 * 1 + 1 :=
   card_correct_add_byzantine
+
+/-! ## A common correct ancestor (T3a-T3c) on the three-round model -/
+
+-- The round-1 author pool is all four validators, so this is the
+-- full-participation case where the counting bound is tight.
+example : (authorsAt U3 1).card = 4 := by decide
+
+-- T3c: some correct validator's genesis block is reached by EVERY round-2
+-- block. Note block 11 (validator 3) references only {4,5,6}, so this is
+-- not something any single block states directly.
+example : ∃ bw ∈ U3.ids, (U3.block bw).round = 0 ∧
+    (U3.block bw).creator ∈ (Correct : Finset (Fin 4)) ∧
+    ∀ c ∈ U3.ids, (U3.block c).round = 2 → Reaches U3 c bw :=
+  exists_common_correct_ancestor (c₀ := 8) (by decide) (by decide)
+
+-- T3a in isolation: the support threshold really is met.
+example : ∃ bw ∈ U3.ids, (U3.block bw).round = 0 ∧
+    (U3.block bw).creator ∈ (Correct : Finset (Fin 4)) ∧
+    (authorsAt U3 1).card ≤ (correctSupporters U3 bw 1).card + 2 * Faults.f (Fin 4) :=
+  exists_correct_common_support (by decide)
