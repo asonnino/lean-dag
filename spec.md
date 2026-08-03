@@ -660,13 +660,15 @@ stages need very different machinery:
   `ValidWrt`), T0'
 - `LeanDag/BlockDag.lean` — §3.3 (universe), T1
 - `LeanDag/CausalHistory.lean` — §3.4, T2
-- `LeanDag/Support.lean` — `blocksAt`, `authorsAt`, and **both coverage
-  lemmas** (§4 *Coverage*). The common foundation under T3 and T3c.
+- `LeanDag/Support.lean` — `blocksAt`, `authorsAt`, `supporters`,
+  `correctSupporters`, and **both coverage lemmas** (§4 *Coverage*). The
+  common foundation under T3, T3c and the Mysticeti rules — Mysticeti's
+  *voters* are exactly `supporters` at the following round.
 - `LeanDag/Persistence.lean` — T3
-- `LeanDag/CommonCore.lean` — `supporters`, `correctSupporters`,
-  `correctBlocksAt`, T3a and T3c (Phase 1b)
-- `LeanDag/Mysticeti.lean` — §3.5 (views), T6a, votes, certificates, the
-  direct and indirect rules, M1–M6 (Phase 2)
+- `LeanDag/CommonCore.lean` — `correctBlocksAt`, T3a and T3c (Phase 1b)
+- `LeanDag/Mysticeti.lean` — `blames`, `Certifies`, `certificates`,
+  `DirectCommit`, `DirectSkip`, M1 and M3 (Phase 2 Stage A). Views, T6a and
+  the indirect rule follow in Stages B and C.
 - `LeanDag/Commit.lean` — T4–T5 (Appendix A, unscheduled)
 - `LeanDagTest/` — concrete models confirming the definitions are
   satisfiable. Built by default, so a change that empties `ValidWrt` or
@@ -728,7 +730,9 @@ Spec label to Lean identifier, for the parts that are built.
 | T3 | `reaches_of_quorum_support` | `Persistence.lean` |
 | T3a | `exists_correct_common_support` | `CommonCore.lean` |
 | T3c | `exists_common_correct_ancestor` | `CommonCore.lean` |
-| T6a, M1–M6 | *(not yet built)* | `Mysticeti.lean` |
+| M1 | `not_directCommit_of_directSkip` | `Mysticeti.lean` |
+| M3 | `certificates_eq_empty_of_directSkip` | `Mysticeti.lean` |
+| T6a, M2, M4–M6 | *(not yet built)* | `Mysticeti.lean` |
 | T4–T5 | *(unscheduled, Appendix A)* | `Commit.lean` |
 
 `CommonCore.lean` is the one file importing `Mathlib` wholesale rather than

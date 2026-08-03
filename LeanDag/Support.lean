@@ -146,4 +146,44 @@ theorem reaches_of_correct_support_of_card
   have := card_authorsAt_le_univ (U := U) (n := r + 1)
   omega
 
+/-! ## Support sets
+
+The coverage lemmas above take their support set as a bare `Finset Validator`
+so they stay instance-free. These are the concrete sets callers build, and
+forming them needs decidable equality on ids.
+
+Mysticeti's *voters* for a leader block are exactly `supporters` at the
+following round, which is why these sit here rather than beside the counting
+argument that first used them. -/
+
+variable [DecidableEq BlockId]
+
+/-- The validators whose round-`n` block references `b`. -/
+def supporters (U : BlockUniverse Validator BlockId Payload) (b : BlockId) (n : ℕ) :
+    Finset Validator :=
+  creatorsOf U.block ((blocksAt U n).filter (fun q => b ∈ (U.block q).refs))
+
+theorem mem_supporters {b : BlockId} {n : ℕ} {v : Validator} :
+    v ∈ supporters U b n ↔
+      ∃ q ∈ U.ids, (U.block q).round = n ∧ b ∈ (U.block q).refs ∧ (U.block q).creator = v := by
+  simp [supporters, mem_creatorsOf]
+  tauto
+
+theorem supporters_subset_authorsAt {b : BlockId} {n : ℕ} :
+    supporters U b n ⊆ authorsAt U n :=
+  Finset.image_subset_image (Finset.filter_subset _ _)
+
+/-- Validators that are both correct and back `b` with their round-`n`
+block. This is exactly what the coverage lemmas consume. -/
+def correctSupporters (U : BlockUniverse Validator BlockId Payload) (b : BlockId) (n : ℕ) :
+    Finset Validator :=
+  supporters U b n ∩ (Correct : Finset Validator)
+
+theorem correctSupporters_subset {b : BlockId} {n : ℕ} :
+    correctSupporters U b n ⊆ supporters U b n := Finset.inter_subset_left
+
+theorem correctSupporters_correct {b : BlockId} {n : ℕ} {v : Validator}
+    (hv : v ∈ correctSupporters U b n) : v ∈ (Correct : Finset Validator) :=
+  Finset.mem_of_mem_inter_right hv
+
 end LeanDag

@@ -87,37 +87,7 @@ theorem card_authorsAt_le {n : ℕ} :
     exact ⟨i, mem_correctBlocksAt.mpr ⟨hi_ids, hi_round, hi_creator ▸ hc⟩, hi_creator⟩
   · exact Finset.mem_union_right _ (by simpa using hc)
 
--- Only `supporters` needs decidable equality on ids: its defining filter
--- tests membership in a `Finset BlockId`. Everything above manages without.
 variable [DecidableEq BlockId]
-
-/-- The validators whose round-`n` block references `b`. -/
-def supporters (U : BlockUniverse Validator BlockId Payload) (b : BlockId) (n : ℕ) :
-    Finset Validator :=
-  creatorsOf U.block ((blocksAt U n).filter (fun q => b ∈ (U.block q).refs))
-
-theorem mem_supporters {b : BlockId} {n : ℕ} {v : Validator} :
-    v ∈ supporters U b n ↔
-      ∃ q ∈ U.ids, (U.block q).round = n ∧ b ∈ (U.block q).refs ∧ (U.block q).creator = v := by
-  simp [supporters, mem_creatorsOf]
-  tauto
-
-theorem supporters_subset_authorsAt {b : BlockId} {n : ℕ} :
-    supporters U b n ⊆ authorsAt U n :=
-  Finset.image_subset_image (Finset.filter_subset _ _)
-
-/-- Validators that are both correct and back `b` with their round-`n`
-block. This is exactly what the coverage lemmas consume. -/
-def correctSupporters (U : BlockUniverse Validator BlockId Payload) (b : BlockId) (n : ℕ) :
-    Finset Validator :=
-  supporters U b n ∩ (Correct : Finset Validator)
-
-theorem correctSupporters_subset {b : BlockId} {n : ℕ} :
-    correctSupporters U b n ⊆ supporters U b n := Finset.inter_subset_left
-
-theorem correctSupporters_correct {b : BlockId} {n : ℕ} {v : Validator}
-    (hv : v ∈ correctSupporters U b n) : v ∈ (Correct : Finset Validator) :=
-  Finset.mem_of_mem_inter_right hv
 
 /-- The arithmetic core of T3a, isolated from the combinatorics.
 

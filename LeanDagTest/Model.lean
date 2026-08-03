@@ -1,5 +1,6 @@
 import LeanDag.Persistence
 import LeanDag.CommonCore
+import LeanDag.Mysticeti
 open LeanDag
 
 #print axioms LeanDag.BlockUniverse.eq_of_creator_eq
@@ -8,6 +9,8 @@ open LeanDag
 #print axioms LeanDag.reaches_of_quorum_support
 #print axioms LeanDag.exists_correct_common_support
 #print axioms LeanDag.exists_common_correct_ancestor
+#print axioms LeanDag.certificates_eq_empty_of_directSkip
+#print axioms LeanDag.not_directCommit_of_directSkip
 
 instance : Faults (Fin 4) where
   f := 1
@@ -217,3 +220,41 @@ example : ∃ bw ∈ U4.ids, (U4.block bw).round = 0 ∧
     (U4.block bw).creator ∈ (Correct : Finset (Fin 4)) ∧
     ∀ c ∈ U4.ids, (U4.block c).round = 2 → Reaches U4 c bw :=
   exists_common_correct_ancestor (c₀ := 8) (by decide) (by decide)
+
+/-! ## Mysticeti direct rules (M1, M3) on the three-round model
+
+`U3` exercises both sides. Round-1 blocks 4-7 all reference `{0,1,2}`, so:
+
+  * genesis block 0 is voted for by every round-1 block, and every round-2
+    block gathers 3 = 2f+1 such votes -- so block 0 is DIRECTLY COMMITTED;
+  * genesis block 3 is referenced by nobody at round 1 -- so it is
+    DIRECTLY SKIPPED.
+
+Without both of these the M-theorems would be vacuous.
+-/
+
+-- Every round-1 block votes for genesis 0; block 3 gets no votes at all.
+example : supporters U3 0 1 = {0, 1, 2, 3} := by decide
+example : supporters U3 3 1 = ∅ := by decide
+example : blames U3 3 1 = {0, 1, 2, 3} := by decide
+
+-- Block 8 certifies genesis 0: its refs {4,5,6} are votes by 3 = 2f+1 authors.
+example : Certifies U3 8 0 := by decide
+
+-- DirectCommit is satisfiable -- so M1 is not vacuous.
+example : DirectCommit U3 0 0 := by decide
+
+-- DirectSkip is satisfiable, on a different block of the same round.
+example : DirectSkip U3 3 0 := by decide
+
+-- **M3** on real data: the skipped block has no certificate anywhere.
+example : certificates U3 3 0 = ∅ :=
+  certificates_eq_empty_of_directSkip (by decide)
+
+-- **M1** on real data: the skipped block cannot also be committed.
+example : ¬ DirectCommit U3 3 0 :=
+  not_directCommit_of_directSkip (by decide)
+
+-- And the two are genuinely different blocks of the same round: block 0 is
+-- committed and NOT skipped, block 3 is skipped and NOT committed.
+example : ¬ DirectSkip U3 0 0 := by decide
