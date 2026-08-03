@@ -10,15 +10,17 @@ original notes were open-ended — flag any you want changed.
 
 ## 1. Scope
 
+Phases 1, 1b and 2 are **built**; §7 indexes every theorem to its Lean name.
+
 - **Phase 1 (main target):** static block DAG structure, quorum-intersection
   combinatorics, and the causal-persistence theorem from the notes (T0–T3).
   This is the mathematical core of why Mysticeti-style protocols are safe.
 - **Phase 1b:** the counting argument giving a common correct ancestor
   across any three consecutive rounds (T3a–T3c). Still pure DAG
   combinatorics, and independent of Phase 2.
-- **Phase 2 — uncertified DAGs (Mysticeti):** the two-level certification
-  rule, direct commit and skip, and the indirect rule (T6a, M1–M6). What one
-  must do once blocks are no longer certificates.
+- **Phase 2 — uncertified DAGs (Mysticeti) — complete:** the two-level
+  certification rule, direct commit and skip, and the indirect rule (T6a,
+  M1–M6). What one must do once blocks are no longer certificates.
 - **Phase 3 (stretch):** total-order safety across the commit sequence;
   liveness under partial synchrony. Liveness needs network timing axioms
   (GST, message delay bounds) rather than pure DAG combinatorics — scope it
@@ -81,13 +83,16 @@ Remaining notes:
   operations like `image`, `∪`, and `∩` do, and here those all land in
   `Validator`.
 
-  Introduce it locally in the two places that do need it, both being a
-  `Finset.filter` over a predicate of the form `i ∈ (U.block q).refs`:
-  `CommonCore.lean`, for `supporters` / `correctSupporters`, and
-  `Mysticeti.lean`, for the vote and certificate sets. `Support.lean`
-  deliberately avoids it: its coverage lemmas take the support set as a plain
-  `Finset Validator` with a witness per member rather than as `supporters`,
-  so the shared layer stays instance-free.
+  Introduce it locally where a `Finset.filter` tests a predicate of the form
+  `i ∈ (U.block q).refs`: `Support.lean` for `supporters`, `CommonCore.lean`
+  for `correctBlocksAt`, and `Mysticeti.lean` for the vote and certificate
+  sets.
+
+  Note the split *within* `Support.lean`. The coverage and hitting lemmas
+  take their support set as a plain `Finset Validator` with a witness per
+  member, so they need no instance; it is declared only lower down, for the
+  concrete `supporters` sets callers build. Keeping the lemmas instance-free
+  is what lets T3 and M2 apply without any decidability on ids.
 - **(assumption)** `Fintype.card Validator = 3 * f + 1` exactly (notes say
   "3f+1 validators").
 - Rounds are plain `ℕ` throughout. No `Round` abbreviation — it would buy
@@ -97,9 +102,8 @@ Five consequences worth naming once rather than re-deriving at each use:
 
 - `exists_correct_of_card`: any `S : Finset Validator` with
   `F.f + 1 ≤ S.card` contains a correct validator, since
-  `F.byzantine.card ≤ F.f` means `S` cannot be wholly Byzantine. Feeds T0
-  only — and T0 currently feeds only T0', which nothing calls. See the note
-  under T0.
+  `F.byzantine.card ≤ F.f` means `S` cannot be wholly Byzantine. Feeds T0,
+  and through T0' reaches M5′ — the whole chain is live.
 - `card_correct_add_byzantine : Correct.card + F.byzantine.card = 3 * F.f + 1`
   — from `Finset.card_compl` and `F.card_validators`. Stated **additively**
   so it gives both bounds without ℕ subtraction. Phase 1b needs the *upper*
@@ -339,8 +343,8 @@ block; M2 must reach *some certificate*, a target set. So the primitive is
 `exists_mem_refs_of_correct_support`: if `f+1`-or-so correct validators
 published round-`n` blocks satisfying a predicate `P`, no round-`(n+1)` block
 can avoid referencing one. It is stated with `P` a bare predicate rather than
-a `Finset BlockId`, since only the *validator* set is ever counted — which
-keeps `Support.lean` free of `DecidableEq BlockId`.
+a `Finset BlockId`, since only the *validator* set is ever counted — so the
+hitting and coverage lemmas need no `DecidableEq BlockId` at all.
 
 Both coverage lemmas are then the instance where every `P`-block references
 the same `b`, and `reaches_pred_of_round_le` (**propagation**) carries the
@@ -380,8 +384,10 @@ Which form to use is determined by how supporters are obtained:
   quorums. Phases 1 and 1b therefore reach a correct validator via
   `card_inter_correct_of_quorum` instead.
 
-  M5 uses T0' **twice** — once per certification layer — which is exactly
-  T0's two-quorum shape, as does T5 in Appendix A.
+  M5′ uses T0' — the two vote quorums of two certificates — which is exactly
+  T0's two-quorum shape, as does T5 in Appendix A. Note it uses it **once**:
+  M5's original proof intersected the certificate quorums as well, and M5′
+  showed that outer step was unnecessary.
 
 - **T1 — Non-equivocation as id equality.** For `v ∈ Correct`, any two ids
   `i j ∈ U.ids` with creator `v` at the same round satisfy `i = j`.
@@ -615,16 +621,25 @@ stages need very different machinery:
   view-independent (T6a): confining the search to the validator's own view
   costs nothing, since the certificate could never have lain outside it.
 
-- **M5 — One block per slot.** Two blocks directly committed for the same
-  slot are equal.
+- **M5′ — Certificate uniqueness.** If certificates exist for two round-`r`
+  blocks by the same author, those blocks coincide.
 
-  T5's proof run twice, once through each certification layer. The two
-  certificate quorums intersect in a correct `v` (T0); `v`'s unique
-  round-`(r+2)` block certifies both candidates, so it references 2f+1 votes
-  for each; those vote sets intersect in a correct `w` (T0 again); `w`'s
-  unique round-`(r+1)` block references both candidates — same creator, same
-  round — so **distinctness** (§3.2) forces them equal. Distinctness is
-  load-bearing at precisely the point it is in T5 (Appendix A).
+  Two certificates each name 2f+1 distinct voters; the two voter sets
+  intersect in a correct `w` (T0'); `w`'s single round-`(r+1)` block votes
+  for both (T1); and **distinctness** (§3.2) forbids one block referencing
+  two round-`r` blocks by one author. That last step is the sole
+  load-bearing use of distinctness in the development.
+
+  This is the form M6 needs, because the indirect rule commits on a *single*
+  certificate in reach rather than a quorum of them. The proof needs no
+  relationship between the two certificates, and no round hypothesis — a
+  voter sits at round `r+1` and references its candidate, which pins the
+  candidate to round `r`.
+
+- **M5 — One block per slot.** Two blocks directly committed for the same
+  slot are equal. A corollary of M5′: a direct commit implies a certificate
+  exists. The outer certificate-quorum intersection an earlier draft
+  performed here turned out to be unnecessary.
 
 - **M6 — Agreement.** No two correct validators reach conflicting decisions
   for a slot. As with T5 this is *no-conflicting-decision*, not "both
@@ -739,10 +754,10 @@ stages need very different machinery:
 
   | | | risk |
   |---|---|---|
-  | C1 | slot schedule, leader blocks, `DirectCommitIn`, the `Decided` relation | low — definitions |
-  | C2 | view-relative M4 and M5, by monotonicity | low |
-  | C3 | M5′, then `decided_unique` by structural induction | **high** — the crux |
-  | C4 | M6 from C2 and C3 | low |
+  | C1 | slot schedule, leader blocks, `DirectCommitIn`, the `Decided` relation | ✓ |
+  | C2 | view-relative M4 and M5, by monotonicity | ✓ |
+  | C3 | M5′, then `decided_unique` by structural induction | ✓ |
+  | C4 | M6 from C2 and C3 | ✓ |
 
   *Built.* The one surprise in C3 was that the IHs in Lean's generated
   recursor come **after** all constructor arguments rather than beside their
@@ -790,29 +805,29 @@ stages need very different machinery:
   *voters* are exactly `supporters` at the following round.
 - `LeanDag/Persistence.lean` — T3
 - `LeanDag/CommonCore.lean` — `correctBlocksAt`, T3a and T3c (Phase 1b)
-- `LeanDag/Mysticeti.lean` — `blames`, `Certifies`, `certificates`,
-  `DirectCommit`, `DirectSkip`, M1–M3 and M5 (Phase 2 Stage A). The indirect
-  rule follows in Stage C.
+- `LeanDag/Mysticeti.lean` — the whole of Phase 2: the vote/certificate
+  machinery and M1–M3, M5′, M5 (Stage A); the slot schedule, `DirectCommitIn`
+  and the `Decided` relation (C1); the view-relative lifts (C2); and M4, M6
+  (C3–C4)
 - `LeanDag/Commit.lean` — T4–T5 (Appendix A, unscheduled)
 - `LeanDagTest/` — concrete models confirming the definitions are
   satisfiable. Built by default, so a change that empties `ValidWrt` or
   `BlockUniverse` fails the build rather than silently making every theorem
   vacuously true. Worth extending with a model at each new layer.
 
-Imports form a chain down to `Support.lean`, which then branches (solid = as
-built, dashed = planned):
+Imports form a chain down to `Support.lean`, which then branches:
 
 ```
 Validators → Block → BlockDag → CausalHistory → Support
                                                    │
                                     ┌──────────────┼──────────────┐
-                                Persistence   CommonCore   ┄ Mysticeti
+                                Persistence   CommonCore     Mysticeti
 ```
 
-`Persistence.lean` and `CommonCore.lean` are **siblings**; neither imports
-the other. T3 and T3c are two consequences of one coverage principle,
-differing only in how their supporters are obtained — assumed (T3) or
-counted (T3a).
+The three leaves are **siblings**; none imports another. T3, T3c and the
+Mysticeti rules are all consequences of the same coverage principle,
+differing only in how their supporters are obtained — assumed (T3), counted
+(T3a), or accumulated a layer at a time (M2).
 
 Parameterizing validity by a lookup function (§3.2) is what keeps this
 acyclic: `ValidWrt`, `creatorsOf` and T0' never mention `BlockUniverse` — T0'
@@ -832,12 +847,12 @@ condition, the creator-set quorum, and non-equivocation — four conditions.
 Not distinctness, not views, not view-closure. This holds for Phase 1b too:
 T3a takes its 2f+1 distinct validators straight from the creator-set quorum,
 and coverage runs on correctness plus non-equivocation. So distinctness is
-load-bearing only at commit agreement (M5, and T5 in Appendix A), exactly as
-§3.2 claims — and that is checkable rather than aspirational:
-`distinct_creators` is consumed only by
-`card_creators`, which is consumed only by `card_refs`, which nothing calls.
-Grep for those three when in doubt. If a Phase 1 or 1b proof reaches for
-distinctness, views, or view-closure, something has gone sideways.
+load-bearing only at commit agreement (M5′, and T5 in Appendix A), exactly
+as §3.2 claims — and that is checkable rather than aspirational.
+`distinct_creators` has exactly two consumers: M5′, and `card_creators`
+(which feeds only `card_refs`, which nothing calls). Grep for it when in
+doubt. If a Phase 1 or 1b proof reaches for distinctness, views, or
+view-closure, something has gone sideways.
 
 ## 7. Theorem index
 
@@ -848,27 +863,27 @@ Spec label to Lean identifier, for the parts that are built.
 | T0 | `exists_correct_mem_inter` | `Validators.lean` |
 | T0' | `exists_correct_mem_creators_inter` | `Block.lean` |
 | T1 | `BlockUniverse.eq_of_creator_eq` | `BlockDag.lean` |
+| — | `View` | `BlockDag.lean` |
 | T2 | `round_le_of_reaches` | `CausalHistory.lean` |
+| T6a | `View.mem_of_reaches` | `CausalHistory.lean` |
+| T6a (usable form) | `View.exists_reaches_iff` | `CausalHistory.lean` |
+| Hitting, `p − 2f` | `exists_mem_refs_of_correct_support` | `Support.lean` |
+| Hitting, `f+1` | `exists_mem_refs_of_correct_support_of_card` | `Support.lean` |
+| Propagation | `reaches_pred_of_round_le` | `Support.lean` |
 | Coverage, `p − 2f` | `reaches_of_correct_support` | `Support.lean` |
 | Coverage, `f+1` | `reaches_of_correct_support_of_card` | `Support.lean` |
 | T3 | `reaches_of_quorum_support` | `Persistence.lean` |
 | T3a | `exists_correct_common_support` | `CommonCore.lean` |
 | T3c | `exists_common_correct_ancestor` | `CommonCore.lean` |
-| Hitting, `p − 2f` | `exists_mem_refs_of_correct_support` | `Support.lean` |
-| Hitting, `f+1` | `exists_mem_refs_of_correct_support_of_card` | `Support.lean` |
-| Propagation | `reaches_pred_of_round_le` | `Support.lean` |
 | M1 | `not_directCommit_of_directSkip` | `Mysticeti.lean` |
 | M2 | `exists_certificate_reaches_of_directCommit` | `Mysticeti.lean` |
 | M3 | `certificates_eq_empty_of_directSkip` | `Mysticeti.lean` |
 | M5′ | `eq_of_certificates_nonempty` | `Mysticeti.lean` |
 | M5 | `eq_of_directCommit_of_creator_eq` | `Mysticeti.lean` |
-| T6a | `View.mem_of_reaches` | `CausalHistory.lean` |
-| T6a (usable form) | `View.exists_reaches_iff` | `CausalHistory.lean` |
 | M4 | `indirect_agrees_with_direct` | `Mysticeti.lean` |
 | M4 (view form) | `certifiedIn_iff_of_view` | `Mysticeti.lean` |
-| C1: `Slots`, `IsLeaderBlock`, `Decided` | *built* | `Mysticeti.lean` |
-| C1: `DirectCommitIn`, `directCommit_of_directCommitIn` | *built* | `Mysticeti.lean` |
-| C2: cross-view M1/M5, `certifiedIn_of_directCommitIn` | *built* | `Mysticeti.lean` |
+| C1 | `Slots`, `IsLeaderBlock`, `DirectCommitIn`, `Decided` | `Mysticeti.lean` |
+| C2 | `directCommit_of_directCommitIn`, `certifiedIn_of_directCommitIn` | `Mysticeti.lean` |
 | M6 | `decided_unique`, `decided_agree` | `Mysticeti.lean` |
 | M6 (corollaries) | `eq_of_decided_commit`, `not_decided_skip_of_decided_commit` | `Mysticeti.lean` |
 | T4–T5 | *(unscheduled, Appendix A)* | `Commit.lean` |
