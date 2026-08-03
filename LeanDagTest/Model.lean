@@ -13,6 +13,7 @@ open LeanDag
 #print axioms LeanDag.not_directCommit_of_directSkip
 #print axioms LeanDag.exists_certificate_reaches_of_directCommit
 #print axioms LeanDag.eq_of_directCommit_of_creator_eq
+#print axioms LeanDag.eq_of_certificates_nonempty
 #print axioms LeanDag.View.mem_of_reaches
 #print axioms LeanDag.indirect_agrees_with_direct
 
@@ -538,3 +539,18 @@ example : CertifiedIn U5 12 0 0 :=
 directly skip it -- whatever that other validator happens to hold. -/
 example (V : View (Fin 4) (Fin 16) Unit U5) : ¬ DirectSkipIn U5 V 0 0 :=
   fun h => not_directSkipIn_of_directCommitIn (V₁ := V5') (by decide) h
+
+/-! ## M5' is strictly stronger than M5
+
+M5 rules out the equivocating twin being *committed*. M5' rules out its
+having even a single certificate -- which is what the indirect rule needs,
+since it commits on one certificate rather than a quorum of them.
+-/
+
+example : (certificates U6 0 0).Nonempty := by decide
+
+/-- Block 4 is genesis block 0's equivocating twin, and cannot have *any*
+certificate. Derived from M5', not from the model being small. -/
+example : ¬ (certificates U6 4 0).Nonempty := fun h =>
+  absurd (eq_of_certificates_nonempty (L₁ := 0) (L₂ := 4) (by decide) h (by decide))
+    (by decide)

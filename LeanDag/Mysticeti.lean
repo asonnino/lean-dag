@@ -201,42 +201,42 @@ theorem exists_certificate_reaches_of_directCommit {L : BlockId} {r : ℕ}
     exact ⟨C, hC_cert, Reaches.single hC_mem⟩
   exact reaches_pred_of_round_le hbase hc hcr
 
-/-- **M5.** At most one block per slot is directly committed: two directly
-committed blocks with the same author are the same block.
+/-- A direct commit needs `2f+1` distinct certificate authors, so in
+particular at least one certificate. -/
+theorem certificates_nonempty_of_directCommit {L : BlockId} {r : ℕ}
+    (h : DirectCommit U L r) : (certificates U L r).Nonempty := by
+  rw [Finset.nonempty_iff_ne_empty]
+  rintro hempty
+  rw [DirectCommit, hempty] at h
+  simp [creatorsOf] at h
 
-Stated as *same round, same creator* rather than *same slot*, which is what
-"same slot" means operationally and avoids needing a leader schedule at all.
-(The round is not a hypothesis — it follows, since both are referenced by
-round-`(r+1)` voters.)
+/-- **M5′ (certificate uniqueness).** A slot admits at most one *certifiable*
+block: if certificates exist for two round-`r` blocks by the same author,
+those blocks coincide.
 
-This is T5's argument run once per certification layer. Two quorum
-intersections and two appeals to non-equivocation peel the layers off, and
-then **distinctness** closes it: one correct validator's single round-`(r+1)`
-block would otherwise reference two different round-`r` blocks by the same
-author. That is the one place in the whole development where distinctness is
-load-bearing. -/
-theorem eq_of_directCommit_of_creator_eq {L₁ L₂ : BlockId} {r : ℕ}
-    (h₁ : DirectCommit U L₁ r) (h₂ : DirectCommit U L₂ r)
+Stronger than M5, and the form the indirect rule needs — the indirect rule
+commits on the strength of a *single* certificate lying in reach, not on a
+quorum of them.
+
+The proof needs no relationship between the two certificates. Each names
+2f+1 distinct voters, so the two voter sets intersect in a correct `w` (T0');
+`w`'s single round-`(r+1)` block votes for both (T1); and **distinctness**
+forbids one block referencing two round-`r` blocks by one author. That last
+step is the one place in the development where distinctness is load-bearing.
+
+The rounds need no hypothesis: a voter for `L₁` sits at round `r+1` and
+references it, which pins `L₁` to round `r`, and likewise for `L₂`. -/
+theorem eq_of_certificates_nonempty {L₁ L₂ : BlockId} {r : ℕ}
+    (h₁ : (certificates U L₁ r).Nonempty) (h₂ : (certificates U L₂ r).Nonempty)
     (hcreator : (U.block L₁).creator = (U.block L₂).creator) :
     L₁ = L₂ := by
-  -- Layer 1: the two certificate quorums share a correct author, whose
-  -- single round-`(r+2)` block therefore certifies both candidates.
-  obtain ⟨v, hv_inter, hv_correct⟩ := exists_correct_mem_creators_inter h₁ h₂
-  rw [Finset.mem_inter] at hv_inter
-  obtain ⟨hv₁, hv₂⟩ := hv_inter
-  rw [mem_creatorsOf] at hv₁ hv₂
-  obtain ⟨C₁, hC₁, hC₁_creator⟩ := hv₁
-  obtain ⟨C₂, hC₂, hC₂_creator⟩ := hv₂
+  obtain ⟨C₁, hC₁⟩ := h₁
+  obtain ⟨C₂, hC₂⟩ := h₂
   rw [certificates, Finset.mem_filter, mem_blocksAt] at hC₁ hC₂
   obtain ⟨⟨hC₁_ids, hC₁_round⟩, hC₁_cert⟩ := hC₁
   obtain ⟨⟨hC₂_ids, hC₂_round⟩, hC₂_cert⟩ := hC₂
-  have hCC : C₁ = C₂ :=
-    U.eq_of_creator_eq hC₁_ids hC₂_ids hv_correct hC₁_creator hC₂_creator
-      (by rw [hC₁_round, hC₂_round])
-  subst hCC
-  -- Layer 2: that block's two vote quorums share a correct author, whose
-  -- single round-`(r+1)` block therefore votes for both candidates.
   rw [Certifies] at hC₁_cert hC₂_cert
+  -- The two vote quorums share a correct author.
   obtain ⟨w, hw_inter, hw_correct⟩ := exists_correct_mem_creators_inter hC₁_cert hC₂_cert
   rw [Finset.mem_inter] at hw_inter
   obtain ⟨hw₁, hw₂⟩ := hw_inter
@@ -247,14 +247,26 @@ theorem eq_of_directCommit_of_creator_eq {L₁ L₂ : BlockId} {r : ℕ}
   obtain ⟨hq₁_mem, hq₁_ref⟩ := hq₁
   obtain ⟨hq₂_mem, hq₂_ref⟩ := hq₂
   have hq₁_ids : q₁ ∈ U.ids := U.complete _ hC₁_ids _ hq₁_mem
-  have hq₂_ids : q₂ ∈ U.ids := U.complete _ hC₁_ids _ hq₂_mem
+  have hq₂_ids : q₂ ∈ U.ids := U.complete _ hC₂_ids _ hq₂_mem
   have hq₁_round := U.round_of_mem_refs hC₁_ids hq₁_mem
-  have hq₂_round := U.round_of_mem_refs hC₁_ids hq₂_mem
+  have hq₂_round := U.round_of_mem_refs hC₂_ids hq₂_mem
+  -- That author has one round-`(r+1)` block, and it votes for both.
   have hqq : q₁ = q₂ :=
     U.eq_of_creator_eq hq₁_ids hq₂_ids hw_correct hq₁_creator hq₂_creator (by omega)
   subst hqq
-  -- Both candidates are references of one block, by one author: distinctness.
   exact (U.valid q₁ hq₁_ids).distinct_creators L₁ hq₁_ref L₂ hq₂_ref hcreator
+
+/-- **M5.** At most one block per slot is directly committed.
+
+Now a corollary of M5′: a direct commit implies a certificate exists. Note
+the outer certificate-quorum intersection this proof used to perform is not
+needed — M5′ never requires the two certificates to be the same block. -/
+theorem eq_of_directCommit_of_creator_eq {L₁ L₂ : BlockId} {r : ℕ}
+    (h₁ : DirectCommit U L₁ r) (h₂ : DirectCommit U L₂ r)
+    (hcreator : (U.block L₁).creator = (U.block L₂).creator) :
+    L₁ = L₂ :=
+  eq_of_certificates_nonempty (certificates_nonempty_of_directCommit h₁)
+    (certificates_nonempty_of_directCommit h₂) hcreator
 
 /-! ## The indirect rule's test
 
@@ -267,6 +279,13 @@ contradicts the direct rule. -/
 history of the anchor block `A`? -/
 def CertifiedIn (U : BlockUniverse Validator BlockId Payload) (A L : BlockId) (r : ℕ) : Prop :=
   ∃ C ∈ certificates U L r, Reaches U A C
+
+/-- A certificate in reach is, in particular, a certificate that exists. This
+is what lets M5′ compare an *indirect* commit against anything else. -/
+theorem certificates_nonempty_of_certifiedIn {A L : BlockId} {r : ℕ}
+    (h : CertifiedIn U A L r) : (certificates U L r).Nonempty := by
+  obtain ⟨C, hC, -⟩ := h
+  exact ⟨C, hC⟩
 
 /-- **M4, commit half.** A directly committed block is found by *every*
 anchor from round `r+3` on. This is M2 restated as the indirect rule's test,

@@ -856,6 +856,7 @@ Spec label to Lean identifier, for the parts that are built.
 | M1 | `not_directCommit_of_directSkip` | `Mysticeti.lean` |
 | M2 | `exists_certificate_reaches_of_directCommit` | `Mysticeti.lean` |
 | M3 | `certificates_eq_empty_of_directSkip` | `Mysticeti.lean` |
+| M5′ | `eq_of_certificates_nonempty` | `Mysticeti.lean` |
 | M5 | `eq_of_directCommit_of_creator_eq` | `Mysticeti.lean` |
 | T6a | `View.mem_of_reaches` | `CausalHistory.lean` |
 | T6a (usable form) | `View.exists_reaches_iff` | `CausalHistory.lean` |
@@ -864,7 +865,7 @@ Spec label to Lean identifier, for the parts that are built.
 | C1: `Slots`, `IsLeaderBlock`, `Decided` | *built* | `Mysticeti.lean` |
 | C1: `DirectCommitIn`, `directCommit_of_directCommitIn` | *built* | `Mysticeti.lean` |
 | C2: cross-view M1/M5, `certifiedIn_of_directCommitIn` | *built* | `Mysticeti.lean` |
-| M6 (C3–C4) | *(not yet built)* | `Mysticeti.lean` |
+| M6 (C3 `decided_unique`, C4) | *(not yet built)* | `Mysticeti.lean` |
 | T4–T5 | *(unscheduled, Appendix A)* | `Commit.lean` |
 
 `CommonCore.lean` is the one file importing `Mathlib` wholesale rather than
