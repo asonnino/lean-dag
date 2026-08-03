@@ -213,11 +213,20 @@ also present `b.refs.card ≥ 2f+1` still follows, so nothing is lost.
 **Distinct creators earns its keep only at T5.** It is a genuine protocol
 rule — a block must not cite the same author twice — but it is worth being
 precise about where it is needed, because the natural guess is wrong. T3
-does *not* use it: the validator extracted from a quorum intersection is
-**correct** by construction, and universe-level non-equivocation (§3.3)
-already makes that validator's block unique. Distinctness is needed only in
-T5's Byzantine-leader branch, where the equivocating author is precisely the
-one non-equivocation says nothing about.
+does *not* use it: coverage requires its supporters to be **correct**, and
+universe-level non-equivocation (§3.3) already makes a correct validator's
+block unique. Distinctness is needed only in T5's Byzantine-leader branch,
+where the equivocating author is precisely the one non-equivocation says
+nothing about.
+
+This is **enforced, not merely asserted**, and it is easy to lose by
+accident. `ValidWrt.refs_nonempty` — which T3's inductive step needs — is
+proved from the quorum condition alone rather than via `card_refs`, because
+`card_refs` goes through `card_creators`, which *does* use distinctness.
+Routing it that way would silently put distinctness on T3's dependency path.
+The consumers of distinctness are therefore exactly `card_creators` and, in
+turn, `card_refs`, and neither is used by any theorem currently in the
+development.
 
 ### 3.3 Block universe
 
@@ -609,9 +618,11 @@ condition, the creator-set quorum, and non-equivocation — four conditions.
 Not distinctness, not views, not view-closure. This holds for Phase 1b too:
 T3a takes its 2f+1 distinct validators straight from the creator-set quorum,
 and coverage runs on correctness plus non-equivocation. So distinctness is
-load-bearing at **T5 alone**, exactly as §3.2 claims. Useful as a check while
-implementing: if a Phase 1 or 1b proof reaches for any of those three,
-something has gone sideways.
+load-bearing at **T5 alone**, exactly as §3.2 claims — and that is checkable
+rather than aspirational: `distinct_creators` is consumed only by
+`card_creators`, which is consumed only by `card_refs`, which nothing calls.
+Grep for those three when in doubt. If a Phase 1 or 1b proof reaches for
+distinctness, views, or view-closure, something has gone sideways.
 
 ## 7. Theorem index
 

@@ -109,11 +109,19 @@ theorem card_refs (h : ValidWrt blk b) (h0 : 0 < b.round) : 2 * F.f + 1 ≤ b.re
   exact h.quorum h0
 
 /-- A non-genesis block has at least one reference. Used by T3's inductive
-step, which needs only this much of validity. -/
+step, which needs only this much of validity.
+
+Proved from the quorum condition **alone**, deliberately not via `card_refs`:
+the image of `∅` is `∅`, so an empty `refs` would give an empty creator set.
+Routing through `card_refs` would drag `distinct_creators` onto T3's
+dependency path, and the whole point of §3.2's analysis is that Phase 1 and
+1b never need it. -/
 theorem refs_nonempty (h : ValidWrt blk b) (h0 : 0 < b.round) : b.refs.Nonempty := by
-  rw [← Finset.card_pos]
-  have := h.card_refs h0
-  omega
+  rcases Finset.eq_empty_or_nonempty b.refs with hempty | hne
+  · exfalso
+    have hq := h.quorum h0
+    simp [creators, creatorsOf, hempty] at hq
+  · exact hne
 
 end ValidWrt
 
