@@ -16,18 +16,16 @@ original notes were open-ended — flag any you want changed.
 - **Phase 1b:** the counting argument giving a common correct ancestor
   across any three consecutive rounds (T3a–T3c). Still pure DAG
   combinatorics, and independent of Phase 2.
-- **Phase 2 — certified DAGs:** views, round leaders, the single-level
-  direct-commit rule, and agreement on committed blocks (T4–T5, T6a). This
-  is the commit rule for DAG-Rider/Bullshark-style protocols, where a block
-  only enters the DAG once 2f+1 validators have signed it — of independent
-  interest, not a stepping stone.
-- **Phase 3 — uncertified DAGs (Mysticeti):** the two-level certification
-  rule, direct commit and skip, and the indirect rule (M1–M6). What one must
-  do once blocks are no longer certificates.
-- **Phase 4 (stretch):** total-order safety across the commit sequence;
+- **Phase 2 — uncertified DAGs (Mysticeti):** the two-level certification
+  rule, direct commit and skip, and the indirect rule (T6a, M1–M6). What one
+  must do once blocks are no longer certificates.
+- **Phase 3 (stretch):** total-order safety across the commit sequence;
   liveness under partial synchrony. Liveness needs network timing axioms
   (GST, message delay bounds) rather than pure DAG combinatorics — scope it
-  separately once Phases 1–3 land.
+  separately once Phases 1–2 land.
+
+Appendix A holds the **certified-DAG** commit rule (T4–T5), deliberately off
+the roadmap.
 
 ## 2. System model
 
@@ -86,7 +84,7 @@ Remaining notes:
   Introduce it locally in the two places that do need it, both being a
   `Finset.filter` over a predicate of the form `i ∈ (U.block q).refs`:
   `CommonCore.lean`, for `supporters` / `correctSupporters`, and
-  `Commit.lean`, for T4's support set. `Support.lean` deliberately avoids it:
+  `Mysticeti.lean`, for the vote and certificate sets. `Support.lean` deliberately avoids it:
   its coverage lemmas take the support set as a plain `Finset Validator` with
   a witness per member rather than as `supporters`, so the shared layer stays
   instance-free.
@@ -116,7 +114,8 @@ Five consequences worth naming once rather than re-deriving at each use:
   produces one witness. Reach for this whenever a count of correct members is
   wanted rather than their existence.
 - `card_correct : 2 * F.f + 1 ≤ Correct.card`. Used by **nothing** — T0, T3,
-  and T5 route through `F.card_byzantine`, and T3a needs the additive form
+  and the commit-agreement arguments route through `F.card_byzantine`, and
+  T3a needs the additive form
   above rather than this one. Kept because liveness (T7) would want it, but
   it is on no currently-built path; do not reach for it in the counting argument.
 
@@ -189,8 +188,8 @@ creators blk b : Finset Validator := creatorsOf blk b.refs
 ```
 
 The generalized form is not cosmetic. T3's hypothesis, `authorsAt` (§4
-*Coverage*), and T4's commit rule all quantify over id-sets that are *not*
-any block's refs; a block-only `creators` would force each of them to inline
+*Coverage*), and Phase 2's vote and certificate sets all quantify over
+id-sets that are *not* any block's refs; a block-only `creators` would force each of them to inline
 the image by hand.
 
 Then `ValidWrt blk b` holds iff:
@@ -216,14 +215,14 @@ form every downstream proof wants, and it is the more faithful reading of
 removes any `card_creators` bridge from the critical path. With distinctness
 also present `b.refs.card ≥ 2f+1` still follows, so nothing is lost.
 
-**Distinct creators earns its keep only at T5.** It is a genuine protocol
+**Distinct creators earns its keep only at commit agreement.** It is a genuine protocol
 rule — a block must not cite the same author twice — but it is worth being
 precise about where it is needed, because the natural guess is wrong. T3
 does *not* use it: coverage requires its supporters to be **correct**, and
 universe-level non-equivocation (§3.3) already makes a correct validator's
-block unique. Distinctness is needed only in T5's Byzantine-leader branch,
-where the equivocating author is precisely the one non-equivocation says
-nothing about.
+block unique. Distinctness is needed only where an *equivocating* author
+must be ruled out — M5, and T5 in Appendix A — precisely the case
+non-equivocation says nothing about.
 
 This is **enforced, not merely asserted**, and it is easy to lose by
 accident. `ValidWrt.refs_nonempty` — which T3's inductive step needs — is
@@ -280,15 +279,16 @@ definable via `Relation.ReflTransGen` on
 
 ### 3.5 Views (Phase 2)
 
-Phase 1 needs no views — T0–T3 are all universe-level. They first matter at
-T4/T5, where committing is a decision an individual validator makes from its
-own local DAG.
+Phases 1 and 1b need no views, and neither do M1–M3 or M5 — all are
+universe-level. Views first matter at M4/M6, where committing is a decision
+an individual validator makes from its own local DAG.
 
 A **view** is a `V : Finset BlockId` with `V ⊆ U.ids`, itself complete:
 `∀ i ∈ V, ∀ j ∈ (U.block i).refs, j ∈ V`. Views share `U.block` — they
 disagree about *which* blocks they hold, never about what an id means — and
 inherit validity and non-equivocation from `U`. Different correct validators
-may hold different views; that asymmetry is the entire point of T5.
+may hold different views; that asymmetry is the entire point of M6 (and of
+T5 in Appendix A).
 
 ## 4. Theorem roadmap
 
@@ -337,7 +337,7 @@ later block reaches *some certificate*" — a set, not a fixed block. The right
 primitive is: if a set `S` of round-`n` blocks has `f+1` correct creators,
 every round-`(n+1)` block references a member of `S`. Both coverage lemmas
 below are then the corollary where every member of `S` references the same
-`b`. Worth doing when Phase 3 starts; it serves T3, T5 and M2 alike, and
+`b`. Worth doing when Phase 2 starts; it serves T3 and M2 alike, and
 makes precise that both commit rules are instances of *a quorum of correct
 support cannot be dodged* — differing only in how many layers deep it runs.
 
@@ -373,9 +373,9 @@ Which form to use is determined by how supporters are obtained:
   than two quorums. Phase 1 and 1b therefore reach a correct validator via
   `card_inter_correct_of_quorum` instead.
 
-  All three are needed again from Phase 2 on: T5 intersects `Q₁` with `Q₂`,
-  and M5 runs the same intersection twice, once per certification layer —
-  genuinely two quorums each time, exactly T0's shape. Keep the chain.
+  All three are needed again from Phase 2 on: M5 runs a two-quorum
+  intersection once per certification layer — exactly T0's shape — as does
+  T5 in Appendix A. Keep the chain.
 
 - **T1 — Non-equivocation as id equality.** For `v ∈ Correct`, any two ids
   `i j ∈ U.ids` with creator `v` at the same round satisfy `i = j`.
@@ -508,67 +508,7 @@ into an apparently provable one.
   `p = 2f+1` every round-`(r+2)` block names all of them and the conclusion
   is immediate.
 
-### Phase 2 — certified DAGs
-
-In DAG-Rider, Bullshark and Narwhal-style protocols a block enters the DAG
-only once 2f+1 validators have signed it: **the block is itself a
-certificate**. There, "referenced by 2f+1 validators at the next round" is
-the entire commit rule, and T5 is its safety proof.
-
-This is not a simplification of Mysticeti but the rule for a different DAG
-discipline — Phase 3 is what one must do after giving that discipline up.
-
-- **T4 — Round leaders and the commit rule.** A deterministic
-  `leader : ℕ → Validator` (mechanism TBD — round-robin is simplest to
-  formalize first). Define **directly committed in a view**:
-  `DirectlyCommittedIn U V r i` — note it takes the universe *and* the view,
-  since the predicate dereferences ids through `U.block` while quantifying
-  over `V` — holds when `i ∈ V` is a round-`r` block by `leader r`, and the
-  *support set* `Q := {q ∈ V | (U.block q).round = r+1 ∧ i ∈ (U.block q).refs}`
-  satisfies `2 * F.f + 1 ≤ (creatorsOf U.block Q).card`. That is T3's hypothesis
-  instantiated at the leader block and evaluated inside `V`.
-
-  The predicate must be **view-relative**: committing is a decision an
-  individual validator makes from its own local DAG. Were it universe-level,
-  T5 would have nothing to compare.
-
-- **T5 — Commit agreement.** If `DirectlyCommittedIn U V₁ r i₁` and
-  `DirectlyCommittedIn U V₂ r i₂` for two complete views of the *same*
-  universe `U`, then `i₁ = i₂`. This is *no-conflicting-commit*, not "both decide" — a
-  validator whose view lacks the quorum simply has not decided yet, which is
-  not disagreement.
-
-  **One uniform proof — no case split on whether the leader is honest.**
-  Let `Q₁, Q₂` be the two support sets. Their creator sets are quorums, so
-  T0' gives a correct `v` in both. Unfolding, `v` authored some `q₁ ∈ Q₁`
-  and some `q₂ ∈ Q₂`, both at round `r+1` and both in `U.ids`; since `v` is
-  correct, T1 forces `q₁ = q₂ =: q`. Then `(U.block q).refs` contains both
-  `i₁` and `i₂`, which are round-`r` ids with the **same creator**
-  (`leader r`, by definition of `DirectlyCommittedIn`). Distinctness (§3.2)
-  gives `i₁ = i₂`.
-
-  Note where the leader's honesty would have entered and does not: the
-  argument never asks whether `leader r` equivocates, only that `i₁` and
-  `i₂` share a creator — which the commit rule guarantees outright. A
-  correct leader *also* yields `i₁ = i₂` directly from non-equivocation, but
-  that is a shortcut, not a required branch.
-
-  So commit agreement holds even against an equivocating leader, and it is
-  **distinctness** rather than non-equivocation that buys it — the one place
-  in the development where that invariant is load-bearing.
-
-- **T6a — Causal history is view-closed.** For a complete view `V` and
-  `i ∈ V`, `Reaches U i j` implies `j ∈ V`, and reachability computed inside
-  `V` coincides with reachability in `U`.
-
-  Not needed for T3 or T5, which stay universe-level. It becomes
-  **required** in Phase 3: the indirect rule asks whether a certificate lies
-  in an anchor's causal history, and each validator evaluates that against
-  its own view. Two validators with the same anchor agree only because views
-  are downward-closed. Cheap — an induction along `Reaches` — but it must be
-  proved before M4.
-
-### Phase 3 — uncertified DAGs (Mysticeti)
+### Phase 2 — uncertified DAGs (Mysticeti)
 
 Mysticeti drops the per-block certification round for latency, so a block
 carries no independent authority. That authority has to be rebuilt inside
@@ -600,6 +540,17 @@ round `≤ r+2` could therefore never see a certificate for `L`, and would
 skip it unconditionally — even where another validator directly committed
 it. The `+3` spacing is exactly what puts every anchor at round `≥ r+3`,
 which is what M2 needs. Any schedule change that narrows it breaks M4.
+
+- **T6a — Causal history is view-closed.** For a complete view `V` and
+  `i ∈ V`, `Reaches U i j` implies `j ∈ V`, and reachability computed inside
+  `V` coincides with reachability in `U`.
+
+  Not needed by M1–M3 or M5, which are universe-level. **Required for M4
+  and M6**: the indirect rule asks whether a certificate lies in an anchor's
+  causal history, and each validator evaluates that against its own view.
+  Two validators with the same anchor agree only because views are
+  downward-closed. Cheap — an induction along `Reaches` — but it gates
+  Stage B.
 
 - **M1 — Commit and skip are exclusive.** No slot admits both a direct
   commit and a direct skip. Immediate from M3.
@@ -664,7 +615,7 @@ which is what M2 needs. Any schedule change that narrows it breaks M4.
   round number. Expect this to dominate the Phase 3 effort; M1–M3 and M5 are
   independent of it and can be built first.
 
-### Phase 4 (stretch)
+### Phase 3 (stretch)
 
 - **T6 — Total order safety.** The sequence of committed leaders, and blocks
   ordered via their causal history, is agreed upon by all correct
@@ -679,9 +630,12 @@ which is what M2 needs. Any schedule change that narrows it breaks M4.
 ## 5. Open questions
 
 1. Weak edges (§3.1) — include now or defer?
-2. Leader selection for T4 — round-robin, stake-weighted, or left abstract
-   as an arbitrary function?
-3. Is Phase 3 in scope, or is T5 the practical finish line?
+2. Leader selection — round-robin, stake-weighted, or left abstract as an
+   arbitrary function? Note M1–M3 and M5 need no leader function at all
+   (M5 is stated as "same round, same creator"), so this only bites at
+   M4/M6, together with the slot schedule and its `≥ 3` spacing.
+3. Is Phase 3 (total order, liveness) in scope, or is M6 the practical
+   finish line?
 4. Should ids be assumed collision-free (`U.block` injective on `U.ids`),
    modeling a content hash? Currently *not* assumed, so the theorems stay
    maximally general. Revisit only if a proof demands it.
@@ -699,9 +653,9 @@ which is what M2 needs. Any schedule change that narrows it breaks M4.
 - `LeanDag/Persistence.lean` — T3
 - `LeanDag/CommonCore.lean` — `supporters`, `correctSupporters`,
   `correctBlocksAt`, T3a and T3c (Phase 1b)
-- `LeanDag/Commit.lean` — §3.5 (views), T6a, T4–T5 (Phase 2)
-- `LeanDag/Mysticeti.lean` — votes, certificates, the direct and indirect
-  rules, M1–M6 (Phase 3)
+- `LeanDag/Mysticeti.lean` — §3.5 (views), T6a, votes, certificates, the
+  direct and indirect rules, M1–M6 (Phase 2)
+- `LeanDag/Commit.lean` — T4–T5 (Appendix A, unscheduled)
 - `LeanDagTest/` — concrete models confirming the definitions are
   satisfiable. Built by default, so a change that empties `ValidWrt` or
   `BlockUniverse` fails the build rather than silently making every theorem
@@ -744,7 +698,8 @@ condition, the creator-set quorum, and non-equivocation — four conditions.
 Not distinctness, not views, not view-closure. This holds for Phase 1b too:
 T3a takes its 2f+1 distinct validators straight from the creator-set quorum,
 and coverage runs on correctness plus non-equivocation. So distinctness is
-load-bearing at **T5 alone**, exactly as §3.2 claims — and that is checkable
+load-bearing only at commit agreement (M5, and T5 in Appendix A), exactly
+as §3.2 claims — and that is checkable
 rather than aspirational: `distinct_creators` is consumed only by
 `card_creators`, which is consumed only by `card_refs`, which nothing calls.
 Grep for those three when in doubt. If a Phase 1 or 1b proof reaches for
@@ -765,10 +720,66 @@ Spec label to Lean identifier, for the parts that are built.
 | T3 | `reaches_of_quorum_support` | `Persistence.lean` |
 | T3a | `exists_correct_common_support` | `CommonCore.lean` |
 | T3c | `exists_common_correct_ancestor` | `CommonCore.lean` |
-| T4–T5, T6a | *(not yet built)* | `Commit.lean` |
-| M1–M6 | *(not yet built)* | `Mysticeti.lean` |
+| T6a, M1–M6 | *(not yet built)* | `Mysticeti.lean` |
+| T4–T5 | *(unscheduled, Appendix A)* | `Commit.lean` |
 
 `CommonCore.lean` is the one file importing `Mathlib` wholesale rather than
 targeted modules: the counting argument draws on big operators, ordered
 sums, pigeonhole and `nlinarith`, and chasing individual module paths cost
 more than the build time it saved. Everything else keeps narrow imports.
+
+## Appendix A. Certified DAGs (deferred)
+
+**Not on the roadmap.** Retained because it is of independent interest and
+the contrast with Phase 2 is instructive, but nothing below is scheduled.
+
+In DAG-Rider, Bullshark and Narwhal-style protocols a block enters the DAG
+only once 2f+1 validators have signed it: **the block is itself a
+certificate**. There, "referenced by 2f+1 validators at the next round" is
+the entire commit rule, and T5 is its safety proof — the single-level
+counterpart of Mysticeti's two-layer rule.
+
+Reading the two together is the point: Phase 2 is what one must do after
+giving up the certified-block discipline. T5 and M5 have the same proof
+shape, M5 simply running it once per certification layer.
+
+These need views (§3.5) and T6a, which Phase 2 introduces anyway.
+
+- **T4 — Round leaders and the commit rule.** A deterministic
+  `leader : ℕ → Validator` (mechanism TBD — round-robin is simplest to
+  formalize first). Define **directly committed in a view**:
+  `DirectlyCommittedIn U V r i` — note it takes the universe *and* the view,
+  since the predicate dereferences ids through `U.block` while quantifying
+  over `V` — holds when `i ∈ V` is a round-`r` block by `leader r`, and the
+  *support set* `Q := {q ∈ V | (U.block q).round = r+1 ∧ i ∈ (U.block q).refs}`
+  satisfies `2 * F.f + 1 ≤ (creatorsOf U.block Q).card`. That is T3's hypothesis
+  instantiated at the leader block and evaluated inside `V`.
+
+  The predicate must be **view-relative**: committing is a decision an
+  individual validator makes from its own local DAG. Were it universe-level,
+  T5 would have nothing to compare.
+
+- **T5 — Commit agreement.** If `DirectlyCommittedIn U V₁ r i₁` and
+  `DirectlyCommittedIn U V₂ r i₂` for two complete views of the *same*
+  universe `U`, then `i₁ = i₂`. This is *no-conflicting-commit*, not "both decide" — a
+  validator whose view lacks the quorum simply has not decided yet, which is
+  not disagreement.
+
+  **One uniform proof — no case split on whether the leader is honest.**
+  Let `Q₁, Q₂` be the two support sets. Their creator sets are quorums, so
+  T0' gives a correct `v` in both. Unfolding, `v` authored some `q₁ ∈ Q₁`
+  and some `q₂ ∈ Q₂`, both at round `r+1` and both in `U.ids`; since `v` is
+  correct, T1 forces `q₁ = q₂ =: q`. Then `(U.block q).refs` contains both
+  `i₁` and `i₂`, which are round-`r` ids with the **same creator**
+  (`leader r`, by definition of `DirectlyCommittedIn`). Distinctness (§3.2)
+  gives `i₁ = i₂`.
+
+  Note where the leader's honesty would have entered and does not: the
+  argument never asks whether `leader r` equivocates, only that `i₁` and
+  `i₂` share a creator — which the commit rule guarantees outright. A
+  correct leader *also* yields `i₁ = i₂` directly from non-equivocation, but
+  that is a shortcut, not a required branch.
+
+  So commit agreement holds even against an equivocating leader, and it is
+  **distinctness** rather than non-equivocation that buys it — the one place
+  in the development where that invariant is load-bearing.
