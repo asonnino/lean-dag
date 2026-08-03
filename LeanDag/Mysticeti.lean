@@ -440,4 +440,65 @@ inductive Decided (U : BlockUniverse Validator BlockId Payload)
       (∀ L, IsLeaderBlock U k L → ¬ CertifiedIn U A L (S.slotRound k)) →
       Decided U V k none
 
+/-! ## Stage C2 — the direct rules, lifted to views
+
+Everything here is a corollary of Stage A composed with monotonicity. No
+counting is redone: a view can only under-report, so its verdicts are
+genuine universe-level ones and the Stage A theorems apply directly. -/
+
+omit S in
+/-- Cross-view M1: one validator cannot directly commit what another
+directly skips. -/
+theorem not_directSkipIn_of_directCommitIn {V₁ V₂ : View Validator BlockId Payload U}
+    {L : BlockId} {r : ℕ} (h₁ : DirectCommitIn U V₁ L r) (h₂ : DirectSkipIn U V₂ L r) :
+    False :=
+  not_directCommit_of_directSkip (directSkip_of_directSkipIn h₂)
+    (directCommit_of_directCommitIn h₁)
+
+/-- Cross-view M5: two validators cannot directly commit *different* blocks
+for one slot. Both candidates are authored by `leader k`, which is the
+same-creator hypothesis M5 needs. -/
+theorem eq_of_directCommitIn {V₁ V₂ : View Validator BlockId Payload U}
+    {k : ℕ} {L₁ L₂ : BlockId}
+    (hL₁ : IsLeaderBlock U k L₁) (hL₂ : IsLeaderBlock U k L₂)
+    (h₁ : DirectCommitIn U V₁ L₁ (S.slotRound k))
+    (h₂ : DirectCommitIn U V₂ L₂ (S.slotRound k)) :
+    L₁ = L₂ :=
+  eq_of_directCommit_of_creator_eq (directCommit_of_directCommitIn h₁)
+    (directCommit_of_directCommitIn h₂) (by rw [hL₁.2.2, hL₂.2.2])
+
+/-- **The engine of M6.** A direct commit made in *any* view is visible from
+*every* later slot's leader block. A validator that missed the direct commit
+therefore recovers it indirectly, which is what stops anchors from
+diverging.
+
+The slot spacing is what discharges the round hypothesis: `k < j` gives
+`slotRound k + 3 ≤ slotRound j`, exactly M4's requirement. -/
+theorem certifiedIn_of_directCommitIn {V : View Validator BlockId Payload U}
+    {k j : ℕ} {L A : BlockId}
+    (h : DirectCommitIn U V L (S.slotRound k))
+    (hA : A ∈ U.ids) (hAr : (U.block A).round = S.slotRound j) (hkj : k < j) :
+    CertifiedIn U A L (S.slotRound k) := by
+  refine certifiedIn_of_directCommit (directCommit_of_directCommitIn h) hA ?_
+  have := slotRound_add_three_le (Validator := Validator) hkj
+  omega
+
+omit S in
+/-- A direct skip made in any view is invisible from every anchor — no round
+hypothesis needed, since M3 rules the certificate out universe-wide. -/
+theorem not_certifiedIn_of_directSkipIn {V : View Validator BlockId Payload U}
+    {L : BlockId} {r : ℕ} (h : DirectSkipIn U V L r) {A : BlockId} :
+    ¬ CertifiedIn U A L r :=
+  not_certifiedIn_of_directSkip (directSkip_of_directSkipIn h)
+
+/-- **Direct decisions agree across views.** If one validator directly
+commits a slot, no other validator can directly skip it — the `∀`-form here
+being exactly the premise of `Decided.directSkip`. -/
+theorem not_directSkip_of_directCommitIn {V₁ V₂ : View Validator BlockId Payload U}
+    {k : ℕ} {L : BlockId} (hL : IsLeaderBlock U k L)
+    (h₁ : DirectCommitIn U V₁ L (S.slotRound k))
+    (h₂ : ∀ L', IsLeaderBlock U k L' → DirectSkipIn U V₂ L' (S.slotRound k)) :
+    False :=
+  not_directSkipIn_of_directCommitIn h₁ (h₂ L hL)
+
 end LeanDag

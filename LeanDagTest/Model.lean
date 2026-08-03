@@ -510,3 +510,31 @@ example : Decided U7 V7 0 (some 0) :=
 -- The anchor really is two rounds of indirection away from the certificate's
 -- own evidence: block 12 does not reference slot 0's candidate directly.
 example : (0 : Fin 24) ∉ (U7.block 12).refs := by decide
+
+/-! ## C2: the direct rules lifted to views
+
+`U5` with the standard schedule: slot 0 sits at round 0, slot 1 at round 3.
+`V5'` is a *partial* view -- it holds three of the four certificates for
+genesis block 0, which is still a quorum, so it commits slot 0 locally.
+-/
+
+example : IsLeaderBlock U5 0 0 := by decide
+example : IsLeaderBlock U5 1 12 := by decide
+
+-- A strictly partial view still reaches the quorum.
+example : certificates U5 0 0 = {8, 9, 10, 11} := by decide
+example : (11 : Fin 16) ∉ V5'.ids := by decide
+example : DirectCommitIn U5 V5' 0 0 := by decide
+
+/-- **The engine of M6, on real data.** A commit made in the partial view
+`V5'` is visible from slot 1's leader block -- so a validator that never saw
+that commit still recovers it indirectly. The slot spacing discharges the
+round hypothesis. -/
+example : CertifiedIn U5 12 0 0 :=
+  certifiedIn_of_directCommitIn (V := V5') (k := 0) (j := 1) (L := 0) (A := 12)
+    (by decide) (by decide) (by decide) (by omega)
+
+/-- Cross-view M1: since *some* view commits genesis block 0, **no** view can
+directly skip it -- whatever that other validator happens to hold. -/
+example (V : View (Fin 4) (Fin 16) Unit U5) : ¬ DirectSkipIn U5 V 0 0 :=
+  fun h => not_directSkipIn_of_directCommitIn (V₁ := V5') (by decide) h
