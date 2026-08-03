@@ -673,13 +673,75 @@ stages need very different machinery:
   definitions quantify over round-`slotRound k` blocks by `leader k` rather
   than selecting one, and M5 supplies the uniqueness where it is needed.
 
+  ### C3 in detail
+
+  **A missing lemma, found while designing this: M5 is too weak.** M5 says
+  two *directly committed* blocks for a slot coincide, i.e. two blocks each
+  backed by 2f+1 certificates. But the indirect rule commits on the strength
+  of **one** certificate lying in the anchor's history. Comparing an indirect
+  commit against anything therefore needs:
+
+  > **M5′ (certificate uniqueness).** If a certificate exists for `L₁` and a
+  > certificate exists for `L₂`, and `L₁`, `L₂` are round-`r` blocks with the
+  > same author, then `L₁ = L₂`.
+
+  It holds, and by M5's *inner* argument alone. Each certificate names 2f+1
+  distinct voters, the two voter sets intersect in a correct `w` (T0), `w`'s
+  single round-`(r+1)` block votes for both (T1), and distinctness forbids it
+  referencing two round-`r` blocks by one author. Note this never needs the
+  two certificates to be the same block, so the outer certificate-quorum
+  intersection M5 performs is not required. **M5 becomes a corollary of M5′**
+  — a direct commit implies a certificate exists.
+
+  With M5′ in hand, define `HasCertificate L r` as `(certificates U L r)`
+  being nonempty. Both a direct commit and a `CertifiedIn` witness imply it,
+  so *every* commit-versus-commit case collapses to one appeal to M5′.
+
+  **The induction is structural on the first derivation**, generalised over
+  the second view and verdict:
+
+  > `Decided U V₁ k v₁ → ∀ V₂ v₂, Decided U V₂ k v₂ → v₁ = v₂`
+
+  Not induction on rounds, and not on slot index — on the derivation tree.
+  The IH then applies to exactly the two kinds of sub-derivation the indirect
+  constructors carry: the anchor `Decided U V₁ j (some A)`, and each
+  intermediate `Decided U V₁ i none`.
+
+  Case analysis on the second derivation. Of the sixteen pairings, all but
+  one are immediate:
+
+  | pairing | closes by |
+  |---|---|
+  | commit / commit, any mix of direct and indirect | M5′ |
+  | direct commit / direct skip | cross-view M1 (C2) |
+  | direct commit / indirect skip | the engine — `certifiedIn_of_directCommitIn` puts the certificate in the other anchor's reach, contradicting its skip |
+  | direct skip / indirect commit | M3 — a skip leaves no certificate anywhere, so nothing is in reach |
+  | skip / skip | both `none` |
+
+  **The one real case is indirect commit against indirect skip**, with
+  anchors at slots `j₁` and `j₂`. Compare them three ways:
+
+  - `j₁ = j₂` — the IH at that slot forces `A₁ = A₂`, and then one derivation
+    claims a certificate in reach of that anchor while the other denies it.
+  - `j₁ < j₂` — the *skip* derivation's intermediate premise covers `j₁`, so
+    it decides `j₁` as `none`; the IH against the commit derivation's anchor
+    sub-derivation gives `some A₁ = none`.
+  - `j₁ > j₂` — symmetric, using the commit derivation's intermediate premise
+    at `j₂`.
+
+  So "anchor agreement" is never proved as a standalone statement. It falls
+  out of the induction: the intermediate-skip premises are exactly what let
+  the IH reach across to the other validator's anchor. That is the payoff of
+  stating "nearest" positively in C1 — the negative reading would carry no
+  sub-derivation to induct on.
+
   Staging, in dependency order:
 
   | | | risk |
   |---|---|---|
   | C1 | slot schedule, leader blocks, `DirectCommitIn`, the `Decided` relation | low — definitions |
   | C2 | view-relative M4 and M5, by monotonicity | low |
-  | C3 | **anchor agreement** | **high** — the crux |
+  | C3 | M5′, then `decided_unique` by structural induction | **high** — the crux |
   | C4 | M6 from C2 and C3 | low |
 
   C3 is the only part that is not static combinatorics. Its induction runs
