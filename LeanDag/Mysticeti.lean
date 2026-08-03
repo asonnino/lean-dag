@@ -520,4 +520,129 @@ theorem not_directSkip_of_directCommitIn {V₁ V₂ : View Validator BlockId Pay
     False :=
   not_directSkipIn_of_directCommitIn h₁ (h₂ L hL)
 
+/-! ## Stage C3 — agreement -/
+
+/-- Whatever route it took, a committed verdict names a genuine candidate for
+that slot. Needed because the agreement proof must feed another validator's
+anchor into the engine lemma, which wants its round. -/
+theorem isLeaderBlock_of_decided {V : View Validator BlockId Payload U} {j : ℕ} {A : BlockId}
+    (h : Decided U V j (some A)) : IsLeaderBlock U j A := by
+  cases h with
+  | directCommit hL _ => exact hL
+  | indirectCommit _ _ _ hL _ => exact hL
+
+/-- Two commits for one slot agree, however each was reached. Both routes
+yield a certificate, so this is M5′ with the plumbing done. -/
+theorem eq_of_hasCertificate {k : ℕ} {L₁ L₂ : BlockId}
+    (hL₁ : IsLeaderBlock U k L₁) (hL₂ : IsLeaderBlock U k L₂)
+    (h₁ : (certificates U L₁ (S.slotRound k)).Nonempty)
+    (h₂ : (certificates U L₂ (S.slotRound k)).Nonempty) :
+    L₁ = L₂ :=
+  eq_of_certificates_nonempty h₁ h₂ (by rw [hL₁.2.2, hL₂.2.2])
+
+/-- **M6 (agreement).** No two validators reach conflicting decisions for a
+slot, whatever views they hold and whichever routes they took.
+
+As with T5 this is *no-conflicting-decision*: a validator that has not yet
+decided is not in disagreement.
+
+Structural induction on the first derivation. Of the sixteen constructor
+pairings, fifteen close outright — every commit-versus-commit case by M5′,
+and the direct-versus-indirect crossings by cross-view M1, the engine lemma,
+or M3. The one real case is *indirect commit against indirect skip*, settled
+by comparing the two anchors: if they coincide the IH forces the same anchor
+block, and otherwise the earlier anchor is covered by the *other* validator's
+intermediate-skip premise, which is exactly the sub-derivation the IH needs.
+
+That is why "nearest anchor" had to be stated positively. The negative
+reading would carry no sub-derivation here, and the induction would have
+nothing to stand on. -/
+theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ} {v₁ : Option BlockId}
+    (h₁ : Decided U V₁ k v₁) :
+    ∀ (V₂ : View Validator BlockId Payload U) (v₂ : Option BlockId),
+      Decided U V₂ k v₂ → v₁ = v₂ := by
+  induction h₁ with
+  | @directCommit k L hL h =>
+    intro V₂ v₂ h₂
+    cases h₂ with
+    | directCommit hL₂ h₂ => exact congrArg some (eq_of_directCommitIn hL hL₂ h h₂)
+    | directSkip hskip => exact absurd (not_directSkip_of_directCommitIn hL h hskip) not_false
+    | indirectCommit _ _ _ hL₂ hcert₂ =>
+      exact congrArg some (eq_of_hasCertificate hL hL₂
+        (certificates_nonempty_of_directCommit (directCommit_of_directCommitIn h))
+        (certificates_nonempty_of_certifiedIn hcert₂))
+    | @indirectSkip _ j A hkj hj _ hnone =>
+      -- The engine: this commit is visible from the other validator's anchor.
+      exact absurd (certifiedIn_of_directCommitIn h (isLeaderBlock_of_decided hj).1
+        (isLeaderBlock_of_decided hj).2.1 hkj) (hnone _ hL)
+  | @directSkip k hskip =>
+    intro V₂ v₂ h₂
+    cases h₂ with
+    | directCommit hL₂ h₂ => exact absurd (not_directSkip_of_directCommitIn hL₂ h₂ hskip) not_false
+    | directSkip _ => rfl
+    | indirectCommit _ _ _ hL₂ hcert₂ =>
+      exact absurd hcert₂ (not_certifiedIn_of_directSkipIn (hskip _ hL₂))
+    | indirectSkip _ _ _ _ => rfl
+  | @indirectCommit k j A L hkj hj hmid hL hcert ihj ihmid =>
+    intro V₂ v₂ h₂
+    cases h₂ with
+    | directCommit hL₂ h₂ =>
+      exact congrArg some (eq_of_hasCertificate hL hL₂
+        (certificates_nonempty_of_certifiedIn hcert)
+        (certificates_nonempty_of_directCommit (directCommit_of_directCommitIn h₂)))
+    | directSkip hskip₂ =>
+      exact absurd hcert (not_certifiedIn_of_directSkipIn (hskip₂ _ hL))
+    | indirectCommit _ _ _ hL₂ hcert₂ =>
+      exact congrArg some (eq_of_hasCertificate hL hL₂
+        (certificates_nonempty_of_certifiedIn hcert)
+        (certificates_nonempty_of_certifiedIn hcert₂))
+    | @indirectSkip _ j₂ A₂ hkj₂ hj₂ hmid₂ hnone₂ =>
+      -- The one real case: compare the two anchors.
+      rcases lt_trichotomy j j₂ with hlt | heq | hgt
+      · -- Our anchor is earlier, so *they* decided it `none`.
+        exact absurd (ihj V₂ none (hmid₂ j hkj hlt)) (by simp)
+      · -- Same anchor: the IH identifies the anchor blocks.
+        subst heq
+        have hA : A = A₂ := Option.some.inj (ihj V₂ (some A₂) hj₂)
+        subst hA
+        exact absurd hcert (hnone₂ _ hL)
+      · -- Their anchor is earlier, so *we* decided it `none`.
+        exact absurd (ihmid j₂ hkj₂ hgt V₂ (some A₂) hj₂) (by simp)
+  | @indirectSkip k j A hkj hj hmid hnone ihj ihmid =>
+    intro V₂ v₂ h₂
+    cases h₂ with
+    | directCommit hL₂ h₂ =>
+      exact absurd (certifiedIn_of_directCommitIn h₂ (isLeaderBlock_of_decided hj).1
+        (isLeaderBlock_of_decided hj).2.1 hkj) (hnone _ hL₂)
+    | directSkip _ => rfl
+    | @indirectCommit _ j₂ A₂ L₂ hkj₂ hj₂ hmid₂ hL₂ hcert₂ =>
+      rcases lt_trichotomy j j₂ with hlt | heq | hgt
+      · exact absurd (ihj V₂ none (hmid₂ j hkj hlt)) (by simp)
+      · subst heq
+        have hA : A = A₂ := Option.some.inj (ihj V₂ (some A₂) hj₂)
+        subst hA
+        exact absurd hcert₂ (hnone _ hL₂)
+      · exact absurd (ihmid j₂ hkj₂ hgt V₂ (some A₂) hj₂) (by simp)
+    | indirectSkip _ _ _ _ => rfl
+
+/-- **M6**, in the shape callers want: two validators' verdicts for a slot
+agree. -/
+theorem decided_agree {V₁ V₂ : View Validator BlockId Payload U} {k : ℕ}
+    {v₁ v₂ : Option BlockId} (h₁ : Decided U V₁ k v₁) (h₂ : Decided U V₂ k v₂) :
+    v₁ = v₂ :=
+  decided_unique h₁ V₂ v₂ h₂
+
+/-- No two validators commit *different* blocks for one slot. -/
+theorem eq_of_decided_commit {V₁ V₂ : View Validator BlockId Payload U} {k : ℕ}
+    {L₁ L₂ : BlockId} (h₁ : Decided U V₁ k (some L₁)) (h₂ : Decided U V₂ k (some L₂)) :
+    L₁ = L₂ :=
+  Option.some.inj (decided_agree h₁ h₂)
+
+/-- No validator commits a slot another has skipped. This is the shape that
+matters operationally: a committed block never has to be retracted. -/
+theorem not_decided_skip_of_decided_commit {V₁ V₂ : View Validator BlockId Payload U}
+    {k : ℕ} {L : BlockId} (h₁ : Decided U V₁ k (some L)) (h₂ : Decided U V₂ k none) :
+    False := by
+  simpa using decided_agree h₁ h₂
+
 end LeanDag

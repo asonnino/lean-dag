@@ -744,6 +744,10 @@ stages need very different machinery:
   | C3 | M5′, then `decided_unique` by structural induction | **high** — the crux |
   | C4 | M6 from C2 and C3 | low |
 
+  *Built.* The one surprise in C3 was that the IHs in Lean's generated
+  recursor come **after** all constructor arguments rather than beside their
+  own recursive premise; the case patterns must be ordered accordingly.
+
   C3 is the only part that is not static combinatorics. Its induction runs
   over *slots between `k` and its anchor* rather than over rounds, so the
   measure is not the round number, and the well-foundedness needs care.
@@ -865,7 +869,8 @@ Spec label to Lean identifier, for the parts that are built.
 | C1: `Slots`, `IsLeaderBlock`, `Decided` | *built* | `Mysticeti.lean` |
 | C1: `DirectCommitIn`, `directCommit_of_directCommitIn` | *built* | `Mysticeti.lean` |
 | C2: cross-view M1/M5, `certifiedIn_of_directCommitIn` | *built* | `Mysticeti.lean` |
-| M6 (C3 `decided_unique`, C4) | *(not yet built)* | `Mysticeti.lean` |
+| M6 | `decided_unique`, `decided_agree` | `Mysticeti.lean` |
+| M6 (corollaries) | `eq_of_decided_commit`, `not_decided_skip_of_decided_commit` | `Mysticeti.lean` |
 | T4–T5 | *(unscheduled, Appendix A)* | `Commit.lean` |
 
 `CommonCore.lean` is the one file importing `Mathlib` wholesale rather than

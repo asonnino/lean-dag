@@ -14,6 +14,8 @@ open LeanDag
 #print axioms LeanDag.exists_certificate_reaches_of_directCommit
 #print axioms LeanDag.eq_of_directCommit_of_creator_eq
 #print axioms LeanDag.eq_of_certificates_nonempty
+#print axioms LeanDag.decided_unique
+#print axioms LeanDag.decided_agree
 #print axioms LeanDag.View.mem_of_reaches
 #print axioms LeanDag.indirect_agrees_with_direct
 
@@ -554,3 +556,27 @@ certificate. Derived from M5', not from the model being small. -/
 example : ¬ (certificates U6 4 0).Nonempty := fun h =>
   absurd (eq_of_certificates_nonempty (L₁ := 0) (L₂ := 4) (by decide) h (by decide))
     (by decide)
+
+/-! ## M6 on the concrete model
+
+`U7` has slot 0 undecided directly and committed indirectly via slot 1. M6
+says no other validator, on any view, can reach a different verdict.
+-/
+
+/-- The indirect commit of slot 0, as constructed above. -/
+theorem decidedSlot0 : Decided U7 V7 0 (some 0) :=
+  Decided.indirectCommit (j := 1) (A := 12) (by omega)
+    (Decided.directCommit (by decide) (by decide))
+    (fun i h1 h2 => absurd h2 (by omega))
+    (by decide)
+    ⟨8, by decide, Reaches.single (by decide)⟩
+
+/-- **M6 applied.** No view can skip slot 0 -- the indirect commit above
+settles it for every validator, not just the one that made it. -/
+example (V : View (Fin 4) (Fin 24) Unit U7) : ¬ Decided U7 V 0 none :=
+  fun h => not_decided_skip_of_decided_commit decidedSlot0 h
+
+/-- And no view can commit a *different* block for slot 0. -/
+example (V : View (Fin 4) (Fin 24) Unit U7) (L : Fin 24) (h : Decided U7 V 0 (some L)) :
+    L = 0 :=
+  (eq_of_decided_commit decidedSlot0 h).symm
