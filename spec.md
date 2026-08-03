@@ -605,6 +605,16 @@ stages need very different machinery:
   `L` is directly skipped, no certificate exists at all (M3), so no anchor's
   history contains one and the indirect rule skips it too.
 
+  The two halves are **not symmetric**, which is worth noticing. The commit
+  half needs the anchor far enough along, since the certificate has to be
+  *reachable*; the skip half needs no round hypothesis at all, because M3
+  rules the certificate out universe-wide rather than merely out of reach.
+  Only the commit half is why leader spacing matters.
+
+  `certifiedIn_iff_of_view` records the companion fact that the test is
+  view-independent (T6a): confining the search to the validator's own view
+  costs nothing, since the certificate could never have lain outside it.
+
 - **M5 — One block per slot.** Two blocks directly committed for the same
   slot are equal.
 
@@ -746,7 +756,9 @@ Spec label to Lean identifier, for the parts that are built.
 | M5 | `eq_of_directCommit_of_creator_eq` | `Mysticeti.lean` |
 | T6a | `View.mem_of_reaches` | `CausalHistory.lean` |
 | T6a (usable form) | `View.exists_reaches_iff` | `CausalHistory.lean` |
-| M4, M6 | *(not yet built)* | `Mysticeti.lean` |
+| M4 | `indirect_agrees_with_direct` | `Mysticeti.lean` |
+| M4 (view form) | `certifiedIn_iff_of_view` | `Mysticeti.lean` |
+| M6 | *(not yet built)* | `Mysticeti.lean` |
 | T4–T5 | *(unscheduled, Appendix A)* | `Commit.lean` |
 
 `CommonCore.lean` is the one file importing `Mathlib` wholesale rather than

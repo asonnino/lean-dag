@@ -256,4 +256,56 @@ theorem eq_of_directCommit_of_creator_eq {L₁ L₂ : BlockId} {r : ℕ}
   -- Both candidates are references of one block, by one author: distinctness.
   exact (U.valid q₁ hq₁_ids).distinct_creators L₁ hq₁_ref L₂ hq₂_ref hcreator
 
+/-! ## The indirect rule's test
+
+An undecided slot is settled by looking into the causal history of a later,
+directly committed *anchor*: commit if a certificate for the slot lies in
+that subgraph, skip otherwise. M4 is the statement that this never
+contradicts the direct rule. -/
+
+/-- The indirect rule's test: does a certificate for `L` lie in the causal
+history of the anchor block `A`? -/
+def CertifiedIn (U : BlockUniverse Validator BlockId Payload) (A L : BlockId) (r : ℕ) : Prop :=
+  ∃ C ∈ certificates U L r, Reaches U A C
+
+/-- **M4, commit half.** A directly committed block is found by *every*
+anchor from round `r+3` on. This is M2 restated as the indirect rule's test,
+and it is why the slot schedule must space leaders at least three rounds
+apart — that spacing is exactly what puts every anchor in range. -/
+theorem certifiedIn_of_directCommit {L : BlockId} {r : ℕ} (h : DirectCommit U L r)
+    {A : BlockId} (hA : A ∈ U.ids) (hAr : r + 3 ≤ (U.block A).round) :
+    CertifiedIn U A L r :=
+  exists_certificate_reaches_of_directCommit h hA hAr
+
+/-- **M4, skip half.** A directly skipped block is found by *no* anchor
+whatsoever — no round hypothesis needed, because M3 rules out the
+certificate universe-wide rather than merely out of reach. -/
+theorem not_certifiedIn_of_directSkip {L : BlockId} {r : ℕ} (h : DirectSkip U L r)
+    {A : BlockId} : ¬ CertifiedIn U A L r := by
+  rintro ⟨C, hC, -⟩
+  rw [certificates_eq_empty_of_directSkip h] at hC
+  exact absurd hC (Finset.notMem_empty C)
+
+/-- **M4.** Where the direct rule decides, the indirect rule agrees.
+
+The asymmetry between the halves is worth noting. Commit needs the anchor to
+be far enough along (`r+3`), since the certificate must be *reachable*. Skip
+needs nothing at all, since there is no certificate anywhere to reach. -/
+theorem indirect_agrees_with_direct {L : BlockId} {r : ℕ}
+    {A : BlockId} (hA : A ∈ U.ids) (hAr : r + 3 ≤ (U.block A).round) :
+    (DirectCommit U L r → CertifiedIn U A L r) ∧
+      (DirectSkip U L r → ¬ CertifiedIn U A L r) :=
+  ⟨fun h => certifiedIn_of_directCommit h hA hAr, fun h => not_certifiedIn_of_directSkip h⟩
+
+/-- The indirect test is **view-independent**: a validator holding the anchor
+computes the same verdict from its own local DAG as from the whole universe.
+
+T6a in action — the certificate could never have lain outside the view, so
+confining the search to it costs nothing. This is what stops two validators
+with different views but the same anchor from disagreeing. -/
+theorem certifiedIn_iff_of_view {V : View Validator BlockId Payload U} {A L : BlockId} {r : ℕ}
+    (hA : A ∈ V.ids) :
+    (∃ C, C ∈ V.ids ∧ C ∈ certificates U L r ∧ Reaches U A C) ↔ CertifiedIn U A L r :=
+  View.exists_reaches_iff hA
+
 end LeanDag

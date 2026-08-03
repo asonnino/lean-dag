@@ -14,6 +14,7 @@ open LeanDag
 #print axioms LeanDag.exists_certificate_reaches_of_directCommit
 #print axioms LeanDag.eq_of_directCommit_of_creator_eq
 #print axioms LeanDag.View.mem_of_reaches
+#print axioms LeanDag.indirect_agrees_with_direct
 
 instance : Faults (Fin 4) where
   f := 1
@@ -385,3 +386,42 @@ example : (0 : Fin 16) ∈ V5.ids :=
 view holds can reach it. The view's boundary is a causal boundary. -/
 example : ¬ Reaches U5 8 3 := fun h =>
   absurd (View.mem_of_reaches (V := V5) (c := 8) (by decide) h) (by decide)
+
+/-! ## M4: the indirect test agrees with the direct rule
+
+`U5` decides two genesis blocks in opposite directions, so one anchor can be
+checked against both. Round-1 blocks all reference `{0,1,2}`, so block 0 is
+directly committed while block 3 is directly skipped. Block 12 sits at round
+3 = r+3 and serves as the anchor.
+-/
+
+example : DirectCommit U5 0 0 := by decide
+example : DirectSkip U5 3 0 := by decide
+example : (U5.block 12).round = 3 := by decide
+
+-- The anchor finds a certificate for the committed block ...
+example : CertifiedIn U5 12 0 0 :=
+  certifiedIn_of_directCommit (by decide) (by decide) (by decide)
+
+-- ... and none for the skipped one. Same anchor, opposite verdicts, both
+-- matching the direct rule.
+example : ¬ CertifiedIn U5 12 3 0 :=
+  not_certifiedIn_of_directSkip (by decide)
+
+/-! ### The same verdict from inside a view
+
+`V5'` is a strict view holding block 12 and exactly its causal history. -/
+
+def V5' : View (Fin 4) (Fin 16) Unit U5 where
+  ids := {0, 1, 2, 4, 5, 6, 8, 9, 10, 12}
+  subset_ids := by decide
+  complete := by decide
+
+example : (7 : Fin 16) ∉ V5'.ids := by decide
+example : (13 : Fin 16) ∉ V5'.ids := by decide
+
+/-- A validator holding only `V5'` still finds the certificate, and finds it
+*inside its own view* -- derived from the universe-level fact via T6a. -/
+example : ∃ C, C ∈ V5'.ids ∧ C ∈ certificates U5 0 0 ∧ Reaches U5 12 C :=
+  (certifiedIn_iff_of_view (V := V5') (by decide)).mpr
+    (certifiedIn_of_directCommit (by decide) (by decide) (by decide))
