@@ -166,3 +166,54 @@ example : ({0, 1, 2} : Finset (Fin 4)).card
 example : Faults.f (Fin 4) + 1
     ≤ (({0, 1, 2} : Finset (Fin 4)) ∩ (Correct : Finset (Fin 4))).card :=
   card_inter_correct_of_quorum (by decide)
+
+/-! ## Divergent round-2 views
+
+`U3` has every round-2 block referencing the same `{4,5,6}`, so it never
+tests whether T3c depends on round-`(r+2)` blocks agreeing. This model gives
+each round-2 block a *different* 2f+1 subset of the round-1 blocks:
+
+  id 8  (validator 0) refs {4,5,6}
+  id 9  (validator 1) refs {5,6,7}
+  id 10 (validator 2) refs {4,6,7}
+  id 11 (validator 3) refs {4,5,7}
+
+No two agree, and no single round-1 block is referenced by all of them.
+-/
+
+def lk4 : Fin 12 → Block (Fin 4) (Fin 12) Unit := fun i =>
+  if h4 : (i : ℕ) < 4 then
+    { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
+  else if h8 : (i : ℕ) < 8 then
+    { round := 1, creator := ⟨(i : ℕ) - 4, by omega⟩, refs := {0, 1, 2}, payload := () }
+  else
+    { round := 2, creator := ⟨(i : ℕ) - 8, by omega⟩,
+      refs := if (i : ℕ) = 8 then {4, 5, 6}
+              else if (i : ℕ) = 9 then {5, 6, 7}
+              else if (i : ℕ) = 10 then {4, 6, 7} else {4, 5, 7},
+      payload := () }
+
+def U4 : BlockUniverse (Fin 4) (Fin 12) Unit where
+  ids := Finset.univ
+  block := lk4
+  complete := by decide
+  valid := by decide
+  no_equivocation := by decide
+
+-- The round-2 blocks genuinely disagree, and not just pairwise: the four
+-- reference sets have EMPTY common intersection, so there is no round-1
+-- block that all of them see.
+example : (U4.block 8).refs ∩ (U4.block 9).refs
+    ∩ (U4.block 10).refs ∩ (U4.block 11).refs = ∅ := by decide
+
+-- Full participation at round 1, so this is the tight case: threshold
+-- p - 2f = 4 - 2 = 2, and the count delivers 2f+1-b = 2.
+example : (authorsAt U4 1).card = 4 := by decide
+
+/-- **T3c with divergent views.** Despite no two round-2 blocks referencing
+the same round-1 set, a single correct validator's genesis block lies in
+*all* of their causal histories. -/
+example : ∃ bw ∈ U4.ids, (U4.block bw).round = 0 ∧
+    (U4.block bw).creator ∈ (Correct : Finset (Fin 4)) ∧
+    ∀ c ∈ U4.ids, (U4.block c).round = 2 → Reaches U4 c bw :=
+  exists_common_correct_ancestor (c₀ := 8) (by decide) (by decide)
