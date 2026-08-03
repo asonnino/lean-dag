@@ -163,4 +163,42 @@ theorem not_directCommit_of_directSkip {L : BlockId} {r : ℕ}
   rw [DirectCommit, certificates_eq_empty_of_directSkip h]
   simp [creatorsOf]
 
+/-- **M2.** Once a block is directly committed, its certificate becomes
+unavoidable: every block from round `r+3` on has one in its causal history.
+
+The bound is `r+3` and it is **tight**. Certificates sit at round `r+2`, and
+a round-`(r+2)` block's own references sit at `r+1`, so a round-`(r+2)` block
+that is not itself a certificate reaches none. One round above the
+certificates is needed before the intersection argument bites — the same
+phenomenon as T3's `r+2`.
+
+This is what makes the indirect rule agree with the direct one, and it is
+why the slot schedule must space leaders at least 3 rounds apart: that is
+exactly what puts every anchor at round `≥ r+3`. -/
+theorem exists_certificate_reaches_of_directCommit {L : BlockId} {r : ℕ}
+    (h : DirectCommit U L r)
+    {c : BlockId} (hc : c ∈ U.ids) (hcr : r + 3 ≤ (U.block c).round) :
+    ∃ C ∈ certificates U L r, Reaches U c C := by
+  -- Base case at `r+3`: the certificates' correct authors cannot be dodged.
+  have hbase : ∀ c' ∈ U.ids, (U.block c').round = r + 3 →
+      ∃ C, C ∈ certificates U L r ∧ Reaches U c' C := by
+    intro c' hc' hc'r
+    set T := creatorsOf U.block (certificates U L r) ∩ (Correct : Finset Validator) with hT_def
+    have hT : ∀ v ∈ T, ∃ q ∈ U.ids,
+        (U.block q).round = r + 2 ∧ q ∈ certificates U L r ∧ (U.block q).creator = v := by
+      intro v hv
+      rw [hT_def, Finset.mem_inter, mem_creatorsOf] at hv
+      obtain ⟨⟨q, hq_cert, hq_creator⟩, _⟩ := hv
+      have hq := hq_cert
+      rw [certificates, Finset.mem_filter, mem_blocksAt] at hq
+      exact ⟨q, hq.1.1, hq.1.2, hq_cert, hq_creator⟩
+    have hTc : ∀ v ∈ T, v ∈ (Correct : Finset Validator) :=
+      fun _ hv => Finset.mem_of_mem_inter_right hv
+    have hcard : F.f + 1 ≤ T.card := card_inter_correct_of_quorum h
+    obtain ⟨C, hC_mem, hC_cert⟩ :=
+      exists_mem_refs_of_correct_support_of_card
+        (P := fun q => q ∈ certificates U L r) hT hTc hcard hc' (by omega)
+    exact ⟨C, hC_cert, Reaches.single hC_mem⟩
+  exact reaches_pred_of_round_le hbase hc hcr
+
 end LeanDag

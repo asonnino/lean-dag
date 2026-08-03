@@ -74,32 +74,21 @@ theorem reaches_of_quorum_support
     (hQquorum : 2 * F.f + 1 ≤ (creatorsOf U.block Q).card)
     {c : BlockId} (hc : c ∈ U.ids) (hcr : r + 2 ≤ (U.block c).round) :
     Reaches U c b := by
-  -- Strong induction on the round of `c`.
-  suffices H : ∀ n, ∀ c ∈ U.ids, (U.block c).round = n → r + 2 ≤ n → Reaches U c b by
-    exact H _ c hc rfl hcr
-  clear hcr hc c
-  intro n
-  induction n using Nat.strong_induction_on with
-  | _ n ih =>
-    intro c hc hcn hrn
-    rcases eq_or_lt_of_le hrn with hbase | hstep
-    · -- Base case: `c` sits at round `r+2`. The quorum contains at least
-      -- `f+1` *correct* creators, and those are exactly the supporters the
-      -- uniform coverage lemma consumes.
-      refine reaches_of_correct_support_of_card (b := b) (r := r)
-        (S := creatorsOf U.block Q ∩ (Correct : Finset Validator)) ?_ ?_ ?_ hc (by omega)
-      · intro v hv
-        rw [Finset.mem_inter, mem_creatorsOf] at hv
-        obtain ⟨⟨q, hq_mem, hq_creator⟩, _⟩ := hv
-        exact ⟨q, hQ hq_mem, hQround q hq_mem, hQref q hq_mem, hq_creator⟩
-      · exact fun v hv => Finset.mem_of_mem_inter_right hv
-      · exact card_inter_correct_of_quorum hQquorum
-    · -- Inductive step: no quorum reasoning needed. Any reference of `c`
-      -- lands at a strictly smaller round that is still at least `r+2`.
-      obtain ⟨i, hi_mem⟩ := U.refs_nonempty hc (by omega)
-      have hi_ids : i ∈ U.ids := U.complete c hc i hi_mem
-      have hi_round := U.round_of_mem_refs hc hi_mem
-      exact Reaches.of_mem_refs hi_mem
-        (ih (U.block i).round (by omega) i hi_ids rfl (by omega))
+  -- Base case at `r+2`; everything above is `reaches_pred_of_round_le`.
+  have hbase : ∀ c' ∈ U.ids, (U.block c').round = r + 2 → ∃ x, x = b ∧ Reaches U c' x := by
+    intro c' hc' hc'r
+    refine ⟨b, rfl, ?_⟩
+    -- The quorum contains at least `f+1` *correct* creators, and those are
+    -- exactly the supporters the uniform coverage lemma consumes.
+    refine reaches_of_correct_support_of_card (b := b) (r := r)
+      (S := creatorsOf U.block Q ∩ (Correct : Finset Validator)) ?_ ?_ ?_ hc' hc'r
+    · intro v hv
+      rw [Finset.mem_inter, mem_creatorsOf] at hv
+      obtain ⟨⟨q, hq_mem, hq_creator⟩, _⟩ := hv
+      exact ⟨q, hQ hq_mem, hQround q hq_mem, hQref q hq_mem, hq_creator⟩
+    · exact fun v hv => Finset.mem_of_mem_inter_right hv
+    · exact card_inter_correct_of_quorum hQquorum
+  obtain ⟨x, hx, hreach⟩ := reaches_pred_of_round_le hbase hc hcr
+  exact hx ▸ hreach
 
 end LeanDag

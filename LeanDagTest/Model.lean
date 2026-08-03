@@ -11,6 +11,7 @@ open LeanDag
 #print axioms LeanDag.exists_common_correct_ancestor
 #print axioms LeanDag.certificates_eq_empty_of_directSkip
 #print axioms LeanDag.not_directCommit_of_directSkip
+#print axioms LeanDag.exists_certificate_reaches_of_directCommit
 
 instance : Faults (Fin 4) where
   f := 1
@@ -258,3 +259,45 @@ example : ¬ DirectCommit U3 3 0 :=
 -- And the two are genuinely different blocks of the same round: block 0 is
 -- committed and NOT skipped, block 3 is skipped and NOT committed.
 example : ¬ DirectSkip U3 0 0 := by decide
+
+/-! ## M2 needs a fourth round
+
+`U3` stops at round 2, so M2 -- which speaks about blocks at round `r+3` --
+would be vacuous on it. `U5` adds a round:
+
+  ids 0-3    round 0, genesis
+  ids 4-7    round 1, refs {0,1,2}
+  ids 8-11   round 2, refs {4,5,6}     -- these certify genesis block 0
+  ids 12-15  round 3, refs {8,9,10}
+-/
+
+def lk5 : Fin 16 → Block (Fin 4) (Fin 16) Unit := fun i =>
+  if h4 : (i : ℕ) < 4 then
+    { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
+  else if h8 : (i : ℕ) < 8 then
+    { round := 1, creator := ⟨(i : ℕ) - 4, by omega⟩, refs := {0, 1, 2}, payload := () }
+  else if h12 : (i : ℕ) < 12 then
+    { round := 2, creator := ⟨(i : ℕ) - 8, by omega⟩, refs := {4, 5, 6}, payload := () }
+  else
+    { round := 3, creator := ⟨(i : ℕ) - 12, by omega⟩, refs := {8, 9, 10}, payload := () }
+
+def U5 : BlockUniverse (Fin 4) (Fin 16) Unit where
+  ids := Finset.univ
+  block := lk5
+  complete := by decide
+  valid := by decide
+  no_equivocation := by decide
+
+-- Genesis block 0 is directly committed, and its certificates really exist.
+example : DirectCommit U5 0 0 := by decide
+example : Certifies U5 8 0 := by decide
+
+/-- **M2 applied.** Block 12 sits at round 3 = r+3 and has a certificate for
+genesis block 0 in its causal history -- though it references neither block 0
+nor any round-1 voter directly. -/
+example : ∃ C ∈ certificates U5 0 0, Reaches U5 12 C :=
+  exists_certificate_reaches_of_directCommit (by decide) (by decide) (by decide)
+
+-- The indirection is real: block 12's own references are {8,9,10}.
+example : (0 : Fin 16) ∉ (U5.block 12).refs := by decide
+example : (4 : Fin 16) ∉ (U5.block 12).refs := by decide

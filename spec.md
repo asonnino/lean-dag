@@ -334,14 +334,20 @@ argument — it would need fresh `BlockId`s, hence an `Infinite BlockId`
 hypothesis and a universe-extension construction, for a theorem statement
 that comes out identical.)
 
-**Generalisation pending (the hitting lemma).** Phase 2's M2 needs "every
-later block reaches *some certificate*" — a set, not a fixed block. The right
-primitive is: if a set `S` of round-`n` blocks has `f+1` correct creators,
-every round-`(n+1)` block references a member of `S`. Both coverage lemmas
-below are then the corollary where every member of `S` references the same
-`b`. Worth doing when Phase 2 starts; it serves T3 and M2 alike, and
-makes precise that both commit rules are instances of *a quorum of correct
-support cannot be dodged* — differing only in how many layers deep it runs.
+**The hitting lemma is the actual primitive.** Coverage reaches a *fixed*
+block; M2 must reach *some certificate*, a target set. So the primitive is
+`exists_mem_refs_of_correct_support`: if `f+1`-or-so correct validators
+published round-`n` blocks satisfying a predicate `P`, no round-`(n+1)` block
+can avoid referencing one. It is stated with `P` a bare predicate rather than
+a `Finset BlockId`, since only the *validator* set is ever counted — which
+keeps `Support.lean` free of `DecidableEq BlockId`.
+
+Both coverage lemmas are then the instance where every `P`-block references
+the same `b`, and `reaches_pred_of_round_le` (**propagation**) carries the
+result upward from one round to all higher ones. T3 and M2 are each a base
+case plus propagation, and neither carries its own induction. This makes
+precise that both commit rules are instances of *a quorum of correct support
+cannot be dodged* — differing only in how many layers deep it runs.
 
 Which form to use is determined by how supporters are obtained:
 
@@ -730,9 +736,13 @@ Spec label to Lean identifier, for the parts that are built.
 | T3 | `reaches_of_quorum_support` | `Persistence.lean` |
 | T3a | `exists_correct_common_support` | `CommonCore.lean` |
 | T3c | `exists_common_correct_ancestor` | `CommonCore.lean` |
+| Hitting, `p − 2f` | `exists_mem_refs_of_correct_support` | `Support.lean` |
+| Hitting, `f+1` | `exists_mem_refs_of_correct_support_of_card` | `Support.lean` |
+| Propagation | `reaches_pred_of_round_le` | `Support.lean` |
 | M1 | `not_directCommit_of_directSkip` | `Mysticeti.lean` |
+| M2 | `exists_certificate_reaches_of_directCommit` | `Mysticeti.lean` |
 | M3 | `certificates_eq_empty_of_directSkip` | `Mysticeti.lean` |
-| T6a, M2, M4–M6 | *(not yet built)* | `Mysticeti.lean` |
+| T6a, M4–M6 | *(not yet built)* | `Mysticeti.lean` |
 | T4–T5 | *(unscheduled, Appendix A)* | `Commit.lean` |
 
 `CommonCore.lean` is the one file importing `Mathlib` wholesale rather than
