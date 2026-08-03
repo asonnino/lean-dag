@@ -791,10 +791,20 @@ stages need very different machinery:
   protocol configuration rather than mathematics, but the theorem cannot be
   stated without choosing one.
 
-  Worth stating alongside it: **no retraction** — once a block is output it
-  never moves or disappears. That follows from the flush sets being disjoint
-  and only growing, and it is closer to what a ledger's users actually rely
-  on than abstract sequence equality.
+  **No retraction is already done**, and it needed no ordering assumption —
+  which is the point. Retraction is about *whether* and *when* a block is
+  output, not about its position within a flush, so none of it touches an
+  order on ids:
+
+  - `ledgerSet_mono` — nothing already output is ever dropped;
+  - `ledgerSet_agree` — two validators output the same blocks;
+  - `outputAt_unique` and `outputAt_agree` — each block enters at exactly one
+    slot, and validators concur on which.
+
+  Together: a block, once written, stays written, in the same place. That is
+  closer to what a ledger's users rely on than abstract sequence equality,
+  and it means the outstanding ordering assumption buys only the arrangement
+  *inside* each flush.
 
 - **T7 — Liveness.** Under partial synchrony, leaders eventually get
   committed. Needs timing/network axioms, not just DAG structure — an
@@ -914,6 +924,8 @@ Spec label to Lean identifier, for the parts that are built.
 | M6 | `decided_unique`, `decided_agree` | `Mysticeti.lean` |
 | M6 (corollaries) | `eq_of_decided_commit`, `not_decided_skip_of_decided_commit` | `Mysticeti.lean` |
 | M6 (sequence) | `commitSeq`, `commitSeq_agree` | `Mysticeti.lean` |
+| No retraction | `ledgerSet_mono`, `ledgerSet_agree` | `Mysticeti.lean` |
+| No retraction | `OutputAt`, `outputAt_unique`, `outputAt_agree` | `Mysticeti.lean` |
 | T4–T5 | *(unscheduled, Appendix A)* | `Commit.lean` |
 
 `CommonCore.lean` is the one file importing `Mathlib` wholesale rather than

@@ -597,8 +597,8 @@ def g7 : ℕ → Option (Fin 24) :=
 theorem g7_decided : ∀ k, k < 2 → Decided U7 V7 k (g7 k) := by
   intro k hk
   interval_cases k
-  · show Decided U7 V7 0 (some 0); exact decidedSlot0
-  · show Decided U7 V7 1 (some 12); exact decidedSlot1
+  · change Decided U7 V7 0 (some 0); exact decidedSlot0
+  · change Decided U7 V7 1 (some 12); exact decidedSlot1
 
 example : commitSeq g7 2 = [0, 12] := by decide
 
@@ -609,3 +609,39 @@ example (V : View (Fin 4) (Fin 24) Unit U7) (g : ℕ → Option (Fin 24))
     (hg : ∀ k, k < 2 → Decided U7 V k (g k)) :
     commitSeq g 2 = [0, 12] :=
   (commitSeq_agree hg g7_decided).trans (by decide)
+
+/-! ## No retraction, on the concrete model
+
+Slot 0 commits genesis block 0; slot 1 commits block 12, whose causal history
+reaches back through rounds 2 and 1 to the genesis blocks. So the ledger
+genuinely grows between the two stages.
+-/
+
+-- Block 8 (round 2) is reached by slot 1's leader but not by slot 0's.
+example : Reaches U7 12 8 := Reaches.single (by decide)
+example : ¬ Reaches U7 0 8 := not_reaches_of_round_lt (by decide) (by decide)
+
+/-- After slot 0 the ledger holds genesis block 0 ... -/
+example : (0 : Fin 24) ∈ ledgerSet U7 g7 1 :=
+  ⟨0, by omega, 0, rfl, Reaches.refl⟩
+
+/-- ... and it is still there after slot 1. Monotonicity, not re-derivation. -/
+example : (0 : Fin 24) ∈ ledgerSet U7 g7 2 :=
+  ledgerSet_mono (n := 1) (m := 2) (by omega) ⟨0, by omega, 0, rfl, Reaches.refl⟩
+
+/-- Block 8 arrives only at stage 2 -- the ledger really did grow. -/
+example : (8 : Fin 24) ∈ ledgerSet U7 g7 2 :=
+  ⟨1, by omega, 12, rfl, Reaches.single (by decide)⟩
+
+/-- **Genesis block 0 enters at slot 0, and nowhere else.** -/
+example : OutputAt U7 g7 0 0 :=
+  ⟨⟨0, rfl, Reaches.refl⟩, fun j hj _ _ _ => absurd hj (by omega)⟩
+
+/-- **Every validator agrees it entered there** -- whatever view it holds and
+however it settled the slots. -/
+example (V : View (Fin 4) (Fin 24) Unit U7) (g : ℕ → Option (Fin 24))
+    (hg : ∀ j, j < 2 → Decided U7 V j (g j)) :
+    OutputAt U7 g 0 0 := by
+  have h0 : OutputAt U7 g7 0 0 :=
+    ⟨⟨0, rfl, Reaches.refl⟩, fun j hj _ _ _ => absurd hj (by omega)⟩
+  exact outputAt_agree (n := 2) g7_decided hg (by omega) h0
