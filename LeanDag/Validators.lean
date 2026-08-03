@@ -56,6 +56,20 @@ theorem card_correct : 2 * F.f + 1 ≤ (Correct : Finset Validator).card := by
   have := F.card_byzantine
   omega
 
+/-- The correct and Byzantine validators partition the whole set.
+
+Stated additively so it yields both bounds without ℕ subtraction. The
+*upper* bound on `Correct.card` is the one the Phase 1b counting argument
+needs — it divides an incidence count by the number of correct validators,
+for which `card_correct`'s lower bound is useless. -/
+theorem card_correct_add_byzantine :
+    (Correct : Finset Validator).card + F.byzantine.card = 3 * F.f + 1 := by
+  have h : (Correct : Finset Validator).card = Fintype.card Validator - F.byzantine.card :=
+    Finset.card_compl F.byzantine
+  have hle : F.byzantine.card ≤ Fintype.card Validator := Finset.card_le_univ _
+  have := F.card_validators
+  omega
+
 /-- Any set of more than `f` validators contains a correct one, since the
 Byzantine validators number at most `f`. -/
 theorem exists_correct_of_card {S : Finset Validator} (h : F.f + 1 ≤ S.card) :

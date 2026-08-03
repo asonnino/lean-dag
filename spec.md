@@ -13,6 +13,9 @@ original notes were open-ended — flag any you want changed.
 - **Phase 1 (main target):** static block DAG structure, quorum-intersection
   combinatorics, and the causal-persistence theorem from the notes (T0–T3).
   This is the mathematical core of why Mysticeti-style protocols are safe.
+- **Phase 1b:** the counting argument giving a common correct ancestor
+  across any three consecutive rounds (T3a–T3c). Still pure DAG
+  combinatorics, and independent of Phase 2.
 - **Phase 2:** views, round leaders, the direct-commit rule, and agreement
   between correct validators on committed blocks (T4–T5).
 - **Phase 3 (stretch):** total-order safety across the commit sequence;
@@ -60,44 +63,65 @@ from — it elaborates to a metavariable and fails confusingly later. Naming
 the instance `F` and writing `F.f`, `F.byzantine`, `F.card_validators`,
 `F.card_byzantine` keeps every reference unambiguous.
 
+The fields are not uniform in this respect, which is what makes it a trap:
+`Faults.byzantine` returns a `Finset Validator`, so `Validator` *is*
+recoverable from its result type and a bare `byzantine` elaborates fine,
+while `Faults.f` returns a bare `ℕ` and does not. Going through `F.` for
+everything avoids having to remember which is which.
+
 Remaining notes:
 
 - `DecidableEq Validator` is needed for `creatorsOf` (§3.2), a
-  `Finset.image` into `Validator`. **`DecidableEq BlockId` is not needed**:
-  `Finset α` itself imposes no decidable equality — only operations like
-  `image`, `∪`, and `∩` do, and here those all land in `Validator`. Expect
-  to need it locally in `Commit.lean`, where T4's support set is a
-  `Finset.filter` over a predicate mentioning `i ∈ (U.block q).refs`;
-  introduce it there rather than globally.
+  `Finset.image` into `Validator`. **`DecidableEq BlockId` is not needed
+  globally**: `Finset α` itself imposes no decidable equality — only
+  operations like `image`, `∪`, and `∩` do, and here those all land in
+  `Validator`.
+
+  Introduce it locally in the two places that do need it, both being a
+  `Finset.filter` over a predicate of the form `i ∈ (U.block q).refs`:
+  `CommonCore.lean`, for the support set of T3a/T3b, and `Commit.lean`, for
+  T4's support set. Note `blocksAt` (§4, Phase 1b) does *not* need it — its
+  predicate is ℕ equality on rounds.
 - **(assumption)** `Fintype.card Validator = 3 * f + 1` exactly (notes say
   "3f+1 validators").
 - Rounds are plain `ℕ` throughout. No `Round` abbreviation — it would buy
   nothing, and two spellings for one type reliably drift apart.
 
-Two consequences worth naming once rather than re-deriving at each use:
+Three consequences worth naming once rather than re-deriving at each use:
 
 - `exists_correct_of_card`: any `S : Finset Validator` with
   `F.f + 1 ≤ S.card` contains a correct validator, since
   `F.byzantine.card ≤ F.f` means `S` cannot be wholly Byzantine. Used by T0,
   and so reaches T3 and T5 through T0'.
-- `card_correct : 2 * F.f + 1 ≤ Correct.card`. Note this is currently used
-  by **nothing** — T0, T3, and T5 all route through `F.card_byzantine`
-  instead. It is kept because liveness (T7) would want it, but it is not on
-  any Phase 1–2 path.
+- `card_correct_add_byzantine : Correct.card + F.byzantine.card = 3 * F.f + 1`
+  — from `Finset.card_compl` and `F.card_validators`. Stated **additively**
+  so it gives both bounds without ℕ subtraction. Phase 1b needs the *upper*
+  bound on `Correct.card`: T3a divides an incidence count by the number of
+  correct validators, and a lower bound is useless as a denominator bound.
+- `card_correct : 2 * F.f + 1 ≤ Correct.card`. Used by **nothing** — T0, T3,
+  and T5 route through `F.card_byzantine`, and T3a needs the additive form
+  above rather than this one. Kept because liveness (T7) would want it, but
+  it is on no Phase 1–2 path; do not reach for it in the counting argument.
 
 ## 3. Blocks and the DAG
 
 ### 3.1 Block and BlockId
 
 Blocks are referenced by **id**, not by value. `BlockId` is an opaque type
-with `DecidableEq`; `Block` itself is then non-recursive:
+carrying no instances at all (§2); `Block` itself is then non-recursive:
 
 - `round : ℕ`
 - `creator : Validator`
 - `refs : Finset BlockId` — pointers to blocks at the preceding round
 - `payload : Payload` — opaque, per the notes; inert throughout Phase 1.
-  `Payload` is a section variable (§2), so the structure elaborates as
-  `Block Payload` and the parameter rides along implicitly everywhere.
+
+**(assumption)** `Block` is declared with its three type parameters
+**explicit** — `structure Block (Validator BlockId Payload : Type*)`, used as
+`Block Validator BlockId Payload` — rather than letting them auto-bind from
+the section variables. Auto-binding would also drag in whichever instance
+variables mention `Validator`, so `Block` would silently acquire a
+`Fintype`/`Faults` dependency it has no use for. Explicit parameters are
+verbose at use sites but predictable.
 
 This is not merely stylistic. The value-recursive alternative (`refs :
 Finset Block`) almost certainly does not elaborate in Lean 4: nested
@@ -170,10 +194,10 @@ round guard.
 **Quorum is stated on the creator set**, not on `b.refs.card`. This is the
 form every downstream proof wants, and it is the more faithful reading of
 "2f+1 blocks from the previous round" — the protocol means 2f+1
-*validators*. Stating it directly makes `Valid.creators_quorum` definitional
-rather than a lemma, and removes any `card_creators` bridge from the
-critical path. With distinctness also present `b.refs.card ≥ 2f+1` still
-follows, so nothing is lost.
+*validators*. Stating it directly makes the quorum fact the field projection
+`ValidWrt.quorum` itself, rather than a derived `creators_quorum` lemma, and
+removes any `card_creators` bridge from the critical path. With distinctness
+also present `b.refs.card ≥ 2f+1` still follows, so nothing is lost.
 
 **Distinct creators earns its keep only at T5.** It is a genuine protocol
 rule — a block must not cite the same author twice — but it is worth being
@@ -333,6 +357,89 @@ may hold different views; that asymmetry is the entire point of T5.
   and predecessor conditions at every intervening round — all supplied by
   §3.3's validity field.
 
+### Phase 1b — a common correct ancestor
+
+Persistence (T3) says a block *already backed by a quorum* survives forever.
+This group says something is **always** backed, whether or not anyone
+arranged it: across any three consecutive rounds, some correct validator's
+round-`r` block ends up in the causal history of every round-`(r+2)` block.
+The argument is a counting one, in the spirit of the Gather protocol's
+common-core lemma.
+
+Two counts are needed. Write
+
+- `blocksAt U n : Finset BlockId := U.ids.filter (fun i => (U.block i).round = n)`
+- `authorsAt U n : Finset Validator := creatorsOf U.block (blocksAt U n)`
+
+and fix `p := (authorsAt U (r+1)).card`, the number of validators holding a
+round-`(r+1)` block, and `b := F.byzantine.card`.
+
+The quantity `p` is what makes this work without any progress assumption.
+A round-`(r+2)` block draws its 2f+1 referenced creators from those same `p`
+validators, so it **misses exactly `p − (2f+1)`** of them. Low participation
+weakens the counting below, but it narrows a round-`(r+2)` block's room to
+dodge by precisely as much. The two sides move together.
+
+**(assumption)** Every `p − 2f` below is written subtractively for
+readability only. In Lean state the support threshold **additively** — `k`
+supporters with `p ≤ k + 2 * F.f` — exactly as §3.2 does for the predecessor
+condition. Truncated ℕ subtraction would otherwise make the threshold
+silently collapse to `0` whenever `p ≤ 2f`, which is precisely the
+degenerate range where no round-`(r+2)` block exists, turning a vacuous case
+into an apparently provable one.
+
+- **T3a — Correct-support counting.** Some correct validator's round-`r`
+  block is referenced by the round-`(r+1)` blocks of at least `p − 2f`
+  distinct **correct** validators.
+
+  At least `p − b` of the `p` are correct, and each has a *unique*
+  round-`(r+1)` block (T1) referencing 2f+1 distinct validators — straight
+  from the creator-set quorum, no distinctness needed — of which at least
+  `2f+1 − b` are correct. Counting incidences between those blocks and the
+  correct round-`r` authors they name gives at least `(p−b)(2f+1−b)`, spread
+  over `Correct.card = 3f+1 − b` validators (`card_correct_add_byzantine`,
+  §2 — the *upper* bound is the one that matters here). Pigeonhole yields a
+  validator `w` receiving at least `(p−b)(2f+1−b) / (3f+1−b)`, and `w`'s
+  round-`r` block is unique by T1. It remains to check
+
+  > `(p − b)(2f+1 − b)  ≥  (p − 2f)(3f+1 − b)`
+
+  whose difference is `b² − 4fb − b + 6f² + 2f − fp`. Since `p ≤ 3f+1`, that
+  is at least
+
+  > `(b − f)(b − 3f) + (f − b)`
+
+  and both terms are non-negative for `b ≤ f`. Tight exactly at
+  `b = f, p = 3f+1`; slack everywhere else.
+
+- **T3b — Coverage from correct support.** If a block `b` is referenced by
+  the round-`(r+1)` blocks of at least `p − 2f` distinct **correct**
+  validators, then every round-`(r+2)` block reaches `b`.
+
+  A round-`(r+2)` block `c` names 2f+1 distinct round-`(r+1)` creators, all
+  of which hold round-`(r+1)` blocks and so lie among the `p`. It therefore
+  misses at most `p − 2f − 1` of them, one fewer than the size of the
+  support set — so `c` names some supporting validator `v`. Because `v` is
+  correct it has only one round-`(r+1)` block (T1), which is the one
+  referencing `b`. Compose: `c → B_v → b`.
+
+  Note this needs only `p − 2f` supporters, never a full quorum, because the
+  supporters are *correct*: dodging them means dodging `p − 2f` distinct
+  validators, and a round-`(r+2)` block cannot miss that many. T3's quorum
+  `Q` is arbitrary and may contain Byzantine authors, so T3 cannot argue this
+  way — this is a sharper result in the same family, not a corollary.
+
+- **T3c — Common correct ancestor.** If any block exists at round `r+2`,
+  then some correct validator's round-`r` block lies in the causal history of
+  **every** round-`(r+2)` block. Immediate from T3a and T3b.
+
+  The sole premise is that a round-`(r+2)` block exists — a fact about the
+  DAG in hand, not an assumption that anyone makes progress. This stays a
+  safety result. The degenerate cases are consistent with it: if `p < 2f+1`
+  no round-`(r+2)` block can be formed and the claim is vacuous; if
+  `p = 2f+1` every round-`(r+2)` block names all of them and the conclusion
+  is immediate.
+
 ### Phase 2
 
 - **T4 — Round leaders and the commit rule.** A deterministic
@@ -411,6 +518,10 @@ may hold different views; that asymmetry is the entire point of T5.
 - `LeanDag/BlockDag.lean` — §3.3 (universe), T1
 - `LeanDag/CausalHistory.lean` — §3.4, T2
 - `LeanDag/Persistence.lean` — T3
+- `LeanDag/CommonCore.lean` — `blocksAt`, `authorsAt`, T3a–T3c (Phase 1b).
+  Imports `CausalHistory`, **not** `Persistence`: T3a–T3c use only T0, T1
+  and T2. Keep it that way — the independence is the point of T3b's remark
+  that this is a sharper result in the same family rather than a corollary.
 - `LeanDag/Commit.lean` — §3.5 (views), T4–T5 (Phase 2)
 - `LeanDagTest/` — concrete models confirming the definitions are
   satisfiable. Built by default, so a change that empties `ValidWrt` or
@@ -434,8 +545,25 @@ T3 is the first substantial proof.
 Dependencies run strictly downward in that list — worth confirming as you
 go, since the §3.2 lookup-function choice is what keeps it acyclic.
 
-**What Phase 1 actually requires.** Completeness, the predecessor condition,
-the creator-set quorum, and non-equivocation — four conditions. Not
-distinctness, not views, not view-closure. Useful as a check while
-implementing: if a Phase 1 proof reaches for any of those three, something
-has gone sideways.
+**What Phases 1 and 1b actually require.** Completeness, the predecessor
+condition, the creator-set quorum, and non-equivocation — four conditions.
+Not distinctness, not views, not view-closure. This holds for Phase 1b too:
+T3a takes its 2f+1 distinct validators straight from the creator-set quorum,
+and T3b runs on correctness plus non-equivocation. So distinctness is
+load-bearing at **T5 alone**, exactly as §3.2 claims. Useful as a check while
+implementing: if a Phase 1 or 1b proof reaches for any of those three,
+something has gone sideways.
+
+## 7. Theorem index
+
+Spec label to Lean identifier, for the parts that are built.
+
+| Label | Lean | File |
+|---|---|---|
+| T0 | `exists_correct_mem_inter` | `Validators.lean` |
+| T0' | `exists_correct_mem_creators_inter` | `Block.lean` |
+| T1 | `BlockUniverse.eq_of_creator_eq` | `BlockDag.lean` |
+| T2 | `round_le_of_reaches` | `CausalHistory.lean` |
+| T3 | `reaches_of_quorum_support` | `Persistence.lean` |
+| T3a–T3c | *(not yet built)* | `CommonCore.lean` |
+| T4–T5 | *(not yet built)* | `Commit.lean` |

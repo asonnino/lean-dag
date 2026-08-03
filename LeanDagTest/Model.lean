@@ -126,3 +126,9 @@ example : (0 : Fin 12) ∉ (U3.block 11).refs := by decide
 example : (0 : Fin 12) ∈ U3.ids ∧ (U3.block 0).round = 0 :=
   mem_ids_and_round_of_quorum_support (b := 0) (r := 0) (Q := {4, 5, 6})
     (by decide) (by decide) (by decide) (by decide)
+
+-- The additive cardinality fact Phase 1b's counting argument divides by.
+-- Concretely: 3 correct + 1 Byzantine = 4 = 3f+1 at f = 1.
+example :
+    (Correct : Finset (Fin 4)).card + (Faults.byzantine : Finset (Fin 4)).card = 3 * 1 + 1 :=
+  card_correct_add_byzantine
