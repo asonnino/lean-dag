@@ -35,7 +35,7 @@ class Faults (Validator : Type*) [Fintype Validator] [DecidableEq Validator] whe
 
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
-variable {BlockId : Type*} [DecidableEq BlockId]
+variable {BlockId : Type*}
 variable {Payload : Type*}
 
 def Correct : Finset Validator := (F.byzantine)ᶜ
@@ -63,8 +63,12 @@ the instance `F` and writing `F.f`, `F.byzantine`, `F.card_validators`,
 Remaining notes:
 
 - `DecidableEq Validator` is needed for `creatorsOf` (§3.2), a
-  `Finset.image` into `Validator`; `DecidableEq BlockId` for
-  `Finset BlockId` throughout (§3.1).
+  `Finset.image` into `Validator`. **`DecidableEq BlockId` is not needed**:
+  `Finset α` itself imposes no decidable equality — only operations like
+  `image`, `∪`, and `∩` do, and here those all land in `Validator`. Expect
+  to need it locally in `Commit.lean`, where T4's support set is a
+  `Finset.filter` over a predicate mentioning `i ∈ (U.block q).refs`;
+  introduce it there rather than globally.
 - **(assumption)** `Fintype.card Validator = 3 * f + 1` exactly (notes say
   "3f+1 validators").
 - Rounds are plain `ℕ` throughout. No `Round` abbreviation — it would buy
