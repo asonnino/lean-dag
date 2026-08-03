@@ -21,8 +21,11 @@ Phases 1, 1b and 2 are **built**; §7 indexes every theorem to its Lean name.
 - **Phase 2 — uncertified DAGs (Mysticeti) — complete:** the two-level
   certification rule, direct commit and skip, and the indirect rule (T6a,
   M1–M6). What one must do once blocks are no longer certificates.
-- **Phase 3 (stretch):** total-order safety across the commit sequence;
-  liveness under partial synchrony. Liveness needs network timing axioms
+- **Phase 3 (stretch) — partly done:** total-order safety across the commit
+  sequence; liveness under partial synchrony. The committed-*leader* sequence
+  and all of **no retraction** are already proved, since neither needs an
+  order on ids; what remains of T6 is the arrangement of blocks *within* a
+  single flush. Liveness needs network timing axioms
   (GST, message delay bounds) rather than pure DAG combinatorics — scope it
   separately once Phases 1–2 land.
 
@@ -234,9 +237,11 @@ accident. `ValidWrt.refs_nonempty` — which T3's inductive step needs — is
 proved from the quorum condition alone rather than via `card_refs`, because
 `card_refs` goes through `card_creators`, which *does* use distinctness.
 Routing it that way would silently put distinctness on T3's dependency path.
-The consumers of distinctness are therefore exactly `card_creators` and, in
-turn, `card_refs`, and neither is used by any theorem currently in the
-development.
+
+`distinct_creators` has exactly **two** consumers, and the split is the whole
+point: M5′, which is the genuine load-bearing use, and `card_creators` (which
+feeds only `card_refs`, which nothing calls). Grepping for it is therefore a
+live check that Phase 1 and 1b have not started leaning on it.
 
 ### 3.3 Block universe
 
@@ -827,8 +832,12 @@ stages need very different machinery:
 
 - `LeanDag/Validators.lean` — §2 (all five fault-counting consequences), T0
 - `LeanDag/Block.lean` — §3.1 (`Block`), §3.2 (`creatorsOf`, `creators`,
-  `ValidWrt`), T0'
-- `LeanDag/BlockDag.lean` — §3.3 (universe), §3.5 (`View`), T1
+  `ValidWrt`), T0', and `nonempty_of_creatorsOf_card_pos` (a quorum of
+  authors needs a nonempty id set — used in three files)
+- `LeanDag/BlockDag.lean` — §3.3 (universe), §3.5 (`View`), T1, and
+  `BlockUniverse.exists_common_mem_of_quorums` (two quorum-backed sets of
+  round-`n` blocks share a block — the "peel off one certification layer"
+  step)
 - `LeanDag/CausalHistory.lean` — §3.4, T2, T6a
 - `LeanDag/Support.lean` — `blocksAt`, `authorsAt`, `supporters`,
   `correctSupporters`, `blames`, the hitting/propagation/coverage lemmas
@@ -840,8 +849,9 @@ stages need very different machinery:
 - `LeanDag/CommonCore.lean` — `correctBlocksAt`, T3a and T3c (Phase 1b)
 - `LeanDag/Mysticeti.lean` — the whole of Phase 2: the vote/certificate
   machinery and M1–M3, M5′, M5 (Stage A); the slot schedule, `DirectCommitIn`
-  and the `Decided` relation (C1); the view-relative lifts (C2); and M4, M6
-  (C3–C4)
+  and the `Decided` relation (C1); the view-relative lifts (C2); M4 and M6
+  (C3–C4). Plus the Phase 3 fragments that need no ordering assumption:
+  `commitSeq` and the `ledgerSet` / `OutputAt` no-retraction results.
 - `LeanDag/Commit.lean` — T4–T5 (Appendix A, unscheduled)
 - `LeanDagTest/` — concrete models confirming the definitions are
   satisfiable. Built by default, so a change that empties `ValidWrt` or
@@ -898,7 +908,7 @@ Spec label to Lean identifier, for the parts that are built.
 | — | `nonempty_of_creatorsOf_card_pos` | `Block.lean` |
 | T1 | `BlockUniverse.eq_of_creator_eq` | `BlockDag.lean` |
 | — | `View` | `BlockDag.lean` |
-| — | `exists_common_mem_of_quorums` | `BlockDag.lean` |
+| — | `BlockUniverse.exists_common_mem_of_quorums` | `BlockDag.lean` |
 | T2 | `round_le_of_reaches` | `CausalHistory.lean` |
 | T6a | `View.mem_of_reaches` | `CausalHistory.lean` |
 | T6a (usable form) | `View.exists_reaches_iff` | `CausalHistory.lean` |
