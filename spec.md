@@ -266,9 +266,18 @@ may hold different views; that asymmetry is the entire point of T5.
   Immediate from §3.3, but it is what lets a quorum-intersection argument
   land on a *single concrete id* instead of an existential.
 
-- **T2 — Causal history is transitive and well-founded.** `Reaches U`
-  composes, and induction along strictly decreasing `round` is valid.
-  Infrastructure for T3.
+- **T2 — Causal history composes and runs downward.** `Reaches U` is
+  reflexive, closed under single reference steps, and transitive — all three
+  inherited from `Relation.ReflTransGen`. The content is
+  `round_le_of_reaches`: following a reference strictly decreases the round
+  (§3.2's predecessor condition), so causal history never climbs.
+
+  Earlier drafts called this "well-founded", which overstates it. T3 inducts
+  on the round *number*, an ordinary `ℕ`, not on `Reaches`; no
+  `WellFoundedRelation` instance is needed, only the fact that a block's
+  references sit at a strictly smaller round. Supporting lemmas:
+  `mem_ids_of_reaches` (completeness propagates along a walk) and
+  `eq_of_reaches_of_refs_empty` (genesis blocks are causal-history leaves).
 
 - **T3 — Persistence (the theorem from the notes).** Precise statement:
 
