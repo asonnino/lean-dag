@@ -1,4 +1,4 @@
-import LeanDag.CausalHistory
+import LeanDag.Support
 
 /-!
 # Persistence
@@ -83,30 +83,17 @@ theorem reaches_of_quorum_support
   | _ n ih =>
     intro c hc hcn hrn
     rcases eq_or_lt_of_le hrn with hbase | hstep
-    · -- Base case: `c` sits at round `r+2`.
-      -- `c`'s references and `Q` are both validator quorums, so they share a
-      -- correct author `v` (T0').
-      have hcq : 2 * F.f + 1 ≤ (creatorsOf U.block (U.block c).refs).card :=
-        U.creators_quorum hc (by omega)
-      obtain ⟨v, hv_inter, hv_correct⟩ := exists_correct_mem_creators_inter hcq hQquorum
-      rw [Finset.mem_inter] at hv_inter
-      obtain ⟨hv_c, hv_Q⟩ := hv_inter
-      rw [mem_creatorsOf] at hv_c hv_Q
-      obtain ⟨i, hi_mem, hi_creator⟩ := hv_c
-      obtain ⟨q, hq_mem, hq_creator⟩ := hv_Q
-      -- `i` and `q` are both round-`(r+1)` blocks authored by the correct `v`.
-      have hi_ids : i ∈ U.ids := U.complete c hc i hi_mem
-      have hi_round : (U.block i).round = r + 1 := by
-        have := U.round_of_mem_refs hc hi_mem
-        omega
-      have hq_round : (U.block q).round = r + 1 := hQround q hq_mem
-      -- T1: a correct author has only one block per round, so they coincide.
-      have hiq : i = q :=
-        U.eq_of_creator_eq hi_ids (hQ hq_mem) hv_correct hi_creator hq_creator
-          (by rw [hi_round, hq_round])
-      -- That block references `b` directly, so `c → i → b`.
-      have hb_in_i : b ∈ (U.block i).refs := by rw [hiq]; exact hQref q hq_mem
-      exact Reaches.of_mem_refs hi_mem (Reaches.single hb_in_i)
+    · -- Base case: `c` sits at round `r+2`. The quorum contains at least
+      -- `f+1` *correct* creators, and those are exactly the supporters the
+      -- uniform coverage lemma consumes.
+      refine reaches_of_correct_support_of_card (b := b) (r := r)
+        (S := creatorsOf U.block Q ∩ (Correct : Finset Validator)) ?_ ?_ ?_ hc (by omega)
+      · intro v hv
+        rw [Finset.mem_inter, mem_creatorsOf] at hv
+        obtain ⟨⟨q, hq_mem, hq_creator⟩, _⟩ := hv
+        exact ⟨q, hQ hq_mem, hQround q hq_mem, hQref q hq_mem, hq_creator⟩
+      · exact fun v hv => Finset.mem_of_mem_inter_right hv
+      · exact card_inter_correct_of_quorum hQquorum
     · -- Inductive step: no quorum reasoning needed. Any reference of `c`
       -- lands at a strictly smaller round that is still at least `r+2`.
       obtain ⟨i, hi_mem⟩ := U.refs_nonempty hc (by omega)

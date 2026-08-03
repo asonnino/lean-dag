@@ -79,9 +79,11 @@ Remaining notes:
 
   Introduce it locally in the two places that do need it, both being a
   `Finset.filter` over a predicate of the form `i ∈ (U.block q).refs`:
-  `CommonCore.lean`, for the support set of T3a/T3b, and `Commit.lean`, for
-  T4's support set. Note `blocksAt` (§4, Phase 1b) does *not* need it — its
-  predicate is ℕ equality on rounds.
+  `CommonCore.lean`, for `supporters` / `correctSupporters`, and
+  `Commit.lean`, for T4's support set. Note that neither `blocksAt` nor
+  `Support.lean` needs it — the coverage lemmas take their support set as a
+  plain `Finset Validator` with a witness per member rather than as
+  `supporters`, precisely so the shared layer stays instance-free.
 - **(assumption)** `Fintype.card Validator = 3 * f + 1` exactly (notes say
   "3f+1 validators").
 - Rounds are plain `ℕ` throughout. No `Round` abbreviation — it would buy
@@ -274,6 +276,54 @@ may hold different views; that asymmetry is the entire point of T5.
 
 ## 4. Theorem roadmap
 
+### 4a. Coverage — the shared principle
+
+Both T3 and T3c rest on one statement, in `Support.lean`:
+
+> If a block is referenced by the round-`(r+1)` blocks of enough **correct**
+> validators, then every round-`(r+2)` block reaches it.
+
+Correctness of the *supporters* is what makes it work: a correct validator
+has exactly one round-`(r+1)` block, so naming it suffices to reach what it
+references. A Byzantine supporter could hold two, only one of which
+references the target — which is why Byzantine support is worthless here
+even though it exists.
+
+"Enough" admits two thresholds, and the gap between them is the only thing
+separating the two theorems:
+
+- **`p - 2f`** (`reaches_of_correct_support`), where `p = |authorsAt U (r+1)|`.
+  A round-`(r+2)` block draws its 2f+1 referenced creators from those same
+  `p`, so it misses exactly `p - (2f+1)` and cannot dodge `p - 2f`.
+- **`f+1`** (`reaches_of_correct_support_of_card`), uniform. Since `p ≤ 3f+1`
+  always, this is the corollary: 2f+1 named out of 3f+1 means at most `f`
+  missed.
+
+**Why `p - 2f` rather than just `f+1`.** It looks like a participation-
+sensitive fudge and is not. Imagine handing every absent correct validator a
+valid round-`(r+1)` block — always possible, since a round-`(r+2)` block
+exists and so ≥ 2f+1 round-`r` blocks are available to reference. Now
+participation is full and the count yields `f+1` supporters. But the
+observed round-`(r+2)` block still references only the *originally present*
+validators, so of those `f+1` supporters it can see at least
+
+> `(f + 1) − (3f + 1 − p)  =  p − 2f`
+
+`p - 2f` is exactly `f+1` net of absentees. Absentees shrink the requirement
+precisely as fast as they shrink what counting can deliver, which is why no
+progress assumption appears anywhere. (We do not formalise the extension
+argument — it would need fresh `BlockId`s, hence an `Infinite BlockId`
+hypothesis and a universe-extension construction, for a theorem statement
+that comes out identical.)
+
+Which form to use is determined by how supporters are obtained:
+
+- **assumed** → `f+1`. T3's quorum of 2f+1 distinct creators contains `f+1`
+  correct ones by `card_inter_correct_of_quorum`, regardless of `p`.
+- **counted** → `p - 2f`. T3a can only guarantee that much; at `f = 3`,
+  `p = 2f+1 = 7`, `b = f = 3` the count yields 3 supporters where `f+1 = 4`,
+  and the theorem survives only because `p - 2f = 1` there.
+
 ### Phase 1
 
 - **T0 — Quorum intersection.** Any two `Q₁ Q₂ : Finset Validator` with
@@ -287,11 +337,15 @@ may hold different views; that asymmetry is the entire point of T5.
   likewise for `t`, some correct validator lies in
   `creatorsOf blk s ∩ creatorsOf blk t`.
 
-  That generality is required, not incidental: T3 intersects a block's refs
-  with the arbitrary set `Q`, and T5 intersects `Q₁` with `Q₂` — neither of
-  which is any block's refs. A block-level phrasing would fit none of the
-  three call sites. For a block, apply it with `s := b.refs` and discharge
-  the quorum hypothesis from validity (§3.2, definitional).
+  For a block, apply it with `s := b.refs` and discharge the quorum
+  hypothesis from validity (§3.2, definitional).
+
+  **Currently used by nothing.** T3's base case went through T0' until the
+  coverage refactor (§4a); it now calls `reaches_of_correct_support_of_card`
+  instead, whose intersection argument has a different shape (one quorum
+  against one *correct* set of size `f+1`, not two quorums). T0' is retained
+  because T5 intersects `Q₁` with `Q₂`, which is genuinely two quorums — but
+  if Phase 2 lands without touching it, delete it.
 
 - **T1 — Non-equivocation as id equality.** For `v ∈ Correct`, any two ids
   `i j ∈ U.ids` with creator `v` at the same round satisfy `i = j`.
@@ -525,11 +579,16 @@ into an apparently provable one.
   `ValidWrt`), T0'
 - `LeanDag/BlockDag.lean` — §3.3 (universe), T1
 - `LeanDag/CausalHistory.lean` — §3.4, T2
+- `LeanDag/Support.lean` — `blocksAt`, `authorsAt`, and **both coverage
+  lemmas** (§4a below). The common foundation under T3 and T3c.
 - `LeanDag/Persistence.lean` — T3
-- `LeanDag/CommonCore.lean` — `blocksAt`, `authorsAt`, T3a–T3c (Phase 1b).
-  Imports `CausalHistory`, **not** `Persistence`: T3a–T3c use only T0, T1
-  and T2. Keep it that way — the independence is the point of T3b's remark
-  that this is a sharper result in the same family rather than a corollary.
+- `LeanDag/CommonCore.lean` — `supporters`, `correctSupporters`,
+  `correctBlocksAt`, T3a and T3c (Phase 1b)
+
+`Persistence.lean` and `CommonCore.lean` are **siblings**, both sitting on
+`Support.lean`; neither imports the other. T3 and T3c are two consequences
+of one coverage principle, differing only in how their supporters are
+obtained — assumed (T3) or counted (T3a).
 - `LeanDag/Commit.lean` — §3.5 (views), T4–T5 (Phase 2)
 - `LeanDagTest/` — concrete models confirming the definitions are
   satisfiable. Built by default, so a change that empties `ValidWrt` or
@@ -573,8 +632,9 @@ Spec label to Lean identifier, for the parts that are built.
 | T1 | `BlockUniverse.eq_of_creator_eq` | `BlockDag.lean` |
 | T2 | `round_le_of_reaches` | `CausalHistory.lean` |
 | T3 | `reaches_of_quorum_support` | `Persistence.lean` |
+| T3b | `reaches_of_correct_support` | `Support.lean` |
+| T3b′ | `reaches_of_correct_support_of_card` | `Support.lean` |
 | T3a | `exists_correct_common_support` | `CommonCore.lean` |
-| T3b | `reaches_of_correct_support` | `CommonCore.lean` |
 | T3c | `exists_common_correct_ancestor` | `CommonCore.lean` |
 | T4–T5 | *(not yet built)* | `Commit.lean` |
 

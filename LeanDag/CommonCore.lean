@@ -1,4 +1,4 @@
-import LeanDag.CausalHistory
+import LeanDag.Support
 -- Broad import: the counting argument below uses big operators, ordered
 -- sums, pigeonhole and `nlinarith`. Narrowing this to specific modules is
 -- not worth the churn -- the rest of the library keeps its targeted imports.
@@ -40,38 +40,6 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
 variable {BlockId : Type*} {Payload : Type*}
 variable {U : BlockUniverse Validator BlockId Payload}
-
-/-- The ids present at a given round. -/
-def blocksAt (U : BlockUniverse Validator BlockId Payload) (n : ℕ) : Finset BlockId :=
-  U.ids.filter (fun i => (U.block i).round = n)
-
-/-- The validators holding a block at a given round. -/
-def authorsAt (U : BlockUniverse Validator BlockId Payload) (n : ℕ) : Finset Validator :=
-  creatorsOf U.block (blocksAt U n)
-
-@[simp]
-theorem mem_blocksAt {i : BlockId} {n : ℕ} :
-    i ∈ blocksAt U n ↔ i ∈ U.ids ∧ (U.block i).round = n := by
-  simp [blocksAt]
-
-theorem mem_authorsAt {v : Validator} {n : ℕ} :
-    v ∈ authorsAt U n ↔ ∃ i ∈ U.ids, (U.block i).round = n ∧ (U.block i).creator = v := by
-  simp [authorsAt, mem_creatorsOf]
-  tauto
-
-/-- The creators of a round-`(n+1)` block's references all hold round-`n`
-blocks. This is what forces a round-`(r+2)` block to choose its 2f+1
-referenced creators from the same pool the counting argument ranges over. -/
-theorem creators_refs_subset_authorsAt {c : BlockId} {n : ℕ}
-    (hc : c ∈ U.ids) (hcr : (U.block c).round = n + 1) :
-    creatorsOf U.block (U.block c).refs ⊆ authorsAt U n := by
-  intro v hv
-  rw [mem_creatorsOf] at hv
-  obtain ⟨i, hi_mem, hi_creator⟩ := hv
-  rw [mem_authorsAt]
-  refine ⟨i, U.complete c hc i hi_mem, ?_, hi_creator⟩
-  have := U.round_of_mem_refs hc hi_mem
-  omega
 
 /-- The round-`n` blocks authored by *correct* validators. The counting
 argument ranges over these: a correct author has exactly one block per round
@@ -276,50 +244,6 @@ theorem exists_correct_common_support {r : ℕ}
           (creator_injOn_correctBlocksAt.mono (Finset.coe_subset.mpr (Finset.filter_subset _ _)))]
     _ ≤ _ := Nat.add_le_add_right (Finset.card_le_card hsub) _
 
-/-- **T3b (Coverage).** A block supported by enough *correct* round-`(r+1)`
-validators is reached by every round-`(r+2)` block.
-
-The threshold is one short of what a round-`(r+2)` block can miss: it names
-2f+1 of the `p` validators holding round-`(r+1)` blocks, so it omits
-`p - (2f+1)`, and a support set of size `p - 2f` cannot be dodged. The
-supporter it is forced to name is correct, so by non-equivocation its single
-round-`(r+1)` block is the one referencing `b`. -/
-theorem reaches_of_correct_support
-    {b : BlockId} {r : ℕ} {S : Finset Validator}
-    (hS_sub : S ⊆ supporters U b (r + 1))
-    (hS_correct : ∀ v ∈ S, v ∈ (Correct : Finset Validator))
-    (hp : (authorsAt U (r + 1)).card ≤ S.card + 2 * F.f)
-    {c : BlockId} (hc : c ∈ U.ids) (hcr : (U.block c).round = r + 2) :
-    Reaches U c b := by
-  set A := creatorsOf U.block (U.block c).refs with hA
-  -- `c`'s referenced creators form a quorum, and both they and `S` live
-  -- inside the round-`(r+1)` author pool.
-  have hA_quorum : 2 * F.f + 1 ≤ A.card := U.creators_quorum hc (by omega)
-  have hA_sub : A ⊆ authorsAt U (r + 1) :=
-    creators_refs_subset_authorsAt hc (by omega)
-  have hS_auth : S ⊆ authorsAt U (r + 1) := hS_sub.trans supporters_subset_authorsAt
-  -- Their sizes overflow the pool, so they must meet.
-  have hunion : (A ∪ S).card ≤ (authorsAt U (r + 1)).card :=
-    Finset.card_le_card (Finset.union_subset hA_sub hS_auth)
-  have hadd := Finset.card_union_add_card_inter A S
-  have hinter : 0 < (A ∩ S).card := by omega
-  obtain ⟨v, hv⟩ := Finset.card_pos.mp hinter
-  rw [Finset.mem_inter] at hv
-  obtain ⟨hv_A, hv_S⟩ := hv
-  -- Unfold both memberships into concrete ids.
-  rw [hA, mem_creatorsOf] at hv_A
-  obtain ⟨i, hi_mem, hi_creator⟩ := hv_A
-  obtain ⟨q, hq_ids, hq_round, hq_ref, hq_creator⟩ := mem_supporters.mp (hS_sub hv_S)
-  -- `v` is correct, so its round-`(r+1)` block is unique: `i = q`.
-  have hi_ids : i ∈ U.ids := U.complete c hc i hi_mem
-  have hi_round : (U.block i).round = r + 1 := by
-    have := U.round_of_mem_refs hc hi_mem
-    omega
-  have hiq : i = q :=
-    U.eq_of_creator_eq hi_ids hq_ids (hS_correct v hv_S) hi_creator hq_creator
-      (by rw [hi_round, hq_round])
-  exact Reaches.of_mem_refs hi_mem (Reaches.single (by rw [hiq]; exact hq_ref))
-
 omit [DecidableEq BlockId] in
 /-- **T3c (Common correct ancestor).** If any block exists at round `r+2`,
 some correct validator's round-`r` block lies in the causal history of
@@ -348,7 +272,10 @@ theorem exists_common_correct_ancestor {r : ℕ} {c₀ : BlockId}
   obtain ⟨bw, hbw_ids, hbw_round, hbw_correct, hbw_support⟩ :=
     exists_correct_common_support (U := U) (r := r) hp
   refine ⟨bw, hbw_ids, hbw_round, hbw_correct, fun c hc hcr => ?_⟩
-  exact reaches_of_correct_support correctSupporters_subset
-    (fun _ hv => correctSupporters_correct hv) hbw_support hc hcr
+  refine reaches_of_correct_support (b := bw) (r := r)
+    (S := correctSupporters U bw (r + 1)) ?_ (fun _ hv => correctSupporters_correct hv)
+    hbw_support hc hcr
+  intro v hv
+  exact mem_supporters.mp (correctSupporters_subset hv)
 
 end LeanDag
