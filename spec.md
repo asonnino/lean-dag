@@ -98,6 +98,14 @@ Three consequences worth naming once rather than re-deriving at each use:
   so it gives both bounds without ℕ subtraction. Phase 1b needs the *upper*
   bound on `Correct.card`: T3a divides an incidence count by the number of
   correct validators, and a lower bound is useless as a denominator bound.
+- `card_le_card_inter_correct_add_byzantine : S.card ≤ (S ∩ Correct).card + F.byzantine.card`
+  for any `S : Finset Validator` — "Byzantine validators absorb at most `b`
+  of any set". The workhorse behind *a quorum still contains many correct
+  validators*; T3a's per-block bound is one line given it.
+- `card_inter_correct_of_quorum : 2f+1 ≤ S.card → F.f + 1 ≤ (S ∩ Correct).card`
+  — the *cardinality* strengthening of `exists_correct_of_card`, which only
+  produces one witness. Reach for this whenever a count of correct members is
+  wanted rather than their existence.
 - `card_correct : 2 * F.f + 1 ≤ Correct.card`. Used by **nothing** — T0, T3,
   and T5 route through `F.card_byzantine`, and T3a needs the additive form
   above rather than this one. Kept because liveness (T7) would want it, but

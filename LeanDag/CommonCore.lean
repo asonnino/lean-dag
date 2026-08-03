@@ -152,6 +152,25 @@ theorem correctSupporters_correct {b : BlockId} {n : ℕ} {v : Validator}
     (hv : v ∈ correctSupporters U b n) : v ∈ (Correct : Finset Validator) :=
   Finset.mem_of_mem_inter_right hv
 
+/-- The arithmetic core of T3a, isolated from the combinatorics.
+
+With `f` the fault bound, `b = |Byzantine|`, `c = |Correct|`, `l` the number
+of correct round-`(r+1)` blocks, `k` the largest support degree and `p` the
+author-pool size: the double count gives `hA`, and the conclusion is T3b's
+threshold. The contradiction is `c² ≤ f(l+c)`, which `l ≤ c` collapses to
+`c ≤ 2f` — impossible, since `b ≤ f` forces `c ≥ 2f+1`. -/
+private theorem support_threshold_arith {f b c l k p : ℕ}
+    (hbf : b ≤ f) (hcb : c + b = 3 * f + 1) (hlc : l ≤ c)
+    (hA : l * (2 * f + 1) ≤ c * k + l * b) (hE : p ≤ l + b) :
+    p ≤ k + 2 * f := by
+  by_contra hcon
+  push Not at hcon
+  have h1 : k + 2 * f + 1 ≤ l + b := by omega
+  have h2 : c * (k + 2 * f + 1) ≤ c * (l + b) := Nat.mul_le_mul_left c h1
+  have hcge : 2 * f + 1 ≤ c := by omega
+  have key : c * c ≤ f * (l + c) := by nlinarith [h2, hA]
+  nlinarith [key, hlc, hcge]
+
 /-- **T3a (Correct-support counting).** Some correct validator's round-`r`
 block is backed by enough correct round-`(r+1)` validators to satisfy T3b's
 threshold.
@@ -180,52 +199,43 @@ theorem exists_correct_common_support {r : ℕ}
   set C := (Correct : Finset Validator) with hCdef
   set g : Validator → ℕ :=
     fun w => (L.filter (fun q => w ∈ creatorsOf U.block (U.block q).refs)).card with hgdef
-  -- Count incidences (correct round-(r+1) block, correct round-r author) twice.
-  have hdouble : ∑ q ∈ L, ((creatorsOf U.block (U.block q).refs) ∩ C).card = ∑ w ∈ C, g w := by
-    have h1 : ∀ q : BlockId, ((creatorsOf U.block (U.block q).refs) ∩ C).card
-        = ∑ w ∈ C, if w ∈ creatorsOf U.block (U.block q).refs then 1 else 0 := by
-      intro q
-      rw [Finset.inter_comm, ← Finset.filter_mem_eq_inter, Finset.card_filter]
-    simp_rw [h1, hgdef, Finset.card_filter]
-    exact Finset.sum_comm
   -- Each correct round-(r+1) block names 2f+1 validators, at most b Byzantine.
   have hper : ∀ q ∈ L,
       2 * F.f + 1 ≤ ((creatorsOf U.block (U.block q).refs) ∩ C).card + F.byzantine.card := by
     intro q hq
     obtain ⟨hq_ids, hq_round, _⟩ := mem_correctBlocksAt.mp hq
-    have hquorum := U.creators_quorum hq_ids (by omega)
-    have hsplit := Finset.card_inter_add_card_sdiff (creatorsOf U.block (U.block q).refs) C
-    have hsdiff : ((creatorsOf U.block (U.block q).refs) \ C).card ≤ F.byzantine.card := by
-      refine Finset.card_le_card fun x hx => ?_
-      rw [Finset.mem_sdiff] at hx
-      simpa [hCdef] using hx.2
-    omega
-  have hsum : L.card * (2 * F.f + 1) ≤ (∑ w ∈ C, g w) + L.card * F.byzantine.card := by
-    rw [← hdouble]
-    calc L.card * (2 * F.f + 1)
-        = ∑ _q ∈ L, (2 * F.f + 1) := by rw [Finset.sum_const, smul_eq_mul]
-      _ ≤ ∑ q ∈ L, (((creatorsOf U.block (U.block q).refs) ∩ C).card + F.byzantine.card) :=
-          Finset.sum_le_sum hper
-      _ = _ := by rw [Finset.sum_add_distrib, Finset.sum_const, smul_eq_mul]
-  -- Pigeonhole on the correct authors.
+    exact le_trans (U.creators_quorum hq_ids (by omega))
+      (card_le_card_inter_correct_add_byzantine _)
+  -- Pick a correct author of maximum support degree.
   have hC_ne : C.Nonempty := by
     rw [← Finset.card_pos]; omega
   obtain ⟨w, hw_mem, hw_max⟩ := C.exists_max_image g hC_ne
-  have hpig : ∑ w' ∈ C, g w' ≤ C.card * g w := by
-    calc ∑ w' ∈ C, g w' ≤ ∑ _w' ∈ C, g w := Finset.sum_le_sum fun x hx => hw_max x hx
-      _ = C.card * g w := by rw [Finset.sum_const, smul_eq_mul]
-  have hA : L.card * (2 * F.f + 1) ≤ C.card * g w + L.card * F.byzantine.card :=
-    le_trans hsum (Nat.add_le_add_right hpig _)
+  -- **Double counting** (`Finset.card_nsmul_le_card_nsmul`): each correct
+  -- round-(r+1) block contributes at least `2f+1 - b` incidences, and each
+  -- correct author absorbs at most `g w`.
+  have hbig : L.card * (2 * F.f + 1 - F.byzantine.card) ≤ C.card * g w := by
+    have := Finset.card_nsmul_le_card_nsmul
+      (r := fun (q : BlockId) (v : Validator) => v ∈ creatorsOf U.block (U.block q).refs)
+      (s := L) (t := C)
+      (m := 2 * F.f + 1 - F.byzantine.card) (n := g w)
+      (fun q hq => by
+        have h := hper q hq
+        -- `bipartiteAbove` is by definition the filter, so `show` retypes it.
+        show 2 * F.f + 1 - F.byzantine.card
+            ≤ (C.filter (fun v => v ∈ creatorsOf U.block (U.block q).refs)).card
+        rw [Finset.filter_mem_eq_inter, Finset.inter_comm]
+        omega)
+      (fun v hv => hw_max v hv)
+    simpa [smul_eq_mul] using this
+  have hb_le : F.byzantine.card ≤ 2 * F.f + 1 := by omega
+  have hA : L.card * (2 * F.f + 1) ≤ C.card * g w + L.card * F.byzantine.card := by
+    have hsplit : L.card * (2 * F.f + 1)
+        = L.card * (2 * F.f + 1 - F.byzantine.card) + L.card * F.byzantine.card := by
+      rw [← Nat.mul_add, Nat.sub_add_cancel hb_le]
+    omega
   -- The arithmetic core: p ≤ (max degree) + 2f.
-  have harith : (authorsAt U (r + 1)).card ≤ g w + 2 * F.f := by
-    by_contra hcon
-    push Not at hcon
-    have h1 : g w + 2 * F.f + 1 ≤ L.card + F.byzantine.card := by omega
-    have h2 : C.card * (g w + 2 * F.f + 1) ≤ C.card * (L.card + F.byzantine.card) :=
-      Nat.mul_le_mul_left _ h1
-    have hcge : 2 * F.f + 1 ≤ C.card := by omega
-    have key : C.card * C.card ≤ F.f * (L.card + C.card) := by nlinarith [h2, hA]
-    nlinarith [key, hlc, hcge]
+  have harith : (authorsAt U (r + 1)).card ≤ g w + 2 * F.f :=
+    support_threshold_arith hbf hcb hlc hA hE
   -- The maximiser has positive degree, so it really does author a round-r block.
   have hgw_pos : 0 < g w := by omega
   obtain ⟨q₀, hq₀⟩ := Finset.card_pos.mp hgw_pos

@@ -81,6 +81,30 @@ theorem exists_correct_of_card {S : Finset Validator} (h : F.f + 1 ≤ S.card) :
   have := F.card_byzantine
   omega
 
+/-- Byzantine validators can absorb at most `f` of any set: removing the
+correct members of `S` leaves something no bigger than the Byzantine set.
+
+The workhorse behind "a quorum still contains many correct validators".
+Stated additively so it composes without ℕ subtraction. -/
+theorem card_le_card_inter_correct_add_byzantine (S : Finset Validator) :
+    S.card ≤ (S ∩ (Correct : Finset Validator)).card + F.byzantine.card := by
+  have hsplit := Finset.card_inter_add_card_sdiff S (Correct : Finset Validator)
+  have hsdiff : (S \ (Correct : Finset Validator)).card ≤ F.byzantine.card := by
+    refine Finset.card_le_card fun x hx => ?_
+    rw [Finset.mem_sdiff] at hx
+    simpa using hx.2
+  omega
+
+/-- A quorum contains at least `f+1` *correct* validators.
+
+The cardinality strengthening of `exists_correct_of_card`, which only
+produces one. Immediate from the previous lemma and `F.card_byzantine`. -/
+theorem card_inter_correct_of_quorum {S : Finset Validator} (h : 2 * F.f + 1 ≤ S.card) :
+    F.f + 1 ≤ (S ∩ (Correct : Finset Validator)).card := by
+  have := card_le_card_inter_correct_add_byzantine S
+  have := F.card_byzantine
+  omega
+
 /-- **T0 (cardinality half).** Two quorums overlap in at least `f+1`
 validators: `(2f+1) + (2f+1) - (3f+1) = f+1`. -/
 theorem card_inter_ge_of_quorum {Q₁ Q₂ : Finset Validator}

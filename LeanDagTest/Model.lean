@@ -155,3 +155,14 @@ example : ∃ bw ∈ U3.ids, (U3.block bw).round = 0 ∧
     (U3.block bw).creator ∈ (Correct : Finset (Fin 4)) ∧
     (authorsAt U3 1).card ≤ (correctSupporters U3 bw 1).card + 2 * Faults.f (Fin 4) :=
   exists_correct_common_support (by decide)
+
+-- The reusable fault-counting lemmas, on concrete sets. At f = 1 with
+-- Byzantine = {0}: the quorum {0,1,2} has 2 = f+1 correct members.
+example : ({0, 1, 2} : Finset (Fin 4)).card
+    ≤ (({0, 1, 2} : Finset (Fin 4)) ∩ (Correct : Finset (Fin 4))).card
+      + (Faults.byzantine : Finset (Fin 4)).card :=
+  card_le_card_inter_correct_add_byzantine _
+
+example : Faults.f (Fin 4) + 1
+    ≤ (({0, 1, 2} : Finset (Fin 4)) ∩ (Correct : Finset (Fin 4))).card :=
+  card_inter_correct_of_quorum (by decide)
