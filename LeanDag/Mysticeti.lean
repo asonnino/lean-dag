@@ -599,4 +599,37 @@ theorem not_decided_skip_of_decided_commit {V₁ V₂ : View Validator BlockId P
     False := by
   simpa using decided_agree h₁ h₂
 
+/-! ## The committed-leader sequence
+
+M6 settles each slot in isolation. Because slots are indexed by `ℕ`, that is
+already enough to fix the *sequence*: reading verdicts off in slot order and
+dropping the skips gives a list, and pointwise agreement makes the lists
+equal.
+
+This is the leader half of total-order safety, and it is a corollary rather
+than a theorem. The block half — flushing each committed leader's causal
+history into a ledger — needs a deterministic order *within* each flush, and
+so a `LinearOrder` on ids or an equivalent tie-break, which the development
+deliberately does not assume. -/
+
+/-- The blocks committed at slots `0, …, n-1`, in slot order, with skipped
+slots dropped. `g` is a validator's verdict assignment. -/
+def commitSeq (g : ℕ → Option BlockId) (n : ℕ) : List BlockId :=
+  (List.range n).filterMap g
+
+/-- **The committed-leader sequence is agreed.** Two validators that have
+settled the first `n` slots — on whatever views, by whatever mix of direct
+and indirect routes — read off the same list of committed blocks. -/
+theorem commitSeq_agree {V₁ V₂ : View Validator BlockId Payload U} {n : ℕ}
+    {g₁ g₂ : ℕ → Option BlockId}
+    (h₁ : ∀ k, k < n → Decided U V₁ k (g₁ k))
+    (h₂ : ∀ k, k < n → Decided U V₂ k (g₂ k)) :
+    commitSeq g₁ n = commitSeq g₂ n := by
+  have h : ∀ k ∈ List.range n, g₁ k = g₂ k := by
+    intro k hk
+    rw [List.mem_range] at hk
+    exact decided_agree (h₁ k hk) (h₂ k hk)
+  simp only [commitSeq]
+  exact List.filterMap_congr h
+
 end LeanDag

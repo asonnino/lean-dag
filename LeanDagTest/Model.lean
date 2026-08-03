@@ -580,3 +580,32 @@ example (V : View (Fin 4) (Fin 24) Unit U7) : ¬ Decided U7 V 0 none :=
 example (V : View (Fin 4) (Fin 24) Unit U7) (L : Fin 24) (h : Decided U7 V 0 (some L)) :
     L = 0 :=
   (eq_of_decided_commit decidedSlot0 h).symm
+
+/-! ## The committed-leader sequence
+
+`U7` commits slot 0 *indirectly* and slot 1 *directly*, so its transcript is
+a genuine two-element sequence reached by two different routes.
+-/
+
+theorem decidedSlot1 : Decided U7 V7 1 (some 12) :=
+  Decided.directCommit (by decide) (by decide)
+
+/-- One validator's verdict assignment for the first two slots. -/
+def g7 : ℕ → Option (Fin 24) :=
+  fun k => if k = 0 then some 0 else if k = 1 then some 12 else none
+
+theorem g7_decided : ∀ k, k < 2 → Decided U7 V7 k (g7 k) := by
+  intro k hk
+  interval_cases k
+  · show Decided U7 V7 0 (some 0); exact decidedSlot0
+  · show Decided U7 V7 1 (some 12); exact decidedSlot1
+
+example : commitSeq g7 2 = [0, 12] := by decide
+
+/-- **The sequence is forced.** *Any* validator, on *any* view, that has
+settled the first two slots reads off exactly `[0, 12]` -- including one that
+reached slot 0 by a different route entirely. -/
+example (V : View (Fin 4) (Fin 24) Unit U7) (g : ℕ → Option (Fin 24))
+    (hg : ∀ k, k < 2 → Decided U7 V k (g k)) :
+    commitSeq g 2 = [0, 12] :=
+  (commitSeq_agree hg g7_decided).trans (by decide)

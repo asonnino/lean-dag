@@ -769,11 +769,32 @@ stages need very different machinery:
 
 ### Phase 3 (stretch)
 
-- **T6 — Total order safety.** The sequence of committed leaders, and blocks
-  ordered via their causal history, is agreed upon by all correct
-  validators. The actual end-to-end safety property; M6 decides *which*
-  leaders commit, and total order needs one more step — placing non-leader
-  blocks relative to the committed ones.
+- **T6 — Total order safety.** Two correct validators emit the same *blocks*
+  in the same order.
+
+  The **leader half is already done**: slots are indexed by `ℕ`, so reading
+  M6's verdicts off in slot order and dropping the skips gives a list, and
+  pointwise agreement makes the lists equal. That is `commitSeq_agree`, a
+  corollary rather than a theorem.
+
+  The **block half** is what remains. A ledger contains every block, not just
+  leaders: committing the leader at slot `k` flushes all blocks in its causal
+  history not already output. Two of the three ingredients are in hand — the
+  agreed leader sequence (M6), and the fact that a validator holding a leader
+  necessarily holds its whole causal history (T6a, which is where view
+  closure finally earns its keep beyond the certificate check).
+
+  The missing ingredient is a **deterministic order within each flush**, and
+  it needs a new assumption: `BlockId` currently carries no order at all —
+  not even `DecidableEq` outside the few files that need it. Any fixed rule
+  serves (a `LinearOrder` on ids, or round-then-tie-break), so this is
+  protocol configuration rather than mathematics, but the theorem cannot be
+  stated without choosing one.
+
+  Worth stating alongside it: **no retraction** — once a block is output it
+  never moves or disappears. That follows from the flush sets being disjoint
+  and only growing, and it is closer to what a ledger's users actually rely
+  on than abstract sequence equality.
 
 - **T7 — Liveness.** Under partial synchrony, leaders eventually get
   committed. Needs timing/network axioms, not just DAG structure — an
@@ -892,6 +913,7 @@ Spec label to Lean identifier, for the parts that are built.
 | C2 | `directCommit_of_directCommitIn`, `certifiedIn_of_directCommitIn` | `Mysticeti.lean` |
 | M6 | `decided_unique`, `decided_agree` | `Mysticeti.lean` |
 | M6 (corollaries) | `eq_of_decided_commit`, `not_decided_skip_of_decided_commit` | `Mysticeti.lean` |
+| M6 (sequence) | `commitSeq`, `commitSeq_agree` | `Mysticeti.lean` |
 | T4–T5 | *(unscheduled, Appendix A)* | `Commit.lean` |
 
 `CommonCore.lean` is the one file importing `Mathlib` wholesale rather than
