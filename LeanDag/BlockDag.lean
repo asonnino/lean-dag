@@ -40,6 +40,23 @@ structure BlockUniverse (Validator BlockId Payload : Type*)
     (block i).creator = (block j).creator →
     (block i).round = (block j).round → i = j
 
+/-- A **view**: one validator's local DAG. A subset of the universe that is
+itself closed under references.
+
+Views share `U.block`, so they disagree about *which* blocks they hold, never
+about what an id denotes, and they inherit validity and non-equivocation from
+`U` for free. Different correct validators may hold different views — that
+asymmetry is the entire point of the cross-view results. -/
+structure View (Validator BlockId Payload : Type*) [Fintype Validator]
+    [DecidableEq Validator] [Faults Validator]
+    (U : BlockUniverse Validator BlockId Payload) where
+  /-- The ids this validator holds. -/
+  ids : Finset BlockId
+  /-- A view holds only blocks that exist. -/
+  subset_ids : ids ⊆ U.ids
+  /-- A view is closed downward: it holds everything its blocks reference. -/
+  complete : ∀ i ∈ ids, ∀ j ∈ (U.block i).refs, j ∈ ids
+
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
 variable {BlockId : Type*} {Payload : Type*}

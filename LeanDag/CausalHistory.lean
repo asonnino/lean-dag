@@ -97,4 +97,36 @@ theorem not_reaches_of_round_lt {c b : BlockId} (hc : c ∈ U.ids)
   have := round_le_of_reaches hc hreach
   omega
 
+/-! ## Views
+
+`spec.md` T6a. A view is downward-closed, so causal history computed inside
+one coincides with causal history in the universe. That is what lets two
+validators holding *different* views nonetheless agree about what lies in a
+given block's history — the check does not depend on which view asks. -/
+
+/-- **T6a.** Causal history never escapes a view. -/
+theorem View.mem_of_reaches {U : BlockUniverse Validator BlockId Payload}
+    {V : View Validator BlockId Payload U} {c b : BlockId}
+    (hc : c ∈ V.ids) (h : Reaches U c b) : b ∈ V.ids := by
+  induction h with
+  | refl => exact hc
+  | tail _ hstep ih => exact V.complete _ ih _ hstep
+
+/-- **T6a, in the form the commit rules consume.** Asking "is there a `P`-block
+in `c`'s causal history?" gives the same answer whether or not the search is
+confined to the view. Restricting to `V` costs nothing, because the answer
+could never have lain outside it.
+
+This is what makes a view-relative certificate check well defined: two
+validators with different views but the same anchor cannot disagree. -/
+theorem View.exists_reaches_iff {U : BlockUniverse Validator BlockId Payload}
+    {V : View Validator BlockId Payload U} {P : BlockId → Prop} {c : BlockId}
+    (hc : c ∈ V.ids) :
+    (∃ b, b ∈ V.ids ∧ P b ∧ Reaches U c b) ↔ (∃ b, P b ∧ Reaches U c b) := by
+  constructor
+  · rintro ⟨b, _, hP, hr⟩
+    exact ⟨b, hP, hr⟩
+  · rintro ⟨b, hP, hr⟩
+    exact ⟨b, View.mem_of_reaches hc hr, hP, hr⟩
+
 end LeanDag

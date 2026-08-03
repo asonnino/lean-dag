@@ -13,6 +13,7 @@ open LeanDag
 #print axioms LeanDag.not_directCommit_of_directSkip
 #print axioms LeanDag.exists_certificate_reaches_of_directCommit
 #print axioms LeanDag.eq_of_directCommit_of_creator_eq
+#print axioms LeanDag.View.mem_of_reaches
 
 instance : Faults (Fin 4) where
   f := 1
@@ -351,3 +352,36 @@ consequence of the theorem, not of the model being small. -/
 example : ¬ DirectCommit U6 4 0 := fun h4 =>
   absurd (eq_of_directCommit_of_creator_eq (L₁ := 0) (L₂ := 4) (by decide) h4 (by decide))
     (by decide)
+
+/-! ## Views and T6a
+
+A view must be a *strict* subset to test anything -- over the whole universe
+T6a is trivial. `V5` holds only part of `U5`, chosen downward-closed:
+
+  {0,1,2}  round-0 blocks
+  {4,5,6}  round-1 blocks, whose refs {0,1,2} are all present
+  {8}      one round-2 block, whose refs {4,5,6} are all present
+
+and omits 3, 7, 9-15.
+-/
+
+def V5 : View (Fin 4) (Fin 16) Unit U5 where
+  ids := {0, 1, 2, 4, 5, 6, 8}
+  subset_ids := by decide
+  complete := by decide
+
+-- The view is genuinely partial.
+example : (8 : Fin 16) ∈ V5.ids := by decide
+example : (3 : Fin 16) ∉ V5.ids := by decide
+example : (12 : Fin 16) ∉ V5.ids := by decide
+
+-- **T6a.** Causal history cannot escape the view: block 8 reaches genesis 0
+-- two steps down, and 0 is in the view because it had to be.
+example : (0 : Fin 16) ∈ V5.ids :=
+  View.mem_of_reaches (V := V5) (c := 8) (by decide)
+    (Reaches.of_mem_refs (i := 8) (j := 4) (by decide) (Reaches.single (by decide)))
+
+/-- T6a has real content: since genesis 3 is outside the view, no block the
+view holds can reach it. The view's boundary is a causal boundary. -/
+example : ¬ Reaches U5 8 3 := fun h =>
+  absurd (View.mem_of_reaches (V := V5) (c := 8) (by decide) h) (by decide)

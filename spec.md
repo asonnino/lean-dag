@@ -555,6 +555,9 @@ stages need very different machinery:
   than *same slot*. Pure combinatorics on top of `Support.lean`, the same
   character as Phase 1b. Nothing below blocks it.
 - **Stage B — T6a.** Makes the per-view certificate check well-defined.
+  `View` sits with the universe in `BlockDag.lean` and T6a with `Reaches` in
+  `CausalHistory.lean`, rather than inside `Mysticeti.lean`: both are general
+  notions, and Appendix A's T4/T5 would want them too.
 - **Stage C — M4, M6.** The decision procedure, the slot schedule, and
   agreement.
 
@@ -662,8 +665,8 @@ stages need very different machinery:
 - `LeanDag/Validators.lean` — §2 (all five fault-counting consequences), T0
 - `LeanDag/Block.lean` — §3.1 (`Block`), §3.2 (`creatorsOf`, `creators`,
   `ValidWrt`), T0'
-- `LeanDag/BlockDag.lean` — §3.3 (universe), T1
-- `LeanDag/CausalHistory.lean` — §3.4, T2
+- `LeanDag/BlockDag.lean` — §3.3 (universe), §3.5 (`View`), T1
+- `LeanDag/CausalHistory.lean` — §3.4, T2, T6a
 - `LeanDag/Support.lean` — `blocksAt`, `authorsAt`, `supporters`,
   `correctSupporters`, and **both coverage lemmas** (§4 *Coverage*). The
   common foundation under T3, T3c and the Mysticeti rules — Mysticeti's
@@ -671,8 +674,8 @@ stages need very different machinery:
 - `LeanDag/Persistence.lean` — T3
 - `LeanDag/CommonCore.lean` — `correctBlocksAt`, T3a and T3c (Phase 1b)
 - `LeanDag/Mysticeti.lean` — `blames`, `Certifies`, `certificates`,
-  `DirectCommit`, `DirectSkip`, M1 and M3 (Phase 2 Stage A). Views, T6a and
-  the indirect rule follow in Stages B and C.
+  `DirectCommit`, `DirectSkip`, M1–M3 and M5 (Phase 2 Stage A). The indirect
+  rule follows in Stage C.
 - `LeanDag/Commit.lean` — T4–T5 (Appendix A, unscheduled)
 - `LeanDagTest/` — concrete models confirming the definitions are
   satisfiable. Built by default, so a change that empties `ValidWrt` or
@@ -741,7 +744,9 @@ Spec label to Lean identifier, for the parts that are built.
 | M2 | `exists_certificate_reaches_of_directCommit` | `Mysticeti.lean` |
 | M3 | `certificates_eq_empty_of_directSkip` | `Mysticeti.lean` |
 | M5 | `eq_of_directCommit_of_creator_eq` | `Mysticeti.lean` |
-| T6a, M4, M6 | *(not yet built)* | `Mysticeti.lean` |
+| T6a | `View.mem_of_reaches` | `CausalHistory.lean` |
+| T6a (usable form) | `View.exists_reaches_iff` | `CausalHistory.lean` |
+| M4, M6 | *(not yet built)* | `Mysticeti.lean` |
 | T4–T5 | *(unscheduled, Appendix A)* | `Commit.lean` |
 
 `CommonCore.lean` is the one file importing `Mathlib` wholesale rather than
