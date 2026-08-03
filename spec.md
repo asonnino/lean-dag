@@ -281,11 +281,17 @@ may hold different views; that asymmetry is the entire point of T5.
 
 - **T3 — Persistence (the theorem from the notes).** Precise statement:
 
-  > Let `b ∈ U.ids` with `(U.block b).round = r`. Suppose `Q ⊆ U.ids` is a
-  > set of ids at round `r+1`, all of which reference `b`
-  > (`∀ q ∈ Q, b ∈ (U.block q).refs`), and whose creator set is a quorum:
-  > `2 * F.f + 1 ≤ (creatorsOf U.block Q).card`. Then for every `c ∈ U.ids` with
-  > `(U.block c).round ≥ r + 2`, `Reaches U c b`.
+  > Let `Q ⊆ U.ids` be a set of ids at round `r+1`, all of which reference
+  > `b` (`∀ q ∈ Q, b ∈ (U.block q).refs`), and whose creator set is a
+  > quorum: `2 * F.f + 1 ≤ (creatorsOf U.block Q).card`. Then for every
+  > `c ∈ U.ids` with `(U.block c).round ≥ r + 2`, `Reaches U c b`.
+
+  Note `b ∈ U.ids` and `(U.block b).round = r` are **not** hypotheses. Both
+  are consequences of the quorum condition: a quorum has `≥ 2f+1 ≥ 1`
+  authors so `Q` is nonempty, and any member is in the universe, references
+  `b`, and sits at round `r+1` — which pins `b` by completeness and the
+  predecessor condition. Assuming them would only weaken the theorem
+  (`mem_ids_and_round_of_quorum_support` records the derivation).
 
   **The bound is `r + 2`, and it is tight.** A round-`(r+1)` block outside
   `Q` need not reach `b` at all, so the naive "every block after round `r`"
