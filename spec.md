@@ -397,6 +397,10 @@ may hold different views; that asymmetry is the entire point of T5.
 - `LeanDag/CausalHistory.lean` — §3.4, T2
 - `LeanDag/Persistence.lean` — T3
 - `LeanDag/Commit.lean` — §3.5 (views), T4–T5 (Phase 2)
+- `LeanDagTest/` — concrete models confirming the definitions are
+  satisfiable. Built by default, so a change that empties `ValidWrt` or
+  `BlockUniverse` fails the build rather than silently making every theorem
+  vacuously true. Worth extending with a model at each new layer.
 
 Parameterizing validity by the lookup function (§3.2) keeps `ValidWrt`,
 `creatorsOf`, and T0' free of any `BlockUniverse` dependency — T0' quantifies

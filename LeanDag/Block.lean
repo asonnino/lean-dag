@@ -72,6 +72,17 @@ structure ValidWrt (blk : BlockId → Block Validator BlockId Payload)
   /-- Non-genesis blocks reference a quorum of distinct validators. -/
   quorum : 0 < b.round → 2 * F.f + 1 ≤ (creators blk b).card
 
+/-- `ValidWrt` is decidable on concrete data. Not needed by any proof below,
+but it lets a small hand-built DAG be checked by `decide`, which is how the
+definitions here are confirmed to be satisfiable rather than vacuous. -/
+instance [DecidableEq BlockId] (blk : BlockId → Block Validator BlockId Payload)
+    (b : Block Validator BlockId Payload) : Decidable (ValidWrt blk b) :=
+  decidable_of_iff
+    ((∀ i ∈ b.refs, (blk i).round + 1 = b.round) ∧
+      (∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j) ∧
+      (0 < b.round → 2 * F.f + 1 ≤ (creators blk b).card))
+    ⟨fun h => ⟨h.1, h.2.1, h.2.2⟩, fun h => ⟨h.predecessor, h.distinct_creators, h.quorum⟩⟩
+
 namespace ValidWrt
 
 variable {blk : BlockId → Block Validator BlockId Payload}
