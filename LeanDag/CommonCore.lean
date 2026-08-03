@@ -220,8 +220,8 @@ theorem exists_correct_common_support {r : ℕ}
       (m := 2 * F.f + 1 - F.byzantine.card) (n := g w)
       (fun q hq => by
         have h := hper q hq
-        -- `bipartiteAbove` is by definition the filter, so `show` retypes it.
-        show 2 * F.f + 1 - F.byzantine.card
+        -- `bipartiteAbove` is by definition the filter, so `change` retypes it.
+        change 2 * F.f + 1 - F.byzantine.card
             ≤ (C.filter (fun v => v ∈ creatorsOf U.block (U.block q).refs)).card
         rw [Finset.filter_mem_eq_inter, Finset.inter_comm]
         omega)
@@ -320,18 +320,26 @@ theorem reaches_of_correct_support
       (by rw [hi_round, hq_round])
   exact Reaches.of_mem_refs hi_mem (Reaches.single (by rw [hiq]; exact hq_ref))
 
+omit [DecidableEq BlockId] in
 /-- **T3c (Common correct ancestor).** If any block exists at round `r+2`,
 some correct validator's round-`r` block lies in the causal history of
 *every* round-`(r+2)` block.
 
 The only premise is that a round-`(r+2)` block exists — a fact about the DAG
 in hand, not an assumption that anyone makes progress. Its own reference
-quorum supplies the `2f+1` author bound T3a needs. -/
+quorum supplies the `2f+1` author bound T3a needs.
+
+Note the statement mentions no `Finset BlockId` operation, so unlike T3a and
+T3b it does **not** require decidable equality on ids; the proof supplies
+that classically. -/
 theorem exists_common_correct_ancestor {r : ℕ} {c₀ : BlockId}
     (hc₀ : c₀ ∈ U.ids) (hc₀r : (U.block c₀).round = r + 2) :
     ∃ bw ∈ U.ids, (U.block bw).round = r ∧
       (U.block bw).creator ∈ (Correct : Finset Validator) ∧
       ∀ c ∈ U.ids, (U.block c).round = r + 2 → Reaches U c bw := by
+  -- The statement mentions no `Finset BlockId` operation, so decidable
+  -- equality on ids is an artefact of the proof only.
+  classical
   -- A round-(r+2) block names 2f+1 distinct round-(r+1) authors, so the
   -- author pool is at least that large -- exactly T3a's hypothesis.
   have hp : 2 * F.f + 1 ≤ (authorsAt U (r + 1)).card :=
