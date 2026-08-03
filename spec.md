@@ -22,39 +22,64 @@ original notes were open-ended — flag any you want changed.
 
 ## 2. System model
 
-**(assumption)** The parameters are carried as section `variable`s in a
-`LeanDag` namespace, with the hypotheses as named variable hypotheses — not
-bundled into a class or structure. Bundling earns nothing at this size and
-variables are the Mathlib idiom. This needs deciding up front: it fixes the
-signature of `ValidWrt`, `BlockUniverse`, and every theorem below.
+**(assumption)** The fault model is **bundled as a class**, not threaded as
+section variables. This fixes the signature of `ValidWrt`, `BlockUniverse`,
+and every theorem below, so it is worth settling first.
 
 ```lean
+class Faults (Validator : Type*) [Fintype Validator] [DecidableEq Validator] where
+  f : ℕ
+  byzantine : Finset Validator
+  card_validators : Fintype.card Validator = 3 * f + 1
+  card_byzantine : byzantine.card ≤ f
+
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable [F : Faults Validator]
 variable {BlockId : Type*} [DecidableEq BlockId]
 variable {Payload : Type*}
-variable (f : ℕ) (Byzantine : Finset Validator)
-variable (hcard : Fintype.card Validator = 3 * f + 1)
-variable (hbyz : Byzantine.card ≤ f)
+
+def Correct : Finset Validator := (F.byzantine)ᶜ
 ```
+
+Bundling wins on two counts, both verified against the built file rather
+than assumed:
+
+- **The cardinality hypotheses ride on the instance**, so they never appear
+  as explicit arguments and no `include` is ever needed. With section
+  variables every theorem carried `(f) (Byzantine) (hcard) (hbyz)` before
+  its real arguments, and every declaration needed `include hcard hbyz in`,
+  since `Prop`-valued variables are not auto-included.
+- **`Correct` takes no argument** — the instance is inferred from
+  `Validator`. As a section-variable `def` it necessarily absorbed
+  `Byzantine` as a parameter, forcing `Correct Byzantine` at every use.
+
+**Refer to the fault bound as `F.f`, never as a bare `f`.** With `f` as a
+class field, `Faults.f` takes `Validator` explicitly, and a bare `f` in a
+position expecting only an `ℕ` gives Lean nothing to determine the type
+from — it elaborates to a metavariable and fails confusingly later. Naming
+the instance `F` and writing `F.f`, `F.byzantine`, `F.card_validators`,
+`F.card_byzantine` keeps every reference unambiguous.
+
+Remaining notes:
 
 - `DecidableEq Validator` is needed for `creatorsOf` (§3.2), a
   `Finset.image` into `Validator`; `DecidableEq BlockId` for
   `Finset BlockId` throughout (§3.1).
-- The two hypothesis variables are `Prop`s, so Lean will not auto-include
-  them in a declaration that does not mention them by name — expect to need
-  `include hcard hbyz in` before the theorems that use them only indirectly.
 - **(assumption)** `Fintype.card Validator = 3 * f + 1` exactly (notes say
   "3f+1 validators").
-- `Correct : Finset Validator := Byzantineᶜ`.
 - Rounds are plain `ℕ` throughout. No `Round` abbreviation — it would buy
   nothing, and two spellings for one type reliably drift apart.
 
 Two consequences worth naming once rather than re-deriving at each use:
 
-- `card_correct : Correct.card ≥ 2 * f + 1`.
-- `exists_correct_of_card`: any `S : Finset Validator` with `S.card ≥ f + 1`
-  contains a correct validator, since `Byzantine.card ≤ f` means `S` cannot
-  be wholly Byzantine. Used by T0, and so reaches T3 and T5 through T0'.
+- `exists_correct_of_card`: any `S : Finset Validator` with
+  `F.f + 1 ≤ S.card` contains a correct validator, since
+  `F.byzantine.card ≤ F.f` means `S` cannot be wholly Byzantine. Used by T0,
+  and so reaches T3 and T5 through T0'.
+- `card_correct : 2 * F.f + 1 ≤ Correct.card`. Note this is currently used
+  by **nothing** — T0, T3, and T5 all route through `F.card_byzantine`
+  instead. It is kept because liveness (T7) would want it, but it is not on
+  any Phase 1–2 path.
 
 ## 3. Blocks and the DAG
 
@@ -128,7 +153,7 @@ Then `ValidWrt blk b` holds iff:
 - **Predecessor:** `∀ i ∈ b.refs, (blk i).round + 1 = b.round`
 - **Distinct creators:**
   `∀ i j ∈ b.refs, (blk i).creator = (blk j).creator → i = j`
-- **Quorum:** `b.round > 0 → (creators blk b).card ≥ 2 * f + 1`
+- **Quorum:** `b.round > 0 → 2 * F.f + 1 ≤ (creators blk b).card`
 
 Three notes on the shape.
 
@@ -222,8 +247,8 @@ may hold different views; that asymmetry is the entire point of T5.
   `Finset.card_inter_add_card_union` or similar.
 
   Corollary **T0'**, stated on **id-sets** rather than blocks: for
-  `s t : Finset BlockId` with `(creatorsOf blk s).card ≥ 2f+1` and
-  `(creatorsOf blk t).card ≥ 2f+1`, some correct validator lies in
+  `s t : Finset BlockId` with `2 * F.f + 1 ≤ (creatorsOf blk s).card` and
+  likewise for `t`, some correct validator lies in
   `creatorsOf blk s ∩ creatorsOf blk t`.
 
   That generality is required, not incidental: T3 intersects a block's refs
@@ -246,7 +271,7 @@ may hold different views; that asymmetry is the entire point of T5.
   > Let `b ∈ U.ids` with `(U.block b).round = r`. Suppose `Q ⊆ U.ids` is a
   > set of ids at round `r+1`, all of which reference `b`
   > (`∀ q ∈ Q, b ∈ (U.block q).refs`), and whose creator set is a quorum:
-  > `(creatorsOf U.block Q).card ≥ 2f+1`. Then for every `c ∈ U.ids` with
+  > `2 * F.f + 1 ≤ (creatorsOf U.block Q).card`. Then for every `c ∈ U.ids` with
   > `(U.block c).round ≥ r + 2`, `Reaches U c b`.
 
   **The bound is `r + 2`, and it is tight.** A round-`(r+1)` block outside
@@ -298,7 +323,7 @@ may hold different views; that asymmetry is the entire point of T5.
   since the predicate dereferences ids through `U.block` while quantifying
   over `V` — holds when `i ∈ V` is a round-`r` block by `leader r`, and the
   *support set* `Q := {q ∈ V | (U.block q).round = r+1 ∧ i ∈ (U.block q).refs}`
-  satisfies `(creatorsOf U.block Q).card ≥ 2f+1`. That is T3's hypothesis
+  satisfies `2 * F.f + 1 ≤ (creatorsOf U.block Q).card`. That is T3's hypothesis
   instantiated at the leader block and evaluated inside `V`.
 
   The predicate must be **view-relative**: committing is a decision an
