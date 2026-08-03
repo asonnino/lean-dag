@@ -425,3 +425,88 @@ example : (13 : Fin 16) ∉ V5'.ids := by decide
 example : ∃ C, C ∈ V5'.ids ∧ C ∈ certificates U5 0 0 ∧ Reaches U5 12 C :=
   (certifiedIn_iff_of_view (V := V5') (by decide)).mpr
     (certifiedIn_of_directCommit (by decide) (by decide) (by decide))
+
+/-! ## C1: the decision relation is inhabited, including indirectly
+
+Every model above decides each round-0 block *directly* -- all round-1 blocks
+reference the same set, so a block is either fully voted or fully blamed. To
+reach the indirect constructors a slot must be genuinely UNDECIDED: some
+certificate exists, but too few to commit and too few blames to skip.
+
+`U7` arranges that, over six rounds (slots at rounds 0 and 3 need round 5 to
+certify the later one):
+
+  round 0  ids 0-3     genesis
+  round 1  ids 4-7     4,5,6 ref {0,1,2};  7 refs {1,2,3}
+  round 2  ids 8-11    8 refs {4,5,6};     9,10,11 ref {5,6,7}
+  round 3  ids 12-15   ref {8,9,10}
+  round 4  ids 16-19   ref {12,13,14}
+  round 5  ids 20-23   ref {16,17,18}
+
+Block 0 then has exactly ONE certificate (block 8) -- one creator, short of
+2f+1 -- and exactly ONE blamer (block 7), also short. Undecided both ways.
+-/
+
+def lk7 : Fin 24 → Block (Fin 4) (Fin 24) Unit := fun i =>
+  if h : (i : ℕ) < 4 then
+    { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
+  else if h : (i : ℕ) < 8 then
+    { round := 1, creator := ⟨(i : ℕ) - 4, by omega⟩,
+      refs := if (i : ℕ) = 7 then {1, 2, 3} else {0, 1, 2}, payload := () }
+  else if h : (i : ℕ) < 12 then
+    { round := 2, creator := ⟨(i : ℕ) - 8, by omega⟩,
+      refs := if (i : ℕ) = 8 then {4, 5, 6} else {5, 6, 7}, payload := () }
+  else if h : (i : ℕ) < 16 then
+    { round := 3, creator := ⟨(i : ℕ) - 12, by omega⟩, refs := {8, 9, 10}, payload := () }
+  else if h : (i : ℕ) < 20 then
+    { round := 4, creator := ⟨(i : ℕ) - 16, by omega⟩, refs := {12, 13, 14}, payload := () }
+  else
+    { round := 5, creator := ⟨(i : ℕ) - 20, by omega⟩, refs := {16, 17, 18}, payload := () }
+
+def U7 : BlockUniverse (Fin 4) (Fin 24) Unit where
+  ids := Finset.univ
+  block := lk7
+  complete := by decide
+  valid := by decide
+  no_equivocation := by decide
+
+/-- Slots every three rounds, always led by validator 0. -/
+instance : Slots (Fin 4) where
+  slotRound k := 3 * k
+  leader _ := 0
+  spacing k := by omega
+
+def V7 : View (Fin 4) (Fin 24) Unit U7 where
+  ids := Finset.univ
+  subset_ids := by decide
+  complete := by decide
+
+-- Slot 0's candidate is genesis block 0; slot 1's is block 12.
+example : IsLeaderBlock U7 0 0 := by decide
+example : IsLeaderBlock U7 1 12 := by decide
+
+-- Slot 0 is genuinely UNDECIDED: one certificate, one blamer, neither a quorum.
+example : certificates U7 0 0 = {8} := by decide
+example : ¬ DirectCommit U7 0 0 := by decide
+example : ¬ DirectSkip U7 0 0 := by decide
+
+-- Slot 1 IS directly committed, so it can serve as slot 0's anchor.
+example : DirectCommitIn U7 V7 12 3 := by decide
+
+/-- **The indirect rule fires.** Slot 0 is undecided directly, but slot 1 is
+directly committed and its leader block (12) reaches the lone certificate
+(8) for slot 0's candidate. So slot 0 is committed *indirectly*, anchored on
+the nearest committed slot after it.
+
+This inhabits `Decided`'s indirect constructor — the case the whole Stage C
+argument is about. -/
+example : Decided U7 V7 0 (some 0) :=
+  Decided.indirectCommit (j := 1) (A := 12) (by omega)
+    (Decided.directCommit (by decide) (by decide))
+    (fun i h1 h2 => absurd h2 (by omega))
+    (by decide)
+    ⟨8, by decide, Reaches.single (by decide)⟩
+
+-- The anchor really is two rounds of indirection away from the certificate's
+-- own evidence: block 12 does not reference slot 0's candidate directly.
+example : (0 : Fin 24) ∉ (U7.block 12).refs := by decide

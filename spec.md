@@ -799,7 +799,9 @@ Spec label to Lean identifier, for the parts that are built.
 | T6a (usable form) | `View.exists_reaches_iff` | `CausalHistory.lean` |
 | M4 | `indirect_agrees_with_direct` | `Mysticeti.lean` |
 | M4 (view form) | `certifiedIn_iff_of_view` | `Mysticeti.lean` |
-| M6 | *(not yet built)* | `Mysticeti.lean` |
+| C1: `Slots`, `IsLeaderBlock`, `Decided` | *built* | `Mysticeti.lean` |
+| C1: `DirectCommitIn`, `directCommit_of_directCommitIn` | *built* | `Mysticeti.lean` |
+| M6 (C2–C4) | *(not yet built)* | `Mysticeti.lean` |
 | T4–T5 | *(unscheduled, Appendix A)* | `Commit.lean` |
 
 `CommonCore.lean` is the one file importing `Mathlib` wholesale rather than

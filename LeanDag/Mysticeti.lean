@@ -308,4 +308,136 @@ theorem certifiedIn_iff_of_view {V : View Validator BlockId Payload U} {A L : Bl
     (∃ C, C ∈ V.ids ∧ C ∈ certificates U L r ∧ Reaches U A C) ↔ CertifiedIn U A L r :=
   View.exists_reaches_iff hA
 
+/-! ## Stage C1 — the slot schedule and the decision relation -/
+
+/-- The leader schedule. Slots are **not** every round: the `+3` spacing is
+what puts every anchor at round `≥ r+3`, which is what M4's commit half
+needs. It is a safety parameter, not a throughput one. -/
+class Slots (Validator : Type*) where
+  /-- The round at which slot `k` is decided. -/
+  slotRound : ℕ → ℕ
+  /-- The validator whose block is the slot-`k` candidate. -/
+  leader : ℕ → Validator
+  /-- Consecutive slots are at least three rounds apart. -/
+  spacing : ∀ k, slotRound k + 3 ≤ slotRound (k + 1)
+
+variable [S : Slots Validator]
+
+omit [Fintype Validator] [DecidableEq Validator] F in
+/-- Any later slot is at least three rounds further on. Written `S.slotRound`
+rather than bare `slotRound` for the same reason as `F.f`: the field returns
+a bare `ℕ`, so nothing would fix `Validator`. -/
+theorem slotRound_add_three_le {j k : ℕ} (h : k < j) :
+    S.slotRound k + 3 ≤ S.slotRound j := by
+  induction j with
+  | zero => omega
+  | succ n ih =>
+    rcases Nat.lt_succ_iff_lt_or_eq.mp h with hlt | heq
+    · have := ih hlt
+      have := S.spacing n
+      omega
+    · subst heq
+      exact S.spacing k
+
+/-- `L` is a candidate block for slot `k`: the right round, the right author.
+
+A *correct* leader has at most one such block (T1); a Byzantine one may have
+several, which is why the definitions below quantify over candidates rather
+than selecting one. M5 supplies uniqueness where it is needed. -/
+def IsLeaderBlock (U : BlockUniverse Validator BlockId Payload) (k : ℕ) (L : BlockId) : Prop :=
+  L ∈ U.ids ∧ (U.block L).round = S.slotRound k ∧ (U.block L).creator = S.leader k
+
+/-- As with the Stage A predicates, these are decidable but Lean needs
+telling, so concrete models can settle them by `decide`. -/
+instance decidableIsLeaderBlock (k : ℕ) (L : BlockId) : Decidable (IsLeaderBlock U k L) :=
+  inferInstanceAs (Decidable (L ∈ U.ids ∧ (U.block L).round = S.slotRound k ∧
+    (U.block L).creator = S.leader k))
+
+/-! ### View-relative direct rules
+
+A validator applies the direct rules to what it can actually see. These are
+monotone into the universe-level versions of Stage A, so M4 and M5 lift to
+views without redoing any counting. -/
+
+/-- The certificates for `L` that a view actually holds. -/
+def certificatesIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Finset BlockId :=
+  certificates U L r ∩ V.ids
+
+/-- Direct commit, as judged from a single view. -/
+def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
+  2 * F.f + 1 ≤ (creatorsOf U.block (certificatesIn U V L r)).card
+
+/-- Direct skip, as judged from a single view. -/
+def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
+  2 * F.f + 1 ≤
+    (creatorsOf U.block
+      (((blocksAt U (r + 1)).filter (fun q => L ∉ (U.block q).refs)) ∩ V.ids)).card
+
+omit S in
+instance decidableDirectCommitIn (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) :
+    Decidable (DirectCommitIn U V L r) :=
+  inferInstanceAs (Decidable (2 * F.f + 1 ≤ (creatorsOf U.block (certificatesIn U V L r)).card))
+
+instance decidableDirectSkipIn (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) :
+    Decidable (DirectSkipIn U V L r) :=
+  inferInstanceAs (Decidable (2 * F.f + 1 ≤
+    (creatorsOf U.block
+      (((blocksAt U (r + 1)).filter (fun q => L ∉ (U.block q).refs)) ∩ V.ids)).card))
+
+omit S in
+/-- **A view can only under-report.** Everything it sees is real, so a
+view-relative direct commit is a genuine one.
+
+This one line is what lets all of Stage A be reused unchanged: M2, M4 and M5
+are stated universe-level, and a validator's local judgement feeds straight
+into them. -/
+theorem directCommit_of_directCommitIn {V : View Validator BlockId Payload U}
+    {L : BlockId} {r : ℕ} (h : DirectCommitIn U V L r) : DirectCommit U L r :=
+  le_trans h (Finset.card_le_card (Finset.image_subset_image Finset.inter_subset_left))
+
+omit S in
+theorem directSkip_of_directSkipIn {V : View Validator BlockId Payload U}
+    {L : BlockId} {r : ℕ} (h : DirectSkipIn U V L r) : DirectSkip U L r :=
+  le_trans h (Finset.card_le_card (Finset.image_subset_image Finset.inter_subset_left))
+
+/-! ### The decision relation
+
+`Decided U V k v` — a validator holding `V` has settled slot `k`, with `v`
+naming the committed block or `none` for a skip.
+
+A **relation**, not a function: a `decide` function would recurse upward in
+slot index with no a-priori bound, needing fuel or partiality for nothing,
+since none of this needs to compute.
+
+The indirect cases anchor on the **nearest** committed slot after `k`. The
+naive reading of "nearest" — no slot strictly between is committed — is a
+*negative* premise, which an inductive definition cannot carry. It is stated
+positively as *every slot strictly between is decided `none`*, which is
+equivalent because the sweep decides every slot it passes, and which keeps
+every recursive occurrence positive. -/
+inductive Decided (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) : ℕ → Option BlockId → Prop
+  /-- The direct rule commits a candidate outright. -/
+  | directCommit {k : ℕ} {L : BlockId} :
+      IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
+      Decided U V k (some L)
+  /-- The direct rule blames every candidate — including vacuously, when the
+  leader produced no block at all. -/
+  | directSkip {k : ℕ} :
+      (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
+      Decided U V k none
+  /-- Anchored on the nearest committed slot, a certificate is in reach. -/
+  | indirectCommit {k j : ℕ} {A L : BlockId} :
+      k < j → Decided U V j (some A) → (∀ i, k < i → i < j → Decided U V i none) →
+      IsLeaderBlock U k L → CertifiedIn U A L (S.slotRound k) →
+      Decided U V k (some L)
+  /-- Anchored on the nearest committed slot, no candidate is in reach. -/
+  | indirectSkip {k j : ℕ} {A : BlockId} :
+      k < j → Decided U V j (some A) → (∀ i, k < i → i < j → Decided U V i none) →
+      (∀ L, IsLeaderBlock U k L → ¬ CertifiedIn U A L (S.slotRound k)) →
+      Decided U V k none
+
 end LeanDag
