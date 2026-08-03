@@ -373,17 +373,15 @@ Which form to use is determined by how supporters are obtained:
   For a block, apply it with `s := b.refs` and discharge the quorum
   hypothesis from validity (§3.2, definitional).
 
-  **The whole T0 chain is currently unreachable.** `exists_correct_of_card`
-  feeds only T0, T0 feeds only T0', and T0' feeds nothing. T3's base case
+  **Unused by Phase 1 and 1b, load-bearing from Phase 2 on.** T3's base case
   went through T0' until the coverage refactor (§4 *Coverage*) and now calls
-  `reaches_of_correct_support_of_card`, whose intersection argument has a
-  different shape: one quorum against one *correct* set of size `f+1`, rather
-  than two quorums. Phase 1 and 1b therefore reach a correct validator via
+  `reaches_of_correct_support_of_card`, whose intersection has a different
+  shape: one quorum against one *correct* set of size `f+1`, rather than two
+  quorums. Phases 1 and 1b therefore reach a correct validator via
   `card_inter_correct_of_quorum` instead.
 
-  All three are needed again from Phase 2 on: M5 runs a two-quorum
-  intersection once per certification layer — exactly T0's shape — as does
-  T5 in Appendix A. Keep the chain.
+  M5 uses T0' **twice** — once per certification layer — which is exactly
+  T0's two-quorum shape, as does T5 in Appendix A.
 
 - **T1 — Non-equivocation as id equality.** For `v ∈ Correct`, any two ids
   `i j ∈ U.ids` with creator `v` at the same round satisfy `i = j`.
@@ -742,7 +740,8 @@ Spec label to Lean identifier, for the parts that are built.
 | M1 | `not_directCommit_of_directSkip` | `Mysticeti.lean` |
 | M2 | `exists_certificate_reaches_of_directCommit` | `Mysticeti.lean` |
 | M3 | `certificates_eq_empty_of_directSkip` | `Mysticeti.lean` |
-| T6a, M4–M6 | *(not yet built)* | `Mysticeti.lean` |
+| M5 | `eq_of_directCommit_of_creator_eq` | `Mysticeti.lean` |
+| T6a, M4, M6 | *(not yet built)* | `Mysticeti.lean` |
 | T4–T5 | *(unscheduled, Appendix A)* | `Commit.lean` |
 
 `CommonCore.lean` is the one file importing `Mathlib` wholesale rather than

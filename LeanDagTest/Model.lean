@@ -12,6 +12,7 @@ open LeanDag
 #print axioms LeanDag.certificates_eq_empty_of_directSkip
 #print axioms LeanDag.not_directCommit_of_directSkip
 #print axioms LeanDag.exists_certificate_reaches_of_directCommit
+#print axioms LeanDag.eq_of_directCommit_of_creator_eq
 
 instance : Faults (Fin 4) where
   f := 1
@@ -301,3 +302,52 @@ example : ∃ C ∈ certificates U5 0 0, Reaches U5 12 C :=
 -- The indirection is real: block 12's own references are {8,9,10}.
 example : (0 : Fin 16) ∉ (U5.block 12).refs := by decide
 example : (4 : Fin 16) ∉ (U5.block 12).refs := by decide
+
+/-! ## M5 needs an EQUIVOCATING leader to say anything
+
+Every model above has one block per validator per round, so M5 would only
+ever be applied with `L₁ = L₂` -- true but empty. `U6` gives the Byzantine
+validator 0 **two** genesis blocks, which non-equivocation permits precisely
+because it is Byzantine:
+
+  ids 0-3   round 0, genesis by validators 0,1,2,3
+  id  4     round 0, a SECOND genesis by validator 0   -- equivocation
+  ids 5-8   round 1, refs {0,1,2}
+  ids 9-12  round 2, refs {5,6,7}
+
+Block 0 is directly committed. Block 4 has the same author and round, so M5
+forbids it from also being committed -- which is the Byzantine-leader case
+the whole distinctness invariant exists to handle.
+-/
+
+def lk6 : Fin 13 → Block (Fin 4) (Fin 13) Unit := fun i =>
+  if h4 : (i : ℕ) < 4 then
+    { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
+  else if (i : ℕ) = 4 then
+    { round := 0, creator := 0, refs := ∅, payload := () }
+  else if h9 : (i : ℕ) < 9 then
+    { round := 1, creator := ⟨(i : ℕ) - 5, by omega⟩, refs := {0, 1, 2}, payload := () }
+  else
+    { round := 2, creator := ⟨(i : ℕ) - 9, by omega⟩, refs := {5, 6, 7}, payload := () }
+
+def U6 : BlockUniverse (Fin 4) (Fin 13) Unit where
+  ids := Finset.univ
+  block := lk6
+  complete := by decide
+  valid := by decide
+  no_equivocation := by decide
+
+-- Validator 0 really does equivocate at round 0, and it is Byzantine.
+example : (U6.block 0).creator = (U6.block 4).creator := by decide
+example : (U6.block 0).round = (U6.block 4).round := by decide
+example : (0 : Fin 13) ≠ 4 := by decide
+example : (0 : Fin 4) ∉ (Correct : Finset (Fin 4)) := by decide
+
+-- One of the two equivocating blocks is directly committed.
+example : DirectCommit U6 0 0 := by decide
+
+/-- **M5 applied.** The other one therefore cannot be — the conclusion is a
+consequence of the theorem, not of the model being small. -/
+example : ¬ DirectCommit U6 4 0 := fun h4 =>
+  absurd (eq_of_directCommit_of_creator_eq (L₁ := 0) (L₂ := 4) (by decide) h4 (by decide))
+    (by decide)
