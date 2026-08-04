@@ -390,7 +390,7 @@ abbrev FairSchedule : Prop := FairScheduleOn Correct
 ### The timing layer
 
 `LeanDag/Timing.lean`. Everything above treats `SynchronisedOn` as a
-hypothesis; this is where it is earned (Q1).
+hypothesis; this is where it is earned (S6).
 
 ```lean
 /-- When each validator built each block, and what the network guarantees.
@@ -408,14 +408,26 @@ structure Timing (U) (T : Finset Validator) (N : ℕ) where
   blk_mem : ∀ v ∈ T, ∀ n ≤ N, blk v n ∈ U.ids
   blk_creator : ∀ v ∈ T, ∀ n ≤ N, (U.block (blk v n)).creator = v
   blk_round : ∀ v ∈ T, ∀ n ≤ N, (U.block (blk v n)).round = n
-  /-- **The waiting rule** (protocol). A *full timeout* after entering the
-  round — **not** as soon as a quorum is in hand. See Q1. -/
+  /-- **Build no earlier** (protocol). A *full timeout* after entering the
+  round — **not** as soon as a quorum is in hand (S6). -/
   waits : ∀ v ∈ T, ∀ n < N, built v n + timeout n ≤ built v (n + 1)
   timeout_pos : ∀ n, 1 ≤ timeout n
   /-- **Delivery** (network). This is GST, and where the chain bottoms out. -/
   covers : ∀ v ∈ T, ∀ w ∈ T, ∀ n < N, gst ≤ built w n →
     built w n + delay ≤ built v (n + 1) →
     blk w n ∈ (U.block (blk v (n + 1))).refs
+  /-- The last time any `T`-validator built at round `n`. An explicit max, so
+  no `Finset.max'` machinery is needed. -/
+  latest : ℕ → ℕ
+  built_le_latest : ∀ v ∈ T, ∀ n ≤ N, built v n ≤ latest n
+  /-- `latest` is **attained**, not merely an upper bound. As a bare bound it
+  would carry no information and S6's second case would fail. -/
+  latest_mem : ∀ n ≤ N, ∃ w ∈ T, latest n ≤ built w n
+  /-- **Build no later** (protocol). Once the timeout has elapsed *and* the
+  round below has arrived, a validator builds. The counterpart to `waits`,
+  and what makes drift derivable rather than assumed (S6). -/
+  prompt : ∀ v ∈ T, ∀ n < N,
+    built v (n + 1) ≤ max (built v n + timeout n) (latest n + delay)
 
 /-- `T`-validators are never more than `D` apart at the same round, from
 round `n₀` on. **Derived**, not assumed — see S6. -/
@@ -611,10 +623,16 @@ def Timing.DriftFrom (tm : Timing U T N) (n₀ D : ℕ) : Prop :=
 
   `Timing.synchronisedOn_of_timing` and `exists_synchronisedOn_of_backoff` go
   one layer further, deriving `SynchronisedOn U T R` from **GST plus an
-  unbounded backoff** (Q1). The argument is four inequalities: drift bounds
+  unbounded backoff** (S6). The argument is four inequalities: drift bounds
   how far apart `T`-validators are at a round, the backoff pushes the timeout
   past `drift + delay`, `waits` turns that into "everything a peer built one
   round below has arrived", and `covers` turns arrival into a reference.
+
+  Drift is itself a theorem (`driftFrom_of_prompt`), not a hypothesis: pairing
+  `waits` with `prompt` keeps the spread between `T`-validators from growing
+  once `delay ≤ timeout`, so a bound at one round is a bound at all later
+  ones. What the layer assumes is GST, the two build rules, and a backoff that
+  never stops growing.
 
   Non-equivocation finishes it. `SynchronisedOn` quantifies over *every*
   `T`-authored block, and T1 identifies each with the one `Timing` names —
@@ -684,7 +702,7 @@ L4 wanted.
 What was not foreseen is how much it unlocked. Once `Delivery` existed it made
 S2 settleable, and settling S2 changed `Live`, which now takes the `Delivery`
 it is stated against. And the seam it cut — *assume `Synchronised` above,
-supply it below* — is exactly where the timing layer (L7b, Q1) then slotted
+supply it below* — is exactly where the timing layer (L7b, S6) then slotted
 in, one level further down, again with nothing above it changing.
 
 So the layer is additive *downstream* of `Synchronised` and a *prerequisite*
@@ -702,79 +720,14 @@ separately, because the cheapest item here is not the most important one.
 
 | | question | why it matters | cost |
 |---|---|---|---|
-| **Q1** | Does a timeout actually deliver honest-to-honest coverage? | *settled* — §9 S6 | — |
-| **Q2** | Is `Populated` too strong? | *settled* — §9 S5 | — |
 | **Q3** | How far should the quantitative version go? | no operational bound of any kind | high |
-| **Q4** | Should `FairSchedule` be round-robin? | no throughput bound; leader predictability unmodelled | medium |
-| **Q5** | Is a partial-view model needed? | two definitions are exercised only degenerately | low |
+| **Q4** | Should `FairScheduleOn` be round-robin? | no throughput bound; leader predictability unmodelled | medium |
+| **Q5** | Is a partial-view model needed? | three definitions are exercised only degenerately | low |
 | **Q6** | Should L1 hold from round 0, or only after `R`? | presentational | low |
 
-### Q1 — Does a timeout actually deliver honest-to-honest coverage? — **settled, §9 S6**
-
-**Mostly settled** by `LeanDag/Timing.lean`, which derives `SynchronisedOn`
-from GST plus an unbounded backoff:
-
-```
-GST + Δ delivery  ──▶  SynchronisedOn U T R  ──L4/L6──▶  commits
-   (Timing.lean)          (was assumed)
-```
-
-`exists_synchronisedOn_of_backoff` is the headline: given bounded drift and a
-monotone unbounded timeout, coverage holds from *some* round. Nothing above
-changed — L4 and L6 still take `SynchronisedOn` and this supplies it, exactly
-as `synchronised_of_delivery` does from `Delivery`. That seam was cut by L7.
-
-**Drift is now derived too** (`driftFrom_of_prompt`), so nothing is left. See
-§9 S6 for how, and for the one correction the argument needed.
-
-**Two things the formalisation corrected.**
-
-The dichotomy *"either Byzantine validators participate and commits happen, or
-the timeout grows"* does **not** work: a Byzantine *leader* can publish and
-reveal selectively, leaving its slot undecided however long anyone waits. The
-argument that does work never mentions the adversary — it quantifies over `T`
-only, which is better, since no reasoning about strategy is needed.
-
-It also creates an obligation on implementations: `waits` says a validator
-builds a **full timeout** after entering the round, *not* as soon as it holds
-`2f+1` blocks. An adversary answering instantly can fill an early quorum with
-Byzantine blocks and crowd out the correct ones — including the leader's — so
-building on the first `2f+1` makes the backoff accomplish nothing.
-
-The original statement, kept because it is why the file exists:
-
-A correct validator waits on a timeout and builds on whatever arrived; it
-cannot tell correct peers from Byzantine ones (§3b). If Byzantine validators
-respond *fast* while some correct ones are slow, a validator can fill its
-quorum with Byzantine blocks and miss correct ones — **violating
-`Synchronised` even after GST**. §4.3 states the justification is "a timing
-argument this development does not formalize". That sentence is the gap.
-
-Distinct from Q3: Q3 asks for a *bound*, Q1 asks whether the qualitative
-property holds **at all**. If it fails, L4–L6 are true but empty — every
-theorem after L3 rests on `Synchronised`.
-
-Expensive, because settling it needs the time model §4.3 deliberately drops.
-But it is the assumption most likely to be false, so it heads the list.
-
-### Q2 — Is `Populated` too strong? — **settled, §9 S5**
-
-`Populated U r` demands that **every** correct validator have a block at round
-`r`, and L4 needs three consecutive such rounds. One correct validator missing
-one round — a GC pause, a restart, a slow disk — and L4 becomes inapplicable.
-
-But Mysticeti still commits: it needs `2f+1` blocks at each round, not a
-*particular* set of them. **So the theorem is strictly weaker than the
-protocol**, and it lapses under ordinary operational hiccups rather than under
-attack, which is the wrong way round.
-
-Restate as *a quorum of correct validators is populated*. L4's proof only ever
-counts to `2f+1`, so it should survive unchanged — this is the cheapest real
-improvement on the list.
-
-One caveat on how much it buys: when exactly `f` validators are Byzantine,
-`|Correct| = 2f+1` and the two formulations coincide. The gain shows when
-fewer than `f` are actually faulty, which is the common case.
+Q1 (*does a timeout deliver coverage?*) and Q2 (*is `Populated` too strong?*)
+were the two highest-importance entries and are both **settled** — §9, S6 and
+S5. Numbering is left alone so earlier references still resolve.
 
 ### Q3 — How far should the quantitative version go?
 
@@ -794,7 +747,7 @@ this cannot supply:
 rather than time); those are separable, since slot-counting needs no clock.
 The layer Δ attaches to now exists: `held`, not `refs` (S4).
 
-### Q4 — Should `FairSchedule` be round-robin?
+### Q4 — Should `FairScheduleOn` be round-robin?
 
 Two distinct issues behind one definition.
 
@@ -818,8 +771,10 @@ currently exercises the condition.
 
 `Ugrow` sets `held v n` to *every* round-`n` block, so the delivery hop added
 by S2 is never exercised against a genuinely partial view — and partial views
-are the normal case, not the exception. `DeliversQuorum` and `Delivery` are
-therefore satisfiable but barely tested.
+are the normal case, not the exception. `Delivery`, `DeliversQuorum` and now
+`Timing` are all satisfiable but barely tested: `ugrowTiming` likewise has
+zero drift and zero delay, so S6's two-case induction only ever takes the
+timeout-limited branch.
 
 One construction would settle two things at once, since the same model gives
 the round-spread exhibit §4.1 asks for: a universe where L0 holds while
@@ -968,17 +923,47 @@ Progress-with-the-fast-ones spends from the same budget as Byzantine faults.
 At exactly `f` Byzantine, `T = Correct` necessarily and no correct validator
 may lag.
 
-### S6 — drift is derived, so the chain bottoms out at GST alone
+### S6 — `Synchronised` is earned from GST, drift included
 
-`Timing` first carried `Drift` as a field: `T`-validators are never more than
-`D` apart in real time at the same round. That was the last assumption in the
-chain, and it is now a theorem.
+**The problem this answers** — originally Q1, the highest-importance entry on
+the open list:
+
+> A correct validator waits on a timeout and builds on whatever arrived; it
+> cannot tell correct peers from Byzantine ones (§3b). If Byzantine validators
+> respond *fast* while some correct ones are slow, a validator can fill its
+> quorum with Byzantine blocks and miss correct ones — **violating
+> `Synchronised` even after GST**. §4.3 called the justification "a timing
+> argument this development does not formalize".
+
+`LeanDag/Timing.lean` settles it, adding the layer beneath `Delivery`:
+
+```
+GST + Δ delivery  ──▶  SynchronisedOn U T R  ──L4/L6──▶  commits
+   (Timing.lean)          (was assumed)
+```
+
+**Two things the formalisation corrected.** The dichotomy *"either Byzantine
+validators participate and commits happen, or the timeout grows"* does not
+work: a Byzantine *leader* can publish and reveal selectively, leaving its
+slot undecided however long anyone waits. The argument that does work never
+mentions the adversary — it quantifies over `T` only, which is better, since
+no reasoning about strategy is needed.
+
+And it puts an obligation on implementations: `waits` says a validator builds
+a **full timeout** after entering the round, *not* as soon as it holds `2f+1`
+blocks. An adversary answering instantly can fill an early quorum with
+Byzantine blocks and crowd out the correct ones — including the leader's — so
+building on the first `2f+1` makes the backoff accomplish nothing.
+
+**Drift, the last assumption.** `Timing` first carried `Drift` as a field:
+`T`-validators are never more than `D` apart in real time at the same round.
+It is now a theorem.
 
 The idea — *once one correct validator reaches round `r`, the others follow
 within a bounded time* — needed one correction. It does **not** give a fixed
 `2Δ` bound, because every validator's clock advances by the same timeout: the
-spread is **preserved**, not compressed. That is enough, since Q1 needs drift
-*bounded*, not small.
+spread is **preserved**, not compressed. That is enough: the coverage
+argument needs drift *bounded*, not small.
 
 Pairing `waits` (build no *earlier* than a full timeout) with a new `prompt`
 field (build no *later* than the timeout elapsing and the round below
