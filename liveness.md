@@ -81,10 +81,13 @@ rule forces infinitely many distinct blocks into `U.ids`, which is a
 vacuous. That was found by trying to build the witness model.
 
 **(b) Correct blocks cover the correct blocks below them.** Distinct from
-(a), and pulling the other way: (a) says build as soon as you can, (b) says
-do not. After GST, every correct block references every correct block of the
-round below. Without (b) correct validators race ahead under perfect
-synchrony and never vote for the leader, so nothing commits. This is the
+(a), and pulling the other way: (a) is a **floor** on production — a validator
+must eventually build (`Timing.prompt`) — while (b) is a **delay**, requiring
+it not build too early (`Timing.waits`). After GST, every correct block
+references every correct block of the round below. Without (b) correct
+validators race ahead under perfect synchrony and never vote for the leader,
+so nothing commits — which is why the waiting rule is a protocol obligation
+and not a performance tweak. This is the
 **synchrony** assumption, and §5's `Synchronised` is where it lives — for
 now; §9's S4 splits it into an implementable rule and a delivery
 assumption. It is not leader-specific: catching the leader's block is *why*

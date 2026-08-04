@@ -562,8 +562,11 @@ taxonomy is worth foregrounding:
   the protocol produces but cannot name (§7.2).
 - **(c) Correct leaders recur** — schedule.
 
-(a) and (b) pull against each other: (a) says build as soon as you can, (b)
-says do not.
+(a) and (b) pull against each other, and the timing layer resolves the tension
+exactly: (a) is a **floor** on production — a validator must eventually build
+(`prompt`, the upper bound on build time); (b) is a **delay** — it must not
+build too early (`waits`, the lower bound). Neither alone suffices, and
+`Timing` carries both because a protocol needs both.
 
 ### 6.1 L0 — the DAG is dense below its frontier
 
@@ -591,9 +594,14 @@ def DeliversQuorum (D : Delivery U) : Prop :=
     ∀ v ∈ Correct, 2 * F.f + 1 ≤ (creatorsOf U.block (D.held v n)).card
 ```
 
-- `held` is what the static model lacked. **Note what it does not contain: a
-  clock.** With no time model, "waited longer" can only show up as a larger
-  `held` — which is exactly the trace a timeout leaves.
+- `held` is what the static model lacked, and its **index is the point**:
+  `held v n` is what `v` had in hand *at the moment it built its round-`(n+1)`
+  block*, not what `v` ever receives. That is the build-time index a view
+  cannot supply (§7.1).
+- **Note what it does not contain: a clock.** With no time model, "waited
+  longer" can only show up as a larger `held` — which is exactly the trace a
+  timeout leaves, and it is why `Timing` (§6.8) can slot in underneath without
+  anything above changing.
 - `DeliversQuorum` is stated **conditionally** (existence first, holding
   second). Unconditionally it would assert the very block production L1 sets
   out to prove.
@@ -757,6 +765,12 @@ assumption becomes two and nothing turns unconditional. The gain is that each
 piece is a *single kind of thing*: `includes` is implementable and observable;
 `EventuallyDelivers` is pure network.
 
+**Note what `EventuallyDelivers` is, precisely.** It is view convergence
+*indexed to the build moment* — it does not say correct blocks reach `v`
+eventually, but that they are in `D.held v n`, which is what `v` had in hand
+when it built at `n+1`. That indexing is doing the work, and it is exactly what
+a view-shaped statement lacks (§7.1). Given it, L7a is one line.
+
 ### 6.8 L7b — the seam discharged from GST and backoff
 
 The timing layer. Present the structure, then the three theorems.
@@ -863,7 +877,7 @@ mentions certificates.**
 
 This is the section the paper exists for. It should be able to stand alone.
 
-### 7.1 The view formulation is half the assumption
+### 7.1 The view formulation, and the two things it needs beside it
 
 The original proposal stated it on **views**:
 
@@ -872,58 +886,77 @@ The original proposal stated it on **views**:
 
 This is appealing — `View` is already first-class, `V₁ ⊆ V₂` is already
 meaningful, every safety result is already view-relative — and it **does**
-give L3 directly: the common view *is* `View.full`.
+give L3 outright: the common view *is* `View.full`, so `decided_full` is L2
+instantiated.
 
-**It gives coverage too, but only once a build rule is added.** Fast
-propagation puts every correct round-`n` block in hand; a validator that then
-waits long enough before building at `n+1` references all of them. That is the
-mechanism and §6.8 formalises it. What the view statement supplies by itself is
-the **delivery half only** — a perfectly propagating network still commits
-nothing if validators build on the `2f+1`st arrival. Hence `Timing.waits` is a
-structure field, not a remark.
+**The mechanism for coverage is the expected one, and it works.** Fast
+propagation puts every correct round-`n` block into every correct validator's
+hands; a validator that waits long enough before building at `n+1` then
+references all of them. §6.8 is that argument, formalised. Nothing exotic is
+going on, and the report should not suggest otherwise.
 
-> **Do not overstate this.** An earlier draft of `liveness.md` §4.3 claimed
-> coverage "does not follow from view convergence" and that the timing
-> argument was unformalised. Both were wrong once `Timing.lean` existed. The
-> report must not repeat it.
+What the view statement does not supply is **two further ingredients**, and
+identifying them is the contribution:
 
-**What does survive is a modelling point: views need a build-time index.**
-A block's references are fixed at construction, so what matters is not what a
-validator holds *eventually* but what it held *at that moment*. `View` records
-no time, so a view-convergence statement cannot be plugged in as-is. The
-delivery layer supplies the index — `Delivery.held v n` is *what `v` held from
-round `n` when it built its round-`(n+1)` block* — and with it L7a is one line.
-The static model has no clock, which is why the assumption must be phrased on
-`refs`.
+**(i) A build rule.** View convergence is a claim about the network. Coverage
+additionally needs a claim about *when validators build*. A perfectly
+propagating network still commits nothing if validators build the moment they
+hold `2f+1` — they would reference the fastest quorum and no more. So the
+assumption pairs a delivery bound with a protocol obligation, which is why
+`waits` and `prompt` are `Timing` fields rather than remarks, and why S4
+splits `Synchronised` into `EventuallyDelivers` (network) and `includes`
+(protocol).
 
-**And the timeout must exceed `delay + D`, not `delay`.** Validators enter a
-round at different times, so the wait must cover the propagation bound *and*
-the spread. `D` is derived, not assumed (§6.8), and its content is that drift
-is **preserved** rather than compressed.
+**(ii) A build-time index on the view.** References are fixed at construction,
+so what matters is not what a validator holds *eventually* but what it held *at
+the moment it built*. `View` records no time, so a view-convergence statement
+cannot be plugged in as it stands. The delivery layer supplies the index:
+`Delivery.held v n` is *what `v` held from round `n` when it built its
+round-`(n+1)` block*, and with that indexing L7a is a single line. This is a
+modelling point, not a claim about mechanism — but it is why the assumption is
+phrased on `refs`, and why `held` exists at all.
 
-[EXPAND — the honest framing for a reviewer: the notes' assumption was
-*incomplete*, not *wrong*, and the development's contribution is identifying
-the missing protocol half and the build-time index. That is a smaller claim
-than "views cannot express this", and it is the defensible one.]
+**A third detail, easy to miss: the timeout must exceed `delay + D`, not
+`delay`.** Validators enter a round at different times, so the wait has to
+cover the propagation bound *and* the spread `D` between entries. That is
+`hbackoff` in §6.8, and `D` is derived rather than assumed — the content of
+`driftFrom_of_prompt` being that drift is **preserved**, not compressed.
+
+> **Calibration for the write-up.** The claim is that the view formulation is
+> *incomplete*, not that it is *wrong* and not that views *cannot* express
+> this. An earlier draft of `liveness.md` §4.3 said coverage "does not follow
+> from view convergence" and that the timing argument was unformalised; both
+> became false once `Timing.lean` landed, and the section was corrected. The
+> defensible contribution is the pair (i)/(ii) above — smaller than an
+> impossibility claim, and it survives scrutiny.
 
 ### 7.2 Coverage is an outcome, not an instruction
 
-The second thing the report must be honest about. A validator **cannot execute
-`SynchronisedOn`**: it cannot tell which of its peers are correct, so "wait
-for the correct blocks" is not a rule it can follow. What it can do is:
+The second thing the report must be honest about, and it is independent of
+§7.1. A validator **cannot execute `SynchronisedOn`**: `Correct` is
+`F.byzantineᶜ`, a model-level object, so "reference every correct block below
+you" names two things a validator cannot determine — which held blocks are
+correct-authored, and whether all of them have arrived (a missing block is
+indistinguishable from one never published).
 
-- wait on a **timeout** and build with whatever arrived;
-- **raise** that timeout when commits stop arriving.
+What a validator *can* do is wait a fixed period, build on whatever arrived,
+and raise the period when things go badly. Those are `waits`, `prompt` and the
+backoff — all executable.
 
-Before GST no period is long enough, and nothing lets a validator detect that
-directly — what it observes is that **commits have stopped**. So the feedback
-loop that delivers coverage is driven by *liveness failure*, the very thing
-being proved away. `SynchronisedOn R` is the **outcome** of that loop once the
-network settles.
+**The awkward part is the backoff signal.** Before GST no period is long
+enough, and nothing lets a validator detect that directly; what it observes is
+that **commits have stopped**. So the loop that delivers coverage is driven by
+liveness failure, the very thing being proved away. That is a feedback loop
+rather than a vicious circle — but it means the argument cannot rest on
+modelling the loop's dynamics.
 
-§6.8 is what makes this rigorous rather than a story: `waits` and `prompt` are
-rules a validator *can* follow, `covers` is the network, and coverage is the
-theorem.
+**§6.8 sidesteps it rather than solving it, and that is the right move.** The
+backoff hypothesis is only `Monotone tm.timeout` together with
+`∀ m, ∃ n, m ≤ tm.timeout n` — grows, and grows without bound. Not its shape,
+not its rate, not the signal driving it. So the theorem holds whatever
+mechanism an implementation chooses, and the unmodelled feedback loop never
+has to be trusted. `SynchronisedOn R` is the **outcome** of that loop once the
+network settles; the proof needs only that some `R` exists.
 
 ### 7.3 What the abstraction buys
 
