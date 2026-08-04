@@ -39,7 +39,7 @@ blocks propagate, only that they do — and the assumption is realisable by
 ordinary gossip, so it cannot be quietly inconsistent.
 
 **But views carry only half of it.** View convergence gives L3 directly: the
-eventual common view *is* `View.full` (§4.2). It does **not** give
+common view *is* `View.full` (§4.2). It does **not** give
 honest-to-honest coverage, because a block's references are frozen when it is
 built and no later convergence enlarges them (§4.3). That is why
 `Synchronised` is stated on `refs` rather than on views — the one place the
@@ -53,14 +53,21 @@ worth being explicit about what kind of thing each is: (a) and (c) are
 name. None of the three is a DAG property.
 
 **(a) Correct validators produce blocks.** `Correct` currently means only
-*does not equivocate* — a purely negative condition. Every liveness statement
-is vacuous without a positive rule:
+*does not equivocate* — a purely negative condition, satisfied by a validator
+that crashes at round 0 and never speaks again. That is deliberate: it is what
+lets every safety result hold for crashed validators too. But it makes every
+liveness statement vacuous without a positive rule:
 
-> a correct validator has a round-`(r+1)` block once 2f+1 validators have
-> round-`r` blocks
+> up to a horizon `N`, a correct validator has a round-`(r+1)` block once
+> 2f+1 validators have round-`r` blocks
 
 This is an **asynchrony-only** assumption: it needs eventual delivery, not
 synchrony, and it is what makes the pre-GST results go through.
+
+**The horizon is not optional** — see §4.4. Without the bound `r < N` this
+rule forces infinitely many distinct blocks into `U.ids`, which is a
+`Finset`, so *no universe satisfies it* and every theorem assuming it is
+vacuous. That was found by trying to build the witness model.
 
 **(b) Correct blocks cover the correct blocks below them.** Distinct from
 (a), and pulling the other way: (a) says build as soon as you can, (b) says
@@ -68,7 +75,7 @@ do not. After GST, every correct block references every correct block of the
 round below. Without (b) correct validators race ahead under perfect
 synchrony and never vote for the leader, so nothing commits. This is the
 **synchrony** assumption, and §5's `Synchronised` is where it lives — for
-now; open question 7 splits it into an implementable rule and a delivery
+now; open question 8 splits it into an implementable rule and a delivery
 assumption. It is not leader-specific: catching the leader's block is *why*
 we want it, not what it says.
 
@@ -101,6 +108,9 @@ supports. This is the part where the abstraction has to be handled carefully:
 one of the phases turns out to be invisible, and saying so precisely is what
 keeps the framing honest.
 
+§4.4 is **not** a fourth phase. It records why `U` is finite and what that
+costs — a modelling constraint that cuts across all three.
+
 ### 4.1 Before GST — the DAG still grows
 
 Messages are delayed arbitrarily, so correct validators sit at wildly
@@ -115,7 +125,8 @@ DAG grows but that it **cannot grow tall and thin**: a single block high up
 forces a quorum of authors at every round beneath it.
 
 **L1 needs only asynchrony.** With rule (a) and eventual delivery, every
-correct validator eventually has a block at every round. No synchrony.
+correct validator eventually has a block at every round up to the horizon
+(§4.4). No synchrony.
 
 **Round spread is not a theorem.** That correct validators may be far apart in
 round number is a *negative* fact — an absence of any bound — so it belongs in
@@ -128,19 +139,19 @@ At GST the slow validators hold stale views, receive everything, and burst
 forward through the rounds they missed. In wall-clock terms this catch-up is
 real and takes time.
 
-**The limit universe cannot see it.** In the limit every correct validator has
-a block at every round (L1). The only question the limit can ask of a block is
-*whether it references every correct block of the round below*, and that is a
-property of the round it was built at — not of when it was built.
+**The snapshot cannot see it.** Up to the horizon every correct validator has
+a block at every round (L1). The only question the snapshot can ask of a block
+is *whether it references every correct block of the round below*, and that is
+a property of the round it was built at — not of when it was built.
 
 So GST and the end of catch-up are **indistinguishable** here: both are "some
 round from which correct blocks see every correct block below them".
 
-**The limit universe is the eventual common view.** Eventual DAG synchrony
-says anything one correct validator holds, all eventually hold. So the union
-of the correct validators' views *is* `U`, and every correct validator's
-eventual view is the **full** view — `ids := U.ids`, downward-closed for free
-by `U.complete`.
+**`U` is the common view as of the snapshot.** Eventual DAG synchrony says
+anything one correct validator holds, all eventually hold. So the union of the
+correct validators' views *is* `U`, and every correct validator's view of the
+snapshot is the **full** view — `ids := U.ids`, downward-closed for free by
+`U.complete`.
 
 That is the crispest form the assumption takes here, and it is what makes L3
 a theorem rather than an appeal: "eventually all agree" becomes "L2
@@ -206,7 +217,7 @@ liveness failure — the very thing being proved away.
 
 It also welds two unlike things into one object: the network guarantee and
 rule (3b). That is a modelling defect rather than a necessity, and open
-question 7 records the split — `Synchronised` becomes a **theorem**, derived
+question 8 records the split — `Synchronised` becomes a **theorem**, derived
 from an implementable protocol rule plus a delivery assumption. The timeout
 story above then attaches to something real: a timeout governs what a
 validator *holds*, which is a notion the split introduces and `refs` alone
@@ -224,18 +235,83 @@ the theorems are *"all will commit"* and *"never gets stuck"*, and Δ is a
 performance claim layered on top. Flag if the quantitative bound is wanted —
 it brings back the time model and should be scoped separately.
 
+### 4.4 The horizon — why `U` is finite, and what that costs
+
+`BlockUniverse.ids` is a **`Finset`**. Every universe holds finitely many
+blocks. That is not incidental: it is what makes `authorsAt` have a
+cardinality at all, and every quorum argument in the development counts one.
+
+The first draft of `Live` ignored this. It said a correct validator has a
+block at round 0 and another at every round after — infinitely many distinct
+blocks, in a `Finset`. So **no universe satisfied it**, and L1, though
+proved, said nothing. This is checked, not argued — writing `Live⁰` for that
+unbounded draft:
+
+```lean
+theorem not_live (U : BlockUniverse Validator BlockId Payload) : ¬ Live⁰ U
+```
+
+The proof is three lines: pick a correct validator, collect its blocks at
+rounds `0 … |U.ids|`, and note they are `|U.ids| + 1` distinct members of
+`U.ids`.
+
+The fix is a **horizon** `N`: `builds` fires only for `r < N`, so the DAG
+reaches round `N` and stops. Three things follow.
+
+**`N` is a demand on the DAG, not a bound on it.** `Live U N` requires that
+correct validators *actually have* blocks at every round up to `N`. A larger
+`N` is a **stronger** hypothesis satisfied by **fewer** DAGs — it is not
+slack, and picking it enormous does not make the theorems cover more. What
+makes them cover everything is that they are universally quantified over `N`:
+a DAG of height `h` is handled at `N = h`, whatever `h` is. There is no
+feasibility ceiling and no constant to choose.
+
+**Two independent axes.** `N` measures *extent* — how far the DAG reaches.
+`R` measures *quality* — from which round correct blocks cover the correct
+blocks below. Neither implies the other, and all four combinations are real:
+
+| | `R` small | `R` large, or never |
+|---|---|---|
+| **`N` large** | tall and synchronous — commits | tall but asynchronous — grows, commits nothing |
+| **`N` small** | synchronous but short — nothing to commit yet | short and asynchronous |
+
+Neither is a clock. `R` is a round index and `N` a round count; Δ stays
+dropped (§4.3).
+
+**Unboundedness moves to the family.** No finite snapshot contains infinitely
+many commits, and the first draft's claim that one could was the bug. "The
+ledger grows without bound" is now a statement across horizons: for every `N`
+there is a DAG reaching it (`Ugrow`), and for every slot there is a later one
+that commits (L6). That is the honest form of the claim when the object is a
+`Finset`.
+
+**What this does *not* touch.** L4 needs correct blocks at three consecutive
+rounds — a local, finite requirement. It takes `Populated` at `r`, `r+1` and
+`r+2` and never mentions `N`, growth, or a limit. The horizon appears only in
+L1, which manufactures `Populated` from growth, and in L6, which chains them.
+The only real proof in the plan is untouched by any of this.
+
 ## 5. Definitions
 
 ```lean
-/-- The protocol behaviour liveness needs, as properties of the limit
-universe. Not derivable from the DAG structure: `Correct` is a negative
-condition, and these are positive. Asynchrony-only — no synchrony here. -/
-structure Live (U : BlockUniverse Validator BlockId Payload) where
-  genesis : ∀ v ∈ Correct, ∃ b ∈ U.ids,
-    (U.block b).creator = v ∧ (U.block b).round = 0
-  builds  : ∀ r, 2 * F.f + 1 ≤ (authorsAt U r).card →
-    ∀ v ∈ Correct, ∃ b ∈ U.ids,
-      (U.block b).creator = v ∧ (U.block b).round = r + 1
+/-- What L4 actually needs of a round: every correct validator has a block
+there. Local and finite — no growth, no horizon, no limit. Splitting this out
+is what keeps `N` out of L4 entirely. -/
+def Populated (U : BlockUniverse Validator BlockId Payload) (r : ℕ) : Prop :=
+  ∀ v ∈ Correct, ∃ b ∈ U.ids,
+    (U.block b).creator = v ∧ (U.block b).round = r
+
+/-- The protocol behaviour liveness needs. Not derivable from the DAG
+structure: `Correct` is a negative condition, and these are positive.
+Asynchrony-only — no synchrony here.
+
+`N` is the **horizon**: `builds` fires only below it, so the DAG reaches
+round `N` and stops. Without that bound the structure is unsatisfiable, since
+`U.ids` is a `Finset` (§4.4). -/
+structure Live (U : BlockUniverse Validator BlockId Payload) (N : ℕ) where
+  genesis : Populated U 0
+  builds  : ∀ r < N, 2 * F.f + 1 ≤ (authorsAt U r).card →
+    Populated U (r + 1)
 
 /-- From round `R` on, correct blocks reference every correct block of the
 round below.
@@ -243,7 +319,7 @@ round below.
 `R` is **not** GST: it is the round from which synchrony has fully taken
 effect (§4.2). This single predicate carries both the network guarantee and
 rule (§3b), because honest-to-honest coverage does not follow from view
-convergence alone (§4.3). Open question 7 splits it and makes this a
+convergence alone (§4.3). Open question 8 splits it and makes this a
 *theorem*; the statement below is unchanged by that — only how it is
 obtained.
 
@@ -261,7 +337,7 @@ free, by `U.complete`. -/
 def View.full (U : BlockUniverse Validator BlockId Payload) :
     View Validator BlockId Payload U where
   ids := U.ids
-  subset_ids := le_refl _
+  subset_ids := Finset.Subset.rfl
   complete := U.complete
 
 /-- The schedule names a correct leader arbitrarily far out (§3c). Without
@@ -287,15 +363,20 @@ def FairSchedule : Prop :=
   `creators_refs_subset_authorsAt`). It is the precise form of *"the DAG grows
   regardless"*, and it says more than growth: the DAG cannot be tall and thin.
 
-- **L1 — No stall.** Every correct validator has a block at every round.
+- **L1 — No stall.** Given `Live U N`, every correct validator has a block at
+  every round up to `N`: `r ≤ N → Populated U r`.
 
   Induction on `r`. Base is `genesis`. For the step, the induction hypothesis
   puts every correct validator in `authorsAt U r`, and there are at least
   `2f+1` correct validators, so `builds` applies. Needs `Live` but **no
-  synchrony** — the notes' *"from round 0 onwards, always"*.
+  synchrony** — the notes' *"from round 0 onwards, always"*, now qualified by
+  the horizon (§4.4).
 
   This is where `card_correct` (`2f+1 ≤ |Correct|`) finally gets used.
   `spec.md` §2 has carried it as unused-but-kept-for-liveness from the start.
+
+  L1 is the **only** result where `N` does real work: its whole job is to turn
+  a growth assumption into the local `Populated` facts L4 consumes.
 
 ### View growth
 
@@ -330,15 +411,20 @@ def FairSchedule : Prop :=
 
 ### After R
 
-- **L4 — A correct leader commits.** Given `Live U`, `Synchronised U R`,
-  `R ≤ slotRound k`, and `leader k` correct, the leader's block is directly
-  committed.
+- **L4 — A correct leader commits.** Write `r = slotRound k`. Given
+  `Populated U r`, `Populated U (r+1)`, `Populated U (r+2)`,
+  `Synchronised U R`, `R ≤ r`, and `leader k` correct, the leader's block is
+  directly committed.
 
-  **`Live` is not optional here.** `Synchronised` says correct blocks
+  **Population is not optional here.** `Synchronised` says correct blocks
   *reference* correct blocks; it says nothing about blocks *existing*. Without
-  `Live` the theorem is satisfied vacuously by an empty DAG. L1 supplies the
-  leader's round-`r` block and the correct blocks at `r+1` and `r+2` that the
-  argument counts.
+  it the theorem is satisfied vacuously by an empty DAG.
+
+  **But growth is.** The three hypotheses are local and finite — no `Live`,
+  no `N`, no limit universe. L1 supplies them from `Live U N` when
+  `r + 2 ≤ N`, but L4 does not care where they come from. That is what keeps
+  the only hard proof in the plan independent of the horizon question
+  (§4.4).
 
   Every correct round-`(r+1)` block references `L` by synchrony — `L` is
   correct-authored, so honest-to-honest coverage applies — and the supporters
@@ -364,16 +450,45 @@ def FairSchedule : Prop :=
   **vacuously true** when the leader published nothing. Choosing the `∀` form
   over naming a candidate block is what makes this case disappear.
 
-- **L6 — Commits recur.** Given `Live U`, `Synchronised U R` and a
-  `FairSchedule`, for every slot there is a later slot that commits — so the
-  ledger grows without bound.
+- **L6 — Commits recur.** Given a `FairSchedule`, for every slot `k` there is
+  a slot `k' ≥ k` such that **every** sufficiently grown synchronous DAG
+  commits it:
 
-  Fairness names a correct leader at some slot `k' ≥ max(k, k_R)`, where `k_R`
-  is any slot with `R ≤ slotRound k_R`; L4 then commits it.
+  > `∀ k, ∃ k' ≥ k, R ≤ slotRound k' ∧`
+  > `  ∀ U N, Live U N → Synchronised U R → slotRound k' + 2 ≤ N →`
+  > `    slot k' commits`
+
+  **The quantifier order is the whole content, and getting it wrong makes the
+  statement false.** The tempting form — *given `Live U N`, for every `k`
+  there is a committing `k' ≥ k` with `slotRound k' + 2 ≤ N`* — is not
+  provable. Fairness promises a correct leader *somewhere* beyond `k`, and
+  that slot may lie past the horizon; nothing lets you ask for a nearer one.
+  Fixing `U` and `N` first therefore caps how far fairness may reach.
+
+  Stated as above the problem disappears, because `k'` depends only on the
+  **schedule** — `FairSchedule` and `slotRound` are properties of the `Slots`
+  instance, not of any DAG. So the slot is named first and the DAG grows to
+  it second, which is also the correct reading of *"the ledger grows without
+  bound"*: not that one DAG commits infinitely often, but that no slot is the
+  last one a DAG can be grown far enough to commit.
+
+  Fairness names a correct leader at some `k' ≥ max(k, k_R)`, where `k_R` is
+  any slot with `R ≤ slotRound k_R`; L1 then populates its three rounds and L4
+  commits it.
 
   Such a `k_R` exists because `slotRound` is unbounded — the `Slots` spacing
   condition gives `slotRound k + 3 ≤ slotRound (k+1)`, so rounds grow without
   limit. Small, but it is a real proof obligation rather than an aside.
+
+  **The two side conditions read as they should.** `R ≤ slotRound k'` is
+  *this slot is after synchrony took hold*; `slotRound k' + 2 ≤ N` is *the
+  DAG has grown past this slot's certificate rounds*. A DAG with `R > N`
+  satisfies neither for any slot and commits nothing — correct, since it
+  stopped growing before synchrony arrived.
+
+  **Unboundedness lives across horizons, not inside one.** No finite snapshot
+  holds infinitely many commits. Read L6 together with `ugrow_live` — for
+  every `N` a DAG reaches it, and for every slot a later one commits (§4.4).
 
   **Not "every slot decides".** An earlier draft claimed that, and it is
   false. L4 needs a *correct* leader and L5 an *absent* one; a Byzantine
@@ -395,24 +510,41 @@ def FairSchedule : Prop :=
 | L0 | density below the frontier | low — existing lemmas, no new primitives | ✓ `card_authorsAt_of_lt` |
 | L2 | view-monotonicity of `Decided` | low — mirrors `decided_unique`'s induction | ✓ `decided_mono` |
 | L3 | `View.full`, then L2 instantiated | low | ✓ `decided_full` |
-| L1 | `Live`, then no-stall by induction on rounds | low | |
-| — | **a model satisfying `Live` and `Synchronised`** | low, and required | |
-| L4 | `Live` + `Synchronised`, then the two-layer argument | medium — the only real proof | |
+| — | **`Ugrow`: a family with `Live (Ugrow N) N` for every `N`** | low, and required **first** | |
+| L1 | `Live U N`, then no-stall by induction on rounds | low | |
+| L4 | `Populated` ×3 + `Synchronised`, then the two-layer argument | medium — the only real proof | |
 | L5 | vacuity of the `∀`-over-candidates premise | low | |
-| L6 | `FairSchedule`, then L4 | low | |
-| L7 | `Delivery`, then `Synchronised` as a theorem | low — see question 7 | |
+| L6 | `FairSchedule`, then L1 and L4 | low — but see the quantifier order | |
+| L7 | `Delivery`, then `Synchronised` as a theorem | low — see question 8 | |
 
 L0, L2 and L3 come first because none needs a new primitive: L0 is pure DAG
 structure, L2 and L3 are pure view reasoning. That defers every modelling
 decision until something is already proved.
 
-**The model is not optional.** `Live` and `Synchronised` are assumptions, and
-if they were jointly unsatisfiable then L1 and L4–L6 would hold vacuously and
-prove nothing. They are satisfiable — a DAG in which every correct block
-references every correct block below meets both, and `U5`/`U7` nearly do — but
-the discipline everywhere else in this development is to *exhibit* a witness
-rather than argue one exists. It should be built before L4, so that L4 is
-known to say something the moment it is proved.
+**The witness now comes before L1, not before L4.** An earlier draft staged it
+later, and that ordering is what let an unsatisfiable `Live` be *proved
+against* before anyone tried to satisfy it. The revised rule: a definition
+gets a witness before anything is proved from it, not before the theorem that
+matters most.
+
+**The model is not optional, and this is not hypothetical.** The first draft
+of `Live` was *unsatisfiable* — `U.ids` is a `Finset` and the rule forced
+infinitely many blocks — so L1 was proved and said nothing. It was caught by
+sitting down to build the witness, which is exactly the argument for building
+one (§4.4).
+
+The witness must be a **family** `Ugrow N`, not a single model: one model
+shows `Live U N` holds at one horizon, whereas the claim needed is that every
+horizon is reachable. `BlockId := ℕ` with round `b / (3f+1)`, creator
+`b % (3f+1)`, and refs the previous round's ids — finite at each `N`,
+unbounded across them. The existing `U`–`U7` cannot serve: all are `Fin n`
+and fixed height.
+
+It must also satisfy `Synchronised` for some `R`, since if `Live` and
+`Synchronised` were jointly unsatisfiable then L4–L6 would still be vacuous.
+Building both into one family settles both questions at once — and since
+`Ugrow`'s blocks reference *every* block of the round below, `R = 0` should
+fall out.
 
 **L7 comes last deliberately.** It refines the assumptions rather than proving
 anything new, and it is purely additive: L4 keeps taking `Synchronised`
@@ -423,16 +555,33 @@ definition. Doing it after costs nothing and is informed by a finished proof.
 
 ## 8. Open questions
 
-1. **Should `Live` be a class or an explicit structure argument?** `Faults` is
-   a class and that worked; but liveness hypotheses are the kind of thing one
-   wants visible in a signature.
+1. **Should `Live` be a class or an explicit argument?** — **resolved:
+   explicit, and a structure of its own.**
+
+   `Faults` is a class because it is *universal*: every theorem in the
+   development carries it, so hiding it costs nothing. `Live` is not — L0, L2
+   and L3 do without it and L1 does not. When an assumption separates the
+   unconditional results from the conditional ones, hiding it is exactly
+   backwards; a reader could no longer tell which is which from a signature.
+
+   Folding `Live` into `Faults` was considered and is impossible anyway: the
+   dependency runs the wrong way, since `Live` mentions a `BlockUniverse`
+   whose own type requires `Faults`. It would also be undesirable if it were
+   possible — every safety theorem would acquire a liveness hypothesis it does
+   not use, and `decided_unique` currently holds *even if correct validators
+   crash*. That is the standard safety/liveness split, and it is worth
+   keeping.
 2. **Is `builds` the right rule?** It says a correct validator builds once
-   *any* 2f+1 validators have round-`r` blocks. A real implementation waits for
-   2f+1 blocks *it has received*, which in the limit is the same, but the two
-   differ if we ever move off the limit framing.
-3. **Do we want L1 unconditionally**, or only after `R`? As stated it holds
-   from round 0 with no synchrony, which is stronger and matches the notes —
-   but it does assume correct validators never stop.
+   *any* 2f+1 validators have round-`r` blocks. A real implementation waits
+   for 2f+1 blocks *it has received*. In a snapshot that has settled the two
+   coincide, but they are not the same statement, and question 8's `Delivery`
+   layer is where the difference would become expressible — `held` is exactly
+   the notion `builds` currently lacks.
+3. **Do we want L1 from round 0**, or only after `R`? As stated it holds from
+   round 0 with no synchrony, which is stronger and matches the notes — but it
+   does assume correct validators never stop before the horizon. Note this is
+   independent of §4.4: the horizon bounds *how far* L1 reaches, not *where it
+   starts*.
 4. **Is the round-spread exhibit worth building?** It proves nothing, but it
    documents that L0 is compatible with arbitrary asynchrony, which is easy to
    doubt when reading L0 alone.
@@ -444,7 +593,28 @@ definition. Doing it after costs nothing and is informed by a finished proof.
 6. **How far should the quantitative version go?** §4.3 drops Δ, and open
    question 5 would reintroduce counting of a different kind (slots rather
    than time). Those are separable: slot-counting needs no clock.
-7. **Should `Synchronised` be assumed or derived?** — **resolved: derived,
+7. **Should `Live` be finite or infinite?** — **resolved: finite, with a
+   horizon `N` (§4.4).**
+
+   Recorded because the alternative is defensible and was rejected on cost,
+   not on principle. Making `BlockUniverse.ids` a `Set` would let `U` be the
+   genuine limit and would state unbounded growth inside a single universe —
+   which is what §4.2 originally claimed. It was rejected because it reopens a
+   *finished and verified* safety development: `blocksAt`/`authorsAt` would
+   need per-round finiteness as a new `BlockUniverse` field (not derivable —
+   `no_equivocation` constrains only correct authors, so a Byzantine validator
+   may author unboundedly many blocks in one round), and `Set` membership is
+   undecidable, so all 135 `by decide` proofs in `LeanDagTest` would need
+   rework across 72 `.ids` sites.
+
+   That `decide` infrastructure is what has caught every vacuity bug in this
+   project — including the one that forced this question. Trading it away to
+   make a paragraph literally true is the wrong exchange.
+
+   A third option — `builds` firing only when round `r+1` is already nonempty
+   — was rejected for saying nothing about the DAG getting *taller*, which
+   discards the notes' *"from round 0 onwards, always"* entirely.
+8. **Should `Synchronised` be assumed or derived?** — **resolved: derived,
    staged after L4 as L7.**
 
    `Synchronised` welds two unlike things together: a protocol rule and a

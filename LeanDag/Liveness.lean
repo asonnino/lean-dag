@@ -3,11 +3,12 @@ import LeanDag.Mysticeti
 /-!
 # Liveness — results needing no new primitives
 
-`liveness.md` §6, results **L0**, **L2** and **L3**.
+`liveness.md` §6, results **L0**–**L3**.
 
-None of the three assumes `Live` or `Synchronised`, which is why they come
+L0, L2 and L3 assume neither `Live` nor `Synchronised`, which is why they come
 first: L0 is pure DAG structure, L2 and L3 are pure view reasoning. Every
-modelling decision is deferred until something is already proved.
+modelling decision is deferred until something is already proved. **L1** is
+the first result to need a new primitive.
 
 - **L0** — the DAG is dense below its frontier. Validity alone; nothing here
   even mentions correctness. The content is not that the DAG grows but that
@@ -16,6 +17,8 @@ modelling decision is deferred until something is already proved.
   decision as its view grows.
 - **L3** — commit propagation. L2 at the full view, which §4.2 identifies as
   every correct validator's eventual view.
+- **L1** — no stall. The first result needing `Live`, and still needing no
+  synchrony.
 -/
 
 namespace LeanDag
@@ -72,6 +75,81 @@ theorem card_authorsAt_of_lt {r n : ℕ} (hn : n < r) {i : BlockId}
       obtain ⟨j, hj, hjr⟩ := exists_mem_of_authorsAt_card_pos (U := U) (n := n + 1)
         (by omega)
       exact card_authorsAt_of_succ hj hjr
+
+/-! ## L1 — no stall
+
+`liveness.md` §3(a), §6. The first result here to need a primitive the static
+model lacks.
+
+`Correct` means only *does not equivocate* — a purely negative condition,
+satisfied by a validator that crashes at round 0 and never speaks again. That
+is deliberate: it is what lets every safety result hold for crashed
+validators too. But it makes every liveness statement vacuous without a
+positive rule, so `Live` supplies one.
+
+**`Live` is an explicit argument, not a class.** `Faults` is a class because
+it is *universal* — every theorem in the development carries it, so hiding it
+costs nothing. `Live` is not: L0, L2 and L3 do without it and L1 does not.
+When an assumption separates the unconditional results from the conditional
+ones, hiding it is exactly backwards. For the same reason it is a structure
+of its own rather than extra fields on `Faults`: folding it in would give
+every safety theorem a liveness hypothesis it does not use, and `Faults`
+cannot mention a `BlockUniverse` anyway, since `BlockUniverse`'s own type
+requires `Faults`.
+
+Note that `Live` forces an **infinite** DAG — a block at every round, for
+every correct validator, all distinct. No finite `BlockId` can satisfy it, so
+every model in `LeanDagTest` is out and the witness has to be built. That is
+also why `BlockId` was never given a `Fintype` instance: with one, `Live`
+would be unsatisfiable and everything assuming it vacuous. -/
+
+/-- The positive protocol behaviour liveness needs. Not derivable from the
+DAG structure — `Correct` is a negative condition and these are positive.
+
+**Asynchrony-only.** `builds` asks that a correct validator has a block at
+round `r+1` once *some* quorum holds round-`r` blocks; it says nothing about
+timing, delivery, or whose blocks are referenced. That is what lets L1 hold
+from round 0 with no synchrony at all. -/
+structure Live (U : BlockUniverse Validator BlockId Payload) : Prop where
+  /-- Every correct validator has a genesis block. -/
+  genesis : ∀ v ∈ (Correct : Finset Validator), ∃ b ∈ U.ids,
+    (U.block b).creator = v ∧ (U.block b).round = 0
+  /-- Once a quorum holds round-`r` blocks, every correct validator gets one
+  at round `r+1`. -/
+  builds : ∀ r, 2 * F.f + 1 ≤ (authorsAt U r).card →
+    ∀ v ∈ (Correct : Finset Validator), ∃ b ∈ U.ids,
+      (U.block b).creator = v ∧ (U.block b).round = r + 1
+
+omit [DecidableEq BlockId] in
+/-- **L1 — no stall.** Every correct validator has a block at every round.
+
+Induction on the round. The base case is `genesis`; the step feeds the
+induction hypothesis back into `builds`, since "every correct validator has a
+round-`r` block" makes `Correct` a subset of `authorsAt U r`, and there are
+at least `2f+1` correct validators.
+
+This is where `card_correct` is finally used. `spec.md` §2 has carried it as
+unused-but-kept-for-liveness since the system model was written. -/
+theorem no_stall (H : Live U) (r : ℕ) :
+    ∀ v ∈ (Correct : Finset Validator), ∃ b ∈ U.ids,
+      (U.block b).creator = v ∧ (U.block b).round = r := by
+  induction r with
+  | zero => exact H.genesis
+  | succ r ih =>
+      refine H.builds r (le_trans card_correct (Finset.card_le_card ?_))
+      intro w hw
+      obtain ⟨b, hb, hbc, hbr⟩ := ih w hw
+      exact mem_authorsAt.mpr ⟨b, hb, hbr, hbc⟩
+
+omit [DecidableEq BlockId] in
+/-- L1's corollary in the form L0 consumes: under `Live`, **every** round
+carries a quorum of authors — not merely every round below some frontier. -/
+theorem card_authorsAt_of_live (H : Live U) (r : ℕ) :
+    2 * F.f + 1 ≤ (authorsAt U r).card := by
+  refine le_trans card_correct (Finset.card_le_card ?_)
+  intro w hw
+  obtain ⟨b, hb, hbc, hbr⟩ := no_stall H r w hw
+  exact mem_authorsAt.mpr ⟨b, hb, hbr, hbc⟩
 
 /-! ## L2 — decisions are monotone in the view
 
