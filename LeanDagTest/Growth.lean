@@ -299,6 +299,26 @@ example (N : ℕ) : Synchronised (Ugrow N) 0 :=
 #print axioms ugrow_decided
 #print axioms ugrow_skip
 #print axioms ugrow_commits_recur
+/-- **Q2 applied.** A *quorum* of correct validators suffices — here
+`{1, 2, 3}`, which is all of `Correct` at `f = 1`, but the theorem no longer
+demands that they be all of it. -/
+example (N k : ℕ) (h : 3 * k + 2 ≤ N) :
+    ∃ L, IsLeaderBlock (Ugrow N) k L ∧
+      DirectCommit (Ugrow N) L (fairSlots.slotRound k) :=
+  directCommit_of_leader_mem (T := {1, 2, 3}) (R := 0) (by decide)
+    (SynchronisedOn.mono (by decide) (ugrow_synchronised N)) (Nat.zero_le _)
+    (PopulatedOn.mono (by decide)
+      (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _
+        (by simp only [fairSlots_slotRound]; omega)))
+    (PopulatedOn.mono (by decide)
+      (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _
+        (by simp only [fairSlots_slotRound]; omega)))
+    (PopulatedOn.mono (by decide)
+      (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _
+        (by simp only [fairSlots_slotRound]; omega)))
+    (by simp only [fairSlots_leader]; decide)
+
 #print axioms synchronised_of_delivery
+#print axioms directCommit_of_leader_mem
 
 end LeanDagTest

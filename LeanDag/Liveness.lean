@@ -100,15 +100,33 @@ requires `Faults`.
 -/
 
 omit [DecidableEq BlockId] in
-/-- What L4 actually needs of a round: every correct validator has a block
+/-- What L4 actually needs of a round: every validator in `T` has a block
 there.
 
 Local and finite — no growth, no horizon. Splitting this out is what keeps
 the horizon `N` out of L4 entirely, so the only hard proof in the plan is
-independent of how `Live` is framed. -/
-def Populated (U : BlockUniverse Validator BlockId Payload) (r : ℕ) : Prop :=
-  ∀ v ∈ (Correct : Finset Validator), ∃ b ∈ U.ids,
-    (U.block b).creator = v ∧ (U.block b).round = r
+independent of how `Live` is framed.
+
+**Why a set `T` rather than all of `Correct`.** L4 counts to `2f+1` and never
+higher, so it needs a *quorum* of reliable validators, not every one of them.
+Demanding all of `Correct` makes the theorem lapse when a single correct
+validator misses a single round — a GC pause, a restart — although the
+protocol still commits. See `liveness.md` §8 Q2. -/
+def PopulatedOn (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (r : ℕ) : Prop :=
+  ∀ v ∈ T, ∃ b ∈ U.ids, (U.block b).creator = v ∧ (U.block b).round = r
+
+/-- The all-of-`Correct` case, which is what L1 produces. -/
+abbrev Populated (U : BlockUniverse Validator BlockId Payload) (r : ℕ) : Prop :=
+  PopulatedOn U (Correct : Finset Validator) r
+
+omit [DecidableEq BlockId] in
+/-- Population is **antitone**: a smaller set is easier to populate. This is
+what lets L1 keep concluding about all of `Correct` while L4 consumes only a
+quorum. -/
+theorem PopulatedOn.mono {T T' : Finset Validator} {r : ℕ} (hsub : T ⊆ T')
+    (h : PopulatedOn U T' r) : PopulatedOn U T r :=
+  fun v hv => h v (hsub hv)
 
 /-! ## The delivery layer
 
@@ -257,11 +275,24 @@ blocks, and the arrival of the `2f+1`st says nothing about the rest having
 arrived. Views converging later does not retroactively enlarge blocks. So
 this is an assumption, not a theorem — see `liveness.md` §4.3, and §8
 question 8 for how it is meant to be split and derived. -/
-def Synchronised (U : BlockUniverse Validator BlockId Payload) (R : ℕ) : Prop :=
+def SynchronisedOn (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (R : ℕ) : Prop :=
   ∀ n, R ≤ n → ∀ b ∈ U.ids, (U.block b).round = n + 1 →
-    (U.block b).creator ∈ (Correct : Finset Validator) →
+    (U.block b).creator ∈ T →
     ∀ a ∈ U.ids, (U.block a).round = n →
-      (U.block a).creator ∈ (Correct : Finset Validator) → a ∈ (U.block b).refs
+      (U.block a).creator ∈ T → a ∈ (U.block b).refs
+
+/-- The all-of-`Correct` case. -/
+abbrev Synchronised (U : BlockUniverse Validator BlockId Payload) (R : ℕ) : Prop :=
+  SynchronisedOn U (Correct : Finset Validator) R
+
+omit [DecidableEq BlockId] in
+/-- Coverage is **antitone** too: mutual coverage among a larger set implies
+it among any subset. So existing witnesses of `Synchronised` feed the
+quorum-relative L4 unchanged. -/
+theorem SynchronisedOn.mono {T T' : Finset Validator} {R : ℕ} (hsub : T ⊆ T')
+    (h : SynchronisedOn U T' R) : SynchronisedOn U T R :=
+  fun n hn b hb hbr hbc a ha har hac => h n hn b hb hbr (hsub hbc) a ha har (hsub hac)
 
 /-! ## L7 — `Synchronised`, derived
 
@@ -405,7 +436,7 @@ since a Byzantine validator may publish nothing, or publish and withhold
 does not care where they come from — which is exactly why the horizon
 question of §4.4 could be settled without touching this proof. -/
 
-variable {L C : BlockId} {R r : ℕ} {k : ℕ}
+variable {L C : BlockId} {R r : ℕ} {k : ℕ} {T : Finset Validator}
 
 omit S in
 /-- A correct round-`(r+2)` block certifies any correct round-`r` block, once
@@ -413,17 +444,17 @@ round `r+1` is populated and synchrony has taken hold.
 
 This is both layers at once: `q` references `L` by coverage at `n = r`, and
 `C` references `q` by coverage at `n = r+1`. -/
-theorem certifies_of_synchronised (hs : Synchronised U R) (hRr : R ≤ r)
-    (hpop1 : Populated U (r + 1))
-    (hL : L ∈ U.ids) (hLr : (U.block L).round = r)
-    (hLc : (U.block L).creator ∈ (Correct : Finset Validator))
+theorem certifies_of_synchronisedOn (hcard : 2 * F.f + 1 ≤ T.card)
+    (hs : SynchronisedOn U T R) (hRr : R ≤ r)
+    (hpop1 : PopulatedOn U T (r + 1))
+    (hL : L ∈ U.ids) (hLr : (U.block L).round = r) (hLc : (U.block L).creator ∈ T)
     (hC : C ∈ U.ids) (hCr : (U.block C).round = r + 2)
-    (hCc : (U.block C).creator ∈ (Correct : Finset Validator)) :
+    (hCc : (U.block C).creator ∈ T) :
     Certifies U C L := by
-  refine le_trans card_correct (Finset.card_le_card ?_)
+  refine le_trans hcard (Finset.card_le_card ?_)
   intro v hv
   obtain ⟨q, hq, hqc, hqr⟩ := hpop1 v hv
-  have hqcorrect : (U.block q).creator ∈ (Correct : Finset Validator) := by rw [hqc]; exact hv
+  have hqcorrect : (U.block q).creator ∈ T := by rw [hqc]; exact hv
   rw [mem_creatorsOf]
   refine ⟨q, ?_, hqc⟩
   rw [votesIn, Finset.mem_filter]
@@ -437,40 +468,51 @@ committed, given coverage from `r` and correct blocks at `r+1` and `r+2`.
 Stated without `Slots`: nothing in the argument cares that `L` is a leader
 block, only that it is correct-authored — the same separation Stage A makes
 for M1–M3. -/
-theorem directCommit_of_synchronised (hs : Synchronised U R) (hRr : R ≤ r)
-    (hpop1 : Populated U (r + 1)) (hpop2 : Populated U (r + 2))
-    (hL : L ∈ U.ids) (hLr : (U.block L).round = r)
-    (hLc : (U.block L).creator ∈ (Correct : Finset Validator)) :
+theorem directCommit_of_synchronisedOn (hcard : 2 * F.f + 1 ≤ T.card)
+    (hs : SynchronisedOn U T R) (hRr : R ≤ r)
+    (hpop1 : PopulatedOn U T (r + 1)) (hpop2 : PopulatedOn U T (r + 2))
+    (hL : L ∈ U.ids) (hLr : (U.block L).round = r) (hLc : (U.block L).creator ∈ T) :
     DirectCommit U L r := by
-  refine le_trans card_correct (Finset.card_le_card ?_)
+  refine le_trans hcard (Finset.card_le_card ?_)
   intro v hv
   obtain ⟨C, hC, hCc, hCr⟩ := hpop2 v hv
-  have hCcorrect : (U.block C).creator ∈ (Correct : Finset Validator) := by rw [hCc]; exact hv
+  have hCcorrect : (U.block C).creator ∈ T := by rw [hCc]; exact hv
   rw [mem_creatorsOf]
   exact ⟨C, mem_certificates.mpr ⟨hC, hCr,
-    certifies_of_synchronised hs hRr hpop1 hL hLr hLc hC hCr hCcorrect⟩, hCc⟩
+    certifies_of_synchronisedOn hcard hs hRr hpop1 hL hLr hLc hC hCr hCcorrect⟩, hCc⟩
 
 omit [DecidableEq BlockId] in
 /-- A correct leader has a candidate block, once its round is populated.
 `Populated` at the leader's own round is needed for nothing else. -/
-theorem exists_isLeaderBlock (hpop : Populated U (S.slotRound k))
-    (hlead : S.leader k ∈ (Correct : Finset Validator)) :
+theorem exists_isLeaderBlock (hpop : PopulatedOn U T (S.slotRound k))
+    (hlead : S.leader k ∈ T) :
     ∃ L, IsLeaderBlock U k L := by
   obtain ⟨L, hL, hLc, hLr⟩ := hpop (S.leader k) hlead
   exact ⟨L, hL, hLr, hLc⟩
 
 /-- **L4.** A slot with a correct leader, whose three rounds are populated and
 which sits after synchrony, is directly committed. -/
+theorem directCommit_of_leader_mem (hcard : 2 * F.f + 1 ≤ T.card)
+    (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
+    (hpop0 : PopulatedOn U T (S.slotRound k))
+    (hpop1 : PopulatedOn U T (S.slotRound k + 1))
+    (hpop2 : PopulatedOn U T (S.slotRound k + 2))
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k) := by
+  obtain ⟨L, hL, hLr, hLc⟩ := exists_isLeaderBlock hpop0 hlead
+  exact ⟨L, ⟨hL, hLr, hLc⟩,
+    directCommit_of_synchronisedOn hcard hs hR hpop1 hpop2 hL hLr
+      (by rw [hLc]; exact hlead)⟩
+
+/-- **L4 at `T := Correct`.** The original statement, recovered. -/
 theorem directCommit_of_correct_leader (hs : Synchronised U R)
     (hR : R ≤ S.slotRound k)
     (hpop0 : Populated U (S.slotRound k))
     (hpop1 : Populated U (S.slotRound k + 1))
     (hpop2 : Populated U (S.slotRound k + 2))
     (hlead : S.leader k ∈ (Correct : Finset Validator)) :
-    ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k) := by
-  obtain ⟨L, hL, hLr, hLc⟩ := exists_isLeaderBlock hpop0 hlead
-  exact ⟨L, ⟨hL, hLr, hLc⟩,
-    directCommit_of_synchronised hs hR hpop1 hpop2 hL hLr (by rw [hLc]; exact hlead)⟩
+    ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k) :=
+  directCommit_of_leader_mem card_correct hs hR hpop0 hpop1 hpop2 hlead
 
 /-! ### From `DirectCommit` to an actual decision
 
@@ -488,16 +530,26 @@ theorem directCommitIn_full (h : DirectCommit U L r) :
   exact h
 
 /-- **L4, as a decision.** What L6 consumes and L3 propagates. -/
+theorem decided_of_leader_mem (hcard : 2 * F.f + 1 ≤ T.card)
+    (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
+    (hpop0 : PopulatedOn U T (S.slotRound k))
+    (hpop1 : PopulatedOn U T (S.slotRound k + 1))
+    (hpop2 : PopulatedOn U T (S.slotRound k + 2))
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) := by
+  obtain ⟨L, hLb, hdc⟩ :=
+    directCommit_of_leader_mem hcard hs hR hpop0 hpop1 hpop2 hlead
+  exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_full hdc)⟩
+
+/-- The same at `T := Correct`. -/
 theorem decided_of_correct_leader (hs : Synchronised U R)
     (hR : R ≤ S.slotRound k)
     (hpop0 : Populated U (S.slotRound k))
     (hpop1 : Populated U (S.slotRound k + 1))
     (hpop2 : Populated U (S.slotRound k + 2))
     (hlead : S.leader k ∈ (Correct : Finset Validator)) :
-    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) := by
-  obtain ⟨L, hLb, hdc⟩ :=
-    directCommit_of_correct_leader hs hR hpop0 hpop1 hpop2 hlead
-  exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_full hdc)⟩
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) :=
+  decided_of_leader_mem card_correct hs hR hpop0 hpop1 hpop2 hlead
 
 /-! ## L5 — an absent leader is skipped
 
@@ -542,8 +594,11 @@ that no slot is the last one a DAG can be grown far enough to commit. -/
 /-- The schedule names a correct leader arbitrarily far out. Without it no
 recurrence statement holds: `Slots.leader` is an arbitrary function and could
 name Byzantine validators forever, however synchronous the network. -/
-def FairSchedule : Prop :=
-  ∀ k, ∃ k', k ≤ k' ∧ S.leader k' ∈ (Correct : Finset Validator)
+def FairScheduleOn (T : Finset Validator) : Prop :=
+  ∀ k, ∃ k', k ≤ k' ∧ S.leader k' ∈ T
+
+/-- The all-of-`Correct` case. -/
+abbrev FairSchedule : Prop := FairScheduleOn (Correct : Finset Validator)
 
 omit [Fintype Validator] [DecidableEq Validator] F in
 /-- Slot rounds grow at least as fast as `3k`, so they are unbounded. Small,
@@ -559,10 +614,11 @@ that **every** sufficiently grown synchronous DAG commits.
 
 Note the conclusion quantifies over `U` and `N` *inside* the existential: the
 slot is fixed by the schedule alone, and any DAG grown past it commits it. -/
-theorem commits_recur (fair : FairSchedule (Validator := Validator)) (R : ℕ) (k : ℕ) :
+theorem commits_recur_on (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : 2 * F.f + 1 ≤ T.card) (fair : FairScheduleOn T) (R : ℕ) (k : ℕ) :
     ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
-        Live U D N → DeliversQuorum D → Synchronised U R →
+        Live U D N → DeliversQuorum D → SynchronisedOn U T R →
         S.slotRound k' + 2 ≤ N →
         ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
   -- slot `R` is already past round `R`, since slot rounds grow at least as
@@ -577,8 +633,22 @@ theorem commits_recur (fair : FairSchedule (Validator := Validator)) (R : ℕ) (
     · exact le_trans hkR (by have := slotRound_add_three_le (Validator := Validator) hlt; omega)
   refine ⟨k', le_trans (le_max_left _ _) hk', hRk', ?_⟩
   intro U D N H hd hs hN
-  exact decided_of_correct_leader hs hRk'
-    (no_stall H hd _ (by omega)) (no_stall H hd _ (by omega))
-    (no_stall H hd _ (by omega)) hlead
+  -- L1 populates all of `Correct`; `T` is a subset, so `.mono` bridges them.
+  -- This is the one place `T ⊆ Correct` is genuinely needed: L4 alone cares
+  -- only about `T.card`, but its population has to come from somewhere, and
+  -- the only source is L1, which knows about correct validators.
+  exact decided_of_leader_mem hcard hs hRk'
+    (PopulatedOn.mono hT (no_stall H hd _ (by omega)))
+    (PopulatedOn.mono hT (no_stall H hd _ (by omega)))
+    (PopulatedOn.mono hT (no_stall H hd _ (by omega))) hlead
+
+/-- **L6 at `T := Correct`.** The original statement, recovered. -/
+theorem commits_recur (fair : FairSchedule (Validator := Validator)) (R : ℕ) (k : ℕ) :
+    ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
+        Live U D N → DeliversQuorum D → Synchronised U R →
+        S.slotRound k' + 2 ≤ N →
+        ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) :=
+  commits_recur_on Finset.Subset.rfl card_correct fair R k
 
 end LeanDag
