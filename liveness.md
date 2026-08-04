@@ -141,8 +141,13 @@ correct validator eventually has a block at every round up to the horizon
 
 **Round spread is not a theorem.** That correct validators may be far apart in
 round number is a *negative* fact — an absence of any bound — so it belongs in
-a test model as an exhibit, not as a statement to prove. Worth building: a
-universe where L0 holds while the spread is arbitrary.
+a test model as an exhibit, not as a statement to prove.
+
+Building that exhibit turned out to be **impossible at `f = 1`**, which is
+itself informative: with `3f+1 = 4` validators and `|Correct| = 3 = 2f+1`
+exactly, every correct validator is needed for a quorum and none can lag. A
+spread exhibit that still commits needs `f ≥ 2`. See S7 — it is S5's combined
+budget appearing as a concrete obstruction rather than an inequality.
 
 ### 4.2 The transition — invisible to this framing, and that is the honest report
 
@@ -324,7 +329,8 @@ abbrev Populated (U) (r : ℕ) : Prop := PopulatedOn U Correct r
 
 /-- Antitone: a smaller set is easier to populate. This is what lets L1 keep
 concluding about all of `Correct` while L4 consumes only a quorum. -/
-theorem PopulatedOn.mono (hsub : T ⊆ T') : PopulatedOn U T' r → PopulatedOn U T r
+theorem PopulatedOn.mono (hsub : T ⊆ T') :
+  PopulatedOn U T' r → PopulatedOn U T r
 
 /-- What each validator had in hand, one round at a time — the layer the
 static model lacks. Note what it does **not** contain: a clock. -/
@@ -362,7 +368,8 @@ def SynchronisedOn (U) (T : Finset Validator) (R : ℕ) : Prop :=
 abbrev Synchronised (U) (R : ℕ) : Prop := SynchronisedOn U Correct R
 
 /-- Antitone too, so existing witnesses feed the quorum-relative L4. -/
-theorem SynchronisedOn.mono (hsub : T ⊆ T') : SynchronisedOn U T' R → SynchronisedOn U T R
+theorem SynchronisedOn.mono (hsub : T ⊆ T') :
+  SynchronisedOn U T' R → SynchronisedOn U T R
 
 /-- **Synchrony, at the delivery layer.** After `R` the *whole* correct round
 is held — not merely a quorum of it, which is what `DeliversQuorum` gives
@@ -432,7 +439,8 @@ structure Timing (U) (T : Finset Validator) (N : ℕ) where
 /-- `T`-validators are never more than `D` apart at the same round, from
 round `n₀` on. **Derived**, not assumed — see S6. -/
 def Timing.DriftFrom (tm : Timing U T N) (n₀ D : ℕ) : Prop :=
-  ∀ v ∈ T, ∀ w ∈ T, ∀ n, n₀ ≤ n → n ≤ N → tm.built w n ≤ tm.built v n + D
+  ∀ v ∈ T, ∀ w ∈ T, ∀ n, n₀ ≤ n → n ≤ N →
+    tm.built w n ≤ tm.built v n + D
 ```
 
 ## 6. The results
@@ -548,7 +556,7 @@ def Timing.DriftFrom (tm : Timing U T N) (n₀ D : ℕ) : Prop :=
   **vacuously true** when the leader published nothing. Choosing the `∀` form
   over naming a candidate block is what makes this case disappear.
 
-- **L6 — Commits recur.** Given a `FairSchedule`, for every slot `k` there is
+- **L6 — Commits recur.** Given a `FairScheduleOn T`, for every slot `k` there is
   a slot `k' ≥ k` such that **every** sufficiently grown synchronous DAG
   commits it:
 
@@ -667,32 +675,28 @@ decision until something is already proved.
 **Every definition gets a witness before anything is proved from it.** An
 earlier draft staged the model before L4 rather than before L1, and that
 ordering is what let an unsatisfiable `Live` be *proved against* before anyone
-tried to satisfy it.
+tried to satisfy it — `U.ids` is a `Finset`, and the rule forced infinitely
+many blocks. The rule then earned its keep three more times:
 
-The rule earned its keep twice more. `Timing` had the identical flaw — `blk`
-at every round forces infinitely many blocks into a `Finset` — and writing
-`ugrowTiming` is what caught it, so `Timing` carries the horizon too. And
-writing `ugrow_synchronised` is what revealed that `Synchronised` had never
-been defined in Lean at all; it existed only in this document.
+- `Timing` had the **identical flaw** — `blk` at every round again forces
+  infinitely many blocks — and writing `ugrowTiming` caught it, so `Timing`
+  carries a horizon too.
+- Writing `ugrow_synchronised` revealed that `Synchronised` had never been
+  **defined in Lean at all**; it existed only in this document.
+- Writing `ugrowSkew` (S7) found that the constants making S6's two branches
+  both reachable sit in a **one-point window**, which no lockstep witness
+  could have shown.
 
-**The model is not optional, and this is not hypothetical.** The first draft
-of `Live` was *unsatisfiable* — `U.ids` is a `Finset` and the rule forced
-infinitely many blocks — so L1 was proved and said nothing. It was caught by
-sitting down to build the witness, which is exactly the argument for building
-one (§4.4).
+**The witness is a family, not a model.** One model shows `Live` holds at one
+horizon; the claim needed is that every horizon is reachable. `Ugrow N` takes
+`BlockId := ℕ` with round `b / 4`, creator `b % 4`, and refs the whole round
+below — finite at each `N`, unbounded across them. The `U`–`U7` models of
+`LeanDagTest/Model.lean` cannot serve: all are `Fin n` and of fixed height.
 
-The witness must be a **family** `Ugrow N`, not a single model: one model
-shows `Live` holds at one horizon, whereas the claim needed is that every
-horizon is reachable. `BlockId := ℕ` with round `b / (3f+1)`, creator
-`b % (3f+1)`, and refs the previous round's ids — finite at each `N`,
-unbounded across them. The existing `U`–`U7` cannot serve: all are `Fin n`
-and fixed height.
-
-It must also satisfy `Synchronised` for some `R`, since if `Live` and
-`Synchronised` were jointly unsatisfiable then L4–L6 would still be vacuous.
-Building both into one family settles both questions at once — and since
-`Ugrow`'s blocks reference *every* block of the round below, `R = 0` should
-fall out.
+It also satisfies `Synchronised` at `R = 0`, since its blocks reference the
+entire round below. That matters because `Live` and `Synchronised` being
+*jointly* unsatisfiable would leave L4–L6 vacuous even if each held alone —
+so one family settles both.
 
 **L7 came last deliberately, and that was right — but it was not "purely
 additive" as predicted.** The reasoning for staging it late held up: L4–L6
@@ -713,6 +717,23 @@ upstream of it. The visible consequence: **proof order and file order differ.**
 logically the bottom of the stack while being the last file written. Worth
 flagging, since the table above reads as a file order and is not one.
 
+### Where it lives
+
+The liveness development is three files, plus three of witnesses. Read
+top-down, each layer *assumes* what the one below it *supplies*.
+
+| file | contents |
+|---|---|
+| `LeanDag/Liveness.lean` | L0–L6, plus `Populated`, `Live`, `Delivery`, `Synchronised`, `FairScheduleOn`, and L7a |
+| `LeanDag/Timing.lean` | L7b — `Timing`, `DriftFrom`, and `SynchronisedOn` earned from GST |
+| `LeanDagTest/Growth.lean` | `Ugrow`, `ugrowDelivery`, `ugrowTiming` — satisfiability at every horizon |
+| `LeanDagTest/Partial.lean` | `ugrowHonest`, `ugrowSkew` — the partial and skewed cases (S7) |
+| `LeanDagTest/Model.lean` | the `Fin n` safety models; L0, L2 and L3 are exercised here |
+
+Note the inversion: `Timing.lean` is logically the **bottom** of the stack and
+was the **last** file written. Proof order and file order differ, and §7
+explains why.
+
 ## 8. Open questions
 
 Ordered by **importance** — whether a real deployment could be hurt if the
@@ -726,9 +747,15 @@ separately, because the cheapest item here is not the most important one.
 | **Q5** | Is a partial-view model needed? | *settled* — §9 S7 | — |
 | **Q6** | Should L1 hold from round 0, or only after `R`? | presentational | low |
 
-Q1 (*does a timeout deliver coverage?*) and Q2 (*is `Populated` too strong?*)
-were the two highest-importance entries and are both **settled** — §9, S6 and
-S5. Numbering is left alone so earlier references still resolve.
+Q1 (*does a timeout deliver coverage?*), Q2 (*is `Populated` too strong?*)
+and Q5 (*is a partial-view model needed?*) are **settled** — §9, S6, S5 and
+S7. Q1 and Q2 were the two highest-importance entries on the list. Numbering
+is left alone so earlier references still resolve.
+
+What remains is one question that would need a time model (Q3), one that would
+need a concrete schedule (Q4), and one that is presentational (Q6). Nothing
+open now affects whether the existing theorems are true — only how much they
+say.
 
 ### Q3 — How far should the quantitative version go?
 
