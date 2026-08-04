@@ -84,7 +84,7 @@ do not. After GST, every correct block references every correct block of the
 round below. Without (b) correct validators race ahead under perfect
 synchrony and never vote for the leader, so nothing commits. This is the
 **synchrony** assumption, and §5's `Synchronised` is where it lives — for
-now; open question 8 splits it into an implementable rule and a delivery
+now; §9's S4 splits it into an implementable rule and a delivery
 assumption. It is not leader-specific: catching the leader's block is *why*
 we want it, not what it says.
 
@@ -226,7 +226,7 @@ liveness failure — the very thing being proved away.
 
 It also welds two unlike things into one object: the network guarantee and
 rule (3b). That is a modelling defect rather than a necessity, and open
-question 8 records the split — `Synchronised` becomes a **theorem**, derived
+§9's S4 records the split — `Synchronised` becomes a **theorem**, derived
 from an implementable protocol rule plus a delivery assumption. The timeout
 story above then attaches to something real: a timeout governs what a
 validator *holds*, which is a notion the split introduces and `refs` alone
@@ -267,7 +267,7 @@ rounds `0 … |U.ids|`, and note they are `|U.ids| + 1` distinct members of
 The fix is a **horizon** `N`: `builds` fires only for `r < N`, so the DAG
 reaches round `N` and stops. Three things follow.
 
-**`N` is a demand on the DAG, not a bound on it.** `Live U N` requires that
+**`N` is a demand on the DAG, not a bound on it.** `Live U D N` requires that
 correct validators *actually have* blocks at every round up to `N`. A larger
 `N` is a **stronger** hypothesis satisfied by **fewer** DAGs — it is not
 slack, and picking it enormous does not make the theorems cover more. What
@@ -310,6 +310,20 @@ def Populated (U : BlockUniverse Validator BlockId Payload) (r : ℕ) : Prop :=
   ∀ v ∈ Correct, ∃ b ∈ U.ids,
     (U.block b).creator = v ∧ (U.block b).round = r
 
+/-- What each validator had in hand, one round at a time. The layer the
+static model lacks, and what lets `builds` and `Synchronised` each be stated
+as a single kind of thing (settled questions S2 and S4).
+
+Note what it does **not** contain: a clock. With no time model, a timeout can
+only leave a trace as a larger `held`. -/
+structure Delivery (U : BlockUniverse Validator BlockId Payload) where
+  held : Validator → ℕ → Finset BlockId
+  held_spec : ∀ v n, ∀ i ∈ held v n, i ∈ U.ids ∧ (U.block i).round = n
+  /-- **Protocol rule.** A correct validator references everything it held.
+  Implementable and observable, unlike `Synchronised` itself. -/
+  includes : ∀ v ∈ Correct, ∀ n, ∀ b ∈ U.ids, (U.block b).creator = v →
+    (U.block b).round = n + 1 → held v n ⊆ (U.block b).refs
+
 /-- The protocol behaviour liveness needs. Not derivable from the DAG
 structure: `Correct` is a negative condition, and these are positive.
 Asynchrony-only — no synchrony here.
@@ -337,7 +351,7 @@ round below.
 `R` is **not** GST: it is the round from which synchrony has fully taken
 effect (§4.2). This single predicate carries both the network guarantee and
 rule (§3b), because honest-to-honest coverage does not follow from view
-convergence alone (§4.3). Open question 8 splits it and makes this a
+convergence alone (§4.3). §9's S4 splits it and makes this a
 *theorem*; the statement below is unchanged by that — only how it is
 obtained.
 
@@ -349,6 +363,13 @@ def Synchronised (U : BlockUniverse Validator BlockId Payload) (R : ℕ) : Prop 
     (U.block b).creator ∈ (Correct : Finset Validator) →
     ∀ a ∈ U.ids, (U.block a).round = n →
       (U.block a).creator ∈ (Correct : Finset Validator) → a ∈ (U.block b).refs
+
+/-- **Synchrony.** After `R`, the *whole* correct round is held — not merely
+a quorum of it, which is what `DeliversQuorum` gives unconditionally.
+Together with `Delivery.includes` this yields `Synchronised` (L7). -/
+def EventuallyDelivers (D : Delivery U) (R : ℕ) : Prop :=
+  ∀ n, R ≤ n → ∀ v ∈ Correct, ∀ a ∈ U.ids, (U.block a).round = n →
+    (U.block a).creator ∈ Correct → a ∈ D.held v n
 
 /-- Every correct validator's *eventual* view (§4.2). Downward-closed for
 free, by `U.complete`. -/
@@ -440,7 +461,7 @@ def FairSchedule : Prop :=
   it the theorem is satisfied vacuously by an empty DAG.
 
   **But growth is.** The three hypotheses are local and finite — no `Live`,
-  no `N`, no limit universe. L1 supplies them from `Live U N` when
+  no `N`, no limit universe. L1 supplies them from `Live U D N` when
   `r + 2 ≤ N`, but L4 does not care where they come from. That is what keeps
   the only hard proof in the plan independent of the horizon question
   (§4.4).
@@ -474,11 +495,11 @@ def FairSchedule : Prop :=
   commits it:
 
   > `∀ k, ∃ k' ≥ k, R ≤ slotRound k' ∧`
-  > `  ∀ U N, Live U N → Synchronised U R → slotRound k' + 2 ≤ N →`
-  > `    slot k' commits`
+  > `  ∀ U D N, Live U D N → DeliversQuorum D → Synchronised U R →`
+  > `    slotRound k' + 2 ≤ N → slot k' commits`
 
   **The quantifier order is the whole content, and getting it wrong makes the
-  statement false.** The tempting form — *given `Live U N`, for every `k`
+  statement false.** The tempting form — *given `Live U D N`, for every `k`
   there is a committing `k' ≥ k` with `slotRound k' + 2 ≤ N`* — is not
   provable. Fairness promises a correct leader *somewhere* beyond `k`, and
   that slot may lie past the horizon; nothing lets you ask for a nearer one.
@@ -529,12 +550,12 @@ def FairSchedule : Prop :=
 | L0 | density below the frontier | low — existing lemmas, no new primitives | ✓ `card_authorsAt_of_lt` |
 | L2 | view-monotonicity of `Decided` | low — mirrors `decided_unique`'s induction | ✓ `decided_mono` |
 | L3 | `View.full`, then L2 instantiated | low | ✓ `decided_full` |
-| — | **`Ugrow`: a family with `Live (Ugrow N) N` for every `N`** | low, and required **first** | ✓ `ugrow_live`, `ugrow_synchronised` |
-| L1 | `Live U N`, then no-stall by induction on rounds | low | ✓ `no_stall` |
+| — | **`Ugrow`: a family satisfying `Live`, `DeliversQuorum` and `Synchronised` at every `N`** | low, and required **first** | ✓ `ugrow_live`, `ugrow_deliversQuorum`, `ugrow_synchronised` |
+| L1 | `Live U D N` + `DeliversQuorum D`, then induction on rounds | low | ✓ `no_stall` |
 | L4 | `Populated` ×3 + `Synchronised`, then the two-layer argument | medium — the only real proof | ✓ `directCommit_of_correct_leader` |
 | L5 | vacuity of the `∀`-over-candidates premise | low | ✓ `decided_none_of_leader_absent` |
 | L6 | `FairSchedule`, then L1 and L4 | low — but see the quantifier order | ✓ `commits_recur` |
-| L7 | `Delivery`, then `Synchronised` as a theorem | low — see question 8 | ✓ `synchronised_of_delivery` |
+| L7 | `Delivery`, then `Synchronised` as a theorem | low — see S4 | ✓ `synchronised_of_delivery` |
 
 L0, L2 and L3 come first because none needs a new primitive: L0 is pure DAG
 structure, L2 and L3 are pure view reasoning. That defers every modelling
@@ -553,7 +574,7 @@ sitting down to build the witness, which is exactly the argument for building
 one (§4.4).
 
 The witness must be a **family** `Ugrow N`, not a single model: one model
-shows `Live U N` holds at one horizon, whereas the claim needed is that every
+shows `Live` holds at one horizon, whereas the claim needed is that every
 horizon is reachable. `BlockId := ℕ` with round `b / (3f+1)`, creator
 `b % (3f+1)`, and refs the previous round's ids — finite at each `N`,
 unbounded across them. The existing `U`–`U7` cannot serve: all are `Fin n`
@@ -565,127 +586,234 @@ Building both into one family settles both questions at once — and since
 `Ugrow`'s blocks reference *every* block of the round below, `R = 0` should
 fall out.
 
-**L7 comes last deliberately.** It refines the assumptions rather than proving
-anything new, and it is purely additive: L4 keeps taking `Synchronised`
-unchanged and L7 supplies it a second way. Doing it first would mean carrying
-the extra layer through every experiment while guessing which shape of `held`
-L4 wants — and the witness model would have to be built against the heavier
-definition. Doing it after costs nothing and is informed by a finished proof.
+**L7 came last deliberately, and that was right — but it was not "purely
+additive" as predicted.** The reasoning for staging it late held up: L4–L6
+keep taking `Synchronised` unchanged, L7 simply supplies it a second way, and
+doing it first would have meant guessing which shape of `held` L4 wanted.
+
+What was not foreseen is that once `Delivery` existed, it made S2 settleable —
+and settling S2 changed `Live`, which now takes the `Delivery` it is stated
+against. So the layer is additive *downstream* of `Synchronised` and a
+*prerequisite* upstream of it.
+
+The visible consequence: **proof order and file order now differ.** `Delivery`
+is defined near the top of `Liveness.lean`, ahead of `Live`, even though
+`synchronised_of_delivery` was the last theorem proved. That is the right
+outcome — the late proof is what revealed where the definition belonged — but
+it is worth flagging, since the staging table below reads as a file order and
+is not one.
 
 ## 8. Open questions
 
-1. **Should `Live` be a class or an explicit argument?** — **resolved:
-   explicit, and a structure of its own.**
+Ordered by **importance** — whether a real deployment could be hurt if the
+question goes unanswered — not by how easy each is to settle. Cost is listed
+separately, because the cheapest item here is not the most important one.
 
-   `Faults` is a class because it is *universal*: every theorem in the
-   development carries it, so hiding it costs nothing. `Live` is not — L0, L2
-   and L3 do without it and L1 does not. When an assumption separates the
-   unconditional results from the conditional ones, hiding it is exactly
-   backwards; a reader could no longer tell which is which from a signature.
+| | question | why it matters | cost |
+|---|---|---|---|
+| **Q1** | Does a timeout actually deliver honest-to-honest coverage? | the central assumption could be **false** in practice | high |
+| **Q2** | Is `Populated` too strong? | guarantees lapse under ordinary operation, not attack | **low** |
+| **Q3** | How far should the quantitative version go? | no operational bound of any kind | high |
+| **Q4** | Should `FairSchedule` be round-robin? | no throughput bound; leader predictability unmodelled | medium |
+| **Q5** | Is a partial-view model needed? | two definitions are exercised only degenerately | low |
+| **Q6** | Should L1 hold from round 0, or only after `R`? | presentational | low |
 
-   Folding `Live` into `Faults` was considered and is impossible anyway: the
-   dependency runs the wrong way, since `Live` mentions a `BlockUniverse`
-   whose own type requires `Faults`. It would also be undesirable if it were
-   possible — every safety theorem would acquire a liveness hypothesis it does
-   not use, and `decided_unique` currently holds *even if correct validators
-   crash*. That is the standard safety/liveness split, and it is worth
-   keeping.
-2. **Is `builds` the right rule?** — **resolved: no; it is now stated on
-   `held`.**
+### Q1 — Does a timeout actually deliver honest-to-honest coverage?
 
-   The first form said a correct validator builds once *any* `2f+1`
-   validators have round-`r` blocks. That is not something a validator can
-   act on: it cannot build on blocks it has never received. The real rule is
-   a **timeout plus a quorum in its own view**.
+**The largest unproved link between this development and an implementation.**
 
-   Once question 8's `Delivery` layer existed, `held` was exactly the missing
-   notion, so `builds` is now measured against `D.held v r`. The condition
-   splits cleanly in two, which is the gain: `builds` is protocol (hold a
-   quorum, build) and `DeliversQuorum` is network (a quorum that exists is
-   eventually held). Both are asynchrony-only, so L1 still needs no synchrony
-   — its step simply takes two hops instead of one.
+A correct validator waits on a timeout and builds on whatever arrived; it
+cannot tell correct peers from Byzantine ones (§3b). If Byzantine validators
+respond *fast* while some correct ones are slow, a validator can fill its
+quorum with Byzantine blocks and miss correct ones — **violating
+`Synchronised` even after GST**. §4.3 states the justification is "a timing
+argument this development does not formalize". That sentence is the gap.
 
-   The **timeout leaves no trace** beyond this. With no clock, waiting longer
-   can only show up as a larger `held`; `builds` therefore asks for a quorum
-   in view and nothing more, and `EventuallyDelivers` is what demands the
-   *whole* correct round after `R`.
-3. **Do we want L1 from round 0**, or only after `R`? As stated it holds from
-   round 0 with no synchrony, which is stronger and matches the notes — but it
-   does assume correct validators never stop before the horizon. Note this is
-   independent of §4.4: the horizon bounds *how far* L1 reaches, not *where it
-   starts*.
-4. **Is the round-spread exhibit worth building?** It proves nothing, but it
-   documents that L0 is compatible with arbitrary asynchrony, which is easy to
-   doubt when reading L0 alone.
-5. **Should `FairSchedule` be round-robin instead?** The `∃ k' ≥ k` form is
-   the weakest thing L6 needs, so it makes the theorem strongest. Round-robin
-   would be more concrete and would let us say *how often* commits recur —
-   at least `2f+1` per `3f+1` slots — which is a quantitative claim of the
-   kind §4.3 otherwise avoids.
-6. **How far should the quantitative version go?** §4.3 drops Δ, and open
-   question 5 would reintroduce counting of a different kind (slots rather
-   than time). Those are separable: slot-counting needs no clock.
-7. **Should `Live` be finite or infinite?** — **resolved: finite, with a
-   horizon `N` (§4.4).**
+Distinct from Q3: Q3 asks for a *bound*, Q1 asks whether the qualitative
+property holds **at all**. If it fails, L4–L6 are true but empty — every
+theorem after L3 rests on `Synchronised`.
 
-   Recorded because the alternative is defensible and was rejected on cost,
-   not on principle. Making `BlockUniverse.ids` a `Set` would let `U` be the
-   genuine limit and would state unbounded growth inside a single universe —
-   which is what §4.2 originally claimed. It was rejected because it reopens a
-   *finished and verified* safety development: `blocksAt`/`authorsAt` would
-   need per-round finiteness as a new `BlockUniverse` field (not derivable —
-   `no_equivocation` constrains only correct authors, so a Byzantine validator
-   may author unboundedly many blocks in one round), and `Set` membership is
-   undecidable, so all 135 `by decide` proofs in `LeanDagTest` would need
-   rework across 72 `.ids` sites.
+Expensive, because settling it needs the time model §4.3 deliberately drops.
+But it is the assumption most likely to be false, so it heads the list.
 
-   That `decide` infrastructure is what has caught every vacuity bug in this
-   project — including the one that forced this question. Trading it away to
-   make a paragraph literally true is the wrong exchange.
+### Q2 — Is `Populated` too strong?
 
-   A third option — `builds` firing only when round `r+1` is already nonempty
-   — was rejected for saying nothing about the DAG getting *taller*, which
-   discards the notes' *"from round 0 onwards, always"* entirely.
-8. **Should `Synchronised` be assumed or derived?** — **resolved: derived,
-   staged after L4 as L7.**
+`Populated U r` demands that **every** correct validator have a block at round
+`r`, and L4 needs three consecutive such rounds. One correct validator missing
+one round — a GC pause, a restart, a slow disk — and L4 becomes inapplicable.
 
-   `Synchronised` welds two unlike things together: a protocol rule and a
-   network guarantee. It cannot be derived from anything in the model as it
-   stands, because the model is a static `BlockUniverse` — blocks and refs,
-   no time, no delivery, no record of what a validator *held* when it built.
-   `Synchronised` is stated on `refs` because `refs` is all there is.
+But Mysticeti still commits: it needs `2f+1` blocks at each round, not a
+*particular* set of them. **So the theorem is strictly weaker than the
+protocol**, and it lapses under ordinary operational hiccups rather than under
+attack, which is the wrong way round.
 
-   Adding that missing layer splits it:
+Restate as *a quorum of correct validators is populated*. L4's proof only ever
+counts to `2f+1`, so it should survive unchanged — this is the cheapest real
+improvement on the list.
 
-   ```lean
-   structure Delivery (U : BlockUniverse Validator BlockId Payload) where
-     /-- What `v` held from round `n` when it built its round-`(n+1)` block. -/
-     held : Validator → ℕ → Finset BlockId
-     held_spec : ∀ v n, ∀ i ∈ held v n, i ∈ U.ids ∧ (U.block i).round = n
-     /-- **Protocol rule.** A correct validator references everything it held. -/
-     includes : ∀ v ∈ Correct, ∀ n, ∀ b ∈ U.ids, (U.block b).creator = v →
-       (U.block b).round = n + 1 → held v n ⊆ (U.block b).refs
+One caveat on how much it buys: when exactly `f` validators are Byzantine,
+`|Correct| = 2f+1` and the two formulations coincide. The gain shows when
+fewer than `f` are actually faulty, which is the common case.
 
-   /-- **Network assumption.** After `R`, correct blocks reach correct
-   validators in time to be built on. This is eventual DAG synchrony. -/
-   def EventuallyDelivers (D : Delivery U) (R : ℕ) : Prop := ...
+### Q3 — How far should the quantitative version go?
 
-   theorem synchronised_of_delivery (D : Delivery U) (h : EventuallyDelivers D R) :
-       Synchronised U R
-   ```
+Everything proved here is *"eventually"*. Three things a deployment needs and
+this cannot supply:
 
-   The proof is `refs ⊇ held ⊇ all correct blocks below` — a few lines. **The
-   gain is not logical.** One assumption becomes two, and nothing turns
-   unconditional. The gain is that each piece is a single kind of thing:
-   `includes` is implementable and observable, which is exactly what §3(b)
-   notes `Synchronised` fails to be; `EventuallyDelivers` is pure network.
+- **No bound on `R − GST`** (§4.2). Operationally that is recovery time after
+  a partition heals — usually the number people care about most.
+- **No proof the adaptive timeout converges.** §4.3 records that the backoff
+  is driven by commits stalling. Real implementations *cap* the timeout, and
+  whether the cap exceeds the true delay **is** the liveness question. A
+  system whose cap is too low never recovers, and nothing here would notice.
+- **No commit latency.** Direct commit is `r+2`, but a Byzantine leader pushes
+  the work onto the indirect rule with no bound on how distant the anchor is.
 
-   It also puts the timeout in the right place. A timeout governs *when you
-   build*, i.e. what lands in `held` — it has nothing to do with `refs`. §4.3
-   currently explains the backoff next to a definition that structurally
-   cannot express it. And if the quantitative version (question 6) is ever
-   wanted, Δ attaches to `held`, not to `refs`: that is the layer where a
-   time bound means anything.
+§4.3 drops Δ, and Q4 would reintroduce counting of a different kind (slots
+rather than time); those are separable, since slot-counting needs no clock.
+The layer Δ attaches to now exists: `held`, not `refs` (S4).
 
-   `Synchronised` keeps its exact statement. It stops being a hypothesis one
-   assumes and becomes one that can be discharged, so L4–L6 are untouched.
+### Q4 — Should `FairSchedule` be round-robin?
+
+Two distinct issues behind one definition.
+
+**No rate.** `FairSchedule` is satisfied by a schedule naming a correct leader
+once every `10⁹` slots. L6 then guarantees the ledger grows and says nothing
+about how fast. Round-robin gives at least `2f+1` correct leaders per `3f+1`
+slots — a quantitative claim of the kind §4.3 otherwise avoids, but one that
+needs no clock.
+
+**Leader predictability is unmodelled.** `Slots.leader` is an arbitrary
+function, so nothing distinguishes a schedule an adversary can predict from
+one it cannot. An adversary who knows who leads slot `k` can attack them
+before their round — a standard attack on this protocol family, and entirely
+invisible here.
+
+The witness makes the weakness concrete: `ugrow_fair` uses a *constant*
+correct leader, satisfying fairness in the weakest possible way, so nothing
+currently exercises the condition.
+
+### Q5 — Is a partial-view model needed?
+
+`Ugrow` sets `held v n` to *every* round-`n` block, so the delivery hop added
+by S2 is never exercised against a genuinely partial view — and partial views
+are the normal case, not the exception. `DeliversQuorum` and `Delivery` are
+therefore satisfiable but barely tested.
+
+One construction would settle two things at once, since the same model gives
+the round-spread exhibit §4.1 asks for: a universe where L0 holds while
+correct validators sit at arbitrarily different rounds, documenting that L0
+assumes no synchrony — easy to doubt when reading L0 alone.
+
+### Q6 — Should L1 hold from round 0, or only after `R`?
+
+As stated it holds from round 0 with no synchrony, which is stronger and
+matches the notes. It does assume correct validators never stop before the
+horizon — but a correct validator that stops is a *crash* fault, and crash
+faults are a subset of Byzantine, so the `f` budget already covers it.
+Presentational. Note this is independent of §4.4: the horizon bounds *how far*
+L1 reaches, not *where it starts*.
+
+## 9. Settled questions
+
+Kept because each was decided against a defensible alternative, and the
+reasoning is what a later reader will want.
+
+### S1 — `Live` is an explicit argument, not a class
+
+`Faults` is a class because it is *universal*: every theorem in the
+development carries it, so hiding it costs nothing. `Live` is not — L0, L2
+and L3 do without it and L1 does not. When an assumption separates the
+unconditional results from the conditional ones, hiding it is exactly
+backwards; a reader could no longer tell which is which from a signature.
+
+Folding `Live` into `Faults` was considered and is impossible anyway: the
+dependency runs the wrong way, since `Live` mentions a `BlockUniverse`
+whose own type requires `Faults`. It would also be undesirable if it were
+possible — every safety theorem would acquire a liveness hypothesis it does
+not use, and `decided_unique` currently holds *even if correct validators
+crash*. That is the standard safety/liveness split, and it is worth
+keeping.
+
+### S2 — `builds` is stated on `held`, not on existence
+
+The first form said a correct validator builds once *any* `2f+1`
+validators have round-`r` blocks. That is not something a validator can
+act on: it cannot build on blocks it has never received. The real rule is
+a **timeout plus a quorum in its own view**.
+
+Once S4's `Delivery` layer existed, `held` was exactly the missing
+notion, so `builds` is now measured against `D.held v r`. The condition
+splits cleanly in two, which is the gain: `builds` is protocol (hold a
+quorum, build) and `DeliversQuorum` is network (a quorum that exists is
+eventually held). Both are asynchrony-only, so L1 still needs no synchrony
+— its step simply takes two hops instead of one.
+
+The **timeout leaves no trace** beyond this. With no clock, waiting longer
+can only show up as a larger `held`; `builds` therefore asks for a quorum
+in view and nothing more, and `EventuallyDelivers` is what demands the
+*whole* correct round after `R`.
+
+### S3 — `Live` is finite, with a horizon `N`
+
+Recorded because the alternative is defensible and was rejected on cost,
+not on principle. Making `BlockUniverse.ids` a `Set` would let `U` be the
+genuine limit and would state unbounded growth inside a single universe —
+which is what §4.2 originally claimed. It was rejected because it reopens a
+*finished and verified* safety development: `blocksAt`/`authorsAt` would
+need per-round finiteness as a new `BlockUniverse` field (not derivable —
+`no_equivocation` constrains only correct authors, so a Byzantine validator
+may author unboundedly many blocks in one round), and `Set` membership is
+undecidable, so all 135 `by decide` proofs in `LeanDagTest` would need
+rework across 72 `.ids` sites.
+
+That `decide` infrastructure is what has caught every vacuity bug in this
+project — including the one that forced this question. Trading it away to
+make a paragraph literally true is the wrong exchange.
+
+A third option — `builds` firing only when round `r+1` is already nonempty
+— was rejected for saying nothing about the DAG getting *taller*, which
+discards the notes' *"from round 0 onwards, always"* entirely.
+
+### S4 — `Synchronised` is derived, not assumed
+
+`Synchronised` welds two unlike things together: a protocol rule and a
+network guarantee. It cannot be derived from anything in the model as it
+stands, because the model is a static `BlockUniverse` — blocks and refs,
+no time, no delivery, no record of what a validator *held* when it built.
+`Synchronised` is stated on `refs` because `refs` is all there is.
+
+Adding that missing layer splits it:
+
+```lean
+structure Delivery (U : BlockUniverse Validator BlockId Payload) where
+  /-- What `v` held from round `n` when it built its round-`(n+1)` block. -/
+  held : Validator → ℕ → Finset BlockId
+  held_spec : ∀ v n, ∀ i ∈ held v n, i ∈ U.ids ∧ (U.block i).round = n
+  /-- **Protocol rule.** A correct validator references everything it held. -/
+  includes : ∀ v ∈ Correct, ∀ n, ∀ b ∈ U.ids, (U.block b).creator = v →
+    (U.block b).round = n + 1 → held v n ⊆ (U.block b).refs
+
+/-- **Network assumption.** After `R`, correct blocks reach correct
+validators in time to be built on. This is eventual DAG synchrony. -/
+def EventuallyDelivers (D : Delivery U) (R : ℕ) : Prop := ...
+
+theorem synchronised_of_delivery (D : Delivery U) (h : EventuallyDelivers D R) :
+    Synchronised U R
+```
+
+The proof is `refs ⊇ held ⊇ all correct blocks below` — a few lines. **The
+gain is not logical.** One assumption becomes two, and nothing turns
+unconditional. The gain is that each piece is a single kind of thing:
+`includes` is implementable and observable, which is exactly what §3(b)
+notes `Synchronised` fails to be; `EventuallyDelivers` is pure network.
+
+It also puts the timeout in the right place. A timeout governs *when you
+build*, i.e. what lands in `held` — it has nothing to do with `refs`. §4.3
+currently explains the backoff next to a definition that structurally
+cannot express it. And if the quantitative version (Q3) is ever
+wanted, Δ attaches to `held`, not to `refs`: that is the layer where a
+time bound means anything.
+
+`Synchronised` keeps its exact statement. It stops being a hypothesis one
+assumes and becomes one that can be discharged, so L4–L6 are untouched.
