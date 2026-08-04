@@ -104,11 +104,13 @@ nothing currently stops a schedule from naming Byzantine validators forever —
 and then nothing ever commits, however synchronous the network. Any statement
 that commits *recur* needs a fairness condition:
 
-> for every slot `k` there is a slot `k' ≥ k` whose leader is correct
+> for every slot `k` there is a slot `k' ≥ k` whose leader lies in `T`
 
-Round-robin over `3f+1` validators supplies it, since at least `2f+1` of every
+where `T` is the correct quorum L4 counts (S5). Round-robin over `3f+1`
+validators supplies the `T := Correct` case, since at least `2f+1` of every
 `3f+1` leaders are correct. But the `Slots` class does not require
-round-robin, so this has to be assumed separately.
+round-robin, so this has to be assumed separately — and Q4 records that the
+`∃ k' ≥ k` form buys liveness without buying any *rate*.
 
 ## 4. The phases
 
@@ -262,7 +264,10 @@ theorem not_live (U : BlockUniverse Validator BlockId Payload) : ¬ Live⁰ U
 
 The proof is three lines: pick a correct validator, collect its blocks at
 rounds `0 … |U.ids|`, and note they are `|U.ids| + 1` distinct members of
-`U.ids`.
+`U.ids`. It is not in the repository — `Live` now carries the horizon, so
+there is nothing left to refute — but the same argument applies to any field
+that names a block at every round, which is why `Timing` carries a horizon
+too (§7).
 
 The fix is a **horizon** `N`: `builds` fires only for `r < N`, so the DAG
 reaches round `N` and stops. Three things follow.
@@ -302,21 +307,28 @@ The only real proof in the plan is untouched by any of this.
 
 ## 5. Definitions
 
+Mirrors `LeanDag/Liveness.lean` and `LeanDag/Timing.lean`, in file order.
+Several predicates come in two forms: a general one over a validator set `T`,
+and an abbreviation at `T := Correct` that recovers the original statement.
+The generalisation is S5; it is what lets L4 need only a *quorum* of reliable
+validators rather than every one of them.
+
 ```lean
-/-- What L4 actually needs of a round: every correct validator has a block
-there. Local and finite — no growth, no horizon, no limit. Splitting this out
-is what keeps `N` out of L4 entirely. -/
-def Populated (U : BlockUniverse Validator BlockId Payload) (r : ℕ) : Prop :=
-  ∀ v ∈ Correct, ∃ b ∈ U.ids,
-    (U.block b).creator = v ∧ (U.block b).round = r
+/-- What L4 needs of a round: every validator in `T` has a block there.
+Local and finite — no growth, no horizon. Keeping `N` out of L4 is the point
+(§4.4). -/
+def PopulatedOn (U) (T : Finset Validator) (r : ℕ) : Prop :=
+  ∀ v ∈ T, ∃ b ∈ U.ids, (U.block b).creator = v ∧ (U.block b).round = r
 
-/-- What each validator had in hand, one round at a time. The layer the
-static model lacks, and what lets `builds` and `Synchronised` each be stated
-as a single kind of thing (settled questions S2 and S4).
+abbrev Populated (U) (r : ℕ) : Prop := PopulatedOn U Correct r
 
-Note what it does **not** contain: a clock. With no time model, a timeout can
-only leave a trace as a larger `held`. -/
-structure Delivery (U : BlockUniverse Validator BlockId Payload) where
+/-- Antitone: a smaller set is easier to populate. This is what lets L1 keep
+concluding about all of `Correct` while L4 consumes only a quorum. -/
+theorem PopulatedOn.mono (hsub : T ⊆ T') : PopulatedOn U T' r → PopulatedOn U T r
+
+/-- What each validator had in hand, one round at a time — the layer the
+static model lacks. Note what it does **not** contain: a clock. -/
+structure Delivery (U) where
   held : Validator → ℕ → Finset BlockId
   held_spec : ∀ v n, ∀ i ∈ held v n, i ∈ U.ids ∧ (U.block i).round = n
   /-- **Protocol rule.** A correct validator references everything it held.
@@ -324,66 +336,91 @@ structure Delivery (U : BlockUniverse Validator BlockId Payload) where
   includes : ∀ v ∈ Correct, ∀ n, ∀ b ∈ U.ids, (U.block b).creator = v →
     (U.block b).round = n + 1 → held v n ⊆ (U.block b).refs
 
-/-- The protocol behaviour liveness needs. Not derivable from the DAG
-structure: `Correct` is a negative condition, and these are positive.
-Asynchrony-only — no synchrony here.
+/-- **Asynchrony.** A quorum that *exists* is eventually *held*. Conditional
+on existence, since unconditionally it would assert the block production L1
+sets out to prove. No round bound — this holds before GST too. -/
+def DeliversQuorum (D : Delivery U) : Prop :=
+  ∀ n, 2 * F.f + 1 ≤ (authorsAt U n).card →
+    ∀ v ∈ Correct, 2 * F.f + 1 ≤ (creatorsOf U.block (D.held v n)).card
 
-`N` is the **horizon**: `builds` fires only below it, so the DAG reaches
-round `N` and stops. Without that bound the structure is unsatisfiable, since
-`U.ids` is a `Finset` (§4.4). -/
-structure Live (U : BlockUniverse Validator BlockId Payload)
-    (D : Delivery U) (N : ℕ) where
+/-- The positive protocol behaviour liveness needs. `N` is the **horizon**:
+without it `U.ids` would have to be infinite, and it is a `Finset` (§4.4). -/
+structure Live (U) (D : Delivery U) (N : ℕ) where
   genesis : Populated U 0
   builds  : ∀ r < N, ∀ v ∈ Correct,
     2 * F.f + 1 ≤ (creatorsOf U.block (D.held v r)).card →
     ∃ b ∈ U.ids, (U.block b).creator = v ∧ (U.block b).round = r + 1
 
-/-- Asynchrony: a quorum that *exists* is eventually *held*. Conditional on
-existence, since unconditionally it would assert the block production L1 sets
-out to prove. No round bound — this holds before GST too. -/
-def DeliversQuorum (D : Delivery U) : Prop :=
-  ∀ n, 2 * F.f + 1 ≤ (authorsAt U n).card →
-    ∀ v ∈ Correct, 2 * F.f + 1 ≤ (creatorsOf U.block (D.held v n)).card
-
-/-- From round `R` on, correct blocks reference every correct block of the
-round below.
-
-`R` is **not** GST: it is the round from which synchrony has fully taken
-effect (§4.2). This single predicate carries both the network guarantee and
-rule (§3b), because honest-to-honest coverage does not follow from view
-convergence alone (§4.3). §9's S4 splits it and makes this a
-*theorem*; the statement below is unchanged by that — only how it is
-obtained.
-
-Both quantifiers are restricted to `Correct`, and deliberately: a Byzantine
-validator may publish nothing, or publish and withhold, so no assumption
-about referencing its blocks would be sound — and none is needed (§4.3). -/
-def Synchronised (U : BlockUniverse Validator BlockId Payload) (R : ℕ) : Prop :=
+/-- From round `R` on, a `T`-block references every `T`-block of the round
+below. `R` is **not** GST (§4.2); it is a round index, not a clock. -/
+def SynchronisedOn (U) (T : Finset Validator) (R : ℕ) : Prop :=
   ∀ n, R ≤ n → ∀ b ∈ U.ids, (U.block b).round = n + 1 →
-    (U.block b).creator ∈ (Correct : Finset Validator) →
+    (U.block b).creator ∈ T →
     ∀ a ∈ U.ids, (U.block a).round = n →
-      (U.block a).creator ∈ (Correct : Finset Validator) → a ∈ (U.block b).refs
+      (U.block a).creator ∈ T → a ∈ (U.block b).refs
 
-/-- **Synchrony.** After `R`, the *whole* correct round is held — not merely
-a quorum of it, which is what `DeliversQuorum` gives unconditionally.
-Together with `Delivery.includes` this yields `Synchronised` (L7). -/
+abbrev Synchronised (U) (R : ℕ) : Prop := SynchronisedOn U Correct R
+
+/-- Antitone too, so existing witnesses feed the quorum-relative L4. -/
+theorem SynchronisedOn.mono (hsub : T ⊆ T') : SynchronisedOn U T' R → SynchronisedOn U T R
+
+/-- **Synchrony, at the delivery layer.** After `R` the *whole* correct round
+is held — not merely a quorum of it, which is what `DeliversQuorum` gives
+unconditionally. With `Delivery.includes` this yields `Synchronised` (L7). -/
 def EventuallyDelivers (D : Delivery U) (R : ℕ) : Prop :=
   ∀ n, R ≤ n → ∀ v ∈ Correct, ∀ a ∈ U.ids, (U.block a).round = n →
     (U.block a).creator ∈ Correct → a ∈ D.held v n
 
-/-- Every correct validator's *eventual* view (§4.2). Downward-closed for
-free, by `U.complete`. -/
-def View.full (U : BlockUniverse Validator BlockId Payload) :
-    View Validator BlockId Payload U where
+/-- Every correct validator's eventual view (§4.2). Downward-closed for free,
+by `U.complete`. -/
+def View.full (U) : View Validator BlockId Payload U where
   ids := U.ids
   subset_ids := Finset.Subset.rfl
   complete := U.complete
 
-/-- The schedule names a correct leader arbitrarily far out (§3c). Without
-it, no recurrence statement holds: `Slots.leader` is an arbitrary function
-and could name Byzantine validators forever. -/
-def FairSchedule : Prop :=
-  ∀ k, ∃ k', k ≤ k' ∧ S.leader k' ∈ (Correct : Finset Validator)
+/-- The schedule names a `T`-leader arbitrarily far out (§3c). Without it no
+recurrence statement holds: `Slots.leader` is an arbitrary function and could
+name Byzantine validators forever. -/
+def FairScheduleOn (T : Finset Validator) : Prop :=
+  ∀ k, ∃ k', k ≤ k' ∧ S.leader k' ∈ T
+
+abbrev FairSchedule : Prop := FairScheduleOn Correct
+```
+
+### The timing layer
+
+`LeanDag/Timing.lean`. Everything above treats `SynchronisedOn` as a
+hypothesis; this is where it is earned (Q1).
+
+```lean
+/-- When each validator built each block, and what the network guarantees.
+`gst`, `delay` and `timeout` are fields rather than parameters because they
+belong to the execution, not to the statement. -/
+structure Timing (U) (T : Finset Validator) (N : ℕ) where
+  blk : Validator → ℕ → BlockId          -- `v`'s round-`n` block
+  built : Validator → ℕ → ℕ              -- when `v` built it
+  timeout : ℕ → ℕ
+  gst : ℕ
+  delay : ℕ                              -- Δ
+  /-- The universe stops at the horizon. Without this the structure is
+  **unsatisfiable**, exactly as the first `Live` was (§4.4). -/
+  rounds_le : ∀ b ∈ U.ids, (U.block b).round ≤ N
+  blk_mem : ∀ v ∈ T, ∀ n ≤ N, blk v n ∈ U.ids
+  blk_creator : ∀ v ∈ T, ∀ n ≤ N, (U.block (blk v n)).creator = v
+  blk_round : ∀ v ∈ T, ∀ n ≤ N, (U.block (blk v n)).round = n
+  /-- **The waiting rule** (protocol). A *full timeout* after entering the
+  round — **not** as soon as a quorum is in hand. See Q1. -/
+  waits : ∀ v ∈ T, ∀ n < N, built v n + timeout n ≤ built v (n + 1)
+  timeout_pos : ∀ n, 1 ≤ timeout n
+  /-- **Delivery** (network). This is GST, and where the chain bottoms out. -/
+  covers : ∀ v ∈ T, ∀ w ∈ T, ∀ n < N, gst ≤ built w n →
+    built w n + delay ≤ built v (n + 1) →
+    blk w n ∈ (U.block (blk v (n + 1))).refs
+
+/-- `T`-validators are never more than `D` apart at the same round. The one
+thing `Timing.lean` assumes rather than derives — see Q1. -/
+def Timing.Drift (tm : Timing U T N) (D : ℕ) : Prop :=
+  ∀ v ∈ T, ∀ w ∈ T, ∀ n ≤ N, tm.built w n ≤ tm.built v n + D
 ```
 
 ## 6. The results
@@ -451,13 +488,21 @@ def FairSchedule : Prop :=
 
 ### After R
 
-- **L4 — A correct leader commits.** Write `r = slotRound k`. Given
-  `Populated U r`, `Populated U (r+1)`, `Populated U (r+2)`,
-  `Synchronised U R`, `R ≤ r`, and `leader k` correct, the leader's block is
-  directly committed.
+- **L4 — A leader in a correct quorum commits.** Write `r = slotRound k`.
+  Given a validator set `T` with `2f+1 ≤ |T|`, `PopulatedOn U T` at `r`,
+  `r+1` and `r+2`, `SynchronisedOn U T R`, `R ≤ r`, and `leader k ∈ T`, the
+  leader's block is directly committed
+  (`directCommit_of_leader_mem`). `directCommit_of_correct_leader` is the
+  `T := Correct` instance.
 
-  **Population is not optional here.** `Synchronised` says correct blocks
-  *reference* correct blocks; it says nothing about blocks *existing*. Without
+  **`T` is a quorum, not all of `Correct`** (S5). The proof counts to `2f+1`
+  and never higher, so `Correct` enters at exactly one point —
+  `card_correct` — and everything after is a subset argument. Demanding all
+  of `Correct` would make the theorem lapse when one correct validator misses
+  one round, though the protocol still commits.
+
+  **Population is not optional here.** `SynchronisedOn` says `T`-blocks
+  *reference* `T`-blocks; it says nothing about blocks *existing*. Without
   it the theorem is satisfied vacuously by an empty DAG.
 
   **But growth is.** The three hypotheses are local and finite — no `Live`,
@@ -466,12 +511,13 @@ def FairSchedule : Prop :=
   the only hard proof in the plan independent of the horizon question
   (§4.4).
 
-  Every correct round-`(r+1)` block references `L` by synchrony — `L` is
-  correct-authored, so honest-to-honest coverage applies — and the supporters
-  therefore include all correct validators, at least `2f+1`. Every correct
-  round-`(r+2)` block then references all of *those*, so its `votesIn` has
-  `2f+1` distinct correct creators and it certifies `L`. Since there are
-  `2f+1` correct validators, `DirectCommit` follows.
+  Every `T`-authored round-`(r+1)` block references `L` by coverage — `L` is
+  `T`-authored — so the supporters include all of `T`, at least `2f+1`. Every
+  `T`-authored round-`(r+2)` block then references all of *those*, so its
+  `votesIn` has `2f+1` distinct creators and it certifies `L`. The
+  certificates therefore also come from `2f+1` distinct creators, which is
+  `DirectCommit`. Both steps are the same `SynchronisedOn` applied at adjacent
+  rounds — `certifies_of_synchronisedOn` is literally both at once.
 
   **Only correct-to-correct coverage is used.** The argument never asks
   whether any Byzantine block was produced or seen, which is what lets
@@ -495,8 +541,18 @@ def FairSchedule : Prop :=
   commits it:
 
   > `∀ k, ∃ k' ≥ k, R ≤ slotRound k' ∧`
-  > `  ∀ U D N, Live U D N → DeliversQuorum D → Synchronised U R →`
+  > `  ∀ U D N, Live U D N → DeliversQuorum D → SynchronisedOn U T R →`
   > `    slotRound k' + 2 ≤ N → slot k' commits`
+
+  given `T ⊆ Correct`, `2f+1 ≤ |T|` and `FairScheduleOn T`
+  (`commits_recur_on`; `commits_recur` is the `T := Correct` instance).
+
+  **This is where `T ⊆ Correct` earns its place.** L4 alone does not need it —
+  its counting cares only about `|T|`. L6 does, because its population comes
+  from L1, which knows only about correct validators. That is also the
+  *modelling* reason it must hold: withholding is free for the adversary, so
+  any argument counting Byzantine-authored blocks is defeated by doing
+  nothing (S5).
 
   **The quantifier order is the whole content, and getting it wrong makes the
   statement false.** The tempting form — *given `Live U D N`, for every `k`
@@ -543,6 +599,32 @@ def FairSchedule : Prop :=
   slots cannot delay the ledger indefinitely, because a correct leader is
   always coming".
 
+### Earning `Synchronised`
+
+- **L7 — `Synchronised`, derived.** Two layers, each removing one assumption.
+
+  `synchronised_of_delivery : Delivery U → EventuallyDelivers D R →
+  Synchronised U R`. The proof is `refs ⊇ held ⊇ every correct block below` —
+  a single term. It splits one welded assumption into an implementable
+  protocol rule and a pure network one (S4), but makes nothing
+  unconditional.
+
+  `Timing.synchronisedOn_of_timing` and `exists_synchronisedOn_of_backoff` go
+  one layer further, deriving `SynchronisedOn U T R` from **GST plus an
+  unbounded backoff** (Q1). The argument is four inequalities: drift bounds
+  how far apart `T`-validators are at a round, the backoff pushes the timeout
+  past `drift + delay`, `waits` turns that into "everything a peer built one
+  round below has arrived", and `covers` turns arrival into a reference.
+
+  Non-equivocation finishes it. `SynchronisedOn` quantifies over *every*
+  `T`-authored block, and T1 identifies each with the one `Timing` names —
+  which is why `T ⊆ Correct` is needed there. A Byzantine author could have
+  several blocks in a round, and `blk` names only one.
+
+  **Nothing above L7 changed when either layer landed.** L4 and L6 still take
+  `SynchronisedOn` as a hypothesis; these supply it. That is the payoff of
+  staging L7 last (§7).
+
 ## 7. Staging
 
 | | | risk | |
@@ -552,20 +634,27 @@ def FairSchedule : Prop :=
 | L3 | `View.full`, then L2 instantiated | low | ✓ `decided_full` |
 | — | **`Ugrow`: a family satisfying `Live`, `DeliversQuorum` and `Synchronised` at every `N`** | low, and required **first** | ✓ `ugrow_live`, `ugrow_deliversQuorum`, `ugrow_synchronised` |
 | L1 | `Live U D N` + `DeliversQuorum D`, then induction on rounds | low | ✓ `no_stall` |
-| L4 | `Populated` ×3 + `Synchronised`, then the two-layer argument | medium — the only real proof | ✓ `directCommit_of_correct_leader` |
+| L4 | `PopulatedOn` ×3 + `SynchronisedOn`, then the two-layer argument | medium — the only real proof | ✓ `directCommit_of_leader_mem` |
 | L5 | vacuity of the `∀`-over-candidates premise | low | ✓ `decided_none_of_leader_absent` |
-| L6 | `FairSchedule`, then L1 and L4 | low — but see the quantifier order | ✓ `commits_recur` |
-| L7 | `Delivery`, then `Synchronised` as a theorem | low — see S4 | ✓ `synchronised_of_delivery` |
+| L6 | `FairScheduleOn`, then L1 and L4 | low — but see the quantifier order | ✓ `commits_recur_on` |
+| L7a | `Delivery`, then `Synchronised` as a theorem | low — see S4 | ✓ `synchronised_of_delivery` |
+| — | **`ugrowTiming`: a `Timing` witness at every horizon** | low, and required **first** | ✓ `ugrowTiming` |
+| L7b | `Timing`, then `SynchronisedOn` from GST + backoff | medium — see Q1 | ✓ `exists_synchronisedOn_of_backoff` |
 
 L0, L2 and L3 come first because none needs a new primitive: L0 is pure DAG
 structure, L2 and L3 are pure view reasoning. That defers every modelling
 decision until something is already proved.
 
-**The witness now comes before L1, not before L4.** An earlier draft staged it
-later, and that ordering is what let an unsatisfiable `Live` be *proved
-against* before anyone tried to satisfy it. The revised rule: a definition
-gets a witness before anything is proved from it, not before the theorem that
-matters most.
+**Every definition gets a witness before anything is proved from it.** An
+earlier draft staged the model before L4 rather than before L1, and that
+ordering is what let an unsatisfiable `Live` be *proved against* before anyone
+tried to satisfy it.
+
+The rule earned its keep twice more. `Timing` had the identical flaw — `blk`
+at every round forces infinitely many blocks into a `Finset` — and writing
+`ugrowTiming` is what caught it, so `Timing` carries the horizon too. And
+writing `ugrow_synchronised` is what revealed that `Synchronised` had never
+been defined in Lean at all; it existed only in this document.
 
 **The model is not optional, and this is not hypothetical.** The first draft
 of `Live` was *unsatisfiable* — `U.ids` is a `Finset` and the rule forced
@@ -588,20 +677,22 @@ fall out.
 
 **L7 came last deliberately, and that was right — but it was not "purely
 additive" as predicted.** The reasoning for staging it late held up: L4–L6
-keep taking `Synchronised` unchanged, L7 simply supplies it a second way, and
-doing it first would have meant guessing which shape of `held` L4 wanted.
+keep taking `Synchronised` unchanged, and each new layer simply supplies it
+another way. Doing it first would have meant guessing which shape of `held`
+L4 wanted.
 
-What was not foreseen is that once `Delivery` existed, it made S2 settleable —
-and settling S2 changed `Live`, which now takes the `Delivery` it is stated
-against. So the layer is additive *downstream* of `Synchronised` and a
-*prerequisite* upstream of it.
+What was not foreseen is how much it unlocked. Once `Delivery` existed it made
+S2 settleable, and settling S2 changed `Live`, which now takes the `Delivery`
+it is stated against. And the seam it cut — *assume `Synchronised` above,
+supply it below* — is exactly where the timing layer (L7b, Q1) then slotted
+in, one level further down, again with nothing above it changing.
 
-The visible consequence: **proof order and file order now differ.** `Delivery`
-is defined near the top of `Liveness.lean`, ahead of `Live`, even though
-`synchronised_of_delivery` was the last theorem proved. That is the right
-outcome — the late proof is what revealed where the definition belonged — but
-it is worth flagging, since the staging table below reads as a file order and
-is not one.
+So the layer is additive *downstream* of `Synchronised` and a *prerequisite*
+upstream of it. The visible consequence: **proof order and file order differ.**
+`Delivery` sits near the top of `Liveness.lean`, ahead of `Live`, though
+`synchronised_of_delivery` was proved long after — and `Timing.lean` is
+logically the bottom of the stack while being the last file written. Worth
+flagging, since the table above reads as a file order and is not one.
 
 ## 8. Open questions
 
