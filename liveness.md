@@ -195,8 +195,13 @@ has to be assumed rather than derived: it is stated in terms the protocol
 cannot itself observe, and the loop that delivers it is driven by liveness
 failure — the very thing being proved away.
 
-`Synchronised R` therefore encodes *both* the network guarantee and rule (3b),
-and it is an assumption rather than a theorem.
+`Synchronised R` therefore encodes *both* the network guarantee and rule (3b)
+in one object. That is a modelling defect rather than a necessity, and open
+question 7 records how to split it: `Synchronised` becomes a **theorem**,
+derived from a protocol rule and a delivery assumption stated separately.
+Neither piece is itself derivable — this development has no time model, so
+the chain has to bottom out at delivery — but each is then a single kind of
+thing.
 
 **(assumption)** No wall clock and **no Δ**. Δ would force views indexed by an
 instant and every statement quantified over instants, for no proof content:
@@ -378,6 +383,7 @@ def FairSchedule : Prop :=
 | L4 | `Synchronised`, then the two-layer argument | medium — the only real proof |
 | L5 | vacuity of the `∀`-over-candidates premise | low |
 | L6 | `FairSchedule`, then L4 | low |
+| L7 | `Delivery`, then `Synchronised` as a theorem | low — see question 7 |
 
 L0, L2 and L3 come first because none needs a new primitive: L0 is pure DAG
 structure, L2 and L3 are pure view reasoning. That defers every modelling
@@ -390,6 +396,13 @@ references every correct block below meets both, and `U5`/`U7` nearly do — but
 the discipline everywhere else in this development is to *exhibit* a witness
 rather than argue one exists. It should be built before L4, so that L4 is
 known to say something the moment it is proved.
+
+**L7 comes last deliberately.** It refines the assumptions rather than proving
+anything new, and it is purely additive: L4 keeps taking `Synchronised`
+unchanged and L7 supplies it a second way. Doing it first would mean carrying
+the extra layer through every experiment while guessing which shape of `held`
+L4 wants — and the witness model would have to be built against the heavier
+definition. Doing it after costs nothing and is informed by a finished proof.
 
 ## 8. Open questions
 
@@ -414,3 +427,46 @@ known to say something the moment it is proved.
 6. **How far should the quantitative version go?** §4.3 drops Δ, and open
    question 5 would reintroduce counting of a different kind (slots rather
    than time). Those are separable: slot-counting needs no clock.
+7. **Should `Synchronised` be assumed or derived?** — **resolved: derived,
+   staged after L4 as L7.**
+
+   `Synchronised` welds two unlike things together: a protocol rule and a
+   network guarantee. It cannot be derived from anything in the model as it
+   stands, because the model is a static `BlockUniverse` — blocks and refs,
+   no time, no delivery, no record of what a validator *held* when it built.
+   `Synchronised` is stated on `refs` because `refs` is all there is.
+
+   Adding that missing layer splits it:
+
+   ```lean
+   structure Delivery (U : BlockUniverse Validator BlockId Payload) where
+     /-- What `v` held from round `n` when it built its round-`(n+1)` block. -/
+     held : Validator → ℕ → Finset BlockId
+     held_spec : ∀ v n, ∀ i ∈ held v n, i ∈ U.ids ∧ (U.block i).round = n
+     /-- **Protocol rule.** A correct validator references everything it held. -/
+     includes : ∀ v ∈ Correct, ∀ n, ∀ b ∈ U.ids, (U.block b).creator = v →
+       (U.block b).round = n + 1 → held v n ⊆ (U.block b).refs
+
+   /-- **Network assumption.** After `R`, correct blocks reach correct
+   validators in time to be built on. This is eventual DAG synchrony. -/
+   def EventuallyDelivers (D : Delivery U) (R : ℕ) : Prop := ...
+
+   theorem synchronised_of_delivery (D : Delivery U) (h : EventuallyDelivers D R) :
+       Synchronised U R
+   ```
+
+   The proof is `refs ⊇ held ⊇ all correct blocks below` — a few lines. **The
+   gain is not logical.** One assumption becomes two, and nothing turns
+   unconditional. The gain is that each piece is a single kind of thing:
+   `includes` is implementable and observable, which is exactly what §3(b)
+   notes `Synchronised` fails to be; `EventuallyDelivers` is pure network.
+
+   It also puts the timeout in the right place. A timeout governs *when you
+   build*, i.e. what lands in `held` — it has nothing to do with `refs`. §4.3
+   currently explains the backoff next to a definition that structurally
+   cannot express it. And if the quantitative version (question 6) is ever
+   wanted, Δ attaches to `held`, not to `refs`: that is the layer where a
+   time bound means anything.
+
+   `Synchronised` keeps its exact statement. It stops being a hypothesis one
+   assumes and becomes one that can be discharged, so L4–L6 are untouched.
