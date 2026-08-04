@@ -53,15 +53,24 @@ is vacuous without a positive rule:
 This is an **asynchrony-only** assumption: it needs eventual delivery, not
 synchrony, and it is what makes the pre-GST results go through.
 
-**(b) Correct validators wait before building.** Distinct from (a), and
-pulling the other way: (a) says build as soon as you can, (b) says delay until
-every *correct* block of the round below is in hand. The rule is not
-leader-specific — catching the leader's block is *why* we want it, not what it
-says. Without (b), correct validators race ahead under perfect synchrony and
-never vote for the leader, so nothing commits. This is the **synchrony**
-assumption, and §5's `Synchronised` is where it lives.
+**(b) Correct blocks cover the correct blocks below them.** Distinct from
+(a), and pulling the other way: (a) says build as soon as you can, (b) says
+do not. After GST, every correct block references every correct block of the
+round below. Without (b) correct validators race ahead under perfect
+synchrony and never vote for the leader, so nothing commits. This is the
+**synchrony** assumption, and §5's `Synchronised` is where it lives. It is
+not leader-specific — catching the leader's block is *why* we want it, not
+what it says.
 
-The restriction to correct blocks is not a simplification — see §4.3. A
+**This is an outcome, not an instruction.** A validator cannot tell which of
+its peers are correct, so "wait for the correct blocks" is not something it
+can execute. What it can do is wait on a **timeout** and build with whatever
+arrived — and raise that timeout when commits stop arriving. After GST a long
+enough timeout delivers every correct block of the round below. The coverage
+is what synchrony plus backoff *produces*; the protocol never names it. See
+§4.3.
+
+The restriction to correct blocks is likewise not a simplification. A
 validator cannot wait for Byzantine blocks, because they may never come.
 
 **(c) Correct leaders recur.** `Slots.leader` is an arbitrary function, so
@@ -169,15 +178,22 @@ building at round `n+1` waits for 2f+1 round-`n` blocks; the arrival of the
 2f+1st says nothing about the rest having arrived. Convergence of *views* does
 not retroactively enlarge *blocks*.
 
-So honest-to-honest coverage is a **waiting rule** — the validator must delay
-past 2f+1 — justified by a timing argument this development does not
-formalize.
+So honest-to-honest coverage comes from **waiting past 2f+1**, justified by a
+timing argument this development does not formalize.
 
-Note the rule a correct validator can actually *follow* is "wait long enough",
-not "wait for every correct block" — it cannot identify which of its peers are
-correct. Synchrony is what makes the former deliver the latter, and that gap
-is another reason `Synchronised` has to be assumed rather than derived: it is
-stated in terms the protocol cannot itself observe.
+**The mechanism is an adaptive timeout, and the gap matters.** A correct
+validator cannot identify which of its peers are correct, so it cannot wait
+*for the correct blocks*. It waits a fixed period and builds on whatever
+arrived. Before GST no period is long enough, and nothing lets the validator
+detect that directly — what it observes is that **commits have stopped**.
+Raising the timeout when commits stall is what eventually pushes the period
+past the true delay.
+
+`Synchronised R` is therefore the *outcome* of that feedback loop once the
+network settles, not a rule any validator follows. That is another reason it
+has to be assumed rather than derived: it is stated in terms the protocol
+cannot itself observe, and the loop that delivers it is driven by liveness
+failure — the very thing being proved away.
 
 `Synchronised R` therefore encodes *both* the network guarantee and rule (3b),
 and it is an assumption rather than a theorem.
