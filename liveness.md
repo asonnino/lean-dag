@@ -54,10 +54,14 @@ This is an **asynchrony-only** assumption: it needs eventual delivery, not
 synchrony, and it is what makes the pre-GST results go through.
 
 **(b) Correct validators wait for the leader.** Distinct from (a), and pulling
-the other way: (a) says build as soon as you can, (b) says delay until the
-round below is complete. Without (b), correct validators race ahead under
-perfect synchrony and never vote for the leader, so nothing commits. This is
-the **synchrony** assumption, and §5's `Synchronised` is where it lives.
+the other way: (a) says build as soon as you can, (b) says delay until every
+*correct* block of the round below is in hand. Without (b), correct validators
+race ahead under perfect synchrony and never vote for the leader, so nothing
+commits. This is the **synchrony** assumption, and §5's `Synchronised` is
+where it lives.
+
+The restriction to correct blocks is not a simplification — see §4.3. A
+validator cannot wait for Byzantine blocks, because they may never come.
 
 ## 4. The phases
 
@@ -95,11 +99,11 @@ real and takes time.
 
 **The limit universe cannot see it.** In the limit every correct validator has
 a block at every round (L1). The only question the limit can ask of a block is
-*whether its references are complete*, and that is a property of the round it
-was built at — not of when it was built.
+*whether it references every correct block of the round below*, and that is a
+property of the round it was built at — not of when it was built.
 
 So GST and the end of catch-up are **indistinguishable** here: both are "some
-round from which references are complete".
+round from which correct blocks see every correct block below them".
 
 **(assumption)** `R` is therefore *not* the GST round. It is defined as the
 round from which synchrony has fully taken effect — GST plus however long
@@ -108,21 +112,51 @@ precisely the quantitative content already dropped with Δ (§4.3). It is not
 evasion: the framing is correctly reporting that the distinction is not
 observable in it.
 
-### 4.3 After R — complete references, and why it must be assumed
+### 4.3 After R — honest-to-honest coverage, and why it must be assumed
 
 The final phase is *"all correct blocks contain all other correct blocks
-because of the sufficient delay"*. This **does not follow** from view
-convergence, and the reason is worth recording.
+because of the sufficient delay"*.
+
+**Honest-to-honest only.** The assumption says a *correct* block references
+every *correct* block of the round below, and both restrictions are load
+bearing:
+
+- **Nothing may be assumed about Byzantine blocks existing.** A Byzantine
+  validator can publish nothing at all, so there is no round-`n` block of
+  theirs to reference. It can equally publish and reveal to only some
+  validators, so even correct validators cannot be assumed to hold it.
+- **Nothing needs to be.** L4 counts only correct certificates, and there are
+  `2f+1` correct validators — a quorum — so the argument never asks whether a
+  Byzantine block was seen.
+- **Well-formedness survives.** A correct block referencing every correct
+  block of the round below already names `≥ 2f+1` distinct creators, so
+  validity's quorum condition is met without any Byzantine reference. Nothing
+  is lost by the restriction.
+
+Getting this wrong in the *strong* direction — assuming all blocks are
+referenced — would be assuming Byzantine validators behave, which is exactly
+what a fault model must not do.
+
+This **does not follow** from view convergence, and the reason is worth
+recording.
 
 **A block's references are frozen when it is built.** A correct validator
 building at round `n+1` waits for 2f+1 round-`n` blocks; the arrival of the
 2f+1st says nothing about the rest having arrived. Convergence of *views* does
 not retroactively enlarge *blocks*.
 
-So reference-completeness is a **waiting rule** — the validator must delay
+So honest-to-honest coverage is a **waiting rule** — the validator must delay
 past 2f+1 — justified by a timing argument this development does not
-formalize. `Synchronised R` therefore encodes *both* the network guarantee and
-rule (3b), and it is an assumption rather than a theorem.
+formalize.
+
+Note the rule a correct validator can actually *follow* is "wait long enough",
+not "wait for every correct block" — it cannot identify which of its peers are
+correct. Synchrony is what makes the former deliver the latter, and that gap
+is another reason `Synchronised` has to be assumed rather than derived: it is
+stated in terms the protocol cannot itself observe.
+
+`Synchronised R` therefore encodes *both* the network guarantee and rule (3b),
+and it is an assumption rather than a theorem.
 
 **(assumption)** No wall clock and **no Δ**. Δ would force views indexed by an
 instant and every statement quantified over instants, for no proof content:
@@ -148,8 +182,12 @@ round below.
 
 `R` is **not** GST: it is the round from which synchrony has fully taken
 effect (§4.2). This single predicate carries both the network guarantee and
-the waiting rule (§3b), because reference-completeness cannot be derived from
-view convergence alone (§4.3). -/
+the waiting rule (§3b), because honest-to-honest coverage cannot be derived
+from view convergence alone (§4.3).
+
+Both quantifiers are restricted to `Correct`, and deliberately: a Byzantine
+validator may publish nothing, or publish and withhold, so no assumption
+about referencing its blocks would be sound — and none is needed (§4.3). -/
 def Synchronised (U : BlockUniverse Validator BlockId Payload) (R : ℕ) : Prop :=
   ∀ n, R ≤ n → ∀ b ∈ U.ids, (U.block b).round = n + 1 →
     (U.block b).creator ∈ (Correct : Finset Validator) →
@@ -205,11 +243,16 @@ def Synchronised (U : BlockUniverse Validator BlockId Payload) (R : ℕ) : Prop 
 - **L4 — A correct leader commits.** If `Synchronised U R`, `R ≤ slotRound k`,
   and `leader k` is correct, then its block is directly committed.
 
-  Every correct round-`(r+1)` block references `L` by synchrony, so the
-  supporters include all correct validators — at least `2f+1`. Every correct
+  Every correct round-`(r+1)` block references `L` by synchrony — `L` is
+  correct-authored, so honest-to-honest coverage applies — and the supporters
+  therefore include all correct validators, at least `2f+1`. Every correct
   round-`(r+2)` block then references all of *those*, so its `votesIn` has
   `2f+1` distinct correct creators and it certifies `L`. Since there are
   `2f+1` correct validators, `DirectCommit` follows.
+
+  **Only correct-to-correct coverage is used.** The argument never asks
+  whether any Byzantine block was produced or seen, which is what lets
+  `Synchronised` stay restricted to correct authors on both sides (§4.3).
 
 - **L5 — An absent leader is skipped.** If `leader k` has no
   round-`slotRound k` block, the slot is decided `none`.
