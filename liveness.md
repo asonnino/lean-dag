@@ -393,8 +393,8 @@ def FairSchedule : Prop :=
 | | | risk | |
 |---|---|---|---|
 | L0 | density below the frontier | low — existing lemmas, no new primitives | ✓ `card_authorsAt_of_lt` |
-| L2 | view-monotonicity of `Decided` | low — mirrors `decided_unique`'s induction | |
-| L3 | `View.full`, then L2 instantiated | low | |
+| L2 | view-monotonicity of `Decided` | low — mirrors `decided_unique`'s induction | ✓ `decided_mono` |
+| L3 | `View.full`, then L2 instantiated | low | ✓ `decided_full` |
 | L1 | `Live`, then no-stall by induction on rounds | low | |
 | — | **a model satisfying `Live` and `Synchronised`** | low, and required | |
 | L4 | `Live` + `Synchronised`, then the two-layer argument | medium — the only real proof | |

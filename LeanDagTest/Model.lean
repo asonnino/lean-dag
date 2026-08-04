@@ -674,4 +674,63 @@ example : 2 * 1 + 1 ≤ (authorsAt U7 4).card :=
 is empty -- so L0 says nothing there, correctly. -/
 example : (authorsAt U7 6).card = 0 := by decide
 
+/-! ### L2, L3 — view monotonicity and commit propagation
+
+`V7` is the *full* view, so it cannot exercise L2 on its own: monotonicity
+needs a genuinely smaller view that still decides something.
+
+`U7`'s round-5 blocks are 20-23, authored by validators 0-3, and all four
+certify slot 1's leader (block 12). Dropping one leaves three distinct
+certifying authors -- exactly `2f+1` -- so the trimmed view still commits.
+Dropping two does not. Both views are downward-closed for free: nothing
+references the frontier.
+-/
+
+/-- The full view minus one frontier block. Still enough to commit slot 1. -/
+def V7small : View (Fin 4) (Fin 24) Unit U7 where
+  ids := Finset.univ \ {23}
+  subset_ids := by decide
+  complete := by decide
+
+/-- Minus two. No longer enough. -/
+def V7tiny : View (Fin 4) (Fin 24) Unit U7 where
+  ids := Finset.univ \ {22, 23}
+  subset_ids := by decide
+  complete := by decide
+
+-- The views are genuinely nested, and genuinely distinct.
+example : V7small.ids ⊆ V7.ids := by decide
+example : V7small.ids ≠ V7.ids := by decide
+example : V7tiny.ids ⊆ V7small.ids := by decide
+
+/-- **View size really does control the direct rules.** Were this false, L2
+would be monotone for trivial reasons -- every view deciding everything. -/
+example : ¬ DirectCommitIn U7 V7tiny 12 3 := by decide
+example : DirectCommitIn U7 V7small 12 3 := by decide
+
+/-- A decision reached on the trimmed view. -/
+theorem smallDecidedSlot1 : Decided U7 V7small 1 (some 12) :=
+  Decided.directCommit (by decide) (by decide)
+
+/-- **L2 applied.** The verdict survives the view growing to the full one. -/
+example : Decided U7 V7 1 (some 12) :=
+  decided_mono (by decide) smallDecidedSlot1
+
+/-- L2 also carries the *indirect* commit of slot 0 -- the case whose
+negative `CertifiedIn` premise is the reason L2 holds at all. -/
+example : Decided U7 V7small 0 (some 0) :=
+  Decided.indirectCommit (j := 1) (A := 12) (by omega) smallDecidedSlot1
+    (fun i h1 h2 => absurd h2 (by omega))
+    (by decide)
+    ⟨8, by decide, Reaches.single (by decide)⟩
+
+/-- **L3 applied.** Any view's verdict holds on the full view -- which §4.2
+identifies as every correct validator's eventual view. -/
+example : Decided U7 (View.full U7) 1 (some 12) := decided_full smallDecidedSlot1
+
+/-- The full view is not some new object: it is `U7.ids` itself. -/
+example : (View.full U7).ids = U7.ids := rfl
+
 #print axioms LeanDag.card_authorsAt_of_lt
+#print axioms LeanDag.decided_mono
+#print axioms LeanDag.decided_full
