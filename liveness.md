@@ -53,15 +53,27 @@ is vacuous without a positive rule:
 This is an **asynchrony-only** assumption: it needs eventual delivery, not
 synchrony, and it is what makes the pre-GST results go through.
 
-**(b) Correct validators wait for the leader.** Distinct from (a), and pulling
-the other way: (a) says build as soon as you can, (b) says delay until every
-*correct* block of the round below is in hand. Without (b), correct validators
-race ahead under perfect synchrony and never vote for the leader, so nothing
-commits. This is the **synchrony** assumption, and §5's `Synchronised` is
-where it lives.
+**(b) Correct validators wait before building.** Distinct from (a), and
+pulling the other way: (a) says build as soon as you can, (b) says delay until
+every *correct* block of the round below is in hand. The rule is not
+leader-specific — catching the leader's block is *why* we want it, not what it
+says. Without (b), correct validators race ahead under perfect synchrony and
+never vote for the leader, so nothing commits. This is the **synchrony**
+assumption, and §5's `Synchronised` is where it lives.
 
 The restriction to correct blocks is not a simplification — see §4.3. A
 validator cannot wait for Byzantine blocks, because they may never come.
+
+**(c) Correct leaders recur.** `Slots.leader` is an arbitrary function, so
+nothing currently stops a schedule from naming Byzantine validators forever —
+and then nothing ever commits, however synchronous the network. Any statement
+that commits *recur* needs a fairness condition:
+
+> for every slot `k` there is a slot `k' ≥ k` whose leader is correct
+
+Round-robin over `3f+1` validators supplies it, since at least `2f+1` of every
+`3f+1` leaders are correct. But the `Slots` class does not require
+round-robin, so this has to be assumed separately.
 
 ## 4. The phases
 
@@ -104,6 +116,18 @@ property of the round it was built at — not of when it was built.
 
 So GST and the end of catch-up are **indistinguishable** here: both are "some
 round from which correct blocks see every correct block below them".
+
+**The limit universe is the eventual common view.** Eventual DAG synchrony
+says anything one correct validator holds, all eventually hold. So the union
+of the correct validators' views *is* `U`, and every correct validator's
+eventual view is the **full** view — `ids := U.ids`, downward-closed for free
+by `U.complete`.
+
+That is the crispest form the assumption takes here, and it is what makes L3
+a theorem rather than an appeal: "eventually all agree" becomes "L2
+instantiated at the full view". It also fixes what `U` *means* — not "every
+block anyone ever wrote", but "every block some correct validator ever held".
+A Byzantine block revealed to nobody is simply not in the universe.
 
 **(assumption)** `R` is therefore *not* the GST round. It is defined as the
 round from which synchrony has fully taken effect — GST plus however long
@@ -193,6 +217,20 @@ def Synchronised (U : BlockUniverse Validator BlockId Payload) (R : ℕ) : Prop 
     (U.block b).creator ∈ (Correct : Finset Validator) →
     ∀ a ∈ U.ids, (U.block a).round = n →
       (U.block a).creator ∈ (Correct : Finset Validator) → a ∈ (U.block b).refs
+
+/-- Every correct validator's *eventual* view (§4.2). Downward-closed for
+free, by `U.complete`. -/
+def View.full (U : BlockUniverse Validator BlockId Payload) :
+    View Validator BlockId Payload U where
+  ids := U.ids
+  subset_ids := le_refl _
+  complete := U.complete
+
+/-- The schedule names a correct leader arbitrarily far out (§3c). Without
+it, no recurrence statement holds: `Slots.leader` is an arbitrary function
+and could name Byzantine validators forever. -/
+def FairSchedule : Prop :=
+  ∀ k, ∃ k', k ≤ k' ∧ S.leader k' ∈ (Correct : Finset Validator)
 ```
 
 ## 6. The results
@@ -230,18 +268,39 @@ def Synchronised (U : BlockUniverse Validator BlockId Payload) (R : ℕ) : Prop 
   monotone — intersecting the certificate or blame set with a larger view can
   only grow the creator set — and the indirect cases follow inductively.
 
+  **This works only because `CertifiedIn` is universe-level.** The
+  `indirectSkip` case carries a *negative* premise — no candidate is certified
+  in reach of the anchor. Had the indirect check been view-relative, that
+  premise would be **anti**-monotone: growing the view could reveal a
+  certificate and flip a skip into a commit, and L2 would be false. C1 defined
+  `CertifiedIn` over `U` rather than `V`, with T6a
+  (`certifiedIn_iff_of_view`) showing the view-restricted computation agrees.
+  That is what keeps the negative premise stable.
+
   Worth having independently of liveness: combined with M1 it says a validator
   **never revises a decision** as its view grows. The safety results so far say
   decisions do not *conflict*; they do not say decisions do not *change*.
 
-- **L3 — Commit propagation.** If one correct validator decides slot `k`,
-  every correct validator eventually reaches the same decision. L2 plus
-  eventual DAG synchrony, which supplies `V ⊆ V'`.
+- **L3 — Commit propagation.** If any validator decides slot `k` on any view,
+  the same verdict holds on the **full** view:
+  `Decided U V k v → Decided U (View.full U) k v`.
+
+  L2 instantiated at `V' = View.full U`. Since every correct validator's
+  eventual view is the full view (§4.2), this *is* "all correct validators
+  eventually reach the same decision" — with the informal "eventually"
+  discharged by the framing rather than waved at.
 
 ### After R
 
-- **L4 — A correct leader commits.** If `Synchronised U R`, `R ≤ slotRound k`,
-  and `leader k` is correct, then its block is directly committed.
+- **L4 — A correct leader commits.** Given `Live U`, `Synchronised U R`,
+  `R ≤ slotRound k`, and `leader k` correct, the leader's block is directly
+  committed.
+
+  **`Live` is not optional here.** `Synchronised` says correct blocks
+  *reference* correct blocks; it says nothing about blocks *existing*. Without
+  `Live` the theorem is satisfied vacuously by an empty DAG. L1 supplies the
+  leader's round-`r` block and the correct blocks at `r+1` and `r+2` that the
+  argument counts.
 
   Every correct round-`(r+1)` block references `L` by synchrony — `L` is
   correct-authored, so honest-to-honest coverage applies — and the supporters
@@ -254,6 +313,11 @@ def Synchronised (U : BlockUniverse Validator BlockId Payload) (R : ℕ) : Prop 
   whether any Byzantine block was produced or seen, which is what lets
   `Synchronised` stay restricted to correct authors on both sides (§4.3).
 
+  The conclusion is the *universe-level* `DirectCommit`. It becomes an actual
+  decision through the full view: `DirectCommitIn` there is `DirectCommit`,
+  so `Decided U (View.full U) k (some L)` follows — which is what L6 needs and
+  what L3 propagates.
+
 - **L5 — An absent leader is skipped.** If `leader k` has no
   round-`slotRound k` block, the slot is decided `none`.
 
@@ -262,18 +326,29 @@ def Synchronised (U : BlockUniverse Validator BlockId Payload) (R : ℕ) : Prop 
   **vacuously true** when the leader published nothing. Choosing the `∀` form
   over naming a candidate block is what makes this case disappear.
 
-- **L6 — After `R`, the direct rule always fires.** Combining L4 and L5: every
-  slot from `R` on is *directly* decided, so the indirect rule is never needed
-  after synchrony takes effect.
+- **L6 — Commits recur.** Given `Live U`, `Synchronised U R` and a
+  `FairSchedule`, for every slot there is a later slot that commits — so the
+  ledger grows without bound.
 
-  This is the right shape for a liveness statement here. Not "something
-  eventually commits" but "the machinery for undecided slots stops being
-  reachable".
+  Fairness names a correct leader at some slot `k' ≥ max(k, k_R)`, where `k_R`
+  is any slot with `R ≤ slotRound k_R`; L4 then commits it.
 
-**What this deliberately does not cover.** A Byzantine leader that publishes a
-block but shows it to only some validators. That can leave a slot genuinely
-undecided — which is exactly why the indirect rule exists, and why M4/M6 are
-not made redundant by L6.
+  Such a `k_R` exists because `slotRound` is unbounded — the `Slots` spacing
+  condition gives `slotRound k + 3 ≤ slotRound (k+1)`, so rounds grow without
+  limit. Small, but it is a real proof obligation rather than an aside.
+
+  **Not "every slot decides".** An earlier draft claimed that, and it is
+  false. L4 needs a *correct* leader and L5 an *absent* one; a Byzantine
+  leader that publishes a block and reveals it to only some validators falls
+  in neither gap. `Synchronised` is honest-to-honest, so it says nothing about
+  whether correct validators reference a Byzantine-authored block — some will,
+  some will not, and the slot stays undecided.
+
+  That case is exactly why the indirect rule exists, and why M4/M6 are **not**
+  made redundant by liveness. Recurrence is the right shape for the statement:
+  not "the machinery for undecided slots becomes unreachable" but "undecided
+  slots cannot delay the ledger indefinitely, because a correct leader is
+  always coming".
 
 ## 7. Staging
 
@@ -281,14 +356,24 @@ not made redundant by L6.
 |---|---|---|
 | L0 | density below the frontier | low — existing lemmas, no new primitives |
 | L2 | view-monotonicity of `Decided` | low — mirrors `decided_unique`'s induction |
+| L3 | `View.full`, then L2 instantiated | low |
 | L1 | `Live`, then no-stall by induction on rounds | low |
-| L3 | L2 plus the synchrony hypothesis | low |
+| — | **a model satisfying `Live` and `Synchronised`** | low, and required |
 | L4 | `Synchronised`, then the two-layer argument | medium — the only real proof |
-| L5–L6 | composition | low |
+| L5 | vacuity of the `∀`-over-candidates premise | low |
+| L6 | `FairSchedule`, then L4 | low |
 
-L0 and L2 come first because neither needs a new primitive: L0 is pure DAG
-structure, L2 is pure view reasoning. That defers every modelling decision
-until there is already something proved.
+L0, L2 and L3 come first because none needs a new primitive: L0 is pure DAG
+structure, L2 and L3 are pure view reasoning. That defers every modelling
+decision until something is already proved.
+
+**The model is not optional.** `Live` and `Synchronised` are assumptions, and
+if they were jointly unsatisfiable then L1 and L4–L6 would hold vacuously and
+prove nothing. They are satisfiable — a DAG in which every correct block
+references every correct block below meets both, and `U5`/`U7` nearly do — but
+the discipline everywhere else in this development is to *exhibit* a witness
+rather than argue one exists. It should be built before L4, so that L4 is
+known to say something the moment it is proved.
 
 ## 8. Open questions
 
@@ -305,3 +390,11 @@ until there is already something proved.
 4. **Is the round-spread exhibit worth building?** It proves nothing, but it
    documents that L0 is compatible with arbitrary asynchrony, which is easy to
    doubt when reading L0 alone.
+5. **Should `FairSchedule` be round-robin instead?** The `∃ k' ≥ k` form is
+   the weakest thing L6 needs, so it makes the theorem strongest. Round-robin
+   would be more concrete and would let us say *how often* commits recur —
+   at least `2f+1` per `3f+1` slots — which is a quantitative claim of the
+   kind §4.3 otherwise avoids.
+6. **How far should the quantitative version go?** §4.3 drops Δ, and open
+   question 5 would reintroduce counting of a different kind (slots rather
+   than time). Those are separable: slot-counting needs no clock.
