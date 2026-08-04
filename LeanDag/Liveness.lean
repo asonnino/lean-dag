@@ -401,4 +401,136 @@ theorem decided_of_correct_leader (hs : Synchronised U R)
     directCommit_of_correct_leader hs hR hpop0 hpop1 hpop2 hlead
   exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_full hdc)⟩
 
+/-! ## L5 — an absent leader is skipped
+
+`liveness.md` §6. Nearly free, and it vindicates a C1 decision.
+
+`Decided.directSkip` takes the premise `∀ L, IsLeaderBlock U k L → …`. When
+the leader published nothing there is no such `L`, so the premise holds
+**vacuously** and the case disappears. Choosing the `∀`-over-candidates form
+over naming a single candidate block is what buys this: a formulation that
+selected "the" leader block would have had nothing to select. -/
+
+/-- L5, in the form the `Decided` constructor wants. -/
+theorem decided_none_of_no_candidate {V : View Validator BlockId Payload U}
+    (h : ∀ L, ¬ IsLeaderBlock U k L) : Decided U V k none :=
+  Decided.directSkip fun L hL => absurd hL (h L)
+
+/-- **L5 — an absent leader is skipped.** If the slot-`k` leader has no block
+at its round, every view decides `none`. -/
+theorem decided_none_of_leader_absent {V : View Validator BlockId Payload U}
+    (h : ∀ b ∈ U.ids, (U.block b).round = S.slotRound k →
+      (U.block b).creator ≠ S.leader k) :
+    Decided U V k none :=
+  decided_none_of_no_candidate fun _ hL => h _ hL.1 hL.2.1 hL.2.2
+
+/-! ## L6 — commits recur
+
+`liveness.md` §6. The statement's **quantifier order is its whole content**.
+
+The tempting form — *given `Live U N`, for every `k` there is a committing
+`k' ≥ k` with `slotRound k' + 2 ≤ N`* — is **not provable**. Fairness promises
+a correct leader *somewhere* beyond `k`, and that slot may lie past the
+horizon, with nothing to let you ask for a nearer one. Fixing `U` and `N`
+first therefore caps how far fairness may reach.
+
+Stated as below the problem disappears, because `k'` depends only on the
+**schedule**: `FairSchedule` and `slotRound` are properties of the `Slots`
+instance, not of any DAG. The slot is named first and the DAG grows to it
+second — which is also the correct reading of *"the ledger grows without
+bound"*: not that one DAG commits infinitely often (no `Finset` can), but
+that no slot is the last one a DAG can be grown far enough to commit. -/
+
+/-- The schedule names a correct leader arbitrarily far out. Without it no
+recurrence statement holds: `Slots.leader` is an arbitrary function and could
+name Byzantine validators forever, however synchronous the network. -/
+def FairSchedule : Prop :=
+  ∀ k, ∃ k', k ≤ k' ∧ S.leader k' ∈ (Correct : Finset Validator)
+
+omit [Fintype Validator] [DecidableEq Validator] F in
+/-- Slot rounds grow at least as fast as `3k`, so they are unbounded. Small,
+but L6 genuinely needs it: fairness must be applied at a slot already past
+`R`, and nothing else says such a slot exists. -/
+theorem le_slotRound (k : ℕ) : 3 * k ≤ S.slotRound k := by
+  induction k with
+  | zero => omega
+  | succ k ih => have := S.spacing k; omega
+
+/-- **L6 — commits recur.** For every slot `k` there is a later slot `k'`
+that **every** sufficiently grown synchronous DAG commits.
+
+Note the conclusion quantifies over `U` and `N` *inside* the existential: the
+slot is fixed by the schedule alone, and any DAG grown past it commits it. -/
+theorem commits_recur (fair : FairSchedule (Validator := Validator)) (R : ℕ) (k : ℕ) :
+    ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+        Live U N → Synchronised U R → S.slotRound k' + 2 ≤ N →
+        ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
+  -- slot `R` is already past round `R`, since slot rounds grow at least as
+  -- fast as `3k`. That is all the unboundedness this needs.
+  have h3 : 3 * R ≤ S.slotRound R := le_slotRound (Validator := Validator) R
+  have hkR : R ≤ S.slotRound R := by omega
+  obtain ⟨k', hk', hlead⟩ := fair (max k R)
+  -- the chosen slot is past `R`, whether it *is* slot `R` or lies beyond it
+  have hRk' : R ≤ S.slotRound k' := by
+    rcases eq_or_lt_of_le (le_trans (le_max_right k R) hk') with heq | hlt
+    · exact heq ▸ hkR
+    · exact le_trans hkR (by have := slotRound_add_three_le (Validator := Validator) hlt; omega)
+  refine ⟨k', le_trans (le_max_left _ _) hk', hRk', ?_⟩
+  intro U N H hs hN
+  exact decided_of_correct_leader hs hRk'
+    (no_stall H _ (by omega)) (no_stall H _ (by omega)) (no_stall H _ (by omega)) hlead
+
+/-! ## L7 — `Synchronised`, derived
+
+`liveness.md` §8 question 8. `Synchronised` welds two unlike things into one
+object: a protocol rule and a network guarantee. It cannot be derived from
+anything the static model has, because the model is blocks and refs — no
+time, no delivery, no record of what a validator *held* when it built.
+`Synchronised` is stated on `refs` because `refs` is all there is.
+
+Adding that missing layer splits it. **The gain is not logical** — one
+assumption becomes two and nothing turns unconditional, since with no time
+model the chain must bottom out at delivery. The gain is that each piece is a
+single kind of thing: `includes` is implementable and observable, which is
+exactly what §3(b) notes `Synchronised` fails to be, and `EventuallyDelivers`
+is pure network.
+
+It also puts the timeout story somewhere real. A timeout governs *when you
+build*, i.e. what lands in `held`; it has nothing to do with `refs`, which
+§4.3 had to discuss next to a definition structurally unable to express it. -/
+
+/-- What each validator had in hand, one round at a time. -/
+structure Delivery (U : BlockUniverse Validator BlockId Payload) where
+  /-- What `v` held from round `n` when it built its round-`(n+1)` block. -/
+  held : Validator → ℕ → Finset BlockId
+  /-- Held ids are real blocks of the stated round. Not used by
+  `synchronised_of_delivery` below — it is what keeps `Delivery` meaningful,
+  since without it `held` could be junk and `includes` would demand blocks
+  reference it. -/
+  held_spec : ∀ v n, ∀ i ∈ held v n, i ∈ U.ids ∧ (U.block i).round = n
+  /-- **The protocol rule.** A correct validator references everything it
+  held. Implementable and observable — unlike `Synchronised` itself. -/
+  includes : ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ U.ids,
+    (U.block b).creator = v → (U.block b).round = n + 1 →
+    held v n ⊆ (U.block b).refs
+
+/-- **The network assumption**: after `R`, correct blocks reach correct
+validators in time to be built on. This is eventual DAG synchrony proper —
+pure delivery, no protocol content. -/
+def EventuallyDelivers (D : Delivery U) (R : ℕ) : Prop :=
+  ∀ n, R ≤ n → ∀ v ∈ (Correct : Finset Validator), ∀ a ∈ U.ids,
+    (U.block a).round = n → (U.block a).creator ∈ (Correct : Finset Validator) →
+    a ∈ D.held v n
+
+omit [DecidableEq BlockId] S in
+/-- **L7.** `Synchronised` is a theorem, not an assumption: `refs ⊇ held ⊇`
+every correct block below.
+
+L4–L6 are untouched — they still take `Synchronised`, which this now supplies
+a second way. -/
+theorem synchronised_of_delivery (D : Delivery U) (h : EventuallyDelivers D R) :
+    Synchronised U R := fun n hn b hb hbr hbc a ha har hac =>
+  D.includes _ hbc n b hb rfl hbr (h n hn _ hbc a ha har hac)
+
 end LeanDag

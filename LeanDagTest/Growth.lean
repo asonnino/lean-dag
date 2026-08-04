@@ -235,11 +235,63 @@ theorem ugrow_decided (N k : ℕ) (h : 3 * k + 2 ≤ N) :
 example : ∃ L, IsLeaderBlock (Ugrow 8) 2 L ∧
     DirectCommit (Ugrow 8) L (fairSlots.slotRound 2) := ugrow_directCommit 8 2 (by omega)
 
+/-! ## L5, L6, L7 against the witness -/
+
+/-- **L5 applied.** Above the horizon the leader has no block at all, so the
+slot is skipped — and by *every* view, not just the full one. -/
+theorem ugrow_skip (N k : ℕ) (h : N < 3 * k) (V : View (Fin 4) ℕ Unit (Ugrow N)) :
+    Decided (Ugrow N) V k none := by
+  refine decided_none_of_leader_absent ?_
+  intro b hb hbr
+  simp only [ugrow_ids, Finset.mem_range] at hb
+  simp only [ugrow_block, growBlock_round, fairSlots_slotRound] at hbr
+  exfalso; omega
+
+/-- The schedule is fair: its leader is correct at every slot. -/
+theorem ugrow_fair : FairSchedule (Validator := Fin 4) :=
+  fun k => ⟨k, le_refl k, by simp only [fairSlots_leader]; decide⟩
+
+/-- **L6 applied.** For every slot there is a later one *and* a horizon at
+which it commits. This is unboundedness made concrete: no single `Ugrow N`
+commits infinitely often, but no slot is the last one some `Ugrow` commits. -/
+theorem ugrow_commits_recur (k : ℕ) :
+    ∃ k', k ≤ k' ∧ ∃ N L, IsLeaderBlock (Ugrow N) k' L ∧
+      Decided (Ugrow N) (View.full (Ugrow N)) k' (some L) := by
+  obtain ⟨k', hk', _, hcommit⟩ :=
+    commits_recur (BlockId := ℕ) (Payload := Unit) ugrow_fair 0 k
+  obtain ⟨L, hL, hd⟩ :=
+    hcommit (Ugrow (Slots.slotRound (Validator := Fin 4) k' + 2)) _
+      (ugrow_live _) (ugrow_synchronised _) (le_refl _)
+  exact ⟨k', hk', _, L, hL, hd⟩
+
+/-- What a `Ugrow` validator held: the whole round below, for everyone. -/
+def ugrowDelivery (N : ℕ) : Delivery (Ugrow N) where
+  held _ n := blocksAt (Ugrow N) n
+  held_spec _ _ i hi := mem_blocksAt.mp hi
+  includes := by
+    intro _ _ n b _ _ hbr i hi
+    rw [mem_blocksAt] at hi
+    simp only [ugrow_block, growBlock_round] at hbr hi
+    simp only [ugrow_block, mem_growBlock_refs]
+    omega
+
+theorem ugrow_delivers (N : ℕ) : EventuallyDelivers (ugrowDelivery N) 0 :=
+  fun _ _ _ _ _ ha har _ => mem_blocksAt.mpr ⟨ha, har⟩
+
+/-- **L7 applied.** `Synchronised` comes out as a *theorem* here, from the
+protocol rule plus delivery — and it agrees with the direct proof, which is
+the check that the split did not quietly change the statement. -/
+example (N : ℕ) : Synchronised (Ugrow N) 0 :=
+  synchronised_of_delivery (ugrowDelivery N) (ugrow_delivers N)
+
 #print axioms ugrow_live
 #print axioms ugrow_synchronised
 #print axioms no_stall
 #print axioms ugrow_not_populated_succ
 #print axioms ugrow_directCommit
 #print axioms ugrow_decided
+#print axioms ugrow_skip
+#print axioms ugrow_commits_recur
+#print axioms synchronised_of_delivery
 
 end LeanDagTest

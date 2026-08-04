@@ -513,9 +513,9 @@ def FairSchedule : Prop :=
 | — | **`Ugrow`: a family with `Live (Ugrow N) N` for every `N`** | low, and required **first** | ✓ `ugrow_live`, `ugrow_synchronised` |
 | L1 | `Live U N`, then no-stall by induction on rounds | low | ✓ `no_stall` |
 | L4 | `Populated` ×3 + `Synchronised`, then the two-layer argument | medium — the only real proof | ✓ `directCommit_of_correct_leader` |
-| L5 | vacuity of the `∀`-over-candidates premise | low | |
-| L6 | `FairSchedule`, then L1 and L4 | low — but see the quantifier order | |
-| L7 | `Delivery`, then `Synchronised` as a theorem | low — see question 8 | |
+| L5 | vacuity of the `∀`-over-candidates premise | low | ✓ `decided_none_of_leader_absent` |
+| L6 | `FairSchedule`, then L1 and L4 | low — but see the quantifier order | ✓ `commits_recur` |
+| L7 | `Delivery`, then `Synchronised` as a theorem | low — see question 8 | ✓ `synchronised_of_delivery` |
 
 L0, L2 and L3 come first because none needs a new primitive: L0 is pure DAG
 structure, L2 and L3 are pure view reasoning. That defers every modelling
