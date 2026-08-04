@@ -739,20 +739,24 @@ flagging, since the table above reads as a file order and is not one.
 
 ### Where it lives
 
-The liveness development is three files, plus three of witnesses. Read
+The liveness development is three library files, plus four of witnesses. Read
 top-down, each layer *assumes* what the one below it *supplies*.
 
 | file | contents |
 |---|---|
 | `LeanDag/Liveness.lean` | L0–L6, plus `Populated`, `Live`, `Delivery`, `Synchronised`, `FairScheduleOn`, and L7a |
 | `LeanDag/Timing.lean` | L7b — `Timing`, `DriftFrom`, and `SynchronisedOn` earned from GST |
+| `LeanDag/Quantitative.lean` | S8 — `Rated`, `FairWithin`, `BoundedSpacing`, and the bounds they buy |
 | `LeanDagTest/Growth.lean` | `Ugrow`, `ugrowDelivery`, `ugrowTiming` — satisfiability at every horizon |
 | `LeanDagTest/Partial.lean` | `ugrowHonest`, `ugrowSkew` — the partial and skewed cases (S7) |
+| `LeanDagTest/Quantitative.lean` | `rrSlots` — round-robin, and the rated hypotheses witnessed (S8) |
 | `LeanDagTest/Model.lean` | the `Fin n` safety models; L0, L2 and L3 are exercised here |
 
 Note the inversion: `Timing.lean` is logically the **bottom** of the stack and
 was the **last** file written. Proof order and file order differ, and §7
-explains why.
+explains why. `Quantitative.lean` sits **beside** the stack rather than in it:
+nothing imports it, and every theorem in it is a strengthening of one below,
+bought with a strengthened hypothesis.
 
 ## 8. Open questions
 
@@ -772,48 +776,43 @@ and Q5 (*is a partial-view model needed?*) are **settled** — §9, S6, S5 and
 S7. Q1 and Q2 were the two highest-importance entries on the list. Numbering
 is left alone so earlier references still resolve.
 
-What remains is one question that would need a time model (Q3), one that would
-need a concrete schedule (Q4), and one that is presentational (Q6). Nothing
-open now affects whether the existing theorems are true — only how much they
-say.
+What remains is the residue of Q3 and Q4 after S8 settled their main halves,
+and one presentational question (Q6). Nothing open now affects whether the
+existing theorems are true — only how much they say.
 
 ### Q3 — How far should the quantitative version go?
 
-Everything proved here is *"eventually"*. Three things a deployment needs and
-this cannot supply:
+**Mostly settled by S8**, which supplies the bound on `R` this question was
+principally about. What remains:
 
-- **No bound on `R − GST`** (§4.2). Operationally that is recovery time after
-  a partition heals — usually the number people care about most.
-- **No proof the adaptive timeout converges.** §4.3 records that the backoff
-  is driven by commits stalling. Real implementations *cap* the timeout, and
-  whether the cap exceeds the true delay **is** the liveness question. A
-  system whose cap is too low never recovers, and nothing here would notice.
-- **No commit latency.** Direct commit is `r+2`, but a Byzantine leader pushes
-  the work onto the indirect rule with no bound on how distant the anchor is.
+- **No proof the adaptive *loop* converges.** S8 assumes a rated backoff; it
+  does not derive one from the feedback mechanism §4.3 describes. And
+  `Timing.timeout : ℕ → ℕ` is indexed by round, **common to `T`** — a real
+  per-validator backoff, where validators raise at different moments, cannot
+  even be stated, let alone shown to converge. That needs a richer `Timing`.
+- **No wall-clock latency.** `le_built` relates rounds to time in one
+  direction only (`n ≤ built v n`), which is the weakest possible clock. S8's
+  bounds are in **rounds and slots**, not seconds; converting needs the reverse
+  relation, derivable from `prompt` but not derived.
+- **No bound for a Byzantine leader's slot.** Direct commit is `r+2`, but a
+  Byzantine leader pushes the work onto the indirect rule with no bound on how
+  distant the anchor is. S8 bounds the wait for the next *`T`-leader*, which
+  sidesteps rather than answers this.
 
-§4.3 drops Δ, and Q4 would reintroduce counting of a different kind (slots
-rather than time); those are separable, since slot-counting needs no clock.
-The layer Δ attaches to now exists: `held`, not `refs` (S4).
+§4.3 drops Δ, and the layer it attaches to now exists: `held`, not `refs` (S4).
 
 ### Q4 — Should `FairScheduleOn` be round-robin?
 
-Two distinct issues behind one definition.
-
-**No rate.** `FairSchedule` is satisfied by a schedule naming a correct leader
-once every `10⁹` slots. L6 then guarantees the ledger grows and says nothing
-about how fast. Round-robin gives at least `2f+1` correct leaders per `3f+1`
-slots — a quantitative claim of the kind §4.3 otherwise avoids, but one that
-needs no clock.
+**Mostly settled by S8.** `FairWithin T w` is the rated form, `rrSlots`
+witnesses it at `w = f + 1`, and `commits_recur_by_round` turns it into a round
+bound. What remains is the *other* issue this question always carried:
 
 **Leader predictability is unmodelled.** `Slots.leader` is an arbitrary
 function, so nothing distinguishes a schedule an adversary can predict from
 one it cannot. An adversary who knows who leads slot `k` can attack them
 before their round — a standard attack on this protocol family, and entirely
-invisible here.
-
-The witness makes the weakness concrete: `ugrow_fair` uses a *constant*
-correct leader, satisfying fairness in the weakest possible way, so nothing
-currently exercises the condition.
+invisible here. `FairWithin` does not help: it constrains *when* good leaders
+appear, not whether the adversary can see them coming.
 
 ### Q6 — Should L1 hold from round 0, or only after `R`?
 
@@ -1060,3 +1059,60 @@ can lag. Exhibiting round spread alongside commits needs `f ≥ 2` — seven
 validators with one Byzantine, leaving six correct and room for one to fall
 behind. That is S5's combined budget (`actual_byzantine + slow_correct ≤ f`)
 showing up as a concrete obstruction rather than an inequality.
+
+### S8 — the bounds are available, from rated hypotheses
+
+Q3 and Q4 both asked for a number and got an existential. The reason was the
+same in each case, and it is not a weakness of the proofs: **the hypotheses
+are themselves bare existentials**, so no bound is derivable from them.
+
+- `hub : ∀ m, ∃ n, m ≤ tm.timeout n` — the backoff clears any threshold
+  eventually, at no stated rate. Take `timeout n = ⌊log₂ (n+1)⌋`: monotone,
+  unbounded, admissible, and it needs `n ≥ 2 ^ (D + delay) - 1`. Slower
+  schedules push `R` out without limit.
+- `FairScheduleOn T : ∀ k, ∃ k', k ≤ k' ∧ S.leader k' ∈ T` — a schedule naming
+  `T`-leaders at slots `0, 10, 1000, …` is fair, with unbounded gaps.
+
+So the fix is a **rated** hypothesis, and `LeanDag/Quantitative.lean` supplies
+three. Nothing below it changes; every existing theorem keeps its weak
+hypotheses and stays available.
+
+| weak | rated | buys |
+|---|---|---|
+| `hub` | `Rated timeout` — `∀ n, n ≤ timeout n` | `R = max (max (D + delay) n₀) gst` |
+| `FairScheduleOn T` | `FairWithin T w` | the committing slot within `w` of `max k R` |
+| *(none)* | `BoundedSpacing s` | that slot's **round**, and an explicit horizon |
+
+**A hypothesis is dropped, not merely added.** `backoff_ge_of_rate` needs no
+monotonicity — the bound at `n` comes from `n` itself, so it cannot lapse —
+where `exists_backoff_ge` needs `Monotone` to propagate one clearing round
+upward. And `Rated` implies `hub` (`unbounded_of_rated`), so this is a genuine
+strengthening of one assumption plus a deletion of another, not a sideways
+move.
+
+**`BoundedSpacing` has no weak counterpart, and that is the point.**
+`Slots.spacing` bounds slot rounds from *below*, which is what safety needs —
+M4's anchor must sit at least three rounds up. A latency claim wants the
+opposite bound, and the class never had one, because no safety result asks.
+Adding it is what turns a slot bound into a round bound.
+
+**The witnesses matter more than usual here**, since a rated hypothesis is
+strong enough to be unsatisfiable — in which case the bounds are bounds on
+nothing, exactly as the unbounded `Live` and `Timing` were. All three are
+witnessed in `LeanDagTest/Quantitative.lean`:
+
+- `ugrowTiming_rated` — the `2 ^ n` backoff is rated, and drives `R` to `0`;
+- `rrSlots_fairWithin` — genuine round-robin, window `f + 1 = 2`. `fairSlots`
+  could not serve: its leader is *constant*, so it satisfies `FairWithin T 1`
+  and exercises nothing;
+- `rrSlots_boundedSpacing` at `s = 3`, which `Slots.spacing` already forces to
+  be the tightest legal value.
+
+Composed, `ugrow_commits_by_round` reads: for every slot `k` there is a
+committing slot at round `≤ 3k + 6`, in every `Ugrow` grown to `3k + 8`. That
+is the concrete latency figure Q4 asked for.
+
+**What this does not settle** is recorded in Q3: the backoff *loop* is still
+assumed rather than derived, `Timing.timeout` is common to `T` so a
+per-validator backoff cannot be stated, and every bound here is in **rounds and
+slots** rather than seconds — `le_built` relates the two in one direction only.

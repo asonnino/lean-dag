@@ -871,6 +871,90 @@ be stated as one.
 Say plainly: **nothing above the seam mentions time, and nothing below it
 mentions certificates.**
 
+### 6.10 Quantitative liveness — bounds, from rated hypotheses
+
+`LeanDag/Quantitative.lean`. Presented last because it is **beside** the stack
+rather than in it: nothing imports it, every theorem strengthens one below, and
+each strengthening is bought with a strengthened hypothesis. A reader who
+declines the hypotheses keeps everything in §6.1–§6.9 intact.
+
+**Frame the gap correctly — this is the part reviewers will probe.** Two
+results conclude with a bare existential (`∃ R, SynchronisedOn U T R`;
+`∃ k', k ≤ k' ∧ …`). That is **not** slack in the proofs. Each hypothesis is
+*itself* a bare existential, and under them **no bound exists**:
+
+- `hub : ∀ m, ∃ n, m ≤ tm.timeout n` admits `timeout n = ⌊log₂ (n+1)⌋` —
+  monotone, unbounded, and needing `n ≥ 2^(D + delay) − 1` to clear the
+  threshold. Slower schedules push `R` out without limit.
+- `FairScheduleOn T` admits a schedule naming `T`-leaders at slots
+  `0, 10, 1000, …`.
+
+So the fix is a rated hypothesis, not a better proof. Three are supplied:
+
+```lean
+def Rated (timeout : ℕ → ℕ) : Prop := ∀ n, n ≤ timeout n
+def FairWithin (T : Finset Validator) (w : ℕ) : Prop :=
+  ∀ k, ∃ k', k ≤ k' ∧ k' < k + w ∧ S.leader k' ∈ T
+def BoundedSpacing (s : ℕ) : Prop := ∀ k, S.slotRound (k + 1) ≤ S.slotRound k + s
+```
+
+**Part 1 — `R` becomes explicit.**
+
+```lean
+theorem synchronisedOn_of_rate (tm : Timing U T N) (hT : T ⊆ Correct)
+    (hrate : Rated tm.timeout) {n₀ : ℕ} (hn₀ : tm.delay ≤ n₀)
+    (hbase : ∀ v ∈ T, ∀ w ∈ T, tm.built w n₀ ≤ tm.built v n₀ + D) :
+    SynchronisedOn U T (max (max (D + tm.delay) n₀) tm.gst)
+```
+
+Each summand is what it looks like: the threshold, the drift base, GST.
+
+**A hypothesis is *dropped*, not merely added** — worth a sentence, since it
+inverts the expected trade. `backoff_ge_of_rate` needs **no monotonicity**: the
+bound at `n` comes from `n` itself, so it cannot lapse, where `exists_backoff_ge`
+needs `Monotone` to propagate one clearing round upward. And `Rated` implies
+`hub` (`unbounded_of_rated`).
+
+**Part 2 — the committing slot, then its round.**
+
+```lean
+theorem commits_recur_within … (fair : FairWithin T w) (R k : ℕ) :
+    ∃ k', max k R ≤ k' ∧ k' < max k R + w ∧ R ≤ S.slotRound k' ∧ …
+
+theorem commits_recur_by_round … (hs : BoundedSpacing s) (R k : ℕ) :
+    ∃ k', k ≤ k' ∧ S.slotRound k' ≤ S.slotRound (max k R) + s * w ∧ …
+      S.slotRound (max k R) + s * w + 2 ≤ N → …
+```
+
+**`BoundedSpacing` has no weak counterpart, and that is the interesting part.**
+`Slots.spacing` bounds slot rounds from *below* (`+3`), which is what safety
+needs — M4's anchor must sit three rounds up. A latency claim wants the
+*opposite* bound, and the class never had one because no safety result asks.
+Adding the mirror image is what converts a slot bound into a round bound.
+
+**Witnesses, and why they matter more here.** A rated hypothesis is strong
+enough to be *unsatisfiable*, in which case the bounds bound nothing — exactly
+the failure mode of the unbounded `Live` and `Timing` (§8). All three are
+witnessed in `LeanDagTest/Quantitative.lean`:
+
+| Witness | What it shows |
+|---|---|
+| `ugrowTiming_rated` | `2 ^ n` is rated, driving `R` to an explicit `0` |
+| `rrSlots_fairWithin` | genuine round-robin, window `f + 1 = 2` |
+| `rrSlots_boundedSpacing` | `s = 3`, the tightest value `Slots.spacing` permits |
+
+`fairSlots` could **not** serve for the second: its leader is *constant*, so it
+satisfies `FairWithin T 1` and exercises nothing. The degenerate-witness trap
+of §8, encountered a third time.
+
+Composed, `ugrow_commits_by_round` reads: for every slot `k` there is a
+committing slot at round `≤ 3k + 6`, in every `Ugrow` grown to `3k + 8`. That
+is the concrete latency figure, in rounds.
+
+**Do not oversell it.** The bounds are in **rounds and slots, not seconds**
+(§9), the backoff *loop* is still assumed rather than derived, and
+`Timing.timeout` is common to `T` so a per-validator backoff cannot be stated.
+
 ---
 
 ## 7. Eventual DAG synchrony — the argument
@@ -1044,12 +1128,19 @@ Two further points worth reporting:
 
 State these as open, not solved.
 
-- **Q3 — no quantitative version.** No bound on `R − GST`, no proof that the
-  adaptive timeout converges in bounded time, no commit latency. Adding these
-  brings back the time model above the seam and should be scoped separately.
-- **Q4 — `FairScheduleOn` buys liveness but no rate.** The `∃ k' ≥ k` form
-  says a correct leader recurs, not how often. Round-robin over `3f+1` would
-  give `2f+1` of every `3f+1`. Leader predictability (and so targeted DoS) is
+**First, what is *not* open any more** — see §6.10. The bounds Q3 and Q4 asked
+for exist, from rated hypotheses, and are proved. What remains:
+
+- **Q3 residue — the backoff loop, and wall-clock time.** `Rated` is assumed,
+  not derived from the feedback mechanism. And `Timing.timeout : ℕ → ℕ` is
+  **common to `T`**, so a per-validator backoff — where validators raise at
+  different moments — cannot be stated at all, let alone shown to converge.
+  Every bound is in **rounds and slots**, not seconds: `le_built` relates the
+  two in one direction only (`n ≤ built v n`).
+- **Q3 residue — Byzantine leaders.** §6.10 bounds the wait for the next
+  `T`-leader, sidestepping rather than answering how distant an indirect
+  anchor can be when the leader is Byzantine.
+- **Q4 residue — leader predictability** (and so targeted DoS) is
   unmodelled.
 - **Q6 — presentational.** Whether L1 should hold from round 0 or only
   after `R`.
@@ -1063,13 +1154,14 @@ the stated theorems are *true* — only how much they *say*.
 
 ## 10. Artifact
 
-- Lean 4 (v4.32.2) + Mathlib. `lake build`: 0 errors, 0 warnings, 8671 jobs.
+- Lean 4 (v4.32.2) + Mathlib. `lake build`: 0 errors, 0 warnings, 8673 jobs.
 - **Axiom audit, checked.** Every headline result — `reaches_of_quorum_support`
   (T3), `exists_common_correct_ancestor` (T3c), `decided_agree` (M6),
   `commitSeq_agree`, `outputAt_agree`, `no_stall` (L1), `commits_recur_on`
-  (L6), `exists_synchronisedOn_of_backoff` (L7b) — depends on exactly
-  `[propext, Classical.choice, Quot.sound]`. No `sorry`, no custom axiom, no
-  `native_decide`. Reproduce the `#print axioms` block in the report.
+  (L6), `exists_synchronisedOn_of_backoff` (L7b), `ugrow_commits_by_round`
+  (§6.10) — depends on exactly `[propext, Classical.choice, Quot.sound]`. No
+  `sorry`, no custom axiom, no `native_decide`. Reproduce the `#print axioms`
+  block in the report.
 - File map:
 
 | File | Contents |
@@ -1084,10 +1176,11 @@ the stated theorems are *true* — only how much they *say*.
 | `Mysticeti.lean` | the commit rule, M1–M6, the ledger |
 | `Liveness.lean` | L0–L6, L7a |
 | `Timing.lean` | L7b — logically the bottom of the stack, written last |
-| `LeanDagTest/Growth.lean`, `Partial.lean`, `Model.lean` | witnesses |
+| `Quantitative.lean` | the rated hypotheses and the bounds (§6.10) — *beside* the stack, imported by nothing |
+| `LeanDagTest/Growth.lean`, `Partial.lean`, `Quantitative.lean`, `Model.lean` | witnesses |
 
 - Design records: `spec.md` (safety, settled), `liveness.md` (liveness,
-  including the settled questions S1–S7 and the open Q3/Q4/Q6).
+  including the settled questions S1–S8 and the residue of Q3/Q4 plus Q6).
 
 ---
 
