@@ -39,11 +39,13 @@ blocks propagate, only that they do — and the assumption is realisable by
 ordinary gossip, so it cannot be quietly inconsistent.
 
 **But views carry only half of it.** View convergence gives L3 directly: the
-common view *is* `View.full` (§4.2). It does **not** give
-honest-to-honest coverage, because a block's references are frozen when it is
-built and no later convergence enlarges them (§4.3). That is why
-`Synchronised` is stated on `refs` rather than on views — the one place the
-notes' framing does not reach.
+common view *is* `View.full` (§4.2). It gives honest-to-honest coverage only
+once a **build rule** is added — propagation puts the blocks in hand, and a
+timeout long enough to wait for them is what gets them referenced (§4.3, S6).
+And since a block's references are fixed at build time, what the argument needs
+is what a validator held *at that moment*, which `View` does not record. That
+is why `Synchronised` is stated on `refs`, and why the delivery layer indexes
+`held` by round — the one place the notes' framing does not reach on its own.
 
 ## 3. What must be added
 
@@ -207,16 +209,31 @@ Getting this wrong in the *strong* direction — assuming all blocks are
 referenced — would be assuming Byzantine validators behave, which is exactly
 what a fault model must not do.
 
-This **does not follow** from view convergence, and the reason is worth
-recording.
+This does not follow from view convergence **alone**, and what has to be added
+is worth recording.
 
-**A block's references are frozen when it is built.** A correct validator
-building at round `n+1` waits for 2f+1 round-`n` blocks; the arrival of the
-2f+1st says nothing about the rest having arrived. Convergence of *views* does
-not retroactively enlarge *blocks*.
+**Coverage is delivery plus a build rule.** Fast propagation puts every
+correct round-`n` block into every correct validator's hands; a validator that
+then waits long enough before building at `n+1` references all of them. That
+is the mechanism, and it *is* formalized — `Timing.synchronisedOn_of_timing`
+(S6) derives `SynchronisedOn` from exactly this. What view convergence supplies
+by itself is only the delivery half. A network that propagates perfectly still
+commits nothing if validators build on the 2f+1st arrival, which is why
+`Timing.waits` is a field and not a remark.
 
-So honest-to-honest coverage comes from **waiting past 2f+1**, justified by a
-timing argument this development does not formalize.
+**But views need a build-time index, and that is what `held` is.** A block's
+references are fixed when it is built, so what matters is not what a validator
+holds *eventually* but what it held *at that moment*. `View` records no time,
+so a view-convergence statement cannot be plugged in directly. `Delivery.held
+v n` is precisely "what `v` held from round `n` when it built its round-`(n+1)`
+block", and with that index L7a is one line (`synchronised_of_delivery`). This
+is a modelling point, not a claim about the mechanism: the static model has no
+clock, so the outcome has to be phrased on `refs`.
+
+**The timeout must exceed `delay + D`, not `delay`.** Validators enter round
+`n` at different times, so `v`'s wait has to cover both the propagation bound
+and the spread `D` between entries. That is `hbackoff` in S6, and `D` is
+derived rather than assumed (`driftFrom_of_prompt`).
 
 **The mechanism is an adaptive timeout, and the gap matters.** A correct
 validator cannot identify which of its peers are correct, so it cannot wait
@@ -242,8 +259,8 @@ cannot express.
 What the split does **not** do is make anything unconditional. There is no
 time model here, so the chain bottoms out at delivery: the timing content
 still enters as an assumption, only a cleaner one. And this section's argument
-is untouched either way — coverage does not follow from view convergence,
-however the assumption is packaged.
+is untouched either way — coverage needs a build rule and a build-time index
+on top of delivery, however the assumption is packaged.
 
 **(assumption)** No wall clock and **no Δ**. Δ would force views indexed by an
 instant and every statement quantified over instants, for no proof content:
@@ -946,8 +963,9 @@ the open list:
 > cannot tell correct peers from Byzantine ones (§3b). If Byzantine validators
 > respond *fast* while some correct ones are slow, a validator can fill its
 > quorum with Byzantine blocks and miss correct ones — **violating
-> `Synchronised` even after GST**. §4.3 called the justification "a timing
-> argument this development does not formalize".
+> `Synchronised` even after GST**. §4.3, as then written, called the
+> justification "a timing argument this development does not formalize" — a
+> line this section made stale and which §4.3 no longer carries.
 
 `LeanDag/Timing.lean` settles it, adding the layer beneath `Delivery`:
 

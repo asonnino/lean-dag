@@ -75,10 +75,11 @@ The framing to lead with, from the original design notes:
 4. **The seam is discharged, twice.** Eventual DAG synchrony is derived from a
    delivery model (§6.7) and independently from GST + Δ + adaptive backoff
    (§6.8). It is therefore not a new axiom.
-5. **A negative result about the natural view-based formulation** (§7.1): the
-   assumption cannot be stated on views, because references are frozen at
-   build time. This is the sharpest technical finding and should be
-   foregrounded.
+5. **The view-based formulation is incomplete, and we identify what is
+   missing** (§7.1): a delivery guarantee alone does not yield coverage
+   without a rule about *when* to build, and because references are fixed at
+   construction the delivery guarantee must be indexed to the build moment
+   (`Delivery.held`). Neither is obvious from the view statement.
 6. **Satisfiability witnesses** for every liveness definition, which caught
    four definitions that were vacuous as first written (§8).
 
@@ -862,7 +863,7 @@ mentions certificates.**
 
 This is the section the paper exists for. It should be able to stand alone.
 
-### 7.1 The natural formulation does not work
+### 7.1 The view formulation is half the assumption
 
 The original proposal stated it on **views**:
 
@@ -873,16 +874,37 @@ This is appealing — `View` is already first-class, `V₁ ⊆ V₂` is already
 meaningful, every safety result is already view-relative — and it **does**
 give L3 directly: the common view *is* `View.full`.
 
-**But it does not give coverage, and cannot.**
+**It gives coverage too, but only once a build rule is added.** Fast
+propagation puts every correct round-`n` block in hand; a validator that then
+waits long enough before building at `n+1` references all of them. That is the
+mechanism and §6.8 formalises it. What the view statement supplies by itself is
+the **delivery half only** — a perfectly propagating network still commits
+nothing if validators build on the `2f+1`st arrival. Hence `Timing.waits` is a
+structure field, not a remark.
 
-> **A block's references are frozen when it is built.** A correct validator
-> building at round `n+1` waits for `2f+1` round-`n` blocks; the arrival of
-> the `2f+1`st says nothing about the rest having arrived. Convergence of
-> *views* does not retroactively enlarge *blocks*.
+> **Do not overstate this.** An earlier draft of `liveness.md` §4.3 claimed
+> coverage "does not follow from view convergence" and that the timing
+> argument was unformalised. Both were wrong once `Timing.lean` existed. The
+> report must not repeat it.
 
-So the assumption has to be stated on `refs`, not on views. **This is a
-genuine negative finding and should be presented as one** — it is the reason
-the definition looks the way it does, and it is not obvious in advance.
+**What does survive is a modelling point: views need a build-time index.**
+A block's references are fixed at construction, so what matters is not what a
+validator holds *eventually* but what it held *at that moment*. `View` records
+no time, so a view-convergence statement cannot be plugged in as-is. The
+delivery layer supplies the index — `Delivery.held v n` is *what `v` held from
+round `n` when it built its round-`(n+1)` block* — and with it L7a is one line.
+The static model has no clock, which is why the assumption must be phrased on
+`refs`.
+
+**And the timeout must exceed `delay + D`, not `delay`.** Validators enter a
+round at different times, so the wait must cover the propagation bound *and*
+the spread. `D` is derived, not assumed (§6.8), and its content is that drift
+is **preserved** rather than compressed.
+
+[EXPAND — the honest framing for a reviewer: the notes' assumption was
+*incomplete*, not *wrong*, and the development's contribution is identifying
+the missing protocol half and the build-time index. That is a smaller claim
+than "views cannot express this", and it is the defensible one.]
 
 ### 7.2 Coverage is an outcome, not an instruction
 
