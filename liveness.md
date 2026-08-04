@@ -58,11 +58,20 @@ that crashes at round 0 and never speaks again. That is deliberate: it is what
 lets every safety result hold for crashed validators too. But it makes every
 liveness statement vacuous without a positive rule:
 
-> up to a horizon `N`, a correct validator has a round-`(r+1)` block once
-> 2f+1 validators have round-`r` blocks
+> up to a horizon `N`, a correct validator has a round-`(r+1)` block once it
+> **holds** round-`r` blocks from 2f+1 validators
 
-This is an **asynchrony-only** assumption: it needs eventual delivery, not
-synchrony, and it is what makes the pre-GST results go through.
+**"Holds", not "exist".** A validator builds after a timeout, on a quorum
+that is in *its own view* — it cannot act on blocks it has never received.
+That needs a notion the static model lacks, so rule (a) is stated against
+`Delivery.held` (§5). The timeout itself leaves no trace beyond that: with no
+clock, waiting longer can only show up as a larger `held`.
+
+This splits into two assumptions of different kinds, which is the point:
+`builds` is **protocol** (hold a quorum, build), while `DeliversQuorum` is
+**network** (a quorum that exists is eventually held). Both are
+**asynchrony-only** — they need eventual delivery, not synchrony, and they are
+what makes the pre-GST results go through.
 
 **The horizon is not optional** — see §4.4. Without the bound `r < N` this
 rule forces infinitely many distinct blocks into `U.ids`, which is a
@@ -308,10 +317,19 @@ Asynchrony-only — no synchrony here.
 `N` is the **horizon**: `builds` fires only below it, so the DAG reaches
 round `N` and stops. Without that bound the structure is unsatisfiable, since
 `U.ids` is a `Finset` (§4.4). -/
-structure Live (U : BlockUniverse Validator BlockId Payload) (N : ℕ) where
+structure Live (U : BlockUniverse Validator BlockId Payload)
+    (D : Delivery U) (N : ℕ) where
   genesis : Populated U 0
-  builds  : ∀ r < N, 2 * F.f + 1 ≤ (authorsAt U r).card →
-    Populated U (r + 1)
+  builds  : ∀ r < N, ∀ v ∈ Correct,
+    2 * F.f + 1 ≤ (creatorsOf U.block (D.held v r)).card →
+    ∃ b ∈ U.ids, (U.block b).creator = v ∧ (U.block b).round = r + 1
+
+/-- Asynchrony: a quorum that *exists* is eventually *held*. Conditional on
+existence, since unconditionally it would assert the block production L1 sets
+out to prove. No round bound — this holds before GST too. -/
+def DeliversQuorum (D : Delivery U) : Prop :=
+  ∀ n, 2 * F.f + 1 ≤ (authorsAt U n).card →
+    ∀ v ∈ Correct, 2 * F.f + 1 ≤ (creatorsOf U.block (D.held v n)).card
 
 /-- From round `R` on, correct blocks reference every correct block of the
 round below.
@@ -363,14 +381,15 @@ def FairSchedule : Prop :=
   `creators_refs_subset_authorsAt`). It is the precise form of *"the DAG grows
   regardless"*, and it says more than growth: the DAG cannot be tall and thin.
 
-- **L1 — No stall.** Given `Live U N`, every correct validator has a block at
-  every round up to `N`: `r ≤ N → Populated U r`.
+- **L1 — No stall.** Given `Live U D N` and `DeliversQuorum D`, every correct
+  validator has a block at every round up to `N`: `r ≤ N → Populated U r`.
 
-  Induction on `r`. Base is `genesis`. For the step, the induction hypothesis
-  puts every correct validator in `authorsAt U r`, and there are at least
-  `2f+1` correct validators, so `builds` applies. Needs `Live` but **no
-  synchrony** — the notes' *"from round 0 onwards, always"*, now qualified by
-  the horizon (§4.4).
+  Induction on `r`. Base is `genesis`. The step takes **two** hops, because
+  `builds` is view-relative: the induction hypothesis puts every correct
+  validator in `authorsAt U r`, so a quorum *exists*; `DeliversQuorum` turns
+  that into each correct validator *holding* a quorum; only then does `builds`
+  apply. Still **no synchrony** — the notes' *"from round 0 onwards,
+  always"*, now qualified by the horizon (§4.4).
 
   This is where `card_correct` (`2f+1 ≤ |Correct|`) finally gets used.
   `spec.md` §2 has carried it as unused-but-kept-for-liveness from the start.
@@ -571,12 +590,25 @@ definition. Doing it after costs nothing and is informed by a finished proof.
    not use, and `decided_unique` currently holds *even if correct validators
    crash*. That is the standard safety/liveness split, and it is worth
    keeping.
-2. **Is `builds` the right rule?** It says a correct validator builds once
-   *any* 2f+1 validators have round-`r` blocks. A real implementation waits
-   for 2f+1 blocks *it has received*. In a snapshot that has settled the two
-   coincide, but they are not the same statement, and question 8's `Delivery`
-   layer is where the difference would become expressible — `held` is exactly
-   the notion `builds` currently lacks.
+2. **Is `builds` the right rule?** — **resolved: no; it is now stated on
+   `held`.**
+
+   The first form said a correct validator builds once *any* `2f+1`
+   validators have round-`r` blocks. That is not something a validator can
+   act on: it cannot build on blocks it has never received. The real rule is
+   a **timeout plus a quorum in its own view**.
+
+   Once question 8's `Delivery` layer existed, `held` was exactly the missing
+   notion, so `builds` is now measured against `D.held v r`. The condition
+   splits cleanly in two, which is the gain: `builds` is protocol (hold a
+   quorum, build) and `DeliversQuorum` is network (a quorum that exists is
+   eventually held). Both are asynchrony-only, so L1 still needs no synchrony
+   — its step simply takes two hops instead of one.
+
+   The **timeout leaves no trace** beyond this. With no clock, waiting longer
+   can only show up as a larger `held`; `builds` therefore asks for a quorum
+   in view and nothing more, and `EventuallyDelivers` is what demands the
+   *whole* correct round after `R`.
 3. **Do we want L1 from round 0**, or only after `R`? As stated it holds from
    round 0 with no synchrony, which is stronger and matches the notes — but it
    does assume correct validators never stop before the horizon. Note this is

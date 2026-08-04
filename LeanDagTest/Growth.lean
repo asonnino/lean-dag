@@ -105,6 +105,20 @@ def Ugrow (N : ℕ) : BlockUniverse (Fin 4) ℕ Unit where
 
 @[simp] theorem ugrow_block (N : ℕ) : (Ugrow N).block = growBlock := rfl
 
+/-- What a `Ugrow` validator held: the whole round below, for everyone. -/
+def ugrowDelivery (N : ℕ) : Delivery (Ugrow N) where
+  held _ n := blocksAt (Ugrow N) n
+  held_spec _ _ i hi := mem_blocksAt.mp hi
+  includes := by
+    intro _ _ n b _ _ hbr i hi
+    rw [mem_blocksAt] at hi
+    simp only [ugrow_block, growBlock_round] at hbr hi
+    simp only [ugrow_block, mem_growBlock_refs]
+    omega
+
+theorem ugrow_delivers (N : ℕ) : EventuallyDelivers (ugrowDelivery N) 0 :=
+  fun _ _ _ _ _ ha har _ => mem_blocksAt.mpr ⟨ha, har⟩
+
 /-! ## `Ugrow N` satisfies `Live` at horizon `N`
 
 Both fields come down to naming the right id: validator `v`'s round-`r` block
@@ -125,9 +139,14 @@ theorem ugrow_populated {N r : ℕ} (hr : r ≤ N) : Populated (Ugrow N) r := by
 /-- **The witness.** `Live` is satisfiable at *every* horizon — which is the
 form the claim has to take, since no single `Finset` universe can be tall
 enough for all of them. -/
-theorem ugrow_live (N : ℕ) : Live (Ugrow N) N where
+theorem ugrow_live (N : ℕ) : Live (Ugrow N) (ugrowDelivery N) N where
   genesis := ugrow_populated (Nat.zero_le N)
-  builds _ hr _ := ugrow_populated hr
+  builds _ hr v hv _ := ugrow_populated hr v hv
+
+/-- Delivery is immediate here: `held v n` is *every* round-`n` block, so a
+quorum that exists is held by construction. -/
+theorem ugrow_deliversQuorum (N : ℕ) : DeliversQuorum (ugrowDelivery N) :=
+  fun _ h _ _ => h
 
 /-- And it is synchronised from round 0: a `Ugrow` block references the
 *whole* round below, so honest-to-honest coverage is immediate. This is what
@@ -162,14 +181,14 @@ horizon down as **tight**: L1 reaches round `N` and stops, and it stops
 because there is genuinely nothing above. -/
 
 /-- **L1 applied.** Every correct validator has a block at the top round. -/
-example (N : ℕ) : Populated (Ugrow N) N := no_stall (ugrow_live N) N (le_refl N)
+example (N : ℕ) : Populated (Ugrow N) N := no_stall (ugrow_live N) (ugrow_deliversQuorum N) N (le_refl N)
 
 /-- And at every round below it. -/
-example (N r : ℕ) (h : r ≤ N) : Populated (Ugrow N) r := no_stall (ugrow_live N) r h
+example (N r : ℕ) (h : r ≤ N) : Populated (Ugrow N) r := no_stall (ugrow_live N) (ugrow_deliversQuorum N) r h
 
 /-- The quorum corollary, which L4 will consume. -/
 example (N r : ℕ) (h : r ≤ N) : 2 * Faults.f (Fin 4) + 1 ≤ (authorsAt (Ugrow N) r).card :=
-  card_authorsAt_of_live (ugrow_live N) h
+  card_authorsAt_of_live (ugrow_live N) (ugrow_deliversQuorum N) h
 
 /-- **The horizon is tight, not slack.** One round further and the conclusion
 is false — so L1's bound `r ≤ N` is doing real work rather than being a
@@ -216,9 +235,9 @@ theorem ugrow_directCommit (N k : ℕ) (h : 3 * k + 2 ≤ N) :
     ∃ L, IsLeaderBlock (Ugrow N) k L ∧
       DirectCommit (Ugrow N) L (fairSlots.slotRound k) :=
   directCommit_of_correct_leader (R := 0) (ugrow_synchronised N) (Nat.zero_le _)
-    (no_stall (ugrow_live N) _ (by simp only [fairSlots_slotRound]; omega))
-    (no_stall (ugrow_live N) _ (by simp only [fairSlots_slotRound]; omega))
-    (no_stall (ugrow_live N) _ (by simp only [fairSlots_slotRound]; omega))
+    (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _ (by simp only [fairSlots_slotRound]; omega))
+    (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _ (by simp only [fairSlots_slotRound]; omega))
+    (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _ (by simp only [fairSlots_slotRound]; omega))
     (by simp only [fairSlots_leader]; decide)
 
 /-- **And as a decision** — the form L6 consumes and L3 propagates. -/
@@ -226,9 +245,9 @@ theorem ugrow_decided (N k : ℕ) (h : 3 * k + 2 ≤ N) :
     ∃ L, IsLeaderBlock (Ugrow N) k L ∧
       Decided (Ugrow N) (View.full (Ugrow N)) k (some L) :=
   decided_of_correct_leader (R := 0) (ugrow_synchronised N) (Nat.zero_le _)
-    (no_stall (ugrow_live N) _ (by simp only [fairSlots_slotRound]; omega))
-    (no_stall (ugrow_live N) _ (by simp only [fairSlots_slotRound]; omega))
-    (no_stall (ugrow_live N) _ (by simp only [fairSlots_slotRound]; omega))
+    (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _ (by simp only [fairSlots_slotRound]; omega))
+    (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _ (by simp only [fairSlots_slotRound]; omega))
+    (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _ (by simp only [fairSlots_slotRound]; omega))
     (by simp only [fairSlots_leader]; decide)
 
 -- Concretely: with the DAG grown to round 8, slot 2 commits.
@@ -260,23 +279,9 @@ theorem ugrow_commits_recur (k : ℕ) :
   obtain ⟨k', hk', _, hcommit⟩ :=
     commits_recur (BlockId := ℕ) (Payload := Unit) ugrow_fair 0 k
   obtain ⟨L, hL, hd⟩ :=
-    hcommit (Ugrow (Slots.slotRound (Validator := Fin 4) k' + 2)) _
-      (ugrow_live _) (ugrow_synchronised _) (le_refl _)
+    hcommit (Ugrow (Slots.slotRound (Validator := Fin 4) k' + 2)) _ _
+      (ugrow_live _) (ugrow_deliversQuorum _) (ugrow_synchronised _) (le_refl _)
   exact ⟨k', hk', _, L, hL, hd⟩
-
-/-- What a `Ugrow` validator held: the whole round below, for everyone. -/
-def ugrowDelivery (N : ℕ) : Delivery (Ugrow N) where
-  held _ n := blocksAt (Ugrow N) n
-  held_spec _ _ i hi := mem_blocksAt.mp hi
-  includes := by
-    intro _ _ n b _ _ hbr i hi
-    rw [mem_blocksAt] at hi
-    simp only [ugrow_block, growBlock_round] at hbr hi
-    simp only [ugrow_block, mem_growBlock_refs]
-    omega
-
-theorem ugrow_delivers (N : ℕ) : EventuallyDelivers (ugrowDelivery N) 0 :=
-  fun _ _ _ _ _ ha har _ => mem_blocksAt.mpr ⟨ha, har⟩
 
 /-- **L7 applied.** `Synchronised` comes out as a *theorem* here, from the
 protocol rule plus delivery — and it agrees with the direct proof, which is

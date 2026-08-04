@@ -110,6 +110,51 @@ def Populated (U : BlockUniverse Validator BlockId Payload) (r : ℕ) : Prop :=
   ∀ v ∈ (Correct : Finset Validator), ∃ b ∈ U.ids,
     (U.block b).creator = v ∧ (U.block b).round = r
 
+/-! ## The delivery layer
+
+`liveness.md` §8 questions 2 and 8. The model as first written could not say
+what a validator *held* — only blocks and refs — so two different things had
+to be stated on `refs` and hoped to coincide:
+
+- `builds` said a correct validator builds once *any* quorum has round-`r`
+  blocks. But a validator cannot act on blocks it has not received; the real
+  rule is a **timeout plus a quorum in its own view**.
+- `Synchronised` said correct blocks reference correct blocks, welding a
+  protocol rule to a network guarantee.
+
+`held` fixes both. Note what it does **not** contain: a clock. The timeout is
+what decides how much lands in `held` beyond the `2f+1` minimum, and having no
+time model, that is the only trace it can leave. `builds` therefore asks only
+that a quorum be *in view*; waiting longer than that shows up as a larger
+`held`, which is what `EventuallyDelivers` then demands after `R`. -/
+
+/-- What each validator had in hand, one round at a time. -/
+structure Delivery (U : BlockUniverse Validator BlockId Payload) where
+  /-- What `v` held from round `n` when it built its round-`(n+1)` block. -/
+  held : Validator → ℕ → Finset BlockId
+  /-- Held ids are real blocks of the stated round. Not used by
+  `synchronised_of_delivery` below — it is what keeps `Delivery` meaningful,
+  since without it `held` could be junk and `includes` would demand blocks
+  reference it. -/
+  held_spec : ∀ v n, ∀ i ∈ held v n, i ∈ U.ids ∧ (U.block i).round = n
+  /-- **The protocol rule.** A correct validator references everything it
+  held. Implementable and observable — unlike `Synchronised` itself. -/
+  includes : ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ U.ids,
+    (U.block b).creator = v → (U.block b).round = n + 1 →
+    held v n ⊆ (U.block b).refs
+
+/-- **Asynchrony.** A quorum that exists is eventually held. Stated
+conditionally — existence first, holding second — because unconditionally it
+would assert the very block production L1 sets out to prove.
+
+No round bound: this is what holds *before* GST too, and it is all L1 needs.
+Contrast `EventuallyDelivers`, which demands the *whole* correct round and
+only from `R`. -/
+def DeliversQuorum (D : Delivery U) : Prop :=
+  ∀ n, 2 * F.f + 1 ≤ (authorsAt U n).card →
+    ∀ v ∈ (Correct : Finset Validator),
+      2 * F.f + 1 ≤ (creatorsOf U.block (D.held v n)).card
+
 /-- The positive protocol behaviour liveness needs. Not derivable from the
 DAG structure — `Correct` is a negative condition and these are positive.
 
@@ -128,11 +173,18 @@ Note `N` is a **demand** on the DAG, not a bound on it: `Live U N` requires
 blocks to exist all the way to round `N`, so a larger `N` is a *stronger*
 hypothesis satisfied by *fewer* universes. Coverage of every DAG comes from
 quantifying over `N`, never from choosing it large. -/
-structure Live (U : BlockUniverse Validator BlockId Payload) (N : ℕ) : Prop where
+structure Live (U : BlockUniverse Validator BlockId Payload)
+    (D : Delivery U) (N : ℕ) : Prop where
   /-- Every correct validator has a genesis block. -/
   genesis : Populated U 0
-  /-- Below the horizon, a quorum at round `r` yields blocks at `r+1`. -/
-  builds : ∀ r < N, 2 * F.f + 1 ≤ (authorsAt U r).card → Populated U (r + 1)
+  /-- Below the horizon, a correct validator that **holds** a quorum of
+  round-`r` blocks has one of its own at `r+1`.
+
+  The quorum is measured against `D.held v r`, not against `authorsAt U r`:
+  a validator cannot build on blocks it has not received. -/
+  builds : ∀ r < N, ∀ v ∈ (Correct : Finset Validator),
+    2 * F.f + 1 ≤ (creatorsOf U.block (D.held v r)).card →
+    ∃ b ∈ U.ids, (U.block b).creator = v ∧ (U.block b).round = r + 1
 
 omit [DecidableEq BlockId] in
 /-- A populated round carries a quorum of authors — the step that feeds L1's
@@ -148,31 +200,40 @@ theorem card_authorsAt_of_populated {r : ℕ} (h : Populated U r) :
   exact mem_authorsAt.mpr ⟨b, hb, hbr, hbc⟩
 
 omit [DecidableEq BlockId] in
-/-- **L1 — no stall.** Under `Live U N`, every correct validator has a block
+/-- **L1 — no stall.** Under `Live U D N` and `DeliversQuorum D`, every
+correct validator has a block
 at every round up to the horizon.
 
-Induction on the round. The base is `genesis`; the step observes that "every
-correct validator has a round-`r` block" makes `Correct` a subset of
-`authorsAt U r`, which is a quorum, and feeds that to `builds`.
+Induction on the round. The base is `genesis`. The step goes in two hops now
+that `builds` is view-relative: the induction hypothesis makes `Correct` a
+subset of `authorsAt U r`, so a quorum *exists*; `DeliversQuorum` turns that
+into each correct validator *holding* a quorum; and only then does `builds`
+apply.
+
+That second hop is the content of question 2. Without it the theorem would be
+claiming validators build on blocks they may never have received.
 
 L1 is the **only** result where the horizon does real work. Its whole job is
 to turn the growth assumption into the local `Populated` facts L4 consumes —
 which is why L4 itself never mentions `N` (`liveness.md` §4.4). -/
-theorem no_stall (H : Live U N) : ∀ r ≤ N, Populated U r := by
+theorem no_stall {D : Delivery U} (H : Live U D N) (hd : DeliversQuorum D) :
+    ∀ r ≤ N, Populated U r := by
   intro r
   induction r with
   | zero => intro _; exact H.genesis
   | succ r ih =>
-      intro hr
-      exact H.builds r (by omega) (card_authorsAt_of_populated (ih (by omega)))
+      intro hr v hv
+      exact H.builds r (by omega) v hv
+        (hd r (card_authorsAt_of_populated (ih (by omega))) v hv)
 
 omit [DecidableEq BlockId] in
-/-- L1 in the form L0 consumes: under `Live U N` **every** round up to the
+/-- L1 in the form L0 consumes: under `Live U D N` **every** round up to the
 horizon carries a quorum of authors, not merely every round below some
 frontier. -/
-theorem card_authorsAt_of_live (H : Live U N) {r : ℕ} (hr : r ≤ N) :
+theorem card_authorsAt_of_live {D : Delivery U} (H : Live U D N)
+    (hd : DeliversQuorum D) {r : ℕ} (hr : r ≤ N) :
     2 * F.f + 1 ≤ (authorsAt U r).card :=
-  card_authorsAt_of_populated (no_stall H r hr)
+  card_authorsAt_of_populated (no_stall H hd r hr)
 
 omit [DecidableEq BlockId] in
 /-- From round `R` on, a correct block references every correct block of the
@@ -201,6 +262,43 @@ def Synchronised (U : BlockUniverse Validator BlockId Payload) (R : ℕ) : Prop 
     (U.block b).creator ∈ (Correct : Finset Validator) →
     ∀ a ∈ U.ids, (U.block a).round = n →
       (U.block a).creator ∈ (Correct : Finset Validator) → a ∈ (U.block b).refs
+
+/-! ## L7 — `Synchronised`, derived
+
+`liveness.md` §8 question 8. `Synchronised` welds two unlike things into one
+object: a protocol rule and a network guarantee. It cannot be derived from
+anything the static model has, because the model is blocks and refs — no
+time, no delivery, no record of what a validator *held* when it built.
+`Synchronised` is stated on `refs` because `refs` is all there is.
+
+Adding that missing layer splits it. **The gain is not logical** — one
+assumption becomes two and nothing turns unconditional, since with no time
+model the chain must bottom out at delivery. The gain is that each piece is a
+single kind of thing: `includes` is implementable and observable, which is
+exactly what §3(b) notes `Synchronised` fails to be, and `EventuallyDelivers`
+is pure network.
+
+It also puts the timeout story somewhere real. A timeout governs *when you
+build*, i.e. what lands in `held`; it has nothing to do with `refs`, which
+§4.3 had to discuss next to a definition structurally unable to express it. -/
+
+/-- **The network assumption**: after `R`, correct blocks reach correct
+validators in time to be built on. This is eventual DAG synchrony proper —
+pure delivery, no protocol content. -/
+def EventuallyDelivers (D : Delivery U) (R : ℕ) : Prop :=
+  ∀ n, R ≤ n → ∀ v ∈ (Correct : Finset Validator), ∀ a ∈ U.ids,
+    (U.block a).round = n → (U.block a).creator ∈ (Correct : Finset Validator) →
+    a ∈ D.held v n
+
+omit [DecidableEq BlockId] in
+/-- **L7.** `Synchronised` is a theorem, not an assumption: `refs ⊇ held ⊇`
+every correct block below.
+
+L4–L6 are untouched — they still take `Synchronised`, which this now supplies
+a second way. -/
+theorem synchronised_of_delivery (D : Delivery U) (h : EventuallyDelivers D R) :
+    Synchronised U R := fun n hn b hb hbr hbc a ha har hac =>
+  D.includes _ hbc n b hb rfl hbr (h n hn _ hbc a ha har hac)
 
 /-! ## L2 — decisions are monotone in the view
 
@@ -463,8 +561,9 @@ Note the conclusion quantifies over `U` and `N` *inside* the existential: the
 slot is fixed by the schedule alone, and any DAG grown past it commits it. -/
 theorem commits_recur (fair : FairSchedule (Validator := Validator)) (R : ℕ) (k : ℕ) :
     ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        Live U N → Synchronised U R → S.slotRound k' + 2 ≤ N →
+      ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
+        Live U D N → DeliversQuorum D → Synchronised U R →
+        S.slotRound k' + 2 ≤ N →
         ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
   -- slot `R` is already past round `R`, since slot rounds grow at least as
   -- fast as `3k`. That is all the unboundedness this needs.
@@ -477,60 +576,9 @@ theorem commits_recur (fair : FairSchedule (Validator := Validator)) (R : ℕ) (
     · exact heq ▸ hkR
     · exact le_trans hkR (by have := slotRound_add_three_le (Validator := Validator) hlt; omega)
   refine ⟨k', le_trans (le_max_left _ _) hk', hRk', ?_⟩
-  intro U N H hs hN
+  intro U D N H hd hs hN
   exact decided_of_correct_leader hs hRk'
-    (no_stall H _ (by omega)) (no_stall H _ (by omega)) (no_stall H _ (by omega)) hlead
-
-/-! ## L7 — `Synchronised`, derived
-
-`liveness.md` §8 question 8. `Synchronised` welds two unlike things into one
-object: a protocol rule and a network guarantee. It cannot be derived from
-anything the static model has, because the model is blocks and refs — no
-time, no delivery, no record of what a validator *held* when it built.
-`Synchronised` is stated on `refs` because `refs` is all there is.
-
-Adding that missing layer splits it. **The gain is not logical** — one
-assumption becomes two and nothing turns unconditional, since with no time
-model the chain must bottom out at delivery. The gain is that each piece is a
-single kind of thing: `includes` is implementable and observable, which is
-exactly what §3(b) notes `Synchronised` fails to be, and `EventuallyDelivers`
-is pure network.
-
-It also puts the timeout story somewhere real. A timeout governs *when you
-build*, i.e. what lands in `held`; it has nothing to do with `refs`, which
-§4.3 had to discuss next to a definition structurally unable to express it. -/
-
-/-- What each validator had in hand, one round at a time. -/
-structure Delivery (U : BlockUniverse Validator BlockId Payload) where
-  /-- What `v` held from round `n` when it built its round-`(n+1)` block. -/
-  held : Validator → ℕ → Finset BlockId
-  /-- Held ids are real blocks of the stated round. Not used by
-  `synchronised_of_delivery` below — it is what keeps `Delivery` meaningful,
-  since without it `held` could be junk and `includes` would demand blocks
-  reference it. -/
-  held_spec : ∀ v n, ∀ i ∈ held v n, i ∈ U.ids ∧ (U.block i).round = n
-  /-- **The protocol rule.** A correct validator references everything it
-  held. Implementable and observable — unlike `Synchronised` itself. -/
-  includes : ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ U.ids,
-    (U.block b).creator = v → (U.block b).round = n + 1 →
-    held v n ⊆ (U.block b).refs
-
-/-- **The network assumption**: after `R`, correct blocks reach correct
-validators in time to be built on. This is eventual DAG synchrony proper —
-pure delivery, no protocol content. -/
-def EventuallyDelivers (D : Delivery U) (R : ℕ) : Prop :=
-  ∀ n, R ≤ n → ∀ v ∈ (Correct : Finset Validator), ∀ a ∈ U.ids,
-    (U.block a).round = n → (U.block a).creator ∈ (Correct : Finset Validator) →
-    a ∈ D.held v n
-
-omit [DecidableEq BlockId] S in
-/-- **L7.** `Synchronised` is a theorem, not an assumption: `refs ⊇ held ⊇`
-every correct block below.
-
-L4–L6 are untouched — they still take `Synchronised`, which this now supplies
-a second way. -/
-theorem synchronised_of_delivery (D : Delivery U) (h : EventuallyDelivers D R) :
-    Synchronised U R := fun n hn b hb hbr hbc a ha har hac =>
-  D.includes _ hbc n b hb rfl hbr (h n hn _ hbc a ha har hac)
+    (no_stall H hd _ (by omega)) (no_stall H hd _ (by omega))
+    (no_stall H hd _ (by omega)) hlead
 
 end LeanDag
