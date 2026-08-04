@@ -611,8 +611,8 @@ separately, because the cheapest item here is not the most important one.
 
 | | question | why it matters | cost |
 |---|---|---|---|
-| **Q1** | Does a timeout actually deliver honest-to-honest coverage? | the central assumption could be **false** in practice | high |
-| **Q2** | Is `Populated` too strong? | guarantees lapse under ordinary operation, not attack | **low** |
+| **Q1** | Does a timeout actually deliver honest-to-honest coverage? | *mostly settled* — one residual assumption (`Drift`) | medium |
+| **Q2** | Is `Populated` too strong? | *settled* — §9 S5 | — |
 | **Q3** | How far should the quantitative version go? | no operational bound of any kind | high |
 | **Q4** | Should `FairSchedule` be round-robin? | no throughput bound; leader predictability unmodelled | medium |
 | **Q5** | Is a partial-view model needed? | two definitions are exercised only degenerately | low |
@@ -620,7 +620,42 @@ separately, because the cheapest item here is not the most important one.
 
 ### Q1 — Does a timeout actually deliver honest-to-honest coverage?
 
-**The largest unproved link between this development and an implementation.**
+**Mostly settled** by `LeanDag/Timing.lean`, which derives `SynchronisedOn`
+from GST plus an unbounded backoff:
+
+```
+GST + Δ delivery  ──▶  SynchronisedOn U T R  ──L4/L6──▶  commits
+   (Timing.lean)          (was assumed)
+```
+
+`exists_synchronisedOn_of_backoff` is the headline: given bounded drift and a
+monotone unbounded timeout, coverage holds from *some* round. Nothing above
+changed — L4 and L6 still take `SynchronisedOn` and this supplies it, exactly
+as `synchronised_of_delivery` does from `Delivery`. That seam was cut by L7.
+
+**What remains is one field, `Drift D`:** that `T`-validators are never more
+than `D` apart in real time at the same round. It is bounded rather than
+growing — given `covers` and a rule that a validator builds once the timeout
+has elapsed *and* the round below has arrived, drift is non-increasing while
+`delay ≤ timeout`. Deriving it needs an upper bound on `built` (a `prompt`
+field) and a max over `T`. That is the last place this chain assumes rather
+than proves.
+
+**Two things the formalisation corrected.**
+
+The dichotomy *"either Byzantine validators participate and commits happen, or
+the timeout grows"* does **not** work: a Byzantine *leader* can publish and
+reveal selectively, leaving its slot undecided however long anyone waits. The
+argument that does work never mentions the adversary — it quantifies over `T`
+only, which is better, since no reasoning about strategy is needed.
+
+It also creates an obligation on implementations: `waits` says a validator
+builds a **full timeout** after entering the round, *not* as soon as it holds
+`2f+1` blocks. An adversary answering instantly can fill an early quorum with
+Byzantine blocks and crowd out the correct ones — including the leader's — so
+building on the first `2f+1` makes the backoff accomplish nothing.
+
+The original statement, kept because it is why the file exists:
 
 A correct validator waits on a timeout and builds on whatever arrived; it
 cannot tell correct peers from Byzantine ones (§3b). If Byzantine validators
@@ -636,7 +671,7 @@ theorem after L3 rests on `Synchronised`.
 Expensive, because settling it needs the time model §4.3 deliberately drops.
 But it is the assumption most likely to be false, so it heads the list.
 
-### Q2 — Is `Populated` too strong?
+### Q2 — Is `Populated` too strong? — **settled, §9 S5**
 
 `Populated U r` demands that **every** correct validator have a block at round
 `r`, and L4 needs three consecutive such rounds. One correct validator missing
@@ -817,3 +852,32 @@ time bound means anything.
 
 `Synchronised` keeps its exact statement. It stops being a hypothesis one
 assumes and becomes one that can be discharged, so L4–L6 are untouched.
+
+### S5 — L4 and L6 take a quorum of correct validators, not all of them
+
+`PopulatedOn` and `SynchronisedOn` now take a validator set `T`; `Populated`
+and `Synchronised` are the `T := Correct` abbreviations, so nothing downstream
+moved. Both are **antitone** in `T`, which is what lets L1 keep concluding
+about all of `Correct` while L4 consumes only a quorum, and lets the existing
+`Ugrow` witnesses feed the generalised statements unchanged.
+
+L4's proof needed no change beyond replacing `card_correct` with the
+hypothesis `2f+1 ≤ T.card` — `Correct` entered at exactly that one point, and
+everything after was a subset argument.
+
+**Where `T ⊆ Correct` is and is not needed.** L4 alone does not need it: the
+counting cares only about `T.card`. It *is* needed in L6, because L6's
+population comes from L1, which knows only about correct validators. That is
+the principled home for the hypothesis — and it is also the modelling reason
+it must hold, since a `T` containing Byzantine validators would make
+`SynchronisedOn` unjustifiable: withholding is free for the adversary, so any
+argument counting Byzantine-authored blocks is defeated by doing nothing.
+
+**One honest limit.** `2f+1 ≤ |T|` and `|T| ≤ |Correct| = 3f+1 − actual
+Byzantine` together force
+
+> `actual_byzantine + slow_correct ≤ f`
+
+Progress-with-the-fast-ones spends from the same budget as Byzantine faults.
+At exactly `f` Byzantine, `T = Correct` necessarily and no correct validator
+may lag.
