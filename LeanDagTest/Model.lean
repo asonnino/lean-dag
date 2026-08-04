@@ -1,6 +1,7 @@
 import LeanDag.Persistence
 import LeanDag.CommonCore
 import LeanDag.Mysticeti
+import LeanDag.Liveness
 open LeanDag
 
 #print axioms LeanDag.BlockUniverse.eq_of_creator_eq
@@ -645,3 +646,32 @@ example (V : View (Fin 4) (Fin 24) Unit U7) (g : ℕ → Option (Fin 24))
   have h0 : OutputAt U7 g7 0 0 :=
     ⟨⟨0, rfl, Reaches.refl⟩, fun j hj _ _ _ => absurd hj (by omega)⟩
   exact outputAt_agree (n := 2) g7_decided hg (by omega) h0
+
+/-! ### L0 — density below the frontier
+
+`U7` runs to round 5, so it exercises L0 across a four-round gap. The point
+of the theorem is the *distance*: one block at the top forces a quorum of
+authors all the way down, not merely one round below.
+
+`f = 1` here, so the quorum is `2f+1 = 3`; every round of `U7` in fact has 4.
+-/
+
+-- Block 20 sits at round 5, four rounds above the genesis round.
+example : (U7.block 20).round = 5 := by decide
+
+-- It forces 3 distinct authors at round 0 -- across the whole gap.
+example : 2 * 1 + 1 ≤ (authorsAt U7 0).card :=
+  card_authorsAt_of_lt (U := U7) (r := 5) (n := 0) (by omega) (i := 20) (by decide) (by decide)
+
+-- And at every round in between. The conclusion is non-trivial at each.
+example : 2 * 1 + 1 ≤ (authorsAt U7 2).card :=
+  card_authorsAt_of_lt (U := U7) (r := 5) (n := 2) (by omega) (i := 20) (by decide) (by decide)
+
+example : 2 * 1 + 1 ≤ (authorsAt U7 4).card :=
+  card_authorsAt_of_lt (U := U7) (r := 5) (n := 4) (by omega) (i := 20) (by decide) (by decide)
+
+/-- The bound is not vacuous from above: round 5 is the frontier, and round 6
+is empty -- so L0 says nothing there, correctly. -/
+example : (authorsAt U7 6).card = 0 := by decide
+
+#print axioms LeanDag.card_authorsAt_of_lt

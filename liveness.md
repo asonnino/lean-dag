@@ -390,17 +390,17 @@ def FairSchedule : Prop :=
 
 ## 7. Staging
 
-| | | risk |
-|---|---|---|
-| L0 | density below the frontier | low — existing lemmas, no new primitives |
-| L2 | view-monotonicity of `Decided` | low — mirrors `decided_unique`'s induction |
-| L3 | `View.full`, then L2 instantiated | low |
-| L1 | `Live`, then no-stall by induction on rounds | low |
-| — | **a model satisfying `Live` and `Synchronised`** | low, and required |
-| L4 | `Live` + `Synchronised`, then the two-layer argument | medium — the only real proof |
-| L5 | vacuity of the `∀`-over-candidates premise | low |
-| L6 | `FairSchedule`, then L4 | low |
-| L7 | `Delivery`, then `Synchronised` as a theorem | low — see question 7 |
+| | | risk | |
+|---|---|---|---|
+| L0 | density below the frontier | low — existing lemmas, no new primitives | ✓ `card_authorsAt_of_lt` |
+| L2 | view-monotonicity of `Decided` | low — mirrors `decided_unique`'s induction | |
+| L3 | `View.full`, then L2 instantiated | low | |
+| L1 | `Live`, then no-stall by induction on rounds | low | |
+| — | **a model satisfying `Live` and `Synchronised`** | low, and required | |
+| L4 | `Live` + `Synchronised`, then the two-layer argument | medium — the only real proof | |
+| L5 | vacuity of the `∀`-over-candidates premise | low | |
+| L6 | `FairSchedule`, then L4 | low | |
+| L7 | `Delivery`, then `Synchronised` as a theorem | low — see question 7 | |
 
 L0, L2 and L3 come first because none needs a new primitive: L0 is pure DAG
 structure, L2 and L3 are pure view reasoning. That defers every modelling
