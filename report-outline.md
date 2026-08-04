@@ -951,9 +951,62 @@ Composed, `ugrow_commits_by_round` reads: for every slot `k` there is a
 committing slot at round `≤ 3k + 6`, in every `Ugrow` grown to `3k + 8`. That
 is the concrete latency figure, in rounds.
 
-**Do not oversell it.** The bounds are in **rounds and slots, not seconds**
-(§9), the backoff *loop* is still assumed rather than derived, and
-`Timing.timeout` is common to `T` so a per-validator backoff cannot be stated.
+**Part 3 — the wait bound, and this is the one to lead with.** Parts 1 and 2
+bound *when* coverage starts and *which slot* commits. Neither says what a
+validator should set its timer to. That question has a clean answer:
+
+```lean
+theorem directCommit_of_wait (tm : Timing U T N) (hT : T ⊆ Correct)
+    (hcard : 2 * F.f + 1 ≤ T.card)
+    (hstart : ∀ v ∈ T, ∀ w ∈ T, tm.built w 0 ≤ tm.built v 0 + D₀)
+    (hwait : ∀ n, D₀ + tm.delay ≤ tm.timeout n)
+    (hgst : tm.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k)
+```
+
+> After GST, if every `T`-validator waits at least `D₀ + Δ`, every correct
+> leader is committed — where `D₀` bounds the spread at round `0`.
+
+So **`Delay(Δ) = D₀ + Δ`**, and `2Δ` in the headline case
+(`directCommit_of_wait_two_delay`).
+
+**The timeout is a constant**, and that is the point: no backoff, no `Rated`,
+no `Monotone`, no existential `R`. It says exactly what the backoff is *for* —
+the backoff exists only because Δ is unknown. Given Δ, no adaptation is needed.
+
+**How it dodges the drift obstacle**, which is the methodologically
+interesting part. The instinct is to *derive* `D ≤ Δ` after GST: everyone sees
+a quorum within Δ, so everyone advances within Δ. **`Timing` cannot prove
+that**, because `waits` forbids a lagging validator from catching up faster
+than its own timeout — deliberately, since an adversary answering instantly
+would otherwise fill an early quorum with Byzantine blocks. Drift is preserved,
+not compressed.
+
+The way past is not to derive the bound but to take it at **round `0`**, where
+it is a claim about how far apart validators *started*, and let
+`driftFrom_of_prompt` carry it forward unchanged. Validators that start
+together give `D₀ = 0` and `Delay(Δ) = Δ`; a common broadcast gives `D₀ ≤ Δ`,
+since the signal itself takes at most Δ. **The factor of two is the price of
+not having synchronised clocks.**
+
+Note also that `Timing.populatedOn` makes these statements need no `Live`, no
+`DeliversQuorum` and no L1 — `Timing` already asserts a block per `T`-validator
+per round, so the only hypotheses about time are the start spread, the wait,
+and GST.
+
+**The witness sits exactly on the boundary.** `ugrowSkew` — built for §8 to
+exercise both drift branches — has round-`0` spread `2`, `delay = 2`,
+`timeout = 4`. So `D₀ = delay` and `2 · delay = timeout`: **every inequality
+holds with equality.** That is what shows the constant `2` is right rather than
+a safe over-estimate; a witness with slack would not.
+
+**Do not oversell any of it.** The bounds in Parts 1–2 are in **rounds and
+slots, not seconds** (§9); Part 3's `Delay(Δ)` *is* a duration, but converting
+"`3k + 8` rounds, each at least `2Δ`" into elapsed time needs an accumulation
+lemma over `prompt` that nothing supplies. The backoff *loop* is still assumed
+rather than derived, and `Timing.timeout` is common to `T`, so a per-validator
+backoff cannot be stated.
 
 ---
 

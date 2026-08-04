@@ -1,5 +1,5 @@
 import LeanDag.Quantitative
-import LeanDagTest.Growth
+import LeanDagTest.Partial
 
 /-!
 # Quantitative liveness — the witnesses
@@ -129,10 +129,56 @@ example : ∃ k', 4 ≤ k' ∧ rrSlots.slotRound k' ≤ 18 ∧
       Decided (S := rrSlots) (Ugrow N) (View.full (Ugrow N)) k' (some L) :=
   ugrow_commits_by_round 4
 
+/-! ## Part 3 — the wait bound, at its tight point
+
+`ugrowSkew` was built for S7 to exercise both branches of the drift induction,
+and it turns out to sit exactly on the `2Δ` boundary:
+
+- validator `v` builds round `n` at `v + 4n`, so over `T = {1,2,3}` the round-`0`
+  spread is `3 - 1 = 2`;
+- `delay = 2`;
+- `timeout = 4`.
+
+So `D₀ = delay = 2` and `2 * delay = 4 = timeout` — every inequality in
+`directCommit_of_wait_two_delay` holds with **equality**. A witness that met
+the bound with slack would not show the constant `2` is the right one. -/
+
+/-- The round-`0` spread is exactly one delivery bound. `built w 0 = w` and
+`built v 0 + delay = v + 2`, so the worst pair is `w = 3, v = 1`: `3 ≤ 3`. -/
+theorem ugrowSkew_start (N : ℕ) :
+    ∀ v ∈ ({1, 2, 3} : Finset (Fin 4)), ∀ w ∈ ({1, 2, 3} : Finset (Fin 4)),
+      (ugrowSkew N).built w 0 ≤ (ugrowSkew N).built v 0 + (ugrowSkew N).delay := by
+  intro v hv w hw
+  have h1 := mem_T_bounds hv
+  have h2 := mem_T_bounds hw
+  change (w : ℕ) + 4 * 0 ≤ (v : ℕ) + 4 * 0 + 2
+  omega
+
+/-- **The wait bound applied, with `Delay(Δ) = 2Δ`.** A correct leader is
+committed once the DAG reaches two rounds past its slot — no backoff, no
+`Rated`, no existential `R`, and every hypothesis tight.
+
+`ugrowSkew` has `gst = 0`, so "after GST" is free here; the content is the
+wait, and `2 * delay = 4 = timeout` is where it binds. -/
+theorem ugrowSkew_directCommit_of_wait (N k : ℕ) (h : 3 * k + 2 ≤ N) :
+    ∃ L, IsLeaderBlock (Ugrow N) k L ∧
+      DirectCommit (Ugrow N) L (fairSlots.slotRound k) :=
+  directCommit_of_wait_two_delay (T := {1, 2, 3}) (ugrowSkew N) (by decide) (by decide)
+    (ugrowSkew_start N) (fun _ => (by omega : 2 * 2 ≤ (4 : ℕ))) (Nat.zero_le _)
+    (by simp only [fairSlots_slotRound]; omega)
+    (by simp only [fairSlots_leader]; decide)
+
+/-- Slack breaks it, which is the check that matters. At `timeout = 3` the
+wait hypothesis `2 * delay ≤ timeout` reads `4 ≤ 3` and fails — the same
+constraint S7 found by trying `timeout = 3` and watching
+`synchronisedOn_of_timing` reject it. -/
+example : ¬ (2 * (ugrowSkew 8).delay ≤ 3) := by decide
+
 #print axioms ugrowTiming_rated
 #print axioms ugrow_synchronisedOn_of_rate
 #print axioms rrSlots_fairWithin
 #print axioms rrSlots_boundedSpacing
 #print axioms ugrow_commits_by_round
+#print axioms ugrowSkew_directCommit_of_wait
 
 end LeanDagTest

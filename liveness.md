@@ -746,7 +746,7 @@ top-down, each layer *assumes* what the one below it *supplies*.
 |---|---|
 | `LeanDag/Liveness.lean` | L0–L6, plus `Populated`, `Live`, `Delivery`, `Synchronised`, `FairScheduleOn`, and L7a |
 | `LeanDag/Timing.lean` | L7b — `Timing`, `DriftFrom`, and `SynchronisedOn` earned from GST |
-| `LeanDag/Quantitative.lean` | S8 — `Rated`, `FairWithin`, `BoundedSpacing`, and the bounds they buy |
+| `LeanDag/Quantitative.lean` | S8 — `Rated`, `FairWithin`, `BoundedSpacing`; S9 — the wait bound `Delay(Δ)` |
 | `LeanDagTest/Growth.lean` | `Ugrow`, `ugrowDelivery`, `ugrowTiming` — satisfiability at every horizon |
 | `LeanDagTest/Partial.lean` | `ugrowHonest`, `ugrowSkew` — the partial and skewed cases (S7) |
 | `LeanDagTest/Quantitative.lean` | `rrSlots` — round-robin, and the rated hypotheses witnessed (S8) |
@@ -782,8 +782,9 @@ existing theorems are true — only how much they say.
 
 ### Q3 — How far should the quantitative version go?
 
-**Mostly settled by S8**, which supplies the bound on `R` this question was
-principally about. What remains:
+**Mostly settled by S8 and S9.** S8 bounds `R` in rounds; S9 answers the
+operational form — *what should a validator set its timer to?* — with
+`Delay(Δ) = D₀ + Δ`, a constant, and `2Δ` in the headline case. What remains:
 
 - **No proof the adaptive *loop* converges.** S8 assumes a rated backoff; it
   does not derive one from the feedback mechanism §4.3 describes. And
@@ -1116,3 +1117,54 @@ is the concrete latency figure Q4 asked for.
 assumed rather than derived, `Timing.timeout` is common to `T` so a
 per-validator backoff cannot be stated, and every bound here is in **rounds and
 slots** rather than seconds — `le_built` relates the two in one direction only.
+
+### S9 — the wait bound: `Delay(Δ) = 2Δ`
+
+Q3 asked how long after GST liveness resumes. S8 answered it in **rounds**, via
+a bound on `R`. This answers the operational question instead: *what should a
+validator set its timer to?*
+
+> After GST, if every `T`-validator waits at least `D₀ + Δ` before building,
+> every correct leader is committed — where `D₀` bounds the spread at round `0`.
+
+`directCommit_of_wait`, with `decided_of_wait` as the decision form and
+`directCommit_of_wait_two_delay` the headline case `D₀ ≤ Δ`, giving
+**`Delay(Δ) = 2Δ`**.
+
+**The timeout is a constant.** No backoff, no `Rated`, no `Monotone`, no
+existential `R`. That is the point, and it says what the backoff is *for*: the
+backoff exists only because Δ is unknown. A validator that knows the delivery
+bound needs no adaptation at all.
+
+**Where `D₀` comes from — and why the drift obstacle is not in the way.** The
+natural instinct is to derive `D ≤ Δ` post-GST: everyone sees a quorum within Δ,
+so everyone enters the next round within Δ. **`Timing` cannot prove that**, and
+the reason is `waits`: a lagging validator may not catch up faster than its own
+timeout, which is deliberate (§7 — an adversary answering instantly would
+otherwise fill an early quorum with Byzantine blocks). Drift is preserved, not
+compressed, and S6 records that.
+
+The way past it is not to derive the bound but to **take it at round `0`**,
+where it is a claim about how far apart validators *started* — and
+`driftFrom_of_prompt` then carries it forward unchanged forever. A system whose
+validators start together has `D₀ = 0` and `Delay(Δ) = Δ`; one started by a
+common broadcast has `D₀ ≤ Δ`, since the signal itself takes at most Δ to
+arrive. **The factor of two is the price of not having synchronised clocks.**
+
+**`Timing` populates rounds by itself** (`Timing.populatedOn`), since it already
+asserts a block per `T`-validator per round below the horizon. So these
+statements need no `Live`, no `DeliversQuorum` and no L1 — the only hypotheses
+about time are the start spread, the wait, and the slot being past GST.
+
+**The witness sits on the boundary.** `ugrowSkew`, built for S7 to exercise both
+drift branches, has round-`0` spread `2`, `delay = 2` and `timeout = 4` — so
+`D₀ = delay` and `2 * delay = timeout`, and **every inequality holds with
+equality**. `ugrowSkew_directCommit_of_wait` applies the `2Δ` form at exactly
+that point, which is what shows the constant `2` is the right one rather than a
+safe over-estimate. A witness with slack would not.
+
+**What remains** is the conversion to wall-clock. `Delay(Δ) = 2Δ` is a
+*duration*, so this part is genuinely in time units — but the number of rounds
+to a commit is still bounded only by S8's round count, and turning "`3k + 8`
+rounds, each at least `2Δ`" into an elapsed-time figure needs an upper bound
+accumulating `prompt` across rounds, which nothing supplies. Q3 keeps that.

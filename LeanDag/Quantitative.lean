@@ -243,4 +243,98 @@ theorem commits_recur_by_round {s : ℕ} (hT : T ⊆ (Correct : Finset Validator
   intro U D N H hd hsync hN
   exact hcommit U D N H hd hsync (by omega)
 
+/-! ## Part 3 — the wait bound: how long is long enough?
+
+The question Parts 1 and 2 do not answer. They bound *when* coverage starts
+and *which slot* commits, both given a backoff that eventually clears
+`D + delay`. Neither says what a validator should actually set its timer to.
+
+**The backoff exists only because Δ is unknown.** If a validator knows the
+delivery bound and the spread it started with, it does not need a backoff, a
+`Rated` hypothesis, `Monotone`, or an existential `R` — it needs a **constant**
+timeout of `D₀ + Δ`, and correct leaders commit from GST onward. That is the
+content of this part, and it is why the results below assume neither `Rated`
+nor anything from Part 1.
+
+**Where `D₀` comes from, and why Obstacle 1 is not in the way.** The drift
+bound need not be *derived* from Δ by a compression argument — `Timing` cannot
+supply one, since `waits` forbids a lagging validator from catching up faster
+than its own timeout, and that is deliberate (an adversary answering instantly
+would otherwise fill an early quorum). Instead the bound is taken at **round
+`0`**, where it is a statement about how far apart validators *started*, and
+`driftFrom_of_prompt` carries it forward unchanged forever. A system whose
+validators start together has `D₀ = 0`; one started by a common broadcast has
+`D₀ ≤ Δ`, giving the headline `2Δ`. -/
+
+omit [DecidableEq BlockId] S in
+/-- `Timing` already asserts a block per `T`-validator per round below the
+horizon, so it populates rounds directly — no `Live`, no `DeliversQuorum`, no
+L1. This is what lets Part 3's statements mention only timing. -/
+theorem Timing.populatedOn (tm : Timing U T N) {n : ℕ} (hn : n ≤ N) :
+    PopulatedOn U T n :=
+  fun v hv => ⟨tm.blk v n, tm.blk_mem v hv n hn, tm.blk_creator v hv n hn,
+    tm.blk_round v hv n hn⟩
+
+variable {D₀ k : ℕ}
+
+/-- **The wait bound.** After GST, a correct leader is committed provided every
+`T`-validator waits at least `D₀ + Δ` before building, where `D₀` bounds the
+spread at round `0`.
+
+So `Delay(Δ) = D₀ + Δ`, and it is a **constant** — no backoff, no growth
+condition, no `∃ R`. The only hypotheses about time are the start spread, the
+wait, and that the slot sits past GST.
+
+The chain is three steps, all already proved:
+`driftFrom_of_prompt` turns the round-`0` spread into `DriftFrom 0 D₀`;
+`synchronisedOn_of_timing` turns that plus the wait into coverage from the
+slot's round; and L4 turns coverage plus three populated rounds into a direct
+commit. The populated rounds come from `Timing` itself.
+
+`hN` is the horizon condition, and it is L4's `r + 2` — the certificate round.
+Nothing here is asymptotic: the DAG must actually reach two rounds past the
+leader. -/
+theorem directCommit_of_wait (tm : Timing U T N) (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : 2 * F.f + 1 ≤ T.card)
+    (hstart : ∀ v ∈ T, ∀ w ∈ T, tm.built w 0 ≤ tm.built v 0 + D₀)
+    (hwait : ∀ n, D₀ + tm.delay ≤ tm.timeout n)
+    (hgst : tm.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k) := by
+  have hsync : SynchronisedOn U T (S.slotRound k) :=
+    Timing.synchronisedOn_of_timing hT
+      (Timing.DriftFrom.mono (Nat.zero_le _)
+        (Timing.driftFrom_of_prompt hstart
+          (fun n _ => le_trans (Nat.le_add_left _ _) (hwait n))))
+      hgst (fun n _ => hwait n)
+  exact directCommit_of_leader_mem hcard hsync (le_refl _)
+    (tm.populatedOn (by omega)) (tm.populatedOn (by omega)) (tm.populatedOn (by omega)) hlead
+
+/-- **The wait bound, as a decision.** What the ledger is defined over. -/
+theorem decided_of_wait (tm : Timing U T N) (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : 2 * F.f + 1 ≤ T.card)
+    (hstart : ∀ v ∈ T, ∀ w ∈ T, tm.built w 0 ≤ tm.built v 0 + D₀)
+    (hwait : ∀ n, D₀ + tm.delay ≤ tm.timeout n)
+    (hgst : tm.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) := by
+  obtain ⟨L, hLb, hdc⟩ := directCommit_of_wait tm hT hcard hstart hwait hgst hN hlead
+  exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_full hdc)⟩
+
+/-- **`Delay(Δ) = 2Δ`.** The headline case: validators that started within one
+delivery bound of each other, waiting two, commit every correct leader after
+GST.
+
+`D₀ ≤ Δ` is what a common start signal gives — the signal itself takes at most
+Δ to reach everyone. `D₀ = 0` (a synchronised start) would give `Delay(Δ) = Δ`;
+the factor of two is the price of not having synchronised clocks. -/
+theorem directCommit_of_wait_two_delay (tm : Timing U T N)
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : 2 * F.f + 1 ≤ T.card)
+    (hstart : ∀ v ∈ T, ∀ w ∈ T, tm.built w 0 ≤ tm.built v 0 + tm.delay)
+    (hwait : ∀ n, 2 * tm.delay ≤ tm.timeout n)
+    (hgst : tm.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k) :=
+  directCommit_of_wait tm hT hcard hstart (fun n => by have := hwait n; omega) hgst hN hlead
+
 end LeanDag
