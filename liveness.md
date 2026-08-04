@@ -657,6 +657,7 @@ def Timing.DriftFrom (tm : Timing U T N) (n₀ D : ℕ) : Prop :=
 | L6 | `FairScheduleOn`, then L1 and L4 | low — but see the quantifier order | ✓ `commits_recur_on` |
 | L7a | `Delivery`, then `Synchronised` as a theorem | low — see S4 | ✓ `synchronised_of_delivery` |
 | — | **`ugrowTiming`: a `Timing` witness at every horizon** | low, and required **first** | ✓ `ugrowTiming` |
+| — | **`ugrowHonest`, `ugrowSkew`: non-degenerate witnesses** | low — see S7 | ✓ `LeanDagTest/Partial.lean` |
 | L7b | `Timing`, then `SynchronisedOn` from GST + backoff | medium — see S6 | ✓ `exists_synchronisedOn_of_backoff` |
 
 L0, L2 and L3 come first because none needs a new primitive: L0 is pure DAG
@@ -722,7 +723,7 @@ separately, because the cheapest item here is not the most important one.
 |---|---|---|---|
 | **Q3** | How far should the quantitative version go? | no operational bound of any kind | high |
 | **Q4** | Should `FairScheduleOn` be round-robin? | no throughput bound; leader predictability unmodelled | medium |
-| **Q5** | Is a partial-view model needed? | three definitions are exercised only degenerately | low |
+| **Q5** | Is a partial-view model needed? | *settled* — §9 S7 | — |
 | **Q6** | Should L1 hold from round 0, or only after `R`? | presentational | low |
 
 Q1 (*does a timeout deliver coverage?*) and Q2 (*is `Populated` too strong?*)
@@ -766,20 +767,6 @@ invisible here.
 The witness makes the weakness concrete: `ugrow_fair` uses a *constant*
 correct leader, satisfying fairness in the weakest possible way, so nothing
 currently exercises the condition.
-
-### Q5 — Is a partial-view model needed?
-
-`Ugrow` sets `held v n` to *every* round-`n` block, so the delivery hop added
-by S2 is never exercised against a genuinely partial view — and partial views
-are the normal case, not the exception. `Delivery`, `DeliversQuorum` and now
-`Timing` are all satisfiable but barely tested: `ugrowTiming` likewise has
-zero drift and zero delay, so S6's two-case induction only ever takes the
-timeout-limited branch.
-
-One construction would settle two things at once, since the same model gives
-the round-spread exhibit §4.1 asks for: a universe where L0 holds while
-correct validators sit at arbitrarily different rounds, documenting that L0
-assumes no synchrony — easy to doubt when reading L0 alone.
 
 ### Q6 — Should L1 hold from round 0, or only after `R`?
 
@@ -984,3 +971,44 @@ exactly that reason — while the backoff is still below `delay`, drift may grow
 
 What the whole chain now assumes: GST (`covers`), the two protocol rules
 (`waits`, `prompt`), and an unbounded monotone backoff. Nothing else.
+
+### S7 — the witnesses now exercise the partial cases
+
+`Ugrow` and `ugrowTiming` showed the liveness definitions are *satisfiable*,
+but satisfied them in the easiest possible way. `ugrowDelivery` set `held v n`
+to **every** round-`n` block, so the delivery hop added by S2 never met a
+partial view; `ugrowTiming` had `delay = 0` and zero drift, so S6's two-case
+induction only ever took the **timeout-limited** branch. Partial views are the
+normal case, and a branch no witness reaches is a branch where a mistake would
+hide.
+
+`LeanDagTest/Partial.lean` supplies both over the same `Ugrow N` universe.
+
+**`ugrowHonest`** — the Byzantine validator withholds, so correct validators
+hold only the three correct blocks of each round. `ugrowHonest_partial` shows
+validator `0`'s block exists in the universe and is held by nobody, and
+`ugrowHonest_deliversQuorum` shows a quorum survives anyway. That is §3(b)'s
+scenario made concrete: withholding is free, and the argument does not care.
+
+**`ugrowSkew`** — validator `v` builds at `v + 4n`, so `T = {1,2,3}` is spread
+across drift `2`, with `delay = 2` against `timeout = 4`.
+
+Those constants are forced, and the pinch is the interesting part:
+
+- `synchronisedOn_of_timing` needs `D + delay ≤ timeout`, so `timeout ≥ 4`;
+- the delivery-limited branch fires for `w` only when
+  `w + timeout ≤ 3 + delay`, so for `w = 1` it needs `timeout ≤ 4`.
+
+At `timeout = 4` both hold, with equality on each side — `w = 1` takes the
+**delivery** branch and `w = 3` the **timeout** branch, so both are live. A
+first attempt used `timeout = 3`, satisfied the second constraint and failed
+the first. That is exactly the check a degenerate witness cannot perform, and
+finding the window is narrow is itself worth knowing.
+
+**Not done: the round-spread exhibit** §4.1 asks for, and the reason is worth
+recording. At `f = 1` there are `3f+1 = 4` validators and `|Correct| = 3 =
+2f+1` exactly, so *every* correct validator is needed for a quorum and none
+can lag. Exhibiting round spread alongside commits needs `f ≥ 2` — seven
+validators with one Byzantine, leaving six correct and room for one to fall
+behind. That is S5's combined budget (`actual_byzantine + slow_correct ≤ f`)
+showing up as a concrete obstruction rather than an inequality.
