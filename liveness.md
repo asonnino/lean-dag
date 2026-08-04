@@ -417,10 +417,10 @@ structure Timing (U) (T : Finset Validator) (N : ℕ) where
     built w n + delay ≤ built v (n + 1) →
     blk w n ∈ (U.block (blk v (n + 1))).refs
 
-/-- `T`-validators are never more than `D` apart at the same round. The one
-thing `Timing.lean` assumes rather than derives — see Q1. -/
-def Timing.Drift (tm : Timing U T N) (D : ℕ) : Prop :=
-  ∀ v ∈ T, ∀ w ∈ T, ∀ n ≤ N, tm.built w n ≤ tm.built v n + D
+/-- `T`-validators are never more than `D` apart at the same round, from
+round `n₀` on. **Derived**, not assumed — see S6. -/
+def Timing.DriftFrom (tm : Timing U T N) (n₀ D : ℕ) : Prop :=
+  ∀ v ∈ T, ∀ w ∈ T, ∀ n, n₀ ≤ n → n ≤ N → tm.built w n ≤ tm.built v n + D
 ```
 
 ## 6. The results
@@ -639,7 +639,7 @@ def Timing.Drift (tm : Timing U T N) (D : ℕ) : Prop :=
 | L6 | `FairScheduleOn`, then L1 and L4 | low — but see the quantifier order | ✓ `commits_recur_on` |
 | L7a | `Delivery`, then `Synchronised` as a theorem | low — see S4 | ✓ `synchronised_of_delivery` |
 | — | **`ugrowTiming`: a `Timing` witness at every horizon** | low, and required **first** | ✓ `ugrowTiming` |
-| L7b | `Timing`, then `SynchronisedOn` from GST + backoff | medium — see Q1 | ✓ `exists_synchronisedOn_of_backoff` |
+| L7b | `Timing`, then `SynchronisedOn` from GST + backoff | medium — see S6 | ✓ `exists_synchronisedOn_of_backoff` |
 
 L0, L2 and L3 come first because none needs a new primitive: L0 is pure DAG
 structure, L2 and L3 are pure view reasoning. That defers every modelling
@@ -702,14 +702,14 @@ separately, because the cheapest item here is not the most important one.
 
 | | question | why it matters | cost |
 |---|---|---|---|
-| **Q1** | Does a timeout actually deliver honest-to-honest coverage? | *mostly settled* — one residual assumption (`Drift`) | medium |
+| **Q1** | Does a timeout actually deliver honest-to-honest coverage? | *settled* — §9 S6 | — |
 | **Q2** | Is `Populated` too strong? | *settled* — §9 S5 | — |
 | **Q3** | How far should the quantitative version go? | no operational bound of any kind | high |
 | **Q4** | Should `FairSchedule` be round-robin? | no throughput bound; leader predictability unmodelled | medium |
 | **Q5** | Is a partial-view model needed? | two definitions are exercised only degenerately | low |
 | **Q6** | Should L1 hold from round 0, or only after `R`? | presentational | low |
 
-### Q1 — Does a timeout actually deliver honest-to-honest coverage?
+### Q1 — Does a timeout actually deliver honest-to-honest coverage? — **settled, §9 S6**
 
 **Mostly settled** by `LeanDag/Timing.lean`, which derives `SynchronisedOn`
 from GST plus an unbounded backoff:
@@ -724,13 +724,8 @@ monotone unbounded timeout, coverage holds from *some* round. Nothing above
 changed — L4 and L6 still take `SynchronisedOn` and this supplies it, exactly
 as `synchronised_of_delivery` does from `Delivery`. That seam was cut by L7.
 
-**What remains is one field, `Drift D`:** that `T`-validators are never more
-than `D` apart in real time at the same round. It is bounded rather than
-growing — given `covers` and a rule that a validator builds once the timeout
-has elapsed *and* the round below has arrived, drift is non-increasing while
-`delay ≤ timeout`. Deriving it needs an upper bound on `built` (a `prompt`
-field) and a max over `T`. That is the last place this chain assumes rather
-than proves.
+**Drift is now derived too** (`driftFrom_of_prompt`), so nothing is left. See
+§9 S6 for how, and for the one correction the argument needed.
 
 **Two things the formalisation corrected.**
 
@@ -972,3 +967,35 @@ Byzantine` together force
 Progress-with-the-fast-ones spends from the same budget as Byzantine faults.
 At exactly `f` Byzantine, `T = Correct` necessarily and no correct validator
 may lag.
+
+### S6 — drift is derived, so the chain bottoms out at GST alone
+
+`Timing` first carried `Drift` as a field: `T`-validators are never more than
+`D` apart in real time at the same round. That was the last assumption in the
+chain, and it is now a theorem.
+
+The idea — *once one correct validator reaches round `r`, the others follow
+within a bounded time* — needed one correction. It does **not** give a fixed
+`2Δ` bound, because every validator's clock advances by the same timeout: the
+spread is **preserved**, not compressed. That is enough, since Q1 needs drift
+*bounded*, not small.
+
+Pairing `waits` (build no *earlier* than a full timeout) with a new `prompt`
+field (build no *later* than the timeout elapsing and the round below
+arriving) makes the induction go through, splitting on `prompt`'s `max`:
+
+- **timeout-limited** — the validator advanced by exactly the same
+  `timeout n` as everyone else, so the spread is unchanged;
+- **delivery-limited** — it finished by `latest n + delay`, and `latest` is
+  *attained* by some `T`-validator, so the inductive bound applies to that one
+  and `delay ≤ timeout n` absorbs the rest.
+
+`latest` being attained rather than a free upper bound is what makes the
+second case work; as a bare bound it would carry no information.
+
+So `driftFrom_of_prompt` turns a spread bound at **one** round into a bound at
+every later one, and `DriftFrom` is stated from a round rather than from 0 for
+exactly that reason — while the backoff is still below `delay`, drift may grow.
+
+What the whole chain now assumes: GST (`covers`), the two protocol rules
+(`waits`, `prompt`), and an unbounded monotone backoff. Nothing else.

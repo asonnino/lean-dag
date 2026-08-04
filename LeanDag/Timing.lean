@@ -24,6 +24,12 @@ built one round below has arrived, so it is referenced. The backoff drives the
 timeout past that threshold because it never stops growing, and after GST the
 threshold is finite.
 
+**Drift is derived, not assumed** (`driftFrom_of_prompt`). Pairing `waits`
+with `prompt` — a validator builds once the timeout has elapsed *and* the
+round below has arrived — makes the spread between `T`-validators
+non-increasing while `delay ≤ timeout`. So a bound at one round gives a bound
+at every later one, and the chain bottoms out at GST alone.
+
 **Byzantine behaviour does not appear.** An earlier sketch of this argument
 split on whether Byzantine validators participate. That case analysis is not
 needed and would not have worked — a Byzantine *leader* can publish and reveal
@@ -83,22 +89,31 @@ structure Timing (U : BlockUniverse Validator BlockId Payload)
   covers : ∀ v ∈ T, ∀ w ∈ T, ∀ n < N, gst ≤ built w n →
     built w n + delay ≤ built v (n + 1) →
     blk w n ∈ (U.block (blk v (n + 1))).refs
+  /-- The last time any `T`-validator built at round `n` — an explicit max,
+  so no `Finset.max'` machinery is needed. -/
+  latest : ℕ → ℕ
+  built_le_latest : ∀ v ∈ T, ∀ n ≤ N, built v n ≤ latest n
+  /-- `latest` is *attained*, not merely an upper bound. Without this it could
+  be arbitrarily large and would carry no information. -/
+  latest_mem : ∀ n ≤ N, ∃ w ∈ T, latest n ≤ built w n
+  /-- **Validators do not dawdle** (protocol). Once the timeout has elapsed
+  *and* the round below has arrived, a validator builds. The counterpart to
+  `waits`, which is the lower bound; this is the upper one. -/
+  prompt : ∀ v ∈ T, ∀ n < N,
+    built v (n + 1) ≤ max (built v n + timeout n) (latest n + delay)
 
 namespace Timing
 
 variable (tm : Timing U T N)
 
 /-- `T`-validators are never more than `D` apart in real time at the same
-round.
+round, from round `n₀` on.
 
-**The one thing this file assumes rather than derives.** It is bounded, not
-growing: given `covers` and a rule that a validator builds once the timeout
-has elapsed *and* the round below has arrived, drift is non-increasing while
-`delay ≤ timeout`. Deriving that needs an upper bound on `built` — a
-`prompt` field — and a max over `T`. Recorded in `liveness.md` §8 Q1 as the
-remaining step. -/
-def Drift (D : ℕ) : Prop :=
-  ∀ v ∈ T, ∀ w ∈ T, ∀ n ≤ N, tm.built w n ≤ tm.built v n + D
+Stated *from* a round `n₀` rather than from 0, because that is all
+`synchronisedOn_of_timing` consumes and all `driftFrom_of_prompt` can
+deliver: while the backoff is still below `delay`, drift may grow. -/
+def DriftFrom (n₀ D : ℕ) : Prop :=
+  ∀ v ∈ T, ∀ w ∈ T, ∀ n, n₀ ≤ n → n ≤ N → tm.built w n ≤ tm.built v n + D
 
 variable {tm}
 
@@ -131,7 +146,7 @@ Non-equivocation does the remaining work: `SynchronisedOn` quantifies over
 structure names. That is why `T ⊆ Correct` is needed here — a Byzantine
 author could have several blocks in a round and `blk` would name only one. -/
 theorem synchronisedOn_of_timing (hT : T ⊆ (Correct : Finset Validator))
-    (hD : tm.Drift D) (hgst : tm.gst ≤ R)
+    (hD : tm.DriftFrom R D) (hgst : tm.gst ≤ R)
     (hbackoff : ∀ n, R ≤ n → D + tm.delay ≤ tm.timeout n) :
     SynchronisedOn U T R := by
   intro n hn b hb hbr hbc a ha har hac
@@ -147,10 +162,62 @@ theorem synchronisedOn_of_timing (hT : T ⊆ (Correct : Finset Validator))
   rw [hbv, haw]
   refine tm.covers _ hbc _ hac n (by omega) ?_ ?_
   · exact le_trans (le_trans hgst hn) (le_built hac n (by omega))
-  · have hdrift := hD _ hbc _ hac n (by omega)
+  · have hdrift := hD _ hbc _ hac n hn (by omega)
     have hwait := tm.waits _ hbc n (by omega)
     have hto := hbackoff n hn
     omega
+
+omit [DecidableEq BlockId] in
+/-- Drift from a later round is implied by drift from an earlier one. -/
+theorem DriftFrom.mono {n₀ n₁ : ℕ} (h : n₀ ≤ n₁) (hd : tm.DriftFrom n₀ D) :
+    tm.DriftFrom n₁ D :=
+  fun v hv w hw n hn hN => hd v hv w hw n (le_trans h hn) hN
+
+omit [DecidableEq BlockId] in
+/-- **Drift is preserved, not assumed.** Once the timeout has reached the
+delivery bound, the spread between `T`-validators at a round never grows — so
+a bound at *one* round gives a bound at all later ones.
+
+The step is a two-case split on `prompt`'s `max`:
+
+- **timeout-limited** — the validator advanced by exactly the same
+  `timeout n` as everyone else, so the spread is unchanged;
+- **delivery-limited** — it waited for the round below and finished by
+  `latest n + delay`. `latest` is *attained* by some `T`-validator, so the
+  inductive bound applies to that one, and `delay ≤ timeout n` absorbs the
+  rest.
+
+Note what this does **not** show: that drift shrinks. It does not — every
+clock advances by the same timeout. *Bounded* is all Q1 needs, and bounded is
+what the argument gives. -/
+theorem driftFrom_of_prompt {n₀ : ℕ}
+    (hbase : ∀ v ∈ T, ∀ w ∈ T, tm.built w n₀ ≤ tm.built v n₀ + D)
+    (hto : ∀ n, n₀ ≤ n → tm.delay ≤ tm.timeout n) :
+    tm.DriftFrom n₀ D := by
+  have key : ∀ n, n₀ ≤ n → n ≤ N →
+      ∀ v ∈ T, ∀ w ∈ T, tm.built w n ≤ tm.built v n + D := by
+    intro n
+    induction n with
+    | zero => intro h0 _ v hv w hw; exact (Nat.le_zero.mp h0) ▸ hbase v hv w hw
+    | succ n ih =>
+        intro hn hN v hv w hw
+        rcases Nat.eq_or_lt_of_le hn with heq | hlt
+        · exact heq ▸ hbase v hv w hw
+        · have hn₀ : n₀ ≤ n := by omega
+          have hprompt := tm.prompt w hw n (by omega)
+          have hwait := tm.waits v hv n (by omega)
+          have hdel := hto n hn₀
+          rcases le_total (tm.built w n + tm.timeout n) (tm.latest n + tm.delay) with hc | hc
+          · obtain ⟨x, hx, hxle⟩ := tm.latest_mem n (by omega)
+            have hxv := ih hn₀ (by omega) v hv x hx
+            have hmax : max (tm.built w n + tm.timeout n) (tm.latest n + tm.delay)
+                = tm.latest n + tm.delay := max_eq_right hc
+            omega
+          · have hwv := ih hn₀ (by omega) v hv w hw
+            have hmax : max (tm.built w n + tm.timeout n) (tm.latest n + tm.delay)
+                = tm.built w n + tm.timeout n := max_eq_left hc
+            omega
+  exact fun v hv w hw n hn hN => key n hn hN v hv w hw
 
 end Timing
 
@@ -185,11 +252,17 @@ Everything above this file consumes `SynchronisedOn` and is unchanged: L4 and
 L6 still take it as a hypothesis, and this supplies it, exactly as
 `synchronised_of_delivery` supplies it from `Delivery`. -/
 theorem exists_synchronisedOn_of_backoff (tm : Timing U T N)
-    (hT : T ⊆ (Correct : Finset Validator)) (hD : tm.Drift D)
-    (hmono : Monotone tm.timeout) (hub : ∀ m, ∃ n, m ≤ tm.timeout n) :
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hmono : Monotone tm.timeout) (hub : ∀ m, ∃ n, m ≤ tm.timeout n)
+    {n₀ : ℕ} (hdel : ∀ n, n₀ ≤ n → tm.delay ≤ tm.timeout n)
+    (hbase : ∀ v ∈ T, ∀ w ∈ T, tm.built w n₀ ≤ tm.built v n₀ + D) :
     ∃ R, SynchronisedOn U T R := by
   obtain ⟨R₀, hR₀⟩ := exists_backoff_ge hmono hub (D + tm.delay)
-  refine ⟨max R₀ tm.gst, Timing.synchronisedOn_of_timing hT hD (le_max_right _ _) ?_⟩
-  exact fun n hn => hR₀ n (le_trans (le_max_left _ _) hn)
+  refine ⟨max (max R₀ n₀) tm.gst,
+    Timing.synchronisedOn_of_timing hT
+      (Timing.DriftFrom.mono (le_trans (le_max_right R₀ n₀) (le_max_left _ _))
+        (Timing.driftFrom_of_prompt hbase hdel))
+      (le_max_right _ _) ?_⟩
+  exact fun n hn => hR₀ n (le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) hn)
 
 end LeanDag

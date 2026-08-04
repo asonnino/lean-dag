@@ -363,21 +363,27 @@ def ugrowTiming (N : ℕ) : Timing (Ugrow N) {1, 2, 3} N where
     have hw := w.isLt
     simp only [ugrow_block, mem_growBlock_refs]
     omega
+  latest n := 2 ^ n
+  built_le_latest _ _ _ _ := le_refl _
+  latest_mem _ _ := ⟨1, by decide, le_refl _⟩
+  prompt _ _ n _ := by
+    have h : 2 ^ n + 2 ^ n = 2 ^ (n + 1) := by ring
+    omega
 
-theorem ugrowTiming_drift (N : ℕ) : (ugrowTiming N).Drift 0 :=
-  fun _ _ _ _ _ _ => Nat.le_add_right _ _
-
-/-- **Q1 applied.** `SynchronisedOn` is *derived* here, not assumed — from
-GST plus an unbounded backoff. -/
+/-- **Q1 applied.** `SynchronisedOn` is *derived*, not assumed — from GST,
+an unbounded backoff, and the spread at a *single* round. Drift at every
+round is no longer a hypothesis: `driftFrom_of_prompt` propagates it. -/
 example (N : ℕ) : ∃ R, SynchronisedOn (Ugrow N) {1, 2, 3} R :=
-  exists_synchronisedOn_of_backoff (ugrowTiming N) (by decide) (ugrowTiming_drift N)
+  exists_synchronisedOn_of_backoff (D := 0) (n₀ := 0) (ugrowTiming N) (by decide)
     (fun _ _ h => Nat.pow_le_pow_right (by omega) h)
     (fun m => ⟨m, Nat.le_of_lt (Nat.lt_two_pow_self)⟩)
+    (fun _ _ => Nat.zero_le _)
+    (fun _ _ _ _ => Nat.le_add_right _ _)
 
 #print axioms synchronised_of_delivery
 #print axioms directCommit_of_leader_mem
 #print axioms Timing.synchronisedOn_of_timing
 #print axioms exists_synchronisedOn_of_backoff
-#print axioms ugrowTiming_drift
+#print axioms Timing.driftFrom_of_prompt
 
 end LeanDagTest
