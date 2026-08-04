@@ -512,7 +512,7 @@ def FairSchedule : Prop :=
 | L3 | `View.full`, then L2 instantiated | low | ✓ `decided_full` |
 | — | **`Ugrow`: a family with `Live (Ugrow N) N` for every `N`** | low, and required **first** | ✓ `ugrow_live`, `ugrow_synchronised` |
 | L1 | `Live U N`, then no-stall by induction on rounds | low | ✓ `no_stall` |
-| L4 | `Populated` ×3 + `Synchronised`, then the two-layer argument | medium — the only real proof | |
+| L4 | `Populated` ×3 + `Synchronised`, then the two-layer argument | medium — the only real proof | ✓ `directCommit_of_correct_leader` |
 | L5 | vacuity of the `∀`-over-candidates premise | low | |
 | L6 | `FairSchedule`, then L1 and L4 | low — but see the quantifier order | |
 | L7 | `Delivery`, then `Synchronised` as a theorem | low — see question 8 | |

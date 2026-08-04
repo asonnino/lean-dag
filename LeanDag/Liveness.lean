@@ -285,4 +285,120 @@ theorem decided_full {V : View Validator BlockId Payload U} {k : ℕ}
     {v : Option BlockId} (h : Decided U V k v) : Decided U (View.full U) k v :=
   decided_mono V.subset_ids h
 
+/-! ## L4 — a correct leader commits
+
+`liveness.md` §6. The one substantive proof in the liveness plan.
+
+**Two layers of coverage, and nothing else.** Every correct round-`(r+1)`
+block references `L`, because `L` is correct-authored and honest-to-honest
+coverage applies. Every correct round-`(r+2)` block then references all of
+*those*, so its votes for `L` come from every correct validator — a quorum —
+and it certifies. Since there are `2f+1` correct validators, the certificates
+themselves come from a quorum, which is `DirectCommit`.
+
+**Only correct-to-correct coverage is used.** The argument never asks whether
+a Byzantine block was produced or seen. That is what lets `Synchronised` stay
+restricted to correct authors on both sides — an unavoidable restriction,
+since a Byzantine validator may publish nothing, or publish and withhold
+(§4.3).
+
+**No horizon, no growth, no limit universe.** The hypotheses are three local
+`Populated` facts. L1 supplies them from `Live U N` when `r + 2 ≤ N`, but L4
+does not care where they come from — which is exactly why the horizon
+question of §4.4 could be settled without touching this proof. -/
+
+variable {L C : BlockId} {R r : ℕ} {k : ℕ}
+
+omit S in
+/-- A correct round-`(r+2)` block certifies any correct round-`r` block, once
+round `r+1` is populated and synchrony has taken hold.
+
+This is both layers at once: `q` references `L` by coverage at `n = r`, and
+`C` references `q` by coverage at `n = r+1`. -/
+theorem certifies_of_synchronised (hs : Synchronised U R) (hRr : R ≤ r)
+    (hpop1 : Populated U (r + 1))
+    (hL : L ∈ U.ids) (hLr : (U.block L).round = r)
+    (hLc : (U.block L).creator ∈ (Correct : Finset Validator))
+    (hC : C ∈ U.ids) (hCr : (U.block C).round = r + 2)
+    (hCc : (U.block C).creator ∈ (Correct : Finset Validator)) :
+    Certifies U C L := by
+  refine le_trans card_correct (Finset.card_le_card ?_)
+  intro v hv
+  obtain ⟨q, hq, hqc, hqr⟩ := hpop1 v hv
+  have hqcorrect : (U.block q).creator ∈ (Correct : Finset Validator) := by rw [hqc]; exact hv
+  rw [mem_creatorsOf]
+  refine ⟨q, ?_, hqc⟩
+  rw [votesIn, Finset.mem_filter]
+  exact ⟨hs (r + 1) (by omega) C hC (by omega) hCc q hq hqr hqcorrect,
+         hs r hRr q hq hqr hqcorrect L hL hLr hLc⟩
+
+omit S in
+/-- **L4, at the round level.** A correct block at round `r` is directly
+committed, given coverage from `r` and correct blocks at `r+1` and `r+2`.
+
+Stated without `Slots`: nothing in the argument cares that `L` is a leader
+block, only that it is correct-authored — the same separation Stage A makes
+for M1–M3. -/
+theorem directCommit_of_synchronised (hs : Synchronised U R) (hRr : R ≤ r)
+    (hpop1 : Populated U (r + 1)) (hpop2 : Populated U (r + 2))
+    (hL : L ∈ U.ids) (hLr : (U.block L).round = r)
+    (hLc : (U.block L).creator ∈ (Correct : Finset Validator)) :
+    DirectCommit U L r := by
+  refine le_trans card_correct (Finset.card_le_card ?_)
+  intro v hv
+  obtain ⟨C, hC, hCc, hCr⟩ := hpop2 v hv
+  have hCcorrect : (U.block C).creator ∈ (Correct : Finset Validator) := by rw [hCc]; exact hv
+  rw [mem_creatorsOf]
+  exact ⟨C, mem_certificates.mpr ⟨hC, hCr,
+    certifies_of_synchronised hs hRr hpop1 hL hLr hLc hC hCr hCcorrect⟩, hCc⟩
+
+omit [DecidableEq BlockId] in
+/-- A correct leader has a candidate block, once its round is populated.
+`Populated` at the leader's own round is needed for nothing else. -/
+theorem exists_isLeaderBlock (hpop : Populated U (S.slotRound k))
+    (hlead : S.leader k ∈ (Correct : Finset Validator)) :
+    ∃ L, IsLeaderBlock U k L := by
+  obtain ⟨L, hL, hLc, hLr⟩ := hpop (S.leader k) hlead
+  exact ⟨L, hL, hLr, hLc⟩
+
+/-- **L4.** A slot with a correct leader, whose three rounds are populated and
+which sits after synchrony, is directly committed. -/
+theorem directCommit_of_correct_leader (hs : Synchronised U R)
+    (hR : R ≤ S.slotRound k)
+    (hpop0 : Populated U (S.slotRound k))
+    (hpop1 : Populated U (S.slotRound k + 1))
+    (hpop2 : Populated U (S.slotRound k + 2))
+    (hlead : S.leader k ∈ (Correct : Finset Validator)) :
+    ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k) := by
+  obtain ⟨L, hL, hLr, hLc⟩ := exists_isLeaderBlock hpop0 hlead
+  exact ⟨L, ⟨hL, hLr, hLc⟩,
+    directCommit_of_synchronised hs hR hpop1 hpop2 hL hLr (by rw [hLc]; exact hlead)⟩
+
+/-! ### From `DirectCommit` to an actual decision
+
+L4 concludes the universe-level rule; the ledger is defined over `Decided`.
+The full view closes the gap, since it holds every certificate there is. -/
+
+omit S in
+theorem certificatesIn_full : certificatesIn U (View.full U) L r = certificates U L r :=
+  Finset.inter_eq_left.mpr fun _ hC => (mem_certificates.mp hC).1
+
+omit S in
+theorem directCommitIn_full (h : DirectCommit U L r) :
+    DirectCommitIn U (View.full U) L r := by
+  rw [DirectCommitIn, certificatesIn_full]
+  exact h
+
+/-- **L4, as a decision.** What L6 consumes and L3 propagates. -/
+theorem decided_of_correct_leader (hs : Synchronised U R)
+    (hR : R ≤ S.slotRound k)
+    (hpop0 : Populated U (S.slotRound k))
+    (hpop1 : Populated U (S.slotRound k + 1))
+    (hpop2 : Populated U (S.slotRound k + 2))
+    (hlead : S.leader k ∈ (Correct : Finset Validator)) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) := by
+  obtain ⟨L, hLb, hdc⟩ :=
+    directCommit_of_correct_leader hs hR hpop0 hpop1 hpop2 hlead
+  exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_full hdc)⟩
+
 end LeanDag

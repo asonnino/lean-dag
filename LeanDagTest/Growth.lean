@@ -188,9 +188,58 @@ example (N : ℕ) (hN : 0 < N) : 2 * Faults.f (Fin 4) + 1 ≤ (authorsAt (Ugrow 
     (by simp only [ugrow_ids, Finset.mem_range]; omega)
     (by simp only [ugrow_block, growBlock_round]; omega)
 
+/-! ## L4 against the witness
+
+`Model.lean` also declares `Faults (Fin 4)` and `Slots (Fin 4)`. This file
+deliberately does **not** import it and carries its own: `Model`'s schedule
+names validator `0`, which is Byzantine under that same fault model, so L4
+can never fire against it — the case L4 is about is exactly the one that
+schedule excludes. The two instance sets never meet, since neither file
+imports the other. -/
+
+/-- A schedule whose leader is correct. Validator 1 is not Byzantine. -/
+instance fairSlots : Slots (Fin 4) where
+  slotRound k := 3 * k
+  leader _ := 1
+  spacing _ := by omega
+
+@[simp] theorem fairSlots_slotRound (k : ℕ) : fairSlots.slotRound k = 3 * k := rfl
+
+@[simp] theorem fairSlots_leader (k : ℕ) : fairSlots.leader k = 1 := rfl
+
+example : fairSlots.leader 0 ∈ (Correct : Finset (Fin 4)) := by decide
+
+/-- **L4 applied.** Every slot whose certificate rounds fit under the horizon
+is directly committed. `Ugrow` is synchronised from round 0, so the `R ≤ r`
+side condition is free; the horizon condition is the only real one. -/
+theorem ugrow_directCommit (N k : ℕ) (h : 3 * k + 2 ≤ N) :
+    ∃ L, IsLeaderBlock (Ugrow N) k L ∧
+      DirectCommit (Ugrow N) L (fairSlots.slotRound k) :=
+  directCommit_of_correct_leader (R := 0) (ugrow_synchronised N) (Nat.zero_le _)
+    (no_stall (ugrow_live N) _ (by simp only [fairSlots_slotRound]; omega))
+    (no_stall (ugrow_live N) _ (by simp only [fairSlots_slotRound]; omega))
+    (no_stall (ugrow_live N) _ (by simp only [fairSlots_slotRound]; omega))
+    (by simp only [fairSlots_leader]; decide)
+
+/-- **And as a decision** — the form L6 consumes and L3 propagates. -/
+theorem ugrow_decided (N k : ℕ) (h : 3 * k + 2 ≤ N) :
+    ∃ L, IsLeaderBlock (Ugrow N) k L ∧
+      Decided (Ugrow N) (View.full (Ugrow N)) k (some L) :=
+  decided_of_correct_leader (R := 0) (ugrow_synchronised N) (Nat.zero_le _)
+    (no_stall (ugrow_live N) _ (by simp only [fairSlots_slotRound]; omega))
+    (no_stall (ugrow_live N) _ (by simp only [fairSlots_slotRound]; omega))
+    (no_stall (ugrow_live N) _ (by simp only [fairSlots_slotRound]; omega))
+    (by simp only [fairSlots_leader]; decide)
+
+-- Concretely: with the DAG grown to round 8, slot 2 commits.
+example : ∃ L, IsLeaderBlock (Ugrow 8) 2 L ∧
+    DirectCommit (Ugrow 8) L (fairSlots.slotRound 2) := ugrow_directCommit 8 2 (by omega)
+
 #print axioms ugrow_live
 #print axioms ugrow_synchronised
 #print axioms no_stall
 #print axioms ugrow_not_populated_succ
+#print axioms ugrow_directCommit
+#print axioms ugrow_decided
 
 end LeanDagTest
