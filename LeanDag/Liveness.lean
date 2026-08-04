@@ -27,6 +27,7 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {U : BlockUniverse Validator BlockId Payload}
+variable {N : ℕ}
 
 omit [DecidableEq BlockId] in
 /-- A round with any author at all has a block. The bridge that lets L0's
@@ -78,8 +79,8 @@ theorem card_authorsAt_of_lt {r n : ℕ} (hn : n < r) {i : BlockId}
 
 /-! ## L1 — no stall
 
-`liveness.md` §3(a), §6. The first result here to need a primitive the static
-model lacks.
+`liveness.md` §3(a), §4.4, §6. The first result here to need a primitive the
+static model lacks.
 
 `Correct` means only *does not equivocate* — a purely negative condition,
 satisfied by a validator that crashes at round 0 and never speaks again. That
@@ -96,12 +97,18 @@ of its own rather than extra fields on `Faults`: folding it in would give
 every safety theorem a liveness hypothesis it does not use, and `Faults`
 cannot mention a `BlockUniverse` anyway, since `BlockUniverse`'s own type
 requires `Faults`.
+-/
 
-Note that `Live` forces an **infinite** DAG — a block at every round, for
-every correct validator, all distinct. No finite `BlockId` can satisfy it, so
-every model in `LeanDagTest` is out and the witness has to be built. That is
-also why `BlockId` was never given a `Fintype` instance: with one, `Live`
-would be unsatisfiable and everything assuming it vacuous. -/
+omit [DecidableEq BlockId] in
+/-- What L4 actually needs of a round: every correct validator has a block
+there.
+
+Local and finite — no growth, no horizon. Splitting this out is what keeps
+the horizon `N` out of L4 entirely, so the only hard proof in the plan is
+independent of how `Live` is framed. -/
+def Populated (U : BlockUniverse Validator BlockId Payload) (r : ℕ) : Prop :=
+  ∀ v ∈ (Correct : Finset Validator), ∃ b ∈ U.ids,
+    (U.block b).creator = v ∧ (U.block b).round = r
 
 /-- The positive protocol behaviour liveness needs. Not derivable from the
 DAG structure — `Correct` is a negative condition and these are positive.
@@ -109,47 +116,91 @@ DAG structure — `Correct` is a negative condition and these are positive.
 **Asynchrony-only.** `builds` asks that a correct validator has a block at
 round `r+1` once *some* quorum holds round-`r` blocks; it says nothing about
 timing, delivery, or whose blocks are referenced. That is what lets L1 hold
-from round 0 with no synchrony at all. -/
-structure Live (U : BlockUniverse Validator BlockId Payload) : Prop where
+from round 0 with no synchrony at all.
+
+`N` is the **horizon**, and it is not decoration. `U.ids` is a `Finset`, so
+without the bound `r < N` these two fields force infinitely many distinct
+blocks into a finite set and *no universe satisfies them* — see
+`LeanDagTest.Growth`, where the witness is built, and `liveness.md` §4.4,
+where the vacuous first draft is recorded.
+
+Note `N` is a **demand** on the DAG, not a bound on it: `Live U N` requires
+blocks to exist all the way to round `N`, so a larger `N` is a *stronger*
+hypothesis satisfied by *fewer* universes. Coverage of every DAG comes from
+quantifying over `N`, never from choosing it large. -/
+structure Live (U : BlockUniverse Validator BlockId Payload) (N : ℕ) : Prop where
   /-- Every correct validator has a genesis block. -/
-  genesis : ∀ v ∈ (Correct : Finset Validator), ∃ b ∈ U.ids,
-    (U.block b).creator = v ∧ (U.block b).round = 0
-  /-- Once a quorum holds round-`r` blocks, every correct validator gets one
-  at round `r+1`. -/
-  builds : ∀ r, 2 * F.f + 1 ≤ (authorsAt U r).card →
-    ∀ v ∈ (Correct : Finset Validator), ∃ b ∈ U.ids,
-      (U.block b).creator = v ∧ (U.block b).round = r + 1
+  genesis : Populated U 0
+  /-- Below the horizon, a quorum at round `r` yields blocks at `r+1`. -/
+  builds : ∀ r < N, 2 * F.f + 1 ≤ (authorsAt U r).card → Populated U (r + 1)
 
 omit [DecidableEq BlockId] in
-/-- **L1 — no stall.** Every correct validator has a block at every round.
+/-- A populated round carries a quorum of authors — the step that feeds L1's
+induction back into `builds`, and the only place `card_correct` is used.
 
-Induction on the round. The base case is `genesis`; the step feeds the
-induction hypothesis back into `builds`, since "every correct validator has a
-round-`r` block" makes `Correct` a subset of `authorsAt U r`, and there are
-at least `2f+1` correct validators.
-
-This is where `card_correct` is finally used. `spec.md` §2 has carried it as
-unused-but-kept-for-liveness since the system model was written. -/
-theorem no_stall (H : Live U) (r : ℕ) :
-    ∀ v ∈ (Correct : Finset Validator), ∃ b ∈ U.ids,
-      (U.block b).creator = v ∧ (U.block b).round = r := by
-  induction r with
-  | zero => exact H.genesis
-  | succ r ih =>
-      refine H.builds r (le_trans card_correct (Finset.card_le_card ?_))
-      intro w hw
-      obtain ⟨b, hb, hbc, hbr⟩ := ih w hw
-      exact mem_authorsAt.mpr ⟨b, hb, hbr, hbc⟩
-
-omit [DecidableEq BlockId] in
-/-- L1's corollary in the form L0 consumes: under `Live`, **every** round
-carries a quorum of authors — not merely every round below some frontier. -/
-theorem card_authorsAt_of_live (H : Live U) (r : ℕ) :
+`spec.md` §2 has carried `card_correct` as unused-but-kept-for-liveness since
+the system model was written. This is what it was kept for. -/
+theorem card_authorsAt_of_populated {r : ℕ} (h : Populated U r) :
     2 * F.f + 1 ≤ (authorsAt U r).card := by
   refine le_trans card_correct (Finset.card_le_card ?_)
   intro w hw
-  obtain ⟨b, hb, hbc, hbr⟩ := no_stall H r w hw
+  obtain ⟨b, hb, hbc, hbr⟩ := h w hw
   exact mem_authorsAt.mpr ⟨b, hb, hbr, hbc⟩
+
+omit [DecidableEq BlockId] in
+/-- **L1 — no stall.** Under `Live U N`, every correct validator has a block
+at every round up to the horizon.
+
+Induction on the round. The base is `genesis`; the step observes that "every
+correct validator has a round-`r` block" makes `Correct` a subset of
+`authorsAt U r`, which is a quorum, and feeds that to `builds`.
+
+L1 is the **only** result where the horizon does real work. Its whole job is
+to turn the growth assumption into the local `Populated` facts L4 consumes —
+which is why L4 itself never mentions `N` (`liveness.md` §4.4). -/
+theorem no_stall (H : Live U N) : ∀ r ≤ N, Populated U r := by
+  intro r
+  induction r with
+  | zero => intro _; exact H.genesis
+  | succ r ih =>
+      intro hr
+      exact H.builds r (by omega) (card_authorsAt_of_populated (ih (by omega)))
+
+omit [DecidableEq BlockId] in
+/-- L1 in the form L0 consumes: under `Live U N` **every** round up to the
+horizon carries a quorum of authors, not merely every round below some
+frontier. -/
+theorem card_authorsAt_of_live (H : Live U N) {r : ℕ} (hr : r ≤ N) :
+    2 * F.f + 1 ≤ (authorsAt U r).card :=
+  card_authorsAt_of_populated (no_stall H r hr)
+
+omit [DecidableEq BlockId] in
+/-- From round `R` on, a correct block references every correct block of the
+round below.
+
+`R` is **not** GST: it is the round from which synchrony has fully taken
+effect — GST plus however long catch-up ran (`liveness.md` §4.2). It is a
+round index, not a clock; there is no Δ here.
+
+**Both quantifiers are restricted to `Correct`, and deliberately.** A
+Byzantine validator may publish nothing at all, or publish and reveal to only
+some validators, so no assumption about referencing its blocks would be
+sound — and none is needed: L4 counts only correct certificates, and there
+are `2f+1` correct validators. Getting this wrong in the *strong* direction,
+by demanding that all blocks be referenced, would assume Byzantine validators
+behave.
+
+**This does not follow from view convergence.** A block's references are
+frozen when it is built: a correct validator waits for `2f+1` round-`n`
+blocks, and the arrival of the `2f+1`st says nothing about the rest having
+arrived. Views converging later does not retroactively enlarge blocks. So
+this is an assumption, not a theorem — see `liveness.md` §4.3, and §8
+question 8 for how it is meant to be split and derived. -/
+def Synchronised (U : BlockUniverse Validator BlockId Payload) (R : ℕ) : Prop :=
+  ∀ n, R ≤ n → ∀ b ∈ U.ids, (U.block b).round = n + 1 →
+    (U.block b).creator ∈ (Correct : Finset Validator) →
+    ∀ a ∈ U.ids, (U.block a).round = n →
+      (U.block a).creator ∈ (Correct : Finset Validator) → a ∈ (U.block b).refs
 
 /-! ## L2 — decisions are monotone in the view
 

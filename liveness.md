@@ -510,8 +510,8 @@ def FairSchedule : Prop :=
 | L0 | density below the frontier | low — existing lemmas, no new primitives | ✓ `card_authorsAt_of_lt` |
 | L2 | view-monotonicity of `Decided` | low — mirrors `decided_unique`'s induction | ✓ `decided_mono` |
 | L3 | `View.full`, then L2 instantiated | low | ✓ `decided_full` |
-| — | **`Ugrow`: a family with `Live (Ugrow N) N` for every `N`** | low, and required **first** | |
-| L1 | `Live U N`, then no-stall by induction on rounds | low | |
+| — | **`Ugrow`: a family with `Live (Ugrow N) N` for every `N`** | low, and required **first** | ✓ `ugrow_live`, `ugrow_synchronised` |
+| L1 | `Live U N`, then no-stall by induction on rounds | low | ✓ `no_stall` |
 | L4 | `Populated` ×3 + `Synchronised`, then the two-layer argument | medium — the only real proof | |
 | L5 | vacuity of the `∀`-over-candidates premise | low | |
 | L6 | `FairSchedule`, then L1 and L4 | low — but see the quantifier order | |
