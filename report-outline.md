@@ -1,38 +1,36 @@
 # lean-dag — Report outline
 
-A machine-checked development of block-DAG consensus (Mysticeti-style), in
+A machine-checked development of block-DAG consensus (Mysticeti-style) in
 Lean 4 + Mathlib. This outline fixes the report's structure, its definitions,
-its assumptions, and the statements it will present. Everything quoted below
-is the **actual Lean**, copied from the source — the report should not
-paraphrase a statement it has not checked.
+its assumptions, and the statements it presents. Everything quoted below is the
+**actual Lean**, copied from the source.
 
-**Scope discipline.** The report presents *definitions and theorem
-statements*. Proofs stay in the repository; the report says what is proved,
-what it rests on, and why the statement is the right one. Where a proof
-technique is the point (M6's induction, T3's single use of quorum
-intersection) it is described in a sentence, not reproduced.
+**Scope discipline.** The report presents the *final* definitions, assumptions
+and theorems. Proofs stay in the repository; the report says what is proved and
+what it rests on. Where a definition's shape is load-bearing — the positive
+form of "nearest anchor", the universe-level indirect test, the horizon — the
+report says why *that definition is the right one*, not how it was arrived at.
+Nothing about the development history belongs here.
 
-> **Status.** Draft outline. Sections marked **[EXPAND]** are stubs for
-> George to fill. Sections marked **[CHECK]** contain a claim I believe but
-> which is not itself formalised.
+> **Status.** Draft outline. Sections marked **[EXPAND]** are stubs for George
+> to fill.
 
 ---
 
 ## 0. Front matter
 
-- **Title.** Something that leads with the contribution, not the tool. The
-  contribution is the *assumption*, not the mechanisation.
-  - Candidate: *Eventual DAG Synchrony: a machine-checked liveness argument
-    for DAG-based consensus*
-  - Candidate: *Liveness without messages: DAG-level synchrony, formalised*
-- **Abstract.** [EXPAND] Must contain, in order: (i) DAG BFT is widely
-  deployed but its liveness arguments are stated per-message; (ii) we propose
-  *eventual DAG synchrony*, a structural assumption on the DAG itself;
-  (iii) we mechanise safety and liveness for a Mysticeti-style rule on top of
-  it; (iv) we discharge the DAG-level assumption from GST + Δ + backoff, so
-  it is a convenience, not a strengthening; (v) the seam is validated by two
-  independent lower models.
-- **Contributions list.** See §1.3.
+- **Title.** Lead with the contribution, which is the *assumption*, not the
+  mechanisation.
+  - *Eventual DAG Synchrony: a machine-checked liveness argument for DAG-based
+    consensus*
+  - *Liveness without messages: DAG-level synchrony, formalised*
+- **Abstract.** [EXPAND] In order: (i) DAG BFT is widely deployed but its
+  liveness arguments are stated per-message; (ii) we propose *eventual DAG
+  synchrony*, a structural assumption on the DAG itself; (iii) we mechanise
+  safety and liveness for a Mysticeti-style commit rule above it; (iv) we
+  discharge the DAG-level assumption from GST + Δ + a build rule, so it is a
+  convenience rather than a strengthening; (v) we give the quantitative form —
+  a correct leader commits once validators wait `2Δ`.
 
 ---
 
@@ -40,56 +38,54 @@ intersection) it is described in a sentence, not reproduced.
 
 ### 1.1 The setting
 
-- DAG-based BFT: validators broadcast round-indexed blocks referencing a
-  quorum of the round below; consensus is then a *deterministic read* of the
-  DAG rather than a separate voting protocol.
+- DAG-based BFT: validators broadcast round-indexed blocks referencing a quorum
+  of the round below; consensus is a deterministic *read* of the DAG rather
+  than a separate voting protocol.
 - Uncertified variant (Mysticeti): no explicit certificate round — the
   certificate is *found* in the DAG two rounds up. This is what makes the
-  commit rule combinatorial and the whole development possible without a
-  cryptographic layer.
+  commit rule combinatorial, and it is what lets the whole development proceed
+  with no cryptographic layer.
 
-### 1.2 The problem with per-message synchrony
+### 1.2 Per-message synchrony, and why it is awkward
 
-The framing to lead with, from the original design notes:
-
-> Traditional proofs of liveness assume some synchrony on a message per
-> message basis. Something like after GST messages between honest parties
-> arrive within a bound Δ. This is awkward as it requires us to think of the
-> mechanics of how the DAG is transmitted in terms of messages.
+> Traditional proofs of liveness assume some synchrony on a message per message
+> basis. Something like after GST messages between honest parties arrive within
+> a bound Δ. This is awkward as it requires us to think of the mechanics of how
+> the DAG is transmitted in terms of messages.
 
 - A message-level assumption forces the *whole* proof to carry a time model:
-  every statement quantified over instants, every lemma re-deriving that
-  enough arrived.
-- But the commit rule never mentions time. It counts references. The mismatch
-  is real work with no proof content.
+  every statement quantified over instants, every lemma re-deriving that enough
+  arrived.
+- The commit rule never mentions time. It counts references. The mismatch is
+  real work with no proof content.
 
 ### 1.3 Contributions
 
-1. **Eventual DAG synchrony**, stated structurally (`SynchronisedOn`): after
+1. **Eventual DAG synchrony** (`SynchronisedOn`), stated structurally: after
    round `R`, every correct block references every correct block of the round
    below. No clock, no messages, no Δ.
-2. A **fully machine-checked safety development** (agreement, no retraction)
-   that assumes *nothing* about the network — not even eventual delivery.
-3. A **machine-checked liveness development** on top of the DAG-level
-   assumption, in which no theorem above the seam mentions time.
-4. **The seam is discharged, twice.** Eventual DAG synchrony is derived from a
-   delivery model (§6.7) and independently from GST + Δ + adaptive backoff
-   (§6.8). It is therefore not a new axiom.
-5. **The view-based formulation is incomplete, and we identify what is
-   missing** (§7.1): a delivery guarantee alone does not yield coverage
-   without a rule about *when* to build, and because references are fixed at
-   construction the delivery guarantee must be indexed to the build moment
-   (`Delivery.held`). Neither is obvious from the view statement.
-6. **Satisfiability witnesses** for every liveness definition, which caught
-   four definitions that were vacuous as first written (§8).
+2. A **machine-checked safety development** — agreement, uniqueness, no
+   retraction — assuming *nothing* about the network, not even eventual
+   delivery.
+3. A **machine-checked liveness development** above the DAG-level assumption,
+   in which no theorem mentions time.
+4. **The assumption is discharged, two ways** — from a delivery model (§6.7)
+   and from GST + Δ + a build rule (§6.8). It is not a new axiom.
+5. **What the view formulation needs beside it** (§7.1): a delivery guarantee
+   alone does not give coverage without a rule about *when* to build; and
+   because references are fixed at construction, the guarantee must be indexed
+   to the build moment (`Delivery.held`).
+6. **The quantitative form** (§6.10): coverage from an explicit round, a bounded
+   committing slot, and — the operational statement — **a correct leader
+   commits once every validator waits `2Δ`**.
 
 ### 1.4 What is not claimed
 
-- No quantitative bound: no `R − GST` bound, no commit latency, no throughput
-  rate. Δ is deliberately absent above the timing layer. [→ §9, Q3]
+- No wall-clock latency. `Delay(Δ)` is a duration; total time to commit is not,
+  since converting a round count to elapsed time is not done (§9).
 - The block-level total order needs a tie-break within a flush that the
   development declines to assume; only the *committed-leader sequence* and the
-  *ledger set* are ordered/agreed. [→ §5.6]
+  *ledger set* are agreed (§5.6).
 - No cryptography, no equivocation *detection*, no reconfiguration.
 
 ---
@@ -108,13 +104,13 @@ class Faults (Validator : Type*) [Fintype Validator] [DecidableEq Validator] whe
 def Correct : Finset Validator := (F.byzantine)ᶜ
 ```
 
-- **Assumption A1.** Exactly `3f+1` validators.
-- **Assumption A2.** At most `f` are Byzantine.
-- Quorum = `2f+1`. Derived: `card_correct : 2 * F.f + 1 ≤ Correct.card`.
-- **`Correct` is a purely negative condition** — *does not equivocate*. It is
-  satisfied by a validator that crashes at round 0. That is deliberate: it is
-  what makes every safety result hold for crashed validators too, and it is
-  exactly why liveness needs positive rules added (§6.1).
+Quorum = `2f+1`. Derived: `card_correct : 2 * F.f + 1 ≤ Correct.card`.
+
+**`Correct` carries no behaviour.** It is a set complement — a purely negative
+condition, satisfied by a validator that crashes at round 0. That is what makes
+every safety result hold for crashed validators too, and it is why liveness
+must add positive rules (§6.0). It is also why non-equivocation has to be
+asserted (§2.4): nothing else in the model says what a correct validator does.
 
 ### 2.2 Blocks
 
@@ -126,11 +122,10 @@ structure Block (Validator BlockId Payload : Type*) where
   payload : Payload
 ```
 
-- Blocks are **id-addressed**; `refs : Finset BlockId`, not `Finset Block`.
-  [EXPAND — why: it is what lets a view and the universe share `U.block`, so
-  two validators can disagree about *which* blocks they hold and never about
-  *what an id denotes*.]
-- `Payload` is opaque and inert throughout.
+Blocks are **id-addressed**: `refs : Finset BlockId`, not `Finset Block`. That
+is what lets a view and the universe share one `U.block`, so two validators can
+disagree about *which* blocks they hold and never about *what an id denotes*.
+`Payload` is opaque and inert throughout.
 
 ### 2.3 Validity
 
@@ -142,15 +137,12 @@ structure ValidWrt (blk : BlockId → Block Validator BlockId Payload)
   quorum : 0 < b.round → 2 * F.f + 1 ≤ (creators blk b).card
 ```
 
-- **Assumption A3 (predecessor).** Stated *additively* — `round + 1 = b.round`,
-  not `round = b.round - 1`. Avoids ℕ-subtraction, and makes genesis
-  *derivable*: at round 0 the equation is unsatisfiable, so `refs = ∅` follows
-  rather than being a second case.
-- **Assumption A4 (distinct creators).** Load-bearing in exactly one place —
-  M5′ (§5.4). Worth saying so.
-- **Assumption A5 (quorum).** Stated on the **creator set**, not on
-  `refs.card`. This is the faithful reading of "2f+1 blocks from the previous
-  round": the protocol means 2f+1 *validators*.
+- `predecessor` is stated **additively**, which avoids ℕ-subtraction and makes
+  genesis *derivable* rather than a second case: at round 0 the equation is
+  unsatisfiable, so `refs = ∅` follows.
+- `distinct_creators` is load-bearing in exactly one place, M5′ (§5.4).
+- `quorum` is stated on the **creator set**, not `refs.card` — the faithful
+  reading of "2f+1 blocks from the previous round" is 2f+1 *validators*.
 
 ### 2.4 The block universe and views
 
@@ -166,12 +158,22 @@ structure BlockUniverse (Validator BlockId Payload : Type*) … where
     (block i).round = (block j).round → i = j
 ```
 
-- **Assumption A6 (completeness).** Every referenced block exists.
-- **Assumption A7 (non-equivocation).** **Stated at the universe level, not
-  per-DAG.** Per-DAG would be too weak: two DAGs could each satisfy "at most
-  one block per correct validator per round" while holding *different* such
-  blocks — which is a correct validator equivocating, with both DAGs looking
-  well-formed. [EXPAND — this is a modelling point worth a paragraph.]
+**Non-equivocation is stated at the universe level, and must be.** Per-view
+would be strictly weaker: `V₁` could hold `b₁` by correct validator `v` at
+round `r` and `V₂` a different `b₂` by the same `v` at the same round, with
+both views satisfying "at most one block per correct author per round"
+internally. That is `v` equivocating with both views well-formed. Every
+cross-view result (M6) needs the two blocks identified as *one id*, which only
+a universe-level statement delivers. Views then inherit it for free, which is
+why `View` carries no such field.
+
+**It is also independent of the other fields** — duplicating a correct-authored
+block under a fresh id preserves `complete` and `valid` and breaks only
+`no_equivocation` — and it is the *only* place correct-validator behaviour is
+encoded on the safety side. [EXPAND — this is the modelling trade worth a
+paragraph: the development models a DAG snapshot plus invariants, not an
+execution, so what an operational model would prove as a reachability
+invariant is discharged here by assumption.]
 
 ```lean
 structure View (Validator BlockId Payload : Type*) … (U : BlockUniverse …) where
@@ -180,12 +182,9 @@ structure View (Validator BlockId Payload : Type*) … (U : BlockUniverse …) w
   complete : ∀ i ∈ ids, ∀ j ∈ (U.block i).refs, j ∈ ids
 ```
 
-- A view is a **downward-closed subset** sharing `U.block`. Validity and
-  non-equivocation are inherited for free.
-- **`ids` is a `Finset`.** Every universe is finite. Not incidental — it is
-  what makes `authorsAt` have a cardinality at all, and every quorum argument
-  counts one. It is also what forces the horizon in §6.3, and it is where four
-  vacuous definitions came from (§8).
+**`ids` is a `Finset`.** Every universe is finite. That is what makes
+`authorsAt` have a cardinality at all — every quorum argument counts one — and
+it is what forces the horizon in §6.3.
 
 ### 2.5 Causal history
 
@@ -194,7 +193,7 @@ def RefStep (U) (i j : BlockId) : Prop := j ∈ (U.block i).refs
 def Reaches (U) : BlockId → BlockId → Prop := Relation.ReflTransGen (RefStep U)
 ```
 
-### 2.6 Derived counting vocabulary
+### 2.6 Counting vocabulary
 
 | | |
 |---|---|
@@ -202,14 +201,13 @@ def Reaches (U) : BlockId → BlockId → Prop := Relation.ReflTransGen (RefStep
 | `authorsAt U n` | their creators |
 | `creatorsOf U.block s` | creators of an arbitrary id-set |
 | `supporters U b n` | round-`n` authors referencing `b` |
-| `blames U L n` | round-`n` correct authors *not* referencing `L` |
+| `blames U L n` | round-`n` authors *not* referencing `L` |
 
-**Note for the report.** `creatorsOf` is defined on an arbitrary `Finset
-BlockId`, not on a block's refs — T3's hypothesis, the commit rule and T0′ all
-quantify over id-sets that are nobody's references. Sets that are not refs
-carry no distinctness invariant, which is why the quorum hypotheses are always
-on the creator set (a Byzantine author could otherwise pad with equivocating
-blocks).
+`creatorsOf` is defined on an arbitrary `Finset BlockId`, not on a block's
+refs: T3's hypothesis, the commit rule and T0′ all quantify over id-sets that
+are nobody's references. Such sets carry no distinctness invariant, which is
+why every quorum hypothesis is on the creator set — a Byzantine author could
+otherwise pad one with equivocating blocks.
 
 ---
 
@@ -229,11 +227,10 @@ def certificates (U) (L : BlockId) (r : ℕ) : Finset BlockId :=
 ```
 
 There is no certificate *message*. A round-`(r+2)` block **is** a certificate
-for `L` when its own references happen to contain a quorum of `L`'s voters.
-This is the whole of the "uncertified DAG" idea and deserves a figure.
+for `L` when its own references contain a quorum of `L`'s voters.
 
-> **[FIGURE 1]** Three rounds: `L` at `r`; voters at `r+1` referencing `L`;
-> a certificate at `r+2` whose refs contain a quorum of those voters.
+> **[FIGURE 1]** Three rounds: `L` at `r`; voters at `r+1` referencing `L`; a
+> certificate at `r+2` whose refs contain a quorum of those voters.
 
 ### 3.2 The direct rules
 
@@ -252,12 +249,11 @@ def CertifiedIn (U) (A L : BlockId) (r : ℕ) : Prop :=
   ∃ C ∈ certificates U L r, Reaches U A C
 ```
 
-- **`CertifiedIn` is universe-level, deliberately.** T6a (§5.1) shows the
-  view-restricted computation agrees, so nothing is lost — and it is what
-  makes L2 (§6.5) true. A view-relative indirect check would make the
-  `indirectSkip` premise *anti*-monotone, and growing a view could flip a skip
-  into a commit. [EXPAND — this is a good "the definition earns its shape"
-  paragraph.]
+**`CertifiedIn` is universe-level, and must be.** T6a (§5.1) shows the
+view-restricted computation agrees, so nothing is lost — and it is what makes
+L2 (§6.5) true. A view-relative indirect test would make `indirectSkip`'s
+premise *anti*-monotone, so growing a view could reveal a certificate and flip
+a skip into a commit.
 
 ### 3.4 The slot schedule
 
@@ -271,14 +267,13 @@ def IsLeaderBlock (U) (k : ℕ) (L : BlockId) : Prop :=
   L ∈ U.ids ∧ (U.block L).round = S.slotRound k ∧ (U.block L).creator = S.leader k
 ```
 
-- **Assumption A8 (spacing ≥ 3).** *A safety parameter, not a throughput one.*
-  It is exactly what puts every later anchor at round `≥ r+3`, which is what
-  M4's commit half needs (§5.3). Say this plainly — it is the kind of constant
-  that looks arbitrary and is not.
-- `IsLeaderBlock` is a predicate over *candidates*, not a selection. A
-  Byzantine leader may have several; a correct one has at most one by T1. This
-  choice pays for itself in L5 (§6.6), where the absent-leader case closes
-  vacuously.
+**Spacing ≥ 3 is a safety parameter, not a throughput one.** It is exactly what
+puts every later anchor at round `≥ r+3`, which is M4's commit requirement
+(§5.3). Say this plainly — the constant looks arbitrary and is not.
+
+`IsLeaderBlock` is a predicate over *candidates*, not a selection: a Byzantine
+leader may have several, a correct one at most one by T1. That choice is what
+makes L5 (§6.6) close vacuously when the leader published nothing.
 
 ### 3.5 The decision relation
 
@@ -300,26 +295,24 @@ inductive Decided (U) (V : View …) : ℕ → Option BlockId → Prop
       Decided U V k none
 ```
 
-Three modelling choices to defend in the report:
+Three properties of the definition to state:
 
 1. **A relation, not a function.** A `decide` function recurses upward in slot
-   index with no a-priori bound, needing fuel or partiality for nothing —
-   none of this needs to compute.
-2. **"Nearest anchor" is stated positively.** The naive reading — *no slot
+   index with no a-priori bound, needing fuel or partiality for nothing — none
+   of this needs to compute.
+2. **"Nearest anchor" is stated positively.** The direct reading — *no slot
    strictly between is committed* — is a negative premise an inductive
    definition cannot carry. Stated as *every slot strictly between is decided
-   `none`*, which is equivalent (the sweep decides every slot it passes) and
-   keeps every recursive occurrence positive. **This is not bookkeeping:** it
-   is precisely what supplies the sub-derivation M6's hardest case needs
-   (§5.5).
-3. **View-relative direct rules, universe-level indirect test.** §3.3.
+   `none`* it is equivalent (the sweep decides every slot it passes) and keeps
+   every recursive occurrence positive. This is what supplies the
+   sub-derivation M6's hardest case consumes (§5.5).
+3. **View-relative direct rules, universe-level indirect test** (§3.3).
 
 ---
 
-## 4. Assumption inventory
+## 4. Assumptions
 
-The report should carry **one table** listing every assumption, its kind, and
-which results consume it. Draft:
+The report should carry these as **one table each**, with what consumes them.
 
 ### 4.1 Safety
 
@@ -334,10 +327,9 @@ which results consume it. Draft:
 | A7 | correct validators do not equivocate | fault model | `BlockUniverse.no_equivocation` |
 | A8 | slots are ≥ 3 rounds apart | protocol parameter | `Slots.spacing` |
 
-**The headline of this table: there is no network assumption.** Safety —
-agreement, uniqueness, no retraction — holds under arbitrary asynchrony,
-arbitrary message loss, and arbitrary view divergence. This should be stated
-as a result, not left for the reader to notice.
+**There is no network assumption.** Safety — agreement, uniqueness, no
+retraction — holds under arbitrary asynchrony, arbitrary loss and arbitrary
+view divergence. State this as a result, not as an aside.
 
 ### 4.2 Liveness
 
@@ -351,34 +343,47 @@ as a result, not left for the reader to notice.
 | B6 | the schedule names a `T`-leader arbitrarily far out | schedule | `FairScheduleOn` |
 | B7 | `T ⊆ Correct` and `2f+1 ≤ T.card` | fault budget | L4, L6 hypotheses |
 
-B5 is then **discharged**, two ways:
+B5 is discharged, two ways:
 
 | | Discharging assumptions | Kind | Result |
 |---|---|---|---|
 | Route A | `EventuallyDelivers` (+ B4) | network | `synchronised_of_delivery` |
 | Route B | `Timing.covers` (GST + Δ) | network | `synchronisedOn_of_timing` |
 | | `Timing.waits`, `Timing.prompt` | protocol | |
-| | backoff monotone + unbounded | protocol | `exists_synchronisedOn_of_backoff` |
 
-### 4.3 The combined fault budget
+### 4.3 Quantitative assumptions
+
+Used only in §6.10. Each is optional: every result in §5 and §6.1–§6.9 stands
+without them.
+
+| # | Assumption | Buys |
+|---|---|---|
+| R1 | `Rated timeout` — `∀ n, n ≤ timeout n` | an explicit `R` |
+| R2 | `FairWithin T w` — a `T`-leader within every `w` slots | a bounded committing slot |
+| R3 | `BoundedSpacing s` — slots at most `s` rounds apart | that slot's round |
+| R4 | round-`0` spread `≤ D₀`, and `∀ n, D₀ + Δ ≤ timeout n` | the wait bound `Delay(Δ)` |
+
+### 4.4 The combined fault budget
 
 B7 deserves its own paragraph. L4 counts to `2f+1` and never higher, so it
-needs a *quorum of reliable* validators, not every correct one. Demanding all
-of `Correct` makes the theorem lapse when one correct validator misses one
-round — a GC pause, a restart — although the protocol still commits. Writing
-it as `T ⊆ Correct` with `2f+1 ≤ T.card` yields the real budget:
+needs a *quorum of reliable* validators, not every correct one. Writing it as
+`T ⊆ Correct` with `2f+1 ≤ T.card` yields the real budget:
 
 > `actual_byzantine + slow_correct ≤ f`
 
-The `T := Correct` corollaries recover the textbook statements.
+A correct validator that is persistently slow consumes fault budget exactly
+like a Byzantine one. At `f = 1` there are four validators and
+`|Correct| = 3 = 2f+1` **exactly**, so there is no slack at all — every correct
+validator must be in the fast set. Slack appears only when fewer than `f` are
+actually faulty, and the `T`-parameterised statements deliver it automatically.
+The `T := Correct` corollaries recover the textbook forms.
 
 ---
 
 ## 5. Safety
 
-Present in dependency order, not discovery order. Each theorem gets: the Lean
-statement, one sentence on what it says, one sentence on why it is stated that
-way, and (where it is the point) one sentence on the proof.
+Each theorem gets: the Lean statement, one sentence on what it says, one on why
+it is stated that way, and — where it is the point — one on the proof.
 
 ### 5.1 Foundations
 
@@ -389,8 +394,8 @@ theorem exists_correct_mem_inter {Q₁ Q₂ : Finset Validator}
     ∃ v ∈ Q₁ ∩ Q₂, v ∈ (Correct : Finset Validator)
 ```
 
-**T0′ — the same at the block level** (`exists_correct_mem_creators_inter`):
-two id-sets whose *creator sets* are quorums share a correct author.
+**T0′** (`exists_correct_mem_creators_inter`) — the same at block level: two
+id-sets whose *creator sets* are quorums share a correct author.
 
 **T1 — non-equivocation, in usable form.**
 ```lean
@@ -403,11 +408,11 @@ Phrased around the author `v`, because that is how every use site arrives: a
 quorum intersection yields a correct validator, and T1 turns two blocks known
 to be authored by it into a single concrete id.
 
-**T0 + T1 composed** (`exists_common_mem_of_quorums`) — two quorum-backed sets
-of round-`n` blocks share a *block*. The recurring "peel off one certification
-layer" step.
+**T0 + T1 composed** (`BlockUniverse.exists_common_mem_of_quorums`) — two
+quorum-backed sets of round-`n` blocks share a *block*. The recurring "peel off
+one certification layer" step.
 
-**T2 — causal history runs downward** (`round_le_of_reaches`).
+**T2** (`round_le_of_reaches`) — causal history runs downward in rounds.
 
 **T6a — causal history never escapes a view.**
 ```lean
@@ -431,15 +436,14 @@ theorem reaches_of_quorum_support
     Reaches U c b
 ```
 
-Once a quorum backs a block, it can never be forgotten. Two points the report
-should make:
+Once a quorum backs a block it can never be forgotten. Two points:
 
-- **The bound `r+2` is tight**, with a four-validator counterexample at
-  `r+1`. [EXPAND — reproduce it; it is short and it makes the mechanism
-  visible.] Quorum intersection needs *two* ref-quorums to compare, and `r+2`
-  is the first round that has them.
-- **Quorum intersection is used exactly once**, in the base case. Height above
-  that is carried by transitivity alone.
+- **The bound `r+2` is tight.** [EXPAND — reproduce the four-validator
+  counterexample at `r+1`; it is short and makes the mechanism visible.]
+  Quorum intersection needs *two* ref-quorums to compare, and `r+2` is the
+  first round that has them.
+- **Quorum intersection is used exactly once**, in the base case; height above
+  it is carried by transitivity alone.
 
 **T3c — a common correct ancestor.**
 ```lean
@@ -457,18 +461,17 @@ counting. [EXPAND — the arithmetic obligation reduces to `c² ≤ f(l+c)`, whi
 ### 5.3 The direct rules are consistent
 
 - **M3** `certificates_eq_empty_of_directSkip` — a skipped block has **no
-  certificate anywhere in the universe**, not merely none in some view. The
-  counting: with `2f+1` blamers and correct validators unable to sit on both
-  sides, supporters number at most `2f`.
+  certificate anywhere in the universe**, not merely none in some view. With
+  `2f+1` blamers and correct validators unable to sit on both sides,
+  supporters number at most `2f`.
 - **M1** `not_directCommit_of_directSkip` — immediate from M3.
 - **M2** `exists_certificate_reaches_of_directCommit` — a committed block's
-  certificate is unavoidable from round `r+3` on. **The bound is tight**
-  (a round-`(r+2)` block that is not itself a certificate reaches none), and
-  it is why A8 is `+3`.
+  certificate is unavoidable from round `r+3` on. **Tight**: a round-`(r+2)`
+  block that is not itself a certificate reaches none. This is why A8 is `+3`.
 - **M4** `indirect_agrees_with_direct` — where the direct rule decides, the
   indirect rule agrees. **Note the asymmetry**: commit needs the anchor at
-  `r+3` (the certificate must be *reachable*); skip needs nothing at all
-  (there is no certificate anywhere to reach).
+  `r+3`, since the certificate must be *reachable*; skip needs nothing, since
+  M3 rules the certificate out universe-wide.
 
 ### 5.4 Uniqueness
 
@@ -478,15 +481,14 @@ theorem eq_of_certificates_nonempty {L₁ L₂ : BlockId} {r : ℕ}
     (h₁ : (certificates U L₁ r).Nonempty) (h₂ : (certificates U L₂ r).Nonempty)
     (hcreator : (U.block L₁).creator = (U.block L₂).creator) : L₁ = L₂
 ```
-Stronger than M5 and the form the indirect rule needs — the indirect rule
-commits on a *single* certificate in reach, not a quorum of them. The proof
-needs no relationship between the two certificates: each names `2f+1` distinct
-voters, the voter sets intersect in a correct `w` (T0′), `w`'s single
-round-`(r+1)` block votes for both (T1), and **distinctness** forbids one block
-referencing two round-`r` blocks by one author. *This is the one place A4 is
-load-bearing.*
+Stronger than M5, and the form the indirect rule needs — it commits on a
+*single* certificate in reach, not a quorum. The proof needs no relationship
+between the two certificates: each names `2f+1` distinct voters, the voter sets
+intersect in a correct `w` (T0′), `w`'s single round-`(r+1)` block votes for
+both (T1), and **distinctness** forbids one block referencing two round-`r`
+blocks by one author. *This is the one place A4 is load-bearing.*
 
-**M5** `eq_of_directCommit_of_creator_eq` — now a corollary.
+**M5** `eq_of_directCommit_of_creator_eq` — a corollary.
 
 ### 5.5 Agreement
 
@@ -495,19 +497,18 @@ load-bearing.*
 theorem decided_agree {V₁ V₂ : View …} {k : ℕ} {v₁ v₂ : Option BlockId}
     (h₁ : Decided U V₁ k v₁) (h₂ : Decided U V₂ k v₂) : v₁ = v₂
 ```
-No two validators reach conflicting decisions for a slot, **whatever views
-they hold and whichever routes they took**. As with T5 this is
-*no-conflicting-decision*: a validator that has not yet decided is not in
-disagreement.
+No two validators reach conflicting decisions for a slot, whatever views they
+hold and whichever routes they took. This is *no-conflicting-decision*: a
+validator that has not yet decided is not in disagreement.
 
 Structural induction on the first derivation. Of sixteen constructor pairings,
-fifteen close outright. The one real case is *indirect commit against indirect
-skip*, settled by comparing the two anchors — and it is where the positive
-"nearest anchor" formulation (§3.5) pays for itself: the negative reading
-carries no sub-derivation and the induction has nothing to stand on.
+fifteen close outright. The one substantial case is *indirect commit against
+indirect skip*, settled by trichotomy on the two anchors — and it is where
+§3.5's positive "nearest anchor" formulation is consumed, since the negative
+reading carries no sub-derivation for the induction to use.
 
-> **[FIGURE 2]** The hard case: two validators, two anchors, trichotomy on
-> `j` vs `j₂`.
+> **[FIGURE 2]** The hard case: two validators, two anchors, trichotomy on `j`
+> versus `j₂`.
 
 Corollaries: `eq_of_decided_commit`, `not_decided_skip_of_decided_commit`.
 
@@ -540,12 +541,11 @@ theorem outputAt_unique (h₁ : OutputAt U g b k₁) (h₂ : OutputAt U g b k₂
 theorem outputAt_agree  … (hk : k < n) (ho : OutputAt U g₁ b k) : OutputAt U g₂ b k
 ```
 
-**No retraction, stated without an order on ids.** Together these say: a
-block, once written, stays written, in the same place. Ordering *within* one
-flush needs a tie-break the development deliberately does not assume — but
-**whether** and **when** a block is output needs no order at all, and that is
-what retraction would violate. Be explicit that this is a deliberate stopping
-point, not an omission.
+**No retraction, stated without any order on ids.** A block, once written,
+stays written, in the same place. Ordering *within* one flush needs a tie-break
+the development does not assume — but **whether** and **when** a block is
+output needs no order, and that is what retraction would violate. State this as
+a deliberate boundary.
 
 ---
 
@@ -553,20 +553,18 @@ point, not an omission.
 
 ### 6.0 Why `Correct` is not enough
 
-`Correct` is negative; every liveness statement is vacuous without positive
-rules. Three primitives must be added, and their *kinds* differ — this
-taxonomy is worth foregrounding:
+`Correct` is negative (§2.1), so every liveness statement is vacuous without
+positive rules. Three primitives are added, and their *kinds* differ:
 
 - **(a) Correct validators produce blocks** — protocol.
 - **(b) Correct blocks cover the correct blocks below them** — an **outcome**
   the protocol produces but cannot name (§7.2).
 - **(c) Correct leaders recur** — schedule.
 
-(a) and (b) pull against each other, and the timing layer resolves the tension
-exactly: (a) is a **floor** on production — a validator must eventually build
-(`prompt`, the upper bound on build time); (b) is a **delay** — it must not
-build too early (`waits`, the lower bound). Neither alone suffices, and
-`Timing` carries both because a protocol needs both.
+(a) and (b) pull against each other, and the timing layer brackets them
+exactly: (a) is a **floor** — a validator must eventually build
+(`Timing.prompt`, the upper bound on build time); (b) is a **delay** — it must
+not build too early (`Timing.waits`, the lower bound).
 
 ### 6.1 L0 — the DAG is dense below its frontier
 
@@ -575,9 +573,9 @@ theorem card_authorsAt_of_lt {r n : ℕ} (hn : n < r) {i : BlockId}
     (hi : i ∈ U.ids) (hir : (U.block i).round = r) :
     2 * F.f + 1 ≤ (authorsAt U n).card
 ```
-**No assumptions whatever** — validity alone. The interesting content is not
-that the DAG grows but that it **cannot grow tall and thin**: a single block
-high up forces a quorum of authors at every round beneath it.
+**No assumptions whatever** — validity alone. The content is not that the DAG
+grows but that it **cannot grow tall and thin**: one block high up forces a
+quorum of authors at every round beneath it.
 
 ### 6.2 The delivery layer
 
@@ -594,18 +592,15 @@ def DeliversQuorum (D : Delivery U) : Prop :=
     ∀ v ∈ Correct, 2 * F.f + 1 ≤ (creatorsOf U.block (D.held v n)).card
 ```
 
-- `held` is what the static model lacked, and its **index is the point**:
-  `held v n` is what `v` had in hand *at the moment it built its round-`(n+1)`
-  block*, not what `v` ever receives. That is the build-time index a view
-  cannot supply (§7.1).
-- **Note what it does not contain: a clock.** With no time model, "waited
-  longer" can only show up as a larger `held` — which is exactly the trace a
-  timeout leaves, and it is why `Timing` (§6.8) can slot in underneath without
-  anything above changing.
-- `DeliversQuorum` is stated **conditionally** (existence first, holding
-  second). Unconditionally it would assert the very block production L1 sets
-  out to prove.
-- It carries **no round bound**: this is what holds *before* GST too.
+- **`held`'s index is the point**: `held v n` is what `v` had in hand *at the
+  moment it built its round-`(n+1)` block*, not what `v` ever receives. That is
+  the build-time index a view cannot supply (§7.1).
+- **It contains no clock.** With no time model, "waited longer" can only show
+  up as a larger `held` — which is why `Timing` (§6.8) slots in underneath with
+  nothing above changing.
+- `DeliversQuorum` is **conditional** (existence first, holding second):
+  unconditionally it would assert the very block production L1 proves.
+- It carries **no round bound**, so it holds before GST too.
 
 ### 6.3 L1 — no stall, and the horizon
 
@@ -623,29 +618,24 @@ theorem no_stall {D : Delivery U} (H : Live U D N) (hd : DeliversQuorum D) :
     ∀ r ≤ N, Populated U r
 ```
 
-**The horizon `N` is not decoration, and the report should say why with the
-counterexample.** `U.ids` is a `Finset`. The first draft of `Live` demanded a
-block at every round — infinitely many distinct blocks in a finite set — so
-**no universe satisfied it** and L1, though proved, said nothing. This was
-found by trying to build a witness model, and it is checkable:
+**The horizon `N` is necessary, not cosmetic.** `U.ids` is a `Finset`; without
+the bound `r < N` these fields force infinitely many distinct blocks into a
+finite set, so **no universe satisfies them** and every theorem assuming them
+is vacuous.
 
-```lean
-theorem not_live (U : BlockUniverse Validator BlockId Payload) : ¬ Live⁰ U
-```
-
-Three consequences to present:
+Three consequences:
 
 1. **`N` is a demand, not a bound.** `Live U D N` requires blocks all the way
    to `N`, so a larger `N` is a **stronger** hypothesis satisfied by **fewer**
-   universes. Coverage of every DAG comes from quantifying over `N`, never
-   from choosing it large.
-2. **Two independent axes.** `N` is *extent*; `R` is *quality*. All four
-   combinations are real — reproduce the 2×2 table from `liveness.md` §4.4.
-3. **Unboundedness moves to the family.** "The ledger grows without bound" is
-   not "one DAG commits infinitely often" (no `Finset` can) but "no slot is
-   the last one a DAG can be grown far enough to commit".
+   universes. Coverage of every DAG comes from quantifying over `N`, never from
+   choosing it large.
+2. **Two independent axes.** `N` is *extent*, `R` is *quality*. All four
+   combinations are real. [EXPAND — reproduce the 2×2 table.]
+3. **Unboundedness is a property of the family.** "The ledger grows without
+   bound" is not "one DAG commits infinitely often" — no `Finset` can — but
+   "no slot is the last one a DAG can be grown far enough to commit".
 
-L1 is the only result where the horizon does real work; L4 never mentions `N`.
+L1 is the only result where the horizon does work; L4 never mentions `N`.
 
 ### 6.4 Eventual DAG synchrony — the seam
 
@@ -657,41 +647,37 @@ def SynchronisedOn (U) (T : Finset Validator) (R : ℕ) : Prop :=
       (U.block a).creator ∈ T → a ∈ (U.block b).refs
 ```
 
-**This is the paper's central definition.** Everything to say about it is in
-§7. Two structural notes here:
+**The paper's central definition.** §7 is its argument. Structurally:
 
-- **Honest-to-honest only**, on *both* sides. Nothing may be assumed about
-  Byzantine blocks existing (a Byzantine validator may publish nothing, or
-  publish and reveal selectively) and nothing needs to be (L4 counts only
-  correct certificates, and there are `2f+1` correct validators). Getting this
-  wrong in the *strong* direction — assuming all blocks are referenced — would
-  be assuming Byzantine validators behave.
+- **Honest-to-honest on both sides.** Nothing may be assumed about Byzantine
+  blocks existing — a Byzantine validator may publish nothing, or publish and
+  reveal selectively — and nothing needs to be, since L4 counts only correct
+  certificates and there are `2f+1` correct validators. Assuming *all* blocks
+  are referenced would be assuming Byzantine validators behave.
 - **Well-formedness survives the restriction**: a correct block referencing
   every correct block below already names `≥ 2f+1` distinct creators, so A5 is
   met with no Byzantine reference.
-- Antitone in `T` (`SynchronisedOn.mono`), which is what lets witnesses proved
-  at `Correct` feed the quorum-relative L4.
+- **Antitone in `T`** (`SynchronisedOn.mono`), which is what lets results
+  proved at `Correct` feed the quorum-relative L4.
 
 ### 6.5 L2, L3 — decisions are monotone, and propagate
 
 ```lean
 theorem decided_mono (hsub : V.ids ⊆ V'.ids) (h : Decided U V k v) : Decided U V' k v
-
 def View.full (U) : View Validator BlockId Payload U   -- ids := U.ids
-
 theorem decided_full (h : Decided U V k v) : Decided U (View.full U) k v
 ```
 
-- L2 says a validator **never revises** a decision as its view grows. The
-  safety results say decisions do not *conflict*; this says they do not
-  *change*. Worth distinguishing explicitly.
-- L2 works only because `CertifiedIn` is universe-level (§3.3).
-- L3 is the notes' first claim — *after GST, if one correct validator commits
-  all will commit* — with the time content removed. `View.full` is every
-  correct validator's eventual view, so this **is** "all correct validators
-  eventually reach the same decision". It also fixes what `U` means: not every
-  block anyone ever wrote, but every block some correct validator ever held. A
-  Byzantine block revealed to nobody is simply not in the universe.
+- L2 says a validator **never revises** a decision as its view grows. Safety
+  says decisions do not *conflict*; this says they do not *change*. Distinguish
+  them explicitly.
+- L2 holds only because `CertifiedIn` is universe-level (§3.3).
+- L3 is the informal claim *after GST, if one correct validator commits all
+  will commit*, with the time content removed. `View.full` is every correct
+  validator's eventual view, so this **is** "all correct validators eventually
+  reach the same decision". It also fixes what `U` means: every block some
+  correct validator ever held. A Byzantine block revealed to nobody is not in
+  the universe.
 
 ### 6.6 L4, L5, L6 — commits happen, and recur
 
@@ -704,19 +690,16 @@ theorem directCommit_of_leader_mem (hcard : 2 * F.f + 1 ≤ T.card)
     (hpop2 : PopulatedOn U T (S.slotRound k + 2))
     (hlead : S.leader k ∈ T) :
     ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k)
-
-theorem decided_of_leader_mem … :
-    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
 ```
+with `decided_of_leader_mem` the decision form.
 
 **Two layers of coverage and nothing else.** Every correct round-`(r+1)` block
 references `L` by coverage; every correct round-`(r+2)` block references all of
 *those*, so its votes for `L` come from a quorum and it certifies; there are
 `2f+1` correct validators, so the certificates themselves form a quorum.
 
-**No horizon, no growth, no limit universe.** The hypotheses are three local
-`Populated` facts. This is why the horizon question could be settled without
-touching the only real proof in the plan.
+**No horizon, no growth, no limit universe** — the hypotheses are three local
+`PopulatedOn` facts.
 
 **L5 — an absent leader is skipped.**
 ```lean
@@ -725,10 +708,9 @@ theorem decided_none_of_leader_absent {V : View …}
       (U.block b).creator ≠ S.leader k) :
     Decided U V k none
 ```
-Nearly free, and it vindicates the §3.4 decision: `Decided.directSkip`'s
-premise is `∀ L, IsLeaderBlock U k L → …`, which holds **vacuously** when the
-leader published nothing. A formulation that selected "the" leader block would
-have had nothing to select.
+`Decided.directSkip`'s premise is `∀ L, IsLeaderBlock U k L → …`, which holds
+**vacuously** when the leader published nothing. §3.4's quantify-over-candidates
+choice is what buys this.
 
 **L6 — commits recur.**
 ```lean
@@ -742,12 +724,11 @@ theorem commits_recur_on (hT : T ⊆ Correct) (hcard : 2 * F.f + 1 ≤ T.card)
         ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L)
 ```
 
-**The quantifier order is the whole content, and this belongs in the report.**
-The tempting form — *given `Live U D N`, for every `k` there is a committing
-`k' ≥ k` with `slotRound k' + 2 ≤ N`* — is **not provable**: fairness promises
-a correct leader *somewhere* beyond `k`, and that slot may lie past the
-horizon. Fixing `U` and `N` first caps how far fairness may reach. Stated as
-above, `k'` depends only on the **schedule**, and the DAG grows to it second.
+**The quantifier order is the content.** The alternative reading — *given
+`Live U D N`, for every `k` a committing `k' ≥ k` with `slotRound k' + 2 ≤ N`*
+— is **false**: fairness promises a correct leader somewhere beyond `k`, and
+that slot may lie past the horizon. As stated, `k'` depends only on the
+**schedule**, and the DAG is grown to it afterwards.
 
 ### 6.7 L7a — the seam discharged from delivery
 
@@ -765,15 +746,12 @@ assumption becomes two and nothing turns unconditional. The gain is that each
 piece is a *single kind of thing*: `includes` is implementable and observable;
 `EventuallyDelivers` is pure network.
 
-**Note what `EventuallyDelivers` is, precisely.** It is view convergence
-*indexed to the build moment* — it does not say correct blocks reach `v`
-eventually, but that they are in `D.held v n`, which is what `v` had in hand
-when it built at `n+1`. That indexing is doing the work, and it is exactly what
-a view-shaped statement lacks (§7.1). Given it, L7a is one line.
+**`EventuallyDelivers` is view convergence *indexed to the build moment*** — it
+does not say correct blocks reach `v` eventually, but that they are in
+`D.held v n`. That indexing is doing the work, and it is exactly what a
+view-shaped statement lacks (§7.1).
 
-### 6.8 L7b — the seam discharged from GST and backoff
-
-The timing layer. Present the structure, then the three theorems.
+### 6.8 L7b — the seam discharged from GST
 
 ```lean
 structure Timing (U) (T : Finset Validator) (N : ℕ) where
@@ -796,13 +774,10 @@ structure Timing (U) (T : Finset Validator) (N : ℕ) where
 ```
 
 - `covers` **is** GST + Δ, and it is the only network field.
-- `waits` (lower bound) and `prompt` (upper bound) are the two protocol build
-  rules. `prompt` is what makes drift controllable.
-- `latest` is *attained* (`latest_mem`), not merely an upper bound — otherwise
-  it carries no information.
-- `Timing` carries a horizon for **exactly** the reason `Live` does: `blk` at
-  every round would force infinitely many blocks into a `Finset`. Finding the
-  same flaw twice is itself worth reporting (§8).
+- `waits` (floor) and `prompt` (ceiling) are the two protocol build rules.
+- `latest` is *attained* (`latest_mem`), not merely an upper bound, or it would
+  carry no information.
+- The horizon is required for the same reason as in `Live` (§6.3).
 
 **Drift is derived, not assumed.**
 ```lean
@@ -814,13 +789,11 @@ theorem Timing.driftFrom_of_prompt {n₀ : ℕ}
     (hto : ∀ n, n₀ ≤ n → tm.delay ≤ tm.timeout n) :
     tm.DriftFrom n₀ D
 ```
-A two-case split on `prompt`'s `max`: **timeout-limited** (everyone advanced
-by the same `timeout n`, so the spread is unchanged) or **delivery-limited**
-(finished by `latest n + delay`, and `latest` is attained). **Note what this
-does not show: that drift shrinks.** It does not — every clock advances by the
-same timeout. *Bounded* is all that is needed. [CHECK — an earlier draft
-argued drift is *compressed* to 2Δ; that is wrong, and the correction is worth
-a footnote.]
+A two-case split on `prompt`'s `max`: **timeout-limited** (everyone advances by
+the same `timeout n`, spread unchanged) or **delivery-limited** (finished by
+`latest n + delay`, and `latest` is attained). **Drift is *preserved*, not
+compressed** — every clock advances by the same timeout — and preservation is
+what the argument needs.
 
 **The seam, discharged.**
 ```lean
@@ -829,30 +802,20 @@ theorem Timing.synchronisedOn_of_timing (hT : T ⊆ Correct)
     (hbackoff : ∀ n, R ≤ n → D + tm.delay ≤ tm.timeout n) :
     SynchronisedOn U T R
 ```
-Four inequalities chained: drift, backoff, waiting, hence
-`built w n + delay ≤ built v (n+1)` — exactly what `covers` wants.
+Four inequalities chained — drift, backoff, waiting — give
+`built w n + delay ≤ built v (n+1)`, exactly `covers`'s hypothesis.
 Non-equivocation does the rest: `SynchronisedOn` quantifies over *every*
 `T`-authored block and T1 identifies each with the `blk` the structure names.
 *That is why `T ⊆ Correct` is needed here* — a Byzantine author could have
-several blocks in a round and `blk` names only one.
+several blocks in a round, and `blk` names one.
 
-**The headline.**
-```lean
-theorem exists_synchronisedOn_of_backoff (tm : Timing U T N) (hT : T ⊆ Correct)
-    (hmono : Monotone tm.timeout) (hub : ∀ m, ∃ n, m ≤ tm.timeout n)
-    {n₀ : ℕ} (hdel : ∀ n, n₀ ≤ n → tm.delay ≤ tm.timeout n)
-    (hbase : ∀ v ∈ T, ∀ w ∈ T, tm.built w n₀ ≤ tm.built v n₀ + D) :
-    ∃ R, SynchronisedOn U T R
-```
+**Note the hypothesis is a *threshold*, not a growth condition:** the timeout
+must stay above `D + delay` from `R` on. A constant timeout satisfies it; so
+does any scheme that stabilises above the bound.
+`exists_synchronisedOn_of_backoff` packages one sufficient condition
+(`Monotone` + unbounded) but is not the only route — §6.10 gives two others.
 
-**The only property of the backoff used is that it grows without bound** — not
-its shape, not its rate, and not the signal driving it. An implementation is
-free to choose how it grows. What it is **not** free to do is *cap* the
-timeout: a capped backoff satisfies neither hypothesis, and the system it
-describes can be permanently stuck. That is a deployable conclusion and should
-be stated as one.
-
-### 6.9 The liveness stack, assembled
+### 6.9 The liveness stack
 
 > **[FIGURE 3]** The layer diagram — the load-bearing picture of the paper.
 >
@@ -865,58 +828,45 @@ be stated as one.
 >        │  SynchronisedOn  ←── THE SEAM
 >        │
 >   L7a  EventuallyDelivers (delivery model)
->   L7b  Timing: GST + Δ + waits + prompt + unbounded backoff
+>   L7b  Timing: GST + Δ + waits + prompt
 > ```
 
-Say plainly: **nothing above the seam mentions time, and nothing below it
-mentions certificates.**
+**Nothing above the seam mentions time, and nothing below it mentions
+certificates.**
 
-### 6.10 Quantitative liveness — bounds, from rated hypotheses
+### 6.10 Quantitative liveness
 
-`LeanDag/Quantitative.lean`. Presented last because it is **beside** the stack
-rather than in it: nothing imports it, every theorem strengthens one below, and
-each strengthening is bought with a strengthened hypothesis. A reader who
-declines the hypotheses keeps everything in §6.1–§6.9 intact.
+`LeanDag/Quantitative.lean`. Presented last because it sits **beside** the
+stack: nothing imports it, every theorem strengthens one below, and each
+strengthening is bought with a strengthened hypothesis (§4.3). A reader who
+declines them keeps §6.1–§6.9 intact.
 
-**Frame the gap correctly — this is the part reviewers will probe.** Two
-results conclude with a bare existential (`∃ R, SynchronisedOn U T R`;
-`∃ k', k ≤ k' ∧ …`). That is **not** slack in the proofs. Each hypothesis is
-*itself* a bare existential, and under them **no bound exists**:
+**Why the weak forms give no bound.** Two results conclude with a bare
+existential (`∃ R, SynchronisedOn U T R`; `∃ k', k ≤ k' ∧ …`). That is forced:
+each hypothesis is *itself* a bare existential, and under them **no bound
+exists**.
 
 - `hub : ∀ m, ∃ n, m ≤ tm.timeout n` admits `timeout n = ⌊log₂ (n+1)⌋` —
-  monotone, unbounded, and needing `n ≥ 2^(D + delay) − 1` to clear the
-  threshold. Slower schedules push `R` out without limit.
+  monotone, unbounded, and needing `n ≥ 2^(D + delay) − 1`. Slower schedules
+  push `R` out without limit.
 - `FairScheduleOn T` admits a schedule naming `T`-leaders at slots
   `0, 10, 1000, …`.
 
-So the fix is a rated hypothesis, not a better proof. Three are supplied:
-
-```lean
-def Rated (timeout : ℕ → ℕ) : Prop := ∀ n, n ≤ timeout n
-def FairWithin (T : Finset Validator) (w : ℕ) : Prop :=
-  ∀ k, ∃ k', k ≤ k' ∧ k' < k + w ∧ S.leader k' ∈ T
-def BoundedSpacing (s : ℕ) : Prop := ∀ k, S.slotRound (k + 1) ≤ S.slotRound k + s
-```
+So a bound requires a **rated** hypothesis, not a better proof.
 
 **Part 1 — `R` becomes explicit.**
-
 ```lean
 theorem synchronisedOn_of_rate (tm : Timing U T N) (hT : T ⊆ Correct)
     (hrate : Rated tm.timeout) {n₀ : ℕ} (hn₀ : tm.delay ≤ n₀)
     (hbase : ∀ v ∈ T, ∀ w ∈ T, tm.built w n₀ ≤ tm.built v n₀ + D) :
     SynchronisedOn U T (max (max (D + tm.delay) n₀) tm.gst)
 ```
-
-Each summand is what it looks like: the threshold, the drift base, GST.
-
-**A hypothesis is *dropped*, not merely added** — worth a sentence, since it
-inverts the expected trade. `backoff_ge_of_rate` needs **no monotonicity**: the
-bound at `n` comes from `n` itself, so it cannot lapse, where `exists_backoff_ge`
-needs `Monotone` to propagate one clearing round upward. And `Rated` implies
-`hub` (`unbounded_of_rated`).
+Each summand is what it looks like: the threshold, the drift base, GST. **A
+hypothesis is dropped as well as added** — `backoff_ge_of_rate` needs no
+monotonicity, since the bound at `n` comes from `n` itself and cannot lapse;
+and `Rated` implies `hub` (`unbounded_of_rated`).
 
 **Part 2 — the committing slot, then its round.**
-
 ```lean
 theorem commits_recur_within … (fair : FairWithin T w) (R k : ℕ) :
     ∃ k', max k R ≤ k' ∧ k' < max k R + w ∧ R ≤ S.slotRound k' ∧ …
@@ -925,36 +875,13 @@ theorem commits_recur_by_round … (hs : BoundedSpacing s) (R k : ℕ) :
     ∃ k', k ≤ k' ∧ S.slotRound k' ≤ S.slotRound (max k R) + s * w ∧ …
       S.slotRound (max k R) + s * w + 2 ≤ N → …
 ```
+**`BoundedSpacing` has no weak counterpart.** `Slots.spacing` bounds slot
+rounds from *below* (`+3`), which is what safety needs — M4's anchor must sit
+three rounds up. A latency claim wants the *opposite* bound, and the class has
+none, because no safety result asks. Adding the mirror image is what converts a
+slot bound into a round bound.
 
-**`BoundedSpacing` has no weak counterpart, and that is the interesting part.**
-`Slots.spacing` bounds slot rounds from *below* (`+3`), which is what safety
-needs — M4's anchor must sit three rounds up. A latency claim wants the
-*opposite* bound, and the class never had one because no safety result asks.
-Adding the mirror image is what converts a slot bound into a round bound.
-
-**Witnesses, and why they matter more here.** A rated hypothesis is strong
-enough to be *unsatisfiable*, in which case the bounds bound nothing — exactly
-the failure mode of the unbounded `Live` and `Timing` (§8). All three are
-witnessed in `LeanDagTest/Quantitative.lean`:
-
-| Witness | What it shows |
-|---|---|
-| `ugrowTiming_rated` | `2 ^ n` is rated, driving `R` to an explicit `0` |
-| `rrSlots_fairWithin` | genuine round-robin, window `f + 1 = 2` |
-| `rrSlots_boundedSpacing` | `s = 3`, the tightest value `Slots.spacing` permits |
-
-`fairSlots` could **not** serve for the second: its leader is *constant*, so it
-satisfies `FairWithin T 1` and exercises nothing. The degenerate-witness trap
-of §8, encountered a third time.
-
-Composed, `ugrow_commits_by_round` reads: for every slot `k` there is a
-committing slot at round `≤ 3k + 6`, in every `Ugrow` grown to `3k + 8`. That
-is the concrete latency figure, in rounds.
-
-**Part 3 — the wait bound, and this is the one to lead with.** Parts 1 and 2
-bound *when* coverage starts and *which slot* commits. Neither says what a
-validator should set its timer to. That question has a clean answer:
-
+**Part 3 — the wait bound. This is the statement to lead with.**
 ```lean
 theorem directCommit_of_wait (tm : Timing U T N) (hT : T ⊆ Correct)
     (hcard : 2 * F.f + 1 ≤ T.card)
@@ -965,257 +892,204 @@ theorem directCommit_of_wait (tm : Timing U T N) (hT : T ⊆ Correct)
     ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k)
 ```
 
-> After GST, if every `T`-validator waits at least `D₀ + Δ`, every correct
-> leader is committed — where `D₀` bounds the spread at round `0`.
+> After GST, if every `T`-validator waits at least `D₀ + Δ` before building,
+> every correct leader is committed — where `D₀` bounds the spread at round `0`.
 
 So **`Delay(Δ) = D₀ + Δ`**, and `2Δ` in the headline case
-(`directCommit_of_wait_two_delay`).
+(`directCommit_of_wait_two_delay`), with `decided_of_wait` the decision form.
 
-**The timeout is a constant**, and that is the point: no backoff, no `Rated`,
-no `Monotone`, no existential `R`. It says exactly what the backoff is *for* —
-the backoff exists only because Δ is unknown. Given Δ, no adaptation is needed.
+**The timeout is a constant** — no backoff, no `Rated`, no `Monotone`, no
+existential `R`. That says what the backoff is *for*: it exists only because Δ
+is unknown. Given Δ, no adaptation is needed.
 
-**How it dodges the drift obstacle**, which is the methodologically
-interesting part. The instinct is to *derive* `D ≤ Δ` after GST: everyone sees
-a quorum within Δ, so everyone advances within Δ. **`Timing` cannot prove
-that**, because `waits` forbids a lagging validator from catching up faster
-than its own timeout — deliberately, since an adversary answering instantly
-would otherwise fill an early quorum with Byzantine blocks. Drift is preserved,
-not compressed.
+**Where `D₀` comes from.** Drift is preserved rather than compressed (§6.8), so
+the bound is not derived from Δ — it is taken at **round `0`**, where it states
+how far apart validators *started*, and `driftFrom_of_prompt` carries it
+forward unchanged. Validators starting together give `D₀ = 0` and
+`Delay(Δ) = Δ`; a common start broadcast gives `D₀ ≤ Δ`, since the signal
+itself takes at most Δ. **The factor of two is the price of not having
+synchronised clocks.**
 
-The way past is not to derive the bound but to take it at **round `0`**, where
-it is a claim about how far apart validators *started*, and let
-`driftFrom_of_prompt` carry it forward unchanged. Validators that start
-together give `D₀ = 0` and `Delay(Δ) = Δ`; a common broadcast gives `D₀ ≤ Δ`,
-since the signal itself takes at most Δ. **The factor of two is the price of
-not having synchronised clocks.**
-
-Note also that `Timing.populatedOn` makes these statements need no `Live`, no
-`DeliversQuorum` and no L1 — `Timing` already asserts a block per `T`-validator
-per round, so the only hypotheses about time are the start spread, the wait,
-and GST.
-
-**The witness sits exactly on the boundary.** `ugrowSkew` — built for §8 to
-exercise both drift branches — has round-`0` spread `2`, `delay = 2`,
-`timeout = 4`. So `D₀ = delay` and `2 · delay = timeout`: **every inequality
-holds with equality.** That is what shows the constant `2` is right rather than
-a safe over-estimate; a witness with slack would not.
-
-**Do not oversell any of it.** The bounds in Parts 1–2 are in **rounds and
-slots, not seconds** (§9); Part 3's `Delay(Δ)` *is* a duration, but converting
-"`3k + 8` rounds, each at least `2Δ`" into elapsed time needs an accumulation
-lemma over `prompt` that nothing supplies. The backoff *loop* is still assumed
-rather than derived, and `Timing.timeout` is common to `T`, so a per-validator
-backoff cannot be stated.
+`Timing.populatedOn` makes these statements need no `Live`, no `DeliversQuorum`
+and no L1: `Timing` already asserts a block per `T`-validator per round, so the
+only hypotheses about time are the start spread, the wait, and GST.
 
 ---
 
 ## 7. Eventual DAG synchrony — the argument
 
-This is the section the paper exists for. It should be able to stand alone.
+The section the paper exists for. It should stand alone.
 
 ### 7.1 The view formulation, and the two things it needs beside it
 
-The original proposal stated it on **views**:
+Stated on **views**:
 
 > after GST, if a correct validator has a view `V₁`, then within Δ all correct
 > validators' views will contain `V₁`.
 
-This is appealing — `View` is already first-class, `V₁ ⊆ V₂` is already
-meaningful, every safety result is already view-relative — and it **does**
-give L3 outright: the common view *is* `View.full`, so `decided_full` is L2
-instantiated.
+This is appealing — `View` is already first-class, `V₁ ⊆ V₂` already
+meaningful, every safety result already view-relative — and it gives L3
+outright: the common view *is* `View.full`.
 
-**The mechanism for coverage is the expected one, and it works.** Fast
+**The mechanism for coverage is the expected one and it works.** Fast
 propagation puts every correct round-`n` block into every correct validator's
-hands; a validator that waits long enough before building at `n+1` then
-references all of them. §6.8 is that argument, formalised. Nothing exotic is
-going on, and the report should not suggest otherwise.
+hands; a validator that waits long enough before building at `n+1` references
+all of them. §6.8 is that argument, formalised.
 
-What the view statement does not supply is **two further ingredients**, and
-identifying them is the contribution:
+What the view statement does not supply is **two further ingredients**:
 
-**(i) A build rule.** View convergence is a claim about the network. Coverage
+**(i) A build rule.** View convergence is a claim about the network; coverage
 additionally needs a claim about *when validators build*. A perfectly
 propagating network still commits nothing if validators build the moment they
 hold `2f+1` — they would reference the fastest quorum and no more. So the
 assumption pairs a delivery bound with a protocol obligation, which is why
-`waits` and `prompt` are `Timing` fields rather than remarks, and why S4
-splits `Synchronised` into `EventuallyDelivers` (network) and `includes`
-(protocol).
+`waits` and `prompt` are `Timing` fields, and why the delivery route splits
+into `EventuallyDelivers` (network) and `includes` (protocol).
 
 **(ii) A build-time index on the view.** References are fixed at construction,
 so what matters is not what a validator holds *eventually* but what it held *at
 the moment it built*. `View` records no time, so a view-convergence statement
-cannot be plugged in as it stands. The delivery layer supplies the index:
-`Delivery.held v n` is *what `v` held from round `n` when it built its
-round-`(n+1)` block*, and with that indexing L7a is a single line. This is a
-modelling point, not a claim about mechanism — but it is why the assumption is
-phrased on `refs`, and why `held` exists at all.
+cannot be plugged in as it stands. `Delivery.held v n` supplies the index, and
+with it L7a is a single line. This is a modelling point rather than a claim
+about mechanism — but it is why the assumption is phrased on `refs`.
 
-**A third detail, easy to miss: the timeout must exceed `delay + D`, not
-`delay`.** Validators enter a round at different times, so the wait has to
-cover the propagation bound *and* the spread `D` between entries. That is
-`hbackoff` in §6.8, and `D` is derived rather than assumed — the content of
-`driftFrom_of_prompt` being that drift is **preserved**, not compressed.
+**A third detail: the timeout must exceed `delay + D`, not `delay`.** Validators
+enter a round at different times, so the wait must cover the propagation bound
+*and* the spread. That is `hbackoff` in §6.8 and the `2Δ` of §6.10.
 
-> **Calibration for the write-up.** The claim is that the view formulation is
-> *incomplete*, not that it is *wrong* and not that views *cannot* express
-> this. An earlier draft of `liveness.md` §4.3 said coverage "does not follow
-> from view convergence" and that the timing argument was unformalised; both
-> became false once `Timing.lean` landed, and the section was corrected. The
-> defensible contribution is the pair (i)/(ii) above — smaller than an
-> impossibility claim, and it survives scrutiny.
+**Calibrate the claim.** The view formulation is *incomplete*, not *wrong*, and
+the contribution is the pair (i)/(ii) — not an impossibility result.
 
 ### 7.2 Coverage is an outcome, not an instruction
 
-The second thing the report must be honest about, and it is independent of
-§7.1. A validator **cannot execute `SynchronisedOn`**: `Correct` is
-`F.byzantineᶜ`, a model-level object, so "reference every correct block below
-you" names two things a validator cannot determine — which held blocks are
-correct-authored, and whether all of them have arrived (a missing block is
+Independent of §7.1. A validator **cannot execute `SynchronisedOn`**: `Correct`
+is `F.byzantineᶜ`, a model-level object, so "reference every correct block
+below you" names two things a validator cannot determine — which held blocks
+are correct-authored, and whether all of them have arrived (a missing block is
 indistinguishable from one never published).
 
 What a validator *can* do is wait a fixed period, build on whatever arrived,
 and raise the period when things go badly. Those are `waits`, `prompt` and the
 backoff — all executable.
 
-**The awkward part is the backoff signal.** Before GST no period is long
+**The backoff signal is the awkward part.** Before GST no period is long
 enough, and nothing lets a validator detect that directly; what it observes is
 that **commits have stopped**. So the loop that delivers coverage is driven by
 liveness failure, the very thing being proved away. That is a feedback loop
-rather than a vicious circle — but it means the argument cannot rest on
+rather than a vicious circle, but it means the argument cannot rest on
 modelling the loop's dynamics.
 
-**§6.8 sidesteps it rather than solving it, and that is the right move.** The
-backoff hypothesis is only `Monotone tm.timeout` together with
-`∀ m, ∃ n, m ≤ tm.timeout n` — grows, and grows without bound. Not its shape,
-not its rate, not the signal driving it. So the theorem holds whatever
-mechanism an implementation chooses, and the unmodelled feedback loop never
-has to be trusted. `SynchronisedOn R` is the **outcome** of that loop once the
-network settles; the proof needs only that some `R` exists.
+**The development sidesteps it, and that is the right move.** What
+`synchronisedOn_of_timing` consumes is a *threshold*: the timeout stays above
+`D + delay` from some round on. Nothing about shape, rate, or driving signal.
+§6.10 Part 3 takes this to its conclusion — with Δ known, a **constant**
+timeout of `D₀ + Δ` suffices and the loop disappears entirely.
 
 ### 7.3 What the abstraction buys
 
-1. **The consensus argument is purely combinatorial.** Round indices and
-   `Finset` cardinalities. Compare: under a message-level assumption every
-   statement carries instants.
-2. **The timing content is quarantined** in one file, consumed through one
+1. **The consensus argument is purely combinatorial** — round indices and
+   `Finset` cardinalities. Under a message-level assumption every statement
+   carries instants.
+2. **The timing content is confined** to one file and consumed through one
    definition.
-3. **The seam is validated by two independent lower models** (§6.7, §6.8),
-   built at different times against an unchanged interface. Nothing above
-   `SynchronisedOn` changed when the timing layer was slotted in underneath.
-   [CHECK — this is a methodological claim about the development history; it
-   is true of this repository and the git history supports it, but it is
-   evidence, not proof.]
+3. **The seam admits two independent discharges** (§6.7, §6.8) against one
+   unchanged interface, and a third quantitative route (§6.10) above it.
 4. **It composes with safety.** `SynchronisedOn` mentions only `U.ids`,
-   `U.block` and `refs` — the same vocabulary the safety development already
-   speaks.
+   `U.block` and `refs` — the vocabulary the safety development already speaks.
 
 ### 7.4 What it costs
 
-- **No Δ above the seam, so no quantitative claim.** No bound on `R − GST`, no
-  commit latency, no throughput. Δ would force views indexed by an instant and
-  every statement quantified over instants — for no proof content, since the
-  theorems are *"all will commit"* and *"never gets stuck"*.
+- **No Δ above the seam.** Δ would force views indexed by an instant and every
+  statement quantified over instants, for no proof content. The quantitative
+  statements recover what is needed *below* the seam (§6.10) without pushing
+  time upward.
 - **The gain is not logical.** One assumption becomes two; nothing becomes
   unconditional. With no time model the chain must bottom out at delivery.
-  Say this rather than let a reader discover it.
 
 ### 7.5 Related work
 
 [EXPAND] Positioning against:
-- DAG-BFT liveness arguments as usually presented (DAG-Rider, Narwhal/Bullshark,
-  Mysticeti, Shoal/Sailfish) — where the synchrony assumption sits in each.
+- DAG-BFT liveness arguments as usually presented (DAG-Rider,
+  Narwhal/Bullshark, Mysticeti, Shoal/Sailfish) — where the synchrony
+  assumption sits in each.
 - Partial synchrony (DLS) and the standard GST/Δ formulation.
-- Mechanised consensus: what has been formalised and at what level of
+- Mechanised consensus: what has been formalised, and at what level of
   abstraction.
 - The specific question: *has anyone else stated the synchrony assumption
   structurally on the DAG rather than on message delivery?*
 
 ---
 
-## 8. Method: witness-first, and what it caught
+## 8. Non-vacuity
 
-A short methodological section, and an honest one. **Rule: a definition gets a
-satisfiability witness before anything is proved from it.**
+Every structure carrying assumptions is exhibited satisfiable by a concrete
+model over four validators at `f = 1`. This is a result, not a test: an
+unsatisfiable hypothesis makes every theorem above it vacuous.
 
-Witness models over a concrete 4-validator instance (`f = 1`):
-
-| Model | What it witnesses |
+| Model | Satisfies |
 |---|---|
-| `Ugrow N` | `Live`, `DeliversQuorum`, `Synchronised` at every horizon |
-| `ugrow_not_populated_succ` | the horizon is **tight** — nothing at `N+1` |
-| `ugrowTiming` | `Timing`, in lockstep |
-| `ugrowHonest` | a **genuinely partial view** — Byzantine validator withholds |
-| `ugrowSkew` | **nonzero drift and delay**, both `driftFrom_of_prompt` branches live |
+| `Ugrow N` | `Live`, `DeliversQuorum`, `Synchronised` at every horizon `N` |
+| `ugrowDelivery` | `Delivery`, and `EventuallyDelivers` for L7a |
+| `ugrowHonest` | `Delivery` with a **genuinely partial** view — the Byzantine validator withholds, and a quorum survives |
+| `ugrowTiming` | `Timing`, lockstep, with a rated `2 ^ n` backoff |
+| `ugrowSkew` | `Timing` with **nonzero drift and delay**, exercising both branches of `driftFrom_of_prompt` |
+| `rrSlots` | `Slots`, round-robin, `FairWithin T (f+1)` and `BoundedSpacing 3` |
 
-**Four defects the rule caught**, each of which would have produced vacuous or
-false theorems:
+**Three tightness results**, which is what makes the constants meaningful:
 
-1. `Live` was **unsatisfiable** — a `Finset` cannot hold a block at every
-   round. Confirmed by proving `¬ Live⁰ U`.
-2. `Timing` had the **identical** flaw, found the same way.
-3. `Synchronised` had **never been defined in Lean at all** — it existed only
-   in the design notes, and was discovered missing while writing a witness for
-   it.
-4. L6 as first stated was **false**; the fix was quantifier reordering (§6.6).
+- `ugrow_not_populated_succ` — the horizon is exact: `¬ Populated (Ugrow N) (N+1)`,
+  so the family reaches `N` and stops.
+- `ugrowSkew` sits on the `2Δ` boundary. Round-`0` spread `2`, `delay = 2`,
+  `timeout = 4`: `D₀ = delay` and `2·delay = timeout`, so **every inequality in
+  `directCommit_of_wait_two_delay` holds with equality**. The constant `2` is
+  exact, not a safe over-estimate.
+- `rrSlots_fairWithin` gives window `f + 1 = 2`, and `f + 1` is forced: the
+  validators outside `T` may be consecutive in the rotation.
 
-Two further points worth reporting:
-
-- A **degenerate witness hides branches.** `ugrowTiming` has `delay = 0` and
-  zero drift, so S6's delivery-limited branch was unreachable. `ugrowSkew` was
-  built to reach it, and its constants are forced: `D + delay ≤ timeout` needs
-  `timeout ≥ 4`; the delivery-limited branch needs `timeout ≤ 4`. **The window
-  is a single point.** A first attempt at `timeout = 3` failed — which is
-  exactly the check a degenerate witness cannot perform.
-- One exhibit turned out to be **impossible**, informatively: a round-spread
-  exhibit at `f = 1` cannot exist, because `|Correct| = 3 = 2f+1` exactly, so
-  every correct validator is needed for a quorum and none can lag. A spread
-  exhibit that still commits needs `f ≥ 2`. That is §4.3's combined budget
-  appearing as a concrete obstruction rather than an inequality.
+**One negative fact worth stating.** A model exhibiting *round spread* — correct
+validators far apart in round number — while still committing is impossible at
+`f = 1`, because `|Correct| = 3 = 2f+1` exactly, so every correct validator is
+needed for a quorum and none can lag. It needs `f ≥ 2`. This is §4.4's combined
+budget as a concrete obstruction.
 
 ---
 
-## 9. Limitations and open questions
+## 9. Limitations
 
-State these as open, not solved.
+**The bounds Q3 and Q4 called for are proved** (§6.10). What remains open:
 
-**First, what is *not* open any more** — see §6.10. The bounds Q3 and Q4 asked
-for exist, from rated hypotheses, and are proved. What remains:
-
-- **Q3 residue — the backoff loop, and wall-clock time.** `Rated` is assumed,
-  not derived from the feedback mechanism. And `Timing.timeout : ℕ → ℕ` is
-  **common to `T`**, so a per-validator backoff — where validators raise at
-  different moments — cannot be stated at all, let alone shown to converge.
-  Every bound is in **rounds and slots**, not seconds: `le_built` relates the
-  two in one direction only (`n ≤ built v n`).
-- **Q3 residue — Byzantine leaders.** §6.10 bounds the wait for the next
-  `T`-leader, sidestepping rather than answering how distant an indirect
-  anchor can be when the leader is Byzantine.
-- **Q4 residue — leader predictability** (and so targeted DoS) is
-  unmodelled.
-- **Q6 — presentational.** Whether L1 should hold from round 0 or only
-  after `R`.
-- **T4/T5 (certified DAGs)** are deferred by design, not omitted by accident.
+- **The backoff loop.** `Rated` and the threshold condition are assumed, not
+  derived from the feedback mechanism of §7.2. And `Timing.timeout : ℕ → ℕ` is
+  indexed by round, **common to `T`**, so a per-validator backoff — validators
+  raising at different moments — cannot be stated at all.
+- **Wall-clock latency.** `Delay(Δ)` is a duration, but total time to commit is
+  not: converting "`3k + 8` rounds, each at least `2Δ`" into elapsed time needs
+  a lemma accumulating `prompt` across rounds, which is not present.
+  `le_built` relates rounds to time in one direction only (`n ≤ built v n`).
+- **Byzantine leaders.** §6.10 bounds the wait for the next `T`-leader rather
+  than bounding how distant an indirect anchor can be when the leader is
+  Byzantine.
+- **Leader predictability**, and so targeted DoS, is unmodelled: `Slots.leader`
+  is an arbitrary function, and `FairWithin` constrains *when* good leaders
+  appear, not whether an adversary can see them coming.
 - **Block-level total order** needs a tie-break within a flush (§5.6).
+- **T4/T5 (certified DAGs)** are out of scope by design.
 
-**One sentence that must appear:** none of the open questions affects whether
-the stated theorems are *true* — only how much they *say*.
+**One sentence that must appear:** none of these affects whether the stated
+theorems are *true* — only how much they *say*.
 
 ---
 
 ## 10. Artifact
 
 - Lean 4 (v4.32.2) + Mathlib. `lake build`: 0 errors, 0 warnings, 8673 jobs.
-- **Axiom audit, checked.** Every headline result — `reaches_of_quorum_support`
-  (T3), `exists_common_correct_ancestor` (T3c), `decided_agree` (M6),
+- **Axiom audit.** Every headline result — `reaches_of_quorum_support` (T3),
+  `exists_common_correct_ancestor` (T3c), `decided_agree` (M6),
   `commitSeq_agree`, `outputAt_agree`, `no_stall` (L1), `commits_recur_on`
-  (L6), `exists_synchronisedOn_of_backoff` (L7b), `ugrow_commits_by_round`
-  (§6.10) — depends on exactly `[propext, Classical.choice, Quot.sound]`. No
-  `sorry`, no custom axiom, no `native_decide`. Reproduce the `#print axioms`
-  block in the report.
-- File map:
+  (L6), `exists_synchronisedOn_of_backoff` (L7b), `ugrow_commits_by_round`,
+  `ugrowSkew_directCommit_of_wait` — depends on exactly
+  `[propext, Classical.choice, Quot.sound]`. No `sorry`, no custom axiom, no
+  `native_decide`. Reproduce the `#print axioms` block.
 
 | File | Contents |
 |---|---|
@@ -1223,26 +1097,23 @@ the stated theorems are *true* — only how much they *say*.
 | `Block.lean` | `Block`, `ValidWrt`, T0′ |
 | `BlockDag.lean` | `BlockUniverse`, `View`, T1 |
 | `CausalHistory.lean` | `Reaches`, T2, T6a |
-| `Support.lean` | counting vocabulary, hitting/propagation |
+| `Support.lean` | counting vocabulary, hitting and propagation |
 | `Persistence.lean` | T3 |
 | `CommonCore.lean` | T3a, T3c |
 | `Mysticeti.lean` | the commit rule, M1–M6, the ledger |
 | `Liveness.lean` | L0–L6, L7a |
-| `Timing.lean` | L7b — logically the bottom of the stack, written last |
-| `Quantitative.lean` | the rated hypotheses and the bounds (§6.10) — *beside* the stack, imported by nothing |
-| `LeanDagTest/Growth.lean`, `Partial.lean`, `Quantitative.lean`, `Model.lean` | witnesses |
+| `Timing.lean` | L7b |
+| `Quantitative.lean` | the quantitative results (§6.10); imported by nothing |
+| `LeanDagTest/*` | the models of §8 |
 
-- Design records: `spec.md` (safety, settled), `liveness.md` (liveness,
-  including the settled questions S1–S8 and the residue of Q3/Q4 plus Q6).
+- Design records: `spec.md` (safety), `liveness.md` (liveness). These carry the
+  design rationale and the settled/open question log; the report draws its
+  statements from the source, not from them.
 
 ---
 
 ## Appendix A — statement index
 
-Label → Lean identifier → file. [EXPAND — merge `spec.md` §7's table with a
-new liveness table; both exist and are current.]
-
-## Appendix B — the four vacuous drafts
-
-[EXPAND — the `¬ Live⁰` proof in full, and the L6 quantifier counterexample.
-Short, concrete, and more convincing than the prose in §8.]
+Label → Lean identifier → file, for safety (T/M/C) and liveness (L0–L7, and
+§6.10). [EXPAND — `spec.md` §7 already carries the safety table; the liveness
+half needs writing.]

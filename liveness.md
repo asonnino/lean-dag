@@ -463,6 +463,31 @@ def Timing.DriftFrom (tm : Timing U T N) (n₀ D : ℕ) : Prop :=
     tm.built w n ≤ tm.built v n + D
 ```
 
+### The rated layer
+
+`LeanDag/Quantitative.lean`. Three optional hypotheses, each strengthening one
+already in play, and each buying a bound the weak form cannot give (S8, S9).
+Nothing above depends on them.
+
+```lean
+/-- A backoff growing at least as fast as the round index. Strengthens the
+`hub` of `exists_backoff_ge`, and needs no `Monotone`. -/
+def Rated (timeout : ℕ → ℕ) : Prop := ∀ n, n ≤ timeout n
+
+/-- A `T`-leader within every window of `w` slots. The rated `FairScheduleOn`;
+round-robin over `3f+1` gives `w = f + 1`. -/
+def FairWithin (T : Finset Validator) (w : ℕ) : Prop :=
+  ∀ k, ∃ k', k ≤ k' ∧ k' < k + w ∧ S.leader k' ∈ T
+
+/-- Slots at most `s` rounds apart — the upper companion to `Slots.spacing`,
+which bounds them from below. Safety never asks for this direction; a latency
+claim needs exactly it. -/
+def BoundedSpacing (s : ℕ) : Prop := ∀ k, S.slotRound (k + 1) ≤ S.slotRound k + s
+```
+
+The wait bound (L9) needs none of these — only a round-`0` spread `D₀` and a
+constant timeout of at least `D₀ + Δ`.
+
 ## 6. The results
 
 ### Without synchrony
@@ -671,6 +696,39 @@ def Timing.DriftFrom (tm : Timing U T N) (n₀ D : ℕ) : Prop :=
   `SynchronisedOn` as a hypothesis; these supply it. That is the payoff of
   staging L7 last (§7).
 
+### Bounds
+
+`LeanDag/Quantitative.lean`. Every result here strengthens one above, and each
+is bought with a strengthened hypothesis (S8, S9). Nothing imports the file, so
+the weak forms remain available untouched.
+
+- **L8a — `R` made explicit.** `synchronisedOn_of_rate` replaces
+  `∃ R, SynchronisedOn U T R` with
+
+  `SynchronisedOn U T (max (max (D + delay) n₀) gst)`
+
+  given `Rated timeout` (`∀ n, n ≤ timeout n`). It drops `Monotone`, which
+  `exists_backoff_ge` needs and `backoff_ge_of_rate` does not.
+
+- **L8b — the committing slot bounded.** `commits_recur_within` puts it within
+  `w` slots of `max k R` under `FairWithin T w`; `commits_recur_by_round` then
+  bounds its *round* under `BoundedSpacing s`, the upper companion to
+  `Slots.spacing` that the class never carried because no safety result asks
+  for it.
+
+- **L9 — the wait bound.** `directCommit_of_wait`: after GST, if every
+  `T`-validator waits at least `D₀ + Δ` before building, every correct leader
+  is committed — where `D₀` bounds the round-`0` spread. So
+  **`Delay(Δ) = D₀ + Δ`**, and `2Δ` when `D₀ ≤ Δ`
+  (`directCommit_of_wait_two_delay`), with `decided_of_wait` the decision form.
+
+  The timeout here is a **constant**: no backoff, no `Rated`, no `Monotone`, no
+  existential. That is what the backoff is for — it exists only because Δ is
+  unknown.
+
+  `Timing.populatedOn` supplies L4's three population facts from `Timing`
+  itself, so these statements need no `Live`, no `DeliversQuorum` and no L1.
+
 ## 7. Staging
 
 | | | risk | |
@@ -687,6 +745,10 @@ def Timing.DriftFrom (tm : Timing U T N) (n₀ D : ℕ) : Prop :=
 | — | **`ugrowTiming`: a `Timing` witness at every horizon** | low, and required **first** | ✓ `ugrowTiming` |
 | — | **`ugrowHonest`, `ugrowSkew`: non-degenerate witnesses** | low — see S7 | ✓ `LeanDagTest/Partial.lean` |
 | L7b | `Timing`, then `SynchronisedOn` from GST + backoff | medium — see S6 | ✓ `exists_synchronisedOn_of_backoff` |
+| L8a | `Rated`, then `R` read off instead of extracted | low — see S8 | ✓ `synchronisedOn_of_rate` |
+| L8b | `FairWithin` and `BoundedSpacing`, then L6 rebounded | low — see S8 | ✓ `commits_recur_by_round` |
+| — | **`rrSlots`: a round-robin schedule, window `f+1`** | low, and required **first** | ✓ `rrSlots_fairWithin` |
+| L9 | round-`0` spread + a constant wait, then L4 | low — see S9 | ✓ `directCommit_of_wait` |
 
 L0, L2 and L3 come first because none needs a new primitive: L0 is pure DAG
 structure, L2 and L3 are pure view reasoning. That defers every modelling
@@ -706,6 +768,9 @@ many blocks. The rule then earned its keep three more times:
 - Writing `ugrowSkew` (S7) found that the constants making S6's two branches
   both reachable sit in a **one-point window**, which no lockstep witness
   could have shown.
+- `FairWithin` (S8) could not reuse `fairSlots` at all: its leader is
+  *constant*, so it satisfies `FairWithin T 1` and exercises nothing. `rrSlots`
+  is a real rotation, and it is what makes the window `f + 1` meaningful.
 
 **The witness is a family, not a model.** One model shows `Live` holds at one
 horizon; the claim needed is that every horizon is reachable. `Ugrow N` takes
