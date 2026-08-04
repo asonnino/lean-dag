@@ -38,10 +38,19 @@ It also abstracts the right thing. Nothing in the development cares *how*
 blocks propagate, only that they do — and the assumption is realisable by
 ordinary gossip, so it cannot be quietly inconsistent.
 
+**But views carry only half of it.** View convergence gives L3 directly: the
+eventual common view *is* `View.full` (§4.2). It does **not** give
+honest-to-honest coverage, because a block's references are frozen when it is
+built and no later convergence enlarges them (§4.3). That is why
+`Synchronised` is stated on `refs` rather than on views — the one place the
+notes' framing does not reach.
+
 ## 3. What must be added
 
-Liveness needs two primitives the static model does not have, and it is worth
-being explicit that these are **protocol behaviour**, not DAG properties.
+Liveness needs three primitives the static model does not have, and it is
+worth being explicit about what kind of thing each is: (a) and (c) are
+**protocol behaviour**; (b) is an **outcome** the protocol produces but cannot
+name. None of the three is a DAG property.
 
 **(a) Correct validators produce blocks.** `Correct` currently means only
 *does not equivocate* — a purely negative condition. Every liveness statement
@@ -58,9 +67,10 @@ synchrony, and it is what makes the pre-GST results go through.
 do not. After GST, every correct block references every correct block of the
 round below. Without (b) correct validators race ahead under perfect
 synchrony and never vote for the leader, so nothing commits. This is the
-**synchrony** assumption, and §5's `Synchronised` is where it lives. It is
-not leader-specific — catching the leader's block is *why* we want it, not
-what it says.
+**synchrony** assumption, and §5's `Synchronised` is where it lives — for
+now; open question 7 splits it into an implementable rule and a delivery
+assumption. It is not leader-specific: catching the leader's block is *why*
+we want it, not what it says.
 
 **This is an outcome, not an instruction.** A validator cannot tell which of
 its peers are correct, so "wait for the correct blocks" is not something it
@@ -145,7 +155,7 @@ precisely the quantitative content already dropped with Δ (§4.3). It is not
 evasion: the framing is correctly reporting that the distinction is not
 observable in it.
 
-### 4.3 After R — honest-to-honest coverage, and why it must be assumed
+### 4.3 After R — honest-to-honest coverage, and why views do not give it
 
 The final phase is *"all correct blocks contain all other correct blocks
 because of the sufficient delay"*.
@@ -190,18 +200,23 @@ Raising the timeout when commits stall is what eventually pushes the period
 past the true delay.
 
 `Synchronised R` is therefore the *outcome* of that feedback loop once the
-network settles, not a rule any validator follows. That is another reason it
-has to be assumed rather than derived: it is stated in terms the protocol
-cannot itself observe, and the loop that delivers it is driven by liveness
-failure — the very thing being proved away.
+network settles, not a rule any validator follows. It is stated in terms the
+protocol cannot itself observe, and the loop that delivers it is driven by
+liveness failure — the very thing being proved away.
 
-`Synchronised R` therefore encodes *both* the network guarantee and rule (3b)
-in one object. That is a modelling defect rather than a necessity, and open
-question 7 records how to split it: `Synchronised` becomes a **theorem**,
-derived from a protocol rule and a delivery assumption stated separately.
-Neither piece is itself derivable — this development has no time model, so
-the chain has to bottom out at delivery — but each is then a single kind of
-thing.
+It also welds two unlike things into one object: the network guarantee and
+rule (3b). That is a modelling defect rather than a necessity, and open
+question 7 records the split — `Synchronised` becomes a **theorem**, derived
+from an implementable protocol rule plus a delivery assumption. The timeout
+story above then attaches to something real: a timeout governs what a
+validator *holds*, which is a notion the split introduces and `refs` alone
+cannot express.
+
+What the split does **not** do is make anything unconditional. There is no
+time model here, so the chain bottoms out at delivery: the timing content
+still enters as an assumption, only a cleaner one. And this section's argument
+is untouched either way — coverage does not follow from view convergence,
+however the assumption is packaged.
 
 **(assumption)** No wall clock and **no Δ**. Δ would force views indexed by an
 instant and every statement quantified over instants, for no proof content:
@@ -227,8 +242,10 @@ round below.
 
 `R` is **not** GST: it is the round from which synchrony has fully taken
 effect (§4.2). This single predicate carries both the network guarantee and
-the waiting rule (§3b), because honest-to-honest coverage cannot be derived
-from view convergence alone (§4.3).
+rule (§3b), because honest-to-honest coverage does not follow from view
+convergence alone (§4.3). Open question 7 splits it and makes this a
+*theorem*; the statement below is unchanged by that — only how it is
+obtained.
 
 Both quantifiers are restricted to `Correct`, and deliberately: a Byzantine
 validator may publish nothing, or publish and withhold, so no assumption
@@ -256,7 +273,7 @@ def FairSchedule : Prop :=
 
 ## 6. The results
 
-### Pre-GST
+### Without synchrony
 
 - **L0 — The DAG is dense below its frontier.** If any block exists at round
   `r`, then every round `n < r` has at least `2f+1` distinct authors.
@@ -380,7 +397,7 @@ def FairSchedule : Prop :=
 | L3 | `View.full`, then L2 instantiated | low |
 | L1 | `Live`, then no-stall by induction on rounds | low |
 | — | **a model satisfying `Live` and `Synchronised`** | low, and required |
-| L4 | `Synchronised`, then the two-layer argument | medium — the only real proof |
+| L4 | `Live` + `Synchronised`, then the two-layer argument | medium — the only real proof |
 | L5 | vacuity of the `∀`-over-candidates premise | low |
 | L6 | `FairSchedule`, then L4 | low |
 | L7 | `Delivery`, then `Synchronised` as a theorem | low — see question 7 |
