@@ -181,10 +181,12 @@ horizon down as **tight**: L1 reaches round `N` and stops, and it stops
 because there is genuinely nothing above. -/
 
 /-- **L1 applied.** Every correct validator has a block at the top round. -/
-example (N : ℕ) : Populated (Ugrow N) N := no_stall (ugrow_live N) (ugrow_deliversQuorum N) N (le_refl N)
+example (N : ℕ) : Populated (Ugrow N) N :=
+  no_stall (ugrow_live N) (ugrow_deliversQuorum N) N (le_refl N)
 
 /-- And at every round below it. -/
-example (N r : ℕ) (h : r ≤ N) : Populated (Ugrow N) r := no_stall (ugrow_live N) (ugrow_deliversQuorum N) r h
+example (N r : ℕ) (h : r ≤ N) : Populated (Ugrow N) r :=
+  no_stall (ugrow_live N) (ugrow_deliversQuorum N) r h
 
 /-- The quorum corollary, which L4 will consume. -/
 example (N r : ℕ) (h : r ≤ N) : 2 * Faults.f (Fin 4) + 1 ≤ (authorsAt (Ugrow N) r).card :=
