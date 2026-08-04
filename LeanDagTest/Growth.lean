@@ -1,5 +1,6 @@
 import Mathlib
 import LeanDag.Liveness
+import LeanDag.Timing
 
 /-!
 # `Ugrow` — a witness family for `Live`
@@ -318,7 +319,65 @@ example (N k : ℕ) (h : 3 * k + 2 ≤ N) :
         (by simp only [fairSlots_slotRound]; omega)))
     (by simp only [fairSlots_leader]; decide)
 
+/-! ## The timing layer against the witness
+
+Non-vacuity for `Timing`. Writing this is what caught the horizon bug in the
+structure — `blk` at every round would have forced infinitely many blocks into
+a `Finset`, exactly as the first `Live` did.
+
+Real time is `2 ^ n`: validator `v` builds its round-`n` block at time `2 ^ n`
+with a timeout of `2 ^ n`, so the backoff is unbounded and monotone, which is
+all `exists_synchronisedOn_of_backoff` asks of it. Drift is `0` and delay is
+`0` — this is the no-adversity case, which is the point: it shows the
+hypotheses are *satisfiable*, not that they are easy to meet. -/
+
+def ugrowTiming (N : ℕ) : Timing (Ugrow N) {1, 2, 3} N where
+  blk v n := 4 * n + (v : ℕ)
+  built _ n := 2 ^ n
+  timeout n := 2 ^ n
+  gst := 0
+  delay := 0
+  rounds_le b hb := by
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, growBlock_round]
+    omega
+  blk_mem v _ n hn := by
+    have := v.isLt
+    simp only [ugrow_ids, Finset.mem_range]
+    omega
+  blk_creator v _ n _ := by
+    have := v.isLt
+    apply Fin.ext
+    simp only [ugrow_block, growBlock_creator_val]
+    omega
+  blk_round v _ n _ := by
+    have := v.isLt
+    simp only [ugrow_block, growBlock_round]
+    omega
+  waits _ _ n _ := by
+    have h : 2 ^ n + 2 ^ n = 2 ^ (n + 1) := by ring
+    omega
+  timeout_pos n := Nat.one_le_two_pow
+  covers v _ w _ n _ _ _ := by
+    have hv := v.isLt
+    have hw := w.isLt
+    simp only [ugrow_block, mem_growBlock_refs]
+    omega
+
+theorem ugrowTiming_drift (N : ℕ) : (ugrowTiming N).Drift 0 :=
+  fun _ _ _ _ _ _ => Nat.le_add_right _ _
+
+/-- **Q1 applied.** `SynchronisedOn` is *derived* here, not assumed — from
+GST plus an unbounded backoff. -/
+example (N : ℕ) : ∃ R, SynchronisedOn (Ugrow N) {1, 2, 3} R :=
+  exists_synchronisedOn_of_backoff (ugrowTiming N) (by decide) (ugrowTiming_drift N)
+    (fun _ _ h => Nat.pow_le_pow_right (by omega) h)
+    (fun m => ⟨m, Nat.le_of_lt (Nat.lt_two_pow_self)⟩)
+
 #print axioms synchronised_of_delivery
 #print axioms directCommit_of_leader_mem
+#print axioms Timing.synchronisedOn_of_timing
+#print axioms exists_synchronisedOn_of_backoff
+#print axioms ugrowTiming_drift
 
 end LeanDagTest
