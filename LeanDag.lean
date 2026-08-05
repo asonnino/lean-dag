@@ -10,3 +10,5 @@ import LeanDag.Schedule
 import LeanDag.Liveness
 import LeanDag.Timing
 import LeanDag.Quantitative
+import LeanDag.History
+import LeanDag.Exposure
