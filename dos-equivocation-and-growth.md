@@ -237,6 +237,24 @@ Write `m_s` for the number of distinct blocks of `H(b)` at round `s`.
   block — the two references it would need are exactly what
   `distinct_creators` forbids. §9 is what follows from that.
 
+- **D8a (exposure is structural, not accidental).** A validator whose accepted
+  set spans both branches of an equivocation exposes its author **in its own
+  next block**, since that block's history is the union of the accepted
+  histories (D3).
+
+  D8 says the reference graph cannot *report* an equivocation, and it is easy
+  to read that as making exposure a matter of luck — two branches happening to
+  be referenced together. It is not. A validator accepts one block per author
+  and references what it accepted, so if any two authors it accepts sit on
+  different branches, the merge is performed by the validator itself as a
+  matter of course. Spanning is the default, not the exception: the branches
+  are spread across authors, and the acceptance rule takes one block from each.
+
+  Confirmed on the witness (`LeanDagTest/Exposure.lean`): `Umerge`'s round-2
+  blocks are exposed to validator 0 precisely because their authors accepted
+  `6` and `7`, which disagree. Nothing was arranged to make that happen beyond
+  building blocks normally.
+
 - **D9 (the layer recurrence).** `m_s ≤ (3f+1) + f · m_{s+1}`.
 
   Each block of layer `s+1` references `2f+1` distinct creators, of which at
@@ -467,6 +485,44 @@ deliver a **correct** quorum. That is an assumption change rather than a proof
 change, but it should be made deliberately (§12 Q1) rather than discovered
 halfway through a proof.
 
+### The cost is larger than that, and it is the condition's real weakness
+
+- **D15a (exclusion consumes the entire quorum slack).** Once every Byzantine
+  author is exposed to a block, that block must reference **every correct block
+  of the round below**.
+
+  A block needs `2f+1` distinct creators and may not name an exposed author.
+  Exposed authors are Byzantine (D15), so the correct validators are always
+  available — but `|Correct| = 3f+1 − |byzantine|`, which is exactly `2f+1` when
+  the fault budget is spent. The margin is `f − |byzantine|`, and at the bound
+  it is **zero**.
+
+  This is visible on the witness: `Umerge`'s round-2 blocks reference `{6,7,8}`
+  not by choice but because, validator 0 being exposed, `{1,2,3}` is the only
+  set of three distinct admissible authors there is.
+
+**What that means.** Block production degrades from *wait for `2f+1` of `3f+1`*
+to *wait for all `2f+1` correct validators*, with no tolerance for one that is
+slow, restarting, or briefly partitioned — the very case `liveness.md` S5 went
+out of its way to accommodate. Worse, the adversary can *choose* to trigger it:
+equivocate early, be excluded, and every correct validator's delivery
+requirement rises to 100% of the correct population for the rest of time.
+
+So the condition buys a storage bound and sells liveness margin, and the price
+is not small. Three responses, in the order they should be tried:
+
+1. **Accept it after `R` only.** After `R` synchrony delivers every correct
+   block anyway (`EventuallyDelivers`), so the zero-margin regime costs nothing
+   there. Before `R` the condition would have to be off — which is awkward,
+   since a validity condition cannot be switched on by the clock.
+2. **Take the forward-looking variant** (§12 Q3), which excludes *lies* rather
+   than *liars*: an equivocator's later blocks stay referenceable provided their
+   histories are consistent, so the slack survives. This now looks like the
+   more important of the open questions rather than a refinement.
+3. **Weaken the reference requirement** for blocks that have exhausted the
+   admissible set — which changes `ValidWrt`, and is exactly what §6 was
+   designed to avoid.
+
 ## 9. Exclusion after `R`
 
 By D8 an equivocation is visible only where two branches merge, and by D11
@@ -639,11 +695,27 @@ satisfy **vacuously**.
 
 Suggested order, easiest first:
 
-1. `history` as a `Finset` (§13 S6), `ExposedIn`, D11, D12, D13 — no new
-   machinery, all off `Reaches` and T6a.
-2. `View.ofAccepted`, D1–D4 — the bridge. Independent of everything else, and
-   what makes the later bounds worth having.
+1. ~~`history` as a `Finset` (§13 S6), `ExposedIn`, D11, D12, D13.~~ **Done**
+   (`LeanDag/History.lean`, `LeanDag/Exposure.lean`). The `f = 1` biting
+   witness came with it rather than at step 5: it was ~50 lines, and the
+   contrast between `U6` (an equivocation nobody built on, so nothing exposed)
+   and `Umerge` (the branches merged, so exposure and exclusion) turned out to
+   be the clearest way to exhibit D8 and D8a at once.
+2. ~~`View.ofAccepted`, D1–D4 — the bridge.~~ **Done**
+   (`LeanDag/Acceptance.lean`). On the witness the D2 bound reads 11 ≤ 36: the
+   accepted histories overlap almost entirely, since the round-2 blocks share
+   their round-1 references. That slack is the correct backbone of §10's
+   candidate proof A, showing up as a number.
 3. D5, D6, D19a, D19b — counting; needs the round-partition lemma and L0.
+
+   **A design point discovered at step 2.** "No equivocation" is a property of
+   a *set of blocks*, and the set differs by result: D5 wants it of `V.ids`,
+   D19a of `H(b)`. These do not coincide — a view generated by an accepted set
+   can hold both halves of an equivocation with *neither accepted block*
+   exposed, which is precisely D8a seen from below. So the counting lemma
+   should be proved once for an arbitrary `Finset BlockId` on which `creator`
+   is injective per round, and applied twice, rather than stated for views and
+   re-proved for histories.
 4. D14 — free, by construction of §6.
 5. D7, D8 — one line each, and the facts §9 turns on. Then the `f = 1`
    biting witness, so that nothing after this point is checked against a
@@ -653,6 +725,13 @@ Suggested order, easiest first:
 7. **D16, D17, D18** — the first results with real content. D17 is the one that
    needs care, since it quantifies over Byzantine blocks too.
 8. The `f = 2` model, and the C1 counterexample search against it.
+
+   **Check `decide` cost before committing to this.** `ExposedIn` searches a
+   history quadratically and `DoSValid` ranges over every block and reference,
+   which is comfortable at 13 blocks over `Fin 4` but is exactly the shape that
+   explodes on a model built to have large histories. If `decide` will not
+   carry it, the model's facts have to be proved rather than computed, which is
+   a different and much larger job.
 9. C1, or its refutation, or a weakened form.
 
 Steps 1–7 are believed routine. Step 9 is the research.
@@ -660,8 +739,11 @@ Steps 1–7 are believed routine. Step 9 is the research.
 ## 12. Open questions
 
 **Q1 — Should `DeliversQuorum` be strengthened to a correct quorum?** (§8.)
-The alternative is to accept that L1 holds only after `R` under `DoSValid`.
-`liveness.md` Q6 already asks a version of this for a different reason; the two
+D15a forces the issue: at the fault bound *a correct quorum is every correct
+validator*, so the strengthened form is not "a quorum of correct authors" but
+`EventuallyDelivers` itself. That is available only after `R`, so the honest
+options are to accept L1 only after `R`, or to take Q3's variant and keep the
+slack. `liveness.md` Q6 asks a version of this for a different reason; the two
 answers should agree.
 
 **Q2 — What is the fallback if C1 is false?** If the adversary can sustain
@@ -677,17 +759,27 @@ the model. None is attractive, which is a reason to look for the
 counterexample early (§10).
 
 **Q3 — Should the condition be *forward-looking* instead?** As stated, a block
-may not reference an exposed author. A weaker and possibly sufficient form is
-that a block may not reference a *block* whose author is exposed **in that
-block's own history** — closer to "do not build on a liar's lies" than "do not
-build on a liar". Worth checking whether the weaker form still supports D17,
-since it costs strictly less liveness.
+may not reference an exposed author. A weaker form is that a block may not
+reference a *block* whose own history is inconsistent — "do not build on a
+liar's lies" rather than "do not build on a liar", so an equivocator's later,
+consistent blocks stay referenceable.
 
-**Q4 — Where does it live?** `ExposedIn`, D11, D12, D13 and D15 have no
-dependency on the counting results and could sit beside `CausalHistory`; the
-size results need L0 and therefore sit above `Liveness`; the bridge (§3) needs
-only `View`. That argues for two files, with the DoS condition and the bounds
-in the upper one.
+**D15a promotes this from a refinement to the most consequential open
+question.** Excluding authors costs the whole quorum margin; excluding lies
+does not, because the equivocator keeps contributing admissible blocks. What
+has to be checked is whether the weaker form still supports D16–D18 — exposure
+must still propagate and still bite — and whether it still bounds histories at
+all, since an equivocator that is never excluded can keep feeding branches into
+the DAG. It may well trade the liveness problem for the storage problem it was
+meant to solve, and that is exactly what needs working out.
+
+**Q4 — Where does it live?** Settled for what is built, open for the rest.
+`LeanDag/History.lean` (the `Finset` history) and `LeanDag/Exposure.lean`
+(`ExposedIn`, `DoSValid`, D11–D13) sit directly above `CausalHistory`;
+`LeanDag/Acceptance.lean` (§3) needs only those and `View`. The counting
+results need L0 and so must sit above `Liveness` — which is the one remaining
+placement decision, and it means the file holding D5, D6 and D19a/b cannot be the file
+holding D11–D13.
 
 ## 13. Settled
 
@@ -792,6 +884,14 @@ with one lemma to earn: `b ∈ U.ids → (i ∈ history U b ↔ Reaches U b i)`,
 — the round strictly decreases per step, so the fuel is never short. The
 alternative, a `Classical.dec` instance, would have blocked `decide` in the
 concrete models on which §11 depends.
+
+**Confirmed in practice.** `history Umerge 9`, `DoSValid Umerge` and
+`∀ b ∈ ids, ∀ X, ExposedIn Umerge b X → X = 0` all settle by `decide` on the
+step-1 witness. One friction cost worth knowing: peeling a single layer off a
+history is not `rfl`, because the recursion hands out `round b` steps while
+each reference wants `round + 1` of its own. `mem_history_succ_iff` reconciles
+them once, and the layer arguments of §5 and §10 should go through it rather
+than unfolding `historyUpto` by hand.
 
 **S7 — `Delivery` requires self-reference.** D4 needs a correct validator's
 block to reference its own previous block. DAG protocols do this anyway, it is
