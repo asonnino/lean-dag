@@ -805,6 +805,123 @@ outside the model. The DoS condition and a rate limit are complementary — the
 condition stops an equivocator contributing forever, the rate limit stops it
 contributing much at once — and neither substitutes for the other.
 
+### 10.5 Reopened: the exact ceiling, and the self-parent repair
+
+The reframing above answered *rate*; it left *size* — the largest history a
+single valid block can carry — unexamined. S4 prices the residual damage by
+exactly that quantity, so the question was posed directly: **what is the
+biggest `|H(b)|` a round-`r` block can have and stay valid under `DoSValid`?**
+Working it through produced three findings, the last of which changed the
+model.
+
+**Exponential was never achievable.** D9's recurrence needs each block to name
+`f` *fresh* Byzantine blocks per level, compounding downward. But a block that
+names authors `X` and `Y` is clean about both over its **entire** history, so
+wherever its two sub-branches both contain `X`-blocks at a round, those blocks
+must coincide — named branches merge instead of multiplying. Branching in any
+author can therefore occur at most **once per round**, time-staggered, never
+compounding per level. The intuition that an exponential history must
+somewhere hold many equivocating blocks at one round — and is therefore
+exposed — is exactly right, and it is D11 read as a size statement.
+
+**But super-linear was achievable — the laundering family.** For `f ≥ 3`,
+three roles evade every proved result. A *supply* author `X` maintains many
+disjoint full chains, each individually clean. A *carrier* author `Y` emits
+one fresh single block per round, referencing the tip of a fresh supply chain
+plus correct blocks — clean about `X` (it sees one chain) precisely because
+**it carries none of its own author's past**. A *spine* author `Z` chains to
+itself and names one carrier per round — clean about `Y` (one carrier per
+round) and about `Z` (its own chain), and dirty about `X`, which it simply
+never names. Every block is valid and `DoSValid`, and the spine's history
+holds `Σ_t t ≈ r²/2` supply blocks. Stacking the pattern gives
+`Θ(r^{⌊f/2⌋+1})`; at `f ≤ 2` there is no third author to play spine and the
+correct backbone poisons any substitute, so the family needs `f ≥ 3`. **C1′
+was therefore false in the model as it stood — constructively**, by a
+pencil-and-paper family rather than the never-found `decide` witness, which is
+consistent with §11 step 10's finding that no such witness could be checked.
+
+**The family needs exactly one permission: a block that sheds its author's
+past.** Real DAG protocols do not grant it — a block includes its author's
+previous block. The model now does the same (**S10**): `ValidWrt` has a fourth
+field,
+
+```lean
+self_parent : 0 < b.round → ∃ i ∈ b.refs, (blk i).creator = b.creator
+```
+
+— *some* block by the author, not a unique one, so an equivocator's blocks
+form a forest of predecessor chains and the condition does not pretend
+otherwise. Strengthening validity only shrinks the set of valid universes, so
+**every theorem in the development holds verbatim**; only the witnesses needed
+repair (§14).
+
+What the field proves immediately, all in `LeanDag/SelfParent.lean`:
+
+- **D20 (chains reach the ground).** A block's history holds a block by its
+  own author at *every* round below it — contiguity, the exact thing carriers
+  violated. (`exists_self_ancestor`)
+- **D21 (no self-laundering).** Under `DoSValid` no block is exposed to its
+  own author: it cites its self-parent, and citing an exposed author is
+  forbidden. An author whose equivocation is visible in a history can never
+  build on that history again — exclusion by exposure and exclusion from
+  *building* become the same fact. (`not_exposedIn_self_creator`)
+- **D22 (the self price).** The own-author content of a history is exactly
+  `r + 1` blocks — one per round, the chain, nothing else.
+  (`card_historyBlocksOf_self`, `card_filter_self_creator`)
+- **D23 (the reference price).** Naming another author costs exactly `r`
+  blocks: one per round strictly below, the named block's whole chain — no
+  more (that would be exposure) and no fewer (D20). D19b's `≤` is now an `=`.
+  (`card_historyBlocksOf_of_mem_refs`, `card_filter_creator_of_mem_refs`)
+- **D24 (the floor).** Pure validity, no DoS hypothesis: a round-`r` block
+  carries at least `(2f+1)·r + 1` blocks — a full disjoint chain per quorum
+  author, plus itself. Histories now have a *minimum* size, so the question
+  is two-sided: the floor is `Θ(f·r)`, and the target ceiling matches it.
+  (`card_history_ge`)
+
+**C1′ is conjectured true again, and the argument is the adoption collapse —
+now largely proved** (`LeanDag/Adoption.lean`). The machinery:
+
+- **Chains made countable.** `topsOf U b X` — the `X`-blocks of `H(b)` with
+  no `X`-authored child there. Every `X`-block lies on the chain below some
+  top (`exists_top_of_mem_history`), and a top's own history holds one
+  `X`-block per round (D21 applied to the top), so an author's whole
+  contribution is at most `tops × (r+1)`
+  (`card_filter_creator_le_card_topsOf`). **The number of tops is the number
+  of chains**, and on the witness it is exactly the equivocation made
+  visible: validator 0 has two tops in `Umerge`'s merge history — its two
+  geneses — where honesty gives one.
+- **Unexposed means one chain**
+  (`mem_history_of_creator_eq_of_not_exposedIn`): two same-author blocks of
+  a history whose author is unexposed there are chain-related. D11's count
+  plus D20's contiguity, in pointwise form.
+- **The adoption collapse** (`top_eq_of_mem_namer_history`): two tops, one
+  inside the history of a block referencing the other, coincide — a namer's
+  history has room for only one `X`-chain, and a named `X`-block strictly
+  below another acquires an `X`-child there, so it was no top. Hence one
+  chain adopts one top, and **distinct tops need distinct namer authors**.
+
+What this proves outright — **the main bound, unique-equivocator regime**
+(`card_history_le_of_unique_equivocator`): if at most one author is exposed
+in `H(b)` then
+
+> `|H(b)| ≤ (6f+1)(r+1)` — linear in `r`,
+
+with the exposed fiber priced at `tops × rounds ≤ 3f·(r+1)` and every other
+fiber a single chain. The hypothesis is *free* at `f ≤ 1`, since exposure is
+Byzantine (D15) and the Byzantine set has at most one member — so
+**C1′ holds unconditionally at `f = 1`** (`card_history_le_of_f_le_one`),
+and with D24 the answer to this section's question is pinned from both
+sides: `(2f+1)·r + 1 ≤ |H(b)| ≤ (6f+1)(r+1)`.
+
+What remains is the multi-equivocator case, `f ≥ 2` with two or more
+*exposed* authors: exposed chains can then name each other's tops, and the
+top count needs the distinct-author-sequence induction sketched above —
+every naming pedigree climbs through strictly-later rounds, repeats of an
+author collapse into that author's own chain (D21 again), so pedigrees carry
+pairwise-distinct authors and number at most `c(f) ≤ (3f+1)!`-many. The
+machinery above is that induction's base and step material; what is missing
+is only the recursion over author sets.
+
 ## 11. Staging and witnesses
 
 The house rule — *a definition gets a witness before anything is proved from
@@ -1182,11 +1299,31 @@ recorded so they are not revisited from scratch:
   of `r`. Trading the whole post-`R` exclusion story for a margin that D15b
   shows is not needed is a bad exchange.
 
+**S10 — The self-parent condition.** `ValidWrt` requires every non-genesis
+block to reference *some* block by its own creator (§10.5). Adopted because
+the laundering family — the constructive refutation of C1′ in the weaker
+model — runs entirely on blocks that shed their author's past, which real
+DAG protocols already forbid; the model was more permissive than the thing it
+models. Three consequences of how it is stated:
+
+- *"Some", not "the".* An equivocator's blocks form a forest of predecessor
+  chains. Forcing uniqueness would be a non-equivocation assumption in
+  disguise, and is not needed: every collapse argument runs on the namer's
+  cleanliness, not the equivocator's honesty.
+- It is a **strengthening**, so every existing theorem holds verbatim; only
+  witnesses needed repair. The repair also surfaced a small semantic shift:
+  an author now always votes for its own block, so `supporters` is never
+  empty — a directly-skipped block has its author's self-vote and nothing
+  else, which changes three counted examples and no theorem.
+- S7 (`Delivery` self-reference, for correct validators) is subsumed for
+  validity purposes: what S7 asked of correct behaviour, S10 now demands of
+  every valid block. S7 keeps its role on the delivery side.
+
 ## 14. What is proved
 
-Every result of §3–§7, with its Lean name. `History`, `Exposure`, `Acceptance`
-and `Counting` are `LeanDag/`; the witnesses are `LeanDagTest/`. The whole
-development builds with no `sorry` and the usual three axioms.
+Every result of §3–§7, with its Lean name. `History`, `Exposure`, `Acceptance`,
+`Counting` and `SelfParent` are `LeanDag/`; the witnesses are `LeanDagTest/`.
+The whole development builds with no `sorry` and the usual three axioms.
 
 ### Proved
 
@@ -1219,6 +1356,16 @@ development builds with no `sorry` and the usual three axioms.
 | **D15b** | the correct set alone meets the threshold | `correctBlocksAt_admissible_quorum` | `Exclusion` |
 | — | the condition is implementable | `not_exposedIn_refs_of_policy` | `Exclusion` |
 | — | the quorum is derivable after `R` | `card_creators_accepted_of_eventuallyDelivers` | `Exclusion` |
+| **D20** | chains reach the ground | `exists_self_ancestor` | `SelfParent` |
+| **D21** | no self-laundering | `not_exposedIn_self_creator` | `SelfParent` |
+| **D22** | the self price: exactly `r + 1` | `card_historyBlocksOf_self`, `card_filter_self_creator` | `SelfParent` |
+| **D23** | the reference price: exactly `r` | `card_historyBlocksOf_of_mem_refs`, `card_filter_creator_of_mem_refs` | `SelfParent` |
+| **D24** | the floor: `(2f+1)·r + 1 ≤ \|H(b)\|` | `card_history_ge` | `SelfParent` |
+| — | unexposed means one chain | `mem_history_of_creator_eq_of_not_exposedIn` | `Adoption` |
+| — | tops: chains made countable | `topsOf`, `exists_top_of_mem_history`, `card_filter_creator_le_card_topsOf` | `Adoption` |
+| — | the adoption collapse | `top_eq_of_mem_namer_history`, `card_topsOf_le` | `Adoption` |
+| **B1** | the main bound, unique-equivocator: `\|H(b)\| ≤ (6f+1)(r+1)` | `card_history_le_of_unique_equivocator`, `…_of_card_exposedTo_le_one` | `Adoption` |
+| **C1′ (f ≤ 1)** | unconditional linearity at one fault | `card_history_le_of_f_le_one` | `Adoption` |
 
 Supporting definitions: `history` and `mem_history_iff` (S6, `History`);
 `ExposedIn`, `DoSValid`, `EquivPair` (`Exposure`); `Accepted` (`Acceptance`);
@@ -1241,15 +1388,34 @@ perfectly valid block that no later block may name. `U6` is its foil, an
 equivocation nobody built on and therefore never exposed. `U3` pins D5 as
 tight.
 
+**`LeanDagTest/SelfParent`** reads D20–D24 off `Umerge` and `Uexcl`: validator
+1's chain `12 → 9 → 6 → 1` is exactly one block per round (D22, totalled to
+`4 = r + 1`); referencing validator 2's block costs its chain `10 → 7 → 2`,
+exactly `3 = r` blocks (D23); the histories meet the floor with room — `12`
+blocks against a floor of `10`, and `18` against `16` on the six-round
+`Uexcl` — with the counts confirmed twice, once by theorem and once by
+`decide` on the raw data.
+
+**`LeanDagTest/Adoption`** counts the chains: in `H(12)` of `Umerge` the
+equivocator has exactly **two tops** — its two geneses, `topsOf = {0, 4}` —
+against one for every honest author, within `card_topsOf_le`'s ceiling of
+`3f`. B1 then bounds the same dirty history end to end (`12 ≤ 28`), and on
+`Uexcl` floor and ceiling hold together: `16 ≤ 18 ≤ 42` at round 5.
+
+The S10 repair itself touched only `Model.lean`:
+validator 3's blocks (and dependents) gained their self-parents, and three
+vote-count examples shifted because an author now always votes for its own
+block. `Umerge`, `Uexcl`, `Ufault` already satisfied the condition untouched,
+and `Ugrow` proves it with one new clause.
+
 ### Not yet proved
 
 | | |
 |---|---|
-| **C1′** | **believed false** — §10 records the attempt, where it fails, and why |
+| **C1′, `f ≥ 2` multi-equivocator** | was **false** in the pre-S10 model — §10.5 constructs the laundering family. Under S10: **proved** for `f ≤ 1` and, at any `f`, whenever at most one author is exposed in the history (B1, `(6f+1)(r+1)`). What remains is two-plus *exposed* authors at once, where exposed chains can name each other's tops: the distinct-author-sequence induction of §10.5, whose base and step are the proved adoption machinery |
 
-Everything else in the plan is proved. C1′ was the last open item and is now
-believed unattainable *as a size bound*; what it is replaced by, **C2**, is
-already proved. See §10, and §12 Q1 for the mechanism that has to do the rest.
+See §10.5 for the argument and the remaining recursion, and §12 Q1 for the
+network-layer mechanism that bounds what no DAG condition can.
 
 The gap C1′ has to close is visible on the witness rather than merely stated:
 validator 1, which block `9` references, contributes three blocks to `H(9)` —

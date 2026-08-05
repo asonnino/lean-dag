@@ -9,3 +9,5 @@ import LeanDagTest.Counting
 import LeanDagTest.SafetyUnderDoS
 import LeanDagTest.Exclusion
 import LeanDagTest.TwoFaults
+import LeanDagTest.SelfParent
+import LeanDagTest.Adoption

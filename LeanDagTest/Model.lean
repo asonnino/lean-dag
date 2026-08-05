@@ -28,12 +28,14 @@ instance : Faults (Fin 4) where
   card_byzantine := by decide
 
 /-- ids 0-3: genesis, one per validator.
-    ids 4-7: round 1, validator `i-4`, each referencing genesis `{0,1,2}`. -/
+    ids 4-7: round 1, validator `i-4`, each referencing a quorum of genesis
+    blocks that includes its own (the self-parent condition). -/
 def lk : Fin 8 → Block (Fin 4) (Fin 8) Unit := fun i =>
   if h : (i : ℕ) < 4 then
     { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
   else
-    { round := 1, creator := ⟨(i : ℕ) - 4, by omega⟩, refs := {0, 1, 2}, payload := () }
+    { round := 1, creator := ⟨(i : ℕ) - 4, by omega⟩,
+      refs := if (i : ℕ) = 7 then {1, 2, 3} else {0, 1, 2}, payload := () }
 
 /-- A genuine two-round block DAG satisfying ALL FOUR universe conditions. -/
 def U : BlockUniverse (Fin 4) (Fin 8) Unit where
@@ -110,9 +112,11 @@ def lk3 : Fin 12 → Block (Fin 4) (Fin 12) Unit := fun i =>
   if h4 : (i : ℕ) < 4 then
     { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
   else if h8 : (i : ℕ) < 8 then
-    { round := 1, creator := ⟨(i : ℕ) - 4, by omega⟩, refs := {0, 1, 2}, payload := () }
+    { round := 1, creator := ⟨(i : ℕ) - 4, by omega⟩,
+      refs := if (i : ℕ) = 7 then {1, 2, 3} else {0, 1, 2}, payload := () }
   else
-    { round := 2, creator := ⟨(i : ℕ) - 8, by omega⟩, refs := {4, 5, 6}, payload := () }
+    { round := 2, creator := ⟨(i : ℕ) - 8, by omega⟩,
+      refs := if (i : ℕ) = 11 then {5, 6, 7} else {4, 5, 6}, payload := () }
 
 def U3 : BlockUniverse (Fin 4) (Fin 12) Unit where
   ids := Finset.univ
@@ -197,7 +201,8 @@ def lk4 : Fin 12 → Block (Fin 4) (Fin 12) Unit := fun i =>
   if h4 : (i : ℕ) < 4 then
     { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
   else if h8 : (i : ℕ) < 8 then
-    { round := 1, creator := ⟨(i : ℕ) - 4, by omega⟩, refs := {0, 1, 2}, payload := () }
+    { round := 1, creator := ⟨(i : ℕ) - 4, by omega⟩,
+      refs := if (i : ℕ) = 7 then {1, 2, 3} else {0, 1, 2}, payload := () }
   else
     { round := 2, creator := ⟨(i : ℕ) - 8, by omega⟩,
       refs := if (i : ℕ) = 8 then {4, 5, 6}
@@ -242,10 +247,13 @@ example : ∃ bw ∈ U4.ids, (U4.block bw).round = 0 ∧
 Without both of these the M-theorems would be vacuous.
 -/
 
--- Every round-1 block votes for genesis 0; block 3 gets no votes at all.
-example : supporters U3 0 1 = {0, 1, 2, 3} := by decide
-example : supporters U3 3 1 = ∅ := by decide
-example : blames U3 3 1 = {0, 1, 2, 3} := by decide
+-- Genesis 0 is voted for by three validators; genesis 3's only vote is its
+-- own author's self-parent reference, which the self-parent condition forces
+-- — a block can no longer be *entirely* unsupported, but one self-vote is
+-- still far short of anything.
+example : supporters U3 0 1 = {0, 1, 2} := by decide
+example : supporters U3 3 1 = {3} := by decide
+example : blames U3 3 1 = {0, 1, 2} := by decide
 
 -- Block 8 certifies genesis 0: its refs {4,5,6} are votes by 3 = 2f+1 authors.
 example : Certifies U3 8 0 := by decide
@@ -283,11 +291,14 @@ def lk5 : Fin 16 → Block (Fin 4) (Fin 16) Unit := fun i =>
   if h4 : (i : ℕ) < 4 then
     { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
   else if h8 : (i : ℕ) < 8 then
-    { round := 1, creator := ⟨(i : ℕ) - 4, by omega⟩, refs := {0, 1, 2}, payload := () }
+    { round := 1, creator := ⟨(i : ℕ) - 4, by omega⟩,
+      refs := if (i : ℕ) = 7 then {1, 2, 3} else {0, 1, 2}, payload := () }
   else if h12 : (i : ℕ) < 12 then
-    { round := 2, creator := ⟨(i : ℕ) - 8, by omega⟩, refs := {4, 5, 6}, payload := () }
+    { round := 2, creator := ⟨(i : ℕ) - 8, by omega⟩,
+      refs := if (i : ℕ) = 11 then {5, 6, 7} else {4, 5, 6}, payload := () }
   else
-    { round := 3, creator := ⟨(i : ℕ) - 12, by omega⟩, refs := {8, 9, 10}, payload := () }
+    { round := 3, creator := ⟨(i : ℕ) - 12, by omega⟩,
+      refs := if (i : ℕ) = 15 then {9, 10, 11} else {8, 9, 10}, payload := () }
 
 def U5 : BlockUniverse (Fin 4) (Fin 16) Unit where
   ids := Finset.univ
@@ -333,9 +344,11 @@ def lk6 : Fin 13 → Block (Fin 4) (Fin 13) Unit := fun i =>
   else if (i : ℕ) = 4 then
     { round := 0, creator := 0, refs := ∅, payload := () }
   else if h9 : (i : ℕ) < 9 then
-    { round := 1, creator := ⟨(i : ℕ) - 5, by omega⟩, refs := {0, 1, 2}, payload := () }
+    { round := 1, creator := ⟨(i : ℕ) - 5, by omega⟩,
+      refs := if (i : ℕ) = 8 then {1, 2, 3} else {0, 1, 2}, payload := () }
   else
-    { round := 2, creator := ⟨(i : ℕ) - 9, by omega⟩, refs := {5, 6, 7}, payload := () }
+    { round := 2, creator := ⟨(i : ℕ) - 9, by omega⟩,
+      refs := if (i : ℕ) = 12 then {6, 7, 8} else {5, 6, 7}, payload := () }
 
 def U6 : BlockUniverse (Fin 4) (Fin 13) Unit where
   ids := Finset.univ
@@ -462,11 +475,14 @@ def lk7 : Fin 24 → Block (Fin 4) (Fin 24) Unit := fun i =>
     { round := 2, creator := ⟨(i : ℕ) - 8, by omega⟩,
       refs := if (i : ℕ) = 8 then {4, 5, 6} else {5, 6, 7}, payload := () }
   else if h : (i : ℕ) < 16 then
-    { round := 3, creator := ⟨(i : ℕ) - 12, by omega⟩, refs := {8, 9, 10}, payload := () }
+    { round := 3, creator := ⟨(i : ℕ) - 12, by omega⟩,
+      refs := if (i : ℕ) = 15 then {9, 10, 11} else {8, 9, 10}, payload := () }
   else if h : (i : ℕ) < 20 then
-    { round := 4, creator := ⟨(i : ℕ) - 16, by omega⟩, refs := {12, 13, 14}, payload := () }
+    { round := 4, creator := ⟨(i : ℕ) - 16, by omega⟩,
+      refs := if (i : ℕ) = 19 then {13, 14, 15} else {12, 13, 14}, payload := () }
   else
-    { round := 5, creator := ⟨(i : ℕ) - 20, by omega⟩, refs := {16, 17, 18}, payload := () }
+    { round := 5, creator := ⟨(i : ℕ) - 20, by omega⟩,
+      refs := if (i : ℕ) = 23 then {17, 18, 19} else {16, 17, 18}, payload := () }
 
 def U7 : BlockUniverse (Fin 4) (Fin 24) Unit where
   ids := Finset.univ
@@ -531,7 +547,7 @@ example : IsLeaderBlock U5 0 0 := by decide
 example : IsLeaderBlock U5 1 12 := by decide
 
 -- A strictly partial view still reaches the quorum.
-example : certificates U5 0 0 = {8, 9, 10, 11} := by decide
+example : certificates U5 0 0 = {8, 9, 10} := by decide
 example : (11 : Fin 16) ∉ V5'.ids := by decide
 example : DirectCommitIn U5 V5' 0 0 := by decide
 

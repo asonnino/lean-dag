@@ -69,7 +69,7 @@ def Ugrow (N : ℕ) : BlockUniverse (Fin 4) ℕ Unit where
     omega
   valid := by
     intro i _
-    refine ⟨?_, ?_, ?_⟩
+    refine ⟨?_, ?_, ?_, ?_⟩
     · intro j hj
       rw [mem_growBlock_refs] at hj
       simp only [growBlock_round]
@@ -95,6 +95,16 @@ def Ugrow (N : ℕ) : BlockUniverse (Fin 4) ℕ Unit where
           omega
       have hf : Faults.f (Fin 4) = 1 := rfl
       omega
+    · -- self-parent: the block of the same author one round down is
+      -- `4 * (i / 4) - 4 + i % 4`, and it lies in the `Ico`.
+      intro h
+      simp only [growBlock_round] at h
+      refine ⟨4 * (i / 4) - 4 + i % 4, ?_, ?_⟩
+      · rw [mem_growBlock_refs]
+        omega
+      · apply Fin.ext
+        simp only [growBlock_creator_val]
+        omega
   no_equivocation := by
     intro i _ j _ _ hc hr
     have hv : (i % 4) = (j % 4) := by

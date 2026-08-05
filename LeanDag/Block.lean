@@ -71,6 +71,13 @@ structure ValidWrt (blk : BlockId → Block Validator BlockId Payload)
   distinct_creators : ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
   /-- Non-genesis blocks reference a quorum of distinct validators. -/
   quorum : 0 < b.round → 2 * F.f + 1 ≤ (creators blk b).card
+  /-- Non-genesis blocks reference a block by their own creator — *some* such
+  block, not a unique one: an equivocator's blocks form a forest of
+  predecessor chains, one edge per block, and the condition does not (and
+  need not) collapse the forest. Combined with `predecessor` the parent sits
+  at the round immediately below, and with `distinct_creators` it is the
+  *only* reference sharing the block's author. -/
+  self_parent : 0 < b.round → ∃ i ∈ b.refs, (blk i).creator = b.creator
 
 omit [Fintype Validator] F in
 /-- A nonempty creator set can only come from a nonempty set of ids: the
@@ -93,8 +100,10 @@ instance [DecidableEq BlockId] (blk : BlockId → Block Validator BlockId Payloa
   decidable_of_iff
     ((∀ i ∈ b.refs, (blk i).round + 1 = b.round) ∧
       (∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j) ∧
-      (0 < b.round → 2 * F.f + 1 ≤ (creators blk b).card))
-    ⟨fun h => ⟨h.1, h.2.1, h.2.2⟩, fun h => ⟨h.predecessor, h.distinct_creators, h.quorum⟩⟩
+      (0 < b.round → 2 * F.f + 1 ≤ (creators blk b).card) ∧
+      (0 < b.round → ∃ i ∈ b.refs, (blk i).creator = b.creator))
+    ⟨fun h => ⟨h.1, h.2.1, h.2.2.1, h.2.2.2⟩,
+      fun h => ⟨h.predecessor, h.distinct_creators, h.quorum, h.self_parent⟩⟩
 
 namespace ValidWrt
 

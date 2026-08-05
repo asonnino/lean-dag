@@ -12,6 +12,8 @@ import LeanDag.Timing
 import LeanDag.Quantitative
 import LeanDag.History
 import LeanDag.Exposure
+import LeanDag.SelfParent
+import LeanDag.Adoption
 import LeanDag.Acceptance
 import LeanDag.Counting
 import LeanDag.Exclusion
