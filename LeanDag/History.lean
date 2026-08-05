@@ -132,6 +132,30 @@ theorem history_subset_of_reaches {c b : BlockId} (hc : c ∈ U.ids) (h : Reache
   intro i hi
   exact (mem_history_iff hc).mpr (h.trans ((mem_history_iff hb).mp hi))
 
+/-- The one-step unfolding: a history is its block, plus the histories of its
+references. The fuel bookkeeping is what makes this need a proof rather than
+`rfl` — the recursion hands out `round b` steps, and each reference wants
+`round + 1` of its own, which the predecessor condition reconciles. -/
+theorem mem_history_succ_iff {b : BlockId} (hb : b ∈ U.ids) {i : BlockId} :
+    i ∈ history U b ↔ i = b ∨ ∃ j ∈ (U.block b).refs, i ∈ history U j := by
+  rw [history, mem_historyUpto_succ]
+  constructor
+  · rintro (rfl | ⟨j, hj, hij⟩)
+    · exact Or.inl rfl
+    · refine Or.inr ⟨j, hj, ?_⟩
+      rw [history, U.round_of_mem_refs hb hj]
+      exact hij
+  · rintro (rfl | ⟨j, hj, hij⟩)
+    · exact Or.inl rfl
+    · refine Or.inr ⟨j, hj, ?_⟩
+      rw [history, U.round_of_mem_refs hb hj] at hij
+      exact hij
+
+/-- Causal history runs downward (T2), in the `Finset` form. -/
+theorem round_le_of_mem_history {b i : BlockId} (hb : b ∈ U.ids) (hi : i ∈ history U b) :
+    (U.block i).round ≤ (U.block b).round :=
+  round_le_of_reaches hb ((mem_history_iff hb).mp hi)
+
 /-- A block's references lie in its history, one step down. -/
 theorem mem_history_of_mem_refs {b j : BlockId} (hb : b ∈ U.ids) (hj : j ∈ (U.block b).refs) :
     j ∈ history U b :=

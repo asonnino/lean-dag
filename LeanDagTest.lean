@@ -4,3 +4,4 @@ import LeanDagTest.Partial
 import LeanDagTest.Pipelined
 import LeanDagTest.Quantitative
 import LeanDagTest.Exposure
+import LeanDagTest.Acceptance
