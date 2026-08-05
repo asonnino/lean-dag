@@ -24,7 +24,7 @@ reveals to nobody is not in `U` and costs nothing.
 
 > **Status.** §3, §4, §5's structural half and §6–§7 are **proved in Lean**;
 > §14 is the index, with every result mapped to its name and file. What
-> remains is §8 (the delivery repair, and the liveness cost D15a exposes),
+> remains is §8 (the delivery repair, and the liveness results D15–D15b),
 > §9's exclusion results, and §10 — the conjecture, still open, with the
 > ingredients a proof would need and a candidate counterexample that none of
 > them yet rules out. §12 lists what has to be decided first, §13 what is
@@ -485,48 +485,88 @@ Two definitions change, and one result weakens:
   of round-`n` blocks some of whose authors it has just excluded, and stall.
 
 So L1 — *no stall, from round 0, with no synchrony at all* — is the one result
-the condition genuinely costs, unless `DeliversQuorum` is strengthened to
-deliver a **correct** quorum. That is an assumption change rather than a proof
-change, but it should be made deliberately (§12 Q1) rather than discovered
-halfway through a proof.
+the condition touches. What that costs is the subject of the rest of this
+section, and the answer turned out to be: less than it first appears, and in a
+direction that is arguably a feature.
 
-### The cost is larger than that, and it is the condition's real weakness
+### D15a — exclusion costs fault tolerance, one validator at a time
 
-- **D15a (exclusion consumes the entire quorum slack).** Once every Byzantine
-  author is exposed to a block, that block must reference **every correct block
-  of the round below**.
+- **D15a.** For a block `b`, write `k` for the number of authors exposed in
+  `H(b)`. Then `b`'s references must come from the other `3f+1 − k`
+  validators, so the margin over the quorum is exactly `f − k`. At `k = f` the
+  margin is **zero**: the exposed set is then the whole Byzantine set, the
+  admissible authors are exactly `Correct`, and `b` must reference **every
+  correct block of the round below**.
 
-  A block needs `2f+1` distinct creators and may not name an exposed author.
-  Exposed authors are Byzantine (D15), so the correct validators are always
-  available — but `|Correct| = 3f+1 − |byzantine|`, which is exactly `2f+1` when
-  the fault budget is spent. The margin is `f − |byzantine|`, and at the bound
-  it is **zero**.
+  Each caught equivocator costs exactly one unit of fault tolerance. It is a
+  gradient, not a cliff, and the cliff edge needs the adversary to have spent
+  its entire budget *and* been caught at all of it.
 
-  This is visible on the witness: `Umerge`'s round-2 blocks reference `{6,7,8}`
-  not by choice but because, validator 0 being exposed, `{1,2,3}` is the only
-  set of three distinct admissible authors there is.
+  Visible on the witness: `Umerge`'s round-2 blocks reference `{6,7,8}` not by
+  choice but because, validator 0 being exposed, `{1,2,3}` is the only set of
+  three distinct admissible authors there is.
 
-**What that means.** Block production degrades from *wait for `2f+1` of `3f+1`*
-to *wait for all `2f+1` correct validators*, with no tolerance for one that is
-slow, restarting, or briefly partitioned — the very case `liveness.md` S5 went
-out of its way to accommodate. Worse, the adversary can *choose* to trigger it:
-equivocate early, be excluded, and every correct validator's delivery
-requirement rises to 100% of the correct population for the rest of time.
+**This is the intended behaviour, not a defect.** An author you have *proved*
+Byzantine — permanently and objectively, by D12 and D13 — is not one you can
+build on, so effective redundancy should fall in exact proportion to the
+misbehaviour established. A system that has caught its entire fault budget is a
+system with no tolerance left, and saying so is the correct report rather than
+a failure of the condition. §13 S8 records why this settles the design.
 
-So the condition buys a storage bound and sells liveness margin, and the price
-is not small. Three responses, in the order they should be tried:
+### D15b — the threshold is met by the correct set alone
 
-1. **Accept it after `R` only.** After `R` synchrony delivers every correct
-   block anyway (`EventuallyDelivers`), so the zero-margin regime costs nothing
-   there. Before `R` the condition would have to be off — which is awkward,
-   since a validity condition cannot be switched on by the clock.
-2. **Take the forward-looking variant** (§12 Q3), which excludes *lies* rather
-   than *liars*: an equivocator's later blocks stay referenceable provided their
-   histories are consistent, so the slack survives. This now looks like the
-   more important of the open questions rather than a refinement.
-3. **Weaken the reference requirement** for blocks that have exhausted the
-   admissible set — which changes `ValidWrt`, and is exactly what §6 was
-   designed to avoid.
+- **D15b.** If round `n` is populated by the correct validators, their
+  round-`n` blocks form an admissible quorum for *every* block, whatever has
+  been excluded: there are at least `2f+1` of them (`card_correct` plus
+  `Populated`), and by D15 no correct author is ever exposed to anything.
+
+  So exclusion can never make the quorum threshold unreachable. **The threshold
+  does not change; the pool it is drawn from does**, and `|Correct| ≥ 2f+1` was
+  always exactly the guarantee that the correct pool suffices on its own.
+
+  **The `Populated` hypothesis is not decoration**, and it is what places this
+  result: `card_correct` counts correct *validators*, not their blocks, so
+  something must say they built. D15b is therefore the **induction step of L1
+  under the condition** — round `n` populated, plus delivery, gives round `n+1`
+  populated — rather than a standalone claim that building always succeeds.
+
+### What it costs, precisely
+
+D15b has two hypotheses: that round `n` is populated, which L1's induction
+carries, and that the builder *holds* those blocks, which is
+`EventuallyDelivers` — a post-`R` assumption. So:
+
+- **After `R`: nothing.** `EventuallyDelivers` already puts every correct block
+  in every correct validator's hands, which is exactly what D15b consumes. L4
+  and L6 are untouched: a correct leader still commits, commits still recur.
+- **Before `R`: L1 only.** The adversary controls delivery and can leave a
+  validator holding a quorum of *authors* of which some are excluded. So under
+  `DoSValid`, **L1 holds from `R` rather than from round 0**.
+- **Safety: nothing** (D14, checked mechanically).
+
+**And this needs no new assumption.** `DeliversQuorum` is not strengthened;
+post-`R` its job is done by `EventuallyDelivers`, which the model already has.
+L1 gains a `R ≤ r` restriction and nothing is invented. That question — should
+`DeliversQuorum` be strengthened? — is now settled in the negative; see §13 S8.
+
+One consequence for the repair: `Live.builds` fires on *a quorum of held
+creators*, which under the condition is not enough — it must be a quorum of
+**admissible** creators. At `T := Correct` that is automatic, and `liveness.md`
+S5's parameterization already carries it, so the change stays small.
+
+### Where this leaves the protocol
+
+The chain closes:
+
+> exclusion bites → the correct set still meets `2f+1` (D15b) → blocks keep
+> being produced → after `R` a slot with a correct leader commits (L4) and
+> commits recur (L6) → that commit is where a reconfiguration could be carried.
+
+The last step is outside the model, and deliberately: there is no
+reconfiguration protocol here to formalize. What the results give is that the
+system stays live *under the original thresholds* long enough to reach a commit
+— which is what a reconfiguration would need in order to take effect. §12 Q3
+records the sequel.
 
 ## 9. Exclusion after `R`
 
@@ -670,7 +710,7 @@ The conjecture:
   ingredients, or the argument that no family can.
 
   Note that a refutation would not be a disaster: it would say the condition
-  must be supplemented, and §12 Q2 lists by what. And by D16–D18 the damage is
+  must be supplemented, and §12 Q1 lists by what. And by D16–D18 the damage is
   in any case confined to **one reveal per Byzantine author** — see §13 S4.
   C1 is exactly the question of how large a single reveal can be.
 
@@ -739,15 +779,42 @@ Suggested order, easiest first:
    set — and then falls out: an equivocation pair is at least two rounds down,
    because the top layer holds only `b` and the next holds only `b`'s
    references, whose authors are distinct.
-6. **Next, and worth splitting**, because only half of it is risky:
-   - **6a** — D15 (`ExposedIn U b X → X ∉ Correct`). Five lines off T1, touches
-     no existing file, and D15a's whole argument rests on it.
-   - **6b** — the repaired `Delivery` (§8, §13 S5), and L1 re-earned or
-     explicitly weakened. This is the first edit to proved, committed code:
-     `Liveness.lean` changes, and `ugrowDelivery` and the `Timing` and
-     `Quantitative` witnesses move with it. **Q1 should be answered before this
-     is started**, since D15a forces it and re-earning L1 against an assumption
-     that is then replaced would be wasted work.
+6. **Next, and split**, because only the second half is risky. The design
+   question that used to block it is settled (§13 S8), so both halves are now
+   well defined:
+   - **6a** — D15, D15a and D15b, plus the `Uexcl` witness. All additive:
+     nothing here edits an existing file.
+     - **D15** (`ExposedIn U b X → X ∉ Correct`) is five lines off T1, and
+       everything else rests on it.
+     - **D15a** in its gradient form: the admissible authors number `3f+1 − k`,
+       so the margin is `f − k`, and at `k = f` a block's references are
+       exactly `Correct`.
+     - **D15b**: given `Populated U n`, the correct round-`n` blocks are an
+       admissible quorum for every block. Needs `card_correct` and
+       `correctBlocksAt`, the latter from `CommonCore` — which `Counting` does
+       not currently import, so this is also the first result to need that edge
+       in the import graph.
+     - **`Uexcl N`** — the witness that closes §8's chain end to end: validator
+       0 equivocates at round 0, the branches merge at round 2, it is excluded
+       from then on, and validators 1–3 keep building on one another to any
+       horizon, with `DoSValid` throughout and **L4 firing after the exclusion
+       has taken hold**. At `f = 1`, `n = 4` this is the tightest possible case
+       — `|Correct| = 3 = 2f+1` exactly, so the DAG runs at zero margin from
+       round 2 and still commits.
+
+       One wrinkle found in review: `Live` needs a `Delivery`, and the
+       unrepaired `Delivery.includes` is unsatisfiable when a correct validator
+       *holds* both halves (§8). `Uexcl` can dodge this by setting `held` to
+       the correct blocks alone — legal, and enough to make the witness go
+       through before 6b — but that `held` is not what a real validator holds,
+       since it does receive the Byzantine blocks. So 6a's witness is honest
+       about the DAG and artificial about delivery; **6b is what makes the
+       delivery side honest too**, and the witness should be revisited then.
+   - **6b** — the repaired `Delivery` (§8, §13 S5), and L1 re-earned from `R`.
+     The first edit to proved, committed code: `Liveness.lean` changes, and
+     `ugrowDelivery` and the `Timing` and `Quantitative` witnesses move with it.
+     `Live.builds` must fire on a quorum of *admissible* creators rather than
+     merely held ones; at `T := Correct` that is automatic.
 7. **D16, D17, D18** — the first results with real content. D17 is the one that
    needs care, since it quantifies over Byzantine blocks too.
 8. The `f = 2` model, and the C1 counterexample search against it.
@@ -764,48 +831,37 @@ Steps 1–7 are believed routine. Step 9 is the research.
 
 ## 12. Open questions
 
-**Q1 — Should `DeliversQuorum` be strengthened to a correct quorum?** (§8.)
-D15a forces the issue: at the fault bound *a correct quorum is every correct
-validator*, so the strengthened form is not "a quorum of correct authors" but
-`EventuallyDelivers` itself. That is available only after `R`, so the honest
-options are to accept L1 only after `R`, or to take Q3's variant and keep the
-slack. `liveness.md` Q6 asks a version of this for a different reason; the two
-answers should agree.
-
-**Q2 — What is the fallback if C1 is false?** If the adversary can sustain
+**Q1 — What is the fallback if C1 is false?** If the adversary can sustain
 exponential histories under `DoSValid`, the condition has to be strengthened.
 The candidates, in increasing order of cost: exclude an author on *first*
 exposure anywhere in the view rather than in the history (breaks D13 —
 view-dependence, so blocks would no longer be objectively valid); require
-histories to be equivocation-free outright (kills liveness: after any
-equivocation reaches the backbone, no correct validator could ever build
-again); or bound the number of blocks per author per round admitted into a
-view, which is a rate limit rather than a validity condition and lands outside
-the model. None is attractive, which is a reason to look for the
-counterexample early (§10).
+histories to be equivocation-free outright (**fatal**, see §13 S9); or bound the
+number of blocks per author per round admitted into a view, which is a rate
+limit rather than a validity condition and lands outside the model. None is
+attractive, which is a reason to look for the counterexample early (§10).
 
-**Q3 — Should the condition be *forward-looking* instead?** As stated, a block
-may not reference an exposed author. A weaker form is that a block may not
-reference a *block* whose own history is inconsistent — "do not build on a
-liar's lies" rather than "do not build on a liar", so an equivocator's later,
-consistent blocks stay referenceable.
-
-**D15a promotes this from a refinement to the most consequential open
-question.** Excluding authors costs the whole quorum margin; excluding lies
-does not, because the equivocator keeps contributing admissible blocks. What
-has to be checked is whether the weaker form still supports D16–D18 — exposure
-must still propagate and still bite — and whether it still bounds histories at
-all, since an equivocator that is never excluded can keep feeding branches into
-the DAG. It may well trade the liveness problem for the storage problem it was
-meant to solve, and that is exactly what needs working out.
-
-**Q4 — Where does it live?** Settled for what is built, open for the rest.
+**Q2 — Where does it live?** Settled for what is built, open for the rest.
 `LeanDag/History.lean` (the `Finset` history) and `LeanDag/Exposure.lean`
 (`ExposedIn`, `DoSValid`, D11–D13) sit directly above `CausalHistory`;
 `LeanDag/Acceptance.lean` (§3) needs only those and `View`. The counting
 results need L0 and so must sit above `Liveness` — which is the one remaining
-placement decision, and it means the file holding D5, D6 and D19a/b cannot be the file
-holding D11–D13.
+placement decision, and it means the file holding D5, D6 and D19a/b cannot be
+the file holding D11–D13.
+
+**Q3 — Reconfiguration, the sequel.** Once `k` validators are objectively and
+permanently excluded, the system runs as a `(3f+1−k)`-validator committee while
+still using quorums sized for `f` faults — tolerating `f−k` but paying for `f`
+(D15a). The principled response is to shrink the committee and recompute `f`,
+which restores the margin.
+
+The model cannot say this: `Faults` fixes `3f+1` and `f` globally, and
+`ValidWrt.quorum` hard-codes `2f+1`. Nor should it yet — there is no
+reconfiguration protocol here to formalize. What §8 establishes is the
+precondition for one: the system stays live under the *original* thresholds
+long enough to reach a commit, and a commit is what a reconfiguration would
+need to take effect. Formalizing the handover is a separate piece of work, and
+it would want `Faults` parameterized by a committee rather than fixed.
 
 ## 13. Settled
 
@@ -924,6 +980,52 @@ block to reference its own previous block. DAG protocols do this anyway, it is
 one field, and without it generated views are not monotone, so the view bound
 and L2 could not be used together.
 
+**S8 — Exclusion is by author, and the cost is the point.** The condition
+excludes an *author* exposed in a block's history, and D15a's consequence —
+each caught equivocator costs one unit of fault tolerance, until at `k = f` a
+block must reference every correct block — is **accepted as intended
+behaviour** rather than engineered around.
+
+The reasoning:
+
+- An author proved Byzantine, permanently and objectively (D12, D13), is not
+  one anybody should build on. Redundancy falling in proportion to established
+  misbehaviour is the correct report, not a malfunction.
+- **Liveness under the original thresholds survives** (D15b): the correct set
+  alone always meets `2f+1`, so exclusion can never make the quorum
+  unreachable. What the adversary can do is force the *pool* down to exactly
+  the correct set — which is what `|Correct| ≥ 2f+1` was always for.
+- The cost is confined to **L1 before `R`**, and it needs no new assumption to
+  absorb: after `R`, `EventuallyDelivers` supplies D15b's hypothesis, so L1
+  simply holds from `R` instead of from round 0. `DeliversQuorum` is left
+  alone.
+- Commits are post-`R` anyway, so the guarantee that matters — stay live long
+  enough to commit — is untouched. The residual discomfort is not about the
+  condition but about the *committee* not shrinking to match, which is Q3 and
+  is out of scope until there is a reconfiguration protocol to formalize.
+
+`liveness.md` Q6 asks whether L1 should hold from round 0 or only after `R`, for
+reasons unconnected to any of this. Under the condition the answer is forced —
+only after `R` — so the two questions now have one answer.
+
+**S9 — The forward-looking variants, rejected.** Excluding *lies* rather than
+*liars* was the obvious way to keep the margin. Two readings, both rejected,
+recorded so they are not revisited from scratch:
+
+- *"A block may not reference a block whose history exposes anyone."*
+  **Fatal, and D8a proves it.** Every correct validator's accepted set normally
+  spans both branches of an equivocation, so its next block's history exposes
+  the author — and every correct block becomes unreferenceable. The DAG stops.
+  This is also why §12 Q1's "equivocation-free histories" candidate is not a
+  fallback.
+- *"A block may not reference `i` when a twin of `i` — same author, same round
+  — is in the referencing block's history."* Survivable, and it does keep the
+  margin, but it **loses D12 and D17**: exclusion is no longer permanent or
+  total, only per-round, so §9 collapses. In storage terms it turns S4's *one
+  reveal per author* into *one reveal per author per round*, costing a factor
+  of `r`. Trading the whole post-`R` exclusion story for a margin that D15b
+  shows is not needed is a bad exchange.
+
 ## 14. What is proved
 
 Every result of §3–§7, with its Lean name. `History`, `Exposure`, `Acceptance`
@@ -967,11 +1069,16 @@ tight.
 
 | | |
 |---|---|
+| **D15** | exclusion is sound — five lines, step 6a, everything rests on it |
+| **D15a** | the margin is `f − k` — step 6a, and §13 S8 accepts what it says |
+| **D15b** | the correct set alone meets the threshold — step 6a, the liveness half |
 | **D8a** | exposure is structural — needs the `accepted` field, so 6b |
-| **D15** | exclusion is sound — five lines, step 6a, blocks D15a |
-| **D15a** | exclusion consumes the quorum slack — the finding that forces Q1 |
 | **D16–D18** | exclusion after `R` — step 7, needs the repaired `Delivery` |
 | **C1** | the main bound — open, and §10 says where the argument stops |
+
+Also outstanding: the **`Uexcl` witness** (step 6a), which is what makes §8's
+chain — exclusion bites, the correct set still suffices, a commit still lands —
+true of something rather than merely stated.
 
 The gap C1 has to close is visible on the witness rather than merely stated:
 validator 1, which block `9` references, contributes three blocks to `H(9)` —
