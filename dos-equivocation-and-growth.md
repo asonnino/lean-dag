@@ -22,13 +22,12 @@ So `|U.ids|` **is** the storage burden imposed on the correct population, and
 `|V.ids|` is one validator's share of it. A block a Byzantine validator
 reveals to nobody is not in `U` and costs nothing.
 
-> **Status.** §3, §4, §5's structural half and §6–§7 are **proved in Lean**;
-> §14 is the index, with every result mapped to its name and file. What
-> remains is §8 (the delivery repair, and the liveness results D15–D15b),
-> §9's exclusion results, and §10 — the conjecture, still open, with the
-> ingredients a proof would need and a candidate counterexample that none of
-> them yet rules out. §12 lists what has to be decided first, §13 what is
-> settled, and D8a and D15a were both discovered by building the witnesses
+> **Status.** §3–§8 are **proved in Lean**, including the delivery repair;
+> §14 is the index, with every result mapped to its name and file, and §11
+> steps 7–11 are the roadmap for the rest. What remains is §9's exclusion
+> results, D8a, and §10 — the conjecture, still open, with a route, a gap, and
+> a candidate counterexample. §12 lists what is still undecided, §13 what is
+> settled. D8a, D15a and the shape of C1′ were all found by building things
 > rather than by reasoning about them.
 
 ## 1. What the existing development already gives
@@ -660,13 +659,24 @@ Easy, and provable now:
   can only come from authors `b` does not reference** — at most `f` of them,
   fewer if `b` names Byzantine authors at all.
 
-The conjecture:
+The conjecture, in the form the target actually wants:
 
-- **C1.** Under `DoSValid`, `|H(b)| ≤ (3f+1)(r+1) + g(f)` for some `g`
-  depending on `f` alone.
+- **C1′.** Under `DoSValid`, for every author `X` and every round `s`, the
+  number of `X`-blocks of `H(b)` at round `s` is at most `c(f)`.
 
-  Four ingredients are in hand, and they are close to sufficient without being
-  so:
+  Summing gives `|H(b)| ≤ (3f+1)(r+1) + f·c(f)·(r+1)` — **linear in `r`**,
+  which is the whole requirement. Linear growth is not something the condition
+  could ever prevent anyway: D6 makes `(2f+1)r + 1` a *lower* bound with no
+  equivocation involved. What must be prevented is **compounding** — a fixed
+  number of Byzantine blocks per round per Byzantine author is tolerable; a
+  number that multiplies down the levels is not.
+
+  This is a better-shaped target than the earlier additive form
+  (`(3f+1)(r+1) + g(f)`, `g` depending on `f` alone), and not merely weaker.
+  D9's exponential comes from `f` multiplying *down the levels*; C1′ says
+  exactly *stop the multiplication*, which is what the available tools attack.
+
+  Four ingredients are in hand, all proved:
 
   1. **D11** — inflation and exposure are the same event, so the adversary
      cannot inflate silently.
@@ -676,43 +686,70 @@ The conjecture:
   3. **D18** — after `R`, disagreement about an author's round-`j` block is
      impossible once that block has reached all but `f` of the correct
      validators.
-  4. **Bounded dirt** — let `D(b)` be the set of authors exposed in `H(b)`. By
-     D15, `D(b) ⊆ Byzantine`, so `|D(b)| ≤ f`; and `D` is monotone up the DAG
-     (D12). So along any upward chain, at most `f` blocks are the first to
-     dispute a *new* author.
+  4. **Bounded dirt** — the exposed set is Byzantine (D15) and monotone (D12),
+     so at most `f` authors ever come into dispute along any chain.
 
-  **Where it still does not close.** Ingredient 4 bounds how many *distinct
-  authors* can ever come into dispute — never more than `f` — but not how many
-  blocks of an already-disputed author can be gathered. Once `X` is disputed at
-  some block, every block above it is disputed about `X` too, and gathering
-  further `X`-blocks costs nothing, since gathering requires no cleanliness —
-  only *naming* does. Width is what needs bounding, and the only pressure on it
-  is that `k` mutually inconsistent branches need `k` blocks by distinct authors
-  at each level above them (`distinct_creators` prevents one block from taking
-  two) — a per-level factor of `f`, which is exactly D9's, and `f` compounding
-  over `r` levels is the exponential we are trying to rule out.
+### The route: intersection inside the correct set
 
-  Ingredient 3 does not help here either: it bites only at rounds where the
-  author published to nearly everyone, and an author mounting this attack
-  publishes to nobody.
+The tool that fits C1′, and which none of the four supplies, is this. Two
+blocks that both *name* `X` are both `X`-clean (D19b), and each references at
+least `f+1` **correct** blocks of the round below
+(`card_inter_correct_of_quorum`). A correct validator has one block per round
+(T1), so sharing a correct *creator* means sharing a correct *block*. Hence:
 
-  **The candidate counterexample, sharpened.** `f = 2`, `n = 7`, `X` and `Y`
-  Byzantine. Both stay silent toward correct validators — so no round is pinned
-  for either (defeating 3) — and build a secret binary tree in which each block
-  names one `X`-block and one `Y`-block of the round below. Reveal the root at
-  round `r`. What must be checked is whether such a tree can be **valid**: by
-  D19b, a block naming both `X` and `Y` must be consistent about both, so its
-  two subtrees must agree about both — which appears to collapse the branching
-  to nothing. If that is right, the attack needs the merging blocks to *abstain*
-  from naming the disputed authors, and then the question is how many distinct
-  authors remain available to do the gathering. **This is the crux, and it is
-  where the effort should go**: either a family that survives all four
-  ingredients, or the argument that no family can.
+> **The intersection lemma (to prove).** If the correct blocks available at a
+> round number at most `2f+1`, then any two `X`-naming blocks of the next round
+> share a correct reference `w`, and — both being `X`-clean — they **agree with
+> `H(w)` about `X` at every round where `H(w)` names `X` at all**.
 
-  Note that a refutation would not be a disaster: it would say the condition
-  must be supplemented, and §12 Q1 lists by what. And by D16–D18 the damage is
-  in any case confined to **one reveal per Byzantine author** — see §13 S4.
-  C1 is exactly the question of how large a single reveal can be.
+This is a strict strengthening of D18: same conclusion, but the hypothesis is
+*some shared correct ancestor heard from `X`* rather than *`X` published to all
+but `f` correct validators*.
+
+**Its scope is a case split, and the split may be the proof.** The intersection
+needs at most `2f+1` correct blocks at the round, i.e. `|byzantine| = f`.
+
+- `|byzantine| = f` — the correct blocks number exactly `2f+1`, every pair of
+  namers intersects, and disagreement is pinned wherever the backbone speaks.
+- `|byzantine| < f` — namers may reference disjoint correct sets and the
+  intersection fails; but D9's branching factor is the *number of Byzantine
+  authors*, which has fallen by the same amount.
+
+The adversary cannot have both, and that tension is why every attempt to
+construct a counterexample has felt like it was fighting itself.
+
+**Where it is still short.** The agreement holds only at rounds where `H(w)`
+*names* `X`. Where `X` is invisible to the shared ancestor, the namers may
+differ, and the count is bounded only by the layer above — which is D9's
+recurrence again. Two things might close that gap, neither yet checked:
+
+- **`U`-membership.** Every `X`-block of `H(b)` lies in `U`, so some correct
+  validator *held* it. If the acceptance policy were strengthened to *accept
+  some block from every author you hold a block from*, then holding would imply
+  referencing, and an author invisible to the backbone at a round would have no
+  block at that round in `U` at all — hence none in any history. Whether that
+  survives contact with the specific shared ancestor `w`, whose author may have
+  held nothing from `X`, is exactly what needs working out.
+- **Induction on layers.** Turning "agreement below" into a per-layer constant
+  needs an induction that the current statement does not yet supply.
+
+**The candidate counterexample, sharpened.** `f = 2`, `n = 7`, `X` and `Y`
+Byzantine, both silent toward correct validators — so no round is pinned and
+no shared ancestor speaks — building a secret binary tree in which each block
+names one `X`-block and one `Y`-block of the round below, revealed at round
+`r`. What must be checked is whether such a tree can be **valid**: by D19b a
+block naming both `X` and `Y` must be consistent about both, so its two
+subtrees must agree about both, which appears to collapse that node's branching
+entirely. If that is right, branching nodes must *abstain* from naming one of
+the two, and take their dirt from the correct backbone instead — which is
+shared, and therefore not a source of branching either. **That is the crux, and
+it is where the effort should go**: either a family that survives all of it, or
+the argument that none can.
+
+A refutation would not be a disaster: it would say the condition must be
+supplemented, and §12 Q1 lists by what. And by D16–D18 the damage is in any
+case confined to **one reveal per Byzantine author** (§13 S4) — C1′ is exactly
+the question of how large a single reveal can be.
 
 ## 11. Staging and witnesses
 
@@ -731,7 +768,7 @@ satisfy **vacuously**.
   different halves, and the round-2 block that names both is exposed and thereby
   forbidden to reference `X`. That covers D11, D12 and D17 and needs no new fault
   instance. What genuinely needs **`f = 2`, `n = 7`** is the *attack*: by D10 the
-  exponential does not exist at `f = 1`, so C1 is trivially true there and any
+  exponential does not exist at `f = 1`, so C1′ is trivially true there and any
   counterexample search over `Fin 4` is wasted effort.
 - `Live` and `DoSValid` must be shown **jointly** satisfiable at every horizon,
   or §8 is vacuous — and this now requires the repaired `Delivery`, so
@@ -835,23 +872,45 @@ Suggested order, easiest first:
      populated round supplies `2f+1`. So the plan's Q1 is settled in Lean and
      not merely on paper — the quorum is a consequence from `R` on, and its
      unavailability before `R` is precisely the cost.
-7. **D16, D17, D18** — the first results with real content. D17 is the one that
-   needs care, since it quantifies over Byzantine blocks too.
-8. The `f = 2` model, and the C1 counterexample search against it.
+7. **D16, D17, D18 — exclusion after `R`** (§9). Everything they need is
+   proved: `SynchronisedOn` and the repaired `Delivery`, D12 (permanence), D15
+   (soundness), and `card_inter_correct_of_quorum` for the `f+1`-correct-
+   references step. D17 is the one needing care, since it quantifies over
+   Byzantine blocks too — that is what makes exclusion *total* rather than a
+   convention among the well-behaved. All three are conditional on the rounds
+   being populated, and hold vacuously otherwise.
 
-   **Check `decide` cost before committing to this.** `ExposedIn` searches a
-   history quadratically and `DoSValid` ranges over every block and reference,
-   which is comfortable at 13 blocks over `Fin 4` but is exactly the shape that
-   explodes on a model built to have large histories. If `decide` will not
-   carry it, the model's facts have to be proved rather than computed, which is
-   a different and much larger job.
-9. C1, or its refutation, or a weakened form.
+8. **D8a — exposure is structural.** Now formalizable: it needs `accepted`,
+   which 6b added. A validator whose accepted set spans two branches exposes
+   the author in its own next block, via `Delivery.includes` and D3. Short, and
+   it is the result that makes D16's antecedent ordinary rather than lucky.
 
-Steps 1–7 are believed routine. Step 9 is the research.
+9. **The intersection lemma** (§10). The first genuine step *toward* C1′ rather
+   than more analysis of it, and additive: quorum intersection taken **inside**
+   the correct set, plus D19b for cleanliness and T1 to turn a shared creator
+   into a shared block. It has a payoff independent of C1′ — it strengthens D18
+   by replacing *published to all but `f`* with *some shared ancestor heard from
+   `X`*.
+
+10. **The `f = 2`, `n = 7` model**, and the counterexample search. The largest
+    single piece of new work, and the point at which `decide` may stop being
+    viable — `ExposedIn` is quadratic in the history and `DoSValid` ranges over
+    every block and reference, which is comfortable at 13 blocks over `Fin 4`
+    and is exactly the shape that explodes on a model built to have large
+    histories. **Check that cost before building it.** By D10 there is no point
+    doing this at `f = 1`, where the attack does not exist.
+
+11. **C1′, or its refutation.** Either the induction that turns the
+    intersection lemma's *agreement below* into a per-layer constant, or a
+    family that survives it. §10 says exactly where the current argument stops
+    and what might close it.
+
+Steps 7–9 are believed routine. Step 10 is construction work. Step 11 is the
+research, and it is the only item in the plan whose outcome is unknown.
 
 ## 12. Open questions
 
-**Q1 — What is the fallback if C1 is false?** If the adversary can sustain
+**Q1 — What is the fallback if C1′ is false?** If the adversary can sustain
 exponential histories under `DoSValid`, the condition has to be strengthened.
 The candidates, in increasing order of cost: exclude an author on *first*
 exposure anywhere in the view rather than in the history (breaks D13 —
@@ -935,7 +994,7 @@ bounding storage, and would want the evidence in the block payload rather than
 beside the universe.
 
 **S4 — What the DoS results can promise, and what they cannot.** Whatever the
-fate of C1, D16–D18 give the shape of the guarantee: after `R`, an equivocating
+fate of C1′, D16–D18 give the shape of the guarantee: after `R`, an equivocating
 validator is either invisible to the correct population — inflating nothing
 they hold — or exposed, and then excluded from the whole universe within two
 rounds (D17).
@@ -948,7 +1007,7 @@ already been spent. So the residual damage is bounded by
 
 > `f` × (the largest history a single valid block can have)
 
-and bounding the second factor is precisely **C1**. This is why C1 cannot be
+and bounding the second factor is precisely **C1′**. This is why C1′ cannot be
 dismissed as an asymptotic nicety, and why it is not a purely pre-GST question:
 the reveal can be constructed and delivered after `R` just as well as before.
 
@@ -1101,11 +1160,15 @@ tight.
 
 | | |
 |---|---|
-| **D8a** | exposure is structural — stated, not yet formalized |
-| **D16–D18** | exclusion after `R` — step 7 |
-| **C1** | the main bound — open, and §10 says where the argument stops |
+| **D16–D18** | exclusion after `R` — step 7; everything they need is proved |
+| **D8a** | exposure is structural — step 8, now formalizable since 6b added `accepted` |
+| — | the intersection lemma — step 9, the first genuine step toward C1′ |
+| **C1′** | the main bound — step 11, open; §10 has the route and the gap |
 
-The gap C1 has to close is visible on the witness rather than merely stated:
+The roadmap is §11 steps 7–11. Steps 7–9 are believed routine, step 10 is
+construction work, and step 11 is the only item whose outcome is unknown.
+
+The gap C1′ has to close is visible on the witness rather than merely stated:
 validator 1, which block `9` references, contributes three blocks to `H(9)` —
 one per round, the D19b bound exactly. Validator 0, which `9` does *not*
 reference, contributes two blocks **at a single round**. Same history, same
