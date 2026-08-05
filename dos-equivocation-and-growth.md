@@ -22,11 +22,14 @@ So `|U.ids|` **is** the storage burden imposed on the correct population, and
 `|V.ids|` is one validator's share of it. A block a Byzantine validator
 reveals to nobody is not in `U` and costs nothing.
 
-> **Status.** Nothing here is implemented. §3, §4 and §6–§9 are proofs on
-> paper that reuse existing machinery and should be routine in Lean. §10 is
-> the hard one: it is stated as a conjecture, with the ingredients a proof
-> would need and a candidate counterexample that none of them yet rules out.
-> §12 lists what has to be decided first, §13 what is already settled.
+> **Status.** §3, §4, §5's structural half and §6–§7 are **proved in Lean**;
+> §14 is the index, with every result mapped to its name and file. What
+> remains is §8 (the delivery repair, and the liveness cost D15a exposes),
+> §9's exclusion results, and §10 — the conjecture, still open, with the
+> ingredients a proof would need and a candidate counterexample that none of
+> them yet rules out. §12 lists what has to be decided first, §13 what is
+> settled, and D8a and D15a were both discovered by building the witnesses
+> rather than by reasoning about them.
 
 ## 1. What the existing development already gives
 
@@ -206,7 +209,9 @@ There is no third quantity *for storage* — bandwidth remains outside the model
 
 So without equivocation, `(2f+1)r + 1 ≤ |V| ≤ (3f+1)(r+1)`. Both ends are
 attained: the upper when every validator publishes at every round, the lower
-when exactly `2f+1` do.
+when exactly `2f+1` do. **Confirmed**: `Model.lean`'s `U3` holds twelve blocks
+over rounds `0…2` against an upper bound of `4 × 3 = 12`, so the `r+1` is not
+slack and the `3f+1` is not a rounding.
 
 ## 5. What equivocation does to history size
 
@@ -706,7 +711,12 @@ Suggested order, easiest first:
    accepted histories overlap almost entirely, since the round-2 blocks share
    their round-1 references. That slack is the correct backbone of §10's
    candidate proof A, showing up as a number.
-3. D5, D6, D19a, D19b — counting; needs the round-partition lemma and L0.
+3. ~~D5, D6, D19a, D19b — counting.~~ **Done** (`LeanDag/Counting.lean`). The
+   design point below was the right call: `card_le_of_equivFree` is proved once
+   over an arbitrary `Finset` and instantiated at a view (D5) and at a history
+   (D19a), and on `Umerge` those sets genuinely disagree. Both bounds turn out
+   to be **attained** on the witnesses — `U3` meets D5 exactly, and validator 1
+   meets D19b exactly with three blocks in `H(9)`, one per round.
 
    **A design point discovered at step 2.** "No equivocation" is a property of
    a *set of blocks*, and the set differs by result: D5 wants it of `V.ids`,
@@ -716,12 +726,28 @@ Suggested order, easiest first:
    should be proved once for an arbitrary `Finset BlockId` on which `creator`
    is injective per round, and applied twice, rather than stated for views and
    re-proved for histories.
-4. D14 — free, by construction of §6.
-5. D7, D8 — one line each, and the facts §9 turns on. Then the `f = 1`
-   biting witness, so that nothing after this point is checked against a
-   hypothesis no model exercises.
-6. The repaired `Delivery` (§8, §13 S5), and D15; L1 re-earned or explicitly
-   weakened.
+4. ~~D14 — free, by construction of §6.~~ **Done**
+   (`LeanDagTest/SafetyUnderDoS.lean`). Being free, the claim is also easy to
+   make hollow, so it is pinned down rather than asserted: T1, T2, T3, M3, M5′,
+   M6 and L2 are each restated with `DoSValid U` in scope and discharged by the
+   *existing* theorem, hypothesis unused. If the condition ever migrated into
+   `ValidWrt`, or a safety result grew a dependency on it, those stop
+   elaborating. It says nothing about whether the hypotheses stay satisfiable.
+5. ~~D7, D8.~~ **Done** (`LeanDag/Exposure.lean`; the witness landed at step 1).
+   D8 needed two facts about the top of a history — nothing sits at a block's
+   own round but the block, and the layer one below is *exactly* the reference
+   set — and then falls out: an equivocation pair is at least two rounds down,
+   because the top layer holds only `b` and the next holds only `b`'s
+   references, whose authors are distinct.
+6. **Next, and worth splitting**, because only half of it is risky:
+   - **6a** — D15 (`ExposedIn U b X → X ∉ Correct`). Five lines off T1, touches
+     no existing file, and D15a's whole argument rests on it.
+   - **6b** — the repaired `Delivery` (§8, §13 S5), and L1 re-earned or
+     explicitly weakened. This is the first edit to proved, committed code:
+     `Liveness.lean` changes, and `ugrowDelivery` and the `Timing` and
+     `Quantitative` witnesses move with it. **Q1 should be answered before this
+     is started**, since D15a forces it and re-earning L1 against an assumption
+     that is then replaced would be wasted work.
 7. **D16, D17, D18** — the first results with real content. D17 is the one that
    needs care, since it quantifies over Byzantine blocks too.
 8. The `f = 2` model, and the C1 counterexample search against it.
@@ -897,3 +923,58 @@ than unfolding `historyUpto` by hand.
 block to reference its own previous block. DAG protocols do this anyway, it is
 one field, and without it generated views are not monotone, so the view bound
 and L2 could not be used together.
+
+## 14. What is proved
+
+Every result of §3–§7, with its Lean name. `History`, `Exposure`, `Acceptance`
+and `Counting` are `LeanDag/`; the witnesses are `LeanDagTest/`. The whole
+development builds with no `sorry` and the usual three axioms.
+
+### Proved
+
+| | | | |
+|---|---|---|---|
+| **D1** | a generated view is a view | `View.ofAccepted` | `Acceptance` |
+| **D2** | the bridge, `\|V\| ≤ (3f+1)·max\|H(b)\|` | `View.card_ofAccepted_le` | `Acceptance` |
+| **D3** | the sharp form, `\|V\| + 1 = \|H(b)\|` | `View.card_ofAccepted_add_one` | `Acceptance` |
+| **D4** | generated views grow | `View.ofAccepted_subset`, `…_of_refs`, `…_mono` | `Acceptance` |
+| **D5** | no equivocation: `\|V\| ≤ (3f+1)(r+1)` | `View.card_le_of_equivFree` | `Counting` |
+| **D6** | the lower bound, `(2f+1)r + 1 ≤ \|U.ids\|` | `card_ids_ge_of_round` | `Counting` |
+| **D7** | a block's references carry distinct authors | `eq_of_mem_refs_of_creator_eq` | `Exposure` |
+| **D8** | an equivocation is visible only two rounds up | `round_add_two_le_of_equivPair` | `Exposure` |
+| **D11** | inflation *is* exposure | `not_exposedIn_iff_card_le_one`, `card_le_one_or_not_mem_refs` | `Exposure` |
+| **D12** | exposure is permanent | `ExposedIn.mono`, `ExposedIn.of_mem_refs` | `Exposure` |
+| **D13** | exposure is view-independent | `exposedIn_iff_of_view` | `Exposure` |
+| **D14** | safety is untouched | *(inert-hypothesis checks)* | `LeanDagTest/SafetyUnderDoS` |
+| **D19a** | a clean history is linear | `card_history_le_of_not_exposed` | `Counting` |
+| **D19b** | a block is clean about what it references | `card_filter_creator_le_of_mem_refs` | `Counting` |
+
+Supporting definitions: `history` and `mem_history_iff` (S6, `History`);
+`ExposedIn`, `DoSValid`, `EquivPair` (`Exposure`); `Accepted` (`Acceptance`);
+`EquivFree`, `atRound`, `card_le_of_equivFree` (`Counting`). All four
+predicates are decidable, so the witnesses settle by `decide`.
+
+### Witnessed
+
+`Umerge` (`LeanDagTest/Exposure`) is the `f = 1` model the plan asked for, and
+it is non-vacuous in the way that matters: validator 0 equivocates, is exposed
+at the merge, and is thereby debarred from being referenced — while retaining a
+perfectly valid block that no later block may name. `U6` is its foil, an
+equivocation nobody built on and therefore never exposed. `U3` pins D5 as
+tight.
+
+### Not yet proved
+
+| | |
+|---|---|
+| **D8a** | exposure is structural — needs the `accepted` field, so 6b |
+| **D15** | exclusion is sound — five lines, step 6a, blocks D15a |
+| **D15a** | exclusion consumes the quorum slack — the finding that forces Q1 |
+| **D16–D18** | exclusion after `R` — step 7, needs the repaired `Delivery` |
+| **C1** | the main bound — open, and §10 says where the argument stops |
+
+The gap C1 has to close is visible on the witness rather than merely stated:
+validator 1, which block `9` references, contributes three blocks to `H(9)` —
+one per round, the D19b bound exactly. Validator 0, which `9` does *not*
+reference, contributes two blocks **at a single round**. Same history, same
+count, and only one of them is bounded as the DAG grows.
