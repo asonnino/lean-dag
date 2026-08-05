@@ -136,6 +136,55 @@ theorem card_le_one_or_not_mem_refs (hdos : DoSValid U) {b : BlockId} (hb : b �
     rwa [hcreator]
   · exact Or.inl (not_exposedIn_iff_card_le_one.mp hexp)
 
+/-! ## D7, D8 — an equivocation is only ever visible at a merge -/
+
+omit [DecidableEq BlockId] in
+/-- **D7, the no-equivocation half.** A block's references carry distinct
+authors, so the layer immediately below a block is equivocation-free.
+
+Per *block*, not per round: two different round-`r` blocks may perfectly well
+reference opposite halves of an `(r-1)` equivocation, and that is exactly what
+makes D8 interesting. -/
+theorem eq_of_mem_refs_of_creator_eq {b i j : BlockId} (hb : b ∈ U.ids)
+    (hi : i ∈ (U.block b).refs) (hj : j ∈ (U.block b).refs)
+    (hcreator : (U.block i).creator = (U.block j).creator) : i = j :=
+  (U.valid b hb).distinct_creators i hi j hj hcreator
+
+/-- **D8.** An equivocation shows up in a history only two rounds above the
+round it happened at.
+
+Both witnesses lie in `H(b)`; neither can sit at `b`'s own round, since only
+`b` does; and neither can sit one below, since that layer *is* `b.refs`, whose
+authors are distinct. So the pair is at least two rounds down.
+
+The consequence drawn in the plan: the reference graph cannot report an
+equivocation one round after the fact. A correct validator holding both halves
+cannot say so in its next block, because the two references it would need are
+exactly what `distinct_creators` forbids. What it *can* do is reference two
+blocks that disagree — and that is D8a, the merge. -/
+theorem round_add_two_le_of_equivPair {b i j : BlockId} {X : Validator} (hb : b ∈ U.ids)
+    (hi : i ∈ history U b) (hj : j ∈ history U b) (hpair : EquivPair U X i j) :
+    (U.block i).round + 2 ≤ (U.block b).round := by
+  obtain ⟨hne, hic, hjc, hround⟩ := hpair
+  have hi_le := round_le_of_mem_history hb hi
+  have hj_le := round_le_of_mem_history hb hj
+  rcases Nat.lt_or_ge ((U.block i).round + 1) (U.block b).round with hlt | hge
+  · omega
+  -- the pair sits at `b`'s round or one below; both are impossible
+  rcases Nat.eq_or_lt_of_le hi_le with heq | hlt'
+  · exact absurd ((eq_of_mem_history_of_round_eq hb hi heq).trans
+      (eq_of_mem_history_of_round_eq hb hj (by omega)).symm) hne
+  · have hi_refs := mem_refs_of_mem_history_of_round_succ hb hi (by omega)
+    have hj_refs := mem_refs_of_mem_history_of_round_succ hb hj (by omega)
+    exact absurd (eq_of_mem_refs_of_creator_eq hb hi_refs hj_refs (hic.trans hjc.symm)) hne
+
+/-- Nothing is exposed below round 2: there is not room for a merge. -/
+theorem not_exposedIn_of_round_le_one {b : BlockId} {X : Validator} (hb : b ∈ U.ids)
+    (hr : (U.block b).round ≤ 1) : ¬ ExposedIn U b X := by
+  rintro ⟨i, hi, j, hj, hpair⟩
+  have := round_add_two_le_of_equivPair hb hi hj hpair
+  omega
+
 /-! ## D12 — exposure is permanent -/
 
 /-- **D12.** Exposure is inherited by everything above: what one block's

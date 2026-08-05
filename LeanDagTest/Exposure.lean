@@ -113,6 +113,32 @@ example : (0 : Fin 13) ∈ history Umerge 9 ∧ (4 : Fin 13) ∈ history Umerge 
 -- Nobody else is ever exposed: accusations land only on the guilty (D15, ahead).
 example : ∀ b ∈ Umerge.ids, ∀ X : Fin 4, ExposedIn Umerge b X → X = 0 := by decide
 
+/-! ### D7 and D8 — why the merge is needed
+
+The equivocation is at round 0, and the first block it can possibly be visible
+to is at round 2. Blocks `6` and `7` are at round 1 and each references exactly
+one half, because their reference sets have distinct authors (D7). Only at
+round 2, where two branches meet, can one history hold both (D8). -/
+
+-- D7: a block's references never contain an equivocation.
+example : ∀ i ∈ (Umerge.block 9).refs, ∀ j ∈ (Umerge.block 9).refs,
+    (Umerge.block i).creator = (Umerge.block j).creator → i = j :=
+  fun i hi j hj h => eq_of_mem_refs_of_creator_eq (by decide) hi hj h
+
+/-- **D8 applied.** The witnesses to validator 0's exposure at block `9` sit at
+round 0, two rounds below `9`. -/
+example : (Umerge.block 0).round + 2 ≤ (Umerge.block 9).round :=
+  round_add_two_le_of_equivPair (b := 9) (X := 0) (by decide) (by decide) (by decide)
+    (i := 0) (j := 4) (by decide)
+
+/-- And nothing at round 1 or below can be exposed at all — there is no room
+for a merge. -/
+example : ∀ X : Fin 4, ¬ ExposedIn Umerge 6 X :=
+  fun _ => not_exposedIn_of_round_le_one (by decide) (by decide)
+
+example : ∀ X : Fin 4, ¬ ExposedIn Umerge 0 X :=
+  fun _ => not_exposedIn_of_round_le_one (by decide) (by decide)
+
 /-! ### The condition holds, and bites
 
 `DoSValid` is satisfied — but not for want of an exposure. Blocks 9-12 are

@@ -156,6 +156,31 @@ theorem round_le_of_mem_history {b i : BlockId} (hb : b ∈ U.ids) (hi : i ∈ h
     (U.block i).round ≤ (U.block b).round :=
   round_le_of_reaches hb ((mem_history_iff hb).mp hi)
 
+/-- Nothing in a block's history sits at the block's own round except the block
+itself: a reference step drops the round strictly. -/
+theorem eq_of_mem_history_of_round_eq {b i : BlockId} (hb : b ∈ U.ids)
+    (hi : i ∈ history U b) (hround : (U.block i).round = (U.block b).round) : i = b := by
+  rcases (mem_history_succ_iff hb).mp hi with rfl | ⟨j, hj, hij⟩
+  · rfl
+  · exfalso
+    have hj_ids : j ∈ U.ids := U.complete b hb j hj
+    have h1 := U.round_of_mem_refs hb hj
+    have h2 := round_le_of_reaches hj_ids ((mem_history_iff hj_ids).mp hij)
+    omega
+
+/-- **The layer one below is exactly the reference set.** Anything in `b`'s
+history at round `round b - 1` is a direct reference of `b`. -/
+theorem mem_refs_of_mem_history_of_round_succ {b i : BlockId} (hb : b ∈ U.ids)
+    (hi : i ∈ history U b) (hround : (U.block i).round + 1 = (U.block b).round) :
+    i ∈ (U.block b).refs := by
+  rcases (mem_history_succ_iff hb).mp hi with rfl | ⟨j, hj, hij⟩
+  · omega
+  · have hj_ids : j ∈ U.ids := U.complete b hb j hj
+    have h1 := U.round_of_mem_refs hb hj
+    have h2 := round_le_of_reaches hj_ids ((mem_history_iff hj_ids).mp hij)
+    have : i = j := eq_of_mem_history_of_round_eq hj_ids hij (by omega)
+    exact this ▸ hj
+
 /-- A block's references lie in its history, one step down. -/
 theorem mem_history_of_mem_refs {b j : BlockId} (hb : b ∈ U.ids) (hj : j ∈ (U.block b).refs) :
     j ∈ history U b :=
