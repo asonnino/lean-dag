@@ -872,7 +872,8 @@ Suggested order, easiest first:
      populated round supplies `2f+1`. So the plan's Q1 is settled in Lean and
      not merely on paper — the quorum is a consequence from `R` on, and its
      unavailability before `R` is precisely the cost.
-7. **D16, D17, D18 — exclusion after `R`** (§9). Everything they need is
+7. ~~**D16, D17, D18 — exclusion after `R`** (§9).~~ **Done**
+   (`LeanDag/Exclusion.lean`). Everything they needed was already
    proved: `SynchronisedOn` and the repaired `Delivery`, D12 (permanence), D15
    (soundness), and `card_inter_correct_of_quorum` for the `f+1`-correct-
    references step. D17 is the one needing care, since it quantifies over
@@ -880,33 +881,43 @@ Suggested order, easiest first:
    convention among the well-behaved. All three are conditional on the rounds
    being populated, and hold vacuously otherwise.
 
-8. **D8a — exposure is structural.** Now formalizable: it needs `accepted`,
-   which 6b added. A validator whose accepted set spans two branches exposes
-   the author in its own next block, via `Delivery.includes` and D3. Short, and
-   it is the result that makes D16's antecedent ordinary rather than lucky.
+8. ~~**D8a — exposure is structural.**~~ **Done**. One correction the
+   formalization forced: the two accepted blocks span the branches through
+   their *histories*, and have **different authors** — `accepted_inj` forbids
+   accepting both halves directly, so the equivocation is never in the accepted
+   set itself. Stated the other way the result would have been vacuous.
 
-9. **The intersection lemma** (§10). The first genuine step *toward* C1′ rather
-   than more analysis of it, and additive: quorum intersection taken **inside**
+9. ~~**The intersection lemma** (§10).~~ **Done**, in two pieces —
+   `exists_shared_correct_ref` and `eq_of_both_name_of_shared`. It was quorum intersection taken **inside**
    the correct set, plus D19b for cleanliness and T1 to turn a shared creator
    into a shared block. It has a payoff independent of C1′ — it strengthens D18
    by replacing *published to all but `f`* with *some shared ancestor heard from
    `X`*.
 
-10. **The `f = 2`, `n = 7` model**, and the counterexample search. The largest
-    single piece of new work, and the point at which `decide` may stop being
-    viable — `ExposedIn` is quadratic in the history and `DoSValid` ranges over
-    every block and reference, which is comfortable at 13 blocks over `Fin 4`
-    and is exactly the shape that explodes on a model built to have large
-    histories. **Check that cost before building it.** By D10 there is no point
-    doing this at `f = 1`, where the attack does not exist.
+10. ~~**The `f = 2`, `n = 7` model.**~~ **Done** (`LeanDagTest/TwoFaults.lean`).
+    `Ufault` has both Byzantine validators equivocating at round 0 and both
+    exposed together at the merge, so the fault budget is fully spent and
+    caught and D15a bites at the bound.
+
+    **And it answered the cost question, in the unwelcome direction.** The
+    model settles by `decide` in about 17 seconds — but `DoSValid` **exceeded
+    the default recursion depth** and needed `maxRecDepth 8000`, at 24 blocks
+    over `Fin 7` with histories of at most 15. Since a C1′ counterexample is by
+    definition a history that grows exponentially, and `ExposedIn` is quadratic
+    in that quantity while `DoSValid` runs it per block and reference, the
+    checking cost grows as roughly the *fourth power* of what is being
+    exhibited — from a starting point already over budget. **Step 11 should not
+    plan to `decide` its way to a refutation**: a counterexample family will
+    need its validity and its `DoSValid` proved as theorems parameterized by
+    depth, in the manner of `Ugrow` rather than of `Umerge`.
 
 11. **C1′, or its refutation.** Either the induction that turns the
     intersection lemma's *agreement below* into a per-layer constant, or a
     family that survives it. §10 says exactly where the current argument stops
     and what might close it.
 
-Steps 7–9 are believed routine. Step 10 is construction work. Step 11 is the
-research, and it is the only item in the plan whose outcome is unknown.
+Steps 1–10 are **done**. Step 11 is the research, and the only item in the plan
+whose outcome is unknown.
 
 ## 12. Open questions
 
@@ -1129,6 +1140,11 @@ development builds with no `sorry` and the usual three axioms.
 | **D14** | safety is untouched | *(inert-hypothesis checks)* | `LeanDagTest/SafetyUnderDoS` |
 | **D19a** | a clean history is linear | `card_history_le_of_not_exposed` | `Counting` |
 | **D19b** | a block is clean about what it references | `card_filter_creator_le_of_mem_refs` | `Counting` |
+| **D8a** | exposure is structural, not accidental | `exposedIn_of_accepted_span` | `Exclusion` |
+| **D16** | after `R`, agree or be exposed | `exposedIn_of_correct_disagree` | `Exclusion` |
+| **D17** | exclusion is total and permanent | `exposedIn_of_correct_exposed`, `not_mem_creators_refs_of_correct_exposed` | `Exclusion` |
+| **D18** | pinning | `mem_history_of_pinned` | `Exclusion` |
+| — | the intersection lemma (§10's route) | `exists_shared_correct_ref`, `eq_of_both_name_of_shared` | `Exclusion` |
 | **D15** | exclusion is sound | `ExposedIn.not_correct` | `Exposure` |
 | **D15a** | the margin is `f − k`, and zero at the bound | `card_creators_refs_add_card_exposedTo_le`, `creators_refs_eq_correct` | `Exposure` |
 | **D15b** | the correct set alone meets the threshold | `correctBlocksAt_admissible_quorum` | `Exclusion` |
@@ -1160,13 +1176,10 @@ tight.
 
 | | |
 |---|---|
-| **D16–D18** | exclusion after `R` — step 7; everything they need is proved |
-| **D8a** | exposure is structural — step 8, now formalizable since 6b added `accepted` |
-| — | the intersection lemma — step 9, the first genuine step toward C1′ |
 | **C1′** | the main bound — step 11, open; §10 has the route and the gap |
 
-The roadmap is §11 steps 7–11. Steps 7–9 are believed routine, step 10 is
-construction work, and step 11 is the only item whose outcome is unknown.
+Everything else in the plan is proved. The roadmap is §11, and steps 1–10 are
+done; step 11 is the only item whose outcome is unknown.
 
 The gap C1′ has to close is visible on the witness rather than merely stated:
 validator 1, which block `9` references, contributes three blocks to `H(9)` —

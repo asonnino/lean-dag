@@ -155,4 +155,246 @@ theorem card_creators_accepted_of_eventuallyDelivers {R : ℕ} (D : Delivery U)
   have hheld : a ∈ D.held v n := hd n hn v hv a ha har (by rw [hac]; exact hw)
   exact mem_creatorsOf.mpr ⟨a, D.accepts_correct v hv n a hheld (by rw [hac]; exact hw), hac⟩
 
+/-! ## §9 — exclusion after `R`
+
+D16 produces the exposure, D17 propagates it to every valid block, and D18 is
+the companion about what an author gives up by publishing honestly. Only D16
+uses synchrony; D17's propagation needs nothing but the fact that every block,
+however authored, leans on `f+1` correct blocks. -/
+
+omit [DecidableEq BlockId] in
+/-- Every non-genesis block references a **correct** block of the round below.
+
+`2f+1` distinct creators, at most `f` of them Byzantine. This is the fact D17
+and D18 both run on, and it holds of Byzantine blocks as much as correct ones —
+which is what makes exclusion total rather than a convention. -/
+theorem exists_correct_mem_refs {b : BlockId} (hb : b ∈ U.ids)
+    (hround : 0 < (U.block b).round) :
+    ∃ i ∈ (U.block b).refs, i ∈ U.ids ∧
+      (U.block i).creator ∈ (Correct : Finset Validator) ∧
+      (U.block i).round + 1 = (U.block b).round := by
+  obtain ⟨v, hv, hvc⟩ := exists_correct_of_card
+    (S := creatorsOf U.block (U.block b).refs)
+    (le_trans (by omega) (U.creators_quorum hb hround))
+  obtain ⟨i, hi, rfl⟩ := mem_creatorsOf.mp hv
+  exact ⟨i, hi, U.complete b hb i hi, hvc, U.round_of_mem_refs hb hi⟩
+
+/-- **D17 — exclusion is total, and permanent.** If every correct block of
+round `n+1` is exposed to `X`, then so is every block from round `n+2` on,
+whoever authored it — and under the condition none of them may name `X`.
+
+The induction is one round at a time and uses no synchrony: a block leans on a
+correct block below (`exists_correct_mem_refs`), that one is exposed, and
+exposure passes upward (D12). Synchrony is what produces the antecedent (D16),
+not what propagates it. -/
+theorem exposedIn_of_correct_exposed {X : Validator} {n : ℕ}
+    (hexp : ∀ c ∈ U.ids, (U.block c).round = n + 1 →
+      (U.block c).creator ∈ (Correct : Finset Validator) → ExposedIn U c X) :
+    ∀ k, ∀ b ∈ U.ids, (U.block b).round = n + 2 + k → ExposedIn U b X := by
+  intro k
+  induction k with
+  | zero =>
+      intro b hb hbr
+      obtain ⟨i, hi, hi_ids, hi_correct, hi_round⟩ :=
+        exists_correct_mem_refs hb (by omega)
+      exact (hexp i hi_ids (by omega) hi_correct).of_mem_refs hb hi
+  | succ k ih =>
+      intro b hb hbr
+      obtain ⟨i, hi, hi_ids, _, hi_round⟩ := exists_correct_mem_refs hb (by omega)
+      exact (ih i hi_ids (by omega)).of_mem_refs hb hi
+
+/-- The form the condition consumes: from `n+2` on, nobody may name `X`. -/
+theorem not_mem_creators_refs_of_correct_exposed (hdos : DoSValid U) {X : Validator} {n : ℕ}
+    (hexp : ∀ c ∈ U.ids, (U.block c).round = n + 1 →
+      (U.block c).creator ∈ (Correct : Finset Validator) → ExposedIn U c X)
+    {b : BlockId} (hb : b ∈ U.ids) (hbr : n + 2 ≤ (U.block b).round) :
+    X ∉ creatorsOf U.block (U.block b).refs := by
+  obtain ⟨k, hk⟩ : ∃ k, (U.block b).round = n + 2 + k := ⟨(U.block b).round - (n + 2), by omega⟩
+  intro hX
+  obtain ⟨i, hi, rfl⟩ := mem_creatorsOf.mp hX
+  exact hdos b hb i hi (exposedIn_of_correct_exposed hexp k b hb hk)
+
+/-- **D16 — after `R`, agree or be exposed.** If the histories of two correct
+round-`n` blocks between them hold an equivocation by `X`, then *every* correct
+round-`(n+1)` block is exposed to `X`.
+
+`SynchronisedOn` puts both round-`n` blocks into the references of every correct
+block one round up, so each of the latter inherits the union of their histories.
+No tie-break policy can avoid this: correct validators either agree about `X` —
+in which case D11 says it gained nothing — or they are all exposed one round
+later. -/
+theorem exposedIn_of_correct_disagree {R n : ℕ} {X : Validator}
+    (hs : SynchronisedOn U (Correct : Finset Validator) R) (hn : R ≤ n)
+    {c₁ c₂ : BlockId} (hc₁ : c₁ ∈ U.ids) (hc₁r : (U.block c₁).round = n)
+    (hc₁c : (U.block c₁).creator ∈ (Correct : Finset Validator))
+    (hc₂ : c₂ ∈ U.ids) (hc₂r : (U.block c₂).round = n)
+    (hc₂c : (U.block c₂).creator ∈ (Correct : Finset Validator))
+    {i j : BlockId} (hi : i ∈ history U c₁) (hj : j ∈ history U c₂)
+    (hpair : EquivPair U X i j)
+    {b : BlockId} (hb : b ∈ U.ids) (hbr : (U.block b).round = n + 1)
+    (hbc : (U.block b).creator ∈ (Correct : Finset Validator)) :
+    ExposedIn U b X :=
+  ⟨i, history_subset_of_reaches hb
+      (Reaches.single (hs n hn b hb hbr hbc c₁ hc₁ hc₁r hc₁c)) hi,
+   j, history_subset_of_reaches hb
+      (Reaches.single (hs n hn b hb hbr hbc c₂ hc₂ hc₂r hc₂c)) hj,
+   hpair⟩
+
+/-- **D18 — pinning.** If all but at most `f` correct validators put `A` into
+their round-`(j+1)` block, then every block from round `j+2` on holds `A` in its
+history.
+
+A block leans on `f+1` correct blocks of the round below, and there are not
+`f+1` correct validators lacking `A` to draw them all from. So the honest
+publisher loses the freedom to be disagreed about later — while an author that
+publishes to a strict subset keeps it, which is `liveness.md` §4.3 showing up as
+the gap §10's counterexample needs. -/
+theorem mem_history_of_pinned {A : BlockId} {j : ℕ}
+    (hpin : ((Correct : Finset Validator).filter
+      (fun v => ¬ ∃ c ∈ U.ids, (U.block c).round = j + 1 ∧ (U.block c).creator = v ∧
+        A ∈ (U.block c).refs)).card ≤ F.f) :
+    ∀ k, ∀ b ∈ U.ids, (U.block b).round = j + 2 + k → A ∈ history U b := by
+  intro k
+  induction k with
+  | zero =>
+      intro b hb hbr
+      -- the `f+1` correct creators `b` names cannot all lack `A`
+      have hquorum : F.f + 1 ≤
+          (creatorsOf U.block (U.block b).refs ∩ (Correct : Finset Validator)).card :=
+        card_inter_correct_of_quorum (U.creators_quorum hb (by omega))
+      have hnsub : ¬ (creatorsOf U.block (U.block b).refs ∩ (Correct : Finset Validator)) ⊆
+          (Correct : Finset Validator).filter
+            (fun v => ¬ ∃ c ∈ U.ids, (U.block c).round = j + 1 ∧ (U.block c).creator = v ∧
+              A ∈ (U.block c).refs) := by
+        intro hsub
+        have := Finset.card_le_card hsub
+        omega
+      obtain ⟨v, hv, hvnot⟩ := Finset.not_subset.mp hnsub
+      rw [Finset.mem_inter] at hv
+      obtain ⟨i, hi, hic⟩ := mem_creatorsOf.mp hv.1
+      have hi_ids : i ∈ U.ids := U.complete b hb i hi
+      have hi_round : (U.block i).round = j + 1 := by
+        have := U.round_of_mem_refs hb hi; omega
+      -- `v` does publish `A`, and by T1 that block is `i` itself
+      obtain ⟨c, hc, hcr, hcc, hcA⟩ : ∃ c ∈ U.ids, (U.block c).round = j + 1 ∧
+          (U.block c).creator = v ∧ A ∈ (U.block c).refs := by
+        by_contra hcon
+        exact hvnot (Finset.mem_filter.mpr ⟨hv.2, hcon⟩)
+      have : c = i := U.eq_of_creator_eq hc hi_ids hv.2 hcc (by rw [hic]) (by omega)
+      exact history_subset_of_reaches hb (Reaches.single hi)
+        (mem_history_of_mem_refs hi_ids (this ▸ hcA))
+  | succ k ih =>
+      intro b hb hbr
+      obtain ⟨i, hi, hi_ids, _, hi_round⟩ := exists_correct_mem_refs hb (by omega)
+      exact history_subset_of_reaches hb (Reaches.single hi) (ih i hi_ids (by omega))
+
+/-! ## D8a — exposure is structural, not accidental
+
+D8 says the reference graph cannot *report* an equivocation, which reads as
+making exposure a matter of luck. It is not. A validator accepts one block per
+author and references what it accepted, so if any two authors it accepts carry
+different halves in their histories, the validator performs the merge itself,
+in its own next block, as a matter of course.
+
+Note what the two accepted blocks are: they have **different authors**. The
+acceptance rule forbids accepting both halves directly (`accepted_inj`), so the
+equivocation is never in the accepted set — it is one layer down, in the
+histories of two blocks that disagree. Which is exactly `Umerge`. -/
+
+/-- **D8a.** A validator whose accepted set spans two disagreeing histories
+exposes the author in its own next block. -/
+theorem exposedIn_of_accepted_span (D : Delivery U) {v : Validator}
+    (hv : v ∈ (Correct : Finset Validator)) {n : ℕ} {b : BlockId} (hb : b ∈ U.ids)
+    (hbc : (U.block b).creator = v) (hbr : (U.block b).round = n + 1)
+    {p q : BlockId} (hp : p ∈ D.accepted v n) (hq : q ∈ D.accepted v n)
+    {X : Validator} {i j : BlockId} (hi : i ∈ history U p) (hj : j ∈ history U q)
+    (hpair : EquivPair U X i j) : ExposedIn U b X :=
+  ⟨i, history_subset_of_reaches hb (Reaches.single (D.includes v hv n b hb hbc hbr hp)) hi,
+   j, history_subset_of_reaches hb (Reaches.single (D.includes v hv n b hb hbc hbr hq)) hj,
+   hpair⟩
+
+/-! ## The intersection lemma
+
+§10's route toward C1′. Two blocks that both *name* `X` are both `X`-clean, and
+each leans on `f+1` correct blocks; when the correct validators number at most
+`2f+1` those two sets must meet, and a correct validator has one block per round
+(T1), so meeting in a *creator* means meeting in a *block*. Both then contain
+that block's history, and being clean, both must agree with it about `X`.
+
+This strictly strengthens D18: the hypothesis becomes *some shared ancestor
+heard from `X`*, rather than *`X` published to all but `f` correct validators*.
+
+Its scope is a case split that may be the whole proof. The intersection needs
+`|Correct| ≤ 2f+1`, i.e. the adversary spending its full budget — and when it
+spends less, D9's branching factor, which is the *number* of Byzantine authors,
+falls by the same amount. The adversary cannot have both. -/
+
+omit [DecidableEq BlockId] in
+/-- Two blocks of the same round share a correct reference, when the correct
+validators are as few as the fault bound permits. -/
+theorem exists_shared_correct_ref (hcard : (Correct : Finset Validator).card ≤ 2 * F.f + 1)
+    {c₁ c₂ : BlockId} (hc₁ : c₁ ∈ U.ids) (hc₂ : c₂ ∈ U.ids)
+    (hround : (U.block c₁).round = (U.block c₂).round) (hpos : 0 < (U.block c₁).round) :
+    ∃ w, w ∈ (U.block c₁).refs ∧ w ∈ (U.block c₂).refs ∧
+      (U.block w).creator ∈ (Correct : Finset Validator) := by
+  -- each names `f+1` correct authors, and two such sets cannot miss each other
+  have h₁ := card_inter_correct_of_quorum (U.creators_quorum hc₁ hpos)
+  have h₂ := card_inter_correct_of_quorum (U.creators_quorum hc₂ (by omega))
+  have hsub : (creatorsOf U.block (U.block c₁).refs ∩ (Correct : Finset Validator)) ∪
+      (creatorsOf U.block (U.block c₂).refs ∩ (Correct : Finset Validator)) ⊆
+      (Correct : Finset Validator) :=
+    Finset.union_subset Finset.inter_subset_right Finset.inter_subset_right
+  have hunion := Finset.card_le_card hsub
+  have hadd := Finset.card_union_add_card_inter
+    (creatorsOf U.block (U.block c₁).refs ∩ (Correct : Finset Validator))
+    (creatorsOf U.block (U.block c₂).refs ∩ (Correct : Finset Validator))
+  obtain ⟨v, hv⟩ := Finset.card_pos.mp (show 0 <
+    ((creatorsOf U.block (U.block c₁).refs ∩ (Correct : Finset Validator)) ∩
+      (creatorsOf U.block (U.block c₂).refs ∩ (Correct : Finset Validator))).card from by
+    omega)
+  rw [Finset.mem_inter, Finset.mem_inter, Finset.mem_inter] at hv
+  obtain ⟨⟨hv₁, hvc⟩, hv₂, -⟩ := hv
+  obtain ⟨i₁, hi₁, hi₁c⟩ := mem_creatorsOf.mp hv₁
+  obtain ⟨i₂, hi₂, hi₂c⟩ := mem_creatorsOf.mp hv₂
+  -- one block per correct author per round, so the two references coincide
+  have : i₁ = i₂ :=
+    U.eq_of_creator_eq (U.complete c₁ hc₁ i₁ hi₁) (U.complete c₂ hc₂ i₂ hi₂) hvc hi₁c hi₂c
+      (by have := U.round_of_mem_refs hc₁ hi₁; have := U.round_of_mem_refs hc₂ hi₂; omega)
+  exact ⟨i₁, hi₁, this ▸ hi₂, by rw [hi₁c]; exact hvc⟩
+
+/-- **The intersection lemma.** Two blocks that both name `X` agree about `X`
+wherever their shared correct reference speaks about it.
+
+`A` is the shared ancestor's `X`-block at some round; each namer, being
+`X`-clean, can hold only one `X`-block at that round, and already holds `A`. So
+whatever either of them holds there *is* `A`.
+
+Where the shared ancestor is silent about `X` the two may still differ, and
+that residue is exactly the gap §10 records. -/
+theorem eq_of_both_name_of_shared (hdos : DoSValid U)
+    {c₁ c₂ w : BlockId} (hc₁ : c₁ ∈ U.ids) (hc₂ : c₂ ∈ U.ids)
+    (hw₁ : w ∈ (U.block c₁).refs) (hw₂ : w ∈ (U.block c₂).refs)
+    {X : Validator} (hn₁ : X ∈ creatorsOf U.block (U.block c₁).refs)
+    (hn₂ : X ∈ creatorsOf U.block (U.block c₂).refs)
+    {A A₁ A₂ : BlockId} (hA : A ∈ history U w)
+    (hA₁ : A₁ ∈ history U c₁) (hA₂ : A₂ ∈ history U c₂)
+    (hAc : (U.block A).creator = X) (hA₁c : (U.block A₁).creator = X)
+    (hA₂c : (U.block A₂).creator = X)
+    (hA₁r : (U.block A₁).round = (U.block A).round)
+    (hA₂r : (U.block A₂).round = (U.block A).round) : A₁ = A₂ := by
+  -- naming `X` forces cleanliness about `X` (D19b), which forces uniqueness
+  have hclean₁ : ¬ ExposedIn U c₁ X := by
+    obtain ⟨i, hi, rfl⟩ := mem_creatorsOf.mp hn₁; exact hdos c₁ hc₁ i hi
+  have hclean₂ : ¬ ExposedIn U c₂ X := by
+    obtain ⟨i, hi, rfl⟩ := mem_creatorsOf.mp hn₂; exact hdos c₂ hc₂ i hi
+  have hAw₁ : A ∈ history U c₁ := history_subset_of_reaches hc₁ (Reaches.single hw₁) hA
+  have hAw₂ : A ∈ history U c₂ := history_subset_of_reaches hc₂ (Reaches.single hw₂) hA
+  have e₁ : A₁ = A := by
+    by_contra hne
+    exact hclean₁ ⟨A₁, hA₁, A, hAw₁, hne, hA₁c, hAc, hA₁r⟩
+  have e₂ : A₂ = A := by
+    by_contra hne
+    exact hclean₂ ⟨A₂, hA₂, A, hAw₂, hne, hA₂c, hAc, hA₂r⟩
+  rw [e₁, e₂]
+
 end LeanDag
