@@ -22,13 +22,15 @@ So `|U.ids|` **is** the storage burden imposed on the correct population, and
 `|V.ids|` is one validator's share of it. A block a Byzantine validator
 reveals to nobody is not in `U` and costs nothing.
 
-> **Status.** §3–§8 are **proved in Lean**, including the delivery repair;
+> **Status.** §3–§9 are **proved in Lean**, including the delivery repair;
 > §14 is the index, with every result mapped to its name and file, and §11
-> steps 7–11 are the roadmap for the rest. What remains is §9's exclusion
-> results, D8a, and §10 — the conjecture, still open, with a route, a gap, and
-> a candidate counterexample. §12 lists what is still undecided, §13 what is
-> settled. D8a, D15a and the shape of C1′ were all found by building things
-> rather than by reasoning about them.
+> steps 1–11 are all closed. §10's conjecture **C1′ is believed false** — the
+> attempt, and the one-round gap it fails at, are recorded there — and what
+> replaces it, **C2**, is already proved: the condition guarantees a *rate*,
+> one block per round per author until exclusion and nothing after, not a
+> *size*. Bounding a single reveal is a rate limit at the network layer (§12
+> Q1), outside the model by construction. D8a, D15a and the failure of C1′ were
+> all found by building things rather than by reasoning about them.
 
 ## 1. What the existing development already gives
 
@@ -746,10 +748,62 @@ shared, and therefore not a source of branching either. **That is the crux, and
 it is where the effort should go**: either a family that survives all of it, or
 the argument that none can.
 
-A refutation would not be a disaster: it would say the condition must be
-supplemented, and §12 Q1 lists by what. And by D16–D18 the damage is in any
-case confined to **one reveal per Byzantine author** (§13 S4) — C1′ is exactly
-the question of how large a single reveal can be.
+### The attempt, and why it fails
+
+The route above was tried, with two extra policies making explicit what the
+model had left to prose: `HeldByCorrect` (`U` really is what correct validators
+held, §4.2) and `AcceptsSome` (a validator holding a block by some author
+accepts *some* block by that author). Together they give what the route needed,
+and it is proved: **nothing an author publishes is invisible to the correct
+population** — every block in `U` has a correct validator that accepted one of
+its author's blocks for that round, and therefore referenced one.
+
+The **backbone lemma** came out of the same attempt and is worth having
+independently: after `R`, a correct block's history contains *every* correct
+block of every round from `R` up to its own. The induction needs no population
+hypothesis, since a correct reference always exists to step through.
+
+**And then it stops, one round short.** A block `c` at round `s` that names an
+`X`-block does contain the backbone — but only up to round `s-2`, because
+`H(c)` at round `s-1` is *exactly* `c`'s references (D7). The backbone's
+`X`-block for round `s-1` is referenced by correct blocks at round `s`, not at
+`s-1`, so it is not in `H(c)` and cannot contradict `c`'s choice. Alternates
+are therefore **born one round below their namer**, where nothing pins them,
+and the number of namers per round is bounded only by the layer above. D9's
+recurrence survives intact.
+
+### What we now believe, and the honest reframing
+
+Behind that one-round gap is something structural: **nothing in the model
+limits how many blocks a Byzantine validator publishes.** `|H(b)| ≤ |U.ids|`,
+and `|U.ids|` is *what correct validators held* — a bandwidth quantity the
+model cannot see (§2). So a bound on `|H(b)|` in terms of `r` and `f` alone can
+only come from the constraints forcing the branching to collapse, and the
+analysis above says they do not.
+
+**C1′ is therefore believed false**, though not refuted: no counterexample
+family has been constructed, and §11 step 10 established that constructing one
+would need theorems parameterized by depth rather than `decide`.
+
+What replaces it is already proved, and is a **rate** guarantee rather than a
+**size** one:
+
+> **C2 — the reframed target.** For every author `X` and every block `b`, either
+> `X` contributes at most one block per round to `H(b)` (D11, and D19b when `b`
+> references `X`), or `X` is exposed in `H(b)` — in which case `b` does not
+> reference `X`, and by D17 nothing from two rounds on does either, ever.
+
+So an author's contribution to any history is one block per round until it is
+caught, and nothing afterwards. The only unbounded quantity is what it managed
+to publish *before* being caught — **one reveal per Byzantine author** (§13 S4),
+`f` of them, each bounded by delivery rather than by the DAG.
+
+That is the guarantee the condition actually provides, and it is complete. The
+missing piece is not a theorem but a mechanism: bounding a single reveal is a
+**rate limit at the network layer**, which §12 Q1 already identified as living
+outside the model. The DoS condition and a rate limit are complementary — the
+condition stops an equivocator contributing forever, the rate limit stops it
+contributing much at once — and neither substitutes for the other.
 
 ## 11. Staging and witnesses
 
@@ -911,25 +965,37 @@ Suggested order, easiest first:
     need its validity and its `DoSValid` proved as theorems parameterized by
     depth, in the manner of `Ugrow` rather than of `Umerge`.
 
-11. **C1′, or its refutation.** Either the induction that turns the
-    intersection lemma's *agreement below* into a per-layer constant, or a
-    family that survives it. §10 says exactly where the current argument stops
-    and what might close it.
+11. **C1′ — attempted, and it does not close.** The `AcceptsSome` route was
+    tried; it yields the backbone lemma and `exists_accepted_of_mem_ids`, both
+    kept, and then stops one round short (§10). C1′ is now believed false, and
+    **C2** — the rate guarantee it is replaced by — is already proved. What
+    remains is not a theorem but a mechanism, and it lives outside the model:
+    see §12 Q1.
 
-Steps 1–10 are **done**. Step 11 is the research, and the only item in the plan
-whose outcome is unknown.
+Steps 1–10 are **done**, and step 11 is closed with a negative answer and a
+reframing rather than a proof.
 
 ## 12. Open questions
 
-**Q1 — What is the fallback if C1′ is false?** If the adversary can sustain
-exponential histories under `DoSValid`, the condition has to be strengthened.
-The candidates, in increasing order of cost: exclude an author on *first*
-exposure anywhere in the view rather than in the history (breaks D13 —
-view-dependence, so blocks would no longer be objectively valid); require
-histories to be equivocation-free outright (**fatal**, see §13 S9); or bound the
-number of blocks per author per round admitted into a view, which is a rate
-limit rather than a validity condition and lands outside the model. None is
-attractive, which is a reason to look for the counterexample early (§10).
+**Q1 — The rate limit, now the live question.** §10 concludes that C1′ is
+believed false and that what the condition guarantees is a *rate* (C2), not a
+*size*. Bounding a single reveal is therefore the remaining work, and it is a
+**rate limit at the network layer** — how many blocks per author per round a
+correct validator will hold at all. That is not a validity condition and cannot
+be one: it is about what you accept from the wire, not about what makes a block
+well-formed, and the model has no notion of a message (§2).
+
+The two alternatives that stay inside the model were considered and are worse:
+excluding an author on *first exposure anywhere in the view* rather than in the
+history breaks D13 — validity would become view-dependent, and blocks would no
+longer be objectively well-formed; and requiring histories to be
+equivocation-free outright is **fatal**, since by D8a every correct block
+acquires an equivocation in its history and the DAG stops (§13 S9).
+
+So the rate limit is not a fallback but the intended division of labour. The
+DoS condition stops an equivocator contributing *forever*; a rate limit stops
+it contributing *much at once*. Neither substitutes for the other, and only the
+first is a property of the DAG.
 
 **Q2 — Where does it live?** Settled for what is built, open for the rest.
 `LeanDag/History.lean` (the `Finset` history) and `LeanDag/Exposure.lean`
@@ -1145,6 +1211,9 @@ development builds with no `sorry` and the usual three axioms.
 | **D17** | exclusion is total and permanent | `exposedIn_of_correct_exposed`, `not_mem_creators_refs_of_correct_exposed` | `Exclusion` |
 | **D18** | pinning | `mem_history_of_pinned` | `Exclusion` |
 | — | the intersection lemma (§10's route) | `exists_shared_correct_ref`, `eq_of_both_name_of_shared` | `Exclusion` |
+| — | the backbone lemma | `mem_history_of_correct` | `Exclusion` |
+| — | nothing published is invisible to the correct | `exists_accepted_of_mem_ids` | `Exclusion` |
+| **C2** | the rate guarantee, which replaces C1′ | D11 + D19b + D17, already proved | — |
 | **D15** | exclusion is sound | `ExposedIn.not_correct` | `Exposure` |
 | **D15a** | the margin is `f − k`, and zero at the bound | `card_creators_refs_add_card_exposedTo_le`, `creators_refs_eq_correct` | `Exposure` |
 | **D15b** | the correct set alone meets the threshold | `correctBlocksAt_admissible_quorum` | `Exclusion` |
@@ -1176,10 +1245,11 @@ tight.
 
 | | |
 |---|---|
-| **C1′** | the main bound — step 11, open; §10 has the route and the gap |
+| **C1′** | **believed false** — §10 records the attempt, where it fails, and why |
 
-Everything else in the plan is proved. The roadmap is §11, and steps 1–10 are
-done; step 11 is the only item whose outcome is unknown.
+Everything else in the plan is proved. C1′ was the last open item and is now
+believed unattainable *as a size bound*; what it is replaced by, **C2**, is
+already proved. See §10, and §12 Q1 for the mechanism that has to do the rest.
 
 The gap C1′ has to close is visible on the witness rather than merely stated:
 validator 1, which block `9` references, contributes three blocks to `H(9)` —

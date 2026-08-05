@@ -397,4 +397,72 @@ theorem eq_of_both_name_of_shared (hdos : DoSValid U)
     exact hclean₂ ⟨A₂, hA₂, A, hAw₂, hne, hA₂c, hAc, hA₂r⟩
   rw [e₁, e₂]
 
+/-! ## The correct backbone
+
+The route of §10 turns on what a correct block's history contains. After `R`,
+`SynchronisedOn` makes every correct block reference every correct block one
+round below — and that composes: **a correct block's history contains every
+correct block of every round from `R` to its own.**
+
+The induction needs no population hypothesis. A block references `2f+1`
+distinct creators of which at most `f` are Byzantine, so a correct block one
+round up always exists to step through (`exists_correct_mem_refs`). -/
+
+/-- **The backbone lemma.** After `R`, correct histories contain the whole
+correct past. -/
+theorem mem_history_of_correct {R : ℕ} (hs : SynchronisedOn U (Correct : Finset Validator) R) :
+    ∀ d : ℕ, ∀ c ∈ U.ids, ∀ a ∈ U.ids,
+      (U.block c).creator ∈ (Correct : Finset Validator) →
+      (U.block a).creator ∈ (Correct : Finset Validator) →
+      R ≤ (U.block a).round → (U.block a).round + 1 + d = (U.block c).round →
+      a ∈ history U c := by
+  intro d
+  induction d with
+  | zero =>
+      intro c hc a ha hcc hac hR hround
+      exact mem_history_of_mem_refs hc
+        (hs (U.block a).round hR c hc (by omega) hcc a ha rfl hac)
+  | succ d ih =>
+      intro c hc a ha hcc hac hR hround
+      -- step down one round through a correct reference, which always exists
+      obtain ⟨w, hw, hw_ids, hw_correct, hw_round⟩ :=
+        exists_correct_mem_refs hc (by omega)
+      exact history_subset_of_reaches hc (Reaches.single hw)
+        (ih w hw_ids a ha hw_correct hac hR (by omega))
+
+/-! ## Two delivery policies, and what they do and do not buy
+
+`dos-equivocation-and-growth.md` §10. These make explicit two things the model
+has so far left to prose, and they were introduced to attempt C1′ after `R`.
+The attempt does not close — see the note at the end — but the policies are
+worth stating, and the backbone lemma above came out of it. -/
+
+/-- **What `U` means, made explicit.** §4.2 of `liveness.md` defines `U` as
+every block some correct validator held; the model has never said so. -/
+def HeldByCorrect (D : Delivery U) : Prop :=
+  ∀ i ∈ U.ids, ∃ v ∈ (Correct : Finset Validator), i ∈ D.held v (U.block i).round
+
+/-- **A stronger acceptance policy**: a validator that holds a block by some
+author accepts *some* block by that author. `Delivery.accepts_correct` demands
+this only of correct authors. -/
+def AcceptsSome (D : Delivery U) : Prop :=
+  ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ a ∈ D.held v n,
+    ∃ i ∈ D.accepted v n, (U.block i).creator = (U.block a).creator
+
+omit [DecidableEq BlockId] in
+/-- What the two policies do buy: **nothing an author publishes is invisible to
+the correct population.** If any block by `X` at round `n` exists at all, some
+correct validator accepted a block by `X` at round `n` — and so referenced one,
+if it built.
+
+This is the step the C1′ attempt needed, and it does go through. What does not
+is the step after it; see below. -/
+theorem exists_accepted_of_mem_ids (D : Delivery U) (hheld : HeldByCorrect D)
+    (hsome : AcceptsSome D) {A : BlockId} (hA : A ∈ U.ids) :
+    ∃ v ∈ (Correct : Finset Validator), ∃ i ∈ D.accepted v (U.block A).round,
+      (U.block i).creator = (U.block A).creator := by
+  obtain ⟨v, hv, hheldA⟩ := hheld A hA
+  obtain ⟨i, hi, hic⟩ := hsome v hv (U.block A).round A hheldA
+  exact ⟨v, hv, i, hi, hic⟩
+
 end LeanDag
