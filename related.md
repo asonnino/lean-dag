@@ -224,40 +224,96 @@ synchronous uncertified DAG protocol that aims for "the security properties of
 certified DAGs, the efficiency of uncertified approaches, and linear amortized
 communication complexity."
 
-Its two claims against the existing family are direct:
+The paper's diagnosis, in its own words: *"existing protocols lack rigorous
+liveness proofs … The underlying vulnerability—validators advancing rounds
+without creating blocks—is inherent to uncertified DAG protocols; Cordial
+Miners, which originates the same round advancement mechanism, assumes
+synchronization after GST without proof."* It states specifically that
+Mysticeti's Lemma 8 and Cordial Miners' Proposition 38 both claim post-GST
+validator synchronisation but leave gaps, and cites Qiu et al. (§6.1) for an
+explicit counterexample.
 
-1. **Uncertified DAG protocols, Mysticeti included, lacked a rigorous liveness
-   proof.** Starfish claims to give the first.
-2. **They admit a desynchronisation attack** in which correct parties fail to
-   commit leaders even after GST.
+#### The pacemaker conditions
 
-Its remedies:
-- A **Push pacemaker**: parties must create a block before advancing rounds, plus
-  a catch-up condition for slower participants. This is what restores post-GST
-  synchronisation.
-- **Encoded Cordial Dissemination**: Reed–Solomon erasure coding plus Data
-  Availability Certificates, decoupling transaction data from block headers so
-  headers can be push-disseminated. This attacks the O(Mn²) payload cost that
-  follows from coupling data to metadata in uncertified designs.
-- **Starfish-L** and, applying the same techniques to Mysticeti, **Mysticeti-L**,
-  which retains Mysticeti's latency at quadratic metadata and linear payload cost
-  in the happy case.
+Starfish's Table 3 governs three events; its own additions are A2, C3 and B2.
 
-**Differs from Mysticeti:** adds a pacemaker discipline and an encoded
-dissemination layer; retains the uncertified commit structure.
+**Round advancement** (r−1 → r) requires *both*:
+- **A1** — received 2f+1 blocks of round r−1;
+- **A2** *(new)* — **created its own block in round r−1.** This is the fix. In
+  the paper's words, it *"prevents validators from 'jumping' ahead without
+  contributing blocks that serve as votes and certificates needed for leader
+  commitment."*
 
-**Bearing on this development — the important one.** The report's §4.4 derives
-`SynchronisedOn` (beyond some round, every correct block references every correct
-block of the round below) from GST *together with the protocol's own build
-rules*. Starfish's desynchronisation attack is exactly an attack on that
-property, and its Push pacemaker is exactly a build rule that restores it. The
-two accounts should be reconciled explicitly: either the build rules assumed in
-§4.4 already imply Starfish's pacemaker condition — in which case the derivation
-answers their critique and should say so — or they do not, in which case §4.4's
-assumption is stronger than advertised and the gap must be stated. **This is the
-single highest-value citation to engage with in the report**, since it is the
-literature's standing claim that the property this development derives cannot be
-had for free.
+**Block creation** at round r, on any one of:
+- **C1** — received the round-(r−1) leader block (L1) *and* saw the round-(r−2)
+  leader either collect 2f+1 votes or match a skip pattern (L2);
+- **C2** — a timeout δ_TO = **2Δ** expired;
+- **C3** *(new, "safe jump")* — received 2f+1 blocks of round **r** itself,
+  enabling a lagging validator to catch up without waiting out the timeout.
+
+**Broadcast** of the unknown causal history to each peer, on:
+- **B1** — creating a block; or
+- **B2** *(new)* — **advancing a round.** Called *"essential: it ensures that
+  after GST, all honest validators advance rounds and create blocks within time
+  Δ of each other."*
+
+The argument for the fix: if a validator receives 2f+1 round-r blocks but C1 is
+unsatisfied, then at least f+1 honest validators have already advanced past
+round r, so C3 permits catching up immediately.
+
+#### What they prove
+
+- **Lemma 4 (Synchronicity after GST).** All honest validators enter any round
+  r > r_max within time Δ of each other, and create their round-r blocks within
+  Δ of each other. Sharpens to the actual delay δ when δ < Δ.
+- **Lemma 5.** Any leader block created by an honest validator in round r ≥ r_max
+  is marked TO-COMMIT by the direct decision rule.
+- **Lemma 6.** After GST, any undecided leader block is eventually decided.
+
+**Differs from Mysticeti:** adds A2/C3/B2 to the pacemaker, plus an encoded
+dissemination layer (Reed–Solomon coding with data-availability guarantees
+folded into DAG construction, giving O(Mn) payload at one extra round) and
+**Starfish-C**, using threshold signatures and delayed dissemination for O(κn³)
+worst-case and O(κn²) happy-case metadata. Retains the uncertified commit
+structure throughout.
+
+See §8 for the detailed comparison against this development.
+
+### 4.3.1 Qiu, Xiao and Shao — the counterexample, mechanised
+
+> L. Qiu, J. Xiao, Z. Shao. *Mechanized Safety and Liveness Proofs for the
+> Mysticeti Consensus Protocol under the LiDO-DAG Framework.* IEEE S&P 2026,
+> pp. 149–168. [PDF](https://flint.cs.yale.edu/flint/publications/sp26.pdf) ·
+> [artifact](https://zenodo.org/records/17267594)
+
+The source of Starfish's counterexample, and the closest prior art to this
+repository by a wide margin. Rocq (Coq) proofs under the LiDO-DAG framework.
+
+Their finding: *"liveness of Mysticeti is highly sensitive to the round-jumping
+behavior of honest participants. If honest processes are allowed to jump over
+rounds arbitrarily, then we present an explicit counterexample to the liveness
+of Mysticeti: an infinite trace where no data blocks are ever committed."*
+Safety, by contrast, is *"mostly insensitive to the details of round-jumping."*
+
+**Their fix** is weaker — and therefore sharper — than Starfish's A2. They
+introduce a *global catchup time* (GCT), analogous to GST and known to honest
+parties, before which round-jumping is implementation-defined. After GCT:
+
+> if an honest party jumps to round r, it must create a vertex in every round
+> r′ < r, **unless it has already made a decision for the round r′ − 2**.
+
+Full liveness guarantees hold after max{GST, GCT}. Leader vertices created
+before GCT still cannot be skipped: at least f+1 honest processes create
+certificates for them (`every_vert_certificate` in the artifact).
+
+**They audited deployed code.** *"We found that current versions of Sui indeed
+implemented round-jumping incorrectly, making them susceptible to liveness
+attacks."* Mysten Labs acknowledged the issue. This makes the clause an
+empirical fact about implementations, not only a modelling nicety.
+
+**Differs from this development:** an operational model (traces, a transition
+system, an explicit time model) in Rocq, versus the structural, execution-free
+account here. See §8.
 
 ### 4.4 Bluestreak
 
@@ -351,9 +407,12 @@ Directly relevant, since this repository is a Lean 4 development.
   doi:10.1145/3729306 (Yale FLINT).
   Coq. Applied to Narwhal, Bullshark and Sailfish, giving mechanised safety *and
   liveness* proofs — claimed as the first mechanised liveness proofs of any
-  DAG-based protocol. **All three targets are certified DAGs**, which is the gap
-  the present development occupies: uncertified, and with liveness stated
-  structurally rather than over a time model.
+  DAG-based protocol. All three targets are certified DAGs — but see the next
+  entry, which extends the same framework to Mysticeti.
+
+- **Qiu, Xiao and Shao (S&P 2026)** — mechanised safety *and* liveness for
+  Mysticeti itself, in Rocq under LiDO-DAG. **This is the closest prior art to
+  the present development and is treated in full at §4.3.1 and §8.**
 
 - **Reusable Formal Verification of DAG-based Consensus Protocols.**
   > N. Bertrand, P. Ghorpade, S. Rubin, B. Scholz, P. Subotic. arXiv:2407.02167,
@@ -405,12 +464,125 @@ Three observations for the report.
    not guaranteed. The report's structural condition and its GST derivation land
    squarely in this dispute and should engage with both by name.
 
-3. **No mechanised treatment of an uncertified DAG's liveness exists.** LiDO-DAG
-   mechanises liveness but only for certified protocols; the TLA+ work covers two
-   uncertified protocols but safety only. A machine-checked liveness development
-   for a Mysticeti-style uncertified commit rule is, on this survey, unoccupied
-   ground — and the strongest available statement of this repository's
-   contribution.
+3. **A mechanised liveness proof of Mysticeti already exists** — Qiu, Xiao and
+   Shao (§4.3.1), in Rocq, at S&P 2026. Priority of mechanisation is therefore
+   *not* available as a claim, and the report must not make it. What remains
+   distinctive is the *form* of the account: theirs is an operational model with
+   traces and an explicit time model; this development states liveness
+   structurally, with no theorem mentioning time, and derives the structural
+   condition from GST separately. That is a real and defensible difference, but
+   it is a difference of method, not of first occupancy. See §8.
+
+---
+
+## 8. The pacemaker against our liveness assumptions
+
+This section compares Starfish's pacemaker (§4.3) and Qiu et al.'s round-jumping
+rule (§4.3.1) against `LeanDag/Timing.lean`, `LeanDag/Liveness.lean` and the
+trust boundary of report §4.
+
+### 8.1 The correspondence
+
+| Starfish | Qiu et al. | This development | Status here |
+|---|---|---|---|
+| A1: 2f+1 blocks of round r−1 | — | `Live.builds` + `DeliversQuorum` (P8) | assumed (protocol) |
+| **A2: created own block of round r−1** | **after GCT, no jumping over r′ unless r′−2 decided** | `Live.builds`, giving L1 `Populated`; `Timing.blk` total for n ≤ N | **assumed (P8) — the load-bearing clause** |
+| C1: wait for leader + votes | — | not modelled — `waits` is a pure timeout | absent |
+| C2: timeout δ_TO = **2Δ** | — | `Timing.waits` + backoff past `D + delay`; **= 2Δ** when D = Δ | derived |
+| C3: safe jump on 2f+1 blocks of round r | the "unless decided" clause | `Timing.prompt`: `built v (n+1) ≤ max (built v n + timeout n) (latest n + delay)` | assumed (P9) |
+| B1/B2: broadcast unknown history on create **and on advance** | — | `Timing.covers` + P7 (references everything held) | assumed (network + protocol) |
+| **Lemma 4**: honest validators enter round r within Δ | — | `Timing.DriftFrom`, via `driftFrom_of_prompt` | **derived — but from an assumed base case** |
+| Lemma 5: honest leader committed | their liveness theorem | `directCommit_of_correct_leader`, `decided_of_correct_leader` | derived |
+
+### 8.2 The counterexample does not apply here — and that is the point
+
+The Qiu et al. counterexample is an infinite trace in which honest processes jump
+rounds and no leader is ever committed. It cannot be instantiated in this model,
+because **P8 (`Live.builds` — a validator builds on holding a quorum) excludes
+round-jumping outright**, and L1 ("no stall") turns that into the statement that
+every correct validator has a block at *every* round up to the horizon. `Timing`
+then takes this for granted: `blk : Validator → ℕ → BlockId` is total over
+`n ≤ N`.
+
+So the theorems here are not threatened by the counterexample. But the reason
+they are not is exactly the clause the literature has now identified as the
+crux — and the report currently under-sells it. Report §4.1 lists P8 as
+
+> | P8 | a validator has a genesis block, and builds on holding a quorum |
+
+alongside nine other clauses, in the same register as "no block cites one author
+twice". On the evidence of §4.3 and §4.3.1 it is not that kind of clause. It is
+*the* clause on which liveness of the whole uncertified family turns; omitting it
+makes liveness **false**, not merely unproven; and the deployed Sui implementation
+did not satisfy it. **Recommendation: promote P8 in §4.1 with a note and both
+citations.** It costs a paragraph and it converts a bland modelling choice into a
+result that engages the literature.
+
+### 8.3 Our condition is stronger than either published fix
+
+Worth stating precisely, because it bounds what can be claimed:
+
+- **Qiu et al.** permit jumping over round r′ when a decision for r′−2 already
+  exists — jumping is restricted, not forbidden, and only after GCT.
+- **Starfish A2** requires a block only in the immediately preceding round.
+- **Here**, `blk` is total: a correct validator has a block at every round ≤ N,
+  with no exception clause and no analogue of GCT.
+
+This is sound but strictly stronger, so it describes a protocol doing more work
+than the minimal fix. Two consequences. First, no claim of *minimality* for the
+condition is available. Second, there is a clear route to a sharper result:
+weakening `Live.builds` to Qiu et al.'s "unless already decided" form, and
+checking L1 and `Timing` survive, would put this development at the same strength
+as the S&P 2026 result rather than above it.
+
+### 8.4 Where the accounts genuinely differ
+
+**The base case is assumed here and derived there.** `driftFrom_of_prompt` proves
+drift is *preserved*, not established: `exists_synchronisedOn_of_backoff` takes
+
+```lean
+(hbase : ∀ v ∈ T, ∀ w ∈ T, tm.built w n₀ ≤ tm.built v n₀ + D)
+```
+
+as a hypothesis, recorded honestly in the trust boundary as R4 ("round-`0` spread
+at most `D₀`", deployment). Starfish's **Lemma 4** instead *derives* the
+corresponding Δ-synchronisation for every round past r_max, and its condition
+**B2** — broadcast on round advancement, not merely on block creation — is
+precisely what buys it. Note that B2 is vacuous in our model: advancement and
+block creation coincide when `blk` is total, so B1 alone suffices, which is why
+its absence here is not an error. But it does mean **R4 is avoidable**: adopting
+a B2-style clause would let the round-0 spread assumption be discharged rather
+than assumed, tightening §4.4's "derived, not assumed" claim at its one soft
+point.
+
+**The 2Δ agreement is a genuine corroboration.** Starfish independently fixes its
+block-creation timeout at δ_TO = **2Δ**. Report §6.10/§7.1 derives a required wait
+of `D₀ + Δ`, which is **2Δ** under a common broadcast start (D₀ ≤ Δ). Two
+different routes — a protocol designer's choice there, a derived threshold here —
+landing on the same constant. This is worth a sentence in §9; it is the kind of
+external check a formalisation rarely gets.
+
+**Method.** Qiu et al. work operationally (traces, transition system, explicit
+time) in Rocq; the account here is structural and execution-free, with time
+confined to `Timing.lean` and no theorem above it mentioning a clock. The
+comparison to draw is not who proved it first — they did — but that the
+structural formulation isolates the time-dependence into a single file, which is
+what makes the P8/A2 dependency visible as a *hypothesis of one theorem* rather
+than as a clause buried in a transition relation.
+
+### 8.5 Actions for the report
+
+1. **Correct any priority claim.** Qiu et al. (S&P 2026) mechanised Mysticeti's
+   safety and liveness first. §1.3 contribution 3 should be reworded to claim the
+   structural method, not the first machine-checked liveness.
+2. **Promote P8** in §4.1 with a note and both citations (§8.2).
+3. **Cite the counterexample in §4.4**, where "derived, not assumed" is claimed —
+   noting that the derivation is sound *because* P8 excludes round-jumping, and
+   that this is known to be necessary.
+4. **Record the 2Δ coincidence** with Starfish's δ_TO in §6.10 or §9.
+5. **Flag R4 as avoidable** (§8.4), or adopt a B2-style clause and discharge it.
+6. Optionally, **weaken `Live.builds`** toward Qiu et al.'s rule (§8.3) — the one
+   substantive strengthening available.
 
 ---
 
@@ -427,6 +599,7 @@ Three observations for the report.
 - [Lifefin — arXiv:2511.15936](https://arxiv.org/abs/2511.15936)
 - [Sailfish — ePrint 2024/472](https://eprint.iacr.org/2024/472)
 - [Shoal++ — arXiv:2405.20488](https://arxiv.org/abs/2405.20488) · [NSDI 2025](https://www.usenix.org/conference/nsdi25/presentation/arun)
+- [Qiu, Xiao, Shao — Mechanized Safety and Liveness Proofs for Mysticeti, S&P 2026](https://flint.cs.yale.edu/flint/publications/sp26.pdf) · [artifact](https://zenodo.org/records/17267594) · [FLINT page](https://flint.cs.yale.edu/flint/publications/sp26.html)
 - [LiDO-DAG — doi:10.1145/3729306](https://dl.acm.org/doi/10.1145/3729306) · [PDF](https://flint.cs.yale.edu/flint/publications/lido-dag.pdf)
 - [Reusable Formal Verification of DAG-based Consensus — arXiv:2407.02167](https://arxiv.org/abs/2407.02167)
 - [Nonforking with Dynamic Stake — arXiv:2504.16853](https://arxiv.org/abs/2504.16853)
