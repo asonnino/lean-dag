@@ -9,9 +9,16 @@ deployed. Things graduate into `spec.md` once they settle.
 > 1–7 of §11. The claim of §6.3, that the agreement induction survives the
 > premise change, held exactly as predicted: `decided_unique` needed the extra
 > constructor argument threaded and one hypothesis swapped per trichotomy
-> branch, and no counting was redone. `P7` (every slot eventually decided) and
-> `P8` (the general `Schedule` flattening) remain; see §11 for what landed
-> where and §14 for the surprises.
+> branch, and no counting was redone.
+>
+> **P7 is resolved, and was false as stated.** "After `R`, every slot is
+> decided" fails under pipelining, with a concrete counterexample (§9.5). What
+> holds and is proved is the conditional L8, `decided_of_committed_above`: given
+> one committed slot, every slot below it is decided — provided every later slot
+> may anchor an earlier one, which is exactly the old three-round spacing and
+> exactly what pipelining destroys. This is the substantive finding of the
+> exercise; Q1 is reformulated accordingly and `P8` (the general `Schedule`
+> flattening) remains. See §14 for what implementation changed.
 >
 > §3 is the schedule layer — how a reader writes a schedule down and how the
 > present one is recovered (P0, P8). §5–§8 are the safety half (P1–P3).
@@ -526,59 +533,105 @@ Immediate from `unbounded` at `slotRound k + 3`. Trivial, but it is the fact
 that stops the restriction of §5 from being vacuously unsatisfiable, and it is
 where `unbounded` pays for itself a second time.
 
-### 9.5 P7 — every slot is eventually decided
+### 9.5 P7 — no undecided slot below a commit (**resolved: false as stated**)
 
-**This is the real liveness work, and it is not specific to pipelining — it is
-simply invisible today.** The development proves that commits *recur*
-(`commits_recur_on`), not that every slot is *decided*. Yet the ledger is the
-sequence read off in slot order up to the first undecided slot: one permanently
-undecided slot stalls delivery of everything above it, however many commits
-recur beyond. The paper is explicit that this is the design ("Mysticeti-C
-applies some backpressure through undecided slots, to preserve safety").
+**The development proves that commits *recur*, not that every slot is
+*decided*.** The ledger is the sequence read off in slot order up to the first
+undecided slot, so one permanently undecided slot withholds delivery of
+everything above it however many commits recur beyond. The paper keeps this
+deliberately ("Mysticeti-C applies some backpressure through undecided slots,
+to preserve safety").
 
-Under `+3` spacing this gap is easy to overlook, because slots are scarce.
-Under pipelining there are three times as many slots per round, and with `m`
-leaders, `3m` times as many — so `3m` times as many opportunities for a slot
-with a Byzantine or partitioned leader to sit undecided. The obligation should
-be discharged now rather than inherited.
+Earlier drafts of this section proposed proving that after `R` every slot is
+decided, and flagged as Q1 the worry that the downward induction might need an
+extra hypothesis. **It needs more than that: the statement is false under
+pipelining, and the counterexample is concrete.** What is true, and is now
+proved, is the conditional statement L8 below. The distinction is the most
+substantive thing this exercise turned up, so it is worth setting out
+carefully.
 
-The statement to aim for, in the shape `commits_recur_within` already uses —
-the hypotheses are not optional, and writing them out is half of pinning the
-theorem down:
+#### What is true: L8
 
 ```lean
-theorem all_decided (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : 2 * F.f + 1 ≤ T.card) (fair : FairWithin T w) (R : ℕ) :
-    ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
-      Live U D N → DeliversQuorum D → SynchronisedOn U T R →
-      ∀ k, R ≤ S.slotRound k → S.slotRound k + reach w ≤ N →
-        ∃ v, Decided U (View.full U) k v
+theorem decided_of_committed_above
+    (helig : ∀ a b : ℕ, a < b → Eligible Validator a b)
+    (hn : Decided U V n (some A)) :
+    ∀ i, i ≤ n → ∃ v, Decided U V i v
 ```
 
-`reach w` is the unknown: how far above slot `k` the DAG must have grown before
-`k` is guaranteed decided. It is `s·w + 2` if the anchor can always be the next
-`T`-led slot, and strictly more once eligibility forces the walk past nearer
-slots — which is exactly the arithmetic below.
+Given one committed slot, *every* slot below it is decided — no synchrony, no
+timing, no fairness. Pure decision-relation combinatorics, which is why it is
+worth isolating. The proof takes the **nearest** committed slot above `i` (by
+`Nat.find`, classically, since `Decided` is a Prop) and reads the intermediate
+premise off the induction hypothesis: an intermediate slot is decided by
+induction, and cannot be decided `some` without contradicting nearestness, so
+it is decided `none`. It never consults the direct rules — where the direct rule
+commits, M2 puts the certificate in reach of the anchor anyway, and M6
+guarantees agreement regardless.
 
-The shape of the argument: take the least slot `j > k` whose leader lies in
-`T`; L4 directly commits it, and by `FairWithin` it is at most `w` slots away.
-Every slot strictly between `k` and `j` has a leader outside `T`; each is
-either directly skipped (L5, when the leader published nothing anyone
-referenced) or must itself be resolved indirectly against `j`. So the induction
-runs *downward* from `j`, is bounded by `w`, and needs at each step that the
-eligible intermediates below `j` are already decided — which the downward
-order supplies. The awkward case is the leader that is neither absent nor
-timely: it publishes to some correct validators and not enough, so neither the
-direct commit nor the direct skip fires. That slot is decided only by the
-indirect rule, and only once `j` is committed — which is exactly what the
-induction gives, provided `j` is eligible for it. Since `j` may be as close as
-one round above such a slot under pipelining, **the induction must skip over
-ineligible slots and pick a further anchor**, and the bound is therefore `w`
-slots *plus* the eligibility slack, not `w`. Getting that arithmetic right is
-the substance of P7.
+`all_decided_below_of_spacing` composes it with L6: under the old three-round
+spacing, for every `k` there is an `n ≥ k` such that a sufficiently grown
+synchronous DAG decides every slot up to `n`.
 
-I do not claim this is routine. It is the one item here that could turn out to
-need a hypothesis the model does not currently have — see §12.
+#### Why the hypothesis cannot be dropped
+
+`helig` — every later slot is an eligible anchor — is exactly the old spacing
+condition (`eligible_of_lt_of_spacing`), and exactly what pipelining destroys.
+The counterexample, at `f = 1`, `n = 4`:
+
+Let the schedule be pipelined, and let every slot between the `T`-led ones be
+led by a Byzantine validator that publishes its candidate to exactly one
+correct validator before that validator builds its next block. Then the
+candidate collects two votes — one short of the three a certificate needs — and
+two blames, one short of a skip. So the slot is undecided **directly and
+permanently**: rounds `r+1` and `r+2` are fixed sets of blocks, so neither
+count ever grows.
+
+This is consistent with every hypothesis in the model, and the reason is worth
+stating plainly: `SynchronisedOn` (`Liveness.lean:280`) requires a `T`-block to
+reference the previous round's blocks **whose creators are also in `T`**. A
+Byzantine-authored candidate is not covered by it at all, so synchrony does not
+force correct validators to vote for it.
+
+Now take `j` a committed slot and consider slot `j - 1`. It cannot anchor on
+`j`: under pipelining `j` sits one round on, inside `j-1`'s decision round. So
+it must anchor on the next committed slot `j'`, and its intermediate range then
+contains `j' - 1`, which for the same reason must anchor beyond `j'`, whose
+range contains `j'' - 1`, and so on. Every `Decided` derivation is a finite
+tree, so a chain of strictly smaller sub-derivations that never bottoms out is
+no derivation at all: **slot `j - 1` is undecided permanently.**
+
+Under the old spacing the same construction collapses, because `j` *is*
+eligible for `j - 1` and the intermediate range is empty. That is the whole
+difference, and it is why L8 is stated conditionally rather than dropped.
+
+#### What this means
+
+Two readings, and the honest position is that the model does not distinguish
+them yet.
+
+*The model is too weak.* `SynchronisedOn` is weaker than the eventual-DAG-
+synchrony of `liveness.md`'s opening notes, which say that anything one correct
+validator holds, all eventually hold — with no clause about who authored it.
+Strengthening it to cover every round-`n` block in `U` would kill the
+counterexample. But it cannot be strengthened naively: `ValidWrt.distinct_creators`
+forbids one block referencing two blocks by the same author, so demanding that
+a block reference *every* round-`n` block in `U` is unsatisfiable as soon as a
+leader equivocates. The satisfiable form is "reference *some* round-`n` block by
+every author that has one", and under that a leader may still split correct
+validators between two equivocating candidates, leaving the slot undecided. So
+this route needs care, and probably needs the paper's `SupportedBlock`
+traversal rather than `L ∈ refs`.
+
+*The protocol really is more fragile under pipelining.* This is also what the
+paper says, in §III-C: undecided slots increase "when some proposer slots are
+slow or equivocate", delaying execution, mitigated by choosing well-performing
+leaders rather than by any change to the rule. The counterexample is an
+adversary that controls delivery precisely and forever, which is exactly the
+regime the paper declines to defend against.
+
+Deciding between these is Q1, restated in §12. Nothing in the safety results
+depends on it.
 
 ## 10. What the bounds become
 
@@ -671,8 +724,9 @@ are numbered **P0–P8** and each appears in exactly one stage.
    it is worth doing until the anchor rule is re-thought.
 6. **P3 — schedule faithfulness** and the ledger check (§6.4, §8).
 7. **P4, P5, P6** (§9.2–§9.4). Mechanical against `unbounded`.
-8. **P7 — every slot eventually decided** (§9.5). The open one. Settle Q1 on
-   paper first.
+8. **P7 — no undecided slot below a commit** (§9.5). Landed as the conditional
+   L8, `decided_of_committed_above`, plus `all_decided_below_of_spacing`. The
+   unconditional form is false; see §9.5 and Q1.
 9. **P8 — `Schedule` and `Schedule.toSlots`** (§3.2). Last, and separable:
    nothing above needs it, since `uniform` covers every witness and every
    deployed schedule. Its value is generality — it is what turns "arbitrary
@@ -681,7 +735,9 @@ are numbered **P0–P8** and each appears in exactly one stage.
    rather than for anything conceptual.
 
 Stages 1–7 are believed routine; the risk is concentrated in stage 5 (which
-validates the design) and stage 8 (which is open).
+validates the design) and stage 8 (which is open). *In the event stages 1–8 all
+landed, stage 5 exactly as predicted and stage 8 by refuting its own statement —
+see §14.*
 
 **Witnesses.** `LeanDagTest/` should carry, at minimum:
 
@@ -733,14 +789,29 @@ will not elaborate.
 
 ## 12. Open questions
 
-**Q1. Does P7 need a new hypothesis?** The downward induction of §9.5 needs the
-anchor `j` to be eligible for every undecided slot below it that it is meant to
-resolve. Slots within two rounds below `j` are not eligible for it and need a
-*later* anchor — which needs its own leader in `T`. Under `FairWithin T w` the
-next such is at most `w` slots on, so the recursion terminates; but the bound
-is not simply `w`, and it is not yet clear whether it closes without assuming
-something like "two reliable leaders occur within `w` slots" or a lower bound
-on the slot spacing. Settle this on paper before writing Lean.
+**Q1. ~~Does P7 need a new hypothesis?~~ Should `SynchronisedOn` cover
+Byzantine-authored blocks?** *Reformulated by §9.5.* The original question
+presupposed that "every slot after `R` is decided" was true and only needed the
+right induction. It is false under pipelining, and L8 isolates precisely the
+hypothesis that fails. What remains open is whether that reflects a gap in the
+model or in the protocol.
+
+`SynchronisedOn U T R` covers only round-`n` blocks whose creator is in `T`,
+which is weaker than the eventual DAG synchrony `liveness.md` opens with. The
+candidate repair — a `T`-block references *some* round-`n` block by every author
+that has one in `U` — is satisfiable where the naive "references every round-`n`
+block" is not, because `ValidWrt.distinct_creators` forbids referencing two
+blocks by one author. Under the repair an absent leader is still skipped and a
+publishing leader is still committed, so the counterexample of §9.5 dies; but an
+*equivocating* leader can still split correct validators between two candidates,
+and closing that needs the paper's `SupportedBlock` traversal in place of
+`L ∈ refs` — a change to the vote rule, not to the synchrony assumption.
+
+So the decision is: strengthen synchrony and adopt DFS support (a real
+extension, and the only route to an unconditional L8), or leave L8 conditional
+and record that pipelining trades this guarantee away. Recommend the latter for
+now — it is what the paper's own §III-C says — and treat the former as the next
+piece of work.
 
 **Q2. Should `Eligible` be `slotRound k + 3 ≤ slotRound j`, or
 `+ waveLength`?** The paper parameterises `waveLength`, defaulting to 3, and
@@ -849,6 +920,23 @@ above it and `keyed`/`unbounded` become theorems about `nodup`/`cofinal`
 leaders (§3.3). The general flattening is needed only for irregular schedules
 and can come last.
 
+**Commits recurring is not the ledger advancing.** L6 gives recurrence; the
+ledger stops at the first undecided slot. L8 (`decided_of_committed_above`)
+closes the gap, but only under the hypothesis that later slots may anchor
+earlier ones (§9.5).
+
+**Pipelining trades away "no undecided slot below a commit".** Under the old
+spacing the nearest committed slot above any slot is an admissible anchor for
+it, and the downward induction terminates. Under pipelining the slot below an
+anchor must reach past it, and the dependency never bottoms out — so the
+guarantee is genuinely lost, not merely harder to prove (§9.5). Safety is
+untouched.
+
+**`SynchronisedOn` does not constrain Byzantine-authored blocks.** It covers
+round-`n` blocks whose creator is in `T` only, which is what lets the
+counterexample of §9.5 exist. Whether that is a defect of the model or a
+faithful account of the protocol is Q1 — the one genuinely open question left.
+
 ---
 
 ## 14. What implementation changed
@@ -901,3 +989,25 @@ justify the whole exercise — under `uniformSingle 1`, `¬ Eligible 0 1` and
 `¬ Eligible 0 2`; under `uniform 1 2`, `¬ Eligible 0 1` for a *co-round* slot,
 with slot `6` the first that qualifies. Both would have passed the old `k < j`
 premise. The axiom audit covers all ten new or reproved results.
+
+**The one prediction that was wrong, and it was the important one.** §9.5
+originally proposed P7 — after `R`, every slot is decided — and treated the
+difficulty as arithmetic: how much eligibility slack to add to the `w`-slot
+walk. Working the induction revealed that no amount of slack suffices, because
+the dependency does not terminate: the slot below any anchor needs a later
+anchor, whose own lower neighbour needs a later one still. The statement is
+false, and §9.5 now carries the counterexample.
+
+What replaced it is better than what was asked for. `decided_of_committed_above`
+(L8) needs no synchrony, no timing and no fairness — only one committed slot and
+the hypothesis that later slots may anchor earlier ones. Isolating that
+hypothesis is what makes the failure legible: it is precisely
+`eligible_of_lt_of_spacing`, precisely what pipelining destroys, and
+`Pipelined.lean` now witnesses both sides — `¬ (∀ a b, a < b → Eligible a b)`
+under `uniformSingle 1`, and `a < b ↔ Eligible a b` under `uniformSingle 3`.
+
+Had P7 been proved as originally stated, it would have been proved against a
+synchrony assumption too weak to support it, and the gap would have been hidden
+inside a true-looking theorem. The lesson for the remaining work is §12 Q1: the
+next real step is not more anchor arithmetic but deciding whether
+`SynchronisedOn` should cover Byzantine-authored blocks at all.

@@ -681,4 +681,108 @@ theorem commits_recur (fair : FairSchedule (Validator := Validator)) (R : ℕ) (
         ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) :=
   commits_recur_on Finset.Subset.rfl card_correct fair R k
 
+/-! ## L8 — no undecided slot below a commit
+
+L6 says commits recur. It does **not** say every slot is decided, and the
+difference is what the ledger sees: `commitSeq` reads verdicts off in slot
+order, so a single permanently undecided slot withholds delivery of everything
+above it however many commits recur beyond. The Mysticeti paper calls this
+backpressure and keeps it deliberately (§III-C).
+
+The theorem below says the backpressure clears, under one hypothesis:
+`helig`, that *every* later slot is an eligible anchor. That hypothesis is
+exactly the old three-round spacing (`eligible_of_lt_of_spacing`), and it is
+exactly what pipelining destroys — under `slotRound k = k` the two slots below
+any anchor are within its decision round and cannot use it.
+
+The hypothesis is not a technical convenience. Its failure is a real gap, and
+the shape of the counterexample is worth recording because nothing below rules
+it out. Let the schedule be pipelined and let every slot between the committed
+ones be led by a Byzantine validator that publishes its candidate to exactly
+`f` correct validators: then the candidate gathers `2f` votes, one short of a
+certificate, and `2f` blames, one short of a skip, so the slot is undecided
+directly and forever — `SynchronisedOn` does not constrain it, because it
+covers `T`-authored blocks only. Slot `j - 1`, immediately below a committed
+`j`, must then anchor beyond `j`, on the next committed `j'`; its intermediates
+include `j' - 1`, which must anchor beyond `j'`; and so on. Every `Decided`
+derivation is a finite tree, so a chain of strictly smaller sub-derivations
+that never terminates is no derivation at all: slot `j - 1` is undecided
+permanently. Under the old spacing the same construction collapses, because
+`j` itself is eligible for `j - 1` and the intermediate range is empty. -/
+
+open Classical in
+/-- **L8.** Given a committed slot, every slot below it is decided — provided
+every later slot may anchor an earlier one.
+
+No synchrony, no timing, no fairness: this is pure decision-relation
+combinatorics, which is why it is worth isolating. The work is choosing the
+*nearest* committed slot above `i` and reading the intermediate premise off the
+induction hypothesis — an intermediate slot is decided by induction, and cannot
+be decided `some` without contradicting nearestness, so it is decided `none`.
+
+Note the proof never consults the direct rules. It does not need to: where the
+direct rule commits, M2 puts the certificate in reach of the anchor, so the
+indirect branch taken here agrees with it — and M6 guarantees as much in any
+case. -/
+theorem decided_of_committed_above
+    (helig : ∀ a b : ℕ, a < b → Eligible Validator a b)
+    {V : View Validator BlockId Payload U} {n : ℕ} {A : BlockId}
+    (hn : Decided U V n (some A)) :
+    ∀ i, i ≤ n → ∃ v, Decided U V i v := by
+  classical
+  have key : ∀ d i, i ≤ n → n - i ≤ d → ∃ v, Decided U V i v := by
+    intro d
+    induction d with
+    | zero =>
+      intro i hi hd
+      exact ⟨some A, (by omega : i = n) ▸ hn⟩
+    | succ d ih =>
+      intro i hi hd
+      rcases eq_or_lt_of_le hi with heq | hlt
+      · exact ⟨some A, heq ▸ hn⟩
+      -- The nearest committed slot strictly above `i`, which exists since `n`
+      -- is one. `Nat.find` needs classical decidability: `Decided` is a Prop.
+      have hex : ∃ j, i < j ∧ j ≤ n ∧ ∃ A', Decided U V j (some A') :=
+        ⟨n, hlt, le_refl _, A, hn⟩
+      obtain ⟨hij, hjn, A', hA'⟩ := Nat.find_spec hex
+      -- Every slot between is decided by induction, and `none` by nearestness.
+      have hmid : ∀ i', i < i' → i' < Nat.find hex →
+          Eligible Validator i i' → Decided U V i' none := by
+        intro i' h1 h2 _
+        have hi'n : i' ≤ n := by omega
+        obtain ⟨v, hv⟩ := ih i' hi'n (by omega)
+        cases v with
+        | none => exact hv
+        | some B => exact absurd ⟨h1, hi'n, B, hv⟩ (Nat.find_min hex h2)
+      by_cases hc : ∃ L, IsLeaderBlock U i L ∧ CertifiedIn U A' L (S.slotRound i)
+      · obtain ⟨L, hL, hcert⟩ := hc
+        exact ⟨some L, Decided.indirectCommit hij (helig i _ hij) hA' hmid hL hcert⟩
+      · push Not at hc
+        exact ⟨none, Decided.indirectSkip hij (helig i _ hij) hA' hmid hc⟩
+  intro i hi
+  exact key (n - i) i hi (le_refl _)
+
+/-- **L8 under the old three-round spacing.** Combining L6 with L8: for every
+slot `k` there is a slot `n ≥ k` such that a sufficiently grown synchronous DAG
+decides *every* slot up to `n` — so the ledger does not stall below it.
+
+`hsp` is the field the `Slots` class used to carry. A pipelined or multi-leader
+schedule does not satisfy it, and the counterexample above is why this is
+stated conditionally rather than dropped. -/
+theorem all_decided_below_of_spacing
+    (hsp : ∀ k, S.slotRound k + 3 ≤ S.slotRound (k + 1))
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : 2 * F.f + 1 ≤ T.card)
+    (fair : FairScheduleOn T) (R : ℕ) (k : ℕ) :
+    ∃ n, k ≤ n ∧ R ≤ S.slotRound n ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
+        Live U D N → DeliversQuorum D → SynchronisedOn U T R →
+        S.slotRound n + 2 ≤ N →
+        ∀ i, i ≤ n → ∃ v, Decided U (View.full U) i v := by
+  obtain ⟨n, hkn, hRn, hcommit⟩ := commits_recur_on (BlockId := BlockId) (Payload := Payload)
+    hT hcard fair R k
+  refine ⟨n, hkn, hRn, ?_⟩
+  intro U D N H hd hs hN
+  obtain ⟨L, _, hdec⟩ := hcommit U D N H hd hs hN
+  exact decided_of_committed_above (fun _ _ h => eligible_of_lt_of_spacing hsp h) hdec
+
 end LeanDag

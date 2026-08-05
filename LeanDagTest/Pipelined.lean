@@ -30,6 +30,8 @@ open LeanDag
 #print axioms LeanDag.slot_eq_of_decided_commit
 #print axioms LeanDag.exists_eligible
 #print axioms LeanDag.commits_recur_on
+#print axioms LeanDag.decided_of_committed_above
+#print axioms LeanDag.all_decided_below_of_spacing
 #print axioms LeanDag.Slots.uniform
 #print axioms LeanDag.Slots.uniformSingle_slotRound
 
@@ -84,7 +86,50 @@ example : ∀ j, 3 ≤ j → Eligible (Fin 4) 0 j := by
 schedule. -/
 example : ∃ j, Eligible (Fin 4) 0 j := exists_eligible 0
 
+/-- **L8's hypothesis fails here, and this is the whole cost of pipelining.**
+
+`decided_of_committed_above` clears the backpressure — no slot below a commit
+is left undecided — on the strength of *every* later slot being an eligible
+anchor. Slot `1` is not one for slot `0`, so the guarantee does not transfer,
+and the counterexample recorded at L8 shows it genuinely fails rather than
+merely resisting proof. -/
+example : ¬ (∀ a b : ℕ, a < b → Eligible (Fin 4) a b) :=
+  fun h => absurd (h 0 1 (by omega)) (by decide)
+
 end Pipelined
+
+/-! ## The original schedule, for contrast
+
+One leader every three rounds. Here eligibility and lateness coincide, which
+is what L8 needs: the nearest committed slot above any slot is always an
+admissible anchor for it, so the intermediate range shrinks and the downward
+induction terminates. -/
+
+section Spaced
+
+local instance spacedSlots : Slots (Fin 4) :=
+  Slots.uniformSingle 3 (by omega) (fun k => ⟨k % 4, by omega⟩)
+
+@[local simp] theorem spacedSlots_slotRound (k : ℕ) : spacedSlots.slotRound k = 3 * k := by
+  change 3 * (k / 1) = 3 * k
+  omega
+
+/-- **Eligibility is lateness.** Both directions: `lt_of_eligible` holds for
+every schedule, and the converse is what the three-round spacing buys. -/
+example : ∀ a b : ℕ, a < b ↔ Eligible (Fin 4) a b := by
+  intro a b
+  constructor
+  · intro h
+    rw [eligible_iff]
+    simp only [spacedSlots_slotRound]
+    omega
+  · exact lt_of_eligible
+
+/-- So L8 applies, and the slot immediately below a commit — the one pipelining
+cannot decide — is decided here. -/
+example : Eligible (Fin 4) 6 7 := by decide
+
+end Spaced
 
 /-! ## Multi-leader: two leaders in every round
 
