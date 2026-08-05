@@ -18,16 +18,17 @@ material still to be written and do not form part of the report.*
 > obliges the entire proof to carry a time model that the commit rule itself
 > never mentions.*
 >
-> *(ii) We propose* **eventual DAG synchrony**, *a structural assumption on the
+> *(ii) We propose* **eventual DAG synchrony**, *a structural condition on the
 > DAG: beyond some round, every correct block references every correct block of
 > the round below.*
 >
 > *(iii) We give a machine-checked development of safety and liveness for a
-> Mysticeti-style commit rule above this assumption, in which no theorem
-> mentions time.*
+> Mysticeti-style commit rule above this condition, in which no theorem mentions
+> time.*
 >
-> *(iv) We discharge the assumption from the standard partial-synchrony model,
-> so that it is a reformulation rather than a strengthening.*
+> *(iv) We show this property is derived rather than assumed: it follows from
+> standard partial synchrony together with the protocol's own build rules, so
+> nothing beyond the conventional model is assumed.*
 >
 > *(v) We give its quantitative form: a correct leader is committed once correct
 > validators wait 2Δ.]*
@@ -71,25 +72,26 @@ proof effort with no corresponding proof content.
 
 1. **Eventual DAG synchrony**, formulated structurally as `SynchronisedOn`:
    beyond round `R`, every correct block references every correct block of the
-   round below. The statement mentions no clock, no message and no Δ.
+   round below. The statement mentions no clock, no message and no Δ, and it is
+   a *derived* property of executions rather than an assumption (§4.4).
 
 2. A machine-checked **safety** development — agreement, uniqueness of the
    committed leader sequence, and non-retraction of the ledger — which assumes
    nothing whatsoever about the network, not even eventual delivery.
 
-3. A machine-checked **liveness** development above the structural assumption,
-   in which no theorem mentions time.
+3. A machine-checked **liveness** development above the structural condition, in
+   which no theorem mentions time.
 
-4. **Two independent discharges** of the structural assumption: from an abstract
-   delivery model (§6.7), and from GST together with two protocol build rules
-   (§6.8). The assumption is therefore a reformulation of standard hypotheses
-   rather than a new one.
+4. **Two independent derivations** of the structural property, from an abstract
+   delivery model (§6.7) and from GST (§6.8), in each case together with the
+   protocol's build rules. Nothing beyond standard partial synchrony is
+   assumed.
 
-5. An analysis of what the natural **view-based** formulation of the assumption
-   does and does not supply (§7.1): a delivery guarantee alone does not yield
-   reference coverage without a rule governing *when* validators build; and
-   because a block's references are fixed at construction, the guarantee must be
-   indexed to the moment of building.
+5. A precise account of the **trust boundary** (§4). What is assumed reduces to
+   the fault bound and two network conditions; every other condition is a clause
+   of the protocol, which a designer controls. In particular reference coverage
+   is derived rather than assumed, and the one point at which a network parameter
+   constrains the specification is the wait threshold of §7.1.
 
 6. **Quantitative forms** (§6.10): the round from which coverage holds, given
    explicitly; a bound on the slot at which the next commit occurs; and an
@@ -101,11 +103,12 @@ proof effort with no corresponding proof content.
 The development is deliberately bounded in four respects.
 
 - **No cryptography.** Signatures, authentication and equivocation detection are
-  outside the model. Non-equivocation of correct validators is a modelling
-  assumption (§2.3), not a mechanism.
+  outside the model. Non-equivocation of correct validators is a clause of the
+  protocol (§4.1), recorded structurally (§2.3) and not enforced by a mechanism.
 - **No executions.** The object of study is a DAG together with invariants, not
   a transition system with traces. What an operational model would establish as a
-  reachability invariant is here discharged by assumption.
+  reachability invariant of the protocol is here recorded as a structural
+  condition.
 - **No intra-flush ordering.** The committed-leader sequence and the ledger *set*
   are shown agreed; totally ordering the blocks released by a single commit
   requires a tie-break which the development declines to assume (§5.6).
@@ -132,13 +135,15 @@ A quorum is `2f+1`. The derived fact `card_correct : 2 * F.f + 1 ≤ Correct.car
 records that the correct validators themselves form a quorum, and is used at
 exactly one place in the liveness development (§6.3).
 
-`Correct` is a set complement and carries no behavioural content. It is
-satisfied, in particular, by a validator that crashes at round 0 and never
-speaks again. This is deliberate: it is what allows every safety result to hold
-of crashed validators, and it is the reason the liveness development must
-introduce positive rules explicitly (§6.0). It is also the reason
-non-equivocation must be assumed rather than derived (§2.3): nothing else in the
-model constrains the behaviour of a correct validator.
+As a set, `Correct` is a complement and carries no behavioural content. Membership
+is satisfied, in particular, by a validator that crashes at round 0 and never
+speaks again. This is deliberate: it allows every safety result to hold of
+crashed validators. The behaviour of a correct validator is supplied separately,
+by the protocol clauses of §4.1, and the reader should keep the two apart —
+`Correct` names *which* validators execute the algorithm, while §4.1 says *what*
+the algorithm is. Since a crashed validator satisfies the first and not the
+second, the liveness development must invoke the protocol clauses explicitly
+(§6.0).
 
 ### 2.2 Blocks and validity
 
@@ -207,9 +212,12 @@ under a fresh identifier preserves `complete` and `valid` and violates only
 `no_equivocation`.
 
 It is also the sole point at which the behaviour of a correct validator is
-encoded on the safety side. In modelling terms it is where the statement "this
-DAG arose from an execution in which correct validators followed the protocol"
-is recorded.
+recorded on the safety side, and it is a clause of the protocol rather than an
+assumption (P5): a correct validator produces one block per round because the
+algorithm so directs. Since the object of study is a DAG rather than an
+execution (§1.4), the clause appears as a structural condition on the universe;
+in an operational model it would be established as an invariant of reachable
+states.
 
 ```lean
 structure View (Validator BlockId Payload : Type*) … (U : BlockUniverse …) where
@@ -223,7 +231,7 @@ function, and inherits validity and non-equivocation.
 
 Both `ids` fields are finite sets. Finiteness is not incidental: it is what gives
 `authorsAt` a cardinality, and every quorum argument in the development counts
-one. It also determines the shape of the growth assumption (§6.3).
+one. It also determines the shape of the growth clause P8 (§6.3).
 
 ### 2.4 Causal history
 
@@ -388,85 +396,133 @@ over a validator's assignment of verdicts to slots.
 
 ---
 
-## 4. Assumptions
+## 4. The trust boundary
 
-### 4.1 Safety
+Three kinds of condition appear in the development, and the report distinguishes
+them throughout, because they differ in who controls them.
 
-| | Assumption | Character | Formalisation |
-|---|---|---|---|
-| A1 | there are `3f+1` validators | fault model | `Faults.card_validators` |
-| A2 | at most `f` are Byzantine | fault model | `Faults.card_byzantine` |
-| A3 | references lie one round below | well-formedness | `ValidWrt.predecessor` |
-| A4 | no block cites one author twice | well-formedness | `ValidWrt.distinct_creators` |
-| A5 | non-genesis blocks cite `2f+1` distinct authors | well-formedness | `ValidWrt.quorum` |
-| A6 | referenced blocks exist | well-formedness | `BlockUniverse.complete` |
-| A7 | correct validators do not equivocate | fault model | `BlockUniverse.no_equivocation` |
-| A8 | slots are at least three rounds apart | protocol parameter | `Slots.spacing` |
+**Specification.** A *correct* validator is by definition one that executes the
+algorithm. The clauses of §4.1 are therefore not hypotheses about an uncertain
+world; they are the algorithm, and a designer is free to choose them.
 
-No assumption about the network appears. The safety results of §5 hold under
-arbitrary asynchrony, arbitrary message loss and arbitrary divergence between
-views.
+**Fault model.** How many validators fail to execute the algorithm, and how
+their number is bounded (§4.2). Assumed.
 
-None of A1–A8 is an axiom in the logical sense. A1, A2 and A8 are fields of the
-classes `Faults` and `Slots`, and A3–A7 fields of `ValidWrt` and
-`BlockUniverse`; every theorem quantifying over a universe or over those
-instances therefore carries them as antecedents. Their joint satisfiability is
-consequently a proof obligation, discharged by exhibition (§8), rather than
-something the logic must be trusted for.
+**Network.** Delivery. The network is adversarial and lies outside the trusted
+computing base (§4.3). Assumed.
 
-### 4.2 Liveness
+Logically all of these are antecedents: each is a field of a structure or class,
+and every theorem quantifying over a block universe or over the relevant
+instances carries it. None is an axiom in the sense of §10, and their joint
+satisfiability is a proof obligation discharged by exhibition (§8) rather than
+something the logic must be trusted for. The distinction drawn here is
+epistemic, not logical, and it is what determines where the trust boundary of
+the system actually falls.
 
-| | Assumption | Character | Formalisation |
-|---|---|---|---|
-| B1 | correct validators possess genesis blocks | protocol | `Live.genesis` |
-| B2 | holding a quorum, a correct validator builds (below `N`) | protocol | `Live.builds` |
-| B3 | a quorum that exists is eventually held | network (asynchronous) | `DeliversQuorum` |
-| B4 | a correct block references everything its author held | protocol | `Delivery.includes` |
-| B5 | eventual DAG synchrony beyond round `R` | structural | `SynchronisedOn` |
-| B6 | the schedule names a `T`-leader arbitrarily far out | schedule | `FairScheduleOn` |
-| B7 | `T ⊆ Correct` and `2f+1 ≤ T.card` | fault budget | hypotheses of L4, L6 |
+### 4.1 The protocol
 
-B3 and B4 require eventual delivery only, not synchrony, and are what carry the
-results that hold before GST.
-
-Assumption B5 is discharged by two independent routes:
-
-| Route | Discharging assumptions | Character | Result |
-|---|---|---|---|
-| Delivery | `EventuallyDelivers`, with B4 | network | `synchronised_of_delivery` |
-| Timing | `Timing.covers` (GST and Δ) | network | `synchronisedOn_of_timing` |
-| | `Timing.waits`, `Timing.prompt` | protocol | |
-
-### 4.3 Quantitative assumptions
-
-The following are required only for the results of §6.10. Each strengthens an
-assumption already in play, and every result of §5 and §6.1–§6.9 stands without
-them.
-
-| | Assumption | Yields |
+| | Clause | Formalisation |
 |---|---|---|
-| R1 | `Rated timeout`, i.e. `∀ n, n ≤ timeout n` | an explicit round `R` |
-| R2 | `FairWithin T w`: a `T`-leader within every window of `w` slots | a bounded committing slot |
-| R3 | `BoundedSpacing s`: slots at most `s` rounds apart | that slot's round, and a horizon |
-| R4 | round-`0` spread at most `D₀`, and `∀ n, D₀ + Δ ≤ timeout n` | the wait bound `Delay(Δ)` |
+| P1 | references lie one round below | `ValidWrt.predecessor` |
+| P2 | no block cites one author twice | `ValidWrt.distinct_creators` |
+| P3 | non-genesis blocks cite `2f+1` distinct authors | `ValidWrt.quorum` |
+| P4 | a block is held only with its causal history | `BlockUniverse.complete` |
+| P5 | one block per round: correct validators do not equivocate | `BlockUniverse.no_equivocation` |
+| P6 | slots are at least three rounds apart | `Slots.spacing` |
+| P7 | a validator references everything it held | `Delivery.includes` |
+| P8 | a validator has a genesis block, and builds on holding a quorum | `Live.genesis`, `Live.builds` |
+| P9 | a validator waits a full timeout, and does not dawdle | `Timing.waits`, `Timing.prompt` |
+| P10 | the leader schedule names reliable validators arbitrarily far out | `FairScheduleOn` |
 
-### 4.4 The combined fault budget
+P1–P6 are consumed by the safety development, P7–P10 additionally by liveness.
 
-Assumption B7 merits separate comment. The principal liveness argument counts to
-`2f+1` and no higher, so what it requires is a *quorum of reliable* validators
-rather than the participation of every correct one. Formulating it as
-`T ⊆ Correct` together with `2f+1 ≤ T.card` yields the operative budget:
+P10 is a joint condition rather than a pure specification: the schedule is the
+designer's, but which validators are reliable is not. Round-robin discharges it
+whenever the reliable set is of quorum size, since at most `f` of every `3f+1`
+consecutive leaders then lie outside it; `rrSlots` witnesses this with a window
+of `f + 1` (§8).
+
+P5 deserves emphasis, since it is conventionally described as an assumption. It
+is a clause of the algorithm — a correct validator produces one block per round
+because that is what it was told to do — and it is the sole point at which the
+behaviour of a correct validator is recorded on the safety side. Nothing else in
+the model constrains it, `Correct` being a set complement (§2.1).
+
+P9 is the clause whose *sufficiency* is not under the designer's control: the
+timeout may be chosen freely, but whether the chosen value is long enough
+depends on the network. §6.10 determines the threshold it must meet, and §7.1
+discusses the consequences.
+
+### 4.2 The fault model
+
+| | Assumption | Formalisation |
+|---|---|---|
+| A1 | there are `3f+1` validators | `Faults.card_validators` |
+| A2 | at most `f` are Byzantine | `Faults.card_byzantine` |
+
+Byzantine validators are unconstrained: they may publish nothing, publish
+selectively, or equivocate freely.
+
+**The combined budget.** The principal liveness argument counts to `2f+1` and no
+higher, so what it requires is a quorum of validators that are both correct and
+timely, rather than the participation of every correct one. Formulating this as
+`T ⊆ Correct` with `2f+1 ≤ T.card` — a hypothesis of L4 and L6 — yields the
+operative budget:
 
 > `actual_byzantine + persistently_slow_correct ≤ f`
 
-A correct validator which is persistently slow consumes fault budget exactly as
-a Byzantine one does. At `f = 1` there are four validators and
-`|Correct| = 3 = 2f+1` exactly, so no slack exists: every correct validator must
-belong to the reliable set. Slack appears only when fewer than `f` validators are
-in fact faulty, and the `T`-parameterised statements make it available
-automatically. The specialisations at `T := Correct`
-(`directCommit_of_correct_leader`, `decided_of_correct_leader`, `commits_recur`)
-recover the conventional statements.
+A correct validator which is persistently slow consumes budget exactly as a
+Byzantine one does. This is a hybrid condition: correctness is a fault-model
+matter, timeliness a network one. At `f = 1` there are four validators and
+`|Correct| = 3 = 2f+1` exactly, so no slack exists and every correct validator
+must be timely; slack appears only when fewer than `f` validators are in fact
+faulty, and the `T`-parameterised statements make it available automatically.
+The specialisations at `T := Correct` (`directCommit_of_correct_leader`,
+`decided_of_correct_leader`, `commits_recur`) recover the conventional
+statements.
+
+### 4.3 The network
+
+| | Assumption | Formalisation |
+|---|---|---|
+| N1 | a quorum that exists is eventually held | `DeliversQuorum` |
+| N2 | beyond GST, a block is delivered within Δ | `Timing.covers`, `EventuallyDelivers` |
+
+N1 requires eventual delivery only, not synchrony, and is what carries the
+results holding before GST. N2 is partial synchrony in the standard sense.
+
+**These two are the whole of the trust placed in the environment.** The safety
+results of §5 use neither: they hold under arbitrary asynchrony, arbitrary loss
+and arbitrary divergence between views.
+
+### 4.4 Derived, not assumed
+
+Eventual DAG synchrony is not an assumption of the development. It is a property
+of executions, obtained from the network assumption together with the protocol:
+
+| Route | From | Result |
+|---|---|---|
+| Delivery | N2 (`EventuallyDelivers`) with P7 | `synchronised_of_delivery` |
+| Timing | N2 (`Timing.covers`) with P9 | `Timing.synchronisedOn_of_timing` |
+
+It is stated as a hypothesis of L4 and L6 in order to keep those arguments free
+of temporal notions (§6.9), and supplied to them by the results above. §7
+discusses the formulation.
+
+### 4.5 Quantitative clauses
+
+The results of §6.10 require the following in addition. R1–R3 are further
+specification, strengthening clauses already present; only the round-`0` spread
+of R4 is an assumption, and it concerns deployment rather than the network.
+
+| | Clause | Kind | Yields |
+|---|---|---|---|
+| R1 | `Rated timeout`: `∀ n, n ≤ timeout n` | specification | an explicit round `R` |
+| R2 | `FairWithin T w`: a `T`-leader within every window of `w` slots | specification | a bounded committing slot |
+| R3 | `BoundedSpacing s`: slots at most `s` rounds apart | specification | that slot's round, and a horizon |
+| R4 | `∀ n, D₀ + Δ ≤ timeout n`, with round-`0` spread at most `D₀` | specification; `D₀` deployment | the wait bound `Delay(Δ)` |
+
+Every result of §5 and §6.1–§6.9 stands without them.
 
 ---
 
@@ -580,7 +636,7 @@ it, and it is what makes the skip half of M4 unconditional.
 **M2** (`exists_certificate_reaches_of_directCommit`). Once a block is directly
 committed, its certificate is unavoidable: every block from round `r+3` onwards
 has one in its causal history. The bound is tight, since a round-`(r+2)` block
-which is not itself a certificate reaches none. This is the origin of A8.
+which is not itself a certificate reaches none. This is the origin of P6.
 
 **M4** (`indirect_agrees_with_direct`). Where the direct rule decides, the
 indirect rule agrees. The two halves are asymmetric: the commit half requires the
@@ -604,9 +660,9 @@ lying in reach rather than of a quorum of them.
 
 The proof requires no relationship between the two certificates. Each names
 `2f+1` distinct voters, so the voter sets intersect in a correct validator `w`
-(T0′); `w`'s unique round-`(r+1)` block votes for both (T1); and `A4` forbids one
+(T0′); `w`'s unique round-`(r+1)` block votes for both (T1); and P2 forbids one
 block from referencing two round-`r` blocks by a single author. This is the only
-use of A4 in the development.
+use of P2 in the development.
 
 **M5** (`eq_of_directCommit_of_creator_eq`) follows as a corollary.
 
@@ -670,21 +726,24 @@ properties that retraction would violate.
 
 ## 6. Liveness
 
-### 6.0 The insufficiency of `Correct`
+### 6.0 What liveness requires beyond membership of `Correct`
 
-Since `Correct` is a negative condition (§2.1), liveness statements are vacuous
-without positive rules. Three primitives are introduced, and they differ in
-character:
+Membership of `Correct` says which validators execute the algorithm; it says
+nothing about what the algorithm does (§2.1). Liveness statements are therefore
+vacuous until the relevant protocol clauses are invoked, and three are:
 
-- **(a)** correct validators produce blocks — a protocol rule;
-- **(b)** correct blocks cover the correct blocks below them — an *outcome* the
-  protocol produces but cannot name (§7.2);
-- **(c)** correct leaders recur — a property of the schedule.
+- **(a)** validators produce blocks (P8);
+- **(b)** validators wait before building, and do not dawdle (P9);
+- **(c)** the schedule names reliable leaders arbitrarily far out (P10).
 
-Rules (a) and (b) act in opposition, and the timing layer brackets them
-precisely: (a) is a floor, requiring that a validator eventually build
-(`Timing.prompt`, an upper bound on build time); (b) is a delay, requiring that
-it not build too early (`Timing.waits`, a lower bound).
+Clauses (a) and (b) act in opposition, and P9 brackets them precisely: `prompt`
+is a ceiling, requiring that a validator eventually build; `waits` is a floor,
+requiring that it not build too early.
+
+Reference coverage is not among them. It is not a clause a validator could
+execute, since it refers to `Correct`, which no validator can observe; it is
+what (a) and (b) *produce* against a synchronous network, and it is derived
+accordingly (§4.4, §7.2).
 
 ### 6.1 Density
 
@@ -793,7 +852,7 @@ def SynchronisedOn (U) (T : Finset Validator) (R : ℕ) : Prop :=
       (U.block a).creator ∈ T → a ∈ (U.block b).refs
 ```
 
-The assumption is restricted to correct authors on both sides, and both
+The condition is restricted to correct authors on both sides, and both
 restrictions are load-bearing.
 
 Nothing may be assumed about the existence of Byzantine blocks: a Byzantine
@@ -805,13 +864,13 @@ would amount to assuming that Byzantine validators behave.
 
 Well-formedness survives the restriction: a correct block referencing every
 correct block of the round below already names at least `2f+1` distinct creators,
-so A5 is satisfied without any Byzantine reference.
+so P3 is satisfied without any Byzantine reference.
 
 The predicate is antitone in `T` (`SynchronisedOn.mono`), which allows results
 established at `T := Correct` to be supplied to the quorum-relative statements of
 §6.6.
 
-§7 is devoted to the discussion of this assumption.
+The condition is derived, not assumed (§4.4); §7 discusses its formulation.
 
 ### 6.5 Monotonicity and propagation
 
@@ -902,7 +961,7 @@ that the ledger grows without bound (§6.3).
 The unboundedness of slot rounds required by the proof is supplied by
 `le_slotRound : 3 * k ≤ S.slotRound k`.
 
-### 6.7 Discharging the assumption: delivery
+### 6.7 Deriving coverage: the delivery route
 
 ```lean
 def EventuallyDelivers (D : Delivery U) (R : ℕ) : Prop :=
@@ -915,17 +974,18 @@ theorem synchronised_of_delivery (D : Delivery U) (h : EventuallyDelivers D R) :
 
 The proof is the chain `refs ⊇ held ⊇` every correct block below.
 
-The gain is not logical: one assumption becomes two, and nothing becomes
-unconditional. The gain is that each component is a single kind of thing.
-`includes` is a protocol rule which an implementation can execute and an observer
-can check; `EventuallyDelivers` is a pure network guarantee.
+The two premises are of different kinds, and separating them is the point. P7
+(`includes`) is a clause of the protocol, which an implementation executes and an
+observer can check; `EventuallyDelivers` is a pure network guarantee, and is the
+only thing assumed here. Nothing becomes unconditional: absent a time model the
+chain must terminate at a delivery assumption.
 
 `EventuallyDelivers` is view convergence *indexed to the moment of building*: it
 does not state that correct blocks eventually reach `v`, but that they are members
 of `D.held v n`. That indexing performs the work, and it is exactly what a
 view-shaped statement lacks (§7.1).
 
-### 6.8 Discharging the assumption: timing
+### 6.8 Deriving coverage: the timing route
 
 ```lean
 structure Timing (U) (T : Finset Validator) (N : ℕ) where
@@ -973,7 +1033,7 @@ that it is compressed: every clock advances by the same timeout. Preservation is
 what the subsequent argument requires. `Timing.le_built` records that rounds
 advance real time, so that a round beyond GST was necessarily built beyond GST.
 
-**The assumption, discharged.**
+**Coverage, derived.**
 ```lean
 theorem Timing.synchronisedOn_of_timing (hT : T ⊆ Correct)
     (hD : tm.DriftFrom R D) (hgst : tm.gst ≤ R)
@@ -997,28 +1057,31 @@ is unknown; §6.10 supplies two further routes.
 
 ### 6.9 The layering
 
-> *[Figure 3]* The layer diagram.
+> *[Figure 3]* The layering, and the trust boundary.
 >
 > ```
->   L6  commits recur           ─┐
->   L4  a correct leader commits │  no time appears in this region
->   L1  no stall                 │
->   L0  density                 ─┘
->        ▲
->        │  SynchronisedOn  — the interface
->        │
->   L7a  EventuallyDelivers (delivery model)
->   L7b  Timing: GST, Δ, waits, prompt
+>   L6   commits recur            ─┐
+>   L4   a correct leader commits  │  no time appears in this region
+>   L1   no stall                  │
+>   L0   density                  ─┘
+>         ▲
+>         │   SynchronisedOn   — derived, not assumed
+>         │
+>   L7a   from   N2  EventuallyDelivers   +   P7  includes
+>   L7b   from   N2  Timing.covers        +   P9  waits, prompt
+>                └──── assumed ────┘          └──── specified ────┘
 > ```
 
-No theorem above the interface mentions time, and no theorem below it mentions
-certificates.
+No theorem above `SynchronisedOn` mentions time, and no theorem below it mentions
+certificates. The figure also locates the trust boundary: of the four premises
+beneath the line, the two on the left are assumptions about an adversarial
+network and the two on the right are clauses of the algorithm.
 
 ### 6.10 Quantitative results
 
 The results of this section are collected in a separate module which nothing else
 imports. Each strengthens a result above and is purchased with a strengthened
-hypothesis (§4.3); a reader declining those hypotheses retains §6.1–§6.9 intact.
+clause (§4.5); a reader declining those clauses retains §6.1–§6.9 intact.
 
 **The weak hypotheses admit no bound.** Two of the results above conclude with
 an existential statement that supplies no bound on its witness —
@@ -1113,60 +1176,82 @@ start spread, the wait, and the position of the slot relative to GST.
 
 ## 7. Discussion: eventual DAG synchrony
 
-### 7.1 Relation to the view formulation
+### 7.1 Locating the synchrony assumption
 
-The assumption may be stated instead in terms of views:
+The synchrony assumption may be stated in terms of views:
 
 > beyond GST, if a correct validator holds a view `V₁`, then within Δ the views
 > of all correct validators contain `V₁`.
 
-This formulation is attractive. `View` is already a first-class structure,
-inclusion between views is already meaningful, and every safety result is already
-view-relative. It yields L3 immediately, the common view being `View.full`.
+This is a statement about the network, and as such it is complete: it says
+everything about delivery that the development requires. It is also attractive
+formally, `View` being already a first-class structure with inclusion already
+meaningful and every safety result already view-relative, and it yields L3
+immediately, the common view being `View.full`.
 
-It also yields reference coverage by the expected mechanism: rapid propagation
-places every correct round-`n` block in every correct validator's possession, and
-a validator which waits sufficiently long before building at round `n+1`
-references all of them. §6.8 is that argument, formalised.
+What it does not do is determine what blocks *look like*. Reference coverage is
+a property of blocks, and blocks are produced by validators according to the
+protocol, so it depends on the specification as well as on the network. This is
+not a deficiency in the assumption; it is a consequence of coverage being a
+derived property rather than an assumed one (§4.4).
 
-The view formulation does not, however, supply two further ingredients.
+Three observations follow, and they are the content of the section.
 
-**A build rule.** View convergence is a claim about the network. Coverage requires
-in addition a claim about *when validators build*. A network propagating
-perfectly still commits nothing if validators build upon the arrival of the
-`2f+1`st block, since they would then reference the fastest quorum and no more.
-The assumption therefore pairs a delivery bound with a protocol obligation, which
-is why `waits` and `prompt` are fields of `Timing`, and why the delivery route
-factors into `EventuallyDelivers` and `includes`.
+**The protocol must specify a wait, and this is a design obligation rather than
+a gap in the assumption.** Consider `f = 1` with validators `{A,B,C,D}`, all four
+correct, and instantaneous delivery, so that the network assumption holds in its
+strongest form. Suppose the specification directs a validator to build as soon as
+it holds `2f+1 = 3` blocks of the round below, and suppose `A`, `B` and `C` are
+marginally faster than `D`. Each of them then forms the quorum `{A,B,C}` and
+builds before `D`'s block arrives, so no block of theirs ever references `D`'s.
+Every block is valid, views converge perfectly, and `SynchronisedOn U Correct R`
+fails for every `R`.
 
-**A build-time index.** A block's references are fixed at its construction, so
-what bears on the argument is not what a validator holds eventually but what it
-held at the moment it built. `View` records no time, so a view-convergence
-statement cannot be applied directly. `Delivery.held v n` supplies the index, and
-with it the delivery route is a single line. This is a point about the
-formulation rather than about the mechanism, but it is the reason the assumption
-is stated on `refs`.
+What this exhibits is a badly specified protocol under a well-behaved network.
+The remedy lies in the specification: P9 directs a validator to wait a full
+timeout rather than to build on the arrival of a quorum. The example is worth
+including because the incorrect rule is the natural one — the quorum is exactly
+what validity requires — and because it shows that promptness and coverage are
+in tension, which is what P9's two halves jointly resolve.
 
-A third point is easily overlooked: the timeout must exceed `delay + D`, not
-`delay`. Validators enter a round at different times, so the wait must
-accommodate both the propagation bound and the spread. This is the origin of the
-factor of two in §6.10.
+**The threshold the specification must meet is `D₀ + Δ`, not Δ.** This is the
+one point at which a network parameter enters the protocol's constant, and it is
+the substantive quantitative result (§6.10). Validators enter a round at
+different times, so a wait must accommodate the propagation bound *and* the
+spread between validators; taking the spread at round `0`, where it records how
+nearly simultaneously the validators started, and propagating it forward by
+`driftFrom_of_prompt`, gives the bound. Under a common start, `D₀ ≤ Δ` and the
+threshold is `2Δ`.
 
-The claim advanced here is that the view formulation is *incomplete*, not that it
-is incorrect, and the contribution is the identification of the two missing
-ingredients.
+Because Δ is not known to an implementation, no constant can be fixed in
+advance. A backoff is the specification's response — a search for a sufficient
+constant, written into the algorithm — and its only relevant property is that
+the search terminates (§7.2).
 
-### 7.2 Executability
+**The network guarantee must be indexed to the moment of building.** A block's
+references are fixed at its construction, so what bears on the derivation is not
+what a validator holds eventually but what it held when it built. `View.ids` is a
+finite set of identifiers with no temporal index, so a view-convergence statement
+cannot be applied directly. `Delivery.held : Validator → ℕ → Finset BlockId`
+supplies the index — `held v n` denotes what `v` had in hand when building for
+round `n+1` — and with it the delivery route (§6.7) is a single line. A
+time-indexed family of views would serve equally well; the requirement is the
+index, not the vehicle. This is an observation about formalisation, and it is the
+reason `SynchronisedOn` is stated on `refs`.
 
-`SynchronisedOn` is not a rule a validator can follow. `Correct` is a
-model-level object, so the instruction to reference every correct block of the
-round below names two quantities a validator cannot determine: which of the
-blocks it holds are correct-authored, and whether all of them have arrived, a
-missing block being indistinguishable from one never published.
+### 7.2 Why coverage is derived rather than specified
 
-What a validator can do is wait a fixed period, build upon whatever has arrived,
-and increase the period when progress fails. These are `waits`, `prompt` and the
-backoff, all of which are executable.
+Reference coverage could not have been made a clause of the protocol, which is
+the deeper reason it appears as a derived property. `SynchronisedOn` refers to
+`Correct`, a model-level object, so an instruction to reference every correct
+block of the round below would name two quantities a validator cannot determine:
+which of the blocks it holds are correct-authored, and whether all of them have
+arrived, a missing block being indistinguishable from one never published.
+
+What a validator can be directed to do is wait a fixed period, build upon
+whatever has arrived, and increase the period when progress fails. These are
+`waits`, `prompt` and the backoff — P9 together with R1 — all of them
+executable.
 
 The signal driving the backoff is the awkward point. Before GST no period is
 sufficient, and nothing permits a validator to detect this directly; what it
@@ -1188,9 +1273,9 @@ loop disappears.
    would carry instants.
 2. The temporal content is confined to a single module and consumed through a
    single definition.
-3. The interface admits two independent discharges (§6.7, §6.8) and a third,
+3. The condition admits two independent derivations (§6.7, §6.8) and a third,
    quantitative route (§6.10), against an unchanged statement.
-4. The assumption composes with the safety development, mentioning only `U.ids`,
+4. The condition composes with the safety development, mentioning only `U.ids`,
    `U.block` and `refs` — the vocabulary that development already employs.
 
 ### 7.4 Costs
@@ -1200,9 +1285,11 @@ by an instant and every statement quantified over instants, for no proof content
 The quantitative statements recover what is needed *below* the interface without
 propagating time upward.
 
-The gain is not logical. One assumption becomes two, and nothing becomes
-unconditional: in the absence of a time model the chain must terminate at a
-delivery assumption.
+Coverage being derived rather than assumed does not make it unconditional. The
+derivation rests on N2, and in the absence of a time model the chain must
+terminate at a delivery assumption; what the reformulation achieves is to place
+that assumption where it belongs — on the network — and to keep it out of every
+statement above.
 
 ### 7.5 Related work
 
@@ -1219,7 +1306,7 @@ delivery assumption.
 
 ## 8. Satisfiability
 
-Every structure carrying assumptions is exhibited satisfiable by a concrete model
+Every structure carrying conditions is exhibited satisfiable by a concrete model
 over four validators at `f = 1`. This is a substantive component of the
 development rather than a testing exercise: an unsatisfiable hypothesis renders
 every theorem above it vacuous, and vacuity is not otherwise detectable.
@@ -1251,7 +1338,7 @@ One negative observation is worth recording. A model exhibiting *round spread* �
 correct validators separated by many rounds — while still committing is impossible
 at `f = 1`, since `|Correct| = 3 = 2f+1` exactly, so that every correct validator
 is required for a quorum and none may lag. Such a model requires `f ≥ 2`. This is
-the combined fault budget of §4.4 appearing as a concrete obstruction rather than
+the combined fault budget of §4.2 appearing as a concrete obstruction rather than
 as an inequality.
 
 ---
@@ -1260,8 +1347,9 @@ as an inequality.
 
 The quantitative bounds are established (§6.10). The following remain open.
 
-**The backoff loop.** `Rated`, and the threshold condition generally, are assumed
-rather than derived from the feedback mechanism of §7.2. Moreover
+**The backoff loop.** `Rated` and the threshold of R4 are stipulated as clauses
+of the specification; no realistic adaptive scheme is shown to satisfy them, and
+the feedback mechanism of §7.2 is not modelled. Moreover
 `Timing.timeout : ℕ → ℕ` is indexed by round and common to the reliable set, so
 that a per-validator backoff — in which validators increase their timeouts at
 different moments — cannot be expressed, let alone shown to converge. This
