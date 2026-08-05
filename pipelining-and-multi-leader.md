@@ -101,6 +101,8 @@ pipelined commit.
 
 ## 3. The two generalisations are one weakening
 
+### 3.1 The class
+
 Keep slots indexed by `ℕ`, as the linearisation of (round, proposer offset)
 that `TryDecide` already builds. Then:
 
@@ -139,7 +141,101 @@ slots, delivered twice by `commitSeq`. Today this cannot arise, because
 a real obligation on the leader-election function — the requirement that the
 `numOfProposers` proposers of a round be distinct validators. Round-robin and
 HammerHead both satisfy it; nothing in the model would notice if a schedule did
-not.
+not. §3.2 moves it somewhere it is checkable rather than assumed.
+
+### 3.2 The schedule layer: what a user actually writes
+
+`Slots` is the right *interface* — every theorem downstream indexes slots by
+`ℕ` and should keep doing so — but it is the wrong thing to ask a reader to
+write down. Nobody thinks of a leader schedule as a pair of functions out of
+`ℕ` with three side conditions; they think of it as *which validators propose
+in which round*. So put a second layer above it, and let `Slots` be derived:
+
+```lean
+/-- A leader schedule, as the protocol states it. -/
+structure Schedule (Validator : Type*) where
+  leaders : ℕ → List Validator
+  nodup   : ∀ n, (leaders n).Nodup
+  cofinal : ∀ n, ∃ m, n ≤ m ∧ leaders m ≠ []
+```
+
+**A `List`, not a `Finset`.** The obvious reading of "a set of (round,
+validators)" is `ℕ → Finset Validator`, and it is not quite enough: when a
+round has several leaders their slots are committed in a definite order, and
+that order is visible in the ledger — `TryDecide` iterates proposer offsets and
+`commitSeq` reads slots in order, so two validators disagreeing about the order
+within a round would deliver different sequences. A `Finset` would force a
+`LinearOrder` on `Validator` to recover it, which is an assumption the schedule
+can simply supply instead. Empty lists are allowed and are exactly how "a
+leader every third round" is said.
+
+The two side conditions are the two new facts of §3.1, relocated to where they
+are checkable:
+
+- `nodup` gives `keyed`. Two slots sharing a round and a leader would be two
+  positions in one list holding the same validator.
+- `cofinal` gives `unbounded`. Without it the flattening below is finite and
+  `slotRound` is not total.
+
+`mono` needs no condition: it holds by construction.
+
+Slot `k` is then the `k`-th entry of `leaders 0 ++ leaders 1 ++ ⋯`. Writing
+`count n = Σ_{i<n} (leaders i).length` for the slots strictly below round `n`,
+the derivation is
+
+```lean
+def Schedule.toSlots (sch : Schedule Validator) : Slots Validator
+-- slotRound k = the least n with k < count (n+1)      (Nat.find, via cofinal)
+-- leader    k = (sch.leaders (slotRound k)).get (k - count (slotRound k))
+```
+
+with the characterisation lemma that every concrete instance will want:
+
+```lean
+theorem slotRound_eq_iff : sch.toSlots.slotRound k = n ↔ count sch n ≤ k ∧ k < count sch (n+1)
+```
+
+### 3.3 Recovering the present development, and the schedules worth having
+
+Every schedule anyone deploys is *uniform*: `m` leaders in every `p`-th round.
+That case has a closed form and needs none of the flattening machinery, so it
+is worth a constructor of its own —
+
+```lean
+def Slots.uniform (p m : ℕ) (hp : 0 < p) (hm : 0 < m) (elect : ℕ → Validator)
+    (hblock : ∀ k₁ k₂, k₁ / m = k₂ / m → elect k₁ = elect k₂ → k₁ = k₂) :
+    Slots Validator where
+  slotRound k := p * (k / m)
+  leader    k := elect k
+```
+
+`mono` is monotonicity of `k / m`; `unbounded` holds since
+`slotRound (m * n) = p * n ≥ n`; `keyed` is `hblock` — equal slot rounds force
+`k₁ / m = k₂ / m` because `p > 0`, and then equal leaders force `k₁ = k₂`.
+`hblock` says only that the `m` proposers of a round are distinct, and
+round-robin `elect k = k % (3f+1)` with `m ≤ 3f+1` satisfies it.
+
+| | `p` | `m` | `slotRound k` | |
+|---|---|---|---|---|
+| present development | 3 | 1 | `3k` | `spacing` holds with equality |
+| pipelined, one leader | 1 | 1 | `k` | |
+| pipelined, `m` leaders | 1 | `m` | `k / m` | the deployed rule |
+| slow multi-leader | 3 | `m` | `3 * (k / m)` | |
+
+The first row is the conservativity check the whole exercise turns on, and it
+is a two-line proof: `Slots.uniform 3 1 _ _ rr` has `slotRound k = 3 * (k / 1)
+= 3 * k`, so `slotRound k + 3 ≤ slotRound (k + 1)` by `omega`. Every theorem
+proved against the generalised class therefore specialises to the current one
+with no reproof, and `LeanDagTest` can keep its existing instances by
+rebuilding them through `uniform`.
+
+So there are two entry points and they do not compete: `Slots.uniform` for the
+regular schedules, which is everything above plus every witness in §11, and
+`Schedule.toSlots` for genuinely irregular ones. The general layer is what
+makes the claim *"an arbitrary assignment of validators to rounds works"* a
+theorem rather than a family of examples; the uniform layer is what makes the
+examples cheap. §11 stages them in that order — uniform first, because nothing
+else waits on the flattening.
 
 ## 4. Where the three rounds are load-bearing
 
@@ -438,11 +534,13 @@ one — so `s` is still `1`, not `0`, and `s·w` still reads `w` rounds for `w`
 slots. The bound is loose by exactly the factor of interest: only one step in
 `m` actually advances the round, and `BoundedSpacing` cannot see that.
 
-What is wanted is `slotRound (k + w) ≤ slotRound k + ⌈w/m⌉`, which needs the
-schedule to expose `m`. That is Q4, and §10 is the reason to answer it: without
-`perRound`, the quantitative layer will accept multiple leaders and report no
-improvement, which is worse than not modelling them. With it, the walk cost
-becomes `⌈w/m⌉` and the headline falls from `3(f+1)` to `⌈(f+1)/m⌉`.
+What is wanted is `slotRound (k + w) ≤ slotRound k + p * ⌈w/m⌉`, which needs the
+schedule to expose `m` — and `Slots.uniform` (§3.3) does, in closed form, so
+this is a computation rather than a new hypothesis. Restating the quantitative
+results against `uniform` in place of `BoundedSpacing` takes the walk cost to
+`p * ⌈w/m⌉` and the headline from `3(f+1)` to `⌈(f+1)/m⌉`. Left against the
+bare class, the layer would accept multiple leaders and report no improvement,
+which is worse than not modelling them at all; see Q4.
 
 Independently of the bound, the ledger advances by up to `m` slots per round
 rather than one slot per three.
@@ -465,11 +563,15 @@ to depend on `m`; it should not try to resolve it.
 
 Ordered so that nothing is proved twice and every stage builds.
 
-1. **Generalise the class** (§3) and add `Eligible`. Keep `slotRound k = 3k`
+1. **Generalise the class** (§3.1) and add `Eligible`. Keep `slotRound k = 3k`
    as an instance and check that `LeanDagTest/Model.lean` and
    `LeanDagTest/Quantitative.lean` still discharge their `Slots` instances,
    now via `mono`, `unbounded`, `keyed` instead of `spacing`. Nothing should
    break; if something does, it is unlisted in §4 and worth knowing.
+1b. **`Slots.uniform`** (§3.3), and the conservativity lemma
+   `(uniform 3 1 …).slotRound k = 3 * k`. Rebuild the `LeanDagTest` instances
+   through it. Cheap, and it is what makes every later stage's witnesses
+   one-liners — so it belongs before them, not after.
 2. **P1**, the engine (§6.2). One line changes.
 3. **Revise `Decided`** (§5). The fallout is smaller than it looks: the only
    proof that rebuilds the constructors is `decided_mono`, and only its two
@@ -484,22 +586,33 @@ Ordered so that nothing is proved twice and every stage builds.
 5. **P3** and the ledger check (§6.4, §8).
 6. **P4, P5, P6** (§9.2–§9.4). Mechanical against `unbounded`.
 7. **P7** (§9.5). The open one.
+8. **`Schedule` and `Schedule.toSlots`** (§3.2). Last, and separable: nothing
+   above needs it, since `uniform` covers every witness and every deployed
+   schedule. Its value is generality — it is what turns "arbitrary validators
+   per round" from a family of examples into a theorem. Budget for the index
+   arithmetic (partial sums, `Nat.find`, the characterisation lemma) rather
+   than for anything conceptual.
 
 **Witnesses.** `LeanDagTest/` should carry, at minimum:
 
-- A **pipelined** instance, `slotRound k = k`, `leader` round-robin, with a
-  concrete four-validator DAG in which slot `k` is directly committed while
-  slots `k+1` and `k+2` are also committed — and a `decide`-checked
-  demonstration that anchoring `k` on `k+1` would give the wrong answer. This
-  is the counterexample that justifies `Eligible`, and it belongs in the
-  development, not only in this document.
-- A **multi-leader** instance, `slotRound k = k / m`, `leader k = k % m`, with
-  two co-round slots both committed, exercising §7.
-- A **`keyed`-violating** schedule, to show the duplicate delivery of §8
-  concretely. It need not be an instance of the class; a raw schedule plus a
-  computed `commitSeq` with a repeated element is enough.
-- The existing `+3` instance, unchanged, so the generalisation is visibly
-  conservative.
+- A **pipelined** instance, `Slots.uniform 1 1 rr`, with a concrete
+  four-validator DAG in which slot `k` is directly committed while slots `k+1`
+  and `k+2` are also committed — and a `decide`-checked demonstration that
+  anchoring `k` on `k+1` would give the wrong answer. This is the
+  counterexample that justifies `Eligible`, and it belongs in the development,
+  not only in this document.
+- A **multi-leader** instance, `Slots.uniform 1 2 rr`, with two co-round slots
+  both committed, exercising §7.
+- A **`nodup`-violating** schedule, to show the duplicate delivery of §8
+  concretely. It cannot be a `Schedule`, which is the point; write the raw
+  `slotRound`/`leader` pair and a computed `commitSeq` with a repeated element,
+  and note which field of `Schedule` excludes it.
+- The existing `+3` instance rebuilt as `Slots.uniform 3 1 rr`, so the
+  generalisation is visibly conservative.
+- An **irregular** schedule, once stage 8 lands: leaders at rounds 0, 1, 5, 6,
+  6, 9 say, with `decide`-checked `slotRound` and `leader` values against
+  `slotRound_eq_iff`. This is the witness that the general layer is usable and
+  not merely definable.
 
 Figure 4 of the paper is a ready-made witness for the first of these and its
 example commit sequence (`L1a, L1c, L1d, L2a`) is a ready-made expected value.
@@ -525,25 +638,34 @@ is a much larger change than this one and should not be smuggled in; but
 not as a bare numeral, so the later generalisation is a definition change and
 not a search-and-replace.
 
-**Q3. Is the linearisation of slots worth making explicit?** §3 keeps slots as
-`ℕ` and lets `slotRound`/`leader` encode the (round, offset) structure. That is
-minimal and keeps every ledger theorem. The alternative — slots as
-`ℕ × Fin m` with a lexicographic order — is more faithful to the protocol and
-would make `keyed` a theorem rather than an assumption, at the cost of
-re-indexing `commitSeq`, `ledgerSet`, `OutputAt` and the whole of `Liveness`.
-Recommend the minimal encoding, and record `keyed` as the price.
+**Q3. ~~Is the linearisation of slots worth making explicit?~~** *Answered by
+§3.2.* The question was whether to re-index slots as `ℕ × Fin m` in order to
+make `keyed` a theorem rather than an assumption, at the cost of re-indexing
+`commitSeq`, `ledgerSet`, `OutputAt` and all of `Liveness`. The schedule layer
+gets the benefit without the cost: `Slots` keeps its `ℕ` index so no downstream
+statement moves, and `keyed` becomes a theorem about `Schedule.nodup` one layer
+up. What remains of the question is only *which* per-round container to use,
+and that is settled — a `List`, because the within-round order is visible in
+the ledger (§3.2).
 
 **Q4. Does `numOfProposers` belong in the model?** It has to, if the
 quantitative layer is to say anything true about multiple leaders: §10 shows
 `BoundedSpacing` reports no improvement from them, because `s` stays at `1`
-however many slots share a round. The minimal fix is a field `perRound : ℕ`
-with `slotRound (k + perRound) = slotRound k + 1`, consumed by nothing outside
-`Quantitative.lean`, plus the lemma `slotRound (k + w) ≤ slotRound k +
-(w + perRound - 1) / perRound` to replace `slotRound_le_of_boundedSpacing` at
-the one call site. Note this is an *equation*, so it constrains the schedule to
-a uniform number of leaders per round; a schedule with a varying count would
-need an inequality and a weaker conclusion. Uniform is what deployments do and
-is enough.
+however many slots share a round. *Mostly answered by §3.3*: `Slots.uniform`
+already carries `p` and `m`, and from the closed form `slotRound k = p * (k/m)`
+the wanted bound
+
+```lean
+slotRound (k + w) ≤ slotRound k + p * ((w + m - 1) / m)
+```
+
+is a direct computation, needing no new field and no `BoundedSpacing`. So the
+quantitative results should be restated against `uniform` rather than against
+the bare class. What is *not* answered: whether the general `Schedule` of §3.2
+deserves a quantitative treatment at all. An irregular schedule has no `m` to
+quote, and the honest bound for it is in terms of `count`. Recommend leaving
+the quantitative layer uniform-only and saying so, rather than weakening the
+bounds to cover schedules nobody runs.
 
 **Q5. What happens to the horizon?** `liveness.md` adopts a horizon `N` because
 `Live` was unsatisfiable without one. The horizon is stated in rounds and the
@@ -582,3 +704,20 @@ paper's `SupportedBlock` traversal does (§7).
 
 **The ledger layer is slot-order-generic** and needs `keyed` — and only
 `keyed` — to stay faithful under multiple leaders (§8).
+
+**A schedule is a per-round *sequence* of validators, not a set.** When a round
+has several leaders their slots are committed in a definite order and that
+order reaches the ledger, so `ℕ → List Validator` is the primitive and a
+`Finset` would have to buy the order back with a `LinearOrder` on `Validator`
+(§3.2).
+
+**The schedule is a layer above `Slots`, not a replacement for it.** `Slots`
+stays `ℕ`-indexed, so no downstream statement is re-indexed; `Schedule` sits
+above it and `keyed`/`unbounded` become theorems about `nodup`/`cofinal`
+(§3.2). This is what Q3 was asking for and it costs nothing.
+
+**One constructor covers every deployed schedule.** `Slots.uniform p m` gives
+`slotRound k = p * (k / m)`; `p = 3, m = 1` is the present development with
+`spacing` recovered by `omega`, `p = 1` is pipelining, `m > 1` is multiple
+leaders (§3.3). The general flattening is needed only for irregular schedules
+and can come last.
