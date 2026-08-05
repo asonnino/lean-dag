@@ -883,6 +883,70 @@ theorem notMem_stuck_of_decided {V : View Validator BlockId Payload U} {X : Set 
     obtain ⟨i', hi'X, h1, h2, h3⟩ := hregress k hk j helig ⟨A, hj⟩
     exact ihmid i' h1 h2 h3 hi'X
 
+open Classical in
+/-- **P7′ — a committed run decides everything below it.**
+
+This is L8 with `helig` removed, and it is the shape liveness actually needs.
+The hypotheses are:
+
+* `hrun` — the slots `b … n` are all committed;
+* `hspan` — every slot below `b` has `n` as an *eligible* anchor, which under
+  pipelining just says the run spans three rounds, i.e. `n ≥ b + 2`.
+
+Then every slot below `b` is decided. No synchrony, no timing, no fairness, and
+no hypothesis on the schedule — those enter only when discharging `hrun`, which
+L4 does for a run of `T`-led slots.
+
+Two changes from L8 make it work. The anchor is the nearest **eligible**
+committed slot rather than the nearest committed one, which is what removes
+`helig`; and an eligible intermediate is shown to lie below `b` — if it were in
+`b … n` it would be committed by `hrun`, contradicting minimality — which is
+what lets the induction hypothesis reach it.
+
+That second step is the whole content. It is why three consecutive commits
+suffice and why a *single* commit does not: the slots just below `b` have no
+eligible intermediates at all (their eligible range starts inside the run), so
+they resolve outright, and everything lower descends onto them. -/
+theorem decided_below_of_committed_run {V : View Validator BlockId Payload U} {b n : ℕ}
+    (hbn : b ≤ n)
+    (hspan : ∀ i, i < b → Eligible Validator i n)
+    (hrun : ∀ j, b ≤ j → j ≤ n → ∃ B, Decided U V j (some B)) :
+    ∀ i, i < b → ∃ v, Decided U V i v := by
+  classical
+  have key : ∀ d i, i < b → b - i ≤ d → ∃ v, Decided U V i v := by
+    intro d
+    induction d with
+    | zero => intro i hi hd; omega
+    | succ d ih =>
+      intro i hi hd
+      -- The nearest slot above `i` that is both eligible for it and committed.
+      have hex : ∃ j, Eligible Validator i j ∧ ∃ B, Decided U V j (some B) :=
+        ⟨n, hspan i hi, hrun n hbn (le_refl n)⟩
+      have hle : Nat.find hex ≤ n :=
+        Nat.find_le ⟨hspan i hi, hrun n hbn (le_refl n)⟩
+      obtain ⟨helig, B, hB⟩ := Nat.find_spec hex
+      have hmid : ∀ i', i < i' → i' < Nat.find hex → Eligible Validator i i' →
+          Decided U V i' none := by
+        intro i' h1 h2 h3
+        -- Minimality: an eligible slot below the anchor is not committed ...
+        have hnc : ¬ ∃ C, Decided U V i' (some C) := fun hc => Nat.find_min hex h2 ⟨h3, hc⟩
+        -- ... so it cannot lie in the run, so it lies below `b`, so the
+        -- induction hypothesis reaches it.
+        have hi'b : i' < b := by
+          by_contra hge
+          exact hnc (hrun i' (by omega) (by omega))
+        obtain ⟨v, hv⟩ := ih i' hi'b (by omega)
+        cases v with
+        | none => exact hv
+        | some C => exact absurd ⟨C, hv⟩ hnc
+      by_cases hc : ∃ L, IsLeaderBlock U i L ∧ CertifiedIn U B L (S.slotRound i)
+      · obtain ⟨L, hL, hcert⟩ := hc
+        exact ⟨some L, Decided.indirectCommit (lt_of_eligible helig) helig hB hmid hL hcert⟩
+      · push Not at hc
+        exact ⟨none, Decided.indirectSkip (lt_of_eligible helig) helig hB hmid hc⟩
+  intro i hi
+  exact key (b - i) i hi (le_refl _)
+
 /-- **L8 and L9 are consistent, and their hypotheses are jointly exhaustive.**
 
 Under the old three-round spacing a stuck set has no member below a committed

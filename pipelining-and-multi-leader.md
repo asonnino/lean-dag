@@ -11,15 +11,20 @@ deployed. Things graduate into `spec.md` once they settle.
 > constructor argument threaded and one hypothesis swapped per trichotomy
 > branch, and no counting was redone.
 >
-> **P7 is partly landed.** L8 `decided_of_committed_above` decides every slot
-> below a commit where eligibility coincides with lateness; L9
-> `notMem_stuck_of_decided` bounds when a stall is possible at all — only under
-> an adversarial *leader schedule*, not under pipelining as such;
-> `decided_of_first_eligible_commit` is the escape that makes the difference.
-> **P7′ (§9.6) is the piece that remains**, and it needs no new synchrony
-> assumption and no change to the vote rule. `P8` (the general `Schedule`
-> flattening) also remains. Q1 is closed. See §14 for what implementation
-> changed, including two wrong turns on P7 worth not repeating.
+> **P7′ is landed bar one step.** `decided_below_of_committed_run` (§9.6) shows
+> a run of committed slots decides *everything* below it, with no hypothesis on
+> the schedule; `hspan` costs one commit under the old spacing and three
+> consecutive under pipelining, both checked. L8, L9 and
+> `decided_of_first_eligible_commit` remain as the special cases and the
+> obstruction bound. **What remains is discharging `hrun` from fairness** — a
+> run of `2f+1 ≥ 3` consecutive `T`-led slots commits directly by L4 — plus
+> `P8` (the general `Schedule` flattening). Q1 is closed.
+>
+> **Latency is out of scope**: the goal is safe and live. §10 records what the
+> bounds say only so the `m`-blindness there is not mistaken for a defect.
+>
+> See §14 for what implementation changed, including two wrong turns on P7 worth
+> not repeating.
 >
 > §3 is the schedule layer — how a reader writes a schedule down and how the
 > present one is recovered (P0, P8). §5–§8 are the safety half (P1–P3).
@@ -706,27 +711,47 @@ Two things it also leaves open, which should not be forgotten:
 - No schedule satisfying `hregress` is exhibited either, and by the argument
   above no *fair* schedule can.
 
-### 9.6 P7′ — the statement to prove
+### 9.6 P7′ — a committed run decides everything below it
 
-L8 assumes `helig`. The general form replaces it with a density condition on
-commits, which fairness supplies:
+`decided_below_of_committed_run` is L8 with `helig` removed, and it is the shape
+liveness actually needs:
 
 ```lean
--- for every slot there is a committed eligible anchor with no eligible,
--- not-yet-committed slot below it
-theorem all_decided_of_dense_commits … : ∀ k, R ≤ S.slotRound k → ∃ v, Decided U (View.full U) k v
+theorem decided_below_of_committed_run {b n : ℕ}
+    (hbn : b ≤ n)
+    (hspan : ∀ i, i < b → Eligible Validator i n)
+    (hrun : ∀ j, b ≤ j → j ≤ n → ∃ B, Decided U V j (some B)) :
+    ∀ i, i < b → ∃ v, Decided U V i v
 ```
 
-The engine is `decided_of_first_eligible_commit` — the escape of §9.5 — and the
-density condition comes from `FairWithin T w` plus L4: after `R`, a run of
-`2f+1 ≥ 3` consecutive `T`-led slots commits directly, so above any slot there
-are three consecutive commits within `w` slots. The remaining work is the
-downward walk through each Byzantine run, which terminates because its top slot
-has a vacuous intermediate range.
+Two changes from L8 make it go through. The anchor is the nearest **eligible**
+committed slot rather than the nearest committed one — that is what removes
+`helig`. And an eligible intermediate is shown to lie *below `b`*: were it in
+`b … n` it would be committed by `hrun`, contradicting minimality — which is
+what lets the induction hypothesis reach it.
 
-This needs **no** new synchrony assumption and **no** change to the vote rule.
-That is the main revision to this document: the missing half of liveness is
-reachable with what is already here.
+That second step is the content, and it explains why three consecutive commits
+suffice where one does not. The slots just below `b` have no eligible
+intermediates at all, their eligible range beginning inside the run, so they
+resolve outright; everything lower descends onto them.
+
+**`hspan` is the whole difference between the two schedules**, and it is one
+line each in `LeanDagTest/Pipelined.lean`:
+
+| schedule | `hspan` holds with | commits needed |
+|---|---|---|
+| `uniformSingle 3` (`slotRound k = 3k`) | `n = b` | **one** |
+| `uniformSingle 1` (`slotRound k = k`) | `n = b + 2` | **three consecutive** |
+
+Three is exactly right and two will not do: `Eligible (b-1) (b+1)` is false,
+slot `b-1`'s certificates sitting at round `b+1`. That is checked too.
+
+**What remains** is discharging `hrun` from fairness: after `R`, a run of
+`2f+1 ≥ 3` consecutive `T`-led slots commits directly by L4, which supplies a
+three-slot run above any point within `w` slots. That is a composition of
+`commits_recur_within`-style reasoning with L4 applied at consecutive slots, and
+it needs **no** new synchrony assumption and **no** change to the vote rule —
+which is the main revision this document has undergone.
 
 ## 10. What the bounds become
 
@@ -739,6 +764,12 @@ slot's round by `slotRound (max k R) + s·w + 2`, for `BoundedSpacing s` and
 `FairWithin T w`: `s·w` rounds to walk to the next `T`-leader, `+2` for the
 certificate round. At the standard settings — round-robin over `3f+1` so
 `w = f+1`, slots every three rounds so `s = 3` — that is `3(f+1) + 2`.
+
+> **Scope.** Latency is **not** a goal of this work: the goal is that pipelined
+> and multi-leader Mysticeti be safe and live. The rest of this section records
+> what the existing bounds do and do not say, so that nobody later mistakes the
+> `m`-blindness below for an unnoticed defect. Q4 stays open as an optional
+> improvement, not as a gap.
 
 Pipelining alone takes `s` from 3 to 1, so the walk cost falls to `f+1`
 rounds. Multiple leaders, however, **do not improve this bound as stated**, and

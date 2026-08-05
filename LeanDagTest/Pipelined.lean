@@ -31,6 +31,7 @@ open LeanDag
 #print axioms LeanDag.exists_eligible
 #print axioms LeanDag.commits_recur_on
 #print axioms LeanDag.decided_of_first_eligible_commit
+#print axioms LeanDag.decided_below_of_committed_run
 #print axioms LeanDag.decided_of_committed_above
 #print axioms LeanDag.all_decided_below_of_spacing
 #print axioms LeanDag.notMem_stuck_of_decided
@@ -136,6 +137,20 @@ theorem pipe_eligible_add_three (k : ℕ) : Eligible (Fin 4) k (k + 3) := by
 -- that composition here would need a `Faults (Fin 4)` instance, which this file
 -- deliberately does without; the composition is the lemma itself.
 
+/-- **`hspan` for P7′, at three consecutive slots.** Every slot below `b` has
+`b + 2` as an eligible anchor, so `decided_below_of_committed_run` applies to a
+run of three: `b`, `b + 1`, `b + 2`.
+
+Three is exactly right and two will not do — `Eligible (b - 1) (b + 1)` is
+false, since slot `b - 1`'s certificates sit at round `b + 1`. -/
+theorem pipe_hspan (b i : ℕ) (hi : i < b) : Eligible (Fin 4) i (b + 2) := by
+  simp only [eligible_iff, pipeSlots_slotRound]
+  omega
+
+example (b : ℕ) (hb : 0 < b) : ¬ Eligible (Fin 4) (b - 1) (b + 1) := by
+  simp only [eligible_iff, pipeSlots_slotRound]
+  omega
+
 end Pipelined
 
 /-! ## The original schedule, for contrast
@@ -183,6 +198,15 @@ cannot contain the slot below a commit. This is the arithmetic behind
 nowhere to go. -/
 example (i : ℕ) : ¬ ∃ i', i < i' ∧ i' < i + 1 ∧ Eligible (Fin 4) i i' := by
   rintro ⟨i', h1, h2, -⟩
+  omega
+
+/-- **`hspan` for P7′ needs only a *single* commit here.** Under three-round
+spacing every slot below `b` has `b` itself as an eligible anchor, so
+`decided_below_of_committed_run` applies with `n = b`. Pipelining is what turns
+"one commit" into "three consecutive commits" — the whole difference between the
+two schedules, in one line each. -/
+theorem spaced_hspan (b i : ℕ) (hi : i < b) : Eligible (Fin 4) i b := by
+  simp only [eligible_iff, spacedSlots_slotRound]
   omega
 
 end Spaced
