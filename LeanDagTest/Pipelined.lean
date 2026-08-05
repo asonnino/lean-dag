@@ -32,6 +32,8 @@ open LeanDag
 #print axioms LeanDag.commits_recur_on
 #print axioms LeanDag.decided_of_committed_above
 #print axioms LeanDag.all_decided_below_of_spacing
+#print axioms LeanDag.notMem_stuck_of_decided
+#print axioms LeanDag.stuck_empty_below_commit_of_spacing
 #print axioms LeanDag.Slots.uniform
 #print axioms LeanDag.Slots.uniformSingle_slotRound
 
@@ -96,6 +98,18 @@ merely resisting proof. -/
 example : ¬ (∀ a b : ℕ, a < b → Eligible (Fin 4) a b) :=
   fun h => absurd (h 0 1 (by omega)) (by decide)
 
+/-- **L9's regress clause is satisfiable here**, and this is the arithmetic
+that makes a stuck set possible. An eligible anchor must clear slot `i`'s
+decision round, so unless it is the very first eligible slot there is room for
+an *eligible* intermediate between the two — and that intermediate is what L9's
+descent consumes. -/
+example (i j : ℕ) (hgap : i + 3 < j) :
+    ∃ i', i < i' ∧ i' < j ∧ Eligible (Fin 4) i i' := by
+  refine ⟨i + 3, by omega, hgap, ?_⟩
+  rw [eligible_iff]
+  simp only [pipeSlots_slotRound]
+  omega
+
 end Pipelined
 
 /-! ## The original schedule, for contrast
@@ -128,6 +142,22 @@ example : ∀ a b : ℕ, a < b ↔ Eligible (Fin 4) a b := by
 /-- So L8 applies, and the slot immediately below a commit — the one pipelining
 cannot decide — is decided here. -/
 example : Eligible (Fin 4) 6 7 := by decide
+
+/-- The next slot is always a legitimate anchor, which is what pipelining
+denies. -/
+example (i : ℕ) : Eligible (Fin 4) i (i + 1) := by
+  rw [eligible_iff]
+  simp only [spacedSlots_slotRound]
+  omega
+
+/-- **And L9's regress clause is blocked here.** With `i + 1` already an
+eligible anchor, there is nothing eligibly between it and `i`, so a stuck set
+cannot contain the slot below a commit. This is the arithmetic behind
+`stuck_empty_below_commit_of_spacing`: under three-round spacing the descent has
+nowhere to go. -/
+example (i : ℕ) : ¬ ∃ i', i < i' ∧ i' < i + 1 ∧ Eligible (Fin 4) i i' := by
+  rintro ⟨i', h1, h2, -⟩
+  omega
 
 end Spaced
 

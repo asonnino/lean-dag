@@ -785,4 +785,89 @@ theorem all_decided_below_of_spacing
   obtain ⟨L, _, hdec⟩ := hcommit U D N H hd hs hN
   exact decided_of_committed_above (fun _ _ h => eligible_of_lt_of_spacing hsp h) hdec
 
+/-! ## L9 — the obstruction: when slots are stuck for good
+
+L8 clears the backpressure under `helig`. This is the converse direction, and
+the reason `helig` is stated as a hypothesis rather than dropped: a set of slots
+that is *stuck* stays stuck, and pipelining is what lets a stuck set exist.
+
+`X` is stuck when three things hold of every slot in it: no candidate has a
+certificate anywhere (so neither the direct nor the indirect rule can commit
+it), some candidate is not directly skippable (so the direct skip cannot fire
+either — a slot with no candidate at all would be skipped vacuously, which is
+why a candidate must be assumed to exist), and every *committed eligible* anchor
+has another member of `X` eligibly between it and the slot.
+
+The third clause is the pipelining-specific one. Under the old three-round
+spacing it cannot hold, because the nearest committed anchor above a slot has
+nothing eligibly between — `stuck_empty_below_commit_of_spacing` below turns
+that into a theorem. Under `slotRound k = k` it holds comfortably, since an
+anchor must clear the decision round and so leaves the slots at rounds
+`+3 … ` in between.
+
+This is the machine-checked form of the counterexample recorded in the design
+notes. What it does not supply is a concrete universe satisfying the first two
+clauses; that needs a DAG in which a Byzantine leader's candidate collects
+`2f` votes and `2f` blames, one short of each threshold. -/
+
+/-- **L9.** Nothing in a stuck set is ever decided, on any view.
+
+Induction on the derivation. Three of the four cases die immediately: a direct
+commit and an indirect commit both produce a certificate, and a direct skip
+contradicts the unskippable candidate. The fourth, indirect skip, is the
+content: its intermediate premise is a *sub-derivation* at some slot which the
+regress clause places back inside `X`, so the induction hypothesis applies. A
+derivation is a finite tree, so the descent cannot continue for ever — which is
+precisely the informal argument, discharged by structural induction rather than
+by hand. -/
+theorem notMem_stuck_of_decided {V : View Validator BlockId Payload U} {X : Set ℕ}
+    (hcert : ∀ i ∈ X, ∀ L, IsLeaderBlock U i L → certificates U L (S.slotRound i) = ∅)
+    (hskip : ∀ i ∈ X, ∃ L, IsLeaderBlock U i L ∧ ¬ DirectSkipIn U V L (S.slotRound i))
+    (hregress : ∀ i ∈ X, ∀ j, Eligible Validator i j → (∃ A, Decided U V j (some A)) →
+      ∃ i', i' ∈ X ∧ i < i' ∧ i' < j ∧ Eligible Validator i i')
+    {i : ℕ} {v : Option BlockId} (h : Decided U V i v) : i ∉ X := by
+  induction h with
+  | @directCommit k L hL hdc =>
+    intro hk
+    obtain ⟨C, hC⟩ := certificates_nonempty_of_directCommit (directCommit_of_directCommitIn hdc)
+    rw [hcert k hk L hL] at hC
+    exact absurd hC (Finset.notMem_empty C)
+  | @directSkip k hall =>
+    intro hk
+    obtain ⟨L, hL, hns⟩ := hskip k hk
+    exact hns (hall L hL)
+  | @indirectCommit k j A L _ _ _ _ hL hcertIn _ _ =>
+    intro hk
+    obtain ⟨C, hC⟩ := certificates_nonempty_of_certifiedIn hcertIn
+    rw [hcert k hk L hL] at hC
+    exact absurd hC (Finset.notMem_empty C)
+  | @indirectSkip k j A _ helig hj _ _ _ ihmid =>
+    intro hk
+    obtain ⟨i', hi'X, h1, h2, h3⟩ := hregress k hk j helig ⟨A, hj⟩
+    exact ihmid i' h1 h2 h3 hi'X
+
+/-- **L8 and L9 are consistent, and their hypotheses are jointly exhaustive.**
+
+Under the old three-round spacing a stuck set has no member below a committed
+slot — so the counterexample of L9 cannot be built there, however the DAG is
+arranged. Composing the two results: L8 decides the slot, L9 says a decided
+slot is outside `X`.
+
+This is also the check that neither theorem is vacuous. L9 is not the
+observation that its hypotheses are unsatisfiable; it is that they are
+unsatisfiable *under `helig`*, and satisfiable without it. -/
+theorem stuck_empty_below_commit_of_spacing
+    (hsp : ∀ k, S.slotRound k + 3 ≤ S.slotRound (k + 1))
+    {V : View Validator BlockId Payload U} {X : Set ℕ}
+    (hcert : ∀ i ∈ X, ∀ L, IsLeaderBlock U i L → certificates U L (S.slotRound i) = ∅)
+    (hskip : ∀ i ∈ X, ∃ L, IsLeaderBlock U i L ∧ ¬ DirectSkipIn U V L (S.slotRound i))
+    (hregress : ∀ i ∈ X, ∀ j, Eligible Validator i j → (∃ A, Decided U V j (some A)) →
+      ∃ i', i' ∈ X ∧ i < i' ∧ i' < j ∧ Eligible Validator i i')
+    {n : ℕ} {A : BlockId} (hn : Decided U V n (some A)) :
+    ∀ i, i ≤ n → i ∉ X := by
+  intro i hi
+  obtain ⟨v, hv⟩ :=
+    decided_of_committed_above (fun _ _ h => eligible_of_lt_of_spacing hsp h) hn i hi
+  exact notMem_stuck_of_decided hcert hskip hregress hv
+
 end LeanDag

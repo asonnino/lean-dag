@@ -16,7 +16,9 @@ deployed. Things graduate into `spec.md` once they settle.
 > holds and is proved is the conditional L8, `decided_of_committed_above`: given
 > one committed slot, every slot below it is decided — provided every later slot
 > may anchor an earlier one, which is exactly the old three-round spacing and
-> exactly what pipelining destroys. This is the substantive finding of the
+> exactly what pipelining destroys. The refutation itself is machine-checked as
+> L9, `notMem_stuck_of_decided`; what is *not* yet built is a concrete universe
+> satisfying its two DAG-level hypotheses. This is the substantive finding of the
 > exercise; Q1 is reformulated accordingly and `P8` (the general `Schedule`
 > flattening) remains. See §14 for what implementation changed.
 >
@@ -605,6 +607,53 @@ Under the old spacing the same construction collapses, because `j` *is*
 eligible for `j - 1` and the intermediate range is empty. That is the whole
 difference, and it is why L8 is stated conditionally rather than dropped.
 
+#### The descent argument, machine-checked: L9
+
+The paragraph above is a proof by hand, and in a development whose point is
+machine-checked claims that is the weakest link in it. So the structural half is
+now a theorem:
+
+```lean
+theorem notMem_stuck_of_decided {X : Set ℕ}
+    (hcert : ∀ i ∈ X, ∀ L, IsLeaderBlock U i L → certificates U L (S.slotRound i) = ∅)
+    (hskip : ∀ i ∈ X, ∃ L, IsLeaderBlock U i L ∧ ¬ DirectSkipIn U V L (S.slotRound i))
+    (hregress : ∀ i ∈ X, ∀ j, Eligible Validator i j → (∃ A, Decided U V j (some A)) →
+      ∃ i', i' ∈ X ∧ i < i' ∧ i' < j ∧ Eligible Validator i i')
+    (h : Decided U V i v) : i ∉ X
+```
+
+`X` is a *stuck* set. Induction on the derivation: direct commit and indirect
+commit both produce a certificate and die on `hcert`; direct skip dies on
+`hskip`; and indirect skip hands back a strictly smaller sub-derivation at a
+slot which `hregress` places back inside `X`. Derivations are finite trees, so
+the descent cannot continue — the hand-written appeal to well-foundedness is
+now structural induction.
+
+Note what each hypothesis encodes. `hcert` is the half-published candidate: no
+certificate anywhere, so nothing can commit the slot by either route. `hskip`
+requires a candidate to *exist* and not be skippable — a slot whose leader
+published nothing at all is skipped vacuously, so the counterexample genuinely
+needs a leader that speaks to some correct validators and not enough of them.
+`hregress` is the pipelining-specific clause.
+
+`stuck_empty_below_commit_of_spacing` then composes L8 with L9 to show the two
+are consistent and that neither is vacuous: under the old spacing a stuck set
+has **no** member at or below a committed slot, however the DAG is arranged. So
+L9 is not the observation that its hypotheses are unsatisfiable — it is that
+they are unsatisfiable *under `helig`*, and satisfiable without it. The
+witnesses in `LeanDagTest/Pipelined.lean` close the loop on `hregress`
+arithmetically: under `slotRound k = k` an eligible anchor beyond `i + 3` always
+leaves an eligible intermediate, and under `slotRound k = 3k` the anchor `i + 1`
+leaves none.
+
+**What is still not checked.** L9 takes `hcert` and `hskip` as hypotheses; no
+concrete universe satisfying them is exhibited. That needs a DAG in which a
+Byzantine leader's candidate collects exactly `2f` votes and `2f` blames — one
+short of each threshold — which is a `LeanDagTest` model of the size of `U7`, not
+a lemma. Until it exists, the claim "pipelining loses this guarantee" rests on
+the structural theorem plus an unformalised satisfiability argument, and should
+be reported that way.
+
 #### What this means
 
 Two readings, and the honest position is that the model does not distinguish
@@ -1011,3 +1060,17 @@ synchrony assumption too weak to support it, and the gap would have been hidden
 inside a true-looking theorem. The lesson for the remaining work is §12 Q1: the
 next real step is not more anchor arithmetic but deciding whether
 `SynchronisedOn` should cover Byzantine-authored blocks at all.
+
+**The refutation is now checked, not argued.** L9 (`notMem_stuck_of_decided`)
+turns the descent argument of §9.5 into structural induction on the `Decided`
+derivation, and `stuck_empty_below_commit_of_spacing` composes it with L8 to
+show that neither result is vacuous: a stuck set is impossible below a commit
+under three-round spacing, and the arithmetic that makes one possible under
+pipelining is witnessed in `Pipelined.lean`. Both compiled first try, which is
+some evidence the hand argument was right rather than lucky.
+
+What remains unformalised is narrower than before and worth stating precisely:
+L9 assumes `hcert` and `hskip`, and no concrete universe satisfying them is
+built. That is a `U7`-sized model in which a Byzantine leader's candidate
+gathers exactly `2f` votes and `2f` blames, and it is the last step between "the
+descent argument is valid" and "the counterexample exists".
