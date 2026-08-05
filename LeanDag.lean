@@ -14,6 +14,7 @@ import LeanDag.History
 import LeanDag.Exposure
 import LeanDag.SelfParent
 import LeanDag.Adoption
+import LeanDag.Pedigree
 import LeanDag.Acceptance
 import LeanDag.Counting
 import LeanDag.Exclusion

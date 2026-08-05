@@ -11,3 +11,4 @@ import LeanDagTest.Exclusion
 import LeanDagTest.TwoFaults
 import LeanDagTest.SelfParent
 import LeanDagTest.Adoption
+import LeanDagTest.Pedigree

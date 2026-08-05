@@ -913,14 +913,37 @@ Byzantine (D15) and the Byzantine set has at most one member — so
 and with D24 the answer to this section's question is pinned from both
 sides: `(2f+1)·r + 1 ≤ |H(b)| ≤ (6f+1)(r+1)`.
 
-What remains is the multi-equivocator case, `f ≥ 2` with two or more
-*exposed* authors: exposed chains can then name each other's tops, and the
-top count needs the distinct-author-sequence induction sketched above —
-every naming pedigree climbs through strictly-later rounds, repeats of an
-author collapse into that author's own chain (D21 again), so pedigrees carry
-pairwise-distinct authors and number at most `c(f) ≤ (3f+1)!`-many. The
-machinery above is that induction's base and step material; what is missing
-is only the recursion over author sets.
+**The multi-equivocator case is closed by pedigrees**
+(`LeanDag/Pedigree.lean`), and with it **C1′ is proved in general**. With
+several exposed authors, exposed chains can name each other's tops and the
+flat per-cone count never grounds; what grounds it is *nesting*. An adopted
+top lies inside its adopter's history, so iterating "who adopted the
+adopter" climbs through strictly higher rounds and strictly nested cones and
+must end at `b`, the only unreferenced block. Three facts turn the climb
+into a count:
+
+- **Pedigrees exist with fresh authors** (`exists_pedigree`): the adopters'
+  authors, together with the top's own, are pairwise distinct — a repeat
+  would put the earlier block on the repeated author's single chain
+  (D21/D22) and hand it a child, unmaking the top.
+- **Pedigrees determine** (`pedigree_deterministic`): each step downward is
+  the unique adopted top of that author under that adopter — the adoption
+  collapse again — so a top is a *function* of its pedigree's author list.
+- **Author lists are few**: duplicate-free over `3f+1` validators, hence at
+  most `(3f+2)^(3f+1)` of them.
+
+So `|topsOf U b X| ≤ c(f) := (3f+2)^(3f+1)` (`card_topsOf_le_pow`), which
+yields C1′ verbatim — **an author contributes at most `c(f)` blocks per
+round to any history** (`card_historyBlocksOf_le`) — and the general bound
+
+> `|H(b)| ≤ (3f+1) · c(f) · (r+1)` — linear in `r`, at every `f`
+> (`card_history_le`).
+
+`c(f)` is astronomically loose — at `f = 1` the adoption theorem's `7(r+1)`
+beats `4·5⁴·(r+1)` by three orders of magnitude, and the true constant is
+plausibly `O(f)` — but it is **constant in `r`**, which is all C1′ ever
+demanded: no compounding, at any fault budget. Tightening `c(f)` is a
+quantitative refinement (§12), not an open safety question.
 
 ## 11. Staging and witnesses
 
@@ -1366,6 +1389,11 @@ The whole development builds with no `sorry` and the usual three axioms.
 | — | the adoption collapse | `top_eq_of_mem_namer_history`, `card_topsOf_le` | `Adoption` |
 | **B1** | the main bound, unique-equivocator: `\|H(b)\| ≤ (6f+1)(r+1)` | `card_history_le_of_unique_equivocator`, `…_of_card_exposedTo_le_one` | `Adoption` |
 | **C1′ (f ≤ 1)** | unconditional linearity at one fault | `card_history_le_of_f_le_one` | `Adoption` |
+| — | pedigrees exist, authors all fresh | `exists_pedigree`, `pedigree_spec` | `Pedigree` |
+| — | pedigrees determine their top | `pedigree_deterministic` | `Pedigree` |
+| — | the general top count: `≤ (3f+2)^(3f+1)` | `card_topsOf_le_pow` | `Pedigree` |
+| **C1′** | per-author per-round `≤ c(f)`, every `f` | `card_historyBlocksOf_le` | `Pedigree` |
+| **B2** | the general bound: `\|H(b)\| ≤ (3f+1)·c(f)·(r+1)` | `card_history_le` | `Pedigree` |
 
 Supporting definitions: `history` and `mem_history_iff` (S6, `History`);
 `ExposedIn`, `DoSValid`, `EquivPair` (`Exposure`); `Accepted` (`Acceptance`);
@@ -1402,6 +1430,12 @@ against one for every honest author, within `card_topsOf_le`'s ceiling of
 `3f`. B1 then bounds the same dirty history end to end (`12 ≤ 28`), and on
 `Uexcl` floor and ceiling hold together: `16 ≤ 18 ≤ 42` at round 5.
 
+**`LeanDagTest/Pedigree`** takes the case B1 cannot: `Ufault` at `f = 2`,
+where **both** Byzantine validators are exposed at once
+(`exposedTo = {0, 1}`, each with two chains). C1′ and B2 apply with no
+hypothesis beyond `DoSValid`, bounding the 20-block history and every
+per-round contribution — the multi-equivocator regime, witnessed.
+
 The S10 repair itself touched only `Model.lean`:
 validator 3's blocks (and dependents) gained their self-parents, and three
 vote-count examples shifted because an author now always votes for its own
@@ -1410,12 +1444,14 @@ and `Ugrow` proves it with one new clause.
 
 ### Not yet proved
 
-| | |
-|---|---|
-| **C1′, `f ≥ 2` multi-equivocator** | was **false** in the pre-S10 model — §10.5 constructs the laundering family. Under S10: **proved** for `f ≤ 1` and, at any `f`, whenever at most one author is exposed in the history (B1, `(6f+1)(r+1)`). What remains is two-plus *exposed* authors at once, where exposed chains can name each other's tops: the distinct-author-sequence induction of §10.5, whose base and step are the proved adoption machinery |
-
-See §10.5 for the argument and the remaining recursion, and §12 Q1 for the
-network-layer mechanism that bounds what no DAG condition can.
+Nothing. **C1′ is proved in full** (`card_historyBlocksOf_le`,
+`card_history_le`): it was false in the pre-S10 model — §10.5 constructs the
+laundering family — and under S10 it holds at every fault budget, with the
+sharp constant `6f+1` when at most one author is exposed (B1) and the loose
+but `r`-free `(3f+1)·(3f+2)^(3f+1)` in general (B2). What remains open is
+*quantitative only*: tightening `c(f)` toward its plausible `O(f)` truth
+(§12), and §12 Q1's network-layer rate limit, which bounds what no DAG
+condition can — the size of `U` itself.
 
 The gap C1′ has to close is visible on the witness rather than merely stated:
 validator 1, which block `9` references, contributes three blocks to `H(9)` —
