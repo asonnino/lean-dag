@@ -30,6 +30,7 @@ open LeanDag
 #print axioms LeanDag.slot_eq_of_decided_commit
 #print axioms LeanDag.exists_eligible
 #print axioms LeanDag.commits_recur_on
+#print axioms LeanDag.decided_of_first_eligible_commit
 #print axioms LeanDag.decided_of_committed_above
 #print axioms LeanDag.all_decided_below_of_spacing
 #print axioms LeanDag.notMem_stuck_of_decided
@@ -109,6 +110,31 @@ example (i j : ℕ) (hgap : i + 3 < j) :
   rw [eligible_iff]
   simp only [pipeSlots_slotRound]
   omega
+
+/-! ### The escape
+
+Nothing strictly between `k` and `k + 3` is eligible to anchor `k`, and `k + 3`
+is. So an anchor at `k + 3` carries a **vacuous** intermediate premise, and
+`decided_of_first_eligible_commit` applies with no induction.
+
+This is what stops pipelining from stalling the ledger: slot `j - 1`, which
+cannot anchor on a committed `j`, anchors on `j + 2` instead — and under fair
+leader election `j + 2` is committed whenever `j` is. -/
+
+/-- The first slot eligible to anchor `k` is `k + 3`; nothing between qualifies. -/
+theorem pipe_not_eligible_between (k i : ℕ) (h1 : k < i) (h2 : i < k + 3) :
+    ¬ Eligible (Fin 4) k i := by
+  simp only [eligible_iff, pipeSlots_slotRound]
+  omega
+
+theorem pipe_eligible_add_three (k : ℕ) : Eligible (Fin 4) k (k + 3) := by
+  simp only [eligible_iff, pipeSlots_slotRound]
+  omega
+
+-- These two are exactly the arguments `decided_of_first_eligible_commit` takes,
+-- so a committed slot at `k + 3` decides slot `k` with no induction. Stating
+-- that composition here would need a `Faults (Fin 4)` instance, which this file
+-- deliberately does without; the composition is the lemma itself.
 
 end Pipelined
 

@@ -11,16 +11,15 @@ deployed. Things graduate into `spec.md` once they settle.
 > constructor argument threaded and one hypothesis swapped per trichotomy
 > branch, and no counting was redone.
 >
-> **P7 is resolved, and was false as stated.** "After `R`, every slot is
-> decided" fails under pipelining, with a concrete counterexample (§9.5). What
-> holds and is proved is the conditional L8, `decided_of_committed_above`: given
-> one committed slot, every slot below it is decided — provided every later slot
-> may anchor an earlier one, which is exactly the old three-round spacing and
-> exactly what pipelining destroys. The refutation itself is machine-checked as
-> L9, `notMem_stuck_of_decided`; what is *not* yet built is a concrete universe
-> satisfying its two DAG-level hypotheses. This is the substantive finding of the
-> exercise; Q1 is reformulated accordingly and `P8` (the general `Schedule`
-> flattening) remains. See §14 for what implementation changed.
+> **P7 is partly landed.** L8 `decided_of_committed_above` decides every slot
+> below a commit where eligibility coincides with lateness; L9
+> `notMem_stuck_of_decided` bounds when a stall is possible at all — only under
+> an adversarial *leader schedule*, not under pipelining as such;
+> `decided_of_first_eligible_commit` is the escape that makes the difference.
+> **P7′ (§9.6) is the piece that remains**, and it needs no new synchrony
+> assumption and no change to the vote rule. `P8` (the general `Schedule`
+> flattening) also remains. Q1 is closed. See §14 for what implementation
+> changed, including two wrong turns on P7 worth not repeating.
 >
 > §3 is the schedule layer — how a reader writes a schedule down and how the
 > present one is recovered (P0, P8). §5–§8 are the safety half (P1–P3).
@@ -535,24 +534,91 @@ Immediate from `unbounded` at `slotRound k + 3`. Trivial, but it is the fact
 that stops the restriction of §5 from being vacuously unsatisfiable, and it is
 where `unbounded` pays for itself a second time.
 
-### 9.5 P7 — no undecided slot below a commit (**resolved: false as stated**)
+### 9.5 P7 — no undecided slot below a commit
 
 **The development proves that commits *recur*, not that every slot is
 *decided*.** The ledger is the sequence read off in slot order up to the first
 undecided slot, so one permanently undecided slot withholds delivery of
 everything above it however many commits recur beyond. The paper keeps this
 deliberately ("Mysticeti-C applies some backpressure through undecided slots,
-to preserve safety").
+to preserve safety"). Closing that gap is P7.
 
-Earlier drafts of this section proposed proving that after `R` every slot is
-decided, and flagged as Q1 the worry that the downward induction might need an
-extra hypothesis. **It needs more than that: the statement is false under
-pipelining, and the counterexample is concrete.** What is true, and is now
-proved, is the conditional statement L8 below. The distinction is the most
-substantive thing this exercise turned up, so it is worth setting out
-carefully.
+Two things are settled and worth separating, because conflating them is what
+earlier drafts of this section got wrong.
 
-#### What is true: L8
+**A Byzantine-led slot can be permanently undecided by the direct rules, and no
+synchrony assumption repairs that.** This is genuine, not an artefact. At
+`f = 1`, `n = 4`: the leader hands its candidate to exactly one correct
+validator, moments before that validator builds its round-`(r+1)` block. The
+candidate then collects two votes — one short of the three a certificate needs
+— and two blames, one short of a skip. Rounds `r+1` and `r+2` are fixed sets of
+blocks, so neither count ever grows again.
+
+No stronger delivery assumption helps, and the reason is that a Byzantine block
+has no send time pinned to the round structure. A *correct* validator's
+round-`n` block is built at round pace and sent at once, so with bounded drift
+and a timeout exceeding `Δ` every correct validator holds it before building
+round `n+1` — which is what `EventuallyDelivers` states and what makes it
+derivable. A Byzantine leader chooses its send times, so it can always place a
+block inside the window where one correct validator has it and the others have
+already built. The authorship clause in `EventuallyDelivers` is therefore
+**faithful**, and an assumption covering Byzantine-authored blocks would be one
+a real adversary can violate. (An earlier draft proposed exactly such a
+strengthening. It is withdrawn; see Q1.)
+
+**But an undecided slot does not stall the ledger, because the indirect rule
+resolves it — and under fair scheduling an anchor is always available.** This is
+where earlier drafts overreached, so it is worth doing slowly.
+
+The indirect rule is *total given a committed anchor*: a certificate for the
+candidate either lies in the anchor's causal history or it does not, so the
+outcome is a commit or a skip, never a third thing. Undecidedness is never the
+rule failing to answer; it is the canonical **anchor** not being available.
+Two reasons it may not be:
+
+- *A skipped slot cannot anchor.* The test searches the causal history of the
+  anchor **block**, and a skip carries no block. So "resolved at round `r+3`" is
+  not enough — the anchor must be *committed*.
+- *The anchor must be canonical, because anchors genuinely disagree.* A
+  certificate sits at round `r+2`, and a round-`(r+3)` block's references are all
+  at `r+2`, so it reaches that certificate only by referencing it — and it
+  references `2f+1` of them, not all. One committed anchor may see it and
+  another may not. Hence the *first* committed eligible slot is fixed as the
+  anchor, and to know a slot is first, every eligible slot below it must be
+  known **skipped** — not merely "not yet decided", since a slot undecidable now
+  may commit later as a view grows. That gap between *undecided* and *skipped* is
+  the backpressure, and it is why Algorithm 3 returns `⊥` on an undecided
+  eligible anchor.
+
+Now the escape, which is the fact earlier drafts missed. Under pipelining slot
+`k`'s eligible anchors are exactly the slots at round `slotRound k + 3` and
+beyond — and **nothing strictly between `k` and there is eligible at all**. So
+take the case that looks fatal: slot `j - 1` immediately below a committed `j`.
+It cannot anchor on `j`, which sits one round on, inside its decision round. But
+if `j + 2` is committed then
+
+- `j + 2` is eligible for `j - 1`, and
+- the eligible intermediates in `(j - 1, j + 2)` are the `i` with
+  `j - 1 < i < j + 2` *and* `i ≥ j + 2` — **empty**.
+
+The intermediate premise is vacuous and slot `j - 1` resolves at once, with no
+induction. `decided_of_first_eligible_commit` is this argument.
+
+So a stall needs commits to be **isolated** — three or more non-committed slots
+above every commit. A fair schedule never produces that: correct validators
+number at least `2f+1` of `3f+1`, and under round-robin they hold runs of
+`2f+1 ≥ 3` consecutive slots, every one of which commits directly after `R` by
+L4. Three consecutive commits therefore always exist, the escape always
+applies, and a downward walk through a Byzantine run terminates — its top slot
+has vacuous intermediates, and each slot below it anchors with intermediates
+already decided.
+
+**Conclusion. Pipelined and multi-leader Mysticeti does not stall under fair
+leader election.** What remains is to prove it: L8 below is the special case
+that assumes eligibility coincides with lateness, and L8′ (§9.6) is the general
+statement that fairness discharges.
+
+#### The conditional case: L8
 
 ```lean
 theorem decided_of_committed_above
@@ -575,43 +641,28 @@ guarantees agreement regardless.
 spacing, for every `k` there is an `n ≥ k` such that a sufficiently grown
 synchronous DAG decides every slot up to `n`.
 
-#### Why the hypothesis cannot be dropped
+#### Why `helig` is a genuine restriction, and what it costs
 
 `helig` — every later slot is an eligible anchor — is exactly the old spacing
-condition (`eligible_of_lt_of_spacing`), and exactly what pipelining destroys.
-The counterexample, at `f = 1`, `n = 4`:
+condition (`eligible_of_lt_of_spacing`), and pipelining does destroy it: slot
+`j - 1` cannot anchor on `j`. What it does *not* destroy is the conclusion, for
+the reason set out above — `j - 1` reaches past `j` to `j + 2` with nothing
+eligible in between. So L8 is a **convenience**, not the boundary of what is
+provable: it buys the nearest-anchor induction cheaply where the hypothesis
+holds, and §9.6 is what to prove where it does not.
 
-Let the schedule be pipelined, and let every slot between the `T`-led ones be
-led by a Byzantine validator that publishes its candidate to exactly one
-correct validator before that validator builds its next block. Then the
-candidate collects two votes — one short of the three a certificate needs — and
-two blames, one short of a skip. So the slot is undecided **directly and
-permanently**: rounds `r+1` and `r+2` are fixed sets of blocks, so neither
-count ever grows.
-
-This is consistent with every hypothesis in the model, and the reason is worth
-stating plainly: `SynchronisedOn` (`Liveness.lean:280`) requires a `T`-block to
-reference the previous round's blocks **whose creators are also in `T`**. A
-Byzantine-authored candidate is not covered by it at all, so synchrony does not
-force correct validators to vote for it.
-
-Now take `j` a committed slot and consider slot `j - 1`. It cannot anchor on
-`j`: under pipelining `j` sits one round on, inside `j-1`'s decision round. So
-it must anchor on the next committed slot `j'`, and its intermediate range then
-contains `j' - 1`, which for the same reason must anchor beyond `j'`, whose
-range contains `j'' - 1`, and so on. Every `Decided` derivation is a finite
-tree, so a chain of strictly smaller sub-derivations that never bottoms out is
-no derivation at all: **slot `j - 1` is undecided permanently.**
-
-Under the old spacing the same construction collapses, because `j` *is*
-eligible for `j - 1` and the intermediate range is empty. That is the whole
-difference, and it is why L8 is stated conditionally rather than dropped.
+The one situation in which the conclusion really does fail is **isolated
+commits** — a schedule where no three consecutive slots commit. Then slot
+`j - 1` must reach the next committed slot `j'`, whose own lower neighbour
+`j' - 1` must reach past `j'`, and so on without end; since `Decided`
+derivations are finite trees, no derivation exists. That configuration requires
+an adversarial *leader schedule*, in which Byzantine leaders hold essentially
+three of every four consecutive slots. Fair round-robin excludes it outright.
 
 #### The descent argument, machine-checked: L9
 
-The paragraph above is a proof by hand, and in a development whose point is
-machine-checked claims that is the weakest link in it. So the structural half is
-now a theorem:
+The paragraph above is a proof by hand, so the structural half of it is a
+theorem:
 
 ```lean
 theorem notMem_stuck_of_decided {X : Set ℕ}
@@ -636,51 +687,46 @@ published nothing at all is skipped vacuously, so the counterexample genuinely
 needs a leader that speaks to some correct validators and not enough of them.
 `hregress` is the pipelining-specific clause.
 
-`stuck_empty_below_commit_of_spacing` then composes L8 with L9 to show the two
-are consistent and that neither is vacuous: under the old spacing a stuck set
-has **no** member at or below a committed slot, however the DAG is arranged. So
-L9 is not the observation that its hypotheses are unsatisfiable — it is that
-they are unsatisfiable *under `helig`*, and satisfiable without it. The
-witnesses in `LeanDagTest/Pipelined.lean` close the loop on `hregress`
-arithmetically: under `slotRound k = k` an eligible anchor beyond `i + 3` always
-leaves an eligible intermediate, and under `slotRound k = 3k` the anchor `i + 1`
-leaves none.
+`stuck_empty_below_commit_of_spacing` composes L8 with L9 to show neither is
+vacuous: under the old spacing a stuck set has **no** member at or below a
+committed slot, however the DAG is arranged.
 
-**What is still not checked.** L9 takes `hcert` and `hskip` as hypotheses; no
-concrete universe satisfying them is exhibited. That needs a DAG in which a
-Byzantine leader's candidate collects exactly `2f` votes and `2f` blames — one
-short of each threshold — which is a `LeanDagTest` model of the size of `U7`, not
-a lemma. Until it exists, the claim "pipelining loses this guarantee" rests on
-the structural theorem plus an unformalised satisfiability argument, and should
-be reported that way.
+**What L9 does and does not say.** It is a correct theorem, and it is the reason
+"isolated commits" above is a real configuration rather than a hand-wave. But
+its `hregress` clause needs an adversarial *leader schedule*, not merely an
+adversarial network: with three consecutive commits available, the escape gives
+a vacuous intermediate range and `hregress` fails. So L9 bounds the damage; it
+does not establish any deficiency in pipelined Mysticeti as deployed.
 
-#### What this means
+Two things it also leaves open, which should not be forgotten:
 
-Two readings, and the honest position is that the model does not distinguish
-them yet.
+- No concrete universe satisfying `hcert` and `hskip` is exhibited. That needs a
+  DAG in which a Byzantine leader's candidate collects exactly `2f` votes and
+  `2f` blames — a `LeanDagTest` model the size of `U7`, not a lemma.
+- No schedule satisfying `hregress` is exhibited either, and by the argument
+  above no *fair* schedule can.
 
-*The model is too weak.* `SynchronisedOn` is weaker than the eventual-DAG-
-synchrony of `liveness.md`'s opening notes, which say that anything one correct
-validator holds, all eventually hold — with no clause about who authored it.
-Strengthening it to cover every round-`n` block in `U` would kill the
-counterexample. But it cannot be strengthened naively: `ValidWrt.distinct_creators`
-forbids one block referencing two blocks by the same author, so demanding that
-a block reference *every* round-`n` block in `U` is unsatisfiable as soon as a
-leader equivocates. The satisfiable form is "reference *some* round-`n` block by
-every author that has one", and under that a leader may still split correct
-validators between two equivocating candidates, leaving the slot undecided. So
-this route needs care, and probably needs the paper's `SupportedBlock`
-traversal rather than `L ∈ refs`.
+### 9.6 P7′ — the statement to prove
 
-*The protocol really is more fragile under pipelining.* This is also what the
-paper says, in §III-C: undecided slots increase "when some proposer slots are
-slow or equivocate", delaying execution, mitigated by choosing well-performing
-leaders rather than by any change to the rule. The counterexample is an
-adversary that controls delivery precisely and forever, which is exactly the
-regime the paper declines to defend against.
+L8 assumes `helig`. The general form replaces it with a density condition on
+commits, which fairness supplies:
 
-Deciding between these is Q1, restated in §12. Nothing in the safety results
-depends on it.
+```lean
+-- for every slot there is a committed eligible anchor with no eligible,
+-- not-yet-committed slot below it
+theorem all_decided_of_dense_commits … : ∀ k, R ≤ S.slotRound k → ∃ v, Decided U (View.full U) k v
+```
+
+The engine is `decided_of_first_eligible_commit` — the escape of §9.5 — and the
+density condition comes from `FairWithin T w` plus L4: after `R`, a run of
+`2f+1 ≥ 3` consecutive `T`-led slots commits directly, so above any slot there
+are three consecutive commits within `w` slots. The remaining work is the
+downward walk through each Byzantine run, which terminates because its top slot
+has a vacuous intermediate range.
+
+This needs **no** new synchrony assumption and **no** change to the vote rule.
+That is the main revision to this document: the missing half of liveness is
+reachable with what is already here.
 
 ## 10. What the bounds become
 
@@ -773,9 +819,13 @@ are numbered **P0–P8** and each appears in exactly one stage.
    it is worth doing until the anchor rule is re-thought.
 6. **P3 — schedule faithfulness** and the ledger check (§6.4, §8).
 7. **P4, P5, P6** (§9.2–§9.4). Mechanical against `unbounded`.
-8. **P7 — no undecided slot below a commit** (§9.5). Landed as the conditional
-   L8, `decided_of_committed_above`, plus `all_decided_below_of_spacing`. The
-   unconditional form is false; see §9.5 and Q1.
+8. **P7 — no undecided slot below a commit** (§9.5). Partly landed: L8
+   `decided_of_committed_above` and `all_decided_below_of_spacing` cover the
+   case where eligibility coincides with lateness, L9
+   `notMem_stuck_of_decided` bounds when a stall is possible at all, and
+   `decided_of_first_eligible_commit` is the escape. **P7′ (§9.6) is the
+   remaining piece** and is the one that gives ledger-advance for pipelined and
+   multi-leader schedules.
 9. **P8 — `Schedule` and `Schedule.toSlots`** (§3.2). Last, and separable:
    nothing above needs it, since `uniform` covers every witness and every
    deployed schedule. Its value is generality — it is what turns "arbitrary
@@ -838,29 +888,29 @@ will not elaborate.
 
 ## 12. Open questions
 
-**Q1. ~~Does P7 need a new hypothesis?~~ Should `SynchronisedOn` cover
-Byzantine-authored blocks?** *Reformulated by §9.5.* The original question
-presupposed that "every slot after `R` is decided" was true and only needed the
-right induction. It is false under pipelining, and L8 isolates precisely the
-hypothesis that fails. What remains open is whether that reflects a gap in the
-model or in the protocol.
+**Q1. ~~Does P7 need a new hypothesis?~~ ~~Should `SynchronisedOn` cover
+Byzantine-authored blocks?~~ *Closed — no, and P7 needs no new assumption.***
 
-`SynchronisedOn U T R` covers only round-`n` blocks whose creator is in `T`,
-which is weaker than the eventual DAG synchrony `liveness.md` opens with. The
-candidate repair — a `T`-block references *some* round-`n` block by every author
-that has one in `U` — is satisfiable where the naive "references every round-`n`
-block" is not, because `ValidWrt.distinct_creators` forbids referencing two
-blocks by one author. Under the repair an absent leader is still skipped and a
-publishing leader is still committed, so the counterexample of §9.5 dies; but an
-*equivocating* leader can still split correct validators between two candidates,
-and closing that needs the paper's `SupportedBlock` traversal in place of
-`L ∈ refs` — a change to the vote rule, not to the synchrony assumption.
+Two successive readings of this question were wrong and are recorded here so
+they are not revisited.
 
-So the decision is: strengthen synchrony and adopt DFS support (a real
-extension, and the only route to an unconditional L8), or leave L8 conditional
-and record that pipelining trades this guarantee away. Recommend the latter for
-now — it is what the paper's own §III-C says — and treat the former as the next
-piece of work.
+*First wrong reading:* that "after `R` every slot is decided" merely needed a
+cleverer induction. It needs a density condition on commits, which fairness
+supplies — that is P7′ (§9.6).
+
+*Second wrong reading:* that `SynchronisedOn`'s authorship clause was a modelling
+weakness, to be repaired by covering Byzantine-authored blocks. **It is not a
+weakness.** A Byzantine block has no send time pinned to the round structure, so
+its leader can always place it where one correct validator holds it and the rest
+have already built. Any assumption forcing correct validators to reference it is
+one a real adversary violates. The clause is exactly what is derivable from
+bounded delivery plus a timeout, and it stays. The proposed `CoversOn`, and with
+it the argument for adopting the paper's `SupportedBlock` traversal *for this
+purpose*, are withdrawn.
+
+What survives is smaller and unrelated to liveness: `L ∈ refs` is a coarser vote
+rule than the paper's DFS support, and if equivocation handling is ever wanted
+for its own sake that is where to look. Nothing in §9 needs it.
 
 **Q2. Should `Eligible` be `slotRound k + 3 ≤ slotRound j`, or
 `+ waveLength`?** The paper parameterises `waveLength`, defaulting to 3, and
@@ -906,10 +956,10 @@ bounds to cover schedules nobody runs.
 **Q5. What happens to the horizon?** `liveness.md` adopts a horizon `N` because
 `Live` was unsatisfiable without one. The horizon is stated in rounds and is
 unaffected as such; what changes is that `3m` times as many slots now sit below
-it, and P7's statement (§9.5) needs `slotRound k + reach w ≤ N`, whose `reach`
-is exactly the unknown of Q1. So Q5 is not independent — answering Q1 answers
-it. Recorded separately only because the horizon is where the answer will be
-felt.
+it, and P7′ (§9.6) will need `slotRound k + reach ≤ N` where `reach` covers the
+three consecutive commits above `k` — so roughly `s·w + 2` rounds past the
+starting slot, the same shape `commits_recur_by_round` already produces. Not
+independent of P7′; pinning the constant is part of proving it.
 
 ## 13. Settled
 
@@ -970,21 +1020,30 @@ leaders (§3.3). The general flattening is needed only for irregular schedules
 and can come last.
 
 **Commits recurring is not the ledger advancing.** L6 gives recurrence; the
-ledger stops at the first undecided slot. L8 (`decided_of_committed_above`)
-closes the gap, but only under the hypothesis that later slots may anchor
-earlier ones (§9.5).
+ledger stops at the first undecided slot. Closing that gap is P7, of which L8
+(`decided_of_committed_above`) is the case where eligibility coincides with
+lateness and P7′ (§9.6) is the general one (§9.5).
 
-**Pipelining trades away "no undecided slot below a commit".** Under the old
-spacing the nearest committed slot above any slot is an admissible anchor for
-it, and the downward induction terminates. Under pipelining the slot below an
-anchor must reach past it, and the dependency never bottoms out — so the
-guarantee is genuinely lost, not merely harder to prove (§9.5). Safety is
-untouched.
+**A Byzantine-led slot can be permanently undecided by the direct rules, and no
+synchrony assumption repairs it.** The leader can hand its candidate to exactly
+one correct validator inside the window before the others build, leaving `2f`
+votes and `2f` blames for ever. Byzantine blocks have no send time pinned to the
+round structure, so `EventuallyDelivers`' authorship clause is faithful rather
+than weak, and any assumption covering such blocks is one an adversary violates
+(§9.5, Q1).
 
-**`SynchronisedOn` does not constrain Byzantine-authored blocks.** It covers
-round-`n` blocks whose creator is in `T` only, which is what lets the
-counterexample of §9.5 exist. Whether that is a defect of the model or a
-faithful account of the protocol is Q1 — the one genuinely open question left.
+**That does not stall the ledger.** Nothing strictly between slot `k` and the
+first slot three rounds on is eligible to anchor `k`, so the slot below a commit
+`j` reaches past it to `j + 2` with a *vacuous* intermediate premise
+(`decided_of_first_eligible_commit`). A stall needs commits to be isolated —
+no three consecutive — which fair round-robin excludes, since correct validators
+hold runs of `2f+1 ≥ 3` consecutive slots and each commits directly after `R`
+(§9.5).
+
+**So pipelining does not trade away ledger-advance.** An earlier revision of
+this document claimed it did; that claim was wrong and its residue has been
+removed. L9 bounds when a stall is possible at all, and the answer is "only
+under an adversarial leader schedule", not "under pipelining".
 
 ---
 
@@ -1039,38 +1098,30 @@ justify the whole exercise — under `uniformSingle 1`, `¬ Eligible 0 1` and
 with slot `6` the first that qualifies. Both would have passed the old `k < j`
 premise. The axiom audit covers all ten new or reproved results.
 
-**The one prediction that was wrong, and it was the important one.** §9.5
-originally proposed P7 — after `R`, every slot is decided — and treated the
-difficulty as arithmetic: how much eligibility slack to add to the `w`-slot
-walk. Working the induction revealed that no amount of slack suffices, because
-the dependency does not terminate: the slot below any anchor needs a later
-anchor, whose own lower neighbour needs a later one still. The statement is
-false, and §9.5 now carries the counterexample.
+**P7 took two wrong turns before landing where §9.5 now stands.** Both are
+recorded because the residue was live in this document for a while and because
+each was a distinct kind of error.
 
-What replaced it is better than what was asked for. `decided_of_committed_above`
-(L8) needs no synchrony, no timing and no fairness — only one committed slot and
-the hypothesis that later slots may anchor earlier ones. Isolating that
-hypothesis is what makes the failure legible: it is precisely
-`eligible_of_lt_of_spacing`, precisely what pipelining destroys, and
-`Pipelined.lean` now witnesses both sides — `¬ (∀ a b, a < b → Eligible a b)`
-under `uniformSingle 1`, and `a < b ↔ Eligible a b` under `uniformSingle 3`.
+*First:* P7 was proposed as "after `R`, every slot is decided", with the
+difficulty assumed to be arithmetic — how much eligibility slack to add to the
+`w`-slot walk. Working the induction showed slack is not the issue; the anchor
+must be *committed*, and that is a property of the DAG, not of the schedule.
+Correct response, and it produced L8 and L9.
 
-Had P7 been proved as originally stated, it would have been proved against a
-synchrony assumption too weak to support it, and the gap would have been hidden
-inside a true-looking theorem. The lesson for the remaining work is §12 Q1: the
-next real step is not more anchor arithmetic but deciding whether
-`SynchronisedOn` should cover Byzantine-authored blocks at all.
+*Second, and the error to learn from:* the conclusion drawn was that pipelining
+loses ledger-advance outright. It does not. That inference took "slot `j - 1`
+cannot anchor on `j`" and jumped to "so it must reach the *next commit*",
+overlooking that `j + 1` and `j + 2` are ordinarily committed too, and that
+nothing between `j - 1` and `j + 2` is *eligible* — so the intermediate premise
+is vacuous and the slot resolves immediately. The regress needs commits to be
+isolated, which fair round-robin cannot produce. The error was reasoning about
+the anchor while forgetting that eligibility also prunes the intermediates.
 
-**The refutation is now checked, not argued.** L9 (`notMem_stuck_of_decided`)
-turns the descent argument of §9.5 into structural induction on the `Decided`
-derivation, and `stuck_empty_below_commit_of_spacing` composes it with L8 to
-show that neither result is vacuous: a stuck set is impossible below a commit
-under three-round spacing, and the arithmetic that makes one possible under
-pipelining is witnessed in `Pipelined.lean`. Both compiled first try, which is
-some evidence the hand argument was right rather than lucky.
+Both L8 and L9 survive as theorems and neither was wasted: L8 is the cheap case,
+L9 bounds when a stall is possible, and `decided_of_first_eligible_commit` — the
+escape — is now the engine of P7′. What was wrong was the commentary around
+them, and it has been rewritten rather than annotated.
 
-What remains unformalised is narrower than before and worth stating precisely:
-L9 assumes `hcert` and `hskip`, and no concrete universe satisfying them is
-built. That is a `U7`-sized model in which a Byzantine leader's candidate
-gathers exactly `2f` votes and `2f` blames, and it is the last step between "the
-descent argument is valid" and "the counterexample exists".
+The general lesson for the remaining work: the reachable liveness result needs no
+new synchrony assumption and no change to the vote rule. §9.6 is the statement;
+`FairWithin` plus L4 supply the density condition.

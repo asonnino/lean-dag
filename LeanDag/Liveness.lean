@@ -691,24 +691,58 @@ backpressure and keeps it deliberately (§III-C).
 
 The theorem below says the backpressure clears, under one hypothesis:
 `helig`, that *every* later slot is an eligible anchor. That hypothesis is
-exactly the old three-round spacing (`eligible_of_lt_of_spacing`), and it is
-exactly what pipelining destroys — under `slotRound k = k` the two slots below
-any anchor are within its decision round and cannot use it.
+exactly the old three-round spacing (`eligible_of_lt_of_spacing`), and
+pipelining does destroy it — under `slotRound k = k` the two slots below any
+anchor lie inside its decision round and cannot use it.
 
-The hypothesis is not a technical convenience. Its failure is a real gap, and
-the shape of the counterexample is worth recording because nothing below rules
-it out. Let the schedule be pipelined and let every slot between the committed
-ones be led by a Byzantine validator that publishes its candidate to exactly
-`f` correct validators: then the candidate gathers `2f` votes, one short of a
-certificate, and `2f` blames, one short of a skip, so the slot is undecided
-directly and forever — `SynchronisedOn` does not constrain it, because it
-covers `T`-authored blocks only. Slot `j - 1`, immediately below a committed
-`j`, must then anchor beyond `j`, on the next committed `j'`; its intermediates
-include `j' - 1`, which must anchor beyond `j'`; and so on. Every `Decided`
-derivation is a finite tree, so a chain of strictly smaller sub-derivations
-that never terminates is no derivation at all: slot `j - 1` is undecided
-permanently. Under the old spacing the same construction collapses, because
-`j` itself is eligible for `j - 1` and the intermediate range is empty. -/
+**But the conclusion survives pipelining**, and it is worth being precise about
+why, because the tempting inference is wrong. It does *not* follow from "slot
+`j - 1` cannot anchor on `j`" that `j - 1` must reach the next commit: nothing
+strictly between `j - 1` and `j + 2` is *eligible*, so anchoring on `j + 2`
+leaves the intermediate premise **vacuous**, and `j + 2` is ordinarily committed
+too. `decided_of_first_eligible_commit` below is that argument, and it needs no
+induction at all.
+
+So `helig` is a convenience — it buys the nearest-anchor induction cheaply —
+rather than the boundary of what is provable. The conclusion fails only when
+commits are *isolated*, with no three consecutive: then `j - 1` really must
+reach the next committed `j'`, whose own lower neighbour must reach past `j'`,
+without end, and since `Decided` derivations are finite trees no derivation
+exists. That configuration needs an adversarial *leader schedule* — Byzantine
+leaders holding essentially three of every four consecutive slots — and fair
+round-robin excludes it, correct validators holding runs of `2f+1 ≥ 3`
+consecutive slots each of which commits directly after `R` by L4. L9 below is
+the machine-checked form of the isolated-commit obstruction. -/
+
+/-- **The escape.** If `j` is committed and *nothing strictly between `k` and
+`j` is eligible to anchor `k`*, then `k` is decided outright: the
+intermediate-skip premise is vacuous, so there is no induction and no appeal to
+nearestness.
+
+This is the fact that keeps pipelining live, and the one an earlier draft of
+these notes missed. Slot `j - 1` sitting immediately below a committed `j`
+cannot anchor on `j` — one round on, inside its decision round — but it *can*
+anchor on `j + 2`, and neither `j` nor `j + 1` is eligible for it, so the
+premise is empty and the slot resolves at once. Under fair leader election
+`j + 2` is committed whenever `j` is, correct validators holding runs of
+`2f+1 ≥ 3` consecutive slots.
+
+No hypothesis on the schedule, and none on synchrony: like L8 this is pure
+decision-relation combinatorics. -/
+theorem decided_of_first_eligible_commit {V : View Validator BlockId Payload U}
+    {k j : ℕ} {A : BlockId}
+    (helig : Eligible Validator k j)
+    (hfirst : ∀ i, k < i → i < j → ¬ Eligible Validator k i)
+    (hj : Decided U V j (some A)) :
+    ∃ v, Decided U V k v := by
+  classical
+  have hmid : ∀ i, k < i → i < j → Eligible Validator k i → Decided U V i none :=
+    fun i h1 h2 h3 => absurd h3 (hfirst i h1 h2)
+  by_cases hc : ∃ L, IsLeaderBlock U k L ∧ CertifiedIn U A L (S.slotRound k)
+  · obtain ⟨L, hL, hcert⟩ := hc
+    exact ⟨some L, Decided.indirectCommit (lt_of_eligible helig) helig hj hmid hL hcert⟩
+  · push Not at hc
+    exact ⟨none, Decided.indirectSkip (lt_of_eligible helig) helig hj hmid hc⟩
 
 open Classical in
 /-- **L8.** Given a committed slot, every slot below it is decided — provided
@@ -789,7 +823,7 @@ theorem all_decided_below_of_spacing
 
 L8 clears the backpressure under `helig`. This is the converse direction, and
 the reason `helig` is stated as a hypothesis rather than dropped: a set of slots
-that is *stuck* stays stuck, and pipelining is what lets a stuck set exist.
+that is *stuck* stays stuck.
 
 `X` is stuck when three things hold of every slot in it: no candidate has a
 certificate anywhere (so neither the direct nor the indirect rule can commit
@@ -798,17 +832,20 @@ either — a slot with no candidate at all would be skipped vacuously, which is
 why a candidate must be assumed to exist), and every *committed eligible* anchor
 has another member of `X` eligibly between it and the slot.
 
-The third clause is the pipelining-specific one. Under the old three-round
-spacing it cannot hold, because the nearest committed anchor above a slot has
-nothing eligibly between — `stuck_empty_below_commit_of_spacing` below turns
-that into a theorem. Under `slotRound k = k` it holds comfortably, since an
-anchor must clear the decision round and so leaves the slots at rounds
-`+3 … ` in between.
+**The third clause is about the leader schedule, not about pipelining.** It
+requires commits to be *isolated*: with three consecutive commits available the
+escape (`decided_of_first_eligible_commit`) gives a vacuous intermediate range
+and the clause fails. Under the old three-round spacing it cannot hold at all,
+which `stuck_empty_below_commit_of_spacing` below turns into a theorem; under a
+pipelined schedule it holds only where Byzantine leaders take essentially three
+of every four consecutive slots, which fair round-robin excludes.
 
-This is the machine-checked form of the counterexample recorded in the design
-notes. What it does not supply is a concrete universe satisfying the first two
-clauses; that needs a DAG in which a Byzantine leader's candidate collects
-`2f` votes and `2f` blames, one short of each threshold. -/
+So this theorem bounds *when* a stall is possible. It is not a deficiency of
+pipelined Mysticeti as deployed. Two things it does not supply: a concrete
+universe satisfying the first two clauses — that needs a DAG in which a
+Byzantine leader's candidate collects `2f` votes and `2f` blames, one short of
+each threshold — and a schedule satisfying the third, which no fair schedule
+can. -/
 
 /-- **L9.** Nothing in a stuck set is ever decided, on any view.
 
