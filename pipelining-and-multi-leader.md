@@ -11,14 +11,20 @@ deployed. Things graduate into `spec.md` once they settle.
 > constructor argument threaded and one hypothesis swapped per trichotomy
 > branch, and no counting was redone.
 >
-> **P7′ is landed bar one step.** `decided_below_of_committed_run` (§9.6) shows
-> a run of committed slots decides *everything* below it, with no hypothesis on
-> the schedule; `hspan` costs one commit under the old spacing and three
-> consecutive under pipelining, both checked. L8, L9 and
-> `decided_of_first_eligible_commit` remain as the special cases and the
-> obstruction bound. **What remains is discharging `hrun` from fairness** — a
-> run of `2f+1 ≥ 3` consecutive `T`-led slots commits directly by L4 — plus
-> `P8` (the general `Schedule` flattening). Q1 is closed.
+> **Liveness is complete.** `decided_below_of_committed_run` (§9.6) shows a run
+> of committed slots decides *everything* below it, and
+> `all_decided_below_of_fairRun` (§9.7, L10) supplies the run from the schedule:
+> for every slot there is a `b` beyond it such that every slot below `b` is
+> decided in any sufficiently grown synchronous DAG. That is the ledger
+> advancing, not merely commits recurring. One new assumption was needed,
+> `FairRunOn T c` — a *run* of `T`-led slots rather than a single one — which
+> round-robin satisfies with `c = 3` for every `f ≥ 1`. `hspan` costs one commit
+> under the old spacing and three consecutive under pipelining: that single
+> number is the whole cost pipelining imposes here.
+>
+> **So safety and liveness both hold for pipelined and multi-leader schedules.**
+> `P8` (the general `Schedule` flattening) remains, as generality rather than
+> goal. Q1 is closed.
 >
 > **Latency is out of scope**: the goal is safe and live. §10 records what the
 > bounds say only so the `m`-blindness there is not mistaken for a defect.
@@ -746,12 +752,52 @@ line each in `LeanDagTest/Pipelined.lean`:
 Three is exactly right and two will not do: `Eligible (b-1) (b+1)` is false,
 slot `b-1`'s certificates sitting at round `b+1`. That is checked too.
 
-**What remains** is discharging `hrun` from fairness: after `R`, a run of
-`2f+1 ≥ 3` consecutive `T`-led slots commits directly by L4, which supplies a
-three-slot run above any point within `w` slots. That is a composition of
-`commits_recur_within`-style reasoning with L4 applied at consecutive slots, and
-it needs **no** new synchrony assumption and **no** change to the vote rule —
-which is the main revision this document has undergone.
+### 9.7 L10 — the ledger does not stall
+
+`hrun` is discharged from the schedule, which completes P7′:
+
+```lean
+def FairRunOn (T : Finset Validator) (c : ℕ) : Prop :=
+  ∀ k, ∃ k', k ≤ k' ∧ ∀ i, i < c → S.leader (k' + i) ∈ T
+
+def SpansEligible (c : ℕ) : Prop :=
+  ∀ b i : ℕ, i < b → Eligible Validator i (b + c - 1)
+
+theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
+    (hT : T ⊆ Correct) (hcard : 2 * F.f + 1 ≤ T.card)
+    (hspan : SpansEligible c) (fair : FairRunOn T c) (R k : ℕ) :
+    ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
+      ∀ U D N, Live U D N → DeliversQuorum D → SynchronisedOn U T R →
+        S.slotRound (b + c - 1) + 2 ≤ N →
+        ∀ i, i < b → ∃ v, Decided U (View.full U) i v
+```
+
+`FairRunOn` is new and is the one genuinely new assumption: `FairScheduleOn`
+promises a single `T`-led slot, and P7′ needs a *run*. It refines
+`FairScheduleOn` (`FairRunOn.fairScheduleOn`), so nothing proved from the older
+condition is disturbed.
+
+**Round-robin satisfies it with `c = 3` for every `f ≥ 1`**, whatever the `f`
+Byzantine validators are and wherever they sit in the rotation: they cut the
+cycle into at most `f` arcs holding `2f+1` correct slots between them, so some
+arc has at least `⌈(2f+1)/f⌉` slots, and `(2f+1)/f = 2 + 1/f` makes that
+ceiling `3` for all `f ≥ 1`. Three is exactly what pipelining asks for. The
+concrete case — four validators, one Byzantine, a run at `4k+1, 4k+2, 4k+3` — is
+proved as `pipe_fairRun`, and `LeanDagTest/Pipelined.lean` closes the loop by
+instantiating L10 at that schedule: both of its schedule hypotheses are
+discharged, leaving only the DAG-and-network hypotheses that L4 and L6 already
+require.
+
+The quantifier order is L6's, for L6's reason: the run is named by the schedule
+before any DAG is mentioned, and any DAG grown past it decides everything below.
+
+**This is what "the ledger does not stall" means operationally.** `commitSeq`
+reads verdicts in slot order and halts at the first undecided slot, so a prefix
+of decided slots growing without bound *is* the ledger advancing — where L6 gave
+infinitely many commits while saying nothing about the gaps between them.
+
+No new synchrony assumption and no change to the vote rule were needed, which is
+the main revision this document has undergone.
 
 ## 10. What the bounds become
 
@@ -1051,9 +1097,18 @@ leaders (§3.3). The general flattening is needed only for irregular schedules
 and can come last.
 
 **Commits recurring is not the ledger advancing.** L6 gives recurrence; the
-ledger stops at the first undecided slot. Closing that gap is P7, of which L8
-(`decided_of_committed_above`) is the case where eligibility coincides with
-lateness and P7′ (§9.6) is the general one (§9.5).
+ledger stops at the first undecided slot. That gap is closed by
+`decided_below_of_committed_run` (§9.6) together with L10 (§9.7): a run of
+committed slots decides everything below it, and fairness supplies the run.
+
+**Pipelining's cost to ledger-advance is one number.** `SpansEligible c` holds
+with `c = 1` under three-round spacing and `c = 3` under pipelining — one commit
+against three consecutive. Round-robin over `3f+1` supplies three for every
+`f ≥ 1`, by the arc-counting argument of §9.7, so the cost is paid (§9.6, §9.7).
+
+**Liveness needs one new schedule assumption.** `FairRunOn T c`, a run of
+`T`-led slots rather than a single one. It refines `FairScheduleOn`, so nothing
+proved from the older condition is disturbed (§9.7).
 
 **A Byzantine-led slot can be permanently undecided by the direct rules, and no
 synchrony assumption repairs it.** The leader can hand its candidate to exactly

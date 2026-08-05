@@ -600,6 +600,45 @@ def FairScheduleOn (T : Finset Validator) : Prop :=
 /-- The all-of-`Correct` case. -/
 abbrev FairSchedule : Prop := FairScheduleOn (Correct : Finset Validator)
 
+/-- **The schedule puts `c` consecutive `T`-led slots arbitrarily far out.**
+
+Stronger than `FairScheduleOn`, which promises one `T`-led slot and no more, and
+it is what P7′ needs: `decided_below_of_committed_run` is fed a *run* of commits,
+and L4 turns a run of `T`-led slots into one.
+
+Round-robin over `3f+1` satisfies it with `c = 3` for every `f ≥ 1`, whatever the
+`f` Byzantine validators are and wherever they sit in the rotation. The `f` of
+them cut the cycle into at most `f` arcs holding `2f+1` correct slots between
+them, so some arc has at least `⌈(2f+1)/f⌉ = 3` — the ceiling being `3` for all
+`f ≥ 1` since `(2f+1)/f = 2 + 1/f`. Three is exactly what pipelining asks for,
+which is a pleasant coincidence rather than a designed one.
+
+Like `FairScheduleOn` this is an assumption about the schedule, not a theorem:
+`Slots.leader` is arbitrary and could name Byzantine validators for ever. -/
+def FairRunOn (T : Finset Validator) (c : ℕ) : Prop :=
+  ∀ k, ∃ k', k ≤ k' ∧ ∀ i, i < c → S.leader (k' + i) ∈ T
+
+omit [Fintype Validator] [DecidableEq Validator] F in
+/-- A run of `c` slots contains a `T`-led slot, so `FairRunOn` refines
+`FairScheduleOn` and everything proved from the latter still applies. -/
+theorem FairRunOn.fairScheduleOn {c : ℕ} (hc : 0 < c) (h : FairRunOn T c) :
+    FairScheduleOn T := by
+  intro k
+  obtain ⟨k', hk', hrun⟩ := h k
+  exact ⟨k', hk', by simpa using hrun 0 hc⟩
+
+/-- **A run of `c` slots reaches three rounds past everything below it.**
+
+This is the one place the schedule's *shape* enters P7′, and it is what makes
+`decided_below_of_committed_run`'s `hspan` available: the last slot of a run
+starting at `b` is an eligible anchor for every slot below `b`.
+
+It holds with `c = 1` under the old three-round spacing and with `c = 3` under
+pipelining — one commit against three consecutive, which is the entire cost
+pipelining imposes on this property. -/
+def SpansEligible (c : ℕ) : Prop :=
+  ∀ b i : ℕ, i < b → Eligible Validator i (b + c - 1)
+
 omit [Fintype Validator] [DecidableEq Validator] F in
 /-- Some slot sits at or beyond any given round.
 
@@ -970,5 +1009,75 @@ theorem stuck_empty_below_commit_of_spacing
   obtain ⟨v, hv⟩ :=
     decided_of_committed_above (fun _ _ h => eligible_of_lt_of_spacing hsp h) hn i hi
   exact notMem_stuck_of_decided hcert hskip hregress hv
+
+/-! ## L10 — the ledger does not stall
+
+The last step of P7′: `decided_below_of_committed_run` needs a run of committed
+slots, and this supplies one from the schedule. `FairRunOn T c` gives `c`
+consecutive `T`-led slots arbitrarily far out; L4 commits each of them; and
+`SpansEligible c` says the run reaches far enough for every slot below it to
+anchor on its last member.
+
+The quantifier order is L6's and for L6's reason: the run is named by the
+**schedule** alone, before any DAG is mentioned, and any DAG grown past it
+decides everything below. Reversing the order would let the horizon cap how far
+fairness may reach.
+
+At the two schedules of interest this reads: `c = 1` under the old three-round
+spacing, so a single correct leader clears everything below it; `c = 3` under
+pipelining, so three consecutive correct leaders do — and round-robin over
+`3f+1` supplies three for every `f ≥ 1`. -/
+
+/-- **L10.** For every slot `k` there is a `b ≥ k` such that every slot below
+`b` is decided, in any sufficiently grown synchronous DAG.
+
+This is what "the ledger does not stall" means operationally: `commitSeq` reads
+verdicts in slot order and halts at the first undecided slot, so a prefix of
+decided slots growing without bound is exactly the ledger advancing. Contrast
+L6, which gives infinitely many *commits* while saying nothing about the gaps
+between them. -/
+theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : 2 * F.f + 1 ≤ T.card)
+    (hspan : SpansEligible (Validator := Validator) c)
+    (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
+    ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
+        Live U D N → DeliversQuorum D → SynchronisedOn U T R →
+        S.slotRound (b + c - 1) + 2 ≤ N →
+        ∀ i, i < b → ∃ v, Decided U (View.full U) i v := by
+  -- The run is fixed by the schedule: past `k`, and past a slot already at `R`.
+  obtain ⟨k₀, hk₀⟩ := S.unbounded R
+  obtain ⟨b, hb, hrunT⟩ := fair (max k k₀)
+  have hRb : R ≤ S.slotRound b :=
+    le_trans hk₀ (S.mono (le_trans (le_max_right k k₀) hb))
+  refine ⟨b, le_trans (le_max_left _ _) hb, hRb, ?_⟩
+  intro U D N H hd hs hN
+  -- Every slot of the run is `T`-led, so L4 commits it.
+  have hrun : ∀ j, b ≤ j → j ≤ b + c - 1 → ∃ B, Decided U (View.full U) j (some B) := by
+    intro j hj1 hj2
+    have hlead : S.leader j ∈ T := by
+      have := hrunT (j - b) (by omega)
+      rwa [Nat.add_sub_cancel' hj1] at this
+    have hRj : R ≤ S.slotRound j := le_trans hRb (S.mono hj1)
+    -- the run's last slot bounds the horizon needed for `j`
+    have hjr : S.slotRound j ≤ S.slotRound (b + c - 1) := S.mono hj2
+    obtain ⟨L, _, hdec⟩ :=
+      decided_of_leader_mem hcard hs hRj
+        (PopulatedOn.mono hT (no_stall H hd _ (by omega)))
+        (PopulatedOn.mono hT (no_stall H hd _ (by omega)))
+        (PopulatedOn.mono hT (no_stall H hd _ (by omega))) hlead
+    exact ⟨L, hdec⟩
+  exact decided_below_of_committed_run (by omega) (fun i hi => hspan b i hi) hrun
+
+/-- **L10 at `T := Correct`.** -/
+theorem all_decided_below_of_fairRun_correct {c : ℕ} (hc : 0 < c)
+    (hspan : SpansEligible (Validator := Validator) c)
+    (fair : FairRunOn (Correct : Finset Validator) c) (R : ℕ) (k : ℕ) :
+    ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
+        Live U D N → DeliversQuorum D → Synchronised U R →
+        S.slotRound (b + c - 1) + 2 ≤ N →
+        ∀ i, i < b → ∃ v, Decided U (View.full U) i v :=
+  all_decided_below_of_fairRun hc Finset.Subset.rfl card_correct hspan fair R k
 
 end LeanDag

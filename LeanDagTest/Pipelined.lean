@@ -32,6 +32,8 @@ open LeanDag
 #print axioms LeanDag.commits_recur_on
 #print axioms LeanDag.decided_of_first_eligible_commit
 #print axioms LeanDag.decided_below_of_committed_run
+#print axioms LeanDag.all_decided_below_of_fairRun
+#print axioms LeanDag.all_decided_below_of_fairRun_correct
 #print axioms LeanDag.decided_of_committed_above
 #print axioms LeanDag.all_decided_below_of_spacing
 #print axioms LeanDag.notMem_stuck_of_decided
@@ -151,6 +153,49 @@ example (b : ℕ) (hb : 0 < b) : ¬ Eligible (Fin 4) (b - 1) (b + 1) := by
   simp only [eligible_iff, pipeSlots_slotRound]
   omega
 
+/-- **`SpansEligible 3`**, which is L10's schedule-shape hypothesis at this
+schedule: a run of three consecutive slots reaches three rounds past everything
+below it. -/
+theorem pipe_spansEligible : SpansEligible (Validator := Fin 4) 3 := by
+  intro b i hi
+  simpa using pipe_hspan b i hi
+
+/-! ### Round-robin supplies the run
+
+`FairRunOn T 3` is L10's other hypothesis. Round-robin over four validators with
+one Byzantine satisfies it: slots `4k+1, 4k+2, 4k+3` are led by validators
+`1, 2, 3`, all correct. In general `f` Byzantine among `3f+1` cut the rotation
+into at most `f` arcs holding `2f+1` correct slots, so some arc has
+`⌈(2f+1)/f⌉ = 3` — enough for every `f ≥ 1`. -/
+
+theorem pipe_leader_val (j : ℕ) : (pipeSlots.leader j).val = j % 4 := rfl
+
+theorem mem_T_of_val_ne_zero :
+    ∀ {v : Fin 4}, v.val ≠ 0 → v ∈ ({1, 2, 3} : Finset (Fin 4)) := by decide
+
+/-- **A run of three correct leaders, arbitrarily far out.** -/
+theorem pipe_fairRun : FairRunOn (S := pipeSlots) ({1, 2, 3} : Finset (Fin 4)) 3 := by
+  intro k
+  refine ⟨4 * k + 1, by omega, ?_⟩
+  intro i hi
+  exact mem_T_of_val_ne_zero (by rw [pipe_leader_val]; omega)
+
+/-- **L10 applies to this schedule — pipelined liveness, assembled.**
+
+Everything L10 asks of the *schedule* is discharged by the two theorems above.
+What is left are hypotheses about the DAG and the network — `Live`,
+`DeliversQuorum`, `SynchronisedOn`, and the horizon — which is exactly the
+intended division of labour, and identical to what L4 and L6 already need. -/
+example {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+    [F : Faults (Fin 4)] (hT : ({1, 2, 3} : Finset (Fin 4)) ⊆ Correct)
+    (hcard : 2 * F.f + 1 ≤ ({1, 2, 3} : Finset (Fin 4)).card) (R k : ℕ) :
+    ∃ b, k ≤ b ∧ R ≤ pipeSlots.slotRound b ∧
+      ∀ (U : BlockUniverse (Fin 4) BlockId Payload) (D : Delivery U) (N : ℕ),
+        Live U D N → DeliversQuorum D → SynchronisedOn U ({1, 2, 3} : Finset (Fin 4)) R →
+        pipeSlots.slotRound (b + 3 - 1) + 2 ≤ N →
+        ∀ i, i < b → ∃ v, Decided U (View.full U) i v :=
+  all_decided_below_of_fairRun (by omega) hT hcard pipe_spansEligible pipe_fairRun R k
+
 end Pipelined
 
 /-! ## The original schedule, for contrast
@@ -208,6 +253,13 @@ two schedules, in one line each. -/
 theorem spaced_hspan (b i : ℕ) (hi : i < b) : Eligible (Fin 4) i b := by
   simp only [eligible_iff, spacedSlots_slotRound]
   omega
+
+/-- So L10's schedule-shape hypothesis holds at `c = 1` here, against `c = 3`
+under pipelining. That single number is the entire cost pipelining imposes on
+ledger-advance. -/
+theorem spaced_spansEligible : SpansEligible (Validator := Fin 4) 1 := by
+  intro b i hi
+  simpa using spaced_hspan b i hi
 
 end Spaced
 
