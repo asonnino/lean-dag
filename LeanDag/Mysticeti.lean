@@ -283,34 +283,107 @@ theorem certifiedIn_iff_of_view {V : View Validator BlockId Payload U} {A L : Bl
 
 /-! ## Stage C1 — the slot schedule and the decision relation -/
 
-/-- The leader schedule. Slots are **not** every round: the `+3` spacing is
-what puts every anchor at round `≥ r+3`, which is what M4's commit half
-needs. It is a safety parameter, not a throughput one. -/
+/-- The leader schedule: which validator proposes at which round, as a
+sequence of slots.
+
+Slots need **not** be three rounds apart. Under pipelining consecutive slots
+are one round apart, and under multiple leaders per round they share a round,
+so all that is required of `slotRound` is that it be monotone. The three-round
+separation M4's commit half needs is no longer a property of *consecutive*
+slots and is therefore not derivable here; it is required instead of the
+particular pairs that use it, by `Eligible` below.
+
+`unbounded` was a theorem under the old three-round spacing (`3 * k ≤
+slotRound k`) and is underivable from `mono` alone — a schedule parking every
+slot at one round is monotone. Liveness needs it, so it is assumed.
+
+`keyed` says distinct slots differ in round or in leader. It too was free
+under the old spacing, which made `slotRound` injective outright. Under
+multiple leaders it is a real condition on the schedule: the proposers of a
+round must be distinct validators. Without it one block would be the candidate
+for two slots, and the ledger would deliver it twice. -/
 class Slots (Validator : Type*) where
-  /-- The round at which slot `k` is decided. -/
+  /-- The round at which slot `k` is proposed. -/
   slotRound : ℕ → ℕ
   /-- The validator whose block is the slot-`k` candidate. -/
   leader : ℕ → Validator
-  /-- Consecutive slots are at least three rounds apart. -/
-  spacing : ∀ k, slotRound k + 3 ≤ slotRound (k + 1)
+  /-- Slots are enumerated in round order. -/
+  mono : Monotone slotRound
+  /-- Slot rounds are unbounded. -/
+  unbounded : ∀ n, ∃ k, n ≤ slotRound k
+  /-- Distinct slots differ in round or in leader. -/
+  keyed : Function.Injective (fun k => (slotRound k, leader k))
 
 variable [S : Slots Validator]
 
+variable (Validator) in
+/-- The round at which slot `k`'s direct rules are settled: its certificates
+live here. Algorithm 2's `DecisionRound`.
+
+`Validator` is explicit because the result is a bare `ℕ`, so nothing else
+would fix it — the same reason `slotRound_add_three_le` used to be written
+`S.slotRound`. -/
+def decisionRound (k : ℕ) : ℕ := S.slotRound k + 2
+
+variable (Validator) in
+/-- **`j` may anchor `k`.** Its proposal lies past `k`'s decision round, so a
+block at `j`'s round can reach a certificate for `k`'s — which is exactly M4's
+`r + 3` hypothesis. Algorithm 3's anchor filter `r_decision < s.round`.
+
+Stated through `decisionRound` rather than as a bare `+ 3` so that a later
+wavelength parameter is a change to one definition.
+
+It is a predicate on the **pair of slots alone** — not on any view. That is
+what makes agreement go through: two validators deciding the same slot `k`
+agree on which slots may anchor it, so each one's eligibility premise is the
+side condition the other's intermediate-skip premise requires. -/
+def Eligible (k j : ℕ) : Prop := decisionRound Validator k < S.slotRound j
+
 omit [Fintype Validator] [DecidableEq Validator] F in
-/-- Any later slot is at least three rounds further on. Written `S.slotRound`
-rather than bare `slotRound` for the same reason as `F.f`: the field returns
-a bare `ℕ`, so nothing would fix `Validator`. -/
-theorem slotRound_add_three_le {j k : ℕ} (h : k < j) :
-    S.slotRound k + 3 ≤ S.slotRound j := by
+theorem eligible_iff {k j : ℕ} :
+    Eligible Validator k j ↔ S.slotRound k + 3 ≤ S.slotRound j := by
+  simp [Eligible, decisionRound]
+  omega
+
+instance decidableEligible (k j : ℕ) : Decidable (Eligible Validator k j) :=
+  inferInstanceAs (Decidable (decisionRound Validator k < S.slotRound j))
+
+omit [Fintype Validator] [DecidableEq Validator] F in
+/-- An eligible anchor is a later slot. Monotonicity does the work: were
+`j ≤ k`, the anchor's round could not exceed `k`'s, let alone clear its
+decision round.
+
+This makes the `k < j` premises of `Decided` redundant. They are kept anyway:
+`decided_unique` recurses on them and hands them to `lt_trichotomy`, and
+re-deriving them at each use would be noise. -/
+theorem lt_of_eligible {k j : ℕ} (h : Eligible Validator k j) : k < j := by
+  by_contra hle
+  have : S.slotRound j ≤ S.slotRound k := S.mono (by omega)
+  rw [eligible_iff] at h
+  omega
+
+omit [Fintype Validator] [DecidableEq Validator] F in
+/-- **Conservativity.** Under a schedule whose consecutive slots are three
+rounds apart — the `spacing` field this class used to carry — *every* later
+slot is eligible to anchor an earlier one, and the new premise is implied by
+the old one.
+
+So the generalised `Decided` has exactly the constructors the old one had
+whenever the old schedule condition holds: no derivation available before the
+change is unavailable after it. This is the former `slotRound_add_three_le`,
+demoted from a consequence of the class to a consequence of a hypothesis. -/
+theorem eligible_of_lt_of_spacing (hsp : ∀ k, S.slotRound k + 3 ≤ S.slotRound (k + 1))
+    {k j : ℕ} (h : k < j) : Eligible Validator k j := by
+  rw [eligible_iff]
   induction j with
   | zero => omega
   | succ n ih =>
     rcases Nat.lt_succ_iff_lt_or_eq.mp h with hlt | heq
     · have := ih hlt
-      have := S.spacing n
+      have := hsp n
       omega
     · subst heq
-      exact S.spacing k
+      exact hsp k
 
 /-- `L` is a candidate block for slot `k`: the right round, the right author.
 
@@ -385,12 +458,25 @@ A **relation**, not a function: a `decide` function would recurse upward in
 slot index with no a-priori bound, needing fuel or partiality for nothing,
 since none of this needs to compute.
 
-The indirect cases anchor on the **nearest** committed slot after `k`. The
-naive reading of "nearest" — no slot strictly between is committed — is a
-*negative* premise, which an inductive definition cannot carry. It is stated
-positively as *every slot strictly between is decided `none`*, which is
-equivalent because the sweep decides every slot it passes, and which keeps
-every recursive occurrence positive. -/
+The indirect cases anchor on the nearest **eligible** committed slot after
+`k` — not simply the nearest one. Under pipelining slots `k+1` and `k+2` sit
+at rounds `r+1` and `r+2`, where no certificate for `k` is reachable, and
+anchoring there would turn one validator's direct commit into another's
+indirect skip. The anchor must clear `k`'s decision round, which is Algorithm
+3's filter `anchors ← [s ∈ sequence s.t. r_decision < s.round]`.
+
+For the same reason the intermediate premise quantifies over the **eligible**
+slots between `k` and the anchor only. The ineligible ones are routinely
+committed, so requiring them to be skipped would leave `k` undecidable
+forever.
+
+"Nearest" is stated positively — every eligible slot strictly between is
+decided `none` — rather than as *no eligible slot between is committed*. The
+negative reading is a negative premise, which an inductive definition cannot
+carry; the positive one is equivalent, since the sweep decides every slot it
+passes, and keeps every recursive occurrence strictly positive. Guarding the
+occurrence behind `Eligible` preserves that: `Eligible` is a predicate on two
+naturals and does not mention `Decided`. -/
 inductive Decided (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) : ℕ → Option BlockId → Prop
   /-- The direct rule commits a candidate outright. -/
@@ -402,14 +488,18 @@ inductive Decided (U : BlockUniverse Validator BlockId Payload)
   | directSkip {k : ℕ} :
       (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
       Decided U V k none
-  /-- Anchored on the nearest committed slot, a certificate is in reach. -/
+  /-- Anchored on the nearest eligible committed slot, a certificate is in
+  reach. -/
   | indirectCommit {k j : ℕ} {A L : BlockId} :
-      k < j → Decided U V j (some A) → (∀ i, k < i → i < j → Decided U V i none) →
+      k < j → Eligible Validator k j → Decided U V j (some A) →
+      (∀ i, k < i → i < j → Eligible Validator k i → Decided U V i none) →
       IsLeaderBlock U k L → CertifiedIn U A L (S.slotRound k) →
       Decided U V k (some L)
-  /-- Anchored on the nearest committed slot, no candidate is in reach. -/
+  /-- Anchored on the nearest eligible committed slot, no candidate is in
+  reach. -/
   | indirectSkip {k j : ℕ} {A : BlockId} :
-      k < j → Decided U V j (some A) → (∀ i, k < i → i < j → Decided U V i none) →
+      k < j → Eligible Validator k j → Decided U V j (some A) →
+      (∀ i, k < i → i < j → Eligible Validator k i → Decided U V i none) →
       (∀ L, IsLeaderBlock U k L → ¬ CertifiedIn U A L (S.slotRound k)) →
       Decided U V k none
 
@@ -445,15 +535,17 @@ theorem eq_of_directCommitIn {V₁ V₂ : View Validator BlockId Payload U}
 therefore recovers it indirectly, which is what stops anchors from
 diverging.
 
-The slot spacing is what discharges the round hypothesis: `k < j` gives
-`slotRound k + 3 ≤ slotRound j`, exactly M4's requirement. -/
+Eligibility is what discharges the round hypothesis, and it is now taken as a
+premise rather than derived from `k < j`: under pipelining the next slot is
+one round on, not three, and a block there reaches no certificate for `k`. -/
 theorem certifiedIn_of_directCommitIn {V : View Validator BlockId Payload U}
     {k j : ℕ} {L A : BlockId}
     (h : DirectCommitIn U V L (S.slotRound k))
-    (hA : A ∈ U.ids) (hAr : (U.block A).round = S.slotRound j) (hkj : k < j) :
+    (hA : A ∈ U.ids) (hAr : (U.block A).round = S.slotRound j)
+    (helig : Eligible Validator k j) :
     CertifiedIn U A L (S.slotRound k) := by
   refine certifiedIn_of_directCommit (directCommit_of_directCommitIn h) hA ?_
-  have := slotRound_add_three_le (Validator := Validator) hkj
+  rw [eligible_iff] at helig
   omega
 
 omit S in
@@ -483,7 +575,28 @@ theorem isLeaderBlock_of_decided {V : View Validator BlockId Payload U} {j : ℕ
     (h : Decided U V j (some A)) : IsLeaderBlock U j A := by
   cases h with
   | directCommit hL _ => exact hL
-  | indirectCommit _ _ _ hL _ => exact hL
+  | indirectCommit _ _ _ _ hL _ => exact hL
+
+omit [DecidableEq BlockId] in
+/-- **A block is the candidate of at most one slot.**
+
+Under the old three-round spacing this was free: `slotRound` was injective, so
+distinct slots sat at distinct rounds and a block's round named its slot.
+Under multiple leaders per round it is exactly what `Slots.keyed` buys — two
+slots sharing a round are told apart by their leaders, and a schedule that
+gave one validator two slots in a round would make one block the candidate for
+both. -/
+theorem slot_eq_of_isLeaderBlock {k₁ k₂ : ℕ} {L : BlockId}
+    (h₁ : IsLeaderBlock U k₁ L) (h₂ : IsLeaderBlock U k₂ L) : k₁ = k₂ :=
+  S.keyed (by simp only [← h₁.2.1, ← h₂.2.1, ← h₁.2.2, ← h₂.2.2])
+
+/-- **And so a committed block belongs to one slot.** The ledger reads
+verdicts off in slot order, so without this a single block could be delivered
+twice — a total-order defect that `commitSeq` alone would not notice. -/
+theorem slot_eq_of_decided_commit {V₁ V₂ : View Validator BlockId Payload U}
+    {k₁ k₂ : ℕ} {L : BlockId}
+    (h₁ : Decided U V₁ k₁ (some L)) (h₂ : Decided U V₂ k₂ (some L)) : k₁ = k₂ :=
+  slot_eq_of_isLeaderBlock (isLeaderBlock_of_decided h₁) (isLeaderBlock_of_decided h₂)
 
 /-- Two commits for one slot agree, however each was reached. Both routes
 yield a certificate, so this is M5′ with the plumbing done. -/
@@ -510,7 +623,16 @@ intermediate-skip premise, which is exactly the sub-derivation the IH needs.
 
 That is why "nearest anchor" had to be stated positively. The negative
 reading would carry no sub-derivation here, and the induction would have
-nothing to stand on. -/
+nothing to stand on.
+
+**Why eligibility may not be view-relative.** Since the intermediate premise
+now ranges over eligible slots only, invoking the other validator's copy of it
+needs `Eligible k j` as a side condition — and what discharges it is *this*
+validator's own eligibility premise for the same pair. The two match because
+`Eligible` is a predicate on the slot pair alone: both derivations concern the
+same `k`, so they agree on which slots may anchor it. Were eligibility indexed
+by the decider — "an anchor far enough ahead *as far as I can see*" — the
+premises would not meet and this case would not close. -/
 theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ} {v₁ : Option BlockId}
     (h₁ : Decided U V₁ k v₁) :
     ∀ (V₂ : View Validator BlockId Payload U) (v₂ : Option BlockId),
@@ -521,23 +643,24 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ} {v₁
     cases h₂ with
     | directCommit hL₂ h₂ => exact congrArg some (eq_of_directCommitIn hL hL₂ h h₂)
     | directSkip hskip => exact absurd (not_directSkip_of_directCommitIn hL h hskip) not_false
-    | indirectCommit _ _ _ hL₂ hcert₂ =>
+    | indirectCommit _ _ _ _ hL₂ hcert₂ =>
       exact congrArg some (eq_of_hasCertificate hL hL₂
         (certificates_nonempty_of_directCommit (directCommit_of_directCommitIn h))
         (certificates_nonempty_of_certifiedIn hcert₂))
-    | @indirectSkip _ j A hkj hj _ hnone =>
+    | @indirectSkip _ j A _ helig hj _ hnone =>
       -- The engine: this commit is visible from the other validator's anchor.
+      -- Their own eligibility premise is what puts it in range.
       exact absurd (certifiedIn_of_directCommitIn h (isLeaderBlock_of_decided hj).1
-        (isLeaderBlock_of_decided hj).2.1 hkj) (hnone _ hL)
+        (isLeaderBlock_of_decided hj).2.1 helig) (hnone _ hL)
   | @directSkip k hskip =>
     intro V₂ v₂ h₂
     cases h₂ with
     | directCommit hL₂ h₂ => exact absurd (not_directSkip_of_directCommitIn hL₂ h₂ hskip) not_false
     | directSkip _ => rfl
-    | indirectCommit _ _ _ hL₂ hcert₂ =>
+    | indirectCommit _ _ _ _ hL₂ hcert₂ =>
       exact absurd hcert₂ (not_certifiedIn_of_directSkipIn (hskip _ hL₂))
-    | indirectSkip _ _ _ _ => rfl
-  | @indirectCommit k j A L hkj hj hmid hL hcert ihj ihmid =>
+    | indirectSkip _ _ _ _ _ => rfl
+  | @indirectCommit k j A L hkj helig hj hmid hL hcert ihj ihmid =>
     intro V₂ v₂ h₂
     cases h₂ with
     | directCommit hL₂ h₂ =>
@@ -546,38 +669,40 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ} {v₁
         (certificates_nonempty_of_directCommit (directCommit_of_directCommitIn h₂)))
     | directSkip hskip₂ =>
       exact absurd hcert (not_certifiedIn_of_directSkipIn (hskip₂ _ hL))
-    | indirectCommit _ _ _ hL₂ hcert₂ =>
+    | indirectCommit _ _ _ _ hL₂ hcert₂ =>
       exact congrArg some (eq_of_hasCertificate hL hL₂
         (certificates_nonempty_of_certifiedIn hcert)
         (certificates_nonempty_of_certifiedIn hcert₂))
-    | @indirectSkip _ j₂ A₂ hkj₂ hj₂ hmid₂ hnone₂ =>
-      -- The one real case: compare the two anchors.
+    | @indirectSkip _ j₂ A₂ hkj₂ helig₂ hj₂ hmid₂ hnone₂ =>
+      -- The one real case: compare the two anchors. Each side's eligibility
+      -- premise is exactly the side condition the other's intermediate-skip
+      -- premise asks for — which is why `Eligible` may not depend on the view.
       rcases lt_trichotomy j j₂ with hlt | heq | hgt
       · -- Our anchor is earlier, so *they* decided it `none`.
-        exact absurd (ihj V₂ none (hmid₂ j hkj hlt)) (by simp)
+        exact absurd (ihj V₂ none (hmid₂ j hkj hlt helig)) (by simp)
       · -- Same anchor: the IH identifies the anchor blocks.
         subst heq
         have hA : A = A₂ := Option.some.inj (ihj V₂ (some A₂) hj₂)
         subst hA
         exact absurd hcert (hnone₂ _ hL)
       · -- Their anchor is earlier, so *we* decided it `none`.
-        exact absurd (ihmid j₂ hkj₂ hgt V₂ (some A₂) hj₂) (by simp)
-  | @indirectSkip k j A hkj hj hmid hnone ihj ihmid =>
+        exact absurd (ihmid j₂ hkj₂ hgt helig₂ V₂ (some A₂) hj₂) (by simp)
+  | @indirectSkip k j A hkj helig hj hmid hnone ihj ihmid =>
     intro V₂ v₂ h₂
     cases h₂ with
     | directCommit hL₂ h₂ =>
       exact absurd (certifiedIn_of_directCommitIn h₂ (isLeaderBlock_of_decided hj).1
-        (isLeaderBlock_of_decided hj).2.1 hkj) (hnone _ hL₂)
+        (isLeaderBlock_of_decided hj).2.1 helig) (hnone _ hL₂)
     | directSkip _ => rfl
-    | @indirectCommit _ j₂ A₂ L₂ hkj₂ hj₂ hmid₂ hL₂ hcert₂ =>
+    | @indirectCommit _ j₂ A₂ L₂ hkj₂ helig₂ hj₂ hmid₂ hL₂ hcert₂ =>
       rcases lt_trichotomy j j₂ with hlt | heq | hgt
-      · exact absurd (ihj V₂ none (hmid₂ j hkj hlt)) (by simp)
+      · exact absurd (ihj V₂ none (hmid₂ j hkj hlt helig)) (by simp)
       · subst heq
         have hA : A = A₂ := Option.some.inj (ihj V₂ (some A₂) hj₂)
         subst hA
         exact absurd hcert₂ (hnone _ hL₂)
-      · exact absurd (ihmid j₂ hkj₂ hgt V₂ (some A₂) hj₂) (by simp)
-    | indirectSkip _ _ _ _ => rfl
+      · exact absurd (ihmid j₂ hkj₂ hgt helig₂ V₂ (some A₂) hj₂) (by simp)
+    | indirectSkip _ _ _ _ _ => rfl
 
 /-- **M6**, in the shape callers want: two validators' verdicts for a slot
 agree. -/

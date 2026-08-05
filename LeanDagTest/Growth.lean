@@ -1,4 +1,5 @@
 import Mathlib
+import LeanDag.Schedule
 import LeanDag.Liveness
 import LeanDag.Timing
 
@@ -220,12 +221,10 @@ schedule excludes. The two instance sets never meet, since neither file
 imports the other. -/
 
 /-- A schedule whose leader is correct. Validator 1 is not Byzantine. -/
-instance fairSlots : Slots (Fin 4) where
-  slotRound k := 3 * k
-  leader _ := 1
-  spacing _ := by omega
+instance fairSlots : Slots (Fin 4) := Slots.uniformSingle 3 (by omega) (fun _ => 1)
 
-@[simp] theorem fairSlots_slotRound (k : ℕ) : fairSlots.slotRound k = 3 * k := rfl
+@[simp] theorem fairSlots_slotRound (k : ℕ) : fairSlots.slotRound k = 3 * k := by
+  simp
 
 @[simp] theorem fairSlots_leader (k : ℕ) : fairSlots.leader k = 1 := rfl
 

@@ -1,6 +1,7 @@
 import LeanDag.Persistence
 import LeanDag.CommonCore
 import LeanDag.Mysticeti
+import LeanDag.Schedule
 import LeanDag.Liveness
 open LeanDag
 
@@ -474,11 +475,10 @@ def U7 : BlockUniverse (Fin 4) (Fin 24) Unit where
   valid := by decide
   no_equivocation := by decide
 
-/-- Slots every three rounds, always led by validator 0. -/
-instance : Slots (Fin 4) where
-  slotRound k := 3 * k
-  leader _ := 0
-  spacing k := by omega
+/-- Slots every three rounds, always led by validator 0. Built through
+`uniformSingle`, so `mono`, `unbounded` and `keyed` are discharged once and
+for all rather than here. -/
+instance : Slots (Fin 4) := Slots.uniformSingle 3 (by omega) (fun _ => 0)
 
 def V7 : View (Fin 4) (Fin 24) Unit U7 where
   ids := Finset.univ
@@ -503,13 +503,18 @@ directly committed and its leader block (12) reaches the lone certificate
 the nearest committed slot after it.
 
 This inhabits `Decided`'s indirect constructor — the case the whole Stage C
-argument is about. -/
+argument is about. Slot 1 sits at round 3, three rounds past slot 0, so it
+clears slot 0's decision round and is an eligible anchor. -/
 example : Decided U7 V7 0 (some 0) :=
-  Decided.indirectCommit (j := 1) (A := 12) (by omega)
+  Decided.indirectCommit (j := 1) (A := 12) (by omega) (by decide)
     (Decided.directCommit (by decide) (by decide))
-    (fun i h1 h2 => absurd h2 (by omega))
+    (fun i h1 h2 _ => absurd h2 (by omega))
     (by decide)
     ⟨8, by decide, Reaches.single (by decide)⟩
+
+-- The anchor is eligible, and *would not be* under a pipelined schedule that
+-- put slot 1 at round 1: the certificate for slot 0 sits at round 2.
+example : Eligible (Fin 4) 0 1 := by decide
 
 -- The anchor really is two rounds of indirection away from the certificate's
 -- own evidence: block 12 does not reference slot 0's candidate directly.
@@ -532,11 +537,11 @@ example : DirectCommitIn U5 V5' 0 0 := by decide
 
 /-- **The engine of M6, on real data.** A commit made in the partial view
 `V5'` is visible from slot 1's leader block -- so a validator that never saw
-that commit still recovers it indirectly. The slot spacing discharges the
+that commit still recovers it indirectly. Slot 1's eligibility discharges the
 round hypothesis. -/
 example : CertifiedIn U5 12 0 0 :=
   certifiedIn_of_directCommitIn (V := V5') (k := 0) (j := 1) (L := 0) (A := 12)
-    (by decide) (by decide) (by decide) (by omega)
+    (by decide) (by decide) (by decide) (by decide)
 
 /-- Cross-view M1: since *some* view commits genesis block 0, **no** view can
 directly skip it -- whatever that other validator happens to hold. -/
@@ -566,9 +571,9 @@ says no other validator, on any view, can reach a different verdict.
 
 /-- The indirect commit of slot 0, as constructed above. -/
 theorem decidedSlot0 : Decided U7 V7 0 (some 0) :=
-  Decided.indirectCommit (j := 1) (A := 12) (by omega)
+  Decided.indirectCommit (j := 1) (A := 12) (by omega) (by decide)
     (Decided.directCommit (by decide) (by decide))
-    (fun i h1 h2 => absurd h2 (by omega))
+    (fun i h1 h2 _ => absurd h2 (by omega))
     (by decide)
     ⟨8, by decide, Reaches.single (by decide)⟩
 
@@ -719,8 +724,8 @@ example : Decided U7 V7 1 (some 12) :=
 /-- L2 also carries the *indirect* commit of slot 0 -- the case whose
 negative `CertifiedIn` premise is the reason L2 holds at all. -/
 example : Decided U7 V7small 0 (some 0) :=
-  Decided.indirectCommit (j := 1) (A := 12) (by omega) smallDecidedSlot1
-    (fun i h1 h2 => absurd h2 (by omega))
+  Decided.indirectCommit (j := 1) (A := 12) (by omega) (by decide) smallDecidedSlot1
+    (fun i h1 h2 _ => absurd h2 (by omega))
     (by decide)
     ⟨8, by decide, Reaches.single (by decide)⟩
 

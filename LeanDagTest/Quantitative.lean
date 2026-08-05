@@ -1,4 +1,5 @@
 import LeanDag.Quantitative
+import LeanDag.Schedule
 import LeanDagTest.Partial
 
 /-!
@@ -57,12 +58,11 @@ trivially and exercises nothing. A real rotation is what makes the window
 in four, so a `T`-leader is at most one slot away — never two. -/
 
 /-- Round-robin over all four validators, slots every three rounds. -/
-@[reducible] def rrSlots : Slots (Fin 4) where
-  slotRound k := 3 * k
-  leader k := ⟨k % 4, by omega⟩
-  spacing _ := by omega
+@[reducible] def rrSlots : Slots (Fin 4) :=
+  Slots.uniformSingle 3 (by omega) (fun k => ⟨k % 4, by omega⟩)
 
-@[simp] theorem rrSlots_slotRound (k : ℕ) : rrSlots.slotRound k = 3 * k := rfl
+@[simp] theorem rrSlots_slotRound (k : ℕ) : rrSlots.slotRound k = 3 * k := by
+  simp
 
 theorem rrSlots_leader_val (k : ℕ) : (rrSlots.leader k).val = k % 4 := rfl
 
@@ -89,8 +89,9 @@ theorem rrSlots_fairWithin : FairWithin (S := rrSlots) ({1, 2, 3} : Finset (Fin 
 theorem rrSlots_fairSchedule : FairScheduleOn (S := rrSlots) ({1, 2, 3} : Finset (Fin 4)) :=
   FairWithin.fairScheduleOn (S := rrSlots) rrSlots_fairWithin
 
-/-- Slots are exactly three rounds apart, so `s = 3` — and `Slots.spacing`
-already forces `3 ≤ s`, making this the tightest legal value. -/
+/-- Slots are exactly three rounds apart, so `s = 3` — and for this schedule
+that is the tightest legal value, since consecutive slot rounds differ by
+exactly three. -/
 theorem rrSlots_boundedSpacing : BoundedSpacing (Validator := Fin 4) (S := rrSlots) 3 :=
   fun _ => by simp only [rrSlots_slotRound]; omega
 
@@ -115,12 +116,12 @@ theorem ugrow_commits_by_round (k : ℕ) :
     commits_recur_by_round (S := rrSlots) (BlockId := ℕ) (Payload := Unit)
       (T := {1, 2, 3}) (by decide) (by decide) rrSlots_fairWithin
       rrSlots_boundedSpacing 0 k
-  simp only [rrSlots_slotRound] at hround
+  simp only [rrSlots_slotRound, slotAt_zero, Nat.max_zero] at hround
   refine ⟨k', hk, by simp only [rrSlots_slotRound]; omega, ?_⟩
   intro N hN
   exact hcommit (Ugrow N) (ugrowDelivery N) N (ugrow_live N) (ugrow_deliversQuorum N)
     (ugrow_synchronisedOn_of_rate N)
-    (by simp only [rrSlots_slotRound]; omega)
+    (by simp only [rrSlots_slotRound, slotAt_zero, Nat.max_zero]; omega)
 
 -- Concretely: from slot 4, some slot at round ≤ 18 commits once the DAG
 -- reaches round 20.

@@ -378,10 +378,10 @@ theorem decided_mono {V V' : View Validator BlockId Payload U}
   induction h with
   | directCommit hL hdc => exact Decided.directCommit hL (directCommitIn_mono hsub hdc)
   | directSkip hall => exact Decided.directSkip fun L hL => directSkipIn_mono hsub (hall L hL)
-  | indirectCommit hkj _ _ hL hcert ihj ihmid =>
-      exact Decided.indirectCommit hkj ihj ihmid hL hcert
-  | indirectSkip hkj _ _ hnc ihj ihmid =>
-      exact Decided.indirectSkip hkj ihj ihmid hnc
+  | indirectCommit hkj helig _ _ hL hcert ihj ihmid =>
+      exact Decided.indirectCommit hkj helig ihj ihmid hL hcert
+  | indirectSkip hkj helig _ _ hnc ihj ihmid =>
+      exact Decided.indirectSkip hkj helig ihj ihmid hnc
 
 /-! ## L3 — commit propagation
 
@@ -601,13 +601,45 @@ def FairScheduleOn (T : Finset Validator) : Prop :=
 abbrev FairSchedule : Prop := FairScheduleOn (Correct : Finset Validator)
 
 omit [Fintype Validator] [DecidableEq Validator] F in
-/-- Slot rounds grow at least as fast as `3k`, so they are unbounded. Small,
-but L6 genuinely needs it: fairness must be applied at a slot already past
+/-- Some slot sits at or beyond any given round.
+
+Under the old three-round spacing this was a theorem — slot rounds grew at
+least as fast as `3k`. A merely monotone schedule may not grow at all, so it
+is now the class field `unbounded`; this is only that field, in the shape L6
+wants. L6 genuinely needs it: fairness must be applied at a slot already past
 `R`, and nothing else says such a slot exists. -/
-theorem le_slotRound (k : ℕ) : 3 * k ≤ S.slotRound k := by
-  induction k with
-  | zero => omega
-  | succ k ih => have := S.spacing k; omega
+theorem exists_slotRound_ge (n : ℕ) : ∃ k, n ≤ S.slotRound k := S.unbounded n
+
+variable (Validator) in
+/-- The least slot proposed at or after round `n`.
+
+The old schedule needed no such thing: `3 * k ≤ slotRound k` made slot `n`
+itself sit past round `n`, so `n` could be used as its own slot index. That
+coincidence is gone — under multiple leaders slot `n` may still be far below
+round `n` — so the slot has to be named. -/
+def slotAt (n : ℕ) : ℕ := Nat.find (S.unbounded n)
+
+omit [Fintype Validator] [DecidableEq Validator] F in
+theorem le_slotRound_slotAt (n : ℕ) : n ≤ S.slotRound (slotAt Validator n) :=
+  Nat.find_spec (S.unbounded n)
+
+omit [Fintype Validator] [DecidableEq Validator] F in
+@[simp]
+theorem slotAt_zero : slotAt Validator 0 = 0 := by
+  rw [slotAt, Nat.find_eq_zero]
+  omega
+
+omit [Fintype Validator] [DecidableEq Validator] F in
+/-- **Every slot has an eligible anchor somewhere.**
+
+The indirect rule may only anchor on a slot past `k`'s decision round, so the
+restriction would be worthless if no such slot existed. It is the second job
+`unbounded` does, and the reason a schedule that stalls at some round is
+excluded: under one, a slot left undecided by the direct rules could never be
+settled at all. -/
+theorem exists_eligible (k : ℕ) : ∃ j, Eligible Validator k j := by
+  obtain ⟨j, hj⟩ := S.unbounded (S.slotRound k + 3)
+  exact ⟨j, by rw [eligible_iff]; omega⟩
 
 /-- **L6 — commits recur.** For every slot `k` there is a later slot `k'`
 that **every** sufficiently grown synchronous DAG commits.
@@ -621,16 +653,14 @@ theorem commits_recur_on (hT : T ⊆ (Correct : Finset Validator))
         Live U D N → DeliversQuorum D → SynchronisedOn U T R →
         S.slotRound k' + 2 ≤ N →
         ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
-  -- slot `R` is already past round `R`, since slot rounds grow at least as
-  -- fast as `3k`. That is all the unboundedness this needs.
-  have h3 : 3 * R ≤ S.slotRound R := le_slotRound (Validator := Validator) R
-  have hkR : R ≤ S.slotRound R := by omega
-  obtain ⟨k', hk', hlead⟩ := fair (max k R)
-  -- the chosen slot is past `R`, whether it *is* slot `R` or lies beyond it
-  have hRk' : R ≤ S.slotRound k' := by
-    rcases eq_or_lt_of_le (le_trans (le_max_right k R) hk') with heq | hlt
-    · exact heq ▸ hkR
-    · exact le_trans hkR (by have := slotRound_add_three_le (Validator := Validator) hlt; omega)
+  -- Some slot `k₀` already sits past round `R` (`unbounded`), and every slot
+  -- from `k₀` on sits at least as late (`mono`). That is all this needs; the
+  -- old proof got the same from `3 * k ≤ slotRound k`, which a pipelined or
+  -- multi-leader schedule does not satisfy.
+  obtain ⟨k₀, hk₀⟩ := S.unbounded R
+  obtain ⟨k', hk', hlead⟩ := fair (max k k₀)
+  have hRk' : R ≤ S.slotRound k' :=
+    le_trans hk₀ (S.mono (le_trans (le_max_right k k₀) hk'))
   refine ⟨k', le_trans (le_max_left _ _) hk', hRk', ?_⟩
   intro U D N H hd hs hN
   -- L1 populates all of `Correct`; `T` is a subset, so `.mono` bridges them.

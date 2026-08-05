@@ -6,6 +6,7 @@ import LeanDag.Support
 import LeanDag.Persistence
 import LeanDag.CommonCore
 import LeanDag.Mysticeti
+import LeanDag.Schedule
 import LeanDag.Liveness
 import LeanDag.Timing
 import LeanDag.Quantitative

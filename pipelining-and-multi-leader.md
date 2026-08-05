@@ -5,13 +5,19 @@ single-leader, three-round-spaced commit rule now in `spec.md` and
 `liveness.md` to the **pipelined, multi-leader** Mysticeti-C rule actually
 deployed. Things graduate into `spec.md` once they settle.
 
-> **Status.** Nothing here is implemented. §3 is the schedule layer — how a
-> reader writes a schedule down and how the present one is recovered (P0, P8).
-> §5–§8 are the safety half (P1–P3); the argument is worked out on paper and
-> the claim is that the existing proofs survive a *premise* change with no new
-> counting. §9–§10 are the liveness half (P4–P7), where the genuinely new
-> theorem lives. §11 stages the nine obligations, names the files each touches,
-> and lists the witnesses. §12 is what has to be decided first — only Q1 is
+> **Status.** **P0–P6 are implemented and the full build is clean** — stages
+> 1–7 of §11. The claim of §6.3, that the agreement induction survives the
+> premise change, held exactly as predicted: `decided_unique` needed the extra
+> constructor argument threaded and one hypothesis swapped per trichotomy
+> branch, and no counting was redone. `P7` (every slot eventually decided) and
+> `P8` (the general `Schedule` flattening) remain; see §11 for what landed
+> where and §14 for the surprises.
+>
+> §3 is the schedule layer — how a reader writes a schedule down and how the
+> present one is recovered (P0, P8). §5–§8 are the safety half (P1–P3).
+> §9–§10 are the liveness half (P4–P7), where the one genuinely new theorem
+> lives. §11 stages the nine obligations, names the files each touches, and
+> lists the witnesses. §12 is what has to be decided first — only Q1 is
 > genuinely open — and §13 what is settled.
 
 **The thesis in one paragraph.** The development is already parametric in the
@@ -842,3 +848,56 @@ above it and `keyed`/`unbounded` become theorems about `nodup`/`cofinal`
 `spacing` recovered by `omega`, `p = 1` is pipelining, `m > 1` is multiple
 leaders (§3.3). The general flattening is needed only for irregular schedules
 and can come last.
+
+---
+
+## 14. What implementation changed
+
+P0–P6 are in. Recorded here rather than folded into the sections above, so
+that the predictions of §§3–11 stay legible as predictions.
+
+**Held as written.**
+
+- **P2, the load-bearing claim (§6.3).** `decided_unique` needed exactly what
+  §6.3 said: the extra `Eligible` argument threaded through eight constructor
+  patterns, and `hmid₂ j hkj hlt` gaining a fourth argument discharged by the
+  deciding validator's own eligibility premise. No counting was redone, and
+  the fifteen easy pairings were untouched.
+- **The affected-proof inventory (§11, stage 4).** `decided_mono`,
+  `isLeaderBlock_of_decided` and `decided_unique`, and nothing else. The review
+  pass that caught `isLeaderBlock_of_decided` earned its place: it fails with a
+  bare arity error.
+- **P1 (§6.2)** lost a line, as predicted; `certifiedIn_of_directCommit`
+  already took `r + 3 ≤ round A` explicitly, so nothing beneath the slot layer
+  moved.
+
+**Two things the doc did not foresee.**
+
+1. **`commits_recur_within`'s statement had to change, not just its proof.**
+   §9.3 predicted only that its appeals to `le_slotRound` would go the way
+   P4's did. But the statement itself quantified over `max k R` — mixing a
+   slot index and a round index in one `max` — which is only meaningful when
+   `slotRound R ≥ R`, exactly the coincidence `spacing` supplied. Under a
+   monotone schedule the first slot at or after round `R` has to be *named*, so
+   `Liveness.slotAt` was added (`Nat.find` on `unbounded`) and both
+   `commits_recur_within` and `commits_recur_by_round` now read
+   `max k (slotAt Validator R)`. Under the old schedule `slotAt R ≤ R`, so no
+   bound weakened. Callers see a changed statement; `LeanDagTest/Quantitative`
+   needed `slotAt_zero` to keep computing `3k + 8`.
+
+2. **Stage ordering mattered more than §11 claimed, for a second reason.**
+   §11 argued `uniform` must precede the test instances because `unbounded` and
+   `keyed` resist `omega`. True, but the sharper point is that building
+   instances through `uniform` puts `k / m` where a literal round used to be,
+   so `rfl` proofs of `slotRound k = 3 * k` stop working — `k / 1` is not
+   definitionally `k`. Three test lemmas moved from `rfl` to `simp`. Anyone
+   adding a schedule should expect the same and reach for a `@[simp]` closed
+   form immediately.
+
+**Also landed.** `P3` came with `slot_eq_of_decided_commit`, the shape the
+ledger actually wants: a committed block belongs to one slot. `LeanDagTest/`
+gained `Pipelined.lean`, whose point is the two `decide`-checked facts that
+justify the whole exercise — under `uniformSingle 1`, `¬ Eligible 0 1` and
+`¬ Eligible 0 2`; under `uniform 1 2`, `¬ Eligible 0 1` for a *co-round* slot,
+with slot `6` the first that qualifies. Both would have passed the old `k < j`
+premise. The axiom audit covers all ten new or reproved results.

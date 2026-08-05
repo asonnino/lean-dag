@@ -148,24 +148,25 @@ slots of `max k R`. Everything else is unchanged — the quantifier order, the
 content is `commits_recur_on`'s, reproduced here only because the slot has to
 be named by `FairWithin` rather than `FairScheduleOn`.
 
-The `max k R` is not slack: the slot must clear both the caller's starting
-point and the synchrony round, and `le_slotRound` is what makes slot `R` sit
-past round `R`. -/
+The starting point is not slack: the slot must clear both the caller's `k` and
+the synchrony round `R`. The old statement wrote that as `max k R`, relying on
+`3 * k ≤ slotRound k` to make slot `R` sit past round `R`. A monotone schedule
+gives no such coincidence — under `m` leaders per round slot `R` is around
+round `R / m` — so the slot past round `R` is named explicitly by
+`slotAt Validator R`. Under the old schedule `slotAt R ≤ R`, so the bound is
+no weaker than it was. -/
 theorem commits_recur_within (hT : T ⊆ (Correct : Finset Validator))
     (hcard : 2 * F.f + 1 ≤ T.card) (fair : FairWithin T w) (R k : ℕ) :
-    ∃ k', max k R ≤ k' ∧ k' < max k R + w ∧ R ≤ S.slotRound k' ∧
+    ∃ k', max k (slotAt Validator R) ≤ k' ∧ k' < max k (slotAt Validator R) + w ∧
+      R ≤ S.slotRound k' ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
         Live U D N → DeliversQuorum D → SynchronisedOn U T R →
         S.slotRound k' + 2 ≤ N →
         ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
-  have h3 : 3 * R ≤ S.slotRound R := le_slotRound (Validator := Validator) R
-  have hkR : R ≤ S.slotRound R := by omega
-  obtain ⟨k', hk', hlt, hlead⟩ := fair (max k R)
-  have hRk' : R ≤ S.slotRound k' := by
-    rcases eq_or_lt_of_le (le_trans (le_max_right k R) hk') with heq | hlow
-    · exact heq ▸ hkR
-    · exact le_trans hkR
-        (by have := slotRound_add_three_le (Validator := Validator) hlow; omega)
+  obtain ⟨k', hk', hlt, hlead⟩ := fair (max k (slotAt Validator R))
+  have hRk' : R ≤ S.slotRound k' :=
+    le_trans (le_slotRound_slotAt (Validator := Validator) R)
+      (S.mono (le_trans (le_max_right _ _) hk'))
   refine ⟨k', hk', hlt, hRk', ?_⟩
   intro U D N H hd hs hN
   exact decided_of_leader_mem hcard hs hRk'
@@ -219,27 +220,35 @@ theorem slotRound_le_of_lt {s : ℕ} (hs : BoundedSpacing (Validator := Validato
 DAG must reach before it is guaranteed to commit becomes an explicit number
 rather than "far enough".
 
-Read the two summands: `slotRound (max k R)` is where the search starts, and
-`s * w` is the worst-case cost of walking to the next `T`-leader. The `+ 2` is
-the certificate round — L4's `r + 2`, unchanged.
+Read the two summands: `slotRound (max k (slotAt R))` is where the search
+starts, and `s * w` is the worst-case cost of walking to the next `T`-leader.
+The `+ 2` is the certificate round — L4's `r + 2`, unchanged.
 
 At the standard settings — round-robin over `3f+1` so `w = f + 1`, and slots
 every three rounds so `s = 3` — this reads `3 * (f + 1)` rounds past the
 starting slot, which is the concrete latency figure `liveness.md` §8 Q4 asks
-for. -/
+for.
+
+**This bound is blind to multiple leaders.** `BoundedSpacing s` says
+consecutive slots are at most `s` rounds apart, and with `m` leaders sharing a
+round that is still `s = 1`, not `0` — only one step in `m` advances the
+round, which `BoundedSpacing` cannot see. So `s * w` reads `w` rounds for `w`
+slots however large `m` is. A bound that improves with `m` needs the schedule
+to expose it, which `Slots.uniform` does; this statement is kept because it is
+the only one that says anything about an irregular schedule. -/
 theorem commits_recur_by_round {s : ℕ} (hT : T ⊆ (Correct : Finset Validator))
     (hcard : 2 * F.f + 1 ≤ T.card) (fair : FairWithin T w)
     (hs : BoundedSpacing (Validator := Validator) s) (R k : ℕ) :
-    ∃ k', k ≤ k' ∧ S.slotRound k' ≤ S.slotRound (max k R) + s * w ∧
+    ∃ k', k ≤ k' ∧ S.slotRound k' ≤ S.slotRound (max k (slotAt Validator R)) + s * w ∧
       R ≤ S.slotRound k' ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
         Live U D N → DeliversQuorum D → SynchronisedOn U T R →
-        S.slotRound (max k R) + s * w + 2 ≤ N →
+        S.slotRound (max k (slotAt Validator R)) + s * w + 2 ≤ N →
         ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
   obtain ⟨k', hk, hlt, hRk', hcommit⟩ :=
     commits_recur_within (BlockId := BlockId) (Payload := Payload) hT hcard fair R k
   have hround := slotRound_le_of_lt (Validator := Validator) hs hk hlt
-  refine ⟨k', le_trans (le_max_left k R) hk, hround, hRk', ?_⟩
+  refine ⟨k', le_trans (le_max_left k _) hk, hround, hRk', ?_⟩
   intro U D N H hd hsync hN
   exact hcommit U D N H hd hsync (by omega)
 
