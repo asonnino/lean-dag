@@ -1027,6 +1027,23 @@ spending their D25 miss-budget on excluding each other —
 `LeanDagTest/Density.lean` exhibits two chains of one author inside a
 *correct* validator's history at `f = 1`, against the proved ceiling of 3.
 
+**The doubling step is machine-checked** (`LeanDagTest/Doubling.lean`).
+The obvious objection — Byzantine validators cannot forge correct blocks
+and cannot advance rounds alone — is answered on concrete data. `Udouble`
+runs `f = 4` over thirteen validators: the correct nine (`= 2f+1` exactly)
+advance rounds referencing only each other, and every Byzantine block
+references *seven real correct blocks of the immediately preceding round*,
+as `predecessor` and `quorum` force — the structure parasitizes the correct
+DAG; it never outruns it, and visibility is one-way until the reveal.
+Validator 1 runs four chains, the exposed helper (validator 2) two, each
+helper chain carrying a fresh validator-1 chain to a different scaffold.
+`decide` confirms all of it: `Udouble` is valid and `DoSValid`, the crux
+block names the helper while *clean* about it and lawfully exposed to
+validator 1, `topsOf Udouble 41 1 = {1, 13, 14, 15}` — four chains,
+`4 = 2^e` against the proved ceiling of `22` — and D25's miss-budget is
+honoured throughout (the reveal misses exactly validators 11 and 12 at
+round 2). The family is not a thought experiment.
+
 **Where this leaves the bound.** The truth is exponential in the exposed
 count:
 

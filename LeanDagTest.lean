@@ -13,3 +13,4 @@ import LeanDagTest.SelfParent
 import LeanDagTest.Adoption
 import LeanDagTest.Pedigree
 import LeanDagTest.Density
+import LeanDagTest.Doubling
