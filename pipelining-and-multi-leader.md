@@ -5,19 +5,22 @@ single-leader, three-round-spaced commit rule now in `spec.md` and
 `liveness.md` to the **pipelined, multi-leader** Mysticeti-C rule actually
 deployed. Things graduate into `spec.md` once they settle.
 
-> **Status.** Nothing here is implemented. §5–§8 are the safety half; the
-> argument is worked out on paper and the claim is that the existing proofs
-> survive a *premise* change with no new counting. §9–§10 are the liveness
-> half, which is where the genuinely new theorem lives (P7). §12 lists what
-> has to be decided first, §13 what is already settled.
+> **Status.** Nothing here is implemented. §3 is the schedule layer — how a
+> reader writes a schedule down and how the present one is recovered (P0, P8).
+> §5–§8 are the safety half (P1–P3); the argument is worked out on paper and
+> the claim is that the existing proofs survive a *premise* change with no new
+> counting. §9–§10 are the liveness half (P4–P7), where the genuinely new
+> theorem lives. §11 stages the nine obligations, names the files each touches,
+> and lists the witnesses. §12 is what has to be decided first — only Q1 is
+> genuinely open — and §13 what is settled.
 
 **The thesis in one paragraph.** The development is already parametric in the
 leader schedule: `Slots` is a class, and every safety theorem takes it as an
 instance. Pipelining and multiple leaders per round are, between them, exactly
 one weakening of one field of that class — `spacing : ∀ k, slotRound k + 3 ≤
 slotRound (k+1)` becomes `Monotone slotRound`. Everything that breaks, breaks
-because it consumed that field. There are five such places, and four of them
-are one lemma. The repair is to stop *deriving* the three-round separation
+because it consumed that field. There are five such places, and only two
+consume it directly. The repair is to stop *deriving* the three-round separation
 between a slot and its anchor and start *requiring* it, as a premise on the
 indirect constructors — which is what the deployed protocol does anyway. The
 substantial claim of this document is that the agreement induction survives
@@ -143,7 +146,7 @@ a real obligation on the leader-election function — the requirement that the
 HammerHead both satisfy it; nothing in the model would notice if a schedule did
 not. §3.2 moves it somewhere it is checkable rather than assumed.
 
-### 3.2 The schedule layer: what a user actually writes
+### 3.2 P8 — the schedule layer: what a user actually writes
 
 `Slots` is the right *interface* — every theorem downstream indexes slots by
 `ℕ` and should keep doing so — but it is the wrong thing to ask a reader to
@@ -195,7 +198,7 @@ with the characterisation lemma that every concrete instance will want:
 theorem slotRound_eq_iff : sch.toSlots.slotRound k = n ↔ count sch n ≤ k ∧ k < count sch (n+1)
 ```
 
-### 3.3 Recovering the present development, and the schedules worth having
+### 3.3 P0 — recovering the present development, and the schedules worth having
 
 Every schedule anyone deploys is *uniform*: `m` leaders in every `p`-th round.
 That case has a closed form and needs none of the flattening machinery, so it
@@ -250,8 +253,11 @@ Every occurrence, from a full sweep of the source:
 | `Quantitative.commits_recur_within` | the same two | **reproved**, and the bound improves (§10) |
 
 That is the whole inventory. `BoundedSpacing`, which bounds slot rounds from
-*above*, is untouched and becomes more useful, not less: under pipelining it
-holds with `s = 1` and under multiple leaders with `s = 0`.
+*above*, still compiles: under pipelining it holds with `s = 1`, and with `m`
+leaders per round it *also* holds with `s = 1` and not with `s = 0`, since
+consecutive slots either share a round or advance it by one. That it cannot
+distinguish those two cases is the reason §10 replaces it rather than reusing
+it.
 
 Nothing in `Block`, `BlockDag`, `CausalHistory`, `Support`, `Persistence`,
 `CommonCore` or `Timing` mentions `Slots` at all.
@@ -259,17 +265,40 @@ Nothing in `Block`, `BlockDag`, `CausalHistory`, `Support`, `Persistence`,
 ## 5. The repair: eligible anchors
 
 ```lean
-/-- `j` may anchor `k`: later, and far enough ahead that a block at `j`'s
-round can reach a certificate for `k`'s. -/
-def Eligible (k j : ℕ) : Prop := S.slotRound k + 3 ≤ S.slotRound j
+/-- The round at which slot `k`'s direct rules are settled: its certificates
+live here. Algorithm 2's `DecisionRound`. -/
+def decisionRound (k : ℕ) : ℕ := S.slotRound k + 2
+
+/-- `j` may anchor `k`: its proposal is past `k`'s decision round, so a block
+at `j`'s round can reach a certificate for `k`'s. Algorithm 3's
+`r_decision < s.round`. -/
+def Eligible (k j : ℕ) : Prop := decisionRound k < S.slotRound j
+
+instance : DecidablePred fun p : ℕ × ℕ => Eligible p.1 p.2 := …
 ```
 
-Under `mono`, `Eligible k j → k < j`, so the separate `k < j` premise becomes
-redundant; it is worth keeping in the constructors anyway, because it is what
-the induction in `decided_unique` recurses on and Lean will want it
-syntactically. Also under `mono` the eligible slots above `k` are
-**upward-closed**: there is a first one, and the intermediate premise below
-says "every slot from that one up to the anchor was skipped".
+Stated through `decisionRound` rather than as a bare `+ 3` so that the
+wavelength generalisation of Q2 is a change to one definition. It unfolds to
+`S.slotRound k + 3 ≤ S.slotRound j`, which is what the proofs consume.
+
+Two small lemmas the constructors and the witnesses want:
+
+```lean
+theorem lt_of_eligible (h : Eligible k j) : k < j          -- from `mono`
+theorem eligible_of_lt (h : k < j) : Eligible k j          -- under the OLD spacing only
+```
+
+The first makes the `k < j` premise below strictly redundant. It is kept
+anyway, because `decided_unique` recurses on it and `lt_trichotomy` consumes it
+directly; deriving it at each of the four use sites would be noise. The second
+is the conservativity statement for the decision relation: under `+3` spacing
+eligibility is implied by lateness, so the revised `Decided` has exactly the
+old constructors available and no derivation is lost. Worth proving for the
+`uniform 3 1` instance as the companion to §3.3's `slotRound k = 3 * k`.
+
+Also under `mono` the eligible slots above `k` are **upward-closed**: there is
+a first one, and the intermediate premise below says "every slot from that one
+up to the anchor was skipped".
 
 The revised relation, with the changes marked:
 
@@ -291,6 +320,12 @@ inductive Decided (U) (V : View …) : ℕ → Option BlockId → Prop
       Decided U V k none
 ```
 
+The recursive occurrences stay **strictly positive**: `Eligible k i` is a
+predicate on two naturals and does not mention `Decided`, so guarding
+`Decided U V i none` behind it leaves the definition acceptable to Lean's
+positivity check, which was the reason the intermediate premise was stated
+positively in the first place.
+
 Both edits are forced, and for opposite reasons.
 
 Adding `Eligible k j` is forced **by safety**: without it the engine lemma has
@@ -308,12 +343,18 @@ claim in this document that is not routine.
 ### 6.1 Unchanged (no proof work)
 
 M1, M2, M3, M5′ and M5 are stated at the round level over `certificates U L r`
-and never mention `Slots`. `directCommit_of_directCommitIn`,
-`directSkip_of_directSkipIn`, `certifiedIn_iff_of_view`,
-`not_directSkipIn_of_directCommitIn`, `eq_of_directCommitIn`,
-`not_certifiedIn_of_directSkipIn`, `certificates_nonempty_of_*` and
-`eq_of_hasCertificate` likewise. Expect these to compile against the new class
-untouched.
+and never mention `Slots`. So is **M4 in both halves**:
+`certifiedIn_of_directCommit` already takes `r + 3 ≤ (U.block A).round` as an
+explicit hypothesis rather than deriving it from the schedule, and
+`not_certifiedIn_of_directSkip` needs no round hypothesis at all — which is
+precisely why the repair of §5 is a premise change and not a reproof. Their
+combination `indirect_agrees_with_direct` is likewise untouched.
+
+`directCommit_of_directCommitIn`, `directSkip_of_directSkipIn`,
+`certifiedIn_iff_of_view`, `not_directSkipIn_of_directCommitIn`,
+`eq_of_directCommitIn`, `not_certifiedIn_of_directSkipIn`,
+`certificates_nonempty_of_*` and `eq_of_hasCertificate` likewise. Expect all of
+these to compile against the new class untouched.
 
 ### 6.2 P1 — the engine, re-premised
 
@@ -453,9 +494,17 @@ is a condition on `leader` and needs no change.
 
 ### 9.3 P5 — the wait bound
 
-`commits_recur_within` combines `FairWithin T w` with `BoundedSpacing s`. Both
-survive; only the arithmetic changes, and it changes in the right direction
-(§10).
+`commits_recur_within` combines `FairWithin T w` with `BoundedSpacing s`.
+`FairWithin` is a condition on `leader` alone and survives verbatim. The only
+change is in `commits_recur_within`'s two appeals to `le_slotRound` and
+`slotRound_add_three_le`, which go the way P4's do.
+
+`commits_recur_by_round`, which is where `BoundedSpacing` is consumed, is a
+different matter: §10 shows the bound it produces is blind to multiple leaders,
+so it should be **restated against `Slots.uniform`** rather than reproved
+against `BoundedSpacing`. Keep the `BoundedSpacing` version too — it is the
+only thing that says anything at all about an irregular schedule — but stop
+quoting it as the headline.
 
 ### 9.4 P6 — no ineligible-anchor starvation
 
@@ -487,11 +536,23 @@ leaders, `3m` times as many — so `3m` times as many opportunities for a slot
 with a Byzantine or partitioned leader to sit undecided. The obligation should
 be discharged now rather than inherited.
 
-The statement to aim for, after the synchrony round `R`:
+The statement to aim for, in the shape `commits_recur_within` already uses —
+the hypotheses are not optional, and writing them out is half of pinning the
+theorem down:
 
+```lean
+theorem all_decided (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : 2 * F.f + 1 ≤ T.card) (fair : FairWithin T w) (R : ℕ) :
+    ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
+      Live U D N → DeliversQuorum D → SynchronisedOn U T R →
+      ∀ k, R ≤ S.slotRound k → S.slotRound k + reach w ≤ N →
+        ∃ v, Decided U (View.full U) k v
 ```
-for every slot k with slotRound k ≥ R, ∃ v, Decided U (View.full U) k v
-```
+
+`reach w` is the unknown: how far above slot `k` the DAG must have grown before
+`k` is guaranteed decided. It is `s·w + 2` if the anchor can always be the next
+`T`-led slot, and strictly more once eligibility forces the walk past nearer
+slots — which is exactly the arithmetic below.
 
 The shape of the argument: take the least slot `j > k` whose leader lies in
 `T`; L4 directly commits it, and by `FairWithin` it is at most `w` slots away.
@@ -561,37 +622,60 @@ to depend on `m`; it should not try to resolve it.
 
 ## 11. Staging and witnesses
 
-Ordered so that nothing is proved twice and every stage builds.
+Ordered so that nothing is proved twice and every stage builds. The obligations
+are numbered **P0–P8** and each appears in exactly one stage.
 
-1. **Generalise the class** (§3.1) and add `Eligible`. Keep `slotRound k = 3k`
-   as an instance and check that `LeanDagTest/Model.lean` and
-   `LeanDagTest/Quantitative.lean` still discharge their `Slots` instances,
-   now via `mono`, `unbounded`, `keyed` instead of `spacing`. Nothing should
-   break; if something does, it is unlisted in §4 and worth knowing.
-1b. **`Slots.uniform`** (§3.3), and the conservativity lemma
-   `(uniform 3 1 …).slotRound k = 3 * k`. Rebuild the `LeanDagTest` instances
-   through it. Cheap, and it is what makes every later stage's witnesses
-   one-liners — so it belongs before them, not after.
-2. **P1**, the engine (§6.2). One line changes.
-3. **Revise `Decided`** (§5). The fallout is smaller than it looks: the only
-   proof that rebuilds the constructors is `decided_mono`, and only its two
-   indirect cases, which currently read
-   `Decided.indirectCommit hkj ihj ihmid hL hcert` and will take the extra
-   `Eligible` argument and a re-typed `ihmid`. `decided_full` goes through
-   `decided_mono` and should not change. `decided_unique` is stage 4.
-4. **P2**, agreement (§6.3). The claim is that only the two trichotomy cases
+1. **Generalise the class** (§3.1) and add `decisionRound`, `Eligible`,
+   `lt_of_eligible` and the `Decidable` instance (§5). Do **not** touch
+   `LeanDagTest` yet — see stage 2 for why.
+2. **P0 — `Slots.uniform`** (§3.3), with `mono`/`unbounded`/`keyed` proved once
+   generically, plus the conservativity pair
+   `(uniform 3 1 …).slotRound k = 3 * k` and `eligible_of_lt` for it.
+   Then rebuild the three existing instances — the anonymous one in
+   `LeanDagTest/Model.lean`, the one in `LeanDagTest/Quantitative.lean`, and
+   `fairSlots` in `LeanDagTest/Growth.lean`, each currently discharging
+   `spacing _ := by omega` — through it. Note
+   `LeanDagTest/Quantitative.lean:92` also *comments* on `Slots.spacing` and
+   will need rewording. This ordering is not cosmetic: the old `spacing` field was a `∀ k`
+   statement that `by omega` discharged instance-locally, whereas `unbounded`
+   and `keyed` are existentials and injectivity statements that `omega` will
+   not touch. Proving them once inside `uniform` means no instance ever faces
+   them; doing stage 1 and stage 2 in the other order means writing them three
+   times by hand and then deleting them.
+3. **P1 — the engine** (§6.2). One line changes.
+4. **Revise `Decided`** (§5). Exactly three proofs touch the indirect
+   constructors, and it is worth having the list before starting, because two
+   of them match positionally and will fail with an arity error rather than
+   anything informative:
+   - `decided_mono` **builds** them —
+     `Decided.indirectCommit hkj ihj ihmid hL hcert` gains the `Eligible`
+     argument and a re-typed `ihmid`.
+   - `isLeaderBlock_of_decided` **destructures** them —
+     `| indirectCommit _ _ _ hL _` gains an underscore.
+   - `decided_unique` does both; it is stage 5.
+
+   Everything else that mentions `Decided` uses only `directCommit` and
+   `directSkip`, which are unchanged: `decided_none_of_leader_absent`,
+   `decided_of_leader_mem`, and the one call in `Quantitative.lean`.
+   `decided_full` goes through `decided_mono` and should not change.
+5. **P2 — agreement** (§6.3). The claim is that only the two trichotomy cases
    change, and only by supplying `helig` to `hmid₂`. If that is right, this
    stage is short; it is the stage that validates the whole approach, so it
-   should come before any liveness work.
-5. **P3** and the ledger check (§6.4, §8).
-6. **P4, P5, P6** (§9.2–§9.4). Mechanical against `unbounded`.
-7. **P7** (§9.5). The open one.
-8. **`Schedule` and `Schedule.toSlots`** (§3.2). Last, and separable: nothing
-   above needs it, since `uniform` covers every witness and every deployed
-   schedule. Its value is generality — it is what turns "arbitrary validators
-   per round" from a family of examples into a theorem. Budget for the index
-   arithmetic (partial sums, `Nat.find`, the characterisation lemma) rather
-   than for anything conceptual.
+   should come before any liveness work. **If P2 fails, stop** — nothing after
+   it is worth doing until the anchor rule is re-thought.
+6. **P3 — schedule faithfulness** and the ledger check (§6.4, §8).
+7. **P4, P5, P6** (§9.2–§9.4). Mechanical against `unbounded`.
+8. **P7 — every slot eventually decided** (§9.5). The open one. Settle Q1 on
+   paper first.
+9. **P8 — `Schedule` and `Schedule.toSlots`** (§3.2). Last, and separable:
+   nothing above needs it, since `uniform` covers every witness and every
+   deployed schedule. Its value is generality — it is what turns "arbitrary
+   validators per round" from a family of examples into a theorem. Budget for
+   the index arithmetic (partial sums, `Nat.find`, the characterisation lemma)
+   rather than for anything conceptual.
+
+Stages 1–7 are believed routine; the risk is concentrated in stage 5 (which
+validates the design) and stage 8 (which is open).
 
 **Witnesses.** `LeanDagTest/` should carry, at minimum:
 
@@ -609,13 +693,37 @@ Ordered so that nothing is proved twice and every stage builds.
   and note which field of `Schedule` excludes it.
 - The existing `+3` instance rebuilt as `Slots.uniform 3 1 rr`, so the
   generalisation is visibly conservative.
-- An **irregular** schedule, once stage 8 lands: leaders at rounds 0, 1, 5, 6,
+- An **irregular** schedule, once stage 9 lands: leaders at rounds 0, 1, 5, 6,
   6, 9 say, with `decide`-checked `slotRound` and `leader` values against
   `slotRound_eq_iff`. This is the witness that the general layer is usable and
   not merely definable.
 
 Figure 4 of the paper is a ready-made witness for the first of these and its
 example commit sequence (`L1a, L1c, L1d, L2a`) is a ready-made expected value.
+
+**Where the edits land.** Every file the work touches, and nothing else:
+
+| File | Change | Stage |
+|---|---|---|
+| `LeanDag/Mysticeti.lean` | `Slots` fields; delete `slotRound_add_three_le`; add `decisionRound`, `Eligible`, `lt_of_eligible`; re-premise `certifiedIn_of_directCommitIn`; revise `Decided`; fix `decided_unique` | 1, 3, 4, 5 |
+| `LeanDag/Schedule.lean` *(new)* | `Slots.uniform` and its three field proofs; later `Schedule`, `toSlots`, `slotRound_eq_iff` | 2, 9 |
+| `LeanDag/Liveness.lean` | drop `le_slotRound`; reprove `commits_recur_on`; add `exists_eligible`; P7 | 7, 8 |
+| `LeanDag/Quantitative.lean` | reprove `commits_recur_within`; add the `uniform` bound beside `commits_recur_by_round` | 7 |
+| `LeanDag.lean` | import the new module | 2 |
+| `LeanDagTest/{Model,Quantitative,Growth}.lean` | instances rebuilt through `uniform` | 2 |
+| `LeanDagTest/Pipelined.lean` *(new)* | the witnesses above | 2, 5, 6, 9 |
+| `spec.md` | `Eligible`, `keyed`, and what the schedule layer assumes | as each lands |
+| `report-outline.md` | §3.4 (the slot schedule), §3.5 (`Decided`), §6.10 (the bounds), §9 (drop or requalify the limitation) | last |
+
+`LeanDag/{Block,BlockDag,CausalHistory,Support,Persistence,CommonCore,Timing}.lean`
+are untouched — none of them mentions `Slots` (§4).
+
+Two mechanical notes for whoever starts. `Slots` is a `class` with
+`variable [S : Slots Validator]` and a scattering of `omit S in` on the
+slot-free lemmas; adding fields changes neither. And the new `Eligible` needs
+its `Decidable` instance declared explicitly, as `IsLeaderBlock`,
+`DirectCommitIn` and `DirectSkipIn` all do, or the `decide`-checked witnesses
+will not elaborate.
 
 ## 12. Open questions
 
@@ -632,11 +740,13 @@ on the slot spacing. Settle this on paper before writing Lean.
 `+ waveLength`?** The paper parameterises `waveLength`, defaulting to 3, and
 notes that a longer wavelength raises the chance of a certificate pattern under
 asynchrony at the cost of latency. The whole development hard-codes 3 through
-`certificates` (round `r+2`) and M2 (round `r+3`). Generalising the wavelength
-is a much larger change than this one and should not be smuggled in; but
-`Eligible` should be *stated* so that it reads as "past the decision round",
-not as a bare numeral, so the later generalisation is a definition change and
-not a search-and-replace.
+`certificates` (round `r+2`) and M2 (round `r+3`), so generalising the
+wavelength is a much larger change than this one and should not be smuggled in.
+*Deferred, not open, and §5 pays the one-line insurance premium*: `Eligible` is
+stated as `decisionRound k < slotRound j`, so a later wavelength parameter is a
+change to `decisionRound` and to `certificates`, not a search for the numeral
+`3` across the development. Whoever generalises the wavelength should expect
+M2's `r+3` to be the hard part, not this.
 
 **Q3. ~~Is the linearisation of slots worth making explicit?~~** *Answered by
 §3.2.* The question was whether to re-index slots as `ℕ × Fin m` in order to
@@ -668,9 +778,12 @@ the quantitative layer uniform-only and saying so, rather than weakening the
 bounds to cover schedules nobody runs.
 
 **Q5. What happens to the horizon?** `liveness.md` adopts a horizon `N` because
-`Live` was unsatisfiable without one. The horizon is stated in rounds and the
-new slot count per round is `m` times larger; nothing obviously breaks, but the
-interaction of the horizon with P7's downward induction has not been checked.
+`Live` was unsatisfiable without one. The horizon is stated in rounds and is
+unaffected as such; what changes is that `3m` times as many slots now sit below
+it, and P7's statement (§9.5) needs `slotRound k + reach w ≤ N`, whose `reach`
+is exactly the unknown of Q1. So Q5 is not independent — answering Q1 answers
+it. Recorded separately only because the horizon is where the answer will be
+felt.
 
 ## 13. Settled
 
@@ -687,7 +800,15 @@ s.round]` (§2). The present `k < j` premise is a proxy that happens to be
 correct under `+3` spacing.
 
 **Pipelining and multi-leader are one weakening.** `spacing` becomes `mono`;
-five sites consume the old field, four of them in one lemma (§3, §4).
+five sites consume it, only two of them directly — `slotRound_add_three_le` and
+`le_slotRound`, with the other three routing through those (§3, §4).
+
+**M4 already takes its round hypothesis explicitly.**
+`certifiedIn_of_directCommit` asks for `r + 3 ≤ (U.block A).round` and derives
+nothing from the schedule, and the skip half asks for nothing at all. That is
+why the repair is a premise change rather than a reproof: the safety core was
+already written against the round separation, and only the *slot* layer above
+it assumed the schedule would supply it (§6.1).
 
 **`Eligible` must depend on `(k, j)` only.** This is what lets each validator's
 eligibility premise discharge the other's intermediate premise in the agreement
