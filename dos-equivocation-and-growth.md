@@ -967,6 +967,82 @@ forbids that is the remaining quantitative question (§12) — not an open
 safety one. Everything above is constant in `r`, which is all C1′ ever
 demanded: no compounding, at any fault budget.
 
+### 10.6 The floor for `c(f)`: polynomial is impossible
+
+The question was whether aggressive use of validity — most
+many-equivocation histories cannot exist because their blocks are invalid —
+forces `c(f)` down to a polynomial. Working the validity constraints to
+the end settles it, in both directions: they cut the count far below
+`e^(e-1)`, and they **cannot** cut it below `2^(e-1)`. The plausible-`O(f)`
+guess of §12 was wrong.
+
+**The tool validity actually gives — density (D25, proved,
+`LeanDag/Density.lean`).** A block's references carry `2f+1` distinct
+creators, at most `β := |byzantine|` of them Byzantine; the correct
+validators number exactly `3f+1-β`; so a block *misses at most `f`* of the
+correct validators of the round below — independent of `β` — and missing is
+monotone through any correct reference:
+
+> **D25.** A valid block's history contains a block by all but at most `f`
+> of the correct validators, at every round strictly below it.
+
+Cones cannot be selectively blind: a block curates at most `f` misses per
+round and swallows everything else, including everything those correct
+blocks had swallowed. This is the constraint that "most histories with many
+equivocations are invalid" cashes out to — and its budget is exactly `f`,
+which is what both directions below exploit.
+
+**The freshness constraint (what validity forbids).** When a chain adopts
+tops sequentially, each adoption demands cleanliness about the adopted
+author over the *whole accumulated cone* — including every previously
+adopted subtree. So a chain may adopt author `a` only while no `a`-chain
+sits anywhere in what it has already gathered. This kills the full
+`(e-1)`-ary pedigree tree behind the `e^(e-1)` factor: a node cannot adopt
+children of authors `a₁, a₂, …` in an order that ever revisits an author
+already present in an earlier child's subtree. The orders that survive are
+exactly "leaves first, one big subtree last", and the maximal gatherable
+structure obeys `G(m) = m + Σ_{d<m} G(d)`, i.e. **`G(m) = 2^m - 1`**.
+
+**The matching construction (why nothing stronger is true).** The `2^m`
+is attainable, and the construction passes every proved constraint —
+freshness, path-distinctness, D21 own-author cleanliness, quorum, density —
+with the correct pool silent (consistent: at `β = f` the correct validators
+reference exactly each other). The doubling pattern, with `A₄, A₁`
+unexposed scaffolding and `A₂, A₃` exposed (`e = 2`):
+
+- a chain of `A₃` adopts a fresh `A₂`-leaf — legal, its cone is `A₂`-free;
+- a chain of `A₄` adopts an `A₂`-leaf, *then* the `A₃`-chain — legal: at
+  the second adoption only `A₃`-cleanliness is demanded, and the `A₂`-dirt
+  the `A₃`-subtree brings is harmless because nothing names `A₂` afterward;
+- an anchor (`A₁`-chain, or `b`) adopts the `A₄`-chain — one clean naming
+  of an unexposed author, gathering all four `A₂`-chains.
+
+Every naming block is clean about precisely what it names at the moment it
+names it; all accumulated dirt is by authors never named again. Iterating
+the pattern doubles one author's chain count per additional exposed helper:
+**`2^(e-2)` chains of a single author, with only `e` exposed authors**, in
+`O(e)` rounds. Separately, the anchor factor is real even at `f = 1`:
+two correct validators can adopt the two halves of an equivocation by
+spending their D25 miss-budget on excluding each other —
+`LeanDagTest/Density.lean` exhibits two chains of one author inside a
+*correct* validator's history at `f = 1`, against the proved ceiling of 3.
+
+**Where this leaves the bound.** The truth is exponential in the exposed
+count:
+
+> `(3f+1-e)·2^(e-1)`-ish achievable  ≤  true `c(f)`  ≤  `(3f+1-e)·e^(e-1)` proved.
+
+Closing to `2^(e-1)` needs "top determined by (anchor, *set* of pedigree
+authors)" in place of the proved ordered-list determinism; the freshness
+constraint forces much of that (both orders of a two-author pedigree cannot
+coexist under one anchor), but the general set-determinism claim resisted
+proof and may need refinement. What is **settled** is the shape: `c(f)` is
+`2^Θ(e)` — no additional assumption can be avoided to get polynomial,
+because the doubling family is valid under all of them. A polynomial bound
+therefore requires *changing the model*: a fetch bound (§12 Q1), an
+acceptance policy that refuses blocks whose histories contain exposures
+(rejected as S9 for other reasons), or reconfiguration (Q3).
+
 ## 11. Staging and witnesses
 
 The house rule — *a definition gets a witness before anything is proved from
@@ -1421,6 +1497,7 @@ The whole development builds with no `sorry` and the usual three axioms.
 | — | the sharp top count: `(3f+1-e)·e^(e-1)` | `card_topsOf_le_of_exposed` | `Pedigree` |
 | **C1′ sharp** | per-author per-round `≤ 1 + 3f·f^(f-1)` | `card_historyBlocksOf_le'` | `Pedigree` |
 | **B2 sharp** | `\|H(b)\| ≤ (3f+1 + 3f^(f+1))·(r+1)` | `card_history_le'` | `Pedigree` |
+| **D25** | density: all but `f` correct per round appear | `card_missingAt_le` | `Density` |
 
 Supporting definitions: `history` and `mem_history_iff` (S6, `History`);
 `ExposedIn`, `DoSValid`, `EquivPair` (`Exposure`); `Accepted` (`Acceptance`);
@@ -1476,11 +1553,12 @@ Nothing. **C1′ is proved in full and tightened**
 pre-S10 model — §10.5 constructs the laundering family — and under S10 it
 holds at every fault budget: per author per round `≤ 1 + 3f·f^(f-1)`, in
 total `|H(b)| ≤ (3f+1 + 3f^(f+1))·(r+1)`, which at `f = 1` is exactly the
-adoption theorem's `7(r+1)`. What remains open is *quantitative only*: the
-`f^(f-1)` factor counts nested adoption among exposed authors as if every
-branching order were realisable, and closing the gap to the plausible
-`O(f)` truth is §12's question — along with Q1's network-layer rate limit,
-which bounds what no DAG condition can: the size of `U` itself.
+adoption theorem's `7(r+1)`. What remains open is *quantitative only*, and
+§10.6 settles its shape: the truth is `2^Θ(e)` — the doubling family shows
+polynomial is **impossible** without changing the model, and the remaining
+gap is `2^(e-1)` (constructible) versus `e^(e-1)` (proved), whose closure
+needs set-determinism of pedigrees. Beyond that: Q1's network-layer rate
+limit, which bounds what no DAG condition can — the size of `U` itself.
 
 The gap C1′ has to close is visible on the witness rather than merely stated:
 validator 1, which block `9` references, contributes three blocks to `H(9)` —
