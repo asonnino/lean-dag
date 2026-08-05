@@ -204,6 +204,101 @@ theorem ExposedIn.of_mem_refs {c b : BlockId} {X : Validator} (hc : c ∈ U.ids)
     (hb : b ∈ (U.block c).refs) (h : ExposedIn U b X) : ExposedIn U c X :=
   h.mono hc (Reaches.single hb)
 
+/-! ## D15, D15a — who can be excluded, and what it costs
+
+`dos-equivocation-and-growth.md` §8. Exposure never lands on a correct
+validator, so the admissible authors always include `Correct`; and each
+exposed author costs exactly one unit of the margin over the quorum. -/
+
+/-- **D15 — exclusion is sound.** An exposed author is Byzantine.
+
+T1 contraposed: the two witnesses are distinct ids of the universe with one
+author and one round, which a correct validator cannot have. So a correct
+validator is never excluded, by anybody, ever — and everything in §8 rests on
+that. -/
+theorem ExposedIn.not_correct {b : BlockId} {X : Validator} (hb : b ∈ U.ids)
+    (h : ExposedIn U b X) : X ∉ (Correct : Finset Validator) := by
+  obtain ⟨i, hi, j, hj, hne, hic, hjc, hround⟩ := h
+  intro hX
+  exact hne (U.eq_of_creator_eq (history_subset_ids hb hi) (history_subset_ids hb hj)
+    hX hic hjc hround)
+
+/-- The authors a block's history has caught. -/
+def exposedTo (U : BlockUniverse Validator BlockId Payload) (b : BlockId) : Finset Validator :=
+  Finset.univ.filter (fun X => ExposedIn U b X)
+
+@[simp]
+theorem mem_exposedTo {b : BlockId} {X : Validator} :
+    X ∈ exposedTo U b ↔ ExposedIn U b X := by simp [exposedTo]
+
+theorem exposedTo_subset_byzantine {b : BlockId} (hb : b ∈ U.ids) :
+    exposedTo U b ⊆ F.byzantine := by
+  intro X hX
+  simpa using (mem_exposedTo.mp hX).not_correct hb
+
+theorem card_exposedTo_le {b : BlockId} (hb : b ∈ U.ids) : (exposedTo U b).card ≤ F.f :=
+  le_trans (Finset.card_le_card (exposedTo_subset_byzantine hb)) F.card_byzantine
+
+/-- A block never names an author its own history has caught — `DoSValid`,
+read as a disjointness. -/
+theorem creators_refs_disjoint_exposedTo (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids) :
+    Disjoint (creatorsOf U.block (U.block b).refs) (exposedTo U b) := by
+  rw [Finset.disjoint_right]
+  intro X hX hXc
+  rw [mem_creatorsOf] at hXc
+  obtain ⟨i, hi, rfl⟩ := hXc
+  exact hdos b hb i hi (mem_exposedTo.mp hX)
+
+/-- **D15a — the margin.** The authors a block references and the authors it
+has caught are disjoint subsets of the validator set, so together they fit
+inside `3f+1`.
+
+With the quorum requirement this reads: `k` caught equivocators leave a margin
+of `f − k` over the `2f+1` a block must name. A gradient, not a cliff. -/
+theorem card_creators_refs_add_card_exposedTo_le (hdos : DoSValid U) {b : BlockId}
+    (hb : b ∈ U.ids) :
+    (creatorsOf U.block (U.block b).refs).card + (exposedTo U b).card ≤ 3 * F.f + 1 := by
+  have hdisj := creators_refs_disjoint_exposedTo hdos hb
+  have hadd := Finset.card_union_add_card_inter
+    (creatorsOf U.block (U.block b).refs) (exposedTo U b)
+  have hinter : (creatorsOf U.block (U.block b).refs ∩ exposedTo U b) = ∅ :=
+    Finset.disjoint_iff_inter_eq_empty.mp hdisj
+  have huniv := Finset.card_le_univ
+    (creatorsOf U.block (U.block b).refs ∪ exposedTo U b)
+  rw [F.card_validators] at huniv
+  rw [hinter] at hadd
+  simp only [Finset.card_empty] at hadd
+  omega
+
+/-- **D15a at the bound.** Once a block has caught the whole fault budget, its
+references are *exactly* the correct validators — every one of them.
+
+The margin is gone, and this is what it means concretely: with `f` authors
+excluded the admissible set is `Correct`, which numbers exactly `2f+1`, so a
+block that must name `2f+1` distinct admissible authors must name all of
+them. -/
+theorem creators_refs_eq_correct (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids)
+    (hround : 0 < (U.block b).round) (hk : F.f ≤ (exposedTo U b).card) :
+    creatorsOf U.block (U.block b).refs = (Correct : Finset Validator) := by
+  -- the exposed set has caught everyone there is to catch
+  have hbyz : exposedTo U b = F.byzantine :=
+    Finset.eq_of_subset_of_card_le (exposedTo_subset_byzantine hb)
+      (le_trans F.card_byzantine hk)
+  have hcard_byz : F.byzantine.card = F.f :=
+    le_antisymm F.card_byzantine (hbyz ▸ hk)
+  have hcorrect : (Correct : Finset Validator).card = 2 * F.f + 1 := by
+    have := card_correct_add_byzantine (Validator := Validator)
+    omega
+  -- references avoid the exposed set, which is now the Byzantine set
+  have hsub : creatorsOf U.block (U.block b).refs ⊆ (Correct : Finset Validator) := by
+    intro X hX
+    have := Finset.disjoint_left.mp (creators_refs_disjoint_exposedTo hdos hb) hX
+    rw [hbyz] at this
+    simpa using this
+  refine Finset.eq_of_subset_of_card_le hsub ?_
+  rw [hcorrect]
+  exact U.creators_quorum hb hround
+
 /-! ## D13 — exposure is view-independent
 
 T6a (`View.exists_reaches_iff`) says a causal-history question gives the same

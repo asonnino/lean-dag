@@ -52,6 +52,17 @@ adversary, so no argument may count on Byzantine-authored blocks arriving. -/
 def ugrowHonest (N : ℕ) : Delivery (Ugrow N) where
   held _ n := (blocksAt (Ugrow N) n).filter (fun i => ¬ (4 ∣ i))
   held_spec _ _ i hi := mem_blocksAt.mp (Finset.mem_filter.mp hi).1
+  accepted _ n := (blocksAt (Ugrow N) n).filter (fun i => ¬ (4 ∣ i))
+  accepted_sub _ _ := Finset.Subset.rfl
+  accepted_inj := by
+    intro _ n i hi j hj hij
+    rw [Finset.mem_filter, mem_blocksAt] at hi hj
+    have hv : (i % 4) = (j % 4) := by
+      have := congrArg (fun (v : Fin 4) => (v : ℕ)) hij
+      simpa using this
+    simp only [ugrow_block, growBlock_round] at hi hj
+    omega
+  accepts_correct _ _ _ _ h _ := h
   includes := by
     intro _ _ n b _ _ hbr i hi
     obtain ⟨hi, _⟩ := Finset.mem_filter.mp hi

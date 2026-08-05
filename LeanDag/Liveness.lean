@@ -146,7 +146,23 @@ time model, that is the only trace it can leave. `builds` therefore asks only
 that a quorum be *in view*; waiting longer than that shows up as a larger
 `held`, which is what `EventuallyDelivers` then demands after `R`. -/
 
-/-- What each validator had in hand, one round at a time. -/
+/-- What each validator had in hand, one round at a time — and which of it it
+chose to build on.
+
+**Two fields, because delivery and policy are two things.** `held` is what the
+network brought; `accepted` is what the validator will reference. Until
+equivocation nothing forced them apart, and an earlier version of this
+structure had only `held`, with `includes` demanding that a correct validator
+reference *everything* it held. That is **unsatisfiable** the moment a correct
+validator holds both halves of an equivocation: `distinct_creators` forbids
+referencing two blocks by one author, so no valid block exists and the
+validator cannot build at all. See `dos-equivocation-and-growth.md` §8.
+
+`held` must *not* be deduplicated: `U` is defined as every block some correct
+validator held (§4.2), so pruning at the delivery layer would put the second
+half of an equivocation outside the universe altogether. The choice of which
+half to accept is left unspecified, exactly as the timeout is — the model says
+what was in hand and what was built on, never how either was decided. -/
 structure Delivery (U : BlockUniverse Validator BlockId Payload) where
   /-- What `v` held from round `n` when it built its round-`(n+1)` block. -/
   held : Validator → ℕ → Finset BlockId
@@ -155,11 +171,25 @@ structure Delivery (U : BlockUniverse Validator BlockId Payload) where
   since without it `held` could be junk and `includes` would demand blocks
   reference it. -/
   held_spec : ∀ v n, ∀ i ∈ held v n, i ∈ U.ids ∧ (U.block i).round = n
+  /-- What `v` chose to build on: a subset of what it held. -/
+  accepted : Validator → ℕ → Finset BlockId
+  /-- You can only accept what arrived. -/
+  accepted_sub : ∀ v n, accepted v n ⊆ held v n
+  /-- **The acceptance rule**: at most one block per author. Forced by
+  `distinct_creators` — a validator holding two blocks by one author must pick
+  one, because it cannot reference both. -/
+  accepted_inj : ∀ v n, ∀ i ∈ accepted v n, ∀ j ∈ accepted v n,
+    (U.block i).creator = (U.block j).creator → i = j
+  /-- A correct block is always accepted. It never conflicts with anything —
+  its author has only the one block for that round (T1) — so nothing is ever
+  given up by taking it, and L7 needs it. -/
+  accepts_correct : ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ a ∈ held v n,
+    (U.block a).creator ∈ (Correct : Finset Validator) → a ∈ accepted v n
   /-- **The protocol rule.** A correct validator references everything it
-  held. Implementable and observable — unlike `Synchronised` itself. -/
+  accepted. Implementable and observable — unlike `Synchronised` itself. -/
   includes : ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ U.ids,
     (U.block b).creator = v → (U.block b).round = n + 1 →
-    held v n ⊆ (U.block b).refs
+    accepted v n ⊆ (U.block b).refs
 
 /-- **Asynchrony.** A quorum that exists is eventually held. Stated
 conditionally — existence first, holding second — because unconditionally it
@@ -171,7 +201,7 @@ only from `R`. -/
 def DeliversQuorum (D : Delivery U) : Prop :=
   ∀ n, 2 * F.f + 1 ≤ (authorsAt U n).card →
     ∀ v ∈ (Correct : Finset Validator),
-      2 * F.f + 1 ≤ (creatorsOf U.block (D.held v n)).card
+      2 * F.f + 1 ≤ (creatorsOf U.block (D.accepted v n)).card
 
 /-- The positive protocol behaviour liveness needs. Not derivable from the
 DAG structure — `Correct` is a negative condition and these are positive.
@@ -198,10 +228,11 @@ structure Live (U : BlockUniverse Validator BlockId Payload)
   /-- Below the horizon, a correct validator that **holds** a quorum of
   round-`r` blocks has one of its own at `r+1`.
 
-  The quorum is measured against `D.held v r`, not against `authorsAt U r`:
-  a validator cannot build on blocks it has not received. -/
+  The quorum is measured against `D.accepted v r`, not against `authorsAt U r`:
+  a validator cannot build on blocks it has not received, nor on blocks it
+  declined to accept. -/
   builds : ∀ r < N, ∀ v ∈ (Correct : Finset Validator),
-    2 * F.f + 1 ≤ (creatorsOf U.block (D.held v r)).card →
+    2 * F.f + 1 ≤ (creatorsOf U.block (D.accepted v r)).card →
     ∃ b ∈ U.ids, (U.block b).creator = v ∧ (U.block b).round = r + 1
 
 omit [DecidableEq BlockId] in
@@ -329,7 +360,8 @@ L4–L6 are untouched — they still take `Synchronised`, which this now supplie
 a second way. -/
 theorem synchronised_of_delivery (D : Delivery U) (h : EventuallyDelivers D R) :
     Synchronised U R := fun n hn b hb hbr hbc a ha har hac =>
-  D.includes _ hbc n b hb rfl hbr (h n hn _ hbc a ha har hac)
+  D.includes _ hbc n b hb rfl hbr
+    (D.accepts_correct _ hbc n a (h n hn _ hbc a ha har hac) hac)
 
 /-! ## L2 — decisions are monotone in the view
 

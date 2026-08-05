@@ -186,3 +186,4 @@ theorem mem_history_of_mem_refs {b j : BlockId} (hb : b ∈ U.ids) (hj : j ∈ (
     j ∈ history U b :=
   (mem_history_iff hb).mpr (Reaches.single hj)
 
+end LeanDag

@@ -111,6 +111,19 @@ def Ugrow (N : ℕ) : BlockUniverse (Fin 4) ℕ Unit where
 def ugrowDelivery (N : ℕ) : Delivery (Ugrow N) where
   held _ n := blocksAt (Ugrow N) n
   held_spec _ _ i hi := mem_blocksAt.mp hi
+  accepted _ n := blocksAt (Ugrow N) n
+  accepted_sub _ _ := Finset.Subset.rfl
+  accepted_inj := by
+    -- `Ugrow` has one block per validator per round, so accepting everything
+    -- already satisfies the acceptance rule.
+    intro _ n i hi j hj hij
+    rw [mem_blocksAt] at hi hj
+    have hv : (i % 4) = (j % 4) := by
+      have := congrArg (fun (v : Fin 4) => (v : ℕ)) hij
+      simpa using this
+    simp only [ugrow_block, growBlock_round] at hi hj
+    omega
+  accepts_correct _ _ _ _ h _ := h
   includes := by
     intro _ _ n b _ _ hbr i hi
     rw [mem_blocksAt] at hi

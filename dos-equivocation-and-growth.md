@@ -779,9 +779,9 @@ Suggested order, easiest first:
    set — and then falls out: an equivocation pair is at least two rounds down,
    because the top layer holds only `b` and the next holds only `b`'s
    references, whose authors are distinct.
-6. **Next, and split**, because only the second half is risky. The design
-   question that used to block it is settled (§13 S8), so both halves are now
-   well defined:
+6. ~~The exclusion results, and the delivery repair.~~ **Done**
+   (`LeanDag/Exclusion.lean`, `LeanDagTest/Exclusion.lean`, and the edit to
+   `LeanDag/Liveness.lean`). Recorded as originally planned:
    - **6a** — D15, D15a and D15b, plus the `Uexcl` witness. All additive:
      nothing here edits an existing file.
      - **D15** (`ExposedIn U b X → X ∉ Correct`) is five lines off T1, and
@@ -810,11 +810,31 @@ Suggested order, easiest first:
        since it does receive the Byzantine blocks. So 6a's witness is honest
        about the DAG and artificial about delivery; **6b is what makes the
        delivery side honest too**, and the witness should be revisited then.
-   - **6b** — the repaired `Delivery` (§8, §13 S5), and L1 re-earned from `R`.
-     The first edit to proved, committed code: `Liveness.lean` changes, and
-     `ugrowDelivery` and the `Timing` and `Quantitative` witnesses move with it.
-     `Live.builds` must fire on a quorum of *admissible* creators rather than
-     merely held ones; at `T := Correct` that is automatic.
+   - **6b** — the repaired `Delivery`, and where the quorum comes from.
+
+     **The repair was smaller than feared.** `Delivery` gained four fields
+     (`accepted`, `accepted_sub`, `accepted_inj`, `accepts_correct`) and
+     `includes` now references what was *accepted*; `DeliversQuorum` and
+     `Live.builds` moved from `held` to `accepted`. **No proof in `Liveness`,
+     `Timing` or `Quantitative` needed changing** — only the two `Delivery`
+     witnesses, which set `accepted := held` and discharge `accepted_inj` from
+     `Ugrow`'s one-block-per-validator-per-round structure. L7 is the single
+     place the shape of the argument changed, and `accepts_correct` is exactly
+     what it needed.
+
+     **One design point came out differently from S5.** The exposure
+     subtraction is *not* in `includes`: `Delivery` mentions the DoS vocabulary
+     nowhere, so `Liveness` needs no import from `Exposure` and stays
+     regime-neutral. The condition enters instead as a **policy on a delivery**
+     (`DoSAccepting`), stated in `Exclusion.lean` where it belongs. That is
+     better than what S5 proposed and the reason is recorded there.
+
+     **And `DeliversQuorum` turned out to be derivable after `R`**
+     (`card_creators_accepted_of_eventuallyDelivers`): `EventuallyDelivers`
+     delivers the correct blocks, `accepts_correct` accepts them, and a
+     populated round supplies `2f+1`. So the plan's Q1 is settled in Lean and
+     not merely on paper — the quorum is a consequence from `R` on, and its
+     unavailability before `R` is precisely the cost.
 7. **D16, D17, D18** — the first results with real content. D17 is the one that
    needs care, since it quantifies over Byzantine blocks too.
 8. The `f = 2` model, and the C1 counterexample search against it.
@@ -1050,6 +1070,11 @@ development builds with no `sorry` and the usual three axioms.
 | **D14** | safety is untouched | *(inert-hypothesis checks)* | `LeanDagTest/SafetyUnderDoS` |
 | **D19a** | a clean history is linear | `card_history_le_of_not_exposed` | `Counting` |
 | **D19b** | a block is clean about what it references | `card_filter_creator_le_of_mem_refs` | `Counting` |
+| **D15** | exclusion is sound | `ExposedIn.not_correct` | `Exposure` |
+| **D15a** | the margin is `f − k`, and zero at the bound | `card_creators_refs_add_card_exposedTo_le`, `creators_refs_eq_correct` | `Exposure` |
+| **D15b** | the correct set alone meets the threshold | `correctBlocksAt_admissible_quorum` | `Exclusion` |
+| — | the condition is implementable | `not_exposedIn_refs_of_policy` | `Exclusion` |
+| — | the quorum is derivable after `R` | `card_creators_accepted_of_eventuallyDelivers` | `Exclusion` |
 
 Supporting definitions: `history` and `mem_history_iff` (S6, `History`);
 `ExposedIn`, `DoSValid`, `EquivPair` (`Exposure`); `Accepted` (`Acceptance`);
@@ -1057,6 +1082,13 @@ Supporting definitions: `history` and `mem_history_iff` (S6, `History`);
 predicates are decidable, so the witnesses settle by `decide`.
 
 ### Witnessed
+
+**`Uexcl`** (`LeanDagTest/Exclusion`) closes §8's chain end to end: validator 0
+equivocates, is exposed at the merge from round 2, and the three correct
+validators — `2f+1` exactly, so zero margin — carry the DAG on alone and
+**still commit**, at a slot whose three rounds lie entirely after the
+exclusion. D15a is applied there rather than assumed: the references of every
+block from round 3 on are exactly `Correct`, by theorem.
 
 `Umerge` (`LeanDagTest/Exposure`) is the `f = 1` model the plan asked for, and
 it is non-vacuous in the way that matters: validator 0 equivocates, is exposed
@@ -1069,16 +1101,9 @@ tight.
 
 | | |
 |---|---|
-| **D15** | exclusion is sound — five lines, step 6a, everything rests on it |
-| **D15a** | the margin is `f − k` — step 6a, and §13 S8 accepts what it says |
-| **D15b** | the correct set alone meets the threshold — step 6a, the liveness half |
-| **D8a** | exposure is structural — needs the `accepted` field, so 6b |
-| **D16–D18** | exclusion after `R` — step 7, needs the repaired `Delivery` |
+| **D8a** | exposure is structural — stated, not yet formalized |
+| **D16–D18** | exclusion after `R` — step 7 |
 | **C1** | the main bound — open, and §10 says where the argument stops |
-
-Also outstanding: the **`Uexcl` witness** (step 6a), which is what makes §8's
-chain — exclusion bites, the correct set still suffices, a commit still lands —
-true of something rather than merely stated.
 
 The gap C1 has to close is visible on the witness rather than merely stated:
 validator 1, which block `9` references, contributes three blocks to `H(9)` —
