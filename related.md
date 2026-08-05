@@ -735,14 +735,65 @@ honest processes. Consequently every vertex at round ≥ r+3 indirectly referenc
 a certificate of `Lr`, so `Lr` can never be indirectly *skipped* — the adversary
 can withhold commitment but cannot force a skip.
 
-We have no analogue. M3 (`certificates_eq_empty_of_directSkip`) is the converse
-direction — a directly skipped block has no certificate anywhere. A weak-liveness
-statement would be a genuinely new theorem for this development, and an
-attractive one: it is the strongest liveness available *without* P8, which makes
-it exactly the result that separates what the protocol clause buys from what
-comes free. Given that `certifies_of_synchronisedOn` already produces certificates
-from correct validators, the f+1 version looks within reach by weakening
-`PopulatedOn` to a quorum-of-a-quorum argument.
+**How they get it, since the reference rule does not give it.** A round-(r+1)
+block must cite 2f+1 of 3f+1 distinct round-`r` authors, so it may legally omit
+the leader; nothing structural forces `Lr` into anyone's references. The
+guarantee comes from two other places.
+
+*Their Lemma 4.* If no honest process has ever timed out in round R, then every
+round-R vertex built by an honest process supports a leader vertex of round R−1
+and certifies a leader vertex of round R−2. This rests on the **Predecessor
+Rule** (Alg. 3 line 19) — when creating a vertex, a process must "try its best"
+to make it a supporter and a certificate — and is proved by induction over the
+trace: a process creating its vertex via the jump condition sees 2f+1 round-R
+vertices, of which ≥ f+1 are honest and, by the induction hypothesis, already
+support and certify; the predecessor rule then carries the property to the new
+vertex.
+
+*The dilemma.* After GST, `Lr` reaches every honest process within Δ, and the
+2Δ timer guarantees none has timed out in round r+1 yet. So within another Δ,
+each honest process either
+
+- **creates a supporter for `Lr`** — obliged by the predecessor rule; or
+- **jumps over round r+1** — but jumping is not silent. To jump, it must observe
+  2f+1 vertices in round r+2, and by Lemma 4 at least f+1 of those are honest and
+  are *already certificates for `Lr`*.
+
+Either horn yields ≥ f+1 honest certificates. Note the same argument first rules
+out the leader jumping over its own round r: that would require 2f+1 vertices at
+r+1, of which f+1 honest ones support some round-`r` leader vertex — contradicting
+that `leader_at(r)` created none.
+
+**Correction to the previous assessment.** I earlier called this "within reach by
+weakening `PopulatedOn`". That was too optimistic, and the obstruction is precisely
+the step above. In our vocabulary:
+
+- **L0 (density)** gives, with no assumptions at all, ≥ 2f+1 distinct authors at
+  round r+1 whenever the DAG reaches above it — hence ≥ f+1 *correct* authors.
+- **`SynchronisedOn` at round r** makes each of those correct blocks reference
+  `Lr`. So **f+1 correct supporters is reachable**, from L0 + coverage, with no
+  `Populated` and no P8.
+- But a **certificate** needs a round-(r+2) block citing **2f+1** distinct
+  supporters, and density only supplies f+1 correct ones. `SynchronisedOn` is
+  honest-to-honest — as `liveness.md` puts it in the L4/L5 gap discussion, it
+  "says nothing about whether correct validators reference a Byzantine-authored
+  block" — so it cannot recruit the remaining f. Reaching 2f+1 supporters needs 2f+1 correct
+  authors at round r+1 — which is `Populated`, i.e. P8 again.
+
+So the decomposition is: **f+1 correct supporters comes free (L0 + coverage);
+f+1 certificates does not.** Qiu et al. bridge the gap with the Predecessor Rule,
+which has no counterpart here — our nearest clause, P7 (`Delivery.includes`,
+references ⊇ held), constrains what a validator cites given what it holds, but
+says nothing that forces a *quorum* of supporters to exist for an early-building
+or jumping validator.
+
+The realistic prize is therefore the supporter-level statement, not their
+certificate-level one, unless a Predecessor-Rule analogue is added to the model.
+That is still worth having — it is a liveness result independent of P8, and it
+marks exactly where the protocol clause starts being load-bearing — but it should
+not be advertised as their Theorem 3. M3
+(`certificates_eq_empty_of_directSkip`) remains the only nearby existing result,
+and it runs the other direction.
 
 ### 9.6 Method
 
