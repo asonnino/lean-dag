@@ -1,5 +1,6 @@
 import LeanDag.Adoption
 import Mathlib.Data.Fintype.BigOperators
+import Mathlib.Tactic.Ring
 
 /-!
 # Pedigrees, and the general bound
@@ -364,5 +365,462 @@ theorem card_history_le (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids) :
         rw [Finset.sum_const_nat (fun _ _ => rfl), Finset.card_univ, F.card_validators]
     _ = (3 * F.f + 1) * (3 * F.f + 2) ^ (3 * F.f + 1) * ((U.block b).round + 1) := by
         rw [Nat.mul_assoc]
+
+/-! ## Tightening the constant
+
+Two facts the count above wastes. **An author with two chains is exposed**:
+both chains reach round 0 (D20), so they collide there — hence at most one
+top per *unexposed* author (`card_topsOf_le_one_of_not_exposedIn`), and only
+exposed authors, at most `f` of them, can branch at all. And **a pedigree
+can stop at its first unexposed-author adopter**: that adopter is *the*
+unique top of its author, so it anchors the determination just as well as
+`b` does, and the entries below it are all exposed authors — at most `e - 1`
+choices per slot, where `e := |exposedTo U b| ≤ f`, instead of `3f + 1`.
+
+`PedigreeVia` is the anchored pedigree; the count drops to
+
+> `|topsOf U b X| ≤ (3f+1-e) · e^(e-1)`  (`card_topsOf_le_of_exposed`)
+
+giving per round `c(f) = 1 + 3f·f^(f-1)` (`card_historyBlocksOf_le'`) and in
+total `|H(b)| ≤ (3f+1 + 3f^(f+1))·(r+1)` (`card_history_le'`) — at `f = 1`
+exactly the adoption theorem's `7(r+1)`, and at `f = 2` a constant of `31`
+where the unrefined pedigree count gave `7·8⁷`. -/
+
+/-- **An unexposed author has at most one chain.** Two tops would be
+chain-related, and the lower would have a child. Contrapositive: branching
+proves equivocation — only exposed authors, at most `f`, can branch. -/
+theorem card_topsOf_le_one_of_not_exposedIn (hdos : DoSValid U) {b : BlockId}
+    (hb : b ∈ U.ids) {X : Validator} (hX : ¬ ExposedIn U b X) :
+    (topsOf U b X).card ≤ 1 := by
+  rw [Finset.card_le_one]
+  intro t₁ h₁ t₂ h₂
+  by_contra hne
+  obtain ⟨h₁b, h₁c, h₁top⟩ := mem_topsOf.mp h₁
+  obtain ⟨h₂b, h₂c, h₂top⟩ := mem_topsOf.mp h₂
+  rcases le_total (U.block t₁).round (U.block t₂).round with hle | hle
+  · have hmem : t₁ ∈ history U t₂ :=
+      mem_history_of_creator_eq_of_not_exposedIn hb hX h₁b h₂b h₁c h₂c hle
+    have h₂ids : t₂ ∈ U.ids := history_subset_ids hb h₂b
+    obtain ⟨q, hq, hqc, htq⟩ :=
+      exists_child_of_mem_history_of_creator_eq hdos h₂ids hmem (h₁c.trans h₂c.symm) hne
+    exact h₁top q (history_subset_of_reaches hb ((mem_history_iff hb).mp h₂b) hq)
+      (hqc.trans h₂c) htq
+  · have hmem : t₂ ∈ history U t₁ :=
+      mem_history_of_creator_eq_of_not_exposedIn hb hX h₂b h₁b h₂c h₁c hle
+    have h₁ids : t₁ ∈ U.ids := history_subset_ids hb h₁b
+    obtain ⟨q, hq, hqc, htq⟩ :=
+      exists_child_of_mem_history_of_creator_eq hdos h₁ids hmem (h₂c.trans h₁c.symm)
+        (Ne.symm hne)
+    exact h₂top q (history_subset_of_reaches hb ((mem_history_iff hb).mp h₁b) hq)
+      (hqc.trans h₁c) htq
+
+/-- The adoption collapse, packaged: one adopted top per (adopter, author). -/
+theorem adoptedUnder_unique (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids)
+    {t₁ t₂ T : BlockId} (hT : T ∈ history U b)
+    (htop₁ : t₁ ∈ topsOf U b (U.block t₁).creator)
+    (htop₂ : t₂ ∈ topsOf U b (U.block t₂).creator)
+    (hc : (U.block t₁).creator = (U.block t₂).creator)
+    (ha₁ : AdoptedUnder U b t₁ T) (ha₂ : AdoptedUnder U b t₂ T) : t₁ = t₂ := by
+  obtain ⟨j₁, hj₁b, hj₁T, hj₁c, ht₁ref⟩ := ha₁
+  obtain ⟨j₂, hj₂b, hj₂T, hj₂c, ht₂ref⟩ := ha₂
+  have hT_ids : T ∈ U.ids := history_subset_ids hb hT
+  have hXexp : ¬ ExposedIn U T (U.block T).creator :=
+    not_exposedIn_self_creator hdos hT_ids
+  have htop₂' : t₂ ∈ topsOf U b (U.block t₁).creator := by
+    rw [hc]; exact htop₂
+  rcases le_total (U.block j₁).round (U.block j₂).round with hle | hle
+  · have hchain : j₁ ∈ history U j₂ :=
+      mem_history_of_creator_eq_of_not_exposedIn hT_ids hXexp hj₁T hj₂T hj₁c hj₂c hle
+    have hj₂_ids : j₂ ∈ U.ids := history_subset_ids hb hj₂b
+    have ht₁j₂ : t₁ ∈ history U j₂ :=
+      history_subset_of_reaches hj₂_ids ((mem_history_iff hj₂_ids).mp hchain)
+        (mem_history_of_mem_refs (history_subset_ids hb hj₁b) ht₁ref)
+    exact top_eq_of_mem_namer_history hdos hb htop₁ htop₂' hj₂b ht₂ref ht₁j₂
+  · have hchain : j₂ ∈ history U j₁ :=
+      mem_history_of_creator_eq_of_not_exposedIn hT_ids hXexp hj₂T hj₁T hj₂c hj₁c hle
+    have hj₁_ids : j₁ ∈ U.ids := history_subset_ids hb hj₁b
+    have ht₂j₁ : t₂ ∈ history U j₁ :=
+      history_subset_of_reaches hj₁_ids ((mem_history_iff hj₁_ids).mp hchain)
+        (mem_history_of_mem_refs (history_subset_ids hb hj₂b) ht₂ref)
+    exact (top_eq_of_mem_namer_history hdos hb htop₂' htop₁ hj₁b ht₁ref ht₂j₁).symm
+
+/-- A pedigree anchored at an arbitrary block `T` rather than at `b`,
+recording only the *intermediate* adopters' authors. -/
+inductive PedigreeVia (U : BlockUniverse Validator BlockId Payload) (b : BlockId) :
+    BlockId → BlockId → List Validator → Prop
+  | base {t T : BlockId} :
+      t ∈ topsOf U b (U.block t).creator → AdoptedUnder U b t T →
+      PedigreeVia U b t T []
+  | step {t T₁ T : BlockId} {l : List Validator} :
+      t ∈ topsOf U b (U.block t).creator → AdoptedUnder U b t T₁ →
+      PedigreeVia U b T₁ T l →
+      PedigreeVia U b t T ((U.block T₁).creator :: l)
+
+theorem pedigreeVia_top {b t T : BlockId} {l : List Validator}
+    (h : PedigreeVia U b t T l) : t ∈ topsOf U b (U.block t).creator := by
+  cases h with
+  | base htop _ => exact htop
+  | step htop _ _ => exact htop
+
+theorem pedigreeVia_nil_inv {b t T : BlockId} (h : PedigreeVia U b t T []) :
+    AdoptedUnder U b t T := by
+  cases h with
+  | base _ ha => exact ha
+
+theorem pedigreeVia_cons_inv {b t T : BlockId} {W : Validator} {l : List Validator}
+    (h : PedigreeVia U b t T (W :: l)) :
+    ∃ T₁, (U.block T₁).creator = W ∧ AdoptedUnder U b t T₁ ∧ PedigreeVia U b T₁ T l := by
+  cases h with
+  | step htop ha hrest => exact ⟨_, rfl, ha, hrest⟩
+
+/-- Every recorded author is realised by a top strictly above the subject,
+containing it — the nesting that keeps pedigree authors fresh. -/
+theorem pedigreeVia_spec {b : BlockId} (hb : b ∈ U.ids) {s T : BlockId}
+    {l : List Validator} (hped : PedigreeVia U b s T l) :
+    ∀ W ∈ l, ∃ s', s' ∈ history U b ∧ (U.block s').creator = W ∧
+      s' ∈ topsOf U b (U.block s').creator ∧ s ∈ history U s' ∧
+      (U.block s).round < (U.block s').round := by
+  induction hped with
+  | base _ _ => intro W hW; simp at hW
+  | @step t T₁ T l htop hadopt hrest ih =>
+      obtain ⟨j, hjb, hjT, hjc, htref⟩ := hadopt
+      have hT₁top := pedigreeVia_top hrest
+      have hT₁b : T₁ ∈ history U b := (mem_topsOf.mp hT₁top).1
+      have hT₁_ids : T₁ ∈ U.ids := history_subset_ids hb hT₁b
+      have hj_ids : j ∈ U.ids := history_subset_ids hb hjb
+      have htT₁ : t ∈ history U T₁ :=
+        history_subset_of_reaches hT₁_ids ((mem_history_iff hT₁_ids).mp hjT)
+          (mem_history_of_mem_refs hj_ids htref)
+      have hround_tj := U.round_of_mem_refs hj_ids htref
+      have hround_jT := round_le_of_mem_history hT₁_ids hjT
+      intro W hW
+      rcases List.mem_cons.mp hW with rfl | hWl
+      · exact ⟨T₁, hT₁b, rfl, hT₁top, htT₁, by omega⟩
+      · obtain ⟨s', hs'b, hs'c, hs'top, hTs', hTr⟩ := ih W hWl
+        have hs'_ids : s' ∈ U.ids := history_subset_ids hb hs'b
+        exact ⟨s', hs'b, hs'c, hs'top,
+          history_subset_of_reaches hs'_ids ((mem_history_iff hs'_ids).mp hTs') htT₁,
+          by omega⟩
+
+/-- Anchored determinism: given the anchor and the intermediate author list,
+the top is unique. -/
+theorem pedigreeVia_deterministic (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids)
+    {T : BlockId} (hT : T ∈ history U b) :
+    ∀ {l : List Validator} {t₁ t₂ : BlockId},
+      PedigreeVia U b t₁ T l → PedigreeVia U b t₂ T l →
+      (U.block t₁).creator = (U.block t₂).creator → t₁ = t₂ := by
+  intro l
+  induction l with
+  | nil =>
+      intro t₁ t₂ h₁ h₂ hc
+      exact adoptedUnder_unique hdos hb hT (pedigreeVia_top h₁) (pedigreeVia_top h₂) hc
+        (pedigreeVia_nil_inv h₁) (pedigreeVia_nil_inv h₂)
+  | cons W l ih =>
+      intro t₁ t₂ h₁ h₂ hc
+      obtain ⟨T₁, hW₁, ha₁, hrest₁⟩ := pedigreeVia_cons_inv h₁
+      obtain ⟨T₂, hW₂, ha₂, hrest₂⟩ := pedigreeVia_cons_inv h₂
+      have hTT : T₂ = T₁ := ih hrest₂ hrest₁ (hW₂.trans hW₁.symm)
+      subst hTT
+      have hT₂b : T₂ ∈ history U b := (mem_topsOf.mp (pedigreeVia_top hrest₁)).1
+      exact adoptedUnder_unique hdos hb hT₂b (pedigreeVia_top h₁) (pedigreeVia_top h₂)
+        hc ha₁ ha₂
+
+/-- **Anchored pedigrees exist.** The top of an *exposed* author climbs
+through exposed-author adopters to the first unexposed-author top — with the
+subject's author fresh throughout, and every recorded author exposed. -/
+theorem exists_pedigreeVia (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids) :
+    ∀ (n : ℕ) (t : BlockId), (U.block b).round - (U.block t).round ≤ n →
+      t ∈ topsOf U b (U.block t).creator → ExposedIn U b (U.block t).creator →
+      ∃ T l, T ∈ topsOf U b (U.block T).creator ∧
+        ¬ ExposedIn U b (U.block T).creator ∧
+        PedigreeVia U b t T l ∧ ((U.block t).creator :: l).Nodup ∧
+        ∀ W ∈ l, ExposedIn U b W := by
+  intro n
+  induction n with
+  | zero =>
+      intro t hfuel htop hexp
+      obtain ⟨htb, -, -⟩ := mem_topsOf.mp htop
+      have hle := round_le_of_mem_history hb htb
+      have heq : t = b := eq_of_mem_history_of_round_eq hb htb (by omega)
+      subst heq
+      exact absurd hexp (not_exposedIn_self_creator hdos hb)
+  | succ n ih =>
+      intro t hfuel htop hexp
+      have hbt : t ≠ b := by
+        intro h
+        subst h
+        exact not_exposedIn_self_creator hdos hb hexp
+      obtain ⟨htb, -, httop⟩ := mem_topsOf.mp htop
+      obtain ⟨j, hjb, htref⟩ := exists_referencer hb htb hbt
+      have hj_ids : j ∈ U.ids := history_subset_ids hb hjb
+      obtain ⟨T₁, hT₁top, hjT₁⟩ := exists_top_of_mem_history hb hjb rfl
+      have hT₁c : (U.block T₁).creator = (U.block j).creator := (mem_topsOf.mp hT₁top).2.1
+      have hT₁b : T₁ ∈ history U b := (mem_topsOf.mp hT₁top).1
+      have hT₁_ids := history_subset_ids hb hT₁b
+      have hround_tj := U.round_of_mem_refs hj_ids htref
+      have hround_jT := round_le_of_mem_history hT₁_ids hjT₁
+      have hround_Tb := round_le_of_mem_history hb hT₁b
+      have hT₁top' : T₁ ∈ topsOf U b (U.block T₁).creator := by
+        rw [hT₁c]; exact hT₁top
+      have hadopt : AdoptedUnder U b t T₁ := ⟨j, hjb, hjT₁, hT₁c.symm, htref⟩
+      by_cases hexp₁ : ExposedIn U b (U.block T₁).creator
+      · obtain ⟨T, l, hTtop, hTunexp, hped, hnodup, hexps⟩ :=
+          ih T₁ (by omega) hT₁top' hexp₁
+        have hfull : PedigreeVia U b t T ((U.block T₁).creator :: l) :=
+          .step htop hadopt hped
+        refine ⟨T, (U.block T₁).creator :: l, hTtop, hTunexp, hfull, ?_, ?_⟩
+        · rw [List.nodup_cons]
+          refine ⟨?_, hnodup⟩
+          intro hmem
+          obtain ⟨s', hs'b, hs'c, -, hts', hround⟩ := pedigreeVia_spec hb hfull _ hmem
+          have hs'_ids := history_subset_ids hb hs'b
+          have hne : t ≠ s' := by intro h; rw [h] at hround; omega
+          obtain ⟨q, hq, hqc, htq⟩ :=
+            exists_child_of_mem_history_of_creator_eq hdos hs'_ids hts' hs'c.symm hne
+          exact httop q
+            (history_subset_of_reaches hb ((mem_history_iff hb).mp hs'b) hq)
+            (hqc.trans hs'c) htq
+        · intro W hW
+          rcases List.mem_cons.mp hW with rfl | hWl
+          · exact hexp₁
+          · exact hexps W hWl
+      · exact ⟨T₁, [], hT₁top', hexp₁, .base htop hadopt, List.nodup_singleton _,
+          fun W hW => by simp at hW⟩
+
+/-- **The tightened top count.** With `e := |exposedTo U b|`, an exposed
+author has at most `(3f+1-e) · e^(e-1)` chains: one anchor per unexposed
+author, and intermediate authors drawn without repetition from the other
+exposed authors. -/
+theorem card_topsOf_le_of_exposed (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids)
+    {X : Validator} (hX : ExposedIn U b X) :
+    (topsOf U b X).card ≤
+      (3 * F.f + 1 - (exposedTo U b).card) *
+        (exposedTo U b).card ^ ((exposedTo U b).erase X).card := by
+  classical
+  set E' := (exposedTo U b).erase X with hE'
+  set m := E'.card with hm
+  -- totalised pedigree data
+  have hdata : ∀ t : BlockId, ∃ p : BlockId × List Validator,
+      t ∈ topsOf U b X →
+        p.1 ∈ topsOf U b (U.block p.1).creator ∧
+        ¬ ExposedIn U b (U.block p.1).creator ∧
+        PedigreeVia U b t p.1 p.2 ∧ p.2.Nodup ∧
+        ∀ W ∈ p.2, W ∈ E' := by
+    intro t
+    by_cases ht : t ∈ topsOf U b X
+    · have htc : (U.block t).creator = X := (mem_topsOf.mp ht).2.1
+      obtain ⟨T, l, hTtop, hTunexp, hped, hnodup, hexps⟩ :=
+        exists_pedigreeVia hdos hb _ t (le_refl _) (by rw [htc]; exact ht)
+          (by rw [htc]; exact hX)
+      rw [List.nodup_cons] at hnodup
+      refine ⟨(T, l), fun _ => ⟨hTtop, hTunexp, hped, hnodup.2, ?_⟩⟩
+      intro W hW
+      rw [hE', Finset.mem_erase]
+      refine ⟨?_, mem_exposedTo.mpr (hexps W hW)⟩
+      intro h
+      exact hnodup.1 (htc ▸ h ▸ hW)
+    · exact ⟨(b, []), fun h => absurd h ht⟩
+  choose dataP hdataP using hdata
+  have hlen : ∀ t, t ∈ topsOf U b X → (dataP t).2.length ≤ m := by
+    intro t ht
+    obtain ⟨-, -, -, hnd, hent⟩ := hdataP t ht
+    have hsub : (dataP t).2.toFinset ⊆ E' := by
+      intro W hW
+      exact hent W (List.mem_toFinset.mp hW)
+    have := Finset.card_le_card hsub
+    rwa [List.toFinset_card_of_nodup hnd] at this
+  -- injection: anchor author × entry encoding
+  have hinj : (topsOf U b X).card ≤
+      ((Finset.univ.filter fun W => ¬ ExposedIn U b W) ×ˢ
+        (Finset.univ : Finset (Fin m → Option {W // W ∈ E'}))).card := by
+    refine Finset.card_le_card_of_injOn (fun t =>
+      ((U.block (dataP t).1).creator,
+        fun k : Fin m =>
+          if hk : (k : ℕ) < (dataP t).2.length then
+            if hmem : (dataP t).2[(k : ℕ)] ∈ E' then
+              some ⟨(dataP t).2[(k : ℕ)], hmem⟩
+            else none
+          else none)) ?_ ?_
+    · intro t ht
+      rw [Finset.mem_coe] at ht
+      refine Finset.mem_coe.mpr (Finset.mem_product.mpr ⟨?_, Finset.mem_univ _⟩)
+      exact Finset.mem_filter.mpr ⟨Finset.mem_univ _, (hdataP t ht).2.1⟩
+    · intro t₁ h₁ t₂ h₂ heq
+      rw [Finset.mem_coe] at h₁ h₂
+      obtain ⟨hA₁top, hA₁unexp, hped₁, hnd₁, hent₁⟩ := hdataP t₁ h₁
+      obtain ⟨hA₂top, hA₂unexp, hped₂, hnd₂, hent₂⟩ := hdataP t₂ h₂
+      rw [Prod.mk.injEq] at heq
+      obtain ⟨hanchor, hfun⟩ := heq
+      -- anchors coincide: same unexposed author, one top each
+      have hA : (dataP t₁).1 = (dataP t₂).1 := by
+        have hA₂top' : (dataP t₂).1 ∈ topsOf U b (U.block (dataP t₁).1).creator := by
+          rw [hanchor]; exact hA₂top
+        have hcard := card_topsOf_le_one_of_not_exposedIn hdos hb hA₁unexp
+        rw [Finset.card_le_one] at hcard
+        exact hcard _ hA₁top _ hA₂top'
+      -- lists coincide: lengths first, then entries
+      have hlen₁ := hlen t₁ h₁
+      have hlen₂ := hlen t₂ h₂
+      have hleneq : (dataP t₁).2.length = (dataP t₂).2.length := by
+        by_contra hne
+        rcases Nat.lt_or_ge (dataP t₁).2.length (dataP t₂).2.length with hlt | hge
+        · have hk : (dataP t₁).2.length < m := by omega
+          have hthis := congrFun hfun ⟨(dataP t₁).2.length, hk⟩
+          simp only [Fin.val_mk] at hthis
+          rw [dif_neg (lt_irrefl _), dif_pos hlt,
+            dif_pos (hent₂ _ (List.getElem_mem _))] at hthis
+          simp at hthis
+        · have hlt : (dataP t₂).2.length < (dataP t₁).2.length := by omega
+          have hk : (dataP t₂).2.length < m := by omega
+          have hthis := congrFun hfun ⟨(dataP t₂).2.length, hk⟩
+          simp only [Fin.val_mk] at hthis
+          rw [dif_pos hlt, dif_neg (lt_irrefl _),
+            dif_pos (hent₁ _ (List.getElem_mem _))] at hthis
+          simp at hthis
+      have hlists : (dataP t₁).2 = (dataP t₂).2 := by
+        refine List.ext_getElem hleneq ?_
+        intro k hk₁ hk₂
+        have hkm : k < m := by omega
+        have hthis := congrFun hfun ⟨k, hkm⟩
+        simp only [Fin.val_mk] at hthis
+        rw [dif_pos hk₁, dif_pos hk₂,
+          dif_pos (hent₁ _ (List.getElem_mem _)), dif_pos (hent₂ _ (List.getElem_mem _))]
+          at hthis
+        exact congrArg Subtype.val (Option.some_injective _ hthis)
+      -- determinism closes it
+      have hcreator : (U.block t₁).creator = (U.block t₂).creator :=
+        ((mem_topsOf.mp h₁).2.1).trans ((mem_topsOf.mp h₂).2.1).symm
+      have hped₂' : PedigreeVia U b t₂ (dataP t₁).1 (dataP t₁).2 := by
+        rw [hA, hlists]; exact hped₂
+      exact pedigreeVia_deterministic hdos hb (mem_topsOf.mp hA₁top).1
+        hped₁ hped₂' hcreator
+  -- count the target
+  have hfilter : (Finset.univ.filter fun W => ¬ ExposedIn U b W).card
+      = 3 * F.f + 1 - (exposedTo U b).card := by
+    have hcompl : (Finset.univ.filter fun W => ¬ ExposedIn U b W)
+        = (exposedTo U b)ᶜ := by
+      ext W
+      simp [exposedTo, Finset.mem_compl]
+    rw [hcompl, Finset.card_compl, F.card_validators]
+  have hbase : m + 1 = (exposedTo U b).card := by
+    rw [hm, hE', Finset.card_erase_of_mem (mem_exposedTo.mpr hX)]
+    have : 0 < (exposedTo U b).card :=
+      Finset.card_pos.mpr ⟨X, mem_exposedTo.mpr hX⟩
+    omega
+  calc (topsOf U b X).card
+      ≤ ((Finset.univ.filter fun W => ¬ ExposedIn U b W) ×ˢ
+          (Finset.univ : Finset (Fin m → Option {W // W ∈ E'}))).card := hinj
+    _ = (3 * F.f + 1 - (exposedTo U b).card) *
+          (exposedTo U b).card ^ ((exposedTo U b).erase X).card := by
+        rw [Finset.card_product, Finset.card_univ, Fintype.card_fun,
+          Fintype.card_option, Fintype.card_coe, Fintype.card_fin, hfilter,
+          ← hE', ← hm, hbase]
+
+/-- **C1′, tightened.** The per-round contribution of any author to any
+history is at most `1 + 3f·f^(f-1)` — down from `(3f+2)^(3f+1)`. -/
+theorem card_historyBlocksOf_le' (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids)
+    (X : Validator) (n : ℕ) :
+    (historyBlocksOf U b X n).card ≤ 1 + 3 * F.f * F.f ^ (F.f - 1) := by
+  refine le_trans (card_historyBlocksOf_le_card_topsOf hdos hb X n) ?_
+  by_cases hX : ExposedIn U b X
+  · refine le_trans (card_topsOf_le_of_exposed hdos hb hX) ?_
+    have he : 1 ≤ (exposedTo U b).card :=
+      Finset.card_pos.mpr ⟨X, mem_exposedTo.mpr hX⟩
+    have hef : (exposedTo U b).card ≤ F.f := card_exposedTo_le hb
+    have hf1 : 1 ≤ F.f := le_trans he hef
+    have h1 : 3 * F.f + 1 - (exposedTo U b).card ≤ 3 * F.f := by omega
+    have h2 : (exposedTo U b).card ^ ((exposedTo U b).erase X).card
+        ≤ F.f ^ (F.f - 1) := by
+      have herase : ((exposedTo U b).erase X).card ≤ F.f - 1 := by
+        rw [Finset.card_erase_of_mem (mem_exposedTo.mpr hX)]
+        omega
+      calc (exposedTo U b).card ^ ((exposedTo U b).erase X).card
+          ≤ F.f ^ ((exposedTo U b).erase X).card := Nat.pow_le_pow_left hef _
+        _ ≤ F.f ^ (F.f - 1) := Nat.pow_le_pow_right hf1 herase
+    calc (3 * F.f + 1 - (exposedTo U b).card) *
+          (exposedTo U b).card ^ ((exposedTo U b).erase X).card
+        ≤ 3 * F.f * (F.f ^ (F.f - 1)) := Nat.mul_le_mul h1 h2
+      _ ≤ 1 + 3 * F.f * F.f ^ (F.f - 1) := by omega
+  · have := card_topsOf_le_one_of_not_exposedIn hdos hb hX
+    omega
+
+/-- **The tightened total.** `|H(b)| ≤ (3f+1 + 3f^(f+1))·(r+1)`: the
+unexposed authors contribute one chain each, the at-most-`f` exposed ones at
+most `3f·f^(f-1)` chains each. At `f = 1` this is `7(r+1)`, recovering the
+adoption theorem's constant exactly. -/
+theorem card_history_le' (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids) :
+    (history U b).card
+      ≤ (3 * F.f + 1 + 3 * F.f ^ (F.f + 1)) * ((U.block b).round + 1) := by
+  classical
+  set e := (exposedTo U b).card with he
+  have hef : e ≤ F.f := card_exposedTo_le hb
+  calc (history U b).card
+      = ∑ W ∈ Finset.univ,
+          ((history U b).filter fun i => (U.block i).creator = W).card :=
+        Finset.card_eq_sum_card_fiberwise (fun i _ => Finset.mem_univ _)
+    _ = (∑ W ∈ exposedTo U b,
+          ((history U b).filter fun i => (U.block i).creator = W).card)
+        + ∑ W ∈ (exposedTo U b)ᶜ,
+            ((history U b).filter fun i => (U.block i).creator = W).card :=
+        (Finset.sum_add_sum_compl _ _).symm
+    _ ≤ (∑ _W ∈ exposedTo U b, 3 * F.f * F.f ^ (F.f - 1) * ((U.block b).round + 1))
+        + ∑ _W ∈ (exposedTo U b)ᶜ, ((U.block b).round + 1) := by
+        refine Nat.add_le_add (Finset.sum_le_sum ?_) (Finset.sum_le_sum ?_)
+        · intro W hW
+          have hWexp : ExposedIn U b W := mem_exposedTo.mp hW
+          have hf1 : 1 ≤ F.f :=
+            le_trans (Finset.card_pos.mpr ⟨W, hW⟩) (card_exposedTo_le hb)
+          refine le_trans (card_filter_creator_le_card_topsOf hdos hb W) ?_
+          refine Nat.mul_le_mul_right _ ?_
+          refine le_trans (card_topsOf_le_of_exposed hdos hb hWexp) ?_
+          have h1 : 3 * F.f + 1 - (exposedTo U b).card ≤ 3 * F.f := by
+            have : 1 ≤ (exposedTo U b).card := Finset.card_pos.mpr ⟨W, hW⟩
+            omega
+          have h2 : (exposedTo U b).card ^ ((exposedTo U b).erase W).card
+              ≤ F.f ^ (F.f - 1) := by
+            have herase : ((exposedTo U b).erase W).card ≤ F.f - 1 := by
+              rw [Finset.card_erase_of_mem hW]
+              omega
+            calc (exposedTo U b).card ^ ((exposedTo U b).erase W).card
+                ≤ F.f ^ ((exposedTo U b).erase W).card :=
+                  Nat.pow_le_pow_left (card_exposedTo_le hb) _
+              _ ≤ F.f ^ (F.f - 1) := Nat.pow_le_pow_right hf1 herase
+          exact Nat.mul_le_mul h1 h2
+        · intro W hW
+          rw [Finset.mem_compl, mem_exposedTo] at hW
+          exact card_filter_creator_le hb hW
+    _ ≤ (3 * F.f ^ (F.f + 1)) * ((U.block b).round + 1)
+        + (3 * F.f + 1) * ((U.block b).round + 1) := by
+        refine Nat.add_le_add ?_ ?_
+        · rw [Finset.sum_const_nat (fun _ _ => rfl)]
+          rcases Nat.eq_zero_or_pos F.f with hf0 | hf1
+          · have he0 : e = 0 := by omega
+            rw [← he, he0]
+            simp
+          · calc e * (3 * F.f * F.f ^ (F.f - 1) * ((U.block b).round + 1))
+                ≤ F.f * (3 * F.f * F.f ^ (F.f - 1) * ((U.block b).round + 1)) :=
+                  Nat.mul_le_mul_right _ hef
+              _ = (3 * F.f ^ (F.f + 1)) * ((U.block b).round + 1) := by
+                  have hpow : F.f * (F.f * F.f ^ (F.f - 1)) = F.f ^ (F.f + 1) := by
+                    have : F.f ^ (F.f - 1) * F.f = F.f ^ (F.f - 1 + 1) :=
+                      (pow_succ F.f (F.f - 1)).symm
+                    have hsub : F.f - 1 + 1 = F.f := by omega
+                    calc F.f * (F.f * F.f ^ (F.f - 1))
+                        = F.f ^ (F.f - 1) * F.f * F.f := by ring
+                      _ = F.f ^ (F.f - 1 + 1) * F.f := by rw [this]
+                      _ = F.f ^ F.f * F.f := by rw [hsub]
+                      _ = F.f ^ (F.f + 1) := (pow_succ F.f F.f).symm
+                  calc F.f * (3 * F.f * F.f ^ (F.f - 1) * ((U.block b).round + 1))
+                      = 3 * (F.f * (F.f * F.f ^ (F.f - 1))) * ((U.block b).round + 1) := by
+                        ring
+                    _ = 3 * F.f ^ (F.f + 1) * ((U.block b).round + 1) := by rw [hpow]
+        · rw [Finset.sum_const_nat (fun _ _ => rfl), Finset.card_compl]
+          refine Nat.mul_le_mul_right _ ?_
+          have : Fintype.card Validator = 3 * F.f + 1 := F.card_validators
+          omega
+    _ = (3 * F.f + 1 + 3 * F.f ^ (F.f + 1)) * ((U.block b).round + 1) := by
+        rw [← Nat.add_mul]
+        congr 1
+        omega
 
 end LeanDag

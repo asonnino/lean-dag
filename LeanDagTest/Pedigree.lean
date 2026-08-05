@@ -1,4 +1,5 @@
 import LeanDagTest.TwoFaults
+import LeanDagTest.Exposure
 import LeanDag.Pedigree
 
 /-!
@@ -59,5 +60,52 @@ example : (history Ufault 19).card = 20 := by decide
 chain count exceeds the pedigree ceiling. -/
 example : ∀ X : Fin 7, (topsOf Ufault 19 X).card ≤ (3 * 2 + 2) ^ (3 * 2 + 1) :=
   fun X => card_topsOf_le_pow ufault_dosValid (by decide) X
+
+/-! ## The tightened constants
+
+Anchored pedigrees cut the ceilings by orders of magnitude. At `f = 2` with
+both equivocators exposed (`e = 2`):
+
+* per exposed author: `(3f+1-e)·e^(e-1) = 5·2 = 10` chains (actual: 2);
+* per author per round: `c(f) = 1 + 3f·f^(f-1) = 13` (was `8⁷ = 2 097 152`);
+* whole history: `(3f+1 + 3f^(f+1))·(r+1) = 31·4 = 124` (was `7·8⁷·4`);
+  actual: 20. -/
+
+/-- **The sharp per-author count applied**: validator 0's chains are bounded
+by `(3f+1-e)·e^(e-1) = 10`, and there are `2`. -/
+example : (topsOf Ufault 19 0).card ≤
+    (3 * Faults.f (Fin 7) + 1 - (exposedTo Ufault 19).card) *
+      (exposedTo Ufault 19).card ^ ((exposedTo Ufault 19).erase 0).card :=
+  card_topsOf_le_of_exposed ufault_dosValid (by decide) (by decide)
+
+example : (3 * Faults.f (Fin 7) + 1 - (exposedTo Ufault 19).card) *
+    (exposedTo Ufault 19).card ^ ((exposedTo Ufault 19).erase 0).card = 10 := by decide
+
+/-- **C1′, tightened, applied**: at most `13` blocks per author per round. -/
+example : ∀ n, (historyBlocksOf Ufault 19 0 n).card ≤
+    1 + 3 * Faults.f (Fin 7) * Faults.f (Fin 7) ^ (Faults.f (Fin 7) - 1) :=
+  fun n => card_historyBlocksOf_le' ufault_dosValid (by decide) 0 n
+
+example : 1 + 3 * Faults.f (Fin 7) * Faults.f (Fin 7) ^ (Faults.f (Fin 7) - 1) = 13 := by
+  decide
+
+/-- **The tightened total applied**: `20 ≤ 31·4`. -/
+example : (history Ufault 19).card ≤
+    (3 * Faults.f (Fin 7) + 1 + 3 * Faults.f (Fin 7) ^ (Faults.f (Fin 7) + 1))
+      * ((Ufault.block 19).round + 1) :=
+  card_history_le' ufault_dosValid (by decide)
+
+example : (3 * Faults.f (Fin 7) + 1 + 3 * Faults.f (Fin 7) ^ (Faults.f (Fin 7) + 1)) = 31 := by
+  decide
+
+/-- At `f = 1` the tightened total is exactly the adoption theorem's `7(r+1)`
+— on `Umerge`: `12 ≤ 7·4`. -/
+example : (history Umerge 12).card ≤
+    (3 * Faults.f (Fin 4) + 1 + 3 * Faults.f (Fin 4) ^ (Faults.f (Fin 4) + 1))
+      * ((Umerge.block 12).round + 1) :=
+  card_history_le' umerge_dosValid (by decide)
+
+example : (3 * Faults.f (Fin 4) + 1 + 3 * Faults.f (Fin 4) ^ (Faults.f (Fin 4) + 1)) = 7 := by
+  decide
 
 end LeanDagTest

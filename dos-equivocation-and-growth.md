@@ -939,11 +939,33 @@ round to any history** (`card_historyBlocksOf_le`) — and the general bound
 > `|H(b)| ≤ (3f+1) · c(f) · (r+1)` — linear in `r`, at every `f`
 > (`card_history_le`).
 
-`c(f)` is astronomically loose — at `f = 1` the adoption theorem's `7(r+1)`
-beats `4·5⁴·(r+1)` by three orders of magnitude, and the true constant is
-plausibly `O(f)` — but it is **constant in `r`**, which is all C1′ ever
-demanded: no compounding, at any fault budget. Tightening `c(f)` is a
-quantitative refinement (§12), not an open safety question.
+**Tightened.** The raw pedigree count wastes two facts, and anchored
+pedigrees (`PedigreeVia`) recover both. *An author with two chains is
+exposed* — both chains reach round 0 (D20) and collide there — so at most
+one top per unexposed author (`card_topsOf_le_one_of_not_exposedIn`), and
+only exposed authors, at most `f` of them, can branch at all. And *a
+pedigree can stop at its first unexposed-author adopter*: that adopter is
+the unique top of its author, so it anchors the determination as well as `b`
+does, and every intermediate author is exposed — `e - 1` choices per slot,
+`e := |exposedTo U b| ≤ f`, instead of `3f + 1`. The counts become, all
+proved:
+
+- per exposed author: `|topsOf U b X| ≤ (3f+1-e)·e^(e-1)`
+  (`card_topsOf_le_of_exposed`);
+- per author per round: **`c(f) = 1 + 3f·f^(f-1)`**
+  (`card_historyBlocksOf_le'`) — `4` at `f = 1`, `13` at `f = 2`, `82` at
+  `f = 3`, where the unanchored count gave `5⁴ = 625`, `8⁷ ≈ 2·10⁶`,
+  `11¹⁰ ≈ 2.6·10¹⁰`;
+- in total: **`|H(b)| ≤ (3f+1 + 3f^(f+1))·(r+1)`** (`card_history_le'`) —
+  at `f = 1` exactly the adoption theorem's `7(r+1)`, at `f = 2` a constant
+  of `31` against a D24 floor of `5r+1`.
+
+The residual gap to the plausible `O(f)` truth is the `f^(f-1)` factor: it
+counts nested adoption among the exposed authors as if every branching order
+were realisable, and whether cone-consistency across a *whole* pedigree
+forbids that is the remaining quantitative question (§12) — not an open
+safety one. Everything above is constant in `r`, which is all C1′ ever
+demanded: no compounding, at any fault budget.
 
 ## 11. Staging and witnesses
 
@@ -1394,6 +1416,11 @@ The whole development builds with no `sorry` and the usual three axioms.
 | — | the general top count: `≤ (3f+2)^(3f+1)` | `card_topsOf_le_pow` | `Pedigree` |
 | **C1′** | per-author per-round `≤ c(f)`, every `f` | `card_historyBlocksOf_le` | `Pedigree` |
 | **B2** | the general bound: `\|H(b)\| ≤ (3f+1)·c(f)·(r+1)` | `card_history_le` | `Pedigree` |
+| — | branching proves equivocation: unexposed = one chain | `card_topsOf_le_one_of_not_exposedIn` | `Pedigree` |
+| — | anchored pedigrees | `PedigreeVia`, `exists_pedigreeVia`, `pedigreeVia_deterministic` | `Pedigree` |
+| — | the sharp top count: `(3f+1-e)·e^(e-1)` | `card_topsOf_le_of_exposed` | `Pedigree` |
+| **C1′ sharp** | per-author per-round `≤ 1 + 3f·f^(f-1)` | `card_historyBlocksOf_le'` | `Pedigree` |
+| **B2 sharp** | `\|H(b)\| ≤ (3f+1 + 3f^(f+1))·(r+1)` | `card_history_le'` | `Pedigree` |
 
 Supporting definitions: `history` and `mem_history_iff` (S6, `History`);
 `ExposedIn`, `DoSValid`, `EquivPair` (`Exposure`); `Accepted` (`Acceptance`);
@@ -1444,14 +1471,16 @@ and `Ugrow` proves it with one new clause.
 
 ### Not yet proved
 
-Nothing. **C1′ is proved in full** (`card_historyBlocksOf_le`,
-`card_history_le`): it was false in the pre-S10 model — §10.5 constructs the
-laundering family — and under S10 it holds at every fault budget, with the
-sharp constant `6f+1` when at most one author is exposed (B1) and the loose
-but `r`-free `(3f+1)·(3f+2)^(3f+1)` in general (B2). What remains open is
-*quantitative only*: tightening `c(f)` toward its plausible `O(f)` truth
-(§12), and §12 Q1's network-layer rate limit, which bounds what no DAG
-condition can — the size of `U` itself.
+Nothing. **C1′ is proved in full and tightened**
+(`card_historyBlocksOf_le'`, `card_history_le'`): it was false in the
+pre-S10 model — §10.5 constructs the laundering family — and under S10 it
+holds at every fault budget: per author per round `≤ 1 + 3f·f^(f-1)`, in
+total `|H(b)| ≤ (3f+1 + 3f^(f+1))·(r+1)`, which at `f = 1` is exactly the
+adoption theorem's `7(r+1)`. What remains open is *quantitative only*: the
+`f^(f-1)` factor counts nested adoption among exposed authors as if every
+branching order were realisable, and closing the gap to the plausible
+`O(f)` truth is §12's question — along with Q1's network-layer rate limit,
+which bounds what no DAG condition can: the size of `U` itself.
 
 The gap C1′ has to close is visible on the witness rather than merely stated:
 validator 1, which block `9` references, contributes three blocks to `H(9)` —
