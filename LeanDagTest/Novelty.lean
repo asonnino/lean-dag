@@ -328,7 +328,7 @@ theorem dtwin_live : Live Utwin Dtwin 1 where
 round-1 block (block 7) hands validator 1 everything validator 3 ever
 accepted, and validator 3 accepted nothing Byzantine. -/
 example : (viewGap Dtwin 1 3 1).card ≤ Faults.f (Fin 4) * 0 :=
-  card_viewGap_succ_le_of_block (c := 7) dtwin_byz dtwin_delivers (le_refl 1)
+  card_viewGap_succ_le (c := 7) dtwin_byz dtwin_delivers (le_refl 1)
     (by decide) (by decide) (by decide) (by decide) (by decide)
 
 /-- **C3″ applied** — the constant hysteresis threshold: the merge block 8
@@ -355,7 +355,7 @@ example : (∀ r ≤ 1, Populated Utwin r) ∧
         (n - (1 + 1)) *
           ((Correct : Finset (Fin 4)).card * (Faults.f (Fin 4) * 0 + 1) +
             Faults.f (Fin 4) * 0) :=
-  no_stall_and_card_viewUpto_le dtwin_live dtwin_deliversQuorum dtwin_delivers
+  no_stall_and_card_viewUpto_le' dtwin_live dtwin_deliversQuorum dtwin_delivers
     dtwin_byz dtwin_refsAccepted
 
 /-! ## B4 on data — the pool, and full asynchrony -/
@@ -372,7 +372,7 @@ example : (viewUpto Dtwin 3 2).card ≤
     (Correct : Finset (Fin 4)).card * (2 + 1) +
       ((Correct : Finset (Fin 4)).card * Faults.f (Fin 4) +
         2 * ((Correct : Finset (Fin 4)).card * (Faults.f (Fin 4) * 0))) :=
-  card_viewUpto_le_of_refsAccepted dtwin_byz dtwin_refsAccepted (by decide) 2
+  card_viewUpto_le dtwin_byz dtwin_refsAccepted (by decide) 2
 
 /-- **The unconditional capstone applied**: liveness and linear storage
 under full asynchrony — `EventuallyDelivers` appears nowhere. -/
@@ -382,7 +382,7 @@ example : (∀ r ≤ 1, Populated Utwin r) ∧
         (Correct : Finset (Fin 4)).card * (n + 1) +
           ((Correct : Finset (Fin 4)).card * Faults.f (Fin 4) +
             n * ((Correct : Finset (Fin 4)).card * (Faults.f (Fin 4) * 0))) :=
-  no_stall_and_card_viewUpto_le' dtwin_live dtwin_deliversQuorum dtwin_byz
+  no_stall_and_card_viewUpto_le dtwin_live dtwin_deliversQuorum dtwin_byz
     dtwin_refsAccepted
 
 /-- **The headline applied** — `dos_resistance` from enforceable conditions

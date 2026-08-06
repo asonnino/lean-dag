@@ -127,7 +127,7 @@ theorem card_viewUpto_le_of_allExposed (hdos : DoSValid U)
           fun i => (U.block i).creator ∉ (Correct : Finset Validator)).card :=
         (Finset.card_filter_add_card_filter_not _).symm
     _ ≤ (Correct : Finset Validator).card * (n + 1) + (byzPool D (m + 1)).card :=
-        Nat.add_le_add (card_filter_correct_viewUpto_le v n) hbyzpart
+        Nat.add_le_add (card_viewUpto_filter_correct_le v n) hbyzpart
 
 /-- **B5, with the constant made explicit by the budget**: the frozen pool
 is at most `|Correct|·f·(1 + (m+1)·κ)`. The budget paces what an author

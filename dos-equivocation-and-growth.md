@@ -70,6 +70,17 @@ Absent any further condition, `|H(b)|` can grow *exponentially* in the
 round: each block may name `f` fresh Byzantine blocks one round down, and
 the branching compounds level by level.
 
+**Notation**, fixed for the whole document. `f` — the fault bound
+(`3f+1` validators, quorum `2f+1`); `r` — a block's round; `n` — a
+schedule round, at which a validator's state is measured; `H(b)` — the
+cone of block `b`; `V_v(n)` — validator `v`'s retained view at round `n`
+(Lean `viewUpto`); `U` — the universe of blocks correct validators held;
+`e` — the number of exposed authors in a cone; `R` — the
+eventual-synchrony stabilization round; `T` — the enforced acceptance
+budget, `κ` its analysis-side counterpart (every theorem composes with
+`κ := T`), and `Κ = f·κ + 1` — the derived threshold at which correct
+blocks are always affordable. `|S|` is the size of a finite set.
+
 **Condition 1 — DoS validity.** Say author `X` is **exposed** in `H(b)`
 when the cone contains two `X`-blocks at one round — an equivocation made
 visible. The condition:
@@ -129,7 +140,7 @@ reference discipline. Then, simultaneously:
 > **liveness** — no correct validator ever stalls: each has a block at
 > every round, to the horizon of the growth assumption; and
 > **linear storage** — every correct validator's view at round `n` obeys
-> `|V| ≤ |Correct|·(n+1) + |Correct|·f·(1 + n·T)`,
+> `|V_v(n)| ≤ |Correct|·(n+1) + |Correct|·f·(1 + n·T)`,
 
 from round 0, under full asynchrony — no global stabilization time appears
 in either hypothesis or conclusion, and no rule a validator runs consults
@@ -348,7 +359,8 @@ developed in §6 (*no amplification*).
 
 The question S4 prices the residual damage by: what is the biggest `|H(b)|`
 a round-`r` block can have and stay valid? Without any condition, nothing
-better than the layer recurrence `m_s ≤ (3f+1) + f·m_{s+1}` holds — each
+better than the layer recurrence `m_s ≤ (3f+1) + f·m_{s+1}` holds
+(writing `m_s` for the number of blocks of `H(b)` at round `s`) — each
 block may reference up to `f` fresh Byzantine blocks per level, and the
 recurrence compounds exponentially. Under `DoSValid` and validity the
 answer is **linear in `r` at every `f`**, with a per-round constant that
@@ -425,10 +437,11 @@ proved constraints cut the count and pin its shape:
   every round below it. Cones cannot be selectively blind; the miss budget
   is exactly `f`.
 - **Freshness**: a chain may adopt an author only while no chain of that
-  author sits anywhere in what it has already gathered. This prunes the
-  pedigree tree to `G(m) = m + Σ_{d<m} G(d) = 2^m − 1`.
+  author sits anywhere in what it has already gathered. With `e` exposed
+  authors to adopt among, this prunes the pedigree tree to
+  `G(e) = e + Σ_{d<e} G(d) = 2^e − 1`.
 
-And the `2^m` is attainable: the **doubling family** — an exposed helper
+And the exponential is attainable: the **doubling family** — an exposed helper
 author whose chains each carry a fresh chain of the doubled author to a
 different unexposed scaffold — yields `2^(e−2)` chains of a single author
 with only `e` exposed authors, in `O(e)` rounds, passing every proved
@@ -491,6 +504,10 @@ budget caps acceptances, in two sandwiching formulations:
 - `UniformBudget D T` — the **mechanism side**: every acceptance costs
   `≤ T`, author-blind. This is the rule a validator actually runs.
 
+Symbol convention: `κ` parameterizes analysis-side statements, `T` the
+enforced cap; every theorem below composes with `κ := T` through the
+sandwich, and `Κ` names the derived threshold `f·κ + 1` of C3″.
+
 `UniformBudget T → ByzBudget T` (dropping a guard weakens nothing), and
 post-`R` a `ByzBudget κ` schedule is uniformly budgeted at `f·κ + 1` with
 no guard (`uniform_of_byzBudget`) — equivalent up to one factor of `f`, the
@@ -511,7 +528,7 @@ steps:
   record of everything its author ever accepted**
   (`viewUpto_subset_history`). One such block delivered post-`R` erases
   the standing gap; what remains is one round of Byzantine budget:
-  `gap ≤ f·κ`, constant (`card_viewGap_succ_le_of_block`). The DAG is its
+  `gap ≤ f·κ`, constant (`card_viewGap_succ_le`). The DAG is its
   own repair channel.
 - **C3″ — the correct clause is derived.** After `R`, a validator
   enforcing only the Byzantine clause never meets a correct block costing
@@ -527,9 +544,9 @@ The one hypothesis this chain takes beyond `Delivery` is `RefsAccepted` —
 
 **Storage.** Two bounds, one per synchrony regime:
 
-- **B3′** (post-`R`, `card_viewUpto_le_of_byzBudget`): the view grows by at
+- **B3′** (post-`R`, `card_viewUpto_le'`): the view grows by at
   most `|Correct|·(f·κ+1) + f·κ` per round after `R`.
-- **B4** (unconditional, `card_viewUpto_le_of_refsAccepted`): the pre-`R`
+- **B4** (unconditional, `card_viewUpto_le`): the pre-`R`
   base is itself linear, with **no synchrony at all**. Every Byzantine
   block in any correct view entered through *some* correct validator's
   budgeted acceptance — a direct acceptance is priced `≤ κ`, and a block
@@ -703,7 +720,12 @@ not assumed. `RefsAccepted` is the one modelling hypothesis on the C3 side
 
 Every result with its Lean name. `LeanDag/` holds the theory,
 `LeanDagTest/` the witnesses; the whole development builds with no `sorry`
-and the usual three axioms.
+and the usual three axioms. Naming conventions: `card_X_le…` bounds
+`|X|`; `X_of_Y` derives `X` from the characteristic hypothesis `Y`; and a
+**primed** name is the post-`R` variant of its unprimed, asynchronous
+form — `card_viewUpto_le` / `card_viewUpto_le'`,
+`no_stall_and_card_viewUpto_le` / `'`, `dos_resistance` / `'` all pair
+this way.
 
 | | | | |
 |---|---|---|---|
@@ -755,16 +777,16 @@ and the usual three axioms.
 | **C1′ sharp** | per-author per-round `≤ 1 + 3f·f^(f-1)` | `card_historyBlocksOf_le'` | `Pedigree` |
 | **B2 sharp** | `\|H(b)\| ≤ (3f+1 + 3f^(f+1))·(r+1)` | `card_history_le'` | `Pedigree` |
 | **D25** | density: all but `f` correct per round appear | `card_missingAt_le` | `Density` |
-| — | novelty: the measure, antitone in the view | `novelty`, `novelty_anti`, `card_history_le_card_add` | `Novelty` |
+| — | novelty: the measure, antitone in the view | `novelty`, `novelty_anti`, `card_history_le_card_add_card_novelty` | `Novelty` |
 | **D26** | the telescope: stepwise novelty ⇒ linear history | `StepNovelty`, `card_history_le_of_stepNovelty` | `Novelty` |
 | — | the budget, both forms | `ByzBudget`, `UniformBudget`, `UniformBudget.byzBudget` | `Novelty` |
 | **C3a** | post-`R` cost of a correct block: one plus the gap | `viewGap`, `card_novelty_le_viewGap_add_one` | `Novelty` |
-| **C3′** | the gap collapses: `≤ f·κ`, constant after `R` | `viewUpto_subset_history`, `card_viewGap_succ_le_of_block` | `Novelty` |
+| **C3′** | the gap collapses: `≤ f·κ`, constant after `R` | `viewUpto_subset_history`, `card_viewGap_succ_le` | `Novelty` |
 | **C3″** | the correct clause is derived: `Κ = f·κ + 1` | `ByzBudget`, `card_novelty_le_of_byzBudget` | `Novelty` |
-| **B3′** | linear storage from the enforceable rule alone | `RefsAccepted`, `card_viewUpto_le_of_byzBudget` | `Novelty` |
-| — | the capstone: liveness ∧ storage, one hypothesis set | `no_stall_and_card_viewUpto_le` | `Novelty` |
-| **B4** | unconditional linear storage: no synchrony, from round 0 | `byzPool`, `card_byzPool_le`, `card_viewUpto_le_of_refsAccepted` | `Novelty` |
-| — | the capstone, asynchronous | `no_stall_and_card_viewUpto_le'` | `Novelty` |
+| **B3′** | linear storage from the enforceable rule alone | `RefsAccepted`, `card_viewUpto_le'` | `Novelty` |
+| — | the capstone, post-`R` incremental: liveness ∧ storage | `no_stall_and_card_viewUpto_le'` | `Novelty` |
+| **B4** | unconditional linear storage: no synchrony, from round 0 | `byzPool`, `card_byzPool_le`, `card_viewUpto_le` | `Novelty` |
+| — | the capstone, asynchronous | `no_stall_and_card_viewUpto_le` | `Novelty` |
 | — | the sandwich converse: uniform at `f·κ+1` post-`R` | `uniform_of_byzBudget` | `Novelty` |
 | — | **the headline**: DoS resistance from enforceable conditions only | `dos_resistance`, `dos_resistance'` | `Novelty` |
 | — | exposure-complete ⇒ acceptances turn correct | `AllExposed`, `accepted_correct_of_allExposed` | `Composition` |

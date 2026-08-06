@@ -9,9 +9,9 @@ import Mathlib.Algebra.Order.BigOperators.Group.Finset
 prove size**.
 
 §5 settles that inside the bare model the per-author chain count is
-`2^Θ(e)` — the doubling family is valid, and no acceptance rule on cone
-*shape* can refuse it without convicting correct blocks (the forced merge of
-`Utwin`). What distinguishes the family is invisible to any intrinsic
+exponential in the exposed count `e` from both sides — the doubling family
+is valid, and no acceptance rule on cone *shape* can refuse it without
+convicting correct blocks (the forced merge of `Utwin`). What distinguishes the family is invisible to any intrinsic
 predicate: its mass is *novel to the observer* — old blocks, never public,
 delivered in one reveal. So the rule this file formalizes is observer-
 relative: a block is measured by `novelty U V b := history U b \ V`, what
@@ -38,20 +38,20 @@ The layers, each usable without the ones after it:
   correct block's cone is a complete record of its author's acceptances
   (`viewUpto_subset_history` — `includes` per round, chained by S10), so
   one delivered block collapses the gap to one round of Byzantine budget
-  (C3′, `card_viewGap_succ_le_of_block`), and the hysteresis threshold is
+  (C3′, `card_viewGap_succ_le`), and the hysteresis threshold is
   the derived **constant** `Κ = f·κ + 1` (C3″,
   `card_novelty_le_of_byzBudget`) — the correct clause of the budget is a
   theorem, given only the Byzantine clause. The adversary's hidden mass
   appears nowhere, which is what makes the contagion attack of §6
-  harmless. B3′ (`card_viewUpto_le_of_byzBudget`) telescopes this into
+  harmless. B3′ (`card_viewUpto_le'`) telescopes this into
   post-`R` linear storage, and the capstone
-  `no_stall_and_card_viewUpto_le` adds liveness.
+  `no_stall_and_card_viewUpto_le'` adds liveness.
 * **B4** (unconditional). Even the post-`R` base is dispensable: the
   global Byzantine pool (`byzPool`) grows by at most `|Correct|·f·κ` per
   round with **no synchrony at all** — every Byzantine block in a correct
   view entered through some correct validator's budgeted acceptance — so
   storage is linear from round 0 under full asynchrony
-  (`card_viewUpto_le_of_refsAccepted`, `no_stall_and_card_viewUpto_le'`).
+  (`card_viewUpto_le`, `no_stall_and_card_viewUpto_le`).
 * **The headline.** `dos_resistance` and `dos_resistance'` restate the
   capstones from enforceable conditions only — `Live`, `DeliversQuorum`,
   `UniformBudget`, `RefsAccepted` — none of which consults an identity.
@@ -86,7 +86,7 @@ theorem novelty_anti (h : V ⊆ W) : novelty U W b ⊆ novelty U V b :=
   Finset.sdiff_subset_sdiff (Finset.Subset.refl _) h
 
 /-- A history costs at most the view plus the novelty. -/
-theorem card_history_le_card_add :
+theorem card_history_le_card_add_card_novelty :
     (history U b).card ≤ V.card + (novelty U V b).card := by
   refine le_trans (Finset.card_le_card (?_ : history U b ⊆ V ∪ novelty U V b)) ?_
   · intro i hi
@@ -143,7 +143,7 @@ private theorem card_history_le_of_stepNovelty_aux {κ' : ℕ}
       have h2 : (novelty U (history U p) b).card ≤ κ' := hstep b hb hcorr p hp hpc
       have h3 : (history U b).card ≤
           (history U p).card + (novelty U (history U p) b).card :=
-        card_history_le_card_add
+        card_history_le_card_add_card_novelty
       have hmul : κ' * (r + 1) = κ' * r + κ' := Nat.mul_succ κ' r
       omega
 
@@ -449,7 +449,7 @@ author has a current block (which L1 supplies), the divergence between two
 correct validators' views is at most **one round of Byzantine budget**:
 `w`'s round-`(n+1)` block hands `v` all of `viewUpto w n` at once, and the
 remainder is `w`'s budgeted Byzantine frontier. -/
-theorem card_viewGap_succ_le_of_block {κ R : ℕ} (hbyz : ByzBudget D κ)
+theorem card_viewGap_succ_le {κ R : ℕ} (hbyz : ByzBudget D κ)
     (hED : EventuallyDelivers D R) (hn : R ≤ n + 1)
     (hv : v ∈ (Correct : Finset Validator))
     (hw : w ∈ (Correct : Finset Validator)) {c : BlockId} (hc : c ∈ U.ids)
@@ -502,7 +502,7 @@ theorem card_novelty_le_of_byzBudget {κ R : ℕ} (hbyz : ByzBudget D κ)
     U.round_of_mem_refs hb hp
   exact (card_novelty_le_viewGap_add_one hED hn hv hb hrefs).trans
     (Nat.add_le_add_right
-      (card_viewGap_succ_le_of_block hbyz hED hn hv hbc hp_ids hpc (by omega)) 1)
+      (card_viewGap_succ_le hbyz hED hn hv hbc hp_ids hpc (by omega)) 1)
 
 /-! ## The capstone — liveness and storage from one set of hypotheses -/
 
@@ -546,7 +546,7 @@ correct validator's view grows by at most
 `|Correct|·(f·κ + 1) + f·κ` per round, under nothing but the Byzantine
 budget and the reference discipline: the correct side is supplied by
 C3″. -/
-theorem card_viewUpto_le_of_byzBudget {κ R : ℕ} (hbyz : ByzBudget D κ)
+theorem card_viewUpto_le' {κ R : ℕ} (hbyz : ByzBudget D κ)
     (hED : EventuallyDelivers D R) (hra : RefsAccepted D)
     (hv : v ∈ (Correct : Finset Validator)) {n : ℕ} (hn : R + 1 ≤ n) :
     (viewUpto D v n).card ≤ (viewUpto D v (R + 1)).card +
@@ -591,7 +591,7 @@ liveness never needs a Byzantine block (D15b, and post-`R` the quorum is
 derivable from the correct set alone,
 `card_creators_accepted_of_eventuallyDelivers`), and by C3″ enforcing the
 budget never defers a correct one. -/
-theorem no_stall_and_card_viewUpto_le {κ R N : ℕ} (H : Live U D N)
+theorem no_stall_and_card_viewUpto_le' {κ R N : ℕ} (H : Live U D N)
     (hd : DeliversQuorum D) (hED : EventuallyDelivers D R)
     (hbyz : ByzBudget D κ) (hra : RefsAccepted D) :
     (∀ r ≤ N, Populated U r) ∧
@@ -599,7 +599,7 @@ theorem no_stall_and_card_viewUpto_le {κ R N : ℕ} (H : Live U D N)
         (viewUpto D v n).card ≤ (viewUpto D v (R + 1)).card +
           (n - (R + 1)) *
             ((Correct : Finset Validator).card * (F.f * κ + 1) + F.f * κ) :=
-  ⟨no_stall H hd, fun _v hv _n hn => card_viewUpto_le_of_byzBudget hbyz hED hra hv hn⟩
+  ⟨no_stall H hd, fun _v hv _n hn => card_viewUpto_le' hbyz hED hra hv hn⟩
 
 /-! ## B4 — unconditional linear storage
 
@@ -630,7 +630,7 @@ theorem viewUpto_subset_ids : viewUpto D v n ⊆ U.ids := by
         exact history_subset_ids
           (D.held_spec v (n + 1) a (D.accepted_sub v (n + 1) ha)).1 hia
 
-theorem viewUpto_zero_eq : viewUpto D v 0 = D.accepted v 0 := by
+theorem viewUpto_zero : viewUpto D v 0 = D.accepted v 0 := by
   apply Finset.Subset.antisymm
   · intro i hi
     obtain ⟨a, ha, hia⟩ := Finset.mem_biUnion.mp hi
@@ -643,7 +643,7 @@ theorem viewUpto_zero_eq : viewUpto D v 0 = D.accepted v 0 := by
 
 /-- The correct part of a view counts itself: one block per correct author
 per round (`no_equivocation`), so at most `|Correct|·(n+1)`. -/
-theorem card_filter_correct_viewUpto_le (v : Validator) (n : ℕ) :
+theorem card_viewUpto_filter_correct_le (v : Validator) (n : ℕ) :
     ((viewUpto D v n).filter
       fun i => (U.block i).creator ∈ (Correct : Finset Validator)).card ≤
       (Correct : Finset Validator).card * (n + 1) := by
@@ -698,7 +698,7 @@ theorem card_byzPool_zero_le :
         Finset.card_biUnion_le
     _ ≤ ∑ _w ∈ (Correct : Finset Validator), F.f :=
         Finset.sum_le_sum fun w _ => by
-          rw [viewUpto_zero_eq]
+          rw [viewUpto_zero]
           exact card_filter_not_correct_le w 0
     _ = (Correct : Finset Validator).card * F.f :=
         Finset.sum_const_nat fun _ _ => rfl
@@ -786,7 +786,7 @@ the round: at most one block per correct author per round, plus the global
 Byzantine pool. This is the §6 pre-`R` conjecture, closed: the base the
 capstone measures from is itself linear, so the DoS bound holds from
 round 0 under full asynchrony. -/
-theorem card_viewUpto_le_of_refsAccepted {κ : ℕ} (hbyz : ByzBudget D κ)
+theorem card_viewUpto_le {κ : ℕ} (hbyz : ByzBudget D κ)
     (hra : RefsAccepted D) (hv : v ∈ (Correct : Finset Validator)) (n : ℕ) :
     (viewUpto D v n).card ≤
       (Correct : Finset Validator).card * (n + 1) +
@@ -807,14 +807,14 @@ theorem card_viewUpto_le_of_refsAccepted {κ : ℕ} (hbyz : ByzBudget D κ)
     _ ≤ (Correct : Finset Validator).card * (n + 1) +
           ((Correct : Finset Validator).card * F.f +
             n * ((Correct : Finset Validator).card * (F.f * κ))) :=
-        Nat.add_le_add (card_filter_correct_viewUpto_le v n)
+        Nat.add_le_add (card_viewUpto_filter_correct_le v n)
           (hbyzpart.trans (card_byzPool_le hbyz hra n))
 
 /-- **The capstone, unconditional.** `EventuallyDelivers` is gone: growth
 plus quorum delivery give liveness (L1 is asynchrony-only), and the
 enforceable budget plus the reference discipline give linear storage from
 round 0 — DoS resistance under full asynchrony, in one theorem. -/
-theorem no_stall_and_card_viewUpto_le' {κ N : ℕ} (H : Live U D N)
+theorem no_stall_and_card_viewUpto_le {κ N : ℕ} (H : Live U D N)
     (hd : DeliversQuorum D) (hbyz : ByzBudget D κ) (hra : RefsAccepted D) :
     (∀ r ≤ N, Populated U r) ∧
       ∀ v ∈ (Correct : Finset Validator), ∀ n,
@@ -822,7 +822,7 @@ theorem no_stall_and_card_viewUpto_le' {κ N : ℕ} (H : Live U D N)
           (Correct : Finset Validator).card * (n + 1) +
             ((Correct : Finset Validator).card * F.f +
               n * ((Correct : Finset Validator).card * (F.f * κ))) :=
-  ⟨no_stall H hd, fun _v hv n => card_viewUpto_le_of_refsAccepted hbyz hra hv n⟩
+  ⟨no_stall H hd, fun _v hv n => card_viewUpto_le hbyz hra hv n⟩
 
 /-! ## The headline — enforceable conditions only
 
@@ -850,7 +850,7 @@ theorem dos_resistance {T N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
           (Correct : Finset Validator).card * (n + 1) +
             ((Correct : Finset Validator).card * F.f +
               n * ((Correct : Finset Validator).card * (F.f * T))) :=
-  no_stall_and_card_viewUpto_le' H hd hu.byzBudget hra
+  no_stall_and_card_viewUpto_le H hd hu.byzBudget hra
 
 /-- The post-`R` incremental form of the headline: the same enforceable
 conduct, plus the network's `EventuallyDelivers`. -/
@@ -862,6 +862,6 @@ theorem dos_resistance' {T R N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
         (viewUpto D v n).card ≤ (viewUpto D v (R + 1)).card +
           (n - (R + 1)) *
             ((Correct : Finset Validator).card * (F.f * T + 1) + F.f * T) :=
-  no_stall_and_card_viewUpto_le H hd hED hu.byzBudget hra
+  no_stall_and_card_viewUpto_le' H hd hED hu.byzBudget hra
 
 end LeanDag
