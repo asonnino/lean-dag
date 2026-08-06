@@ -1244,6 +1244,17 @@ existing theorem survives verbatim. What is proved on top
   acceptances by enforcement, correct ones by C3″). Equivalent up to
   one factor of `f`: the exact price of author-blindness, paid in
   constants, never in theorems.
+- **The headline, enforceable-only** (`dos_resistance`, post-`R` form
+  `dos_resistance'`). The final statements quote nothing a validator
+  cannot implement. The hypothesis audit: `Live` (local conduct —
+  build on a held quorum, start at genesis), `DeliversQuorum` (L1's
+  minimal network assumption, asynchrony-safe), `UniformBudget T`
+  (local conduct — never accept anything over `T` novel blocks,
+  whoever signed it), `RefsAccepted` (local conduct — reference only
+  what you accepted). **No hypothesis consults `Correct`, `byzantine`,
+  or any identity**; the conclusion is liveness and linear storage
+  from round 0 under full asynchrony, with the budget parameter `T`
+  where the analysis-side theorems had `κ`.
 
 ## 11. Staging and witnesses
 
@@ -1759,6 +1770,7 @@ The whole development builds with no `sorry` and the usual three axioms.
 | — | the capstone, asynchronous | `no_stall_and_card_viewUpto_le'` | `Novelty` |
 | — | the mechanism-side budget, author-blind | `UniformBudget`, `UniformBudget.byzBudget`, `…noveltyBudget` | `Novelty` |
 | — | the sandwich converse: uniform at `f·κ+1` post-`R` | `uniform_of_byzBudget` | `Novelty` |
+| — | **the headline**: DoS resistance from enforceable conditions only | `dos_resistance`, `dos_resistance'` | `Novelty` |
 
 Supporting definitions: `history` and `mem_history_iff` (S6, `History`);
 `ExposedIn`, `DoSValid`, `EquivPair` (`Exposure`); `Accepted` (`Acceptance`);
@@ -1826,8 +1838,9 @@ frozen there forever at `κ = 0`, and the asynchronous capstone
 `no_stall_and_card_viewUpto_le'` applies with `EventuallyDelivers`
 nowhere in sight. The sandwich, too: the schedule satisfies the
 author-blind `UniformBudget Dtwin 3` (which discharges both guarded
-forms), and post-`R` the converse prices every acceptance at
-`f·κ + 1 = 1`, creator guard gone.
+forms), post-`R` the converse prices every acceptance at `f·κ + 1 = 1`
+with the creator guard gone, and the headline `dos_resistance` applies
+from the four enforceable hypotheses alone.
 
 The S10 repair itself touched only `Model.lean`:
 validator 3's blocks (and dependents) gained their self-parents, and three

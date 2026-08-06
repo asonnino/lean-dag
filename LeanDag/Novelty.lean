@@ -1006,4 +1006,44 @@ theorem no_stall_and_card_viewUpto_le' {κ N : ℕ} (H : Live U D N)
               n * ((Correct : Finset Validator).card * (F.f * κ))) :=
   ⟨no_stall H hd, fun _v hv n => card_viewUpto_le_of_refsAccepted hbyz hra hv n⟩
 
+/-! ## The headline — enforceable conditions only
+
+Every budget hypothesis above is discharged by the author-blind cap, so
+the final statements quote nothing a validator cannot implement. The
+hypothesis audit for `dos_resistance`:
+
+- `Live` — local conduct: build once you hold a quorum, start at genesis;
+- `DeliversQuorum` — L1's minimal network assumption, asynchrony-safe;
+- `UniformBudget T` — local conduct: never accept anything costing more
+  than `T` novel blocks, whoever signed it;
+- `RefsAccepted` — local conduct: reference only what you accepted.
+
+No hypothesis consults `Correct`, `byzantine`, or any identity. -/
+
+/-- **DoS resistance, from enforceable conditions only.** Liveness and
+linear storage from round 0 under full asynchrony; every hypothesis is
+local protocol conduct or a pure network assumption, and the author-blind
+cap replaces every creator-guarded budget. -/
+theorem dos_resistance {T N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
+    (hu : UniformBudget D T) (hra : RefsAccepted D) :
+    (∀ r ≤ N, Populated U r) ∧
+      ∀ v ∈ (Correct : Finset Validator), ∀ n,
+        (viewUpto D v n).card ≤
+          (Correct : Finset Validator).card * (n + 1) +
+            ((Correct : Finset Validator).card * F.f +
+              n * ((Correct : Finset Validator).card * (F.f * T))) :=
+  no_stall_and_card_viewUpto_le' H hd hu.byzBudget hra
+
+/-- The post-`R` incremental form of the headline: the same enforceable
+conduct, plus the network's `EventuallyDelivers`. -/
+theorem dos_resistance' {T R N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
+    (hED : EventuallyDelivers D R) (hu : UniformBudget D T)
+    (hra : RefsAccepted D) :
+    (∀ r ≤ N, Populated U r) ∧
+      ∀ v ∈ (Correct : Finset Validator), ∀ n, R + 1 ≤ n →
+        (viewUpto D v n).card ≤ (viewUpto D v (R + 1)).card +
+          (n - (R + 1)) *
+            ((Correct : Finset Validator).card * (F.f * T + 1) + F.f * T) :=
+  no_stall_and_card_viewUpto_le H hd hED hu.byzBudget hra
+
 end LeanDag

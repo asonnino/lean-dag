@@ -403,6 +403,18 @@ example : (∀ r ≤ 1, Populated Utwin r) ∧
   no_stall_and_card_viewUpto_le' dtwin_live dtwin_deliversQuorum dtwin_byz
     dtwin_refsAccepted
 
+/-- **The headline applied** — `dos_resistance` from enforceable conditions
+only: growth, quorum delivery, the author-blind cap at `T = 3`, and the
+reference discipline. Nothing in the hypotheses consults an identity. -/
+example : (∀ r ≤ 1, Populated Utwin r) ∧
+    ∀ v ∈ (Correct : Finset (Fin 4)), ∀ n,
+      (viewUpto Dtwin v n).card ≤
+        (Correct : Finset (Fin 4)).card * (n + 1) +
+          ((Correct : Finset (Fin 4)).card * Faults.f (Fin 4) +
+            n * ((Correct : Finset (Fin 4)).card * (Faults.f (Fin 4) * 3))) :=
+  dos_resistance dtwin_live dtwin_deliversQuorum dtwin_uniform
+    dtwin_refsAccepted
+
 #print axioms dtwin_budget
 #print axioms udouble_reveal_novelty
 #print axioms udouble_stepNovelty
