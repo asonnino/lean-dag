@@ -116,6 +116,17 @@ adversary's hidden mass is thereby repriced rather than forbidden: a
 exponentially many rounds to place, while correct storage grows linearly
 throughout.
 
+**No amplification.** A consequence worth stating on its own: a correct
+validator's entire outbound obligation is to publish its own block and
+serve that block's cone — which is, transitively, exactly its accepted
+set. Liveness consumes nothing else: no theorem ever requires a Byzantine
+block that no correct validator accepted to move anywhere, and everything
+held-but-never-accepted may be dropped with no effect. Since acceptance
+is budget-priced, the obligation is bounded — at most `f·T + 1` blocks
+per peer when a new block lands (C3″), linear cumulatively (B4) — so
+correct validators **dampen floods rather than relay them**: the
+acceptance decision is the amplification gate (§4, §6).
+
 Theorem B does not assume Condition 1 — the budget is a standalone
 defense — but the two compose (**B5**, §6): the budget alone bounds the
 Byzantine share of a view by a *rate*, `|Correct|·f·T` per round,
@@ -266,6 +277,20 @@ untouched, a correct leader still commits, commits still recur. The chain
 that matters end to end: exclusion bites → the correct set still meets
 `2f+1` (D15b) → blocks keep being produced → a post-`R` slot with a correct
 leader commits. Witnessed in full on `Uexcl` (§8).
+
+**What the network must move.** The chain above consumes only
+correct-authored blocks — `EventuallyDelivers` guards on the author being
+correct — together with their cones, which by the reference discipline are
+exactly the authors' accepted sets. No theorem assumes a Byzantine-authored
+block is ever delivered to anyone: Byzantine delivery is entirely the
+adversary's choice, and a block delivered to nobody is not in `U` and
+costs nothing (§1). Both extremes are witnessed: `ugrowHonest`
+(`LeanDagTest/Partial.lean`) discharges the liveness definitions with the
+Byzantine validator publishing nothing at all, and `Dtwin` (§8) has
+Byzantine blocks reaching some correct validators and not others. The
+consequence for relaying — a correct validator's outbound duty is its own
+block plus that block's cone, budget-bounded, and nothing else — is
+developed in §6 (*no amplification*).
 
 **Exclusion after `R` is total.**
 
@@ -524,6 +549,28 @@ term **constant**, and with the budget the constant is explicit:
 budget paces what an author can inject before being caught; exclusion
 ends it.
 
+**The relay obligation — correct validators never amplify.** Liveness
+consumes exactly two kinds of content: correct-authored blocks, and the
+cones of correct validators' acceptances (§4) — and a correct validator's
+outbound duty for both collapses to one act: *publish your own block, and
+serve its ancestry on request*. The cone of your block **is** your
+accepted set, transitively (`RefsAccepted`), and the self-parent chain
+aggregates every earlier round into your latest block
+(`viewUpto_subset_history`), so your acceptances reach every correct peer
+within one round of your next block, through the DAG itself — the
+containments inside C3′; no separate gossip of acceptances is needed, and
+assuming one would assume a theorem. The duty is priced before it is
+incurred: the sync a peer owes when your block lands is at most
+`f·κ + 1` (C3″), and your whole serveable store is B4's linear bound.
+Everything held but never accepted sits outside every correct cone, is
+required by no theorem, and may be dropped with no effect on liveness —
+**the acceptance decision is the amplification gate**. A flood sent to
+one correct validator dies there: either it is deferred — never accepted,
+never referenced, never owed to anyone — or it passes the budget, in
+which case it is small by definition. What no relay policy can prevent is
+*receiving* the flood in the first place; that inbound residue is §9's
+wire-level item, and it is inbound only.
+
 **Operationally** (not formalized — the model has no clocks): the round
 timer counts only budget-eligible blocks toward `2f+1`, so a deferred block
 never stalls it and after `R` correct tips alone satisfy it; the fetch
@@ -737,7 +784,9 @@ so each model is built to be non-vacuous in the way that matters.
   unbounded and undeduplicated in the model (S5). Flood resistance of the
   delivery layer itself is a statement about messages, not blocks, and was
   always going to live at the network layer. It is the only piece of the
-  DoS story outside the development.
+  DoS story outside the development — and it is **inbound only**: on the
+  outbound side, a correct validator relays nothing it did not accept, so
+  floods are never amplified (§6, *the relay obligation*).
 - **The quantitative gap in the bare-model constant.** `2^(e−1)` chains are
   constructible, `(3f+1−e)·e^(e−1)` is proved; closing to `2^(e−1)` needs
   set-determinism of anchored pedigrees (top determined by the *set* of
