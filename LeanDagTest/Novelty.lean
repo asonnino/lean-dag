@@ -267,8 +267,96 @@ hysteresis bound is `gap(R) + (n-R)·f·0 + 1 = 1`, and the merge block
 meets it exactly. No correct block is ever deferred. -/
 example : (novelty Utwin (viewUpto Dtwin 1 1) 8).card ≤
     (viewGap Dtwin 1 3 1).card + (1 - 1) * (Faults.f (Fin 4) * 0) + 1 :=
-  card_novelty_correct_le (v := 1) (w := 3) dtwin_budget dtwin_delivers
-    (le_refl 1) (by decide) (by decide) (by decide) (by decide)
+  card_novelty_correct_le (v := 1) (w := 3) dtwin_budget.byzBudget
+    dtwin_delivers (le_refl 1) (by decide) (by decide) (by decide) (by decide)
+
+/-! ## The collapse, the derived threshold, and the capstone -/
+
+/-- The enforceable half alone — what a validator actually runs. -/
+theorem dtwin_byz : ByzBudget Dtwin 0 := dtwin_budget.byzBudget
+
+/-- The reference discipline: every correct block of `Utwin` references
+exactly what its author accepted. -/
+theorem dtwin_refsAccepted : RefsAccepted Dtwin := by
+  intro w hw n b hb hbc hbr
+  by_cases h0 : n = 0
+  · subst h0
+    exact (by decide : ∀ w ∈ (Correct : Finset (Fin 4)), ∀ b ∈ Utwin.ids,
+      (Utwin.block b).creator = w → (Utwin.block b).round = 1 →
+      (Utwin.block b).refs ⊆ Dtwin.accepted w 0) w hw b hb hbc hbr
+  by_cases h1 : n = 1
+  · subst h1
+    exact (by decide : ∀ w ∈ (Correct : Finset (Fin 4)), ∀ b ∈ Utwin.ids,
+      (Utwin.block b).creator = w → (Utwin.block b).round = 2 →
+      (Utwin.block b).refs ⊆ Dtwin.accepted w 1) w hw b hb hbc hbr
+  · exfalso
+    have := twin_round_le b
+    omega
+
+/-- Quorum delivery: whenever a round carries a quorum of authors, every
+correct validator's acceptances do too. -/
+theorem dtwin_deliversQuorum : DeliversQuorum Dtwin := by
+  intro n hq v hv
+  by_cases h0 : n = 0
+  · subst h0
+    exact (by decide : ∀ v ∈ (Correct : Finset (Fin 4)),
+      2 * Faults.f (Fin 4) + 1 ≤
+        (creatorsOf Utwin.block (Dtwin.accepted v 0)).card) v hv
+  by_cases h1 : n = 1
+  · subst h1
+    exact (by decide : ∀ v ∈ (Correct : Finset (Fin 4)),
+      2 * Faults.f (Fin 4) + 1 ≤
+        (creatorsOf Utwin.block (Dtwin.accepted v 1)).card) v hv
+  by_cases h2 : n = 2
+  · subst h2
+    exact absurd hq (by decide)
+  · exfalso
+    obtain ⟨a, ha⟩ := Finset.card_pos.mp (lt_of_lt_of_le (by decide) hq)
+    obtain ⟨i, _, hir, _⟩ := mem_authorsAt.mp ha
+    have := twin_round_le i
+    omega
+
+/-- Growth to the horizon `N = 1`: every correct validator, holding its
+round-0 quorum, has its round-1 block. -/
+theorem dtwin_live : Live Utwin Dtwin 1 where
+  genesis := by
+    intro v hv
+    exact (by decide : ∀ v ∈ (Correct : Finset (Fin 4)), ∃ b ∈ Utwin.ids,
+      (Utwin.block b).creator = v ∧ (Utwin.block b).round = 0) v hv
+  builds := by
+    intro r hr v hv hq
+    obtain rfl : r = 0 := by omega
+    exact (by decide : ∀ v ∈ (Correct : Finset (Fin 4)),
+      2 * Faults.f (Fin 4) + 1 ≤
+        (creatorsOf Utwin.block (Dtwin.accepted v 0)).card →
+      ∃ b ∈ Utwin.ids, (Utwin.block b).creator = v ∧
+        (Utwin.block b).round = 0 + 1) v hv hq
+
+/-- **C3′ applied** — the gap collapses to `f·κ = 0`: validator 3's own
+round-1 block (block 7) hands validator 1 everything validator 3 ever
+accepted, and validator 3 accepted nothing Byzantine. -/
+example : (viewGap Dtwin 1 3 1).card ≤ Faults.f (Fin 4) * 0 :=
+  card_viewGap_succ_le_of_block (c := 7) dtwin_byz dtwin_delivers (le_refl 1)
+    (by decide) (by decide) (by decide) (by decide) (by decide)
+
+/-- **C3″ applied** — the constant hysteresis threshold: the merge block 8
+costs validator 1 at most `f·κ + 1 = 1`, met exactly. Derived from the
+Byzantine clause alone. -/
+example : (novelty Utwin (viewUpto Dtwin 1 1) 8).card ≤
+    Faults.f (Fin 4) * 0 + 1 :=
+  card_novelty_le_of_byzBudget (v := 1) dtwin_byz dtwin_delivers (le_refl 1)
+    (by decide) (by decide) (by decide) (by decide) (by decide)
+
+/-- **The capstone applied** — liveness and linear storage from one set of
+hypotheses, on data: `R = 1`, `N = 1`, `κ = 0`. -/
+example : (∀ r ≤ 1, Populated Utwin r) ∧
+    ∀ v ∈ (Correct : Finset (Fin 4)), ∀ n, 1 + 1 ≤ n →
+      (viewUpto Dtwin v n).card ≤ (viewUpto Dtwin v (1 + 1)).card +
+        (n - (1 + 1)) *
+          ((Correct : Finset (Fin 4)).card * (Faults.f (Fin 4) * 0 + 1) +
+            Faults.f (Fin 4) * 0) :=
+  no_stall_and_card_viewUpto_le dtwin_live dtwin_deliversQuorum dtwin_delivers
+    dtwin_byz dtwin_refsAccepted
 
 #print axioms dtwin_budget
 #print axioms udouble_reveal_novelty
