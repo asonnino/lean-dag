@@ -80,7 +80,12 @@ proof effort with no corresponding proof content.
    nothing whatsoever about the network, not even eventual delivery.
 
 3. A machine-checked **liveness** development above the structural condition, in
-   which no theorem mentions time.
+   which no theorem mentions time. Priority is not claimed: Qiu, Xiao and Shao
+   [QXS26] give machine-checked safety and liveness for Mysticeti in Rocq, by
+   refinement into LiDO-DAG. What is claimed is the *form* of the account —
+   theirs is operational, quantified over traces and instants; here liveness is
+   stated as a condition on the DAG, and the dependence on time is confined to a
+   single file (§6.8, §7.5).
 
 4. **Two independent derivations** of the structural property, from an abstract
    delivery model (§6.7) and from GST (§6.8), in each case together with the
@@ -100,8 +105,17 @@ proof effort with no corresponding proof content.
 
 ### 1.4 Scope and non-goals
 
-The development is deliberately bounded in four respects.
+The development is deliberately bounded in five respects.
 
+- **No pipelined leader schedule.** `Slots.spacing` (P6) places consecutive
+  leader slots at least three rounds apart, which is what makes every later slot
+  available as an anchor for the indirect rule (§3.4). Mysticeti as published
+  assigns a leader slot in *every* round, its logical views standing in
+  one-to-one correspondence with DAG rounds, and that pipelining is the source of
+  its latency claim. The object formalised here therefore has Mysticeti's
+  uncertified DAG and Mysticeti's commit rule under a Cordial-Miners-like leader
+  spacing. Everything stated is true of that object; the interleaving of
+  simultaneously undecided slots which pipelining creates is not treated.
 - **No cryptography.** Signatures, authentication and equivocation detection are
   outside the model. Non-equivocation of correct validators is a clause of the
   protocol (§4.1), recorded structurally (§2.3) and not enforced by a mechanism.
@@ -442,6 +456,40 @@ whenever the reliable set is of quorum size, since at most `f` of every `3f+1`
 consecutive leaders then lie outside it; `rrSlots` witnesses this with a window
 of `f + 1` (§8).
 
+**P8 deserves the most emphasis of any clause here**, and is easily mistaken for
+a routine one. It states that a correct validator holding a quorum at round `r`
+*has* a block at round `r+1`; equivalently, that correct validators do not
+advance past a round without building in it. Qiu, Xiao and Shao [QXS26] show
+this clause cannot be dropped: with honest validators free to jump over rounds,
+they exhibit an infinite execution of Mysticeti in which at most `2f`
+certificates are ever created for any round, so no slot is directly committed
+and — direct commitment being what the indirect rule rests on — nothing is
+committed at all. Their fix is a restriction on round-jumping; Starfish [PMV25]
+adds the same condition as pacemaker rule A2, requiring a validator to have
+created its round-`(r-1)` block before advancing to round `r`. The clause is also
+not automatic in practice: [QXS26] audited the Sui implementation and found it
+susceptible to exactly this attack.
+
+So P8 is the point at which the liveness development is conditional on something
+that deployed code has been observed not to satisfy. It is nonetheless a clause
+of the protocol in the sense of this section — a designer can implement it, and
+both cited works tell one how — which is why it appears here rather than in §4.3.
+The form assumed here is stronger than either published fix: `Live.builds`
+demands a block at every round unconditionally, where [QXS26] excuse a validator
+that has already decided round `r'-2`, and admit a *global catchup time* before
+which the rule need not hold. No minimality is claimed for the clause.
+
+P2 is a second place where the model does not simply transcribe the protocol.
+Mysticeti's validity check requires a block to cite `2f+1` *distinct* authors at
+the round below but does not forbid citing an equivocating author's second block
+as well; uniqueness of support is recovered instead by defining a supporter to be
+one that references the *first* leader-slot block among its references. P2
+forbids the duplicate citation outright, and uniqueness then follows without a
+tie-break — this is P2's sole use, in M5′ (§5.4). The two devices agree in
+effect, but P2 is the stronger requirement, and a reader comparing the model
+against a deployed implementation will find a validity condition Mysticeti does
+not impose.
+
 P5 deserves emphasis, since it is conventionally described as an assumption. It
 is a clause of the algorithm — a correct validator produces one block per round
 because that is what it was told to do — and it is the sole point at which the
@@ -509,6 +557,24 @@ It is stated as a hypothesis of L4 and L6 in order to keep those arguments free
 of temporal notions (§6.9), and supplied to them by the results above. §7
 discusses the formulation.
 
+**What "derived" does and does not mean here.** Both routes derive coverage from
+a network assumption *together with clauses of the protocol* — P7 on the delivery
+route, P9 on the timing route — and both are consumed by L4 alongside `Populated`,
+which comes from P8. The claim is therefore not that eventual DAG synchrony holds
+in any execution of any DAG protocol; it is that it need not be *postulated*
+separately, because the network assumption already standard in this literature,
+combined with build rules a designer controls, entails it.
+
+The distinction matters because the corresponding claims in the source literature
+have not survived scrutiny. Mysticeti's Lemma 8 and Cordial Miners' Proposition
+38 both assert that honest validators are synchronised after GST; [PMV25] reports
+that both leave gaps, and [QXS26] shows the gap is not merely expositional — with
+round-jumping unrestricted the conclusion is false. The present development is
+not exposed to that counterexample, but the reason is P8, which excludes
+round-jumping by fiat (§4.1). Read correctly, this is the stronger position: it
+identifies precisely which protocol clause the structural condition is bought
+with, rather than asserting the condition and leaving the price implicit.
+
 ### 4.5 Quantitative clauses
 
 The results of §6.10 require the following in addition. R1–R3 are further
@@ -523,6 +589,19 @@ of R4 is an assumption, and it concerns deployment rather than the network.
 | R4 | `∀ n, D₀ + Δ ≤ timeout n`, with round-`0` spread at most `D₀` | specification; `D₀` deployment | the wait bound `Delay(Δ)` |
 
 Every result of §5 and §6.1–§6.9 stands without them.
+
+**R4's deployment component is avoidable.** `driftFrom_of_prompt` shows drift is
+*preserved*, not established, so a bound on the round-`0` spread has to be
+supplied from outside; `D₀` is the only quantity in the development whose value
+depends on how validators are started rather than on the network or the
+specification. Starfish [PMV25] obtains the corresponding statement — its Lemma
+4, that honest validators enter every round past GST within Δ of each other — as
+a consequence of a further protocol clause rather than as a hypothesis: its rule
+B2 requires a validator to broadcast its unknown history on *advancing a round*,
+not only on creating a block. Adopting such a clause would discharge the
+round-`0` spread instead of assuming it, and would remove the only deployment
+assumption in §4. It is not adopted here, and B2 has no force in the present
+model in any case, since P8 makes advancement and block creation coincide.
 
 ---
 
@@ -912,6 +991,19 @@ theorem directCommit_of_leader_mem (hcard : 2 * F.f + 1 ≤ T.card)
 
 with `decided_of_leader_mem` giving the corresponding statement about `Decided`.
 
+The intermediate step, `certifies_of_synchronisedOn` — a correct round-`(r+2)`
+block certifies any correct round-`r` block — is the statement appearing as Lemma
+10 of Mysticeti, that after GST every honest validator eventually creates a
+certificate for a leader block created by an honest validator. That lemma is the
+one Sailfish identified as flawed and [QXS26] refuted outright. It is a theorem
+here, and its hypotheses show why: `PopulatedOn` at rounds `r+1` and `r+2`
+requires *every* validator of `T` to have a block at those rounds, and the
+counterexample of [QXS26] is precisely a countermodel to that, arranging for only
+`f+2` to `f+3` of the `2f+1` honest validators to build in any given round. The
+counterexample therefore refutes neither L4 nor anything else below; what it
+refutes is the availability of L4's hypothesis under Mysticeti as published, and
+so, in the terms of §4.1, it refutes P8 (§4.4).
+
 The argument consists of two applications of coverage and nothing further. Every
 correct round-`(r+1)` block references `L`, since `L` is correct-authored and
 coverage applies at round `r`; every correct round-`(r+2)` block references all
@@ -1166,6 +1258,19 @@ starting together give `D₀ = 0` and `Delay(Δ) = Δ`; validators started by a
 common broadcast give `D₀ ≤ Δ`, since the signal itself requires at most Δ to
 arrive. The factor of two is thus the cost of not possessing synchronised clocks.
 
+The value admits an external check. Starfish [PMV25], designing a pacemaker for
+this family rather than deriving a threshold, fixes its block-creation timeout at
+`δ_TO = 2Δ`; Mysticeti's own creation rule uses a timer of `2Δ` likewise. The
+constant obtained here as a derived requirement is thus the one independently
+arrived at as a design choice, and §6.8 supplies the reason the factor is two —
+`D₀ + Δ` with `D₀ ≤ Δ` under a common broadcast start.
+
+`Timing.populatedOn` is worth noting in the same connection: it supplies L4's
+population hypotheses from the `Timing` structure directly, because `Timing.blk`
+is total below the horizon. That totality is P8 in its strongest form — a block
+at every round, with no exception — and is what makes these statements
+independent of `Live` and L1.
+
 `Timing.populatedOn` supplies the three population hypotheses of L4 from the
 `Timing` structure itself, which already asserts a block per reliable validator
 per round below the horizon. These statements consequently require neither
@@ -1293,14 +1398,72 @@ statement above.
 
 ### 7.5 Related work
 
-> *[Editorial: position against (i) liveness arguments for DAG-BFT protocols as
-> conventionally presented — DAG-Rider, Narwhal/Bullshark, Mysticeti,
-> Shoal/Sailfish — identifying where the synchrony assumption is located in each;
-> (ii) partial synchrony in the sense of Dwork, Lynch and Stockmeyer, and the
-> standard GST/Δ formulation; (iii) mechanised consensus, and the level of
-> abstraction at which existing formalisations operate. The specific question to
-> settle is whether the synchrony assumption has previously been stated
-> structurally on the DAG rather than on message delivery.]*
+**Certified and uncertified DAGs.** In a certified DAG — DAG-Rider, Narwhal with
+Tusk or Bullshark [DKSS22, SGSK22], Sailfish [SSKN25] — a block is disseminated
+by reliable broadcast and enters the DAG carrying a quorum of signatures, so a
+reader may assume any block it sees is non-equivocated and available. The
+uncertified variant descends from Hashgraph [Bai16] and Blockmania [DH18],
+receives its modern form in Cordial Miners [KNPS23], and reaches its lowest
+latency in Mysticeti [Bab+25], which removes the wave structure of Cordial Miners
+by assigning a leader slot in every round. The trade is the one described in
+§1.1: certification disappears from the critical path, and equivocation and
+availability become the reader's problem.
+
+The uncertified structure has since been reused with one parameter varied at a
+time: Mahi-Mahi [Jov+24] under asynchrony, committing several leader slots per
+round; Odontoceti [Van25] at `n = 5f+1`, buying a two-round commit with a weaker
+fault threshold; Starfish [PMV25] with erasure-coded dissemination; Bluestreak
+[PVM26] with a sparse reference structure, which abandons the rule that every
+block cites a quorum below and so falls outside the present model. Shoal++
+[Aru+25] argues from the certified side that certification is not the cause of
+latency, and hybridises by committing anchors on `2f+1` uncertified proposals.
+
+**Where the synchrony assumption is located.** In each of the above the
+assumption is stated per message, in the sense of Dwork, Lynch and Stockmeyer
+[DLS88]: beyond GST a message between correct parties arrives within Δ. The
+consequence noted in §1.2 is that every subsequent statement is quantified over
+instants. The present formulation instead states the assumption on the DAG, and
+§6.7 and §6.8 derive it from the conventional one. The author is not aware of a
+prior structural formulation, though the property itself is asserted repeatedly:
+Mysticeti's Lemma 8 and Cordial Miners' Proposition 38 both claim post-GST
+synchronisation of honest validators, and it is exactly these claims that
+[PMV25] reports as gapped and [QXS26] refutes.
+
+**Mechanised consensus.** Safety-only verification of DAG protocols exists in
+TLA+ with TLAPS [Ber+24], covering DAG-Rider, Cordial Miners, Hashgraph, an
+Aleph variant and eventually synchronous Bullshark, with a modular separation of
+DAG construction from ordering. LiDO-DAG [QXS25] provides mechanised safety and
+liveness in Rocq for Narwhal, Bullshark and Sailfish — all certified. The work
+closest to the present development is [QXS26], which extends that framework to
+Mysticeti itself and is discussed at length in §4.1, §4.4 and §6.6. Two
+differences of method are worth recording. Theirs is an operational model: a
+transition system over traces, with segmented traces encoding the unreliability
+of timers before GST, and liveness reduced to safety properties of an abstract
+pacemaker by refinement. The account here is structural, and no theorem above
+§6.8 mentions time. The benefit of the structural style is visible in §6.6: the
+dependence of liveness on the round-jumping clause surfaces as a named hypothesis
+of a single lemma rather than as a condition inside a transition relation. The
+cost is that the theorems of [QXS26] cannot be stated here at all, "within
+bounded time" not being expressible in this vocabulary (§9).
+
+**References.**
+
+- [Aru+25] B. Arun, Z. Li, F. Suri-Payer, S. Das, A. Spiegelman. *Shoal++: High Throughput DAG BFT Can Be Fast and Robust!* NSDI 2025. arXiv:2405.20488.
+- [Bab+25] K. Babel, A. Chursin, G. Danezis, A. Kichidis, L. Kokoris-Kogias, A. Koshy, A. Sonnino, M. Tian. *Mysticeti: Reaching the Limits of Latency with Uncertified DAGs.* NDSS 2025. arXiv:2310.14821.
+- [Bai16] L. Baird. *The Swirlds Hashgraph Consensus Algorithm.* Swirlds Tech Report SWIRLDS-TR-2016-01, 2016.
+- [Ber+24] N. Bertrand, P. Ghorpade, S. Rubin, B. Scholz, P. Subotic. *Reusable Formal Verification of DAG-based Consensus Protocols.* arXiv:2407.02167.
+- [DH18] G. Danezis, D. Hrycyszyn. *Blockmania: from Block DAGs to Consensus.* arXiv:1809.01620.
+- [DKSS22] G. Danezis, L. Kokoris-Kogias, A. Sonnino, A. Spiegelman. *Narwhal and Tusk: a DAG-based Mempool and Efficient BFT Consensus.* EuroSys 2022.
+- [DLS88] C. Dwork, N. Lynch, L. Stockmeyer. *Consensus in the Presence of Partial Synchrony.* JACM 35(2), 1988.
+- [Jov+24] P. Jovanovic, L. Kokoris-Kogias, B. Kumara, A. Sonnino, P. Tennage, I. Zablotchi. *Mahi-Mahi: Low-Latency Asynchronous BFT DAG-Based Consensus.* arXiv:2410.08670.
+- [KNPS23] I. Keidar, O. Naor, O. Poupko, E. Shapiro. *Cordial Miners: Fast and Efficient Consensus for Every Eventuality.* DISC 2023, LIPIcs 281.
+- [PMV25] N. Polyanskii, S. Mueller, I. Vorobyev. *Making Uncertified DAG BFT Provably Live with Linear Payload and Quadratic Metadata Communication* (Starfish). IACR ePrint 2025/567.
+- [PVM26] N. Polyanskii, I. Vorobyev, S. Mueller. *Bluestreak: Scaling DAG BFT by Sparsifying Metadata.* IACR ePrint 2026/898.
+- [QXS25] L. Qiu, J. Xiao, J.-Y. Shin, Z. Shao. *LiDO-DAG: A Framework for Verifying Safety and Liveness of DAG-Based Consensus Protocols.* PACMPL 9(PLDI), Article 203, 2025. doi:10.1145/3729306.
+- [QXS26] L. Qiu, J. Xiao, Z. Shao. *Mechanized Safety and Liveness Proofs for the Mysticeti Consensus Protocol under the LiDO-DAG Framework.* IEEE S&P 2026, 149–168.
+- [SGSK22] A. Spiegelman, N. Giridharan, A. Sonnino, L. Kokoris-Kogias. *Bullshark: DAG BFT Protocols Made Practical.* CCS 2022.
+- [SSKN25] N. Shrestha, R. Shrothrium, A. Kate, K. Nayak. *Sailfish: Towards Improving the Latency of DAG-based BFT.* IEEE S&P 2025. ePrint 2024/472.
+- [Van25] P. Vander Vos. *Odontoceti: Ultra-Fast DAG Consensus with Two Round Commitment.* MSc thesis, arXiv:2510.01216.
 
 ---
 
@@ -1373,6 +1536,26 @@ be anticipated.
 
 **Block-level total order.** The blocks released by a single commit are not
 ordered among themselves, for the reason given in §5.6.
+
+**No liveness below P8.** Every liveness result here is conditional on P8, and
+nothing is offered for executions violating it. [QXS26] proves a *weak liveness*
+result which is not: without any restriction on round-jumping, every leader block
+created by an honest validator after GST acquires at least `f+1` certificates
+from honest validators, so it can never be indirectly skipped, only left
+undecided. The corresponding statement is not available here, and the obstruction
+is identifiable. Density (L0) yields `2f+1` distinct authors at round `r+1`
+whenever the DAG reaches above it, hence `f+1` *correct* authors, and coverage
+makes each of their blocks reference the leader — so `f+1` correct **supporters**
+is within reach from L0 and `SynchronisedOn` alone, with neither `Populated` nor
+P8. A certificate, however, requires `2f+1` distinct supporters, and
+`SynchronisedOn` is honest-to-honest (§6.6), so the remaining `f` cannot be
+obtained; reaching `2f+1` supporters requires `2f+1` correct authors at `r+1`,
+which is `Populated` again. [QXS26] bridges the gap with a *predecessor rule* —
+a validator creating a block must make it a supporter and a certificate where it
+can — for which this model has no counterpart, P7 constraining what a validator
+cites given what it holds but not obliging a quorum of supporters to exist. The
+supporter-level statement is therefore the available result, and it is not their
+theorem.
 
 **Certified DAGs.** The certified variant, in which a certificate round is
 explicit, is outside the scope of the present development.
