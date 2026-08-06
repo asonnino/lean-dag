@@ -1233,6 +1233,17 @@ existing theorem survives verbatim. What is proved on top
   `|V_v(n)| ≤ |Correct|·(n+1) + |Correct|·f·(1 + n·κ)` holds under full
   asynchrony — `EventuallyDelivers` appears nowhere. DoS resistance is
   not a post-GST property.
+- **The mechanism-side budget** (`UniformBudget`). `ByzBudget`'s
+  `creator ∉ Correct` guard is not something a validator evaluates — it
+  is analysis bookkeeping, there so the theorems assume less than they
+  prove. What a validator runs is the guard-free, author-blind cap:
+  every acceptance `≤ T`. The two formulations **sandwich**:
+  `UniformBudget T → ByzBudget T` (dropping a guard weakens nothing),
+  and post-`R` a `ByzBudget κ` schedule is uniformly budgeted at
+  `f·κ + 1` with no guard (`uniform_of_byzBudget` — Byzantine
+  acceptances by enforcement, correct ones by C3″). Equivalent up to
+  one factor of `f`: the exact price of author-blindness, paid in
+  constants, never in theorems.
 
 ## 11. Staging and witnesses
 
@@ -1667,6 +1678,12 @@ together:
   correct block's cone is a complete record of its author's acceptances
   (`viewUpto_subset_history`) and so collapses the gap on delivery.
 
+- The **enforced form is guard-free** (`UniformBudget`): what a validator
+  runs never consults identity — `ByzBudget`'s creator guard is analysis
+  bookkeeping, and the two formulations sandwich within one factor of `f`
+  (`uniform_of_byzBudget`). No mechanism in the development ever branches
+  on `Correct`.
+
 One modelling hypothesis appears on the C3 side only: `RefsAccepted` —
 `refs ⊆ accepted`, the converse of `includes`, D3's ordinary case: a
 correct validator references only what it accepted. It becomes a candidate
@@ -1740,6 +1757,8 @@ The whole development builds with no `sorry` and the usual three axioms.
 | — | the capstone: liveness ∧ storage, one hypothesis set | `no_stall_and_card_viewUpto_le` | `Novelty` |
 | **B4** | unconditional linear storage: no synchrony, from round 0 | `byzPool`, `card_byzPool_le`, `card_viewUpto_le_of_refsAccepted` | `Novelty` |
 | — | the capstone, asynchronous | `no_stall_and_card_viewUpto_le'` | `Novelty` |
+| — | the mechanism-side budget, author-blind | `UniformBudget`, `UniformBudget.byzBudget`, `…noveltyBudget` | `Novelty` |
+| — | the sandwich converse: uniform at `f·κ+1` post-`R` | `uniform_of_byzBudget` | `Novelty` |
 
 Supporting definitions: `history` and `mem_history_iff` (S6, `History`);
 `ExposedIn`, `DoSValid`, `EquivPair` (`Exposure`); `Accepted` (`Acceptance`);
@@ -1805,7 +1824,10 @@ single application — closes it. B4 on the same data: the global pool is
 exactly the two accepted equivocation halves, `byzPool Dtwin = {0, 4}`,
 frozen there forever at `κ = 0`, and the asynchronous capstone
 `no_stall_and_card_viewUpto_le'` applies with `EventuallyDelivers`
-nowhere in sight.
+nowhere in sight. The sandwich, too: the schedule satisfies the
+author-blind `UniformBudget Dtwin 3` (which discharges both guarded
+forms), and post-`R` the converse prices every acceptance at
+`f·κ + 1 = 1`, creator guard gone.
 
 The S10 repair itself touched only `Model.lean`:
 validator 3's blocks (and dependents) gained their self-parents, and three

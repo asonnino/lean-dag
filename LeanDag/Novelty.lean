@@ -250,6 +250,29 @@ theorem NoveltyBudget.byzBudget {κ Κ : ℕ} (h : NoveltyBudget D κ Κ) :
   have := h v hv n b hb
   rwa [if_neg hbc] at this
 
+/-- **The mechanism-side budget** — the rule a validator actually runs: a
+guard-free cap on every acceptance, author-blind. `ByzBudget`'s creator
+guard is analysis bookkeeping (assume only what is enforced, prove the
+rest), never something a validator evaluates: enforcing the cap on
+everyone enforces it on the Byzantine authors (`UniformBudget.byzBudget`),
+and post-`R` the converse holds at `f·κ + 1` (`uniform_of_byzBudget`
+below) — the two formulations sandwich within one factor of `f`, the
+exact price of author-blindness. -/
+def UniformBudget (D : Delivery U) (T : ℕ) : Prop :=
+  ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ D.accepted v (n + 1),
+    (novelty U (viewUpto D v n) b).card ≤ T
+
+/-- Dropping a guard weakens nothing: the author-blind cap implies the
+Byzantine-side budget with the same constant. -/
+theorem UniformBudget.byzBudget {T : ℕ} (h : UniformBudget D T) :
+    ByzBudget D T := fun v hv n b hb _ => h v hv n b hb
+
+/-- A uniform cap is the two-tier budget with both tiers equal. -/
+theorem UniformBudget.noveltyBudget {T : ℕ} (h : UniformBudget D T) :
+    NoveltyBudget D T T := fun v hv n b hb => by
+  rw [ite_self]
+  exact h v hv n b hb
+
 omit [DecidableEq BlockId] in
 /-- One acceptance per author: the frontier splits into at most `|Correct|`
 correct-authored blocks… -/
@@ -672,6 +695,33 @@ def RefsAccepted (D : Delivery U) : Prop :=
   ∀ w ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ U.ids,
     (U.block b).creator = w → (U.block b).round = n + 1 →
     (U.block b).refs ⊆ D.accepted w n
+
+/-- **The sandwich, converse direction.** After `R`, a `ByzBudget κ`
+schedule is uniformly budgeted at `f·κ + 1` with **no creator guard**:
+Byzantine acceptances by enforcement, correct ones by C3″. Together with
+`UniformBudget.byzBudget` this makes the guard-free and guarded
+formulations equivalent up to one factor of `f` — a validator that runs
+the author-blind cap loses only constants, never theorems. -/
+theorem uniform_of_byzBudget {κ R : ℕ} (hbyz : ByzBudget D κ)
+    (hED : EventuallyDelivers D R) (hra : RefsAccepted D)
+    (hv : v ∈ (Correct : Finset Validator)) {n : ℕ} (hn : R ≤ n + 1)
+    (hb : b ∈ D.accepted v (n + 2)) :
+    (novelty U (viewUpto D v (n + 1)) b).card ≤ F.f * κ + 1 := by
+  obtain ⟨hb_ids, hb_round⟩ :=
+    D.held_spec v (n + 2) b (D.accepted_sub v (n + 2) hb)
+  by_cases hbc : (U.block b).creator ∈ (Correct : Finset Validator)
+  · exact card_novelty_le_of_byzBudget hbyz hED hn hv hb_ids hbc hb_round
+      (hra (U.block b).creator hbc (n + 1) b hb_ids rfl hb_round)
+  · have h1 := hbyz v hv (n + 1) b hb hbc
+    have hf : 0 < F.f := by
+      have hmem : (U.block b).creator ∈ F.byzantine := by
+        by_contra hcon
+        exact hbc (mem_correct.mpr hcon)
+      have hpos := Finset.card_pos.mpr ⟨_, hmem⟩
+      have := F.card_byzantine
+      omega
+    have := Nat.le_mul_of_pos_left κ hf
+    omega
 
 /-- **B3′ — linear storage from the enforceable rule alone.** After `R`, a
 correct validator's view grows by at most

@@ -275,6 +275,16 @@ example : (novelty Utwin (viewUpto Dtwin 1 1) 8).card ≤
 /-- The enforceable half alone — what a validator actually runs. -/
 theorem dtwin_byz : ByzBudget Dtwin 0 := dtwin_budget.byzBudget
 
+/-- **The author-blind cap, satisfied**: every acceptance of the schedule —
+correct or Byzantine, no creator guard anywhere — costs at most 3. -/
+theorem dtwin_uniform : UniformBudget Dtwin 3 := fun v hv n b hb => by
+  have := dtwin_budget v hv n b hb
+  split at this <;> omega
+
+-- The forward sandwich: the guard-free cap discharges both guarded forms.
+example : ByzBudget Dtwin 3 := dtwin_uniform.byzBudget
+example : NoveltyBudget Dtwin 3 3 := dtwin_uniform.noveltyBudget
+
 /-- The reference discipline: every correct block of `Utwin` references
 exactly what its author accepted. -/
 theorem dtwin_refsAccepted : RefsAccepted Dtwin := by
@@ -346,6 +356,14 @@ example : (novelty Utwin (viewUpto Dtwin 1 1) 8).card ≤
     Faults.f (Fin 4) * 0 + 1 :=
   card_novelty_le_of_byzBudget (v := 1) dtwin_byz dtwin_delivers (le_refl 1)
     (by decide) (by decide) (by decide) (by decide) (by decide)
+
+/-- **The converse sandwich applied**: post-`R` the `ByzBudget 0` schedule
+is uniformly budgeted at `f·0 + 1 = 1`, creator guard gone — every round-2
+acceptance, whoever signed it, costs at most 1. -/
+example : (novelty Utwin (viewUpto Dtwin 1 1) 8).card ≤
+    Faults.f (Fin 4) * 0 + 1 :=
+  uniform_of_byzBudget (v := 1) dtwin_byz dtwin_delivers dtwin_refsAccepted
+    (by decide) (le_refl 1) (by decide)
 
 /-- **The capstone applied** — liveness and linear storage from one set of
 hypotheses, on data: `R = 1`, `N = 1`, `κ = 0`. -/
