@@ -1056,9 +1056,130 @@ coexist under one anchor), but the general set-determinism claim resisted
 proof and may need refinement. What is **settled** is the shape: `c(f)` is
 `2^Θ(e)` — no additional assumption can be avoided to get polynomial,
 because the doubling family is valid under all of them. A polynomial bound
-therefore requires *changing the model*: a fetch bound (§12 Q1), an
-acceptance policy that refuses blocks whose histories contain exposures
-(rejected as S9 for other reasons), or reconfiguration (Q3).
+therefore requires *changing the model*: a fetch bound (§12 Q1, now
+designed as the novelty budget of §10.7), an acceptance policy that
+refuses blocks whose histories contain exposures (rejected as S9 for
+other reasons), or reconfiguration (Q3).
+
+### 10.7 The novelty budget: the rate limit, designed
+
+§10.6 ends at a fork: inside the model the truth is `2^Θ(e)`, and a
+polynomial bound requires changing the model. This section records the
+change we believe is right, worked to the point where the Lean
+statements are visible, before any of it is built. The slogan the whole
+design keeps returning to: **legislate novelty, prove size**.
+
+**The shape of the hidden mass.** Per block, the doubling family is
+unimpeachable — rounds contiguous, quorums full, every cone clean about
+what it names. What is anomalous is where the mass sits *relative to
+the observer*: the excess blocks are old — most of `Udouble`'s live at
+round 0 — and appear in no block any correct validator has ever held.
+The reveal delivers them at once: against the correct view (the 27
+correct blocks), `H(41)` carries **fifteen novel blocks**, where a
+correct tip whose cone the view already holds carries exactly one. The
+signature of the family is **novelty at depth**, and novelty is
+relative to an observer: no intrinsic predicate on a block can see it.
+That one observation sorts every candidate rule.
+
+**Two intrinsic rules, both broken.** The rules that suggest themselves
+legislate cone *shape*, and both convict correct blocks:
+
+- *Cap the chain count* — refuse blocks whose cone holds several chains
+  of one author. `Utwin` kills it at `f = 1`: blocks 5 and 6 each
+  cleanly adopt one half of an equivocation, and block 8 — a correct
+  validator's block — is **forced by quorum** to reference both; only
+  three correct peers exist and it needs three distinct creators. Chain
+  counts only grow under merges, and the merges are forced, not chosen.
+  S9's ghost, now with a machine-checked witness.
+- *Cap the history size* — refuse blocks with `|H| > C·(r+1)`. Same
+  failure at the boundary: a correct block sitting at the cap,
+  quorum-forced to merge two divergent halves, exceeds it through no
+  fault of its own.
+
+**The rule.** Each correct validator `v` maintains `V` — the union of
+the histories of what it has accepted (the retained view of S1).
+Novelty is `|H(t) \ V|`, measured when `t` arrives.
+
+> `v` may use `t` as a reference only if `t`'s novelty at acceptance
+> was at most `κ`. A block over budget is **deferred, never rejected**;
+> among eligible candidates, prefer minimum novelty.
+
+Two properties carry the design. *Novelty is antitone in the view*:
+`|H(t) \ V|` only shrinks as `V` grows, so deferral is a rate limiter,
+not a verdict — a deferred block becomes eligible the moment enough of
+its cone arrives by any route, and no correct validator is ever
+permanently wrong about a block. And the budget charges at the one
+gate the adversary cannot route around: to enter correct cones at all,
+a Byzantine block needs a correct referencer (S4's reveal), and the
+referencer now pays at most `κ` of fetch for it.
+
+**What it buys.** The acceptance rule admits at most one block per
+author per round (S2): at most `f` Byzantine acceptances at `κ` each,
+at most `2f+1` correct ones at `Κ` each (the larger threshold, next
+paragraph), so a correct view grows by at most `(2f+1)·Κ + f·κ` blocks
+per round — and through the D3 bridge the history of `v`'s own next
+block obeys the same bound: **linear in `r`, quadratic in `f`** for
+constant `κ`, the shape §10.6 proves unreachable inside the bare
+model. The doubling family is not forbidden; it is **repriced**. A
+`2^e` cone can no longer arrive in one reveal: it must trickle through
+`κ`-sized acceptances, at most `f` Byzantine authors eligible per
+round, so placing it takes on the order of `2^e/(f²κ)` rounds instead
+of `O(e)` — exponential time to place exponential mass, while correct
+histories grow linearly throughout. This composes with, and does not
+replace, the DAG-side condition: exclusion makes the damage one-shot
+per author (S4); the budget makes the shot small.
+
+**The contagion attack, and hysteresis.** The liveness danger has one
+shape. The adversary trickles its cone to a *single* correct `v` until
+`v`'s check passes; `v` references the Byzantine block; the other
+correct validators have not fetched that cone, defer `v`'s next block,
+and `v` drops out of their quorums — `2f` participants remain and the
+DAG stops. A single threshold serving both *what I reference* and
+*what I count toward quorum* is self-poisoning. The repair is the
+standard two-threshold amplification (the `f+1`/`2f+1` echo pattern):
+
+- `κ` — what you will newly fetch to make something **your own
+  reference**;
+- `Κ ≥ f·κ + 3f+1` — what you will fetch to **count a peer's block
+  toward quorum**: a correct peer's tip carries at most its own
+  per-round budgeted Byzantine excess (`f·κ`) plus one round of normal
+  production, so after `R` every correct block passes every correct
+  validator's `Κ`-check, and only genuinely hidden mass is deferred.
+
+Two proved facts make the repair safe rather than hopeful: the correct
+set alone meets the quorum (D15b) — Byzantine blocks are never
+*needed* — and D25's density is what keeps correct views overlapping
+enough for the correct-to-correct gap to be one round of production
+rather than an assumption.
+
+**Timeouts.** Nothing new in kind. The round timer counts only
+`Κ`-eligible blocks toward `2f+1`; a deferred block never stalls it,
+and after `R` the correct tips alone satisfy it. The fetch timer pulls
+unknown ancestors up to the applicable budget and defers past it;
+re-checking a deferred block is event-driven and monotone, since
+novelty only shrinks. Commit and leader timers are untouched — the
+mechanism sits entirely below the commit rule, shaping only the
+reference graph.
+
+**Why this is expressible, despite Q1.** Q1 records that the rate
+limit cannot be a validity condition and that the model has no notion
+of a message. Both stand, and neither blocks the design: novelty is
+`history \ view` — two objects the model already has — and the
+schedule it needs already exists: `Delivery.accepted` is indexed by
+round. The budget is one predicate over a `Delivery`, living exactly
+where S1 put the storage story — at the acceptance layer, never in
+`ValidWrt` — so validity stays objective (D13 untouched) and every
+existing theorem survives verbatim. What gets proved on top is new:
+
+- **B3** — under the budget, `|V_v(r)| ≤ ((2f+1)·Κ + f·κ)·(r+1)`, and
+  via D3 the same for the histories of `v`'s own blocks;
+- **D-telescope** — the pure-DAG form, no delivery model: if novelty
+  along a correct self-parent chain is stepwise `≤ κ'`, then
+  `|H(b)| ≤ κ'·r + 1`, by D20's descent;
+- **C3** — the liveness half, the one statement needing the timing
+  model, attempted last: after `R`, every correct block has novelty
+  `≤ Κ` at every correct validator, so the rule never defers a correct
+  block and L1 survives with the budget in force.
 
 ## 11. Staging and witnesses
 
@@ -1251,6 +1372,13 @@ So the rate limit is not a fallback but the intended division of labour. The
 DoS condition stops an equivocator contributing *forever*; a rate limit stops
 it contributing *much at once*. Neither substitutes for the other, and only the
 first is a property of the DAG.
+
+*Status:* the rate limit now has a concrete design — the **novelty budget**
+of §10.7 — and the observation that unblocked it is that no message type is
+needed after all: novelty is `history \ view`, both existing objects, and
+the schedule it wants is `Delivery.accepted`, already indexed by round. What
+remains of Q1 is to build it; §10.7 names the staged statements (B3, the
+telescope, C3).
 
 **Q2 — Where does it live?** Settled for what is built, open for the rest.
 `LeanDag/History.lean` (the `Finset` history) and `LeanDag/Exposure.lean`
