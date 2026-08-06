@@ -19,6 +19,109 @@ knowing who is Byzantine.
 > Lean name and file. Result labels (D…, B…, C…, S…) are stable identifiers
 > cited by the Lean sources.
 
+## Overview — the two conditions, and the two main theorems
+
+A self-contained summary. Everything used here is defined from scratch;
+§1–§7 develop it, and §8 maps every result to its Lean name.
+
+**The setting.** There are `3f+1` **validators**, of which at most `f` are
+**Byzantine**; the rest are **correct**. The protocol proceeds in numbered
+**rounds**. A **block** `b` carries an author (its *creator*), a round,
+and a finite set of **references** to earlier blocks. A block is **valid**
+when
+
+1. every reference points to a block of the round exactly below;
+2. its references carry pairwise distinct authors;
+3. they carry at least `2f+1` distinct authors — a **quorum**; and
+4. one of them is by `b`'s own author — the **self-parent** — so every
+   author's blocks chain back to round 0.
+
+Correct validators author at most one block per round; a Byzantine
+validator may **equivocate** — author several blocks at one round. The
+universe `U` is every block some correct validator ever held, so `|U|` is
+the storage burden on the correct population; blocks revealed to nobody
+cost nothing.
+
+The central quantity is a block's **cone** (causal history): `H(b)` is
+`b` together with everything reachable from it through references, and
+`|H(b)|` is what a validator must fetch and validate in order to accept
+`b`. A validator's **view** `V` is the union of the cones of the blocks it
+accepted, so views reduce to cones: `|V| ≤ (3f+1) · max |H(b)|` (D2).
+Absent any further condition, `|H(b)|` can grow *exponentially* in the
+round: each block may name `f` fresh Byzantine blocks one round down, and
+the branching compounds level by level.
+
+**Condition 1 — DoS validity.** Say author `X` is **exposed** in `H(b)`
+when the cone contains two `X`-blocks at one round — an equivocation made
+visible. The condition:
+
+> a block may not reference an author who is exposed in its own cone.
+
+Exposure is objective (any two validators compute it alike, D13),
+permanent along references (D12), and *is* the damage rather than a report
+of it (D11): an author's equivocation either inflates nobody's cone, or
+exposes the author — and then exclusion is automatic and forever. A
+correct author is never exposed (D15), so the condition never blocks a
+correct validator.
+
+**Theorem A — the bare-model bound** (§5; `card_history_le'` with
+`card_history_ge`). Under validity and DoS validity, every block `b` at
+round `r` satisfies
+
+> `(2f+1)·r + 1 ≤ |H(b)| ≤ (3f+1 + 3·f^(f+1)) · (r+1)`.
+
+Linear in `r` at every fault budget — the compounding is gone — with a
+per-round, per-author constant `1 + 3f·f^(f−1)` (C1′); at `f = 1` the
+ceiling is exactly `7(r+1)`. The constant's exponential shape is **final,
+not slack**: with `e` exposed authors an author can lawfully run `2^Θ(e)`
+chains through one cone, and a family attaining the doubling is
+machine-checked (`Udouble`, §5). So no rule keyed on the *shape* of cones
+can bring the constant down to a polynomial in `f` — which is what forces
+Condition 2 to price something an adversary cannot shape away.
+
+**Condition 2 — the novelty budget.** Measure an arriving block not by its
+cone but by what its cone would *newly* bring. Against a validator's
+current store `V`, the **novelty** of `b` is `H(b) \ V` — precisely the
+download performed to validate `b`, so the measurement is the work itself.
+It is antitone in `V`: as the store grows, every block only gets cheaper.
+The enforced rule (`UniformBudget T`, for a parameter `T`):
+
+> never accept a block whose novelty exceeds `T` blocks; defer it instead
+> — the store grows, and the block is re-priced later.
+
+together with the **reference discipline** (`RefsAccepted`): a block
+references exactly what its author accepted. Real DAG protocols do both.
+The rule is **author-blind** — nothing in it consults who is Byzantine —
+and it never defers a correct block: a correct block's cone is a complete
+record of its author's acceptances (the DAG is its own repair channel,
+C3′), so a correct block can never cost another correct validator more
+than `f·T + 1` (C3″) — a *derived* threshold, not an assumed one.
+
+**Theorem B — DoS resistance** (§6; `dos_resistance`). Assume correct
+validators build once they hold a quorum (`Live`), the network eventually
+delivers quorums (`DeliversQuorum`), and correct validators enforce the
+budget and the reference discipline. Then, simultaneously:
+
+> **liveness** — every correct validator has a block at every round; and
+> **linear storage** — every correct validator's view at round `n` obeys
+> `|V| ≤ |Correct|·(n+1) + |Correct|·f·(1 + n·T)`,
+
+from round 0, under full asynchrony — no global stabilization time appears
+in either hypothesis or conclusion, and no hypothesis consults an
+identity. The proof's engine: every Byzantine block in any correct view
+entered through *some* correct validator's budgeted acceptance, so the
+global Byzantine pool grows by at most `|Correct|·f·T` per round (B4). The
+adversary's hidden mass is thereby repriced rather than forbidden: a
+`2^e`-block reveal must trickle through `T`-sized acceptances, taking
+exponentially many rounds to place, while correct storage grows linearly
+throughout.
+
+Read together: exclusion makes Byzantine damage **one-shot per author**
+(C2), Theorem A bounds what one shot can weigh inside the DAG, and
+Theorem B bounds what any schedule of shots can cost a correct validator —
+from conditions each validator can enforce alone, without ever knowing who
+is Byzantine.
+
 ## 1. The threat, and the two measures
 
 `liveness.md` §4.2 fixes `U` as *every block some correct validator ever
