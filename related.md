@@ -16,6 +16,11 @@ present development.
 attributed to the cited work; where a detail could not be confirmed against the
 paper text it is marked* (unconfirmed).
 
+*Sections 8 and 9 compare the two most closely related works against the Lean
+development directly. The changes they called for have been made to
+`report-outline.md`; what remains here is the comparison itself, and the open
+questions §8.3 and §9.5 record.*
+
 ---
 
 ## 1. The distinction
@@ -462,11 +467,11 @@ Three observations for the report.
    liveness proof and admit post-GST desynchronisation; Shoal++ argues from the
    certified side that uncertified DAGs are less robust because availability is
    not guaranteed. The report's structural condition and its GST derivation land
-   squarely in this dispute and should engage with both by name.
+   squarely in this dispute; report §7.5 engages with both by name.
 
 3. **A mechanised liveness proof of Mysticeti already exists** — Qiu, Xiao and
    Shao (§4.3.1), in Rocq, at S&P 2026. Priority of mechanisation is therefore
-   *not* available as a claim, and the report must not make it. What remains
+   *not* available as a claim, and report §1.3 does not make it. What remains
    distinctive is the *form* of the account: theirs is an operational model with
    traces and an explicit time model; this development states liveness
    structurally, with no theorem mentioning time, and derives the structural
@@ -475,7 +480,7 @@ Three observations for the report.
 
 ---
 
-## 8. The pacemaker against our liveness assumptions
+## 8. The pacemaker against the liveness assumptions here
 
 This section compares Starfish's pacemaker (§4.3) and Qiu et al.'s round-jumping
 rule (§4.3.1) against `LeanDag/Timing.lean`, `LeanDag/Liveness.lean` and the
@@ -505,8 +510,8 @@ then takes this for granted: `blk : Validator → ℕ → BlockId` is total over
 `n ≤ N`.
 
 So the theorems here are not threatened by the counterexample. But the reason
-they are not is exactly the clause the literature has now identified as the
-crux — and the report currently under-sells it. Report §4.1 lists P8 as
+they are not is exactly the clause the literature has now identified as the crux.
+Report §4.1 originally listed P8 as
 
 > | P8 | a validator has a genesis block, and builds on holding a quorum |
 
@@ -514,11 +519,9 @@ alongside nine other clauses, in the same register as "no block cites one author
 twice". On the evidence of §4.3 and §4.3.1 it is not that kind of clause. It is
 *the* clause on which liveness of the whole uncertified family turns; omitting it
 makes liveness **false**, not merely unproven; and the deployed Sui implementation
-did not satisfy it. **Recommendation: promote P8 in §4.1 with a note and both
-citations.** It costs a paragraph and it converts a bland modelling choice into a
-result that engages the literature.
+did not satisfy it. Report §4.1 now promotes it accordingly, with both citations.
 
-### 8.3 Our condition is stronger than either published fix
+### 8.3 The condition here is stronger than either published fix
 
 Worth stating precisely, because it bounds what can be claimed:
 
@@ -548,19 +551,19 @@ as a hypothesis, recorded honestly in the trust boundary as R4 ("round-`0` sprea
 at most `D₀`", deployment). Starfish's **Lemma 4** instead *derives* the
 corresponding Δ-synchronisation for every round past r_max, and its condition
 **B2** — broadcast on round advancement, not merely on block creation — is
-precisely what buys it. Note that B2 is vacuous in our model: advancement and
+precisely what buys it. Note that B2 is vacuous in this model: advancement and
 block creation coincide when `blk` is total, so B1 alone suffices, which is why
 its absence here is not an error. But it does mean **R4 is avoidable**: adopting
 a B2-style clause would let the round-0 spread assumption be discharged rather
 than assumed, tightening §4.4's "derived, not assumed" claim at its one soft
-point.
+point. Report §4.5 records this.
 
 **The 2Δ agreement is a genuine corroboration.** Starfish independently fixes its
 block-creation timeout at δ_TO = **2Δ**. Report §6.10/§7.1 derives a required wait
 of `D₀ + Δ`, which is **2Δ** under a common broadcast start (D₀ ≤ Δ). Two
 different routes — a protocol designer's choice there, a derived threshold here —
-landing on the same constant. This is worth a sentence in §9; it is the kind of
-external check a formalisation rarely gets.
+landing on the same constant. It is the kind of external check a formalisation
+rarely gets, and report §6.10 now records it.
 
 **Method.** Qiu et al. work operationally (traces, transition system, explicit
 time) in Rocq; the account here is structural and execution-free, with time
@@ -569,20 +572,6 @@ comparison to draw is not who proved it first — they did — but that the
 structural formulation isolates the time-dependence into a single file, which is
 what makes the P8/A2 dependency visible as a *hypothesis of one theorem* rather
 than as a clause buried in a transition relation.
-
-### 8.5 Actions for the report
-
-1. **Correct any priority claim.** Qiu et al. (S&P 2026) mechanised Mysticeti's
-   safety and liveness first. §1.3 contribution 3 should be reworded to claim the
-   structural method, not the first machine-checked liveness.
-2. **Promote P8** in §4.1 with a note and both citations (§8.2).
-3. **Cite the counterexample in §4.4**, where "derived, not assumed" is claimed —
-   noting that the derivation is sound *because* P8 excludes round-jumping, and
-   that this is known to be necessary.
-4. **Record the 2Δ coincidence** with Starfish's δ_TO in §6.10 or §9.
-5. **Flag R4 as avoidable** (§8.4), or adopt a B2-style clause and discharge it.
-6. Optionally, **weaken `Live.builds`** toward Qiu et al.'s rule (§8.3) — the one
-   substantive strengthening available.
 
 ---
 
@@ -609,7 +598,7 @@ flaws in Mysticeti's liveness proof but gave no counterexample, leaving three
 possibilities open — proof gap, latency-only failure, or genuine liveness bug.
 This paper settles it as the third.
 
-### 9.2 The protocol they model versus the one we model
+### 9.2 The protocol they model versus the one modelled here
 
 | | Qiu et al. | This development |
 |---|---|---|
@@ -645,13 +634,13 @@ block; that permissiveness is why they need the tie-break. **P2 is therefore
 strictly stronger than Mysticeti's validity rule**, and it is doing work that the
 deployed protocol does with the supporter definition instead. This is defensible
 — it is simpler, and the report is explicit that P2 is a protocol clause — but it
-should be stated, because a reader checking our model against the real one will
-find a validity condition that Mysticeti does not impose.
+needs stating, because a reader checking this model against the real one will
+find a validity condition that Mysticeti does not impose. Report §4.1 states it.
 
 *The leader schedule.* Mysticeti's headline
 optimisation — and the direct source of what this paper calls "significantly more
 complex security proofs than previous protocols" — is a leader vertex in *every*
-round, so that DAG rounds and logical views correspond one-to-one. Our
+round, so that DAG rounds and logical views correspond one-to-one. Here,
 `Slots.spacing` requires consecutive leader slots to be **at least three rounds
 apart**.
 
@@ -664,7 +653,7 @@ a **de-pipelined Mysticeti**: it has Mysticeti's uncertified DAG and Mysticeti's
 commit rule, but Cordial-Miners-like leader spacing. Everything proved is true of
 that object, and the safety development is unaffected — but the pipelining that
 motivates Mysticeti is outside the model, and a reader coming from this paper
-will notice at once. **This belongs in §1.4 Scope and non-goals.**
+will notice at once. Report §1.4 now states this among the scope restrictions.
 
 ### 9.3 The counterexample, and exactly which hypothesis it falsifies
 
@@ -682,7 +671,7 @@ The certificate count per round is at most f+3 ≤ 2f, so the 2f+1 threshold is
 never reached, no round is ever directly committed, and since indirect commit
 depends on direct commit, nothing commits at all.
 
-**Where this meets our development.** Our `certifies_of_synchronisedOn`
+**Where this meets the development here.** `certifies_of_synchronisedOn`
 (`Liveness.lean:447`) is precisely Mysticeti's Lemma 10 — the lemma Sailfish
 attacked and this paper refutes. It is a theorem here, and the reason is visible
 in its statement: it takes
@@ -702,19 +691,19 @@ L1, hence to **P8 `Live.builds`** — the clause stating that a correct validato
 holding a quorum at round r *has* a block at round r+1. That clause is what
 forbids round-jumping, and it is imported, not derived.
 
-This is the cleanest possible statement of the relationship, and the report
-should make it: *our liveness results are conditional on a protocol clause that
-the S&P 2026 paper proves is necessary and shows deployed Mysticeti lacked.*
+This is the cleanest statement of the relationship, and report §6.6 makes it:
+*the liveness results here are conditional on a protocol clause that the S&P 2026
+paper proves is necessary and shows deployed Mysticeti lacked.*
 
-### 9.4 Their fix versus our clause
+### 9.4 Their fix versus the clause here
 
 Their Algorithm 4, replacing lines 15–18 of the original:
 
 > After GCT, if an honest party jumps to round r, it must create a vertex in
 > every round r′ < r, **unless it has already made a decision for round r′ − 2**.
 
-Two engineering features worth noting, both absent from our all-or-nothing
-version. First, **GCT** — a global catchup time analogous to GST, before which
+Two engineering features worth noting, both absent from the all-or-nothing
+version here. First, **GCT** — a global catchup time analogous to GST, before which
 the rule need not hold — makes the fix a drop-in upgrade for running deployments;
 full liveness holds after max{GST+Δ, GCT}. Second, the **"unless decided"**
 escape means a validator that has already decided round r′−2 need not backfill
@@ -723,11 +712,11 @@ vertices. Their Theorem 5 closes that concern: with all processes honest, after
 GST+6Δ every new vertex is a certificate, so a jumping validator has already seen
 2f+1 certificates for every round ≤ r−2 and creates just one vertex.
 
-Our `Live.builds` has neither refinement: it demands a block at every round
+`Live.builds` has neither refinement: it demands a block at every round
 unconditionally and from the start. Sound, and simpler, but strictly stronger,
 and it forecloses any minimality claim (§8.3).
 
-### 9.5 "Weak liveness" — a result we do not have
+### 9.5 "Weak liveness" — a result absent here
 
 Their **Theorem 3** holds *without* the round-jumping fix: after GST+Δ, every
 leader vertex created by an honest process gets at least f+1 certificates from
@@ -764,9 +753,9 @@ out the leader jumping over its own round r: that would require 2f+1 vertices at
 r+1, of which f+1 honest ones support some round-`r` leader vertex — contradicting
 that `leader_at(r)` created none.
 
-**Correction to the previous assessment.** I earlier called this "within reach by
-weakening `PopulatedOn`". That was too optimistic, and the obstruction is precisely
-the step above. In our vocabulary:
+**How much of this is reachable here.** Not their Theorem 3: weakening
+`PopulatedOn` does not suffice, and the obstruction is precisely the step above.
+In the vocabulary of this development:
 
 - **L0 (density)** gives, with no assumptions at all, ≥ 2f+1 distinct authors at
   round r+1 whenever the DAG reaches above it — hence ≥ f+1 *correct* authors.
@@ -782,7 +771,7 @@ the step above. In our vocabulary:
 
 So the decomposition is: **f+1 correct supporters comes free (L0 + coverage);
 f+1 certificates does not.** Qiu et al. bridge the gap with the Predecessor Rule,
-which has no counterpart here — our nearest clause, P7 (`Delivery.includes`,
+which has no counterpart here — the nearest clause, P7 (`Delivery.includes`,
 references ⊇ held), constrains what a validator cites given what it holds, but
 says nothing that forces a *quorum* of supporters to exist for an early-building
 or jumping validator.
@@ -807,39 +796,18 @@ segmented traces.
 
 The contrast with this development is real and worth stating plainly rather than
 competitively. Theirs is operational and quantified over traces and instants;
-liveness is a property of executions. Ours is structural: `SynchronisedOn` is a
-condition on a DAG, no theorem above `Timing.lean` mentions time, and the
-time-dependence is confined to one file. The payoff of the structural style is
-visible in §9.3 — the dependency on the round-jumping clause shows up as a named
-hypothesis (`PopulatedOn`) of a single lemma, rather than as a line in a
-transition relation. The cost is that we cannot state their theorems at all:
-"within bounded time" is not expressible in our vocabulary (report §9).
+liveness is a property of executions. The account here is structural:
+`SynchronisedOn` is a condition on a DAG, no theorem above `Timing.lean` mentions
+time, and the time-dependence is confined to one file. The payoff of the
+structural style is visible in §9.3 — the dependency on the round-jumping clause
+shows up as a named hypothesis (`PopulatedOn`) of a single lemma, rather than as a
+line in a transition relation. The cost is that their theorems cannot be stated
+here at all: "within bounded time" is not expressible in this vocabulary
+(report §9).
 
 Both models have acknowledged gaps at the same place, incidentally: their
 Proposition 1 (local DAG ⊆ global DAG) is "implicitly assumed … as it does not
-yet capture the staging area", which is the same status our P4 has.
-
-### 9.7 Consequences for the report
-
-1. **Withdraw any first-mechanised-liveness claim** (§1.3 contribution 3). They
-   did it first, in Rocq, for the same protocol. Claim the structural method.
-2. **State the leader-spacing restriction in §1.4** (§9.2). It is the difference
-   a reader of this paper will spot immediately, and it is cheap to own.
-2a. **Note in §4.1 that P2 is stronger than Mysticeti's validity rule** and
-   substitutes for the supporter tie-break (§9.2). Currently P2 reads as a
-   faithful transcription of the protocol; it is slightly more than that.
-3. **Reframe §4.4's "derived, not assumed"** so it says what is true: eventual
-   DAG synchrony is derived *given* P8, and P8 is known-necessary and was
-   known-missing from deployed code. This is a stronger position than the current
-   framing, not a weaker one, because it identifies precisely what the
-   formalisation is buying.
-4. **Cite `certifies_of_synchronisedOn` as Mysticeti's Lemma 10** and note that
-   the hypotheses under which we prove it are exactly the ones the counterexample
-   removes.
-5. **Consider adding weak liveness** (§9.5) — the one clearly available new
-   theorem.
-6. Optionally, adopt GCT-style and "unless decided" refinements of `Live.builds`
-   (§9.4) to match the minimal published condition.
+yet capture the staging area", which is the same status P4 has here.
 
 ---
 
