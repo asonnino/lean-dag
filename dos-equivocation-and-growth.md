@@ -13,6 +13,23 @@ under which liveness and linear storage hold simultaneously — from round 0,
 under full asynchrony, from hypotheses a validator can enforce without ever
 knowing who is Byzantine.
 
+The headline results, each developed below and mapped to Lean in §8:
+
+- **Theorem A** (§5). Under the DoS validity condition, every valid
+  block's causal history is **linear in its round**:
+  `|H(b)| ≤ (3f+1 + 3·f^(f+1))·(r+1)` — and the constant's exponential
+  shape is optimal in the bare model: a lower-bound family exists whose
+  doubling step is machine-checked.
+- **Theorem B** (§6). Validators that cap the download per acceptance
+  (the novelty budget) and reference only what they accepted get
+  **liveness and linear storage simultaneously**, from round 0, under
+  full asynchrony — and every rule involved is author-blind.
+- **B5** (§6). Under both conditions together, the Byzantine share of
+  storage **stops growing** once every equivocator has been exposed.
+- **No amplification** (§4, §6). A correct validator's relay duty is its
+  own blocks plus their budget-priced cones, and nothing else — floods
+  die at the acceptance gate.
+
 > **Status.** Everything below is proved in Lean — no `sorry`, axioms
 > `propext`, `Classical.choice`, `Quot.sound` only — and witnessed on
 > concrete models by `decide`. §8 is the index, mapping every result to its
@@ -40,7 +57,9 @@ Correct validators author at most one block per round; a Byzantine
 validator may **equivocate** — author several blocks at one round. The
 universe `U` is every block some correct validator ever held, so `|U|` is
 the storage burden on the correct population; blocks revealed to nobody
-cost nothing.
+cost nothing. From what arrives, each validator **accepts** at most one
+block per author per round — its *accepted set* — and builds its next
+block by referencing its latest acceptances.
 
 The central quantity is a block's **cone** (causal history): `H(b)` is
 `b` together with everything reachable from it through references, and
@@ -73,11 +92,13 @@ round `r` satisfies
 Linear in `r` at every fault budget — the compounding is gone — with a
 per-round, per-author constant `1 + 3f·f^(f−1)` (C1′); at `f = 1` the
 ceiling is exactly `7(r+1)`. The constant's exponential shape is **final,
-not slack**: with `e` exposed authors an author can lawfully run `2^Θ(e)`
-chains through one cone, and a family attaining the doubling is
-machine-checked (`Udouble`, §5). So no rule keyed on the *shape* of cones
-can bring the constant down to a polynomial in `f` — which is what forces
-Condition 2 to price something an adversary cannot shape away.
+not slack**: with `e` exposed authors, an author can lawfully run
+`2^(e−2)` chains through one cone — a family constructed against every
+proved constraint, its doubling step machine-checked (`Udouble`, §5) —
+against a proved ceiling of `(3f+1−e)·e^(e−1)`. Exponential in `e` from
+both sides, so no rule keyed on the *shape* of cones can bring the
+constant down to a polynomial in `f` — which is what forces Condition 2
+to price something an adversary cannot shape away.
 
 **Condition 2 — the novelty budget.** Measure an arriving block not by its
 cone but by what its cone would *newly* bring. Against a validator's
@@ -92,23 +113,27 @@ The enforced rule (`UniformBudget T`, for a parameter `T`):
 together with the **reference discipline** (`RefsAccepted`): a block
 references exactly what its author accepted. Real DAG protocols do both.
 The rule is **author-blind** — nothing in it consults who is Byzantine —
-and it never defers a correct block: a correct block's cone is a complete
-record of its author's acceptances (the DAG is its own repair channel,
-C3′), so a correct block can never cost another correct validator more
-than `f·T + 1` (C3″) — a *derived* threshold, not an assumed one.
+and once the network delivers reliably (after the stabilization round
+`R`) it never defers a correct block: a correct block's cone is a
+complete record of its author's acceptances (the DAG is its own repair
+channel, C3′), so a correct block can then never cost another correct
+validator more than `f·T + 1` (C3″) — a *derived* threshold, not an
+assumed one.
 
 **Theorem B — DoS resistance** (§6; `dos_resistance`). Assume correct
 validators build once they hold a quorum (`Live`), the network eventually
-delivers quorums (`DeliversQuorum`), and correct validators enforce the
-budget and the reference discipline. Then, simultaneously:
+puts a quorum in every correct validator's hands whenever one exists
+(`DeliversQuorum`), and correct validators enforce the budget and the
+reference discipline. Then, simultaneously:
 
-> **liveness** — every correct validator has a block at every round; and
+> **liveness** — no correct validator ever stalls: each has a block at
+> every round, to the horizon of the growth assumption; and
 > **linear storage** — every correct validator's view at round `n` obeys
 > `|V| ≤ |Correct|·(n+1) + |Correct|·f·(1 + n·T)`,
 
 from round 0, under full asynchrony — no global stabilization time appears
-in either hypothesis or conclusion, and no hypothesis consults an
-identity. The proof's engine: every Byzantine block in any correct view
+in either hypothesis or conclusion, and no rule a validator runs consults
+an identity. The proof's engine: every Byzantine block in any correct view
 entered through *some* correct validator's budgeted acceptance, so the
 global Byzantine pool grows by at most `|Correct|·f·T` per round (B4). The
 adversary's hidden mass is thereby repriced rather than forbidden: a
@@ -123,7 +148,8 @@ set. Liveness consumes nothing else: no theorem ever requires a Byzantine
 block that no correct validator accepted to move anywhere, and everything
 held-but-never-accepted may be dropped with no effect. Since acceptance
 is budget-priced, the obligation is bounded — at most `f·T + 1` blocks
-per peer when a new block lands (C3″), linear cumulatively (B4) — so
+per peer when a new block lands post-`R` (C3″), linear cumulatively
+(B4, no synchrony needed) — so
 correct validators **dampen floods rather than relay them**: the
 acceptance decision is the amplification gate (§4, §6).
 
@@ -269,8 +295,12 @@ hypothesis, and no safety result mentions it. Checked mechanically
 
 **Liveness.** The delivery layer separates `held` (what arrived — never
 deduplicated, §7 S5) from `accepted` (what the validator builds on — one
-block per author, forced by `distinct_creators`, §7 S2). Under the
-condition, L1 (*no stall*) holds from `R` rather than from round 0 — before
+block per author, forced by `distinct_creators`, §7 S2). `R` is the
+eventual-synchrony stabilization round: `EventuallyDelivers R` says that
+from round `R` on, every correct-authored block reaches every correct
+validator in time to be built on — the network assumption, nothing more.
+Under the condition, L1 (*no stall*) holds from `R` rather than from round
+0 — before
 `R` the adversary controls delivery and can hand a validator a quorum of
 authors it has just excluded — and after `R` nothing changes: L4 and L6 are
 untouched, a correct leader still commits, commits still recur. The chain
@@ -317,17 +347,19 @@ developed in §6 (*no amplification*).
 ## 5. The size of a reveal — the bare-model bounds
 
 The question S4 prices the residual damage by: what is the biggest `|H(b)|`
-a round-`r` block can have and stay valid? Without any condition the answer
-is exponential — each block references up to `f` fresh Byzantine blocks per
-level, and the layer recurrence `m_s ≤ (3f+1) + f·m_{s+1}` compounds. Under
-`DoSValid` and validity the answer is **linear in `r` at every `f`**, with a
-per-round constant that is exponential in the number of exposed authors —
-and that exponential is *attained*, so the bare model's answer is final.
+a round-`r` block can have and stay valid? Without any condition, nothing
+better than the layer recurrence `m_s ≤ (3f+1) + f·m_{s+1}` holds — each
+block may reference up to `f` fresh Byzantine blocks per level, and the
+recurrence compounds exponentially. Under `DoSValid` and validity the
+answer is **linear in `r` at every `f`**, with a per-round constant that
+is exponential in the number of exposed authors — from both sides, so the
+bare model's answer is final.
 
 **The per-block facts.**
 
 - **D5 / D6 — the baseline.** Without equivocation
-  `(2f+1)r + 1 ≤ |V| ≤ (3f+1)(r+1)`, both ends attained.
+  `|V| ≤ (3f+1)(r+1)` (D5); and `(2f+1)r + 1 ≤ |U|` always, since
+  equivocation only adds blocks (D6). Both ends attained.
 - **D7.** A history's top layer below the block is exactly its reference
   set, and carries distinct authors (`distinct_creators`).
 - **D8 / D8a.** An equivocation is visible only at a merge, two rounds up —
@@ -396,19 +428,21 @@ proved constraints cut the count and pin its shape:
   author sits anywhere in what it has already gathered. This prunes the
   pedigree tree to `G(m) = m + Σ_{d<m} G(d) = 2^m − 1`.
 
-And the `2^m` is attained: the **doubling family** — an exposed helper
+And the `2^m` is attainable: the **doubling family** — an exposed helper
 author whose chains each carry a fresh chain of the doubled author to a
 different unexposed scaffold — yields `2^(e−2)` chains of a single author
 with only `e` exposed authors, in `O(e)` rounds, passing every proved
-constraint. The doubling step is **machine-checked** (`Udouble`,
+constraint. Its doubling step is **machine-checked** (`Udouble`,
 `LeanDagTest/Doubling.lean`): thirteen validators at `f = 4`, the correct
 nine advancing rounds referencing only each other, every Byzantine block
 referencing seven real correct blocks of the round below as `predecessor`
 and `quorum` force, visibility one-way until the reveal; `decide` confirms
 validity, `DoSValid`, four chains of validator 1 against the proved ceiling
-of 22, and D25's miss budget honoured throughout. So the truth is
-`2^Θ(e)`: no acceptance rule on cone *shape* can do better — the way out is
-to change what acceptance *costs*, which is §6.
+of 22, and D25's miss budget honoured throughout. So the per-author chain
+count sits between `2^(e−2)` (constructible) and `(3f+1−e)·e^(e−1)`
+(proved) — exponential in `e` from both sides, with only the base of the
+exponent open (§9). No acceptance rule on cone *shape* can do better —
+the way out is to change what acceptance *costs*, which is §6.
 
 ## 6. The novelty budget
 
@@ -470,22 +504,23 @@ steps:
   (`viewGap D v w n := viewUpto D w n \ viewUpto D v n`;
   `card_novelty_le_viewGap_add_one`). The adversary's hidden mass appears
   in neither term.
-- **C3′ — the gap collapses.** The repair mechanism the design once
-  thought it needed already exists inside `Delivery`: `includes` puts every
-  round's acceptances among the next block's references, and the
-  self-parent chain carries every earlier round forward, so **a correct
-  validator's block is, in its cone, a complete record of everything its
-  author ever accepted** (`viewUpto_subset_history`). One such block
-  delivered post-`R` erases the standing gap; what remains is one round of
-  Byzantine budget: `gap ≤ f·κ`, constant
-  (`card_viewGap_succ_le_of_block`). The DAG is its own repair channel.
-- **C3″ — the correct clause is derived.** A validator enforcing only the
-  Byzantine clause never meets a correct block costing more than
-  **`Κ = f·κ + 1`** (`card_novelty_le_of_byzBudget`). The hysteresis
-  threshold for counting peers' blocks is a theorem to cite, not a
-  parameter to guess — which is what makes the contagion attack (defer a
-  correct block, eject its author, lose quorum) impossible: enforcing the
-  budget never defers a correct block.
+- **C3′ — the gap collapses.** No repair or gossip mechanism needs to be
+  added: `includes` puts every round's acceptances among the next block's
+  references, and the self-parent chain carries every earlier round
+  forward, so **a correct validator's block is, in its cone, a complete
+  record of everything its author ever accepted**
+  (`viewUpto_subset_history`). One such block delivered post-`R` erases
+  the standing gap; what remains is one round of Byzantine budget:
+  `gap ≤ f·κ`, constant (`card_viewGap_succ_le_of_block`). The DAG is its
+  own repair channel.
+- **C3″ — the correct clause is derived.** After `R`, a validator
+  enforcing only the Byzantine clause never meets a correct block costing
+  more than **`Κ = f·κ + 1`** (`card_novelty_le_of_byzBudget`). The
+  hysteresis threshold for counting peers' blocks is a theorem to cite,
+  not a parameter to guess — which is what makes the contagion attack
+  (defer a correct block, eject its author, lose quorum) impossible:
+  enforcing the budget never defers a correct block once the network
+  delivers.
 
 The one hypothesis this chain takes beyond `Delivery` is `RefsAccepted` —
 `refs ⊆ accepted`, the converse of `includes`, D3's ordinary case.
@@ -514,14 +549,19 @@ The one hypothesis this chain takes beyond `Delivery` is `RefsAccepted` —
 from enforceable conditions only. The hypothesis audit:
 
 - `Live` — local conduct: build once you hold a quorum, start at genesis;
-- `DeliversQuorum` — L1's minimal network assumption, asynchrony-safe;
+- `DeliversQuorum` — the minimal network assumption, asynchrony-safe:
+  whenever a quorum of round-`n` blocks exists at all, every correct
+  validator eventually has a quorum for `n` in hand;
 - `UniformBudget T` — local conduct: never accept anything costing more
   than `T` novel blocks, whoever signed it;
 - `RefsAccepted` — local conduct: reference only what you accepted.
 
-No hypothesis consults `Correct`, `byzantine`, or any identity. The two
-conclusions never compete: liveness needs no Byzantine block (D15b), and by
-C3″ the enforced rule defers no correct one. The doubling family is not
+The hypotheses are, as all protocol obligations are, statements about
+what *correct* validators do — but **no rule any of them imposes consults
+an identity**: nothing a validator runs needs to know who is Byzantine.
+The two conclusions never compete: liveness needs no Byzantine block
+(D15b), and by C3″ the enforced rule defers no correct one. The doubling
+family is not
 forbidden but **repriced**: a `2^e` cone can no longer arrive in one
 reveal — it must trickle through budgeted acceptances, at most `f`
 Byzantine authors per round, so placing it takes exponentially many rounds
@@ -545,9 +585,10 @@ decays to the correct-production rate:
 
 for every `n ≥ m+1` — linear with slope exactly `|Correct|`, Byzantine
 term **constant**, and with the budget the constant is explicit:
-`|Correct|·f·(1 + (m+1)·κ)`. One theorem for the division of labour: the
-budget paces what an author can inject before being caught; exclusion
-ends it.
+`|Correct|·f·(1 + (m+1)·κ)`. (Liveness under both conditions is §4's:
+from `R` — B5 consumes the population that supplies.) One theorem for the
+division of labour: the budget paces what an author can inject before
+being caught; exclusion ends it.
 
 **The relay obligation — correct validators never amplify.** Liveness
 consumes exactly two kinds of content: correct-authored blocks, and the
@@ -560,7 +601,7 @@ aggregates every earlier round into your latest block
 within one round of your next block, through the DAG itself — the
 containments inside C3′; no separate gossip of acceptances is needed, and
 assuming one would assume a theorem. The duty is priced before it is
-incurred: the sync a peer owes when your block lands is at most
+incurred: the sync a peer owes when your block lands post-`R` is at most
 `f·κ + 1` (C3″), and your whole serveable store is B4's linear bound.
 Everything held but never accepted sits outside every correct cone, is
 required by no theorem, and may be dropped with no effect on liveness —
@@ -787,11 +828,12 @@ so each model is built to be non-vacuous in the way that matters.
   DoS story outside the development — and it is **inbound only**: on the
   outbound side, a correct validator relays nothing it did not accept, so
   floods are never amplified (§6, *the relay obligation*).
-- **The quantitative gap in the bare-model constant.** `2^(e−1)` chains are
-  constructible, `(3f+1−e)·e^(e−1)` is proved; closing to `2^(e−1)` needs
-  set-determinism of anchored pedigrees (top determined by the *set* of
-  pedigree authors, not the list), which resisted proof. Tightness only —
-  the budget supersedes the constant in practice.
+- **The quantitative gap in the bare-model constant.** `2^(e−2)` chains
+  are constructible (§5), `(3f+1−e)·e^(e−1)` is proved; set-determinism
+  of anchored pedigrees (top determined by the *set* of pedigree authors,
+  not the list) would close the ceiling to `(3f+1−e)·2^(e−1)`, but
+  resisted proof. Only the base of the exponent is open — tightness only,
+  and the budget supersedes the constant in practice.
 - **Reconfiguration.** Once `k` validators are permanently excluded, the
   system runs a `(3f+1−k)`-committee on quorums sized for `f` — tolerating
   `f−k` but paying for `f` (D15a). The principled response is to shrink the
