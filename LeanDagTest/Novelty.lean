@@ -26,14 +26,15 @@ the correct chains step by exactly `2f+1 = 9` and the telescope is tight:
 **The budget over a real `Delivery` (`Dtwin`).** The delivery schedule in
 which every correct validator accepts the correct blocks of each round —
 and validators 1 and 2 accepted one half of the equivocation each at
-round 0 — satisfies `NoveltyBudget Dtwin 0 3`: no Byzantine block is ever
+round 0 — satisfies the author-blind `UniformBudget Dtwin 3` and the
+sharp `ByzBudget Dtwin 0`: no Byzantine block is ever
 accepted after round 0 (`κ = 0`), and the dearest correct acceptance costs
 3 (`Κ = 3`): block 6 charges validator 1 for itself, for the correct
 genesis 2 it never held (the D25 miss), *and* for the equivocation half 4
 it carries — the pre-`R` divergence and the Byzantine freight both ride
 in on correct carriers, priced inside `Κ`, which is the hysteresis
-threshold doing exactly its §10.7 job. B3 then bounds the views, and the
-C3 lemmas apply with `R = 1`: the round-0 gap between validators 3 and 1
+threshold doing exactly its §10.7 job. The C3 lemmas then apply with
+`R = 1`: the round-0 gap between validators 3 and 1
 is precisely the Byzantine half `{0}` that validator 1 accepted and
 validator 3 never saw — the gap *is* the budget's spend, on data.
 -/
@@ -179,30 +180,47 @@ def Dtwin : Delivery Utwin where
 
 /-! ## The budget, satisfied on data -/
 
-/-- `NoveltyBudget Dtwin 0 3`: after round 0 nothing Byzantine is accepted
-(`κ = 0` — vacuously affordable), and the dearest correct acceptance costs
-exactly 3: block 6 charges validator 1 for itself, for the missed genesis
-2, and for the equivocation half 4 it carries. The Byzantine freight is
-paid for inside `Κ`: it rides in on correct carriers — the C3 story. -/
-theorem dtwin_budget : NoveltyBudget Dtwin 0 3 := by
+/-- **The author-blind cap, satisfied**: every acceptance of the schedule —
+correct or Byzantine, no creator guard anywhere — costs at most 3, and the
+dearest one costs exactly that: block 6 charges validator 1 for itself,
+for the missed genesis 2, and for the equivocation half 4 it carries. The
+Byzantine freight rides in on correct carriers, priced — the C3 story. -/
+theorem dtwin_uniform : UniformBudget Dtwin 3 := by
   intro v hv n b hb
   by_cases h0 : n = 0
   · subst h0
     exact (by decide : ∀ v ∈ (Correct : Finset (Fin 4)),
-      ∀ b ∈ Dtwin.accepted v 1, (novelty Utwin (viewUpto Dtwin v 0) b).card ≤
-        if (Utwin.block b).creator ∈ (Correct : Finset (Fin 4)) then 3 else 0)
-      v hv b hb
+      ∀ b ∈ Dtwin.accepted v 1,
+        (novelty Utwin (viewUpto Dtwin v 0) b).card ≤ 3) v hv b hb
   by_cases h1 : n = 1
   · subst h1
     exact (by decide : ∀ v ∈ (Correct : Finset (Fin 4)),
-      ∀ b ∈ Dtwin.accepted v 2, (novelty Utwin (viewUpto Dtwin v 1) b).card ≤
-        if (Utwin.block b).creator ∈ (Correct : Finset (Fin 4)) then 3 else 0)
-      v hv b hb
+      ∀ b ∈ Dtwin.accepted v 2,
+        (novelty Utwin (viewUpto Dtwin v 1) b).card ≤ 3) v hv b hb
   · exfalso
-    have h2 : ¬(n + 1 = 0) := by omega
     rw [show Dtwin.accepted v (n + 1) = twinAcc v (n + 1) from rfl,
-      twinAcc_eq_empty h2 (by omega) (by omega)] at hb
+      twinAcc_eq_empty (by omega) (by omega) (by omega)] at hb
     exact absurd hb (Finset.notMem_empty b)
+
+/-- The analysis side at its sharpest: nothing Byzantine is ever accepted
+after round 0, so the Byzantine clause holds with `κ = 0` — every
+acceptance from round 1 on is correct-authored. -/
+theorem dtwin_byz : ByzBudget Dtwin 0 := by
+  intro v hv n b hb hbc
+  by_cases h0 : n = 0
+  · subst h0
+    exact absurd ((by decide : ∀ v : Fin 4, ∀ b ∈ Dtwin.accepted v 1,
+      (Utwin.block b).creator ∈ (Correct : Finset (Fin 4))) v b hb) hbc
+  by_cases h1 : n = 1
+  · subst h1
+    exact absurd ((by decide : ∀ v : Fin 4, ∀ b ∈ Dtwin.accepted v 2,
+      (Utwin.block b).creator ∈ (Correct : Finset (Fin 4))) v b hb) hbc
+  · rw [show Dtwin.accepted v (n + 1) = twinAcc v (n + 1) from rfl,
+      twinAcc_eq_empty (by omega) (by omega) (by omega)] at hb
+    exact absurd hb (Finset.notMem_empty b)
+
+-- The forward sandwich: the guard-free cap discharges the guarded form.
+example : ByzBudget Dtwin 3 := dtwin_uniform.byzBudget
 
 /-- Delivery is complete from round 1 on: the network misses only the
 pre-`R` geneses (validator 1 never held correct genesis 2, validator 2
@@ -225,25 +243,9 @@ theorem dtwin_delivers : EventuallyDelivers Dtwin 1 := by
     have := twin_round_le a
     omega
 
-/-! ## B3 and C3, applied -/
-
--- B3 on data: the bound is `4 + (3·3 + 1·0)·n = 4 + 9n`, and validator 3
--- retains all nine blocks by round 2: `9 ≤ 22`.
-example : (viewUpto Dtwin 3 2).card ≤
-    (3 * Faults.f (Fin 4) + 1) +
-      ((Correct : Finset (Fin 4)).card * 3 + Faults.f (Fin 4) * 0) * 2 :=
-  card_viewUpto_le dtwin_budget (by decide) 2
+/-! ## C3, applied -/
 
 example : (viewUpto Dtwin 3 2).card = 9 := by decide
-
-/-- B3 through the D3 bridge: the merge block 8 references exactly what
-validator 3 accepted, so its history obeys the linear view bound plus
-one — `9 ≤ 4 + 9 + 1`. -/
-example : (history Utwin 8).card ≤
-    (3 * Faults.f (Fin 4) + 1) +
-      ((Correct : Finset (Fin 4)).card * 3 + Faults.f (Fin 4) * 0) * 1 + 1 :=
-  card_history_le_of_noveltyBudget (v := 3) dtwin_budget (by decide)
-    (by decide) (by decide)
 
 /-! The C3 chain on data. The gap between validator 1 and validator 3 at
 round 0 is precisely `{0}` — the Byzantine half validator 1 accepted and
@@ -262,28 +264,7 @@ example : (novelty Utwin (viewUpto Dtwin 1 1) 8).card ≤
 
 example : (novelty Utwin (viewUpto Dtwin 1 1) 8).card = 1 := by decide
 
-/-- C3 composed: with `κ = 0` the gap never grows after `R` — the full
-hysteresis bound is `gap(R) + (n-R)·f·0 + 1 = 1`, and the merge block
-meets it exactly. No correct block is ever deferred. -/
-example : (novelty Utwin (viewUpto Dtwin 1 1) 8).card ≤
-    (viewGap Dtwin 1 3 1).card + (1 - 1) * (Faults.f (Fin 4) * 0) + 1 :=
-  card_novelty_correct_le (v := 1) (w := 3) dtwin_budget.byzBudget
-    dtwin_delivers (le_refl 1) (by decide) (by decide) (by decide) (by decide)
-
 /-! ## The collapse, the derived threshold, and the capstone -/
-
-/-- The enforceable half alone — what a validator actually runs. -/
-theorem dtwin_byz : ByzBudget Dtwin 0 := dtwin_budget.byzBudget
-
-/-- **The author-blind cap, satisfied**: every acceptance of the schedule —
-correct or Byzantine, no creator guard anywhere — costs at most 3. -/
-theorem dtwin_uniform : UniformBudget Dtwin 3 := fun v hv n b hb => by
-  have := dtwin_budget v hv n b hb
-  split at this <;> omega
-
--- The forward sandwich: the guard-free cap discharges both guarded forms.
-example : ByzBudget Dtwin 3 := dtwin_uniform.byzBudget
-example : NoveltyBudget Dtwin 3 3 := dtwin_uniform.noveltyBudget
 
 /-- The reference discipline: every correct block of `Utwin` references
 exactly what its author accepted. -/
@@ -415,7 +396,7 @@ example : (∀ r ≤ 1, Populated Utwin r) ∧
   dos_resistance dtwin_live dtwin_deliversQuorum dtwin_uniform
     dtwin_refsAccepted
 
-#print axioms dtwin_budget
+#print axioms dtwin_uniform
 #print axioms udouble_reveal_novelty
 #print axioms udouble_stepNovelty
 

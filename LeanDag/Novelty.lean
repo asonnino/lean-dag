@@ -17,7 +17,7 @@ delivered in one reveal. So the rule this file formalizes is observer-
 relative: a block is measured by `novelty U V b := history U b \ V`, what
 accepting it would newly pull into the view `V`.
 
-Four layers, each usable without the ones after it:
+The layers, each usable without the ones after it:
 
 * **The measure.** `novelty`, antitone in the view — which is what makes
   deferral a rate limiter rather than a verdict: a deferred block only ever
@@ -25,36 +25,36 @@ Four layers, each usable without the ones after it:
 * **The telescope** (pure DAG, no delivery model). If each block of a
   correct author adds at most `κ'` over its self-parent (`StepNovelty`),
   the whole history is linear: `|H(b)| ≤ κ'·r + 1`, by S10's descent.
-* **B3** (at the acceptance layer). `viewUpto` accumulates
-  `Delivery.accepted` with whole histories — the retained view of S1 —
-  and `NoveltyBudget` caps each acceptance: `κ` for a Byzantine author,
-  `Κ` for a correct one (the hysteresis pair of §10.7). Then a correct
-  validator's view is linear in the round,
-  `|V_v(n)| ≤ (3f+1) + (|Correct|·Κ + f·κ)·n`, and through the D3 bridge
-  so is the history of its own next block.
-* **C3** (the liveness half). After `R`, the novelty of a correct block at
+* **The budget** (at the acceptance layer). `viewUpto` accumulates
+  `Delivery.accepted` with whole histories — the retained view of S1. Two
+  forms, sandwiching within one factor of `f` (`uniform_of_byzBudget`):
+  `ByzBudget` — the analysis side, only Byzantine-authored acceptances
+  capped at `κ`, the weakest thing the theorems need — and
+  `UniformBudget` — the mechanism side, every acceptance capped,
+  author-blind, what a validator actually runs.
+* **C3, and the collapse.** After `R`, the novelty of a correct block at
   any correct validator is `1 +` the standing *view gap* toward its author
-  (`card_novelty_le_viewGap_add_one`) — and the gap grows by at most `f·κ`
-  per round (`card_viewGap_succ_le`), because correct acceptances are
-  shared and Byzantine ones are budgeted. The adversary's hidden mass
-  appears in neither term, which is what makes the contagion attack of
-  §10.7 harmless.
-* **The collapse and the capstone.** The gap does not even drift: a
+  (C3a, `card_novelty_le_viewGap_add_one`) — and the gap does not drift: a
   correct block's cone is a complete record of its author's acceptances
   (`viewUpto_subset_history` — `includes` per round, chained by S10), so
   one delivered block collapses the gap to one round of Byzantine budget
   (C3′, `card_viewGap_succ_le_of_block`), and the hysteresis threshold is
   the derived **constant** `Κ = f·κ + 1` (C3″,
   `card_novelty_le_of_byzBudget`) — the correct clause of the budget is a
-  theorem, given only the enforceable Byzantine clause (`ByzBudget`).
-  `no_stall_and_card_viewUpto_le` then delivers liveness and linear
-  storage from one set of hypotheses.
+  theorem, given only the Byzantine clause. The adversary's hidden mass
+  appears nowhere, which is what makes the contagion attack of §10.7
+  harmless. B3′ (`card_viewUpto_le_of_byzBudget`) telescopes this into
+  post-`R` linear storage, and the capstone
+  `no_stall_and_card_viewUpto_le` adds liveness.
 * **B4** (unconditional). Even the post-`R` base is dispensable: the
   global Byzantine pool (`byzPool`) grows by at most `|Correct|·f·κ` per
   round with **no synchrony at all** — every Byzantine block in a correct
   view entered through some correct validator's budgeted acceptance — so
   storage is linear from round 0 under full asynchrony
   (`card_viewUpto_le_of_refsAccepted`, `no_stall_and_card_viewUpto_le'`).
+* **The headline.** `dos_resistance` and `dos_resistance'` restate the
+  capstones from enforceable conditions only — `Live`, `DeliversQuorum`,
+  `UniformBudget`, `RefsAccepted` — none of which consults an identity.
 
 The one hypothesis the C3 chain takes beyond `Delivery` is
 `RefsAccepted` — `refs ⊆ accepted`, the converse of `includes`, i.e. D3's
@@ -79,19 +79,11 @@ def novelty (U : BlockUniverse Validator BlockId Payload) (V : Finset BlockId)
 theorem mem_novelty : i ∈ novelty U V b ↔ i ∈ history U b ∧ i ∉ V :=
   Finset.mem_sdiff
 
-@[simp]
-theorem novelty_empty : novelty U ∅ b = history U b := by
-  simp [novelty]
-
 /-- **Antitone in the view** — the load-bearing property. Deferral is a rate
 limiter, not a verdict: as the view grows, every deferred block only gets
 cheaper. -/
 theorem novelty_anti (h : V ⊆ W) : novelty U W b ⊆ novelty U V b :=
   Finset.sdiff_subset_sdiff (Finset.Subset.refl _) h
-
-theorem card_novelty_anti (h : V ⊆ W) :
-    (novelty U W b).card ≤ (novelty U V b).card :=
-  Finset.card_le_card (novelty_anti h)
 
 /-- A history costs at most the view plus the novelty. -/
 theorem card_history_le_card_add :
@@ -222,38 +214,24 @@ theorem round_le_of_mem_viewUpto (hi : i ∈ viewUpto D v n) :
         have := round_le_of_mem_history ha_ids hia
         omega
 
-/-! ## The budget -/
+/-! ## The budget
 
-/-- **The novelty budget** (§10.7): every acceptance was affordable — at
-most `κ` novel blocks for a Byzantine author, `Κ` for a correct one. The
-two thresholds are the hysteresis pair: `κ` is policy, chosen small; `Κ`
-must be large enough that correct blocks always pass, and C3 below is the
-theorem that a bounded `Κ` exists to choose. Round 0 needs no clause:
-genesis histories are singletons. -/
-def NoveltyBudget (D : Delivery U) (κ Κ : ℕ) : Prop :=
-  ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ D.accepted v (n + 1),
-    (novelty U (viewUpto D v n) b).card ≤
-      if (U.block b).creator ∈ (Correct : Finset Validator) then Κ else κ
+Round 0 needs no clause in either form: genesis histories are singletons. -/
 
-/-- The **enforceable half** of the budget: only the Byzantine clause. This
-is the rule a validator can actually run — defer any Byzantine-authored
-block costing more than `κ` — and it is all the gap analysis needs. The
-correct clause is *derived* from it (`card_novelty_le_of_byzBudget`): a
-validator enforcing `κ` never meets a correct block over `f·κ + 1`. -/
+/-- The **analysis-side budget**: only the Byzantine clause. This is the
+weakest thing the theorems need — Byzantine-authored acceptances were
+affordable — and the correct clause is *derived* from it
+(`card_novelty_le_of_byzBudget`): a schedule keeping Byzantine acceptances
+under `κ` never carries a correct block over `f·κ + 1`. The creator guard
+is bookkeeping, never something a validator evaluates; the enforced form
+is `UniformBudget` below. -/
 def ByzBudget (D : Delivery U) (κ : ℕ) : Prop :=
   ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ D.accepted v (n + 1),
     (U.block b).creator ∉ (Correct : Finset Validator) →
     (novelty U (viewUpto D v n) b).card ≤ κ
 
-theorem NoveltyBudget.byzBudget {κ Κ : ℕ} (h : NoveltyBudget D κ Κ) :
-    ByzBudget D κ := fun v hv n b hb hbc => by
-  have := h v hv n b hb
-  rwa [if_neg hbc] at this
-
 /-- **The mechanism-side budget** — the rule a validator actually runs: a
-guard-free cap on every acceptance, author-blind. `ByzBudget`'s creator
-guard is analysis bookkeeping (assume only what is enforced, prove the
-rest), never something a validator evaluates: enforcing the cap on
+guard-free cap on every acceptance, author-blind. Enforcing the cap on
 everyone enforces it on the Byzantine authors (`UniformBudget.byzBudget`),
 and post-`R` the converse holds at `f·κ + 1` (`uniform_of_byzBudget`
 below) — the two formulations sandwich within one factor of `f`, the
@@ -266,12 +244,6 @@ def UniformBudget (D : Delivery U) (T : ℕ) : Prop :=
 Byzantine-side budget with the same constant. -/
 theorem UniformBudget.byzBudget {T : ℕ} (h : UniformBudget D T) :
     ByzBudget D T := fun v hv n b hb _ => h v hv n b hb
-
-/-- A uniform cap is the two-tier budget with both tiers equal. -/
-theorem UniformBudget.noveltyBudget {T : ℕ} (h : UniformBudget D T) :
-    NoveltyBudget D T T := fun v hv n b hb => by
-  rw [ite_self]
-  exact h v hv n b hb
 
 omit [DecidableEq BlockId] in
 /-- One acceptance per author: the frontier splits into at most `|Correct|`
@@ -320,12 +292,11 @@ private theorem sum_novelty_not_correct_le {κ : ℕ} (hbyz : ByzBudget D κ)
         Finset.sum_const_nat fun _ _ => rfl
     _ ≤ F.f * κ := Nat.mul_le_mul_right κ (card_filter_not_correct_le v (n + 1))
 
-/-! ## B3 — the view bound -/
+/-! ## The one-round step -/
 
 /-- The generic one-round step: any per-block novelty bounds on the correct
-and Byzantine acceptances bound the view's growth. `card_viewUpto_succ_le`
-instantiates it with the assumed budget; the capstone instantiates the
-correct side with the *derived* threshold instead. -/
+and Byzantine acceptances bound the view's growth. B3′ instantiates the
+correct side with the *derived* threshold of C3″. -/
 private theorem card_viewUpto_succ_le_of_bounds {κc κb n : ℕ}
     (hc : ∀ b ∈ D.accepted v (n + 1),
       (U.block b).creator ∈ (Correct : Finset Validator) →
@@ -399,83 +370,13 @@ private theorem card_viewUpto_succ_le_of_bounds {κc κb n : ℕ}
           ((Correct : Finset Validator).card * κc + F.f * κb) :=
         Nat.add_le_add_left hsum _
 
-/-- One round of growth: `|Correct|` acceptances at `Κ` plus `f` at `κ`. -/
-theorem card_viewUpto_succ_le {κ Κ : ℕ} (hbud : NoveltyBudget D κ Κ)
-    (hv : v ∈ (Correct : Finset Validator)) (n : ℕ) :
-    (viewUpto D v (n + 1)).card ≤
-      (viewUpto D v n).card +
-        ((Correct : Finset Validator).card * Κ + F.f * κ) :=
-  card_viewUpto_succ_le_of_bounds
-    (fun b hb hbc => by have h := hbud v hv n b hb; rwa [if_pos hbc] at h)
-    (fun b hb hbc => by have h := hbud v hv n b hb; rwa [if_neg hbc] at h)
-
-/-- Round 0 is free: at most `3f+1` genesis singletons. -/
-theorem card_viewUpto_zero_le : (viewUpto D v 0).card ≤ 3 * F.f + 1 := by
-  calc (viewUpto D v 0).card
-      ≤ ∑ a ∈ D.accepted v 0, (history U a).card := Finset.card_biUnion_le
-    _ = ∑ _a ∈ D.accepted v 0, 1 :=
-        Finset.sum_congr rfl fun a ha => by
-          obtain ⟨ha_ids, ha_round⟩ := D.held_spec v 0 a (D.accepted_sub v 0 ha)
-          rw [history_eq_singleton_of_round_zero ha_ids ha_round,
-            Finset.card_singleton]
-    _ = (D.accepted v 0).card := by simp
-    _ ≤ 3 * F.f + 1 := by
-        have himg : ((D.accepted v 0).image fun i => (U.block i).creator).card =
-            (D.accepted v 0).card :=
-          Finset.card_image_of_injOn fun i hi j hj hij =>
-            D.accepted_inj v 0 i hi j hj hij
-        rw [← himg, ← F.card_validators, ← Finset.card_univ]
-        exact Finset.card_le_univ _
-
-/-- **B3.** Under the novelty budget, a correct validator's accumulated view
-is linear in the round: `(3f+1) + (|Correct|·Κ + f·κ)·n`. At `β = f` the
-increment is `(2f+1)·Κ + f·κ` — §10.7's constant. -/
-theorem card_viewUpto_le {κ Κ : ℕ} (hbud : NoveltyBudget D κ Κ)
-    (hv : v ∈ (Correct : Finset Validator)) (n : ℕ) :
-    (viewUpto D v n).card ≤
-      (3 * F.f + 1) + ((Correct : Finset Validator).card * Κ + F.f * κ) * n := by
-  induction n with
-  | zero => simpa using card_viewUpto_zero_le (D := D) (v := v)
-  | succ n ih =>
-      have hstep := card_viewUpto_succ_le hbud hv n
-      have hmul : ((Correct : Finset Validator).card * Κ + F.f * κ) * (n + 1) =
-          ((Correct : Finset Validator).card * Κ + F.f * κ) * n +
-            ((Correct : Finset Validator).card * Κ + F.f * κ) :=
-        Nat.mul_succ _ _
-      omega
-
-/-- The D3 direction: a block whose references were all accepted costs at
-most one more than the accumulated view. -/
-theorem card_history_le_card_viewUpto_add_one (hb : b ∈ U.ids)
-    (hrefs : (U.block b).refs ⊆ D.accepted v n) :
-    (history U b).card ≤ (viewUpto D v n).card + 1 := by
-  have hsub : history U b ⊆ insert b (viewUpto D v n) := by
-    intro i hi
-    rcases (mem_history_succ_iff hb).mp hi with rfl | ⟨j, hj, hij⟩
-    · exact Finset.mem_insert_self _ _
-    · exact Finset.mem_insert_of_mem
-        (history_subset_viewUpto (le_refl n) (hrefs hj) hij)
-  exact (Finset.card_le_card hsub).trans (Finset.card_insert_le _ _)
-
-/-- **B3, through the D3 bridge**: the history of a correct validator's own
-next block is linear in the round — the shape §10.6 proves unreachable
-without the budget. -/
-theorem card_history_le_of_noveltyBudget {κ Κ : ℕ} (hbud : NoveltyBudget D κ Κ)
-    (hv : v ∈ (Correct : Finset Validator)) (hb : b ∈ U.ids)
-    (hrefs : (U.block b).refs ⊆ D.accepted v n) :
-    (history U b).card ≤
-      (3 * F.f + 1) +
-        ((Correct : Finset Validator).card * Κ + F.f * κ) * n + 1 :=
-  (card_history_le_card_viewUpto_add_one hb hrefs).trans
-    (Nat.add_le_add_right (card_viewUpto_le hbud hv n) 1)
-
 /-! ## C3 — the liveness half
 
 What a correct validator must be willing to fetch so that no correct block
 is ever deferred. The answer: one plus the standing *view gap* toward the
-block's author — and the gap grows only by the budget's own Byzantine
-spend, `f·κ` per round. The adversary's hidden mass never appears in
-either bound. -/
+block's author (C3a) — and the gap collapses to one round of Byzantine
+budget (C3′ below). The adversary's hidden mass never appears in either
+bound. -/
 
 /-- The standing divergence between two correct validators' retained views:
 what `w` holds that `v` does not. -/
@@ -505,94 +406,11 @@ theorem card_novelty_le_viewGap_add_one {R : ℕ} (hED : EventuallyDelivers D R)
           ⟨history_subset_viewUpto (le_refl n) htw hit, hiv⟩)
   exact (Finset.card_le_card hsub).trans (Finset.card_insert_le _ _)
 
-/-- **C3b.** After `R` the gap grows by at most `f·κ` per round: correct
-acceptances are shared, and Byzantine ones are budgeted at the moment `w`
-takes them. -/
-theorem card_viewGap_succ_le {κ R : ℕ} (hbyz : ByzBudget D κ)
-    (hED : EventuallyDelivers D R) (hn : R ≤ n + 1)
-    (hv : v ∈ (Correct : Finset Validator))
-    (hw : w ∈ (Correct : Finset Validator)) :
-    (viewGap D v w (n + 1)).card ≤ (viewGap D v w n).card + F.f * κ := by
-  have hsub : viewGap D v w (n + 1) ⊆
-      viewGap D v w n ∪
-        ((D.accepted w (n + 1)).filter
-          (fun t => (U.block t).creator ∉ (Correct : Finset Validator))).biUnion
-          (fun t => novelty U (viewUpto D w n) t) := by
-    intro i hi
-    obtain ⟨hiw, hiv⟩ := Finset.mem_sdiff.mp hi
-    have hiv' : i ∉ viewUpto D v n := fun h => hiv (viewUpto_mono (Nat.le_succ n) h)
-    rw [viewUpto_succ] at hiw
-    rcases Finset.mem_union.mp hiw with h | h
-    · exact Finset.mem_union_left _ (Finset.mem_sdiff.mpr ⟨h, hiv'⟩)
-    · obtain ⟨t, ht, hit⟩ := Finset.mem_biUnion.mp h
-      obtain ⟨ht_ids, ht_round⟩ :=
-        D.held_spec w (n + 1) t (D.accepted_sub w (n + 1) ht)
-      by_cases htc : (U.block t).creator ∈ (Correct : Finset Validator)
-      · exact absurd (history_subset_viewUpto (le_refl (n + 1))
-          (D.accepts_correct v hv (n + 1) t
-            (hED (n + 1) hn v hv t ht_ids ht_round htc) htc) hit) hiv
-      · by_cases hiw' : i ∈ viewUpto D w n
-        · exact Finset.mem_union_left _ (Finset.mem_sdiff.mpr ⟨hiw', hiv'⟩)
-        · exact Finset.mem_union_right _ (Finset.mem_biUnion.mpr
-            ⟨t, Finset.mem_filter.mpr ⟨ht, htc⟩, mem_novelty.mpr ⟨hit, hiw'⟩⟩)
-  calc (viewGap D v w (n + 1)).card
-      ≤ (viewGap D v w n ∪
-          ((D.accepted w (n + 1)).filter
-            (fun t => (U.block t).creator ∉ (Correct : Finset Validator))).biUnion
-            (fun t => novelty U (viewUpto D w n) t)).card :=
-        Finset.card_le_card hsub
-    _ ≤ (viewGap D v w n).card +
-          (((D.accepted w (n + 1)).filter
-            (fun t => (U.block t).creator ∉ (Correct : Finset Validator))).biUnion
-            (fun t => novelty U (viewUpto D w n) t)).card :=
-        Finset.card_union_le _ _
-    _ ≤ (viewGap D v w n).card +
-          ∑ t ∈ (D.accepted w (n + 1)).filter
-            (fun t => (U.block t).creator ∉ (Correct : Finset Validator)),
-            (novelty U (viewUpto D w n) t).card :=
-        Nat.add_le_add_left Finset.card_biUnion_le _
-    _ ≤ (viewGap D v w n).card + F.f * κ :=
-        Nat.add_le_add_left (sum_novelty_not_correct_le hbyz hw n) _
-
-/-- **C3c.** The gap, telescoped from `R`: the standing divergence at `R`
-plus the budget's spend rate. Nothing else — in particular, nothing the
-adversary built in private. -/
-theorem card_viewGap_le {κ R : ℕ} (hbyz : ByzBudget D κ)
-    (hED : EventuallyDelivers D R) (hv : v ∈ (Correct : Finset Validator))
-    (hw : w ∈ (Correct : Finset Validator)) (hn : R ≤ n) :
-    (viewGap D v w n).card ≤ (viewGap D v w R).card + (n - R) * (F.f * κ) := by
-  induction n, hn using Nat.le_induction with
-  | base => simp
-  | succ n hRn ih =>
-      have hstep := card_viewGap_succ_le hbyz hED (hRn.trans (Nat.le_succ n)) hv hw
-      have hsub : n + 1 - R = (n - R) + 1 := by omega
-      calc (viewGap D v w (n + 1)).card
-          ≤ (viewGap D v w n).card + F.f * κ := hstep
-        _ ≤ ((viewGap D v w R).card + (n - R) * (F.f * κ)) + F.f * κ :=
-            Nat.add_le_add_right ih _
-        _ = (viewGap D v w R).card + (n + 1 - R) * (F.f * κ) := by
-            rw [hsub, Nat.succ_mul, Nat.add_assoc]
-
-/-- **C3.** After `R`, the hysteresis threshold a correct block ever needs
-is `gap(R) + (n-R)·f·κ + 1`: the divergence standing at `R`, the budget's
-own spend since, and the block itself. The adversary's hidden mass never
-enters — which is what makes a bounded `Κ` satisfiable, and the contagion
-attack of §10.7 harmless. -/
-theorem card_novelty_correct_le {κ R : ℕ} (hbyz : ByzBudget D κ)
-    (hED : EventuallyDelivers D R) (hn : R ≤ n)
-    (hv : v ∈ (Correct : Finset Validator))
-    (hw : w ∈ (Correct : Finset Validator)) (hb : b ∈ U.ids)
-    (hrefs : (U.block b).refs ⊆ D.accepted w n) :
-    (novelty U (viewUpto D v n) b).card ≤
-      (viewGap D v w R).card + (n - R) * (F.f * κ) + 1 :=
-  (card_novelty_le_viewGap_add_one hED hn hv hb hrefs).trans
-    (Nat.add_le_add_right (card_viewGap_le hbyz hED hv hw hn) 1)
-
 /-! ## The gap collapses — the DAG is its own repair channel
 
-`card_viewGap_le` above lets the gap drift by `f·κ` per round, which would
-make the hysteresis threshold a function of time. It does not drift. The
-repair mechanism §10.7 asked for already exists in `Delivery`: `includes`
+A naive telescope would let the gap drift by `f·κ` per round, making the
+hysteresis threshold a function of time. It does not drift. The repair
+mechanism §10.7 asked for already exists in `Delivery`: `includes`
 puts every round's acceptances among the next block's references, and the
 self-parent chain (S10) carries every earlier round forward — so a correct
 validator's block is, in its cone, a complete record of everything its

@@ -1176,12 +1176,15 @@ where S1 put the storage story — at the acceptance layer, never in
 existing theorem survives verbatim. What is proved on top
 (`LeanDag/Novelty.lean`) is new:
 
-- **B3** (`card_viewUpto_le`) — under the budget a correct validator's
-  view is linear in the round:
-  `|V_v(n)| ≤ (3f+1) + (|Correct|·Κ + f·κ)·n`, whose increment at
-  `β = f` is the `(2f+1)·Κ + f·κ` above; through the D3 bridge the
-  history of `v`'s own next block obeys the same bound plus one
-  (`card_history_le_of_noveltyBudget`).
+- **The budget, two forms** (`ByzBudget`, `UniformBudget`) — the
+  analysis side caps only Byzantine-authored acceptances at `κ` (the
+  weakest thing the theorems need; the creator guard is bookkeeping),
+  and the mechanism side caps every acceptance, author-blind. A first
+  *assumed* two-tier form (`NoveltyBudget`, with its view bound B3) was
+  scaffolding and has been **deleted from the development**: once C3″
+  derived the correct tier from the Byzantine clause, its role passed
+  to B3′ (post-`R`) and B4 (unconditional), which strictly supersede
+  it. This paragraph is its record.
 - **D26, the telescope** (`card_history_le_of_stepNovelty`) — the
   pure-DAG form, no delivery model: if each block of a correct author
   adds at most `κ'` over its self-parent (`StepNovelty`), then
@@ -1190,9 +1193,9 @@ existing theorem survives verbatim. What is proved on top
 - **C3** — the liveness half, in two rounds of sharpening. First the
   gap form: after `R`, the novelty of a correct block at any correct
   validator is at most **one plus the view gap** toward its author
-  (`card_novelty_le_viewGap_add_one`), and the gap grows by at most
-  `f·κ` per round (`card_viewGap_le`) — the adversary's hidden mass
-  appears in neither term, which already kills the contagion attack.
+  (C3a, `card_novelty_le_viewGap_add_one`) — the adversary's hidden
+  mass appears in neither term, which already kills the contagion
+  attack.
   Then the drift died too: **the gap collapses** (C3′,
   `card_viewGap_succ_le_of_block`). The repair this section first
   thought it had to design already exists inside `Delivery`:
@@ -1676,7 +1679,7 @@ together:
   because the doubling family has no intrinsic signature: rules on cone
   shape convict correct blocks under forced merges (`Utwin`, §10.7), while
   novelty charges only delivery work, and charges it once.
-- It is a **predicate over `Delivery`** (`NoveltyBudget`), not a new
+- It is a **predicate over `Delivery`** (`ByzBudget`/`UniformBudget`), not a new
   structure and not a validity condition: `Delivery.accepted` already
   carries the round-indexed schedule, validity stays objective (D13), and
   every existing theorem survives verbatim — the S5 precedent.
@@ -1760,15 +1763,14 @@ The whole development builds with no `sorry` and the usual three axioms.
 | **D25** | density: all but `f` correct per round appear | `card_missingAt_le` | `Density` |
 | — | novelty: the measure, antitone in the view | `novelty`, `novelty_anti`, `card_history_le_card_add` | `Novelty` |
 | **D26** | the telescope: stepwise novelty ⇒ linear history | `StepNovelty`, `card_history_le_of_stepNovelty` | `Novelty` |
-| **B3** | the view bound under the budget | `NoveltyBudget`, `card_viewUpto_le`, `card_history_le_of_noveltyBudget` | `Novelty` |
-| **C3** | post-`R` cost of a correct block: gap, plus spend | `card_novelty_le_viewGap_add_one`, `card_viewGap_le`, `card_novelty_correct_le` | `Novelty` |
+| — | the budget, both forms | `ByzBudget`, `UniformBudget`, `UniformBudget.byzBudget` | `Novelty` |
+| **C3a** | post-`R` cost of a correct block: one plus the gap | `viewGap`, `card_novelty_le_viewGap_add_one` | `Novelty` |
 | **C3′** | the gap collapses: `≤ f·κ`, constant after `R` | `viewUpto_subset_history`, `card_viewGap_succ_le_of_block` | `Novelty` |
 | **C3″** | the correct clause is derived: `Κ = f·κ + 1` | `ByzBudget`, `card_novelty_le_of_byzBudget` | `Novelty` |
 | **B3′** | linear storage from the enforceable rule alone | `RefsAccepted`, `card_viewUpto_le_of_byzBudget` | `Novelty` |
 | — | the capstone: liveness ∧ storage, one hypothesis set | `no_stall_and_card_viewUpto_le` | `Novelty` |
 | **B4** | unconditional linear storage: no synchrony, from round 0 | `byzPool`, `card_byzPool_le`, `card_viewUpto_le_of_refsAccepted` | `Novelty` |
 | — | the capstone, asynchronous | `no_stall_and_card_viewUpto_le'` | `Novelty` |
-| — | the mechanism-side budget, author-blind | `UniformBudget`, `UniformBudget.byzBudget`, `…noveltyBudget` | `Novelty` |
 | — | the sandwich converse: uniform at `f·κ+1` post-`R` | `uniform_of_byzBudget` | `Novelty` |
 | — | **the headline**: DoS resistance from enforceable conditions only | `dos_resistance`, `dos_resistance'` | `Novelty` |
 
@@ -1821,10 +1823,11 @@ branch N drops the price to 8: antitone, on data. The telescope is tight
 on `Udouble` (`|H(30)| = 19 = 9·2 + 1`) and its constant is the data's,
 not slack: `StepNovelty Utwin 4` is *false*, the forced merge costs
 exactly 5. `Dtwin` equips `Utwin` with its delivery story and satisfies
-`NoveltyBudget Dtwin 0 3` — the dearest acceptance charges validator 1
+the author-blind `UniformBudget Dtwin 3` and the sharp
+`ByzBudget Dtwin 0` — the dearest acceptance charges validator 1
 for the missed genesis *and* the equivocation half riding in on a correct
-carrier, the pre-`R` divergence priced inside `Κ` — B3 and the whole C3
-chain then apply with `R = 1`, and the round-0 gap between validators 3
+carrier, the pre-`R` divergence priced inside the cap — the C3 chain
+then applies with `R = 1`, and the round-0 gap between validators 3
 and 1 is exactly `{0}`, the Byzantine half one accepted and the other
 never saw: the gap *is* the budget's spend, on data. The collapse and the
 capstone run on the same schedule: `Dtwin` carries `Live`,
@@ -1836,11 +1839,11 @@ single application — closes it. B4 on the same data: the global pool is
 exactly the two accepted equivocation halves, `byzPool Dtwin = {0, 4}`,
 frozen there forever at `κ = 0`, and the asynchronous capstone
 `no_stall_and_card_viewUpto_le'` applies with `EventuallyDelivers`
-nowhere in sight. The sandwich, too: the schedule satisfies the
-author-blind `UniformBudget Dtwin 3` (which discharges both guarded
-forms), post-`R` the converse prices every acceptance at `f·κ + 1 = 1`
-with the creator guard gone, and the headline `dos_resistance` applies
-from the four enforceable hypotheses alone.
+nowhere in sight. The sandwich, too: the author-blind cap discharges the
+guarded form (`dtwin_uniform.byzBudget`), post-`R` the converse prices
+every acceptance at `f·κ + 1 = 1` with the creator guard gone, and the
+headline `dos_resistance` applies from the four enforceable hypotheses
+alone.
 
 The S10 repair itself touched only `Model.lean`:
 validator 3's blocks (and dependents) gained their self-parents, and three
