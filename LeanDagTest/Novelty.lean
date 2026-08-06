@@ -1,4 +1,5 @@
 import LeanDag.Novelty
+import LeanDag.Composition
 import LeanDagTest.Density
 import LeanDagTest.Doubling
 
@@ -395,6 +396,32 @@ example : (∀ r ≤ 1, Populated Utwin r) ∧
             n * ((Correct : Finset (Fin 4)).card * (Faults.f (Fin 4) * 3))) :=
   dos_resistance dtwin_live dtwin_deliversQuorum dtwin_uniform
     dtwin_refsAccepted
+
+/-! ## The composition — the pool freezes -/
+
+/-- Exposure-complete on data: every correct round-2 block's cone exposes
+the lone Byzantine author (the merge block 8, exposed to validator 0). -/
+theorem utwin_allExposed : AllExposed Utwin 1 := by decide
+
+/-- **B5 applied** — both conditions composed: from round `m+1 = 2` on,
+validator 1's view is the correct production plus the **frozen** pool —
+`9 ≤ 3·3 + 2`. The Byzantine term has stopped growing. -/
+example : (viewUpto Dtwin 1 2).card ≤
+    (Correct : Finset (Fin 4)).card * (2 + 1) + (byzPool Dtwin 2).card :=
+  card_viewUpto_le_of_allExposed utwin_dosValid dtwin_refsAccepted
+    utwin_allExposed (by decide) (le_refl 2)
+    (fun _r h1 h2 => (by omega : False).elim)
+
+example : (byzPool Dtwin 2).card = 2 := by decide
+
+/-- B5 with the budget's explicit constant: `9 ≤ 9 + (3 + 0)`. -/
+example : (viewUpto Dtwin 1 2).card ≤
+    (Correct : Finset (Fin 4)).card * (2 + 1) +
+      ((Correct : Finset (Fin 4)).card * Faults.f (Fin 4) +
+        (1 + 1) * ((Correct : Finset (Fin 4)).card * (Faults.f (Fin 4) * 0))) :=
+  card_viewUpto_le_of_allExposed' utwin_dosValid dtwin_byz dtwin_refsAccepted
+    utwin_allExposed (by decide) (le_refl 2)
+    (fun _r h1 h2 => (by omega : False).elim)
 
 #print axioms dtwin_uniform
 #print axioms udouble_reveal_novelty

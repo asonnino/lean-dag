@@ -643,7 +643,7 @@ theorem viewUpto_zero_eq : viewUpto D v 0 = D.accepted v 0 := by
 
 /-- The correct part of a view counts itself: one block per correct author
 per round (`no_equivocation`), so at most `|Correct|·(n+1)`. -/
-private theorem card_filter_correct_viewUpto_le (v : Validator) (n : ℕ) :
+theorem card_filter_correct_viewUpto_le (v : Validator) (n : ℕ) :
     ((viewUpto D v n).filter
       fun i => (U.block i).creator ∈ (Correct : Finset Validator)).card ≤
       (Correct : Finset Validator).card * (n + 1) := by

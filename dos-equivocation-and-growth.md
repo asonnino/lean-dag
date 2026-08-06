@@ -116,11 +116,20 @@ adversary's hidden mass is thereby repriced rather than forbidden: a
 exponentially many rounds to place, while correct storage grows linearly
 throughout.
 
+Theorem B does not assume Condition 1 — the budget is a standalone
+defense — but the two compose (**B5**, §6): the budget alone bounds the
+Byzantine share of a view by a *rate*, `|Correct|·f·T` per round,
+sustained forever; under both conditions that term **stops growing** the
+moment every Byzantine author has been exposed, and the view bound's
+slope decays to the correct-production rate `|Correct|` per round, the
+Byzantine part frozen at `|Correct|·f·(1 + (m+1)·T)` for `m` the round
+exposure completed.
+
 Read together: exclusion makes Byzantine damage **one-shot per author**
-(C2), Theorem A bounds what one shot can weigh inside the DAG, and
-Theorem B bounds what any schedule of shots can cost a correct validator —
-from conditions each validator can enforce alone, without ever knowing who
-is Byzantine.
+(C2), Theorem A bounds what one shot can weigh inside the DAG, Theorem B
+bounds what any schedule of shots can cost a correct validator, and B5
+says the cost *ends* once the authors are caught — all from conditions
+each validator can enforce alone, without ever knowing who is Byzantine.
 
 ## 1. The threat, and the two measures
 
@@ -493,6 +502,28 @@ reveal — it must trickle through budgeted acceptances, at most `f`
 Byzantine authors per round, so placing it takes exponentially many rounds
 while correct storage grows linearly throughout.
 
+**The composition (B5, `LeanDag/Composition.lean`).** Theorem B does not
+assume Condition 1 — `Novelty.lean` never mentions exposure — and the two
+compose into a statement neither makes alone. The budget bounds the
+Byzantine share of a correct view by a *rate*, `|Correct|·f·κ` per round,
+sustained forever; DoS validity *terminates* it. Once every Byzantine
+author is exposed to the correct population (`AllExposed` — the state D16
+manufactures), D17's propagation makes every later valid block silent
+about every Byzantine author; through `includes`, a correct validator
+then accepts nothing Byzantine-authored
+(`accepted_correct_of_allExposed`), and the global pool freezes at its
+current value (`byzPool_subset_of_allExposed`). The view bound's slope
+decays to the correct-production rate:
+
+> `|V_v(n)| ≤ |Correct|·(n+1) + |byzPool(m+1)|`
+> (`card_viewUpto_le_of_allExposed`),
+
+for every `n ≥ m+1` — linear with slope exactly `|Correct|`, Byzantine
+term **constant**, and with the budget the constant is explicit:
+`|Correct|·f·(1 + (m+1)·κ)`. One theorem for the division of labour: the
+budget paces what an author can inject before being caught; exclusion
+ends it.
+
 **Operationally** (not formalized — the model has no clocks): the round
 timer counts only budget-eligible blocks toward `2f+1`, so a deferred block
 never stalls it and after `R` correct tips alone satisfy it; the fetch
@@ -648,6 +679,9 @@ and the usual three axioms.
 | — | the capstone, asynchronous | `no_stall_and_card_viewUpto_le'` | `Novelty` |
 | — | the sandwich converse: uniform at `f·κ+1` post-`R` | `uniform_of_byzBudget` | `Novelty` |
 | — | **the headline**: DoS resistance from enforceable conditions only | `dos_resistance`, `dos_resistance'` | `Novelty` |
+| — | exposure-complete ⇒ acceptances turn correct | `AllExposed`, `accepted_correct_of_allExposed` | `Composition` |
+| — | the pool freezes | `byzPool_succ_subset`, `byzPool_subset_of_allExposed` | `Composition` |
+| **B5** | after exposure the slope is the correct-production rate | `card_viewUpto_le_of_allExposed`, `…'` | `Composition` |
 
 Supporting definitions: `history` and `mem_history_iff` (S6, `History`);
 `ExposedIn`, `DoSValid`, `EquivPair` (`Exposure`); `Accepted`
@@ -688,7 +722,10 @@ so each model is built to be non-vacuous in the way that matters.
   theorem applies on it: the gap is exactly the accepted Byzantine half
   `{0}`, C3′ collapses it, C3″ prices the merge block at exactly
   `f·κ + 1 = 1`, `byzPool = {0, 4}` frozen forever at `κ = 0`, and both
-  capstones and the headline `dos_resistance` apply in single terms. On the
+  capstones and the headline `dos_resistance` apply in single terms. The
+  composition too: `AllExposed Utwin 1` holds by `decide` (the merge
+  exposes the lone equivocator to every correct round-2 cone), and B5
+  applies with the pool frozen at `{0, 4}`. On the
   `Udouble` side: the reveal costs **15 novel blocks** where a correct tip
   costs 1 — every `κ ∈ [1, 14]` defers the reveal and never a correct
   block — and absorbing one branch drops the price to 8: antitone, on data.
