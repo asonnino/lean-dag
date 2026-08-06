@@ -1065,9 +1065,11 @@ other reasons), or reconfiguration (Q3).
 
 §10.6 ends at a fork: inside the model the truth is `2^Θ(e)`, and a
 polynomial bound requires changing the model. This section records the
-change we believe is right, worked to the point where the Lean
-statements are visible, before any of it is built. The slogan the whole
-design keeps returning to: **legislate novelty, prove size**.
+change we believe is right — and, as of `LeanDag/Novelty.lean`, built:
+the measure and its laws, the telescope (D26), the view bound (B3) and
+the liveness half (C3) are proved, each witnessed on data in
+`LeanDagTest/Novelty.lean`. The slogan the whole design keeps returning
+to: **legislate novelty, prove size**.
 
 **The shape of the hidden mass.** Per block, the doubling family is
 unimpeachable — rounds contiguous, quorums full, every cone clean about
@@ -1145,6 +1147,8 @@ standard two-threshold amplification (the `f+1`/`2f+1` echo pattern):
   per-round budgeted Byzantine excess (`f·κ`) plus one round of normal
   production, so after `R` every correct block passes every correct
   validator's `Κ`-check, and only genuinely hidden mass is deferred.
+  (The Lean development sharpened this accounting — the exact
+  requirement is gap-based; see C3 below.)
 
 Two proved facts make the repair safe rather than hopeful: the correct
 set alone meets the quorum (D15b) — Byzantine blocks are never
@@ -1169,17 +1173,36 @@ schedule it needs already exists: `Delivery.accepted` is indexed by
 round. The budget is one predicate over a `Delivery`, living exactly
 where S1 put the storage story — at the acceptance layer, never in
 `ValidWrt` — so validity stays objective (D13 untouched) and every
-existing theorem survives verbatim. What gets proved on top is new:
+existing theorem survives verbatim. What is proved on top
+(`LeanDag/Novelty.lean`) is new:
 
-- **B3** — under the budget, `|V_v(r)| ≤ ((2f+1)·Κ + f·κ)·(r+1)`, and
-  via D3 the same for the histories of `v`'s own blocks;
-- **D-telescope** — the pure-DAG form, no delivery model: if novelty
-  along a correct self-parent chain is stepwise `≤ κ'`, then
-  `|H(b)| ≤ κ'·r + 1`, by D20's descent;
-- **C3** — the liveness half, the one statement needing the timing
-  model, attempted last: after `R`, every correct block has novelty
-  `≤ Κ` at every correct validator, so the rule never defers a correct
-  block and L1 survives with the budget in force.
+- **B3** (`card_viewUpto_le`) — under the budget a correct validator's
+  view is linear in the round:
+  `|V_v(n)| ≤ (3f+1) + (|Correct|·Κ + f·κ)·n`, whose increment at
+  `β = f` is the `(2f+1)·Κ + f·κ` above; through the D3 bridge the
+  history of `v`'s own next block obeys the same bound plus one
+  (`card_history_le_of_noveltyBudget`).
+- **D26, the telescope** (`card_history_le_of_stepNovelty`) — the
+  pure-DAG form, no delivery model: if each block of a correct author
+  adds at most `κ'` over its self-parent (`StepNovelty`), then
+  `|H(b)| ≤ κ'·r + 1`, by S10's descent. Tight on `Udouble`:
+  the correct chains step by exactly `2f+1 = 9` and `|H(30)| = 9·2+1`.
+- **C3** — the liveness half, and it came out *sharper* than the
+  constant-`Κ` guess above. After `R`, the novelty of a correct block
+  at any correct validator is at most **one plus the view gap** toward
+  its author (`card_novelty_le_viewGap_add_one`); the gap grows by at
+  most `f·κ` per round (`card_viewGap_succ_le`), telescoping to
+  `gap(R) + (n−R)·f·κ` (`card_viewGap_le`); so the threshold that
+  keeps every correct block accepted is `gap(R) + (n−R)·f·κ + 1`
+  (`card_novelty_correct_le`). The adversary's hidden mass appears in
+  **neither term** — the only divergence drivers are the standing gap
+  at `R` and the budget's own spend, which is what makes the contagion
+  attack harmless. A *constant* `Κ` accordingly needs the gap repaired
+  — periodic cone-sharing among correct validators, or `κ = 0` between
+  repair windows — a protocol choice, not a new obstruction; the
+  theorem is what makes any bounded choice sound. (C3 takes one
+  hypothesis beyond `Delivery`: `refs ⊆ accepted`, the converse of
+  `includes` — D3's ordinary case.)
 
 ## 11. Staging and witnesses
 
@@ -1373,12 +1396,14 @@ DoS condition stops an equivocator contributing *forever*; a rate limit stops
 it contributing *much at once*. Neither substitutes for the other, and only the
 first is a property of the DAG.
 
-*Status:* the rate limit now has a concrete design — the **novelty budget**
-of §10.7 — and the observation that unblocked it is that no message type is
+*Status:* **designed and built.** The rate limit is the **novelty budget**
+of §10.7, and the observation that unblocked it is that no message type is
 needed after all: novelty is `history \ view`, both existing objects, and
-the schedule it wants is `Delivery.accepted`, already indexed by round. What
-remains of Q1 is to build it; §10.7 names the staged statements (B3, the
-telescope, C3).
+the schedule it wants is `Delivery.accepted`, already indexed by round.
+`LeanDag/Novelty.lean` proves the staged statements — B3, the telescope
+(D26), and C3 in gap form. What remains of Q1 is a protocol choice, not a
+missing theorem: the gap repair (periodic cone-sharing) that makes a
+*constant* hysteresis threshold available.
 
 **Q2 — Where does it live?** Settled for what is built, open for the rest.
 `LeanDag/History.lean` (the `Finset` history) and `LeanDag/Exposure.lean`
@@ -1585,6 +1610,30 @@ models. Three consequences of how it is stated:
   validity purposes: what S7 asked of correct behaviour, S10 now demands of
   every valid block. S7 keeps its role on the delivery side.
 
+**S11 — The novelty budget lives at the acceptance layer, and `Κ` is a
+theorem.** §10.7, built in `LeanDag/Novelty.lean`. Three decisions, made
+together:
+
+- The rule is **observer-relative** — `novelty U V b := history U b \ V` —
+  because the doubling family has no intrinsic signature: rules on cone
+  shape convict correct blocks under forced merges (`Utwin`, §10.7), while
+  novelty charges only delivery work, and charges it once.
+- It is a **predicate over `Delivery`** (`NoveltyBudget`), not a new
+  structure and not a validity condition: `Delivery.accepted` already
+  carries the round-indexed schedule, validity stays objective (D13), and
+  every existing theorem survives verbatim — the S5 precedent.
+- **Deferral, never rejection**, because novelty is antitone in the view
+  (`novelty_anti`): a deferred block only gets cheaper, so the rule is a
+  rate limiter that cannot become a permanently wrong verdict. And the
+  hysteresis threshold `Κ` for counting peers' blocks is not a parameter
+  to guess but a theorem to cite: C3 bounds what any correct block can
+  cost by the standing gap plus the budget's own spend.
+
+One modelling hypothesis appears on the C3 side only: `refs ⊆ accepted`,
+the converse of `includes` — D3's ordinary case, a correct validator
+referencing only what it accepted. It becomes a candidate `Delivery` field
+if it earns more use.
+
 ## 14. What is proved
 
 Every result of §3–§7, with its Lean name. `History`, `Exposure`, `Acceptance`,
@@ -1643,6 +1692,10 @@ The whole development builds with no `sorry` and the usual three axioms.
 | **C1′ sharp** | per-author per-round `≤ 1 + 3f·f^(f-1)` | `card_historyBlocksOf_le'` | `Pedigree` |
 | **B2 sharp** | `\|H(b)\| ≤ (3f+1 + 3f^(f+1))·(r+1)` | `card_history_le'` | `Pedigree` |
 | **D25** | density: all but `f` correct per round appear | `card_missingAt_le` | `Density` |
+| — | novelty: the measure, antitone in the view | `novelty`, `novelty_anti`, `card_history_le_card_add` | `Novelty` |
+| **D26** | the telescope: stepwise novelty ⇒ linear history | `StepNovelty`, `card_history_le_of_stepNovelty` | `Novelty` |
+| **B3** | the view bound under the budget | `NoveltyBudget`, `card_viewUpto_le`, `card_history_le_of_noveltyBudget` | `Novelty` |
+| **C3** | post-`R` cost of a correct block: gap, plus spend | `card_novelty_le_viewGap_add_one`, `card_viewGap_le`, `card_novelty_correct_le` | `Novelty` |
 
 Supporting definitions: `history` and `mem_history_iff` (S6, `History`);
 `ExposedIn`, `DoSValid`, `EquivPair` (`Exposure`); `Accepted` (`Acceptance`);
@@ -1685,6 +1738,21 @@ where **both** Byzantine validators are exposed at once
 hypothesis beyond `DoSValid`, bounding the 20-block history and every
 per-round contribution — the multi-equivocator regime, witnessed.
 
+**`LeanDagTest/Novelty.lean`** prices the doubling family and runs the
+budget on a real schedule. Against the correct bystander's 27 blocks the
+reveal costs **15 novel blocks** where a correct tip costs 1 — every
+`κ ∈ [1, 14]` defers the reveal and never a correct block — and absorbing
+branch N drops the price to 8: antitone, on data. The telescope is tight
+on `Udouble` (`|H(30)| = 19 = 9·2 + 1`) and its constant is the data's,
+not slack: `StepNovelty Utwin 4` is *false*, the forced merge costs
+exactly 5. `Dtwin` equips `Utwin` with its delivery story and satisfies
+`NoveltyBudget Dtwin 0 3` — the dearest acceptance charges validator 1
+for the missed genesis *and* the equivocation half riding in on a correct
+carrier, the pre-`R` divergence priced inside `Κ` — B3 and the whole C3
+chain then apply with `R = 1`, and the round-0 gap between validators 3
+and 1 is exactly `{0}`, the Byzantine half one accepted and the other
+never saw: the gap *is* the budget's spend, on data.
+
 The S10 repair itself touched only `Model.lean`:
 validator 3's blocks (and dependents) gained their self-parents, and three
 vote-count examples shifted because an author now always votes for its own
@@ -1703,7 +1771,10 @@ adoption theorem's `7(r+1)`. What remains open is *quantitative only*, and
 polynomial is **impossible** without changing the model, and the remaining
 gap is `2^(e-1)` (constructible) versus `e^(e-1)` (proved), whose closure
 needs set-determinism of pedigrees. Beyond that: Q1's network-layer rate
-limit, which bounds what no DAG condition can — the size of `U` itself.
+limit, which bounds what no DAG condition can — the size of `U` itself —
+is now designed (§10.7) **and formalized** (B3, D26, C3 in
+`LeanDag/Novelty.lean`); its residue is a protocol choice — gap repair
+for a constant hysteresis threshold — not a missing theorem.
 
 The gap C1′ has to close is visible on the witness rather than merely stated:
 validator 1, which block `9` references, contributes three blocks to `H(9)` —

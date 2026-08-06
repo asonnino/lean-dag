@@ -16,6 +16,7 @@ import LeanDag.SelfParent
 import LeanDag.Adoption
 import LeanDag.Pedigree
 import LeanDag.Density
+import LeanDag.Novelty
 import LeanDag.Acceptance
 import LeanDag.Counting
 import LeanDag.Exclusion
