@@ -1219,6 +1219,20 @@ existing theorem survives verbatim. What is proved on top
   not compete: liveness never needs a Byzantine block (D15b, and the
   post-`R` quorum is derivable from the correct set alone), and by C3″
   the enforced rule never defers a correct one.
+- **B4 — and then the base falls too** (`card_viewUpto_le_of_refsAccepted`,
+  capstone form `no_stall_and_card_viewUpto_le'`). The pre-`R` view the
+  capstone measured from is itself linear, for a reason needing **no
+  synchrony at all**: every Byzantine block in any correct view entered
+  through *some* correct validator's budgeted acceptance — a direct
+  acceptance is priced `≤ κ`, and a block arriving inside a correct
+  block's cone was already in that block's author's earlier view
+  (`RefsAccepted`), hence already in the pool. So the global Byzantine
+  pool (`byzPool`, `card_byzPool_le`) grows by at most `|Correct|·f·κ`
+  per round from round 0, the correct part counts itself at one block
+  per author per round (`no_equivocation`), and
+  `|V_v(n)| ≤ |Correct|·(n+1) + |Correct|·f·(1 + n·κ)` holds under full
+  asynchrony — `EventuallyDelivers` appears nowhere. DoS resistance is
+  not a post-GST property.
 
 ## 11. Staging and witnesses
 
@@ -1421,10 +1435,11 @@ the schedule it wants is `Delivery.accepted`, already indexed by round.
 repair channel, no cone-sharing protocol needed), the hysteresis threshold
 is the derived constant `f·κ + 1` (C3″), and the capstone
 `no_stall_and_card_viewUpto_le` yields liveness and linear storage from
-one set of hypotheses. What remains of Q1 is confined to the edges: the
-pre-`R` base view (what a validator retained before synchrony — see §14),
-and the wire-level cap on `held`, which the model deliberately does not
-see.
+one set of hypotheses — and B4 removes even the synchrony: storage is
+linear from round 0 under full asynchrony
+(`no_stall_and_card_viewUpto_le'`). What remains of Q1 is exactly one
+thing: the wire-level cap on `held`, which the model deliberately does
+not see.
 
 **Q2 — Where does it live?** Settled for what is built, open for the rest.
 `LeanDag/History.lean` (the `Finset` history) and `LeanDag/Exposure.lean`
@@ -1723,6 +1738,8 @@ The whole development builds with no `sorry` and the usual three axioms.
 | **C3″** | the correct clause is derived: `Κ = f·κ + 1` | `ByzBudget`, `card_novelty_le_of_byzBudget` | `Novelty` |
 | **B3′** | linear storage from the enforceable rule alone | `RefsAccepted`, `card_viewUpto_le_of_byzBudget` | `Novelty` |
 | — | the capstone: liveness ∧ storage, one hypothesis set | `no_stall_and_card_viewUpto_le` | `Novelty` |
+| **B4** | unconditional linear storage: no synchrony, from round 0 | `byzPool`, `card_byzPool_le`, `card_viewUpto_le_of_refsAccepted` | `Novelty` |
+| — | the capstone, asynchronous | `no_stall_and_card_viewUpto_le'` | `Novelty` |
 
 Supporting definitions: `history` and `mem_history_iff` (S6, `History`);
 `ExposedIn`, `DoSValid`, `EquivPair` (`Exposure`); `Accepted` (`Acceptance`);
@@ -1784,7 +1801,11 @@ capstone run on the same schedule: `Dtwin` carries `Live`,
 validator 3's own round-1 block gives gap `≤ f·κ = 0`, C3″ prices the
 merge block at exactly the derived threshold `f·κ + 1 = 1`, and
 `no_stall_and_card_viewUpto_le` — liveness and the storage bound in a
-single application — closes it.
+single application — closes it. B4 on the same data: the global pool is
+exactly the two accepted equivocation halves, `byzPool Dtwin = {0, 4}`,
+frozen there forever at `κ = 0`, and the asynchronous capstone
+`no_stall_and_card_viewUpto_le'` applies with `EventuallyDelivers`
+nowhere in sight.
 
 The S10 repair itself touched only `Model.lean`:
 validator 3's blocks (and dependents) gained their self-parents, and three
@@ -1805,17 +1826,17 @@ polynomial is **impossible** without changing the model, and the remaining
 gap is `2^(e-1)` (constructible) versus `e^(e-1)` (proved), whose closure
 needs set-determinism of pedigrees. Beyond that: Q1's network-layer rate
 limit, which bounds what no DAG condition can — the size of `U` itself —
-is now designed (§10.7) **and formalized through the capstone** (B3, D26,
-C3, C3′, C3″, B3′, `no_stall_and_card_viewUpto_le` in
-`LeanDag/Novelty.lean`); a constant hysteresis threshold is *derived*
-(`f·κ + 1`), so no repair protocol is needed. Two edge terms remain. The
-pre-`R` base view `|V_v(R+1)|`: conjectured linear unconditionally — every
-Byzantine block in any correct cone must have entered through *some*
-correct validator's budgeted acceptance (by `RefsAccepted`, a correct
-block's cone sits inside its author's earlier view), so the global
-Byzantine pool should be `≤ |Correct|·f·κ` per round from round 0, with no
-synchrony at all — a global accounting argument not yet formalized. And
-the wire-level cap on `held`, which the model deliberately does not see.
+is now designed (§10.7) **and formalized to the end** (B3, D26, C3, C3′,
+C3″, B3′, B4 and both capstones in `LeanDag/Novelty.lean`): a constant
+hysteresis threshold is *derived* (`f·κ + 1`), no repair protocol is
+needed, and B4 closes the pre-`R` conjecture — storage is linear from
+round 0 under full asynchrony. What remains is exactly one edge term: the
+wire-level cap on `held` — how many *candidate* blocks a validator will
+hold from the network before deciding anything — which the model
+deliberately does not see (S5: `held` must stay undeduplicated so that
+`U` means what §4.2 says). That is a statement about messages, not
+blocks, and it is the one part of Q1 that was always going to live at the
+network layer.
 
 The gap C1′ has to close is visible on the witness rather than merely stated:
 validator 1, which block `9` references, contributes three blocks to `H(9)` —

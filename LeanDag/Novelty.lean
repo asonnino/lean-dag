@@ -49,6 +49,12 @@ Four layers, each usable without the ones after it:
   theorem, given only the enforceable Byzantine clause (`ByzBudget`).
   `no_stall_and_card_viewUpto_le` then delivers liveness and linear
   storage from one set of hypotheses.
+* **B4** (unconditional). Even the post-`R` base is dispensable: the
+  global Byzantine pool (`byzPool`) grows by at most `|Correct|·f·κ` per
+  round with **no synchrony at all** — every Byzantine block in a correct
+  view entered through some correct validator's budgeted acceptance — so
+  storage is linear from round 0 under full asynchrony
+  (`card_viewUpto_le_of_refsAccepted`, `no_stall_and_card_viewUpto_le'`).
 
 The one hypothesis the C3 chain takes beyond `Delivery` is
 `RefsAccepted` — `refs ⊆ accepted`, the converse of `includes`, i.e. D3's
@@ -726,5 +732,228 @@ theorem no_stall_and_card_viewUpto_le {κ R N : ℕ} (H : Live U D N)
           (n - (R + 1)) *
             ((Correct : Finset Validator).card * (F.f * κ + 1) + F.f * κ) :=
   ⟨no_stall H hd, fun _v hv _n hn => card_viewUpto_le_of_byzBudget hbyz hED hra hv hn⟩
+
+/-! ## B4 — unconditional linear storage
+
+The capstone above still measures from a post-`R` base. That base is
+itself linear, and for a reason that needs no synchrony at all: **every
+Byzantine block in any correct view entered through some correct
+validator's budgeted acceptance.** A Byzantine block reaches a correct
+view either as a direct acceptance — priced `≤ κ` by `ByzBudget` — or
+inside an accepted *correct* block's cone; but a correct block's cone sits
+inside its author's own earlier view (`RefsAccepted`), so the mass was
+already in the pool. The global Byzantine pool therefore grows by at most
+`|Correct|·f·κ` per round from round 0, with no delivery guarantee
+anywhere — which closes the pre-`R` residue of §10.7 and makes the DoS
+bound fully asynchronous. -/
+
+theorem viewUpto_subset_ids : viewUpto D v n ⊆ U.ids := by
+  induction n with
+  | zero =>
+      intro i hi
+      obtain ⟨a, ha, hia⟩ := Finset.mem_biUnion.mp hi
+      exact history_subset_ids (D.held_spec v 0 a (D.accepted_sub v 0 ha)).1 hia
+  | succ n ih =>
+      intro i hi
+      rw [viewUpto_succ] at hi
+      rcases Finset.mem_union.mp hi with h | h
+      · exact ih h
+      · obtain ⟨a, ha, hia⟩ := Finset.mem_biUnion.mp h
+        exact history_subset_ids
+          (D.held_spec v (n + 1) a (D.accepted_sub v (n + 1) ha)).1 hia
+
+theorem viewUpto_zero_eq : viewUpto D v 0 = D.accepted v 0 := by
+  apply Finset.Subset.antisymm
+  · intro i hi
+    obtain ⟨a, ha, hia⟩ := Finset.mem_biUnion.mp hi
+    obtain ⟨ha_ids, ha_round⟩ := D.held_spec v 0 a (D.accepted_sub v 0 ha)
+    rw [history_eq_singleton_of_round_zero ha_ids ha_round,
+      Finset.mem_singleton] at hia
+    exact hia ▸ ha
+  · intro a ha
+    exact Finset.mem_biUnion.mpr ⟨a, ha, mem_history_self⟩
+
+/-- The correct part of a view counts itself: one block per correct author
+per round (`no_equivocation`), so at most `|Correct|·(n+1)`. -/
+private theorem card_filter_correct_viewUpto_le (v : Validator) (n : ℕ) :
+    ((viewUpto D v n).filter
+      fun i => (U.block i).creator ∈ (Correct : Finset Validator)).card ≤
+      (Correct : Finset Validator).card * (n + 1) := by
+  calc ((viewUpto D v n).filter
+        fun i => (U.block i).creator ∈ (Correct : Finset Validator)).card
+      ≤ ((Correct : Finset Validator) ×ˢ Finset.range (n + 1)).card := by
+        refine Finset.card_le_card_of_injOn
+          (fun i => ((U.block i).creator, (U.block i).round)) ?_ ?_
+        · intro i hi
+          obtain ⟨hiv, hic⟩ := Finset.mem_filter.mp hi
+          have hr : (U.block i).round < n + 1 := by
+            have := round_le_of_mem_viewUpto hiv; omega
+          exact Finset.mem_product.mpr ⟨hic, Finset.mem_range.mpr hr⟩
+        · intro i hi j hj hij
+          simp only [Finset.mem_coe, Finset.mem_filter] at hi hj
+          have h1 : (U.block i).creator = (U.block j).creator :=
+            congrArg Prod.fst hij
+          have h2 : (U.block i).round = (U.block j).round :=
+            congrArg Prod.snd hij
+          exact U.no_equivocation i (viewUpto_subset_ids hi.1) j
+            (viewUpto_subset_ids hj.1) hi.2 h1 h2
+    _ = (Correct : Finset Validator).card * (n + 1) := by
+        rw [Finset.card_product, Finset.card_range]
+
+/-- The **global Byzantine pool**: every Byzantine-authored block sitting
+in any correct validator's retained view. -/
+def byzPool (D : Delivery U) (n : ℕ) : Finset BlockId :=
+  (Correct : Finset Validator).biUnion fun w =>
+    (viewUpto D w n).filter
+      fun i => (U.block i).creator ∉ (Correct : Finset Validator)
+
+theorem mem_byzPool {i : BlockId} :
+    i ∈ byzPool D n ↔ ∃ w ∈ (Correct : Finset Validator),
+      i ∈ viewUpto D w n ∧
+        (U.block i).creator ∉ (Correct : Finset Validator) := by
+  constructor
+  · intro h
+    obtain ⟨w, hw, hmem⟩ := Finset.mem_biUnion.mp h
+    obtain ⟨hiv, hic⟩ := Finset.mem_filter.mp hmem
+    exact ⟨w, hw, hiv, hic⟩
+  · rintro ⟨w, hw, hiv, hic⟩
+    exact Finset.mem_biUnion.mpr ⟨w, hw, Finset.mem_filter.mpr ⟨hiv, hic⟩⟩
+
+/-- Round 0 seeds the pool with at most `f` Byzantine geneses per correct
+validator. -/
+theorem card_byzPool_zero_le :
+    (byzPool D 0).card ≤ (Correct : Finset Validator).card * F.f :=
+  calc (byzPool D 0).card
+      ≤ ∑ w ∈ (Correct : Finset Validator),
+          ((viewUpto D w 0).filter
+            fun i => (U.block i).creator ∉ (Correct : Finset Validator)).card :=
+        Finset.card_biUnion_le
+    _ ≤ ∑ _w ∈ (Correct : Finset Validator), F.f :=
+        Finset.sum_le_sum fun w _ => by
+          rw [viewUpto_zero_eq]
+          exact card_filter_not_correct_le w 0
+    _ = (Correct : Finset Validator).card * F.f :=
+        Finset.sum_const_nat fun _ _ => rfl
+
+/-- **The accounting step.** A Byzantine block enters the pool only as a
+direct budgeted acceptance: if it arrived inside a correct block's cone,
+`RefsAccepted` puts it in that block's author's *earlier* view — it was in
+the pool already. So the pool grows by at most `|Correct|·f·κ` per round. -/
+theorem card_byzPool_succ_le {κ : ℕ} (hbyz : ByzBudget D κ)
+    (hra : RefsAccepted D) (n : ℕ) :
+    (byzPool D (n + 1)).card ≤
+      (byzPool D n).card + (Correct : Finset Validator).card * (F.f * κ) := by
+  have hsub : byzPool D (n + 1) ⊆ byzPool D n ∪
+      (Correct : Finset Validator).biUnion (fun w =>
+        ((D.accepted w (n + 1)).filter
+          fun t => (U.block t).creator ∉ (Correct : Finset Validator)).biUnion
+          fun t => novelty U (viewUpto D w n) t) := by
+    intro i hi
+    obtain ⟨w, hw, hiv, hic⟩ := mem_byzPool.mp hi
+    rw [viewUpto_succ] at hiv
+    rcases Finset.mem_union.mp hiv with h | h
+    · exact Finset.mem_union_left _ (mem_byzPool.mpr ⟨w, hw, h, hic⟩)
+    · obtain ⟨t, ht, hit⟩ := Finset.mem_biUnion.mp h
+      by_cases hiw : i ∈ viewUpto D w n
+      · exact Finset.mem_union_left _ (mem_byzPool.mpr ⟨w, hw, hiw, hic⟩)
+      obtain ⟨ht_ids, ht_round⟩ :=
+        D.held_spec w (n + 1) t (D.accepted_sub w (n + 1) ht)
+      by_cases htc : (U.block t).creator ∈ (Correct : Finset Validator)
+      · -- inside a correct block's cone: already in its author's view
+        rcases (mem_history_succ_iff ht_ids).mp hit with rfl | ⟨s, hs, his⟩
+        · exact absurd htc hic
+        · exact Finset.mem_union_left _ (mem_byzPool.mpr
+            ⟨(U.block t).creator, htc,
+              history_subset_viewUpto (le_refl n)
+                (hra (U.block t).creator htc n t ht_ids rfl ht_round hs) his,
+              hic⟩)
+      · -- a direct Byzantine acceptance: fresh, budgeted novelty
+        exact Finset.mem_union_right _ (Finset.mem_biUnion.mpr ⟨w, hw,
+          Finset.mem_biUnion.mpr ⟨t, Finset.mem_filter.mpr ⟨ht, htc⟩,
+            mem_novelty.mpr ⟨hit, hiw⟩⟩⟩)
+  calc (byzPool D (n + 1)).card
+      ≤ (byzPool D n ∪
+          (Correct : Finset Validator).biUnion (fun w =>
+            ((D.accepted w (n + 1)).filter
+              fun t => (U.block t).creator ∉ (Correct : Finset Validator)).biUnion
+              fun t => novelty U (viewUpto D w n) t)).card :=
+        Finset.card_le_card hsub
+    _ ≤ (byzPool D n).card +
+          ((Correct : Finset Validator).biUnion (fun w =>
+            ((D.accepted w (n + 1)).filter
+              fun t => (U.block t).creator ∉ (Correct : Finset Validator)).biUnion
+              fun t => novelty U (viewUpto D w n) t)).card :=
+        Finset.card_union_le _ _
+    _ ≤ (byzPool D n).card +
+          ∑ w ∈ (Correct : Finset Validator),
+            (((D.accepted w (n + 1)).filter
+              fun t => (U.block t).creator ∉ (Correct : Finset Validator)).biUnion
+              fun t => novelty U (viewUpto D w n) t).card :=
+        Nat.add_le_add_left Finset.card_biUnion_le _
+    _ ≤ (byzPool D n).card + ∑ _w ∈ (Correct : Finset Validator), F.f * κ :=
+        Nat.add_le_add_left (Finset.sum_le_sum fun w hw =>
+          Finset.card_biUnion_le.trans (sum_novelty_not_correct_le hbyz hw n)) _
+    _ = (byzPool D n).card + (Correct : Finset Validator).card * (F.f * κ) := by
+        rw [Finset.sum_const_nat fun _ _ => rfl]
+
+/-- The pool, telescoped: linear from round 0. -/
+theorem card_byzPool_le {κ : ℕ} (hbyz : ByzBudget D κ) (hra : RefsAccepted D)
+    (n : ℕ) :
+    (byzPool D n).card ≤ (Correct : Finset Validator).card * F.f +
+      n * ((Correct : Finset Validator).card * (F.f * κ)) := by
+  induction n with
+  | zero => simpa using card_byzPool_zero_le (D := D)
+  | succ n ih =>
+      have hstep := card_byzPool_succ_le hbyz hra n
+      have hmul : (n + 1) * ((Correct : Finset Validator).card * (F.f * κ)) =
+          n * ((Correct : Finset Validator).card * (F.f * κ)) +
+            (Correct : Finset Validator).card * (F.f * κ) :=
+        Nat.succ_mul _ _
+      omega
+
+/-- **B4 — unconditional linear storage.** Under nothing but the
+enforceable budget and the reference discipline — no synchrony, no `R`, no
+delivery guarantee — every correct validator's retained view is linear in
+the round: at most one block per correct author per round, plus the global
+Byzantine pool. This is the §10.7 pre-`R` conjecture, closed: the base the
+capstone measures from is itself linear, so the DoS bound holds from
+round 0 under full asynchrony. -/
+theorem card_viewUpto_le_of_refsAccepted {κ : ℕ} (hbyz : ByzBudget D κ)
+    (hra : RefsAccepted D) (hv : v ∈ (Correct : Finset Validator)) (n : ℕ) :
+    (viewUpto D v n).card ≤
+      (Correct : Finset Validator).card * (n + 1) +
+        ((Correct : Finset Validator).card * F.f +
+          n * ((Correct : Finset Validator).card * (F.f * κ))) := by
+  have hbyzpart : ((viewUpto D v n).filter
+      fun i => (U.block i).creator ∉ (Correct : Finset Validator)).card ≤
+      (byzPool D n).card :=
+    Finset.card_le_card fun i hi => by
+      obtain ⟨hiv, hic⟩ := Finset.mem_filter.mp hi
+      exact mem_byzPool.mpr ⟨v, hv, hiv, hic⟩
+  calc (viewUpto D v n).card
+      = ((viewUpto D v n).filter
+          fun i => (U.block i).creator ∈ (Correct : Finset Validator)).card +
+        ((viewUpto D v n).filter
+          fun i => (U.block i).creator ∉ (Correct : Finset Validator)).card :=
+        (Finset.card_filter_add_card_filter_not _).symm
+    _ ≤ (Correct : Finset Validator).card * (n + 1) +
+          ((Correct : Finset Validator).card * F.f +
+            n * ((Correct : Finset Validator).card * (F.f * κ))) :=
+        Nat.add_le_add (card_filter_correct_viewUpto_le v n)
+          (hbyzpart.trans (card_byzPool_le hbyz hra n))
+
+/-- **The capstone, unconditional.** `EventuallyDelivers` is gone: growth
+plus quorum delivery give liveness (L1 is asynchrony-only), and the
+enforceable budget plus the reference discipline give linear storage from
+round 0 — DoS resistance under full asynchrony, in one theorem. -/
+theorem no_stall_and_card_viewUpto_le' {κ N : ℕ} (H : Live U D N)
+    (hd : DeliversQuorum D) (hbyz : ByzBudget D κ) (hra : RefsAccepted D) :
+    (∀ r ≤ N, Populated U r) ∧
+      ∀ v ∈ (Correct : Finset Validator), ∀ n,
+        (viewUpto D v n).card ≤
+          (Correct : Finset Validator).card * (n + 1) +
+            ((Correct : Finset Validator).card * F.f +
+              n * ((Correct : Finset Validator).card * (F.f * κ))) :=
+  ⟨no_stall H hd, fun _v hv n => card_viewUpto_le_of_refsAccepted hbyz hra hv n⟩
 
 end LeanDag

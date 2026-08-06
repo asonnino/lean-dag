@@ -358,6 +358,33 @@ example : (∀ r ≤ 1, Populated Utwin r) ∧
   no_stall_and_card_viewUpto_le dtwin_live dtwin_deliversQuorum dtwin_delivers
     dtwin_byz dtwin_refsAccepted
 
+/-! ## B4 on data — the pool, and full asynchrony -/
+
+-- The global Byzantine pool is exactly the two accepted equivocation
+-- halves, and with `κ = 0` it freezes there: nothing Byzantine ever
+-- enters a correct view again.
+example : byzPool Dtwin 0 = {0, 4} := by decide
+example : byzPool Dtwin 2 = {0, 4} := by decide
+
+/-- **B4 applied** — the unconditional bound, no synchrony hypothesis
+anywhere: `3·3 + (3·1 + 0) = 12` against the actual 9. -/
+example : (viewUpto Dtwin 3 2).card ≤
+    (Correct : Finset (Fin 4)).card * (2 + 1) +
+      ((Correct : Finset (Fin 4)).card * Faults.f (Fin 4) +
+        2 * ((Correct : Finset (Fin 4)).card * (Faults.f (Fin 4) * 0))) :=
+  card_viewUpto_le_of_refsAccepted dtwin_byz dtwin_refsAccepted (by decide) 2
+
+/-- **The unconditional capstone applied**: liveness and linear storage
+under full asynchrony — `EventuallyDelivers` appears nowhere. -/
+example : (∀ r ≤ 1, Populated Utwin r) ∧
+    ∀ v ∈ (Correct : Finset (Fin 4)), ∀ n,
+      (viewUpto Dtwin v n).card ≤
+        (Correct : Finset (Fin 4)).card * (n + 1) +
+          ((Correct : Finset (Fin 4)).card * Faults.f (Fin 4) +
+            n * ((Correct : Finset (Fin 4)).card * (Faults.f (Fin 4) * 0))) :=
+  no_stall_and_card_viewUpto_le' dtwin_live dtwin_deliversQuorum dtwin_byz
+    dtwin_refsAccepted
+
 #print axioms dtwin_budget
 #print axioms udouble_reveal_novelty
 #print axioms udouble_stepNovelty
