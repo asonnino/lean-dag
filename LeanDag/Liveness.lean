@@ -156,7 +156,7 @@ structure had only `held`, with `includes` demanding that a correct validator
 reference *everything* it held. That is **unsatisfiable** the moment a correct
 validator holds both halves of an equivocation: `distinct_creators` forbids
 referencing two blocks by one author, so no valid block exists and the
-validator cannot build at all. See `dos-equivocation-and-growth.md` §8.
+validator cannot build at all. See `dos-equivocation-and-growth.md` §4.
 
 `held` must *not* be deduplicated: `U` is defined as every block some correct
 validator held (§4.2), so pruning at the delivery layer would put the second

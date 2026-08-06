@@ -4,7 +4,7 @@ import Mathlib.Data.Finset.Prod
 /-!
 # Self-parent chains, and what a reference costs
 
-`dos-equivocation-and-growth.md` §10.5, results **D20**–**D24**.
+`dos-equivocation-and-growth.md` §5, results **D20**–**D24**.
 
 The self-parent condition (`ValidWrt.self_parent`) says a non-genesis block
 references *some* block by its own creator. This file develops what that
@@ -29,7 +29,7 @@ Together D21–D23 close the laundering gap that made C1′ false without the
 condition: the super-linear families all needed a fresh block that adopts a
 fresh equivocation branch while carrying none of its author's past, and D20
 says no such block exists. What remains open (the adoption-collapse bound,
-§10.5) is bounding the content of authors a history holds but does *not*
+§5) is bounding the content of authors a history holds but does *not*
 reference.
 -/
 

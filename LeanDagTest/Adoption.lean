@@ -5,7 +5,7 @@ import LeanDag.Adoption
 /-!
 # The adoption collapse on concrete DAGs
 
-`dos-equivocation-and-growth.md` §10.5, witnesses for the tops machinery and
+`dos-equivocation-and-growth.md` §5, witnesses for the tops machinery and
 the main bound.
 
 The count to watch: in `H(12)` of `Umerge`, validator 0 — the equivocator —
@@ -68,7 +68,7 @@ example : (history Umerge 12).card ≤
     (6 * Faults.f (Fin 4) + 1) * ((Umerge.block 12).round + 1) :=
   card_history_le_of_card_exposedTo_le_one umerge_dosValid (by decide) (by decide)
 
-/-- And on the six-round `Uexcl`, whose exclusion story is §8's: the top
+/-- And on the six-round `Uexcl`, whose exclusion story is §4's: the top
 block's history is `18 ≤ 7 · 6 = 42`. The bound holds *through* the
 exclusion — the history carries the equivocator's two chains (its two
 geneses) and is bounded all the same. -/
@@ -80,7 +80,7 @@ example : topsOf Uexcl 17 0 = {0, 4} := by decide
 
 /-! ## The floor and the ceiling together
 
-With D24 this pins the answer to §10.5's question on real data: block 17's
+With D24 this pins the answer to §5's question on real data: block 17's
 history must hold at least `(2f+1)·5 + 1 = 16` blocks and may hold at most
 `(6f+1)·6 = 42`; it holds `18`. Both sides are `Θ(f·r)` — the DoS condition
 plus self-parents make history size a *bounded resource*, not merely a

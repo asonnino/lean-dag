@@ -4,7 +4,7 @@ import LeanDag.Acceptance
 /-!
 # The acceptance rule on a concrete DAG
 
-`dos-equivocation-and-growth.md` §3, D1–D4, against `Umerge` — the model from
+`dos-equivocation-and-growth.md` §2, D1–D4, against `Umerge` — the model from
 `LeanDagTest.Exposure` in which validator 0's equivocation is exposed at the
 merge.
 

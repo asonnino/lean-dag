@@ -3,7 +3,7 @@ import LeanDag.History
 /-!
 # Exposure, and the DoS-protection condition
 
-`dos-equivocation-and-growth.md` §6, results **D11**–**D13**.
+`dos-equivocation-and-growth.md` §3, results **D11**–**D13**.
 
 `X` is *exposed* in `b`'s history when that history holds two distinct blocks
 by `X` at one round. It is a local, checkable test — no quorum, no round bound,
@@ -68,7 +68,7 @@ theorem exposedIn_iff_reaches {b : BlockId} {X : Validator} (hb : b ∈ U.ids) :
   · rintro ⟨i, j, hi, hj, hpair⟩
     exact ⟨i, (mem_history_iff hb).mpr hi, j, (mem_history_iff hb).mpr hj, hpair⟩
 
-/-- **The DoS-protection condition** (§6): a block may not reference an author
+/-- **The DoS-protection condition** (§3): a block may not reference an author
 exposed in its own history.
 
 A predicate on the universe, deliberately **not** a field of `ValidWrt`. Every
@@ -206,7 +206,7 @@ theorem ExposedIn.of_mem_refs {c b : BlockId} {X : Validator} (hc : c ∈ U.ids)
 
 /-! ## D15, D15a — who can be excluded, and what it costs
 
-`dos-equivocation-and-growth.md` §8. Exposure never lands on a correct
+`dos-equivocation-and-growth.md` §4. Exposure never lands on a correct
 validator, so the admissible authors always include `Correct`; and each
 exposed author costs exactly one unit of the margin over the quorum. -/
 
@@ -214,7 +214,7 @@ exposed author costs exactly one unit of the margin over the quorum. -/
 
 T1 contraposed: the two witnesses are distinct ids of the universe with one
 author and one round, which a correct validator cannot have. So a correct
-validator is never excluded, by anybody, ever — and everything in §8 rests on
+validator is never excluded, by anybody, ever — and everything in §4 rests on
 that. -/
 theorem ExposedIn.not_correct {b : BlockId} {X : Validator} (hb : b ∈ U.ids)
     (h : ExposedIn U b X) : X ∉ (Correct : Finset Validator) := by

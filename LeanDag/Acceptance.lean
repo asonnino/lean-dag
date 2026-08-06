@@ -4,7 +4,7 @@ import Mathlib.Algebra.Order.BigOperators.Group.Finset
 /-!
 # The acceptance rule, and view size from history size
 
-`dos-equivocation-and-growth.md` §3, results **D1**–**D4**.
+`dos-equivocation-and-growth.md` §2, results **D1**–**D4**.
 
 The rule: *a correct validator accepts at most one block per validator at its
 latest round, and its view is the causal history of what it accepts.*
@@ -31,7 +31,7 @@ Three things had to be got right, and each is a numbered result:
 
 `A` is the *frontier* — one round. Earlier rounds are not accepted separately;
 they enter the view inside the histories, which is what makes `|A| ≤ 3f+1`
-rather than `(3f+1)(r+1)`. §8 of the plan gives `A` a home in the delivery
+rather than `(3f+1)(r+1)`. §4 gives `A` a home in the delivery
 layer, where it turns out to be forced for an entirely different reason.
 -/
 

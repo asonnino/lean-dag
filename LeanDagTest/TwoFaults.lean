@@ -4,7 +4,7 @@ import LeanDag.Counting
 /-!
 # A model at `f = 2`
 
-`dos-equivocation-and-growth.md` §11 step 10. Every other model in
+`dos-equivocation-and-growth.md` §8. Every other model in
 `LeanDagTest` is `f = 1` over `Fin 4`, and by **D10** the blow-up C1′ is about
 **does not exist there**: at `f = 1` the layer recurrence is `m_s ≤ 4 + m_{s+1}`,
 which is linear. Two equivocators amplifying each other is the smallest setting
@@ -29,7 +29,7 @@ and D15a bites at the bound: the references of every block from round 3 on are
 exactly the five correct validators, which is `2f+1` exactly.
 
 This file does not attempt C1′. It builds the substrate and answers the
-question §11 raised before doing so — **whether `decide` can carry a model of
+question raised before doing so — **whether `decide` can carry a model of
 this size**, since `ExposedIn` searches a history quadratically and `DoSValid`
 ranges over every block and every reference. The answer is recorded below.
 -/
@@ -134,7 +134,7 @@ example : ∀ n, (historyBlocksOf Ufault 14 2 n).card ≤ 1 :=
 example : (historyBlocksOf Ufault 14 0 0).card = 2 := by decide
 example : (historyBlocksOf Ufault 14 1 0).card = 2 := by decide
 
-/-! ## `decide` cost — the question §11 asked
+/-! ## `decide` cost
 
 Everything above settles by `decide` on a 24-block model over `Fin 7`, in about
 17 seconds for the file. But `DoSValid` — which walks every block, every

@@ -4,7 +4,7 @@ import LeanDag.Persistence
 /-!
 # Safety and the DoS condition do not interact
 
-`dos-equivocation-and-growth.md` §7, **D14**.
+`dos-equivocation-and-growth.md` §4, **D14**.
 
 The claim is that every safety result holds unchanged under `DoSValid`, and
 that this is not a theorem to prove but a property of how the condition was
@@ -20,7 +20,7 @@ a safety result grew a dependency on it, these would stop elaborating.
 
 **What this does not say.** The theorems are untouched; whether their
 hypotheses remain *satisfiable* under `DoSValid` is a separate question, and a
-live one — §8 and §11 of the plan are about exactly that, and D15a says the
+live one — §4 is about exactly that, and D15a says the
 answer is not comfortable. Nothing here speaks to it.
 -/
 

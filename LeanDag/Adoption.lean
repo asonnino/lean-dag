@@ -5,7 +5,7 @@ import Mathlib.Data.Finset.Max
 /-!
 # The adoption collapse, and the main bound
 
-`dos-equivocation-and-growth.md` §10.5, the machinery C1′ asked for and the
+`dos-equivocation-and-growth.md` §5, the machinery C1′ asked for and the
 first installment of the bound itself.
 
 With self-parents (S10), an author's blocks inside a history organise into
@@ -39,7 +39,7 @@ At `f ≤ 1` the hypothesis is free (exposure is Byzantine, D15, and there is
 at most one Byzantine validator), so this settles C1′ unconditionally at
 `f = 1` (`card_history_le_of_f_le_one`). For `f ≥ 2` with several exposed
 authors, exposed chains can name each other and the count needs the
-distinct-author-sequence induction of §10.5 — the machinery here is its base
+distinct-author-sequence induction of §5 — the machinery here is its base
 case, and what remains is the recursion over author sets.
 -/
 

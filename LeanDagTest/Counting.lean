@@ -4,7 +4,7 @@ import LeanDag.Counting
 /-!
 # The counting bounds on concrete DAGs
 
-`dos-equivocation-and-growth.md` §4 and §10, D5, D6, D19a, D19b.
+`dos-equivocation-and-growth.md` §5, D5, D6, D19a, D19b.
 
 Two models, because the bounds have different hypotheses. `Model.lean`'s `U3`
 is a three-round DAG with no equivocation anywhere, so both bounds apply to it
@@ -14,7 +14,7 @@ upper bound is unavailable at the universe level and the results have to be
 applied where equivocation-freedom actually holds: to individual histories.
 
 That contrast is the point of proving the counting lemma over an arbitrary
-`Finset` (§11's design point). Equivocation-freedom is a property of the set
+`Finset` (§8's design point). Equivocation-freedom is a property of the set
 being counted, and in `Umerge` the sets disagree: `history Umerge 6` is free of
 it, `history Umerge 9` is not, and `Umerge.ids` is not.
 -/

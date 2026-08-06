@@ -5,10 +5,10 @@ import Mathlib.Algebra.Order.BigOperators.Group.Finset
 /-!
 # The novelty budget
 
-`dos-equivocation-and-growth.md` §10.7. The slogan: **legislate novelty,
+`dos-equivocation-and-growth.md` §6. The slogan: **legislate novelty,
 prove size**.
 
-§10.6 settles that inside the bare model the per-author chain count is
+§5 settles that inside the bare model the per-author chain count is
 `2^Θ(e)` — the doubling family is valid, and no acceptance rule on cone
 *shape* can refuse it without convicting correct blocks (the forced merge of
 `Utwin`). What distinguishes the family is invisible to any intrinsic
@@ -42,7 +42,7 @@ The layers, each usable without the ones after it:
   the derived **constant** `Κ = f·κ + 1` (C3″,
   `card_novelty_le_of_byzBudget`) — the correct clause of the budget is a
   theorem, given only the Byzantine clause. The adversary's hidden mass
-  appears nowhere, which is what makes the contagion attack of §10.7
+  appears nowhere, which is what makes the contagion attack of §6
   harmless. B3′ (`card_viewUpto_le_of_byzBudget`) telescopes this into
   post-`R` linear storage, and the capstone
   `no_stall_and_card_viewUpto_le` adds liveness.
@@ -108,7 +108,7 @@ theorem history_eq_singleton_of_round_zero (hb : b ∈ U.ids)
 /-! ## The telescope — pure DAG, no delivery model
 
 If each block of a correct author adds at most `κ'` over its self-parent,
-the history is linear in the round. This is §10.7's quotable form: it needs
+the history is linear in the round. This is §6's quotable form: it needs
 no schedule, no network, nothing but S10. -/
 
 /-- Stepwise novelty: every correct block adds at most `κ'` blocks over the
@@ -410,7 +410,7 @@ theorem card_novelty_le_viewGap_add_one {R : ℕ} (hED : EventuallyDelivers D R)
 
 A naive telescope would let the gap drift by `f·κ` per round, making the
 hysteresis threshold a function of time. It does not drift. The repair
-mechanism §10.7 asked for already exists in `Delivery`: `includes`
+mechanism §6 asked for already exists in `Delivery`: `includes`
 puts every round's acceptances among the next block's references, and the
 self-parent chain (S10) carries every earlier round forward — so a correct
 validator's block is, in its cone, a complete record of everything its
@@ -488,7 +488,7 @@ enforcing only the Byzantine clause `κ` never meets a correct block over
 `f·κ + 1` after `R`: the gap toward its author, collapsed through the
 author's own self-parent, plus the block itself. So the hysteresis
 threshold is the *constant* `Κ = f·κ + 1` — derived, not assumed, and
-better than §10.7's designed `f·κ + 3f+1`. -/
+better than §6's designed `f·κ + 3f+1`. -/
 theorem card_novelty_le_of_byzBudget {κ R : ℕ} (hbyz : ByzBudget D κ)
     (hED : EventuallyDelivers D R) (hn : R ≤ n + 1)
     (hv : v ∈ (Correct : Finset Validator)) (hb : b ∈ U.ids)
@@ -612,7 +612,7 @@ inside an accepted *correct* block's cone; but a correct block's cone sits
 inside its author's own earlier view (`RefsAccepted`), so the mass was
 already in the pool. The global Byzantine pool therefore grows by at most
 `|Correct|·f·κ` per round from round 0, with no delivery guarantee
-anywhere — which closes the pre-`R` residue of §10.7 and makes the DoS
+anywhere — which closes the pre-`R` residue of §6 and makes the DoS
 bound fully asynchronous. -/
 
 theorem viewUpto_subset_ids : viewUpto D v n ⊆ U.ids := by
@@ -783,7 +783,7 @@ theorem card_byzPool_le {κ : ℕ} (hbyz : ByzBudget D κ) (hra : RefsAccepted D
 enforceable budget and the reference discipline — no synchrony, no `R`, no
 delivery guarantee — every correct validator's retained view is linear in
 the round: at most one block per correct author per round, plus the global
-Byzantine pool. This is the §10.7 pre-`R` conjecture, closed: the base the
+Byzantine pool. This is the §6 pre-`R` conjecture, closed: the base the
 capstone measures from is itself linear, so the DoS bound holds from
 round 0 under full asynchrony. -/
 theorem card_viewUpto_le_of_refsAccepted {κ : ℕ} (hbyz : ByzBudget D κ)

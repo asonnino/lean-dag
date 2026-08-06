@@ -3,7 +3,7 @@ import LeanDag.History
 /-!
 # Density: histories are almost all of the correct past
 
-`dos-equivocation-and-growth.md` §10.6, **D25**.
+`dos-equivocation-and-growth.md` §5, **D25**.
 
 The quorum condition says a block's references carry `2f+1` distinct
 creators, of which at most `f` are Byzantine — so at least `2f+1 - β`

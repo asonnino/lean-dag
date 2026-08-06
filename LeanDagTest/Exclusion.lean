@@ -5,7 +5,7 @@ import LeanDag.Counting
 /-!
 # Liveness survives exclusion, end to end
 
-`dos-equivocation-and-growth.md` §8 and §13 S8. The witness that makes the
+`dos-equivocation-and-growth.md` §8 and §7 S8. The witness that makes the
 chain true of something rather than merely stated:
 
 > exclusion bites → the correct set still meets `2f+1` → blocks keep being

@@ -5,7 +5,7 @@ import LeanDagTest.Doubling
 /-!
 # The novelty budget, witnessed
 
-`dos-equivocation-and-growth.md` §10.7. Three witnesses, per the §11 house
+`dos-equivocation-and-growth.md` §6. Three witnesses, per the §8 house
 rule — the definitions get data before anything leans on them.
 
 **The shape of the reveal (`Udouble`).** Against the correct bystander's
@@ -33,7 +33,7 @@ accepted after round 0 (`κ = 0`), and the dearest correct acceptance costs
 genesis 2 it never held (the D25 miss), *and* for the equivocation half 4
 it carries — the pre-`R` divergence and the Byzantine freight both ride
 in on correct carriers, priced inside `Κ`, which is the hysteresis
-threshold doing exactly its §10.7 job. The C3 lemmas then apply with
+threshold doing exactly its §6 job. The C3 lemmas then apply with
 `R = 1`: the round-0 gap between validators 3 and 1
 is precisely the Byzantine half `{0}` that validator 1 accepted and
 validator 3 never saw — the gap *is* the budget's spend, on data.

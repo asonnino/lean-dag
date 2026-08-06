@@ -4,7 +4,7 @@ import LeanDag.Density
 /-!
 # The doubling step, machine-checked
 
-`dos-equivocation-and-growth.md` §10.6. The claim under test: the nesting
+`dos-equivocation-and-growth.md` §5. The claim under test: the nesting
 mechanism behind the `2^e` family — an *exposed* helper author whose several
 chains each carry a fresh chain of the doubled author to a different
 gatherer — is realisable by **valid** blocks. This file settles it by

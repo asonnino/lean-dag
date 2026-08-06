@@ -5,7 +5,7 @@ import LeanDag.Pedigree
 /-!
 # Density, and the anchor factor made real
 
-`dos-equivocation-and-growth.md` §10.6. Two things on one small model.
+`dos-equivocation-and-growth.md` §5. Two things on one small model.
 
 **D25 on real data.** Every block of `Utwin` misses at most `f = 1` correct
 validator at every round below it — and the budget is *spent*: block 5's

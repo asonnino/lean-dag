@@ -5,7 +5,7 @@ import LeanDag.Pedigree
 /-!
 # The general bound at `f = 2`
 
-`dos-equivocation-and-growth.md` §10.5, the multi-equivocator witness.
+`dos-equivocation-and-growth.md` §5, the multi-equivocator witness.
 
 `Ufault` is exactly the case `Adoption.lean`'s unique-equivocator theorem
 cannot touch: **both** Byzantine validators equivocate and both are exposed

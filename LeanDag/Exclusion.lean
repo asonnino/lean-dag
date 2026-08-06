@@ -5,7 +5,7 @@ import LeanDag.CommonCore
 /-!
 # Liveness survives exclusion
 
-`dos-equivocation-and-growth.md` §8, **D15b**, and §13 S8.
+`dos-equivocation-and-growth.md` §4, **D15b**, and §7 S8.
 
 D15a says each caught equivocator costs one unit of the margin over the quorum,
 and that at the fault bound a block must reference every correct block of the
@@ -38,7 +38,7 @@ variable {b : BlockId} {n : ℕ}
 
 /-- Decidable on concrete data: `PopulatedOn` is a bounded quantifier over two
 `Finset`s, so a model can settle it by `decide`. Stated here rather than beside
-the definition because it is the witnesses of §8 that need it. -/
+the definition because it is the witnesses of §4 that need it. -/
 instance decidablePopulatedOn (T : Finset Validator) (r : ℕ) :
     Decidable (PopulatedOn U T r) :=
   inferInstanceAs (Decidable (∀ v ∈ T, ∃ b ∈ U.ids,
@@ -155,7 +155,7 @@ theorem card_creators_accepted_of_eventuallyDelivers {R : ℕ} (D : Delivery U)
   have hheld : a ∈ D.held v n := hd n hn v hv a ha har (by rw [hac]; exact hw)
   exact mem_creatorsOf.mpr ⟨a, D.accepts_correct v hv n a hheld (by rw [hac]; exact hw), hac⟩
 
-/-! ## §9 — exclusion after `R`
+/-! ## Exclusion after `R` (§4)
 
 D16 produces the exposure, D17 propagates it to every valid block, and D18 is
 the companion about what an author gives up by publishing honestly. Only D16
@@ -248,7 +248,7 @@ A block leans on `f+1` correct blocks of the round below, and there are not
 `f+1` correct validators lacking `A` to draw them all from. So the honest
 publisher loses the freedom to be disagreed about later — while an author that
 publishes to a strict subset keeps it, which is `liveness.md` §4.3 showing up as
-the gap §10's counterexample needs. -/
+the selective-publication gap that §5's doubling family exploits. -/
 theorem mem_history_of_pinned {A : BlockId} {j : ℕ}
     (hpin : ((Correct : Finset Validator).filter
       (fun v => ¬ ∃ c ∈ U.ids, (U.block c).round = j + 1 ∧ (U.block c).creator = v ∧
@@ -315,7 +315,7 @@ theorem exposedIn_of_accepted_span (D : Delivery U) {v : Validator}
 
 /-! ## The intersection lemma
 
-§10's route toward C1′. Two blocks that both *name* `X` are both `X`-clean, and
+A sharpening of D18, kept for its own sake. Two blocks that both *name* `X` are both `X`-clean, and
 each leans on `f+1` correct blocks; when the correct validators number at most
 `2f+1` those two sets must meet, and a correct validator has one block per round
 (T1), so meeting in a *creator* means meeting in a *block*. Both then contain
@@ -369,8 +369,9 @@ wherever their shared correct reference speaks about it.
 `X`-clean, can hold only one `X`-block at that round, and already holds `A`. So
 whatever either of them holds there *is* `A`.
 
-Where the shared ancestor is silent about `X` the two may still differ, and
-that residue is exactly the gap §10 records. -/
+Where the shared ancestor is silent about `X` the two may still differ —
+which is why the per-round count ultimately needs the pedigree machinery
+of §5. -/
 theorem eq_of_both_name_of_shared (hdos : DoSValid U)
     {c₁ c₂ w : BlockId} (hc₁ : c₁ ∈ U.ids) (hc₂ : c₂ ∈ U.ids)
     (hw₁ : w ∈ (U.block c₁).refs) (hw₂ : w ∈ (U.block c₂).refs)
@@ -399,7 +400,7 @@ theorem eq_of_both_name_of_shared (hdos : DoSValid U)
 
 /-! ## The correct backbone
 
-The route of §10 turns on what a correct block's history contains. After `R`,
+After `R`,
 `SynchronisedOn` makes every correct block reference every correct block one
 round below — and that composes: **a correct block's history contains every
 correct block of every round from `R` to its own.**
@@ -432,10 +433,9 @@ theorem mem_history_of_correct {R : ℕ} (hs : SynchronisedOn U (Correct : Finse
 
 /-! ## Two delivery policies, and what they do and do not buy
 
-`dos-equivocation-and-growth.md` §10. These make explicit two things the model
-has so far left to prose, and they were introduced to attempt C1′ after `R`.
-The attempt does not close — see the note at the end — but the policies are
-worth stating, and the backbone lemma above came out of it. -/
+`dos-equivocation-and-growth.md` §5. Two policies making explicit what the
+model otherwise leaves to prose; with them, nothing an author publishes is
+invisible to the correct population. -/
 
 /-- **What `U` means, made explicit.** §4.2 of `liveness.md` defines `U` as
 every block some correct validator held; the model has never said so. -/
@@ -455,8 +455,8 @@ the correct population.** If any block by `X` at round `n` exists at all, some
 correct validator accepted a block by `X` at round `n` — and so referenced one,
 if it built.
 
-This is the step the C1′ attempt needed, and it does go through. What does not
-is the step after it; see below. -/
+Kept because it stands on its own; the C1′ proof itself goes through the
+pedigree machinery of §5. -/
 theorem exists_accepted_of_mem_ids (D : Delivery U) (hheld : HeldByCorrect D)
     (hsome : AcceptsSome D) {A : BlockId} (hA : A ∈ U.ids) :
     ∃ v ∈ (Correct : Finset Validator), ∃ i ∈ D.accepted v (U.block A).round,

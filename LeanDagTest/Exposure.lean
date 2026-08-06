@@ -4,7 +4,7 @@ import LeanDag.Exposure
 /-!
 # Exposure on concrete DAGs
 
-`dos-equivocation-and-growth.md` §11, the `f = 1` witness. Two models, and the
+`dos-equivocation-and-growth.md` §8, the `f = 1` witness. Two models, and the
 contrast between them is the point.
 
 `Model.lean`'s **`U6`** has an equivocation — validator 0, Byzantine under this
@@ -58,7 +58,7 @@ example : DoSValid U6 := by decide
 
 /-! ## `history` computes
 
-The fuel-indexed definition (§13 S6) against hand-checked answers. Block 9 of
+The fuel-indexed definition (§7 S6) against hand-checked answers. Block 9 of
 `U6` sits at round 2 with refs `{5,6,7}`, and those reference `{0,1,2}`. -/
 
 example : history U6 0 = {0} := by decide

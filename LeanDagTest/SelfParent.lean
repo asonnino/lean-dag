@@ -5,7 +5,7 @@ import LeanDag.SelfParent
 /-!
 # Self-parent chains on concrete DAGs
 
-`dos-equivocation-and-growth.md` §10.5, the witnesses for **D20**–**D24**.
+`dos-equivocation-and-growth.md` §5, the witnesses for **D20**–**D24**.
 
 `Umerge` (from `LeanDagTest.Exposure`) already satisfies the strengthened
 validity — every non-genesis block references a block by its own author — so

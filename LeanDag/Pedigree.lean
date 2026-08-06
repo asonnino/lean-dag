@@ -5,7 +5,7 @@ import Mathlib.Tactic.Ring
 /-!
 # Pedigrees, and the general bound
 
-`dos-equivocation-and-growth.md` §10.5, the multi-equivocator case — the
+`dos-equivocation-and-growth.md` §5, the multi-equivocator case — the
 last open piece of C1′.
 
 `Adoption.lean` closed the count when at most one author is exposed:
