@@ -18,3 +18,4 @@ import LeanDagTest.Novelty
 import LeanDagTest.GC.Chop
 import LeanDagTest.GC.Bootstrap
 import LeanDagTest.GC.Horizon
+import LeanDagTest.Odontoceti.Model
