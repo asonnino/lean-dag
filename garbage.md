@@ -13,24 +13,36 @@ been through two design-review passes; their findings are folded in below
 rather than kept as errata, with the items that changed the design marked
 **(review)**.
 
-> **Status.** The core is **proved**: G1 (`LeanDag/Chop.lean` — the
-> operator, universe laws, one-way `DoSValid`), G2 and the per-slot heart
-> of G3 (all six verdict invariances including the indirect test
-> `CertifiedIn`), G13/G14/G5/G6 (`LeanDag/Window.lean` — windowed
-> novelty, store correspondence, liveness transfer, and the
-> bounded-storage headline `card_retained_le`), and both halves of G10
-> (`LeanDag/AttestedBase.lean`). Witnessed by `decide` in
-> `LeanDagTest/Chop.lean`: the `Uexcl` commit surviving the cut verbatim,
-> the statute of limitations vanishing an exposure (and surviving *at*
-> the cut), the G6 constant on `Dtwin`, and `Base Utwin 1 0 = {1,2,3}` —
-> the sandwich tight at the bottom, both equivocation halves filtered.
-> One deviation from the plan, in our favour: the slot-schedule
-> correspondence of §2 was **not needed** for any of this — the entire
-> Mysticeti rule layer (`certificates`, `DirectCommit`, `DirectSkip`,
-> `CertifiedIn`) is round-indexed and schedule-free, so G2/G3 close
-> without touching `Slots`. The schedule enters only at the
-> `Decided`-over-slots level (G3/G4 in the M6/L3 idiom), which remains,
-> along with G6b/G7 statements, G8/G9 (policy), G11/G12, and P9.
+> **Status: every G-label is proved and witnessed.** G1 (`LeanDag/Chop.lean`
+> — the operator, universe laws, one-way `DoSValid`), G2 and per-slot G3
+> (all six verdict invariances including the indirect test `CertifiedIn`),
+> G13/G14/G5/G6 (`LeanDag/Window.lean` — windowed novelty, store
+> correspondence, liveness transfer, the bounded-storage headline
+> `card_retained_le`), G3/G4 at the full `Decided` level
+> (`LeanDag/ChopDecided.lean` — `View.chop`, the induced schedule
+> `Slots.chop`, `decided_chop` by structural induction both ways, and the
+> cross-cut agreement `decided_agree_chop` for **arbitrary** joiner
+> views), G10 both halves (`LeanDag/AttestedBase.lean`), G11/G6b/G7/G12
+> (`LeanDag/Bootstrap.lean` — `accepted_mem_base`, `card_joinIds_le`,
+> `card_serve_le`, `joinView`/`bootstrap_agree`), and G8/G9
+> (`LeanDag/Horizon.lean` — the composition law `chop_chop`,
+> heterogeneous-horizon agreement, and the one-round universal-possession
+> depth bound). Witnessed by `decide` throughout `LeanDagTest/Chop.lean`,
+> `LeanDagTest/Bootstrap.lean` (which gives `Uexcl` its delivery
+> schedule `Dexcl`) and `LeanDagTest/Horizon.lean`; the G11 witness sits
+> exactly on the `t = m + 2` boundary.
+>
+> Two deviations from the plan, both recorded in module docs. In our
+> favour: the slot-schedule correspondence was **not needed** for the
+> rule layer — `certificates`/`DirectCommit`/`DirectSkip`/`CertifiedIn`
+> are round-indexed and schedule-free; `Slots` enters only at `Decided`,
+> where the induced-schedule correspondence went through cleanly (Q4
+> resolved: the indirect rule consults anchors only through their cones).
+> Against the prose: G8's promised "frontiers differ by at most the
+> commit lag" has no carrier in a round-synchronous model with static
+> views — the model's exact content is agreement + composition + the
+> one-round depth bound, and the timing constant lives with `R` in
+> `liveness.md`. P9's resolution is in §8 below.
 
 ## 1. The problem
 
@@ -424,24 +436,70 @@ independent of P4 (the hard phase) and can run in parallel.
   safety never depended on any of it. Doc updates throughout;
   `dos-equivocation-and-growth.md` §9's "wire-level residue" gains a
   sibling: the GC residue is bootstrap sampling, `f+1`-sized, not
-  consensus-sized.
+  consensus-sized. **Resolved in §8** — no new theorems were needed,
+  and the Q1 product turned out to be a term the G6 constant already
+  carries.
 
-**Open questions**, recorded before they are argued about:
+**Open questions**, recorded before they were argued about — now all
+settled; answers inline:
 
-- **Q1 — epoch coupling.** Should the budget parameter `T` and the lag
-  `Λ` be related? A forgiven author re-enters at budget rate; `Λ` sets how
-  often forgiveness can recur. The product `Λ·f·T` may be the right
-  "adversary work per epoch" quantity, and P9 should say so or refute it.
+- **Q1 — epoch coupling. Answered: yes, and the product is already in
+  the proved constant.** A forgiven author re-enters at budget rate, and
+  the per-epoch price of that re-entry is exactly the third term of the
+  G6 bound: `Λ·(|Correct|·(f·κ))` — one lag window's worth of budgeted
+  Byzantine freight, per correct store. "Adversary work per epoch" is
+  not a new quantity to bound; it is the constant `card_retained_le`
+  already carries. See §8.
 - **Q2 — checkpoint content.** For the DAG machinery the attested base
-  *is* the checkpoint (P8 settles the DAG side, no signatures needed).
+  *is* the checkpoint (P8 settled the DAG side, no signatures needed).
   What remains out of scope is application state — the ledger prefix a
   joining node also wants — a different object with different trust
-  requirements; "bootstrap" for a full node means both.
-- **Q3 — one `Λ` or two.** A2 now names two distinct roles for the lag:
-  peer-frontier skew (G8) and attestation lag (G11). Are they the same
-  constant, and should `Base` be pinned to `t = G + Λ`? Likely resolvable
-  inside P8, but the answer shapes G8's statement.
-- **Q4 — the indirect rule's true shape.** G3's per-slot statement
-  assumes the Lean indirect verdict does not consult earlier slots'
-  verdicts. P0 checks this against the actual definition before P4
-  commits to a statement; the fallback induction is recorded in G3.
+  requirements; "bootstrap" for a full node means both. This stays a
+  scope boundary, not an open problem.
+- **Q3 — one `Λ` or two. Answered: two roles, both proved, one covers
+  the other.** The attestation lag is `t ≥ m + 2` — two rounds above the
+  window frontier, and the G11 witness sits exactly on that boundary.
+  The possession lag of the depth rule is **one** round
+  (`viewUpto_subset_viewUpto_succ`). Any `Λ ≥ 2` serves both; `Base`
+  need not be pinned to `t = G + Λ` — every `t ≥ m + 2` works — and G8
+  needed no lag constant at all in-model (its content is agreement plus
+  the composition law).
+- **Q4 — the indirect rule's true shape. Answered favourably, twice.**
+  The rule layer never consults `Slots` (per-slot G2/G3 closed
+  schedule-free), and at the `Decided` level the indirect verdict
+  consults its anchor only through the anchor's *cone* — so the induced
+  schedule correspondence (`Slots.chop`, `decided_chop`) went through by
+  structural induction with no fallback needed.
+
+## 8. The forgiveness ledger (P9)
+
+What survives of the exclusion economy across epochs, and why nothing
+new needed proving.
+
+**Within an epoch, everything survives.** `chop U G` is a bona-fide
+`BlockUniverse` and `DoSValid` crosses the cut (`dosValid_chop`), so the
+entire D-series applies to the truncation *verbatim*: exposure anywhere
+in the window debars for the rest of the window (D12), at most `f`
+authors are ever exposed (C2), exclusion lands only on the guilty (D15).
+No theorem is re-proved; the truncation is just another universe.
+
+**Across a cut, forgiveness is one-way and priced.** The statute of
+limitations (`LeanDagTest/Chop.lean`) forgives exactly the equivocations
+whose witnessing pair falls strictly below the cut — a pair *at* the cut
+survives, and the attested base *preserves* boundary exposure (both
+halves of a circulated round-`G` equivocation clear the `f+1` filter).
+To be debarred again, a forgiven author must equivocate **again, inside
+the new window**: one reveal per author per epoch is the maximum
+forgiveness rate. And the re-entry is not free — the windowed budget
+backstop (`byzBudget_chopD`, `refsAccepted_chopD`, feeding
+`card_retained_le`) prices a forgiven author's freight exactly as it
+prices a fresh author's: `Λ·f·κ` per correct store per epoch, the Q1
+product, already sitting in the G6 constant.
+
+**And safety never depended on any of it** (the D14 note, restated for
+GC): commit safety is quorum arithmetic; exclusion and forgiveness are a
+DoS-layer economy. The cross-cut safety results (`decided_chop`,
+`decided_agree_chop`, `bootstrap_agree`) carry **no** exclusion, budget,
+or exposure hypothesis — their only premise is the base-slot condition
+`G ≤ slotRound d`. A world that forgives every equivocation still
+commits the same blocks; it just stores more junk.

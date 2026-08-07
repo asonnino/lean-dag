@@ -862,7 +862,14 @@ so each model is built to be non-vacuous in the way that matters.
   always going to live at the network layer. It is the only piece of the
   DoS story outside the development — and it is **inbound only**: on the
   outbound side, a correct validator relays nothing it did not accept, so
-  floods are never amplified (§6, *the relay obligation*).
+  floods are never amplified (§6, *the relay obligation*). The garbage
+  collection results (`garbage.md`) add a sibling residue of the same
+  shape: bootstrapping from a truncated DAG rests on the **attested
+  base** — an `f+1`-per-block filter over round-`t` cones, sampled, not
+  agreed — so the trust primitive at a checkpoint is `f+1`-sized
+  sampling, never consensus-sized; and this doc's linear view bound (B4)
+  becomes **constant at lag `Λ`** there (`card_retained_le`), with the
+  relay obligation windowed to the same constant.
 - **The quantitative gap in the bare-model constant.** `2^(e−2)` chains
   are constructible (§5), `(n−e)·e^(e−1)` is proved; set-determinism
   of anchored pedigrees (top determined by the *set* of pedigree authors,
