@@ -20,6 +20,29 @@ decision rule, in a new directory `LeanDag/Odontoceti/` (witnesses in
 wherever it applies and building only the rule layer fresh. Results use
 **O**-labels, continuing the house scheme; plan phases are OP0–OP5.
 
+> **Status: proved and witnessed, with one finding.** The arithmetic
+> core O1/O1′/O2/O3/O4′ (`Rules.lean`), the decision relation with
+> agreement O5/O6 (`Decision.lean`, `decided_unique`/`safety`), and
+> liveness O7–O10 (`Liveness.lean`, through
+> `all_decided_below_of_fairRun`) are all proved at the generalized
+> thresholds `n ≥ 5f+1`, `n−f`, `n−3f` — the generalization held, no
+> fallback needed — and witnessed by `decide` at the boundary
+> `n = 6, f = 1` (`LeanDagTest/Odontoceti/Model.lean`): the sunny-day
+> universe, a direct skip, an indirect commit with `ThickLink` at
+> exactly the threshold, an indirect skip, and O7/O8/O9 applied.
+> **The finding**: risk R2's worry was real. The thesis's Lemma 5
+> proof asserts "same anchor ⇒ same decision", but no counting
+> argument separates two equivocating candidates that both pass the
+> indirect test at one anchor — `utwin6_both_pass` realises that
+> configuration on data — so agreement genuinely rests on the
+> implementation's candidate-iteration order. The formalized
+> `indirectCommit` therefore carries a **canonicity premise** (commit
+> the `≤`-least passing candidate, `[LinearOrder BlockId]` = hash
+> order in practice), under which O5 closes; the O4′ counting lemma
+> (`n−f + n−3f − f > n` at `n ≥ 5f+1`) covers every *other* crossing,
+> so canonicity is needed exactly where the thesis was silent.
+> Remaining: OP5's final-state rewrite of this document.
+
 ## 1. The protocol, in our vocabulary
 
 Odontoceti runs `n = 5f+1` validators on an **uncertified** structured

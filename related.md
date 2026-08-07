@@ -221,12 +221,19 @@ protocol to commit in **two** communication rounds rather than three.
   faults, argued to be the common case in practice.
 - Reported 300ms median latency at 10k TPS.
 
-**Bearing on this development:** the quorum-intersection arithmetic in
-`LeanDag` is now parameterised: `n ≥ 3f+1` validators with quorums of
-`n − f`. Odontoceti is a clean example of the commit rule's round depth
-being a *consequence* of the quorum arithmetic; instantiating a 5f+1-style
-threshold would still be a further change (its quorums are not `n − f`),
-but the arithmetic no longer hard-codes the committee size.
+**Bearing on this development: formalized.** A closer look corrected an
+earlier note here: at `n = 5f+1`, Odontoceti's quorums — the DAG quorum
+`4f+1` and both direct thresholds — **are** `n − f`, exactly the shape
+`LeanDag` is parameterised at, so the entire DAG layer applies verbatim
+and only the two-round rule layer is new. `LeanDag/Odontoceti/` proves
+its safety and liveness (`odontoceti.md`), generalized to `n ≥ 5f+1`
+with indirect threshold `n − 3f`, and surfaces one finding: the
+thesis's agreement proof (Lemma 5) silently relies on the
+implementation's candidate-iteration order — two equivocating leader
+blocks can both pass the `2f+1` indirect test at one anchor
+(`utwin6_both_pass`, realised on data) — so the formalized rule commits
+the canonical least passing candidate, which is what makes agreement a
+theorem.
 
 ### 4.3 Starfish — and the liveness critique of uncertified DAGs
 
