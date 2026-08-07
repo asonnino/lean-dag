@@ -145,7 +145,9 @@ class Faults (Validator : Type*) [Fintype Validator] [DecidableEq Validator] whe
 def Correct : Finset Validator := (F.byzantine)ᶜ
 ```
 
-A quorum is `2f+1`. The derived fact `card_correct : 2 * F.f + 1 ≤ Correct.card`
+A quorum is `n − f` for `n ≥ 3f+1` validators — the familiar `2f+1` at the
+boundary `n = 3f+1`, where every witness sits. The derived fact
+`card_correct : n − f ≤ Correct.card`
 records that the correct validators themselves form a quorum, and is used at
 exactly one place in the liveness development (§6.3).
 
@@ -192,8 +194,8 @@ the equation `(blk i).round + 1 = 0` is unsatisfiable, so `refs = ∅` follows
 (`ValidWrt.refs_empty_of_round_zero`).
 
 The quorum condition is stated on the *creator set*, not on `refs.card`. This is
-the faithful reading of "references 2f+1 blocks of the previous round", which
-means 2f+1 distinct *validators*; `ValidWrt.card_creators` and `ValidWrt.card_refs` relate the two
+the faithful reading of "references a quorum of blocks of the previous
+round", which means `n−f` distinct *validators*; `ValidWrt.card_creators` and `ValidWrt.card_refs` relate the two
 under the distinctness condition.
 
 `distinct_creators` is used in exactly one proof, that of certificate uniqueness
@@ -439,7 +441,7 @@ the system actually falls.
 |---|---|---|
 | P1 | references lie one round below | `ValidWrt.predecessor` |
 | P2 | no block cites one author twice | `ValidWrt.distinct_creators` |
-| P3 | non-genesis blocks cite `2f+1` distinct authors | `ValidWrt.quorum` |
+| P3 | non-genesis blocks cite `n−f` distinct authors | `ValidWrt.quorum` |
 | P4 | a block is held only with its causal history | `BlockUniverse.complete` |
 | P5 | one block per round: correct validators do not equivocate | `BlockUniverse.no_equivocation` |
 | P6 | slots are at least three rounds apart | `Slots.spacing` |
@@ -452,7 +454,7 @@ P1–P6 are consumed by the safety development, P7–P10 additionally by livenes
 
 P10 is a joint condition rather than a pure specification: the schedule is the
 designer's, but which validators are reliable is not. Round-robin discharges it
-whenever the reliable set is of quorum size, since at most `f` of every `3f+1`
+whenever the reliable set is of quorum size, since at most `f` of every `n`
 consecutive leaders then lie outside it; `rrSlots` witnesses this with a window
 of `f + 1` (§8).
 
@@ -480,7 +482,7 @@ that has already decided round `r'-2`, and admit a *global catchup time* before
 which the rule need not hold. No minimality is claimed for the clause.
 
 P2 is a second place where the model does not simply transcribe the protocol.
-Mysticeti's validity check requires a block to cite `2f+1` *distinct* authors at
+Mysticeti's validity check requires a block to cite `n−f` *distinct* authors at
 the round below but does not forbid citing an equivocating author's second block
 as well; uniqueness of support is recovered instead by defining a supporter to be
 one that references the *first* leader-slot block among its references. P2
@@ -505,16 +507,16 @@ discusses the consequences.
 
 | | Assumption | Formalisation |
 |---|---|---|
-| A1 | there are `3f+1` validators | `Faults.card_validators` |
+| A1 | there are `n ≥ 3f+1` validators | `Faults.card_validators` |
 | A2 | at most `f` are Byzantine | `Faults.card_byzantine` |
 
 Byzantine validators are unconstrained: they may publish nothing, publish
 selectively, or equivocate freely.
 
-**The combined budget.** The principal liveness argument counts to `2f+1` and no
+**The combined budget.** The principal liveness argument counts to `n−f` and no
 higher, so what it requires is a quorum of validators that are both correct and
 timely, rather than the participation of every correct one. Formulating this as
-`T ⊆ Correct` with `2f+1 ≤ T.card` — a hypothesis of L4 and L6 — yields the
+`T ⊆ Correct` with `n−f ≤ T.card` — a hypothesis of L4 and L6 — yields the
 operative budget:
 
 > `actual_byzantine + persistently_slow_correct ≤ f`
@@ -522,7 +524,7 @@ operative budget:
 A correct validator which is persistently slow consumes budget exactly as a
 Byzantine one does. This is a hybrid condition: correctness is a fault-model
 matter, timeliness a network one. At `f = 1` there are four validators and
-`|Correct| = 3 = 2f+1` exactly, so no slack exists and every correct validator
+`|Correct| = 3 = n−f` exactly, so no slack exists and every correct validator
 must be timely; slack appears only when fewer than `f` validators are in fact
 faulty, and the `T`-parameterised statements make it available automatically.
 The specialisations at `T := Correct` (`directCommit_of_correct_leader`,
@@ -694,16 +696,16 @@ in hand rather than an assumption that any party makes progress. The proof rests
 on a double-counting argument (T3a, `exists_correct_common_support`).
 
 > *[Editorial: state the counting. Each correct round-`(r+1)` block names at
-> least `2f+1-b` correct round-`r` authors, and there are `l` such blocks spread
-> over `c = 3f+1-b` correct validators, so some author collects at least
-> `l(2f+1-b)/c`. The arithmetic obligation reduces to `c² ≤ f(l+c)`, which
+> least `n-f-b` correct round-`r` authors, and there are `l` such blocks spread
+> over `c = n-b` correct validators, so some author collects at least
+> `l(n-f-b)/c`. The arithmetic obligation reduces to `c² ≤ f(l+c)`, which
 > `l ≤ c` converts to `c ≤ 2f`, contradicting `c ≥ 2f+1`.]*
 
 ### 5.3 Consistency of the direct rules
 
 **M3** (`certificates_eq_empty_of_directSkip`). A directly skipped block has no
 certificate anywhere in the universe, not merely none within some view. Given
-`2f+1` blamers, and since a correct validator cannot appear on both sides
+`n−f` blamers, and since a correct validator cannot appear on both sides
 (`blames_inter_supporters_subset_byzantine`), the supporters number at most `2f`
 (`card_supporters_le_of_card_blames`), one short of a quorum.
 
@@ -738,7 +740,7 @@ rule requires, since that rule commits on the strength of a single certificate
 lying in reach rather than of a quorum of them.
 
 The proof requires no relationship between the two certificates. Each names
-`2f+1` distinct voters, so the voter sets intersect in a correct validator `w`
+`n−f` distinct voters, so the voter sets intersect in a correct validator `w`
 (T0′); `w`'s unique round-`(r+1)` block votes for both (T1); and P2 forbids one
 block from referencing two round-`r` blocks by a single author. This is the only
 use of P2 in the development.
@@ -833,7 +835,7 @@ theorem card_authorsAt_of_lt {r n : ℕ} (hn : n < r) {i : BlockId}
     2 * F.f + 1 ≤ (authorsAt U n).card
 ```
 
-If any block exists at round `r`, every round below `r` has at least `2f+1`
+If any block exists at round `r`, every round below `r` has at least `n−f`
 distinct authors. The result requires no assumption beyond validity. Its content
 is not that the DAG grows, but that it cannot grow tall and thin: a single block
 high in the DAG forces a quorum of authors at every round beneath it.
@@ -942,7 +944,7 @@ validators form a quorum. The stronger reading — that every block is reference
 would amount to assuming that Byzantine validators behave.
 
 Well-formedness survives the restriction: a correct block referencing every
-correct block of the round below already names at least `2f+1` distinct creators,
+correct block of the round below already names at least `n−f` distinct creators,
 so P3 is satisfied without any Byzantine reference.
 
 The predicate is antitone in `T` (`SynchronisedOn.mono`), which allows results
@@ -1306,7 +1308,7 @@ Three observations follow, and they are the content of the section.
 a gap in the assumption.** Consider `f = 1` with validators `{A,B,C,D}`, all four
 correct, and instantaneous delivery, so that the network assumption holds in its
 strongest form. Suppose the specification directs a validator to build as soon as
-it holds `2f+1 = 3` blocks of the round below, and suppose `A`, `B` and `C` are
+it holds `n−f = 3` blocks of the round below, and suppose `A`, `B` and `C` are
 marginally faster than `D`. Each of them then forms the quorum `{A,B,C}` and
 builds before `D`'s block arrives, so no block of theirs ever references `D`'s.
 Every block is valid, views converge perfectly, and `SynchronisedOn U Correct R`
@@ -1499,7 +1501,7 @@ Three of the models are tight, which is what renders the constants meaningful.
 
 One negative observation is worth recording. A model exhibiting *round spread* —
 correct validators separated by many rounds — while still committing is impossible
-at `f = 1`, since `|Correct| = 3 = 2f+1` exactly, so that every correct validator
+at `f = 1`, since `|Correct| = 3 = n−f` exactly, so that every correct validator
 is required for a quorum and none may lag. Such a model requires `f ≥ 2`. This is
 the combined fault budget of §4.2 appearing as a concrete obstruction rather than
 as an inequality.
@@ -1543,13 +1545,13 @@ result which is not: without any restriction on round-jumping, every leader bloc
 created by an honest validator after GST acquires at least `f+1` certificates
 from honest validators, so it can never be indirectly skipped, only left
 undecided. The corresponding statement is not available here, and the obstruction
-is identifiable. Density (L0) yields `2f+1` distinct authors at round `r+1`
+is identifiable. Density (L0) yields `n−f` distinct authors at round `r+1`
 whenever the DAG reaches above it, hence `f+1` *correct* authors, and coverage
 makes each of their blocks reference the leader — so `f+1` correct **supporters**
 is within reach from L0 and `SynchronisedOn` alone, with neither `Populated` nor
-P8. A certificate, however, requires `2f+1` distinct supporters, and
+P8. A certificate, however, requires `n−f` distinct supporters, and
 `SynchronisedOn` is honest-to-honest (§6.6), so the remaining `f` cannot be
-obtained; reaching `2f+1` supporters requires `2f+1` correct authors at `r+1`,
+obtained; reaching `n−f` supporters requires `n−f` correct authors at `r+1`,
 which is `Populated` again. [QXS26] bridges the gap with a *predecessor rule* —
 a validator creating a block must make it a supporter and a certificate where it
 can — for which this model has no counterpart, P7 constraining what a validator

@@ -42,7 +42,7 @@ and every theorem below, so it is worth settling first.
 class Faults (Validator : Type*) [Fintype Validator] [DecidableEq Validator] where
   f : ℕ
   byzantine : Finset Validator
-  card_validators : Fintype.card Validator = 3 * f + 1
+  card_validators : 3 * f + 1 ≤ Fintype.card Validator
   card_byzantine : byzantine.card ≤ f
 
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
@@ -96,8 +96,10 @@ Remaining notes:
   member, so they need no instance; it is declared only lower down, for the
   concrete `supporters` sets callers build. Keeping the lemmas instance-free
   is what lets T3 and M2 apply without any decidability on ids.
-- **(assumption)** `Fintype.card Validator = 3 * f + 1` exactly (notes say
-  "3f+1 validators").
+- **(assumption)** `3 * f + 1 ≤ Fintype.card Validator` — the literature's
+  general form. Throughout, `n` abbreviates `Fintype.card Validator`;
+  quorums are `n − f`, which at the boundary `n = 3f+1` (where every
+  concrete witness sits) is the familiar `2f+1`.
 - Rounds are plain `ℕ` throughout. No `Round` abbreviation — it would buy
   nothing, and two spellings for one type reliably drift apart.
 
@@ -116,7 +118,7 @@ Five consequences worth naming once rather than re-deriving at each use:
   for any `S : Finset Validator` — "Byzantine validators absorb at most `b`
   of any set". The workhorse behind *a quorum still contains many correct
   validators*; T3a's per-block bound is one line given it.
-- `card_inter_correct_of_quorum : 2f+1 ≤ S.card → F.f + 1 ≤ (S ∩ Correct).card`
+- `card_inter_correct_of_quorum : n−f ≤ S.card → F.f + 1 ≤ (S ∩ Correct).card`
   — the *cardinality* strengthening of `exists_correct_of_card`, which only
   produces one witness. Reach for this whenever a count of correct members is
   wanted rather than their existence.
@@ -216,11 +218,11 @@ round guard.
 
 **Quorum is stated on the creator set**, not on `b.refs.card`. This is the
 form every downstream proof wants, and it is the more faithful reading of
-"2f+1 blocks from the previous round" — the protocol means 2f+1
+"a quorum of blocks from the previous round" — the protocol means `n−f`
 *validators*. Stating it directly makes the quorum fact the field projection
 `ValidWrt.quorum` itself, rather than a derived `creators_quorum` lemma, and
 removes any `card_creators` bridge from the critical path. With distinctness
-also present `b.refs.card ≥ 2f+1` still follows, so nothing is lost.
+also present `b.refs.card ≥ n−f` still follows, so nothing is lost.
 
 **Distinct creators earns its keep only at commit agreement.** It is a
 genuine protocol rule — a block must not cite the same author twice — but it
@@ -319,24 +321,26 @@ even though it exists.
 "Enough" admits two thresholds, and the gap between them is the only thing
 separating the two theorems:
 
-- **`p - 2f`** (`reaches_of_correct_support`), where `p = |authorsAt U (r+1)|`.
-  A round-`(r+2)` block draws its 2f+1 referenced creators from those same
-  `p`, so it misses exactly `p - (2f+1)` and cannot dodge `p - 2f`.
-- **`f+1`** (`reaches_of_correct_support_of_card`), uniform. Since `p ≤ 3f+1`
-  always, this is the corollary: 2f+1 named out of 3f+1 means at most `f`
-  missed.
+- **`p + f + 1 - n`** (`reaches_of_correct_support`), where
+  `p = |authorsAt U (r+1)|`. A round-`(r+2)` block draws its `n−f`
+  referenced creators from those same `p`, so it misses at most
+  `p - (n−f)` and cannot dodge `p + f + 1 - n` (the old `p - 2f` at
+  `n = 3f+1`).
+- **`f+1`** (`reaches_of_correct_support_of_card`), uniform. Since `p ≤ n`
+  always, this is the corollary: `n−f` named out of at most `n` means at
+  most `f` missed.
 
-**Why `p - 2f` rather than just `f+1`.** It looks like a participation-
-sensitive fudge and is not. Imagine handing every absent correct validator a
-valid round-`(r+1)` block — always possible, since a round-`(r+2)` block
-exists and so ≥ 2f+1 round-`r` blocks are available to reference. Now
-participation is full and the count yields `f+1` supporters. But the
-observed round-`(r+2)` block still references only the *originally present*
-validators, so of those `f+1` supporters it can see at least
+**Why `p + f + 1 - n` rather than just `f+1`.** It looks like a
+participation-sensitive fudge and is not. Imagine handing every absent
+correct validator a valid round-`(r+1)` block — always possible, since a
+round-`(r+2)` block exists and so enough round-`r` blocks are available to
+reference. Now participation is full and the count yields `f+1` supporters.
+But the observed round-`(r+2)` block still references only the *originally
+present* validators, so of those `f+1` supporters it can see at least
 
-> `(f + 1) − (3f + 1 − p)  =  p − 2f`
+> `(f + 1) − (n − p)  =  p + f + 1 − n`
 
-`p - 2f` is exactly `f+1` net of absentees. Absentees shrink the requirement
+`p + f + 1 - n` is exactly `f+1` net of absentees. Absentees shrink the requirement
 precisely as fast as they shrink what counting can deliver, which is why no
 progress assumption appears anywhere. (We do not formalise the extension
 argument — it would need fresh `BlockId`s, hence an `Infinite BlockId`
@@ -360,16 +364,17 @@ cannot be dodged* — differing only in how many layers deep it runs.
 
 Which form to use is determined by how supporters are obtained:
 
-- **assumed** → `f+1`. T3's quorum of 2f+1 distinct creators contains `f+1`
-  correct ones by `card_inter_correct_of_quorum`, regardless of `p`.
-- **counted** → `p - 2f`. T3a can only guarantee that much; at `f = 3`,
-  `p = 2f+1 = 7`, `b = f = 3` the count yields 3 supporters where `f+1 = 4`,
-  and the theorem survives only because `p - 2f = 1` there.
+- **assumed** → `f+1`. T3's quorum of `n−f` distinct creators contains
+  `f+1` correct ones by `card_inter_correct_of_quorum`, regardless of `p`.
+- **counted** → `p + f + 1 - n`. T3a can only guarantee that much; at
+  `n = 10, f = 3`, `p = n−f = 7`, `b = f = 3` the count yields 3 supporters
+  where `f+1 = 4`, and the theorem survives only because
+  `p + f + 1 - n = 1` there.
 
 ### Phase 1
 
 - **T0 — Quorum intersection.** Any two `Q₁ Q₂ : Finset Validator` with
-  `card ≥ 2f+1` (out of `3f+1` total) satisfy `(Q₁ ∩ Q₂).card ≥ f + 1`,
+  `card ≥ n−f` (out of `n` total) satisfy `(Q₁ ∩ Q₂).card ≥ n−2f ≥ f + 1`,
   hence contain a correct validator by `exists_correct_of_card` (§2). Pure
   `Finset`/`Fintype` cardinality — likely close to a one-liner from
   `Finset.card_inter_add_card_union` or similar.
@@ -420,7 +425,7 @@ Which form to use is determined by how supporters are obtained:
   > `c ∈ U.ids` with `(U.block c).round ≥ r + 2`, `Reaches U c b`.
 
   Note `b ∈ U.ids` and `(U.block b).round = r` are **not** hypotheses. Both
-  are consequences of the quorum condition: a quorum has `≥ 2f+1 ≥ 1`
+  are consequences of the quorum condition: a quorum has `≥ n−f ≥ 2f+1 ≥ 1`
   authors so `Q` is nonempty, and any member is in the universe, references
   `b`, and sits at round `r+1` — which pins `b` by completeness and the
   predecessor condition. Assuming them would only weaken the theorem
@@ -451,7 +456,7 @@ Which form to use is determined by how supporters are obtained:
     is a correct supporter — so the uniform (`f+1`) coverage lemma applies
     directly.
   - **Step, `round c = n + 1` with `n ≥ r + 2`.** No coverage needed: `c`'s
-    refs are nonempty (the quorum is `≥ 2f+1 ≥ 1`, and the image of `∅` is
+    refs are nonempty (the quorum is `≥ n−f ≥ 2f+1 ≥ 1`, and the image of `∅` is
     `∅`) and sit at round `n ≥ r + 2`, so the IH applies to any one of them;
     compose by T2.
 
@@ -490,39 +495,33 @@ degenerate range where no round-`(r+2)` block exists, turning a vacuous case
 into an apparently provable one.
 
 - **T3a — Correct-support counting.** Some correct validator's round-`r`
-  block is referenced by the round-`(r+1)` blocks of at least `p − 2f`
-  distinct **correct** validators.
+  block is referenced by the round-`(r+1)` blocks of at least
+  `p + f + 1 − n` distinct **correct** validators.
 
   At least `p − b` of the `p` are correct, and each has a *unique*
-  round-`(r+1)` block (T1) referencing 2f+1 distinct validators — straight
+  round-`(r+1)` block (T1) referencing `n−f` distinct validators — straight
   from the creator-set quorum, no distinctness needed — of which at least
-  `2f+1 − b` are correct. Counting incidences between those blocks and the
-  correct round-`r` authors they name gives at least `(p−b)(2f+1−b)`, spread
-  over `Correct.card = 3f+1 − b` validators (`card_correct_add_byzantine`,
+  `n−f−b` are correct. Counting incidences between those blocks and the
+  correct round-`r` authors they name gives at least `(p−b)(n−f−b)`, spread
+  over `Correct.card = n − b` validators (`card_correct_add_byzantine`,
   §2 — the *upper* bound is the one that matters here). Pigeonhole yields a
-  validator `w` receiving at least `(p−b)(2f+1−b) / (3f+1−b)`, and `w`'s
-  round-`r` block is unique by T1. It remains to check
-
-  > `(p − b)(2f+1 − b)  ≥  (p − 2f)(3f+1 − b)`
-
-  whose difference is `b² − 4fb − b + 6f² + 2f − fp`. Since `p ≤ 3f+1`, that
-  is at least
-
-  > `(b − f)(b − 3f) + (f − b)`
-
-  and both terms are non-negative for `b ≤ f`. Tight exactly at
-  `b = f, p = 3f+1`; slack everywhere else.
+  validator `w` receiving at least `(p−b)(n−f−b) / (n−b)`, and `w`'s
+  round-`r` block is unique by T1. The arithmetic obligation reduces to
+  `c² ≤ f(l+c)` for `c = n − b` and `l` the number of correct
+  round-`(r+1)` blocks; `l ≤ c` turns it into `c ≤ 2f` — impossible, since
+  `b ≤ f` and `n ≥ 3f+1` force `c ≥ 2f+1`. Tight exactly at
+  `b = f, p = n`; slack everywhere else.
 
 - **T3c — Common correct ancestor.** If any block exists at round `r+2`,
   then some correct validator's round-`r` block lies in the causal history of
-  **every** round-`(r+2)` block. Immediate from T3a and the `p − 2f` form of
-  coverage (§4 *Coverage*).
+  **every** round-`(r+2)` block. Immediate from T3a and the
+  participation-sensitive form of coverage (§4 *Coverage*).
 
   The sole premise is that a round-`(r+2)` block exists — a fact about the
   DAG in hand, not an assumption that anyone makes progress. This stays a
-  safety result. The degenerate cases are consistent with it: if `p < 2f+1`
+  safety result. The degenerate cases are consistent with it: if `p < n−f`
   no round-`(r+2)` block can be formed and the claim is vacuous; if
-  `p = 2f+1` every round-`(r+2)` block names all of them and the conclusion
+  `p = n−f` every round-`(r+2)` block names all of them and the conclusion
   is immediate.
 
 ### Phase 2 — uncertified DAGs (Mysticeti)
@@ -537,9 +536,9 @@ Fix a slot with leader block `L` by `leader k` at round `r`:
 - a round-`(r+1)` block **votes** for `L` if `L ∈ refs`, and **blames**
   otherwise;
 - a round-`(r+2)` block **certifies** `L` if its refs include votes for `L`
-  from **2f+1 distinct validators**;
-- **direct commit**: certificates for `L` come from 2f+1 distinct validators;
-- **direct skip**: blames come from 2f+1 distinct validators;
+  from **`n−f` distinct validators**;
+- **direct commit**: certificates for `L` come from `n−f` distinct validators;
+- **direct skip**: blames come from `n−f` distinct validators;
 - otherwise **undecided**. A later direct commit triggers a backward sweep
   over the undecided slots in the causal history of *that* leader block,
   **earliest first**: each is committed if a certificate for it lies in that
@@ -590,23 +589,23 @@ stages need very different machinery:
   directly committed, every block at round `≥ r+3` reaches some certificate
   for `L`.
 
-  The certificates sit at round `r+2` with 2f+1 distinct creators, so `f+1`
+  The certificates sit at round `r+2` with `n−f` distinct creators, so `f+1`
   of them are correct (`card_inter_correct_of_quorum`). A round-`(r+3)`
-  block names 2f+1 of the 3f+1 validators and so misses at most `f`, hence
+  block names `n−f` of at most `n` validators and so misses at most `f`, hence
   names one of those correct certifiers, whose round-`(r+2)` block is unique
   (T1) and therefore *is* that certificate. Later rounds follow by
   induction. This is the **hitting lemma** — coverage generalised from a
   fixed block to a set — and it is the same argument as T3's base case.
 
-- **M3 — Direct skip ⟹ no certificate exists anywhere.** If 2f+1 validators
+- **M3 — Direct skip ⟹ no certificate exists anywhere.** If `n−f` validators
   blame, no certificate for `L` exists in the entire universe.
 
   A *correct* validator's single round-`(r+1)` block either votes or blames,
   never both, so `blames ∩ votes ⊆ Byzantine` and
 
-  > `|votes| ≤ (3f+1) − (2f+1) + f = 2f  <  2f+1`
+  > `|votes| ≤ n − (n−f) + f = 2f  <  n−f`
 
-  and a certificate requires 2f+1 distinct vote-creators. Note the
+  and a certificate requires `n−f` distinct vote-creators. Note the
   conclusion is universe-wide, not view-relative: this is why a skip needs
   no anchor to justify it.
 
@@ -629,7 +628,7 @@ stages need very different machinery:
 - **M5′ — Certificate uniqueness.** If certificates exist for two round-`r`
   blocks by the same author, those blocks coincide.
 
-  Two certificates each name 2f+1 distinct voters; the two voter sets
+  Two certificates each name `n−f` distinct voters; the two voter sets
   intersect in a correct `w` (T0'); `w`'s single round-`(r+1)` block votes
   for both (T1); and **distinctness** (§3.2) forbids one block referencing
   two round-`r` blocks by one author. That last step is the sole
@@ -655,13 +654,13 @@ stages need very different machinery:
   cosmetic; the other reading is unsound. Slots at rounds 0, 3, 6, with
   exactly one certificate `C` for slot 0 — too few to commit it directly, so
   slot 0 is undecided. Validator 1 directly commits slot 1, whose leader
-  block references 2f+1 round-2 blocks but misses `C`, and skips slot 0.
+  block references a quorum of round-2 blocks but misses `C`, and skips slot 0.
   Validator 2 instead directly commits slot 2, whose leader block does reach
   `C`, and commits slot 0. Two validators, opposite verdicts.
 
   Anchoring on the *nearest* committed slot closes it. Validator 2 must
   resolve slot 1 first, and M2 forces its hand: slot 1 was directly
-  committed by someone, so 2f+1 certificates for it exist and validator 2's
+  committed by someone, so a quorum of certificates for it exists and validator 2's
   anchor reaches one, so validator 2 commits slot 1 indirectly. Slot 1 is
   then the nearest committed slot after 0 for **both** validators, so both
   evaluate slot 0 against the same subgraph.
@@ -697,7 +696,7 @@ stages need very different machinery:
 
   **A missing lemma, found while designing this: M5 is too weak.** M5 says
   two *directly committed* blocks for a slot coincide, i.e. two blocks each
-  backed by 2f+1 certificates. But the indirect rule commits on the strength
+  backed by a quorum of certificates. But the indirect rule commits on the strength
   of **one** certificate lying in the anchor's history. Comparing an indirect
   commit against anything therefore needs:
 
@@ -705,7 +704,7 @@ stages need very different machinery:
   > certificate exists for `L₂`, and `L₁`, `L₂` are round-`r` blocks with the
   > same author, then `L₁ = L₂`.
 
-  It holds, and by M5's *inner* argument alone. Each certificate names 2f+1
+  It holds, and by M5's *inner* argument alone. Each certificate names `n−f`
   distinct voters, the two voter sets intersect in a correct `w` (T0), `w`'s
   single round-`(r+1)` block votes for both (T1), and distinctness forbids it
   referencing two round-`r` blocks by one author. Note this never needs the
@@ -888,7 +887,7 @@ needs a wholesale `Mathlib` import.
 **What Phases 1 and 1b actually require.** Completeness, the predecessor
 condition, the creator-set quorum, and non-equivocation — four conditions.
 Not distinctness, not views, not view-closure. This holds for Phase 1b too:
-T3a takes its 2f+1 distinct validators straight from the creator-set quorum,
+T3a takes its `n−f` distinct validators straight from the creator-set quorum,
 and coverage runs on correctness plus non-equivocation. So distinctness is
 load-bearing only at commit agreement (M5′, and T5 in Appendix A), exactly
 as §3.2 claims — and that is checkable rather than aspirational.

@@ -212,9 +212,11 @@ protocol to commit in **two** communication rounds rather than three.
 - Reported 300ms median latency at 10k TPS.
 
 **Bearing on this development:** the quorum-intersection arithmetic in
-`LeanDag` is stated against 3f+1. Odontoceti is a clean example of the commit
-rule's round depth being a *consequence* of the quorum arithmetic, which suggests
-the safety proofs could be parameterised over the threshold.
+`LeanDag` is now parameterised: `n ≥ 3f+1` validators with quorums of
+`n − f`. Odontoceti is a clean example of the commit rule's round depth
+being a *consequence* of the quorum arithmetic; instantiating a 5f+1-style
+threshold would still be a further change (its quorums are not `n − f`),
+but the arithmetic no longer hard-codes the committee size.
 
 ### 4.3 Starfish — and the liveness critique of uncertified DAGs
 
@@ -602,11 +604,11 @@ This paper settles it as the third.
 
 | | Qiu et al. | This development |
 |---|---|---|
-| Validators | 3f+1, 2f+1 honest | `Faults`: 3f+1, ≤ f Byzantine — **same** |
+| Validators | 3f+1, 2f+1 honest | `Faults`: `n ≥ 3f+1`, ≤ f Byzantine — **generalises** (equal at `n = 3f+1`) |
 | Reference rule | 2f+1 vertices of round r−1, distinct builders | P3 `ValidWrt.quorum` — **same** |
 | Supporter | *first* leader-slot vertex in `preds` | plain `refs`-membership (`votesIn`) — **differs; see below** |
 | Certificate | round r+2 vertex referencing 2f+1 distinct supporters | `Certifies` — **same** |
-| **Direct commit** | **2f+1 certificates, distinct builders** | `DirectCommitIn`: `2*f+1 ≤ (creatorsOf … certificatesIn).card` — **same** |
+| **Direct commit** | **2f+1 certificates, distinct builders** | `DirectCommitIn`: `n−f ≤ (creatorsOf … certificatesIn).card` — **same** at `n = 3f+1` |
 | Direct skip | 2f+1 round-(r+1) vertices, none supporting | `DirectSkipIn` — **same** |
 | Indirect rule | earliest non-Skipped anchor at r′ ≥ r+3 | M4, anchor at ≥ r+3 — **same** |
 | **Leader slots** | **every round**; view v = round r, 1-to-1 | **`Slots.spacing`: `slotRound k + 3 ≤ slotRound (k+1)`** — **differs** |

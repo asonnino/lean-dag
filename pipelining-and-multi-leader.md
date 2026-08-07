@@ -11,7 +11,7 @@ three-round-spaced commit rule of `spec.md` and `liveness.md` to the
 > `Classical.choice` and `Quot.sound`.
 >
 > One assumption was added — `FairRunOn T c`, that the schedule places `c`
-> consecutive `T`-led slots arbitrarily far out — and round-robin over `3f+1`
+> consecutive `T`-led slots arbitrarily far out — and round-robin over the `n`
 > satisfies it with `c = 3` for every `f ≥ 1`. Nothing else about the model
 > changed: no new synchrony assumption, no change to the vote rule.
 >
@@ -74,7 +74,8 @@ arXiv:2310.14821), Algorithms 1–3. Parameters: `waveLength` (3), `roundOffset`
 - `ProposerRound(w) = w·waveLength + roundOffset`, `DecisionRound(w) =
   w·waveLength + waveLength − 1 + roundOffset`. With `waveLength = 3` a slot
   proposed at round `r` has voting round `r+1` and decision round `r+2`.
-- `SkippedProposer`: `≥ 2f+1` blocks at `r+1` with no parent by the leader —
+- `SkippedProposer`: `≥ 2f+1` blocks at `r+1` with no parent by the leader
+  (the paper's `2f+1` is our `n−f` at the boundary `n = 3f+1`) —
   this is `DirectSkip` with `blames` at `r+1`.
 - `SupportedProposer`: `≥ 2f+1` blocks at `r+2` each of which is a certificate,
   where `IsCert(b, L)` counts `≥ 2f+1` of `b`'s parents voting for `L` — this is
@@ -473,7 +474,7 @@ anchor not being available. Two reasons it may not be:
 - *The anchor must be canonical, because anchors genuinely disagree.* A
   certificate sits at round `r+2`, and a round-`(r+3)` block's references are all
   at `r+2`, so it reaches that certificate only by referencing it — and it
-  references `2f+1` of them, not all. One committed anchor may see it and another
+  references a quorum (`n−f`) of them, not all. One committed anchor may see it and another
   may not. Hence the *first* committed eligible slot is fixed as the anchor, and
   to know a slot is first, every eligible slot below it must be known **skipped**
   — not merely "not yet decided", since a slot undecidable now may commit later
@@ -560,9 +561,9 @@ which discharges `hrun`.
 
 **Round-robin satisfies it with `c = 3` for every `f ≥ 1`**, whatever the `f`
 Byzantine validators are and wherever they sit in the rotation: they cut the
-cycle into at most `f` arcs holding `2f+1` correct slots between them, so some
-arc has at least `⌈(2f+1)/f⌉` slots, and `(2f+1)/f = 2 + 1/f` makes that ceiling
-`3` for all `f ≥ 1`. Three is exactly what pipelining asks for — a coincidence
+cycle into at most `f` arcs holding at least `n−f ≥ 2f+1` correct slots
+between them, so some arc has at least `⌈(2f+1)/f⌉` slots, and
+`(2f+1)/f = 2 + 1/f` makes that ceiling `3` for all `f ≥ 1`. Three is exactly what pipelining asks for — a coincidence
 rather than a design. The concrete case, four validators with one Byzantine and a
 run at `4k+1, 4k+2, 4k+3`, is `pipe_fairRun`, and `Pipelined.lean` instantiates
 L10 at that schedule: both schedule hypotheses discharged, leaving only the

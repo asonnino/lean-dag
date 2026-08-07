@@ -22,7 +22,7 @@ they settle.
 > This should allow us to prove a few results:
 >
 > - After GST, within Δ if a correct validator commits all will commit.
-> - From round 0 onwards correct validators have enough (2f+1) references to
+> - From round 0 onwards correct validators have enough (`n−f`) references to
 >   previous rounds to build blocks, always.
 > - After GST if validators wait to build these blocks they will commit.
 
@@ -61,7 +61,7 @@ lets every safety result hold for crashed validators too. But it makes every
 liveness statement vacuous without a positive rule:
 
 > up to a horizon `N`, a correct validator has a round-`(r+1)` block once it
-> **holds** round-`r` blocks from 2f+1 validators
+> **holds** round-`r` blocks from `n−f` validators
 
 **"Holds", not "exist".** A validator builds after a timeout, on a quorum
 that is in *its own view* — it cannot act on blocks it has never received.
@@ -111,9 +111,9 @@ that commits *recur* needs a fairness condition:
 
 > for every slot `k` there is a slot `k' ≥ k` whose leader lies in `T`
 
-where `T` is the correct quorum L4 counts (S5). Round-robin over `3f+1`
-validators supplies the `T := Correct` case, since at least `2f+1` of every
-`3f+1` leaders are correct. But the `Slots` class does not require
+where `T` is the correct quorum L4 counts (S5). Round-robin over the `n`
+validators supplies the `T := Correct` case, since at least `n−f` of every
+`n` leaders are correct. But the `Slots` class does not require
 round-robin, so this has to be assumed separately — and Q4 records that the
 `∃ k' ≥ k` form buys liveness without buying any *rate*.
 
@@ -149,7 +149,7 @@ round number is a *negative* fact — an absence of any bound — so it belongs 
 a test model as an exhibit, not as a statement to prove.
 
 Building that exhibit turned out to be **impossible at `f = 1`**, which is
-itself informative: with `3f+1 = 4` validators and `|Correct| = 3 = 2f+1`
+itself informative: with `n = 3f+1 = 4` validators and `|Correct| = 3 = n−f`
 exactly, every correct validator is needed for a quorum and none can lag. A
 spread exhibit that still commits needs `f ≥ 2`. See S7 — it is S5's combined
 budget appearing as a concrete obstruction rather than an inequality.
@@ -201,10 +201,10 @@ bearing:
   theirs to reference. It can equally publish and reveal to only some
   validators, so even correct validators cannot be assumed to hold it.
 - **Nothing needs to be.** L4 counts only correct certificates, and there are
-  `2f+1` correct validators — a quorum — so the argument never asks whether a
+  `n−f` correct validators — a quorum — so the argument never asks whether a
   Byzantine block was seen.
 - **Well-formedness survives.** A correct block referencing every correct
-  block of the round below already names `≥ 2f+1` distinct creators, so
+  block of the round below already names `≥ n−f` distinct creators, so
   validity's quorum condition is met without any Byzantine reference. Nothing
   is lost by the restriction.
 
@@ -221,7 +221,7 @@ then waits long enough before building at `n+1` references all of them. That
 is the mechanism, and it *is* formalized — `Timing.synchronisedOn_of_timing`
 (S6) derives `SynchronisedOn` from exactly this. What view convergence supplies
 by itself is only the delivery half. A network that propagates perfectly still
-commits nothing if validators build on the 2f+1st arrival, which is why
+commits nothing if validators build on the quorum-completing arrival, which is why
 `Timing.waits` is a field and not a remark.
 
 **But views need a build-time index, and that is what `held` is.** A block's
@@ -475,7 +475,7 @@ Nothing above depends on them.
 def Rated (timeout : ℕ → ℕ) : Prop := ∀ n, n ≤ timeout n
 
 /-- A `T`-leader within every window of `w` slots. The rated `FairScheduleOn`;
-round-robin over `3f+1` gives `w = f + 1`. -/
+round-robin over `n` gives `w = f + 1`. -/
 def FairWithin (T : Finset Validator) (w : ℕ) : Prop :=
   ∀ k, ∃ k', k ≤ k' ∧ k' < k + w ∧ S.leader k' ∈ T
 
@@ -493,9 +493,9 @@ constant timeout of at least `D₀ + Δ`.
 ### Without synchrony
 
 - **L0 — The DAG is dense below its frontier.** If any block exists at round
-  `r`, then every round `n < r` has at least `2f+1` distinct authors.
+  `r`, then every round `n < r` has at least `n−f` distinct authors.
 
-  A round-`r` block references 2f+1 distinct round-`(r-1)` creators, so round
+  A round-`r` block references `n−f` distinct round-`(r-1)` creators, so round
   `r-1` carries a quorum of authors; that round is then nonempty, so the same
   argument applies below it. Downward induction.
 
@@ -514,7 +514,7 @@ constant timeout of at least `D₀ + Δ`.
   apply. Still **no synchrony** — the notes' *"from round 0 onwards,
   always"*, now qualified by the horizon (§4.4).
 
-  This is where `card_correct` (`2f+1 ≤ |Correct|`) finally gets used.
+  This is where `card_correct` (`n−f ≤ |Correct|`) finally gets used.
   `spec.md` §2 has carried it as unused-but-kept-for-liveness from the start.
 
   L1 is the **only** result where `N` does real work: its whole job is to turn
@@ -554,13 +554,13 @@ constant timeout of at least `D₀ + Δ`.
 ### After R
 
 - **L4 — A leader in a correct quorum commits.** Write `r = slotRound k`.
-  Given a validator set `T` with `2f+1 ≤ |T|`, `PopulatedOn U T` at `r`,
+  Given a validator set `T` with `n−f ≤ |T|`, `PopulatedOn U T` at `r`,
   `r+1` and `r+2`, `SynchronisedOn U T R`, `R ≤ r`, and `leader k ∈ T`, the
   leader's block is directly committed
   (`directCommit_of_leader_mem`). `directCommit_of_correct_leader` is the
   `T := Correct` instance.
 
-  **`T` is a quorum, not all of `Correct`** (S5). The proof counts to `2f+1`
+  **`T` is a quorum, not all of `Correct`** (S5). The proof counts to `n−f`
   and never higher, so `Correct` enters at exactly one point —
   `card_correct` — and everything after is a subset argument. Demanding all
   of `Correct` would make the theorem lapse when one correct validator misses
@@ -577,10 +577,10 @@ constant timeout of at least `D₀ + Δ`.
   (§4.4).
 
   Every `T`-authored round-`(r+1)` block references `L` by coverage — `L` is
-  `T`-authored — so the supporters include all of `T`, at least `2f+1`. Every
+  `T`-authored — so the supporters include all of `T`, at least `n−f`. Every
   `T`-authored round-`(r+2)` block then references all of *those*, so its
-  `votesIn` has `2f+1` distinct creators and it certifies `L`. The
-  certificates therefore also come from `2f+1` distinct creators, which is
+  `votesIn` has `n−f` distinct creators and it certifies `L`. The
+  certificates therefore also come from `n−f` distinct creators, which is
   `DirectCommit`. Both steps are the same `SynchronisedOn` applied at adjacent
   rounds — `certifies_of_synchronisedOn` is literally both at once.
 
@@ -609,7 +609,7 @@ constant timeout of at least `D₀ + Δ`.
   > `  ∀ U D N, Live U D N → DeliversQuorum D → SynchronisedOn U T R →`
   > `    slotRound k' + 2 ≤ N → slot k' commits`
 
-  given `T ⊆ Correct`, `2f+1 ≤ |T|` and `FairScheduleOn T`
+  given `T ⊆ Correct`, `n−f ≤ |T|` and `FairScheduleOn T`
   (`commits_recur_on`; `commits_recur` is the `T := Correct` instance).
 
   **This is where `T ⊆ Correct` earns its place.** L4 alone does not need it —
@@ -912,7 +912,7 @@ keeping.
 
 ### S2 — `builds` is stated on `held`, not on existence
 
-The first form said a correct validator builds once *any* `2f+1`
+The first form said a correct validator builds once *any* `n−f`
 validators have round-`r` blocks. That is not something a validator can
 act on: it cannot build on blocks it has never received. The real rule is
 a **timeout plus a quorum in its own view**.
@@ -1002,7 +1002,7 @@ about all of `Correct` while L4 consumes only a quorum, and lets the existing
 `Ugrow` witnesses feed the generalised statements unchanged.
 
 L4's proof needed no change beyond replacing `card_correct` with the
-hypothesis `2f+1 ≤ T.card` — `Correct` entered at exactly that one point, and
+hypothesis `n−f ≤ T.card` — `Correct` entered at exactly that one point, and
 everything after was a subset argument.
 
 **Where `T ⊆ Correct` is and is not needed.** L4 alone does not need it: the
@@ -1013,7 +1013,7 @@ it must hold, since a `T` containing Byzantine validators would make
 `SynchronisedOn` unjustifiable: withholding is free for the adversary, so any
 argument counting Byzantine-authored blocks is defeated by doing nothing.
 
-**One honest limit.** `2f+1 ≤ |T|` and `|T| ≤ |Correct| = 3f+1 − actual
+**One honest limit.** `n−f ≤ |T|` and `|T| ≤ |Correct| = n − actual
 Byzantine` together force
 
 > `actual_byzantine + slow_correct ≤ f`
@@ -1050,10 +1050,10 @@ mentions the adversary — it quantifies over `T` only, which is better, since
 no reasoning about strategy is needed.
 
 And it puts an obligation on implementations: `waits` says a validator builds
-a **full timeout** after entering the round, *not* as soon as it holds `2f+1`
+a **full timeout** after entering the round, *not* as soon as it holds `n−f`
 blocks. An adversary answering instantly can fill an early quorum with
 Byzantine blocks and crowd out the correct ones — including the leader's — so
-building on the first `2f+1` makes the backoff accomplish nothing.
+building on the first `n−f` makes the backoff accomplish nothing.
 
 **Drift, the last assumption.** `Timing` first carried `Drift` as a field:
 `T`-validators are never more than `D` apart in real time at the same round.
@@ -1119,8 +1119,8 @@ the first. That is exactly the check a degenerate witness cannot perform, and
 finding the window is narrow is itself worth knowing.
 
 **Not done: the round-spread exhibit** §4.1 asks for, and the reason is worth
-recording. At `f = 1` there are `3f+1 = 4` validators and `|Correct| = 3 =
-2f+1` exactly, so *every* correct validator is needed for a quorum and none
+recording. At `f = 1`, `n = 3f+1 = 4` there are four validators and `|Correct| = 3 =
+n−f` exactly, so *every* correct validator is needed for a quorum and none
 can lag. Exhibiting round spread alongside commits needs `f ≥ 2` — seven
 validators with one Byzantine, leaving six correct and room for one to fall
 behind. That is S5's combined budget (`actual_byzantine + slow_correct ≤ f`)
