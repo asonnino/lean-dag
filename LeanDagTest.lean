@@ -17,3 +17,4 @@ import LeanDagTest.Doubling
 import LeanDagTest.Novelty
 import LeanDagTest.Chop
 import LeanDagTest.Bootstrap
+import LeanDagTest.Horizon

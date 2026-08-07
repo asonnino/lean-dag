@@ -56,6 +56,11 @@ theorem chopBlock_round :
     (chopBlock U G i).round = (U.block i).round - G := by
   unfold chopBlock; split <;> rfl
 
+@[simp]
+theorem chopBlock_payload :
+    (chopBlock U G i).payload = (U.block i).payload := by
+  unfold chopBlock; split <;> rfl
+
 theorem chopBlock_refs_of_le (h : (U.block i).round ≤ G) :
     (chopBlock U G i).refs = ∅ := by
   unfold chopBlock; rw [if_pos h]

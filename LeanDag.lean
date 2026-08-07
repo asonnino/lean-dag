@@ -23,6 +23,7 @@ import LeanDag.ChopDecided
 import LeanDag.Window
 import LeanDag.AttestedBase
 import LeanDag.Bootstrap
+import LeanDag.Horizon
 import LeanDag.Acceptance
 import LeanDag.Counting
 import LeanDag.Exclusion
