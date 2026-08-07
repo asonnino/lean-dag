@@ -59,12 +59,12 @@ structure Accepted (U : BlockUniverse Validator BlockId Payload)
   inj : ∀ i ∈ A, ∀ j ∈ A, (U.block i).creator = (U.block j).creator → i = j
 
 omit [DecidableEq BlockId] in
-/-- One block per author out of `3f+1` validators. This is the whole reason the
+/-- One block per author out of the `n` validators. This is the whole reason the
 acceptance rule buys anything. -/
-theorem Accepted.card_le (h : Accepted U A n) : A.card ≤ 3 * F.f + 1 := by
+theorem Accepted.card_le (h : Accepted U A n) : A.card ≤ Fintype.card Validator := by
   have himg : (A.image (fun i => (U.block i).creator)).card = A.card :=
     Finset.card_image_of_injOn fun i hi j hj hij => h.inj i hi j hj hij
-  rw [← himg, ← F.card_validators]
+  rw [← himg]
   exact Finset.card_le_univ _
 
 /-- **D1 — the view an accepted set generates.**
@@ -99,12 +99,12 @@ is what turns every bound on `|H(b)|` into a bound on what a validator
 stores. -/
 theorem View.card_ofAccepted_le (h : Accepted U A n)
     (hm : ∀ a ∈ A, (history U a).card ≤ m) :
-    (View.ofAccepted h).ids.card ≤ (3 * F.f + 1) * m :=
+    (View.ofAccepted h).ids.card ≤ (Fintype.card Validator) * m :=
   calc (View.ofAccepted h).ids.card
       ≤ ∑ a ∈ A, (history U a).card := Finset.card_biUnion_le
     _ ≤ ∑ _a ∈ A, m := Finset.sum_le_sum hm
     _ = A.card * m := Finset.sum_const_nat fun _ _ => rfl
-    _ ≤ (3 * F.f + 1) * m := Nat.mul_le_mul_right m h.card_le
+    _ ≤ (Fintype.card Validator) * m := Nat.mul_le_mul_right m h.card_le
 
 /-! ## D3 — the sharp form
 

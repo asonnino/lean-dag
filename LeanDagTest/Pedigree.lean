@@ -50,7 +50,7 @@ example : (historyBlocksOf Ufault 19 0 0).card = 2 := by decide
 /-- **The general bound applied**: the whole 20-block history is bounded
 linearly in its round, both equivocators notwithstanding. -/
 example : (history Ufault 19).card
-    ≤ (3 * Faults.f (Fin 7) + 1) * (3 * Faults.f (Fin 7) + 2) ^ (3 * Faults.f (Fin 7) + 1)
+    ≤ (Fintype.card (Fin 7)) * ((Fintype.card (Fin 7) + 1)) ^ (Fintype.card (Fin 7))
       * ((Ufault.block 19).round + 1) :=
   card_history_le ufault_dosValid (by decide)
 
@@ -74,38 +74,38 @@ both equivocators exposed (`e = 2`):
 /-- **The sharp per-author count applied**: validator 0's chains are bounded
 by `(3f+1-e)·e^(e-1) = 10`, and there are `2`. -/
 example : (topsOf Ufault 19 0).card ≤
-    (3 * Faults.f (Fin 7) + 1 - (exposedTo Ufault 19).card) *
+    (Fintype.card (Fin 7) - (exposedTo Ufault 19).card) *
       (exposedTo Ufault 19).card ^ ((exposedTo Ufault 19).erase 0).card :=
   card_topsOf_le_of_exposed ufault_dosValid (by decide) (by decide)
 
-example : (3 * Faults.f (Fin 7) + 1 - (exposedTo Ufault 19).card) *
+example : (Fintype.card (Fin 7) - (exposedTo Ufault 19).card) *
     (exposedTo Ufault 19).card ^ ((exposedTo Ufault 19).erase 0).card = 10 := by decide
 
 /-- **C1′, tightened, applied**: at most `13` blocks per author per round. -/
 example : ∀ n, (historyBlocksOf Ufault 19 0 n).card ≤
-    1 + 3 * Faults.f (Fin 7) * Faults.f (Fin 7) ^ (Faults.f (Fin 7) - 1) :=
+    1 + (Fintype.card (Fin 7) - 1) * Faults.f (Fin 7) ^ (Faults.f (Fin 7) - 1) :=
   fun n => card_historyBlocksOf_le' ufault_dosValid (by decide) 0 n
 
-example : 1 + 3 * Faults.f (Fin 7) * Faults.f (Fin 7) ^ (Faults.f (Fin 7) - 1) = 13 := by
+example : 1 + (Fintype.card (Fin 7) - 1) * Faults.f (Fin 7) ^ (Faults.f (Fin 7) - 1) = 13 := by
   decide
 
 /-- **The tightened total applied**: `20 ≤ 31·4`. -/
 example : (history Ufault 19).card ≤
-    (3 * Faults.f (Fin 7) + 1 + 3 * Faults.f (Fin 7) ^ (Faults.f (Fin 7) + 1))
+    (Fintype.card (Fin 7) + (Fintype.card (Fin 7) - 1) * Faults.f (Fin 7) ^ Faults.f (Fin 7))
       * ((Ufault.block 19).round + 1) :=
   card_history_le' ufault_dosValid (by decide)
 
-example : (3 * Faults.f (Fin 7) + 1 + 3 * Faults.f (Fin 7) ^ (Faults.f (Fin 7) + 1)) = 31 := by
+example : (Fintype.card (Fin 7) + (Fintype.card (Fin 7) - 1) * Faults.f (Fin 7) ^ Faults.f (Fin 7)) = 31 := by
   decide
 
 /-- At `f = 1` the tightened total is exactly the adoption theorem's `7(r+1)`
 — on `Umerge`: `12 ≤ 7·4`. -/
 example : (history Umerge 12).card ≤
-    (3 * Faults.f (Fin 4) + 1 + 3 * Faults.f (Fin 4) ^ (Faults.f (Fin 4) + 1))
+    (Fintype.card (Fin 4) + (Fintype.card (Fin 4) - 1) * Faults.f (Fin 4) ^ Faults.f (Fin 4))
       * ((Umerge.block 12).round + 1) :=
   card_history_le' umerge_dosValid (by decide)
 
-example : (3 * Faults.f (Fin 4) + 1 + 3 * Faults.f (Fin 4) ^ (Faults.f (Fin 4) + 1)) = 7 := by
+example : (Fintype.card (Fin 4) + (Fintype.card (Fin 4) - 1) * Faults.f (Fin 4) ^ Faults.f (Fin 4)) = 7 := by
   decide
 
 end LeanDagTest

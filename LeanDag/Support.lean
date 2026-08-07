@@ -14,15 +14,15 @@ separating the two theorems downstream.
 
 * `reaches_of_correct_support` — threshold `p - 2f`, where `p` is the number
   of validators holding a round-`(r+1)` block. A round-`(r+2)` block draws
-  its 2f+1 referenced creators from those same `p`, so it misses exactly
-  `p - (2f+1)` of them and cannot dodge `p - 2f` supporters.
+  its n−f referenced creators from those same `p`, so it misses exactly
+  `p - (n−f)` of them and cannot dodge `p + f + 1 - n` supporters.
 
 * `reaches_of_correct_support_of_card` — threshold `f+1`, uniform. Since
-  `p ≤ 3f+1` always, this is the corollary: a round-`(r+2)` block names 2f+1
-  of the 3f+1 validators, so it misses at most `f`.
+  `p ≤ n` always, this is the corollary: a round-`(r+2)` block names n−f
+  of the `n` validators, so it misses at most `f`.
 
 The `f+1` form is the one to reach for when supporters are *assumed* (T3
-gets them free: a quorum of 2f+1 distinct creators contains at least `f+1`
+gets them free: a quorum of n−f distinct creators contains at least `f+1`
 correct ones). The `p` form is needed when supporters are *counted* (T3a can
 only guarantee `p - 2f`, which is strictly less than `f+1` when `p < 3f+1`).
 
@@ -64,7 +64,7 @@ theorem mem_authorsAt {v : Validator} {n : ℕ} :
 
 /-- The author pool never exceeds the validator set. This is what turns the
 `p - 2f` threshold into the uniform `f+1` one. -/
-theorem card_authorsAt_le_univ {n : ℕ} : (authorsAt U n).card ≤ 3 * F.f + 1 := by
+theorem card_authorsAt_le_univ {n : ℕ} : (authorsAt U n).card ≤ Fintype.card Validator := by
   have h := Finset.card_le_univ (authorsAt U n)
   have := F.card_validators
   omega
@@ -92,18 +92,19 @@ bare predicate rather than a `Finset BlockId` because nothing here takes the
 cardinality of the target set — only of `T`, the validators backing it —
 which keeps the whole file free of `DecidableEq BlockId`.
 
-The threshold is participation-sensitive: `c` draws its 2f+1 referenced
-creators from the round-`n` author pool, so it misses exactly
-`p - (2f+1)` of them and cannot dodge `p - 2f` backers. -/
+The threshold is participation-sensitive: `c` draws its `n - f` referenced
+creators from the round-`n` author pool `p`, so it misses at most
+`p - (n - f)` of them and cannot dodge `p + f + 1 - n` backers. At
+`n = 3f+1` this is the familiar `p - 2f`. -/
 theorem exists_mem_refs_of_correct_support
     {P : BlockId → Prop} {n : ℕ} {T : Finset Validator}
     (hT : ∀ v ∈ T, ∃ q ∈ U.ids, (U.block q).round = n ∧ P q ∧ (U.block q).creator = v)
     (hT_correct : ∀ v ∈ T, v ∈ (Correct : Finset Validator))
-    (hp : (authorsAt U n).card ≤ T.card + 2 * F.f)
+    (hp : (authorsAt U n).card + F.f + 1 ≤ T.card + Fintype.card Validator)
     {c : BlockId} (hc : c ∈ U.ids) (hcr : (U.block c).round = n + 1) :
     ∃ q ∈ (U.block c).refs, P q := by
   set A := creatorsOf U.block (U.block c).refs with hA
-  have hA_quorum : 2 * F.f + 1 ≤ A.card := U.creators_quorum hc (by omega)
+  have hA_quorum : (Fintype.card Validator - F.f) ≤ A.card := U.creators_quorum hc (by omega)
   have hA_sub : A ⊆ authorsAt U n := creators_refs_subset_authorsAt hc hcr
   have hT_auth : T ⊆ authorsAt U n := by
     intro v hv
@@ -113,7 +114,9 @@ theorem exists_mem_refs_of_correct_support
   have hunion : (A ∪ T).card ≤ (authorsAt U n).card :=
     Finset.card_le_card (Finset.union_subset hA_sub hT_auth)
   have hadd := Finset.card_union_add_card_inter A T
-  have hinter : 0 < (A ∩ T).card := by omega
+  have hinter : 0 < (A ∩ T).card := by
+    have := F.card_validators
+    omega
   obtain ⟨v, hv⟩ := Finset.card_pos.mp hinter
   rw [Finset.mem_inter] at hv
   obtain ⟨hv_A, hv_T⟩ := hv
@@ -130,8 +133,8 @@ theorem exists_mem_refs_of_correct_support
   exact ⟨i, hi_mem, hiq ▸ hq_P⟩
 
 /-- **The hitting lemma, uniform form.** `f+1` correct backers always
-suffice: a round-`(n+1)` block names 2f+1 of the 3f+1 validators, so it
-misses at most `f`. -/
+suffice: a round-`(n+1)` block names `n - f` of at most `n` participating
+authors, so it misses at most `f`. -/
 theorem exists_mem_refs_of_correct_support_of_card
     {P : BlockId → Prop} {n : ℕ} {T : Finset Validator}
     (hT : ∀ v ∈ T, ∃ q ∈ U.ids, (U.block q).round = n ∧ P q ∧ (U.block q).creator = v)
@@ -168,8 +171,9 @@ theorem reaches_pred_of_round_le {P : BlockId → Prop} {N : ℕ}
       obtain ⟨b, hPb, hreach⟩ := ih (U.block i).round (by omega) i hi_ids rfl (by omega)
       exact ⟨b, hPb, Reaches.of_mem_refs hi_mem hreach⟩
 
-/-- **Coverage, participation-sensitive form.** A block backed by `p - 2f`
-correct round-`(r+1)` validators is reached by every round-`(r+2)` block.
+/-- **Coverage, participation-sensitive form.** A block backed by
+`p + f + 1 - n` correct round-`(r+1)` validators is reached by every
+round-`(r+2)` block.
 
 The `P`-instance of the hitting lemma where every target references `b`. -/
 theorem reaches_of_correct_support
@@ -177,7 +181,7 @@ theorem reaches_of_correct_support
     (hS_support : ∀ v ∈ S, ∃ q ∈ U.ids,
       (U.block q).round = r + 1 ∧ b ∈ (U.block q).refs ∧ (U.block q).creator = v)
     (hS_correct : ∀ v ∈ S, v ∈ (Correct : Finset Validator))
-    (hp : (authorsAt U (r + 1)).card ≤ S.card + 2 * F.f)
+    (hp : (authorsAt U (r + 1)).card + F.f + 1 ≤ S.card + Fintype.card Validator)
     {c : BlockId} (hc : c ∈ U.ids) (hcr : (U.block c).round = r + 2) :
     Reaches U c b := by
   obtain ⟨q, hq_mem, hq_ref⟩ :=
@@ -188,7 +192,7 @@ theorem reaches_of_correct_support
 /-- **Coverage, uniform form.** `f+1` correct supporters always suffice.
 
 This is the form to use when supporters come from a quorum rather than from
-counting — see T3, where 2f+1 distinct creators contain `f+1` correct ones
+counting — see T3, where n−f distinct creators contain `f+1` correct ones
 by `card_inter_correct_of_quorum`. -/
 theorem reaches_of_correct_support_of_card
     {b : BlockId} {r : ℕ} {S : Finset Validator}
@@ -290,9 +294,9 @@ the Byzantine set: `|supporters| ≤ (3f+1) − (2f+1) + f = 2f`. Nothing about
 certificates enters, which is why this belongs here rather than beside the
 commit rules that consume it. -/
 theorem card_supporters_le_of_card_blames {L : BlockId} {n : ℕ}
-    (h : 2 * F.f + 1 ≤ (blames U L n).card) :
+    (h : (Fintype.card Validator - F.f) ≤ (blames U L n).card) :
     (supporters U L n).card ≤ 2 * F.f := by
-  have hunion : (blames U L n ∪ supporters U L n).card ≤ 3 * F.f + 1 := by
+  have hunion : (blames U L n ∪ supporters U L n).card ≤ Fintype.card Validator := by
     have := Finset.card_le_univ (blames U L n ∪ supporters U L n)
     have := F.card_validators
     omega

@@ -94,7 +94,7 @@ example : ((history Umerge 12).filter
 
 /-- **D24 applied.** Block 12's history must hold at least
 `(2f+1)·round + 1 = 10` blocks; it holds 12. -/
-example : (2 * Faults.f (Fin 4) + 1) * (Umerge.block 12).round + 1 ≤
+example : ((Fintype.card (Fin 4) - Faults.f (Fin 4))) * (Umerge.block 12).round + 1 ≤
     (history Umerge 12).card :=
   card_history_ge (by decide) (by decide)
 
@@ -103,7 +103,7 @@ example : (history Umerge 12).card = 12 := by decide
 /-- And on the six-round `Uexcl`: the floor at round 5 is `16`, met with an
 18-block history — the DAG that keeps committing after excluding validator 0
 still pays full price for its chains. -/
-example : (2 * Faults.f (Fin 4) + 1) * (Uexcl.block 17).round + 1 ≤
+example : ((Fintype.card (Fin 4) - Faults.f (Fin 4))) * (Uexcl.block 17).round + 1 ≤
     (history Uexcl 17).card :=
   card_history_ge (by decide) (by decide)
 

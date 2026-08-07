@@ -51,7 +51,7 @@ example (_hdos : DoSValid U) {c b : BlockId} (hc : c ∈ U.ids) (h : Reaches U c
 example (_hdos : DoSValid U) {b : BlockId} {r : ℕ} {Q : Finset BlockId} (hQ : Q ⊆ U.ids)
     (hQround : ∀ q ∈ Q, (U.block q).round = r + 1)
     (hQref : ∀ q ∈ Q, b ∈ (U.block q).refs)
-    (hQquorum : 2 * F.f + 1 ≤ (creatorsOf U.block Q).card)
+    (hQquorum : Fintype.card Validator - F.f ≤ (creatorsOf U.block Q).card)
     {c : BlockId} (hc : c ∈ U.ids) (hcr : r + 2 ≤ (U.block c).round) :
     Reaches U c b :=
   reaches_of_quorum_support hQ hQround hQref hQquorum hc hcr
@@ -97,7 +97,7 @@ holds of any universe, whether or not it satisfies `DoSValid`, since it asks
 only that a particular history expose nobody. -/
 
 example {b : BlockId} (hb : b ∈ U.ids) (h : ∀ X, ¬ ExposedIn U b X) :
-    (history U b).card ≤ (3 * F.f + 1) * ((U.block b).round + 1) :=
+    (history U b).card ≤ Fintype.card Validator * ((U.block b).round + 1) :=
   card_history_le_of_not_exposed hb h
 
 end LeanDagTest

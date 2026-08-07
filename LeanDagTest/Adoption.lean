@@ -57,7 +57,7 @@ example : ((history Umerge 12).filter
 /-- **The main bound applied** (`f = 1` form): every history of `Umerge` is
 linear in its round. For block 12: `12 ≤ 7 · 4 = 28`. -/
 example : (history Umerge 12).card ≤
-    (6 * Faults.f (Fin 4) + 1) * ((Umerge.block 12).round + 1) :=
+    ((2 * Fintype.card (Fin 4) - 1)) * ((Umerge.block 12).round + 1) :=
   card_history_le_of_f_le_one umerge_dosValid (by decide) (by decide)
 
 /-- The same through the counted hypothesis: exactly one author is caught in
@@ -65,7 +65,7 @@ example : (history Umerge 12).card ≤
 example : (exposedTo Umerge 12).card ≤ 1 := by decide
 
 example : (history Umerge 12).card ≤
-    (6 * Faults.f (Fin 4) + 1) * ((Umerge.block 12).round + 1) :=
+    ((2 * Fintype.card (Fin 4) - 1)) * ((Umerge.block 12).round + 1) :=
   card_history_le_of_card_exposedTo_le_one umerge_dosValid (by decide) (by decide)
 
 /-- And on the six-round `Uexcl`, whose exclusion story is §4's: the top
@@ -73,7 +73,7 @@ block's history is `18 ≤ 7 · 6 = 42`. The bound holds *through* the
 exclusion — the history carries the equivocator's two chains (its two
 geneses) and is bounded all the same. -/
 example : (history Uexcl 17).card ≤
-    (6 * Faults.f (Fin 4) + 1) * ((Uexcl.block 17).round + 1) :=
+    ((2 * Fintype.card (Fin 4) - 1)) * ((Uexcl.block 17).round + 1) :=
   card_history_le_of_f_le_one uexcl_dosValid (by decide) (by decide)
 
 example : topsOf Uexcl 17 0 = {0, 4} := by decide
@@ -86,10 +86,10 @@ history must hold at least `(2f+1)·5 + 1 = 16` blocks and may hold at most
 plus self-parents make history size a *bounded resource*, not merely a
 monitored one. -/
 
-example : (2 * Faults.f (Fin 4) + 1) * (Uexcl.block 17).round + 1
+example : ((Fintype.card (Fin 4) - Faults.f (Fin 4))) * (Uexcl.block 17).round + 1
       ≤ (history Uexcl 17).card ∧
     (history Uexcl 17).card
-      ≤ (6 * Faults.f (Fin 4) + 1) * ((Uexcl.block 17).round + 1) :=
+      ≤ ((2 * Fintype.card (Fin 4) - 1)) * ((Uexcl.block 17).round + 1) :=
   ⟨card_history_ge (by decide) (by decide),
     card_history_le_of_f_le_one uexcl_dosValid (by decide) (by decide)⟩
 

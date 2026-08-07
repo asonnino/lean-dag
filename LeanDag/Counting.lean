@@ -80,12 +80,12 @@ theorem EquivFree.subset {t : Finset BlockId} (h : EquivFree U t) (hsub : s ⊆ 
 omit [DecidableEq BlockId] in
 /-- One round of an equivocation-free set has at most one block per validator,
 so at most `3f+1` blocks. -/
-theorem card_atRound_le (h : EquivFree U s) (n : ℕ) : (atRound U s n).card ≤ 3 * F.f + 1 := by
+theorem card_atRound_le (h : EquivFree U s) (n : ℕ) : (atRound U s n).card ≤ Fintype.card Validator := by
   have hinj : Set.InjOn (fun i => (U.block i).creator) (atRound U s n) := by
     intro i hi j hj hij
     rw [Finset.mem_coe, mem_atRound] at hi hj
     exact h i hi.1 j hj.1 hij (by rw [hi.2, hj.2])
-  rw [← Finset.card_image_of_injOn hinj, ← F.card_validators]
+  rw [← Finset.card_image_of_injOn hinj]
   exact Finset.card_le_univ _
 
 /-- **The general counting bound.** An equivocation-free set spanning rounds
@@ -94,7 +94,7 @@ theorem card_atRound_le (h : EquivFree U s) (n : ℕ) : (atRound U s n).card ≤
 No disjointness is needed: the rounds cover `s`, and `card_biUnion_le` does not
 care that they also partition it. -/
 theorem card_le_of_equivFree (h : EquivFree U s) (hr : ∀ i ∈ s, (U.block i).round ≤ r) :
-    s.card ≤ (3 * F.f + 1) * (r + 1) := by
+    s.card ≤ (Fintype.card Validator) * (r + 1) := by
   have hsub : s ⊆ (Finset.range (r + 1)).biUnion (atRound U s) := by
     intro i hi
     exact Finset.mem_biUnion.mpr ⟨(U.block i).round,
@@ -102,11 +102,11 @@ theorem card_le_of_equivFree (h : EquivFree U s) (hr : ∀ i ∈ s, (U.block i).
   calc s.card
       ≤ ((Finset.range (r + 1)).biUnion (atRound U s)).card := Finset.card_le_card hsub
     _ ≤ ∑ n ∈ Finset.range (r + 1), (atRound U s n).card := Finset.card_biUnion_le
-    _ ≤ ∑ _n ∈ Finset.range (r + 1), (3 * F.f + 1) :=
+    _ ≤ ∑ _n ∈ Finset.range (r + 1), (Fintype.card Validator) :=
         Finset.sum_le_sum fun n _ => card_atRound_le h n
-    _ = (r + 1) * (3 * F.f + 1) := by
+    _ = (r + 1) * (Fintype.card Validator) := by
         rw [Finset.sum_const_nat fun _ _ => rfl, Finset.card_range]
-    _ = (3 * F.f + 1) * (r + 1) := Nat.mul_comm _ _
+    _ = (Fintype.card Validator) * (r + 1) := Nat.mul_comm _ _
 
 /-! ## D5 — a view without equivocation -/
 
@@ -117,7 +117,7 @@ The `r+1` is not slack: the view is downward closed, so round `0` is present
 and counted. -/
 theorem View.card_le_of_equivFree {V : View Validator BlockId Payload U}
     (h : EquivFree U V.ids) (hr : ∀ i ∈ V.ids, (U.block i).round ≤ r) :
-    V.ids.card ≤ (3 * F.f + 1) * (r + 1) :=
+    V.ids.card ≤ (Fintype.card Validator) * (r + 1) :=
   _root_.LeanDag.card_le_of_equivFree h hr
 
 /-! ## D19a — a history without equivocation
@@ -138,7 +138,7 @@ theorem equivFree_history_iff :
 /-- **D19a.** A history exposing nobody is linear in the round: at most
 `(3f+1)(r+1)` blocks, which is the no-equivocation baseline of D5 again. -/
 theorem card_history_le_of_not_exposed (hb : b ∈ U.ids) (h : ∀ X, ¬ ExposedIn U b X) :
-    (history U b).card ≤ (3 * F.f + 1) * ((U.block b).round + 1) :=
+    (history U b).card ≤ (Fintype.card Validator) * ((U.block b).round + 1) :=
   card_le_of_equivFree (equivFree_history_iff.mpr h)
     fun _ hi => round_le_of_mem_history hb hi
 
@@ -200,18 +200,18 @@ theorem blocksAt_disjoint (h : m ≠ n) : Disjoint (blocksAt U m) (blocksAt U n)
 omit [DecidableEq BlockId] in
 /-- L0 in blocks rather than authors. -/
 theorem card_blocksAt_of_lt (hn : n < r) {i : BlockId} (hi : i ∈ U.ids)
-    (hir : (U.block i).round = r) : 2 * F.f + 1 ≤ (blocksAt U n).card :=
+    (hir : (U.block i).round = r) : (Fintype.card Validator - F.f) ≤ (blocksAt U n).card :=
   le_trans (card_authorsAt_of_lt hn hi hir) card_authorsAt_le_card_blocksAt
 
 /-- **D6.** A universe holding a block at round `r` holds at least
-`(2f+1)·r + 1` blocks: `2f+1` at every round strictly below `r`, by L0, and the
+`(n−f)·r + 1` blocks: `2f+1` at every round strictly below `r`, by L0, and the
 block itself.
 
 Rounds partition, which is what turns L0's per-round bound into a bound on the
 whole `Finset`. The `+1` matters: without it the statement would be vacuous at
 `r = 0` and would say nothing about a genesis-only DAG. -/
 theorem card_ids_ge_of_round {i : BlockId} (hi : i ∈ U.ids) (hir : (U.block i).round = r) :
-    (2 * F.f + 1) * r + 1 ≤ U.ids.card := by
+    ((Fintype.card Validator - F.f)) * r + 1 ≤ U.ids.card := by
   have hsub : (Finset.range (r + 1)).biUnion (fun n => blocksAt U n) ⊆ U.ids := by
     intro j hj
     obtain ⟨n, -, hjn⟩ := Finset.mem_biUnion.mp hj
@@ -221,8 +221,8 @@ theorem card_ids_ge_of_round {i : BlockId} (hi : i ∈ U.ids) (hir : (U.block i)
     Finset.card_biUnion fun _ _ _ _ hmn => blocksAt_disjoint hmn
   have hle := Finset.card_le_card hsub
   rw [hcard, Finset.sum_range_succ] at hle
-  have hlow : (2 * F.f + 1) * r ≤ ∑ n ∈ Finset.range r, (blocksAt U n).card := by
-    calc (2 * F.f + 1) * r = ∑ _n ∈ Finset.range r, (2 * F.f + 1) := by
+  have hlow : ((Fintype.card Validator - F.f)) * r ≤ ∑ n ∈ Finset.range r, (blocksAt U n).card := by
+    calc ((Fintype.card Validator - F.f)) * r = ∑ _n ∈ Finset.range r, ((Fintype.card Validator - F.f)) := by
           rw [Finset.sum_const_nat fun _ _ => rfl, Finset.card_range, Nat.mul_comm]
       _ ≤ _ := Finset.sum_le_sum fun n hn =>
           card_blocksAt_of_lt (Finset.mem_range.mp hn) hi hir
@@ -234,7 +234,7 @@ theorem card_ids_ge_of_round {i : BlockId} (hi : i ∈ U.ids) (hir : (U.block i)
 the round from both sides. -/
 theorem card_ids_bounds (h : EquivFree U U.ids) {i : BlockId} (hi : i ∈ U.ids)
     (hir : (U.block i).round = r) (hmax : ∀ j ∈ U.ids, (U.block j).round ≤ r) :
-    (2 * F.f + 1) * r + 1 ≤ U.ids.card ∧ U.ids.card ≤ (3 * F.f + 1) * (r + 1) :=
+    ((Fintype.card Validator - F.f)) * r + 1 ≤ U.ids.card ∧ U.ids.card ≤ (Fintype.card Validator) * (r + 1) :=
   ⟨card_ids_ge_of_round hi hir, card_le_of_equivFree h hmax⟩
 
 end LeanDag

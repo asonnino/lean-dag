@@ -35,7 +35,7 @@ example : ({9, 10, 11} : Finset (Fin 13)).image (fun i => (Umerge.block i).creat
 
 /-- The frontier is smaller than the validator set, as `Accepted.card_le`
 demands. -/
-example : ({9, 10, 11} : Finset (Fin 13)).card ≤ 3 * Faults.f (Fin 4) + 1 :=
+example : ({9, 10, 11} : Finset (Fin 13)).card ≤ Fintype.card (Fin 4) :=
   umerge_accepted.card_le
 
 /-! ## D1 — the generated view is a view
@@ -66,7 +66,7 @@ example : (history Umerge 9).card = 9 := by decide
 example : (history Umerge 10).card = 9 := by decide
 example : (history Umerge 11).card = 9 := by decide
 
-example : (View.ofAccepted umerge_accepted).ids.card ≤ (3 * Faults.f (Fin 4) + 1) * 9 :=
+example : (View.ofAccepted umerge_accepted).ids.card ≤ (Fintype.card (Fin 4)) * 9 :=
   View.card_ofAccepted_le umerge_accepted (by decide)
 
 /-! ## D3 — the sharp form

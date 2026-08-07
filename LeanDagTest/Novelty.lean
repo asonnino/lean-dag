@@ -292,12 +292,12 @@ theorem dtwin_deliversQuorum : DeliversQuorum Dtwin := by
   by_cases h0 : n = 0
   · subst h0
     exact (by decide : ∀ v ∈ (Correct : Finset (Fin 4)),
-      2 * Faults.f (Fin 4) + 1 ≤
+      (Fintype.card (Fin 4) - Faults.f (Fin 4)) ≤
         (creatorsOf Utwin.block (Dtwin.accepted v 0)).card) v hv
   by_cases h1 : n = 1
   · subst h1
     exact (by decide : ∀ v ∈ (Correct : Finset (Fin 4)),
-      2 * Faults.f (Fin 4) + 1 ≤
+      (Fintype.card (Fin 4) - Faults.f (Fin 4)) ≤
         (creatorsOf Utwin.block (Dtwin.accepted v 1)).card) v hv
   by_cases h2 : n = 2
   · subst h2
@@ -319,7 +319,7 @@ theorem dtwin_live : Live Utwin Dtwin 1 where
     intro r hr v hv hq
     obtain rfl : r = 0 := by omega
     exact (by decide : ∀ v ∈ (Correct : Finset (Fin 4)),
-      2 * Faults.f (Fin 4) + 1 ≤
+      (Fintype.card (Fin 4) - Faults.f (Fin 4)) ≤
         (creatorsOf Utwin.block (Dtwin.accepted v 0)).card →
       ∃ b ∈ Utwin.ids, (Utwin.block b).creator = v ∧
         (Utwin.block b).round = 0 + 1) v hv hq

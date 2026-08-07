@@ -209,7 +209,7 @@ authors, of which there are at most `3f`. -/
 theorem card_topsOf_le (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids) {X : Validator}
     (hXb : X ≠ (U.block b).creator)
     (hother : ∀ W, W ≠ X → ¬ ExposedIn U b W) :
-    (topsOf U b X).card ≤ 3 * F.f := by
+    (topsOf U b X).card ≤ (Fintype.card Validator - 1) := by
   classical
   have hmap : ∀ t ∈ topsOf U b X, ∃ j ∈ history U b, t ∈ (U.block j).refs := by
     intro t ht
@@ -252,9 +252,8 @@ theorem card_topsOf_le (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids) {X :
         exact (top_eq_of_mem_namer_history hdos hb h₂ h₁ hj₁b hj₁ref
           (history_subset_of_reaches hj₁_ids ((mem_history_iff hj₁_ids).mp hchain)
             (mem_history_of_mem_refs hj₂_ids hj₂ref))).symm
-  have hcard : (Finset.univ.erase X).card = 3 * F.f := by
-    rw [Finset.card_erase_of_mem (Finset.mem_univ X), Finset.card_univ, F.card_validators]
-    omega
+  have hcard : (Finset.univ.erase X).card = (Fintype.card Validator - 1) := by
+    rw [Finset.card_erase_of_mem (Finset.mem_univ X), Finset.card_univ]
   omega
 
 /-- **The main bound, unique-equivocator regime.** If at most one author is
@@ -266,31 +265,30 @@ The exposed author's fiber is priced by tops × rounds, every other fiber by
 its single chain. -/
 theorem card_history_le_of_unique_equivocator (hdos : DoSValid U) {b : BlockId}
     (hb : b ∈ U.ids) {X : Validator} (hother : ∀ W, W ≠ X → ¬ ExposedIn U b W) :
-    (history U b).card ≤ (6 * F.f + 1) * ((U.block b).round + 1) := by
+    (history U b).card ≤ ((2 * Fintype.card Validator - 1)) * ((U.block b).round + 1) := by
   classical
   have hfib : (history U b).card = ∑ W ∈ Finset.univ,
       ((history U b).filter fun i => (U.block i).creator = W).card :=
     Finset.card_eq_sum_card_fiberwise (fun i _ => Finset.mem_univ _)
   have hXfiber : ((history U b).filter fun i => (U.block i).creator = X).card
-      ≤ (3 * F.f + 1) * ((U.block b).round + 1) := by
+      ≤ (Fintype.card Validator) * ((U.block b).round + 1) := by
     by_cases hXexp : ExposedIn U b X
     · have hXb : X ≠ (U.block b).creator := fun h =>
         not_exposedIn_self_creator hdos hb (h ▸ hXexp)
       calc ((history U b).filter fun i => (U.block i).creator = X).card
           ≤ (topsOf U b X).card * ((U.block b).round + 1) :=
             card_filter_creator_le_card_topsOf hdos hb X
-        _ ≤ (3 * F.f) * ((U.block b).round + 1) :=
+        _ ≤ ((Fintype.card Validator - 1)) * ((U.block b).round + 1) :=
             Nat.mul_le_mul_right _ (card_topsOf_le hdos hb hXb hother)
-        _ ≤ (3 * F.f + 1) * ((U.block b).round + 1) :=
+        _ ≤ (Fintype.card Validator) * ((U.block b).round + 1) :=
             Nat.mul_le_mul_right _ (by omega)
     · calc ((history U b).filter fun i => (U.block i).creator = X).card
           ≤ (U.block b).round + 1 := card_filter_creator_le hb hXexp
         _ = 1 * ((U.block b).round + 1) := (one_mul _).symm
-        _ ≤ (3 * F.f + 1) * ((U.block b).round + 1) :=
-            Nat.mul_le_mul_right _ (by omega)
-  have herase : (Finset.univ.erase X).card = 3 * F.f := by
-    rw [Finset.card_erase_of_mem (Finset.mem_univ X), Finset.card_univ, F.card_validators]
-    omega
+        _ ≤ (Fintype.card Validator) * ((U.block b).round + 1) :=
+            Nat.mul_le_mul_right _ (by have := F.card_validators; omega)
+  have herase : (Finset.univ.erase X).card = (Fintype.card Validator - 1) := by
+    rw [Finset.card_erase_of_mem (Finset.mem_univ X), Finset.card_univ]
   calc (history U b).card
       = ∑ W ∈ Finset.univ,
           ((history U b).filter fun i => (U.block i).creator = W).card := hfib
@@ -298,15 +296,15 @@ theorem card_history_le_of_unique_equivocator (hdos : DoSValid U) {b : BlockId}
         + ∑ W ∈ Finset.univ.erase X,
             ((history U b).filter fun i => (U.block i).creator = W).card :=
           (Finset.add_sum_erase _ _ (Finset.mem_univ X)).symm
-    _ ≤ (3 * F.f + 1) * ((U.block b).round + 1)
+    _ ≤ (Fintype.card Validator) * ((U.block b).round + 1)
         + ∑ W ∈ Finset.univ.erase X, ((U.block b).round + 1) := by
           refine Nat.add_le_add hXfiber (Finset.sum_le_sum ?_)
           intro W hW
           exact card_filter_creator_le hb (hother W (Finset.mem_erase.mp hW).1)
-    _ = (3 * F.f + 1) * ((U.block b).round + 1)
-        + (3 * F.f) * ((U.block b).round + 1) := by
+    _ = (Fintype.card Validator) * ((U.block b).round + 1)
+        + ((Fintype.card Validator - 1)) * ((U.block b).round + 1) := by
           rw [Finset.sum_const_nat (m := (U.block b).round + 1) (fun _ _ => rfl), herase]
-    _ = (6 * F.f + 1) * ((U.block b).round + 1) := by
+    _ = ((2 * Fintype.card Validator - 1)) * ((U.block b).round + 1) := by
           rw [← Nat.add_mul]
           congr 1
           omega
@@ -315,7 +313,7 @@ theorem card_history_le_of_unique_equivocator (hdos : DoSValid U) {b : BlockId}
 caught in the whole history. -/
 theorem card_history_le_of_card_exposedTo_le_one (hdos : DoSValid U) {b : BlockId}
     (hb : b ∈ U.ids) (hexp : (exposedTo U b).card ≤ 1) :
-    (history U b).card ≤ (6 * F.f + 1) * ((U.block b).round + 1) := by
+    (history U b).card ≤ ((2 * Fintype.card Validator - 1)) * ((U.block b).round + 1) := by
   classical
   by_cases hex : ∃ X, ExposedIn U b X
   · obtain ⟨X, hX⟩ := hex
@@ -337,7 +335,7 @@ Byzantine set has at most one member, so every DoS-valid history is linear:
 at `f = 1`, `|H(b)| ≤ 7(r+1)`. -/
 theorem card_history_le_of_f_le_one (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids)
     (hf : F.f ≤ 1) :
-    (history U b).card ≤ (6 * F.f + 1) * ((U.block b).round + 1) :=
+    (history U b).card ≤ ((2 * Fintype.card Validator - 1)) * ((U.block b).round + 1) :=
   card_history_le_of_card_exposedTo_le_one hdos hb (le_trans (card_exposedTo_le hb) hf)
 
 end LeanDag

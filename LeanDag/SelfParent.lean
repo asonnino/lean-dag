@@ -22,7 +22,7 @@ buys against the DoS condition, and the shape of the results is the point:
   the history: no more (that would be exposure, D11) and no fewer (the
   chain, D20). A reference buys a full, single, clean chain — nothing else.
 * **D24** — the floor: a valid block at round `r` carries at least
-  `(2f+1)·r + 1` blocks, because its quorum of referenced authors each
+  `(n−f)·r + 1` blocks, because its quorum of referenced authors each
   contributes a full disjoint chain.
 
 Together D21–D23 close the laundering gap that made C1′ false without the
@@ -169,7 +169,7 @@ theorem card_filter_creator_of_mem_refs (hdos : DoSValid U) {b p : BlockId}
       ⟨history_subset_of_reaches hb (Reaches.single hp) hi, hic⟩, hir⟩
 
 /-- **D24 (the floor).** With self-parents, histories have a *minimum* size:
-a valid block at round `r` carries at least `(2f+1)·r + 1` blocks — a full
+a valid block at round `r` carries at least `(n−f)·r + 1` blocks — a full
 chain for each of its quorum of referenced authors, plus itself. Needs no
 DoS hypothesis: it is pure validity.
 
@@ -177,7 +177,7 @@ The flip side of every upper bound in the plan: under this model storage is
 `Θ(f·r)` per history from below, so the open question is only how far above
 the floor an adversary can push. -/
 theorem card_history_ge {b : BlockId} (hb : b ∈ U.ids) (h0 : 0 < (U.block b).round) :
-    (2 * F.f + 1) * (U.block b).round + 1 ≤ (history U b).card := by
+    ((Fintype.card Validator - F.f)) * (U.block b).round + 1 ≤ (history U b).card := by
   set r := (U.block b).round with hr
   set C := creatorsOf U.block (U.block b).refs with hC
   set S := (history U b).filter (fun i => (U.block i).round < r) with hS
@@ -198,8 +198,8 @@ theorem card_history_ge {b : BlockId} (hb : b ∈ U.ids) (h0 : 0 < (U.block b).r
       exact ⟨history_subset_of_reaches hb (Reaches.single hp) hi, by omega⟩
     · show ((U.block i).creator, (U.block i).round) = (X, t)
       rw [hic, hpc, hir]
-  have hcount : (2 * F.f + 1) * r ≤ S.card := by
-    calc (2 * F.f + 1) * r
+  have hcount : ((Fintype.card Validator - F.f)) * r ≤ S.card := by
+    calc ((Fintype.card Validator - F.f)) * r
         ≤ C.card * r :=
           Nat.mul_le_mul_right r ((U.valid b hb).quorum h0)
       _ = (C ×ˢ Finset.range r).card := by rw [Finset.card_product, Finset.card_range]

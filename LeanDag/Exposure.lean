@@ -251,13 +251,13 @@ theorem creators_refs_disjoint_exposedTo (hdos : DoSValid U) {b : BlockId} (hb :
 
 /-- **D15a — the margin.** The authors a block references and the authors it
 has caught are disjoint subsets of the validator set, so together they fit
-inside `3f+1`.
+inside `n`.
 
 With the quorum requirement this reads: `k` caught equivocators leave a margin
-of `f − k` over the `2f+1` a block must name. A gradient, not a cliff. -/
+of `f − k` over the `n−f` a block must name. A gradient, not a cliff. -/
 theorem card_creators_refs_add_card_exposedTo_le (hdos : DoSValid U) {b : BlockId}
     (hb : b ∈ U.ids) :
-    (creatorsOf U.block (U.block b).refs).card + (exposedTo U b).card ≤ 3 * F.f + 1 := by
+    (creatorsOf U.block (U.block b).refs).card + (exposedTo U b).card ≤ Fintype.card Validator := by
   have hdisj := creators_refs_disjoint_exposedTo hdos hb
   have hadd := Finset.card_union_add_card_inter
     (creatorsOf U.block (U.block b).refs) (exposedTo U b)
@@ -265,7 +265,6 @@ theorem card_creators_refs_add_card_exposedTo_le (hdos : DoSValid U) {b : BlockI
     Finset.disjoint_iff_inter_eq_empty.mp hdisj
   have huniv := Finset.card_le_univ
     (creatorsOf U.block (U.block b).refs ∪ exposedTo U b)
-  rw [F.card_validators] at huniv
   rw [hinter] at hadd
   simp only [Finset.card_empty] at hadd
   omega
@@ -275,7 +274,7 @@ references are *exactly* the correct validators — every one of them.
 
 The margin is gone, and this is what it means concretely: with `f` authors
 excluded the admissible set is `Correct`, which numbers exactly `2f+1`, so a
-block that must name `2f+1` distinct admissible authors must name all of
+block that must name `n−f` distinct admissible authors must name all of
 them. -/
 theorem creators_refs_eq_correct (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids)
     (hround : 0 < (U.block b).round) (hk : F.f ≤ (exposedTo U b).card) :
@@ -286,7 +285,7 @@ theorem creators_refs_eq_correct (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U
       (le_trans F.card_byzantine hk)
   have hcard_byz : F.byzantine.card = F.f :=
     le_antisymm F.card_byzantine (hbyz ▸ hk)
-  have hcorrect : (Correct : Finset Validator).card = 2 * F.f + 1 := by
+  have hcorrect : (Correct : Finset Validator).card = (Fintype.card Validator - F.f) := by
     have := card_correct_add_byzantine (Validator := Validator)
     omega
   -- references avoid the exposed set, which is now the Byzantine set

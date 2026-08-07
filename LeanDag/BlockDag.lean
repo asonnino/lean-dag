@@ -93,7 +93,7 @@ theorem round_of_mem_refs {i j : BlockId} (hi : i ∈ U.ids) (hj : j ∈ (U.bloc
 /-- References of a non-genesis block carry a quorum of distinct authors.
 This is the hypothesis T0' consumes. -/
 theorem creators_quorum {i : BlockId} (hi : i ∈ U.ids) (hround : 0 < (U.block i).round) :
-    2 * F.f + 1 ≤ (creatorsOf U.block (U.block i).refs).card :=
+    (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (U.block i).refs).card :=
   (U.valid i hi).quorum hround
 
 /-- A non-genesis block references at least one block. -/
@@ -112,8 +112,8 @@ did a second time to two certificate sets. -/
 theorem exists_common_mem_of_quorums {s t : Finset BlockId} {n : ℕ}
     (hs : ∀ q ∈ s, q ∈ U.ids ∧ (U.block q).round = n)
     (ht : ∀ q ∈ t, q ∈ U.ids ∧ (U.block q).round = n)
-    (hsq : 2 * F.f + 1 ≤ (creatorsOf U.block s).card)
-    (htq : 2 * F.f + 1 ≤ (creatorsOf U.block t).card) :
+    (hsq : (Fintype.card Validator - F.f) ≤ (creatorsOf U.block s).card)
+    (htq : (Fintype.card Validator - F.f) ≤ (creatorsOf U.block t).card) :
     ∃ q, q ∈ s ∧ q ∈ t := by
   obtain ⟨v, hv_inter, hv_correct⟩ := exists_correct_mem_creators_inter hsq htq
   rw [Finset.mem_inter] at hv_inter

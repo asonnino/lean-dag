@@ -86,8 +86,11 @@ theorem ugrowHonest_partial (N n : ℕ) (hn : n ≤ N) (v : Fin 4) :
 /-- And it is still a quorum: the three correct authors remain. -/
 theorem ugrowHonest_deliversQuorum (N : ℕ) : DeliversQuorum (ugrowHonest N) := by
   intro n hn v _
-  have hnN : n ≤ N := ugrow_le_of_authorsAt (by omega)
-  refine le_trans (by decide : 2 * Faults.f (Fin 4) + 1 ≤ ({1, 2, 3} : Finset (Fin 4)).card)
+  have hnN : n ≤ N := ugrow_le_of_authorsAt (by
+    have h4 : Fintype.card (Fin 4) = 4 := rfl
+    have hf : Faults.f (Fin 4) = 1 := rfl
+    omega)
+  refine le_trans (by decide : (Fintype.card (Fin 4) - Faults.f (Fin 4)) ≤ ({1, 2, 3} : Finset (Fin 4)).card)
     (Finset.card_le_card ?_)
   intro x hx
   rw [mem_creatorsOf]

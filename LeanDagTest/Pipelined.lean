@@ -188,7 +188,7 @@ What is left are hypotheses about the DAG and the network — `Live`,
 intended division of labour, and identical to what L4 and L6 already need. -/
 example {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
     [F : Faults (Fin 4)] (hT : ({1, 2, 3} : Finset (Fin 4)) ⊆ Correct)
-    (hcard : 2 * F.f + 1 ≤ ({1, 2, 3} : Finset (Fin 4)).card) (R k : ℕ) :
+    (hcard : Fintype.card (Fin 4) - F.f ≤ ({1, 2, 3} : Finset (Fin 4)).card) (R k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ pipeSlots.slotRound b ∧
       ∀ (U : BlockUniverse (Fin 4) BlockId Payload) (D : Delivery U) (N : ℕ),
         Live U D N → DeliversQuorum D → SynchronisedOn U ({1, 2, 3} : Finset (Fin 4)) R →

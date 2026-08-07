@@ -32,20 +32,20 @@ example : U3.ids.card = 12 := by decide
 example : ∀ i ∈ U3.ids, (U3.block i).round ≤ 2 := by decide
 
 /-- **D6.** A block at round 2 forces at least `(2f+1)·2 + 1 = 7` blocks. -/
-example : (2 * Faults.f (Fin 4) + 1) * 2 + 1 ≤ U3.ids.card :=
+example : ((Fintype.card (Fin 4) - Faults.f (Fin 4))) * 2 + 1 ≤ U3.ids.card :=
   card_ids_ge_of_round (i := 8) (by decide) (by decide)
 
 /-- **D5.** And without equivocation there are at most `(3f+1)·3 = 12`. -/
-example : U3.ids.card ≤ (3 * Faults.f (Fin 4) + 1) * (2 + 1) :=
+example : U3.ids.card ≤ (Fintype.card (Fin 4)) * (2 + 1) :=
   card_le_of_equivFree u3_equivFree (by decide)
 
 /-- The two together, and the upper bound is **tight**: `U3` attains it
 exactly, so the `r+1` is not slack and `3f+1` is not a rounding. -/
-example : (2 * Faults.f (Fin 4) + 1) * 2 + 1 ≤ U3.ids.card ∧
-    U3.ids.card ≤ (3 * Faults.f (Fin 4) + 1) * (2 + 1) :=
+example : ((Fintype.card (Fin 4) - Faults.f (Fin 4))) * 2 + 1 ≤ U3.ids.card ∧
+    U3.ids.card ≤ (Fintype.card (Fin 4)) * (2 + 1) :=
   card_ids_bounds u3_equivFree (i := 8) (by decide) (by decide) (by decide)
 
-example : (3 * Faults.f (Fin 4) + 1) * (2 + 1) = 12 := by decide
+example : (Fintype.card (Fin 4)) * (2 + 1) = 12 := by decide
 
 /-! ## With an equivocation, the universe-level bound is gone
 
@@ -56,7 +56,7 @@ DoS question is about, and it is why C1 is needed at all. -/
 example : ¬ EquivFree Umerge Umerge.ids := by decide
 
 -- D6 still applies: it never mentions equivocation.
-example : (2 * Faults.f (Fin 4) + 1) * 3 + 1 ≤ Umerge.ids.card :=
+example : ((Fintype.card (Fin 4) - Faults.f (Fin 4))) * 3 + 1 ≤ Umerge.ids.card :=
   card_ids_ge_of_round (i := 12) (by decide) (by decide)
 
 example : Umerge.ids.card = 13 := by decide
@@ -70,7 +70,7 @@ excluded. -/
 example : ∀ X : Fin 4, ¬ ExposedIn Umerge 6 X := by decide
 
 /-- **D19a applied.** `|H(6)| = 4`, against a bound of `4 * 2 = 8`. -/
-example : (history Umerge 6).card ≤ (3 * Faults.f (Fin 4) + 1) * ((Umerge.block 6).round + 1) :=
+example : (history Umerge 6).card ≤ (Fintype.card (Fin 4)) * ((Umerge.block 6).round + 1) :=
   card_history_le_of_not_exposed (by decide) (by decide)
 
 example : (history Umerge 6).card = 4 ∧ (Umerge.block 6).round = 1 := by decide
@@ -123,7 +123,7 @@ theorem umerge_accepted_six : Accepted Umerge {6} 1 where
 
 example : (View.ofAccepted umerge_accepted_six).ids = history Umerge 6 := by decide
 
-example : (View.ofAccepted umerge_accepted_six).ids.card ≤ (3 * Faults.f (Fin 4) + 1) * 4 :=
+example : (View.ofAccepted umerge_accepted_six).ids.card ≤ (Fintype.card (Fin 4)) * 4 :=
   View.card_ofAccepted_le umerge_accepted_six (by decide)
 
 #print axioms u3_equivFree

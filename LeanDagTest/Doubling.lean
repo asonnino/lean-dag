@@ -103,12 +103,12 @@ theorem udouble_dosValid : DoSValid Udouble := by decide
 
 -- Byzantine blocks parasitize real correct blocks: the crux block 39
 -- references seven correct round-1 blocks, exactly as the quorum demands.
-example : 2 * Faults.f (Fin 13) + 1 ≤
+example : (Fintype.card (Fin 13) - Faults.f (Fin 13)) ≤
     (creatorsOf Udouble.block (Udouble.block 39).refs).card := by decide
 
 -- The correct validators never reference anything Byzantine, and advance
 -- rounds among themselves: 9 = 2f+1 exactly.
-example : (Correct : Finset (Fin 13)).card = 2 * Faults.f (Fin 13) + 1 := by decide
+example : (Correct : Finset (Fin 13)).card = (Fintype.card (Fin 13) - Faults.f (Fin 13)) := by decide
 example : ∀ i ∈ Udouble.ids, (Udouble.block i).creator ∈ (Correct : Finset (Fin 13)) →
     ∀ j ∈ (Udouble.block i).refs, (Udouble.block j).creator ∈ (Correct : Finset (Fin 13)) := by
   decide
@@ -142,7 +142,7 @@ theorem udouble_exposed_one : ExposedIn Udouble 41 1 := by decide
 `4 = 2^e` — the doubling step is real, and it is what keeps the bound
 exponential in `e`. -/
 example : (topsOf Udouble 41 1).card ≤
-    (3 * Faults.f (Fin 13) + 1 - (exposedTo Udouble 41).card) *
+    (Fintype.card (Fin 13) - (exposedTo Udouble 41).card) *
       (exposedTo Udouble 41).card ^ ((exposedTo Udouble 41).erase 1).card :=
   card_topsOf_le_of_exposed udouble_dosValid (by decide) udouble_exposed_one
 

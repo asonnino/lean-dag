@@ -8,11 +8,17 @@ import Mathlib.Tactic.ByContra
 
 The system model of `spec.md` §2, plus the quorum-intersection lemma T0.
 
-There are `3f+1` validators, of which at most `f` are Byzantine. A *quorum*
-is any set of at least `2f+1` validators. The single fact everything
-downstream rests on is that two quorums always share a **correct** validator
-(`exists_correct_mem_inter`): two sets of size `2f+1` drawn from `3f+1`
-overlap in at least `f+1` elements, one more than the fault bound.
+There are `n ≥ 3f+1` validators, of which at most `f` are Byzantine. A
+*quorum* is any set of at least `n − f` validators — at `n = 3f+1` this is
+the familiar `2f+1`. The single fact everything downstream rests on is
+that two quorums always share a **correct** validator
+(`exists_correct_mem_inter`): two sets of size `n − f` drawn from `n`
+overlap in at least `n − 2f ≥ f+1` elements, one more than the fault
+bound.
+
+The quorum threshold is written literally as
+`Fintype.card Validator - F.f` throughout, which keeps every counting
+argument within `omega`'s reach given `card_validators`.
 
 The fault model is bundled as a class `Faults` rather than threaded as
 section variables. Bundling keeps the two cardinality hypotheses attached to
@@ -25,15 +31,15 @@ it belongs to and will elaborate to a metavariable.
 
 namespace LeanDag
 
-/-- The fault model: exactly `3f+1` validators, at most `f` of them
+/-- The fault model: `n ≥ 3f+1` validators, at most `f` of them
 Byzantine. -/
 class Faults (Validator : Type*) [Fintype Validator] [DecidableEq Validator] where
   /-- The fault bound. -/
   f : ℕ
   /-- The Byzantine validators. Everything else is correct. -/
   byzantine : Finset Validator
-  /-- There are exactly `3f+1` validators. -/
-  card_validators : Fintype.card Validator = 3 * f + 1
+  /-- There are at least `3f+1` validators. -/
+  card_validators : 3 * f + 1 ≤ Fintype.card Validator
   /-- At most `f` validators are Byzantine. -/
   card_byzantine : byzantine.card ≤ f
 
@@ -47,26 +53,32 @@ def Correct : Finset Validator := (F.byzantine)ᶜ
 theorem mem_correct {v : Validator} : v ∈ (Correct : Finset Validator) ↔ v ∉ F.byzantine := by
   simp [Correct]
 
-/-- At least `2f+1` validators are correct. -/
-theorem card_correct : 2 * F.f + 1 ≤ (Correct : Finset Validator).card := by
-  have h : (Correct : Finset Validator).card = Fintype.card Validator - F.byzantine.card :=
-    Finset.card_compl F.byzantine
-  have hle : F.byzantine.card ≤ Fintype.card Validator := Finset.card_le_univ _
-  have := F.card_validators
-  have := F.card_byzantine
-  omega
-
 /-- The correct and Byzantine validators partition the whole set.
 
 Stated additively so it yields both bounds without ℕ subtraction. The
-*upper* bound on `Correct.card` is the one the Phase 1b counting argument
-needs — it divides an incidence count by the number of correct validators,
-for which `card_correct`'s lower bound is useless. -/
+*upper* bound on `Correct.card` is the one the counting arguments need —
+they divide an incidence count by the number of correct validators, for
+which a lower bound is useless. -/
 theorem card_correct_add_byzantine :
-    (Correct : Finset Validator).card + F.byzantine.card = 3 * F.f + 1 := by
+    (Correct : Finset Validator).card + F.byzantine.card = Fintype.card Validator := by
   have h : (Correct : Finset Validator).card = Fintype.card Validator - F.byzantine.card :=
     Finset.card_compl F.byzantine
   have hle : F.byzantine.card ≤ Fintype.card Validator := Finset.card_le_univ _
+  omega
+
+/-- The correct validators alone meet the quorum threshold: at least
+`n − f` of them. This is what the threshold `n − f` is *for* — the
+correct pool suffices on its own. -/
+theorem card_correct : Fintype.card Validator - F.f ≤ (Correct : Finset Validator).card := by
+  have := card_correct_add_byzantine (Validator := Validator)
+  have := F.card_byzantine
+  omega
+
+/-- At least `2f+1` validators are correct — the `n = 3f+1` reading of
+`card_correct`, kept for arguments that count in `f` alone. -/
+theorem two_f_add_one_le_card_correct :
+    2 * F.f + 1 ≤ (Correct : Finset Validator).card := by
+  have := card_correct (Validator := Validator)
   have := F.card_validators
   omega
 
@@ -95,30 +107,37 @@ theorem card_le_card_inter_correct_add_byzantine (S : Finset Validator) :
     simpa using hx.2
   omega
 
-/-- A quorum contains at least `f+1` *correct* validators.
+/-- A quorum contains at least `f+1` *correct* validators:
+`(n − f) − f = n − 2f ≥ f+1`.
 
 The cardinality strengthening of `exists_correct_of_card`, which only
-produces one. Immediate from the previous lemma and `F.card_byzantine`. -/
-theorem card_inter_correct_of_quorum {S : Finset Validator} (h : 2 * F.f + 1 ≤ S.card) :
+produces one. -/
+theorem card_inter_correct_of_quorum {S : Finset Validator}
+    (h : Fintype.card Validator - F.f ≤ S.card) :
     F.f + 1 ≤ (S ∩ (Correct : Finset Validator)).card := by
   have := card_le_card_inter_correct_add_byzantine S
   have := F.card_byzantine
+  have := F.card_validators
   omega
 
 /-- **T0 (cardinality half).** Two quorums overlap in at least `f+1`
-validators: `(2f+1) + (2f+1) - (3f+1) = f+1`. -/
+validators: `(n−f) + (n−f) − n = n − 2f ≥ f+1`. -/
 theorem card_inter_ge_of_quorum {Q₁ Q₂ : Finset Validator}
-    (h₁ : 2 * F.f + 1 ≤ Q₁.card) (h₂ : 2 * F.f + 1 ≤ Q₂.card) :
+    (h₁ : Fintype.card Validator - F.f ≤ Q₁.card)
+    (h₂ : Fintype.card Validator - F.f ≤ Q₂.card) :
     F.f + 1 ≤ (Q₁ ∩ Q₂).card := by
-  have hunion : (Q₁ ∪ Q₂).card ≤ 3 * F.f + 1 := by
-    rw [← F.card_validators]; exact Finset.card_le_univ _
+  have hunion : (Q₁ ∪ Q₂).card ≤ Fintype.card Validator := by
+    rw [← Finset.card_univ]
+    exact Finset.card_le_univ _
   have hadd := Finset.card_union_add_card_inter Q₁ Q₂
+  have := F.card_validators
   omega
 
 /-- **T0.** Two quorums always share a *correct* validator. This is the form
 every later proof cites. -/
 theorem exists_correct_mem_inter {Q₁ Q₂ : Finset Validator}
-    (h₁ : 2 * F.f + 1 ≤ Q₁.card) (h₂ : 2 * F.f + 1 ≤ Q₂.card) :
+    (h₁ : Fintype.card Validator - F.f ≤ Q₁.card)
+    (h₂ : Fintype.card Validator - F.f ≤ Q₂.card) :
     ∃ v ∈ Q₁ ∩ Q₂, v ∈ (Correct : Finset Validator) :=
   exists_correct_of_card (card_inter_ge_of_quorum h₁ h₂)
 

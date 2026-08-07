@@ -96,7 +96,9 @@ private theorem card_missingAt_le_aux (n : ℕ) :
           card_le_card_inter_correct_add_byzantine (creators U.block (U.block b))
         have hbyz := F.card_byzantine
         have hpos : 0 < (creators U.block (U.block b)
-            ∩ (Correct : Finset Validator)).card := by omega
+            ∩ (Correct : Finset Validator)).card := by
+          have := F.card_validators
+          omega
         obtain ⟨v, hv⟩ := Finset.card_pos.mp hpos
         rw [Finset.mem_inter] at hv
         obtain ⟨p, hp, hpc⟩ := mem_creatorsOf.mp hv.1

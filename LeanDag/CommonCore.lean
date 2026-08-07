@@ -22,8 +22,8 @@ hypothesis. Neither file imports the other.
 
 Everything is parameterised by `p := (authorsAt U (r+1)).card`, the number of
 validators holding a round-`(r+1)` block. A round-`(r+2)` block draws its
-2f+1 referenced creators from those same `p`, so it misses exactly
-`p - (2f+1)`. Low participation weakens the counting but narrows the room to
+n−f referenced creators from those same `p`, so it misses exactly
+`p - (n−f)`. Low participation weakens the counting but narrows the room to
 dodge by exactly as much, which is why no progress assumption is needed.
 
 Thresholds are stated **additively** (`p ≤ k + 2 * F.f`) rather than as
@@ -96,14 +96,17 @@ of correct round-`(r+1)` blocks, `k` the largest support degree and `p` the
 author-pool size: the double count gives `hA`, and the conclusion is the
 `p - 2f` coverage threshold. The contradiction is `c² ≤ f(l+c)`, which `l ≤ c` collapses to
 `c ≤ 2f` — impossible, since `b ≤ f` forces `c ≥ 2f+1`. -/
-private theorem support_threshold_arith {f b c l k p : ℕ}
-    (hbf : b ≤ f) (hcb : c + b = 3 * f + 1) (hlc : l ≤ c)
-    (hA : l * (2 * f + 1) ≤ c * k + l * b) (hE : p ≤ l + b) :
-    p ≤ k + 2 * f := by
+private theorem support_threshold_arith {f b c l k p n : ℕ}
+    (hbf : b ≤ f) (hn : 3 * f + 1 ≤ n) (hcb : c + b = n) (hlc : l ≤ c)
+    (hA : l * (n - f) ≤ c * k + l * b) (hE : p ≤ l + b) :
+    p + f + 1 ≤ k + n := by
+  obtain ⟨d, rfl⟩ : ∃ d, n = d + f := ⟨n - f, by omega⟩
+  rw [show d + f - f = d from by omega] at hA
   by_contra hcon
   push Not at hcon
-  have h1 : k + 2 * f + 1 ≤ l + b := by omega
-  have h2 : c * (k + 2 * f + 1) ≤ c * (l + b) := Nat.mul_le_mul_left c h1
+  have h1 : k + d ≤ p := by omega
+  have h2 : c * (k + d) ≤ c * (l + b) :=
+    Nat.mul_le_mul_left c (le_trans h1 hE)
   have hcge : 2 * f + 1 ≤ c := by omega
   have key : c * c ≤ f * (l + c) := by nlinarith [h2, hA]
   nlinarith [key, hlc, hcge]
@@ -112,22 +115,25 @@ private theorem support_threshold_arith {f b c l k p : ℕ}
 block is backed by enough correct round-`(r+1)` validators to satisfy the
 `p - 2f` coverage threshold.
 
-Double counting: each correct round-`(r+1)` block names at least `2f+1 - b`
-correct round-`r` authors, and there are `l` such blocks spread over
-`c = 3f+1 - b` correct validators, so some author `w` collects at least
-`l(2f+1-b)/c`. The arithmetic obligation reduces to `c² ≤ f(l+c)`, which
-`l ≤ c` turns into `c ≤ 2f` — impossible, since `b ≤ f` forces `c ≥ 2f+1`. -/
+Double counting: each correct round-`(r+1)` block names at least
+`(n-f) - b` correct round-`r` authors, and there are `l` such blocks spread
+over `c = n - b` correct validators, so some author `w` collects at least
+`l(n-f-b)/c`. The arithmetic obligation reduces to `c² ≤ f(l+c)`, which
+`l ≤ c` turns into `c ≤ 2f` — impossible, since `b ≤ f` and `n ≥ 3f+1`
+force `c ≥ 2f+1`. The same contradiction as at `n = 3f+1`, verbatim. -/
 theorem exists_correct_common_support {r : ℕ}
-    (hp : 2 * F.f + 1 ≤ (authorsAt U (r + 1)).card) :
+    (hp : (Fintype.card Validator - F.f) ≤ (authorsAt U (r + 1)).card) :
     ∃ bw ∈ U.ids, (U.block bw).round = r ∧
       (U.block bw).creator ∈ (Correct : Finset Validator) ∧
-      (authorsAt U (r + 1)).card ≤ (correctSupporters U bw (r + 1)).card + 2 * F.f := by
+      (authorsAt U (r + 1)).card + F.f + 1
+        ≤ (correctSupporters U bw (r + 1)).card + Fintype.card Validator := by
   classical
   -- Derive the ambient cardinality facts *before* abbreviating, so that
   -- `set` rewrites them too; otherwise `omega` sees `Correct.card` and
   -- `C.card` as unrelated atoms.
   have hcb := card_correct_add_byzantine (Validator := Validator)
   have hbf := F.card_byzantine
+  have hnv := F.card_validators
   have hE := card_authorsAt_le (U := U) (n := r + 1)
   have hlc : (correctBlocksAt U (r + 1)).card ≤ (Correct : Finset Validator).card := by
     rw [← card_creatorsOf_correctBlocksAt]
@@ -136,9 +142,9 @@ theorem exists_correct_common_support {r : ℕ}
   set C := (Correct : Finset Validator) with hCdef
   set g : Validator → ℕ :=
     fun w => (L.filter (fun q => w ∈ creatorsOf U.block (U.block q).refs)).card with hgdef
-  -- Each correct round-(r+1) block names 2f+1 validators, at most b Byzantine.
+  -- Each correct round-(r+1) block names n−f validators, at most b Byzantine.
   have hper : ∀ q ∈ L,
-      2 * F.f + 1 ≤ ((creatorsOf U.block (U.block q).refs) ∩ C).card + F.byzantine.card := by
+      (Fintype.card Validator - F.f) ≤ ((creatorsOf U.block (U.block q).refs) ∩ C).card + F.byzantine.card := by
     intro q hq
     obtain ⟨hq_ids, hq_round, _⟩ := mem_correctBlocksAt.mp hq
     exact le_trans (U.creators_quorum hq_ids (by omega))
@@ -150,29 +156,29 @@ theorem exists_correct_common_support {r : ℕ}
   -- **Double counting** (`Finset.card_nsmul_le_card_nsmul`): each correct
   -- round-(r+1) block contributes at least `2f+1 - b` incidences, and each
   -- correct author absorbs at most `g w`.
-  have hbig : L.card * (2 * F.f + 1 - F.byzantine.card) ≤ C.card * g w := by
+  have hbig : L.card * ((Fintype.card Validator - F.f) - F.byzantine.card) ≤ C.card * g w := by
     have := Finset.card_nsmul_le_card_nsmul
       (r := fun (q : BlockId) (v : Validator) => v ∈ creatorsOf U.block (U.block q).refs)
       (s := L) (t := C)
-      (m := 2 * F.f + 1 - F.byzantine.card) (n := g w)
+      (m := (Fintype.card Validator - F.f) - F.byzantine.card) (n := g w)
       (fun q hq => by
         have h := hper q hq
         -- `bipartiteAbove` is by definition the filter, so `change` retypes it.
-        change 2 * F.f + 1 - F.byzantine.card
+        change (Fintype.card Validator - F.f) - F.byzantine.card
             ≤ (C.filter (fun v => v ∈ creatorsOf U.block (U.block q).refs)).card
         rw [Finset.filter_mem_eq_inter, Finset.inter_comm]
         omega)
       (fun v hv => hw_max v hv)
     simpa [smul_eq_mul] using this
-  have hb_le : F.byzantine.card ≤ 2 * F.f + 1 := by omega
-  have hA : L.card * (2 * F.f + 1) ≤ C.card * g w + L.card * F.byzantine.card := by
-    have hsplit : L.card * (2 * F.f + 1)
-        = L.card * (2 * F.f + 1 - F.byzantine.card) + L.card * F.byzantine.card := by
+  have hb_le : F.byzantine.card ≤ (Fintype.card Validator - F.f) := by omega
+  have hA : L.card * ((Fintype.card Validator - F.f)) ≤ C.card * g w + L.card * F.byzantine.card := by
+    have hsplit : L.card * ((Fintype.card Validator - F.f))
+        = L.card * ((Fintype.card Validator - F.f) - F.byzantine.card) + L.card * F.byzantine.card := by
       rw [← Nat.mul_add, Nat.sub_add_cancel hb_le]
     omega
   -- The arithmetic core: p ≤ (max degree) + 2f.
-  have harith : (authorsAt U (r + 1)).card ≤ g w + 2 * F.f :=
-    support_threshold_arith hbf hcb hlc hA hE
+  have harith : (authorsAt U (r + 1)).card + F.f + 1 ≤ g w + Fintype.card Validator :=
+    support_threshold_arith hbf hnv hcb hlc hA hE
   -- The maximiser has positive degree, so it really does author a round-r block.
   have hgw_pos : 0 < g w := by omega
   obtain ⟨q₀, hq₀⟩ := Finset.card_pos.mp hgw_pos
@@ -206,9 +212,11 @@ theorem exists_correct_common_support {r : ℕ}
     refine Finset.mem_inter.mpr ⟨?_, hq_corr⟩
     rw [mem_supporters]
     exact ⟨q, hq_ids, hq_round, hib ▸ hi'_mem, rfl⟩
-  calc (authorsAt U (r + 1)).card ≤ g w + 2 * F.f := harith
+  calc (authorsAt U (r + 1)).card + F.f + 1
+      ≤ g w + Fintype.card Validator := harith
     _ = (Finset.image (fun q => (U.block q).creator)
-          (L.filter (fun q => w ∈ creatorsOf U.block (U.block q).refs))).card + 2 * F.f := by
+          (L.filter (fun q => w ∈ creatorsOf U.block (U.block q).refs))).card
+        + Fintype.card Validator := by
         rw [Finset.card_image_of_injOn
           (creator_injOn_correctBlocksAt.mono (Finset.coe_subset.mpr (Finset.filter_subset _ _)))]
     _ ≤ _ := Nat.add_le_add_right (Finset.card_le_card hsub) _
@@ -233,9 +241,9 @@ theorem exists_common_correct_ancestor {r : ℕ} {c₀ : BlockId}
   -- The statement mentions no `Finset BlockId` operation, so decidable
   -- equality on ids is an artefact of the proof only.
   classical
-  -- A round-(r+2) block names 2f+1 distinct round-(r+1) authors, so the
+  -- A round-(r+2) block names n−f distinct round-(r+1) authors, so the
   -- author pool is at least that large -- exactly T3a's hypothesis.
-  have hp : 2 * F.f + 1 ≤ (authorsAt U (r + 1)).card :=
+  have hp : (Fintype.card Validator - F.f) ≤ (authorsAt U (r + 1)).card :=
     le_trans (U.creators_quorum hc₀ (by omega))
       (Finset.card_le_card (creators_refs_subset_authorsAt hc₀ (by omega)))
   obtain ⟨bw, hbw_ids, hbw_round, hbw_correct, hbw_support⟩ :=

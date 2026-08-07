@@ -249,7 +249,7 @@ pedigree's duplicate-free author list, of which there are at most
 `(3f+2)^(3f+1)`. -/
 theorem card_topsOf_le_pow (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids)
     (X : Validator) :
-    (topsOf U b X).card ≤ (3 * F.f + 2) ^ (3 * F.f + 1) := by
+    (topsOf U b X).card ≤ ((Fintype.card Validator + 1)) ^ (Fintype.card Validator) := by
   classical
   have hex : ∀ t ∈ topsOf U b X,
       ∃ l, PedigreeTo U b t l ∧ ((U.block t).creator :: l).Nodup := by
@@ -257,10 +257,10 @@ theorem card_topsOf_le_pow (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids)
     have htc : (U.block t).creator = X := (mem_topsOf.mp ht).2.1
     exact exists_pedigree hdos hb _ t (le_refl _) (by rw [htc]; exact ht)
   have hinj : (topsOf U b X).card
-      ≤ Fintype.card (Fin (3 * F.f + 1) → Option Validator) := by
+      ≤ Fintype.card (Fin (Fintype.card Validator) → Option Validator) := by
     rw [← Finset.card_univ]
     refine Finset.card_le_card_of_injOn
-      (fun t => (fun k : Fin (3 * F.f + 1) =>
+      (fun t => (fun k : Fin (Fintype.card Validator) =>
         (if h : ∃ l, PedigreeTo U b t l ∧ ((U.block t).creator :: l).Nodup
           then h.choose else [])[(k : ℕ)]?))
       (fun _ _ => Finset.mem_univ _) ?_
@@ -269,21 +269,19 @@ theorem card_topsOf_le_pow (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids)
     have hex₁ := hex t₁ h₁
     have hex₂ := hex t₂ h₂
     simp only [dif_pos hex₁, dif_pos hex₂] at heq
-    have hlen₁ : hex₁.choose.length ≤ 3 * F.f := by
+    have hlen₁ : hex₁.choose.length ≤ (Fintype.card Validator - 1) := by
       have hlc := hex₁.choose_spec.2.length_le_card
-      rw [F.card_validators] at hlc
       simp only [List.length_cons] at hlc
       omega
-    have hlen₂ : hex₂.choose.length ≤ 3 * F.f := by
+    have hlen₂ : hex₂.choose.length ≤ (Fintype.card Validator - 1) := by
       have hlc := hex₂.choose_spec.2.length_le_card
-      rw [F.card_validators] at hlc
       simp only [List.length_cons] at hlc
       omega
     have hlists : hex₁.choose = hex₂.choose := by
       apply List.ext_getElem?'
       intro n hn
-      have hn' : n < 3 * F.f + 1 := by
-        have hmax : max hex₁.choose.length hex₂.choose.length ≤ 3 * F.f :=
+      have hn' : n < Fintype.card Validator := by
+        have hmax : max hex₁.choose.length hex₂.choose.length ≤ (Fintype.card Validator - 1) :=
           max_le hlen₁ hlen₂
         omega
       have := congrFun heq ⟨n, hn'⟩
@@ -294,9 +292,9 @@ theorem card_topsOf_le_pow (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids)
       ((mem_topsOf.mp h₁).2.1).trans ((mem_topsOf.mp h₂).2.1).symm
     exact pedigree_deterministic hdos hb hex₁.choose_spec.1 hped₂ hcreator
   calc (topsOf U b X).card
-      ≤ Fintype.card (Fin (3 * F.f + 1) → Option Validator) := hinj
-    _ = (3 * F.f + 2) ^ (3 * F.f + 1) := by
-        rw [Fintype.card_fun, Fintype.card_option, Fintype.card_fin, F.card_validators]
+      ≤ Fintype.card (Fin (Fintype.card Validator) → Option Validator) := hinj
+    _ = ((Fintype.card Validator + 1)) ^ (Fintype.card Validator) := by
+        rw [Fintype.card_fun, Fintype.card_option, Fintype.card_fin]
 
 /-- An author's per-round contribution never exceeds its chain count: each
 round-`n` block sits on the chain of a distinct top. -/
@@ -333,7 +331,7 @@ contributes at most `c(f) = (3f+2)^(3f+1)` blocks per round to any history —
 a constant in `r`, for every `f`. Compounding is impossible. -/
 theorem card_historyBlocksOf_le (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids)
     (X : Validator) (n : ℕ) :
-    (historyBlocksOf U b X n).card ≤ (3 * F.f + 2) ^ (3 * F.f + 1) :=
+    (historyBlocksOf U b X n).card ≤ ((Fintype.card Validator + 1)) ^ (Fintype.card Validator) :=
   le_trans (card_historyBlocksOf_le_card_topsOf hdos hb X n)
     (card_topsOf_le_pow hdos hb X)
 
@@ -346,24 +344,24 @@ The constant is far from tight — `f ≤ 1` has `7(r+1)` by the adoption
 theorem — but it is constant in `r`, which is C1′'s whole demand. -/
 theorem card_history_le (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids) :
     (history U b).card
-      ≤ (3 * F.f + 1) * (3 * F.f + 2) ^ (3 * F.f + 1) * ((U.block b).round + 1) := by
+      ≤ (Fintype.card Validator) * ((Fintype.card Validator + 1)) ^ (Fintype.card Validator) * ((U.block b).round + 1) := by
   classical
   calc (history U b).card
       = ∑ W ∈ Finset.univ,
           ((history U b).filter fun i => (U.block i).creator = W).card :=
         Finset.card_eq_sum_card_fiberwise (fun i _ => Finset.mem_univ _)
     _ ≤ ∑ _W ∈ (Finset.univ : Finset Validator),
-          (3 * F.f + 2) ^ (3 * F.f + 1) * ((U.block b).round + 1) := by
+          ((Fintype.card Validator + 1)) ^ (Fintype.card Validator) * ((U.block b).round + 1) := by
         refine Finset.sum_le_sum ?_
         intro W _
         calc ((history U b).filter fun i => (U.block i).creator = W).card
             ≤ (topsOf U b W).card * ((U.block b).round + 1) :=
               card_filter_creator_le_card_topsOf hdos hb W
-          _ ≤ (3 * F.f + 2) ^ (3 * F.f + 1) * ((U.block b).round + 1) :=
+          _ ≤ ((Fintype.card Validator + 1)) ^ (Fintype.card Validator) * ((U.block b).round + 1) :=
               Nat.mul_le_mul_right _ (card_topsOf_le_pow hdos hb W)
-    _ = (3 * F.f + 1) * ((3 * F.f + 2) ^ (3 * F.f + 1) * ((U.block b).round + 1)) := by
-        rw [Finset.sum_const_nat (fun _ _ => rfl), Finset.card_univ, F.card_validators]
-    _ = (3 * F.f + 1) * (3 * F.f + 2) ^ (3 * F.f + 1) * ((U.block b).round + 1) := by
+    _ = (Fintype.card Validator) * (((Fintype.card Validator + 1)) ^ (Fintype.card Validator) * ((U.block b).round + 1)) := by
+        rw [Finset.sum_const_nat (fun _ _ => rfl), Finset.card_univ]
+    _ = (Fintype.card Validator) * ((Fintype.card Validator + 1)) ^ (Fintype.card Validator) * ((U.block b).round + 1) := by
         rw [Nat.mul_assoc]
 
 /-! ## Tightening the constant
@@ -594,7 +592,7 @@ exposed authors. -/
 theorem card_topsOf_le_of_exposed (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids)
     {X : Validator} (hX : ExposedIn U b X) :
     (topsOf U b X).card ≤
-      (3 * F.f + 1 - (exposedTo U b).card) *
+      (Fintype.card Validator - (exposedTo U b).card) *
         (exposedTo U b).card ^ ((exposedTo U b).erase X).card := by
   classical
   set E' := (exposedTo U b).erase X with hE'
@@ -696,12 +694,12 @@ theorem card_topsOf_le_of_exposed (hdos : DoSValid U) {b : BlockId} (hb : b ∈ 
         hped₁ hped₂' hcreator
   -- count the target
   have hfilter : (Finset.univ.filter fun W => ¬ ExposedIn U b W).card
-      = 3 * F.f + 1 - (exposedTo U b).card := by
+      = Fintype.card Validator - (exposedTo U b).card := by
     have hcompl : (Finset.univ.filter fun W => ¬ ExposedIn U b W)
         = (exposedTo U b)ᶜ := by
       ext W
       simp [exposedTo, Finset.mem_compl]
-    rw [hcompl, Finset.card_compl, F.card_validators]
+    rw [hcompl, Finset.card_compl]
   have hbase : m + 1 = (exposedTo U b).card := by
     rw [hm, hE', Finset.card_erase_of_mem (mem_exposedTo.mpr hX)]
     have : 0 < (exposedTo U b).card :=
@@ -710,7 +708,7 @@ theorem card_topsOf_le_of_exposed (hdos : DoSValid U) {b : BlockId} (hb : b ∈ 
   calc (topsOf U b X).card
       ≤ ((Finset.univ.filter fun W => ¬ ExposedIn U b W) ×ˢ
           (Finset.univ : Finset (Fin m → Option {W // W ∈ E'}))).card := hinj
-    _ = (3 * F.f + 1 - (exposedTo U b).card) *
+    _ = (Fintype.card Validator - (exposedTo U b).card) *
           (exposedTo U b).card ^ ((exposedTo U b).erase X).card := by
         rw [Finset.card_product, Finset.card_univ, Fintype.card_fun,
           Fintype.card_option, Fintype.card_coe, Fintype.card_fin, hfilter,
@@ -720,7 +718,7 @@ theorem card_topsOf_le_of_exposed (hdos : DoSValid U) {b : BlockId} (hb : b ∈ 
 history is at most `1 + 3f·f^(f-1)` — down from `(3f+2)^(3f+1)`. -/
 theorem card_historyBlocksOf_le' (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids)
     (X : Validator) (n : ℕ) :
-    (historyBlocksOf U b X n).card ≤ 1 + 3 * F.f * F.f ^ (F.f - 1) := by
+    (historyBlocksOf U b X n).card ≤ 1 + (Fintype.card Validator - 1) * F.f ^ (F.f - 1) := by
   refine le_trans (card_historyBlocksOf_le_card_topsOf hdos hb X n) ?_
   by_cases hX : ExposedIn U b X
   · refine le_trans (card_topsOf_le_of_exposed hdos hb hX) ?_
@@ -728,7 +726,7 @@ theorem card_historyBlocksOf_le' (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U
       Finset.card_pos.mpr ⟨X, mem_exposedTo.mpr hX⟩
     have hef : (exposedTo U b).card ≤ F.f := card_exposedTo_le hb
     have hf1 : 1 ≤ F.f := le_trans he hef
-    have h1 : 3 * F.f + 1 - (exposedTo U b).card ≤ 3 * F.f := by omega
+    have h1 : Fintype.card Validator - (exposedTo U b).card ≤ (Fintype.card Validator - 1) := by omega
     have h2 : (exposedTo U b).card ^ ((exposedTo U b).erase X).card
         ≤ F.f ^ (F.f - 1) := by
       have herase : ((exposedTo U b).erase X).card ≤ F.f - 1 := by
@@ -737,10 +735,10 @@ theorem card_historyBlocksOf_le' (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U
       calc (exposedTo U b).card ^ ((exposedTo U b).erase X).card
           ≤ F.f ^ ((exposedTo U b).erase X).card := Nat.pow_le_pow_left hef _
         _ ≤ F.f ^ (F.f - 1) := Nat.pow_le_pow_right hf1 herase
-    calc (3 * F.f + 1 - (exposedTo U b).card) *
+    calc (Fintype.card Validator - (exposedTo U b).card) *
           (exposedTo U b).card ^ ((exposedTo U b).erase X).card
-        ≤ 3 * F.f * (F.f ^ (F.f - 1)) := Nat.mul_le_mul h1 h2
-      _ ≤ 1 + 3 * F.f * F.f ^ (F.f - 1) := by omega
+        ≤ (Fintype.card Validator - 1) * (F.f ^ (F.f - 1)) := Nat.mul_le_mul h1 h2
+      _ ≤ 1 + (Fintype.card Validator - 1) * F.f ^ (F.f - 1) := by omega
   · have := card_topsOf_le_one_of_not_exposedIn hdos hb hX
     omega
 
@@ -750,7 +748,7 @@ most `3f·f^(f-1)` chains each. At `f = 1` this is `7(r+1)`, recovering the
 adoption theorem's constant exactly. -/
 theorem card_history_le' (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids) :
     (history U b).card
-      ≤ (3 * F.f + 1 + 3 * F.f ^ (F.f + 1)) * ((U.block b).round + 1) := by
+      ≤ (Fintype.card Validator + (Fintype.card Validator - 1) * F.f ^ F.f) * ((U.block b).round + 1) := by
   classical
   set e := (exposedTo U b).card with he
   have hef : e ≤ F.f := card_exposedTo_le hb
@@ -763,7 +761,7 @@ theorem card_history_le' (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids) :
         + ∑ W ∈ (exposedTo U b)ᶜ,
             ((history U b).filter fun i => (U.block i).creator = W).card :=
         (Finset.sum_add_sum_compl _ _).symm
-    _ ≤ (∑ _W ∈ exposedTo U b, 3 * F.f * F.f ^ (F.f - 1) * ((U.block b).round + 1))
+    _ ≤ (∑ _W ∈ exposedTo U b, (Fintype.card Validator - 1) * F.f ^ (F.f - 1) * ((U.block b).round + 1))
         + ∑ _W ∈ (exposedTo U b)ᶜ, ((U.block b).round + 1) := by
         refine Nat.add_le_add (Finset.sum_le_sum ?_) (Finset.sum_le_sum ?_)
         · intro W hW
@@ -773,7 +771,7 @@ theorem card_history_le' (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids) :
           refine le_trans (card_filter_creator_le_card_topsOf hdos hb W) ?_
           refine Nat.mul_le_mul_right _ ?_
           refine le_trans (card_topsOf_le_of_exposed hdos hb hWexp) ?_
-          have h1 : 3 * F.f + 1 - (exposedTo U b).card ≤ 3 * F.f := by
+          have h1 : Fintype.card Validator - (exposedTo U b).card ≤ (Fintype.card Validator - 1) := by
             have : 1 ≤ (exposedTo U b).card := Finset.card_pos.mpr ⟨W, hW⟩
             omega
           have h2 : (exposedTo U b).card ^ ((exposedTo U b).erase W).card
@@ -789,36 +787,33 @@ theorem card_history_le' (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids) :
         · intro W hW
           rw [Finset.mem_compl, mem_exposedTo] at hW
           exact card_filter_creator_le hb hW
-    _ ≤ (3 * F.f ^ (F.f + 1)) * ((U.block b).round + 1)
-        + (3 * F.f + 1) * ((U.block b).round + 1) := by
+    _ ≤ ((Fintype.card Validator - 1) * F.f ^ F.f) * ((U.block b).round + 1)
+        + (Fintype.card Validator) * ((U.block b).round + 1) := by
         refine Nat.add_le_add ?_ ?_
         · rw [Finset.sum_const_nat (fun _ _ => rfl)]
           rcases Nat.eq_zero_or_pos F.f with hf0 | hf1
           · have he0 : e = 0 := by omega
             rw [← he, he0]
             simp
-          · calc e * (3 * F.f * F.f ^ (F.f - 1) * ((U.block b).round + 1))
-                ≤ F.f * (3 * F.f * F.f ^ (F.f - 1) * ((U.block b).round + 1)) :=
+          · calc e * ((Fintype.card Validator - 1) * F.f ^ (F.f - 1) * ((U.block b).round + 1))
+                ≤ F.f * ((Fintype.card Validator - 1) * F.f ^ (F.f - 1) * ((U.block b).round + 1)) :=
                   Nat.mul_le_mul_right _ hef
-              _ = (3 * F.f ^ (F.f + 1)) * ((U.block b).round + 1) := by
-                  have hpow : F.f * (F.f * F.f ^ (F.f - 1)) = F.f ^ (F.f + 1) := by
-                    have : F.f ^ (F.f - 1) * F.f = F.f ^ (F.f - 1 + 1) :=
-                      (pow_succ F.f (F.f - 1)).symm
+              _ = ((Fintype.card Validator - 1) * F.f ^ F.f) * ((U.block b).round + 1) := by
+                  have hpow : F.f * F.f ^ (F.f - 1) = F.f ^ F.f := by
                     have hsub : F.f - 1 + 1 = F.f := by omega
-                    calc F.f * (F.f * F.f ^ (F.f - 1))
-                        = F.f ^ (F.f - 1) * F.f * F.f := by ring
-                      _ = F.f ^ (F.f - 1 + 1) * F.f := by rw [this]
-                      _ = F.f ^ F.f * F.f := by rw [hsub]
-                      _ = F.f ^ (F.f + 1) := (pow_succ F.f F.f).symm
-                  calc F.f * (3 * F.f * F.f ^ (F.f - 1) * ((U.block b).round + 1))
-                      = 3 * (F.f * (F.f * F.f ^ (F.f - 1))) * ((U.block b).round + 1) := by
+                    calc F.f * F.f ^ (F.f - 1)
+                        = F.f ^ (F.f - 1) * F.f := by ring
+                      _ = F.f ^ (F.f - 1 + 1) := (pow_succ F.f (F.f - 1)).symm
+                      _ = F.f ^ F.f := by rw [hsub]
+                  calc F.f * ((Fintype.card Validator - 1) * F.f ^ (F.f - 1) * ((U.block b).round + 1))
+                      = (Fintype.card Validator - 1) * (F.f * F.f ^ (F.f - 1)) * ((U.block b).round + 1) := by
                         ring
-                    _ = 3 * F.f ^ (F.f + 1) * ((U.block b).round + 1) := by rw [hpow]
+                    _ = ((Fintype.card Validator - 1) * F.f ^ F.f) * ((U.block b).round + 1) := by
+                        rw [hpow]
         · rw [Finset.sum_const_nat (fun _ _ => rfl), Finset.card_compl]
           refine Nat.mul_le_mul_right _ ?_
-          have : Fintype.card Validator = 3 * F.f + 1 := F.card_validators
           omega
-    _ = (3 * F.f + 1 + 3 * F.f ^ (F.f + 1)) * ((U.block b).round + 1) := by
+    _ = (Fintype.card Validator + (Fintype.card Validator - 1) * F.f ^ F.f) * ((U.block b).round + 1) := by
         rw [← Nat.add_mul]
         congr 1
         omega

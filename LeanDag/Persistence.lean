@@ -47,9 +47,11 @@ theorem mem_ids_and_round_of_quorum_support
     {b : BlockId} {r : ℕ} {Q : Finset BlockId} (hQ : Q ⊆ U.ids)
     (hQround : ∀ q ∈ Q, (U.block q).round = r + 1)
     (hQref : ∀ q ∈ Q, b ∈ (U.block q).refs)
-    (hQquorum : 2 * F.f + 1 ≤ (creatorsOf U.block Q).card) :
+    (hQquorum : (Fintype.card Validator - F.f) ≤ (creatorsOf U.block Q).card) :
     b ∈ U.ids ∧ (U.block b).round = r := by
-  have hpos : 0 < (creatorsOf U.block Q).card := by omega
+  have hpos : 0 < (creatorsOf U.block Q).card := by
+    have := F.card_validators
+    omega
   obtain ⟨q, hq⟩ := nonempty_of_creatorsOf_card_pos hpos
   have hq_ids := hQ hq
   have hb_ref := hQref q hq
@@ -68,7 +70,7 @@ theorem reaches_of_quorum_support
     {Q : Finset BlockId} (hQ : Q ⊆ U.ids)
     (hQround : ∀ q ∈ Q, (U.block q).round = r + 1)
     (hQref : ∀ q ∈ Q, b ∈ (U.block q).refs)
-    (hQquorum : 2 * F.f + 1 ≤ (creatorsOf U.block Q).card)
+    (hQquorum : (Fintype.card Validator - F.f) ≤ (creatorsOf U.block Q).card)
     {c : BlockId} (hc : c ∈ U.ids) (hcr : r + 2 ≤ (U.block c).round) :
     Reaches U c b := by
   -- Base case at `r+2`; everything above is `reaches_pred_of_round_le`.

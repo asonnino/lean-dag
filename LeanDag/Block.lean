@@ -70,7 +70,7 @@ structure ValidWrt (blk : BlockId → Block Validator BlockId Payload)
   /-- A block never cites the same author twice. -/
   distinct_creators : ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
   /-- Non-genesis blocks reference a quorum of distinct validators. -/
-  quorum : 0 < b.round → 2 * F.f + 1 ≤ (creators blk b).card
+  quorum : 0 < b.round → (Fintype.card Validator - F.f) ≤ (creators blk b).card
   /-- Non-genesis blocks reference a block by their own creator — *some* such
   block, not a unique one: an equivocator's blocks form a forest of
   predecessor chains, one edge per block, and the condition does not (and
@@ -100,7 +100,7 @@ instance [DecidableEq BlockId] (blk : BlockId → Block Validator BlockId Payloa
   decidable_of_iff
     ((∀ i ∈ b.refs, (blk i).round + 1 = b.round) ∧
       (∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j) ∧
-      (0 < b.round → 2 * F.f + 1 ≤ (creators blk b).card) ∧
+      (0 < b.round → (Fintype.card Validator - F.f) ≤ (creators blk b).card) ∧
       (0 < b.round → ∃ i ∈ b.refs, (blk i).creator = b.creator))
     ⟨fun h => ⟨h.1, h.2.1, h.2.2.1, h.2.2.2⟩,
       fun h => ⟨h.predecessor, h.distinct_creators, h.quorum, h.self_parent⟩⟩
@@ -126,7 +126,7 @@ theorem card_creators (h : ValidWrt blk b) : (creators blk b).card = b.refs.card
   exact h.distinct_creators i hi j hj hij
 
 /-- A non-genesis block references at least `2f+1` blocks. -/
-theorem card_refs (h : ValidWrt blk b) (h0 : 0 < b.round) : 2 * F.f + 1 ≤ b.refs.card := by
+theorem card_refs (h : ValidWrt blk b) (h0 : 0 < b.round) : (Fintype.card Validator - F.f) ≤ b.refs.card := by
   rw [← h.card_creators]
   exact h.quorum h0
 
@@ -139,8 +139,10 @@ Routing through `card_refs` would drag `distinct_creators` onto T3's
 dependency path, and the whole point of §3.2's analysis is that Phase 1 and
 1b never need it. -/
 theorem refs_nonempty (h : ValidWrt blk b) (h0 : 0 < b.round) : b.refs.Nonempty := by
-  have hq : 2 * F.f + 1 ≤ (creatorsOf blk b.refs).card := h.quorum h0
-  have hpos : 0 < (creatorsOf blk b.refs).card := by omega
+  have hq : (Fintype.card Validator - F.f) ≤ (creatorsOf blk b.refs).card := h.quorum h0
+  have hpos : 0 < (creatorsOf blk b.refs).card := by
+    have := F.card_validators
+    omega
   exact nonempty_of_creatorsOf_card_pos hpos
 
 end ValidWrt
@@ -155,8 +157,8 @@ refs. For a block, apply it with `s := b.refs` and discharge the hypothesis
 with `ValidWrt.quorum`. -/
 theorem exists_correct_mem_creators_inter
     {blk : BlockId → Block Validator BlockId Payload} {s t : Finset BlockId}
-    (hs : 2 * F.f + 1 ≤ (creatorsOf blk s).card)
-    (ht : 2 * F.f + 1 ≤ (creatorsOf blk t).card) :
+    (hs : (Fintype.card Validator - F.f) ≤ (creatorsOf blk s).card)
+    (ht : (Fintype.card Validator - F.f) ≤ (creatorsOf blk t).card) :
     ∃ v ∈ creatorsOf blk s ∩ creatorsOf blk t, v ∈ (Correct : Finset Validator) :=
   exists_correct_mem_inter hs ht
 

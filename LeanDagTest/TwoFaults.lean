@@ -51,7 +51,7 @@ example : (Correct : Finset (Fin 7)) = {2, 3, 4, 5, 6} := by decide
 
 /-- Exactly `2f+1` correct validators: the tight case, where a block that has
 caught the whole budget has no choice of references at all. -/
-example : (Correct : Finset (Fin 7)).card = 2 * Faults.f (Fin 7) + 1 := by decide
+example : (Correct : Finset (Fin 7)).card = (Fintype.card (Fin 7) - Faults.f (Fin 7)) := by decide
 
 def lky : Fin 24 → Block (Fin 7) (Fin 24) Unit := fun i =>
   if h : (i : ℕ) < 7 then
@@ -113,7 +113,7 @@ example : creatorsOf Ufault.block (Ufault.block 19).refs = (Correct : Finset (Fi
 
 /-- And D15b on the same model: the correct blocks of a round are still an
 admissible quorum, which is why the DAG can continue at all. -/
-example : 2 * Faults.f (Fin 7) + 1 ≤
+example : Fintype.card (Fin 7) - Faults.f (Fin 7) ≤
     (creatorsOf Ufault.block (correctBlocksAt Ufault 2)).card ∧
     ∀ i ∈ correctBlocksAt Ufault 2, (Ufault.block i).creator ∉ exposedTo Ufault 19 :=
   correctBlocksAt_admissible_quorum (by decide) (by decide)

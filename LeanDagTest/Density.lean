@@ -92,12 +92,12 @@ example : (Utwin.block 8).creator ∈ (Correct : Finset (Fin 4)) := by decide
 the anchor factor is not slack — it is the count of correct validators able
 to sustain divergent adoptions under the `f`-miss budget. -/
 example : (topsOf Utwin 8 0).card ≤
-    (3 * Faults.f (Fin 4) + 1 - (exposedTo Utwin 8).card) *
+    (Fintype.card (Fin 4) - (exposedTo Utwin 8).card) *
       (exposedTo Utwin 8).card ^ ((exposedTo Utwin 8).erase 0).card :=
   card_topsOf_le_of_exposed utwin_dosValid (by decide) (by decide)
 
 example : (topsOf Utwin 8 0).card = 2 := by decide
-example : (3 * Faults.f (Fin 4) + 1 - (exposedTo Utwin 8).card) *
+example : (Fintype.card (Fin 4) - (exposedTo Utwin 8).card) *
     (exposedTo Utwin 8).card ^ ((exposedTo Utwin 8).erase 0).card = 3 := by decide
 
 end LeanDagTest

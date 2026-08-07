@@ -63,7 +63,7 @@ example : (5 : Fin 8) = 5 :=
 example : ∀ j ∈ U.ids, (U.block j).creator = 1 → (U.block j).round = 1 → j = 5 := by decide
 
 -- Refs of a round-1 block carry a real 3-validator quorum (T0's input).
-example : 2 * Faults.f (Fin 4) + 1 ≤ (creatorsOf U.block (U.block 4).refs).card :=
+example : (Fintype.card (Fin 4) - Faults.f (Fin 4)) ≤ (creatorsOf U.block (U.block 4).refs).card :=
   U.creators_quorum (by decide) (by decide)
 
 -- Completeness and the round relation hold on real data.
@@ -127,7 +127,7 @@ def U3 : BlockUniverse (Fin 4) (Fin 12) Unit where
 
 -- Blocks 4,5,6 are a round-1 quorum (3 = 2f+1 distinct authors) backing
 -- genesis block 0.
-example : 2 * Faults.f (Fin 4) + 1 ≤ (creatorsOf U3.block ({4, 5, 6} : Finset (Fin 12))).card := by
+example : (Fintype.card (Fin 4) - Faults.f (Fin 4)) ≤ (creatorsOf U3.block ({4, 5, 6} : Finset (Fin 12))).card := by
   decide
 
 /-- **T3 applied.** Every round-2 block reaches genesis block 0 -- including
@@ -169,7 +169,8 @@ example : ∃ bw ∈ U3.ids, (U3.block bw).round = 0 ∧
 -- T3a in isolation: the support threshold really is met.
 example : ∃ bw ∈ U3.ids, (U3.block bw).round = 0 ∧
     (U3.block bw).creator ∈ (Correct : Finset (Fin 4)) ∧
-    (authorsAt U3 1).card ≤ (correctSupporters U3 bw 1).card + 2 * Faults.f (Fin 4) :=
+    (authorsAt U3 1).card + Faults.f (Fin 4) + 1
+      ≤ (correctSupporters U3 bw 1).card + Fintype.card (Fin 4) :=
   exists_correct_common_support (by decide)
 
 -- The reusable fault-counting lemmas, on concrete sets. At f = 1 with

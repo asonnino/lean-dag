@@ -39,14 +39,14 @@ def votesIn (U : BlockUniverse Validator BlockId Payload) (C L : BlockId) : Fins
 /-- A round-`(r+2)` block certifies `L` when its votes for `L` come from a
 quorum of distinct validators. -/
 def Certifies (U : BlockUniverse Validator BlockId Payload) (C L : BlockId) : Prop :=
-  2 * F.f + 1 ≤ (creatorsOf U.block (votesIn U C L)).card
+  (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (votesIn U C L)).card
 
 /-- All three rule predicates are cardinality comparisons and so decidable,
 but as `Prop`-valued `def`s Lean will not see that unaided. `certificates`
 needs this to filter on `Certifies`, and concrete models need it to settle
 the rules by `decide`. -/
 instance decidableCertifies (C L : BlockId) : Decidable (Certifies U C L) :=
-  inferInstanceAs (Decidable (2 * F.f + 1 ≤ (creatorsOf U.block (votesIn U C L)).card))
+  inferInstanceAs (Decidable ((Fintype.card Validator - F.f) ≤ (creatorsOf U.block (votesIn U C L)).card))
 
 /-- The certificates for a round-`r` block `L`: the round-`(r+2)` blocks that
 certify it. -/
@@ -73,18 +73,18 @@ theorem mem_votesIn_spec {C L q : BlockId} {r : ℕ}
 /-- `L` is directly committed when its certificates come from a quorum of
 distinct validators. -/
 def DirectCommit (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) : Prop :=
-  2 * F.f + 1 ≤ (creatorsOf U.block (certificates U L r)).card
+  (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (certificates U L r)).card
 
 /-- `L` is directly skipped when a quorum of distinct validators declined to
 vote for it. -/
 def DirectSkip (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) : Prop :=
-  2 * F.f + 1 ≤ (blames U L (r + 1)).card
+  (Fintype.card Validator - F.f) ≤ (blames U L (r + 1)).card
 
 instance decidableDirectCommit (L : BlockId) (r : ℕ) : Decidable (DirectCommit U L r) :=
-  inferInstanceAs (Decidable (2 * F.f + 1 ≤ (creatorsOf U.block (certificates U L r)).card))
+  inferInstanceAs (Decidable ((Fintype.card Validator - F.f) ≤ (creatorsOf U.block (certificates U L r)).card))
 
 instance decidableDirectSkip (L : BlockId) (r : ℕ) : Decidable (DirectSkip U L r) :=
-  inferInstanceAs (Decidable (2 * F.f + 1 ≤ (blames U L (r + 1)).card))
+  inferInstanceAs (Decidable ((Fintype.card Validator - F.f) ≤ (blames U L (r + 1)).card))
 
 /-- **M3.** A directly skipped block has **no certificate anywhere** in the
 universe — not merely none in some view.
@@ -114,6 +114,7 @@ theorem certificates_eq_empty_of_directSkip {L : BlockId} {r : ℕ}
     obtain ⟨hq_ids, hq_round, hq_ref⟩ := mem_votesIn_spec hC_ids hC_round hq
     exact mem_supporters.mpr ⟨q, hq_ids, hq_round, hq_ref, hq_creator⟩
   have := Finset.card_le_card hsub
+  have := F.card_validators
   omega
 
 /-- **M1.** No block is both directly committed and directly skipped.
@@ -123,7 +124,9 @@ Immediate from M3: a skip leaves no certificates at all, and a commit needs
 theorem not_directCommit_of_directSkip {L : BlockId} {r : ℕ}
     (h : DirectSkip U L r) : ¬ DirectCommit U L r := by
   rw [DirectCommit, certificates_eq_empty_of_directSkip h]
-  simp [creatorsOf]
+  simp only [creatorsOf, Finset.image_empty, Finset.card_empty]
+  have := F.card_validators
+  omega
 
 /-- **M2.** Once a block is directly committed, its certificate becomes
 unavoidable: every block from round `r+3` on has one in its causal history.
@@ -169,7 +172,9 @@ theorem certificates_nonempty_of_directCommit {L : BlockId} {r : ℕ}
   rw [Finset.nonempty_iff_ne_empty]
   rintro hempty
   rw [DirectCommit, hempty] at h
-  simp [creatorsOf] at h
+  simp only [creatorsOf, Finset.image_empty, Finset.card_empty] at h
+  have := F.card_validators
+  omega
 
 /-- **M5′ (certificate uniqueness).** A slot admits at most one *certifiable*
 block: if certificates exist for two round-`r` blocks by the same author,
@@ -180,7 +185,7 @@ commits on the strength of a *single* certificate lying in reach, not on a
 quorum of them.
 
 The proof needs no relationship between the two certificates. Each names
-2f+1 distinct voters, so the two voter sets intersect in a correct `w` (T0');
+n−f distinct voters, so the two voter sets intersect in a correct `w` (T0');
 `w`'s single round-`(r+1)` block votes for both (T1); and **distinctness**
 forbids one block referencing two round-`r` blocks by one author. That last
 step is the one place in the development where distinctness is load-bearing.
@@ -413,23 +418,23 @@ def certificatesIn (U : BlockUniverse Validator BlockId Payload)
 /-- Direct commit, as judged from a single view. -/
 def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  2 * F.f + 1 ≤ (creatorsOf U.block (certificatesIn U V L r)).card
+  (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (certificatesIn U V L r)).card
 
 /-- Direct skip, as judged from a single view. -/
 def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  2 * F.f + 1 ≤
+  (Fintype.card Validator - F.f) ≤
     (creatorsOf U.block
       (((blocksAt U (r + 1)).filter (fun q => L ∉ (U.block q).refs)) ∩ V.ids)).card
 
 omit S in
 instance decidableDirectCommitIn (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) :
     Decidable (DirectCommitIn U V L r) :=
-  inferInstanceAs (Decidable (2 * F.f + 1 ≤ (creatorsOf U.block (certificatesIn U V L r)).card))
+  inferInstanceAs (Decidable ((Fintype.card Validator - F.f) ≤ (creatorsOf U.block (certificatesIn U V L r)).card))
 
 instance decidableDirectSkipIn (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) :
     Decidable (DirectSkipIn U V L r) :=
-  inferInstanceAs (Decidable (2 * F.f + 1 ≤
+  inferInstanceAs (Decidable ((Fintype.card Validator - F.f) ≤
     (creatorsOf U.block
       (((blocksAt U (r + 1)).filter (fun q => L ∉ (U.block q).refs)) ∩ V.ids)).card))
 

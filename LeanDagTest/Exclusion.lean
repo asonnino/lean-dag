@@ -115,7 +115,7 @@ theorem uexcl_populated (r : ℕ) (h : r ≤ 5) : Populated Uexcl r := by
   interval_cases r <;> decide
 
 /-- **D15b applied**, at the round the commit's certificates come from. -/
-example : 2 * Faults.f (Fin 4) + 1 ≤ (creatorsOf Uexcl.block (correctBlocksAt Uexcl 5)).card ∧
+example : (Fintype.card (Fin 4) - Faults.f (Fin 4)) ≤ (creatorsOf Uexcl.block (correctBlocksAt Uexcl 5)).card ∧
     ∀ i ∈ correctBlocksAt Uexcl 5, (Uexcl.block i).creator ∉ exposedTo Uexcl 17 :=
   correctBlocksAt_admissible_quorum (uexcl_populated 5 (by omega)) (by decide)
 

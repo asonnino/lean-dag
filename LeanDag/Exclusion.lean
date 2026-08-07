@@ -56,7 +56,7 @@ theorem correct_subset_creators_correctBlocksAt (h : Populated U n) :
 omit [DecidableEq BlockId] in
 /-- The correct blocks of a populated round carry a quorum of authors. -/
 theorem card_creators_correctBlocksAt (h : Populated U n) :
-    2 * F.f + 1 ≤ (creatorsOf U.block (correctBlocksAt U n)).card :=
+    (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (correctBlocksAt U n)).card :=
   le_trans card_correct (Finset.card_le_card (correct_subset_creators_correctBlocksAt h))
 
 /-- No correct block's author is ever excluded — D15, in the form a builder
@@ -77,7 +77,7 @@ and exclusion never starves it. What the adversary can force is the pool down
 to exactly `Correct` (D15a) — which is precisely the situation
 `|Correct| ≥ 2f+1` was there to survive. -/
 theorem correctBlocksAt_admissible_quorum (h : Populated U n) (hb : b ∈ U.ids) :
-    2 * F.f + 1 ≤ (creatorsOf U.block (correctBlocksAt U n)).card ∧
+    (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (correctBlocksAt U n)).card ∧
       ∀ i ∈ correctBlocksAt U n, (U.block i).creator ∉ exposedTo U b :=
   ⟨card_creators_correctBlocksAt h, fun _ hi =>
     creator_notMem_exposedTo_of_mem_correctBlocksAt hb hi⟩
@@ -148,7 +148,7 @@ holds from `R` rather than from round 0. -/
 theorem card_creators_accepted_of_eventuallyDelivers {R : ℕ} (D : Delivery U)
     (hd : EventuallyDelivers D R) (hn : R ≤ n) (hpop : Populated U n)
     {v : Validator} (hv : v ∈ (Correct : Finset Validator)) :
-    2 * F.f + 1 ≤ (creatorsOf U.block (D.accepted v n)).card := by
+    (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (D.accepted v n)).card := by
   refine le_trans card_correct (Finset.card_le_card ?_)
   intro w hw
   obtain ⟨a, ha, hac, har⟩ := hpop w hw
@@ -175,7 +175,7 @@ theorem exists_correct_mem_refs {b : BlockId} (hb : b ∈ U.ids)
       (U.block i).round + 1 = (U.block b).round := by
   obtain ⟨v, hv, hvc⟩ := exists_correct_of_card
     (S := creatorsOf U.block (U.block b).refs)
-    (le_trans (by omega) (U.creators_quorum hb hround))
+    (le_trans (by have := F.card_validators; omega) (U.creators_quorum hb hround))
   obtain ⟨i, hi, rfl⟩ := mem_creatorsOf.mp hv
   exact ⟨i, hi, U.complete b hb i hi, hvc, U.round_of_mem_refs hb hi⟩
 
@@ -332,14 +332,23 @@ falls by the same amount. The adversary cannot have both. -/
 omit [DecidableEq BlockId] in
 /-- Two blocks of the same round share a correct reference, when the correct
 validators are as few as the fault bound permits. -/
-theorem exists_shared_correct_ref (hcard : (Correct : Finset Validator).card ≤ 2 * F.f + 1)
+theorem exists_shared_correct_ref (hcard : (Correct : Finset Validator).card ≤ (Fintype.card Validator - F.f))
     {c₁ c₂ : BlockId} (hc₁ : c₁ ∈ U.ids) (hc₂ : c₂ ∈ U.ids)
     (hround : (U.block c₁).round = (U.block c₂).round) (hpos : 0 < (U.block c₁).round) :
     ∃ w, w ∈ (U.block c₁).refs ∧ w ∈ (U.block c₂).refs ∧
       (U.block w).creator ∈ (Correct : Finset Validator) := by
-  -- each names `f+1` correct authors, and two such sets cannot miss each other
-  have h₁ := card_inter_correct_of_quorum (U.creators_quorum hc₁ hpos)
-  have h₂ := card_inter_correct_of_quorum (U.creators_quorum hc₂ (by omega))
+  -- each names at least `n - f - b` correct authors out of the `n - b`
+  -- correct validators, and two such sets cannot miss each other:
+  -- `2(n-f-b) - (n-b) = n - 2f - b ≥ f+1-b ≥ 1`.
+  have hq₁ := U.creators_quorum hc₁ hpos
+  have hq₂ := U.creators_quorum hc₂ (by omega)
+  have h₁ := card_le_card_inter_correct_add_byzantine
+    (creatorsOf U.block (U.block c₁).refs)
+  have h₂ := card_le_card_inter_correct_add_byzantine
+    (creatorsOf U.block (U.block c₂).refs)
+  have hcb := card_correct_add_byzantine (Validator := Validator)
+  have hbf := F.card_byzantine
+  have hnv := F.card_validators
   have hsub : (creatorsOf U.block (U.block c₁).refs ∩ (Correct : Finset Validator)) ∪
       (creatorsOf U.block (U.block c₂).refs ∩ (Correct : Finset Validator)) ⊆
       (Correct : Finset Validator) :=

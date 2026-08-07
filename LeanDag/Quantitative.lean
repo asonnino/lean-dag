@@ -156,7 +156,7 @@ round `R / m` — so the slot past round `R` is named explicitly by
 `slotAt Validator R`. Under the old schedule `slotAt R ≤ R`, so the bound is
 no weaker than it was. -/
 theorem commits_recur_within (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : 2 * F.f + 1 ≤ T.card) (fair : FairWithin T w) (R k : ℕ) :
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (fair : FairWithin T w) (R k : ℕ) :
     ∃ k', max k (slotAt Validator R) ≤ k' ∧ k' < max k (slotAt Validator R) + w ∧
       R ≤ S.slotRound k' ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
@@ -237,7 +237,7 @@ slots however large `m` is. A bound that improves with `m` needs the schedule
 to expose it, which `Slots.uniform` does; this statement is kept because it is
 the only one that says anything about an irregular schedule. -/
 theorem commits_recur_by_round {s : ℕ} (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : 2 * F.f + 1 ≤ T.card) (fair : FairWithin T w)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (fair : FairWithin T w)
     (hs : BoundedSpacing (Validator := Validator) s) (R k : ℕ) :
     ∃ k', k ≤ k' ∧ S.slotRound k' ≤ S.slotRound (max k (slotAt Validator R)) + s * w ∧
       R ≤ S.slotRound k' ∧
@@ -304,7 +304,7 @@ commit. The populated rounds come from `Timing` itself.
 Nothing here is asymptotic: the DAG must actually reach two rounds past the
 leader. -/
 theorem directCommit_of_wait (tm : Timing U T N) (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : 2 * F.f + 1 ≤ T.card)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hstart : ∀ v ∈ T, ∀ w ∈ T, tm.built w 0 ≤ tm.built v 0 + D₀)
     (hwait : ∀ n, D₀ + tm.delay ≤ tm.timeout n)
     (hgst : tm.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
@@ -321,7 +321,7 @@ theorem directCommit_of_wait (tm : Timing U T N) (hT : T ⊆ (Correct : Finset V
 
 /-- **The wait bound, as a decision.** What the ledger is defined over. -/
 theorem decided_of_wait (tm : Timing U T N) (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : 2 * F.f + 1 ≤ T.card)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hstart : ∀ v ∈ T, ∀ w ∈ T, tm.built w 0 ≤ tm.built v 0 + D₀)
     (hwait : ∀ n, D₀ + tm.delay ≤ tm.timeout n)
     (hgst : tm.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
@@ -338,7 +338,7 @@ GST.
 Δ to reach everyone. `D₀ = 0` (a synchronised start) would give `Delay(Δ) = Δ`;
 the factor of two is the price of not having synchronised clocks. -/
 theorem directCommit_of_wait_two_delay (tm : Timing U T N)
-    (hT : T ⊆ (Correct : Finset Validator)) (hcard : 2 * F.f + 1 ≤ T.card)
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hstart : ∀ v ∈ T, ∀ w ∈ T, tm.built w 0 ≤ tm.built v 0 + tm.delay)
     (hwait : ∀ n, 2 * tm.delay ≤ tm.timeout n)
     (hgst : tm.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)

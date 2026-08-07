@@ -94,6 +94,7 @@ def Ugrow (N : ℕ) : BlockUniverse (Fin 4) ℕ Unit where
             simpa using this
           omega
       have hf : Faults.f (Fin 4) = 1 := rfl
+      have hn : Fintype.card (Fin 4) = 4 := rfl
       omega
     · -- self-parent: the block of the same author one round down is
       -- `4 * (i / 4) - 4 + i % 4`, and it lies in the `Ico`.
@@ -214,7 +215,7 @@ example (N r : ℕ) (h : r ≤ N) : Populated (Ugrow N) r :=
   no_stall (ugrow_live N) (ugrow_deliversQuorum N) r h
 
 /-- The quorum corollary, which L4 will consume. -/
-example (N r : ℕ) (h : r ≤ N) : 2 * Faults.f (Fin 4) + 1 ≤ (authorsAt (Ugrow N) r).card :=
+example (N r : ℕ) (h : r ≤ N) : (Fintype.card (Fin 4) - Faults.f (Fin 4)) ≤ (authorsAt (Ugrow N) r).card :=
   card_authorsAt_of_live (ugrow_live N) (ugrow_deliversQuorum N) h
 
 /-- **The horizon is tight, not slack.** One round further and the conclusion
@@ -228,7 +229,7 @@ theorem ugrow_not_populated_succ (N : ℕ) : ¬ Populated (Ugrow N) (N + 1) := b
   omega
 
 /-- L0 also applies, and agrees: `Ugrow N` is dense below its frontier. -/
-example (N : ℕ) (hN : 0 < N) : 2 * Faults.f (Fin 4) + 1 ≤ (authorsAt (Ugrow N) 0).card :=
+example (N : ℕ) (hN : 0 < N) : (Fintype.card (Fin 4) - Faults.f (Fin 4)) ≤ (authorsAt (Ugrow N) 0).card :=
   card_authorsAt_of_lt (U := Ugrow N) (r := N) (n := 0) hN
     (i := 4 * N)
     (by simp only [ugrow_ids, Finset.mem_range]; omega)
