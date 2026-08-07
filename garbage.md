@@ -101,19 +101,27 @@ another universe. The work is not re-proving the theory above the cut; it
 is relating verdicts across the cut, and choosing the cut.
 
 **(review) Rebasing must not touch the slot schedule.** Verdicts are
-indexed by `Slots` (leader per slot, `slotRound`, 3-round spacing). A node
-that recomputed leaders from *rebased* rounds would assign different
-leaders than the network, and every cross-node verdict comparison would be
-garbage. Nor can `chop` simply keep absolute rounds: the base layer's
-emptied references would then violate `quorum` (genesis-emptiness is
-*derived* from `predecessor` at round 0 and does not generalize to round
-`G` for free). The resolution: rebase the universe, **carry the offset** —
-define the induced schedule `slotRound' k = slotRound (k + k₀) − G` for
-`k₀` the first slot at or above `G`, and state every cross-node claim in
-absolute terms through the correspondence `k ↦ k + k₀`. One induced
-definition, one correspondence lemma, settled in P1; this is also the
-likeliest place G2's "mechanical" reputation fails, so it gets a decided
-witness early.
+indexed by `Slots` (leader per slot, `slotRound`). A node that recomputed
+leaders from *rebased* rounds would assign different leaders than the
+network, and every cross-node verdict comparison would be garbage. Nor
+can `chop` simply keep absolute rounds: the base layer's emptied
+references would then violate `quorum` (genesis-emptiness is *derived*
+from `predecessor` at round 0 and does not generalize to round `G` for
+free). The resolution as built: rebase the universe, **carry the
+offset** — the induced schedule is `Slots.chop S G d hd`
+(`ChopDecided.lean`), re-indexed from a base slot `d` whose round clears
+the horizon (`hd : G ≤ slotRound d`), with
+`slotRound' k = slotRound (d + k) − G`, and every cross-node claim
+stated in absolute terms through the correspondence `k ↦ d + k`. Two
+things turned out better than planned. The rule layer
+(`supporters`/`certificates`/`DirectCommit`/`DirectSkip`/`CertifiedIn`)
+is round-indexed and **never consults the schedule**, so all of G2 and
+per-slot G3 closed with no correspondence at all; the schedule enters
+only at the `Decided` level, where the correspondence
+(`decided_chop`) went through by structural induction with the
+base-slot condition as the *only* premise. And the base-slot condition
+is what makes keying survive: `G ≤ slotRound d` pins the rebased rounds
+above zero, where subtraction is faithful.
 
 **Model versus implementation.** `chop` *edits* the base-layer blocks
 (empties their reference sets). In a real system a block's identity is a
@@ -128,21 +136,24 @@ Two invariants make a horizon *admissible* for a validator:
   decided (committed or skipped) in the validator's view. **(review)**
   Note what A1 is *for*: not verdict invariance — verdicts for slots
   `≥ G` are window-local and invariant regardless (§4) — but **ledger
-  totality**: the pruner must not discard a slot whose output it still
-  owes the application. A1 is a policy-layer invariant (§6), not a
-  hypothesis of the safety transfer. It is also *dischargeable*: the
-  pipelining results already prove that a committed run decides
-  everything below it (`all_decided_below_of_fairRun`), so post-`R` the
-  frontier below a commit is total.
+  totality**: a slot's verdict reads rounds `slotRound k` through `+2`,
+  so pruning above an undecided slot discards its certificates and the
+  slot can never be decided — the ledger stalls below the validator's
+  own cut. A liveness-of-output failure, never a safety one. A1 is a
+  policy-layer invariant (§6), not a hypothesis of the safety transfer —
+  none of `decided_chop`/`decided_agree_chop`/`bootstrap_agree` assumes
+  it. It is also *dischargeable*: a committed run decides everything
+  below it (`all_decided_below_of_fairRun`), so post-`R` the frontier
+  below a commit is total.
 - **(A2) Lag bound.** `G` trails the validator's current round by a
   margin `Λ`. **(review)** The first draft justified `Λ` by "the commit
   window and the indirect-anchor reach" — wrong on the second count: the
   indirect anchor sits *above* its slot, so anchor reach never looks
-  below the cut. What `Λ` actually buys: (i) the **peer-frontier skew** —
-  do not prune what a slower correct peer's undecided slots still window
-  over, bounded post-`R` by the commit lag (G8); (ii) the **attestation
-  lag** of the certified base (G11). Whether these are one constant is
-  Q3.
+  below the cut. What `Λ` actually buys is now proved, and it is two
+  **completeness** properties, not safety: the one-round possession
+  bound of the depth rule (G9, `Λ ≥ 1`) and the attestation lag of the
+  certified base (G11, `Λ ≥ 2`, tight on data). The full accounting of
+  what constrains `Λ` — and what does not — is §6's *lag envelope*.
 
 ## 3. What breaks, what bends, what holds
 
@@ -157,8 +168,9 @@ An honest inventory against the existing development.
   L4/L6 operate in the slot window. Liveness never reaches below the cut.
 - `DoSValid` transfers to `chop U G` **one-way**: cones shrink under
   truncation, so exposure shrinks, so the per-block condition weakens —
-  `DoSValid U → DoSValid (chop U G)` should be a lemma of G1. The failure
-  of the converse direction *is* the statute of limitations, below.
+  `DoSValid U → DoSValid (chop U G)` is proved (`dosValid_chop`). The
+  failure of the converse direction *is* the statute of limitations,
+  below, and the witness file makes it visible on data.
 
 **Bends #1 (review — a contradiction in the first draft): the budget
 must be windowed.** The first draft claimed the novelty budget is
@@ -209,9 +221,10 @@ in order of preference:
    forever, which is the unbounded growth we set out to remove.
 
 **Breaks, by design, and is replaced.** Global downward closure and
-"full history available to all". The replacement claim, to be proved: for
-everything the protocol still *does* — validate new blocks, decide slots,
-stay live, bound storage — the truncated universe is as good as the full
+"full history available to all". The replacement claim, now proved: for
+everything the protocol still *does* — validate new blocks (G1), decide
+slots (`decided_chop`), stay live (`live_chopD`), bound storage
+(`card_retained_le`) — the truncated universe is as good as the full
 one.
 
 ## 4. Safety above the horizon
@@ -223,64 +236,87 @@ accepted by nobody counts in a `U`-level verdict but is unobtainable by
 any syncing node, GC or no GC. The existing machinery already has the
 right idiom for this: decisions are **view-relative and monotone** (L2),
 **never conflicting** across views (M6), and **propagating** (L3). The
-invariance targets are stated in that idiom:
+results, in that idiom — each marked with where it lives:
 
-- **G1 (truncation is a universe).** `chop U G` satisfies `complete`,
-  `valid`, `no_equivocation`; `DoSValid U → DoSValid (chop U G)`; and the
-  induced schedule with its slot correspondence `k ↦ k + k₀` (§2).
-  Immediate consequence: every existing theorem holds of `chop U G`.
-- **G2 (verdict invariance, per view).** For a slot with proposer round
-  `r ≥ G`: `supporters`, `certificates`, `blames`, `DirectCommit`,
-  `DirectSkip` computed in a truncated view agree with the same view
-  untruncated, through the slot correspondence. Window-locality does the
-  work; the index bookkeeping is where mistakes would hide, so every
-  lemma gets a decided instance on the P0 witness.
-- **G3 (decision invariance, per slot).** Direct and indirect verdicts
-  for slots `≥ G` agree between a view and its truncation. Stated
-  **per slot**, not as a claim about a sweep procedure: the direct
-  verdict is window-local, and the indirect verdict is a property of the
-  anchor's cone, also entirely above the slot. (If the Lean form of the
-  indirect rule turns out to consult earlier slots' verdicts, the
-  fallback shape is induction over slot indices `≥ k₀` with the
-  checkpoint as base — Q4.) A1 is *not* a hypothesis here (§2).
-- **G4 (heterogeneous horizons).** For correct `v, w` with horizons
-  `G_v ≤ G_w`: on slots `≥ G_w` their verdicts never conflict and
-  eventually agree — M6/L3 relativized through G3 twice. Nodes need not
-  share a horizon; they need each horizon admissible and the skew
-  bounded (G8).
+- **G1 (truncation is a universe) — proved** (`Chop.lean`). `chop U G`
+  satisfies `complete`, `valid`, `no_equivocation`;
+  `DoSValid U → DoSValid (chop U G)` (`dosValid_chop`). Immediate
+  consequence: every existing theorem holds of `chop U G`.
+- **G2 (verdict invariance) — proved** (`Chop.lean`,
+  `ChopDecided.lean`). For a slot at rebased round `s` (original round
+  `G + s`): `supporters_chop`, `blames_chop`, `certificates_chop`,
+  `directCommit_chop`, `directSkip_chop`, and the indirect test
+  `certifiedIn_chop` — plus the view-relative forms
+  (`certificatesIn_chop`, `directCommitIn_chop`, `directSkipIn_chop`)
+  against the truncated view `View.chop`. Window-locality does all the
+  work, and no slot correspondence was needed at this level: the rule
+  layer is round-indexed and schedule-free.
+- **G3 (decision invariance) — proved, at both levels.** Per slot as
+  planned, and then for the **full decision relation**: `decided_chop`
+  (`ChopDecided.lean`) — a validator re-running Mysticeti on the
+  truncation from its truncated view decides slot `k` exactly as it
+  decided slot `d + k` on the full universe, by structural induction
+  through anchors and intermediate skips, both directions. The Q4
+  fallback was never needed: the indirect verdict consults its anchor
+  only through the anchor's cone. The only premise is
+  `G ≤ slotRound d` — no synchrony, no liveness, and A1 is *not* a
+  hypothesis (§2).
+- **G4 (heterogeneous horizons) — proved, stronger than stated.** The
+  target said "never conflict and eventually agree"; the theorem
+  (`decided_agree_chop`) gives outright **equality of verdicts**, and
+  for an **arbitrary** view of the truncation — not a truncated
+  full-history view. That asymmetry matters: a joiner's view is never
+  `V.chop` for any full-history `V` (lifted to `U` it would not be
+  downward closed), so `decided_unique` is played *inside* the
+  truncation against a truncated view, and `decided_chop` carries the
+  verdict across the cut. Cross-horizon agreement `G_v ≠ G_w` is
+  `decided_agree_horizons` (§6).
 
 Safety needs no new quorum argument anywhere: it inherits T0/T3/M-series
-through G1, and G2–G4 are locality and correspondence bookkeeping.
+through G1, and G2–G4 are locality and correspondence bookkeeping — the
+counting was never redone.
 
 ## 5. Liveness, storage, and the cost of joining
 
-- **G5 (liveness transfer).** A `Delivery` for `U` induces a `Delivery`
-  for `chop U G` (drop everything below `G`); `Live` and `DeliversQuorum`
-  transfer; hence L1 (`no_stall`) holds in the truncated universe, and the
-  post-`R` commit chain (L4, L6) with it, with the usual `R`-offsets.
-- **G13 (windowed novelty).** The definition of §3 with its cut-advance
-  monotonicity law. Prerequisite to everything below.
-- **G14 (store correspondence).** Pruning a store below `G` yields
-  exactly the `viewUpto` of the induced delivery on `chop U G`:
-  `viewUpto D v t ∩ [G, ∞) = viewUpto (chop D G) v (t − G)`. The bridge
-  between "what a validator retains" and "B4 on the truncated universe".
-- **G6 (bounded storage — the headline).** Stated **per time**, because a
-  validator's life is a sequence of cuts, not one: at each `t`, with
-  admissible horizon `G(t) ≥ t − Λ`, the retained store is (G14) the
-  truncated view, and B4 on `chop U G(t)` at rebased round `≤ Λ` gives
-  > `|retained| ≤ |Correct|·(Λ+1)·(1 + f·T)`-shaped — **constant in `t`**,
-  with G13 guaranteeing the sequence of prunings never un-prices anything.
-  The DoS story ended at "linear forever"; the GC story ends at
-  "constant, at lag `Λ`".
-- **G6b (bounded join).** The same constant bounds what a joining
-  validator must fetch: the attested base plus the window — GC bounds
-  **sync cost**, not just storage. Half the point of the exercise, and it
-  deserves its own statement.
-- **G7 (relay obligation, windowed).** The no-amplification story of the
-  DoS doc survives with "your block's cone" replaced by "your block's
-  cone above `max(G_v, G_w)`": a correct validator serves at most the
-  window; everything below is the base's job. Floods are still dampened
-  at acceptance; now the *honest* obligation is bounded too.
+- **G5 (liveness transfer) — proved** (`Window.lean`). A `Delivery` for
+  `U` induces a `Delivery` for `chop U G` (`chopD`, drop everything
+  below `G`); `DeliversQuorum` transfers (`deliversQuorum_chopD`),
+  `Live` transfers with the horizon offset (`live_chopD`), hence L1
+  holds in the truncated universe (`populated_chop`), and the post-`R`
+  commit chain with it.
+- **G13 (windowed novelty) — proved** (`Window.lean`). The definition of
+  §3 with its cut-advance monotonicity law (`history_chop_anti`,
+  `novelty_chop_anti`): as the window slides, pruning only cheapens
+  blocks. Prerequisite to everything below.
+- **G14 (store correspondence) — proved** (`viewUpto_chopD`). Pruning a
+  store below `G` yields exactly the `viewUpto` of the induced delivery
+  on `chop U G`:
+  `viewUpto (chopD D G) v m = (viewUpto D v (G+m)).filter (G ≤ round ·)`.
+  The bridge between "what a validator retains" and "B4 on the truncated
+  universe".
+- **G6 (bounded storage — the headline) — proved**
+  (`card_retained_le`). Stated **per time**, because a validator's life
+  is a sequence of cuts, not one: at each `t` with `G ≤ t ≤ G + Λ`, the
+  retained store `(viewUpto D v t).filter (G ≤ round ·)` obeys
+  > `|retained| ≤ |Correct|·(Λ+1) + (|Correct|·f + Λ·|Correct|·f·κ)`
+  — **constant in `t`**, under `ByzBudget κ` and `RefsAccepted`
+  (mechanism-side, instantiate `κ` through the budget sandwich of the
+  DoS doc), with G13 guaranteeing the sequence of prunings never
+  un-prices anything. The DoS story ended at "linear forever"; the GC
+  story ends at "constant, at lag `Λ`".
+- **G6b (bounded join) — proved** (`base_subset_retained`,
+  `card_joinIds_le`). Sharper than planned: the joiner's *entire* fetch —
+  attested base plus window (`joinIds`) — is a **subset of one correct
+  peer's retained store**, so the same G6 constant bounds sync cost, not
+  just storage.
+- **G7 (relay obligation, windowed) — proved**
+  (`history_chop_subset_retained`, `card_serve_le`). What a correct
+  author can be asked to serve for its block — the block's truncated
+  cone — is its **own retained store above its own horizon, plus the
+  block itself** (`RefsAccepted` one step down, S10 the rest of the
+  way): the G6 constant plus one. Floods are still dampened at
+  acceptance; now the *honest* obligation is bounded too, and
+  everything below the cut is the base's job.
 
 ## 6. Setting the horizon without consensus
 
@@ -294,24 +330,50 @@ horizons safe. Two local rules, not exclusive:
   every slot below it is decided in `v`'s view) `− Λ`. A1 holds by
   construction — and is *supplied* post-`R` by the pipelining theorem
   that a committed run decides everything below it
-  (`all_decided_below_of_fairRun`); A2 by the margin. Skew: decisions are
-  final (M-series), shared where shared (M6), and propagating (L3), so
-  post-`R` two correct frontiers differ by at most the commit lag, which
-  L6 (commits recur) bounds. No agreement protocol; the DAG's own commits
-  are the synchronizer.
-- **The common-core rule** (depth-based). Post-`R`, the backbone lemma
-  puts every correct block of round `m` inside every correct cone from
-  `m+1` on, and D25 (density) says even Byzantine-authored blocks cannot
-  be selectively blind below any valid block. So "everything `Λ` rounds
-  deep is in every correct validator's cone" is a *theorem*, and a
-  validator may set `G_v := t − Λ` knowing no correct peer in the L1
-  envelope still lacks what it discards. **The rule's safety is exactly
-  coextensive with that envelope**: post-`R`, round skew ≤ 1; any
-  validator outside it — partitioned, crashed, joining — is by definition
-  on the bootstrap path below.
+  (`all_decided_below_of_fairRun`); A2 by the margin. On skew, the model
+  is more honest than the first draft: "two correct frontiers differ by
+  at most the commit lag" is a statement about *clocks*, and this model
+  is round-synchronous with static views — the constant has no carrier
+  here. What the model proves instead is that skew **does not need
+  bounding for correctness**: verdicts at different horizons are equal
+  outright (`decided_agree_horizons`), and different horizons compose
+  (`chop_chop` — a deeper cut is just another cut, so validators at
+  different `G` sit on one tower of truncations, never in incomparable
+  worlds). No agreement protocol; the DAG's own commits are the
+  synchronizer, and the timing constant lives with `R` in `liveness.md`.
+- **The common-core rule** (depth-based). Proved sharper than stated:
+  possession universalises in **one** round, not `Λ` —
+  `viewUpto_subset_viewUpto_succ` (post-`R`, everything *any* correct
+  validator retains by round `m` is in *every* correct store by `m+1`),
+  so a validator may set `G_v := t − Λ` for any `Λ ≥ 1` knowing no
+  correct peer in the L1 envelope still lacks what it discards
+  (`pruned_subset_peer_store`). **The rule's guarantee is exactly
+  coextensive with that envelope**: any validator outside it —
+  partitioned, crashed, joining — is by definition on the bootstrap path
+  below.
 
 The two rules bound different things (frontier: decidedness; depth:
 universality of possession) and the admissible horizon is their minimum.
+
+**The lag envelope — what actually constrains `Λ`.** Collecting the
+proved facts in one place, because the answer is easy to misremember:
+*safety constrains `Λ` not at all*; every restriction is a completeness
+or cost statement, each pinned to its theorem.
+
+| bound | source | what breaks below it |
+|---|---|---|
+| — (any `G` is safe) | `decided_chop`, `decided_agree_chop`, `bootstrap_agree` | nothing — commit safety carries no lag hypothesis at all; its only premise is `G ≤ slotRound d` |
+| `Λ ≥ 0` vs the *decided* frontier | A1 / `all_decided_below_of_fairRun` | ledger totality: a slot reads rounds `slotRound k … +2`, so cutting above an undecided slot discards its certificates and the slot is undecidable forever — output stalls, safety unharmed |
+| `Λ ≥ 1` | G9, `viewUpto_subset_viewUpto_succ` | no-desync among correct peers: possession universalises in exactly one round, so at `Λ = 0` a peer may still lack what you discard |
+| `Λ ≥ 2` | G11, `accepted_mem_base` (`t ≥ m + 2`, tight on data) | base completeness for joiners: below it, an accepted round-`G` block can be missing from the attested base and a window block dangles — the `Dexcl` witness realises this at `t = m + 1` |
+| upper bound: none | G6/G6b/G7 constants | nothing breaks; storage, join cost and relay obligation grow **linearly in `Λ`** (`|Correct|·(Λ+1) + |Correct|·f + Λ·|Correct|·f·κ`), so the ceiling is appetite, not correctness |
+
+One further consideration that is a trade-off, not a restriction: `Λ` is
+the epoch length of the statute of limitations (§8). Smaller `Λ`
+forgives exposed equivocators sooner; the budget prices every re-entry
+either way. The practical envelope is therefore
+**`2 ≤ Λ ≤` storage appetite** — everything below 2 loses a
+completeness property, never a safety one.
 
 **Where a residue of agreement genuinely lives: bootstrap — and the
 inexact certificate that dissolves most of it.** A validator so far behind
@@ -333,9 +395,11 @@ anything surviving the filter has a correct attester, hence lies in a
 correct cone, hence (relay, C3′) in *every* correct cone within a round.
 The certified base is therefore **sandwiched** —
 `C ⊆ Base ⊆` (the layer of the union of correct cones) — and the sandwich
-is all rebasing needs: window completeness holds after one propagation
-lag, verdicts above the cut are view-local (G2), and extra fringe is
-inert and bounded. Bases need not agree, exactly as horizons need not.
+is all rebasing needs: window completeness holds two rounds above the
+window frontier (`t ≥ m + 2`, one round for the carrier, one for the
+backbone — tight on data), verdicts above the cut are view-local (G2),
+and extra fringe is inert and bounded. Bases need not agree, exactly as
+horizons need not.
 Two further precisions from review: the fringe may contain **several
 same-author blocks** — harmless, since `no_equivocation` constrains
 correct authors only, and the witnesses already carry Byzantine
@@ -357,28 +421,49 @@ distinct authors, and `f+1` authors always include a correct one
 protocol detail of choosing it (presenters may offer different cuts) is
 recorded in P8.
 
-- **G8 (skew).** Post-`R`, admissible horizons of correct validators under
-  either rule differ by a bounded amount (commit lag, resp. round skew).
-- **G9 (no desync).** A correct validator never *needs* a block below any
-  correct peer's admissible horizon, except at bootstrap — where the
-  attested base suffices. (This is the formal content of "slightly
-  different horizons are fine".)
-- **G10 (the sandwich).** Post-`R`, `C ⊆ Base U t G ⊆` the round-`G`
-  layer of the union of correct cones — completeness from the backbone,
-  soundness from `f+1`-implies-a-correct-attester.
-- **G11 (window completeness).** With the attestation round one
-  propagation lag above `G`, every round-`G` block referenced by a
-  surviving window block is in `Base` — rebasing on `Base` restores
-  `complete` for the obtainable window. The proof route is three existing
-  theorems composed: acceptance puts the block in a correct store, the
-  relay (C3′) puts it in every correct store within a round, and
-  `viewUpto_subset_history` lifts stores into own-block cones — i.e.,
-  into attestations. The scope — blocks in *accepted* cones — is exactly
-  the obtainable window of §4, which is the right scope.
-- **G12 (bootstrap safety).** Rebasing on *any* base satisfying the G10
-  sandwich yields slot verdicts that never conflict with any correct
-  validator's and eventually agree (compose G10–G11 with G2–G4): inexact
-  certificates, exact decisions.
+- **G8 (heterogeneous horizons) — proved as composition + agreement**
+  (`Horizon.lean`). The planned "differ by a bounded amount" was a clock
+  statement with no model carrier (see the deviation note in the status
+  block); what is proved is stronger where it matters:
+  `chop_chop : chop (chop U G₁) (G₂−G₁) = chop U G₂` — every pair of
+  horizons is related by the one operator — and
+  `decided_agree_horizons` — validators truncated at *different*
+  horizons, holding arbitrary views of their truncations, decide every
+  shared slot (matched through the absolute index `d₁+k₁ = d₂+k₂`)
+  identically.
+- **G9 (no desync) — proved** (`viewUpto_subset_viewUpto_succ`,
+  `pruned_subset_peer_store`). Post-`R`, possession universalises in
+  one round, so a correct validator never *needs* a block below any
+  correct peer's admissible horizon (`Λ ≥ 1`), except at bootstrap —
+  where the attested base suffices. This is the formal content of
+  "slightly different horizons are fine".
+- **G10 (the sandwich) — proved** (`AttestedBase.lean`). Post-`R`,
+  `C ⊆ Base U t G ⊆` the round-`G` layer of the union of correct
+  cones — completeness from the backbone (`correct_mem_base`),
+  soundness from `f+1`-implies-a-correct-attester
+  (`exists_correct_attester_of_mem_base`). Witness: `Base Utwin 1 0 =
+  {1,2,3}`, the shared correct layer exactly, both equivocation halves
+  filtered.
+- **G11 (window completeness) — proved, with a sharper scope**
+  (`accepted_mem_base`). *Every* round-`G` block a correct validator
+  accepted into its window by `m` — not merely those referenced by
+  surviving window blocks — is in the base attested at any `t ≥ m + 2`,
+  and the bound is tight on data. The proof route is the three existing
+  theorems composed, as planned: acceptance puts the block in a correct
+  store, the store rides into its keeper's next block
+  (`viewUpto_subset_history`), and the backbone
+  (`mem_history_of_correct`) carries that block into every correct
+  round-`t` cone — a cone *is* an attestation. The scope — blocks in
+  *accepted* cones — is exactly the obtainable window of §4.
+- **G12 (bootstrap safety) — proved, as equality** (`joinView`,
+  `bootstrap_agree`). The joiner's assembly — base as genesis layer plus
+  a correct peer's window strictly above the cut — is a bona-fide
+  `View` of `chop U G` (downward closure is the content: window
+  references above the cut stay in the window; references *at* the cut
+  are exactly the G11 blocks), and any decision reached from it equals
+  any full-history validator's — not "never conflicts, eventually
+  agrees" but outright equality. Inexact certificates, exact
+  decisions.
 
 ## 7. The plan
 
