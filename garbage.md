@@ -7,13 +7,30 @@
 > and whether the surrounding prose is faithful to what is proved, has
 > only human-plus-LLM review behind it. Read critically.
 
-Design notes and plan for garbage-collecting the DAG. Nothing here is
-proved yet; this document fixes the problem, the design, the interactions
-with the existing development, and the phased plan. Results will use
+Design notes and plan for garbage-collecting the DAG. Results use
 **G**-labels (G1, G2, …), continuing the house scheme. The document has
 been through two design-review passes; their findings are folded in below
 rather than kept as errata, with the items that changed the design marked
 **(review)**.
+
+> **Status.** The core is **proved**: G1 (`LeanDag/Chop.lean` — the
+> operator, universe laws, one-way `DoSValid`), G2 and the per-slot heart
+> of G3 (all six verdict invariances including the indirect test
+> `CertifiedIn`), G13/G14/G5/G6 (`LeanDag/Window.lean` — windowed
+> novelty, store correspondence, liveness transfer, and the
+> bounded-storage headline `card_retained_le`), and both halves of G10
+> (`LeanDag/AttestedBase.lean`). Witnessed by `decide` in
+> `LeanDagTest/Chop.lean`: the `Uexcl` commit surviving the cut verbatim,
+> the statute of limitations vanishing an exposure (and surviving *at*
+> the cut), the G6 constant on `Dtwin`, and `Base Utwin 1 0 = {1,2,3}` —
+> the sandwich tight at the bottom, both equivocation halves filtered.
+> One deviation from the plan, in our favour: the slot-schedule
+> correspondence of §2 was **not needed** for any of this — the entire
+> Mysticeti rule layer (`certificates`, `DirectCommit`, `DirectSkip`,
+> `CertifiedIn`) is round-indexed and schedule-free, so G2/G3 close
+> without touching `Slots`. The schedule enters only at the
+> `Decided`-over-slots level (G3/G4 in the M6/L3 idiom), which remains,
+> along with G6b/G7 statements, G8/G9 (policy), G11/G12, and P9.
 
 ## 1. The problem
 

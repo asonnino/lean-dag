@@ -18,6 +18,9 @@ import LeanDag.Pedigree
 import LeanDag.Density
 import LeanDag.Novelty
 import LeanDag.Composition
+import LeanDag.Chop
+import LeanDag.Window
+import LeanDag.AttestedBase
 import LeanDag.Acceptance
 import LeanDag.Counting
 import LeanDag.Exclusion
