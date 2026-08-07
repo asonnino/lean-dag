@@ -1,6 +1,6 @@
-import LeanDag.Window
-import LeanDag.AttestedBase
-import LeanDag.ChopDecided
+import LeanDag.GC.Window
+import LeanDag.GC.AttestedBase
+import LeanDag.GC.ChopDecided
 
 /-!
 # Bootstrap: the joiner's view, assembled and bounded

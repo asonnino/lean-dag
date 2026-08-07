@@ -1,4 +1,4 @@
-import LeanDag.Bootstrap
+import LeanDag.GC.Bootstrap
 import LeanDagTest.Exclusion
 
 /-!

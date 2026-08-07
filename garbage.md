@@ -13,23 +13,23 @@ been through two design-review passes; their findings are folded in below
 rather than kept as errata, with the items that changed the design marked
 **(review)**.
 
-> **Status: every G-label is proved and witnessed.** G1 (`LeanDag/Chop.lean`
+> **Status: every G-label is proved and witnessed.** G1 (`LeanDag/GC/Chop.lean`
 > — the operator, universe laws, one-way `DoSValid`), G2 and per-slot G3
 > (all six verdict invariances including the indirect test `CertifiedIn`),
-> G13/G14/G5/G6 (`LeanDag/Window.lean` — windowed novelty, store
+> G13/G14/G5/G6 (`LeanDag/GC/Window.lean` — windowed novelty, store
 > correspondence, liveness transfer, the bounded-storage headline
 > `card_retained_le`), G3/G4 at the full `Decided` level
-> (`LeanDag/ChopDecided.lean` — `View.chop`, the induced schedule
+> (`LeanDag/GC/ChopDecided.lean` — `View.chop`, the induced schedule
 > `Slots.chop`, `decided_chop` by structural induction both ways, and the
 > cross-cut agreement `decided_agree_chop` for **arbitrary** joiner
-> views), G10 both halves (`LeanDag/AttestedBase.lean`), G11/G6b/G7/G12
-> (`LeanDag/Bootstrap.lean` — `accepted_mem_base`, `card_joinIds_le`,
+> views), G10 both halves (`LeanDag/GC/AttestedBase.lean`), G11/G6b/G7/G12
+> (`LeanDag/GC/Bootstrap.lean` — `accepted_mem_base`, `card_joinIds_le`,
 > `card_serve_le`, `joinView`/`bootstrap_agree`), and G8/G9
-> (`LeanDag/Horizon.lean` — the composition law `chop_chop`,
+> (`LeanDag/GC/Horizon.lean` — the composition law `chop_chop`,
 > heterogeneous-horizon agreement, and the one-round universal-possession
-> depth bound). Witnessed by `decide` throughout `LeanDagTest/Chop.lean`,
-> `LeanDagTest/Bootstrap.lean` (which gives `Uexcl` its delivery
-> schedule `Dexcl`) and `LeanDagTest/Horizon.lean`; the G11 witness sits
+> depth bound). Witnessed by `decide` throughout `LeanDagTest/GC/Chop.lean`,
+> `LeanDagTest/GC/Bootstrap.lean` (which gives `Uexcl` its delivery
+> schedule `Dexcl`) and `LeanDagTest/GC/Horizon.lean`; the G11 witness sits
 > exactly on the `t = m + 2` boundary.
 >
 > Two deviations from the plan, both recorded in module docs. In our
@@ -569,7 +569,7 @@ authors are ever exposed (C2), exclusion lands only on the guilty (D15).
 No theorem is re-proved; the truncation is just another universe.
 
 **Across a cut, forgiveness is one-way and priced.** The statute of
-limitations (`LeanDagTest/Chop.lean`) forgives exactly the equivocations
+limitations (`LeanDagTest/GC/Chop.lean`) forgives exactly the equivocations
 whose witnessing pair falls strictly below the cut — a pair *at* the cut
 survives, and the attested base *preserves* boundary exposure (both
 halves of a circulated round-`G` equivocation clear the `f+1` filter).

@@ -1,5 +1,5 @@
-import LeanDag.Horizon
-import LeanDagTest.Bootstrap
+import LeanDag.GC.Horizon
+import LeanDagTest.GC.Bootstrap
 
 /-!
 # The horizon policy, witnessed

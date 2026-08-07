@@ -1,4 +1,4 @@
-import LeanDag.Chop
+import LeanDag.GC.Chop
 import LeanDag.Novelty
 
 /-!

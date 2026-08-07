@@ -1,6 +1,6 @@
-import LeanDag.Window
-import LeanDag.AttestedBase
-import LeanDag.ChopDecided
+import LeanDag.GC.Window
+import LeanDag.GC.AttestedBase
+import LeanDag.GC.ChopDecided
 import LeanDagTest.Exposure
 import LeanDagTest.Exclusion
 import LeanDagTest.Novelty

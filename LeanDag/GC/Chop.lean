@@ -242,7 +242,7 @@ theorem exposedIn_of_exposedIn_chop {X : Validator}
 
 /-- **G1, DoS half — the one-way door.** The condition survives
 truncation; the converse fails by design (the statute of limitations,
-witnessed in `LeanDagTest/Chop.lean`). -/
+witnessed in `LeanDagTest/GC/Chop.lean`). -/
 theorem dosValid_chop (hdos : DoSValid U) : DoSValid (chop U G) := by
   intro b hb i hi
   intro hexp

@@ -15,6 +15,6 @@ import LeanDagTest.Pedigree
 import LeanDagTest.Density
 import LeanDagTest.Doubling
 import LeanDagTest.Novelty
-import LeanDagTest.Chop
-import LeanDagTest.Bootstrap
-import LeanDagTest.Horizon
+import LeanDagTest.GC.Chop
+import LeanDagTest.GC.Bootstrap
+import LeanDagTest.GC.Horizon
