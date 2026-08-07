@@ -1,5 +1,6 @@
 import LeanDag.Window
 import LeanDag.AttestedBase
+import LeanDag.ChopDecided
 import LeanDagTest.Exposure
 import LeanDagTest.Exclusion
 import LeanDagTest.Novelty
@@ -61,6 +62,39 @@ example : certificates (chop Uexcl 2) 11 1 = certificates Uexcl 11 3 :=
   certificates_chop 1
 example : DirectCommit (chop Uexcl 2) 11 1 ↔ DirectCommit Uexcl 11 3 :=
   directCommit_chop 1
+
+/-! ## The decision relation across the cut (G3/G4) -/
+
+-- The induced schedule: `fairSlots` (slot `k` at round `3k`) chopped at
+-- `G = 2` from base slot `d = 1` puts slot 0 at rebased round 1 — where
+-- `Uexcl`'s slot-1 commit now lives.
+example : (fairSlots.chop 2 1 (by decide)).slotRound 0 = 1 := by decide
+example : (fairSlots.chop 2 1 (by decide)).leader 0 = 1 := by decide
+
+-- The full-history decision at slot 1, concretely: leader block 11.
+example : Decided Uexcl (View.full Uexcl) 1 (some 11) :=
+  Decided.directCommit (by decide) (by decide)
+
+-- G3 applied: the truncated view re-decides it as slot 0 of the truncation.
+example : Decided (S := fairSlots.chop 2 1 (by decide)) (chop Uexcl 2)
+    ((View.full Uexcl).chop 2) 0 (some 11) :=
+  (decided_chop (by decide)).mpr (Decided.directCommit (by decide) (by decide))
+
+-- A joiner's decision, derived *inside the truncation alone*: the full view
+-- of `chop Uexcl 2` is not `V.chop` for any full-history `V`, and the
+-- direct rule fires on the truncated data by computation.
+example : Decided (S := fairSlots.chop 2 1 (by decide)) (chop Uexcl 2)
+    (View.full (chop Uexcl 2)) 0 (some 11) :=
+  Decided.directCommit (S := fairSlots.chop 2 1 (by decide)) (by decide) (by decide)
+
+/-- **G4 on data**: whatever verdicts a joiner (any view of the truncation,
+slot 0) and a full-history validator (any view of `Uexcl`, slot 1) reach,
+they are the same verdict. -/
+example {w v : Option (Fin 20)}
+    (hW : Decided (S := fairSlots.chop 2 1 (by decide)) (chop Uexcl 2)
+      (View.full (chop Uexcl 2)) 0 w)
+    (hV : Decided Uexcl (View.full Uexcl) 1 v) : w = v :=
+  decided_agree_chop (by decide) hW hV
 
 /-! ## The statute of limitations, on data -/
 
