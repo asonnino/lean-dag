@@ -407,14 +407,17 @@ leaders (slot `k` at round `k`, leader `k % 6`).
   reuse claim as a computation. Slot 1 commits directly with all six
   supporters; O7 applied commits slot 2 from `uodo_populated` and
   `uodo_synchronised`; O8 applied (`spansEligible_two`).
-- **`Uskip`** (`Fin 36`, six rounds — the decision zoo): slot 1 splits
-  3–3 (neither direct rule fires) and is committed **indirectly**
-  through the slot-3 anchor with `coneSupports` exactly `{1,2,3}` —
-  `ThickLink` tight at the threshold (`uskip_slot1`); slot 2 splits
-  2–4 and is **indirectly skipped** through the slot-4 anchor — two
-  supporters cannot reach three in any cone (`uskip_slot2`); slots 3
-  and 4 commit directly and form the committed run to which O9 applies,
-  deciding every slot below.
+- **`Uskip`** (`Fin 36`, six rounds — the decision zoo, all four
+  `Decided` constructors on one universe): slot 0's Byzantine leader is
+  **directly skipped** — five blames, exactly the quorum, with author 0
+  pinned to support by its own mandatory self-parent
+  (`uskip_slot0`); slot 1 splits 3–3 (neither direct rule fires) and is
+  committed **indirectly** through the slot-3 anchor with
+  `coneSupports` exactly `{1,2,3}` — `ThickLink` tight at the threshold
+  (`uskip_slot1`); slot 2 splits 2–4 and is **indirectly skipped**
+  through the slot-4 anchor — two supporters cannot reach three in any
+  cone (`uskip_slot2`); slots 3 and 4 commit directly and form the
+  committed run to which O9 applies, deciding every slot below.
 - **`Utwin6`** (`Fin 25` — the §6 finding on data): the Byzantine
   leader's round-0 twins with supporters `{0,1,2}` and `{3,4,5}`;
   `utwin6_both_pass` — both twins pass `ThickLink` against the
@@ -466,4 +469,4 @@ Odontoceti-specific instantiation was not this arc's concern.
 | `LeanDag/Odontoceti/Rules.lean` | `Faults5`; `DirectCommit`/`DirectSkip`/`coneSupports`/`ThickLink`; the arithmetic core O1, O1′, O2, O3, O4′ |
 | `LeanDag/Odontoceti/Decision.lean` | `decisionRound`/`Eligible`; the view layer; `Decided` with the canonicity premise; `decided_unique` (O5), `safety` (O6) |
 | `LeanDag/Odontoceti/Liveness.lean` | O7 (`decided_of_leader_mem`), O8 (`spansEligible_two`), O9 (`decided_below_of_committed_run`), O10 (`all_decided_below_of_fairRun`) |
-| `LeanDagTest/Odontoceti/Model.lean` | the boundary instance; `Uodo`, `Uskip`, `Utwin6`; every rule witnessed by `decide`, including `utwin6_both_pass` |
+| `LeanDagTest/Odontoceti/Model.lean` | the boundary instance; `Uodo`, `Uskip`, `Utwin6`; every rule and all four `Decided` constructors witnessed by `decide`, including `utwin6_both_pass` |

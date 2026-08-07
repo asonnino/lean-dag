@@ -109,7 +109,9 @@ def skipBlk : Fin 36 → Block (Fin 6) (Fin 36) Unit := fun i =>
     { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
   else if h : (i : ℕ) < 12 then
     { round := 1, creator := ⟨(i : ℕ) - 6, by omega⟩,
-      refs := {0, 1, 2, 3, 4, 5}, payload := () }
+      refs := if (i : ℕ) = 6 then {0, 1, 2, 3, 4}  -- pinned by self-parent
+        else {1, 2, 3, 4, 5},                       -- blames slot 0's leader
+      payload := () }
   else if h : (i : ℕ) < 18 then
     { round := 2, creator := ⟨(i : ℕ) - 12, by omega⟩,
       refs := if (i : ℕ) = 13 ∨ (i : ℕ) = 14 ∨ (i : ℕ) = 15 then
@@ -135,6 +137,19 @@ def Uskip : BlockUniverse (Fin 6) (Fin 36) Unit where
   complete := by decide
   valid := by decide
   no_equivocation := by decide
+
+-- Slot 0 (Byzantine leader, block 0): the five correct authors blame
+-- it; author 0 itself is pinned to support by its mandatory
+-- self-parent. Five blames is exactly the quorum: directly skipped.
+example : (blames Uskip 0 1 : Finset (Fin 6)) = {1, 2, 3, 4, 5} := by
+  decide
+example : Odontoceti.DirectSkip Uskip 0 0 := by decide
+
+/-- **The direct skip, as a decision**: every candidate of slot 0 — the
+one block — is blamed by a quorum in the full view. -/
+theorem uskip_slot0 :
+    Odontoceti.Decided Uskip (View.full Uskip) 0 none :=
+  Decided.directSkip (by decide)
 
 -- Slot 1 (leader block 7): three supporters, three blamers — neither
 -- direct rule fires.
