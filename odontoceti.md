@@ -20,9 +20,11 @@ rule, proved in `LeanDag/Odontoceti/` with `decide` witnesses in
 fixed committee. Results carry **O**-labels, continuing the house
 scheme. The existing DAG development is consumed read-only — not one
 definition or theorem outside the new directory changed — and the
-formalization surfaced one genuine finding: the thesis's agreement
-argument silently rests on an implementation detail, which the
-formalized rule makes explicit as a canonicity premise (§6).
+formalization surfaced four findings about the thesis (§6): a
+consensus-critical gap in the agreement argument, a missing lemma its
+case analysis needs, a load-bearing ambiguity in the indirect test's
+counting unit, and a loose counting step — alongside confirmation that
+everything else is sound, at a generality the thesis does not claim.
 
 ## 0. Overview
 
@@ -49,13 +51,17 @@ with no certificate round.
   direct thresholds `n − f` and indirect threshold `n − 3f`,
   specializing to the thesis's `4f+1` / `2f+1` at the boundary. The
   planned fallback (pinning `n = 5f+1`) was never needed.
-- **The finding** (§6): agreement between two *indirect* commits at a
+- **The findings** (§6): four issues in the thesis's safety argument.
+  Chief among them: agreement between two *indirect* commits at a
   shared anchor is not a consequence of the quorum arithmetic — two
   equivocating candidates can both pass the indirect test at one
   anchor, realised on data by `utwin6_both_pass` — so the formalized
-  rule commits the **canonical least** passing candidate, which is the
+  rule commits the **canonical least** passing candidate, the
   implementation's deterministic iteration order stated as mathematics,
-  and is exactly what makes agreement a theorem.
+  and exactly what makes agreement a theorem. Also: a lemma the
+  agreement proof needs but the thesis lacks (O4′), the
+  blocks-versus-authors ambiguity in the indirect test, and a counting
+  step that needs the exact complement identity to go through.
 
 ## 1. The protocol, in our vocabulary
 
@@ -260,10 +266,15 @@ derivation, in exactly the M6 shape:
 **`safety` (O6).** Two committed blocks for one slot are equal, across
 any views and any routes.
 
-## 6. The finding: agreement needs a canonical candidate
+## 6. Findings: what the formalization surfaced in the thesis
 
-The design review flagged this risk, and it was real — the one place the formalization
-diverges from the thesis by *necessity* rather than generalization.
+Four items, ranked by severity — one consensus-critical gap, one
+missing lemma, one load-bearing ambiguity, one proof-precision issue —
+followed by what was confirmed sound. The first is the one place the
+formalization diverges from the thesis by *necessity* rather than
+generalization, and the design review had flagged the risk in advance.
+
+### F1 — agreement needs a canonical candidate (consensus-critical)
 
 The thesis's Lemma 5 proof handles the indirect/indirect case by
 arguing both validators use the same anchor and "the indirect decision
@@ -300,6 +311,53 @@ the indirect rule is consensus-critical.** Two honest nodes iterating
 different blocks for the same slot at `n = 5f+1`. Any fixed order
 shared by all nodes (block hash is the natural one) restores agreement;
 "first seen" does not.
+
+### F2 — a missing lemma in the safety argument
+
+The thesis's lemma set covers commit-vs-skip (Lemma 1),
+skip-vs-indirect-commit (Lemma 2), propagation (Lemma 3), and
+commit-vs-indirect-**skip** (Corollary 4) — but not *direct commit
+versus indirect commit of a different candidate*, and Lemma 5's case
+analysis silently assumes that crossing closes. It does, but it needs
+its own counting lemma: **O4′** (`eq_of_directCommit_of_thickLink`) —
+a directly committed block is the unique same-author block that can
+pass the indirect test at any anchor, by
+`(n−f) + (n−3f) − f > n ⟺ n ≥ 5f+1`. The inequality is one of the two
+places the five-`f` committee is genuinely spent, which is a sign the
+lemma is load-bearing rather than routine.
+
+### F3 — "2f+1 supports" is ambiguous, and only one reading is provable
+
+The thesis counts "supports in the history of the anchor" without
+saying whether it counts support *blocks* or their *distinct authors*.
+The difference is adversarial: an equivocating supporter can plant any
+number of support-twins in one cone, so the block count is inflatable
+and the skip-side bound (Lemma 2 / O2) fails for it. The author count
+is the reading for which both sides of the arithmetic go through — O2
+bounds it above by `2f`, O3 bounds it below by `n−3f` — and it is what
+`ThickLink` counts (§3).
+
+### F4 — Lemma 2's counting is loose as written
+
+The thesis's "honest supporters ≤ f" step reasons as if exactly `f`
+validators are Byzantine. The bound is correct for **any** actual
+Byzantine count `b ≤ f`, but only via the exact complement identity
+`|Correct| = n − |byzantine|`, in which `b` cancels
+(`card_supporters_le_of_directSkip`, §3); the natural loose bounding
+`|Correct| ≤ n` yields `3f`, which does **not** clear the `n−3f`
+threshold at the boundary. The result stands; the written argument does
+not quite prove it as stated.
+
+### What was confirmed sound
+
+Everything else. The two-round direct rules, the propagation lemma
+(Lemma 3 / O3), the skip-side arithmetic, the two-consecutive-leaders
+liveness structure (Lemmas 8–11 / O7–O9), and the
+self-parent/distinct-author validity rules all check out — and more:
+they hold at the generalization `n ≥ 5f+1` with thresholds `n−f` /
+`n−3f`, which the thesis does not claim. The core design is right; the
+gaps sit in the safety argument's equivocation corners, which is
+exactly where hand proofs about uncertified DAGs tend to be thinnest.
 
 ## 7. Liveness (O7–O10)
 
@@ -388,9 +446,11 @@ All witnesses are by `decide`; all proofs use the standard axioms
   document and `related.md` (whose earlier claim that Odontoceti's
   quorums are not `n−f` was wrong, and is corrected).
 
-**The deviation that is a contribution** (§6): the canonicity premise
-on `indirectCommit` has no counterpart in the thesis; without it,
-agreement is refutable on data. Worth communicating upstream.
+**The deviations that are contributions** (§6): the canonicity premise
+on `indirectCommit` and the O4′ lemma have no counterparts in the
+thesis; without the former, agreement is refutable on data, and without
+the latter, its proof does not close. Worth communicating upstream,
+together with F3/F4.
 
 **What remains, optionally:** deriving the run-recurrence from a
 round-robin schedule definition (thesis Lemma 10's `2f+2`-window

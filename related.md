@@ -227,13 +227,17 @@ earlier note here: at `n = 5f+1`, Odontoceti's quorums — the DAG quorum
 `LeanDag` is parameterised at, so the entire DAG layer applies verbatim
 and only the two-round rule layer is new. `LeanDag/Odontoceti/` proves
 its safety and liveness (`odontoceti.md`), generalized to `n ≥ 5f+1`
-with indirect threshold `n − 3f`, and surfaces one finding: the
-thesis's agreement proof (Lemma 5) silently relies on the
-implementation's candidate-iteration order — two equivocating leader
-blocks can both pass the `2f+1` indirect test at one anchor
-(`utwin6_both_pass`, realised on data) — so the formalized rule commits
-the canonical least passing candidate, which is what makes agreement a
-theorem.
+with indirect threshold `n − 3f`, and surfaces four findings
+(`odontoceti.md` §6). Chief among them: the thesis's agreement proof
+(Lemma 5) silently relies on the implementation's candidate-iteration
+order — two equivocating leader blocks can both pass the `2f+1`
+indirect test at one anchor (`utwin6_both_pass`, realised on data) — so
+the formalized rule commits the canonical least passing candidate,
+which is what makes agreement a theorem. Also: a missing
+commit-versus-indirect-rival lemma the safety proof needs, the
+blocks-versus-authors ambiguity in the indirect test's count, and a
+counting step in its Lemma 2 that holds only via the exact complement
+identity.
 
 ### 4.3 Starfish — and the liveness critique of uncertified DAGs
 
