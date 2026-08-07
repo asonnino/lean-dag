@@ -257,54 +257,97 @@ distinct authors, and `f+1` authors always include a correct one
 ## 7. The plan
 
 House rule as always: every definition gets a witness before anything is
-proved from it. Phases, in order:
+proved from it. Phases, with their dependencies; P7 is independent of P3
+and can run in parallel with the safety chain.
 
-- **P0 — witness first.** `chop Uexcl 2` computed concretely: the
-  post-exclusion DAG re-based, its round-2 layer as geneses; `decide` that
-  it is a universe and that the surviving slot verdicts match. Also the
-  negative witness: `chop Umerge` at a cut above the equivocation round,
-  where validator 0 is *no longer exposed* — the statute of limitations
-  made visible on data.
-- **P1 — the operator.** `chop U G : BlockUniverse` (blocks `≥ G`,
-  rounds rebased, base layer's refs emptied) + **G1**. Design decision to
-  settle here: rebase (preferred — every theorem applies verbatim) versus
+- **P0 — witnesses for the cut** *(no dependencies; settles Q3)*.
+  `chop Uexcl 2` computed concretely: the post-exclusion DAG re-based,
+  its round-2 layer as geneses; `decide` that it is a universe and that
+  the surviving slot verdicts match. The negative witness: `chop Umerge`
+  at a cut above the equivocation round, where validator 0 is *no longer
+  exposed* — the statute of limitations made visible on data before it is
+  argued about. This phase also settles computability: `chop` must be a
+  `Finset`-level operator and the fuel-based `history` (S6) must survive
+  rebasing, or nothing later is `decide`-checkable.
+- **P1 — the operator (G1)** *(after P0)*. `chop U G : BlockUniverse`
+  (blocks `≥ G`, rounds rebased by `−G`, base layer's refs emptied), with
+  the universe laws. Design decision settled here: rebase (preferred —
+  every existing theorem then applies to `chop U G` verbatim) versus
   weakened completeness (rejected unless rebasing hits an unforeseen
-  wall; it threads a hypothesis through everything).
-- **P2 — verdict invariance (G2).** Window-locality of
+  wall; it threads a hypothesis through every proof).
+- **P2 — verdict invariance (G2)** *(after P1)*. Window-locality of
   `supporters`/`certificates`/`blames`/`DirectCommit`/`DirectSkip` under
-  `chop`.
-- **P3 — decision invariance (G3, G4).** The backward sweep under (A1);
-  then heterogeneous horizons by composition. The delicate statements of
-  the extension; expect the effort here.
-- **P4 — liveness transfer (G5).** Induced `Delivery`, transferred
-  `Live`/`DeliversQuorum`, `no_stall` and the commit chain on `chop`.
-- **P5 — bounded storage (G6, G7).** B4 on the truncated universe plus
-  the lag invariant; the windowed relay obligation. The headline.
-- **P6 — horizon policy and the attested base (G8–G12).** The
-  commit-frontier and common-core rules, admissibility, skew, no-desync;
-  then the inexact certificate: `Base` as a DAG-internal, decidable
-  definition, the sandwich (G10), window completeness after the lag
-  (G11), and bootstrap safety (G12). Witness on data: `Base` computed on
-  a truncated `Uexcl`/`Utwin`, with a Byzantine fringe block surviving in
-  one collector's base and not another's — and the verdicts agreeing
-  regardless.
-- **P7 — the forgiveness ledger.** State precisely what survives of
-  C2/D17 across epochs (one reveal per author per epoch) and prove the
-  budget backstop on `chop` (B4/B5 relativized). Doc updates throughout;
+  `chop`: each quantifies over a bounded round window above the slot, and
+  `chop` is the identity there. Mechanical, but the index bookkeeping is
+  where mistakes would hide — every lemma gets a decided instance on the
+  P0 witness.
+- **P3 — decision invariance (G3, G4)** *(after P2; the hard phase)*.
+  The full decision relation — direct, indirect, and the backward sweep —
+  under admissibility (A1): pruning never flips or un-decides a slot
+  above the horizon. Then heterogeneous horizons (G4) by composing G3
+  twice. Expect the effort of the extension to concentrate here, in
+  getting the sweep's statement right.
+- **P4 — liveness transfer (G5)** *(after P1; independent of P2–P3)*.
+  A `Delivery` for `U` induces one for `chop U G` (drop everything below
+  `G`); `Live` and `DeliversQuorum` transfer; `no_stall` and the
+  post-`R` commit chain hold on the truncated universe with the usual
+  offsets.
+- **P5 — bounded storage (G6, G7) — the headline** *(after P1, P4)*.
+  B4 instantiated on `chop U G` plus the lag invariant (A2): every
+  correct validator that keeps its horizon within `Λ` of its current
+  round stores **a constant** — `|Correct|·(Λ+1)·(1 + f·T)`-shaped,
+  independent of `t`. Then the windowed relay obligation (G7): serve your
+  block's cone above `max(G_v, G_w)`, nothing else, no amplification.
+- **P6 — horizon policy (G8, G9)** *(after P3; uses M6/L3 as-is)*.
+  The two local rules — commit-frontier (`G_v :=` decided-prefix end
+  `− Λ`) and common-core depth (`G_v := t − Λ`) — with admissibility by
+  construction, the post-`R` skew bound (G8: commit lag, resp. round
+  skew), and no-desync (G9): a correct validator never needs a block
+  below any correct peer's admissible horizon, except at bootstrap.
+- **P7 — the attested base (G10–G12)** *(after P1–P2; independent of
+  P3, parallel to the safety chain; uses the backbone and relay
+  theorems as-is)*. The inexact certificate:
+  - `Base U t G := { y at round G : y ∈ cones of round-`t` blocks by
+    ≥ f+1 distinct authors }` — DAG-internal, no signatures, decidable;
+    equivocating attesters neutered by counting authors.
+  - **G10 (the sandwich)**: `C ⊆ Base ⊆` the layer of the union of
+    correct cones — completeness because every correct attestation
+    contains the whole shared correct layer (backbone), soundness
+    because `f+1` authors include a correct one.
+  - **G11 (window completeness)**: with the attestation round one
+    propagation lag above `G`, every round-`G` block referenced by a
+    surviving window block clears the filter — rebasing on `Base`
+    restores `complete` for the window. The timing lemma is the real
+    content; it should fall out of the relay theorem (C3′).
+  - **G12 (bootstrap safety)**: rebasing on *any* base satisfying the
+    G10 sandwich yields slot verdicts agreeing with every correct
+    validator's (compose with G2–G4) — inexact certificates, exact
+    decisions.
+  - Witness on data: `Base` computed on truncated `Uexcl`/`Utwin` at two
+    different attestation samples, a Byzantine fringe block surviving in
+    one collector's base and not the other's, and the verdicts agreeing
+    regardless.
+- **P8 — the forgiveness ledger** *(last; after P5, P7)*. State
+  precisely what survives of C2/D17 across epochs — one reveal per
+  author per GC epoch — and prove the budget backstop on `chop`
+  (B4/B5 relativized to the window). Doc updates throughout;
   `dos-equivocation-and-growth.md` §9's "wire-level residue" gains a
-  sibling: the GC residue is bootstrap trust.
+  sibling: the GC residue is bootstrap sampling, and it is `f+1`-sized,
+  not consensus-sized.
 
 **Open questions**, recorded before they are argued about:
 
 - **Q1 — epoch coupling.** Should the budget parameter `T` and the lag
   `Λ` be related? A forgiven author re-enters at budget rate; `Λ` sets how
-  often forgiveness can recur. The product may be the right "adversary
-  work per epoch" quantity.
-- **Q2 — checkpoint content.** Is the new genesis layer alone enough for
-  all consumers (it is for the DAG machinery), or does application state
-  (the ledger prefix) force a richer checkpoint? Out of scope for the DAG
-  theorems, in scope for honesty about what "bootstrap" means.
-- **Q3 — pruned-view decidability.** `decide`-checkable witnesses need
-  `chop` computable; the fuel-based `history` (S6) should survive
-  rebasing untouched, but this is exactly the kind of thing P0 exists to
-  catch.
+  often forgiveness can recur. The product `Λ·f·T` may be the right
+  "adversary work per epoch" quantity, and P8 should say so or refute it.
+- **Q2 — checkpoint content.** For the DAG machinery the attested base
+  *is* the checkpoint (P7 settles the DAG side, and no signatures are
+  needed for it). What remains out of scope is application state — the
+  ledger prefix a joining node also wants — which is a different object
+  with different trust requirements; the doc should stay honest that
+  "bootstrap" for a full node means both.
+- **Q3 — attestation-round choice.** G11 needs the attestation round one
+  propagation lag above `G`; A2 needs `Λ` above the commit window. Are
+  these the same constant, and should `Base` be pinned to `t = G + Λ`?
+  Likely resolvable inside P7, but the answer shapes G8's skew bound.
