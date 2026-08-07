@@ -200,23 +200,59 @@ free. Two candidate rules, not exclusive:
 The two rules bound different things (frontier: decidedness; depth:
 universality of possession) and the admissible horizon is their minimum.
 
-**Where a residue of agreement genuinely lives: bootstrap.** A validator
-so far behind that its needs predate every peer's horizon cannot fetch the
-prefix — it must adopt a **checkpoint**: the new genesis layer of some
-`chop`, plus the claim that everything below is decided. Verifying that
-claim without history is the classic problem; the in-model answer needs no
-signatures: **a checkpoint presented identically by `f+1` distinct
-validators contains a correct presenter** (`exists_correct_of_card`), and
-a correct presenter's checkpoint is admissible by G1–G4. That is the only
-place where cross-validator matching is required, and it is `f+1`, not a
-quorum, and only at (re)join time.
+**Where a residue of agreement genuinely lives: bootstrap — and the
+inexact certificate that dissolves most of it.** A validator so far behind
+that its needs predate every peer's horizon cannot fetch the prefix — it
+must adopt the new genesis layer from others. Demanding `f+1` *identical*
+checkpoints would be wrong: correct validators' layers share the correct
+core exactly (backbone) but differ in the Byzantine fringe, so honest
+presenters need never match block-for-block. The right primitive is the
+**inexact certificate**, filtered per block:
+
+> attest the layer, keep what `≥ f+1` distinct authors attest.
+
+Post-`R` each correct attestation is `C ∪ B_v` — the **shared correct
+layer** `C` (identical across correct validators, `|C| ≥ n−f`, by the
+backbone; one block per correct author by T1) plus a varying Byzantine
+fringe. Among any `n−f` attestations, `≥ n−2f ≥ f+1` are correct and each
+contains all of `C`, so nothing of `C` is filtered out; conversely
+anything surviving the filter has a correct attester, hence lies in a
+correct cone, hence (relay, C3′) in *every* correct cone within a round.
+The certified base is therefore **sandwiched** —
+`C ⊆ Base ⊆` (the layer of the union of correct cones) — and the sandwich
+is all rebasing needs: window completeness holds after one propagation
+lag (referenced layer blocks are in correct cones), verdicts above the
+cut are window-local (G2), and extra fringe is inert and bounded. Bases
+need not agree, exactly as horizons need not.
+
+Better still, **no signatures are needed even here**: in this model a
+validator's attestation *is its block* — its cone is its objective,
+checkable (D13), unforgeable statement of what the layer contains. The
+certificate is definable DAG-internally and decidably:
+`Base U t G := { y at round G : y lies in the cones of round-t blocks by
+≥ f+1 distinct authors }`, with the guarantee side supplied by `n−f`
+authors *having* round-`t` blocks (Populated) rather than by collecting
+messages. Equivocating attesters cost nothing — the filter counts
+distinct authors, and `f+1` authors always include a correct one
+(`exists_correct_of_card`).
 
 - **G8 (skew).** Post-`R`, admissible horizons of correct validators under
   either rule differ by a bounded amount (commit lag, resp. round skew).
 - **G9 (no desync).** A correct validator never *needs* a block below any
   correct peer's admissible horizon, except at bootstrap — where the
-  `f+1`-matching checkpoint rule suffices. (This is the formal content of
-  "slightly different horizons are fine".)
+  attested base suffices. (This is the formal content of "slightly
+  different horizons are fine".)
+- **G10 (the sandwich).** Post-`R`, `C ⊆ Base U t G ⊆` the round-`G`
+  layer of the union of correct cones — completeness from the backbone,
+  soundness from `f+1`-implies-a-correct-attester.
+- **G11 (window completeness).** With the attestation round one
+  propagation lag above `G`, every round-`G` block referenced by a
+  surviving window block is in `Base` — rebasing on `Base` restores
+  `complete` for the window.
+- **G12 (bootstrap safety).** Rebasing on *any* base satisfying the G10
+  sandwich yields a universe whose slot verdicts above the cut agree with
+  every correct validator's (compose G10–G11 with G2–G4): inexact
+  certificates, exact decisions.
 
 ## 7. The plan
 
@@ -244,9 +280,14 @@ proved from it. Phases, in order:
   `Live`/`DeliversQuorum`, `no_stall` and the commit chain on `chop`.
 - **P5 — bounded storage (G6, G7).** B4 on the truncated universe plus
   the lag invariant; the windowed relay obligation. The headline.
-- **P6 — horizon policy (G8, G9).** The commit-frontier and common-core
-  rules, admissibility, skew, no-desync; the `f+1` checkpoint-matching
-  lemma for bootstrap.
+- **P6 — horizon policy and the attested base (G8–G12).** The
+  commit-frontier and common-core rules, admissibility, skew, no-desync;
+  then the inexact certificate: `Base` as a DAG-internal, decidable
+  definition, the sandwich (G10), window completeness after the lag
+  (G11), and bootstrap safety (G12). Witness on data: `Base` computed on
+  a truncated `Uexcl`/`Utwin`, with a Byzantine fringe block surviving in
+  one collector's base and not another's — and the verdicts agreeing
+  regardless.
 - **P7 — the forgiveness ledger.** State precisely what survives of
   C2/D17 across epochs (one reveal per author per epoch) and prove the
   budget backstop on `chop` (B4/B5 relativized). Doc updates throughout;
