@@ -1,5 +1,12 @@
 # lean-dag — Equivocation, growth, and denial of service
 
+> **Provenance.** Code and prose in this project were co-written with
+> heavy LLM assistance. The Lean proofs are machine-checked — the kernel
+> verifies every theorem against its stated form — but whether the
+> definitions and theorem statements capture their *intended* meaning,
+> and whether the surrounding prose is faithful to what is proved, has
+> only human-plus-LLM review behind it. Read critically.
+
 The denial-of-service extension of the development. Safety and liveness
 (`spec.md`, `liveness.md`) already hold under equivocation — `no_equivocation`
 constrains correct validators only, and every result is stated against a

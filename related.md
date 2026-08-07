@@ -1,5 +1,15 @@
 # Related work: consensus on uncertified DAGs
 
+> **Provenance.** Code and prose in this project were co-written with
+> heavy LLM assistance. The Lean proofs are machine-checked — the kernel
+> verifies every theorem against its stated form — but whether the
+> definitions and theorem statements capture their *intended* meaning,
+> and whether the surrounding prose is faithful to what is proved, has
+> only human-plus-LLM review behind it. Read critically.
+> In particular, the paper summaries in this survey may contain errors
+> of reading; verify claims against the cited sources before relying on
+> them.
+
 **Scope.** This document surveys the protocols that share Mysticeti's central
 structural commitment — an *uncertified* DAG, in which no certificate is ever
 constructed or transmitted, and certification is instead a property of the graph

@@ -1,5 +1,12 @@
 # lean-dag — Liveness
 
+> **Provenance.** Code and prose in this project were co-written with
+> heavy LLM assistance. The Lean proofs are machine-checked — the kernel
+> verifies every theorem against its stated form — but whether the
+> definitions and theorem statements capture their *intended* meaning,
+> and whether the surrounding prose is faithful to what is proved, has
+> only human-plus-LLM review behind it. Read critically.
+
 Design notes for the liveness results. Separate from `spec.md` because the
 approach is exploratory and because liveness needs modelling primitives the
 static development deliberately lacks. Things graduate into `spec.md` once

@@ -1,5 +1,12 @@
 # lean-dag — Specification
 
+> **Provenance.** Code and prose in this project were co-written with
+> heavy LLM assistance. The Lean proofs are machine-checked — the kernel
+> verifies every theorem against its stated form — but whether the
+> definitions and theorem statements capture their *intended* meaning,
+> and whether the surrounding prose is faithful to what is proved, has
+> only human-plus-LLM review behind it. Read critically.
+
 Formalize, in Lean 4 + Mathlib, the core combinatorial structures and safety
 arguments underlying DAG-based BFT consensus, starting with the fragment of
 **Mysticeti** needed to state and prove its key persistence/safety lemma,

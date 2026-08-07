@@ -1,5 +1,12 @@
 # Eventual DAG Synchrony: a machine-checked account of safety and liveness for uncertified DAG consensus
 
+> **Provenance.** Code and prose in this project were co-written with
+> heavy LLM assistance. The Lean proofs are machine-checked — the kernel
+> verifies every theorem against its stated form — but whether the
+> definitions and theorem statements capture their *intended* meaning,
+> and whether the surrounding prose is faithful to what is proved, has
+> only human-plus-LLM review behind it. Read critically.
+
 **Report outline.** This document fixes the structure, definitions, assumptions
 and results of the report. All displayed Lean is copied from the source and
 type-checks against the built library.

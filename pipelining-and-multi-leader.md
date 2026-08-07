@@ -1,5 +1,12 @@
 # lean-dag — Pipelining and multiple leaders
 
+> **Provenance.** Code and prose in this project were co-written with
+> heavy LLM assistance. The Lean proofs are machine-checked — the kernel
+> verifies every theorem against its stated form — but whether the
+> definitions and theorem statements capture their *intended* meaning,
+> and whether the surrounding prose is faithful to what is proved, has
+> only human-plus-LLM review behind it. Read critically.
+
 A record of extending the safety and liveness results from the single-leader,
 three-round-spaced commit rule of `spec.md` and `liveness.md` to the
 **pipelined, multi-leader** Mysticeti-C rule actually deployed.
