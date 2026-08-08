@@ -1666,73 +1666,251 @@ verdict, since novelty is antitone in the growing store.
 
 ## 8. Garbage collection: the horizon
 
-*(design record: `garbage.md`)*
+*(design record: `garbage.md`; modules `LeanDag/GC/`)*
 
-Linear-forever storage still diverges, and a joining validator must
-fetch it. The remedy is a **horizon** `G` — a round below which stores
-retain nothing — with the model-side truncation operator: `chop U G`
-keeps the blocks of rounds `≥ G`, rebases rounds by `−G`, and empties
-the reference sets of the new base layer. The round-`G` layer becomes
-the new genesis layer, every validity clause holds verbatim, and so
-`chop U G` is a bona-fide `BlockUniverse`: every theorem of this report
-applies to it unchanged. The work is relating verdicts *across* the
-cut, and choosing the cut.
+The DoS results end at linear-forever storage, and linear still diverges: a
+validator that runs for years retains years of history, and a joining
+validator must fetch it. The remedy is a **horizon** — a round `G`, chosen
+per validator, below which nothing is retained, requested, or served — with
+theorems that commit safety, commit liveness, bounded storage, and bootstrap
+all survive above it, and that **no consensus on the horizon is ever
+needed**. Throughout, `G` denotes a horizon round and `Λ` (the *lag*) how far
+a horizon trails the current round; both are per-validator quantities.
 
-**Safety crosses the cut unconditionally.** Every commit-rule notion
-for a slot above the cut is invariant (`certificates_chop`,
-`directCommit_chop`, …, `certifiedIn_chop`), and the full decision
-relation follows, under the induced schedule re-indexed from a base
-slot `d` with `G ≤ slotRound d`:
+One scoping fact first: garbage collection bounds *stores*, not the
+universe. `U` — every block any correct validator ever held — keeps growing
+as an analysis object; the theorems live at the level of what a validator
+retains (`viewUpto`, §7.1) and what a joiner must fetch.
+
+### 8.1 Truncation as rebasing
+
+The model-side operator keeps the blocks at rounds `≥ G`, rebases rounds by
+`−G`, and empties the reference sets of the new base layer — the round-`G`
+layer becomes the new genesis layer:
+
+```lean
+def chopBlock (U) (G : ℕ) (i : BlockId) : Block Validator BlockId Payload :=
+  if (U.block i).round ≤ G then
+    { U.block i with round := (U.block i).round - G, refs := ∅ }
+  else
+    { U.block i with round := (U.block i).round - G }
+
+def chop (U) (G : ℕ) : BlockUniverse Validator BlockId Payload where
+  ids := U.ids.filter fun i => G ≤ (U.block i).round
+  block := chopBlock U G
+  …
+```
+
+Every validity clause of §2.2 constrains only rounds `> 0`, and the old
+genesis special case applies verbatim to the new base — so `chop U G` is a
+bona-fide `BlockUniverse`, and **every theorem of this report applies to it
+unchanged**. That is the entire design: the work is never re-proving the
+theory above the cut, only relating verdicts *across* the cut and choosing
+the cut. (In an implementation, block identity is a hash over references, so
+emptying the base layer's references is not a re-hash of history: it is the
+checkpoint reinterpreting those identifiers as opaque geneses — a rule about
+what the sync layer serves.)
+
+The DoS condition crosses the cut one way (`dosValid_chop`): cones shrink
+under truncation, so exposure shrinks, so the per-block condition weakens.
+The converse fails *by design*, and the failure is the **statute of
+limitations**: an equivocation whose witnessing pair falls strictly below
+the cut is forgiven — in `chop U G` its author is no longer exposed — while
+a pair *at* the cut survives into the base layer. §8.5 prices the
+forgiveness; the witness file exhibits it on data, an exposure present in
+the full universe and absent from its truncation (§10).
+
+### 8.2 Verdicts survive the cut
+
+Every commit-rule notion of §3 for a slot above the cut is invariant — the
+rules read a window of rounds that truncation does not touch:
+
+```lean
+theorem certificates_chop (s : ℕ) :
+    certificates (chop U G) L s = certificates U L (G + s)
+```
+
+and likewise `supporters_chop`, `blames_chop`, `directCommit_chop`,
+`directSkip_chop`, and the indirect test `certifiedIn_chop`. The full
+decision relation follows under an *induced schedule*: slots re-indexed
+from a base slot `d` whose round clears the horizon, with
+`Slots.chop S G d hd` given by `slotRound' k = slotRound (d + k) − G` (the
+condition `hd : G ≤ S.slotRound d` is what keeps the re-based rounds above
+zero, where subtraction is faithful and the schedule's keying survives).
+Views truncate by the same filter (`View.chop`), and:
 
 ```lean
 theorem decided_chop (hd : G ≤ S.slotRound d) :
     Decided (S := S.chop G d hd) (chop U G) (V.chop G) k v ↔
       Decided U V (d + k) v
+```
 
+— a validator re-running the protocol on the truncation decides slot `k`
+exactly as it decided slot `d + k` on the full universe, by structural
+induction through anchors and intermediate skips, in both directions. The
+**only hypothesis is the base-slot condition**: no synchrony, no liveness,
+no lag bound, no DoS condition. Cross-cut agreement is deliberately
+asymmetric:
+
+```lean
 theorem decided_agree_chop (hd : G ≤ S.slotRound d)
     (hW : Decided (S := S.chop G d hd) (chop U G) W k w)
     (hV : Decided U V (d + k) v) : w = v
 ```
 
-— the joiner's view `W` is an **arbitrary** view of the truncation, and
-the only hypothesis anywhere is the base-slot condition: no synchrony,
-no liveness, no lag bound. Liveness transfers with the offset
-(`live_chopD`), and storage becomes **constant at lag `Λ`**
-(`card_retained_le`): the retained store is bounded by
-`|Correct|·(Λ+1) + |Correct|·f + Λ·|Correct|·f·κ`, independent of how
-long the system has run. The same constant bounds a joiner's entire
-fetch (`card_joinIds_le`) and a correct author's serving obligation
-(`card_serve_le`).
+Here `W` is an **arbitrary** view of the truncation — not a truncated
+full-history view. The asymmetry matters because a joiner's view is never of
+the form `V.chop`: lifted to `U` it would not be downward closed, its base
+layer having lost its references. The proof plays the agreement theorem of
+§5.5 *inside* the truncation against a truncated view, and carries the
+verdict across the cut through `decided_chop`. So a validator that joined
+from the truncation and never saw the pruned prefix agrees with every
+full-history validator, slot for slot.
 
-**No consensus on the cut.** Horizons are per-validator: verdicts at
-different horizons are equal outright (`decided_agree_horizons`), a
-deeper cut is just another cut
-(`chop_chop : chop (chop U G₁) (G₂−G₁) = chop U G₂`), and post-`R`
-possession universalises in one round
-(`viewUpto_subset_viewUpto_succ`), so pruning at depth `≥ 1` below a
-correct frontier discards nothing a peer lacks. Bootstrap — the one
-place a residue of agreement could live — needs sampling, not
-consensus: a joiner adopts the **attested base**
+### 8.3 Windowed storage: constant at a lag
+
+Liveness transfers with the offset: a delivery layer for `U` induces one
+for the truncation (`chopD D G`, with `held v m := D.held v (G + m)`), and
+`Live U D N` yields `Live (chop U G) (chopD D G) (N − G)` (`live_chopD`).
+Stores correspond exactly —
 
 ```lean
+theorem viewUpto_chopD (m : ℕ) :
+    viewUpto (chopD D G) v m =
+      (viewUpto D v (G + m)).filter fun i => G ≤ (U.block i).round
+```
+
+— pruning a store below `G` yields precisely the store of the induced
+delivery, which is what lets §7's bound `card_viewUpto_le` be read on the
+truncated universe. Two prerequisites make this legitimate over a *sequence*
+of cuts. The budget must be measured on the truncated universe — otherwise
+pruning would make every arriving block's novelty explode with the
+discarded prefix — and windowed novelty is *antitone under cut-advance*
+(`novelty_chop_anti`): as the window slides, pruning only cheapens blocks,
+so an affordable block never becomes unaffordable. The budget conditions
+themselves descend to the window (`byzBudget_chopD`, `refsAccepted_chopD`).
+
+The storage headline is stated per time, because a validator's life is a
+sequence of cuts:
+
+```lean
+theorem card_retained_le {κ Λ t : ℕ} (hbyz : ByzBudget D κ)
+    (hra : RefsAccepted D) (hv : v ∈ Correct) (hG : G ≤ t) (hΛ : t ≤ G + Λ) :
+    ((viewUpto D v t).filter fun i => G ≤ (U.block i).round).card ≤
+      (Correct : Finset Validator).card * (Λ + 1) +
+        ((Correct : Finset Validator).card * F.f +
+          Λ * ((Correct : Finset Validator).card * (F.f * κ)))
+```
+
+— **constant in `t`**: at lag `Λ`, the retained store is bounded
+independently of how long the system has run. The same constant bounds a
+joiner's entire fetch — the attested base plus the window is a *subset of
+one correct peer's retained store* (`card_joinIds_le`) — and, plus one, a
+correct author's serving obligation: everything it can be asked to serve
+for its block is its own retained store above its own horizon, plus the
+block itself (`card_serve_le`, via `RefsAccepted` one step down and the
+self-parent chain the rest of the way). Garbage collection bounds sync
+cost, not just storage, and the honest relay obligation is bounded too.
+
+### 8.4 Bootstrap: the attested base
+
+A validator so far behind that its needs predate every peer's horizon
+cannot fetch the prefix; it must adopt a genesis layer from others. Requiring
+`f+1` *identical* checkpoints would be wrong — correct validators' layers
+share the correct core exactly but differ in Byzantine fringe — so the
+primitive is an **inexact certificate**, filtered per block: attest the
+layer, keep what `f+1` distinct authors attest. In this model an
+attestation *is* a block — its cone is its objective, unforgeable statement
+of what the layer contains — so the certificate is DAG-internal, decidable,
+and needs no signatures:
+
+```lean
+def attesters (U) (t : ℕ) (y : BlockId) : Finset Validator :=
+  creatorsOf U.block ((blocksAt U t).filter fun a => y ∈ history U a)
+
 def Base (U) (t G : ℕ) : Finset BlockId :=
   (blocksAt U G).filter fun y => F.f + 1 ≤ (attesters U t y).card
 ```
 
-(an attestation *is* a block; no signatures), sandwiched between the
-shared correct layer and the union of correct cones
-(`correct_mem_base`, `exists_correct_attester_of_mem_base`), complete
-for everything obtainable at attestation lag two
-(`accepted_mem_base`, tight on data) — and any decision reached from
-base-plus-window equals any full-history validator's
-(`bootstrap_agree`). The *lag envelope* is pinned theorem by theorem:
-safety constrains the lag not at all; `Λ ≥ 1` buys peer no-desync,
-`Λ ≥ 2` buys base completeness, and the ceiling is storage appetite —
-the constants grow linearly in `Λ`. Truncation *forgives* — an
-equivocation whose witnessing pair falls below the cut is no longer
-exposed (`dosValid_chop` is deliberately one-way) — at a bounded,
-priced rate: one reveal per author per epoch, under the windowed
-budget, and commit safety never depended on any of it.
+The base is **sandwiched** between the shared correct layer and the union of
+correct cones: everything in it has a correct attester, so the adversary
+cannot smuggle fabrications in (`exists_correct_attester_of_mem_base`);
+post-`R`, every correct round-`G` block is in every correct attestation, so
+nothing of the correct layer can be filtered out, by anyone
+(`correct_mem_base`). Completeness in fact extends to everything
+*obtainable* — Byzantine-authored included:
+
+```lean
+theorem accepted_mem_base (hs : Synchronised U R) (hv : v ∈ Correct)
+    (hy : y ∈ viewUpto D v m) (hyr : (U.block y).round = G)
+    (hcar : Populated U (m + 1)) (hpop : Populated U t)
+    (hR : R ≤ m + 1) (hmt : m + 2 ≤ t) :
+    y ∈ Base U t G
+```
+
+— every round-`G` block a correct validator accepted into its window by `m`
+is in the base attested at any `t ≥ m + 2`: acceptance puts the block in a
+correct store, the store rides into its keeper's next block
+(`viewUpto_subset_history`, §7.4), and the backbone carries that block into
+every correct round-`t` cone — a cone *is* an attestation. The lag is tight
+on data: at `t = m + 1` the witness exhibits an accepted equivocation half
+missing from the base (§10). Consequently the joiner's assembly — base as
+genesis layer plus a correct peer's window strictly above the cut — is a
+bona-fide view of the truncation (`joinView`; downward closure is the
+content: window references above the cut stay in the window, references *at*
+the cut are exactly the blocks `accepted_mem_base` puts in the base), and:
+
+```lean
+theorem bootstrap_agree … (hJ : Decided … (joinView …) k jv)
+    (hV : Decided U V (d + k) fv) : jv = fv
+```
+
+— any decision reached from base-plus-window equals any full-history
+validator's. Inexact certificates, exact decisions; bases sampled from
+different peers need never agree, exactly as horizons need not.
+
+### 8.5 Horizons without consensus, and the lag envelope
+
+Each validator sets its own horizon by a local rule — trail the decided
+frontier by `Λ`, or trail the current round by `Λ` — and three theorems make
+the heterogeneity safe. Verdicts at different horizons are equal outright
+(`decided_agree_horizons`, matching slots through their absolute index). A
+deeper cut is just another cut:
+
+```lean
+theorem chop_chop (hG : G₁ ≤ G₂) :
+    chop (chop U G₁) (G₂ - G₁) = chop U G₂
+```
+
+so validators at different horizons sit on one tower of truncations, never
+in incomparable worlds. And post-`R` possession universalises in **one**
+round (`viewUpto_subset_viewUpto_succ`): everything any correct validator
+retains by round `m` is in every correct store by `m + 1` — the keeper's
+next block carries its whole store, and that block is delivered and
+accepted — so pruning at depth `≥ 1` below a correct frontier discards
+nothing any correct peer still lacks (`pruned_subset_peer_store`).
+
+What constrains the lag is worth pinning theorem by theorem, because
+*safety constrains it not at all*:
+
+| bound | source | what breaks below it |
+|:---|:---|:---|
+| — (any `G` is safe) | `decided_chop`, `decided_agree_chop`, `bootstrap_agree` | nothing — commit safety carries no lag hypothesis; its only premise is `G ≤ slotRound d` |
+| `Λ ≥ 0` vs the *decided* frontier | ledger totality | a slot reads rounds `slotRound k … +2`; cutting above an undecided slot discards its certificates and the slot is undecidable forever — output stalls, safety unharmed |
+| `Λ ≥ 1` | `viewUpto_subset_viewUpto_succ` | peer no-desync: possession universalises in exactly one round |
+| `Λ ≥ 2` | `accepted_mem_base` (tight) | base completeness for joiners |
+| upper bound: none | the §8.3 constants | nothing breaks; storage, join and relay grow linearly in `Λ` |
+
+Finally, the statute of limitations is a bounded-rate, priced phenomenon
+rather than a cliff. Within an epoch the entire exposure economy of §7.2
+applies to the truncation verbatim — it is just another universe. Across a
+cut, a forgiven author must equivocate *again, inside the new window*, to
+be debarred again — one reveal per author per epoch — and the re-entry runs
+under the windowed budget: `Λ·f·κ` of freight per correct store per epoch,
+a term the `card_retained_le` constant already carries. Commit safety never
+depended on any of it: the cross-cut results above carry no exclusion,
+budget, or exposure hypothesis. A world that forgives every equivocation
+still commits the same blocks; it just stores more junk.
 
 ---
 
