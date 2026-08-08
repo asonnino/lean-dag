@@ -460,6 +460,18 @@ Directly relevant, since this repository is a Lean 4 development.
 
 ---
 
+## 6.5 Chain quality and fairness
+
+The chain-quality property originates with the Bitcoin backbone analysis
+(Garay, Kiayias, Leonardos, EUROCRYPT 2015); order-fairness (Kelkar,
+Zhang, Goldfeder, Juels, CRYPTO 2020) concerns transaction ordering and
+is orthogonal. For DAG protocols, fairness claims go back to Hashgraph
+(§2.1) and remain informal across the family. The present development's
+chain-quality arc (`chain-quality.md`, `LeanDag/Quality/`) proves the
+inclusion side mechanically: per-flush author coverage with no synchrony
+assumption, individual inclusion within a schedule window once the DAG
+is synchronous, and a counterexample separating the two.
+
 ## 7. Summary: where this development sits
 
 | Protocol | Uncertified | Synchrony | Leader cadence | Commit depth | Fault bound |

@@ -18,6 +18,12 @@ quorums of size `n − f`, over pipelined, multi-leader slot schedules.
 - **Safety** of the Mysticeti-style commit rule — agreement across
   views and routes, uniqueness of the committed sequence, a monotone and
   agreed ledger — with no network assumption of any kind.
+- **Chain quality** (`LeanDag/Quality/`): every commit's flush carries,
+  at every round below it, blocks from **at least half of the correct
+  validators** — with no synchrony assumption — and once the DAG is
+  synchronous, every correct block enters the agreed ledger within a
+  schedule-window of its creation; a six-validator counterexample shows
+  the aggregate guarantee provably does not imply the individual one.
 - **Liveness** above *eventual DAG synchrony*, a structural condition on
   the DAG under which no liveness theorem mentions time; the condition
   is then **derived** twice, from an abstract delivery model and from
@@ -57,8 +63,9 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 
 - `LeanDag/` — theorem/definition source: the core DAG and Mysticeti
   development at the top level, with the three arcs in subdirectories
-  (`DoS/` — equivocation and the novelty budget; `GC/` — garbage
-  collection; `Odontoceti/` — the two-round protocol).
+  (`Quality/` — chain quality; `DoS/` — equivocation and the novelty
+  budget; `GC/` — garbage collection; `Odontoceti/` — the two-round
+  protocol).
 - `LeanDag.lean` — root import file.
 - `LeanDagTest/` — `decide` witnesses and concrete models, mirroring the
   same layout.
@@ -74,6 +81,7 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 | [`docs/spec.md`](docs/spec.md) | the safety design record |
 | [`docs/liveness.md`](docs/liveness.md) | the liveness design record, and eventual DAG synchrony |
 | [`docs/pipelining-and-multi-leader.md`](docs/pipelining-and-multi-leader.md) | the schedule generalization: eligibility, runs, pipelined commits |
+| [`docs/chain-quality.md`](docs/chain-quality.md) | chain quality: coverage without synchrony, inclusion with it |
 | [`docs/dos-equivocation-and-growth.md`](docs/dos-equivocation-and-growth.md) | equivocation, exposure, view growth, and the novelty budget |
 | [`docs/garbage.md`](docs/garbage.md) | the horizon: truncation, bounded storage, bootstrap without consensus |
 | [`docs/odontoceti.md`](docs/odontoceti.md) | the two-round protocol: the generalized thresholds, and the findings |

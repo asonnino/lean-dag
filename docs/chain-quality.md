@@ -7,254 +7,171 @@
 > and whether the surrounding prose is faithful to what is proved, has
 > only human-plus-LLM review behind it. Read critically.
 
-Design notes and plan for **chain quality**: theorems about *whose blocks
-the ledger contains*. Two families, with sharply different trust
-requirements:
+This document records the **chain quality** arc: machine-checked
+theorems about *whose blocks the ledger contains*, in
+`LeanDag/Quality/` with witnesses in `LeanDagTest/Quality/`, consuming
+the existing development read-only. Results carry **CQ**-labels. Two
+families, split exactly along the trust boundary:
 
-1. **Asynchronous coverage.** Every commit flushes an entire cone, and
-   the quorum structure forces every layer of every valid cone to carry
-   blocks from all but at most `f` of the correct validators — so each
-   commit carries, at every round below it, **at least half of the
-   correct validators' blocks**, with no synchrony assumption anywhere.
-2. **Post-synchrony inclusion (censorship resistance).** After `R`,
-   every correct block is in the cone of every later correct block (the
-   backbone), commits by correct leaders recur, and therefore **every
-   correct block enters the agreed ledger**, within an explicit bound.
+1. **Asynchronous coverage** (`Coverage.lean`). Every commit flushes an
+   entire cone, and the quorum structure forces every layer of every
+   valid cone to carry blocks from all but at most `f` of the correct
+   validators — so each commit carries, at every round below it,
+   **at least half of the correct validators' blocks**
+   (`card_correct_le_two_mul_coveredAt_of_decided`), with no synchrony
+   assumption, no delivery model, and no populated rounds anywhere.
+2. **Post-synchrony inclusion** (`Inclusion.lean`, `Capstone.lean`).
+   After `R`, every correct block is in the cone of every later
+   correct-led commit (`mem_history_of_decided_commit`), and commits by
+   correct leaders recur — so **every correct block enters the agreed
+   ledger** (`committed_of_correct_block`), within an explicit
+   schedule-window bound (`committed_of_correct_block_within`,
+   `…_by_round`), packaged with the coverage half in the capstone
+   `chain_quality`.
 
-Results use **CQ**-labels; plan phases are CQP0–CQP4. The intended home
-is `LeanDag/Quality/` with witnesses in
-`LeanDagTest/Quality/`, consuming the existing development
-read-only — the same additive discipline as the DoS, GC and Odontoceti
-arcs.
+The split is genuine, not a proof artifact: the witness model `Ucens`
+commits for ever while the *same* correct validator is missing from
+every flushed layer, so aggregate coverage provably does not imply
+individual inclusion, and the synchrony round `R` is exactly what the
+upgrade costs.
 
-## 1. The property, and why it is worth proving
+## 1. The property
 
 Every protocol in this family claims that leader rotation prevents
-censorship; almost none proves what its ledger *contains*. The classical
-blockchain form of the property is *chain quality* (the fraction of
-honest contribution in any window of the chain); the DAG setting has a
-stronger natural form, because a commit does not append one block — it
-flushes the **entire causal cone** of the committed leader
-(`ledgerSet U g n = {b | ∃ k < n, ∃ L, g k = some L ∧ Reaches U L b}`,
-§3.6 of the report). The right questions are therefore:
+censorship; almost none proves what its ledger *contains*. The
+classical blockchain form is *chain quality* — the fraction of honest
+contribution in any window of the chain — and the DAG setting has a
+stronger natural form, because a commit does not append one block: it
+flushes the entire causal cone of the committed leader
+(`ledgerSet U g n = {b | ∃ k < n, ∃ L, g k = some L ∧ Reaches U L b}`).
+The two right questions, and their answers:
 
 - *Coverage*: of the blocks correct validators produced, how many does
-  each flush carry?
-- *Inclusion*: is any particular correct validator's block guaranteed to
-  be committed, and when?
+  each flush carry? **All but at most `f` authors per round, always.**
+- *Inclusion*: is any particular correct validator's block guaranteed
+  in, and when? **Yes, from round `R` on, within a schedule window —
+  and provably not before `R`.**
 
-The two questions separate exactly along the trust boundary: coverage is
-structural and asynchronous; individual inclusion is a liveness property
-and genuinely needs the synchrony round `R` — asynchronously, the *same*
-`f` correct validators could be the ones missing from every layer, so an
-aggregate guarantee is the best available. Making that separation
-precise is half the point of the arc.
-
-## 2. A recorded decision: coverage counts authors, not blocks
+## 2. The metric — a decision that held
 
 "Fraction of committed blocks that are correct-authored" is the
-conventional chain-quality metric, and it is the wrong one here: an
-equivocator can inflate a cone with many blocks per round (the DoS arc's
-§7 is the study of exactly that), so a raw block-count fraction is
-adversary-deflatable. The robust metric — and the one the existing
-machinery bounds — is **per-round author coverage**: for each round `δ`
-below the committed leader, count the correct validators whose round-`δ`
-block appears in the flushed cone. All CQ statements use this metric.
-(A block-fraction corollary *under the novelty budget* is available as a
-stretch goal, CQ4, since the budget is what bounds the Byzantine
-inflation; it is deliberately not the headline.)
-
-## 3. Asynchronous coverage
-
-The engine already exists: **density** (D25, `card_missingAt_le`,
-`LeanDag/DoS/Density.lean`). For any valid block `b` and any round
-`δ < round(b)`,
+conventional metric and the wrong one here: an equivocator can inflate
+a cone with any number of blocks per round, so a block-count fraction
+is adversary-deflatable. All CQ statements count **distinct correct
+authors per round**:
 
 ```lean
-missingAt U b δ = (Correct).filter fun v =>
-  ∀ i ∈ history U b, ¬ ((U.block i).creator = v ∧ (U.block i).round = δ)
-
-theorem card_missingAt_le (hb : b ∈ U.ids) (hδ : δ < (U.block b).round) :
-    (missingAt U b δ).card ≤ F.f
+def coveredAt (U) (b : BlockId) (δ : ℕ) : Finset Validator :=
+  (Correct : Finset Validator).filter fun v =>
+    ∃ i ∈ history U b, (U.block i).creator = v ∧ (U.block i).round = δ
 ```
 
-— at most `f` correct validators lack a round-`δ` block in the cone.
-This is purely structural (the quorum clause of validity, layer by
-layer); no synchrony, no delivery, no populated rounds. The new content
-is packaging, not proof machinery:
+with `coveredAt_eq_sdiff : coveredAt U b δ = Correct \ missingAt U b δ`
+tying it to density's complement. The block-fraction variant (CQ4) was
+assessed against its recorded gate — *state it only if the constant is
+clean* — and **dropped**: under `DoSValid` alone the per-author block
+count carries the exponential pedigree constant, and under the budget
+the cone-level Byzantine count is the author's whole store bound,
+linear in the round rather than the layer; neither yields a ratio worth
+quoting.
 
-- **CQ1 (per-commit coverage).** For a committed leader block `L`
-  (`Decided U V k (some L)` — any route, any view) and every
-  `δ < (U.block L).round`: at least `|Correct| − f` correct validators
-  have a round-`δ` block in `H(L)`. Proof: `isLeaderBlock_of_decided`
-  gives `L ∈ U.ids`; apply density. Note the statement quantifies over
-  *decided* commits, so by agreement (M6) the guarantee is
-  view-independent.
-- **CQ2 (the half, exactly).** `|Correct| − f ≥ |Correct| / 2` —
-  because `|Correct| ≥ n − f ≥ 2f + 1 ≥ 2f`. So: **every commit
-  carries, at every round below it, blocks from at least half of the
-  correct validators** — at the boundary `n = 3f+1`, from at least
-  `f+1` of the `2f+1`. Pure arithmetic over CQ1; this is the quotable
-  form and confirms the design intuition that motivated the arc.
-- **CQ3 (ledger form).** Lifted to `ledgerSet`, in the ledger's own
-  idiom: for a verdict assignment `g` of a view
-  (`∀ k' < n, Decided U V k' (g k')`) with `g k = some L` for some
-  `k < n`, the ledger `ledgerSet U g n` contains, for every
-  `δ < (U.block L).round` and all but at most `f` correct validators
-  `v`, a round-`δ` block authored by `v`. Membership is one unfolding:
-  a cone block `i ∈ H(L)` gives `Reaches U L i` (`mem_history_iff`),
-  hence `i ∈ ledgerSet U g n`. The statement is view-independent
-  because the assignment is (`ledgerSet_agree`). Stated
-  **cumulatively** (a recorded decision): the per-flush *delta* — what
-  slot `k` adds over slot `k−1` — is awkward under pipelining, where
-  consecutive cones overlap heavily, while the cumulative form is
-  monotone (`ledgerSet_mono`) and composes with CQ1 directly.
-- **CQ4 (stretch — block-fraction purity under the budget).** Under
-  `DoSValid` or the novelty budget, the Byzantine *block count* per
-  committed cone is bounded (§7's machinery), giving a classical
-  chain-quality fraction. Optional; only worth stating if the constant
-  comes out clean.
+## 3. Asynchronous coverage (CQ1–CQ3)
 
-## 4. Post-synchrony inclusion
+The engine is density (D25, `card_missingAt_le`, `DoS/Density.lean`) —
+at most `f` correct validators lack a round-`δ` block in any valid
+cone — and the results are packaging, exactly as planned:
 
-The second family upgrades the aggregate guarantee to an individual one,
-at the price of `R` — and only at that price, which the plan records as
-a negative observation worth witnessing: asynchronously, nothing
-prevents the *same* correct validator being among the `f` missing from
-every layer of every commit for ever.
+- **CQ1** (`card_coveredAt_ge`, `card_coveredAt_ge_of_decided`): for a
+  committed leader `L` — any route, any view — and every
+  `δ < (U.block L).round`,
+  `|Correct| − f ≤ (coveredAt U L δ).card`. The only fact consumed
+  about the commit is `L ∈ U.ids` (`isLeaderBlock_of_decided`).
+- **CQ2** (`card_correct_le_two_mul_coveredAt_of_decided`): the half,
+  exactly — `|Correct| ≤ 2·|coveredAt|`, since `|Correct| ≥ 2f+1`.
+- **CQ3** (`ledger_coverage`): the cumulative ledger form, in the
+  verdict-assignment idiom: for `g` with `Decided U V k (g k)` and
+  `g k = some L`, an exhibited set of at least `|Correct| − f` correct
+  validators each has a round-`δ` block in `ledgerSet U g n`. The
+  bridging lemma `mem_ledgerSet_of_mem_history` is the one unfolding
+  CQ3 and CQ6 share; view-independence is `ledgerSet_agree`.
 
-The engine is the **backbone** (`mem_history_of_correct`,
-`LeanDag/DoS/Exclusion.lean`): post-`R`, a correct block at round
-`m ≥ R` is in the cone of every correct block at every round `> m`. The
-new content composes it with commit recurrence:
+## 4. Post-synchrony inclusion (CQ5–CQ7)
 
-- **CQ5 (inclusion in every later correct commit).** Post-`R`, every
-  correct block `b` at round `m ≥ R` is in `H(L)` for **every**
-  committed leader block `L` with a correct author and
-  `(U.block L).round > m`. Proof: `isLeaderBlock_of_decided` + the
-  backbone. No new counting.
-- **CQ6 (inclusion liveness — the headline).** Every correct block at
-  round `m ≥ R` enters the agreed ledger, and within an explicit
-  bound. The composition, precisely: pick a slot at or above round
-  `m + 1` (`slotAt` / `S.unbounded`); `commits_recur_on` (L6) from
-  that slot yields a committed slot `k'` with a **correct** leader —
-  `hT : T ⊆ Correct` makes the leader's block correct-authored, which
-  is what the backbone consumes — and `R ≤ S.slotRound k'`; CQ5 puts
-  `b` in the committed block's cone (`R ≤ m` and
-  `m < S.slotRound k'` are exactly the backbone's side conditions);
-  and `ledgerSet` membership follows as in CQ3. Quantitative forms
-  come from the L8b machinery: under a windowed-fair schedule the
-  committing slot is within `w` slots (`commits_recur_within`) and its
-  round within `s·w` rounds (`commits_recur_by_round`) of the starting
-  slot, giving *"a correct block is committed within a
-  schedule-window of rounds of its creation, once the DAG is
-  synchronous"* — accepting the `max(m, R)` shape R2 anticipates. For
-  pipelined schedules the same composition runs through the
-  committed-run results (`all_decided_below_of_fairRun`). One scoping
-  note, recorded: CQ6 is stated at `T ⊆ Correct` for the *schedule*
-  but with full `Synchronised U R` (Correct-wide coverage) for the
-  backbone — a `T`-relative variant would need a `T`-relative backbone
-  lemma, which is possible (the backbone steps through any
-  quorum-covered set) but not attempted in this arc.
-- **CQ7 (enforceable-hypotheses form).** The capstone packaging in the
-  house style of `dos_resistance`: under `Live`, `DeliversQuorum`,
-  `SynchronisedOn`, and a fair schedule — enforceable or standard
-  conditions only — every correct block from round `R` on is in the
-  ledger of every correct validator's view within the CQ6 bound.
+- **CQ5** (`mem_history_of_decided_commit`): post-`R`, every correct
+  block is in the cone of every committed leader block with a correct
+  author at a later round — the backbone
+  (`mem_history_of_correct`, `DoS/Exclusion.lean`) applied through
+  `isLeaderBlock_of_decided`, no new counting.
+- **CQ6** (`committed_of_correct_block`, and `…_correct` at
+  `T := Correct`): under a fair schedule over reliable validators, for
+  every round `m ≥ R` there is a committed slot — above `m`, led by a
+  correct validator, **fixed by the schedule before the universe is
+  quantified**, in the L6 style — whose flush contains every correct
+  round-`m` block; ledger membership follows for any covering verdict
+  assignment. One discovery from the proof: `commits_recur_on` does
+  not expose that the committed leader lies in `T`, which the backbone
+  needs, so CQ6 composes from the fair schedule, L4
+  (`decided_of_leader_mem`) and `no_stall` directly, mirroring L6's
+  own proof rather than consuming its statement.
+- **CQ7** (`Capstone.lean`): the quantitative and packaged forms.
+  Under a windowed-fair schedule the committing slot lies within `w`
+  slots of `slotAt (m+1)` (`committed_of_correct_block_within`);
+  bounded spacing converts to rounds, `s·w`
+  (`committed_of_correct_block_by_round`) — *a correct block is
+  committed within a schedule-window of its creation, once the DAG is
+  synchronous*. The capstone `chain_quality` states both halves
+  together under enforceable or standard conditions only, in the
+  `dos_resistance` style.
 
-A boundary note for honesty in the doc and the eventual report section:
-CQ5–CQ7 concern blocks at rounds `≥ R`. Correct blocks *below* `R` get
-only the aggregate CQ1 guarantee plus whatever cones happen to carry
-them — the common-core theorem (T3c) guarantees one common correct
-ancestor per round, not full inclusion — and this is a real asymmetry of
-the model, not a proof gap: pre-`R` delivery may genuinely have dropped
-a block from every correct validator's building horizon.
+A scoping note that held: the schedule side is `T ⊆ Correct`-relative,
+the backbone side is Correct-wide (`Synchronised U R`); a fully
+`T`-relative variant would need a `T`-relative backbone lemma, possible
+but not attempted.
 
-## 5. Witnesses
+## 5. Witnesses (`LeanDagTest/Quality/Model.lean`)
 
-House rule: every definition and every theorem gets a `decide` instance
-before or alongside its proof.
+- **`Ucens`** — tightness and censorship in one universe (`Fin 4`,
+  `f = 1`, six rounds): validators `0,1,2` reference only each other;
+  validator `3` (correct) builds validly — self-parent plus two
+  others — and is never referenced. Slot 1 commits directly with the
+  full certificate pattern, and on data: `missingAt = {3}` at **every**
+  layer (CQ1's `≤ f` is exactly tight), `coveredAt = {1,2}` (the half),
+  `Synchronised` fails at every round while the commit stands, the
+  censored validator's blocks are absent from the committed cone and
+  from the ledger (`decide` against a concrete verdict assignment),
+  and a correct-authored cone block is present. Aggregate coverage is
+  not individual inclusion, exhibited.
+- **`Uexcl`** — inclusion on data: CQ5 applied puts a correct round-1
+  block in the slot-1 commit's cone, confirmed independently by
+  `decide`; CQ3 applied yields the two-of-three ledger coverage; CQ6's
+  and CQ7's schedule sides instantiate over `fairSlots` and the
+  round-robin `rrSlots` (the two-slot window on data).
 
-- **Coverage on data** (`Uexcl`): `missingAt` is decidable; compute the
-  per-layer coverage of the slot-1 commit's cone — the committed cone
-  at round 3 carries all three correct authors at every layer
-  (`missingAt = ∅`, better than the `≤ f` bound), and a variant cone
-  that genuinely misses one (the exclusion story already provides
-  blocks whose cones omit validator 0's half). CQ2's arithmetic at the
-  boundary: `f + 1 = 2` of `2f + 1 = 3`.
-- **The negative witness — aggregate is not individual, and CQ1 is
-  tight.** One model serves twice: four validators `{A,B,C,D}` at
-  `f = 1`, where `A`, `B`, `C` reference only each other and commit
-  (an `A`-led slot with `n − f = 3` supporters and certificates from
-  `{A,B,C}`), while `D` builds validly — its blocks self-parent and
-  reference `{A,B,C}` — but is never referenced by anyone.
-  `missingAt` of every committed cone is `{D}` at **every** layer:
-  simultaneously the tightness of CQ1's `≤ f` and the proof that
-  aggregate coverage is not individual inclusion — the same correct
-  validator is censored from every commit for as long as the universe
-  runs, and no validity or delivery clause objects (`DeliversQuorum`
-  is satisfied by the `{A,B,C}` quorums; `Live.builds` lets `D` keep
-  building). This is why CQ6 needs `R`, exhibited rather than argued.
-- **Inclusion on data**: in `Uexcl`, a specific correct block's
-  membership in `ledgerSet` after the slot-1 commit. Ledger
-  membership *is* decidable on data — `Reaches U L b` is
-  `b ∈ history U L` (`mem_history_iff`), and the slot quantifier is a
-  finite scan — so this is a `decide` witness with a concrete verdict
-  assignment, not a hand-built `Reaches` term. The CQ5 composition is
-  then applied with `uexcl_synchronised` at `R = 0`.
+All witnesses are by `decide` or explicit one-line terms; all proofs
+use the standard axioms only.
 
-## 6. The plan
+## 6. Decisions, as they played out
 
-- **CQP0 — witnesses first** *(no dependencies)*. The coverage
-  computations on `Uexcl` and the censorship counter-model; settles
-  that `missingAt`, `ledgerSet` membership and the coverage counts all
-  `decide`.
-- **CQP1 — asynchronous coverage (CQ1–CQ3)** *(after CQP0)*. The
-  density packaging: per-commit coverage, the half corollary, the
-  cumulative ledger form. Expected to be short — the counting is D25.
-- **CQP2 — inclusion (CQ5, CQ6)** *(after CQP0; independent of
-  CQP1)*. Backbone composition with L6, then the quantitative bounds
-  through L8b, then the pipelined form through the committed-run
-  results.
-- **CQP3 — the capstone and stretch (CQ7, CQ4)** *(after CQP1,
-  CQP2)*. The enforceable-hypotheses packaging; the budgeted
-  block-fraction form if its constant is clean.
-- **CQP4 — docs** *(last)*. Rewrite this document as a final-state
-  record; a chain-quality subsection for the report (§5 or a short
-  section after §6, since CQ1–CQ3 are safety-side and CQ5–CQ7
-  liveness-side); `related.md` gains the chain-quality/fairness
-  literature paragraph.
+- **Authors per round, not blocks** — held; CQ4 dropped at its gate,
+  with both failing routes recorded (§2).
+- **Cumulative ledger form** — held; the delta form was never needed.
+- **Read-only cross-arc reuse** — held: the arc imports `DoS/Density`
+  and `DoS/Exclusion` for D25 and the backbone; nothing outside
+  `Quality/` changed.
+- **Ledger decidability (R1)** — resolved as predicted in review:
+  membership on data is `mem_history_iff` plus a finite slot scan.
+- **The `max(m, R)` shape (R2)** — avoided: stating the theorems at
+  `R ≤ m` (the only case with content — blocks below `R` get CQ1's
+  aggregate guarantee only) keeps every bound in terms of
+  `slotAt (m+1)` alone.
+- **The censorship model (R3)** — constructed exactly as reviewed, and
+  it earned double duty as the CQ1 tightness witness.
 
-## 7. Decisions and risks
+## 7. Where everything lives
 
-**Decisions, recorded where they bind:**
-
-- **Coverage counts authors per round, not blocks** (§2): the
-  block-count metric is equivocation-deflatable; the author metric is
-  what density bounds. CQ4 is the block-count story, gated on the
-  budget, and optional.
-- **The ledger statement is cumulative** (§3): per-flush deltas overlap
-  under pipelining; the cumulative form is monotone, agreed, and
-  composes.
-- **Cross-arc reuse is read-only**: the arc imports `DoS/Density` and
-  `DoS/Exclusion` for D25 and the backbone exactly as GC and Odontoceti
-  consume their dependencies — no existing file changes.
-
-**Risks the plan watches:**
-
-- **R1 — resolved in review.** `ledgerSet` is a `Set`, but membership
-  is decidable on concrete data: `Reaches U L b ↔ b ∈ history U L`
-  (`mem_history_iff`) and the slot quantifier is a finite scan. No
-  bounded variant needed; witnesses use `decide` with a concrete
-  verdict assignment.
-- **R2 — the CQ6 bound's shape.** L8b's constants are stated against
-  `FairWithin`/`BoundedSpacing`; composing them with the backbone's
-  `m ≥ R` side conditions produces a `max(m, R)`-shaped bound. Accept
-  it, and state the clean `R ≤ m` form as the headline with the
-  general form beside it, rather than forcing one statement.
-- **R3 — resolved in review.** The censorship counter-model is
-  constructible: `D`'s blocks satisfy validity by self-parenting and
-  referencing `{A,B,C}` (three distinct authors including its own
-  chain), `DeliversQuorum` is discharged by the `{A,B,C}` quorums, and
-  `Live.builds` is satisfied for all four. The §5 sketch is the
-  construction; CQP0 realises it.
+| Module | Contents |
+|:---|:---|
+| `LeanDag/Quality/Coverage.lean` | `coveredAt`; CQ1 (`card_coveredAt_ge_of_decided`), CQ2 (`card_correct_le_two_mul_coveredAt_of_decided`), CQ3 (`ledger_coverage`), `mem_ledgerSet_of_mem_history` |
+| `LeanDag/Quality/Inclusion.lean` | CQ5 (`mem_history_of_decided_commit`), CQ6 (`committed_of_correct_block`) |
+| `LeanDag/Quality/Capstone.lean` | CQ7: `committed_of_correct_block_within`, `…_by_round`, `chain_quality`; the CQ4 verdict |
+| `LeanDagTest/Quality/Model.lean` | `Ucens`; every result applied on data; the censorship exhibit |
