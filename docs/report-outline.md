@@ -153,24 +153,6 @@ proof effort with no corresponding proof content.
    resting on candidate-iteration order) is refutable on data without a
    canonicity repair the formalisation supplies.
 
-### 1.4 Organisation
-
-§2 gives the system model and §3 the commit rule; §4 draws the trust
-boundary, separating what is assumed from what the protocol enforces. §5
-develops safety (culminating in agreement, `decided_agree`, and the agreed
-ledger) and §6 liveness (culminating in recurring commits,
-`commits_recur_on`, the two derivations of eventual DAG synchrony, and the
-quantitative wait bound). §§7–9 present the three further developments —
-denial-of-service resistance (`dos_resistance`), garbage collection
-(`decided_agree_chop`, `card_retained_le`, `bootstrap_agree`), and
-Odontoceti (`Odontoceti.decided_unique`,
-`Odontoceti.all_decided_below_of_fairRun`). §10 exhibits the witness models,
-§11 describes the mechanisation, §12 discusses the formulation and its
-limitations, and §13 surveys related work. Appendix A indexes every
-principal statement against its Lean name and module. Throughout, displayed
-Lean is drawn from the source; binders are occasionally elided for layout,
-and `…` marks an elision.
-
 ### 1.4 Scope and non-goals
 
 The development is deliberately bounded in four respects — a fifth, the
@@ -199,6 +181,25 @@ first.
   requires a tie-break which the development declines to assume (§5.6).
 - **No wall-clock latency.** The wait bound of §6.10 is a duration, but the total
   elapsed time to a commit is not derived (§12.5).
+
+### 1.5 Organisation
+
+§2 gives the system model and §3 the commit rule; §4 draws the trust
+boundary, separating what is assumed from what the protocol enforces. §5
+develops safety (culminating in agreement, `decided_agree`, and the agreed
+ledger) and §6 liveness (culminating in recurring commits,
+`commits_recur_on`, the two derivations of eventual DAG synchrony, and the
+quantitative wait bound). §§7–9 present the three further developments —
+denial-of-service resistance (`dos_resistance`), garbage collection
+(`decided_agree_chop`, `card_retained_le`, `bootstrap_agree`), and
+Odontoceti (`Odontoceti.decided_unique`,
+`Odontoceti.all_decided_below_of_fairRun`). §10 exhibits the witness models,
+§11 describes the mechanisation, §12 discusses the formulation and its
+limitations, and §13 surveys related work. Appendix A indexes every
+principal statement against its Lean name and module. Throughout, displayed
+Lean is drawn from the source; binders are occasionally elided for layout,
+and `…` marks an elision.
+
 
 ---
 
@@ -1406,19 +1407,61 @@ start spread, the wait, and the position of the slot relative to GST.
 
 ## 7. Denial of service: equivocation, growth, and the novelty budget
 
-*(design record: `dos-equivocation-and-growth.md`)*
+*(design record: `dos-equivocation-and-growth.md`; modules `LeanDag/DoS/`)*
 
-Safety needs no protection from equivocation — the M-series holds with
-no anti-equivocation condition anywhere, and the independence is
-recorded on data (`LeanDagTest/DoS/SafetyUnderDoS.lean`). *Storage*
-does: an uncertified DAG accepts Byzantine blocks into correct views,
-and an equivocator can multiply what a cone carries. Two mechanisms are
-studied, and composed.
+Safety needs no protection from equivocation: every result of §5 holds with no
+anti-equivocation condition anywhere in its hypotheses, and the independence is
+itself recorded — a witness model satisfies safety while violating every
+storage condition of this section (`LeanDagTest/DoS/SafetyUnderDoS.lean`).
+*Storage* is another matter. An uncertified DAG admits Byzantine blocks into
+correct views by design, an equivocator may produce arbitrarily many blocks
+per round, and a correct validator that retains the cones of what it accepts
+can be made to retain the attacker's freight. This section bounds that
+freight twice over: first under a *reference-validity* condition (exposure),
+whose bound is shown essentially optimal yet exponential in `f`; then under a
+*rate-limiting* condition (the novelty budget), which is enforceable,
+author-blind, and yields the linear headline `dos_resistance`. The two
+compose: the budget paces what an equivocator can inject, exposure ends it.
 
-**Exposure.** An author is *exposed* in a cone holding two of its
-same-round blocks; the DoS condition forbids building on the exposed:
+### 7.1 The store, and what growth means
+
+A validator's store is the accumulation of the cones of everything it
+accepted (§6.2 introduced acceptance):
 
 ```lean
+def viewUpto (D : Delivery U) (v : Validator) : ℕ → Finset BlockId
+  | 0 => (D.accepted v 0).biUnion (history U)
+  | n + 1 => viewUpto D v n ∪ (D.accepted v (n + 1)).biUnion (history U)
+```
+
+`viewUpto D v n` is everything `v` has retained by round `n`: accepting a
+block means holding its entire causal history — that is what downward
+closure of views (§2.3) demands. Growth questions are questions about
+`(viewUpto D v n).card`, and since correct production alone contributes
+`|Correct|` blocks per round, *linear in `n`* is the best possible shape;
+the question is the constant, and whether the Byzantine share can exceed it.
+
+The *novelty* of an arriving block is what its cone adds over the store:
+
+```lean
+def novelty (U) (V : Finset BlockId) (b : BlockId) : Finset BlockId :=
+  history U b \ V
+```
+
+Novelty is antitone in the store — the more a validator already holds, the
+cheaper any block is — which is the monotonicity every argument below leans
+on.
+
+### 7.2 Exposure, and the DoS-validity condition
+
+An author is *exposed* in a cone that holds two of its blocks from one
+round; the DoS condition forbids building on the exposed:
+
+```lean
+def EquivPair (U) (X : Validator) (i j : BlockId) : Prop :=
+  i ≠ j ∧ (U.block i).creator = X ∧ (U.block j).creator = X ∧
+    (U.block i).round = (U.block j).round
+
 def ExposedIn (U) (b : BlockId) (X : Validator) : Prop :=
   ∃ i ∈ history U b, ∃ j ∈ history U b, EquivPair U X i j
 
@@ -1426,12 +1469,50 @@ def DoSValid (U) : Prop :=
   ∀ b ∈ U.ids, ∀ i ∈ (U.block b).refs, ¬ ExposedIn U b (U.block i).creator
 ```
 
-Exposure is monotone up the DAG, lands only on the guilty, and at most
-`f` authors are ever exposed in one cone (`card_exposedTo_le`).
-Exclusion costs margin rather than liveness: after every equivocator is
-caught, references are *exactly* the correct validators
-(`creators_refs_eq_correct`) and the commit chain still runs. Under
-`DoSValid` alone the per-cone bound is
+Exposure is objective — a property of the cone, checkable by any holder —
+and *monotone up the DAG*: a cone containing an exposing cone is exposing.
+Only the guilty are ever exposed (a correct author has one block per round,
+by non-equivocation), and at most `f` authors are exposed in any one cone:
+
+```lean
+theorem card_exposedTo_le (hb : b ∈ U.ids) : (exposedTo U b).card ≤ F.f
+```
+
+Exclusion costs quorum *margin*, not liveness. At the extreme — every
+Byzantine validator caught — the condition pins references exactly:
+
+```lean
+theorem creators_refs_eq_correct (hdos : DoSValid U) (hb : b ∈ U.ids)
+    (hround : 0 < (U.block b).round) (hk : F.f ≤ (exposedTo U b).card) :
+    creatorsOf U.block (U.block b).refs = (Correct : Finset Validator)
+```
+
+— the references of every later block are precisely the correct validators,
+and the commit chain still runs on them: the witness model `Uexcl` carries a
+direct commit whose three rounds all lie after the exclusion of its
+equivocator (§10). Exclusion also does not depend on luck: *density* says a
+cone can be selectively blind to at most `f` correct authors per round, even
+below Byzantine blocks, because the quorum clause forces every layer of
+every valid cone to carry `n − f` distinct authors:
+
+```lean
+theorem card_missingAt_le (hb : b ∈ U.ids) (hδ : δ < (U.block b).round) :
+    (missingAt U b δ).card ≤ F.f
+```
+
+where `missingAt U b δ` is the set of correct authors with no round-`δ`
+block in `H(b)`.
+
+### 7.3 Growth under the condition alone: the exponential wall
+
+How large can one cone be under `DoSValid` alone? Byzantine authors are
+excluded only *after* both halves of an equivocation meet in one cone; until
+then, distinct branches may carry distinct halves, and `e` cooperating
+equivocators can chain reveals so that each unexposed author doubles the
+mass a branch may adopt. The general upper bound is proved through
+*pedigrees* — for each exposed author, the chain of adoption events by which
+its blocks entered the cone — and is linear in the round with a constant
+exponential in `f`:
 
 ```lean
 theorem card_history_le' (hdos : DoSValid U) (hb : b ∈ U.ids) :
@@ -1440,19 +1521,29 @@ theorem card_history_le' (hdos : DoSValid U) (hb : b ∈ U.ids) :
           ((U.block b).round + 1)
 ```
 
-— linear in the round, with a constant exponential in `f`. The shape is
-essentially forced: a chain of `e` cooperating equivocators doubles the
-reachable mass at each reveal (`Udouble`, `2^(e−2)` constructible), so
-no constant polynomial in `f` exists, and the condition alone cannot
-give practical storage bounds. What it buys instead is the *exclusion
-economy*; the bound that matters comes from rate limiting.
+The exponential constant is not slack in the proof: a matching family of
+witnesses (`Udouble`, §10) realises `2^(e−2)` growth from `e` equivocators,
+so any bound obtainable from reference-validity conditions alone carries a
+constant exponential in `f`. That is the honest verdict on the exposure
+mechanism as a *storage* defence: it is the right accountability layer — it
+identifies and permanently retires equivocators at the cost of quorum
+margin — but no practical storage bound can rest on it. Rate limiting is
+needed, and it is orthogonal.
 
-**The novelty budget.** The *novelty* of an arriving block is what its
-cone adds over the store (`novelty U V b = H(b) \ V`); the budget caps
-it per acceptance. The mechanism-side rule is **author-blind** — it
-never asks who is Byzantine:
+### 7.4 The novelty budget
+
+The budget is a rule about acceptance, and deliberately about nothing else.
+Two formulations are related. The analysis-side form guards on the author
+being Byzantine; the mechanism-side form is the rule a validator can
+actually run — **author-blind**, since correct validators cannot in general
+tell who is Byzantine:
 
 ```lean
+def ByzBudget (D : Delivery U) (κ : ℕ) : Prop :=
+  ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ D.accepted v (n + 1),
+    (U.block b).creator ∉ (Correct : Finset Validator) →
+    (novelty U (viewUpto D v n) b).card ≤ κ
+
 def UniformBudget (D : Delivery U) (T : ℕ) : Prop :=
   ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ D.accepted v (n + 1),
     (novelty U (viewUpto D v n) b).card ≤ T
@@ -1463,15 +1554,71 @@ def RefsAccepted (D : Delivery U) : Prop :=
     (U.block b).refs ⊆ D.accepted w n
 ```
 
-The analysis-side guarded form `ByzBudget κ` and the blind form sandwich
-each other within a factor of `f` (`UniformBudget.byzBudget`,
-`uniform_of_byzBudget`) — author-blindness costs constants, never
-theorems. The gap between two correct stores is a *constant*, not a
-drift: a correct block's cone is a complete record of everything its
-author ever accepted (`viewUpto_subset_history` — S10 chains
-`includes`), so one delivery erases the standing gap
-(`card_viewGap_succ_le`); the DAG is its own repair channel. The
-headline quotes enforceable conduct only:
+`RefsAccepted` is the converse of `includes` (§6.2): together they say a
+correct block's references are *exactly* its author's acceptances — local,
+observable conduct. The blind and guarded budgets sandwich each other within
+one factor of `f`:
+
+* `UniformBudget.byzBudget : UniformBudget D T → ByzBudget D T` — dropping
+  a guard weakens nothing; and conversely
+* `uniform_of_byzBudget` — post-`R`, under `ByzBudget κ`, *every*
+  acceptance (correct authors included) adds at most `f·κ + 1`.
+
+The converse direction is the interesting one, and its engine deserves
+stating. Why would a *correct* author's block have small novelty? Because a
+correct block's cone is a complete record of everything its author ever
+accepted — `includes` puts each round's acceptances among the next block's
+references, and the self-parent chain (P3′) carries every earlier round
+forward:
+
+```lean
+theorem viewUpto_subset_history (hw : w ∈ Correct) (hb : b ∈ U.ids)
+    (hbc : (U.block b).creator = w) (hbr : (U.block b).round = n + 1) :
+    viewUpto D w n ⊆ history U b
+```
+
+One delivered block therefore erases the entire standing gap between two
+correct stores — the DAG is its own repair channel, and no cone-exchange
+protocol needs modelling. Quantitatively, the gap between correct stores is
+a *constant*, not a drift (`card_viewGap_succ_le`): post-`R` it is at most
+`f·κ`, one round of Byzantine budget, however long the system has run.
+
+The same self-parent mechanism yields a pure-DAG form worth isolating: if
+every correct block adds at most `κ'` over its self-parent (`StepNovelty`),
+then correct cones are linear outright,
+`|H(b)| ≤ κ'·round(b) + 1` (`card_history_le_of_stepNovelty`) — a telescope
+along the self-parent chain, with no delivery model at all.
+
+### 7.5 The headline, and the composition
+
+Under the guarded budget the Byzantine share of a correct store is priced
+through a global object, the *pool* — the Byzantine-authored blocks any
+correct validator retains:
+
+```lean
+def byzPool (D : Delivery U) (n : ℕ) : Finset BlockId :=
+  (Correct : Finset Validator).biUnion fun w =>
+    (viewUpto D w n).filter fun i => (U.block i).creator ∉ Correct
+```
+
+A Byzantine block enters the pool only as a direct budgeted acceptance — if
+it arrived inside a correct block's cone, `RefsAccepted` places it in that
+author's *earlier* store — so the pool grows by at most `|Correct|·f·κ` per
+round (`card_byzPool_le`), and the store bound follows:
+
+```lean
+theorem card_viewUpto_le (hbyz : ByzBudget D κ) (hra : RefsAccepted D)
+    (hv : v ∈ Correct) (n : ℕ) :
+    (viewUpto D v n).card ≤
+      (Correct : Finset Validator).card * (n + 1) +
+        ((Correct : Finset Validator).card * F.f +
+          n * ((Correct : Finset Validator).card * (F.f * κ)))
+```
+
+— correct production, a Byzantine genesis allowance, and a Byzantine rate.
+The capstone quotes **enforceable conduct only** — the author-blind budget,
+the reference rule, and the liveness hypotheses of §6 — and delivers
+liveness and storage from one set of premises:
 
 ```lean
 theorem dos_resistance {T N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
@@ -1484,12 +1631,36 @@ theorem dos_resistance {T N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
               n * ((Correct : Finset Validator).card * (F.f * T)))
 ```
 
-— liveness *and* linear storage from one set of hypotheses, with a
-post-`R` incremental form (`dos_resistance'`). Composing the two
-conditions: once every equivocator is exposed, the Byzantine pool
-freezes and the slope decays to the correct-production rate
-(`card_viewUpto_le_of_allExposed'`) — the budget paces what an author
-can inject, exclusion ends it.
+with a post-`R` incremental form (`dos_resistance'`) in which the slope is
+per-round and the pre-`R` prefix is a single opaque constant. Note what the
+hypotheses do *not* contain: no `DoSValid`, no exposure, no appeal to
+identifying the Byzantine — the budget alone suffices for the linear bound.
+
+The two conditions then compose. Once every equivocator stands exposed to
+every correct validator (`AllExposed U m`), `DoSValid` blocks all further
+Byzantine acceptances, the pool freezes at its round-`m` value, and the
+store's slope decays to the correct-production rate:
+
+```lean
+theorem card_viewUpto_le_of_allExposed' (hdos : DoSValid U)
+    (hbyz : ByzBudget D κ) (hra : RefsAccepted D) (hexp : AllExposed U m) …
+    (viewUpto D v n).card ≤
+      (Correct : Finset Validator).card * (n + 1) +
+        ((Correct : Finset Validator).card * F.f +
+          (m + 1) * ((Correct : Finset Validator).card * (F.f * κ)))
+```
+
+— the budget paces what an author can inject; exclusion ends it. On data,
+the budget is satisfiable at its sharp constant: the witness schedule
+`Dtwin` satisfies `UniformBudget 3` with its costliest acceptance costing
+exactly `3`, and `ByzBudget 0` — nothing Byzantine accepted after the
+genesis round (§10).
+
+How should the parameter `T` be set? Any `T ≥ 1` admits every correct block
+post-`R` (the sandwich's `f·κ + 1` with `κ = 0` would be the correct-only
+floor); smaller `T` tightens the Byzantine rate and defers — never refuses —
+expensive correct blocks, deferral being a rate limiter rather than a
+verdict, since novelty is antitone in the growing store.
 
 ---
 
