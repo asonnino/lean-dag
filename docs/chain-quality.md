@@ -22,8 +22,8 @@ requirements:
    correct block enters the agreed ledger**, within an explicit bound.
 
 Results use **CQ**-labels; plan phases are CQP0–CQP4. The intended home
-is `LeanDag/ChainQuality/` with witnesses in
-`LeanDagTest/ChainQuality/`, consuming the existing development
+is `LeanDag/Quality/` with witnesses in
+`LeanDagTest/Quality/`, consuming the existing development
 read-only — the same additive discipline as the DoS, GC and Odontoceti
 arcs.
 

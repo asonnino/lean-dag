@@ -27,6 +27,8 @@ import LeanDag.GC.Window
 import LeanDag.GC.AttestedBase
 import LeanDag.GC.Bootstrap
 import LeanDag.GC.Horizon
+import LeanDag.Quality.Coverage
+import LeanDag.Quality.Inclusion
 import LeanDag.Odontoceti.Rules
 import LeanDag.Odontoceti.Decision
 import LeanDag.Odontoceti.Liveness
