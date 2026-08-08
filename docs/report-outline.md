@@ -337,10 +337,37 @@ def RefStep (U) (i j : BlockId) : Prop := j ∈ (U.block i).refs
 def Reaches (U) : BlockId → BlockId → Prop := Relation.ReflTransGen (RefStep U)
 ```
 
-### 2.5 Notation for counting
+### 2.5 Notation, and the labelling scheme
+
+Global symbols, fixed for the whole report:
+
+| Symbol | Meaning |
+|:---|:---|
+| `n`, `f` | committee size and fault bound; `n ≥ 3f+1` throughout, `n ≥ 5f+1` in §9 |
+| `n − f` | the quorum size; `2f+1` at the boundary `n = 3f+1` |
+| `Correct` | the complement of the Byzantine set (§2.1) |
+| `r`, `k` | a round; a slot index (§3.4) |
+| `U`, `V`, `D` | the block universe, a view, a delivery layer (§2.3, §6.2) |
+| `H(b)`, `history U b` | the causal history (cone) of block `b` (§2.4) |
+| `Δ`, GST | the post-stabilisation delivery bound and stabilisation time of partial synchrony (§6.8) |
+| `R` | the round from which eventual DAG synchrony holds (§6.4) |
+| `D₀` | the round-0 spread between correct validators' start times (§6.10) |
+| `N` | the growth horizon of `Live` (§6.3) |
+| `κ`, `T` | the novelty budget: analysis-side (guarded) and mechanism-side (author-blind) constants (§7.4) |
+| `G`, `Λ` | a garbage-collection horizon round, and its lag behind the current round (§8) |
+
+Results carry alphanumeric labels by area: **T** (structural theorems, §2 and
+§5.1–§5.2), **M** (the commit rule, §5.3–§5.6), **L** (liveness, §6), **P**
+and **N** and **R** (protocol, network and rate clauses of the trust
+boundary, §4), **D**/**C**/**B** (the denial-of-service development, §7),
+**G** (garbage collection, §8), and **O** (Odontoceti, §9). The labels match
+the design records and the source comments; Appendix A maps each to its Lean
+name and module.
+
+Counting vocabulary:
 
 | Notation | Meaning |
-|---|---|
+|:---|:---|
 | `blocksAt U n` | the identifiers in `U` at round `n` |
 | `authorsAt U n` | their creators |
 | `creatorsOf U.block s` | the creators of an arbitrary set of identifiers |
@@ -379,9 +406,6 @@ A round-`(r+2)` block certifies a round-`r` block `L` exactly when its own
 references contain blocks by a quorum of distinct validators, each of which
 references `L`.
 
-> *[Figure 1]* Three rounds: `L` at round `r`; voters at `r+1` whose references
-> contain `L`; a certificate at `r+2` whose references contain a quorum of those
-> voters.
 
 ### 3.2 The direct rules
 
@@ -545,7 +569,7 @@ the system actually falls.
 ### 4.1 The protocol
 
 | | Clause | Formalisation |
-|---|---|---|
+|:---|:---|:---|
 | P1 | references lie one round below | `ValidWrt.predecessor` |
 | P2 | no block cites one author twice | `ValidWrt.distinct_creators` |
 | P3 | non-genesis blocks cite `n−f` distinct authors | `ValidWrt.quorum` |
@@ -615,7 +639,7 @@ discusses the consequences.
 ### 4.2 The fault model
 
 | | Assumption | Formalisation |
-|---|---|---|
+|:---|:---|:---|
 | A1 | there are `n ≥ 3f+1` validators | `Faults.card_validators` |
 | A2 | at most `f` are Byzantine | `Faults.card_byzantine` |
 
@@ -643,7 +667,7 @@ statements.
 ### 4.3 The network
 
 | | Assumption | Formalisation |
-|---|---|---|
+|:---|:---|:---|
 | N1 | a quorum that exists is eventually held | `DeliversQuorum` |
 | N2 | beyond GST, a block is delivered within Δ | `Timing.covers`, `EventuallyDelivers` |
 
@@ -660,7 +684,7 @@ Eventual DAG synchrony is not an assumption of the development. It is a property
 of executions, obtained from the network assumption together with the protocol:
 
 | Route | From | Result |
-|---|---|---|
+|:---|:---|:---|
 | Delivery | N2 (`EventuallyDelivers`) with P7 | `synchronised_of_delivery` |
 | Timing | N2 (`Timing.covers`) with P9 | `Timing.synchronisedOn_of_timing` |
 
@@ -693,7 +717,7 @@ specification, strengthening clauses already present; only the round-`0` spread
 of R4 is an assumption, and it concerns deployment rather than the network.
 
 | | Clause | Kind | Yields |
-|---|---|---|---|
+|:---|:---|:---|:---|
 | R1 | `Rated timeout`: `∀ n, n ≤ timeout n` | specification | an explicit round `R` |
 | R2 | `FairWithin T w`: a `T`-leader within every window of `w` slots | specification | a bounded committing slot |
 | R3 | `BoundedSpacing s`: slots at most `s` rounds apart | specification | that slot's round, and a horizon |
@@ -780,14 +804,13 @@ Once a quorum of round-`(r+1)` blocks references `b`, every block from round
 universe nor its round need be assumed; both follow from the quorum hypothesis
 (`mem_ids_and_round_of_quorum_support`).
 
-The bound `r+2` is tight.
-
-> *[Editorial: reproduce the counterexample at `r+1`. With `f = 1` and validators
-> `{A,B,C,D}`, let `b` be `A`'s round-`r` block, referenced by the round-`(r+1)`
-> blocks of `A`, `B` and `C`; `D`'s round-`(r+1)` block may reference `{B,C,D}`
-> instead, and since all its references lie at round `r`, it does not reach `b`.
-> Quorum intersection requires two reference quorums to compare, and `r+2` is the
-> first round which supplies them.]*
+The bound `r+2` is tight. At `r+1` there is a counterexample: with `f = 1`
+and validators `{A,B,C,D}`, let `b` be `A`'s round-`r` block, referenced by
+the round-`(r+1)` blocks of `A`, `B` and `C`; `D`'s round-`(r+1)` block may
+reference `{B,C,D}`'s round-`r` blocks instead, and since all its references
+lie at round `r`, it does not reach `b`. Quorum intersection requires two
+reference quorums to compare, and `r+2` is the first round that supplies
+them.
 
 Quorum intersection is used exactly once, in the base case; height above that
 layer is carried by transitivity alone (`reaches_pred_of_round_le`).
@@ -805,11 +828,13 @@ The sole premise is that some round-`(r+2)` block exists — a fact about the DA
 in hand rather than an assumption that any party makes progress. The proof rests
 on a double-counting argument (T3a, `exists_correct_common_support`).
 
-> *[Editorial: state the counting. Each correct round-`(r+1)` block names at
-> least `n-f-b` correct round-`r` authors, and there are `l` such blocks spread
-> over `c = n-b` correct validators, so some author collects at least
-> `l(n-f-b)/c`. The arithmetic obligation reduces to `c² ≤ f(l+c)`, which
-> `l ≤ c` converts to `c ≤ 2f`, contradicting `c ≥ 2f+1`.]*
+The counting: with `b ≤ f` the number of Byzantine validators, each correct
+round-`(r+1)` block names at least `n−f−b` correct round-`r` authors, and
+there are `l ≥ 1` such blocks spread over `c = n−b` correct authors, so some
+round-`r` author collects support from at least `l(n−f−b)/c` of them. Were
+that always below the needed threshold, the arithmetic obligation would
+reduce to `c² ≤ f(l+c)`, which `l ≤ c` converts to `c ≤ 2f` — contradicting
+`c ≥ n − f ≥ 2f+1`.
 
 ### 5.3 Consistency of the direct rules
 
@@ -880,8 +905,6 @@ trichotomy on the two anchors, and it is here that the positive formulation of
 "nearest anchor" (§3.5) is consumed: the negative reading supplies no
 sub-derivation on which the induction could rest.
 
-> *[Figure 2]* The principal case: two validators, two anchors, and the
-> trichotomy on their indices.
 
 Two corollaries are stated in the form applications require:
 `eq_of_decided_commit` (no two validators commit different blocks for a slot) and
@@ -1031,10 +1054,11 @@ choosing it large.
 Second, `N` and `R` measure independent quantities — extent and quality
 respectively — and all four combinations occur.
 
-> *[Editorial: reproduce the 2×2 table. `N` large with `R` small: tall and
-> synchronous, commits. `N` large with `R` large or never: grows, commits
-> nothing. `N` small with `R` small: synchronous but too short to commit. `N`
-> small with `R` large: short and asynchronous.]*
+All four combinations occur: `N` large with `R` small is a tall,
+synchronous DAG that commits; `N` large with `R` large (or with coverage
+never holding) grows for ever and commits nothing; `N` small with `R` small
+is synchronous but too short to commit; `N` small with `R` large is short
+and asynchronous.
 
 Third, unboundedness becomes a property of a *family* of universes. The assertion
 that the ledger grows without bound is not that one DAG commits infinitely often
@@ -1273,20 +1297,6 @@ is unknown; §6.10 supplies two further routes.
 
 ### 6.9 The layering
 
-> *[Figure 3]* The layering, and the trust boundary.
->
-> ```
->   L6   commits recur            ─┐
->   L4   a correct leader commits  │  no time appears in this region
->   L1   no stall                  │
->   L0   density                  ─┘
->         ▲
->         │   SynchronisedOn   — derived, not assumed
->         │
->   L7a   from   N2  EventuallyDelivers   +   P7  includes
->   L7b   from   N2  Timing.covers        +   P9  waits, prompt
->                └──── assumed ────┘          └──── specified ────┘
-> ```
 
 No theorem above `SynchronisedOn` mentions time, and no theorem below it mentions
 certificates. The figure also locates the trust boundary: of the four premises
@@ -2146,7 +2156,7 @@ development rather than a testing exercise: an unsatisfiable hypothesis renders
 every theorem above it vacuous, and vacuity is not otherwise detectable.
 
 | Model | Satisfies |
-|---|---|
+|:---|:---|
 | `Ugrow N` | `Live`, `DeliversQuorum`, `Synchronised`, at every horizon `N` |
 | `ugrowDelivery` | `Delivery`, and `EventuallyDelivers` for the delivery route |
 | `ugrowHonest` | `Delivery` with a genuinely partial view: the Byzantine validator withholds, and a quorum nonetheless survives |
@@ -2211,7 +2221,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 **The core.**
 
 | Module | Contents |
-|---|---|
+|:---|:---|
 | `Validators.lean` | the fault model (`n ≥ 3f+1`); T0 |
 | `Block.lean` | `Block`, `ValidWrt`; T0′ |
 | `BlockDag.lean` | `BlockUniverse`, `View`; T1 |
@@ -2229,7 +2239,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 **The arcs** (§§7–9), each consuming the core read-only:
 
 | Module | Contents |
-|---|---|
+|:---|:---|
 | `DoS/Exposure.lean` | `ExposedIn`, `DoSValid`; exposure ≤ `f` per cone |
 | `DoS/Acceptance.lean`, `DoS/Counting.lean` | the acceptance rule; view size from history size |
 | `DoS/SelfParent.lean`, `DoS/Adoption.lean`, `DoS/Pedigree.lean` | the adoption collapse; pedigrees; the general per-cone bound |
@@ -2492,7 +2502,35 @@ bounded time" not being expressible in this vocabulary (§12.5).
 
 ## 14. Conclusion
 
-> *[Placeholder — written in the editing pass.]*
+This report has given a machine-checked account of uncertified DAG consensus
+organised around one idea: state the liveness condition on the object the
+protocol actually builds. Eventual DAG synchrony — beyond some round, every
+correct block references every correct block of the round below — is a
+sentence about a graph, and above it the entire consensus argument is finite
+combinatorics: safety with no network assumption at all, liveness with no
+mention of time, and the temporal content of partial synchrony confined to a
+single module that *derives* the structural condition twice over.
+
+The same foundation then carried three developments it was not designed for,
+essentially unchanged — which is the strongest evidence the abstraction is
+placed correctly. The denial-of-service account reused the delivery layer and
+the self-parent clause; garbage collection reused every theorem verbatim on
+the truncated universe, because truncation was arranged to be a universe; and
+Odontoceti reused the entire DAG layer because its quorums turned out to be
+the `n − f` the development was already parameterised by. Each arc also
+returned something to the trust story: enforceable storage bounds, horizons
+without consensus, and — in the one place the formalization diverged from a
+published argument by necessity — the observation that Odontoceti's
+agreement rests on a canonical candidate order that its paper never states.
+
+What remains open is catalogued in §12.5: the backoff dynamics, wall-clock
+latency, block-level total order, and liveness below the growth clause.
+Beyond those, two directions suggest themselves. The commit-free,
+evidence-based horizon rule sketched in the garbage-collection design record
+would extend pruning into asynchrony; and the decision relation, now
+instantiated twice at different wavelengths with near-identical agreement
+proofs, invites a rule-parameterised treatment — resisted here to keep each
+development additive, but natural the third time a commit rule arrives.
 
 ---
 
@@ -2524,7 +2562,7 @@ Principal results only; supporting lemmas are omitted.
 ### Safety
 
 | Label | Statement | Lean | Module |
-|---|---|---|---|
+|:---|:---|:---|:---|
 | T0 | two quorums share a correct validator | `exists_correct_mem_inter` | `Validators` |
 | T0′ | two quorum-backed identifier sets share a correct author | `exists_correct_mem_creators_inter` | `Block` |
 | T1 | non-equivocation, in usable form | `BlockUniverse.eq_of_creator_eq` | `BlockDag` |
@@ -2549,7 +2587,7 @@ Principal results only; supporting lemmas are omitted.
 ### Liveness
 
 | Label | Statement | Lean | Module |
-|---|---|---|---|
+|:---|:---|:---|:---|
 | L0 | the DAG is dense below its frontier | `card_authorsAt_of_lt` | `Liveness` |
 | L1 | no stall | `no_stall` | `Liveness` |
 | L2 | decisions are monotone in the view | `decided_mono` | `Liveness` |
@@ -2572,7 +2610,7 @@ Principal results only; supporting lemmas are omitted.
 ### Denial of service (§7)
 
 | Label | Statement | Lean | Module |
-|---|---|---|---|
+|:---|:---|:---|:---|
 | D11–D13 | exposure, and the DoS condition | `ExposedIn`, `DoSValid` | `DoS/Exposure` |
 | C2 | at most `f` authors exposed per cone | `card_exposedTo_le` | `DoS/Exposure` |
 | D14 | safety and the DoS condition do not interact | witness file | `LeanDagTest/DoS/SafetyUnderDoS` |
@@ -2591,7 +2629,7 @@ Principal results only; supporting lemmas are omitted.
 ### Garbage collection (§8)
 
 | Label | Statement | Lean | Module |
-|---|---|---|---|
+|:---|:---|:---|:---|
 | G1 | truncation is a universe; the DoS condition crosses one way | `chop`, `dosValid_chop` | `GC/Chop` |
 | G2 | per-slot verdict invariance | `certificates_chop`, `directCommit_chop`, `certifiedIn_chop`, … | `GC/Chop` |
 | G3 | the decision relation survives the cut | `decided_chop` | `GC/ChopDecided` |
@@ -2609,7 +2647,7 @@ Principal results only; supporting lemmas are omitted.
 ### Odontoceti (§9)
 
 | Label | Statement | Lean | Module |
-|---|---|---|---|
+|:---|:---|:---|:---|
 | O1 | commit versus skip | `not_directSkip_of_directCommit` | `Odontoceti/Rules` |
 | O1′ | twin uniqueness for direct commits | `eq_of_directCommit` | `Odontoceti/Rules` |
 | O2 | a skipped leader fails the indirect test everywhere | `card_supporters_le_of_directSkip`, `not_thickLink_of_directSkip` | `Odontoceti/Rules` |
