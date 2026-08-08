@@ -96,15 +96,19 @@ is packaging, not proof machinery:
   correct validators** — at the boundary `n = 3f+1`, from at least
   `f+1` of the `2f+1`. Pure arithmetic over CQ1; this is the quotable
   form and confirms the design intuition that motivated the arc.
-- **CQ3 (ledger form).** Lifted to `ledgerSet`: after any commit at
-  slot `k` with leader round `r`, the agreed ledger contains, for every
-  `δ < r`, round-`δ` blocks of at least `|Correct| − f` correct
-  authors. Stated **cumulatively** (a recorded decision): the
-  per-flush *delta* — what slot `k` adds over slot `k−1` — is awkward
-  under pipelining, where consecutive cones overlap heavily, while the
-  cumulative form is monotone (`ledgerSet_mono`), agreed
-  (`ledgerSet_agree`), and composes with CQ1 by one unfolding of
-  `ledgerSet`.
+- **CQ3 (ledger form).** Lifted to `ledgerSet`, in the ledger's own
+  idiom: for a verdict assignment `g` of a view
+  (`∀ k' < n, Decided U V k' (g k')`) with `g k = some L` for some
+  `k < n`, the ledger `ledgerSet U g n` contains, for every
+  `δ < (U.block L).round` and all but at most `f` correct validators
+  `v`, a round-`δ` block authored by `v`. Membership is one unfolding:
+  a cone block `i ∈ H(L)` gives `Reaches U L i` (`mem_history_iff`),
+  hence `i ∈ ledgerSet U g n`. The statement is view-independent
+  because the assignment is (`ledgerSet_agree`). Stated
+  **cumulatively** (a recorded decision): the per-flush *delta* — what
+  slot `k` adds over slot `k−1` — is awkward under pipelining, where
+  consecutive cones overlap heavily, while the cumulative form is
+  monotone (`ledgerSet_mono`) and composes with CQ1 directly.
 - **CQ4 (stretch — block-fraction purity under the budget).** Under
   `DoSValid` or the novelty budget, the Byzantine *block count* per
   committed cone is bounded (§7's machinery), giving a classical
@@ -130,17 +134,28 @@ new content composes it with commit recurrence:
   `(U.block L).round > m`. Proof: `isLeaderBlock_of_decided` + the
   backbone. No new counting.
 - **CQ6 (inclusion liveness — the headline).** Every correct block at
-  round `m ≥ R` enters the agreed ledger, and within an explicit bound:
-  commits by reliable leaders recur (`commits_recur_on`, L6), a
-  recurring commit above round `m` exists, CQ5 puts `b` in its cone,
-  and `ledgerSet` membership follows. Quantitative forms come from the
-  L8b machinery: under a windowed-fair schedule the committing slot is
-  within `w` slots (`commits_recur_within`) and its round within
-  `s·w` rounds (`commits_recur_by_round`) of `max(m, R)` — so the
-  statement can be phrased as *"a correct block is committed within a
+  round `m ≥ R` enters the agreed ledger, and within an explicit
+  bound. The composition, precisely: pick a slot at or above round
+  `m + 1` (`slotAt` / `S.unbounded`); `commits_recur_on` (L6) from
+  that slot yields a committed slot `k'` with a **correct** leader —
+  `hT : T ⊆ Correct` makes the leader's block correct-authored, which
+  is what the backbone consumes — and `R ≤ S.slotRound k'`; CQ5 puts
+  `b` in the committed block's cone (`R ≤ m` and
+  `m < S.slotRound k'` are exactly the backbone's side conditions);
+  and `ledgerSet` membership follows as in CQ3. Quantitative forms
+  come from the L8b machinery: under a windowed-fair schedule the
+  committing slot is within `w` slots (`commits_recur_within`) and its
+  round within `s·w` rounds (`commits_recur_by_round`) of the starting
+  slot, giving *"a correct block is committed within a
   schedule-window of rounds of its creation, once the DAG is
-  synchronous"*. For pipelined schedules the same composition runs
-  through the committed-run results (`all_decided_below_of_fairRun`).
+  synchronous"* — accepting the `max(m, R)` shape R2 anticipates. For
+  pipelined schedules the same composition runs through the
+  committed-run results (`all_decided_below_of_fairRun`). One scoping
+  note, recorded: CQ6 is stated at `T ⊆ Correct` for the *schedule*
+  but with full `Synchronised U R` (Correct-wide coverage) for the
+  backbone — a `T`-relative variant would need a `T`-relative backbone
+  lemma, which is possible (the backbone steps through any
+  quorum-covered set) but not attempted in this arc.
 - **CQ7 (enforceable-hypotheses form).** The capstone packaging in the
   house style of `dos_resistance`: under `Live`, `DeliversQuorum`,
   `SynchronisedOn`, and a fair schedule — enforceable or standard
@@ -167,17 +182,26 @@ before or alongside its proof.
   that genuinely misses one (the exclusion story already provides
   blocks whose cones omit validator 0's half). CQ2's arithmetic at the
   boundary: `f + 1 = 2` of `2f + 1 = 3`.
-- **The negative witness — aggregate is not individual.** A universe
-  where the same correct validator is missing from every committed
-  cone's every layer for as long as the universe runs: three validators
-  build on each other, the fourth's blocks arrive but are never
-  referenced (asynchrony permits it), commits still occur. This
-  witnesses why CQ6 needs `R`, and it is buildable from the §12.1
-  quorum-formation example of the report.
-- **Inclusion on data**: in `Ugrow` or `Uexcl`, a specific correct
-  block's membership in `ledgerSet` after the slot-1 commit, by an
-  explicit `Reaches` witness; and the CQ5 composition applied with
-  `uexcl_synchronised` at `R = 0`.
+- **The negative witness — aggregate is not individual, and CQ1 is
+  tight.** One model serves twice: four validators `{A,B,C,D}` at
+  `f = 1`, where `A`, `B`, `C` reference only each other and commit
+  (an `A`-led slot with `n − f = 3` supporters and certificates from
+  `{A,B,C}`), while `D` builds validly — its blocks self-parent and
+  reference `{A,B,C}` — but is never referenced by anyone.
+  `missingAt` of every committed cone is `{D}` at **every** layer:
+  simultaneously the tightness of CQ1's `≤ f` and the proof that
+  aggregate coverage is not individual inclusion — the same correct
+  validator is censored from every commit for as long as the universe
+  runs, and no validity or delivery clause objects (`DeliversQuorum`
+  is satisfied by the `{A,B,C}` quorums; `Live.builds` lets `D` keep
+  building). This is why CQ6 needs `R`, exhibited rather than argued.
+- **Inclusion on data**: in `Uexcl`, a specific correct block's
+  membership in `ledgerSet` after the slot-1 commit. Ledger
+  membership *is* decidable on data — `Reaches U L b` is
+  `b ∈ history U L` (`mem_history_iff`), and the slot quantifier is a
+  finite scan — so this is a `decide` witness with a concrete verdict
+  assignment, not a hand-built `Reaches` term. The CQ5 composition is
+  then applied with `uexcl_synchronised` at `R = 0`.
 
 ## 6. The plan
 
@@ -218,19 +242,19 @@ before or alongside its proof.
 
 **Risks the plan watches:**
 
-- **R1 — `ledgerSet` is a `Set`, not a `Finset`.** Membership witnesses
-  on data need explicit `Reaches` terms rather than `decide` on the
-  set; if that grates in CQP0, add a decidable bounded form
-  (`ledgerSet` restricted to `U.ids` is finite) without touching the
-  original.
+- **R1 — resolved in review.** `ledgerSet` is a `Set`, but membership
+  is decidable on concrete data: `Reaches U L b ↔ b ∈ history U L`
+  (`mem_history_iff`) and the slot quantifier is a finite scan. No
+  bounded variant needed; witnesses use `decide` with a concrete
+  verdict assignment.
 - **R2 — the CQ6 bound's shape.** L8b's constants are stated against
   `FairWithin`/`BoundedSpacing`; composing them with the backbone's
-  `m ≥ R` side conditions may produce an ugly `max(m, R)` expression.
-  If so, state the clean form at `R ≤ m` and the general form
-  separately rather than forcing one statement.
-- **R3 — the censorship counter-model under `Live`.** The negative
-  witness needs commits to occur while one correct validator is never
-  referenced; `Live.builds` only requires building on *accepted*
-  quorums, so this should be constructible, but if `DeliversQuorum`
-  forces the fourth validator's blocks into acceptance the model needs
-  `held ⊃ accepted` asymmetry — worth checking first in CQP0.
+  `m ≥ R` side conditions produces a `max(m, R)`-shaped bound. Accept
+  it, and state the clean `R ≤ m` form as the headline with the
+  general form beside it, rather than forcing one statement.
+- **R3 — resolved in review.** The censorship counter-model is
+  constructible: `D`'s blocks satisfy validity by self-parenting and
+  referencing `{A,B,C}` (three distinct authors including its own
+  chain), `DeliversQuorum` is discharged by the `{A,B,C}` quorums, and
+  `Live.builds` is satisfied for all four. The §5 sketch is the
+  construction; CQP0 realises it.
