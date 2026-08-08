@@ -1,5 +1,7 @@
 import LeanDag.Quality.Inclusion
+import LeanDag.Quality.Capstone
 import LeanDagTest.DoS.Exclusion
+import LeanDagTest.Quantitative
 
 /-!
 # Chain quality, witnessed
@@ -154,6 +156,22 @@ example : ∃ k', 1 < fairSlots.slotRound k' := by
       (by omega)
   exact ⟨k', hk'⟩
 
+/-! ## CQ7 on data — the windowed bound instantiated -/
+
+-- Under the round-robin schedule (windowed-fair at `w = 2`, spacing 3),
+-- the committing slot for round-`m` blocks is pinned to a two-slot
+-- window, and its round to within `3·2 = 6` rounds.
+example : ∃ k', slotAt (Fin 4) (S := rrSlots) 2 ≤ k' ∧
+    k' < slotAt (Fin 4) (S := rrSlots) 2 + 2 := by
+  obtain ⟨k', h1, h2, -⟩ :=
+    committed_of_correct_block_within (S := rrSlots) (BlockId := Fin 20)
+      (Payload := Unit) (by decide) (by decide) rrSlots_fairWithin 0 1
+      (by omega)
+  exact ⟨k', h1, h2⟩
+
+#print axioms chain_quality
+#print axioms committed_of_correct_block_within
+#print axioms committed_of_correct_block_by_round
 #print axioms card_coveredAt_ge_of_decided
 #print axioms card_correct_le_two_mul_coveredAt_of_decided
 #print axioms ledger_coverage
