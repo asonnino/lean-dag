@@ -1,4 +1,4 @@
-import LeanDag.Counting
+import LeanDag.DoS.Counting
 import LeanDag.Persistence
 
 /-!

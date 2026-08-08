@@ -1,5 +1,5 @@
-import LeanDag.Novelty
-import LeanDag.Exclusion
+import LeanDag.DoS.Novelty
+import LeanDag.DoS.Exclusion
 
 /-!
 # The two conditions, composed

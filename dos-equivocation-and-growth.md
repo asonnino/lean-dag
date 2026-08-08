@@ -299,7 +299,7 @@ bandwidth stays outside (§1).
 
 **D14 — safety is untouched.** Literally: `DoSValid` is an extra
 hypothesis, and no safety result mentions it. Checked mechanically
-(`LeanDagTest/SafetyUnderDoS.lean`).
+(`LeanDagTest/DoS/SafetyUnderDoS.lean`).
 
 **Exclusion is sound, and priced correctly.**
 
@@ -405,7 +405,7 @@ self_parent : 0 < b.round → ∃ i ∈ b.refs, (blk i).creator = b.creator
 Real DAG protocols do this anyway, and without it the linear bound is
 false: an author that sheds its own past can launder chains through
 single-block *carriers*, giving `Θ(r^{⌊f/2⌋+1})` histories at `f ≥ 3` with
-every block valid and `DoSValid`. With it (all in `LeanDag/SelfParent.lean`):
+every block valid and `DoSValid`. With it (all in `LeanDag/DoS/SelfParent.lean`):
 
 - **D20 — chains reach the ground**: a history holds a block by its own
   author at every round below it.
@@ -421,11 +421,11 @@ every block valid and `DoSValid`. With it (all in `LeanDag/SelfParent.lean`):
 **The ceiling — C1′, proved at every `f`.** An author's contribution to a
 history is `chains × rounds`, and chains are counted by **tops** — the
 author's blocks with no same-author child in the cone (`topsOf`,
-`LeanDag/Adoption.lean`). An unexposed author has one chain; a namer's
+`LeanDag/DoS/Adoption.lean`). An unexposed author has one chain; a namer's
 history has room for only one chain of the named author, so distinct tops
 need distinct adopting authors (*the adoption collapse*); and iterating
 "who adopted the adopter" climbs strictly nested cones — a **pedigree**
-(`LeanDag/Pedigree.lean`) — whose author list is duplicate-free and
+(`LeanDag/DoS/Pedigree.lean`) — whose author list is duplicate-free and
 determines its top. Anchored at the first unexposed adopter, with
 `e := |exposedTo U b| ≤ f` exposed authors:
 
@@ -444,7 +444,7 @@ no compounding, which is all C1′ ever demanded.
 **The exponential in `e` is real — polynomial `c(f)` is impossible.** Two
 proved constraints cut the count and pin its shape:
 
-- **D25 — density** (`LeanDag/Density.lean`): a valid block's history
+- **D25 — density** (`LeanDag/DoS/Density.lean`): a valid block's history
   contains a block by all but at most `f` of the correct validators, at
   every round below it. Cones cannot be selectively blind; the miss budget
   is exactly `f`.
@@ -458,7 +458,7 @@ author whose chains each carry a fresh chain of the doubled author to a
 different unexposed scaffold — yields `2^(e−2)` chains of a single author
 with only `e` exposed authors, in `O(e)` rounds, passing every proved
 constraint. Its doubling step is **machine-checked** (`Udouble`,
-`LeanDagTest/Doubling.lean`): thirteen validators at `f = 4`, the correct
+`LeanDagTest/DoS/Doubling.lean`): thirteen validators at `f = 4`, the correct
 nine advancing rounds referencing only each other, every Byzantine block
 referencing seven real correct blocks of the round below as `predecessor`
 and `quorum` force, visibility one-way until the reveal; `decide` confirms
@@ -472,8 +472,8 @@ the way out is to change what acceptance *costs*, which is §6.
 ## 6. The novelty budget
 
 The slogan the design keeps returning to: **legislate novelty, prove
-size**. Built in `LeanDag/Novelty.lean`, witnessed in
-`LeanDagTest/Novelty.lean`.
+size**. Built in `LeanDag/DoS/Novelty.lean`, witnessed in
+`LeanDagTest/DoS/Novelty.lean`.
 
 **The shape of the hidden mass.** Per block, the doubling family is
 unimpeachable — rounds contiguous, quorums full, every cone clean about
@@ -596,7 +596,7 @@ reveal — it must trickle through budgeted acceptances, at most `f`
 Byzantine authors per round, so placing it takes exponentially many rounds
 while correct storage grows linearly throughout.
 
-**The composition (B5, `LeanDag/Composition.lean`).** Theorem B does not
+**The composition (B5, `LeanDag/DoS/Composition.lean`).** Theorem B does not
 assume Condition 1 — `Novelty.lean` never mentions exposure — and the two
 compose into a statement neither makes alone. The budget bounds the
 Byzantine share of a correct view by a *rate*, `|Correct|·f·κ` per round,

@@ -1,5 +1,5 @@
-import LeanDag.SelfParent
-import LeanDag.Counting
+import LeanDag.DoS.SelfParent
+import LeanDag.DoS.Counting
 import Mathlib.Data.Finset.Max
 
 /-!

@@ -1,5 +1,5 @@
-import LeanDag.Acceptance
-import LeanDag.Exposure
+import LeanDag.DoS.Acceptance
+import LeanDag.DoS.Exposure
 import LeanDag.Liveness
 
 /-!

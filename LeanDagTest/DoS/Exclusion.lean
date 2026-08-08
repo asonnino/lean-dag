@@ -1,6 +1,6 @@
 import LeanDagTest.Growth
-import LeanDag.Exclusion
-import LeanDag.Counting
+import LeanDag.DoS.Exclusion
+import LeanDag.DoS.Counting
 
 /-!
 # Liveness survives exclusion, end to end

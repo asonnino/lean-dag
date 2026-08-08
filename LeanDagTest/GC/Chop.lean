@@ -1,9 +1,9 @@
 import LeanDag.GC.Window
 import LeanDag.GC.AttestedBase
 import LeanDag.GC.ChopDecided
-import LeanDagTest.Exposure
-import LeanDagTest.Exclusion
-import LeanDagTest.Novelty
+import LeanDagTest.DoS.Exposure
+import LeanDagTest.DoS.Exclusion
+import LeanDagTest.DoS.Novelty
 
 /-!
 # The horizon, witnessed

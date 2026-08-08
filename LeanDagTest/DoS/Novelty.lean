@@ -1,7 +1,7 @@
-import LeanDag.Novelty
-import LeanDag.Composition
-import LeanDagTest.Density
-import LeanDagTest.Doubling
+import LeanDag.DoS.Novelty
+import LeanDag.DoS.Composition
+import LeanDagTest.DoS.Density
+import LeanDagTest.DoS.Doubling
 
 /-!
 # The novelty budget, witnessed

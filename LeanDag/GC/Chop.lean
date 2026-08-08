@@ -1,5 +1,5 @@
 import LeanDag.Mysticeti
-import LeanDag.Exposure
+import LeanDag.DoS.Exposure
 
 /-!
 # The horizon: truncation as rebasing

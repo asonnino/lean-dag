@@ -1,5 +1,5 @@
-import LeanDagTest.Exposure
-import LeanDag.Acceptance
+import LeanDagTest.DoS.Exposure
+import LeanDag.DoS.Acceptance
 
 /-!
 # The acceptance rule on a concrete DAG

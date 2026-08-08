@@ -1,4 +1,4 @@
-import LeanDag.Adoption
+import LeanDag.DoS.Adoption
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.Tactic.Ring
 

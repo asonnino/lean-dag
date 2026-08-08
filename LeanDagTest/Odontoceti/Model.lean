@@ -1,6 +1,6 @@
 import LeanDag.Odontoceti.Liveness
 import LeanDag.Schedule
-import LeanDag.Exclusion
+import LeanDag.DoS.Exclusion
 import Mathlib.Tactic.IntervalCases
 
 /-!

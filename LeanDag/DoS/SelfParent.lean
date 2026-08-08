@@ -1,4 +1,4 @@
-import LeanDag.Exposure
+import LeanDag.DoS.Exposure
 import Mathlib.Data.Finset.Prod
 
 /-!

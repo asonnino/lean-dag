@@ -1,5 +1,5 @@
 import LeanDag.GC.Chop
-import LeanDag.Exclusion
+import LeanDag.DoS.Exclusion
 
 /-!
 # The attested base: the inexact certificate
