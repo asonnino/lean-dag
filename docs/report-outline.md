@@ -7,49 +7,64 @@
 > and whether the surrounding prose is faithful to what is proved, has
 > only human-plus-LLM review behind it. Read critically.
 
-**Report outline.** This document fixes the structure, definitions, assumptions
-and results of the report. All displayed Lean is copied from the source and
-type-checks against the built library.
-
-*Editorial notes appear in italics and are addressed to the author; they mark
-material still to be written and do not form part of the report.*
-
----
-
 ## Abstract
 
-> *[To be written. The argument, in order:*
->
-> *(i) DAG-based BFT protocols are widely deployed, but their liveness arguments
-> are conventionally stated in terms of per-message delivery bounds, which
-> obliges the entire proof to carry a time model that the commit rule itself
-> never mentions.*
->
-> *(ii) We propose* **eventual DAG synchrony**, *a structural condition on the
-> DAG: beyond some round, every correct block references every correct block of
-> the round below.*
->
-> *(iii) We give a machine-checked development of safety and liveness for a
-> Mysticeti-style commit rule above this condition, in which no theorem mentions
-> time.*
->
-> *(iv) We show this property is derived rather than assumed: it follows from
-> standard partial synchrony together with the protocol's own build rules, so
-> nothing beyond the conventional model is assumed.*
->
-> *(v) We give its quantitative form: a correct leader is committed once correct
-> validators wait 2Δ.*
->
-> *(vi) On the same foundation, unchanged, we develop three further
-> machine-checked accounts: denial-of-service resistance under equivocation via
-> an enforceable novelty budget; garbage collection with a per-validator horizon
-> and no consensus on the cut; and safety and liveness of the two-round protocol
-> Odontoceti, generalized to n ≥ 5f+1, including a repair to its published
-> agreement argument.]*
+DAG-based Byzantine fault-tolerant protocols are widely deployed, yet their
+liveness arguments are conventionally stated in terms of per-message delivery
+bounds, which obliges the entire proof to carry a time model that the commit
+rule itself never mentions. We propose **eventual DAG synchrony** — a
+structural condition on the DAG: beyond some round, every correct block
+references every correct block of the round below — and give a machine-checked
+development, in Lean 4, of safety and liveness for a Mysticeti-style commit
+rule above this condition, in which no liveness theorem mentions time. Safety
+assumes nothing about the network at all. The structural condition is derived
+rather than assumed: it follows from standard partial synchrony together with
+the protocol's own build rules, and its quantitative form states that a
+correct leader is committed once correct validators wait `2Δ`.
+
+On the same foundation, unchanged, we develop three further machine-checked
+accounts. First, **denial-of-service resistance**: safety is shown
+independent of any anti-equivocation condition, and a correct validator's
+storage is bounded under an enforceable, author-blind *novelty budget* — with
+a matching construction showing that any bound from reference-validity
+conditions alone carries a constant exponential in the fault bound `f`.
+Second, **garbage collection**: a per-validator horizon below which nothing
+is retained, with commit verdicts invariant across the cut, storage constant
+at a lag, and bootstrap by an `(f+1)`-sampled attested base — no consensus on
+the cut anywhere. Third, the two-round protocol **Odontoceti**: safety and
+liveness of its commit rule, generalized from the published `n = 5f+1` to
+`n ≥ 5f+1`, where the formalization surfaces a gap in the published agreement
+argument — two equivocating candidates can both pass the indirect commit test
+at one anchor, realized on a concrete six-validator counterexample — and
+repairs it with a canonical-candidate rule.
+
+The development comprises roughly 15,000 lines of Lean 4 over Mathlib. Every
+principal result depends on exactly Lean's three standard axioms; every
+definition is exercised on concrete models by `decide` before anything is
+proved from it. All displayed Lean in this report is drawn from the source
+and type-checks against the built library.
 
 ---
 
 ## 1. Introduction
+
+Byzantine fault-tolerant consensus built over block DAGs has moved from
+research prototypes to production blockchains: validators exchange
+round-indexed blocks, each referencing a quorum of the previous round, and
+read commitment out of the resulting graph. The latest generation of these
+protocols — Mysticeti and its descendants — is *uncertified*: no certificate
+is ever constructed or sent, and every consensus-relevant fact is a counting
+pattern in the graph itself. This makes the protocols unusually well suited
+to mechanised verification — the commit rule is finite-set arithmetic — and
+unusually exposed to subtle error, because equivocation and availability,
+which certification used to discharge, become the reader's problem in every
+proof. This report is a machine-checked account, in Lean 4 over Mathlib, of
+this protocol family: a core development of safety and liveness organised
+around a structural liveness condition we call *eventual DAG synchrony*, and,
+on that unchanged foundation, three further developments — storage bounds
+under adversarial equivocation, garbage collection without consensus on the
+cut, and the safety and liveness of the two-round protocol Odontoceti,
+including a repair its published argument turns out to need.
 
 ### 1.1 DAG-based consensus
 
@@ -137,6 +152,24 @@ proof effort with no corresponding proof content.
    the paper's safety argument, one of which (agreement among indirect commits
    resting on candidate-iteration order) is refutable on data without a
    canonicity repair the formalisation supplies.
+
+### 1.4 Organisation
+
+§2 gives the system model and §3 the commit rule; §4 draws the trust
+boundary, separating what is assumed from what the protocol enforces. §5
+develops safety (culminating in agreement, `decided_agree`, and the agreed
+ledger) and §6 liveness (culminating in recurring commits,
+`commits_recur_on`, the two derivations of eventual DAG synchrony, and the
+quantitative wait bound). §§7–9 present the three further developments —
+denial-of-service resistance (`dos_resistance`), garbage collection
+(`decided_agree_chop`, `card_retained_le`, `bootstrap_agree`), and
+Odontoceti (`Odontoceti.decided_unique`,
+`Odontoceti.all_decided_below_of_fairRun`). §10 exhibits the witness models,
+§11 describes the mechanisation, §12 discusses the formulation and its
+limitations, and §13 surveys related work. Appendix A indexes every
+principal statement against its Lean name and module. Throughout, displayed
+Lean is drawn from the source; binders are occasionally elided for layout,
+and `…` marks an elision.
 
 ### 1.4 Scope and non-goals
 
