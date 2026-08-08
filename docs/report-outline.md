@@ -99,7 +99,7 @@ proof effort with no corresponding proof content.
    refinement into LiDO-DAG. What is claimed is the *form* of the account —
    theirs is operational, quantified over traces and instants; here liveness is
    stated as a condition on the DAG, and the dependence on time is confined to a
-   single file (§6.8, §7.5).
+   single file (§6.8, §13).
 
 4. **Two independent derivations** of the structural property, from an abstract
    delivery model (§6.7) and from GST (§6.8), in each case together with the
@@ -110,14 +110,14 @@ proof effort with no corresponding proof content.
    the fault bound and two network conditions; every other condition is a clause
    of the protocol, which a designer controls. In particular reference coverage
    is derived rather than assumed, and the one point at which a network parameter
-   constrains the specification is the wait threshold of §7.1.
+   constrains the specification is the wait threshold of §12.1.
 
 6. **Quantitative forms** (§6.10): the round from which coverage holds, given
    explicitly; a bound on the slot at which the next commit occurs; and an
    operational statement — a correct leader is committed once every correct
    validator waits `D₀ + Δ`, which is `2Δ` under a common start.
 
-7. **Denial-of-service resistance** (§8.1): with safety shown independent of
+7. **Denial-of-service resistance** (§7): with safety shown independent of
    any anti-equivocation condition, storage is bounded twice over — a general
    per-cone bound under an exposure condition on references, with a matching
    construction showing its exponential constant is essentially forced, and a
@@ -125,13 +125,13 @@ proof effort with no corresponding proof content.
    forever, stated under enforceable, author-blind conditions only
    (`dos_resistance`).
 
-8. **Garbage collection without consensus** (§8.2): a horizon below which
+8. **Garbage collection without consensus** (§8): a horizon below which
    stores retain nothing, with commit verdicts proved invariant across the cut
    under a single premise, storage made *constant* at a lag, bootstrap by an
    `f+1`-sampled attested base rather than any agreement on the cut, and the
    lag envelope pinned theorem by theorem.
 
-9. **Odontoceti, formalized and repaired** (§8.3): safety and liveness of the
+9. **Odontoceti, formalized and repaired** (§9): safety and liveness of the
    two-round commit rule, generalized from the paper's fixed `n = 5f+1` to
    `n ≥ 5f+1`, on the unmodified DAG layer — together with four findings about
    the paper's safety argument, one of which (agreement among indirect commits
@@ -165,7 +165,7 @@ first.
   are shown agreed; totally ordering the blocks released by a single commit
   requires a tie-break which the development declines to assume (§5.6).
 - **No wall-clock latency.** The wait bound of §6.10 is a duration, but the total
-  elapsed time to a commit is not derived (§10).
+  elapsed time to a commit is not derived (§12.5).
 
 ---
 
@@ -238,13 +238,13 @@ round", which means `n−f` distinct *validators*; `ValidWrt.card_creators` and 
 under the distinctness condition.
 
 `distinct_creators` is consumed by certificate uniqueness (§5.4) and, in the
-two-round setting, by twin uniqueness (§8.3).
+two-round setting, by twin uniqueness (§9).
 
 `self_parent` — a non-genesis block references *some* block by its own
 creator, not a unique one: an equivocator's blocks form a forest of
 predecessor chains, and the condition does not collapse it. Mysticeti and
 Odontoceti both mandate the clause. The safety and liveness developments never
-consume it; it is load-bearing for the DoS arc (§8.1), where the self-parent
+consume it; it is load-bearing for the DoS arc (§7), where the self-parent
 chain is what turns per-acceptance budgets into per-round rates and a correct
 block's cone into a complete record of its author's acceptances.
 
@@ -503,7 +503,7 @@ computing base (§4.3). Assumed.
 Logically all of these are antecedents: each is a field of a structure or class,
 and every theorem quantifying over a block universe or over the relevant
 instances carries it. None is an axiom in the sense of §11, and their joint
-satisfiability is a proof obligation discharged by exhibition (§9) rather than
+satisfiability is a proof obligation discharged by exhibition (§10) rather than
 something the logic must be trusted for. The distinction drawn here is
 epistemic, not logical, and it is what determines where the trust boundary of
 the system actually falls.
@@ -525,13 +525,13 @@ the system actually falls.
 | P10 | the leader schedule names reliable validators arbitrarily far out | `FairScheduleOn` |
 
 P1–P6 are consumed by the safety development, P7–P10 additionally by liveness;
-P3′ by neither — it is load-bearing for the DoS arc (§8.1).
+P3′ by neither — it is load-bearing for the DoS arc (§7).
 
 P10 is a joint condition rather than a pure specification: the schedule is the
 designer's, but which validators are reliable is not. Round-robin discharges it
 whenever the reliable set is of quorum size, since at most `f` of every `n`
 consecutive leaders then lie outside it; `rrSlots` witnesses this with a window
-of `f + 1` (§9).
+of `f + 1` (§10).
 
 **P8 deserves the most emphasis of any clause here**, and is easily mistaken for
 a routine one. It states that a correct validator holding a quorum at round `r`
@@ -575,7 +575,7 @@ the model constrains it, `Correct` being a set complement (§2.1).
 
 P9 is the clause whose *sufficiency* is not under the designer's control: the
 timeout may be chosen freely, but whether the chosen value is long enough
-depends on the network. §6.10 determines the threshold it must meet, and §7.1
+depends on the network. §6.10 determines the threshold it must meet, and §12.1
 discusses the consequences.
 
 ### 4.2 The fault model
@@ -631,7 +631,7 @@ of executions, obtained from the network assumption together with the protocol:
 | Timing | N2 (`Timing.covers`) with P9 | `Timing.synchronisedOn_of_timing` |
 
 It is stated as a hypothesis of L4 and L6 in order to keep those arguments free
-of temporal notions (§6.9), and supplied to them by the results above. §7
+of temporal notions (§6.9), and supplied to them by the results above. §12
 discusses the formulation.
 
 **What "derived" does and does not mean here.** Both routes derive coverage from
@@ -900,7 +900,7 @@ requiring that it not build too early.
 Reference coverage is not among them. It is not a clause a validator could
 execute, since it refers to `Correct`, which no validator can observe; it is
 what (a) and (b) *produce* against a synchronous network, and it is derived
-accordingly (§4.4, §7.2).
+accordingly (§4.4, §12.2).
 
 ### 6.1 Density
 
@@ -940,10 +940,10 @@ def DeliversQuorum (D : Delivery U) : Prop :=
 
 The indexing of `held` is essential: `held v n` denotes what `v` had in hand *at
 the moment it built its round-`(n+1)` block*, not what `v` eventually receives.
-This is the build-time index which a view cannot supply (§7.1). Between holding
+This is the build-time index which a view cannot supply (§12.1). Between holding
 and referencing sits **acceptance** — at most one block per author, correct
 blocks always taken — which is deliberately where the protocol may refuse:
-the DoS arc's novelty budget (§8.1) is a rule about `accepted`, and the
+the DoS arc's novelty budget (§7) is a rule about `accepted`, and the
 liveness development reads only `accepted`.
 
 The structure contains no clock. In the absence of a time model, "waited longer"
@@ -1038,7 +1038,7 @@ The predicate is antitone in `T` (`SynchronisedOn.mono`), which allows results
 established at `T := Correct` to be supplied to the quorum-relative statements of
 §6.6.
 
-The condition is derived, not assumed (§4.4); §7 discusses its formulation.
+The condition is derived, not assumed (§4.4); §12 discusses its formulation.
 
 ### 6.5 Monotonicity and propagation
 
@@ -1165,7 +1165,7 @@ chain must terminate at a delivery assumption.
 `EventuallyDelivers` is view convergence *indexed to the moment of building*: it
 does not state that correct blocks eventually reach `v`, but that they are members
 of `D.held v n`. That indexing performs the work, and it is exactly what a
-view-shaped statement lacks (§7.1).
+view-shaped statement lacks (§12.1).
 
 ### 6.8 Deriving coverage: the timing route
 
@@ -1369,208 +1369,9 @@ start spread, the wait, and the position of the slot relative to GST.
 
 ---
 
-## 7. Discussion: eventual DAG synchrony
-
-### 7.1 Locating the synchrony assumption
-
-The synchrony assumption may be stated in terms of views:
-
-> beyond GST, if a correct validator holds a view `V₁`, then within Δ the views
-> of all correct validators contain `V₁`.
-
-This is a statement about the network, and as such it is complete: it says
-everything about delivery that the development requires. It is also attractive
-formally, `View` being already a first-class structure with inclusion already
-meaningful and every safety result already view-relative, and it yields L3
-immediately, the common view being `View.full`.
-
-What it does not do is determine what blocks *look like*. Reference coverage is
-a property of blocks, and blocks are produced by validators according to the
-protocol, so it depends on the specification as well as on the network. This is
-not a deficiency in the assumption; it is a consequence of coverage being a
-derived property rather than an assumed one (§4.4).
-
-Three observations follow, and they are the content of the section.
-
-**The protocol must specify a wait, and this is a design obligation rather than
-a gap in the assumption.** Consider `f = 1` with validators `{A,B,C,D}`, all four
-correct, and instantaneous delivery, so that the network assumption holds in its
-strongest form. Suppose the specification directs a validator to build as soon as
-it holds `n−f = 3` blocks of the round below, and suppose `A`, `B` and `C` are
-marginally faster than `D`. Each of them then forms the quorum `{A,B,C}` and
-builds before `D`'s block arrives, so no block of theirs ever references `D`'s.
-Every block is valid, views converge perfectly, and `SynchronisedOn U Correct R`
-fails for every `R`.
-
-What this exhibits is a badly specified protocol under a well-behaved network.
-The remedy lies in the specification: P9 directs a validator to wait a full
-timeout rather than to build on the arrival of a quorum. The example is worth
-including because the incorrect rule is the natural one — the quorum is exactly
-what validity requires — and because it shows that promptness and coverage are
-in tension, which is what P9's two halves jointly resolve.
-
-**The threshold the specification must meet is `D₀ + Δ`, not Δ.** This is the
-one point at which a network parameter enters the protocol's constant, and it is
-the substantive quantitative result (§6.10). Validators enter a round at
-different times, so a wait must accommodate the propagation bound *and* the
-spread between validators; taking the spread at round `0`, where it records how
-nearly simultaneously the validators started, and propagating it forward by
-`driftFrom_of_prompt`, gives the bound. Under a common start, `D₀ ≤ Δ` and the
-threshold is `2Δ`.
-
-Because Δ is not known to an implementation, no constant can be fixed in
-advance. A backoff is the specification's response — a search for a sufficient
-constant, written into the algorithm — and its only relevant property is that
-the search terminates (§7.2).
-
-**The network guarantee must be indexed to the moment of building.** A block's
-references are fixed at its construction, so what bears on the derivation is not
-what a validator holds eventually but what it held when it built. `View.ids` is a
-finite set of identifiers with no temporal index, so a view-convergence statement
-cannot be applied directly. `Delivery.held : Validator → ℕ → Finset BlockId`
-supplies the index — `held v n` denotes what `v` had in hand when building for
-round `n+1` — and with it the delivery route (§6.7) is a single line. A
-time-indexed family of views would serve equally well; the requirement is the
-index, not the vehicle. This is an observation about formalisation, and it is the
-reason `SynchronisedOn` is stated on `refs`.
-
-### 7.2 Why coverage is derived rather than specified
-
-Reference coverage could not have been made a clause of the protocol, which is
-the deeper reason it appears as a derived property. `SynchronisedOn` refers to
-`Correct`, a model-level object, so an instruction to reference every correct
-block of the round below would name two quantities a validator cannot determine:
-which of the blocks it holds are correct-authored, and whether all of them have
-arrived, a missing block being indistinguishable from one never published.
-
-What a validator can be directed to do is wait a fixed period, build upon
-whatever has arrived, and increase the period when progress fails. These are
-`waits`, `prompt` and the backoff — P9 together with R1 — all of them
-executable.
-
-The signal driving the backoff is the awkward point. Before GST no period is
-sufficient, and nothing permits a validator to detect this directly; what it
-observes is that commits have ceased. The feedback loop which delivers coverage
-is therefore driven by liveness failure, the very condition being proved away.
-This is a feedback loop rather than a circularity, but it means the argument
-cannot rest on modelling the loop's dynamics.
-
-The development accordingly does not model it. What `synchronisedOn_of_timing`
-consumes is a threshold — the timeout remains above `D + delay` from some round
-onwards — with no condition on shape, rate, or driving signal. §6.10 carries this
-to its conclusion: with Δ known, a constant timeout of `D₀ + Δ` suffices and the
-loop disappears.
-
-### 7.3 Consequences of the abstraction
-
-1. The consensus argument is purely combinatorial, involving round indices and
-   finite-set cardinalities. Under a message-level assumption every statement
-   would carry instants.
-2. The temporal content is confined to a single module and consumed through a
-   single definition.
-3. The condition admits two independent derivations (§6.7, §6.8) and a third,
-   quantitative route (§6.10), against an unchanged statement.
-4. The condition composes with the safety development, mentioning only `U.ids`,
-   `U.block` and `refs` — the vocabulary that development already employs.
-
-### 7.4 Costs
-
-Δ does not appear above the interface. Introducing it would require views indexed
-by an instant and every statement quantified over instants, for no proof content.
-The quantitative statements recover what is needed *below* the interface without
-propagating time upward.
-
-Coverage being derived rather than assumed does not make it unconditional. The
-derivation rests on N2, and in the absence of a time model the chain must
-terminate at a delivery assumption; what the reformulation achieves is to place
-that assumption where it belongs — on the network — and to keep it out of every
-statement above.
-
-### 7.5 Related work
-
-**Certified and uncertified DAGs.** In a certified DAG — DAG-Rider, Narwhal with
-Tusk or Bullshark [DKSS22, SGSK22], Sailfish [SSKN25] — a block is disseminated
-by reliable broadcast and enters the DAG carrying a quorum of signatures, so a
-reader may assume any block it sees is non-equivocated and available. The
-uncertified variant descends from Hashgraph [Bai16] and Blockmania [DH18],
-receives its modern form in Cordial Miners [KNPS23], and reaches its lowest
-latency in Mysticeti [Bab+25], which removes the wave structure of Cordial Miners
-by assigning a leader slot in every round. The trade is the one described in
-§1.1: certification disappears from the critical path, and equivocation and
-availability become the reader's problem.
-
-The uncertified structure has since been reused with one parameter varied at a
-time: Mahi-Mahi [Jov+24] under asynchrony, committing several leader slots per
-round; Odontoceti [Van25] at `n = 5f+1`, buying a two-round commit with a weaker
-fault threshold; Starfish [PMV25] with erasure-coded dissemination; Bluestreak
-[PVM26] with a sparse reference structure, which abandons the rule that every
-block cites a quorum below and so falls outside the present model. Shoal++
-[Aru+25] argues from the certified side that certification is not the cause of
-latency, and hybridises by committing anchors on `2f+1` uncertified proposals.
-
-**Where the synchrony assumption is located.** In each of the above the
-assumption is stated per message, in the sense of Dwork, Lynch and Stockmeyer
-[DLS88]: beyond GST a message between correct parties arrives within Δ. The
-consequence noted in §1.2 is that every subsequent statement is quantified over
-instants. The present formulation instead states the assumption on the DAG, and
-§6.7 and §6.8 derive it from the conventional one. The author is not aware of a
-prior structural formulation, though the property itself is asserted repeatedly:
-Mysticeti's Lemma 8 and Cordial Miners' Proposition 38 both claim post-GST
-synchronisation of honest validators, and it is exactly these claims that
-[PMV25] reports as gapped and [QXS26] refutes.
-
-**Mechanised consensus.** Safety-only verification of DAG protocols exists in
-TLA+ with TLAPS [Ber+24], covering DAG-Rider, Cordial Miners, Hashgraph, an
-Aleph variant and eventually synchronous Bullshark, with a modular separation of
-DAG construction from ordering. LiDO-DAG [QXS25] provides mechanised safety and
-liveness in Rocq for Narwhal, Bullshark and Sailfish — all certified. The work
-closest to the present development is [QXS26], which extends that framework to
-Mysticeti itself and is discussed at length in §4.1, §4.4 and §6.6. Two
-differences of method are worth recording. Theirs is an operational model: a
-transition system over traces, with segmented traces encoding the unreliability
-of timers before GST, and liveness reduced to safety properties of an abstract
-pacemaker by refinement. The account here is structural, and no theorem above
-§6.8 mentions time. The benefit of the structural style is visible in §6.6: the
-dependence of liveness on the round-jumping clause surfaces as a named hypothesis
-of a single lemma rather than as a condition inside a transition relation. The
-cost is that the theorems of [QXS26] cannot be stated here at all, "within
-bounded time" not being expressible in this vocabulary (§10).
-
-**References.**
-
-- [Aru+25] B. Arun, Z. Li, F. Suri-Payer, S. Das, A. Spiegelman. *Shoal++: High Throughput DAG BFT Can Be Fast and Robust!* NSDI 2025. arXiv:2405.20488.
-- [Bab+25] K. Babel, A. Chursin, G. Danezis, A. Kichidis, L. Kokoris-Kogias, A. Koshy, A. Sonnino, M. Tian. *Mysticeti: Reaching the Limits of Latency with Uncertified DAGs.* NDSS 2025. arXiv:2310.14821.
-- [Bai16] L. Baird. *The Swirlds Hashgraph Consensus Algorithm.* Swirlds Tech Report SWIRLDS-TR-2016-01, 2016.
-- [Ber+24] N. Bertrand, P. Ghorpade, S. Rubin, B. Scholz, P. Subotic. *Reusable Formal Verification of DAG-based Consensus Protocols.* arXiv:2407.02167.
-- [DH18] G. Danezis, D. Hrycyszyn. *Blockmania: from Block DAGs to Consensus.* arXiv:1809.01620.
-- [DKSS22] G. Danezis, L. Kokoris-Kogias, A. Sonnino, A. Spiegelman. *Narwhal and Tusk: a DAG-based Mempool and Efficient BFT Consensus.* EuroSys 2022.
-- [DLS88] C. Dwork, N. Lynch, L. Stockmeyer. *Consensus in the Presence of Partial Synchrony.* JACM 35(2), 1988.
-- [Jov+24] P. Jovanovic, L. Kokoris-Kogias, B. Kumara, A. Sonnino, P. Tennage, I. Zablotchi. *Mahi-Mahi: Low-Latency Asynchronous BFT DAG-Based Consensus.* arXiv:2410.08670.
-- [KNPS23] I. Keidar, O. Naor, O. Poupko, E. Shapiro. *Cordial Miners: Fast and Efficient Consensus for Every Eventuality.* DISC 2023, LIPIcs 281.
-- [PMV25] N. Polyanskii, S. Mueller, I. Vorobyev. *Making Uncertified DAG BFT Provably Live with Linear Payload and Quadratic Metadata Communication* (Starfish). IACR ePrint 2025/567.
-- [PVM26] N. Polyanskii, I. Vorobyev, S. Mueller. *Bluestreak: Scaling DAG BFT by Sparsifying Metadata.* IACR ePrint 2026/898.
-- [QXS25] L. Qiu, J. Xiao, J.-Y. Shin, Z. Shao. *LiDO-DAG: A Framework for Verifying Safety and Liveness of DAG-Based Consensus Protocols.* PACMPL 9(PLDI), Article 203, 2025. doi:10.1145/3729306.
-- [QXS26] L. Qiu, J. Xiao, Z. Shao. *Mechanized Safety and Liveness Proofs for the Mysticeti Consensus Protocol under the LiDO-DAG Framework.* IEEE S&P 2026, 149–168.
-- [SGSK22] A. Spiegelman, N. Giridharan, A. Sonnino, L. Kokoris-Kogias. *Bullshark: DAG BFT Protocols Made Practical.* CCS 2022.
-- [SSKN25] N. Shrestha, R. Shrothrium, A. Kate, K. Nayak. *Sailfish: Towards Improving the Latency of DAG-based BFT.* IEEE S&P 2025. ePrint 2024/472.
-- [Van25] P. Vander Vos. *Odontoceti: Ultra-Fast DAG Consensus with Two Round Commitment.* MSc thesis, arXiv:2510.01216.
-
 ---
 
-## 8. Extensions: three developments on the same foundation
-
-The account above is the platform for three further machine-checked
-developments, each additive — the core files unchanged, each arc a
-subdirectory (`DoS/`, `GC/`, `Odontoceti/`) consuming the core
-read-only — and each with a design record carrying its full account.
-This section states the principal definitions and results; Appendix A
-indexes the statements. Two generalisations of the core preceded them
-and are reflected in every display of this report: the committee is
-`n ≥ 3f+1` with quorums of literal size `n − f` (witnesses sit at the
-boundary `n = 3f+1`), and the slot schedule admits pipelining and
-multiple leaders (§3.4).
-
-### 8.1 Denial of service: equivocation, growth, and the novelty budget
+## 7. Denial of service: equivocation, growth, and the novelty budget
 
 *(design record: `dos-equivocation-and-growth.md`)*
 
@@ -1657,7 +1458,9 @@ freezes and the slope decays to the correct-production rate
 (`card_viewUpto_le_of_allExposed'`) — the budget paces what an author
 can inject, exclusion ends it.
 
-### 8.2 Garbage collection: the horizon
+---
+
+## 8. Garbage collection: the horizon
 
 *(design record: `garbage.md`)*
 
@@ -1727,7 +1530,9 @@ exposed (`dosValid_chop` is deliberately one-way) — at a bounded,
 priced rate: one reveal per author per epoch, under the windowed
 budget, and commit safety never depended on any of it.
 
-### 8.3 Odontoceti: two-round commitment
+---
+
+## 9. Odontoceti: two-round commitment
 
 *(design record: `odontoceti.md`)*
 
@@ -1783,7 +1588,7 @@ the exact complement identity `|Correct| = n − |byzantine|`.
 
 ---
 
-## 9. Satisfiability
+## 10. Satisfiability
 
 Every structure carrying conditions is exhibited satisfiable by a concrete model
 over four validators at `f = 1`. This is a substantive component of the
@@ -1820,7 +1625,7 @@ is required for a quorum and none may lag. Such a model requires `f ≥ 2`. This
 the combined fault budget of §4.2 appearing as a concrete obstruction rather than
 as an inequality.
 
-The conditions of §8 are witnessed in the same style, at their own boundary
+The conditions of §§7–9 are witnessed in the same style, at their own boundary
 instances: `DoSValid` satisfiable and biting (`Uexcl`, with the exclusion
 chain and a commit after it), the budget satisfiable at its sharp constant
 (`UniformBudget Dtwin 3` with `ByzBudget Dtwin 0`), the horizon computed and
@@ -1832,13 +1637,202 @@ motivates the canonicity premise (`utwin6_both_pass`).
 
 ---
 
-## 10. Limitations
+---
+
+## 11. Mechanisation
+
+The development comprises approximately 14,800 lines of Lean 4 (v4.32.2)
+against Mathlib, of which some 10,200 constitute the library and 4,600 the
+models of §10 and the witness files of the three arcs. A full build reports no
+errors.
+
+**Axiom audit.** Every principal result — among them
+`reaches_of_quorum_support`, `exists_common_correct_ancestor`,
+`decided_agree`, `commitSeq_agree`, `outputAt_agree`, `no_stall`,
+`commits_recur_on`, `exists_synchronisedOn_of_backoff`,
+`all_decided_below_of_fairRun`, `card_history_le'`, `dos_resistance`,
+`decided_chop`, `decided_agree_chop`, `card_retained_le`, `bootstrap_agree`,
+`chop_chop`, `Odontoceti.decided_unique`, `Odontoceti.safety` and
+`Odontoceti.all_decided_below_of_fairRun` — depends on exactly `propext`,
+`Classical.choice` and `Quot.sound`, which constitute the whole axiom set of
+Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
+`native_decide` and the extended trusted base it entails.
+
+**The core.**
+
+| Module | Contents |
+|---|---|
+| `Validators.lean` | the fault model (`n ≥ 3f+1`); T0 |
+| `Block.lean` | `Block`, `ValidWrt`; T0′ |
+| `BlockDag.lean` | `BlockUniverse`, `View`; T1 |
+| `CausalHistory.lean` | `Reaches`; T2, T6a |
+| `Support.lean` | counting vocabulary; the hitting, propagation and coverage lemmas |
+| `History.lean` | causal history as a `Finset` |
+| `Persistence.lean` | T3 |
+| `CommonCore.lean` | T3a, T3c |
+| `Mysticeti.lean` | the commit rule; eligibility; M1–M6; the ledger |
+| `Schedule.lean` | concrete schedules (`uniform`, `uniformSingle`); conservativity |
+| `Liveness.lean` | L0–L6, L7a; the committed-run results |
+| `Timing.lean` | L7b |
+| `Quantitative.lean` | L8, L9 |
+
+**The arcs** (§§7–9), each consuming the core read-only:
+
+| Module | Contents |
+|---|---|
+| `DoS/Exposure.lean` | `ExposedIn`, `DoSValid`; exposure ≤ `f` per cone |
+| `DoS/Acceptance.lean`, `DoS/Counting.lean` | the acceptance rule; view size from history size |
+| `DoS/SelfParent.lean`, `DoS/Adoption.lean`, `DoS/Pedigree.lean` | the adoption collapse; pedigrees; the general per-cone bound |
+| `DoS/Density.lean` | histories are almost all of the correct past |
+| `DoS/Novelty.lean` | the novelty budget; the budget sandwich; `dos_resistance` |
+| `DoS/Composition.lean` | the two conditions composed; the pool freezes |
+| `DoS/Exclusion.lean` | liveness survives exclusion; the correct backbone |
+| `GC/Chop.lean` | the horizon operator; per-slot verdict invariance |
+| `GC/ChopDecided.lean` | the induced schedule; `decided_chop`, `decided_agree_chop` |
+| `GC/Window.lean` | windowed novelty and stores; `card_retained_le` |
+| `GC/AttestedBase.lean` | the inexact certificate, sandwiched |
+| `GC/Bootstrap.lean` | window completeness; the joiner's view; `bootstrap_agree` |
+| `GC/Horizon.lean` | `chop_chop`; heterogeneous-horizon agreement; the depth rule |
+| `Odontoceti/Rules.lean` | the two-round rules; the arithmetic core O1–O4′ |
+| `Odontoceti/Decision.lean` | the decision relation with canonicity; agreement |
+| `Odontoceti/Liveness.lean` | O7–O10 |
+| `LeanDagTest/` | the models of §10 and the witness files of every arc |
+
+Six design records accompany the development: `spec.md` (safety),
+`liveness.md` (liveness), `pipelining-and-multi-leader.md` (the schedule
+generalisation), `dos-equivocation-and-growth.md` (§7), `garbage.md`
+(§8) and `odontoceti.md` (§9), with `related.md` surveying the
+surrounding literature. These carry the design rationale and the log of
+settled and open questions. The report draws its statements from the source.
+
+---
+
+---
+
+## 12. Discussion: eventual DAG synchrony
+
+### 12.1 Locating the synchrony assumption
+
+The synchrony assumption may be stated in terms of views:
+
+> beyond GST, if a correct validator holds a view `V₁`, then within Δ the views
+> of all correct validators contain `V₁`.
+
+This is a statement about the network, and as such it is complete: it says
+everything about delivery that the development requires. It is also attractive
+formally, `View` being already a first-class structure with inclusion already
+meaningful and every safety result already view-relative, and it yields L3
+immediately, the common view being `View.full`.
+
+What it does not do is determine what blocks *look like*. Reference coverage is
+a property of blocks, and blocks are produced by validators according to the
+protocol, so it depends on the specification as well as on the network. This is
+not a deficiency in the assumption; it is a consequence of coverage being a
+derived property rather than an assumed one (§4.4).
+
+Three observations follow, and they are the content of the section.
+
+**The protocol must specify a wait, and this is a design obligation rather than
+a gap in the assumption.** Consider `f = 1` with validators `{A,B,C,D}`, all four
+correct, and instantaneous delivery, so that the network assumption holds in its
+strongest form. Suppose the specification directs a validator to build as soon as
+it holds `n−f = 3` blocks of the round below, and suppose `A`, `B` and `C` are
+marginally faster than `D`. Each of them then forms the quorum `{A,B,C}` and
+builds before `D`'s block arrives, so no block of theirs ever references `D`'s.
+Every block is valid, views converge perfectly, and `SynchronisedOn U Correct R`
+fails for every `R`.
+
+What this exhibits is a badly specified protocol under a well-behaved network.
+The remedy lies in the specification: P9 directs a validator to wait a full
+timeout rather than to build on the arrival of a quorum. The example is worth
+including because the incorrect rule is the natural one — the quorum is exactly
+what validity requires — and because it shows that promptness and coverage are
+in tension, which is what P9's two halves jointly resolve.
+
+**The threshold the specification must meet is `D₀ + Δ`, not Δ.** This is the
+one point at which a network parameter enters the protocol's constant, and it is
+the substantive quantitative result (§6.10). Validators enter a round at
+different times, so a wait must accommodate the propagation bound *and* the
+spread between validators; taking the spread at round `0`, where it records how
+nearly simultaneously the validators started, and propagating it forward by
+`driftFrom_of_prompt`, gives the bound. Under a common start, `D₀ ≤ Δ` and the
+threshold is `2Δ`.
+
+Because Δ is not known to an implementation, no constant can be fixed in
+advance. A backoff is the specification's response — a search for a sufficient
+constant, written into the algorithm — and its only relevant property is that
+the search terminates (§12.2).
+
+**The network guarantee must be indexed to the moment of building.** A block's
+references are fixed at its construction, so what bears on the derivation is not
+what a validator holds eventually but what it held when it built. `View.ids` is a
+finite set of identifiers with no temporal index, so a view-convergence statement
+cannot be applied directly. `Delivery.held : Validator → ℕ → Finset BlockId`
+supplies the index — `held v n` denotes what `v` had in hand when building for
+round `n+1` — and with it the delivery route (§6.7) is a single line. A
+time-indexed family of views would serve equally well; the requirement is the
+index, not the vehicle. This is an observation about formalisation, and it is the
+reason `SynchronisedOn` is stated on `refs`.
+
+### 12.2 Why coverage is derived rather than specified
+
+Reference coverage could not have been made a clause of the protocol, which is
+the deeper reason it appears as a derived property. `SynchronisedOn` refers to
+`Correct`, a model-level object, so an instruction to reference every correct
+block of the round below would name two quantities a validator cannot determine:
+which of the blocks it holds are correct-authored, and whether all of them have
+arrived, a missing block being indistinguishable from one never published.
+
+What a validator can be directed to do is wait a fixed period, build upon
+whatever has arrived, and increase the period when progress fails. These are
+`waits`, `prompt` and the backoff — P9 together with R1 — all of them
+executable.
+
+The signal driving the backoff is the awkward point. Before GST no period is
+sufficient, and nothing permits a validator to detect this directly; what it
+observes is that commits have ceased. The feedback loop which delivers coverage
+is therefore driven by liveness failure, the very condition being proved away.
+This is a feedback loop rather than a circularity, but it means the argument
+cannot rest on modelling the loop's dynamics.
+
+The development accordingly does not model it. What `synchronisedOn_of_timing`
+consumes is a threshold — the timeout remains above `D + delay` from some round
+onwards — with no condition on shape, rate, or driving signal. §6.10 carries this
+to its conclusion: with Δ known, a constant timeout of `D₀ + Δ` suffices and the
+loop disappears.
+
+### 12.3 Consequences of the abstraction
+
+1. The consensus argument is purely combinatorial, involving round indices and
+   finite-set cardinalities. Under a message-level assumption every statement
+   would carry instants.
+2. The temporal content is confined to a single module and consumed through a
+   single definition.
+3. The condition admits two independent derivations (§6.7, §6.8) and a third,
+   quantitative route (§6.10), against an unchanged statement.
+4. The condition composes with the safety development, mentioning only `U.ids`,
+   `U.block` and `refs` — the vocabulary that development already employs.
+
+### 12.4 Costs
+
+Δ does not appear above the interface. Introducing it would require views indexed
+by an instant and every statement quantified over instants, for no proof content.
+The quantitative statements recover what is needed *below* the interface without
+propagating time upward.
+
+Coverage being derived rather than assumed does not make it unconditional. The
+derivation rests on N2, and in the absence of a time model the chain must
+terminate at a delivery assumption; what the reformulation achieves is to place
+that assumption where it belongs — on the network — and to keep it out of every
+statement above.
+
+### 12.5 Limitations
 
 The quantitative bounds are established (§6.10). The following remain open.
 
 **The backoff loop.** `Rated` and the threshold of R4 are stipulated as clauses
 of the specification; no realistic adaptive scheme is shown to satisfy them, and
-the feedback mechanism of §7.2 is not modelled. Moreover
+the feedback mechanism of §12.2 is not modelled. Moreover
 `Timing.timeout : ℕ → ℕ` is indexed by round and common to the reliable set, so
 that a per-validator backoff — in which validators increase their timeouts at
 different moments — cannot be expressed, let alone shown to converge. This
@@ -1857,7 +1851,7 @@ anchor may be when the leader is Byzantine.
 **Leader predictability.** `Slots.leader` is an arbitrary function, so nothing
 distinguishes a schedule an adversary can predict from one it cannot, and
 targeted denial of service against a known future leader — the network sense,
-distinct from the storage-exhaustion sense §8.1 bounds — is invisible to the
+distinct from the storage-exhaustion sense §7 bounds — is invisible to the
 model. `FairWithin` constrains when reliable leaders occur, not whether they can
 be anticipated.
 
@@ -1892,71 +1886,84 @@ much they say.
 
 ---
 
-## 11. Mechanisation
+## 13. Related work
 
-The development comprises approximately 14,800 lines of Lean 4 (v4.32.2)
-against Mathlib, of which some 10,200 constitute the library and 4,600 the
-models of §9 and the witness files of the three arcs. A full build reports no
-errors.
+**Certified and uncertified DAGs.** In a certified DAG — DAG-Rider, Narwhal with
+Tusk or Bullshark [DKSS22, SGSK22], Sailfish [SSKN25] — a block is disseminated
+by reliable broadcast and enters the DAG carrying a quorum of signatures, so a
+reader may assume any block it sees is non-equivocated and available. The
+uncertified variant descends from Hashgraph [Bai16] and Blockmania [DH18],
+receives its modern form in Cordial Miners [KNPS23], and reaches its lowest
+latency in Mysticeti [Bab+25], which removes the wave structure of Cordial Miners
+by assigning a leader slot in every round. The trade is the one described in
+§1.1: certification disappears from the critical path, and equivocation and
+availability become the reader's problem.
 
-**Axiom audit.** Every principal result — among them
-`reaches_of_quorum_support`, `exists_common_correct_ancestor`,
-`decided_agree`, `commitSeq_agree`, `outputAt_agree`, `no_stall`,
-`commits_recur_on`, `exists_synchronisedOn_of_backoff`,
-`all_decided_below_of_fairRun`, `card_history_le'`, `dos_resistance`,
-`decided_chop`, `decided_agree_chop`, `card_retained_le`, `bootstrap_agree`,
-`chop_chop`, `Odontoceti.decided_unique`, `Odontoceti.safety` and
-`Odontoceti.all_decided_below_of_fairRun` — depends on exactly `propext`,
-`Classical.choice` and `Quot.sound`, which constitute the whole axiom set of
-Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
-`native_decide` and the extended trusted base it entails.
+The uncertified structure has since been reused with one parameter varied at a
+time: Mahi-Mahi [Jov+24] under asynchrony, committing several leader slots per
+round; Odontoceti [Van25] at `n = 5f+1`, buying a two-round commit with a weaker
+fault threshold; Starfish [PMV25] with erasure-coded dissemination; Bluestreak
+[PVM26] with a sparse reference structure, which abandons the rule that every
+block cites a quorum below and so falls outside the present model. Shoal++
+[Aru+25] argues from the certified side that certification is not the cause of
+latency, and hybridises by committing anchors on `2f+1` uncertified proposals.
 
-**The core.**
+**Where the synchrony assumption is located.** In each of the above the
+assumption is stated per message, in the sense of Dwork, Lynch and Stockmeyer
+[DLS88]: beyond GST a message between correct parties arrives within Δ. The
+consequence noted in §1.2 is that every subsequent statement is quantified over
+instants. The present formulation instead states the assumption on the DAG, and
+§6.7 and §6.8 derive it from the conventional one. The author is not aware of a
+prior structural formulation, though the property itself is asserted repeatedly:
+Mysticeti's Lemma 8 and Cordial Miners' Proposition 38 both claim post-GST
+synchronisation of honest validators, and it is exactly these claims that
+[PMV25] reports as gapped and [QXS26] refutes.
 
-| Module | Contents |
-|---|---|
-| `Validators.lean` | the fault model (`n ≥ 3f+1`); T0 |
-| `Block.lean` | `Block`, `ValidWrt`; T0′ |
-| `BlockDag.lean` | `BlockUniverse`, `View`; T1 |
-| `CausalHistory.lean` | `Reaches`; T2, T6a |
-| `Support.lean` | counting vocabulary; the hitting, propagation and coverage lemmas |
-| `History.lean` | causal history as a `Finset` |
-| `Persistence.lean` | T3 |
-| `CommonCore.lean` | T3a, T3c |
-| `Mysticeti.lean` | the commit rule; eligibility; M1–M6; the ledger |
-| `Schedule.lean` | concrete schedules (`uniform`, `uniformSingle`); conservativity |
-| `Liveness.lean` | L0–L6, L7a; the committed-run results |
-| `Timing.lean` | L7b |
-| `Quantitative.lean` | L8, L9 |
+**Mechanised consensus.** Safety-only verification of DAG protocols exists in
+TLA+ with TLAPS [Ber+24], covering DAG-Rider, Cordial Miners, Hashgraph, an
+Aleph variant and eventually synchronous Bullshark, with a modular separation of
+DAG construction from ordering. LiDO-DAG [QXS25] provides mechanised safety and
+liveness in Rocq for Narwhal, Bullshark and Sailfish — all certified. The work
+closest to the present development is [QXS26], which extends that framework to
+Mysticeti itself and is discussed at length in §4.1, §4.4 and §6.6. Two
+differences of method are worth recording. Theirs is an operational model: a
+transition system over traces, with segmented traces encoding the unreliability
+of timers before GST, and liveness reduced to safety properties of an abstract
+pacemaker by refinement. The account here is structural, and no theorem above
+§6.8 mentions time. The benefit of the structural style is visible in §6.6: the
+dependence of liveness on the round-jumping clause surfaces as a named hypothesis
+of a single lemma rather than as a condition inside a transition relation. The
+cost is that the theorems of [QXS26] cannot be stated here at all, "within
+bounded time" not being expressible in this vocabulary (§12.5).
 
-**The arcs** (§8), each consuming the core read-only:
+---
 
-| Module | Contents |
-|---|---|
-| `DoS/Exposure.lean` | `ExposedIn`, `DoSValid`; exposure ≤ `f` per cone |
-| `DoS/Acceptance.lean`, `DoS/Counting.lean` | the acceptance rule; view size from history size |
-| `DoS/SelfParent.lean`, `DoS/Adoption.lean`, `DoS/Pedigree.lean` | the adoption collapse; pedigrees; the general per-cone bound |
-| `DoS/Density.lean` | histories are almost all of the correct past |
-| `DoS/Novelty.lean` | the novelty budget; the budget sandwich; `dos_resistance` |
-| `DoS/Composition.lean` | the two conditions composed; the pool freezes |
-| `DoS/Exclusion.lean` | liveness survives exclusion; the correct backbone |
-| `GC/Chop.lean` | the horizon operator; per-slot verdict invariance |
-| `GC/ChopDecided.lean` | the induced schedule; `decided_chop`, `decided_agree_chop` |
-| `GC/Window.lean` | windowed novelty and stores; `card_retained_le` |
-| `GC/AttestedBase.lean` | the inexact certificate, sandwiched |
-| `GC/Bootstrap.lean` | window completeness; the joiner's view; `bootstrap_agree` |
-| `GC/Horizon.lean` | `chop_chop`; heterogeneous-horizon agreement; the depth rule |
-| `Odontoceti/Rules.lean` | the two-round rules; the arithmetic core O1–O4′ |
-| `Odontoceti/Decision.lean` | the decision relation with canonicity; agreement |
-| `Odontoceti/Liveness.lean` | O7–O10 |
-| `LeanDagTest/` | the models of §9 and the witness files of every arc |
+---
 
-Six design records accompany the development: `spec.md` (safety),
-`liveness.md` (liveness), `pipelining-and-multi-leader.md` (the schedule
-generalisation), `dos-equivocation-and-growth.md` (§8.1), `garbage.md`
-(§8.2) and `odontoceti.md` (§8.3), with `related.md` surveying the
-surrounding literature. These carry the design rationale and the log of
-settled and open questions. The report draws its statements from the source.
+## 14. Conclusion
+
+> *[Placeholder — written in the editing pass.]*
+
+---
+
+## References
+
+- [Aru+25] B. Arun, Z. Li, F. Suri-Payer, S. Das, A. Spiegelman. *Shoal++: High Throughput DAG BFT Can Be Fast and Robust!* NSDI 2025. arXiv:2405.20488.
+- [Bab+25] K. Babel, A. Chursin, G. Danezis, A. Kichidis, L. Kokoris-Kogias, A. Koshy, A. Sonnino, M. Tian. *Mysticeti: Reaching the Limits of Latency with Uncertified DAGs.* NDSS 2025. arXiv:2310.14821.
+- [Bai16] L. Baird. *The Swirlds Hashgraph Consensus Algorithm.* Swirlds Tech Report SWIRLDS-TR-2016-01, 2016.
+- [Ber+24] N. Bertrand, P. Ghorpade, S. Rubin, B. Scholz, P. Subotic. *Reusable Formal Verification of DAG-based Consensus Protocols.* arXiv:2407.02167.
+- [DH18] G. Danezis, D. Hrycyszyn. *Blockmania: from Block DAGs to Consensus.* arXiv:1809.01620.
+- [DKSS22] G. Danezis, L. Kokoris-Kogias, A. Sonnino, A. Spiegelman. *Narwhal and Tusk: a DAG-based Mempool and Efficient BFT Consensus.* EuroSys 2022.
+- [DLS88] C. Dwork, N. Lynch, L. Stockmeyer. *Consensus in the Presence of Partial Synchrony.* JACM 35(2), 1988.
+- [Jov+24] P. Jovanovic, L. Kokoris-Kogias, B. Kumara, A. Sonnino, P. Tennage, I. Zablotchi. *Mahi-Mahi: Low-Latency Asynchronous BFT DAG-Based Consensus.* arXiv:2410.08670.
+- [KNPS23] I. Keidar, O. Naor, O. Poupko, E. Shapiro. *Cordial Miners: Fast and Efficient Consensus for Every Eventuality.* DISC 2023, LIPIcs 281.
+- [PMV25] N. Polyanskii, S. Mueller, I. Vorobyev. *Making Uncertified DAG BFT Provably Live with Linear Payload and Quadratic Metadata Communication* (Starfish). IACR ePrint 2025/567.
+- [PVM26] N. Polyanskii, I. Vorobyev, S. Mueller. *Bluestreak: Scaling DAG BFT by Sparsifying Metadata.* IACR ePrint 2026/898.
+- [QXS25] L. Qiu, J. Xiao, J.-Y. Shin, Z. Shao. *LiDO-DAG: A Framework for Verifying Safety and Liveness of DAG-Based Consensus Protocols.* PACMPL 9(PLDI), Article 203, 2025. doi:10.1145/3729306.
+- [QXS26] L. Qiu, J. Xiao, Z. Shao. *Mechanized Safety and Liveness Proofs for the Mysticeti Consensus Protocol under the LiDO-DAG Framework.* IEEE S&P 2026, 149–168.
+- [SGSK22] A. Spiegelman, N. Giridharan, A. Sonnino, L. Kokoris-Kogias. *Bullshark: DAG BFT Protocols Made Practical.* CCS 2022.
+- [SSKN25] N. Shrestha, R. Shrothrium, A. Kate, K. Nayak. *Sailfish: Towards Improving the Latency of DAG-based BFT.* IEEE S&P 2025. ePrint 2024/472.
+- [Van25] P. Vander Vos. *Odontoceti: Ultra-Fast DAG Consensus with Two Round Commitment.* MSc thesis, arXiv:2510.01216.
 
 ---
 
@@ -2012,7 +2019,7 @@ Principal results only; supporting lemmas are omitted.
 | L8b | the committing slot, and its round | `commits_recur_within`, `commits_recur_by_round` | `Quantitative` |
 | L9 | the wait bound | `directCommit_of_wait`, `decided_of_wait`, `directCommit_of_wait_two_delay` | `Quantitative` |
 
-### Denial of service (§8.1)
+### Denial of service (§7)
 
 | Label | Statement | Lean | Module |
 |---|---|---|---|
@@ -2031,7 +2038,7 @@ Principal results only; supporting lemmas are omitted.
 | B | the capstone, enforceable conditions only | `dos_resistance`, `dos_resistance'` | `DoS/Novelty` |
 | B5 | after exposure completes, the pool freezes | `card_viewUpto_le_of_allExposed'` | `DoS/Composition` |
 
-### Garbage collection (§8.2)
+### Garbage collection (§8)
 
 | Label | Statement | Lean | Module |
 |---|---|---|---|
@@ -2049,7 +2056,7 @@ Principal results only; supporting lemmas are omitted.
 | G8 | horizons compose; heterogeneous horizons agree | `chop_chop`, `decided_agree_horizons` | `GC/Horizon` |
 | G9 | possession universalises in one round | `viewUpto_subset_viewUpto_succ`, `pruned_subset_peer_store` | `GC/Horizon` |
 
-### Odontoceti (§8.3)
+### Odontoceti (§9)
 
 | Label | Statement | Lean | Module |
 |---|---|---|---|
