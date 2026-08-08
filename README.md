@@ -21,8 +21,17 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 
 ## Layout
 
-- `LeanDag/` — theorem/definition source, organized by topic.
+- `LeanDag/` — theorem/definition source: the core DAG and Mysticeti
+  development at the top level, with the three arcs in subdirectories
+  (`DoS/` — equivocation and the novelty budget; `GC/` — garbage
+  collection; `Odontoceti/` — the two-round protocol).
 - `LeanDag.lean` — root import file.
+- `LeanDagTest/` — `decide` witnesses and concrete models, mirroring the
+  same layout.
+- `docs/` — the design records and the report
+  (`docs/report-outline.md` is the entry point; each arc has its own
+  document). `docs/build-pdf.sh` compiles them to `docs/pdf/` — requires
+  `pandoc` and `typst` (`brew install pandoc typst`).
 
 ## GitHub configuration
 

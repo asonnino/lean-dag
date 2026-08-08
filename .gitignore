@@ -2,3 +2,4 @@
 
 # Generated documents (rebuild with ./scripts/build-pdf.sh)
 *.pdf
+docs/pdf/
