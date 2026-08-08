@@ -196,8 +196,9 @@ denial-of-service resistance (`dos_resistance`), garbage collection
 (`decided_agree_chop`, `card_retained_le`, `bootstrap_agree`), and
 Odontoceti (`Odontoceti.decided_unique`,
 `Odontoceti.all_decided_below_of_fairRun`). §10 exhibits the witness models,
-§11 describes the mechanisation, §12 discusses the formulation and its
-limitations, and §13 surveys related work. Appendix A indexes every
+§11 describes the mechanisation, §12 discusses the formulation, the lessons
+of the extensions, and the limitations, §13 surveys related work, and §14
+concludes. Appendix A indexes every
 principal statement against its Lean name and module. Throughout, displayed
 Lean is drawn from the source; binders are occasionally elided for layout,
 and `…` marks an elision.

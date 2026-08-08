@@ -28,7 +28,7 @@ paper text it is marked* (unconfirmed).
 
 *Sections 8 and 9 compare the two most closely related works against the Lean
 development directly. The changes they called for have been made to
-`report-outline.md`; what remains here is the comparison itself, and the open
+`report.md`; what remains here is the comparison itself, and the open
 questions §8.3 and §9.5 record.*
 
 ---

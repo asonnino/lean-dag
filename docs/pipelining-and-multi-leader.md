@@ -738,7 +738,7 @@ the obstruction's reachability under an adversarial schedule only.
 **The `m`-sensitive bound (§10).** Optional, and explicitly not a goal.
 
 **Documentation.** `spec.md` needs `Eligible`, `keyed`, and what the schedule
-layer assumes; `report-outline.md` needs §3.4 (the slot schedule), §3.5
+layer assumes; `report.md` needs §3.4 (the slot schedule), §3.5
 (`Decided`), §6 (the liveness chain), §9 (requalify the limitations) and §10
 (the module table and axiom audit). Both are deliberately untouched here.
 

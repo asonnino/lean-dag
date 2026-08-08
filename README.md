@@ -70,7 +70,7 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 
 | Document | Contents |
 |---|---|
-| [`docs/report-outline.md`](docs/report-outline.md) | **the entry point**: the full report — model, commit rule, trust boundary, safety, liveness, the three arcs, satisfiability, statement index |
+| [`docs/report.md`](docs/report.md) | **the entry point**: the full report — model, commit rule, trust boundary, safety, liveness, the three arcs, satisfiability, statement index |
 | [`docs/spec.md`](docs/spec.md) | the safety design record |
 | [`docs/liveness.md`](docs/liveness.md) | the liveness design record, and eventual DAG synchrony |
 | [`docs/pipelining-and-multi-leader.md`](docs/pipelining-and-multi-leader.md) | the schedule generalization: eligibility, runs, pipelined commits |
