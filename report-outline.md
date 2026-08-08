@@ -1820,7 +1820,8 @@ anchor may be when the leader is Byzantine.
 
 **Leader predictability.** `Slots.leader` is an arbitrary function, so nothing
 distinguishes a schedule an adversary can predict from one it cannot, and
-targeted denial of service against a known future leader is invisible to the
+targeted denial of service against a known future leader — the network sense,
+distinct from the storage-exhaustion sense §8.1 bounds — is invisible to the
 model. `FairWithin` constrains when reliable leaders occur, not whether they can
 be anticipated.
 
