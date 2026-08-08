@@ -692,17 +692,137 @@ statements.
 
 ### 4.3 The network
 
+Two assumptions, and they are the whole of what the development asks of the
+environment.
+
 | | Assumption | Formalisation |
 |:---|:---|:---|
 | N1 | a quorum that exists is eventually held | `DeliversQuorum` |
-| N2 | beyond GST, a block is delivered within Δ | `Timing.covers`, `EventuallyDelivers` |
+| N2 | beyond GST, a block is delivered within Δ | `EventuallyDelivers`, `Timing.covers` |
 
-N1 requires eventual delivery only, not synchrony, and is what carries the
-results holding before GST. N2 is partial synchrony in the standard sense.
+**The vehicle.** Both are stated over the delivery layer (§6.2), whose
+central field is
 
-**These two are the whole of the trust placed in the environment.** The safety
-results of §5 use neither: they hold under arbitrary asynchrony, arbitrary loss
-and arbitrary divergence between views.
+```lean
+held : Validator → ℕ → Finset BlockId
+```
+
+with `held v n` denoting what `v` had **in hand at the moment it built its
+round-`(n+1)` block** — not what `v` eventually receives. The index is the
+essential modelling device, and §13.1 argues it is unavoidable: a block's
+references are frozen at construction, so the quantity that bears on the
+DAG's shape is what was held at build time. A view (`View.ids`) is a finite
+set of identifiers with no temporal index and cannot supply it; a
+time-indexed family of views would serve equally well.
+
+#### N1 — eventual delivery, without timing
+
+```lean
+def DeliversQuorum (D : Delivery U) : Prop :=
+  ∀ n, (Fintype.card Validator - F.f) ≤ (authorsAt U n).card →
+    ∀ v ∈ (Correct : Finset Validator),
+      (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (D.accepted v n)).card
+```
+
+*If* a quorum of validators have produced round-`n` blocks — `authorsAt U n`
+being the creators of the round-`n` blocks of `U` — *then* every correct
+validator accepts round-`n` blocks from a quorum of distinct authors. Four
+features of the shape are deliberate.
+
+- **It is conditional: existence first, holding second.** Stated
+  unconditionally it would assert that round-`n` blocks exist, which is
+  exactly what the liveness argument sets out to prove (§6.3); the
+  assumption would then swallow its own conclusion. As stated it says only
+  that *what exists is eventually obtained*.
+- **It mentions no clock and no round bound.** There is no Δ, no GST, and
+  no index past which it begins to hold — so N1 constrains the network
+  before stabilisation exactly as after. This is what carries every result
+  that does not need synchrony: L1 (`no_stall`, §6.3) turns N1 together
+  with the protocol's build clause P8 into `Populated` at every round up to
+  the growth horizon, with no temporal input whatever.
+- **It is stated on `accepted`, not on `held`.** The quorum must survive
+  the acceptance filter — the layer at which a validator takes at most one
+  block per author, and at which the novelty budget of §8 imposes a rate
+  limit. Since correct blocks are always accepted (`accepts_correct`), the
+  two readings differ only on Byzantine duplicates, and stating it on
+  `accepted` is what keeps the storage results of §8 compatible with
+  liveness.
+- **It counts authors, not blocks** (`creatorsOf`), so an equivocator
+  flooding a validator with same-round twins contributes one to the
+  quorum. Every quorum hypothesis in the development is stated this way
+  (§2.5).
+
+#### N2 — partial synchrony, in two guises
+
+N2 appears in two forms because the structural condition of §6.4 is derived
+from it twice, once without a clock and once with one (§4.4). The abstract
+form, consumed by the delivery route of §6.7:
+
+```lean
+def EventuallyDelivers (D : Delivery U) (R : ℕ) : Prop :=
+  ∀ n, R ≤ n → ∀ v ∈ (Correct : Finset Validator), ∀ a ∈ U.ids,
+    (U.block a).round = n → (U.block a).creator ∈ (Correct : Finset Validator) →
+    a ∈ D.held v n
+```
+
+From round `R` on, **every** correct block of round `n` is in **every**
+correct validator's hands at index `n` — that is, in time to be built upon.
+Coverage then follows in one step, `held ⊆ accepted ⊆ refs`, by
+`accepts_correct` and the protocol clause P7
+(`synchronised_of_delivery`, §6.7).
+
+The timing form, consumed by the GST route of §6.8, is partial synchrony in
+the sense of Dwork, Lynch and Stockmeyer [DLS88], written on wall-clock
+stamps — `built v n` is the time at which `v` built its round-`n` block,
+`blk v n` that block, `gst` the stabilisation time and `delay` the bound Δ
+(the full structure is displayed in §6.8):
+
+```lean
+covers : ∀ v ∈ T, ∀ w ∈ T, ∀ n < N, gst ≤ built w n →
+  built w n + delay ≤ built v (n + 1) →
+  blk w n ∈ (U.block (blk v (n + 1))).refs
+```
+
+If `w` built its round-`n` block after GST, and `v` began its round-`(n+1)`
+block at least Δ later, then `v` references `w`'s block. Note that this too
+is conditional, and on a premise the network does not control: that `v`
+actually waited. Discharging it is the protocol's obligation, which is why
+P9 (`waits`, `prompt`) stands beside N2 in this section rather than inside
+it, and why §6.10 must determine *how long* is long enough — `D₀ + Δ`,
+which is `2Δ` under a common start. §13.1 gives the counterexample that
+makes the point: under instantaneous delivery, a protocol that builds on
+the first quorum to arrive can violate coverage for ever, so no strengthening
+of N2 alone would suffice.
+
+#### What neither assumption says
+
+- **Nothing about Byzantine senders.** A Byzantine validator may deliver a
+  block to some correct validators and not others, may send two
+  equivocating blocks to two different correct validators, or may publish
+  nothing at all. Both N1 and N2 quantify over *correct* authors only, and
+  the safety results tolerate the rest unconditionally: a Byzantine block
+  that reaches one view and not another is precisely the situation the
+  cross-view theorems of §5 are stated to survive.
+- **Nothing about which blocks arrive**, beyond the correct ones after `R`.
+  N1 promises a quorum, not a particular sender's block.
+- **Nothing before GST**, in N2's case — arbitrary delay, arbitrary
+  reordering and arbitrary loss are permitted, and every safety result and
+  L1 continue to hold there.
+
+#### The asymmetry, and the payoff
+
+The two are deliberately unequal. N1 is weak — conditional, quorum-sized,
+timeless — and does the pre-GST work. N2 is strong — every correct block,
+every correct validator, promptly — but is asserted only from GST onward.
+Nothing between the two is assumed, and no third condition on the
+environment appears anywhere in the development.
+
+**These two are the whole of the trust placed in the environment.** The
+safety results of §5 use neither: they hold under arbitrary asynchrony,
+arbitrary loss and arbitrary divergence between views. Reference coverage,
+the condition on which all of liveness rests, is not a third assumption but
+a consequence of N2 with the protocol's own clauses — which is the subject
+of §4.4.
 
 ### 4.4 Derived, not assumed
 
@@ -1014,11 +1134,6 @@ structure Delivery (U) where
   includes : ∀ v ∈ Correct, ∀ n, ∀ b ∈ U.ids,
     (U.block b).creator = v → (U.block b).round = n + 1 →
     accepted v n ⊆ (U.block b).refs
-
-def DeliversQuorum (D : Delivery U) : Prop :=
-  ∀ n, (Fintype.card Validator - F.f) ≤ (authorsAt U n).card →
-    ∀ v ∈ Correct,
-      (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (D.accepted v n)).card
 ```
 
 The indexing of `held` is essential: `held v n` denotes what `v` had in hand *at
@@ -1033,10 +1148,12 @@ The structure contains no clock. In the absence of a time model, "waited longer"
 can manifest only as a larger `held`, which is what allows the timing layer of
 §6.8 to be placed beneath without disturbing anything above it.
 
-`DeliversQuorum` is stated conditionally — existence of a quorum first, holding
-of one second — since unconditionally it would assert the very block production
-that §6.3 sets out to establish. It carries no round bound, and so holds before
-GST as well as after.
+The network assumption stated over this structure is N1
+(`DeliversQuorum`), displayed and discussed in §4.3; the liveness results
+below consume it as a hypothesis. Two of its features matter here: it is
+conditional, so it does not assert the block production §6.3 establishes,
+and it carries no round bound, so the results resting on it hold before GST
+as well as after.
 
 ### 6.3 Progress, and the horizon
 
