@@ -38,7 +38,14 @@ material still to be written and do not form part of the report.*
 > nothing beyond the conventional model is assumed.*
 >
 > *(v) We give its quantitative form: a correct leader is committed once correct
-> validators wait 2Δ.]*
+> validators wait 2Δ.*
+>
+> *(vi) On the same foundation, unchanged, we develop three further
+> machine-checked accounts: denial-of-service resistance under equivocation via
+> an enforceable novelty budget; garbage collection with a per-validator horizon
+> and no consensus on the cut; and safety and liveness of the two-round protocol
+> Odontoceti, generalized to n ≥ 5f+1, including a repair to its published
+> agreement argument.]*
 
 ---
 
@@ -110,19 +117,41 @@ proof effort with no corresponding proof content.
    operational statement — a correct leader is committed once every correct
    validator waits `D₀ + Δ`, which is `2Δ` under a common start.
 
+7. **Denial-of-service resistance** (§8.1): with safety shown independent of
+   any anti-equivocation condition, storage is bounded twice over — a general
+   per-cone bound under an exposure condition on references, with a matching
+   construction showing its exponential constant is essentially forced, and a
+   **novelty budget** under which a correct validator's store grows linearly
+   forever, stated under enforceable, author-blind conditions only
+   (`dos_resistance`).
+
+8. **Garbage collection without consensus** (§8.2): a horizon below which
+   stores retain nothing, with commit verdicts proved invariant across the cut
+   under a single premise, storage made *constant* at a lag, bootstrap by an
+   `f+1`-sampled attested base rather than any agreement on the cut, and the
+   lag envelope pinned theorem by theorem.
+
+9. **Odontoceti, formalized and repaired** (§8.3): safety and liveness of the
+   two-round commit rule, generalized from the paper's fixed `n = 5f+1` to
+   `n ≥ 5f+1`, on the unmodified DAG layer — together with four findings about
+   the paper's safety argument, one of which (agreement among indirect commits
+   resting on candidate-iteration order) is refutable on data without a
+   canonicity repair the formalisation supplies.
+
 ### 1.4 Scope and non-goals
 
 The development is deliberately bounded in five respects.
 
-- **No pipelined leader schedule.** `Slots.spacing` (P6) places consecutive
-  leader slots at least three rounds apart, which is what makes every later slot
-  available as an anchor for the indirect rule (§3.4). Mysticeti as published
-  assigns a leader slot in *every* round, its logical views standing in
-  one-to-one correspondence with DAG rounds, and that pipelining is the source of
-  its latency claim. The object formalised here therefore has Mysticeti's
-  uncertified DAG and Mysticeti's commit rule under a Cordial-Miners-like leader
-  spacing. Everything stated is true of that object; the interleaving of
-  simultaneously undecided slots which pipelining creates is not treated.
+- **Pipelining and multiple leaders enter through the schedule, not the
+  rule.** The schedule class constrains only monotonicity, unboundedness and
+  keying (§3.4); anchoring is governed by per-pair eligibility. Mysticeti's
+  every-round pipelining and its multi-leader rounds are instances, with the
+  interleaving of simultaneously undecided slots handled by the committed-run
+  results (`decided_of_committed_above`, `decided_below_of_committed_run`,
+  `all_decided_below_of_fairRun`); `pipelining-and-multi-leader.md` is the
+  design record. An earlier version of this development fixed a
+  Cordial-Miners-like three-round spacing; that spacing survives only as a
+  conservativity theorem (`eligible_of_lt_of_spacing`).
 - **No cryptography.** Signatures, authentication and equivocation detection are
   outside the model. Non-equivocation of correct validators is a clause of the
   protocol (§4.1), recorded structurally (§2.3) and not enforced by a mechanism.
@@ -134,7 +163,7 @@ The development is deliberately bounded in five respects.
   are shown agreed; totally ordering the blocks released by a single commit
   requires a tie-break which the development declines to assume (§5.6).
 - **No wall-clock latency.** The wait bound of §6.10 is a duration, but the total
-  elapsed time to a commit is not derived (§9).
+  elapsed time to a commit is not derived (§10).
 
 ---
 
@@ -146,7 +175,7 @@ The development is deliberately bounded in five respects.
 class Faults (Validator : Type*) [Fintype Validator] [DecidableEq Validator] where
   f : ℕ
   byzantine : Finset Validator
-  card_validators : Fintype.card Validator = 3 * f + 1
+  card_validators : 3 * f + 1 ≤ Fintype.card Validator
   card_byzantine : byzantine.card ≤ f
 
 def Correct : Finset Validator := (F.byzantine)ᶜ
@@ -189,7 +218,7 @@ structure ValidWrt (blk : BlockId → Block Validator BlockId Payload)
     (b : Block Validator BlockId Payload) : Prop where
   predecessor : ∀ i ∈ b.refs, (blk i).round + 1 = b.round
   distinct_creators : ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
-  quorum : 0 < b.round → 2 * F.f + 1 ≤ (creators blk b).card
+  quorum : 0 < b.round → (Fintype.card Validator - F.f) ≤ (creators blk b).card
 ```
 
 Three points of formulation are load-bearing.
@@ -295,7 +324,7 @@ def votesIn (U) (C L : BlockId) : Finset BlockId :=
   (U.block C).refs.filter (fun q => L ∈ (U.block q).refs)
 
 def Certifies (U) (C L : BlockId) : Prop :=
-  2 * F.f + 1 ≤ (creatorsOf U.block (votesIn U C L)).card
+  (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (votesIn U C L)).card
 
 def certificates (U) (L : BlockId) (r : ℕ) : Finset BlockId :=
   (blocksAt U (r + 2)).filter (fun C => Certifies U C L)
@@ -313,10 +342,10 @@ references `L`.
 
 ```lean
 def DirectCommit (U) (L : BlockId) (r : ℕ) : Prop :=
-  2 * F.f + 1 ≤ (creatorsOf U.block (certificates U L r)).card
+  (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (certificates U L r)).card
 
 def DirectSkip (U) (L : BlockId) (r : ℕ) : Prop :=
-  2 * F.f + 1 ≤ (blames U L (r + 1)).card
+  (Fintype.card Validator - F.f) ≤ (blames U L (r + 1)).card
 ```
 
 A validator applies these to what it holds. The view-relative forms
@@ -348,16 +377,29 @@ convert a skip into a commit.
 class Slots (Validator : Type*) where
   slotRound : ℕ → ℕ
   leader : ℕ → Validator
-  spacing : ∀ k, slotRound k + 3 ≤ slotRound (k + 1)
+  mono : Monotone slotRound
+  unbounded : ∀ n, ∃ k, n ≤ slotRound k
+  keyed : Function.Injective (fun k => (slotRound k, leader k))
+
+def decisionRound (k : ℕ) : ℕ := S.slotRound k + 2
+def Eligible (k j : ℕ) : Prop := decisionRound Validator k < S.slotRound j
 
 def IsLeaderBlock (U) (k : ℕ) (L : BlockId) : Prop :=
   L ∈ U.ids ∧ (U.block L).round = S.slotRound k ∧ (U.block L).creator = S.leader k
 ```
 
-The spacing of three rounds is a safety parameter rather than a throughput one:
-it is exactly what places every subsequent anchor at round `≥ r+3`, which is the
-hypothesis of the agreement between the direct and indirect rules (§5.3), and
-`slotRound_add_three_le` extends it to arbitrary later slots.
+The class constrains the schedule only to be monotone, unbounded in round, and
+*keyed* — distinct slots differ in round or in leader. What safety actually
+requires of anchoring is per-pair **eligibility**: an anchor's proposal must
+clear the slot's decision round, which is Algorithm 3's filter
+`r_decision < s.round`. Under the older formalisation's three-round spacing,
+every later slot is eligible (`eligible_of_lt_of_spacing`), so the general
+relation is conservative over it; and pipelined and multi-leader schedules —
+Mysticeti as published — are instances (`Slots.uniform p m`,
+`Slots.uniformSingle`), at the price that a backlog of undecided slots is
+cleared by a *run* of consecutive commits rather than any single one
+(`decided_below_of_committed_run`, `all_decided_below_of_fairRun`; the design
+record is `pipelining-and-multi-leader.md`).
 
 `IsLeaderBlock` characterises the *candidates* for a slot rather than selecting
 one. A Byzantine leader may have several; a correct leader has at most one, by
@@ -436,8 +478,8 @@ computing base (§4.3). Assumed.
 
 Logically all of these are antecedents: each is a field of a structure or class,
 and every theorem quantifying over a block universe or over the relevant
-instances carries it. None is an axiom in the sense of §10, and their joint
-satisfiability is a proof obligation discharged by exhibition (§8) rather than
+instances carries it. None is an axiom in the sense of §11, and their joint
+satisfiability is a proof obligation discharged by exhibition (§9) rather than
 something the logic must be trusted for. The distinction drawn here is
 epistemic, not logical, and it is what determines where the trust boundary of
 the system actually falls.
@@ -451,7 +493,7 @@ the system actually falls.
 | P3 | non-genesis blocks cite `n−f` distinct authors | `ValidWrt.quorum` |
 | P4 | a block is held only with its causal history | `BlockUniverse.complete` |
 | P5 | one block per round: correct validators do not equivocate | `BlockUniverse.no_equivocation` |
-| P6 | slots are at least three rounds apart | `Slots.spacing` |
+| P6 | the slot schedule is monotone, unbounded and keyed | `Slots.mono`, `Slots.unbounded`, `Slots.keyed` |
 | P7 | a validator references everything it held | `Delivery.includes` |
 | P8 | a validator has a genesis block, and builds on holding a quorum | `Live.genesis`, `Live.builds` |
 | P9 | a validator waits a full timeout, and does not dawdle | `Timing.waits`, `Timing.prompt` |
@@ -463,7 +505,7 @@ P10 is a joint condition rather than a pure specification: the schedule is the
 designer's, but which validators are reliable is not. Round-robin discharges it
 whenever the reliable set is of quorum size, since at most `f` of every `n`
 consecutive leaders then lie outside it; `rrSlots` witnesses this with a window
-of `f + 1` (§8).
+of `f + 1` (§9).
 
 **P8 deserves the most emphasis of any clause here**, and is easily mistaken for
 a routine one. It states that a correct validator holding a quorum at round `r`
@@ -621,7 +663,8 @@ model in any case, since P8 makes advancement and block creation coincide.
 **T0.**
 ```lean
 theorem exists_correct_mem_inter {Q₁ Q₂ : Finset Validator}
-    (h₁ : 2 * F.f + 1 ≤ Q₁.card) (h₂ : 2 * F.f + 1 ≤ Q₂.card) :
+    (h₁ : Fintype.card Validator - F.f ≤ Q₁.card)
+    (h₂ : Fintype.card Validator - F.f ≤ Q₂.card) :
     ∃ v ∈ Q₁ ∩ Q₂, v ∈ (Correct : Finset Validator)
 ```
 
@@ -667,7 +710,7 @@ theorem reaches_of_quorum_support
     {b : BlockId} {r : ℕ} {Q : Finset BlockId} (hQ : Q ⊆ U.ids)
     (hQround : ∀ q ∈ Q, (U.block q).round = r + 1)
     (hQref : ∀ q ∈ Q, b ∈ (U.block q).refs)
-    (hQquorum : 2 * F.f + 1 ≤ (creatorsOf U.block Q).card)
+    (hQquorum : (Fintype.card Validator - F.f) ≤ (creatorsOf U.block Q).card)
     {c : BlockId} (hc : c ∈ U.ids) (hcr : r + 2 ≤ (U.block c).round) :
     Reaches U c b
 ```
@@ -839,7 +882,7 @@ accordingly (§4.4, §7.2).
 ```lean
 theorem card_authorsAt_of_lt {r n : ℕ} (hn : n < r) {i : BlockId}
     (hi : i ∈ U.ids) (hir : (U.block i).round = r) :
-    2 * F.f + 1 ≤ (authorsAt U n).card
+    (Fintype.card Validator - F.f) ≤ (authorsAt U n).card
 ```
 
 If any block exists at round `r`, every round below `r` has at least `n−f`
@@ -853,18 +896,29 @@ high in the DAG forces a quorum of authors at every round beneath it.
 structure Delivery (U) where
   held : Validator → ℕ → Finset BlockId
   held_spec : ∀ v n, ∀ i ∈ held v n, i ∈ U.ids ∧ (U.block i).round = n
+  accepted : Validator → ℕ → Finset BlockId
+  accepted_sub : ∀ v n, accepted v n ⊆ held v n
+  accepted_inj : ∀ v n, ∀ i ∈ accepted v n, ∀ j ∈ accepted v n,
+    (U.block i).creator = (U.block j).creator → i = j
+  accepts_correct : ∀ v ∈ Correct, ∀ n, ∀ a ∈ held v n,
+    (U.block a).creator ∈ Correct → a ∈ accepted v n
   includes : ∀ v ∈ Correct, ∀ n, ∀ b ∈ U.ids,
     (U.block b).creator = v → (U.block b).round = n + 1 →
-    held v n ⊆ (U.block b).refs
+    accepted v n ⊆ (U.block b).refs
 
 def DeliversQuorum (D : Delivery U) : Prop :=
-  ∀ n, 2 * F.f + 1 ≤ (authorsAt U n).card →
-    ∀ v ∈ Correct, 2 * F.f + 1 ≤ (creatorsOf U.block (D.held v n)).card
+  ∀ n, (Fintype.card Validator - F.f) ≤ (authorsAt U n).card →
+    ∀ v ∈ Correct,
+      (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (D.accepted v n)).card
 ```
 
 The indexing of `held` is essential: `held v n` denotes what `v` had in hand *at
 the moment it built its round-`(n+1)` block*, not what `v` eventually receives.
-This is the build-time index which a view cannot supply (§7.1).
+This is the build-time index which a view cannot supply (§7.1). Between holding
+and referencing sits **acceptance** — at most one block per author, correct
+blocks always taken — which is deliberately where the protocol may refuse:
+the DoS arc's novelty budget (§8.1) is a rule about `accepted`, and the
+liveness development reads only `accepted`.
 
 The structure contains no clock. In the absence of a time model, "waited longer"
 can manifest only as a larger `held`, which is what allows the timing layer of
@@ -884,7 +938,7 @@ def PopulatedOn (U) (T : Finset Validator) (r : ℕ) : Prop :=
 structure Live (U) (D : Delivery U) (N : ℕ) : Prop where
   genesis : Populated U 0
   builds : ∀ r < N, ∀ v ∈ Correct,
-    2 * F.f + 1 ≤ (creatorsOf U.block (D.held v r)).card →
+    (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (D.accepted v r)).card →
     ∃ b ∈ U.ids, (U.block b).creator = v ∧ (U.block b).round = r + 1
 ```
 
@@ -989,7 +1043,7 @@ simply not in the universe.
 
 **L4.**
 ```lean
-theorem directCommit_of_leader_mem (hcard : 2 * F.f + 1 ≤ T.card)
+theorem directCommit_of_leader_mem (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
     (hpop0 : PopulatedOn U T (S.slotRound k))
     (hpop1 : PopulatedOn U T (S.slotRound k + 1))
@@ -1042,7 +1096,8 @@ had nothing to select.
 ```lean
 def FairScheduleOn (T : Finset Validator) : Prop := ∀ k, ∃ k', k ≤ k' ∧ S.leader k' ∈ T
 
-theorem commits_recur_on (hT : T ⊆ Correct) (hcard : 2 * F.f + 1 ≤ T.card)
+theorem commits_recur_on (hT : T ⊆ Correct)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (fair : FairScheduleOn T) (R k : ℕ) :
     ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
       ∀ U D N, Live U D N → DeliversQuorum D → SynchronisedOn U T R →
@@ -1228,9 +1283,9 @@ theorem commits_recur_by_round … (hs : BoundedSpacing s) (R k : ℕ) :
 `FairWithin.fairScheduleOn` records that the rated schedule is a fair one, so
 that L6 applies unchanged.
 
-`BoundedSpacing` has no counterpart among the weak hypotheses. `Slots.spacing`
-bounds slot rounds from *below*, which is what safety requires, the anchor of M4
-being obliged to lie three rounds above. A latency claim requires the opposite
+`BoundedSpacing` has no counterpart among the weak hypotheses. Eligibility
+bounds an anchor's round from *below*, which is what safety requires, the
+anchor of M4 being obliged to clear the decision round. A latency claim requires the opposite
 bound, and the class provides none, no safety result having occasion to ask for
 one. Supplying the mirror image is what converts a bound on the slot index into a
 bound on its round.
@@ -1238,7 +1293,7 @@ bound on its round.
 **The wait bound.**
 ```lean
 theorem directCommit_of_wait (tm : Timing U T N) (hT : T ⊆ Correct)
-    (hcard : 2 * F.f + 1 ≤ T.card)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hstart : ∀ v ∈ T, ∀ w ∈ T, tm.built w 0 ≤ tm.built v 0 + D₀)
     (hwait : ∀ n, D₀ + tm.delay ≤ tm.timeout n)
     (hgst : tm.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
@@ -1453,7 +1508,7 @@ pacemaker by refinement. The account here is structural, and no theorem above
 dependence of liveness on the round-jumping clause surfaces as a named hypothesis
 of a single lemma rather than as a condition inside a transition relation. The
 cost is that the theorems of [QXS26] cannot be stated here at all, "within
-bounded time" not being expressible in this vocabulary (§9).
+bounded time" not being expressible in this vocabulary (§10).
 
 **References.**
 
@@ -1476,7 +1531,233 @@ bounded time" not being expressible in this vocabulary (§9).
 
 ---
 
-## 8. Satisfiability
+## 8. Extensions: three developments on the same foundation
+
+The account above is the platform for three further machine-checked
+developments, each additive — the core files unchanged, each arc a
+subdirectory (`DoS/`, `GC/`, `Odontoceti/`) consuming the core
+read-only — and each with a design record carrying its full account.
+This section states the principal definitions and results; Appendix A
+indexes the statements. Two generalisations of the core preceded them
+and are reflected in every display of this report: the committee is
+`n ≥ 3f+1` with quorums of literal size `n − f` (witnesses sit at the
+boundary `n = 3f+1`), and the slot schedule admits pipelining and
+multiple leaders (§3.4).
+
+### 8.1 Denial of service: equivocation, growth, and the novelty budget
+
+*(design record: `dos-equivocation-and-growth.md`)*
+
+Safety needs no protection from equivocation — the M-series holds with
+no anti-equivocation condition anywhere, and the independence is
+recorded on data (`LeanDagTest/DoS/SafetyUnderDoS.lean`). *Storage*
+does: an uncertified DAG accepts Byzantine blocks into correct views,
+and an equivocator can multiply what a cone carries. Two mechanisms are
+studied, and composed.
+
+**Exposure.** An author is *exposed* in a cone holding two of its
+same-round blocks; the DoS condition forbids building on the exposed:
+
+```lean
+def ExposedIn (U) (b : BlockId) (X : Validator) : Prop :=
+  ∃ i ∈ history U b, ∃ j ∈ history U b, EquivPair U X i j
+
+def DoSValid (U) : Prop :=
+  ∀ b ∈ U.ids, ∀ i ∈ (U.block b).refs, ¬ ExposedIn U b (U.block i).creator
+```
+
+Exposure is monotone up the DAG, lands only on the guilty, and at most
+`f` authors are ever exposed in one cone (`card_exposedTo_le`).
+Exclusion costs margin rather than liveness: after every equivocator is
+caught, references are *exactly* the correct validators
+(`creators_refs_eq_correct`) and the commit chain still runs. Under
+`DoSValid` alone the per-cone bound is
+
+```lean
+theorem card_history_le' (hdos : DoSValid U) (hb : b ∈ U.ids) :
+    (history U b).card
+      ≤ (Fintype.card Validator + (Fintype.card Validator - 1) * F.f ^ F.f) *
+          ((U.block b).round + 1)
+```
+
+— linear in the round, with a constant exponential in `f`. The shape is
+essentially forced: a chain of `e` cooperating equivocators doubles the
+reachable mass at each reveal (`Udouble`, `2^(e−2)` constructible), so
+no constant polynomial in `f` exists, and the condition alone cannot
+give practical storage bounds. What it buys instead is the *exclusion
+economy*; the bound that matters comes from rate limiting.
+
+**The novelty budget.** The *novelty* of an arriving block is what its
+cone adds over the store (`novelty U V b = H(b) \ V`); the budget caps
+it per acceptance. The mechanism-side rule is **author-blind** — it
+never asks who is Byzantine:
+
+```lean
+def UniformBudget (D : Delivery U) (T : ℕ) : Prop :=
+  ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ D.accepted v (n + 1),
+    (novelty U (viewUpto D v n) b).card ≤ T
+
+def RefsAccepted (D : Delivery U) : Prop :=
+  ∀ w ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ U.ids,
+    (U.block b).creator = w → (U.block b).round = n + 1 →
+    (U.block b).refs ⊆ D.accepted w n
+```
+
+The analysis-side guarded form `ByzBudget κ` and the blind form sandwich
+each other within a factor of `f` (`UniformBudget.byzBudget`,
+`uniform_of_byzBudget`) — author-blindness costs constants, never
+theorems. The gap between two correct stores is a *constant*, not a
+drift: a correct block's cone is a complete record of everything its
+author ever accepted (`viewUpto_subset_history` — S10 chains
+`includes`), so one delivery erases the standing gap
+(`card_viewGap_succ_le`); the DAG is its own repair channel. The
+headline quotes enforceable conduct only:
+
+```lean
+theorem dos_resistance {T N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
+    (hu : UniformBudget D T) (hra : RefsAccepted D) :
+    (∀ r ≤ N, Populated U r) ∧
+      ∀ v ∈ (Correct : Finset Validator), ∀ n,
+        (viewUpto D v n).card ≤
+          (Correct : Finset Validator).card * (n + 1) +
+            ((Correct : Finset Validator).card * F.f +
+              n * ((Correct : Finset Validator).card * (F.f * T)))
+```
+
+— liveness *and* linear storage from one set of hypotheses, with a
+post-`R` incremental form (`dos_resistance'`). Composing the two
+conditions: once every equivocator is exposed, the Byzantine pool
+freezes and the slope decays to the correct-production rate
+(`card_viewUpto_le_of_allExposed'`) — the budget paces what an author
+can inject, exclusion ends it.
+
+### 8.2 Garbage collection: the horizon
+
+*(design record: `garbage.md`)*
+
+Linear-forever storage still diverges, and a joining validator must
+fetch it. The remedy is a **horizon** `G` — a round below which stores
+retain nothing — with the model-side truncation operator: `chop U G`
+keeps the blocks of rounds `≥ G`, rebases rounds by `−G`, and empties
+the reference sets of the new base layer. The round-`G` layer becomes
+the new genesis layer, every validity clause holds verbatim, and so
+`chop U G` is a bona-fide `BlockUniverse`: every theorem of this report
+applies to it unchanged. The work is relating verdicts *across* the
+cut, and choosing the cut.
+
+**Safety crosses the cut unconditionally.** Every commit-rule notion
+for a slot above the cut is invariant (`certificates_chop`,
+`directCommit_chop`, …, `certifiedIn_chop`), and the full decision
+relation follows, under the induced schedule re-indexed from a base
+slot `d` with `G ≤ slotRound d`:
+
+```lean
+theorem decided_chop (hd : G ≤ S.slotRound d) :
+    Decided (S := S.chop G d hd) (chop U G) (V.chop G) k v ↔
+      Decided U V (d + k) v
+
+theorem decided_agree_chop (hd : G ≤ S.slotRound d)
+    (hW : Decided (S := S.chop G d hd) (chop U G) W k w)
+    (hV : Decided U V (d + k) v) : w = v
+```
+
+— the joiner's view `W` is an **arbitrary** view of the truncation, and
+the only hypothesis anywhere is the base-slot condition: no synchrony,
+no liveness, no lag bound. Liveness transfers with the offset
+(`live_chopD`), and storage becomes **constant at lag `Λ`**
+(`card_retained_le`): the retained store is bounded by
+`|Correct|·(Λ+1) + |Correct|·f + Λ·|Correct|·f·κ`, independent of how
+long the system has run. The same constant bounds a joiner's entire
+fetch (`card_joinIds_le`) and a correct author's serving obligation
+(`card_serve_le`).
+
+**No consensus on the cut.** Horizons are per-validator: verdicts at
+different horizons are equal outright (`decided_agree_horizons`), a
+deeper cut is just another cut
+(`chop_chop : chop (chop U G₁) (G₂−G₁) = chop U G₂`), and post-`R`
+possession universalises in one round
+(`viewUpto_subset_viewUpto_succ`), so pruning at depth `≥ 1` below a
+correct frontier discards nothing a peer lacks. Bootstrap — the one
+place a residue of agreement could live — needs sampling, not
+consensus: a joiner adopts the **attested base**
+
+```lean
+def Base (U) (t G : ℕ) : Finset BlockId :=
+  (blocksAt U G).filter fun y => F.f + 1 ≤ (attesters U t y).card
+```
+
+(an attestation *is* a block; no signatures), sandwiched between the
+shared correct layer and the union of correct cones
+(`correct_mem_base`, `exists_correct_attester_of_mem_base`), complete
+for everything obtainable at attestation lag two
+(`accepted_mem_base`, tight on data) — and any decision reached from
+base-plus-window equals any full-history validator's
+(`bootstrap_agree`). The *lag envelope* is pinned theorem by theorem:
+safety constrains the lag not at all; `Λ ≥ 1` buys peer no-desync,
+`Λ ≥ 2` buys base completeness, and the ceiling is storage appetite —
+the constants grow linearly in `Λ`. Truncation *forgives* — an
+equivocation whose witnessing pair falls below the cut is no longer
+exposed (`dosValid_chop` is deliberately one-way) — at a bounded,
+priced rate: one reveal per author per epoch, under the windowed
+budget, and commit safety never depended on any of it.
+
+### 8.3 Odontoceti: two-round commitment
+
+*(design record: `odontoceti.md`)*
+
+Odontoceti (Vander Vos, arXiv:2510.01216) commits in **two**
+communication rounds at `n = 5f+1`: supports at the decision round are
+the whole story, with no certificate round. Its quorums are `n − f` —
+exactly the shape this development is parameterised at — so the entire
+DAG layer applies verbatim and only the rule layer is new
+(`supporters`/`blames` of §3 *are* its support and blame). The
+formalisation proves safety and liveness at the generalisation
+`n ≥ 5f+1`, direct thresholds `n − f`, indirect threshold `n − 3f`
+(the paper's `4f+1`/`2f+1` at the boundary):
+
+```lean
+def DirectCommit (U) (L : BlockId) (r : ℕ) : Prop :=
+  (Fintype.card Validator - F.f) ≤ (supporters U L (r + 1)).card
+
+def ThickLink (U) (A L : BlockId) (r : ℕ) : Prop :=
+  (Fintype.card Validator - 3 * F.f) ≤ (coneSupports U A L r).card
+```
+
+Four counting theorems carry safety, and locate where the five-`f`
+committee is spent: commit-vs-skip and twin uniqueness need only
+`3f+1` (O1, O1′); a skipped leader musters at most `2f` supporters
+anywhere, and `2f < n−3f` is exactly `n ≥ 5f+1` (O2); a committed
+leader's supports propagate into **every** deeper cone at `n−3f`
+authors — every anchor's cone *is* the certificate (O3); and a direct
+commit excludes every rival candidate at any anchor (O4′,
+`(n−f)+(n−3f)−f > n`). Agreement (`Odontoceti.decided_unique`) and
+liveness (`Odontoceti.all_decided_below_of_fairRun`) then follow the
+§5/§6 shapes — with liveness *shorter* at every step: a correct leader
+commits from two populated rounds and one synchronised step, and a run
+of **two** consecutive correct-led slots clears every backlog.
+
+The formalisation also surfaced four findings about the paper
+(`odontoceti.md` §6). Chief among them: its agreement proof asserts
+that sharing an anchor yields a shared verdict, but no counting
+argument separates two equivocating candidates that both pass the
+indirect test at one anchor — the required inequality needs `n > 7f`,
+false at `5f+1`, and the configuration is realised on a valid
+six-validator universe by `decide` (`utwin6_both_pass`). What
+arbitrates in practice is the unspecified iteration order of the
+implementation's candidate loop; the formalised rule states that
+determinism as a canonicity premise — commit the least passing
+candidate in a fixed order — under which agreement is a theorem, and
+without which it is refutable. For implementers: the candidate
+iteration order of the indirect rule is consensus-critical; block-hash
+order restores agreement, arrival order does not. The remaining
+findings: a lemma the agreement proof needs but the paper lacks (O4′),
+the blocks-versus-authors ambiguity in "2f+1 supports" (only the
+author count is provable), and a counting step that holds only through
+the exact complement identity `|Correct| = n − |byzantine|`.
+
+---
+
+## 9. Satisfiability
 
 Every structure carrying conditions is exhibited satisfiable by a concrete model
 over four validators at `f = 1`. This is a substantive component of the
@@ -1515,7 +1796,7 @@ as an inequality.
 
 ---
 
-## 9. Limitations
+## 10. Limitations
 
 The quantitative bounds are established (§6.10). The following remain open.
 
@@ -1574,38 +1855,70 @@ much they say.
 
 ---
 
-## 10. Mechanisation
+## 11. Mechanisation
 
-The development comprises approximately 4,700 lines of Lean 4 (v4.32.2) against
-Mathlib, of which some 3,200 constitute the library and 1,500 the models of
-§8. A full build reports no errors and no warnings.
+The development comprises approximately 14,800 lines of Lean 4 (v4.32.2)
+against Mathlib, of which some 10,200 constitute the library and 4,600 the
+models of §9 and the witness files of the three arcs. A full build reports no
+errors.
 
-**Axiom audit.** Every principal result — `reaches_of_quorum_support`,
-`exists_common_correct_ancestor`, `decided_agree`, `commitSeq_agree`,
-`outputAt_agree`, `no_stall`, `commits_recur_on`,
-`exists_synchronisedOn_of_backoff`, `ugrow_commits_by_round`,
-`ugrowSkew_directCommit_of_wait` — depends on exactly `propext`,
-`Classical.choice` and `Quot.sound`, which constitute the whole axiom set of Lean
-4. No result depends on `sorryAx`, on any bespoke axiom, or on `native_decide`
-and the extended trusted base it entails.
+**Axiom audit.** Every principal result — among them
+`reaches_of_quorum_support`, `exists_common_correct_ancestor`,
+`decided_agree`, `commitSeq_agree`, `outputAt_agree`, `no_stall`,
+`commits_recur_on`, `exists_synchronisedOn_of_backoff`,
+`all_decided_below_of_fairRun`, `card_history_le'`, `dos_resistance`,
+`decided_chop`, `decided_agree_chop`, `card_retained_le`, `bootstrap_agree`,
+`chop_chop`, `Odontoceti.decided_unique`, `Odontoceti.safety` and
+`Odontoceti.all_decided_below_of_fairRun` — depends on exactly `propext`,
+`Classical.choice` and `Quot.sound`, which constitute the whole axiom set of
+Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
+`native_decide` and the extended trusted base it entails.
+
+**The core.**
 
 | Module | Contents |
 |---|---|
-| `Validators.lean` | the fault model; T0 |
+| `Validators.lean` | the fault model (`n ≥ 3f+1`); T0 |
 | `Block.lean` | `Block`, `ValidWrt`; T0′ |
 | `BlockDag.lean` | `BlockUniverse`, `View`; T1 |
 | `CausalHistory.lean` | `Reaches`; T2, T6a |
 | `Support.lean` | counting vocabulary; the hitting, propagation and coverage lemmas |
+| `History.lean` | causal history as a `Finset` |
 | `Persistence.lean` | T3 |
 | `CommonCore.lean` | T3a, T3c |
-| `Mysticeti.lean` | the commit rule; M1–M6; the ledger |
-| `Liveness.lean` | L0–L6, L7a |
+| `Mysticeti.lean` | the commit rule; eligibility; M1–M6; the ledger |
+| `Schedule.lean` | concrete schedules (`uniform`, `uniformSingle`); conservativity |
+| `Liveness.lean` | L0–L6, L7a; the committed-run results |
 | `Timing.lean` | L7b |
-| `Quantitative.lean` | L8, L9; imported by nothing |
-| `LeanDagTest/` | the models of §8 |
+| `Quantitative.lean` | L8, L9 |
 
-Two design records accompany the development: `spec.md` for safety and
-`liveness.md` for liveness. These carry the design rationale and the log of
+**The arcs** (§8), each consuming the core read-only:
+
+| Module | Contents |
+|---|---|
+| `DoS/Exposure.lean` | `ExposedIn`, `DoSValid`; exposure ≤ `f` per cone |
+| `DoS/Acceptance.lean`, `DoS/Counting.lean` | the acceptance rule; view size from history size |
+| `DoS/SelfParent.lean`, `DoS/Adoption.lean`, `DoS/Pedigree.lean` | the adoption collapse; pedigrees; the general per-cone bound |
+| `DoS/Density.lean` | histories are almost all of the correct past |
+| `DoS/Novelty.lean` | the novelty budget; the budget sandwich; `dos_resistance` |
+| `DoS/Composition.lean` | the two conditions composed; the pool freezes |
+| `DoS/Exclusion.lean` | liveness survives exclusion; the correct backbone |
+| `GC/Chop.lean` | the horizon operator; per-slot verdict invariance |
+| `GC/ChopDecided.lean` | the induced schedule; `decided_chop`, `decided_agree_chop` |
+| `GC/Window.lean` | windowed novelty and stores; `card_retained_le` |
+| `GC/AttestedBase.lean` | the inexact certificate, sandwiched |
+| `GC/Bootstrap.lean` | window completeness; the joiner's view; `bootstrap_agree` |
+| `GC/Horizon.lean` | `chop_chop`; heterogeneous-horizon agreement; the depth rule |
+| `Odontoceti/Rules.lean` | the two-round rules; the arithmetic core O1–O4′ |
+| `Odontoceti/Decision.lean` | the decision relation with canonicity; agreement |
+| `Odontoceti/Liveness.lean` | O7–O10 |
+| `LeanDagTest/` | the models of §9 and the witness files of every arc |
+
+Six design records accompany the development: `spec.md` (safety),
+`liveness.md` (liveness), `pipelining-and-multi-leader.md` (the schedule
+generalisation), `dos-equivocation-and-growth.md` (§8.1), `garbage.md`
+(§8.2) and `odontoceti.md` (§8.3), with `related.md` surveying the
+surrounding literature. These carry the design rationale and the log of
 settled and open questions. The report draws its statements from the source.
 
 ---
@@ -1657,3 +1970,57 @@ Principal results only; supporting lemmas are omitted.
 | L8a | the round of coverage, explicitly | `synchronisedOn_of_rate` | `Quantitative` |
 | L8b | the committing slot, and its round | `commits_recur_within`, `commits_recur_by_round` | `Quantitative` |
 | L9 | the wait bound | `directCommit_of_wait`, `decided_of_wait`, `directCommit_of_wait_two_delay` | `Quantitative` |
+
+### Denial of service (§8.1)
+
+| Label | Statement | Lean | Module |
+|---|---|---|---|
+| D11–D13 | exposure, and the DoS condition | `ExposedIn`, `DoSValid` | `DoS/Exposure` |
+| C2 | at most `f` authors exposed per cone | `card_exposedTo_le` | `DoS/Exposure` |
+| D14 | safety and the DoS condition do not interact | witness file | `LeanDagTest/DoS/SafetyUnderDoS` |
+| D15a | at zero margin, references are exactly the correct validators | `creators_refs_eq_correct` | `DoS/Exclusion` |
+| — | the correct backbone | `mem_history_of_correct` | `DoS/Exclusion` |
+| C1′ | the general per-cone bound | `card_history_le'` | `DoS/Pedigree` |
+| D25 | density: cones miss at most `f` per layer | `card_missingAt_le` | `DoS/Density` |
+| — | the doubling construction (`2^(e−2)`) | `Udouble` witnesses | `LeanDagTest/DoS/Doubling` |
+| — | the telescope | `card_history_le_of_stepNovelty` | `DoS/Novelty` |
+| C3′ | the view gap is a constant, not a drift | `card_viewGap_succ_le` | `DoS/Novelty` |
+| — | the budget sandwich | `UniformBudget.byzBudget`, `uniform_of_byzBudget` | `DoS/Novelty` |
+| B4 | linear storage under the budget | `card_viewUpto_le` | `DoS/Novelty` |
+| B | the capstone, enforceable conditions only | `dos_resistance`, `dos_resistance'` | `DoS/Novelty` |
+| B5 | after exposure completes, the pool freezes | `card_viewUpto_le_of_allExposed'` | `DoS/Composition` |
+
+### Garbage collection (§8.2)
+
+| Label | Statement | Lean | Module |
+|---|---|---|---|
+| G1 | truncation is a universe; the DoS condition crosses one way | `chop`, `dosValid_chop` | `GC/Chop` |
+| G2 | per-slot verdict invariance | `certificates_chop`, `directCommit_chop`, `certifiedIn_chop`, … | `GC/Chop` |
+| G3 | the decision relation survives the cut | `decided_chop` | `GC/ChopDecided` |
+| G4 | cross-cut agreement, arbitrary joiner views | `decided_agree_chop` | `GC/ChopDecided` |
+| G5 | liveness transfers | `live_chopD`, `populated_chop` | `GC/Window` |
+| G13, G14 | windowed novelty; store correspondence | `novelty_chop_anti`, `viewUpto_chopD` | `GC/Window` |
+| G6 | storage constant at lag `Λ` | `card_retained_le` | `GC/Window` |
+| G6b, G7 | join and relay at the same constant | `card_joinIds_le`, `card_serve_le` | `GC/Bootstrap` |
+| G10 | the attested-base sandwich | `correct_mem_base`, `exists_correct_attester_of_mem_base` | `GC/AttestedBase` |
+| G11 | window completeness, tight at lag two | `accepted_mem_base` | `GC/Bootstrap` |
+| G12 | bootstrap safety | `joinView`, `bootstrap_agree` | `GC/Bootstrap` |
+| G8 | horizons compose; heterogeneous horizons agree | `chop_chop`, `decided_agree_horizons` | `GC/Horizon` |
+| G9 | possession universalises in one round | `viewUpto_subset_viewUpto_succ` | `GC/Horizon` |
+
+### Odontoceti (§8.3)
+
+| Label | Statement | Lean | Module |
+|---|---|---|---|
+| O1 | commit versus skip | `not_directSkip_of_directCommit` | `Odontoceti/Rules` |
+| O1′ | twin uniqueness for direct commits | `eq_of_directCommit` | `Odontoceti/Rules` |
+| O2 | a skipped leader fails the indirect test everywhere | `card_supporters_le_of_directSkip`, `not_thickLink_of_directSkip` | `Odontoceti/Rules` |
+| O3 | support propagation: every anchor's cone is the certificate | `thickLink_of_directCommit` | `Odontoceti/Rules` |
+| O4′ | a direct commit excludes every rival candidate | `eq_of_directCommit_of_thickLink` | `Odontoceti/Rules` |
+| O5 | agreement, under canonicity | `Odontoceti.decided_unique` | `Odontoceti/Decision` |
+| O6 | safety | `Odontoceti.safety` | `Odontoceti/Decision` |
+| O7 | a correct leader commits in one step | `Odontoceti.decided_of_leader_mem` | `Odontoceti/Liveness` |
+| O8 | a run of two spans eligibility | `Odontoceti.spansEligible_two` | `Odontoceti/Liveness` |
+| O9 | a committed run clears everything below | `Odontoceti.decided_below_of_committed_run` | `Odontoceti/Liveness` |
+| O10 | liveness | `Odontoceti.all_decided_below_of_fairRun` | `Odontoceti/Liveness` |
+| — | the thesis gap, on data | `utwin6_both_pass` | `LeanDagTest/Odontoceti/Model` |
