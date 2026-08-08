@@ -1916,57 +1916,225 @@ still commits the same blocks; it just stores more junk.
 
 ## 9. Odontoceti: two-round commitment
 
-*(design record: `odontoceti.md`)*
+*(design record: `odontoceti.md`; modules `LeanDag/Odontoceti/`)*
 
-Odontoceti (Vander Vos, arXiv:2510.01216) commits in **two**
-communication rounds at `n = 5f+1`: supports at the decision round are
-the whole story, with no certificate round. Its quorums are `n − f` —
-exactly the shape this development is parameterised at — so the entire
-DAG layer applies verbatim and only the rule layer is new
-(`supporters`/`blames` of §3 *are* its support and blame). The
-formalisation proves safety and liveness at the generalisation
-`n ≥ 5f+1`, direct thresholds `n − f`, indirect threshold `n − 3f`
-(the paper's `4f+1`/`2f+1` at the boundary):
+Odontoceti [Van25] commits in **two** communication rounds: a leader block
+at round `r` is decided by the supports and blames of round `r+1` alone,
+with no certificate round anywhere. The price is a larger committee,
+`n = 5f+1`. This section proves safety and liveness of the two-round rule at
+the *generalization* `n ≥ 5f+1` — direct thresholds `n − f`, indirect
+threshold `n − 3f`, specializing to the published `4f+1` and `2f+1` at the
+boundary — and reports four findings about the published safety argument,
+one of which is a genuine gap that the formalized rule must repair (§9.4).
+
+### 9.1 The reuse boundary
+
+At `n = 5f+1` Odontoceti's quorums *are* `n − f`: the DAG quorum `4f+1`,
+and both direct thresholds. Its validity rules coincide with `ValidWrt`
+clause for clause — including the mandatory self-parent (P3′) — and its
+support/blame primitives are the `supporters`/`blames` of §3. The entire
+DAG layer of this report therefore applies verbatim, and only the rule
+layer is new; the fault bound is an *extension*,
+
+```lean
+class Faults5 (Validator) extends Faults Validator where
+  card_validators5 : 5 * f + 1 ≤ Fintype.card Validator
+```
+
+so a `Faults5` instance is a `Faults` instance and every existing theorem
+continues to apply to the same types. The stronger bound is consumed in
+exactly two proofs (O2 and O4′ below) — the two-round rule's *direct* safety
+already holds at `3f+1`. The witness file proves the reuse claim as a
+computation: a quorum-5 universe over six validators satisfies the untouched
+`BlockUniverse` by `decide` (§10). Nothing outside `LeanDag/Odontoceti/`
+was modified.
+
+### 9.2 The rule layer, and the arithmetic core
 
 ```lean
 def DirectCommit (U) (L : BlockId) (r : ℕ) : Prop :=
   (Fintype.card Validator - F.f) ≤ (supporters U L (r + 1)).card
 
+def DirectSkip (U) (L : BlockId) (r : ℕ) : Prop :=
+  (Fintype.card Validator - F.f) ≤ (blames U L (r + 1)).card
+
+def coneSupports (U) (A L : BlockId) (r : ℕ) : Finset Validator :=
+  creatorsOf U.block
+    ((blocksAt U (r + 1)).filter
+      (fun q => L ∈ (U.block q).refs ∧ q ∈ history U A))
+
 def ThickLink (U) (A L : BlockId) (r : ℕ) : Prop :=
   (Fintype.card Validator - 3 * F.f) ≤ (coneSupports U A L r).card
 ```
 
-Four counting theorems carry safety, and locate where the five-`f`
-committee is spent: commit-vs-skip and twin uniqueness need only
-`3f+1` (O1, O1′); a skipped leader musters at most `2f` supporters
-anywhere, and `2f < n−3f` is exactly `n ≥ 5f+1` (O2); a committed
-leader's supports propagate into **every** deeper cone at `n−3f`
-authors — every anchor's cone *is* the certificate (O3); and a direct
-commit excludes every rival candidate at any anchor (O4′,
-`(n−f)+(n−3f)−f > n`). Agreement (`Odontoceti.decided_unique`) and
-liveness (`Odontoceti.all_decided_below_of_fairRun`) then follow the
-§5/§6 shapes — with liveness *shorter* at every step: a correct leader
-commits from two populated rounds and one synchronised step, and a run
-of **two** consecutive correct-led slots clears every backlog.
+`ThickLink` is the indirect test: enough supports for `L` visible in an
+anchor's cone. It counts **distinct authors** of in-cone support blocks,
+not raw blocks — the published rule says "`2f+1` supports in the history of
+the anchor" without disambiguating, and the block count is
+adversary-inflatable (an equivocating supporter can plant any number of
+support-twins in one cone), while the author count is the one the
+arithmetic on both sides actually bounds. Four counting theorems carry
+safety, and they locate exactly where the five-`f` committee is spent:
 
-The formalisation also surfaced four findings about the paper
-(`odontoceti.md` §6). Chief among them: its agreement proof asserts
-that sharing an anchor yields a shared verdict, but no counting
-argument separates two equivocating candidates that both pass the
-indirect test at one anchor — the required inequality needs `n > 7f`,
-false at `5f+1`, and the configuration is realised on a valid
-six-validator universe by `decide` (`utwin6_both_pass`). What
-arbitrates in practice is the unspecified iteration order of the
-implementation's candidate loop; the formalised rule states that
-determinism as a canonicity premise — commit the least passing
-candidate in a fixed order — under which agreement is a theorem, and
-without which it is refutable. For implementers: the candidate
-iteration order of the indirect rule is consensus-critical; block-hash
-order restores agreement, arrival order does not. The remaining
-findings: a lemma the agreement proof needs but the paper lacks (O4′),
-the blocks-versus-authors ambiguity in "2f+1 supports" (only the
-author count is provable), and a counting step that holds only through
-the exact complement identity `|Correct| = n − |byzantine|`.
+**O1 (commit versus skip; needs only `n ≥ 3f+1`).**
+`not_directSkip_of_directCommit`: no block is both directly committed and
+directly skipped. Two `(n−f)`-quorums over `n` authors share
+`n − 2f ≥ f+1`; an author both supporting and blaming has two distinct
+decision-round blocks, so every member of the intersection is an
+equivocator — one more than exist.
+
+**O1′ (twin uniqueness; `n ≥ 3f+1`).** `eq_of_directCommit`: two directly
+committed same-author blocks are equal. Same intersection; an author
+supporting two distinct twins is an equivocator, because one block cannot
+cite an author twice (`distinct_creators`) and two supporting blocks are an
+equivocation.
+
+**O2 (a skipped leader fails the test everywhere; spends the fifth `f`).**
+`card_supporters_le_of_directSkip`: a directly skipped leader's supporters —
+anywhere in the universe, hence in any cone — number at most `2f`; and
+`2f < n − 3f` exactly when `n ≥ 5f+1`
+(`not_thickLink_of_directSkip`). The proof requires the **exact complement
+identity** `|Correct| = n − |byzantine|`: correct supporters and correct
+blamers are disjoint, correct blamers number at least
+`(n−f) − |byzantine|`, and the `|byzantine|` cancels, leaving correct
+supporters at most `f`. Bounding `|Correct| ≤ n` instead degrades the
+estimate to `3f`, which does *not* clear the threshold at the boundary —
+the natural loose count fails, and only the exact one proves the published
+lemma.
+
+**O3 (propagation — every anchor's cone is the certificate).**
+`thickLink_of_directCommit`: if `L` is directly committed, then *every*
+block from two rounds above it onward — Byzantine-authored included,
+validity being structural — carries at least `n − 3f` distinct authors of
+support blocks in its cone. One hop: a round-`(r+2)` block's `n − f`
+distinct-author parents meet the `n − f` supporters in `n − 2f` authors, of
+whom up to `f` are Byzantine equivocators whose *referenced* parent may be
+a non-supporting twin; the remaining `≥ n − 3f` are correct, and a correct
+author's unique decision-round block is both supporting and in the cone.
+Depth: cones are monotone through any single parent, so the bound never
+decays. This is the two-round replacement for M2/M4: there is no
+certificate object, so its rôle is played by the support pattern that every
+later cone is forced to contain.
+
+**O4′ (a direct commit excludes every rival; spends the fifth `f`
+again).** `eq_of_directCommit_of_thickLink`: a directly committed block is
+the *only* same-author block that can pass the indirect test, at any
+anchor — `n − f` supporters of `L₁` and `n − 3f` in-cone supporters of a
+twin `L₂` would overlap in `n − 5f ≥ 1` correct authors, each supporting
+two twins. This lemma has no counterpart in the published argument, and
+§9.4 explains why it had to exist.
+
+### 9.3 The decision relation, and agreement
+
+Eligibility contracts by one round —
+`decisionRound k = slotRound k + 1` and
+`Eligible k j ↔ slotRound k + 2 ≤ slotRound j` — and the view-relative
+direct rules lift to universe level exactly as in §3.2. The decision
+relation mirrors §3.5 constructor for constructor, with one new premise:
+
+```lean
+| indirectCommit :
+    k < j → Eligible Validator k j → Decided U V j (some A) →
+    (∀ i, k < i → i < j → Eligible Validator k i → Decided U V i none) →
+    IsLeaderBlock U k L → ThickLink U A L (S.slotRound k) →
+    (∀ L', IsLeaderBlock U k L' → ThickLink U A L' (S.slotRound k) → ¬ L' < L) →
+    Decided U V k (some L)
+```
+
+The final premise — the committed candidate is the `≤`-least one passing
+the test at the anchor, under `[LinearOrder BlockId]` — is the *canonicity*
+of §9.4. With it, agreement and safety follow the §5.5 shape:
+
+```lean
+theorem decided_unique (h₁ : Decided U V₁ k v₁) :
+    ∀ V₂ v₂, Decided U V₂ k v₂ → v₁ = v₂
+
+theorem safety (h₁ : Decided U V₁ k (some L₁))
+    (h₂ : Decided U V₂ k (some L₂)) : L₁ = L₂
+```
+
+The induction closes case by case: the direct/direct diagonal by O1 and
+O1′; every direct/indirect crossing by O2, O3 and O4′; and the
+indirect/indirect case by the anchor trichotomy of §5.5, with a shared
+anchor yielding a shared verdict — skip-versus-commit by the skip
+constructor's universal premise, commit-versus-commit by canonicity.
+
+### 9.4 The finding: agreement needs a canonical candidate
+
+The published agreement proof (its Lemma 5) handles the indirect/indirect
+case by arguing that both validators use the same anchor and that "the
+indirect decision rule solely depends on the causal history of the anchor".
+That is true of the *test* — but the rule must also **choose a candidate**,
+and nothing in the quorum arithmetic prevents two equivocating candidates
+from both passing the test at one anchor. The counting that would be needed
+— two `(n−3f)`-sized in-cone supporter sets overlapping in more than the
+`f` equivocators — requires `2(n−3f) − f > n`, that is `n > 7f`, which
+**fails** at `n = 5f+1`. The configuration is moreover realisable: on a
+valid six-validator universe, a Byzantine leader's two round-0 twins each
+gather exactly three supporters (disjoint correct pairs plus the
+equivocator's own split), and a round-3 block sees all of round 1 — **both
+twins pass `ThickLink` against it**, by `decide` (`utwin6_both_pass`, §10).
+An indirect rule that commits "some passing candidate" therefore admits
+derivations committing either twin: agreement is *refutable*.
+
+What arbitrates in practice is the iteration order of the implementation's
+candidate loop — every honest node examines candidates in the same,
+unspecified but deterministic, order. The formalized rule states that
+determinism as mathematics: commit the least passing candidate in a fixed
+linear order on block identifiers (block hash, in an implementation). Under
+that premise agreement is a theorem; without it, false. The premise is
+consumed *exactly* where the published argument is silent — O4′ shows a
+directly committed block is the unique candidate passing the test anywhere,
+so every other pairing closes by counting, and canonicity arbitrates only
+the indirect-versus-indirect, shared-anchor, equivocating-leader corner.
+
+For implementers: **the candidate-iteration order of the indirect rule is
+consensus-critical**. Two honest nodes iterating in different orders (for
+instance, arrival order) can commit different blocks for one slot at
+`n = 5f+1`; any fixed shared order restores agreement, and "first seen"
+does not. The remaining findings are recorded in the design document: a
+missing lemma (O4′, assumed silently by the published case analysis), the
+blocks-versus-authors ambiguity in the indirect test (only the author count
+is provable), and the exact-complement subtlety in the published Lemma 2
+(§9.2, O2).
+
+### 9.5 Liveness, one round shorter
+
+Liveness follows the §6 development with every hypothesis one round
+shorter — the protocol's latency advantage made visible as proof
+structure:
+
+* **O7.** Post-`R`, a correct-led slot commits *directly* from **two**
+  populated rounds and one synchronised step
+  (`Odontoceti.decided_of_leader_mem`): coverage makes every correct
+  decision-round block reference the leader's block, and `Correct` carries
+  a quorum. The §6.6 analogue needed three populated rounds.
+* **O8.** Under a pipelined identity-round schedule, a run of **two**
+  consecutive committed slots spans eligibility for everything below
+  (`spansEligible_two`): a slot cannot anchor on the round immediately
+  above it, but the second slot of the run clears `slotRound + 2`. Two
+  consecutive correct leaders is the published Lemma 10, now visible as
+  arithmetic.
+* **O9.** A committed run of eligible span clears every slot below it
+  (`Odontoceti.decided_below_of_committed_run`), by the
+  nearest-eligible-committed-anchor induction of §6.6, with the indirect
+  commit taking the minimum of the passing candidates — the constructive
+  face of the canonicity premise.
+* **O10.** The composition, under enforceable hypotheses only:
+
+```lean
+theorem all_decided_below_of_fairRun (hc : 0 < c) (hT : T ⊆ Correct)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hspan : SpansEligible Validator c) (fair : FairRunOn T c) (R k : ℕ) :
+    ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
+      ∀ U D N, Live U D N → DeliversQuorum D → SynchronisedOn U T R →
+        S.slotRound (b + c - 1) + 1 ≤ N →
+        ∀ i, i < b → ∃ v, Decided U (View.full U) i v
+```
+
+Note the horizon: the run's last slot needs rounds up to `slotRound + 1` —
+one round of certificates fewer than the §6 analogue, again the two-round
+structure showing through.
 
 ---
 
