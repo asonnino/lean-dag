@@ -19,9 +19,10 @@ build() {
   echo "building pdf/${name}.pdf"
   pandoc "${name}.md" -o "pdf/${name}.pdf" \
     --pdf-engine=typst \
-    --from=gfm+tex_math_dollars \
+    --from=gfm+tex_math_dollars+yaml_metadata_block \
     -V margin-x=2.2cm -V margin-y=2.4cm \
     -V fontsize=10pt \
+    --include-in-header=typst-header.typ \
     -V mainfont="Libertinus Serif" \
     -V monofont="Menlo" \
     --toc --toc-depth=2

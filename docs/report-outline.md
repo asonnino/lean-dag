@@ -1,4 +1,6 @@
-# Eventual DAG Synchrony: a machine-checked account of safety and liveness for uncertified DAG consensus
+---
+title: "Eventual DAG Synchrony: a machine-checked account of safety and liveness for uncertified DAG consensus"
+---
 
 > **Provenance.** Code and prose in this project were co-written with
 > heavy LLM assistance. The Lean proofs are machine-checked — the kernel
@@ -1413,8 +1415,6 @@ start spread, the wait, and the position of the slot relative to GST.
 
 ---
 
----
-
 ## 7. Denial of service: equivocation, growth, and the novelty budget
 
 *(design record: `dos-equivocation-and-growth.md`; modules `LeanDag/DoS/`)*
@@ -2197,8 +2197,6 @@ motivates the canonicity premise (`utwin6_both_pass`).
 
 ---
 
----
-
 ## 11. Mechanisation
 
 The development comprises approximately 14,800 lines of Lean 4 (v4.32.2)
@@ -2264,8 +2262,6 @@ generalisation), `dos-equivocation-and-growth.md` (§7), `garbage.md`
 (§8) and `odontoceti.md` (§9), with `related.md` surveying the
 surrounding literature. These carry the design rationale and the log of
 settled and open questions. The report draws its statements from the source.
-
----
 
 ---
 
@@ -2495,8 +2491,6 @@ dependence of liveness on the round-jumping clause surfaces as a named hypothesi
 of a single lemma rather than as a condition inside a transition relation. The
 cost is that the theorems of [QXS26] cannot be stated here at all, "within
 bounded time" not being expressible in this vocabulary (§12.5).
-
----
 
 ---
 
