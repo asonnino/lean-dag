@@ -182,7 +182,7 @@ first.
   are shown agreed; totally ordering the blocks released by a single commit
   requires a tie-break which the development declines to assume (§5.6).
 - **No wall-clock latency.** The wait bound of §6.10 is a duration, but the total
-  elapsed time to a commit is not derived (§12.5).
+  elapsed time to a commit is not derived (§12.6).
 
 ### 1.5 Organisation
 
@@ -2265,7 +2265,11 @@ settled and open questions. The report draws its statements from the source.
 
 ---
 
-## 12. Discussion: eventual DAG synchrony
+## 12. Discussion
+
+The first four subsections concern the core account's central design
+choice — where the synchrony assumption lives; §12.5 draws the lessons of
+the three extensions; §12.6 records what remains open.
 
 ### 12.1 Locating the synchrony assumption
 
@@ -2382,7 +2386,43 @@ terminate at a delivery assumption; what the reformulation achieves is to place
 that assumption where it belongs — on the network — and to keep it out of every
 statement above.
 
-### 12.5 Limitations
+### 12.5 Lessons from the extensions
+
+Three lessons generalise beyond the particular arcs.
+
+**Additivity is a measurement of abstraction.** Each extension was carried
+out without modifying a line of the core: the DoS arc consumed the delivery
+layer and the self-parent clause as found; garbage collection consumed every
+theorem verbatim because `chop U G` was arranged to *be* a `BlockUniverse`;
+Odontoceti consumed the whole DAG layer because its quorums are the `n − f`
+the development is parameterised by. When an abstraction is placed
+correctly, new developments read like instantiations; when it is misplaced,
+they read like refactors. The one refactor resisted — a rule-parameterised
+decision relation shared between §3.5 and §9.3 — is the price of the
+discipline, and it was paid twice in mirrored proofs rather than once in
+core churn.
+
+**Enforceability is a specification discipline.** The DoS headline
+(`dos_resistance`) quotes only conduct a validator can execute — an
+author-blind budget, a reference rule — and no condition that consults an
+identity oracle; the cost of author-blindness is a factor of `f` in a
+constant, never a theorem. The same discipline shapes §8: horizons are set
+by local rules, the attested base replaces agreement with `f+1` sampling,
+and every hypothesis of the bootstrap theorems is checkable by the party it
+binds. Conditions of this shape survive contact with implementations;
+conditions that quantify over `Correct` do not.
+
+**Mechanisation earns its keep at the equivocation corners.** All four §9
+findings — the canonicity gap, the missing uniqueness lemma, the
+blocks-versus-authors ambiguity, the exact-complement subtlety — live where
+an equivocating author interacts with a counting argument, precisely the
+territory that uncertified DAGs annexed when they discarded certificates,
+and precisely where hand proofs compress the most. The counterexample
+behind the canonicity gap fits in six validators and twenty-five blocks;
+what was needed to find it was not scale but the obligation to state the
+indirect rule precisely enough to fail to prove it.
+
+### 12.6 Limitations
 
 The quantitative bounds are established (§6.10). The following remain open.
 
@@ -2490,7 +2530,7 @@ pacemaker by refinement. The account here is structural, and no theorem above
 dependence of liveness on the round-jumping clause surfaces as a named hypothesis
 of a single lemma rather than as a condition inside a transition relation. The
 cost is that the theorems of [QXS26] cannot be stated here at all, "within
-bounded time" not being expressible in this vocabulary (§12.5).
+bounded time" not being expressible in this vocabulary (§12.6).
 
 ---
 
@@ -2517,7 +2557,7 @@ without consensus, and — in the one place the formalization diverged from a
 published argument by necessity — the observation that Odontoceti's
 agreement rests on a canonical candidate order that its paper never states.
 
-What remains open is catalogued in §12.5: the backoff dynamics, wall-clock
+What remains open is catalogued in §12.6: the backoff dynamics, wall-clock
 latency, block-level total order, and liveness below the growth clause.
 Beyond those, two directions suggest themselves. The commit-free,
 evidence-based horizon rule sketched in the garbage-collection design record
@@ -2555,102 +2595,102 @@ Principal results only; supporting lemmas are omitted.
 
 ### Safety
 
-| Label | Statement | Lean | Module |
-|:---|:---|:---|:---|
-| T0 | two quorums share a correct validator | `exists_correct_mem_inter` | `Validators` |
-| T0′ | two quorum-backed identifier sets share a correct author | `exists_correct_mem_creators_inter` | `Block` |
-| T1 | non-equivocation, in usable form | `BlockUniverse.eq_of_creator_eq` | `BlockDag` |
-| — | two quorum-backed sets of round-`n` blocks share a block | `BlockUniverse.exists_common_mem_of_quorums` | `BlockDag` |
-| T2 | causal history is non-increasing in round | `round_le_of_reaches` | `CausalHistory` |
-| T6a | causal history does not escape a view | `View.mem_of_reaches`, `View.exists_reaches_iff` | `CausalHistory` |
-| T3 | persistence | `reaches_of_quorum_support` | `Persistence` |
-| T3a | correct-support counting | `exists_correct_common_support` | `CommonCore` |
-| T3c | a common correct ancestor | `exists_common_correct_ancestor` | `CommonCore` |
-| M1 | no block is both committed and skipped | `not_directCommit_of_directSkip` | `Mysticeti` |
-| M2 | a committed block's certificate is unavoidable from `r+3` | `exists_certificate_reaches_of_directCommit` | `Mysticeti` |
-| M3 | a skipped block has no certificate anywhere | `certificates_eq_empty_of_directSkip` | `Mysticeti` |
-| M4 | the indirect rule agrees with the direct | `indirect_agrees_with_direct`, `certifiedIn_iff_of_view` | `Mysticeti` |
-| M5′ | certificate uniqueness | `eq_of_certificates_nonempty` | `Mysticeti` |
-| M5 | at most one block per slot is directly committed | `eq_of_directCommit_of_creator_eq` | `Mysticeti` |
-| M6 | agreement | `decided_unique`, `decided_agree` | `Mysticeti` |
-| — | corollaries of agreement | `eq_of_decided_commit`, `not_decided_skip_of_decided_commit` | `Mysticeti` |
-| — | the committed-leader sequence is agreed | `commitSeq_agree` | `Mysticeti` |
-| — | the ledger is monotone and agreed | `ledgerSet_mono`, `ledgerSet_agree` | `Mysticeti` |
-| — | a block enters at one slot, agreed | `outputAt_unique`, `outputAt_agree` | `Mysticeti` |
+| Label | Statement | Lean *(module)* |
+|:---|:---|:---|
+| T0 | two quorums share a correct validator | `exists_correct_mem_inter` *(Validators)* |
+| T0′ | two quorum-backed identifier sets share a correct author | `exists_correct_mem_creators_inter` *(Block)* |
+| T1 | non-equivocation, in usable form | `BlockUniverse.eq_of_creator_eq` *(BlockDag)* |
+| — | two quorum-backed sets of round-`n` blocks share a block | `BlockUniverse.exists_common_mem_of_quorums` *(BlockDag)* |
+| T2 | causal history is non-increasing in round | `round_le_of_reaches` *(CausalHistory)* |
+| T6a | causal history does not escape a view | `View.mem_of_reaches`, `View.exists_reaches_iff` *(CausalHistory)* |
+| T3 | persistence | `reaches_of_quorum_support` *(Persistence)* |
+| T3a | correct-support counting | `exists_correct_common_support` *(CommonCore)* |
+| T3c | a common correct ancestor | `exists_common_correct_ancestor` *(CommonCore)* |
+| M1 | no block is both committed and skipped | `not_directCommit_of_directSkip` *(Mysticeti)* |
+| M2 | a committed block's certificate is unavoidable from `r+3` | `exists_certificate_reaches_of_directCommit` *(Mysticeti)* |
+| M3 | a skipped block has no certificate anywhere | `certificates_eq_empty_of_directSkip` *(Mysticeti)* |
+| M4 | the indirect rule agrees with the direct | `indirect_agrees_with_direct`, `certifiedIn_iff_of_view` *(Mysticeti)* |
+| M5′ | certificate uniqueness | `eq_of_certificates_nonempty` *(Mysticeti)* |
+| M5 | at most one block per slot is directly committed | `eq_of_directCommit_of_creator_eq` *(Mysticeti)* |
+| M6 | agreement | `decided_unique`, `decided_agree` *(Mysticeti)* |
+| — | corollaries of agreement | `eq_of_decided_commit`, `not_decided_skip_of_decided_commit` *(Mysticeti)* |
+| — | the committed-leader sequence is agreed | `commitSeq_agree` *(Mysticeti)* |
+| — | the ledger is monotone and agreed | `ledgerSet_mono`, `ledgerSet_agree` *(Mysticeti)* |
+| — | a block enters at one slot, agreed | `outputAt_unique`, `outputAt_agree` *(Mysticeti)* |
 
 ### Liveness
 
-| Label | Statement | Lean | Module |
-|:---|:---|:---|:---|
-| L0 | the DAG is dense below its frontier | `card_authorsAt_of_lt` | `Liveness` |
-| L1 | no stall | `no_stall` | `Liveness` |
-| L2 | decisions are monotone in the view | `decided_mono` | `Liveness` |
-| L3 | decisions propagate to the full view | `decided_full` | `Liveness` |
-| L4 | a correct leader is committed | `directCommit_of_leader_mem`, `decided_of_leader_mem` | `Liveness` |
-| — | at `T := Correct` | `directCommit_of_correct_leader`, `decided_of_correct_leader` | `Liveness` |
-| L5 | an absent leader is skipped | `decided_none_of_leader_absent` | `Liveness` |
-| L6 | commits recur | `commits_recur_on`, `commits_recur` | `Liveness` |
-| — | a slot resolves through its first eligible commit | `decided_of_first_eligible_commit` | `Liveness` |
-| — | a committed slot above decides everything below (spaced schedules) | `decided_of_committed_above`, `all_decided_below_of_spacing` | `Liveness` |
-| — | a committed run of eligible span clears everything below | `decided_below_of_committed_run` | `Liveness` |
-| — | every slot below a fair run is decided (pipelined) | `all_decided_below_of_fairRun` | `Liveness` |
-| L7a | coverage from delivery | `synchronised_of_delivery` | `Liveness` |
-| L7b | coverage from GST | `Timing.synchronisedOn_of_timing`, `exists_synchronisedOn_of_backoff` | `Timing` |
-| — | drift is derived | `Timing.driftFrom_of_prompt` | `Timing` |
-| L8a | the round of coverage, explicitly | `synchronisedOn_of_rate` | `Quantitative` |
-| L8b | the committing slot, and its round | `commits_recur_within`, `commits_recur_by_round` | `Quantitative` |
-| L9 | the wait bound | `directCommit_of_wait`, `decided_of_wait`, `directCommit_of_wait_two_delay` | `Quantitative` |
+| Label | Statement | Lean *(module)* |
+|:---|:---|:---|
+| L0 | the DAG is dense below its frontier | `card_authorsAt_of_lt` *(Liveness)* |
+| L1 | no stall | `no_stall` *(Liveness)* |
+| L2 | decisions are monotone in the view | `decided_mono` *(Liveness)* |
+| L3 | decisions propagate to the full view | `decided_full` *(Liveness)* |
+| L4 | a correct leader is committed | `directCommit_of_leader_mem`, `decided_of_leader_mem` *(Liveness)* |
+| — | at `T := Correct` | `directCommit_of_correct_leader`, `decided_of_correct_leader` *(Liveness)* |
+| L5 | an absent leader is skipped | `decided_none_of_leader_absent` *(Liveness)* |
+| L6 | commits recur | `commits_recur_on`, `commits_recur` *(Liveness)* |
+| — | a slot resolves through its first eligible commit | `decided_of_first_eligible_commit` *(Liveness)* |
+| — | a committed slot above decides everything below (spaced schedules) | `decided_of_committed_above`, `all_decided_below_of_spacing` *(Liveness)* |
+| — | a committed run of eligible span clears everything below | `decided_below_of_committed_run` *(Liveness)* |
+| — | every slot below a fair run is decided (pipelined) | `all_decided_below_of_fairRun` *(Liveness)* |
+| L7a | coverage from delivery | `synchronised_of_delivery` *(Liveness)* |
+| L7b | coverage from GST | `Timing.synchronisedOn_of_timing`, `exists_synchronisedOn_of_backoff` *(Timing)* |
+| — | drift is derived | `Timing.driftFrom_of_prompt` *(Timing)* |
+| L8a | the round of coverage, explicitly | `synchronisedOn_of_rate` *(Quantitative)* |
+| L8b | the committing slot, and its round | `commits_recur_within`, `commits_recur_by_round` *(Quantitative)* |
+| L9 | the wait bound | `directCommit_of_wait`, `decided_of_wait`, `directCommit_of_wait_two_delay` *(Quantitative)* |
 
 ### Denial of service (§7)
 
-| Label | Statement | Lean | Module |
-|:---|:---|:---|:---|
-| D11–D13 | exposure, and the DoS condition | `ExposedIn`, `DoSValid` | `DoS/Exposure` |
-| C2 | at most `f` authors exposed per cone | `card_exposedTo_le` | `DoS/Exposure` |
-| D14 | safety and the DoS condition do not interact | witness file | `LeanDagTest/DoS/SafetyUnderDoS` |
-| D15a | at zero margin, references are exactly the correct validators | `creators_refs_eq_correct` | `DoS/Exclusion` |
-| — | the correct backbone | `mem_history_of_correct` | `DoS/Exclusion` |
-| C1′ | the general per-cone bound | `card_history_le'` | `DoS/Pedigree` |
-| D25 | density: cones miss at most `f` per layer | `card_missingAt_le` | `DoS/Density` |
-| — | the doubling construction (`2^(e−2)`) | `Udouble` witnesses | `LeanDagTest/DoS/Doubling` |
-| — | the telescope | `card_history_le_of_stepNovelty` | `DoS/Novelty` |
-| C3′ | the view gap is a constant, not a drift | `card_viewGap_succ_le` | `DoS/Novelty` |
-| — | the budget sandwich | `UniformBudget.byzBudget`, `uniform_of_byzBudget` | `DoS/Novelty` |
-| B4 | linear storage under the budget | `card_viewUpto_le` | `DoS/Novelty` |
-| B | the capstone, enforceable conditions only | `dos_resistance`, `dos_resistance'` | `DoS/Novelty` |
-| B5 | after exposure completes, the pool freezes | `card_viewUpto_le_of_allExposed'` | `DoS/Composition` |
+| Label | Statement | Lean *(module)* |
+|:---|:---|:---|
+| D11–D13 | exposure, and the DoS condition | `ExposedIn`, `DoSValid` *(DoS/Exposure)* |
+| C2 | at most `f` authors exposed per cone | `card_exposedTo_le` *(DoS/Exposure)* |
+| D14 | safety and the DoS condition do not interact | witness file *(LeanDagTest/DoS/SafetyUnderDoS)* |
+| D15a | at zero margin, references are exactly the correct validators | `creators_refs_eq_correct` *(DoS/Exclusion)* |
+| — | the correct backbone | `mem_history_of_correct` *(DoS/Exclusion)* |
+| C1′ | the general per-cone bound | `card_history_le'` *(DoS/Pedigree)* |
+| D25 | density: cones miss at most `f` per layer | `card_missingAt_le` *(DoS/Density)* |
+| — | the doubling construction (`2^(e−2)`) | `Udouble` witnesses *(LeanDagTest/DoS/Doubling)* |
+| — | the telescope | `card_history_le_of_stepNovelty` *(DoS/Novelty)* |
+| C3′ | the view gap is a constant, not a drift | `card_viewGap_succ_le` *(DoS/Novelty)* |
+| — | the budget sandwich | `UniformBudget.byzBudget`, `uniform_of_byzBudget` *(DoS/Novelty)* |
+| B4 | linear storage under the budget | `card_viewUpto_le` *(DoS/Novelty)* |
+| B | the capstone, enforceable conditions only | `dos_resistance`, `dos_resistance'` *(DoS/Novelty)* |
+| B5 | after exposure completes, the pool freezes | `card_viewUpto_le_of_allExposed'` *(DoS/Composition)* |
 
 ### Garbage collection (§8)
 
-| Label | Statement | Lean | Module |
-|:---|:---|:---|:---|
-| G1 | truncation is a universe; the DoS condition crosses one way | `chop`, `dosValid_chop` | `GC/Chop` |
-| G2 | per-slot verdict invariance | `certificates_chop`, `directCommit_chop`, `certifiedIn_chop`, … | `GC/Chop` |
-| G3 | the decision relation survives the cut | `decided_chop` | `GC/ChopDecided` |
-| G4 | cross-cut agreement, arbitrary joiner views | `decided_agree_chop` | `GC/ChopDecided` |
-| G5 | liveness transfers | `live_chopD`, `populated_chop` | `GC/Window` |
-| G13, G14 | windowed novelty; store correspondence | `novelty_chop_anti`, `viewUpto_chopD` | `GC/Window` |
-| G6 | storage constant at lag `Λ` | `card_retained_le` | `GC/Window` |
-| G6b, G7 | join and relay at the same constant | `card_joinIds_le`, `card_serve_le` | `GC/Bootstrap` |
-| G10 | the attested-base sandwich | `correct_mem_base`, `exists_correct_attester_of_mem_base` | `GC/AttestedBase` |
-| G11 | window completeness, tight at lag two | `accepted_mem_base` | `GC/Bootstrap` |
-| G12 | bootstrap safety | `joinView`, `bootstrap_agree` | `GC/Bootstrap` |
-| G8 | horizons compose; heterogeneous horizons agree | `chop_chop`, `decided_agree_horizons` | `GC/Horizon` |
-| G9 | possession universalises in one round | `viewUpto_subset_viewUpto_succ`, `pruned_subset_peer_store` | `GC/Horizon` |
+| Label | Statement | Lean *(module)* |
+|:---|:---|:---|
+| G1 | truncation is a universe; the DoS condition crosses one way | `chop`, `dosValid_chop` *(GC/Chop)* |
+| G2 | per-slot verdict invariance | `certificates_chop`, `directCommit_chop`, `certifiedIn_chop`, … *(GC/Chop)* |
+| G3 | the decision relation survives the cut | `decided_chop` *(GC/ChopDecided)* |
+| G4 | cross-cut agreement, arbitrary joiner views | `decided_agree_chop` *(GC/ChopDecided)* |
+| G5 | liveness transfers | `live_chopD`, `populated_chop` *(GC/Window)* |
+| G13, G14 | windowed novelty; store correspondence | `novelty_chop_anti`, `viewUpto_chopD` *(GC/Window)* |
+| G6 | storage constant at lag `Λ` | `card_retained_le` *(GC/Window)* |
+| G6b, G7 | join and relay at the same constant | `card_joinIds_le`, `card_serve_le` *(GC/Bootstrap)* |
+| G10 | the attested-base sandwich | `correct_mem_base`, `exists_correct_attester_of_mem_base` *(GC/AttestedBase)* |
+| G11 | window completeness, tight at lag two | `accepted_mem_base` *(GC/Bootstrap)* |
+| G12 | bootstrap safety | `joinView`, `bootstrap_agree` *(GC/Bootstrap)* |
+| G8 | horizons compose; heterogeneous horizons agree | `chop_chop`, `decided_agree_horizons` *(GC/Horizon)* |
+| G9 | possession universalises in one round | `viewUpto_subset_viewUpto_succ`, `pruned_subset_peer_store` *(GC/Horizon)* |
 
 ### Odontoceti (§9)
 
-| Label | Statement | Lean | Module |
-|:---|:---|:---|:---|
-| O1 | commit versus skip | `not_directSkip_of_directCommit` | `Odontoceti/Rules` |
-| O1′ | twin uniqueness for direct commits | `eq_of_directCommit` | `Odontoceti/Rules` |
-| O2 | a skipped leader fails the indirect test everywhere | `card_supporters_le_of_directSkip`, `not_thickLink_of_directSkip` | `Odontoceti/Rules` |
-| O3 | support propagation: every anchor's cone is the certificate | `thickLink_of_directCommit` | `Odontoceti/Rules` |
-| O4′ | a direct commit excludes every rival candidate | `eq_of_directCommit_of_thickLink` | `Odontoceti/Rules` |
-| O5 | agreement, under canonicity | `Odontoceti.decided_unique` | `Odontoceti/Decision` |
-| O6 | safety | `Odontoceti.safety` | `Odontoceti/Decision` |
-| O7 | a correct leader commits in one step | `Odontoceti.decided_of_leader_mem` | `Odontoceti/Liveness` |
-| O8 | a run of two spans eligibility | `Odontoceti.spansEligible_two` | `Odontoceti/Liveness` |
-| O9 | a committed run clears everything below | `Odontoceti.decided_below_of_committed_run` | `Odontoceti/Liveness` |
-| O10 | liveness | `Odontoceti.all_decided_below_of_fairRun` | `Odontoceti/Liveness` |
-| — | the thesis gap, on data | `utwin6_both_pass` | `LeanDagTest/Odontoceti/Model` |
+| Label | Statement | Lean *(module)* |
+|:---|:---|:---|
+| O1 | commit versus skip | `not_directSkip_of_directCommit` *(Odontoceti/Rules)* |
+| O1′ | twin uniqueness for direct commits | `eq_of_directCommit` *(Odontoceti/Rules)* |
+| O2 | a skipped leader fails the indirect test everywhere | `card_supporters_le_of_directSkip`, `not_thickLink_of_directSkip` *(Odontoceti/Rules)* |
+| O3 | support propagation: every anchor's cone is the certificate | `thickLink_of_directCommit` *(Odontoceti/Rules)* |
+| O4′ | a direct commit excludes every rival candidate | `eq_of_directCommit_of_thickLink` *(Odontoceti/Rules)* |
+| O5 | agreement, under canonicity | `Odontoceti.decided_unique` *(Odontoceti/Decision)* |
+| O6 | safety | `Odontoceti.safety` *(Odontoceti/Decision)* |
+| O7 | a correct leader commits in one step | `Odontoceti.decided_of_leader_mem` *(Odontoceti/Liveness)* |
+| O8 | a run of two spans eligibility | `Odontoceti.spansEligible_two` *(Odontoceti/Liveness)* |
+| O9 | a committed run clears everything below | `Odontoceti.decided_below_of_committed_run` *(Odontoceti/Liveness)* |
+| O10 | liveness | `Odontoceti.all_decided_below_of_fairRun` *(Odontoceti/Liveness)* |
+| — | the thesis gap, on data | `utwin6_both_pass` *(LeanDagTest/Odontoceti/Model)* |
