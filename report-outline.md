@@ -140,7 +140,9 @@ proof effort with no corresponding proof content.
 
 ### 1.4 Scope and non-goals
 
-The development is deliberately bounded in five respects.
+The development is deliberately bounded in four respects — a fifth, the
+restriction to unpipelined schedules, has since been lifted and is recorded
+first.
 
 - **Pipelining and multiple leaders enter through the schedule, not the
   rule.** The schedule class constrains only monotonicity, unboundedness and
@@ -219,9 +221,10 @@ structure ValidWrt (blk : BlockId → Block Validator BlockId Payload)
   predecessor : ∀ i ∈ b.refs, (blk i).round + 1 = b.round
   distinct_creators : ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
   quorum : 0 < b.round → (Fintype.card Validator - F.f) ≤ (creators blk b).card
+  self_parent : 0 < b.round → ∃ i ∈ b.refs, (blk i).creator = b.creator
 ```
 
-Three points of formulation are load-bearing.
+Four points of formulation are load-bearing.
 
 The predecessor condition is stated additively rather than as
 `(blk i).round = b.round - 1`. Besides avoiding truncated subtraction on `ℕ`,
@@ -234,8 +237,16 @@ the faithful reading of "references a quorum of blocks of the previous
 round", which means `n−f` distinct *validators*; `ValidWrt.card_creators` and `ValidWrt.card_refs` relate the two
 under the distinctness condition.
 
-`distinct_creators` is used in exactly one proof, that of certificate uniqueness
-(§5.4).
+`distinct_creators` is consumed by certificate uniqueness (§5.4) and, in the
+two-round setting, by twin uniqueness (§8.3).
+
+`self_parent` — a non-genesis block references *some* block by its own
+creator, not a unique one: an equivocator's blocks form a forest of
+predecessor chains, and the condition does not collapse it. Mysticeti and
+Odontoceti both mandate the clause. The safety and liveness developments never
+consume it; it is load-bearing for the DoS arc (§8.1), where the self-parent
+chain is what turns per-acceptance budgets into per-round rates and a correct
+block's cone into a complete record of its author's acceptances.
 
 ### 2.3 The block universe and views
 
@@ -417,11 +428,13 @@ inductive Decided (U) (V : View …) : ℕ → Option BlockId → Prop
       (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
       Decided U V k none
   | indirectCommit {k j A L} :
-      k < j → Decided U V j (some A) → (∀ i, k < i → i < j → Decided U V i none) →
+      k < j → Eligible Validator k j → Decided U V j (some A) →
+      (∀ i, k < i → i < j → Eligible Validator k i → Decided U V i none) →
       IsLeaderBlock U k L → CertifiedIn U A L (S.slotRound k) →
       Decided U V k (some L)
   | indirectSkip {k j A} :
-      k < j → Decided U V j (some A) → (∀ i, k < i → i < j → Decided U V i none) →
+      k < j → Eligible Validator k j → Decided U V j (some A) →
+      (∀ i, k < i → i < j → Eligible Validator k i → Decided U V i none) →
       (∀ L, IsLeaderBlock U k L → ¬ CertifiedIn U A L (S.slotRound k)) →
       Decided U V k none
 ```
@@ -432,14 +445,25 @@ The relation is not a function. A decision procedure would recurse upward in
 slot index with no *a priori* bound, requiring fuel or partiality for no benefit,
 since nothing in the development needs to compute.
 
-The two indirect cases anchor on the *nearest* committed slot above `k`. The
-direct reading of "nearest" — that no slot strictly between is committed — is a
-negative premise, which an inductive definition cannot carry. It is stated
-positively, as the requirement that every slot strictly between be decided
-`none`. The two are equivalent, since the sweep decides every slot it passes,
-and the positive form keeps every recursive occurrence strictly positive. This
-formulation is consumed directly in the principal case of the agreement proof
-(§5.5).
+The two indirect cases anchor on the nearest **eligible** committed slot above
+`k` — not simply the nearest one. Under pipelining the slots immediately above
+`k` sit one and two rounds up, where no certificate for `k` is reachable, and
+anchoring there would turn one validator's direct commit into another's
+indirect skip; the anchor must clear `k`'s decision round (§3.4), which is
+Algorithm 3's own filter. For the same reason the intermediate premise
+quantifies over the eligible slots between `k` and the anchor only: the
+ineligible ones are routinely committed under pipelining, and requiring them
+skipped would leave `k` undecidable forever.
+
+The direct reading of "nearest" — that no eligible slot strictly between is
+committed — is a negative premise, which an inductive definition cannot carry.
+It is stated positively, as the requirement that every eligible slot strictly
+between be decided `none`. The two are equivalent, since the sweep decides
+every slot it passes, and the positive form keeps every recursive occurrence
+strictly positive; guarding the occurrence behind `Eligible` preserves that,
+`Eligible` being a predicate on two naturals which does not mention `Decided`.
+This formulation is consumed directly in the principal case of the agreement
+proof (§5.5).
 
 ### 3.6 The ledger
 
@@ -491,15 +515,17 @@ the system actually falls.
 | P1 | references lie one round below | `ValidWrt.predecessor` |
 | P2 | no block cites one author twice | `ValidWrt.distinct_creators` |
 | P3 | non-genesis blocks cite `n−f` distinct authors | `ValidWrt.quorum` |
+| P3′ | non-genesis blocks cite a block by their own creator | `ValidWrt.self_parent` |
 | P4 | a block is held only with its causal history | `BlockUniverse.complete` |
 | P5 | one block per round: correct validators do not equivocate | `BlockUniverse.no_equivocation` |
 | P6 | the slot schedule is monotone, unbounded and keyed | `Slots.mono`, `Slots.unbounded`, `Slots.keyed` |
-| P7 | a validator references everything it held | `Delivery.includes` |
+| P7 | a validator references everything it accepted | `Delivery.includes` |
 | P8 | a validator has a genesis block, and builds on holding a quorum | `Live.genesis`, `Live.builds` |
 | P9 | a validator waits a full timeout, and does not dawdle | `Timing.waits`, `Timing.prompt` |
 | P10 | the leader schedule names reliable validators arbitrarily far out | `FairScheduleOn` |
 
-P1–P6 are consumed by the safety development, P7–P10 additionally by liveness.
+P1–P6 are consumed by the safety development, P7–P10 additionally by liveness;
+P3′ by neither — it is load-bearing for the DoS arc (§8.1).
 
 P10 is a joint condition rather than a pure specification: the schedule is the
 designer's, but which validators are reliable is not. Round-robin discharges it
@@ -1794,6 +1820,16 @@ is required for a quorum and none may lag. Such a model requires `f ≥ 2`. This
 the combined fault budget of §4.2 appearing as a concrete obstruction rather than
 as an inequality.
 
+The conditions of §8 are witnessed in the same style, at their own boundary
+instances: `DoSValid` satisfiable and biting (`Uexcl`, with the exclusion
+chain and a commit after it), the budget satisfiable at its sharp constant
+(`UniformBudget Dtwin 3` with `ByzBudget Dtwin 0`), the horizon computed and
+its statute of limitations exhibited (`chop Uexcl 2`, `chop Umerge 1`), the
+attested base sandwich tight at the bottom (`Base Utwin 1 0 = {1,2,3}`), and
+every Odontoceti rule and all four `Decided` constructors at `n = 6, f = 1`
+(`Uodo`, `Uskip`, `Utwin6`), including the two-twin configuration that
+motivates the canonicity premise (`utwin6_both_pass`).
+
 ---
 
 ## 10. Limitations
@@ -1965,6 +2001,10 @@ Principal results only; supporting lemmas are omitted.
 | — | at `T := Correct` | `directCommit_of_correct_leader`, `decided_of_correct_leader` | `Liveness` |
 | L5 | an absent leader is skipped | `decided_none_of_leader_absent` | `Liveness` |
 | L6 | commits recur | `commits_recur_on`, `commits_recur` | `Liveness` |
+| — | a slot resolves through its first eligible commit | `decided_of_first_eligible_commit` | `Liveness` |
+| — | a committed slot above decides everything below (spaced schedules) | `decided_of_committed_above`, `all_decided_below_of_spacing` | `Liveness` |
+| — | a committed run of eligible span clears everything below | `decided_below_of_committed_run` | `Liveness` |
+| — | every slot below a fair run is decided (pipelined) | `all_decided_below_of_fairRun` | `Liveness` |
 | L7a | coverage from delivery | `synchronised_of_delivery` | `Liveness` |
 | L7b | coverage from GST | `Timing.synchronisedOn_of_timing`, `exists_synchronisedOn_of_backoff` | `Timing` |
 | — | drift is derived | `Timing.driftFrom_of_prompt` | `Timing` |
@@ -2007,7 +2047,7 @@ Principal results only; supporting lemmas are omitted.
 | G11 | window completeness, tight at lag two | `accepted_mem_base` | `GC/Bootstrap` |
 | G12 | bootstrap safety | `joinView`, `bootstrap_agree` | `GC/Bootstrap` |
 | G8 | horizons compose; heterogeneous horizons agree | `chop_chop`, `decided_agree_horizons` | `GC/Horizon` |
-| G9 | possession universalises in one round | `viewUpto_subset_viewUpto_succ` | `GC/Horizon` |
+| G9 | possession universalises in one round | `viewUpto_subset_viewUpto_succ`, `pruned_subset_peer_store` | `GC/Horizon` |
 
 ### Odontoceti (§8.3)
 
