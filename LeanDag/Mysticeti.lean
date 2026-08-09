@@ -612,6 +612,33 @@ theorem eq_of_hasCertificate {k : ℕ} {L₁ L₂ : BlockId}
     L₁ = L₂ :=
   eq_of_certificates_nonempty h₁ h₂ (by rw [hL₁.2.2, hL₂.2.2])
 
+/-- **The anchor comparison.** Two indirect decisions for one slot each
+name an anchor, together with the premise that every eligible slot
+strictly between the slot and that anchor was decided `none`. Whichever
+anchor is the earlier is then decided `none` by the other side and
+`some` by its own, so the anchors coincide — and with them the blocks
+they name.
+
+The statement carries no consensus content: `Dec` and `Elig` are
+arbitrary predicates, and the argument is only that two searches for the
+first decided slot above `k` cannot disagree when each certifies that
+nothing eligible below its own find was decided. Both commit rules
+consume it, five times between them, and stating it separately is what
+keeps their case analyses to one line per case. -/
+theorem anchor_eq {W : Type*} {Dec : W → ℕ → Option BlockId → Prop}
+    {Elig : ℕ → Prop} {k j j₂ : ℕ} {A A₂ : BlockId} {V₂ : W}
+    (hkj : k < j) (helig : Elig j) (hkj₂ : k < j₂) (helig₂ : Elig j₂)
+    (hj₂ : Dec V₂ j₂ (some A₂))
+    (hmid₂ : ∀ i, k < i → i < j₂ → Elig i → Dec V₂ i none)
+    (ihj : ∀ V v, Dec V j v → some A = v)
+    (ihmid : ∀ i, k < i → i < j → Elig i → ∀ V v, Dec V i v → none = v) :
+    j = j₂ ∧ A = A₂ := by
+  rcases lt_trichotomy j j₂ with hlt | heq | hgt
+  · exact absurd (ihj V₂ none (hmid₂ j hkj hlt helig)) (by simp)
+  · subst heq
+    exact ⟨rfl, Option.some.inj (ihj V₂ (some A₂) hj₂)⟩
+  · exact absurd (ihmid j₂ hkj₂ hgt helig₂ V₂ (some A₂) hj₂) (by simp)
+
 /-- **M6 (agreement).** No two validators reach conflicting decisions for a
 slot, whatever views they hold and whichever routes they took.
 
@@ -682,16 +709,8 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ} {v₁
       -- The one real case: compare the two anchors. Each side's eligibility
       -- premise is exactly the side condition the other's intermediate-skip
       -- premise asks for — which is why `Eligible` may not depend on the view.
-      rcases lt_trichotomy j j₂ with hlt | heq | hgt
-      · -- Our anchor is earlier, so *they* decided it `none`.
-        exact absurd (ihj V₂ none (hmid₂ j hkj hlt helig)) (by simp)
-      · -- Same anchor: the IH identifies the anchor blocks.
-        subst heq
-        have hA : A = A₂ := Option.some.inj (ihj V₂ (some A₂) hj₂)
-        subst hA
-        exact absurd hcert (hnone₂ _ hL)
-      · -- Their anchor is earlier, so *we* decided it `none`.
-        exact absurd (ihmid j₂ hkj₂ hgt helig₂ V₂ (some A₂) hj₂) (by simp)
+      obtain ⟨rfl, rfl⟩ := anchor_eq hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
+      exact absurd hcert (hnone₂ _ hL)
   | @indirectSkip k j A hkj helig hj hmid hnone ihj ihmid =>
     intro V₂ v₂ h₂
     cases h₂ with
@@ -700,13 +719,8 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ} {v₁
         (isLeaderBlock_of_decided hj).2.1 helig) (hnone _ hL₂)
     | directSkip _ => rfl
     | @indirectCommit _ j₂ A₂ L₂ hkj₂ helig₂ hj₂ hmid₂ hL₂ hcert₂ =>
-      rcases lt_trichotomy j j₂ with hlt | heq | hgt
-      · exact absurd (ihj V₂ none (hmid₂ j hkj hlt helig)) (by simp)
-      · subst heq
-        have hA : A = A₂ := Option.some.inj (ihj V₂ (some A₂) hj₂)
-        subst hA
-        exact absurd hcert₂ (hnone _ hL₂)
-      · exact absurd (ihmid j₂ hkj₂ hgt helig₂ V₂ (some A₂) hj₂) (by simp)
+      obtain ⟨rfl, rfl⟩ := anchor_eq hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
+      exact absurd hcert₂ (hnone _ hL₂)
     | indirectSkip _ _ _ _ _ => rfl
 
 /-- **M6**, in the shape callers want: two validators' verdicts for a slot

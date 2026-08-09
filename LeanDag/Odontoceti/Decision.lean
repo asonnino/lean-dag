@@ -275,23 +275,13 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ}
     | directSkip hskip₂ =>
       exact absurd ht (not_thickLink_of_directSkipIn (hskip₂ _ hL) _)
     | @indirectCommit _ j₂ A₂ L₂ hkj₂ helig₂ hj₂ hmid₂ hL₂ ht₂ hmin₂ =>
-      rcases lt_trichotomy j j₂ with hlt | heq | hgt
-      · exact absurd (ihj V₂ none (hmid₂ j hkj hlt helig)) (by simp)
-      · subst heq
-        have hA : A = A₂ := Option.some.inj (ihj V₂ (some A₂) hj₂)
-        subst hA
-        -- shared anchor: canonicity arbitrates
-        exact congrArg some (le_antisymm
-          (not_lt.mp (hmin L₂ hL₂ ht₂)) (not_lt.mp (hmin₂ L hL ht)))
-      · exact absurd (ihmid j₂ hkj₂ hgt helig₂ V₂ (some A₂) hj₂) (by simp)
+      obtain ⟨rfl, rfl⟩ := anchor_eq hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
+      -- shared anchor: canonicity arbitrates
+      exact congrArg some (le_antisymm
+        (not_lt.mp (hmin L₂ hL₂ ht₂)) (not_lt.mp (hmin₂ L hL ht)))
     | @indirectSkip _ j₂ A₂ hkj₂ helig₂ hj₂ hmid₂ hnone₂ =>
-      rcases lt_trichotomy j j₂ with hlt | heq | hgt
-      · exact absurd (ihj V₂ none (hmid₂ j hkj hlt helig)) (by simp)
-      · subst heq
-        have hA : A = A₂ := Option.some.inj (ihj V₂ (some A₂) hj₂)
-        subst hA
-        exact absurd ht (hnone₂ _ hL)
-      · exact absurd (ihmid j₂ hkj₂ hgt helig₂ V₂ (some A₂) hj₂) (by simp)
+      obtain ⟨rfl, rfl⟩ := anchor_eq hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
+      exact absurd ht (hnone₂ _ hL)
   | @indirectSkip k j A hkj helig hj hmid hnone ihj ihmid =>
     intro V₂ v₂ h₂
     cases h₂ with
@@ -302,13 +292,8 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ}
         (hnone _ hL₂)
     | directSkip _ => rfl
     | @indirectCommit _ j₂ A₂ L₂ hkj₂ helig₂ hj₂ hmid₂ hL₂ ht₂ hmin₂ =>
-      rcases lt_trichotomy j j₂ with hlt | heq | hgt
-      · exact absurd (ihj V₂ none (hmid₂ j hkj hlt helig)) (by simp)
-      · subst heq
-        have hA : A = A₂ := Option.some.inj (ihj V₂ (some A₂) hj₂)
-        subst hA
-        exact absurd ht₂ (hnone _ hL₂)
-      · exact absurd (ihmid j₂ hkj₂ hgt helig₂ V₂ (some A₂) hj₂) (by simp)
+      obtain ⟨rfl, rfl⟩ := anchor_eq hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
+      exact absurd ht₂ (hnone _ hL₂)
     | indirectSkip _ _ _ _ _ => rfl
 
 /-- **O6 (safety).** Two committed blocks for one slot are the same
