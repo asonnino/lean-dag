@@ -285,4 +285,101 @@ end Liveness
 
 end ViewSync
 
+/-! ## The untimed variant
+
+`ViewSync.converges` still mentions a clock: `holds w t ⊆ holds v (t + delay)`
+is a statement about wall-clock instants, and `delay` is Δ. The obvious
+question is whether the same shape can be had *without* a bound —
+"whatever a correct validator holds, every correct validator eventually
+holds" — and whether that could stand in for N1.
+
+It can, and the definition is below; but the form it must take is
+forced, and worth understanding before use.
+
+**Why "eventually, at some later index" cannot work.** Building a
+round-`(n+1)` block requires round-`n` blocks *at that build*. In an
+untimed model the only measure of progress is the round index itself —
+and the round index advances only when blocks are produced, which is the
+very thing production is trying to establish. So an assumption which
+delivers round-`n` blocks at some index `m > n` cannot drive production:
+every validator may sit waiting, nothing is produced, no index advances,
+and the "eventually" never arrives. The circle is real, and N1 breaks it
+by being *conditional on existence* rather than on progress.
+
+**So the untimed form must be index-aligned**, and once it is, there is
+no clock left in it: `held v n` means "what `v` had in hand when it built
+for round `n+1`", *whenever that was*. That is where the "eventually"
+lives — not in a bound, but in the fact that the index is logical rather
+than temporal. A validator that waits arbitrarily long still builds at
+index `n`.
+
+**The price.** Index-aligned sharing of correct blocks is *stronger* than
+N1: N1 promises a quorum and only when one exists, whereas this promises
+every correct block, always. In exchange the two network assumptions
+become the same shape — both are now "views converge", one with a bound
+and one without — and N1 disappears from the liveness development
+entirely (`populated_of_viewsConverge`). Whether that trade is worth
+making is a modelling judgement, not a theorem; §4.3 keeps N1 because its
+conditional quorum form is the weaker hypothesis and the implementable
+one. -/
+
+section Untimed
+
+variable {D : Delivery U}
+
+/-- **Untimed view convergence.** What a correct validator holds when it
+builds for round `n` is held by every correct validator when *it* builds
+for round `n` — no clock, no Δ, no GST.
+
+Restricted to correct-authored blocks, deliberately: a Byzantine author
+may send to some correct validators and not others, and no network
+assumption should forbid that (§4.3). -/
+def ViewsConverge (D : Delivery U) : Prop :=
+  ∀ v ∈ (Correct : Finset Validator), ∀ w ∈ (Correct : Finset Validator),
+    ∀ n, ∀ b ∈ D.held v n,
+      (U.block b).creator ∈ (Correct : Finset Validator) → b ∈ D.held w n
+
+/-- A correct validator has its own block in hand when it builds the next
+one. The untimed counterpart of `ViewSync.holds_own`, and the clause that
+turns *existence* of a block into somebody *holding* it. -/
+def HoldsOwn (D : Delivery U) : Prop :=
+  ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ U.ids,
+    (U.block b).creator = v → (U.block b).round = n → b ∈ D.held v n
+
+/-- Untimed view convergence is `EventuallyDelivers` from round `0`: the
+author holds its own block, and convergence hands it to everyone else at
+the same index. -/
+theorem eventuallyDelivers_of_viewsConverge (hvc : ViewsConverge D)
+    (hown : HoldsOwn D) : EventuallyDelivers D 0 := by
+  intro n _ v hv a ha har hac
+  exact hvc _ hac _ hv n a (hown _ hac n a ha rfl har) hac
+
+/-- **L1 without N1.** Under untimed view convergence, every round below
+the horizon is populated — the conclusion `no_stall` draws from
+`DeliversQuorum`, drawn instead from a view-shaped assumption.
+
+The induction is the same, with the quorum obtained differently: rather
+than assuming a quorum is delivered whenever one exists, the previous
+round's population supplies `|Correct| ≥ n − f` correct blocks, and
+convergence puts every one of them in every correct validator's hands. -/
+theorem populated_of_viewsConverge {N : ℕ} (H : Live U D N)
+    (hvc : ViewsConverge D) (hown : HoldsOwn D) :
+    ∀ r ≤ N, Populated U r := by
+  have hED := eventuallyDelivers_of_viewsConverge hvc hown
+  intro r
+  induction r with
+  | zero => intro _; exact H.genesis
+  | succ r ih =>
+      intro hr v hv
+      refine H.builds r (by omega) v hv ?_
+      refine le_trans card_correct (Finset.card_le_card ?_)
+      intro w hw
+      obtain ⟨a, ha, hac, har⟩ := ih (by omega) w hw
+      refine mem_creatorsOf.mpr ⟨a, ?_, hac⟩
+      exact D.accepts_correct v hv r a
+        (hED r (Nat.zero_le r) v hv a ha har (by rw [hac]; exact hw))
+        (by rw [hac]; exact hw)
+
+end Untimed
+
 end LeanDag

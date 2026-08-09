@@ -119,6 +119,47 @@ example (N : ℕ) (hlead : rrSlots.leader 3 ∈ ({1, 2, 3} : Finset (Fin 4)))
       omega)
     (fun n => by show 2 + 2 ≤ 4; omega) (Nat.zero_le _) hN hlead
 
+/-! ## The untimed variant, witnessed
+
+`ugrowHonest` (`LeanDagTest/Partial.lean`) holds exactly the round-`n`
+blocks not authored by validator `0` — the Byzantine one — so its views
+are genuinely partial, and yet they converge on correct blocks. It
+therefore satisfies both untimed clauses, and populates every round with
+no `DeliversQuorum` anywhere. -/
+
+theorem ugrowHonest_viewsConverge (N : ℕ) :
+    ViewsConverge (ugrowHonest N) := by
+  intro v _ w _ n b hb _
+  exact hb
+
+theorem ugrowHonest_holdsOwn (N : ℕ) : HoldsOwn (ugrowHonest N) := by
+  intro v hv n b hb hbc hbr
+  simp only [ugrowHonest, Finset.mem_filter, mem_blocksAt]
+  refine ⟨⟨hb, hbr⟩, ?_⟩
+  -- `v` is correct, so `v ≠ 0`, so `b` is not a multiple of four
+  have : ((Ugrow N).block b).creator = v := hbc
+  simp only [ugrow_block] at this
+  have hv0 : (v : ℕ) ≠ 0 := by
+    have hall : ∀ x : Fin 4, x ∈ (Correct : Finset (Fin 4)) → (x : ℕ) ≠ 0 := by
+      decide
+    exact hall v hv
+  have : b % 4 = (v : ℕ) := by
+    have := congrArg (fun (x : Fin 4) => (x : ℕ)) this
+    simpa using this
+  omega
+
+/-- `Live` over the partial-view delivery — the same universe, so
+production is immediate. -/
+theorem ugrowHonest_live (N : ℕ) : Live (Ugrow N) (ugrowHonest N) N where
+  genesis := ugrow_populated (Nat.zero_le N)
+  builds _ hr v hv _ := ugrow_populated hr v hv
+
+/-- **Production with no N1**, on data: every round populated, from
+untimed view convergence and nothing else about the network. -/
+example (N : ℕ) : ∀ r ≤ N, Populated (Ugrow N) r :=
+  populated_of_viewsConverge (ugrowHonest_live N)
+    (ugrowHonest_viewsConverge N) (ugrowHonest_holdsOwn N)
+
 #print axioms ugrowSkewView_synchronised
 #print axioms LeanDag.ViewSync.commits_recur_of_converges
 #print axioms LeanDag.ViewSync.all_decided_below_of_converges
