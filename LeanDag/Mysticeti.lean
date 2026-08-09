@@ -298,7 +298,7 @@ separation M4's commit half needs is no longer a property of *consecutive*
 slots and is therefore not derivable here; it is required instead of the
 particular pairs that use it, by `Eligible` below.
 
-`unbounded` was a theorem under the old three-round spacing (`3 * k ≤
+`unbounded` was a theorem under three-round spacing (`3 * k ≤
 slotRound k`) and is underivable from `mono` alone — a schedule parking every
 slot at one round is monotone. Liveness needs it, so it is assumed.
 
@@ -482,6 +482,29 @@ carry; the positive one is equivalent, since the sweep decides every slot it
 passes, and keeps every recursive occurrence strictly positive. Guarding the
 occurrence behind `Eligible` preserves that: `Eligible` is a predicate on two
 naturals and does not mention `Decided`. -/
+/-- **The decision relation.** `Decided U V k v` — a validator holding the
+view `V` has settled slot `k`, committing the block `v = some L` or
+skipping it, `v = none`.
+
+Four rules, in two pairs. The *direct* pair reads the slot's own
+certificates: a candidate carrying `n−f` of them is committed, and a slot
+whose every candidate is blamed by `n−f` is skipped. The *indirect* pair
+applies when the direct evidence is inconclusive, and decides `k` by
+looking up to an **anchor** — the nearest eligible slot above `k` that is
+itself committed — and asking whether a certificate for a candidate of
+`k` is reachable from the anchor's block.
+
+"Nearest" is stated positively: every eligible slot strictly between `k`
+and the anchor is decided `none`. The negative reading — *no eligible
+slot between is committed* — would be a negative premise, which an
+inductive definition cannot carry; the positive form is equivalent, since
+the sweep decides every slot it passes, and it keeps every recursive
+occurrence strictly positive. The occurrence sits behind `Eligible`,
+which is a predicate on two naturals and does not mention `Decided`.
+
+The relation is indexed by a view, so two validators may reach different
+verdicts by the letter of the definition; M6 (`decided_unique`) is the
+theorem that they cannot. -/
 inductive Decided (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) : ℕ → Option BlockId → Prop
   /-- The direct rule commits a candidate outright. -/

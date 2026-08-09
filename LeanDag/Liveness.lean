@@ -151,9 +151,9 @@ chose to build on.
 
 **Two fields, because delivery and policy are two things.** `held` is what the
 network brought; `accepted` is what the validator will reference. Until
-equivocation nothing forced them apart, and an earlier version of this
-structure had only `held`, with `includes` demanding that a correct validator
-reference *everything* it held. That is **unsatisfiable** the moment a correct
+equivocation nothing forces them apart, and a structure carrying only `held`,
+with `includes` demanding that a correct validator reference *everything* it
+held, would be **unsatisfiable** the moment a correct
 validator holds both halves of an equivocation: `distinct_creators` forbids
 referencing two blocks by one author, so no valid block exists and the
 validator cannot build at all. See `dos-equivocation-and-growth.md` §4.
@@ -204,7 +204,7 @@ from round 0 with no synchrony at all.
 without the bound `r < N` these two fields force infinitely many distinct
 blocks into a finite set and *no universe satisfies them* — see
 `LeanDagTest.Growth`, where the witness is built, and `liveness.md` §4.4,
-where the vacuous first draft is recorded.
+where the vacuous formulation is discussed.
 
 Note `N` is a **demand** on the DAG, not a bound on it: `Live U N` requires
 blocks to exist all the way to round `N`, so a larger `N` is a *stronger*
@@ -258,8 +258,8 @@ behave.
 frozen when it is built: a correct validator waits for `2f+1` round-`n`
 blocks, and the arrival of the `2f+1`st says nothing about the rest having
 arrived. Views converging later does not retroactively enlarge blocks. So
-this is an assumption, not a theorem — see `liveness.md` §4.3, and §8
-question 8 for how it is meant to be split and derived. -/
+this is an assumption, not a theorem — see `liveness.md` §4.3, and its
+§8 question 8 for how it is meant to be split and derived. -/
 def SynchronisedOn (U : BlockUniverse Validator BlockId Payload)
     (T : Finset Validator) (R : ℕ) : Prop :=
   ∀ n, R ≤ n → ∀ b ∈ U.ids, (U.block b).round = n + 1 →
@@ -383,7 +383,7 @@ block anyone ever wrote, but every block some correct validator ever held. A
 Byzantine block revealed to nobody is simply not in the universe. -/
 
 omit [DecidableEq BlockId] in
-/-- Every correct validator's *eventual* view. Downward-closed for free, by
+/-- Every correct validator's *eventual* view. Downward-closed by
 `U.complete`. -/
 def View.full (U : BlockUniverse Validator BlockId Payload) :
     View Validator BlockId Payload U where
@@ -670,7 +670,7 @@ theorem exists_slotRound_ge (n : ℕ) : ∃ k, n ≤ S.slotRound k := S.unbounde
 variable (Validator) in
 /-- The least slot proposed at or after round `n`.
 
-The old schedule needed no such thing: `3 * k ≤ slotRound k` made slot `n`
+A three-round-spaced schedule needs no such thing: `3 * k ≤ slotRound k` made slot `n`
 itself sit past round `n`, so `n` could be used as its own slot index. That
 coincidence is gone — under multiple leaders slot `n` may still be far below
 round `n` — so the slot has to be named. -/

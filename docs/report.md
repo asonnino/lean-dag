@@ -3791,15 +3791,6 @@ The predecessor condition is stated additively rather than as `(blk i).round = b
 
 The quorum is stated on the *creator set*, not on `refs.card`. That is the form every downstream proof wants, and it is the faithful reading of "2f+1 blocks from the previous round" — the protocol means 2f+1 *validators*.
 
-#### `being`
-
-*structure, `BlockDag.lean`*
-
-```lean
-structure being defined.
--/
-```
-
 #### `BlockUniverse`
 
 *structure, `BlockDag.lean`*
@@ -3844,7 +3835,7 @@ structure View (Validator BlockId Payload : Type*) [Fintype Validator]
 
 A **view**: one validator's local DAG. A subset of the universe that is itself closed under references.
 
-Views share `U.block`, so they disagree about *which* blocks they hold, never about what an id denotes, and they inherit validity and non-equivocation from `U` for free. Different correct validators may hold different views — that asymmetry is the entire point of the cross-view results.
+Views share `U.block`, so they disagree about *which* blocks they hold, never about what an id denotes, and they inherit validity and non-equivocation from `U` unchanged. Different correct validators may hold different views — that asymmetry is the entire point of the cross-view results.
 
 ### Causal structure
 
@@ -4095,7 +4086,7 @@ The leader schedule: which validator proposes at which round, as a sequence of s
 
 Slots need **not** be three rounds apart. Under pipelining consecutive slots are one round apart, and under multiple leaders per round they share a round, so all that is required of `slotRound` is that it be monotone. The three-round separation M4's commit half needs is no longer a property of *consecutive* slots and is therefore not derivable here; it is required instead of the particular pairs that use it, by `Eligible` below.
 
-`unbounded` was a theorem under the old three-round spacing (`3 * k ≤ slotRound k`) and is underivable from `mono` alone — a schedule parking every slot at one round is monotone. Liveness needs it, so it is assumed.
+`unbounded` was a theorem under three-round spacing (`3 * k ≤ slotRound k`) and is underivable from `mono` alone — a schedule parking every slot at one round is monotone. Liveness needs it, so it is assumed.
 
 `keyed` says distinct slots differ in round or in leader. It too was free under the old spacing, which made `slotRound` injective outright. Under multiple leaders it is a real condition on the schedule: the proposers of a round must be distinct validators. Without it one block would be the candidate for two slots, and the ledger would deliver it twice.
 
@@ -4208,6 +4199,14 @@ inductive Decided (U : BlockUniverse Validator BlockId Payload)
       Decided U V k none
 ```
 
+**The decision relation.** `Decided U V k v` — a validator holding the view `V` has settled slot `k`, committing the block `v = some L` or skipping it, `v = none`.
+
+Four rules, in two pairs. The *direct* pair reads the slot's own certificates: a candidate carrying `n−f` of them is committed, and a slot whose every candidate is blamed by `n−f` is skipped. The *indirect* pair applies when the direct evidence is inconclusive, and decides `k` by looking up to an **anchor** — the nearest eligible slot above `k` that is itself committed — and asking whether a certificate for a candidate of `k` is reachable from the anchor's block.
+
+"Nearest" is stated positively: every eligible slot strictly between `k` and the anchor is decided `none`. The negative reading — *no eligible slot between is committed* — would be a negative premise, which an inductive definition cannot carry; the positive form is equivalent, since the sweep decides every slot it passes, and it keeps every recursive occurrence strictly positive. The occurrence sits behind `Eligible`, which is a predicate on two naturals and does not mention `Decided`.
+
+The relation is indexed by a view, so two validators may reach different verdicts by the letter of the definition; M6 (`decided_unique`) is the theorem that they cannot.
+
 #### `commitSeq`
 
 *def, `Mysticeti.lean`*
@@ -4309,7 +4308,7 @@ structure Delivery (U : BlockUniverse Validator BlockId Payload) where
 
 What each validator had in hand, one round at a time — and which of it it chose to build on.
 
-**Two fields, because delivery and policy are two things.** `held` is what the network brought; `accepted` is what the validator will reference. Until equivocation nothing forced them apart, and an earlier version of this structure had only `held`, with `includes` demanding that a correct validator reference *everything* it held. That is **unsatisfiable** the moment a correct validator holds both halves of an equivocation: `distinct_creators` forbids referencing two blocks by one author, so no valid block exists and the validator cannot build at all. See `dos-equivocation-and-growth.md` §4.
+**Two fields, because delivery and policy are two things.** `held` is what the network brought; `accepted` is what the validator will reference. Until equivocation nothing forces them apart, and a structure carrying only `held`, with `includes` demanding that a correct validator reference *everything* it held, would be **unsatisfiable** the moment a correct validator holds both halves of an equivocation: `distinct_creators` forbids referencing two blocks by one author, so no valid block exists and the validator cannot build at all. See `dos-equivocation-and-growth.md` §4.
 
 `held` must *not* be deduplicated: `U` is defined as every block some correct validator held (§4.2), so pruning at the delivery layer would put the second half of an equivocation outside the universe altogether. The choice of which half to accept is left unspecified, exactly as the timeout is — the model says what was in hand and what was built on, never how either was decided.
 
@@ -4337,7 +4336,7 @@ The positive protocol behaviour liveness needs. Not derivable from the DAG struc
 
 **Asynchrony-only.** `builds` asks that a correct validator has a block at round `r+1` once *some* quorum holds round-`r` blocks; it says nothing about timing, delivery, or whose blocks are referenced. That is what lets L1 hold from round 0 with no synchrony at all.
 
-`N` is the **horizon**, and it is not decoration. `U.ids` is a `Finset`, so without the bound `r < N` these two fields force infinitely many distinct blocks into a finite set and *no universe satisfies them* — see `LeanDagTest.Growth`, where the witness is built, and `liveness.md` §4.4, where the vacuous first draft is recorded.
+`N` is the **horizon**, and it is not decoration. `U.ids` is a `Finset`, so without the bound `r < N` these two fields force infinitely many distinct blocks into a finite set and *no universe satisfies them* — see `LeanDagTest.Growth`, where the witness is built, and `liveness.md` §4.4, where the vacuous formulation is discussed.
 
 Note `N` is a **demand** on the DAG, not a bound on it: `Live U N` requires blocks to exist all the way to round `N`, so a larger `N` is a *stronger* hypothesis satisfied by *fewer* universes. Coverage of every DAG comes from quantifying over `N`, never from choosing it large.
 
@@ -4360,7 +4359,7 @@ From round `R` on, a correct block references every correct block of the round b
 
 **Both quantifiers are restricted to `Correct`, and deliberately.** A Byzantine validator may publish nothing at all, or publish and reveal to only some validators, so no assumption about referencing its blocks would be sound — and none is needed: L4 counts only correct certificates, and there are `2f+1` correct validators. Getting this wrong in the *strong* direction, by demanding that all blocks be referenced, would assume Byzantine validators behave.
 
-**This does not follow from view convergence.** A block's references are frozen when it is built: a correct validator waits for `2f+1` round-`n` blocks, and the arrival of the `2f+1`st says nothing about the rest having arrived. Views converging later does not retroactively enlarge blocks. So this is an assumption, not a theorem — see `liveness.md` §4.3, and §8 question 8 for how it is meant to be split and derived.
+**This does not follow from view convergence.** A block's references are frozen when it is built: a correct validator waits for `2f+1` round-`n` blocks, and the arrival of the `2f+1`st says nothing about the rest having arrived. Views converging later does not retroactively enlarge blocks. So this is an assumption, not a theorem — see `liveness.md` §4.3, and its §8 question 8 for how it is meant to be split and derived.
 
 #### `Synchronised`
 
@@ -4398,7 +4397,7 @@ def View.full (U : BlockUniverse Validator BlockId Payload) :
   complete := U.complete
 ```
 
-Every correct validator's *eventual* view. Downward-closed for free, by `U.complete`.
+Every correct validator's *eventual* view. Downward-closed by `U.complete`.
 
 #### `CommitsAt`
 
@@ -4480,7 +4479,7 @@ def slotAt (n : ℕ) : ℕ := Nat.find (S.unbounded n)
 
 The least slot proposed at or after round `n`.
 
-The old schedule needed no such thing: `3 * k ≤ slotRound k` made slot `n` itself sit past round `n`, so `n` could be used as its own slot index. That coincidence is gone — under multiple leaders slot `n` may still be far below round `n` — so the slot has to be named.
+A three-round-spaced schedule needs no such thing: `3 * k ≤ slotRound k` made slot `n` itself sit past round `n`, so `n` could be used as its own slot index. That coincidence is gone — under multiple leaders slot `n` may still be far below round `n` — so the slot has to be named.
 
 #### `DeliversQuorum`
 
@@ -4602,47 +4601,6 @@ def BoundedSpacing (s : ℕ) : Prop := ∀ k, S.slotRound (k + 1) ≤ S.slotRoun
 Consecutive slots are at most `s` rounds apart — the upper companion to such a field. Every real schedule has one; the class omits it because no safety result ever asks.
 
 ### View convergence
-
-#### `which`
-
-*structure, `ViewSync.lean`*
-
-```lean
-structure which is not purely one thing: its own comment concedes that it
-says *"a `T`-block built at time `t` is in every `T`-validator's hands by
-`t + delay`; **and** a validator references everything it holds."* Two
-clauses, one network and one protocol, fused into a single hypothesis
-that concludes about `refs`. That fusion is convenient — it is what makes
-`synchronisedOn_of_timing` short — but it puts a protocol clause inside
-the row of the trust boundary reserved for the network.
-
-This file separates them, and in the direction that the original design
-notes asked for: state the network assumption as **view convergence** —
-*after GST, whatever one correct validator holds reaches every correct
-validator within `delay`* — keep referencing as the protocol clause P7 it
-is, and derive `covers`, hence all of `Timing`, hence reference coverage.
-
-```
-view convergence + P7 (references) + P9 (waits, drift)
-        ──▶  Timing.covers  ──▶  SynchronisedOn  ──L4/L6──▶  commits
-```
-
-**What this settles.** Reference coverage *is* derivable from view
-convergence — the objection that a validator might build before a
-straggler's block lands is answered not by strengthening the network but
-by the waiting rule, which is already a clause of the protocol. What view
-convergence cannot do *alone* is win that race: `holds_mono` and
-`converges` place the block in the builder's hands at time
-`built w n + delay`, and only `waits` (through the drift bound) puts that
-moment before `built v (n+1)`. So the two premises are co-equal partners,
-not a network assumption with an afterthought.
-
-`ViewSync.toTiming` is the reduction, after which every result of
-`Timing.lean` applies unchanged: drift is still derived from `prompt`,
-the backoff still terminates, and the quantitative bounds of §6.10 are
-unaffected.
--/
-```
 
 #### `ViewSync`
 
@@ -4968,26 +4926,6 @@ Accepting conservatively is what makes `accepted_inj` true rather than a further
 
 ### Chain quality
 
-#### `forces`
-
-*structure, `Quality.Coverage.lean`*
-
-```lean
-structure forces every layer of every valid cone to carry blocks from
-all but at most `f` of the correct validators. So each commit carries,
-at every round below it, blocks from **at least half of the correct
-validators** — with no synchrony assumption, no delivery model, and no
-populated rounds anywhere in the hypotheses. The engine is density
-(D25, `card_missingAt_le`); everything here is packaging.
-
-The metric is **per-round author coverage**, not a block-count
-fraction: an equivocator can inflate a cone with any number of blocks
-per round, so the raw fraction is adversary-deflatable, while the
-author count is what density bounds (`chain-quality.md` §2, a recorded
-decision).
--/
-```
-
 #### `coveredAt`
 
 *def, `Quality.Coverage.lean`*
@@ -5064,7 +5002,7 @@ def DoSValid (U : BlockUniverse Validator BlockId Payload) : Prop :=
   ∀ b ∈ U.ids, ∀ i ∈ (U.block b).refs, ¬ ExposedIn U b (U.block i).creator
 ```
 
-**The DoS-protection condition** (§3): a block may not reference an author exposed in its own history.
+**The DoS-protection condition** (`dos-equivocation-and-growth.md` §3): a block may not reference an author exposed in its own history.
 
 A predicate on the universe, deliberately **not** a field of `ValidWrt`. Every safety and liveness theorem in the development applies verbatim under it, because none of them mention it; results that need it take it as an extra hypothesis.
 

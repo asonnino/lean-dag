@@ -105,11 +105,19 @@ def parse(path):
     doc = None
     while i < len(lines):
         line = lines[i]
-        if line.startswith("/--"):
+        if line.startswith("/--") or line.startswith("/-!"):
+            # Lean block comments nest, and a docstring may quote `-/`, so
+            # close on depth rather than on the first terminator.
+            depth = 0
             j = i
-            while j < len(lines) and not lines[j].rstrip().endswith("-/"):
+            while j < len(lines):
+                depth += lines[j].count("/-") - lines[j].count("-/")
+                if depth <= 0:
+                    break
                 j += 1
-            doc = strip_docstring(lines[i:j + 1])
+            # a `/-!` section comment documents the section, not the next
+            # declaration, so it is read past rather than attached
+            doc = strip_docstring(lines[i:j + 1]) if line.startswith("/--") else None
             i = j + 1
             continue
         m = DECL.match(line)

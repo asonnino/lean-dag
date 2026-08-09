@@ -68,7 +68,7 @@ theorem exposedIn_iff_reaches {b : BlockId} {X : Validator} (hb : b ∈ U.ids) :
   · rintro ⟨i, j, hi, hj, hpair⟩
     exact ⟨i, (mem_history_iff hb).mpr hi, j, (mem_history_iff hb).mpr hj, hpair⟩
 
-/-- **The DoS-protection condition** (§3): a block may not reference an author
+/-- **The DoS-protection condition** (`dos-equivocation-and-growth.md` §3): a block may not reference an author
 exposed in its own history.
 
 A predicate on the universe, deliberately **not** a field of `ValidWrt`. Every

@@ -45,7 +45,7 @@ itself closed under references.
 
 Views share `U.block`, so they disagree about *which* blocks they hold, never
 about what an id denotes, and they inherit validity and non-equivocation from
-`U` for free. Different correct validators may hold different views — that
+`U` unchanged. Different correct validators may hold different views — that
 asymmetry is the entire point of the cross-view results. -/
 structure View (Validator BlockId Payload : Type*) [Fintype Validator]
     [DecidableEq Validator] [Faults Validator]
