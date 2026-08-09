@@ -697,30 +697,37 @@ statements.
 
 ### 4.3 The network
 
-Two assumptions, and they are the whole of what the development asks of the
-environment.
+The development asks the environment for two *things*, and each admits
+several *formulations*. Keeping those apart is what this section is for:
+the roles are fixed, the formulations are a modelling choice, and two of
+the formulations are not as pure as their names suggest.
 
-| | Assumption | Formalisation |
+| Role | What is wanted | Formulations |
 |:---|:---|:---|
-| N1 | a quorum that exists is eventually held | `DeliversQuorum` |
-| N2 | beyond GST, a block is delivered within Δ | `EventuallyDelivers`, `Timing.covers` |
+| **Production** | what exists is eventually obtained, so the DAG keeps growing | N1 (`DeliversQuorum`); or untimed view convergence (`ViewsConverge`) |
+| **Coverage** | after stabilisation, delivery is prompt enough that blocks reference one another | N2, in three forms: `converges` (views), `Timing.covers` (references), `EventuallyDelivers` (holdings) |
 
-**The vehicle.** Both are stated over the delivery layer (§6.2), whose
-central field is
+Safety (§5) uses **none** of them: it holds under arbitrary asynchrony,
+arbitrary loss and arbitrarily divergent views.
 
-```lean
-held : Validator → ℕ → Finset BlockId
-```
+#### The vehicles
 
-with `held v n` denoting what `v` had **in hand at the moment it built its
-round-`(n+1)` block** — not what `v` eventually receives. The index is the
-essential modelling device, and §13.1 argues it is unavoidable: a block's
-references are frozen at construction, so the quantity that bears on the
-DAG's shape is what was held at build time. A view (`View.ids`) is a finite
-set of identifiers with no temporal index and cannot supply it; a
-time-indexed family of views would serve equally well.
+The formulations do not all range over the same object, and the
+differences matter more than they appear to.
 
-#### N1 — eventual delivery, without timing
+| Field | Indexed by | Structure |
+|:---|:---|:---|
+| `held v n` | the **round** `v` is building over | `Delivery` (§6.2) |
+| `holds v t` | the **instant** `t` | `Timing`, `ViewSync` (§6.8–§6.9) |
+
+`held v n` is what `v` had in hand *at the moment it built its
+round-`(n+1)` block* — not what it eventually receives. That build-time
+index is the essential modelling device (§13.1): a block's references are
+frozen at construction, so what bears on the DAG's shape is what was held
+when the builder acted. `View.ids` is a finite set of identifiers with no
+index of either kind, which is why no formulation is stated over it.
+
+#### Production: N1
 
 ```lean
 def DeliversQuorum (D : Delivery U) : Prop :=
@@ -729,200 +736,153 @@ def DeliversQuorum (D : Delivery U) : Prop :=
       (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (D.accepted v n)).card
 ```
 
-*If* a quorum of validators have produced round-`n` blocks — `authorsAt U n`
-being the creators of the round-`n` blocks of `U` — *then* every correct
-validator accepts round-`n` blocks from a quorum of distinct authors. Four
-features of the shape are deliberate.
+*If* a quorum of validators have produced round-`n` blocks, *then* every
+correct validator accepts round-`n` blocks from a quorum of distinct
+authors. Four features of the shape are deliberate.
 
-- **It is conditional: existence first, holding second.** Stated
+- **Conditional: existence first, holding second.** Stated
   unconditionally it would assert that round-`n` blocks exist, which is
-  exactly what the liveness argument sets out to prove (§6.3); the
-  assumption would then swallow its own conclusion. As stated it says only
-  that *what exists is eventually obtained*.
-- **It mentions no clock and no round bound.** There is no Δ, no GST, and
-  no index past which it begins to hold — so N1 constrains the network
-  before stabilisation exactly as after. This is what carries every result
-  that does not need synchrony: L1 (`no_stall`, §6.3) turns N1 together
-  with the protocol's build clause P8 into `Populated` at every round up to
-  the growth horizon, with no temporal input whatever.
-- **It is stated on `accepted`, not on `held`.** The quorum must survive
-  the acceptance filter — the layer at which a validator takes at most one
-  block per author, and at which the novelty budget of §8 imposes a rate
-  limit. Since correct blocks are always accepted (`accepts_correct`), the
-  two readings differ only on Byzantine duplicates, and stating it on
-  `accepted` is what keeps the storage results of §8 compatible with
-  liveness.
-- **It counts authors, not blocks** (`creatorsOf`), so an equivocator
-  flooding a validator with same-round twins contributes one to the
-  quorum. Every quorum hypothesis in the development is stated this way
-  (§2.5).
+  what the liveness argument sets out to prove (§6.3); the assumption
+  would swallow its own conclusion.
+- **No clock and no round bound.** No Δ, no GST, no index past which it
+  begins to hold, so it constrains the network before stabilisation
+  exactly as after. This is what carries the results that do not need
+  synchrony: `N1 + P8 → Populated`, through L1, with no temporal input.
+- **Stated on `accepted`, not `held`.** The quorum must survive the
+  acceptance filter — where a validator takes at most one block per
+  author, and where the novelty budget of §8 imposes a rate limit.
+- **Counting authors, not blocks** (`creatorsOf`), so an equivocator
+  flooding a validator with twins contributes one (§2.5).
 
-#### N2 — partial synchrony, in two guises
+Two qualifications belong here rather than in a footnote, because each
+weakens the sense in which N1 is a network assumption.
 
-N2 appears in two forms because the structural condition of §6.4 is derived
-from it twice, once without a clock and once with one (§4.4). The abstract
-form, consumed by the delivery route of §6.7:
+*It is not purely environmental.* Nothing obliges a validator to accept a
+**Byzantine**-authored block — `accepts_correct` covers correct authors
+only. With `f` Byzantine validators and `f` slow correct ones, a
+validator may hold a quorum yet accept only `f+1` creators. So N1
+constrains the network **and the acceptance policy** jointly, which is
+the formal link to §8: `dos_resistance` takes N1 *and* the novelty
+budget, and that pairing is the statement that the budget must be set
+loose enough to keep N1 true.
+
+*From `R` on it is a theorem, not an assumption.*
+`card_creators_accepted_of_eventuallyDelivers` derives the accepted
+quorum from N2 with `Populated`: coverage puts every correct round-`n`
+block in hand, `accepts_correct` obliges acceptance, and
+`|Correct| ≥ n−f`. N1's real content is therefore the pre-GST prefix —
+which is precisely what it is for.
+
+#### Coverage: N2, in three forms
+
+The three formulations are a hierarchy, ordered here from the most
+primitive; §6.9 proves the reductions.
 
 ```lean
+-- over views, at instants
+converges : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + delay)
+
+-- over references, at instants
+covers : ∀ v ∈ T, ∀ w ∈ T, ∀ n < N, gst ≤ built w n →
+  built w n + delay ≤ built v (n + 1) →
+  blk w n ∈ (U.block (blk v (n + 1))).refs
+
+-- over holdings, at the build index
 def EventuallyDelivers (D : Delivery U) (R : ℕ) : Prop :=
   ∀ n, R ≤ n → ∀ v ∈ (Correct : Finset Validator), ∀ a ∈ U.ids,
     (U.block a).round = n → (U.block a).creator ∈ (Correct : Finset Validator) →
     a ∈ D.held v n
 ```
 
-From round `R` on, **every** correct block of round `n` is in **every**
-correct validator's hands at index `n` — that is, in time to be built upon.
-Coverage then follows in one step, `held ⊆ accepted ⊆ refs`, by
-`accepts_correct` and the protocol clause P7
-(`synchronised_of_delivery`, §6.7).
+`converges` is partial synchrony as one would state it in words — *after
+GST, whatever a correct validator holds reaches every correct validator
+within Δ* — and mentions no block, no round and no reference. Each of the
+others is obtained from it by applying a clause of the protocol:
+`covers` is `converges` composed with P7 (`ViewSync.covers_of_converges`),
+and `ViewSync.toTiming` exhibits a view-convergent execution as a timed
+one, so the timing route is a special case rather than an alternative.
 
-The timing form, consumed by the GST route of §6.8, is partial synchrony in
-the sense of Dwork, Lynch and Stockmeyer [DLS88], written on wall-clock
-stamps — `built v n` is the time at which `v` built its round-`n` block,
-`blk v n` that block, `gst` the stabilisation time and `delay` the bound Δ
-(the full structure is displayed in §6.8):
+**Two of the three are impure, and the report should not pretend
+otherwise.** `Timing.covers` concludes about `refs`, so it fuses the
+network guarantee with the referencing clause; its own source comment
+concedes as much. `EventuallyDelivers` concludes about `held v n` — the
+*build-time* index — so it silently assumes the builder waited. Only
+`converges` states the network's contribution in a form containing
+nothing the protocol does, which is why §6.9 treats it as the primitive
+one.
 
-```lean
-covers : ∀ v ∈ T, ∀ w ∈ T, ∀ n < N, gst ≤ built w n →
-  built w n + delay ≤ built v (n + 1) →
-  blk w n ∈ (U.block (blk v (n + 1))).refs
-```
+Two further relations, both proved in §6.9. The bound factors out:
+convergence within Δ is exactly eventual convergence whose lag is
+uniformly bounded after GST (`convergesWithin_iff_bounded`), so *view
+convergence under synchrony = view convergence + a bound*. And eventual
+convergence **alone** yields nothing: an unbounded lag cannot be compared
+with a timeout, so no argument places the block in the builder's hands
+before it builds. The missing ingredient is not a stronger network but
+the protocol's waiting rule — which is why P9 stands beside N2 in §4.1
+rather than inside it.
 
-If `w` built its round-`n` block after GST, and `v` began its round-`(n+1)`
-block at least Δ later, then `v` references `w`'s block. Note that this too
-is conditional, and on a premise the network does not control: that `v`
-actually waited. Discharging it is the protocol's obligation, which is why
-P9 (`waits`, `prompt`) stands beside N2 in this section rather than inside
-it, and why §6.11 must determine *how long* is long enough — `D₀ + Δ`,
-which is `2Δ` under a common start. §13.1 gives the counterexample that
-makes the point: under instantaneous delivery, a protocol that builds on
-the first quorum to arrive can violate coverage for ever, so no strengthening
-of N2 alone would suffice.
+#### What none of them says
 
-#### What neither assumption says
-
-- **Nothing about Byzantine senders.** A Byzantine validator may deliver a
-  block to some correct validators and not others, may send two
-  equivocating blocks to two different correct validators, or may publish
-  nothing at all. Both N1 and N2 quantify over *correct* authors only, and
-  the safety results tolerate the rest unconditionally: a Byzantine block
-  that reaches one view and not another is precisely the situation the
-  cross-view theorems of §5 are stated to survive.
-- **Nothing about which blocks arrive**, beyond the correct ones after `R`.
+- **Nothing about Byzantine senders.** A Byzantine validator may deliver
+  to some correct validators and not others, may send equivocating blocks
+  to two of them, or may publish nothing. Every formulation quantifies
+  over *correct* authors only, and safety tolerates the rest
+  unconditionally — a Byzantine block reaching one view and not another is
+  exactly what the cross-view theorems of §5 are stated to survive.
+- **Nothing about which blocks arrive**, beyond correct ones after `R`:
   N1 promises a quorum, not a particular sender's block.
-- **Nothing before GST**, in N2's case — arbitrary delay, arbitrary
-  reordering and arbitrary loss are permitted, and every safety result and
-  L1 continue to hold there.
+- **Nothing before GST**, for N2: arbitrary delay, reordering and loss are
+  permitted there, and every safety result and L1 continue to hold.
 
-#### Where the assumptions are consumed
+#### Where they are consumed
 
-Neither assumption is used where its name suggests, and the extracted
+Neither role is discharged where its name suggests, and the extracted
 support graph (§12) makes the pattern checkable rather than asserted.
 
 **N1 has exactly one primitive consumer: L1 (`no_stall`).** It appears in
-the hypotheses of a great many statements — L6, the quantitative results,
-the capstones of §§7–10 — but always threaded through to that one place.
-Its job is *block production*, not synchrony: a populated round means a
-quorum of authors exists, N1 converts that into "every correct validator
-has accepted a quorum", and that discharges the premise of P8, which
-produces the next round. The chain is `N1 + P8 → Populated`, with no
-coverage, no `R` and no Δ anywhere in it. (The only other direct uses are
-a repackaging, `card_authorsAt_of_live`, and the garbage-collection
-transfer lemma `deliversQuorum_chopD`, which re-establishes N1 on the
-truncated universe so that L1 runs there too.)
-
-**And from `R` on, N1 is a theorem rather than an assumption:**
-
-```lean
-theorem card_creators_accepted_of_eventuallyDelivers {R : ℕ} (D : Delivery U)
-    (hd : EventuallyDelivers D R) (hn : R ≤ n) (hpop : Populated U n)
-    {v : Validator} (hv : v ∈ (Correct : Finset Validator)) :
-    (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (D.accepted v n)).card
-```
-
-N2 puts every correct round-`n` block in `v`'s hands, `accepts_correct`
-obliges `v` to accept them, `Populated` supplies one per correct
-validator, and `|Correct| ≥ n−f`. So N1's real content is confined to the
-pre-GST prefix, which is exactly the price the structural condition
-carries.
-
-Before `R` it is *not* derivable, and the reason is worth stating because
-it locates a subtlety in the trust boundary. Nothing obliges a validator
-to accept a **Byzantine**-authored block: `accepts_correct` covers correct
-authors only. With `f` Byzantine validators and `f` slow correct ones, a
-validator holds `f+1` correct blocks and `f` Byzantine ones — a quorum in
-`held` — but if it declines the Byzantine ones, `accepted` carries only
-`f+1` creators, short of the quorum. **N1 is therefore a joint condition
-on the network and the acceptance policy**, not a pure network
-assumption. That is not a hypothetical concern: the novelty budget of §8
-is precisely a rule that declines, which is why `dos_resistance` takes N1
-*and* the budget together — the pairing is the formal statement that the
-budget must be set loose enough to keep N1 true.
+the hypotheses of many statements — L6, the quantitative results, the
+capstones of §§7–10 — but always threaded through to that one place. Its
+job is production, not synchrony. (The only other direct uses are a
+repackaging, `card_authorsAt_of_live`, and the garbage-collection
+transfer lemma `deliversQuorum_chopD`, which re-establishes it on the
+truncated universe.)
 
 **N2's abstract form is used for five distinct things**, only the first
 of which is coverage: L7a (§6.7); the view-gap constant C3′ and hence the
-budget sandwich of §8.4, where it says a correct validator's block —
-carrying its whole accepted store — arrives and is accepted; the
-accepted-quorum lemma above; the bound placing the attested base inside a
-correct peer's retained store (G6b, §9.3); and the one-round
-universalisation of possession (G9, §9.5). The common thread in the last
-four is not "references cover the round below" but "a correct validator's
-store reaches every correct validator in time" — a fact about **stores**,
-where coverage is a fact about **references**. One assumption serves both
-because it is stated on `held`, upstream of the split. N2's timing form,
-by contrast, is consumed exactly once, in L7b.
+budget sandwich of §8.4; the accepted-quorum lemma above; the bound
+placing the attested base inside a correct peer's retained store (G6b,
+§9.3); and the one-round universalisation of possession (G9, §9.5). The
+last four are facts about **stores**, where coverage is a fact about
+**references**; one assumption serves both because it is stated on
+`held`, upstream of the split. `Timing.covers` is consumed exactly once,
+in L7b.
 
-#### How the formulations relate
+#### What is actually trusted
 
-N2 has more than two statements, and they form a hierarchy rather than a
-set of alternatives. Ordered from the most primitive:
+Collecting the qualifications, the honest summary is narrower than "two
+assumptions" and more interesting.
 
-| | Statement | Over |
-|:---|:---|:---|
-| view convergence | after GST, what a correct validator holds reaches every correct validator within Δ | views, at instants |
-| `Timing.covers` | after GST, a block built early enough is *referenced* | blocks and references |
-| `EventuallyDelivers` | every correct block is held at the moment of building | holdings, at build index |
+*For coverage*, one condition on the environment: view convergence,
+bounded after GST. The other two formulations are that condition with a
+protocol clause folded in, and §6.9 derives them from it.
 
-Each is obtained from the one above it by applying a clause of the
-protocol, and §6.9 proves the reductions: `covers` is view convergence
-composed with P7 (`references`), and `ViewSync.toTiming` exhibits a
-view-convergent execution as a timed one, so every result of §6.8 applies
-to it unchanged.
+*For production*, one condition — but the choice of formulation is a
+genuine fork. N1 is the weakest and the implementable one, at the price
+of also constraining the acceptance policy. Untimed view convergence
+(`ViewsConverge`) is stronger — every correct block, always, rather than
+a quorum when one exists — and discharges N1 entirely
+(`populated_of_viewsConverge`), at the price of being unimplementable as
+stated, since a validator cannot wait for "all correct blocks" without
+distinguishing correct validators from crashed ones. The timed structures
+take a third option and assume production outright, carrying a block per
+validator per round as data (§6.10).
 
-The consequence for this section is a correction and a simplification.
-The correction: `Timing.covers` is **not** a pure network assumption. Its
-own comment concedes the point — *"a `T`-block built at time `t` is in
-every `T`-validator's hands by `t + delay`; **and** a validator
-references everything it holds"* — so it fuses N2 with P7 and straddles
-the line this section draws. The simplification: once the two are
-separated, the network's entire contribution is a single sentence about
-views, containing no block, no round and no reference, and every clause
-about what validators *do* sits on the protocol side where it belongs.
-
-Two further relations are worth recording, both proved in §6.9. The
-bound factors out: convergence within Δ is exactly eventual convergence
-whose lag is uniformly bounded after GST
-(`convergesWithin_iff_bounded`), so *view convergence under synchrony =
-view convergence + a bound*. And eventual convergence **alone** yields
-nothing — an unbounded lag cannot be compared with a timeout, so the
-block cannot be shown to arrive before the builder acts. The missing
-ingredient is not a stronger network but the protocol's waiting rule,
-which is why P9 sits beside N2 in this section rather than inside it.
-
-#### The asymmetry, and the payoff
-
-The two are deliberately unequal. N1 is weak — conditional, quorum-sized,
-timeless — and does the pre-GST work. N2 is strong — every correct block,
-every correct validator, promptly — but is asserted only from GST onward.
-Nothing between the two is assumed, and no third condition on the
-environment appears anywhere in the development.
-
-**These two are the whole of the trust placed in the environment.** The
-safety results of §5 use neither: they hold under arbitrary asynchrony,
-arbitrary loss and arbitrary divergence between views. Reference coverage,
-the condition on which all of liveness rests, is not a third assumption but
-a consequence of N2 with the protocol's own clauses — which is the subject
-of §4.4.
+*And nothing else.* No condition on the environment appears in the
+development beyond these two roles, in one of the formulations above; the
+remaining hypotheses of §4.1 are clauses of the algorithm, which a
+designer controls. Reference coverage itself — the condition all of
+liveness rests on — is not a further assumption but a consequence, which
+is the subject of §4.4.
 
 ### 4.4 Derived, not assumed
 
@@ -2831,7 +2791,9 @@ self-parent clause, has no outgoing edge in the core view and in the full
 view feeds only C1′, C3′, G1, G9 and G11 — which is §2.2's assertion that
 safety and liveness never consume it and that it is load-bearing for the
 denial-of-service and garbage-collection arcs. `L7a ← N2a, P7` and
-`L7b ← N2b, P9, T1` reproduce the §4.4 table row for row, the extra `T1`
+`L7b ← N2b, P9, T1` reproduce the §4.4 table row for row — `N2a` and
+`N2b` being the diagram's labels for N2's `EventuallyDelivers` and
+`Timing.covers` forms (§4.3) — the extra `T1`
 on the timing route being the non-equivocation step that identifies a
 validator's block with the one the timing structure names. And
 `O5 ← O1, O1′, O2, O3, O4′` confirms that Odontoceti's agreement rests on
