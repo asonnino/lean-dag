@@ -585,6 +585,89 @@ theorem exists_pedigreeVia (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids) 
       · exact ⟨T₁, [], hT₁top', hexp₁, .base htop hadopt, List.nodup_singleton _,
           fun W hW => by simp at hW⟩
 
+/-- The padded encoding of a list of at most `m` members of `E'`: entry
+`k` is the `k`-th element when there is one, and `none` past the end.
+
+Used to count lists by counting functions — a `Finset` of lists of
+bounded length has no convenient cardinality, whereas `Fin m → Option _`
+does. -/
+def encodeList (E' : Finset Validator) (m : ℕ) (l : List Validator) :
+    Fin m → Option {W // W ∈ E'} :=
+  fun k => if hk : (k : ℕ) < l.length then
+      if hmem : l[(k : ℕ)] ∈ E' then some ⟨l[(k : ℕ)], hmem⟩ else none
+    else none
+
+/-- **The encoding is faithful.** Two lists over `E'` of length at most
+`m` with the same encoding are equal: the first index past the shorter
+one separates them if the lengths differ, and after that the entries
+match pointwise.
+
+Nothing here concerns pedigrees; it is the general fact that padding a
+bounded list into a fixed-width option vector loses nothing. -/
+theorem encodeList_injOn {E' : Finset Validator} {m : ℕ} {l₁ l₂ : List Validator}
+    (h₁ : l₁.length ≤ m) (h₂ : l₂.length ≤ m)
+    (he₁ : ∀ W ∈ l₁, W ∈ E') (he₂ : ∀ W ∈ l₂, W ∈ E')
+    (hfun : encodeList E' m l₁ = encodeList E' m l₂) : l₁ = l₂ := by
+  have hleneq : l₁.length = l₂.length := by
+    by_contra hne
+    rcases Nat.lt_or_ge l₁.length l₂.length with hlt | hge
+    · have hk : l₁.length < m := by omega
+      have hthis := congrFun hfun ⟨l₁.length, hk⟩
+      simp only [encodeList, Fin.val_mk] at hthis
+      rw [dif_neg (lt_irrefl _), dif_pos hlt,
+        dif_pos (he₂ _ (List.getElem_mem _))] at hthis
+      simp at hthis
+    · have hlt : l₂.length < l₁.length := by omega
+      have hk : l₂.length < m := by omega
+      have hthis := congrFun hfun ⟨l₂.length, hk⟩
+      simp only [encodeList, Fin.val_mk] at hthis
+      rw [dif_pos hlt, dif_neg (lt_irrefl _),
+        dif_pos (he₁ _ (List.getElem_mem _))] at hthis
+      simp at hthis
+  refine List.ext_getElem hleneq ?_
+  intro k hk₁ hk₂
+  have hkm : k < m := by omega
+  have hthis := congrFun hfun ⟨k, hkm⟩
+  simp only [encodeList, Fin.val_mk] at hthis
+  rw [dif_pos hk₁, dif_pos hk₂,
+    dif_pos (he₁ _ (List.getElem_mem _)), dif_pos (he₂ _ (List.getElem_mem _))] at hthis
+  exact congrArg Subtype.val (Option.some_injective _ hthis)
+
+/-- **Every top has an anchored pedigree, in totalised form.**
+
+`exists_pedigreeVia` gives a pedigree for each top of an exposed author:
+an anchor that is the sole top of some *unexposed* author, and the list
+of authors traversed on the way, which is duplicate-free and avoids `X`
+itself. This restates it as a total function so that `choose` applies —
+outside `topsOf U b X` the witness is arbitrary and the implication
+vacuous.
+
+Split out because it is the constructive half of the counting argument:
+the bound that follows counts these pairs, and needs nothing about how
+they were obtained. -/
+theorem exists_pedigree_data (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids)
+    {X : Validator} (hX : ExposedIn U b X) :
+    ∀ t : BlockId, ∃ p : BlockId × List Validator,
+      t ∈ topsOf U b X →
+        p.1 ∈ topsOf U b (U.block p.1).creator ∧
+        ¬ ExposedIn U b (U.block p.1).creator ∧
+        PedigreeVia U b t p.1 p.2 ∧ p.2.Nodup ∧
+        ∀ W ∈ p.2, W ∈ (exposedTo U b).erase X := by
+  intro t
+  by_cases ht : t ∈ topsOf U b X
+  · have htc : (U.block t).creator = X := (mem_topsOf.mp ht).2.1
+    obtain ⟨T, l, hTtop, hTunexp, hped, hnodup, hexps⟩ :=
+      exists_pedigreeVia hdos hb _ t (le_refl _) (by rw [htc]; exact ht)
+        (by rw [htc]; exact hX)
+    rw [List.nodup_cons] at hnodup
+    refine ⟨(T, l), fun _ => ⟨hTtop, hTunexp, hped, hnodup.2, ?_⟩⟩
+    intro W hW
+    rw [Finset.mem_erase]
+    refine ⟨?_, mem_exposedTo.mpr (hexps W hW)⟩
+    intro h
+    exact hnodup.1 (htc ▸ h ▸ hW)
+  · exact ⟨(b, []), fun h => absurd h ht⟩
+
 /-- **The tightened top count.** With `e := |exposedTo U b|`, an exposed
 author has at most `(3f+1-e) · e^(e-1)` chains: one anchor per unexposed
 author, and intermediate authors drawn without repetition from the other
@@ -597,27 +680,7 @@ theorem card_topsOf_le_of_exposed (hdos : DoSValid U) {b : BlockId} (hb : b ∈ 
   classical
   set E' := (exposedTo U b).erase X with hE'
   set m := E'.card with hm
-  -- totalised pedigree data
-  have hdata : ∀ t : BlockId, ∃ p : BlockId × List Validator,
-      t ∈ topsOf U b X →
-        p.1 ∈ topsOf U b (U.block p.1).creator ∧
-        ¬ ExposedIn U b (U.block p.1).creator ∧
-        PedigreeVia U b t p.1 p.2 ∧ p.2.Nodup ∧
-        ∀ W ∈ p.2, W ∈ E' := by
-    intro t
-    by_cases ht : t ∈ topsOf U b X
-    · have htc : (U.block t).creator = X := (mem_topsOf.mp ht).2.1
-      obtain ⟨T, l, hTtop, hTunexp, hped, hnodup, hexps⟩ :=
-        exists_pedigreeVia hdos hb _ t (le_refl _) (by rw [htc]; exact ht)
-          (by rw [htc]; exact hX)
-      rw [List.nodup_cons] at hnodup
-      refine ⟨(T, l), fun _ => ⟨hTtop, hTunexp, hped, hnodup.2, ?_⟩⟩
-      intro W hW
-      rw [hE', Finset.mem_erase]
-      refine ⟨?_, mem_exposedTo.mpr (hexps W hW)⟩
-      intro h
-      exact hnodup.1 (htc ▸ h ▸ hW)
-    · exact ⟨(b, []), fun h => absurd h ht⟩
+  have hdata := exists_pedigree_data hdos hb hX
   choose dataP hdataP using hdata
   have hlen : ∀ t, t ∈ topsOf U b X → (dataP t).2.length ≤ m := by
     intro t ht
@@ -631,14 +694,8 @@ theorem card_topsOf_le_of_exposed (hdos : DoSValid U) {b : BlockId} (hb : b ∈ 
   have hinj : (topsOf U b X).card ≤
       ((Finset.univ.filter fun W => ¬ ExposedIn U b W) ×ˢ
         (Finset.univ : Finset (Fin m → Option {W // W ∈ E'}))).card := by
-    refine Finset.card_le_card_of_injOn (fun t =>
-      ((U.block (dataP t).1).creator,
-        fun k : Fin m =>
-          if hk : (k : ℕ) < (dataP t).2.length then
-            if hmem : (dataP t).2[(k : ℕ)] ∈ E' then
-              some ⟨(dataP t).2[(k : ℕ)], hmem⟩
-            else none
-          else none)) ?_ ?_
+    refine Finset.card_le_card_of_injOn
+      (fun t => ((U.block (dataP t).1).creator, encodeList E' m (dataP t).2)) ?_ ?_
     · intro t ht
       rw [Finset.mem_coe] at ht
       refine Finset.mem_coe.mpr (Finset.mem_product.mpr ⟨?_, Finset.mem_univ _⟩)
@@ -656,35 +713,9 @@ theorem card_topsOf_le_of_exposed (hdos : DoSValid U) {b : BlockId} (hb : b ∈ 
         have hcard := card_topsOf_le_one_of_not_exposedIn hdos hb hA₁unexp
         rw [Finset.card_le_one] at hcard
         exact hcard _ hA₁top _ hA₂top'
-      -- lists coincide: lengths first, then entries
-      have hlen₁ := hlen t₁ h₁
-      have hlen₂ := hlen t₂ h₂
-      have hleneq : (dataP t₁).2.length = (dataP t₂).2.length := by
-        by_contra hne
-        rcases Nat.lt_or_ge (dataP t₁).2.length (dataP t₂).2.length with hlt | hge
-        · have hk : (dataP t₁).2.length < m := by omega
-          have hthis := congrFun hfun ⟨(dataP t₁).2.length, hk⟩
-          simp only [Fin.val_mk] at hthis
-          rw [dif_neg (lt_irrefl _), dif_pos hlt,
-            dif_pos (hent₂ _ (List.getElem_mem _))] at hthis
-          simp at hthis
-        · have hlt : (dataP t₂).2.length < (dataP t₁).2.length := by omega
-          have hk : (dataP t₂).2.length < m := by omega
-          have hthis := congrFun hfun ⟨(dataP t₂).2.length, hk⟩
-          simp only [Fin.val_mk] at hthis
-          rw [dif_pos hlt, dif_neg (lt_irrefl _),
-            dif_pos (hent₁ _ (List.getElem_mem _))] at hthis
-          simp at hthis
-      have hlists : (dataP t₁).2 = (dataP t₂).2 := by
-        refine List.ext_getElem hleneq ?_
-        intro k hk₁ hk₂
-        have hkm : k < m := by omega
-        have hthis := congrFun hfun ⟨k, hkm⟩
-        simp only [Fin.val_mk] at hthis
-        rw [dif_pos hk₁, dif_pos hk₂,
-          dif_pos (hent₁ _ (List.getElem_mem _)), dif_pos (hent₂ _ (List.getElem_mem _))]
-          at hthis
-        exact congrArg Subtype.val (Option.some_injective _ hthis)
+      -- lists coincide: the encoding is faithful
+      have hlists : (dataP t₁).2 = (dataP t₂).2 :=
+        encodeList_injOn (hlen t₁ h₁) (hlen t₂ h₂) hent₁ hent₂ hfun
       -- determinism closes it
       have hcreator : (U.block t₁).creator = (U.block t₂).creator :=
         ((mem_topsOf.mp h₁).2.1).trans ((mem_topsOf.mp h₂).2.1).symm
