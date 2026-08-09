@@ -72,7 +72,7 @@ def ugrowSkewView (N : ℕ) : ViewSync (Ugrow N) {1, 2, 3} N where
     have hv4 := v.isLt
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
     simp only [skewHolds, Finset.mem_filter, Finset.mem_range] at ha
-    simp only [ugrow_block, growBlock_round] at har
+    simp only [ugrow_block, rrBlock_round] at har
     simp only [ugrow_block, mem_growBlock_refs]
     omega
 
@@ -177,15 +177,8 @@ id determines its author and round. -/
 /-- Every validator has a block at every round of `Ugrow` — the fact both
 `base` and `builds` need, at `T = {1,2,3}` rather than at `Correct`. -/
 theorem ugrow_populatedOn {N r : ℕ} (hr : r ≤ N) :
-    PopulatedOn (Ugrow N) {1, 2, 3} r := by
-  intro v _
-  have hv := v.isLt
-  refine ⟨4 * r + (v : ℕ), ?_, ?_, ?_⟩
-  · simp only [ugrow_ids, Finset.mem_range]; omega
-  · apply Fin.ext
-    simp only [ugrow_block, growBlock_creator_val]
-    omega
-  · simp only [ugrow_block, growBlock_round]; omega
+    PopulatedOn (Ugrow N) {1, 2, 3} r :=
+  rrUniverse_populatedOn _ _ _ _ _ _ hr
 
 /-- The view-level witness with production removed. `base` covers round
 `0` only; every later round is derived. -/
@@ -211,7 +204,7 @@ def ugrowSkewGrowth (N : ℕ) : ViewGrowth (Ugrow N) {1, 2, 3} 0 N where
     have hv4 := v.isLt
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
     simp only [ugrow_ids, Finset.mem_range] at hb
-    simp only [ugrow_block, growBlock_round] at hbr
+    simp only [ugrow_block, rrBlock_round] at hbr
     have hbc' : b % 4 = (v : ℕ) := by
       have := congrArg (fun (x : Fin 4) => (x : ℕ)) hbc
       simpa using this
@@ -229,7 +222,7 @@ def ugrowSkewGrowth (N : ℕ) : ViewGrowth (Ugrow N) {1, 2, 3} 0 N where
     have hv4 := v.isLt
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
     simp only [ugrow_ids, Finset.mem_range] at hc
-    simp only [ugrow_block, growBlock_round] at hcr har
+    simp only [ugrow_block, rrBlock_round] at hcr har
     simp only [skewHolds, Finset.mem_filter, Finset.mem_range] at ha
     simp only [ugrow_block, mem_growBlock_refs]
     omega
@@ -239,9 +232,9 @@ def ugrowSkewGrowth (N : ℕ) : ViewGrowth (Ugrow N) {1, 2, 3} 0 N where
     refine ⟨4 * (n + 1) + (v : ℕ), ?_, ?_, ?_⟩
     · simp only [ugrow_ids, Finset.mem_range]; omega
     · apply Fin.ext
-      simp only [ugrow_block, growBlock_creator_val]
+      simp only [ugrow_block, rrBlock_creator_val]
       omega
-    · simp only [ugrow_block, growBlock_round]; omega
+    · simp only [ugrow_block, rrBlock_round]; omega
 
 /-- The drift, backoff and quorum side conditions, at the same constants
 as `ugrowSkewView`: drift `2`, `delay = 2`, `timeout = 4`. -/

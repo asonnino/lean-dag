@@ -346,9 +346,7 @@ theorem exists_shared_correct_ref (hcard : (Correct : Finset Validator).card ≤
     (creatorsOf U.block (U.block c₁).refs)
   have h₂ := card_le_card_inter_correct_add_byzantine
     (creatorsOf U.block (U.block c₂).refs)
-  have hcb := card_correct_add_byzantine (Validator := Validator)
-  have hbf := F.card_byzantine
-  have hnv := F.card_validators
+  obtain ⟨hcb, hbf, hnv⟩ := faults_arith (Validator := Validator)
   have hsub : (creatorsOf U.block (U.block c₁).refs ∩ (Correct : Finset Validator)) ∪
       (creatorsOf U.block (U.block c₂).refs ∩ (Correct : Finset Validator)) ⊆
       (Correct : Finset Validator) :=

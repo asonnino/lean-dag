@@ -62,86 +62,48 @@ theorem mem_omitRefs {x : Fin 4} {b i : ℕ} :
     · rintro ⟨⟨hlo, hhi⟩, hor⟩
       exact ⟨hor.resolve_left h, hlo, hhi⟩
 
-/-- Block `b` sits at round `b / 4`, is authored by validator `b % 4`, and
-references the round below except for validator `2`'s block. -/
-def omitBlock (x : Fin 4) (b : ℕ) : Block (Fin 4) ℕ Unit where
-  round := b / 4
-  creator := ⟨b % 4, by omega⟩
-  refs := omitRefs x b
-  payload := ()
+/-- The DAG of the round-robin scheme, with validator `x` excluded from
+everyone else's references.
 
-@[simp] theorem omitBlock_round (x : Fin 4) (b : ℕ) : (omitBlock x b).round = b / 4 := rfl
-@[simp] theorem omitBlock_creator_val (x : Fin 4) (b : ℕ) :
-    ((omitBlock x b).creator : ℕ) = b % 4 := rfl
-@[simp] theorem omitBlock_refs (x : Fin 4) (b : ℕ) : (omitBlock x b).refs = omitRefs x b := rfl
-
-/-- The DAG of `Ugrow`'s shape, with validator `2` excluded from everyone
-else's references. -/
-def Uomit (x : Fin 4) (N : ℕ) : BlockUniverse (Fin 4) ℕ Unit where
-  ids := Finset.range (4 * (N + 1))
-  block := omitBlock x
-  complete := by
-    intro i hi j hj
-    rw [Finset.mem_range] at hi ⊢
-    rw [omitBlock_refs, mem_omitRefs] at hj
-    omega
-  valid := by
-    intro i _
-    refine ⟨?_, ?_, ?_, ?_⟩
-    · intro j hj
-      rw [omitBlock_refs, mem_omitRefs] at hj
-      simp only [omitBlock_round]
-      omega
-    · intro j hj k hk hjk
-      rw [omitBlock_refs, mem_omitRefs] at hj hk
-      have : (j % 4) = (k % 4) := by
-        have := congrArg (fun (v : Fin 4) => (v : ℕ)) hjk
-        simpa using this
-      omega
-    · -- validators `0`, `1` and `3` are always referenced, and three is a quorum
-      intro h
-      simp only [omitBlock_round] at h
-      have hsub : (Finset.univ.erase x) ⊆ creators (omitBlock x) (omitBlock x i) := by
+Only the two clauses the reference set controls are proved here; the rest
+of validity is `rrUniverse`'s, since the block layout is the shared one. -/
+def Uomit (x : Fin 4) (N : ℕ) : BlockUniverse (Fin 4) ℕ Unit :=
+  rrUniverse N (omitRefs x)
+    (fun b i hi => (mem_omitRefs.mp hi).1)
+    (by
+      -- the three validators other than `x` are always referenced
+      intro i h
+      have hsub : (Finset.univ.erase x) ⊆
+          creators (rrBlock (omitRefs x)) (rrBlock (omitRefs x) i) := by
         intro y hy
         rw [Finset.mem_erase] at hy
         have hyx : (y : ℕ) ≠ (x : ℕ) := fun hc => hy.1 (Fin.ext hc)
         have hylt := y.isLt
         have hxlt := x.isLt
-        simp only [creators, creatorsOf, omitBlock_refs, Finset.mem_image]
+        simp only [creators, creatorsOf, rrBlock_refs, Finset.mem_image]
         refine ⟨4 * (i / 4) - 4 + (y : ℕ), ?_, ?_⟩
         · rw [mem_omitRefs]; omega
         · apply Fin.ext
-          simp only [omitBlock_creator_val]
+          simp only [rrBlock_creator_val]
           omega
       have hcard : (Finset.univ.erase x).card = 3 := by
         rw [Finset.card_erase_of_mem (Finset.mem_univ x), Finset.card_univ]
         rfl
       have := Finset.card_le_card hsub
-      have hf : Faults.f (Fin 4) = 1 := rfl
-      have hn : Fintype.card (Fin 4) = 4 := rfl
-      omega
-    · -- self-parent: the erased id is validator `2`'s, and `2` never erases
-      intro h
-      simp only [omitBlock_round] at h
-      refine ⟨4 * (i / 4) - 4 + i % 4, ?_, ?_⟩
-      · rw [omitBlock_refs, mem_omitRefs]
-        by_cases h2 : i % 4 = (x : ℕ)
-        · exact ⟨by omega, Or.inl h2⟩
-        · exact ⟨by omega, Or.inr (by omega)⟩
-      · apply Fin.ext
-        simp only [omitBlock_creator_val]
-        omega
-  no_equivocation := by
-    intro i _ j _ _ hc hr
-    have hv : (i % 4) = (j % 4) := by
-      have := congrArg (fun (v : Fin 4) => (v : ℕ)) hc
-      simpa using this
-    simp only [omitBlock_round] at hr
-    omega
+      omega)
+    (by
+      -- `x` is exempt from its own erasure, so every author keeps a parent
+      intro i h
+      have hxlt := x.isLt
+      rw [mem_omitRefs]
+      by_cases h2 : i % 4 = (x : ℕ)
+      · exact ⟨by omega, Or.inl h2⟩
+      · exact ⟨by omega, Or.inr (by omega)⟩)
 
 @[simp] theorem uomit_ids (x : Fin 4) (N : ℕ) :
     (Uomit x N).ids = Finset.range (4 * (N + 1)) := rfl
-@[simp] theorem uomit_block (x : Fin 4) (N : ℕ) : (Uomit x N).block = omitBlock x := rfl
+@[simp] theorem uomit_block (x : Fin 4) (N : ℕ) :
+    (Uomit x N).block = rrBlock (omitRefs x) := rfl
 
 /-- **Coverage fails whenever the omitted validator is inside the set.**
 `y`'s block of round `R+1` does not reference `x`'s block of round `R`.
@@ -158,15 +120,15 @@ theorem uomit_not_synchronisedOn {N : ℕ} {x y : Fin 4} (hxy : y ≠ x)
   have hamem : (4 * R + (x : ℕ)) ∈ (Uomit x N).ids := by
     simp only [uomit_ids, Finset.mem_range]; omega
   have hbc : ((Uomit x N).block (4 * (R + 1) + (y : ℕ))).creator = y := by
-    apply Fin.ext; simp only [uomit_block, omitBlock_creator_val]; omega
+    apply Fin.ext; simp only [uomit_block, rrBlock_creator_val]; omega
   have hac : ((Uomit x N).block (4 * R + (x : ℕ))).creator = x := by
-    apply Fin.ext; simp only [uomit_block, omitBlock_creator_val]; omega
+    apply Fin.ext; simp only [uomit_block, rrBlock_creator_val]; omega
   have := hsync R (le_refl R) _ hbmem
-    (by simp only [uomit_block, omitBlock_round]; omega)
+    (by simp only [uomit_block, rrBlock_round]; omega)
     (by rw [hbc]; exact hy) _ hamem
-    (by simp only [uomit_block, omitBlock_round]; omega)
+    (by simp only [uomit_block, rrBlock_round]; omega)
     (by rw [hac]; exact hx)
-  simp only [uomit_block, omitBlock_refs, mem_omitRefs] at this
+  simp only [uomit_block, rrBlock_refs, mem_omitRefs] at this
   omega
 
 /-- What `v` holds at time `t`: everything except validator `2`'s blocks,
@@ -187,7 +149,7 @@ def ugapGrowth (N : ℕ) : ViewGrowth (Uomit 2 N) (Correct : Finset (Fin 4)) 0 N
   delay := 1
   rounds_le b hb := by
     simp only [uomit_ids, Finset.mem_range] at hb
-    simp only [uomit_block, omitBlock_round]
+    simp only [uomit_block, rrBlock_round]
     omega
   waits _ _ _ := by omega
   timeout_pos _ := by omega
@@ -204,7 +166,7 @@ def ugapGrowth (N : ℕ) : ViewGrowth (Uomit 2 N) (Correct : Finset (Fin 4)) 0 N
   holds_own v _ n _ b hb hbc hbr := by
     have hv := v.isLt
     simp only [uomit_ids, Finset.mem_range] at hb
-    simp only [uomit_block, omitBlock_round] at hbr
+    simp only [uomit_block, rrBlock_round] at hbr
     have hbc' : b % 4 = (v : ℕ) := by
       have := congrArg (fun (x : Fin 4) => (x : ℕ)) hbc
       simpa using this
@@ -228,12 +190,12 @@ def ugapGrowth (N : ℕ) : ViewGrowth (Uomit 2 N) (Correct : Finset (Fin 4)) 0 N
   references v _ n hn c hc hcc hcr a ha har := by
     have hv := v.isLt
     simp only [uomit_ids, Finset.mem_range] at hc
-    simp only [uomit_block, omitBlock_round] at hcr har
+    simp only [uomit_block, rrBlock_round] at hcr har
     have hcc' : c % 4 = (v : ℕ) := by
       have := congrArg (fun (x : Fin 4) => (x : ℕ)) hcc
       simpa using this
     simp only [gapHolds, Finset.mem_filter, Finset.mem_range] at ha
-    simp only [uomit_block, omitBlock_refs, mem_omitRefs]
+    simp only [uomit_block, rrBlock_refs, mem_omitRefs]
     -- the build is at `v + 4 * (n+1) ≤ 3 + 4 * N`, before the late arrival
     have hlate : ¬ (4 * N + 5 ≤ (v : ℕ) + 4 * (n + 1)) := by omega
     refine ⟨by omega, ?_⟩
@@ -247,14 +209,10 @@ def ugapGrowth (N : ℕ) : ViewGrowth (Uomit 2 N) (Correct : Finset (Fin 4)) 0 N
     have hv := v.isLt
     refine ⟨(v : ℕ), ?_, ?_, ?_⟩
     · simp only [uomit_ids, Finset.mem_range]; omega
-    · apply Fin.ext; simp only [uomit_block, omitBlock_creator_val]; omega
-    · simp only [uomit_block, omitBlock_round]; omega
-  builds v _ n _ hn _ := by
-    have hv := v.isLt
-    refine ⟨4 * (n + 1) + (v : ℕ), ?_, ?_, ?_⟩
-    · simp only [uomit_ids, Finset.mem_range]; omega
-    · apply Fin.ext; simp only [uomit_block, omitBlock_creator_val]; omega
-    · simp only [uomit_block, omitBlock_round]; omega
+    · apply Fin.ext; simp only [uomit_block, rrBlock_creator_val]; omega
+    · simp only [uomit_block, rrBlock_round]; omega
+  builds v hv n _ hn _ :=
+    rrUniverse_populatedOn _ _ _ _ _ _ (show n + 1 ≤ N by omega) v hv
 
 /-- **Convergence without a bound, from time `0`.** Holdings do converge:
 whatever anyone holds, everyone holds by `4 * N + 5`. No GST, no `delay`. -/
@@ -304,10 +262,10 @@ theorem ugap_not_viewsConvergeOn {N : ℕ} (hN : 0 < N) :
     refine ⟨?_, ?_, h2⟩
     · simp only [ugapGrowth, gapHolds, Finset.mem_filter, Finset.mem_range]
       exact ⟨by omega, Or.inr (Or.inl rfl)⟩
-    · simp only [uomit_block, omitBlock_round]
+    · simp only [uomit_block, rrBlock_round]
   have hbc : ((Uomit 2 N).block 2).creator ∈ (Correct : Finset (Fin 4)) := by
     have : ((Uomit 2 N).block 2).creator = (2 : Fin 4) := by
-      apply Fin.ext; simp only [uomit_block, omitBlock_creator_val]; rfl
+      apply Fin.ext; simp only [uomit_block, rrBlock_creator_val]; rfl
     rw [this]; exact h2
   have hcon := h 2 h2 1 h1 0 (Nat.zero_le _) 2 hb hbc
   rw [ViewGrowth.mem_toDelivery] at hcon
@@ -356,17 +314,17 @@ def ustarveSync (N : ℕ) : ViewSync (Uomit 3 N) ({1, 2} : Finset (Fin 4)) N whe
   delay := 1
   rounds_le b hb := by
     simp only [uomit_ids, Finset.mem_range] at hb
-    simp only [uomit_block, omitBlock_round]
+    simp only [uomit_block, rrBlock_round]
     omega
   blk_mem v hv n hn := by
     obtain ⟨_, _⟩ := mem_T12_bounds hv
     simp only [uomit_ids, Finset.mem_range]; omega
   blk_creator v hv n _ := by
     obtain ⟨_, _⟩ := mem_T12_bounds hv
-    apply Fin.ext; simp only [uomit_block, omitBlock_creator_val]; omega
+    apply Fin.ext; simp only [uomit_block, rrBlock_creator_val]; omega
   blk_round v hv n _ := by
     obtain ⟨_, _⟩ := mem_T12_bounds hv
-    simp only [uomit_block, omitBlock_round]; omega
+    simp only [uomit_block, rrBlock_round]; omega
   waits _ _ _ := by omega
   timeout_pos _ := by omega
   latest n := 2 + 4 * n
@@ -393,9 +351,9 @@ def ustarveSync (N : ℕ) : ViewSync (Uomit 3 N) ({1, 2} : Finset (Fin 4)) N whe
     · omega
   references v hv n hn a ha har := by
     obtain ⟨h1, h2⟩ := mem_T12_bounds hv
-    simp only [uomit_block, omitBlock_round] at har
+    simp only [uomit_block, rrBlock_round] at har
     simp only [starveHolds, Finset.mem_filter, Finset.mem_range] at ha
-    simp only [uomit_block, omitBlock_refs, mem_omitRefs]
+    simp only [uomit_block, rrBlock_refs, mem_omitRefs]
     refine ⟨by omega, Or.inr ?_⟩
     rcases ha.2 with h | h
     · omega

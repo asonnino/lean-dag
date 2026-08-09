@@ -32,7 +32,7 @@ theorem ugrow_blocksAt_eq_empty {N n : ℕ} (h : N < n) : blocksAt (Ugrow N) n =
   rw [mem_blocksAt] at hi
   obtain ⟨him, hir⟩ := hi
   simp only [ugrow_ids, Finset.mem_range] at him
-  simp only [ugrow_block, growBlock_round] at hir
+  simp only [ugrow_block, rrBlock_round] at hir
   omega
 
 theorem ugrow_le_of_authorsAt {N n : ℕ} (h : 0 < (authorsAt (Ugrow N) n).card) :
@@ -61,14 +61,14 @@ def ugrowHonest (N : ℕ) : Delivery (Ugrow N) where
     have hv : (i % 4) = (j % 4) := by
       have := congrArg (fun (v : Fin 4) => (v : ℕ)) hij
       simpa using this
-    simp only [ugrow_block, growBlock_round] at hi hj
+    simp only [ugrow_block, rrBlock_round] at hi hj
     omega
   accepts_correct _ _ _ _ h _ := h
   includes := by
     intro _ _ n b _ _ hbr i hi
     obtain ⟨hi, _⟩ := Finset.mem_filter.mp hi
     rw [mem_blocksAt] at hi
-    simp only [ugrow_block, growBlock_round] at hbr hi
+    simp only [ugrow_block, rrBlock_round] at hbr hi
     simp only [ugrow_block, mem_growBlock_refs]
     omega
 
@@ -78,7 +78,7 @@ theorem ugrowHonest_partial (N n : ℕ) (hn : n ≤ N) (v : Fin 4) :
     4 * n ∈ blocksAt (Ugrow N) n ∧ 4 * n ∉ (ugrowHonest N).held v n := by
   constructor
   · rw [mem_blocksAt]
-    simp only [ugrow_ids, Finset.mem_range, ugrow_block, growBlock_round]
+    simp only [ugrow_ids, Finset.mem_range, ugrow_block, rrBlock_round]
     omega
   · intro h
     obtain ⟨_, hdvd⟩ := Finset.mem_filter.mp h
@@ -99,13 +99,13 @@ theorem ugrowHonest_deliversQuorum (N : ℕ) : DeliversQuorum (ugrowHonest N) :=
   · have hx3 : (x : ℕ) = 1 ∨ (x : ℕ) = 2 ∨ (x : ℕ) = 3 := by fin_cases hx <;> simp
     refine Finset.mem_filter.mpr ⟨?_, ?_⟩
     · rw [mem_blocksAt]
-      simp only [ugrow_ids, Finset.mem_range, ugrow_block, growBlock_round]
+      simp only [ugrow_ids, Finset.mem_range, ugrow_block, rrBlock_round]
       omega
     · rintro ⟨c, hc⟩
       omega
   · have := x.isLt
     apply Fin.ext
-    simp only [ugrow_block, growBlock_creator_val]
+    simp only [ugrow_block, rrBlock_creator_val]
     omega
 
 /-! ## Nonzero drift and delay
@@ -141,7 +141,7 @@ def ugrowSkew (N : ℕ) : Timing (Ugrow N) {1, 2, 3} N where
   delay := 2
   rounds_le b hb := by
     simp only [ugrow_ids, Finset.mem_range] at hb
-    simp only [ugrow_block, growBlock_round]
+    simp only [ugrow_block, rrBlock_round]
     omega
   blk_mem v _ n hn := by
     have := v.isLt
@@ -150,11 +150,11 @@ def ugrowSkew (N : ℕ) : Timing (Ugrow N) {1, 2, 3} N where
   blk_creator v _ n _ := by
     have := v.isLt
     apply Fin.ext
-    simp only [ugrow_block, growBlock_creator_val]
+    simp only [ugrow_block, rrBlock_creator_val]
     omega
   blk_round v _ n _ := by
     have := v.isLt
-    simp only [ugrow_block, growBlock_round]
+    simp only [ugrow_block, rrBlock_round]
     omega
   waits _ _ _ _ := by omega
   timeout_pos _ := by omega

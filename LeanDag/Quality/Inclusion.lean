@@ -47,6 +47,27 @@ theorem mem_history_of_decided_commit (hs : Synchronised U R)
   mem_history_of_correct hs ((U.block L).round - (U.block b).round - 1)
     L (isLeaderBlock_of_decided hdec).1 b hb hLc hbc hR (by omega)
 
+/-- **A slot whose commit carries a whole round into the ledger.**
+
+The conclusion CQ6 and its refinements share: in any sufficiently grown
+synchronous execution, slot `k` commits a leader whose history contains
+every correct round-`m` block, and every such block is in the agreed
+ledger from any later position. Naming it keeps the quantifier order
+visible — `k` is fixed by the schedule before an execution is named — as
+`CommitsAt` does for the recurrence results. -/
+def IncludesAt (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
+    [S : Slots Validator] (R m k : ℕ) : Prop :=
+  ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+    (∀ r ≤ N, Populated U r) → Synchronised U R →
+    S.slotRound k + 2 ≤ N →
+    ∃ L, Decided U (View.full U) k (some L) ∧
+      ∀ b ∈ U.ids,
+        (U.block b).creator ∈ (Correct : Finset Validator) →
+        (U.block b).round = m →
+        b ∈ history U L ∧
+        ∀ (g : ℕ → Option BlockId) (n : ℕ), g k = some L → k < n →
+          b ∈ ledgerSet U g n
+
 /-- **CQ6 (inclusion liveness).** Under a fair schedule over reliable
 validators and post-`R` synchrony, for every round `m ≥ R` there is a
 committed slot — above `m`, led by a correct validator — whose flush
@@ -60,16 +81,7 @@ theorem committed_of_correct_block (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (fair : FairScheduleOn T) (R m : ℕ) (hRm : R ≤ m) :
     ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → Synchronised U R →
-        S.slotRound k' + 2 ≤ N →
-        ∃ L, Decided U (View.full U) k' (some L) ∧
-          ∀ b ∈ U.ids,
-            (U.block b).creator ∈ (Correct : Finset Validator) →
-            (U.block b).round = m →
-            b ∈ history U L ∧
-            ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
-              b ∈ ledgerSet U g n := by
+      IncludesAt (Validator := Validator) BlockId Payload R m k' := by
   obtain ⟨k₀, hk₀⟩ := S.unbounded R
   obtain ⟨k', hk', hlead⟩ := fair (max (slotAt Validator (m + 1)) k₀)
   have hRk' : R ≤ S.slotRound k' :=
@@ -80,10 +92,8 @@ theorem committed_of_correct_block (hT : T ⊆ (Correct : Finset Validator))
     omega
   refine ⟨k', hm, hRk', ?_⟩
   intro U N hpop hs hN
-  obtain ⟨L, hLb, hdec⟩ := decided_of_leader_mem hcard (hs.mono hT) hRk'
-    (PopulatedOn.mono hT (hpop _ (by omega)))
-    (PopulatedOn.mono hT (hpop _ (by omega)))
-    (PopulatedOn.mono hT (hpop _ (by omega))) hlead
+  obtain ⟨L, hLb, hdec⟩ :=
+    decided_of_leader_of_populated hT hcard (hs.mono hT) hRk' hpop (by omega) hlead
   refine ⟨L, hdec, ?_⟩
   intro b hb hbc hbr
   have hLc : (U.block L).creator ∈ (Correct : Finset Validator) := by
@@ -100,16 +110,7 @@ theorem committed_of_correct_block_correct
     (fair : FairScheduleOn (Correct : Finset Validator)) (R m : ℕ)
     (hRm : R ≤ m) :
     ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → Synchronised U R →
-        S.slotRound k' + 2 ≤ N →
-        ∃ L, Decided U (View.full U) k' (some L) ∧
-          ∀ b ∈ U.ids,
-            (U.block b).creator ∈ (Correct : Finset Validator) →
-            (U.block b).round = m →
-            b ∈ history U L ∧
-            ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
-              b ∈ ledgerSet U g n :=
+      IncludesAt (Validator := Validator) BlockId Payload R m k' :=
   committed_of_correct_block Finset.Subset.rfl card_correct fair R m hRm
 
 end LeanDag

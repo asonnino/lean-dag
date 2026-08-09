@@ -2,7 +2,14 @@
 """Two mechanical checks on docs/report.md, per docs/style.md section 4.
 
   1. every section cross-reference names a section that exists;
-  2. every backticked Lean identifier names a declaration that exists.
+  2. every backticked Lean identifier names a declaration that exists;
+  3. every displayed theorem statement still matches its source signature.
+
+Check 3 catches the failure the first two cannot: a displayed statement
+that has drifted from the declaration it claims to show. It compares the
+declaration names appearing in the report's rendering of `theorem X`
+against those in `X`'s actual signature, and reports any the source no
+longer mentions.
 
 The declaration list is read from docs/depgraph/deps.tsv, the extraction of
 the compiled environment that also drives the support diagrams. Regenerate
@@ -65,6 +72,57 @@ def resolves(name, decls, suffixes):
     return "." in name and name.split(".")[-1] in suffixes
 
 
+DECL_START = re.compile(r"^(?:@\[[^\]]*\]\s*)?(?:private\s+|protected\s+|noncomputable\s+)?"
+                        r"(?:theorem|lemma|def|abbrev|instance|structure|class)\s+"
+                        r"([A-Za-z_][A-Za-z0-9_.'\u2032]*)")
+
+
+def source_declarations(root):
+    """name -> full declaration text (statement and proof).
+
+    The whole declaration rather than the signature alone: a signature
+    cannot be delimited reliably, since named arguments such as
+    `(Validator := Validator)` contain the token that would end it. The
+    coarser text still catches a displayed statement naming something the
+    declaration no longer mentions anywhere, which is the drift that
+    matters.
+    """
+    decls = {}
+    for f in (root / "LeanDag").rglob("*.lean"):
+        lines = f.read_text().split("\n")
+        starts = [i for i, l in enumerate(lines) if DECL_START.match(l)]
+        for n, i in enumerate(starts):
+            end = starts[n + 1] if n + 1 < len(starts) else len(lines)
+            decls.setdefault(DECL_START.match(lines[i]).group(1),
+                             " ".join(lines[i:end]))
+    return decls
+
+
+def displayed_statements(text):
+    """name -> displayed statement text, from the report's lean blocks."""
+    out = {}
+    for block in re.findall(r"^```lean\n(.*?)^```$", text, re.M | re.S):
+        lines = block.split("\n")
+        i = 0
+        while i < len(lines):
+            m = re.match(r"^(?:theorem|def|abbrev|structure|class)\s+"
+                         r"([A-Za-z_][A-Za-z0-9_.'\u2032]*)", lines[i])
+            if m:
+                buf = []
+                j = i
+                while j < len(lines):
+                    if j > i and re.match(r"^(?:theorem|def|abbrev|structure|class)\s",
+                                          lines[j]):
+                        break
+                    buf.append(lines[j])
+                    j += 1
+                out.setdefault(m.group(1), " ".join(buf))
+                i = j
+                continue
+            i += 1
+    return out
+
+
 def audit(path, decls, suffixes):
     text = path.read_text()
     failures = []
@@ -90,9 +148,28 @@ def audit(path, decls, suffixes):
         if not resolves(tok, decls, suffixes):
             failures.append(("ident", tok))
 
-    print(f"{path.relative_to(ROOT)}: {len(have)} sections, {len(seen)} distinct backticked tokens")
+    # check 3: displayed statements still match their source signatures
+    sigs = source_declarations(ROOT)
+    shown = displayed_statements(text)
+    drifted = 0
+    for name, disp in shown.items():
+        src = sigs.get(name)
+        if src is None:
+            continue
+        for tok in set(re.findall(r"[A-Za-z_][A-Za-z0-9_.'\u2032]*", disp)):
+            if tok == name or tok in ALLOW:
+                continue
+            if not (tok in decls or tok in suffixes):
+                continue          # not a declaration of this development
+            if tok not in src:
+                failures.append(("stale", f"{name} displays `{tok}`, absent from its signature"))
+                drifted += 1
+
+    print(f"{path.relative_to(ROOT)}: {len(have)} sections, "
+          f"{len(seen)} distinct backticked tokens, {len(shown)} displayed statements")
     for kind, item in failures:
-        label = "unresolved section" if kind == "xref" else "unknown declaration"
+        label = {"xref": "unresolved section", "ident": "unknown declaration"}.get(
+            kind, "stale displayed statement")
         print(f"  FAIL {label}: {item}")
     if not failures:
         print("  ok")

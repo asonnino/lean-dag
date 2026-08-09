@@ -52,16 +52,7 @@ theorem committed_of_correct_block_within
     ∃ k', slotAt Validator (m + 1) ≤ k' ∧
       k' < slotAt Validator (m + 1) + w ∧
       m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → Synchronised U R →
-        S.slotRound k' + 2 ≤ N →
-        ∃ L, Decided U (View.full U) k' (some L) ∧
-          ∀ b ∈ U.ids,
-            (U.block b).creator ∈ (Correct : Finset Validator) →
-            (U.block b).round = m →
-            b ∈ history U L ∧
-            ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
-              b ∈ ledgerSet U g n := by
+      IncludesAt (Validator := Validator) BlockId Payload R m k' := by
   obtain ⟨k', hk₁, hk₂, hlead⟩ := fair (slotAt Validator (m + 1))
   have hm : m < S.slotRound k' := by
     have h1 := le_slotRound_slotAt (Validator := Validator) (m + 1)
@@ -70,10 +61,8 @@ theorem committed_of_correct_block_within
   have hRk' : R ≤ S.slotRound k' := by omega
   refine ⟨k', hk₁, hk₂, hm, hRk', ?_⟩
   intro U N hpop hs hN
-  obtain ⟨L, hLb, hdec⟩ := decided_of_leader_mem hcard (hs.mono hT) hRk'
-    (PopulatedOn.mono hT (hpop _ (by omega)))
-    (PopulatedOn.mono hT (hpop _ (by omega)))
-    (PopulatedOn.mono hT (hpop _ (by omega))) hlead
+  obtain ⟨L, hLb, hdec⟩ :=
+    decided_of_leader_of_populated hT hcard (hs.mono hT) hRk' hpop (by omega) hlead
   refine ⟨L, hdec, ?_⟩
   intro b hb hbc hbr
   have hLc : (U.block L).creator ∈ (Correct : Finset Validator) := by
@@ -97,16 +86,7 @@ theorem committed_of_correct_block_by_round
     ∃ k', m < S.slotRound k' ∧
       S.slotRound k' ≤ S.slotRound (slotAt Validator (m + 1)) + s * w ∧
       R ≤ S.slotRound k' ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → Synchronised U R →
-        S.slotRound k' + 2 ≤ N →
-        ∃ L, Decided U (View.full U) k' (some L) ∧
-          ∀ b ∈ U.ids,
-            (U.block b).creator ∈ (Correct : Finset Validator) →
-            (U.block b).round = m →
-            b ∈ history U L ∧
-            ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
-              b ∈ ledgerSet U g n := by
+      IncludesAt (Validator := Validator) BlockId Payload R m k' := by
   obtain ⟨k', hk₁, hk₂, hm, hRk', hrest⟩ :=
     committed_of_correct_block_within (BlockId := BlockId) (Payload := Payload)
       hT hcard fair R m hRm
@@ -136,16 +116,7 @@ theorem chain_quality (hT : T ⊆ (Correct : Finset Validator))
         (δ : ℕ), Decided U V k (some L) → δ < (U.block L).round →
         (Correct : Finset Validator).card ≤ 2 * (coveredAt U L δ).card) ∧
     ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → Synchronised U R →
-        S.slotRound k' + 2 ≤ N →
-        ∃ L, Decided U (View.full U) k' (some L) ∧
-          ∀ b ∈ U.ids,
-            (U.block b).creator ∈ (Correct : Finset Validator) →
-            (U.block b).round = m →
-            b ∈ history U L ∧
-            ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
-              b ∈ ledgerSet U g n :=
+      IncludesAt (Validator := Validator) BlockId Payload R m k' :=
   ⟨fun _ _ _ _ _ hdec hδ =>
     card_correct_le_two_mul_coveredAt_of_decided hdec hδ,
    committed_of_correct_block hT hcard fair R m hRm⟩
