@@ -27,6 +27,10 @@ DECL = re.compile(
     rf"({KINDS})\s+([A-Za-z_][A-Za-z0-9_.'′]*)"
 )
 ATTR = re.compile(r"^@\[[^\]]*\]\s*$")
+# A declaration may be anonymous (`instance : Decidable … := by`), which the
+# named pattern above misses; a body must still stop at one.
+ANY_DECL = re.compile(
+    rf"^(?:@\[[^\]]*\]\s*)?(?:private\s+|protected\s+|noncomputable\s+)?{KINDS}\b")
 
 
 def strip_docstring(lines):
@@ -47,7 +51,7 @@ def body_of(lines, start):
     """
     out = []
     for k, raw in enumerate(lines[start:], start):
-        if k > start and (DECL.match(raw) or raw.startswith(("/--", "/-!"))
+        if k > start and (ANY_DECL.match(raw) or raw.startswith(("/--", "/-!"))
                           or ATTR.match(raw)
                           or raw.startswith(("omit ", "variable", "open ", "end ",
                                              "section", "namespace"))):

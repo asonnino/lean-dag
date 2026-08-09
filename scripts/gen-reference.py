@@ -106,6 +106,17 @@ def main():
     out.append("`scripts/gen-reference.py`; the statements are therefore the")
     out.append("declarations themselves rather than transcriptions of them.")
     out.append("")
+    out.append("Nine entries carry proofs, which can look like a")
+    out.append("misclassification. They are not. A structure in Lean may have")
+    out.append("fields that are propositions — `BlockUniverse` requires causal")
+    out.append("closure, validity and non-equivocation — so *constructing* one")
+    out.append("means discharging those obligations, and the proof is part of")
+    out.append("the definition rather than a theorem about it. `chop`, `chopD`")
+    out.append("and `toDelivery` are of this kind: each builds an object whose")
+    out.append("type demands the proofs shown. A theorem, by contrast, asserts")
+    out.append("a proposition about objects already built, and those are")
+    out.append("Appendix C.")
+    out.append("")
 
     n = 0
     for title, modules in LAYERS:

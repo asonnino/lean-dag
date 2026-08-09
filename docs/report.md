@@ -3689,6 +3689,17 @@ generated from the compiled development by
 `scripts/gen-reference.py`; the statements are therefore the
 declarations themselves rather than transcriptions of them.
 
+Nine entries carry proofs, which can look like a
+misclassification. They are not. A structure in Lean may have
+fields that are propositions — `BlockUniverse` requires causal
+closure, validity and non-equivocation — so *constructing* one
+means discharging those obligations, and the proof is part of
+the definition rather than a theorem about it. `chop`, `chopD`
+and `toDelivery` are of this kind: each builds an object whose
+type demands the proofs shown. A theorem, by contrast, asserts
+a proposition about objects already built, and those are
+Appendix C.
+
 ### The validator set and the fault model
 
 #### `Faults`
@@ -5257,9 +5268,6 @@ def StepNovelty (U : BlockUniverse Validator BlockId Payload) (κ' : ℕ) : Prop
   ∀ b ∈ U.ids, (U.block b).creator ∈ (Correct : Finset Validator) →
     ∀ p ∈ (U.block b).refs, (U.block p).creator = (U.block b).creator →
       (novelty U (history U p) b).card ≤ κ'
-
-instance : Decidable (StepNovelty U κ') := by
-  unfold StepNovelty; infer_instance
 ```
 
 Stepwise novelty: every correct block adds at most `κ'` blocks over the history of its self-parent. For a correct author the self-parent is unique (`no_equivocation`), so the `∀` costs nothing.
@@ -5347,9 +5355,6 @@ def AllExposed (U : BlockUniverse Validator BlockId Payload) (m : ℕ) : Prop :=
   ∀ X : Validator, X ∉ (Correct : Finset Validator) →
     ∀ c ∈ U.ids, (U.block c).round = m + 1 →
       (U.block c).creator ∈ (Correct : Finset Validator) → ExposedIn U c X
-
-instance : Decidable (AllExposed U m) := by
-  unfold AllExposed; infer_instance
 ```
 
 **Exposure-complete at `m`**: every correct block of round `m+1` is exposed to every Byzantine author — the state D16 manufactures once all `f` authors have equivocated toward the correct population.
@@ -5650,12 +5655,6 @@ def DirectCommit (U : BlockUniverse Validator BlockId Payload)
 def DirectSkip (U : BlockUniverse Validator BlockId Payload)
     (L : BlockId) (r : ℕ) : Prop :=
   (Fintype.card Validator - F.f) ≤ (blames U L (r + 1)).card
-
-instance : Decidable (DirectCommit U L r) :=
-  inferInstanceAs (Decidable (_ ≤ _))
-
-instance : Decidable (DirectSkip U L r) :=
-  inferInstanceAs (Decidable (_ ≤ _))
 ```
 
 **Direct skip**: a quorum of distinct authors blame `L` at its decision round.
@@ -5682,9 +5681,6 @@ The authors of decision-round support blocks for `L` visible in `A`'s cone. Coun
 def ThickLink (U : BlockUniverse Validator BlockId Payload)
     (A L : BlockId) (r : ℕ) : Prop :=
   (Fintype.card Validator - 3 * F.f) ≤ (coneSupports U A L r).card
-
-instance : Decidable (ThickLink U A L r) :=
-  inferInstanceAs (Decidable (_ ≤ _))
 ```
 
 **The indirect test** (the thesis's ThickLink): at least `n − 3f` distinct authors of support blocks for `L` in the anchor's cone. At `n = 5f+1` this is the thesis's `2f+1`.
@@ -5757,14 +5753,6 @@ Direct commit, as judged from a single view.
 def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
   (Fintype.card Validator - F.f) ≤ (blamesIn U V L r).card
-
-instance {V : View Validator BlockId Payload U} :
-    Decidable (DirectCommitIn U V L r) :=
-  inferInstanceAs (Decidable (_ ≤ _))
-
-instance {V : View Validator BlockId Payload U} :
-    Decidable (DirectSkipIn U V L r) :=
-  inferInstanceAs (Decidable (_ ≤ _))
 ```
 
 Direct skip, as judged from a single view.
