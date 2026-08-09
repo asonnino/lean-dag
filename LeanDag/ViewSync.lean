@@ -1,4 +1,4 @@
-import LeanDag.Timing
+import LeanDag.Quantitative
 
 /-!
 # View convergence, and reference coverage derived from it
@@ -180,6 +180,108 @@ theorem exists_synchronisedOn_of_converges
     (hbase : ∀ v ∈ T, ∀ w ∈ T, vs.built w n₀ ≤ vs.built v n₀ + D) :
     ∃ R, SynchronisedOn U T R :=
   exists_synchronisedOn_of_backoff vs.toTiming hT hmono hub hdel hbase
+
+/-! ## Liveness on this foundation
+
+What the whole liveness development needs, once it is grounded here.
+
+The striking point is what is **absent**: no `Delivery`, no `Live`, and no
+`DeliversQuorum` (N1). Block production is not derived from N1 and P8 in
+this setting — it is carried by the structure itself, since `blk` asserts
+a block per `T`-validator per round below the horizon, which is exactly
+`PopulatedOn`. So on this foundation the entire liveness account rests on
+
+* **view convergence** — the network's whole contribution;
+* **`references`** (P7) and **`waits`/`prompt`** (P9) — protocol;
+* **`blk`** — the production clause P8 plays, here as data;
+* **a fair schedule** (P10) — for the recurrence results;
+
+and nothing else. N1 remains necessary only for the *untimed* route, where
+production must be derived rather than assumed (§4.3). -/
+
+section Liveness
+
+variable [S : Slots Validator] {k : ℕ}
+
+/-- **Production.** The structure asserts a block per `T`-validator per
+round, so rounds are populated with no appeal to N1 or L1. -/
+theorem populatedOn (vs : ViewSync U T N) {n : ℕ} (hn : n ≤ N) :
+    PopulatedOn U T n :=
+  vs.toTiming.populatedOn hn
+
+/-- **L4 on this foundation.** A `T`-led slot past GST is committed, given
+only view convergence, the referencing rule, and a wait exceeding the
+start spread plus the delivery bound. -/
+theorem decided_of_leader_of_converges (vs : ViewSync U T N)
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card) {D₀ : ℕ}
+    (hstart : ∀ v ∈ T, ∀ w ∈ T, vs.built w 0 ≤ vs.built v 0 + D₀)
+    (hwait : ∀ n, D₀ + vs.delay ≤ vs.timeout n)
+    (hgst : vs.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) :=
+  decided_of_wait vs.toTiming hT hcard hstart hwait hgst hN hlead
+
+/-- **L6 on this foundation.** Commits recur: for every slot there is a
+later one, past any given bound on GST, which any sufficiently grown
+view-convergent execution commits.
+
+The quantifier order is L6's and carries the same content (§6.6): the
+committing slot is fixed by the schedule and the GST bound alone, before
+any execution is named. -/
+theorem commits_recur_of_converges (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (fair : FairScheduleOn T) (G k : ℕ) :
+    ∃ k', k ≤ k' ∧ G ≤ S.slotRound k' ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N D₀ : ℕ)
+        (vs : ViewSync U T N), vs.gst ≤ G →
+        (∀ v ∈ T, ∀ w ∈ T, vs.built w 0 ≤ vs.built v 0 + D₀) →
+        (∀ n, D₀ + vs.delay ≤ vs.timeout n) →
+        S.slotRound k' + 2 ≤ N →
+        ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
+  obtain ⟨k₀, hk₀⟩ := S.unbounded G
+  obtain ⟨k', hk', hlead⟩ := fair (max k k₀)
+  have hG : G ≤ S.slotRound k' :=
+    le_trans hk₀ (S.mono (le_trans (le_max_right k k₀) hk'))
+  refine ⟨k', le_trans (le_max_left _ _) hk', hG, ?_⟩
+  intro U N D₀ vs hgst hstart hwait hN
+  exact decided_of_leader_of_converges vs hT hcard hstart hwait
+    (le_trans hgst hG) hN hlead
+
+/-- **L10 on this foundation.** Every slot below a committed run is
+decided, so the ledger does not stall — again with no `Delivery` and no
+N1 anywhere in the hypotheses. -/
+theorem all_decided_below_of_converges {c : ℕ} (hc : 0 < c)
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hspan : SpansEligible (Validator := Validator) c)
+    (fair : FairRunOn T c) (G k : ℕ) :
+    ∃ b, k ≤ b ∧ G ≤ S.slotRound b ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N D₀ : ℕ)
+        (vs : ViewSync U T N), vs.gst ≤ G →
+        (∀ v ∈ T, ∀ w ∈ T, vs.built w 0 ≤ vs.built v 0 + D₀) →
+        (∀ n, D₀ + vs.delay ≤ vs.timeout n) →
+        S.slotRound (b + c - 1) + 2 ≤ N →
+        ∀ i, i < b → ∃ v, Decided U (View.full U) i v := by
+  obtain ⟨k₀, hk₀⟩ := S.unbounded G
+  obtain ⟨b, hb, hrunT⟩ := fair (max k k₀)
+  have hG : G ≤ S.slotRound b :=
+    le_trans hk₀ (S.mono (le_trans (le_max_right k k₀) hb))
+  refine ⟨b, le_trans (le_max_left _ _) hb, hG, ?_⟩
+  intro U N D₀ vs hgst hstart hwait hN
+  have hrun : ∀ j, b ≤ j → j ≤ b + c - 1 →
+      ∃ B, Decided U (View.full U) j (some B) := by
+    intro j hj1 hj2
+    have hlead : S.leader j ∈ T := by
+      have := hrunT (j - b) (by omega)
+      rwa [Nat.add_sub_cancel' hj1] at this
+    have hjr : S.slotRound j ≤ S.slotRound (b + c - 1) := S.mono hj2
+    obtain ⟨L, -, hdec⟩ := decided_of_leader_of_converges vs hT hcard hstart hwait
+      (le_trans hgst (le_trans hG (S.mono hj1))) (by omega) hlead
+    exact ⟨L, hdec⟩
+  exact decided_below_of_committed_run (by omega) (fun i hi => hspan b i hi) hrun
+
+end Liveness
 
 end ViewSync
 

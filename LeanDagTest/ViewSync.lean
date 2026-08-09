@@ -1,5 +1,6 @@
 import LeanDag.ViewSync
 import LeanDagTest.Partial
+import LeanDagTest.Quantitative
 
 /-!
 # View convergence, witnessed
@@ -93,7 +94,34 @@ result of `Timing.lean` reads off the view-level witness unchanged. -/
 example (N : ℕ) : (ugrowSkewView N).toTiming.delay = 2 := rfl
 example (N : ℕ) : (ugrowSkewView N).toTiming.built 1 0 = 1 := rfl
 
+/-! ## Liveness on the foundation, on data
+
+`Ugrow`'s round-robin schedule commits, and the whole chain — production,
+coverage, the commit — runs off the view-level structure with no
+`Delivery`, no `Live` and no `DeliversQuorum` anywhere. -/
+
+-- Production comes from the structure itself.
+example (N : ℕ) (hn : 2 ≤ N) : PopulatedOn (Ugrow N) {1, 2, 3} 2 :=
+  (ugrowSkewView N).populatedOn hn
+
+/-- A `{1,2,3}`-led slot commits, from view convergence and the wait
+alone. -/
+example (N : ℕ) (hlead : rrSlots.leader 3 ∈ ({1, 2, 3} : Finset (Fin 4)))
+    (hN : rrSlots.slotRound 3 + 2 ≤ N) :
+    ∃ L, IsLeaderBlock (S := rrSlots) (Ugrow N) 3 L ∧
+      Decided (S := rrSlots) (Ugrow N) (View.full (Ugrow N)) 3 (some L) :=
+  (ugrowSkewView N).decided_of_leader_of_converges (S := rrSlots) (by decide)
+    (by decide) (D₀ := 2)
+    (fun v hv w hw => by
+      obtain ⟨_, _⟩ := mem_T_bounds hv
+      obtain ⟨_, _⟩ := mem_T_bounds hw
+      show (w : ℕ) + 4 * 0 ≤ ((v : ℕ) + 4 * 0) + 2
+      omega)
+    (fun n => by show 2 + 2 ≤ 4; omega) (Nat.zero_le _) hN hlead
+
 #print axioms ugrowSkewView_synchronised
+#print axioms LeanDag.ViewSync.commits_recur_of_converges
+#print axioms LeanDag.ViewSync.all_decided_below_of_converges
 #print axioms LeanDag.ViewSync.covers_of_converges
 
 end LeanDagTest
