@@ -1752,6 +1752,65 @@ before GST the network may deliver nothing, and no round need be
 populated. The two routes run the same induction and differ only in where
 it starts — `R = 0` untimed, `R` past GST timed.
 
+**The untimed condition, induced.** `ViewsConverge` is stated over a
+`Delivery`, whose `held v n` is documented as *what `v` held from round
+`n` when it built its round-`n+1` block*. A `ViewGrowth` has exactly
+that, as `holds v (built v (n+1))`, so it induces a delivery and the
+untimed condition becomes a theorem about it:
+
+```lean
+def toDelivery : Delivery U where
+  held v n := (vg.holds v (vg.built v (n + 1))).filter
+    fun b => (U.block b).round = n ∧ v ∈ T ∧ n < N
+  accepted v n := … filter (fun b => (U.block b).creator ∈ Correct)
+  …
+
+theorem viewsConvergeOn_toDelivery (hD : DriftOn vg.built T R D N)
+    (hgst : vg.gst ≤ R) (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) :
+    ViewsConvergeOn vg.toDelivery T R
+```
+
+Accepting conservatively is what makes `accepted_inj` a theorem rather
+than a further assumption: two accepted blocks share an author only if
+that author is correct, and non-equivocation identifies them. `includes`
+is `references`, and needs no side condition on the horizon because no
+block exists above `N`.
+
+Two relativisations survive the passage, and both are forced. The induced
+delivery holds nothing outside `T` or above the horizon, because
+`converges` and `holds_own` say nothing there; and the derived condition
+runs from `R` on, because `converges` is silent below `gst`. So
+`ViewsConvergeOn T R` is what is obtained, of which `ViewsConverge` is
+the case `T = Correct`, `R = 0` — `viewsConverge_toDelivery`, with both
+parameters carried in the type since they are parameters of the
+structure. The relation between the timed and untimed formulations is
+therefore a hierarchy, in the same shape as the one between `converges`
+and `Timing.covers`, rather than an equivalence.
+
+**The bound is necessary.** `convergesWithin_iff_bounded` factors the
+network assumption into a qualitative half and a quantitative one, and it
+is fair to ask whether the second is doing any work. It is, and the claim
+is now checked rather than argued. `Ugap` is `Ugrow` with one block per
+round withheld — validator `2`'s, from everyone but validator `2`. The
+withheld blocks arrive after every build in the run, so holdings converge;
+they converge too late to be referenced. `ugapGrowth` certifies every
+protocol clause field by field, and
+
+```lean
+theorem bound_is_necessary (hN : 0 < N) :
+    ConvergesEventually (ugapGrowth N).holds Correct ∧
+      ¬ SynchronisedOn (Ugap N) Correct 0
+```
+
+Convergence without a bound holds from time `0`; coverage fails at every
+round the horizon leaves room for. The structure carries `gst = 4N + 5`,
+after every build in the run, so `converges` is true of it but says
+nothing — which is precisely the situation the qualitative half describes.
+Nothing is contradicted: `synchronisedOn_of_converges` requires
+`gst ≤ R`, and at such an `R` coverage holds vacuously for want of blocks
+above it. What the model shows is that the qualitative half alone carries
+none of the weight.
+
 The reduction is more demanding than the derivation. `ViewGrowth.toViewSync`
 requires population at *every* round below the horizon, since `blk` is
 total, and so takes the pre-`R` rounds as an explicit hypothesis. That is a
@@ -2863,7 +2922,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Schedule.lean` | concrete schedules (`uniform`, `uniformSingle`); conservativity |
 | `Liveness.lean` | L0–L6, L7a; the committed-run results |
 | `Timing.lean` | L7b |
-| `ViewSync.lean` | L7c: view convergence, the reduction to `Timing`, the factoring of the bound, the untimed variant, and production derived rather than assumed |
+| `ViewSync.lean` | L7c: view convergence, the reduction to `Timing`, the factoring of the bound, the untimed variant, production derived rather than assumed, and the delivery a timed structure induces |
 | `Quantitative.lean` | L8, L9 |
 
 **The arcs** (§§8–10), each consuming the core read-only:
@@ -3345,6 +3404,8 @@ Principal results only; supporting lemmas are omitted.
 | — | production from untimed view convergence, without N1 | `ViewsConverge`, `populated_of_viewsConverge` *(ViewSync)* |
 | — | production from timed view convergence, from the GST crossing | `ViewGrowth`, `ViewGrowth.populatedOn` *(ViewSync)* |
 | — | the assumed production clause is the derived one, Skolemised | `exists_blk_of_populatedOn`, `ViewGrowth.toViewSync` *(ViewSync)* |
+| — | the untimed condition induced by the timed structure | `ViewGrowth.toDelivery`, `ViewsConvergeOn`, `viewsConvergeOn_toDelivery` *(ViewSync)* |
+| — | the bound in `converges` is necessary for coverage | `bound_is_necessary` *(LeanDagTest.Unbounded)* |
 | — | liveness on the view-convergence foundation | `ViewSync.commits_recur_of_converges`, `ViewSync.all_decided_below_of_converges` *(ViewSync)* |
 | — | drift is derived | `Timing.driftFrom_of_prompt` *(Timing)* |
 | L8a | the round of coverage, explicitly | `synchronisedOn_of_rate` *(Quantitative)* |
