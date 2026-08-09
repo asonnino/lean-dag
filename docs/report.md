@@ -979,6 +979,137 @@ round-`0` spread instead of assuming it, and would remove the only deployment
 assumption in §4. It is not adopted here, and B2 has no force in the present
 model in any case, since P8 makes advancement and block creation coincide.
 
+### 4.6 What the adversary may do
+
+The clauses above say what correct validators do and what the network
+provides. This section states the complement: the behaviour a Byzantine
+validator is permitted, which is everything not excluded above. An
+implementation that defends against less than this is defending against
+the wrong adversary.
+
+**Equivocate.** P5 (`BlockUniverse.no_equivocation`) quantifies over
+`Correct` alone, so a Byzantine author may publish any number of distinct
+blocks for one round. Nothing in the safety development limits how many:
+§8.1 shows the equivocation degree enters no safety statement, and the
+`Utwin6` model exhibits two blocks by one author each passing
+Odontoceti's indirect test against a third (§10.5).
+
+**Withhold entirely.** No clause obliges a Byzantine validator to publish
+anything. A Byzantine *leader* may therefore leave its slot undecided,
+which is why P10 asks only that reliable leaders recur, and why L5
+(skipping) exists.
+
+**Send selectively.** A Byzantine author may deliver a block to some
+correct validators and not others, at any time. Every network assumption
+in §4.3 is restricted to correct-authored blocks for exactly this reason:
+`ViewsConverge` carries the restriction in its statement, and a
+formulation that dropped it would be assuming Byzantine validators
+behave, which is not an assumption anyone can implement against.
+
+**Reveal late.** Delivery bounds apply from GST and to correct authors. A
+Byzantine validator may release a block long after building it, and the
+commit rules must — and do — treat a late block as a block.
+
+**Lead any slot.** `Slots.leader` is an arbitrary function; the schedule
+is not assumed to favour correct validators. P10 asks only that reliable
+leaders appear arbitrarily far out, which a round-robin schedule
+discharges whenever the reliable set is of quorum size.
+
+**What the adversary may not do** is exactly three things, and each is
+either cryptographic or a counting bound. It may not forge a block under
+another validator's name — authorship is taken as authenticated, the one
+cryptographic assumption in the development and the only clause of §4
+with no Lean counterpart. It may not exceed `f` in number (`Faults`,
+§4.2). And under the DoS conditions of §4.7 it may not force a correct
+validator to store more than the stated bound.
+
+**The limits are witnessed, not merely stated.** Three models show that
+weakening a network hypothesis does not merely block a proof but makes
+the conclusion false: `bound_is_necessary` (the delivery bound cannot be
+dropped for coverage), `ugap_not_viewsConvergeOn` (the starting round
+cannot be dropped), and `reliable_set_is_forced` (coverage over the
+reliable set does not extend to `Correct`). §13.4 gives them in full.
+
+### 4.7 The denial-of-service conditions
+
+§8 assumes four further conditions, none of them about the network. Two
+are enforceable by a correct validator acting alone, which is the
+property that makes them deployable; the other two are structural.
+
+```lean
+def DoSValid (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ b ∈ U.ids, ∀ i ∈ (U.block b).refs, ¬ ExposedIn U b (U.block i).creator
+```
+
+**D (`DoSValid`) — do not build on an exposed author.** A block never
+references a block whose author is already exposed as an equivocator
+within the referencing block's own history. Checkable locally, since
+exposure is a fact about the cone a validator already holds.
+
+```lean
+def UniformBudget (D : Delivery U) (T : ℕ) : Prop :=
+  ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ D.accepted v (n + 1),
+    (novelty U (viewUpto D v n) b).card ≤ T
+```
+
+**The novelty budget — accept nothing that costs more than `T` new
+blocks.** `UniformBudget` is the author-blind form and the one an
+implementation should use: it consults no identity, so a validator can
+enforce it without knowing who is correct. `ByzBudget κ` is the same
+bound imposed only on Byzantine-authored blocks; it is what the theory
+needs, and `uniform_of_byzBudget` shows the enforceable form implies it.
+
+```lean
+def RefsAccepted (D : Delivery U) : Prop :=
+  ∀ w ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ U.ids,
+    (U.block b).creator = w → (U.block b).round = n + 1 →
+    (U.block b).refs ⊆ D.accepted w n
+```
+
+**The reference discipline — reference only what you accepted.** The
+converse of P7, and equally a clause an implementation executes.
+
+The distinction matters for deployment: `DoSValid`, `UniformBudget` and
+`RefsAccepted` are conduct a validator can follow unilaterally, so the
+storage bound of §8.5 rests on nothing an operator must trust others to
+do. `ByzBudget` is not, and appears only as the weaker hypothesis the
+enforceable one discharges.
+
+### 4.8 Where each assumption is consumed
+
+Extracted from the compiled development rather than compiled by hand: a
+result appears against a clause when its proof reaches that clause, by
+any path. Read down a column to see what an implementation puts at risk
+by violating a clause; read across to see what a result depends on.
+
+| | Clause | Consumed by |
+|:---|:---|:---|
+| P1 | `ValidWrt.predecessor` | T2, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L0, CQ3, CQ5, CQ6, CQ7, C2, D15a, C1′, C3′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, G9 |
+| P2 | `ValidWrt.distinct_creators` | M5′, M5, M6, C1′, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G12, G8, O1′, O4′, O5, O6 |
+| P3 | `ValidWrt.quorum` | T3, T3a, T3c, M2, M4, M6, L0, CQ5, CQ6, CQ7, D15a, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8 |
+| P3′ | `ValidWrt.self_parent` | C1′, C3′, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G11, G12, G8, G9 |
+| P4 | `BlockUniverse.complete` | T2, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L0, L3, L6, L8b, CQ3, CQ5, CQ6, CQ7, C2, D15a, C1′, C3′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, G9, O7, O10 |
+| P5 | `BlockUniverse.no_equivocation` | T1, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L7b, L7c, L8a, L9, C2, D15a, C1′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G12, G8, O1, O1′, O2, O4′, O5, O6 |
+| P7 | `Delivery.includes` | L7a, C3′, B5, G6, G6b, G7, G11, G12, G9 |
+| P8 | `Live.builds` | L1 |
+| P9a | `Timing.waits` | L7b, L7c, L8a, L9 |
+| P9b | `Timing.prompt` | L8a, L9 |
+| P10 | `FairScheduleOn` | L6, CQ6 |
+| N1 | `DeliversQuorum` | L1 |
+| N2a | `EventuallyDelivers` | L7a, C3′, G6b, G7, G9 |
+| N2b | `Timing.covers` | L7b, L7c, L8a, L9 |
+| N2v | `ViewSync.converges` | L7c |
+
+Three readings are worth drawing out. **P8 and N1 now reach only L1**:
+since the liveness results take production as a `Populated` hypothesis
+rather than deriving it inline, the quorum route is one way to discharge
+that hypothesis and no result is committed to it (§4.4). **P3′ is absent
+from safety and liveness entirely**, feeding only the DoS and
+garbage-collection arcs — the report's claim to that effect is this table
+row. And **P4 and P5 appear almost everywhere**, which is the honest
+shape of the development: causal closure and non-equivocation are what
+the DAG is, not conditions imposed on it.
+
 ---
 
 ## 5. Safety
