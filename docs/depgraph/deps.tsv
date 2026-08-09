@@ -6,20 +6,12 @@ EDGE	LeanDag.chop._proof_5	LeanDag.Block.round
 EDGE	LeanDag.chop._proof_5	LeanDag.BlockUniverse
 NODE	LeanDag.ViewGrowth.toViewSync._proof_2	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_2	LeanDag.Faults
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_2	LeanDag.DriftOn
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_2	LeanDag.ViewGrowth.gst
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_2	LeanDag.BlockUniverse.ids
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_2	LeanDag.ViewGrowth.populatedOn
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_2	LeanDag.ViewGrowth.delay
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_2	LeanDag.ViewGrowth.timeout
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_2	LeanDag.BlockUniverse.block
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_2	LeanDag.Block.round
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_2	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_2	LeanDag.ViewGrowth
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_2	LeanDag.Faults.f
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_2	LeanDag.exists_blk_of_populatedOn
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_2	LeanDag.ViewGrowth.built
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_2	LeanDag.Block.creator
 NODE	LeanDag.ViewSync._sizeOf_inst	LeanDag.ViewSync	def
 EDGE	LeanDag.ViewSync._sizeOf_inst	LeanDag.Faults
 EDGE	LeanDag.ViewSync._sizeOf_inst	LeanDag.ViewSync
@@ -608,9 +600,9 @@ EDGE	LeanDagTest.ugrowSkewGrowth	LeanDagTest.ugrowSkewView._proof_4
 EDGE	LeanDagTest.ugrowSkewGrowth	LeanDagTest.ugrowSkewGrowth._proof_7
 EDGE	LeanDagTest.ugrowSkewGrowth	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowSkewGrowth	LeanDagTest.ugrowSkewView._proof_17
+EDGE	LeanDagTest.ugrowSkewGrowth	LeanDagTest.ugrowSkewGrowth._proof_6
 EDGE	LeanDagTest.ugrowSkewGrowth	LeanDag.ViewGrowth.mk
 EDGE	LeanDagTest.ugrowSkewGrowth	LeanDagTest.ugrowSkewView._proof_20
-EDGE	LeanDagTest.ugrowSkewGrowth	LeanDagTest.ugrowSkewGrowth._proof_10
 EDGE	LeanDagTest.ugrowSkewGrowth	LeanDagTest.ugrowSkewView._proof_15
 EDGE	LeanDagTest.ugrowSkewGrowth	LeanDagTest.ugrowSkewView._proof_18
 EDGE	LeanDagTest.ugrowSkewGrowth	LeanDagTest.ugrowSkewView._proof_14
@@ -875,6 +867,7 @@ EDGE	LeanDag.ViewGrowth.toViewSync_built	LeanDag.ViewGrowth.gst
 EDGE	LeanDag.ViewGrowth.toViewSync_built	LeanDag.ViewGrowth.toViewSync
 EDGE	LeanDag.ViewGrowth.toViewSync_built	LeanDag.ViewGrowth.delay
 EDGE	LeanDag.ViewGrowth.toViewSync_built	LeanDag.ViewGrowth.timeout
+EDGE	LeanDag.ViewGrowth.toViewSync_built	LeanDag.PopulatedOn
 EDGE	LeanDag.ViewGrowth.toViewSync_built	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.toViewSync_built	LeanDag.ViewGrowth
 EDGE	LeanDag.ViewGrowth.toViewSync_built	LeanDag.Faults.f
@@ -1044,13 +1037,17 @@ EDGE	LeanDag.ValidWrt.quorum	LeanDag.Block.round
 EDGE	LeanDag.ValidWrt.quorum	LeanDag.Faults.f
 EDGE	LeanDag.ValidWrt.quorum	LeanDag.ValidWrt
 NODE	LeanDagTest.ugrowSkewGrowth._proof_6	LeanDagTest.ViewSync	thm
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_6	LeanDag.creatorsOf
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_6	LeanDagTest.ugrowSkewGrowth._proof_1
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_6	LeanDagTest.Ugrow
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_6	LeanDagTest.ugrowSkewView._simp_6
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_6	LeanDag.BlockUniverse.ids
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_6	LeanDagTest.skewHolds
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_6	LeanDagTest.mem_T_bounds
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_6	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_6	LeanDag.Block.round
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_6	LeanDag.Faults.f
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_6	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_6	LeanDag.Block.creator
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_6	LeanDagTest.ugrowSkewView._simp_5
 NODE	LeanDag.mem_creatorsOf	LeanDag.Block	thm
 EDGE	LeanDag.mem_creatorsOf	LeanDag.Block
 EDGE	LeanDag.mem_creatorsOf	LeanDag.creatorsOf
@@ -1472,6 +1469,12 @@ EDGE	LeanDag.BlockUniverse.rec	LeanDag.BlockUniverse
 EDGE	LeanDag.BlockUniverse.rec	LeanDag.Block.creator
 EDGE	LeanDag.BlockUniverse.rec	LeanDag.ValidWrt
 NODE	LeanDagTest.dtwin_uniform._proof_1_2	LeanDagTest.DoS.Novelty	thm
+NODE	LeanDag.ViewGrowth.populatedOn._proof_1_9	LeanDag.ViewSync	thm
+EDGE	LeanDag.ViewGrowth.populatedOn._proof_1_9	LeanDag.Faults
+EDGE	LeanDag.ViewGrowth.populatedOn._proof_1_9	LeanDag.ViewGrowth.gst
+EDGE	LeanDag.ViewGrowth.populatedOn._proof_1_9	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewGrowth.populatedOn._proof_1_9	LeanDag.ViewGrowth
+EDGE	LeanDag.ViewGrowth.populatedOn._proof_1_9	LeanDag.Faults.f
 NODE	LeanDag.card_byzPool_zero_le	LeanDag.DoS.Novelty	thm
 EDGE	LeanDag.card_byzPool_zero_le	LeanDag.Delivery
 EDGE	LeanDag.card_byzPool_zero_le	LeanDag.Faults
@@ -1928,18 +1931,17 @@ EDGE	LeanDagTest.ugrowDelivery._proof_2	LeanDag.mem_blocksAt
 NODE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.Faults
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.DriftOn
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.ViewGrowth.holds
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.ViewGrowth.toViewSync._proof_3
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.ViewGrowth.gst
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.BlockUniverse.ids
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.ViewGrowth.delay
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.ViewGrowth.holds_own
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.ViewGrowth.timeout
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.BlockUniverse.block
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.Block.round
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.PopulatedOn
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.ViewGrowth
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.Faults.f
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.ViewGrowth.toViewSync._proof_2
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.ViewGrowth.built
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.Block.creator
 NODE	LeanDag.ValidWrt.card_refs	LeanDag.Block	thm
@@ -2060,6 +2062,13 @@ EDGE	LeanDag.Odontoceti.mem_coneSupports._simp_1_2	LeanDag.creatorsOf
 EDGE	LeanDag.Odontoceti.mem_coneSupports._simp_1_2	LeanDag.mem_creatorsOf
 EDGE	LeanDag.Odontoceti.mem_coneSupports._simp_1_2	LeanDag.Block.creator
 NODE	LeanDagTest.ugrowSkewGrowth._proof_3	LeanDagTest.ViewSync	thm
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_3	LeanDag.creatorsOf
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_3	LeanDagTest.Ugrow
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_3	LeanDagTest.skewHolds
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_3	LeanDag.BlockUniverse.block
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_3	LeanDag.Block.round
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_3	LeanDag.Faults.f
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_3	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 NODE	LeanDag.chop._proof_2	LeanDag.GC.Chop	thm
 EDGE	LeanDag.chop._proof_2	LeanDag.Faults
 EDGE	LeanDag.chop._proof_2	LeanDag.creators
@@ -2573,6 +2582,7 @@ EDGE	LeanDag.ViewGrowth.synchronisedOn_of_converges	LeanDag.ViewGrowth.toViewSyn
 EDGE	LeanDag.ViewGrowth.synchronisedOn_of_converges	LeanDag.Correct
 EDGE	LeanDag.ViewGrowth.synchronisedOn_of_converges	LeanDag.ViewGrowth.delay
 EDGE	LeanDag.ViewGrowth.synchronisedOn_of_converges	LeanDag.ViewGrowth.timeout
+EDGE	LeanDag.ViewGrowth.synchronisedOn_of_converges	LeanDag.PopulatedOn
 EDGE	LeanDag.ViewGrowth.synchronisedOn_of_converges	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.synchronisedOn_of_converges	LeanDag.ViewGrowth
 EDGE	LeanDag.ViewGrowth.synchronisedOn_of_converges	LeanDag.Faults.f
@@ -2648,16 +2658,17 @@ EDGE	LeanDag.decidableDirectCommit._aux_1	LeanDag.certificates
 NODE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.Faults
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.DriftOn
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.ViewGrowth.toViewSync._proof_3
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.ViewGrowth.gst
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.BlockUniverse.ids
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.ViewGrowth.delay
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.ViewGrowth.timeout
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.BlockUniverse.block
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.Block.round
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.PopulatedOn
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.ViewGrowth
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.Faults.f
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.ViewGrowth.toViewSync._proof_2
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.ViewGrowth.built
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.Block.creator
 NODE	LeanDag.chopD._proof_9	LeanDag.GC.Window	thm
@@ -4120,6 +4131,7 @@ EDGE	LeanDag.ViewGrowth.populatedOn	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.populatedOn	LeanDag.ViewGrowth
 EDGE	LeanDag.ViewGrowth.populatedOn	LeanDag.Faults.f
 EDGE	LeanDag.ViewGrowth.populatedOn	LeanDag.ViewGrowth.populatedOn._proof_1_4
+EDGE	LeanDag.ViewGrowth.populatedOn	LeanDag.ViewGrowth.populatedOn._proof_1_9
 EDGE	LeanDag.ViewGrowth.populatedOn	LeanDag.ViewGrowth.waits
 EDGE	LeanDag.ViewGrowth.populatedOn	LeanDag.le_built_of_waits
 EDGE	LeanDag.ViewGrowth.populatedOn	LeanDag.ViewGrowth.populatedOn._proof_1_6
@@ -4329,8 +4341,6 @@ EDGE	LeanDagTest.utwin_dosValid	LeanDag.DoSValid
 NODE	LeanDag.ViewGrowth.toViewSync._proof_1	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_1	LeanDag.Faults
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_1	LeanDag.ViewGrowth.gst
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_1	LeanDag.BlockUniverse.block
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_1	LeanDag.Block.round
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_1	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_1	LeanDag.ViewGrowth
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_1	LeanDag.Faults.f
@@ -4598,20 +4608,6 @@ EDGE	LeanDag.Odontoceti.DirectCommitIn	LeanDag.Faults.f
 EDGE	LeanDag.Odontoceti.DirectCommitIn	LeanDag.Odontoceti.supportersIn
 EDGE	LeanDag.Odontoceti.DirectCommitIn	LeanDag.View
 EDGE	LeanDag.Odontoceti.DirectCommitIn	LeanDag.Faults5.toFaults
-NODE	LeanDagTest.ugrowSkewGrowth._proof_10	LeanDagTest.ViewSync	thm
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_10	LeanDag.creatorsOf
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_10	LeanDagTest.Ugrow
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_10	LeanDagTest.ugrowSkewView._simp_6
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_10	LeanDag.BlockUniverse.ids
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_10	LeanDagTest.skewHolds
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_10	LeanDag.BlockUniverse.block
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_10	LeanDag.Block.round
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_10	LeanDag.Faults.f
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_10	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_10	LeanDagTest.ugrowSkewGrowth._proof_6
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_10	LeanDagTest.ugrowSkewGrowth._proof_5
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_10	LeanDagTest.ugrowSkewGrowth._proof_4
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_10	LeanDag.Block.creator
 NODE	LeanDag.pedigree_spec	LeanDag.DoS.Pedigree	thm
 EDGE	LeanDag.pedigree_spec	LeanDag.Faults
 EDGE	LeanDag.pedigree_spec	LeanDag.pedigree_spec._proof_1_2
@@ -5471,6 +5467,7 @@ EDGE	LeanDag.card_viewUpto_le'._proof_1_2	LeanDag.Block.round
 EDGE	LeanDag.card_viewUpto_le'._proof_1_2	LeanDag.BlockUniverse
 EDGE	LeanDag.card_viewUpto_le'._proof_1_2	LeanDag.Faults.f
 EDGE	LeanDag.card_viewUpto_le'._proof_1_2	LeanDag.viewUpto
+NODE	LeanDagTest.ugrowSkewGrowth_synchronised._proof_1_2	LeanDagTest.ViewSync	thm
 NODE	LeanDag.ViewGrowth.references	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewGrowth.references	LeanDag.Faults
 EDGE	LeanDag.ViewGrowth.references	LeanDag.ViewGrowth.holds
@@ -6819,6 +6816,7 @@ EDGE	LeanDag.ViewGrowth.toViewSync_delay	LeanDag.ViewGrowth.gst
 EDGE	LeanDag.ViewGrowth.toViewSync_delay	LeanDag.ViewGrowth.toViewSync
 EDGE	LeanDag.ViewGrowth.toViewSync_delay	LeanDag.ViewGrowth.delay
 EDGE	LeanDag.ViewGrowth.toViewSync_delay	LeanDag.ViewGrowth.timeout
+EDGE	LeanDag.ViewGrowth.toViewSync_delay	LeanDag.PopulatedOn
 EDGE	LeanDag.ViewGrowth.toViewSync_delay	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.toViewSync_delay	LeanDag.ViewGrowth
 EDGE	LeanDag.ViewGrowth.toViewSync_delay	LeanDag.Faults.f
@@ -8470,6 +8468,7 @@ EDGE	LeanDag.ViewGrowth.toViewSync_gst	LeanDag.ViewGrowth.toViewSync
 EDGE	LeanDag.ViewGrowth.toViewSync_gst	LeanDag.ViewSync.gst
 EDGE	LeanDag.ViewGrowth.toViewSync_gst	LeanDag.ViewGrowth.delay
 EDGE	LeanDag.ViewGrowth.toViewSync_gst	LeanDag.ViewGrowth.timeout
+EDGE	LeanDag.ViewGrowth.toViewSync_gst	LeanDag.PopulatedOn
 EDGE	LeanDag.ViewGrowth.toViewSync_gst	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.toViewSync_gst	LeanDag.ViewGrowth
 EDGE	LeanDag.ViewGrowth.toViewSync_gst	LeanDag.Faults.f
@@ -9048,20 +9047,19 @@ NODE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.Faults
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.DriftOn
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.ViewGrowth.holds
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.ViewGrowth.toViewSync._proof_3
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.ViewGrowth.gst
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.BlockUniverse.ids
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.Block.refs
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.ViewGrowth.delay
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.ViewGrowth.holds_own
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.ViewGrowth.timeout
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.BlockUniverse.block
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.Block.round
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.PopulatedOn
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.ViewGrowth
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.ViewGrowth.references
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.Faults.f
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.ViewGrowth.toViewSync._proof_2
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.ViewGrowth.built
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.ViewGrowth.toViewSync._proof_1
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_7	LeanDag.Block.creator
 NODE	LeanDagTest.ugrow_delivers	LeanDagTest.Growth	thm
 EDGE	LeanDagTest.ugrow_delivers	LeanDagTest.ugrowDelivery
@@ -9209,15 +9207,18 @@ EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.Faults
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.DriftOn
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.ViewGrowth.gst
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.ViewGrowth.populatedOn
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.ViewGrowth.delay
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.ViewGrowth.timeout
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.BlockUniverse.block
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.Block.round
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.PopulatedOn
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.ViewGrowth
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.Faults.f
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.ViewGrowth.toViewSync._proof_2
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.exists_blk_of_populatedOn
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.ViewGrowth.built
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.ViewGrowth.toViewSync._proof_1
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_3	LeanDag.Block.creator
 NODE	LeanDag.Faults5	LeanDag.Odontoceti.Rules	ind
 NODE	LeanDag.certificates_nonempty_of_directCommit._proof_1_2	LeanDag.Mysticeti	thm
@@ -10664,16 +10665,9 @@ EDGE	LeanDag.history_subset_ids	LeanDag.mem_ids_of_reaches
 EDGE	LeanDag.history_subset_ids	LeanDag.Reaches
 NODE	LeanDagTest.ugrowSkewGrowth._proof_8	LeanDagTest.ViewSync	thm
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_8	LeanDagTest.Ugrow
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_8	LeanDagTest.ugrowSkewView._simp_12
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_8	LeanDag.BlockUniverse.ids
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_8	LeanDag.Block.refs
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_8	LeanDagTest.skewHolds
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_8	LeanDagTest.mem_T_bounds
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_8	LeanDag.BlockUniverse.block
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_8	LeanDag.Block.round
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_8	LeanDagTest.ugrowSkewGrowth._proof_2
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_8	LeanDag.PopulatedOn
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_8	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_8	LeanDag.Block.creator
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_8	LeanDagTest.ugrow_populatedOn
 NODE	LeanDagTest.uskip_slot2._proof_1_1	LeanDagTest.Odontoceti.Model	thm
 NODE	LeanDag.ViewSync.blk_mem_holds._proof_1_1	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewSync.blk_mem_holds._proof_1_1	LeanDag.Faults
@@ -11941,12 +11935,14 @@ EDGE	LeanDag.eligible_iff	LeanDag.Eligible
 EDGE	LeanDag.eligible_iff	LeanDag.eligible_iff._proof_1_3
 EDGE	LeanDag.eligible_iff	LeanDag.Slots
 NODE	LeanDagTest.ugrowSkewGrowth_synchronised	LeanDagTest.ViewSync	thm
+EDGE	LeanDagTest.ugrowSkewGrowth_synchronised	LeanDagTest.ugrowSkewGrowth_synchronised._proof_1_2
 EDGE	LeanDagTest.ugrowSkewGrowth_synchronised	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowSkewGrowth_synchronised	LeanDagTest.ugrowSkewGrowth_drift
 EDGE	LeanDagTest.ugrowSkewGrowth_synchronised	LeanDagTest.ugrowSkewGrowth
 EDGE	LeanDagTest.ugrowSkewGrowth_synchronised	LeanDag.Correct
 EDGE	LeanDagTest.ugrowSkewGrowth_synchronised	LeanDag.ViewGrowth.delay
 EDGE	LeanDagTest.ugrowSkewGrowth_synchronised	LeanDag.ViewGrowth.timeout
+EDGE	LeanDagTest.ugrowSkewGrowth_synchronised	LeanDag.PopulatedOn
 EDGE	LeanDagTest.ugrowSkewGrowth_synchronised	LeanDag.Faults.f
 EDGE	LeanDagTest.ugrowSkewGrowth_synchronised	LeanDag.ViewGrowth.synchronisedOn_of_converges
 EDGE	LeanDagTest.ugrowSkewGrowth_synchronised	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
@@ -12356,17 +12352,17 @@ EDGE	LeanDag.chopBlock	LeanDag.BlockUniverse
 EDGE	LeanDag.chopBlock	LeanDag.Block.creator
 NODE	LeanDagTest.ugrowSkewView._proof_7	LeanDagTest.ViewSync	thm
 NODE	LeanDagTest.ugrowSkewGrowth._proof_7	LeanDagTest.ViewSync	thm
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_7	LeanDagTest.ugrowSkewGrowth._proof_1
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_7	LeanDagTest.Ugrow
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_7	LeanDagTest.ugrowSkewView._simp_6
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_7	LeanDagTest.ugrowSkewView._simp_12
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_7	LeanDag.BlockUniverse.ids
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_7	LeanDag.Block.refs
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_7	LeanDagTest.skewHolds
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_7	LeanDagTest.mem_T_bounds
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_7	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_7	LeanDag.Block.round
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_7	LeanDagTest.ugrowSkewGrowth._proof_2
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_7	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_7	LeanDag.Block.creator
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_7	LeanDagTest.ugrowSkewView._simp_5
 NODE	LeanDagTest.ugrowSkewView._proof_21	LeanDagTest.ViewSync	thm
 EDGE	LeanDagTest.ugrowSkewView._proof_21	LeanDagTest.ugrowSkewView._simp_6
 EDGE	LeanDagTest.ugrowSkewView._proof_21	LeanDagTest.skewHolds
@@ -12601,15 +12597,16 @@ EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.ViewGrowth.gst
 EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.ViewGrowth.toViewSync._proof_5
 EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.BlockUniverse.ids
 EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.ViewGrowth.delay
+EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.ViewGrowth.toViewSync._proof_8
 EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.ViewGrowth.timeout
 EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.BlockUniverse.block
 EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.Block.round
 EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.ViewGrowth.holds_mono
 EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.ViewSync
+EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.PopulatedOn
 EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.ViewGrowth
 EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.Faults.f
-EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.ViewGrowth.toViewSync._proof_2
 EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.ViewGrowth.waits
 EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.ViewGrowth.rounds_le
 EDGE	LeanDag.ViewGrowth.toViewSync	LeanDag.ViewGrowth.built
@@ -12888,11 +12885,19 @@ EDGE	LeanDag.Odontoceti.decidableEligible._aux_1	LeanDag.Odontoceti.decisionRoun
 EDGE	LeanDag.Odontoceti.decidableEligible._aux_1	LeanDag.Odontoceti.Eligible
 EDGE	LeanDag.Odontoceti.decidableEligible._aux_1	LeanDag.Slots
 NODE	LeanDagTest.ugrowSkewGrowth._proof_9	LeanDagTest.ViewSync	thm
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_9	LeanDag.creatorsOf
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_9	LeanDagTest.Ugrow
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_9	LeanDag.PopulatedOn
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_9	LeanDagTest.ugrowSkewView._simp_6
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_9	LeanDag.BlockUniverse.ids
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_9	LeanDagTest.skewHolds
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_9	LeanDag.BlockUniverse.block
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_9	LeanDag.Block.round
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_9	LeanDag.Faults.f
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_9	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
-EDGE	LeanDagTest.ugrowSkewGrowth._proof_9	LeanDagTest.ugrow_populatedOn
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_9	LeanDagTest.ugrowSkewGrowth._proof_3
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_9	LeanDagTest.ugrowSkewGrowth._proof_5
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_9	LeanDagTest.ugrowSkewGrowth._proof_4
+EDGE	LeanDagTest.ugrowSkewGrowth._proof_9	LeanDag.Block.creator
 NODE	LeanDag.PedigreeTo	LeanDag.DoS.Pedigree	ind
 EDGE	LeanDag.PedigreeTo	LeanDag.Faults
 EDGE	LeanDag.PedigreeTo	LeanDag.BlockUniverse
@@ -13480,6 +13485,26 @@ EDGE	LeanDag.View.ofAccepted._proof_1	LeanDag.Accepted
 EDGE	LeanDag.View.ofAccepted._proof_1	LeanDag.history
 EDGE	LeanDag.View.ofAccepted._proof_1	LeanDag.BlockUniverse
 EDGE	LeanDag.View.ofAccepted._proof_1	LeanDag.history_subset_ids
+NODE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.ViewSync	thm
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.Faults
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.DriftOn
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.ViewGrowth.holds
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.ViewGrowth.toViewSync._proof_3
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.ViewGrowth.gst
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.Block.refs
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.ViewGrowth.delay
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.ViewGrowth.timeout
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.BlockUniverse.block
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.Block.round
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.PopulatedOn
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.ViewGrowth
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.ViewGrowth.references
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.Faults.f
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.ViewGrowth.toViewSync._proof_2
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.ViewGrowth.built
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_8	LeanDag.Block.creator
 NODE	LeanDag.card_serve_le	LeanDag.GC.Bootstrap	thm
 EDGE	LeanDag.card_serve_le	LeanDag.Delivery
 EDGE	LeanDag.card_serve_le	LeanDag.ByzBudget
@@ -13565,6 +13590,7 @@ EDGE	LeanDag.ViewGrowth.toViewSync_timeout	LeanDag.ViewGrowth.gst
 EDGE	LeanDag.ViewGrowth.toViewSync_timeout	LeanDag.ViewGrowth.toViewSync
 EDGE	LeanDag.ViewGrowth.toViewSync_timeout	LeanDag.ViewGrowth.delay
 EDGE	LeanDag.ViewGrowth.toViewSync_timeout	LeanDag.ViewGrowth.timeout
+EDGE	LeanDag.ViewGrowth.toViewSync_timeout	LeanDag.PopulatedOn
 EDGE	LeanDag.ViewGrowth.toViewSync_timeout	LeanDag.ViewSync.timeout
 EDGE	LeanDag.ViewGrowth.toViewSync_timeout	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.toViewSync_timeout	LeanDag.ViewGrowth
@@ -13848,16 +13874,17 @@ EDGE	LeanDag.Odontoceti.eq_of_directCommit._proof_1_2	LeanDag.Faults5.toFaults
 NODE	LeanDag.ViewGrowth.toViewSync._proof_4	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_4	LeanDag.Faults
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_4	LeanDag.DriftOn
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_4	LeanDag.ViewGrowth.toViewSync._proof_3
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_4	LeanDag.ViewGrowth.gst
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_4	LeanDag.BlockUniverse.ids
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_4	LeanDag.ViewGrowth.delay
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_4	LeanDag.ViewGrowth.timeout
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_4	LeanDag.BlockUniverse.block
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_4	LeanDag.Block.round
+EDGE	LeanDag.ViewGrowth.toViewSync._proof_4	LeanDag.PopulatedOn
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_4	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_4	LeanDag.ViewGrowth
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_4	LeanDag.Faults.f
-EDGE	LeanDag.ViewGrowth.toViewSync._proof_4	LeanDag.ViewGrowth.toViewSync._proof_2
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_4	LeanDag.ViewGrowth.built
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_4	LeanDag.Block.creator
 NODE	LeanDagTest.uexcl_decided._proof_1_1	LeanDagTest.DoS.Exclusion	thm

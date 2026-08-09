@@ -677,10 +677,13 @@ structure ViewGrowth (U : BlockUniverse Validator BlockId Payload)
     (U.block c).creator = v → (U.block c).round = n + 1 →
     ∀ a ∈ holds v (built v (n + 1)), (U.block a).round = n →
     a ∈ (U.block c).refs
-  /-- Production up to `R` — the rounds view convergence says nothing
-  about, since they may precede GST. The untimed route's counterpart is
+  /-- The seed: **one** populated round at the GST crossing. The
+  induction below steps from `n` to `n+1` using only the previous round,
+  so nothing is assumed about the rounds beneath `R` — which is the most
+  that can be claimed, since `converges` is silent below `gst` and the
+  network may deliver nothing there. The untimed route's counterpart is
   `Live.genesis`, at `R = 0`. -/
-  base : ∀ n ≤ R, PopulatedOn U T n
+  base : PopulatedOn U T R
   /-- **P8, the build rule** (protocol). A validator holding a quorum of
   distinct authors at round `n`, among what it has in hand when it builds
   for round `n+1`, produces a block there. This is `Live.builds` with
@@ -696,9 +699,9 @@ namespace ViewGrowth
 
 variable (vg : ViewGrowth U T R N)
 
-/-- **Production, derived.** Every round below the horizon is populated,
-from view convergence, the waiting rule and the build rule — the timed
-counterpart of `populated_of_viewsConverge`, and the same induction.
+/-- **Production, derived.** From the seed round on, every round below the
+horizon is populated — the timed counterpart of
+`populated_of_viewsConverge`, and the same induction.
 
 The step is the argument of `blk_mem_holds` run in the other direction:
 rather than moving a block that `blk` asserts exists, it moves the blocks
@@ -708,33 +711,46 @@ rounds advance time; convergence puts it in `v`'s hands by
 `built w n + delay`, and drift, the wait and the backoff put that before
 `built v (n+1)`. So `v`'s build-time view contains a round-`n` block from
 every member of `T` — a quorum of distinct authors — and `builds`
-applies. -/
+applies.
+
+The conclusion starts at `R` rather than at `0`, and the hypothesis is a
+single round rather than every round beneath `R`, because the step
+consumes only its predecessor. Below `R` nothing is derivable and nothing
+is assumed: `converges` is silent before `gst`, and its unbounded
+companion `ConvergesEventually`, though it does hold there, cannot
+substitute — a lag that merely exists cannot be ordered against a build
+time, which is the comparison `hbackoff` performs. What lets the untimed
+route begin at round `0` is not the absence of a GST but the index
+alignment of `ViewsConverge`, which supplies that ordering by fiat. -/
 theorem populatedOn (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hD : DriftOn vg.built T R D N) (hgst : vg.gst ≤ R)
     (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) :
-    ∀ n ≤ N, PopulatedOn U T n := by
-  intro n
-  induction n with
-  | zero => intro _; exact vg.base 0 (Nat.zero_le _)
-  | succ n ih =>
-      intro hn
-      by_cases hR : n + 1 ≤ R
-      · exact vg.base (n + 1) hR
-      · have hRn : R ≤ n := by omega
+    ∀ n, R ≤ n → n ≤ N → PopulatedOn U T n := by
+  have key : ∀ k, R + k ≤ N → PopulatedOn U T (R + k) := by
+    intro k
+    induction k with
+    | zero => intro _; exact vg.base
+    | succ k ih =>
+        intro hn
         have hpop := ih (by omega)
+        have hRn : R ≤ R + k := by omega
         intro v hv
-        refine vg.builds v hv n hRn (by omega) (le_trans hcard (Finset.card_le_card ?_))
+        refine vg.builds v hv (R + k) hRn (by omega)
+          (le_trans hcard (Finset.card_le_card ?_))
         intro w hw
         obtain ⟨b, hb, hbc, hbr⟩ := hpop w hw
         refine mem_creatorsOf.mpr ⟨b, Finset.mem_filter.mpr ⟨?_, hbr⟩, hbc⟩
-        have hown := vg.holds_own w hw n (by omega) b hb hbc hbr
-        have hle := le_built_of_waits vg.waits vg.timeout_pos hw n (by omega)
+        have hown := vg.holds_own w hw (R + k) (by omega) b hb hbc hbr
+        have hle := le_built_of_waits vg.waits vg.timeout_pos hw (R + k) (by omega)
         have hconv := vg.converges v hv w hw _ (by omega) hown
         refine vg.holds_mono v _ _ ?_ hconv
-        have hdrift := hD v hv w hw n hRn (by omega)
-        have hwait := vg.waits v hv n (by omega)
-        have hto := hbackoff n hRn
+        have hdrift := hD v hv w hw (R + k) hRn (by omega)
+        have hwait := vg.waits v hv (R + k) (by omega)
+        have hto := hbackoff (R + k) hRn
         omega
+  intro n hRn hn
+  obtain ⟨k, rfl⟩ : ∃ k, n = R + k := ⟨n - R, by omega⟩
+  exact key k hn
 
 /-- **The unification.** A `ViewGrowth` *is* a `ViewSync`: production is
 recovered by Skolemising the population it derives, and the two clauses
@@ -746,10 +762,12 @@ this reduction, with N1 absent from both routes. -/
 noncomputable def toViewSync [Nonempty BlockId]
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hD : DriftOn vg.built T R D N) (hgst : vg.gst ≤ R)
-    (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) :
+    (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n)
+    (hbelow : ∀ n < R, PopulatedOn U T n) :
     ViewSync U T N :=
   let hb := exists_blk_of_populatedOn (U := U) (T := T) (N := N)
-    (vg.populatedOn hcard hD hgst hbackoff)
+    (fun n hn => if h : R ≤ n then vg.populatedOn hcard hD hgst hbackoff n h hn
+      else hbelow n (by omega))
   { blk := hb.choose
     built := vg.built
     timeout := vg.timeout
@@ -776,17 +794,17 @@ noncomputable def toViewSync [Nonempty BlockId]
         (hb.choose_spec.2.1 v hv (n + 1) (by omega))
         (hb.choose_spec.2.2 v hv (n + 1) (by omega)) a ha har }
 
-@[simp] theorem toViewSync_built [Nonempty BlockId] (hcard) (hD) (hgst) (hbackoff) :
-    (vg.toViewSync (D := D) hcard hD hgst hbackoff).built = vg.built := rfl
+@[simp] theorem toViewSync_built [Nonempty BlockId] (hcard) (hD) (hgst) (hbackoff) (hbelow) :
+    (vg.toViewSync (D := D) hcard hD hgst hbackoff hbelow).built = vg.built := rfl
 
-@[simp] theorem toViewSync_gst [Nonempty BlockId] (hcard) (hD) (hgst) (hbackoff) :
-    (vg.toViewSync (D := D) hcard hD hgst hbackoff).gst = vg.gst := rfl
+@[simp] theorem toViewSync_gst [Nonempty BlockId] (hcard) (hD) (hgst) (hbackoff) (hbelow) :
+    (vg.toViewSync (D := D) hcard hD hgst hbackoff hbelow).gst = vg.gst := rfl
 
-@[simp] theorem toViewSync_delay [Nonempty BlockId] (hcard) (hD) (hgst) (hbackoff) :
-    (vg.toViewSync (D := D) hcard hD hgst hbackoff).delay = vg.delay := rfl
+@[simp] theorem toViewSync_delay [Nonempty BlockId] (hcard) (hD) (hgst) (hbackoff) (hbelow) :
+    (vg.toViewSync (D := D) hcard hD hgst hbackoff hbelow).delay = vg.delay := rfl
 
-@[simp] theorem toViewSync_timeout [Nonempty BlockId] (hcard) (hD) (hgst) (hbackoff) :
-    (vg.toViewSync (D := D) hcard hD hgst hbackoff).timeout = vg.timeout := rfl
+@[simp] theorem toViewSync_timeout [Nonempty BlockId] (hcard) (hD) (hgst) (hbackoff) (hbelow) :
+    (vg.toViewSync (D := D) hcard hD hgst hbackoff hbelow).timeout = vg.timeout := rfl
 
 /-- **L7c with production derived.** Reference coverage from view
 convergence, on a structure that assumes no blocks exist. -/
@@ -794,9 +812,10 @@ theorem synchronisedOn_of_converges [Nonempty BlockId]
     (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hD : DriftOn vg.built T R D N) (hgst : vg.gst ≤ R)
-    (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) :
+    (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n)
+    (hbelow : ∀ n < R, PopulatedOn U T n) :
     SynchronisedOn U T R :=
-  (vg.toViewSync hcard hD hgst hbackoff).synchronisedOn_of_converges hT
+  (vg.toViewSync hcard hD hgst hbackoff hbelow).synchronisedOn_of_converges hT
     (D := D) (by intro v hv w hw n hn hN; exact hD v hv w hw n hn hN)
     hgst hbackoff
 

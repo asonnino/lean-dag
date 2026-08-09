@@ -1694,7 +1694,7 @@ structure ViewGrowth (U) (T : Finset Validator) (R N : ℕ) where
     (U.block c).creator = v → (U.block c).round = n + 1 →
     ∀ a ∈ holds v (built v (n + 1)), (U.block a).round = n →
     a ∈ (U.block c).refs
-  base : ∀ n ≤ R, PopulatedOn U T n
+  base : PopulatedOn U T R
   builds : ∀ v ∈ T, ∀ n, R ≤ n → n < N →
     (Fintype.card Validator - F.f) ≤
       (creatorsOf U.block
@@ -1731,12 +1731,33 @@ structure that assumed no blocks exist.
 
 **What remains asymmetric, and should.** `converges` says nothing below
 `gst`, so production is derivable only from a round `R` at or after the
-GST crossing, and `ViewGrowth` carries a `base` covering the rounds up to
-`R`. `ViewsConverge` is unconditional and drives production from round
-`0`. This residue is not a defect but the content of partial synchrony:
+GST crossing. `ViewGrowth` therefore carries `base`, and it is a *single*
+seed round: the step consumes only its predecessor, so nothing is assumed
+about the rounds beneath `R`. `ViewsConverge` is unconditional and drives
+production from round `0`.
+
+The natural objection is that convergence *is* available before GST, in
+its unbounded form — `convergesEventually_of_within` establishes
+`ConvergesEventually` at every instant, GST or not. It cannot serve here,
+for the reason `covers_of_converges` exhibits: the block must be in the
+builder's hands before it builds, and a lag that merely exists cannot be
+ordered against a build time. That comparison is what `hbackoff`
+performs, and it requires a bound. What lets the untimed route begin at
+round `0` is therefore not the absence of a GST but the index alignment
+of `ViewsConverge`, which supplies the ordering by fiat and is, for that
+reason, the stronger assumption.
+
+The residue is thus the content of partial synchrony rather than a defect:
 before GST the network may deliver nothing, and no round need be
 populated. The two routes run the same induction and differ only in where
 it starts — `R = 0` untimed, `R` past GST timed.
+
+The reduction is more demanding than the derivation. `ViewGrowth.toViewSync`
+requires population at *every* round below the horizon, since `blk` is
+total, and so takes the pre-`R` rounds as an explicit hypothesis. That is a
+constraint of `Timing`'s shape, not of the argument: deriving production
+needs one seed round, whereas presenting the result as a `ViewSync` needs
+blocks everywhere.
 
 ### 6.10 The layering
 
@@ -1796,7 +1817,7 @@ still owes:
 | Delivery (§6.7) | `EventuallyDelivers` — build-time indexed | P7 | `Synchronised` |
 | Timing (§6.8) | `Timing.covers` — Δ after GST, concludes on `refs` | P9, drift | `SynchronisedOn` |
 | View convergence (§6.9) | `converges` — Δ after GST, over views | P7, P9, drift | `SynchronisedOn`, and the other two |
-| View growth (§6.9) | `converges`, with `blk` removed | P7, P8, P9, drift, a base below `R` | `SynchronisedOn` and `PopulatedOn`, from `R` on |
+| View growth (§6.9) | `converges`, with `blk` removed | P7, P8, P9, drift, one seed round at `R` | `PopulatedOn` from `R` on, and `SynchronisedOn` |
 | Untimed views (§6.9) | `ViewsConverge` — no bound, index-aligned | `HoldsOwn`, P8 | `Populated`, from round `0`, without N1 |
 
 Read downward, the first three are increasingly primitive statements of

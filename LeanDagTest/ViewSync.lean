@@ -227,7 +227,7 @@ def ugrowSkewGrowth (N : ℕ) : ViewGrowth (Ugrow N) {1, 2, 3} 0 N where
     simp only [skewHolds, Finset.mem_filter, Finset.mem_range] at ha
     simp only [ugrow_block, mem_growBlock_refs]
     omega
-  base n hn := ugrow_populatedOn (by omega)
+  base := ugrow_populatedOn (Nat.zero_le N)
   builds v _ n _ hn _ := by
     have hv4 := v.isLt
     refine ⟨4 * (n + 1) + (v : ℕ), ?_, ?_, ?_⟩
@@ -251,7 +251,7 @@ theorem ugrowSkewGrowth_drift (N : ℕ) :
 proved from view convergence, the waiting rule and the build rule, on a
 structure that never asserts a block exists above round `0`. -/
 theorem ugrowSkewGrowth_populated (N : ℕ) :
-    ∀ n ≤ N, PopulatedOn (Ugrow N) {1, 2, 3} n :=
+    ∀ n, 0 ≤ n → n ≤ N → PopulatedOn (Ugrow N) {1, 2, 3} n :=
   (ugrowSkewGrowth N).populatedOn (by decide) (ugrowSkewGrowth_drift N)
     (le_refl 0) (fun n _ => by change 2 + 2 ≤ 4; omega)
 
@@ -260,13 +260,15 @@ with the same timing data, so `ugrowSkewView`'s conclusions are available
 without ever having assumed `blk`. -/
 example (N : ℕ) :
     ((ugrowSkewGrowth N).toViewSync (by decide) (ugrowSkewGrowth_drift N)
-      (le_refl 0) (fun n _ => by change 2 + 2 ≤ 4; omega)).delay = 2 := rfl
+      (le_refl 0) (fun n _ => by change 2 + 2 ≤ 4; omega)
+      (fun n hn => absurd hn (by omega))).delay = 2 := rfl
 
 /-- **L7c with nothing assumed about production.** -/
 theorem ugrowSkewGrowth_synchronised (N : ℕ) :
     SynchronisedOn (Ugrow N) {1, 2, 3} 0 :=
   (ugrowSkewGrowth N).synchronisedOn_of_converges (by decide) (by decide)
     (ugrowSkewGrowth_drift N) (le_refl 0) (fun n _ => by change 2 + 2 ≤ 4; omega)
+    (fun n hn => absurd hn (by omega))
 
 #print axioms ugrowSkewGrowth_populated
 #print axioms ugrowSkewGrowth_synchronised
