@@ -720,8 +720,8 @@ slot is fixed by the schedule alone, and any DAG grown past it commits it. -/
 theorem commits_recur_on (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card) (fair : FairScheduleOn T) (R : ℕ) (k : ℕ) :
     ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
-        Live U D N → DeliversQuorum D → SynchronisedOn U T R →
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
         S.slotRound k' + 2 ≤ N →
         ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
   -- Some slot `k₀` already sits past round `R` (`unbounded`), and every slot
@@ -733,21 +733,21 @@ theorem commits_recur_on (hT : T ⊆ (Correct : Finset Validator))
   have hRk' : R ≤ S.slotRound k' :=
     le_trans hk₀ (S.mono (le_trans (le_max_right k k₀) hk'))
   refine ⟨k', le_trans (le_max_left _ _) hk', hRk', ?_⟩
-  intro U D N H hd hs hN
+  intro U N hpop hs hN
   -- L1 populates all of `Correct`; `T` is a subset, so `.mono` bridges them.
   -- This is the one place `T ⊆ Correct` is genuinely needed: L4 alone cares
   -- only about `T.card`, but its population has to come from somewhere, and
   -- the only source is L1, which knows about correct validators.
   exact decided_of_leader_mem hcard hs hRk'
-    (PopulatedOn.mono hT (no_stall H hd _ (by omega)))
-    (PopulatedOn.mono hT (no_stall H hd _ (by omega)))
-    (PopulatedOn.mono hT (no_stall H hd _ (by omega))) hlead
+    (PopulatedOn.mono hT (hpop _ (by omega)))
+    (PopulatedOn.mono hT (hpop _ (by omega)))
+    (PopulatedOn.mono hT (hpop _ (by omega))) hlead
 
 /-- **L6 at `T := Correct`.** The original statement, recovered. -/
 theorem commits_recur (fair : FairSchedule (Validator := Validator)) (R : ℕ) (k : ℕ) :
     ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
-        Live U D N → DeliversQuorum D → Synchronised U R →
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+        (∀ r ≤ N, Populated U r) → Synchronised U R →
         S.slotRound k' + 2 ≤ N →
         ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) :=
   commits_recur_on Finset.Subset.rfl card_correct fair R k
@@ -879,15 +879,15 @@ theorem all_decided_below_of_spacing
     (hT : T ⊆ (Correct : Finset Validator)) (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (fair : FairScheduleOn T) (R : ℕ) (k : ℕ) :
     ∃ n, k ≤ n ∧ R ≤ S.slotRound n ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
-        Live U D N → DeliversQuorum D → SynchronisedOn U T R →
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
         S.slotRound n + 2 ≤ N →
         ∀ i, i ≤ n → ∃ v, Decided U (View.full U) i v := by
   obtain ⟨n, hkn, hRn, hcommit⟩ := commits_recur_on (BlockId := BlockId) (Payload := Payload)
     hT hcard fair R k
   refine ⟨n, hkn, hRn, ?_⟩
-  intro U D N H hd hs hN
-  obtain ⟨L, _, hdec⟩ := hcommit U D N H hd hs hN
+  intro U N hpop hs hN
+  obtain ⟨L, _, hdec⟩ := hcommit U N hpop hs hN
   exact decided_of_committed_above (fun _ _ h => eligible_of_lt_of_spacing hsp h) hdec
 
 /-! ## L9 — the obstruction: when slots are stuck for good
@@ -1073,8 +1073,8 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (hspan : SpansEligible (Validator := Validator) c)
     (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
-        Live U D N → DeliversQuorum D → SynchronisedOn U T R →
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
         S.slotRound (b + c - 1) + 2 ≤ N →
         ∀ i, i < b → ∃ v, Decided U (View.full U) i v := by
   -- The run is fixed by the schedule: past `k`, and past a slot already at `R`.
@@ -1083,7 +1083,7 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
   have hRb : R ≤ S.slotRound b :=
     le_trans hk₀ (S.mono (le_trans (le_max_right k k₀) hb))
   refine ⟨b, le_trans (le_max_left _ _) hb, hRb, ?_⟩
-  intro U D N H hd hs hN
+  intro U N hpop hs hN
   -- Every slot of the run is `T`-led, so L4 commits it.
   have hrun : ∀ j, b ≤ j → j ≤ b + c - 1 → ∃ B, Decided U (View.full U) j (some B) := by
     intro j hj1 hj2
@@ -1095,9 +1095,9 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     have hjr : S.slotRound j ≤ S.slotRound (b + c - 1) := S.mono hj2
     obtain ⟨L, _, hdec⟩ :=
       decided_of_leader_mem hcard hs hRj
-        (PopulatedOn.mono hT (no_stall H hd _ (by omega)))
-        (PopulatedOn.mono hT (no_stall H hd _ (by omega)))
-        (PopulatedOn.mono hT (no_stall H hd _ (by omega))) hlead
+        (PopulatedOn.mono hT (hpop _ (by omega)))
+        (PopulatedOn.mono hT (hpop _ (by omega)))
+        (PopulatedOn.mono hT (hpop _ (by omega))) hlead
     exact ⟨L, hdec⟩
   exact decided_below_of_committed_run (by omega) (fun i hi => hspan b i hi) hrun
 
@@ -1106,8 +1106,8 @@ theorem all_decided_below_of_fairRun_correct {c : ℕ} (hc : 0 < c)
     (hspan : SpansEligible (Validator := Validator) c)
     (fair : FairRunOn (Correct : Finset Validator) c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
-        Live U D N → DeliversQuorum D → Synchronised U R →
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+        (∀ r ≤ N, Populated U r) → Synchronised U R →
         S.slotRound (b + c - 1) + 2 ≤ N →
         ∀ i, i < b → ∃ v, Decided U (View.full U) i v :=
   all_decided_below_of_fairRun hc Finset.Subset.rfl card_correct hspan fair R k

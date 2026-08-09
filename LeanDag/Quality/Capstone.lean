@@ -52,9 +52,8 @@ theorem committed_of_correct_block_within
     ∃ k', slotAt Validator (m + 1) ≤ k' ∧
       k' < slotAt Validator (m + 1) + w ∧
       m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U)
-        (N : ℕ),
-        Live U D N → DeliversQuorum D → Synchronised U R →
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+        (∀ r ≤ N, Populated U r) → Synchronised U R →
         S.slotRound k' + 2 ≤ N →
         ∃ L, Decided U (View.full U) k' (some L) ∧
           ∀ b ∈ U.ids,
@@ -70,11 +69,11 @@ theorem committed_of_correct_block_within
     omega
   have hRk' : R ≤ S.slotRound k' := by omega
   refine ⟨k', hk₁, hk₂, hm, hRk', ?_⟩
-  intro U D N H hd hs hN
+  intro U N hpop hs hN
   obtain ⟨L, hLb, hdec⟩ := decided_of_leader_mem hcard (hs.mono hT) hRk'
-    (PopulatedOn.mono hT (no_stall H hd _ (by omega)))
-    (PopulatedOn.mono hT (no_stall H hd _ (by omega)))
-    (PopulatedOn.mono hT (no_stall H hd _ (by omega))) hlead
+    (PopulatedOn.mono hT (hpop _ (by omega)))
+    (PopulatedOn.mono hT (hpop _ (by omega)))
+    (PopulatedOn.mono hT (hpop _ (by omega))) hlead
   refine ⟨L, hdec, ?_⟩
   intro b hb hbc hbr
   have hLc : (U.block L).creator ∈ (Correct : Finset Validator) := by
@@ -98,9 +97,8 @@ theorem committed_of_correct_block_by_round
     ∃ k', m < S.slotRound k' ∧
       S.slotRound k' ≤ S.slotRound (slotAt Validator (m + 1)) + s * w ∧
       R ≤ S.slotRound k' ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U)
-        (N : ℕ),
-        Live U D N → DeliversQuorum D → Synchronised U R →
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+        (∀ r ≤ N, Populated U r) → Synchronised U R →
         S.slotRound k' + 2 ≤ N →
         ∃ L, Decided U (View.full U) k' (some L) ∧
           ∀ b ∈ U.ids,
@@ -138,9 +136,8 @@ theorem chain_quality (hT : T ⊆ (Correct : Finset Validator))
         (δ : ℕ), Decided U V k (some L) → δ < (U.block L).round →
         (Correct : Finset Validator).card ≤ 2 * (coveredAt U L δ).card) ∧
     ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U)
-        (N : ℕ),
-        Live U D N → DeliversQuorum D → Synchronised U R →
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+        (∀ r ≤ N, Populated U r) → Synchronised U R →
         S.slotRound k' + 2 ≤ N →
         ∃ L, Decided U (View.full U) k' (some L) ∧
           ∀ b ∈ U.ids,

@@ -839,13 +839,21 @@ rather than inside it.
 Neither role is discharged where its name suggests, and the extracted
 support graph (§12) makes the pattern checkable rather than asserted.
 
-**N1 has exactly one primitive consumer: L1 (`no_stall`).** It appears in
-the hypotheses of many statements — L6, the quantitative results, the
-capstones of §§7–10 — but always threaded through to that one place. Its
-job is production, not synchrony. (The only other direct uses are a
-repackaging, `card_authorsAt_of_live`, and the garbage-collection
-transfer lemma `deliversQuorum_chopD`, which re-establishes it on the
-truncated universe.)
+**N1 has exactly one primitive consumer: L1 (`no_stall`).** Its job is
+production, not synchrony, and the results that need production take it
+as a `Populated` hypothesis rather than reaching for the assumption that
+supplies it. L6, L10, the quantitative results and the capstones of
+§§7–10 therefore do not mention N1 at all: any of the three production
+routes may discharge them — `no_stall` from N1, `ViewGrowth.populatedOn`
+from timed view convergence, or `populated_of_viewsConverge` from the
+untimed form.
+
+Of the 67 results in Appendix A, three still reach N1, and each is
+*about* the combinatorial route rather than a consumer of it: L1, which
+derives production from it; G5, which re-establishes it on a truncated
+universe; and B, whose statement bundles growth with the storage bound
+and so asserts both under the same hypotheses. The storage half of B is
+independent of N1.
 
 **N2's abstract form is used for five distinct things**, only the first
 of which is coverage: L7a (§6.7); the view-gap constant C3′ and hence the
@@ -1899,6 +1907,11 @@ still owes:
 | View convergence (§6.9) | `converges` — Δ after GST, over views | P7, P9, drift | `SynchronisedOn`, and the other two |
 | View growth (§6.9) | `converges`, with `blk` removed | P7, P8, P9, drift, one seed round at `R` | `PopulatedOn` from `R` on, and `SynchronisedOn` |
 | Untimed views (§6.9) | `ViewsConverge` — no bound, index-aligned | `HoldsOwn`, P8 | `Populated`, from round `0`, without N1 |
+
+The three routes are interchangeable at the interface. Results above it
+take `PopulatedOn` and `SynchronisedOn` as hypotheses, so which route
+supplies them is a choice made at the point of application rather than a
+commitment baked into the statements.
 
 Read downward, the first three are increasingly primitive statements of
 the same assumption; the last two yield production as well as coverage,

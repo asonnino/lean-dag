@@ -314,12 +314,11 @@ EDGE	LeanDag.decidableDoSValid	LeanDag.decidableDoSValid._aux_1
 EDGE	LeanDag.decidableDoSValid	LeanDag.DoSValid
 EDGE	LeanDag.decidableDoSValid	LeanDag.BlockUniverse
 NODE	LeanDag.commits_recur_by_round	LeanDag.Quantitative	thm
-EDGE	LeanDag.commits_recur_by_round	LeanDag.Delivery
 EDGE	LeanDag.commits_recur_by_round	LeanDag.Faults
 EDGE	LeanDag.commits_recur_by_round	LeanDag.View.full
 EDGE	LeanDag.commits_recur_by_round	LeanDag.Slots.slotRound
-EDGE	LeanDag.commits_recur_by_round	LeanDag.Live
 EDGE	LeanDag.commits_recur_by_round	LeanDag.commits_recur_by_round._proof_1_1
+EDGE	LeanDag.commits_recur_by_round	LeanDag.Populated
 EDGE	LeanDag.commits_recur_by_round	LeanDag.slotRound_le_of_lt
 EDGE	LeanDag.commits_recur_by_round	LeanDag.commits_recur_within
 EDGE	LeanDag.commits_recur_by_round	LeanDag.Decided
@@ -331,7 +330,6 @@ EDGE	LeanDag.commits_recur_by_round	LeanDag.BlockUniverse
 EDGE	LeanDag.commits_recur_by_round	LeanDag.Faults.f
 EDGE	LeanDag.commits_recur_by_round	LeanDag.IsLeaderBlock
 EDGE	LeanDag.commits_recur_by_round	LeanDag.SynchronisedOn
-EDGE	LeanDag.commits_recur_by_round	LeanDag.DeliversQuorum
 EDGE	LeanDag.commits_recur_by_round	LeanDag.Slots
 NODE	LeanDagTest.censBlk._proof_1	LeanDagTest.Quality.Model	thm
 NODE	LeanDag.ViewSync.blk_mem_holds	LeanDag.ViewSync	thm
@@ -3791,14 +3789,14 @@ EDGE	LeanDagTest.ugrowHonest._simp_2	LeanDag.Block.refs
 EDGE	LeanDagTest.ugrowHonest._simp_2	LeanDagTest.growBlock
 EDGE	LeanDagTest.ugrowHonest._simp_2	LeanDagTest.mem_growBlock_refs
 NODE	LeanDagTest.ugrow_commits_recur	LeanDagTest.Growth	thm
-EDGE	LeanDagTest.ugrow_commits_recur	LeanDag.Delivery
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDagTest.ugrowDelivery
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDag.View.full
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDag.Slots.slotRound
-EDGE	LeanDagTest.ugrow_commits_recur	LeanDag.Live
+EDGE	LeanDagTest.ugrow_commits_recur	LeanDag.Populated
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDag.Decided
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDagTest.ugrow_fair
+EDGE	LeanDagTest.ugrow_commits_recur	LeanDag.no_stall
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDagTest.ugrow_live
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDagTest.ugrow_synchronised
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDag.BlockUniverse
@@ -3807,7 +3805,6 @@ EDGE	LeanDagTest.ugrow_commits_recur	LeanDagTest.instFaultsFinOfNatNat_leanDagTe
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDag.IsLeaderBlock
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDagTest.fairSlots
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDag.commits_recur
-EDGE	LeanDagTest.ugrow_commits_recur	LeanDag.DeliversQuorum
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDag.Synchronised
 NODE	LeanDag.live_chopD	LeanDag.GC.Window	thm
 EDGE	LeanDag.live_chopD	LeanDag.live_chopD._proof_1_5
@@ -3860,19 +3857,17 @@ EDGE	LeanDag.certificatesIn_chop	LeanDag.certificates
 EDGE	LeanDag.certificatesIn_chop	LeanDag.View
 EDGE	LeanDag.certificatesIn_chop	LeanDag.certificatesIn_chop._proof_1_4
 NODE	LeanDag.all_decided_below_of_fairRun	LeanDag.Liveness	thm
-EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.Delivery
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.decided_of_leader_mem
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.Faults
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.all_decided_below_of_fairRun._proof_1_1
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.View.full
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.Slots.slotRound
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.Slots.unbounded
-EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.Live
+EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.Populated
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.Decided
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.Slots.leader
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.FairRunOn
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.Correct
-EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.no_stall
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.PopulatedOn.mono
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.all_decided_below_of_fairRun._proof_1_5
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.BlockUniverse
@@ -3880,7 +3875,6 @@ EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.Faults.f
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.all_decided_below_of_fairRun._proof_1_2
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.IsLeaderBlock
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.SynchronisedOn
-EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.DeliversQuorum
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.Slots
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.all_decided_below_of_fairRun._proof_1_3
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.decided_below_of_committed_run
@@ -5592,15 +5586,14 @@ EDGE	LeanDag.ViewGrowth.toDelivery._proof_1	LeanDag.ViewGrowth.built
 EDGE	LeanDag.ViewGrowth.toDelivery._proof_1	LeanDag.ViewGrowth.toDelivery._simp_1
 EDGE	LeanDag.ViewGrowth.toDelivery._proof_1	LeanDag.ViewGrowth.holds_sub
 NODE	LeanDag.committed_of_correct_block_by_round	LeanDag.Quality.Capstone	thm
-EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.Delivery
 EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.committed_of_correct_block_within
 EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.committed_of_correct_block_by_round._proof_1_1
 EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.Faults
 EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.View.full
 EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.Slots.slotRound
 EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.committed_of_correct_block_by_round._proof_1_2
-EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.Live
 EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.slotRound_le_of_boundedSpacing
+EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.Populated
 EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.Decided
 EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.slotAt
 EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.BoundedSpacing
@@ -5613,7 +5606,6 @@ EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.Block.round
 EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.BlockUniverse
 EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.Faults.f
 EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.ledgerSet
-EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.DeliversQuorum
 EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.Slots
 EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.Block.creator
 EDGE	LeanDag.committed_of_correct_block_by_round	LeanDag.Synchronised
@@ -5903,18 +5895,16 @@ EDGE	LeanDag.committed_of_correct_block_within._proof_1_1	LeanDag.slotAt
 EDGE	LeanDag.committed_of_correct_block_within._proof_1_1	LeanDag.Faults.f
 EDGE	LeanDag.committed_of_correct_block_within._proof_1_1	LeanDag.Slots
 NODE	LeanDag.Odontoceti.all_decided_below_of_fairRun_correct	LeanDag.Odontoceti.Liveness	thm
-EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun_correct	LeanDag.Delivery
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun_correct	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun_correct	LeanDag.View.full
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun_correct	LeanDag.Slots.slotRound
-EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun_correct	LeanDag.Live
+EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun_correct	LeanDag.Populated
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun_correct	LeanDag.card_correct
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun_correct	LeanDag.FairRunOn
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun_correct	LeanDag.Correct
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun_correct	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun_correct	LeanDag.Odontoceti.all_decided_below_of_fairRun
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun_correct	LeanDag.Odontoceti.SpansEligible
-EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun_correct	LeanDag.DeliversQuorum
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun_correct	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun_correct	LeanDag.Odontoceti.Decided
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun_correct	LeanDag.Faults5.toFaults
@@ -8376,18 +8366,16 @@ NODE	LeanDag.slotRound_le_of_boundedSpacing._proof_1_2	LeanDag.Quantitative	thm
 EDGE	LeanDag.slotRound_le_of_boundedSpacing._proof_1_2	LeanDag.Slots.slotRound
 EDGE	LeanDag.slotRound_le_of_boundedSpacing._proof_1_2	LeanDag.Slots
 NODE	LeanDag.commits_recur_on	LeanDag.Liveness	thm
-EDGE	LeanDag.commits_recur_on	LeanDag.Delivery
 EDGE	LeanDag.commits_recur_on	LeanDag.decided_of_leader_mem
 EDGE	LeanDag.commits_recur_on	LeanDag.Faults
 EDGE	LeanDag.commits_recur_on	LeanDag.View.full
 EDGE	LeanDag.commits_recur_on	LeanDag.Slots.slotRound
 EDGE	LeanDag.commits_recur_on	LeanDag.Slots.unbounded
-EDGE	LeanDag.commits_recur_on	LeanDag.Live
+EDGE	LeanDag.commits_recur_on	LeanDag.Populated
 EDGE	LeanDag.commits_recur_on	LeanDag.Decided
 EDGE	LeanDag.commits_recur_on	LeanDag.Slots.leader
 EDGE	LeanDag.commits_recur_on	LeanDag.Correct
 EDGE	LeanDag.commits_recur_on	LeanDag.commits_recur_on._proof_1_1
-EDGE	LeanDag.commits_recur_on	LeanDag.no_stall
 EDGE	LeanDag.commits_recur_on	LeanDag.FairScheduleOn
 EDGE	LeanDag.commits_recur_on	LeanDag.PopulatedOn.mono
 EDGE	LeanDag.commits_recur_on	LeanDag.BlockUniverse
@@ -8395,7 +8383,6 @@ EDGE	LeanDag.commits_recur_on	LeanDag.Faults.f
 EDGE	LeanDag.commits_recur_on	LeanDag.IsLeaderBlock
 EDGE	LeanDag.commits_recur_on	LeanDag.SynchronisedOn
 EDGE	LeanDag.commits_recur_on	LeanDag.commits_recur_on._proof_1_2
-EDGE	LeanDag.commits_recur_on	LeanDag.DeliversQuorum
 EDGE	LeanDag.commits_recur_on	LeanDag.Slots
 EDGE	LeanDag.commits_recur_on	LeanDag.Slots.mono
 NODE	LeanDag.history.eq_1	LeanDag.History	thm
@@ -8669,19 +8656,19 @@ EDGE	LeanDagTest.ustarveSync._proof_11	LeanDagTest.mem_T12_bounds
 EDGE	LeanDagTest.ustarveSync._proof_11	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ustarveSync._proof_11	LeanDagTest.ustarveSync._proof_1
 NODE	LeanDagTest.ugrow_commits_by_round	LeanDagTest.Quantitative	thm
-EDGE	LeanDagTest.ugrow_commits_by_round	LeanDag.Delivery
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDagTest.ugrowDelivery
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDag.View.full
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDag.Slots.slotRound
-EDGE	LeanDagTest.ugrow_commits_by_round	LeanDag.Live
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDagTest.rrSlots_slotRound
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDag.commits_recur_by_round
+EDGE	LeanDagTest.ugrow_commits_by_round	LeanDag.Populated
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDagTest.rrSlots
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDag.Decided
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDag.slotAt
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDagTest.ugrow_synchronisedOn_of_rate
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDag.Correct
+EDGE	LeanDagTest.ugrow_commits_by_round	LeanDag.no_stall
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDagTest.rrSlots_fairWithin
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDagTest.ugrow_live
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDag.slotAt_zero
@@ -8692,7 +8679,6 @@ EDGE	LeanDagTest.ugrow_commits_by_round	LeanDagTest.ugrow_deliversQuorum
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDag.IsLeaderBlock
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDag.SynchronisedOn
-EDGE	LeanDagTest.ugrow_commits_by_round	LeanDag.DeliversQuorum
 NODE	LeanDag.PedigreeVia.below.base	LeanDag.DoS.Pedigree	ctor
 EDGE	LeanDag.PedigreeVia.below.base	LeanDag.Faults
 EDGE	LeanDag.PedigreeVia.below.base	LeanDag.PedigreeVia
@@ -9145,21 +9131,19 @@ EDGE	LeanDag.instDecidableStepNovelty	LeanDag.StepNovelty
 EDGE	LeanDag.instDecidableStepNovelty	LeanDag.novelty
 EDGE	LeanDag.instDecidableStepNovelty	LeanDag.Block.creator
 NODE	LeanDag.committed_of_correct_block_within	LeanDag.Quality.Capstone	thm
-EDGE	LeanDag.committed_of_correct_block_within	LeanDag.Delivery
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.committed_of_correct_block_within._proof_1_6
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.decided_of_leader_mem
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.Faults
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.View.full
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.Slots.slotRound
-EDGE	LeanDag.committed_of_correct_block_within	LeanDag.Live
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.SynchronisedOn.mono
+EDGE	LeanDag.committed_of_correct_block_within	LeanDag.Populated
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.le_slotRound_slotAt
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.Decided
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.slotAt
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.Slots.leader
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.BlockUniverse.ids
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.Correct
-EDGE	LeanDag.committed_of_correct_block_within	LeanDag.no_stall
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.committed_of_correct_block_within._proof_1_1
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.FairWithin
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.PopulatedOn.mono
@@ -9173,7 +9157,6 @@ EDGE	LeanDag.committed_of_correct_block_within	LeanDag.Faults.f
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.ledgerSet
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.isLeaderBlock_of_decided
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.IsLeaderBlock
-EDGE	LeanDag.committed_of_correct_block_within	LeanDag.DeliversQuorum
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.Slots
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.mem_ledgerSet_of_mem_history
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.Slots.mono
@@ -9403,18 +9386,16 @@ EDGE	LeanDag.pedigree_cons_inv	LeanDag.PedigreeTo.step
 EDGE	LeanDag.pedigree_cons_inv	LeanDag.PedigreeTo.casesOn
 EDGE	LeanDag.pedigree_cons_inv	LeanDag.Block.creator
 NODE	LeanDag.commits_recur_within	LeanDag.Quantitative	thm
-EDGE	LeanDag.commits_recur_within	LeanDag.Delivery
 EDGE	LeanDag.commits_recur_within	LeanDag.decided_of_leader_mem
 EDGE	LeanDag.commits_recur_within	LeanDag.Faults
 EDGE	LeanDag.commits_recur_within	LeanDag.View.full
 EDGE	LeanDag.commits_recur_within	LeanDag.Slots.slotRound
-EDGE	LeanDag.commits_recur_within	LeanDag.Live
+EDGE	LeanDag.commits_recur_within	LeanDag.Populated
 EDGE	LeanDag.commits_recur_within	LeanDag.le_slotRound_slotAt
 EDGE	LeanDag.commits_recur_within	LeanDag.Decided
 EDGE	LeanDag.commits_recur_within	LeanDag.slotAt
 EDGE	LeanDag.commits_recur_within	LeanDag.Slots.leader
 EDGE	LeanDag.commits_recur_within	LeanDag.Correct
-EDGE	LeanDag.commits_recur_within	LeanDag.no_stall
 EDGE	LeanDag.commits_recur_within	LeanDag.FairWithin
 EDGE	LeanDag.commits_recur_within	LeanDag.PopulatedOn.mono
 EDGE	LeanDag.commits_recur_within	LeanDag.commits_recur_within._proof_1_1
@@ -9423,7 +9404,6 @@ EDGE	LeanDag.commits_recur_within	LeanDag.Faults.f
 EDGE	LeanDag.commits_recur_within	LeanDag.commits_recur_within._proof_1_2
 EDGE	LeanDag.commits_recur_within	LeanDag.IsLeaderBlock
 EDGE	LeanDag.commits_recur_within	LeanDag.SynchronisedOn
-EDGE	LeanDag.commits_recur_within	LeanDag.DeliversQuorum
 EDGE	LeanDag.commits_recur_within	LeanDag.Slots
 EDGE	LeanDag.commits_recur_within	LeanDag.Slots.mono
 NODE	LeanDag.Timing.blk	LeanDag.Timing	def
@@ -9552,11 +9532,10 @@ EDGE	LeanDagTest.ugrow_delivers	LeanDag.Block.creator
 EDGE	LeanDagTest.ugrow_delivers	LeanDag.mem_blocksAt
 NODE	LeanDag.byzPool_subset_of_allExposed._proof_1_1	LeanDag.DoS.Composition	thm
 NODE	LeanDag.all_decided_below_of_spacing	LeanDag.Liveness	thm
-EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.Delivery
 EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.Faults
 EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.View.full
 EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.Slots.slotRound
-EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.Live
+EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.Populated
 EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.decided_of_committed_above
 EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.Decided
 EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.commits_recur_on
@@ -9567,7 +9546,6 @@ EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.eligible_of_lt_of_spacing
 EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.Faults.f
 EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.IsLeaderBlock
 EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.SynchronisedOn
-EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.DeliversQuorum
 EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.Slots
 NODE	LeanDag.Delivery.casesOn	LeanDag.Liveness	def
 EDGE	LeanDag.Delivery.casesOn	LeanDag.Delivery
@@ -9753,22 +9731,20 @@ EDGE	LeanDagTest.Ugrow._proof_4	LeanDagTest.growBlock
 EDGE	LeanDagTest.Ugrow._proof_4	LeanDagTest.mem_growBlock_refs
 NODE	LeanDagTest.ugrowSkewView._proof_18	LeanDagTest.ViewSync	thm
 NODE	LeanDag.committed_of_correct_block	LeanDag.Quality.Inclusion	thm
-EDGE	LeanDag.committed_of_correct_block	LeanDag.Delivery
 EDGE	LeanDag.committed_of_correct_block	LeanDag.committed_of_correct_block._proof_1_2
 EDGE	LeanDag.committed_of_correct_block	LeanDag.decided_of_leader_mem
 EDGE	LeanDag.committed_of_correct_block	LeanDag.Faults
 EDGE	LeanDag.committed_of_correct_block	LeanDag.View.full
 EDGE	LeanDag.committed_of_correct_block	LeanDag.Slots.slotRound
 EDGE	LeanDag.committed_of_correct_block	LeanDag.Slots.unbounded
-EDGE	LeanDag.committed_of_correct_block	LeanDag.Live
 EDGE	LeanDag.committed_of_correct_block	LeanDag.SynchronisedOn.mono
+EDGE	LeanDag.committed_of_correct_block	LeanDag.Populated
 EDGE	LeanDag.committed_of_correct_block	LeanDag.le_slotRound_slotAt
 EDGE	LeanDag.committed_of_correct_block	LeanDag.Decided
 EDGE	LeanDag.committed_of_correct_block	LeanDag.slotAt
 EDGE	LeanDag.committed_of_correct_block	LeanDag.Slots.leader
 EDGE	LeanDag.committed_of_correct_block	LeanDag.BlockUniverse.ids
 EDGE	LeanDag.committed_of_correct_block	LeanDag.Correct
-EDGE	LeanDag.committed_of_correct_block	LeanDag.no_stall
 EDGE	LeanDag.committed_of_correct_block	LeanDag.FairScheduleOn
 EDGE	LeanDag.committed_of_correct_block	LeanDag.PopulatedOn.mono
 EDGE	LeanDag.committed_of_correct_block	LeanDag.BlockUniverse.block
@@ -9782,7 +9758,6 @@ EDGE	LeanDag.committed_of_correct_block	LeanDag.committed_of_correct_block._proo
 EDGE	LeanDag.committed_of_correct_block	LeanDag.isLeaderBlock_of_decided
 EDGE	LeanDag.committed_of_correct_block	LeanDag.committed_of_correct_block._proof_1_4
 EDGE	LeanDag.committed_of_correct_block	LeanDag.IsLeaderBlock
-EDGE	LeanDag.committed_of_correct_block	LeanDag.DeliversQuorum
 EDGE	LeanDag.committed_of_correct_block	LeanDag.Slots
 EDGE	LeanDag.committed_of_correct_block	LeanDag.mem_ledgerSet_of_mem_history
 EDGE	LeanDag.committed_of_correct_block	LeanDag.Slots.mono
@@ -11102,11 +11077,10 @@ EDGE	LeanDag.View.mem_of_reaches	LeanDag.View.complete
 EDGE	LeanDag.View.mem_of_reaches	LeanDag.View
 EDGE	LeanDag.View.mem_of_reaches	LeanDag.Reaches
 NODE	LeanDag.committed_of_correct_block_correct	LeanDag.Quality.Inclusion	thm
-EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.Delivery
 EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.Faults
 EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.View.full
 EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.Slots.slotRound
-EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.Live
+EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.Populated
 EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.card_correct
 EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.Decided
 EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.BlockUniverse.ids
@@ -11118,7 +11092,6 @@ EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.Block.round
 EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.BlockUniverse
 EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.ledgerSet
 EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.committed_of_correct_block
-EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.DeliversQuorum
 EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.Slots
 EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.Block.creator
 EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.Synchronised
@@ -12006,12 +11979,11 @@ EDGE	LeanDag.Decided.below.indirectCommit	LeanDag.IsLeaderBlock
 EDGE	LeanDag.Decided.below.indirectCommit	LeanDag.Slots
 EDGE	LeanDag.Decided.below.indirectCommit	LeanDag.View
 NODE	LeanDag.chain_quality	LeanDag.Quality.Capstone	thm
-EDGE	LeanDag.chain_quality	LeanDag.Delivery
 EDGE	LeanDag.chain_quality	LeanDag.Faults
 EDGE	LeanDag.chain_quality	LeanDag.View.full
 EDGE	LeanDag.chain_quality	LeanDag.Slots.slotRound
 EDGE	LeanDag.chain_quality	LeanDag.card_correct_le_two_mul_coveredAt_of_decided
-EDGE	LeanDag.chain_quality	LeanDag.Live
+EDGE	LeanDag.chain_quality	LeanDag.Populated
 EDGE	LeanDag.chain_quality	LeanDag.coveredAt
 EDGE	LeanDag.chain_quality	LeanDag.Decided
 EDGE	LeanDag.chain_quality	LeanDag.BlockUniverse.ids
@@ -12024,7 +11996,6 @@ EDGE	LeanDag.chain_quality	LeanDag.BlockUniverse
 EDGE	LeanDag.chain_quality	LeanDag.Faults.f
 EDGE	LeanDag.chain_quality	LeanDag.ledgerSet
 EDGE	LeanDag.chain_quality	LeanDag.committed_of_correct_block
-EDGE	LeanDag.chain_quality	LeanDag.DeliversQuorum
 EDGE	LeanDag.chain_quality	LeanDag.Slots
 EDGE	LeanDag.chain_quality	LeanDag.View
 EDGE	LeanDag.chain_quality	LeanDag.Block.creator
@@ -12201,19 +12172,17 @@ EDGE	LeanDagTest.Ufault._proof_3	LeanDagTest.lky
 EDGE	LeanDagTest.Ufault._proof_3	LeanDag.Block.creator
 NODE	LeanDagTest.Uomit._proof_10	LeanDagTest.Unbounded	thm
 NODE	LeanDag.commits_recur	LeanDag.Liveness	thm
-EDGE	LeanDag.commits_recur	LeanDag.Delivery
 EDGE	LeanDag.commits_recur	LeanDag.Faults
 EDGE	LeanDag.commits_recur	LeanDag.View.full
 EDGE	LeanDag.commits_recur	LeanDag.Slots.slotRound
-EDGE	LeanDag.commits_recur	LeanDag.Live
 EDGE	LeanDag.commits_recur	LeanDag.FairSchedule
+EDGE	LeanDag.commits_recur	LeanDag.Populated
 EDGE	LeanDag.commits_recur	LeanDag.card_correct
 EDGE	LeanDag.commits_recur	LeanDag.Decided
 EDGE	LeanDag.commits_recur	LeanDag.commits_recur_on
 EDGE	LeanDag.commits_recur	LeanDag.Correct
 EDGE	LeanDag.commits_recur	LeanDag.BlockUniverse
 EDGE	LeanDag.commits_recur	LeanDag.IsLeaderBlock
-EDGE	LeanDag.commits_recur	LeanDag.DeliversQuorum
 EDGE	LeanDag.commits_recur	LeanDag.Slots
 EDGE	LeanDag.commits_recur	LeanDag.Synchronised
 NODE	LeanDagTest.Uomit._proof_13	LeanDagTest.Unbounded	thm
@@ -14852,17 +14821,15 @@ EDGE	LeanDagTest.censBlk	LeanDagTest.censBlk._proof_6
 EDGE	LeanDagTest.censBlk	LeanDagTest.censBlk._proof_9
 EDGE	LeanDagTest.censBlk	LeanDagTest.censBlk._proof_10
 NODE	LeanDag.all_decided_below_of_fairRun_correct	LeanDag.Liveness	thm
-EDGE	LeanDag.all_decided_below_of_fairRun_correct	LeanDag.Delivery
 EDGE	LeanDag.all_decided_below_of_fairRun_correct	LeanDag.Faults
 EDGE	LeanDag.all_decided_below_of_fairRun_correct	LeanDag.View.full
 EDGE	LeanDag.all_decided_below_of_fairRun_correct	LeanDag.Slots.slotRound
-EDGE	LeanDag.all_decided_below_of_fairRun_correct	LeanDag.Live
+EDGE	LeanDag.all_decided_below_of_fairRun_correct	LeanDag.Populated
 EDGE	LeanDag.all_decided_below_of_fairRun_correct	LeanDag.card_correct
 EDGE	LeanDag.all_decided_below_of_fairRun_correct	LeanDag.Decided
 EDGE	LeanDag.all_decided_below_of_fairRun_correct	LeanDag.FairRunOn
 EDGE	LeanDag.all_decided_below_of_fairRun_correct	LeanDag.Correct
 EDGE	LeanDag.all_decided_below_of_fairRun_correct	LeanDag.BlockUniverse
-EDGE	LeanDag.all_decided_below_of_fairRun_correct	LeanDag.DeliversQuorum
 EDGE	LeanDag.all_decided_below_of_fairRun_correct	LeanDag.Slots
 EDGE	LeanDag.all_decided_below_of_fairRun_correct	LeanDag.all_decided_below_of_fairRun
 EDGE	LeanDag.all_decided_below_of_fairRun_correct	LeanDag.SpansEligible
@@ -15039,17 +15006,15 @@ EDGE	LeanDagTest.ugapGrowth.eq_1	LeanDagTest.gapHolds
 EDGE	LeanDagTest.ugapGrowth.eq_1	LeanDagTest.ugapGrowth._proof_1
 EDGE	LeanDagTest.ugapGrowth.eq_1	LeanDagTest.ugapGrowth._proof_25
 NODE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Odontoceti.Liveness	thm
-EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Delivery
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Odontoceti.decided_of_leader_mem
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.View.full
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Slots.slotRound
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Slots.unbounded
-EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Live
+EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Populated
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Slots.leader
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.FairRunOn
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Correct
-EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.no_stall
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.PopulatedOn.mono
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Faults.f
@@ -15057,7 +15022,6 @@ EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.IsLeaderBlock
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Odontoceti.SpansEligible
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.SynchronisedOn
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Odontoceti.decided_below_of_committed_run
-EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.DeliversQuorum
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Odontoceti.all_decided_below_of_fairRun._proof_1_3
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Odontoceti.Decided

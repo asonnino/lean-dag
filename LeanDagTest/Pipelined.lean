@@ -190,8 +190,8 @@ example {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
     [F : Faults (Fin 4)] (hT : ({1, 2, 3} : Finset (Fin 4)) ⊆ Correct)
     (hcard : Fintype.card (Fin 4) - F.f ≤ ({1, 2, 3} : Finset (Fin 4)).card) (R k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ pipeSlots.slotRound b ∧
-      ∀ (U : BlockUniverse (Fin 4) BlockId Payload) (D : Delivery U) (N : ℕ),
-        Live U D N → DeliversQuorum D → SynchronisedOn U ({1, 2, 3} : Finset (Fin 4)) R →
+      ∀ (U : BlockUniverse (Fin 4) BlockId Payload) (N : ℕ),
+        (∀ r ≤ N, Populated U r) → SynchronisedOn U ({1, 2, 3} : Finset (Fin 4)) R →
         pipeSlots.slotRound (b + 3 - 1) + 2 ≤ N →
         ∀ i, i < b → ∃ v, Decided U (View.full U) i v :=
   all_decided_below_of_fairRun (by omega) hT hcard pipe_spansEligible pipe_fairRun R k
