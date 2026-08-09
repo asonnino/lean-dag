@@ -133,7 +133,7 @@ proof effort with no corresponding proof content.
    delivery model (§6.7), from GST (§6.8), and from **view convergence**
    (§6.9) — in each case together with the protocol's build rules, and
    nothing beyond standard partial synchrony. They form a hierarchy
-   rather than a menu: the third derives the second, and states the
+   rather than a set of alternatives: the third derives the second, and states the
    network's contribution in a form containing no clause about what
    validators do. On the same foundation, production is derived too
    (`populated_of_viewsConverge`), so the entire liveness account can be
@@ -288,7 +288,7 @@ structure ValidWrt (blk : BlockId → Block Validator BlockId Payload)
   self_parent : 0 < b.round → ∃ i ∈ b.refs, (blk i).creator = b.creator
 ```
 
-Four points of formulation are load-bearing.
+Four aspects of the formulation are consequential.
 
 The predecessor condition is stated additively rather than as
 `(blk i).round = b.round - 1`. Besides avoiding truncated subtraction on `ℕ`,
@@ -308,7 +308,7 @@ two-round setting, by twin uniqueness (§10).
 creator, not a unique one: an equivocator's blocks form a forest of
 predecessor chains, and the condition does not collapse it. Mysticeti and
 Odontoceti both mandate the clause. The safety and liveness developments never
-consume it; it is load-bearing for the DoS arc (§8), where the self-parent
+consume it; it is indispensable to §8, where the self-parent
 chain is what turns per-acceptance budgets into per-round rates and a correct
 block's cone into a complete record of its author's acceptances.
 
@@ -614,7 +614,7 @@ the system actually falls.
 | P10 | the leader schedule names reliable validators arbitrarily far out | `FairScheduleOn` |
 
 P1–P6 are consumed by the safety development, P7–P10 additionally by liveness;
-P3′ by neither — it is load-bearing for the DoS arc (§8).
+P3′ by neither — it is indispensable to §8.
 
 P10 is a joint condition rather than a pure specification: the schedule is the
 designer's, but which validators are reliable is not. Round-robin discharges it
@@ -688,8 +688,8 @@ operative budget:
 A correct validator which is persistently slow consumes budget exactly as a
 Byzantine one does. This is a hybrid condition: correctness is a fault-model
 matter, timeliness a network one. At `f = 1` there are four validators and
-`|Correct| = 3 = n−f` exactly, so no slack exists and every correct validator
-must be timely; slack appears only when fewer than `f` validators are in fact
+`|Correct| = 3 = n−f` exactly, so no margin exists and every correct validator
+must be timely; margin appears only when fewer than `f` validators are in fact
 faulty, and the `T`-parameterised statements make it available automatically.
 The specialisations at `T := Correct` (`directCommit_of_correct_leader`,
 `decided_of_correct_leader`, `commits_recur`) recover the conventional
@@ -743,7 +743,7 @@ authors. Four features of the shape are deliberate.
 - **Conditional: existence first, holding second.** Stated
   unconditionally it would assert that round-`n` blocks exist, which is
   what the liveness argument sets out to prove (§6.3); the assumption
-  would swallow its own conclusion.
+  would presuppose what it is invoked to establish.
 - **No clock and no round bound.** No Δ, no GST, no index past which it
   begins to hold, so it constrains the network before stabilisation
   exactly as after. This is what carries the results that do not need
@@ -863,15 +863,14 @@ narrower than the two-assumption summary suggests.
 
 *For coverage*, one condition on the environment: view convergence,
 bounded after GST. The other two formulations are that condition with a
-protocol clause folded in, and §6.9 derives them from it.
+protocol clause incorporated, and §6.9 derives them from it.
 
 *For production*, one condition — but the choice of formulation is a
-genuine fork. N1 is the weakest and the implementable one, at the price
-of also constraining the acceptance policy. Untimed view convergence
+genuine choice. N1 is the weakest and the implementable one, though it
+also constrains the acceptance policy. Untimed view convergence
 (`ViewsConverge`) is stronger — every correct block, always, rather than
 a quorum when one exists — and discharges N1 entirely
-(`populated_of_viewsConverge`), at the price of being unimplementable as
-stated, since a validator cannot wait for "all correct blocks" without
+(`populated_of_viewsConverge`), though it is unimplementable as stated, since a validator cannot wait for "all correct blocks" without
 distinguishing correct validators from crashed ones. The timed structures
 take a third option and assume production outright, carrying a block per
 validator per round as data (§6.10).
@@ -896,7 +895,7 @@ together with clauses of the protocol, by any of three routes:
 | View convergence | N2 (`converges`) with P7 and P9 | `ViewSync.synchronisedOn_of_converges` (L7c) |
 
 The third derives the second (`ViewSync.toTiming`, §6.9), so the routes
-are a hierarchy and not a menu; and a fourth result on the same
+are a hierarchy rather than a set of alternatives; and a fourth result on the same
 foundation derives *production* rather than coverage, discharging N1
 (`populated_of_viewsConverge`).
 
@@ -919,9 +918,9 @@ have not survived scrutiny. Mysticeti's Lemma 8 and Cordial Miners' Proposition
 that both leave gaps, and [QXS26] shows the gap is not merely expositional — with
 round-jumping unrestricted the conclusion is false. The present development is
 not exposed to that counterexample, but the reason is P8, which excludes
-round-jumping by fiat (§4.1). Read correctly, this is the stronger position: it
-identifies precisely which protocol clause the structural condition is bought
-with, rather than asserting the condition and leaving the price implicit.
+round-jumping outright (§4.1). Properly read, this is the stronger position: it
+identifies precisely which protocol clause the structural condition depends
+on, rather than asserting the condition and leaving the price implicit.
 
 ### 4.5 Quantitative clauses
 
@@ -1275,7 +1274,7 @@ that the ledger grows without bound is not that one DAG commits infinitely often
 — no finite DAG can — but that no slot is the last one which some sufficiently
 grown DAG commits.
 
-L1 is the only result in which the horizon does any work; the principal
+L1 is the only result in which the horizon is consumed; the principal
 commitment theorem does not mention `N`.
 
 ### 6.4 Eventual DAG synchrony
@@ -1289,7 +1288,7 @@ def SynchronisedOn (U) (T : Finset Validator) (R : ℕ) : Prop :=
 ```
 
 The condition is restricted to correct authors on both sides, and both
-restrictions are load-bearing.
+restrictions are consequential.
 
 Nothing may be assumed about the existence of Byzantine blocks: a Byzantine
 validator may publish nothing, or publish and reveal selectively, so no argument
@@ -1432,7 +1431,8 @@ chain must terminate at a delivery assumption.
 
 `EventuallyDelivers` is view convergence *indexed to the moment of building*: it
 does not state that correct blocks eventually reach `v`, but that they are members
-of `D.held v n`. That indexing performs the work, and it is exactly what a
+of `D.held v n`. That indexing is what carries the argument, and it is exactly
+what a
 view-shaped statement lacks (§13.1).
 
 ### 6.8 Deriving coverage: the timing route
@@ -1533,7 +1533,7 @@ mentions no block, no round and no reference.
 **`covers` is two clauses, not one.** It concludes about `refs`, fusing a
 network guarantee with the protocol's referencing rule (§4.3). Stated
 over views the two are apart: `converges` is the network's, `references` is P7 in the timed
-setting, and the fused field is a *theorem*:
+setting, and the composite field becomes a *theorem*:
 
 ```lean
 theorem covers_of_converges : … vs.blk w n ∈ (U.block (vs.blk v (n + 1))).refs
@@ -1542,7 +1542,7 @@ theorem covers_of_converges : … vs.blk w n ∈ (U.block (vs.blk v (n + 1))).re
 The block is in its author's hands when built (`holds_own`), reaches the
 builder within `delay` (`converges`), is still there when the builder
 acts (`holds_mono` — which is where the hypothesis
-`built w n + delay ≤ built v (n+1)` is spent), and is therefore
+`built w n + delay ≤ built v (n+1)` is used), and is therefore
 referenced (`references`).
 
 **L7c.**
@@ -1564,7 +1564,7 @@ route is what the view-convergence route becomes once P7 is applied,
 which is the hierarchy of §4.3.
 
 **The bound, factored out.** `converges` is partial synchrony in its
-familiar two-part shape, and the parts separate:
+familiar two-part form, and the parts separate:
 
 ```lean
 def ConvergesEventually (holds) (T) : Prop :=
@@ -1581,9 +1581,10 @@ convergence whose lag is uniformly bounded after `gst`. So
 > view convergence under synchrony = view convergence + a bound on the lag,
 
 and `converges` is the second (`ViewSync.convergesWithin`), with the
-first following for free (`ViewSync.convergesEventually`).
+the first following without further hypotheses
+(`ViewSync.convergesEventually`).
 
-**The bound is load-bearing.** Eventual convergence alone yields
+**The bound is indispensable.** Eventual convergence alone yields
 nothing: the derivation above needs the block in
 the builder's hands *before* it builds, which is arranged by choosing a
 timeout that exceeds the lag. A lag that merely exists cannot be compared
@@ -1612,8 +1613,8 @@ the bound (to compare a lag with a timeout at all), the drift (to compare
 one validator's clock with another's) and the wait (to push the build
 past both).
 
-**The untimed variant.** The same shape can be written with no clock at
-all, over `Delivery`:
+**The untimed variant.** The same condition may be written with no clock
+at all, over `Delivery`:
 
 ```lean
 def ViewsConverge (D : Delivery U) : Prop :=
@@ -1644,11 +1645,11 @@ exists, the previous round's population supplies `|Correct| ≥ n−f`
 correct blocks and convergence puts every one of them in every correct
 validator's hands.
 
-N1 is not thereby obtained for free. Index-aligned sharing of every
+N1 is not thereby obtained without cost. Index-aligned sharing of every
 correct block is **stronger** than N1, which promises only a quorum and
-only when one exists; what is bought is uniformity of shape, not a weaker
-hypothesis. And **the untimed condition is not a delivery assumption but
-a delivery assumption fused with a wait clause.** In the untimed model
+only when one exists; what is obtained is uniformity of formulation, not a
+weaker hypothesis. And **the untimed condition is not a delivery assumption but
+a delivery assumption combined with a waiting clause.** In the untimed model
 that fusion cannot be undone, for a structural reason:
 `Delivery.held v n` is indexed by the *round*, and `held_spec` confines
 it to round-`n` blocks, so a round-`n` block can appear only at index
@@ -1661,7 +1662,7 @@ untimed model must postulate.
 
 ### 6.10 The layering
 
-![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow rests only on definitions and unlabelled lemmas — L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §12 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
+![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §12 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
 
 No theorem above `SynchronisedOn` mentions time, and no theorem below it mentions
 certificates. The diagram also locates the trust boundary: the leftmost column is
@@ -1684,7 +1685,7 @@ single column that every liveness result passes through.
 *Network from protocol* — the interface is the pair
 `converges` / `references` of §6.9. This line is invisible in the delivery
 and timing routes: `EventuallyDelivers` is indexed at build time, and
-`Timing.covers` concludes about `refs`, so each silently carries some
+`Timing.covers` concludes about `refs`, so each tacitly carries some
 protocol content. Only the view-convergence route states the network's
 contribution in a form containing nothing the protocol does, which is why
 §4.3 can now claim that the network's whole contribution is one sentence
@@ -1709,7 +1710,7 @@ still owes:
 | Untimed views (§6.9) | `ViewsConverge` — no bound, index-aligned | `HoldsOwn` | `Populated`, without N1 |
 
 Read downward, the first three are increasingly primitive statements of
-the same assumption; read across, the fourth is the only one that buys
+the same assumption; read across, the fourth is the only one that yields
 production rather than coverage.
 
 ### 6.11 Quantitative results
@@ -1720,8 +1721,8 @@ clause (§4.5); a reader declining those clauses retains §6.1–§6.10 intact.
 
 **The weak hypotheses admit no bound.** Two of the results above conclude with
 an existential statement that supplies no bound on its witness —
-`∃ R, SynchronisedOn U T R`, and `∃ k', k ≤ k' ∧ …`. This is not slack in the
-proofs. Each governing hypothesis has the same form, and under such hypotheses
+`∃ R, SynchronisedOn U T R`, and `∃ k', k ≤ k' ∧ …`. This is not a
+deficiency of the proofs. Each governing hypothesis has the same form, and under such hypotheses
 no bound exists. The hypothesis
 `∀ m, ∃ n, m ≤ tm.timeout n` admits `timeout n = ⌊log₂(n+1)⌋`, which is monotone
 and unbounded yet requires `n ≥ 2^(D+delay) − 1` to clear the threshold, and
@@ -1808,7 +1809,7 @@ constant obtained here as a derived requirement is thus the one independently
 arrived at as a design choice, and §6.8 supplies the reason the factor is two —
 `D₀ + Δ` with `D₀ ≤ Δ` under a common broadcast start.
 
-`Timing.populatedOn` is worth noting in the same connection: it supplies L4's
+`Timing.populatedOn` bears on the same point: it supplies L4's
 population hypotheses from the `Timing` structure directly, because `Timing.blk`
 is total below the horizon. That totality is P8 in its strongest form — a block
 at every round, with no exception — and is what makes these statements
@@ -1900,7 +1901,7 @@ theorem committed_of_correct_block (hT : T ⊆ Correct)
 
 — for every round `m ≥ R` the schedule fixes, *before the universe is
 quantified*, a committed slot whose flush contains every correct
-round-`m` block. (One composition note: `commits_recur_on` does not
+round-`m` block. (`commits_recur_on` does not
 expose the committed leader's membership in `T`, which the backbone
 needs, so the proof composes from the fair schedule, L4 and `no_stall`
 directly, mirroring L6's own proof.) The quantitative forms pin the
@@ -1912,11 +1913,11 @@ correct block is committed within a schedule-window of its creation,
 once the DAG is synchronous*. The capstone `chain_quality` packages
 both halves under enforceable or standard conditions only.
 
-A block-count purity variant was assessed against a recorded gate and
-dropped: under `DoSValid` alone the per-author block count carries the
-exponential constant of §8.3, and under the budget the cone-level
-Byzantine count is a whole-store bound — neither yields a ratio worth
-quoting, and the author-coverage metric is the honest one.
+A block-count purity variant was considered and rejected: under `DoSValid`
+alone the per-author block count carries the exponential constant of §8.3,
+and under the budget the cone-level Byzantine count is a whole-store
+bound. Neither yields an informative ratio, and the author-coverage
+metric is the appropriate one.
 
 ---
 
@@ -1931,12 +1932,13 @@ storage condition of this section (`LeanDagTest/DoS/SafetyUnderDoS.lean`).
 *Storage* is another matter. An uncertified DAG admits Byzantine blocks into
 correct views by design, an equivocator may produce arbitrarily many blocks
 per round, and a correct validator that retains the cones of what it accepts
-can be made to retain the attacker's freight. This section bounds that
-freight twice over: first under a *reference-validity* condition (exposure),
+can be made to retain material injected by an adversary. This
+section bounds that growth in two ways: first under a *reference-validity* condition (exposure),
 whose bound is shown essentially optimal yet exponential in `f`; then under a
 *rate-limiting* condition (the novelty budget), which is enforceable,
-author-blind, and yields the linear headline `dos_resistance`. The two
-compose: the budget paces what an equivocator can inject, exposure ends it.
+author-blind, and yields the linear result `dos_resistance`. The two
+compose: the budget limits the rate at which an equivocator can inject
+material, and exposure terminates it.
 
 ### 8.1 The store, and what growth means
 
@@ -1953,7 +1955,7 @@ def viewUpto (D : Delivery U) (v : Validator) : ℕ → Finset BlockId
 block means holding its entire causal history — that is what downward
 closure of views (§2.3) demands. Growth questions are questions about
 `(viewUpto D v n).card`, and since correct production alone contributes
-`|Correct|` blocks per round, *linear in `n`* is the best possible shape;
+`|Correct|` blocks per round, *linear in `n`* is the best attainable;
 the question is the constant, and whether the Byzantine share can exceed it.
 
 The *novelty* of an arriving block is what its cone adds over the store:
@@ -1964,8 +1966,8 @@ def novelty (U) (V : Finset BlockId) (b : BlockId) : Finset BlockId :=
 ```
 
 Novelty is antitone in the store — the more a validator already holds, the
-cheaper any block is — which is the monotonicity every argument below leans
-on.
+smaller the novelty of any arriving block — the monotonicity on which every
+argument below depends.
 
 ### 8.2 Exposure, and the DoS-validity condition
 
@@ -2003,9 +2005,11 @@ theorem creators_refs_eq_correct (hdos : DoSValid U) (hb : b ∈ U.ids)
 ```
 
 — the references of every later block are precisely the correct validators,
-and the commit chain still runs on them: the witness model `Uexcl` carries a
+and the commit chain still operates over
+them: the witness model `Uexcl` carries a
 direct commit whose three rounds all lie after the exclusion of its
-equivocator (§11). Exclusion also does not depend on luck: *density* says a
+equivocator (§11). Nor does exclusion depend on favourable circumstances:
+*density* establishes that a
 cone can be selectively blind to at most `f` correct authors per round, even
 below Byzantine blocks, because the quorum clause forces every layer of
 every valid cone to carry `n − f` distinct authors:
@@ -2036,14 +2040,14 @@ theorem card_history_le' (hdos : DoSValid U) (hb : b ∈ U.ids) :
           ((U.block b).round + 1)
 ```
 
-The exponential constant is not slack in the proof: a matching family of
+The exponential constant is not an artefact of the proof: a matching family of
 witnesses (`Udouble`, §11) realises `2^(e−2)` growth from `e` equivocators,
 so any bound obtainable from reference-validity conditions alone carries a
-constant exponential in `f`. That is the honest verdict on the exposure
+constant exponential in `f`. This is the assessment of the exposure
 mechanism as a *storage* defence: it is the right accountability layer — it
 identifies and permanently retires equivocators at the cost of quorum
-margin — but no practical storage bound can rest on it. Rate limiting is
-needed, and it is orthogonal.
+margin — but no practical storage bound can rest upon it. Rate limiting is
+required, and is orthogonal to it.
 
 ### 8.4 The novelty budget
 
@@ -2071,16 +2075,16 @@ def RefsAccepted (D : Delivery U) : Prop :=
 
 `RefsAccepted` is the converse of `includes` (§6.2): together they say a
 correct block's references are *exactly* its author's acceptances — local,
-observable conduct. The blind and guarded budgets sandwich each other within
-one factor of `f`:
+observable conduct. The blind and guarded formulations bound each other to
+within a factor of `f`:
 
 * `UniformBudget.byzBudget : UniformBudget D T → ByzBudget D T` — dropping
   a guard weakens nothing; and conversely
 * `uniform_of_byzBudget` — post-`R`, under `ByzBudget κ`, *every*
   acceptance (correct authors included) adds at most `f·κ + 1`.
 
-The converse direction is the interesting one, and its engine deserves
-stating. Why would a *correct* author's block have small novelty? Because a
+The converse direction is the substantive one, and the mechanism behind it
+should be stated. Why would a *correct* author's block have small novelty? Because a
 correct block's cone is a complete record of everything its author ever
 accepted — `includes` puts each round's acceptances among the next block's
 references, and the self-parent chain (P3′) carries every earlier round
@@ -2098,13 +2102,13 @@ protocol needs modelling. Quantitatively, the gap between correct stores is
 a *constant*, not a drift (`card_viewGap_succ_le`): post-`R` it is at most
 `f·κ`, one round of Byzantine budget, however long the system has run.
 
-The same self-parent mechanism yields a pure-DAG form worth isolating: if
+The same self-parent mechanism yields a purely structural form: if
 every correct block adds at most `κ'` over its self-parent (`StepNovelty`),
 then correct cones are linear outright,
 `|H(b)| ≤ κ'·round(b) + 1` (`card_history_le_of_stepNovelty`) — a telescope
 along the self-parent chain, with no delivery model at all.
 
-### 8.5 The headline, and the composition
+### 8.5 The principal result, and the composition
 
 Under the guarded budget the Byzantine share of a correct store is priced
 through a global object, the *pool* — the Byzantine-authored blocks any
@@ -2165,8 +2169,9 @@ theorem card_viewUpto_le_of_allExposed' (hdos : DoSValid U)
           (m + 1) * ((Correct : Finset Validator).card * (F.f * κ)))
 ```
 
-— the budget paces what an author can inject; exclusion ends it. On data,
-the budget is satisfiable at its sharp constant: the witness schedule
+— the budget limits the rate at which an author can inject material;
+exclusion terminates it. On data,
+the budget is satisfiable at its exact constant: the witness schedule
 `Dtwin` satisfies `UniformBudget 3` with its costliest acceptance costing
 exactly `3`, and `ByzBudget 0` — nothing Byzantine accepted after the
 genesis round (§11).
@@ -2174,8 +2179,8 @@ genesis round (§11).
 How should the parameter `T` be set? Any `T ≥ 1` admits every correct block
 post-`R` (the sandwich's `f·κ + 1` with `κ = 0` would be the correct-only
 floor); smaller `T` tightens the Byzantine rate and defers — never refuses —
-expensive correct blocks, deferral being a rate limiter rather than a
-verdict, since novelty is antitone in the growing store.
+correct blocks of high novelty, deferral being a rate limit rather than a
+refusal, since novelty is antitone in the growing store.
 
 ---
 
@@ -2219,7 +2224,7 @@ def chop (U) (G : ℕ) : BlockUniverse Validator BlockId Payload where
 Every validity clause of §2.2 constrains only rounds `> 0`, and the old
 genesis special case applies verbatim to the new base — so `chop U G` is a
 bona-fide `BlockUniverse`, and **every theorem of this report applies to it
-unchanged**. That is the entire design: the work is never re-proving the
+unchanged**. This is the design in its entirety: the task is never to re-prove the
 theory above the cut, only relating verdicts *across* the cut and choosing
 the cut. (In an implementation, block identity is a hash over references, so
 emptying the base layer's references is not a re-hash of history: it is the
@@ -2301,11 +2306,12 @@ truncated universe. Two prerequisites make this legitimate over a *sequence*
 of cuts. The budget must be measured on the truncated universe — otherwise
 pruning would make every arriving block's novelty explode with the
 discarded prefix — and windowed novelty is *antitone under cut-advance*
-(`novelty_chop_anti`): as the window slides, pruning only cheapens blocks,
+(`novelty_chop_anti`): as the window slides, pruning only decreases novelty,
 so an affordable block never becomes unaffordable. The budget conditions
 themselves descend to the window (`byzBudget_chopD`, `refsAccepted_chopD`).
 
-The storage headline is stated per time, because a validator's life is a
+The principal storage result is stated per time, because a validator's life
+is a
 sequence of cuts:
 
 ```lean
@@ -2325,7 +2331,8 @@ correct author's serving obligation: everything it can be asked to serve
 for its block is its own retained store above its own horizon, plus the
 block itself (`card_serve_le`, via `RefsAccepted` one step down and the
 self-parent chain the rest of the way). Garbage collection bounds sync
-cost, not just storage, and the honest relay obligation is bounded too.
+cost as well as storage, and the obligation on correct validators is bounded
+likewise.
 
 ### 9.4 Bootstrap: the attested base
 
@@ -2390,7 +2397,7 @@ Each validator sets its own horizon by a local rule — trail the decided
 frontier by `Λ`, or trail the current round by `Λ` — and three theorems make
 the heterogeneity safe. Verdicts at different horizons are equal outright
 (`decided_agree_horizons`, matching slots through their absolute index). A
-deeper cut is just another cut:
+a deeper cut is again a cut:
 
 ```lean
 theorem chop_chop (hG : G₁ ≤ G₂) :
@@ -2405,7 +2412,7 @@ next block carries its whole store, and that block is delivered and
 accepted — so pruning at depth `≥ 1` below a correct frontier discards
 nothing any correct peer still lacks (`pruned_subset_peer_store`).
 
-What constrains the lag is worth pinning theorem by theorem, because
+The constraints on the lag are best set out theorem by theorem, since
 *safety constrains it not at all*:
 
 | bound | source | what breaks below it |
@@ -2418,14 +2425,16 @@ What constrains the lag is worth pinning theorem by theorem, because
 
 Finally, the statute of limitations is a bounded-rate, priced phenomenon
 rather than a cliff. Within an epoch the entire exposure economy of §8.2
-applies to the truncation verbatim — it is just another universe. Across a
+applies to the truncation verbatim, the truncation being simply another
+universe. Across a
 cut, a forgiven author must equivocate *again, inside the new window*, to
 be debarred again — one reveal per author per epoch — and the re-entry runs
-under the windowed budget: `Λ·f·κ` of freight per correct store per epoch,
+under the windowed budget: `Λ·f·κ` of injected material per correct store per
+epoch,
 a term the `card_retained_le` constant already carries. Commit safety never
 depended on any of it: the cross-cut results above carry no exclusion,
 budget, or exposure hypothesis. A world that forgives every equivocation
-still commits the same blocks; it just stores more junk.
+still commits the same blocks; it merely retains more.
 
 ---
 
@@ -2489,7 +2498,8 @@ the anchor" without disambiguating, and the block count is
 adversary-inflatable (an equivocating supporter can plant any number of
 support-twins in one cone), while the author count is the one the
 arithmetic on both sides actually bounds. Four counting theorems carry
-safety, and they locate exactly where the five-`f` committee is spent:
+safety, and they identify precisely where the committee of size `5f+1` is
+required:
 
 **O1 (commit versus skip; needs only `n ≥ 3f+1`).**
 `not_directSkip_of_directCommit`: no block is both directly committed and
@@ -2558,7 +2568,7 @@ relation mirrors §3.5 constructor for constructor, with one new premise:
 
 The final premise — the committed candidate is the `≤`-least one passing
 the test at the anchor, under `[LinearOrder BlockId]` — is the *canonicity*
-of §10.4. With it, agreement and safety follow the §5.5 shape:
+of §10.4. With it, agreement and safety follow the pattern of §5.5:
 
 ```lean
 theorem decided_unique (h₁ : Decided U V₁ k v₁) :
@@ -2601,14 +2611,15 @@ that premise agreement is a theorem; without it, false. The premise is
 consumed *exactly* where the published argument is silent — O4′ shows a
 directly committed block is the unique candidate passing the test anywhere,
 so every other pairing closes by counting, and canonicity arbitrates only
-the indirect-versus-indirect, shared-anchor, equivocating-leader corner.
+the indirect-versus-indirect case with a shared anchor and an equivocating
+leader.
 
 For implementers: **the candidate-iteration order of the indirect rule is
 consensus-critical**. Two honest nodes iterating in different orders (for
 instance, arrival order) can commit different blocks for one slot at
 `n = 5f+1`; any fixed shared order restores agreement, and "first seen"
 does not. The remaining findings are recorded in the design document: a
-missing lemma (O4′, assumed silently by the published case analysis), the
+missing lemma (O4′, assumed tacitly by the published case analysis), the
 blocks-versus-authors ambiguity in the indirect test (only the author count
 is provable), and the exact-complement subtlety in the published Lemma 2
 (§10.2, O2).
@@ -2683,7 +2694,7 @@ Three of the models are tight, which is what renders the constants meaningful.
   validators outside the reliable set being permitted to occupy consecutive
   positions in the rotation.
 
-One negative observation is worth recording. A model exhibiting *round spread* —
+One negative observation should be recorded. A model exhibiting *round spread* —
 correct validators separated by many rounds — while still committing is impossible
 at `f = 1`, since `|Correct| = 3 = n−f` exactly, so that every correct validator
 is required for a quorum and none may lag. Such a model requires `f ≥ 2`. This is
@@ -2695,7 +2706,7 @@ boundary instances: chain quality on `Ucens` — the one model that is
 simultaneously CQ1's tightness witness (`missingAt = {3}` at every layer
 of the committed cone, exactly `f`) and the censorship exhibit
 (`Synchronised` fails at every round while the commit stands); `DoSValid` satisfiable and biting (`Uexcl`, with the exclusion
-chain and a commit after it), the budget satisfiable at its sharp constant
+chain and a commit after it), the budget satisfiable at its exact constant
 (`UniformBudget Dtwin 3` with `ByzBudget Dtwin 0`), the horizon computed and
 its statute of limitations exhibited (`chop Uexcl 2`, `chop Umerge 1`), the
 attested base sandwich tight at the bottom (`Base Utwin 1 0 = {1,2,3}`), and
@@ -2796,7 +2807,7 @@ The extracted edges are also an independent check on this report's prose,
 and three of its claims come out exactly as written. `P3′`, the
 self-parent clause, has no outgoing edge in the core view and in the full
 view feeds only C1′, C3′, G1, G9 and G11 — which is §2.2's assertion that
-safety and liveness never consume it and that it is load-bearing for the
+safety and liveness never consume it and that it is indispensable to the
 denial-of-service and garbage-collection arcs. `L7a ← N2a, P7` and
 `L7b ← N2b, P9, T1` reproduce the §4.4 table row for row — `N2a` and
 `N2b` being the diagram's labels for N2's `EventuallyDelivers` and
@@ -2805,7 +2816,7 @@ on the timing route being the non-equivocation step that identifies a
 validator's block with the one the timing structure names. And
 `O5 ← O1, O1′, O2, O3, O4′` confirms that Odontoceti's agreement rests on
 exactly the four counting theorems plus twin uniqueness (§10.3), with
-`O4′` — the lemma the published argument lacks — visibly load-bearing.
+`O4′` — the lemma the published argument lacks — evidently indispensable.
 
 Seven companion documents accompany the development and carry the design
 rationale in more detail than a report admits: `spec.md` (safety),
@@ -2867,8 +2878,8 @@ of a two-part derivation whose other half is a protocol clause, and §6.9
 proves both. What the counterexample shows is that the missing half
 cannot be supplied by strengthening the network, which is already as
 strong as it can be — delivery there is instantaneous. The gap is a
-*race* between arrival and building, and only the builder's own schedule
-can win it.
+*race* between arrival and building, which only the builder's own schedule
+can resolve.
 
 **The threshold the specification must meet is `D₀ + Δ`, not Δ.** This is the
 one point at which a network parameter enters the protocol's constant, and it is
@@ -2909,7 +2920,7 @@ whatever has arrived, and increase the period when progress fails. These are
 `waits`, `prompt` and the backoff — P9 together with R1 — all of them
 executable.
 
-The signal driving the backoff is the awkward point. Before GST no period is
+The signal driving the backoff is the difficulty. Before GST no period is
 sufficient, and nothing permits a validator to detect this directly; what it
 observes is that commits have ceased. The feedback loop which delivers coverage
 is therefore driven by liveness failure, the very condition being proved away.
@@ -2959,21 +2970,22 @@ Odontoceti consumed the whole DAG layer because its quorums are the `n − f`
 the development is parameterised by. When an abstraction is placed
 correctly, new developments read like instantiations; when it is misplaced,
 they read like refactors. The one refactor resisted — a rule-parameterised
-decision relation shared between §3.5 and §10.3 — is the price of the
-discipline, and it was paid twice in mirrored proofs rather than once in
-core churn.
+decision relation shared between §3.5 and §10.3 — is the cost of that
+discipline, incurred twice in mirrored proofs rather than once in
+modifications to the core.
 
-**Enforceability is a specification discipline.** The DoS headline
+**Enforceability is a specification discipline.** The principal result of §8
 (`dos_resistance`) quotes only conduct a validator can execute — an
 author-blind budget, a reference rule — and no condition that consults an
 identity oracle; the cost of author-blindness is a factor of `f` in a
 constant, never a theorem. The same discipline shapes §9: horizons are set
 by local rules, the attested base replaces agreement with `f+1` sampling,
 and every hypothesis of the bootstrap theorems is checkable by the party it
-binds. Conditions of this shape survive contact with implementations;
+binds. Conditions of this kind survive contact with implementations;
 conditions that quantify over `Correct` do not.
 
-**Mechanisation earns its keep at the equivocation corners.** All four §10
+**The value of mechanisation is concentrated where equivocation meets
+counting.** All four §10
 findings — the canonicity gap, the missing uniqueness lemma, the
 blocks-versus-authors ambiguity, the exact-complement subtlety — live where
 an equivocating author interacts with a counting argument, precisely the
@@ -3097,7 +3109,7 @@ DAG construction from ordering. LiDO-DAG [QXS25] provides mechanised safety and
 liveness in Rocq for Narwhal, Bullshark and Sailfish — all certified. The work
 closest to the present development is [QXS26], which extends that framework to
 Mysticeti itself and is discussed at length in §4.1, §4.4 and §6.6. Two
-differences of method are worth recording. Theirs is an operational model: a
+differences of method should be recorded. Theirs is an operational model: a
 transition system over traces, with segmented traces encoding the unreliability
 of timers before GST, and liveness reduced to safety properties of an abstract
 pacemaker by refinement. The account here is structural, and no theorem above
@@ -3127,7 +3139,8 @@ the self-parent clause; garbage collection reused every theorem verbatim on
 the truncated universe, because truncation was arranged to be a universe; and
 Odontoceti reused the entire DAG layer because its quorums turned out to be
 the `n − f` the development was already parameterised by. Each arc also
-returned something to the trust story: enforceable storage bounds, horizons
+returned something to the account of the trust boundary: enforceable storage
+bounds, horizons
 without consensus, and — in the one place the formalization diverged from a
 published argument by necessity — the observation that Odontoceti's
 agreement rests on a canonical candidate order that its paper never states.
