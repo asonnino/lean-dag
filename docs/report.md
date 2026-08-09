@@ -1418,13 +1418,15 @@ had nothing to select.
 ```lean
 def FairScheduleOn (T : Finset Validator) : Prop := ∀ k, ∃ k', k ≤ k' ∧ S.leader k' ∈ T
 
+def CommitsAt (BlockId) (Payload) (T : Finset Validator) (R k : ℕ) : Prop :=
+  ∀ U N, (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
+    S.slotRound k + 2 ≤ N →
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
+
 theorem commits_recur_on (hT : T ⊆ Correct)
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (fair : FairScheduleOn T) (R k : ℕ) :
-    ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
-      ∀ U D N, Live U D N → DeliversQuorum D → SynchronisedOn U T R →
-        S.slotRound k' + 2 ≤ N →
-        ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L)
+    ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧ CommitsAt BlockId Payload T R k'
 ```
 
 The order of quantification carries the content. The alternative reading — that
@@ -2110,17 +2112,20 @@ correct-led commit at any later round
 (`mem_history_of_decided_commit`), and fairness supplies such a commit:
 
 ```lean
+def IncludesAt (BlockId) (Payload) (R m k : ℕ) : Prop :=
+  ∀ U N, (∀ r ≤ N, Populated U r) → Synchronised U R →
+    S.slotRound k + 2 ≤ N →
+    ∃ L, Decided U (View.full U) k (some L) ∧
+      ∀ b ∈ U.ids, (U.block b).creator ∈ Correct →
+        (U.block b).round = m →
+        b ∈ history U L ∧
+        ∀ g n, g k = some L → k < n → b ∈ ledgerSet U g n
+
 theorem committed_of_correct_block (hT : T ⊆ Correct)
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (fair : FairScheduleOn T) (R m : ℕ) (hRm : R ≤ m) :
     ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧
-      ∀ U D N, Live U D N → DeliversQuorum D → Synchronised U R →
-        S.slotRound k' + 2 ≤ N →
-        ∃ L, Decided U (View.full U) k' (some L) ∧
-          ∀ b ∈ U.ids, (U.block b).creator ∈ Correct →
-            (U.block b).round = m →
-            b ∈ history U L ∧
-            ∀ g n, g k' = some L → k' < n → b ∈ ledgerSet U g n
+      IncludesAt BlockId Payload R m k'
 ```
 
 — for every round `m ≥ R` the schedule fixes, *before the universe is
@@ -2359,12 +2364,14 @@ theorem card_viewUpto_le (hbyz : ByzBudget D κ) (hra : RefsAccepted D)
 ```
 
 — correct production, a Byzantine genesis allowance, and a Byzantine rate.
-The capstone quotes **enforceable conduct only** — the author-blind budget,
-the reference rule, and the liveness hypotheses of §6 — and delivers
-liveness and storage from one set of premises:
+The capstone quotes **enforceable conduct only** — the author-blind budget
+and the reference rule — and carries production through alongside the
+storage bound, so both hold of the same execution. Production itself is a
+hypothesis rather than a premise of the DoS argument: any of the routes of
+§§6.7–6.9 discharges it (§4.3):
 
 ```lean
-theorem dos_resistance {T N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
+theorem dos_resistance {T N : ℕ} (hpop : ∀ r ≤ N, Populated U r)
     (hu : UniformBudget D T) (hra : RefsAccepted D) :
     (∀ r ≤ N, Populated U r) ∧
       ∀ v ∈ (Correct : Finset Validator), ∀ n,
@@ -2877,7 +2884,7 @@ theorem all_decided_below_of_fairRun (hc : 0 < c) (hT : T ⊆ Correct)
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hspan : SpansEligible Validator c) (fair : FairRunOn T c) (R k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ U D N, Live U D N → DeliversQuorum D → SynchronisedOn U T R →
+      ∀ U N, (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
         S.slotRound (b + c - 1) + 1 ≤ N →
         ∀ i, i < b → ∃ v, Decided U (View.full U) i v
 ```
