@@ -168,7 +168,7 @@ timeout at all), the *drift* (to compare `w`'s clock with `v`'s), and the
 *wait* (to push `v`'s build past both). An unbounded lag `d` cannot enter
 that chain: there is nothing to compare it with, and no timeout can be
 chosen to clear it. -/
-theorem blk_mem_holds (hT : T ⊆ (Correct : Finset Validator))
+theorem blk_mem_holds (_hT : T ⊆ (Correct : Finset Validator))
     {R D : ℕ} (hD : vs.toTiming.DriftFrom R D) (hgst : vs.gst ≤ R)
     (hbackoff : ∀ n, R ≤ n → D + vs.delay ≤ vs.timeout n)
     {v : Validator} (hv : v ∈ T) {w : Validator} (hw : w ∈ T)
@@ -184,6 +184,40 @@ theorem blk_mem_holds (hT : T ⊆ (Correct : Finset Validator))
   have hto := hbackoff n hRn
   simp only [toTiming_built] at hdrift
   omega
+
+/-- The untimed condition's shape, stated over the timed structure:
+from `R` on, every `T`-validator's build-time view contains every
+`T`-authored block of the round it is building over. This is what
+`ViewsConverge` asserts outright in the untimed model. -/
+def ViewsAgree (R : ℕ) : Prop :=
+  ∀ v ∈ T, ∀ u ∈ T, ∀ n, R ≤ n → n < N →
+    vs.blk u n ∈ vs.holds v (vs.built v (n + 1))
+
+/-- **The bridge, with the protocol clause made explicit.**
+
+In the untimed model the two halves cannot be separated, and the reason
+is structural rather than a matter of taste: `Delivery.held v n` is
+indexed by the *round*, and `held_spec` confines it to round-`n` blocks,
+so a round-`n` block can only ever appear at index `n`. There is
+therefore no way to say "it arrived, but after `v` had already built" —
+the model has no room to place the arrival event on either side of the
+build event. Delivery and waiting are literally indistinguishable there,
+which is why `ViewsConverge` must assume their conjunction.
+
+Separating them needs exactly one thing: an ordering of the two events,
+which is to say a clock. With one, the split is clean and this theorem
+is the bridge —
+
+* `converges` is the **network's** half (bounded, from `gst`);
+* `waits` with the drift and backoff conditions is the **protocol's**;
+
+and together they yield what the untimed model has to postulate. -/
+theorem viewsAgree_of_converges (hT : T ⊆ (Correct : Finset Validator))
+    {R D : ℕ} (hD : vs.toTiming.DriftFrom R D) (hgst : vs.gst ≤ R)
+    (hbackoff : ∀ n, R ≤ n → D + vs.delay ≤ vs.timeout n) :
+    vs.ViewsAgree R :=
+  fun _ hv _ hu _ hRn hn => vs.blk_mem_holds hT hD hgst hbackoff hv hu hRn hn
+
 
 /-- **Reference coverage from view convergence.** The statement the design
 notes originally asked for, now a theorem: after GST, with validators
