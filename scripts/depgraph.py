@@ -216,7 +216,7 @@ def order_layers(edges, nodes, lay):
 # ---------------------------------------------------------------- svg
 def render(view, sel, edges, layers, lay):
     """Left-to-right: each layer a column, so an arrow reads 'supports'."""
-    BW, BH, VGAP, HGAP, PAD, TOP = 158, 36, 12, 96, 40, 84
+    BW, BH, VGAP, HGAP, PAD, TOP = 158, 36, 12, 96, 40, 100
     nlay = max(layers) + 1
     heights = {L: len(ns) * (BH + VGAP) - VGAP for L, ns in layers.items()}
     H = max(heights.values()) + 2 * PAD + TOP
@@ -245,12 +245,14 @@ def render(view, sel, edges, layers, lay):
     title = ('The core account: what supports what' if view == 'core'
              else 'lean-dag: the support structure of the development')
     out.append(f'<text class="ttl" x="{PAD}" y="{34}">{title}</text>')
-    out.append(f'<text class="sub" x="{PAD}" y="{56}">'
-               'An arrow A → B means A is used in the proof of B — directly, or '
-               'through unlabelled lemmas. Assumptions on the left; each column '
-               'is one step further from them. Extracted from the Lean environment; '
-               'implied arrows removed. A box with no incoming arrow rests only on '
-               'definitions and unlabelled lemmas.</text>')
+    for i, line in enumerate([
+            'An arrow A → B means A is used in the proof of B — directly, or through '
+            'unlabelled lemmas. Assumptions on the left; each column is one step '
+            'further from them.',
+            'Extracted from the Lean environment; arrows implied by longer paths are '
+            'removed. A box with no incoming arrow rests only on definitions and '
+            'unlabelled lemmas.']):
+        out.append(f'<text class="sub" x="{PAD}" y="{54 + i * 16}">{line}</text>')
 
     kx = PAD
     for g in ['fault', 'protocol', 'network', 'core', 'quality', 'dos', 'gc', 'odo']:

@@ -67,6 +67,14 @@ three claims come out exactly as stated:
   exactly the four counting theorems plus twin uniqueness, as §10.3
   claims, and `O4′` is visibly load-bearing rather than decorative.
 
+## PDFs
+
+    scripts/svg2pdf.sh
+
+places vector PDFs of both diagrams in `docs/pdf/`, each on a page cut to
+the diagram's own size. Typst is already required for the document build
+and renders SVG natively, so no separate converter is involved.
+
 ## Regenerating
 
 Both files are checked in, but they are build products: re-run the two
