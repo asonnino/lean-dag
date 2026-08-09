@@ -126,13 +126,18 @@ proof effort with no corresponding proof content.
    [QXS26] give machine-checked safety and liveness for Mysticeti in Rocq, by
    refinement into LiDO-DAG. What is claimed is the *form* of the account —
    theirs is operational, quantified over traces and instants; here liveness is
-   stated as a condition on the DAG, and the dependence on time is confined to a
-   single file (§6.8, §14).
+   stated as a condition on the DAG, and the dependence on time is confined to
+   two files below a `Prop`-valued interface (§6.8–§6.9, §14).
 
-4. **Two independent derivations** of the structural property, from an abstract
-   delivery model (§6.7) and from GST (§6.8), in each case together with the
-   protocol's build rules. Nothing beyond standard partial synchrony is
-   assumed.
+4. **Three derivations** of the structural property — from an abstract
+   delivery model (§6.7), from GST (§6.8), and from **view convergence**
+   (§6.9) — in each case together with the protocol's build rules, and
+   nothing beyond standard partial synchrony. They form a hierarchy
+   rather than a menu: the third derives the second, and states the
+   network's contribution in a form containing no clause about what
+   validators do. On the same foundation, production is derived too
+   (`populated_of_viewsConverge`), so the entire liveness account can be
+   grounded on one view-shaped assumption.
 
 5. A precise account of the **trust boundary** (§4). What is assumed reduces to
    the fault bound and two network conditions; every other condition is a clause
@@ -140,7 +145,7 @@ proof effort with no corresponding proof content.
    is derived rather than assumed, and the one point at which a network parameter
    constrains the specification is the wait threshold of §13.1.
 
-6. **Quantitative forms** (§6.10): the round from which coverage holds, given
+6. **Quantitative forms** (§6.11): the round from which coverage holds, given
    explicitly; a bound on the slot at which the next commit occurs; and an
    operational statement — a correct leader is committed once every correct
    validator waits `D₀ + Δ`, which is `2Δ` under a common start.
@@ -200,7 +205,7 @@ first.
 - **No intra-flush ordering.** The committed-leader sequence and the ledger *set*
   are shown agreed; totally ordering the blocks released by a single commit
   requires a tie-break which the development declines to assume (§5.6).
-- **No wall-clock latency.** The wait bound of §6.10 is a duration, but the total
+- **No wall-clock latency.** The wait bound of §6.11 is a duration, but the total
   elapsed time to a commit is not derived (§13.6).
 
 ### 1.5 Organisation
@@ -209,7 +214,7 @@ first.
 boundary, separating what is assumed from what the protocol enforces. §5
 develops safety (culminating in agreement, `decided_agree`, and the agreed
 ledger) and §6 liveness (culminating in recurring commits,
-`commits_recur_on`, the two derivations of eventual DAG synchrony, and the
+`commits_recur_on`, the three derivations of eventual DAG synchrony, and the
 quantitative wait bound). §7 proves the chain-quality account — coverage
 without synchrony, inclusion with it (`chain_quality`,
 `committed_of_correct_block`). §§8–10 present the three further
@@ -376,7 +381,7 @@ Global symbols, fixed for the whole report:
 | `H(b)`, `history U b` | the causal history (cone) of block `b` (§2.4) |
 | `Δ`, GST | the post-stabilisation delivery bound and stabilisation time of partial synchrony (§6.8) |
 | `R` | the round from which eventual DAG synchrony holds (§6.4) |
-| `D₀` | the round-0 spread between correct validators' start times (§6.10) |
+| `D₀` | the round-0 spread between correct validators' start times (§6.11) |
 | `N` | the growth horizon of `Live` (§6.3) |
 | `κ`, `T` | the novelty budget: analysis-side (guarded) and mechanism-side (author-blind) constants (§8.4) |
 | `G`, `Λ` | a garbage-collection horizon round, and its lag behind the current round (§9) |
@@ -659,7 +664,7 @@ the model constrains it, `Correct` being a set complement (§2.1).
 
 P9 is the clause whose *sufficiency* is not under the designer's control: the
 timeout may be chosen freely, but whether the chosen value is long enough
-depends on the network. §6.10 determines the threshold it must meet, and §13.1
+depends on the network. §6.11 determines the threshold it must meet, and §13.1
 discusses the consequences.
 
 ### 4.2 The fault model
@@ -788,7 +793,7 @@ block at least Δ later, then `v` references `w`'s block. Note that this too
 is conditional, and on a premise the network does not control: that `v`
 actually waited. Discharging it is the protocol's obligation, which is why
 P9 (`waits`, `prompt`) stands beside N2 in this section rather than inside
-it, and why §6.10 must determine *how long* is long enough — `D₀ + Δ`,
+it, and why §6.11 must determine *how long* is long enough — `D₀ + Δ`,
 which is `2Δ` under a common start. §13.1 gives the counterexample that
 makes the point: under instantaneous delivery, a protocol that builds on
 the first quorum to arrive can violate coverage for ever, so no strengthening
@@ -867,34 +872,42 @@ where coverage is a fact about **references**. One assumption serves both
 because it is stated on `held`, upstream of the split. N2's timing form,
 by contrast, is consumed exactly once, in L7b.
 
-#### The two forms of N2 converge; they do not reduce
+#### How the formulations relate
 
-No theorem relates `EventuallyDelivers` and `Timing.covers`. They do not
-even range over the same object — the first is a predicate on a
-`Delivery`, the second a field of a `Timing` structure that neither
-extends nor constructs one — and they meet only at their shared
-conclusion, which is the layering of §6.9. They are also incomparable in
-strength: the delivery route assumes more (arrival, outright) but needs
-no side conditions and yields Correct-wide coverage; the timing route
-assumes something more primitive (GST and Δ) but must earn arrival from
-drift, waiting and backoff, and pays with `T`-relativity.
+N2 has more than two statements, and they form a hierarchy rather than a
+set of alternatives. Ordered from the most primitive:
 
-The obvious factoring — derive arrival from the clock, then reuse the
-delivery route — is blocked by a detail worth recording plainly.
-`covers` concludes about **`refs`**, where `EventuallyDelivers` concludes
-about **`held`** and lets P7 lift it. Its own comment admits the
-bundling: *"a `T`-block built at time `t` is in every `T`-validator's
-hands by `t + delay`; **and** a validator references everything it
-holds."* So `covers` is not a pure environment assumption — it fuses N2
-with P7 — and there is no intermediate `held`-level statement to hand to
-the delivery route. The converse direction is hopeless for a simpler
-reason: `Delivery` has no temporal fields from which to build `gst` or
-`delay`. Splitting `covers` into a delivery field and a referencing field
-would make the timing route factor through the delivery route and would
-put the whole of P7 on the protocol side of the boundary where it
-belongs; the cost is a `T`-relative `EventuallyDelivers` and a re-proof
-of L7a at that generality. It is not done here, and §4.3's table should
-be read with that qualification.
+| | Statement | Over |
+|:---|:---|:---|
+| view convergence | after GST, what a correct validator holds reaches every correct validator within Δ | views, at instants |
+| `Timing.covers` | after GST, a block built early enough is *referenced* | blocks and references |
+| `EventuallyDelivers` | every correct block is held at the moment of building | holdings, at build index |
+
+Each is obtained from the one above it by applying a clause of the
+protocol, and §6.9 proves the reductions: `covers` is view convergence
+composed with P7 (`references`), and `ViewSync.toTiming` exhibits a
+view-convergent execution as a timed one, so every result of §6.8 applies
+to it unchanged.
+
+The consequence for this section is a correction and a simplification.
+The correction: `Timing.covers` is **not** a pure network assumption. Its
+own comment concedes the point — *"a `T`-block built at time `t` is in
+every `T`-validator's hands by `t + delay`; **and** a validator
+references everything it holds"* — so it fuses N2 with P7 and straddles
+the line this section draws. The simplification: once the two are
+separated, the network's entire contribution is a single sentence about
+views, containing no block, no round and no reference, and every clause
+about what validators *do* sits on the protocol side where it belongs.
+
+Two further relations are worth recording, both proved in §6.9. The
+bound factors out: convergence within Δ is exactly eventual convergence
+whose lag is uniformly bounded after GST
+(`convergesWithin_iff_bounded`), so *view convergence under synchrony =
+view convergence + a bound*. And eventual convergence **alone** yields
+nothing — an unbounded lag cannot be compared with a timeout, so the
+block cannot be shown to arrive before the builder acts. The missing
+ingredient is not a stronger network but the protocol's waiting rule,
+which is why P9 sits beside N2 in this section rather than inside it.
 
 #### The asymmetry, and the payoff
 
@@ -920,9 +933,15 @@ of executions, obtained from the network assumption together with the protocol:
 |:---|:---|:---|
 | Delivery | N2 (`EventuallyDelivers`) with P7 | `synchronised_of_delivery` |
 | Timing | N2 (`Timing.covers`) with P9 | `Timing.synchronisedOn_of_timing` |
+| View convergence | N2 (`converges`) with P7 and P9 | `ViewSync.synchronisedOn_of_converges` |
+
+The third derives the second (`ViewSync.toTiming`, §6.9), so the routes
+are a hierarchy and not a menu; and a fourth result on the same
+foundation derives *production* rather than coverage, discharging N1
+(`populated_of_viewsConverge`).
 
 It is stated as a hypothesis of L4 and L6 in order to keep those arguments free
-of temporal notions (§6.9), and supplied to them by the results above. §13
+of temporal notions (§6.10), and supplied to them by the results above. §13
 discusses the formulation.
 
 **What "derived" does and does not mean here.** Both routes derive coverage from
@@ -945,7 +964,7 @@ with, rather than asserting the condition and leaving the price implicit.
 
 ### 4.5 Quantitative clauses
 
-The results of §6.10 require the following in addition. R1–R3 are further
+The results of §6.11 require the following in addition. R1–R3 are further
 specification, strengthening clauses already present; only the round-`0` spread
 of R4 is an assumption, and it concerns deployment rather than the network.
 
@@ -956,7 +975,7 @@ of R4 is an assumption, and it concerns deployment rather than the network.
 | R3 | `BoundedSpacing s`: slots at most `s` rounds apart | specification | that slot's round, and a horizon |
 | R4 | `∀ n, D₀ + Δ ≤ timeout n`, with round-`0` spread at most `D₀` | specification; `D₀` deployment | the wait bound `Delay(Δ)` |
 
-Every result of §5 and §6.1–§6.9 stands without them.
+Every result of §5 and §6.1–§6.10 stands without them.
 
 **R4's deployment component is avoidable.** `driftFrom_of_prompt` shows drift is
 *preserved*, not established, so a bound on the round-`0` spread has to be
@@ -1523,24 +1542,213 @@ condition: the timeout must remain above `D + delay` from `R` onwards. A constan
 timeout satisfies it, as does any schedule which stabilises above the bound.
 `exists_backoff_ge` and `exists_synchronisedOn_of_backoff` package one sufficient
 condition — a monotone, unbounded backoff — which is the appropriate one when Δ
-is unknown; §6.10 supplies two further routes.
+is unknown; §6.11 supplies two further routes.
 
-### 6.9 The layering
+### 6.9 Deriving coverage: the view-convergence route
+
+The two routes above state the network's contribution over objects the
+protocol builds — `held` in one case, `refs` in the other. A third states
+it over **views**, which is where this development's design notes wanted
+it from the outset, and derives the other two rather than standing beside
+them.
+
+```lean
+structure ViewSync (U) (T : Finset Validator) (N : ℕ) where
+  …                                        -- as `Timing`, minus `covers`
+  holds : Validator → ℕ → Finset BlockId
+  holds_own  : ∀ v ∈ T, ∀ n ≤ N, blk v n ∈ holds v (built v n)
+  holds_mono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t
+  converges  : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + delay)
+  references : ∀ v ∈ T, ∀ n < N, ∀ a ∈ holds v (built v (n + 1)),
+    (U.block a).round = n → a ∈ (U.block (blk v (n + 1))).refs
+```
+
+`holds v t` is what `v` holds **at time `t`** — the temporal index a
+`View` cannot supply (§13.1). `converges` is then partial synchrony
+stated exactly as one would say it in words: *after GST, whatever a
+correct validator holds reaches every correct validator within Δ*. It
+mentions no block, no round and no reference.
+
+**What this buys: `covers` was two clauses, not one.** §4.3 recorded that
+`Timing.covers` concludes about `refs` and so fuses a network guarantee
+with the protocol's referencing rule — its own comment says so. Here they
+are apart: `converges` is the network's, `references` is P7 in the timed
+setting, and the fused field is a *theorem*:
+
+```lean
+theorem covers_of_converges : … vs.blk w n ∈ (U.block (vs.blk v (n + 1))).refs
+```
+
+The block is in its author's hands when built (`holds_own`), reaches the
+builder within `delay` (`converges`), is still there when the builder
+acts (`holds_mono` — which is where the hypothesis
+`built w n + delay ≤ built v (n+1)` is spent), and is therefore
+referenced (`references`).
+
+**And the routes form a hierarchy, not a pair.** `ViewSync.toTiming`
+exhibits a `ViewSync` as a `Timing`, so every result of §6.8 applies
+unchanged — drift still derived from `prompt`, the backoff still
+terminating, the quantitative bounds of §6.11 unaffected. The timing
+route is thus what the view-convergence route *becomes* once P7 is
+applied, and the correction to §4.3's earlier claim is that the two forms
+of N2 do reduce, once `covers` is unfused.
+
+**The bound, factored out.** `converges` is partial synchrony in its
+familiar two-part shape, and the parts separate:
+
+```lean
+def ConvergesEventually (holds) (T) : Prop :=
+  ∀ v ∈ T, ∀ w ∈ T, ∀ t, ∃ d, holds w t ⊆ holds v (t + d)
+
+def ConvergesWithin (holds) (T) (gst bound : ℕ) : Prop :=
+  ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + bound)
+```
+
+Under monotone holdings these are related by
+`convergesWithin_iff_bounded`: convergence within a bound *is* eventual
+convergence whose lag is uniformly bounded after `gst`. So
+
+> view convergence under synchrony = view convergence + a bound on the lag,
+
+and `converges` is the second (`ViewSync.convergesWithin`), with the
+first following for free (`ViewSync.convergesEventually`).
+
+**The bound is load-bearing, and the reason is worth stating.** Eventual
+convergence alone yields nothing: the derivation above needs the block in
+the builder's hands *before* it builds, which is arranged by choosing a
+timeout that exceeds the lag. A lag that merely exists cannot be compared
+with a timeout — the existential `d` is uncomparable with any schedule —
+whereas a lag bounded by `delay` can, and `D + delay ≤ timeout n` is
+precisely where the comparison happens. This is also why the bound is
+asserted only from `gst`: before it there is nothing for a timeout to
+clear, which is the content of partial synchrony rather than an artefact
+of the encoding.
+
+**Index-aligned agreement, derived.** The statement that build-time views
+*agree* — every `T`-authored round-`n` block in every `T`-validator's
+holdings at the moment it builds for `n+1` — follows from the same three
+ingredients:
+
+```lean
+def ViewsAgree (R : ℕ) : Prop :=
+  ∀ v ∈ T, ∀ u ∈ T, ∀ n, R ≤ n → n < N →
+    vs.blk u n ∈ vs.holds v (vs.built v (n + 1))
+
+theorem viewsAgree_of_converges (hT) (hD : DriftFrom R D) (hgst)
+    (hbackoff : ∀ n, R ≤ n → D + vs.delay ≤ vs.timeout n) : vs.ViewsAgree R
+```
+
+the bound (to compare a lag with a timeout at all), the drift (to compare
+one validator's clock with another's) and the wait (to push the build
+past both).
+
+**The untimed variant, and what it conceals.** The same shape can be
+written with no clock at all, over `Delivery`:
+
+```lean
+def ViewsConverge (D : Delivery U) : Prop :=
+  ∀ v ∈ Correct, ∀ w ∈ Correct, ∀ n, ∀ b ∈ D.held v n,
+    (U.block b).creator ∈ Correct → b ∈ D.held w n
+```
+
+*What a correct validator holds when it builds for round `n`, every
+correct validator holds when it builds for round `n`.* No Δ, no GST: the
+"eventually" is carried by the build-time index, which is logical rather
+than temporal, so a validator that waits arbitrarily long still builds at
+index `n`. Restricted to correct-authored blocks, since selective
+Byzantine sending must remain permitted (§4.3).
+
+With `HoldsOwn` — an author has its own block in hand when it builds the
+next — this yields `EventuallyDelivers` from round `0`, and hence
+**production without N1**:
+
+```lean
+theorem populated_of_viewsConverge (H : Live U D N)
+    (hvc : ViewsConverge D) (hown : HoldsOwn D) : ∀ r ≤ N, Populated U r
+```
+
+L1's conclusion, drawn from a view-shaped assumption rather than from
+`DeliversQuorum`. The induction is L1's, with the quorum obtained
+differently: rather than assuming a quorum is delivered whenever one
+exists, the previous round's population supplies `|Correct| ≥ n−f`
+correct blocks and convergence puts every one of them in every correct
+validator's hands.
+
+Two things must be said about this, because the appearance is that N1 has
+been obtained for free. It has not. First, index-aligned sharing of every
+correct block is **stronger** than N1, which promises only a quorum and
+only when one exists; what is bought is uniformity of shape, not a weaker
+hypothesis. Second, and more interesting: **the untimed condition is not
+a delivery assumption at all, but a delivery assumption fused with a wait
+clause.** In the untimed model that fusion cannot be undone, and the
+reason is structural — `Delivery.held v n` is indexed by the *round*, and
+`held_spec` confines it to round-`n` blocks, so a round-`n` block can only
+ever appear at index `n`. "It arrived, but after `v` had already built"
+is not expressible; the model has nowhere to place the arrival event
+relative to the build event. Separating the two requires an ordering of
+those events — which is to say a clock — and once there is one, the split
+is exactly `converges` against `waits`, and `viewsAgree_of_converges` is
+the bridge from the unfused pair to what the untimed model must postulate.
+
+### 6.10 The layering
 
 ![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow rests only on definitions and unlabelled lemmas — L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §12 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
 
 No theorem above `SynchronisedOn` mentions time, and no theorem below it mentions
 certificates. The diagram also locates the trust boundary: the leftmost column is
 the whole of what is assumed, and it divides into assumptions about an adversarial
-network (N1, N2) and clauses of the algorithm (P1–P10) — the two derivations of
-coverage, L7a and L7b, are visible as the only results drawing on the network
-column.
+network (N1, N2) and clauses of the algorithm (P1–P10) — the derivations of
+coverage are visible as the only results drawing on the network column.
 
-### 6.10 Quantitative results
+**Three separations, and they are different in kind.** The development
+draws three lines, and it is worth being explicit about which does what,
+since only the first is the one usually meant by "confining the time
+model".
+
+*Time from graph structure* — the interface is `SynchronisedOn`.
+Everything above it is finite combinatorics over a DAG; everything that
+mentions an instant lies below. The interface is a `Prop` about
+references, so the layers meet at a statement rather than at a module
+boundary, and any of the three routes of §§6.7–6.9 may supply it. This is
+the separation the report's title claims, and the diagram shows it as a
+single column that every liveness result passes through.
+
+*Network from protocol* — the interface is the pair
+`converges` / `references` of §6.9. This line is invisible in the delivery
+and timing routes: `EventuallyDelivers` is indexed at build time, and
+`Timing.covers` concludes about `refs`, so each silently carries some
+protocol content. Only the view-convergence route states the network's
+contribution in a form containing nothing the protocol does, which is why
+§4.3 can now claim that the network's whole contribution is one sentence
+about views.
+
+*Assumed from derived* — the interface is `Populated`. Production may be
+assumed (the timing structures carry `blk`, a block per validator per
+round), or derived (N1 with P8, through L1, or view convergence with
+`HoldsOwn`, through `populated_of_viewsConverge`). Which side of this line
+a development stands on is a modelling choice rather than a theorem, and
+§4.3 keeps N1 precisely because deriving production from a *conditional
+quorum* hypothesis is the weaker and the implementable option.
+
+The routes may therefore be summarised by what each assumes and what it
+still owes:
+
+| Route | Network assumption | Also needs | Yields |
+|:---|:---|:---|:---|
+| Delivery (§6.7) | `EventuallyDelivers` — build-time indexed | P7 | `Synchronised` |
+| Timing (§6.8) | `Timing.covers` — Δ after GST, concludes on `refs` | P9, drift | `SynchronisedOn` |
+| View convergence (§6.9) | `converges` — Δ after GST, over views | P7, P9, drift | `SynchronisedOn`, and the other two |
+| Untimed views (§6.9) | `ViewsConverge` — no bound, index-aligned | `HoldsOwn` | `Populated`, without N1 |
+
+Read downward, the first three are increasingly primitive statements of
+the same assumption; read across, the fourth is the only one that buys
+production rather than coverage.
+
+### 6.11 Quantitative results
 
 The results of this section are collected in a separate module which nothing else
 imports. Each strengthens a result above and is purchased with a strengthened
-clause (§4.5); a reader declining those clauses retains §6.1–§6.9 intact.
+clause (§4.5); a reader declining those clauses retains §6.1–§6.10 intact.
 
 **The weak hypotheses admit no bound.** Two of the results above conclude with
 an existential statement that supplies no bound on its witness —
@@ -2531,8 +2739,8 @@ motivates the canonicity premise (`utwin6_both_pass`).
 
 ## 12. Mechanisation
 
-The development comprises approximately 15,400 lines of Lean 4 (v4.32.2)
-against Mathlib, of which some 10,600 constitute the library and 4,800 the
+The development comprises approximately 15,700 lines of Lean 4 (v4.32.2)
+against Mathlib, of which some 10,900 constitute the library and 4,800 the
 models of §11 and the witness files of the arcs. A full build reports no
 errors.
 
@@ -2565,6 +2773,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Schedule.lean` | concrete schedules (`uniform`, `uniformSingle`); conservativity |
 | `Liveness.lean` | L0–L6, L7a; the committed-run results |
 | `Timing.lean` | L7b |
+| `ViewSync.lean` | L7c: view convergence, the reduction to `Timing`, the factoring of the bound, and the untimed variant |
 | `Quantitative.lean` | L8, L9 |
 
 **The arcs** (§§8–10), each consuming the core read-only:
@@ -2601,7 +2810,7 @@ statement's signature. `scripts/depgraph.py` then takes its node set from
 Appendix A of this report, contracts paths running through unlabelled
 lemmas, takes the transitive reduction, and renders the result. The full
 graph is ≈900 declarations and ≈7,700 edges; the two views drawn here are
-the §6.9 figure and the one below.
+the §6.10 figure and the one below.
 
 Two extraction details are worth recording for anyone repeating the
 exercise. `ConstantInfo.value?` returns `none` for *imported* theorems in
@@ -2683,9 +2892,19 @@ including because the incorrect rule is the natural one — the quorum is exactl
 what validity requires — and because it shows that promptness and coverage are
 in tension, which is what P9's two halves jointly resolve.
 
+The example is often read as showing that a view-shaped assumption is
+*inadequate*. That reading is too strong, and §6.9 corrects it: view
+convergence is adequate but **incomplete** — it is the network half of a
+two-part derivation whose other half is a protocol clause, and both
+halves are now proved. What the counterexample really shows is that the
+missing half cannot be supplied by strengthening the network, since the
+network is already as strong as it can be (delivery is instantaneous
+there). The gap is a *race* between arrival and building, and only the
+builder's own schedule can win it.
+
 **The threshold the specification must meet is `D₀ + Δ`, not Δ.** This is the
 one point at which a network parameter enters the protocol's constant, and it is
-the substantive quantitative result (§6.10). Validators enter a round at
+the substantive quantitative result (§6.11). Validators enter a round at
 different times, so a wait must accommodate the propagation bound *and* the
 spread between validators; taking the spread at round `0`, where it records how
 nearly simultaneously the validators started, and propagating it forward by
@@ -2731,7 +2950,7 @@ cannot rest on modelling the loop's dynamics.
 
 The development accordingly does not model it. What `synchronisedOn_of_timing`
 consumes is a threshold — the timeout remains above `D + delay` from some round
-onwards — with no condition on shape, rate, or driving signal. §6.10 carries this
+onwards — with no condition on shape, rate, or driving signal. §6.11 carries this
 to its conclusion: with Δ known, a constant timeout of `D₀ + Δ` suffices and the
 loop disappears.
 
@@ -2743,7 +2962,7 @@ loop disappears.
 2. The temporal content is confined to a single module and consumed through a
    single definition.
 3. The condition admits two independent derivations (§6.7, §6.8) and a third,
-   quantitative route (§6.10), against an unchanged statement.
+   quantitative route (§6.11), against an unchanged statement.
 4. The condition composes with the safety development, mentioning only `U.ids`,
    `U.block` and `refs` — the vocabulary that development already employs.
 
@@ -2798,7 +3017,7 @@ indirect rule precisely enough to fail to prove it.
 
 ### 13.6 Limitations
 
-The quantitative bounds are established (§6.10). The following remain open.
+The quantitative bounds are established (§6.11). The following remain open.
 
 **The backoff loop.** `Rated` and the threshold of R4 are stipulated as clauses
 of the specification; no realistic adaptive scheme is shown to satisfy them, and
@@ -2814,7 +3033,7 @@ at least `2Δ`" into elapsed time requires a lemma accumulating `prompt` across
 rounds, which is not present. `Timing.le_built` relates rounds to time in one
 direction only.
 
-**Byzantine leaders.** §6.10 bounds the wait until the next reliable leader,
+**Byzantine leaders.** §6.11 bounds the wait until the next reliable leader,
 which sidesteps rather than answers the question of how distant an indirect
 anchor may be when the leader is Byzantine.
 
@@ -3026,6 +3245,13 @@ Principal results only; supporting lemmas are omitted.
 | — | every slot below a fair run is decided (pipelined) | `all_decided_below_of_fairRun` *(Liveness)* |
 | L7a | coverage from delivery | `synchronised_of_delivery` *(Liveness)* |
 | L7b | coverage from GST | `Timing.synchronisedOn_of_timing`, `exists_synchronisedOn_of_backoff` *(Timing)* |
+| L7c | coverage from view convergence | `ViewSync.synchronisedOn_of_converges` *(ViewSync)* |
+| — | the referencing clause, unfused from the network's | `ViewSync.covers_of_converges` *(ViewSync)* |
+| — | the timing route derived from the view-level one | `ViewSync.toTiming` *(ViewSync)* |
+| — | build-time views agree | `ViewSync.ViewsAgree`, `ViewSync.viewsAgree_of_converges` *(ViewSync)* |
+| — | the bound factored out of convergence | `convergesWithin_iff_bounded` *(ViewSync)* |
+| — | production from untimed view convergence, without N1 | `ViewsConverge`, `populated_of_viewsConverge` *(ViewSync)* |
+| — | liveness on the view-convergence foundation | `ViewSync.commits_recur_of_converges`, `ViewSync.all_decided_below_of_converges` *(ViewSync)* |
 | — | drift is derived | `Timing.driftFrom_of_prompt` *(Timing)* |
 | L8a | the round of coverage, explicitly | `synchronisedOn_of_rate` *(Quantitative)* |
 | L8b | the committing slot, and its round | `commits_recur_within`, `commits_recur_by_round` *(Quantitative)* |
