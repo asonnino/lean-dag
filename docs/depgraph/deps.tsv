@@ -6422,6 +6422,11 @@ EDGE	LeanDag.Odontoceti.eq_of_directCommit	LeanDag.Faults5.toFaults
 EDGE	LeanDag.Odontoceti.eq_of_directCommit	LeanDag.Odontoceti.eq_of_directCommit._proof_1_2
 EDGE	LeanDag.Odontoceti.eq_of_directCommit	LeanDag.Block.creator
 EDGE	LeanDag.Odontoceti.eq_of_directCommit	LeanDag.Odontoceti.not_correct_of_supports_two
+NODE	LeanDagTest.ugap_not_viewsConvergeOn._proof_1_4	LeanDagTest.Unbounded	thm
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn._proof_1_4	LeanDagTest.Ugap
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn._proof_1_4	LeanDag.Block.round
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn._proof_1_4	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 NODE	LeanDag.Accepted.casesOn	LeanDag.DoS.Acceptance	def
 EDGE	LeanDag.Accepted.casesOn	LeanDag.Faults
 EDGE	LeanDag.Accepted.casesOn	LeanDag.Accepted.mk
@@ -7270,6 +7275,24 @@ EDGE	LeanDag.Delivery.mk.noConfusion	LeanDag.Block.round
 EDGE	LeanDag.Delivery.mk.noConfusion	LeanDag.BlockUniverse
 EDGE	LeanDag.Delivery.mk.noConfusion	LeanDag.Delivery.mk
 EDGE	LeanDag.Delivery.mk.noConfusion	LeanDag.Block.creator
+NODE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDagTest.Unbounded	thm
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDag.ViewGrowth.toDelivery
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDagTest.Ugap
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDag.ViewGrowth.holds
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDagTest.ugap_not_viewsConvergeOn._proof_1_4
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDagTest.ugapGrowth
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDagTest.ugapGrowth._simp_7
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDagTest.ugapGrowth._simp_1
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDag.Correct
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDag.BlockUniverse.block
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDag.Delivery.held
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDag.Block.round
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDag.ViewsConvergeOn
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDag.ViewGrowth.mem_toDelivery
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDagTest.ugap_not_viewsConvergeOn._proof_1_3
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDag.ViewGrowth.built
+EDGE	LeanDagTest.ugap_not_viewsConvergeOn	LeanDag.Block.creator
 NODE	LeanDag.Live	LeanDag.Liveness	ind
 EDGE	LeanDag.Live	LeanDag.Delivery
 EDGE	LeanDag.Live	LeanDag.Faults
@@ -13848,6 +13871,7 @@ EDGE	LeanDag.card_history_le_of_unique_equivocator._proof_1_2	LeanDag.history
 EDGE	LeanDag.card_history_le_of_unique_equivocator._proof_1_2	LeanDag.BlockUniverse
 EDGE	LeanDag.card_history_le_of_unique_equivocator._proof_1_2	LeanDag.Faults.f
 EDGE	LeanDag.card_history_le_of_unique_equivocator._proof_1_2	LeanDag.Block.creator
+NODE	LeanDagTest.ugap_not_viewsConvergeOn._proof_1_3	LeanDagTest.Unbounded	thm
 NODE	LeanDag.HoldsOwn	LeanDag.ViewSync	def
 EDGE	LeanDag.HoldsOwn	LeanDag.Delivery
 EDGE	LeanDag.HoldsOwn	LeanDag.Faults

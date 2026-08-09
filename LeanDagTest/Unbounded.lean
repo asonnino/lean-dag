@@ -260,6 +260,41 @@ theorem bound_is_necessary {N : ℕ} (hN : 0 < N) :
       ¬ SynchronisedOn (Ugap N) (Correct : Finset (Fin 4)) 0 :=
   ⟨ugapGrowth_convergesEventually N, ugap_not_synchronisedOn 0 hN⟩
 
+/-! ## The starting round is forced
+
+`viewsConvergeOn_toDelivery` concludes from `R` on, under `gst ≤ R`. This
+model shows that side condition cannot be dropped: it is a genuine
+`ViewGrowth` whose `gst` lies beyond the run, and the untimed condition
+fails outright on the delivery it induces. Validator `2` holds its own
+round-`0` block when it builds, and validator `1` does not.
+
+So the `R`-relativisation of the bridge in §6.9 is forced by the
+structure rather than chosen for convenience. -/
+theorem ugap_not_viewsConvergeOn {N : ℕ} (hN : 0 < N) :
+    ¬ ViewsConvergeOn (ugapGrowth N).toDelivery (Correct : Finset (Fin 4)) 0 := by
+  intro h
+  have h2 : (2 : Fin 4) ∈ (Correct : Finset (Fin 4)) := by decide
+  have h1 : (1 : Fin 4) ∈ (Correct : Finset (Fin 4)) := by decide
+  have hb : (2 : ℕ) ∈ (ugapGrowth N).toDelivery.held 2 0 := by
+    rw [ViewGrowth.mem_toDelivery]
+    refine ⟨?_, ?_, h2, hN⟩
+    · simp only [ugapGrowth, gapHolds, Finset.mem_filter, Finset.mem_range]
+      exact ⟨by omega, Or.inr (Or.inl rfl)⟩
+    · simp only [ugap_block, gapBlock_round]
+  have hbc : ((Ugap N).block 2).creator ∈ (Correct : Finset (Fin 4)) := by
+    have : ((Ugap N).block 2).creator = (2 : Fin 4) := by
+      apply Fin.ext; simp only [ugap_block, gapBlock_creator_val]; rfl
+    rw [this]; exact h2
+  have hcon := h 2 h2 1 h1 0 (Nat.zero_le _) 2 hb hbc
+  rw [ViewGrowth.mem_toDelivery] at hcon
+  have := hcon.1
+  simp only [ugapGrowth, gapHolds, Finset.mem_filter, Finset.mem_range] at this
+  rcases this.2 with hx | hx | hx
+  · exact hx rfl
+  · exact absurd hx (by decide)
+  · omega
+
+#print axioms ugap_not_viewsConvergeOn
 #print axioms ugapGrowth_convergesEventually
 #print axioms ugap_not_synchronisedOn
 #print axioms bound_is_necessary

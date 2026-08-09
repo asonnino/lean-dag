@@ -1776,16 +1776,26 @@ that author is correct, and non-equivocation identifies them. `includes`
 is `references`, and needs no side condition on the horizon because no
 block exists above `N`.
 
-Two relativisations survive the passage, and both are forced. The induced
-delivery holds nothing outside `T` or above the horizon, because
-`converges` and `holds_own` say nothing there; and the derived condition
-runs from `R` on, because `converges` is silent below `gst`. So
-`ViewsConvergeOn T R` is what is obtained, of which `ViewsConverge` is
-the case `T = Correct`, `R = 0` — `viewsConverge_toDelivery`, with both
-parameters carried in the type since they are parameters of the
-structure. The relation between the timed and untimed formulations is
-therefore a hierarchy, in the same shape as the one between `converges`
-and `Timing.covers`, rather than an equivalence.
+Two relativisations survive the passage. The induced delivery holds
+nothing outside `T` or above the horizon, because `converges` and
+`holds_own` say nothing there; and the derived condition runs from `R`
+on, because `converges` is silent below `gst`. So `ViewsConvergeOn T R`
+is what is obtained, of which `ViewsConverge` is the case `T = Correct`,
+`R = 0` — `viewsConverge_toDelivery`, with both parameters carried in the
+type since they are parameters of the structure.
+
+Whether these are artefacts of the derivation or properties of the
+setting matters, since only in the second case is the hierarchy real. For
+the starting round the question is settled: `ugap_not_viewsConvergeOn`
+exhibits a `ViewGrowth` whose `gst` lies beyond the run and on which the
+untimed condition fails outright, so the hypothesis `gst ≤ R` cannot be
+dropped. For the reliable set the corresponding claim is argued rather
+than witnessed — `converges` and `holds_own` quantify over `T`, so a
+correct validator outside it may hold nothing and no proof can reach it,
+but no model exhibiting that is constructed here. The relation between
+the timed and untimed formulations is therefore a hierarchy, in the same
+shape as the one between `converges` and `Timing.covers`, rather than an
+equivalence.
 
 **The bound is necessary.** `convergesWithin_iff_bounded` factors the
 network assumption into a qualitative half and a quantitative one, and it
@@ -3406,6 +3416,7 @@ Principal results only; supporting lemmas are omitted.
 | — | the assumed production clause is the derived one, Skolemised | `exists_blk_of_populatedOn`, `ViewGrowth.toViewSync` *(ViewSync)* |
 | — | the untimed condition induced by the timed structure | `ViewGrowth.toDelivery`, `ViewsConvergeOn`, `viewsConvergeOn_toDelivery` *(ViewSync)* |
 | — | the bound in `converges` is necessary for coverage | `bound_is_necessary` *(LeanDagTest.Unbounded)* |
+| — | and its starting round is forced, not chosen | `ugap_not_viewsConvergeOn` *(LeanDagTest.Unbounded)* |
 | — | liveness on the view-convergence foundation | `ViewSync.commits_recur_of_converges`, `ViewSync.all_decided_below_of_converges` *(ViewSync)* |
 | — | drift is derived | `Timing.driftFrom_of_prompt` *(Timing)* |
 | L8a | the round of coverage, explicitly | `synchronisedOn_of_rate` *(Quantitative)* |
