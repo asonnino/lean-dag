@@ -40,52 +40,130 @@ instance : Faults (Fin 4) where
   card_validators := by decide
   card_byzantine := by decide
 
-/-- Block `b` sits at round `b / 4`, is authored by validator `b % 4`, and
-references every block of the round below. -/
-def growBlock (b : ℕ) : Block (Fin 4) ℕ Unit where
+/-! ## The round-robin scheme
+
+Every concrete model in this development lays its blocks out the same
+way: four validators, one block each per round, with block `b` sitting at
+round `b / 4` under author `b % 4`, so validator `v`'s round-`r` block is
+`4 * r + v`. Only the reference sets differ.
+
+`rrUniverse` proves once what that layout alone decides — completeness,
+non-equivocation, the predecessor relation and distinctness of cited
+authors — leaving a model to supply only the two clauses its references
+actually control. -/
+
+/-- A block of the round-robin scheme, over a given reference function. -/
+def rrBlock (refs : ℕ → Finset ℕ) (b : ℕ) : Block (Fin 4) ℕ Unit where
   round := b / 4
   creator := ⟨b % 4, by omega⟩
-  refs := Finset.Ico (4 * (b / 4) - 4) (4 * (b / 4))
+  refs := refs b
   payload := ()
 
-@[simp] theorem growBlock_round (b : ℕ) : (growBlock b).round = b / 4 := rfl
+@[simp] theorem rrBlock_round (refs : ℕ → Finset ℕ) (b : ℕ) :
+    (rrBlock refs b).round = b / 4 := rfl
+@[simp] theorem rrBlock_creator_val (refs : ℕ → Finset ℕ) (b : ℕ) :
+    ((rrBlock refs b).creator : ℕ) = b % 4 := rfl
+@[simp] theorem rrBlock_refs (refs : ℕ → Finset ℕ) (b : ℕ) :
+    (rrBlock refs b).refs = refs b := rfl
 
-@[simp] theorem growBlock_creator_val (b : ℕ) : ((growBlock b).creator : ℕ) = b % 4 := rfl
+/-- **The scheme, as a universe.** Rounds `0` to `N`, four blocks each.
 
-@[simp] theorem growBlock_refs (b : ℕ) :
-    (growBlock b).refs = Finset.Ico (4 * (b / 4) - 4) (4 * (b / 4)) := rfl
-
-theorem mem_growBlock_refs {b i : ℕ} :
-    i ∈ (growBlock b).refs ↔ 4 * (b / 4) - 4 ≤ i ∧ i < 4 * (b / 4) :=
-  Finset.mem_Ico
-
-/-- The DAG grown to round `N`: four blocks per round, rounds `0` to `N`. -/
-def Ugrow (N : ℕ) : BlockUniverse (Fin 4) ℕ Unit where
+The two hypotheses are exactly what the layout cannot decide: that
+references sit in the round below (`hrefs`), and the two `ValidWrt`
+clauses that read the reference *set* rather than its bounds — a quorum
+of distinct authors, and a parent by the block's own creator. -/
+def rrUniverse (N : ℕ) (refs : ℕ → Finset ℕ)
+    (hrefs : ∀ b i, i ∈ refs b → 4 * (b / 4) - 4 ≤ i ∧ i < 4 * (b / 4))
+    (hquorum : ∀ b, 0 < b / 4 → 3 ≤ (creators (rrBlock refs) (rrBlock refs b)).card)
+    (hself : ∀ b, 0 < b / 4 → 4 * (b / 4) - 4 + b % 4 ∈ refs b) :
+    BlockUniverse (Fin 4) ℕ Unit where
   ids := Finset.range (4 * (N + 1))
-  block := growBlock
+  block := rrBlock refs
   complete := by
     intro i hi j hj
     rw [Finset.mem_range] at hi ⊢
-    rw [mem_growBlock_refs] at hj
+    have := hrefs i j hj
     omega
   valid := by
     intro i _
     refine ⟨?_, ?_, ?_, ?_⟩
     · intro j hj
-      rw [mem_growBlock_refs] at hj
-      simp only [growBlock_round]
+      have := hrefs i j hj
+      simp only [rrBlock_round]
       omega
     · intro j hj k hk hjk
-      rw [mem_growBlock_refs] at hj hk
+      have := hrefs i j hj
+      have := hrefs i k hk
       have : (j % 4) = (k % 4) := by
         have := congrArg (fun (v : Fin 4) => (v : ℕ)) hjk
         simpa using this
       omega
     · intro h
-      simp only [growBlock_round] at h
-      -- the four ids of the round below carry four distinct authors
-      have hcard : (creators growBlock (growBlock i)).card = 4 := by
-        rw [creators, creatorsOf, Finset.card_image_of_injOn, growBlock_refs,
+      simp only [rrBlock_round] at h
+      have hf : Faults.f (Fin 4) = 1 := rfl
+      have hn : Fintype.card (Fin 4) = 4 := rfl
+      have := hquorum i h
+      omega
+    · intro h
+      simp only [rrBlock_round] at h
+      refine ⟨4 * (i / 4) - 4 + i % 4, hself i h, ?_⟩
+      apply Fin.ext
+      simp only [rrBlock_creator_val]
+      omega
+  no_equivocation := by
+    intro i _ j _ _ hc hr
+    have hv : (i % 4) = (j % 4) := by
+      have := congrArg (fun (v : Fin 4) => (v : ℕ)) hc
+      simpa using this
+    simp only [rrBlock_round] at hr
+    omega
+
+@[simp] theorem rrUniverse_ids (N refs hrefs hquorum hself) :
+    (rrUniverse N refs hrefs hquorum hself).ids = Finset.range (4 * (N + 1)) := rfl
+@[simp] theorem rrUniverse_block (N refs hrefs hquorum hself) :
+    (rrUniverse N refs hrefs hquorum hself).block = rrBlock refs := rfl
+
+/-- **Every round of the scheme is populated**, for any set of validators:
+validator `v`'s round-`r` block is `4 * r + v`, and the layout puts it in
+`ids` with the right author and round. This is what the models' `base`,
+`builds` and `blk` clauses all come down to. -/
+theorem rrUniverse_populatedOn (N : ℕ) (refs : ℕ → Finset ℕ) (hrefs hquorum hself)
+    (T : Finset (Fin 4)) {r : ℕ} (hr : r ≤ N) :
+    PopulatedOn (rrUniverse N refs hrefs hquorum hself) T r := by
+  intro v _
+  have hv := v.isLt
+  refine ⟨4 * r + (v : ℕ), ?_, ?_, ?_⟩
+  · simp only [rrUniverse_ids, Finset.mem_range]; omega
+  · apply Fin.ext
+    simp only [rrUniverse_block, rrBlock_creator_val]
+    omega
+  · simp only [rrUniverse_block, rrBlock_round]; omega
+
+
+/-- `Ugrow`'s references: the whole round below. -/
+def growRefs (b : ℕ) : Finset ℕ := Finset.Ico (4 * (b / 4) - 4) (4 * (b / 4))
+
+@[simp] theorem growBlock_refs (b : ℕ) :
+    (rrBlock growRefs b).refs = Finset.Ico (4 * (b / 4) - 4) (4 * (b / 4)) := rfl
+
+theorem mem_growBlock_refs {b i : ℕ} :
+    i ∈ (rrBlock growRefs b).refs ↔ 4 * (b / 4) - 4 ≤ i ∧ i < 4 * (b / 4) :=
+  Finset.mem_Ico
+
+/-- The DAG grown to round `N`: four blocks per round, rounds `0` to `N`,
+each block referencing the whole round below.
+
+The block layout and the validity it decides are `rrUniverse`'s; what is
+left is that four references are a quorum and that one of them is the
+author's own. -/
+def Ugrow (N : ℕ) : BlockUniverse (Fin 4) ℕ Unit :=
+  rrUniverse N growRefs
+    (fun _ _ hi => Finset.mem_Ico.mp hi)
+    (by
+      -- all four authors of the round below are cited
+      intro i h
+      have hcard : (creators (rrBlock growRefs) (rrBlock growRefs i)).card = 4 := by
+        rw [creators, creatorsOf, Finset.card_image_of_injOn, rrBlock_refs, growRefs,
           Nat.card_Ico]
         · omega
         · intro a ha b hb hab
@@ -94,30 +172,15 @@ def Ugrow (N : ℕ) : BlockUniverse (Fin 4) ℕ Unit where
             have := congrArg (fun (v : Fin 4) => (v : ℕ)) hab
             simpa using this
           omega
-      have hf : Faults.f (Fin 4) = 1 := rfl
-      have hn : Fintype.card (Fin 4) = 4 := rfl
-      omega
-    · -- self-parent: the block of the same author one round down is
-      -- `4 * (i / 4) - 4 + i % 4`, and it lies in the `Ico`.
-      intro h
-      simp only [growBlock_round] at h
-      refine ⟨4 * (i / 4) - 4 + i % 4, ?_, ?_⟩
-      · rw [mem_growBlock_refs]
-        omega
-      · apply Fin.ext
-        simp only [growBlock_creator_val]
-        omega
-  no_equivocation := by
-    intro i _ j _ _ hc hr
-    have hv : (i % 4) = (j % 4) := by
-      have := congrArg (fun (v : Fin 4) => (v : ℕ)) hc
-      simpa using this
-    simp only [growBlock_round] at hr
-    omega
+      omega)
+    (by
+      intro i h
+      rw [growRefs, Finset.mem_Ico]
+      omega)
 
 @[simp] theorem ugrow_ids (N : ℕ) : (Ugrow N).ids = Finset.range (4 * (N + 1)) := rfl
 
-@[simp] theorem ugrow_block (N : ℕ) : (Ugrow N).block = growBlock := rfl
+@[simp] theorem ugrow_block (N : ℕ) : (Ugrow N).block = rrBlock growRefs := rfl
 
 /-- What a `Ugrow` validator held: the whole round below, for everyone. -/
 def ugrowDelivery (N : ℕ) : Delivery (Ugrow N) where
@@ -133,13 +196,13 @@ def ugrowDelivery (N : ℕ) : Delivery (Ugrow N) where
     have hv : (i % 4) = (j % 4) := by
       have := congrArg (fun (v : Fin 4) => (v : ℕ)) hij
       simpa using this
-    simp only [ugrow_block, growBlock_round] at hi hj
+    simp only [ugrow_block, rrBlock_round] at hi hj
     omega
   accepts_correct _ _ _ _ h _ := h
   includes := by
     intro _ _ n b _ _ hbr i hi
     rw [mem_blocksAt] at hi
-    simp only [ugrow_block, growBlock_round] at hbr hi
+    simp only [ugrow_block, rrBlock_round] at hbr hi
     simp only [ugrow_block, mem_growBlock_refs]
     omega
 
@@ -151,17 +214,8 @@ theorem ugrow_delivers (N : ℕ) : EventuallyDelivers (ugrowDelivery N) 0 :=
 Both fields come down to naming the right id: validator `v`'s round-`r` block
 is `4 * r + v`. -/
 
-theorem ugrow_populated {N r : ℕ} (hr : r ≤ N) : Populated (Ugrow N) r := by
-  intro v _
-  have hv := v.isLt
-  refine ⟨4 * r + (v : ℕ), ?_, ?_, ?_⟩
-  · simp only [ugrow_ids, Finset.mem_range]
-    omega
-  · apply Fin.ext
-    simp only [ugrow_block, growBlock_creator_val]
-    omega
-  · simp only [ugrow_block, growBlock_round]
-    omega
+theorem ugrow_populated {N r : ℕ} (hr : r ≤ N) : Populated (Ugrow N) r :=
+  rrUniverse_populatedOn _ _ _ _ _ _ hr
 
 /-- **The witness.** `Live` is satisfiable at *every* horizon — which is the
 form the claim has to take, since no single `Finset` universe can be tall
@@ -181,7 +235,7 @@ rules out `Live` and `Synchronised` being jointly unsatisfiable, which would
 leave L4–L6 vacuous however satisfiable each was alone. -/
 theorem ugrow_synchronised (N : ℕ) : Synchronised (Ugrow N) 0 := by
   intro n _ b _ hbr _ a _ har _
-  simp only [ugrow_block, growBlock_round] at hbr har
+  simp only [ugrow_block, rrBlock_round] at hbr har
   simp only [ugrow_block, mem_growBlock_refs]
   omega
 
@@ -198,8 +252,8 @@ example : ∀ N, ∃ M, N < (Ugrow M).ids.card := fun N => ⟨N, by
 
 -- Concretely: `Ugrow 5` is a six-round DAG, and validator 3 is at its top.
 example : (Ugrow 5).ids.card = 24 := by decide
-example : (growBlock 23).round = 5 := by decide
-example : ((growBlock 23).creator : ℕ) = 3 := by decide
+example : (rrBlock growRefs 23).round = 5 := by decide
+example : ((rrBlock growRefs 23).creator : ℕ) = 3 := by decide
 
 /-! ## L1 against the witness
 
@@ -226,7 +280,7 @@ theorem ugrow_not_populated_succ (N : ℕ) : ¬ Populated (Ugrow N) (N + 1) := b
   intro h
   obtain ⟨b, hb, _, hbr⟩ := h 1 (by decide)
   simp only [ugrow_ids, Finset.mem_range] at hb
-  simp only [ugrow_block, growBlock_round] at hbr
+  simp only [ugrow_block, rrBlock_round] at hbr
   omega
 
 /-- L0 also applies, and agrees: `Ugrow N` is dense below its frontier. -/
@@ -234,7 +288,7 @@ example (N : ℕ) (hN : 0 < N) : (Fintype.card (Fin 4) - Faults.f (Fin 4)) ≤ (
   card_authorsAt_of_lt (U := Ugrow N) (r := N) (n := 0) hN
     (i := 4 * N)
     (by simp only [ugrow_ids, Finset.mem_range]; omega)
-    (by simp only [ugrow_block, growBlock_round]; omega)
+    (by simp only [ugrow_block, rrBlock_round]; omega)
 
 /-! ## L4 against the witness
 
@@ -290,7 +344,7 @@ theorem ugrow_skip (N k : ℕ) (h : N < 3 * k) (V : View (Fin 4) ℕ Unit (Ugrow
   refine decided_none_of_leader_absent ?_
   intro b hb hbr
   simp only [ugrow_ids, Finset.mem_range] at hb
-  simp only [ugrow_block, growBlock_round, fairSlots_slotRound] at hbr
+  simp only [ugrow_block, rrBlock_round, fairSlots_slotRound] at hbr
   exfalso; omega
 
 /-- The schedule is fair: its leader is correct at every slot. -/
@@ -364,7 +418,7 @@ def ugrowTiming (N : ℕ) : Timing (Ugrow N) {1, 2, 3} N where
   delay := 0
   rounds_le b hb := by
     simp only [ugrow_ids, Finset.mem_range] at hb
-    simp only [ugrow_block, growBlock_round]
+    simp only [ugrow_block, rrBlock_round]
     omega
   blk_mem v _ n hn := by
     have := v.isLt
@@ -373,11 +427,11 @@ def ugrowTiming (N : ℕ) : Timing (Ugrow N) {1, 2, 3} N where
   blk_creator v _ n _ := by
     have := v.isLt
     apply Fin.ext
-    simp only [ugrow_block, growBlock_creator_val]
+    simp only [ugrow_block, rrBlock_creator_val]
     omega
   blk_round v _ n _ := by
     have := v.isLt
-    simp only [ugrow_block, growBlock_round]
+    simp only [ugrow_block, rrBlock_round]
     omega
   waits _ _ n _ := by
     have h : 2 ^ n + 2 ^ n = 2 ^ (n + 1) := by ring
