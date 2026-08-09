@@ -66,6 +66,19 @@ theorem card_correct_add_byzantine :
   have hle : F.byzantine.card ≤ Fintype.card Validator := Finset.card_le_univ _
   omega
 
+/-- **The standing arithmetic of the fault model**, in the form `omega`
+consumes it: the correct and Byzantine sets partition the validators, at
+most `f` are Byzantine, and there are at least `3f+1` in all.
+
+A conjunction because the three are always wanted together — every
+counting argument in the development opens by introducing them, and
+naming the bundle says that these, and only these, are what the fault
+model contributes to an arithmetic step. -/
+theorem faults_arith :
+    (Correct : Finset Validator).card + F.byzantine.card = Fintype.card Validator ∧
+      F.byzantine.card ≤ F.f ∧ 3 * F.f + 1 ≤ Fintype.card Validator :=
+  ⟨card_correct_add_byzantine, F.card_byzantine, F.card_validators⟩
+
 /-- The correct validators alone meet the quorum threshold: at least
 `n − f` of them. This is what the threshold `n − f` is *for* — the
 correct pool suffices on its own. -/

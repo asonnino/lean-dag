@@ -131,9 +131,7 @@ theorem exists_correct_common_support {r : ℕ}
   -- Derive the ambient cardinality facts *before* abbreviating, so that
   -- `set` rewrites them too; otherwise `omega` sees `Correct.card` and
   -- `C.card` as unrelated atoms.
-  have hcb := card_correct_add_byzantine (Validator := Validator)
-  have hbf := F.card_byzantine
-  have hnv := F.card_validators
+  obtain ⟨hcb, hbf, hnv⟩ := faults_arith (Validator := Validator)
   have hE := card_authorsAt_le (U := U) (n := r + 1)
   have hlc : (correctBlocksAt U (r + 1)).card ≤ (Correct : Finset Validator).card := by
     rw [← card_creatorsOf_correctBlocksAt]
