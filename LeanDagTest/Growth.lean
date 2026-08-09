@@ -2,6 +2,7 @@ import Mathlib
 import LeanDag.Schedule
 import LeanDag.Liveness
 import LeanDag.Timing
+import LeanDag.Network.Quorum
 
 /-!
 # `Ugrow` — a witness family for `Live`

@@ -1,5 +1,6 @@
 import LeanDag.Schedule
 import LeanDag.Liveness
+import LeanDag.Network.Quorum
 
 /-!
 # Pipelined and multi-leader schedules — the witnesses

@@ -1,4 +1,5 @@
 import LeanDagTest.Growth
+import LeanDag.Network.Quorum
 
 /-!
 # Partial views — the non-degenerate witnesses

@@ -181,36 +181,20 @@ theorem refsAccepted_chopD (hra : RefsAccepted D) :
   rw [chopD_accepted]
   exact hsub hi
 
-/-! ## G5 — liveness transfers -/
 
-theorem deliversQuorum_chopD (hd : DeliversQuorum D) :
-    DeliversQuorum (chopD D G) := by
-  intro m hq v hv
-  rw [authorsAt_chop] at hq
-  have h := hd (G + m) hq v hv
-  rw [chopD_accepted, chop_block_eq, creatorsOf_chopBlock]
-  exact h
+/-- **G5.** The truncated universe never stalls above the cut.
 
-theorem live_chopD {N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
-    (hG : G ≤ N) : Live (chop U G) (chopD D G) (N - G) where
-  genesis := by
-    intro v hv
-    obtain ⟨b, hb, hbc, hbr⟩ := no_stall H hd G hG v hv
-    refine ⟨b, mem_chop_ids.mpr ⟨hb, by omega⟩, ?_, ?_⟩
-    · rw [chop_block_eq, chopBlock_creator]; exact hbc
-    · rw [chop_block_eq, chopBlock_round]; omega
-  builds := by
-    intro r hr v hv hq
-    rw [chopD_accepted, chop_block_eq, creatorsOf_chopBlock] at hq
-    obtain ⟨b, hb, hbc, hbr⟩ := H.builds (G + r) (by omega) v hv hq
-    refine ⟨b, mem_chop_ids.mpr ⟨hb, by omega⟩, ?_, ?_⟩
-    · rw [chop_block_eq, chopBlock_creator]; exact hbc
-    · rw [chop_block_eq, chopBlock_round]; omega
-
-/-- **G5.** The truncated universe never stalls above the cut. -/
-theorem populated_chop {N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
-    (hG : G ≤ N) : ∀ r ≤ N - G, Populated (chop U G) r :=
-  no_stall (live_chopD H hd hG) (deliversQuorum_chopD hd)
+Production upstream is all this needs: a round-`r` block of `chop U G` is
+a round-`(G+r)` block of `U`, so the statement is the hypothesis with its
+index shifted. It consumes no network assumption, and any of the three
+production routes discharges it. -/
+theorem populated_chop {N : ℕ} (hpop : ∀ r ≤ N, Populated U r) (hG : G ≤ N) :
+    ∀ r ≤ N - G, Populated (chop U G) r := by
+  intro r hr v hv
+  obtain ⟨b, hb, hbc, hbr⟩ := hpop (G + r) (by omega) v hv
+  refine ⟨b, mem_chop_ids.mpr ⟨hb, by omega⟩, ?_, ?_⟩
+  · rw [chop_block_eq, chopBlock_creator]; exact hbc
+  · rw [chop_block_eq, chopBlock_round]; omega
 
 /-! ## G6 — bounded storage, the headline -/
 

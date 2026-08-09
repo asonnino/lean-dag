@@ -62,7 +62,8 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 ## Layout
 
 - `LeanDag/` — theorem/definition source: the core DAG and Mysticeti
-  development at the top level, with the three arcs in subdirectories
+  development at the top level, with `Network/` holding the quorum-based
+  network assumption kept out of the main line, and the arcs in subdirectories
   (`Quality/` — chain quality; `DoS/` — equivocation and the novelty
   budget; `GC/` — garbage collection; `Odontoceti/` — the two-round
   protocol).

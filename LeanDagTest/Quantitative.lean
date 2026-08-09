@@ -1,6 +1,7 @@
 import LeanDag.Quantitative
 import LeanDag.Schedule
 import LeanDagTest.Partial
+import LeanDag.Network.Quorum
 
 /-!
 # Quantitative liveness — the witnesses

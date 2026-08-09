@@ -3558,7 +3558,7 @@ EDGE	LeanDag.pedigreeVia_deterministic	LeanDag.BlockUniverse
 EDGE	LeanDag.pedigreeVia_deterministic	LeanDag.AdoptedUnder
 EDGE	LeanDag.pedigreeVia_deterministic	LeanDag.adoptedUnder_unique
 EDGE	LeanDag.pedigreeVia_deterministic	LeanDag.Block.creator
-NODE	LeanDag.no_stall._proof_1_2	LeanDag.Liveness	thm
+NODE	LeanDag.no_stall._proof_1_2	LeanDag.Network.Quorum	thm
 NODE	LeanDag.ViewGrowth.builds	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewGrowth.builds	LeanDag.creatorsOf
 EDGE	LeanDag.ViewGrowth.builds	LeanDag.Faults
@@ -3822,7 +3822,7 @@ EDGE	LeanDagTest.ugrow_commits_recur	LeanDag.IsLeaderBlock
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDagTest.fairSlots
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDag.commits_recur
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDag.Synchronised
-NODE	LeanDag.live_chopD	LeanDag.GC.Window	thm
+NODE	LeanDag.live_chopD	LeanDag.Network.Quorum	thm
 EDGE	LeanDag.live_chopD	LeanDag.live_chopD._proof_1_5
 EDGE	LeanDag.live_chopD	LeanDag.Delivery
 EDGE	LeanDag.live_chopD	LeanDag.Block
@@ -4211,6 +4211,11 @@ EDGE	LeanDag.decidableEquivFree	LeanDag.EquivFree
 EDGE	LeanDag.decidableEquivFree	LeanDag.decidableEquivFree._aux_1
 EDGE	LeanDag.decidableEquivFree	LeanDag.BlockUniverse
 NODE	LeanDag.Odontoceti.lt_of_eligible._proof_1_1	LeanDag.Odontoceti.Decision	thm
+NODE	LeanDag.populated_chop._proof_1_2	LeanDag.GC.Window	thm
+EDGE	LeanDag.populated_chop._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.populated_chop._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.populated_chop._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.populated_chop._proof_1_2	LeanDag.BlockUniverse
 NODE	LeanDagTest.Dexcl._proof_5	LeanDagTest.GC.Bootstrap	thm
 EDGE	LeanDagTest.Dexcl._proof_5	LeanDagTest.exclAcc
 EDGE	LeanDagTest.Dexcl._proof_5	LeanDag.BlockUniverse.block
@@ -4218,6 +4223,11 @@ EDGE	LeanDagTest.Dexcl._proof_5	LeanDagTest.Uexcl
 EDGE	LeanDagTest.Dexcl._proof_5	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.Dexcl._proof_5	LeanDagTest.Dexcl._proof_1
 EDGE	LeanDagTest.Dexcl._proof_5	LeanDag.Block.creator
+NODE	LeanDag.populated_chop._proof_1_3	LeanDag.GC.Window	thm
+EDGE	LeanDag.populated_chop._proof_1_3	LeanDag.Faults
+EDGE	LeanDag.populated_chop._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.populated_chop._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.populated_chop._proof_1_3	LeanDag.BlockUniverse
 NODE	LeanDag.card_history_le'._proof_1_2	LeanDag.DoS.Pedigree	thm
 EDGE	LeanDag.card_history_le'._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.card_history_le'._proof_1_2	LeanDag.BlockUniverse
@@ -4642,17 +4652,24 @@ EDGE	LeanDagTest.ugrowSkewView._proof_22	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ugrowSkewView._proof_22	LeanDag.Block.round
 EDGE	LeanDagTest.ugrowSkewView._proof_22	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 NODE	LeanDag.populated_chop	LeanDag.GC.Window	thm
-EDGE	LeanDag.populated_chop	LeanDag.Delivery
-EDGE	LeanDag.populated_chop	LeanDag.chopD
+EDGE	LeanDag.populated_chop	LeanDag.Block
 EDGE	LeanDag.populated_chop	LeanDag.Faults
-EDGE	LeanDag.populated_chop	LeanDag.Live
+EDGE	LeanDag.populated_chop	LeanDag.mem_chop_ids
 EDGE	LeanDag.populated_chop	LeanDag.Populated
+EDGE	LeanDag.populated_chop	LeanDag.chop_block_eq
 EDGE	LeanDag.populated_chop	LeanDag.chop
-EDGE	LeanDag.populated_chop	LeanDag.no_stall
-EDGE	LeanDag.populated_chop	LeanDag.live_chopD
+EDGE	LeanDag.populated_chop	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.populated_chop	LeanDag.populated_chop._proof_1_2
+EDGE	LeanDag.populated_chop	LeanDag.Correct
+EDGE	LeanDag.populated_chop	LeanDag.populated_chop._proof_1_3
+EDGE	LeanDag.populated_chop	LeanDag.chopBlock
+EDGE	LeanDag.populated_chop	LeanDag.chopBlock_creator
+EDGE	LeanDag.populated_chop	LeanDag.BlockUniverse.block
+EDGE	LeanDag.populated_chop	LeanDag.Block.round
 EDGE	LeanDag.populated_chop	LeanDag.BlockUniverse
-EDGE	LeanDag.populated_chop	LeanDag.deliversQuorum_chopD
-EDGE	LeanDag.populated_chop	LeanDag.DeliversQuorum
+EDGE	LeanDag.populated_chop	LeanDag.chopBlock_round
+EDGE	LeanDag.populated_chop	LeanDag.populated_chop._proof_1_1
+EDGE	LeanDag.populated_chop	LeanDag.Block.creator
 NODE	LeanDag.PedigreeTo.step	LeanDag.DoS.Pedigree	ctor
 EDGE	LeanDag.PedigreeTo.step	LeanDag.Faults
 EDGE	LeanDag.PedigreeTo.step	LeanDag.PedigreeTo
@@ -4790,7 +4807,7 @@ EDGE	LeanDag.ViewSync.holds_mono	LeanDag.ViewSync.holds
 NODE	LeanDagTest.ugrow_T_eq_correct	LeanDagTest.ViewSync	thm
 EDGE	LeanDagTest.ugrow_T_eq_correct	LeanDag.Correct
 EDGE	LeanDagTest.ugrow_T_eq_correct	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
-NODE	LeanDag.no_stall_and_card_viewUpto_le'	LeanDag.DoS.Novelty	thm
+NODE	LeanDag.no_stall_and_card_viewUpto_le'	LeanDag.Network.Quorum	thm
 EDGE	LeanDag.no_stall_and_card_viewUpto_le'	LeanDag.Delivery
 EDGE	LeanDag.no_stall_and_card_viewUpto_le'	LeanDag.card_viewUpto_le'
 EDGE	LeanDag.no_stall_and_card_viewUpto_le'	LeanDag.ByzBudget
@@ -7364,7 +7381,7 @@ EDGE	LeanDag.creators_refs_eq_correct	LeanDag.mem_correct._simp_1
 EDGE	LeanDag.creators_refs_eq_correct	LeanDag.Faults.card_byzantine
 EDGE	LeanDag.creators_refs_eq_correct	LeanDag.exposedTo
 EDGE	LeanDag.creators_refs_eq_correct	LeanDag.BlockUniverse.creators_quorum
-NODE	LeanDag.card_authorsAt_of_live	LeanDag.Liveness	thm
+NODE	LeanDag.card_authorsAt_of_live	LeanDag.Network.Quorum	thm
 EDGE	LeanDag.card_authorsAt_of_live	LeanDag.Delivery
 EDGE	LeanDag.card_authorsAt_of_live	LeanDag.Faults
 EDGE	LeanDag.card_authorsAt_of_live	LeanDag.Live
@@ -8599,7 +8616,7 @@ EDGE	LeanDag.all_decided_below_of_fairRun._proof_1_4	LeanDag.Faults
 EDGE	LeanDag.all_decided_below_of_fairRun._proof_1_4	LeanDag.Slots.slotRound
 EDGE	LeanDag.all_decided_below_of_fairRun._proof_1_4	LeanDag.Faults.f
 EDGE	LeanDag.all_decided_below_of_fairRun._proof_1_4	LeanDag.Slots
-NODE	LeanDag.live_chopD._proof_1_3	LeanDag.GC.Window	thm
+NODE	LeanDag.live_chopD._proof_1_3	LeanDag.Network.Quorum	thm
 EDGE	LeanDag.live_chopD._proof_1_3	LeanDag.Delivery
 EDGE	LeanDag.live_chopD._proof_1_3	LeanDag.creatorsOf
 EDGE	LeanDag.live_chopD._proof_1_3	LeanDag.Faults
@@ -10350,7 +10367,7 @@ EDGE	LeanDag.Delivery.mk._flat_ctor	LeanDag.Block.round
 EDGE	LeanDag.Delivery.mk._flat_ctor	LeanDag.BlockUniverse
 EDGE	LeanDag.Delivery.mk._flat_ctor	LeanDag.Delivery.mk
 EDGE	LeanDag.Delivery.mk._flat_ctor	LeanDag.Block.creator
-NODE	LeanDag.no_stall._proof_1_1	LeanDag.Liveness	thm
+NODE	LeanDag.no_stall._proof_1_1	LeanDag.Network.Quorum	thm
 NODE	LeanDag.exists_correct_of_card._proof_1_1	LeanDag.Validators	thm
 EDGE	LeanDag.exists_correct_of_card._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.exists_correct_of_card._proof_1_1	LeanDag.Faults.byzantine
@@ -10782,7 +10799,7 @@ EDGE	LeanDagTest.ugrowSkewView._proof_20	LeanDagTest.ugrowSkewView._simp_6
 EDGE	LeanDagTest.ugrowSkewView._proof_20	LeanDagTest.skewHolds
 EDGE	LeanDagTest.ugrowSkewView._proof_20	LeanDagTest.ugrowSkewView._proof_10
 EDGE	LeanDagTest.ugrowSkewView._proof_20	LeanDagTest.ugrowSkewView._simp_5
-NODE	LeanDag.live_chopD._proof_1_1	LeanDag.GC.Window	thm
+NODE	LeanDag.live_chopD._proof_1_1	LeanDag.Network.Quorum	thm
 EDGE	LeanDag.live_chopD._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.live_chopD._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.live_chopD._proof_1_1	LeanDag.Block.round
@@ -10808,16 +10825,14 @@ NODE	LeanDag.dos_resistance	LeanDag.DoS.Novelty	thm
 EDGE	LeanDag.dos_resistance	LeanDag.Delivery
 EDGE	LeanDag.dos_resistance	LeanDag.RefsAccepted
 EDGE	LeanDag.dos_resistance	LeanDag.Faults
-EDGE	LeanDag.dos_resistance	LeanDag.Live
 EDGE	LeanDag.dos_resistance	LeanDag.Populated
 EDGE	LeanDag.dos_resistance	LeanDag.UniformBudget
 EDGE	LeanDag.dos_resistance	LeanDag.Correct
-EDGE	LeanDag.dos_resistance	LeanDag.no_stall_and_card_viewUpto_le
 EDGE	LeanDag.dos_resistance	LeanDag.UniformBudget.byzBudget
 EDGE	LeanDag.dos_resistance	LeanDag.BlockUniverse
 EDGE	LeanDag.dos_resistance	LeanDag.Faults.f
 EDGE	LeanDag.dos_resistance	LeanDag.viewUpto
-EDGE	LeanDag.dos_resistance	LeanDag.DeliversQuorum
+EDGE	LeanDag.dos_resistance	LeanDag.card_viewUpto_le
 NODE	LeanDag.viewUpto_chopD._proof_1_3	LeanDag.GC.Window	thm
 EDGE	LeanDag.viewUpto_chopD._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.viewUpto_chopD._proof_1_3	LeanDag.BlockUniverse.block
@@ -11043,7 +11058,7 @@ EDGE	LeanDagTest.ugapGrowth._proof_29	LeanDagTest.instFaultsFinOfNatNat_leanDagT
 EDGE	LeanDagTest.ugapGrowth._proof_29	LeanDagTest.ugapGrowth._proof_17
 EDGE	LeanDagTest.ugapGrowth._proof_29	LeanDagTest.ugapGrowth._proof_16
 EDGE	LeanDagTest.ugapGrowth._proof_29	LeanDag.Block.creator
-NODE	LeanDag.no_stall_and_card_viewUpto_le	LeanDag.DoS.Novelty	thm
+NODE	LeanDag.no_stall_and_card_viewUpto_le	LeanDag.Network.Quorum	thm
 EDGE	LeanDag.no_stall_and_card_viewUpto_le	LeanDag.Delivery
 EDGE	LeanDag.no_stall_and_card_viewUpto_le	LeanDag.ByzBudget
 EDGE	LeanDag.no_stall_and_card_viewUpto_le	LeanDag.RefsAccepted
@@ -11188,7 +11203,7 @@ EDGE	LeanDagTest.ugrowSkew_synchronised	LeanDagTest.instFaultsFinOfNatNat_leanDa
 EDGE	LeanDagTest.ugrowSkew_synchronised	LeanDag.SynchronisedOn
 EDGE	LeanDagTest.ugrowSkew_synchronised	LeanDagTest.ugrowSkew_drift
 EDGE	LeanDagTest.ugrowSkew_synchronised	LeanDag.Timing.synchronisedOn_of_timing
-NODE	LeanDag.DeliversQuorum	LeanDag.Liveness	def
+NODE	LeanDag.DeliversQuorum	LeanDag.Network.Quorum	def
 EDGE	LeanDag.DeliversQuorum	LeanDag.Delivery
 EDGE	LeanDag.DeliversQuorum	LeanDag.creatorsOf
 EDGE	LeanDag.DeliversQuorum	LeanDag.Faults
@@ -11820,7 +11835,7 @@ EDGE	LeanDag.chopD_accepted	LeanDag.chop
 EDGE	LeanDag.chopD_accepted	LeanDag.BlockUniverse
 EDGE	LeanDag.chopD_accepted	LeanDag.Delivery.accepted
 NODE	LeanDagTest.Uomit._proof_11	LeanDagTest.Unbounded	thm
-NODE	LeanDag.deliversQuorum_chopD	LeanDag.GC.Window	thm
+NODE	LeanDag.deliversQuorum_chopD	LeanDag.Network.Quorum	thm
 EDGE	LeanDag.deliversQuorum_chopD	LeanDag.Delivery
 EDGE	LeanDag.deliversQuorum_chopD	LeanDag.Block
 EDGE	LeanDag.deliversQuorum_chopD	LeanDag.creatorsOf
@@ -12085,9 +12100,9 @@ EDGE	LeanDag.ViewSync._sizeOf_1	LeanDag.Block.creator
 EDGE	LeanDag.ViewSync._sizeOf_1	LeanDag.ViewSync.rec
 NODE	LeanDag.dos_resistance'	LeanDag.DoS.Novelty	thm
 EDGE	LeanDag.dos_resistance'	LeanDag.Delivery
+EDGE	LeanDag.dos_resistance'	LeanDag.card_viewUpto_le'
 EDGE	LeanDag.dos_resistance'	LeanDag.RefsAccepted
 EDGE	LeanDag.dos_resistance'	LeanDag.Faults
-EDGE	LeanDag.dos_resistance'	LeanDag.Live
 EDGE	LeanDag.dos_resistance'	LeanDag.EventuallyDelivers
 EDGE	LeanDag.dos_resistance'	LeanDag.Populated
 EDGE	LeanDag.dos_resistance'	LeanDag.UniformBudget
@@ -12096,8 +12111,6 @@ EDGE	LeanDag.dos_resistance'	LeanDag.UniformBudget.byzBudget
 EDGE	LeanDag.dos_resistance'	LeanDag.BlockUniverse
 EDGE	LeanDag.dos_resistance'	LeanDag.Faults.f
 EDGE	LeanDag.dos_resistance'	LeanDag.viewUpto
-EDGE	LeanDag.dos_resistance'	LeanDag.no_stall_and_card_viewUpto_le'
-EDGE	LeanDag.dos_resistance'	LeanDag.DeliversQuorum
 NODE	LeanDag.ViewGrowth.toDelivery._proof_4	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewGrowth.toDelivery._proof_4	LeanDag.Faults
 EDGE	LeanDag.ViewGrowth.toDelivery._proof_4	LeanDag.ViewGrowth.holds
@@ -12308,7 +12321,7 @@ EDGE	LeanDag.BlockUniverse.exists_common_mem_of_quorums	LeanDag.BlockUniverse.ex
 EDGE	LeanDag.BlockUniverse.exists_common_mem_of_quorums	LeanDag.Block.creator
 NODE	LeanDagTest.doubleFaults._proof_3	LeanDagTest.DoS.Doubling	thm
 EDGE	LeanDagTest.doubleFaults._proof_3	LeanDagTest.doubleFaults._proof_1
-NODE	LeanDag.live_chopD._proof_1_5	LeanDag.GC.Window	thm
+NODE	LeanDag.live_chopD._proof_1_5	LeanDag.Network.Quorum	thm
 EDGE	LeanDag.live_chopD._proof_1_5	LeanDag.Delivery
 EDGE	LeanDag.live_chopD._proof_1_5	LeanDag.creatorsOf
 EDGE	LeanDag.live_chopD._proof_1_5	LeanDag.Faults
@@ -12669,7 +12682,7 @@ EDGE	LeanDag.PedigreeVia.below.casesOn	LeanDag.AdoptedUnder
 EDGE	LeanDag.PedigreeVia.below.casesOn	LeanDag.PedigreeVia.below
 EDGE	LeanDag.PedigreeVia.below.casesOn	LeanDag.PedigreeVia.below.rec
 EDGE	LeanDag.PedigreeVia.below.casesOn	LeanDag.Block.creator
-NODE	LeanDag.live_chopD._proof_1_2	LeanDag.GC.Window	thm
+NODE	LeanDag.live_chopD._proof_1_2	LeanDag.Network.Quorum	thm
 EDGE	LeanDag.live_chopD._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.live_chopD._proof_1_2	LeanDag.BlockUniverse.block
 EDGE	LeanDag.live_chopD._proof_1_2	LeanDag.Block.round
@@ -13370,6 +13383,7 @@ EDGE	LeanDagTest.ugrowSkewGrowth._proof_5	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_5	LeanDag.Block.round
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_5	LeanDag.Faults.f
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_5	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+NODE	LeanDag.populated_chop._proof_1_1	LeanDag.GC.Window	thm
 NODE	LeanDag.card_history_ge._proof_1_1	LeanDag.DoS.SelfParent	thm
 EDGE	LeanDag.card_history_ge._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.card_history_ge._proof_1_1	LeanDag.BlockUniverse.block
@@ -13472,7 +13486,7 @@ EDGE	LeanDag.mem_history_of_creator_eq_of_not_exposedIn	LeanDag.history_subset_i
 EDGE	LeanDag.mem_history_of_creator_eq_of_not_exposedIn	LeanDag.Block.creator
 EDGE	LeanDag.mem_history_of_creator_eq_of_not_exposedIn	LeanDag.Reaches
 NODE	LeanDagTest.ustarve_synchronisedOn._proof_1_2	LeanDagTest.Unbounded	thm
-NODE	LeanDag.no_stall	LeanDag.Liveness	thm
+NODE	LeanDag.no_stall	LeanDag.Network.Quorum	thm
 EDGE	LeanDag.no_stall	LeanDag.Delivery
 EDGE	LeanDag.no_stall	LeanDag.no_stall._proof_1_1
 EDGE	LeanDag.no_stall	LeanDag.Faults
@@ -13929,7 +13943,7 @@ EDGE	LeanDag.exists_synchronisedOn_of_backoff	LeanDag.BlockUniverse
 EDGE	LeanDag.exists_synchronisedOn_of_backoff	LeanDag.SynchronisedOn
 EDGE	LeanDag.exists_synchronisedOn_of_backoff	LeanDag.Timing.DriftFrom.mono
 EDGE	LeanDag.exists_synchronisedOn_of_backoff	LeanDag.Timing.synchronisedOn_of_timing
-NODE	LeanDag.live_chopD._proof_1_4	LeanDag.GC.Window	thm
+NODE	LeanDag.live_chopD._proof_1_4	LeanDag.Network.Quorum	thm
 EDGE	LeanDag.live_chopD._proof_1_4	LeanDag.Delivery
 EDGE	LeanDag.live_chopD._proof_1_4	LeanDag.creatorsOf
 EDGE	LeanDag.live_chopD._proof_1_4	LeanDag.Faults

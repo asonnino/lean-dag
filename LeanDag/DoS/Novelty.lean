@@ -581,25 +581,6 @@ theorem card_viewUpto_le' {κ R : ℕ} (hbyz : ByzBudget D κ)
                 ((Correct : Finset Validator).card * (F.f * κ + 1) + F.f * κ) := by
             rw [hsub, Nat.succ_mul, Nat.add_assoc]
 
-/-- **The composed statement — DoS resistance in one theorem.** One set of
-hypotheses — growth (`Live`), quorum delivery, post-`R` delivery, the
-*enforceable* budget, and the reference discipline — supports liveness and
-linear storage **simultaneously**: no correct validator ever stalls, and no
-correct validator's retained view grows faster than
-`|Correct|·(f·κ+1) + f·κ` per round. The two conclusions do not compete:
-liveness never needs a Byzantine block (D15b, and post-`R` the quorum is
-derivable from the correct set alone,
-`card_creators_accepted_of_eventuallyDelivers`), and by C3″ enforcing the
-budget never defers a correct one. -/
-theorem no_stall_and_card_viewUpto_le' {κ R N : ℕ} (H : Live U D N)
-    (hd : DeliversQuorum D) (hED : EventuallyDelivers D R)
-    (hbyz : ByzBudget D κ) (hra : RefsAccepted D) :
-    (∀ r ≤ N, Populated U r) ∧
-      ∀ v ∈ (Correct : Finset Validator), ∀ n, R + 1 ≤ n →
-        (viewUpto D v n).card ≤ (viewUpto D v (R + 1)).card +
-          (n - (R + 1)) *
-            ((Correct : Finset Validator).card * (F.f * κ + 1) + F.f * κ) :=
-  ⟨no_stall H hd, fun _v hv _n hn => card_viewUpto_le' hbyz hED hra hv hn⟩
 
 /-! ## B4 — unconditional linear storage
 
@@ -810,20 +791,6 @@ theorem card_viewUpto_le {κ : ℕ} (hbyz : ByzBudget D κ)
         Nat.add_le_add (card_viewUpto_filter_correct_le v n)
           (hbyzpart.trans (card_byzPool_le hbyz hra n))
 
-/-- **The capstone, unconditional.** `EventuallyDelivers` is gone: growth
-plus quorum delivery give liveness (L1 is asynchrony-only), and the
-enforceable budget plus the reference discipline give linear storage from
-round 0 — DoS resistance under full asynchrony, in one theorem. -/
-theorem no_stall_and_card_viewUpto_le {κ N : ℕ} (H : Live U D N)
-    (hd : DeliversQuorum D) (hbyz : ByzBudget D κ) (hra : RefsAccepted D) :
-    (∀ r ≤ N, Populated U r) ∧
-      ∀ v ∈ (Correct : Finset Validator), ∀ n,
-        (viewUpto D v n).card ≤
-          (Correct : Finset Validator).card * (n + 1) +
-            ((Correct : Finset Validator).card * F.f +
-              n * ((Correct : Finset Validator).card * (F.f * κ))) :=
-  ⟨no_stall H hd, fun _v hv n => card_viewUpto_le hbyz hra hv n⟩
-
 /-! ## The headline — enforceable conditions only
 
 Every budget hypothesis above is discharged by the author-blind cap, so
@@ -842,7 +809,7 @@ No hypothesis consults `Correct`, `byzantine`, or any identity. -/
 linear storage from round 0 under full asynchrony; every hypothesis is
 local protocol conduct or a pure network assumption, and the author-blind
 cap replaces every creator-guarded budget. -/
-theorem dos_resistance {T N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
+theorem dos_resistance {T N : ℕ} (hpop : ∀ r ≤ N, Populated U r)
     (hu : UniformBudget D T) (hra : RefsAccepted D) :
     (∀ r ≤ N, Populated U r) ∧
       ∀ v ∈ (Correct : Finset Validator), ∀ n,
@@ -850,11 +817,11 @@ theorem dos_resistance {T N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
           (Correct : Finset Validator).card * (n + 1) +
             ((Correct : Finset Validator).card * F.f +
               n * ((Correct : Finset Validator).card * (F.f * T))) :=
-  no_stall_and_card_viewUpto_le H hd hu.byzBudget hra
+  ⟨hpop, fun _v hv n => card_viewUpto_le hu.byzBudget hra hv n⟩
 
 /-- The post-`R` incremental form of the headline: the same enforceable
 conduct, plus the network's `EventuallyDelivers`. -/
-theorem dos_resistance' {T R N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
+theorem dos_resistance' {T R N : ℕ} (hpop : ∀ r ≤ N, Populated U r)
     (hED : EventuallyDelivers D R) (hu : UniformBudget D T)
     (hra : RefsAccepted D) :
     (∀ r ≤ N, Populated U r) ∧
@@ -862,6 +829,6 @@ theorem dos_resistance' {T R N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
         (viewUpto D v n).card ≤ (viewUpto D v (R + 1)).card +
           (n - (R + 1)) *
             ((Correct : Finset Validator).card * (F.f * T + 1) + F.f * T) :=
-  no_stall_and_card_viewUpto_le' H hd hED hu.byzBudget hra
+  ⟨hpop, fun _v hv _n hn => card_viewUpto_le' hu.byzBudget hED hra hv hn⟩
 
 end LeanDag

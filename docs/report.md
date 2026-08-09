@@ -839,6 +839,14 @@ rather than inside it.
 Neither role is discharged where its name suggests, and the extracted
 support graph (§12) makes the pattern checkable rather than asserted.
 
+**N1 lives outside the main line.** It, L1, and the four results that
+exist only to serve them are collected in `LeanDag/Network/Quorum.lean`,
+which nothing else in the development imports. The main line therefore
+presents one network assumption — view convergence — and obtains
+production from it; N1 remains available as an alternative way to
+discharge the same `Populated` hypothesis, and is still the weakest of
+the three, since it promises a quorum only when one already exists.
+
 **N1 has exactly one primitive consumer: L1 (`no_stall`).** Its job is
 production, not synchrony, and the results that need production take it
 as a `Populated` hypothesis rather than reaching for the assumption that
@@ -2967,6 +2975,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Mysticeti.lean` | the commit rule; eligibility; M1–M6; the ledger |
 | `Schedule.lean` | concrete schedules (`uniform`, `uniformSingle`); conservativity |
 | `Liveness.lean` | L0–L6, L7a; the committed-run results |
+| `Network/Quorum.lean` | the quorum route: N1, L1, and the results that exist to serve them |
 | `Timing.lean` | L7b |
 | `ViewSync.lean` | L7c: view convergence, the reduction to `Timing`, the factoring of the bound, the untimed variant, production derived rather than assumed, and the delivery a timed structure induces |
 | `Quantitative.lean` | L8, L9 |
@@ -3429,7 +3438,7 @@ Principal results only; supporting lemmas are omitted.
 | Label | Statement | Lean *(module)* |
 |:---|:---|:---|
 | L0 | the DAG is dense below its frontier | `card_authorsAt_of_lt` *(Liveness)* |
-| L1 | no stall | `no_stall` *(Liveness)* |
+| L1 | no stall | `no_stall` *(Network/Quorum)* |
 | L2 | decisions are monotone in the view | `decided_mono` *(Liveness)* |
 | L3 | decisions propagate to the full view | `decided_full` *(Liveness)* |
 | L4 | a correct leader is committed | `directCommit_of_leader_mem`, `decided_of_leader_mem` *(Liveness)* |
@@ -3500,7 +3509,7 @@ Principal results only; supporting lemmas are omitted.
 | G2 | per-slot verdict invariance | `certificates_chop`, `directCommit_chop`, `certifiedIn_chop`, … *(GC/Chop)* |
 | G3 | the decision relation survives the cut | `decided_chop` *(GC/ChopDecided)* |
 | G4 | cross-cut agreement, arbitrary joiner views | `decided_agree_chop` *(GC/ChopDecided)* |
-| G5 | liveness transfers | `live_chopD`, `populated_chop` *(GC/Window)* |
+| G5 | liveness transfers | `populated_chop` *(GC/Window)*; the assumption transfer `live_chopD`, `deliversQuorum_chopD` *(Network/Quorum)* |
 | G13, G14 | windowed novelty; store correspondence | `novelty_chop_anti`, `viewUpto_chopD` *(GC/Window)* |
 | G6 | storage constant at lag `Λ` | `card_retained_le` *(GC/Window)* |
 | G6b, G7 | join and relay at the same constant | `card_joinIds_le`, `card_serve_le` *(GC/Bootstrap)* |

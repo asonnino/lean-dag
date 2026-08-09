@@ -4,6 +4,7 @@ import LeanDag.GC.ChopDecided
 import LeanDagTest.DoS.Exposure
 import LeanDagTest.DoS.Exclusion
 import LeanDagTest.DoS.Novelty
+import LeanDag.Network.Quorum
 
 /-!
 # The horizon, witnessed
@@ -130,7 +131,7 @@ example : ((viewUpto Dtwin 1 2).filter
 /-- G5 applied: the truncation of `Utwin` at its horizon is populated —
 liveness transfers through the cut. -/
 example : ∀ r ≤ 0, Populated (chop Utwin 1) r :=
-  populated_chop dtwin_live dtwin_deliversQuorum (le_refl 1)
+  populated_chop (no_stall dtwin_live dtwin_deliversQuorum) (le_refl 1)
 
 /-! ## The attested base on data (G10) -/
 

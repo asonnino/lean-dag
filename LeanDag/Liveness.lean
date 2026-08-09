@@ -191,17 +191,6 @@ structure Delivery (U : BlockUniverse Validator BlockId Payload) where
     (U.block b).creator = v → (U.block b).round = n + 1 →
     accepted v n ⊆ (U.block b).refs
 
-/-- **Asynchrony.** A quorum that exists is eventually held. Stated
-conditionally — existence first, holding second — because unconditionally it
-would assert the very block production L1 sets out to prove.
-
-No round bound: this is what holds *before* GST too, and it is all L1 needs.
-Contrast `EventuallyDelivers`, which demands the *whole* correct round and
-only from `R`. -/
-def DeliversQuorum (D : Delivery U) : Prop :=
-  ∀ n, (Fintype.card Validator - F.f) ≤ (authorsAt U n).card →
-    ∀ v ∈ (Correct : Finset Validator),
-      (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (D.accepted v n)).card
 
 /-- The positive protocol behaviour liveness needs. Not derivable from the
 DAG structure — `Correct` is a negative condition and these are positive.
@@ -248,41 +237,6 @@ theorem card_authorsAt_of_populated {r : ℕ} (h : Populated U r) :
   obtain ⟨b, hb, hbc, hbr⟩ := h w hw
   exact mem_authorsAt.mpr ⟨b, hb, hbr, hbc⟩
 
-omit [DecidableEq BlockId] in
-/-- **L1 — no stall.** Under `Live U D N` and `DeliversQuorum D`, every
-correct validator has a block
-at every round up to the horizon.
-
-Induction on the round. The base is `genesis`. The step goes in two hops now
-that `builds` is view-relative: the induction hypothesis makes `Correct` a
-subset of `authorsAt U r`, so a quorum *exists*; `DeliversQuorum` turns that
-into each correct validator *holding* a quorum; and only then does `builds`
-apply.
-
-That second hop is the content of question 2. Without it the theorem would be
-claiming validators build on blocks they may never have received.
-
-L1 is the **only** result where the horizon does real work. Its whole job is
-to turn the growth assumption into the local `Populated` facts L4 consumes —
-which is why L4 itself never mentions `N` (`liveness.md` §4.4). -/
-theorem no_stall {D : Delivery U} (H : Live U D N) (hd : DeliversQuorum D) :
-    ∀ r ≤ N, Populated U r := by
-  intro r
-  induction r with
-  | zero => intro _; exact H.genesis
-  | succ r ih =>
-      intro hr v hv
-      exact H.builds r (by omega) v hv
-        (hd r (card_authorsAt_of_populated (ih (by omega))) v hv)
-
-omit [DecidableEq BlockId] in
-/-- L1 in the form L0 consumes: under `Live U D N` **every** round up to the
-horizon carries a quorum of authors, not merely every round below some
-frontier. -/
-theorem card_authorsAt_of_live {D : Delivery U} (H : Live U D N)
-    (hd : DeliversQuorum D) {r : ℕ} (hr : r ≤ N) :
-    (Fintype.card Validator - F.f) ≤ (authorsAt U r).card :=
-  card_authorsAt_of_populated (no_stall H hd r hr)
 
 omit [DecidableEq BlockId] in
 /-- From round `R` on, a correct block references every correct block of the

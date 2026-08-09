@@ -1,6 +1,7 @@
 import LeanDag.ViewSync
 import LeanDagTest.Partial
 import LeanDagTest.Quantitative
+import LeanDag.Network.Quorum
 
 /-!
 # View convergence, witnessed
