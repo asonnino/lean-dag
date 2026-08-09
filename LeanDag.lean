@@ -10,6 +10,7 @@ import LeanDag.Schedule
 import LeanDag.Liveness
 import LeanDag.Timing
 import LeanDag.Quantitative
+import LeanDag.ViewSync
 import LeanDag.History
 import LeanDag.DoS.Exposure
 import LeanDag.DoS.SelfParent
@@ -33,3 +34,4 @@ import LeanDag.Quality.Capstone
 import LeanDag.Odontoceti.Rules
 import LeanDag.Odontoceti.Decision
 import LeanDag.Odontoceti.Liveness
+import LeanDag.Network.Quorum

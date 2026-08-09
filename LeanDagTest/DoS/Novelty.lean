@@ -2,6 +2,7 @@ import LeanDag.DoS.Novelty
 import LeanDag.DoS.Composition
 import LeanDagTest.DoS.Density
 import LeanDagTest.DoS.Doubling
+import LeanDag.Network.Quorum
 
 /-!
 # The novelty budget, witnessed
@@ -394,7 +395,7 @@ example : (∀ r ≤ 1, Populated Utwin r) ∧
         (Correct : Finset (Fin 4)).card * (n + 1) +
           ((Correct : Finset (Fin 4)).card * Faults.f (Fin 4) +
             n * ((Correct : Finset (Fin 4)).card * (Faults.f (Fin 4) * 3))) :=
-  dos_resistance dtwin_live dtwin_deliversQuorum dtwin_uniform
+  dos_resistance (no_stall dtwin_live dtwin_deliversQuorum) dtwin_uniform
     dtwin_refsAccepted
 
 /-! ## The composition — the pool freezes -/

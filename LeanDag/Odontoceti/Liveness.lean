@@ -194,9 +194,8 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (hspan : SpansEligible Validator c)
     (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U)
-        (N : ℕ),
-        Live U D N → DeliversQuorum D → SynchronisedOn U T R →
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
         S.slotRound (b + c - 1) + 1 ≤ N →
         ∀ i, i < b → ∃ v, Decided U (View.full U) i v := by
   obtain ⟨k₀, hk₀⟩ := S.unbounded R
@@ -204,7 +203,7 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
   have hRb : R ≤ S.slotRound b :=
     le_trans hk₀ (S.mono (le_trans (le_max_right k k₀) hb))
   refine ⟨b, le_trans (le_max_left _ _) hb, hRb, ?_⟩
-  intro U D N H hd hs hN
+  intro U N hpop hs hN
   have hrun : ∀ j, b ≤ j → j ≤ b + c - 1 →
       ∃ B, Decided U (View.full U) j (some B) := by
     intro j hj1 hj2
@@ -214,8 +213,8 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     have hRj : R ≤ S.slotRound j := le_trans hRb (S.mono hj1)
     have hjr : S.slotRound j ≤ S.slotRound (b + c - 1) := S.mono (by omega)
     obtain ⟨L, _, hdec⟩ := decided_of_leader_mem hcard hs hRj
-      (PopulatedOn.mono hT (no_stall H hd _ (by omega)))
-      (PopulatedOn.mono hT (no_stall H hd _ (by omega)))
+      (PopulatedOn.mono hT (hpop _ (by omega)))
+      (PopulatedOn.mono hT (hpop _ (by omega)))
       hlead
     exact ⟨L, hdec⟩
   exact decided_below_of_committed_run (by omega)
@@ -226,9 +225,8 @@ theorem all_decided_below_of_fairRun_correct {c : ℕ} (hc : 0 < c)
     (hspan : SpansEligible Validator c)
     (fair : FairRunOn (Correct : Finset Validator) c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U)
-        (N : ℕ),
-        Live U D N → DeliversQuorum D → Synchronised U R →
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+        (∀ r ≤ N, Populated U r) → Synchronised U R →
         S.slotRound (b + c - 1) + 1 ≤ N →
         ∀ i, i < b → ∃ v, Decided U (View.full U) i v :=
   all_decided_below_of_fairRun hc Finset.Subset.rfl card_correct hspan

@@ -159,8 +159,8 @@ theorem commits_recur_within (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card) (fair : FairWithin T w) (R k : ℕ) :
     ∃ k', max k (slotAt Validator R) ≤ k' ∧ k' < max k (slotAt Validator R) + w ∧
       R ≤ S.slotRound k' ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
-        Live U D N → DeliversQuorum D → SynchronisedOn U T R →
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
         S.slotRound k' + 2 ≤ N →
         ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
   obtain ⟨k', hk', hlt, hlead⟩ := fair (max k (slotAt Validator R))
@@ -168,11 +168,11 @@ theorem commits_recur_within (hT : T ⊆ (Correct : Finset Validator))
     le_trans (le_slotRound_slotAt (Validator := Validator) R)
       (S.mono (le_trans (le_max_right _ _) hk'))
   refine ⟨k', hk', hlt, hRk', ?_⟩
-  intro U D N H hd hs hN
+  intro U N hpop hs hN
   exact decided_of_leader_mem hcard hs hRk'
-    (PopulatedOn.mono hT (no_stall H hd _ (by omega)))
-    (PopulatedOn.mono hT (no_stall H hd _ (by omega)))
-    (PopulatedOn.mono hT (no_stall H hd _ (by omega))) hlead
+    (PopulatedOn.mono hT (hpop _ (by omega)))
+    (PopulatedOn.mono hT (hpop _ (by omega)))
+    (PopulatedOn.mono hT (hpop _ (by omega))) hlead
 
 /-! ### From a slot bound to a round bound
 
@@ -241,16 +241,16 @@ theorem commits_recur_by_round {s : ℕ} (hT : T ⊆ (Correct : Finset Validator
     (hs : BoundedSpacing (Validator := Validator) s) (R k : ℕ) :
     ∃ k', k ≤ k' ∧ S.slotRound k' ≤ S.slotRound (max k (slotAt Validator R)) + s * w ∧
       R ≤ S.slotRound k' ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (D : Delivery U) (N : ℕ),
-        Live U D N → DeliversQuorum D → SynchronisedOn U T R →
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
         S.slotRound (max k (slotAt Validator R)) + s * w + 2 ≤ N →
         ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
   obtain ⟨k', hk, hlt, hRk', hcommit⟩ :=
     commits_recur_within (BlockId := BlockId) (Payload := Payload) hT hcard fair R k
   have hround := slotRound_le_of_lt (Validator := Validator) hs hk hlt
   refine ⟨k', le_trans (le_max_left k _) hk, hround, hRk', ?_⟩
-  intro U D N H hd hsync hN
-  exact hcommit U D N H hd hsync (by omega)
+  intro U N hpop hsync hN
+  exact hcommit U N hpop hsync (by omega)
 
 /-! ## Part 3 — the wait bound: how long is long enough?
 

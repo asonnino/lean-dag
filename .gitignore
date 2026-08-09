@@ -3,3 +3,10 @@
 # Generated documents (rebuild with ./scripts/build-pdf.sh)
 *.pdf
 docs/pdf/
+
+# Python bytecode from scripts/
+__pycache__/
+*.pyc
+
+# Session scratch
+/.claude

@@ -62,7 +62,8 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 ## Layout
 
 - `LeanDag/` — theorem/definition source: the core DAG and Mysticeti
-  development at the top level, with the three arcs in subdirectories
+  development at the top level, with `Network/` holding the quorum-based
+  network assumption kept out of the main line, and the arcs in subdirectories
   (`Quality/` — chain quality; `DoS/` — equivocation and the novelty
   budget; `GC/` — garbage collection; `Odontoceti/` — the two-round
   protocol).
@@ -72,6 +73,10 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 - `docs/` — the design records and the report. `docs/build-pdf.sh`
   compiles them to `docs/pdf/` — requires `pandoc` and `typst`
   (`brew install pandoc typst`).
+- `scripts/` — `DepGraph.lean` and `depgraph.py` extract and draw the
+  support diagrams (`docs/depgraph/README.md`); `svg2pdf.sh` renders them
+  to PDF; `audit-report.py` checks the report's cross-references and Lean
+  identifiers against the compiled library.
 
 ## Documents
 
@@ -86,3 +91,4 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 | [`docs/garbage.md`](docs/garbage.md) | the horizon: truncation, bounded storage, bootstrap without consensus |
 | [`docs/odontoceti.md`](docs/odontoceti.md) | the two-round protocol: the generalized thresholds, and the findings |
 | [`docs/related.md`](docs/related.md) | a survey of consensus on uncertified DAGs |
+| [`docs/style.md`](docs/style.md) | writing conventions for the documents and the source |

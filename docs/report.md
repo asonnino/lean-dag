@@ -49,7 +49,7 @@ argument — two equivocating candidates can both pass the indirect commit test
 at one anchor, realized on a concrete six-validator counterexample — and
 repairs it with a canonical-candidate rule.
 
-The development comprises roughly 15,000 lines of Lean 4 over Mathlib. Every
+The development comprises roughly 16,000 lines of Lean 4 over Mathlib. Every
 principal result depends on exactly Lean's three standard axioms; every
 definition is exercised on concrete models by `decide` before anything is
 proved from it. All displayed Lean in this report is drawn from the source
@@ -126,13 +126,19 @@ proof effort with no corresponding proof content.
    [QXS26] give machine-checked safety and liveness for Mysticeti in Rocq, by
    refinement into LiDO-DAG. What is claimed is the *form* of the account —
    theirs is operational, quantified over traces and instants; here liveness is
-   stated as a condition on the DAG, and the dependence on time is confined to a
-   single file (§6.8, §14).
+   stated as a condition on the DAG, and the dependence on time is confined to
+   two files below a `Prop`-valued interface (§6.8–§6.9, §14).
 
-4. **Two independent derivations** of the structural property, from an abstract
-   delivery model (§6.7) and from GST (§6.8), in each case together with the
-   protocol's build rules. Nothing beyond standard partial synchrony is
-   assumed.
+4. **Three derivations** of the structural property — from an abstract
+   delivery model (§6.7), from GST (§6.8), and from **view convergence**
+   (§6.9) — in each case together with the protocol's build rules, and
+   nothing beyond standard partial synchrony. They form a hierarchy
+   rather than a set of alternatives: the third derives the second, and states the
+   network's contribution in a form containing no clause about what
+   validators do. On the same foundation, production is derived too —
+   untimed from round `0` (`populated_of_viewsConverge`), and timed from
+   the GST crossing (`ViewGrowth.populatedOn`) — so the entire liveness
+   account can be grounded on one view-shaped assumption.
 
 5. A precise account of the **trust boundary** (§4). What is assumed reduces to
    the fault bound and two network conditions; every other condition is a clause
@@ -140,7 +146,7 @@ proof effort with no corresponding proof content.
    is derived rather than assumed, and the one point at which a network parameter
    constrains the specification is the wait threshold of §13.1.
 
-6. **Quantitative forms** (§6.10): the round from which coverage holds, given
+6. **Quantitative forms** (§6.11): the round from which coverage holds, given
    explicitly; a bound on the slot at which the next commit occurs; and an
    operational statement — a correct leader is committed once every correct
    validator waits `D₀ + Δ`, which is `2Δ` under a common start.
@@ -187,9 +193,9 @@ first.
   interleaving of simultaneously undecided slots handled by the committed-run
   results (`decided_of_committed_above`, `decided_below_of_committed_run`,
   `all_decided_below_of_fairRun`); `pipelining-and-multi-leader.md` is the
-  design record. An earlier version of this development fixed a
-  Cordial-Miners-like three-round spacing; that spacing survives only as a
-  conservativity theorem (`eligible_of_lt_of_spacing`).
+  companion document. A Cordial-Miners-like three-round spacing is the
+  special case in which every later slot is eligible
+  (`eligible_of_lt_of_spacing`).
 - **No cryptography.** Signatures, authentication and equivocation detection are
   outside the model. Non-equivocation of correct validators is a clause of the
   protocol (§4.1), recorded structurally (§2.3) and not enforced by a mechanism.
@@ -200,7 +206,7 @@ first.
 - **No intra-flush ordering.** The committed-leader sequence and the ledger *set*
   are shown agreed; totally ordering the blocks released by a single commit
   requires a tie-break which the development declines to assume (§5.6).
-- **No wall-clock latency.** The wait bound of §6.10 is a duration, but the total
+- **No wall-clock latency.** The wait bound of §6.11 is a duration, but the total
   elapsed time to a commit is not derived (§13.6).
 
 ### 1.5 Organisation
@@ -209,7 +215,7 @@ first.
 boundary, separating what is assumed from what the protocol enforces. §5
 develops safety (culminating in agreement, `decided_agree`, and the agreed
 ledger) and §6 liveness (culminating in recurring commits,
-`commits_recur_on`, the two derivations of eventual DAG synchrony, and the
+`commits_recur_on`, the three derivations of eventual DAG synchrony, and the
 quantitative wait bound). §7 proves the chain-quality account — coverage
 without synchrony, inclusion with it (`chain_quality`,
 `committed_of_correct_block`). §§8–10 present the three further
@@ -283,7 +289,7 @@ structure ValidWrt (blk : BlockId → Block Validator BlockId Payload)
   self_parent : 0 < b.round → ∃ i ∈ b.refs, (blk i).creator = b.creator
 ```
 
-Four points of formulation are load-bearing.
+Four aspects of the formulation are consequential.
 
 The predecessor condition is stated additively rather than as
 `(blk i).round = b.round - 1`. Besides avoiding truncated subtraction on `ℕ`,
@@ -303,7 +309,7 @@ two-round setting, by twin uniqueness (§10).
 creator, not a unique one: an equivocator's blocks form a forest of
 predecessor chains, and the condition does not collapse it. Mysticeti and
 Odontoceti both mandate the clause. The safety and liveness developments never
-consume it; it is load-bearing for the DoS arc (§8), where the self-parent
+consume it; it is indispensable to §8, where the self-parent
 chain is what turns per-acceptance budgets into per-round rates and a correct
 block's cone into a complete record of its author's acceptances.
 
@@ -376,7 +382,7 @@ Global symbols, fixed for the whole report:
 | `H(b)`, `history U b` | the causal history (cone) of block `b` (§2.4) |
 | `Δ`, GST | the post-stabilisation delivery bound and stabilisation time of partial synchrony (§6.8) |
 | `R` | the round from which eventual DAG synchrony holds (§6.4) |
-| `D₀` | the round-0 spread between correct validators' start times (§6.10) |
+| `D₀` | the round-0 spread between correct validators' start times (§6.11) |
 | `N` | the growth horizon of `Live` (§6.3) |
 | `κ`, `T` | the novelty budget: analysis-side (guarded) and mechanism-side (author-blind) constants (§8.4) |
 | `G`, `Λ` | a garbage-collection horizon round, and its lag behind the current round (§9) |
@@ -387,7 +393,7 @@ and **N** and **R** (protocol, network and rate clauses of the trust
 boundary, §4), **CQ** (chain quality, §7),
 **D**/**C**/**B** (the denial-of-service development, §8),
 **G** (garbage collection, §9), and **O** (Odontoceti, §10). The labels match
-the design records and the source comments; Appendix A maps each to its Lean
+the companion documents and the source comments; Appendix A maps each to its Lean
 name and module.
 
 Counting vocabulary:
@@ -609,7 +615,7 @@ the system actually falls.
 | P10 | the leader schedule names reliable validators arbitrarily far out | `FairScheduleOn` |
 
 P1–P6 are consumed by the safety development, P7–P10 additionally by liveness;
-P3′ by neither — it is load-bearing for the DoS arc (§8).
+P3′ by neither — it is indispensable to §8.
 
 P10 is a joint condition rather than a pure specification: the schedule is the
 designer's, but which validators are reliable is not. Round-robin discharges it
@@ -659,7 +665,7 @@ the model constrains it, `Correct` being a set complement (§2.1).
 
 P9 is the clause whose *sufficiency* is not under the designer's control: the
 timeout may be chosen freely, but whether the chosen value is long enough
-depends on the network. §6.10 determines the threshold it must meet, and §13.1
+depends on the network. §6.11 determines the threshold it must meet, and §13.1
 discusses the consequences.
 
 ### 4.2 The fault model
@@ -683,8 +689,8 @@ operative budget:
 A correct validator which is persistently slow consumes budget exactly as a
 Byzantine one does. This is a hybrid condition: correctness is a fault-model
 matter, timeliness a network one. At `f = 1` there are four validators and
-`|Correct| = 3 = n−f` exactly, so no slack exists and every correct validator
-must be timely; slack appears only when fewer than `f` validators are in fact
+`|Correct| = 3 = n−f` exactly, so no margin exists and every correct validator
+must be timely; margin appears only when fewer than `f` validators are in fact
 faulty, and the `T`-parameterised statements make it available automatically.
 The specialisations at `T := Correct` (`directCommit_of_correct_leader`,
 `decided_of_correct_leader`, `commits_recur`) recover the conventional
@@ -692,36 +698,245 @@ statements.
 
 ### 4.3 The network
 
-| | Assumption | Formalisation |
+The development asks the environment for two *things*, and each admits
+several *formulations*. Keeping those apart is what this section is for:
+the roles are fixed, the formulations are a modelling choice, and two of
+the formulations are not as pure as their names suggest.
+
+| Role | What is wanted | Formulations |
 |:---|:---|:---|
-| N1 | a quorum that exists is eventually held | `DeliversQuorum` |
-| N2 | beyond GST, a block is delivered within Δ | `Timing.covers`, `EventuallyDelivers` |
+| **Production** | what exists is eventually obtained, so the DAG keeps growing | N1 (`DeliversQuorum`); or view convergence, untimed (`ViewsConverge`) or timed (`converges`, from GST on) |
+| **Coverage** | after stabilisation, delivery is prompt enough that blocks reference one another | N2, in three forms: `converges` (views), `Timing.covers` (references), `EventuallyDelivers` (holdings) |
 
-N1 requires eventual delivery only, not synchrony, and is what carries the
-results holding before GST. N2 is partial synchrony in the standard sense.
+Safety (§5) uses **none** of them: it holds under arbitrary asynchrony,
+arbitrary loss and arbitrarily divergent views.
 
-**These two are the whole of the trust placed in the environment.** The safety
-results of §5 use neither: they hold under arbitrary asynchrony, arbitrary loss
-and arbitrary divergence between views.
+#### The vehicles
+
+The formulations do not all range over the same object, and the
+differences matter more than they appear to.
+
+| Field | Indexed by | Structure |
+|:---|:---|:---|
+| `held v n` | the **round** `v` is building over | `Delivery` (§6.2) |
+| `holds v t` | the **instant** `t` | `Timing`, `ViewSync` (§6.8–§6.9) |
+
+`held v n` is what `v` had in hand *at the moment it built its
+round-`(n+1)` block* — not what it eventually receives. That build-time
+index is the essential modelling device (§13.1): a block's references are
+frozen at construction, so what bears on the DAG's shape is what was held
+when the builder acted. `View.ids` is a finite set of identifiers with no
+index of either kind, which is why no formulation is stated over it.
+
+#### Production: N1
+
+```lean
+def DeliversQuorum (D : Delivery U) : Prop :=
+  ∀ n, (Fintype.card Validator - F.f) ≤ (authorsAt U n).card →
+    ∀ v ∈ (Correct : Finset Validator),
+      (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (D.accepted v n)).card
+```
+
+*If* a quorum of validators have produced round-`n` blocks, *then* every
+correct validator accepts round-`n` blocks from a quorum of distinct
+authors. Four features of the shape are deliberate.
+
+- **Conditional: existence first, holding second.** Stated
+  unconditionally it would assert that round-`n` blocks exist, which is
+  what the liveness argument sets out to prove (§6.3); the assumption
+  would presuppose what it is invoked to establish.
+- **No clock and no round bound.** No Δ, no GST, no index past which it
+  begins to hold, so it constrains the network before stabilisation
+  exactly as after. This is what carries the results that do not need
+  synchrony: `N1 + P8 → Populated`, through L1, with no temporal input.
+- **Stated on `accepted`, not `held`.** The quorum must survive the
+  acceptance filter — where a validator takes at most one block per
+  author, and where the novelty budget of §8 imposes a rate limit.
+- **Counting authors, not blocks** (`creatorsOf`), so an equivocator
+  flooding a validator with twins contributes one (§2.5).
+
+Two qualifications weaken the sense in which N1 is a network
+assumption.
+
+*It is not purely environmental.* Nothing obliges a validator to accept a
+**Byzantine**-authored block — `accepts_correct` covers correct authors
+only. With `f` Byzantine validators and `f` slow correct ones, a
+validator may hold a quorum yet accept only `f+1` creators. So N1
+constrains the network **and the acceptance policy** jointly, which is
+the formal link to §8: `dos_resistance` takes N1 *and* the novelty
+budget, and that pairing is the statement that the budget must be set
+loose enough to keep N1 true.
+
+*From `R` on it is a theorem, not an assumption.*
+`card_creators_accepted_of_eventuallyDelivers` derives the accepted
+quorum from N2 with `Populated`: coverage puts every correct round-`n`
+block in hand, `accepts_correct` obliges acceptance, and
+`|Correct| ≥ n−f`. N1's real content is therefore the pre-GST prefix —
+which is precisely what it is for.
+
+#### Coverage: N2, in three forms
+
+The three formulations are a hierarchy, ordered here from the most
+primitive; §6.9 proves the reductions.
+
+```lean
+-- over views, at instants
+converges : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + delay)
+
+-- over references, at instants
+covers : ∀ v ∈ T, ∀ w ∈ T, ∀ n < N, gst ≤ built w n →
+  built w n + delay ≤ built v (n + 1) →
+  blk w n ∈ (U.block (blk v (n + 1))).refs
+
+-- over holdings, at the build index
+def EventuallyDelivers (D : Delivery U) (R : ℕ) : Prop :=
+  ∀ n, R ≤ n → ∀ v ∈ (Correct : Finset Validator), ∀ a ∈ U.ids,
+    (U.block a).round = n → (U.block a).creator ∈ (Correct : Finset Validator) →
+    a ∈ D.held v n
+```
+
+`converges` is partial synchrony as one would state it in words — *after
+GST, whatever a correct validator holds reaches every correct validator
+within Δ* — and mentions no block, no round and no reference. Each of the
+others is obtained from it by applying a clause of the protocol:
+`covers` is `converges` composed with P7 (`ViewSync.covers_of_converges`),
+and `ViewSync.toTiming` exhibits a view-convergent execution as a timed
+one, so the timing route is a special case rather than an alternative.
+
+**Two of the three are impure.** `Timing.covers` concludes about `refs`,
+fusing the network guarantee with the referencing clause;
+`EventuallyDelivers` concludes about `held v n` — the *build-time*
+index — and so presupposes that the builder waited. Only `converges`
+states the network's contribution in a form containing nothing the
+protocol does, and it is accordingly the primitive of the three
+(§6.9).
+
+Two further relations, both proved in §6.9. The bound factors out:
+convergence within Δ is exactly eventual convergence whose lag is
+uniformly bounded after GST (`convergesWithin_iff_bounded`), so *view
+convergence under synchrony = view convergence + a bound*. And eventual
+convergence **alone** yields nothing: an unbounded lag cannot be compared
+with a timeout, so no argument places the block in the builder's hands
+before it builds. The missing ingredient is not a stronger network but
+the protocol's waiting rule — which is why P9 stands beside N2 in §4.1
+rather than inside it.
+
+#### What none of them says
+
+- **Nothing about Byzantine senders.** A Byzantine validator may deliver
+  to some correct validators and not others, may send equivocating blocks
+  to two of them, or may publish nothing. Every formulation quantifies
+  over *correct* authors only, and safety tolerates the rest
+  unconditionally — a Byzantine block reaching one view and not another is
+  exactly what the cross-view theorems of §5 are stated to survive.
+- **Nothing about which blocks arrive**, beyond correct ones after `R`:
+  N1 promises a quorum, not a particular sender's block.
+- **Nothing before GST**, for N2: arbitrary delay, reordering and loss are
+  permitted there, and every safety result and L1 continue to hold.
+
+#### Where they are consumed
+
+Neither role is discharged where its name suggests, and the extracted
+support graph (§12) makes the pattern checkable rather than asserted.
+
+**N1 lives outside the main line.** It, L1, and the four results that
+exist only to serve them are collected in `LeanDag/Network/Quorum.lean`,
+which nothing else in the development imports. The main line therefore
+presents one network assumption — view convergence — and obtains
+production from it; N1 remains available as an alternative way to
+discharge the same `Populated` hypothesis, and is still the weakest of
+the three, since it promises a quorum only when one already exists.
+
+**N1 has exactly one primitive consumer: L1 (`no_stall`).** Its job is
+production, not synchrony, and the results that need production take it
+as a `Populated` hypothesis rather than reaching for the assumption that
+supplies it. L6, L10, the quantitative results and the capstones of
+§§7–10 therefore do not mention N1 at all: any of the three production
+routes may discharge them — `no_stall` from N1, `ViewGrowth.populatedOn`
+from timed view convergence, or `populated_of_viewsConverge` from the
+untimed form.
+
+Of the 67 results in Appendix A, three still reach N1, and each is
+*about* the combinatorial route rather than a consumer of it: L1, which
+derives production from it; G5, which re-establishes it on a truncated
+universe; and B, whose statement bundles growth with the storage bound
+and so asserts both under the same hypotheses. The storage half of B is
+independent of N1.
+
+**N2a is derivable from view convergence.** The delivery a `ViewGrowth`
+induces satisfies it — `ViewGrowth.eventuallyDelivers_toDelivery` — so the
+store facts below rest on the same single network assumption as coverage
+does, rather than on a second one. The derivation needs `waits` at every
+round rather than only below the horizon, which is the one clause
+`ViewGrowth` states more strongly than `Timing`: at round `N` the
+assumption speaks of a block being in hand when its holder builds for
+round `N+1`, and only a schedule that keeps honouring timeouts past `N`
+orders those two events. The horizon bounds the DAG, not the clock. L7a
+then follows for the induced delivery (`synchronised_toDelivery`), so all
+three routes of §§6.7–6.9 are available from view convergence alone.
+
+**N2's abstract form is used for five distinct things**, only the first
+of which is coverage: L7a (§6.7); the view-gap constant C3′ and hence the
+budget sandwich of §8.4; the accepted-quorum lemma above; the bound
+placing the attested base inside a correct peer's retained store (G6b,
+§9.3); and the one-round universalisation of possession (G9, §9.5). The
+last four are facts about **stores**, where coverage is a fact about
+**references**; one assumption serves both because it is stated on
+`held`, upstream of the split. `Timing.covers` is consumed exactly once,
+in L7b.
+
+#### What is actually trusted
+
+Collecting the qualifications, what the environment is trusted with is
+narrower than the two-assumption summary suggests.
+
+*For coverage*, one condition on the environment: view convergence,
+bounded after GST. The other two formulations are that condition with a
+protocol clause incorporated, and §6.9 derives them from it.
+
+*For production*, one condition — but the choice of formulation is a
+genuine choice. N1 is the weakest and the implementable one, though it
+also constrains the acceptance policy. Untimed view convergence
+(`ViewsConverge`) is stronger — every correct block, always, rather than
+a quorum when one exists — and discharges N1 entirely
+(`populated_of_viewsConverge`), though it is unimplementable as stated, since a validator cannot wait for "all correct blocks" without
+distinguishing correct validators from crashed ones. The timed structures
+take a third option and assume production outright, carrying a block per
+validator per round as data (§6.10).
+
+*And nothing else.* No condition on the environment appears in the
+development beyond these two roles, in one of the formulations above; the
+remaining hypotheses of §4.1 are clauses of the algorithm, which a
+designer controls. Reference coverage itself — the condition all of
+liveness rests on — is not a further assumption but a consequence, which
+is the subject of §4.4.
 
 ### 4.4 Derived, not assumed
 
-Eventual DAG synchrony is not an assumption of the development. It is a property
-of executions, obtained from the network assumption together with the protocol:
+Eventual DAG synchrony is not an assumption of the development. It is a
+property of executions, obtained from the network assumption of §4.3
+together with clauses of the protocol, by any of three routes:
 
 | Route | From | Result |
 |:---|:---|:---|
-| Delivery | N2 (`EventuallyDelivers`) with P7 | `synchronised_of_delivery` |
-| Timing | N2 (`Timing.covers`) with P9 | `Timing.synchronisedOn_of_timing` |
+| Delivery | N2 (`EventuallyDelivers`) with P7 | `synchronised_of_delivery` (L7a) |
+| Timing | N2 (`Timing.covers`) with P9 | `Timing.synchronisedOn_of_timing` (L7b) |
+| View convergence | N2 (`converges`) with P7 and P9 | `ViewSync.synchronisedOn_of_converges` (L7c) |
+
+The third derives the second (`ViewSync.toTiming`, §6.9), so the routes
+are a hierarchy rather than a set of alternatives; and a fourth result on the same
+foundation derives *production* rather than coverage, discharging N1
+(`populated_of_viewsConverge`).
 
 It is stated as a hypothesis of L4 and L6 in order to keep those arguments free
-of temporal notions (§6.9), and supplied to them by the results above. §13
+of temporal notions (§6.10), and supplied to them by the results above. §13
 discusses the formulation.
 
-**What "derived" does and does not mean here.** Both routes derive coverage from
-a network assumption *together with clauses of the protocol* — P7 on the delivery
-route, P9 on the timing route — and both are consumed by L4 alongside `Populated`,
-which comes from P8. The claim is therefore not that eventual DAG synchrony holds
+**What "derived" does and does not mean here.** Each route derives
+coverage from a network assumption *together with clauses of the
+protocol* — P7 on the delivery route, P9 on the timing route, both on the
+view-convergence route — and each is consumed by L4 alongside
+`Populated`, which comes from P8. The claim is therefore not that eventual DAG synchrony holds
 in any execution of any DAG protocol; it is that it need not be *postulated*
 separately, because the network assumption already standard in this literature,
 combined with build rules a designer controls, entails it.
@@ -732,13 +947,13 @@ have not survived scrutiny. Mysticeti's Lemma 8 and Cordial Miners' Proposition
 that both leave gaps, and [QXS26] shows the gap is not merely expositional — with
 round-jumping unrestricted the conclusion is false. The present development is
 not exposed to that counterexample, but the reason is P8, which excludes
-round-jumping by fiat (§4.1). Read correctly, this is the stronger position: it
-identifies precisely which protocol clause the structural condition is bought
-with, rather than asserting the condition and leaving the price implicit.
+round-jumping outright (§4.1). Properly read, this is the stronger position: it
+identifies precisely which protocol clause the structural condition depends
+on, rather than asserting the condition and leaving the price implicit.
 
 ### 4.5 Quantitative clauses
 
-The results of §6.10 require the following in addition. R1–R3 are further
+The results of §6.11 require the following in addition. R1–R3 are further
 specification, strengthening clauses already present; only the round-`0` spread
 of R4 is an assumption, and it concerns deployment rather than the network.
 
@@ -749,7 +964,7 @@ of R4 is an assumption, and it concerns deployment rather than the network.
 | R3 | `BoundedSpacing s`: slots at most `s` rounds apart | specification | that slot's round, and a horizon |
 | R4 | `∀ n, D₀ + Δ ≤ timeout n`, with round-`0` spread at most `D₀` | specification; `D₀` deployment | the wait bound `Delay(Δ)` |
 
-Every result of §5 and §6.1–§6.9 stands without them.
+Every result of §5 and §6.1–§6.10 stands without them.
 
 **R4's deployment component is avoidable.** `driftFrom_of_prompt` shows drift is
 *preserved*, not established, so a bound on the round-`0` spread has to be
@@ -1014,11 +1229,6 @@ structure Delivery (U) where
   includes : ∀ v ∈ Correct, ∀ n, ∀ b ∈ U.ids,
     (U.block b).creator = v → (U.block b).round = n + 1 →
     accepted v n ⊆ (U.block b).refs
-
-def DeliversQuorum (D : Delivery U) : Prop :=
-  ∀ n, (Fintype.card Validator - F.f) ≤ (authorsAt U n).card →
-    ∀ v ∈ Correct,
-      (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (D.accepted v n)).card
 ```
 
 The indexing of `held` is essential: `held v n` denotes what `v` had in hand *at
@@ -1033,10 +1243,12 @@ The structure contains no clock. In the absence of a time model, "waited longer"
 can manifest only as a larger `held`, which is what allows the timing layer of
 §6.8 to be placed beneath without disturbing anything above it.
 
-`DeliversQuorum` is stated conditionally — existence of a quorum first, holding
-of one second — since unconditionally it would assert the very block production
-that §6.3 sets out to establish. It carries no round bound, and so holds before
-GST as well as after.
+The network assumption stated over this structure is N1
+(`DeliversQuorum`), displayed and discussed in §4.3; the liveness results
+below consume it as a hypothesis. Two of its features matter here: it is
+conditional, so it does not assert the block production §6.3 establishes,
+and it carries no round bound, so the results resting on it hold before GST
+as well as after.
 
 ### 6.3 Progress, and the horizon
 
@@ -1091,7 +1303,7 @@ that the ledger grows without bound is not that one DAG commits infinitely often
 — no finite DAG can — but that no slot is the last one which some sufficiently
 grown DAG commits.
 
-L1 is the only result in which the horizon does any work; the principal
+L1 is the only result in which the horizon is consumed; the principal
 commitment theorem does not mention `N`.
 
 ### 6.4 Eventual DAG synchrony
@@ -1105,7 +1317,7 @@ def SynchronisedOn (U) (T : Finset Validator) (R : ℕ) : Prop :=
 ```
 
 The condition is restricted to correct authors on both sides, and both
-restrictions are load-bearing.
+restrictions are consequential.
 
 Nothing may be assumed about the existence of Byzantine blocks: a Byzantine
 validator may publish nothing, or publish and reveal selectively, so no argument
@@ -1248,7 +1460,8 @@ chain must terminate at a delivery assumption.
 
 `EventuallyDelivers` is view convergence *indexed to the moment of building*: it
 does not state that correct blocks eventually reach `v`, but that they are members
-of `D.held v n`. That indexing performs the work, and it is exactly what a
+of `D.held v n`. That indexing is what carries the argument, and it is exactly
+what a
 view-shaped statement lacks (§13.1).
 
 ### 6.8 Deriving coverage: the timing route
@@ -1319,26 +1532,421 @@ condition: the timeout must remain above `D + delay` from `R` onwards. A constan
 timeout satisfies it, as does any schedule which stabilises above the bound.
 `exists_backoff_ge` and `exists_synchronisedOn_of_backoff` package one sufficient
 condition — a monotone, unbounded backoff — which is the appropriate one when Δ
-is unknown; §6.10 supplies two further routes.
+is unknown; §6.11 supplies two further routes.
 
-### 6.9 The layering
+### 6.9 Deriving coverage: the view-convergence route
 
+The routes of §6.7 and §6.8 state the network's contribution over objects
+the protocol builds — `held` in one case, `refs` in the other. A third states
+it over **views**, which is where this development's design notes wanted
+it from the outset, and derives the other two rather than standing beside
+them.
+
+```lean
+structure ViewSync (U) (T : Finset Validator) (N : ℕ) where
+  …                                        -- as `Timing`, minus `covers`
+  holds : Validator → ℕ → Finset BlockId
+  holds_own  : ∀ v ∈ T, ∀ n ≤ N, blk v n ∈ holds v (built v n)
+  holds_mono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t
+  converges  : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + delay)
+  references : ∀ v ∈ T, ∀ n < N, ∀ a ∈ holds v (built v (n + 1)),
+    (U.block a).round = n → a ∈ (U.block (blk v (n + 1))).refs
+```
+
+`holds v t` is what `v` holds **at time `t`** — the temporal index a
+`View` cannot supply (§13.1). `converges` is then partial synchrony
+stated exactly as one would say it in words: *after GST, whatever a
+correct validator holds reaches every correct validator within Δ*. It
+mentions no block, no round and no reference.
+
+**`covers` is two clauses, not one.** It concludes about `refs`, fusing a
+network guarantee with the protocol's referencing rule (§4.3). Stated
+over views the two are apart: `converges` is the network's, `references` is P7 in the timed
+setting, and the composite field becomes a *theorem*:
+
+```lean
+theorem covers_of_converges : … vs.blk w n ∈ (U.block (vs.blk v (n + 1))).refs
+```
+
+The block is in its author's hands when built (`holds_own`), reaches the
+builder within `delay` (`converges`), is still there when the builder
+acts (`holds_mono` — which is where the hypothesis
+`built w n + delay ≤ built v (n+1)` is used), and is therefore
+referenced (`references`).
+
+**L7c.**
+```lean
+theorem ViewSync.synchronisedOn_of_converges (hT : T ⊆ Correct)
+    (hD : vs.DriftFrom R D) (hgst : vs.gst ≤ R)
+    (hbackoff : ∀ n, R ≤ n → D + vs.delay ≤ vs.timeout n) :
+    SynchronisedOn U T R
+```
+
+with `ViewSync.exists_synchronisedOn_of_converges` giving the backoff
+form, as in §6.8.
+
+**The routes form a hierarchy, not a pair.** `ViewSync.toTiming`
+exhibits a `ViewSync` as a `Timing`, so every result of §6.8 applies
+unchanged — drift still derived from `prompt`, the backoff still
+terminating, the quantitative bounds of §6.11 unaffected. The timing
+route is what the view-convergence route becomes once P7 is applied,
+which is the hierarchy of §4.3.
+
+**The bound, factored out.** `converges` is partial synchrony in its
+familiar two-part form, and the parts separate:
+
+```lean
+def ConvergesEventually (holds) (T) : Prop :=
+  ∀ v ∈ T, ∀ w ∈ T, ∀ t, ∃ d, holds w t ⊆ holds v (t + d)
+
+def ConvergesWithin (holds) (T) (gst bound : ℕ) : Prop :=
+  ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + bound)
+```
+
+Under monotone holdings these are related by
+`convergesWithin_iff_bounded`: convergence within a bound *is* eventual
+convergence whose lag is uniformly bounded after `gst`. So
+
+> view convergence under synchrony = view convergence + a bound on the lag,
+
+and `converges` is the second (`ViewSync.convergesWithin`), with the
+the first following without further hypotheses
+(`ViewSync.convergesEventually`).
+
+**The bound is indispensable.** Eventual convergence alone yields
+nothing: the derivation above needs the block in
+the builder's hands *before* it builds, which is arranged by choosing a
+timeout that exceeds the lag. A lag that merely exists cannot be compared
+with a timeout — the existential `d` is uncomparable with any schedule —
+whereas a lag bounded by `delay` can, and `D + delay ≤ timeout n` is
+precisely where the comparison happens. This is also why the bound is
+asserted only from `gst`: before it there is nothing for a timeout to
+clear, which is the content of partial synchrony rather than an artefact
+of the encoding.
+
+**Index-aligned agreement, derived.** The statement that build-time views
+*agree* — every `T`-authored round-`n` block in every `T`-validator's
+holdings at the moment it builds for `n+1` — follows from the same three
+ingredients:
+
+```lean
+def ViewsAgree (R : ℕ) : Prop :=
+  ∀ v ∈ T, ∀ u ∈ T, ∀ n, R ≤ n → n < N →
+    vs.blk u n ∈ vs.holds v (vs.built v (n + 1))
+
+theorem viewsAgree_of_converges (hT) (hD : DriftFrom R D) (hgst)
+    (hbackoff : ∀ n, R ≤ n → D + vs.delay ≤ vs.timeout n) : vs.ViewsAgree R
+```
+
+the bound (to compare a lag with a timeout at all), the drift (to compare
+one validator's clock with another's) and the wait (to push the build
+past both).
+
+**The untimed variant.** The same condition may be written with no clock
+at all, over `Delivery`:
+
+```lean
+def ViewsConverge (D : Delivery U) : Prop :=
+  ∀ v ∈ Correct, ∀ w ∈ Correct, ∀ n, ∀ b ∈ D.held v n,
+    (U.block b).creator ∈ Correct → b ∈ D.held w n
+```
+
+*What a correct validator holds when it builds for round `n`, every
+correct validator holds when it builds for round `n`.* No Δ, no GST: the
+"eventually" is carried by the build-time index, which is logical rather
+than temporal, so a validator that waits arbitrarily long still builds at
+index `n`. Restricted to correct-authored blocks, since selective
+Byzantine sending must remain permitted (§4.3).
+
+With `HoldsOwn` — an author has its own block in hand when it builds the
+next — this yields `EventuallyDelivers` from round `0`, and hence
+**production without N1**:
+
+```lean
+theorem populated_of_viewsConverge (H : Live U D N)
+    (hvc : ViewsConverge D) (hown : HoldsOwn D) : ∀ r ≤ N, Populated U r
+```
+
+L1's conclusion, drawn from a view-shaped assumption rather than from
+`DeliversQuorum`. The induction is L1's, with the quorum obtained
+differently: rather than assuming a quorum is delivered whenever one
+exists, the previous round's population supplies `|Correct| ≥ n−f`
+correct blocks and convergence puts every one of them in every correct
+validator's hands.
+
+N1 is not thereby obtained without cost. Index-aligned sharing of every
+correct block is **stronger** than N1, which promises only a quorum and
+only when one exists; what is obtained is uniformity of formulation, not a
+weaker hypothesis. And **the untimed condition is not a delivery assumption but
+a delivery assumption combined with a waiting clause.** In the untimed model
+that fusion cannot be undone, for a structural reason:
+`Delivery.held v n` is indexed by the *round*, and `held_spec` confines
+it to round-`n` blocks, so a round-`n` block can appear only at index
+`n`. "It arrived, but after `v` had already built" is inexpressible —
+the model has nowhere to place the arrival event relative to the build
+event. Separating them requires an ordering of those events, which is to
+say a clock; with one, the split is exactly `converges` against `waits`,
+and `viewsAgree_of_converges` carries the unfused pair to what the
+untimed model must postulate.
+
+**Production, derived in the timed route as well.** The two routes appear
+to treat block production differently: the untimed one derives it, while
+the timed structures carry `blk`, a total function giving every
+`T`-validator a block at every round below the horizon. The difference is
+one of presentation. The three `blk` fields say exactly that every
+`v ∈ T` has a round-`n` block, which is `PopulatedOn U T n`; and a choice
+function extracted from `PopulatedOn` satisfies them, the choice being
+canonical because non-equivocation makes a correct validator's round-`n`
+block unique:
+
+```lean
+theorem exists_blk_of_populatedOn [Nonempty BlockId]
+    (hpop : ∀ n ≤ N, PopulatedOn U T n) :
+    ∃ blk : Validator → ℕ → BlockId,
+      (∀ v ∈ T, ∀ n ≤ N, blk v n ∈ U.ids) ∧
+      (∀ v ∈ T, ∀ n ≤ N, (U.block (blk v n)).creator = v) ∧
+      (∀ v ∈ T, ∀ n ≤ N, (U.block (blk v n)).round = n)
+```
+
+So `blk` is `PopulatedOn`, Skolemised, and the timed route may derive it
+instead. `ViewGrowth` is `ViewSync` with `blk` removed and the build rule
+put in its place:
+
+```lean
+structure ViewGrowth (U) (T : Finset Validator) (R N : ℕ) where
+  …                                        -- the schedule, as in `ViewSync`
+  holds_own : ∀ v ∈ T, ∀ n ≤ N, ∀ b ∈ U.ids,
+    (U.block b).creator = v → (U.block b).round = n → b ∈ holds v (built v n)
+  converges : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + delay)
+  references : ∀ v ∈ T, ∀ n < N, ∀ c ∈ U.ids,
+    (U.block c).creator = v → (U.block c).round = n + 1 →
+    ∀ a ∈ holds v (built v (n + 1)), (U.block a).round = n →
+    a ∈ (U.block c).refs
+  base : PopulatedOn U T R
+  builds : ∀ v ∈ T, ∀ n, R ≤ n → n < N →
+    (Fintype.card Validator - F.f) ≤
+      (creatorsOf U.block
+        ((holds v (built v (n + 1))).filter fun b => (U.block b).round = n)).card →
+    ∃ b ∈ U.ids, (U.block b).creator = v ∧ (U.block b).round = n + 1
+```
+
+Two clauses had to be generalised, and they are exactly the two that
+mentioned `blk`: `holds_own` becomes a statement about any block a
+validator authored, and `references` about any block it authors at round
+`n+1`. Both are what one would state in any case, since non-equivocation
+makes the block unique; with them neither clause mentions the function
+being constructed, and the circularity is gone. `builds` is `Live.builds`
+with `D.accepted v n` replaced by the round-`n` part of the build-time
+view — the same rule, over the object this layer has.
+
+Production is then a theorem:
+
+```lean
+theorem ViewGrowth.populatedOn (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hD : DriftOn vg.built T R D N) (hgst : vg.gst ≤ R)
+    (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) :
+    ∀ n ≤ N, PopulatedOn U T n
+```
+
+by the induction of `populated_of_viewsConverge` run over the timed data:
+each `w ∈ T` authored a round-`n` block and holds it at `built w n`,
+which is past GST since rounds advance time; convergence puts it in `v`'s
+hands by `built w n + delay`, and drift, the wait and the backoff put that
+before `built v (n+1)`. So `v`'s build-time view carries a round-`n` block
+from every member of `T`, and `builds` applies. `ViewGrowth.toViewSync`
+then Skolemises the result, so every theorem of §§6.8–6.9 applies to a
+structure that assumed no blocks exist.
+
+**What remains asymmetric, and should.** `converges` says nothing below
+`gst`, so production is derivable only from a round `R` at or after the
+GST crossing. `ViewGrowth` therefore carries `base`, and it is a *single*
+seed round: the step consumes only its predecessor, so nothing is assumed
+about the rounds beneath `R`. `ViewsConverge` is unconditional and drives
+production from round `0`.
+
+The natural objection is that convergence *is* available before GST, in
+its unbounded form — `convergesEventually_of_within` establishes
+`ConvergesEventually` at every instant, GST or not. It cannot serve here,
+for the reason `covers_of_converges` exhibits: the block must be in the
+builder's hands before it builds, and a lag that merely exists cannot be
+ordered against a build time. That comparison is what `hbackoff`
+performs, and it requires a bound. What lets the untimed route begin at
+round `0` is therefore not the absence of a GST but the index alignment
+of `ViewsConverge`, which supplies the ordering by fiat and is, for that
+reason, the stronger assumption.
+
+The residue is thus the content of partial synchrony rather than a defect:
+before GST the network may deliver nothing, and no round need be
+populated. The two routes run the same induction and differ only in where
+it starts — `R = 0` untimed, `R` past GST timed.
+
+**The untimed condition, induced.** `ViewsConverge` is stated over a
+`Delivery`, whose `held v n` is documented as *what `v` held from round
+`n` when it built its round-`n+1` block*. A `ViewGrowth` has exactly
+that, as `holds v (built v (n+1))`, so it induces a delivery and the
+untimed condition becomes a theorem about it:
+
+```lean
+def toDelivery : Delivery U where
+  held v n := (vg.holds v (vg.built v (n + 1))).filter
+    fun b => (U.block b).round = n ∧ v ∈ T ∧ n < N
+  accepted v n := … filter (fun b => (U.block b).creator ∈ Correct)
+  …
+
+theorem viewsConvergeOn_toDelivery (hD : DriftOn vg.built T R D N)
+    (hgst : vg.gst ≤ R) (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) :
+    ViewsConvergeOn vg.toDelivery T R
+```
+
+Accepting conservatively is what makes `accepted_inj` a theorem rather
+than a further assumption: two accepted blocks share an author only if
+that author is correct, and non-equivocation identifies them. `includes`
+is `references`, and needs no side condition on the horizon because no
+block exists above `N`.
+
+Two relativisations survive the passage. The induced delivery holds
+nothing outside `T` or above the horizon, because `converges` and
+`holds_own` say nothing there; and the derived condition runs from `R`
+on, because `converges` is silent below `gst`. So `ViewsConvergeOn T R`
+is what is obtained, of which `ViewsConverge` is the case `T = Correct`,
+`R = 0` — `viewsConverge_toDelivery`, with both parameters carried in the
+type since they are parameters of the structure.
+
+Whether these are artefacts of the derivation or properties of the
+setting matters, since only in the second case is the hierarchy real.
+Both are settled, by models in which everything else holds and the
+conclusion fails.
+
+For the starting round, `ugap_not_viewsConvergeOn` exhibits a
+`ViewGrowth` whose `gst` lies beyond the run and on which the untimed
+condition fails outright, so `gst ≤ R` cannot be dropped.
+
+For the reliable set, `reliable_set_is_forced` takes `T = {1,2}`, a
+proper subset of `Correct`, over a DAG withholding validator `3`'s blocks
+from everyone's references. The network assumption is met properly there
+— `gst = 0`, a real bound of `1` — so coverage over `T` is *derived*,
+while coverage over `Correct` is *false*. That second statement is about
+the DAG alone, independent of any delivery, which forestalls the
+objection that the relativisation is an artefact of how `toDelivery`
+treats validators outside `T`. `ViewsConverge` fails a fortiori, and for
+the same reason: a correct validator outside `T` builds on nothing anyone
+else can see.
+
+The relation between the timed and untimed formulations is therefore a
+hierarchy, in the same shape as the one between `converges` and
+`Timing.covers`, rather than an equivalence.
+
+**The bound is necessary.** `convergesWithin_iff_bounded` factors the
+network assumption into a qualitative half and a quantitative one, and it
+is fair to ask whether the second is doing any work. It is, and the claim
+is now checked rather than argued. `Ugap` is `Ugrow` with one block per
+round withheld — validator `2`'s, from everyone but validator `2`. The
+withheld blocks arrive after every build in the run, so holdings converge;
+they converge too late to be referenced. `ugapGrowth` certifies every
+protocol clause field by field, and
+
+```lean
+theorem bound_is_necessary (hN : 0 < N) :
+    ConvergesEventually (ugapGrowth N).holds Correct ∧
+      ¬ SynchronisedOn (Ugap N) Correct 0
+```
+
+Convergence without a bound holds from time `0`; coverage fails at every
+round the horizon leaves room for. The structure carries `gst = 4N + 5`,
+after every build in the run, so `converges` is true of it but says
+nothing — which is precisely the situation the qualitative half describes.
+Nothing is contradicted: `synchronisedOn_of_converges` requires
+`gst ≤ R`, and at such an `R` coverage holds vacuously for want of blocks
+above it. What the model shows is that the qualitative half alone carries
+none of the weight.
+
+The reduction is more demanding than the derivation. `ViewGrowth.toViewSync`
+requires population at *every* round below the horizon, since `blk` is
+total, and so takes the pre-`R` rounds as an explicit hypothesis. That is a
+constraint of `Timing`'s shape, not of the argument: deriving production
+needs one seed round, whereas presenting the result as a `ViewSync` needs
+blocks everywhere.
+
+### 6.10 The layering
+
+![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §12 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
 
 No theorem above `SynchronisedOn` mentions time, and no theorem below it mentions
-certificates. The figure also locates the trust boundary: of the four premises
-beneath the line, the two on the left are assumptions about an adversarial
-network and the two on the right are clauses of the algorithm.
+certificates. The diagram also locates the trust boundary: the leftmost column is
+the whole of what is assumed, and it divides into assumptions about an adversarial
+network (N1, N2) and clauses of the algorithm (P1–P10) — the derivations of
+coverage are visible as the only results drawing on the network column.
 
-### 6.10 Quantitative results
+**Three separations, different in kind.** The development draws three
+lines; only the first is the one usually meant by "confining the time
+model".
+
+*Time from graph structure* — the interface is the pair
+`SynchronisedOn` and `PopulatedOn`, coverage and production. Everything
+above it is finite combinatorics over a DAG; everything that mentions an
+instant lies below. Both halves are `Prop`s about a block universe, so
+the layers meet at a statement rather than at a module boundary, and any
+of the routes of §§6.7–6.9 may supply them. Extraction confirms the
+division: of the 67 labelled results, four mention a clock — L7b, L7c,
+L8a and L9, which are the derivations themselves — and every theorem of
+`Timing.lean`, `Quantitative.lean` and `ViewSync.lean` that concludes
+anything used above the line does so by first establishing
+`SynchronisedOn` or `PopulatedOn`. This is the separation the report's
+title claims, and the diagram shows it as a column that every liveness
+result passes through.
+
+*Network from protocol* — the interface is the pair
+`converges` / `references` of §6.9. This line is invisible in the delivery
+and timing routes: `EventuallyDelivers` is indexed at build time, and
+`Timing.covers` concludes about `refs`, so each tacitly carries some
+protocol content. Only the view-convergence route states the network's
+contribution in a form containing nothing the protocol does, which is why
+§4.3 can now claim that the network's whole contribution is one sentence
+about views.
+
+*Assumed from derived* — the interface is `Populated`. Production may be
+assumed, as `Timing` and `ViewSync` do in carrying `blk`, or derived:
+from N1 with P8 through L1; from untimed view convergence with `HoldsOwn`
+through `populated_of_viewsConverge`; or, in the timed setting, from
+`converges` with the build rule through `ViewGrowth.populatedOn`. The
+assumed form is not a different hypothesis but the derived one
+Skolemised, and `exists_blk_of_populatedOn` is the identification. What
+the three derivations differ in is where the induction may start: at
+round `0` for the two untimed ones, and only past GST for the timed one,
+since `converges` says nothing before it. §4.3 keeps N1 because deriving
+production from a *conditional quorum* hypothesis is the weaker and the
+implementable option.
+
+The routes may therefore be summarised by what each assumes and what it
+still owes:
+
+| Route | Network assumption | Also needs | Yields |
+|:---|:---|:---|:---|
+| Delivery (§6.7) | `EventuallyDelivers` — build-time indexed | P7 | `Synchronised` |
+| Timing (§6.8) | `Timing.covers` — Δ after GST, concludes on `refs` | P9, drift | `SynchronisedOn` |
+| View convergence (§6.9) | `converges` — Δ after GST, over views | P7, P9, drift | `SynchronisedOn`, and the other two |
+| View growth (§6.9) | `converges`, with `blk` removed | P7, P8, P9, drift, one seed round at `R` | `PopulatedOn` from `R` on, and `SynchronisedOn` |
+| Untimed views (§6.9) | `ViewsConverge` — no bound, index-aligned | `HoldsOwn`, P8 | `Populated`, from round `0`, without N1 |
+
+The three routes are interchangeable at the interface. Results above it
+take `PopulatedOn` and `SynchronisedOn` as hypotheses, so which route
+supplies them is a choice made at the point of application rather than a
+commitment baked into the statements.
+
+Read downward, the first three are increasingly primitive statements of
+the same assumption; the last two yield production as well as coverage,
+and differ only in the round at which their common induction may start.
+
+### 6.11 Quantitative results
 
 The results of this section are collected in a separate module which nothing else
 imports. Each strengthens a result above and is purchased with a strengthened
-clause (§4.5); a reader declining those clauses retains §6.1–§6.9 intact.
+clause (§4.5); a reader declining those clauses retains §6.1–§6.10 intact.
 
 **The weak hypotheses admit no bound.** Two of the results above conclude with
 an existential statement that supplies no bound on its witness —
-`∃ R, SynchronisedOn U T R`, and `∃ k', k ≤ k' ∧ …`. This is not slack in the
-proofs. Each governing hypothesis has the same form, and under such hypotheses
+`∃ R, SynchronisedOn U T R`, and `∃ k', k ≤ k' ∧ …`. This is not a
+deficiency of the proofs. Each governing hypothesis has the same form, and under such hypotheses
 no bound exists. The hypothesis
 `∀ m, ∃ n, m ≤ tm.timeout n` admits `timeout n = ⌊log₂(n+1)⌋`, which is monotone
 and unbounded yet requires `n ≥ 2^(D+delay) − 1` to clear the threshold, and
@@ -1425,7 +2033,7 @@ constant obtained here as a derived requirement is thus the one independently
 arrived at as a design choice, and §6.8 supplies the reason the factor is two —
 `D₀ + Δ` with `D₀ ≤ Δ` under a common broadcast start.
 
-`Timing.populatedOn` is worth noting in the same connection: it supplies L4's
+`Timing.populatedOn` bears on the same point: it supplies L4's
 population hypotheses from the `Timing` structure directly, because `Timing.blk`
 is total below the horizon. That totality is P8 in its strongest form — a block
 at every round, with no exception — and is what makes these statements
@@ -1441,7 +2049,7 @@ start spread, the wait, and the position of the slot relative to GST.
 
 ## 7. Chain quality: coverage and inclusion
 
-*(design record: `chain-quality.md`; modules `LeanDag/Quality/`)*
+*(companion document: `chain-quality.md`; modules `LeanDag/Quality/`)*
 
 Every protocol of this family claims that leader rotation prevents
 censorship; this section proves what the ledger actually contains. A
@@ -1517,7 +2125,7 @@ theorem committed_of_correct_block (hT : T ⊆ Correct)
 
 — for every round `m ≥ R` the schedule fixes, *before the universe is
 quantified*, a committed slot whose flush contains every correct
-round-`m` block. (One composition note: `commits_recur_on` does not
+round-`m` block. (`commits_recur_on` does not
 expose the committed leader's membership in `T`, which the backbone
 needs, so the proof composes from the fair schedule, L4 and `no_stall`
 directly, mirroring L6's own proof.) The quantitative forms pin the
@@ -1529,17 +2137,17 @@ correct block is committed within a schedule-window of its creation,
 once the DAG is synchronous*. The capstone `chain_quality` packages
 both halves under enforceable or standard conditions only.
 
-A block-count purity variant was assessed against a recorded gate and
-dropped: under `DoSValid` alone the per-author block count carries the
-exponential constant of §8.3, and under the budget the cone-level
-Byzantine count is a whole-store bound — neither yields a ratio worth
-quoting, and the author-coverage metric is the honest one.
+A block-count purity variant was considered and rejected: under `DoSValid`
+alone the per-author block count carries the exponential constant of §8.3,
+and under the budget the cone-level Byzantine count is a whole-store
+bound. Neither yields an informative ratio, and the author-coverage
+metric is the appropriate one.
 
 ---
 
 ## 8. Denial of service: equivocation, growth, and the novelty budget
 
-*(design record: `dos-equivocation-and-growth.md`; modules `LeanDag/DoS/`)*
+*(companion document: `dos-equivocation-and-growth.md`; modules `LeanDag/DoS/`)*
 
 Safety needs no protection from equivocation: every result of §5 holds with no
 anti-equivocation condition anywhere in its hypotheses, and the independence is
@@ -1548,12 +2156,13 @@ storage condition of this section (`LeanDagTest/DoS/SafetyUnderDoS.lean`).
 *Storage* is another matter. An uncertified DAG admits Byzantine blocks into
 correct views by design, an equivocator may produce arbitrarily many blocks
 per round, and a correct validator that retains the cones of what it accepts
-can be made to retain the attacker's freight. This section bounds that
-freight twice over: first under a *reference-validity* condition (exposure),
+can be made to retain material injected by an adversary. This
+section bounds that growth in two ways: first under a *reference-validity* condition (exposure),
 whose bound is shown essentially optimal yet exponential in `f`; then under a
 *rate-limiting* condition (the novelty budget), which is enforceable,
-author-blind, and yields the linear headline `dos_resistance`. The two
-compose: the budget paces what an equivocator can inject, exposure ends it.
+author-blind, and yields the linear result `dos_resistance`. The two
+compose: the budget limits the rate at which an equivocator can inject
+material, and exposure terminates it.
 
 ### 8.1 The store, and what growth means
 
@@ -1570,7 +2179,7 @@ def viewUpto (D : Delivery U) (v : Validator) : ℕ → Finset BlockId
 block means holding its entire causal history — that is what downward
 closure of views (§2.3) demands. Growth questions are questions about
 `(viewUpto D v n).card`, and since correct production alone contributes
-`|Correct|` blocks per round, *linear in `n`* is the best possible shape;
+`|Correct|` blocks per round, *linear in `n`* is the best attainable;
 the question is the constant, and whether the Byzantine share can exceed it.
 
 The *novelty* of an arriving block is what its cone adds over the store:
@@ -1581,8 +2190,8 @@ def novelty (U) (V : Finset BlockId) (b : BlockId) : Finset BlockId :=
 ```
 
 Novelty is antitone in the store — the more a validator already holds, the
-cheaper any block is — which is the monotonicity every argument below leans
-on.
+smaller the novelty of any arriving block — the monotonicity on which every
+argument below depends.
 
 ### 8.2 Exposure, and the DoS-validity condition
 
@@ -1620,9 +2229,11 @@ theorem creators_refs_eq_correct (hdos : DoSValid U) (hb : b ∈ U.ids)
 ```
 
 — the references of every later block are precisely the correct validators,
-and the commit chain still runs on them: the witness model `Uexcl` carries a
+and the commit chain still operates over
+them: the witness model `Uexcl` carries a
 direct commit whose three rounds all lie after the exclusion of its
-equivocator (§11). Exclusion also does not depend on luck: *density* says a
+equivocator (§11). Nor does exclusion depend on favourable circumstances:
+*density* establishes that a
 cone can be selectively blind to at most `f` correct authors per round, even
 below Byzantine blocks, because the quorum clause forces every layer of
 every valid cone to carry `n − f` distinct authors:
@@ -1653,14 +2264,14 @@ theorem card_history_le' (hdos : DoSValid U) (hb : b ∈ U.ids) :
           ((U.block b).round + 1)
 ```
 
-The exponential constant is not slack in the proof: a matching family of
+The exponential constant is not an artefact of the proof: a matching family of
 witnesses (`Udouble`, §11) realises `2^(e−2)` growth from `e` equivocators,
 so any bound obtainable from reference-validity conditions alone carries a
-constant exponential in `f`. That is the honest verdict on the exposure
+constant exponential in `f`. This is the assessment of the exposure
 mechanism as a *storage* defence: it is the right accountability layer — it
 identifies and permanently retires equivocators at the cost of quorum
-margin — but no practical storage bound can rest on it. Rate limiting is
-needed, and it is orthogonal.
+margin — but no practical storage bound can rest upon it. Rate limiting is
+required, and is orthogonal to it.
 
 ### 8.4 The novelty budget
 
@@ -1688,16 +2299,16 @@ def RefsAccepted (D : Delivery U) : Prop :=
 
 `RefsAccepted` is the converse of `includes` (§6.2): together they say a
 correct block's references are *exactly* its author's acceptances — local,
-observable conduct. The blind and guarded budgets sandwich each other within
-one factor of `f`:
+observable conduct. The blind and guarded formulations bound each other to
+within a factor of `f`:
 
 * `UniformBudget.byzBudget : UniformBudget D T → ByzBudget D T` — dropping
   a guard weakens nothing; and conversely
 * `uniform_of_byzBudget` — post-`R`, under `ByzBudget κ`, *every*
   acceptance (correct authors included) adds at most `f·κ + 1`.
 
-The converse direction is the interesting one, and its engine deserves
-stating. Why would a *correct* author's block have small novelty? Because a
+The converse direction is the substantive one, and the mechanism behind it
+should be stated. Why would a *correct* author's block have small novelty? Because a
 correct block's cone is a complete record of everything its author ever
 accepted — `includes` puts each round's acceptances among the next block's
 references, and the self-parent chain (P3′) carries every earlier round
@@ -1715,13 +2326,13 @@ protocol needs modelling. Quantitatively, the gap between correct stores is
 a *constant*, not a drift (`card_viewGap_succ_le`): post-`R` it is at most
 `f·κ`, one round of Byzantine budget, however long the system has run.
 
-The same self-parent mechanism yields a pure-DAG form worth isolating: if
+The same self-parent mechanism yields a purely structural form: if
 every correct block adds at most `κ'` over its self-parent (`StepNovelty`),
 then correct cones are linear outright,
 `|H(b)| ≤ κ'·round(b) + 1` (`card_history_le_of_stepNovelty`) — a telescope
 along the self-parent chain, with no delivery model at all.
 
-### 8.5 The headline, and the composition
+### 8.5 The principal result, and the composition
 
 Under the guarded budget the Byzantine share of a correct store is priced
 through a global object, the *pool* — the Byzantine-authored blocks any
@@ -1782,8 +2393,9 @@ theorem card_viewUpto_le_of_allExposed' (hdos : DoSValid U)
           (m + 1) * ((Correct : Finset Validator).card * (F.f * κ)))
 ```
 
-— the budget paces what an author can inject; exclusion ends it. On data,
-the budget is satisfiable at its sharp constant: the witness schedule
+— the budget limits the rate at which an author can inject material;
+exclusion terminates it. On data,
+the budget is satisfiable at its exact constant: the witness schedule
 `Dtwin` satisfies `UniformBudget 3` with its costliest acceptance costing
 exactly `3`, and `ByzBudget 0` — nothing Byzantine accepted after the
 genesis round (§11).
@@ -1791,14 +2403,14 @@ genesis round (§11).
 How should the parameter `T` be set? Any `T ≥ 1` admits every correct block
 post-`R` (the sandwich's `f·κ + 1` with `κ = 0` would be the correct-only
 floor); smaller `T` tightens the Byzantine rate and defers — never refuses —
-expensive correct blocks, deferral being a rate limiter rather than a
-verdict, since novelty is antitone in the growing store.
+correct blocks of high novelty, deferral being a rate limit rather than a
+refusal, since novelty is antitone in the growing store.
 
 ---
 
 ## 9. Garbage collection: the horizon
 
-*(design record: `garbage.md`; modules `LeanDag/GC/`)*
+*(companion document: `garbage.md`; modules `LeanDag/GC/`)*
 
 The DoS results end at linear-forever storage, and linear still diverges: a
 validator that runs for years retains years of history, and a joining
@@ -1836,7 +2448,7 @@ def chop (U) (G : ℕ) : BlockUniverse Validator BlockId Payload where
 Every validity clause of §2.2 constrains only rounds `> 0`, and the old
 genesis special case applies verbatim to the new base — so `chop U G` is a
 bona-fide `BlockUniverse`, and **every theorem of this report applies to it
-unchanged**. That is the entire design: the work is never re-proving the
+unchanged**. This is the design in its entirety: the task is never to re-prove the
 theory above the cut, only relating verdicts *across* the cut and choosing
 the cut. (In an implementation, block identity is a hash over references, so
 emptying the base layer's references is not a re-hash of history: it is the
@@ -1918,11 +2530,12 @@ truncated universe. Two prerequisites make this legitimate over a *sequence*
 of cuts. The budget must be measured on the truncated universe — otherwise
 pruning would make every arriving block's novelty explode with the
 discarded prefix — and windowed novelty is *antitone under cut-advance*
-(`novelty_chop_anti`): as the window slides, pruning only cheapens blocks,
+(`novelty_chop_anti`): as the window slides, pruning only decreases novelty,
 so an affordable block never becomes unaffordable. The budget conditions
 themselves descend to the window (`byzBudget_chopD`, `refsAccepted_chopD`).
 
-The storage headline is stated per time, because a validator's life is a
+The principal storage result is stated per time, because a validator's life
+is a
 sequence of cuts:
 
 ```lean
@@ -1942,7 +2555,8 @@ correct author's serving obligation: everything it can be asked to serve
 for its block is its own retained store above its own horizon, plus the
 block itself (`card_serve_le`, via `RefsAccepted` one step down and the
 self-parent chain the rest of the way). Garbage collection bounds sync
-cost, not just storage, and the honest relay obligation is bounded too.
+cost as well as storage, and the obligation on correct validators is bounded
+likewise.
 
 ### 9.4 Bootstrap: the attested base
 
@@ -2007,7 +2621,7 @@ Each validator sets its own horizon by a local rule — trail the decided
 frontier by `Λ`, or trail the current round by `Λ` — and three theorems make
 the heterogeneity safe. Verdicts at different horizons are equal outright
 (`decided_agree_horizons`, matching slots through their absolute index). A
-deeper cut is just another cut:
+a deeper cut is again a cut:
 
 ```lean
 theorem chop_chop (hG : G₁ ≤ G₂) :
@@ -2022,7 +2636,7 @@ next block carries its whole store, and that block is delivered and
 accepted — so pruning at depth `≥ 1` below a correct frontier discards
 nothing any correct peer still lacks (`pruned_subset_peer_store`).
 
-What constrains the lag is worth pinning theorem by theorem, because
+The constraints on the lag are best set out theorem by theorem, since
 *safety constrains it not at all*:
 
 | bound | source | what breaks below it |
@@ -2035,20 +2649,22 @@ What constrains the lag is worth pinning theorem by theorem, because
 
 Finally, the statute of limitations is a bounded-rate, priced phenomenon
 rather than a cliff. Within an epoch the entire exposure economy of §8.2
-applies to the truncation verbatim — it is just another universe. Across a
+applies to the truncation verbatim, the truncation being simply another
+universe. Across a
 cut, a forgiven author must equivocate *again, inside the new window*, to
 be debarred again — one reveal per author per epoch — and the re-entry runs
-under the windowed budget: `Λ·f·κ` of freight per correct store per epoch,
+under the windowed budget: `Λ·f·κ` of injected material per correct store per
+epoch,
 a term the `card_retained_le` constant already carries. Commit safety never
 depended on any of it: the cross-cut results above carry no exclusion,
 budget, or exposure hypothesis. A world that forgives every equivocation
-still commits the same blocks; it just stores more junk.
+still commits the same blocks; it merely retains more.
 
 ---
 
 ## 10. Odontoceti: two-round commitment
 
-*(design record: `odontoceti.md`; modules `LeanDag/Odontoceti/`)*
+*(companion document: `odontoceti.md`; modules `LeanDag/Odontoceti/`)*
 
 Odontoceti [Van25] commits in **two** communication rounds: a leader block
 at round `r` is decided by the supports and blames of round `r+1` alone,
@@ -2106,7 +2722,8 @@ the anchor" without disambiguating, and the block count is
 adversary-inflatable (an equivocating supporter can plant any number of
 support-twins in one cone), while the author count is the one the
 arithmetic on both sides actually bounds. Four counting theorems carry
-safety, and they locate exactly where the five-`f` committee is spent:
+safety, and they identify precisely where the committee of size `5f+1` is
+required:
 
 **O1 (commit versus skip; needs only `n ≥ 3f+1`).**
 `not_directSkip_of_directCommit`: no block is both directly committed and
@@ -2175,7 +2792,7 @@ relation mirrors §3.5 constructor for constructor, with one new premise:
 
 The final premise — the committed candidate is the `≤`-least one passing
 the test at the anchor, under `[LinearOrder BlockId]` — is the *canonicity*
-of §10.4. With it, agreement and safety follow the §5.5 shape:
+of §10.4. With it, agreement and safety follow the pattern of §5.5:
 
 ```lean
 theorem decided_unique (h₁ : Decided U V₁ k v₁) :
@@ -2218,14 +2835,15 @@ that premise agreement is a theorem; without it, false. The premise is
 consumed *exactly* where the published argument is silent — O4′ shows a
 directly committed block is the unique candidate passing the test anywhere,
 so every other pairing closes by counting, and canonicity arbitrates only
-the indirect-versus-indirect, shared-anchor, equivocating-leader corner.
+the indirect-versus-indirect case with a shared anchor and an equivocating
+leader.
 
 For implementers: **the candidate-iteration order of the indirect rule is
 consensus-critical**. Two honest nodes iterating in different orders (for
 instance, arrival order) can commit different blocks for one slot at
 `n = 5f+1`; any fixed shared order restores agreement, and "first seen"
 does not. The remaining findings are recorded in the design document: a
-missing lemma (O4′, assumed silently by the published case analysis), the
+missing lemma (O4′, assumed tacitly by the published case analysis), the
 blocks-versus-authors ambiguity in the indirect test (only the author count
 is provable), and the exact-complement subtlety in the published Lemma 2
 (§10.2, O2).
@@ -2300,7 +2918,7 @@ Three of the models are tight, which is what renders the constants meaningful.
   validators outside the reliable set being permitted to occupy consecutive
   positions in the rotation.
 
-One negative observation is worth recording. A model exhibiting *round spread* —
+One negative observation should be recorded. A model exhibiting *round spread* —
 correct validators separated by many rounds — while still committing is impossible
 at `f = 1`, since `|Correct| = 3 = n−f` exactly, so that every correct validator
 is required for a quorum and none may lag. Such a model requires `f ≥ 2`. This is
@@ -2312,7 +2930,7 @@ boundary instances: chain quality on `Ucens` — the one model that is
 simultaneously CQ1's tightness witness (`missingAt = {3}` at every layer
 of the committed cone, exactly `f`) and the censorship exhibit
 (`Synchronised` fails at every round while the commit stands); `DoSValid` satisfiable and biting (`Uexcl`, with the exclusion
-chain and a commit after it), the budget satisfiable at its sharp constant
+chain and a commit after it), the budget satisfiable at its exact constant
 (`UniformBudget Dtwin 3` with `ByzBudget Dtwin 0`), the horizon computed and
 its statute of limitations exhibited (`chop Uexcl 2`, `chop Umerge 1`), the
 attested base sandwich tight at the bottom (`Base Utwin 1 0 = {1,2,3}`), and
@@ -2324,8 +2942,8 @@ motivates the canonicity premise (`utwin6_both_pass`).
 
 ## 12. Mechanisation
 
-The development comprises approximately 15,400 lines of Lean 4 (v4.32.2)
-against Mathlib, of which some 10,600 constitute the library and 4,800 the
+The development comprises approximately 16,100 lines of Lean 4 (v4.32.2)
+against Mathlib, of which some 11,100 constitute the library and 4,900 the
 models of §11 and the witness files of the arcs. A full build reports no
 errors.
 
@@ -2357,7 +2975,9 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Mysticeti.lean` | the commit rule; eligibility; M1–M6; the ledger |
 | `Schedule.lean` | concrete schedules (`uniform`, `uniformSingle`); conservativity |
 | `Liveness.lean` | L0–L6, L7a; the committed-run results |
+| `Network/Quorum.lean` | the quorum route: N1, L1, and the results that exist to serve them |
 | `Timing.lean` | L7b |
+| `ViewSync.lean` | L7c: view convergence, the reduction to `Timing`, the factoring of the bound, the untimed variant, production derived rather than assumed, and the delivery a timed structure induces |
 | `Quantitative.lean` | L8, L9 |
 
 **The arcs** (§§8–10), each consuming the core read-only:
@@ -2385,13 +3005,51 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Quality/Capstone.lean` | the windowed bounds and `chain_quality` (CQ7) |
 | `LeanDagTest/` | the models of §11 and the witness files of every arc |
 
-Seven design records accompany the development: `spec.md` (safety),
+**The support graph, extracted.** The dependency structure of the
+development is not documented by hand: `scripts/DepGraph.lean` walks
+`Environment.constants` and records, for every declaration, the constants
+appearing in its type **and in its body** — for a theorem, that body is
+the proof term, so the edges are the real proof structure rather than the
+statement's signature. `scripts/depgraph.py` then takes its node set from
+Appendix A of this report, contracts paths running through unlabelled
+lemmas, takes the transitive reduction, and renders the result. The full
+graph is ≈900 declarations and ≈7,700 edges; the two views drawn here are
+the §6.10 figure and the one below.
+
+Two details govern the extraction. `ConstantInfo.value?` returns `none`
+for *imported* theorems in this Lean version, proofs being loaded
+lazily, so the proof term is reached by matching `.thmInfo` explicitly;
+otherwise only statement-level dependencies appear. Private declarations
+and compiler-generated auxiliaries are kept as pass-through nodes, since
+a labelled result frequently reaches another only through one of them.
+Mathlib and core constants are dropped, and safely: they never mention a
+constant of this development, so no path between two of its results can
+run through them.
+
+![**The whole development.** The same extraction over every principal result, including the four arcs. Reading the columns: the core account occupies the left half, and each arc attaches to it at the results it consumes rather than at the top — the garbage-collection operator (G1) sits beside the structural theorems it re-uses, and Odontoceti's counting core (O1–O4′) is independent of Mysticeti's, converging only at its own agreement theorem. Lean names are omitted for legibility; the full-detail rendering is in `docs/depgraph/`.](depgraph/support-full-compact.svg)
+
+The extracted edges are also an independent check on this report's prose,
+and three of its claims come out exactly as written. `P3′`, the
+self-parent clause, has no outgoing edge in the core view and in the full
+view feeds only C1′, C3′, G1, G9 and G11 — which is §2.2's assertion that
+safety and liveness never consume it and that it is indispensable to the
+denial-of-service and garbage-collection arcs. `L7a ← N2a, P7` and
+`L7b ← N2b, P9, T1` reproduce the §4.4 table row for row — `N2a` and
+`N2b` being the diagram's labels for N2's `EventuallyDelivers` and
+`Timing.covers` forms (§4.3) — the extra `T1`
+on the timing route being the non-equivocation step that identifies a
+validator's block with the one the timing structure names. And
+`O5 ← O1, O1′, O2, O3, O4′` confirms that Odontoceti's agreement rests on
+exactly the four counting theorems plus twin uniqueness (§10.3), with
+`O4′` — the lemma the published argument lacks — evidently indispensable.
+
+Seven companion documents accompany the development and carry the design
+rationale in more detail than a report admits: `spec.md` (safety),
 `liveness.md` (liveness), `pipelining-and-multi-leader.md` (the schedule
-generalisation), `chain-quality.md` (§7), `dos-equivocation-and-growth.md`
-(§8), `garbage.md`
-(§9) and `odontoceti.md` (§10), with `related.md` surveying the
-surrounding literature. These carry the design rationale and the log of
-settled and open questions. The report draws its statements from the source.
+generalisation), `chain-quality.md` (§7),
+`dos-equivocation-and-growth.md` (§8), `garbage.md` (§9) and
+`odontoceti.md` (§10), with `related.md` surveying the surrounding
+literature. Every statement in this report is drawn from the source.
 
 ---
 
@@ -2439,9 +3097,18 @@ including because the incorrect rule is the natural one — the quorum is exactl
 what validity requires — and because it shows that promptness and coverage are
 in tension, which is what P9's two halves jointly resolve.
 
+The example does not show a view-shaped assumption to be *inadequate*.
+View convergence is adequate but **incomplete**: it is the network half
+of a two-part derivation whose other half is a protocol clause, and §6.9
+proves both. What the counterexample shows is that the missing half
+cannot be supplied by strengthening the network, which is already as
+strong as it can be — delivery there is instantaneous. The gap is a
+*race* between arrival and building, which only the builder's own schedule
+can resolve.
+
 **The threshold the specification must meet is `D₀ + Δ`, not Δ.** This is the
 one point at which a network parameter enters the protocol's constant, and it is
-the substantive quantitative result (§6.10). Validators enter a round at
+the substantive quantitative result (§6.11). Validators enter a round at
 different times, so a wait must accommodate the propagation bound *and* the
 spread between validators; taking the spread at round `0`, where it records how
 nearly simultaneously the validators started, and propagating it forward by
@@ -2478,7 +3145,7 @@ whatever has arrived, and increase the period when progress fails. These are
 `waits`, `prompt` and the backoff — P9 together with R1 — all of them
 executable.
 
-The signal driving the backoff is the awkward point. Before GST no period is
+The signal driving the backoff is the difficulty. Before GST no period is
 sufficient, and nothing permits a validator to detect this directly; what it
 observes is that commits have ceased. The feedback loop which delivers coverage
 is therefore driven by liveness failure, the very condition being proved away.
@@ -2487,7 +3154,7 @@ cannot rest on modelling the loop's dynamics.
 
 The development accordingly does not model it. What `synchronisedOn_of_timing`
 consumes is a threshold — the timeout remains above `D + delay` from some round
-onwards — with no condition on shape, rate, or driving signal. §6.10 carries this
+onwards — with no condition on shape, rate, or driving signal. §6.11 carries this
 to its conclusion: with Δ known, a constant timeout of `D₀ + Δ` suffices and the
 loop disappears.
 
@@ -2499,7 +3166,7 @@ loop disappears.
 2. The temporal content is confined to a single module and consumed through a
    single definition.
 3. The condition admits two independent derivations (§6.7, §6.8) and a third,
-   quantitative route (§6.10), against an unchanged statement.
+   quantitative route (§6.11), against an unchanged statement.
 4. The condition composes with the safety development, mentioning only `U.ids`,
    `U.block` and `refs` — the vocabulary that development already employs.
 
@@ -2528,21 +3195,22 @@ Odontoceti consumed the whole DAG layer because its quorums are the `n − f`
 the development is parameterised by. When an abstraction is placed
 correctly, new developments read like instantiations; when it is misplaced,
 they read like refactors. The one refactor resisted — a rule-parameterised
-decision relation shared between §3.5 and §10.3 — is the price of the
-discipline, and it was paid twice in mirrored proofs rather than once in
-core churn.
+decision relation shared between §3.5 and §10.3 — is the cost of that
+discipline, incurred twice in mirrored proofs rather than once in
+modifications to the core.
 
-**Enforceability is a specification discipline.** The DoS headline
+**Enforceability is a specification discipline.** The principal result of §8
 (`dos_resistance`) quotes only conduct a validator can execute — an
 author-blind budget, a reference rule — and no condition that consults an
 identity oracle; the cost of author-blindness is a factor of `f` in a
 constant, never a theorem. The same discipline shapes §9: horizons are set
 by local rules, the attested base replaces agreement with `f+1` sampling,
 and every hypothesis of the bootstrap theorems is checkable by the party it
-binds. Conditions of this shape survive contact with implementations;
+binds. Conditions of this kind survive contact with implementations;
 conditions that quantify over `Correct` do not.
 
-**Mechanisation earns its keep at the equivocation corners.** All four §10
+**The value of mechanisation is concentrated where equivocation meets
+counting.** All four §10
 findings — the canonicity gap, the missing uniqueness lemma, the
 blocks-versus-authors ambiguity, the exact-complement subtlety — live where
 an equivocating author interacts with a counting argument, precisely the
@@ -2554,7 +3222,7 @@ indirect rule precisely enough to fail to prove it.
 
 ### 13.6 Limitations
 
-The quantitative bounds are established (§6.10). The following remain open.
+The quantitative bounds are established (§6.11). The following remain open.
 
 **The backoff loop.** `Rated` and the threshold of R4 are stipulated as clauses
 of the specification; no realistic adaptive scheme is shown to satisfy them, and
@@ -2570,7 +3238,7 @@ at least `2Δ`" into elapsed time requires a lemma accumulating `prompt` across
 rounds, which is not present. `Timing.le_built` relates rounds to time in one
 direction only.
 
-**Byzantine leaders.** §6.10 bounds the wait until the next reliable leader,
+**Byzantine leaders.** §6.11 bounds the wait until the next reliable leader,
 which sidesteps rather than answers the question of how distant an indirect
 anchor may be when the leader is Byzantine.
 
@@ -2666,7 +3334,7 @@ DAG construction from ordering. LiDO-DAG [QXS25] provides mechanised safety and
 liveness in Rocq for Narwhal, Bullshark and Sailfish — all certified. The work
 closest to the present development is [QXS26], which extends that framework to
 Mysticeti itself and is discussed at length in §4.1, §4.4 and §6.6. Two
-differences of method are worth recording. Theirs is an operational model: a
+differences of method should be recorded. Theirs is an operational model: a
 transition system over traces, with segmented traces encoding the unreliability
 of timers before GST, and liveness reduced to safety properties of an abstract
 pacemaker by refinement. The account here is structural, and no theorem above
@@ -2696,7 +3364,8 @@ the self-parent clause; garbage collection reused every theorem verbatim on
 the truncated universe, because truncation was arranged to be a universe; and
 Odontoceti reused the entire DAG layer because its quorums turned out to be
 the `n − f` the development was already parameterised by. Each arc also
-returned something to the trust story: enforceable storage bounds, horizons
+returned something to the account of the trust boundary: enforceable storage
+bounds, horizons
 without consensus, and — in the one place the formalization diverged from a
 published argument by necessity — the observation that Odontoceti's
 agreement rests on a canonical candidate order that its paper never states.
@@ -2704,7 +3373,7 @@ agreement rests on a canonical candidate order that its paper never states.
 What remains open is catalogued in §13.6: the backoff dynamics, wall-clock
 latency, block-level total order, and liveness below the growth clause.
 Beyond those, two directions suggest themselves. The commit-free,
-evidence-based horizon rule sketched in the garbage-collection design record
+evidence-based horizon rule sketched in the garbage-collection document
 would extend pruning into asynchrony; and the decision relation, now
 instantiated twice at different wavelengths with near-identical agreement
 proofs, invites a rule-parameterised treatment — resisted here to keep each
@@ -2769,7 +3438,7 @@ Principal results only; supporting lemmas are omitted.
 | Label | Statement | Lean *(module)* |
 |:---|:---|:---|
 | L0 | the DAG is dense below its frontier | `card_authorsAt_of_lt` *(Liveness)* |
-| L1 | no stall | `no_stall` *(Liveness)* |
+| L1 | no stall | `no_stall` *(Network/Quorum)* |
 | L2 | decisions are monotone in the view | `decided_mono` *(Liveness)* |
 | L3 | decisions propagate to the full view | `decided_full` *(Liveness)* |
 | L4 | a correct leader is committed | `directCommit_of_leader_mem`, `decided_of_leader_mem` *(Liveness)* |
@@ -2782,6 +3451,20 @@ Principal results only; supporting lemmas are omitted.
 | — | every slot below a fair run is decided (pipelined) | `all_decided_below_of_fairRun` *(Liveness)* |
 | L7a | coverage from delivery | `synchronised_of_delivery` *(Liveness)* |
 | L7b | coverage from GST | `Timing.synchronisedOn_of_timing`, `exists_synchronisedOn_of_backoff` *(Timing)* |
+| L7c | coverage from view convergence | `ViewSync.synchronisedOn_of_converges` *(ViewSync)* |
+| — | the referencing clause, unfused from the network's | `ViewSync.covers_of_converges` *(ViewSync)* |
+| — | the timing route derived from the view-level one | `ViewSync.toTiming` *(ViewSync)* |
+| — | build-time views agree | `ViewSync.ViewsAgree`, `ViewSync.viewsAgree_of_converges` *(ViewSync)* |
+| — | the bound factored out of convergence | `convergesWithin_iff_bounded` *(ViewSync)* |
+| — | production from untimed view convergence, without N1 | `ViewsConverge`, `populated_of_viewsConverge` *(ViewSync)* |
+| — | production from timed view convergence, from the GST crossing | `ViewGrowth`, `ViewGrowth.populatedOn` *(ViewSync)* |
+| — | the assumed production clause is the derived one, Skolemised | `exists_blk_of_populatedOn`, `ViewGrowth.toViewSync` *(ViewSync)* |
+| — | the untimed condition induced by the timed structure | `ViewGrowth.toDelivery`, `ViewsConvergeOn`, `viewsConvergeOn_toDelivery` *(ViewSync)* |
+| — | N2a and L7a derived from view convergence | `ViewGrowth.eventuallyDelivers_toDelivery`, `ViewGrowth.synchronised_toDelivery` *(ViewSync)* |
+| — | the bound in `converges` is necessary for coverage | `bound_is_necessary` *(LeanDagTest.Unbounded)* |
+| — | and its starting round is forced, not chosen | `ugap_not_viewsConvergeOn` *(LeanDagTest.Unbounded)* |
+| — | as is its reliable set: coverage over `T` derived, over `Correct` false | `reliable_set_is_forced` *(LeanDagTest.Unbounded)* |
+| — | liveness on the view-convergence foundation | `ViewSync.commits_recur_of_converges`, `ViewSync.all_decided_below_of_converges` *(ViewSync)* |
 | — | drift is derived | `Timing.driftFrom_of_prompt` *(Timing)* |
 | L8a | the round of coverage, explicitly | `synchronisedOn_of_rate` *(Quantitative)* |
 | L8b | the committing slot, and its round | `commits_recur_within`, `commits_recur_by_round` *(Quantitative)* |
@@ -2826,7 +3509,7 @@ Principal results only; supporting lemmas are omitted.
 | G2 | per-slot verdict invariance | `certificates_chop`, `directCommit_chop`, `certifiedIn_chop`, … *(GC/Chop)* |
 | G3 | the decision relation survives the cut | `decided_chop` *(GC/ChopDecided)* |
 | G4 | cross-cut agreement, arbitrary joiner views | `decided_agree_chop` *(GC/ChopDecided)* |
-| G5 | liveness transfers | `live_chopD`, `populated_chop` *(GC/Window)* |
+| G5 | liveness transfers | `populated_chop` *(GC/Window)*; the assumption transfer `live_chopD`, `deliversQuorum_chopD` *(Network/Quorum)* |
 | G13, G14 | windowed novelty; store correspondence | `novelty_chop_anti`, `viewUpto_chopD` *(GC/Window)* |
 | G6 | storage constant at lag `Λ` | `card_retained_le` *(GC/Window)* |
 | G6b, G7 | join and relay at the same constant | `card_joinIds_le`, `card_serve_le` *(GC/Bootstrap)* |
