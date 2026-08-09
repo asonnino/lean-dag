@@ -15,7 +15,7 @@ generalized thresholds — direct rules at `n − f`, the indirect test at
 `n − 3f` — which specialize to the thesis's `4f+1` / `2f+1` at the
 boundary `n = 5f+1`.
 
-Where each `f` is spent, in one place:
+Where each `f` is used, in one place:
 
 * **O1** (commit vs skip) and **O1′** (twin uniqueness for direct
   commits) need only `n ≥ 3f+1`: two `n−f` quorums over `n` authors
@@ -30,7 +30,7 @@ Where each `f` is spent, in one place:
   supporters number `≤ 2f` — by the **exact complement identity**
   `|Correct| = n − |byzantine|`; the naive `|Correct| ≤ n` bounding
   yields `3f` and dies at the boundary — and `2f < n−3f` is exactly
-  `n ≥ 5f+1`. This is where the fifth `f` is spent.
+  `n ≥ 5f+1`. This is where the fifth `f` is used.
 * **O4′** (a direct commit excludes every rival): `n−f` supports for
   `L₁` and `n−3f` in-cone supports for a same-author `L₂` overlap in
   `≥ n−5f ≥ 1` correct authors, who cannot support two twins
@@ -255,7 +255,7 @@ theorem card_supporters_le_of_directSkip (hk : DirectSkip U L r) :
 
 /-- **O2 (thesis Lemma 2).** A directly skipped leader fails the
 indirect test against **every** anchor: `≤ 2f < n − 3f`. This is where
-`n ≥ 5f+1` is spent. -/
+`n ≥ 5f+1` is used. -/
 theorem not_thickLink_of_directSkip (hk : DirectSkip U L r)
     (A : BlockId) : ¬ ThickLink U A L r := by
   intro ht

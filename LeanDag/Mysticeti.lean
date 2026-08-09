@@ -54,6 +54,7 @@ def certificates (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r 
     Finset BlockId :=
   (blocksAt U (r + 2)).filter (fun C => Certifies U C L)
 
+/-- Membership in `certificates`, unfolded: a round-`r+2` block that certifies `L`. -/
 @[simp]
 theorem mem_certificates {C L : BlockId} {r : ℕ} :
     C ∈ certificates U L r ↔ C ∈ U.ids ∧ (U.block C).round = r + 2 ∧ Certifies U C L := by
@@ -302,8 +303,7 @@ particular pairs that use it, by `Eligible` below.
 slotRound k`) and is underivable from `mono` alone — a schedule parking every
 slot at one round is monotone. Liveness needs it, so it is assumed.
 
-`keyed` says distinct slots differ in round or in leader. It too was free
-under the old spacing, which made `slotRound` injective outright. Under
+`keyed` says distinct slots differ in round or in leader. It too held under three-round spacing, which makes `slotRound` injective outright. Under
 multiple leaders it is a real condition on the schedule: the proposers of a
 round must be distinct validators. Without it one block would be the candidate
 for two slots, and the ledger would deliver it twice. -/
@@ -345,6 +345,7 @@ side condition the other's intermediate-skip premise requires. -/
 def Eligible (k j : ℕ) : Prop := decisionRound Validator k < S.slotRound j
 
 omit [Fintype Validator] [DecidableEq Validator] F in
+/-- Eligibility, unfolded: an anchor must sit three rounds above the slot it decides — one for votes, one for certificates, one to separate them. -/
 theorem eligible_iff {k j : ℕ} :
     Eligible Validator k j ↔ S.slotRound k + 3 ≤ S.slotRound j := by
   simp [Eligible, decisionRound]
@@ -354,7 +355,7 @@ instance decidableEligible (k j : ℕ) : Decidable (Eligible Validator k j) :=
   inferInstanceAs (Decidable (decisionRound Validator k < S.slotRound j))
 
 omit [Fintype Validator] [DecidableEq Validator] F in
-/-- An eligible anchor is a later slot. Monotonicity does the work: were
+/-- An eligible anchor is a later slot. Monotonicity is what carries it: were
 `j ≤ k`, the anchor's round could not exceed `k`'s, let alone clear its
 decision round.
 
@@ -370,11 +371,10 @@ theorem lt_of_eligible {k j : ℕ} (h : Eligible Validator k j) : k < j := by
 omit [Fintype Validator] [DecidableEq Validator] F in
 /-- **Conservativity.** Under a schedule whose consecutive slots are three
 rounds apart — the `spacing` field this class used to carry — *every* later
-slot is eligible to anchor an earlier one, and the new premise is implied by
-the old one.
+slot is eligible to anchor an earlier one, and the generalised premise implies the three-round one.
 
-So the generalised `Decided` has exactly the constructors the old one had
-whenever the old schedule condition holds: no derivation available before the
+So the generalised `Decided` has exactly the constructors the three-round form has
+whenever three-round spacing holds: no derivation available before the
 change is unavailable after it. This is the three-round spacing bound,
 demoted from a consequence of the class to a consequence of a hypothesis. -/
 theorem eligible_of_lt_of_spacing (hsp : ∀ k, S.slotRound k + 3 ≤ S.slotRound (k + 1))
@@ -598,7 +598,7 @@ theorem not_directSkip_of_directCommitIn {V₁ V₂ : View Validator BlockId Pay
 
 /-- Whatever route it took, a committed verdict names a genuine candidate for
 that slot. Needed because the agreement proof must feed another validator's
-anchor into the engine lemma, which wants its round. -/
+anchor into the visibility lemma, which wants its round. -/
 theorem isLeaderBlock_of_decided {V : View Validator BlockId Payload U} {j : ℕ} {A : BlockId}
     (h : Decided U V j (some A)) : IsLeaderBlock U j A := by
   cases h with
@@ -687,7 +687,7 @@ decided is not in disagreement.
 
 Structural induction on the first derivation. Of the sixteen constructor
 pairings, fifteen close outright — every commit-versus-commit case by M5′,
-and the direct-versus-indirect crossings by cross-view M1, the engine lemma,
+and the direct-versus-indirect crossings by cross-view M1, the visibility lemma,
 or M3. The one real case is *indirect commit against indirect skip*, settled
 by comparing the two anchors: if they coincide the IH forces the same anchor
 block, and otherwise the earlier anchor is covered by the *other* validator's
@@ -720,7 +720,7 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ} {v₁
         (certificates_nonempty_of_directCommit (directCommit_of_directCommitIn h))
         (certificates_nonempty_of_certifiedIn hcert₂))
     | @indirectSkip _ j A _ helig hj _ hnone =>
-      -- The engine: this commit is visible from the other validator's anchor.
+      -- Visibility: this commit is seen from the other validator's anchor.
       -- Their own eligibility premise is what puts it in range.
       exact absurd (certifiedIn_of_directCommitIn_at_anchor h hj helig) (hnone _ hL)
   | @directSkip k hskip =>

@@ -47,6 +47,7 @@ interchangeably. -/
 def correctBlocksAt (U : BlockUniverse Validator BlockId Payload) (n : ℕ) : Finset BlockId :=
   (blocksAt U n).filter (fun q => (U.block q).creator ∈ (Correct : Finset Validator))
 
+/-- Membership in `correctBlocksAt`, unfolded. -/
 theorem mem_correctBlocksAt {i : BlockId} {n : ℕ} :
     i ∈ correctBlocksAt U n ↔
       i ∈ U.ids ∧ (U.block i).round = n ∧ (U.block i).creator ∈ (Correct : Finset Validator) := by

@@ -44,7 +44,7 @@ ALLOW = {
     # Lean core and Mathlib names the report mentions; the extraction keeps
     # only this development's declarations, so these cannot be checked here.
     "Environment.constants", "ConstantInfo.value", "Finset.card", "Fintype.card",
-    "Finset.filter", "Finset.min", "Finset.max", "Finset.max'", "Nat.succ", "refs.card",
+    "Finset.filter", "Finset.min", "Finset.max", "lt_trichotomy", "Correct.card", "Finset.max'", "Nat.succ", "refs.card",
     "LeanDagTest.Growth", "LeanDagTest.Unbounded", "Environment.constants",
 }
 
@@ -159,6 +159,24 @@ def subsequence_gap(shown, src):
     return None
 
 
+def extracted_names(root):
+    """Declaration and module names known to the source extraction.
+
+    Wider than the compiled graph: it includes private lemmas, which the
+    dependency extraction drops but docstrings still name.
+    """
+    path = root / "docs/decls.json"
+    if not path.exists():
+        return set()
+    names = set()
+    for d in json.loads(path.read_text()):
+        names.add(d["name"])
+        names.add(d["name"].rsplit(".", 1)[-1])
+        names.add(d["module"])
+        names.add(d["module"].removeprefix("LeanDag."))
+    return names
+
+
 def load_extracted(root):
     path = root / "docs/decls.json"
     if not path.exists():
@@ -243,7 +261,7 @@ def main(argv):
     tsv = ROOT / "docs/depgraph/deps.tsv"
     if not tsv.exists():
         sys.exit(f"missing {tsv}; see docs/depgraph/README.md to regenerate")
-    decls = declarations(tsv.read_text())
+    decls = declarations(tsv.read_text()) | extracted_names(ROOT)
     suffixes = {n.split(".", 1)[1] for n in decls if "." in n}
     for n in list(suffixes):
         while "." in n:

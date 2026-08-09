@@ -44,6 +44,7 @@ def attesters (U : BlockUniverse Validator BlockId Payload) (t : ℕ)
     (y : BlockId) : Finset Validator :=
   creatorsOf U.block ((blocksAt U t).filter fun a => y ∈ history U a)
 
+/-- Membership in `attesters`, unfolded: an attester is a correct author of a round-`t` block whose history reaches `y`. -/
 theorem mem_attesters {v : Validator} :
     v ∈ attesters U t y ↔
       ∃ a ∈ U.ids, (U.block a).round = t ∧ y ∈ history U a ∧
@@ -58,6 +59,7 @@ def Base (U : BlockUniverse Validator BlockId Payload) (t G : ℕ) :
     Finset BlockId :=
   (blocksAt U G).filter fun y => F.f + 1 ≤ (attesters U t y).card
 
+/-- Membership in `Base`, unfolded: a round-`G` block attested by at least `f+1` validators. -/
 theorem mem_base :
     y ∈ Base U t G ↔
       (y ∈ U.ids ∧ (U.block y).round = G) ∧

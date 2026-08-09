@@ -71,8 +71,8 @@ exposed to its own author. A block cites its self-parent, and `DoSValid`
 forbids citing an exposed author — so once an author's equivocation is
 visible in some history, that author can never build on that history again.
 
-This is the load-bearing half of D20: the fresh "carrier" block that adopts
-an equivocation branch while carrying none of its author's past — the engine
+This is the indispensable half of D20: the fresh "carrier" block that adopts
+an equivocation branch while carrying none of its author's past — the mechanism
 of every super-linear history family — cannot exist. -/
 theorem not_exposedIn_self_creator (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids) :
     ¬ ExposedIn U b (U.block b).creator := by

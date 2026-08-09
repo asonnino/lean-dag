@@ -117,6 +117,7 @@ theorem mem_history_iff {b i : BlockId} (hb : b ∈ U.ids) :
     i ∈ history U b ↔ Reaches U b i :=
   ⟨reaches_of_mem_historyUpto, mem_historyUpto_of_reaches hb (by omega)⟩
 
+/-- A block lies in its own causal history. -/
 @[simp]
 theorem mem_history_self {b : BlockId} : b ∈ history U b := mem_historyUpto_self
 

@@ -93,6 +93,7 @@ def historyBlocksOf (U : BlockUniverse Validator BlockId Payload) (b : BlockId)
     (X : Validator) (n : ℕ) : Finset BlockId :=
   (history U b).filter (fun i => (U.block i).creator = X ∧ (U.block i).round = n)
 
+/-- Membership in `historyBlocksOf`, unfolded. -/
 theorem mem_historyBlocksOf {b i : BlockId} {X : Validator} {n : ℕ} :
     i ∈ historyBlocksOf U b X n ↔
       i ∈ history U b ∧ (U.block i).creator = X ∧ (U.block i).round = n := by
@@ -102,7 +103,7 @@ theorem mem_historyBlocksOf {b i : BlockId} {X : Validator} {n : ℕ} :
 
 The counting form of `ExposedIn`, and the whole content of D11: an author that
 is never exposed in `b`'s history contributes at most one block per round to
-it, so the equivocation bought nothing. -/
+it, so the equivocation achieved nothing. -/
 theorem not_exposedIn_iff_card_le_one {b : BlockId} {X : Validator} :
     ¬ ExposedIn U b X ↔ ∀ n, (historyBlocksOf U b X n).card ≤ 1 := by
   constructor
@@ -227,6 +228,7 @@ theorem ExposedIn.not_correct {b : BlockId} {X : Validator} (hb : b ∈ U.ids)
 def exposedTo (U : BlockUniverse Validator BlockId Payload) (b : BlockId) : Finset Validator :=
   Finset.univ.filter (fun X => ExposedIn U b X)
 
+/-- `exposedTo` collects exactly the authors exposed in the block's history — the `Finset` form of `ExposedIn`. -/
 @[simp]
 theorem mem_exposedTo {b : BlockId} {X : Validator} :
     X ∈ exposedTo U b ↔ ExposedIn U b X := by simp [exposedTo]
@@ -236,6 +238,7 @@ theorem exposedTo_subset_byzantine {b : BlockId} (hb : b ∈ U.ids) :
   intro X hX
   simpa using (mem_exposedTo.mp hX).not_correct hb
 
+/-- **At most `f` authors can be exposed**, since exposure requires equivocation and only Byzantine validators equivocate. -/
 theorem card_exposedTo_le {b : BlockId} (hb : b ∈ U.ids) : (exposedTo U b).card ≤ F.f :=
   le_trans (Finset.card_le_card (exposedTo_subset_byzantine hb)) F.card_byzantine
 

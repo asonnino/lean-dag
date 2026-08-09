@@ -52,11 +52,13 @@ def blocksAt (U : BlockUniverse Validator BlockId Payload) (n : ℕ) : Finset Bl
 def authorsAt (U : BlockUniverse Validator BlockId Payload) (n : ℕ) : Finset Validator :=
   creatorsOf U.block (blocksAt U n)
 
+/-- Membership in `blocksAt`, unfolded. -/
 @[simp]
 theorem mem_blocksAt {i : BlockId} {n : ℕ} :
     i ∈ blocksAt U n ↔ i ∈ U.ids ∧ (U.block i).round = n := by
   simp [blocksAt]
 
+/-- Membership in `authorsAt`, unfolded: an author of a round is anyone with a block there. -/
 theorem mem_authorsAt {v : Validator} {n : ℕ} :
     v ∈ authorsAt U n ↔ ∃ i ∈ U.ids, (U.block i).round = n ∧ (U.block i).creator = v := by
   simp [authorsAt, mem_creatorsOf]
@@ -223,6 +225,7 @@ def supporters (U : BlockUniverse Validator BlockId Payload) (b : BlockId) (n : 
     Finset Validator :=
   creatorsOf U.block ((blocksAt U n).filter (fun q => b ∈ (U.block q).refs))
 
+/-- Membership in `supporters`, unfolded: a supporter has a round-`n` block referencing `b`. -/
 theorem mem_supporters {b : BlockId} {n : ℕ} {v : Validator} :
     v ∈ supporters U b n ↔
       ∃ q ∈ U.ids, (U.block q).round = n ∧ b ∈ (U.block q).refs ∧ (U.block q).creator = v := by
@@ -239,9 +242,11 @@ def correctSupporters (U : BlockUniverse Validator BlockId Payload) (b : BlockId
     Finset Validator :=
   supporters U b n ∩ (Correct : Finset Validator)
 
+/-- Correct supporters are supporters. -/
 theorem correctSupporters_subset {b : BlockId} {n : ℕ} :
     correctSupporters U b n ⊆ supporters U b n := Finset.inter_subset_left
 
+/-- And they are correct. -/
 theorem correctSupporters_correct {b : BlockId} {n : ℕ} {v : Validator}
     (hv : v ∈ correctSupporters U b n) : v ∈ (Correct : Finset Validator) :=
   Finset.mem_of_mem_inter_right hv
@@ -259,6 +264,7 @@ def blames (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (n : ℕ)
     Finset Validator :=
   creatorsOf U.block ((blocksAt U n).filter (fun q => L ∉ (U.block q).refs))
 
+/-- Membership in `blames`, unfolded: a blamer has a round-`n` block that omits `L`. -/
 theorem mem_blames {L : BlockId} {n : ℕ} {v : Validator} :
     v ∈ blames U L n ↔
       ∃ q ∈ U.ids, (U.block q).round = n ∧ L ∉ (U.block q).refs ∧ (U.block q).creator = v := by

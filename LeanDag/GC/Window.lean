@@ -96,6 +96,7 @@ def chopD (D : Delivery U) (G : ℕ) : Delivery (chop U G) where
     rw [chop_block_eq, chopBlock_refs_of_lt (by omega)]
     exact hsub hi
 
+/-- The truncated delivery accepts at round `m` what the original accepted at `G + m`. -/
 @[simp]
 theorem chopD_accepted (m : ℕ) :
     (chopD D G).accepted v m = D.accepted v (G + m) := rfl

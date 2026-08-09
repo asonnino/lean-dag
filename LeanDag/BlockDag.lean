@@ -107,8 +107,7 @@ T0' gives a correct author common to both creator sets, and T1 makes that
 author's round-`n` block unique — so the two blocks it contributes coincide.
 
 This is the recurring "peel off one certification layer" step: it is exactly
-what M5′ does to two certificates' vote sets, and what an earlier draft of M5
-did a second time to two certificate sets. -/
+what M5′ does to two certificates' vote sets, and what M5 would otherwise do a second time to two certificate sets. -/
 theorem exists_common_mem_of_quorums {s t : Finset BlockId} {n : ℕ}
     (hs : ∀ q ∈ s, q ∈ U.ids ∧ (U.block q).round = n)
     (ht : ∀ q ∈ t, q ∈ U.ids ∧ (U.block q).round = n)

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Generate the report's definition reference from the compiled source.
+"""Generate the report's reference appendices from the compiled source.
 
-Every definition and structure of the development, verbatim, with the
-docstring the source already carries. Regenerating tracks the code, so the
+Appendix B holds every definition and structure, Appendix C every theorem
+another module depends on, and Appendix D indexes the remaining lemmas.
+All are verbatim, with the docstrings the source already carries. Regenerating tracks the code, so the
 reference cannot drift; `audit-report.py` check 4 then compares what is
 written against the same extraction on every run.
 
@@ -52,6 +53,40 @@ def tidy(doc):
     return doc.replace("\x00", "\n\n")
 
 
+def cross_module(root):
+    """Names of theorems some other module depends on."""
+    import collections
+    rdeps = collections.defaultdict(set)
+    mod = {}
+    for line in (root / "docs/depgraph/deps.tsv").read_text().splitlines():
+        p = line.split("\t")
+        if p[0] == "NODE":
+            mod[p[1]] = p[2]
+        elif p[0] == "EDGE":
+            rdeps[p[2]].add(p[1])
+    out = set()
+    for full, m in mod.items():
+        if any(mod.get(u) and mod[u] != m for u in rdeps.get(full, ())):
+            out.add((full.rsplit(".", 1)[-1], m))
+    return out
+
+
+def entry(d, out):
+    mod = d["module"].removeprefix("LeanDag.")
+    out.append(f"#### `{d['name']}`")
+    out.append("")
+    out.append(f"*{d['kind']}, `{mod}.lean`*")
+    out.append("")
+    out.append("```lean")
+    out.append(d["statement"])
+    out.append("```")
+    out.append("")
+    doc = tidy(d["doc"])
+    if doc:
+        out.append(doc)
+        out.append("")
+
+
 def main():
     decls = json.loads((ROOT / "docs/decls.json").read_text())
     lib = [d for d in decls if d["module"].startswith("LeanDag.")
@@ -62,6 +97,8 @@ def main():
 
     placed = set()
     out = [BEGIN, ""]
+    out.append("## Appendix B. The definition reference")
+    out.append("")
     out.append("Every definition and structure of the development, in the order")
     out.append("a reader meets them. Each entry is the source text, unabridged,")
     out.append("with the explanation the source carries. This appendix is")
@@ -114,6 +151,62 @@ def main():
                 out.append(doc)
                 out.append("")
 
+    # ---- Appendix C: the theorems other modules depend on ----
+    thms = [d for d in decls if d["module"].startswith("LeanDag.")
+            and d["kind"] in ("theorem", "lemma")]
+    cross = cross_module(ROOT)
+    public = [d for d in thms if (d["name"], d["module"]) in cross]
+    internal = [d for d in thms if (d["name"], d["module"]) not in cross]
+
+    out.append("")
+    out.append("---")
+    out.append("")
+    out.append("## Appendix C. The theorem reference")
+    out.append("")
+    out.append(f"The {len(public)} theorems that another module of the development")
+    out.append("depends on: the results the rest of the report reasons with, as")
+    out.append("opposed to the steps internal to one file. Each is the source")
+    out.append("statement, unabridged. Generated with Appendix B.")
+    out.append("")
+    seen_c = set()
+    for title, modules in LAYERS:
+        group = [d for m in modules for d in public
+                 if d["module"].removeprefix("LeanDag.") == m]
+        if not group:
+            continue
+        out.append(f"### {title}")
+        out.append("")
+        for d in group:
+            seen_c.add(id(d))
+            entry(d, out)
+    rest = [d for d in public if id(d) not in seen_c]
+    if rest:
+        out.append("### Not otherwise grouped")
+        out.append("")
+        for d in rest:
+            entry(d, out)
+
+    # ---- Appendix D: the remaining lemmas, indexed ----
+    out.append("---")
+    out.append("")
+    out.append("## Appendix D. Index of internal lemmas")
+    out.append("")
+    out.append(f"The {len(internal)} lemmas used only within the file that proves")
+    out.append("them. They are steps of the arguments above rather than results")
+    out.append("in their own right, so they are listed rather than displayed;")
+    out.append("the source is the reference for their statements.")
+    out.append("")
+    out.append("| Lemma | Module | Role |")
+    out.append("|:---|:---|:---|")
+    for d in sorted(internal, key=lambda x: (x["module"], x["name"])):
+        mod = d["module"].removeprefix("LeanDag.")
+        doc = tidy(d["doc"]).split("\n")[0]
+        doc = re.sub(r"\*\*", "", doc)
+        if len(doc) > 110:
+            doc = doc[:107].rsplit(" ", 1)[0] + " …"
+        out.append(f"| `{d['name']}` | `{mod}` | {doc or '—'} |")
+    out.append("")
+
     out.append(END)
     body = "\n".join(out)
 
@@ -126,7 +219,8 @@ def main():
     else:
         text = text.rstrip("\n") + "\n\n" + body + "\n"
     report.write_text(text)
-    print(f"{n} definitions written; {len(leftover)} ungrouped")
+    print(f"{n} definitions, {len(public)} public theorems, "
+          f"{len(internal)} indexed lemmas")
 
 
 if __name__ == "__main__":

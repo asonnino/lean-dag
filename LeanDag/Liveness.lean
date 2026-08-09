@@ -510,6 +510,7 @@ theorem certificatesIn_full : certificatesIn U (View.full U) L r = certificates 
   Finset.inter_eq_left.mpr fun _ hC => (mem_certificates.mp hC).1
 
 omit S in
+/-- A universe-level direct commit is one the full view also sees. -/
 theorem directCommitIn_full (h : DirectCommit U L r) :
     DirectCommitIn U (View.full U) L r := by
   rw [DirectCommitIn, certificatesIn_full]
@@ -651,7 +652,7 @@ This is the one place the schedule's *shape* enters P7′, and it is what makes
 `decided_below_of_committed_run`'s `hspan` available: the last slot of a run
 starting at `b` is an eligible anchor for every slot below `b`.
 
-It holds with `c = 1` under the old three-round spacing and with `c = 3` under
+It holds with `c = 1` under three-round spacing and with `c = 3` under
 pipelining — one commit against three consecutive, which is the entire cost
 pipelining imposes on this property. -/
 def SpansEligible (c : ℕ) : Prop :=
@@ -677,10 +678,12 @@ round `n` — so the slot has to be named. -/
 def slotAt (n : ℕ) : ℕ := Nat.find (S.unbounded n)
 
 omit [Fintype Validator] [DecidableEq Validator] F in
+/-- `slotAt n` names a slot at or past round `n` — the defining property of the index. -/
 theorem le_slotRound_slotAt (n : ℕ) : n ≤ S.slotRound (slotAt Validator n) :=
   Nat.find_spec (S.unbounded n)
 
 omit [Fintype Validator] [DecidableEq Validator] F in
+/-- Round `0` is served by slot `0`. -/
 @[simp]
 theorem slotAt_zero : slotAt Validator 0 = 0 := by
   rw [slotAt, Nat.find_eq_zero]
@@ -767,8 +770,8 @@ the machine-checked form of the isolated-commit obstruction. -/
 intermediate-skip premise is vacuous, so there is no induction and no appeal to
 nearestness.
 
-This is the fact that keeps pipelining live, and the one an earlier draft of
-these notes missed. Slot `j - 1` sitting immediately below a committed `j`
+This is the fact that keeps pipelining live, and the one most easily
+overlooked. Slot `j - 1` sitting immediately below a committed `j`
 cannot anchor on `j` — one round on, inside its decision round — but it *can*
 anchor on `j + 2`, and neither `j` nor `j + 1` is eligible for it, so the
 premise is empty and the slot resolves at once. Under fair leader election
