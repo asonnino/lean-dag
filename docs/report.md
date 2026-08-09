@@ -1752,13 +1752,19 @@ coverage are visible as the only results drawing on the network column.
 lines; only the first is the one usually meant by "confining the time
 model".
 
-*Time from graph structure* — the interface is `SynchronisedOn`.
-Everything above it is finite combinatorics over a DAG; everything that
-mentions an instant lies below. The interface is a `Prop` about
-references, so the layers meet at a statement rather than at a module
-boundary, and any of the three routes of §§6.7–6.9 may supply it. This is
-the separation the report's title claims, and the diagram shows it as a
-single column that every liveness result passes through.
+*Time from graph structure* — the interface is the pair
+`SynchronisedOn` and `PopulatedOn`, coverage and production. Everything
+above it is finite combinatorics over a DAG; everything that mentions an
+instant lies below. Both halves are `Prop`s about a block universe, so
+the layers meet at a statement rather than at a module boundary, and any
+of the routes of §§6.7–6.9 may supply them. Extraction confirms the
+division: of the 67 labelled results, four mention a clock — L7b, L7c,
+L8a and L9, which are the derivations themselves — and every theorem of
+`Timing.lean`, `Quantitative.lean` and `ViewSync.lean` that concludes
+anything used above the line does so by first establishing
+`SynchronisedOn` or `PopulatedOn`. This is the separation the report's
+title claims, and the diagram shows it as a column that every liveness
+result passes through.
 
 *Network from protocol* — the interface is the pair
 `converges` / `references` of §6.9. This line is invisible in the delivery
