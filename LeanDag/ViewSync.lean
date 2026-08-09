@@ -156,6 +156,35 @@ def toTiming : Timing U T N where
 /-- Drift, stated directly over a `ViewSync`. -/
 abbrev DriftFrom (n₀ D : ℕ) : Prop := vs.toTiming.DriftFrom n₀ D
 
+/-- **Build-time views agree, from `R` on.** Every `T`-authored round-`n`
+block is in *every* `T`-validator's holdings at the moment it builds for
+round `n+1` — the index-aligned statement, derived rather than assumed.
+
+This is the timed model's version of `ViewsConverge`, and the proof shows
+what that untimed condition is really carrying. Convergence alone places
+the block in the builder's hands at `built w n + delay`; making that
+moment precede `built v (n+1)` needs the *bound* (to compare with a
+timeout at all), the *drift* (to compare `w`'s clock with `v`'s), and the
+*wait* (to push `v`'s build past both). An unbounded lag `d` cannot enter
+that chain: there is nothing to compare it with, and no timeout can be
+chosen to clear it. -/
+theorem blk_mem_holds (hT : T ⊆ (Correct : Finset Validator))
+    {R D : ℕ} (hD : vs.toTiming.DriftFrom R D) (hgst : vs.gst ≤ R)
+    (hbackoff : ∀ n, R ≤ n → D + vs.delay ≤ vs.timeout n)
+    {v : Validator} (hv : v ∈ T) {w : Validator} (hw : w ∈ T)
+    {n : ℕ} (hRn : R ≤ n) (hn : n < N) :
+    vs.blk w n ∈ vs.holds v (vs.built v (n + 1)) := by
+  have hown := vs.holds_own w hw n (by omega)
+  have hgstw : vs.gst ≤ vs.built w n :=
+    le_trans (le_trans hgst hRn) (vs.toTiming.le_built hw n (by omega))
+  have hconv := vs.converges v hv w hw _ hgstw hown
+  refine vs.holds_mono v _ _ ?_ hconv
+  have hdrift := hD v hv w hw n hRn (by omega)
+  have hwait := vs.waits v hv n hn
+  have hto := hbackoff n hRn
+  simp only [toTiming_built] at hdrift
+  omega
+
 /-- **Reference coverage from view convergence.** The statement the design
 notes originally asked for, now a theorem: after GST, with validators
 waiting long enough that the timeout clears drift plus the delivery
