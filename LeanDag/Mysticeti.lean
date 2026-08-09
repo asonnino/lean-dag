@@ -326,7 +326,7 @@ variable (Validator) in
 live here. Algorithm 2's `DecisionRound`.
 
 `Validator` is explicit because the result is a bare `ℕ`, so nothing else
-would fix it — the same reason `slotRound_add_three_le` used to be written
+would fix it — the same reason the three-round spacing lemma is written
 `S.slotRound`. -/
 def decisionRound (k : ℕ) : ℕ := S.slotRound k + 2
 
@@ -375,7 +375,7 @@ the old one.
 
 So the generalised `Decided` has exactly the constructors the old one had
 whenever the old schedule condition holds: no derivation available before the
-change is unavailable after it. This is the former `slotRound_add_three_le`,
+change is unavailable after it. This is the three-round spacing bound,
 demoted from a consequence of the class to a consequence of a hypothesis. -/
 theorem eligible_of_lt_of_spacing (hsp : ∀ k, S.slotRound k + 3 ≤ S.slotRound (k + 1))
     {k j : ℕ} (h : k < j) : Eligible Validator k j := by

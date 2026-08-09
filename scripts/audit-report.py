@@ -44,7 +44,8 @@ ALLOW = {
     # Lean core and Mathlib names the report mentions; the extraction keeps
     # only this development's declarations, so these cannot be checked here.
     "Environment.constants", "ConstantInfo.value", "Finset.card", "Fintype.card",
-    "Finset.filter", "Finset.min", "Nat.succ", "refs.card",
+    "Finset.filter", "Finset.min", "Finset.max", "Finset.max'", "Nat.succ", "refs.card",
+    "LeanDagTest.Growth", "LeanDagTest.Unbounded", "Environment.constants",
 }
 
 

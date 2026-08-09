@@ -252,7 +252,8 @@ theorem correctSupporters_correct {b : BlockId} {n : ℕ} {v : Validator}
 The complement of `supporters U L n` *within the round-`n` author pool* —
 but only for correct validators. A Byzantine author can appear in both, by
 publishing one round-`n` block that votes and another that does not; ruling
-that out for correct validators is exactly what `blames_inter_supporters`
+that out for correct validators is exactly what
+`blames_inter_supporters_subset_byzantine`
 does, and is the whole content of M3. -/
 def blames (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (n : ℕ) :
     Finset Validator :=
