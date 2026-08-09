@@ -214,9 +214,14 @@ def order_layers(edges, nodes, lay):
     return layers
 
 # ---------------------------------------------------------------- svg
-def render(view, sel, edges, layers, lay):
+def render(view, sel, edges, layers, lay, compact=False):
     """Left-to-right: each layer a column, so an arrow reads 'supports'."""
-    BW, BH, VGAP, HGAP, PAD, TOP = 158, 36, 12, 96, 40, 100
+    if compact:
+        # For inclusion in the report: label only, sized so that the whole
+        # diagram stays legible when scaled to a text column.
+        BW, BH, VGAP, HGAP, PAD, TOP = 62, 24, 9, 46, 26, 76
+    else:
+        BW, BH, VGAP, HGAP, PAD, TOP = 158, 36, 12, 96, 40, 100
     nlay = max(layers) + 1
     heights = {L: len(ns) * (BH + VGAP) - VGAP for L, ns in layers.items()}
     H = max(heights.values()) + 2 * PAD + TOP
@@ -233,9 +238,12 @@ def render(view, sel, edges, layers, lay):
            f'height="{H:.0f}" viewBox="0 0 {W:.0f} {H:.0f}" '
            f'font-family="Helvetica,Arial,sans-serif">',
            '<style>text{dominant-baseline:middle}'
-           '.lbl{font-size:13px;font-weight:700}.nm{font-size:8.5px;fill:#444}'
-           '.ttl{font-size:20px;font-weight:700}.sub{font-size:11.5px;fill:#555}'
-           '.key{font-size:11px}.col{font-size:10px;fill:#888;font-weight:700}'
+           f'.lbl{{font-size:{11 if compact else 13}px;font-weight:700}}'
+           '.nm{font-size:8.5px;fill:#444}'
+           f'.ttl{{font-size:{15 if compact else 20}px;font-weight:700}}'
+           f'.sub{{font-size:{9.5 if compact else 11.5}px;fill:#555}}'
+           f'.key{{font-size:{9 if compact else 11}px}}'
+           f'.col{{font-size:{9 if compact else 10}px;fill:#888;font-weight:700}}'
            '</style>',
            f'<rect width="{W:.0f}" height="{H:.0f}" fill="#fff"/>',
            '<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" '
@@ -244,31 +252,35 @@ def render(view, sel, edges, layers, lay):
 
     title = ('The core account: what supports what' if view == 'core'
              else 'lean-dag: the support structure of the development')
-    out.append(f'<text class="ttl" x="{PAD}" y="{34}">{title}</text>')
-    for i, line in enumerate([
-            'An arrow A → B means A is used in the proof of B — directly, or through '
-            'unlabelled lemmas. Assumptions on the left; each column is one step '
-            'further from them.',
-            'Extracted from the Lean environment; arrows implied by longer paths are '
-            'removed. A box with no incoming arrow rests only on definitions and '
-            'unlabelled lemmas.']):
-        out.append(f'<text class="sub" x="{PAD}" y="{54 + i * 16}">{line}</text>')
+    out.append(f'<text class="ttl" x="{PAD}" y="{26 if compact else 34}">{title}</text>')
+    subtitle = ([
+        'A → B: A is used in the proof of B. Assumptions on the left; implied '
+        'arrows removed.'] if compact else [
+        'An arrow A → B means A is used in the proof of B — directly, or through '
+        'unlabelled lemmas. Assumptions on the left; each column is one step '
+        'further from them.',
+        'Extracted from the Lean environment; arrows implied by longer paths are '
+        'removed. A box with no incoming arrow rests only on definitions and '
+        'unlabelled lemmas.'])
+    for i, line in enumerate(subtitle):
+        out.append(f'<text class="sub" x="{PAD}" y="{(42 if compact else 54) + i * (13 if compact else 16)}">{line}</text>')
 
     kx = PAD
     for g in ['fault', 'protocol', 'network', 'core', 'quality', 'dos', 'gc', 'odo']:
         if not any(v[1] == g for v in sel.values()):
             continue
         f, st = GROUP_FILL[g]
-        out.append(f'<rect x="{kx}" y="{TOP - 16}" width="11" height="11" rx="2" '
-                   f'fill="{f}" stroke="{st}"/>')
-        out.append(f'<text class="key" x="{kx + 16}" y="{TOP - 10}">'
+        sw = 9 if compact else 11
+        out.append(f'<rect x="{kx}" y="{TOP - 16}" width="{sw}" height="{sw}" '
+                   f'rx="2" fill="{f}" stroke="{st}"/>')
+        out.append(f'<text class="key" x="{kx + sw + 5}" y="{TOP - 11}">'
                    f'{html.escape(GROUP_TITLE[g])}</text>')
-        kx += 22 + 6.6 * len(GROUP_TITLE[g])
+        kx += (16 + 5.0 * len(GROUP_TITLE[g])) if compact else (22 + 6.6 * len(GROUP_TITLE[g]))
 
     for L in sorted(layers):
         x = PAD + L * (BW + HGAP)
         cap = 'assumptions (§4)' if L == 0 else f'step {L}'
-        out.append(f'<text class="col" x="{x + BW/2:.1f}" y="{TOP + 14}" '
+        out.append(f'<text class="col" x="{x + BW/2:.1f}" y="{TOP + (10 if compact else 14)}" '
                    f'text-anchor="middle">{cap}</text>')
 
     for src in edges:
@@ -292,10 +304,14 @@ def render(view, sel, edges, layers, lay):
         out.append(f'<g><title>{html.escape(n)} — {html.escape(tip)}</title>')
         out.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{BW}" height="{BH}" '
                    f'rx="5" fill="{fill}" stroke="{stroke}" stroke-width="1.2"/>')
-        out.append(f'<text class="lbl" x="{x + BW/2:.1f}" y="{y + 12:.1f}" '
-                   f'text-anchor="middle">{html.escape(label)}</text>')
-        out.append(f'<text class="nm" x="{x + BW/2:.1f}" y="{y + 26:.1f}" '
-                   f'text-anchor="middle">{html.escape(short)}</text></g>')
+        if compact:
+            out.append(f'<text class="lbl" x="{x + BW/2:.1f}" y="{y + BH/2:.1f}" '
+                       f'text-anchor="middle">{html.escape(label)}</text></g>')
+        else:
+            out.append(f'<text class="lbl" x="{x + BW/2:.1f}" y="{y + 12:.1f}" '
+                       f'text-anchor="middle">{html.escape(label)}</text>')
+            out.append(f'<text class="nm" x="{x + BW/2:.1f}" y="{y + 26:.1f}" '
+                       f'text-anchor="middle">{html.escape(short)}</text></g>')
     out.append('</svg>')
     return '\n'.join(out)
 
@@ -307,12 +323,15 @@ def main():
         assumption_names = {lean for _, lean, _ in ASSUMPTIONS}
         lay = layer_assign(edges, set(sel), assumption_names)
         layers = order_layers(edges, set(sel), lay)
-        svg = render(view, sel, edges, layers, lay)
-        path = f'{ROOT}/docs/depgraph/support-{view}.svg'
-        open(path, 'w').write(svg)
         n_edges = sum(len(v) for v in edges.values())
-        print(f'{path}: {len(sel)} nodes, {n_edges} edges, '
-              f'{max(layers)+1} layers, widest {max(len(v) for v in layers.values())}')
+        for compact in (False, True):
+            svg = render(view, sel, edges, layers, lay, compact)
+            suffix = f'{view}-compact' if compact else view
+            path = f'{ROOT}/docs/depgraph/support-{suffix}.svg'
+            open(path, 'w').write(svg)
+            w = re.search(r'width="([0-9.]+)"', svg).group(1)
+            h = re.search(r'height="([0-9.]+)"', svg).group(1)
+            print(f'{path}: {len(sel)} nodes, {n_edges} edges, {w}x{h}')
 
 if __name__ == '__main__':
     main()

@@ -809,6 +809,93 @@ of N2 alone would suffice.
   reordering and arbitrary loss are permitted, and every safety result and
   L1 continue to hold there.
 
+#### Where the assumptions are consumed
+
+Neither assumption is used where its name suggests, and the extracted
+support graph (§12) makes the pattern checkable rather than asserted.
+
+**N1 has exactly one primitive consumer: L1 (`no_stall`).** It appears in
+the hypotheses of a great many statements — L6, the quantitative results,
+the capstones of §§7–10 — but always threaded through to that one place.
+Its job is *block production*, not synchrony: a populated round means a
+quorum of authors exists, N1 converts that into "every correct validator
+has accepted a quorum", and that discharges the premise of P8, which
+produces the next round. The chain is `N1 + P8 → Populated`, with no
+coverage, no `R` and no Δ anywhere in it. (The only other direct uses are
+a repackaging, `card_authorsAt_of_live`, and the garbage-collection
+transfer lemma `deliversQuorum_chopD`, which re-establishes N1 on the
+truncated universe so that L1 runs there too.)
+
+**And from `R` on, N1 is a theorem rather than an assumption:**
+
+```lean
+theorem card_creators_accepted_of_eventuallyDelivers {R : ℕ} (D : Delivery U)
+    (hd : EventuallyDelivers D R) (hn : R ≤ n) (hpop : Populated U n)
+    {v : Validator} (hv : v ∈ (Correct : Finset Validator)) :
+    (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (D.accepted v n)).card
+```
+
+N2 puts every correct round-`n` block in `v`'s hands, `accepts_correct`
+obliges `v` to accept them, `Populated` supplies one per correct
+validator, and `|Correct| ≥ n−f`. So N1's real content is confined to the
+pre-GST prefix, which is exactly the price the structural condition
+carries.
+
+Before `R` it is *not* derivable, and the reason is worth stating because
+it locates a subtlety in the trust boundary. Nothing obliges a validator
+to accept a **Byzantine**-authored block: `accepts_correct` covers correct
+authors only. With `f` Byzantine validators and `f` slow correct ones, a
+validator holds `f+1` correct blocks and `f` Byzantine ones — a quorum in
+`held` — but if it declines the Byzantine ones, `accepted` carries only
+`f+1` creators, short of the quorum. **N1 is therefore a joint condition
+on the network and the acceptance policy**, not a pure network
+assumption. That is not a hypothetical concern: the novelty budget of §8
+is precisely a rule that declines, which is why `dos_resistance` takes N1
+*and* the budget together — the pairing is the formal statement that the
+budget must be set loose enough to keep N1 true.
+
+**N2's abstract form is used for five distinct things**, only the first
+of which is coverage: L7a (§6.7); the view-gap constant C3′ and hence the
+budget sandwich of §8.4, where it says a correct validator's block —
+carrying its whole accepted store — arrives and is accepted; the
+accepted-quorum lemma above; the bound placing the attested base inside a
+correct peer's retained store (G6b, §9.3); and the one-round
+universalisation of possession (G9, §9.5). The common thread in the last
+four is not "references cover the round below" but "a correct validator's
+store reaches every correct validator in time" — a fact about **stores**,
+where coverage is a fact about **references**. One assumption serves both
+because it is stated on `held`, upstream of the split. N2's timing form,
+by contrast, is consumed exactly once, in L7b.
+
+#### The two forms of N2 converge; they do not reduce
+
+No theorem relates `EventuallyDelivers` and `Timing.covers`. They do not
+even range over the same object — the first is a predicate on a
+`Delivery`, the second a field of a `Timing` structure that neither
+extends nor constructs one — and they meet only at their shared
+conclusion, which is the layering of §6.9. They are also incomparable in
+strength: the delivery route assumes more (arrival, outright) but needs
+no side conditions and yields Correct-wide coverage; the timing route
+assumes something more primitive (GST and Δ) but must earn arrival from
+drift, waiting and backoff, and pays with `T`-relativity.
+
+The obvious factoring — derive arrival from the clock, then reuse the
+delivery route — is blocked by a detail worth recording plainly.
+`covers` concludes about **`refs`**, where `EventuallyDelivers` concludes
+about **`held`** and lets P7 lift it. Its own comment admits the
+bundling: *"a `T`-block built at time `t` is in every `T`-validator's
+hands by `t + delay`; **and** a validator references everything it
+holds."* So `covers` is not a pure environment assumption — it fuses N2
+with P7 — and there is no intermediate `held`-level statement to hand to
+the delivery route. The converse direction is hopeless for a simpler
+reason: `Delivery` has no temporal fields from which to build `gst` or
+`delay`. Splitting `covers` into a delivery field and a referencing field
+would make the timing route factor through the delivery route and would
+put the whole of P7 on the protocol side of the boundary where it
+belongs; the cost is a `T`-relative `EventuallyDelivers` and a re-proof
+of L7a at that generality. It is not done here, and §4.3's table should
+be read with that qualification.
+
 #### The asymmetry, and the payoff
 
 The two are deliberately unequal. N1 is weak — conditional, quorum-sized,
@@ -1440,11 +1527,14 @@ is unknown; §6.10 supplies two further routes.
 
 ### 6.9 The layering
 
+![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow rests only on definitions and unlabelled lemmas — L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §12 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
 
 No theorem above `SynchronisedOn` mentions time, and no theorem below it mentions
-certificates. The figure also locates the trust boundary: of the four premises
-beneath the line, the two on the left are assumptions about an adversarial
-network and the two on the right are clauses of the algorithm.
+certificates. The diagram also locates the trust boundary: the leftmost column is
+the whole of what is assumed, and it divides into assumptions about an adversarial
+network (N1, N2) and clauses of the algorithm (P1–P10) — the two derivations of
+coverage, L7a and L7b, are visible as the only results drawing on the network
+column.
 
 ### 6.10 Quantitative results
 
@@ -2501,6 +2591,43 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
 | `Quality/Capstone.lean` | the windowed bounds and `chain_quality` (CQ7) |
 | `LeanDagTest/` | the models of §11 and the witness files of every arc |
+
+**The support graph, extracted.** The dependency structure of the
+development is not documented by hand: `scripts/DepGraph.lean` walks
+`Environment.constants` and records, for every declaration, the constants
+appearing in its type **and in its body** — for a theorem, that body is
+the proof term, so the edges are the real proof structure rather than the
+statement's signature. `scripts/depgraph.py` then takes its node set from
+Appendix A of this report, contracts paths running through unlabelled
+lemmas, takes the transitive reduction, and renders the result. The full
+graph is ≈900 declarations and ≈7,700 edges; the two views drawn here are
+the §6.9 figure and the one below.
+
+Two extraction details are worth recording for anyone repeating the
+exercise. `ConstantInfo.value?` returns `none` for *imported* theorems in
+this Lean version — proofs are loaded lazily — so the proof term must be
+reached by matching `.thmInfo` explicitly; without that, only
+statement-level dependencies appear and the graph looks almost empty.
+And private declarations and compiler-generated auxiliaries must be kept
+as pass-through nodes, since a labelled result frequently reaches another
+only through one of them. Mathlib and core constants *are* dropped, and
+safely: they never mention a constant of this development, so no path
+between two of its results can run through them.
+
+![**The whole development.** The same extraction over every principal result, including the four arcs. Reading the columns: the core account occupies the left half, and each arc attaches to it at the results it consumes rather than at the top — the garbage-collection operator (G1) sits beside the structural theorems it re-uses, and Odontoceti's counting core (O1–O4′) is independent of Mysticeti's, converging only at its own agreement theorem. Lean names are omitted for legibility; the full-detail rendering is in `docs/depgraph/`.](depgraph/support-full-compact.svg)
+
+The extracted edges are also an independent check on this report's prose,
+and three of its claims come out exactly as written. `P3′`, the
+self-parent clause, has no outgoing edge in the core view and in the full
+view feeds only C1′, C3′, G1, G9 and G11 — which is §2.2's assertion that
+safety and liveness never consume it and that it is load-bearing for the
+denial-of-service and garbage-collection arcs. `L7a ← N2a, P7` and
+`L7b ← N2b, P9, T1` reproduce the §4.4 table row for row, the extra `T1`
+on the timing route being the non-equivocation step that identifies a
+validator's block with the one the timing structure names. And
+`O5 ← O1, O1′, O2, O3, O4′` confirms that Odontoceti's agreement rests on
+exactly the four counting theorems plus twin uniqueness (§10.3), with
+`O4′` — the lemma the published argument lacks — visibly load-bearing.
 
 Seven design records accompany the development: `spec.md` (safety),
 `liveness.md` (liveness), `pipelining-and-multi-leader.md` (the schedule
