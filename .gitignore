@@ -10,3 +10,6 @@ __pycache__/
 
 # Session scratch
 /.claude
+
+# Extracted declaration index (rebuild with scripts/extract-decls.py)
+docs/decls.json
