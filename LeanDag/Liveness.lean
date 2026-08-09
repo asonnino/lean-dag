@@ -527,6 +527,25 @@ theorem decided_of_leader_mem (hcard : (Fintype.card Validator - F.f) ≤ T.card
     directCommit_of_leader_mem hcard hs hR hpop0 hpop1 hpop2 hlead
   exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_full hdc)⟩
 
+/-- **L4, against a horizon.** The form every capstone uses: production is
+available as a single `Populated` hypothesis up to a horizon, and the
+three rounds L4 needs are read off it.
+
+Stated separately because the capstones of §§6–10 all reach L4 the same
+way — restrict `Populated` to `T`, three times, at `slotRound k`, `+1`
+and `+2` — and doing that inline obscures which hypothesis is actually
+being consumed. -/
+theorem decided_of_leader_of_populated (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
+    (hpop : ∀ r ≤ N, Populated U r) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) :=
+  decided_of_leader_mem hcard hs hR
+    (PopulatedOn.mono hT (hpop _ (by omega)))
+    (PopulatedOn.mono hT (hpop _ (by omega)))
+    (PopulatedOn.mono hT (hpop _ (by omega))) hlead
+
 /-- The same at `T := Correct`. -/
 theorem decided_of_correct_leader (hs : Synchronised U R)
     (hR : R ≤ S.slotRound k)
@@ -559,6 +578,19 @@ theorem decided_none_of_leader_absent {V : View Validator BlockId Payload U}
       (U.block b).creator ≠ S.leader k) :
     Decided U V k none :=
   decided_none_of_no_candidate fun _ hL => h _ hL.1 hL.2.1 hL.2.2
+
+/-- **A slot every sufficiently grown synchronous execution commits.**
+
+The conclusion the recurrence results share. Naming it keeps their
+quantifier order visible — the slot is fixed by the schedule alone,
+before any execution is named — and keeps production and coverage as the
+two separate hypotheses they are, rather than bundling them. -/
+def CommitsAt (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
+    [S : Slots Validator] (T : Finset Validator) (R k : ℕ) : Prop :=
+  ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+    (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
+    S.slotRound k + 2 ≤ N →
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
 
 /-! ## L6 — commits recur
 
@@ -674,10 +706,7 @@ slot is fixed by the schedule alone, and any DAG grown past it commits it. -/
 theorem commits_recur_on (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card) (fair : FairScheduleOn T) (R : ℕ) (k : ℕ) :
     ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
-        S.slotRound k' + 2 ≤ N →
-        ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
+      CommitsAt BlockId Payload T R k' := by
   -- Some slot `k₀` already sits past round `R` (`unbounded`), and every slot
   -- from `k₀` on sits at least as late (`mono`). That is all this needs; the
   -- old proof got the same from `3 * k ≤ slotRound k`, which a pipelined or
@@ -692,18 +721,12 @@ theorem commits_recur_on (hT : T ⊆ (Correct : Finset Validator))
   -- This is the one place `T ⊆ Correct` is genuinely needed: L4 alone cares
   -- only about `T.card`, but its population has to come from somewhere, and
   -- the only source is L1, which knows about correct validators.
-  exact decided_of_leader_mem hcard hs hRk'
-    (PopulatedOn.mono hT (hpop _ (by omega)))
-    (PopulatedOn.mono hT (hpop _ (by omega)))
-    (PopulatedOn.mono hT (hpop _ (by omega))) hlead
+  exact decided_of_leader_of_populated hT hcard hs hRk' hpop (by omega) hlead
 
 /-- **L6 at `T := Correct`.** The original statement, recovered. -/
 theorem commits_recur (fair : FairSchedule (Validator := Validator)) (R : ℕ) (k : ℕ) :
     ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → Synchronised U R →
-        S.slotRound k' + 2 ≤ N →
-        ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) :=
+      CommitsAt BlockId Payload (Correct : Finset Validator) R k' :=
   commits_recur_on Finset.Subset.rfl card_correct fair R k
 
 /-! ## L8 — no undecided slot below a commit
@@ -1048,10 +1071,7 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     -- the run's last slot bounds the horizon needed for `j`
     have hjr : S.slotRound j ≤ S.slotRound (b + c - 1) := S.mono hj2
     obtain ⟨L, _, hdec⟩ :=
-      decided_of_leader_mem hcard hs hRj
-        (PopulatedOn.mono hT (hpop _ (by omega)))
-        (PopulatedOn.mono hT (hpop _ (by omega)))
-        (PopulatedOn.mono hT (hpop _ (by omega))) hlead
+      decided_of_leader_of_populated hT hcard hs hRj hpop (by omega) hlead
     exact ⟨L, hdec⟩
   exact decided_below_of_committed_run (by omega) (fun i hi => hspan b i hi) hrun
 

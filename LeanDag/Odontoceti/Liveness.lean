@@ -93,6 +93,20 @@ theorem decided_of_leader_mem
     directCommit_of_leader_mem hcard hs hR hpop0 hpop1 hlead
   exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_full hdc)⟩
 
+/-- **O7 against a horizon**, the two-round counterpart of
+`decided_of_leader_of_populated`: the rule needs the leader's round and
+the one above it, so two rounds are read off the horizon rather than
+three. -/
+theorem decided_of_leader_of_populated (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
+    (hpop : ∀ r ≤ N, Populated U r) (hN : S.slotRound k + 1 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) :=
+  decided_of_leader_mem hcard hs hR
+    (PopulatedOn.mono hT (hpop _ (by omega)))
+    (PopulatedOn.mono hT (hpop _ (by omega))) hlead
+
 /-- The same at `T := Correct`. -/
 theorem decided_of_correct_leader (hs : Synchronised U R)
     (hR : R ≤ S.slotRound k)
@@ -212,10 +226,8 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
       rwa [Nat.add_sub_cancel' hj1] at this
     have hRj : R ≤ S.slotRound j := le_trans hRb (S.mono hj1)
     have hjr : S.slotRound j ≤ S.slotRound (b + c - 1) := S.mono (by omega)
-    obtain ⟨L, _, hdec⟩ := decided_of_leader_mem hcard hs hRj
-      (PopulatedOn.mono hT (hpop _ (by omega)))
-      (PopulatedOn.mono hT (hpop _ (by omega)))
-      hlead
+    obtain ⟨L, _, hdec⟩ :=
+      decided_of_leader_of_populated hT hcard hs hRj hpop (by omega) hlead
     exact ⟨L, hdec⟩
   exact decided_below_of_committed_run (by omega)
     (fun i hi => hspan b i hi) hrun

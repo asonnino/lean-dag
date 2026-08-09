@@ -70,10 +70,8 @@ theorem committed_of_correct_block_within
   have hRk' : R ≤ S.slotRound k' := by omega
   refine ⟨k', hk₁, hk₂, hm, hRk', ?_⟩
   intro U N hpop hs hN
-  obtain ⟨L, hLb, hdec⟩ := decided_of_leader_mem hcard (hs.mono hT) hRk'
-    (PopulatedOn.mono hT (hpop _ (by omega)))
-    (PopulatedOn.mono hT (hpop _ (by omega)))
-    (PopulatedOn.mono hT (hpop _ (by omega))) hlead
+  obtain ⟨L, hLb, hdec⟩ :=
+    decided_of_leader_of_populated hT hcard (hs.mono hT) hRk' hpop (by omega) hlead
   refine ⟨L, hdec, ?_⟩
   intro b hb hbc hbr
   have hLc : (U.block L).creator ∈ (Correct : Finset Validator) := by
