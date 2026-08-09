@@ -189,7 +189,7 @@ def ugapGrowth (N : ℕ) : ViewGrowth (Uomit 2 N) (Correct : Finset (Fin 4)) 0 N
     simp only [uomit_ids, Finset.mem_range] at hb
     simp only [uomit_block, omitBlock_round]
     omega
-  waits _ _ _ _ := by omega
+  waits _ _ _ := by omega
   timeout_pos _ := by omega
   latest n := 3 + 4 * n
   built_le_latest v _ _ _ := by have := v.isLt; omega
@@ -301,7 +301,7 @@ theorem ugap_not_viewsConvergeOn {N : ℕ} (hN : 0 < N) :
   have h1 : (1 : Fin 4) ∈ (Correct : Finset (Fin 4)) := by decide
   have hb : (2 : ℕ) ∈ (ugapGrowth N).toDelivery.held 2 0 := by
     rw [ViewGrowth.mem_toDelivery]
-    refine ⟨?_, ?_, h2, hN⟩
+    refine ⟨?_, ?_, h2⟩
     · simp only [ugapGrowth, gapHolds, Finset.mem_filter, Finset.mem_range]
       exact ⟨by omega, Or.inr (Or.inl rfl)⟩
     · simp only [uomit_block, omitBlock_round]
@@ -367,7 +367,7 @@ def ustarveSync (N : ℕ) : ViewSync (Uomit 3 N) ({1, 2} : Finset (Fin 4)) N whe
   blk_round v hv n _ := by
     obtain ⟨_, _⟩ := mem_T12_bounds hv
     simp only [uomit_block, omitBlock_round]; omega
-  waits _ _ _ _ := by omega
+  waits _ _ _ := by omega
   timeout_pos _ := by omega
   latest n := 2 + 4 * n
   built_le_latest v hv _ _ := by obtain ⟨_, _⟩ := mem_T12_bounds hv; omega

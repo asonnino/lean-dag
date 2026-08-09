@@ -46,7 +46,7 @@ def ugrowSkewView (N : ℕ) : ViewSync (Ugrow N) {1, 2, 3} N where
   blk_mem := (ugrowSkew N).blk_mem
   blk_creator := (ugrowSkew N).blk_creator
   blk_round := (ugrowSkew N).blk_round
-  waits _ _ _ _ := by omega
+  waits _ _ _ := by omega
   timeout_pos _ := by omega
   latest n := 3 + 4 * n
   built_le_latest v _ _ _ := by have := v.isLt; omega
@@ -194,7 +194,7 @@ def ugrowSkewGrowth (N : ℕ) : ViewGrowth (Ugrow N) {1, 2, 3} 0 N where
   gst := 0
   delay := 2
   rounds_le := (ugrowSkew N).rounds_le
-  waits _ _ _ _ := by omega
+  waits _ _ _ := by omega
   timeout_pos _ := by omega
   latest n := 3 + 4 * n
   built_le_latest v _ _ _ := by have := v.isLt; omega
@@ -302,6 +302,35 @@ theorem ugrowCorrectGrowth_viewsConverge (N : ℕ) :
       omega)
     rfl (fun n => by change 2 + 2 ≤ 4; omega)
 
+/-- **N2a, derived on data.** The delivery induced by the witness satisfies
+eventual DAG synchrony from round `0` — including the topmost round, which
+is what `waits` reaching past the horizon buys. -/
+theorem ugrowCorrectGrowth_eventuallyDelivers (N : ℕ) :
+    EventuallyDelivers (ugrowCorrectGrowth N).toDelivery 0 :=
+  ViewGrowth.eventuallyDelivers_toDelivery (D := 2) _
+    (by
+      intro v hv w hw n _ _
+      rw [← ugrow_T_eq_correct] at hv hw
+      obtain ⟨_, _⟩ := mem_T_bounds hv
+      obtain ⟨_, _⟩ := mem_T_bounds hw
+      change (w : ℕ) + 4 * n ≤ ((v : ℕ) + 4 * n) + 2
+      omega)
+    (le_refl 0) (fun n _ => by change 2 + 2 ≤ 4; omega)
+
+/-- And L7a's conclusion follows, so the delivery route of §6.7 is
+available from view convergence. -/
+example (N : ℕ) : Synchronised (Ugrow N) 0 :=
+  ViewGrowth.synchronised_toDelivery (D := 2) (ugrowCorrectGrowth N)
+    (by
+      intro v hv w hw n _ _
+      rw [← ugrow_T_eq_correct] at hv hw
+      obtain ⟨_, _⟩ := mem_T_bounds hv
+      obtain ⟨_, _⟩ := mem_T_bounds hw
+      change (w : ℕ) + 4 * n ≤ ((v : ℕ) + 4 * n) + 2
+      omega)
+    (le_refl 0) (fun n _ => by change 2 + 2 ≤ 4; omega)
+
+#print axioms ugrowCorrectGrowth_eventuallyDelivers
 #print axioms ugrowCorrectGrowth_viewsConverge
 #print axioms ugrowSkewGrowth_populated
 #print axioms ugrowSkewGrowth_synchronised

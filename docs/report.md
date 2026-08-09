@@ -855,6 +855,18 @@ universe; and B, whose statement bundles growth with the storage bound
 and so asserts both under the same hypotheses. The storage half of B is
 independent of N1.
 
+**N2a is derivable from view convergence.** The delivery a `ViewGrowth`
+induces satisfies it — `ViewGrowth.eventuallyDelivers_toDelivery` — so the
+store facts below rest on the same single network assumption as coverage
+does, rather than on a second one. The derivation needs `waits` at every
+round rather than only below the horizon, which is the one clause
+`ViewGrowth` states more strongly than `Timing`: at round `N` the
+assumption speaks of a block being in hand when its holder builds for
+round `N+1`, and only a schedule that keeps honouring timeouts past `N`
+orders those two events. The horizon bounds the DAG, not the clock. L7a
+then follows for the induced delivery (`synchronised_toDelivery`), so all
+three routes of §§6.7–6.9 are available from view convergence alone.
+
 **N2's abstract form is used for five distinct things**, only the first
 of which is coverage: L7a (§6.7); the view-gap constant C3′ and hence the
 budget sandwich of §8.4; the accepted-quorum lemma above; the bound
@@ -3439,6 +3451,7 @@ Principal results only; supporting lemmas are omitted.
 | — | production from timed view convergence, from the GST crossing | `ViewGrowth`, `ViewGrowth.populatedOn` *(ViewSync)* |
 | — | the assumed production clause is the derived one, Skolemised | `exists_blk_of_populatedOn`, `ViewGrowth.toViewSync` *(ViewSync)* |
 | — | the untimed condition induced by the timed structure | `ViewGrowth.toDelivery`, `ViewsConvergeOn`, `viewsConvergeOn_toDelivery` *(ViewSync)* |
+| — | N2a and L7a derived from view convergence | `ViewGrowth.eventuallyDelivers_toDelivery`, `ViewGrowth.synchronised_toDelivery` *(ViewSync)* |
 | — | the bound in `converges` is necessary for coverage | `bound_is_necessary` *(LeanDagTest.Unbounded)* |
 | — | and its starting round is forced, not chosen | `ugap_not_viewsConvergeOn` *(LeanDagTest.Unbounded)* |
 | — | as is its reliable set: coverage over `T` derived, over `Correct` false | `reliable_set_is_forced` *(LeanDagTest.Unbounded)* |

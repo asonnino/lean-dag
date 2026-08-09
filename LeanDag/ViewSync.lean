@@ -654,8 +654,11 @@ structure ViewGrowth (U : BlockUniverse Validator BlockId Payload)
   gst : ℕ
   delay : ℕ
   rounds_le : ∀ b ∈ U.ids, (U.block b).round ≤ N
-  /-- **P9, the waiting rule** (protocol). -/
-  waits : ∀ v ∈ T, ∀ n < N, built v n + timeout n ≤ built v (n + 1)
+  /-- **P9, the waiting rule** (protocol), at every round rather than only
+  below the horizon. `N` bounds the DAG, not the clock: a schedule does
+  not stop honouring its timeouts at round `N`, and the extra round is
+  what lets the induced delivery below reach the topmost blocks. -/
+  waits : ∀ v ∈ T, ∀ n, built v n + timeout n ≤ built v (n + 1)
   timeout_pos : ∀ n, 1 ≤ timeout n
   latest : ℕ → ℕ
   built_le_latest : ∀ v ∈ T, ∀ n ≤ N, built v n ≤ latest n
@@ -745,11 +748,11 @@ theorem populatedOn (hcard : (Fintype.card Validator - F.f) ≤ T.card)
         obtain ⟨b, hb, hbc, hbr⟩ := hpop w hw
         refine mem_creatorsOf.mpr ⟨b, Finset.mem_filter.mpr ⟨?_, hbr⟩, hbc⟩
         have hown := vg.holds_own w hw (R + k) (by omega) b hb hbc hbr
-        have hle := le_built_of_waits vg.waits vg.timeout_pos hw (R + k) (by omega)
+        have hle := le_built_of_waits (N := N) (fun v hv n _ => vg.waits v hv n) vg.timeout_pos hw (R + k) (by omega)
         have hconv := vg.converges v hv w hw _ (by omega) hown
         refine vg.holds_mono v _ _ ?_ hconv
         have hdrift := hD v hv w hw (R + k) hRn (by omega)
-        have hwait := vg.waits v hv (R + k) (by omega)
+        have hwait := vg.waits v hv (R + k)
         have hto := hbackoff (R + k) hRn
         omega
   intro n hRn hn
@@ -781,7 +784,7 @@ noncomputable def toViewSync [Nonempty BlockId]
     blk_mem := hb.choose_spec.1
     blk_creator := hb.choose_spec.2.1
     blk_round := hb.choose_spec.2.2
-    waits := vg.waits
+    waits := fun v hv n _ => vg.waits v hv n
     timeout_pos := vg.timeout_pos
     latest := vg.latest
     built_le_latest := vg.built_le_latest
@@ -871,12 +874,12 @@ be claimed — `converges` and `holds_own` quantify over `T`, and no block
 exists above `N`. -/
 def toDelivery : Delivery U where
   held v n := (vg.holds v (vg.built v (n + 1))).filter
-    fun b => (U.block b).round = n ∧ v ∈ T ∧ n < N
+    fun b => (U.block b).round = n ∧ v ∈ T
   held_spec v n i hi := by
     simp only [Finset.mem_filter] at hi
     exact ⟨vg.holds_sub _ _ hi.1, hi.2.1⟩
   accepted v n := (vg.holds v (vg.built v (n + 1))).filter
-    fun b => ((U.block b).round = n ∧ v ∈ T ∧ n < N) ∧
+    fun b => ((U.block b).round = n ∧ v ∈ T) ∧
       (U.block b).creator ∈ (Correct : Finset Validator)
   accepted_sub v n i hi := by
     simp only [Finset.mem_filter] at hi ⊢
@@ -890,14 +893,16 @@ def toDelivery : Delivery U where
     exact ⟨ha.1, ha.2, hac⟩
   includes v _ n b hb hbc hbr a ha := by
     simp only [Finset.mem_filter] at ha
-    obtain ⟨hamem, ⟨har, hvT, hnN⟩, _⟩ := ha
+    obtain ⟨hamem, ⟨har, hvT⟩, _⟩ := ha
+    -- above the horizon there is no such `b`, so the clause is vacuous
+    have hnN : n < N := by have := vg.rounds_le b hb; omega
     exact vg.references v hvT n hnN b hb hbc hbr a hamem har
 
 omit [DecidableEq BlockId] in
 /-- Membership in the induced delivery, unfolded. -/
 theorem mem_toDelivery {v : Validator} {n : ℕ} {b : BlockId} :
     b ∈ vg.toDelivery.held v n ↔
-      b ∈ vg.holds v (vg.built v (n + 1)) ∧ (U.block b).round = n ∧ v ∈ T ∧ n < N := by
+      b ∈ vg.holds v (vg.built v (n + 1)) ∧ (U.block b).round = n ∧ v ∈ T := by
   simp only [toDelivery, Finset.mem_filter, and_assoc]
 
 /-- **The untimed condition, derived.** From `R` on, the induced delivery
@@ -914,28 +919,76 @@ theorem viewsConvergeOn_toDelivery
     ViewsConvergeOn vg.toDelivery T R := by
   intro v hv w hw n hRn b hb hbT
   rw [mem_toDelivery] at hb
-  obtain ⟨hbmem, hbr, -, hnN⟩ := hb
+  obtain ⟨hbmem, hbr, -⟩ := hb
   have hbids := vg.holds_sub _ _ hbmem
+  have hnN : n ≤ N := by have := vg.rounds_le b hbids; omega
   rw [mem_toDelivery]
-  refine ⟨?_, hbr, hw, hnN⟩
-  have hown := vg.holds_own _ hbT n (by omega) b hbids rfl hbr
-  have hle := le_built_of_waits vg.waits vg.timeout_pos hbT n (by omega)
+  refine ⟨?_, hbr, hw⟩
+  have hown := vg.holds_own _ hbT n hnN b hbids rfl hbr
+  have hle := le_built_of_waits (N := N) (fun v hv n _ => vg.waits v hv n) vg.timeout_pos hbT n (by omega)
   have hconv := vg.converges w hw _ hbT _ (by omega) hown
   refine vg.holds_mono w _ _ ?_ hconv
   have hdrift := hD w hw _ hbT n hRn (by omega)
-  have hwait := vg.waits w hw n hnN
+  have hwait := vg.waits w hw n
   have hto := hbackoff n hRn
   omega
 
 /-- A validator holds its own block when it builds the next, in the
 induced delivery — `HoldsOwn` relative to `T`. -/
-theorem holdsOwn_toDelivery {v : Validator} (hv : v ∈ T) {n : ℕ} (hn : n < N)
+theorem holdsOwn_toDelivery {v : Validator} (hv : v ∈ T) {n : ℕ} (hn : n ≤ N)
     {b : BlockId} (hb : b ∈ U.ids) (hbc : (U.block b).creator = v)
     (hbr : (U.block b).round = n) : b ∈ vg.toDelivery.held v n := by
   rw [mem_toDelivery]
-  refine ⟨vg.holds_mono v _ _ ?_ (vg.holds_own v hv n (by omega) b hb hbc hbr),
-    hbr, hv, hn⟩
-  exact le_trans (Nat.le_add_right _ _) (vg.waits v hv n hn)
+  refine ⟨vg.holds_mono v _ _ ?_ (vg.holds_own v hv n hn b hb hbc hbr), hbr, hv⟩
+  exact le_trans (Nat.le_add_right _ _) (vg.waits v hv n)
+
+/-- **`HoldsOwn`, in full.** With `T = Correct` the induced delivery
+satisfies the clause outright, at every round: above the horizon no block
+exists, and at the horizon itself `waits` still applies. -/
+theorem holdsOwn_toDelivery' (vg : ViewGrowth U (Correct : Finset Validator) R N) :
+    HoldsOwn vg.toDelivery := by
+  intro v hv n b hb hbc hbr
+  have hnN : n ≤ N := by have := vg.rounds_le b hb; omega
+  exact vg.holdsOwn_toDelivery hv hnN hb hbc hbr
+
+/-- **N2a, derived.** The induced delivery satisfies eventual DAG
+synchrony from `R` on — the assumption of §6.7, obtained from view
+convergence and the schedule.
+
+The horizon is no longer an obstruction. `EventuallyDelivers` quantifies
+over every round, including `N`, where it asserts that a correct round-`N`
+block is in hand when its holder builds for round `N+1`; `waits` reaching
+past the horizon is exactly what supplies that step, and above `N` the
+statement is vacuous because no block exists there. -/
+theorem eventuallyDelivers_toDelivery
+    (vg : ViewGrowth U (Correct : Finset Validator) R N)
+    (hD : DriftOn vg.built (Correct : Finset Validator) R D N) (hgst : vg.gst ≤ R)
+    (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) :
+    EventuallyDelivers vg.toDelivery R := by
+  intro n hRn v hv a ha har hac
+  have hnN : n ≤ N := by have := vg.rounds_le a ha; omega
+  rw [mem_toDelivery]
+  refine ⟨?_, har, hv⟩
+  have hown := vg.holds_own _ hac n hnN a ha rfl har
+  have hle := le_built_of_waits (N := N) (fun v hv n _ => vg.waits v hv n)
+    vg.timeout_pos hac n hnN
+  have hconv := vg.converges v hv _ hac _ (by omega) hown
+  refine vg.holds_mono v _ _ ?_ hconv
+  have hdrift := hD v hv _ hac n hRn hnN
+  have hwait := vg.waits v hv n
+  have hto := hbackoff n hRn
+  omega
+
+/-- **And hence coverage, the second way.** `synchronised_of_delivery`
+(L7a) applies to the induced delivery, so the delivery route's conclusion
+is available from view convergence too — the three routes of §6.7–§6.9
+meet. -/
+theorem synchronised_toDelivery
+    (vg : ViewGrowth U (Correct : Finset Validator) R N)
+    (hD : DriftOn vg.built (Correct : Finset Validator) R D N) (hgst : vg.gst ≤ R)
+    (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) :
+    Synchronised U R :=
+  synchronised_of_delivery _ (vg.eventuallyDelivers_toDelivery hD hgst hbackoff)
 
 /-- **The bridge, at the untimed condition's own parameters.** When the
 reliable set is all of `Correct` and stabilisation has already happened,
