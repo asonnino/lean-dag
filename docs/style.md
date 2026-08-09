@@ -10,6 +10,17 @@
 Conventions for the documents and the source, derived from the editing
 passes that produced them. The rules are few; the examples are the point.
 
+## 0. What is governed by what
+
+`report.md` is the academic artifact and is held to all four sections
+below. The companion documents — `spec.md`, `liveness.md`, `garbage.md`,
+`odontoceti.md`, `chain-quality.md`, `related.md` and the rest — are
+technical records of a completed development: they are held to §2–§4 and
+to the final-state rule in §1, but their register may be more informal
+than the report's. They predate this guide and still contain several of
+the phrases tabulated below; the substitutions are owed at their next
+revision, not as a separate sweep.
+
 ## 1. Register
 
 `report.md` is an academic report. It states results; it does not narrate
@@ -102,14 +113,17 @@ here"*. Naming which hypothesis a result consumes, and where.
 
 ## 4. Before committing a document change
 
-Four checks, all cheap:
+Four checks. The first two are mechanical:
+
+    scripts/audit-report.py
 
 1. **Cross-references resolve.** Every `§n.m` names a section that
-   exists.
-2. **Identifiers resolve.** Every backticked Lean name appears in the
-   built library. (Both checks are a short script over `report.md` and
-   the source; see the audits in the session history of
-   `scripts/depgraph.py`, which parses the same appendix.)
+   exists — the usual casualty of renumbering.
+2. **Identifiers resolve.** Every backticked Lean name is a declaration
+   of the built library. The declaration list comes from
+   `docs/depgraph/deps.tsv`, so **regenerate the extraction first**
+   (`docs/depgraph/README.md`); against a stale `deps.tsv` every result
+   added since it was written reports as unknown.
 3. **Claims are consistent with what was added.** New material commonly
    falsifies an older sentence — a count, a "these two are the whole
    of …", a "two routes" that has become three. Search for the numeral.

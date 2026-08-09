@@ -29,7 +29,7 @@ with no incoming arrow rests only on definitions and unlabelled lemmas.
 declaration of this development, records the constants appearing in its
 type **and in its body** — for a theorem, that body is the proof term, so
 the edges are the real proof structure rather than the statement's
-signature. Two details matter and both cost a debugging round:
+signature. Two details of the extraction matter:
 
 * `ConstantInfo.value?` returns `none` for imported theorems in this Lean
   version; the proof term must be reached by matching `.thmInfo`
@@ -57,7 +57,7 @@ three claims come out exactly as stated:
 * **`P3′` (`ValidWrt.self_parent`) has no outgoing edge in the core
   view**, and in the full view feeds only C1′, C3′, G1, G9 and G11 —
   precisely the report's claim that safety and liveness never consume the
-  self-parent clause and that it is load-bearing for the DoS and
+  self-parent clause and that it is required only by the DoS and
   garbage-collection arcs.
 * **`L7a ← N2a, P7` and `L7b ← N2b, P9, T1`** — the two derivations of
   eventual DAG synchrony, matching the §4.4 table row for row. The extra
@@ -65,7 +65,7 @@ three claims come out exactly as stated:
   validator's block with the one the timing structure names.
 * **`O5 ← O1, O1′, O2, O3, O4′`** — Odontoceti's agreement rests on
   exactly the four counting theorems plus twin uniqueness, as §10.3
-  claims, and `O4′` is visibly load-bearing rather than decorative.
+  claims, and `O4′` is genuinely consumed rather than decorative.
 
 ## PDFs
 

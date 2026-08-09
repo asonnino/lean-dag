@@ -72,6 +72,10 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 - `docs/` — the design records and the report. `docs/build-pdf.sh`
   compiles them to `docs/pdf/` — requires `pandoc` and `typst`
   (`brew install pandoc typst`).
+- `scripts/` — `DepGraph.lean` and `depgraph.py` extract and draw the
+  support diagrams (`docs/depgraph/README.md`); `svg2pdf.sh` renders them
+  to PDF; `audit-report.py` checks the report's cross-references and Lean
+  identifiers against the compiled library.
 
 ## Documents
 
