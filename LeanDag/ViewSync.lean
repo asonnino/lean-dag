@@ -285,6 +285,95 @@ end Liveness
 
 end ViewSync
 
+/-! ## Factoring the bound
+
+`converges` is partial synchrony in its usual two-part shape, and the
+parts can be separated. Qualitatively, holdings converge at all —
+whatever one correct validator holds, every correct validator holds
+*some time later*, with no claim about when. Quantitatively, from `gst`
+on that lag is uniformly at most `delay`.
+
+`convergesWithin_iff_bounded` is the factoring: under monotone holdings,
+convergence-with-a-bound is exactly eventual convergence whose lag is
+uniformly bounded after `gst`. So
+
+> **view convergence under synchrony  =  view convergence  +  a bound on
+> the lag.**
+
+The bound is not decoration. Eventual convergence alone cannot yield
+reference coverage, for the reason `covers_of_converges` makes visible:
+the block must be in the builder's hands *before it builds*, and the only
+way to arrange that is to choose a timeout exceeding the lag. A lag that
+merely exists cannot be compared with a timeout; a lag bounded by `delay`
+can, and `D + delay ≤ timeout n` is where the comparison happens. This is
+also why the bound is asserted only from `gst`: before it there is
+nothing for a timeout to clear, which is precisely the content of partial
+synchrony. -/
+
+section Factoring
+
+variable {holds : Validator → ℕ → Finset BlockId} {gst bound : ℕ}
+
+/-- **The qualitative half.** Holdings converge: whatever `w` holds at `t`,
+`v` holds at some later time. No bound and no GST. -/
+def ConvergesEventually (holds : Validator → ℕ → Finset BlockId)
+    (T : Finset Validator) : Prop :=
+  ∀ v ∈ T, ∀ w ∈ T, ∀ t, ∃ d, holds w t ⊆ holds v (t + d)
+
+/-- **The quantitative half.** From `gst` on, that lag is at most `bound` —
+and uniformly so, in the validators and in the time. This is exactly the
+`converges` field of `ViewSync`. -/
+def ConvergesWithin (holds : Validator → ℕ → Finset BlockId)
+    (T : Finset Validator) (gst bound : ℕ) : Prop :=
+  ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + bound)
+
+/-- The `converges` field *is* the bounded form — the definition is the
+field, unfolded. -/
+theorem ViewSync.convergesWithin (vs : ViewSync U T N) :
+    ConvergesWithin vs.holds T vs.gst vs.delay := vs.converges
+
+/-- A bounded lag is a lag: the timed form implies the untimed one, even
+before `gst`, since holdings only grow. -/
+theorem convergesEventually_of_within
+    (hmono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t)
+    (h : ConvergesWithin holds T gst bound) :
+    ConvergesEventually holds T := by
+  intro v hv w hw t
+  refine ⟨(gst - t) + bound, ?_⟩
+  refine le_trans (hmono w t (max t gst) (le_max_left _ _)) ?_
+  refine le_trans (h v hv w hw (max t gst) (le_max_right _ _)) ?_
+  exact hmono v _ _ (by omega)
+
+/-- And conversely: eventual convergence whose lag is uniformly bounded
+after `gst` *is* convergence within that bound. The two together are
+`converges`, and neither half alone is. -/
+theorem convergesWithin_of_bounded
+    (hmono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t)
+    (h : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t →
+      ∃ d ≤ bound, holds w t ⊆ holds v (t + d)) :
+    ConvergesWithin holds T gst bound := by
+  intro v hv w hw t ht
+  obtain ⟨d, hd, hsub⟩ := h v hv w hw t ht
+  exact le_trans hsub (hmono v _ _ (by omega))
+
+/-- **The factoring.** Under monotone holdings, convergence within a bound
+and bounded eventual convergence are the same condition. -/
+theorem convergesWithin_iff_bounded
+    (hmono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t) :
+    ConvergesWithin holds T gst bound ↔
+      (∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t →
+        ∃ d ≤ bound, holds w t ⊆ holds v (t + d)) :=
+  ⟨fun h v hv w hw t ht => ⟨bound, le_refl _, h v hv w hw t ht⟩,
+   convergesWithin_of_bounded hmono⟩
+
+/-- Every `ViewSync` converges in the qualitative sense too — the bound is
+extra information, not a different phenomenon. -/
+theorem ViewSync.convergesEventually (vs : ViewSync U T N) :
+    ConvergesEventually vs.holds T :=
+  convergesEventually_of_within vs.holds_mono vs.converges
+
+end Factoring
+
 /-! ## The untimed variant
 
 `ViewSync.converges` still mentions a clock: `holds w t ⊆ holds v (t + delay)`
