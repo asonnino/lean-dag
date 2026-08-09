@@ -160,6 +160,116 @@ example (N : ℕ) : ∀ r ≤ N, Populated (Ugrow N) r :=
   populated_of_viewsConverge (ugrowHonest_live N)
     (ugrowHonest_viewsConverge N) (ugrowHonest_holdsOwn N)
 
+/-! ## Production derived, witnessed
+
+`ugrowSkewGrowth` is `ugrowSkewView` with `blk` deleted: it asserts no
+blocks at all beyond round `0`, and instead carries the build rule. The
+population of every round is then a *theorem* about it
+(`ugrowSkewGrowth_populated`), and `toViewSync` recovers the structure
+above — at the same constants, since none of the timing data changed.
+
+The two generalised clauses are what make this satisfiable: `holds_own`
+and `references` are discharged for an arbitrary authored block rather
+than for `blk v n`, which in this model is the observation that a block's
+id determines its author and round. -/
+
+/-- Every validator has a block at every round of `Ugrow` — the fact both
+`base` and `builds` need, at `T = {1,2,3}` rather than at `Correct`. -/
+theorem ugrow_populatedOn {N r : ℕ} (hr : r ≤ N) :
+    PopulatedOn (Ugrow N) {1, 2, 3} r := by
+  intro v _
+  have hv := v.isLt
+  refine ⟨4 * r + (v : ℕ), ?_, ?_, ?_⟩
+  · simp only [ugrow_ids, Finset.mem_range]; omega
+  · apply Fin.ext
+    simp only [ugrow_block, growBlock_creator_val]
+    omega
+  · simp only [ugrow_block, growBlock_round]; omega
+
+/-- The view-level witness with production removed. `base` covers round
+`0` only; every later round is derived. -/
+def ugrowSkewGrowth (N : ℕ) : ViewGrowth (Ugrow N) {1, 2, 3} 0 N where
+  built v n := (v : ℕ) + 4 * n
+  timeout _ := 4
+  gst := 0
+  delay := 2
+  rounds_le := (ugrowSkew N).rounds_le
+  waits _ _ _ _ := by omega
+  timeout_pos _ := by omega
+  latest n := 3 + 4 * n
+  built_le_latest v _ _ _ := by have := v.isLt; omega
+  latest_mem _ _ := ⟨3, by decide, le_refl _⟩
+  prompt _ _ _ _ := le_max_left _ _
+  holds := skewHolds N
+  holds_own v hv n _ b hb hbc hbr := by
+    have hv4 := v.isLt
+    obtain ⟨h1, h3⟩ := mem_T_bounds hv
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, growBlock_round] at hbr
+    have hbc' : b % 4 = (v : ℕ) := by
+      have := congrArg (fun (x : Fin 4) => (x : ℕ)) hbc
+      simpa using this
+    simp only [skewHolds, Finset.mem_filter, Finset.mem_range]
+    exact ⟨hb, Or.inr ⟨hbc', by omega⟩⟩
+  holds_mono v s t hst := by
+    intro b hb
+    simp only [skewHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
+    exact ⟨hb.1, by omega⟩
+  converges v _ w _ t _ := by
+    intro b hb
+    simp only [skewHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
+    exact ⟨hb.1, Or.inl (by omega)⟩
+  references v hv n _ c hc _ hcr a ha har := by
+    have hv4 := v.isLt
+    obtain ⟨h1, h3⟩ := mem_T_bounds hv
+    simp only [ugrow_ids, Finset.mem_range] at hc
+    simp only [ugrow_block, growBlock_round] at hcr har
+    simp only [skewHolds, Finset.mem_filter, Finset.mem_range] at ha
+    simp only [ugrow_block, mem_growBlock_refs]
+    omega
+  base n hn := ugrow_populatedOn (by omega)
+  builds v _ n _ hn _ := by
+    have hv4 := v.isLt
+    refine ⟨4 * (n + 1) + (v : ℕ), ?_, ?_, ?_⟩
+    · simp only [ugrow_ids, Finset.mem_range]; omega
+    · apply Fin.ext
+      simp only [ugrow_block, growBlock_creator_val]
+      omega
+    · simp only [ugrow_block, growBlock_round]; omega
+
+/-- The drift, backoff and quorum side conditions, at the same constants
+as `ugrowSkewView`: drift `2`, `delay = 2`, `timeout = 4`. -/
+theorem ugrowSkewGrowth_drift (N : ℕ) :
+    DriftOn (ugrowSkewGrowth N).built {1, 2, 3} 0 2 N := by
+  intro v hv w hw n _ _
+  obtain ⟨_, _⟩ := mem_T_bounds hv
+  obtain ⟨_, _⟩ := mem_T_bounds hw
+  change (w : ℕ) + 4 * n ≤ ((v : ℕ) + 4 * n) + 2
+  omega
+
+/-- **Production, derived on data.** Every round of `Ugrow` is populated —
+proved from view convergence, the waiting rule and the build rule, on a
+structure that never asserts a block exists above round `0`. -/
+theorem ugrowSkewGrowth_populated (N : ℕ) :
+    ∀ n ≤ N, PopulatedOn (Ugrow N) {1, 2, 3} n :=
+  (ugrowSkewGrowth N).populatedOn (by decide) (ugrowSkewGrowth_drift N)
+    (le_refl 0) (fun n _ => by change 2 + 2 ≤ 4; omega)
+
+/-- And the reduction closes the circle: `toViewSync` yields a `ViewSync`
+with the same timing data, so `ugrowSkewView`'s conclusions are available
+without ever having assumed `blk`. -/
+example (N : ℕ) :
+    ((ugrowSkewGrowth N).toViewSync (by decide) (ugrowSkewGrowth_drift N)
+      (le_refl 0) (fun n _ => by change 2 + 2 ≤ 4; omega)).delay = 2 := rfl
+
+/-- **L7c with nothing assumed about production.** -/
+theorem ugrowSkewGrowth_synchronised (N : ℕ) :
+    SynchronisedOn (Ugrow N) {1, 2, 3} 0 :=
+  (ugrowSkewGrowth N).synchronisedOn_of_converges (by decide) (by decide)
+    (ugrowSkewGrowth_drift N) (le_refl 0) (fun n _ => by change 2 + 2 ≤ 4; omega)
+
+#print axioms ugrowSkewGrowth_populated
+#print axioms ugrowSkewGrowth_synchronised
 #print axioms ugrowSkewView_synchronised
 #print axioms LeanDag.ViewSync.commits_recur_of_converges
 #print axioms LeanDag.ViewSync.all_decided_below_of_converges

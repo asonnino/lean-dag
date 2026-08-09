@@ -135,9 +135,10 @@ proof effort with no corresponding proof content.
    nothing beyond standard partial synchrony. They form a hierarchy
    rather than a set of alternatives: the third derives the second, and states the
    network's contribution in a form containing no clause about what
-   validators do. On the same foundation, production is derived too
-   (`populated_of_viewsConverge`), so the entire liveness account can be
-   grounded on one view-shaped assumption.
+   validators do. On the same foundation, production is derived too —
+   untimed from round `0` (`populated_of_viewsConverge`), and timed from
+   the GST crossing (`ViewGrowth.populatedOn`) — so the entire liveness
+   account can be grounded on one view-shaped assumption.
 
 5. A precise account of the **trust boundary** (§4). What is assumed reduces to
    the fault bound and two network conditions; every other condition is a clause
@@ -704,7 +705,7 @@ the formulations are not as pure as their names suggest.
 
 | Role | What is wanted | Formulations |
 |:---|:---|:---|
-| **Production** | what exists is eventually obtained, so the DAG keeps growing | N1 (`DeliversQuorum`); or untimed view convergence (`ViewsConverge`) |
+| **Production** | what exists is eventually obtained, so the DAG keeps growing | N1 (`DeliversQuorum`); or view convergence, untimed (`ViewsConverge`) or timed (`converges`, from GST on) |
 | **Coverage** | after stabilisation, delivery is prompt enough that blocks reference one another | N2, in three forms: `converges` (views), `Timing.covers` (references), `EventuallyDelivers` (holdings) |
 
 Safety (§5) uses **none** of them: it holds under arbitrary asynchrony,
@@ -1660,6 +1661,83 @@ say a clock; with one, the split is exactly `converges` against `waits`,
 and `viewsAgree_of_converges` carries the unfused pair to what the
 untimed model must postulate.
 
+**Production, derived in the timed route as well.** The two routes appear
+to treat block production differently: the untimed one derives it, while
+the timed structures carry `blk`, a total function giving every
+`T`-validator a block at every round below the horizon. The difference is
+one of presentation. The three `blk` fields say exactly that every
+`v ∈ T` has a round-`n` block, which is `PopulatedOn U T n`; and a choice
+function extracted from `PopulatedOn` satisfies them, the choice being
+canonical because non-equivocation makes a correct validator's round-`n`
+block unique:
+
+```lean
+theorem exists_blk_of_populatedOn [Nonempty BlockId]
+    (hpop : ∀ n ≤ N, PopulatedOn U T n) :
+    ∃ blk : Validator → ℕ → BlockId,
+      (∀ v ∈ T, ∀ n ≤ N, blk v n ∈ U.ids) ∧
+      (∀ v ∈ T, ∀ n ≤ N, (U.block (blk v n)).creator = v) ∧
+      (∀ v ∈ T, ∀ n ≤ N, (U.block (blk v n)).round = n)
+```
+
+So `blk` is `PopulatedOn`, Skolemised, and the timed route may derive it
+instead. `ViewGrowth` is `ViewSync` with `blk` removed and the build rule
+put in its place:
+
+```lean
+structure ViewGrowth (U) (T : Finset Validator) (R N : ℕ) where
+  …                                        -- the schedule, as in `ViewSync`
+  holds_own : ∀ v ∈ T, ∀ n ≤ N, ∀ b ∈ U.ids,
+    (U.block b).creator = v → (U.block b).round = n → b ∈ holds v (built v n)
+  converges : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + delay)
+  references : ∀ v ∈ T, ∀ n < N, ∀ c ∈ U.ids,
+    (U.block c).creator = v → (U.block c).round = n + 1 →
+    ∀ a ∈ holds v (built v (n + 1)), (U.block a).round = n →
+    a ∈ (U.block c).refs
+  base : ∀ n ≤ R, PopulatedOn U T n
+  builds : ∀ v ∈ T, ∀ n, R ≤ n → n < N →
+    (Fintype.card Validator - F.f) ≤
+      (creatorsOf U.block
+        ((holds v (built v (n + 1))).filter fun b => (U.block b).round = n)).card →
+    ∃ b ∈ U.ids, (U.block b).creator = v ∧ (U.block b).round = n + 1
+```
+
+Two clauses had to be generalised, and they are exactly the two that
+mentioned `blk`: `holds_own` becomes a statement about any block a
+validator authored, and `references` about any block it authors at round
+`n+1`. Both are what one would state in any case, since non-equivocation
+makes the block unique; with them neither clause mentions the function
+being constructed, and the circularity is gone. `builds` is `Live.builds`
+with `D.accepted v n` replaced by the round-`n` part of the build-time
+view — the same rule, over the object this layer has.
+
+Production is then a theorem:
+
+```lean
+theorem ViewGrowth.populatedOn (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hD : DriftOn vg.built T R D N) (hgst : vg.gst ≤ R)
+    (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) :
+    ∀ n ≤ N, PopulatedOn U T n
+```
+
+by the induction of `populated_of_viewsConverge` run over the timed data:
+each `w ∈ T` authored a round-`n` block and holds it at `built w n`,
+which is past GST since rounds advance time; convergence puts it in `v`'s
+hands by `built w n + delay`, and drift, the wait and the backoff put that
+before `built v (n+1)`. So `v`'s build-time view carries a round-`n` block
+from every member of `T`, and `builds` applies. `ViewGrowth.toViewSync`
+then Skolemises the result, so every theorem of §§6.8–6.9 applies to a
+structure that assumed no blocks exist.
+
+**What remains asymmetric, and should.** `converges` says nothing below
+`gst`, so production is derivable only from a round `R` at or after the
+GST crossing, and `ViewGrowth` carries a `base` covering the rounds up to
+`R`. `ViewsConverge` is unconditional and drives production from round
+`0`. This residue is not a defect but the content of partial synchrony:
+before GST the network may deliver nothing, and no round need be
+populated. The two routes run the same induction and differ only in where
+it starts — `R = 0` untimed, `R` past GST timed.
+
 ### 6.10 The layering
 
 ![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §12 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
@@ -1692,12 +1770,17 @@ contribution in a form containing nothing the protocol does, which is why
 about views.
 
 *Assumed from derived* — the interface is `Populated`. Production may be
-assumed (the timing structures carry `blk`, a block per validator per
-round), or derived (N1 with P8, through L1, or view convergence with
-`HoldsOwn`, through `populated_of_viewsConverge`). Which side of this line
-a development stands on is a modelling choice rather than a theorem, and
-§4.3 keeps N1 precisely because deriving production from a *conditional
-quorum* hypothesis is the weaker and the implementable option.
+assumed, as `Timing` and `ViewSync` do in carrying `blk`, or derived:
+from N1 with P8 through L1; from untimed view convergence with `HoldsOwn`
+through `populated_of_viewsConverge`; or, in the timed setting, from
+`converges` with the build rule through `ViewGrowth.populatedOn`. The
+assumed form is not a different hypothesis but the derived one
+Skolemised, and `exists_blk_of_populatedOn` is the identification. What
+the three derivations differ in is where the induction may start: at
+round `0` for the two untimed ones, and only past GST for the timed one,
+since `converges` says nothing before it. §4.3 keeps N1 because deriving
+production from a *conditional quorum* hypothesis is the weaker and the
+implementable option.
 
 The routes may therefore be summarised by what each assumes and what it
 still owes:
@@ -1707,11 +1790,12 @@ still owes:
 | Delivery (§6.7) | `EventuallyDelivers` — build-time indexed | P7 | `Synchronised` |
 | Timing (§6.8) | `Timing.covers` — Δ after GST, concludes on `refs` | P9, drift | `SynchronisedOn` |
 | View convergence (§6.9) | `converges` — Δ after GST, over views | P7, P9, drift | `SynchronisedOn`, and the other two |
-| Untimed views (§6.9) | `ViewsConverge` — no bound, index-aligned | `HoldsOwn` | `Populated`, without N1 |
+| View growth (§6.9) | `converges`, with `blk` removed | P7, P8, P9, drift, a base below `R` | `SynchronisedOn` and `PopulatedOn`, from `R` on |
+| Untimed views (§6.9) | `ViewsConverge` — no bound, index-aligned | `HoldsOwn`, P8 | `Populated`, from round `0`, without N1 |
 
 Read downward, the first three are increasingly primitive statements of
-the same assumption; read across, the fourth is the only one that yields
-production rather than coverage.
+the same assumption; the last two yield production as well as coverage,
+and differ only in the round at which their common induction may start.
 
 ### 6.11 Quantitative results
 
@@ -2752,7 +2836,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Schedule.lean` | concrete schedules (`uniform`, `uniformSingle`); conservativity |
 | `Liveness.lean` | L0–L6, L7a; the committed-run results |
 | `Timing.lean` | L7b |
-| `ViewSync.lean` | L7c: view convergence, the reduction to `Timing`, the factoring of the bound, and the untimed variant |
+| `ViewSync.lean` | L7c: view convergence, the reduction to `Timing`, the factoring of the bound, the untimed variant, and production derived rather than assumed |
 | `Quantitative.lean` | L8, L9 |
 
 **The arcs** (§§8–10), each consuming the core read-only:
@@ -3232,6 +3316,8 @@ Principal results only; supporting lemmas are omitted.
 | — | build-time views agree | `ViewSync.ViewsAgree`, `ViewSync.viewsAgree_of_converges` *(ViewSync)* |
 | — | the bound factored out of convergence | `convergesWithin_iff_bounded` *(ViewSync)* |
 | — | production from untimed view convergence, without N1 | `ViewsConverge`, `populated_of_viewsConverge` *(ViewSync)* |
+| — | production from timed view convergence, from the GST crossing | `ViewGrowth`, `ViewGrowth.populatedOn` *(ViewSync)* |
+| — | the assumed production clause is the derived one, Skolemised | `exists_blk_of_populatedOn`, `ViewGrowth.toViewSync` *(ViewSync)* |
 | — | liveness on the view-convergence foundation | `ViewSync.commits_recur_of_converges`, `ViewSync.all_decided_below_of_converges` *(ViewSync)* |
 | — | drift is derived | `Timing.driftFrom_of_prompt` *(Timing)* |
 | L8a | the round of coverage, explicitly | `synchronisedOn_of_rate` *(Quantitative)* |

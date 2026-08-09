@@ -534,4 +534,274 @@ theorem populated_of_viewsConverge {N : ℕ} (H : Live U D N)
 
 end Untimed
 
+/-! ## Production, derived rather than assumed
+
+The two routes above appear to treat block production differently. The
+untimed one *derives* it (`populated_of_viewsConverge`), from the build
+rule P8 and convergence. The timed one appears to *assume* it: `blk` is a
+total function giving every `T`-validator a block at every round below the
+horizon, and `populatedOn` merely reads it off.
+
+The difference is one of presentation. `blk_mem`, `blk_creator` and
+`blk_round` say exactly that every `v ∈ T` has a round-`n` block, which is
+`PopulatedOn U T n`; and conversely a choice function extracted from
+`PopulatedOn` satisfies the three fields, the choice being canonical
+because non-equivocation (T1) makes a correct validator's round-`n` block
+unique. `exists_blk_of_populatedOn` is that direction. So `blk` is
+`PopulatedOn`, Skolemised.
+
+`ViewGrowth` is then `ViewSync` with `blk` removed and the build rule put
+in its place, and `toViewSync` derives what was previously assumed. Two
+fields have to be generalised for this to be possible, and they are
+exactly the two stated over `blk`:
+
+* `holds_own` becomes a statement about any block a validator authored,
+  not about `blk v n`;
+* `references` becomes a statement about any block a validator authors at
+  round `n+1`, not about `blk v (n+1)`.
+
+Both generalisations are what one would state anyway — non-equivocation
+makes the block in question unique — and with them the circularity is
+gone: neither clause mentions the function being constructed.
+
+**What remains asymmetric, and should.** `converges` says nothing below
+`gst`, so production is derivable only from a round `R` at or after the
+GST crossing, whereas `ViewsConverge` is unconditional and drives
+production from round 0. `ViewGrowth` therefore carries a `base` covering
+rounds up to `R`. The residue is not a defect of the development but the
+content of partial synchrony: before GST the network may deliver nothing
+and no round need be populated. The two routes run the same induction and
+differ only in where it starts — `R = 0` untimed, `R` past GST timed.
+-/
+
+section Production
+
+variable {R D : ℕ}
+
+/-- Drift over a build schedule alone. `Timing.DriftFrom` is this
+predicate at `tm.built`, which is all that definition mentions; naming it
+separately lets the production argument state the hypothesis before any
+`Timing` exists — and none can exist until `blk` is available. -/
+def DriftOn (built : Validator → ℕ → ℕ) (T : Finset Validator)
+    (R D N : ℕ) : Prop :=
+  ∀ v ∈ T, ∀ w ∈ T, ∀ n, R ≤ n → n ≤ N → built w n ≤ built v n + D
+
+theorem Timing.driftFrom_iff_driftOn (tm : Timing U T N) :
+    tm.DriftFrom R D ↔ DriftOn tm.built T R D N := Iff.rfl
+
+omit [DecidableEq BlockId] in
+/-- Rounds advance real time — `Timing.le_built`'s argument over a
+schedule alone, for the same reason. -/
+theorem le_built_of_waits {built : Validator → ℕ → ℕ} {timeout : ℕ → ℕ}
+    (waits : ∀ v ∈ T, ∀ n < N, built v n + timeout n ≤ built v (n + 1))
+    (timeout_pos : ∀ n, 1 ≤ timeout n) {v : Validator} (hv : v ∈ T) :
+    ∀ n ≤ N, n ≤ built v n := by
+  intro n
+  induction n with
+  | zero => intro _; omega
+  | succ n ih =>
+      intro hn
+      have hw := waits v hv n (by omega)
+      have := timeout_pos n
+      have := ih (by omega)
+      omega
+
+omit [DecidableEq BlockId] in
+/-- **`blk` is `PopulatedOn`, Skolemised.** A population of every round
+below the horizon yields a function naming one block per validator per
+round, satisfying the three `blk` fields of `Timing` and `ViewSync`.
+
+The converse is those fields read directly, so the timed structure's
+production clause and the untimed route's conclusion are the same
+proposition in two presentations. Non-equivocation is not needed for this
+direction — any choice will do — but it is what makes the choice
+canonical, and `synchronisedOn_of_timing` relies on that when it
+identifies an arbitrary `T`-authored block with the one `blk` names. -/
+theorem exists_blk_of_populatedOn [Nonempty BlockId]
+    (hpop : ∀ n ≤ N, PopulatedOn U T n) :
+    ∃ blk : Validator → ℕ → BlockId,
+      (∀ v ∈ T, ∀ n ≤ N, blk v n ∈ U.ids) ∧
+      (∀ v ∈ T, ∀ n ≤ N, (U.block (blk v n)).creator = v) ∧
+      (∀ v ∈ T, ∀ n ≤ N, (U.block (blk v n)).round = n) := by
+  classical
+  have h : ∀ p : Validator × ℕ, ∃ b : BlockId, p.1 ∈ T → p.2 ≤ N →
+      b ∈ U.ids ∧ (U.block b).creator = p.1 ∧ (U.block b).round = p.2 := by
+    rintro ⟨v, n⟩
+    by_cases hv : v ∈ T
+    · by_cases hn : n ≤ N
+      · obtain ⟨b, hb, hbc, hbr⟩ := hpop n hn v hv
+        exact ⟨b, fun _ _ => ⟨hb, hbc, hbr⟩⟩
+      · exact ⟨Classical.arbitrary BlockId, fun _ h => absurd h hn⟩
+    · exact ⟨Classical.arbitrary BlockId, fun h => absurd h hv⟩
+  obtain ⟨f, hf⟩ := Classical.skolem.mp h
+  exact ⟨fun v n => f (v, n),
+    fun v hv n hn => (hf (v, n) hv hn).1,
+    fun v hv n hn => (hf (v, n) hv hn).2.1,
+    fun v hv n hn => (hf (v, n) hv hn).2.2⟩
+
+/-- `ViewSync` with production removed and the build rule put in its
+place: the same network and protocol data, but the DAG's growth is a
+consequence rather than a hypothesis.
+
+Everything except `blk` is `ViewSync`'s, with `holds_own` and
+`references` generalised off `blk` as described above, plus the two
+clauses the induction needs: a `base` populating the rounds up to `R`,
+and `builds`, the timed counterpart of `Live.builds`. -/
+structure ViewGrowth (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (R N : ℕ) where
+  built : Validator → ℕ → ℕ
+  timeout : ℕ → ℕ
+  gst : ℕ
+  delay : ℕ
+  rounds_le : ∀ b ∈ U.ids, (U.block b).round ≤ N
+  /-- **P9, the waiting rule** (protocol). -/
+  waits : ∀ v ∈ T, ∀ n < N, built v n + timeout n ≤ built v (n + 1)
+  timeout_pos : ∀ n, 1 ≤ timeout n
+  latest : ℕ → ℕ
+  built_le_latest : ∀ v ∈ T, ∀ n ≤ N, built v n ≤ latest n
+  latest_mem : ∀ n ≤ N, ∃ w ∈ T, latest n ≤ built w n
+  /-- **P9, the promptness rule** (protocol). -/
+  prompt : ∀ v ∈ T, ∀ n < N,
+    built v (n + 1) ≤ max (built v n + timeout n) (latest n + delay)
+  holds : Validator → ℕ → Finset BlockId
+  /-- A validator holds every block it authored, from the time it builds
+  at that round. `ViewSync.holds_own` is this at `blk v n`. -/
+  holds_own : ∀ v ∈ T, ∀ n ≤ N, ∀ b ∈ U.ids,
+    (U.block b).creator = v → (U.block b).round = n → b ∈ holds v (built v n)
+  holds_mono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t
+  /-- **N2, as view convergence** (network). -/
+  converges : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + delay)
+  /-- **P7, referencing** (protocol), over any block the validator authors
+  at that round. `ViewSync.references` is this at `blk v (n+1)`. -/
+  references : ∀ v ∈ T, ∀ n < N, ∀ c ∈ U.ids,
+    (U.block c).creator = v → (U.block c).round = n + 1 →
+    ∀ a ∈ holds v (built v (n + 1)), (U.block a).round = n →
+    a ∈ (U.block c).refs
+  /-- Production up to `R` — the rounds view convergence says nothing
+  about, since they may precede GST. The untimed route's counterpart is
+  `Live.genesis`, at `R = 0`. -/
+  base : ∀ n ≤ R, PopulatedOn U T n
+  /-- **P8, the build rule** (protocol). A validator holding a quorum of
+  distinct authors at round `n`, among what it has in hand when it builds
+  for round `n+1`, produces a block there. This is `Live.builds` with
+  `D.accepted v n` replaced by the round-`n` part of the build-time
+  view. -/
+  builds : ∀ v ∈ T, ∀ n, R ≤ n → n < N →
+    (Fintype.card Validator - F.f) ≤
+      (creatorsOf U.block
+        ((holds v (built v (n + 1))).filter fun b => (U.block b).round = n)).card →
+    ∃ b ∈ U.ids, (U.block b).creator = v ∧ (U.block b).round = n + 1
+
+namespace ViewGrowth
+
+variable (vg : ViewGrowth U T R N)
+
+/-- **Production, derived.** Every round below the horizon is populated,
+from view convergence, the waiting rule and the build rule — the timed
+counterpart of `populated_of_viewsConverge`, and the same induction.
+
+The step is the argument of `blk_mem_holds` run in the other direction:
+rather than moving a block that `blk` asserts exists, it moves the blocks
+the induction hypothesis provides. Each `w ∈ T` authored a round-`n`
+block, holds it at `built w n` (`holds_own`), which is past GST since
+rounds advance time; convergence puts it in `v`'s hands by
+`built w n + delay`, and drift, the wait and the backoff put that before
+`built v (n+1)`. So `v`'s build-time view contains a round-`n` block from
+every member of `T` — a quorum of distinct authors — and `builds`
+applies. -/
+theorem populatedOn (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hD : DriftOn vg.built T R D N) (hgst : vg.gst ≤ R)
+    (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) :
+    ∀ n ≤ N, PopulatedOn U T n := by
+  intro n
+  induction n with
+  | zero => intro _; exact vg.base 0 (Nat.zero_le _)
+  | succ n ih =>
+      intro hn
+      by_cases hR : n + 1 ≤ R
+      · exact vg.base (n + 1) hR
+      · have hRn : R ≤ n := by omega
+        have hpop := ih (by omega)
+        intro v hv
+        refine vg.builds v hv n hRn (by omega) (le_trans hcard (Finset.card_le_card ?_))
+        intro w hw
+        obtain ⟨b, hb, hbc, hbr⟩ := hpop w hw
+        refine mem_creatorsOf.mpr ⟨b, Finset.mem_filter.mpr ⟨?_, hbr⟩, hbc⟩
+        have hown := vg.holds_own w hw n (by omega) b hb hbc hbr
+        have hle := le_built_of_waits vg.waits vg.timeout_pos hw n (by omega)
+        have hconv := vg.converges v hv w hw _ (by omega) hown
+        refine vg.holds_mono v _ _ ?_ hconv
+        have hdrift := hD v hv w hw n hRn (by omega)
+        have hwait := vg.waits v hv n (by omega)
+        have hto := hbackoff n hRn
+        omega
+
+/-- **The unification.** A `ViewGrowth` *is* a `ViewSync`: production is
+recovered by Skolemising the population it derives, and the two clauses
+generalised off `blk` specialise back to it.
+
+So the timed route no longer assumes what the untimed route proves. Every
+result of this file and of `Timing.lean` applies to a `ViewGrowth` through
+this reduction, with N1 absent from both routes. -/
+noncomputable def toViewSync [Nonempty BlockId]
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hD : DriftOn vg.built T R D N) (hgst : vg.gst ≤ R)
+    (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) :
+    ViewSync U T N :=
+  let hb := exists_blk_of_populatedOn (U := U) (T := T) (N := N)
+    (vg.populatedOn hcard hD hgst hbackoff)
+  { blk := hb.choose
+    built := vg.built
+    timeout := vg.timeout
+    gst := vg.gst
+    delay := vg.delay
+    rounds_le := vg.rounds_le
+    blk_mem := hb.choose_spec.1
+    blk_creator := hb.choose_spec.2.1
+    blk_round := hb.choose_spec.2.2
+    waits := vg.waits
+    timeout_pos := vg.timeout_pos
+    latest := vg.latest
+    built_le_latest := vg.built_le_latest
+    latest_mem := vg.latest_mem
+    prompt := vg.prompt
+    holds := vg.holds
+    holds_own := fun v hv n hn =>
+      vg.holds_own v hv n hn _ (hb.choose_spec.1 v hv n hn)
+        (hb.choose_spec.2.1 v hv n hn) (hb.choose_spec.2.2 v hv n hn)
+    holds_mono := vg.holds_mono
+    converges := vg.converges
+    references := fun v hv n hn a ha har =>
+      vg.references v hv n hn _ (hb.choose_spec.1 v hv (n + 1) (by omega))
+        (hb.choose_spec.2.1 v hv (n + 1) (by omega))
+        (hb.choose_spec.2.2 v hv (n + 1) (by omega)) a ha har }
+
+@[simp] theorem toViewSync_built [Nonempty BlockId] (hcard) (hD) (hgst) (hbackoff) :
+    (vg.toViewSync (D := D) hcard hD hgst hbackoff).built = vg.built := rfl
+
+@[simp] theorem toViewSync_gst [Nonempty BlockId] (hcard) (hD) (hgst) (hbackoff) :
+    (vg.toViewSync (D := D) hcard hD hgst hbackoff).gst = vg.gst := rfl
+
+@[simp] theorem toViewSync_delay [Nonempty BlockId] (hcard) (hD) (hgst) (hbackoff) :
+    (vg.toViewSync (D := D) hcard hD hgst hbackoff).delay = vg.delay := rfl
+
+@[simp] theorem toViewSync_timeout [Nonempty BlockId] (hcard) (hD) (hgst) (hbackoff) :
+    (vg.toViewSync (D := D) hcard hD hgst hbackoff).timeout = vg.timeout := rfl
+
+/-- **L7c with production derived.** Reference coverage from view
+convergence, on a structure that assumes no blocks exist. -/
+theorem synchronisedOn_of_converges [Nonempty BlockId]
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hD : DriftOn vg.built T R D N) (hgst : vg.gst ≤ R)
+    (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) :
+    SynchronisedOn U T R :=
+  (vg.toViewSync hcard hD hgst hbackoff).synchronisedOn_of_converges hT
+    (D := D) (by intro v hv w hw n hn hN; exact hD v hv w hw n hn hN)
+    hgst hbackoff
+
+end ViewGrowth
+
+end Production
+
 end LeanDag
