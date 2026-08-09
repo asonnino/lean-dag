@@ -664,6 +664,10 @@ structure ViewGrowth (U : BlockUniverse Validator BlockId Payload)
   prompt : ∀ v ∈ T, ∀ n < N,
     built v (n + 1) ≤ max (built v n + timeout n) (latest n + delay)
   holds : Validator → ℕ → Finset BlockId
+  /-- Holdings are real blocks. `ViewSync` can leave this implicit because
+  `blk_mem` supplies it where it is needed; the induced delivery below
+  states it over arbitrary held ids, so it must be assumed. -/
+  holds_sub : ∀ v t, holds v t ⊆ U.ids
   /-- A validator holds every block it authored, from the time it builds
   at that round. `ViewSync.holds_own` is this at `blk v n`. -/
   holds_own : ∀ v ∈ T, ∀ n ≤ N, ∀ b ∈ U.ids,
@@ -818,6 +822,136 @@ theorem synchronisedOn_of_converges [Nonempty BlockId]
   (vg.toViewSync hcard hD hgst hbackoff hbelow).synchronisedOn_of_converges hT
     (D := D) (by intro v hv w hw n hn hN; exact hD v hv w hw n hn hN)
     hgst hbackoff
+
+end ViewGrowth
+
+/-! ### The untimed condition, induced
+
+`ViewsConverge` is stated over a `Delivery`, whose `held v n` is
+documented as *what `v` held from round `n` when it built its round-`n+1`
+block* — a build-time view. A `ViewGrowth` has exactly that, as
+`holds v (built v (n+1))`, so it induces a delivery, and the untimed
+condition becomes a theorem about it rather than a separate assumption.
+
+Two relativisations survive the passage, and both are forced. The induced
+delivery holds nothing outside `T` or above the horizon, because
+`converges` and `holds_own` say nothing there; and the derived condition
+runs from `R` on, because `converges` is silent below `gst`. So what is
+obtained is `ViewsConvergeOn T R`, of which `ViewsConverge` is the case
+`T = Correct`, `R = 0` — a hierarchy rather than an equivalence, in the
+same shape as the one between `converges` and `Timing.covers`. -/
+
+/-- `ViewsConverge` relative to a set and a starting round: what a
+`T`-validator holds when it builds for round `n` is held by every
+`T`-validator when it builds for round `n`, for `T`-authored blocks from
+round `R` on. -/
+def ViewsConvergeOn (D : Delivery U) (T : Finset Validator) (R : ℕ) : Prop :=
+  ∀ v ∈ T, ∀ w ∈ T, ∀ n, R ≤ n → ∀ b ∈ D.held v n,
+    (U.block b).creator ∈ T → b ∈ D.held w n
+
+omit [DecidableEq BlockId] in
+/-- At `T = Correct` and `R = 0` the relative condition is the original. -/
+theorem viewsConverge_of_viewsConvergeOn {D : Delivery U}
+    (h : ViewsConvergeOn D (Correct : Finset Validator) 0) : ViewsConverge D :=
+  fun v hv w hw n b hb hbc => h v hv w hw n (Nat.zero_le _) b hb hbc
+
+namespace ViewGrowth
+
+variable (vg : ViewGrowth U T R N)
+
+/-- **The delivery a timed structure induces.** `held` is the build-time
+view, cut to the round it is indexed by; `accepted` keeps the
+correct-authored part of it.
+
+Accepting conservatively is what makes `accepted_inj` true rather than a
+further assumption: two accepted blocks share an author only if that
+author is correct, and non-equivocation then identifies them. Outside `T`
+and above the horizon the delivery is empty, which is the most that can
+be claimed — `converges` and `holds_own` quantify over `T`, and no block
+exists above `N`. -/
+def toDelivery : Delivery U where
+  held v n := (vg.holds v (vg.built v (n + 1))).filter
+    fun b => (U.block b).round = n ∧ v ∈ T ∧ n < N
+  held_spec v n i hi := by
+    simp only [Finset.mem_filter] at hi
+    exact ⟨vg.holds_sub _ _ hi.1, hi.2.1⟩
+  accepted v n := (vg.holds v (vg.built v (n + 1))).filter
+    fun b => ((U.block b).round = n ∧ v ∈ T ∧ n < N) ∧
+      (U.block b).creator ∈ (Correct : Finset Validator)
+  accepted_sub v n i hi := by
+    simp only [Finset.mem_filter] at hi ⊢
+    exact ⟨hi.1, hi.2.1⟩
+  accepted_inj v n i hi j hj hij := by
+    simp only [Finset.mem_filter] at hi hj
+    exact U.eq_of_creator_eq (vg.holds_sub _ _ hi.1) (vg.holds_sub _ _ hj.1)
+      hi.2.2 rfl hij.symm (by rw [hi.2.1.1, hj.2.1.1])
+  accepts_correct v _ n a ha hac := by
+    simp only [Finset.mem_filter] at ha ⊢
+    exact ⟨ha.1, ha.2, hac⟩
+  includes v _ n b hb hbc hbr a ha := by
+    simp only [Finset.mem_filter] at ha
+    obtain ⟨hamem, ⟨har, hvT, hnN⟩, _⟩ := ha
+    exact vg.references v hvT n hnN b hb hbc hbr a hamem har
+
+omit [DecidableEq BlockId] in
+/-- Membership in the induced delivery, unfolded. -/
+theorem mem_toDelivery {v : Validator} {n : ℕ} {b : BlockId} :
+    b ∈ vg.toDelivery.held v n ↔
+      b ∈ vg.holds v (vg.built v (n + 1)) ∧ (U.block b).round = n ∧ v ∈ T ∧ n < N := by
+  simp only [toDelivery, Finset.mem_filter, and_assoc]
+
+/-- **The untimed condition, derived.** From `R` on, the induced delivery
+satisfies view convergence relative to `T`.
+
+The argument is `blk_mem_holds`'s, over a block the hypothesis supplies
+rather than one `blk` names: its author holds it when it builds
+(`holds_own`), that moment is past GST because rounds advance time,
+convergence carries it to `w` within `delay`, and drift, the wait and the
+backoff place that before `w` builds for the round above. -/
+theorem viewsConvergeOn_toDelivery
+    (hD : DriftOn vg.built T R D N) (hgst : vg.gst ≤ R)
+    (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) :
+    ViewsConvergeOn vg.toDelivery T R := by
+  intro v hv w hw n hRn b hb hbT
+  rw [mem_toDelivery] at hb
+  obtain ⟨hbmem, hbr, -, hnN⟩ := hb
+  have hbids := vg.holds_sub _ _ hbmem
+  rw [mem_toDelivery]
+  refine ⟨?_, hbr, hw, hnN⟩
+  have hown := vg.holds_own _ hbT n (by omega) b hbids rfl hbr
+  have hle := le_built_of_waits vg.waits vg.timeout_pos hbT n (by omega)
+  have hconv := vg.converges w hw _ hbT _ (by omega) hown
+  refine vg.holds_mono w _ _ ?_ hconv
+  have hdrift := hD w hw _ hbT n hRn (by omega)
+  have hwait := vg.waits w hw n hnN
+  have hto := hbackoff n hRn
+  omega
+
+/-- A validator holds its own block when it builds the next, in the
+induced delivery — `HoldsOwn` relative to `T`. -/
+theorem holdsOwn_toDelivery {v : Validator} (hv : v ∈ T) {n : ℕ} (hn : n < N)
+    {b : BlockId} (hb : b ∈ U.ids) (hbc : (U.block b).creator = v)
+    (hbr : (U.block b).round = n) : b ∈ vg.toDelivery.held v n := by
+  rw [mem_toDelivery]
+  refine ⟨vg.holds_mono v _ _ ?_ (vg.holds_own v hv n (by omega) b hb hbc hbr),
+    hbr, hv, hn⟩
+  exact le_trans (Nat.le_add_right _ _) (vg.waits v hv n hn)
+
+/-- **The bridge, at the untimed condition's own parameters.** When the
+reliable set is all of `Correct` and stabilisation has already happened,
+the induced delivery satisfies `ViewsConverge` outright — the assumption
+of the untimed route, obtained as a theorem of the timed one.
+
+The two hypotheses `T = Correct` and `R = 0` are carried in the type
+rather than assumed, since both are parameters of the structure. They are
+the exact price of the passage: outside `T` the timed structure says
+nothing, and below `gst` neither does the network. -/
+theorem viewsConverge_toDelivery (vg : ViewGrowth U (Correct : Finset Validator) 0 N)
+    (hD : DriftOn vg.built (Correct : Finset Validator) 0 D N) (hgst : vg.gst = 0)
+    (hbackoff : ∀ n, D + vg.delay ≤ vg.timeout n) :
+    ViewsConverge vg.toDelivery :=
+  viewsConverge_of_viewsConvergeOn
+    (vg.viewsConvergeOn_toDelivery hD (le_of_eq hgst) (fun n _ => hbackoff n))
 
 end ViewGrowth
 

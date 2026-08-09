@@ -201,6 +201,11 @@ def ugrowSkewGrowth (N : ℕ) : ViewGrowth (Ugrow N) {1, 2, 3} 0 N where
   latest_mem _ _ := ⟨3, by decide, le_refl _⟩
   prompt _ _ _ _ := le_max_left _ _
   holds := skewHolds N
+  holds_sub v t := by
+    intro b hb
+    simp only [skewHolds, Finset.mem_filter, Finset.mem_range] at hb
+    simp only [ugrow_ids, Finset.mem_range]
+    exact hb.1
   holds_own v hv n _ b hb hbc hbr := by
     have hv4 := v.isLt
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
@@ -270,6 +275,34 @@ theorem ugrowSkewGrowth_synchronised (N : ℕ) :
     (ugrowSkewGrowth_drift N) (le_refl 0) (fun n _ => by change 2 + 2 ≤ 4; omega)
     (fun n hn => absurd hn (by omega))
 
+/-! ### The untimed condition, induced on data
+
+`{1,2,3}` is exactly `Correct` in this model and `gst = 0`, so the witness
+meets the bridge's parameters and the untimed assumption comes out as a
+theorem about the delivery it induces. -/
+
+theorem ugrow_T_eq_correct : ({1, 2, 3} : Finset (Fin 4)) = Correct := by decide
+
+/-- The witness, retyped at `T = Correct` — the same structure, since the
+two sets are equal. -/
+def ugrowCorrectGrowth (N : ℕ) : ViewGrowth (Ugrow N) (Correct : Finset (Fin 4)) 0 N :=
+  ugrow_T_eq_correct ▸ ugrowSkewGrowth N
+
+/-- **`ViewsConverge`, derived from the timed structure**, on data: the
+untimed route's assumption, obtained as a theorem of the timed one. -/
+theorem ugrowCorrectGrowth_viewsConverge (N : ℕ) :
+    ViewsConverge (ugrowCorrectGrowth N).toDelivery :=
+  ViewGrowth.viewsConverge_toDelivery (D := 2) _
+    (by
+      intro v hv w hw n _ _
+      rw [← ugrow_T_eq_correct] at hv hw
+      obtain ⟨_, _⟩ := mem_T_bounds hv
+      obtain ⟨_, _⟩ := mem_T_bounds hw
+      change (w : ℕ) + 4 * n ≤ ((v : ℕ) + 4 * n) + 2
+      omega)
+    rfl (fun n => by change 2 + 2 ≤ 4; omega)
+
+#print axioms ugrowCorrectGrowth_viewsConverge
 #print axioms ugrowSkewGrowth_populated
 #print axioms ugrowSkewGrowth_synchronised
 #print axioms ugrowSkewView_synchronised
