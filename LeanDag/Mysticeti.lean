@@ -612,6 +612,23 @@ theorem eq_of_hasCertificate {k : ℕ} {L₁ L₂ : BlockId}
     L₁ = L₂ :=
   eq_of_certificates_nonempty h₁ h₂ (by rw [hL₁.2.2, hL₂.2.2])
 
+/-- **Visibility from an anchor.** A slot committed directly is certified
+at any eligible anchor above it: the anchor is a real block whose round
+the eligibility premise places far enough above the slot.
+
+The companion to `anchor_eq`, and the second of the two ideas in the
+agreement proof. Both rules use it to rule out the mixed cases, where one
+validator commits directly and the other skips indirectly: the skipper's
+own anchor is where the commit becomes visible, so its
+no-certificate premise cannot hold. -/
+theorem certifiedIn_of_directCommitIn_at_anchor
+    {V W : View Validator BlockId Payload U} {k j : ℕ} {L A : BlockId}
+    (h : DirectCommitIn U V L (S.slotRound k))
+    (hj : Decided U W j (some A)) (helig : Eligible Validator k j) :
+    CertifiedIn U A L (S.slotRound k) :=
+  certifiedIn_of_directCommitIn h (isLeaderBlock_of_decided hj).1
+    (isLeaderBlock_of_decided hj).2.1 helig
+
 /-- **The anchor comparison.** Two indirect decisions for one slot each
 name an anchor, together with the premise that every eligible slot
 strictly between the slot and that anchor was decided `none`. Whichever
@@ -682,8 +699,7 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ} {v₁
     | @indirectSkip _ j A _ helig hj _ hnone =>
       -- The engine: this commit is visible from the other validator's anchor.
       -- Their own eligibility premise is what puts it in range.
-      exact absurd (certifiedIn_of_directCommitIn h (isLeaderBlock_of_decided hj).1
-        (isLeaderBlock_of_decided hj).2.1 helig) (hnone _ hL)
+      exact absurd (certifiedIn_of_directCommitIn_at_anchor h hj helig) (hnone _ hL)
   | @directSkip k hskip =>
     intro V₂ v₂ h₂
     cases h₂ with
@@ -715,8 +731,7 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ} {v₁
     intro V₂ v₂ h₂
     cases h₂ with
     | directCommit hL₂ h₂ =>
-      exact absurd (certifiedIn_of_directCommitIn h₂ (isLeaderBlock_of_decided hj).1
-        (isLeaderBlock_of_decided hj).2.1 helig) (hnone _ hL₂)
+      exact absurd (certifiedIn_of_directCommitIn_at_anchor h₂ hj helig) (hnone _ hL₂)
     | directSkip _ => rfl
     | @indirectCommit _ j₂ A₂ L₂ hkj₂ helig₂ hj₂ hmid₂ hL₂ hcert₂ =>
       obtain ⟨rfl, rfl⟩ := anchor_eq hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid

@@ -222,6 +222,22 @@ theorem isLeaderBlock_of_decided {V : View Validator BlockId Payload U}
 
 /-! ## O5 — agreement -/
 
+/-- **Visibility from an anchor.** A slot committed directly carries a
+thick link at any eligible anchor above it — the two-round counterpart of
+`certifiedIn_of_directCommitIn_at_anchor`, with `anchor_round_le`
+supplying the round gap that eligibility guarantees.
+
+This is what rules out the mixed cases, where one validator commits
+directly and the other skips indirectly: the skipper's own anchor is
+where the commit becomes visible. -/
+theorem thickLink_of_directCommitIn_at_anchor
+    {V W : View Validator BlockId Payload U} {k j : ℕ} {L A : BlockId}
+    (h : DirectCommitIn U V L (S.slotRound k))
+    (hj : Decided U W j (some A)) (helig : Eligible Validator k j) :
+    ThickLink U A L (S.slotRound k) :=
+  thickLink_of_directCommitIn h (isLeaderBlock_of_decided hj).1
+    (anchor_round_le (isLeaderBlock_of_decided hj) helig)
+
 /-- **O5 (thesis Lemma 5; the M6 analogue).** No two validators reach
 conflicting decisions for a slot, whatever views they hold and
 whichever routes they took.
@@ -252,10 +268,7 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ}
       exact congrArg some (eq_of_directCommitIn_of_thickLink hL hL₂ h ht₂)
     | @indirectSkip _ j A hkj helig hj hmid hnone =>
       -- the engine: our commit is visible from their anchor
-      exact absurd (thickLink_of_directCommitIn h
-          (isLeaderBlock_of_decided hj).1
-          (anchor_round_le (isLeaderBlock_of_decided hj) helig))
-        (hnone _ hL)
+      exact absurd (thickLink_of_directCommitIn_at_anchor h hj helig) (hnone _ hL)
   | @directSkip k hskip =>
     intro V₂ v₂ h₂
     cases h₂ with
@@ -286,10 +299,7 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ}
     intro V₂ v₂ h₂
     cases h₂ with
     | directCommit hL₂ h₂ =>
-      exact absurd (thickLink_of_directCommitIn h₂
-          (isLeaderBlock_of_decided hj).1
-          (anchor_round_le (isLeaderBlock_of_decided hj) helig))
-        (hnone _ hL₂)
+      exact absurd (thickLink_of_directCommitIn_at_anchor h₂ hj helig) (hnone _ hL₂)
     | directSkip _ => rfl
     | @indirectCommit _ j₂ A₂ L₂ hkj₂ helig₂ hj₂ hmid₂ hL₂ ht₂ hmin₂ =>
       obtain ⟨rfl, rfl⟩ := anchor_eq hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
