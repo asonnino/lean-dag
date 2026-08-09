@@ -1476,7 +1476,9 @@ structure Timing (U) (T : Finset Validator) (N : ℕ) where
   gst : ℕ
   delay : ℕ
   rounds_le : ∀ b ∈ U.ids, (U.block b).round ≤ N
-  blk_mem / blk_creator / blk_round : …
+  blk_mem : ∀ v ∈ T, ∀ n ≤ N, …
+  blk_creator : …
+  blk_round : …
   waits   : ∀ v ∈ T, ∀ n < N, built v n + timeout n ≤ built v (n + 1)
   timeout_pos : ∀ n, 1 ≤ timeout n
   covers  : ∀ v ∈ T, ∀ w ∈ T, ∀ n < N, gst ≤ built w n →
@@ -1636,7 +1638,7 @@ def ViewsAgree (R : ℕ) : Prop :=
   ∀ v ∈ T, ∀ u ∈ T, ∀ n, R ≤ n → n < N →
     vs.blk u n ∈ vs.holds v (vs.built v (n + 1))
 
-theorem viewsAgree_of_converges (hT) (hD : DriftFrom R D) (hgst)
+theorem viewsAgree_of_converges (hT) (hD : vs.toTiming.DriftFrom R D) (hgst)
     (hbackoff : ∀ n, R ≤ n → D + vs.delay ≤ vs.timeout n) : vs.ViewsAgree R
 ```
 
@@ -1791,8 +1793,8 @@ untimed condition becomes a theorem about it:
 ```lean
 def toDelivery : Delivery U where
   held v n := (vg.holds v (vg.built v (n + 1))).filter
-    fun b => (U.block b).round = n ∧ v ∈ T ∧ n < N
-  accepted v n := … filter (fun b => (U.block b).creator ∈ Correct)
+    fun b => (U.block b).round = n ∧ v ∈ T
+  accepted v n := … fun b => … ∧ (U.block b).creator ∈ (Correct : Finset Validator)
   …
 
 theorem viewsConvergeOn_toDelivery (hD : DriftOn vg.built T R D N)

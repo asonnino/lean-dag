@@ -40,8 +40,10 @@ def strip_docstring(lines):
 def body_of(lines, start):
     """A definition's full text: signature and body, to the next declaration.
 
-    For a `def` the body is the content the report must show, so unlike a
-    theorem it is not cut at `:=`.
+    For a `def` the body is the content the report must show, and a
+    structure has no proof at all, so neither is cut at `:=`. Cutting them
+    at the proof marker also truncated structures at the first `by`
+    appearing inside a field docstring.
     """
     out = []
     for k, raw in enumerate(lines[start:], start):
@@ -117,7 +119,8 @@ def parse(path):
                 i += 1
                 line = lines[i]
         if m:
-            if m.group(1) in ("def", "abbrev", "instance"):
+            if m.group(1) in ("def", "abbrev", "instance",
+                              "structure", "class", "inductive"):
                 stmt = body_of(lines, i)
             else:
                 stmt, _ = statement_of(lines, i)
