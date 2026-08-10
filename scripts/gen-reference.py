@@ -58,6 +58,22 @@ def tidy(doc):
     return doc.replace("\x00", "\n\n")
 
 
+def labelled(root):
+    """Short names of the results Appendix A indexes.
+
+    Cross-module use is blind to the capstones: nothing consumes them
+    precisely because they are endpoints, so by usage alone they file as
+    internal steps. The statement index carries the judgement the graph
+    cannot.
+    """
+    text = (root / "docs/report.md").read_text()
+    app = text[text.index("## Appendix A"):text.index(BEGIN)]
+    names = set()
+    for lean in re.findall(r"^\|[^|]+\|[^|]+\| (.+?) \|$", app, re.M):
+        names.update(re.findall(r"`([A-Za-z][A-Za-z0-9_.'\u2032]*)`", lean))
+    return {n.rsplit(".", 1)[-1] for n in names}
+
+
 def cross_module(root):
     """Names of theorems some other module depends on."""
     import collections
@@ -171,18 +187,23 @@ def main():
     thms = [d for d in decls if d["module"].startswith("LeanDag.")
             and d["kind"] in ("theorem", "lemma")]
     cross = cross_module(ROOT)
-    public = [d for d in thms if (d["name"], d["module"]) in cross]
-    internal = [d for d in thms if (d["name"], d["module"]) not in cross]
+    idx = labelled(ROOT)
+    def is_public(d):
+        return (d["name"], d["module"]) in cross \
+            or d["name"].rsplit(".", 1)[-1] in idx
+    public = [d for d in thms if is_public(d)]
+    internal = [d for d in thms if not is_public(d)]
 
     out.append("")
     out.append("---")
     out.append("")
     out.append("## Appendix C. The theorem reference")
     out.append("")
-    out.append(f"The {len(public)} theorems that another module of the development")
-    out.append("depends on: the results the rest of the report reasons with, as")
-    out.append("opposed to the steps internal to one file. Each is the source")
-    out.append("statement, unabridged. Generated with Appendix B.")
+    out.append(f"The {len(public)} theorems that either another module of the")
+    out.append("development depends on, or that Appendix A indexes as principal")
+    out.append("results — the second clause because the capstones are consumed")
+    out.append("by nothing, being endpoints. Each is the source statement,")
+    out.append("unabridged. Generated with Appendix B.")
     out.append("")
     seen_c = set()
     for title, modules in LAYERS:

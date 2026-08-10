@@ -189,7 +189,7 @@ The proof needs no relationship between the two certificates. Each names
 n−f distinct voters, so the two voter sets intersect in a correct `w` (T0');
 `w`'s single round-`(r+1)` block votes for both (T1); and **distinctness**
 forbids one block referencing two round-`r` blocks by one author. That last
-step is the one place in the development where distinctness is load-bearing.
+step is the one place in the development where distinctness is indispensable.
 
 The rounds need no hypothesis: a voter for `L₁` sits at round `r+1` and
 references it, which pins `L₁` to round `r`, and likewise for `L₂`. -/

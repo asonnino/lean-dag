@@ -108,7 +108,7 @@ referencing clause, with no counting and no drift: the block is in its
 author's hands when built (`holds_own`), reaches the builder within
 `delay` (`converges`), is still there when the builder acts
 (`holds_mono`, which is where the hypothesis
-`built w n + delay ≤ built v (n+1)` is spent), and is therefore
+`built w n + delay ≤ built v (n+1)` is consumed), and is therefore
 referenced (`references`).
 
 The hypothesis discharged here is exactly the race of report §15.1: view

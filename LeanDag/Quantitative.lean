@@ -153,7 +153,7 @@ the synchrony round `R`. The old statement wrote that as `max k R`, relying on
 `3 * k ≤ slotRound k` to make slot `R` sit past round `R`. A monotone schedule
 gives no such coincidence — under `m` leaders per round slot `R` is around
 round `R / m` — so the slot past round `R` is named explicitly by
-`slotAt Validator R`. Under the old schedule `slotAt R ≤ R`, so the bound is
+`slotAt Validator R`. Under three-round spacing `slotAt R ≤ R`, so the bound is
 no weaker than it was. -/
 theorem commits_recur_within (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card) (fair : FairWithin T w) (R k : ℕ) :
