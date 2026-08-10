@@ -151,9 +151,9 @@ chose to build on.
 
 **Two fields, because delivery and policy are two things.** `held` is what the
 network brought; `accepted` is what the validator will reference. Until
-equivocation nothing forced them apart, and an earlier version of this
-structure had only `held`, with `includes` demanding that a correct validator
-reference *everything* it held. That is **unsatisfiable** the moment a correct
+equivocation nothing forces them apart, and a structure carrying only `held`,
+with `includes` demanding that a correct validator reference *everything* it
+held, would be **unsatisfiable** the moment a correct
 validator holds both halves of an equivocation: `distinct_creators` forbids
 referencing two blocks by one author, so no valid block exists and the
 validator cannot build at all. See `dos-equivocation-and-growth.md` §4.
@@ -204,7 +204,7 @@ from round 0 with no synchrony at all.
 without the bound `r < N` these two fields force infinitely many distinct
 blocks into a finite set and *no universe satisfies them* — see
 `LeanDagTest.Growth`, where the witness is built, and `liveness.md` §4.4,
-where the vacuous first draft is recorded.
+where the vacuous formulation is discussed.
 
 Note `N` is a **demand** on the DAG, not a bound on it: `Live U N` requires
 blocks to exist all the way to round `N`, so a larger `N` is a *stronger*
@@ -225,11 +225,9 @@ structure Live (U : BlockUniverse Validator BlockId Payload)
     ∃ b ∈ U.ids, (U.block b).creator = v ∧ (U.block b).round = r + 1
 
 omit [DecidableEq BlockId] in
-/-- A populated round carries a quorum of authors — the step that feeds L1's
-induction back into `builds`, and the only place `card_correct` is used.
-
-`spec.md` §2 has carried `card_correct` as unused-but-kept-for-liveness since
-the system model was written. This is what it was kept for. -/
+/-- A populated round carries a quorum of authors — the step that feeds a
+production induction back into its build rule, and the first consumer
+`card_correct` was kept for. -/
 theorem card_authorsAt_of_populated {r : ℕ} (h : Populated U r) :
     (Fintype.card Validator - F.f) ≤ (authorsAt U r).card := by
   refine le_trans card_correct (Finset.card_le_card ?_)
@@ -258,8 +256,8 @@ behave.
 frozen when it is built: a correct validator waits for `2f+1` round-`n`
 blocks, and the arrival of the `2f+1`st says nothing about the rest having
 arrived. Views converging later does not retroactively enlarge blocks. So
-this is an assumption, not a theorem — see `liveness.md` §4.3, and §8
-question 8 for how it is meant to be split and derived. -/
+this is an assumption, not a theorem — see `liveness.md` §4.3, and its
+§8 question 8 for how it is meant to be split and derived. -/
 def SynchronisedOn (U : BlockUniverse Validator BlockId Payload)
     (T : Finset Validator) (R : ℕ) : Prop :=
   ∀ n, R ≤ n → ∀ b ∈ U.ids, (U.block b).round = n + 1 →
@@ -383,7 +381,7 @@ block anyone ever wrote, but every block some correct validator ever held. A
 Byzantine block revealed to nobody is simply not in the universe. -/
 
 omit [DecidableEq BlockId] in
-/-- Every correct validator's *eventual* view. Downward-closed for free, by
+/-- Every correct validator's *eventual* view. Downward-closed by
 `U.complete`. -/
 def View.full (U : BlockUniverse Validator BlockId Payload) :
     View Validator BlockId Payload U where
@@ -510,6 +508,7 @@ theorem certificatesIn_full : certificatesIn U (View.full U) L r = certificates 
   Finset.inter_eq_left.mpr fun _ hC => (mem_certificates.mp hC).1
 
 omit S in
+/-- A universe-level direct commit is one the full view also sees. -/
 theorem directCommitIn_full (h : DirectCommit U L r) :
     DirectCommitIn U (View.full U) L r := by
   rw [DirectCommitIn, certificatesIn_full]
@@ -651,7 +650,7 @@ This is the one place the schedule's *shape* enters P7′, and it is what makes
 `decided_below_of_committed_run`'s `hspan` available: the last slot of a run
 starting at `b` is an eligible anchor for every slot below `b`.
 
-It holds with `c = 1` under the old three-round spacing and with `c = 3` under
+It holds with `c = 1` under three-round spacing and with `c = 3` under
 pipelining — one commit against three consecutive, which is the entire cost
 pipelining imposes on this property. -/
 def SpansEligible (c : ℕ) : Prop :=
@@ -670,17 +669,19 @@ theorem exists_slotRound_ge (n : ℕ) : ∃ k, n ≤ S.slotRound k := S.unbounde
 variable (Validator) in
 /-- The least slot proposed at or after round `n`.
 
-The old schedule needed no such thing: `3 * k ≤ slotRound k` made slot `n`
+A three-round-spaced schedule needs no such thing: `3 * k ≤ slotRound k` made slot `n`
 itself sit past round `n`, so `n` could be used as its own slot index. That
 coincidence is gone — under multiple leaders slot `n` may still be far below
 round `n` — so the slot has to be named. -/
 def slotAt (n : ℕ) : ℕ := Nat.find (S.unbounded n)
 
 omit [Fintype Validator] [DecidableEq Validator] F in
+/-- `slotAt n` names a slot at or past round `n` — the defining property of the index. -/
 theorem le_slotRound_slotAt (n : ℕ) : n ≤ S.slotRound (slotAt Validator n) :=
   Nat.find_spec (S.unbounded n)
 
 omit [Fintype Validator] [DecidableEq Validator] F in
+/-- Round `0` is served by slot `0`. -/
 @[simp]
 theorem slotAt_zero : slotAt Validator 0 = 0 := by
   rw [slotAt, Nat.find_eq_zero]
@@ -767,8 +768,8 @@ the machine-checked form of the isolated-commit obstruction. -/
 intermediate-skip premise is vacuous, so there is no induction and no appeal to
 nearestness.
 
-This is the fact that keeps pipelining live, and the one an earlier draft of
-these notes missed. Slot `j - 1` sitting immediately below a committed `j`
+This is the fact that keeps pipelining live, and the one most easily
+overlooked. Slot `j - 1` sitting immediately below a committed `j`
 cannot anchor on `j` — one round on, inside its decision round — but it *can*
 anchor on `j + 2`, and neither `j` nor `j + 1` is eligible for it, so the
 premise is empty and the slot resolves at once. Under fair leader election

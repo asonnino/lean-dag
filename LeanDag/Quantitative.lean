@@ -170,7 +170,7 @@ theorem commits_recur_within (hT : T ⊆ (Correct : Finset Validator))
 
 /-! ### From a slot bound to a round bound
 
-`Slots.spacing` bounds slot rounds from **below** (`slotRound k + 3 ≤
+A spacing field on `Slots` would bound slot rounds from **below** (`slotRound k + 3 ≤
 slotRound (k+1)`), which is what safety needs — M4's anchor must sit at least
 three rounds up. A *latency* claim wants the opposite bound, and nothing in
 `Slots` provides it: a schedule may leave arbitrarily large gaps between
@@ -180,7 +180,7 @@ So the round bound needs its own hypothesis, and it is the mirror image of
 `spacing`. -/
 
 /-- Consecutive slots are at most `s` rounds apart — the upper companion to
-`Slots.spacing`. Every real schedule has one; the class omits it because no
+such a field. Every real schedule has one; the class omits it because no
 safety result ever asks. -/
 def BoundedSpacing (s : ℕ) : Prop := ∀ k, S.slotRound (k + 1) ≤ S.slotRound k + s
 

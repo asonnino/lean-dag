@@ -46,6 +46,7 @@ def creators (blk : BlockId → Block Validator BlockId Payload)
   creatorsOf blk b.refs
 
 omit [Fintype Validator] F in
+/-- Membership in `creatorsOf`, unfolded: a validator is a creator of a set of ids exactly when it authored one of them. -/
 @[simp]
 theorem mem_creatorsOf {blk : BlockId → Block Validator BlockId Payload}
     {s : Finset BlockId} {v : Validator} :

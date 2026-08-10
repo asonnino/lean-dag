@@ -91,6 +91,7 @@ def topsOf (U : BlockUniverse Validator BlockId Payload) (b : BlockId) (X : Vali
   (history U b).filter fun t => (U.block t).creator = X ∧
     ∀ c ∈ history U b, (U.block c).creator = X → t ∉ (U.block c).refs
 
+/-- Membership in `topsOf`, unfolded: a top is a block of `X` in the history with no later block of `X` reachable above it. -/
 theorem mem_topsOf {b t : BlockId} {X : Validator} :
     t ∈ topsOf U b X ↔ t ∈ history U b ∧ (U.block t).creator = X ∧
       ∀ c ∈ history U b, (U.block c).creator = X → t ∉ (U.block c).refs := by

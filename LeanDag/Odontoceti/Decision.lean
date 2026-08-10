@@ -60,6 +60,7 @@ induction match two validators' premises against each other. -/
 def Eligible (k j : ℕ) : Prop := decisionRound Validator k < S.slotRound j
 
 omit [Fintype Validator] [DecidableEq Validator] F in
+/-- Eligibility, unfolded. Two rounds rather than Mysticeti's three, which is what the stronger committee affords. -/
 theorem eligible_iff {k j : ℕ} :
     Eligible Validator k j ↔ S.slotRound k + 2 ≤ S.slotRound j := by
   simp [Eligible, decisionRound]
@@ -267,7 +268,7 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ}
     | indirectCommit _ _ _ _ hL₂ ht₂ _ =>
       exact congrArg some (eq_of_directCommitIn_of_thickLink hL hL₂ h ht₂)
     | @indirectSkip _ j A hkj helig hj hmid hnone =>
-      -- the engine: our commit is visible from their anchor
+      -- visibility: our commit is seen from their anchor
       exact absurd (thickLink_of_directCommitIn_at_anchor h hj helig) (hnone _ hL)
   | @directSkip k hskip =>
     intro V₂ v₂ h₂

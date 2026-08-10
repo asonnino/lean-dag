@@ -49,6 +49,7 @@ variable [F : Faults Validator]
 /-- The correct (non-Byzantine) validators. -/
 def Correct : Finset Validator := (F.byzantine)ᶜ
 
+/-- Correctness is the complement of the Byzantine set. -/
 @[simp]
 theorem mem_correct {v : Validator} : v ∈ (Correct : Finset Validator) ↔ v ∉ F.byzantine := by
   simp [Correct]

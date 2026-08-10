@@ -76,6 +76,7 @@ def novelty (U : BlockUniverse Validator BlockId Payload) (V : Finset BlockId)
     (b : BlockId) : Finset BlockId :=
   history U b \ V
 
+/-- Membership in `novelty`, unfolded: the novel blocks are those in the history and not already in the view. -/
 theorem mem_novelty : i ∈ novelty U V b ↔ i ∈ history U b ∧ i ∉ V :=
   Finset.mem_sdiff
 
@@ -167,10 +168,12 @@ def viewUpto (D : Delivery U) (v : Validator) : ℕ → Finset BlockId
   | 0 => (D.accepted v 0).biUnion (history U)
   | n + 1 => viewUpto D v n ∪ (D.accepted v (n + 1)).biUnion (history U)
 
+/-- The view after round `n+1` is the previous view together with the histories of everything newly accepted. -/
 theorem viewUpto_succ (n : ℕ) :
     viewUpto D v (n + 1) =
       viewUpto D v n ∪ (D.accepted v (n + 1)).biUnion (history U) := rfl
 
+/-- Views only grow with the round index. -/
 theorem viewUpto_mono (h : m ≤ n) : viewUpto D v m ⊆ viewUpto D v n := by
   induction n with
   | zero =>
@@ -596,6 +599,7 @@ already in the pool. The global Byzantine pool therefore grows by at most
 anywhere — which closes the pre-`R` residue of §6 and makes the DoS
 bound fully asynchronous. -/
 
+/-- A view holds real blocks. -/
 theorem viewUpto_subset_ids : viewUpto D v n ⊆ U.ids := by
   induction n with
   | zero =>
@@ -656,6 +660,7 @@ def byzPool (D : Delivery U) (n : ℕ) : Finset BlockId :=
     (viewUpto D w n).filter
       fun i => (U.block i).creator ∉ (Correct : Finset Validator)
 
+/-- Membership in `byzPool`, unfolded: a Byzantine-authored block that some correct validator's view already contains. -/
 theorem mem_byzPool {i : BlockId} :
     i ∈ byzPool D n ↔ ∃ w ∈ (Correct : Finset Validator),
       i ∈ viewUpto D w n ∧

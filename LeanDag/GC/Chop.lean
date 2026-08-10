@@ -46,25 +46,30 @@ def chopBlock (U : BlockUniverse Validator BlockId Payload) (G : ℕ)
   else
     { U.block i with round := (U.block i).round - G }
 
+/-- Truncation leaves authorship unchanged. -/
 @[simp]
 theorem chopBlock_creator :
     (chopBlock U G i).creator = (U.block i).creator := by
   unfold chopBlock; split <;> rfl
 
+/-- Truncation rebases rounds by the cut. -/
 @[simp]
 theorem chopBlock_round :
     (chopBlock U G i).round = (U.block i).round - G := by
   unfold chopBlock; split <;> rfl
 
+/-- Truncation leaves payloads unchanged. -/
 @[simp]
 theorem chopBlock_payload :
     (chopBlock U G i).payload = (U.block i).payload := by
   unfold chopBlock; split <;> rfl
 
+/-- At or below the cut a block becomes a genesis: its references are dropped. -/
 theorem chopBlock_refs_of_le (h : (U.block i).round ≤ G) :
     (chopBlock U G i).refs = ∅ := by
   unfold chopBlock; rw [if_pos h]
 
+/-- Above the cut references are untouched. -/
 theorem chopBlock_refs_of_lt (h : G < (U.block i).round) :
     (chopBlock U G i).refs = (U.block i).refs := by
   unfold chopBlock; rw [if_neg (by omega)]
@@ -147,16 +152,19 @@ def chop (U : BlockUniverse Validator BlockId Payload) (G : ℕ) :
     rw [chopBlock_round, chopBlock_round] at hround
     exact U.no_equivocation i hi.1 j hj.1 hic hcreator (by omega)
 
+/-- The truncated universe holds exactly the blocks at or above the cut. -/
 @[simp]
 theorem mem_chop_ids :
     i ∈ (chop U G).ids ↔ i ∈ U.ids ∧ G ≤ (U.block i).round :=
   Finset.mem_filter
 
+/-- The truncated universe looks blocks up through `chopBlock`. -/
 @[simp]
 theorem chop_block_eq : (chop U G).block = chopBlock U G := rfl
 
 /-! ## Transfer lemmas: rounds, layers, reachability, cones -/
 
+/-- Round `m` of the truncation is round `G + m` of the original. -/
 theorem blocksAt_chop (m : ℕ) :
     blocksAt (chop U G) m = blocksAt U (G + m) := by
   ext i
@@ -167,6 +175,7 @@ theorem blocksAt_chop (m : ℕ) :
   · rintro ⟨hi, hr⟩
     exact ⟨⟨hi, by omega⟩, by omega⟩
 
+/-- And so are its authors. -/
 theorem authorsAt_chop (m : ℕ) :
     authorsAt (chop U G) m = authorsAt U (G + m) := by
   unfold authorsAt

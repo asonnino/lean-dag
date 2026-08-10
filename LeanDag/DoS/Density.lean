@@ -38,6 +38,7 @@ def missingAt (U : BlockUniverse Validator BlockId Payload) (b : BlockId) (δ : 
   (Correct : Finset Validator).filter fun v =>
     ∀ i ∈ history U b, ¬ ((U.block i).creator = v ∧ (U.block i).round = δ)
 
+/-- Membership in `missingAt`, unfolded: a correct validator is missing at depth `δ` when the history contains none of its blocks there. -/
 theorem mem_missingAt {b : BlockId} {δ : ℕ} {v : Validator} :
     v ∈ missingAt U b δ ↔ v ∈ (Correct : Finset Validator) ∧
       ∀ i ∈ history U b, ¬ ((U.block i).creator = v ∧ (U.block i).round = δ) := by

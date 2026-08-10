@@ -3,7 +3,14 @@
 
   1. every section cross-reference names a section that exists;
   2. every backticked Lean identifier names a declaration that exists;
-  3. every displayed theorem statement still matches its source signature.
+  3. every displayed theorem statement still matches its source signature;
+  4. every displayed statement is a faithful abridgement of the source.
+
+Check 4 is the strict one: the report's rendering, tokenised, must be a
+subsequence of the declaration's own text. Dropping binders or clauses is
+allowed -- the report elides for layout, marking it with a horizontal
+ellipsis -- but reordering, rewording or inventing a hypothesis is not.
+It needs docs/decls.json; run scripts/extract-decls.py first.
 
 Check 3 catches the failure the first two cannot: a displayed statement
 that has drifted from the declaration it claims to show. It compares the
@@ -19,6 +26,7 @@ it (see docs/depgraph/README.md) before trusting a failure from check 2.
 
 Exit status is 1 if anything failed, so it can gate a commit.
 """
+import json
 import re
 import sys
 import pathlib
@@ -36,7 +44,8 @@ ALLOW = {
     # Lean core and Mathlib names the report mentions; the extraction keeps
     # only this development's declarations, so these cannot be checked here.
     "Environment.constants", "ConstantInfo.value", "Finset.card", "Fintype.card",
-    "Finset.filter", "Finset.min", "Nat.succ", "refs.card",
+    "Finset.filter", "Finset.min", "Finset.max", "lt_trichotomy", "Correct.card", "Finset.max'", "Nat.succ", "refs.card",
+    "LeanDagTest.Growth", "LeanDagTest.Unbounded", "Environment.constants",
 }
 
 
@@ -123,6 +132,62 @@ def displayed_statements(text):
     return out
 
 
+TOKEN = re.compile(r"[A-Za-z_][A-Za-z0-9_.'\u2032]*|[^\sA-Za-z0-9]")
+
+
+def tokens(text):
+    """Tokens for comparison.
+
+    Line comments are dropped from both sides: the report annotates its
+    displayed blocks (`-- as in ViewSync`) and the source carries field
+    docstrings, and neither is part of the statement.
+    """
+    text = re.sub(r"--[^\n]*", " ", text)
+    text = re.sub(r"/--.*?-/", " ", text, flags=re.S)
+    return [t for t in TOKEN.findall(text) if t not in "\u2026"]
+
+
+def subsequence_gap(shown, src):
+    """First token of `shown` not matchable in order against `src`."""
+    i = 0
+    for t in shown:
+        while i < len(src) and src[i] != t:
+            i += 1
+        if i == len(src):
+            return t
+        i += 1
+    return None
+
+
+def extracted_names(root):
+    """Declaration and module names known to the source extraction.
+
+    Wider than the compiled graph: it includes private lemmas, which the
+    dependency extraction drops but docstrings still name.
+    """
+    path = root / "docs/decls.json"
+    if not path.exists():
+        return set()
+    names = set()
+    for d in json.loads(path.read_text()):
+        names.add(d["name"])
+        names.add(d["name"].rsplit(".", 1)[-1])
+        names.add(d["module"])
+        names.add(d["module"].removeprefix("LeanDag."))
+    return names
+
+
+def load_extracted(root):
+    path = root / "docs/decls.json"
+    if not path.exists():
+        return None
+    out = {}
+    for d in json.loads(path.read_text()):
+        if d["module"].startswith("LeanDag."):
+            out.setdefault(d["name"], d["statement"])
+    return out
+
+
 def audit(path, decls, suffixes):
     text = path.read_text()
     failures = []
@@ -165,11 +230,27 @@ def audit(path, decls, suffixes):
                 failures.append(("stale", f"{name} displays `{tok}`, absent from its signature"))
                 drifted += 1
 
+    # check 4: displayed statements are faithful abridgements
+    extracted = load_extracted(ROOT)
+    checked = 0
+    if extracted is not None:
+        for name, disp in shown.items():
+            src = extracted.get(name)
+            if src is None:
+                continue
+            checked += 1
+            gap = subsequence_gap(tokens(disp), tokens(src))
+            if gap is not None:
+                failures.append(("verbatim",
+                                 f"{name} displays `{gap}`, which the source does "
+                                 f"not have at that point"))
+
     print(f"{path.relative_to(ROOT)}: {len(have)} sections, "
-          f"{len(seen)} distinct backticked tokens, {len(shown)} displayed statements")
+          f"{len(seen)} distinct backticked tokens, {len(shown)} displayed "
+          f"statements ({checked} compared verbatim)")
     for kind, item in failures:
-        label = {"xref": "unresolved section", "ident": "unknown declaration"}.get(
-            kind, "stale displayed statement")
+        label = {"xref": "unresolved section", "ident": "unknown declaration",
+                 "stale": "stale displayed statement"}.get(kind, "not verbatim")
         print(f"  FAIL {label}: {item}")
     if not failures:
         print("  ok")
@@ -180,7 +261,7 @@ def main(argv):
     tsv = ROOT / "docs/depgraph/deps.tsv"
     if not tsv.exists():
         sys.exit(f"missing {tsv}; see docs/depgraph/README.md to regenerate")
-    decls = declarations(tsv.read_text())
+    decls = declarations(tsv.read_text()) | extracted_names(ROOT)
     suffixes = {n.split(".", 1)[1] for n in decls if "." in n}
     for n in list(suffixes):
         while "." in n:
