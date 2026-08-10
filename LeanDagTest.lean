@@ -25,4 +25,5 @@ import LeanDagTest.Unbounded
 import LeanDagTest.Reactive
 import LeanDagTest.Catchup
 import LeanDagTest.Collapse
+import LeanDagTest.Adaptive
 import LeanDagTest.SafeSkip
