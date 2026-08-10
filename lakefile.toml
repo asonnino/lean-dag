@@ -7,8 +7,9 @@ defaultTargets = ["LeanDag", "LeanDagTest"]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
 relaxedAutoImplicit = false
 weak.linter.mathlibStandardSet = true
-# Mathlib's header linter wants a mathlib-style copyright block referencing a
-# LICENSE file this project does not have. The rest of the standard set is kept.
+# Mathlib's header linter wants a mathlib-style copyright block at the top of
+# every file; the project is MIT-licensed (see LICENSE) but does not carry
+# per-file headers. The rest of the standard set is kept.
 weak.linter.style.header = false
 maxSynthPendingDepth = 3
 

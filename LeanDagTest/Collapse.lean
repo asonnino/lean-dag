@@ -1,0 +1,201 @@
+import LeanDag.Drift.Catchup
+import LeanDagTest.Catchup
+
+/-!
+# The collapse, exhibited from a large spread
+
+`ugrowCatch` shows `CatchupSync` satisfiable, but it starts synchronised,
+so it cannot show the mechanism *working*. This model can: the round-`0`
+spread is `10` — five times the collapsed bound — because the laggard
+starts late and GST has not yet arrived; at every round from `1` on the
+spread is exactly `Δ + proc = 3`, the collapse bound of
+`drift_collapse`, met with equality.
+
+The run: validators `1` and `2` enter round `0` at times `0` and `1`,
+the laggard `3` at time `10`; GST is `12`. Before GST the network
+delivers nothing, so catch-up binds nobody — the large spread is
+admissible precisely because no evidence has crossed. The first round-`1`
+blocks appear at `12`; they reach the laggard at `14`, catch-up forces
+its round-`1` entry by `15`, and its own `waits` floor (`10 + 5`) meets
+that deadline exactly. From then on every clause is tight: the laggard
+builds at the catch-up deadline, the leaders at the `prompt` ceiling,
+and the spread neither grows past `3` nor shrinks below it.
+
+This also settles the coexistence question: `catchup` and `waits` are
+jointly satisfiable *from* a large spread, not only near synchrony —
+the timeout floor of the laggard and the catch-up deadline imposed by
+the leaders' blocks meet, here with no slack at all.
+-/
+
+namespace LeanDagTest
+
+open LeanDag
+
+attribute [local instance 2000] rrSlots
+
+/-- Entry times: the laggard `3` starts round `0` nine ticks after `1`;
+from round `1` on, everyone is pinned — the leaders by `prompt` at
+`12 + 5(n−1)`, the laggard by catch-up at `15 + 5(n−1)`. Validator `0`
+is Byzantine and outside `T`; its times follow validator `1`. -/
+def lagBuilt (v : Fin 4) : ℕ → ℕ
+  | 0 => if (v : ℕ) = 3 then 10 else (v : ℕ) - 1
+  | n + 1 => (if (v : ℕ) = 3 then 15 else 12) + 5 * n
+
+@[simp] theorem lagBuilt_zero (v : Fin 4) :
+    lagBuilt v 0 = if (v : ℕ) = 3 then 10 else (v : ℕ) - 1 := rfl
+@[simp] theorem lagBuilt_succ (v : Fin 4) (n : ℕ) :
+    lagBuilt v (n + 1) = (if (v : ℕ) = 3 then 15 else 12) + 5 * n := rfl
+
+/-- When block `b` was built by its author. -/
+def lagStamp (b : ℕ) : ℕ := lagBuilt ⟨b % 4, by omega⟩ (b / 4)
+
+/-- What `v` holds at `t`: nothing crosses before GST (`12`), a block
+arrives `delay = 2` after the later of its build and GST, and one's own
+block is in hand at once. -/
+def lagHolds (N : ℕ) (v : Fin 4) (t : ℕ) : Finset ℕ :=
+  (Finset.range (4 * (N + 1))).filter fun b =>
+    max (lagStamp b) 12 + 2 ≤ t ∨ (b % 4 = (v : ℕ) ∧ lagStamp b ≤ t)
+
+/-- **`CatchupSync`, from a spread of `10`.** Every clause is proved for
+the run described in the module docstring; the laggard's `waits` floor
+and its catch-up deadline coincide at every round. -/
+def ugrowLag (N : ℕ) : CatchupSync (Ugrow N) {1, 2, 3} N where
+  blk v n := 4 * n + (v : ℕ)
+  built := lagBuilt
+  timeout _ := 5
+  gst := 12
+  delay := 2
+  proc := 1
+  rounds_le := (ugrowSkew N).rounds_le
+  blk_mem v hv n hn := by
+    obtain ⟨_, _⟩ := mem_T_bounds hv
+    simp only [ugrow_ids, Finset.mem_range]; omega
+  blk_creator v hv n _ := by
+    obtain ⟨_, _⟩ := mem_T_bounds hv
+    apply Fin.ext
+    simp only [ugrow_block, rrBlock_creator_val]
+    omega
+  blk_round v hv n _ := by
+    obtain ⟨_, _⟩ := mem_T_bounds hv
+    simp only [ugrow_block, rrBlock_round]; omega
+  waits v hv n _ := by
+    obtain ⟨h1, h3⟩ := mem_T_bounds hv
+    by_cases h : (v : ℕ) = 3
+    · cases n <;> simp only [lagBuilt_zero, lagBuilt_succ, if_pos h] <;> omega
+    · cases n <;> simp only [lagBuilt_zero, lagBuilt_succ, if_neg h] <;> omega
+  timeout_pos _ := by omega
+  latest n := 10 + 5 * n
+  built_le_latest v hv n _ := by
+    obtain ⟨h1, h3⟩ := mem_T_bounds hv
+    cases n <;> simp only [lagBuilt_zero, lagBuilt_succ] <;> split <;> omega
+  latest_mem n _ := by
+    refine ⟨3, by decide, ?_⟩
+    cases n with
+    | zero => decide
+    | succ n =>
+        rw [lagBuilt_succ, if_pos (show ((3 : Fin 4) : ℕ) = 3 by decide)]
+        omega
+  prompt v hv n _ := by
+    obtain ⟨h1, h3⟩ := mem_T_bounds hv
+    by_cases h : (v : ℕ) = 3
+    · refine le_trans ?_ (le_max_left _ _)
+      cases n <;> simp only [lagBuilt_zero, lagBuilt_succ, if_pos h] <;> omega
+    · refine le_trans ?_ (le_max_right _ _)
+      cases n <;> simp only [lagBuilt_zero, lagBuilt_succ, if_neg h] <;> omega
+  holds := lagHolds N
+  holds_own v hv n _ := by
+    obtain ⟨h1, h3⟩ := mem_T_bounds hv
+    have hv4 := v.isLt
+    have e : (4 * n + (v : ℕ)) % 4 = (v : ℕ) := by omega
+    have d : (4 * n + (v : ℕ)) / 4 = n := by omega
+    have hstamp : lagStamp (4 * n + (v : ℕ)) = lagBuilt v n := by
+      simp only [lagStamp]
+      congr 1
+      exact Fin.ext e
+    simp only [lagHolds, Finset.mem_filter, Finset.mem_range]
+    exact ⟨by omega, Or.inr ⟨by omega, by rw [hstamp]⟩⟩
+  holds_mono v s t hst := by
+    intro b hb
+    simp only [lagHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
+    exact ⟨hb.1, by omega⟩
+  converges v _ w _ t ht := by
+    intro b hb
+    simp only [lagHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
+    refine ⟨hb.1, Or.inl ?_⟩
+    rcases hb.2 with h | ⟨_, h⟩
+    · omega
+    · have hle : max (lagStamp b) 12 ≤ t := max_le h ht
+      omega
+  references v hv n hn a ha har := by
+    obtain ⟨h1, h3⟩ := mem_T_bounds hv
+    simp only [lagHolds, Finset.mem_filter, Finset.mem_range] at ha
+    simp only [ugrow_block, rrBlock_round] at har
+    simp only [ugrow_block, mem_growBlock_refs]
+    omega
+  catchup v hv u hu n _ t hheld := by
+    obtain ⟨hv1, hv3⟩ := mem_T_bounds hv
+    obtain ⟨hu1, hu3⟩ := mem_T_bounds hu
+    have hu4 := u.isLt
+    have e : (4 * n + (u : ℕ)) % 4 = (u : ℕ) := by omega
+    have d : (4 * n + (u : ℕ)) / 4 = n := by omega
+    have hstamp : lagStamp (4 * n + (u : ℕ)) = lagBuilt u n := by
+      simp only [lagStamp]
+      congr 1
+      exact Fin.ext e
+    simp only [lagHolds, Finset.mem_filter, Finset.mem_range, e, hstamp] at hheld
+    rcases hheld.2 with h | ⟨huv, h⟩
+    · -- arrival: the deadline covers the laggard exactly
+      cases n with
+      | zero =>
+          have hL : lagBuilt v 0 ≤ 10 := by
+            simp only [lagBuilt_zero]; split <;> omega
+          have h12 := le_max_right (lagBuilt u 0) 12
+          omega
+      | succ n =>
+          have hL : lagBuilt v (n + 1) ≤ 15 + 5 * n := by
+            simp only [lagBuilt_succ]; split <;> omega
+          have hU : 12 + 5 * n ≤ lagBuilt u (n + 1) := by
+            simp only [lagBuilt_succ]; split <;> omega
+          have hm := le_max_left (lagBuilt u (n + 1)) 12
+          omega
+    · -- own copy: `u = v`
+      have huv' : u = v := Fin.ext (by omega)
+      subst huv'
+      omega
+
+/-- **The collapse, on data.** The spread is `10` at round `0` and
+exactly `Δ + proc = 3` at every round from `1` on — five times the
+collapsed bound, gone in one post-GST round, and never returning. -/
+theorem ugrowLag_collapse (N : ℕ) :
+    lagBuilt 3 0 = lagBuilt 1 0 + 10 ∧
+      ∀ n, lagBuilt 3 (n + 1) = lagBuilt 1 (n + 1) + 3 := by
+  refine ⟨by decide, fun n => ?_⟩
+  rw [lagBuilt_succ, lagBuilt_succ,
+    if_pos (show ((3 : Fin 4) : ℕ) = 3 by decide),
+    if_neg (show ¬((1 : Fin 4) : ℕ) = 3 by decide)]
+  omega
+
+/-- The collapsed spread agrees with `drift_collapse`'s bound: from
+round `1` on, every pair of reliable validators is within `Δ + proc`. -/
+example (N : ℕ) {n : ℕ} (hn : n + 1 ≤ N) :
+    ∀ v ∈ ({1, 2, 3} : Finset (Fin 4)), ∀ w ∈ ({1, 2, 3} : Finset (Fin 4)),
+      (ugrowLag N).built v (n + 1) ≤ (ugrowLag N).built w (n + 1) + 3 := by
+  refine (ugrowLag N).drift_collapse hn (fun u hu => ?_)
+  show (12 : ℕ) ≤ lagBuilt u (n + 1)
+  simp only [lagBuilt_succ]
+  split <;> omega
+
+/-- **The commit, from the collapsed spread.** Slot `5` sits at round
+`15 ≥ 12 = GST`; it is committed at timeout `5 = 2Δ + proc`, with the
+round-`0` spread of `10` appearing in no hypothesis. -/
+theorem ugrowLag_decided (N : ℕ) (hN : rrSlots.slotRound 5 + 2 ≤ N) :
+    ∃ L, IsLeaderBlock (S := rrSlots) (Ugrow N) 5 L ∧
+      Decided (S := rrSlots) (Ugrow N) (View.full (Ugrow N)) 5 (some L) :=
+  (ugrowLag N).decided_of_catchup (R := 12) (by decide) (by decide)
+    (le_refl 12) (fun n _ => by change 2 + 1 + 2 ≤ 5; omega)
+    (by simp only [rrSlots_slotRound]; omega) hN (by decide)
+
+#print axioms ugrowLag_collapse
+#print axioms ugrowLag_decided
+
+end LeanDagTest

@@ -41,6 +41,7 @@ LAYERS = [
                     "Odontoceti.Liveness"]),
     ("The reactive schedule", ["Reactive.Basic", "Reactive.Mysticeti",
                                "Reactive.Odontoceti"]),
+    ("Catch-up, and the start spread", ["Drift.Catchup"]),
 ]
 
 KINDS = ("def", "abbrev", "structure", "class", "inductive")

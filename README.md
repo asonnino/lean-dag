@@ -9,9 +9,10 @@
 
 A Lean 4 + Mathlib formalization of uncertified DAG consensus in the
 style of Mysticeti: the DAG itself, the commit rule, and machine-checked
-safety and liveness — together with three further developments built on
-the same foundation. Everything is stated for `n ≥ 3f+1` validators with
-quorums of size `n − f`, over pipelined, multi-leader slot schedules.
+safety and liveness — together with further developments built on the
+same foundation, each in its own module consuming the core read-only.
+Everything is stated for `n ≥ 3f+1` validators with quorums of size
+`n − f`, over pipelined, multi-leader slot schedules.
 
 ## What is proved
 
@@ -25,10 +26,15 @@ quorums of size `n − f`, over pipelined, multi-leader slot schedules.
   schedule-window of its creation; a six-validator counterexample shows
   the aggregate guarantee provably does not imply the individual one.
 - **Liveness** above *eventual DAG synchrony*, a structural condition on
-  the DAG under which no liveness theorem mentions time; the condition
-  is then **derived** twice, from an abstract delivery model and from
-  GST, with quantitative forms (a correct leader commits once correct
-  validators wait `2Δ`).
+  the DAG under which no liveness theorem mentions time. The whole of
+  what the network must supply reduces to a single clause of **view
+  convergence** — after stabilisation, whatever one correct validator
+  holds reaches every correct validator within `Δ` — from which the
+  structural condition is derived three ways and block production is
+  derived rather than assumed. Quantitative forms give the wait
+  threshold (a correct leader commits once correct validators wait
+  `D₀ + Δ`, `2Δ` under a common start). The quorum-based alternative N1
+  is retained in `LeanDag/Network/`, which nothing else imports.
 - **Denial-of-service resistance** (`LeanDag/DoS/`): safety is shown
   independent of any anti-equivocation condition; storage is bounded
   under an exposure condition (with a matching construction showing its
@@ -44,6 +50,19 @@ quorums of size `n − f`, over pipelined, multi-leader slot schedules.
   about the published safety argument, one of which (agreement among
   indirect commits resting on candidate-iteration order) is refutable
   on data without the canonicity repair the formalization supplies.
+- **Reactive schedules** (`LeanDag/Reactive/`): both commit rules remain
+  live when validators wait only until they hold the leader's block —
+  or, under Mysticeti, until they can certify — with the timeout as a
+  fallback. The fast path is quantified: round latency is bounded by
+  drift, delivery and processing with the timeout appearing nowhere,
+  and when delivery undercuts the timeout no timeout ever fires.
+- **Catch-up** (`LeanDag/Drift/`): drift between validators is
+  *preserved*, not contracted, by the standard build rules — refuted on
+  data — and one further clause (seeing evidence of a round is entering
+  it) collapses any start spread to `Δ + proc` in a single post-GST
+  round, making the commit threshold `2Δ + proc` with no deployment
+  assumption; a witness starts with a spread of ten and collapses to
+  exactly three.
 
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on
@@ -66,23 +85,29 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
   network assumption kept out of the main line, and the arcs in subdirectories
   (`Quality/` — chain quality; `DoS/` — equivocation and the novelty
   budget; `GC/` — garbage collection; `Odontoceti/` — the two-round
-  protocol).
+  protocol; `Reactive/` — the reactive schedule; `Drift/` — catch-up
+  and the start spread).
 - `LeanDag.lean` — root import file.
 - `LeanDagTest/` — `decide` witnesses and concrete models, mirroring the
   same layout.
 - `docs/` — the design records and the report. `docs/build-pdf.sh`
   compiles them to `docs/pdf/` — requires `pandoc` and `typst`
   (`brew install pandoc typst`).
-- `scripts/` — `DepGraph.lean` and `depgraph.py` extract and draw the
-  support diagrams (`docs/depgraph/README.md`); `svg2pdf.sh` renders them
-  to PDF; `audit-report.py` checks the report's cross-references and Lean
-  identifiers against the compiled library.
+- `scripts/` — the extraction and verification pipeline. `DepGraph.lean`
+  and `depgraph.py` extract and draw the support diagrams
+  (`docs/depgraph/README.md`); `svg2pdf.sh` renders them to PDF;
+  `extract-decls.py` reads every declaration with its docstring and
+  statement, and `gen-reference.py` regenerates the report's reference
+  appendices from it; `audit-report.py` checks the report's
+  cross-references, its Lean identifiers, and every displayed statement
+  verbatim against the compiled source. Regeneration is deterministic,
+  so regenerate-and-diff is the pre-merge check.
 
 ## Documents
 
 | Document | Contents |
 |---|---|
-| [`docs/report.md`](docs/report.md) | **the entry point**: the full report — model, commit rule, trust boundary, safety, liveness, the three arcs, satisfiability, statement index |
+| [`docs/report.md`](docs/report.md) | **the entry point**: the full report — model, commit rule, trust boundary (including what the adversary may do), safety, liveness on view convergence, the five arcs, satisfiability, mechanisation — plus generated reference appendices giving **every definition and public theorem verbatim** and an index of the internal lemmas |
 | [`docs/spec.md`](docs/spec.md) | the safety design record |
 | [`docs/liveness.md`](docs/liveness.md) | the liveness design record, and eventual DAG synchrony |
 | [`docs/pipelining-and-multi-leader.md`](docs/pipelining-and-multi-leader.md) | the schedule generalization: eligibility, runs, pipelined commits |
@@ -92,3 +117,7 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 | [`docs/odontoceti.md`](docs/odontoceti.md) | the two-round protocol: the generalized thresholds, and the findings |
 | [`docs/related.md`](docs/related.md) | a survey of consensus on uncertified DAGs |
 | [`docs/style.md`](docs/style.md) | writing conventions for the documents and the source |
+
+## License
+
+MIT — see [`LICENSE`](LICENSE).

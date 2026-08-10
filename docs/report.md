@@ -1,5 +1,6 @@
 ---
 title: "Eventual DAG Synchrony: a machine-checked account of safety and liveness for uncertified DAG consensus"
+author: "George Danezis (University College London)"
 ---
 
 > **Provenance.** Code and prose in this project were co-written with
@@ -159,7 +160,10 @@ proof effort with no corresponding proof content.
 6. **Quantitative forms** (§6.11): the round from which coverage holds, given
    explicitly; a bound on the slot at which the next commit occurs; and an
    operational statement — a correct leader is committed once every correct
-   validator waits `D₀ + Δ`, which is `2Δ` under a common start.
+   validator waits `D₀ + Δ`, which is `2Δ` under a common start. A catch-up
+   clause eliminates `D₀` outright (§6.12): drift collapses to `Δ + proc` at
+   the first fully-post-GST round whatever the start spread, and the
+   threshold becomes `2Δ + proc` with no deployment assumption.
 
 7. **Chain quality** (§7): every commit's flush carries, at every round
    below it, blocks from at least half of the correct validators —
@@ -1009,10 +1013,13 @@ specification. Starfish [PMV25] obtains the corresponding statement — its Lemm
 4, that honest validators enter every round past GST within Δ of each other — as
 a consequence of a further protocol clause rather than as a hypothesis: its rule
 B2 requires a validator to broadcast its unknown history on *advancing a round*,
-not only on creating a block. Adopting such a clause would discharge the
-round-`0` spread instead of assuming it, and would remove the only deployment
-assumption in §4. It is not adopted here, and B2 has no force in the present
-model in any case, since P8 makes advancement and block creation coincide.
+not only on creating a block. Such a clause is formalised here as an
+**optional layer**: `catchup` (§6.12) — a validator that holds any block of a
+round has entered that round within a processing bound — under which the
+spread collapses to `Δ + proc` at the first fully-post-GST round whatever its
+starting value, and the threshold becomes `2Δ + proc` with `D₀` appearing
+nowhere. A development declining the clause retains R4 with its deployment
+component; one adopting it has no deployment assumption in §4 at all.
 
 ### 4.6 What the adversary may do
 
@@ -1698,8 +1705,11 @@ timeout-limited case every validator advances by the same `timeout n` and the
 spread is unchanged; in the delivery-limited case a validator completes by
 `latest n + delay`, and since `latest` is attained the inductive bound applies to
 the validator attaining it. The result establishes that drift is *preserved*, not
-that it is compressed: every clock advances by the same timeout. Preservation is
-what the subsequent argument requires. `Timing.le_built` records that rounds
+that it is compressed: every clock advances by the same timeout, and the
+skewed witness carries its round-`0` spread unchanged at every round
+(`ugrowSkew_spread_constant`). Preservation is what the subsequent argument
+requires; contraction requires a further protocol clause, and is the subject
+of §6.12. `Timing.le_built` records that rounds
 advance real time, so that a round beyond GST was necessarily built beyond GST.
 
 **Coverage, derived.**
@@ -2216,7 +2226,8 @@ compressed (§6.8), the bound is not derived from Δ. It is instead taken at rou
 started, and `driftFrom_of_prompt` carries it forward unchanged. Validators
 starting together give `D₀ = 0` and `Delay(Δ) = Δ`; validators started by a
 common broadcast give `D₀ ≤ Δ`, since the signal itself requires at most Δ to
-arrive. The factor of two is thus the cost of not possessing synchronised clocks.
+arrive. The factor of two is thus the cost of not possessing synchronised
+clocks — a cost §6.12 removes by protocol clause rather than by clock.
 
 The value admits an external check. Starfish [PMV25], designing a pacemaker for
 this family rather than deriving a threshold, fixes its block-creation timeout at
@@ -2231,6 +2242,82 @@ its strongest form, a block at every round with no exception (§6.9 identifies
 it as `PopulatedOn` Skolemised). These statements consequently require
 neither `Live`, nor N1, nor L1: their only temporal hypotheses are the start
 spread, the wait, and the position of the slot relative to GST.
+
+### 6.12 Catch-up: the start spread eliminated
+
+*(module `LeanDag/Drift/`)*
+
+`D₀` is the one quantity in the development set by deployment rather
+than by the network or the specification (§4.5), and it enters the wait
+threshold permanently because drift is preserved, not contracted
+(§6.8). The intuition that the spread shrinks as the protocol reaches
+synchrony is false of the protocol as modelled — the network converging
+does not move anyone's clock — and it is refuted on data:
+`ugrowSkew_spread_constant` shows the timed witness carrying its
+round-`0` spread unchanged for ever.
+
+A mechanism supplies the contraction, and it is the rule real pacemakers
+run: *seeing evidence of a round is entering it*. `CatchupSync` extends
+`ViewSync` with one clause,
+
+```lean
+structure CatchupSync (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (N : ℕ) extends ViewSync U T N where
+  proc : ℕ
+  catchup : ∀ v ∈ T, ∀ u ∈ T, ∀ n ≤ N, ∀ t,
+    blk u n ∈ holds v t → built v n ≤ t + proc
+```
+
+and the collapse is immediate and total:
+
+```lean
+theorem drift_collapse {n : ℕ} (hn : n ≤ N)
+    (hg : ∀ u ∈ T, cs.gst ≤ cs.built u n) :
+    ∀ v ∈ T, ∀ w ∈ T, cs.built v n ≤ cs.built w n + (cs.delay + cs.proc)
+```
+
+No hypothesis mentions the previous spread. The laggard cannot stay
+behind: the earliest builder's block reaches it within `Δ`, and catch-up
+converts the sighting into entry within `proc`. The contraction happens
+in one round, not gradually, and `driftOn_of_catchup` feeds the
+collapsed bound to the coverage derivation of §6.9 unchanged. The
+threshold then loses its deployment component:
+
+```lean
+theorem decided_of_catchup [S : Slots Validator] {k : ℕ}
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hgst : cs.gst ≤ R)
+    (hto : ∀ n, R ≤ n → (cs.delay + cs.proc) + cs.delay ≤ cs.timeout n)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
+```
+
+A reliable-led slot past GST is committed once the timeout clears
+`2Δ + proc` — a constant of the network and the implementation, with
+nothing anywhere stating how the validators started. Where
+`decided_of_wait` improves on this constant it does so only under
+`D₀ < Δ + proc`, a fact about deployment; here there is no such fact to
+know.
+
+**The mechanism is exhibited working, not merely satisfiable.**
+`ugrowLag` starts with a round-`0` spread of `10` — admissible because
+GST has not yet arrived and no evidence has crossed — and collapses to
+exactly `Δ + proc = 3` at round `1`, where the laggard's `waits` floor
+and its catch-up deadline meet with no slack (`ugrowLag_collapse`). The
+same run commits a slot at timeout `5 = 2Δ + proc`
+(`ugrowLag_decided`), the spread of `10` appearing in no hypothesis.
+This also settles that `catchup` and `waits` are jointly satisfiable
+*from* a large spread, not only near synchrony.
+
+**What catch-up does not buy is coverage.** A validator entering a round
+on evidence has not waited for the round below to assemble, so its own
+block may reference little; the coverage argument still runs through
+`waits`, from the collapsed spread onward. Catch-up repairs the *base*
+of the drift argument, not the argument — which is also why it composes
+with the reactive schedule of §11 rather than replacing it: the two
+clauses cut different waits, entry into a round and exit from it.
 
 ---
 
@@ -3349,6 +3436,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Reactive/Basic.lean` | the reactive dichotomy; the vote; the fast path |
 | `Reactive/Mysticeti.lean` | the certificate stage; reactive liveness, three rounds |
 | `Reactive/Odontoceti.lean` | reactive liveness, two rounds, from the core alone |
+| `Drift/Catchup.lean` | the catch-up clause; the collapse; the deployment-free threshold |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
 | `Quality/Capstone.lean` | the windowed bounds and `chain_quality` (CQ7) |
@@ -3455,14 +3543,16 @@ strong as it can be — delivery there is instantaneous. The gap is a
 *race* between arrival and building, which only the builder's own schedule
 can resolve.
 
-**The threshold the specification must meet is `D₀ + Δ`, not Δ.** This is the
-one point at which a network parameter enters the protocol's constant, and it is
-the substantive quantitative result (§6.11). Validators enter a round at
-different times, so a wait must accommodate the propagation bound *and* the
-spread between validators; taking the spread at round `0`, where it records how
-nearly simultaneously the validators started, and propagating it forward by
-`driftFrom_of_prompt`, gives the bound. Under a common start, `D₀ ≤ Δ` and the
-threshold is `2Δ`.
+**The threshold the specification must meet is `D₀ + Δ`, not Δ** — for the
+catch-up-free protocol. This is the one point at which a network parameter
+enters the protocol's constant, and it is the substantive quantitative result
+(§6.11). Validators enter a round at different times, so a wait must
+accommodate the propagation bound *and* the spread between validators; taking
+the spread at round `0`, where it records how nearly simultaneously the
+validators started, and propagating it forward by `driftFrom_of_prompt`,
+gives the bound. Under a common start, `D₀ ≤ Δ` and the threshold is `2Δ`.
+Under the catch-up clause the spread is contracted rather than propagated,
+and the threshold is `2Δ + proc` with no start-spread hypothesis (§6.12).
 
 Because Δ is not known to an implementation, no constant can be fixed in
 advance. A backoff is the specification's response — a search for a sufficient
@@ -3894,6 +3984,15 @@ Principal results only; supporting lemmas are omitted.
 | — | reactive liveness, three rounds | `ReactiveM.certifies`, `ReactiveM.directCommit`, `ReactiveM.decided` *(Reactive/Mysticeti)* |
 | — | reactive liveness, two rounds | `Odontoceti.reactive_directCommit`, `Odontoceti.reactive_decided` *(Reactive/Odontoceti)* |
 | — | latency tracks delivery; the timeout never fires | `ReactiveCore.built_succ_le_of_fast`, `ReactiveCore.no_timeout_of_fast` *(Reactive/Basic)* |
+
+**Catch-up** (§6.12):
+
+| Label | Statement | Lean |
+|:---|:---|:---|
+| — | drift does not contract without the clause | `ugrowSkew_spread_constant` *(LeanDagTest.Catchup)* |
+| — | drift collapses to `Δ + proc`, from any spread | `CatchupSync.drift_collapse`, `CatchupSync.driftOn_of_catchup` *(Drift/Catchup)* |
+| — | the deployment-free threshold `2Δ + proc` | `CatchupSync.synchronisedOn_of_catchup`, `CatchupSync.decided_of_catchup` *(Drift/Catchup)* |
+| — | the collapse exhibited from a spread of ten | `ugrowLag_collapse`, `ugrowLag_decided` *(LeanDagTest.Collapse)* |
 | — | the thesis gap, on data | `utwin6_both_pass` *(LeanDagTest/Odontoceti/Model)* |
 
 ---
@@ -6107,12 +6206,32 @@ structure ReactiveM (U : BlockUniverse Validator BlockId Payload)
 
 The reactive three-round schedule: `ReactiveCore`'s vote stage, plus the certificate wait.
 
+### Catch-up, and the start spread
+
+#### `CatchupSync`
+
+*structure, `Drift.Catchup.lean`*
+
+```lean
+structure CatchupSync (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (N : ℕ) extends ViewSync U T N where
+  /-- The processing bound: how long entry may lag evidence. -/
+  proc : ℕ
+  /-- **Catch-up** (protocol). Seeing a round is entering it: any
+  `T`-block of round `n` in hand at time `t` means the holder's own
+  round-`n` block was built by `t + proc`. -/
+  catchup : ∀ v ∈ T, ∀ u ∈ T, ∀ n ≤ N, ∀ t,
+    blk u n ∈ holds v t → built v n ≤ t + proc
+```
+
+`ViewSync` with the catch-up rule: a validator that holds any block of a round has built its own block of that round within `proc` of the sighting.
+
 
 ---
 
 ## Appendix C. The theorem reference
 
-The 155 theorems that another module of the development
+The 156 theorems that another module of the development
 depends on: the results the rest of the report reasons with, as
 opposed to the steps internal to one file. Each is the source
 statement, unabridged. Generated with Appendix B.
@@ -8123,6 +8242,25 @@ theorem decided (hT : T ⊆ (Correct : Finset Validator))
 
 **Reactive liveness (Mysticeti).** A reliable-led slot past GST is committed by every view — the conclusion of `decided_of_leader_mem`, with reference coverage replaced by the two reactive wait clauses. The leader block is the one the schedule names, so its existence is not a hypothesis.
 
+### Catch-up, and the start spread
+
+#### `decided_of_catchup`
+
+*theorem, `Drift.Catchup.lean`*
+
+```lean
+theorem decided_of_catchup [S : Slots Validator] {k : ℕ}
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hgst : cs.gst ≤ R)
+    (hto : ∀ n, R ≤ n → (cs.delay + cs.proc) + cs.delay ≤ cs.timeout n)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
+```
+
+**The commit, with `D₀` eliminated.** A reliable-led slot past GST is committed by every view once the timeout clears `2Δ + proc`. Where `decided_of_wait` requires the round-`0` spread as a hypothesis — the one deployment quantity in the development — this requires nothing about how the validators started.
+
 ### Not otherwise grouped
 
 #### `exists_self_ancestor`
@@ -8155,7 +8293,7 @@ This is the indispensable half of D20: the fresh "carrier" block that adopts an 
 
 ## Appendix D. Index of internal lemmas
 
-The 336 lemmas used only within the file that proves
+The 339 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements.
@@ -8289,6 +8427,9 @@ the source is the reference for their statements.
 | `card_historyBlocksOf_self` | `DoS.SelfParent` | D22, per round. A block's own author sits in its history *exactly once* per round: at least once by the … |
 | `card_history_ge` | `DoS.SelfParent` | D24 (the floor). With self-parents, histories have a *minimum* size: a valid block at round `r` carries at … |
 | `exists_self_ancestor_aux` | `DoS.SelfParent` | — |
+| `driftOn_of_catchup` | `Drift.Catchup` | The collapsed spread, in the form the timed development consumes: from any `R` past GST, drift is bounded … |
+| `drift_collapse` | `Drift.Catchup` | Drift collapses, from any starting value. At a round whose builds all lie past GST, the spread among `T` … |
+| `synchronisedOn_of_catchup` | `Drift.Catchup` | Coverage at a deployment-free threshold. Reference coverage from `R` on, once the timeout clears `2Δ + … |
 | `correct_mem_base` | `GC.AttestedBase` | G10, completeness. Post-`R`, every correct block of the layer is in every correct attestation (the … |
 | `accepted_mem_base` | `GC.Bootstrap` | G11. Every round-`G` block a correct validator accepted into its window by `m` — Byzantine-authored … |
 | `base_subset_retained` | `GC.Bootstrap` | The base is inside every correct peer's retained store: each base block sits in a correct attester's cone … |
