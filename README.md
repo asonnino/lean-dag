@@ -81,6 +81,17 @@ Everything is stated for `n ≥ 3f+1` validators with quorums of size
   reliable leaders (`adaptiveRun_exists`); and the layer is
   rule-agnostic, the two-round mirror consuming the same policy
   objects.
+- **Hybrid fault tolerance** (`LeanDag/Hybrid/`): the two-round rule
+  proved safe and live under **separate Byzantine and crash caps** —
+  `fb` equivocators, `fc` honest validators that may halt — at
+  Orcaella's bound `n ≥ 5·fb + 3·fc + 1` (arXiv:2607.04789), for every
+  indirect threshold in an admissible interval whose nonemptiness *is*
+  the committee bound. Four validators suffice for two-round finality
+  under a single crash, where Byzantine tolerance costs six; at
+  `fc = 0` the development collapses onto Odontoceti. The bound is
+  also proved **necessary**: one validator short, one view derives
+  conflicting verdicts at every threshold
+  (`hybrid_bound_necessary`).
 
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on
@@ -105,7 +116,8 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
   budget; `GC/` — garbage collection; `Odontoceti/` — the two-round
   protocol; `Reactive/` — the reactive schedule; `Drift/` — catch-up
   and the start spread; `SafeSkip/` — crash recovery in one message;
-  `Adaptive/` — adaptive leader schedules).
+  `Adaptive/` — adaptive leader schedules; `Hybrid/` — Byzantine and
+  crash faults apart).
 - `LeanDag.lean` — root import file.
 - `LeanDagTest/` — `decide` witnesses and concrete models, mirroring the
   same layout.
@@ -134,6 +146,8 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 | [`docs/dos-equivocation-and-growth.md`](docs/dos-equivocation-and-growth.md) | equivocation, exposure, view growth, and the novelty budget |
 | [`docs/garbage.md`](docs/garbage.md) | the horizon: truncation, bounded storage, bootstrap without consensus |
 | [`docs/odontoceti.md`](docs/odontoceti.md) | the two-round protocol: the generalized thresholds, and the findings |
+| [`docs/adaptive-leaders.md`](docs/adaptive-leaders.md) | adaptive leader schedules: the design record and theorem plan |
+| [`docs/hybrid-plan.md`](docs/hybrid-plan.md) | hybrid fault tolerance: the design record and theorem plan |
 | [`docs/related.md`](docs/related.md) | a survey of consensus on uncertified DAGs |
 | [`docs/style.md`](docs/style.md) | writing conventions for the documents and the source |
 

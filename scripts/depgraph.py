@@ -52,6 +52,7 @@ def series_group(label):
     if label.startswith('RS'): return 'reactive'
     if label.startswith('SS'): return 'safeskip'
     if label.startswith('AL'): return 'adaptive'
+    if label.startswith('H'): return 'hybrid'
     if label.startswith('E'): return 'dos'
     if label.startswith(('D', 'C', 'B')) and label != 'D': return 'dos'
     if label.startswith('G'): return 'gc'
@@ -70,6 +71,7 @@ GROUP_FILL = {
     'reactive': ('#d9eef2', '#4f8a98'),
     'safeskip': ('#eef0d8', '#8f9a4a'),
     'adaptive': ('#f4e3f0', '#a45a92'),
+    'hybrid': ('#fdf0d5', '#b0894a'),
 }
 GROUP_TITLE = {
     'fault': 'fault model (§4.2)', 'protocol': 'protocol clauses (§4.1)',
@@ -79,6 +81,7 @@ GROUP_TITLE = {
     'reactive': 'reactive schedule (§11)',
     'safeskip': 'safe skip (§12)',
     'adaptive': 'adaptive leaders (§13)',
+    'hybrid': 'hybrid faults (§14)',
 }
 
 # ---------------------------------------------------------------- input
