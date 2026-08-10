@@ -560,7 +560,7 @@ behind I6a and moot if I1 fails. The pair is the arc's most likely
 | `Integration/Joiner.lean` | I9: the transformers commute; horizon-stability; epoch alignment | **done** |
 | `Integration/Stack.lean` | I16: the composition capstone — several transformers at once | **done** |
 | `Integration/Lifecycle.lean` | I10, I11: the crash-prone lifecycle end to end | next |
-| `Integration/Placement.lean` | I7 and the placement account: where a horizon may be put | after I10 |
+| — | I7 and the placement conditions | §4.4: prose, not a module |
 | `Integration/Exposure.lean` | I1: `DoSValid` under the fill, conditionally (§5.6) | design decision pending |
 | `Integration/DeliveryFill.lean` | I6a–d: Safe Skip's delivery transformer, then its budget column | deferred, likely open |
 | `LeanDagTest/Integration.lean` | the refutation witnessed as biting; the stack and lifecycle exhibits | ongoing |
@@ -585,12 +585,15 @@ should be built next:
    must fall on an epoch boundary, and the retained window must carry
    what the policy reads.
 
+I16 is not a fourth kind but the payoff of the first: it is the proof
+that the preservation lemmas *compose*, which is what makes collecting
+them worthwhile rather than merely tidy.
+
 The third kind should be pursued deliberately rather than collected
-incidentally. `Integration/Placement.lean` is the place to state the
-conditions together, with I7's anchor-above-horizon joining them —
-answering *where may a cut be made, given everything running above it?*
-as one account, rather than leaving three side conditions scattered
-across three files.
+incidentally, and stated as one account — *where may a cut be made,
+given everything running above it?* — rather than left as side
+conditions scattered across three files. Two of the three conditions
+are proved (§3.2); §4.4 settles where the account belongs.
 
 ### 4.2 What the arc is not
 
@@ -604,44 +607,72 @@ belongs in its own arc, planned and reviewed as a refactor, with the
 old statements retained as corollaries. Keeping it here would mix a
 refactor into a results arc and make the diff unauditable.
 
-### 4.3 The missing deliverable
+### 4.3 The thesis is demonstrated
 
-The plan's thesis is that named invariants plus preservation lemmas
-make composition free. Seven cells prove the *ingredients* and not the
-claim. **I16 closes that gap and should be next**, because it is cheap
-and because it is the arc's proof of concept:
+The plan's claim was that named invariants plus preservation lemmas
+make composition free. I16 (§3.2) is that claim, proved: the stacked
+universe satisfies every invariant its arcs require, by chains of
+existing lemmas with no new argument, and the end-to-end statement —
+a validator that recovered from a crash and then pruned cannot
+disagree with anyone about a verdict — is §14's agreement theorem
+applied to a different universe.
 
-> A universe that has been truncated *and* filled *and* is read under
-> an adaptive schedule *and* interpreted in the hybrid fault model
-> still satisfies every invariant its arcs require — by chaining
-> existing lemmas, with no new argument.
+This changes what the rest of the arc is *for*. Nothing remaining is
+load-bearing for the central claim; the arc could stop here and be
+complete as an argument. What follows is pursued because it is
+independently useful, and should be scoped that way rather than as
+obligations.
 
-Concretely: `HonestNoEquiv (chop (skipFill U) G)` from I3 then I2;
-coverage above the fill and above the cut from I5-positive then I4;
-the schedule fair and spanning after truncation from I13/I15. If those
-chain without friction the thesis is demonstrated; if they do not, the
-friction is the most important thing the arc has to report, and better
-found now than after five more cells. Either outcome is worth the small
-cost.
+### 4.4 What I16 changed
 
-### 4.4 Order
+**I7 drops in priority.** The question was posed as "do the
+transformers commute?", and the answer turns out to be that the
+*deployment* order — fill on recovery, prune later — is unconditional,
+while only the reverse needs the anchor retained. So I7 is no longer a
+prerequisite for anything: it is the cost of a corner case (a validator
+pruning while a recovery message is in flight). Worth stating, not
+worth stating first.
 
-1. **I16 first** — cheap, and it tests the document's central claim.
-   Everything it needs already exists.
-2. **I10, I11** — mostly assembly: I3 supplies the hybrid-side
+**The placement account shrinks to a section, not a module.** Two of
+its three conditions are proved and live in `Joiner.lean` — epoch
+alignment and horizon-stability — and the third is I7's, now demoted.
+`Integration/Placement.lean` is dropped from the plan; the account
+belongs in the eventual report section, where the three conditions can
+be stated together in prose without a module that would hold one
+lemma.
+
+**A design rule for future arcs.** The schedule layer stacks for free
+because `Slots.chop` and `slotsOf` depend on a `Slots` instance and
+nothing else. That is a property worth *preserving deliberately*: a
+future arc that introduces a schedule variant reading the universe
+would forfeit it, and would owe a compatibility lemma against every
+universe transformer. Keeping schedule variants universe-independent
+is the cheapest structural decision available, and §2's layering is
+what makes the cost visible.
+
+### 4.5 Order
+
+1. **I10, I11 next** — mostly assembly: I3 supplies the hybrid-side
    hypothesis the fill needs, and what remains is restating §12's
    theorems over `HybridFaults` and composing with the demote-on-skip
    policy. They deliver the arc's most quotable claim, the crash-prone
    lifecycle end to end: demoted while down, safe-skipped back in,
-   re-promoted after recovery.
-3. **I7 and the placement account** — the third placement condition,
-   stated with the other two.
-4. **I1 only with the hypothesis §5.6 identifies**, or not at all; it
-   is no longer a preservation lemma in the plain sense, and the choice
-   between conditional statement and open record is a design decision.
-5. **I6a–d deferred**, and to be recorded as open if §5.6's prediction
+   re-promoted after recovery. This is the last item with narrative
+   value, and after it the arc is tellable.
+2. **I7**, as the corner case it turned out to be, and stated with the
+   other placement conditions in prose rather than in a module of its
+   own.
+3. **I1 only with the hypothesis §5.6 identifies**, or not at all; the
+   choice between conditional statement and open record is a design
+   decision, and "open" is now a perfectly good outcome given §4.3.
+4. **I6a–d deferred**, to be recorded as open if §5.6's prediction
    holds — a delivery transformer whose only consumer is a combination
    of doubtful value is not worth constructing.
+
+A reasonable stopping point is after item 1, with items 2–4 recorded as
+open in the report. The arc's results are the preservation table, the
+refutation with its boundary, the placement conditions, and the
+composition capstone; none of them needs the remainder to stand.
 
 ## 5. Risks and predictions
 
