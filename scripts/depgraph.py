@@ -50,6 +50,7 @@ def series_group(label):
     if label.startswith('CQ'): return 'quality'
     if label.startswith('CU') or label.startswith('V'): return 'core'
     if label.startswith('RS'): return 'reactive'
+    if label.startswith('SS'): return 'safeskip'
     if label.startswith('E'): return 'dos'
     if label.startswith(('D', 'C', 'B')) and label != 'D': return 'dos'
     if label.startswith('G'): return 'gc'
@@ -66,6 +67,7 @@ GROUP_FILL = {
     'gc':       ('#e9dff5', '#7d63a8'),
     'odo':      ('#fadce6', '#b05878'),
     'reactive': ('#d9eef2', '#4f8a98'),
+    'safeskip': ('#eef0d8', '#8f9a4a'),
 }
 GROUP_TITLE = {
     'fault': 'fault model (§4.2)', 'protocol': 'protocol clauses (§4.1)',
@@ -73,6 +75,7 @@ GROUP_TITLE = {
     'quality': 'chain quality (§7)', 'dos': 'denial of service (§8)',
     'gc': 'garbage collection (§9)', 'odo': 'Odontoceti (§10)',
     'reactive': 'reactive schedule (§11)',
+    'safeskip': 'safe skip (§12)',
 }
 
 # ---------------------------------------------------------------- input

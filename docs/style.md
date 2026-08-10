@@ -117,7 +117,7 @@ here"*. Naming which hypothesis a result consumes, and where.
 - **A topic confined to its own section gets pointers only elsewhere.**
   Outside the section, at most a bare pointer — naming no theorem and no
   assumption of the confined topic — as with the legacy quorum route
-  (report §13).
+  (report §14).
 
 ## 3. The Lean source
 
