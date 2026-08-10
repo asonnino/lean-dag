@@ -39,6 +39,8 @@ LAYERS = [
                             "GC.AttestedBase", "GC.Bootstrap", "GC.Horizon"]),
     ("Odontoceti", ["Odontoceti.Rules", "Odontoceti.Decision",
                     "Odontoceti.Liveness"]),
+    ("The reactive schedule", ["Reactive.Basic", "Reactive.Mysticeti",
+                               "Reactive.Odontoceti"]),
 ]
 
 KINDS = ("def", "abbrev", "structure", "class", "inductive")

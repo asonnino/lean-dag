@@ -5851,12 +5851,93 @@ def SpansEligible (c : ℕ) : Prop :=
 
 A run of `c` slots reaches past everything below it: the last slot of a run starting at `b` is an eligible anchor for every slot below `b`.
 
+### The reactive schedule
+
+#### `ReactiveCore`
+
+*structure, `Reactive.Basic.lean`*
+
+```lean
+structure ReactiveCore (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (N : ℕ) where
+  /-- `v`'s round-`n` block. -/
+  blk : Validator → ℕ → BlockId
+  /-- The time at which `v` built it. -/
+  built : Validator → ℕ → ℕ
+  /-- The fallback timeout in force at round `n`. -/
+  timeout : ℕ → ℕ
+  /-- The processing bound: how long a reactive exit may lag its trigger. -/
+  proc : ℕ
+  gst : ℕ
+  delay : ℕ
+  rounds_le : ∀ b ∈ U.ids, (U.block b).round ≤ N
+  blk_mem : ∀ v ∈ T, ∀ n ≤ N, blk v n ∈ U.ids
+  blk_creator : ∀ v ∈ T, ∀ n ≤ N, (U.block (blk v n)).creator = v
+  blk_round : ∀ v ∈ T, ∀ n ≤ N, (U.block (blk v n)).round = n
+  /-- Time advances with rounds — the only lower bound a reactive
+  schedule keeps. -/
+  built_lt : ∀ v ∈ T, ∀ n, built v n < built v (n + 1)
+  /-- **The reactive ceiling.** A validator never waits past the
+  timeout; it may build any time before it. -/
+  deadline : ∀ v ∈ T, ∀ n < N, built v (n + 1) ≤ built v n + timeout n
+  /-- What `v` holds at time `t`. -/
+  holds : Validator → ℕ → Finset BlockId
+  holds_own : ∀ v ∈ T, ∀ n ≤ N, blk v n ∈ holds v (built v n)
+  holds_mono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t
+  /-- **N2, as view convergence** (network) — as in `ViewSync`. -/
+  converges : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + delay)
+  /-- **The leader wait.** At the round above a reliable leader, either
+  the block votes (the reactive exit), or its builder waited the full
+  timeout and votes for any leader block it holds (the fallback). -/
+  vote_or_wait : ∀ v ∈ T, ∀ k : ℕ, S.slotRound k + 1 ≤ N → S.leader k ∈ T →
+    ∀ L, IsLeaderBlock U k L →
+    L ∈ (U.block (blk v (S.slotRound k + 1))).refs ∨
+      (built v (S.slotRound k) + timeout (S.slotRound k)
+          ≤ built v (S.slotRound k + 1) ∧
+        (L ∈ holds v (built v (S.slotRound k + 1)) →
+          L ∈ (U.block (blk v (S.slotRound k + 1))).refs))
+  /-- **The reactive exit is prompt.** Once a validator past its round
+  entry holds the leader and every reliable round-`r` block, it builds
+  within `proc`. Consumed only by the fast-path results. -/
+  prompt_vote : ∀ v ∈ T, ∀ k : ℕ, S.slotRound k + 1 ≤ N → S.leader k ∈ T →
+    ∀ L, IsLeaderBlock U k L → ∀ t, built v (S.slotRound k) ≤ t →
+    L ∈ holds v t → (∀ u ∈ T, blk u (S.slotRound k) ∈ holds v t) →
+    built v (S.slotRound k + 1) ≤ t + proc
+```
+
+The reactive schedule and network layer, shared by both protocols.
+
+Relative to `ViewSync`: `waits` and `prompt` are replaced by `deadline`, `built_lt`, `vote_or_wait` and `prompt_vote`, and the referencing clause is carried inside `vote_or_wait`'s fallback rather than stated globally — a reactive builder deliberately does *not* reference everything it holds.
+
+#### `ReactiveM`
+
+*structure, `Reactive.Mysticeti.lean`*
+
+```lean
+structure ReactiveM (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (N : ℕ) extends ReactiveCore U T N where
+  /-- **The certificate wait.** At two rounds above a reliable leader,
+  either the block already certifies (the reactive exit — its references
+  carry a quorum of votes), or its builder waited the full timeout and
+  references every reliable vote it holds (the fallback). -/
+  cert_or_wait : ∀ v ∈ T, ∀ k : ℕ, S.slotRound k + 2 ≤ N → S.leader k ∈ T →
+    ∀ L, IsLeaderBlock U k L →
+    Certifies U (blk v (S.slotRound k + 2)) L ∨
+      (built v (S.slotRound k + 1) + timeout (S.slotRound k + 1)
+          ≤ built v (S.slotRound k + 2) ∧
+        ∀ u ∈ T, blk u (S.slotRound k + 1) ∈ holds v (built v (S.slotRound k + 2)) →
+          L ∈ (U.block (blk u (S.slotRound k + 1))).refs →
+          blk u (S.slotRound k + 1) ∈ (U.block (blk v (S.slotRound k + 2))).refs)
+```
+
+The reactive three-round schedule: `ReactiveCore`'s vote stage, plus the certificate wait.
+
 
 ---
 
 ## Appendix C. The theorem reference
 
-The 147 theorems that another module of the development
+The 155 theorems that another module of the development
 depends on: the results the rest of the report reasons with, as
 opposed to the steps internal to one file. Each is the source
 statement, unabridged. Generated with Appendix B.
@@ -5885,6 +5966,20 @@ theorem card_correct_add_byzantine :
 The correct and Byzantine validators partition the whole set.
 
 Stated additively so it yields both bounds without ℕ subtraction. The *upper* bound on `Correct.card` is the one the counting arguments need — they divide an incidence count by the number of correct validators, for which a lower bound is useless.
+
+#### `faults_arith`
+
+*theorem, `Validators.lean`*
+
+```lean
+theorem faults_arith :
+    (Correct : Finset Validator).card + F.byzantine.card = Fintype.card Validator ∧
+      F.byzantine.card ≤ F.f ∧ 3 * F.f + 1 ≤ Fintype.card Validator
+```
+
+**The standing arithmetic of the fault model**, in the form `omega` consumes it: the correct and Byzantine sets partition the validators, at most `f` are Byzantine, and there are at least `3f+1` in all.
+
+A conjunction because the three are always wanted together — every counting argument in the development opens by introducing them, and naming the bundle says that these, and only these, are what the fault model contributes to an arithmetic step.
 
 #### `card_correct`
 
@@ -6536,6 +6631,25 @@ theorem isLeaderBlock_of_decided {V : View Validator BlockId Payload U} {j : ℕ
 
 Whatever route it took, a committed verdict names a genuine candidate for that slot. Needed because the agreement proof must feed another validator's anchor into the visibility lemma, which wants its round.
 
+#### `anchor_eq`
+
+*theorem, `Mysticeti.lean`*
+
+```lean
+theorem anchor_eq {W : Type*} {Dec : W → ℕ → Option BlockId → Prop}
+    {Elig : ℕ → Prop} {k j j₂ : ℕ} {A A₂ : BlockId} {V₂ : W}
+    (hkj : k < j) (helig : Elig j) (hkj₂ : k < j₂) (helig₂ : Elig j₂)
+    (hj₂ : Dec V₂ j₂ (some A₂))
+    (hmid₂ : ∀ i, k < i → i < j₂ → Elig i → Dec V₂ i none)
+    (ihj : ∀ V v, Dec V j v → some A = v)
+    (ihmid : ∀ i, k < i → i < j → Elig i → ∀ V v, Dec V i v → none = v) :
+    j = j₂ ∧ A = A₂
+```
+
+**The anchor comparison.** Two indirect decisions for one slot each name an anchor, together with the premise that every eligible slot strictly between the slot and that anchor was decided `none`. Whichever anchor is the earlier is then decided `none` by the other side and `some` by its own, so the anchors coincide — and with them the blocks they name.
+
+The statement carries no consensus content: `Dec` and `Elig` are arbitrary predicates, and the argument is only that two searches for the first decided slot above `k` cannot disagree when each certifies that nothing eligible below its own find was decided. Both commit rules consume it, five times between them, and stating it separately is what keeps their case analyses to one line per case.
+
 #### `decided_unique`
 
 *theorem, `Mysticeti.lean`*
@@ -6657,6 +6771,23 @@ theorem decided_of_leader_mem (hcard : (Fintype.card Validator - F.f) ≤ T.card
 ```
 
 **L4, as a decision.** What L6 consumes and L3 propagates.
+
+#### `decided_of_leader_of_populated`
+
+*theorem, `Liveness.lean`*
+
+```lean
+theorem decided_of_leader_of_populated (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
+    (hpop : ∀ r ≤ N, Populated U r) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
+```
+
+**L4, against a horizon.** The form every capstone uses: production is available as a single `Populated` hypothesis up to a horizon, and the three rounds L4 needs are read off it.
+
+Stated separately because the capstones of §§6–10 all reach L4 the same way — restrict `Populated` to `T`, three times, at `slotRound k`, `+1` and `+2` — and doing that inline obscures which hypothesis is actually being consumed.
 
 #### `decided_of_correct_leader`
 
@@ -7745,6 +7876,78 @@ theorem lt_of_eligible {k j : ℕ} (h : Eligible Validator k j) : k < j
 
 An eligible anchor is a later slot.
 
+#### `directCommitIn_full`
+
+*theorem, `Odontoceti.Liveness.lean`*
+
+```lean
+theorem directCommitIn_full {r : ℕ} (h : DirectCommit U L r) :
+    DirectCommitIn U (View.full U) L r
+```
+
+### The reactive schedule
+
+#### `le_built`
+
+*theorem, `Reactive.Basic.lean`*
+
+```lean
+theorem le_built {v : Validator} (hv : v ∈ T) (n : ℕ) : n ≤ rc.built v n
+```
+
+Rounds advance real time.
+
+#### `votes`
+
+*theorem, `Reactive.Basic.lean`*
+
+```lean
+theorem votes (hT : T ⊆ (Correct : Finset Validator))
+    (hD : DriftOn rc.built T R D N) (hgst : rc.gst ≤ R)
+    (hto : ∀ n, R ≤ n → D + rc.delay ≤ rc.timeout n)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
+    (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
+    ∀ v ∈ T, L ∈ (U.block (rc.blk v (S.slotRound k + 1))).refs
+```
+
+**Every reliable validator votes.** Past GST, with the timeout clearing drift plus the delivery bound, every `T`-block at the round above a reliable leader references the leader's block — whether by the reactive exit or by the fallback.
+
+The fallback case is the only argument: the leader holds its own block when it builds, convergence carries it across within `delay`, drift and the full timeout place that arrival before the waiter's build, and the fallback clause then obliges the vote. The reactive exit needs nothing: it *is* the vote.
+
+#### `built_succ_le_of_fast`
+
+*theorem, `Reactive.Basic.lean`*
+
+```lean
+theorem built_succ_le_of_fast {δ : ℕ}
+    (hδ : ∀ u ∈ T, ∀ v ∈ T,
+      rc.blk u (S.slotRound k) ∈ rc.holds v (rc.built u (S.slotRound k) + δ))
+    (hD : ∀ u ∈ T, ∀ v ∈ T,
+      rc.built u (S.slotRound k) ≤ rc.built v (S.slotRound k) + D)
+    (hN : S.slotRound k + 1 ≤ N) (hlead : S.leader k ∈ T)
+    (hL : IsLeaderBlock U k L) (hT : T ⊆ (Correct : Finset Validator)) :
+    ∀ v ∈ T, rc.built v (S.slotRound k + 1)
+      ≤ rc.built v (S.slotRound k) + D + δ + rc.proc
+```
+
+**Latency tracks delivery.** If every reliable round-`r` block — the leader's among them — reaches every reliable validator within `δ` of its build, then the round above is built within `D + δ + proc` of round entry: drift to the last builder, `δ` to arrive, `proc` to build. The timeout does not appear.
+
+#### `decided`
+
+*theorem, `Reactive.Mysticeti.lean`*
+
+```lean
+theorem decided (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hD : DriftOn rm.built T R D N) (hgst : rm.gst ≤ R)
+    (hto : ∀ n, R ≤ n → D + rm.delay ≤ rm.timeout n)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
+```
+
+**Reactive liveness (Mysticeti).** A reliable-led slot past GST is committed by every view — the conclusion of `decided_of_leader_mem`, with reference coverage replaced by the two reactive wait clauses. The leader block is the one the schedule names, so its existence is not a hypothesis.
+
 ### Not otherwise grouped
 
 #### `exists_self_ancestor`
@@ -7777,7 +7980,7 @@ This is the indispensable half of D20: the fresh "carrier" block that adopts an 
 
 ## Appendix D. Index of internal lemmas
 
-The 334 lemmas used only within the file that proves
+The 336 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements.
@@ -7982,7 +8185,6 @@ the source is the reference for their statements.
 | `decided_none_of_no_candidate` | `Liveness` | L5, in the form the `Decided` constructor wants. |
 | `decided_of_committed_above` | `Liveness` | L8. Given a committed slot, every slot below it is decided — provided every later slot may anchor an … |
 | `decided_of_first_eligible_commit` | `Liveness` | The escape. If `j` is committed and *nothing strictly between `k` and `j` is eligible to anchor `k`*, then … |
-| `decided_of_leader_of_populated` | `Liveness` | L4, against a horizon. The form every capstone uses: production is available as a single `Populated` … |
 | `directCommitIn_mono` | `Liveness` | A larger view can only see more certificates. |
 | `directCommit_of_synchronisedOn` | `Liveness` | L4, at the round level. A correct block at round `r` is directly committed, given coverage from `r` and … |
 | `directSkipIn_mono` | `Liveness` | A larger view can only see more blame. |
@@ -7992,7 +8194,6 @@ the source is the reference for their statements.
 | `exists_slotRound_ge` | `Liveness` | Some slot sits at or beyond any given round. |
 | `notMem_stuck_of_decided` | `Liveness` | L9. Nothing in a stuck set is ever decided, on any view. |
 | `stuck_empty_below_commit_of_spacing` | `Liveness` | L8 and L9 are consistent, and their hypotheses are jointly exhaustive. |
-| `anchor_eq` | `Mysticeti` | The anchor comparison. Two indirect decisions for one slot each name an anchor, together with the premise … |
 | `certificates_eq_empty_of_directSkip` | `Mysticeti` | M3. A directly skipped block has no certificate anywhere in the universe — not merely none in some view. |
 | `certifiedIn_iff_of_view` | `Mysticeti` | The indirect test is view-independent: a validator holding the anchor computes the same verdict from its … |
 | `certifiedIn_of_directCommit` | `Mysticeti` | M4, commit half. A directly committed block is found by *every* anchor from round `r+3` on. This is M2 … |
@@ -8044,7 +8245,6 @@ the source is the reference for their statements.
 | `decided_of_correct_leader` | `Odontoceti.Liveness` | The same at `T := Correct`. |
 | `decided_of_leader_mem` | `Odontoceti.Liveness` | O7, as a decision. |
 | `decided_of_leader_of_populated` | `Odontoceti.Liveness` | O7 against a horizon, the two-round counterpart of `decided_of_leader_of_populated`: the rule needs the … |
-| `directCommitIn_full` | `Odontoceti.Liveness` | — |
 | `directCommit_of_leader_mem` | `Odontoceti.Liveness` | O7, commit half (thesis Lemma 8 + Corollary 9). Post-`R`, a `T`-led slot is directly committed: … |
 | `spansEligible_two` | `Odontoceti.Liveness` | O8. Under a pipelined identity-round schedule, `c = 2` spans: slot `b − 1` cannot anchor on slot `b` — one … |
 | `supportersIn_full` | `Odontoceti.Liveness` | The full view sees every supporter. |
@@ -8075,6 +8275,12 @@ the source is the reference for their statements.
 | `directCommit_of_wait` | `Quantitative` | The wait bound. After GST, a correct leader is committed provided every `T`-validator waits at least `D₀ + … |
 | `slotRound_le_of_lt` | `Quantitative` | A slot bound becomes a round bound. |
 | `unbounded_of_rated` | `Quantitative` | Every rated backoff is unbounded, so `Rated` really is a strengthening of `exists_backoff_ge`'s hypothesis … |
+| `leader_blk_eq` | `Reactive.Basic` | The reliable leader's block of slot `k` is the one the schedule names: non-equivocation identifies any … |
+| `no_timeout_of_fast` | `Reactive.Basic` | The timeout never fires. When delivery, drift and processing together undercut the timeout, every reliable … |
+| `certifies` | `Reactive.Mysticeti` | Every reliable validator certifies. In the reactive exit the block certifies by construction. In the … |
+| `directCommit` | `Reactive.Mysticeti` | The reactive direct commit. Every reliable validator's round-`(r+2)` block certifies, and `T` is a quorum … |
+| `reactive_decided` | `Reactive.Odontoceti` | Reactive liveness (Odontoceti). A reliable-led slot past GST is committed by every view — the conclusion … |
+| `reactive_directCommit` | `Reactive.Odontoceti` | The reactive direct commit (Odontoceti). Every reliable validator votes (`ReactiveCore.votes`), a vote is … |
 | `one_hblock` | `Schedule` | With one leader per round the distinctness condition is vacuous: slots in a round are the round, so no two … |
 | `uniformSingle_slotRound` | `Schedule` | — |
 | `uniformSingle_spacing` | `Schedule` | The old `spacing` field, recovered. Consecutive slots of `uniformSingle 3` really are three rounds apart, … |
@@ -8087,7 +8293,6 @@ the source is the reference for their statements.
 | `DriftFrom.mono` | `Timing` | Drift from a later round is implied by drift from an earlier one. |
 | `exists_backoff_ge` | `Timing` | A backoff that grows without bound eventually clears any fixed threshold. |
 | `card_inter_ge_of_quorum` | `Validators` | T0 (cardinality half). Two quorums overlap in at least `f+1` validators: `(n−f) + (n−f) − n = n − 2f ≥ f+1`. |
-| `faults_arith` | `Validators` | The standing arithmetic of the fault model, in the form `omega` consumes it: the correct and Byzantine … |
 | `Timing.driftFrom_iff_driftOn` | `ViewSync` | — |
 | `ViewSync.convergesEventually` | `ViewSync` | Every `ViewSync` converges in the qualitative sense too — the bound is extra information, not a different … |
 | `ViewSync.convergesWithin` | `ViewSync` | The `converges` field *is* the bounded form — the definition is the field, unfolded. |

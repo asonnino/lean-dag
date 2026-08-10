@@ -184,7 +184,7 @@ def load_extracted(root):
     out = {}
     for d in json.loads(path.read_text()):
         if d["module"].startswith("LeanDag."):
-            out.setdefault(d["name"], d["statement"])
+            out.setdefault(d["name"], []).append(d["statement"])
     return out
 
 
@@ -235,15 +235,16 @@ def audit(path, decls, suffixes):
     checked = 0
     if extracted is not None:
         for name, disp in shown.items():
-            src = extracted.get(name)
-            if src is None:
+            srcs = extracted.get(name)
+            if not srcs:
                 continue
             checked += 1
-            gap = subsequence_gap(tokens(disp), tokens(src))
-            if gap is not None:
+            # a short name may occur in several namespaces; any match passes
+            gaps = [subsequence_gap(tokens(disp), tokens(src)) for src in srcs]
+            if all(g is not None for g in gaps):
                 failures.append(("verbatim",
-                                 f"{name} displays `{gap}`, which the source does "
-                                 f"not have at that point"))
+                                 f"{name} displays `{gaps[0]}`, which the source "
+                                 f"does not have at that point"))
 
     print(f"{path.relative_to(ROOT)}: {len(have)} sections, "
           f"{len(seen)} distinct backticked tokens, {len(shown)} displayed "
