@@ -36,7 +36,7 @@ shows the same correct validator can be censored for ever without
 synchrony, so the upgrade from aggregate to individual inclusion
 genuinely costs the synchrony assumption.
 
-On the same foundation, unchanged, we develop three further machine-checked
+On the same foundation, unchanged, we develop four further machine-checked
 accounts. First, **denial-of-service resistance**: safety is shown
 independent of any anti-equivocation condition, and a correct validator's
 storage is bounded under an enforceable, author-blind *novelty budget* — with
@@ -50,7 +50,12 @@ liveness of its commit rule, generalized from the published `n = 5f+1` to
 `n ≥ 5f+1`, where the formalization surfaces a gap in the published agreement
 argument — two equivocating candidates can both pass the indirect commit test
 at one anchor, realized on a concrete six-validator counterexample — and
-repairs it with a canonical-candidate rule.
+repairs it with a canonical-candidate rule. Fourth, **reactive
+schedules**: both commit rules remain live when validators wait only
+until they hold the leader's block — or, under Mysticeti, until they can
+certify — with the timeout as a fallback; latency is bounded by actual
+propagation with the timeout appearing nowhere, and when delivery
+undercuts the timeout no timeout ever fires.
 
 The development comprises roughly 17,400 lines of Lean 4 over Mathlib. Every
 principal result depends on exactly Lean's three standard axioms; every
@@ -76,7 +81,7 @@ proof. This report is a machine-checked account, in Lean 4 over Mathlib, of
 this protocol family: a core development of safety and liveness organised
 around a structural liveness condition we call *eventual DAG synchrony*,
 a chain-quality account of what the committed ledger contains, and, on
-that unchanged foundation, three further developments — storage bounds
+that unchanged foundation, further developments — storage bounds
 under adversarial equivocation, garbage collection without consensus on
 the cut, and the safety and liveness of the two-round protocol
 Odontoceti, including a repair its published argument turns out to
@@ -130,7 +135,7 @@ proof effort with no corresponding proof content.
    refinement into LiDO-DAG. What is claimed is the *form* of the account —
    theirs is operational, quantified over traces and instants; here liveness is
    stated as a condition on the DAG, and the dependence on time is confined to
-   two files below a `Prop`-valued interface (§6.8–§6.9, §14).
+   two files below a `Prop`-valued interface (§6.8–§6.9, §15).
 
 4. **Three derivations** of the structural property — from an abstract
    delivery model (§6.7), from GST (§6.8), and from **view convergence**
@@ -149,7 +154,7 @@ proof effort with no corresponding proof content.
    the fault bound and two network conditions; every other condition is a clause
    of the protocol, which a designer controls. In particular reference coverage
    is derived rather than assumed, and the one point at which a network parameter
-   constrains the specification is the wait threshold of §13.1.
+   constrains the specification is the wait threshold of §14.1.
 
 6. **Quantitative forms** (§6.11): the round from which coverage holds, given
    explicitly; a bound on the slot at which the next commit occurs; and an
@@ -185,6 +190,13 @@ proof effort with no corresponding proof content.
    resting on candidate-iteration order) is refutable on data without a
    canonicity repair the formalisation supplies.
 
+11. **Reactive liveness** (§11): both commit rules proved live under a
+   schedule that waits only as long as it must — react on holding the
+   leader (or, under Mysticeti, a certificate), fall back to the timeout
+   otherwise. The fast path is quantified: round latency is bounded by
+   drift, delivery and processing with the timeout absent, and below the
+   timeout the fallback branch is never taken.
+
 ### 1.4 Scope and non-goals
 
 The development is deliberately bounded in four respects — a fifth, the
@@ -212,7 +224,7 @@ first.
   are shown agreed; totally ordering the blocks released by a single commit
   requires a tie-break which the development declines to assume (§5.6).
 - **No wall-clock latency.** The wait bound of §6.11 is a duration, but the total
-  elapsed time to a commit is not derived (§13.6).
+  elapsed time to a commit is not derived (§14.6).
 
 ### 1.5 Organisation
 
@@ -223,14 +235,16 @@ ledger) and §6 liveness, grounded on view convergence (culminating in
 recurring commits, `commits_recur_on`, the three derivations of eventual
 DAG synchrony, and the quantitative wait bound). §7 proves the chain-quality account — coverage
 without synchrony, inclusion with it (`chain_quality`,
-`committed_of_correct_block`). §§8–10 present the three further
+`committed_of_correct_block`). §§8–11 present the four further
 developments —
 denial-of-service resistance (`dos_resistance`), garbage collection
-(`decided_agree_chop`, `card_retained_le`, `bootstrap_agree`), and
+(`decided_agree_chop`, `card_retained_le`, `bootstrap_agree`),
 Odontoceti (`Odontoceti.decided_unique`,
-`Odontoceti.all_decided_below_of_fairRun`). §11 exhibits the witness models,
-§12 describes the mechanisation, §13 discusses the formulation, the lessons
-of the extensions, and the limitations, §14 surveys related work, and §15
+`Odontoceti.all_decided_below_of_fairRun`), and the reactive schedule
+(`ReactiveM.decided`, `Odontoceti.reactive_decided`,
+`ReactiveCore.no_timeout_of_fast`). §12 exhibits the witness models,
+§13 describes the mechanisation, §14 discusses the formulation, the lessons
+of the extensions, and the limitations, §15 surveys related work, and §16
 concludes. Appendix A indexes every
 principal statement against its Lean name and module. Throughout, displayed
 Lean is drawn from the source; binders are occasionally elided for layout,
@@ -598,8 +612,8 @@ computing base (§4.3). Assumed.
 
 Logically all of these are antecedents: each is a field of a structure or class,
 and every theorem quantifying over a block universe or over the relevant
-instances carries it. None is an axiom in the sense of §12, and their joint
-satisfiability is a proof obligation discharged by exhibition (§11) rather than
+instances carries it. None is an axiom in the sense of §13, and their joint
+satisfiability is a proof obligation discharged by exhibition (§12) rather than
 something the logic must be trusted for. The distinction drawn here is
 epistemic, not logical, and it is what determines where the trust boundary of
 the system actually falls.
@@ -627,7 +641,7 @@ P10 is a joint condition rather than a pure specification: the schedule is the
 designer's, but which validators are reliable is not. Round-robin discharges it
 whenever the reliable set is of quorum size, since at most `f` of every `n`
 consecutive leaders then lie outside it; `rrSlots` witnesses this with a window
-of `f + 1` (§11).
+of `f + 1` (§12).
 
 **P8 deserves the most emphasis of any clause here**, and is easily mistaken for
 a routine one. It states that a correct validator holding a quorum at round `r`
@@ -671,7 +685,7 @@ the model constrains it, `Correct` being a set complement (§2.1).
 
 P9 is the clause whose *sufficiency* is not under the designer's control: the
 timeout may be chosen freely, but whether the chosen value is long enough
-depends on the network. §6.11 determines the threshold it must meet, and §13.1
+depends on the network. §6.11 determines the threshold it must meet, and §14.1
 discusses the consequences.
 
 ### 4.2 The fault model
@@ -729,7 +743,7 @@ differences matter more than they appear to.
 
 `held v n` is what `v` had in hand *at the moment it built its
 round-`(n+1)` block* — not what it eventually receives. That build-time
-index is the essential modelling device (§13.1): a block's references are
+index is the essential modelling device (§14.1): a block's references are
 frozen at construction, so what bears on the DAG's shape is what was held
 when the builder acted. `View.ids` is a finite set of identifiers with no
 index of either kind, which is why no formulation is stated over it.
@@ -857,7 +871,7 @@ rather than inside it.
 #### Where they are consumed
 
 Neither role is discharged where its name suggests, and the extracted
-support graph (§12) makes the pattern checkable rather than asserted.
+support graph (§13) makes the pattern checkable rather than asserted.
 
 **N1 lives outside the main line.** It, L1, and the four results that
 exist only to serve them are collected in `LeanDag/Network/Quorum.lean`,
@@ -950,7 +964,7 @@ foundation derives *production* rather than coverage, discharging N1
 (`populated_of_viewsConverge`).
 
 It is stated as a hypothesis of L4 and L6 in order to keep those arguments free
-of temporal notions (§6.10), and supplied to them by the results above. §13
+of temporal notions (§6.10), and supplied to them by the results above. §14
 discusses the formulation.
 
 **What "derived" does and does not mean here.** Each route derives
@@ -1350,7 +1364,7 @@ requiring that it not build too early.
 Reference coverage is not among them. It is not a clause a validator could
 execute, since it refers to `Correct`, which no validator can observe; it is
 what (a) and (b) *produce* against a synchronous network, and it is derived
-accordingly (§4.4, §13.2).
+accordingly (§4.4, §14.2).
 
 The chapter is organised around two interface predicates, and every
 result above them consumes them as hypotheses rather than reaching for a
@@ -1393,7 +1407,7 @@ structure Delivery (U) where
 
 The indexing of `held` is essential: `held v n` denotes what `v` had in hand *at
 the moment it built its round-`(n+1)` block*, not what `v` eventually receives.
-This is the build-time index which a view cannot supply (§13.1). Between holding
+This is the build-time index which a view cannot supply (§14.1). Between holding
 and referencing sits **acceptance** — at most one block per author, correct
 blocks always taken — which is deliberately where the protocol may refuse:
 the DoS arc's novelty budget (§8) is a rule about `accepted`, and the
@@ -1505,7 +1519,7 @@ The predicate is antitone in `T` (`SynchronisedOn.mono`), which allows results
 established at `T := Correct` to be supplied to the quorum-relative statements of
 §6.6.
 
-The condition is derived, not assumed (§4.4); §13 discusses its formulation.
+The condition is derived, not assumed (§4.4); §14 discusses its formulation.
 
 ### 6.5 Monotonicity and propagation
 
@@ -1636,7 +1650,7 @@ chain must terminate at a delivery assumption.
 does not state that correct blocks eventually reach `v`, but that they are members
 of `D.held v n`. That indexing is what carries the argument, and it is exactly
 what a
-view-shaped statement lacks (§13.1).
+view-shaped statement lacks (§14.1).
 
 ### 6.8 Deriving coverage: the timing route
 
@@ -1730,7 +1744,7 @@ structure ViewSync (U) (T : Finset Validator) (N : ℕ) where
 ```
 
 `holds v t` is what `v` holds **at time `t`** — the temporal index a
-`View` cannot supply (§13.1). `converges` is then partial synchrony
+`View` cannot supply (§14.1). `converges` is then partial synchrony
 stated exactly as one would say it in words: *after GST, whatever a
 correct validator holds reaches every correct validator within Δ*. It
 mentions no block, no round and no reference.
@@ -2045,7 +2059,7 @@ blocks everywhere.
 
 ### 6.10 The layering
 
-![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §12 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
+![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §13 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
 
 No theorem above `SynchronisedOn` mentions time, and no theorem below it mentions
 certificates. The diagram also locates the trust boundary: the leftmost column is
@@ -2268,7 +2282,7 @@ each with a round-`δ` block in `ledgerSet`. No synchrony, no delivery
 model, no populated rounds appear in any hypothesis.
 
 **The boundary, witnessed.** Aggregate coverage is *not* individual
-inclusion. The witness model `Ucens` (§11) runs six rounds in which
+inclusion. The witness model `Ucens` (§12) runs six rounds in which
 three validators reference only each other and commit with the full
 certificate pattern, while a fourth — correct, building validly, never
 referenced — is the missing author of **every** layer of **every**
@@ -2408,7 +2422,7 @@ theorem creators_refs_eq_correct (hdos : DoSValid U) (hb : b ∈ U.ids)
 and the commit chain still operates over
 them: the witness model `Uexcl` carries a
 direct commit whose three rounds all lie after the exclusion of its
-equivocator (§11). Nor does exclusion depend on favourable circumstances:
+equivocator (§12). Nor does exclusion depend on favourable circumstances:
 *density* establishes that a
 cone can be selectively blind to at most `f` correct authors per round, even
 below Byzantine blocks, because the quorum clause forces every layer of
@@ -2441,7 +2455,7 @@ theorem card_history_le' (hdos : DoSValid U) (hb : b ∈ U.ids) :
 ```
 
 The exponential constant is not an artefact of the proof: a matching family of
-witnesses (`Udouble`, §11) realises `2^(e−2)` growth from `e` equivocators,
+witnesses (`Udouble`, §12) realises `2^(e−2)` growth from `e` equivocators,
 so any bound obtainable from reference-validity conditions alone carries a
 constant exponential in `f`. This is the assessment of the exposure
 mechanism as a *storage* defence: it is the right accountability layer — it
@@ -2576,7 +2590,7 @@ exclusion terminates it. On data,
 the budget is satisfiable at its exact constant: the witness schedule
 `Dtwin` satisfies `UniformBudget 3` with its costliest acceptance costing
 exactly `3`, and `ByzBudget 0` — nothing Byzantine accepted after the
-genesis round (§11).
+genesis round (§12).
 
 How should the parameter `T` be set? Any `T ≥ 1` admits every correct block
 post-`R` (the sandwich's `f·κ + 1` with `κ = 0` would be the correct-only
@@ -2640,7 +2654,7 @@ limitations**: an equivocation whose witnessing pair falls strictly below
 the cut is forgiven — in `chop U G` its author is no longer exposed — while
 a pair *at* the cut survives into the base layer. §9.5 prices the
 forgiveness; the witness file exhibits it on data, an exposure present in
-the full universe and absent from its truncation (§11).
+the full universe and absent from its truncation (§12).
 
 ### 9.2 Verdicts survive the cut
 
@@ -2783,7 +2797,7 @@ correct store, the store rides into its keeper's next block
 (`viewUpto_subset_history`, §8.4), and the backbone carries that block into
 every correct round-`t` cone — a cone *is* an attestation. The lag is tight
 on data: at `t = m + 1` the witness exhibits an accepted equivocation half
-missing from the base (§11). Consequently the joiner's assembly — base as
+missing from the base (§12). Consequently the joiner's assembly — base as
 genesis layer plus a correct peer's window strictly above the cut — is a
 bona-fide view of the truncation (`joinView`; downward closure is the
 content: window references above the cut stay in the window, references *at*
@@ -2877,7 +2891,7 @@ continues to apply to the same types. The stronger bound is consumed in
 exactly two proofs (O2 and O4′ below) — the two-round rule's *direct* safety
 already holds at `3f+1`. The witness file proves the reuse claim as a
 computation: a quorum-5 universe over six validators satisfies the untouched
-`BlockUniverse` by `decide` (§11). Nothing outside `LeanDag/Odontoceti/`
+`BlockUniverse` by `decide` (§12). Nothing outside `LeanDag/Odontoceti/`
 was modified.
 
 ### 10.2 The rule layer, and the arithmetic core
@@ -3005,7 +3019,7 @@ from both passing the test at one anchor. The counting that would be needed
 valid six-validator universe, a Byzantine leader's two round-0 twins each
 gather exactly three supporters (disjoint correct pairs plus the
 equivocator's own split), and a round-3 block sees all of round 1 — **both
-twins pass `ThickLink` against it**, by `decide` (`utwin6_both_pass`, §11).
+twins pass `ThickLink` against it**, by `decide` (`utwin6_both_pass`, §12).
 An indirect rule that commits "some passing candidate" therefore admits
 derivations committing either twin: agreement is *refutable*.
 
@@ -3071,7 +3085,156 @@ structure showing through.
 
 ---
 
-## 11. Satisfiability
+## 11. The reactive schedule
+
+*(modules `LeanDag/Reactive/`)*
+
+The timed schedules of §6.8–§6.9 direct a validator to wait a full
+timeout in every round, so latency is a multiple of the timeout however
+fast the network happens to be. A **reactive** validator waits only as
+long as it must: at the round above a leader it builds as soon as it
+holds the leader's block and enough references, falling back to the
+timeout only if the leader does not arrive; under Mysticeti a validator
+that voted likewise waits at the next round only until it can certify.
+When leaders propagate faster than the timeout, consensus proceeds at
+network speed — and if every reliable validator is fast, no timeout ever
+fires (§11.3). The commit rules, the decision relations and the whole
+safety development are consumed as found; only the schedule changes.
+
+### 11.1 The reactive dichotomy
+
+`ReactiveCore` is the schedule and network layer both protocols share.
+Relative to `ViewSync`, the full-timeout floor `waits` and the
+promptness clause `prompt` are gone; in their place:
+
+```lean
+structure ReactiveCore (U) (T : Finset Validator) (N : ℕ) where
+  …
+  built_lt : ∀ v ∈ T, ∀ n, built v n < built v (n + 1)
+  deadline : ∀ v ∈ T, ∀ n < N, built v (n + 1) ≤ built v n + timeout n
+  …
+  vote_or_wait : ∀ v ∈ T, ∀ k : ℕ, S.slotRound k + 1 ≤ N → S.leader k ∈ T →
+    ∀ L, IsLeaderBlock U k L →
+    L ∈ (U.block (blk v (S.slotRound k + 1))).refs ∨
+      (built v (S.slotRound k) + timeout (S.slotRound k)
+          ≤ built v (S.slotRound k + 1) ∧
+        (L ∈ holds v (built v (S.slotRound k + 1)) →
+          L ∈ (U.block (blk v (S.slotRound k + 1))).refs))
+```
+
+`deadline` is the ceiling — a validator never waits *past* the timeout —
+and `built_lt` the only remaining floor. `vote_or_wait` is the reactive
+dichotomy: at the round above a reliable leader, a block either
+references the leader (the reactive exit), or its builder waited the
+full timeout and references any leader block it holds (the fallback).
+Building early *without* the leader is thereby excluded, which is the
+entire discipline: speed is bought only where it cannot cost the vote.
+
+The clause is stated for slots whose leader lies in `T`. For a Byzantine
+leader nothing useful can be said — it may equivocate, and P2 forbids
+referencing two of its blocks — and no liveness statement concerns such
+slots.
+
+The reference coverage of the main line is deliberately unavailable
+here: a reactive builder omits whatever had not arrived when its exit
+condition was met, so `SynchronisedOn` fails in general. It is also
+unneeded — the exit conditions are chosen so that exactly the references
+the commit rule counts are present, early exit and fallback alike — and
+the extraction confirms that neither liveness result below reaches
+`SynchronisedOn`, N1, or `Timing`.
+
+### 11.2 Liveness, both protocols
+
+The vote is the shared step:
+
+```lean
+theorem votes (hT : T ⊆ (Correct : Finset Validator))
+    (hD : DriftOn rc.built T R D N) (hgst : rc.gst ≤ R)
+    (hto : ∀ n, R ≤ n → D + rc.delay ≤ rc.timeout n)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
+    (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
+    ∀ v ∈ T, L ∈ (U.block (rc.blk v (S.slotRound k + 1))).refs
+```
+
+The fallback case is the whole argument, and it is the chain of
+`covers_of_converges` aimed at a single block: the leader holds its own
+block when it builds, convergence carries it across within `delay`, and
+drift plus the full timeout place the arrival before the waiter's build,
+where the fallback clause obliges the vote. The reactive exit needs
+nothing — it *is* the vote.
+
+Under Mysticeti, `ReactiveM` adds the certificate stage as the analogous
+dichotomy `cert_or_wait` — a round-`(r+2)` block either already
+certifies, or its builder waited the full timeout and references every
+reliable vote it holds — and the liveness statement mirrors L4's
+conclusion with the coverage hypothesis replaced by the two wait
+clauses:
+
+```lean
+theorem decided (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hD : DriftOn rm.built T R D N) (hgst : rm.gst ≤ R)
+    (hto : ∀ n, R ≤ n → D + rm.delay ≤ rm.timeout n)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
+```
+
+The leader block is the one the schedule names, so its existence is a
+conclusion rather than a hypothesis.
+
+Odontoceti requires **no new structure at all**. With no certificates,
+the vote stage is the whole protocol: a vote is a support, `T` is a
+quorum of supporters, and `Odontoceti.reactive_decided` concludes from
+`ReactiveCore` alone. The two-round rule is the natural home of the
+reactive discipline — one delivery separates a fast leader from its
+commit.
+
+### 11.3 The fast path, quantified
+
+The claim that reactive execution tracks the network is a theorem, not a
+design intention. `prompt_vote` bounds the reactive exit by a processing
+constant `proc` — once a validator past its round entry holds the leader
+and every reliable round-`r` block, it builds within `proc` — and the
+latency of a round is then bounded with the timeout appearing nowhere:
+
+```lean
+theorem no_timeout_of_fast {δ : ℕ}
+    (hδ : ∀ u ∈ T, ∀ v ∈ T,
+      rc.blk u (S.slotRound k) ∈ rc.holds v (rc.built u (S.slotRound k) + δ))
+    (hD : ∀ u ∈ T, ∀ v ∈ T,
+      rc.built u (S.slotRound k) ≤ rc.built v (S.slotRound k) + D)
+    (hN : S.slotRound k + 1 ≤ N) (hlead : S.leader k ∈ T)
+    (hL : IsLeaderBlock U k L) (hT : T ⊆ (Correct : Finset Validator))
+    (hfast : D + δ + rc.proc < rc.timeout (S.slotRound k)) :
+    ∀ v ∈ T, rc.built v (S.slotRound k + 1)
+      < rc.built v (S.slotRound k) + rc.timeout (S.slotRound k)
+```
+
+`δ` is the *actual* per-block propagation bound of the run — a premise
+about this execution, not an assumption about the network — and the
+conclusion degrades continuously as it approaches the timeout. Below it,
+every reliable validator builds strictly before its deadline: the
+fallback branch of the dichotomy is never taken, and consensus proceeds
+at the pace of `built_succ_le_of_fast`'s bound, drift plus delivery plus
+processing per round.
+
+### 11.4 The witness, and a constant it corrected
+
+`ugrowReactive` (§12) runs the Mysticeti structure on the round-robin
+schedule at build spacing `6` inside a timeout of `7`: every fallback
+branch untaken, the commit, the latency bound and the
+strictly-inside-deadline conclusion all exhibited on data. Its
+processing constant is honest rather than generous: `proc = 5` is the
+least value `prompt_vote` admits on this model, because a validator's
+shortcut to its *own* round-`r` block lets the trigger fire one tick
+before the slowest peer's block would force it. The witness refused to
+compile at `4` — the house rule of §12 catching an over-tight constant
+in a clause that read as obviously right.
+
+---
+
+## 12. Satisfiability
 
 Every structure carrying conditions is exhibited satisfiable by a concrete model
 over four validators at `f = 1`. This is a substantive component of the
@@ -3123,11 +3286,11 @@ motivates the canonicity premise (`utwin6_both_pass`).
 
 ---
 
-## 12. Mechanisation
+## 13. Mechanisation
 
 The development comprises approximately 17,400 lines of Lean 4 (v4.32.2)
 against Mathlib, of which some 11,800 constitute the library and 5,600 the
-models of §11 and the witness files of the arcs. A full build reports no
+models of §12 and the witness files of the arcs. A full build reports no
 errors.
 
 **Axiom audit.** Every principal result — among them
@@ -3183,10 +3346,13 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Odontoceti/Rules.lean` | the two-round rules; the arithmetic core O1–O4′ |
 | `Odontoceti/Decision.lean` | the decision relation with canonicity; agreement |
 | `Odontoceti/Liveness.lean` | O7–O10 |
+| `Reactive/Basic.lean` | the reactive dichotomy; the vote; the fast path |
+| `Reactive/Mysticeti.lean` | the certificate stage; reactive liveness, three rounds |
+| `Reactive/Odontoceti.lean` | reactive liveness, two rounds, from the core alone |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
 | `Quality/Capstone.lean` | the windowed bounds and `chain_quality` (CQ7) |
-| `LeanDagTest/` | the models of §11 and the witness files of every arc |
+| `LeanDagTest/` | the models of §12 and the witness files of every arc |
 
 **The support graph, extracted.** The dependency structure of the
 development is not documented by hand: `scripts/DepGraph.lean` walks
@@ -3236,13 +3402,13 @@ literature. Every statement in this report is drawn from the source.
 
 ---
 
-## 13. Discussion
+## 14. Discussion
 
 The first four subsections concern the core account's central design
-choice — where the synchrony assumption lives; §13.5 draws the lessons of
-the three extensions; §13.6 records what remains open.
+choice — where the synchrony assumption lives; §14.5 draws the lessons of
+the three extensions; §14.6 records what remains open.
 
-### 13.1 Locating the synchrony assumption
+### 14.1 Locating the synchrony assumption
 
 The synchrony assumption may be stated in terms of views:
 
@@ -3301,7 +3467,7 @@ threshold is `2Δ`.
 Because Δ is not known to an implementation, no constant can be fixed in
 advance. A backoff is the specification's response — a search for a sufficient
 constant, written into the algorithm — and its only relevant property is that
-the search terminates (§13.2).
+the search terminates (§14.2).
 
 **The network guarantee must be indexed to the moment of building.** A block's
 references are fixed at its construction, so what bears on the derivation is not
@@ -3314,7 +3480,7 @@ time-indexed family of views would serve equally well; the requirement is the
 index, not the vehicle. This is an observation about formalisation, and it is the
 reason `SynchronisedOn` is stated on `refs`.
 
-### 13.2 Why coverage is derived rather than specified
+### 14.2 Why coverage is derived rather than specified
 
 Reference coverage could not have been made a clause of the protocol, which is
 the deeper reason it appears as a derived property. `SynchronisedOn` refers to
@@ -3341,7 +3507,7 @@ onwards — with no condition on shape, rate, or driving signal. §6.11 carries 
 to its conclusion: with Δ known, a constant timeout of `D₀ + Δ` suffices and the
 loop disappears.
 
-### 13.3 Consequences of the abstraction
+### 14.3 Consequences of the abstraction
 
 1. The consensus argument is purely combinatorial, involving round indices and
    finite-set cardinalities. Under a message-level assumption every statement
@@ -3353,7 +3519,7 @@ loop disappears.
 4. The condition composes with the safety development, mentioning only `U.ids`,
    `U.block` and `refs` — the vocabulary that development already employs.
 
-### 13.4 Costs
+### 14.4 Costs
 
 Δ does not appear above the interface. Introducing it would require views indexed
 by an instant and every statement quantified over instants, for no proof content.
@@ -3366,7 +3532,7 @@ chain must terminate at a network assumption; what the reformulation achieves
 is to place that assumption where it belongs — on the network, as one clause
 over views — and to keep it out of every statement above.
 
-### 13.5 Lessons from the extensions
+### 14.5 Lessons from the extensions
 
 Three lessons generalise beyond the particular arcs.
 
@@ -3403,13 +3569,13 @@ behind the canonicity gap fits in six validators and twenty-five blocks;
 what was needed to find it was not scale but the obligation to state the
 indirect rule precisely enough to fail to prove it.
 
-### 13.6 Limitations
+### 14.6 Limitations
 
 The quantitative bounds are established (§6.11). The following remain open.
 
 **The backoff loop.** `Rated` and the threshold of R4 are stipulated as clauses
 of the specification; no realistic adaptive scheme is shown to satisfy them, and
-the feedback mechanism of §13.2 is not modelled. Moreover
+the feedback mechanism of §14.2 is not modelled. Moreover
 `Timing.timeout : ℕ → ℕ` is indexed by round and common to the reliable set, so
 that a per-validator backoff — in which validators increase their timeouts at
 different moments — cannot be expressed, let alone shown to converge. This
@@ -3463,7 +3629,7 @@ much they say.
 
 ---
 
-## 14. Related work
+## 15. Related work
 
 **Certified and uncertified DAGs.** In a certified DAG — DAG-Rider, Narwhal with
 Tusk or Bullshark [DKSS22, SGSK22], Sailfish [SSKN25] — a block is disseminated
@@ -3525,11 +3691,11 @@ pacemaker by refinement. The account here is structural, and no theorem above
 dependence of liveness on the round-jumping clause surfaces as a named hypothesis
 of a single lemma rather than as a condition inside a transition relation. The
 cost is that the theorems of [QXS26] cannot be stated here at all, "within
-bounded time" not being expressible in this vocabulary (§13.6).
+bounded time" not being expressible in this vocabulary (§14.6).
 
 ---
 
-## 15. Conclusion
+## 16. Conclusion
 
 This report has given a machine-checked account of uncertified DAG consensus
 organised around one idea: state the liveness condition on the object the
@@ -3555,7 +3721,7 @@ without consensus, and — in the one place the formalization diverged from a
 published argument by necessity — the observation that Odontoceti's
 agreement rests on a canonical candidate order that its paper never states.
 
-What remains open is catalogued in §13.6: the backoff dynamics, wall-clock
+What remains open is catalogued in §14.6: the backoff dynamics, wall-clock
 latency, block-level total order, and liveness below the growth clause.
 Beyond those, two directions suggest themselves. The commit-free,
 evidence-based horizon rule sketched in the garbage-collection document
@@ -3719,6 +3885,15 @@ Principal results only; supporting lemmas are omitted.
 | O8 | a run of two spans eligibility | `Odontoceti.spansEligible_two` *(Odontoceti/Liveness)* |
 | O9 | a committed run clears everything below | `Odontoceti.decided_below_of_committed_run` *(Odontoceti/Liveness)* |
 | O10 | liveness | `Odontoceti.all_decided_below_of_fairRun` *(Odontoceti/Liveness)* |
+
+**The reactive schedule** (§11):
+
+| Label | Statement | Lean |
+|:---|:---|:---|
+| — | every reliable validator votes | `ReactiveCore.votes` *(Reactive/Basic)* |
+| — | reactive liveness, three rounds | `ReactiveM.certifies`, `ReactiveM.directCommit`, `ReactiveM.decided` *(Reactive/Mysticeti)* |
+| — | reactive liveness, two rounds | `Odontoceti.reactive_directCommit`, `Odontoceti.reactive_decided` *(Reactive/Odontoceti)* |
+| — | latency tracks delivery; the timeout never fires | `ReactiveCore.built_succ_le_of_fast`, `ReactiveCore.no_timeout_of_fast` *(Reactive/Basic)* |
 | — | the thesis gap, on data | `utwin6_both_pass` *(LeanDagTest/Odontoceti/Model)* |
 
 ---
@@ -4686,7 +4861,7 @@ structure ViewSync (U : BlockUniverse Validator BlockId Payload)
   prompt : ∀ v ∈ T, ∀ n < N,
     built v (n + 1) ≤ max (built v n + timeout n) (latest n + delay)
   /-- What `v` holds at *time* `t` — the temporal index a `View` cannot
-  supply (§13.1). This is the object the original design notes wanted the
+  supply (report §14.1). This is the object the original design notes wanted the
   synchrony assumption stated over. -/
   holds : Validator → ℕ → Finset BlockId
   /-- A validator holds its own block from the moment it builds it. -/
@@ -5851,12 +6026,93 @@ def SpansEligible (c : ℕ) : Prop :=
 
 A run of `c` slots reaches past everything below it: the last slot of a run starting at `b` is an eligible anchor for every slot below `b`.
 
+### The reactive schedule
+
+#### `ReactiveCore`
+
+*structure, `Reactive.Basic.lean`*
+
+```lean
+structure ReactiveCore (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (N : ℕ) where
+  /-- `v`'s round-`n` block. -/
+  blk : Validator → ℕ → BlockId
+  /-- The time at which `v` built it. -/
+  built : Validator → ℕ → ℕ
+  /-- The fallback timeout in force at round `n`. -/
+  timeout : ℕ → ℕ
+  /-- The processing bound: how long a reactive exit may lag its trigger. -/
+  proc : ℕ
+  gst : ℕ
+  delay : ℕ
+  rounds_le : ∀ b ∈ U.ids, (U.block b).round ≤ N
+  blk_mem : ∀ v ∈ T, ∀ n ≤ N, blk v n ∈ U.ids
+  blk_creator : ∀ v ∈ T, ∀ n ≤ N, (U.block (blk v n)).creator = v
+  blk_round : ∀ v ∈ T, ∀ n ≤ N, (U.block (blk v n)).round = n
+  /-- Time advances with rounds — the only lower bound a reactive
+  schedule keeps. -/
+  built_lt : ∀ v ∈ T, ∀ n, built v n < built v (n + 1)
+  /-- **The reactive ceiling.** A validator never waits past the
+  timeout; it may build any time before it. -/
+  deadline : ∀ v ∈ T, ∀ n < N, built v (n + 1) ≤ built v n + timeout n
+  /-- What `v` holds at time `t`. -/
+  holds : Validator → ℕ → Finset BlockId
+  holds_own : ∀ v ∈ T, ∀ n ≤ N, blk v n ∈ holds v (built v n)
+  holds_mono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t
+  /-- **N2, as view convergence** (network) — as in `ViewSync`. -/
+  converges : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + delay)
+  /-- **The leader wait.** At the round above a reliable leader, either
+  the block votes (the reactive exit), or its builder waited the full
+  timeout and votes for any leader block it holds (the fallback). -/
+  vote_or_wait : ∀ v ∈ T, ∀ k : ℕ, S.slotRound k + 1 ≤ N → S.leader k ∈ T →
+    ∀ L, IsLeaderBlock U k L →
+    L ∈ (U.block (blk v (S.slotRound k + 1))).refs ∨
+      (built v (S.slotRound k) + timeout (S.slotRound k)
+          ≤ built v (S.slotRound k + 1) ∧
+        (L ∈ holds v (built v (S.slotRound k + 1)) →
+          L ∈ (U.block (blk v (S.slotRound k + 1))).refs))
+  /-- **The reactive exit is prompt.** Once a validator past its round
+  entry holds the leader and every reliable round-`r` block, it builds
+  within `proc`. Consumed only by the fast-path results. -/
+  prompt_vote : ∀ v ∈ T, ∀ k : ℕ, S.slotRound k + 1 ≤ N → S.leader k ∈ T →
+    ∀ L, IsLeaderBlock U k L → ∀ t, built v (S.slotRound k) ≤ t →
+    L ∈ holds v t → (∀ u ∈ T, blk u (S.slotRound k) ∈ holds v t) →
+    built v (S.slotRound k + 1) ≤ t + proc
+```
+
+The reactive schedule and network layer, shared by both protocols.
+
+Relative to `ViewSync`: `waits` and `prompt` are replaced by `deadline`, `built_lt`, `vote_or_wait` and `prompt_vote`, and the referencing clause is carried inside `vote_or_wait`'s fallback rather than stated globally — a reactive builder deliberately does *not* reference everything it holds.
+
+#### `ReactiveM`
+
+*structure, `Reactive.Mysticeti.lean`*
+
+```lean
+structure ReactiveM (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (N : ℕ) extends ReactiveCore U T N where
+  /-- **The certificate wait.** At two rounds above a reliable leader,
+  either the block already certifies (the reactive exit — its references
+  carry a quorum of votes), or its builder waited the full timeout and
+  references every reliable vote it holds (the fallback). -/
+  cert_or_wait : ∀ v ∈ T, ∀ k : ℕ, S.slotRound k + 2 ≤ N → S.leader k ∈ T →
+    ∀ L, IsLeaderBlock U k L →
+    Certifies U (blk v (S.slotRound k + 2)) L ∨
+      (built v (S.slotRound k + 1) + timeout (S.slotRound k + 1)
+          ≤ built v (S.slotRound k + 2) ∧
+        ∀ u ∈ T, blk u (S.slotRound k + 1) ∈ holds v (built v (S.slotRound k + 2)) →
+          L ∈ (U.block (blk u (S.slotRound k + 1))).refs →
+          blk u (S.slotRound k + 1) ∈ (U.block (blk v (S.slotRound k + 2))).refs)
+```
+
+The reactive three-round schedule: `ReactiveCore`'s vote stage, plus the certificate wait.
+
 
 ---
 
 ## Appendix C. The theorem reference
 
-The 147 theorems that another module of the development
+The 155 theorems that another module of the development
 depends on: the results the rest of the report reasons with, as
 opposed to the steps internal to one file. Each is the source
 statement, unabridged. Generated with Appendix B.
@@ -5885,6 +6141,20 @@ theorem card_correct_add_byzantine :
 The correct and Byzantine validators partition the whole set.
 
 Stated additively so it yields both bounds without ℕ subtraction. The *upper* bound on `Correct.card` is the one the counting arguments need — they divide an incidence count by the number of correct validators, for which a lower bound is useless.
+
+#### `faults_arith`
+
+*theorem, `Validators.lean`*
+
+```lean
+theorem faults_arith :
+    (Correct : Finset Validator).card + F.byzantine.card = Fintype.card Validator ∧
+      F.byzantine.card ≤ F.f ∧ 3 * F.f + 1 ≤ Fintype.card Validator
+```
+
+**The standing arithmetic of the fault model**, in the form `omega` consumes it: the correct and Byzantine sets partition the validators, at most `f` are Byzantine, and there are at least `3f+1` in all.
+
+A conjunction because the three are always wanted together — every counting argument in the development opens by introducing them, and naming the bundle says that these, and only these, are what the fault model contributes to an arithmetic step.
 
 #### `card_correct`
 
@@ -6536,6 +6806,25 @@ theorem isLeaderBlock_of_decided {V : View Validator BlockId Payload U} {j : ℕ
 
 Whatever route it took, a committed verdict names a genuine candidate for that slot. Needed because the agreement proof must feed another validator's anchor into the visibility lemma, which wants its round.
 
+#### `anchor_eq`
+
+*theorem, `Mysticeti.lean`*
+
+```lean
+theorem anchor_eq {W : Type*} {Dec : W → ℕ → Option BlockId → Prop}
+    {Elig : ℕ → Prop} {k j j₂ : ℕ} {A A₂ : BlockId} {V₂ : W}
+    (hkj : k < j) (helig : Elig j) (hkj₂ : k < j₂) (helig₂ : Elig j₂)
+    (hj₂ : Dec V₂ j₂ (some A₂))
+    (hmid₂ : ∀ i, k < i → i < j₂ → Elig i → Dec V₂ i none)
+    (ihj : ∀ V v, Dec V j v → some A = v)
+    (ihmid : ∀ i, k < i → i < j → Elig i → ∀ V v, Dec V i v → none = v) :
+    j = j₂ ∧ A = A₂
+```
+
+**The anchor comparison.** Two indirect decisions for one slot each name an anchor, together with the premise that every eligible slot strictly between the slot and that anchor was decided `none`. Whichever anchor is the earlier is then decided `none` by the other side and `some` by its own, so the anchors coincide — and with them the blocks they name.
+
+The statement carries no consensus content: `Dec` and `Elig` are arbitrary predicates, and the argument is only that two searches for the first decided slot above `k` cannot disagree when each certifies that nothing eligible below its own find was decided. Both commit rules consume it, five times between them, and stating it separately is what keeps their case analyses to one line per case.
+
 #### `decided_unique`
 
 *theorem, `Mysticeti.lean`*
@@ -6657,6 +6946,23 @@ theorem decided_of_leader_mem (hcard : (Fintype.card Validator - F.f) ≤ T.card
 ```
 
 **L4, as a decision.** What L6 consumes and L3 propagates.
+
+#### `decided_of_leader_of_populated`
+
+*theorem, `Liveness.lean`*
+
+```lean
+theorem decided_of_leader_of_populated (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
+    (hpop : ∀ r ≤ N, Populated U r) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
+```
+
+**L4, against a horizon.** The form every capstone uses: production is available as a single `Populated` hypothesis up to a horizon, and the three rounds L4 needs are read off it.
+
+Stated separately because the capstones of §§6–10 all reach L4 the same way — restrict `Populated` to `T`, three times, at `slotRound k`, `+1` and `+2` — and doing that inline obscures which hypothesis is actually being consumed.
 
 #### `decided_of_correct_leader`
 
@@ -7745,6 +8051,78 @@ theorem lt_of_eligible {k j : ℕ} (h : Eligible Validator k j) : k < j
 
 An eligible anchor is a later slot.
 
+#### `directCommitIn_full`
+
+*theorem, `Odontoceti.Liveness.lean`*
+
+```lean
+theorem directCommitIn_full {r : ℕ} (h : DirectCommit U L r) :
+    DirectCommitIn U (View.full U) L r
+```
+
+### The reactive schedule
+
+#### `le_built`
+
+*theorem, `Reactive.Basic.lean`*
+
+```lean
+theorem le_built {v : Validator} (hv : v ∈ T) (n : ℕ) : n ≤ rc.built v n
+```
+
+Rounds advance real time.
+
+#### `votes`
+
+*theorem, `Reactive.Basic.lean`*
+
+```lean
+theorem votes (hT : T ⊆ (Correct : Finset Validator))
+    (hD : DriftOn rc.built T R D N) (hgst : rc.gst ≤ R)
+    (hto : ∀ n, R ≤ n → D + rc.delay ≤ rc.timeout n)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
+    (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
+    ∀ v ∈ T, L ∈ (U.block (rc.blk v (S.slotRound k + 1))).refs
+```
+
+**Every reliable validator votes.** Past GST, with the timeout clearing drift plus the delivery bound, every `T`-block at the round above a reliable leader references the leader's block — whether by the reactive exit or by the fallback.
+
+The fallback case is the only argument: the leader holds its own block when it builds, convergence carries it across within `delay`, drift and the full timeout place that arrival before the waiter's build, and the fallback clause then obliges the vote. The reactive exit needs nothing: it *is* the vote.
+
+#### `built_succ_le_of_fast`
+
+*theorem, `Reactive.Basic.lean`*
+
+```lean
+theorem built_succ_le_of_fast {δ : ℕ}
+    (hδ : ∀ u ∈ T, ∀ v ∈ T,
+      rc.blk u (S.slotRound k) ∈ rc.holds v (rc.built u (S.slotRound k) + δ))
+    (hD : ∀ u ∈ T, ∀ v ∈ T,
+      rc.built u (S.slotRound k) ≤ rc.built v (S.slotRound k) + D)
+    (hN : S.slotRound k + 1 ≤ N) (hlead : S.leader k ∈ T)
+    (hL : IsLeaderBlock U k L) (hT : T ⊆ (Correct : Finset Validator)) :
+    ∀ v ∈ T, rc.built v (S.slotRound k + 1)
+      ≤ rc.built v (S.slotRound k) + D + δ + rc.proc
+```
+
+**Latency tracks delivery.** If every reliable round-`r` block — the leader's among them — reaches every reliable validator within `δ` of its build, then the round above is built within `D + δ + proc` of round entry: drift to the last builder, `δ` to arrive, `proc` to build. The timeout does not appear.
+
+#### `decided`
+
+*theorem, `Reactive.Mysticeti.lean`*
+
+```lean
+theorem decided (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hD : DriftOn rm.built T R D N) (hgst : rm.gst ≤ R)
+    (hto : ∀ n, R ≤ n → D + rm.delay ≤ rm.timeout n)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
+```
+
+**Reactive liveness (Mysticeti).** A reliable-led slot past GST is committed by every view — the conclusion of `decided_of_leader_mem`, with reference coverage replaced by the two reactive wait clauses. The leader block is the one the schedule names, so its existence is not a hypothesis.
+
 ### Not otherwise grouped
 
 #### `exists_self_ancestor`
@@ -7777,7 +8155,7 @@ This is the indispensable half of D20: the fresh "carrier" block that adopts an 
 
 ## Appendix D. Index of internal lemmas
 
-The 334 lemmas used only within the file that proves
+The 336 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements.
@@ -7982,7 +8360,6 @@ the source is the reference for their statements.
 | `decided_none_of_no_candidate` | `Liveness` | L5, in the form the `Decided` constructor wants. |
 | `decided_of_committed_above` | `Liveness` | L8. Given a committed slot, every slot below it is decided — provided every later slot may anchor an … |
 | `decided_of_first_eligible_commit` | `Liveness` | The escape. If `j` is committed and *nothing strictly between `k` and `j` is eligible to anchor `k`*, then … |
-| `decided_of_leader_of_populated` | `Liveness` | L4, against a horizon. The form every capstone uses: production is available as a single `Populated` … |
 | `directCommitIn_mono` | `Liveness` | A larger view can only see more certificates. |
 | `directCommit_of_synchronisedOn` | `Liveness` | L4, at the round level. A correct block at round `r` is directly committed, given coverage from `r` and … |
 | `directSkipIn_mono` | `Liveness` | A larger view can only see more blame. |
@@ -7992,7 +8369,6 @@ the source is the reference for their statements.
 | `exists_slotRound_ge` | `Liveness` | Some slot sits at or beyond any given round. |
 | `notMem_stuck_of_decided` | `Liveness` | L9. Nothing in a stuck set is ever decided, on any view. |
 | `stuck_empty_below_commit_of_spacing` | `Liveness` | L8 and L9 are consistent, and their hypotheses are jointly exhaustive. |
-| `anchor_eq` | `Mysticeti` | The anchor comparison. Two indirect decisions for one slot each name an anchor, together with the premise … |
 | `certificates_eq_empty_of_directSkip` | `Mysticeti` | M3. A directly skipped block has no certificate anywhere in the universe — not merely none in some view. |
 | `certifiedIn_iff_of_view` | `Mysticeti` | The indirect test is view-independent: a validator holding the anchor computes the same verdict from its … |
 | `certifiedIn_of_directCommit` | `Mysticeti` | M4, commit half. A directly committed block is found by *every* anchor from round `r+3` on. This is M2 … |
@@ -8044,7 +8420,6 @@ the source is the reference for their statements.
 | `decided_of_correct_leader` | `Odontoceti.Liveness` | The same at `T := Correct`. |
 | `decided_of_leader_mem` | `Odontoceti.Liveness` | O7, as a decision. |
 | `decided_of_leader_of_populated` | `Odontoceti.Liveness` | O7 against a horizon, the two-round counterpart of `decided_of_leader_of_populated`: the rule needs the … |
-| `directCommitIn_full` | `Odontoceti.Liveness` | — |
 | `directCommit_of_leader_mem` | `Odontoceti.Liveness` | O7, commit half (thesis Lemma 8 + Corollary 9). Post-`R`, a `T`-led slot is directly committed: … |
 | `spansEligible_two` | `Odontoceti.Liveness` | O8. Under a pipelined identity-round schedule, `c = 2` spans: slot `b − 1` cannot anchor on slot `b` — one … |
 | `supportersIn_full` | `Odontoceti.Liveness` | The full view sees every supporter. |
@@ -8075,6 +8450,12 @@ the source is the reference for their statements.
 | `directCommit_of_wait` | `Quantitative` | The wait bound. After GST, a correct leader is committed provided every `T`-validator waits at least `D₀ + … |
 | `slotRound_le_of_lt` | `Quantitative` | A slot bound becomes a round bound. |
 | `unbounded_of_rated` | `Quantitative` | Every rated backoff is unbounded, so `Rated` really is a strengthening of `exists_backoff_ge`'s hypothesis … |
+| `leader_blk_eq` | `Reactive.Basic` | The reliable leader's block of slot `k` is the one the schedule names: non-equivocation identifies any … |
+| `no_timeout_of_fast` | `Reactive.Basic` | The timeout never fires. When delivery, drift and processing together undercut the timeout, every reliable … |
+| `certifies` | `Reactive.Mysticeti` | Every reliable validator certifies. In the reactive exit the block certifies by construction. In the … |
+| `directCommit` | `Reactive.Mysticeti` | The reactive direct commit. Every reliable validator's round-`(r+2)` block certifies, and `T` is a quorum … |
+| `reactive_decided` | `Reactive.Odontoceti` | Reactive liveness (Odontoceti). A reliable-led slot past GST is committed by every view — the conclusion … |
+| `reactive_directCommit` | `Reactive.Odontoceti` | The reactive direct commit (Odontoceti). Every reliable validator votes (`ReactiveCore.votes`), a vote is … |
 | `one_hblock` | `Schedule` | With one leader per round the distinctness condition is vacuous: slots in a round are the round, so no two … |
 | `uniformSingle_slotRound` | `Schedule` | — |
 | `uniformSingle_spacing` | `Schedule` | The old `spacing` field, recovered. Consecutive slots of `uniformSingle 3` really are three rounds apart, … |
@@ -8087,7 +8468,6 @@ the source is the reference for their statements.
 | `DriftFrom.mono` | `Timing` | Drift from a later round is implied by drift from an earlier one. |
 | `exists_backoff_ge` | `Timing` | A backoff that grows without bound eventually clears any fixed threshold. |
 | `card_inter_ge_of_quorum` | `Validators` | T0 (cardinality half). Two quorums overlap in at least `f+1` validators: `(n−f) + (n−f) − n = n − 2f ≥ f+1`. |
-| `faults_arith` | `Validators` | The standing arithmetic of the fault model, in the form `omega` consumes it: the correct and Byzantine … |
 | `Timing.driftFrom_iff_driftOn` | `ViewSync` | — |
 | `ViewSync.convergesEventually` | `ViewSync` | Every `ViewSync` converges in the qualitative sense too — the bound is extra information, not a different … |
 | `ViewSync.convergesWithin` | `ViewSync` | The `converges` field *is* the bounded form — the definition is the field, unfolded. |

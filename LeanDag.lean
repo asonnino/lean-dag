@@ -35,3 +35,5 @@ import LeanDag.Odontoceti.Rules
 import LeanDag.Odontoceti.Decision
 import LeanDag.Odontoceti.Liveness
 import LeanDag.Network.Quorum
+import LeanDag.Reactive.Mysticeti
+import LeanDag.Reactive.Odontoceti

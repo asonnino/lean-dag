@@ -12,7 +12,15 @@ the proof of B"; edges implied by longer paths are removed, so what remains
 is the shortest honest account of each dependency.
 """
 
-import re, sys, html, collections
+import os, re, sys, html, collections
+
+# Layout must be deterministic so that regenerating produces a byte-identical
+# diagram — the pre-merge check regenerates and diffs. Python randomises
+# string hashing per process, which changes set iteration order and with it
+# the barycentre sweeps' starting order; pin the seed and re-exec once.
+if os.environ.get("PYTHONHASHSEED") != "0":
+    os.environ["PYTHONHASHSEED"] = "0"
+    os.execv(sys.executable, [sys.executable] + sys.argv)
 
 ROOT = __file__.rsplit('/scripts/', 1)[0]
 DEPS = f'{ROOT}/docs/depgraph/deps.tsv'

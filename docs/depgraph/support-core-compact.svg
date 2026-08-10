@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="654" height="614" viewBox="0 0 654 614" font-family="Helvetica,Arial,sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="762" height="1076" viewBox="0 0 762 1076" font-family="Helvetica,Arial,sans-serif">
 <style>text{dominant-baseline:middle}.lbl{font-size:11px;font-weight:700}.nm{font-size:8.5px;fill:#444}.ttl{font-size:15px;font-weight:700}.sub{font-size:9.5px;fill:#555}.key{font-size:9px}.col{font-size:9px;fill:#888;font-weight:700}</style>
-<rect width="654" height="614" fill="#fff"/>
+<rect width="762" height="1076" fill="#fff"/>
 <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8894a4"/></marker></defs>
 <text class="ttl" x="26" y="26">The core account: what supports what</text>
 <text class="sub" x="26" y="42">A → B: A is used in the proof of B. Assumptions on the left; implied arrows removed.</text>
@@ -18,198 +18,302 @@
 <text class="col" x="381.0" y="86" text-anchor="middle">step 3</text>
 <text class="col" x="489.0" y="86" text-anchor="middle">step 4</text>
 <text class="col" x="597.0" y="86" text-anchor="middle">step 5</text>
-<path d="M88.0,279.0 C111.0,279.0 111.0,312.0 134.0,312.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M304.0,262.5 C327.0,262.5 327.0,246.0 350.0,246.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M196.0,543.0 C273.0,543.0 273.0,312.0 350.0,312.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M196.0,543.0 C165.0,543.0 165.0,246.0 134.0,246.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M196.0,543.0 C165.0,543.0 165.0,213.0 134.0,213.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,180.0 C111.0,180.0 111.0,312.0 134.0,312.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,180.0 C165.0,180.0 165.0,394.5 242.0,394.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,180.0 C165.0,180.0 165.0,361.5 242.0,361.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,180.0 C111.0,180.0 111.0,147.0 134.0,147.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,180.0 C165.0,180.0 165.0,328.5 242.0,328.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,180.0 C165.0,180.0 165.0,427.5 242.0,427.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M304.0,394.5 C327.0,394.5 327.0,444.0 350.0,444.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M412.0,246.0 C435.0,246.0 435.0,345.0 458.0,345.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M196.0,180.0 C219.0,180.0 219.0,394.5 242.0,394.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M196.0,180.0 C273.0,180.0 273.0,246.0 350.0,246.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M196.0,180.0 C219.0,180.0 219.0,361.5 242.0,361.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M196.0,180.0 C219.0,180.0 219.0,295.5 242.0,295.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M196.0,180.0 C219.0,180.0 219.0,328.5 242.0,328.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M196.0,180.0 C219.0,180.0 219.0,427.5 242.0,427.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,543.0 C219.0,543.0 219.0,246.0 350.0,246.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,147.0 C111.0,147.0 111.0,213.0 134.0,213.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M304.0,361.5 C327.0,361.5 327.0,411.0 350.0,411.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M304.0,361.5 C435.0,361.5 435.0,345.0 566.0,345.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M196.0,147.0 C219.0,147.0 219.0,262.5 242.0,262.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,213.0 C165.0,213.0 165.0,394.5 242.0,394.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,213.0 C165.0,213.0 165.0,361.5 242.0,361.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,213.0 C111.0,213.0 111.0,147.0 134.0,147.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,213.0 C165.0,213.0 165.0,328.5 242.0,328.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,213.0 C111.0,213.0 111.0,378.0 134.0,378.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,213.0 C165.0,213.0 165.0,427.5 242.0,427.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M520.0,345.0 C543.0,345.0 543.0,345.0 566.0,345.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,114.0 C111.0,114.0 111.0,180.0 134.0,180.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,444.0 C111.0,444.0 111.0,411.0 134.0,411.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,477.0 C165.0,477.0 165.0,295.5 242.0,295.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,345.0 C165.0,345.0 165.0,394.5 242.0,394.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,345.0 C111.0,345.0 111.0,345.0 134.0,345.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,345.0 C219.0,345.0 219.0,246.0 350.0,246.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,345.0 C165.0,345.0 165.0,361.5 242.0,361.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,345.0 C165.0,345.0 165.0,328.5 242.0,328.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,345.0 C111.0,345.0 111.0,378.0 134.0,378.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,345.0 C165.0,345.0 165.0,427.5 242.0,427.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M412.0,378.0 C489.0,378.0 489.0,345.0 566.0,345.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M196.0,477.0 C165.0,477.0 165.0,279.0 134.0,279.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M304.0,328.5 C327.0,328.5 327.0,411.0 350.0,411.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M304.0,328.5 C327.0,328.5 327.0,378.0 350.0,378.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,246.0 C111.0,246.0 111.0,279.0 134.0,279.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,246.0 C165.0,246.0 165.0,394.5 242.0,394.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,246.0 C111.0,246.0 111.0,345.0 134.0,345.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,246.0 C219.0,246.0 219.0,246.0 350.0,246.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,246.0 C165.0,246.0 165.0,361.5 242.0,361.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,246.0 C111.0,246.0 111.0,246.0 134.0,246.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,246.0 C165.0,246.0 165.0,328.5 242.0,328.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,246.0 C111.0,246.0 111.0,213.0 134.0,213.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,246.0 C111.0,246.0 111.0,378.0 134.0,378.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,246.0 C165.0,246.0 165.0,427.5 242.0,427.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,378.0 C111.0,378.0 111.0,378.0 134.0,378.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,378.0 C165.0,378.0 165.0,394.5 242.0,394.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,378.0 C165.0,378.0 165.0,427.5 242.0,427.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,378.0 C165.0,378.0 165.0,361.5 242.0,361.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,312.0 C111.0,312.0 111.0,312.0 134.0,312.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M304.0,295.5 C327.0,295.5 327.0,345.0 350.0,345.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M304.0,295.5 C327.0,295.5 327.0,279.0 350.0,279.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M304.0,295.5 C327.0,295.5 327.0,312.0 350.0,312.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,510.0 C165.0,510.0 165.0,295.5 242.0,295.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M88.0,411.0 C111.0,411.0 111.0,411.0 134.0,411.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<g><title>LeanDag.BlockUniverse.no_equivocation — BlockUniverse.no_equivocation</title>
-<rect x="26.0" y="102.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
-<text class="lbl" x="57.0" y="114.0" text-anchor="middle">P5</text></g>
-<g><title>LeanDag.FairScheduleOn — FairScheduleOn</title>
-<rect x="26.0" y="135.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
-<text class="lbl" x="57.0" y="147.0" text-anchor="middle">P10</text></g>
+<text class="col" x="705.0" y="86" text-anchor="middle">step 6</text>
+<path d="M196.0,279.0 C219.0,279.0 219.0,543.0 242.0,543.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,279.0 C219.0,279.0 219.0,510.0 242.0,510.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,279.0 C219.0,279.0 219.0,576.0 242.0,576.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M88.0,543.0 C219.0,543.0 219.0,477.0 350.0,477.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M88.0,543.0 C219.0,543.0 219.0,609.0 350.0,609.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M88.0,543.0 C165.0,543.0 165.0,675.0 242.0,675.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M88.0,543.0 C219.0,543.0 219.0,543.0 350.0,543.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M88.0,543.0 C165.0,543.0 165.0,741.0 242.0,741.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M88.0,543.0 C165.0,543.0 165.0,708.0 242.0,708.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M88.0,543.0 C219.0,543.0 219.0,675.0 350.0,675.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M88.0,543.0 C273.0,543.0 273.0,444.0 458.0,444.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M88.0,543.0 C219.0,543.0 219.0,510.0 350.0,510.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M88.0,543.0 C165.0,543.0 165.0,609.0 242.0,609.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,114.0 C219.0,114.0 219.0,411.0 242.0,411.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,114.0 C273.0,114.0 273.0,477.0 350.0,477.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,114.0 C273.0,114.0 273.0,708.0 350.0,708.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,114.0 C273.0,114.0 273.0,543.0 350.0,543.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,114.0 C273.0,114.0 273.0,675.0 350.0,675.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,114.0 C273.0,114.0 273.0,510.0 350.0,510.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M412.0,477.0 C435.0,477.0 435.0,477.0 458.0,477.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M412.0,477.0 C435.0,477.0 435.0,510.0 458.0,510.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,312.0 C165.0,312.0 165.0,675.0 134.0,675.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,312.0 C219.0,312.0 219.0,543.0 242.0,543.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,312.0 C165.0,312.0 165.0,807.0 134.0,807.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,312.0 C165.0,312.0 165.0,411.0 134.0,411.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,312.0 C165.0,312.0 165.0,906.0 134.0,906.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,312.0 C165.0,312.0 165.0,576.0 134.0,576.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,312.0 C165.0,312.0 165.0,840.0 134.0,840.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,312.0 C165.0,312.0 165.0,378.0 134.0,378.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,312.0 C165.0,312.0 165.0,1038.0 134.0,1038.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,312.0 C165.0,312.0 165.0,510.0 134.0,510.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,312.0 C165.0,312.0 165.0,609.0 134.0,609.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,312.0 C165.0,312.0 165.0,477.0 134.0,477.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,312.0 C165.0,312.0 165.0,147.0 134.0,147.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,312.0 C165.0,312.0 165.0,444.0 134.0,444.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,312.0 C165.0,312.0 165.0,741.0 134.0,741.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M412.0,444.0 C435.0,444.0 435.0,444.0 458.0,444.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,510.0 C219.0,510.0 219.0,741.0 242.0,741.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,708.0 C165.0,708.0 165.0,741.0 134.0,741.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,213.0 C219.0,213.0 219.0,510.0 242.0,510.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M412.0,510.0 C435.0,510.0 435.0,510.0 458.0,510.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M412.0,510.0 C543.0,510.0 543.0,576.0 674.0,576.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,741.0 C273.0,741.0 273.0,708.0 350.0,708.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M88.0,609.0 C273.0,609.0 273.0,444.0 458.0,444.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M304.0,510.0 C327.0,510.0 327.0,576.0 350.0,576.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,378.0 C273.0,378.0 273.0,675.0 350.0,675.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,378.0 C219.0,378.0 219.0,609.0 242.0,609.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,378.0 C273.0,378.0 273.0,510.0 350.0,510.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,378.0 C273.0,378.0 273.0,543.0 350.0,543.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,972.0 C165.0,972.0 165.0,1005.0 134.0,1005.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M412.0,576.0 C435.0,576.0 435.0,576.0 458.0,576.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M412.0,576.0 C435.0,576.0 435.0,642.0 458.0,642.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M412.0,576.0 C435.0,576.0 435.0,609.0 458.0,609.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M304.0,444.0 C327.0,444.0 327.0,477.0 350.0,477.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M304.0,444.0 C327.0,444.0 327.0,642.0 350.0,642.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M304.0,444.0 C327.0,444.0 327.0,543.0 350.0,543.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M304.0,444.0 C327.0,444.0 327.0,675.0 350.0,675.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M304.0,444.0 C327.0,444.0 327.0,576.0 350.0,576.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M304.0,444.0 C381.0,444.0 381.0,444.0 458.0,444.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M304.0,444.0 C327.0,444.0 327.0,510.0 350.0,510.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M304.0,411.0 C327.0,411.0 327.0,444.0 350.0,444.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M88.0,576.0 C273.0,576.0 273.0,675.0 458.0,675.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,246.0 C219.0,246.0 219.0,411.0 242.0,411.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,246.0 C273.0,246.0 273.0,477.0 350.0,477.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,246.0 C273.0,246.0 273.0,543.0 350.0,543.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,246.0 C273.0,246.0 273.0,675.0 350.0,675.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,246.0 C273.0,246.0 273.0,510.0 350.0,510.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,246.0 C219.0,246.0 219.0,609.0 242.0,609.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,411.0 C219.0,411.0 219.0,642.0 242.0,642.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,180.0 C219.0,180.0 219.0,477.0 242.0,477.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M304.0,477.0 C327.0,477.0 327.0,576.0 350.0,576.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,477.0 C219.0,477.0 219.0,708.0 242.0,708.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,477.0 C273.0,477.0 273.0,477.0 350.0,477.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,477.0 C219.0,477.0 219.0,675.0 242.0,675.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,477.0 C273.0,477.0 273.0,543.0 350.0,543.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,477.0 C273.0,477.0 273.0,675.0 350.0,675.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,477.0 C327.0,477.0 327.0,444.0 458.0,444.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,477.0 C273.0,477.0 273.0,510.0 350.0,510.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,477.0 C219.0,477.0 219.0,609.0 242.0,609.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M520.0,444.0 C543.0,444.0 543.0,576.0 566.0,576.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,444.0 C219.0,444.0 219.0,642.0 242.0,642.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M304.0,543.0 C327.0,543.0 327.0,609.0 350.0,609.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M304.0,543.0 C381.0,543.0 381.0,609.0 458.0,609.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,873.0 C165.0,873.0 165.0,213.0 134.0,213.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,873.0 C165.0,873.0 165.0,279.0 134.0,279.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,873.0 C165.0,873.0 165.0,180.0 134.0,180.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,543.0 C273.0,543.0 273.0,609.0 350.0,609.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,543.0 C165.0,543.0 165.0,510.0 134.0,510.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,543.0 C165.0,543.0 165.0,1038.0 134.0,1038.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,543.0 C435.0,543.0 435.0,576.0 674.0,576.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,774.0 C327.0,774.0 327.0,642.0 458.0,642.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M520.0,477.0 C597.0,477.0 597.0,576.0 674.0,576.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M304.0,576.0 C327.0,576.0 327.0,708.0 350.0,708.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M304.0,576.0 C327.0,576.0 327.0,609.0 350.0,609.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,1005.0 C327.0,1005.0 327.0,576.0 458.0,576.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M628.0,576.0 C651.0,576.0 651.0,576.0 674.0,576.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M412.0,543.0 C435.0,543.0 435.0,543.0 458.0,543.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M412.0,609.0 C435.0,609.0 435.0,708.0 458.0,708.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M412.0,609.0 C435.0,609.0 435.0,675.0 458.0,675.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,345.0 C219.0,345.0 219.0,543.0 242.0,543.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,345.0 C165.0,345.0 165.0,114.0 134.0,114.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,345.0 C165.0,345.0 165.0,246.0 134.0,246.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,345.0 C165.0,345.0 165.0,576.0 134.0,576.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,345.0 C165.0,345.0 165.0,378.0 134.0,378.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,345.0 C165.0,345.0 165.0,1038.0 134.0,1038.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,345.0 C165.0,345.0 165.0,510.0 134.0,510.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,345.0 C165.0,345.0 165.0,741.0 134.0,741.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,147.0 C219.0,147.0 219.0,444.0 242.0,444.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
 <g><title>LeanDag.Faults.card_byzantine — Faults.card_byzantine</title>
-<rect x="26.0" y="168.0" width="62" height="24" rx="5" fill="#f3e5d0" stroke="#b08a4a" stroke-width="1.2"/>
-<text class="lbl" x="57.0" y="180.0" text-anchor="middle">A2</text></g>
-<g><title>LeanDag.Faults.card_validators — Faults.card_validators</title>
-<rect x="26.0" y="201.0" width="62" height="24" rx="5" fill="#f3e5d0" stroke="#b08a4a" stroke-width="1.2"/>
-<text class="lbl" x="57.0" y="213.0" text-anchor="middle">A1</text></g>
-<g><title>LeanDag.BlockUniverse.complete — BlockUniverse.complete</title>
-<rect x="26.0" y="234.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
-<text class="lbl" x="57.0" y="246.0" text-anchor="middle">P4</text></g>
-<g><title>LeanDag.DeliversQuorum — DeliversQuorum</title>
-<rect x="26.0" y="267.0" width="62" height="24" rx="5" fill="#fbdcdc" stroke="#c06a6a" stroke-width="1.2"/>
-<text class="lbl" x="57.0" y="279.0" text-anchor="middle">N1</text></g>
-<g><title>LeanDag.Live.builds — Live.builds</title>
-<rect x="26.0" y="300.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
-<text class="lbl" x="57.0" y="312.0" text-anchor="middle">P8</text></g>
-<g><title>LeanDag.ValidWrt.predecessor — ValidWrt.predecessor</title>
-<rect x="26.0" y="333.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
-<text class="lbl" x="57.0" y="345.0" text-anchor="middle">P1</text></g>
-<g><title>LeanDag.ValidWrt.quorum — ValidWrt.quorum</title>
-<rect x="26.0" y="366.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
-<text class="lbl" x="57.0" y="378.0" text-anchor="middle">P3</text></g>
-<g><title>LeanDag.Delivery.includes — Delivery.includes</title>
-<rect x="26.0" y="399.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
-<text class="lbl" x="57.0" y="411.0" text-anchor="middle">P7</text></g>
-<g><title>LeanDag.EventuallyDelivers — EventuallyDelivers</title>
-<rect x="26.0" y="432.0" width="62" height="24" rx="5" fill="#fbdcdc" stroke="#c06a6a" stroke-width="1.2"/>
-<text class="lbl" x="57.0" y="444.0" text-anchor="middle">N2a</text></g>
-<g><title>LeanDag.Timing.covers — Timing.covers</title>
-<rect x="26.0" y="465.0" width="62" height="24" rx="5" fill="#fbdcdc" stroke="#c06a6a" stroke-width="1.2"/>
-<text class="lbl" x="57.0" y="477.0" text-anchor="middle">N2b</text></g>
+<rect x="134.0" y="102.0" width="62" height="24" rx="5" fill="#f3e5d0" stroke="#b08a4a" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="114.0" text-anchor="middle">A2</text></g>
+<g><title>LeanDag.BlockUniverse.no_equivocation — BlockUniverse.no_equivocation</title>
+<rect x="134.0" y="135.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="147.0" text-anchor="middle">P5</text></g>
 <g><title>LeanDag.Timing.waits — Timing.waits</title>
-<rect x="26.0" y="498.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
-<text class="lbl" x="57.0" y="510.0" text-anchor="middle">P9</text></g>
-<g><title>LeanDag.ValidWrt.distinct_creators — ValidWrt.distinct_creators</title>
-<rect x="26.0" y="531.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
-<text class="lbl" x="57.0" y="543.0" text-anchor="middle">P2</text></g>
-<g><title>LeanDag.ValidWrt.self_parent — ValidWrt.self_parent</title>
-<rect x="26.0" y="564.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
-<text class="lbl" x="57.0" y="576.0" text-anchor="middle">P3&#x27;</text></g>
-<g><title>LeanDag.exists_correct_mem_inter — two quorums share a correct validator</title>
-<rect x="134.0" y="135.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="165.0" y="147.0" text-anchor="middle">T0</text></g>
-<g><title>LeanDag.BlockUniverse.eq_of_creator_eq — non-equivocation, in usable form</title>
-<rect x="134.0" y="168.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="165.0" y="180.0" text-anchor="middle">T1</text></g>
-<g><title>LeanDag.commits_recur_on — commits recur</title>
+<rect x="134.0" y="168.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="180.0" text-anchor="middle">P9</text></g>
+<g><title>LeanDag.Timing.gst — `ViewSync`</title>
 <rect x="134.0" y="201.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="165.0" y="213.0" text-anchor="middle">L6</text></g>
-<g><title>LeanDag.commits_recur_within — the committing slot, and its round</title>
-<rect x="134.0" y="234.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="165.0" y="246.0" text-anchor="middle">L8b</text></g>
-<g><title>LeanDag.decided_full — decisions propagate to the full view</title>
+<text class="lbl" x="165.0" y="213.0" text-anchor="middle">`convergesWithin_of_bounded`</text></g>
+<g><title>LeanDag.Faults.card_validators — Faults.card_validators</title>
+<rect x="134.0" y="234.0" width="62" height="24" rx="5" fill="#f3e5d0" stroke="#b08a4a" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="246.0" text-anchor="middle">A1</text></g>
+<g><title>LeanDag.Timing.blk — `ViewSync`</title>
 <rect x="134.0" y="267.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="165.0" y="279.0" text-anchor="middle">L3</text></g>
-<g><title>LeanDag.no_stall — no stall</title>
+<text class="lbl" x="165.0" y="279.0" text-anchor="middle">`exists_blk_of_populatedOn`</text></g>
+<g><title>LeanDag.Block.round — `DoS.SelfParent`</title>
 <rect x="134.0" y="300.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="165.0" y="312.0" text-anchor="middle">L1</text></g>
-<g><title>LeanDag.round_le_of_reaches — causal history is non-increasing in round</title>
+<text class="lbl" x="165.0" y="312.0" text-anchor="middle">`card_filter_creator_of_mem_refs`</text></g>
+<g><title>LeanDag.Faults.f — `Quality.Coverage`</title>
 <rect x="134.0" y="333.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="165.0" y="345.0" text-anchor="middle">T2</text></g>
-<g><title>LeanDag.card_authorsAt_of_lt — the DAG is dense below its frontier</title>
-<rect x="134.0" y="366.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="165.0" y="378.0" text-anchor="middle">L0</text></g>
-<g><title>LeanDag.synchronised_of_delivery — coverage from delivery</title>
-<rect x="134.0" y="399.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="165.0" y="411.0" text-anchor="middle">L7a</text></g>
-<g><title>LeanDag.View.mem_of_reaches — causal history does not escape a view</title>
+<text class="lbl" x="165.0" y="345.0" text-anchor="middle">`card_coveredAt_ge_of_decided`</text></g>
+<g><title>LeanDag.ValidWrt.quorum — ValidWrt.quorum</title>
+<rect x="134.0" y="366.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="378.0" text-anchor="middle">P3</text></g>
+<g><title>LeanDag.Delivery.includes — Delivery.includes</title>
+<rect x="134.0" y="399.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="411.0" text-anchor="middle">P7</text></g>
+<g><title>LeanDag.EventuallyDelivers — `ViewSync`</title>
 <rect x="134.0" y="432.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="165.0" y="444.0" text-anchor="middle">T6a</text></g>
+<text class="lbl" x="165.0" y="444.0" text-anchor="middle">`eventuallyDelivers_of_viewsConverge`</text></g>
+<g><title>LeanDag.ValidWrt.predecessor — ValidWrt.predecessor</title>
+<rect x="134.0" y="465.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="477.0" text-anchor="middle">P1</text></g>
 <g><title>LeanDag.decided_mono — decisions are monotone in the view</title>
-<rect x="134.0" y="465.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="165.0" y="477.0" text-anchor="middle">L2</text></g>
-<g><title>LeanDag.decided_none_of_leader_absent — an absent leader is skipped</title>
 <rect x="134.0" y="498.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="165.0" y="510.0" text-anchor="middle">L5</text></g>
-<g><title>LeanDag.directCommit_of_leader_mem — a correct leader is committed</title>
+<text class="lbl" x="165.0" y="510.0" text-anchor="middle">L2</text></g>
+<g><title>LeanDag.Decided — `Liveness`</title>
 <rect x="134.0" y="531.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="165.0" y="543.0" text-anchor="middle">L4</text></g>
+<text class="lbl" x="165.0" y="543.0" text-anchor="middle">`decided_none_of_no_candidate`</text></g>
+<g><title>LeanDag.DeliversQuorum — DeliversQuorum</title>
+<rect x="134.0" y="564.0" width="62" height="24" rx="5" fill="#fbdcdc" stroke="#c06a6a" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="576.0" text-anchor="middle">N1</text></g>
+<g><title>LeanDag.DoSValid — `DoS.Pedigree`</title>
+<rect x="134.0" y="597.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="609.0" text-anchor="middle">`card_historyBlocksOf_le`</text></g>
+<g><title>LeanDag.FairRunOn — `Liveness`</title>
+<rect x="134.0" y="630.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="642.0" text-anchor="middle">`FairRunOn.fairScheduleOn`</text></g>
+<g><title>LeanDag.HoldsOwn — `ViewSync`</title>
+<rect x="134.0" y="663.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="675.0" text-anchor="middle">`holdsOwn_toDelivery&#x27;`</text></g>
+<g><title>LeanDag.Live — `Odontoceti.Liveness`</title>
+<rect x="134.0" y="696.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="708.0" text-anchor="middle">`all_decided_below_of_fairRun`</text></g>
+<g><title>LeanDag.Live.builds — Live.builds</title>
+<rect x="134.0" y="729.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="741.0" text-anchor="middle">P8</text></g>
+<g><title>LeanDag.Rated — `Quantitative`</title>
+<rect x="134.0" y="762.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="774.0" text-anchor="middle">`unbounded_of_rated`</text></g>
+<g><title>LeanDag.RefsAccepted — `GC.Bootstrap`</title>
+<rect x="134.0" y="795.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="807.0" text-anchor="middle">`history_subset_insert_viewUpto`</text></g>
+<g><title>LeanDag.StepNovelty — `DoS.Novelty`</title>
+<rect x="134.0" y="828.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="840.0" text-anchor="middle">`card_history_le_of_stepNovelty`</text></g>
+<g><title>LeanDag.Timing — `Quantitative`</title>
+<rect x="134.0" y="861.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="873.0" text-anchor="middle">`Timing.populatedOn`</text></g>
+<g><title>LeanDag.ValidWrt.self_parent — ValidWrt.self_parent</title>
+<rect x="134.0" y="894.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="906.0" text-anchor="middle">P3&#x27;</text></g>
+<g><title>LeanDag.View.mem_of_reaches — causal history does not escape a view</title>
+<rect x="134.0" y="927.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="939.0" text-anchor="middle">T6a</text></g>
+<g><title>LeanDag.ViewSync — `ViewSync`</title>
+<rect x="134.0" y="960.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="972.0" text-anchor="middle">`exists_synchronisedOn_of_converges`</text></g>
+<g><title>LeanDag.ViewSync.converges — `ViewSync`</title>
+<rect x="134.0" y="993.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="1005.0" text-anchor="middle">`ViewSync.convergesWithin`</text></g>
+<g><title>LeanDag.decided_none_of_leader_absent — an absent leader is skipped</title>
+<rect x="134.0" y="1026.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="165.0" y="1038.0" text-anchor="middle">L5</text></g>
+<g><title>LeanDag.BlockUniverse.complete — BlockUniverse.complete</title>
+<rect x="26.0" y="531.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
+<text class="lbl" x="57.0" y="543.0" text-anchor="middle">P4</text></g>
+<g><title>LeanDag.FairScheduleOn — `Quantitative`</title>
+<rect x="26.0" y="564.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="57.0" y="576.0" text-anchor="middle">`FairWithin.fairScheduleOn`</text></g>
+<g><title>LeanDag.ValidWrt.distinct_creators — ValidWrt.distinct_creators</title>
+<rect x="26.0" y="597.0" width="62" height="24" rx="5" fill="#e8e8ea" stroke="#8a8a92" stroke-width="1.2"/>
+<text class="lbl" x="57.0" y="609.0" text-anchor="middle">P2</text></g>
+<g><title>LeanDag.exists_correct_mem_inter — two quorums share a correct validator</title>
+<rect x="242.0" y="399.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="273.0" y="411.0" text-anchor="middle">T0</text></g>
+<g><title>LeanDag.BlockUniverse.eq_of_creator_eq — non-equivocation, in usable form</title>
+<rect x="242.0" y="432.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="273.0" y="444.0" text-anchor="middle">T1</text></g>
+<g><title>LeanDag.Timing.le_built — `ViewSync`</title>
+<rect x="242.0" y="465.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="273.0" y="477.0" text-anchor="middle">`le_built_of_waits`</text></g>
+<g><title>LeanDag.Timing.covers — `ViewSync`</title>
+<rect x="242.0" y="498.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="273.0" y="510.0" text-anchor="middle">`covers_of_converges`</text></g>
+<g><title>LeanDag.directCommit_of_leader_mem — a correct leader is committed</title>
+<rect x="242.0" y="531.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="273.0" y="543.0" text-anchor="middle">L4</text></g>
+<g><title>LeanDag.Populated — `Liveness`</title>
+<rect x="242.0" y="564.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="273.0" y="576.0" text-anchor="middle">`exists_isLeaderBlock`</text></g>
+<g><title>LeanDag.card_authorsAt_of_lt — the DAG is dense below its frontier</title>
+<rect x="242.0" y="597.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="273.0" y="609.0" text-anchor="middle">L0</text></g>
+<g><title>LeanDag.synchronised_of_delivery — `ViewSync`</title>
+<rect x="242.0" y="630.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="273.0" y="642.0" text-anchor="middle">`synchronised_toDelivery`</text></g>
+<g><title>LeanDag.mem_history_iff — `History`</title>
+<rect x="242.0" y="663.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="273.0" y="675.0" text-anchor="middle">`historyUpto_mono`</text></g>
+<g><title>LeanDag.round_le_of_reaches — causal history is non-increasing in round</title>
+<rect x="242.0" y="696.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="273.0" y="708.0" text-anchor="middle">T2</text></g>
+<g><title>LeanDag.decided_full — decisions propagate to the full view</title>
+<rect x="242.0" y="729.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="273.0" y="741.0" text-anchor="middle">L3</text></g>
 <g><title>LeanDag.exists_correct_mem_creators_inter — two quorum-backed identifier sets share a correct author</title>
-<rect x="242.0" y="250.5" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="273.0" y="262.5" text-anchor="middle">T0′</text></g>
-<g><title>LeanDag.Timing.synchronisedOn_of_timing — coverage from GST</title>
-<rect x="242.0" y="283.5" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="273.0" y="295.5" text-anchor="middle">L7b</text></g>
-<g><title>LeanDag.certificates_eq_empty_of_directSkip — a skipped block has no certificate anywhere</title>
-<rect x="242.0" y="316.5" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="273.0" y="328.5" text-anchor="middle">M3</text></g>
-<g><title>LeanDag.exists_certificate_reaches_of_directCommit — a committed block&#x27;s certificate is unavoidable from `r+3`</title>
-<rect x="242.0" y="349.5" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="273.0" y="361.5" text-anchor="middle">M2</text></g>
-<g><title>LeanDag.exists_correct_common_support — correct-support counting</title>
-<rect x="242.0" y="382.5" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="273.0" y="394.5" text-anchor="middle">T3a</text></g>
-<g><title>LeanDag.reaches_of_quorum_support — persistence</title>
-<rect x="242.0" y="415.5" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="273.0" y="427.5" text-anchor="middle">T3</text></g>
-<g><title>LeanDag.eq_of_certificates_nonempty — certificate uniqueness</title>
-<rect x="350.0" y="234.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="381.0" y="246.0" text-anchor="middle">M5′</text></g>
-<g><title>LeanDag.ViewSync.synchronisedOn_of_converges — coverage from view convergence</title>
-<rect x="350.0" y="267.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="381.0" y="279.0" text-anchor="middle">L7c</text></g>
-<g><title>LeanDag.directCommit_of_wait — the wait bound</title>
-<rect x="350.0" y="300.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="381.0" y="312.0" text-anchor="middle">L9</text></g>
-<g><title>LeanDag.synchronisedOn_of_rate — the round of coverage, explicitly</title>
-<rect x="350.0" y="333.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="381.0" y="345.0" text-anchor="middle">L8a</text></g>
-<g><title>LeanDag.not_directCommit_of_directSkip — no block is both committed and skipped</title>
-<rect x="350.0" y="366.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="381.0" y="378.0" text-anchor="middle">M1</text></g>
-<g><title>LeanDag.indirect_agrees_with_direct — the indirect rule agrees with the direct</title>
-<rect x="350.0" y="399.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="381.0" y="411.0" text-anchor="middle">M4</text></g>
-<g><title>LeanDag.exists_common_correct_ancestor — a common correct ancestor</title>
 <rect x="350.0" y="432.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="381.0" y="444.0" text-anchor="middle">T3c</text></g>
+<text class="lbl" x="381.0" y="444.0" text-anchor="middle">T0′</text></g>
+<g><title>LeanDag.certificates_eq_empty_of_directSkip — a skipped block has no certificate anywhere</title>
+<rect x="350.0" y="465.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="381.0" y="477.0" text-anchor="middle">M3</text></g>
+<g><title>LeanDag.exists_certificate_reaches_of_directCommit — a committed block&#x27;s certificate is unavoidable from `r+3`</title>
+<rect x="350.0" y="498.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="381.0" y="510.0" text-anchor="middle">M2</text></g>
+<g><title>LeanDag.exists_correct_common_support — correct-support counting</title>
+<rect x="350.0" y="531.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="381.0" y="543.0" text-anchor="middle">T3a</text></g>
+<g><title>LeanDag.Timing.synchronisedOn_of_timing — coverage from GST</title>
+<rect x="350.0" y="564.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="381.0" y="576.0" text-anchor="middle">L7b</text></g>
+<g><title>LeanDag.decided_of_leader_of_populated — `Odontoceti.Liveness`</title>
+<rect x="350.0" y="597.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="381.0" y="609.0" text-anchor="middle">`decided_of_leader_of_populated`</text></g>
+<g><title>LeanDag.ReactiveCore.votes — `Reactive.Odontoceti`</title>
+<rect x="350.0" y="630.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="381.0" y="642.0" text-anchor="middle">`reactive_directCommit`</text></g>
+<g><title>LeanDag.reaches_of_quorum_support — persistence</title>
+<rect x="350.0" y="663.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="381.0" y="675.0" text-anchor="middle">T3</text></g>
+<g><title>LeanDag.no_stall — no stall</title>
+<rect x="350.0" y="696.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="381.0" y="708.0" text-anchor="middle">L1</text></g>
+<g><title>LeanDag.eq_of_certificates_nonempty — certificate uniqueness</title>
+<rect x="458.0" y="432.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="489.0" y="444.0" text-anchor="middle">M5′</text></g>
+<g><title>LeanDag.not_directCommit_of_directSkip — no block is both committed and skipped</title>
+<rect x="458.0" y="465.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="489.0" y="477.0" text-anchor="middle">M1</text></g>
+<g><title>LeanDag.indirect_agrees_with_direct — the indirect rule agrees with the direct</title>
+<rect x="458.0" y="498.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="489.0" y="510.0" text-anchor="middle">M4</text></g>
+<g><title>LeanDag.exists_common_correct_ancestor — a common correct ancestor</title>
+<rect x="458.0" y="531.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="489.0" y="543.0" text-anchor="middle">T3c</text></g>
+<g><title>LeanDag.ViewSync.synchronisedOn_of_converges — coverage from view convergence</title>
+<rect x="458.0" y="564.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="489.0" y="576.0" text-anchor="middle">L7c</text></g>
+<g><title>LeanDag.directCommit_of_wait — the wait bound</title>
+<rect x="458.0" y="597.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="489.0" y="609.0" text-anchor="middle">L9</text></g>
+<g><title>LeanDag.synchronisedOn_of_rate — the round of coverage, explicitly</title>
+<rect x="458.0" y="630.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="489.0" y="642.0" text-anchor="middle">L8a</text></g>
+<g><title>LeanDag.commits_recur_on — commits recur</title>
+<rect x="458.0" y="663.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="489.0" y="675.0" text-anchor="middle">L6</text></g>
+<g><title>LeanDag.commits_recur_within — the committing slot, and its round</title>
+<rect x="458.0" y="696.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="489.0" y="708.0" text-anchor="middle">L8b</text></g>
 <g><title>LeanDag.decided_unique — agreement</title>
-<rect x="566.0" y="333.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="597.0" y="345.0" text-anchor="middle">M6</text></g>
+<rect x="674.0" y="564.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="705.0" y="576.0" text-anchor="middle">M6</text></g>
 <g><title>LeanDag.eq_of_directCommit_of_creator_eq — at most one block per slot is directly committed</title>
-<rect x="458.0" y="333.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
-<text class="lbl" x="489.0" y="345.0" text-anchor="middle">M5</text></g>
+<rect x="566.0" y="564.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
+<text class="lbl" x="597.0" y="576.0" text-anchor="middle">M5</text></g>
 </svg>
