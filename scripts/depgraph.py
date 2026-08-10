@@ -48,6 +48,9 @@ ASSUMPTIONS = [
 # Section of the report each label series belongs to, for colouring.
 def series_group(label):
     if label.startswith('CQ'): return 'quality'
+    if label.startswith('CU') or label.startswith('V'): return 'core'
+    if label.startswith('RS'): return 'reactive'
+    if label.startswith('E'): return 'dos'
     if label.startswith(('D', 'C', 'B')) and label != 'D': return 'dos'
     if label.startswith('G'): return 'gc'
     if label.startswith('O'): return 'odo'
@@ -62,12 +65,14 @@ GROUP_FILL = {
     'dos':      ('#fbe9d6', '#c0844a'),
     'gc':       ('#e9dff5', '#7d63a8'),
     'odo':      ('#fadce6', '#b05878'),
+    'reactive': ('#d9eef2', '#4f8a98'),
 }
 GROUP_TITLE = {
     'fault': 'fault model (§4.2)', 'protocol': 'protocol clauses (§4.1)',
     'network': 'network (§4.3)', 'core': 'core: safety & liveness (§5–§6)',
     'quality': 'chain quality (§7)', 'dos': 'denial of service (§8)',
     'gc': 'garbage collection (§9)', 'odo': 'Odontoceti (§10)',
+    'reactive': 'reactive schedule (§11)',
 }
 
 # ---------------------------------------------------------------- input
@@ -104,7 +109,10 @@ def build(view):
     all_names = set(module)
 
     def resolve(short):
-        exact = [n for n in all_names if n == short or n.endswith('.' + short)]
+        # library declarations only: witness-model labels index runs on
+        # data, and the diagrams show the proof structure of the library
+        exact = [n for n in all_names if (n == short or n.endswith('.' + short))
+                 and not n.startswith('LeanDagTest.')]
         if not exact:
             return None
         return min(exact, key=len)

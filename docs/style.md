@@ -91,8 +91,9 @@ here"*. Naming which hypothesis a result consumes, and where.
 - **Every displayed Lean statement is copied from the source** and
   type-checks against the built library. Binders may be elided for
   layout; mark an elision with `…`.
-- **Labels** are alphanumeric by area — T, M, L (core), P, N, R (trust
-  boundary), CQ, D/C/B, G, O (the arcs) — and must be *introduced where
+- **Labels** are alphanumeric by area — T, M, L (core), V, CU, RS
+  (view convergence, catch-up, reactive), P, N, R (trust boundary),
+  CQ, D/C/B/E, G, O (the arcs) — and must be *introduced where
   the reader first meets them*, not only in the appendix.
 - **Tables are left-aligned** (`|:---|`), and carry short cells with the
   explanation in the surrounding prose.

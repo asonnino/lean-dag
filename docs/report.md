@@ -1077,7 +1077,7 @@ by violating a clause; read across to see what a result depends on.
 | P4 | `BlockUniverse.complete` | T2, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L0, L3, L6, L8b, CQ3, CQ5, CQ6, CQ7, C2, D15a, C1′, C3′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, G9, O7, O10 |
 | P5 | `BlockUniverse.no_equivocation` | T1, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L7b, L7c, L8a, L9, C2, D15a, C1′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G12, G8, O1, O1′, O2, O4′, O5, O6 |
 | P7 | `Delivery.includes` | L7a, C3′, B5, G6, G6b, G7, G11, G12, G9 |
-| P8 | `Live.builds` | `populated_of_viewsConverge` (unlabelled) |
+| P8 | `Live.builds` | V5; V6 via its timed counterpart `ViewGrowth.builds` |
 | P9a | `Timing.waits` | L7b, L7c, L8a, L9 |
 | P9b | `Timing.prompt` | L8a, L9 |
 | P10 | `FairScheduleOn` | L6, CQ6 |
@@ -1091,11 +1091,9 @@ dischargeable from `converges`.
 
 Three readings are worth drawing out. **P8's consumers are the
 production derivations**: the liveness results take production as a
-`Populated` hypothesis rather than deriving it inline, so no labelled
-result reaches the clause. The row tracks `Live.builds`, consumed by the
-untimed derivation; P8's timed incarnation `ViewGrowth.builds` is
-consumed by `ViewGrowth.populatedOn` (§6.9), which the table does not
-show because that derivation carries no label. **P3′ is absent
+`Populated` hypothesis rather than deriving it inline, so the clause is
+reached only by V5 — the untimed derivation, through `Live.builds` —
+and by V6, through its timed counterpart `ViewGrowth.builds`. **P3′ is absent
 from safety and liveness entirely**, feeding only the DoS and
 garbage-collection arcs — the report's claim to that effect is this table
 row. And **P4 and P5 appear almost everywhere**, which is the honest
@@ -1277,6 +1275,7 @@ committed).
 
 ### 5.6 Ledger stability
 
+**M7.**
 ```lean
 theorem commitSeq_agree
     (h₁ : ∀ k, k < n → Decided U V₁ k (g₁ k))
@@ -1710,6 +1709,7 @@ network guarantee with the protocol's referencing rule (§4.3). Stated
 over views the two are apart: `converges` is the network's, `references` is P7 in the timed
 setting, and the composite field becomes a *theorem*:
 
+**V1.**
 ```lean
 theorem covers_of_converges : … vs.blk w n ∈ (U.block (vs.blk v (n + 1))).refs
 ```
@@ -1808,6 +1808,7 @@ With `HoldsOwn` — an author has its own block in hand when it builds the
 next — this yields `EventuallyDelivers` from round `0`, and hence
 **production, untimed**:
 
+**V5.**
 ```lean
 theorem populated_of_viewsConverge (H : Live U D N)
     (hvc : ViewsConverge D) (hown : HoldsOwn D) : ∀ r ≤ N, Populated U r
@@ -1846,6 +1847,7 @@ function extracted from `PopulatedOn` satisfies them, the choice being
 canonical because non-equivocation makes a correct validator's round-`n`
 block unique:
 
+**V7.**
 ```lean
 theorem exists_blk_of_populatedOn [Nonempty BlockId]
     (hpop : ∀ n ≤ N, PopulatedOn U T n) :
@@ -1888,6 +1890,7 @@ view — the same rule, over the object this layer has.
 
 Production is then a theorem:
 
+**V6.**
 ```lean
 theorem ViewGrowth.populatedOn (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hD : DriftOn vg.built T R D N) (hgst : vg.gst ≤ R)
@@ -1992,6 +1995,7 @@ withheld blocks arrive after every build in the run, so holdings converge;
 they converge too late to be referenced. `ugapGrowth` certifies every
 protocol clause field by field, and
 
+**V10.**
 ```lean
 theorem bound_is_necessary (hN : 0 < N) :
     ConvergesEventually (ugapGrowth N).holds Correct ∧
@@ -2034,8 +2038,10 @@ above it is finite combinatorics over a DAG; everything that mentions an
 instant lies below. Both halves are `Prop`s about a block universe, so
 the layers meet at a statement rather than at a module boundary, and any
 of the routes of §§6.7–6.9 may supply them. Extraction confirms the
-division: of the 67 labelled results, four mention a clock — L7b, L7c,
-L8a and L9, which are the derivations themselves — and every theorem of
+division: every labelled result that mentions a clock lies below the
+interface — the timing derivations (L7b, L7c, L8a, L9, L11), the
+view-convergence family (V1–V13), catch-up (CU1–CU4) and the reactive
+schedule (RS1–RS4) — and none above it does. Every theorem of
 `Timing.lean`, `Quantitative.lean` and `ViewSync.lean` that concludes
 anything used above the line does so by first establishing
 `SynchronisedOn` or `PopulatedOn`. This is the separation the report's
@@ -2216,6 +2222,7 @@ structure CatchupSync (U : BlockUniverse Validator BlockId Payload)
 
 and the collapse is immediate and total:
 
+**CU2.**
 ```lean
 theorem drift_collapse {n : ℕ} (hn : n ≤ N)
     (hg : ∀ u ∈ T, cs.gst ≤ cs.built u n) :
@@ -2229,6 +2236,7 @@ in one round, not gradually, and `driftOn_of_catchup` feeds the
 collapsed bound to the coverage derivation of §6.9 unchanged. The
 threshold then loses its deployment component:
 
+**CU3.**
 ```lean
 theorem decided_of_catchup [S : Slots Validator] {k : ℕ}
     (hT : T ⊆ (Correct : Finset Validator))
@@ -3099,6 +3107,7 @@ structure:
   face of the canonicity premise.
 * **O10.** The composition, under enforceable hypotheses only:
 
+**L10.**
 ```lean
 theorem all_decided_below_of_fairRun (hc : 0 < c) (hT : T ⊆ Correct)
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
@@ -3177,6 +3186,7 @@ the extraction confirms that neither liveness result below reaches
 
 The vote is the shared step:
 
+**RS1.**
 ```lean
 theorem votes (hT : T ⊆ (Correct : Finset Validator))
     (hD : DriftOn rc.built T R D N) (hgst : rc.gst ≤ R)
@@ -3200,6 +3210,7 @@ reliable vote it holds — and the liveness statement mirrors L4's
 conclusion with the coverage hypothesis replaced by the two wait
 clauses:
 
+**RS2.**
 ```lean
 theorem decided (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
@@ -3228,6 +3239,7 @@ constant `proc` — once a validator past its round entry holds the leader
 and every reliable round-`r` block, it builds within `proc` — and the
 latency of a round is then bounded with the timeout appearing nowhere:
 
+**RS4.**
 ```lean
 theorem no_timeout_of_fast {δ : ℕ}
     (hδ : ∀ u ∈ T, ∀ v ∈ T,
@@ -3898,15 +3910,17 @@ development additive, but natural the third time a commit rule arrives.
 Principal results only; supporting lemmas are omitted (Appendix D
 indexes them).
 
-A label — `L4`, `CQ6`, `O5` — is a cross-reference handle, not a rank:
-the prose, the consumption map of §4.8 and the support diagrams of §6.10
-refer to results through them, and the quantified claims of §6.10 and
-§14 range over the labelled tier. A `—` row indexes a result no prose
-refers to by handle; the split largely tracks chronology, since each
-series was coined when its area's narrative was designed, and results
-arriving later — the view-convergence family, the negative witnesses,
-and the reactive and catch-up arcs entire — were indexed without
-extending the schemes. Appendix C displays both tiers in full.
+A label — `L4`, `CQ6`, `O5` — is a cross-reference handle: the prose,
+the consumption map of §4.8 and the support diagrams of §6.10 refer to
+results through them. The series are alphabetic by area: T and M for
+the safety core, L for liveness, V for the view-convergence family, CU
+for catch-up, RS for the reactive schedule, CQ for chain quality, C, D,
+B and E for the denial-of-service arc, G for garbage collection, O for
+Odontoceti; P, N and R name clauses of the trust boundary rather than
+results. Labels resolving to witness models rather than library
+theorems (V10–V12, CU1, CU4, C5, CQ8, O11) are excluded from the
+diagrams, which show the library. Appendix C displays every indexed
+result in full.
 
 ### Safety
 
@@ -3915,7 +3929,7 @@ extending the schemes. Appendix C displays both tiers in full.
 | T0 | two quorums share a correct validator | `exists_correct_mem_inter` *(Validators)* |
 | T0′ | two quorum-backed identifier sets share a correct author | `exists_correct_mem_creators_inter` *(Block)* |
 | T1 | non-equivocation, in usable form | `BlockUniverse.eq_of_creator_eq` *(BlockDag)* |
-| — | two quorum-backed sets of round-`n` blocks share a block | `BlockUniverse.exists_common_mem_of_quorums` *(BlockDag)* |
+| T6 | two quorum-backed sets of round-`n` blocks share a block | `BlockUniverse.exists_common_mem_of_quorums` *(BlockDag)* |
 | T2 | causal history is non-increasing in round | `round_le_of_reaches` *(CausalHistory)* |
 | T6a | causal history does not escape a view | `View.mem_of_reaches`, `View.exists_reaches_iff` *(CausalHistory)* |
 | T3 | persistence | `reaches_of_quorum_support` *(Persistence)* |
@@ -3928,10 +3942,10 @@ extending the schemes. Appendix C displays both tiers in full.
 | M5′ | certificate uniqueness | `eq_of_certificates_nonempty` *(Mysticeti)* |
 | M5 | at most one block per slot is directly committed | `eq_of_directCommit_of_creator_eq` *(Mysticeti)* |
 | M6 | agreement | `decided_unique`, `decided_agree` *(Mysticeti)* |
-| — | corollaries of agreement | `eq_of_decided_commit`, `not_decided_skip_of_decided_commit` *(Mysticeti)* |
-| — | the committed-leader sequence is agreed | `commitSeq_agree` *(Mysticeti)* |
-| — | the ledger is monotone and agreed | `ledgerSet_mono`, `ledgerSet_agree` *(Mysticeti)* |
-| — | a block enters at one slot, agreed | `outputAt_unique`, `outputAt_agree` *(Mysticeti)* |
+| M6′ | corollaries of agreement | `eq_of_decided_commit`, `not_decided_skip_of_decided_commit` *(Mysticeti)* |
+| M7 | the committed-leader sequence is agreed | `commitSeq_agree` *(Mysticeti)* |
+| M8 | the ledger is monotone and agreed | `ledgerSet_mono`, `ledgerSet_agree` *(Mysticeti)* |
+| M9 | a block enters at one slot, agreed | `outputAt_unique`, `outputAt_agree` *(Mysticeti)* |
 
 ### Liveness
 
@@ -3942,30 +3956,30 @@ extending the schemes. Appendix C displays both tiers in full.
 | L2 | decisions are monotone in the view | `decided_mono` *(Liveness)* |
 | L3 | decisions propagate to the full view | `decided_full` *(Liveness)* |
 | L4 | a correct leader is committed | `directCommit_of_leader_mem`, `decided_of_leader_mem` *(Liveness)* |
-| — | at `T := Correct` | `directCommit_of_correct_leader`, `decided_of_correct_leader` *(Liveness)* |
+| L4′ | at `T := Correct` | `directCommit_of_correct_leader`, `decided_of_correct_leader` *(Liveness)* |
 | L5 | an absent leader is skipped | `decided_none_of_leader_absent` *(Liveness)* |
 | L6 | commits recur | `commits_recur_on`, `commits_recur` *(Liveness)* |
-| — | a slot resolves through its first eligible commit | `decided_of_first_eligible_commit` *(Liveness)* |
-| — | a committed slot above decides everything below (spaced schedules) | `decided_of_committed_above`, `all_decided_below_of_spacing` *(Liveness)* |
-| — | a committed run of eligible span clears everything below | `decided_below_of_committed_run` *(Liveness)* |
-| — | every slot below a fair run is decided (pipelined) | `all_decided_below_of_fairRun` *(Liveness)* |
+| L8c | a slot resolves through its first eligible commit | `decided_of_first_eligible_commit` *(Liveness)* |
+| L8d | a committed slot above decides everything below (spaced schedules) | `decided_of_committed_above`, `all_decided_below_of_spacing` *(Liveness)* |
+| L8e | a committed run of eligible span clears everything below | `decided_below_of_committed_run` *(Liveness)* |
+| L10 | every slot below a fair run is decided (pipelined) | `all_decided_below_of_fairRun` *(Liveness)* |
 | L7a | coverage from delivery | `synchronised_of_delivery` *(Liveness)* |
 | L7b | coverage from GST | `Timing.synchronisedOn_of_timing`, `exists_synchronisedOn_of_backoff` *(Timing)* |
 | L7c | coverage from view convergence | `ViewSync.synchronisedOn_of_converges` *(ViewSync)* |
-| — | the referencing clause, unfused from the network's | `ViewSync.covers_of_converges` *(ViewSync)* |
-| — | the timing route derived from the view-level one | `ViewSync.toTiming` *(ViewSync)* |
-| — | build-time views agree | `ViewSync.ViewsAgree`, `ViewSync.viewsAgree_of_converges` *(ViewSync)* |
-| — | the bound factored out of convergence | `convergesWithin_iff_bounded` *(ViewSync)* |
-| — | production from untimed view convergence, without N1 | `ViewsConverge`, `populated_of_viewsConverge` *(ViewSync)* |
-| — | production from timed view convergence, from the GST crossing | `ViewGrowth`, `ViewGrowth.populatedOn` *(ViewSync)* |
-| — | the assumed production clause is the derived one, Skolemised | `exists_blk_of_populatedOn`, `ViewGrowth.toViewSync` *(ViewSync)* |
-| — | the untimed condition induced by the timed structure | `ViewGrowth.toDelivery`, `ViewsConvergeOn`, `viewsConvergeOn_toDelivery` *(ViewSync)* |
-| — | N2a and L7a derived from view convergence | `ViewGrowth.eventuallyDelivers_toDelivery`, `ViewGrowth.synchronised_toDelivery` *(ViewSync)* |
-| — | the bound in `converges` is necessary for coverage | `bound_is_necessary` *(LeanDagTest.Unbounded)* |
-| — | and its starting round is forced, not chosen | `ugap_not_viewsConvergeOn` *(LeanDagTest.Unbounded)* |
-| — | as is its reliable set: coverage over `T` derived, over `Correct` false | `reliable_set_is_forced` *(LeanDagTest.Unbounded)* |
-| — | liveness on the view-convergence foundation | `ViewSync.commits_recur_of_converges`, `ViewSync.all_decided_below_of_converges` *(ViewSync)* |
-| — | drift is derived | `Timing.driftFrom_of_prompt` *(Timing)* |
+| V1 | the referencing clause, unfused from the network's | `ViewSync.covers_of_converges` *(ViewSync)* |
+| V2 | the timing route derived from the view-level one | `ViewSync.toTiming` *(ViewSync)* |
+| V3 | build-time views agree | `ViewSync.ViewsAgree`, `ViewSync.viewsAgree_of_converges` *(ViewSync)* |
+| V4 | the bound factored out of convergence | `convergesWithin_iff_bounded` *(ViewSync)* |
+| V5 | production from untimed view convergence, without N1 | `ViewsConverge`, `populated_of_viewsConverge` *(ViewSync)* |
+| V6 | production from timed view convergence, from the GST crossing | `ViewGrowth`, `ViewGrowth.populatedOn` *(ViewSync)* |
+| V7 | the assumed production clause is the derived one, Skolemised | `exists_blk_of_populatedOn`, `ViewGrowth.toViewSync` *(ViewSync)* |
+| V8 | the untimed condition induced by the timed structure | `ViewGrowth.toDelivery`, `ViewsConvergeOn`, `viewsConvergeOn_toDelivery` *(ViewSync)* |
+| V9 | N2a and L7a derived from view convergence | `ViewGrowth.eventuallyDelivers_toDelivery`, `ViewGrowth.synchronised_toDelivery` *(ViewSync)* |
+| V10 | the bound in `converges` is necessary for coverage | `bound_is_necessary` *(LeanDagTest.Unbounded)* |
+| V11 | and its starting round is forced, not chosen | `ugap_not_viewsConvergeOn` *(LeanDagTest.Unbounded)* |
+| V12 | as is its reliable set: coverage over `T` derived, over `Correct` false | `reliable_set_is_forced` *(LeanDagTest.Unbounded)* |
+| V13 | liveness on the view-convergence foundation | `ViewSync.commits_recur_of_converges`, `ViewSync.all_decided_below_of_converges` *(ViewSync)* |
+| L11 | drift is derived | `Timing.driftFrom_of_prompt` *(Timing)* |
 | L8a | the round of coverage, explicitly | `synchronisedOn_of_rate` *(Quantitative)* |
 | L8b | the committing slot, and its round | `commits_recur_within`, `commits_recur_by_round` *(Quantitative)* |
 | L9 | the wait bound | `directCommit_of_wait`, `decided_of_wait`, `directCommit_of_wait_two_delay` *(Quantitative)* |
@@ -3980,7 +3994,7 @@ extending the schemes. Appendix C displays both tiers in full.
 | CQ5 | post-`R`, every correct block is in every later correct-led commit | `mem_history_of_decided_commit` *(Quality/Inclusion)* |
 | CQ6 | every correct block enters the agreed ledger | `committed_of_correct_block` *(Quality/Inclusion)* |
 | CQ7 | within a schedule window; the capstone | `committed_of_correct_block_within`, `committed_of_correct_block_by_round`, `chain_quality` *(Quality/Capstone)* |
-| — | the censorship boundary, on data | `Ucens` witnesses *(LeanDagTest/Quality/Model)* |
+| CQ8 | the censorship boundary, on data | `Ucens` witnesses *(LeanDagTest/Quality/Model)* |
 
 ### Denial of service (§8)
 
@@ -3990,14 +4004,14 @@ extending the schemes. Appendix C displays both tiers in full.
 | C2 | at most `f` authors exposed per cone | `card_exposedTo_le` *(DoS/Exposure)* |
 | D14 | safety and the DoS condition do not interact | witness file *(LeanDagTest/DoS/SafetyUnderDoS)* |
 | D15a | at zero margin, references are exactly the correct validators | `creators_refs_eq_correct` *(DoS/Exclusion)* |
-| — | the correct backbone | `mem_history_of_correct` *(DoS/Exclusion)* |
+| E1 | the correct backbone | `mem_history_of_correct` *(DoS/Exclusion)* |
 | C1′ | the general per-cone bound | `card_history_le'` *(DoS/Pedigree)* |
 | D25 | density: cones miss at most `f` per layer | `card_missingAt_le` *(DoS/Density)* |
-| — | the doubling construction (`2^(e−2)`) | `Udouble` witnesses *(LeanDagTest/DoS/Doubling)* |
-| — | the telescope | `card_history_le_of_stepNovelty` *(DoS/Novelty)* |
+| C5 | the doubling construction (`2^(e−2)`) | `Udouble` witnesses *(LeanDagTest/DoS/Doubling)* |
+| C4 | the telescope | `card_history_le_of_stepNovelty` *(DoS/Novelty)* |
 | C3′ | the view gap is a constant, not a drift | `card_viewGap_succ_le` *(DoS/Novelty)* |
-| — | the budget sandwich | `UniformBudget.byzBudget`, `uniform_of_byzBudget` *(DoS/Novelty)* |
-| — | a correct block carries its author's whole accepted past | `viewUpto_subset_history` *(DoS/Novelty)* |
+| B6 | the budget sandwich | `UniformBudget.byzBudget`, `uniform_of_byzBudget` *(DoS/Novelty)* |
+| B7 | a correct block carries its author's whole accepted past | `viewUpto_subset_history` *(DoS/Novelty)* |
 | B4 | linear storage under the budget | `card_viewUpto_le` *(DoS/Novelty)* |
 | B | the capstone, enforceable conditions only | `dos_resistance`, `dos_resistance'` *(DoS/Novelty)* |
 | B5 | after exposure completes, the pool freezes | `card_viewUpto_le_of_allExposed'` *(DoS/Composition)* |
@@ -4035,25 +4049,25 @@ extending the schemes. Appendix C displays both tiers in full.
 | O8 | a run of two spans eligibility | `Odontoceti.spansEligible_two` *(Odontoceti/Liveness)* |
 | O9 | a committed run clears everything below | `Odontoceti.decided_below_of_committed_run` *(Odontoceti/Liveness)* |
 | O10 | liveness | `Odontoceti.all_decided_below_of_fairRun` *(Odontoceti/Liveness)* |
+| O11 | the thesis gap, on data | `utwin6_both_pass` *(LeanDagTest/Odontoceti/Model)* |
 
 **The reactive schedule** (§11):
 
 | Label | Statement | Lean |
 |:---|:---|:---|
-| — | every reliable validator votes | `ReactiveCore.votes` *(Reactive/Basic)* |
-| — | reactive liveness, three rounds | `ReactiveM.certifies`, `ReactiveM.directCommit`, `ReactiveM.decided` *(Reactive/Mysticeti)* |
-| — | reactive liveness, two rounds | `Odontoceti.reactive_directCommit`, `Odontoceti.reactive_decided` *(Reactive/Odontoceti)* |
-| — | latency tracks delivery; the timeout never fires | `ReactiveCore.built_succ_le_of_fast`, `ReactiveCore.no_timeout_of_fast` *(Reactive/Basic)* |
+| RS1 | every reliable validator votes | `ReactiveCore.votes` *(Reactive/Basic)* |
+| RS2 | reactive liveness, three rounds | `ReactiveM.certifies`, `ReactiveM.directCommit`, `ReactiveM.decided` *(Reactive/Mysticeti)* |
+| RS3 | reactive liveness, two rounds | `Odontoceti.reactive_directCommit`, `Odontoceti.reactive_decided` *(Reactive/Odontoceti)* |
+| RS4 | latency tracks delivery; the timeout never fires | `ReactiveCore.built_succ_le_of_fast`, `ReactiveCore.no_timeout_of_fast` *(Reactive/Basic)* |
 
 **Catch-up** (§6.12):
 
 | Label | Statement | Lean |
 |:---|:---|:---|
-| — | drift does not contract without the clause | `ugrowSkew_spread_constant` *(LeanDagTest.Catchup)* |
-| — | drift collapses to `Δ + proc`, from any spread | `CatchupSync.drift_collapse`, `CatchupSync.driftOn_of_catchup` *(Drift/Catchup)* |
-| — | the deployment-free threshold `2Δ + proc` | `CatchupSync.synchronisedOn_of_catchup`, `CatchupSync.decided_of_catchup` *(Drift/Catchup)* |
-| — | the collapse exhibited from a spread of ten | `ugrowLag_collapse`, `ugrowLag_decided` *(LeanDagTest.Collapse)* |
-| — | the thesis gap, on data | `utwin6_both_pass` *(LeanDagTest/Odontoceti/Model)* |
+| CU1 | drift does not contract without the clause | `ugrowSkew_spread_constant` *(LeanDagTest.Catchup)* |
+| CU2 | drift collapses to `Δ + proc`, from any spread | `CatchupSync.drift_collapse`, `CatchupSync.driftOn_of_catchup` *(Drift/Catchup)* |
+| CU3 | the deployment-free threshold `2Δ + proc` | `CatchupSync.synchronisedOn_of_catchup`, `CatchupSync.decided_of_catchup` *(Drift/Catchup)* |
+| CU4 | the collapse exhibited from a spread of ten | `ugrowLag_collapse`, `ugrowLag_decided` *(LeanDagTest.Collapse)* |
 
 ---
 
