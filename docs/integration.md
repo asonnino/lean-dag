@@ -23,7 +23,9 @@ readers would assume anyway. Instead: give each arc a small,
 explicitly named **interface** — the invariants it consumes and the
 invariants it preserves — and prove interface-to-interface facts. Then
 composition is a corollary, and the cost is linear rather than
-quadratic.
+quadratic. §2 collects that interface and reports an audit confirming
+it is closed; §3 turns it into a work plan of roughly twenty small
+lemmas in place of thirty-six real proofs.
 
 Results will carry **I**-labels. Everything will live in
 `LeanDag/Integration/`, with `decide` witnesses in
@@ -62,29 +64,164 @@ than against incidental facts about a particular universe.
 ## 2. The named invariants
 
 The development already has the right vocabulary; it has simply never
-been collected. These are the universe-level `Prop`s that arcs consume
-as hypotheses:
+been collected. Collecting it turns out to be the substantive part of
+the plan, because the invariants do **not** all live at the same level,
+and the level is what determines which transformer can break them.
 
-| Invariant | Introduced | Consumed by |
-|:---|:---|:---|
-| the `BlockUniverse` laws (P1–P5) | §2.3 | everything |
-| `Populated U r`, `PopulatedOn U T r` | §6.3 | every liveness result |
-| `SynchronisedOn U T R` | §6.4 | every liveness result |
-| `DoSValid U` | §8.2 | the exposure bound (C2, C1′) |
-| `HonestNoEquiv U` | §14.1 | every hybrid safety theorem |
-| `UniformBudget D T`, `RefsAccepted D` | §8.4 | the storage bounds (B4, B) |
-| `Decided U V k v` facts | §3.5 | the ledger, chain quality |
+There are three layers, and they are not independent: a `Delivery` is
+*indexed by* a universe, so a universe transformer forces a delivery
+transformer, while a `Slots` instance is independent of the universe
+entirely.
 
-Seven entries, and the last is a family rather than a single `Prop`.
-That is the whole surface. **Every theorem in the development is
-stated against some subset of this list** — which is exactly the
-property that makes the linear strategy work.
+### 2.1 Layer U — the block universe
 
-The invariant list is also the thing to *audit* when a new arc is
-added: an arc that introduces a hypothesis outside this list has, by
-that act, created a new column in every future composition table. The
-integration arc should treat "does this need a new named invariant?"
-as a design question, not a bookkeeping one.
+The object: `BlockUniverse Validator BlockId Payload`. Broken by:
+`chop`, `skipFill`.
+
+**U1. The DAG laws (P1–P5).** Carried by the `BlockUniverse` structure
+itself — predecessor rounds, distinct creators, the reference quorum,
+the self-parent clause, completeness, non-equivocation.
+*Provides:* everything; no theorem in the development is stated without
+them. *Preservation is free*, in the strict sense that a transformer
+cannot typecheck without proving it — which is why `chop` and
+`skipFill` both discharge it in their definitions rather than as
+lemmas.
+
+**U2. Production.**
+```lean
+def PopulatedOn (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (r : ℕ) : Prop :=
+  ∀ v ∈ T, ∃ b ∈ U.ids, (U.block b).creator = v ∧ (U.block b).round = r
+```
+*Provides:* every liveness result in the development. L4 (a reliable
+leader is committed) consumes it three times — at the leader's round
+and the two above — and every capstone above L4 inherits it. If a
+transformer preserves nothing else, it must preserve this or nothing
+downstream of §6 applies.
+
+**U3. Coverage.**
+```lean
+def SynchronisedOn (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (R : ℕ) : Prop :=
+  ∀ n, R ≤ n → ∀ b ∈ U.ids, (U.block b).round = n + 1 →
+    (U.block b).creator ∈ T →
+    ∀ a ∈ U.ids, (U.block a).round = n →
+      (U.block a).creator ∈ T → a ∈ (U.block b).refs
+```
+*Provides:* the other half of L4, and with it the whole liveness line.
+Note the shape: it is a statement about **every** block of `T` at
+**every** round above `R`, which is precisely why adding blocks to a
+universe is dangerous for it and removing blocks is not (§3.1, I4/I5).
+
+**U4. The exposure condition.**
+```lean
+def DoSValid (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ b ∈ U.ids, ∀ i ∈ (U.block b).refs, ¬ ExposedIn U b (U.block i).creator
+```
+*Provides:* C2 (at most `f` authors exposed per cone) and through it
+C1′, the general per-cone storage bound of §8. Consumed by nothing
+outside §8 and §9 — safety and liveness are provably independent of it,
+which is one of §8's headline claims.
+
+**U5. Honest non-equivocation.**
+```lean
+def HonestNoEquiv (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ i ∈ U.ids, ∀ j ∈ U.ids, (U.block i).creator ∉ H.byzantine →
+    (U.block i).creator = (U.block j).creator →
+    (U.block i).round = (U.block j).round → i = j
+```
+*Provides:* every safety theorem of §14 — H2 through H6. It is P5 at
+the wider honest class, and it is the *only* invariant in this list
+introduced by an arc rather than by the core, which makes it the
+canonical example of the audit question of §2.4.
+
+**U6. Verdict facts** — `Decided U V k v`, and its bounded variant
+`DecidedWithin`. Not an invariant of a universe so much as a family of
+derivable facts about one, but it behaves like one for composition
+purposes: a transformer must say what happens to verdicts.
+*Provides:* the ledger (M7, M8), chain quality (§7), and — through
+`DecidedWithin` — the entire adaptive fixpoint (§13).
+
+### 2.2 Layer D — the delivery structure
+
+The object: `Delivery U`, **indexed by the universe**. This dependency
+is the structural fact the first draft of this document missed: a
+universe transformer `F : U ↦ F U` does not merely need to preserve
+delivery-level invariants, it needs a *transformer of its own* at this
+layer, `F_D : Delivery U → Delivery (F U)`, before those invariants can
+even be stated in the transformed setting.
+
+GC has one — `chopD D G : Delivery (chop U G)`, shifting every index by
+`G`. **Safe Skip has none**, which is why I6 as first drafted was not a
+well-formed obligation (§3.1).
+
+**D1. Production, operationally** — `Live U D N`: every correct
+validator has a genesis block, and one holding a quorum at `r` builds
+at `r+1` (P8). *Provides:* the untimed production derivation, hence U2.
+
+**D2. Delivery conditions** — `DeliversQuorum D`, `EventuallyDelivers D R`.
+*Provides:* the legacy quorum route (§15) and the delivery derivation
+of coverage (L7a). Both already have `chopD` counterparts.
+
+**D3. The storage budgets** — `UniformBudget D T`, `ByzBudget D κ`,
+`RefsAccepted D`. *Provides:* B4 and B, the linear-storage capstone of
+§8. All three have `chopD` counterparts (`byzBudget_chopD`,
+`refsAccepted_chopD`).
+
+### 2.3 Layer S — the schedule
+
+The object: `Slots Validator`, independent of the universe. Broken not
+by universe transformers but by *schedule* variants — `Slots.chop`
+(§9's re-indexing) and `slotsOf` (§13's adaptive assignment).
+
+**S1. Fairness** — `FairScheduleOn T` (a reliable leader arbitrarily
+far out) and `FairRunOn T c` (`c` consecutive reliable-led slots
+arbitrarily far out). *Provides:* recurrence (L6), chain-quality
+inclusion (CQ6, CQ7), and the liveness capstone L10.
+
+**S2. Shape** — `SpansEligible c` (a run of `c` reaches past everything
+below it) and `BoundedSpacing s`. *Provides:* the committed-run
+descent, hence L10 and its Odontoceti and hybrid mirrors.
+
+**S3. Adaptive fairness** — `PlacesRuns P T c`: every assignment the
+policy can emit still places a reliable run in each epoch.
+*Provides:* the existence half of the adaptive fixpoint (AL5). Note it
+is a condition on a *policy*, not on a schedule — the only invariant in
+the list at that level, and a sign that §13 sits one abstraction step
+above the rest.
+
+### 2.4 What the audit found
+
+The claim that these are *all* the hypotheses is now checked rather
+than asserted, by querying the extracted statements of the principal
+capstones (`dos_resistance`, `chain_quality`, `decided_agree_chop`,
+`card_retained_le`, `bootstrap_agree`, `all_decided_below_of_fairRun`,
+`commits_recur_on`, `decided_fill`, `adaptiveRun_exists`,
+`adaptiveRun_agree`, `committed_of_correct_block`, `card_history_le'`,
+`card_viewUpto_le`) for hypothesis-position identifiers outside the
+list. Three findings, all of which changed this plan:
+
+1. **The schedule layer was missing entirely.** `FairScheduleOn`,
+   `FairRunOn`, `SpansEligible` and `PlacesRuns` appear as hypotheses
+   of five capstones and were absent from the first draft's list. The
+   first draft would therefore have produced a preservation table that
+   silently omitted every combination involving a schedule variant —
+   including GC × Adaptive, the most interesting one (I9).
+2. **The delivery layer is dependent, not parallel.** `UniformBudget`
+   and `RefsAccepted` range over `Delivery U`, not `U`, so they cannot
+   be stated for a transformed universe without a transformed delivery.
+3. **Nothing else turned up.** Modulo the two structural corrections,
+   the surface really is closed: every hypothesis of every capstone
+   audited is `U1`–`U6`, `D1`–`D3`, `S1`–`S3`, or arithmetic side
+   conditions on `ℕ`. That is the fact the linear strategy rests on,
+   and it is now evidence rather than hope.
+
+The list is also the thing to *audit when a new arc is added*: an arc
+that introduces a hypothesis outside it has, by that act, created a new
+row in every future preservation table. §14 did exactly this with
+`HonestNoEquiv`, which is why it is the one entry above with a single
+consumer. The integration arc should treat "does this need a new named
+invariant?" as a design question, not bookkeeping.
 
 ## 3. The strategy: preservation, not combination
 
@@ -97,26 +234,56 @@ prove one lemma:
 
 Then any property `P` whose statement depends only on named invariants
 transfers to `F U` **for free**, with no new proof and no mention of
-`P` anywhere. Two transformers × seven invariants is fourteen lemmas,
-most of them a few lines, against thirty-six pairwise combinations that
-would each need real work.
+`P` anywhere. The pattern is already established — GC carries most of
+its column, and this is why §9 reads as cleanly as it does.
 
-The pattern is already established — GC's `chop` carries most of its
-row, and this is why §9 reads as cleanly as it does:
+**Layer U — universe transformers.**
 
-| | `chop U G` | `skipFill` |
+| Invariant | `chop U G` | `skipFill` |
 |:---|:---|:---|
-| DAG laws | ✅ (the `chop` definition) | ✅ (SS1) |
-| `Populated` | ✅ `populated_chop` | ✅ SS2 (`skipFill_populatedOn`) |
-| `Decided` | ✅ G3 (`decided_chop`) | ✅ SS5 (`decided_fill`) |
-| `DoSValid` | ✅ `dosValid_chop` | **I1 — open** |
-| `HonestNoEquiv` | **I2 — open** | **I3 — open** |
-| `SynchronisedOn` | **I4 — open** | **I5 — open** |
-| budgets (`UniformBudget`, `RefsAccepted`) | ✅ `byzBudget_chopD`, `refsAccepted_chopD` | **I6 — open** |
+| U1 DAG laws | ✅ (definitional) | ✅ SS1 (definitional) |
+| U2 `Populated` | ✅ `populated_chop` | ✅ SS2 `skipFill_populatedOn` |
+| U3 `SynchronisedOn` | **I4 — open** | **I5 — open, expect negative** |
+| U4 `DoSValid` | ✅ `dosValid_chop` | **I1 — open** |
+| U5 `HonestNoEquiv` | ✅ **I2 — done while drafting** | **I3 — open** |
+| U6 verdicts | ✅ G3 `decided_chop` | ✅ SS5 `decided_fill` |
 
-Seven open cells, each a single lemma, and filling them closes far more
-than seven combinations. Predictions worth recording before the work,
-since a plan that cannot be wrong is not a plan:
+**Layer D — delivery transformers.** `chopD` supplies the whole
+column; Safe Skip has no delivery transformer at all, so the entire
+column is blocked behind constructing one:
+
+| Invariant | `chopD D G` | Safe Skip |
+|:---|:---|:---|
+| — the transformer itself | ✅ `chopD` | **I6a — open, blocking** |
+| D1 `Live` | ✅ `live_chopD` | I6b |
+| D2 `DeliversQuorum` | ✅ `deliversQuorum_chopD` | I6c |
+| D3 budgets | ✅ `byzBudget_chopD`, `refsAccepted_chopD` | I6d |
+
+**Layer S — schedule variants.** Universe transformers do not touch
+this layer, but both schedule variants do, and the table is nearly
+empty:
+
+| Invariant | `Slots.chop S G d` | `slotsOf hinj a` |
+|:---|:---|:---|
+| — the correspondences | ✅ `chop_slotRound`, `chop_leader` | ✅ `slotsOf_slotRound`, `slotsOf_leader` |
+| S1 `FairScheduleOn`, `FairRunOn` | **I13 — open** | ✳︎ not a preservation fact |
+| S2 `SpansEligible` | **I15 — open** | ✅ `spansEligible_slotsOf` |
+
+✳︎ The empty cell is the informative one. `slotsOf` sets
+`leader := a`, so fairness of the induced instance is a statement about
+the *assignment* and is not derivable from the base schedule's
+fairness — an adaptive policy changes who leads, which is the entire
+point of §13. There is no lemma to prove here; `PlacesRuns` (S3) *is*
+the replacement, and seeing it arise this way explains its otherwise
+peculiar shape: it quantifies over every verdict function the policy
+might see, because no fact about the base schedule survives
+reassignment. The contrast with `spansEligible_slotsOf` directly below
+is the whole distinction — eligibility reads only `slotRound`, which
+reassignment fixes, so *shape* transfers verbatim while *fairness*
+cannot transfer at all.
+
+Predictions worth recording before the work, since a plan that cannot
+be wrong is not a plan:
 
 - **I2** (`chop` preserves `HonestNoEquiv`) is nearly free: truncation
   removes blocks and never adds them, and `HonestNoEquiv` is a
@@ -128,8 +295,9 @@ since a plan that cannot be wrong is not a plan:
   do not immediately give equal original rounds. Truncated subtraction
   is faithful only above the cut, and the filter supplies `G ≤ round`
   on both sides to close it by `omega`. This is the same subtlety §9
-  already met in `Slots.chop`'s keying clause; expect every
-  `chop`-preservation lemma about rounds to pay it.
+  already met in `Slots.chop`'s keying clause, and I15 will meet it a
+  third time — `SpansEligible` is stated through `slotRound`, which
+  `Slots.chop` rebases by exactly this subtraction.
 - **I3** (`skipFill` preserves `HonestNoEquiv`) is the interesting one.
   The fill creates blocks authored by `v1`, who is honest — so the
   proof must show the filled blocks do not equivocate against `v1`'s
@@ -137,6 +305,10 @@ since a plan that cannot be wrong is not a plan:
   proves exactly this for the *derived* correct class, using `hgap`;
   the honest-class version should be the same argument with the class
   widened, provided `v1` is honest, which `hv1` gives.
+- **I4** (`chop` preserves `SynchronisedOn`) should hold *above the
+  cut* and cannot hold at the base layer, where `chop` deliberately
+  empties references. Expect the statement to need `G < n`, in the
+  same shape as `supporters_chop`'s `1 ≤ m`.
 - **I5** (`skipFill` preserves `SynchronisedOn`) is where I expect a
   genuine *negative* result, and it is the most valuable cell in the
   table. Coverage says every correct block references every correct
@@ -152,11 +324,23 @@ since a plan that cannot be wrong is not a plan:
   where `SynchronisedOn (skipFill …)` fails — and then state the
   positive form: coverage holds *above* the fill (`r > sk.r`), which
   is what a liveness argument after recovery actually needs.
-- **I1** (`skipFill` preserves `DoSValid`) is a real question with a
-  possible negative answer, for a different reason: the fill creates
-  one block per gap round in a single message, and the exposure /
-  novelty accounting of §8 was designed around blocks arriving one at
-  a time. See §5.3 below.
+- **I6a** is the blocking item of its column and is not a preservation
+  lemma but a *construction*: what does a validator hold, and what has
+  it accepted, in a universe extended by a fill? The fill's blocks
+  arrive in one message, so the natural definition adds them to every
+  correct validator's `accepted` set at their gap round — at which
+  point `accepted_inj` (at most one block per author per round) must be
+  rechecked against `hgap`, and the whole of I1 and I6b–d becomes
+  statable. Scope this before starting it; it may be the largest single
+  item in the arc, and §5.3's budget question lives inside it.
+- **I13/I15** (`Slots.chop` preserves fairness and shape) are the cells
+  the first draft missed entirely, and they are prerequisites for I9 —
+  a joiner reasoning about the truncation needs *its* schedule to be
+  fair and spanning, not merely the original's. `FairScheduleOn` should
+  shift by `d` and go through directly; `SpansEligible` will meet the
+  subtraction wrinkle above. Unlike the layer-U cells these are pure
+  arithmetic over the schedule — no universe, no views — so they are
+  the best first exercise for anyone picking the arc up cold.
 
 ### 3.2 Transformers × transformers
 
@@ -271,19 +455,30 @@ is a stronger claim than any single arc makes.
 | Module | Contents |
 |:---|:---|
 | `Integration/Invariants.lean` | the named-invariant list, collected; the preservation-lemma interface |
-| `Integration/Preservation.lean` | I1–I6: the transformer × invariant table filled |
+| `Integration/Preservation.lean` | I1–I5: the layer-U table filled |
+| `Integration/DeliveryFill.lean` | I6a–d: Safe Skip's delivery transformer, then its budget column |
+| `Integration/ScheduleShape.lean` | I13–I15: fairness and shape under `Slots.chop` and `slotsOf` |
 | `Integration/Commute.lean` | I7: `chop` ∘ `skipFill`, and the anchor-above-horizon condition |
 | `Integration/RuleInterface.lean` | I8: the decision-relation interface; Mysticeti, Odontoceti, Hybrid as instances |
 | `Integration/Joiner.lean` | I9: horizon-stable policies; the joiner's adaptive run |
 | `Integration/Lifecycle.lean` | I10, I11: the crash-prone lifecycle end to end |
 | `LeanDagTest/Integration.lean` | the negative witnesses (I5, I7's side condition) and the lifecycle exhibit |
 
-Order matters: **I2, I3, I5 first** — they are cheap, they either
-confirm or refute the assumption that the fill is well-behaved, and the
-answer to I5 determines how much of the rest is worth stating. I8 is
-the largest item and should not start until the preservation table is
-complete, since its value depends on how many instances it actually
-serves.
+Order matters, and the audit sharpened it:
+
+1. **I2, I3, I5 first** — cheap, and they either confirm or refute the
+   assumption that the fill is well-behaved. I2 is already done; the
+   answer to I5 determines how much of the rest is worth stating.
+2. **I13, I15 next** — small, and they unblock I9, the sharpest
+   question in the arc.
+3. **I6a before anything else in its column**, and only after scoping:
+   it is a construction rather than a lemma, and §5.3's budget question
+   is inside it. If it proves large, the honest move is to state the
+   Safe Skip × DoS combination as *open* rather than to force it.
+4. **I8 last.** It is the largest item, it touches existing code where
+   every other arc only added, and its value depends on how many
+   instances it ends up serving — which is known only once the rest is
+   in place.
 
 ## 5. Risks and predictions
 
@@ -296,13 +491,17 @@ each names a deployment constraint that no single arc can see. The arc
 should be written expecting them, in the house style of
 `bound_is_necessary` — a witness, not an apology.
 
-**5.2 The interface may not be as clean as §2 suggests.** The claim
-that every theorem is stated against the seven named invariants is an
-*assertion from a survey*, not a verified fact. The first task of the
-arc is to check it mechanically — the extraction in `scripts/` already
-walks every declaration's dependencies, so "which hypotheses does this
-capstone actually reach?" is a query, not a reading exercise. If the
-survey is wrong, the plan needs revising before any Lean is written.
+**5.2 The interface audit is done, and it moved the plan.** This risk
+was live in the first draft, where §2's list was a survey rather than a
+verified fact. It has now been checked mechanically against the
+extracted statements of thirteen capstones (§2.4), and it was
+*wrong in two structural ways* — the schedule layer was missing
+entirely, and the delivery layer is universe-indexed rather than
+parallel. Both corrections are folded in above; the residual risk is
+that the audit covered capstones rather than every theorem, so an
+intermediate lemma could still consume something unlisted. That is
+cheap to re-check as the arc proceeds and should be re-run whenever a
+new preservation lemma turns out to need a hypothesis not in §2.
 
 **5.3 The DoS accounting may not survive a bulk fill.** §8's novelty
 budget limits the rate at which an author can inject material; Safe
