@@ -23,8 +23,8 @@ clauses replace `waits`:
   references the leader (the reactive exit), or its builder waited the
   full timeout and would have referenced the leader had it held it (the
   fallback). Building early *without* the leader is thereby excluded,
-  which is the whole discipline: speed is bought only where it cannot
-  cost the vote.
+  which is the whole discipline: the schedule accelerates only where
+  acceleration cannot cost the vote.
 
 The clause is stated only for slots whose leader lies in `T`. For a
 Byzantine leader nothing useful can be said — it may equivocate, and

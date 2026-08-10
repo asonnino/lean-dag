@@ -80,7 +80,8 @@ def novelty (U : BlockUniverse Validator BlockId Payload) (V : Finset BlockId)
 theorem mem_novelty : i ∈ novelty U V b ↔ i ∈ history U b ∧ i ∉ V :=
   Finset.mem_sdiff
 
-/-- **Antitone in the view** — the load-bearing property. Deferral is a rate
+/-- **Antitone in the view** — the property everything below depends on.
+Deferral is a rate
 limiter, not a verdict: as the view grows, every deferred block only gets
 cheaper. -/
 theorem novelty_anti (h : V ⊆ W) : novelty U W b ⊆ novelty U V b :=

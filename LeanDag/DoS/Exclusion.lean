@@ -438,7 +438,7 @@ theorem mem_history_of_correct {R : ℕ} (hs : SynchronisedOn U (Correct : Finse
       exact history_subset_of_reaches hc (Reaches.single hw)
         (ih w hw_ids a ha hw_correct hac hR (by omega))
 
-/-! ## Two delivery policies, and what they do and do not buy
+/-! ## Two delivery policies, and what they do and do not yield
 
 `dos-equivocation-and-growth.md` §5. Two policies making explicit what the
 model otherwise leaves to prose; with them, nothing an author publishes is
@@ -457,7 +457,7 @@ def AcceptsSome (D : Delivery U) : Prop :=
     ∃ i ∈ D.accepted v n, (U.block i).creator = (U.block a).creator
 
 omit [DecidableEq BlockId] in
-/-- What the two policies do buy: **nothing an author publishes is invisible to
+/-- What the two policies do yield: **nothing an author publishes is invisible to
 the correct population.** If any block by `X` at round `n` exists at all, some
 correct validator accepted a block by `X` at round `n` — and so referenced one,
 if it built.

@@ -152,8 +152,9 @@ proof effort with no corresponding proof content.
    separately (§13).
 
 5. A precise account of the **trust boundary** (§4). What is assumed reduces to
-   the fault bound and two network conditions; every other condition is a clause
-   of the protocol, which a designer controls. In particular reference coverage
+   the fault bound and a single network condition — view convergence — serving
+   coverage and production alike; every other condition is a clause of the
+   protocol, which a designer controls. In particular reference coverage
    is derived rather than assumed, and the one point at which a network parameter
    constrains the specification is the wait threshold of §15.1.
 
@@ -864,7 +865,7 @@ in L7b.
 #### What is actually trusted
 
 Collecting the qualifications, what the environment is trusted with is
-narrower than the two-assumption summary suggests.
+narrower than the two-role summary suggests.
 
 *For coverage*, one condition on the environment: view convergence,
 bounded after GST. The other two formulations are that condition with a
@@ -899,9 +900,10 @@ together with clauses of the protocol, by any of three routes:
 | Timing | N2 (`Timing.covers`) with P9 | `Timing.synchronisedOn_of_timing` (L7b) |
 | View convergence | N2 (`converges`) with P7 and P9 | `ViewSync.synchronisedOn_of_converges` (L7c) |
 
-The third derives the second (`ViewSync.toTiming`, §6.9), so the routes
-are a hierarchy rather than a set of alternatives; and a fourth result on the same
-foundation derives *production* rather than coverage
+The third derives the second (`ViewSync.toTiming`, §6.9) and the first
+(`eventuallyDelivers_toDelivery`), so the three are one assumption in three
+shapes, of which only `converges` is primitive; and a fourth result on the
+same foundation derives *production* rather than coverage
 (`populated_of_viewsConverge`).
 
 It is stated as a hypothesis of L4 and L6 in order to keep those arguments free
@@ -979,7 +981,7 @@ which is why P10 asks only that reliable leaders recur, and why L5
 (skipping) exists.
 
 **Send selectively.** A Byzantine author may deliver a block to some
-correct validators and not others, at any time. Every network assumption
+correct validators and not others, at any time. Every network formulation
 in §4.3 is restricted to correct-authored blocks for exactly this reason:
 `ViewsConverge` carries the restriction in its statement, and a
 formulation that dropped it would be assuming Byzantine validators
@@ -1077,6 +1079,10 @@ by violating a clause; read across to see what a result depends on.
 | N2a | `EventuallyDelivers` | L7a, C3′, G6b, G7, G9 |
 | N2b | `Timing.covers` | L7b, L7c, L8a, L9 |
 | N2v | `ViewSync.converges` | L7c |
+
+N2a and N2b are derived forms of N2v (§4.3, §6.9); they hold rows of
+their own because the arcs consume them as stated hypotheses, each
+dischargeable from `converges`.
 
 Three readings are worth drawing out. **P8's consumers are the
 production derivations**: the liveness results take production as a
@@ -1570,10 +1576,13 @@ theorem synchronised_of_delivery (D : Delivery U) (h : EventuallyDelivers D R) :
 The proof is the chain `refs ⊇ held ⊇` every correct block below.
 
 The two premises are of different kinds, and separating them is the point. P7
-(`includes`) is a clause of the protocol, which an implementation executes and an
-observer can check; `EventuallyDelivers` is a pure network guarantee, and is the
-only thing assumed here. Nothing becomes unconditional: absent a time model the
-chain must terminate at a delivery assumption.
+(`includes`) is a clause of the protocol, which an implementation executes and
+an observer can check; `EventuallyDelivers` is pure network content, and is the
+route's sole premise. It is not, in the main line, an assumption: the delivery
+a view-convergent schedule induces satisfies it
+(`eventuallyDelivers_toDelivery`, §6.9), so the route survives as a
+*formulation* — consumed where a build-time-indexed statement is the
+convenient shape, and discharged from `converges` where it is not.
 
 `EventuallyDelivers` is view convergence *indexed to the moment of building*: it
 does not state that correct blocks eventually reach `v`, but that they are members
@@ -1605,8 +1614,9 @@ structure Timing (U) (T : Finset Validator) (N : ℕ) where
     built v (n + 1) ≤ max (built v n + timeout n) (latest n + delay)
 ```
 
-The field `covers` is the partial-synchrony assumption, and it is the only
-network field. `waits` and `prompt` are the two protocol build rules, bounding
+The field `covers` is the structure's only network field, partial synchrony
+in reference-level form; the main line derives it from view convergence
+(`covers_of_converges`, §6.9) rather than assuming it. `waits` and `prompt` are the two protocol build rules, bounding
 build times from below and above respectively. `latest` is required to be
 *attained* (`latest_mem`) and not merely an upper bound, since as a bare bound it
 would carry no information. The horizon is required for the reason given in §6.3.
@@ -2229,7 +2239,7 @@ same run commits a slot at timeout `5 = 2Δ + proc`
 This also settles that `catchup` and `waits` are jointly satisfiable
 *from* a large spread, not only near synchrony.
 
-**What catch-up does not buy is coverage.** A validator entering a round
+**What catch-up does not supply is coverage.** A validator entering a round
 on evidence has not waited for the round below to assemble, so its own
 block may reference little; the coverage argument still runs through
 `waits`, from the collapsed spread onward. Catch-up repairs the *base*
@@ -3130,7 +3140,7 @@ dichotomy: at the round above a reliable leader, a block either
 references the leader (the reactive exit), or its builder waited the
 full timeout and references any leader block it holds (the fallback).
 Building early *without* the leader is thereby excluded, which is the
-entire discipline: speed is bought only where it cannot cost the vote.
+entire discipline: the schedule accelerates only where acceleration cannot cost the vote.
 
 The clause is stated for slots whose leader lies in `T`. For a Byzantine
 leader nothing useful can be said — it may equivocate, and P2 forbids
@@ -3370,7 +3380,7 @@ a quorum and only when one already exists. It is also the
 **implementable** one — a validator can observe that it holds `n − f`
 distinct authors, where it cannot wait for "all correct blocks" without
 distinguishing correct validators from crashed ones. What the
-view-convergence forms buy instead is uniformity: one network clause for
+view-convergence forms offer instead is uniformity: one network clause for
 coverage and production both, where this route needs an assumption of
 its own.
 
@@ -8328,7 +8338,7 @@ the source is the reference for their statements.
 | `exists_common_correct_ancestor` | `CommonCore` | T3c (Common correct ancestor). If any block exists at round `r+2`, some correct validator's round-`r` … |
 | `exists_correct_common_support` | `CommonCore` | T3a (Correct-support counting). Some correct validator's round-`r` block is backed by enough correct … |
 | `support_threshold_arith` | `CommonCore` | The arithmetic core of T3a, isolated from the combinatorics. |
-| `Accepted.card_le` | `DoS.Acceptance` | One block per author out of the `n` validators. This is the whole reason the acceptance rule buys anything. |
+| `Accepted.card_le` | `DoS.Acceptance` | One block per author out of the `n` validators. This is the whole of what the acceptance rule contributes. |
 | `View.card_ofAccepted_add_one` | `DoS.Acceptance` | D3. `|V| = |H(b)| - 1`, stated additively. |
 | `View.card_ofAccepted_le` | `DoS.Acceptance` | D2 — the bridge. A view generated by an accepted set is at most `3f+1` histories wide. |
 | `View.mem_ofAccepted` | `DoS.Acceptance` | — |
@@ -8371,7 +8381,7 @@ the source is the reference for their statements.
 | `creator_notMem_exposedTo_of_mem_correctBlocksAt` | `DoS.Exclusion` | No correct block's author is ever excluded — D15, in the form a builder needs. |
 | `dosValid_refs_of_correctBlocksAt` | `DoS.Exclusion` | The same, phrased as the DoS condition permits it: a block whose references are correct round-`n` blocks … |
 | `eq_of_both_name_of_shared` | `DoS.Exclusion` | The intersection lemma. Two blocks that both name `X` agree about `X` wherever their shared correct … |
-| `exists_accepted_of_mem_ids` | `DoS.Exclusion` | What the two policies do buy: nothing an author publishes is invisible to the correct population. If any … |
+| `exists_accepted_of_mem_ids` | `DoS.Exclusion` | What the two policies do yield: nothing an author publishes is invisible to the correct population. If any … |
 | `exists_correct_mem_refs` | `DoS.Exclusion` | Every non-genesis block references a correct block of the round below. |
 | `exists_shared_correct_ref` | `DoS.Exclusion` | Two blocks of the same round share a correct reference, when the correct validators are as few as the … |
 | `exposedIn_of_accepted_span` | `DoS.Exclusion` | D8a. A validator whose accepted set spans two disagreeing histories exposes the author in its own next block. |
@@ -8408,7 +8418,7 @@ the source is the reference for their statements.
 | `dos_resistance` | `DoS.Novelty` | DoS resistance, from enforceable conditions only. Liveness and linear storage from round 0 under full … |
 | `dos_resistance'` | `DoS.Novelty` | The post-`R` incremental form of the headline: the same enforceable conduct, plus the network's … |
 | `history_eq_singleton_of_round_zero` | `DoS.Novelty` | A genesis history is a singleton — round 0 needs no budget clause. |
-| `novelty_anti` | `DoS.Novelty` | Antitone in the view — the load-bearing property. Deferral is a rate limiter, not a verdict: as the view … |
+| `novelty_anti` | `DoS.Novelty` | Antitone in the view — the property everything below depends on. Deferral is a rate limiter, not a … |
 | `round_le_of_mem_viewUpto` | `DoS.Novelty` | Nothing retained by round `n` sits above round `n`. |
 | `sum_novelty_not_correct_le` | `DoS.Novelty` | The Byzantine spend of one round: at most `f` acceptances, `κ` each. |
 | `uniform_of_byzBudget` | `DoS.Novelty` | The sandwich, converse direction. After `R`, a `ByzBudget κ` schedule is uniformly budgeted at `f·κ + 1` … |

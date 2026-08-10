@@ -59,8 +59,8 @@ structure Accepted (U : BlockUniverse Validator BlockId Payload)
   inj : ∀ i ∈ A, ∀ j ∈ A, (U.block i).creator = (U.block j).creator → i = j
 
 omit [DecidableEq BlockId] in
-/-- One block per author out of the `n` validators. This is the whole reason the
-acceptance rule buys anything. -/
+/-- One block per author out of the `n` validators. This is the whole of what
+the acceptance rule contributes. -/
 theorem Accepted.card_le (h : Accepted U A n) : A.card ≤ Fintype.card Validator := by
   have himg : (A.image (fun i => (U.block i).creator)).card = A.card :=
     Finset.card_image_of_injOn fun i hi j hj hij => h.inj i hi j hj hij

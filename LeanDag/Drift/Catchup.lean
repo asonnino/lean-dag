@@ -35,7 +35,7 @@ reached it, so before GST — when the network may deliver nothing — an
 arbitrary spread is admitted, and the clause never conflicts with
 `waits`, which the collapse then makes easy to honour.
 
-What catch-up does *not* buy is coverage. A validator that enters a
+What catch-up does *not* supply is coverage. A validator that enters a
 round by evidence has not waited for the round below to assemble, so
 its own block may reference little; the coverage argument still runs
 through `waits`, from the collapsed spread onward. Catch-up repairs the

@@ -8,7 +8,7 @@ stands unchanged; this file adds nothing to those and removes nothing from
 them.
 
 **Why a separate file.** The results below are *strictly stronger* than their
-counterparts underneath, and they buy that strength with *strictly stronger*
+counterparts underneath, and they obtain that strength from *strictly stronger*
 hypotheses. Keeping them apart makes the trade legible: a reader sees exactly
 which assumption purchases which bound, and the weak-hypothesis theorems stay
 available to anyone unwilling to pay.
