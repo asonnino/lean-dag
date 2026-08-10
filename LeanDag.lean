@@ -52,5 +52,6 @@ import LeanDag.Integration.Preservation
 import LeanDag.Integration.Coverage
 import LeanDag.Integration.ScheduleShape
 import LeanDag.Integration.Joiner
+import LeanDag.Integration.Stack
 import LeanDag.SafeSkip.Basic
 import LeanDag.SafeSkip.Invariance

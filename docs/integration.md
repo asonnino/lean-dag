@@ -326,6 +326,40 @@ last filled one, and the refutation reaches there too.
 joiner reasoning inside a truncation has a schedule that is fair and
 spanning in its own right, which is what I9 needs.
 
+**I16 — the thesis holds: composition is free.** The capstone
+(`LeanDag/Integration/Stack.lean`) puts a validator on all four
+mechanisms at once — recovered by Safe Skip, then truncated below a
+horizon, read in the hybrid fault model, under an adaptive schedule —
+and every proof is a chain of existing lemmas. Honest non-equivocation
+survives the stack by I3 then I2 (`honestNoEquiv_stack`, one line);
+coverage by I5-positive then I4, the two offsets composing exactly as
+their statements suggest; production by SS2 then the truncation's
+rebasing. The payoff is `hybrid_agree_stack`: **a validator that
+recovered from a crash and then pruned still cannot disagree with
+anyone about a verdict**, its proof being §14's agreement theorem
+applied to a different universe with the one hypothesis discharged by
+`honestNoEquiv_stack`. Nothing about the fill or the cut is re-proved.
+
+Two things the capstone settled that the ingredients did not.
+
+**Order matters, asymmetrically — and the deployment order is the free
+one.** Fill-then-truncate is unconditional: `chop (skipFill U) G` is
+well formed at every horizon, because the fill has already happened
+when the cut is made. The reverse needs the anchor retained, since a
+`SkipMsg` for `chop U G` requires `B1 ∈ (chop U G).ids`. So I7's
+condition is real but appears here as an *asymmetry between orders*
+rather than as an obstacle, and the order that costs nothing is the one
+deployments actually take: fill the gap on recovery, prune later. §5.4
+anticipated that I16 might need I7 first; it does not, and this is why.
+
+**The schedule layer stacks entirely for free** (`schedule_stack`).
+`Slots.chop` and `slotsOf` are functions of a `Slots` instance and
+nothing else, so the layer-S results hold for a validator running *any*
+stack of universe transformers, with no compatibility lemma. That is
+the clearest vindication of §2's layering: the composition matrix is
+smaller than the arc count suggests because one of its three layers
+does not interact with the others at all.
+
 **I9 — a joiner can run the network's schedule, under two obligations**
 (`LeanDag/Integration/Joiner.lean`). The question decomposed further
 than expected, and the decomposition is the result.
@@ -524,7 +558,7 @@ behind I6a and moot if I1 fails. The pair is the arc's most likely
 | `Integration/Coverage.lean` | I5: coverage refuted under the fill, and recovered strictly above it | **done** |
 | `Integration/ScheduleShape.lean` | I13, I15: fairness and shape under `Slots.chop` | **done** |
 | `Integration/Joiner.lean` | I9: the transformers commute; horizon-stability; epoch alignment | **done** |
-| `Integration/Stack.lean` | I16: the composition capstone — several transformers at once | next |
+| `Integration/Stack.lean` | I16: the composition capstone — several transformers at once | **done** |
 | `Integration/Lifecycle.lean` | I10, I11: the crash-prone lifecycle end to end | next |
 | `Integration/Placement.lean` | I7 and the placement account: where a horizon may be put | after I10 |
 | `Integration/Exposure.lean` | I1: `DoSValid` under the fill, conditionally (§5.6) | design decision pending |
@@ -645,17 +679,15 @@ argument rather than a preservation lemma. It is also gated behind
 I6a's construction, and §5.6 now suggests the universe-level half fails
 first, which would make the delivery-level question moot.
 
-**5.4 The composition capstone may not chain cleanly.** §4.3 proposes
-I16 on the expectation that the preservation lemmas compose without
-friction. Two things could go wrong, and both would be worth knowing.
-The transformers may not be *simultaneously applicable* — `skipFill`
-needs its anchor retained, which is I7's condition, so
-`chop (skipFill U) G` may need a hypothesis that `chop`'s own statement
-never mentions. And the invariants may compose only in one order:
-filling then truncating is not obviously the same as truncating then
-filling, which is exactly what I7 asks. If I16 turns out to need I7,
-the two should be done together and the order in §4.4 revised — that
-is the most likely way this plan is wrong, and it is cheap to discover.
+**5.4 The composition capstone chained cleanly, in one order.** This
+risk is discharged (§3.2). The second half of it was right: the
+invariants compose in one order and not obviously the other. But the
+order that works — fill, then truncate — is the deployment order, so
+I16 needed no hypothesis `chop`'s statement does not already carry, and
+I7 was not a prerequisite after all. The residual is that
+truncate-then-fill remains unproved and is what I7 will address; it is
+the rarer deployment case (a validator pruning while a recovery message
+is in flight) and its condition is already identified.
 
 **5.5 Scope discipline.** The temptation in an integration arc is to
 prove the full cross product because each individual proof is easy once
