@@ -6288,6 +6288,273 @@ structure CatchupSync (U : BlockUniverse Validator BlockId Payload)
 
 `ViewSync` with the catch-up rule: a validator that holds any block of a round has built its own block of that round within `proc` of the sighting.
 
+### Safe Skip: crash recovery in one message
+
+#### `SkipMsg`
+
+*structure, `SafeSkip.Basic.lean`*
+
+```lean
+structure SkipMsg (U : BlockUniverse Validator BlockId Payload) where
+  /-- The recovering validator. -/
+  v1 : Validator
+  /-- Its last block before the crash. -/
+  B1 : BlockId
+  /-- The donor of the reference structure. -/
+  v2 : Validator
+  /-- The target round — the round of the pinned block `B2 = line r`. -/
+  r : ℕ
+  /-- `v2`'s history line, meaningful on rounds `[round B1, r]`. -/
+  line : ℕ → BlockId
+  /-- Fresh ids for the filled blocks, and their decoder. -/
+  fresh : ℕ → BlockId
+  idx : BlockId → ℕ
+  hv1 : v1 ∈ (Correct : Finset Validator)
+  hv12 : v1 ≠ v2
+  hB1 : B1 ∈ U.ids
+  hB1c : (U.block B1).creator = v1
+  hline_mem : ∀ k, (U.block B1).round ≤ k → k ≤ r → line k ∈ U.ids
+  hline_creator : ∀ k, (U.block B1).round ≤ k → k ≤ r →
+    (U.block (line k)).creator = v2
+  hline_round : ∀ k, (U.block B1).round ≤ k → k ≤ r →
+    (U.block (line k)).round = k
+  hline_chain : ∀ k, (U.block B1).round < k → k ≤ r →
+    line (k - 1) ∈ (U.block (line k)).refs
+  hfresh_new : ∀ k, fresh k ∉ U.ids
+  hidx : ∀ k, idx (fresh k) = k
+  /-- The crash: `v1` authored nothing in the gap. -/
+  hgap : ∀ b ∈ U.ids, (U.block b).creator = v1 →
+    (U.block B1).round < (U.block b).round → (U.block b).round ≤ r → False
+```
+
+The denotation of a Safe Skip message, together with the freshness data an implementation supplies (new ids for the filled blocks and their decoder).
+
+`line` is `v2`'s history line: one block per round from `r0 := round B1` up to `r`, each referencing the one below — the chain the message's `B2` pins by following self-parents. `hgap` is the crash itself: `v1` authored nothing strictly between `B1` and `r`.
+
+#### `r0`
+
+*def, `SafeSkip.Basic.lean`*
+
+```lean
+def r0 : ℕ := (U.block sk.B1).round
+```
+
+The round of the anchor block — the bottom of the gap.
+
+#### `prev`
+
+*def, `SafeSkip.Basic.lean`*
+
+```lean
+def prev (k : ℕ) : BlockId :=
+  if k = sk.r0 + 1 then sk.B1 else sk.fresh (k - 1)
+```
+
+The self reference of the filled block at round `k`: the anchor at the boundary, the previous filled block above it.
+
+#### `fillBlock`
+
+*def, `SafeSkip.Basic.lean`*
+
+```lean
+def fillBlock (k : ℕ) : Block Validator BlockId Payload where
+  round := k
+  creator := sk.v1
+  refs := insert (sk.prev k) (U.block (sk.line k)).refs
+  payload := (U.block (sk.line k)).payload
+```
+
+The filled block at gap round `k`: `v2`'s references at that round, plus the added self reference.
+
+#### `gap`
+
+*def, `SafeSkip.Basic.lean`*
+
+```lean
+def gap : Finset ℕ := (Finset.range (sk.r + 1)).filter (fun k => sk.r0 < k)
+```
+
+The gap rounds, as a `Finset`.
+
+#### `freshIds`
+
+*def, `SafeSkip.Basic.lean`*
+
+```lean
+def freshIds : Finset BlockId := sk.gap.image sk.fresh
+```
+
+The ids of the filled blocks.
+
+#### `skipFill`
+
+*def, `SafeSkip.Basic.lean`*
+
+```lean
+def skipFill : BlockUniverse Validator BlockId Payload where
+  ids := U.ids ∪ sk.freshIds
+  block b := if b ∈ U.ids then U.block b else sk.fillBlock (sk.idx b)
+  complete := by
+    intro i hi j hj
+    rcases Finset.mem_union.mp hi with ho | hf
+    · rw [if_pos ho] at hj
+      exact Finset.mem_union_left _ (U.complete i ho j hj)
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      have hR0 : sk.r0 = (U.block sk.B1).round := rfl
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hj
+      simp only [fillBlock, Finset.mem_insert] at hj
+      rcases hj with rfl | hj
+      · -- the self reference: the anchor, or the previous filled block
+        by_cases hb : k = sk.r0 + 1
+        · simp only [prev, if_pos hb]
+          exact Finset.mem_union_left _ sk.hB1
+        · simp only [prev, if_neg hb]
+          refine Finset.mem_union_right _ (sk.mem_freshIds.mpr ⟨k - 1, ?_, ?_, rfl⟩)
+          · omega
+          · omega
+      · -- a copied reference: old, by completeness of `U` at the line
+        exact Finset.mem_union_left _
+          (U.complete _ (sk.hline_mem k (by omega) hk2) j hj)
+  valid := by
+    intro i hi
+    rcases Finset.mem_union.mp hi with ho | hf
+    · -- old blocks: `U`'s validity, reference lookups unchanged
+      rw [if_pos ho]
+      have hv := U.valid i ho
+      refine ⟨?_, ?_, ?_, ?_⟩
+      · intro j hj
+        rw [if_pos (U.complete i ho j hj)]
+        exact hv.predecessor j hj
+      · intro j hj l hl
+        rw [if_pos (U.complete i ho j hj), if_pos (U.complete i ho l hl)]
+        exact hv.distinct_creators j hj l hl
+      · intro hr
+        refine le_trans (hv.quorum hr) (Finset.card_le_card ?_)
+        intro c hc
+        unfold creators creatorsOf at hc ⊢
+        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
+        refine Finset.mem_image.mpr ⟨j, hj, ?_⟩
+        simp only
+        rw [if_pos (U.complete i ho j hj)]
+        exact hjc
+      · intro hr
+        obtain ⟨j, hj, hjc⟩ := hv.self_parent hr
+        exact ⟨j, hj, by rw [if_pos (U.complete i ho j hj)]; exact hjc⟩
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      have hR0 : sk.r0 = (U.block sk.B1).round := rfl
+      rw [if_neg (sk.hfresh_new k), sk.hidx]
+      have hlm := sk.hline_mem k (by omega) hk2
+      have hlv := U.valid _ hlm
+      have hlr := sk.hline_round k (by omega) hk2
+      -- the self reference is an old id at round `k − 1` with creator `v1`
+      have hprev_old : sk.prev k ∈ U.ids ∨ sk.prev k = sk.fresh (k - 1) := by
+        by_cases hb : k = sk.r0 + 1
+        · exact Or.inl (by simp only [prev, if_pos hb]; exact sk.hB1)
+        · exact Or.inr (by simp only [prev, if_neg hb])
+      have hprev_round : (if sk.prev k ∈ U.ids then U.block (sk.prev k)
+          else sk.fillBlock (sk.idx (sk.prev k))).round = k - 1 := by
+        by_cases hb : k = sk.r0 + 1
+        · simp only [prev, if_pos hb, if_pos sk.hB1]
+          show (U.block sk.B1).round = k - 1
+          omega
+        · simp only [prev, if_neg hb, if_neg (sk.hfresh_new (k - 1)), sk.hidx]
+          rfl
+      have hprev_creator : (if sk.prev k ∈ U.ids then U.block (sk.prev k)
+          else sk.fillBlock (sk.idx (sk.prev k))).creator = sk.v1 := by
+        by_cases hb : k = sk.r0 + 1
+        · simp only [prev, if_pos hb, if_pos sk.hB1]
+          exact sk.hB1c
+        · simp only [prev, if_neg hb, if_neg (sk.hfresh_new (k - 1)), sk.hidx]
+          rfl
+      -- no copied reference is `v1`-authored, except possibly the anchor itself
+      have hno_v1 : ∀ j ∈ (U.block (sk.line k)).refs,
+          (U.block j).creator = sk.v1 → j = sk.prev k := by
+        intro j hj hjc
+        have hjo := U.complete _ hlm j hj
+        have hjr : (U.block j).round = k - 1 := by
+          have := hlv.predecessor j hj
+          omega
+        by_cases hb : k = sk.r0 + 1
+        · -- boundary: non-equivocation pins it to the anchor
+          simp only [prev, if_pos hb]
+          exact U.eq_of_creator_eq hjo sk.hB1 (hjc ▸ sk.hv1) hjc sk.hB1c
+            (by omega)
+        · -- inside the gap: the crash forbids it
+          exact (sk.hgap j hjo hjc (by omega) (by omega)).elim
+      refine ⟨?_, ?_, ?_, ?_⟩
+      · -- P1: the self reference and every copied reference sit at `k − 1`
+        intro j hj
+        simp only [fillBlock, Finset.mem_insert] at hj
+        rcases hj with rfl | hj
+        · rw [hprev_round]; show k - 1 + 1 = k; omega
+        · rw [if_pos (U.complete _ hlm j hj)]
+          have := hlv.predecessor j hj
+          show (U.block j).round + 1 = k
+          omega
+      · -- P2: copied references are distinct by the line's P2; the self
+        -- reference's author appears nowhere else
+        intro j hj l hl hjl
+        simp only [fillBlock, Finset.mem_insert] at hj hl
+        rcases hj with rfl | hj <;> rcases hl with rfl | hl
+        · rfl
+        · rw [hprev_creator] at hjl
+          rw [if_pos (U.complete _ hlm l hl)] at hjl
+          exact (hno_v1 l hl hjl.symm).symm
+        · rw [hprev_creator] at hjl
+          rw [if_pos (U.complete _ hlm j hj)] at hjl
+          exact hno_v1 j hj hjl
+        · rw [if_pos (U.complete _ hlm j hj), if_pos (U.complete _ hlm l hl)] at hjl
+          exact hlv.distinct_creators j hj l hl hjl
+      · -- P3: the copied quorum survives, since lookups of old ids agree
+        intro _
+        have hq := hlv.quorum (by show 0 < (U.block (sk.line k)).round; omega)
+        refine le_trans hq ?_
+        refine Finset.card_le_card ?_
+        intro c hc
+        unfold creators creatorsOf at hc ⊢
+        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
+        refine Finset.mem_image.mpr ⟨j, ?_, ?_⟩
+        · simp only [fillBlock, Finset.mem_insert]
+          exact Or.inr hj
+        · simp only
+          rw [if_pos (U.complete _ hlm j hj)]
+          exact hjc
+      · -- P3′: the added self reference
+        intro _
+        exact ⟨sk.prev k, Finset.mem_insert_self _ _, hprev_creator⟩
+  no_equivocation := by
+    intro i hi j hj hic hcc hrr
+    rcases Finset.mem_union.mp hi with ho | hf <;>
+      rcases Finset.mem_union.mp hj with ho' | hf'
+    · rw [if_pos ho] at hic hcc hrr
+      rw [if_pos ho'] at hcc hrr
+      exact U.no_equivocation i ho j ho' hic hcc hrr
+    · -- an old block equal in author and round to a filled one: the
+      -- author is `v1`, and the crash forbids it
+      obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf'
+      have hR0 : sk.r0 = (U.block sk.B1).round := rfl
+      rw [if_pos ho] at hic hcc hrr
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hcc hrr
+      exact (sk.hgap i ho hcc
+        (by simp only [fillBlock] at hrr; omega)
+        (by simp only [fillBlock] at hrr; omega)).elim
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      have hR0 : sk.r0 = (U.block sk.B1).round := rfl
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hic hcc hrr
+      rw [if_pos ho'] at hcc hrr
+      exact (sk.hgap j ho' hcc.symm
+        (by simp only [fillBlock] at hrr; omega)
+        (by simp only [fillBlock] at hrr; omega)).elim
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      obtain ⟨l, hl1, hl2, rfl⟩ := sk.mem_freshIds.mp hf'
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hrr
+      rw [if_neg (sk.hfresh_new l), sk.hidx] at hrr
+      simp only [fillBlock] at hrr
+      exact hrr ▸ rfl
+```
+
+**The denotation.** `U`, extended with one filled block per gap round; every old block looked up unchanged.
+
 ### The legacy quorum route (report §13)
 
 #### `DeliversQuorum`
@@ -6310,7 +6577,7 @@ No round bound: this is what holds *before* GST too, and it is all L1 needs. Con
 
 ## Appendix C. The theorem reference
 
-The 243 theorems that either another module of the
+The 245 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -9630,6 +9897,34 @@ theorem decided_of_catchup [S : Slots Validator] {k : ℕ}
 
 **The commit, with `D₀` eliminated.** A reliable-led slot past GST is committed by every view once the timeout clears `2Δ + proc`. Where `decided_of_wait` requires the round-`0` spread as a hypothesis — the one deployment quantity in the development — this requires nothing about how the validators started.
 
+### Safe Skip: crash recovery in one message
+
+#### `skipFill_populatedOn`
+
+*theorem, `SafeSkip.Basic.lean`*
+
+```lean
+theorem skipFill_populatedOn {T : Finset Validator} {k : ℕ}
+    (hpop : PopulatedOn U T k) (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r) :
+    PopulatedOn sk.skipFill (insert sk.v1 T) k
+```
+
+**The gap is populated.** With `v1` restored to the reliable set, every gap round carries a `v1` block — the production hypothesis liveness consumes, recovered from one message.
+
+#### `directSkip_fresh`
+
+*theorem, `SafeSkip.Basic.lean`*
+
+```lean
+theorem directSkip_fresh {T : Finset Validator} {k : ℕ}
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hv1T : sk.v1 ∉ T)
+    (hpop : PopulatedOn U T (k + 1)) (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r) :
+    DirectSkip sk.skipFill (sk.fresh k) k
+```
+
+**The fill cannot conjure a commit.** A filled block landing on a leader slot is directly skipped: no old block references a fresh id, so every reliable validator's block at the round above blames it. The mechanism restores production without touching the slots the network already passed.
+
 ### The legacy quorum route (report §13)
 
 #### `no_stall`
@@ -9672,7 +9967,7 @@ theorem live_chopD {N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
 
 ## Appendix D. Index of internal lemmas
 
-The 252 lemmas used only within the file that proves
+The 256 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -10106,6 +10401,15 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `leader_blk_eq` | The reliable leader's block of slot `k` is the one the schedule names: non-equivocation identifies any … |
+
+### `SafeSkip/Basic.lean` (4)
+
+| Lemma | Role |
+|:---|:---|
+| `ids_subset_skipFill` | — |
+| `mem_freshIds` | — |
+| `skipFill_block_fresh` | — |
+| `skipFill_block_old` | Old blocks read unchanged: every store, view and certificate built on `U` sees the same data in the extension. |
 
 ### `Network/Quorum.lean` (3)
 
