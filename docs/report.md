@@ -20,9 +20,12 @@ references every correct block of the round below — and give a machine-checked
 development, in Lean 4, of safety and liveness for a Mysticeti-style commit
 rule above this condition, in which no liveness theorem mentions time. Safety
 assumes nothing about the network at all. The structural condition is derived
-rather than assumed: it follows from standard partial synchrony together with
-the protocol's own build rules, and its quantitative form states that a
-correct leader is committed once correct validators wait `2Δ`.
+rather than assumed, and the whole of what the network must supply reduces to
+a single clause of **view convergence** — after stabilisation, whatever one
+correct validator holds reaches every correct validator within Δ — from which
+both coverage and block production follow by the protocol's own build rules.
+The quantitative form states that a correct leader is committed once correct
+validators wait `2Δ`.
 
 We further prove what the committed ledger *contains*: every commit
 carries, at every round below it, blocks from at least half of the
@@ -138,7 +141,9 @@ proof effort with no corresponding proof content.
    validators do. On the same foundation, production is derived too —
    untimed from round `0` (`populated_of_viewsConverge`), and timed from
    the GST crossing (`ViewGrowth.populatedOn`) — so the entire liveness
-   account can be grounded on one view-shaped assumption.
+   account rests on one view-shaped assumption. The quorum-based
+   alternative N1 is retained in a module nothing else imports
+   (`Network/Quorum.lean`).
 
 5. A precise account of the **trust boundary** (§4). What is assumed reduces to
    the fault bound and two network conditions; every other condition is a clause
@@ -214,9 +219,9 @@ first.
 §2 gives the system model and §3 the commit rule; §4 draws the trust
 boundary, separating what is assumed from what the protocol enforces. §5
 develops safety (culminating in agreement, `decided_agree`, and the agreed
-ledger) and §6 liveness (culminating in recurring commits,
-`commits_recur_on`, the three derivations of eventual DAG synchrony, and the
-quantitative wait bound). §7 proves the chain-quality account — coverage
+ledger) and §6 liveness, grounded on view convergence (culminating in
+recurring commits, `commits_recur_on`, the three derivations of eventual
+DAG synchrony, and the quantitative wait bound). §7 proves the chain-quality account — coverage
 without synchrony, inclusion with it (`chain_quality`,
 `committed_of_correct_block`). §§8–10 present the three further
 developments —
@@ -728,7 +733,21 @@ frozen at construction, so what bears on the DAG's shape is what was held
 when the builder acted. `View.ids` is a finite set of identifiers with no
 index of either kind, which is why no formulation is stated over it.
 
-#### Production: N1
+#### Production
+
+In the main line production is derived, not assumed. The liveness results
+consume it as a `Populated` hypothesis, and view convergence discharges
+that hypothesis twice over: `ViewGrowth.populatedOn` derives it from the
+GST crossing on, and `populated_of_viewsConverge` from round `0` under
+the untimed form (§6.9). The network contributes nothing to production
+beyond the one convergence clause it already supplies for coverage.
+
+There remains a third route, the development's original one, kept in
+`LeanDag/Network/Quorum.lean` outside the main line: a quorum-conditional
+delivery assumption from which production follows with no temporal input
+at all. It is documented here because it is the weakest of the three and
+the natural one to implement against, and because its shape repays study
+even where it is not used.
 
 ```lean
 def DeliversQuorum (D : Delivery U) : Prop :=
@@ -1028,7 +1047,7 @@ weakening a network hypothesis does not merely block a proof but makes
 the conclusion false: `bound_is_necessary` (the delivery bound cannot be
 dropped for coverage), `ugap_not_viewsConvergeOn` (the starting round
 cannot be dropped), and `reliable_set_is_forced` (coverage over the
-reliable set does not extend to `Correct`). §13.4 gives them in full.
+reliable set does not extend to `Correct`). §6.9 gives them in full.
 
 ### 4.7 The denial-of-service conditions
 
@@ -1331,6 +1350,14 @@ execute, since it refers to `Correct`, which no validator can observe; it is
 what (a) and (b) *produce* against a synchronous network, and it is derived
 accordingly (§4.4, §13.2).
 
+The chapter is organised around two interface predicates, and every
+result above them consumes them as hypotheses rather than reaching for a
+network assumption: **production** (`Populated`, §6.3) and **coverage**
+(`SynchronisedOn`, §6.4). The main line discharges both from a single
+network clause, view convergence, in §6.7–§6.9; the quorum route that
+discharges production instead from N1 lives in `Network/Quorum.lean` and
+is noted where it is relevant (§4.3).
+
 ### 6.1 Density
 
 **L0.**
@@ -1374,12 +1401,12 @@ The structure contains no clock. In the absence of a time model, "waited longer"
 can manifest only as a larger `held`, which is what allows the timing layer of
 §6.8 to be placed beneath without disturbing anything above it.
 
-The network assumption stated over this structure is N1
-(`DeliversQuorum`), displayed and discussed in §4.3; the liveness results
-below consume it as a hypothesis. Two of its features matter here: it is
-conditional, so it does not assert the block production §6.3 establishes,
-and it carries no round bound, so the results resting on it hold before GST
-as well as after.
+No network assumption is stated over this structure in the main line.
+The view-convergence layer *produces* a delivery —
+`ViewGrowth.toDelivery`, §6.9 — and the DoS arc's novelty budget is a
+rule about `accepted`. The quorum assumption N1 (`DeliversQuorum`), the
+delivery-level alternative kept in `Network/Quorum.lean`, is documented
+in §4.3; nothing below depends on it.
 
 ### 6.3 Progress, and the horizon
 
@@ -1394,18 +1421,28 @@ structure Live (U) (D : Delivery U) (N : ℕ) : Prop where
     ∃ b ∈ U.ids, (U.block b).creator = v ∧ (U.block b).round = r + 1
 ```
 
+`Populated` is the production half of the liveness interface (§6.10):
+every result above this section takes `∀ r ≤ N, Populated U r` as a
+hypothesis, and which route discharges it is decided at the point of
+application. The main line derives it from view convergence — the
+induction of `ViewGrowth.populatedOn` in the timed setting, and of
+`populated_of_viewsConverge` in the untimed one (§6.9), both running
+`builds` against blocks that convergence places in the builder's hands.
+
+The quorum route derives the same conclusion in `Network/Quorum.lean`:
+
 **L1.**
 ```lean
 theorem no_stall {D : Delivery U} (H : Live U D N) (hd : DeliversQuorum D) :
     ∀ r ≤ N, Populated U r
 ```
 
-Every correct validator has a block at every round up to the horizon. The
-induction proceeds in two steps: the inductive hypothesis makes `Correct` a
-subset of `authorsAt U r`, so a quorum exists; `DeliversQuorum` converts this
-into each correct validator *holding* a quorum; and only then does `builds`
-apply. The second step is what prevents the theorem from asserting that
-validators build upon blocks they may never have received.
+with the quorum obtained from N1 rather than from convergence — the
+inductive hypothesis makes a quorum *exist*, `DeliversQuorum` converts
+existence into each correct validator *holding* one, and `builds`
+applies. It is the weakest hypothesis of the three and needs no clock,
+which is why the module survives; nothing else in the development
+consumes it.
 
 The horizon `N` is not a technical convenience. Since `U.ids` is finite, a
 formulation without the bound `r < N` would require infinitely many distinct
@@ -1434,8 +1471,9 @@ that the ledger grows without bound is not that one DAG commits infinitely often
 — no finite DAG can — but that no slot is the last one which some sufficiently
 grown DAG commits.
 
-L1 is the only result in which the horizon is consumed; the principal
-commitment theorem does not mention `N`.
+The horizon is consumed exactly where production is derived — L1 and
+the two view-convergence derivations alike; L4 itself never mentions
+`N`.
 
 ### 6.4 Eventual DAG synchrony
 
@@ -2048,7 +2086,8 @@ assumed form is not a different hypothesis but the derived one
 Skolemised, and `exists_blk_of_populatedOn` is the identification. What
 the three derivations differ in is where the induction may start: at
 round `0` for the two untimed ones, and only past GST for the timed one,
-since `converges` says nothing before it. §4.3 keeps N1 because deriving
+since `converges` says nothing before it. N1 is retained — in
+`Network/Quorum.lean`, outside the main line — because deriving
 production from a *conditional quorum* hypothesis is the weaker and the
 implementable option.
 
@@ -2265,8 +2304,8 @@ theorem committed_of_correct_block (hT : T ⊆ Correct)
 quantified*, a committed slot whose flush contains every correct
 round-`m` block. (`commits_recur_on` does not
 expose the committed leader's membership in `T`, which the backbone
-needs, so the proof composes from the fair schedule, L4 and `no_stall`
-directly, mirroring L6's own proof.) The quantitative forms pin the
+needs, so the proof composes from the fair schedule and L4 against the
+production hypothesis directly, mirroring L6's own proof.) The quantitative forms pin the
 slot to a window: under `FairWithin T w` the committing slot lies
 within `w` slots of the first slot above round `m`
 (`committed_of_correct_block_within`), and under `BoundedSpacing s` its
@@ -3318,10 +3357,10 @@ The quantitative statements recover what is needed *below* the interface without
 propagating time upward.
 
 Coverage being derived rather than assumed does not make it unconditional. The
-derivation rests on N2, and in the absence of a time model the chain must
-terminate at a delivery assumption; what the reformulation achieves is to place
-that assumption where it belongs — on the network — and to keep it out of every
-statement above.
+derivation rests on view convergence, and in the absence of a time model the
+chain must terminate at a network assumption; what the reformulation achieves
+is to place that assumption where it belongs — on the network, as one clause
+over views — and to keep it out of every statement above.
 
 ### 13.5 Lessons from the extensions
 
