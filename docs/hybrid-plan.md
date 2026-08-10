@@ -8,8 +8,9 @@
 > only human-plus-LLM review behind it. Read critically.
 
 This document is the design record for the **hybrid** arc, written
-before the development. The subject is `hybrid.md`'s extension of the
-two-round rule: a fault model distinguishing `f` Byzantine validators
+before the development. The subject is the hybrid fault model for
+two-round DAG consensus (arXiv:2607.04789; the working notes are
+`hybrid.md`), an extension of the two-round rule: a fault model distinguishing `f` Byzantine validators
 (may equivocate) from `c` crash-prone validators (honest, may halt,
 never equivocate), with the claimed tight bound
 
