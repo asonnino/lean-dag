@@ -282,92 +282,84 @@ is the whole distinction — eligibility reads only `slotRound`, which
 reassignment fixes, so *shape* transfers verbatim while *fairness*
 cannot transfer at all.
 
-Predictions worth recording before the work, since a plan that cannot
-be wrong is not a plan:
+### 3.2 What the proved cells establish
 
-- **I2** (`chop` preserves `HonestNoEquiv`) is nearly free: truncation
-  removes blocks and never adds them, and `HonestNoEquiv` is a
-  *universally quantified* statement over pairs of retained blocks, so
-  it restricts downward. This single lemma is what makes §14 (hybrid)
-  compose with §9 (GC). **Verified while drafting** — four lines — and
-  the one non-trivial step is worth recording, because it will recur:
-  `chopBlock` rebases rounds to `round − G`, so equal *chopped* rounds
-  do not immediately give equal original rounds. Truncated subtraction
-  is faithful only above the cut, and the filter supplies `G ≤ round`
-  on both sides to close it by `omega`. This is the same subtlety §9
-  already met in `Slots.chop`'s keying clause, and I15 will meet it a
-  third time — `SpansEligible` is stated through `slotRound`, which
-  `Slots.chop` rebases by exactly this subtraction.
-- **I3** (`skipFill` preserves `HonestNoEquiv`) is the interesting one.
-  The fill creates blocks authored by `v1`, who is honest — so the
-  proof must show the filled blocks do not equivocate against `v1`'s
-  own history. `skipFill`'s existing `no_equivocation` field already
-  proves exactly this for the *derived* correct class, using `hgap`;
-  the honest-class version should be the same argument with the class
-  widened, provided `v1` is honest, which `hv1` gives.
-- **I4** (`chop` preserves `SynchronisedOn`) — **done**, and the
-  prediction was wrong in a way worth recording. I expected a base-layer
-  exception in the shape of `supporters_chop`'s `1 ≤ m`; there is none.
-  Coverage only ever constrains a block at chopped round `n + 1`, which
-  is above the cut by construction, so its references are retained and
-  the original clause applies directly. The statement needs only the
-  horizon offset `R ≤ G + R'`. A clause that quantifies *upward* is
-  cheaper to transport than one pinned at a fixed round.
-- **I5** (`skipFill` preserves `SynchronisedOn`) is where I expect a
-  genuine *negative* result, and it is the most valuable cell in the
-  table. Coverage says every correct block references every correct
-  block of the round below. A filled block copies the donor's
-  references — it does **not** reference every correct block of the
-  round below unless the donor did — and, worse, *old* blocks at the
-  round above a filled block cannot reference it (they were built
-  first; this is precisely SS3's argument). So `SynchronisedOn` is
-  almost certainly **false** in the extension at the gap rounds. That
-  is not a defect: it says the fill restores *production*, not
-  *coverage*, which is exactly what §12 claims and no more. The
-  integration arc should state the negative result on data — a witness
-  where `SynchronisedOn (skipFill …)` fails — and then state the
-  positive form: coverage holds *above* the fill (`r > sk.r`), which
-  is what a liveness argument after recovery actually needs.
+Six cells are closed, all on the standard three axioms
+(`LeanDag/Integration/`, witnessed in `LeanDagTest/Integration.lean`).
 
-  **Done, and stronger than planned.** The refutation did not need a
-  witness: `not_synchronisedOn_skipFill` refutes coverage *in general*,
-  at every gap round of every fill, on no hypotheses beyond the ones
-  SS2 creates. The `Ucrash` witness is retained anyway, to show the
-  hypotheses are satisfiable and the refutation therefore bites. The
-  positive form (`synchronisedOn_skipFill_above`) needs `sk.r < R'`
-  **strictly** — at `n = sk.r` the lower block may still be the last
-  filled one, and the refutation applies there too.
+**I2, I3 — honest non-equivocation survives both transformers**
+(`honestNoEquiv_chop`, `honestNoEquiv_skipFill`). Together these are
+what let §14's hybrid model be used inside §9's truncation and across
+§12's fill: a hybrid universe stays a hybrid universe on both sides.
+I3 is the same argument `skipFill`'s own `no_equivocation` field makes
+for the derived correct class, at the wider honest class, and turns on
+the same clause — `hgap`, the crash itself.
 
-  The reason is worth carrying into the report: it is the *same fact*
-  that makes Safe Skip safe. SS3 concludes that a filled candidate is
-  always skipped because no old block references a fresh identifier;
-  I5 concludes that coverage fails at gap rounds for the identical
-  reason. One fact, two consequences — the fill can manufacture
-  neither a commit nor coverage — and §12's claim was always exactly
-  that it restores *production*, which is the hypothesis liveness
-  consumes.
-- **I6a** is the blocking item of its column and is not a preservation
-  lemma but a *construction*: what does a validator hold, and what has
-  it accepted, in a universe extended by a fill? The fill's blocks
-  arrive in one message, so the natural definition adds them to every
-  correct validator's `accepted` set at their gap round — at which
-  point `accepted_inj` (at most one block per author per round) must be
-  rechecked against `hgap`, and the whole of I1 and I6b–d becomes
-  statable. Scope this before starting it; it may be the largest single
-  item in the arc, and §5.3's budget question lives inside it.
-- **I13/I15** (`Slots.chop` preserves fairness and shape) are the cells
-  the first draft missed entirely, and they are prerequisites for I9 —
-  a joiner reasoning about the truncation needs *its* schedule to be
-  fair and spanning, not merely the original's. **Both done, exactly as
-  predicted.** `FairScheduleOn` and its run form shift by `d` and go
-  through directly; `SpansEligible` met the subtraction wrinkle a third
-  time and paid it with `Slots.chop`'s base-slot condition
-  `G ≤ S.slotRound d`, carried to every slot at or above `d` by
-  monotonicity (`le_slotRound_add`). That condition was already in
-  `Slots.chop`'s signature for its `keyed` clause; this is a second,
-  independent use of it.
+**I4 — coverage survives truncation** (`synchronisedOn_chop`), needing
+only the horizon offset `R ≤ G + R'` and no base-layer exception. The
+reason is structural and generalises (§3.3): coverage constrains a
+block at chopped round `n + 1`, which lies above the cut by
+construction, so `chop` retains its references and the original clause
+applies unchanged.
 
-### 3.2 Transformers × transformers
+**I5 — coverage does *not* survive the fill**
+(`not_synchronisedOn_skipFill`), refuted in general rather than on
+data: at every gap round of every fill, an old block at the round above
+fails to reference the filled block below it, because no old block
+references a fresh identifier. The `Ucrash` witness
+(`ucrash_not_synchronisedOn`) is retained to show the hypotheses are
+satisfiable and the refutation therefore bites.
+
+This is the same fact that makes Safe Skip **safe**. SS3 concludes a
+filled candidate is always directly skipped *because no old block
+references a fresh identifier*; I5 concludes coverage fails at gap
+rounds for the identical reason. One fact, two consequences: the fill
+can manufacture neither a commit nor coverage. §12 claims only that it
+restores *production*, which is the hypothesis liveness consumes, so
+nothing in §12 weakens — but the boundary is now exact. Coverage
+returns strictly above the fill (`synchronisedOn_skipFill_above`,
+requiring `sk.r < R'`); at `n = sk.r` the lower block may still be the
+last filled one, and the refutation reaches there too.
+
+**I13, I15 — the schedule layer survives truncation**
+(`fairScheduleOn_chop`, `fairRunOn_chop`, `spansEligible_chop`). A
+joiner reasoning inside a truncation has a schedule that is fair and
+spanning in its own right, which is what I9 needs.
+
+### 3.3 Transport heuristics
+
+Three patterns emerged that should be applied to the remaining cells
+before attempting them, because each predicts the shape of the answer:
+
+**Quantify upward, transport cheaply.** A clause constraining a block
+at round `n + 1` in terms of round `n` transports through truncation
+without a base-layer exception, because the constrained block is above
+the cut by construction (I4). A clause pinned at a fixed round needs
+one (`supporters_chop`'s `1 ≤ m`). When a new invariant is added to
+§2, its quantifier shape predicts its transport cost.
+
+**Truncated subtraction is faithful only above the cut.** Paid three
+times now — in I2, in `Slots.chop`'s `keyed` clause, and in I15 — and
+discharged the same way each time: some hypothesis already in scope
+pins the rounds above `G` (the `chop` filter; the base-slot condition
+`G ≤ S.slotRound d`, carried upward by monotonicity in
+`le_slotRound_add`). Expect every round-sensitive `chop` lemma to pay
+it, and look for the pinning hypothesis rather than strengthening the
+statement.
+
+**Adding blocks is dangerous; removing them is not.** Truncation
+restricts universally quantified invariants downward for free (I2, I4).
+Extension does not (I5), because an invariant of the form "every block
+here relates to every block there" acquires new obligations when new
+blocks arrive — and `skipFill`'s new blocks are, by SS3's own argument,
+exactly the ones nothing old can reference. **This predicts I1**: the
+fill's cone is strictly larger than the donor's — it adds `v1`'s chain
+below the anchor — and `DoSValid` forbids referencing an author exposed
+*in one's own cone*, so a larger cone can only expose more. I1 is
+therefore likely false without a hypothesis confining equivocations in
+`v1`'s pre-crash history; see §5.5.
+
+### 3.4 Transformers × transformers
 
 Rather than prove that every *order* of applying transformers is safe,
 prove a **commutation or normalization** result once. §9 already has
@@ -390,7 +382,7 @@ constraint that neither arc alone can see, and pinning it as a theorem
 (with the negative case witnessed on data) is exactly the kind of
 result integration should produce.
 
-### 3.3 Layer variants: parametrize once, instantiate thrice
+### 3.5 Layer variants: parametrize once, instantiate thrice
 
 The schedule and fault layers should not be handled by preservation
 lemmas but by **abstraction over the interface actually consumed**.
@@ -431,7 +423,7 @@ arc has avoided. It should be done as a *generalization with the old
 statements retained as corollaries*, so nothing downstream breaks and
 the diff is auditable.
 
-### 3.4 What remains genuinely pairwise
+### 3.6 What remains genuinely pairwise
 
 Some combinations are not preservation facts and must be proved
 directly. These are the ones with real content, and there are fewer
@@ -473,48 +465,68 @@ crash-prone validator is demoted while down (I11), safe-skipped back in
 (I10), and re-promoted after recovery. That lifecycle, machine-checked,
 is a stronger claim than any single arc makes.
 
-**I12 — DoS × Safe Skip: does a fill respect the budget?** See §5.3.
+**I12 — DoS × Safe Skip.** Two questions, now separated by the
+analysis of §5.5. At the universe layer, whether the fill preserves
+`DoSValid` (I1) — expected conditional rather than preserved, since the
+fill's cone is strictly larger than the donor's. At the delivery layer,
+whether a bulk fill respects the novelty budget (§5.3), which is gated
+behind I6a and moot if I1 fails. The pair is the arc's most likely
+*open* entry, and recording it as open is a legitimate outcome.
 
-## 4. Proposed module plan
+## 4. Module plan and order
 
-| Module | Contents |
-|:---|:---|
-| `Integration/Invariants.lean` | the named-invariant list, collected; the preservation-lemma interface |
-| `Integration/Preservation.lean` | I1–I5: the layer-U table filled |
-| `Integration/DeliveryFill.lean` | I6a–d: Safe Skip's delivery transformer, then its budget column |
-| `Integration/ScheduleShape.lean` | I13–I15: fairness and shape under `Slots.chop` and `slotsOf` |
-| `Integration/Commute.lean` | I7: `chop` ∘ `skipFill`, and the anchor-above-horizon condition |
-| `Integration/RuleInterface.lean` | I8: the decision-relation interface; Mysticeti, Odontoceti, Hybrid as instances |
-| `Integration/Joiner.lean` | I9: horizon-stable policies; the joiner's adaptive run |
-| `Integration/Lifecycle.lean` | I10, I11: the crash-prone lifecycle end to end |
-| `LeanDagTest/Integration.lean` | the negative witnesses (I5, I7's side condition) and the lifecycle exhibit |
+| Module | Contents | Status |
+|:---|:---|:---|
+| `Integration/Preservation.lean` | I2, I3, I4: honest non-equivocation under both transformers; coverage under truncation | **done** |
+| `Integration/Coverage.lean` | I5: coverage refuted under the fill, and recovered strictly above it | **done** |
+| `Integration/ScheduleShape.lean` | I13, I15: fairness and shape under `Slots.chop` | **done** |
+| `LeanDagTest/Integration.lean` | the refutation witnessed as biting; the lifecycle exhibit to come | started |
+| `Integration/Joiner.lean` | I9: horizon-stable policies; the joiner's adaptive run | next |
+| `Integration/Lifecycle.lean` | I10, I11: the crash-prone lifecycle end to end | next |
+| `Integration/Commute.lean` | I7: `chop` ∘ `skipFill`, and the anchor-above-horizon condition | after I9 |
+| `Integration/Exposure.lean` | I1: `DoSValid` under the fill, conditionally (§5.5) | scoped, see §5.5 |
+| `Integration/DeliveryFill.lean` | I6a–d: Safe Skip's delivery transformer, then its budget column | deferred |
+| `Integration/RuleInterface.lean` | I8: the decision-relation interface; three instances | last |
 
-Order matters, and the audit sharpened it:
+The remaining order, revised with what the first six cells settled:
 
-1. **I2, I3, I5 first** — cheap, and they either confirm or refute the
-   assumption that the fill is well-behaved. I2 is already done; the
-   answer to I5 determines how much of the rest is worth stating.
-2. **I13, I15 next** — small, and they unblock I9, the sharpest
-   question in the arc.
-3. **I6a before anything else in its column**, and only after scoping:
-   it is a construction rather than a lemma, and §5.3's budget question
-   is inside it. If it proves large, the honest move is to state the
-   Safe Skip × DoS combination as *open* rather than to force it.
-4. **I8 last.** It is the largest item, it touches existing code where
-   every other arc only added, and its value depends on how many
-   instances it ends up serving — which is known only once the rest is
-   in place.
+1. **I9 next**, and it is now unblocked. I13/I15 give the joiner a fair
+   and spanning schedule inside the truncation, which was the
+   prerequisite; what remains is the genuinely new content —
+   *horizon-stability* of the policy, and whether a joiner's adaptive
+   run agrees with a full-history one. This is the sharpest question in
+   the arc and the one with a deployment analogue, so it should be
+   attempted while the schedule lemmas are fresh.
+2. **I10, I11 alongside it.** Both are mostly assembly now: I3 supplies
+   the hybrid-side hypothesis the fill needs, and what remains is
+   restating §12's theorems over `HybridFaults` and composing with the
+   demote-on-skip policy. Cheap, and they deliver the arc's most
+   quotable claim — the crash-prone lifecycle, end to end.
+3. **I7 after I9**, because the anchor-above-horizon condition it is
+   expected to need is the same shape as the retention condition I9
+   will already have introduced for verdicts; doing them in this order
+   should let one condition serve both.
+4. **I1 only with the hypothesis §5.5 identifies**, or not at all. It
+   is no longer a preservation lemma in the plain sense.
+5. **I6a–d deferred, and possibly permanently.** §5.3's scoping
+   question is now sharper (§5.5) and the honest answer may be to
+   record Safe Skip × DoS as open rather than to force a delivery
+   transformer whose only consumer is a combination of doubtful value.
+6. **I8 last**, unchanged: it is the only item that touches existing
+   code, and its value still depends on how many instances it serves.
 
 ## 5. Risks and predictions
 
-**5.1 The negative results are the valuable ones.** Three cells in this
-plan look likely to be *false*: `SynchronisedOn` under `skipFill` (I5),
-`chop`/`skipFill` commutation without the anchor condition (I7), and
-horizon-stability for an unrestricted adaptive policy (I9). Each is
-worth more than the corresponding positive would have been, because
-each names a deployment constraint that no single arc can see. The arc
-should be written expecting them, in the house style of
-`bound_is_necessary` — a witness, not an apology.
+**5.1 The negative results are the valuable ones.** Four cells in this
+plan are expected to be *false*: coverage under `skipFill` (I5, now
+**settled negative**), `chop`/`skipFill` commutation without the anchor
+condition (I7), horizon-stability for an unrestricted adaptive policy
+(I9), and `DoSValid` under the fill (I1, §5.5). Each is worth more than
+the corresponding positive would have been, because each names a
+deployment constraint that no single arc can see. I5 sets the pattern
+to follow: refute in general where possible, keep a witness to show the
+refutation bites, and state the positive form that survives — the
+boundary is the result, not the failure.
 
 **5.2 The interface audit is done, and it moved the plan.** This risk
 was live in the first draft, where §2's list was a survey rather than a
@@ -533,10 +545,33 @@ budget limits the rate at which an author can inject material; Safe
 Skip injects one block per gap round in a single message. Whether that
 respects `UniformBudget` depends on whether the budget is per-block or
 per-round — and the fill produces exactly one block per round, which
-suggests it does, but the *acceptance* side (`RefsAccepted`, and the
-exposure condition) may see a burst. This is the combination most
-likely to require a genuinely new argument rather than a preservation
-lemma, and it should be scoped before it is started.
+suggests it does, but the *acceptance* side (`RefsAccepted`) may see a
+burst. This is the combination most likely to require a genuinely new
+argument rather than a preservation lemma. It is also gated behind
+I6a's construction, and §5.5 now suggests the universe-level half fails
+first, which would make the delivery-level question moot.
+
+**5.5 `DoSValid` under the fill is probably conditional, not
+preserved.** The third heuristic of §3.3 predicts I1 negative, and the
+mechanism is specific enough to state before attempting: a filled
+block's cone is the donor block's cone *plus* `v1`'s chain below the
+anchor, since `fillBlock` inserts the self reference. `DoSValid`
+forbids a block from referencing an author exposed **in its own cone**,
+and a larger cone can only expose more authors. So the donor's own
+`DoSValid` does not transfer: the fill inherits the donor's references
+while acquiring a strictly larger cone in which one of those
+referenced authors may be exposed by an equivocation in `v1`'s
+pre-crash history.
+
+If that is right, I1 needs a hypothesis of the form *no author of the
+donor line's references is exposed within `B1`'s cone*. Two responses
+are available and the choice is a design decision, not a proof detail:
+state I1 conditionally and record the hypothesis as a deployment
+obligation on the recovering validator, or record Safe Skip × DoS as
+open. The first is preferable if the hypothesis turns out to be
+checkable by `v1` itself — which it is, since `B1`'s cone is exactly
+what `v1` retains — and that would make it enforceable in the sense
+§8 requires.
 
 **5.4 Scope discipline.** The temptation in an integration arc is to
 prove the full cross product because each individual proof is easy once
