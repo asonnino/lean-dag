@@ -23,3 +23,4 @@ import LeanDagTest.Quality.Model
 import LeanDagTest.ViewSync
 import LeanDagTest.Unbounded
 import LeanDagTest.Reactive
+import LeanDagTest.Catchup

@@ -6107,12 +6107,32 @@ structure ReactiveM (U : BlockUniverse Validator BlockId Payload)
 
 The reactive three-round schedule: `ReactiveCore`'s vote stage, plus the certificate wait.
 
+### Catch-up, and the start spread
+
+#### `CatchupSync`
+
+*structure, `Drift.Catchup.lean`*
+
+```lean
+structure CatchupSync (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (N : ℕ) extends ViewSync U T N where
+  /-- The processing bound: how long entry may lag evidence. -/
+  proc : ℕ
+  /-- **Catch-up** (protocol). Seeing a round is entering it: any
+  `T`-block of round `n` in hand at time `t` means the holder's own
+  round-`n` block was built by `t + proc`. -/
+  catchup : ∀ v ∈ T, ∀ u ∈ T, ∀ n ≤ N, ∀ t,
+    blk u n ∈ holds v t → built v n ≤ t + proc
+```
+
+`ViewSync` with the catch-up rule: a validator that holds any block of a round has built its own block of that round within `proc` of the sighting.
+
 
 ---
 
 ## Appendix C. The theorem reference
 
-The 155 theorems that another module of the development
+The 156 theorems that another module of the development
 depends on: the results the rest of the report reasons with, as
 opposed to the steps internal to one file. Each is the source
 statement, unabridged. Generated with Appendix B.
@@ -8123,6 +8143,25 @@ theorem decided (hT : T ⊆ (Correct : Finset Validator))
 
 **Reactive liveness (Mysticeti).** A reliable-led slot past GST is committed by every view — the conclusion of `decided_of_leader_mem`, with reference coverage replaced by the two reactive wait clauses. The leader block is the one the schedule names, so its existence is not a hypothesis.
 
+### Catch-up, and the start spread
+
+#### `decided_of_catchup`
+
+*theorem, `Drift.Catchup.lean`*
+
+```lean
+theorem decided_of_catchup [S : Slots Validator] {k : ℕ}
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hgst : cs.gst ≤ R)
+    (hto : ∀ n, R ≤ n → (cs.delay + cs.proc) + cs.delay ≤ cs.timeout n)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
+```
+
+**The commit, with `D₀` eliminated.** A reliable-led slot past GST is committed by every view once the timeout clears `2Δ + proc`. Where `decided_of_wait` requires the round-`0` spread as a hypothesis — the one deployment quantity in the development — this requires nothing about how the validators started.
+
 ### Not otherwise grouped
 
 #### `exists_self_ancestor`
@@ -8155,7 +8194,7 @@ This is the indispensable half of D20: the fresh "carrier" block that adopts an 
 
 ## Appendix D. Index of internal lemmas
 
-The 336 lemmas used only within the file that proves
+The 339 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements.
@@ -8289,6 +8328,9 @@ the source is the reference for their statements.
 | `card_historyBlocksOf_self` | `DoS.SelfParent` | D22, per round. A block's own author sits in its history *exactly once* per round: at least once by the … |
 | `card_history_ge` | `DoS.SelfParent` | D24 (the floor). With self-parents, histories have a *minimum* size: a valid block at round `r` carries at … |
 | `exists_self_ancestor_aux` | `DoS.SelfParent` | — |
+| `driftOn_of_catchup` | `Drift.Catchup` | The collapsed spread, in the form the timed development consumes: from any `R` past GST, drift is bounded … |
+| `drift_collapse` | `Drift.Catchup` | Drift collapses, from any starting value. At a round whose builds all lie past GST, the spread among `T` … |
+| `synchronisedOn_of_catchup` | `Drift.Catchup` | Coverage at a deployment-free threshold. Reference coverage from `R` on, once the timeout clears `2Δ + … |
 | `correct_mem_base` | `GC.AttestedBase` | G10, completeness. Post-`R`, every correct block of the layer is in every correct attestation (the … |
 | `accepted_mem_base` | `GC.Bootstrap` | G11. Every round-`G` block a correct validator accepted into its window by `m` — Byzantine-authored … |
 | `base_subset_retained` | `GC.Bootstrap` | The base is inside every correct peer's retained store: each base block sits in a correct attester's cone … |
