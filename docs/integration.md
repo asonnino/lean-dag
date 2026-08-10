@@ -326,6 +326,33 @@ last filled one, and the refutation reaches there too.
 joiner reasoning inside a truncation has a schedule that is fair and
 spanning in its own right, which is what I9 needs.
 
+**I7 — the lag bounds the recoverable outage.** Both directions.
+`anchor_pruned` (I7a) states the constraint: a horizon past the crash
+round prunes the anchor, so every `SkipMsg` over the truncation must
+name a different one. `chopMsg` (I7b) shows it is the *only* constraint
+— with the anchor retained the whole message rebases, every field
+shifted by `−G`, and a validator that has already pruned can still
+rejoin with one message.
+
+One hypothesis appeared that the plan had not predicted: the horizon
+must also lie below the *target* round (`G ≤ sk.r`), not only below the
+anchor. It is needed where `k ≤ r − G` must give `G + k ≤ r`, which
+truncated subtraction does not supply for free. In any non-degenerate
+fill it is implied, but it is a real side condition and is stated
+rather than assumed.
+
+Composing with report §9's lag envelope makes it operational.
+`outage_bounded_by_lag`: with the horizon trailing the recovery round
+by `Λ`, the anchor survives *exactly* when the outage did not exceed
+`Λ` —
+
+> Garbage collection at lag `Λ` supports Safe Skip recovery from
+> outages of up to `Λ` rounds, and no more.
+
+Beyond it the validator's last block is gone and it must bootstrap by
+report §9.5's attested base. That is where the boundary between the two
+recovery routes falls, and neither arc alone could see it.
+
 **I10 — a crash-prone validator can Safe Skip, once a hypothesis is
 stated as the fact it stands for.** This is the composition that did
 *not* fit, and the misfit is the finding. `SkipMsg` carried
@@ -593,7 +620,7 @@ behind I6a and moot if I1 fails. The pair is the arc's most likely
 | `Integration/Joiner.lean` | I9: the transformers commute; horizon-stability; epoch alignment | **done** |
 | `Integration/Stack.lean` | I16: the composition capstone — several transformers at once | **done** |
 | `Integration/Lifecycle.lean` | I10: the crash-prone fill; I11 recorded as a non-task; the lifecycle | **done** |
-| `Integration/Retention.lean` | I7a, I7b: anchor retention — necessary, then sufficient | next, see §4.5 |
+| `Integration/Retention.lean` | I7a, I7b: anchor retention; the lag bounds the outage | **done** |
 | `Integration/Exposure.lean` | I1: `DoSValid` under the fill, conditionally (§5.6) | design decision pending |
 | `Integration/DeliveryFill.lean` | I6a–d: Safe Skip's delivery transformer, then its budget column | deferred, likely open |
 | `LeanDagTest/Integration.lean` | the refutation witnessed as biting; the stack and lifecycle exhibits | ongoing |
@@ -694,7 +721,8 @@ what makes the cost visible.
 
 Three items remain, and I16 changed what the first of them is *for*.
 
-**I7, reframed: how long may a validator be down?** The item was posed
+**I7 — done; see §3.2.** The account below states the question as it
+was posed. The item was posed
 as "do the transformers commute?". I16 answered the deployment order
 (fill, then prune) unconditionally, so what is left is the other order,
 and that order has a concrete operational reading:
@@ -743,7 +771,8 @@ nothing here is load-bearing for the arc's claim.
 
 ### 4.6 After the proofs
 
-The arc is tellable now. Its results are the preservation table, the
+The arc is tellable now, with I1 and I6 the only items left open. Its
+results are the preservation table, the
 refutation with its exact boundary, the placement conditions, the
 composition capstone, and the lifecycle — with two non-tasks (I11,
 I14) which are findings in their own right, and one hypothesis
@@ -793,10 +822,9 @@ risk is discharged (§3.2). The second half of it was right: the
 invariants compose in one order and not obviously the other. But the
 order that works — fill, then truncate — is the deployment order, so
 I16 needed no hypothesis `chop`'s statement does not already carry, and
-I7 was not a prerequisite after all. The residual is that
-truncate-then-fill remains unproved and is what I7 will address; it is
-the rarer deployment case (a validator pruning while a recovery message
-is in flight) and its condition is already identified.
+I7 was not a prerequisite after all, and truncate-then-fill has since
+been proved outright (I7b) under the retention condition the asymmetry
+predicted — so both composition orders are now settled.
 
 **5.5 Scope discipline.** The temptation in an integration arc is to
 prove the full cross product because each individual proof is easy once
