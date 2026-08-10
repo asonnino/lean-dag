@@ -634,7 +634,7 @@ the system actually falls.
 | P5 | one block per round: correct validators do not equivocate | `BlockUniverse.no_equivocation` |
 | P6 | the slot schedule is monotone, unbounded and keyed | `Slots.mono`, `Slots.unbounded`, `Slots.keyed` |
 | P7 | a validator references everything it accepted | `Delivery.includes` |
-| P8 | a validator has a genesis block, and builds on holding a quorum | `Live.genesis`, `Live.builds` |
+| P8 | a validator has a genesis block, and builds on holding a quorum | `Live.genesis`, `Live.builds`; timed counterpart `ViewGrowth.builds` |
 | P9 | a validator waits a full timeout, and does not dawdle | `Timing.waits`, `Timing.prompt` |
 | P10 | the leader schedule names reliable validators arbitrarily far out | `FairScheduleOn` |
 
@@ -665,6 +665,12 @@ So P8 is the point at which the liveness development is conditional on something
 that deployed code has been observed not to satisfy. It is nonetheless a clause
 of the protocol in the sense of this section — a designer can implement it, and
 both cited works tell one how — which is why it appears here rather than in §4.3.
+The clause appears once per production route: as `Live.builds` in the untimed
+derivation (`populated_of_viewsConverge`) and the quorum route (L1); as
+`ViewGrowth.builds` — the same rule over the build-time view — in the timed
+derivation of the main line; and as the totality of `blk` where production is
+assumed (§6.11 identifies that totality as P8 in its strongest form). The
+argument above applies to each incarnation alike.
 The form assumed here is stronger than either published fix: `Live.builds`
 demands a block at every round unconditionally, where [QXS26] excuse a validator
 that has already decided round `r'-2`, and admit a *global catchup time* before
@@ -1145,7 +1151,10 @@ by violating a clause; read across to see what a result depends on.
 Three readings are worth drawing out. **P8 and N1 now reach only L1**:
 since the liveness results take production as a `Populated` hypothesis
 rather than deriving it inline, the quorum route is one way to discharge
-that hypothesis and no result is committed to it (§4.4). **P3′ is absent
+that hypothesis and no result is committed to it (§4.4). The row tracks
+`Live.builds`; P8's timed incarnation `ViewGrowth.builds` is consumed by
+the main line's production derivation (`ViewGrowth.populatedOn`, §6.9),
+which the table does not show because that derivation carries no label. **P3′ is absent
 from safety and liveness entirely**, feeding only the DoS and
 garbage-collection arcs — the report's claim to that effect is this table
 row. And **P4 and P5 appear almost everywhere**, which is the honest
