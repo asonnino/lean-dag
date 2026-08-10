@@ -225,11 +225,9 @@ structure Live (U : BlockUniverse Validator BlockId Payload)
     ∃ b ∈ U.ids, (U.block b).creator = v ∧ (U.block b).round = r + 1
 
 omit [DecidableEq BlockId] in
-/-- A populated round carries a quorum of authors — the step that feeds L1's
-induction back into `builds` — the use `card_correct` was kept for.
-
-`spec.md` §2 has carried `card_correct` as unused-but-kept-for-liveness since
-the system model was written. This is what it was kept for. -/
+/-- A populated round carries a quorum of authors — the step that feeds a
+production induction back into its build rule, and the first consumer
+`card_correct` was kept for. -/
 theorem card_authorsAt_of_populated {r : ℕ} (h : Populated U r) :
     (Fintype.card Validator - F.f) ≤ (authorsAt U r).card := by
   refine le_trans card_correct (Finset.card_le_card ?_)
