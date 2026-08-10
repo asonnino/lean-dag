@@ -1621,7 +1621,16 @@ structure Timing (U) (T : Finset Validator) (N : ℕ) where
 
 The field `covers` is the structure's only network field, partial synchrony
 in reference-level form; the main line derives it from view convergence
-(`covers_of_converges`, §6.9) rather than assuming it. `waits` and `prompt` are the two protocol build rules, bounding
+(`covers_of_converges`, §6.9) rather than assuming it.
+
+`blk` names one block per **reliable** validator per round, and nothing
+more: its three constraining fields are `T`-guarded, its value off `T`
+is arbitrary and read by nothing, and a Byzantine author's blocks — any
+number per round, `no_equivocation` binding correct creators only — live
+in `U` unconstrained by the schedule. The restriction is what makes the
+coverage proof sound, since it identifies a `T`-authored block with the
+one `blk` names by non-equivocation, and an equivocator has no such
+canonical block to name. `waits` and `prompt` are the two protocol build rules, bounding
 build times from below and above respectively. `latest` is required to be
 *attained* (`latest_mem`) and not merely an upper bound, since as a bare bound it
 would carry no information. The horizon is required for the reason given in §6.3.
@@ -4905,6 +4914,8 @@ structure Timing (U : BlockUniverse Validator BlockId Payload)
 When each validator built each of its blocks, and what the network guarantees about delivery.
 
 `gst`, `delay` and `timeout` are fields rather than parameters because they belong to the execution, not to the statement.
+
+`blk` schedules one block per **reliable** validator per round: every clause constraining it is guarded by `v ∈ T`, and off `T` its value is arbitrary and read by nothing. A Byzantine validator's blocks — any number per round, since `no_equivocation` binds correct creators only — live in `U` itself, unconstrained by this structure. That restriction is essential, not cosmetic: the coverage proof identifies an arbitrary `T`-authored block with the one `blk` names via non-equivocation, which for an equivocating author would be unsound.
 
 #### `DriftFrom`
 

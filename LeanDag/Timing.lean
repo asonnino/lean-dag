@@ -57,7 +57,16 @@ variable {T : Finset Validator} {D R N : ℕ}
 guarantees about delivery.
 
 `gst`, `delay` and `timeout` are fields rather than parameters because they
-belong to the execution, not to the statement. -/
+belong to the execution, not to the statement.
+
+`blk` schedules one block per **reliable** validator per round: every
+clause constraining it is guarded by `v ∈ T`, and off `T` its value is
+arbitrary and read by nothing. A Byzantine validator's blocks — any
+number per round, since `no_equivocation` binds correct creators only —
+live in `U` itself, unconstrained by this structure. That restriction is
+essential, not cosmetic: the coverage proof identifies an arbitrary
+`T`-authored block with the one `blk` names via non-equivocation, which
+for an equivocating author would be unsound. -/
 structure Timing (U : BlockUniverse Validator BlockId Payload)
     (T : Finset Validator) (N : ℕ) where
   /-- `v`'s round-`n` block. -/
