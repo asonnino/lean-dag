@@ -3895,7 +3895,18 @@ development additive, but natural the third time a commit rule arrives.
 
 ## Appendix A. Statement index
 
-Principal results only; supporting lemmas are omitted.
+Principal results only; supporting lemmas are omitted (Appendix D
+indexes them).
+
+A label — `L4`, `CQ6`, `O5` — is a cross-reference handle, not a rank:
+the prose, the consumption map of §4.8 and the support diagrams of §6.10
+refer to results through them, and the quantified claims of §6.10 and
+§14 range over the labelled tier. A `—` row indexes a result no prose
+refers to by handle; the split largely tracks chronology, since each
+series was coined when its area's narrative was designed, and results
+arriving later — the view-convergence family, the negative witnesses,
+and the reactive and catch-up arcs entire — were indexed without
+extending the schemes. Appendix C displays both tiers in full.
 
 ### Safety
 
