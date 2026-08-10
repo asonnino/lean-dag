@@ -52,7 +52,7 @@ argument — two equivocating candidates can both pass the indirect commit test
 at one anchor, realized on a concrete six-validator counterexample — and
 repairs it with a canonical-candidate rule.
 
-The development comprises roughly 16,000 lines of Lean 4 over Mathlib. Every
+The development comprises roughly 17,400 lines of Lean 4 over Mathlib. Every
 principal result depends on exactly Lean's three standard axioms; every
 definition is exercised on concrete models by `decide` before anything is
 proved from it. All displayed Lean in this report is drawn from the source
@@ -256,8 +256,9 @@ def Correct : Finset Validator := (F.byzantine)ᶜ
 A quorum is `n − f` for `n ≥ 3f+1` validators — the familiar `2f+1` at the
 boundary `n = 3f+1`, where every witness sits. The derived fact
 `card_correct : n − f ≤ Correct.card`
-records that the correct validators themselves form a quorum, and is used at
-exactly one place in the liveness development (§6.3).
+records that the correct validators themselves form a quorum. The liveness
+development consumes it wherever a `T`-relative result is specialised to
+`T := Correct`, and in the production inductions of §6.3 and §6.9.
 
 As a set, `Correct` is a complement and carries no behavioural content. Membership
 is satisfied, in particular, by a validator that crashes at round 0 and never
@@ -502,7 +503,7 @@ clear the slot's decision round, which is Algorithm 3's filter
 every later slot is eligible (`eligible_of_lt_of_spacing`), so the general
 relation is conservative over it; and pipelined and multi-leader schedules —
 Mysticeti as published — are instances (`Slots.uniform p m`,
-`Slots.uniformSingle`), at the price that a backlog of undecided slots is
+`Slots.uniformSingle`), though a backlog of undecided slots is
 cleared by a *run* of consecutive commits rather than any single one
 (`decided_below_of_committed_run`, `all_decided_below_of_fairRun`; the design
 record is `pipelining-and-multi-leader.md`).
@@ -869,7 +870,8 @@ the three, since it promises a quorum only when one already exists.
 **N1 has exactly one primitive consumer: L1 (`no_stall`).** Its job is
 production, not synchrony, and the results that need production take it
 as a `Populated` hypothesis rather than reaching for the assumption that
-supplies it. L6, L10, the quantitative results and the capstones of
+supplies it. L6, the committed-run results, the quantitative results and
+the capstones of
 §§7–10 therefore do not mention N1 at all: any of the three production
 routes may discharge them — `no_stall` from N1, `ViewGrowth.populatedOn`
 from timed view convergence, or `populated_of_viewsConverge` from the
@@ -1599,16 +1601,17 @@ theorem commits_recur_on (hT : T ⊆ Correct)
 ```
 
 The order of quantification carries the content. The alternative reading — that
-given `Live U D N`, for every `k` there exists a committing `k' ≥ k` with
-`slotRound k' + 2 ≤ N` — is false: fairness promises a correct leader somewhere
-beyond `k`, and that slot may lie beyond the horizon, with nothing to license
-requesting a nearer one. As stated, `k'` depends only upon the schedule, which is
-a property of the `Slots` instance and not of any DAG; the universe is then
-required to have grown far enough. This is also the correct reading of the claim
-that the ledger grows without bound (§6.3).
+given a universe populated to `N`, for every `k` there exists a committing
+`k' ≥ k` with `slotRound k' + 2 ≤ N` — is false: fairness promises a correct
+leader somewhere beyond `k`, and that slot may lie beyond the horizon, with
+nothing to license requesting a nearer one. As stated, `k'` depends only upon
+the schedule, which is a property of the `Slots` instance and not of any DAG;
+the universe is then required to have grown far enough. This is also the
+correct reading of the claim that the ledger grows without bound (§6.3).
 
-The unboundedness of slot rounds required by the proof is supplied by
-`le_slotRound : 3 * k ≤ S.slotRound k`.
+The unboundedness of slot rounds required by the proof is `Slots.unbounded`,
+with `Slots.mono` carrying it past the fair slot; three-round spacing, which
+once supplied both, is not assumed (§3.4).
 
 ### 6.7 Deriving coverage: the delivery route
 
@@ -2113,9 +2116,10 @@ and differ only in the round at which their common induction may start.
 
 ### 6.11 Quantitative results
 
-The results of this section are collected in a separate module which nothing else
-imports. Each strengthens a result above and is purchased with a strengthened
-clause (§4.5); a reader declining those clauses retains §6.1–§6.10 intact.
+The results of this section are collected in `Quantitative.lean`, which the
+view-convergence layer and the chain-quality capstone build on. Each
+strengthens a result above under a strengthened clause (§4.5); a reader
+declining those clauses retains §6.1–§6.10 intact.
 
 **The weak hypotheses admit no bound.** Two of the results above conclude with
 an existential statement that supplies no bound on its witness —
@@ -2207,17 +2211,12 @@ constant obtained here as a derived requirement is thus the one independently
 arrived at as a design choice, and §6.8 supplies the reason the factor is two —
 `D₀ + Δ` with `D₀ ≤ Δ` under a common broadcast start.
 
-`Timing.populatedOn` bears on the same point: it supplies L4's
-population hypotheses from the `Timing` structure directly, because `Timing.blk`
-is total below the horizon. That totality is P8 in its strongest form — a block
-at every round, with no exception — and is what makes these statements
-independent of `Live` and L1.
-
-`Timing.populatedOn` supplies the three population hypotheses of L4 from the
-`Timing` structure itself, which already asserts a block per reliable validator
-per round below the horizon. These statements consequently require neither
-`Live`, nor `DeliversQuorum`, nor L1: their only temporal hypotheses are the
-start spread, the wait, and the position of the slot relative to GST.
+`Timing.populatedOn` supplies L4's population hypotheses from the `Timing`
+structure directly, because `Timing.blk` is total below the horizon — P8 in
+its strongest form, a block at every round with no exception (§6.9 identifies
+it as `PopulatedOn` Skolemised). These statements consequently require
+neither `Live`, nor N1, nor L1: their only temporal hypotheses are the start
+spread, the wait, and the position of the slot relative to GST.
 
 ---
 
@@ -2692,10 +2691,15 @@ full-history validator, slot for slot.
 
 ### 9.3 Windowed storage: constant at a lag
 
-Liveness transfers with the offset: a delivery layer for `U` induces one
-for the truncation (`chopD D G`, with `held v m := D.held v (G + m)`), and
-`Live U D N` yields `Live (chop U G) (chopD D G) (N − G)` (`live_chopD`).
-Stores correspond exactly —
+Liveness transfers with the offset. Production on the truncation is
+production upstream with the round index shifted — a round-`r` block of
+`chop U G` is a round-`(G+r)` block of `U` — so `populated_chop` (G5)
+takes the `Populated` hypothesis every liveness result consumes and
+re-establishes it above the cut, consuming no network assumption of its
+own. (A delivery layer also transports: `chopD D G` sets
+`held v m := D.held v (G + m)`, and the quorum route's assumptions carry
+across with it, `live_chopD` and `deliversQuorum_chopD` in
+`Network/Quorum.lean`.) Stores correspond exactly —
 
 ```lean
 theorem viewUpto_chopD (m : ℕ) :
@@ -3121,8 +3125,8 @@ motivates the canonicity premise (`utwin6_both_pass`).
 
 ## 12. Mechanisation
 
-The development comprises approximately 16,100 lines of Lean 4 (v4.32.2)
-against Mathlib, of which some 11,100 constitute the library and 4,900 the
+The development comprises approximately 17,400 lines of Lean 4 (v4.32.2)
+against Mathlib, of which some 11,800 constitute the library and 5,600 the
 models of §11 and the witness files of the arcs. A full build reports no
 errors.
 
@@ -3153,11 +3157,11 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `CommonCore.lean` | T3a, T3c |
 | `Mysticeti.lean` | the commit rule; eligibility; M1–M6; the ledger |
 | `Schedule.lean` | concrete schedules (`uniform`, `uniformSingle`); conservativity |
-| `Liveness.lean` | L0–L6, L7a; the committed-run results |
+| `Liveness.lean` | L0, L2–L6, L7a; the committed-run results |
 | `Network/Quorum.lean` | the quorum route: N1, L1, and the results that exist to serve them |
 | `Timing.lean` | L7b |
 | `ViewSync.lean` | L7c: view convergence, the reduction to `Timing`, the factoring of the bound, the untimed variant, production derived rather than assumed, and the delivery a timed structure induces |
-| `Quantitative.lean` | L8, L9 |
+| `Quantitative.lean` | L8a, L8b, L9 |
 
 **The arcs** (§§8–10), each consuming the core read-only:
 
@@ -3533,15 +3537,17 @@ protocol actually builds. Eventual DAG synchrony — beyond some round, every
 correct block references every correct block of the round below — is a
 sentence about a graph, and above it the entire consensus argument is finite
 combinatorics: safety with no network assumption at all, liveness with no
-mention of time, and the temporal content of partial synchrony confined to a
-single module that *derives* the structural condition twice over.
+mention of time, and the temporal content of partial synchrony confined to
+two files beneath a `Prop`-valued interface, where the whole of the
+network's contribution reduces to one clause of view convergence and the
+structural condition is *derived* — three ways over (§6.7–§6.9).
 
 The same foundation then carried three developments it was not designed for,
 essentially unchanged — which is the strongest evidence the abstraction is
 placed correctly. The denial-of-service account reused the delivery layer and
 the self-parent clause; garbage collection reused every theorem verbatim on
 the truncated universe, because truncation was arranged to be a universe; and
-Odontoceti reused the entire DAG layer because its quorums turned out to be
+Odontoceti reused the entire DAG layer because its quorums are
 the `n − f` the development was already parameterised by. Each arc also
 returned something to the account of the trust boundary: enforceable storage
 bounds, horizons

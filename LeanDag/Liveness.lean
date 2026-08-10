@@ -226,7 +226,7 @@ structure Live (U : BlockUniverse Validator BlockId Payload)
 
 omit [DecidableEq BlockId] in
 /-- A populated round carries a quorum of authors — the step that feeds L1's
-induction back into `builds`, and the only place `card_correct` is used.
+induction back into `builds` — the use `card_correct` was kept for.
 
 `spec.md` §2 has carried `card_correct` as unused-but-kept-for-liveness since
 the system model was written. This is what it was kept for. -/
