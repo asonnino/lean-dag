@@ -117,3 +117,7 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 | [`docs/odontoceti.md`](docs/odontoceti.md) | the two-round protocol: the generalized thresholds, and the findings |
 | [`docs/related.md`](docs/related.md) | a survey of consensus on uncertified DAGs |
 | [`docs/style.md`](docs/style.md) | writing conventions for the documents and the source |
+
+## License
+
+MIT — see [`LICENSE`](LICENSE).
