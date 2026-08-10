@@ -39,7 +39,8 @@ past `n + fb` share an honest member.
 namespace LeanDag
 
 /-- The hybrid fault model: at most `fb` Byzantine, at most `fc`
-crash-prone, committee at least `5·fb + 3·fc + 1`. -/
+crash-prone. The committee bound `n ≥ 5·fb + 3·fc + 1` enters through
+the admissible threshold interval, not here — see `card_validators`. -/
 class HybridFaults (Validator : Type*) [Fintype Validator]
     [DecidableEq Validator] where
   /-- The Byzantine bound. -/
@@ -53,8 +54,14 @@ class HybridFaults (Validator : Type*) [Fintype Validator]
   disjoint : Disjoint byzantine crash
   card_byzantine : byzantine.card ≤ fb
   card_crash : crash.card ≤ fc
-  /-- The hybrid committee bound. -/
-  card_validators : 5 * fb + 3 * fc + 1 ≤ Fintype.card Validator
+  /-- The base bound — what the *derived instance* needs. The hybrid
+  committee bound `n ≥ 5·fb + 3·fc + 1` deliberately does **not** live
+  here: every safety theorem consumes it through the admissible
+  interval, whose nonemptiness implies it — and keeping the class at
+  the base bound is what lets the one-short committee `n = 5·fb + 3·fc`
+  be *expressed*, so that the tightness counterexample (H10) is a
+  theorem rather than an unstatable aside. -/
+  card_validators : 3 * (fb + fc) + 1 ≤ Fintype.card Validator
 
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [H : HybridFaults Validator]

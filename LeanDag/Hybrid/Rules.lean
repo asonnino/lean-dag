@@ -62,15 +62,27 @@ def Admissible (k : ℕ) : Prop :=
 instance : Decidable (Admissible Validator k) :=
   inferInstanceAs (Decidable (_ ∧ _))
 
-/-- Both named thresholds are admissible — the class bound in use. -/
-theorem admissible_kTight : Admissible Validator (kTight Validator) := by
-  have := H.card_validators
+/-- Both named thresholds are admissible exactly at the committee
+bound — which is the content of the bound: a working threshold exists
+iff `n ≥ 5·fb + 3·fc + 1`. -/
+theorem admissible_kTight
+    (hn : 5 * H.fb + 3 * H.fc + 1 ≤ Fintype.card Validator) :
+    Admissible Validator (kTight Validator) := by
   unfold Admissible kTight
   omega
 
-theorem admissible_kRel : Admissible Validator (kRel Validator) := by
-  have := H.card_validators
+theorem admissible_kRel
+    (hn : 5 * H.fb + 3 * H.fc + 1 ≤ Fintype.card Validator) :
+    Admissible Validator (kRel Validator) := by
   unfold Admissible kRel
+  omega
+
+/-- The converse: an admissible threshold forces the committee bound.
+Nonemptiness of the interval *is* `n ≥ 5·fb + 3·fc + 1`. -/
+theorem committee_bound_of_admissible {k : ℕ}
+    (hk : Admissible Validator k) :
+    5 * H.fb + 3 * H.fc + 1 ≤ Fintype.card Validator := by
+  obtain ⟨h1, h2⟩ := hk
   omega
 
 /-! ## The direct rules -/

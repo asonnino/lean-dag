@@ -27,4 +27,5 @@ import LeanDagTest.Catchup
 import LeanDagTest.Collapse
 import LeanDagTest.Adaptive
 import LeanDagTest.Hybrid
+import LeanDagTest.HybridTight
 import LeanDagTest.SafeSkip
