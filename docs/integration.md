@@ -326,6 +326,45 @@ last filled one, and the refutation reaches there too.
 joiner reasoning inside a truncation has a schedule that is fair and
 spanning in its own right, which is what I9 needs.
 
+**I9 — a joiner can run the network's schedule, under two obligations**
+(`LeanDag/Integration/Joiner.lean`). The question decomposed further
+than expected, and the decomposition is the result.
+
+The schedule half is *definitional*: truncating an adaptive schedule
+and adapting a truncated one produce the same rounds and the same
+leaders, `slotsChop_slotsOf` closing by `⟨rfl, rfl⟩`, provided the
+assignment used inside the truncation is the original one shifted past
+the base slot. No policy hypothesis is involved — all of I9's content
+sits in whether a joiner can *produce* that shifted assignment.
+
+That is `HorizonStable`, and it is the deployment obligation the arc
+was looking for: the joiner's rule, run on the truncation with the
+joiner's own slot numbering, must return what the network's policy
+returns at the corresponding slot. Under it a joiner computes exactly
+the leaders the network is using (`joiner_assign_agree`), so the two
+run one schedule seen from two origins (`joiner_leader_agree`). The
+obligation is stated on the *rule* rather than on a whole
+`AdaptivePolicy`, because a policy is indexed by its `Slots` instance
+and a joiner's policy therefore inhabits a different type from the
+network's; the rule is the part that survives re-indexing, and the
+leaders are what must agree.
+
+A **second, independent obligation** surfaced from the run structure.
+Horizon-stability aligns leaders; it does not align *epochs*. A
+joiner's slot `k` is the network's `d + k`, so the epoch numberings
+correspond only when the base slot is a whole number of epochs
+(`epochOf_add_of_dvd`), and the example beneath it shows the
+correspondence genuinely failing otherwise. So: **a garbage-collection
+base slot must be a multiple of the adaptive epoch width.** Without
+it two validators can agree on who leads every slot and still disagree
+about which verdicts the policy was entitled to read.
+
+The constant policy is horizon-stable only at `d = 0`
+(`horizonStable_const_zero`), which is the informative degenerate
+case: even a rule that ignores verdicts entirely must be *stated
+relative to the reader's own slot numbering* to survive truncation.
+Horizon-stability is not only about how far back a policy reads.
+
 ### 3.3 Transport heuristics
 
 Three patterns emerged that should be applied to the remaining cells
@@ -429,7 +468,8 @@ Some combinations are not preservation facts and must be proved
 directly. These are the ones with real content, and there are fewer
 than the matrix suggests:
 
-**I9 — GC × Adaptive: can a joiner recompute the schedule?** The
+**I9 — GC × Adaptive: can a joiner recompute the schedule?** *(Closed;
+see §3.2. The account below states the question as it was posed.)* The
 adaptive schedule at epoch `e` is a function of verdicts at epochs
 `≤ e−2`. Garbage collection prunes history below a horizon. A
 validator that joins from the truncation therefore may not hold the
@@ -481,7 +521,7 @@ behind I6a and moot if I1 fails. The pair is the arc's most likely
 | `Integration/Coverage.lean` | I5: coverage refuted under the fill, and recovered strictly above it | **done** |
 | `Integration/ScheduleShape.lean` | I13, I15: fairness and shape under `Slots.chop` | **done** |
 | `LeanDagTest/Integration.lean` | the refutation witnessed as biting; the lifecycle exhibit to come | started |
-| `Integration/Joiner.lean` | I9: horizon-stable policies; the joiner's adaptive run | next |
+| `Integration/Joiner.lean` | I9: the transformers commute; horizon-stability; epoch alignment | **done** |
 | `Integration/Lifecycle.lean` | I10, I11: the crash-prone lifecycle end to end | next |
 | `Integration/Commute.lean` | I7: `chop` ∘ `skipFill`, and the anchor-above-horizon condition | after I9 |
 | `Integration/Exposure.lean` | I1: `DoSValid` under the fill, conditionally (§5.5) | scoped, see §5.5 |
@@ -490,29 +530,25 @@ behind I6a and moot if I1 fails. The pair is the arc's most likely
 
 The remaining order, revised with what the first six cells settled:
 
-1. **I9 next**, and it is now unblocked. I13/I15 give the joiner a fair
-   and spanning schedule inside the truncation, which was the
-   prerequisite; what remains is the genuinely new content —
-   *horizon-stability* of the policy, and whether a joiner's adaptive
-   run agrees with a full-history one. This is the sharpest question in
-   the arc and the one with a deployment analogue, so it should be
-   attempted while the schedule lemmas are fresh.
-2. **I10, I11 alongside it.** Both are mostly assembly now: I3 supplies
+1. **I10, I11 next.** Both are mostly assembly now: I3 supplies
    the hybrid-side hypothesis the fill needs, and what remains is
    restating §12's theorems over `HybridFaults` and composing with the
    demote-on-skip policy. Cheap, and they deliver the arc's most
    quotable claim — the crash-prone lifecycle, end to end.
-3. **I7 after I9**, because the anchor-above-horizon condition it is
-   expected to need is the same shape as the retention condition I9
-   will already have introduced for verdicts; doing them in this order
-   should let one condition serve both.
-4. **I1 only with the hypothesis §5.5 identifies**, or not at all. It
+2. **I7 next after those.** I9's two obligations are both *conditions
+   on where the cut falls* — the base slot must be a whole number of
+   epochs, and (I9's premise) the retained window must carry what the
+   policy reads. I7's expected anchor-above-horizon condition is the
+   third of that family, and the three should be stated together as the
+   arc's account of *where a horizon may be placed*, which is a better
+   result than three scattered side conditions.
+3. **I1 only with the hypothesis §5.5 identifies**, or not at all. It
    is no longer a preservation lemma in the plain sense.
-5. **I6a–d deferred, and possibly permanently.** §5.3's scoping
+4. **I6a–d deferred, and possibly permanently.** §5.3's scoping
    question is now sharper (§5.5) and the honest answer may be to
    record Safe Skip × DoS as open rather than to force a delivery
    transformer whose only consumer is a combination of doubtful value.
-6. **I8 last**, unchanged: it is the only item that touches existing
+5. **I8 last**, unchanged: it is the only item that touches existing
    code, and its value still depends on how many instances it serves.
 
 ## 5. Risks and predictions

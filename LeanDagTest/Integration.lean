@@ -1,5 +1,6 @@
 import LeanDag.Integration.Coverage
 import LeanDag.Integration.ScheduleShape
+import LeanDag.Integration.Joiner
 import LeanDagTest.SafeSkip
 
 /-!
@@ -58,6 +59,9 @@ example (hs : SynchronisedOn (Ucrash 2) (Finset.univ : Finset (Fin 4)) 0) :
     SynchronisedOn skTight.skipFill (Finset.univ : Finset (Fin 4)) 2 :=
   synchronisedOn_skipFill_above skTight hs (Nat.zero_le _) (by decide)
 
+#print axioms LeanDag.Integration.slotsChop_slotsOf
+#print axioms LeanDag.Integration.joiner_assign_agree
+#print axioms LeanDag.Integration.epochOf_add_of_dvd
 #print axioms LeanDag.Integration.honestNoEquiv_chop
 #print axioms LeanDag.Integration.honestNoEquiv_skipFill
 #print axioms LeanDag.Integration.synchronisedOn_chop
