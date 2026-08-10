@@ -45,6 +45,72 @@ theorem anchor_pruned (sk : SkipMsg U) (hG : (U.block sk.B1).round < G)
   rw [h, mem_chop_ids] at this
   omega
 
+/-! ### Why filling only the retained part does not help
+
+The natural repair is to fill only the rounds above the horizon and let
+the pruned ones go. It does not work, and the reason is not about Safe
+Skip at all — it is **P3′**, the self-parent clause. Every non-genesis
+block must reference a block by its own creator, so a filled block at
+the round above the cut needs a `v1`-authored block *at* the cut to
+chain from, and a validator that crashed below the horizon has none. A
+fill cannot start in mid-air.
+
+The consequence is stronger than "the fill fails", and general: a
+validator with no block in a universe's genesis layer can produce
+nothing in it *at all*, by any mechanism. Truncation makes the retained
+layer genesis (`chopBlock_refs_of_le` empties its references, and the
+rebasing puts it at round `0`), so a validator whose entire history
+falls below the horizon is severed from the chain the protocol's
+accounting is built on. -/
+
+/-- **A severed chain cannot restart.** With no block at round `0`, a
+validator has no block at any round: P3′ walks every block down to
+genesis one round at a time, and P1 supplies the descent.
+
+Stated for an arbitrary universe because it is not about garbage
+collection — it is what P3′ means. Report §2.2 records that safety and
+liveness never consume the clause; this is a place where its *absence*
+would be felt, and it is consumed here to say what the clause costs. -/
+theorem no_blocks_of_no_genesis {v : Validator}
+    (hgen : ∀ b ∈ U.ids, (U.block b).creator = v → (U.block b).round ≠ 0) :
+    ∀ b ∈ U.ids, (U.block b).creator ≠ v := by
+  suffices h : ∀ n, ∀ b ∈ U.ids, (U.block b).round = n → (U.block b).creator ≠ v by
+    intro b hb; exact h _ b hb rfl
+  intro n
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+    intro b hb hbr hbc
+    rcases Nat.eq_zero_or_pos n with rfl | hpos
+    · exact hgen b hb hbc hbr
+    · obtain ⟨i, hi, hic⟩ := (U.valid b hb).self_parent (by omega)
+      have hi_ids := U.complete b hb i hi
+      have hir := (U.valid b hb).predecessor i hi
+      exact ih ((U.block i).round) (by omega) i hi_ids rfl (hic.trans hbc)
+
+/-- **The recovering validator is severed, not merely unable to fill.**
+If the horizon has passed the crash round, the crashed validator has no
+block in the truncation's genesis layer — `hgap` says it authored
+nothing there — so by `no_blocks_of_no_genesis` it has no block in the
+truncation at all.
+
+This is why filling only the retained rounds is not a repair: there is
+nothing to chain the first filled block to, and the same obstruction
+blocks *any* attempt to resume, Safe Skip or otherwise. Rejoining after
+a horizon has passed one's whole history needs a protocol provision the
+model does not have — a re-genesis block, exempt from P3′ — and the
+practical alternative is the one I7 quantifies: keep the lag longer
+than the outage. -/
+theorem severed_of_pruned_anchor (sk : SkipMsg U)
+    (hG1 : sk.r0 < G) (hG2 : G ≤ sk.r) :
+    ∀ b ∈ (chop U G).ids, ((chop U G).block b).creator ≠ sk.v1 := by
+  refine no_blocks_of_no_genesis (fun b hb hbc hbr => ?_)
+  rw [mem_chop_ids] at hb
+  simp only [chop_block_eq, chopBlock_creator] at hbc
+  simp only [chop_block_eq, chopBlock_round] at hbr
+  -- a genesis block of the truncation sits exactly at the cut
+  have hR0 : sk.r0 = (U.block sk.B1).round := rfl
+  exact sk.hgap b hb.1 hbc (by omega) (by omega)
+
 /-! ## I7b — retention is sufficient
 
 Below the horizon everything rebases. The construction is the original

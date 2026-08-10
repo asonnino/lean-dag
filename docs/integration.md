@@ -349,9 +349,29 @@ by `Λ`, the anchor survives *exactly* when the outage did not exceed
 > Garbage collection at lag `Λ` supports Safe Skip recovery from
 > outages of up to `Λ` rounds, and no more.
 
-Beyond it the validator's last block is gone and it must bootstrap by
-report §9.5's attested base. That is where the boundary between the two
-recovery routes falls, and neither arc alone could see it.
+Beyond it the validator's last block is gone — and the consequence is
+sharper than "the fill fails".
+
+**Filling only the retained rounds is not a repair, and the obstruction
+is P3′.** A filled block at the round above the cut needs a
+`v1`-authored block *at* the cut to chain from, and a validator that
+crashed below the horizon has none: a fill cannot start in mid-air.
+Pushing on that yields a general fact
+(`no_blocks_of_no_genesis`): a validator with no block in a universe's
+genesis layer can produce nothing in it **at all**, because P3′ walks
+every block down to genesis one round at a time. Truncation makes the
+retained layer genesis, so `severed_of_pruned_anchor` concludes that a
+validator whose whole history fell below the horizon has no block in
+the truncation whatsoever.
+
+So the failure is not Safe Skip's. **Any** attempt to resume is blocked,
+because the validator's self-parent chain has been severed, and
+rejoining would need a protocol provision the model does not have — a
+re-genesis block, exempt from P3′. This also locates a cost of P3′ that
+report §2.2 does not record: the clause is credited there for the DoS
+and garbage-collection arcs and noted as unused by safety and liveness,
+but it is what makes a pruned validator unrecoverable, and the
+practical mitigation is exactly the lag bound above.
 
 **I10 — a crash-prone validator can Safe Skip, once a hypothesis is
 stated as the fact it stands for.** This is the composition that did
