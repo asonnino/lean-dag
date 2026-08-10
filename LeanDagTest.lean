@@ -24,3 +24,4 @@ import LeanDagTest.ViewSync
 import LeanDagTest.Unbounded
 import LeanDagTest.Reactive
 import LeanDagTest.Catchup
+import LeanDagTest.Collapse
