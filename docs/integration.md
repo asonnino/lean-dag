@@ -593,7 +593,7 @@ behind I6a and moot if I1 fails. The pair is the arc's most likely
 | `Integration/Joiner.lean` | I9: the transformers commute; horizon-stability; epoch alignment | **done** |
 | `Integration/Stack.lean` | I16: the composition capstone — several transformers at once | **done** |
 | `Integration/Lifecycle.lean` | I10: the crash-prone fill; I11 recorded as a non-task; the lifecycle | **done** |
-| — | I7 and the placement conditions | §4.4: prose, not a module |
+| `Integration/Retention.lean` | I7a, I7b: anchor retention — necessary, then sufficient | next, see §4.5 |
 | `Integration/Exposure.lean` | I1: `DoSValid` under the fill, conditionally (§5.6) | design decision pending |
 | `Integration/DeliveryFill.lean` | I6a–d: Safe Skip's delivery transformer, then its budget column | deferred, likely open |
 | `LeanDagTest/Integration.lean` | the refutation witnessed as biting; the stack and lifecycle exhibits | ongoing |
@@ -665,13 +665,13 @@ obligations.
 
 ### 4.4 What I16 changed
 
-**I7 drops in priority.** The question was posed as "do the
-transformers commute?", and the answer turns out to be that the
-*deployment* order — fill on recovery, prune later — is unconditional,
-while only the reverse needs the anchor retained. So I7 is no longer a
-prerequisite for anything: it is the cost of a corner case (a validator
-pruning while a recovery message is in flight). Worth stating, not
-worth stating first.
+**I7 changes meaning.** The question was posed as "do the transformers
+commute?", and the answer turns out to be that the *deployment* order —
+fill on recovery, prune later — is unconditional, while only the
+reverse needs the anchor retained. So I7 is no longer a prerequisite
+for anything. What it became is an operational question with a sharp
+answer — *how long may a validator be down and still recover cheaply?*
+— which is why §4.5 puts it next rather than last.
 
 **The placement account shrinks to a section, not a module.** Two of
 its three conditions are proved and live in `Joiner.lean` — epoch
@@ -690,22 +690,67 @@ universe transformer. Keeping schedule variants universe-independent
 is the cheapest structural decision available, and §2's layering is
 what makes the cost visible.
 
-### 4.5 Order
+### 4.5 The continuation
 
-1. **I7 next**, as the corner case it turned out to be, and stated with
-   the other placement conditions in prose rather than in a module of
-   its own.
-2. **I1 only with the hypothesis §5.6 identifies**, or not at all; the
-   choice between conditional statement and open record is a design
-   decision, and "open" is now a perfectly good outcome given §4.3.
-3. **I6a–d deferred**, to be recorded as open if §5.6's prediction
-   holds — a delivery transformer whose only consumer is a combination
-   of doubtful value is not worth constructing.
+Three items remain, and I16 changed what the first of them is *for*.
 
-The arc is now tellable: with I10 and I16 done, a reasonable stopping
-point is here, with items 1–3 recorded as open in the report. The arc's results are the preservation table, the
-refutation with its boundary, the placement conditions, and the
-composition capstone; none of them needs the remainder to stand.
+**I7, reframed: how long may a validator be down?** The item was posed
+as "do the transformers commute?". I16 answered the deployment order
+(fill, then prune) unconditionally, so what is left is the other order,
+and that order has a concrete operational reading:
+
+> A validator crashed at round `r0` and is recovering at round `r`.
+> Meanwhile the network garbage-collected below `G`. **Can it still
+> Safe Skip?**
+
+The answer is visibly *iff the anchor survived the cut*: `SkipMsg`
+requires `B1 ∈ U.ids`, and `chop` retains `B1` exactly when
+`G ≤ round B1 = r0`. So the horizon must not have passed the point at
+which the validator crashed — which makes the garbage-collection lag a
+**bound on the maximum cheaply-recoverable outage**. Longer than that
+and the validator must bootstrap by §9.5's attested base instead. This
+is the third placement condition and the most operational statement the
+arc can make; it pairs directly with §9's lag envelope.
+
+Two halves, and the cheap one first:
+
+* **I7a — necessity.** If `G > r0` then `B1 ∉ (chop U G).ids`, so no
+  `SkipMsg` over the truncation can use that anchor. Nearly free, and
+  it states the constraint sharply.
+* **I7b — sufficiency.** If `G ≤ r0`, a `SkipMsg` over `chop U G`
+  exists: the original's data with every round rebased by `−G`. A
+  genuine construction — every field's round arithmetic pays the
+  truncated-subtraction wrinkle (§3.3) — and the larger of the two. If
+  it proves long, I7a alone still delivers the deployment guidance,
+  and I7b can be recorded open.
+
+**I1 — confirm or refute the exposure prediction.** §5.6 predicts
+`DoSValid` fails under the fill, because `fillBlock` inserts the self
+reference and so gives the filled block a strictly larger cone than the
+donor's, in which a referenced author may be exposed by an equivocation
+in `v1`'s pre-crash history. The arc's record on predictions is mixed —
+I4's was wrong, I5's was right and understated — so this is worth
+settling rather than assuming. Follow I5's template: refute in general
+if it fails, witness that the refutation bites, and state the condition
+under which it holds. §5.6 argues the condition would be *checkable by
+`v1` itself*, which would make it enforceable in §8's sense and
+therefore worth having.
+
+**I6a–d — record as open.** Unless I1 comes out positive, a delivery
+transformer for the fill has no consumer worth the construction. The
+honest outcome is a recorded gap, and §4.3 is why that is acceptable:
+nothing here is load-bearing for the arc's claim.
+
+### 4.6 After the proofs
+
+The arc is tellable now. Its results are the preservation table, the
+refutation with its exact boundary, the placement conditions, the
+composition capstone, and the lifecycle — with two non-tasks (I11,
+I14) which are findings in their own right, and one hypothesis
+weakening that a composition forced (I10). A report section should
+follow the proofs and is the natural place for the placement account
+of §4.4, since three conditions on where a cut may fall read better as
+prose than as three scattered lemmas.
 
 ## 5. Risks and predictions
 
