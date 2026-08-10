@@ -26,7 +26,9 @@ a single clause of **view convergence** — after stabilisation, whatever one
 correct validator holds reaches every correct validator within Δ — from which
 both coverage and block production follow by the protocol's own build rules.
 The quantitative form states that a correct leader is committed once correct
-validators wait `2Δ`.
+validators wait `2Δ`; a catch-up clause collapses any start spread between
+validators in a single post-stabilisation round, so the threshold `2Δ + proc`
+holds with no assumption about how the deployment began.
 
 We further prove what the committed ledger *contains*: every commit
 carries, at every round below it, blocks from at least half of the
@@ -87,11 +89,14 @@ proof. This report is a machine-checked account, in Lean 4 over Mathlib, of
 this protocol family: a core development of safety and liveness organised
 around a structural liveness condition we call *eventual DAG synchrony*,
 a chain-quality account of what the committed ledger contains, and, on
-that unchanged foundation, further developments — storage bounds
-under adversarial equivocation, garbage collection without consensus on
-the cut, and the safety and liveness of the two-round protocol
-Odontoceti, including a repair its published argument turns out to
-need.
+that unchanged foundation, five further developments — storage bounds
+under adversarial equivocation; garbage collection without consensus on
+the cut; the safety and liveness of the two-round protocol Odontoceti,
+including a repair its published argument requires; reactive schedules
+under which consensus proceeds at network speed, with the timeout as a
+fallback that a fast network never triggers; and Safe Skip, by which a
+crashed validator rejoins production with a single message, with every
+prior verdict proved to survive the recovery.
 
 ### 1.1 DAG-based consensus
 

@@ -63,6 +63,14 @@ Everything is stated for `n ≥ 3f+1` validators with quorums of size
   round, making the commit threshold `2Δ + proc` with no deployment
   assumption; a witness starts with a spread of ten and collapses to
   exactly three.
+- **Safe Skip** (`LeanDag/SafeSkip/`): a crashed validator rejoins with
+  **one constant-size message** denoting a block for every missed round —
+  a donor's references plus the self reference the validity rules force.
+  The fill is proved a block universe extending the old one unchanged;
+  production is restored at every missed round, a filled leader
+  candidate is directly skipped rather than committed, and every verdict
+  reached before the fill re-derives and agrees after it
+  (`decided_fill_agree`).
 
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on
@@ -86,7 +94,7 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
   (`Quality/` — chain quality; `DoS/` — equivocation and the novelty
   budget; `GC/` — garbage collection; `Odontoceti/` — the two-round
   protocol; `Reactive/` — the reactive schedule; `Drift/` — catch-up
-  and the start spread).
+  and the start spread; `SafeSkip/` — crash recovery in one message).
 - `LeanDag.lean` — root import file.
 - `LeanDagTest/` — `decide` witnesses and concrete models, mirroring the
   same layout.
@@ -107,7 +115,7 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 
 | Document | Contents |
 |---|---|
-| [`docs/report.md`](docs/report.md) | **the entry point**: the full report — model, commit rule, trust boundary (including what the adversary may do), safety, liveness on view convergence, the five arcs, satisfiability, mechanisation — plus generated reference appendices giving **every definition and public theorem verbatim** and an index of the internal lemmas |
+| [`docs/report.md`](docs/report.md) | **the entry point**: the full report — model, commit rule, trust boundary (including what the adversary may do), safety, liveness on view convergence, the extension arcs, satisfiability, mechanisation — plus generated reference appendices giving **every definition and public theorem verbatim** and an index of the internal lemmas |
 | [`docs/spec.md`](docs/spec.md) | the safety design record |
 | [`docs/liveness.md`](docs/liveness.md) | the liveness design record, and eventual DAG synchrony |
 | [`docs/pipelining-and-multi-leader.md`](docs/pipelining-and-multi-leader.md) | the schedule generalization: eligibility, runs, pipelined commits |
