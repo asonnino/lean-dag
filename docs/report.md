@@ -1,5 +1,6 @@
 ---
 title: "Eventual DAG Synchrony: a machine-checked account of safety and liveness for uncertified DAG consensus"
+author: "George Danezis (University College London)"
 ---
 
 > **Provenance.** Code and prose in this project were co-written with
