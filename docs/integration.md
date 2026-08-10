@@ -243,9 +243,9 @@ its column, and this is why §9 reads as cleanly as it does.
 |:---|:---|:---|
 | U1 DAG laws | ✅ (definitional) | ✅ SS1 (definitional) |
 | U2 `Populated` | ✅ `populated_chop` | ✅ SS2 `skipFill_populatedOn` |
-| U3 `SynchronisedOn` | **I4 — open** | **I5 — open, expect negative** |
+| U3 `SynchronisedOn` | ✅ **I4** `synchronisedOn_chop` | ⛔ **I5 — refuted**; ✅ above the fill |
 | U4 `DoSValid` | ✅ `dosValid_chop` | **I1 — open** |
-| U5 `HonestNoEquiv` | ✅ **I2 — done while drafting** | **I3 — open** |
+| U5 `HonestNoEquiv` | ✅ **I2** `honestNoEquiv_chop` | ✅ **I3** `honestNoEquiv_skipFill` |
 | U6 verdicts | ✅ G3 `decided_chop` | ✅ SS5 `decided_fill` |
 
 **Layer D — delivery transformers.** `chopD` supplies the whole
@@ -266,8 +266,8 @@ empty:
 | Invariant | `Slots.chop S G d` | `slotsOf hinj a` |
 |:---|:---|:---|
 | — the correspondences | ✅ `chop_slotRound`, `chop_leader` | ✅ `slotsOf_slotRound`, `slotsOf_leader` |
-| S1 `FairScheduleOn`, `FairRunOn` | **I13 — open** | ✳︎ not a preservation fact |
-| S2 `SpansEligible` | **I15 — open** | ✅ `spansEligible_slotsOf` |
+| S1 `FairScheduleOn`, `FairRunOn` | ✅ **I13** `fairScheduleOn_chop`, `fairRunOn_chop` | ✳︎ not a preservation fact |
+| S2 `SpansEligible` | ✅ **I15** `spansEligible_chop` | ✅ `spansEligible_slotsOf` |
 
 ✳︎ The empty cell is the informative one. `slotsOf` sets
 `leader := a`, so fairness of the induced instance is a statement about
@@ -305,10 +305,14 @@ be wrong is not a plan:
   proves exactly this for the *derived* correct class, using `hgap`;
   the honest-class version should be the same argument with the class
   widened, provided `v1` is honest, which `hv1` gives.
-- **I4** (`chop` preserves `SynchronisedOn`) should hold *above the
-  cut* and cannot hold at the base layer, where `chop` deliberately
-  empties references. Expect the statement to need `G < n`, in the
-  same shape as `supporters_chop`'s `1 ≤ m`.
+- **I4** (`chop` preserves `SynchronisedOn`) — **done**, and the
+  prediction was wrong in a way worth recording. I expected a base-layer
+  exception in the shape of `supporters_chop`'s `1 ≤ m`; there is none.
+  Coverage only ever constrains a block at chopped round `n + 1`, which
+  is above the cut by construction, so its references are retained and
+  the original clause applies directly. The statement needs only the
+  horizon offset `R ≤ G + R'`. A clause that quantifies *upward* is
+  cheaper to transport than one pinned at a fixed round.
 - **I5** (`skipFill` preserves `SynchronisedOn`) is where I expect a
   genuine *negative* result, and it is the most valuable cell in the
   table. Coverage says every correct block references every correct
@@ -324,6 +328,24 @@ be wrong is not a plan:
   where `SynchronisedOn (skipFill …)` fails — and then state the
   positive form: coverage holds *above* the fill (`r > sk.r`), which
   is what a liveness argument after recovery actually needs.
+
+  **Done, and stronger than planned.** The refutation did not need a
+  witness: `not_synchronisedOn_skipFill` refutes coverage *in general*,
+  at every gap round of every fill, on no hypotheses beyond the ones
+  SS2 creates. The `Ucrash` witness is retained anyway, to show the
+  hypotheses are satisfiable and the refutation therefore bites. The
+  positive form (`synchronisedOn_skipFill_above`) needs `sk.r < R'`
+  **strictly** — at `n = sk.r` the lower block may still be the last
+  filled one, and the refutation applies there too.
+
+  The reason is worth carrying into the report: it is the *same fact*
+  that makes Safe Skip safe. SS3 concludes that a filled candidate is
+  always skipped because no old block references a fresh identifier;
+  I5 concludes that coverage fails at gap rounds for the identical
+  reason. One fact, two consequences — the fill can manufacture
+  neither a commit nor coverage — and §12's claim was always exactly
+  that it restores *production*, which is the hypothesis liveness
+  consumes.
 - **I6a** is the blocking item of its column and is not a preservation
   lemma but a *construction*: what does a validator hold, and what has
   it accepted, in a universe extended by a fill? The fill's blocks
@@ -336,11 +358,14 @@ be wrong is not a plan:
 - **I13/I15** (`Slots.chop` preserves fairness and shape) are the cells
   the first draft missed entirely, and they are prerequisites for I9 —
   a joiner reasoning about the truncation needs *its* schedule to be
-  fair and spanning, not merely the original's. `FairScheduleOn` should
-  shift by `d` and go through directly; `SpansEligible` will meet the
-  subtraction wrinkle above. Unlike the layer-U cells these are pure
-  arithmetic over the schedule — no universe, no views — so they are
-  the best first exercise for anyone picking the arc up cold.
+  fair and spanning, not merely the original's. **Both done, exactly as
+  predicted.** `FairScheduleOn` and its run form shift by `d` and go
+  through directly; `SpansEligible` met the subtraction wrinkle a third
+  time and paid it with `Slots.chop`'s base-slot condition
+  `G ≤ S.slotRound d`, carried to every slot at or above `d` by
+  monotonicity (`le_slotRound_add`). That condition was already in
+  `Slots.chop`'s signature for its `keyed` clause; this is a second,
+  independent use of it.
 
 ### 3.2 Transformers × transformers
 
