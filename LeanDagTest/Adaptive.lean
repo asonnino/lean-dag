@@ -1,5 +1,6 @@
 import LeanDag.Adaptive.Basic
 import LeanDag.Adaptive.Run
+import LeanDag.Adaptive.Liveness
 import LeanDagTest.Model
 
 /-!
@@ -205,8 +206,38 @@ example : ∀ k, run7.vdct k = run7small.vdct k :=
 example : ∀ m, run7.assign m = run7small.assign m :=
   (adaptiveRun_agree run7 run7small).2
 
+/-! ## The liveness clauses, witnessed -/
+
+/-- A total run is partial at every height. -/
+example : PartialRun demotePolicy U7 V7 3 := run7.toPartial 3
+
+/-- Three-round spacing spans at `c = 1`: a single committed slot
+anchors everything below it. The schedule-shape hypothesis the adaptive
+existence consumes, on this schedule. -/
+theorem u7_spansEligible : SpansEligible (Validator := Fin 4) 1 := by
+  intro b i hi
+  change 3 * (i / 1) + 2 < 3 * ((b + 1 - 1) / 1)
+  omega
+
+/-- The demote policy names only validators `0` and `1`, whatever it
+reads, so it places a (one-slot) run in every epoch for `T = {0, 1}`:
+`PlacesRuns`, witnessed. -/
+theorem demote_placesRuns : PlacesRuns demotePolicy {0, 1} 1 := by
+  intro U v e
+  have hW : demotePolicy.W = 1 := rfl
+  refine ⟨e + 1, by rw [hW]; omega, by rw [hW]; omega, ?_⟩
+  intro i hi
+  have hi0 : i = 0 := by omega
+  subst hi0
+  have hp : demotePolicy.pick U v (e + 1 + 0) =
+      if e + 1 + 0 < 2 then 0 else if v (e + 1 + 0 - 2) = none then 1 else 0 := rfl
+  rw [hp]
+  split_ifs <;> decide
+
 #print axioms LeanDag.adaptiveRun_agree
+#print axioms LeanDag.adaptiveRun_exists
 #print axioms LeanDag.AdaptivePolicy.const_run_decided
 #print axioms run7
+#print axioms demote_placesRuns
 
 end LeanDagTest
