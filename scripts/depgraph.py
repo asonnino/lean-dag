@@ -41,7 +41,6 @@ ASSUMPTIONS = [
     ('P8', 'LeanDag.Live.builds', 'protocol'),
     ('P9', 'LeanDag.Timing.waits', 'protocol'),
     ('P10', 'LeanDag.FairScheduleOn', 'protocol'),
-    ('N1', 'LeanDag.DeliversQuorum', 'network'),
     ('N2a', 'LeanDag.EventuallyDelivers', 'network'),
     ('N2b', 'LeanDag.Timing.covers', 'network'),
 ]
@@ -90,7 +89,9 @@ def load_labels():
     for label, stmt, lean in re.findall(r'^\| ([^|]+?) \| ([^|]+?) \| (.+?) \|$',
                                         app, re.M):
         label, stmt = label.strip(), stmt.strip()
-        if label in ('Label', '', '—'):
+        if label in ('Label', '', '—', 'L1'):
+            # L1 is the legacy quorum route's result (report §13); the
+            # diagrams show the main line.
             continue
         names = re.findall(r"`([A-Za-z][A-Za-z0-9_.']*)`", lean)
         if names:

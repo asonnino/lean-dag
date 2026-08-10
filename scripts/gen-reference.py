@@ -27,7 +27,7 @@ LAYERS = [
     ("Causal structure", ["CausalHistory", "History", "Support", "CommonCore"]),
     ("Slots and the schedule", ["Schedule"]),
     ("The commit rule, and the ledger", ["Mysticeti"]),
-    ("Delivery, growth, and coverage", ["Liveness", "Network.Quorum"]),
+    ("Delivery, growth, and coverage", ["Liveness"]),
     ("Time: GST, drift, and the backoff", ["Timing", "Quantitative"]),
     ("View convergence", ["ViewSync"]),
     ("Chain quality", ["Quality.Coverage", "Quality.Inclusion", "Quality.Capstone"]),
@@ -42,6 +42,7 @@ LAYERS = [
     ("The reactive schedule", ["Reactive.Basic", "Reactive.Mysticeti",
                                "Reactive.Odontoceti"]),
     ("Catch-up, and the start spread", ["Drift.Catchup"]),
+    ("The legacy quorum route (report §13)", ["Network.Quorum"]),
 ]
 
 KINDS = ("def", "abbrev", "structure", "class", "inductive")
