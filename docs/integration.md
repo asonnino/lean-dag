@@ -396,7 +396,7 @@ fill's cone is strictly larger than the donor's — it adds `v1`'s chain
 below the anchor — and `DoSValid` forbids referencing an author exposed
 *in one's own cone*, so a larger cone can only expose more. I1 is
 therefore likely false without a hypothesis confining equivocations in
-`v1`'s pre-crash history; see §5.5.
+`v1`'s pre-crash history; see §5.6.
 
 ### 3.4 Transformers × transformers
 
@@ -456,11 +456,14 @@ the one refactor the development declined ("a rule-parameterised
 decision relation shared between §3.5 and §10.3") is finally
 discharged — with three instances to justify it where two did not.
 
-This is the highest-value item in the plan and also the most invasive:
-it touches existing code rather than adding to it, which every other
-arc has avoided. It should be done as a *generalization with the old
-statements retained as corollaries*, so nothing downstream breaks and
-the diff is auditable.
+It is the most invasive item considered here — it touches existing
+code rather than adding to it, which every other arc has avoided — and
+it should be done as a *generalization with the old statements retained
+as corollaries*, so nothing downstream breaks and the diff is
+auditable. That is a refactor, and §4.2 moves it out of this arc
+accordingly: I9 settled adaptive × GC without it, so no integration
+result now depends on it. The analysis above is kept because it is the
+specification that arc will need.
 
 ### 3.6 What remains genuinely pairwise
 
@@ -506,7 +509,7 @@ crash-prone validator is demoted while down (I11), safe-skipped back in
 is a stronger claim than any single arc makes.
 
 **I12 — DoS × Safe Skip.** Two questions, now separated by the
-analysis of §5.5. At the universe layer, whether the fill preserves
+analysis of §5.6. At the universe layer, whether the fill preserves
 `DoSValid` (I1) — expected conditional rather than preserved, since the
 fill's cone is strictly larger than the donor's. At the delivery layer,
 whether a bulk fill respects the novelty budget (§5.3), which is gated
@@ -520,36 +523,91 @@ behind I6a and moot if I1 fails. The pair is the arc's most likely
 | `Integration/Preservation.lean` | I2, I3, I4: honest non-equivocation under both transformers; coverage under truncation | **done** |
 | `Integration/Coverage.lean` | I5: coverage refuted under the fill, and recovered strictly above it | **done** |
 | `Integration/ScheduleShape.lean` | I13, I15: fairness and shape under `Slots.chop` | **done** |
-| `LeanDagTest/Integration.lean` | the refutation witnessed as biting; the lifecycle exhibit to come | started |
 | `Integration/Joiner.lean` | I9: the transformers commute; horizon-stability; epoch alignment | **done** |
+| `Integration/Stack.lean` | I16: the composition capstone — several transformers at once | next |
 | `Integration/Lifecycle.lean` | I10, I11: the crash-prone lifecycle end to end | next |
-| `Integration/Commute.lean` | I7: `chop` ∘ `skipFill`, and the anchor-above-horizon condition | after I9 |
-| `Integration/Exposure.lean` | I1: `DoSValid` under the fill, conditionally (§5.5) | scoped, see §5.5 |
-| `Integration/DeliveryFill.lean` | I6a–d: Safe Skip's delivery transformer, then its budget column | deferred |
-| `Integration/RuleInterface.lean` | I8: the decision-relation interface; three instances | last |
+| `Integration/Placement.lean` | I7 and the placement account: where a horizon may be put | after I10 |
+| `Integration/Exposure.lean` | I1: `DoSValid` under the fill, conditionally (§5.6) | design decision pending |
+| `Integration/DeliveryFill.lean` | I6a–d: Safe Skip's delivery transformer, then its budget column | deferred, likely open |
+| `LeanDagTest/Integration.lean` | the refutation witnessed as biting; the stack and lifecycle exhibits | ongoing |
+| — | I8: the decision-relation interface | **moved out of this arc**, see §4.2 |
 
-The remaining order, revised with what the first six cells settled:
+### 4.1 What the arc turned out to be
 
-1. **I10, I11 next.** Both are mostly assembly now: I3 supplies
-   the hybrid-side hypothesis the fill needs, and what remains is
-   restating §12's theorems over `HybridFaults` and composing with the
-   demote-on-skip policy. Cheap, and they deliver the arc's most
-   quotable claim — the crash-prone lifecycle, end to end.
-2. **I7 next after those.** I9's two obligations are both *conditions
-   on where the cut falls* — the base slot must be a whole number of
-   epochs, and (I9's premise) the retained window must carry what the
-   policy reads. I7's expected anchor-above-horizon condition is the
-   third of that family, and the three should be stated together as the
-   arc's account of *where a horizon may be placed*, which is a better
-   result than three scattered side conditions.
-3. **I1 only with the hypothesis §5.5 identifies**, or not at all. It
-   is no longer a preservation lemma in the plain sense.
-4. **I6a–d deferred, and possibly permanently.** §5.3's scoping
-   question is now sharper (§5.5) and the honest answer may be to
-   record Safe Skip × DoS as open rather than to force a delivery
-   transformer whose only consumer is a combination of doubtful value.
-5. **I8 last**, unchanged: it is the only item that touches existing
-   code, and its value still depends on how many instances it serves.
+Seven cells in, the results have not all been of the kind the plan
+anticipated. Three kinds have appeared, and naming them changes what
+should be built next:
+
+1. **Preservation lemmas** (I2, I3, I4, I13, I15) — the planned kind,
+   and the cheapest. Each closes a column of the composition matrix.
+2. **A refutation with an exact boundary** (I5) — worth more than the
+   positive would have been, and now the template: refute in general,
+   witness that the refutation bites, state the positive form that
+   survives.
+3. **Placement conditions** (I9's two obligations; I7's expected one) —
+   *not in the original plan at all*, and arguably the arc's most
+   useful output, because they are engineering guidance rather than
+   proof plumbing. A horizon may not be put anywhere: its base slot
+   must fall on an epoch boundary, and the retained window must carry
+   what the policy reads.
+
+The third kind should be pursued deliberately rather than collected
+incidentally. `Integration/Placement.lean` is the place to state the
+conditions together, with I7's anchor-above-horizon joining them —
+answering *where may a cut be made, given everything running above it?*
+as one account, rather than leaving three side conditions scattered
+across three files.
+
+### 4.2 What the arc is not
+
+**I8 (the decision-relation interface) leaves this arc.** It was
+included on the reasoning that Hybrid should become a third instance of
+the adaptive layer rather than a third copy. That is still worth doing,
+but I9 settled adaptive × GC without it, so nothing in the integration
+programme now depends on it — and it is the one item that *modifies
+existing code* where every other arc, this one included, only adds. It
+belongs in its own arc, planned and reviewed as a refactor, with the
+old statements retained as corollaries. Keeping it here would mix a
+refactor into a results arc and make the diff unauditable.
+
+### 4.3 The missing deliverable
+
+The plan's thesis is that named invariants plus preservation lemmas
+make composition free. Seven cells prove the *ingredients* and not the
+claim. **I16 closes that gap and should be next**, because it is cheap
+and because it is the arc's proof of concept:
+
+> A universe that has been truncated *and* filled *and* is read under
+> an adaptive schedule *and* interpreted in the hybrid fault model
+> still satisfies every invariant its arcs require — by chaining
+> existing lemmas, with no new argument.
+
+Concretely: `HonestNoEquiv (chop (skipFill U) G)` from I3 then I2;
+coverage above the fill and above the cut from I5-positive then I4;
+the schedule fair and spanning after truncation from I13/I15. If those
+chain without friction the thesis is demonstrated; if they do not, the
+friction is the most important thing the arc has to report, and better
+found now than after five more cells. Either outcome is worth the small
+cost.
+
+### 4.4 Order
+
+1. **I16 first** — cheap, and it tests the document's central claim.
+   Everything it needs already exists.
+2. **I10, I11** — mostly assembly: I3 supplies the hybrid-side
+   hypothesis the fill needs, and what remains is restating §12's
+   theorems over `HybridFaults` and composing with the demote-on-skip
+   policy. They deliver the arc's most quotable claim, the crash-prone
+   lifecycle end to end: demoted while down, safe-skipped back in,
+   re-promoted after recovery.
+3. **I7 and the placement account** — the third placement condition,
+   stated with the other two.
+4. **I1 only with the hypothesis §5.6 identifies**, or not at all; it
+   is no longer a preservation lemma in the plain sense, and the choice
+   between conditional statement and open record is a design decision.
+5. **I6a–d deferred**, and to be recorded as open if §5.6's prediction
+   holds — a delivery transformer whose only consumer is a combination
+   of doubtful value is not worth constructing.
 
 ## 5. Risks and predictions
 
@@ -557,7 +615,7 @@ The remaining order, revised with what the first six cells settled:
 plan are expected to be *false*: coverage under `skipFill` (I5, now
 **settled negative**), `chop`/`skipFill` commutation without the anchor
 condition (I7), horizon-stability for an unrestricted adaptive policy
-(I9), and `DoSValid` under the fill (I1, §5.5). Each is worth more than
+(I9), and `DoSValid` under the fill (I1, §5.6). Each is worth more than
 the corresponding positive would have been, because each names a
 deployment constraint that no single arc can see. I5 sets the pattern
 to follow: refute in general where possible, keep a witness to show the
@@ -584,10 +642,30 @@ per-round — and the fill produces exactly one block per round, which
 suggests it does, but the *acceptance* side (`RefsAccepted`) may see a
 burst. This is the combination most likely to require a genuinely new
 argument rather than a preservation lemma. It is also gated behind
-I6a's construction, and §5.5 now suggests the universe-level half fails
+I6a's construction, and §5.6 now suggests the universe-level half fails
 first, which would make the delivery-level question moot.
 
-**5.5 `DoSValid` under the fill is probably conditional, not
+**5.4 The composition capstone may not chain cleanly.** §4.3 proposes
+I16 on the expectation that the preservation lemmas compose without
+friction. Two things could go wrong, and both would be worth knowing.
+The transformers may not be *simultaneously applicable* — `skipFill`
+needs its anchor retained, which is I7's condition, so
+`chop (skipFill U) G` may need a hypothesis that `chop`'s own statement
+never mentions. And the invariants may compose only in one order:
+filling then truncating is not obviously the same as truncating then
+filling, which is exactly what I7 asks. If I16 turns out to need I7,
+the two should be done together and the order in §4.4 revised — that
+is the most likely way this plan is wrong, and it is cheap to discover.
+
+**5.5 Scope discipline.** The temptation in an integration arc is to
+prove the full cross product because each individual proof is easy once
+the interface exists. That would defeat the purpose. The rule for this
+arc: **a combination gets its own theorem only if it has content that
+the preservation lemmas do not already imply.** Everything else is a
+one-line corollary at most, and more often simply an observation in the
+report that the composition is immediate.
+
+**5.6 `DoSValid` under the fill is probably conditional, not
 preserved.** The third heuristic of §3.3 predicts I1 negative, and the
 mechanism is specific enough to state before attempting: a filled
 block's cone is the donor block's cone *plus* `v1`'s chain below the
@@ -608,14 +686,6 @@ open. The first is preferable if the hypothesis turns out to be
 checkable by `v1` itself — which it is, since `B1`'s cone is exactly
 what `v1` retains — and that would make it enforceable in the sense
 §8 requires.
-
-**5.4 Scope discipline.** The temptation in an integration arc is to
-prove the full cross product because each individual proof is easy once
-the interface exists. That would defeat the purpose. The rule for this
-arc: **a combination gets its own theorem only if it has content that
-the preservation lemmas do not already imply.** Everything else is a
-one-line corollary at most, and more often simply an observation in the
-report that the composition is immediate.
 
 ## 6. Out of scope
 
