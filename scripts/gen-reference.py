@@ -24,14 +24,15 @@ END = "<!-- END GENERATED REFERENCE -->"
 LAYERS = [
     ("The validator set and the fault model", ["Validators"]),
     ("Blocks, validity, and the universe", ["Block", "BlockDag"]),
-    ("Causal structure", ["CausalHistory", "History", "Support", "CommonCore"]),
+    ("Causal structure", ["CausalHistory", "History", "Support", "CommonCore",
+     "Persistence"]),
     ("Slots and the schedule", ["Schedule"]),
     ("The commit rule, and the ledger", ["Mysticeti"]),
     ("Delivery, growth, and coverage", ["Liveness"]),
     ("Time: GST, drift, and the backoff", ["Timing", "Quantitative"]),
     ("View convergence", ["ViewSync"]),
     ("Chain quality", ["Quality.Coverage", "Quality.Inclusion", "Quality.Capstone"]),
-    ("Denial of service", ["DoS.Exposure", "DoS.Density", "DoS.Counting",
+    ("Denial of service", ["DoS.Exposure", "DoS.SelfParent", "DoS.Density", "DoS.Counting",
                            "DoS.Adoption", "DoS.Pedigree", "DoS.Exclusion",
                            "DoS.Acceptance", "DoS.Novelty", "DoS.Composition",
                            "DoS.SafetyUnderDoS"]),
@@ -209,18 +210,30 @@ def main():
     out.append(f"The {len(internal)} lemmas used only within the file that proves")
     out.append("them. They are steps of the arguments above rather than results")
     out.append("in their own right, so they are listed rather than displayed;")
-    out.append("the source is the reference for their statements.")
+    out.append("the source is the reference for their statements. One")
+    out.append("subsection per module, in the layer order of Appendices B and C.")
     out.append("")
-    out.append("| Lemma | Module | Role |")
-    out.append("|:---|:---|:---|")
-    for d in sorted(internal, key=lambda x: (x["module"], x["name"])):
-        mod = d["module"].removeprefix("LeanDag.")
-        doc = tidy(d["doc"]).split("\n")[0]
-        doc = re.sub(r"\*\*", "", doc)
-        if len(doc) > 110:
-            doc = doc[:107].rsplit(" ", 1)[0] + " …"
-        out.append(f"| `{d['name']}` | `{mod}` | {doc or '—'} |")
-    out.append("")
+
+    # group by module, in LAYERS order (leftovers last)
+    by_mod = {}
+    for d in internal:
+        by_mod.setdefault(d["module"].removeprefix("LeanDag."), []).append(d)
+    ordered = [m for _, mods in LAYERS for m in mods if m in by_mod]
+    ordered += [m for m in sorted(by_mod) if m not in ordered]
+
+    for mod in ordered:
+        group = sorted(by_mod[mod], key=lambda x: x["name"])
+        out.append(f"### `{mod.replace(chr(46), chr(47))}.lean` ({len(group)})")
+        out.append("")
+        out.append("| Lemma | Role |")
+        out.append("|:---|:---|")
+        for d in group:
+            doc = tidy(d["doc"]).split("\n")[0]
+            doc = re.sub(r"\*\*", "", doc)
+            if len(doc) > 110:
+                doc = doc[:107].rsplit(" ", 1)[0] + " …"
+            out.append(f"| `{d['name']}` | {doc or '—'} |")
+        out.append("")
 
     out.append(END)
     body = "\n".join(out)

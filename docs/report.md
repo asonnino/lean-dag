@@ -7588,6 +7588,32 @@ theorem card_exposedTo_le {b : BlockId} (hb : b ∈ U.ids) : (exposedTo U b).car
 
 **At most `f` authors can be exposed**, since exposure requires equivocation and only Byzantine validators equivocate.
 
+#### `exists_self_ancestor`
+
+*theorem, `DoS.SelfParent.lean`*
+
+```lean
+theorem exists_self_ancestor {b : BlockId} (hb : b ∈ U.ids) {t : ℕ}
+    (ht : t ≤ (U.block b).round) :
+    ∃ i ∈ history U b,
+      (U.block i).creator = (U.block b).creator ∧ (U.block i).round = t
+```
+
+**D20 (chains reach the ground).** A block's history holds a block by its own author at *every* round below it. Contiguity is the content: an author cannot appear at round `t` without a full pedigree at `t-1, …, 0`.
+
+#### `not_exposedIn_self_creator`
+
+*theorem, `DoS.SelfParent.lean`*
+
+```lean
+theorem not_exposedIn_self_creator (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids) :
+    ¬ ExposedIn U b (U.block b).creator
+```
+
+**D21 (no self-laundering).** Under the DoS condition no valid block is exposed to its own author. A block cites its self-parent, and `DoSValid` forbids citing an exposed author — so once an author's equivocation is visible in some history, that author can never build on that history again.
+
+This is the indispensable half of D20: the fresh "carrier" block that adopts an equivocation branch while carrying none of its author's past — the mechanism of every super-linear history family — cannot exist.
+
 #### `mem_missingAt`
 
 *theorem, `DoS.Density.lean`*
@@ -8304,34 +8330,6 @@ That second hop is the content of question 2. Without it the theorem would be cl
 
 L1 is the **only** result where the horizon does real work. Its whole job is to turn the growth assumption into the local `Populated` facts L4 consumes — which is why L4 itself never mentions `N` (`liveness.md` §4.4).
 
-### Not otherwise grouped
-
-#### `exists_self_ancestor`
-
-*theorem, `DoS.SelfParent.lean`*
-
-```lean
-theorem exists_self_ancestor {b : BlockId} (hb : b ∈ U.ids) {t : ℕ}
-    (ht : t ≤ (U.block b).round) :
-    ∃ i ∈ history U b,
-      (U.block i).creator = (U.block b).creator ∧ (U.block i).round = t
-```
-
-**D20 (chains reach the ground).** A block's history holds a block by its own author at *every* round below it. Contiguity is the content: an author cannot appear at round `t` without a full pedigree at `t-1, …, 0`.
-
-#### `not_exposedIn_self_creator`
-
-*theorem, `DoS.SelfParent.lean`*
-
-```lean
-theorem not_exposedIn_self_creator (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U.ids) :
-    ¬ ExposedIn U b (U.block b).creator
-```
-
-**D21 (no self-laundering).** Under the DoS condition no valid block is exposed to its own author. A block cites its self-parent, and `DoSValid` forbids citing an exposed author — so once an author's equivocation is visible in some history, that author can never build on that history again.
-
-This is the indispensable half of D20: the fresh "carrier" block that adopts an equivocation branch while carrying none of its author's past — the mechanism of every super-linear history family — cannot exist.
-
 ---
 
 ## Appendix D. Index of internal lemmas
@@ -8339,348 +8337,551 @@ This is the indispensable half of D20: the fresh "carrier" block that adopts an 
 The 339 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
-the source is the reference for their statements.
+the source is the reference for their statements. One
+subsection per module, in the layer order of Appendices B and C.
 
-| Lemma | Module | Role |
-|:---|:---|:---|
-| `card_creators` | `Block` | Distinct creators means the creator map does not collapse the refs, so the creator set has exactly as many … |
-| `card_refs` | `Block` | A non-genesis block references at least `2f+1` blocks. |
-| `refs_subset` | `BlockDag` | Completeness, as a subset statement. |
-| `View.exists_reaches_iff` | `CausalHistory` | T6a, in the form the commit rules consume. Asking "is there a `P`-block in `c`'s causal history?" gives … |
-| `View.mem_of_reaches` | `CausalHistory` | T6a. Causal history never escapes a view. |
-| `not_reaches_of_round_lt` | `CausalHistory` | A block cannot reach anything strictly above it. Contrapositive of T2, and the form that rules out … |
-| `card_authorsAt_le` | `CommonCore` | The author pool at round `n` is covered by the correct authors together with the Byzantine validators, … |
-| `card_creatorsOf_correctBlocksAt` | `CommonCore` | — |
-| `creator_injOn_correctBlocksAt` | `CommonCore` | Distinct correct round-`n` blocks have distinct authors — non-equivocation (T1) in the form the count needs. |
-| `creatorsOf_correctBlocksAt_subset` | `CommonCore` | — |
-| `exists_common_correct_ancestor` | `CommonCore` | T3c (Common correct ancestor). If any block exists at round `r+2`, some correct validator's round-`r` … |
-| `exists_correct_common_support` | `CommonCore` | T3a (Correct-support counting). Some correct validator's round-`r` block is backed by enough correct … |
-| `support_threshold_arith` | `CommonCore` | The arithmetic core of T3a, isolated from the combinatorics. |
-| `Accepted.card_le` | `DoS.Acceptance` | One block per author out of the `n` validators. This is the whole of what the acceptance rule contributes. |
-| `View.card_ofAccepted_add_one` | `DoS.Acceptance` | D3. `|V| = |H(b)| - 1`, stated additively. |
-| `View.card_ofAccepted_le` | `DoS.Acceptance` | D2 — the bridge. A view generated by an accepted set is at most `3f+1` histories wide. |
-| `View.mem_ofAccepted` | `DoS.Acceptance` | — |
-| `View.ofAccepted_mono` | `DoS.Acceptance` | Exclusion governs what you reference, not what you retain. Retaining more is monotone on its own, so a … |
-| `View.ofAccepted_subset` | `DoS.Acceptance` | D4. If everything accepted before is reachable from something accepted now, the view has only grown. |
-| `View.ofAccepted_subset_of_refs` | `DoS.Acceptance` | The form self-reference supplies: `v`'s next block is accepted at the next round and references everything … |
-| `history_eq_insert_ofAccepted` | `DoS.Acceptance` | The view generated by `b`'s references is `b`'s history, less `b`. |
-| `notMem_ofAccepted_self` | `DoS.Acceptance` | A block is never inside the view its own references generate: everything there sits a round lower. |
-| `card_history_le_of_card_exposedTo_le_one` | `DoS.Adoption` | The same bound with the hypothesis in counted form: at most one author caught in the whole history. |
-| `card_history_le_of_f_le_one` | `DoS.Adoption` | C1′ at `f ≤ 1`, unconditionally. Exposure is Byzantine (D15) and the Byzantine set has at most one member, … |
-| `card_history_le_of_unique_equivocator` | `DoS.Adoption` | The main bound, unique-equivocator regime. If at most one author is exposed in `b`'s history, the history … |
-| `card_topsOf_le` | `DoS.Adoption` | Tops are as scarce as authors. When every author other than `X` is unexposed — its blocks a single chain — … |
-| `accepted_correct_of_allExposed` | `DoS.Composition` | After exposure-complete, a correct validator accepts nothing Byzantine-authored: its next block would have … |
-| `byzPool_mono` | `DoS.Composition` | — |
-| `byzPool_subset_of_allExposed` | `DoS.Composition` | The pool freezes. After exposure-complete at `m`, the global Byzantine pool never grows past its … |
-| `byzPool_succ_subset` | `DoS.Composition` | The freeze step: a round in which every correct acceptance is correct-authored adds nothing to the pool — … |
-| `card_viewUpto_le_of_allExposed` | `DoS.Composition` | B5 — the slope decays to the correct-production rate. After exposure-complete at `m`, a correct view is … |
-| `card_viewUpto_le_of_allExposed'` | `DoS.Composition` | B5, with the constant made explicit by the budget: the frozen pool is at most `|Correct|·f·(1 + (m+1)·κ)`. … |
-| `EquivFree.subset` | `DoS.Counting` | — |
-| `View.card_le_of_equivFree` | `DoS.Counting` | D5. A view whose blocks reach no higher than round `r`, and which holds no equivocation, holds at most … |
-| `blocksAt_disjoint` | `DoS.Counting` | Distinct rounds hold disjoint blocks: a block sits at one round. |
-| `blocksAt_eq_atRound` | `DoS.Counting` | — |
-| `card_atRound_le` | `DoS.Counting` | One round of an equivocation-free set has at most one block per validator, so at most `3f+1` blocks. |
-| `card_authorsAt_le_card_blocksAt` | `DoS.Counting` | Authors are the image of blocks, so a round has at least as many blocks as authors. |
-| `card_blocksAt_of_lt` | `DoS.Counting` | L0 in blocks rather than authors. |
-| `card_filter_creator_le_of_mem_refs` | `DoS.Counting` | D19b. Under the DoS condition, an author a block *references* contributes at most `round b + 1` blocks to … |
-| `card_history_le_of_not_exposed` | `DoS.Counting` | D19a. A history exposing nobody is linear in the round: at most `(3f+1)(r+1)` blocks, which is the … |
-| `card_ids_bounds` | `DoS.Counting` | The bounds together, on a universe with no equivocation at all: linear in the round from both sides. |
-| `card_ids_ge_of_round` | `DoS.Counting` | D6. A universe holding a block at round `r` holds at least `(n−f)·r + 1` blocks: `2f+1` at every round … |
-| `card_le_of_equivFree` | `DoS.Counting` | The general counting bound. An equivocation-free set spanning rounds `0…r` holds at most `(3f+1)(r+1)` blocks. |
-| `equivFree_history_iff` | `DoS.Counting` | — |
-| `mem_atRound` | `DoS.Counting` | — |
-| `card_missingAt_le_aux` | `DoS.Density` | — |
-| `card_missingAt_le_base` | `DoS.Density` | The one-round case: the references themselves witness all but at most `f` of the correct validators of the … |
-| `missingAt_subset_of_mem_refs` | `DoS.Density` | Missing is monotone through references: what `b` lacks, its references lack. |
-| `card_creators_accepted_of_eventuallyDelivers` | `DoS.Exclusion` | Where the quorum comes from after `R` — and the settled answer to the plan's Q1. |
-| `card_creators_correctBlocksAt` | `DoS.Exclusion` | The correct blocks of a populated round carry a quorum of authors. |
-| `correctBlocksAt_admissible_quorum` | `DoS.Exclusion` | D15b — the threshold is met by the correct set alone. |
-| `correct_subset_creators_correctBlocksAt` | `DoS.Exclusion` | A populated round carries every correct validator among its correct blocks' authors. |
-| `creator_notMem_exposedTo_of_mem_correctBlocksAt` | `DoS.Exclusion` | No correct block's author is ever excluded — D15, in the form a builder needs. |
-| `dosValid_refs_of_correctBlocksAt` | `DoS.Exclusion` | The same, phrased as the DoS condition permits it: a block whose references are correct round-`n` blocks … |
-| `eq_of_both_name_of_shared` | `DoS.Exclusion` | The intersection lemma. Two blocks that both name `X` agree about `X` wherever their shared correct … |
-| `exists_accepted_of_mem_ids` | `DoS.Exclusion` | What the two policies do yield: nothing an author publishes is invisible to the correct population. If any … |
-| `exists_correct_mem_refs` | `DoS.Exclusion` | Every non-genesis block references a correct block of the round below. |
-| `exists_shared_correct_ref` | `DoS.Exclusion` | Two blocks of the same round share a correct reference, when the correct validators are as few as the … |
-| `exposedIn_of_accepted_span` | `DoS.Exclusion` | D8a. A validator whose accepted set spans two disagreeing histories exposes the author in its own next block. |
-| `exposedIn_of_correct_disagree` | `DoS.Exclusion` | D16 — after `R`, agree or be exposed. If the histories of two correct round-`n` blocks between them hold … |
-| `exposedIn_of_correct_exposed` | `DoS.Exclusion` | D17 — exclusion is total, and permanent. If every correct block of round `n+1` is exposed to `X`, then so … |
-| `mem_history_of_pinned` | `DoS.Exclusion` | D18 — pinning. If all but at most `f` correct validators put `A` into their round-`(j+1)` block, then … |
-| `not_exposedIn_refs_of_policy` | `DoS.Exclusion` | The condition is implementable. A correct validator following the policy produces blocks that satisfy the … |
-| `EquivPair.symm` | `DoS.Exposure` | — |
-| `ExposedIn.mono` | `DoS.Exposure` | D12. Exposure is inherited by everything above: what one block's history reveals, every block reaching it … |
-| `ExposedIn.not_correct` | `DoS.Exposure` | D15 — exclusion is sound. An exposed author is Byzantine. |
-| `ExposedIn.of_mem_refs` | `DoS.Exposure` | Exposure passes up a single reference — the form the induction in D17 will want. |
-| `card_creators_refs_add_card_exposedTo_le` | `DoS.Exposure` | D15a — the margin. The authors a block references and the authors it has caught are disjoint subsets of … |
-| `card_le_one_or_not_mem_refs` | `DoS.Exposure` | D11. Under the DoS condition, for every block and every author exactly one of two things holds: the author … |
-| `creators_refs_disjoint_exposedTo` | `DoS.Exposure` | A block never names an author its own history has caught — `DoSValid`, read as a disjointness. |
-| `creators_refs_eq_correct` | `DoS.Exposure` | D15a at the bound. Once a block has caught the whole fault budget, its references are *exactly* the … |
-| `eq_of_mem_refs_of_creator_eq` | `DoS.Exposure` | D7, the no-equivocation half. A block's references carry distinct authors, so the layer immediately below … |
-| `exposedIn_iff_of_view` | `DoS.Exposure` | D13. Restricting the search for an equivocation to a view that holds `b` costs nothing: the witnesses … |
-| `exposedIn_iff_reaches` | `DoS.Exposure` | — |
-| `exposedTo_subset_byzantine` | `DoS.Exposure` | — |
-| `history_subset_view` | `DoS.Exposure` | Causal history never escapes a view — T6a in `Finset` form. |
-| `round_add_two_le_of_equivPair` | `DoS.Exposure` | D8. An equivocation shows up in a history only two rounds above the round it happened at. |
-| `UniformBudget.byzBudget` | `DoS.Novelty` | Dropping a guard weakens nothing: the author-blind cap implies the Byzantine-side budget with the same … |
-| `card_byzPool_succ_le` | `DoS.Novelty` | The accounting step. A Byzantine block enters the pool only as a direct budgeted acceptance: if it arrived … |
-| `card_byzPool_zero_le` | `DoS.Novelty` | Round 0 seeds the pool with at most `f` Byzantine geneses per correct validator. |
-| `card_filter_correct_le` | `DoS.Novelty` | One acceptance per author: the frontier splits into at most `|Correct|` correct-authored blocks… |
-| `card_filter_not_correct_le` | `DoS.Novelty` | …and at most `f` Byzantine-authored ones. |
-| `card_history_le_card_add_card_novelty` | `DoS.Novelty` | A history costs at most the view plus the novelty. |
-| `card_history_le_of_stepNovelty` | `DoS.Novelty` | The telescope. Under `StepNovelty`, a correct author's history is linear: `|H(b)| ≤ κ'·r + 1`. Descent … |
-| `card_history_le_of_stepNovelty_aux` | `DoS.Novelty` | — |
-| `card_novelty_le_of_byzBudget` | `DoS.Novelty` | C3″ — the correct side of the budget is a theorem. A validator enforcing only the Byzantine clause `κ` … |
-| `card_novelty_le_viewGap_add_one` | `DoS.Novelty` | C3a. After `R`, a block built from `w`'s acceptances is, at any correct `v`, at most one plus the gap … |
-| `card_viewGap_succ_le` | `DoS.Novelty` | C3′ — the gap is constant, not a drift. After `R`, as long as the author has a current block (which L1 … |
-| `card_viewUpto_succ_le_of_bounds` | `DoS.Novelty` | The generic one-round step: any per-block novelty bounds on the correct and Byzantine acceptances bound … |
-| `dos_resistance` | `DoS.Novelty` | DoS resistance, from enforceable conditions only. Liveness and linear storage from round 0 under full … |
-| `dos_resistance'` | `DoS.Novelty` | The post-`R` incremental form of the headline: the same enforceable conduct, plus the network's … |
-| `history_eq_singleton_of_round_zero` | `DoS.Novelty` | A genesis history is a singleton — round 0 needs no budget clause. |
-| `novelty_anti` | `DoS.Novelty` | Antitone in the view — the property everything below depends on. Deferral is a rate limiter, not a … |
-| `round_le_of_mem_viewUpto` | `DoS.Novelty` | Nothing retained by round `n` sits above round `n`. |
-| `sum_novelty_not_correct_le` | `DoS.Novelty` | The Byzantine spend of one round: at most `f` acceptances, `κ` each. |
-| `uniform_of_byzBudget` | `DoS.Novelty` | The sandwich, converse direction. After `R`, a `ByzBudget κ` schedule is uniformly budgeted at `f·κ + 1` … |
-| `viewUpto_zero` | `DoS.Novelty` | — |
-| `adoptedUnder_unique` | `DoS.Pedigree` | The adoption collapse, packaged: one adopted top per (adopter, author). |
-| `card_historyBlocksOf_le` | `DoS.Pedigree` | C1′, in full. Under `DoSValid` with self-parents, an author contributes at most `c(f) = (3f+2)^(3f+1)` … |
-| `card_historyBlocksOf_le'` | `DoS.Pedigree` | C1′, tightened. The per-round contribution of any author to any history is at most `1 + 3f·f^(f-1)` — down … |
-| `card_historyBlocksOf_le_card_topsOf` | `DoS.Pedigree` | An author's per-round contribution never exceeds its chain count: each round-`n` block sits on the chain … |
-| `card_history_le` | `DoS.Pedigree` | The general bound. Every DoS-valid history is linear in its round, at every fault budget: |
-| `card_history_le'` | `DoS.Pedigree` | The tightened total. `|H(b)| ≤ (3f+1 + 3f^(f+1))·(r+1)`: the unexposed authors contribute one chain each, … |
-| `card_topsOf_le_of_exposed` | `DoS.Pedigree` | The tightened top count. With `e := |exposedTo U b|`, an exposed author has at most `(3f+1-e) · e^(e-1)` … |
-| `card_topsOf_le_one_of_not_exposedIn` | `DoS.Pedigree` | An unexposed author has at most one chain. Two tops would be chain-related, and the lower would have a … |
-| `card_topsOf_le_pow` | `DoS.Pedigree` | The general top count. A top is determined by its own author and its pedigree's duplicate-free author … |
-| `encodeList_injOn` | `DoS.Pedigree` | The encoding is faithful. Two lists over `E'` of length at most `m` with the same encoding are equal: the … |
-| `exists_child_of_mem_history_of_creator_eq` | `DoS.Pedigree` | A same-author block strictly inside a history is on the root's chain (D21/D22), so it has a same-author … |
-| `exists_pedigree` | `DoS.Pedigree` | Pedigrees exist, with fresh authors all the way. Every top climbs to `b` through adopters whose authors, … |
-| `exists_pedigreeVia` | `DoS.Pedigree` | Anchored pedigrees exist. The top of an *exposed* author climbs through exposed-author adopters to the … |
-| `exists_pedigree_data` | `DoS.Pedigree` | Every top has an anchored pedigree, in totalised form. |
-| `pedigreeVia_cons_inv` | `DoS.Pedigree` | — |
-| `pedigreeVia_deterministic` | `DoS.Pedigree` | Anchored determinism: given the anchor and the intermediate author list, the top is unique. |
-| `pedigreeVia_nil_inv` | `DoS.Pedigree` | — |
-| `pedigreeVia_spec` | `DoS.Pedigree` | Every recorded author is realised by a top strictly above the subject, containing it — the nesting that … |
-| `pedigreeVia_top` | `DoS.Pedigree` | — |
-| `pedigree_cons_inv` | `DoS.Pedigree` | Inverting one pedigree step against a cons list. |
-| `pedigree_deterministic` | `DoS.Pedigree` | Pedigrees determine. Two tops of one author with the same pedigree author-list are equal: each step … |
-| `pedigree_spec` | `DoS.Pedigree` | Every author on a pedigree is realised by a *top* strictly above the pedigree's base, whose history … |
-| `self_mem_topsOf` | `DoS.Pedigree` | The block itself tops its own chain: nothing in its history can reference it. |
-| `card_filter_creator_of_mem_refs` | `DoS.SelfParent` | D23, totalled. For any *other* author the block references, the cost is exactly `round` blocks: rounds `0` … |
-| `card_filter_self_creator` | `DoS.SelfParent` | D22, totalled. The own-author content of a history is exactly `round + 1` blocks — one per round, the … |
-| `card_historyBlocksOf_of_mem_refs` | `DoS.SelfParent` | D23, per round. Referencing a block puts its author into the history exactly once per round strictly below … |
-| `card_historyBlocksOf_self` | `DoS.SelfParent` | D22, per round. A block's own author sits in its history *exactly once* per round: at least once by the … |
-| `card_history_ge` | `DoS.SelfParent` | D24 (the floor). With self-parents, histories have a *minimum* size: a valid block at round `r` carries at … |
-| `exists_self_ancestor_aux` | `DoS.SelfParent` | — |
-| `driftOn_of_catchup` | `Drift.Catchup` | The collapsed spread, in the form the timed development consumes: from any `R` past GST, drift is bounded … |
-| `drift_collapse` | `Drift.Catchup` | Drift collapses, from any starting value. At a round whose builds all lie past GST, the spread among `T` … |
-| `synchronisedOn_of_catchup` | `Drift.Catchup` | Coverage at a deployment-free threshold. Reference coverage from `R` on, once the timeout clears `2Δ + … |
-| `correct_mem_base` | `GC.AttestedBase` | G10, completeness. Post-`R`, every correct block of the layer is in every correct attestation (the … |
-| `accepted_mem_base` | `GC.Bootstrap` | G11. Every round-`G` block a correct validator accepted into its window by `m` — Byzantine-authored … |
-| `base_subset_retained` | `GC.Bootstrap` | The base is inside every correct peer's retained store: each base block sits in a correct attester's cone … |
-| `bootstrap_agree` | `GC.Bootstrap` | G12 (bootstrap safety). A joiner that assembles its view from the attested base and a correct peer's … |
-| `card_base_le` | `GC.Bootstrap` | The base alone is bounded by the G6 constant. |
-| `card_joinIds_le` | `GC.Bootstrap` | G6b. The joiner's entire fetch is inside one correct peer's retained store, hence bounded by the G6 … |
-| `card_serve_le` | `GC.Bootstrap` | G7, priced. Serving cost is the G6 constant plus one. |
-| `history_chop_subset_retained` | `GC.Bootstrap` | G7. The windowed relay obligation: everything a correct author can be asked to serve for its block — the … |
-| `history_subset_insert_viewUpto` | `GC.Bootstrap` | A correct author's cone is its own retained store plus the block itself: `RefsAccepted` one step down, S10 … |
-| `joinView_ids` | `GC.Bootstrap` | — |
-| `mem_viewUpto_of_mem_refs` | `GC.Bootstrap` | A retained store is closed under references: whatever cone brought `i` also holds everything `i` references. |
-| `blames_chop` | `GC.Chop` | — |
-| `certifies_chop` | `GC.Chop` | — |
-| `chopBlock_refs_subset` | `GC.Chop` | The truncation's references never exceed the original's. |
-| `directCommit_chop` | `GC.Chop` | — |
-| `directSkip_chop` | `GC.Chop` | — |
-| `dosValid_chop` | `GC.Chop` | G1, DoS half — the one-way door. The condition survives truncation; the converse fails by design (the … |
-| `exposedIn_of_exposedIn_chop` | `GC.Chop` | Exposure in the truncation is exposure in the original: the witnessing pair survives un-rebasing. |
-| `reaches_chop_iff` | `GC.Chop` | — |
-| `reaches_chop_of_reaches` | `GC.Chop` | A path of the original whose endpoint stays at or above the cut never dips below it, so it survives … |
-| `reaches_of_reaches_chop` | `GC.Chop` | A step in the truncation is a step in the original. |
-| `supporters_chop` | `GC.Chop` | — |
-| `votesIn_chop` | `GC.Chop` | — |
-| `Slots.chop_leader` | `GC.ChopDecided` | — |
-| `Slots.chop_slotRound` | `GC.ChopDecided` | — |
-| `View.chop_ids` | `GC.ChopDecided` | — |
-| `anchor_mem_chop_ids` | `GC.ChopDecided` | The anchor of a decided slot at or past the base slot survives the cut. |
-| `certificatesIn_chop` | `GC.ChopDecided` | The view filter is invisible to the certificate count: certificates for a slot above the cut live two … |
-| `decided_chop` | `GC.ChopDecided` | G3. The decision relation survives the cut, both ways: a validator re-running Mysticeti on the truncation, … |
-| `decided_chop_of_decided` | `GC.ChopDecided` | Backward: the original decision is reached on the truncation. Stated over an arbitrary slot `n = d + k` so … |
-| `decided_of_decided_chop` | `GC.ChopDecided` | Forward: a decision reached on the truncation, from a truncated view, is the original decision. Structural … |
-| `directCommitIn_chop` | `GC.ChopDecided` | — |
-| `directSkipIn_chop` | `GC.ChopDecided` | — |
-| `eligible_chop` | `GC.ChopDecided` | — |
-| `horizon_le_slotRound` | `GC.ChopDecided` | Every slot from the base slot on clears the horizon. |
-| `isLeaderBlock_chop` | `GC.ChopDecided` | — |
-| `block_eq_of` | `GC.Horizon` | — |
-| `chopBlock_chop` | `GC.Horizon` | — |
-| `chop_chop` | `GC.Horizon` | G8, the composition law. A deeper cut is just another cut: two admissible horizons are always related by … |
-| `decided_agree_horizons` | `GC.Horizon` | G8. Validators truncated at *different* horizons agree on every shared slot, from arbitrary views of their … |
-| `pruned_subset_peer_store` | `GC.Horizon` | G9 (no desync). What a validator prunes at any horizon, every correct peer already holds one round later: … |
-| `universe_eq_of` | `GC.Horizon` | — |
-| `viewUpto_subset_viewUpto_succ` | `GC.Horizon` | G9, the engine. Post-`R`, everything any correct validator retains by round `m` is in every correct … |
-| `byzBudget_chopD` | `GC.Window` | — |
-| `history_chop_anti` | `GC.Window` | Advancing the cut only shrinks cones… |
-| `novelty_chop_anti` | `GC.Window` | …so it only shrinks novelty: pruning cheapens blocks — an affordable block never becomes unaffordable as … |
-| `populated_chop` | `GC.Window` | G5. The truncated universe never stalls above the cut. |
-| `refsAccepted_chopD` | `GC.Window` | — |
-| `viewUpto_chopD` | `GC.Window` | G14. The truncated store *is* the store of the truncation: pruning below `G` and accumulating in the … |
-| `historyUpto_mono` | `History` | More fuel never loses anything. Needed because `mem_history_iff` fixes the fuel at `round + 1` while the … |
-| `historyUpto_succ` | `History` | — |
-| `historyUpto_zero` | `History` | — |
-| `mem_historyUpto_of_reaches` | `History` | Completeness, with the fuel accounted for. A path from `b` drops the round by one per step (T2), so `round … |
-| `mem_historyUpto_self` | `History` | — |
-| `mem_historyUpto_succ` | `History` | — |
-| `reaches_of_mem_historyUpto` | `History` | Soundness. Anything the fuelled search finds really is reachable. No hypothesis on `b`: even off the … |
-| `FairRunOn.fairScheduleOn` | `Liveness` | A run of `c` slots contains a `T`-led slot, so `FairRunOn` refines `FairScheduleOn` and everything proved … |
-| `PopulatedOn.mono` | `Liveness` | Population is antitone: a smaller set is easier to populate. This is what lets L1 keep concluding about … |
-| `SynchronisedOn.mono` | `Liveness` | Coverage is antitone too: mutual coverage among a larger set implies it among any subset. So existing … |
-| `all_decided_below_of_fairRun` | `Liveness` | L10. For every slot `k` there is a `b ≥ k` such that every slot below `b` is decided, in any sufficiently … |
-| `all_decided_below_of_fairRun_correct` | `Liveness` | L10 at `T := Correct`. |
-| `all_decided_below_of_spacing` | `Liveness` | L8 under the old three-round spacing. Combining L6 with L8: for every slot `k` there is a slot `n ≥ k` … |
-| `card_authorsAt_of_succ` | `Liveness` | One step of L0: a block at round `n+1` forces a quorum of authors at round `n`. |
-| `certificatesIn_full` | `Liveness` | — |
-| `certifies_of_synchronisedOn` | `Liveness` | A correct round-`(r+2)` block certifies any correct round-`r` block, once round `r+1` is populated and … |
-| `commits_recur_on` | `Liveness` | L6 — commits recur. For every slot `k` there is a later slot `k'` that every sufficiently grown … |
-| `decided_full` | `Liveness` | L3 — commit propagation. Whatever any validator decides on any view, the same verdict holds on the full view. |
-| `decided_mono` | `Liveness` | L2 — decisions are monotone in the view. If `V ⊆ V'` then `Decided U V k v → Decided U V' k v`. |
-| `decided_none_of_no_candidate` | `Liveness` | L5, in the form the `Decided` constructor wants. |
-| `decided_of_committed_above` | `Liveness` | L8. Given a committed slot, every slot below it is decided — provided every later slot may anchor an … |
-| `decided_of_first_eligible_commit` | `Liveness` | The escape. If `j` is committed and *nothing strictly between `k` and `j` is eligible to anchor `k`*, then … |
-| `directCommitIn_mono` | `Liveness` | A larger view can only see more certificates. |
-| `directCommit_of_synchronisedOn` | `Liveness` | L4, at the round level. A correct block at round `r` is directly committed, given coverage from `r` and … |
-| `directSkipIn_mono` | `Liveness` | A larger view can only see more blame. |
-| `exists_eligible` | `Liveness` | Every slot has an eligible anchor somewhere. |
-| `exists_isLeaderBlock` | `Liveness` | A correct leader has a candidate block, once its round is populated. `Populated` at the leader's own round … |
-| `exists_mem_of_authorsAt_card_pos` | `Liveness` | A round with any author at all has a block. The bridge that lets L0's induction step back down: a … |
-| `exists_slotRound_ge` | `Liveness` | Some slot sits at or beyond any given round. |
-| `notMem_stuck_of_decided` | `Liveness` | L9. Nothing in a stuck set is ever decided, on any view. |
-| `stuck_empty_below_commit_of_spacing` | `Liveness` | L8 and L9 are consistent, and their hypotheses are jointly exhaustive. |
-| `certificates_eq_empty_of_directSkip` | `Mysticeti` | M3. A directly skipped block has no certificate anywhere in the universe — not merely none in some view. |
-| `certifiedIn_iff_of_view` | `Mysticeti` | The indirect test is view-independent: a validator holding the anchor computes the same verdict from its … |
-| `certifiedIn_of_directCommit` | `Mysticeti` | M4, commit half. A directly committed block is found by *every* anchor from round `r+3` on. This is M2 … |
-| `certifiedIn_of_directCommitIn` | `Mysticeti` | The engine of M6. A direct commit made in *any* view is visible from *every* later slot's leader block. A … |
-| `certifiedIn_of_directCommitIn_at_anchor` | `Mysticeti` | Visibility from an anchor. A slot committed directly is certified at any eligible anchor above it: the … |
-| `commitSeq_agree` | `Mysticeti` | The committed-leader sequence is agreed. Two validators that have settled the first `n` slots — on … |
-| `decided_agree` | `Mysticeti` | M6, in the shape callers want: two validators' verdicts for a slot agree. |
-| `directSkip_of_directSkipIn` | `Mysticeti` | — |
-| `eq_of_certificates_nonempty` | `Mysticeti` | M5′ (certificate uniqueness). A slot admits at most one *certifiable* block: if certificates exist for two … |
-| `eq_of_decided_commit` | `Mysticeti` | No two validators commit *different* blocks for one slot. |
-| `eq_of_directCommitIn` | `Mysticeti` | Cross-view M5: two validators cannot directly commit *different* blocks for one slot. Both candidates are … |
-| `eq_of_directCommit_of_creator_eq` | `Mysticeti` | M5. At most one block per slot is directly committed. |
-| `eq_of_hasCertificate` | `Mysticeti` | Two commits for one slot agree, however each was reached. Both routes yield a certificate, so this is M5′ … |
-| `exists_certificate_reaches_of_directCommit` | `Mysticeti` | M2. Once a block is directly committed, its certificate becomes unavoidable: every block from round `r+3` … |
-| `indirect_agrees_with_direct` | `Mysticeti` | M4. Where the direct rule decides, the indirect rule agrees. |
-| `ledgerSet_agree` | `Mysticeti` | Two validators output the same blocks. |
-| `ledgerSet_mono` | `Mysticeti` | Nothing is ever dropped. The ledger only grows as more slots settle. |
-| `mem_votesIn_spec` | `Mysticeti` | A vote counted by a round-`(r+2)` certificate really is a round-`(r+1)` block of the universe that … |
-| `not_certifiedIn_of_directSkip` | `Mysticeti` | M4, skip half. A directly skipped block is found by *no* anchor whatsoever — no round hypothesis needed, … |
-| `not_certifiedIn_of_directSkipIn` | `Mysticeti` | A direct skip made in any view is invisible from every anchor — no round hypothesis needed, since M3 rules … |
-| `not_decided_skip_of_decided_commit` | `Mysticeti` | No validator commits a slot another has skipped. This is the shape that matters operationally: a committed … |
-| `not_directCommit_of_directSkip` | `Mysticeti` | M1. No block is both directly committed and directly skipped. |
-| `not_directSkipIn_of_directCommitIn` | `Mysticeti` | Cross-view M1: one validator cannot directly commit what another directly skips. |
-| `not_directSkip_of_directCommitIn` | `Mysticeti` | Direct decisions agree across views. If one validator directly commits a slot, no other validator can … |
-| `outputAt_agree` | `Mysticeti` | And validators agree on which slot that is. |
-| `outputAt_unique` | `Mysticeti` | A block enters the ledger once. Its position is not merely stable over time — there is no second slot it … |
-| `slot_eq_of_decided_commit` | `Mysticeti` | And so a committed block belongs to one slot. The ledger reads verdicts off in slot order, so without this … |
-| `slot_eq_of_isLeaderBlock` | `Mysticeti` | A block is the candidate of at most one slot. |
-| `card_authorsAt_of_live` | `Network.Quorum` | L1 in the form L0 consumes: under `Live U D N` every round up to the horizon carries a quorum of authors, … |
-| `deliversQuorum_chopD` | `Network.Quorum` | — |
-| `live_chopD` | `Network.Quorum` | — |
-| `no_stall_and_card_viewUpto_le` | `Network.Quorum` | The capstone, unconditional. `EventuallyDelivers` is gone: growth plus quorum delivery give liveness (L1 … |
-| `no_stall_and_card_viewUpto_le'` | `Network.Quorum` | The composed statement — DoS resistance in one theorem. One set of hypotheses — growth (`Live`), quorum … |
-| `anchor_round_le` | `Odontoceti.Decision` | The anchor's round clears the slot's decision round by one — enough for O3 to read the whole certificate … |
-| `decided_unique` | `Odontoceti.Decision` | O5 (thesis Lemma 5; the M6 analogue). No two validators reach conflicting decisions for a slot, whatever … |
-| `directCommit_of_directCommitIn` | `Odontoceti.Decision` | A view can only under-report: its direct commit is genuine. |
-| `directSkip_of_directSkipIn` | `Odontoceti.Decision` | A view can only under-report: its direct skip is genuine. |
-| `eq_of_directCommitIn` | `Odontoceti.Decision` | Cross-view O1′: two direct commits for one slot agree. |
-| `eq_of_directCommitIn_of_thickLink` | `Odontoceti.Decision` | O4′, from a view: a view-level direct commit is the only same-slot candidate that can pass the indirect … |
-| `isLeaderBlock_of_decided` | `Odontoceti.Decision` | A committed slot's block is a candidate of that slot. |
-| `not_directSkipIn_of_directCommitIn` | `Odontoceti.Decision` | Cross-view O1: one validator cannot directly commit what another directly skips. |
-| `not_thickLink_of_directSkipIn` | `Odontoceti.Decision` | O2, from a view: a view-level direct skip fails the indirect test everywhere. |
-| `safety` | `Odontoceti.Decision` | O6 (safety). Two committed blocks for one slot are the same block, across any two views and any two routes. |
-| `thickLink_of_directCommitIn` | `Odontoceti.Decision` | O3, from a view: a view-level direct commit passes the indirect test at every block two rounds up. |
-| `thickLink_of_directCommitIn_at_anchor` | `Odontoceti.Decision` | Visibility from an anchor. A slot committed directly carries a thick link at any eligible anchor above it … |
-| `all_decided_below_of_fairRun` | `Odontoceti.Liveness` | O10 (thesis Theorem 12). Under `Live`, `DeliversQuorum`, and post-`R` synchrony, a recurring run of `c` … |
-| `all_decided_below_of_fairRun_correct` | `Odontoceti.Liveness` | O10 at `T := Correct`. |
-| `decided_below_of_committed_run` | `Odontoceti.Liveness` | O9 (thesis Lemma 11). Every slot below a committed run of eligible span is decided: walk down from the … |
-| `decided_of_correct_leader` | `Odontoceti.Liveness` | The same at `T := Correct`. |
-| `decided_of_leader_mem` | `Odontoceti.Liveness` | O7, as a decision. |
-| `decided_of_leader_of_populated` | `Odontoceti.Liveness` | O7 against a horizon, the two-round counterpart of `decided_of_leader_of_populated`: the rule needs the … |
-| `directCommit_of_leader_mem` | `Odontoceti.Liveness` | O7, commit half (thesis Lemma 8 + Corollary 9). Post-`R`, a `T`-led slot is directly committed: … |
-| `spansEligible_two` | `Odontoceti.Liveness` | O8. Under a pipelined identity-round schedule, `c = 2` spans: slot `b − 1` cannot anchor on slot `b` — one … |
-| `supportersIn_full` | `Odontoceti.Liveness` | The full view sees every supporter. |
-| `card_supporters_le_of_directSkip` | `Odontoceti.Rules` | O2, the counting half. A directly skipped leader's supporters — anywhere in the universe — number at most … |
-| `coneSupports_subset_of_reaches` | `Odontoceti.Rules` | Cones nest, so in-cone support does. |
-| `coneSupports_subset_supporters` | `Odontoceti.Rules` | In-cone supporters are supporters. |
-| `mem_coneSupports` | `Odontoceti.Rules` | — |
-| `not_correct_of_supports_and_blames` | `Odontoceti.Rules` | A validator that both supports and blames `L` has two distinct blocks at the decision round, so it is not … |
-| `not_correct_of_supports_two` | `Odontoceti.Rules` | A validator supporting two *distinct* same-author blocks is not correct: one supporting block cannot … |
-| `thickLink_of_directCommit_aux` | `Odontoceti.Rules` | — |
-| `mem_ids_and_round_of_quorum_support` | `Persistence` | The quorum hypothesis already forces `b` into the universe at round `r`, so T3 need not assume either. A … |
-| `reaches_of_quorum_support` | `Persistence` | T3 (Persistence). If `b` is referenced by a quorum of round-`(r+1)` blocks, every block at round `r+2` or … |
-| `chain_quality` | `Quality.Capstone` | CQ7 (the capstone). Chain quality in one statement, enforceable or standard conditions only. … |
-| `committed_of_correct_block_by_round` | `Quality.Capstone` | CQ7, by round. With bounded slot spacing, the committing slot's round is within `s·w` rounds of the first … |
-| `committed_of_correct_block_within` | `Quality.Capstone` | CQ7, windowed. Under a windowed-fair schedule, the committing slot for round-`m` blocks lies within `w` … |
-| `slotAt_le_slotAt` | `Quality.Capstone` | The least slot at or above a round is monotone in the round. |
-| `card_coveredAt_ge` | `Quality.Coverage` | CQ1, the count. A valid block's cone covers all but at most `f` of the correct validators, at every round … |
-| `card_coveredAt_ge_of_decided` | `Quality.Coverage` | CQ1. A committed leader's flush covers all but at most `f` of the correct validators at every round below … |
-| `coveredAt_eq_sdiff` | `Quality.Coverage` | Covered and missing partition the correct validators. |
-| `coveredAt_subset_correct` | `Quality.Coverage` | — |
-| `ledger_coverage` | `Quality.Coverage` | CQ3 (ledger coverage, cumulative). For a verdict assignment `g` of a view with a committed slot `k < n` … |
-| `mem_coveredAt` | `Quality.Coverage` | — |
-| `committed_of_correct_block_correct` | `Quality.Inclusion` | CQ6 at `T := Correct`. |
-| `FairWithin.fairScheduleOn` | `Quantitative` | A rated schedule is a fair one, so everything already proved from `FairScheduleOn` applies to it unchanged. |
-| `Timing.populatedOn` | `Quantitative` | `Timing` already asserts a block per `T`-validator per round below the horizon, so it populates rounds … |
-| `backoff_ge_of_rate` | `Quantitative` | A rated backoff clears any threshold by the threshold itself. |
-| `commits_recur_within` | `Quantitative` | Q4, the schedule half. L6 with the committing slot bounded. |
-| `directCommit_of_wait` | `Quantitative` | The wait bound. After GST, a correct leader is committed provided every `T`-validator waits at least `D₀ + … |
-| `slotRound_le_of_lt` | `Quantitative` | A slot bound becomes a round bound. |
-| `unbounded_of_rated` | `Quantitative` | Every rated backoff is unbounded, so `Rated` really is a strengthening of `exists_backoff_ge`'s hypothesis … |
-| `leader_blk_eq` | `Reactive.Basic` | The reliable leader's block of slot `k` is the one the schedule names: non-equivocation identifies any … |
-| `no_timeout_of_fast` | `Reactive.Basic` | The timeout never fires. When delivery, drift and processing together undercut the timeout, every reliable … |
-| `certifies` | `Reactive.Mysticeti` | Every reliable validator certifies. In the reactive exit the block certifies by construction. In the … |
-| `directCommit` | `Reactive.Mysticeti` | The reactive direct commit. Every reliable validator's round-`(r+2)` block certifies, and `T` is a quorum … |
-| `reactive_decided` | `Reactive.Odontoceti` | Reactive liveness (Odontoceti). A reliable-led slot past GST is committed by every view — the conclusion … |
-| `reactive_directCommit` | `Reactive.Odontoceti` | The reactive direct commit (Odontoceti). Every reliable validator votes (`ReactiveCore.votes`), a vote is … |
-| `one_hblock` | `Schedule` | With one leader per round the distinctness condition is vacuous: slots in a round are the round, so no two … |
-| `uniformSingle_slotRound` | `Schedule` | — |
-| `uniformSingle_spacing` | `Schedule` | The old `spacing` field, recovered. Consecutive slots of `uniformSingle 3` really are three rounds apart, … |
-| `uniform_leader` | `Schedule` | — |
-| `uniform_slotRound` | `Schedule` | — |
-| `blames_inter_supporters_subset_byzantine` | `Support` | A correct validator cannot both vote for `L` and blame it: that would be two distinct round-`n` blocks by … |
-| `card_authorsAt_le_univ` | `Support` | The author pool never exceeds the validator set. This is what turns the `p - 2f` threshold into the … |
-| `exists_mem_refs_of_correct_support` | `Support` | The hitting lemma. A round-`(n+1)` block cannot avoid referencing a block satisfying `P`, once `f+1`-or-so … |
-| `supporters_subset_authorsAt` | `Support` | — |
-| `DriftFrom.mono` | `Timing` | Drift from a later round is implied by drift from an earlier one. |
-| `exists_backoff_ge` | `Timing` | A backoff that grows without bound eventually clears any fixed threshold. |
-| `card_inter_ge_of_quorum` | `Validators` | T0 (cardinality half). Two quorums overlap in at least `f+1` validators: `(n−f) + (n−f) − n = n − 2f ≥ f+1`. |
-| `Timing.driftFrom_iff_driftOn` | `ViewSync` | — |
-| `ViewSync.convergesEventually` | `ViewSync` | Every `ViewSync` converges in the qualitative sense too — the bound is extra information, not a different … |
-| `ViewSync.convergesWithin` | `ViewSync` | The `converges` field *is* the bounded form — the definition is the field, unfolded. |
-| `all_decided_below_of_converges` | `ViewSync` | L10 on this foundation. Every slot below a committed run is decided, so the ledger does not stall — again … |
-| `blk_mem_holds` | `ViewSync` | Build-time views agree, from `R` on. Every `T`-authored round-`n` block is in *every* `T`-validator's … |
-| `commits_recur_of_converges` | `ViewSync` | L6 on this foundation. Commits recur: for every slot there is a later one, past any given bound on GST, … |
-| `convergesEventually_of_within` | `ViewSync` | A bounded lag is a lag: the timed form implies the untimed one, even before `gst`, since holdings only grow. |
-| `convergesWithin_iff_bounded` | `ViewSync` | The factoring. Under monotone holdings, convergence within a bound and bounded eventual convergence are … |
-| `convergesWithin_of_bounded` | `ViewSync` | And conversely: eventual convergence whose lag is uniformly bounded after `gst` *is* convergence within … |
-| `covers_of_converges` | `ViewSync` | The derivation. `Timing.covers` — a `T`-block built after GST and early enough is referenced — follows … |
-| `decided_of_leader_of_converges` | `ViewSync` | L4 on this foundation. A `T`-led slot past GST is committed, given only view convergence, the referencing … |
-| `eventuallyDelivers_of_viewsConverge` | `ViewSync` | Untimed view convergence is `EventuallyDelivers` from round `0`: the author holds its own block, and … |
-| `exists_blk_of_populatedOn` | `ViewSync` | `blk` is `PopulatedOn`, Skolemised. A population of every round below the horizon yields a function naming … |
-| `exists_synchronisedOn_of_converges` | `ViewSync` | And with an unbounded backoff, from some round on — the `ViewSync` form of L7b's headline, with drift … |
-| `holdsOwn_toDelivery` | `ViewSync` | A validator holds its own block when it builds the next, in the induced delivery — `HoldsOwn` relative to `T`. |
-| `holdsOwn_toDelivery'` | `ViewSync` | `HoldsOwn`, in full. With `T = Correct` the induced delivery satisfies the clause outright, at every … |
-| `le_built_of_waits` | `ViewSync` | Rounds advance real time — `Timing.le_built`'s argument over a schedule alone, for the same reason. |
-| `populated_of_viewsConverge` | `ViewSync` | L1 without N1. Under untimed view convergence, every round below the horizon is populated — the conclusion … |
-| `synchronised_toDelivery` | `ViewSync` | And hence coverage, the second way. `synchronised_of_delivery` (L7a) applies to the induced delivery, so … |
-| `toTiming_built` | `ViewSync` | — |
-| `toTiming_delay` | `ViewSync` | — |
-| `toTiming_gst` | `ViewSync` | — |
-| `toTiming_timeout` | `ViewSync` | — |
-| `toViewSync_built` | `ViewSync` | — |
-| `toViewSync_delay` | `ViewSync` | — |
-| `toViewSync_gst` | `ViewSync` | — |
-| `toViewSync_timeout` | `ViewSync` | — |
-| `viewsAgree_of_converges` | `ViewSync` | The bridge, with the protocol clause made explicit. |
-| `viewsConvergeOn_toDelivery` | `ViewSync` | The untimed condition, derived. From `R` on, the induced delivery satisfies view convergence relative to `T`. |
-| `viewsConverge_of_viewsConvergeOn` | `ViewSync` | At `T = Correct` and `R = 0` the relative condition is the original. |
+### `Validators.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `card_inter_ge_of_quorum` | T0 (cardinality half). Two quorums overlap in at least `f+1` validators: `(n−f) + (n−f) − n = n − 2f ≥ f+1`. |
+
+### `Block.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `card_creators` | Distinct creators means the creator map does not collapse the refs, so the creator set has exactly as many … |
+| `card_refs` | A non-genesis block references at least `2f+1` blocks. |
+
+### `BlockDag.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `refs_subset` | Completeness, as a subset statement. |
+
+### `CausalHistory.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `View.exists_reaches_iff` | T6a, in the form the commit rules consume. Asking "is there a `P`-block in `c`'s causal history?" gives … |
+| `View.mem_of_reaches` | T6a. Causal history never escapes a view. |
+| `not_reaches_of_round_lt` | A block cannot reach anything strictly above it. Contrapositive of T2, and the form that rules out … |
+
+### `History.lean` (7)
+
+| Lemma | Role |
+|:---|:---|
+| `historyUpto_mono` | More fuel never loses anything. Needed because `mem_history_iff` fixes the fuel at `round + 1` while the … |
+| `historyUpto_succ` | — |
+| `historyUpto_zero` | — |
+| `mem_historyUpto_of_reaches` | Completeness, with the fuel accounted for. A path from `b` drops the round by one per step (T2), so `round … |
+| `mem_historyUpto_self` | — |
+| `mem_historyUpto_succ` | — |
+| `reaches_of_mem_historyUpto` | Soundness. Anything the fuelled search finds really is reachable. No hypothesis on `b`: even off the … |
+
+### `Support.lean` (4)
+
+| Lemma | Role |
+|:---|:---|
+| `blames_inter_supporters_subset_byzantine` | A correct validator cannot both vote for `L` and blame it: that would be two distinct round-`n` blocks by … |
+| `card_authorsAt_le_univ` | The author pool never exceeds the validator set. This is what turns the `p - 2f` threshold into the … |
+| `exists_mem_refs_of_correct_support` | The hitting lemma. A round-`(n+1)` block cannot avoid referencing a block satisfying `P`, once `f+1`-or-so … |
+| `supporters_subset_authorsAt` | — |
+
+### `CommonCore.lean` (7)
+
+| Lemma | Role |
+|:---|:---|
+| `card_authorsAt_le` | The author pool at round `n` is covered by the correct authors together with the Byzantine validators, … |
+| `card_creatorsOf_correctBlocksAt` | — |
+| `creator_injOn_correctBlocksAt` | Distinct correct round-`n` blocks have distinct authors — non-equivocation (T1) in the form the count needs. |
+| `creatorsOf_correctBlocksAt_subset` | — |
+| `exists_common_correct_ancestor` | T3c (Common correct ancestor). If any block exists at round `r+2`, some correct validator's round-`r` … |
+| `exists_correct_common_support` | T3a (Correct-support counting). Some correct validator's round-`r` block is backed by enough correct … |
+| `support_threshold_arith` | The arithmetic core of T3a, isolated from the combinatorics. |
+
+### `Persistence.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `mem_ids_and_round_of_quorum_support` | The quorum hypothesis already forces `b` into the universe at round `r`, so T3 need not assume either. A … |
+| `reaches_of_quorum_support` | T3 (Persistence). If `b` is referenced by a quorum of round-`(r+1)` blocks, every block at round `r+2` or … |
+
+### `Schedule.lean` (5)
+
+| Lemma | Role |
+|:---|:---|
+| `one_hblock` | With one leader per round the distinctness condition is vacuous: slots in a round are the round, so no two … |
+| `uniformSingle_slotRound` | — |
+| `uniformSingle_spacing` | The old `spacing` field, recovered. Consecutive slots of `uniformSingle 3` really are three rounds apart, … |
+| `uniform_leader` | — |
+| `uniform_slotRound` | — |
+
+### `Mysticeti.lean` (28)
+
+| Lemma | Role |
+|:---|:---|
+| `certificates_eq_empty_of_directSkip` | M3. A directly skipped block has no certificate anywhere in the universe — not merely none in some view. |
+| `certifiedIn_iff_of_view` | The indirect test is view-independent: a validator holding the anchor computes the same verdict from its … |
+| `certifiedIn_of_directCommit` | M4, commit half. A directly committed block is found by *every* anchor from round `r+3` on. This is M2 … |
+| `certifiedIn_of_directCommitIn` | The engine of M6. A direct commit made in *any* view is visible from *every* later slot's leader block. A … |
+| `certifiedIn_of_directCommitIn_at_anchor` | Visibility from an anchor. A slot committed directly is certified at any eligible anchor above it: the … |
+| `commitSeq_agree` | The committed-leader sequence is agreed. Two validators that have settled the first `n` slots — on … |
+| `decided_agree` | M6, in the shape callers want: two validators' verdicts for a slot agree. |
+| `directSkip_of_directSkipIn` | — |
+| `eq_of_certificates_nonempty` | M5′ (certificate uniqueness). A slot admits at most one *certifiable* block: if certificates exist for two … |
+| `eq_of_decided_commit` | No two validators commit *different* blocks for one slot. |
+| `eq_of_directCommitIn` | Cross-view M5: two validators cannot directly commit *different* blocks for one slot. Both candidates are … |
+| `eq_of_directCommit_of_creator_eq` | M5. At most one block per slot is directly committed. |
+| `eq_of_hasCertificate` | Two commits for one slot agree, however each was reached. Both routes yield a certificate, so this is M5′ … |
+| `exists_certificate_reaches_of_directCommit` | M2. Once a block is directly committed, its certificate becomes unavoidable: every block from round `r+3` … |
+| `indirect_agrees_with_direct` | M4. Where the direct rule decides, the indirect rule agrees. |
+| `ledgerSet_agree` | Two validators output the same blocks. |
+| `ledgerSet_mono` | Nothing is ever dropped. The ledger only grows as more slots settle. |
+| `mem_votesIn_spec` | A vote counted by a round-`(r+2)` certificate really is a round-`(r+1)` block of the universe that … |
+| `not_certifiedIn_of_directSkip` | M4, skip half. A directly skipped block is found by *no* anchor whatsoever — no round hypothesis needed, … |
+| `not_certifiedIn_of_directSkipIn` | A direct skip made in any view is invisible from every anchor — no round hypothesis needed, since M3 rules … |
+| `not_decided_skip_of_decided_commit` | No validator commits a slot another has skipped. This is the shape that matters operationally: a committed … |
+| `not_directCommit_of_directSkip` | M1. No block is both directly committed and directly skipped. |
+| `not_directSkipIn_of_directCommitIn` | Cross-view M1: one validator cannot directly commit what another directly skips. |
+| `not_directSkip_of_directCommitIn` | Direct decisions agree across views. If one validator directly commits a slot, no other validator can … |
+| `outputAt_agree` | And validators agree on which slot that is. |
+| `outputAt_unique` | A block enters the ledger once. Its position is not merely stable over time — there is no second slot it … |
+| `slot_eq_of_decided_commit` | And so a committed block belongs to one slot. The ledger reads verdicts off in slot order, so without this … |
+| `slot_eq_of_isLeaderBlock` | A block is the candidate of at most one slot. |
+
+### `Liveness.lean` (24)
+
+| Lemma | Role |
+|:---|:---|
+| `FairRunOn.fairScheduleOn` | A run of `c` slots contains a `T`-led slot, so `FairRunOn` refines `FairScheduleOn` and everything proved … |
+| `PopulatedOn.mono` | Population is antitone: a smaller set is easier to populate. This is what lets L1 keep concluding about … |
+| `SynchronisedOn.mono` | Coverage is antitone too: mutual coverage among a larger set implies it among any subset. So existing … |
+| `all_decided_below_of_fairRun` | L10. For every slot `k` there is a `b ≥ k` such that every slot below `b` is decided, in any sufficiently … |
+| `all_decided_below_of_fairRun_correct` | L10 at `T := Correct`. |
+| `all_decided_below_of_spacing` | L8 under the old three-round spacing. Combining L6 with L8: for every slot `k` there is a slot `n ≥ k` … |
+| `card_authorsAt_of_succ` | One step of L0: a block at round `n+1` forces a quorum of authors at round `n`. |
+| `certificatesIn_full` | — |
+| `certifies_of_synchronisedOn` | A correct round-`(r+2)` block certifies any correct round-`r` block, once round `r+1` is populated and … |
+| `commits_recur_on` | L6 — commits recur. For every slot `k` there is a later slot `k'` that every sufficiently grown … |
+| `decided_full` | L3 — commit propagation. Whatever any validator decides on any view, the same verdict holds on the full view. |
+| `decided_mono` | L2 — decisions are monotone in the view. If `V ⊆ V'` then `Decided U V k v → Decided U V' k v`. |
+| `decided_none_of_no_candidate` | L5, in the form the `Decided` constructor wants. |
+| `decided_of_committed_above` | L8. Given a committed slot, every slot below it is decided — provided every later slot may anchor an … |
+| `decided_of_first_eligible_commit` | The escape. If `j` is committed and *nothing strictly between `k` and `j` is eligible to anchor `k`*, then … |
+| `directCommitIn_mono` | A larger view can only see more certificates. |
+| `directCommit_of_synchronisedOn` | L4, at the round level. A correct block at round `r` is directly committed, given coverage from `r` and … |
+| `directSkipIn_mono` | A larger view can only see more blame. |
+| `exists_eligible` | Every slot has an eligible anchor somewhere. |
+| `exists_isLeaderBlock` | A correct leader has a candidate block, once its round is populated. `Populated` at the leader's own round … |
+| `exists_mem_of_authorsAt_card_pos` | A round with any author at all has a block. The bridge that lets L0's induction step back down: a … |
+| `exists_slotRound_ge` | Some slot sits at or beyond any given round. |
+| `notMem_stuck_of_decided` | L9. Nothing in a stuck set is ever decided, on any view. |
+| `stuck_empty_below_commit_of_spacing` | L8 and L9 are consistent, and their hypotheses are jointly exhaustive. |
+
+### `Timing.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `DriftFrom.mono` | Drift from a later round is implied by drift from an earlier one. |
+| `exists_backoff_ge` | A backoff that grows without bound eventually clears any fixed threshold. |
+
+### `Quantitative.lean` (7)
+
+| Lemma | Role |
+|:---|:---|
+| `FairWithin.fairScheduleOn` | A rated schedule is a fair one, so everything already proved from `FairScheduleOn` applies to it unchanged. |
+| `Timing.populatedOn` | `Timing` already asserts a block per `T`-validator per round below the horizon, so it populates rounds … |
+| `backoff_ge_of_rate` | A rated backoff clears any threshold by the threshold itself. |
+| `commits_recur_within` | Q4, the schedule half. L6 with the committing slot bounded. |
+| `directCommit_of_wait` | The wait bound. After GST, a correct leader is committed provided every `T`-validator waits at least `D₀ + … |
+| `slotRound_le_of_lt` | A slot bound becomes a round bound. |
+| `unbounded_of_rated` | Every rated backoff is unbounded, so `Rated` really is a strengthening of `exists_backoff_ge`'s hypothesis … |
+
+### `ViewSync.lean` (30)
+
+| Lemma | Role |
+|:---|:---|
+| `Timing.driftFrom_iff_driftOn` | — |
+| `ViewSync.convergesEventually` | Every `ViewSync` converges in the qualitative sense too — the bound is extra information, not a different … |
+| `ViewSync.convergesWithin` | The `converges` field *is* the bounded form — the definition is the field, unfolded. |
+| `all_decided_below_of_converges` | L10 on this foundation. Every slot below a committed run is decided, so the ledger does not stall — again … |
+| `blk_mem_holds` | Build-time views agree, from `R` on. Every `T`-authored round-`n` block is in *every* `T`-validator's … |
+| `commits_recur_of_converges` | L6 on this foundation. Commits recur: for every slot there is a later one, past any given bound on GST, … |
+| `convergesEventually_of_within` | A bounded lag is a lag: the timed form implies the untimed one, even before `gst`, since holdings only grow. |
+| `convergesWithin_iff_bounded` | The factoring. Under monotone holdings, convergence within a bound and bounded eventual convergence are … |
+| `convergesWithin_of_bounded` | And conversely: eventual convergence whose lag is uniformly bounded after `gst` *is* convergence within … |
+| `covers_of_converges` | The derivation. `Timing.covers` — a `T`-block built after GST and early enough is referenced — follows … |
+| `decided_of_leader_of_converges` | L4 on this foundation. A `T`-led slot past GST is committed, given only view convergence, the referencing … |
+| `eventuallyDelivers_of_viewsConverge` | Untimed view convergence is `EventuallyDelivers` from round `0`: the author holds its own block, and … |
+| `exists_blk_of_populatedOn` | `blk` is `PopulatedOn`, Skolemised. A population of every round below the horizon yields a function naming … |
+| `exists_synchronisedOn_of_converges` | And with an unbounded backoff, from some round on — the `ViewSync` form of L7b's headline, with drift … |
+| `holdsOwn_toDelivery` | A validator holds its own block when it builds the next, in the induced delivery — `HoldsOwn` relative to `T`. |
+| `holdsOwn_toDelivery'` | `HoldsOwn`, in full. With `T = Correct` the induced delivery satisfies the clause outright, at every … |
+| `le_built_of_waits` | Rounds advance real time — `Timing.le_built`'s argument over a schedule alone, for the same reason. |
+| `populated_of_viewsConverge` | L1 without N1. Under untimed view convergence, every round below the horizon is populated — the conclusion … |
+| `synchronised_toDelivery` | And hence coverage, the second way. `synchronised_of_delivery` (L7a) applies to the induced delivery, so … |
+| `toTiming_built` | — |
+| `toTiming_delay` | — |
+| `toTiming_gst` | — |
+| `toTiming_timeout` | — |
+| `toViewSync_built` | — |
+| `toViewSync_delay` | — |
+| `toViewSync_gst` | — |
+| `toViewSync_timeout` | — |
+| `viewsAgree_of_converges` | The bridge, with the protocol clause made explicit. |
+| `viewsConvergeOn_toDelivery` | The untimed condition, derived. From `R` on, the induced delivery satisfies view convergence relative to `T`. |
+| `viewsConverge_of_viewsConvergeOn` | At `T = Correct` and `R = 0` the relative condition is the original. |
+
+### `Quality/Coverage.lean` (6)
+
+| Lemma | Role |
+|:---|:---|
+| `card_coveredAt_ge` | CQ1, the count. A valid block's cone covers all but at most `f` of the correct validators, at every round … |
+| `card_coveredAt_ge_of_decided` | CQ1. A committed leader's flush covers all but at most `f` of the correct validators at every round below … |
+| `coveredAt_eq_sdiff` | Covered and missing partition the correct validators. |
+| `coveredAt_subset_correct` | — |
+| `ledger_coverage` | CQ3 (ledger coverage, cumulative). For a verdict assignment `g` of a view with a committed slot `k < n` … |
+| `mem_coveredAt` | — |
+
+### `Quality/Inclusion.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `committed_of_correct_block_correct` | CQ6 at `T := Correct`. |
+
+### `Quality/Capstone.lean` (4)
+
+| Lemma | Role |
+|:---|:---|
+| `chain_quality` | CQ7 (the capstone). Chain quality in one statement, enforceable or standard conditions only. … |
+| `committed_of_correct_block_by_round` | CQ7, by round. With bounded slot spacing, the committing slot's round is within `s·w` rounds of the first … |
+| `committed_of_correct_block_within` | CQ7, windowed. Under a windowed-fair schedule, the committing slot for round-`m` blocks lies within `w` … |
+| `slotAt_le_slotAt` | The least slot at or above a round is monotone in the round. |
+
+### `DoS/Exposure.lean` (14)
+
+| Lemma | Role |
+|:---|:---|
+| `EquivPair.symm` | — |
+| `ExposedIn.mono` | D12. Exposure is inherited by everything above: what one block's history reveals, every block reaching it … |
+| `ExposedIn.not_correct` | D15 — exclusion is sound. An exposed author is Byzantine. |
+| `ExposedIn.of_mem_refs` | Exposure passes up a single reference — the form the induction in D17 will want. |
+| `card_creators_refs_add_card_exposedTo_le` | D15a — the margin. The authors a block references and the authors it has caught are disjoint subsets of … |
+| `card_le_one_or_not_mem_refs` | D11. Under the DoS condition, for every block and every author exactly one of two things holds: the author … |
+| `creators_refs_disjoint_exposedTo` | A block never names an author its own history has caught — `DoSValid`, read as a disjointness. |
+| `creators_refs_eq_correct` | D15a at the bound. Once a block has caught the whole fault budget, its references are *exactly* the … |
+| `eq_of_mem_refs_of_creator_eq` | D7, the no-equivocation half. A block's references carry distinct authors, so the layer immediately below … |
+| `exposedIn_iff_of_view` | D13. Restricting the search for an equivocation to a view that holds `b` costs nothing: the witnesses … |
+| `exposedIn_iff_reaches` | — |
+| `exposedTo_subset_byzantine` | — |
+| `history_subset_view` | Causal history never escapes a view — T6a in `Finset` form. |
+| `round_add_two_le_of_equivPair` | D8. An equivocation shows up in a history only two rounds above the round it happened at. |
+
+### `DoS/SelfParent.lean` (6)
+
+| Lemma | Role |
+|:---|:---|
+| `card_filter_creator_of_mem_refs` | D23, totalled. For any *other* author the block references, the cost is exactly `round` blocks: rounds `0` … |
+| `card_filter_self_creator` | D22, totalled. The own-author content of a history is exactly `round + 1` blocks — one per round, the … |
+| `card_historyBlocksOf_of_mem_refs` | D23, per round. Referencing a block puts its author into the history exactly once per round strictly below … |
+| `card_historyBlocksOf_self` | D22, per round. A block's own author sits in its history *exactly once* per round: at least once by the … |
+| `card_history_ge` | D24 (the floor). With self-parents, histories have a *minimum* size: a valid block at round `r` carries at … |
+| `exists_self_ancestor_aux` | — |
+
+### `DoS/Density.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `card_missingAt_le_aux` | — |
+| `card_missingAt_le_base` | The one-round case: the references themselves witness all but at most `f` of the correct validators of the … |
+| `missingAt_subset_of_mem_refs` | Missing is monotone through references: what `b` lacks, its references lack. |
+
+### `DoS/Counting.lean` (14)
+
+| Lemma | Role |
+|:---|:---|
+| `EquivFree.subset` | — |
+| `View.card_le_of_equivFree` | D5. A view whose blocks reach no higher than round `r`, and which holds no equivocation, holds at most … |
+| `blocksAt_disjoint` | Distinct rounds hold disjoint blocks: a block sits at one round. |
+| `blocksAt_eq_atRound` | — |
+| `card_atRound_le` | One round of an equivocation-free set has at most one block per validator, so at most `3f+1` blocks. |
+| `card_authorsAt_le_card_blocksAt` | Authors are the image of blocks, so a round has at least as many blocks as authors. |
+| `card_blocksAt_of_lt` | L0 in blocks rather than authors. |
+| `card_filter_creator_le_of_mem_refs` | D19b. Under the DoS condition, an author a block *references* contributes at most `round b + 1` blocks to … |
+| `card_history_le_of_not_exposed` | D19a. A history exposing nobody is linear in the round: at most `(3f+1)(r+1)` blocks, which is the … |
+| `card_ids_bounds` | The bounds together, on a universe with no equivocation at all: linear in the round from both sides. |
+| `card_ids_ge_of_round` | D6. A universe holding a block at round `r` holds at least `(n−f)·r + 1` blocks: `2f+1` at every round … |
+| `card_le_of_equivFree` | The general counting bound. An equivocation-free set spanning rounds `0…r` holds at most `(3f+1)(r+1)` blocks. |
+| `equivFree_history_iff` | — |
+| `mem_atRound` | — |
+
+### `DoS/Adoption.lean` (4)
+
+| Lemma | Role |
+|:---|:---|
+| `card_history_le_of_card_exposedTo_le_one` | The same bound with the hypothesis in counted form: at most one author caught in the whole history. |
+| `card_history_le_of_f_le_one` | C1′ at `f ≤ 1`, unconditionally. Exposure is Byzantine (D15) and the Byzantine set has at most one member, … |
+| `card_history_le_of_unique_equivocator` | The main bound, unique-equivocator regime. If at most one author is exposed in `b`'s history, the history … |
+| `card_topsOf_le` | Tops are as scarce as authors. When every author other than `X` is unexposed — its blocks a single chain — … |
+
+### `DoS/Pedigree.lean` (23)
+
+| Lemma | Role |
+|:---|:---|
+| `adoptedUnder_unique` | The adoption collapse, packaged: one adopted top per (adopter, author). |
+| `card_historyBlocksOf_le` | C1′, in full. Under `DoSValid` with self-parents, an author contributes at most `c(f) = (3f+2)^(3f+1)` … |
+| `card_historyBlocksOf_le'` | C1′, tightened. The per-round contribution of any author to any history is at most `1 + 3f·f^(f-1)` — down … |
+| `card_historyBlocksOf_le_card_topsOf` | An author's per-round contribution never exceeds its chain count: each round-`n` block sits on the chain … |
+| `card_history_le` | The general bound. Every DoS-valid history is linear in its round, at every fault budget: |
+| `card_history_le'` | The tightened total. `|H(b)| ≤ (3f+1 + 3f^(f+1))·(r+1)`: the unexposed authors contribute one chain each, … |
+| `card_topsOf_le_of_exposed` | The tightened top count. With `e := |exposedTo U b|`, an exposed author has at most `(3f+1-e) · e^(e-1)` … |
+| `card_topsOf_le_one_of_not_exposedIn` | An unexposed author has at most one chain. Two tops would be chain-related, and the lower would have a … |
+| `card_topsOf_le_pow` | The general top count. A top is determined by its own author and its pedigree's duplicate-free author … |
+| `encodeList_injOn` | The encoding is faithful. Two lists over `E'` of length at most `m` with the same encoding are equal: the … |
+| `exists_child_of_mem_history_of_creator_eq` | A same-author block strictly inside a history is on the root's chain (D21/D22), so it has a same-author … |
+| `exists_pedigree` | Pedigrees exist, with fresh authors all the way. Every top climbs to `b` through adopters whose authors, … |
+| `exists_pedigreeVia` | Anchored pedigrees exist. The top of an *exposed* author climbs through exposed-author adopters to the … |
+| `exists_pedigree_data` | Every top has an anchored pedigree, in totalised form. |
+| `pedigreeVia_cons_inv` | — |
+| `pedigreeVia_deterministic` | Anchored determinism: given the anchor and the intermediate author list, the top is unique. |
+| `pedigreeVia_nil_inv` | — |
+| `pedigreeVia_spec` | Every recorded author is realised by a top strictly above the subject, containing it — the nesting that … |
+| `pedigreeVia_top` | — |
+| `pedigree_cons_inv` | Inverting one pedigree step against a cons list. |
+| `pedigree_deterministic` | Pedigrees determine. Two tops of one author with the same pedigree author-list are equal: each step … |
+| `pedigree_spec` | Every author on a pedigree is realised by a *top* strictly above the pedigree's base, whose history … |
+| `self_mem_topsOf` | The block itself tops its own chain: nothing in its history can reference it. |
+
+### `DoS/Exclusion.lean` (15)
+
+| Lemma | Role |
+|:---|:---|
+| `card_creators_accepted_of_eventuallyDelivers` | Where the quorum comes from after `R` — and the settled answer to the plan's Q1. |
+| `card_creators_correctBlocksAt` | The correct blocks of a populated round carry a quorum of authors. |
+| `correctBlocksAt_admissible_quorum` | D15b — the threshold is met by the correct set alone. |
+| `correct_subset_creators_correctBlocksAt` | A populated round carries every correct validator among its correct blocks' authors. |
+| `creator_notMem_exposedTo_of_mem_correctBlocksAt` | No correct block's author is ever excluded — D15, in the form a builder needs. |
+| `dosValid_refs_of_correctBlocksAt` | The same, phrased as the DoS condition permits it: a block whose references are correct round-`n` blocks … |
+| `eq_of_both_name_of_shared` | The intersection lemma. Two blocks that both name `X` agree about `X` wherever their shared correct … |
+| `exists_accepted_of_mem_ids` | What the two policies do yield: nothing an author publishes is invisible to the correct population. If any … |
+| `exists_correct_mem_refs` | Every non-genesis block references a correct block of the round below. |
+| `exists_shared_correct_ref` | Two blocks of the same round share a correct reference, when the correct validators are as few as the … |
+| `exposedIn_of_accepted_span` | D8a. A validator whose accepted set spans two disagreeing histories exposes the author in its own next block. |
+| `exposedIn_of_correct_disagree` | D16 — after `R`, agree or be exposed. If the histories of two correct round-`n` blocks between them hold … |
+| `exposedIn_of_correct_exposed` | D17 — exclusion is total, and permanent. If every correct block of round `n+1` is exposed to `X`, then so … |
+| `mem_history_of_pinned` | D18 — pinning. If all but at most `f` correct validators put `A` into their round-`(j+1)` block, then … |
+| `not_exposedIn_refs_of_policy` | The condition is implementable. A correct validator following the policy produces blocks that satisfy the … |
+
+### `DoS/Acceptance.lean` (9)
+
+| Lemma | Role |
+|:---|:---|
+| `Accepted.card_le` | One block per author out of the `n` validators. This is the whole of what the acceptance rule contributes. |
+| `View.card_ofAccepted_add_one` | D3. `|V| = |H(b)| - 1`, stated additively. |
+| `View.card_ofAccepted_le` | D2 — the bridge. A view generated by an accepted set is at most `3f+1` histories wide. |
+| `View.mem_ofAccepted` | — |
+| `View.ofAccepted_mono` | Exclusion governs what you reference, not what you retain. Retaining more is monotone on its own, so a … |
+| `View.ofAccepted_subset` | D4. If everything accepted before is reachable from something accepted now, the view has only grown. |
+| `View.ofAccepted_subset_of_refs` | The form self-reference supplies: `v`'s next block is accepted at the next round and references everything … |
+| `history_eq_insert_ofAccepted` | The view generated by `b`'s references is `b`'s history, less `b`. |
+| `notMem_ofAccepted_self` | A block is never inside the view its own references generate: everything there sits a round lower. |
+
+### `DoS/Novelty.lean` (20)
+
+| Lemma | Role |
+|:---|:---|
+| `UniformBudget.byzBudget` | Dropping a guard weakens nothing: the author-blind cap implies the Byzantine-side budget with the same … |
+| `card_byzPool_succ_le` | The accounting step. A Byzantine block enters the pool only as a direct budgeted acceptance: if it arrived … |
+| `card_byzPool_zero_le` | Round 0 seeds the pool with at most `f` Byzantine geneses per correct validator. |
+| `card_filter_correct_le` | One acceptance per author: the frontier splits into at most `|Correct|` correct-authored blocks… |
+| `card_filter_not_correct_le` | …and at most `f` Byzantine-authored ones. |
+| `card_history_le_card_add_card_novelty` | A history costs at most the view plus the novelty. |
+| `card_history_le_of_stepNovelty` | The telescope. Under `StepNovelty`, a correct author's history is linear: `|H(b)| ≤ κ'·r + 1`. Descent … |
+| `card_history_le_of_stepNovelty_aux` | — |
+| `card_novelty_le_of_byzBudget` | C3″ — the correct side of the budget is a theorem. A validator enforcing only the Byzantine clause `κ` … |
+| `card_novelty_le_viewGap_add_one` | C3a. After `R`, a block built from `w`'s acceptances is, at any correct `v`, at most one plus the gap … |
+| `card_viewGap_succ_le` | C3′ — the gap is constant, not a drift. After `R`, as long as the author has a current block (which L1 … |
+| `card_viewUpto_succ_le_of_bounds` | The generic one-round step: any per-block novelty bounds on the correct and Byzantine acceptances bound … |
+| `dos_resistance` | DoS resistance, from enforceable conditions only. Liveness and linear storage from round 0 under full … |
+| `dos_resistance'` | The post-`R` incremental form of the headline: the same enforceable conduct, plus the network's … |
+| `history_eq_singleton_of_round_zero` | A genesis history is a singleton — round 0 needs no budget clause. |
+| `novelty_anti` | Antitone in the view — the property everything below depends on. Deferral is a rate limiter, not a … |
+| `round_le_of_mem_viewUpto` | Nothing retained by round `n` sits above round `n`. |
+| `sum_novelty_not_correct_le` | The Byzantine spend of one round: at most `f` acceptances, `κ` each. |
+| `uniform_of_byzBudget` | The sandwich, converse direction. After `R`, a `ByzBudget κ` schedule is uniformly budgeted at `f·κ + 1` … |
+| `viewUpto_zero` | — |
+
+### `DoS/Composition.lean` (6)
+
+| Lemma | Role |
+|:---|:---|
+| `accepted_correct_of_allExposed` | After exposure-complete, a correct validator accepts nothing Byzantine-authored: its next block would have … |
+| `byzPool_mono` | — |
+| `byzPool_subset_of_allExposed` | The pool freezes. After exposure-complete at `m`, the global Byzantine pool never grows past its … |
+| `byzPool_succ_subset` | The freeze step: a round in which every correct acceptance is correct-authored adds nothing to the pool — … |
+| `card_viewUpto_le_of_allExposed` | B5 — the slope decays to the correct-production rate. After exposure-complete at `m`, a correct view is … |
+| `card_viewUpto_le_of_allExposed'` | B5, with the constant made explicit by the budget: the frozen pool is at most `|Correct|·f·(1 + (m+1)·κ)`. … |
+
+### `GC/Chop.lean` (12)
+
+| Lemma | Role |
+|:---|:---|
+| `blames_chop` | — |
+| `certifies_chop` | — |
+| `chopBlock_refs_subset` | The truncation's references never exceed the original's. |
+| `directCommit_chop` | — |
+| `directSkip_chop` | — |
+| `dosValid_chop` | G1, DoS half — the one-way door. The condition survives truncation; the converse fails by design (the … |
+| `exposedIn_of_exposedIn_chop` | Exposure in the truncation is exposure in the original: the witnessing pair survives un-rebasing. |
+| `reaches_chop_iff` | — |
+| `reaches_chop_of_reaches` | A path of the original whose endpoint stays at or above the cut never dips below it, so it survives … |
+| `reaches_of_reaches_chop` | A step in the truncation is a step in the original. |
+| `supporters_chop` | — |
+| `votesIn_chop` | — |
+
+### `GC/ChopDecided.lean` (13)
+
+| Lemma | Role |
+|:---|:---|
+| `Slots.chop_leader` | — |
+| `Slots.chop_slotRound` | — |
+| `View.chop_ids` | — |
+| `anchor_mem_chop_ids` | The anchor of a decided slot at or past the base slot survives the cut. |
+| `certificatesIn_chop` | The view filter is invisible to the certificate count: certificates for a slot above the cut live two … |
+| `decided_chop` | G3. The decision relation survives the cut, both ways: a validator re-running Mysticeti on the truncation, … |
+| `decided_chop_of_decided` | Backward: the original decision is reached on the truncation. Stated over an arbitrary slot `n = d + k` so … |
+| `decided_of_decided_chop` | Forward: a decision reached on the truncation, from a truncated view, is the original decision. Structural … |
+| `directCommitIn_chop` | — |
+| `directSkipIn_chop` | — |
+| `eligible_chop` | — |
+| `horizon_le_slotRound` | Every slot from the base slot on clears the horizon. |
+| `isLeaderBlock_chop` | — |
+
+### `GC/Window.lean` (6)
+
+| Lemma | Role |
+|:---|:---|
+| `byzBudget_chopD` | — |
+| `history_chop_anti` | Advancing the cut only shrinks cones… |
+| `novelty_chop_anti` | …so it only shrinks novelty: pruning cheapens blocks — an affordable block never becomes unaffordable as … |
+| `populated_chop` | G5. The truncated universe never stalls above the cut. |
+| `refsAccepted_chopD` | — |
+| `viewUpto_chopD` | G14. The truncated store *is* the store of the truncation: pruning below `G` and accumulating in the … |
+
+### `GC/AttestedBase.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `correct_mem_base` | G10, completeness. Post-`R`, every correct block of the layer is in every correct attestation (the … |
+
+### `GC/Bootstrap.lean` (10)
+
+| Lemma | Role |
+|:---|:---|
+| `accepted_mem_base` | G11. Every round-`G` block a correct validator accepted into its window by `m` — Byzantine-authored … |
+| `base_subset_retained` | The base is inside every correct peer's retained store: each base block sits in a correct attester's cone … |
+| `bootstrap_agree` | G12 (bootstrap safety). A joiner that assembles its view from the attested base and a correct peer's … |
+| `card_base_le` | The base alone is bounded by the G6 constant. |
+| `card_joinIds_le` | G6b. The joiner's entire fetch is inside one correct peer's retained store, hence bounded by the G6 … |
+| `card_serve_le` | G7, priced. Serving cost is the G6 constant plus one. |
+| `history_chop_subset_retained` | G7. The windowed relay obligation: everything a correct author can be asked to serve for its block — the … |
+| `history_subset_insert_viewUpto` | A correct author's cone is its own retained store plus the block itself: `RefsAccepted` one step down, S10 … |
+| `joinView_ids` | — |
+| `mem_viewUpto_of_mem_refs` | A retained store is closed under references: whatever cone brought `i` also holds everything `i` references. |
+
+### `GC/Horizon.lean` (7)
+
+| Lemma | Role |
+|:---|:---|
+| `block_eq_of` | — |
+| `chopBlock_chop` | — |
+| `chop_chop` | G8, the composition law. A deeper cut is just another cut: two admissible horizons are always related by … |
+| `decided_agree_horizons` | G8. Validators truncated at *different* horizons agree on every shared slot, from arbitrary views of their … |
+| `pruned_subset_peer_store` | G9 (no desync). What a validator prunes at any horizon, every correct peer already holds one round later: … |
+| `universe_eq_of` | — |
+| `viewUpto_subset_viewUpto_succ` | G9, the engine. Post-`R`, everything any correct validator retains by round `m` is in every correct … |
+
+### `Odontoceti/Rules.lean` (7)
+
+| Lemma | Role |
+|:---|:---|
+| `card_supporters_le_of_directSkip` | O2, the counting half. A directly skipped leader's supporters — anywhere in the universe — number at most … |
+| `coneSupports_subset_of_reaches` | Cones nest, so in-cone support does. |
+| `coneSupports_subset_supporters` | In-cone supporters are supporters. |
+| `mem_coneSupports` | — |
+| `not_correct_of_supports_and_blames` | A validator that both supports and blames `L` has two distinct blocks at the decision round, so it is not … |
+| `not_correct_of_supports_two` | A validator supporting two *distinct* same-author blocks is not correct: one supporting block cannot … |
+| `thickLink_of_directCommit_aux` | — |
+
+### `Odontoceti/Decision.lean` (12)
+
+| Lemma | Role |
+|:---|:---|
+| `anchor_round_le` | The anchor's round clears the slot's decision round by one — enough for O3 to read the whole certificate … |
+| `decided_unique` | O5 (thesis Lemma 5; the M6 analogue). No two validators reach conflicting decisions for a slot, whatever … |
+| `directCommit_of_directCommitIn` | A view can only under-report: its direct commit is genuine. |
+| `directSkip_of_directSkipIn` | A view can only under-report: its direct skip is genuine. |
+| `eq_of_directCommitIn` | Cross-view O1′: two direct commits for one slot agree. |
+| `eq_of_directCommitIn_of_thickLink` | O4′, from a view: a view-level direct commit is the only same-slot candidate that can pass the indirect … |
+| `isLeaderBlock_of_decided` | A committed slot's block is a candidate of that slot. |
+| `not_directSkipIn_of_directCommitIn` | Cross-view O1: one validator cannot directly commit what another directly skips. |
+| `not_thickLink_of_directSkipIn` | O2, from a view: a view-level direct skip fails the indirect test everywhere. |
+| `safety` | O6 (safety). Two committed blocks for one slot are the same block, across any two views and any two routes. |
+| `thickLink_of_directCommitIn` | O3, from a view: a view-level direct commit passes the indirect test at every block two rounds up. |
+| `thickLink_of_directCommitIn_at_anchor` | Visibility from an anchor. A slot committed directly carries a thick link at any eligible anchor above it … |
+
+### `Odontoceti/Liveness.lean` (9)
+
+| Lemma | Role |
+|:---|:---|
+| `all_decided_below_of_fairRun` | O10 (thesis Theorem 12). Under `Live`, `DeliversQuorum`, and post-`R` synchrony, a recurring run of `c` … |
+| `all_decided_below_of_fairRun_correct` | O10 at `T := Correct`. |
+| `decided_below_of_committed_run` | O9 (thesis Lemma 11). Every slot below a committed run of eligible span is decided: walk down from the … |
+| `decided_of_correct_leader` | The same at `T := Correct`. |
+| `decided_of_leader_mem` | O7, as a decision. |
+| `decided_of_leader_of_populated` | O7 against a horizon, the two-round counterpart of `decided_of_leader_of_populated`: the rule needs the … |
+| `directCommit_of_leader_mem` | O7, commit half (thesis Lemma 8 + Corollary 9). Post-`R`, a `T`-led slot is directly committed: … |
+| `spansEligible_two` | O8. Under a pipelined identity-round schedule, `c = 2` spans: slot `b − 1` cannot anchor on slot `b` — one … |
+| `supportersIn_full` | The full view sees every supporter. |
+
+### `Reactive/Basic.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `leader_blk_eq` | The reliable leader's block of slot `k` is the one the schedule names: non-equivocation identifies any … |
+| `no_timeout_of_fast` | The timeout never fires. When delivery, drift and processing together undercut the timeout, every reliable … |
+
+### `Reactive/Mysticeti.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `certifies` | Every reliable validator certifies. In the reactive exit the block certifies by construction. In the … |
+| `directCommit` | The reactive direct commit. Every reliable validator's round-`(r+2)` block certifies, and `T` is a quorum … |
+
+### `Reactive/Odontoceti.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `reactive_decided` | Reactive liveness (Odontoceti). A reliable-led slot past GST is committed by every view — the conclusion … |
+| `reactive_directCommit` | The reactive direct commit (Odontoceti). Every reliable validator votes (`ReactiveCore.votes`), a vote is … |
+
+### `Drift/Catchup.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `driftOn_of_catchup` | The collapsed spread, in the form the timed development consumes: from any `R` past GST, drift is bounded … |
+| `drift_collapse` | Drift collapses, from any starting value. At a round whose builds all lie past GST, the spread among `T` … |
+| `synchronisedOn_of_catchup` | Coverage at a deployment-free threshold. Reference coverage from `R` on, once the timeout clears `2Δ + … |
+
+### `Network/Quorum.lean` (5)
+
+| Lemma | Role |
+|:---|:---|
+| `card_authorsAt_of_live` | L1 in the form L0 consumes: under `Live U D N` every round up to the horizon carries a quorum of authors, … |
+| `deliversQuorum_chopD` | — |
+| `live_chopD` | — |
+| `no_stall_and_card_viewUpto_le` | The capstone, unconditional. `EventuallyDelivers` is gone: growth plus quorum delivery give liveness (L1 … |
+| `no_stall_and_card_viewUpto_le'` | The composed statement — DoS resistance in one theorem. One set of hypotheses — growth (`Live`), quorum … |
 
 <!-- END GENERATED REFERENCE -->
