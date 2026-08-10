@@ -3986,6 +3986,7 @@ Principal results only; supporting lemmas are omitted.
 | — | the telescope | `card_history_le_of_stepNovelty` *(DoS/Novelty)* |
 | C3′ | the view gap is a constant, not a drift | `card_viewGap_succ_le` *(DoS/Novelty)* |
 | — | the budget sandwich | `UniformBudget.byzBudget`, `uniform_of_byzBudget` *(DoS/Novelty)* |
+| — | a correct block carries its author's whole accepted past | `viewUpto_subset_history` *(DoS/Novelty)* |
 | B4 | linear storage under the budget | `card_viewUpto_le` *(DoS/Novelty)* |
 | B | the capstone, enforceable conditions only | `dos_resistance`, `dos_resistance'` *(DoS/Novelty)* |
 | B5 | after exposure completes, the pool freezes | `card_viewUpto_le_of_allExposed'` *(DoS/Composition)* |

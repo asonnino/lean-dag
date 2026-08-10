@@ -6,7 +6,13 @@
   3. every displayed theorem statement still matches its source signature;
   4. every displayed statement is a faithful abridgement of the source;
   5. the banned-phrase list of docs/style.md is absent, appendices included;
-  6. every section reference in a source docstring names its document.
+  6. every section reference in a source docstring names its document;
+  7. every theorem the body displays has an Appendix A row.
+
+Check 7 enforces the statement index's criterion — Appendix A indexes
+what the narrative presents — and, since Appendix C admits everything
+Appendix A names, keeps the reference appendices complete over the
+narrative.
 
 Check 6 exists because a bare `§4.2` in a docstring surfaces in the
 generated appendices, where a reader takes it for a report section; twice
@@ -253,6 +259,33 @@ def audit(path, decls, suffixes):
                                      f"…{doc[max(0, m.start() - 24):m.end() + 6]}…"))
                     break
 
+    # check 7: body-displayed theorems are indexed in Appendix A
+    if extracted_marker := "## Appendix A" in text:
+        body_part = text[:text.index("## Appendix A")]
+        appA = text[text.index("## Appendix A"):]
+        gen = appA.find("<!-- BEGIN GENERATED")
+        if gen >= 0:
+            appA = appA[:gen]
+        anames = set()
+        for lean in re.findall(r"^\|[^|]+\|[^|]+\| (.+?) \|$", appA, re.M):
+            anames.update(n.rsplit(".", 1)[-1] for n in
+                          re.findall(r"`([A-Za-z][A-Za-z0-9_.'\u2032]*)`", lean))
+        dpath2 = ROOT / "docs/decls.json"
+        thm_names = set()
+        if dpath2.exists():
+            thm_names = {d["name"].rsplit(".", 1)[-1]
+                         for d in json.loads(dpath2.read_text())
+                         if d["module"].startswith("LeanDag.")
+                         and d["kind"] in ("theorem", "lemma")}
+        for block in re.findall(r"^```lean\n(.*?)^```$", body_part, re.M | re.S):
+            for m in re.finditer(r"^theorem\s+([A-Za-z_][A-Za-z0-9_.'\u2032]*)",
+                                 block, re.M):
+                short = m.group(1).rsplit(".", 1)[-1]
+                if short in thm_names and short not in anames:
+                    failures.append(("unindexed",
+                                     f"`{m.group(1)}` is displayed but has no "
+                                     f"Appendix A row"))
+
     # check 3: displayed statements still match their source signatures
     sigs = source_declarations(ROOT)
     shown = displayed_statements(text)
@@ -292,7 +325,8 @@ def audit(path, decls, suffixes):
     for kind, item in failures:
         label = {"xref": "unresolved section", "ident": "unknown declaration",
                  "stale": "stale displayed statement", "banned": "banned phrase",
-                 "secref": "unqualified section reference"}.get(kind, "not verbatim")
+                 "secref": "unqualified section reference",
+                 "unindexed": "displayed theorem unindexed"}.get(kind, "not verbatim")
         print(f"  FAIL {label}: {item}")
     if not failures:
         print("  ok")
