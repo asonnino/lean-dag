@@ -871,15 +871,20 @@ narrower than the two-role summary suggests.
 bounded after GST. The other two formulations are that condition with a
 protocol clause incorporated, and §6.9 derives them from it.
 
-*For production*, the same condition again. Untimed view convergence
-(`ViewsConverge`) drives it from round `0`
-(`populated_of_viewsConverge`), though it is unimplementable as stated,
-since a validator cannot wait for "all correct blocks" without
-distinguishing correct validators from crashed ones; the timed form
-drives it from the GST crossing (`ViewGrowth.populatedOn`); and the
-timed structures may instead assume production outright, carrying a
-block per validator per round as data (§6.10). The implementable
-formulation is the legacy quorum condition of §13.
+*For production*, the same condition again, and the deployed behaviour
+it rests on is the ordinary one: wait for a quorum of distinct authors,
+then up to a timeout, then build — which is precisely `ViewGrowth`'s
+`builds` and `waits`, from which the timed form derives production past
+the GST crossing (`ViewGrowth.populatedOn`). The untimed form
+(`ViewsConverge`) drives production from round `0`
+(`populated_of_viewsConverge`), but as an idealisation: no waiting rule
+can secure "every correct block held at build time", since correctness
+is not observable and a crashed validator — correct, by §2.1 — may have
+produced nothing to wait for. The timed structures may instead assume
+production outright, carrying a block per validator per round as data
+(§6.10). A delivery premise matched by the quorum wait, for production
+*before* GST or with no clock at all, is the legacy condition of §13;
+the main line does not need one.
 
 *And nothing else.* No condition on the environment appears in the
 development beyond these two roles, in one of the formulations above; the
@@ -1804,9 +1809,13 @@ population supplies `|Correct| ≥ n−f` correct blocks, and convergence
 puts every one of them in every correct validator's hands, where the
 build rule applies.
 
-Index-aligned sharing of every correct block is a strong assumption —
-§13 compares it with the legacy quorum form, which is the weaker and the
-implementable one. And **the untimed condition is not a delivery assumption but
+Index-aligned sharing of every correct block is an idealisation: no
+waiting rule secures it, since correctness is not observable and a
+crashed validator — correct, by §2.1 — may have produced nothing to wait
+for. Its value is uniformity of shape with the timed clause; the
+deployable behaviour, a quorum wait bounded by a timeout, is the timed
+route's, and liveness is proved from it. (§13 compares this condition
+with the weaker legacy quorum form.) And **the untimed condition is not a delivery assumption but
 a delivery assumption combined with a waiting clause.** In the untimed model
 that fusion cannot be undone, for a structural reason:
 `Delivery.held v n` is indexed by the *round*, and `held_spec` confines
@@ -3305,8 +3314,9 @@ motivates the canonicity premise (`utwin6_both_pass`).
 The development's original production assumption was a quorum-conditional
 delivery condition, and this section is its record: the main line derives
 production from view convergence (§6.9) and mentions the route nowhere.
-It is retained because it is the weakest formulation, the implementable
-one, and the only one whose content survives below GST; a reader
+It is retained because it is the weakest formulation, the one whose
+guarantee the ordinary quorum-waiting rule matches, and the only one
+whose content survives below GST; a reader
 interested solely in the current account may skip this section entirely.
 
 ### 13.1 The assumption
@@ -3376,13 +3386,21 @@ storage bound of one execution under one set of hypotheses.
 
 Against the untimed view-convergence form, N1 is **weaker**:
 `ViewsConverge` promises every correct block, always, where N1 promises
-a quorum and only when one already exists. It is also the
-**implementable** one — a validator can observe that it holds `n − f`
-distinct authors, where it cannot wait for "all correct blocks" without
-distinguishing correct validators from crashed ones. What the
-view-convergence forms offer instead is uniformity: one network clause for
-coverage and production both, where this route needs an assumption of
-its own.
+a quorum and only when one already exists. It is also the premise the
+ordinary waiting rule *matches*: a validator can observe that it holds
+`n − f` distinct authors, where no rule can wait for "every correct
+block" — correctness is not observable, and a crashed validator, correct
+by §2.1, may have produced nothing to wait for.
+
+Neither remark bears on the timed main line. The deployed behaviour —
+wait for a quorum, then up to a timeout, then build — is exactly
+`ViewGrowth`'s `builds` and `waits`, and liveness is proved from it with
+`converges` as the network's whole contribution (§6.9). What this route
+offers over the main line is production *before* GST and with no clock
+at all; the main line, needing production only from the GST crossing
+(with a seed below it), does without, and carries one assumption fewer. What the view-convergence forms offer against this route is
+uniformity: one network clause for coverage and production both, where
+this route needs an assumption of its own.
 
 The extraction bounds the route's footprint exactly. Nothing outside
 `Network/Quorum.lean` imports it; of the labelled results, only L1 —
