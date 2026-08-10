@@ -42,5 +42,6 @@ import LeanDag.Adaptive.Basic
 import LeanDag.Adaptive.Policy
 import LeanDag.Adaptive.Run
 import LeanDag.Adaptive.Liveness
+import LeanDag.Adaptive.Odontoceti
 import LeanDag.SafeSkip.Basic
 import LeanDag.SafeSkip.Invariance
