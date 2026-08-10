@@ -158,8 +158,8 @@ validator holds both halves of an equivocation: `distinct_creators` forbids
 referencing two blocks by one author, so no valid block exists and the
 validator cannot build at all. See `dos-equivocation-and-growth.md` §4.
 
-`held` must *not* be deduplicated: `U` is defined as every block some correct
-validator held (§4.2), so pruning at the delivery layer would put the second
+`held` must *not* be deduplicated: `U` is defined as every block some correct validator held
+(`liveness.md` §4.2), so pruning at the delivery layer would put the second
 half of an equivocation outside the universe altogether. The choice of which
 half to accept is left unspecified, exactly as the timeout is — the model says
 what was in hand and what was built on, never how either was decided. -/
@@ -392,7 +392,7 @@ def View.full (U : BlockUniverse Validator BlockId Payload) :
 /-- **L3 — commit propagation.** Whatever any validator decides on any view,
 the same verdict holds on the full view.
 
-Since the full view is every correct validator's eventual view (§4.2), this
+Since the full view is every correct validator's eventual view (`liveness.md` §4.2), this
 *is* "all correct validators eventually reach the same decision". -/
 theorem decided_full {V : View Validator BlockId Payload U} {k : ℕ}
     {v : Option BlockId} (h : Decided U V k v) : Decided U (View.full U) k v :=
@@ -530,7 +530,7 @@ theorem decided_of_leader_mem (hcard : (Fintype.card Validator - F.f) ≤ T.card
 available as a single `Populated` hypothesis up to a horizon, and the
 three rounds L4 needs are read off it.
 
-Stated separately because the capstones of §§6–10 all reach L4 the same
+Stated separately because the capstones of report §§6–10 all reach L4 the same
 way — restrict `Populated` to `T`, three times, at `slotRound k`, `+1`
 and `+2` — and doing that inline obscures which hypothesis is actually
 being consumed. -/

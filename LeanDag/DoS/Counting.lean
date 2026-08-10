@@ -171,7 +171,7 @@ contributes at most `round b + 1` blocks to that block's history.
 So the blow-up `C1` is about can only come from authors `b` does **not**
 reference — at most `f` of them, and fewer if `b` names Byzantine authors at
 all. This is the sharpest per-reference constraint the condition supplies,
-and what the §5 machinery sharpens to an equality (D23). -/
+and what the `dos-equivocation-and-growth.md` §5 machinery sharpens to an equality (D23). -/
 theorem card_filter_creator_le_of_mem_refs (hdos : DoSValid U) (hb : b ∈ U.ids)
     {i : BlockId} (hi : i ∈ (U.block b).refs) :
     ((history U b).filter (fun j => (U.block j).creator = (U.block i).creator)).card

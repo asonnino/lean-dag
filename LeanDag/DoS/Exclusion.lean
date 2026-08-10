@@ -38,7 +38,7 @@ variable {b : BlockId} {n : ℕ}
 
 /-- Decidable on concrete data: `PopulatedOn` is a bounded quantifier over two
 `Finset`s, so a model can settle it by `decide`. Stated here rather than beside
-the definition because it is the witnesses of §4 that need it. -/
+the definition because it is the witnesses of `dos-equivocation-and-growth.md` §4 that need it. -/
 instance decidablePopulatedOn (T : Finset Validator) (r : ℕ) :
     Decidable (PopulatedOn U T r) :=
   inferInstanceAs (Decidable (∀ v ∈ T, ∃ b ∈ U.ids,
@@ -248,7 +248,7 @@ A block leans on `f+1` correct blocks of the round below, and there are not
 `f+1` correct validators lacking `A` to draw them all from. So the honest
 publisher loses the freedom to be disagreed about later — while an author that
 publishes to a strict subset keeps it, which is `liveness.md` §4.3 showing up as
-the selective-publication gap that §5's doubling family exploits. -/
+the selective-publication gap that `dos-equivocation-and-growth.md` §5's doubling family exploits. -/
 theorem mem_history_of_pinned {A : BlockId} {j : ℕ}
     (hpin : ((Correct : Finset Validator).filter
       (fun v => ¬ ∃ c ∈ U.ids, (U.block c).round = j + 1 ∧ (U.block c).creator = v ∧
@@ -377,8 +377,8 @@ wherever their shared correct reference speaks about it.
 whatever either of them holds there *is* `A`.
 
 Where the shared ancestor is silent about `X` the two may still differ —
-which is why the per-round count ultimately needs the pedigree machinery
-of §5. -/
+which is why the per-round count ultimately needs the pedigree machinery of
+`dos-equivocation-and-growth.md` §5. -/
 theorem eq_of_both_name_of_shared (hdos : DoSValid U)
     {c₁ c₂ w : BlockId} (hc₁ : c₁ ∈ U.ids) (hc₂ : c₂ ∈ U.ids)
     (hw₁ : w ∈ (U.block c₁).refs) (hw₂ : w ∈ (U.block c₂).refs)
@@ -463,7 +463,8 @@ correct validator accepted a block by `X` at round `n` — and so referenced one
 if it built.
 
 Kept because it stands on its own; the C1′ proof itself goes through the
-pedigree machinery of §5. -/
+pedigree machinery of
+`dos-equivocation-and-growth.md` §5. -/
 theorem exists_accepted_of_mem_ids (D : Delivery U) (hheld : HeldByCorrect D)
     (hsome : AcceptsSome D) {A : BlockId} (hA : A ∈ U.ids) :
     ∃ v ∈ (Correct : Finset Validator), ∃ i ∈ D.accepted v (U.block A).round,

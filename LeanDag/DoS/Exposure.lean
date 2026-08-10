@@ -215,7 +215,7 @@ exposed author costs exactly one unit of the margin over the quorum. -/
 
 T1 contraposed: the two witnesses are distinct ids of the universe with one
 author and one round, which a correct validator cannot have. So a correct
-validator is never excluded, by anybody, ever — and everything in §4 rests on
+validator is never excluded, by anybody, ever — and everything in `dos-equivocation-and-growth.md` §4 rests on
 that. -/
 theorem ExposedIn.not_correct {b : BlockId} {X : Validator} (hb : b ∈ U.ids)
     (h : ExposedIn U b X) : X ∉ (Correct : Finset Validator) := by

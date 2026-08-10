@@ -137,7 +137,7 @@ step, which needs only this much of validity.
 Proved from the quorum condition **alone**, deliberately not via `card_refs`:
 the image of `∅` is `∅`, so an empty `refs` would give an empty creator set.
 Routing through `card_refs` would drag `distinct_creators` onto T3's
-dependency path, and the whole point of §3.2's analysis is that Phase 1 and
+dependency path, and the whole point of `spec.md` §3.2's analysis is that Phase 1 and
 1b never need it. -/
 theorem refs_nonempty (h : ValidWrt blk b) (h0 : 0 < b.round) : b.refs.Nonempty := by
   have hq : (Fintype.card Validator - F.f) ≤ (creatorsOf blk b.refs).card := h.quorum h0

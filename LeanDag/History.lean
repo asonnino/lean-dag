@@ -111,7 +111,7 @@ theorem mem_historyUpto_of_reaches {n : ℕ} {b i : BlockId} (hb : b ∈ U.ids)
 def history (U : BlockUniverse Validator BlockId Payload) (b : BlockId) : Finset BlockId :=
   historyUpto U ((U.block b).round + 1) b
 
-/-- **The representation is faithful** (§7 S6). For a block of the universe,
+/-- **The representation is faithful** (`dos-equivocation-and-growth.md` §7 S6). For a block of the universe,
 membership of `history` and reachability are the same thing. -/
 theorem mem_history_iff {b i : BlockId} (hb : b ∈ U.ids) :
     i ∈ history U b ↔ Reaches U b i :=

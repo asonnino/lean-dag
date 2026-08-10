@@ -492,7 +492,7 @@ enforcing only the Byzantine clause `κ` never meets a correct block over
 `f·κ + 1` after `R`: the gap toward its author, collapsed through the
 author's own self-parent, plus the block itself. So the hysteresis
 threshold is the *constant* `Κ = f·κ + 1` — derived, not assumed, and
-better than §6's designed `f·κ + 3f+1`. -/
+better than `dos-equivocation-and-growth.md` §6's designed `f·κ + 3f+1`. -/
 theorem card_novelty_le_of_byzBudget {κ R : ℕ} (hbyz : ByzBudget D κ)
     (hED : EventuallyDelivers D R) (hn : R ≤ n + 1)
     (hv : v ∈ (Correct : Finset Validator)) (hb : b ∈ U.ids)
@@ -770,7 +770,7 @@ theorem card_byzPool_le {κ : ℕ} (hbyz : ByzBudget D κ) (hra : RefsAccepted D
 enforceable budget and the reference discipline — no synchrony, no `R`, no
 delivery guarantee — every correct validator's retained view is linear in
 the round: at most one block per correct author per round, plus the global
-Byzantine pool. This is the §6 pre-`R` conjecture, closed: the base the
+Byzantine pool. This is `dos-equivocation-and-growth.md` §6's pre-`R` conjecture, closed: the base the
 capstone measures from is itself linear, so the DoS bound holds from
 round 0 under full asynchrony. -/
 theorem card_viewUpto_le {κ : ℕ} (hbyz : ByzBudget D κ)

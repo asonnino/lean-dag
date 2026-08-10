@@ -289,7 +289,7 @@ theorem decided_of_leader_of_converges (vs : ViewSync U T N)
 later one, past any given bound on GST, which any sufficiently grown
 view-convergent execution commits.
 
-The quantifier order is L6's and carries the same content (§6.6): the
+The quantifier order is L6's and carries the same content (report §6.6): the
 committing slot is fixed by the schedule and the GST bound alone, before
 any execution is named. -/
 theorem commits_recur_of_converges (hT : T ⊆ (Correct : Finset Validator))
@@ -485,7 +485,7 @@ for round `n` — no clock, no Δ, no GST.
 
 Restricted to correct-authored blocks, deliberately: a Byzantine author
 may send to some correct validators and not others, and no network
-assumption should forbid that (§4.3). -/
+assumption should forbid that (report §4.3). -/
 def ViewsConverge (D : Delivery U) : Prop :=
   ∀ v ∈ (Correct : Finset Validator), ∀ w ∈ (Correct : Finset Validator),
     ∀ n, ∀ b ∈ D.held v n,
@@ -952,7 +952,7 @@ theorem holdsOwn_toDelivery' (vg : ViewGrowth U (Correct : Finset Validator) R N
   exact vg.holdsOwn_toDelivery hv hnN hb hbc hbr
 
 /-- **N2a, derived.** The induced delivery satisfies eventual DAG
-synchrony from `R` on — the assumption of §6.7, obtained from view
+synchrony from `R` on — the assumption of report §6.7, obtained from view
 convergence and the schedule.
 
 The horizon is no longer an obstruction. `EventuallyDelivers` quantifies
@@ -981,7 +981,7 @@ theorem eventuallyDelivers_toDelivery
 
 /-- **And hence coverage, the second way.** `synchronised_of_delivery`
 (L7a) applies to the induced delivery, so the delivery route's conclusion
-is available from view convergence too — the three routes of §6.7–§6.9
+is available from view convergence too — the three routes of report §6.7–§6.9
 meet. -/
 theorem synchronised_toDelivery
     (vg : ViewGrowth U (Correct : Finset Validator) R N)

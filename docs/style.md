@@ -21,6 +21,11 @@ than the report's. They predate this guide and still contain several of
 the phrases tabulated below; the substitutions are owed at their next
 revision, not as a separate sweep.
 
+**Source docstrings are report text.** The report's reference appendices
+are generated from them, so §1 applies to every docstring in `LeanDag/`,
+and fixes belong at source — editing the generated copy diverges it and
+is undone at the next regeneration.
+
 ## 1. Register
 
 `report.md` is an academic report. It states results; it does not narrate
@@ -38,6 +43,9 @@ always less precise than the literal statement.
 | pruning only cheapens blocks | pruning only decreases novelty |
 | obtained for free | obtained without further hypotheses |
 | mechanisation earns its keep here | the value of mechanisation is concentrated here |
+| speed is bought where … | the schedule accelerates only where … |
+| what the rule buys anything for | the whole of what the rule contributes |
+| every deferred block gets cheaper | every deferred block's novelty only decreases |
 
 **Avoid figurative verbs and nouns.** A metaphor that has to be decoded
 is slower to read than the thing it replaces.
@@ -91,6 +99,24 @@ here"*. Naming which hypothesis a result consumes, and where.
 - **Cross-references** use `§n.m`. After renumbering, re-run the audit in
   §4 below; a reference to a section that no longer exists is the most
   common casualty of restructuring.
+- **Section references in docstrings name their document** — `` `spec.md`
+  §3.2 ``, `report §6.9` — never a bare `§4.2`. In the generated
+  appendices a bare reference reads as a report section, and it may even
+  *resolve* to one by coincidence, which the resolution check cannot
+  catch. Audit check 6 enforces this.
+- **Uniqueness and superlative claims are the most fragile sentences.**
+  "the only consumer", "used at exactly one place", "nothing else
+  imports", "derived twice" — each is true of an architecture and false
+  of its successor. When results move, search for these before searching
+  for names.
+- **Generated regions are never edited by hand.** Text between
+  `BEGIN/END GENERATED` markers is owned by its generator; a global edit
+  (a renumbering script especially) that touches it silently diverges
+  the document from source until the next regeneration reverts the fix.
+- **A topic confined to its own section gets pointers only elsewhere.**
+  Outside the section, at most a bare pointer — naming no theorem and no
+  assumption of the confined topic — as with the legacy quorum route
+  (report §13).
 
 ## 3. The Lean source
 
@@ -108,22 +134,38 @@ here"*. Naming which hypothesis a result consumes, and where.
 - **Arcs are additive.** A new development goes in its own directory and
   consumes the core read-only. If it requires a change to the core, that
   is a finding to report, not a refactor to perform quietly.
+- **Every public declaration carries its own `/-- … -/` docstring.** A
+  `/-!` section comment documents the section and attaches to nothing; a
+  definition whose explanation lives only there shows bare in the
+  reference.
+- **Docstrings precede attributes**: `/-- … -/` above `@[simp]`, not
+  between the attribute and the declaration, which does not parse.
 - **Standard axioms only** — `propext`, `Classical.choice`, `Quot.sound`.
   No `sorry`, no bespoke axioms, no `native_decide`.
 
 ## 4. Before committing a document change
 
-Four checks. The first two are mechanical:
+The mechanical part is one pipeline, and the pre-merge ritual is to run
+it and require an empty diff — which regeneration being deterministic
+makes meaningful:
 
+    lake build
+    lake env lean scripts/DepGraph.lean > docs/depgraph/deps.tsv
+    scripts/extract-decls.py && scripts/gen-reference.py
+    scripts/depgraph.py && scripts/svg2pdf.sh
     scripts/audit-report.py
+    git diff --stat   # empty, or the committed state was stale
 
-1. **Cross-references resolve.** Every `§n.m` names a section that
-   exists — the usual casualty of renumbering.
-2. **Identifiers resolve.** Every backticked Lean name is a declaration
-   of the built library. The declaration list comes from
-   `docs/depgraph/deps.tsv`, so **regenerate the extraction first**
-   (`docs/depgraph/README.md`); against a stale `deps.tsv` every result
-   added since it was written reports as unknown.
+`audit-report.py` runs six checks: cross-references resolve;
+identifiers resolve against the extraction (regenerate it first — a
+stale `deps.tsv` reports every new result as unknown); displayed
+statements name nothing their declaration lacks; displayed statements
+are verbatim, as tokenised subsequences of the source; the banned
+phrases of §1 are absent, appendices included; and docstring section
+references are qualified.
+
+Two judgement checks remain:
+
 3. **Claims are consistent with what was added.** New material commonly
    falsifies an older sentence — a count, a "these two are the whole
    of …", a "two routes" that has become three. Search for the numeral.

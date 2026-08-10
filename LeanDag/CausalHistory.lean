@@ -66,7 +66,7 @@ theorem mem_ids_of_reaches {c b : BlockId} (hc : c ∈ U.ids) (h : Reaches U c b
   | tail _ hstep ih => exact U.complete _ ih _ hstep
 
 /-- A block with no references reaches only itself. In particular genesis
-blocks (§3.2, `refs_empty_of_round_zero`) are causal-history leaves. -/
+blocks (`spec.md` §3.2, `refs_empty_of_round_zero`) are causal-history leaves. -/
 theorem eq_of_reaches_of_refs_empty {c b : BlockId} (hc : (U.block c).refs = ∅)
     (h : Reaches U c b) : b = c := by
   rcases h.cases_head with heq | ⟨_, hstep, _⟩
@@ -77,7 +77,7 @@ theorem eq_of_reaches_of_refs_empty {c b : BlockId} (hc : (U.block c).refs = ∅
 sits at a round no greater than `c`'s.
 
 This is the substantive half of T2 — reflexivity, single steps and
-transitivity are inherited from `ReflTransGen`. It rests on §3.2's
+transitivity are inherited from `ReflTransGen`. It rests on `spec.md` §3.2's
 predecessor condition, applied at each step to an intermediate id that
 `mem_ids_of_reaches` keeps inside the universe. -/
 theorem round_le_of_reaches {c b : BlockId} (hc : c ∈ U.ids) (h : Reaches U c b) :

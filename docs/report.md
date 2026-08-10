@@ -4661,7 +4661,7 @@ What each validator had in hand, one round at a time — and which of it it chos
 
 **Two fields, because delivery and policy are two things.** `held` is what the network brought; `accepted` is what the validator will reference. Until equivocation nothing forces them apart, and a structure carrying only `held`, with `includes` demanding that a correct validator reference *everything* it held, would be **unsatisfiable** the moment a correct validator holds both halves of an equivocation: `distinct_creators` forbids referencing two blocks by one author, so no valid block exists and the validator cannot build at all. See `dos-equivocation-and-growth.md` §4.
 
-`held` must *not* be deduplicated: `U` is defined as every block some correct validator held (§4.2), so pruning at the delivery layer would put the second half of an equivocation outside the universe altogether. The choice of which half to accept is left unspecified, exactly as the timeout is — the model says what was in hand and what was built on, never how either was decided.
+`held` must *not* be deduplicated: `U` is defined as every block some correct validator held (`liveness.md` §4.2), so pruning at the delivery layer would put the second half of an equivocation outside the universe altogether. The choice of which half to accept is left unspecified, exactly as the timeout is — the model says what was in hand and what was built on, never how either was decided.
 
 #### `Live`
 
@@ -5076,7 +5076,7 @@ def ViewsConverge (D : Delivery U) : Prop :=
 
 **Untimed view convergence.** What a correct validator holds when it builds for round `n` is held by every correct validator when *it* builds for round `n` — no clock, no Δ, no GST.
 
-Restricted to correct-authored blocks, deliberately: a Byzantine author may send to some correct validators and not others, and no network assumption should forbid that (§4.3).
+Restricted to correct-authored blocks, deliberately: a Byzantine author may send to some correct validators and not others, and no network assumption should forbid that (report §4.3).
 
 #### `HoldsOwn`
 
@@ -6417,7 +6417,7 @@ theorem refs_nonempty (h : ValidWrt blk b) (h0 : 0 < b.round) : b.refs.Nonempty
 
 A non-genesis block has at least one reference. Used by T3's inductive step, which needs only this much of validity.
 
-Proved from the quorum condition **alone**, deliberately not via `card_refs`: the image of `∅` is `∅`, so an empty `refs` would give an empty creator set. Routing through `card_refs` would drag `distinct_creators` onto T3's dependency path, and the whole point of §3.2's analysis is that Phase 1 and 1b never need it.
+Proved from the quorum condition **alone**, deliberately not via `card_refs`: the image of `∅` is `∅`, so an empty `refs` would give an empty creator set. Routing through `card_refs` would drag `distinct_creators` onto T3's dependency path, and the whole point of `spec.md` §3.2's analysis is that Phase 1 and 1b never need it.
 
 #### `exists_correct_mem_creators_inter`
 
@@ -6565,7 +6565,7 @@ theorem eq_of_reaches_of_refs_empty {c b : BlockId} (hc : (U.block c).refs = ∅
     (h : Reaches U c b) : b = c
 ```
 
-A block with no references reaches only itself. In particular genesis blocks (§3.2, `refs_empty_of_round_zero`) are causal-history leaves.
+A block with no references reaches only itself. In particular genesis blocks (`spec.md` §3.2, `refs_empty_of_round_zero`) are causal-history leaves.
 
 #### `round_le_of_reaches`
 
@@ -6578,7 +6578,7 @@ theorem round_le_of_reaches {c b : BlockId} (hc : c ∈ U.ids) (h : Reaches U c 
 
 **T2.** Causal history runs downward in rounds: anything `c` reaches sits at a round no greater than `c`'s.
 
-This is the substantive half of T2 — reflexivity, single steps and transitivity are inherited from `ReflTransGen`. It rests on §3.2's predecessor condition, applied at each step to an intermediate id that `mem_ids_of_reaches` keeps inside the universe.
+This is the substantive half of T2 — reflexivity, single steps and transitivity are inherited from `ReflTransGen`. It rests on `spec.md` §3.2's predecessor condition, applied at each step to an intermediate id that `mem_ids_of_reaches` keeps inside the universe.
 
 #### `mem_history_iff`
 
@@ -6589,7 +6589,7 @@ theorem mem_history_iff {b i : BlockId} (hb : b ∈ U.ids) :
     i ∈ history U b ↔ Reaches U b i
 ```
 
-**The representation is faithful** (§7 S6). For a block of the universe, membership of `history` and reachability are the same thing.
+**The representation is faithful** (`dos-equivocation-and-growth.md` §7 S6). For a block of the universe, membership of `history` and reachability are the same thing.
 
 #### `mem_history_self`
 
@@ -7104,7 +7104,7 @@ theorem decided_of_leader_of_populated (hT : T ⊆ (Correct : Finset Validator))
 
 **L4, against a horizon.** The form every capstone uses: production is available as a single `Populated` hypothesis up to a horizon, and the three rounds L4 needs are read off it.
 
-Stated separately because the capstones of §§6–10 all reach L4 the same way — restrict `Populated` to `T`, three times, at `slotRound k`, `+1` and `+2` — and doing that inline obscures which hypothesis is actually being consumed.
+Stated separately because the capstones of report §§6–10 all reach L4 the same way — restrict `Populated` to `T`, three times, at `slotRound k`, `+1` and `+2` — and doing that inline obscures which hypothesis is actually being consumed.
 
 #### `decided_of_correct_leader`
 
@@ -7432,7 +7432,7 @@ theorem eventuallyDelivers_toDelivery
     EventuallyDelivers vg.toDelivery R
 ```
 
-**N2a, derived.** The induced delivery satisfies eventual DAG synchrony from `R` on — the assumption of §6.7, obtained from view convergence and the schedule.
+**N2a, derived.** The induced delivery satisfies eventual DAG synchrony from `R` on — the assumption of report §6.7, obtained from view convergence and the schedule.
 
 The horizon is no longer an obstruction. `EventuallyDelivers` quantifies over every round, including `N`, where it asserts that a correct round-`N` block is in hand when its holder builds for round `N+1`; `waits` reaching past the horizon is exactly what supplies that step, and above `N` the statement is vacuous because no block exists there.
 
@@ -7855,7 +7855,7 @@ theorem card_viewUpto_le {κ : ℕ} (hbyz : ByzBudget D κ)
           n * ((Correct : Finset Validator).card * (F.f * κ)))
 ```
 
-**B4 — unconditional linear storage.** Under nothing but the enforceable budget and the reference discipline — no synchrony, no `R`, no delivery guarantee — every correct validator's retained view is linear in the round: at most one block per correct author per round, plus the global Byzantine pool. This is the §6 pre-`R` conjecture, closed: the base the capstone measures from is itself linear, so the DoS bound holds from round 0 under full asynchrony.
+**B4 — unconditional linear storage.** Under nothing but the enforceable budget and the reference discipline — no synchrony, no `R`, no delivery guarantee — every correct validator's retained view is linear in the round: at most one block per correct author per round, plus the global Byzantine pool. This is `dos-equivocation-and-growth.md` §6's pre-`R` conjecture, closed: the base the capstone measures from is itself linear, so the DoS bound holds from round 0 under full asynchrony.
 
 ### Garbage collection
 

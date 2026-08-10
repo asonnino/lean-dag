@@ -4,7 +4,14 @@
   1. every section cross-reference names a section that exists;
   2. every backticked Lean identifier names a declaration that exists;
   3. every displayed theorem statement still matches its source signature;
-  4. every displayed statement is a faithful abridgement of the source.
+  4. every displayed statement is a faithful abridgement of the source;
+  5. the banned-phrase list of docs/style.md is absent, appendices included;
+  6. every section reference in a source docstring names its document.
+
+Check 6 exists because a bare `§4.2` in a docstring surfaces in the
+generated appendices, where a reader takes it for a report section; twice
+this session such a reference resolved to a report section by
+coincidence, which check 1 cannot catch.
 
 Check 4 is the strict one: the report's rendering, tokenised, must be a
 subsequence of the declaration's own text. Dropping binders or clauses is
@@ -177,6 +184,18 @@ def extracted_names(root):
     return names
 
 
+# High-precision register violations only; docs/style.md carries the tables.
+BANNED = re.compile(
+    r"\b(load[- ]bearing|earns its keep|for free|buys|bought|at the price"
+    r"|turned out|an earlier (?:draft|version)|worth recording|first draft"
+    r"|the old (?:schedule|spacing|proof)|gets cheaper|is spent)\b", re.I)
+
+# A docstring section reference is qualified when a document name or the
+# word "report" sits within forty characters before or after it.
+SECREF = re.compile(r"§§?\d")
+QUALIFIER = re.compile(r"\.md`|report", re.I)
+
+
 def load_extracted(root):
     path = root / "docs/decls.json"
     if not path.exists():
@@ -212,6 +231,27 @@ def audit(path, decls, suffixes):
             continue  # a single English word, not a Lean name
         if not resolves(tok, decls, suffixes):
             failures.append(("ident", tok))
+
+    # check 5: the banned phrases, over the whole document
+    for i, line in enumerate(text.split("\n"), 1):
+        m = BANNED.search(line)
+        if m:
+            failures.append(("banned", f"line {i}: `{m.group(0)}`"))
+
+    # check 6: docstring section references are qualified
+    dpath = ROOT / "docs/decls.json"
+    if dpath.exists():
+        for d in json.loads(dpath.read_text()):
+            if not d["module"].startswith("LeanDag."):
+                continue
+            doc = d["doc"]
+            for m in SECREF.finditer(doc):
+                window = doc[max(0, m.start() - 40):m.end() + 40]
+                if not QUALIFIER.search(window):
+                    failures.append(("secref",
+                                     f"{d['name']} ({d['module'].removeprefix('LeanDag.')}): "
+                                     f"…{doc[max(0, m.start() - 24):m.end() + 6]}…"))
+                    break
 
     # check 3: displayed statements still match their source signatures
     sigs = source_declarations(ROOT)
@@ -251,7 +291,8 @@ def audit(path, decls, suffixes):
           f"statements ({checked} compared verbatim)")
     for kind, item in failures:
         label = {"xref": "unresolved section", "ident": "unknown declaration",
-                 "stale": "stale displayed statement"}.get(kind, "not verbatim")
+                 "stale": "stale displayed statement", "banned": "banned phrase",
+                 "secref": "unqualified section reference"}.get(kind, "not verbatim")
         print(f"  FAIL {label}: {item}")
     if not failures:
         print("  ok")
