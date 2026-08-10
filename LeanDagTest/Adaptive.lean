@@ -1,7 +1,9 @@
 import LeanDag.Adaptive.Basic
 import LeanDag.Adaptive.Run
 import LeanDag.Adaptive.Liveness
+import LeanDag.Adaptive.Odontoceti
 import LeanDagTest.Model
+import LeanDagTest.Odontoceti.Model
 
 /-!
 # Adaptive leaders, witnessed: the induced instance and the bounded relation
@@ -239,5 +241,84 @@ theorem demote_placesRuns : PlacesRuns demotePolicy {0, 1} 1 := by
 #print axioms LeanDag.AdaptivePolicy.const_run_decided
 #print axioms run7
 #print axioms demote_placesRuns
+
+/-! ## The two-round mirror, witnessed
+
+The bounded Odontoceti relation on the `Uodo`/`Uskip` families of
+`Odontoceti/Model.lean`: the direct commit at a bound, the reassignment
+moving a slot's committed block (`8`, not `7` — six validators, so the
+donor of the reassigned identity has a block in every round), and the
+indirect commit *with its canonicity clause* carried through the bound —
+the constructor the three-round relation does not have. -/
+
+/-- One leader per round on the Odontoceti schedule: rounds are `k`. -/
+theorem odo_inj : Function.Injective (odoSlots.slotRound) := by
+  intro a b h
+  change 1 * (a / 1) = 1 * (b / 1) at h
+  omega
+
+/-- The base rotation, as a plain function. -/
+def oBase : ℕ → Fin 6 := fun k => ⟨k % 6, by omega⟩
+
+/-- Slot `1`'s leader moves to validator `2`. -/
+def oSwap : ℕ → Fin 6 := fun k => if k = 1 then 2 else oBase k
+
+/-- The bounded two-round direct commit at slot `1`, base rotation. -/
+theorem uodo_decidedWithin_slot1 :
+    Odontoceti.DecidedWithin (S := slotsOf odo_inj oBase)
+      Uodo (View.full Uodo) 2 1 (some 7) :=
+  Odontoceti.DecidedWithin.directCommit (S := slotsOf odo_inj oBase)
+    (by omega) (by decide) (by decide)
+
+/-- **The verdict moves with the assignment, two-round rule**: under
+`oSwap` the slot-`1` candidate is block `8`, and it commits directly. -/
+theorem uodo_decidedWithin_slot1_swap :
+    Odontoceti.DecidedWithin (S := slotsOf odo_inj oSwap)
+      Uodo (View.full Uodo) 2 1 (some 8) :=
+  Odontoceti.DecidedWithin.directCommit (S := slotsOf odo_inj oSwap)
+    (by omega) (by decide) (by decide)
+
+-- The embedding and agreement, exercised on the two-round side.
+example : Odontoceti.Decided Uodo (View.full Uodo) 1 (some 7) :=
+  uodo_decidedWithin_slot1.toDecided
+example : some (7 : Fin 24) = some 7 :=
+  Odontoceti.DecidedWithin.agree (S := slotsOf odo_inj oBase)
+    uodo_decidedWithin_slot1 uodo_decidedWithin_slot1
+
+/-- **The canonicity clause through the bound**: `Uskip`'s slot `1` is
+undecided directly and commits through the slot-`3` anchor as the least
+passing candidate — the `Odontoceti.DecidedWithin.indirectCommit`
+constructor in full, inside bound `4`. -/
+theorem uskip_decidedWithin_slot1 :
+    Odontoceti.DecidedWithin (S := slotsOf odo_inj oBase)
+      Uskip (View.full Uskip) 4 1 (some 7) := by
+  refine Odontoceti.DecidedWithin.indirectCommit (S := slotsOf odo_inj oBase)
+    (j := 3) (A := 21) (by omega) (by omega) (by decide)
+    (Odontoceti.DecidedWithin.directCommit (S := slotsOf odo_inj oBase)
+      (by omega) (by decide) (by decide))
+    ?_ (by decide) (by decide) ?_
+  · intro i h1 h2 h3
+    have : i = 2 := by omega
+    subst this
+    exact absurd h3 (by decide)
+  · intro L' hL' ht' hlt
+    have hall : ∀ M : Fin 36,
+        IsLeaderBlock (S := odoSlots) Uskip 1 M → M = 7 := by decide
+    have := hall L' hL'
+    subst this
+    exact absurd hlt (lt_irrefl _)
+
+/-- Congruence on the two-round side: an assignment differing only
+above the bound derives the same verdict. -/
+example :
+    Odontoceti.DecidedWithin (S := slotsOf odo_inj (fun k => if 4 ≤ k then 0 else oBase k))
+      Uskip (View.full Uskip) 4 1 (some 7) :=
+  Odontoceti.decidedWithin_congr
+    (fun m hm => by rw [if_neg (by omega)])
+    uskip_decidedWithin_slot1
+
+#print axioms LeanDag.Odontoceti.adaptiveRun_agree
+#print axioms LeanDag.Odontoceti.adaptiveRun_exists
+#print axioms uskip_decidedWithin_slot1
 
 end LeanDagTest
