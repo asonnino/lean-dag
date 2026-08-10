@@ -115,8 +115,12 @@ def source_declarations(root):
         starts = [i for i, l in enumerate(lines) if DECL_START.match(l)]
         for n, i in enumerate(starts):
             end = starts[n + 1] if n + 1 < len(starts) else len(lines)
-            decls.setdefault(DECL_START.match(lines[i]).group(1),
-                             " ".join(lines[i:end]))
+            name = DECL_START.match(lines[i]).group(1)
+            # Short names may repeat across namespaces (a protocol variant
+            # lives in its own namespace, per the style guide), so keep the
+            # text of every declaration of the name: a displayed statement
+            # is checked against all of them, and drift means matching none.
+            decls[name] = decls.get(name, "") + " " + " ".join(lines[i:end])
     return decls
 
 

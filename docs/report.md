@@ -39,7 +39,7 @@ shows the same correct validator can be censored for ever without
 synchrony, so the upgrade from aggregate to individual inclusion
 genuinely costs the synchrony assumption.
 
-On the same foundation, unchanged, we develop five further machine-checked
+On the same foundation, unchanged, we develop six further machine-checked
 accounts. First, **denial-of-service resistance**: safety is shown
 independent of any anti-equivocation condition, and a correct validator's
 storage is bounded under an enforceable, author-blind *novelty budget* — with
@@ -63,9 +63,14 @@ crashed validator rejoins with one constant-size message denoting a block
 for every missed round — a donor's references plus a forced self
 reference — with production restored, no commit conjured for slots the
 network already passed, and every verdict reached before the fill
-re-derived and agreed after it.
+re-derived and agreed after it. Sixth, **adaptive leader schedules**:
+Hammerhead-style reassignment of the leaders ahead, computed from the
+agreed prefix, is proved safe unconditionally — the schedule-and-verdict
+fixpoint is unique under no synchrony assumption, for arbitrary adapted
+policies — and live exactly when the policy keeps placing runs of
+reliable leaders.
 
-The development comprises roughly 19,500 lines of Lean 4 over Mathlib. Every
+The development comprises roughly 21,000 lines of Lean 4 over Mathlib. Every
 principal result depends on exactly Lean's three standard axioms; every
 definition is exercised on concrete models by `decide` before anything is
 proved from it. All displayed Lean in this report is drawn from the source
@@ -89,14 +94,16 @@ proof. This report is a machine-checked account, in Lean 4 over Mathlib, of
 this protocol family: a core development of safety and liveness organised
 around a structural liveness condition we call *eventual DAG synchrony*,
 a chain-quality account of what the committed ledger contains, and, on
-that unchanged foundation, five further developments — storage bounds
+that unchanged foundation, six further developments — storage bounds
 under adversarial equivocation; garbage collection without consensus on
 the cut; the safety and liveness of the two-round protocol Odontoceti,
 including a repair its published argument requires; reactive schedules
 under which consensus proceeds at network speed, with the timeout as a
 fallback that a fast network never triggers; and Safe Skip, by which a
 crashed validator rejoins production with a single message, with every
-prior verdict proved to survive the recovery.
+prior verdict proved to survive the recovery; and adaptive leader
+schedules, with the reassignment fixpoint proved unique — safety
+needing no synchrony at all — and live under a run-placing policy.
 
 ### 1.1 DAG-based consensus
 
@@ -146,7 +153,7 @@ proof effort with no corresponding proof content.
    refinement into LiDO-DAG. What is claimed is the *form* of the account —
    theirs is operational, quantified over traces and instants; here liveness is
    stated as a condition on the DAG, and the dependence on time is confined to
-   two files below a `Prop`-valued interface (§6.8–§6.9, §17).
+   two files below a `Prop`-valued interface (§6.8–§6.9, §18).
 
 4. **Three derivations** of the structural property — from an abstract
    delivery model (§6.7), from GST (§6.8), and from **view convergence**
@@ -159,14 +166,14 @@ proof effort with no corresponding proof content.
    the GST crossing (`ViewGrowth.populatedOn` (V6)) — so the entire liveness
    account rests on one view-shaped assumption. A legacy quorum-based
    route, retained in a module nothing else imports, is discussed
-   separately (§14).
+   separately (§15).
 
 5. A precise account of the **trust boundary** (§4). What is assumed reduces to
    the fault bound and a single network condition — view convergence — serving
    coverage and production alike; every other condition is a clause of the
    protocol, which a designer controls. In particular reference coverage
    is derived rather than assumed, and the one point at which a network parameter
-   constrains the specification is the wait threshold of §16.1.
+   constrains the specification is the wait threshold of §17.1.
 
 6. **Quantitative forms** (§6.11): the round from which coverage holds, given
    explicitly; a bound on the slot at which the next commit occurs; and an
@@ -220,6 +227,15 @@ proof effort with no corresponding proof content.
    reached before the fill re-derives and agrees after it
    (`SkipMsg.decided_fill_agree` (SS6)).
 
+13. **Adaptive leaders** (§13): a Hammerhead-style schedule — the leaders
+   ahead recomputed from the agreed prefix — proved safe and live for both
+   commit rules. Safety is uniqueness of the schedule-and-verdict fixpoint,
+   with no synchrony or fairness hypothesis of any kind
+   (`adaptiveRun_agree` (AL3)); liveness is its existence under the one
+   clause that prices the policy (`adaptiveRun_exists` (AL5)); and the
+   layer is rule-agnostic, its two-round mirror consuming the policy
+   objects unchanged (AL7).
+
 ### 1.4 Scope and non-goals
 
 The development is deliberately bounded in four respects — a fifth, the
@@ -247,7 +263,7 @@ first.
   are shown agreed; totally ordering the blocks released by a single commit
   requires a tie-break which the development declines to assume (§5.6).
 - **No wall-clock latency.** The wait bound of §6.11 is a duration, but the total
-  elapsed time to a commit is not derived (§16.6).
+  elapsed time to a commit is not derived (§17.6).
 
 ### 1.5 Organisation
 
@@ -258,7 +274,7 @@ ledger) and §6 liveness, grounded on view convergence (culminating in
 recurring commits, `commits_recur_on`, the three derivations of eventual
 DAG synchrony, and the quantitative wait bound). §7 proves the chain-quality account — coverage
 without synchrony, inclusion with it (`chain_quality`,
-`committed_of_correct_block`). §§8–12 present the five further
+`committed_of_correct_block`). §§8–13 present the six further
 developments —
 denial-of-service resistance (`dos_resistance`), garbage collection
 (`decided_agree_chop`, `card_retained_le`, `bootstrap_agree`),
@@ -266,9 +282,11 @@ Odontoceti (`Odontoceti.decided_unique`,
 `Odontoceti.all_decided_below_of_fairRun`), and the reactive schedule
 (`ReactiveM.decided` (RS2), `Odontoceti.reactive_decided` (RS3),
 `ReactiveCore.no_timeout_of_fast` (RS4)), and safe-skip recovery
-(`SkipMsg.decided_fill_agree` (SS6)). §13 exhibits the witness models,
-§15 describes the mechanisation, §16 discusses the formulation, the lessons
-of the extensions, and the limitations, §17 surveys related work, and §18
+(`SkipMsg.decided_fill_agree` (SS6)), and adaptive leader schedules
+(`adaptiveRun_agree` (AL3), `adaptiveRun_exists` (AL5)). §14 exhibits
+the witness models,
+§16 describes the mechanisation, §17 discusses the formulation, the lessons
+of the extensions, and the limitations, §18 surveys related work, and §19
 concludes. Appendix A indexes every
 principal statement against its Lean name and module. Throughout, displayed
 Lean is drawn from the source; binders are occasionally elided for layout,
@@ -439,7 +457,8 @@ and **N** and **R** (protocol, network and rate clauses of the trust
 boundary, §4), **CQ** (chain quality, §7),
 **D**/**C**/**B** (the denial-of-service development, §8),
 **G** (garbage collection, §9), **O** (Odontoceti, §10), **RS** (the
-reactive schedule, §11), and **SS** (safe skip, §12). The labels match
+reactive schedule, §11), **SS** (safe skip, §12), and **AL** (adaptive
+leaders, §13). The labels match
 the companion documents and the source comments; Appendix A maps each to its Lean
 name and module.
 
@@ -639,8 +658,8 @@ computing base (§4.3). Assumed.
 
 Logically all of these are antecedents: each is a field of a structure or class,
 and every theorem quantifying over a block universe or over the relevant
-instances carries it. None is an axiom in the sense of §15, and their joint
-satisfiability is a proof obligation discharged by exhibition (§13) rather than
+instances carries it. None is an axiom in the sense of §16, and their joint
+satisfiability is a proof obligation discharged by exhibition (§14) rather than
 something the logic must be trusted for. The distinction drawn here is
 epistemic, not logical, and it is what determines where the trust boundary of
 the system actually falls.
@@ -668,7 +687,7 @@ P10 is a joint condition rather than a pure specification: the schedule is the
 designer's, but which validators are reliable is not. Round-robin discharges it
 whenever the reliable set is of quorum size, since at most `f` of every `n`
 consecutive leaders then lie outside it; `rrSlots` witnesses this with a window
-of `f + 1` (§13).
+of `f + 1` (§14).
 
 **P8 deserves the most emphasis of any clause here**, and is easily mistaken for
 a routine one. It states that a correct validator holding a quorum at round `r`
@@ -717,7 +736,7 @@ the model constrains it, `Correct` being a set complement (§2.1).
 
 P9 is the clause whose *sufficiency* is not under the designer's control: the
 timeout may be chosen freely, but whether the chosen value is long enough
-depends on the network. §6.11 determines the threshold it must meet, and §16.1
+depends on the network. §6.11 determines the threshold it must meet, and §17.1
 discusses the consequences.
 
 ### 4.2 The fault model
@@ -775,7 +794,7 @@ differences matter more than they appear to.
 
 `held v n` is what `v` had in hand *at the moment it built its
 round-`(n+1)` block* — not what it eventually receives. That build-time
-index is the essential modelling device (§16.1): a block's references are
+index is the essential modelling device (§17.1): a block's references are
 frozen at construction, so what bears on the DAG's shape is what was held
 when the builder acted. `View.ids` is a finite set of identifiers with no
 index of either kind, which is why no formulation is stated over it.
@@ -790,7 +809,7 @@ the untimed form (§6.9). The network contributes nothing to production
 beyond the one convergence clause it already supplies for coverage.
 
 A third, legacy route — a quorum-conditional delivery assumption from
-which production follows with no temporal input — is confined to §14.
+which production follows with no temporal input — is confined to §15.
 
 #### Coverage: N2, in three forms
 
@@ -854,7 +873,7 @@ rather than inside it.
 #### Where they are consumed
 
 Neither role is discharged where its name suggests, and the extracted
-support graph (§15) makes the pattern checkable rather than asserted.
+support graph (§16) makes the pattern checkable rather than asserted.
 
 Production is consumed as a `Populated` hypothesis: L6, the
 committed-run results, the quantitative results and the capstones of
@@ -905,7 +924,7 @@ is not observable and a crashed validator — correct, by §2.1 — may have
 produced nothing to wait for. The timed structures may instead assume
 production outright, carrying a block per validator per round as data
 (§6.10). A delivery premise matched by the quorum wait, for production
-*before* GST or with no clock at all, is the legacy condition of §14;
+*before* GST or with no clock at all, is the legacy condition of §15;
 the main line does not need one.
 
 *And nothing else.* No condition on the environment appears in the
@@ -934,7 +953,7 @@ same foundation derives *production* rather than coverage
 (`populated_of_viewsConverge`).
 
 It is stated as a hypothesis of L4 and L6 in order to keep those arguments free
-of temporal notions (§6.10), and supplied to them by the results above. §16
+of temporal notions (§6.10), and supplied to them by the results above. §17
 discusses the formulation.
 
 **What "derived" does and does not mean here.** Each route derives
@@ -1092,12 +1111,12 @@ by violating a clause; read across to see what a result depends on.
 
 | | Clause | Consumed by |
 |:---|:---|:---|
-| P1 | `ValidWrt.predecessor` | T2, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L0, CQ3, CQ5, CQ6, CQ7, C2, D15a, C1′, C3′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, G9, SS1, SS2, SS3, SS4, SS5, SS6 |
-| P2 | `ValidWrt.distinct_creators` | M5′, M5, M6, C1′, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G12, G8, O1′, O4′, O5, O6, SS1, SS2, SS3, SS4, SS5, SS6 |
-| P3 | `ValidWrt.quorum` | T3, T3a, T3c, M2, M4, M6, L0, CQ5, CQ6, CQ7, D15a, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, SS1, SS2, SS3, SS4, SS5, SS6 |
+| P1 | `ValidWrt.predecessor` | T2, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L0, CQ3, CQ5, CQ6, CQ7, C2, D15a, C1′, C3′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, G9, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6 |
+| P2 | `ValidWrt.distinct_creators` | M5′, M5, M6, C1′, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G12, G8, O1′, O4′, O5, O6, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6, AL7 |
+| P3 | `ValidWrt.quorum` | T3, T3a, T3c, M2, M4, M6, L0, CQ5, CQ6, CQ7, D15a, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6 |
 | P3′ | `ValidWrt.self_parent` | C1′, C3′, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G11, G12, G8, G9, SS1, SS2, SS3, SS4, SS5, SS6 |
-| P4 | `BlockUniverse.complete` | T2, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L0, L3, L6, L8b, CQ3, CQ5, CQ6, CQ7, C2, D15a, C1′, C3′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, G9, O7, O10, SS1, SS2, SS3, SS4, SS5, SS6 |
-| P5 | `BlockUniverse.no_equivocation` | T1, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L7b, L7c, L8a, L9, C2, D15a, C1′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G12, G8, O1, O1′, O2, O4′, O5, O6, SS1, SS2, SS3, SS4, SS5, SS6 |
+| P4 | `BlockUniverse.complete` | T2, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L0, L3, L6, L8b, CQ3, CQ5, CQ6, CQ7, C2, D15a, C1′, C3′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, G9, O7, O10, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6, AL7 |
+| P5 | `BlockUniverse.no_equivocation` | T1, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L7b, L7c, L8a, L9, C2, D15a, C1′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G12, G8, O1, O1′, O2, O4′, O5, O6, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6, AL7 |
 | P7 | `Delivery.includes` | L7a, C3′, B5, G6, G6b, G7, G11, G12, G9 |
 | P8 | `Live.builds` | V5; V6 via its timed counterpart `ViewGrowth.builds` |
 | P9a | `Timing.waits` | L7b, L7c, L8a, L9 |
@@ -1342,14 +1361,14 @@ requiring that it not build too early.
 Reference coverage is not among them. It is not a clause a validator could
 execute, since it refers to `Correct`, which no validator can observe; it is
 what (a) and (b) *produce* against a synchronous network, and it is derived
-accordingly (§4.4, §16.2).
+accordingly (§4.4, §17.2).
 
 The chapter is organised around two interface predicates, and every
 result above them consumes them as hypotheses rather than reaching for a
 network assumption: **production** (`Populated`, §6.3) and **coverage**
 (`SynchronisedOn`, §6.4). The main line discharges both from a single
 network clause, view convergence, in §6.7–§6.9. (A legacy quorum-based
-alternative is confined to §14.)
+alternative is confined to §15.)
 
 ### 6.1 Density
 
@@ -1384,7 +1403,7 @@ structure Delivery (U) where
 
 The indexing of `held` is essential: `held v n` denotes what `v` had in hand *at
 the moment it built its round-`(n+1)` block*, not what `v` eventually receives.
-This is the build-time index which a view cannot supply (§16.1). Between holding
+This is the build-time index which a view cannot supply (§17.1). Between holding
 and referencing sits **acceptance** — at most one block per author, correct
 blocks always taken — which is deliberately where the protocol may refuse:
 the DoS arc's novelty budget (§8) is a rule about `accepted`, and the
@@ -1420,7 +1439,7 @@ induction of `ViewGrowth.populatedOn` (V6) in the timed setting, and of
 `populated_of_viewsConverge` (V5) in the untimed one (§6.9), both running
 `builds` against blocks that convergence places in the builder's hands.
 
-(A legacy derivation from a quorum assumption is presented in §14.)
+(A legacy derivation from a quorum assumption is presented in §15.)
 
 The horizon `N` is not a technical convenience. Since `U.ids` is finite, a
 formulation without the bound `r < N` would require infinitely many distinct
@@ -1480,7 +1499,7 @@ The predicate is antitone in `T` (`SynchronisedOn.mono`), which allows results
 established at `T := Correct` to be supplied to the quorum-relative statements of
 §6.6.
 
-The condition is derived, not assumed (§4.4); §16 discusses its formulation.
+The condition is derived, not assumed (§4.4); §17 discusses its formulation.
 
 ### 6.5 Monotonicity and propagation
 
@@ -1614,7 +1633,7 @@ convenient shape, and discharged from `converges` where it is not.
 does not state that correct blocks eventually reach `v`, but that they are members
 of `D.held v n`. That indexing is what carries the argument, and it is exactly
 what a
-view-shaped statement lacks (§16.1).
+view-shaped statement lacks (§17.1).
 
 ### 6.8 Deriving coverage: the timing route
 
@@ -1721,7 +1740,7 @@ structure ViewSync (U) (T : Finset Validator) (N : ℕ) where
 ```
 
 `holds v t` is what `v` holds **at time `t`** — the temporal index a
-`View` cannot supply (§16.1). `converges` is then partial synchrony
+`View` cannot supply (§17.1). `converges` is then partial synchrony
 stated exactly as one would say it in words: *after GST, whatever a
 correct validator holds reaches every correct validator within Δ*. It
 mentions no block, no round and no reference.
@@ -1846,7 +1865,7 @@ waiting rule secures it, since correctness is not observable and a
 crashed validator — correct, by §2.1 — may have produced nothing to wait
 for. Its value is uniformity of shape with the timed clause; the
 deployable behaviour, a quorum wait bounded by a timeout, is the timed
-route's, and liveness is proved from it. (§14 compares this condition
+route's, and liveness is proved from it. (§15 compares this condition
 with the weaker legacy quorum form.) And **the untimed condition is not a delivery assumption but
 a delivery assumption combined with a waiting clause.** In the untimed model
 that fusion cannot be undone, for a structural reason:
@@ -2042,7 +2061,7 @@ blocks everywhere.
 
 ### 6.10 The layering
 
-![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §15 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
+![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §16 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
 
 No theorem above `SynchronisedOn` mentions time, and no theorem below it mentions
 certificates. The diagram also locates the trust boundary: the leftmost column is
@@ -2089,7 +2108,7 @@ Skolemised, and `exists_blk_of_populatedOn` (V7) is the identification. What
 the two derivations differ in is where the induction may start: at round
 `0` for the untimed one, and only past GST for the timed one, since
 `converges` says nothing before it. (A third, legacy derivation is
-confined to §14.)
+confined to §15.)
 
 The routes may therefore be summarised by what each assumes and what it
 still owes:
@@ -2345,7 +2364,7 @@ each with a round-`δ` block in `ledgerSet`. No synchrony, no delivery
 model, no populated rounds appear in any hypothesis.
 
 **The boundary, witnessed.** Aggregate coverage is *not* individual
-inclusion. The witness model `Ucens` (CQ8) (§13) runs six rounds in which
+inclusion. The witness model `Ucens` (CQ8) (§14) runs six rounds in which
 three validators reference only each other and commit with the full
 certificate pattern, while a fourth — correct, building validly, never
 referenced — is the missing author of **every** layer of **every**
@@ -2485,7 +2504,7 @@ theorem creators_refs_eq_correct (hdos : DoSValid U) (hb : b ∈ U.ids)
 and the commit chain still operates over
 them: the witness model `Uexcl` carries a
 direct commit whose three rounds all lie after the exclusion of its
-equivocator (§13). Nor does exclusion depend on favourable circumstances:
+equivocator (§14). Nor does exclusion depend on favourable circumstances:
 *density* establishes that a
 cone can be selectively blind to at most `f` correct authors per round, even
 below Byzantine blocks, because the quorum clause forces every layer of
@@ -2518,7 +2537,7 @@ theorem card_history_le' (hdos : DoSValid U) (hb : b ∈ U.ids) :
 ```
 
 The exponential constant is not an artefact of the proof: a matching family of
-witnesses (`Udouble` (C5), §13) realises `2^(e−2)` growth from `e` equivocators,
+witnesses (`Udouble` (C5), §14) realises `2^(e−2)` growth from `e` equivocators,
 so any bound obtainable from reference-validity conditions alone carries a
 constant exponential in `f`. This is the assessment of the exposure
 mechanism as a *storage* defence: it is the right accountability layer — it
@@ -2654,7 +2673,7 @@ exclusion terminates it. On data,
 the budget is satisfiable at its exact constant: the witness schedule
 `Dtwin` satisfies `UniformBudget 3` with its costliest acceptance costing
 exactly `3`, and `ByzBudget 0` — nothing Byzantine accepted after the
-genesis round (§13).
+genesis round (§14).
 
 How should the parameter `T` be set? Any `T ≥ 1` admits every correct block
 post-`R` (the sandwich's `f·κ + 1` with `κ = 0` would be the correct-only
@@ -2718,7 +2737,7 @@ limitations**: an equivocation whose witnessing pair falls strictly below
 the cut is forgiven — in `chop U G` its author is no longer exposed — while
 a pair *at* the cut survives into the base layer. §9.5 prices the
 forgiveness; the witness file exhibits it on data, an exposure present in
-the full universe and absent from its truncation (§13).
+the full universe and absent from its truncation (§14).
 
 ### 9.2 Verdicts survive the cut
 
@@ -2858,7 +2877,7 @@ correct store, the store rides into its keeper's next block
 (`viewUpto_subset_history` (B7), §8.4), and the backbone carries that block into
 every correct round-`t` cone — a cone *is* an attestation. The lag is tight
 on data: at `t = m + 1` the witness exhibits an accepted equivocation half
-missing from the base (§13). Consequently the joiner's assembly — base as
+missing from the base (§14). Consequently the joiner's assembly — base as
 genesis layer plus a correct peer's window strictly above the cut — is a
 bona-fide view of the truncation (`joinView`; downward closure is the
 content: window references above the cut stay in the window, references *at*
@@ -2952,7 +2971,7 @@ continues to apply to the same types. The stronger bound is consumed in
 exactly two proofs (O2 and O4′ below) — the two-round rule's *direct* safety
 already holds at `3f+1`. The witness file proves the reuse claim as a
 computation: a quorum-5 universe over six validators satisfies the untouched
-`BlockUniverse` by `decide` (§13). Nothing outside `LeanDag/Odontoceti/`
+`BlockUniverse` by `decide` (§14). Nothing outside `LeanDag/Odontoceti/`
 was modified.
 
 ### 10.2 The rule layer, and the arithmetic core
@@ -3080,7 +3099,7 @@ from both passing the test at one anchor. The counting that would be needed
 valid six-validator universe, a Byzantine leader's two round-0 twins each
 gather exactly three supporters (disjoint correct pairs plus the
 equivocator's own split), and a round-3 block sees all of round 1 — **both
-twins pass `ThickLink` against it**, by `decide` (`utwin6_both_pass` (O11), §13).
+twins pass `ThickLink` against it**, by `decide` (`utwin6_both_pass` (O11), §14).
 An indirect rule that commits "some passing candidate" therefore admits
 derivations committing either twin: agreement is *refutable*.
 
@@ -3286,7 +3305,7 @@ processing per round.
 
 ### 11.4 The witness, and a constant it corrected
 
-`ugrowReactive` (§13) runs the Mysticeti structure on the round-robin
+`ugrowReactive` (§14) runs the Mysticeti structure on the round-robin
 schedule at build spacing `6` inside a timeout of `7`: every fallback
 branch untaken, the commit, the latency bound and the
 strictly-inside-deadline conclusion all exhibited on data. Its
@@ -3294,7 +3313,7 @@ processing constant is honest rather than generous: `proc = 5` is the
 least value `prompt_vote` admits on this model, because a validator's
 shortcut to its *own* round-`r` block lets the trigger fire one tick
 before the slowest peer's block would force it. The witness refused to
-compile at `4` — the house rule of §13 catching an over-tight constant
+compile at `4` — the house rule of §14 catching an over-tight constant
 in a clause that read as obviously right.
 
 ---
@@ -3513,7 +3532,7 @@ theorem decided_fill_agree {V : View Validator BlockId Payload U}
 
 ### 12.4 The witness
 
-`Ucrash N` (SS7, §13) is the round-robin family with validator `3`
+`Ucrash N` (SS7, §14) is the round-robin family with validator `3`
 crashed after its genesis block: three validators run full lines whose
 references omit the absent author, and `3` owns exactly one block. The
 message `ucrashMsg` targets validator `1`'s line, and the development's
@@ -3524,7 +3543,262 @@ the full view with `hq` discharged by counting the three live authors.
 
 ---
 
-## 13. Satisfiability
+## 13. Adaptive leaders: the schedule as a fixpoint
+
+*(modules `LeanDag/Adaptive/`; the design record is `adaptive-leaders.md`)*
+
+Deployed systems do not run the blind rotation the `Slots` instance
+models: Hammerhead-style implementations consult the agreed prefix
+after a commit and reassign the leaders ahead, demoting validators
+whose slots were skipped. The intuition for safety is this
+development's own agreement theorem — the verdict sequence is agreed
+(M6, M7), so any function of it is agreed, and every correct validator
+derives the same revised schedule. Turning the intuition into a proof
+meets a circularity the base development does not have. In the decision
+relation verdicts flow *downward*: a slot is decided indirectly by
+anchoring on a committed slot above it, arbitrarily far up. An adaptive
+schedule makes leader identity flow *upward*: the leaders of a high
+slot depend on verdicts below. Composed without restriction, the
+verdict of a slot may depend on the leader of its own anchor, whose
+identity depends on that verdict — and nothing rules out two
+*self-justifying* schedules, an agreement failure manufactured by the
+mechanism itself.
+
+The arc stratifies the dependency and proves the fixpoint forced:
+**safety is unconditional** — any two adaptive fixpoints agree, under
+no synchrony or fairness hypothesis, for arbitrary, even adversarial,
+adapted policies (AL3) — while **liveness prices the policy's
+choices** through one clause, the adaptive counterpart of the run
+fairness the fixed schedule assumes (AL5). Both hold for both commit
+rules: the adaptive layer is rule-agnostic, and its two-round mirror
+consumes the policy objects unchanged (AL7).
+
+### 13.1 Epochs, the lag, and the bounded relation
+
+Slots are grouped into epochs of `W` consecutive slots
+(`epochOf W k := k / W`); the schedule of an epoch is a function of the
+verdicts of epochs at least two below it, and an epoch's verdicts must
+be derivable with anchors strictly below the start of the epoch two
+above. The dependency is then well-founded — each stage consults
+strictly earlier data than the stage above it produces — and the lag of
+two is the least that works: with lag one, the slots at the top of an
+epoch would have no eligible anchors inside their window. This mirrors
+what deployments do, applying reputation to leader selection after a
+pipeline delay.
+
+The stratification cannot be expressed with `Decided`, whose
+derivations record no bound on their anchors — the relation is a
+`Prop`, and a derivation's anchors cannot be recovered from it. The
+bound therefore lives in the statement (AL2):
+
+```lean
+inductive DecidedWithin (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (B : ℕ) : ℕ → Option BlockId → Prop
+  …
+  | indirectCommit {k j : ℕ} {A L : BlockId} :
+      k < j → j < B → Eligible Validator k j → DecidedWithin U V B j (some A) →
+      (∀ i, k < i → i < j → Eligible Validator k i → DecidedWithin U V B i none) →
+      IsLeaderBlock U k L → CertifiedIn U A L (S.slotRound k) →
+      DecidedWithin U V B k (some L)
+  …
+```
+
+Two structural lemmas carry the whole arc. `DecidedWithin.toDecided`
+forgets the bound, so every safety theorem of the base development
+applies to bounded verdicts without restatement — agreement for the new
+relation *is* M6. And congruence: the relation reads the schedule's
+`leader` only at slots below `B` (only `IsLeaderBlock` consults it; the
+round structure is fixed), so two assignments agreeing below the bound
+derive exactly the same verdicts —
+
+```lean
+theorem decidedWithin_congr {hinj : Function.Injective S.slotRound}
+    {a₁ a₂ : ℕ → Validator} {V : View Validator BlockId Payload U} {B k : ℕ}
+    {v : Option BlockId} (ha : ∀ m, m < B → a₁ m = a₂ m)
+    (h : DecidedWithin (S := slotsOf hinj a₁) U V B k v) :
+    DecidedWithin (S := slotsOf hinj a₂) U V B k v
+```
+
+— which is what permits judging an epoch against a schedule only
+partially determined. `slotsOf` (AL1) is the `Slots` instance a leader
+assignment induces over the base round structure; one leader per round
+(`slotRound` injective) makes its `keyed` clause a lemma, where under
+multi-leader rounds a reassignment could collide two slots of one round
+onto one validator and the policy would owe the distinctness clause
+itself. The multi-leader obligation is recorded and not pursued.
+
+### 13.2 The policy and the run
+
+`AdaptivePolicy` packages the reassignment rule with the clauses it
+owes:
+
+```lean
+structure AdaptivePolicy (Validator : Type*) [Fintype Validator]
+    [DecidableEq Validator] [Faults Validator] (BlockId : Type*)
+    [DecidableEq BlockId] (Payload : Type*) [S : Slots Validator] where
+  W : ℕ
+  …
+  pick : BlockUniverse Validator BlockId Payload →
+    (ℕ → Option BlockId) → ℕ → Validator
+  adapted : ∀ U v w k,
+    (∀ j, epochOf W j + 2 ≤ epochOf W k → v j = w j) →
+    pick U v k = pick U w k
+  base_prefix : ∀ U v k, epochOf W k < 2 → pick U v k = S.leader k
+```
+
+`adapted` is the measurability clause and the heart of the safety
+argument: the leader of slot `k` is a function of the verdicts of
+epochs `≤ epochOf k − 2` and of nothing else. `pick` receives the
+universe so that a reputation rule may consult the committed blocks
+themselves — certification patterns, payload contents — and not merely
+the verdict vector; in this model the universe is the shared ground
+truth, so no agreement question arises from that argument. What a
+*deployed* validator may consult is its committed prefix only: as with
+the enforceability discussion of §4.7, the model states the
+mathematical condition and the implementation owes the discipline.
+Fairness is deliberately absent from the structure — safety must hold
+for policies that violate it.
+
+The central object is a schedule-and-verdict pair coherent with the
+policy, every slot decided inside its epoch window against the schedule
+the policy computes from the verdicts themselves:
+
+```lean
+structure AdaptiveRun (P : AdaptivePolicy Validator BlockId Payload)
+    (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) where
+  assign : ℕ → Validator
+  vdct : ℕ → Option BlockId
+  closed : ∀ k, DecidedWithin (S := slotsOf P.inj assign) U V
+    (P.W * (epochOf P.W k + 2)) k (vdct k)
+  coherent : ∀ m, assign m = P.pick U vdct m
+```
+
+Existence and uniqueness are deliberately separated, mirroring the
+base development's split between the `Decided` relation and
+`decided_unique`: **uniqueness is the safety theorem, existence is the
+liveness theorem.** A partial variant (`PartialRun`, closed up to an
+epoch height) states what a validator holds mid-execution.
+
+### 13.3 Safety: the fixpoint is unique
+
+**AL3.**
+```lean
+theorem adaptiveRun_agree {P : AdaptivePolicy Validator BlockId Payload}
+    {V₁ V₂ : View Validator BlockId Payload U}
+    (R₁ : AdaptiveRun P U V₁) (R₂ : AdaptiveRun P U V₂) :
+    (∀ k, R₁.vdct k = R₂.vdct k) ∧ (∀ m, R₁.assign m = R₂.assign m)
+```
+
+Two adaptive fixpoints over one universe — derived from *any* two
+views, under *no* synchrony or fairness hypothesis — hold the same
+verdicts and run the same schedule. The proof is a strong induction on
+epochs in which nothing about counting is ever re-proved: verdict
+agreement below an epoch forces the two assignments to agree through
+the epoch above it (`adapted`), which places both runs' derivations in
+the *same* `Slots` instance (`decidedWithin_congr`), where agreement is
+M6 through the embedding. The induction is carried by the partial-run
+form (`partialRun_agree`), so validators that have not decided equally
+far agree on their common prefix. Two corollaries: the commit sequence
+read from any two runs is the same list (`adaptive_commitSeq_agree`,
+AL6, the shape of M7), and under the constant policy a run's verdicts
+are ordinary `Decided` verdicts of the base schedule
+(`AdaptivePolicy.const_run_decided`, AL4) — the anchor demanded by the
+house rule that a new relation must instantiate to the old one.
+
+### 13.4 Liveness: the fixpoint exists
+
+Existence consumes the standard interface — `SynchronisedOn` and
+`Populated`, both untouched by reassignment, since neither mentions a
+leader — plus the one clause that prices the policy:
+
+```lean
+def PlacesRuns (P : AdaptivePolicy Validator BlockId Payload)
+    (T : Finset Validator) (c : ℕ) : Prop :=
+  ∀ (U : BlockUniverse Validator BlockId Payload) (v : ℕ → Option BlockId)
+    (e : ℕ), ∃ b, P.W * (e + 1) ≤ b ∧ b + c ≤ P.W * (e + 2) ∧
+      ∀ i, i < c → P.pick U v (b + i) ∈ T
+```
+
+Every assignment the policy can emit places, in each epoch past the
+base prefix, a run of `c` consecutive `T`-led slots — `FairRunOn`,
+relativised to the policy's outputs. Hammerhead's purpose lands on this
+clause: a policy that reacts to observed skips satisfies it by
+construction where a blind rotation satisfies it by assumption — but
+which validators are reliable is not the designer's to know, so it
+remains a joint condition exactly as P10 is.
+
+**AL5.**
+```lean
+theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hc : 0 < c) (hruns : PlacesRuns P T c)
+    (hspans : SpansEligible (Validator := Validator) c)
+    (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
+    (hpop : ∀ r, Populated U r) :
+    Nonempty (AdaptiveRun P U (View.full U))
+```
+
+The construction instantiates the base machinery once per epoch and
+counts nothing anew: the run `PlacesRuns` puts in epoch `e + 1` commits
+directly (L4 at the induced instance), the committed-run descent —
+restated with the anchors' bound carried through, the base proof
+already anchoring at or below the run's top — clears the epoch below
+it, and `exists_partialRun` stacks epochs under a finite horizon,
+re-reading the schedule off the verdicts so far at each stage. Partial
+runs at every height then glue into a total run along the diagonal,
+with `partialRun_agree` supplying the coherence that the
+stage-by-stage choices need not. A total run decides every slot there
+is, which is why its growth hypothesis is `∀ r, Populated U r`; the
+finite-horizon statement is `exists_partialRun`, and it is the
+witnessable form.
+
+### 13.5 The two-round mirror
+
+The Odontoceti development (AL7) exhibits that the layer is
+rule-agnostic. `AdaptivePolicy` and `PlacesRuns` are consumed as found
+— they are protocol-free — and only the decision relation is mirrored:
+`Odontoceti.DecidedWithin` carries the canonicity clause of the
+two-round indirect commit through the bound, and its congruence
+transports the clause in both directions, the candidate set reading
+the schedule only through `IsLeaderBlock`, which the protocols share.
+Per epoch, agreement is O5 through the embedding exactly as the
+three-round side used M6, and existence consumes O7 and the bounded
+two-round descent with its least-candidate selection — two populated
+rounds where Mysticeti needs three:
+
+```lean
+theorem adaptiveRun_agree {P : AdaptivePolicy Validator BlockId Payload}
+    {V₁ V₂ : View Validator BlockId Payload U}
+    (R₁ : AdaptiveRun P U V₁) (R₂ : AdaptiveRun P U V₂) :
+    ∀ k, R₁.vdct k = R₂.vdct k
+```
+
+`Faults5` supplies the `Faults` instance the shared policy layer
+expects, so nothing is restated on the way.
+
+### 13.6 The witness, and what remains
+
+`demotePolicy` (AL8, §14) is genuinely adaptive at epoch length one —
+a slot whose verdict two below was a skip is handed to a fixed
+replacement — and the witness exhibits the phenomena the theorems govern:
+the same DAG under a reassigned leader commits a *different block* for
+a slot, on both rules; a vacuous skip moves a later slot's leader off
+the base rotation; two total runs over distinct views are constructed
+and shown verdict- and schedule-identical by AL3; and the two-round
+indirect commit carries its canonicity clause through the bound on
+data.
+
+One question from the design record remains open (AL9): whether the
+anchor bound is *necessary* — a model with two self-justifying runs
+under unbounded anchors would justify the stratification the way the
+`bound_is_necessary` witness justified the convergence bound. The
+interaction between an anchor's leader and the verdict it anchors is
+delicate, and the answer may need more than four validators.
+
+---
+
+## 14. Satisfiability
 
 Every structure carrying conditions is exhibited satisfiable by a concrete model
 over four validators at `f = 1`. This is a substantive component of the
@@ -3541,6 +3815,7 @@ every theorem above it vacuous, and vacuity is not otherwise detectable.
 | `rrSlots` | `Slots`, round-robin, satisfying `FairWithin T (f+1)` and `BoundedSpacing 3` |
 | `Model.lean` | six `BlockUniverse` instances exercising the safety definitions |
 | `Ucrash N`, `ucrashMsg` | `SkipMsg`: a crashed line, the message against it, and the fill (SS7) |
+| `demotePolicy`, `run7` | `AdaptivePolicy`, `AdaptiveRun`, `PlacesRuns`: a genuinely adapting policy and its total runs (AL8) |
 
 Three of the models are tight, which is what renders the constants meaningful.
 
@@ -3562,7 +3837,7 @@ is required for a quorum and none may lag. Such a model requires `f ≥ 2`. This
 the combined fault budget of §4.2 appearing as a concrete obstruction rather than
 as an inequality.
 
-The conditions of §§7–12 are witnessed in the same style, at their own
+The conditions of §§7–13 are witnessed in the same style, at their own
 boundary instances: chain quality on `Ucens` (CQ8) — the one model that is
 simultaneously CQ1's tightness witness (`missingAt = {3}` at every layer
 of the committed cone, exactly `f`) and the censorship exhibit
@@ -3578,11 +3853,14 @@ schedule is witnessed at §11.4's `ugrowReactive`, and Safe Skip on `Ucrash`
 (SS7): the fill's reference sets and cardinality computed by `decide`, the
 gap populated, the filled candidate skipped, and `decided_fill` applied to
 the full view with its quorum hypothesis discharged by counting the three
-live authors.
+live authors. Adaptive leaders are witnessed on `demotePolicy` (AL8): the
+same DAG under a reassigned leader commits a different block on both
+rules, a vacuous skip moves a later slot's leader off the base rotation,
+and two views' total runs are constructed and shown identical by AL3.
 
 ---
 
-## 14. Liveness from the quorum assumption: the legacy route
+## 15. Liveness from the quorum assumption: the legacy route
 
 *(module `LeanDag/Network/Quorum.lean`, which nothing else imports)*
 
@@ -3594,7 +3872,7 @@ guarantee the ordinary quorum-waiting rule matches, and the only one
 whose content survives below GST; a reader
 interested solely in the current account may skip this section entirely.
 
-### 14.1 The assumption
+### 15.1 The assumption
 
 ```lean
 def DeliversQuorum (D : Delivery U) : Prop :=
@@ -3633,7 +3911,7 @@ an assumption*: `card_creators_accepted_of_eventuallyDelivers` derives
 the accepted quorum from coverage with `Populated`. N1's real content is
 therefore the pre-GST prefix.
 
-### 14.2 The derivation, and what serves it
+### 15.2 The derivation, and what serves it
 
 ```lean
 theorem no_stall {D : Delivery U} (H : Live U D N) (hd : DeliversQuorum D) :
@@ -3657,7 +3935,7 @@ neither — G5 takes `Populated` directly); and the bundled statement
 `no_stall_and_card_viewUpto_le`, which asserts growth and the DoS
 storage bound of one execution under one set of hypotheses.
 
-### 14.3 The comparison, and why the route is retained
+### 15.3 The comparison, and why the route is retained
 
 Against the untimed view-convergence form, N1 is **weaker**:
 `ViewsConverge` promises every correct block, always, where N1 promises
@@ -3681,17 +3959,17 @@ The extraction bounds the route's footprint exactly. Nothing outside
 `Network/Quorum.lean` imports it; of the labelled results, only L1 —
 the route itself — and G5's transfer lemmas reach N1, and the DoS
 capstone consumes production as a hypothesis it may, but need not,
-discharge here. The witnesses of §13 exercise the route at every
+discharge here. The witnesses of §14 exercise the route at every
 horizon (`ugrow_deliversQuorum`, `no_stall` on `Ugrow`), so retaining it
 costs nothing but this section.
 
 ---
 
-## 15. Mechanisation
+## 16. Mechanisation
 
-The development comprises approximately 19,500 lines of Lean 4 (v4.32.2)
-against Mathlib, of which some 13,100 constitute the library and 6,400 the
-models of §13 and the witness files of the arcs. A full build reports no
+The development comprises approximately 21,000 lines of Lean 4 (v4.32.2)
+against Mathlib, of which some 14,200 constitute the library and 6,800 the
+models of §14 and the witness files of the arcs. A full build reports no
 errors.
 
 **Axiom audit.** Every principal result — among them
@@ -3703,7 +3981,8 @@ errors.
 `chop_chop`, `Odontoceti.decided_unique`, `Odontoceti.safety` and
 `Odontoceti.all_decided_below_of_fairRun`, `chain_quality`,
 `committed_of_correct_block`, `SkipMsg.decided_fill` (SS5) and
-`SkipMsg.decided_fill_agree` (SS6) — depends on exactly `propext`,
+`SkipMsg.decided_fill_agree` (SS6), `adaptiveRun_agree` (AL3) and
+`adaptiveRun_exists` (AL5) — depends on exactly `propext`,
 `Classical.choice` and `Quot.sound`, which constitute the whole axiom set of
 Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 `native_decide` and the extended trusted base it entails.
@@ -3723,12 +4002,12 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Mysticeti.lean` | the commit rule; eligibility; M1–M6; the ledger |
 | `Schedule.lean` | concrete schedules (`uniform`, `uniformSingle`); conservativity |
 | `Liveness.lean` | L0, L2–L6, L7a; the committed-run results |
-| `Network/Quorum.lean` | the legacy quorum route (§14) |
+| `Network/Quorum.lean` | the legacy quorum route (§15) |
 | `Timing.lean` | L7b |
 | `ViewSync.lean` | L7c: view convergence, the reduction to `Timing`, the factoring of the bound, the untimed variant, production derived rather than assumed, and the delivery a timed structure induces |
 | `Quantitative.lean` | L8a, L8b, L9 |
 
-**The arcs** (§§7–12), each consuming the core read-only:
+**The arcs** (§§7–13), each consuming the core read-only:
 
 | Module | Contents |
 |:---|:---|
@@ -3754,10 +4033,15 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Drift/Catchup.lean` | the catch-up clause; the collapse; the deployment-free threshold |
 | `SafeSkip/Basic.lean` | the message and its denotation; the fill is a universe; production restored; the filled candidate skipped |
 | `SafeSkip/Invariance.lean` | conservativity at the rule layer; verdict invariance; agreement across a recovery |
+| `Adaptive/Basic.lean` | epochs; the induced instance; the bounded relation, its embedding and congruence |
+| `Adaptive/Policy.lean` | the reassignment policy and its clauses |
+| `Adaptive/Run.lean` | the adaptive run; safety as uniqueness; conservativity; the agreed ledger |
+| `Adaptive/Liveness.lean` | the bounded descent; the fairness clause; existence |
+| `Adaptive/Odontoceti.lean` | the two-round mirror |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
 | `Quality/Capstone.lean` | the windowed bounds and `chain_quality` (CQ7) |
-| `LeanDagTest/` | the models of §13 and the witness files of every arc |
+| `LeanDagTest/` | the models of §14 and the witness files of every arc |
 
 **The support graph, extracted.** The dependency structure of the
 development is not documented by hand: `scripts/DepGraph.lean` walks
@@ -3807,13 +4091,13 @@ literature. Every statement in this report is drawn from the source.
 
 ---
 
-## 16. Discussion
+## 17. Discussion
 
 The first four subsections concern the core account's central design
-choice — where the synchrony assumption lives; §16.5 draws the lessons of
-the three extensions; §16.6 records what remains open.
+choice — where the synchrony assumption lives; §17.5 draws the lessons of
+the three extensions; §17.6 records what remains open.
 
-### 16.1 Locating the synchrony assumption
+### 17.1 Locating the synchrony assumption
 
 The synchrony assumption may be stated in terms of views:
 
@@ -3874,7 +4158,7 @@ and the threshold is `2Δ + proc` with no start-spread hypothesis (§6.12).
 Because Δ is not known to an implementation, no constant can be fixed in
 advance. A backoff is the specification's response — a search for a sufficient
 constant, written into the algorithm — and its only relevant property is that
-the search terminates (§16.2).
+the search terminates (§17.2).
 
 **The network guarantee must be indexed to the moment of building.** A block's
 references are fixed at its construction, so what bears on the derivation is not
@@ -3887,7 +4171,7 @@ time-indexed family of views would serve equally well; the requirement is the
 index, not the vehicle. This is an observation about formalisation, and it is the
 reason `SynchronisedOn` is stated on `refs`.
 
-### 16.2 Why coverage is derived rather than specified
+### 17.2 Why coverage is derived rather than specified
 
 Reference coverage could not have been made a clause of the protocol, which is
 the deeper reason it appears as a derived property. `SynchronisedOn` refers to
@@ -3914,7 +4198,7 @@ onwards — with no condition on shape, rate, or driving signal. §6.11 carries 
 to its conclusion: with Δ known, a constant timeout of `D₀ + Δ` suffices and the
 loop disappears.
 
-### 16.3 Consequences of the abstraction
+### 17.3 Consequences of the abstraction
 
 1. The consensus argument is purely combinatorial, involving round indices and
    finite-set cardinalities. Under a message-level assumption every statement
@@ -3926,7 +4210,7 @@ loop disappears.
 4. The condition composes with the safety development, mentioning only `U.ids`,
    `U.block` and `refs` — the vocabulary that development already employs.
 
-### 16.4 Costs
+### 17.4 Costs
 
 Δ does not appear above the interface. Introducing it would require views indexed
 by an instant and every statement quantified over instants, for no proof content.
@@ -3939,7 +4223,7 @@ chain must terminate at a network assumption; what the reformulation achieves
 is to place that assumption where it belongs — on the network, as one clause
 over views — and to keep it out of every statement above.
 
-### 16.5 Lessons from the extensions
+### 17.5 Lessons from the extensions
 
 Three lessons generalise beyond the particular arcs.
 
@@ -3976,13 +4260,13 @@ behind the canonicity gap fits in six validators and twenty-five blocks;
 what was needed to find it was not scale but the obligation to state the
 indirect rule precisely enough to fail to prove it.
 
-### 16.6 Limitations
+### 17.6 Limitations
 
 The quantitative bounds are established (§6.11). The following remain open.
 
 **The backoff loop.** `Rated` and the threshold of R4 are stipulated as clauses
 of the specification; no realistic adaptive scheme is shown to satisfy them, and
-the feedback mechanism of §16.2 is not modelled. Moreover
+the feedback mechanism of §17.2 is not modelled. Moreover
 `Timing.timeout : ℕ → ℕ` is indexed by round and common to the reliable set, so
 that a per-validator backoff — in which validators increase their timeouts at
 different moments — cannot be expressed, let alone shown to converge. This
@@ -4036,7 +4320,7 @@ much they say.
 
 ---
 
-## 17. Related work
+## 18. Related work
 
 **Certified and uncertified DAGs.** In a certified DAG — DAG-Rider, Narwhal with
 Tusk or Bullshark [DKSS22, SGSK22], Sailfish [SSKN25] — a block is disseminated
@@ -4098,11 +4382,11 @@ pacemaker by refinement. The account here is structural, and no theorem above
 dependence of liveness on the round-jumping clause surfaces as a named hypothesis
 of a single lemma rather than as a condition inside a transition relation. The
 cost is that the theorems of [QXS26] cannot be stated here at all, "within
-bounded time" not being expressible in this vocabulary (§16.6).
+bounded time" not being expressible in this vocabulary (§17.6).
 
 ---
 
-## 18. Conclusion
+## 19. Conclusion
 
 This report has given a machine-checked account of uncertified DAG consensus
 organised around one idea: state the liveness condition on the object the
@@ -4128,7 +4412,7 @@ without consensus, and — in the one place the formalization diverged from a
 published argument by necessity — the observation that Odontoceti's
 agreement rests on a canonical candidate order that its paper never states.
 
-What remains open is catalogued in §16.6: the backoff dynamics, wall-clock
+What remains open is catalogued in §17.6: the backoff dynamics, wall-clock
 latency, block-level total order, and liveness below the growth clause.
 Beyond those, two directions suggest themselves. The commit-free,
 evidence-based horizon rule sketched in the garbage-collection document
@@ -4171,12 +4455,13 @@ A label — `L4`, `CQ6`, `O5` — is a cross-reference handle: the prose,
 the consumption map of §4.8 and the support diagrams of §6.10 refer to
 results through them. The series are alphabetic by area: T and M for
 the safety core, L for liveness, V for the view-convergence family, CU
-for catch-up, RS for the reactive schedule, SS for safe skip, CQ for chain quality, C, D,
+for catch-up, RS for the reactive schedule, SS for safe skip, AL for adaptive
+leaders, CQ for chain quality, C, D,
 B and E for the denial-of-service arc, G for garbage collection, O for
 Odontoceti; P, N and R name clauses of the trust boundary rather than
 results. Labels resolving to witness models rather than library
-theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7) are excluded from the
-diagrams, which show the library. Appendix C displays every indexed
+theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7, AL8) are excluded from
+the diagrams, which show the library. Appendix C displays every indexed
 result in full.
 
 ### Safety
@@ -4337,6 +4622,19 @@ result in full.
 | SS5 | verdict invariance across the fill | `SkipMsg.decided_fill` *(SafeSkip/Invariance)* |
 | SS6 | agreement across a recovery | `SkipMsg.decided_fill_agree` *(SafeSkip/Invariance)* |
 | SS7 | the crash, the message and the fill, on data | `Ucrash` witnesses *(LeanDagTest/SafeSkip)* |
+
+**Adaptive leaders** (§13):
+
+| Label | Statement | Lean |
+|:---|:---|:---|
+| AL1 | the induced instance; the base schedule is its own | `slotsOf`, `slotsOf_base` *(Adaptive/Basic)* |
+| AL2 | the bounded relation; the embedding and the congruence | `DecidedWithin`, `DecidedWithin.toDecided`, `decidedWithin_congr` *(Adaptive/Basic)* |
+| AL3 | safety: the fixpoint is unique, unconditionally | `partialRun_agree`, `adaptiveRun_agree` *(Adaptive/Run)* |
+| AL4 | conservativity at the constant policy | `AdaptivePolicy.const_run_decided` *(Adaptive/Run)* |
+| AL5 | liveness: the fixpoint exists, one epoch at a time | `epoch_closes`, `exists_partialRun`, `adaptiveRun_exists` *(Adaptive/Liveness)* |
+| AL6 | the adaptive ledger is agreed | `adaptive_commitSeq_agree` *(Adaptive/Run)* |
+| AL7 | the two-round mirror, from the same policy objects | `Odontoceti.adaptiveRun_agree`, `Odontoceti.adaptiveRun_exists` *(Adaptive/Odontoceti)* |
+| AL8 | adaptivity on data: the verdict moves with the assignment | `demotePolicy` witnesses *(LeanDagTest/Adaptive)* |
 
 ---
 
@@ -5290,7 +5588,7 @@ structure ViewSync (U : BlockUniverse Validator BlockId Payload)
   prompt : ∀ v ∈ T, ∀ n < N,
     built v (n + 1) ≤ max (built v n + timeout n) (latest n + delay)
   /-- What `v` holds at *time* `t` — the temporal index a `View` cannot
-  supply (report §16.1). This is the object the original design notes wanted the
+  supply (report §17.1). This is the object the original design notes wanted the
   synchrony assumption stated over. -/
   holds : Validator → ℕ → Finset BlockId
   /-- A validator holds its own block from the moment it builds it. -/
@@ -6840,6 +7138,279 @@ def liftView (V : View Validator BlockId Payload U) :
 
 A view of `U` is a view of the extension, unchanged: its blocks are old, and old references are preserved.
 
+### Adaptive leaders: the schedule as a fixpoint
+
+#### `epochOf`
+
+*def, `Adaptive.Basic.lean`*
+
+```lean
+def epochOf (W k : ℕ) : ℕ := k / W
+```
+
+The epoch of slot `k` at width `W`: epoch `e` is slots `[W·e, W·(e+1))`.
+
+#### `slotsOf`
+
+*def, `Adaptive.Basic.lean`*
+
+```lean
+@[reducible] def slotsOf (hinj : Function.Injective S.slotRound) (a : ℕ → Validator) :
+    Slots Validator where
+  slotRound := S.slotRound
+  leader := a
+  mono := S.mono
+  unbounded := S.unbounded
+  keyed := fun _ _ h => hinj (congrArg Prod.fst h)
+```
+
+The `Slots` instance a leader assignment induces: the base round structure, the given leaders. `keyed` is where one-leader-per-round enters: with `slotRound` injective, distinct slots differ in round whatever the assignment names.
+
+#### `DecidedWithin`
+
+*inductive, `Adaptive.Basic.lean`*
+
+```lean
+inductive DecidedWithin (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (B : ℕ) : ℕ → Option BlockId → Prop
+  /-- The direct rule commits a candidate outright. -/
+  | directCommit {k : ℕ} {L : BlockId} :
+      k < B → IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
+      DecidedWithin U V B k (some L)
+  /-- The direct rule blames every candidate. -/
+  | directSkip {k : ℕ} :
+      k < B → (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
+      DecidedWithin U V B k none
+  /-- Anchored on the nearest eligible committed slot below the bound. -/
+  | indirectCommit {k j : ℕ} {A L : BlockId} :
+      k < j → j < B → Eligible Validator k j → DecidedWithin U V B j (some A) →
+      (∀ i, k < i → i < j → Eligible Validator k i → DecidedWithin U V B i none) →
+      IsLeaderBlock U k L → CertifiedIn U A L (S.slotRound k) →
+      DecidedWithin U V B k (some L)
+  /-- Anchored likewise, no candidate is in reach. -/
+  | indirectSkip {k j : ℕ} {A : BlockId} :
+      k < j → j < B → Eligible Validator k j → DecidedWithin U V B j (some A) →
+      (∀ i, k < i → i < j → Eligible Validator k i → DecidedWithin U V B i none) →
+      (∀ L, IsLeaderBlock U k L → ¬ CertifiedIn U A L (S.slotRound k)) →
+      DecidedWithin U V B k none
+```
+
+**The bounded decision relation.** `Decided`, with every slot the derivation mentions — the decided slot, the anchor, the eligible intermediates — strictly below `B`.
+
+The bound lives in the relation because it cannot live anywhere else: a `Decided` derivation is a proof of a `Prop` and its anchors cannot be recovered from it. The adaptive fixpoint is stratified by exactly this bound — epoch `e`'s verdicts are `DecidedWithin` the start of epoch `e + 2`, which consults leaders the schedule has already determined.
+
+#### `AdaptivePolicy`
+
+*structure, `Adaptive.Policy.lean`*
+
+```lean
+structure AdaptivePolicy (Validator : Type*) [Fintype Validator]
+    [DecidableEq Validator] [Faults Validator] (BlockId : Type*)
+    [DecidableEq BlockId] (Payload : Type*) [S : Slots Validator] where
+  /-- The epoch length, in slots. -/
+  W : ℕ
+  W_pos : 0 < W
+  /-- One leader per round, for the whole arc. -/
+  inj : Function.Injective S.slotRound
+  /-- The reassignment rule: from the universe and a verdict function,
+  the leader of each slot. -/
+  pick : BlockUniverse Validator BlockId Payload →
+    (ℕ → Option BlockId) → ℕ → Validator
+  /-- **Adaptedness.** The leader of slot `k` reads the verdicts of
+  epochs `≤ epochOf k − 2` and nothing else. -/
+  adapted : ∀ U v w k,
+    (∀ j, epochOf W j + 2 ≤ epochOf W k → v j = w j) →
+    pick U v k = pick U w k
+  /-- Epochs `0` and `1` run the base schedule. -/
+  base_prefix : ∀ U v k, epochOf W k < 2 → pick U v k = S.leader k
+```
+
+A Hammerhead-style reassignment policy: epoch length, the rule, and the clauses it owes. Fairness — the clause liveness will price — is deliberately *not* here: safety must hold for arbitrary, even adversarial, adapted policies, and stating fairness where liveness consumes it keeps that separation visible.
+
+#### `const`
+
+*def, `Adaptive.Policy.lean`*
+
+```lean
+def const (W : ℕ) (hW : 0 < W) (hinj : Function.Injective S.slotRound) :
+    AdaptivePolicy Validator BlockId Payload where
+  W := W
+  W_pos := hW
+  inj := hinj
+  pick _ _ k := S.leader k
+  adapted _ _ _ _ _ := rfl
+  base_prefix _ _ _ _ := rfl
+```
+
+The constant policy: reassign nothing. The conservativity anchor — under it the adaptive development must collapse onto the base one.
+
+#### `PartialRun`
+
+*structure, `Adaptive.Run.lean`*
+
+```lean
+structure PartialRun (P : AdaptivePolicy Validator BlockId Payload)
+    (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (E : ℕ) where
+  /-- The leader assignment. -/
+  assign : ℕ → Validator
+  /-- The verdicts. -/
+  vdct : ℕ → Option BlockId
+  /-- Every slot of a closed epoch is decided inside its window: anchors
+  strictly below the start of epoch `e + 2`. -/
+  closed : ∀ k, epochOf P.W k < E →
+    DecidedWithin (S := slotsOf P.inj assign) U V
+      (P.W * (epochOf P.W k + 2)) k (vdct k)
+  /-- The assignment is the policy's, as far as the derivations read it. -/
+  coherent : ∀ m, epochOf P.W m < E + 1 → assign m = P.pick U vdct m
+```
+
+A run closed up to epoch height `E`: verdicts derived for every slot of epochs `< E`, the schedule coherent as far as those derivations read it (epochs `< E + 1`). What a validator holds mid-execution.
+
+#### `AdaptiveRun`
+
+*structure, `Adaptive.Run.lean`*
+
+```lean
+structure AdaptiveRun (P : AdaptivePolicy Validator BlockId Payload)
+    (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) where
+  /-- The leader assignment. -/
+  assign : ℕ → Validator
+  /-- The verdicts. -/
+  vdct : ℕ → Option BlockId
+  /-- Every slot is decided inside its epoch window. -/
+  closed : ∀ k, DecidedWithin (S := slotsOf P.inj assign) U V
+    (P.W * (epochOf P.W k + 2)) k (vdct k)
+  /-- The assignment is the policy's, everywhere. -/
+  coherent : ∀ m, assign m = P.pick U vdct m
+```
+
+A total run: the adaptive fixpoint itself.
+
+#### `AdaptiveRun.toPartial`
+
+*def, `Adaptive.Run.lean`*
+
+```lean
+def AdaptiveRun.toPartial {P : AdaptivePolicy Validator BlockId Payload}
+    {V : View Validator BlockId Payload U} (R : AdaptiveRun P U V) (E : ℕ) :
+    PartialRun P U V E where
+  assign := R.assign
+  vdct := R.vdct
+  closed := fun k _ => R.closed k
+  coherent := fun m _ => R.coherent m
+```
+
+A total run is partial at every height.
+
+#### `PlacesRuns`
+
+*def, `Adaptive.Liveness.lean`*
+
+```lean
+def PlacesRuns (P : AdaptivePolicy Validator BlockId Payload)
+    (T : Finset Validator) (c : ℕ) : Prop :=
+  ∀ (U : BlockUniverse Validator BlockId Payload) (v : ℕ → Option BlockId)
+    (e : ℕ), ∃ b, P.W * (e + 1) ≤ b ∧ b + c ≤ P.W * (e + 2) ∧
+      ∀ i, i < c → P.pick U v (b + i) ∈ T
+```
+
+**The adaptive fairness clause.** Every assignment the policy can emit places, in each epoch past the base prefix, a run of `c` consecutive `T`-led slots. The clause liveness prices and safety never sees: `adaptiveRun_agree` holds for policies that violate it.
+
+#### `DecidedWithin`
+
+*inductive, `Adaptive.Odontoceti.lean`*
+
+```lean
+inductive DecidedWithin (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (B : ℕ) : ℕ → Option BlockId → Prop
+  /-- The direct rule commits a candidate outright. -/
+  | directCommit {k : ℕ} {L : BlockId} :
+      k < B → IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
+      DecidedWithin U V B k (some L)
+  /-- The direct rule blames every candidate. -/
+  | directSkip {k : ℕ} :
+      k < B → (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
+      DecidedWithin U V B k none
+  /-- Anchored below the bound, the least candidate passing the indirect
+  test is committed. -/
+  | indirectCommit {k j : ℕ} {A L : BlockId} :
+      k < j → j < B → Eligible Validator k j → DecidedWithin U V B j (some A) →
+      (∀ i, k < i → i < j → Eligible Validator k i → DecidedWithin U V B i none) →
+      IsLeaderBlock U k L → ThickLink U A L (S.slotRound k) →
+      (∀ L', IsLeaderBlock U k L' → ThickLink U A L' (S.slotRound k) →
+        ¬ L' < L) →
+      DecidedWithin U V B k (some L)
+  /-- Anchored below the bound, no candidate passes. -/
+  | indirectSkip {k j : ℕ} {A : BlockId} :
+      k < j → j < B → Eligible Validator k j → DecidedWithin U V B j (some A) →
+      (∀ i, k < i → i < j → Eligible Validator k i → DecidedWithin U V B i none) →
+      (∀ L, IsLeaderBlock U k L → ¬ ThickLink U A L (S.slotRound k)) →
+      DecidedWithin U V B k none
+```
+
+The bounded two-round decision relation: `Odontoceti.Decided` with every slot mentioned strictly below `B`, canonicity clause included.
+
+#### `PartialRun`
+
+*structure, `Adaptive.Odontoceti.lean`*
+
+```lean
+structure PartialRun (P : AdaptivePolicy Validator BlockId Payload)
+    (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (E : ℕ) where
+  /-- The leader assignment. -/
+  assign : ℕ → Validator
+  /-- The verdicts. -/
+  vdct : ℕ → Option BlockId
+  /-- Every slot of a closed epoch is decided inside its window. -/
+  closed : ∀ k, epochOf P.W k < E →
+    DecidedWithin (S := slotsOf P.inj assign) U V
+      (P.W * (epochOf P.W k + 2)) k (vdct k)
+  /-- The assignment is the policy's, as far as the derivations read it. -/
+  coherent : ∀ m, epochOf P.W m < E + 1 → assign m = P.pick U vdct m
+```
+
+A run closed up to epoch height `E`, two-round rule.
+
+#### `AdaptiveRun`
+
+*structure, `Adaptive.Odontoceti.lean`*
+
+```lean
+structure AdaptiveRun (P : AdaptivePolicy Validator BlockId Payload)
+    (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) where
+  /-- The leader assignment. -/
+  assign : ℕ → Validator
+  /-- The verdicts. -/
+  vdct : ℕ → Option BlockId
+  /-- Every slot is decided inside its epoch window. -/
+  closed : ∀ k, DecidedWithin (S := slotsOf P.inj assign) U V
+    (P.W * (epochOf P.W k + 2)) k (vdct k)
+  /-- The assignment is the policy's, everywhere. -/
+  coherent : ∀ m, assign m = P.pick U vdct m
+```
+
+A total run: the adaptive fixpoint, two-round rule.
+
+#### `AdaptiveRun.toPartial`
+
+*def, `Adaptive.Odontoceti.lean`*
+
+```lean
+def AdaptiveRun.toPartial {P : AdaptivePolicy Validator BlockId Payload}
+    {V : View Validator BlockId Payload U} (R : AdaptiveRun P U V) (E : ℕ) :
+    PartialRun P U V E where
+  assign := R.assign
+  vdct := R.vdct
+  closed := fun k _ => R.closed k
+  coherent := fun m _ => R.coherent m
+```
+
+A total run is partial at every height.
+
 ### The legacy quorum route (report §13)
 
 #### `DeliversQuorum`
@@ -6862,7 +7433,7 @@ No round bound: this is what holds *before* GST too, and it is all L1 needs. Con
 
 ## Appendix C. The theorem reference
 
-The 253 theorems that either another module of the
+The 275 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -8430,7 +9001,7 @@ theorem covers_of_converges :
 
 **The derivation.** `Timing.covers` — a `T`-block built after GST and early enough is referenced — follows from view convergence and the referencing clause, with no counting and no drift: the block is in its author's hands when built (`holds_own`), reaches the builder within `delay` (`converges`), is still there when the builder acts (`holds_mono`, which is where the hypothesis `built w n + delay ≤ built v (n+1)` is consumed), and is therefore referenced (`references`).
 
-The hypothesis discharged here is exactly the race of report §16.1: view convergence delivers the block relative to when it was *sent*, and only the waiting rule places that moment before the builder acts.
+The hypothesis discharged here is exactly the race of report §17.1: view convergence delivers the block relative to when it was *sent*, and only the waiting rule places that moment before the builder acts.
 
 #### `viewsAgree_of_converges`
 
@@ -10307,6 +10878,307 @@ theorem decided_fill_agree {V : View Validator BlockId Payload U}
 
 **Agreement across a recovery.** A verdict reached before the fill agrees with any verdict reached after it, whatever view either side held — verdict invariance composed with agreement in the extension.
 
+### Adaptive leaders: the schedule as a fixpoint
+
+#### `epochOf_lt_iff`
+
+*theorem, `Adaptive.Basic.lean`*
+
+```lean
+theorem epochOf_lt_iff {W k e : ℕ} (hW : 0 < W) :
+    epochOf W k < e ↔ k < W * e
+```
+
+#### `slotsOf_leader`
+
+*theorem, `Adaptive.Basic.lean`*
+
+```lean
+@[simp] theorem slotsOf_leader (hinj : Function.Injective S.slotRound)
+    (a : ℕ → Validator) (k : ℕ) : (slotsOf hinj a).leader k = a k
+```
+
+#### `slotsOf_base`
+
+*theorem, `Adaptive.Basic.lean`*
+
+```lean
+theorem slotsOf_base (hinj : Function.Injective S.slotRound) :
+    slotsOf hinj S.leader = S
+```
+
+The base schedule is its own induced instance — the anchor for conservativity: a constant policy reassigns nothing.
+
+#### `toDecided`
+
+*theorem, `Adaptive.Basic.lean`*
+
+```lean
+theorem toDecided (h : DecidedWithin U V B k v) : Decided U V k v
+```
+
+Forgetting the bound: every bounded derivation is a `Decided` derivation, so the base safety development — M1–M6 in particular — applies to bounded verdicts without restatement.
+
+#### `mono`
+
+*theorem, `Adaptive.Basic.lean`*
+
+```lean
+theorem mono (h : DecidedWithin U V B k v) (hBB : B ≤ B') :
+    DecidedWithin U V B' k v
+```
+
+The bound relaxes upward.
+
+#### `agree`
+
+*theorem, `Adaptive.Basic.lean`*
+
+```lean
+theorem agree {V₁ V₂ : View Validator BlockId Payload U} {B₁ B₂ k : ℕ}
+    {v₁ v₂ : Option BlockId} (h₁ : DecidedWithin U V₁ B₁ k v₁)
+    (h₂ : DecidedWithin U V₂ B₂ k v₂) : v₁ = v₂
+```
+
+Two bounded verdicts agree — M6, through the embedding.
+
+#### `isLeaderBlock_slotsOf_congr`
+
+*theorem, `Adaptive.Basic.lean`*
+
+```lean
+theorem isLeaderBlock_slotsOf_congr {hinj : Function.Injective S.slotRound}
+    {a₁ a₂ : ℕ → Validator} {k : ℕ} {L : BlockId} (hk : a₁ k = a₂ k)
+    (h : IsLeaderBlock (S := slotsOf hinj a₁) U k L) :
+    IsLeaderBlock (S := slotsOf hinj a₂) U k L
+```
+
+Only the leader clause of `IsLeaderBlock` consults the assignment, at the slot itself.
+
+#### `decidedWithin_congr`
+
+*theorem, `Adaptive.Basic.lean`*
+
+```lean
+theorem decidedWithin_congr {hinj : Function.Injective S.slotRound}
+    {a₁ a₂ : ℕ → Validator} {V : View Validator BlockId Payload U} {B k : ℕ}
+    {v : Option BlockId} (ha : ∀ m, m < B → a₁ m = a₂ m)
+    (h : DecidedWithin (S := slotsOf hinj a₁) U V B k v) :
+    DecidedWithin (S := slotsOf hinj a₂) U V B k v
+```
+
+**Congruence below the bound.** Only `IsLeaderBlock` consults the assignment, and only at slots below `B`; the round structure — and with it eligibility, decision rounds and every counting predicate — is the base instance's. So two assignments agreeing below `B` derive the same bounded verdicts, which is what permits judging an epoch against a schedule only determined so far.
+
+#### `partialRun_agree`
+
+*theorem, `Adaptive.Run.lean`*
+
+```lean
+theorem partialRun_agree {P : AdaptivePolicy Validator BlockId Payload}
+    {V₁ V₂ : View Validator BlockId Payload U} {E₁ E₂ : ℕ}
+    (R₁ : PartialRun P U V₁ E₁) (R₂ : PartialRun P U V₂ E₂) :
+    ∀ k, epochOf P.W k < min E₁ E₂ → R₁.vdct k = R₂.vdct k
+```
+
+**The master agreement lemma.** Two partial runs over one universe — whatever views, whatever heights — agree on the verdicts of their common epochs and on the assignments those verdicts determine.
+
+The strong induction the module docstring describes: verdict agreement below an epoch forces assignment agreement through the epoch above it (`adapted`), which forces verdict agreement at the epoch itself (`decidedWithin_congr`, then M6 through the embedding).
+
+#### `adaptiveRun_agree`
+
+*theorem, `Adaptive.Run.lean`*
+
+```lean
+theorem adaptiveRun_agree {P : AdaptivePolicy Validator BlockId Payload}
+    {V₁ V₂ : View Validator BlockId Payload U}
+    (R₁ : AdaptiveRun P U V₁) (R₂ : AdaptiveRun P U V₂) :
+    (∀ k, R₁.vdct k = R₂.vdct k) ∧ (∀ m, R₁.assign m = R₂.assign m)
+```
+
+**Safety: the adaptive fixpoint is unique.** Two total runs over one universe — derived from any two views, under no synchrony or fairness hypothesis — hold the same verdicts and run the same schedule. Adaptive validators cannot diverge, whatever the policy adapts to.
+
+#### `adaptive_commitSeq_agree`
+
+*theorem, `Adaptive.Run.lean`*
+
+```lean
+theorem adaptive_commitSeq_agree {P : AdaptivePolicy Validator BlockId Payload}
+    {V₁ V₂ : View Validator BlockId Payload U}
+    (R₁ : AdaptiveRun P U V₁) (R₂ : AdaptiveRun P U V₂) (n : ℕ) :
+    commitSeq R₁.vdct n = commitSeq R₂.vdct n
+```
+
+**The adaptive ledger is agreed** — M7's shape: the committed-leader sequence read from any two runs' verdicts is the same list.
+
+#### `const_run_decided`
+
+*theorem, `Adaptive.Run.lean`*
+
+```lean
+theorem const_run_decided {W : ℕ} {hW : 0 < W}
+    {hinj : Function.Injective S.slotRound}
+    {V : View Validator BlockId Payload U}
+    (R : AdaptiveRun (const (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) W hW hinj) U V) (k : ℕ) :
+    Decided U V k (R.vdct k)
+```
+
+**Conservativity.** Under the constant policy a run's verdicts are ordinary `Decided` verdicts of the base schedule — the adaptive development instantiates to the base one, per the house rule that a new relation must collapse onto the old. With M6 this also pins each `vdct k` to the unique base verdict.
+
+#### `epoch_closes`
+
+*theorem, `Adaptive.Liveness.lean`*
+
+```lean
+theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hc : 0 < c) (hruns : PlacesRuns P T c)
+    (hspans : SpansEligible (Validator := Validator) c)
+    (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
+    (hpop : ∀ r ≤ N, Populated U r) (v : ℕ → Option BlockId) (E : ℕ)
+    (hN : S.slotRound (P.W * (E + 2)) + 2 ≤ N) :
+    ∀ k, epochOf P.W k < E + 1 →
+      ∃ w, DecidedWithin (S := slotsOf P.inj (fun m => P.pick U v m)) U
+        (View.full U) (P.W * (E + 2)) k w
+```
+
+**One epoch closes.** Against the schedule an arbitrary verdict function induces, every slot of epoch `E` is decided inside its window: the run `PlacesRuns` puts in epoch `E + 1` commits directly, and the bounded descent clears everything below it.
+
+#### `exists_partialRun`
+
+*theorem, `Adaptive.Liveness.lean`*
+
+```lean
+theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hc : 0 < c) (hruns : PlacesRuns P T c)
+    (hspans : SpansEligible (Validator := Validator) c)
+    (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
+    (hpop : ∀ r ≤ N, Populated U r) (E : ℕ)
+    (hN : S.slotRound (P.W * (E + 1)) + 2 ≤ N) :
+    Nonempty (PartialRun P U (View.full U) E)
+```
+
+**Partial runs exist at every height** — the witnessable, finite- horizon form of existence, by induction on the height: each stage re-reads the schedule off the verdicts so far and closes one more epoch.
+
+#### `adaptiveRun_exists`
+
+*theorem, `Adaptive.Liveness.lean`*
+
+```lean
+theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hc : 0 < c) (hruns : PlacesRuns P T c)
+    (hspans : SpansEligible (Validator := Validator) c)
+    (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
+    (hpop : ∀ r, Populated U r) :
+    Nonempty (AdaptiveRun P U (View.full U))
+```
+
+**AL5: the adaptive fixpoint exists.** On a DAG synchronised over a quorum of reliable validators and populated at every round, under a policy that places runs, a total adaptive run exists on the full view — partial runs at every height glued along the diagonal, `partialRun_agree` making the stage-by-stage choices cohere. With `adaptiveRun_agree` it is THE fixpoint: adaptive Mysticeti decides every slot, and uniquely.
+
+#### `toDecided`
+
+*theorem, `Adaptive.Odontoceti.lean`*
+
+```lean
+theorem toDecided (h : DecidedWithin U V B k v) : Decided U V k v
+```
+
+Forgetting the bound: agreement for the bounded relation *is* O5.
+
+#### `decidedWithin_congr`
+
+*theorem, `Adaptive.Odontoceti.lean`*
+
+```lean
+theorem decidedWithin_congr {hinj : Function.Injective S.slotRound}
+    {a₁ a₂ : ℕ → Validator} {V : View Validator BlockId Payload U} {B k : ℕ}
+    {v : Option BlockId} (ha : ∀ m, m < B → a₁ m = a₂ m)
+    (h : DecidedWithin (S := slotsOf hinj a₁) U V B k v) :
+    DecidedWithin (S := slotsOf hinj a₂) U V B k v
+```
+
+Congruence below the bound, canonicity clause included: the candidate set reads the schedule only through `IsLeaderBlock`, which transports in both directions at the decided slot.
+
+#### `partialRun_agree`
+
+*theorem, `Adaptive.Odontoceti.lean`*
+
+```lean
+theorem partialRun_agree {P : AdaptivePolicy Validator BlockId Payload}
+    {V₁ V₂ : View Validator BlockId Payload U} {E₁ E₂ : ℕ}
+    (R₁ : PartialRun P U V₁ E₁) (R₂ : PartialRun P U V₂ E₂) :
+    ∀ k, epochOf P.W k < min E₁ E₂ → R₁.vdct k = R₂.vdct k
+```
+
+The master agreement lemma, two-round rule — the Mysticeti induction verbatim, with O5 where it used M6.
+
+#### `adaptiveRun_agree`
+
+*theorem, `Adaptive.Odontoceti.lean`*
+
+```lean
+theorem adaptiveRun_agree {P : AdaptivePolicy Validator BlockId Payload}
+    {V₁ V₂ : View Validator BlockId Payload U}
+    (R₁ : AdaptiveRun P U V₁) (R₂ : AdaptiveRun P U V₂) :
+    ∀ k, R₁.vdct k = R₂.vdct k
+```
+
+**Safety, two-round rule: the adaptive fixpoint is unique** — with no fairness, synchrony or view hypothesis, exactly as on the three-round side.
+
+#### `epoch_closes`
+
+*theorem, `Adaptive.Odontoceti.lean`*
+
+```lean
+theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hc : 0 < c) (hruns : PlacesRuns P T c)
+    (hspans : SpansEligible Validator c)
+    (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
+    (hpop : ∀ r ≤ N, Populated U r) (v : ℕ → Option BlockId) (E : ℕ)
+    (hN : S.slotRound (P.W * (E + 2)) + 1 ≤ N) :
+    ∀ k, epochOf P.W k < E + 1 →
+      ∃ w, DecidedWithin (S := slotsOf P.inj (fun m => P.pick U v m)) U
+        (View.full U) (P.W * (E + 2)) k w
+```
+
+One epoch closes, two-round rule: O7 commits the placed run — two populated rounds where Mysticeti needs three — and the bounded descent clears the epoch below.
+
+#### `exists_partialRun`
+
+*theorem, `Adaptive.Odontoceti.lean`*
+
+```lean
+theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hc : 0 < c) (hruns : PlacesRuns P T c)
+    (hspans : SpansEligible Validator c)
+    (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
+    (hpop : ∀ r ≤ N, Populated U r) (E : ℕ)
+    (hN : S.slotRound (P.W * (E + 1)) + 1 ≤ N) :
+    Nonempty (PartialRun P U (View.full U) E)
+```
+
+Partial runs exist at every height, two-round rule.
+
+#### `adaptiveRun_exists`
+
+*theorem, `Adaptive.Odontoceti.lean`*
+
+```lean
+theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hc : 0 < c) (hruns : PlacesRuns P T c)
+    (hspans : SpansEligible Validator c)
+    (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
+    (hpop : ∀ r, Populated U r) :
+    Nonempty (AdaptiveRun P U (View.full U))
+```
+
+**AL7: adaptive Odontoceti is safe and live.** The fixpoint exists on the full view — glued along the diagonal exactly as on the three-round side — and by `Odontoceti.adaptiveRun_agree` it is unique.
+
 ### The legacy quorum route (report §13)
 
 #### `no_stall`
@@ -10349,7 +11221,7 @@ theorem live_chopD {N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
 
 ## Appendix D. Index of internal lemmas
 
-The 264 lemmas used only within the file that proves
+The 275 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -10800,6 +11672,42 @@ subsection per module, in the layer order of Appendices B and C.
 | `reaches_fill_old` | Reachability from an old block never leaves the old ids, in either universe, and coincides between them. |
 | `votesIn_fill` | Votes read identically on old certificates — for *every* candidate: an old block's references are … |
 | `votesIn_subset_ids` | — |
+
+### `Adaptive/Basic.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `epochOf_mono` | — |
+| `lt_bound` | The decided slot lies below the bound. |
+| `slotsOf_slotRound` | — |
+
+### `Adaptive/Policy.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `const_pick` | — |
+
+### `Adaptive/Run.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `adaptive_decided_agree` | The verdict form of uniqueness, in the shape of M6. |
+| `partialRun_assign_agree` | Assignments agree wherever the common verdicts determine them. |
+
+### `Adaptive/Liveness.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `decidedWithin_below_of_committed_run` | The committed-run descent, bounded. The base `decided_below_of_committed_run`, restated with the anchors' … |
+| `spansEligible_slotsOf` | Eligibility reads only the round structure, which reassignment fixes: the spanning property transfers to … |
+
+### `Adaptive/Odontoceti.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `agree` | Two bounded verdicts agree — O5, through the embedding. |
+| `decidedWithin_below_of_committed_run` | The committed-run descent, bounded — the base `Odontoceti` descent with the anchor's bound carried … |
+| `mono` | The bound relaxes upward. |
 
 ### `Network/Quorum.lean` (3)
 

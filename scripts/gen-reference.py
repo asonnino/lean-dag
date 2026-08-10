@@ -44,6 +44,9 @@ LAYERS = [
                                "Reactive.Odontoceti"]),
     ("Catch-up, and the start spread", ["Drift.Catchup"]),
     ("Safe Skip: crash recovery in one message", ["SafeSkip.Basic", "SafeSkip.Invariance"]),
+    ("Adaptive leaders: the schedule as a fixpoint",
+     ["Adaptive.Basic", "Adaptive.Policy", "Adaptive.Run", "Adaptive.Liveness",
+      "Adaptive.Odontoceti"]),
     ("The legacy quorum route (report §13)", ["Network.Quorum"]),
 ]
 

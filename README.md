@@ -71,6 +71,16 @@ Everything is stated for `n ≥ 3f+1` validators with quorums of size
   candidate is directly skipped rather than committed, and every verdict
   reached before the fill re-derives and agrees after it
   (`decided_fill_agree`).
+- **Adaptive leaders** (`LeanDag/Adaptive/`): a Hammerhead-style
+  schedule — the leaders ahead recomputed from the agreed prefix, to
+  favour validators observed live — proved safe and live for **both**
+  commit rules. Safety is unconditional: the schedule-and-verdict
+  fixpoint is unique under **no synchrony or fairness hypothesis**, for
+  arbitrary adapted policies (`adaptiveRun_agree`); liveness is its
+  existence under one clause — the policy keeps placing runs of
+  reliable leaders (`adaptiveRun_exists`); and the layer is
+  rule-agnostic, the two-round mirror consuming the same policy
+  objects.
 
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on
@@ -94,7 +104,8 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
   (`Quality/` — chain quality; `DoS/` — equivocation and the novelty
   budget; `GC/` — garbage collection; `Odontoceti/` — the two-round
   protocol; `Reactive/` — the reactive schedule; `Drift/` — catch-up
-  and the start spread; `SafeSkip/` — crash recovery in one message).
+  and the start spread; `SafeSkip/` — crash recovery in one message;
+  `Adaptive/` — adaptive leader schedules).
 - `LeanDag.lean` — root import file.
 - `LeanDagTest/` — `decide` witnesses and concrete models, mirroring the
   same layout.
