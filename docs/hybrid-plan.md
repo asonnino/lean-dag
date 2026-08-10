@@ -130,6 +130,22 @@ recovering `hybrid.md`'s constant; at `c = 0` both thresholds are
 Odontoceti's, which is what makes conservativity (§4, H8) definitional
 rather than a theorem with content.
 
+At general `n` the two candidate thresholds diverge, and *any* `k` in
+
+    2fb + fc + 1  ≤  k  ≤  n − 3fb − 2fc
+
+is admissible: the lower end is what the skip-side conflicts need
+(`q + k > n + fb`), the upper end is what link integrity supplies
+(`2q − n − fb ≥ k`), and the interval is nonempty exactly when
+`n ≥ 5fb + 3fc + 1` — the class bound *is* the existence of a working
+threshold. The development will therefore prove the rule theorems over
+an abstract `k` carrying the two interval inequalities as hypotheses,
+with `hybrid.md`'s constant and the `n`-relative choice as the two
+named instantiations. The bound itself is consumed at exactly two
+places — H3 and the O4′ mirror, the skip-side counting — with slack
+everywhere else, mirroring where `n ≥ 5f + 1` is consumed in the
+existing Odontoceti development.
+
 ## 3. Mirror, not parameterise
 
 The hybrid rules are Odontoceti's shape at new constants: direct
