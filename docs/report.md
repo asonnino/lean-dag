@@ -6555,6 +6555,23 @@ def skipFill : BlockUniverse Validator BlockId Payload where
 
 **The denotation.** `U`, extended with one filled block per gap round; every old block looked up unchanged.
 
+#### `liftView`
+
+*def, `SafeSkip.Invariance.lean`*
+
+```lean
+def liftView (V : View Validator BlockId Payload U) :
+    View Validator BlockId Payload sk.skipFill where
+  ids := V.ids
+  subset_ids := V.subset_ids.trans sk.ids_subset_skipFill
+  complete := by
+    intro i hi j hj
+    rw [sk.skipFill_block_old (V.subset_ids hi)] at hj
+    exact V.complete i hi j hj
+```
+
+A view of `U` is a view of the extension, unchanged: its blocks are old, and old references are preserved.
+
 ### The legacy quorum route (report §13)
 
 #### `DeliversQuorum`
@@ -6577,7 +6594,7 @@ No round bound: this is what holds *before* GST too, and it is all L1 needs. Con
 
 ## Appendix C. The theorem reference
 
-The 245 theorems that either another module of the
+The 249 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -9899,6 +9916,43 @@ theorem decided_of_catchup [S : Slots Validator] {k : ℕ}
 
 ### Safe Skip: crash recovery in one message
 
+#### `mem_freshIds`
+
+*theorem, `SafeSkip.Basic.lean`*
+
+```lean
+theorem mem_freshIds {b : BlockId} :
+    b ∈ sk.freshIds ↔ ∃ k, sk.r0 < k ∧ k ≤ sk.r ∧ b = sk.fresh k
+```
+
+#### `skipFill_block_old`
+
+*theorem, `SafeSkip.Basic.lean`*
+
+```lean
+@[simp] theorem skipFill_block_old {b : BlockId} (hb : b ∈ U.ids) :
+    sk.skipFill.block b = U.block b
+```
+
+Old blocks read unchanged: every store, view and certificate built on `U` sees the same data in the extension.
+
+#### `skipFill_block_fresh`
+
+*theorem, `SafeSkip.Basic.lean`*
+
+```lean
+@[simp] theorem skipFill_block_fresh {k : ℕ} :
+    sk.skipFill.block (sk.fresh k) = sk.fillBlock k
+```
+
+#### `ids_subset_skipFill`
+
+*theorem, `SafeSkip.Basic.lean`*
+
+```lean
+theorem ids_subset_skipFill : U.ids ⊆ sk.skipFill.ids
+```
+
 #### `skipFill_populatedOn`
 
 *theorem, `SafeSkip.Basic.lean`*
@@ -9967,7 +10021,7 @@ theorem live_chopD {N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
 
 ## Appendix D. Index of internal lemmas
 
-The 256 lemmas used only within the file that proves
+The 268 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -10402,14 +10456,26 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `leader_blk_eq` | The reliable leader's block of slot `k` is the one the schedule names: non-equivocation identifies any … |
 
-### `SafeSkip/Basic.lean` (4)
+### `SafeSkip/Invariance.lean` (16)
 
 | Lemma | Role |
 |:---|:---|
-| `ids_subset_skipFill` | — |
-| `mem_freshIds` | — |
-| `skipFill_block_fresh` | — |
-| `skipFill_block_old` | Old blocks read unchanged: every store, view and certificate built on `U` sees the same data in the extension. |
+| `blameSetIn_fill` | The blocks a view holds that blame a candidate read identically — for every candidate, a fresh id lying in … |
+| `certificatesIn_fill` | Certificates a view holds read identically — again for every candidate. |
+| `certificatesIn_subset_ids` | — |
+| `certifiedIn_fill` | Certification transports both ways for an old anchor: any witness certificate reached from it is itself … |
+| `certifies_fill` | — |
+| `creatorsOf_fill` | Creators read identically on old blocks. |
+| `decided_fill` | Verdict invariance. Every verdict a view reached in `U` re-derives, for the lifted view, in the extension. |
+| `decided_fill_agree` | Agreement across a recovery. A verdict reached before the fill agrees with any verdict reached after it, … |
+| `inter_view_subset_ids` | — |
+| `isLeaderBlock_fill` | A leader block of `U` remains one of the extension. |
+| `isLeaderBlock_fill_cases` | A leader block of the extension is an old one, or a filled block on a slot of the recovering validator. |
+| `liftView_ids` | — |
+| `not_certifiedIn_fresh` | No old anchor certifies a fresh candidate: everything it reaches is old, and no old reference contains a … |
+| `reaches_fill_old` | Reachability from an old block never leaves the old ids, in either universe, and coincides between them. |
+| `votesIn_fill` | Votes read identically on old certificates — for *every* candidate: an old block's references are … |
+| `votesIn_subset_ids` | — |
 
 ### `Network/Quorum.lean` (3)
 

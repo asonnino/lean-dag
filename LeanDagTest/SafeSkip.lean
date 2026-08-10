@@ -1,5 +1,7 @@
 import LeanDag.SafeSkip.Basic
+import LeanDag.SafeSkip.Invariance
 import LeanDagTest.Unbounded
+import LeanDagTest.Quantitative
 
 /-!
 # Safe Skip, witnessed
@@ -204,6 +206,52 @@ theorem ucrash_directSkip (N : ℕ) (hN : 2 ≤ N) :
   · simp only [ucrash_block, rrBlock_round]
     omega
 
+attribute [local instance 2000] rrSlots
+
+/-- The view quorum the invariance theorem consumes, discharged for the
+full view: three authors at every round above the gap. -/
+theorem ucrash_full_hq (N r : ℕ) (hrN : r < N) :
+    ∀ n, (ucrashMsg N r (le_of_lt hrN)).r0 < n → n ≤ r →
+      Fintype.card (Fin 4) - Faults.f (Fin 4) ≤
+        (creatorsOf (Ucrash N).block
+          ((blocksAt (Ucrash N) (n + 1)) ∩ (View.full (Ucrash N)).ids)).card := by
+  intro n _ hn2
+  have hsub : (Finset.univ.erase (3 : Fin 4)) ⊆
+      creatorsOf (Ucrash N).block
+        ((blocksAt (Ucrash N) (n + 1)) ∩ (View.full (Ucrash N)).ids) := by
+    intro y hy
+    rw [Finset.mem_erase] at hy
+    have hyx : (y : ℕ) ≠ 3 := fun hc => hy.1 (Fin.ext (by rw [hc]; rfl))
+    have hylt := y.isLt
+    refine mem_creatorsOf.mpr ⟨4 * (n + 1) + (y : ℕ), ?_, ?_⟩
+    · refine Finset.mem_inter.mpr ⟨?_, ?_⟩
+      · refine mem_blocksAt.mpr ⟨?_, ?_⟩
+        · simp only [ucrash_ids, Finset.mem_filter, Finset.mem_range]
+          omega
+        · simp only [ucrash_block, rrBlock_round]
+          omega
+      · change _ ∈ (Ucrash N).ids
+        simp only [ucrash_ids, Finset.mem_filter, Finset.mem_range]
+        omega
+    · apply Fin.ext
+      simp only [ucrash_block, rrBlock_creator_val]
+      omega
+  have := Finset.card_le_card hsub
+  have hcard : (Finset.univ.erase (3 : Fin 4)).card = 3 := by decide
+  have hf : Faults.f (Fin 4) = 1 := rfl
+  have hn : Fintype.card (Fin 4) = 4 := rfl
+  omega
+
+/-- **Verdict invariance, exercised**: every full-view verdict of the
+crashed universe re-derives in the fill. -/
+example (N r : ℕ) (hrN : r < N) {k : ℕ} {v : Option ℕ}
+    (h : Decided (Ucrash N) (View.full (Ucrash N)) k v) :
+    Decided (ucrashMsg N r (le_of_lt hrN)).skipFill
+      ((ucrashMsg N r (le_of_lt hrN)).liftView (View.full (Ucrash N))) k v :=
+  SkipMsg.decided_fill _ (ucrash_full_hq N r hrN) h
+
+#print axioms LeanDag.SkipMsg.decided_fill
+#print axioms LeanDag.SkipMsg.decided_fill_agree
 #print axioms ucrash_populated
 #print axioms ucrash_directSkip
 #print axioms LeanDag.SkipMsg.skipFill_populatedOn

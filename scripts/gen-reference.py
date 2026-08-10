@@ -43,7 +43,7 @@ LAYERS = [
     ("The reactive schedule", ["Reactive.Basic", "Reactive.Mysticeti",
                                "Reactive.Odontoceti"]),
     ("Catch-up, and the start spread", ["Drift.Catchup"]),
-    ("Safe Skip: crash recovery in one message", ["SafeSkip.Basic"]),
+    ("Safe Skip: crash recovery in one message", ["SafeSkip.Basic", "SafeSkip.Invariance"]),
     ("The legacy quorum route (report §13)", ["Network.Quorum"]),
 ]
 

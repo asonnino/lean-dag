@@ -42,13 +42,11 @@ blocks, every old block untouched. What this file proves:
   fill cannot conjure a commit for a slot the network already passed —
   the mechanism restores production without touching consensus.
 
-Open, and recorded as such: full verdict invariance across the fill —
-that every `Decided U V k v` re-derives in `skipFill U` — is the
-`decided_chop` analogue for extension rather than truncation. Its direct
-cases follow from preservation; its vacuous-skip case (a slot whose
-leader produced nothing now has a filled candidate) needs the blame
-quorum `directSkip_fresh` provides, threaded through the indirect
-recursion. It is future work for this arc.
+Full verdict invariance across the fill — every `Decided U V k v`
+re-derives in `skipFill U`, and hence agrees with every verdict reached
+after recovery — is `decided_fill` and `decided_fill_agree` in
+`Invariance.lean`, the `decided_chop` analogue for extension rather than
+truncation.
 -/
 
 namespace LeanDag
