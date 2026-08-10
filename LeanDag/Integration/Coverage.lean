@@ -21,7 +21,7 @@ the round above provably does not reference. **One fact, two
 consequences**: the fill cannot manufacture a commit, and the fill
 cannot manufacture coverage.
 
-This is not a defect, and it does not weaken §12. Safe Skip's claim is
+This is not a defect, and it does not weaken report §12. Safe Skip's claim is
 that it restores *production* (`PopulatedOn`, SS2) — the hypothesis
 liveness actually consumes — and it makes no claim about coverage.
 Coverage is restored the ordinary way, by the network, once the

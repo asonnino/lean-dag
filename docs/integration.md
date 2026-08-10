@@ -326,6 +326,39 @@ last filled one, and the refutation reaches there too.
 joiner reasoning inside a truncation has a schedule that is fair and
 spanning in its own right, which is what I9 needs.
 
+**I10 — a crash-prone validator can Safe Skip, once a hypothesis is
+stated as the fact it stands for.** This is the composition that did
+*not* fit, and the misfit is the finding. `SkipMsg` carried
+`hv1 : v1 ∈ Correct`; the hybrid model splits `Correct` into honest and
+available, and a crash-prone validator — precisely the one Safe Skip
+serves — is honest but not correct. The structure could not describe
+its own motivating case.
+
+The hypothesis was stronger than its use. It appeared **once**, pinning
+`v1`'s round-`r0` block to the anchor at the fill's boundary. §12 now
+carries that fact directly (`hB1uniq`), with `hB1uniq_of_correct`
+recovering the base model's route and `hB1uniq_of_crash` supplying the
+hybrid one from `HonestNoEquiv`. Neither arc was wrong; one of them
+stated a hypothesis in terms of a class the other splits, and finding
+that is what an integration arc is for.
+
+This is the arc's one modification to existing code, and it is a strict
+weakening: every model that satisfied the old field satisfies the new
+one, and the report's §12.1 now explains why the fact is stated rather
+than the membership.
+
+**I11 — nothing to prove, and that is the result.** The expectation was
+a lemma relating `AdaptivePolicy` to `HybridFaults`. There is none, and
+there cannot usefully be one: a policy reads verdicts, and the crash
+class is invisible in verdicts. A halted validator's slot is skipped by
+L5, whose hypothesis is that no block at the round carries the leader
+as creator — which says nothing about *why* the leader is absent. A
+crash-prone leader, a withholding Byzantine leader and a correct leader
+that has not yet built are indistinguishable there, and a demoting
+policy demotes all three alike. I11 joins I14 as a non-task, and
+`lifecycle` composes L5, SS2 and I3 into one statement in which three
+arcs meet without any of them mentioning another.
+
 **I16 — the thesis holds: composition is free.** The capstone
 (`LeanDag/Integration/Stack.lean`) puts a validator on all four
 mechanisms at once — recovered by Safe Skip, then truncated below a
@@ -559,7 +592,7 @@ behind I6a and moot if I1 fails. The pair is the arc's most likely
 | `Integration/ScheduleShape.lean` | I13, I15: fairness and shape under `Slots.chop` | **done** |
 | `Integration/Joiner.lean` | I9: the transformers commute; horizon-stability; epoch alignment | **done** |
 | `Integration/Stack.lean` | I16: the composition capstone — several transformers at once | **done** |
-| `Integration/Lifecycle.lean` | I10, I11: the crash-prone lifecycle end to end | next |
+| `Integration/Lifecycle.lean` | I10: the crash-prone fill; I11 recorded as a non-task; the lifecycle | **done** |
 | — | I7 and the placement conditions | §4.4: prose, not a module |
 | `Integration/Exposure.lean` | I1: `DoSValid` under the fill, conditionally (§5.6) | design decision pending |
 | `Integration/DeliveryFill.lean` | I6a–d: Safe Skip's delivery transformer, then its budget column | deferred, likely open |
@@ -601,11 +634,18 @@ are proved (§3.2); §4.4 settles where the account belongs.
 included on the reasoning that Hybrid should become a third instance of
 the adaptive layer rather than a third copy. That is still worth doing,
 but I9 settled adaptive × GC without it, so nothing in the integration
-programme now depends on it — and it is the one item that *modifies
-existing code* where every other arc, this one included, only adds. It
-belongs in its own arc, planned and reviewed as a refactor, with the
-old statements retained as corollaries. Keeping it here would mix a
-refactor into a results arc and make the diff unauditable.
+programme now depends on it — and it is a *refactor*: restructuring
+working code for elegance. It belongs in its own arc, planned and
+reviewed as such, with the old statements retained as corollaries.
+
+The distinction that keeps this honest is not "adds versus modifies".
+I10 modified §12, weakening `hv1` to `hB1uniq`, and had to — the
+composition was **unstatable** otherwise. That is a different act from
+a refactor: it is a hypothesis weakening forced by a theorem one wants
+to state, it is strictly conservative, and it is one field and one
+proof line. The rule this arc follows is therefore: *modify existing
+code only when a result cannot otherwise be stated, never for
+elegance.*
 
 ### 4.3 The thesis is demonstrated
 
@@ -652,25 +692,18 @@ what makes the cost visible.
 
 ### 4.5 Order
 
-1. **I10, I11 next** — mostly assembly: I3 supplies the hybrid-side
-   hypothesis the fill needs, and what remains is restating §12's
-   theorems over `HybridFaults` and composing with the demote-on-skip
-   policy. They deliver the arc's most quotable claim, the crash-prone
-   lifecycle end to end: demoted while down, safe-skipped back in,
-   re-promoted after recovery. This is the last item with narrative
-   value, and after it the arc is tellable.
-2. **I7**, as the corner case it turned out to be, and stated with the
-   other placement conditions in prose rather than in a module of its
-   own.
-3. **I1 only with the hypothesis §5.6 identifies**, or not at all; the
+1. **I7 next**, as the corner case it turned out to be, and stated with
+   the other placement conditions in prose rather than in a module of
+   its own.
+2. **I1 only with the hypothesis §5.6 identifies**, or not at all; the
    choice between conditional statement and open record is a design
    decision, and "open" is now a perfectly good outcome given §4.3.
-4. **I6a–d deferred**, to be recorded as open if §5.6's prediction
+3. **I6a–d deferred**, to be recorded as open if §5.6's prediction
    holds — a delivery transformer whose only consumer is a combination
    of doubtful value is not worth constructing.
 
-A reasonable stopping point is after item 1, with items 2–4 recorded as
-open in the report. The arc's results are the preservation table, the
+The arc is now tellable: with I10 and I16 done, a reasonable stopping
+point is here, with items 1–3 recorded as open in the report. The arc's results are the preservation table, the
 refutation with its boundary, the placement conditions, and the
 composition capstone; none of them needs the remainder to stand.
 

@@ -78,7 +78,14 @@ structure SkipMsg (U : BlockUniverse Validator BlockId Payload) where
   /-- Fresh ids for the filled blocks, and their decoder. -/
   fresh : ℕ → BlockId
   idx : BlockId → ℕ
-  hv1 : v1 ∈ (Correct : Finset Validator)
+  /-- `B1` is `v1`'s only block at its round — the whole of what the
+  boundary argument needs. Stated directly rather than as `v1 ∈ Correct`
+  because the two are not interchangeable in every fault model:
+  non-equivocation gives it for a correct `v1` (`hB1uniq_of_correct`),
+  and the hybrid model of report §14 gives it for a *crash-prone* one,
+  which is the case Safe Skip exists to serve. -/
+  hB1uniq : ∀ j ∈ U.ids, (U.block j).creator = v1 →
+    (U.block j).round = (U.block B1).round → j = B1
   hv12 : v1 ≠ v2
   hB1 : B1 ∈ U.ids
   hB1c : (U.block B1).creator = v1
@@ -94,6 +101,19 @@ structure SkipMsg (U : BlockUniverse Validator BlockId Payload) where
   /-- The crash: `v1` authored nothing in the gap. -/
   hgap : ∀ b ∈ U.ids, (U.block b).creator = v1 →
     (U.block B1).round < (U.block b).round → (U.block b).round ≤ r → False
+
+/-- **The boundary condition from correctness.** For a `v1` outside the
+ambient model's Byzantine set, non-equivocation pins its round-`r0`
+block to `B1`. This is how a `SkipMsg` is built in the base fault
+model, and it is what the `hB1uniq` field generalises: report §14's
+hybrid model discharges the same field for a *crash-prone* `v1`, whom
+`Correct` excludes. -/
+theorem hB1uniq_of_correct {v1 : Validator} {B1 : BlockId}
+    (hB1 : B1 ∈ U.ids) (hB1c : (U.block B1).creator = v1)
+    (hv1 : v1 ∈ (Correct : Finset Validator)) :
+    ∀ j ∈ U.ids, (U.block j).creator = v1 →
+      (U.block j).round = (U.block B1).round → j = B1 :=
+  fun j hj hjc hjr => U.eq_of_creator_eq hj hB1 hv1 hjc hB1c hjr
 
 namespace SkipMsg
 
@@ -216,8 +236,7 @@ def skipFill : BlockUniverse Validator BlockId Payload where
         by_cases hb : k = sk.r0 + 1
         · -- boundary: non-equivocation pins it to the anchor
           simp only [prev, if_pos hb]
-          exact U.eq_of_creator_eq hjo sk.hB1 (hjc ▸ sk.hv1) hjc sk.hB1c
-            (by omega)
+          exact sk.hB1uniq j hjo hjc (by omega)
         · -- inside the gap: the crash forbids it
           exact (sk.hgap j hjo hjc (by omega) (by omega)).elim
       refine ⟨?_, ?_, ?_, ?_⟩

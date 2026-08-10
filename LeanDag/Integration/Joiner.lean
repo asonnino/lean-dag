@@ -4,11 +4,11 @@ import LeanDag.Adaptive.Run
 /-!
 # I9 — the joiner and the adaptive schedule
 
-The sharpest question in the integration arc. §13's adaptive schedule
-is a function of the committed verdicts; §9's garbage collection prunes
+The sharpest question in the integration arc. report §13's adaptive schedule
+is a function of the committed verdicts; report §9's garbage collection prunes
 those verdicts below a horizon. A validator that joins from the
 truncation therefore may not hold what the policy reads — and if it
-computes a *different* schedule, §13's uniqueness theorem does not
+computes a *different* schedule, report §13's uniqueness theorem does not
 reach it, because `adaptiveRun_agree` quantifies over runs of one
 policy over **one** universe. The joiner's run is over a different
 universe, under a re-indexed schedule.
@@ -173,7 +173,7 @@ This is a second deployment obligation, independent of the policy: **a
 garbage-collection base slot must be a multiple of the epoch width**.
 Otherwise the two validators agree on who leads every slot and still
 disagree about which epoch it belongs to — hence about which verdicts
-the policy was entitled to read — and the fixpoint arguments of §13 do
+the policy was entitled to read — and the fixpoint arguments of report §13 do
 not line up across the cut. -/
 
 /-- **Epoch alignment.** When the base slot is a whole number of epochs,

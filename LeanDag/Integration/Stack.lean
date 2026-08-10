@@ -11,9 +11,9 @@ lemmas make composition free. The cells proved so far are the
 whether the linear strategy actually paid.
 
 The stack under test is a validator running four mechanisms at once: it
-recovered from a crash by Safe Skip (§12), later garbage-collected
-below a horizon (§9), reads the result under the hybrid fault model
-(§14), and runs an adaptive schedule (§13). Nothing below proves
+recovered from a crash by Safe Skip (report §12), later garbage-collected
+below a horizon (report §9), reads the result under the hybrid fault model
+(report §14), and runs an adaptive schedule (report §13). Nothing below proves
 anything new about any of them — every proof is a chain of existing
 lemmas, which is the point.
 
@@ -79,7 +79,7 @@ universe: a validator that recovered from a crash by Safe Skip and then
 pruned below a horizon still cannot disagree with anyone about a slot's
 verdict, at any admissible threshold.
 
-Every hypothesis is one of §14's own, discharged for the stack by
+Every hypothesis is one of report §14's own, discharged for the stack by
 `honestNoEquiv_stack`; the theorem body is `Hybrid.decided_unique`
 applied to a different universe. Nothing about the fill or the cut is
 re-proved, which is the thesis of this document in one statement. -/
@@ -101,7 +101,7 @@ at all — `Slots.chop` and `slotsOf` are functions of a `Slots` instance
 and nothing else — so the layer-S results of I13/I15 apply to a
 validator running any stack of universe transformers whatsoever, with
 no compatibility lemma needed. This is not a triviality worth hiding:
-it is the reason §2's layering was the right decomposition, and it is
+it is the reason report §2's layering was the right decomposition, and it is
 why the composition matrix is far smaller than the arc count suggests.
 
 The statement below is the schedule half of the stack, and its proof is

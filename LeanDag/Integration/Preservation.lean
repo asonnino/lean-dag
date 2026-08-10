@@ -5,7 +5,7 @@ import LeanDag.Hybrid.Faults
 /-!
 # Preservation: the transformer × invariant table, layer U
 
-The integration arc's core move (`integration.md` §3.1). Each lemma
+The integration arc's core move (`integration.md` report §3.1). Each lemma
 here has the shape
 
     I U  →  I (F U)
@@ -39,7 +39,7 @@ variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 
 /-! ## I2 — truncation preserves honest non-equivocation
 
-The lemma that makes §14 (hybrid) compose with §9 (garbage collection):
+The lemma that makes report §14 (hybrid) compose with report §9 (garbage collection):
 a hybrid-model universe stays a hybrid-model universe below a horizon.
 Truncation removes blocks and never adds them, and `HonestNoEquiv` is
 universally quantified over pairs of retained blocks, so it restricts

@@ -2,6 +2,7 @@ import LeanDag.Integration.Coverage
 import LeanDag.Integration.ScheduleShape
 import LeanDag.Integration.Joiner
 import LeanDag.Integration.Stack
+import LeanDag.Integration.Lifecycle
 import LeanDagTest.SafeSkip
 
 /-!
@@ -60,6 +61,9 @@ example (hs : SynchronisedOn (Ucrash 2) (Finset.univ : Finset (Fin 4)) 0) :
     SynchronisedOn skTight.skipFill (Finset.univ : Finset (Fin 4)) 2 :=
   synchronisedOn_skipFill_above skTight hs (Nat.zero_le _) (by decide)
 
+#print axioms LeanDag.Integration.hB1uniq_of_crash
+#print axioms LeanDag.Integration.crash_recovery_hybrid
+#print axioms LeanDag.Integration.lifecycle
 #print axioms LeanDag.Integration.honestNoEquiv_stack
 #print axioms LeanDag.Integration.synchronisedOn_stack
 #print axioms LeanDag.Integration.hybrid_agree_stack

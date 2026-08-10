@@ -117,7 +117,11 @@ def ucrashMsg (N r : ℕ) (hr : r ≤ N) : SkipMsg (Ucrash N) where
   line k := 4 * k + 1
   fresh k := 4 * (N + 1) + k
   idx b := b - 4 * (N + 1)
-  hv1 := by decide
+  hB1uniq :=
+    hB1uniq_of_correct
+      (Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega), Or.inr rfl⟩)
+      (by apply Fin.ext; simp only [ucrash_block, rrBlock_creator_val]; decide)
+      (by decide)
   hv12 := by decide
   hB1 := Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega), Or.inr rfl⟩
   hB1c := by

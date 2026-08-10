@@ -3395,10 +3395,19 @@ structure SkipMsg (U : BlockUniverse Validator BlockId Payload) where
 chain the message's pinned block determines by following self-parents —
 and `fresh` supplies unused identifiers for the filled blocks, with
 `idx` their decoder. The elided clauses record what the receiver checks:
-`v1` is correct and distinct from `v2`, `B1` is `v1`'s block, the line
-has the stated creators, rounds and chaining, and the fresh identifiers
-are new. `hgap` is the crash itself: `v1` authored nothing strictly
-between `B1` and `r`.
+`v1` is distinct from `v2`, `B1` is `v1`'s block *and its only one at
+that round* (`hB1uniq`), the line has the stated creators, rounds and
+chaining, and the fresh identifiers are new. `hgap` is the crash
+itself: `v1` authored nothing strictly between `B1` and `r`.
+
+`hB1uniq` is stated as the uniqueness fact rather than as
+`v1 ∈ Correct`, from which it would follow by non-equivocation
+(`hB1uniq_of_correct`). The two are not interchangeable in every fault
+model: the hybrid model of §14 splits `Correct` into honest and
+available, and a *crash-prone* validator — the one Safe Skip exists to
+serve — is honest but outside `Correct`. Stating the fact the boundary
+argument actually uses is what lets the same structure describe both
+(§14's `hB1uniq_of_crash`).
 
 The filled block at gap round `k` is the donor's references plus the
 forced self reference:
@@ -7195,7 +7204,14 @@ structure SkipMsg (U : BlockUniverse Validator BlockId Payload) where
   /-- Fresh ids for the filled blocks, and their decoder. -/
   fresh : ℕ → BlockId
   idx : BlockId → ℕ
-  hv1 : v1 ∈ (Correct : Finset Validator)
+  /-- `B1` is `v1`'s only block at its round — the whole of what the
+  boundary argument needs. Stated directly rather than as `v1 ∈ Correct`
+  because the two are not interchangeable in every fault model:
+  non-equivocation gives it for a correct `v1` (`hB1uniq_of_correct`),
+  and the hybrid model of report §14 gives it for a *crash-prone* one,
+  which is the case Safe Skip exists to serve. -/
+  hB1uniq : ∀ j ∈ U.ids, (U.block j).creator = v1 →
+    (U.block j).round = (U.block B1).round → j = B1
   hv12 : v1 ≠ v2
   hB1 : B1 ∈ U.ids
   hB1c : (U.block B1).creator = v1
@@ -7363,8 +7379,7 @@ def skipFill : BlockUniverse Validator BlockId Payload where
         by_cases hb : k = sk.r0 + 1
         · -- boundary: non-equivocation pins it to the anchor
           simp only [prev, if_pos hb]
-          exact U.eq_of_creator_eq hjo sk.hB1 (hjc ▸ sk.hv1) hjc sk.hB1c
-            (by omega)
+          exact sk.hB1uniq j hjo hjc (by omega)
         · -- inside the gap: the crash forbids it
           exact (sk.hgap j hjo hjc (by omega) (by omega)).elim
       refine ⟨?_, ?_, ?_, ?_⟩
@@ -8031,6 +8046,35 @@ def DeliversQuorum (D : Delivery U) : Prop :=
 **Asynchrony.** A quorum that exists is eventually held. Stated conditionally — existence first, holding second — because unconditionally it would assert the very block production L1 sets out to prove.
 
 No round bound: this is what holds *before* GST too, and it is all L1 needs. Contrast `EventuallyDelivers`, which demands the *whole* correct round and only from `R`.
+
+### Not otherwise grouped
+
+#### `HorizonStable`
+
+*def, `Integration.Joiner.lean`*
+
+```lean
+def HorizonStable (P : AdaptivePolicy Validator BlockId Payload) (d G : ℕ)
+    (pick' : BlockUniverse Validator BlockId Payload →
+      (ℕ → Option BlockId) → ℕ → Validator) : Prop :=
+  ∀ (U : BlockUniverse Validator BlockId Payload) (v : ℕ → Option BlockId)
+    (k : ℕ), pick' (chop U G) (fun m => v (d + m)) k = P.pick U v (d + k)
+```
+
+**Horizon-stability.** The joiner's rule, run on the truncation with the joiner's own slot indices, returns what the network's policy returns on the full history at the corresponding slot.
+
+Read as a deployment obligation: *a validator that pruned below `G` and re-indexed from `d` must still compute the leaders everyone else is using.* A policy that reads arbitrarily far back into committed history cannot satisfy this, which is the substantive content — such a policy is incompatible with garbage collection, and saying so precisely is the point of I9.
+
+#### `stack`
+
+*abbrev, `Integration.Stack.lean`*
+
+```lean
+abbrev stack (sk : SkipMsg U) (G : ℕ) : BlockUniverse Validator BlockId Payload :=
+  chop sk.skipFill G
+```
+
+**The stacked universe**: filled, then truncated.
 
 
 ---
@@ -12097,7 +12141,7 @@ theorem live_chopD {N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
 
 ## Appendix D. Index of internal lemmas
 
-The 306 lemmas used only within the file that proves
+The 332 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -12532,6 +12576,12 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `leader_blk_eq` | The reliable leader's block of slot `k` is the one the schedule names: non-equivocation identifies any … |
 
+### `SafeSkip/Basic.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `hB1uniq_of_correct` | The boundary condition from correctness. For a `v1` outside the ambient model's Byzantine set, … |
+
 ### `SafeSkip/Invariance.lean` (12)
 
 | Lemma | Role |
@@ -12648,5 +12698,60 @@ subsection per module, in the layer order of Appendices B and C.
 | `card_authorsAt_of_live` | L1 in the form L0 consumes: under `Live U D N` every round up to the horizon carries a quorum of authors, … |
 | `no_stall_and_card_viewUpto_le` | The capstone, unconditional. `EventuallyDelivers` is gone: growth plus quorum delivery give liveness (L1 … |
 | `no_stall_and_card_viewUpto_le'` | The composed statement — DoS resistance in one theorem. One set of hypotheses — growth (`Live`), quorum … |
+
+### `Integration/Coverage.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `mem_ids_of_round_gt` | Above the fill every block is an old one: the fresh identifiers occupy gap rounds only. |
+| `not_synchronisedOn_skipFill` | I5, refuted. The fill does not restore coverage. If the recovering validator is counted reliable — which … |
+| `synchronisedOn_skipFill_above` | I5, positively. Coverage holds *strictly* above the fill: past the target round every block is old, … |
+
+### `Integration/Joiner.lean` (6)
+
+| Lemma | Role |
+|:---|:---|
+| `epochOf_add_of_dvd` | Epoch alignment. When the base slot is a whole number of epochs, the joiner's epoch numbering is the … |
+| `horizonStable_const_zero` | The constant policy is horizon-stable exactly when the base slot is the origin — which is the degenerate … |
+| `injective_slotRound_chop` | Truncation preserves one-leader-per-round. Injectivity of the rebased rounds needs the base-slot … |
+| `joiner_assign_agree` | I9, the assignment half. Under a horizon-stable rule a joiner computes exactly the leaders the network is … |
+| `joiner_leader_agree` | The joiner's schedule *is* the network's, seen from another origin: combining the assignment agreement … |
+| `slotsChop_slotsOf` | The transformers commute. Truncating an adaptive schedule and adapting a truncated one give the same … |
+
+### `Integration/Lifecycle.lean` (4)
+
+| Lemma | Role |
+|:---|:---|
+| `crash_recovery_hybrid` | I10. A crash-prone validator rejoins by Safe Skip, and every guarantee of report §12 holds for its fill in … |
+| `hB1uniq_of_crash` | I10, the enabling lemma. In the hybrid model a *crash-prone* validator satisfies Safe Skip's boundary … |
+| `lifecycle` | The lifecycle, in one statement. A validator that halts has its slot skipped (L5, unchanged); after it … |
+| `notMem_byzantine_of_mem_crash` | Membership in the crash class implies the hypothesis above: the crash-prone are honest. The bridge a … |
+
+### `Integration/Preservation.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `honestNoEquiv_chop` | I2. Truncation preserves honest non-equivocation. |
+| `honestNoEquiv_skipFill` | I3. The Safe Skip fill preserves honest non-equivocation. |
+| `synchronisedOn_chop` | I4. Truncation preserves coverage, with the horizon offset. |
+
+### `Integration/ScheduleShape.lean` (4)
+
+| Lemma | Role |
+|:---|:---|
+| `fairRunOn_chop` | I13, run form. The same for runs of `c` consecutive reliable-led slots, which is what the liveness … |
+| `fairScheduleOn_chop` | I13. Truncation preserves schedule fairness: a reliable leader arbitrarily far out in the original … |
+| `le_slotRound_add` | Every slot at or above the base slot has its round above the cut — the fact that makes the rebasing … |
+| `spansEligible_chop` | I15. Truncation preserves the spanning property. Eligibility is a statement about rounds, which the … |
+
+### `Integration/Stack.lean` (5)
+
+| Lemma | Role |
+|:---|:---|
+| `honestNoEquiv_stack` | I16a. Honest non-equivocation survives the whole stack — I3 then I2, with no new argument. This is what … |
+| `hybrid_agree_stack` | I16d — the payoff. Hybrid agreement holds in the stacked universe: a validator that recovered from a crash … |
+| `populated_stack` | I16c. Production survives the stack — SS2 then the truncation's own rebasing. The reliable set gains the … |
+| `schedule_stack` | I16e. A validator running the stack still has a fair, spanning schedule inside its truncation, for any … |
+| `synchronisedOn_stack` | I16b. Coverage survives the stack above the fill and the cut — I5-positive then I4. The two offsets … |
 
 <!-- END GENERATED REFERENCE -->
