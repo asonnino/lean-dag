@@ -3488,6 +3488,20 @@ that the blaming quorum is drawn from the validators that were live
 through the gap; the recovering validator is not asked to blame its own
 fill.
 
+The clause the crash violates is exactly P8 (§4.4): a correct validator
+holding a quorum builds the following round unconditionally, and
+[QXS26] show that dropping it lets round-skipping starve certificate
+formation altogether — an infinite execution in which at most `2f`
+certificates are ever formed for any round, because production never
+recovers. Safe Skip does not weaken P8 to accommodate the crash; it
+keeps the base development's unconditional form and repairs the
+hypothesis after the fact, once, over the closed gap `hgap` bounds.
+That boundedness is what distinguishes the two situations: [QXS26]'s
+counterexample needs skipping to be permitted indefinitely, with
+nothing pulling validators back into lockstep, where the fill's gap has
+a fixed right endpoint and SS3 forbids exploiting it — a filled
+candidate is always directly skipped, never committed.
+
 ### 12.3 Verdict invariance
 
 The two theorems above concern rounds inside the gap. What remains is
@@ -3569,9 +3583,9 @@ the full view with `hq` discharged by counting the three live authors.
 *(modules `LeanDag/Adaptive/`; the design record is `adaptive-leaders.md`)*
 
 Deployed systems do not run the blind rotation the `Slots` instance
-models: Hammerhead-style implementations consult the agreed prefix
-after a commit and reassign the leaders ahead, demoting validators
-whose slots were skipped. The intuition for safety is this
+models: Hammerhead-style implementations [Tsi+23] consult the agreed
+prefix after a commit and reassign the leaders ahead, demoting
+validators whose slots were skipped. The intuition for safety is this
 development's own agreement theorem — the verdict sequence is agreed
 (M6, M7), so any function of it is agreed, and every correct validator
 derives the same revised schedule. Turning the intuition into a proof
@@ -3773,6 +3787,19 @@ stage-by-stage choices need not. A total run decides every slot there
 is, which is why its growth hypothesis is `∀ r, Populated U r`; the
 finite-horizon statement is `exists_partialRun`, and it is the
 witnessable form.
+
+Hammerhead [Tsi+23] — the reputation-based schedule deployed in Sui
+mainnet since v1.9.1 — proves an analogous result by a different route.
+Validators may run different schedules concurrently there, and safety
+is recovered by proving the schedules necessarily *reconverge*, via
+quorum intersection between anchors committed under different
+schedules, interleaved with the base protocol's own liveness — its
+safety corollary is stated to follow from its liveness lemma directly.
+The account here separates the two questions instead: `DecidedWithin`'s
+bound makes divergence unstatable rather than something to reconverge
+from, so `adaptiveRun_agree` needs no synchrony assumption at all, and
+liveness is the independent question of whether the fixpoint the bound
+describes exists.
 
 ### 13.5 The two-round mirror
 
@@ -4719,6 +4746,7 @@ development additive, but natural the third time a commit rule arrives.
 - [QXS26] L. Qiu, J. Xiao, Z. Shao. *Mechanized Safety and Liveness Proofs for the Mysticeti Consensus Protocol under the LiDO-DAG Framework.* IEEE S&P 2026, 149–168.
 - [SGSK22] A. Spiegelman, N. Giridharan, A. Sonnino, L. Kokoris-Kogias. *Bullshark: DAG BFT Protocols Made Practical.* CCS 2022.
 - [SSKN25] N. Shrestha, R. Shrothrium, A. Kate, K. Nayak. *Sailfish: Towards Improving the Latency of DAG-based BFT.* IEEE S&P 2025. ePrint 2024/472.
+- [Tsi+23] G. Tsimos, A. Kichidis, A. Sonnino, L. Kokoris-Kogias. *HammerHead: Leader Reputation for Dynamic Scheduling.* arXiv:2309.12713.
 - [Van25] P. Vander Vos. *Odontoceti: Ultra-Fast DAG Consensus with Two Round Commitment.* MSc thesis, arXiv:2510.01216.
 
 ---
