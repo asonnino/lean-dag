@@ -90,6 +90,89 @@ example (hs : SynchronisedOn (Ucrash 2) (Finset.univ : Finset (Fin 4)) 0) :
 #print axioms LeanDag.Integration.honestNoEquiv_stack
 #print axioms LeanDag.Integration.synchronisedOn_stack
 #print axioms LeanDag.Integration.hybrid_agree_stack
+/-! ## The constructions, witnessed
+
+The house rule of report §16 applies with particular force to the
+structures this arc introduces: `recoveryMsg` and `skipFillD` carry
+many hypotheses, and hypotheses that cannot be met jointly make every
+theorem above them vacuous. The severed-validator scenario is the one
+they all describe, and `Ucrash` exhibits it: validator `3` crashed
+after its genesis block, so a horizon at round `1` prunes its entire
+history. -/
+
+/-- The truncation at which validator `3` is severed — its only block
+sat at round `0`. -/
+abbrev Ucut : BlockUniverse (Fin 4) ℕ Unit := chop (Ucrash 2) 1
+
+example : (3 : ℕ) ∉ Ucut.ids := by decide
+
+/-- **Severance, on data.** No block of the truncation is validator
+`3`'s, which is the hypothesis `addGenesis` needs and the conclusion
+`severed_of_pruned_anchor` reaches in general. -/
+theorem ucut_severed : ∀ b ∈ Ucut.ids, (Ucut.block b).creator ≠ 3 := by decide
+
+/-- **Re-genesis, on data.** The stranded validator restarts at the cut
+with a reference-free block; the universe laws hold by the same
+argument `chop` uses for the layer it flattened. -/
+abbrev Uregen : BlockUniverse (Fin 4) ℕ Unit :=
+  addGenesis Ucut 3 999 () (by decide) ucut_severed
+
+example : (999 : ℕ) ∈ Uregen.ids := mem_addGenesis
+example : (Uregen.block 999).round = 0 ∧ (Uregen.block 999).creator = 3 := by
+  constructor <;> rw [addGenesis_block_new]
+
+/-- The re-genesis block is a lawful Safe Skip anchor, on data: unique
+at its round because its author has no other block anywhere. -/
+example : ∀ j ∈ Uregen.ids, (Uregen.block j).creator = 3 →
+    (Uregen.block j).round = (Uregen.block 999).round → j = 999 :=
+  hB1uniq_of_addGenesis
+
+/-- **The exposure condition survives re-genesis, on data.** -/
+example : DoSValid Ucut → DoSValid Uregen := dosValid_addGenesis
+
+/-- **The catch-up fill, on data.** After re-genesis the stranded
+validator rejoins production with one message, anchored on its new
+block and filling the retained window: donor line `1` (blocks `5` at
+the cut and `9` above it), target round `1`.
+
+This is the arc's most hypothesis-heavy construction, and exhibiting it
+is what rules out the possibility that its clauses cannot be met
+together. -/
+def urecover : SkipMsg Uregen :=
+  recoveryMsg (V := Ucut) (v := 3) (g := 999) (p := ())
+    (hg := by decide) (hsev := ucut_severed)
+    1 (fun k => if k = 0 then 5 else 9) (fun k => 1000 + k) (fun b => b - 1000)
+    1 (by decide)
+    (by intro k hk; interval_cases k <;> decide)
+    (by intro k hk; interval_cases k <;> decide)
+    (by
+      intro k hk
+      have h0 : (Uregen.block 999).round = 0 := by rw [addGenesis_block_new]
+      rw [h0]
+      interval_cases k <;> decide)
+    (by intro k hk1 hk2; interval_cases k <;> decide)
+    (by
+      intro k
+      simp only [Uregen, addGenesis, Finset.mem_insert]
+      push Not
+      refine ⟨by omega, ?_⟩
+      intro hc
+      rw [mem_chop_ids, ucrash_ids, Finset.mem_filter, Finset.mem_range] at hc
+      omega)
+    (fun k => by omega)
+
+-- The recovery message's shape, on data: anchored at the re-genesis
+-- block, filling to the target.
+example : urecover.B1 = 999 := rfl
+example : urecover.v1 = 3 := rfl
+example : urecover.r = 1 := by
+  show (Uregen.block 999).round + 1 = 1
+  rw [addGenesis_block_new]
+
+#print axioms urecover
+
+#print axioms ucut_severed
+
 #print axioms LeanDag.Integration.slotsChop_slotsOf
 #print axioms LeanDag.Integration.joiner_assign_agree
 #print axioms LeanDag.Integration.epochOf_add_of_dvd

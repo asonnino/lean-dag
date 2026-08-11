@@ -763,224 +763,116 @@ whether a bulk fill respects the novelty budget (§5.3), which is gated
 behind I6a and moot if I1 fails. The pair is the arc's most likely
 *open* entry, and recording it as open is a legitimate outcome.
 
-## 4. Module plan and order
+## 4. Status, and what is left
 
 | Module | Contents | Status |
 |:---|:---|:---|
-| `Integration/Preservation.lean` | I2, I3, I4: honest non-equivocation under both transformers; coverage under truncation | **done** |
-| `Integration/Coverage.lean` | I5: coverage refuted under the fill, and recovered strictly above it | **done** |
-| `Integration/ScheduleShape.lean` | I13, I15: fairness and shape under `Slots.chop` | **done** |
-| `Integration/Joiner.lean` | I9: the transformers commute; horizon-stability; epoch alignment | **done** |
-| `Integration/Stack.lean` | I16: the composition capstone — several transformers at once | **done** |
-| `Integration/Lifecycle.lean` | I10: the crash-prone fill; I11 recorded as a non-task; the lifecycle | **done** |
-| `Integration/Retention.lean` | I7a, I7b: anchor retention; the lag bounds the outage; the severed chain | **done** |
-| `Integration/ReGenesis.lean` | I17, I18: restarting a severed chain at the cut; local derivation converges | **done** |
-| `Integration/Exposure.lean` | I1: cone growth; the disturbance is local, and the check is enforceable | **done** |
-| `Integration/ReGenesis.lean` (§I19) | I19a: `DoSValid` survives re-genesis | **done** |
-| `Integration/DeliveryFill.lean` | I15: the delivery transformer; the budget transfers, the reference discipline does not | **done** |
-| `LeanDagTest/Integration.lean` | the refutation witnessed as biting; the stack and lifecycle exhibits | ongoing |
-| — | I8: the decision-relation interface | **moved out of this arc**, see §4.2 |
+| `Integration/Preservation.lean` | honest non-equivocation under both transformers; coverage under truncation | **done** |
+| `Integration/Coverage.lean` | coverage refuted under the fill, recovered strictly above it | **done** |
+| `Integration/ScheduleShape.lean` | fairness and shape under `Slots.chop` | **done** |
+| `Integration/Joiner.lean` | the transformers commute; horizon-stability; epoch alignment | **done** |
+| `Integration/Retention.lean` | anchor retention; the outage bound; the severed chain | **done** |
+| `Integration/ReGenesis.lean` | re-genesis; convergence; the exposure condition; the composite recovery | **done** |
+| `Integration/Stack.lean` | the composition capstone | **done** |
+| `Integration/Lifecycle.lean` | the crash-prone lifecycle | **done** |
+| `Integration/Exposure.lean` | cone growth; the enforceable check; its reachability form | **done** |
+| `Integration/DeliveryFill.lean` | the delivery transformer; the budgets over it | **done** |
+| `LeanDagTest/Integration.lean` | the refutation witnessed; the constructions exhibited | **done** |
+| — | I8: the decision-relation interface | **moved out**, §4.2 |
 
 ### 4.1 What the arc turned out to be
 
-Seven cells in, the results have not all been of the kind the plan
-anticipated. Three kinds have appeared, and naming them changes what
-should be built next:
+Three kinds of result appeared, and only the first was planned:
 
-1. **Preservation lemmas** (I2, I3, I4, I13, I15) — the planned kind,
-   and the cheapest. Each closes a column of the composition matrix.
-2. **A refutation with an exact boundary** (I5) — worth more than the
-   positive would have been, and now the template: refute in general,
-   witness that the refutation bites, state the positive form that
-   survives.
-3. **Placement conditions** (I9's two obligations; I7's expected one) —
-   *not in the original plan at all*, and arguably the arc's most
-   useful output, because they are engineering guidance rather than
-   proof plumbing. A horizon may not be put anywhere: its base slot
-   must fall on an epoch boundary, and the retained window must carry
-   what the policy reads.
+1. **Preservation lemmas** — the planned kind, and the cheapest. Each
+   closes a column of the composition matrix.
+2. **Refutations with exact boundaries** — coverage under the fill, the
+   severed chain, the reference discipline under the fill's delivery.
+   Each is worth more than the corresponding positive would have been,
+   because each names a constraint no single arc can see.
+3. **Placement and enforceability conditions** — where a horizon may
+   fall (epoch alignment, horizon-stability, anchor retention), and
+   what a recipient must check to accept a fill. These were not in the
+   plan at all, and they are the arc's most directly usable output,
+   being engineering guidance rather than proof plumbing.
 
-I16 is not a fourth kind but the payoff of the first: it is the proof
-that the preservation lemmas *compose*, which is what makes collecting
-them worthwhile rather than merely tidy.
-
-The third kind should be pursued deliberately rather than collected
-incidentally, and stated as one account — *where may a cut be made,
-given everything running above it?* — rather than left as side
-conditions scattered across three files. Two of the three conditions
-are proved (§3.2); §4.4 settles where the account belongs.
+The composition capstone is not a fourth kind but the payoff of the
+first: it is the proof that the preservation lemmas *compose*, which is
+what makes collecting them worthwhile rather than merely tidy.
 
 ### 4.2 What the arc is not
 
-**I8 (the decision-relation interface) leaves this arc.** It was
+**I8 (the decision-relation interface) is out of scope.** It was
 included on the reasoning that Hybrid should become a third instance of
 the adaptive layer rather than a third copy. That is still worth doing,
-but I9 settled adaptive × GC without it, so nothing in the integration
-programme now depends on it — and it is a *refactor*: restructuring
-working code for elegance. It belongs in its own arc, planned and
-reviewed as such, with the old statements retained as corollaries.
+but the joiner result settled adaptive × GC without it, so nothing here
+depends on it — and it is a *refactor*, restructuring working code for
+elegance. It belongs in its own arc, with the old statements retained
+as corollaries.
 
-The distinction that keeps this honest is not "adds versus modifies".
-I10 modified §12, weakening `hv1` to `hB1uniq`, and had to — the
-composition was **unstatable** otherwise. That is a different act from
-a refactor: it is a hypothesis weakening forced by a theorem one wants
-to state, it is strictly conservative, and it is one field and one
-proof line. The rule this arc follows is therefore: *modify existing
-code only when a result cannot otherwise be stated, never for
-elegance.*
+The rule this arc followed is not "adds versus modifies". One
+composition required modifying report §12 — weakening `hv1` to
+`hB1uniq` — because the composition was **unstatable** otherwise. That
+is a different act from a refactor: a hypothesis weakening forced by a
+theorem one wants to state, strictly conservative, one field and one
+proof line. *Modify existing code only when a result cannot otherwise
+be stated, never for elegance.*
 
-### 4.3 The thesis is demonstrated
+### 4.3 Loose ends
 
-The plan's claim was that named invariants plus preservation lemmas
-make composition free. I16 (§3.2) is that claim, proved: the stacked
-universe satisfies every invariant its arcs require, by chains of
-existing lemmas with no new argument, and the end-to-end statement —
-a validator that recovered from a crash and then pruned cannot
-disagree with anyone about a verdict — is §14's agreement theorem
-applied to a different universe.
+Four, none of which blocks the arc's claims.
 
-This changes what the rest of the arc is *for*. Nothing remaining is
-load-bearing for the central claim; the arc could stop here and be
-complete as an argument. What follows is pursued because it is
-independently useful, and should be scoped that way rather than as
-obligations.
+**A recorded modelling choice, not a gap.** Whether a `Delivery`
+records what arrived over the network or what a recovering validator
+accepts at recovery time decides which of the two storage clauses the
+fill satisfies (§3.2). Both routes reach report §8's bound; the
+question is what a `Delivery` is *meant* to record, which is a
+specification decision about the protocol rather than something a proof
+should settle quietly.
 
-### 4.4 What I16 changed
+**One conjecture worth testing.** The reference discipline may be
+stated more tightly than the storage bound needs. What the pool
+argument uses is that a correct block's cone sit inside *some* correct
+validator's earlier view — not specifically its author's — and the fill
+satisfies that reading, since everything it cites entered through the
+donor's budgeted acceptance. If that holds, the modelling choice above
+dissolves and no compromise is needed. It would require care about the
+constant, the pool bound counting per acceptor.
 
-**I7 changes meaning.** The question was posed as "do the transformers
-commute?", and the answer turns out to be that the *deployment* order —
-fill on recovery, prune later — is unconditional, while only the
-reverse needs the anchor retained. So I7 is no longer a prerequisite
-for anything. What it became is an operational question with a sharp
-answer — *how long may a validator be down and still recover cheaply?*
-— which is why §4.5 puts it next rather than last.
+**One claim stated but unproved.** A bootstrapped validator that has
+not yet re-genesised can read but not produce, so it cannot belong to
+any reliable set satisfying the production clause — which would make
+the horizon lag a liveness-margin parameter and not only a storage one.
+The two halves are proved (`bootstrap_agree`;
+`no_blocks_of_no_genesis`); that they combine into a statement about
+`PopulatedOn` and `T` is a reading of the liveness hypotheses, and
+proving it looks straightforward.
 
-**The placement account shrinks to a section, not a module.** Two of
-its three conditions are proved and live in `Joiner.lean` — epoch
-alignment and horizon-stability — and the third is I7's, now demoted.
-`Integration/Placement.lean` is dropped from the plan; the account
-belongs in the eventual report section, where the three conditions can
-be stated together in prose without a module that would hold one
-lemma.
+**One deliberate omission.** The arc proves nothing about *executions*:
+the order in which mechanisms fire, or whether a validator's local
+sequence of bootstrap, re-genesis and fill is realisable in time. That
+is outside the model by report §1.4, as it is for every other arc.
 
-**A design rule for future arcs.** The schedule layer stacks for free
-because `Slots.chop` and `slotsOf` depend on a `Slots` instance and
-nothing else. That is a property worth *preserving deliberately*: a
-future arc that introduces a schedule variant reading the universe
-would forfeit it, and would owe a compatibility lemma against every
-universe transformer. Keeping schedule variants universe-independent
-is the cheapest structural decision available, and §2's layering is
-what makes the cost visible.
+### 3.7 The constructions, witnessed
 
-### 4.5 What remains, and why it matters
-
-Ten items are closed. What is left has an unexpected property: **every
-remaining question belongs to one arc — denial of service, report §8 —
-and all three are the same question in different clothes.**
-
-> Do the storage bounds survive the recovery mechanisms?
-
-The stake is deployment. §8's bounds are what make the system runnable
-against an adversary: a correct validator's store grows linearly for
-ever under an enforceable, author-blind budget. Every other arc's
-guarantees are about *correctness*; §8's are about not running out of
-disk. A deployment that runs garbage collection, Safe Skip, re-genesis
-and the novelty budget together needs all four to hold at once, and
-that is precisely what has not been checked.
-
-The three items:
-
-**I1 — `DoSValid` under the fill.** §5.6 predicts it fails: the fill
-inserts a self reference, so a filled block's cone is the donor's *plus*
-`v1`'s chain below the anchor, and `DoSValid` forbids referencing an
-author exposed in one's own cone — a larger cone can only expose more.
-If that is right, the condition that rescues it is one `v1` can check
-itself (`B1`'s cone is exactly what it retains), making it enforceable
-in §8's sense rather than an assumption. *Significance*: without it, a
-universe that has been filled carries no exposure bound, so C1′ and the
-per-cone storage result do not apply after a recovery.
-
-**I19 — storage accounting under re-genesis** (new; raised by I17/I18
-and not in the original plan). Report §2.2 records that P3′ earns its
-place in §8 because "the self-parent chain is what turns per-acceptance
-budgets into per-round rates and a correct block's cone into a complete
-record of its author's acceptances." **Re-genesis deliberately severs
-that chain.** After it, `v1`'s cone contains nothing before the cut, so
-the completeness property §8 relies on is locally false by
-construction.
-
-Two sub-questions, and the second is the sharper:
-
-* *Does the windowed bound survive?* Probably yes — everything below
-  the cut is pruned anyway, and §9 already has windowed novelty
-  (`novelty_chop_anti`, G13) for exactly this reason. The likely
-  outcome is that the bound holds relative to the retained window,
-  which is the only window that exists after truncation.
-* *Can re-genesis be abused to reset a budget?* Re-genesis is available
-  to a validator absent from the retained layer — which a Byzantine
-  validator can arrange by simply not producing. It would gain a fresh
-  chain and, with it, whatever accounting the chain carries. Whether
-  that buys an adversary anything is an open security question, and it
-  is the one place in this arc where a *new mechanism* might have
-  weakened an existing guarantee rather than merely failed to compose
-  with it.
-
-*Significance*: this is the only item on the list that could invalidate
-something already proved, rather than leaving a composition unproved.
-It should be settled before re-genesis is proposed as a protocol
-change.
-
-**I6a–d — the budget column under the fill.** Gated on I1 and moot if
-I1 fails: a delivery transformer for the fill has no consumer worth the
-construction. To be recorded as open in that case.
-
-**The loose end is closed, and it reframed the mechanisms.** I17 put a
-stranded validator back in the genesis layer but did not compose that
-with a fill anchored on the new block. `recoveryMsg` does, and the
-closure is exact: `hsev`, the total absence that licensed re-genesis,
-is what discharges the anchor's uniqueness clause and `hgap` alike — a
-validator with no other block anywhere cannot have a second at that
-round, nor any during the gap.
-
-The consequence is a correction to how these mechanisms relate. Safe
-Skip was described here as the *alternative* to bootstrap, avoiding it
-when the anchor survives. That holds only inside the lag bound. Past
-it the three are **complementary and sequential**: bootstrap to read,
-re-genesis to write, Safe Skip to catch up — with Safe Skip's role
-undiminished, since it remains the succinct encoding of the many blocks
-missing inside the retained window, at a gap that now begins at the
-horizon rather than at the crash. What every party needs for the fill
-to denote anything is the retained history up to the target block,
-which is `SkipMsg`'s standing requirement and, after garbage
-collection, exactly the window everyone keeps.
-
-### 4.6 After the proofs
-
-The arc is tellable now. Its results are the preservation table, the
-refutation with its exact boundary, the placement conditions, the
-composition capstone, the lifecycle, and the re-genesis provision with
-its convergence — together with two non-tasks (I11, I14) which are
-findings in their own right, and one hypothesis weakening that a
-composition forced (I10).
-
-The open items (§4.5) are all §8's, and I19 is the only one that could
-disturb a result already proved. A report section should say so
-plainly: the arc's account of §8's compatibility is incomplete, and
-that is a different statement from the rest of it being conditional. A report section should
-follow the proofs and is the natural place for the placement account
-of §4.4, since three conditions on where a cut may fall read better as
-prose than as three scattered lemmas.
+The house rule of report §16 applies with particular force to the
+structures introduced here: `recoveryMsg` and `skipFillD` carry many
+hypotheses, and clauses that cannot be met jointly make every theorem
+above them vacuous. `LeanDagTest/Integration.lean` exhibits the
+scenario they all describe — validator `3` of `Ucrash`, crashed after
+its genesis block, severed by a horizon at round `1` — and builds the
+re-genesis universe and the catch-up message over it by `decide`.
 
 ## 5. Risks and predictions
 
 **5.1 The negative results were the valuable ones, as expected.** The
 prediction held throughout, and in more places than were listed.
-Settled negative: coverage under the fill (I5), the two non-tasks (I11,
-I14), and the severed chain — each naming a constraint no single arc
-could see. Settled *conditional* rather than negative: anchor retention
-(I7) and horizon-stability (I9), where the condition turned out to be
-the deliverable. Still expected negative: `DoSValid` under the fill
-(I1, §5.6).
+Settled negative: coverage under the fill, the two non-tasks, the
+severed chain, and the reference discipline under the fill's
+delivery — each naming a constraint no single arc could see. Settled
+*conditional* rather than negative: anchor retention, horizon-stability
+and the exposure condition, where in each case the condition was the
+deliverable.
 
 I5 set the template the rest followed: refute in general where
 possible, keep a witness so the refutation is seen to bite, and state
@@ -1031,52 +923,18 @@ the preservation lemmas do not already imply.** Everything else is a
 one-line corollary at most, and more often simply an observation in the
 report that the composition is immediate.
 
-**5.6 `DoSValid` under the fill is probably conditional, not
-preserved.** The third heuristic of §3.3 predicts I1 negative, and the
-mechanism is specific enough to state before attempting: a filled
-block's cone is the donor block's cone *plus* `v1`'s chain below the
-anchor, since `fillBlock` inserts the self reference. `DoSValid`
-forbids a block from referencing an author exposed **in its own cone**,
-and a larger cone can only expose more authors. So the donor's own
-`DoSValid` does not transfer: the fill inherits the donor's references
-while acquiring a strictly larger cone in which one of those
-referenced authors may be exposed by an equivocation in `v1`'s
-pre-crash history.
+**5.6 `DoSValid` under the fill was conditional, as predicted.** The
+mechanism was stated before the attempt and held: a filled block's cone
+is the donor's *plus* `v1`'s chain below the anchor, since `fillBlock`
+inserts the self reference, and `DoSValid` forbids citing an author
+exposed in one's own cone — so a larger cone can only expose more,
+while the citations are inherited unchanged.
 
-If that is right, I1 needs a hypothesis of the form *no author of the
-donor line's references is exposed within `B1`'s cone*. Two responses
-are available and the choice is a design decision, not a proof detail:
-state I1 conditionally and record the hypothesis as a deployment
-obligation on the recovering validator, or record Safe Skip × DoS as
-open. The first is preferable if the hypothesis turns out to be
-checkable by `v1` itself — which it is, since `B1`'s cone is exactly
-what `v1` retains — and that would make it enforceable in the sense
-§8 requires.
-
-**5.7 Re-genesis needs agreement the horizon design avoids.** A
-re-genesis block is valid in the truncation and *not* in the universe it
-came from: at round `G > 0` of the original, a reference-free block
-violates P3. It is therefore acceptable only to validators that have
-themselves pruned to at least `G`. Report §9 keeps horizons
-per-validator and reaches no agreement on the cut — deliberately, as its
-headline claim — so a re-genesis convention asks the *lagging*
-validators, those retaining more history, to accept a block their own
-rules reject.
-
-**Resolved by I18** (§3.2), and the resolution is the one that gives up
-nothing: derive the block locally rather than transmitting it. Each
-validator synthesises a genesis for any validator missing from its own
-retained layer, and `regenesis_converges` shows the derivations agree
-as horizons advance — a validator holding more history, on truncating
-further, arrives at exactly what the more-truncated validator already
-had. No message, no agreement, and §9's per-validator horizons are
-preserved intact.
-
-Two alternatives were available and are worth recording as rejected:
-carrying the block with evidence of the horizon it was taken at, which
-needs a new message; or requiring the fill's target to exceed every
-honest horizon, which reintroduces a bound of the kind §9 exists to
-avoid.
+What was not anticipated is how *well* it resolves. The disturbance is
+local to the fill's own blocks, so the residual obligation is checkable
+by a recipient (§3.2), and under the ordinary condition that the donor
+line already covers the anchor it reduces to a reachability test. The
+prediction was right about the failure and wrong about its cost.
 
 ## 6. Out of scope
 
