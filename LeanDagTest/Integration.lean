@@ -6,6 +6,7 @@ import LeanDag.Integration.Lifecycle
 import LeanDag.Integration.Retention
 import LeanDag.Integration.ReGenesis
 import LeanDag.Integration.Exposure
+import LeanDag.Integration.DeliveryFill
 import LeanDagTest.SafeSkip
 
 /-!
@@ -71,6 +72,9 @@ example (hs : SynchronisedOn (Ucrash 2) (Finset.univ : Finset (Fin 4)) 0) :
 #print axioms LeanDag.Integration.dosValid_skipFill
 #print axioms LeanDag.Integration.fill_cone_subset
 #print axioms LeanDag.Integration.dosValid_skipFill_of_covered
+#print axioms LeanDag.Integration.skipFillD
+#print axioms LeanDag.Integration.uniformBudget_skipFillD
+#print axioms LeanDag.Integration.not_refsAccepted_skipFillD
 #print axioms LeanDag.Integration.regenesis_converges
 #print axioms LeanDag.Integration.populatedOn_addGenesis
 #print axioms LeanDag.Integration.no_blocks_of_no_genesis

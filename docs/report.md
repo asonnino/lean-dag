@@ -4488,10 +4488,48 @@ own round*, leaving open that `v1` equivocated before crashing, and the
 fill's self reference would then cite an exposed author. It is what the
 base model's correctness and §14's honesty each supply.
 
-The delivery-layer question remains open on its own terms: §8.4's
-budgets need a delivery transformer for the fill, which §12 does not
-have. That is the arc's one open composition, and it concerns §8
-alone.
+### 15.8 The delivery layer, and a modelling choice
+
+§8.4's budgets range over a `Delivery U` rather than over `U`, so they
+cannot be *stated* for the fill until it has a delivery structure of
+its own — the dependency §15.1 records for layer D, which garbage
+collection satisfies with `chopD`.
+
+The transformer is smaller than it appears. A `Delivery` records what
+validators held and accepted **when they built their blocks**, and
+nobody received the fill at the time: the filled blocks reconstruct
+what the recovering validator would have produced. `skipFillD`
+therefore changes nothing, and the one obligation with content is
+`includes`, which now quantifies over filled blocks and asks that they
+reference what `v1` accepted below. The hypothesis that discharges it
+is that `v1` accepted nothing while down — the acceptance-side
+counterpart of `hgap`, which says as much of production.
+
+**I15.** The author-blind budget then transfers at the same constant
+(`uniformBudget_skipFillD`), with no arithmetic: every accepted block
+is old, so views and novelty are literally the same finite sets
+(`viewUpto_skipFillD`).
+
+The reference discipline does **not** transfer, and the failure
+describes the mechanism rather than the transformer
+(`not_refsAccepted_skipFillD`). `RefsAccepted` is `includes`'
+converse — a correct validator cites *only* what it accepted — and a
+filled block cites the donor's blocks, which the recovering validator
+did not accept, having been down. A retroactive reconstruction cannot
+satisfy both under a delivery structure that records what actually
+arrived.
+
+The alternative is to model recovery as acceptance *at recovery time*:
+`v1` obtains the donor's blocks when it rejoins and accepts exactly
+what its filled blocks cite, whereupon both clauses hold by
+construction, `accepted_inj` following from the P2 clause `skipFill`
+already establishes for `fillBlock`. What that model does not concede
+is the budget — the novelty of the newly accepted blocks becomes a
+property of the fill, to be checked as in §15.7 rather than inherited.
+Which model is right is a question about what a `Delivery` is meant to
+record, and it is stated here rather than settled. With it settled
+either way, B4's storage bound transfers by the route that model
+supports.
 
 ---
 
@@ -4756,7 +4794,8 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Integration/ReGenesis.lean` | re-genesis at the cut; convergence; the exposure condition |
 | `Integration/Stack.lean` | the composition capstone |
 | `Integration/Lifecycle.lean` | the crash-prone lifecycle |
-| `Integration/Exposure.lean` | the fill's cone growth |
+| `Integration/Exposure.lean` | the fill's cone growth; the enforceable exposure check |
+| `Integration/DeliveryFill.lean` | the fill's delivery layer, and the budgets over it |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
 | `Quality/Capstone.lean` | the windowed bounds and `chain_quality` (CQ7) |
@@ -5409,6 +5448,7 @@ result in full.
 | I12 | the exposure condition survives re-genesis; the fill enlarges cones | `dosValid_addGenesis` *(Integration/ReGenesis)*; `history_B1_subset_fill` *(Integration/Exposure)* |
 | I13 | the fill disturbs exposure only at its own blocks | `exposedIn_skipFill_old`, `dosValid_skipFill` *(Integration/Exposure)* |
 | I14 | a covered donor line reduces the check to reachability | `fill_cone_subset`, `dosValid_skipFill_of_covered` *(Integration/Exposure)* |
+| I15 | the fill's delivery layer; the budget transfers, the reference discipline does not | `skipFillD`, `uniformBudget_skipFillD`, `not_refsAccepted_skipFillD` *(Integration/DeliveryFill)* |
 
 ---
 
@@ -8674,12 +8714,60 @@ def DeliversQuorum (D : Delivery U) : Prop :=
 
 No round bound: this is what holds *before* GST too, and it is all L1 needs. Contrast `EventuallyDelivers`, which demands the *whole* correct round and only from `R`.
 
+### Not otherwise grouped
+
+#### `skipFillD`
+
+*def, `Integration.DeliveryFill.lean`*
+
+```lean
+def skipFillD (sk : SkipMsg U) (D : Delivery U)
+    (hdown : ∀ m, sk.r0 ≤ m → m < sk.r → D.accepted sk.v1 m = ∅) :
+    Delivery sk.skipFill where
+  held := D.held
+  held_spec := by
+    intro v n i hi
+    obtain ⟨h1, h2⟩ := D.held_spec v n i hi
+    exact ⟨sk.ids_subset_skipFill h1, by rw [sk.skipFill_block_old h1]; exact h2⟩
+  accepted := D.accepted
+  accepted_sub := D.accepted_sub
+  accepted_inj := by
+    intro v n i hi j hj hij
+    have hio := (D.held_spec v n i (D.accepted_sub v n hi)).1
+    have hjo := (D.held_spec v n j (D.accepted_sub v n hj)).1
+    rw [sk.skipFill_block_old hio, sk.skipFill_block_old hjo] at hij
+    exact D.accepted_inj v n i hi j hj hij
+  accepts_correct := by
+    intro v hv n a ha hac
+    have hao := (D.held_spec v n a ha).1
+    rw [sk.skipFill_block_old hao] at hac
+    exact D.accepts_correct v hv n a ha hac
+  includes := by
+    intro v hv n b hb hbc hbr
+    rcases Finset.mem_union.mp hb with ho | hf
+    · -- an old block references what it accepted, as before
+      rw [sk.skipFill_block_old ho] at hbc hbr ⊢
+      exact D.includes v hv n b ho hbc hbr
+    · -- a filled block: the recovering validator accepted nothing
+      obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      have hR0 : sk.r0 = (U.block sk.B1).round := rfl
+      rw [sk.skipFill_block_fresh] at hbc hbr
+      simp only [SkipMsg.fillBlock] at hbc hbr
+      subst hbc
+      rw [hdown n (by omega) (by omega)]
+      exact Finset.empty_subset _
+```
+
+**I15a — the delivery transformer.** The fill's delivery structure is the original's: the recovering validator's blocks were never delivered to anyone, being reconstructed after the fact.
+
+`hdown` is the hypothesis `Delivery.includes` forces — the recovering validator accepted nothing while it was down. It is the acceptance-side counterpart of `hgap`, which says the same of production.
+
 
 ---
 
 ## Appendix C. The theorem reference
 
-The 326 theorems that either another module of the
+The 328 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -13143,11 +13231,40 @@ theorem live_chopD {N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
   genesis
 ```
 
+### Not otherwise grouped
+
+#### `uniformBudget_skipFillD`
+
+*theorem, `Integration.DeliveryFill.lean`*
+
+```lean
+theorem uniformBudget_skipFillD {T : ℕ} (hu : UniformBudget D T) :
+    UniformBudget (skipFillD sk D hdown) T
+```
+
+**I15b — the budget transfers.** Novelty is measured over the cone of an accepted block against the accumulated view, and both are unchanged, so the author-blind budget holds of the fill's delivery at the same constant.
+
+#### `not_refsAccepted_skipFillD`
+
+*theorem, `Integration.DeliveryFill.lean`*
+
+```lean
+theorem not_refsAccepted_skipFillD (hne : sk.r0 < sk.r)
+    (hv1 : sk.v1 ∈ (Correct : Finset Validator)) :
+    ¬ RefsAccepted (skipFillD sk D hdown)
+```
+
+**I15c — the reference discipline does not transfer, and the failure is the mechanism's own.** `RefsAccepted` is the converse of `includes`: a correct validator references *only* what it accepted. A filled block references the donor's blocks, which the recovering validator did not accept — it was down. So the discipline fails at every filled block.
+
+This is not a defect of the transformer but a description of what Safe Skip does. The fill asserts references on `v1`'s behalf for rounds it slept through; `RefsAccepted` says a validator cites only what reached it. The two cannot both hold of a retroactive reconstruction under the delivery structure that records what actually arrived.
+
+The alternative is to model recovery as *acceptance at recovery time* — `v1` obtains the donor's blocks when it rejoins, and accepts exactly what its filled blocks cite. Both `includes` and `RefsAccepted` then hold by construction, `accepted_inj` following from the P2 clause `skipFill` already proves for `fillBlock`. What that model does not give away is the budget: the novelty of the newly accepted blocks is then a property of the fill, to be checked as in report §15.7 rather than inherited. Which model is right is a specification question about what a `Delivery` is meant to record, and it is recorded here rather than settled.
+
 ---
 
 ## Appendix D. Index of internal lemmas
 
-The 327 lemmas used only within the file that proves
+The 328 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -13754,5 +13871,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `card_authorsAt_of_live` | L1 in the form L0 consumes: under `Live U D N` every round up to the horizon carries a quorum of authors, … |
 | `no_stall_and_card_viewUpto_le` | The capstone, unconditional. `EventuallyDelivers` is gone: growth plus quorum delivery give liveness (L1 … |
 | `no_stall_and_card_viewUpto_le'` | The composed statement — DoS resistance in one theorem. One set of hypotheses — growth (`Live`), quorum … |
+
+### `Integration/DeliveryFill.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `viewUpto_skipFillD` | Accepted blocks are old, so their cones are unchanged and the accumulated view is literally the same … |
 
 <!-- END GENERATED REFERENCE -->

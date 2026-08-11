@@ -456,9 +456,31 @@ base model's correctness and report §14's honesty each supply, and it
 is the second place (after I9) where weakening `hv1` to `hB1uniq`
 required the missing strength to be named explicitly.
 
-The delivery-layer question is open on its own terms: report §8.4's
-budgets need a delivery transformer for the fill, which report §12 does
-not have. That is the arc's one open composition.
+**I15 closes the delivery layer, with a modelling choice recorded
+rather than settled.** `skipFillD` is the transformer, and it changes
+nothing: a `Delivery` records what validators held when they built,
+and nobody received the fill at the time. Its one obligation with
+content is `includes` over the filled blocks, discharged by the
+hypothesis that `v1` accepted nothing while down — the acceptance-side
+counterpart of `hgap`.
+
+The author-blind budget then transfers at the same constant
+(`uniformBudget_skipFillD`), since every accepted block is old and
+views and novelty are literally the same finite sets. The *reference
+discipline* does not (`not_refsAccepted_skipFillD`), and the failure
+describes Safe Skip rather than the transformer: `RefsAccepted` says a
+validator cites only what reached it, and a fill cites the donor's
+blocks, which the recovering validator did not receive. A retroactive
+reconstruction cannot satisfy both under a delivery structure that
+records what actually arrived.
+
+Modelling recovery as acceptance *at recovery time* satisfies both by
+construction, and concedes the budget instead — the novelty of the
+newly accepted blocks becomes a property of the fill, checkable as in
+I13/I14 rather than inherited. Which model is right is a question about
+what a `Delivery` is meant to record, and the arc records it rather
+than settling it. Either way B4's storage bound transfers by the route
+that model supports.
 
 **I18 — and the condition dissolves if the block is derived, not sent.**
 §5.7's objection was that a re-genesis block is valid only to
@@ -755,7 +777,7 @@ behind I6a and moot if I1 fails. The pair is the arc's most likely
 | `Integration/ReGenesis.lean` | I17, I18: restarting a severed chain at the cut; local derivation converges | **done** |
 | `Integration/Exposure.lean` | I1: cone growth; the disturbance is local, and the check is enforceable | **done** |
 | `Integration/ReGenesis.lean` (§I19) | I19a: `DoSValid` survives re-genesis | **done** |
-| `Integration/DeliveryFill.lean` | I6a–d: Safe Skip's delivery transformer, then its budget column | gated on I1 |
+| `Integration/DeliveryFill.lean` | I15: the delivery transformer; the budget transfers, the reference discipline does not | **done** |
 | `LeanDagTest/Integration.lean` | the refutation witnessed as biting; the stack and lifecycle exhibits | ongoing |
 | — | I8: the decision-relation interface | **moved out of this arc**, see §4.2 |
 
