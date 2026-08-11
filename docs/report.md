@@ -4427,6 +4427,17 @@ bound). Past that the three compose, and Safe Skip's contribution is
 undiminished: it remains the succinct encoding of the many blocks
 missing inside the retained window.
 
+**I18 — and the interval between the phases is priced.** A severed
+validator can read once bootstrapped but cannot produce, and the
+reliable sets liveness quantifies over are defined by production, so it
+belongs to none of them (`notMem_of_no_blocks`). Since liveness needs a
+reliable set of quorum size, at most `f` validators may be severed at
+once (`card_severed_le`). **The horizon lag is therefore a
+liveness-margin parameter and not only a storage one**: a shorter lag
+saves storage and lengthens the window in which a returning validator,
+however honest and however well caught up on the ledger, counts against
+the fault budget.
+
 ### 15.7 P3′ pays in §8 and charges in §12
 
 The two recovery mechanisms part company at the exposure condition, and
@@ -4552,10 +4563,34 @@ construction, `accepted_inj` following from the P2 clause `skipFill`
 already establishes for `fillBlock`. What that model does not concede
 is the budget — the novelty of the newly accepted blocks becomes a
 property of the fill, to be checked as in §15.7 rather than inherited.
-Which model is right is a question about what a `Delivery` is meant to
-record, and it is stated here rather than settled. With it settled
-either way, B4's storage bound transfers by the route that model
-supports.
+**I17 — and the choice does not affect the budget.** §8.4's
+`RefsAccepted` charges a block's cone to *its own author's* view, and
+the pool argument turns out not to need that. Its component lemmas are
+already stated at the right generality: novelty is bounded by the gap
+toward whichever validator's acceptances contain the references
+(`card_novelty_le_viewGap_add_one`), and that gap is bounded as soon as
+the validator **has a block at the round**
+(`card_viewGap_succ_le`) — which a donor line does at every gap round.
+Composing them at a `w` other than the author gives
+
+```lean
+theorem card_novelty_le_of_donor {κ R : ℕ} (hbyz : ByzBudget D κ)
+    (hED : EventuallyDelivers D R) (hn : R ≤ n + 1)
+    (hv : v ∈ (Correct : Finset Validator))
+    (hw : w ∈ (Correct : Finset Validator)) (hb : b ∈ U.ids)
+    (hrefs : (U.block b).refs ⊆ D.accepted w (n + 1))
+    {c : BlockId} (hc : c ∈ U.ids) (hcc : (U.block c).creator = w)
+    (hcr : (U.block c).round = n + 1) :
+    (novelty U (viewUpto D v (n + 1)) b).card ≤ F.f * κ + 1
+```
+
+So a filled block respects the budget with the **donor** in the role
+the author would ordinarily play, whether or not the recovering
+validator ever accepted the material. The modelling question is
+therefore about which clause of §8.4 one wishes to state, not about
+whether the storage bound holds: it holds either way. The discipline is
+stated more tightly than the bound requires, and the fill is the case
+that shows the difference.
 
 ---
 
@@ -4822,6 +4857,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Integration/Lifecycle.lean` | the crash-prone lifecycle |
 | `Integration/Exposure.lean` | the fill's cone growth; the enforceable exposure check |
 | `Integration/DeliveryFill.lean` | the fill's delivery layer, and the budgets over it |
+| `Integration/Margin.lean` | the budget without the author; severance and the fault budget |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
 | `Quality/Capstone.lean` | the windowed bounds and `chain_quality` (CQ7) |
@@ -5476,6 +5512,8 @@ result in full.
 | I14 | the fill disturbs exposure only at its own blocks | `exposedIn_skipFill_old`, `dosValid_skipFill` *(Integration/Exposure)* |
 | I15 | a covered donor line reduces the check to reachability | `fill_cone_subset`, `dosValid_skipFill_of_covered` *(Integration/Exposure)* |
 | I16 | the fill's delivery layer; the budget transfers, the reference discipline does not | `skipFillD`, `uniformBudget_skipFillD`, `not_refsAccepted_skipFillD` *(Integration/DeliveryFill)* |
+| I17 | the budget needs a donor, not the author | `card_novelty_le_of_donor` *(Integration/Margin)* |
+| I18 | severance costs liveness margin: at most `f` at once | `notMem_of_no_blocks`, `card_severed_le` *(Integration/Margin)* |
 
 ---
 
@@ -8855,7 +8893,7 @@ def skipFillD (sk : SkipMsg U) (D : Delivery U)
 
 ## Appendix C. The theorem reference
 
-The 329 theorems that either another module of the
+The 332 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -13361,6 +13399,53 @@ theorem not_refsAccepted_skipFillD (hne : sk.r0 < sk.r)
 This is not a defect of the transformer but a description of what Safe Skip does. The fill asserts references on `v1`'s behalf for rounds it slept through; `RefsAccepted` says a validator cites only what reached it. The two cannot both hold of a retroactive reconstruction under the delivery structure that records what actually arrived.
 
 The alternative is to model recovery as *acceptance at recovery time* — `v1` obtains the donor's blocks when it rejoins, and accepts exactly what its filled blocks cite. Both `includes` and `RefsAccepted` then hold by construction, `accepted_inj` following from the P2 clause `skipFill` already proves for `fillBlock`. What that model does not give away is the budget: the novelty of the newly accepted blocks is then a property of the fill, to be checked as in report §15.7 rather than inherited. Which model is right is a specification question about what a `Delivery` is meant to record, and it is recorded here rather than settled.
+
+#### `notMem_of_no_blocks`
+
+*theorem, `Integration.Margin.lean`*
+
+```lean
+theorem notMem_of_no_blocks {T : Finset Validator} {r : ℕ} {v : Validator}
+    (hsev : ∀ b ∈ U.ids, (U.block b).creator ≠ v)
+    (hpop : PopulatedOn U T r) : v ∉ T
+```
+
+A validator with no blocks belongs to no populated set: production is what membership of a reliable set asserts.
+
+#### `card_severed_le`
+
+*theorem, `Integration.Margin.lean`*
+
+```lean
+theorem card_severed_le {T S : Finset Validator} {r : ℕ}
+    (hsev : ∀ v ∈ S, ∀ b ∈ U.ids, (U.block b).creator ≠ v)
+    (hpop : PopulatedOn U T r)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+    S.card ≤ F.f
+```
+
+**I17.** At most `f` validators can be severed at once without costing liveness. A reliable set of quorum size is disjoint from every severed validator, so the severed cannot number more than the fault budget — and a validator recovering from an outage longer than the horizon lag is severed until it re-genesises.
+
+The hypothesis is the one every liveness capstone carries; the conclusion prices the recovery window.
+
+#### `card_novelty_le_of_donor`
+
+*theorem, `Integration.Margin.lean`*
+
+```lean
+theorem card_novelty_le_of_donor {κ R : ℕ} (hbyz : ByzBudget D κ)
+    (hED : EventuallyDelivers D R) (hn : R ≤ n + 1)
+    (hv : v ∈ (Correct : Finset Validator))
+    (hw : w ∈ (Correct : Finset Validator)) (hb : b ∈ U.ids)
+    (hrefs : (U.block b).refs ⊆ D.accepted w (n + 1))
+    {c : BlockId} (hc : c ∈ U.ids) (hcc : (U.block c).creator = w)
+    (hcr : (U.block c).round = n + 1) :
+    (novelty U (viewUpto D v (n + 1)) b).card ≤ F.f * κ + 1
+```
+
+**I18.** The novelty budget holds for a block whose references lie inside **any** correct validator's acceptances, provided that validator has a block at the round — not specifically the block's own author.
+
+Report §8.4's `RefsAccepted` asks for the author, and the pool argument uses only this. The two component lemmas were already stated at the right generality; composing them at a `w` other than the author is what had not been done.
 
 ---
 

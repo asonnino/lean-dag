@@ -58,5 +58,6 @@ import LeanDag.Integration.Retention
 import LeanDag.Integration.ReGenesis
 import LeanDag.Integration.Exposure
 import LeanDag.Integration.DeliveryFill
+import LeanDag.Integration.Margin
 import LeanDag.SafeSkip.Basic
 import LeanDag.SafeSkip.Invariance

@@ -822,31 +822,22 @@ be stated, never for elegance.*
 
 Four, none of which blocks the arc's claims.
 
-**A recorded modelling choice, not a gap.** Whether a `Delivery`
-records what arrived over the network or what a recovering validator
-accepts at recovery time decides which of the two storage clauses the
-fill satisfies (§3.2). Both routes reach report §8's bound; the
-question is what a `Delivery` is *meant* to record, which is a
-specification decision about the protocol rather than something a proof
-should settle quietly.
+**A modelling choice, now known not to matter for the bound.**
+Whether a `Delivery` records what arrived over the network or what a
+recovering validator accepts at recovery time decides which of report
+§8.4's two clauses the fill satisfies (§3.2). The conjecture that this
+does not affect the *bound* is now proved: `card_novelty_le_of_donor`
+shows the novelty budget holds for a block whose references lie inside
+**any** correct validator's acceptances — its author's or not —
+provided that validator has a block at the round, which a donor line
+does at every gap round. Both component lemmas were already stated at
+the right generality; composing them at a `w` other than the author is
+what had not been done.
 
-**One conjecture worth testing.** The reference discipline may be
-stated more tightly than the storage bound needs. What the pool
-argument uses is that a correct block's cone sit inside *some* correct
-validator's earlier view — not specifically its author's — and the fill
-satisfies that reading, since everything it cites entered through the
-donor's budgeted acceptance. If that holds, the modelling choice above
-dissolves and no compromise is needed. It would require care about the
-constant, the pool bound counting per acceptor.
-
-**One claim stated but unproved.** A bootstrapped validator that has
-not yet re-genesised can read but not produce, so it cannot belong to
-any reliable set satisfying the production clause — which would make
-the horizon lag a liveness-margin parameter and not only a storage one.
-The two halves are proved (`bootstrap_agree`;
-`no_blocks_of_no_genesis`); that they combine into a statement about
-`PopulatedOn` and `T` is a reading of the liveness hypotheses, and
-proving it looks straightforward.
+So the discipline is stated more tightly than the storage bound
+requires, and the fill is the case that exhibits the difference. What
+remains is a genuine specification question — which clause one wishes
+to state — and not a gap in the account.
 
 **One deliberate omission.** The arc proves nothing about *executions*:
 the order in which mechanisms fire, or whether a validator's local
