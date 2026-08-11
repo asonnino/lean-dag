@@ -683,9 +683,10 @@ behind I6a and moot if I1 fails. The pair is the arc's most likely
 | `Integration/Stack.lean` | I16: the composition capstone — several transformers at once | **done** |
 | `Integration/Lifecycle.lean` | I10: the crash-prone fill; I11 recorded as a non-task; the lifecycle | **done** |
 | `Integration/Retention.lean` | I7a, I7b: anchor retention; the lag bounds the outage; the severed chain | **done** |
-| `Integration/ReGenesis.lean` | I17: restarting a severed chain at the cut, free of P3′ | **done** |
-| `Integration/Exposure.lean` | I1: `DoSValid` under the fill, conditionally (§5.6) | design decision pending |
-| `Integration/DeliveryFill.lean` | I6a–d: Safe Skip's delivery transformer, then its budget column | deferred, likely open |
+| `Integration/ReGenesis.lean` | I17, I18: restarting a severed chain at the cut; local derivation converges | **done** |
+| `Integration/Exposure.lean` | I1: `DoSValid` under the fill, conditionally (§5.6) | **remains**, see §4.5 |
+| `Integration/Budget.lean` | I19: storage accounting under re-genesis | **remains**, new |
+| `Integration/DeliveryFill.lean` | I6a–d: Safe Skip's delivery transformer, then its budget column | gated on I1 |
 | `LeanDagTest/Integration.lean` | the refutation witnessed as biting; the stack and lifecycle exhibits | ongoing |
 | — | I8: the decision-relation interface | **moved out of this arc**, see §4.2 |
 
@@ -780,82 +781,111 @@ universe transformer. Keeping schedule variants universe-independent
 is the cheapest structural decision available, and §2's layering is
 what makes the cost visible.
 
-### 4.5 The continuation
+### 4.5 What remains, and why it matters
 
-Three items remain, and I16 changed what the first of them is *for*.
+Ten items are closed. What is left has an unexpected property: **every
+remaining question belongs to one arc — denial of service, report §8 —
+and all three are the same question in different clothes.**
 
-**I7 — done; see §3.2.** The account below states the question as it
-was posed. The item was posed
-as "do the transformers commute?". I16 answered the deployment order
-(fill, then prune) unconditionally, so what is left is the other order,
-and that order has a concrete operational reading:
+> Do the storage bounds survive the recovery mechanisms?
 
-> A validator crashed at round `r0` and is recovering at round `r`.
-> Meanwhile the network garbage-collected below `G`. **Can it still
-> Safe Skip?**
+The stake is deployment. §8's bounds are what make the system runnable
+against an adversary: a correct validator's store grows linearly for
+ever under an enforceable, author-blind budget. Every other arc's
+guarantees are about *correctness*; §8's are about not running out of
+disk. A deployment that runs garbage collection, Safe Skip, re-genesis
+and the novelty budget together needs all four to hold at once, and
+that is precisely what has not been checked.
 
-The answer is visibly *iff the anchor survived the cut*: `SkipMsg`
-requires `B1 ∈ U.ids`, and `chop` retains `B1` exactly when
-`G ≤ round B1 = r0`. So the horizon must not have passed the point at
-which the validator crashed — which makes the garbage-collection lag a
-**bound on the maximum cheaply-recoverable outage**. Longer than that
-and the validator must bootstrap by §9.5's attested base instead. This
-is the third placement condition and the most operational statement the
-arc can make; it pairs directly with §9's lag envelope.
+The three items:
 
-Two halves, and the cheap one first:
+**I1 — `DoSValid` under the fill.** §5.6 predicts it fails: the fill
+inserts a self reference, so a filled block's cone is the donor's *plus*
+`v1`'s chain below the anchor, and `DoSValid` forbids referencing an
+author exposed in one's own cone — a larger cone can only expose more.
+If that is right, the condition that rescues it is one `v1` can check
+itself (`B1`'s cone is exactly what it retains), making it enforceable
+in §8's sense rather than an assumption. *Significance*: without it, a
+universe that has been filled carries no exposure bound, so C1′ and the
+per-cone storage result do not apply after a recovery.
 
-* **I7a — necessity.** If `G > r0` then `B1 ∉ (chop U G).ids`, so no
-  `SkipMsg` over the truncation can use that anchor. Nearly free, and
-  it states the constraint sharply.
-* **I7b — sufficiency.** If `G ≤ r0`, a `SkipMsg` over `chop U G`
-  exists: the original's data with every round rebased by `−G`. A
-  genuine construction — every field's round arithmetic pays the
-  truncated-subtraction wrinkle (§3.3) — and the larger of the two. If
-  it proves long, I7a alone still delivers the deployment guidance,
-  and I7b can be recorded open.
+**I19 — storage accounting under re-genesis** (new; raised by I17/I18
+and not in the original plan). Report §2.2 records that P3′ earns its
+place in §8 because "the self-parent chain is what turns per-acceptance
+budgets into per-round rates and a correct block's cone into a complete
+record of its author's acceptances." **Re-genesis deliberately severs
+that chain.** After it, `v1`'s cone contains nothing before the cut, so
+the completeness property §8 relies on is locally false by
+construction.
 
-**I1 — confirm or refute the exposure prediction.** §5.6 predicts
-`DoSValid` fails under the fill, because `fillBlock` inserts the self
-reference and so gives the filled block a strictly larger cone than the
-donor's, in which a referenced author may be exposed by an equivocation
-in `v1`'s pre-crash history. The arc's record on predictions is mixed —
-I4's was wrong, I5's was right and understated — so this is worth
-settling rather than assuming. Follow I5's template: refute in general
-if it fails, witness that the refutation bites, and state the condition
-under which it holds. §5.6 argues the condition would be *checkable by
-`v1` itself*, which would make it enforceable in §8's sense and
-therefore worth having.
+Two sub-questions, and the second is the sharper:
 
-**I6a–d — record as open.** Unless I1 comes out positive, a delivery
-transformer for the fill has no consumer worth the construction. The
-honest outcome is a recorded gap, and §4.3 is why that is acceptable:
-nothing here is load-bearing for the arc's claim.
+* *Does the windowed bound survive?* Probably yes — everything below
+  the cut is pruned anyway, and §9 already has windowed novelty
+  (`novelty_chop_anti`, G13) for exactly this reason. The likely
+  outcome is that the bound holds relative to the retained window,
+  which is the only window that exists after truncation.
+* *Can re-genesis be abused to reset a budget?* Re-genesis is available
+  to a validator absent from the retained layer — which a Byzantine
+  validator can arrange by simply not producing. It would gain a fresh
+  chain and, with it, whatever accounting the chain carries. Whether
+  that buys an adversary anything is an open security question, and it
+  is the one place in this arc where a *new mechanism* might have
+  weakened an existing guarantee rather than merely failed to compose
+  with it.
+
+*Significance*: this is the only item on the list that could invalidate
+something already proved, rather than leaving a composition unproved.
+It should be settled before re-genesis is proposed as a protocol
+change.
+
+**I6a–d — the budget column under the fill.** Gated on I1 and moot if
+I1 fails: a delivery transformer for the fill has no consumer worth the
+construction. To be recorded as open in that case.
+
+**A loose end.** I17 puts a stranded validator back in the genesis layer
+(`populatedOn_addGenesis`) but does not compose that with an actual
+fill anchored on the new block. The composition should be immediate —
+the re-genesis block is a lawful anchor — and it is worth doing to
+close the recovery story end to end rather than leaving the last step
+implied.
 
 ### 4.6 After the proofs
 
-The arc is tellable now, with I1 and I6 the only items left open. Its
-results are the preservation table, the
+The arc is tellable now. Its results are the preservation table, the
 refutation with its exact boundary, the placement conditions, the
-composition capstone, and the lifecycle — with two non-tasks (I11,
-I14) which are findings in their own right, and one hypothesis
-weakening that a composition forced (I10). A report section should
+composition capstone, the lifecycle, and the re-genesis provision with
+its convergence — together with two non-tasks (I11, I14) which are
+findings in their own right, and one hypothesis weakening that a
+composition forced (I10).
+
+The open items (§4.5) are all §8's, and I19 is the only one that could
+disturb a result already proved. A report section should say so
+plainly: the arc's account of §8's compatibility is incomplete, and
+that is a different statement from the rest of it being conditional. A report section should
 follow the proofs and is the natural place for the placement account
 of §4.4, since three conditions on where a cut may fall read better as
 prose than as three scattered lemmas.
 
 ## 5. Risks and predictions
 
-**5.1 The negative results are the valuable ones.** Four cells in this
-plan are expected to be *false*: coverage under `skipFill` (I5, now
-**settled negative**), `chop`/`skipFill` commutation without the anchor
-condition (I7), horizon-stability for an unrestricted adaptive policy
-(I9), and `DoSValid` under the fill (I1, §5.6). Each is worth more than
-the corresponding positive would have been, because each names a
-deployment constraint that no single arc can see. I5 sets the pattern
-to follow: refute in general where possible, keep a witness to show the
-refutation bites, and state the positive form that survives — the
-boundary is the result, not the failure.
+**5.1 The negative results were the valuable ones, as expected.** The
+prediction held throughout, and in more places than were listed.
+Settled negative: coverage under the fill (I5), the two non-tasks (I11,
+I14), and the severed chain — each naming a constraint no single arc
+could see. Settled *conditional* rather than negative: anchor retention
+(I7) and horizon-stability (I9), where the condition turned out to be
+the deliverable. Still expected negative: `DoSValid` under the fill
+(I1, §5.6).
+
+I5 set the template the rest followed: refute in general where
+possible, keep a witness so the refutation is seen to bite, and state
+the positive form that survives — the boundary is the result, not the
+failure. The one methodological correction is that "negative" was too
+narrow a category. Three of this arc's most useful outputs (the lag
+bound, horizon-stability, epoch alignment) are neither positive nor
+negative but *conditions*, and §4.1 names that as the third kind of
+result the plan had not anticipated.
 
 **5.2 The interface audit is done, and it moved the plan.** This risk
 was live in the first draft, where §2's list was a survey rather than a
