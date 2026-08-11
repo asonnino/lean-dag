@@ -4200,6 +4200,14 @@ prove that each transformer preserves them, and let composition follow.
 The cost is then linear in the arcs rather than quadratic, and the
 capstone (I8) confirms that the ingredients do compose.
 
+The section is organised by what composition produced. §15.1 and §15.2
+are the method — the invariant interface, and the preservation lemmas
+that make composition linear. §15.3 to §15.6 are what the method
+found: a refutation with an exact boundary, the conditions on where a
+horizon may fall, the capstone, and a recovery route for a validator
+pruned past its own history. §15.7 and §15.8 settle the interaction
+with §8's storage account.
+
 What came out are results no single arc could state. Coverage is
 **refuted** under the Safe Skip fill, with an exact boundary and for
 the same reason the fill is safe (I4). *Placement conditions* say where
@@ -4278,7 +4286,13 @@ explains its otherwise peculiar shape — it quantifies over every
 verdict function the policy might see, because no fact about the base
 schedule survives reassignment.
 
-### 15.3 Coverage does not survive the fill
+### 15.3 Coverage under the fill
+
+Coverage behaves in three ways under the Safe Skip fill, and the
+division is the result.
+
+**It fails for a reliable set containing the recovering validator, at
+the rounds that validator slept through.**
 
 **I4.**
 ```lean
@@ -4289,28 +4303,33 @@ theorem not_synchronisedOn_skipFill (sk : SkipMsg U) {T : Finset Validator}
     ¬ SynchronisedOn sk.skipFill T R
 ```
 
-Coverage fails at every gap round of every fill, on no hypotheses
-beyond the ones SS2 itself creates. The reason is the fact that makes
-Safe Skip **safe**: SS3 concludes that a filled candidate is always
-directly skipped *because no old block references a fresh identifier*,
-and coverage asks the opposite — that every reliable block at round
-`n+1` reference every reliable block at round `n`. One fact, two
-consequences: the fill can manufacture neither a commit nor coverage.
+The failure needs no hypotheses beyond the ones SS2 itself creates, and
+its reason is the fact that makes Safe Skip **safe**. SS3 concludes
+that a filled candidate is always directly skipped *because no old
+block references a fresh identifier*; coverage asks the opposite, that
+every reliable block at round `n+1` reference every reliable block at
+round `n`. One fact, two consequences: the fill can manufacture neither
+a commit nor coverage. The hypotheses are exhibited satisfiable on
+`Ucrash` (§16), so the refutation is not vacuous.
 
-The refutation is narrower than it first appears, and the boundary is
-exact in two directions. It is a statement about counting the recovering
-validator reliable *during the gap it slept through*: exclude it from
-the reliable set and coverage is untouched, the fill's blocks being its
-alone, so the clause never quantifies over them
-(`synchronisedOn_skipFill_of_notMem`). And with the validator included, coverage returns strictly above the
-fill (`synchronisedOn_skipFill_above`) — the strictness is not slack,
-since at the target round the lower block may still be the last filled
-one, and the refutation reaches there too. So Safe Skip composes with
-the liveness account: what it cannot support is the claim that a
-validator was covered at rounds during which it was absent, which §12
-never makes. Its claim is that the fill restores *production*, and that
-is the hypothesis liveness consumes. The hypotheses are exhibited satisfiable on `Ucrash` (§16), so the
-refutation is not vacuous.
+**It is preserved for any reliable set that excludes the recovering
+validator** (`synchronisedOn_skipFill_of_notMem`). The filled blocks
+are that validator's alone, so a clause quantified over the others
+never encounters them.
+
+**It returns strictly above the fill**
+(`synchronisedOn_skipFill_above`), for any set. The strictness is not
+slack: at the target round the lower block may still be the last filled
+one, and the refutation reaches there too.
+
+So the fill composes with the liveness account of §6, and what it
+cannot support is the claim that a validator was covered at rounds
+during which it was absent — which §12 does not make. §12's claim is
+that the fill restores *production*, which is the hypothesis liveness
+consumes and which SS2 supplies. The reading for a deployment is that
+a recovering validator is outside the covered set for the duration of
+its gap, consistent with §15.6's account of what it costs to be absent,
+and an ordinary participant from the round above the fill onward.
 
 ### 15.4 Where a horizon may be put
 
@@ -4424,7 +4443,7 @@ with the validator back in the reliable set. No lemma relates
 `AdaptivePolicy` to `HybridFaults`, and none is needed: the crash class
 is invisible in verdicts, which is all a policy reads.
 
-### 15.6 Re-genesis
+### 15.6 Re-genesis, and the long outage
 
 A validator whose whole history falls below a horizon is worse off than
 unable to fill. P3′ requires every non-genesis block to reference a
@@ -4526,7 +4545,7 @@ saves storage and lengthens the window in which a returning validator,
 however honest and however well caught up on the ledger, counts against
 the fault budget.
 
-### 15.7 The self-parent clause, on both sides
+### 15.7 The exposure condition under both mechanisms
 
 The two recovery mechanisms part company at the exposure condition, and
 the reason is structural.
@@ -4613,7 +4632,7 @@ own round*, leaving open that `v1` equivocated before crashing, and the
 fill's self reference would then cite an exposed author. It is what the
 base model's correctness and §14's honesty each supply.
 
-### 15.8 The delivery layer, and a modelling choice
+### 15.8 Storage: the delivery layer, and what settles it
 
 §8.4's budgets range over a `Delivery U` rather than over `U`, so they
 cannot be *stated* for the fill until it has a delivery structure of
@@ -4651,9 +4670,9 @@ construction, `accepted_inj` following from the P2 clause `skipFill`
 already establishes for `fillBlock`. What that model does not concede
 is the budget — the novelty of the newly accepted blocks becomes a
 property of the fill, to be checked as in §15.7 rather than inherited.
+
 **I17 — and the choice does not affect the budget.** §8.4's
-`RefsAccepted` attributes a block's cone to *its own author's* view, and
-the pool argument turns out not to need that. Its component lemmas are
+`RefsAccepted` attributes a block's cone to *its own author's* view, and the pool argument does not need that. Its component lemmas are
 already stated at the right generality: novelty is bounded by the gap
 toward whichever validator's acceptances contain the references
 (`card_novelty_le_viewGap_add_one`), and that gap is bounded as soon as
@@ -4734,6 +4753,7 @@ every theorem above it vacuous, and vacuity is not otherwise detectable.
 | `Uhyb4`, `Uhyb9` | `HybridFaults`, `HonestNoEquiv`: one crash at four validators; the tight hybrid committee (H9) |
 | `UtightA`, `UtightB` | the one-short committee: agreement refuted at every threshold (H10) |
 | `skTight` | the fill of `Ucrash` at which coverage is refuted (I4) |
+| `Ucut`, `Uregen`, `urecover` | the severed validator, its re-genesis, and the catch-up message over it |
 
 Three of the models are tight, which is what renders the constants meaningful.
 
@@ -4778,6 +4798,18 @@ and two views' total runs are constructed and shown identical by AL3.
 The hybrid model is witnessed at both of §14.7's committees (H9), and
 the one-short committee's two attack universes carry the tightness
 refutation (H10).
+
+The integration constructions are witnessed on the scenario they all
+describe: validator `3` of `Ucrash`, crashed after its genesis block
+and severed by a horizon at round `1`. `Ucut` is the truncation and
+`ucut_severed` confirms by `decide` that the validator has no block in
+it at all; `Uregen` adds the derived genesis, with its uniqueness
+clause and `dosValid_addGenesis` checked over it; and `urecover` builds
+the catch-up message anchored on that block, so the composite recovery
+of §15.6 is exhibited end to end rather than assumed composable. The
+refutation of §15.3 is witnessed on the same family
+(`ucrash_not_synchronisedOn`), which is what makes it a refutation
+rather than an unsatisfiable hypothesis.
 
 ---
 

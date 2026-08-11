@@ -223,6 +223,24 @@ def load_extracted(root):
     return out
 
 
+def audit_register(path):
+    """The banned-phrase check alone.
+
+    Design records cite the report's sections and name declarations that
+    may not exist yet, so the cross-reference and identifier checks do
+    not apply to them. The register does: it is the one rule that holds
+    of every document in `docs/`.
+    """
+    failures = [
+        ("banned", f"line {i}: `{m.group(0)}`")
+        for i, line in enumerate(path.read_text().split("\n"), 1)
+        if (m := BANNED.search(line))
+    ]
+    for kind, detail in failures:
+        print(f"{path.name}: {kind}: {detail}")
+    return len(failures)
+
+
 def audit(path, decls, suffixes):
     text = path.read_text()
     failures = []
@@ -354,8 +372,17 @@ def main(argv):
             n = n.split(".", 1)[1]
             suffixes.add(n)
 
-    paths = [pathlib.Path(a) for a in argv[1:]] or [ROOT / "docs/report.md"]
+    if argv[1:]:
+        paths, register_only = [pathlib.Path(a) for a in argv[1:]], []
+    else:
+        paths = [ROOT / "docs/report.md"]
+        # The register check covers the documents held to `style.md`'s
+        # rules. `style.md` itself quotes the banned phrases in order to
+        # ban them. The remaining design records predate the rule and
+        # are not held to it; adding one here means cleaning it first.
+        register_only = [ROOT / "docs/integration.md"]
     bad = sum(audit(p, decls, suffixes) for p in paths)
+    bad += sum(audit_register(q) for q in register_only)
     sys.exit(1 if bad else 0)
 
 

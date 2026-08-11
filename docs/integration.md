@@ -8,8 +8,9 @@
 > only human-plus-LLM review behind it. Read critically.
 
 Every arc of this development was built additively: each consumes the
-core read-only, and none modifies another. That discipline bought
-independence, and it left a question unanswered — **do the arcs compose
+core read-only, and none modifies another. That discipline kept the
+arcs independent, and it left a question unanswered — **do the arcs
+compose
 with each other?** A validator that garbage-collects below a horizon,
 recovers from a crash by Safe Skip, runs an adaptive leader schedule
 and tolerates hybrid faults is running all four mechanisms at once, and
@@ -48,8 +49,8 @@ instance). These change the quorum arithmetic under everything.
 
 **Schedule- and timing-layer variants.** Replace or refine the `Slots`
 instance or the timed structure: `slotsOf` (§13, adaptive assignment),
-`Slots.chop` (§9's induced schedule), `ReactiveCore`/`ReactiveM` (§11),
-`CatchupSync` (§6.12).
+`Slots.chop` (report §9's induced schedule), `ReactiveCore`/`ReactiveM`
+(report §11), `CatchupSync` (report §6.12).
 
 **Property provers.** Consume a universe plus conditions and conclude:
 chain quality (§7), the storage bounds (§8), the liveness capstones
@@ -145,7 +146,7 @@ purposes: a transformer must say what happens to verdicts.
 ### 2.2 Layer D — the delivery structure
 
 The object: `Delivery U`, **indexed by the universe**. This dependency
-is the structural fact the first draft of this document missed: a
+is the structural fact this document's plan missed as first written: a
 universe transformer `F : U ↦ F U` does not merely need to preserve
 delivery-level invariants, it needs a *transformer of its own* at this
 layer, `F_D : Delivery U → Delivery (F U)`, before those invariants can
@@ -159,7 +160,8 @@ well-formed obligation (§3.1).
 validator has a genesis block, and one holding a quorum at `r` builds
 at `r+1` (P8). *Provides:* the untimed production derivation, hence U2.
 
-**D2. Delivery conditions** — `DeliversQuorum D`, `EventuallyDelivers D R`.
+**D2. Delivery conditions** — `DeliversQuorum D`, `EventuallyDelivers
+D R`.
 *Provides:* the legacy quorum route (§15) and the delivery derivation
 of coverage (L7a). Both already have `chopD` counterparts.
 
@@ -202,11 +204,8 @@ capstones (`dos_resistance`, `chain_quality`, `decided_agree_chop`,
 list. Three findings, all of which changed this plan:
 
 1. **The schedule layer was missing entirely.** `FairScheduleOn`,
-   `FairRunOn`, `SpansEligible` and `PlacesRuns` appear as hypotheses
-   of five capstones and were absent from the first draft's list. The
-   first draft would therefore have produced a preservation table that
-   silently omitted every combination involving a schedule variant —
-   including GC × Adaptive, the most interesting one (I9).
+   `FairRunOn`, `SpansEligible` and `PlacesRuns` appear as hypotheses of five capstones and were absent from §2's list as first written. That list would therefore have produced a preservation table that silently omitted every combination involving a schedule variant —
+   including GC × Adaptive, the most interesting one (I5).
 2. **The delivery layer is dependent, not parallel.** `UniformBudget`
    and `RefsAccepted` range over `Delivery U`, not `U`, so they cannot
    be stated for a transformed universe without a transformed delivery.
@@ -233,8 +232,8 @@ prove one lemma:
     I U  →  I (F U)
 
 Then any property `P` whose statement depends only on named invariants
-transfers to `F U` **for free**, with no new proof and no mention of
-`P` anywhere. The pattern is already established — GC carries most of
+transfers to `F U` **with no new proof**, and with no mention of `P`
+anywhere. The pattern is already established — GC carries most of
 its column, and this is why §9 reads as cleanly as it does.
 
 **Layer U — universe transformers.**
@@ -298,7 +297,7 @@ the accounts after.
 | I7 | the composition capstone | `Stack` |
 | I8 | a severed chain cannot restart | `Retention` |
 | I9 | the crash-prone lifecycle, and the hypothesis it forced | `Lifecycle` |
-| I10 | re-genesis at the cut, free of P3′ | `ReGenesis` |
+| I10 | re-genesis at the cut, needing no P3′ exemption | `ReGenesis` |
 | I11 | local derivation converges; no agreement on the cut | `ReGenesis` |
 | I12 | bootstrap, re-genesis and Safe Skip compose | `ReGenesis` |
 | I13 | the exposure condition survives re-genesis; the fill enlarges cones | `ReGenesis`, `Exposure` |
@@ -320,49 +319,66 @@ explains its shape.
 Six cells are closed, all on the standard three axioms
 (`LeanDag/Integration/`, witnessed in `LeanDagTest/Integration.lean`).
 
-**I2, I3 — honest non-equivocation survives both transformers**
+**I1 — honest non-equivocation survives both transformers**
 (`honestNoEquiv_chop`, `honestNoEquiv_skipFill`). Together these are
 what let §14's hybrid model be used inside §9's truncation and across
 §12's fill: a hybrid universe stays a hybrid universe on both sides.
-I3 is the same argument `skipFill`'s own `no_equivocation` field makes
-for the derived correct class, at the wider honest class, and turns on
-the same clause — `hgap`, the crash itself.
+The fill's half is the same argument `skipFill`'s own
+`no_equivocation` field makes for the derived correct class, run at the
+wider honest class, and turns on the same clause — `hgap`, the crash
+itself.
 
-**I4 — coverage survives truncation** (`synchronisedOn_chop`), needing
+**I2 — coverage survives truncation** (`synchronisedOn_chop`), needing
 only the horizon offset `R ≤ G + R'` and no base-layer exception. The
 reason is structural and generalises (§3.3): coverage constrains a
 block at chopped round `n + 1`, which lies above the cut by
 construction, so `chop` retains its references and the original clause
 applies unchanged.
 
-**I5 — coverage does *not* survive the fill**
-(`not_synchronisedOn_skipFill`), refuted in general rather than on
-data: at every gap round of every fill, an old block at the round above
-fails to reference the filled block below it, because no old block
-references a fresh identifier. The `Ucrash` witness
-(`ucrash_not_synchronisedOn`) is retained to show the hypotheses are
-satisfiable and the refutation therefore bites.
+**I4 — coverage under the fill, in three cases.** The division is the
+result, and the middle case was found late.
 
-This is the same fact that makes Safe Skip **safe**. SS3 concludes a
-filled candidate is always directly skipped *because no old block
-references a fresh identifier*; I5 concludes coverage fails at gap
-rounds for the identical reason. One fact, two consequences: the fill
-can manufacture neither a commit nor coverage. §12 claims only that it
-restores *production*, which is the hypothesis liveness consumes, so
-nothing in §12 weakens — but the boundary is now exact. Coverage
-returns strictly above the fill (`synchronisedOn_skipFill_above`,
-requiring `sk.r < R'`); at `n = sk.r` the lower block may still be the
-last filled one, and the refutation reaches there too.
+*It fails* (`not_synchronisedOn_skipFill`) for a reliable set
+containing the recovering validator, at that validator's gap rounds —
+refuted in general rather than on data, because at every gap round of
+every fill an old block at the round above fails to reference the
+filled block below it. The `Ucrash` witness
+(`ucrash_not_synchronisedOn`) exhibits the hypotheses satisfiable, so
+the refutation is not vacuous.
 
-**I13, I15 — the schedule layer survives truncation**
+*It is preserved* (`synchronisedOn_skipFill_of_notMem`) for any
+reliable set excluding the recovering validator. The filled blocks are
+that validator's alone, so a clause quantified over the others never
+encounters them.
+
+*It returns strictly above the fill*
+(`synchronisedOn_skipFill_above`, requiring `sk.r < R'`), for any set.
+The strictness is not slack: at the target round the lower block may
+still be the last filled one, and the refutation reaches there too.
+
+The refutation is the same fact that makes Safe Skip **safe**. SS3
+concludes a filled candidate is always directly skipped *because no old
+block references a fresh identifier*; coverage asks the opposite of
+that reference. One fact, two consequences: the fill can manufacture
+neither a commit nor coverage.
+
+So the fill composes with §6's liveness account. What it cannot support
+is the claim that a validator was covered at rounds during which it was
+absent — which §12 does not make: §12 claims the fill restores
+*production*, which is the hypothesis liveness consumes and which SS2
+supplies. A recovering validator is outside the covered set for the
+duration of its gap, and an ordinary participant from the round above
+the fill onward.
+
+**I3 — the schedule layer survives truncation**
 (`fairScheduleOn_chop`, `fairRunOn_chop`, `spansEligible_chop`). A
 joiner reasoning inside a truncation has a schedule that is fair and
-spanning in its own right, which is what I9 needs.
+spanning in its own right, which is what I5 needs.
 
-**I7 — the lag bounds the recoverable outage.** Both directions.
-`anchor_pruned` (I7a) states the constraint: a horizon past the crash
+**I6 — the lag bounds the recoverable outage.** Both directions.
+`anchor_pruned` (I6a) states the constraint: a horizon past the crash
 round prunes the anchor, so every `SkipMsg` over the truncation must
-name a different one. `chopMsg` (I7b) shows it is the *only* constraint
+name a different one. `chopMsg` (I6b) shows it is the *only* constraint
 — with the anchor retained the whole message rebases, every field
 shifted by `−G`, and a validator that has already pruned can still
 rejoin with one message.
@@ -370,7 +386,7 @@ rejoin with one message.
 One hypothesis appeared that the plan had not predicted: the horizon
 must also lie below the *target* round (`G ≤ sk.r`), not only below the
 anchor. It is needed where `k ≤ r − G` must give `G + k ≤ r`, which
-truncated subtraction does not supply for free. In any non-degenerate
+truncated subtraction does not supply. In any non-degenerate
 fill it is implied, but it is a real side condition and is stated
 rather than assumed.
 
@@ -385,8 +401,8 @@ by `Λ`, the anchor survives *exactly* when the outage did not exceed
 Beyond it the validator's last block is gone — and the consequence is
 sharper than "the fill fails".
 
-**Filling only the retained rounds is not a repair, and the obstruction
-is P3′.** A filled block at the round above the cut needs a
+**I8 — filling only the retained rounds is not a repair, and the
+obstruction is P3′.** A filled block at the round above the cut needs a
 `v1`-authored block *at* the cut to chain from, and a validator that
 crashed below the horizon has none: a fill cannot start in mid-air.
 Pushing on that yields a general fact
@@ -405,7 +421,23 @@ not record: the clause is credited there for the DoS and
 garbage-collection arcs and noted as unused by safety and liveness, but
 it is what makes a pruned validator unrecoverable.
 
-**I17 — and the provision is nearly free** (`Integration/ReGenesis.lean`).
+**I18 — and severance is a liveness cost, not only a storage one.**
+A severed validator can still *read* after bootstrap, but it cannot
+*produce*, and the reliable sets liveness quantifies over are defined
+by production. So a severed validator belongs to none of them
+(`notMem_of_no_blocks`), and since liveness needs a reliable set of
+quorum size, at most `f` validators can be severed at once
+(`card_severed_le`).
+
+That reprices the horizon lag. It is set as a storage parameter — how
+much history to retain — but it also fixes the window during which a
+returning validator counts against the fault budget rather than towards
+the quorum. A shorter lag saves disk and lengthens that window. The
+trade-off is not visible from §9 alone, because §9 has no notion of a
+validator that is present but unable to produce.
+
+**I10 — and the provision needed is a single block**
+(`Integration/ReGenesis.lean`).
 The obvious repair is to let the stranded validator start a fresh chain
 *at the cut*, with a block carrying no references. It needs no exemption
 from P3′ at all: truncation rebases the retained layer to round `0`,
@@ -416,7 +448,8 @@ block is indistinguishable, to the rules, from a block the cut
 flattened.
 
 `addGenesis` builds it and proves the extension a lawful universe, and
-the non-equivocation obligation comes out **free**: adding a genesis
+the non-equivocation obligation needs **no separate argument**: adding
+a genesis
 block would normally risk a twin at round `0`, but the very fact that
 stranded the validator — its total absence from the truncation,
 `severed_of_pruned_anchor` — is what makes the new block unambiguous.
@@ -424,98 +457,7 @@ stranded the validator — its total absence from the truncation,
 layer, which is P8's hypothesis at round `0`, and an ordinary Safe Skip
 anchored on the new block fills the rounds above.
 
-**I19a — re-genesis preserves the exposure condition, and I1's
-mechanism is its exact opposite.** The two recovery mechanisms come
-apart here, for one structural reason.
-
-`dosValid_addGenesis`: re-genesis adds a block with **no references**.
-It therefore cannot cite an exposed author — the clause is vacuous for
-it — and it enters no other block's cone, since nothing reaches what
-nothing references. `DoSValid` is untouched in both directions, so §8's
-per-cone bound applies to a re-genesised universe unchanged. Report
-§2.2's worry that re-genesis severs the self-parent chain turns out not
-to bite at the condition level: what §8 forbids is *citing* an exposed
-author, and a block citing nothing is safe by inspection.
-
-The fill does the opposite, and `history_B1_subset_fill` is the engine
-of §5.6's prediction: P3′ obliges `fillBlock` to insert a self
-reference, so the first filled block **reaches the anchor**, and with
-it the whole of `v1`'s pre-crash history. Its citations are inherited
-unchanged from the donor, but its cone is strictly larger — and
-`DoSValid` forbids citing an author exposed *in one's own cone*. A
-citation innocuous in the donor's smaller cone can therefore be a
-violation in the filled block's larger one.
-
-So P3′ **pays for itself in §8 and charges for itself in §12**: the
-self-parent chain is what makes a cone a complete record of its
-author's acceptances, and the self reference the fill must add is
-exactly what enlarges the cone past what the donor vouched for. The
-disturbance is nonetheless **local**, which is what closes I1.
-
-A fill copies a donor block's references, which `DoSValid U` already
-vouches for in the donor's cone; and it disturbs no *other* block,
-because an old block's cone contains no filled block. Exposure at an
-old block is unchanged in both directions (`exposedIn_skipFill_old`),
-so `dosValid_skipFill` gives the extension the condition as soon as its
-own blocks satisfy it.
-
-The residual obligation is therefore local to the fill and
-**checkable**: a recipient computes the fill and inspects it,
-consulting no identity oracle and nothing beyond the message and its
-own DAG. In report §8's vocabulary the condition is enforceable, so it
-is admissible as a clause of the mechanism rather than an assumption
-about the network — a fill whose enlarged cone exposes one of the
-donor's citations fails the check and is refused, rather than accepted
-and unsound.
-
-**And the check reduces to reachability** (`I14`,
-`dosValid_skipFill_of_covered`). If each donor block already reaches
-the anchor — which a donor line satisfies whenever it referenced `v1`'s
-last block, the ordinary case since `v1` was producing at `r0` — then
-the fill's cone adds nothing but `v1`'s own new blocks
-(`fill_cone_subset`), and those cannot form an equivocating pair: they
-sit at distinct rounds, `hgap` excludes an old `v1` block at any of
-them, and `hB1uniq` pins the anchor's round. What is left is the
-donor's own cone, for which `DoSValid U` already vouches. A recipient
-therefore runs one reachability query per gap round and needs no
-exposure computation over the extension.
-
-One hypothesis is forced rather than chosen, and is worth stating for
-what it reveals: `SkipMsg` records only that the anchor is `v1`'s
-unique block *at its own round*, which leaves open that `v1`
-equivocated before crashing — and the fill's self reference would then
-cite an exposed author. Non-equivocation of `v1` throughout is what the
-base model's correctness and report §14's honesty each supply, and it
-is the second place (after I9) where weakening `hv1` to `hB1uniq`
-required the missing strength to be named explicitly.
-
-**I15 closes the delivery layer, with a modelling choice recorded
-rather than settled.** `skipFillD` is the transformer, and it changes
-nothing: a `Delivery` records what validators held when they built,
-and nobody received the fill at the time. Its one obligation with
-content is `includes` over the filled blocks, discharged by the
-hypothesis that `v1` accepted nothing while down — the acceptance-side
-counterpart of `hgap`.
-
-The author-blind budget then transfers at the same constant
-(`uniformBudget_skipFillD`), since every accepted block is old and
-views and novelty are literally the same finite sets. The *reference
-discipline* does not (`not_refsAccepted_skipFillD`), and the failure
-describes Safe Skip rather than the transformer: `RefsAccepted` says a
-validator cites only what reached it, and a fill cites the donor's
-blocks, which the recovering validator did not receive. A retroactive
-reconstruction cannot satisfy both under a delivery structure that
-records what actually arrived.
-
-Modelling recovery as acceptance *at recovery time* satisfies both by
-construction, and concedes the budget instead — the novelty of the
-newly accepted blocks becomes a property of the fill, checkable as in
-I13/I14 rather than inherited. Which model is right is a question about
-what a `Delivery` is meant to record, and the arc records it rather
-than settling it. Either way B4's storage bound transfers by the route
-that model supports.
-
-**I18 — and the condition dissolves if the block is derived, not sent.**
+**I11 — and the condition dissolves if the block is derived, not sent.**
 §5.7's objection was that a re-genesis block is valid only to
 validators who have pruned at least as far, which report §9's
 per-validator horizons cannot guarantee. It applies to a *transmitted*
@@ -539,7 +481,115 @@ The statements are observational: identifier sets equal, and blocks
 equal at those identifiers. The two universes differ only on junk
 outside their identifier sets, which nothing reads.
 
-**I10 — a crash-prone validator can Safe Skip, once a hypothesis is
+**I12 — and the three mechanisms compose into one recovery.**
+`recoveryMsg` puts them in sequence for a validator that crashed below
+the horizon: bootstrap supplies the retained layer, re-genesis supplies
+a block at the cut, and an ordinary `SkipMsg` anchored on that block
+fills the rounds above. The result is a lawful universe in which the
+validator produces again.
+
+This is the answer to a question §12 could not pose. Safe Skip alone
+covers outages up to the lag (I6); beyond it the anchor is gone and the
+mechanism has nothing to attach to. The composite covers the rest, so
+the two are **complementary rather than alternatives**: Safe Skip is
+the cheap path when the anchor survives, and bootstrap with re-genesis
+is the path when it does not. Neither subsumes the other, and the lag
+is what divides them.
+
+**I13 — re-genesis preserves the exposure condition, and the fill's
+mechanism is its exact opposite.** The two recovery mechanisms come
+apart here, for one structural reason.
+
+`dosValid_addGenesis`: re-genesis adds a block with **no references**.
+It therefore cannot cite an exposed author — the clause is vacuous for
+it — and it enters no other block's cone, since nothing reaches what
+nothing references. `DoSValid` is untouched in both directions, so §8's
+per-cone bound applies to a re-genesised universe unchanged. Report
+§2.2's worry that re-genesis severs the self-parent chain does not
+apply at the condition level: what §8 forbids is *citing* an exposed
+author, and a block citing nothing is safe by inspection.
+
+The fill does the opposite, and `history_B1_subset_fill` is what §5.6
+predicted: P3′ obliges `fillBlock` to insert a self
+reference, so the first filled block **reaches the anchor**, and with
+it the whole of `v1`'s pre-crash history. Its citations are inherited
+unchanged from the donor, but its cone is strictly larger — and
+`DoSValid` forbids citing an author exposed *in one's own cone*. A
+citation innocuous in the donor's smaller cone can therefore be a
+violation in the filled block's larger one.
+
+So the same clause has opposite effects in the two arcs: P3′ is what
+makes a cone a complete record of its author's acceptances, which is
+what §8 relies on, and the self reference it obliges the fill to add is
+exactly what enlarges the cone past what the donor vouched for, which
+is what §12 must then handle. The
+disturbance is nonetheless **local**, which is what I14 establishes.
+
+A fill copies a donor block's references, which `DoSValid U` already
+vouches for in the donor's cone; and it disturbs no *other* block,
+because an old block's cone contains no filled block. Exposure at an
+old block is unchanged in both directions (`exposedIn_skipFill_old`),
+so `dosValid_skipFill` gives the extension the condition as soon as its
+own blocks satisfy it.
+
+The residual obligation is therefore local to the fill and
+**checkable**: a recipient computes the fill and inspects it,
+consulting no identity oracle and nothing beyond the message and its
+own DAG. In report §8's vocabulary the condition is enforceable, so it
+is admissible as a clause of the mechanism rather than an assumption
+about the network — a fill whose enlarged cone exposes one of the
+donor's citations fails the check and is refused, rather than accepted
+and unsound.
+
+**I15 — and the check reduces to reachability**
+(`dosValid_skipFill_of_covered`). If each donor block already reaches
+the anchor — which a donor line satisfies whenever it referenced `v1`'s
+last block, the ordinary case since `v1` was producing at `r0` — then
+the fill's cone adds nothing but `v1`'s own new blocks
+(`fill_cone_subset`), and those cannot form an equivocating pair: they
+sit at distinct rounds, `hgap` excludes an old `v1` block at any of
+them, and `hB1uniq` pins the anchor's round. What is left is the
+donor's own cone, for which `DoSValid U` already vouches. A recipient
+therefore runs one reachability query per gap round and needs no
+exposure computation over the extension.
+
+One hypothesis is forced rather than chosen, and is worth stating for
+what it reveals: `SkipMsg` records only that the anchor is `v1`'s
+unique block *at its own round*, which leaves open that `v1`
+equivocated before crashing — and the fill's self reference would then
+cite an exposed author. Non-equivocation of `v1` throughout is what the
+base model's correctness and report §14's honesty each supply, and it
+is the second place (after I9) where weakening `hv1` to `hB1uniq`
+required the missing strength to be named explicitly.
+
+**I16 closes the delivery layer, with a modelling choice recorded
+rather than settled.** `skipFillD` is the transformer, and it changes
+nothing: a `Delivery` records what validators held when they built,
+and nobody received the fill at the time. Its one obligation with
+content is `includes` over the filled blocks, discharged by the
+hypothesis that `v1` accepted nothing while down — the acceptance-side
+counterpart of `hgap`.
+
+The author-blind budget then transfers at the same constant
+(`uniformBudget_skipFillD`), since every accepted block is old and
+views and novelty are literally the same finite sets. The *reference
+discipline* does not (`not_refsAccepted_skipFillD`), and the failure
+describes Safe Skip rather than the transformer: `RefsAccepted` says a
+validator cites only what reached it, and a fill cites the donor's
+blocks, which the recovering validator did not receive. A retroactive
+reconstruction cannot satisfy both under a delivery structure that
+records what actually arrived.
+
+Modelling recovery as acceptance *at recovery time* satisfies both by
+construction, and concedes the budget instead — the novelty of the
+newly accepted blocks becomes a property of the fill, checkable as in
+I14/I15 rather than inherited. Which model is right is a question
+about
+what a `Delivery` is meant to record, and the arc records it rather
+than settling it. Either way B4's storage bound transfers by the route
+that model supports.
+
+**I9 — a crash-prone validator can Safe Skip, once a hypothesis is
 stated as the fact it stands for.** This is the composition that did
 *not* fit, and the misfit is the finding. `SkipMsg` carried
 `hv1 : v1 ∈ Correct`; the hybrid model splits `Correct` into honest and
@@ -560,7 +610,7 @@ weakening: every model that satisfied the old field satisfies the new
 one, and the report's §12.1 now explains why the fact is stated rather
 than the membership.
 
-**I11 — nothing to prove, and that is the result.** The expectation was
+**A non-task, and that is the result.** The expectation was
 a lemma relating `AdaptivePolicy` to `HybridFaults`. There is none, and
 there cannot usefully be one: a policy reads verdicts, and the crash
 class is invisible in verdicts. A halted validator's slot is skipped by
@@ -568,18 +618,20 @@ L5, whose hypothesis is that no block at the round carries the leader
 as creator — which says nothing about *why* the leader is absent. A
 crash-prone leader, a withholding Byzantine leader and a correct leader
 that has not yet built are indistinguishable there, and a demoting
-policy demotes all three alike. I11 joins I14 as a non-task, and
-`lifecycle` composes L5, SS2 and I3 into one statement in which three
+policy demotes all three alike. This joins `slotsOf`'s failure to
+preserve fairness as the arc's second non-task, and
+`lifecycle` composes L5, SS2 and I1 into one statement in which three
 arcs meet without any of them mentioning another.
 
-**I16 — the thesis holds: composition is free.** The capstone
+**I7 — the thesis holds: composition needs no new arguments.** The capstone
 (`LeanDag/Integration/Stack.lean`) puts a validator on all four
 mechanisms at once — recovered by Safe Skip, then truncated below a
 horizon, read in the hybrid fault model, under an adaptive schedule —
 and every proof is a chain of existing lemmas. Honest non-equivocation
-survives the stack by I3 then I2 (`honestNoEquiv_stack`, one line);
-coverage by I5-positive then I4, the two offsets composing exactly as
-their statements suggest; production by SS2 then the truncation's
+survives the stack by I1 applied at each transformer in turn
+(`honestNoEquiv_stack`, one line); coverage by I4's positive case then
+I2, the two offsets composing exactly as their statements suggest;
+production by SS2 then the truncation's
 rebasing. The payoff is `hybrid_agree_stack`: **a validator that
 recovered from a crash and then pruned still cannot disagree with
 anyone about a verdict**, its proof being §14's agreement theorem
@@ -592,21 +644,23 @@ Two things the capstone settled that the ingredients did not.
 one.** Fill-then-truncate is unconditional: `chop (skipFill U) G` is
 well formed at every horizon, because the fill has already happened
 when the cut is made. The reverse needs the anchor retained, since a
-`SkipMsg` for `chop U G` requires `B1 ∈ (chop U G).ids`. So I7's
+`SkipMsg` for `chop U G` requires `B1 ∈ (chop U G).ids`. So I6's
 condition is real but appears here as an *asymmetry between orders*
-rather than as an obstacle, and the order that costs nothing is the one
+rather than as an obstacle, and the unconditional order is the one
 deployments actually take: fill the gap on recovery, prune later. §5.4
-anticipated that I16 might need I7 first; it does not, and this is why.
+anticipated that the capstone might need I6 first; it does not, and
+this is why.
 
-**The schedule layer stacks entirely for free** (`schedule_stack`).
+**The schedule layer stacks with no compatibility lemma at all**
+(`schedule_stack`).
 `Slots.chop` and `slotsOf` are functions of a `Slots` instance and
 nothing else, so the layer-S results hold for a validator running *any*
 stack of universe transformers, with no compatibility lemma. That is
-the clearest vindication of §2's layering: the composition matrix is
+the clearest evidence for §2's layering: the composition matrix is
 smaller than the arc count suggests because one of its three layers
 does not interact with the others at all.
 
-**I9 — a joiner can run the network's schedule, under two obligations**
+**I5 — a joiner can run the network's schedule, under two obligations**
 (`LeanDag/Integration/Joiner.lean`). The question decomposed further
 than expected, and the decomposition is the result.
 
@@ -614,7 +668,7 @@ The schedule half is *definitional*: truncating an adaptive schedule
 and adapting a truncated one produce the same rounds and the same
 leaders, `slotsChop_slotsOf` closing by `⟨rfl, rfl⟩`, provided the
 assignment used inside the truncation is the original one shifted past
-the base slot. No policy hypothesis is involved — all of I9's content
+the base slot. No policy hypothesis is involved — all of I5's content
 sits in whether a joiner can *produce* that shifted assignment.
 
 That is `HorizonStable`, and it is the deployment obligation the arc
@@ -663,12 +717,12 @@ before attempting them, because each predicts the shape of the answer:
 **Quantify upward, transport cheaply.** A clause constraining a block
 at round `n + 1` in terms of round `n` transports through truncation
 without a base-layer exception, because the constrained block is above
-the cut by construction (I4). A clause pinned at a fixed round needs
+the cut by construction (I2). A clause pinned at a fixed round needs
 one (`supporters_chop`'s `1 ≤ m`). When a new invariant is added to
 §2, its quantifier shape predicts its transport cost.
 
 **Truncated subtraction is faithful only above the cut.** Paid three
-times now — in I2, in `Slots.chop`'s `keyed` clause, and in I15 — and
+times now — in I2, in `Slots.chop`'s `keyed` clause, and in I6 — and
 discharged the same way each time: some hypothesis already in scope
 pins the rounds above `G` (the `chop` filter; the base-slot condition
 `G ≤ S.slotRound d`, carried upward by monotonicity in
@@ -677,39 +731,51 @@ it, and look for the pinning hypothesis rather than strengthening the
 statement.
 
 **Adding blocks is dangerous; removing them is not.** Truncation
-restricts universally quantified invariants downward for free (I2, I4).
-Extension does not (I5), because an invariant of the form "every block
+restricts universally quantified invariants downward without further
+hypotheses (I1, I2). Extension does not (I4), because an invariant of
+the form "every block
 here relates to every block there" acquires new obligations when new
 blocks arrive — and `skipFill`'s new blocks are, by SS3's own argument,
-exactly the ones nothing old can reference. **This predicts I1**: the
-fill's cone is strictly larger than the donor's — it adds `v1`'s chain
-below the anchor — and `DoSValid` forbids referencing an author exposed
-*in one's own cone*, so a larger cone can only expose more. I1 is
-therefore likely false without a hypothesis confining equivocations in
-`v1`'s pre-crash history; see §5.6.
+exactly the ones nothing old can reference. **The heuristic predicted
+the shape of I14 correctly**, and the prediction is recorded because
+it held: the fill's cone is strictly larger than the donor's — it adds
+`v1`'s chain below the anchor — and `DoSValid` forbids referencing an
+author exposed *in one's own cone*, so a larger cone can only expose
+more. Unconditional preservation is indeed false, and I14 supplies
+exactly the hypothesis the heuristic named: a condition confining
+equivocations in `v1`'s pre-crash history, which `hB1uniq` and `hgap`
+together provide.
 
-### 3.5 Transformers × transformers
+### 3.5 Transformers × transformers, and how the order question closed
 
-Rather than prove that every *order* of applying transformers is safe,
-prove a **commutation or normalization** result once. §9 already has
-`chop_chop`: two horizons compose, and the composite is the coarser
-one. What is missing is the mixed pair:
+The plan proposed proving a **commutation or normalization** result
+once rather than checking every *order* of applying transformers. §9
+already had `chop_chop`: two horizons compose, and the composite is the
+coarser one. The mixed pair was the gap:
 
-**I7 — `chop` and `skipFill` commute, on their common domain.**
-Concretely, if the anchor `B1` is retained (`G ≤ round B1`), then
-truncating a filled universe and filling a truncated one agree:
+**`chop` and `skipFill` on their common domain.** If the anchor `B1` is
+retained (`G ≤ round B1`), then truncating a filled universe and
+filling a truncated one agree:
 
     chop (skipFill sk) G  ≃  skipFill (sk.chop G) G
 
-with the fill's data re-indexed. The side condition is the interesting
-content, and it is an *engineering* fact worth stating plainly: **Safe
-Skip requires its anchor to be above the horizon.** A validator that
-crashes for longer than the garbage-collection lag cannot Safe Skip
-back in — its last block has been pruned — and must instead bootstrap
-by the §9.5 attested-base route. That is a genuine deployment
-constraint that neither arc alone can see, and pinning it as a theorem
-(with the negative case witnessed on data) is exactly the kind of
-result integration should produce.
+with the fill's data re-indexed.
+
+The side condition was correctly identified as the interesting content,
+and it became I6: **Safe Skip requires its anchor to be above the
+horizon.** A validator that crashes for longer than the
+garbage-collection lag cannot Safe Skip back in — its last block has
+been pruned — and must bootstrap and re-genesise instead (I8, I10).
+`outage_bounded_by_lag` states it in both directions.
+
+What the arc did *not* need was the commutation theorem itself. I7's
+capstone showed the two orders are not symmetric and do not have to be:
+fill-then-truncate is unconditional, truncate-then-fill needs the
+anchor retained, and the unconditional order is the one deployments
+take. A commutation result would have proved something true and
+unnecessary. The heuristic that a normalization result saves work is
+sound in general; here the asymmetry was cheaper to state and more
+useful to know.
 
 ### 3.6 Layer variants: parametrize once, instantiate thrice
 
@@ -717,8 +783,9 @@ The schedule and fault layers should not be handled by preservation
 lemmas but by **abstraction over the interface actually consumed**.
 
 The evidence that this works is already in the development. §14
-(hybrid) composes with the entire DAG layer for free — not through any
-composition theorem, but because `HybridFaults.toFaults` places the
+(hybrid) composes with the entire DAG layer at no cost in proof — not
+through any composition theorem, but because `HybridFaults.toFaults`
+places the
 hybrid parameters into the *base* `Faults` interface, so every theorem
 stated over an arbitrary `Faults` instance applies verbatim. Nothing
 was proved to make that happen; the theorems were simply stated at the
@@ -730,7 +797,7 @@ demonstrates this by *mirroring* the whole development onto Odontoceti,
 a second copy of every definition and theorem. A third copy for Hybrid
 is the obvious next step and the wrong one. Instead:
 
-**I8 — the decision-relation interface.** Extract the three properties
+**The decision-relation interface.** Extract the three properties
 the adaptive fixpoint actually consumes from its underlying rule:
 
 1. a bounded decision relation with an agreement theorem
@@ -751,18 +818,20 @@ code rather than adding to it, which every other arc has avoided — and
 it should be done as a *generalization with the old statements retained
 as corollaries*, so nothing downstream breaks and the diff is
 auditable. That is a refactor, and §4.2 moves it out of this arc
-accordingly: I9 settled adaptive × GC without it, so no integration
+accordingly: I5 settled adaptive × GC without it, so no integration
 result now depends on it. The analysis above is kept because it is the
 specification that arc will need.
 
-### 3.7 What remains genuinely pairwise
+### 3.7 The four genuinely pairwise cells, as posed and as closed
 
-Some combinations are not preservation facts and must be proved
-directly. These are the ones with real content, and there are fewer
-than the matrix suggests:
+Four combinations were not preservation facts and had to be proved
+directly. All four are now closed, and the accounts below state each
+question as it was originally posed, with the closing result named.
+They are kept because in three of the four the answer differed in shape
+from the question.
 
-**I9 — GC × Adaptive: can a joiner recompute the schedule?** *(Closed;
-see §3.2. The account below states the question as it was posed.)* The
+**GC × Adaptive: can a joiner recompute the schedule?** *(Closed by I5.
+The question as posed:)* The
 adaptive schedule at epoch `e` is a function of verdicts at epochs
 `≤ e−2`. Garbage collection prunes history below a horizon. A
 validator that joins from the truncation therefore may not hold the
@@ -777,34 +846,66 @@ output depends only on verdicts within the retained window —
 
         pick U v k = pick (chop U G) (v restricted above G) k
 
-    and then a joiner's run agrees with a full-history run (I9). A
-policy that reads arbitrarily far back is a policy incompatible with
-garbage collection, and saying so precisely is worth more than proving
-one compatible instance.
+    and then a joiner's run agrees with a full-history run. A policy that
+reads arbitrarily far back is a policy incompatible with garbage
+collection, and saying so precisely is worth more than proving one
+compatible instance.
 
-**I10 — Hybrid × Safe Skip: the natural pairing.** The hybrid model
-names a *crash-prone* class; Safe Skip is the recovery mechanism for a
-crashed validator. That these two were built separately is an accident
-of order. The composite statement — a crash-prone validator's fill,
-verified at hybrid thresholds, restoring it to the correct class — is
-the arc's most natural end-to-end story, and mostly follows from I3
+*How it closed.* The schedule half proved to be definitional
+(`slotsChop_slotsOf`, by `⟨rfl, rfl⟩`), and all the content moved into
+whether a joiner can produce the shifted assignment. That is
+horizon-stability, and a **second** obligation the question had not
+anticipated came with it: the garbage-collection base slot must be a
+multiple of the adaptive epoch width, or two validators can agree on
+every leader and still disagree about which verdicts the policy was
+entitled to read.
+
+**Hybrid × Safe Skip: the natural pairing.** *(Closed by I9.)* The
+hybrid model names a *crash-prone* class; Safe Skip is the recovery
+mechanism for a crashed validator. That these two were built separately
+is an accident of order. The composite statement — a crash-prone
+validator's fill, verified at hybrid thresholds, restoring it to the
+correct class — was expected to follow from honest non-equivocation
 plus restating §12's theorems over `HybridFaults`.
 
-**I11 — Hybrid × Adaptive: demotion of the crash class.** The
-demote-on-skip policy of §13.6 is the mechanism that removes a crashed
-validator from the leader rotation; the hybrid model is where "crashed"
-is a named class. Combined with I10, this is the full lifecycle: a
-crash-prone validator is demoted while down (I11), safe-skipped back in
-(I10), and re-promoted after recovery. That lifecycle, machine-checked,
-is a stronger claim than any single arc makes.
+*How it closed.* It did not follow, and that is the finding. §12's
+`hv1 : v1 ∈ Correct` excluded the crash-prone validator the pairing is
+about, so the composite was unstatable before the hypothesis was
+weakened to the fact it stood for (`hB1uniq`). The expectation that
+this cell would be routine was the arc's largest single misjudgement.
 
-**I12 — DoS × Safe Skip.** Two questions, now separated by the
-analysis of §5.6. At the universe layer, whether the fill preserves
-`DoSValid` (I1) — expected conditional rather than preserved, since the
-fill's cone is strictly larger than the donor's. At the delivery layer,
-whether a bulk fill respects the novelty budget (§5.3), which is gated
-behind I6a and moot if I1 fails. The pair is the arc's most likely
-*open* entry, and recording it as open is a legitimate outcome.
+**Hybrid × Adaptive: demotion of the crash class.** *(Closed as a
+non-task; see §3.2.)* The demote-on-skip policy of §13.6 removes a
+crashed validator from the leader rotation, and the hybrid model is
+where "crashed" is a named class. The full lifecycle — demoted while
+down, safe-skipped back in, re-promoted after recovery — was expected
+to need a lemma relating the two.
+
+*How it closed.* There is no such lemma and there cannot usefully be
+one: a policy reads verdicts, and the crash class is invisible in
+verdicts. The lifecycle theorem exists (`lifecycle`) and is exactly as
+strong as hoped, but it composes three arcs none of which mentions
+another.
+
+**DoS × Safe Skip.** *(Closed by I14, I15, I16, I17 and I19 — the cell
+that expanded most.)* Two questions, separated by the analysis of §5.6.
+At the universe layer, whether the fill preserves `DoSValid` — expected
+conditional rather than preserved, since the fill's cone is strictly
+larger than the donor's. At the delivery layer, whether a bulk fill
+respects the novelty budget.
+
+*How it closed.* The universe-layer expectation was right, and the
+condition proved **enforceable** rather than assumed: a
+recipient computes the fill and inspects it (I14), and against a donor
+line that already reaches the anchor the check reduces to one
+reachability query per gap round (I15). The delivery layer needed a
+transformer built first (I16), after which the budget transferred with
+no arithmetic; the reference discipline did not, and that failure
+describes Safe Skip rather than the transformer. The residual worries —
+which discipline the specification should state, and whether the
+recovering validator can serve what it cites — were then removed
+together by I17 and I19 rather than resolved. This cell was recorded as
+the most likely to stay open, and it produced five results.
 
 ## 4. Status, and what is left
 
@@ -821,9 +922,9 @@ behind I6a and moot if I1 fails. The pair is the arc's most likely
 | `Integration/Exposure.lean` | cone growth; the enforceable check; its reachability form | **done** |
 | `Integration/DeliveryFill.lean` | the delivery transformer; the budgets over it | **done** |
 | `LeanDagTest/Integration.lean` | the refutation witnessed; the constructions exhibited | **done** |
-| — | I8: the decision-relation interface | **moved out**, §4.2 |
+| — | the decision-relation interface (§3.6) | **moved out**, §4.2 |
 
-### 4.1 What the arc turned out to be
+### 4.1 The three kinds of result the arc produced
 
 Three kinds of result appeared, and only the first was planned:
 
@@ -845,7 +946,7 @@ what makes collecting them worthwhile rather than merely tidy.
 
 ### 4.2 What the arc is not
 
-**I8 (the decision-relation interface) is out of scope.** It was
+**The decision-relation interface (§3.6) is out of scope.** It was
 included on the reasoning that Hybrid should become a third instance of
 the adaptive layer rather than a third copy. That is still worth doing,
 but the joiner result settled adaptive × GC without it, so nothing here
@@ -910,8 +1011,9 @@ delivery — each naming a constraint no single arc could see. Settled
 and the exposure condition, where in each case the condition was the
 deliverable.
 
-I5 set the template the rest followed: refute in general where
-possible, keep a witness so the refutation is seen to bite, and state
+I4 set the template the rest followed: refute in general where
+possible, keep a witness so the refutation is seen to be non-vacuous,
+and state
 the positive form that survives — the boundary is the result, not the
 failure. The one methodological correction is that "negative" was too
 narrow a category. Three of this arc's most useful outputs (the lag
@@ -920,7 +1022,7 @@ negative but *conditions*, and §4.1 names that as the third kind of
 result the plan had not anticipated.
 
 **5.2 The interface audit is done, and it moved the plan.** This risk
-was live in the first draft, where §2's list was a survey rather than a
+was live while §2's list was still a survey rather than a
 verified fact. It has now been checked mechanically against the
 extracted statements of thirteen capstones (§2.4), and it was
 *wrong in two structural ways* — the schedule layer was missing
@@ -931,25 +1033,36 @@ intermediate lemma could still consume something unlisted. That is
 cheap to re-check as the arc proceeds and should be re-run whenever a
 new preservation lemma turns out to need a hypothesis not in §2.
 
-**5.3 The DoS accounting may not survive a bulk fill.** §8's novelty
-budget limits the rate at which an author can inject material; Safe
-Skip injects one block per gap round in a single message. Whether that
-respects `UniformBudget` depends on whether the budget is per-block or
-per-round — and the fill produces exactly one block per round, which
-suggests it does, but the *acceptance* side (`RefsAccepted`) may see a
-burst. This is the combination most likely to require a genuinely new
-argument rather than a preservation lemma. It is also gated behind
-I6a's construction, and §5.6 now suggests the universe-level half fails
-first, which would make the delivery-level question moot.
+**5.3 The DoS accounting survives a bulk fill, and the risk was
+correctly located.** The concern was that §8's novelty budget limits
+the rate at which an author can inject material while Safe Skip injects
+one block per gap round in a single message, and that the *acceptance*
+side (`RefsAccepted`) might see a burst.
+
+Both halves were right. The budget itself transfers with no arithmetic
+once the delivery transformer exists (I16), because the fill produces
+exactly one block per round and every accepted block is old. The
+acceptance side is where it fails, exactly as predicted — and the
+failure is `RefsAccepted`, exactly the clause named. What the risk
+register did not anticipate is that the failure would be a *description
+of Safe Skip* rather than a defect: a retroactive reconstruction cannot
+satisfy a clause saying a validator cites only what reached it. Nor
+that the residual question would then be removed by I17 and I19 rather
+than answered.
+
+The prediction that this cell needed a genuinely new argument rather
+than a preservation lemma held, and it was the correct place to expect
+one.
 
 **5.4 The composition capstone chained cleanly, in one order.** This
 risk is discharged (§3.2). The second half of it was right: the
 invariants compose in one order and not obviously the other. But the
-order that works — fill, then truncate — is the deployment order, so
-I16 needed no hypothesis `chop`'s statement does not already carry, and
-I7 was not a prerequisite after all, and truncate-then-fill has since
-been proved outright (I7b) under the retention condition the asymmetry
-predicted — so both composition orders are now settled.
+order that works — fill, then truncate — is the deployment
+order, so the capstone (I7) needed no hypothesis `chop`'s statement
+does not already carry, and the commutation result of §3.5 was not a
+prerequisite after all. Truncate-then-fill has since been proved
+outright (I6b) under the retention condition the asymmetry predicted,
+so both composition orders are now settled.
 
 **5.5 Scope discipline.** The temptation in an integration arc is to
 prove the full cross product because each individual proof is easy once
@@ -971,6 +1084,23 @@ local to the fill's own blocks, so the residual obligation is checkable
 by a recipient (§3.2), and under the ordinary condition that the donor
 line already covers the anchor it reduces to a reachability test. The
 prediction was right about the failure and wrong about its cost.
+
+**5.7 Re-genesis looked like it needed agreement on the cut, and does
+not.** The objection recorded here was that a re-genesis block is valid
+only to validators who have pruned at least as far, which report §9's
+per-validator horizons cannot guarantee — so the provision appeared to
+require the one thing §9 is designed to avoid.
+
+It dissolved rather than being answered, and I11 is the resolution:
+the objection applies to a *transmitted* block, and the block need not
+be transmitted. Each validator synthesises a genesis for any validator
+absent from its own retained layer, and the local derivations converge
+under further truncation. Nothing is sent, so nothing can be rejected,
+and heterogeneous horizons stay compatible.
+
+The methodological point is the one §5.1 makes: the useful move was to
+find the *weakest form of the mechanism* that avoids the obstacle, not
+to prove the obstacle surmountable.
 
 ## 6. Out of scope
 
