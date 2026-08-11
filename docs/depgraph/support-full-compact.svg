@@ -638,7 +638,7 @@
 <text class="lbl" x="273.0" y="1417.5" text-anchor="middle">D15a</text></g>
 <g><title>LeanDag.Integration.dosValid_addGenesis — the exposure condition survives re-genesis; the fill enlarges cones</title>
 <rect x="242.0" y="1438.5" width="62" height="24" rx="5" fill="#dbe7e0" stroke="#5f8a76" stroke-width="1.2"/>
-<text class="lbl" x="273.0" y="1450.5" text-anchor="middle">I12</text></g>
+<text class="lbl" x="273.0" y="1450.5" text-anchor="middle">I13</text></g>
 <g><title>LeanDag.card_viewUpto_le_of_allExposed&#x27; — after exposure completes, the pool freezes</title>
 <rect x="242.0" y="1471.5" width="62" height="24" rx="5" fill="#fbe9d6" stroke="#c0844a" stroke-width="1.2"/>
 <text class="lbl" x="273.0" y="1483.5" text-anchor="middle">B5</text></g>

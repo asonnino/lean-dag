@@ -324,6 +324,115 @@ theorem regenesis_converges {U : BlockUniverse Validator BlockId Payload}
 
 end Convergence
 
+/-! ## Re-genesis and Safe Skip compose: the full recovery
+
+The three mechanisms are complementary rather than alternative, and a
+long outage uses all of them in order:
+
+1. **bootstrap** to read — report §9.5's attested base gives the
+   returning validator a view whose verdicts agree with everyone's
+   (`bootstrap_agree`), but not the ability to produce;
+2. **re-genesis** to write — a block at the cut, restoring it to the
+   genesis layer (`addGenesis`), which is what P3′ was blocking;
+3. **Safe Skip** to catch up — one message denoting every block from
+   the cut to the current round, which is report §12's mechanism doing
+   exactly the job it was built for, at a gap that now begins at the
+   horizon rather than at the crash.
+
+The third step needs an anchor, and the re-genesis block is one. The
+closure is pleasing: `hsev`, the total absence that licensed
+re-genesis, is precisely what discharges `hB1uniq` — a validator with
+no other block anywhere cannot have a second block at the anchor's
+round. Nothing extra is assumed.
+
+What every party needs, for the fill to denote anything, is the
+retained history including the donor's line up to the target block.
+That is the standing requirement of a `SkipMsg` (`hline_mem`), and
+after garbage collection it is satisfied by exactly the window
+everyone keeps. -/
+
+section Recovery
+
+variable {V : BlockUniverse Validator BlockId Payload} {v : Validator}
+variable {g : BlockId} {p : Payload}
+variable {hg : g ∉ V.ids} {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v}
+
+/-- **The re-genesis block is a lawful Safe Skip anchor.** Uniqueness
+at its round is immediate from the absence that licensed it. -/
+theorem hB1uniq_of_addGenesis :
+    ∀ j ∈ (addGenesis V v g p hg hsev).ids,
+      ((addGenesis V v g p hg hsev).block j).creator = v →
+      ((addGenesis V v g p hg hsev).block j).round
+        = ((addGenesis V v g p hg hsev).block g).round → j = g := by
+  intro j hj hjc _
+  rcases Finset.mem_insert.mp hj with rfl | ho
+  · rfl
+  · rw [addGenesis_block_old ho] at hjc
+    exact absurd hjc (hsev j ho)
+
+/-- **The catch-up fill.** After re-genesis the returning validator
+rejoins production with one message: a `SkipMsg` anchored on its new
+genesis block, filling every round from the cut to the target.
+
+The donor data is the ordinary requirement — a line of `v2` blocks
+from the anchor's round to the target, each citing the one below,
+all of them in the retained window that every validator holds. The two
+clauses peculiar to recovery come at no cost: `hB1uniq` from
+`hB1uniq_of_addGenesis`, and `hgap` from the absence itself, since a
+validator with no blocks authored none during the gap either. -/
+def recoveryMsg (r : ℕ) (line fresh : ℕ → BlockId) (idx : BlockId → ℕ)
+    (v2 : Validator) (hv12 : v ≠ v2)
+    (hline_mem : ∀ k, k ≤ r → line k ∈ V.ids)
+    (hline_creator : ∀ k, k ≤ r → (V.block (line k)).creator = v2)
+    (hline_round : ∀ k, k ≤ r →
+      (V.block (line k)).round = ((addGenesis V v g p hg hsev).block g).round + k)
+    (hline_chain : ∀ k, 0 < k → k ≤ r → line (k - 1) ∈ (V.block (line k)).refs)
+    (hfresh_new : ∀ k, fresh k ∉ (addGenesis V v g p hg hsev).ids)
+    (hidx : ∀ k, idx (fresh k) = k) :
+    SkipMsg (addGenesis V v g p hg hsev) where
+  v1 := v
+  B1 := g
+  v2 := v2
+  r := ((addGenesis V v g p hg hsev).block g).round + r
+  line k := line (k - ((addGenesis V v g p hg hsev).block g).round)
+  fresh := fresh
+  idx := idx
+  hB1uniq := hB1uniq_of_addGenesis
+  hv12 := hv12
+  hB1 := mem_addGenesis
+  hB1c := by rw [addGenesis_block_new]
+  hline_mem := by
+    intro k hk1 hk2
+    exact Finset.mem_insert_of_mem (hline_mem _ (by omega))
+  hline_creator := by
+    intro k hk1 hk2
+    rw [addGenesis_block_old (hline_mem _ (by omega))]
+    exact hline_creator _ (by omega)
+  hline_round := by
+    intro k hk1 hk2
+    rw [addGenesis_block_old (hline_mem _ (by omega))]
+    rw [hline_round _ (by omega)]
+    omega
+  hline_chain := by
+    intro k hk1 hk2
+    rw [addGenesis_block_old (hline_mem _ (by omega))]
+    have := hline_chain (k - ((addGenesis V v g p hg hsev).block g).round)
+      (by omega) (by omega)
+    have hidx' : k - ((addGenesis V v g p hg hsev).block g).round - 1
+        = k - 1 - ((addGenesis V v g p hg hsev).block g).round := by omega
+    rwa [hidx'] at this
+  hfresh_new := hfresh_new
+  hidx := hidx
+  hgap := by
+    intro b hb hbc _ _
+    rcases Finset.mem_insert.mp hb with rfl | ho
+    · rw [addGenesis_block_new] at *
+      omega
+    · rw [addGenesis_block_old ho] at hbc
+      exact absurd hbc (hsev b ho)
+
+end Recovery
+
 end Integration
 
 end LeanDag

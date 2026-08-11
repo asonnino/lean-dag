@@ -934,12 +934,25 @@ change.
 I1 fails: a delivery transformer for the fill has no consumer worth the
 construction. To be recorded as open in that case.
 
-**A loose end.** I17 puts a stranded validator back in the genesis layer
-(`populatedOn_addGenesis`) but does not compose that with an actual
-fill anchored on the new block. The composition should be immediate —
-the re-genesis block is a lawful anchor — and it is worth doing to
-close the recovery story end to end rather than leaving the last step
-implied.
+**The loose end is closed, and it reframed the mechanisms.** I17 put a
+stranded validator back in the genesis layer but did not compose that
+with a fill anchored on the new block. `recoveryMsg` does, and the
+closure is exact: `hsev`, the total absence that licensed re-genesis,
+is what discharges the anchor's uniqueness clause and `hgap` alike — a
+validator with no other block anywhere cannot have a second at that
+round, nor any during the gap.
+
+The consequence is a correction to how these mechanisms relate. Safe
+Skip was described here as the *alternative* to bootstrap, avoiding it
+when the anchor survives. That holds only inside the lag bound. Past
+it the three are **complementary and sequential**: bootstrap to read,
+re-genesis to write, Safe Skip to catch up — with Safe Skip's role
+undiminished, since it remains the succinct encoding of the many blocks
+missing inside the retained window, at a gap that now begins at the
+horizon rather than at the crash. What every party needs for the fill
+to denote anything is the retained history up to the target block,
+which is `SkipMsg`'s standing requirement and, after garbage
+collection, exactly the window everyone keeps.
 
 ### 4.6 After the proofs
 

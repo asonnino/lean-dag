@@ -76,6 +76,8 @@ example (hs : SynchronisedOn (Ucrash 2) (Finset.univ : Finset (Fin 4)) 0) :
 #print axioms LeanDag.Integration.uniformBudget_skipFillD
 #print axioms LeanDag.Integration.not_refsAccepted_skipFillD
 #print axioms LeanDag.Integration.regenesis_converges
+#print axioms LeanDag.Integration.hB1uniq_of_addGenesis
+#print axioms LeanDag.Integration.recoveryMsg
 #print axioms LeanDag.Integration.populatedOn_addGenesis
 #print axioms LeanDag.Integration.no_blocks_of_no_genesis
 #print axioms LeanDag.Integration.severed_of_pruned_anchor

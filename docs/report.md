@@ -4401,12 +4401,38 @@ intact. The statements are observational: identifier sets equal, and
 blocks equal at those identifiers, the two universes differing only on
 material outside their identifier sets that nothing reads.
 
+**I12 — the three mechanisms are complementary.** A long outage uses
+all of them, in order: **bootstrap** to read, since §9.5's attested
+base yields a view whose verdicts agree with everyone's
+(`bootstrap_agree`) but no ability to produce; **re-genesis** to write,
+restoring the validator to the genesis layer, which is what P3′ was
+blocking; and **Safe Skip** to catch up, one message denoting every
+block from the cut to the current round — §12's mechanism doing the job
+it was built for, at a gap that now begins at the horizon rather than
+at the crash.
+
+The third step needs an anchor and the re-genesis block is one
+(`recoveryMsg`). The closure is exact: `hsev`, the total absence that
+licensed re-genesis, is what discharges the anchor's uniqueness
+clause — a validator with no other block anywhere cannot have a second
+at that round — and the same absence discharges `hgap`. Nothing extra
+is assumed. What every party needs for the fill to denote anything is
+the retained history including the donor's line up to the target, which
+is `SkipMsg`'s standing requirement and, after garbage collection,
+exactly the window everyone keeps.
+
+So the earlier reading — that Safe Skip's fast path *avoids* bootstrap
+and re-genesis — holds only while the anchor survives (§15.4's lag
+bound). Past that the three compose, and Safe Skip's contribution is
+undiminished: it remains the succinct encoding of the many blocks
+missing inside the retained window.
+
 ### 15.7 P3′ pays in §8 and charges in §12
 
 The two recovery mechanisms part company at the exposure condition, and
 the reason is structural.
 
-**I12.**
+**I13.**
 ```lean
 theorem dosValid_addGenesis (hdos : DoSValid V) :
     DoSValid (addGenesis V v g p hg hsev)
@@ -4442,7 +4468,7 @@ filled block — SS3's observation once more. Exposure at an old block is
 therefore unchanged in both directions
 (`exposedIn_skipFill_old`), and the condition decomposes:
 
-**I13.**
+**I14.**
 ```lean
 theorem dosValid_skipFill (hdos : DoSValid U)
     (hnew : ∀ k, sk.r0 < k → k ≤ sk.r →
@@ -4462,7 +4488,7 @@ check and is refused, rather than accepted and unsound.
 
 The check itself reduces to **reachability** in the ordinary case.
 
-**I14.**
+**I15.**
 ```lean
 theorem dosValid_skipFill_of_covered (hdos : DoSValid U)
     (hcov : ∀ k, sk.r0 < k → k ≤ sk.r → sk.B1 ∈ history U (sk.line k))
@@ -4505,7 +4531,7 @@ reference what `v1` accepted below. The hypothesis that discharges it
 is that `v1` accepted nothing while down — the acceptance-side
 counterpart of `hgap`, which says as much of production.
 
-**I15.** The author-blind budget then transfers at the same constant
+**I16.** The author-blind budget then transfers at the same constant
 (`uniformBudget_skipFillD`), with no arithmetic: every accepted block
 is old, so views and novelty are literally the same finite sets
 (`viewUpto_skipFillD`).
@@ -5445,10 +5471,11 @@ result in full.
 | I9 | the crash-prone lifecycle, and the hypothesis it forced | `hB1uniq_of_crash`, `lifecycle` *(Integration/Lifecycle)* |
 | I10 | re-genesis at the cut | `addGenesis`, `populatedOn_addGenesis` *(Integration/ReGenesis)* |
 | I11 | local derivation converges; no agreement on the cut | `chop_addGenesis`, `regenesis_converges` *(Integration/ReGenesis)* |
-| I12 | the exposure condition survives re-genesis; the fill enlarges cones | `dosValid_addGenesis` *(Integration/ReGenesis)*; `history_B1_subset_fill` *(Integration/Exposure)* |
-| I13 | the fill disturbs exposure only at its own blocks | `exposedIn_skipFill_old`, `dosValid_skipFill` *(Integration/Exposure)* |
-| I14 | a covered donor line reduces the check to reachability | `fill_cone_subset`, `dosValid_skipFill_of_covered` *(Integration/Exposure)* |
-| I15 | the fill's delivery layer; the budget transfers, the reference discipline does not | `skipFillD`, `uniformBudget_skipFillD`, `not_refsAccepted_skipFillD` *(Integration/DeliveryFill)* |
+| I12 | bootstrap, re-genesis and Safe Skip compose into full recovery | `hB1uniq_of_addGenesis`, `recoveryMsg` *(Integration/ReGenesis)* |
+| I13 | the exposure condition survives re-genesis; the fill enlarges cones | `dosValid_addGenesis` *(Integration/ReGenesis)*; `history_B1_subset_fill` *(Integration/Exposure)* |
+| I14 | the fill disturbs exposure only at its own blocks | `exposedIn_skipFill_old`, `dosValid_skipFill` *(Integration/Exposure)* |
+| I15 | a covered donor line reduces the check to reachability | `fill_cone_subset`, `dosValid_skipFill_of_covered` *(Integration/Exposure)* |
+| I16 | the fill's delivery layer; the budget transfers, the reference discipline does not | `skipFillD`, `uniformBudget_skipFillD`, `not_refsAccepted_skipFillD` *(Integration/DeliveryFill)* |
 
 ---
 
@@ -8129,6 +8156,67 @@ def addGenesis_of_severed {U : BlockUniverse Validator BlockId Payload}
 
 Re-genesis is available exactly to a stranded validator: the absence hypothesis it needs is what `severed_of_pruned_anchor` supplies. The composite says a validator pruned past its own history can restart at the cut — the provision report §12 lacks.
 
+#### `recoveryMsg`
+
+*def, `Integration.ReGenesis.lean`*
+
+```lean
+def recoveryMsg (r : ℕ) (line fresh : ℕ → BlockId) (idx : BlockId → ℕ)
+    (v2 : Validator) (hv12 : v ≠ v2)
+    (hline_mem : ∀ k, k ≤ r → line k ∈ V.ids)
+    (hline_creator : ∀ k, k ≤ r → (V.block (line k)).creator = v2)
+    (hline_round : ∀ k, k ≤ r →
+      (V.block (line k)).round = ((addGenesis V v g p hg hsev).block g).round + k)
+    (hline_chain : ∀ k, 0 < k → k ≤ r → line (k - 1) ∈ (V.block (line k)).refs)
+    (hfresh_new : ∀ k, fresh k ∉ (addGenesis V v g p hg hsev).ids)
+    (hidx : ∀ k, idx (fresh k) = k) :
+    SkipMsg (addGenesis V v g p hg hsev) where
+  v1 := v
+  B1 := g
+  v2 := v2
+  r := ((addGenesis V v g p hg hsev).block g).round + r
+  line k := line (k - ((addGenesis V v g p hg hsev).block g).round)
+  fresh := fresh
+  idx := idx
+  hB1uniq := hB1uniq_of_addGenesis
+  hv12 := hv12
+  hB1 := mem_addGenesis
+  hB1c := by rw [addGenesis_block_new]
+  hline_mem := by
+    intro k hk1 hk2
+    exact Finset.mem_insert_of_mem (hline_mem _ (by omega))
+  hline_creator := by
+    intro k hk1 hk2
+    rw [addGenesis_block_old (hline_mem _ (by omega))]
+    exact hline_creator _ (by omega)
+  hline_round := by
+    intro k hk1 hk2
+    rw [addGenesis_block_old (hline_mem _ (by omega))]
+    rw [hline_round _ (by omega)]
+    omega
+  hline_chain := by
+    intro k hk1 hk2
+    rw [addGenesis_block_old (hline_mem _ (by omega))]
+    have := hline_chain (k - ((addGenesis V v g p hg hsev).block g).round)
+      (by omega) (by omega)
+    have hidx' : k - ((addGenesis V v g p hg hsev).block g).round - 1
+        = k - 1 - ((addGenesis V v g p hg hsev).block g).round := by omega
+    rwa [hidx'] at this
+  hfresh_new := hfresh_new
+  hidx := hidx
+  hgap := by
+    intro b hb hbc _ _
+    rcases Finset.mem_insert.mp hb with rfl | ho
+    · rw [addGenesis_block_new] at *
+      omega
+    · rw [addGenesis_block_old ho] at hbc
+      exact absurd hbc (hsev b ho)
+```
+
+**The catch-up fill.** After re-genesis the returning validator rejoins production with one message: a `SkipMsg` anchored on its new genesis block, filling every round from the cut to the target.
+
+The donor data is the ordinary requirement — a line of `v2` blocks from the anchor's round to the target, each citing the one below, all of them in the retained window that every validator holds. The two clauses peculiar to recovery come at no cost: `hB1uniq` from `hB1uniq_of_addGenesis`, and `hgap` from the absence itself, since a validator with no blocks authored none during the gap either.
+
 #### `stack`
 
 *abbrev, `Integration.Stack.lean`*
@@ -8767,7 +8855,7 @@ def skipFillD (sk : SkipMsg U) (D : Delivery U)
 
 ## Appendix C. The theorem reference
 
-The 328 theorems that either another module of the
+The 329 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -12492,6 +12580,20 @@ theorem regenesis_converges {U : BlockUniverse Validator BlockId Payload}
 **The convergence.** A validator at horizon `G₁`, truncating on to a later horizon `G₂`, holds exactly the blocks of a validator that cut at `G₂` directly — its derived genesis having been pruned on the way. Both then derive the same genesis from the same base, so heterogeneous horizons need no agreement.
 
 The identifier sets are equal and the blocks agree on them; the two universes are the same object as far as anything that reads them is concerned.
+
+#### `hB1uniq_of_addGenesis`
+
+*theorem, `Integration.ReGenesis.lean`*
+
+```lean
+theorem hB1uniq_of_addGenesis :
+    ∀ j ∈ (addGenesis V v g p hg hsev).ids,
+      ((addGenesis V v g p hg hsev).block j).creator = v →
+      ((addGenesis V v g p hg hsev).block j).round
+        = ((addGenesis V v g p hg hsev).block g).round → j = g
+```
+
+**The re-genesis block is a lawful Safe Skip anchor.** Uniqueness at its round is immediate from the absence that licensed it.
 
 #### `honestNoEquiv_stack`
 
