@@ -67,7 +67,7 @@ Correct validators author at most one block per round; a Byzantine
 validator may **equivocate** — author several blocks at one round. The
 universe `U` is every block some correct validator ever held, so `|U|` is
 the storage burden on the correct population; blocks revealed to nobody
-cost nothing. From what arrives, each validator **accepts** at most one
+impose none. From what arrives, each validator **accepts** at most one
 block per author per round — its *accepted set* — and builds its next
 block by referencing its latest acceptances.
 
@@ -89,8 +89,9 @@ blocks correct validators held;
 `e` — the number of exposed authors in a cone; `R` — the
 eventual-synchrony stabilization round; `T` — the enforced acceptance
 budget, `κ` its analysis-side counterpart (every theorem composes with
-`κ := T`), and `Κ = f·κ + 1` — the derived threshold at which correct
-blocks are always affordable. `|S|` is the size of a finite set.
+`κ := T`), and `Κ = f·κ + 1` — the derived threshold at which correct blocks
+always lie within the
+budget. `|S|` is the size of a finite set.
 
 **Condition 1 — DoS validity.** Say author `X` is **exposed** in `H(b)`
 when the cone contains two `X`-blocks at one round — an equivocation made
@@ -126,7 +127,8 @@ to price something an adversary cannot shape away.
 cone but by what its cone would *newly* bring. Against a validator's
 current store `V`, the **novelty** of `b` is `H(b) \ V` — precisely the
 download performed to validate `b`, so the measurement is the work itself.
-It is antitone in `V`: as the store grows, every block only gets cheaper.
+It is antitone in `V`: as the store grows, every block's novelty only
+shrinks.
 The enforced rule (`UniformBudget T`, for a parameter `T`):
 
 > never accept a block whose novelty exceeds `T` blocks; defer it instead
@@ -244,8 +246,8 @@ injectivity D2 consumes.
 
 What the rule must *not* be read as claiming: `V ≤ n(r+1)` "by
 construction". A round-`r` block by `w` may reference the other half of an
-equivocation than the one this validator accepted, so `V` holds both. The
-rule buys the reduction to `|H(b)|`, not the bound — the bound is §5 and §6.
+equivocation than the one this validator accepted, so `V` holds both. The rule
+gives the reduction to `|H(b)|`, not the bound — the bound is §5 and §6.
 
 ## 3. The DoS validity condition
 
@@ -337,7 +339,7 @@ correct — together with their cones, which by the reference discipline are
 exactly the authors' accepted sets. No theorem assumes a Byzantine-authored
 block is ever delivered to anyone: Byzantine delivery is entirely the
 adversary's choice, and a block delivered to nobody is not in `U` and
-costs nothing (§1). Both extremes are witnessed: `ugrowHonest`
+imposes no burden (§1). Both extremes are witnessed: `ugrowHonest`
 (`LeanDagTest/Partial.lean`) discharges the liveness definitions with the
 Byzantine validator publishing nothing at all, and `Dtwin` (§8) has
 Byzantine blocks reaching some correct validators and not others. The
@@ -496,8 +498,8 @@ def novelty (U) (V : Finset BlockId) (b : BlockId) : Finset BlockId :=
 
 Novelty is the fetch a validator performs anyway to validate `b` — the rule
 prices work it is already forced to do — and it is **antitone in the view**
-(`novelty_anti`): a deferred block only ever gets cheaper, so deferral is a
-rate limiter, never a permanently wrong verdict.
+(`novelty_anti`): a deferred block's novelty only ever shrinks, so deferral is a rate
+limiter, never a permanently wrong verdict.
 
 **The telescope (D26, pure DAG).** If each block of a correct author adds
 at most `κ'` over its self-parent (`StepNovelty`), the whole history is

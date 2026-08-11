@@ -93,8 +93,7 @@ and a joining validator must fetch it. Eventually storage — and sync time —
 is exhausted not by an adversary but by the protocol's own health.
 
 What we want is **bounded storage**: retain a *window* of the DAG and
-discard the prefix. This collides with two load-bearing properties of the
-model:
+discard the prefix. This collides with two properties the model relies on:
 
 - **Completeness / downward closure.** `BlockUniverse.complete` says every
   referenced block is present; `View.complete` closes views downward; a
@@ -144,7 +143,7 @@ from *rebased* rounds would assign different leaders than the network,
 and every cross-node verdict comparison would be garbage. Nor can `chop`
 simply keep absolute rounds: the base layer's emptied references would
 then violate `quorum` (genesis-emptiness is *derived* from `predecessor`
-at round 0 and does not generalize to round `G` for free). The
+at round 0 and does not generalize to round `G` without further argument). The
 resolution: rebase the universe, **carry the offset**. The induced
 schedule is `Slots.chop S G d hd` (`ChopDecided.lean`), re-indexed from
 a base slot `d` whose round clears the horizon
@@ -186,7 +185,7 @@ Two invariants make a horizon *admissible* for a validator:
 - **(A2) Lag bound.** `G` trails the validator's current round by a
   margin `Λ`. Note what `Λ` is *not* for: the indirect-anchor reach —
   the anchor sits *above* its slot, so anchor reach never looks below
-  the cut. What `Λ` buys is two **completeness** properties, not
+  the cut. What `Λ` provides is two **completeness** properties, not
   safety: the one-round possession bound of the depth rule (G9,
   `Λ ≥ 1`) and the attestation lag of the certified base (G11, `Λ ≥ 2`,
   tight on data). The full accounting of what constrains `Λ` — and what
@@ -222,8 +221,9 @@ novelty **on the truncated universe**:
 of GC. This is a definition with its own law (**G13**): windowed novelty
 is *antitone under cut-advance* — for `G' ≥ G`,
 `novelty_{G'} ⊆ novelty_G` — so as the window slides, **pruning only
-cheapens blocks**: an affordable block never becomes unaffordable, and
-deferral decisions never flip the wrong way. Without G13 the
+cheapens blocks**: a block within budget never leaves it, and deferral
+decisions never flip
+the wrong way. Without G13 the
 bounded-storage headline (G6) would be unprovable over a *sequence* of
 cuts.
 
@@ -235,8 +235,8 @@ longer forbids referencing it. Exclusion permanence (D12, D17) is a
 statement about `U`; truncation **forgives**. A precision the witnesses
 carry: the statute applies strictly below the cut — a pair *at* round
 `G` survives into the base layer (base blocks keep round and creator),
-and later cones containing both halves are still exposed. The design
-accepts forgiveness, for reasons worth recording against the
+and later cones containing both halves are still exposed. The design accepts
+forgiveness, for the reasons below, set against the
 alternatives:
 
 1. **Accepted: the budget is the backstop.** C2's "one reveal per
@@ -465,8 +465,8 @@ and decidable:
 `Base U t G := { y at round G : y lies in the cones of round-t blocks by
 ≥ f+1 distinct authors }`, with the guarantee side supplied by `n−f`
 authors *having* round-`t` blocks (Populated) rather than by collecting
-messages. Equivocating attesters cost nothing — the filter counts
-distinct authors, and `f+1` authors always include a correct one
+messages. Equivocating attesters gain nothing — the filter counts distinct
+authors, and `f+1` authors always include a correct one
 (`exists_correct_of_card`). A joiner adopts a specific pair `(t, G)`;
 which pair (presenters may offer different cuts) is a protocol detail
 that G8 makes inert.

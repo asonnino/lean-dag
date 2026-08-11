@@ -121,8 +121,8 @@ that commits *recur* needs a fairness condition:
 where `T` is the correct quorum L4 counts (S5). Round-robin over the `n`
 validators supplies the `T := Correct` case, since at least `n−f` of every
 `n` leaders are correct. But the `Slots` class does not require
-round-robin, so this has to be assumed separately — and Q4 records that the
-`∃ k' ≥ k` form buys liveness without buying any *rate*.
+round-robin, so this has to be assumed separately — and Q4 records that the `∃
+k' ≥ k` form gives liveness without giving any *rate*.
 
 ## 4. The phases
 
@@ -155,8 +155,8 @@ correct validator eventually has a block at every round up to the horizon
 round number is a *negative* fact — an absence of any bound — so it belongs in
 a test model as an exhibit, not as a statement to prove.
 
-Building that exhibit turned out to be **impossible at `f = 1`**, which is
-itself informative: with `n = 3f+1 = 4` validators and `|Correct| = 3 = n−f`
+Building that exhibit is **impossible at `f = 1`**, which is itself
+informative: with `n = 3f+1 = 4` validators and `|Correct| = 3 = n−f`
 exactly, every correct validator is needed for a quorum and none can lag. A
 spread exhibit that still commits needs `f ≥ 2`. See S7 — it is S5's combined
 budget appearing as a concrete obstruction rather than an inequality.
@@ -178,8 +178,7 @@ round from which correct blocks see every correct block below them".
 **`U` is the common view as of the snapshot.** Eventual DAG synchrony says
 anything one correct validator holds, all eventually hold. So the union of the
 correct validators' views *is* `U`, and every correct validator's view of the
-snapshot is the **full** view — `ids := U.ids`, downward-closed for free by
-`U.complete`.
+snapshot is the **full** view — `ids := U.ids`, downward-closed by `U.complete`.
 
 That is the crispest form the assumption takes here, and it is what makes L3
 a theorem rather than an appeal: "eventually all agree" becomes "L2
@@ -219,8 +218,8 @@ Getting this wrong in the *strong* direction — assuming all blocks are
 referenced — would be assuming Byzantine validators behave, which is exactly
 what a fault model must not do.
 
-This does not follow from view convergence **alone**, and what has to be added
-is worth recording.
+This does not follow from view convergence **alone**, and what has to be
+added is set out below.
 
 **Coverage is delivery plus a build rule.** Fast propagation puts every
 correct round-`n` block into every correct validator's hands; a validator that
@@ -284,7 +283,7 @@ it brings back the time model and should be scoped separately.
 blocks. That is not incidental: it is what makes `authorsAt` have a
 cardinality at all, and every quorum argument in the development counts one.
 
-The first draft of `Live` ignored this. It said a correct validator has a
+`Live` as first stated ignored this. It said a correct validator has a
 block at round 0 and another at every round after — infinitely many distinct
 blocks, in a `Finset`. So **no universe satisfied it**, and L1, though
 proved, said nothing. This is checked, not argued — writing `Live⁰` for that
@@ -325,7 +324,7 @@ Neither is a clock. `R` is a round index and `N` a round count; Δ stays
 dropped (§4.3).
 
 **Unboundedness moves to the family.** No finite snapshot contains infinitely
-many commits, and the first draft's claim that one could was the bug. "The
+many commits, and the claim that one could was the bug. "The
 ledger grows without bound" is now a statement across horizons: for every `N`
 there is a DAG reaching it (`Ugrow`), and for every slot there is a later one
 that commits (L6). That is the honest form of the claim when the object is a
@@ -405,8 +404,8 @@ def EventuallyDelivers (D : Delivery U) (R : ℕ) : Prop :=
   ∀ n, R ≤ n → ∀ v ∈ Correct, ∀ a ∈ U.ids, (U.block a).round = n →
     (U.block a).creator ∈ Correct → a ∈ D.held v n
 
-/-- Every correct validator's eventual view (§4.2). Downward-closed for free,
-by `U.complete`. -/
+/-- Every correct validator's eventual view (§4.2). Downward-closed by
+`U.complete`. -/
 def View.full (U) : View Validator BlockId Payload U where
   ids := U.ids
   subset_ids := Finset.Subset.rfl
@@ -658,8 +657,8 @@ constant timeout of at least `D₀ + Δ`.
   holds infinitely many commits. Read L6 together with `ugrow_live` — for
   every `N` a DAG reaches it, and for every slot a later one commits (§4.4).
 
-  **Not "every slot decides".** An earlier draft claimed that, and it is
-  false. L4 needs a *correct* leader and L5 an *absent* one; a Byzantine
+  **Not "every slot decides".** That is the natural stronger claim, and it
+is false. L4 needs a *correct* leader and L5 an *absent* one; a Byzantine
   leader that publishes a block and reveals it to only some validators falls
   in neither gap. `Synchronised` is honest-to-honest, so it says nothing about
   whether correct validators reference a Byzantine-authored block — some will,
@@ -706,7 +705,7 @@ constant timeout of at least `D₀ + Δ`.
 ### Bounds
 
 `LeanDag/Quantitative.lean`. Every result here strengthens one above, and each
-is bought with a strengthened hypothesis (S8, S9). Nothing imports the file, so
+requires a strengthened hypothesis (S8, S9). Nothing imports the file, so
 the weak forms remain available untouched.
 
 - **L8a — `R` made explicit.** `synchronisedOn_of_rate` replaces
@@ -828,7 +827,7 @@ Note the inversion: `Timing.lean` is logically the **bottom** of the stack and
 was the **last** file written. Proof order and file order differ, and §7
 explains why. `Quantitative.lean` sits **beside** the stack rather than in it:
 nothing imports it, and every theorem in it is a strengthening of one below,
-bought with a strengthened hypothesis.
+requiring a strengthened hypothesis.
 
 ## 8. Open questions
 
@@ -903,8 +902,9 @@ reasoning is what a later reader will want.
 
 ### S1 — `Live` is an explicit argument, not a class
 
-`Faults` is a class because it is *universal*: every theorem in the
-development carries it, so hiding it costs nothing. `Live` is not — L0, L2
+`Faults` is a class because it is *universal*: every theorem in the development
+carries it, so hiding it loses no
+information. `Live` is not — L0, L2
 and L3 do without it and L1 does not. When an assumption separates the
 unconditional results from the conditional ones, hiding it is exactly
 backwards; a reader could no longer tell which is which from a signature.
@@ -1150,7 +1150,7 @@ So the fix is a **rated** hypothesis, and `LeanDag/Quantitative.lean` supplies
 three. Nothing below it changes; every existing theorem keeps its weak
 hypotheses and stays available.
 
-| weak | rated | buys |
+| weak | rated | gives |
 |---|---|---|
 | `hub` | `Rated timeout` — `∀ n, n ≤ timeout n` | `R = max (max (D + delay) n₀) gst` |
 | `FairScheduleOn T` | `FairWithin T w` | the committing slot within `w` of `max k R` |

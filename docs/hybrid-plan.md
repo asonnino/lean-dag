@@ -116,7 +116,7 @@ conduct the protocol enforces.
 `k := 2f + c + 1`; it will mirror the house treatment of Odontoceti,
 which generalized the thesis's `2f + 1` to `n − 3f`. Set
 
-    q := n − fb − fc        (the derived instance's quorum, for free)
+    q := n − fb − fc        (the derived instance's quorum, with no new proof)
     k := n − 3·fb − 2·fc
 
 Then both constraints of `hybrid.md` §4 collapse into the class bound:

@@ -62,11 +62,11 @@ The three-round structure of the *commit pattern* — proposal at `r`, votes at
 `r+1`, certificates at `r+2`, unavoidability from `r+3` — is baked into
 `certificates`, `Certifies` and M2, and **none of it changed**. Pipelining does
 not shorten the pattern; it overlaps successive copies of it. Worth saying
-plainly, because the confusion is common: pipelining buys recurrence, not depth.
+plainly, because the confusion is common: pipelining gives recurrence, not depth.
 A slot is still decided three rounds after its proposal.
 
-The overlap costs nothing because *every role is assigned by the reader of the
-DAG, not by its writer*. A round-`(r+2)` block was already permitted to be a
+The overlap is harmless because *every role is assigned by the reader of
+the DAG, not by its writer*. A round-`(r+2)` block was already permitted to be a
 certificate for the slot at `r`, a vote for the slot at `r+1`, and a proposal for
 the slot at `r+2`, because nothing in `Block` or `ValidWrt` records which of
 these it is. Uncertified-DAG modelling paid for itself here: the most conspicuous
@@ -140,8 +140,9 @@ class Slots (Validator : Type*) where
 at one round is monotone — and liveness needs it, so it is assumed. Pipelining
 and every bounded-spacing schedule imply it.
 
-`keyed` says distinct slots differ in round or in leader. It too was free under
-the old spacing, which made `slotRound` injective outright. Under multiple
+`keyed` says distinct slots differ in round or in leader. It too held
+automatically under the
+single-leader spacing, which made `slotRound` injective outright. Under multiple
 leaders it is a real condition: the proposers of a round must be distinct
 validators. Without it one block would be the candidate for two slots and the
 ledger would deliver it twice (§8). §3.2 moves it somewhere checkable.
@@ -188,7 +189,7 @@ touch.
 results say the generalisation lost nothing:
 
 - `Slots.uniformSingle_spacing` — its consecutive slots really are three rounds
-  apart, so the old schedule is an instance of the weakened class;
+  apart, so the single-leader schedule is an instance of the weakened class;
 - `eligible_of_lt_of_spacing` (§5) — under that condition every later slot is an
   eligible anchor, so the revised `Decided` offers exactly the constructors the
   old one did. No derivation available before the change is unavailable after it.
@@ -216,7 +217,7 @@ sums and `Nat.find` plus a characterisation lemma.
 This is generality, not goal: `uniform` covers every deployed schedule and every
 witness here. See §12.
 
-## 4. Where the three rounds were load-bearing
+## 4. Where the three rounds were required
 
 Every occurrence, from a sweep of the source, with what became of it:
 
@@ -236,8 +237,8 @@ which is meaningful only when `slotRound R ≥ R` — precisely the coincidence
 `spacing` supplied. Under a monotone schedule the first slot at or after a round
 has to be named, so `Liveness.slotAt` was added (`Nat.find` on `unbounded`, with
 `le_slotRound_slotAt` and `slotAt_zero`), and both quantitative theorems now read
-`max k (slotAt Validator R)`. Under the old schedule `slotAt R ≤ R`, so no bound
-weakened.
+`max k (slotAt Validator R)`. Under the single-leader schedule
+`slotAt R ≤ R`, so no bound weakened.
 
 `BoundedSpacing`, which bounds slot rounds from *above*, still compiles and is
 untouched. Nothing in `Block`, `BlockDag`, `CausalHistory`, `Support`,
@@ -330,7 +331,7 @@ the constructor it just destructured.
 
 ### 6.3 Agreement (M6), and why the induction survives
 
-The load-bearing claim, and it held exactly as predicted. `decided_unique` is a
+The central claim, and it held exactly as predicted. `decided_unique` is a
 structural induction over sixteen constructor pairings; fifteen close on Stage A
 and were unaffected. The real case is *indirect commit at `k` with anchor `j`*
 against *indirect skip at `k` with anchor `j₂`*, settled by
@@ -368,8 +369,9 @@ theorem slot_eq_of_decided_commit (h₁ : Decided U V₁ k₁ (some L))
     (h₂ : Decided U V₂ k₂ (some L)) : k₁ = k₂
 ```
 
-Under the old spacing these were free, `slotRound` being injective, so a block's
-round named its slot. Under multiple leaders they are what `keyed` buys. The
+Under the single-leader spacing these held automatically, `slotRound` being
+injective, so a block's round named its slot. Under multiple leaders they
+are what `keyed` supplies. The
 second is the shape the ledger wants: a committed block belongs to one slot.
 
 ## 7. Multiple leaders, specifically
@@ -385,7 +387,8 @@ does not need to — they are different slots and may both commit. Two candidate
 for the *same* slot have the same creator by `IsLeaderBlock`, which is the
 hypothesis M5′ wants. The proof is indifferent to how many slots share a round.
 
-This is also where the model's `L ∈ (U.block q).refs` vote rule earns its keep.
+This is also where the model's `L ∈ (U.block q).refs` vote rule is what the
+argument needs.
 The paper implements votes through `SupportedBlock`, a depth-first traversal
 returning the first block for the slot encountered, precisely so that its Lemma 4
 holds. `ValidWrt.distinct_creators` discharges the same obligation structurally,
@@ -481,7 +484,8 @@ anchor not being available. Two reasons it may not be:
 - *The anchor must be canonical, because anchors genuinely disagree.* A
   certificate sits at round `r+2`, and a round-`(r+3)` block's references are all
   at `r+2`, so it reaches that certificate only by referencing it — and it
-  references a quorum (`n−f`) of them, not all. One committed anchor may see it and another
+    references a quorum (`n−f`) of them, not all. One committed anchor may see it
+  and another
   may not. Hence the *first* committed eligible slot is fixed as the anchor, and
   to know a slot is first, every eligible slot below it must be known **skipped**
   — not merely "not yet decided", since a slot undecidable now may commit later
@@ -570,7 +574,8 @@ which discharges `hrun`.
 Byzantine validators are and wherever they sit in the rotation: they cut the
 cycle into at most `f` arcs holding at least `n−f ≥ 2f+1` correct slots
 between them, so some arc has at least `⌈(2f+1)/f⌉` slots, and
-`(2f+1)/f = 2 + 1/f` makes that ceiling `3` for all `f ≥ 1`. Three is exactly what pipelining asks for — a coincidence
+`(2f+1)/f = 2 + 1/f` makes that ceiling `3` for all `f ≥ 1`. Three is exactly what
+pipelining asks for — a coincidence
 rather than a design. The concrete case, four validators with one Byzantine and a
 run at `4k+1, 4k+2, 4k+3`, is `pipe_fairRun`, and `Pipelined.lean` instantiates
 L10 at that schedule: both schedule hypotheses discharged, leaving only the
@@ -612,7 +617,8 @@ intermediate range and the clause fails. Fair round-robin therefore excludes it,
 by §9.5.
 
 `stuck_empty_below_commit_of_spacing` composes this with `decided_of_committed_above`
-to show neither is vacuous: under the old spacing a stuck set has no member at or
+to show neither is vacuous: under the single-leader spacing a stuck set has no
+member at or
 below a committed slot, however the DAG is arranged.
 
 Not supplied: a concrete universe satisfying `hcert` and `hskip`, which would be
@@ -816,7 +822,7 @@ response, and it produced `decided_of_committed_above` and
 overlooking that `j + 1` and `j + 2` are ordinarily committed too and that
 nothing between `j − 1` and `j + 2` is *eligible*. The error was reasoning about
 the anchor while forgetting that eligibility also prunes the intermediates. What
-it produced — §9.3 — turned out to be the engine of the real theorem.
+it produced — §9.3 — became the core of the real theorem.
 
 A third correction belongs with them. It was proposed that `SynchronisedOn`'s
 authorship clause was a modelling weakness, to be repaired by a `CoversOn`

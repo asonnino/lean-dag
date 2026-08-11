@@ -376,11 +376,12 @@ def main(argv):
         paths, register_only = [pathlib.Path(a) for a in argv[1:]], []
     else:
         paths = [ROOT / "docs/report.md"]
-        # The register check covers the documents held to `style.md`'s
-        # rules. `style.md` itself quotes the banned phrases in order to
-        # ban them. The remaining design records predate the rule and
-        # are not held to it; adding one here means cleaning it first.
-        register_only = [ROOT / "docs/integration.md"]
+        # The register check covers every document in `docs/` except
+        # `style.md`, which quotes the banned phrases in order to ban
+        # them. A new design record is covered the moment it is added.
+        register_only = sorted(
+            q for q in (ROOT / "docs").glob("*.md")
+            if q.name not in ("report.md", "style.md"))
     bad = sum(audit(p, decls, suffixes) for p in paths)
     bad += sum(audit_register(q) for q in register_only)
     sys.exit(1 if bad else 0)

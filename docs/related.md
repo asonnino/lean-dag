@@ -526,7 +526,7 @@ trust boundary of report §4.
 | Starfish | Qiu et al. | This development | Status here |
 |---|---|---|---|
 | A1: 2f+1 blocks of round r−1 | — | `Live.builds` + `DeliversQuorum` (P8) | assumed (protocol) |
-| **A2: created own block of round r−1** | **after GCT, no jumping over r′ unless r′−2 decided** | `Live.builds`, giving L1 `Populated`; `Timing.blk` total for n ≤ N | **assumed (P8) — the load-bearing clause** |
+| **A2: created own block of round r−1** | **after GCT, no jumping over r′ unless r′−2 decided** | `Live.builds`, giving L1 `Populated`; `Timing.blk` total for n ≤ N | **assumed (P8) — the clause the argument rests on** |
 | C1: wait for leader + votes | — | not modelled — `waits` is a pure timeout | absent |
 | C2: timeout δ_TO = **2Δ** | — | `Timing.waits` + backoff past `D + delay`; **= 2Δ** when D = Δ | derived |
 | C3: safe jump on 2f+1 blocks of round r | the "unless decided" clause | `Timing.prompt`: `built v (n+1) ≤ max (built v n + timeout n) (latest n + delay)` | assumed (P9) |
@@ -585,8 +585,8 @@ drift is *preserved*, not established: `exists_synchronisedOn_of_backoff` takes
 as a hypothesis, recorded honestly in the trust boundary as R4 ("round-`0` spread
 at most `D₀`", deployment). Starfish's **Lemma 4** instead *derives* the
 corresponding Δ-synchronisation for every round past r_max, and its condition
-**B2** — broadcast on round advancement, not merely on block creation — is
-precisely what buys it. Note that B2 is vacuous in this model: advancement and
+**B2** — broadcast on round advancement, not merely on block creation — is precisely
+what supplies it. Note that B2 is vacuous in this model: advancement and
 block creation coincide when `blk` is total, so B1 alone suffices, which is why
 its absence here is not an error. But it does mean **R4 is avoidable**: adopting
 a B2-style clause would let the round-0 spread assumption be discharged rather
@@ -813,8 +813,9 @@ or jumping validator.
 
 The realistic prize is therefore the supporter-level statement, not their
 certificate-level one, unless a Predecessor-Rule analogue is added to the model.
-That is still worth having — it is a liveness result independent of P8, and it
-marks exactly where the protocol clause starts being load-bearing — but it should
+That is still worth having — it is a liveness result independent of P8, and it marks
+exactly where the argument starts to depend on the protocol
+clause — but it should
 not be advertised as their Theorem 3. M3
 (`certificates_eq_empty_of_directSkip`) remains the only nearby existing result,
 and it runs the other direction.

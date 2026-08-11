@@ -204,7 +204,10 @@ capstones (`dos_resistance`, `chain_quality`, `decided_agree_chop`,
 list. Three findings, all of which changed this plan:
 
 1. **The schedule layer was missing entirely.** `FairScheduleOn`,
-   `FairRunOn`, `SpansEligible` and `PlacesRuns` appear as hypotheses of five capstones and were absent from §2's list as first written. That list would therefore have produced a preservation table that silently omitted every combination involving a schedule variant —
+   `FairRunOn`, `SpansEligible` and `PlacesRuns` appear as hypotheses
+   of five capstones and were absent from §2's list as first written.
+   That list would therefore have produced a preservation table that
+   silently omitted every combination involving a schedule variant —
    including GC × Adaptive, the most interesting one (I5).
 2. **The delivery layer is dependent, not parallel.** `UniformBudget`
    and `RefsAccepted` range over `Delivery U`, not `U`, so they cannot

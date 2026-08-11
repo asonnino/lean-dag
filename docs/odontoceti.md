@@ -22,7 +22,7 @@ scheme. The existing DAG development is consumed read-only — not one
 definition or theorem outside the new directory changed — and the
 formalization surfaced four findings about the thesis (§6): a
 consensus-critical gap in the agreement argument, a missing lemma its
-case analysis needs, a load-bearing ambiguity in the indirect test's
+case analysis needs, a consequential ambiguity in the indirect test's
 counting unit, and a loose counting step — alongside confirmation that
 everything else is sound, at a generality the thesis does not claim.
 
@@ -160,7 +160,7 @@ both sides actually bounds (O2 gives `≤ 2f` authors, O3 gives
 `≥ n − 3f` authors). All rule predicates are decidable, which is what
 lets every witness run by `decide`.
 
-**The arithmetic core — where each `f` is spent.** Four counting
+**The arithmetic core — where each `f` is needed.** Four counting
 theorems carry the entire safety story; each is sharp at the boundary:
 
 - **O1** (`not_directSkip_of_directCommit`): no block is both directly
@@ -169,7 +169,7 @@ theorems carry the entire safety story; each is sharp at the boundary:
   decision-round blocks, so all of them are equivocators
   (`not_correct_of_supports_and_blames`, via `no_equivocation`) — one
   too many. **Needs only `n ≥ 3f+1`**: commit-versus-skip is not where
-  the larger committee is spent.
+  the larger committee is needed.
 - **O1′** (`eq_of_directCommit`): two directly committed same-author
   blocks are equal. Same intersection; an author supporting two
   distinct twins is an equivocator, because one block cannot reference
@@ -178,8 +178,8 @@ theorems carry the entire safety story; each is sharp at the boundary:
 - **O2** (`card_supporters_le_of_directSkip`,
   `not_thickLink_of_directSkip`): a directly skipped leader's
   supporters — anywhere in the universe, hence in any cone — number at
-  most `2f`, and `2f < n−3f` exactly when `n ≥ 5f+1`. **This is where
-  the fifth `f` is spent.** The proof needs the **exact complement
+    most `2f`, and `2f < n−3f` exactly when `n ≥ 5f+1`. **This is where
+  the fifth `f` is needed.** The proof needs the **exact complement
   identity** `|Correct| = n − |byzantine|`
   (`card_correct_add_byzantine`): correct supporters and correct
   blamers are disjoint, correct blamers number
@@ -269,7 +269,7 @@ any views and any routes.
 ## 6. Findings: what the formalization surfaced in the thesis
 
 Four items, ranked by severity — one consensus-critical gap, one
-missing lemma, one load-bearing ambiguity, one proof-precision issue —
+missing lemma, one consequential ambiguity, one proof-precision issue —
 followed by what was confirmed sound. The first is the one place the
 formalization diverges from the thesis by *necessity* rather than
 generalization, and the design review had flagged the risk in advance.
@@ -323,8 +323,8 @@ its own counting lemma: **O4′** (`eq_of_directCommit_of_thickLink`) —
 a directly committed block is the unique same-author block that can
 pass the indirect test at any anchor, by
 `(n−f) + (n−3f) − f > n ⟺ n ≥ 5f+1`. The inequality is one of the two
-places the five-`f` committee is genuinely spent, which is a sign the
-lemma is load-bearing rather than routine.
+places the five-`f` committee is genuinely required, which is a sign the
+lemma is essential rather than routine.
 
 ### F3 — "2f+1 supports" is ambiguous, and only one reading is provable
 
@@ -434,8 +434,8 @@ All witnesses are by `decide`; all proofs use the standard axioms
 
 - **The generalization** — `n ≥ 5f+1`, thresholds `n−f` / `n−3f` —
   **held everywhere**; the pinning fallback was never used. What the
-  general form says that the thesis's fixed `5f+1` does not: the
-  five-`f` committee is spent in exactly two places (O2's
+    general form says that the thesis's fixed `5f+1` does not: the
+  five-`f` committee is required in exactly two places (O2's
   skip-vs-indirect bound and O4′'s commit-vs-rival bound), the direct
   rules are sound already at `3f+1`, and at the boundary the indirect
   threshold's window is the single value `2f+1`.

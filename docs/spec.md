@@ -231,7 +231,7 @@ form every downstream proof wants, and it is the more faithful reading of
 removes any `card_creators` bridge from the critical path. With distinctness
 also present `b.refs.card ≥ n−f` still follows, so nothing is lost.
 
-**Distinct creators earns its keep only at commit agreement.** It is a
+**Distinct creators is needed only at commit agreement.** It is a
 genuine protocol rule — a block must not cite the same author twice — but it
 is worth being precise about where it is needed, because the guess is
 wrong. T3
@@ -248,7 +248,7 @@ proved from the quorum condition alone rather than via `card_refs`, because
 Routing it that way would silently put distinctness on T3's dependency path.
 
 `distinct_creators` has exactly **two** consumers, and the split is the whole
-point: M5′, which is the genuine load-bearing use, and `card_creators` (which
+point: M5′, which is the genuine use, and `card_creators` (which
 feeds only `card_refs`, which nothing calls). Grepping for it is therefore a
 live check that Phase 1 and 1b have not started leaning on it.
 
@@ -394,7 +394,7 @@ Which form to use is determined by how supporters are obtained:
   For a block, apply it with `s := b.refs` and discharge the quorum
   hypothesis from validity (§3.2, definitional).
 
-  **Unused by Phase 1 and 1b, load-bearing from Phase 2 on.** T3's base case
+  **Unused by Phase 1 and 1b, required from Phase 2 on.** T3's base case
   went through T0' until the coverage refactor (§4 *Coverage*) and now calls
   `reaches_of_correct_support_of_card`, whose intersection has a different
   shape: one quorum against one *correct* set of size `f+1`, rather than two
@@ -450,7 +450,7 @@ Which form to use is determined by how supporters are obtained:
   The hypothesis is on `Q`'s *creator set*, not `Q.card`: `Q` is an
   arbitrary id set here, not one block's refs, so it carries no distinctness
   invariant of its own and `Q.card` would be the wrong measure. In every
-  application `Q` does come from distinct validators, so this costs nothing
+  application `Q` does come from distinct validators, so this loses nothing
   at call sites.
 
   Proof sketch — induction on `(U.block c).round`. All the real work is in
@@ -556,7 +556,7 @@ the round of slot `k`, with
 
 > `slotRound (k+1) ≥ slotRound k + 3`
 
-**This spacing is load-bearing for safety, not merely scheduling.** A
+**This spacing is required for safety, not merely for scheduling.** A
 certificate for `L` sits at round `r+2`, and by T2 a block's causal history
 reaches only strictly lower rounds. An anchor whose leader block sat at
 round `≤ r+2` could therefore never see a certificate for `L`, and would
@@ -630,7 +630,7 @@ stages need very different machinery:
 
   `certifiedIn_iff_of_view` records the companion fact that the test is
   view-independent (T6a): confining the search to the validator's own view
-  costs nothing, since the certificate could never have lain outside it.
+  loses nothing, since the certificate could never have lain outside it.
 
 - **M5′ — Certificate uniqueness.** If certificates exist for two round-`r`
   blocks by the same author, those blocks coincide.
@@ -639,7 +639,7 @@ stages need very different machinery:
   intersect in a correct `w` (T0'); `w`'s single round-`(r+1)` block votes
   for both (T1); and **distinctness** (§3.2) forbids one block referencing
   two round-`r` blocks by one author. That last step is the sole
-  load-bearing use of distinctness in the development.
+  essential use of distinctness in the development.
 
   This is the form M6 needs, because the indirect rule commits on a *single*
   certificate in reach rather than a quorum of them. The proof needs no
@@ -649,8 +649,8 @@ stages need very different machinery:
 
 - **M5 — One block per slot.** Two blocks directly committed for the same
   slot are equal. A corollary of M5′: a direct commit implies a certificate
-  exists. The outer certificate-quorum intersection an earlier draft
-  performed here turned out to be unnecessary.
+  exists. An outer certificate-quorum intersection here is
+  unnecessary.
 
 - **M6 — Agreement.** No two correct validators reach conflicting decisions
   for a slot. As with T5 this is *no-conflicting-decision*, not "both
@@ -691,7 +691,7 @@ stages need very different machinery:
   **(assumption)** The direct rules become **view-relative** here
   (`DirectCommitIn V`), since a validator applies them to the certificates it
   can actually see. They are monotone into the universe-level versions of
-  Stage A — `V ⊆ U.ids` — so M4 and M5 lift to views for free, and no
+  Stage A — `V ⊆ U.ids` — so M4 and M5 lift to views directly, and no
   counting is redone.
 
   Which leader block is "the" slot-`k` candidate is left open: for a correct
@@ -793,7 +793,7 @@ stages need very different machinery:
   history not already output. Two of the three ingredients are in hand — the
   agreed leader sequence (M6), and the fact that a validator holding a leader
   necessarily holds its whole causal history (T6a, which is where view
-  closure finally earns its keep beyond the certificate check).
+  closure is needed beyond the certificate check).
 
   The missing ingredient is a **deterministic order within each flush**, and
   it needs a new assumption: `BlockId` currently carries no order at all —
@@ -814,7 +814,7 @@ stages need very different machinery:
 
   Together: a block, once written, stays written, in the same place. That is
   closer to what a ledger's users rely on than abstract sequence equality,
-  and it means the outstanding ordering assumption buys only the arrangement
+  and it means the outstanding ordering assumption affects only the arrangement
   *inside* each flush.
 
 - **T7 — Liveness.** Under partial synchrony, leaders eventually get
@@ -896,7 +896,7 @@ condition, the creator-set quorum, and non-equivocation — four conditions.
 Not distinctness, not views, not view-closure. This holds for Phase 1b too:
 T3a takes its `n−f` distinct validators straight from the creator-set quorum,
 and coverage runs on correctness plus non-equivocation. So distinctness is
-load-bearing only at commit agreement (M5′, and T5 in Appendix A), exactly
+required only at commit agreement (M5′, and T5 in Appendix A), exactly
 as §3.2 claims — and that is checkable rather than aspirational.
 `distinct_creators` has exactly two consumers: M5′, and `card_creators`
 (which feeds only `card_refs`, which nothing calls). Grep for it when in
@@ -1001,6 +1001,6 @@ These need views (§3.5) and T6a, which Phase 2 introduces anyway.
   correct leader *also* yields `i₁ = i₂` directly from non-equivocation, but
   that is a shortcut, not a required branch.
 
-  So commit agreement holds even against an equivocating leader, and it is
-  **distinctness** rather than non-equivocation that buys it — the one place
-  in the development where that invariant is load-bearing.
+    So commit agreement holds even against an equivocating leader, and it is
+  **distinctness** rather than non-equivocation that supplies it — the
+  one place in the development where that invariant is required.

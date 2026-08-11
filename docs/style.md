@@ -186,6 +186,14 @@ are verbatim, as tokenised subsequences of the source; the banned
 phrases of §1 are absent, appendices included; and docstring section
 references are qualified.
 
+The first, second, third, fourth and sixth checks apply to the report.
+The banned-phrase check applies to **every document in `docs/`** except
+this one, which quotes the phrases in order to ban them. A new design
+record is therefore covered from the moment it is added, and no
+document is exempt for being a working note: the register rules are
+about accuracy rather than formality, and a working note that says a
+clause "earns its keep" is as imprecise as a report that does.
+
 Two judgement checks remain:
 
 3. **Claims are consistent with what was added.** New material commonly
