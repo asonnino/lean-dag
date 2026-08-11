@@ -417,9 +417,30 @@ So P3′ **pays for itself in §8 and charges for itself in §12**: the
 self-parent chain is what makes a cone a complete record of its
 author's acceptances, and the self reference the fill must add is
 exactly what enlarges the cone past what the donor vouched for. The
-remaining work on I1 is to turn the mechanism into either a refutation
-on data or the condition that rescues it (§4.5); the mechanism itself
-no longer depends on which.
+disturbance is nonetheless **local**, which is what closes I1.
+
+A fill copies a donor block's references, which `DoSValid U` already
+vouches for in the donor's cone; and it disturbs no *other* block,
+because an old block's cone contains no filled block. Exposure at an
+old block is unchanged in both directions (`exposedIn_skipFill_old`),
+so `dosValid_skipFill` gives the extension the condition as soon as its
+own blocks satisfy it.
+
+The residual obligation is therefore local to the fill and
+**checkable**: a recipient computes the fill and inspects it,
+consulting no identity oracle and nothing beyond the message and its
+own DAG. In report §8's vocabulary the condition is enforceable, so it
+is admissible as a clause of the mechanism rather than an assumption
+about the network — a fill whose enlarged cone exposes one of the
+donor's citations fails the check and is refused, rather than accepted
+and unsound.
+
+What is still open is narrower than the condition: whether a *simpler*
+check suffices. The natural candidate is that the donor line already
+covers the anchor's cone, which holds whenever the donor referenced
+`v1`'s last block — the ordinary case, since `v1` was producing at
+`r0` — and would reduce the obligation to a reachability test rather
+than an exposure computation.
 
 **I18 — and the condition dissolves if the block is derived, not sent.**
 §5.7's objection was that a re-genesis block is valid only to
@@ -714,7 +735,7 @@ behind I6a and moot if I1 fails. The pair is the arc's most likely
 | `Integration/Lifecycle.lean` | I10: the crash-prone fill; I11 recorded as a non-task; the lifecycle | **done** |
 | `Integration/Retention.lean` | I7a, I7b: anchor retention; the lag bounds the outage; the severed chain | **done** |
 | `Integration/ReGenesis.lean` | I17, I18: restarting a severed chain at the cut; local derivation converges | **done** |
-| `Integration/Exposure.lean` | I1: the fill enlarges cones — the mechanism of the predicted failure | **partial** |
+| `Integration/Exposure.lean` | I1: cone growth; the disturbance is local, and the check is enforceable | **done** |
 | `Integration/ReGenesis.lean` (§I19) | I19a: `DoSValid` survives re-genesis | **done** |
 | `Integration/DeliveryFill.lean` | I6a–d: Safe Skip's delivery transformer, then its budget column | gated on I1 |
 | `LeanDagTest/Integration.lean` | the refutation witnessed as biting; the stack and lifecycle exhibits | ongoing |
