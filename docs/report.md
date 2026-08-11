@@ -327,22 +327,26 @@ ledger) and §6 liveness, grounded on view convergence (culminating in
 recurring commits, `commits_recur_on`, the three derivations of eventual
 DAG synchrony, and the quantitative wait bound). §7 proves the chain-quality account — coverage
 without synchrony, inclusion with it (`chain_quality`,
-`committed_of_correct_block`). §§8–14 present the seven further
-developments —
-denial-of-service resistance (`dos_resistance`), garbage collection
-(`decided_agree_chop`, `card_retained_le`, `bootstrap_agree`),
+`committed_of_correct_block`).
+
+§§8–14 present seven further developments on that foundation:
+denial-of-service resistance (`dos_resistance`); garbage collection
+(`decided_agree_chop`, `card_retained_le`, `bootstrap_agree`);
 Odontoceti (`Odontoceti.decided_unique`,
-`Odontoceti.all_decided_below_of_fairRun`), and the reactive schedule
+`Odontoceti.all_decided_below_of_fairRun`); the reactive schedule
 (`ReactiveM.decided` (RS2), `Odontoceti.reactive_decided` (RS3),
-`ReactiveCore.no_timeout_of_fast` (RS4)), and safe-skip recovery
-(`SkipMsg.decided_fill_agree` (SS6)), and adaptive leader schedules
-(`adaptiveRun_agree` (AL3), `adaptiveRun_exists` (AL5)), and hybrid
+`ReactiveCore.no_timeout_of_fast` (RS4)); safe-skip recovery
+(`SkipMsg.decided_fill_agree` (SS6)); adaptive leader schedules
+(`adaptiveRun_agree` (AL3), `adaptiveRun_exists` (AL5)); and hybrid
 fault tolerance (`Hybrid.decided_unique` (H6),
 `hybrid_bound_necessary` (H10)). §15 composes them
-(`hybrid_agree_stack` (I7)). §16 exhibits the witness models,
-§18 describes the mechanisation, §19 discusses the formulation, the lessons
-of the extensions, and the limitations, §20 surveys related work, and §21
-concludes. Appendix A indexes every
+(`hybrid_agree_stack` (I7)) and collects the deployment conditions
+their composition reveals.
+
+§16 exhibits the witness models and §17 the legacy quorum route, kept
+in a module nothing else imports. §18 describes the mechanisation, §19
+discusses the formulation, the lessons of the extensions, and the
+limitations, §20 surveys related work, and §21 concludes. Appendix A indexes every
 principal statement against its Lean name and module. Throughout, displayed
 Lean is drawn from the source; binders are occasionally elided for layout,
 and `…` marks an elision.
@@ -1342,8 +1346,9 @@ lying in reach rather than of a quorum of them.
 The proof requires no relationship between the two certificates. Each names
 `n−f` distinct voters, so the voter sets intersect in a correct validator `w`
 (T0′); `w`'s unique round-`(r+1)` block votes for both (T1); and P2 forbids one
-block from referencing two round-`r` blocks by a single author. This is the only
-use of P2 in the development.
+block from referencing two round-`r` blocks by a single author. This is P2's
+only use in the safety development; §4.8's row records where the arcs
+consume it.
 
 **M5** (`eq_of_directCommit_of_creator_eq`) follows as a corollary.
 
@@ -4194,11 +4199,17 @@ prove that each transformer preserves them, and let composition follow.
 The cost is then linear in the arcs rather than quadratic, and the
 capstone (I8) confirms that the ingredients do compose.
 
-Three results came out that no single arc could state: coverage is
-**refuted** under the Safe Skip fill, with an exact boundary (I4);
-three *placement conditions* say where a garbage-collection horizon may
-be put (I5, I6); and a composition that did not fit exposed a
-hypothesis stated more strongly than its use (I9).
+What came out are results no single arc could state. Coverage is
+**refuted** under the Safe Skip fill, with an exact boundary and for
+the same reason the fill is safe (I4). *Placement conditions* say where
+a garbage-collection horizon may be put (I5, I6). A composition that
+did not fit exposed a hypothesis stated more strongly than its use
+(I9). A validator pruned past its own history can be restored, by a
+provision costing no exemption from P3′ and no agreement on the cut
+(I10–I12). And §8's storage account is sharpened twice over: its
+reference discipline is stated more tightly than its own bound needs
+(I17), and a fill drawn against a common-core target carries no
+material its recipients lack (I19).
 
 ### 15.1 Three layers, and what can break them
 
@@ -5002,13 +5013,14 @@ validator's block with the one the timing structure names. And
 exactly the four counting theorems plus twin uniqueness (§10.3), with
 `O4′` — the lemma the published argument lacks — evidently indispensable.
 
-Nine companion documents accompany the development and carry the design
+Ten companion documents accompany the development and carry the design
 rationale in more detail than a report admits: `spec.md` (safety),
 `liveness.md` (liveness), `pipelining-and-multi-leader.md` (the schedule
 generalisation), `chain-quality.md` (§7),
 `dos-equivocation-and-growth.md` (§8), `garbage.md` (§9),
-`odontoceti.md` (§10), `adaptive-leaders.md` (§13) and
-`hybrid-plan.md` (§14), with `related.md` surveying the surrounding
+`odontoceti.md` (§10), `adaptive-leaders.md` (§13),
+`hybrid-plan.md` (§14) and `integration.md` (§15), with `related.md`
+surveying the surrounding
 literature. Every statement in this report is drawn from the source.
 
 ---
@@ -5149,17 +5161,29 @@ over views — and to keep it out of every statement above.
 
 Three lessons generalise beyond the particular arcs.
 
-**Additivity is a measurement of abstraction.** Each extension was carried
-out without modifying a line of the core: the DoS arc consumed the delivery
-layer and the self-parent clause as found; garbage collection consumed every
-theorem verbatim because `chop U G` was arranged to *be* a `BlockUniverse`;
-Odontoceti consumed the whole DAG layer because its quorums are the `n − f`
-the development is parameterised by. When an abstraction is placed
-correctly, new developments read like instantiations; when it is misplaced,
-they read like refactors. The one refactor resisted — a rule-parameterised
+**Additivity is a measurement of abstraction.** Every extension of
+§§7–14 was carried out without modifying a line of what it consumed:
+the DoS arc took the delivery layer and the self-parent clause as
+found; garbage collection took every theorem verbatim because
+`chop U G` was arranged to *be* a `BlockUniverse`; Odontoceti took the
+whole DAG layer because its quorums are the `n − f` the development is
+parameterised by. When an abstraction is placed correctly, new
+developments read like instantiations; when it is misplaced, they read
+like refactors. The one refactor resisted — a rule-parameterised
 decision relation shared between §3.5 and §10.3 — is the cost of that
 discipline, incurred twice in mirrored proofs rather than once in
 modifications to the core.
+
+§15 is the exception, and a measured one. Composing §12 with §14
+required weakening a hypothesis of §12 — `v1 ∈ Correct` to the fact
+that clause was used for — because the composition was otherwise
+**unstatable**: §14 splits `Correct` into honest and available, and the
+crash-prone validator Safe Skip serves is honest but not correct. The
+change is conservative, one field and one proof line, and it is a
+different act from a refactor. The rule it suggests is that existing
+code may be modified when a result cannot otherwise be stated, and not
+for elegance — which is why the rule-parameterised relation above is
+still resisted.
 
 **Enforceability is a specification discipline.** The principal result of §8
 (`dos_resistance`) quotes only conduct a validator can execute — an
