@@ -391,8 +391,29 @@ stranded the validator — its total absence from the truncation,
 layer, which is P8's hypothesis at round `0`, and an ordinary Safe Skip
 anchored on the new block fills the rounds above.
 
-So the design gap identified above closes, with one condition that does
-not (§5.7).
+**I18 — and the condition dissolves if the block is derived, not sent.**
+§5.7's objection was that a re-genesis block is valid only to
+validators who have pruned at least as far, which report §9's
+per-validator horizons cannot guarantee. It applies to a *transmitted*
+block. Let each validator instead **synthesise** a genesis for any
+validator absent from its own retained layer, as a deterministic
+function of its own horizon: nothing is sent, so nothing can be
+rejected.
+
+What that needs is that the local derivations converge, and they do,
+cleanly. A validator's own derived genesis sits at round `0` and is
+pruned by any further cut (`chop_addGenesis`), leaving exactly the
+base a more-truncated validator already holds — `regenesis_converges`,
+composing that with `chop_chop`. Both then derive the same genesis from
+the same base. So a validator holding more history, on truncating
+further, arrives at precisely what the later-cutoff validator had, and
+heterogeneous horizons stay compatible with **no agreement on the
+cut** — which is §9's design constraint, preserved rather than
+traded away.
+
+The statements are observational: identifier sets equal, and blocks
+equal at those identifiers. The two universes differ only on junk
+outside their identifier sets, which nothing reads.
 
 **I10 — a crash-prone validator can Safe Skip, once a hypothesis is
 stated as the fact it stands for.** This is the composition that did
@@ -908,15 +929,20 @@ headline claim — so a re-genesis convention asks the *lagging*
 validators, those retaining more history, to accept a block their own
 rules reject.
 
-This is the one thing `addGenesis` cannot supply, and it is a real
-interaction rather than a detail. Three ways out suggest themselves and
-the choice is a design decision: carry the re-genesis block with
-evidence of the horizon it was taken at, so a lagging validator can
-check it against a horizon it would accept; require the fill's target
-round to exceed every honest horizon, which reintroduces a bound of the
-kind §9 avoids; or accept the lag bound of I7 and route longer outages
-to bootstrap, which is the status quo and needs nothing new. Recorded,
-not resolved.
+**Resolved by I18** (§3.2), and the resolution is the one that gives up
+nothing: derive the block locally rather than transmitting it. Each
+validator synthesises a genesis for any validator missing from its own
+retained layer, and `regenesis_converges` shows the derivations agree
+as horizons advance — a validator holding more history, on truncating
+further, arrives at exactly what the more-truncated validator already
+had. No message, no agreement, and §9's per-validator horizons are
+preserved intact.
+
+Two alternatives were available and are worth recording as rejected:
+carrying the block with evidence of the horizon it was taken at, which
+needs a new message; or requiring the fill's target to exceed every
+honest horizon, which reintroduces a bound of the kind §9 exists to
+avoid.
 
 ## 6. Out of scope
 

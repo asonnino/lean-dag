@@ -1,4 +1,5 @@
 import LeanDag.Integration.Retention
+import LeanDag.GC.Horizon
 
 /-!
 # Re-genesis: restarting a severed chain at the cut
@@ -153,6 +154,85 @@ def addGenesis_of_severed {U : BlockUniverse Validator BlockId Payload}
     (g : BlockId) (p : Payload) (hg : g ∉ (chop U G).ids) :
     BlockUniverse Validator BlockId Payload :=
   addGenesis (chop U G) sk.v1 g p hg (severed_of_pruned_anchor sk hG1 hG2)
+
+/-! ## Convergence: local derivation needs no agreement
+
+The condition of §5.7 — that a re-genesis block is valid only to
+validators who have pruned at least as far — dissolves if the block is
+**derived rather than transmitted**. Let each validator synthesise a
+genesis for any validator absent from its own retained layer, as a
+deterministic function of its own horizon. Nothing is sent, so nothing
+can be rejected.
+
+What must then be true is that the derivations *converge*: a validator
+holding more history, on truncating further, must arrive at what the
+more-truncated validator already had. It does, and cleanly. Its own
+derived genesis sits at round `0` and is pruned by any further cut,
+leaving exactly the later validator's base — on which the same
+derivation produces the same genesis.
+
+So heterogeneous horizons stay compatible with no agreement on the cut,
+which is report §9's design constraint, and the re-genesis convention
+is a local rule rather than a protocol message. -/
+
+section Convergence
+
+variable {V : BlockUniverse Validator BlockId Payload} {v : Validator}
+variable {g : BlockId} {p : Payload} {d : ℕ}
+
+/-- **A derived genesis is pruned by the next cut, without trace.** Any
+further truncation removes the round-`0` block and leaves the ordinary
+truncation of what lay beneath.
+
+Stated observationally — identifiers, and blocks at those identifiers —
+because the two universes differ on the junk outside their identifier
+sets, which nothing consults. -/
+theorem chop_addGenesis (hd : 0 < d)
+    {hg : g ∉ V.ids} {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v} :
+    (chop (addGenesis V v g p hg hsev) d).ids = (chop V d).ids
+      ∧ ∀ b ∈ (chop V d).ids,
+          (chop (addGenesis V v g p hg hsev) d).block b = (chop V d).block b := by
+  constructor
+  · ext b
+    rw [mem_chop_ids, mem_chop_ids]
+    constructor
+    · rintro ⟨hb, hbr⟩
+      rcases Finset.mem_insert.mp hb with rfl | ho
+      · rw [addGenesis_block_new] at hbr
+        change d ≤ 0 at hbr
+        omega
+      · rw [addGenesis_block_old ho] at hbr
+        exact ⟨ho, hbr⟩
+    · rintro ⟨hb, hbr⟩
+      exact ⟨Finset.mem_insert_of_mem hb, by rw [addGenesis_block_old hb]; exact hbr⟩
+  · intro b hb
+    rw [mem_chop_ids] at hb
+    simp only [chop_block_eq, chopBlock, addGenesis_block_old hb.1]
+
+/-- **The convergence.** A validator at horizon `G₁`, truncating on to a
+later horizon `G₂`, holds exactly the blocks of a validator that cut at
+`G₂` directly — its derived genesis having been pruned on the way. Both
+then derive the same genesis from the same base, so heterogeneous
+horizons need no agreement.
+
+The identifier sets are equal and the blocks agree on them; the two
+universes are the same object as far as anything that reads them is
+concerned. -/
+theorem regenesis_converges {U : BlockUniverse Validator BlockId Payload}
+    {G₁ G₂ : ℕ} (hG : G₁ < G₂)
+    {hg : g ∉ (chop U G₁).ids}
+    {hsev : ∀ b ∈ (chop U G₁).ids, ((chop U G₁).block b).creator ≠ v} :
+    (chop (addGenesis (chop U G₁) v g p hg hsev) (G₂ - G₁)).ids
+        = (chop U G₂).ids
+      ∧ ∀ b ∈ (chop U G₂).ids,
+          (chop (addGenesis (chop U G₁) v g p hg hsev) (G₂ - G₁)).block b
+            = (chop U G₂).block b := by
+  obtain ⟨hids, hblk⟩ := chop_addGenesis (V := chop U G₁) (v := v) (g := g)
+    (p := p) (d := G₂ - G₁) (by omega) (hg := hg) (hsev := hsev)
+  rw [chop_chop (le_of_lt hG)] at hids hblk
+  exact ⟨hids, hblk⟩
+
+end Convergence
 
 end Integration
 
