@@ -367,11 +367,32 @@ the truncation whatsoever.
 So the failure is not Safe Skip's. **Any** attempt to resume is blocked,
 because the validator's self-parent chain has been severed, and
 rejoining would need a protocol provision the model does not have — a
-re-genesis block, exempt from P3′. This also locates a cost of P3′ that
-report §2.2 does not record: the clause is credited there for the DoS
-and garbage-collection arcs and noted as unused by safety and liveness,
-but it is what makes a pruned validator unrecoverable, and the
-practical mitigation is exactly the lag bound above.
+re-genesis block. This also locates a cost of P3′ that report §2.2 does
+not record: the clause is credited there for the DoS and
+garbage-collection arcs and noted as unused by safety and liveness, but
+it is what makes a pruned validator unrecoverable.
+
+**I17 — and the provision is nearly free** (`Integration/ReGenesis.lean`).
+The obvious repair is to let the stranded validator start a fresh chain
+*at the cut*, with a block carrying no references. It needs no exemption
+from P3′ at all: truncation rebases the retained layer to round `0`,
+where P1, P3 and P3′ are guarded by `0 < round` and P2 is vacuous for an
+empty reference set — which is exactly how `chop`'s own validity proof
+discharges that layer ("no references, nothing to prove"). A re-genesis
+block is indistinguishable, to the rules, from a block the cut
+flattened.
+
+`addGenesis` builds it and proves the extension a lawful universe, and
+the non-equivocation obligation comes out **free**: adding a genesis
+block would normally risk a twin at round `0`, but the very fact that
+stranded the validator — its total absence from the truncation,
+`severed_of_pruned_anchor` — is what makes the new block unambiguous.
+`populatedOn_addGenesis` then puts the validator back in the genesis
+layer, which is P8's hypothesis at round `0`, and an ordinary Safe Skip
+anchored on the new block fills the rounds above.
+
+So the design gap identified above closes, with one condition that does
+not (§5.7).
 
 **I10 — a crash-prone validator can Safe Skip, once a hypothesis is
 stated as the fact it stands for.** This is the composition that did
@@ -640,7 +661,8 @@ behind I6a and moot if I1 fails. The pair is the arc's most likely
 | `Integration/Joiner.lean` | I9: the transformers commute; horizon-stability; epoch alignment | **done** |
 | `Integration/Stack.lean` | I16: the composition capstone — several transformers at once | **done** |
 | `Integration/Lifecycle.lean` | I10: the crash-prone fill; I11 recorded as a non-task; the lifecycle | **done** |
-| `Integration/Retention.lean` | I7a, I7b: anchor retention; the lag bounds the outage | **done** |
+| `Integration/Retention.lean` | I7a, I7b: anchor retention; the lag bounds the outage; the severed chain | **done** |
+| `Integration/ReGenesis.lean` | I17: restarting a severed chain at the cut, free of P3′ | **done** |
 | `Integration/Exposure.lean` | I1: `DoSValid` under the fill, conditionally (§5.6) | design decision pending |
 | `Integration/DeliveryFill.lean` | I6a–d: Safe Skip's delivery transformer, then its budget column | deferred, likely open |
 | `LeanDagTest/Integration.lean` | the refutation witnessed as biting; the stack and lifecycle exhibits | ongoing |
@@ -875,6 +897,26 @@ open. The first is preferable if the hypothesis turns out to be
 checkable by `v1` itself — which it is, since `B1`'s cone is exactly
 what `v1` retains — and that would make it enforceable in the sense
 §8 requires.
+
+**5.7 Re-genesis needs agreement the horizon design avoids.** A
+re-genesis block is valid in the truncation and *not* in the universe it
+came from: at round `G > 0` of the original, a reference-free block
+violates P3. It is therefore acceptable only to validators that have
+themselves pruned to at least `G`. Report §9 keeps horizons
+per-validator and reaches no agreement on the cut — deliberately, as its
+headline claim — so a re-genesis convention asks the *lagging*
+validators, those retaining more history, to accept a block their own
+rules reject.
+
+This is the one thing `addGenesis` cannot supply, and it is a real
+interaction rather than a detail. Three ways out suggest themselves and
+the choice is a design decision: carry the re-genesis block with
+evidence of the horizon it was taken at, so a lagging validator can
+check it against a horizon it would accept; require the fill's target
+round to exceed every honest horizon, which reintroduces a bound of the
+kind §9 avoids; or accept the lag bound of I7 and route longer outages
+to bootstrap, which is the status quo and needs nothing new. Recorded,
+not resolved.
 
 ## 6. Out of scope
 

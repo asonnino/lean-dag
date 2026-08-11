@@ -55,5 +55,6 @@ import LeanDag.Integration.Joiner
 import LeanDag.Integration.Stack
 import LeanDag.Integration.Lifecycle
 import LeanDag.Integration.Retention
+import LeanDag.Integration.ReGenesis
 import LeanDag.SafeSkip.Basic
 import LeanDag.SafeSkip.Invariance

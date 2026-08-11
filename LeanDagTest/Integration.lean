@@ -4,6 +4,7 @@ import LeanDag.Integration.Joiner
 import LeanDag.Integration.Stack
 import LeanDag.Integration.Lifecycle
 import LeanDag.Integration.Retention
+import LeanDag.Integration.ReGenesis
 import LeanDagTest.SafeSkip
 
 /-!
@@ -62,6 +63,8 @@ example (hs : SynchronisedOn (Ucrash 2) (Finset.univ : Finset (Fin 4)) 0) :
     SynchronisedOn skTight.skipFill (Finset.univ : Finset (Fin 4)) 2 :=
   synchronisedOn_skipFill_above skTight hs (Nat.zero_le _) (by decide)
 
+#print axioms LeanDag.Integration.addGenesis
+#print axioms LeanDag.Integration.populatedOn_addGenesis
 #print axioms LeanDag.Integration.no_blocks_of_no_genesis
 #print axioms LeanDag.Integration.severed_of_pruned_anchor
 #print axioms LeanDag.Integration.anchor_pruned
