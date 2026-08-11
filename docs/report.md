@@ -4297,12 +4297,19 @@ and coverage asks the opposite — that every reliable block at round
 `n+1` reference every reliable block at round `n`. One fact, two
 consequences: the fill can manufacture neither a commit nor coverage.
 
-Nothing in §12 weakens, since its claim is that the fill restores
-*production*, which is the hypothesis liveness consumes. The boundary
-is now exact. Coverage returns strictly above the fill
-(`synchronisedOn_skipFill_above`), and the strictness is not slack: at
-the target round the lower block may still be the last filled one, and
-the refutation reaches there too. The hypotheses are exhibited satisfiable on `Ucrash` (§16), so the
+The refutation is narrower than it first appears, and the boundary is
+exact in two directions. It is a statement about counting the recovering
+validator reliable *during the gap it slept through*: exclude it from
+the reliable set and coverage is untouched, the fill's blocks being its
+alone, so the clause never quantifies over them
+(`synchronisedOn_skipFill_of_notMem`). And with the validator included, coverage returns strictly above the
+fill (`synchronisedOn_skipFill_above`) — the strictness is not slack,
+since at the target round the lower block may still be the last filled
+one, and the refutation reaches there too. So Safe Skip composes with
+the liveness account: what it cannot support is the claim that a
+validator was covered at rounds during which it was absent, which §12
+never makes. Its claim is that the fill restores *production*, and that
+is the hypothesis liveness consumes. The hypotheses are exhibited satisfiable on `Ucrash` (§16), so the
 refutation is not vacuous.
 
 ### 15.4 Where a horizon may be put
@@ -5624,7 +5631,7 @@ result in full.
 | I1 | honest non-equivocation survives truncation and the fill | `honestNoEquiv_chop`, `honestNoEquiv_skipFill` *(Integration/Preservation)* |
 | I2 | coverage survives truncation, at a horizon offset | `synchronisedOn_chop` *(Integration/Preservation)* |
 | I3 | fairness and shape survive truncation | `fairScheduleOn_chop`, `fairRunOn_chop`, `spansEligible_chop` *(Integration/ScheduleShape)* |
-| I4 | coverage is refuted under the fill, and returns strictly above it | `not_synchronisedOn_skipFill`, `synchronisedOn_skipFill_above` *(Integration/Coverage)* |
+| I4 | coverage under the fill: refuted for a set including the recovering validator, preserved otherwise, restored above the fill | `not_synchronisedOn_skipFill`, `synchronisedOn_skipFill_of_notMem`, `synchronisedOn_skipFill_above` *(Integration/Coverage)* |
 | I5 | the joiner: horizon-stability, and epoch alignment | `HorizonStable`, `joiner_assign_agree`, `epochOf_add_of_dvd` *(Integration/Joiner)* |
 | I6 | anchor retention, and the lag bounds the outage | `anchor_pruned`, `chopMsg`, `outage_bounded_by_lag` *(Integration/Retention)* |
 | I7 | the composition capstone | `honestNoEquiv_stack`, `hybrid_agree_stack` *(Integration/Stack)* |
@@ -9032,7 +9039,7 @@ def skipFillD (sk : SkipMsg U) (D : Delivery U)
 
 ## Appendix C. The theorem reference
 
-The 334 theorems that either another module of the
+The 335 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -12554,6 +12561,20 @@ theorem not_synchronisedOn_skipFill (sk : SkipMsg U) {T : Finset Validator}
 **I5, refuted.** The fill does not restore coverage. If the recovering validator is counted reliable — which is exactly what SS2 does — then at any gap round `k` above the coverage round, an old reliable block at `k+1` fails to reference the filled block at `k`, because no old block references a fresh identifier.
 
 The hypotheses are the situation SS2 creates, not a contrived one: `hv1` puts `v1` in the reliable set, `hk` places the gap round in the covered range, and `hb` asks only that some reliable validator built at the round above — which `PopulatedOn` supplies.
+
+#### `synchronisedOn_skipFill_of_notMem`
+
+*theorem, `Integration.Coverage.lean`*
+
+```lean
+theorem synchronisedOn_skipFill_of_notMem (sk : SkipMsg U) {T : Finset Validator}
+    {R : ℕ} (hs : SynchronisedOn U T R) (hv1 : sk.v1 ∉ T) :
+    SynchronisedOn sk.skipFill T R
+```
+
+**The refutation is narrow: it is about counting the recovering validator reliable during the gap it slept through.** Exclude it from the reliable set and coverage is untouched — the fill's blocks are its alone, so the clause never quantifies over them.
+
+Together with `not_synchronisedOn_skipFill` and `synchronisedOn_skipFill_above` this is the whole picture. Coverage fails only where it should: over a set that includes the recovering validator, at rounds during which it was absent. It holds for every other set, and for every set above the fill.
 
 #### `synchronisedOn_skipFill_above`
 

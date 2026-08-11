@@ -600,7 +600,7 @@
 <g><title>LeanDag.correct_mem_base — the attested-base sandwich</title>
 <rect x="242.0" y="1009.5" width="62" height="24" rx="5" fill="#e9dff5" stroke="#7d63a8" stroke-width="1.2"/>
 <text class="lbl" x="273.0" y="1021.5" text-anchor="middle">G10</text></g>
-<g><title>LeanDag.Integration.not_synchronisedOn_skipFill — coverage is refuted under the fill, and returns strictly above it</title>
+<g><title>LeanDag.Integration.not_synchronisedOn_skipFill — coverage under the fill: refuted for a set including the recovering validator, preserved otherwise, restored above the fill</title>
 <rect x="242.0" y="1042.5" width="62" height="24" rx="5" fill="#dbe7e0" stroke="#5f8a76" stroke-width="1.2"/>
 <text class="lbl" x="273.0" y="1054.5" text-anchor="middle">I4</text></g>
 <g><title>LeanDag.SkipMsg.directSkip_fresh — the fill cannot conjure a commit</title>

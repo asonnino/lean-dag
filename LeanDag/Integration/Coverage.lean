@@ -82,6 +82,37 @@ theorem not_synchronisedOn_skipFill (sk : SkipMsg U) {T : Finset Validator}
   rw [sk.skipFill_block_old hb] at this
   exact sk.hfresh_new k (U.complete b hb _ this)
 
+/-- **The refutation is narrow: it is about counting the recovering
+validator reliable during the gap it slept through.** Exclude it from
+the reliable set and coverage is untouched — the fill's blocks are its
+alone, so the clause never quantifies over them.
+
+Together with `not_synchronisedOn_skipFill` and
+`synchronisedOn_skipFill_above` this is the whole picture. Coverage
+fails only where it should: over a set that includes the recovering
+validator, at rounds during which it was absent. It holds for every
+other set, and for every set above the fill. -/
+theorem synchronisedOn_skipFill_of_notMem (sk : SkipMsg U) {T : Finset Validator}
+    {R : ℕ} (hs : SynchronisedOn U T R) (hv1 : sk.v1 ∉ T) :
+    SynchronisedOn sk.skipFill T R := by
+  intro n hn b hb hbround hbc a ha haround hac
+  have hbo : b ∈ U.ids := by
+    rcases Finset.mem_union.mp hb with ho | hf
+    · exact ho
+    · obtain ⟨k, _, _, rfl⟩ := sk.mem_freshIds.mp hf
+      rw [sk.skipFill_block_fresh] at hbc
+      exact absurd hbc (by simpa [SkipMsg.fillBlock] using hv1)
+  have hao : a ∈ U.ids := by
+    rcases Finset.mem_union.mp ha with ho | hf
+    · exact ho
+    · obtain ⟨k, _, _, rfl⟩ := sk.mem_freshIds.mp hf
+      rw [sk.skipFill_block_fresh] at hac
+      exact absurd hac (by simpa [SkipMsg.fillBlock] using hv1)
+  rw [sk.skipFill_block_old hbo] at hbround hbc ⊢
+  rw [sk.skipFill_block_old hao] at haround hac
+  exact hs n hn b hbo hbround hbc a hao haround hac
+
+
 /-- **I5, positively.** Coverage holds *strictly* above the fill: past
 the target round every block is old, references are preserved, and the
 original condition applies unchanged. This is the form a liveness
