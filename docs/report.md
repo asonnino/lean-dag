@@ -4432,11 +4432,41 @@ So the clause §2.2 records as consumed by neither safety nor liveness
 is doubly implicated: the self-parent chain is what makes a cone a
 complete record of its author's acceptances in §8, and the self
 reference §12 must add is what pushes a cone past what the donor
-vouched for. Whether `DoSValid` survives the fill under a stateable
-condition is **open**, as is the delivery-layer question behind it
+vouched for.
+
+The disturbance is nonetheless **local**, which is what makes it
+addressable. A fill copies a donor block's references, and `DoSValid U`
+already vouches for those citations in the donor's cone; what the fill
+adds affects no other block, because an old block's cone contains no
+filled block — SS3's observation once more. Exposure at an old block is
+therefore unchanged in both directions
+(`exposedIn_skipFill_old`), and the condition decomposes:
+
+**I13.**
+```lean
+theorem dosValid_skipFill (hdos : DoSValid U)
+    (hnew : ∀ k, sk.r0 < k → k ≤ sk.r →
+      ∀ i ∈ (sk.skipFill.block (sk.fresh k)).refs,
+        ¬ ExposedIn sk.skipFill (sk.fresh k) (sk.skipFill.block i).creator) :
+    DoSValid sk.skipFill
+```
+
+The extension satisfies the exposure condition as soon as its own
+blocks do. That second half is a property of the fill alone, so a
+recipient establishes it by computing the fill and inspecting it,
+consulting no identity oracle and nothing beyond the message and its
+own DAG — enforceable in the sense §4.7 requires, and admissible as a
+clause of the mechanism rather than an assumption about the network. A
+fill whose enlarged cone exposes one of the donor's citations fails the
+check and is refused, rather than accepted and unsound.
+
+What remains open is narrower than the condition: whether a *simpler*
+sufficient check suffices — the natural candidate being that the donor
+line already covers the anchor's cone, which holds whenever the donor
+referenced `v1`'s last block and would reduce the check to
+reachability. The delivery-layer question is open on its own terms
 (§8.4's budgets need a delivery transformer for the fill, which §12
-does not have). These are the only open compositions, and both concern
-§8 alone.
+does not have). Both concern §8 alone.
 
 ---
 
@@ -5352,6 +5382,7 @@ result in full.
 | I10 | re-genesis at the cut | `addGenesis`, `populatedOn_addGenesis` *(Integration/ReGenesis)* |
 | I11 | local derivation converges; no agreement on the cut | `chop_addGenesis`, `regenesis_converges` *(Integration/ReGenesis)* |
 | I12 | the exposure condition survives re-genesis; the fill enlarges cones | `dosValid_addGenesis` *(Integration/ReGenesis)*; `history_B1_subset_fill` *(Integration/Exposure)* |
+| I13 | the fill disturbs exposure only at its own blocks | `exposedIn_skipFill_old`, `dosValid_skipFill` *(Integration/Exposure)* |
 
 ---
 
@@ -8622,7 +8653,7 @@ No round bound: this is what holds *before* GST too, and it is all L1 needs. Con
 
 ## Appendix C. The theorem reference
 
-The 322 theorems that either another module of the
+The 324 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -12421,6 +12452,33 @@ theorem history_B1_subset_fill (sk : SkipMsg U) (hne : sk.r0 < sk.r) :
 
 The anchor's whole cone lies in the filled block's cone. Needs the gap to be nonempty, which is when there is anything to fill.
 
+#### `exposedIn_skipFill_old`
+
+*theorem, `Integration.Exposure.lean`*
+
+```lean
+theorem exposedIn_skipFill_old {b : BlockId} (hb : b ∈ U.ids) {X : Validator} :
+    ExposedIn sk.skipFill b X ↔ ExposedIn U b X
+```
+
+Exposure is unchanged at an old block, in both directions.
+
+#### `dosValid_skipFill`
+
+*theorem, `Integration.Exposure.lean`*
+
+```lean
+theorem dosValid_skipFill (hdos : DoSValid U)
+    (hnew : ∀ k, sk.r0 < k → k ≤ sk.r →
+      ∀ i ∈ (sk.skipFill.block (sk.fresh k)).refs,
+        ¬ ExposedIn sk.skipFill (sk.fresh k) (sk.skipFill.block i).creator) :
+    DoSValid sk.skipFill
+```
+
+**I1.** The fill can break the exposure condition only at its own blocks. Given `DoSValid U`, the extension is `DoSValid` as soon as each filled block is sound — a condition on the fill alone, which a recipient checks by computing the fill and inspecting it.
+
+This is the form report §8 asks of its clauses: structural, author-blind, and checkable by the party it binds. The predicted failure (`history_B1_subset_fill`) is not thereby avoided — a fill whose enlarged cone exposes a donor citation simply fails the check, and is refused rather than accepted and unsound.
+
 ### Hybrid fault tolerance: Byzantine and crash faults apart
 
 #### `mem_honest`
@@ -13036,7 +13094,7 @@ theorem live_chopD {N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
 
 ## Appendix D. Index of internal lemmas
 
-The 326 lemmas used only within the file that proves
+The 327 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -13536,10 +13594,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `crash_recovery_hybrid` | I10. A crash-prone validator rejoins by Safe Skip, and every guarantee of report §12 holds for its fill in … |
 | `notMem_byzantine_of_mem_crash` | Membership in the crash class implies the hypothesis above: the crash-prone are honest. The bridge a … |
 
-### `Integration/Exposure.lean` (2)
+### `Integration/Exposure.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
+| `history_skipFill_old` | An old block's cone is unchanged by the fill: reachability from an old block stays among old blocks. |
 | `reaches_B1_of_fill` | The first filled block reaches the anchor: the self reference P3′ obliges is a reference like any other, … |
 | `reaches_of_fill_of_reaches_B1` | The cone grows. Everything the anchor reaches, the first filled block reaches — so `v1`'s entire pre-crash … |
 
