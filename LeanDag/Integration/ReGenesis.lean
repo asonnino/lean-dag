@@ -28,12 +28,12 @@ from the truncation — is what makes the new block unambiguous.
 truncation* and not in the universe it came from: at round `G > 0` of
 the original, a reference-free block violates P3. So it is acceptable
 only to validators that have themselves pruned to at least `G`. Report
-§9 keeps horizons per-validator and deliberately reaches no agreement
+report §9 keeps horizons per-validator and deliberately reaches no agreement
 on the cut, so this is a genuine interaction rather than a detail: a
 re-genesis convention needs the *lagging* validators — those retaining
 more history — to accept a block their own rules reject. That is the
 one thing the construction below cannot supply, and it is recorded in
-`integration.md` §5.7 rather than papered over.
+`integration.md` report §5.7 rather than papered over.
 -/
 
 namespace LeanDag
@@ -157,10 +157,10 @@ def addGenesis_of_severed {U : BlockUniverse Validator BlockId Payload}
 
 /-! ## I19 — the exposure condition survives re-genesis
 
-Report §2.2 credits P3′ to §8 because the self-parent chain makes a
+Report report §2.2 credits P3′ to report §8 because the self-parent chain makes a
 correct block's cone a complete record of its author's acceptances —
 and re-genesis deliberately severs that chain, so the completeness is
-locally false after it. The question is whether §8's *conditions* still
+locally false after it. The question is whether report §8's *conditions* still
 hold, and the answer at the universe level is yes, for a reason worth
 stating: **the re-genesis block has no references at all.**
 
@@ -169,7 +169,7 @@ for it), and it enters no other block's cone (nothing reaches it, since
 nothing references it). `DoSValid` is untouched in both directions.
 
 This is the sharpest contrast with the fill, whose predicted failure
-(§5.6, I1) comes from precisely the opposite property: `fillBlock`
+(report §5.6, I1) comes from precisely the opposite property: `fillBlock`
 inserts a self reference and so *enlarges* the cone. Adding a block
 with no references is safe for cone-based conditions; adding one with
 references is not.
@@ -221,7 +221,7 @@ theorem history_addGenesis {b : BlockId} (hb : b ∈ V.ids) :
 
 /-- **I19a.** Re-genesis preserves the exposure condition. A block with
 no references can neither cite an exposed author nor enlarge anyone
-else's cone, so §8's per-cone bound applies to the extended universe
+else's cone, so report §8's per-cone bound applies to the extended universe
 unchanged. -/
 theorem dosValid_addGenesis (hdos : DoSValid V) :
     DoSValid (addGenesis V v g p hg hsev) := by
@@ -247,7 +247,7 @@ end Exposure
 
 /-! ## Convergence: local derivation needs no agreement
 
-The condition of §5.7 — that a re-genesis block is valid only to
+The condition of report §5.7 — that a re-genesis block is valid only to
 validators who have pruned at least as far — dissolves if the block is
 **derived rather than transmitted**. Let each validator synthesise a
 genesis for any validator absent from its own retained layer, as a

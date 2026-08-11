@@ -78,7 +78,7 @@ structure ViewSync (U : BlockUniverse Validator BlockId Payload)
   prompt : ∀ v ∈ T, ∀ n < N,
     built v (n + 1) ≤ max (built v n + timeout n) (latest n + delay)
   /-- What `v` holds at *time* `t` — the temporal index a `View` cannot
-  supply (report §18.1). This is the object the original design notes wanted the
+  supply (report §19.1). This is the object the original design notes wanted the
   synchrony assumption stated over. -/
   holds : Validator → ℕ → Finset BlockId
   /-- A validator holds its own block from the moment it builds it. -/
@@ -111,7 +111,7 @@ author's hands when built (`holds_own`), reaches the builder within
 `built w n + delay ≤ built v (n+1)` is consumed), and is therefore
 referenced (`references`).
 
-The hypothesis discharged here is exactly the race of report §18.1: view
+The hypothesis discharged here is exactly the race of report §19.1: view
 convergence delivers the block relative to when it was *sent*, and only
 the waiting rule places that moment before the builder acts. -/
 theorem covers_of_converges :
