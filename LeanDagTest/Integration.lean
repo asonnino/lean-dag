@@ -8,6 +8,7 @@ import LeanDag.Integration.ReGenesis
 import LeanDag.Integration.Exposure
 import LeanDag.Integration.DeliveryFill
 import LeanDag.Integration.Margin
+import LeanDag.Integration.CommonTarget
 import LeanDagTest.SafeSkip
 
 /-!
@@ -73,6 +74,8 @@ example (hs : SynchronisedOn (Ucrash 2) (Finset.univ : Finset (Fin 4)) 0) :
 #print axioms LeanDag.Integration.dosValid_skipFill
 #print axioms LeanDag.Integration.fill_cone_subset
 #print axioms LeanDag.Integration.dosValid_skipFill_of_covered
+#print axioms LeanDag.Integration.exists_commonAt
+#print axioms LeanDag.Integration.fill_refs_available
 #print axioms LeanDag.Integration.card_severed_le
 #print axioms LeanDag.Integration.card_novelty_le_of_donor
 #print axioms LeanDag.Integration.skipFillD

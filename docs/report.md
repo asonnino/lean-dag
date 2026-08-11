@@ -4592,6 +4592,37 @@ whether the storage bound holds: it holds either way. The discipline is
 stated more tightly than the bound requires, and the fill is the case
 that shows the difference.
 
+**I19 — and choosing the target from the common core settles the rest.**
+What the storage argument does not address is *availability*: a
+validator citing blocks it does not hold cannot serve them. Selecting
+the fill's donor line from the **common core** removes that at its
+source. §5.2's T3c produces, at every round and under no assumption
+whatever, a correct-authored block that every block two rounds later
+reaches (`exists_commonAt`) — so cones nest and its references lie in
+the causal past of every validator holding a block two rounds up:
+
+```lean
+theorem fill_refs_available (sk : SkipMsg U)
+    (hcom : ∀ k, sk.r0 < k → k ≤ sk.r → CommonAt U (sk.line k) k)
+    {k : ℕ} (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r)
+    {c : BlockId} (hc : c ∈ U.ids) (hcr : (U.block c).round = k + 2)
+    {i : BlockId} (hi : i ∈ (U.block (sk.line k)).refs) :
+    i ∈ history U c
+```
+
+Three things follow. **Nothing needs transmitting**: the message names
+the target and every recipient reconstructs the filled blocks from its
+own DAG. **The recovering validator holds what it cites**, having the
+common core like everyone else once bootstrapped, so the tight
+author-attributed discipline is satisfiable rather than something to
+weaken. And the choice above stops mattering in practice, both clauses
+being met.
+
+This is a restriction on how a message picks its target, not on the
+executions the protocol admits: T3c is a counting theorem with no
+synchrony and no progress hypothesis, so a common target exists at
+every round of every universe.
+
 ---
 
 ## 16. Satisfiability
@@ -4858,6 +4889,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Integration/Exposure.lean` | the fill's cone growth; the enforceable exposure check |
 | `Integration/DeliveryFill.lean` | the fill's delivery layer, and the budgets over it |
 | `Integration/Margin.lean` | the budget without the author; severance and the fault budget |
+| `Integration/CommonTarget.lean` | fills against a common-core target |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
 | `Quality/Capstone.lean` | the windowed bounds and `chain_quality` (CQ7) |
@@ -5514,6 +5546,7 @@ result in full.
 | I16 | the fill's delivery layer; the budget transfers, the reference discipline does not | `skipFillD`, `uniformBudget_skipFillD`, `not_refsAccepted_skipFillD` *(Integration/DeliveryFill)* |
 | I17 | the budget needs a donor, not the author | `card_novelty_le_of_donor` *(Integration/Margin)* |
 | I18 | severance costs liveness margin: at most `f` at once | `notMem_of_no_blocks`, `card_severed_le` *(Integration/Margin)* |
+| I19 | a common-core target makes the fill transmission-free | `CommonAt`, `exists_commonAt`, `fill_refs_available` *(Integration/CommonTarget)* |
 
 ---
 
@@ -8842,6 +8875,19 @@ No round bound: this is what holds *before* GST too, and it is all L1 needs. Con
 
 ### Not otherwise grouped
 
+#### `CommonAt`
+
+*def, `Integration.CommonTarget.lean`*
+
+```lean
+def CommonAt (U : BlockUniverse Validator BlockId Payload)
+    (b : BlockId) (r : ℕ) : Prop :=
+  b ∈ U.ids ∧ (U.block b).round = r ∧
+    ∀ c ∈ U.ids, (U.block c).round = r + 2 → Reaches U c b
+```
+
+A block is **common at round `r`** when every block two rounds above it reaches it. Report §5.2's T3c supplies one at every round, of correct authorship, with no assumption whatever.
+
 #### `skipFillD`
 
 *def, `Integration.DeliveryFill.lean`*
@@ -8893,7 +8939,7 @@ def skipFillD (sk : SkipMsg U) (D : Delivery U)
 
 ## Appendix C. The theorem reference
 
-The 332 theorems that either another module of the
+The 334 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -13373,6 +13419,35 @@ theorem live_chopD {N : ℕ} (H : Live U D N) (hd : DeliversQuorum D)
 
 ### Not otherwise grouped
 
+#### `exists_commonAt`
+
+*theorem, `Integration.CommonTarget.lean`*
+
+```lean
+theorem exists_commonAt {r : ℕ} {c₀ : BlockId} (hc₀ : c₀ ∈ U.ids)
+    (hc₀r : (U.block c₀).round = r + 2) :
+    ∃ b, CommonAt U b r ∧ (U.block b).creator ∈ (Correct : Finset Validator)
+```
+
+**Common blocks exist at every round**, and are correct-authored — T3c restated in the vocabulary above. The hypothesis is only that some block exists two rounds up, which is what having a round to fill means.
+
+#### `fill_refs_available`
+
+*theorem, `Integration.CommonTarget.lean`*
+
+```lean
+theorem fill_refs_available (sk : SkipMsg U)
+    (hcom : ∀ k, sk.r0 < k → k ≤ sk.r → CommonAt U (sk.line k) k)
+    {k : ℕ} (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r)
+    {c : BlockId} (hc : c ∈ U.ids) (hcr : (U.block c).round = k + 2)
+    {i : BlockId} (hi : i ∈ (U.block (sk.line k)).refs) :
+    i ∈ history U c
+```
+
+**I19 — a fill against a common donor line transmits nothing.** Every reference the fill copies at a gap round lies in the causal past of every validator holding a block two rounds above that round.
+
+So the recipients need no blocks they lack: naming the target suffices, and each reconstructs the filled blocks from its own DAG. The `prev` reference is the recovering validator's own chain, supplied by the fill itself, so the copied references are the whole of what would otherwise have to be sent.
+
 #### `uniformBudget_skipFillD`
 
 *theorem, `Integration.DeliveryFill.lean`*
@@ -13451,7 +13526,7 @@ Report §8.4's `RefsAccepted` asks for the author, and the pool argument uses on
 
 ## Appendix D. Index of internal lemmas
 
-The 328 lemmas used only within the file that proves
+The 331 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -14058,6 +14133,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `card_authorsAt_of_live` | L1 in the form L0 consumes: under `Live U D N` every round up to the horizon carries a quorum of authors, … |
 | `no_stall_and_card_viewUpto_le` | The capstone, unconditional. `EventuallyDelivers` is gone: growth plus quorum delivery give liveness (L1 … |
 | `no_stall_and_card_viewUpto_le'` | The composed statement — DoS resistance in one theorem. One set of hypotheses — growth (`Live`), quorum … |
+
+### `Integration/CommonTarget.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `fill_refs_eq` | The filled block's own references, split: the copied ones are universally held (`fill_refs_available`), … |
+| `mem_history_of_commonAt` | Everyone holds a common block. Any validator with a block two rounds above has it in its own causal past. |
+| `refs_mem_history_of_commonAt` | And everything it cites. Cones nest, so a common block's references — the very blocks a fill would copy — … |
 
 ### `Integration/DeliveryFill.lean` (1)
 

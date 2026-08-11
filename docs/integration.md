@@ -822,7 +822,8 @@ be stated, never for elegance.*
 
 Four, none of which blocks the arc's claims.
 
-**A modelling choice, now known not to matter for the bound.**
+**A modelling choice, now known to matter for neither the bound nor,
+against a common-core target, for availability (§3.2's I19).**
 Whether a `Delivery` records what arrived over the network or what a
 recovering validator accepts at recovery time decides which of report
 §8.4's two clauses the fill satisfies (§3.2). The conjecture that this
@@ -835,9 +836,20 @@ the right generality; composing them at a `w` other than the author is
 what had not been done.
 
 So the discipline is stated more tightly than the storage bound
-requires, and the fill is the case that exhibits the difference. What
-remains is a genuine specification question — which clause one wishes
-to state — and not a gap in the account.
+requires, and the fill is the case that exhibits the difference.
+
+**And the residual question dissolves once the target is drawn from the
+common core.** What the storage argument leaves untouched is
+availability: a validator citing blocks it does not hold cannot serve
+them. Report §5.2's T3c produces at every round — under no assumption
+whatever — a correct-authored block that every block two rounds later
+reaches, so its references lie in the causal past of every validator
+holding a block two rounds up (`fill_refs_available`). A fill built
+against such a line therefore cites only material its recipients
+already have: nothing needs transmitting, the recovering validator
+holds what it cites once bootstrapped, and both candidate clauses are
+satisfied. What was a specification choice becomes a choice the
+mechanism can make for itself, by picking its target well.
 
 **One deliberate omission.** The arc proves nothing about *executions*:
 the order in which mechanisms fire, or whether a validator's local
