@@ -114,7 +114,7 @@ theorem View.mem_of_reaches {U : BlockUniverse Validator BlockId Payload}
 
 /-- **T6a, in the form the commit rules consume.** Asking "is there a `P`-block
 in `c`'s causal history?" gives the same answer whether or not the search is
-confined to the view. Restricting to `V` costs nothing, because the answer
+confined to the view. Restricting to `V` changes nothing, because the answer
 could never have lain outside it.
 
 This is what makes a view-relative certificate check well defined: two

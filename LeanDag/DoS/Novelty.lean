@@ -115,7 +115,7 @@ no schedule, no network, nothing but S10. -/
 
 /-- Stepwise novelty: every correct block adds at most `κ'` blocks over the
 history of its self-parent. For a correct author the self-parent is unique
-(`no_equivocation`), so the `∀` costs nothing. -/
+(`no_equivocation`), so the `∀` is free of content. -/
 def StepNovelty (U : BlockUniverse Validator BlockId Payload) (κ' : ℕ) : Prop :=
   ∀ b ∈ U.ids, (U.block b).creator ∈ (Correct : Finset Validator) →
     ∀ p ∈ (U.block b).refs, (U.block p).creator = (U.block b).creator →
@@ -224,7 +224,7 @@ Round 0 needs no clause in either form: genesis histories are singletons. -/
 
 /-- The **analysis-side budget**: only the Byzantine clause. This is the
 weakest thing the theorems need — Byzantine-authored acceptances were
-affordable — and the correct clause is *derived* from it
+within the budget — and the correct clause is *derived* from it
 (`card_novelty_le_of_byzBudget`): a schedule keeping Byzantine acceptances
 under `κ` never carries a correct block over `f·κ + 1`. The creator guard
 is bookkeeping, never something a validator evaluates; the enforced form

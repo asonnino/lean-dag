@@ -14,3 +14,4 @@ __pycache__/
 
 # Extracted declaration index (rebuild with scripts/extract-decls.py)
 docs/decls.json
+.DS_Store

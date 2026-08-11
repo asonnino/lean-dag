@@ -2875,7 +2875,7 @@ of cuts. The budget must be measured on the truncated universe — otherwise
 pruning would make every arriving block's novelty explode with the
 discarded prefix — and windowed novelty is *antitone under cut-advance*
 (`novelty_chop_anti`): as the window slides, pruning only decreases novelty,
-so an affordable block never becomes unaffordable. The budget conditions
+so a block within the budget never falls outside it. The budget conditions
 themselves descend to the window (`byzBudget_chopD`, `refsAccepted_chopD`).
 
 The principal storage result is stated per time, because a validator's life
@@ -3082,7 +3082,8 @@ supporting two distinct twins is an equivocator, because one block cannot
 cite an author twice (`distinct_creators`) and two supporting blocks are an
 equivocation.
 
-**O2 (a skipped leader fails the test everywhere; spends the fifth `f`).**
+**O2 (a skipped leader fails the test everywhere; the first use of the
+fifth `f`).**
 `card_supporters_le_of_directSkip`: a directly skipped leader's supporters —
 anywhere in the universe, hence in any cone — number at most `2f`; and
 `2f < n − 3f` exactly when `n ≥ 5f+1`
@@ -3109,8 +3110,8 @@ decays. This is the two-round replacement for M2/M4: there is no
 certificate object, so its rôle is played by the support pattern that every
 later cone is forced to contain.
 
-**O4′ (a direct commit excludes every rival; spends the fifth `f`
-again).** `eq_of_directCommit_of_thickLink`: a directly committed block is
+**O4′ (a direct commit excludes every rival; the second use of the fifth
+`f`).** `eq_of_directCommit_of_thickLink`: a directly committed block is
 the *only* same-author block that can pass the indirect test, at any
 anchor — `n − f` supporters of `L₁` and `n − 3f` in-cone supporters of a
 twin `L₂` would overlap in `n − 5f ≥ 1` correct authors, each supporting
@@ -4168,7 +4169,7 @@ least sufficient committee.
 
 ### 14.7 The witnesses
 
-`Uhyb4` (H9, §16) is the arc's headline on data: `fb = 0, fc = 1,
+`Uhyb4` (H9, §16) is the arc's principal witness: `fb = 0, fc = 1,
 n = 4` — the classical `3f + 1` committee with two-round finality when
 the single tolerated fault is a crash. Validator `3` halts after its
 genesis block; the survivors run three rounds at quorum `3`, slots
@@ -4263,9 +4264,8 @@ the same clause — `hgap`, the crash itself.
 **I2** needs only the horizon offset `R ≤ G + R'`, with no base-layer
 exception. Coverage constrains a block at chopped round `n + 1`, which
 lies above the cut by construction, so `chop` retains its references
-and the original clause applies unchanged. A condition that quantifies
-*upward* transports through truncation more cheaply than one pinned at
-a fixed round.
+and the original clause applies unchanged. A condition that quantifies *upward* transports through truncation with
+fewer side conditions than one pinned at a fixed round.
 
 At layer S, **I3** carries fairness and shape through `Slots.chop`
 (`fairScheduleOn_chop`, `fairRunOn_chop`, `spansEligible_chop`), which
@@ -4302,8 +4302,8 @@ Nothing in §12 weakens, since its claim is that the fill restores
 is now exact. Coverage returns strictly above the fill
 (`synchronisedOn_skipFill_above`), and the strictness is not slack: at
 the target round the lower block may still be the last filled one, and
-the refutation reaches there too. The hypotheses are exhibited
-satisfiable on `Ucrash` (§16), so the refutation is seen to bite.
+the refutation reaches there too. The hypotheses are exhibited satisfiable on `Ucrash` (§16), so the
+refutation is not vacuous.
 
 ### 15.4 Where a horizon may be put
 
@@ -4393,8 +4393,8 @@ horizon, because the fill has already happened when the cut is made;
 truncating then filling needs the anchor retained, which is I6's
 condition. The schedule layer composes with no compatibility lemma at
 all, since `Slots.chop` and `slotsOf` read a `Slots` instance and
-nothing else — the clearest vindication of the layering of §15.1, one
-of whose three layers does not interact with the others.
+nothing else, which is what the layering of §15.1 was drawn for: one of
+its three layers does not interact with the others at all.
 
 **I9 — the composition that did not fit.** §14 splits `Correct` into
 honest and available, and a crash-prone validator — precisely the one
@@ -4446,7 +4446,8 @@ def addGenesis (V : BlockUniverse Validator BlockId Payload) (v : Validator)
   …
 ```
 
-The non-equivocation obligation costs nothing: adding a genesis block
+The non-equivocation obligation needs no further hypothesis: adding a
+genesis block
 would normally risk a twin at round `0`, and the absence that stranded
 the validator is what makes the new block unambiguous.
 `populatedOn_addGenesis` puts it back in the genesis layer, which is
@@ -4518,7 +4519,7 @@ saves storage and lengthens the window in which a returning validator,
 however honest and however well caught up on the ledger, counts against
 the fault budget.
 
-### 15.7 P3′ pays in §8 and charges in §12
+### 15.7 The self-parent clause, on both sides
 
 The two recovery mechanisms part company at the exposure condition, and
 the reason is structural.
@@ -4533,8 +4534,8 @@ Re-genesis adds a block with **no references**. It cannot cite an
 exposed author — the clause is vacuous for it — and it enters no other
 block's cone, since nothing reaches what nothing references. §8's
 per-cone bound therefore applies to a re-genesised universe unchanged,
-and the concern that re-genesis severs the chain §8 relies on does not
-bite at the level of the condition: what §8 forbids is *citing* an
+and the concern that re-genesis severs the chain §8 relies on does not reach
+the condition: what §8 forbids is *citing* an
 exposed author.
 
 The fill does the reverse. P3′ obliges `fillBlock` to insert a self
@@ -4644,7 +4645,7 @@ already establishes for `fillBlock`. What that model does not concede
 is the budget — the novelty of the newly accepted blocks becomes a
 property of the fill, to be checked as in §15.7 rather than inherited.
 **I17 — and the choice does not affect the budget.** §8.4's
-`RefsAccepted` charges a block's cone to *its own author's* view, and
+`RefsAccepted` attributes a block's cone to *its own author's* view, and
 the pool argument turns out not to need that. Its component lemmas are
 already stated at the right generality: novelty is bounded by the gap
 toward whichever validator's acceptances contain the references
@@ -4873,8 +4874,7 @@ The extraction bounds the route's footprint exactly. Nothing outside
 the route itself — and G5's transfer lemmas reach N1, and the DoS
 capstone consumes production as a hypothesis it may, but need not,
 discharge here. The witnesses of §16 exercise the route at every
-horizon (`ugrow_deliversQuorum`, `no_stall` on `Ugrow`), so retaining it
-costs nothing but this section.
+horizon (`ugrow_deliversQuorum`, `no_stall` on `Ugrow`), so retaining it requires nothing beyond this section.
 
 ---
 
@@ -7222,7 +7222,7 @@ def StepNovelty (U : BlockUniverse Validator BlockId Payload) (κ' : ℕ) : Prop
       (novelty U (history U p) b).card ≤ κ'
 ```
 
-Stepwise novelty: every correct block adds at most `κ'` blocks over the history of its self-parent. For a correct author the self-parent is unique (`no_equivocation`), so the `∀` costs nothing.
+Stepwise novelty: every correct block adds at most `κ'` blocks over the history of its self-parent. For a correct author the self-parent is unique (`no_equivocation`), so the `∀` is free of content.
 
 #### `viewUpto`
 
@@ -7247,7 +7247,7 @@ def ByzBudget (D : Delivery U) (κ : ℕ) : Prop :=
     (novelty U (viewUpto D v n) b).card ≤ κ
 ```
 
-The **analysis-side budget**: only the Byzantine clause. This is the weakest thing the theorems need — Byzantine-authored acceptances were affordable — and the correct clause is *derived* from it (`card_novelty_le_of_byzBudget`): a schedule keeping Byzantine acceptances under `κ` never carries a correct block over `f·κ + 1`. The creator guard is bookkeeping, never something a validator evaluates; the enforced form is `UniformBudget` below.
+The **analysis-side budget**: only the Byzantine clause. This is the weakest thing the theorems need — Byzantine-authored acceptances were within the budget — and the correct clause is *derived* from it (`card_novelty_le_of_byzBudget`): a schedule keeping Byzantine acceptances under `κ` never carries a correct block over `f·κ + 1`. The creator guard is bookkeeping, never something a validator evaluates; the enforced form is `UniformBudget` below.
 
 #### `UniformBudget`
 
@@ -9382,7 +9382,7 @@ theorem View.exists_reaches_iff {U : BlockUniverse Validator BlockId Payload}
     (∃ b, b ∈ V.ids ∧ P b ∧ Reaches U c b) ↔ (∃ b, P b ∧ Reaches U c b)
 ```
 
-**T6a, in the form the commit rules consume.** Asking "is there a `P`-block in `c`'s causal history?" gives the same answer whether or not the search is confined to the view. Restricting to `V` costs nothing, because the answer could never have lain outside it.
+**T6a, in the form the commit rules consume.** Asking "is there a `P`-block in `c`'s causal history?" gives the same answer whether or not the search is confined to the view. Restricting to `V` changes nothing, because the answer could never have lain outside it.
 
 This is what makes a view-relative certificate check well defined: two validators with different views but the same anchor cannot disagree.
 
@@ -9854,7 +9854,7 @@ theorem certifiedIn_iff_of_view {V : View Validator BlockId Payload U} {A L : Bl
 
 The indirect test is **view-independent**: a validator holding the anchor computes the same verdict from its own local DAG as from the whole universe.
 
-T6a in action — the certificate could never have lain outside the view, so confining the search to it costs nothing. This is what stops two validators with different views but the same anchor from disagreeing.
+T6a in action — the certificate could never have lain outside the view, so confining the search to it changes nothing. This is what stops two validators with different views but the same anchor from disagreeing.
 
 #### `eligible_iff`
 
@@ -11721,7 +11721,7 @@ theorem novelty_chop_anti {G' : ℕ} (hGG : G ≤ G') (hb : b ∈ (chop U G').id
     novelty (chop U G') V b ⊆ novelty (chop U G) V b
 ```
 
-…so it only shrinks novelty: **pruning cheapens blocks** — an affordable block never becomes unaffordable as the window slides, and no deferral decision ever flips the wrong way.
+…so it only shrinks novelty: **pruning cheapens blocks** — an block within the budget never falls outside it as the window slides, and no deferral decision ever flips the wrong way.
 
 #### `populated_chop`
 
@@ -13812,7 +13812,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `card_le_one_or_not_mem_refs` | D11. Under the DoS condition, for every block and every author exactly one of two things holds: the author … |
 | `creators_refs_disjoint_exposedTo` | A block never names an author its own history has caught — `DoSValid`, read as a disjointness. |
 | `eq_of_mem_refs_of_creator_eq` | D7, the no-equivocation half. A block's references carry distinct authors, so the layer immediately below … |
-| `exposedIn_iff_of_view` | D13. Restricting the search for an equivocation to a view that holds `b` costs nothing: the witnesses … |
+| `exposedIn_iff_of_view` | D13. Restricting the search for an equivocation to a view that holds `b` changes nothing: the witnesses … |
 | `exposedIn_iff_reaches` | — |
 | `exposedTo_subset_byzantine` | — |
 | `history_subset_view` | Causal history never escapes a view — T6a in `Finset` form. |

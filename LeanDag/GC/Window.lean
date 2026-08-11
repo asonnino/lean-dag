@@ -144,7 +144,7 @@ theorem history_chop_anti {G' : ℕ} (hGG : G ≤ G') (hb : b ∈ (chop U G').id
   exact ⟨hx.1, by omega⟩
 
 /-- …so it only shrinks novelty: **pruning cheapens blocks** — an
-affordable block never becomes unaffordable as the window slides, and no
+block within the budget never falls outside it as the window slides, and no
 deferral decision ever flips the wrong way. -/
 theorem novelty_chop_anti {G' : ℕ} (hGG : G ≤ G') (hb : b ∈ (chop U G').ids)
     (V : Finset BlockId) :

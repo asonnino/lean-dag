@@ -46,6 +46,12 @@ always less precise than the literal statement.
 | speed is bought where … | the schedule accelerates only where … |
 | what the rule buys anything for | the whole of what the rule contributes |
 | every deferred block gets cheaper | every deferred block's novelty only decreases |
+| P3′ pays in §8 and charges in §12 | the self-parent clause, on both sides |
+| spends the fifth `f` | the first use of the fifth `f` |
+| transports more cheaply | transports with fewer side conditions |
+| the obligation costs nothing | the obligation needs no further hypothesis |
+| retaining it costs nothing but | retaining it requires nothing beyond |
+| an affordable block | a block within the budget |
 
 **Avoid figurative verbs and nouns.** A metaphor that has to be decoded
 is slower to read than the thing it replaces.
@@ -60,6 +66,11 @@ is slower to read than the thing it replaces.
 | its engine deserves stating | the mechanism behind it should be stated |
 | exclusion does not depend on luck | does not depend on favourable circumstances |
 | it just stores more junk | it merely retains more |
+| the refutation is seen to bite | the refutation is not vacuous |
+| the concern does not bite | the concern does not reach the condition |
+| the clearest vindication of | which is what the layering was drawn for |
+| the arc's headline on data | the arc's principal witness |
+| `history_B1_subset_fill` is its engine | … is the mechanism behind it |
 
 **Avoid the laboratory notebook.** The report is not a record of how the
 development evolved. Delete, rather than rephrase:
@@ -75,6 +86,16 @@ State the final position. If an alternative was considered and rejected,
 say so in one clause and give the reason — *"a block-count variant was
 considered and rejected: neither route yields an informative ratio"* —
 not the history of considering it.
+
+A note on the two hardest cases. **`budget` and `cost` are defined
+terms** of §8 and §9 — "the novelty budget", "storage cost" — and are
+not metaphor when used of the quantities those sections define.
+Extending them figuratively is the error: a *block* is not affordable,
+a *clause* does not pay for itself, and an `f` is not spent. And a
+**pleasing formulation is the most dangerous kind**: the banned row
+above beginning "P3′ pays" was written because it reads well, survived
+several revisions on that ground, and says less than the plain
+sentence that replaced it.
 
 **Permitted, and encouraged.** Established technical metaphor with a
 fixed meaning in the field: quorum *intersection*, the correct

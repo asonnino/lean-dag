@@ -90,7 +90,7 @@ positive rule, so `Live` supplies one.
 
 **`Live` is an explicit argument, not a class.** `Faults` is a class because
 it is *universal* — every theorem in the development carries it, so hiding it
-costs nothing. `Live` is not: L0, L2 and L3 do without it and L1 does not.
+changes nothing. `Live` is not: L0, L2 and L3 do without it and L1 does not.
 When an assumption separates the unconditional results from the conditional
 ones, hiding it is exactly backwards. For the same reason it is a structure
 of its own rather than extra fields on `Faults`: folding it in would give

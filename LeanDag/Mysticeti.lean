@@ -280,7 +280,7 @@ theorem indirect_agrees_with_direct {L : BlockId} {r : ℕ}
 computes the same verdict from its own local DAG as from the whole universe.
 
 T6a in action — the certificate could never have lain outside the view, so
-confining the search to it costs nothing. This is what stops two validators
+confining the search to it changes nothing. This is what stops two validators
 with different views but the same anchor from disagreeing. -/
 theorem certifiedIn_iff_of_view {V : View Validator BlockId Payload U} {A L : BlockId} {r : ℕ}
     (hA : A ∈ V.ids) :

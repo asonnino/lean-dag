@@ -313,7 +313,7 @@ theorem history_subset_view {V : View Validator BlockId Payload U} {b : BlockId}
   fun _ hi => View.mem_of_reaches hb ((mem_history_iff (V.subset_ids hb)).mp hi)
 
 /-- **D13.** Restricting the search for an equivocation to a view that holds
-`b` costs nothing: the witnesses could never have lain outside it.
+`b` changes nothing: the witnesses could never have lain outside it.
 
 Two correct validators with different views therefore never disagree about
 whether a block is DoS-valid, which is what makes the condition a validity

@@ -198,7 +198,13 @@ def extracted_names(root):
 BANNED = re.compile(
     r"\b(load[- ]bearing|earns its keep|for free|buys|bought|at the price"
     r"|turned out|an earlier (?:draft|version)|worth recording|first draft"
-    r"|the old (?:schedule|spacing|proof)|gets cheaper|is spent)\b", re.I)
+    r"|the old (?:schedule|spacing|proof)|gets cheaper|is spent"
+    # commercial metaphor extended to clauses, blocks and thresholds
+    r"|pays? for itself|spends? the|charges? (?:a|the|it)|costs? nothing"
+    r"|more cheaply|unaffordable|affordable"
+    # figurative verbs and nouns
+    r"|seen to bite|does not bite|vindication of|headline on data"
+    r"|is its engine)\b", re.I)
 
 # A docstring section reference is qualified when a document name or the
 # word "report" sits within forty characters before or after it.

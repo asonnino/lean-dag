@@ -8,7 +8,7 @@ import LeanDag.GC.Horizon
 fell below a horizon can produce nothing in the truncation: P3′ demands
 a self-parent, and it has no block to chain from. The natural repair is
 to let it start a fresh chain *at the cut*, with a block carrying no
-references at all — and the repair costs nothing to justify, because
+references at all — and the repair needs no new justification, because
 the truncation's base layer is already exactly that.
 
 `chop`'s own validity proof discharges the retained layer with "no
