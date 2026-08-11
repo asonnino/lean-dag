@@ -155,6 +155,96 @@ def addGenesis_of_severed {U : BlockUniverse Validator BlockId Payload}
     BlockUniverse Validator BlockId Payload :=
   addGenesis (chop U G) sk.v1 g p hg (severed_of_pruned_anchor sk hG1 hG2)
 
+/-! ## I19 — the exposure condition survives re-genesis
+
+Report §2.2 credits P3′ to §8 because the self-parent chain makes a
+correct block's cone a complete record of its author's acceptances —
+and re-genesis deliberately severs that chain, so the completeness is
+locally false after it. The question is whether §8's *conditions* still
+hold, and the answer at the universe level is yes, for a reason worth
+stating: **the re-genesis block has no references at all.**
+
+It therefore cannot reference an exposed author (the clause is vacuous
+for it), and it enters no other block's cone (nothing reaches it, since
+nothing references it). `DoSValid` is untouched in both directions.
+
+This is the sharpest contrast with the fill, whose predicted failure
+(§5.6, I1) comes from precisely the opposite property: `fillBlock`
+inserts a self reference and so *enlarges* the cone. Adding a block
+with no references is safe for cone-based conditions; adding one with
+references is not.
+-/
+
+section Exposure
+
+variable {V : BlockUniverse Validator BlockId Payload} {v : Validator}
+variable {g : BlockId} {p : Payload}
+variable {hg : g ∉ V.ids} {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v}
+
+/-- Reachability is unchanged among old blocks: the new block
+references nothing, and nothing references it. -/
+theorem reaches_addGenesis {b i : BlockId} (hb : b ∈ V.ids) :
+    Reaches (addGenesis V v g p hg hsev) b i ↔ Reaches V b i := by
+  constructor
+  · intro h
+    induction h with
+    | refl => exact Relation.ReflTransGen.refl
+    | @tail x y _ hstep ih =>
+        -- every block reached from an old one is old, so the step is `V`'s
+        have hxo : x ∈ V.ids := by
+          clear ih hstep
+          induction ‹Relation.ReflTransGen _ b x› with
+          | refl => exact hb
+          | @tail u w _ hs' ih' =>
+              unfold RefStep at hs'
+              rw [addGenesis_block_old ih'] at hs'
+              exact V.complete _ ih' _ hs'
+        unfold RefStep at hstep
+        rw [addGenesis_block_old hxo] at hstep
+        exact ih.tail hstep
+  · intro h
+    induction h with
+    | refl => exact Relation.ReflTransGen.refl
+    | @tail x y hr hstep ih =>
+        have hxo : x ∈ V.ids := mem_ids_of_reaches hb hr
+        refine ih.tail ?_
+        unfold RefStep
+        rw [addGenesis_block_old hxo]
+        exact hstep
+
+/-- Cones are unchanged, so every cone-based condition reads the same. -/
+theorem history_addGenesis {b : BlockId} (hb : b ∈ V.ids) :
+    history (addGenesis V v g p hg hsev) b = history V b := by
+  ext i
+  rw [mem_history_iff (Finset.mem_insert_of_mem hb), mem_history_iff hb]
+  exact reaches_addGenesis hb
+
+/-- **I19a.** Re-genesis preserves the exposure condition. A block with
+no references can neither cite an exposed author nor enlarge anyone
+else's cone, so §8's per-cone bound applies to the extended universe
+unchanged. -/
+theorem dosValid_addGenesis (hdos : DoSValid V) :
+    DoSValid (addGenesis V v g p hg hsev) := by
+  intro b hb i hi hexp
+  rcases Finset.mem_insert.mp hb with rfl | ho
+  · -- the new block references nothing
+    rw [addGenesis_block_new] at hi
+    exact absurd hi (Finset.notMem_empty i)
+  · -- an old block: its cone, and every block in it, reads as before
+    rw [addGenesis_block_old ho] at hi
+    obtain ⟨x, hx, y, hy, hxy⟩ := hexp
+    rw [history_addGenesis ho] at hx hy
+    refine hdos b ho i hi ⟨x, hx, y, hy, ?_⟩
+    obtain ⟨hne, hxc, hyc, hr⟩ := hxy
+    have hxo : x ∈ V.ids := mem_ids_of_reaches ho ((mem_history_iff ho).mp hx)
+    have hyo : y ∈ V.ids := mem_ids_of_reaches ho ((mem_history_iff ho).mp hy)
+    rw [addGenesis_block_old hxo] at hxc hr
+    rw [addGenesis_block_old hyo] at hyc hr
+    rw [addGenesis_block_old (V.complete b ho i hi)] at *
+    exact ⟨hne, hxc, hyc, hr⟩
+
+end Exposure
+
 /-! ## Convergence: local derivation needs no agreement
 
 The condition of §5.7 — that a re-genesis block is valid only to

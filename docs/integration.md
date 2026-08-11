@@ -391,6 +391,36 @@ stranded the validator — its total absence from the truncation,
 layer, which is P8's hypothesis at round `0`, and an ordinary Safe Skip
 anchored on the new block fills the rounds above.
 
+**I19a — re-genesis preserves the exposure condition, and I1's
+mechanism is its exact opposite.** The two recovery mechanisms come
+apart here, for one structural reason.
+
+`dosValid_addGenesis`: re-genesis adds a block with **no references**.
+It therefore cannot cite an exposed author — the clause is vacuous for
+it — and it enters no other block's cone, since nothing reaches what
+nothing references. `DoSValid` is untouched in both directions, so §8's
+per-cone bound applies to a re-genesised universe unchanged. Report
+§2.2's worry that re-genesis severs the self-parent chain turns out not
+to bite at the condition level: what §8 forbids is *citing* an exposed
+author, and a block citing nothing is safe by inspection.
+
+The fill does the opposite, and `history_B1_subset_fill` is the engine
+of §5.6's prediction: P3′ obliges `fillBlock` to insert a self
+reference, so the first filled block **reaches the anchor**, and with
+it the whole of `v1`'s pre-crash history. Its citations are inherited
+unchanged from the donor, but its cone is strictly larger — and
+`DoSValid` forbids citing an author exposed *in one's own cone*. A
+citation innocuous in the donor's smaller cone can therefore be a
+violation in the filled block's larger one.
+
+So P3′ **pays for itself in §8 and charges for itself in §12**: the
+self-parent chain is what makes a cone a complete record of its
+author's acceptances, and the self reference the fill must add is
+exactly what enlarges the cone past what the donor vouched for. The
+remaining work on I1 is to turn the mechanism into either a refutation
+on data or the condition that rescues it (§4.5); the mechanism itself
+no longer depends on which.
+
 **I18 — and the condition dissolves if the block is derived, not sent.**
 §5.7's objection was that a re-genesis block is valid only to
 validators who have pruned at least as far, which report §9's
@@ -684,8 +714,8 @@ behind I6a and moot if I1 fails. The pair is the arc's most likely
 | `Integration/Lifecycle.lean` | I10: the crash-prone fill; I11 recorded as a non-task; the lifecycle | **done** |
 | `Integration/Retention.lean` | I7a, I7b: anchor retention; the lag bounds the outage; the severed chain | **done** |
 | `Integration/ReGenesis.lean` | I17, I18: restarting a severed chain at the cut; local derivation converges | **done** |
-| `Integration/Exposure.lean` | I1: `DoSValid` under the fill, conditionally (§5.6) | **remains**, see §4.5 |
-| `Integration/Budget.lean` | I19: storage accounting under re-genesis | **remains**, new |
+| `Integration/Exposure.lean` | I1: the fill enlarges cones — the mechanism of the predicted failure | **partial** |
+| `Integration/ReGenesis.lean` (§I19) | I19a: `DoSValid` survives re-genesis | **done** |
 | `Integration/DeliveryFill.lean` | I6a–d: Safe Skip's delivery transformer, then its budget column | gated on I1 |
 | `LeanDagTest/Integration.lean` | the refutation witnessed as biting; the stack and lifecycle exhibits | ongoing |
 | — | I8: the decision-relation interface | **moved out of this arc**, see §4.2 |
