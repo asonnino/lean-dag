@@ -149,6 +149,139 @@ theorem dosValid_skipFill (hdos : DoSValid U)
   · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
     exact hnew k hk1 hk2 i hi
 
+/-! ## The check reduces to reachability
+
+The obligation of `dosValid_skipFill` asks a recipient to compute
+exposure over the fill's cone. It collapses to a **reachability test**
+under a condition that holds in the ordinary case: *the donor's block
+at each gap round already reaches the anchor*. That is what a donor
+line does whenever it referenced `v1`'s last block, which it would
+have, `v1` having been producing at `r0`.
+
+Under it the fill's cone adds nothing but `v1`'s own new blocks
+(`fill_cone_subset`), and those cannot form an equivocating pair: they
+sit at distinct rounds, `hgap` excludes an old `v1` block at any of
+them, and `hB1uniq` pins the anchor's round. What is left is the
+donor's own cone, for which `DoSValid U` already vouches.
+
+The second hypothesis is forced rather than chosen. `SkipMsg` records
+only that the anchor is `v1`'s unique block *at its own round*
+(report §12.1), which leaves open that `v1` equivocated before
+crashing — and a fill's self reference would then cite an exposed
+author. Non-equivocation of `v1` throughout is what the base model's
+correctness and report §14's honesty each supply. -/
+
+section Reachability
+
+variable (sk : SkipMsg U)
+
+theorem fill_cone_subset (sk : SkipMsg U)
+    (hcov : ∀ k, sk.r0 < k → k ≤ sk.r → sk.B1 ∈ history U (sk.line k)) :
+    ∀ k, sk.r0 < k → k ≤ sk.r → ∀ i, Reaches sk.skipFill (sk.fresh k) i →
+      i ∈ sk.freshIds ∨ i ∈ history U (sk.line k) := by
+  intro k
+  induction k using Nat.strong_induction_on with
+  | _ k ih =>
+    intro hk1 hk2 i hreach
+    have hR0 : sk.r0 = (U.block sk.B1).round := rfl
+    have hlm := sk.hline_mem k (by omega) hk2
+    rcases hreach.cases_head with rfl | ⟨j, hstep, hji⟩
+    · exact Or.inl (sk.mem_freshIds.mpr ⟨k, hk1, hk2, rfl⟩)
+    · -- unfold the first step: the self reference, or a donor reference
+      have hstep' : j ∈ insert (sk.prev k) (U.block (sk.line k)).refs := by
+        have : j ∈ (sk.skipFill.block (sk.fresh k)).refs := hstep
+        rwa [sk.skipFill_block_fresh] at this
+      rcases Finset.mem_insert.mp hstep' with hj | hj
+      · -- the self reference
+        subst hj
+        by_cases hb : k = sk.r0 + 1
+        · -- boundary: the anchor, whose cone the donor covers
+          rw [SkipMsg.prev, if_pos hb] at hji
+          obtain ⟨hio, hiU⟩ := (sk.reaches_fill_old sk.hB1).mp hji
+          refine Or.inr (history_subset_of_reaches hlm
+            ((mem_history_iff hlm).mp (hcov k hk1 hk2)) ?_)
+          exact (mem_history_iff sk.hB1).mpr hiU
+        · -- inside the gap: the previous filled block, by induction
+          rw [SkipMsg.prev, if_neg hb] at hji
+          rcases ih (k - 1) (by omega) (by omega) (by omega) i hji with h | h
+          · exact Or.inl h
+          · refine Or.inr (history_subset_of_reaches hlm ?_ h)
+            exact Reaches.single (sk.hline_chain k (by omega) hk2)
+      · -- a donor reference: old, and inside the donor's cone
+        have hjo : j ∈ U.ids := U.complete _ hlm j hj
+        obtain ⟨hio, hiU⟩ := (sk.reaches_fill_old hjo).mp hji
+        refine Or.inr (history_subset_of_reaches hlm ?_ ((mem_history_iff hjo).mpr hiU))
+        exact Reaches.single hj
+
+
+/-- **I14.** The enforceable check reduces to reachability. If each
+donor block reaches the anchor and `v1` never equivocates, the fill
+preserves the exposure condition outright — no exposure computation
+over the extension is needed.
+
+This is the deployable form: a recipient verifies that the donor line
+covers the anchor, which is one reachability query per gap round
+against its own DAG. -/
+theorem dosValid_skipFill_of_covered (hdos : DoSValid U)
+    (hcov : ∀ k, sk.r0 < k → k ≤ sk.r → sk.B1 ∈ history U (sk.line k))
+    (hv1ne : ∀ p ∈ U.ids, ∀ q ∈ U.ids, (U.block p).creator = sk.v1 →
+      (U.block q).creator = sk.v1 → (U.block p).round = (U.block q).round → p = q) :
+    DoSValid sk.skipFill := by
+  refine dosValid_skipFill sk hdos (fun k hk1 hk2 i hi hexp => ?_)
+  have hR0 : sk.r0 = (U.block sk.B1).round := rfl
+  have hlm := sk.hline_mem k (by omega) hk2
+  have hfk : sk.fresh k ∈ sk.skipFill.ids :=
+    Finset.mem_union_right _ (sk.mem_freshIds.mpr ⟨k, hk1, hk2, rfl⟩)
+  obtain ⟨x, hx, y, hy, hne, hxc, hyc, hr⟩ := hexp
+  rw [mem_history_iff hfk] at hx hy
+  -- each twin is one of `v1`'s new blocks, or lies in the donor's cone
+  have hxs := fill_cone_subset sk hcov k hk1 hk2 x hx
+  have hys := fill_cone_subset sk hcov k hk1 hk2 y hy
+  rcases hxs with hxf | hxo <;> rcases hys with hyf | hyo
+  · -- both fresh: equal rounds are equal gap indices, so the ids coincide
+    obtain ⟨m, hm1, hm2, rfl⟩ := sk.mem_freshIds.mp hxf
+    obtain ⟨m', hm1', hm2', rfl⟩ := sk.mem_freshIds.mp hyf
+    rw [sk.skipFill_block_fresh, sk.skipFill_block_fresh] at hr
+    simp only [SkipMsg.fillBlock] at hr
+    exact hne (hr ▸ rfl)
+  · -- one fresh, one old: an old `v1` block at a gap round is the crash
+    obtain ⟨m, hm1, hm2, rfl⟩ := sk.mem_freshIds.mp hxf
+    have hyU : y ∈ U.ids := mem_ids_of_reaches hlm ((mem_history_iff hlm).mp hyo)
+    rw [sk.skipFill_block_fresh] at hxc hr
+    rw [sk.skipFill_block_old hyU] at hyc hr
+    simp only [SkipMsg.fillBlock] at hxc hr
+    exact sk.hgap y hyU (hyc.trans hxc.symm) (by omega) (by omega)
+  · obtain ⟨m, hm1, hm2, rfl⟩ := sk.mem_freshIds.mp hyf
+    have hxU : x ∈ U.ids := mem_ids_of_reaches hlm ((mem_history_iff hlm).mp hxo)
+    rw [sk.skipFill_block_fresh] at hyc hr
+    rw [sk.skipFill_block_old hxU] at hxc hr
+    simp only [SkipMsg.fillBlock] at hyc hr
+    exact sk.hgap x hxU (hxc.trans hyc.symm) (by omega) (by omega)
+  · -- both old: the donor's own cone, for which `DoSValid U` vouches
+    have hxU : x ∈ U.ids := mem_ids_of_reaches hlm ((mem_history_iff hlm).mp hxo)
+    have hyU : y ∈ U.ids := mem_ids_of_reaches hlm ((mem_history_iff hlm).mp hyo)
+    rw [sk.skipFill_block_old hxU] at hxc hr
+    rw [sk.skipFill_block_old hyU] at hyc hr
+    -- the cited author is the anchor's, or one of the donor's
+    have hi' : i ∈ insert (sk.prev k) (U.block (sk.line k)).refs := by
+      have : i ∈ (sk.skipFill.block (sk.fresh k)).refs := hi
+      rwa [sk.skipFill_block_fresh] at this
+    rcases Finset.mem_insert.mp hi' with hip | hid
+    · -- the self reference: `v1`, who does not equivocate
+      subst hip
+      have hpv : (sk.skipFill.block (sk.prev k)).creator = sk.v1 := by
+        by_cases hb : k = sk.r0 + 1
+        · rw [SkipMsg.prev, if_pos hb, sk.skipFill_block_old sk.hB1]; exact sk.hB1c
+        · rw [SkipMsg.prev, if_neg hb, sk.skipFill_block_fresh]; rfl
+      rw [hpv] at hxc hyc
+      exact hne (hv1ne x hxU y hyU hxc hyc hr)
+    · -- a donor citation: `DoSValid U` at the donor block
+      have hio : i ∈ U.ids := U.complete _ hlm i hid
+      rw [sk.skipFill_block_old hio] at *
+      exact hdos (sk.line k) hlm i hid ⟨x, hxo, y, hyo, hne, hxc, hyc, hr⟩
+
+end Reachability
+
 end Locality
 
 end Integration

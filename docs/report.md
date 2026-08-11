@@ -4460,13 +4460,38 @@ clause of the mechanism rather than an assumption about the network. A
 fill whose enlarged cone exposes one of the donor's citations fails the
 check and is refused, rather than accepted and unsound.
 
-What remains open is narrower than the condition: whether a *simpler*
-sufficient check suffices — the natural candidate being that the donor
-line already covers the anchor's cone, which holds whenever the donor
-referenced `v1`'s last block and would reduce the check to
-reachability. The delivery-layer question is open on its own terms
-(§8.4's budgets need a delivery transformer for the fill, which §12
-does not have). Both concern §8 alone.
+The check itself reduces to **reachability** in the ordinary case.
+
+**I14.**
+```lean
+theorem dosValid_skipFill_of_covered (hdos : DoSValid U)
+    (hcov : ∀ k, sk.r0 < k → k ≤ sk.r → sk.B1 ∈ history U (sk.line k))
+    (hv1ne : ∀ p ∈ U.ids, ∀ q ∈ U.ids, (U.block p).creator = sk.v1 →
+      (U.block q).creator = sk.v1 → (U.block p).round = (U.block q).round → p = q) :
+    DoSValid sk.skipFill
+```
+
+If each donor block already reaches the anchor, the fill's cone adds
+nothing but `v1`'s own new blocks (`fill_cone_subset`) — and those
+cannot form an equivocating pair, since they sit at distinct rounds,
+`hgap` excludes an old `v1` block at any of them, and `hB1uniq` pins
+the anchor's round. What is left is the donor's own cone, for which
+`DoSValid U` already vouches. So a recipient verifies one reachability
+query per gap round against its own DAG, and needs no exposure
+computation over the extension at all.
+
+The covering hypothesis is what a donor line satisfies whenever it
+referenced `v1`'s last block, which is the ordinary case: `v1` was
+producing at `r0`. The second hypothesis is forced rather than chosen —
+`SkipMsg` records only that the anchor is `v1`'s unique block *at its
+own round*, leaving open that `v1` equivocated before crashing, and the
+fill's self reference would then cite an exposed author. It is what the
+base model's correctness and §14's honesty each supply.
+
+The delivery-layer question remains open on its own terms: §8.4's
+budgets need a delivery transformer for the fill, which §12 does not
+have. That is the arc's one open composition, and it concerns §8
+alone.
 
 ---
 
@@ -5383,6 +5408,7 @@ result in full.
 | I11 | local derivation converges; no agreement on the cut | `chop_addGenesis`, `regenesis_converges` *(Integration/ReGenesis)* |
 | I12 | the exposure condition survives re-genesis; the fill enlarges cones | `dosValid_addGenesis` *(Integration/ReGenesis)*; `history_B1_subset_fill` *(Integration/Exposure)* |
 | I13 | the fill disturbs exposure only at its own blocks | `exposedIn_skipFill_old`, `dosValid_skipFill` *(Integration/Exposure)* |
+| I14 | a covered donor line reduces the check to reachability | `fill_cone_subset`, `dosValid_skipFill_of_covered` *(Integration/Exposure)* |
 
 ---
 
@@ -8653,7 +8679,7 @@ No round bound: this is what holds *before* GST too, and it is all L1 needs. Con
 
 ## Appendix C. The theorem reference
 
-The 324 theorems that either another module of the
+The 326 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -12478,6 +12504,33 @@ theorem dosValid_skipFill (hdos : DoSValid U)
 **I1.** The fill can break the exposure condition only at its own blocks. Given `DoSValid U`, the extension is `DoSValid` as soon as each filled block is sound — a condition on the fill alone, which a recipient checks by computing the fill and inspecting it.
 
 This is the form report §8 asks of its clauses: structural, author-blind, and checkable by the party it binds. The predicted failure (`history_B1_subset_fill`) is not thereby avoided — a fill whose enlarged cone exposes a donor citation simply fails the check, and is refused rather than accepted and unsound.
+
+#### `fill_cone_subset`
+
+*theorem, `Integration.Exposure.lean`*
+
+```lean
+theorem fill_cone_subset (sk : SkipMsg U)
+    (hcov : ∀ k, sk.r0 < k → k ≤ sk.r → sk.B1 ∈ history U (sk.line k)) :
+    ∀ k, sk.r0 < k → k ≤ sk.r → ∀ i, Reaches sk.skipFill (sk.fresh k) i →
+      i ∈ sk.freshIds ∨ i ∈ history U (sk.line k)
+```
+
+#### `dosValid_skipFill_of_covered`
+
+*theorem, `Integration.Exposure.lean`*
+
+```lean
+theorem dosValid_skipFill_of_covered (hdos : DoSValid U)
+    (hcov : ∀ k, sk.r0 < k → k ≤ sk.r → sk.B1 ∈ history U (sk.line k))
+    (hv1ne : ∀ p ∈ U.ids, ∀ q ∈ U.ids, (U.block p).creator = sk.v1 →
+      (U.block q).creator = sk.v1 → (U.block p).round = (U.block q).round → p = q) :
+    DoSValid sk.skipFill
+```
+
+**I14.** The enforceable check reduces to reachability. If each donor block reaches the anchor and `v1` never equivocates, the fill preserves the exposure condition outright — no exposure computation over the extension is needed.
+
+This is the deployable form: a recipient verifies that the donor line covers the anchor, which is one reachability query per gap round against its own DAG.
 
 ### Hybrid fault tolerance: Byzantine and crash faults apart
 

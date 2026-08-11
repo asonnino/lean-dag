@@ -435,12 +435,30 @@ about the network — a fill whose enlarged cone exposes one of the
 donor's citations fails the check and is refused, rather than accepted
 and unsound.
 
-What is still open is narrower than the condition: whether a *simpler*
-check suffices. The natural candidate is that the donor line already
-covers the anchor's cone, which holds whenever the donor referenced
-`v1`'s last block — the ordinary case, since `v1` was producing at
-`r0` — and would reduce the obligation to a reachability test rather
-than an exposure computation.
+**And the check reduces to reachability** (`I14`,
+`dosValid_skipFill_of_covered`). If each donor block already reaches
+the anchor — which a donor line satisfies whenever it referenced `v1`'s
+last block, the ordinary case since `v1` was producing at `r0` — then
+the fill's cone adds nothing but `v1`'s own new blocks
+(`fill_cone_subset`), and those cannot form an equivocating pair: they
+sit at distinct rounds, `hgap` excludes an old `v1` block at any of
+them, and `hB1uniq` pins the anchor's round. What is left is the
+donor's own cone, for which `DoSValid U` already vouches. A recipient
+therefore runs one reachability query per gap round and needs no
+exposure computation over the extension.
+
+One hypothesis is forced rather than chosen, and is worth stating for
+what it reveals: `SkipMsg` records only that the anchor is `v1`'s
+unique block *at its own round*, which leaves open that `v1`
+equivocated before crashing — and the fill's self reference would then
+cite an exposed author. Non-equivocation of `v1` throughout is what the
+base model's correctness and report §14's honesty each supply, and it
+is the second place (after I9) where weakening `hv1` to `hB1uniq`
+required the missing strength to be named explicitly.
+
+The delivery-layer question is open on its own terms: report §8.4's
+budgets need a delivery transformer for the fill, which report §12 does
+not have. That is the arc's one open composition.
 
 **I18 — and the condition dissolves if the block is derived, not sent.**
 §5.7's objection was that a re-genesis block is valid only to

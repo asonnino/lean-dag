@@ -69,6 +69,8 @@ example (hs : SynchronisedOn (Ucrash 2) (Finset.univ : Finset (Fin 4)) 0) :
 #print axioms LeanDag.Integration.history_B1_subset_fill
 #print axioms LeanDag.Integration.exposedIn_skipFill_old
 #print axioms LeanDag.Integration.dosValid_skipFill
+#print axioms LeanDag.Integration.fill_cone_subset
+#print axioms LeanDag.Integration.dosValid_skipFill_of_covered
 #print axioms LeanDag.Integration.regenesis_converges
 #print axioms LeanDag.Integration.populatedOn_addGenesis
 #print axioms LeanDag.Integration.no_blocks_of_no_genesis
