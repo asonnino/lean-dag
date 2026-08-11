@@ -282,7 +282,40 @@ is the whole distinction — eligibility reads only `slotRound`, which
 reassignment fixes, so *shape* transfers verbatim while *fairness*
 cannot transfer at all.
 
-### 3.2 What the proved cells establish
+### 3.2 The results
+
+Nineteen results, all on Lean's three standard axioms. The index first,
+the accounts after.
+
+| | Result | Where |
+|:---|:---|:---|
+| I1 | honest non-equivocation survives truncation and the fill | `Preservation` |
+| I2 | coverage survives truncation, at a horizon offset | `Preservation` |
+| I3 | fairness and shape survive truncation | `ScheduleShape` |
+| I4 | coverage is **refuted** under the fill; returns strictly above it | `Coverage` |
+| I5 | horizon-stability, and epoch alignment | `Joiner` |
+| I6 | anchor retention; the lag bounds the outage | `Retention` |
+| I7 | the composition capstone | `Stack` |
+| I8 | a severed chain cannot restart | `Retention` |
+| I9 | the crash-prone lifecycle, and the hypothesis it forced | `Lifecycle` |
+| I10 | re-genesis at the cut, free of P3′ | `ReGenesis` |
+| I11 | local derivation converges; no agreement on the cut | `ReGenesis` |
+| I12 | bootstrap, re-genesis and Safe Skip compose | `ReGenesis` |
+| I13 | the exposure condition survives re-genesis; the fill enlarges cones | `ReGenesis`, `Exposure` |
+| I14 | the fill disturbs exposure only at its own blocks | `Exposure` |
+| I15 | a covered donor line reduces the check to reachability | `Exposure` |
+| I16 | the delivery layer; the budget transfers, the discipline does not | `DeliveryFill` |
+| I17 | the budget needs a donor, not the author | `Margin` |
+| I18 | severance costs liveness margin: at most `f` at once | `Margin` |
+| I19 | a common-core target makes the fill transmission-free | `CommonTarget` |
+
+Two entries are **non-tasks** and are findings in their own right: the
+adaptive layer needs no lemma relating it to the hybrid fault model,
+because the crash class is invisible in verdicts; and `slotsOf` cannot
+preserve fairness, because reassignment is what an adaptive policy is
+for — `PlacesRuns` is the replacement, and seeing it arise that way
+explains its shape.
+
 
 Six cells are closed, all on the standard three axioms
 (`LeanDag/Integration/`, witnessed in `LeanDagTest/Integration.lean`).
@@ -612,7 +645,17 @@ case: even a rule that ignores verdicts entirely must be *stated
 relative to the reader's own slot numbering* to survive truncation.
 Horizon-stability is not only about how far back a policy reads.
 
-### 3.3 Transport heuristics
+### 3.3 The constructions, witnessed
+
+The house rule of report §16 applies with particular force to the
+structures introduced here: `recoveryMsg` and `skipFillD` carry many
+hypotheses, and clauses that cannot be met jointly make every theorem
+above them vacuous. `LeanDagTest/Integration.lean` exhibits the
+scenario they all describe — validator `3` of `Ucrash`, crashed after
+its genesis block, severed by a horizon at round `1` — and builds the
+re-genesis universe and the catch-up message over it by `decide`.
+
+### 3.4 Transport heuristics
 
 Three patterns emerged that should be applied to the remaining cells
 before attempting them, because each predicts the shape of the answer:
@@ -645,7 +688,7 @@ below the anchor — and `DoSValid` forbids referencing an author exposed
 therefore likely false without a hypothesis confining equivocations in
 `v1`'s pre-crash history; see §5.6.
 
-### 3.4 Transformers × transformers
+### 3.5 Transformers × transformers
 
 Rather than prove that every *order* of applying transformers is safe,
 prove a **commutation or normalization** result once. §9 already has
@@ -668,7 +711,7 @@ constraint that neither arc alone can see, and pinning it as a theorem
 (with the negative case witnessed on data) is exactly the kind of
 result integration should produce.
 
-### 3.5 Layer variants: parametrize once, instantiate thrice
+### 3.6 Layer variants: parametrize once, instantiate thrice
 
 The schedule and fault layers should not be handled by preservation
 lemmas but by **abstraction over the interface actually consumed**.
@@ -712,7 +755,7 @@ accordingly: I9 settled adaptive × GC without it, so no integration
 result now depends on it. The analysis above is kept because it is the
 specification that arc will need.
 
-### 3.6 What remains genuinely pairwise
+### 3.7 What remains genuinely pairwise
 
 Some combinations are not preservation facts and must be proved
 directly. These are the ones with real content, and there are fewer
@@ -855,16 +898,6 @@ mechanism can make for itself, by picking its target well.
 the order in which mechanisms fire, or whether a validator's local
 sequence of bootstrap, re-genesis and fill is realisable in time. That
 is outside the model by report §1.4, as it is for every other arc.
-
-### 3.7 The constructions, witnessed
-
-The house rule of report §16 applies with particular force to the
-structures introduced here: `recoveryMsg` and `skipFillD` carry many
-hypotheses, and clauses that cannot be met jointly make every theorem
-above them vacuous. `LeanDagTest/Integration.lean` exhibits the
-scenario they all describe — validator `3` of `Ucrash`, crashed after
-its genesis block, severed by a horizon at round `1` — and builds the
-re-genesis universe and the catch-up message over it by `decide`.
 
 ## 5. Risks and predictions
 
