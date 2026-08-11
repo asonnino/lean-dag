@@ -77,11 +77,15 @@ necessary: one validator short, agreement fails on data at every
 threshold. Finally we ask whether the seven compose, and answer it by
 naming the invariants each consumes and proving the two universe
 transformers preserve them: a validator running four mechanisms at once
-still cannot disagree about a verdict. Three conditions on where a
-garbage-collection horizon may be placed, and one refutation with an
-exact boundary, are visible only from the composition.
+still cannot disagree about a verdict. What is visible only from the
+composition is a set of deployment constraints no single account can
+state — a garbage-collection lag bounds the outage a one-message
+recovery can span, a horizon must fall on an epoch boundary of an
+adaptive schedule, and a validator pruned past its own history is a
+reader until it re-genesises, counting against the fault budget
+meanwhile.
 
-The development comprises roughly 24,000 lines of Lean 4 over Mathlib. Every
+The development comprises roughly 25,000 lines of Lean 4 over Mathlib. Every
 principal result depends on exactly Lean's three standard axioms; every
 definition is exercised on concrete models by `decide` before anything is
 proved from it. All displayed Lean in this report is drawn from the source
@@ -120,7 +124,9 @@ hybrid fault tolerance, separating Byzantine from crash faults, with
 the tight two-round committee bound machine-checked in both
 directions; and an integration account in which the arcs are shown to
 compose, together with the deployment conditions that only their
-composition reveals.
+composition reveals — including a recovery path for a validator whose
+whole history has been pruned, and a choice of message target that
+makes recovery transmit nothing at all.
 
 ### 1.1 DAG-based consensus
 
@@ -269,12 +275,19 @@ proof effort with no corresponding proof content.
    universe transformers rather than settling a quadratic matrix — with
    a capstone in which a validator recovered by Safe Skip, then
    truncated, read in the hybrid model under an adaptive schedule still
-   cannot disagree about a verdict (`hybrid_agree_stack` (I7)). Three
-   results are visible only here: coverage is refuted under the fill
-   with an exact boundary (I4), three conditions constrain where a
-   horizon may be placed (I5, I6), and a re-genesis provision restores
-   a validator whose history was pruned, needing no exemption from P3′
-   and no agreement on the cut (I10, I11).
+   cannot disagree about a verdict (`hybrid_agree_stack` (I7)). Four
+   kinds of result are visible only here. Coverage is refuted under the
+   fill, with an exact boundary and for the same reason the fill is
+   safe (I4). Three conditions constrain where a horizon may fall
+   (I5, I6). A **re-genesis** provision restores a validator whose
+   history was pruned entirely — needing no exemption from P3′, since
+   truncation makes the retained layer genesis, and no agreement on the
+   cut, since each validator derives its own (I10, I11) — after which
+   bootstrap, re-genesis and Safe Skip compose into a full recovery
+   (I12). And the storage account is sharpened: the reference
+   discipline of §8.4 is stated more tightly than its own bound
+   requires (I17), while a fill drawn against a common-core target
+   carries no material its recipients lack (I19).
 
 ### 1.4 Scope and non-goals
 
@@ -1137,7 +1150,10 @@ def RefsAccepted (D : Delivery U) : Prop :=
 ```
 
 **The reference discipline — reference only what you accepted.** The
-converse of P7, and equally a clause an implementation executes.
+converse of P7, and equally a clause an implementation executes. It is
+stated more tightly than the storage bound needs: §15.7 shows the pool
+argument requires only that a block's references lie inside *some*
+correct validator's acceptances, its author's or not.
 
 The distinction matters for deployment: `DoSValid`, `UniformBudget` and
 `RefsAccepted` are conduct a validator can follow unilaterally, so the
@@ -3610,6 +3626,49 @@ cardinality are computed by `decide`, the gap is populated, the filled
 leader candidate is directly skipped, and `decided_fill` is applied to
 the full view with `hq` discharged by counting the three live authors.
 
+### 12.5 How the mechanism should be used
+
+Three constraints on Safe Skip are not visible from this section, since
+each arises only against another arc. §15 proves them; they are
+collected here because they are what an implementer of §12 needs.
+
+**Recover within the garbage-collection lag.** The fill needs its
+anchor, and a horizon that has passed the crash round has pruned it. So
+a fill is available exactly for outages no longer than the lag (§15.4);
+beyond it the validator's chain is severed, and it recovers by the
+longer route of §12.6.
+
+**Draw the donor line from the common core.** §5.2's T3c supplies, at
+every round and under no assumption, a correct-authored block that
+every block two rounds later reaches. A donor line chosen from such
+blocks cites only material every recipient already holds (§15.7), so
+the message needs to carry nothing but the target's name — which is the
+property the mechanism was designed for — and the recovering validator
+holds what it cites, rather than pointing at history it cannot serve.
+
+**Check the fill before accepting it.** The self reference P3′ obliges
+enlarges a filled block's cone past the donor's, so the exposure
+condition of §8.2 must be re-established rather than inherited. The
+check is local to the fill and needs no identity oracle (§15.7), and
+against a covered donor line it reduces to reachability.
+
+### 12.6 When the fill is not available
+
+A validator down longer than the lag is in a worse position than unable
+to fill: P3′ requires every non-genesis block to cite a block by its own
+creator, so a validator with nothing in the retained layer can produce
+nothing at all (§15.6). Bootstrapping by §9.5's attested base makes it a
+correct *reader* — its verdicts agree with everyone's — and not a
+producer.
+
+Recovery is then three steps rather than one: bootstrap to read,
+**re-genesis** to write, and a fill to catch up, the last anchored on
+the re-genesis block and spanning the retained window (§15.6). The
+middle step needs no exemption from P3′, the retained layer being
+genesis after truncation. Until it completes, the validator counts
+against the fault budget however well caught up it is, which prices the
+recovery window (§15.6).
+
 ---
 
 ## 13. Adaptive leaders: the schedule as a fixpoint
@@ -3835,7 +3894,17 @@ from, so `adaptiveRun_agree` needs no synchrony assumption at all, and
 liveness is the independent question of whether the fixpoint the bound
 describes exists.
 
-### 13.5 The two-round mirror
+### 13.5 Schedules and pruning
+
+A policy reading the committed prefix meets garbage collection, which
+prunes it. §15.4 states the two conditions that keep the two
+compatible: the policy must be **horizon-stable**, computing on a
+truncated prefix what it would compute on the full one, and a
+garbage-collection base slot must be a whole number of epochs.
+Otherwise two validators can agree on who leads every slot and still
+disagree about which verdicts the policy was entitled to read.
+
+### 13.6 The two-round mirror
 
 The Odontoceti development (AL7) exhibits that the layer is
 rule-agnostic. `AdaptivePolicy` and `PlacesRuns` are consumed as found
@@ -3859,7 +3928,7 @@ theorem adaptiveRun_agree {P : AdaptivePolicy Validator BlockId Payload}
 `Faults5` supplies the `Faults` instance the shared policy layer
 expects, so nothing is restated on the way.
 
-### 13.6 The witness, and what remains
+### 13.7 The witness, and what remains
 
 `demotePolicy` (AL8, §16) is genuinely adaptive at epoch length one —
 a slot whose verdict two below was a skip is handed to a fixed
@@ -4800,8 +4869,8 @@ costs nothing but this section.
 
 ## 18. Mechanisation
 
-The development comprises approximately 24,000 lines of Lean 4 (v4.32.2)
-against Mathlib, of which some 16,900 constitute the library and 7,300 the
+The development comprises approximately 25,000 lines of Lean 4 (v4.32.2)
+against Mathlib, of which some 17,600 constitute the library and 7,400 the
 models of §16 and the witness files of the arcs. A full build reports no
 errors.
 

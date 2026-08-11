@@ -92,6 +92,18 @@ Everything is stated for `n ≥ 3f+1` validators with quorums of size
   also proved **necessary**: one validator short, one view derives
   conflicting verdicts at every threshold
   (`hybrid_bound_necessary`).
+- **Integration** (`LeanDag/Integration/`): the arcs are proved to
+  **compose** — not by settling a quadratic matrix, but by naming the
+  invariants each consumes and proving the two universe transformers
+  preserve them, after which a validator running four mechanisms at
+  once still cannot disagree about a verdict (`hybrid_agree_stack`).
+  The deployment constraints only the composition reveals: garbage
+  collection at lag `Λ` supports one-message recovery from outages of
+  up to `Λ` rounds and no more; a horizon must fall on an epoch
+  boundary of an adaptive schedule; and a validator pruned past its own
+  history can read but not produce until it **re-genesises** — a
+  provision that needs no exemption from the self-parent rule and no
+  agreement on where anyone's cut falls.
 
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on
@@ -117,7 +129,7 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
   protocol; `Reactive/` — the reactive schedule; `Drift/` — catch-up
   and the start spread; `SafeSkip/` — crash recovery in one message;
   `Adaptive/` — adaptive leader schedules; `Hybrid/` — Byzantine and
-  crash faults apart).
+  crash faults apart; `Integration/` — how the arcs compose).
 - `LeanDag.lean` — root import file.
 - `LeanDagTest/` — `decide` witnesses and concrete models, mirroring the
   same layout.
@@ -148,6 +160,7 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 | [`docs/odontoceti.md`](docs/odontoceti.md) | the two-round protocol: the generalized thresholds, and the findings |
 | [`docs/adaptive-leaders.md`](docs/adaptive-leaders.md) | adaptive leader schedules: the design record and theorem plan |
 | [`docs/hybrid-plan.md`](docs/hybrid-plan.md) | hybrid fault tolerance: the design record and theorem plan |
+| [`docs/integration.md`](docs/integration.md) | composing the arcs: the invariant interface, and what composition revealed |
 | [`docs/related.md`](docs/related.md) | a survey of consensus on uncertified DAGs |
 | [`docs/style.md`](docs/style.md) | writing conventions for the documents and the source |
 
