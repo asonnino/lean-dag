@@ -31,3 +31,4 @@ import LeanDagTest.Hybrid
 import LeanDagTest.Integration
 import LeanDagTest.HybridTight
 import LeanDagTest.SafeSkip
+import LeanDagTest.Routes
