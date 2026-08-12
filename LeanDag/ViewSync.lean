@@ -33,6 +33,34 @@ convergence cannot do *alone* is win that race: `holds_mono` and
 moment before `built v (n+1)`. So the two premises are co-equal partners,
 not a network assumption with an afterthought.
 
+**"After GST" is not the hypothesis.** It is necessary and it is not
+sufficient, and `bound_is_necessary` (V10, `LeanDagTest.Unbounded`) is the
+witness: holdings converge from time `0` over all of `Correct` — nobody
+starved, every protocol clause met — and coverage fails at *every* round
+below the horizon. Eventual delivery is not the ingredient; the **bound**
+is, for the reason above, since an unbounded lag cannot be compared with
+a timeout and so can never be cleared by one. The liveness results here
+therefore carry three hypotheses past GST rather than one:
+
+```
+vs.DriftFrom R D                            -- clocks within `D`
+vs.gst ≤ R                                  -- past GST
+∀ n, R ≤ n → D + vs.delay ≤ vs.timeout n    -- the timeout has caught up
+```
+
+read together as *after GST, once the timeout exceeds drift plus the
+delivery bound*. Only the middle one is the network's, and
+`driftFrom_of_prompt` discharges the first from `prompt`; so what is
+assumed of the world is GST, and what is asked of the implementation is a
+sufficient backoff.
+
+What a bound does *not* buy is the reliable set. A correct validator whose
+blocks reach nobody falsifies `converges` over `Correct` outright rather
+than being tolerated by it — `reliable_set_is_forced` (V12) is that model,
+and its starvation is permanent and its `gst` is `0`, so it is a statement
+about which `T` the structure may be instantiated at and not about the
+post-GST regime. See §6.9.
+
 `ViewSync.toTiming` is the reduction, after which every result of
 `Timing.lean` applies unchanged: drift is still derived from `prompt`,
 the backoff still terminates, and the quantitative bounds of §6.10 are
@@ -360,9 +388,9 @@ that the chain
 is literally the proof rather than a gloss on it. Nothing new is proved;
 the point is which route is taken.
 
-Stated at `T := Correct` because that is where the two halves meet:
-`CommitsAt` asks for production over `Correct`, and a `ViewSync` supplies
-it over its own reliable set. -/
+Stated at an arbitrary reliable set `T`, which is where the two halves
+now meet: a `ViewSync U T N` supplies production and coverage over its
+own `T`, and `CommitsAt` asks for exactly that. -/
 
 /-- **The liveness spine.** View convergence gives production
 (`populatedOn`) and coverage (`synchronisedOn_of_converges`); L6
@@ -370,8 +398,35 @@ it over its own reliable set. -/
 slot past any bound.
 
 The quantifier order is L6's: the slot is fixed by the schedule and the
-bound alone, before any execution is named. -/
-theorem commits_recur_via_interface
+bound alone, before any execution is named.
+
+`T` need not be all of `Correct`. What is required of the world is that
+*some* `n - f` correct validators converge in view — the rest may be
+starved, partitioned or silent for the whole run. That is weaker than
+partial synchrony in its usual form, which stabilises every
+correct-to-correct link; `reliable_set_is_forced` (V12) is a DAG where the
+difference is real. It is a genuine weakening only below full fault load:
+at `|byzantine| = f`, `reliable_eq_correct` forces `T = Correct`. -/
+theorem commits_recur_via_interface (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (fair : FairScheduleOn T) (R k : ℕ) :
+    ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N D : ℕ)
+        (vs : ViewSync U T N),
+        vs.DriftFrom R D → vs.gst ≤ R →
+        (∀ n, R ≤ n → D + vs.delay ≤ vs.timeout n) →
+        S.slotRound k' + 2 ≤ N →
+        ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
+  obtain ⟨k', hk, hR, hcommit⟩ :=
+    commits_recur_on (BlockId := BlockId) (Payload := Payload) hT hcard fair R k
+  refine ⟨k', hk, hR, fun U N D vs hD hgst hbackoff hN => ?_⟩
+  exact hcommit U N
+    (fun r hr => vs.populatedOn hr)
+    (vs.synchronisedOn_of_converges hT hD hgst hbackoff)
+    hN
+
+/-- **The spine at `T := Correct`**, the shape the earlier statement had. -/
+theorem commits_recur_via_interface_correct
     (hcard : (Fintype.card Validator - F.f) ≤ (Correct : Finset Validator).card)
     (fair : FairScheduleOn (Correct : Finset Validator)) (R k : ℕ) :
     ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
@@ -380,15 +435,8 @@ theorem commits_recur_via_interface
         vs.DriftFrom R D → vs.gst ≤ R →
         (∀ n, R ≤ n → D + vs.delay ≤ vs.timeout n) →
         S.slotRound k' + 2 ≤ N →
-        ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
-  obtain ⟨k', hk, hR, hcommit⟩ :=
-    commits_recur_on (BlockId := BlockId) (Payload := Payload)
-      (Finset.Subset.refl _) hcard fair R k
-  refine ⟨k', hk, hR, fun U N D vs hD hgst hbackoff hN => ?_⟩
-  exact hcommit U N
-    (fun r hr => vs.populatedOn hr)
-    (vs.synchronisedOn_of_converges (Finset.Subset.refl _) hD hgst hbackoff)
-    hN
+        ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) :=
+  commits_recur_via_interface (Finset.Subset.refl _) hcard fair R k
 
 end Liveness
 

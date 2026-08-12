@@ -88,6 +88,25 @@ theorem card_correct : Fintype.card Validator - F.f ≤ (Correct : Finset Valida
   have := F.card_byzantine
   omega
 
+/-- **At full fault load the reliable set is forced.** The liveness results
+run at any `T ⊆ Correct` with `n - f ≤ T.card`, which is strictly weaker than
+`T = Correct` — correct validators outside `T` may be starved for the whole
+run. This says how much weaker: none at all, when the adversary spends its
+whole budget. `|byzantine| = f` makes `Correct` exactly `n - f` large, and a
+subset of a set of the same cardinality is that set.
+
+So the generality has bite only below full fault load, and `T := Correct`
+(`commits_recur_via_interface_correct`) is not a restriction but the only
+instantiation always available. -/
+theorem reliable_eq_correct {T : Finset Validator} (hfull : F.byzantine.card = F.f)
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : Fintype.card Validator - F.f ≤ T.card) :
+    T = (Correct : Finset Validator) :=
+  Finset.eq_of_subset_of_card_le hT (by
+    have := card_correct_add_byzantine (Validator := Validator)
+    have := F.card_validators
+    omega)
+
 /-- At least `2f+1` validators are correct — the `n = 3f+1` reading of
 `card_correct`, kept for arguments that count in `f` alone. -/
 theorem two_f_add_one_le_card_correct :

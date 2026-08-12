@@ -1659,7 +1659,7 @@ had nothing to select.
 def FairScheduleOn (T : Finset Validator) : Prop := ∀ k, ∃ k', k ≤ k' ∧ S.leader k' ∈ T
 
 def CommitsAt (BlockId) (Payload) (T : Finset Validator) (R k : ℕ) : Prop :=
-  ∀ U N, (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
+  ∀ U N, (∀ r ≤ N, PopulatedOn U T r) → SynchronisedOn U T R →
     S.slotRound k + 2 ≤ N →
     ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
 
@@ -2148,11 +2148,30 @@ to L6 in its general form (`commits_recur_on`), and so makes
 
     view convergence  ⟹  production and coverage  ⟹  commits recur
 
-the proof rather than a gloss on it. Nothing new is established — the
-two differ in route, not in strength — and it is stated at
-`T := Correct` because that is where the halves meet: `CommitsAt` asks
-for production over `Correct`, and a `ViewSync` supplies it over its own
-reliable set.
+the proof rather than a gloss on it. The two differ in route, not in
+strength.
+
+It is stated at an arbitrary reliable set `T`, which is where the halves
+meet: a `ViewSync U T N` supplies production and coverage over its own
+`T`, and `CommitsAt` asks for exactly that. This was not so. `CommitsAt`
+asked for production over all of `Correct` while asking coverage over
+`T` — strictly more than anything downstream consumed, since
+`decided_of_leader_of_populated` discarded the excess through
+`PopulatedOn.mono` at once. Relativising both to `T` needs no new
+argument and says what the earlier form could not: what is required of the world
+is that **some `n − f` correct validators converge in view**, not all of
+them. Correct validators outside `T` may be starved, partitioned or
+silent for the whole run.
+
+That is weaker than partial synchrony in its usual form, which
+stabilises every correct-to-correct link, and the gap is real rather
+than notional — `reliable_set_is_forced` (V12) exhibits a DAG in which
+coverage over a proper subset of `Correct` is *derived* and coverage
+over `Correct` is *false*. The generality is a genuine weakening only
+below full fault load: `reliable_eq_correct` shows that at `|byzantine| = f` the two
+conditions `T ⊆ Correct` and `n − f ≤ T.card` force `T = Correct`, so
+the `T := Correct` form (`commits_recur_via_interface_correct`) is not a
+restriction but the instantiation always available.
 
 ### 6.10 The layering
 
@@ -6451,7 +6470,7 @@ Every correct validator's *eventual* view. Downward-closed by `U.complete`.
 def CommitsAt (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
     [S : Slots Validator] (T : Finset Validator) (R k : ℕ) : Prop :=
   ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-    (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
+    (∀ r ≤ N, PopulatedOn U T r) → SynchronisedOn U T R →
     S.slotRound k + 2 ≤ N →
     ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
 ```
@@ -6459,6 +6478,8 @@ def CommitsAt (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
 **A slot every sufficiently grown synchronous execution commits.**
 
 The conclusion the recurrence results share. Naming it keeps their quantifier order visible — the slot is fixed by the schedule alone, before any execution is named — and keeps production and coverage as the two separate hypotheses they are, rather than bundling them.
+
+**Both hypotheses are relative to the same `T`.** They were not: production was asked over all of `Correct` while coverage was asked over `T`, which is strictly more than anything downstream consumes — `decided_of_leader_of_populated` discarded the excess immediately. Asking both over `T` makes this a statement about *any* quorum-sized set of reliable validators: the correct validators outside `T` may be permanently starved and the slot still commits. That is not a vacuous generality — `reliable_set_is_forced` (V12) exhibits a DAG in which coverage over a proper subset of `Correct` holds and coverage over `Correct` fails. It is a genuine weakening only below full fault load, since `|byzantine| = f` forces `T = Correct` (`reliable_eq_correct`).
 
 #### `FairScheduleOn`
 
@@ -10257,17 +10278,21 @@ theorem decided_of_leader_mem (hcard : (Fintype.card Validator - F.f) ≤ T.card
 *theorem, `Liveness.lean`*
 
 ```lean
-theorem decided_of_leader_of_populated (hT : T ⊆ (Correct : Finset Validator))
+theorem decided_of_leader_of_populated (_hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
-    (hpop : ∀ r ≤ N, Populated U r) (hN : S.slotRound k + 2 ≤ N)
+    (hpop : ∀ r ≤ N, PopulatedOn U T r) (hN : S.slotRound k + 2 ≤ N)
     (hlead : S.leader k ∈ T) :
     ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
 ```
 
-**L4, against a horizon.** The form every capstone uses: production is available as a single `Populated` hypothesis up to a horizon, and the three rounds L4 needs are read off it.
+**L4, against a horizon.** The form every capstone uses: production is available as a single hypothesis up to a horizon, and the three rounds L4 needs are read off it.
 
-Stated separately because the capstones of report §§6–10 all reach L4 the same way — restrict `Populated` to `T`, three times, at `slotRound k`, `+1` and `+2` — and doing that inline obscures which hypothesis is actually being consumed.
+Stated separately because the capstones of report §§6–10 all reach L4 the same way — read production off at `slotRound k`, `+1` and `+2` — and doing that inline obscures which hypothesis is actually being consumed.
+
+**Production is asked for over `T`, not over `Correct`.** The rule consumes only `T`-authored blocks, so requiring a block from every correct validator would be asking for more than is used; `PopulatedOn.mono` bridges the two for callers holding the stronger `Populated`. The weaker hypothesis is what lets the recurrence results run at a `T` that is a *proper* subset of `Correct` — correct validators outside `T` may be starved, partitioned or silent, and the ledger still commits, provided `T` itself is a quorum.
+
+The subset hypothesis is now unused: with production asked over `T`, L4 needs nothing but the cardinality of `T`, which is what `commits_recur_on`'s comment already observed. It is kept in the signature because every capstone has it to hand and threading it documents the setting.
 
 #### `decided_of_correct_leader`
 
@@ -10393,7 +10418,7 @@ theorem all_decided_below_of_spacing
     (fair : FairScheduleOn T) (R : ℕ) (k : ℕ) :
     ∃ n, k ≤ n ∧ R ≤ S.slotRound n ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
+        (∀ r ≤ N, PopulatedOn U T r) → SynchronisedOn U T R →
         S.slotRound n + 2 ≤ N →
         ∀ i, i ≤ n → ∃ v, Decided U (View.full U) i v
 ```
@@ -10437,7 +10462,7 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
+        (∀ r ≤ N, PopulatedOn U T r) → SynchronisedOn U T R →
         S.slotRound (b + c - 1) + 2 ≤ N →
         ∀ i, i < b → ∃ v, Decided U (View.full U) i v
 ```
@@ -10573,7 +10598,7 @@ theorem commits_recur_by_round {s : ℕ} (hT : T ⊆ (Correct : Finset Validator
     ∃ k', k ≤ k' ∧ S.slotRound k' ≤ S.slotRound (max k (slotAt Validator R)) + s * w ∧
       R ≤ S.slotRound k' ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
+        (∀ r ≤ N, PopulatedOn U T r) → SynchronisedOn U T R →
         S.slotRound (max k (slotAt Validator R)) + s * w + 2 ≤ N →
         ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L)
 ```
@@ -10764,12 +10789,12 @@ theorem all_decided_below_of_converges {c : ℕ} (hc : 0 < c)
 *theorem, `ViewSync.lean`*
 
 ```lean
-theorem commits_recur_via_interface
-    (hcard : (Fintype.card Validator - F.f) ≤ (Correct : Finset Validator).card)
-    (fair : FairScheduleOn (Correct : Finset Validator)) (R k : ℕ) :
+theorem commits_recur_via_interface (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (fair : FairScheduleOn T) (R k : ℕ) :
     ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N D : ℕ)
-        (vs : ViewSync U (Correct : Finset Validator) N),
+        (vs : ViewSync U T N),
         vs.DriftFrom R D → vs.gst ≤ R →
         (∀ n, R ≤ n → D + vs.delay ≤ vs.timeout n) →
         S.slotRound k' + 2 ≤ N →
@@ -10779,6 +10804,8 @@ theorem commits_recur_via_interface
 **The liveness spine.** View convergence gives production (`populatedOn`) and coverage (`synchronisedOn_of_converges`); L6 (`commits_recur_on`) consumes exactly those two and returns a committing slot past any bound.
 
 The quantifier order is L6's: the slot is fixed by the schedule and the bound alone, before any execution is named.
+
+`T` need not be all of `Correct`. What is required of the world is that *some* `n - f` correct validators converge in view — the rest may be starved, partitioned or silent for the whole run. That is weaker than partial synchrony in its usual form, which stabilises every correct-to-correct link; `reliable_set_is_forced` (V12) is a DAG where the difference is real. It is a genuine weakening only below full fault load: at `|byzantine| = f`, `reliable_eq_correct` forces `T = Correct`.
 
 #### `convergesWithin_iff_bounded`
 
@@ -13756,17 +13783,18 @@ Report §8.4's `RefsAccepted` asks for the author, and the pool argument uses on
 
 ## Appendix D. Index of internal lemmas
 
-The 328 lemmas used only within the file that proves
+The 330 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
 subsection per module, in the layer order of Appendices B and C.
 
-### `Validators.lean` (1)
+### `Validators.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `card_inter_ge_of_quorum` | T0 (cardinality half). Two quorums overlap in at least `f+1` validators: `(n−f) + (n−f) − n = n − 2f ≥ f+1`. |
+| `reliable_eq_correct` | At full fault load the reliable set is forced. The liveness results run at any `T ⊆ Correct` with `n - f ≤ … |
 
 ### `Block.lean` (2)
 
@@ -13890,7 +13918,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `slotRound_le_of_lt` | A slot bound becomes a round bound. |
 | `unbounded_of_rated` | Every rated backoff is unbounded, so `Rated` really is a strengthening of `exists_backoff_ge`'s hypothesis … |
 
-### `ViewSync.lean` (21)
+### `ViewSync.lean` (22)
 
 | Lemma | Role |
 |:---|:---|
@@ -13898,6 +13926,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `ViewSync.convergesEventually` | Every `ViewSync` converges in the qualitative sense too — the bound is extra information, not a different … |
 | `ViewSync.convergesWithin` | The `converges` field *is* the bounded form — the definition is the field, unfolded. |
 | `blk_mem_holds` | Build-time views agree, from `R` on. Every `T`-authored round-`n` block is in *every* `T`-validator's … |
+| `commits_recur_via_interface_correct` | The spine at `T := Correct`, the shape the earlier statement had. |
 | `convergesEventually_of_within` | A bounded lag is a lag: the timed form implies the untimed one, even before `gst`, since holdings only grow. |
 | `convergesWithin_of_bounded` | And conversely: eventual convergence whose lag is uniformly bounded after `gst` *is* convergence within … |
 | `decided_of_leader_of_converges` | L4 on this foundation. A `T`-led slot past GST is committed, given only view convergence, the referencing … |

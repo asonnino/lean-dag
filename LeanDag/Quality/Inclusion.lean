@@ -93,7 +93,8 @@ theorem committed_of_correct_block (hT : T ⊆ (Correct : Finset Validator))
   refine ⟨k', hm, hRk', ?_⟩
   intro U N hpop hs hN
   obtain ⟨L, hLb, hdec⟩ :=
-    decided_of_leader_of_populated hT hcard (hs.mono hT) hRk' hpop (by omega) hlead
+    decided_of_leader_of_populated hT hcard (hs.mono hT) hRk'
+      (fun r hr => PopulatedOn.mono hT (hpop r hr)) (by omega) hlead
   refine ⟨L, hdec, ?_⟩
   intro b hb hbc hbr
   have hLc : (U.block L).creator ∈ (Correct : Finset Validator) := by
