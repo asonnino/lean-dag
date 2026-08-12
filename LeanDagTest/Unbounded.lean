@@ -27,7 +27,7 @@ coverage fails.
 everyone but validator `2`. The withheld blocks arrive eventually, after
 every build in the run, so holdings do converge; they simply converge too
 late to be referenced. Every protocol clause is satisfied, which the
-`ViewGrowth` instance certifies field by field, and `ConvergesEventually`
+`ViewPace` instance certifies field by field, and `ConvergesEventually`
 holds from time `0`. Yet `SynchronisedOn (Uomit 2 N) Correct R` fails for
 every `R` below the horizon.
 
@@ -139,11 +139,54 @@ def gapHolds (N : ℕ) (v : Fin 4) (t : ℕ) : Finset ℕ :=
   (Finset.range (4 * (N + 1))).filter fun b =>
     b % 4 ≠ 2 ∨ (v : ℕ) = 2 ∨ 4 * N + 5 ≤ t
 
-/-- **Every protocol clause, and convergence with a bound placed beyond the
-run.** The instance exists to certify the clauses field by field; its
-`gst` is deliberately after every build, so `converges` holds without
-saying anything about the run. -/
-def ugapGrowth (N : ℕ) : ViewGrowth (Uomit 2 N) (Correct : Finset (Fin 4)) 0 N where
+/-- **And coverage fails anyway**, at every round the horizon leaves room
+for: validator `1`'s block of round `R+1` does not reference validator
+`2`'s block of round `R`, and both authors are correct. -/
+theorem ugap_not_synchronisedOn {N : ℕ} (R : ℕ) (hR : R < N) :
+    ¬ SynchronisedOn (Uomit 2 N) (Correct : Finset (Fin 4)) R :=
+  uomit_not_synchronisedOn (x := 2) (y := 1) (by decide) (by decide) (by decide) R hR
+
+/-! ## The reliable set is forced
+
+Coverage is derived over a set `T`, never over all of `Correct` outright.
+That relativisation is a property of the setting: with a proper subset
+`T ⊊ Correct`, coverage over `T` is *derivable* while coverage over
+`Correct` is *false*, and the second statement is about the DAG alone.
+
+`Uomit 3` withholds validator `3`'s blocks from everyone's references.
+Taking `T = {1, 2}` — two correct validators, with the correct validator
+`3` outside — every clause holds at `gst = 0` with a real bound of `1`,
+so unlike the model above the network assumption is satisfied properly
+rather than vacuously. -/
+
+theorem mem_T12_bounds {v : Fin 4} (hv : v ∈ ({1, 2} : Finset (Fin 4))) :
+    1 ≤ (v : ℕ) ∧ (v : ℕ) ≤ 2 := by fin_cases hv <;> exact ⟨by decide, by decide⟩
+
+/-- What `v` holds: everything except validator `3`'s blocks, which reach
+nobody but `3` itself. No time dependence — the starvation is permanent,
+so no bound is at issue here. -/
+def starveHolds (N : ℕ) (v : Fin 4) (_t : ℕ) : Finset ℕ :=
+  (Finset.range (4 * (N + 1))).filter fun b => b % 4 ≠ 3 ∨ (v : ℕ) = 3
+
+/-- **And coverage over `Correct` is false.** Validator `3` is correct and
+outside `T`, and nobody references its blocks. -/
+theorem ustarve_not_synchronisedOn {N : ℕ} (hN : 0 < N) :
+    ¬ SynchronisedOn (Uomit 3 N) (Correct : Finset (Fin 4)) 0 :=
+  uomit_not_synchronisedOn (x := 3) (y := 1) (by decide) (by decide) (by decide) 0 hN
+
+/-! ## The same three witnesses, over the partial schedule
+
+The route the development is converging on is `ViewPace`, so the
+necessity claims must be stated over it — otherwise deleting the older
+structures would delete the evidence while keeping the conclusions. The
+models are the same; only the certifying instance changes, and `top := N`
+throughout, since every validator of `Uomit` builds every round. -/
+
+/-- Every clause of the partial-schedule structure, with `gst` beyond
+every build in the run — deliberately, which is the point: `converges`
+is true of it but vacuously. -/
+def ugapPace (N : ℕ) : ViewPace (Uomit 2 N) (Correct : Finset (Fin 4)) N where
+  top _ := N
   built v n := (v : ℕ) + 4 * n
   timeout _ := 4
   gst := 4 * N + 5
@@ -152,18 +195,18 @@ def ugapGrowth (N : ℕ) : ViewGrowth (Uomit 2 N) (Correct : Finset (Fin 4)) 0 N
     simp only [uomit_ids, Finset.mem_range] at hb
     simp only [uomit_block, rrBlock_round]
     omega
-  waits _ _ _ := by omega
+  built_of_le_top v hv n hn := rrUniverse_populatedOn _ _ _ _ _ _ hn v hv
+  le_top_of_built _ _ b hb _ := by
+    simp only [uomit_ids, Finset.mem_range] at hb
+    simp only [uomit_block, rrBlock_round]
+    omega
+  waits _ _ _ _ := by omega
   timeout_pos _ := by omega
   latest n := 3 + 4 * n
   built_le_latest v _ _ _ := by have := v.isLt; omega
   latest_mem _ _ := ⟨3, by decide, le_refl _⟩
   prompt _ _ _ _ := le_max_left _ _
   holds := gapHolds N
-  holds_sub v t := by
-    intro b hb
-    simp only [gapHolds, Finset.mem_filter, Finset.mem_range] at hb
-    simp only [uomit_ids, Finset.mem_range]
-    exact hb.1
   holds_own v _ n _ b hb hbc hbr := by
     have hv := v.isLt
     simp only [uomit_ids, Finset.mem_range] at hb
@@ -197,7 +240,6 @@ def ugapGrowth (N : ℕ) : ViewGrowth (Uomit 2 N) (Correct : Finset (Fin 4)) 0 N
       simpa using this
     simp only [gapHolds, Finset.mem_filter, Finset.mem_range] at ha
     simp only [uomit_block, rrBlock_refs, mem_omitRefs]
-    -- the build is at `v + 4 * (n+1) ≤ 3 + 4 * N`, before the late arrival
     have hlate : ¬ (4 * N + 5 ≤ (v : ℕ) + 4 * (n + 1)) := by omega
     refine ⟨by omega, ?_⟩
     by_cases h2 : (v : ℕ) = 2
@@ -206,232 +248,24 @@ def ugapGrowth (N : ℕ) : ViewGrowth (Uomit 2 N) (Correct : Finset (Fin 4)) 0 N
       · exact Or.inr (by omega)
       · exact absurd h h2
       · exact absurd h hlate
-  base v _ := by
-    have hv := v.isLt
-    refine ⟨(v : ℕ), ?_, ?_, ?_⟩
-    · simp only [uomit_ids, Finset.mem_range]; omega
-    · apply Fin.ext; simp only [uomit_block, rrBlock_creator_val]; omega
-    · simp only [uomit_block, rrBlock_round]; omega
-  builds v hv n _ hn _ :=
-    rrUniverse_populatedOn _ _ _ _ _ _ (show n + 1 ≤ N by omega) v hv
-
-/-- **Convergence without a bound, from time `0`.** Holdings do converge:
-whatever anyone holds, everyone holds by `4 * N + 5`. No GST, no `delay`. -/
-theorem ugapGrowth_convergesEventually (N : ℕ) :
-    ConvergesEventually (ugapGrowth N).holds (Correct : Finset (Fin 4)) := by
-  intro v _ w _ t
-  refine ⟨4 * N + 5, ?_⟩
-  intro b hb
-  simp only [ugapGrowth, gapHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
-  exact ⟨hb.1, Or.inr (Or.inr (by omega))⟩
-
-/-- **And coverage fails anyway**, at every round the horizon leaves room
-for: validator `1`'s block of round `R+1` does not reference validator
-`2`'s block of round `R`, and both authors are correct. -/
-theorem ugap_not_synchronisedOn {N : ℕ} (R : ℕ) (hR : R < N) :
-    ¬ SynchronisedOn (Uomit 2 N) (Correct : Finset (Fin 4)) R :=
-  uomit_not_synchronisedOn (x := 2) (y := 1) (by decide) (by decide) (by decide) R hR
-
-/-- **The separation.** Every protocol clause holds, holdings converge from
-time `0`, and coverage fails at every round below the horizon. So the
-qualitative half of the network assumption does not yield
-`SynchronisedOn`: the bound in `converges` is doing the work, and
-`convergesWithin_iff_bounded` is a factoring of a genuine conjunction
-rather than a restatement of one half. -/
-theorem bound_is_necessary {N : ℕ} (hN : 0 < N) :
-    ConvergesEventually (ugapGrowth N).holds (Correct : Finset (Fin 4)) ∧
-      ¬ SynchronisedOn (Uomit 2 N) (Correct : Finset (Fin 4)) 0 :=
-  ⟨ugapGrowth_convergesEventually N, ugap_not_synchronisedOn 0 hN⟩
-
-/-! ## The starting round is forced
-
-`viewsConvergeOn_toDelivery` concludes from `R` on, under `gst ≤ R`. This
-model shows that side condition cannot be dropped: it is a genuine
-`ViewGrowth` whose `gst` lies beyond the run, and the untimed condition
-fails outright on the delivery it induces. Validator `2` holds its own
-round-`0` block when it builds, and validator `1` does not.
-
-So the `R`-relativisation of the bridge in §6.9 is forced by the
-structure rather than chosen for convenience. -/
-theorem ugap_not_viewsConvergeOn {N : ℕ} (hN : 0 < N) :
-    ¬ ViewsConvergeOn (ugapGrowth N).toDelivery (Correct : Finset (Fin 4)) 0 := by
-  intro h
-  have h2 : (2 : Fin 4) ∈ (Correct : Finset (Fin 4)) := by decide
-  have h1 : (1 : Fin 4) ∈ (Correct : Finset (Fin 4)) := by decide
-  have hb : (2 : ℕ) ∈ (ugapGrowth N).toDelivery.held 2 0 := by
-    rw [ViewGrowth.mem_toDelivery]
-    refine ⟨?_, ?_, h2⟩
-    · simp only [ugapGrowth, gapHolds, Finset.mem_filter, Finset.mem_range]
-      exact ⟨by omega, Or.inr (Or.inl rfl)⟩
-    · simp only [uomit_block, rrBlock_round]
-  have hbc : ((Uomit 2 N).block 2).creator ∈ (Correct : Finset (Fin 4)) := by
-    have : ((Uomit 2 N).block 2).creator = (2 : Fin 4) := by
-      apply Fin.ext; simp only [uomit_block, rrBlock_creator_val]; rfl
-    rw [this]; exact h2
-  have hcon := h 2 h2 1 h1 0 (Nat.zero_le _) 2 hb hbc
-  rw [ViewGrowth.mem_toDelivery] at hcon
-  have := hcon.1
-  simp only [ugapGrowth, gapHolds, Finset.mem_filter, Finset.mem_range] at this
-  rcases this.2 with hx | hx | hx
-  · exact hx rfl
-  · exact absurd hx (by decide)
-  · omega
-
-/-! ## The reliable set is forced
-
-The bridge derives `ViewsConvergeOn T R`, never `ViewsConverge`. That is
-not an artefact of how `toDelivery` treats validators outside `T`: with a
-proper subset `T ⊊ Correct`, coverage over `T` is *derivable* while
-coverage over `Correct` is *false*, and the second statement is about the
-DAG alone, independent of any delivery.
-
-`Uomit 3` withholds validator `3`'s blocks from everyone's references.
-Taking `T = {1, 2}` — two correct validators, with the correct validator
-`3` outside — every clause holds at `gst = 0` with a real bound of `1`,
-so unlike the model above the network assumption is satisfied properly
-rather than vacuously. -/
-
-theorem mem_T12_bounds {v : Fin 4} (hv : v ∈ ({1, 2} : Finset (Fin 4))) :
-    1 ≤ (v : ℕ) ∧ (v : ℕ) ≤ 2 := by fin_cases hv <;> exact ⟨by decide, by decide⟩
-
-/-- What `v` holds: everything except validator `3`'s blocks, which reach
-nobody but `3` itself. No time dependence — the starvation is permanent,
-so no bound is at issue here. -/
-def starveHolds (N : ℕ) (v : Fin 4) (_t : ℕ) : Finset ℕ :=
-  (Finset.range (4 * (N + 1))).filter fun b => b % 4 ≠ 3 ∨ (v : ℕ) = 3
-
-/-- **A structure over a proper subset of `Correct`**, satisfied at
-`gst = 0` and `delay = 1`.
-
-A `ViewSync` rather than a `ViewGrowth`: `T` has two members and is
-therefore not a quorum, so production is not derivable here — correctly,
-since two validators cannot form one. Coverage needs no quorum, and it is
-coverage the claim is about. -/
-def ustarveSync (N : ℕ) : ViewSync (Uomit 3 N) ({1, 2} : Finset (Fin 4)) N where
-  blk v n := 4 * n + (v : ℕ)
-  built v n := (v : ℕ) + 4 * n
-  timeout _ := 4
-  gst := 0
-  delay := 1
-  rounds_le b hb := by
-    simp only [uomit_ids, Finset.mem_range] at hb
-    simp only [uomit_block, rrBlock_round]
-    omega
-  blk_mem v hv n hn := by
-    obtain ⟨_, _⟩ := mem_T12_bounds hv
-    simp only [uomit_ids, Finset.mem_range]; omega
-  blk_creator v hv n _ := by
-    obtain ⟨_, _⟩ := mem_T12_bounds hv
-    apply Fin.ext; simp only [uomit_block, rrBlock_creator_val]; omega
-  blk_round v hv n _ := by
-    obtain ⟨_, _⟩ := mem_T12_bounds hv
-    simp only [uomit_block, rrBlock_round]; omega
-  waits _ _ _ := by omega
-  timeout_pos _ := by omega
-  latest n := 2 + 4 * n
-  built_le_latest v hv _ _ := by obtain ⟨_, _⟩ := mem_T12_bounds hv; omega
-  latest_mem _ _ := ⟨2, by decide, le_refl _⟩
-  prompt _ _ _ _ := le_max_left _ _
-  holds := starveHolds N
-  holds_own v hv n hn := by
-    obtain ⟨h1, h2⟩ := mem_T12_bounds hv
-    simp only [starveHolds, Finset.mem_filter, Finset.mem_range]
-    exact ⟨by omega, Or.inl (by omega)⟩
-  holds_mono v s t _ := by
-    intro b hb
-    simp only [starveHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
-    exact hb
-  converges v hv w hw t _ := by
-    obtain ⟨_, hv2⟩ := mem_T12_bounds hv
-    obtain ⟨_, _⟩ := mem_T12_bounds hw
-    intro b hb
-    simp only [starveHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
-    refine ⟨hb.1, Or.inl ?_⟩
-    rcases hb.2 with h | h
-    · exact h
-    · omega
-  references v hv n hn a ha har := by
-    obtain ⟨h1, h2⟩ := mem_T12_bounds hv
-    simp only [uomit_block, rrBlock_round] at har
-    simp only [starveHolds, Finset.mem_filter, Finset.mem_range] at ha
-    simp only [uomit_block, rrBlock_refs, mem_omitRefs]
-    refine ⟨by omega, Or.inr ?_⟩
-    rcases ha.2 with h | h
-    · omega
-    · omega
-
-/-- **Coverage over `T` is derived** — the network assumption is met
-properly here, at `gst = 0` with a real bound, so the route of §6.9 runs
-to completion. -/
-theorem ustarve_synchronisedOn (N : ℕ) :
-    SynchronisedOn (Uomit 3 N) ({1, 2} : Finset (Fin 4)) 0 :=
-  (ustarveSync N).synchronisedOn_of_converges (by decide) (D := 1)
-    (fun v hv w hw n _ _ => by
-      obtain ⟨_, _⟩ := mem_T12_bounds hv
-      obtain ⟨_, _⟩ := mem_T12_bounds hw
-      change (w : ℕ) + 4 * n ≤ ((v : ℕ) + 4 * n) + 1
-      omega)
-    (le_refl 0) (fun n _ => by change 1 + 1 ≤ 4; omega)
-
-/-- **And coverage over `Correct` is false.** Validator `3` is correct and
-outside `T`, and nobody references its blocks. -/
-theorem ustarve_not_synchronisedOn {N : ℕ} (hN : 0 < N) :
-    ¬ SynchronisedOn (Uomit 3 N) (Correct : Finset (Fin 4)) 0 :=
-  uomit_not_synchronisedOn (x := 3) (y := 1) (by decide) (by decide) (by decide) 0 hN
-
-/-- **The reliable set cannot be widened.** With `T ⊊ Correct`, the timed
-structure yields coverage over `T` and coverage over `Correct` fails — a
-statement about the DAG, so the relativisation is a property of the
-setting and not of how `toDelivery` was defined.
-
-`ViewsConverge` over the induced delivery fails a fortiori, and for the
-same reason: validator `3` builds on nothing anyone else can see. -/
-theorem reliable_set_is_forced {N : ℕ} (hN : 0 < N) :
-    ({1, 2} : Finset (Fin 4)) ⊂ (Correct : Finset (Fin 4)) ∧
-      SynchronisedOn (Uomit 3 N) ({1, 2} : Finset (Fin 4)) 0 ∧
-      ¬ SynchronisedOn (Uomit 3 N) (Correct : Finset (Fin 4)) 0 :=
-  ⟨by decide, ustarve_synchronisedOn N, ustarve_not_synchronisedOn hN⟩
-
-/-! ## The same three witnesses, over the partial schedule
-
-The route the development is converging on is `ViewPace`, so the
-necessity claims must be stated over it — otherwise deleting the older
-structures would delete the evidence while keeping the conclusions. The
-models are the same; only the certifying instance changes, and `top := N`
-throughout, since every validator of `Uomit` builds every round. -/
-
-/-- `ugapGrowth`, as a `ViewPace`: every clause of the partial-schedule
-structure, with `gst` beyond every build in the run. -/
-def ugapPace (N : ℕ) : ViewPace (Uomit 2 N) (Correct : Finset (Fin 4)) N where
-  top _ := N
-  built v n := (v : ℕ) + 4 * n
-  timeout _ := 4
-  gst := 4 * N + 5
-  delay := 1
-  rounds_le := (ugapGrowth N).rounds_le
-  built_of_le_top v hv n hn := rrUniverse_populatedOn _ _ _ _ _ _ hn v hv
-  le_top_of_built _ _ b hb _ := (ugapGrowth N).rounds_le b hb
-  waits _ _ _ _ := by omega
-  timeout_pos _ := by omega
-  latest n := 3 + 4 * n
-  built_le_latest v _ _ _ := by have := v.isLt; omega
-  latest_mem _ _ := ⟨3, by decide, le_refl _⟩
-  prompt _ _ _ _ := le_max_left _ _
-  holds := gapHolds N
-  holds_own := (ugapGrowth N).holds_own
-  holds_mono := (ugapGrowth N).holds_mono
-  converges := (ugapGrowth N).converges
-  references := (ugapGrowth N).references
   advances _ _ _ hn _ _ := hn
 
 /-- **V10 over the partial schedule.** Holdings converge from time `0`,
 every clause of `ViewPace` holds, and coverage fails at every round below
 the horizon: the bound in `converges` is what carries coverage, on this
 route as on the others. -/
+theorem ugapPace_convergesEventually (N : ℕ) :
+    ConvergesEventually (ugapPace N).holds (Correct : Finset (Fin 4)) := by
+  intro v _ w _ t
+  refine ⟨4 * N + 5, ?_⟩
+  intro b hb
+  simp only [ugapPace, gapHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
+  exact ⟨hb.1, Or.inr (Or.inr (by omega))⟩
+
 theorem bound_is_necessary_pace {N : ℕ} (hN : 0 < N) :
     ConvergesEventually (ugapPace N).holds (Correct : Finset (Fin 4)) ∧
       ¬ SynchronisedOn (Uomit 2 N) (Correct : Finset (Fin 4)) 0 :=
-  ⟨ugapGrowth_convergesEventually N, ugap_not_synchronisedOn 0 hN⟩
+  ⟨ugapPace_convergesEventually N, ugap_not_synchronisedOn 0 hN⟩
 
 /-- **V11 over the partial schedule** — the form the claim takes once the
 untimed bridge is gone: `gst ≤ R` cannot be dropped from
@@ -450,8 +284,8 @@ theorem gst_is_forced_pace {N : ℕ} (hN : 0 < N) :
    fun n _ => by change 3 + 1 ≤ 4; omega,
    ugap_not_synchronisedOn 0 hN⟩
 
-/-- `ustarveSync`, as a `ViewPace` — over the two-member reliable set,
-with the network assumption met properly: `gst = 0`, bound `1`. -/
+/-- Over the two-member reliable set, with the network assumption met
+properly: `gst = 0`, bound `1` — unlike `ugapPace`, nothing vacuous. -/
 def ustarvePace (N : ℕ) : ViewPace (Uomit 3 N) ({1, 2} : Finset (Fin 4)) N where
   top _ := N
   built v n := (v : ℕ) + 4 * n
@@ -529,16 +363,12 @@ theorem reliable_set_is_forced_pace {N : ℕ} (hN : 0 < N) :
       ¬ SynchronisedOn (Uomit 3 N) (Correct : Finset (Fin 4)) 0 :=
   ⟨by decide, ustarvePace_synchronisedOn N, ustarve_not_synchronisedOn hN⟩
 
+#print axioms ugap_not_synchronisedOn
 #print axioms bound_is_necessary_pace
 #print axioms gst_is_forced_pace
 #print axioms ustarvePace_synchronisedOn
 #print axioms reliable_set_is_forced_pace
 
-#print axioms ustarve_synchronisedOn
-#print axioms reliable_set_is_forced
-#print axioms ugap_not_viewsConvergeOn
-#print axioms ugapGrowth_convergesEventually
 #print axioms ugap_not_synchronisedOn
-#print axioms bound_is_necessary
 
 end LeanDagTest

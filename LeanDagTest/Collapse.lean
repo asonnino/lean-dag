@@ -4,7 +4,7 @@ import LeanDagTest.Catchup
 /-!
 # The collapse, exhibited from a large spread
 
-`ugrowCatch` shows `CatchupSync` satisfiable, but it starts synchronised,
+`ugrowCatchPace` shows `CatchupPace` satisfiable, but it starts synchronised,
 so it cannot show the mechanism *working*. This model can: the round-`0`
 spread is `10` — five times the collapsed bound — because the laggard
 starts late and GST has not yet arrived; at every round from `1` on the
@@ -56,27 +56,22 @@ def lagHolds (N : ℕ) (v : Fin 4) (t : ℕ) : Finset ℕ :=
   (Finset.range (4 * (N + 1))).filter fun b =>
     max (lagStamp b) 12 + 2 ≤ t ∨ (b % 4 = (v : ℕ) ∧ lagStamp b ≤ t)
 
-/-- **`CatchupSync`, from a spread of `10`.** Every clause is proved for
+/-- **`CatchupPace`, from a spread of `10`.** Every clause is proved for
 the run described in the module docstring; the laggard's `waits` floor
 and its catch-up deadline coincide at every round. -/
-def ugrowLag (N : ℕ) : CatchupSync (Ugrow N) {1, 2, 3} N where
-  blk v n := 4 * n + (v : ℕ)
+def ugrowLag (N : ℕ) : CatchupPace (Ugrow N) {1, 2, 3} N where
+  top _ := N
   built := lagBuilt
   timeout _ := 5
   gst := 12
   delay := 2
   proc := 1
-  rounds_le := (ugrowSkew N).rounds_le
-  blk_mem v hv n hn := by
-    obtain ⟨_, _⟩ := mem_T_bounds hv
-    simp only [ugrow_ids, Finset.mem_range]; omega
-  blk_creator v hv n _ := by
-    obtain ⟨_, _⟩ := mem_T_bounds hv
-    apply Fin.ext
-    simp only [ugrow_block, rrBlock_creator_val]
-    omega
-  blk_round v hv n _ := by
-    obtain ⟨_, _⟩ := mem_T_bounds hv
+  rounds_le b hb := by
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round]; omega
+  built_of_le_top v hv n hn := rrUniverse_populatedOn _ _ _ _ _ _ hn v hv
+  le_top_of_built _ _ b hb _ := by
+    simp only [ugrow_ids, Finset.mem_range] at hb
     simp only [ugrow_block, rrBlock_round]; omega
   waits v hv n _ := by
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
@@ -103,17 +98,20 @@ def ugrowLag (N : ℕ) : CatchupSync (Ugrow N) {1, 2, 3} N where
     · refine le_trans ?_ (le_max_right _ _)
       cases n <;> simp only [lagBuilt_zero, lagBuilt_succ, if_neg h] <;> omega
   holds := lagHolds N
-  holds_own v hv n _ := by
+  holds_own v hv n _ b hb hbc hbr := by
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
     have hv4 := v.isLt
-    have e : (4 * n + (v : ℕ)) % 4 = (v : ℕ) := by omega
-    have d : (4 * n + (v : ℕ)) / 4 = n := by omega
-    have hstamp : lagStamp (4 * n + (v : ℕ)) = lagBuilt v n := by
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round] at hbr
+    have hb4 : b % 4 = (v : ℕ) := by
+      have := congrArg (fun (x : Fin 4) => (x : ℕ)) hbc
+      simpa [ugrow_block] using this
+    have hstamp : lagStamp b = lagBuilt v n := by
+      have hfin : (⟨b % 4, by omega⟩ : Fin 4) = v := Fin.ext hb4
       simp only [lagStamp]
-      congr 1
-      exact Fin.ext e
+      rw [hbr, hfin]
     simp only [lagHolds, Finset.mem_filter, Finset.mem_range]
-    exact ⟨by omega, Or.inr ⟨by omega, by rw [hstamp]⟩⟩
+    exact ⟨hb, Or.inr ⟨hb4, by rw [hstamp]⟩⟩
   holds_mono v s t hst := by
     intro b hb
     simp only [lagHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
@@ -126,23 +124,26 @@ def ugrowLag (N : ℕ) : CatchupSync (Ugrow N) {1, 2, 3} N where
     · omega
     · have hle : max (lagStamp b) 12 ≤ t := max_le h ht
       omega
-  references v hv n hn a ha har := by
+  references v hv n hn c hc hcc hcr a ha har := by
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
+    simp only [ugrow_ids, Finset.mem_range] at hc
     simp only [lagHolds, Finset.mem_filter, Finset.mem_range] at ha
-    simp only [ugrow_block, rrBlock_round] at har
+    simp only [ugrow_block, rrBlock_round] at har hcr
     simp only [ugrow_block, mem_growBlock_refs]
     omega
-  catchup v hv u hu n _ t hheld := by
+  advances _ _ _ hn _ _ := hn
+  catchup v hv n hn b hb hbT hbr t hheld := by
     obtain ⟨hv1, hv3⟩ := mem_T_bounds hv
-    obtain ⟨hu1, hu3⟩ := mem_T_bounds hu
-    have hu4 := u.isLt
-    have e : (4 * n + (u : ℕ)) % 4 = (u : ℕ) := by omega
-    have d : (4 * n + (u : ℕ)) / 4 = n := by omega
-    have hstamp : lagStamp (4 * n + (u : ℕ)) = lagBuilt u n := by
+    obtain ⟨hu1, hu3⟩ := mem_T_bounds hbT
+    set u := ((Ugrow N).block b).creator with hu
+    have hb4 : b % 4 = (u : ℕ) := by simp [hu, ugrow_block]
+    simp only [ugrow_block, rrBlock_round] at hbr
+    have hstamp : lagStamp b = lagBuilt u n := by
+      have hfin : (⟨b % 4, by omega⟩ : Fin 4) = u := Fin.ext hb4
       simp only [lagStamp]
-      congr 1
-      exact Fin.ext e
-    simp only [lagHolds, Finset.mem_filter, Finset.mem_range, e, hstamp] at hheld
+      rw [hbr, hfin]
+    refine ⟨hn, ?_⟩
+    simp only [lagHolds, Finset.mem_filter, Finset.mem_range, hb4, hstamp] at hheld
     rcases hheld.2 with h | ⟨huv, h⟩
     · -- arrival: the deadline covers the laggard exactly
       cases n with
@@ -160,7 +161,7 @@ def ugrowLag (N : ℕ) : CatchupSync (Ugrow N) {1, 2, 3} N where
           omega
     · -- own copy: `u = v`
       have huv' : u = v := Fin.ext (by omega)
-      subst huv'
+      rw [huv'] at h
       omega
 
 /-- **The collapse, on data.** The spread is `10` at round `0` and
@@ -180,7 +181,7 @@ round `1` on, every pair of reliable validators is within `Δ + proc`. -/
 example (N : ℕ) {n : ℕ} (hn : n + 1 ≤ N) :
     ∀ v ∈ ({1, 2, 3} : Finset (Fin 4)), ∀ w ∈ ({1, 2, 3} : Finset (Fin 4)),
       (ugrowLag N).built v (n + 1) ≤ (ugrowLag N).built w (n + 1) + 3 := by
-  refine (ugrowLag N).drift_collapse hn (fun u hu => ?_)
+  refine (ugrowLag N).drift_collapse hn (fun u _ => hn) (fun u hu => ?_)
   show (12 : ℕ) ≤ lagBuilt u (n + 1)
   simp only [lagBuilt_succ]
   split <;> omega
