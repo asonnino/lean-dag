@@ -1,4 +1,3 @@
-import LeanDag.ViewSync
 import LeanDag.ViewPace
 import LeanDagTest.Growth
 

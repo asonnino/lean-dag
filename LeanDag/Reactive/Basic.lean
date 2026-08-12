@@ -1,4 +1,4 @@
-import LeanDag.ViewSync
+import LeanDag.ViewPace
 
 /-!
 # The reactive schedule

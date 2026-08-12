@@ -10,7 +10,6 @@ import LeanDag.Schedule
 import LeanDag.Liveness
 import LeanDag.Timing
 import LeanDag.Quantitative
-import LeanDag.ViewSync
 import LeanDag.ViewPace
 import LeanDag.History
 import LeanDag.DoS.Exposure
