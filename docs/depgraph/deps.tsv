@@ -2306,7 +2306,6 @@ EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.View.full
 EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.Slots.slotRound
 EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.Slots.unbounded
 EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.Hybrid.all_decided_below_of_fairRun._proof_1_1
-EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.Populated
 EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.HybridFaults.toFaults
 EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.Hybrid.Decided
 EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.Slots.leader
@@ -2314,6 +2313,7 @@ EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.FairRunOn
 EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.Hybrid.decided_below_of_committed_run
 EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.Hybrid.all_decided_below_of_fairRun._proof_1_3
 EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.Correct
+EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.PopulatedOn
 EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.BlockUniverse
 EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.Hybrid.q
 EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.Hybrid.decided_of_leader_of_populated
@@ -3242,7 +3242,6 @@ EDGE	LeanDag.exists_partialRun	LeanDag.exists_partialRun._proof_1_1
 EDGE	LeanDag.exists_partialRun	LeanDag.AdaptivePolicy.W_pos
 EDGE	LeanDag.exists_partialRun	LeanDag.exists_partialRun._proof_1_7
 EDGE	LeanDag.exists_partialRun	LeanDag.exists_partialRun._proof_1_8
-EDGE	LeanDag.exists_partialRun	LeanDag.Populated
 EDGE	LeanDag.exists_partialRun	LeanDag.DecidedWithin
 EDGE	LeanDag.exists_partialRun	LeanDag.AdaptivePolicy.pick
 EDGE	LeanDag.exists_partialRun	LeanDag.PartialRun.closed
@@ -3251,6 +3250,7 @@ EDGE	LeanDag.exists_partialRun	LeanDag.slotsOf
 EDGE	LeanDag.exists_partialRun	LeanDag.Correct
 EDGE	LeanDag.exists_partialRun	LeanDag.PartialRun.assign
 EDGE	LeanDag.exists_partialRun	LeanDag.epochOf
+EDGE	LeanDag.exists_partialRun	LeanDag.PopulatedOn
 EDGE	LeanDag.exists_partialRun	LeanDag.BlockUniverse
 EDGE	LeanDag.exists_partialRun	LeanDag.Faults.f
 EDGE	LeanDag.exists_partialRun	LeanDag.exists_partialRun._proof_1_5
@@ -5161,6 +5161,11 @@ EDGE	LeanDag.chopD._proof_9	LeanDag.chopBlock_round
 EDGE	LeanDag.chopD._proof_9	LeanDag.Delivery.accepted
 EDGE	LeanDag.chopD._proof_9	LeanDag.Delivery.includes
 EDGE	LeanDag.chopD._proof_9	LeanDag.Block.creator
+NODE	LeanDag.Hybrid.decided_of_leader_of_populated._proof_1_2	LeanDag.Hybrid.Liveness	thm
+EDGE	LeanDag.Hybrid.decided_of_leader_of_populated._proof_1_2	LeanDag.HybridFaults
+EDGE	LeanDag.Hybrid.decided_of_leader_of_populated._proof_1_2	LeanDag.Slots.slotRound
+EDGE	LeanDag.Hybrid.decided_of_leader_of_populated._proof_1_2	LeanDag.Hybrid.q
+EDGE	LeanDag.Hybrid.decided_of_leader_of_populated._proof_1_2	LeanDag.Slots
 NODE	LeanDagTest.ugapGrowth._proof_24	LeanDagTest.Unbounded	thm
 EDGE	LeanDagTest.ugapGrowth._proof_24	LeanDagTest.ugapGrowth._simp_7
 EDGE	LeanDagTest.ugapGrowth._proof_24	LeanDagTest.ugapGrowth._simp_1
@@ -5464,10 +5469,14 @@ NODE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.Adaptive.Odontoceti	thm
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.Slots.slotRound
+EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.AdaptivePolicy.pick
+EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.slotsOf
+EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.Faults.f
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.AdaptivePolicy
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.Faults5.toFaults
+EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.AdaptivePolicy.inj
 NODE	LeanDagTest.ugrowStuckPace._proof_14	LeanDagTest.ViewSync	thm
 EDGE	LeanDagTest.ugrowStuckPace._proof_14	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowStuckPace._proof_14	LeanDagTest.ugrowSkewView._simp_6
@@ -8697,6 +8706,19 @@ EDGE	LeanDag.Odontoceti.Decided.below.indirectSkip	LeanDag.View
 EDGE	LeanDag.Odontoceti.Decided.below.indirectSkip	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.oBase._proof_2	LeanDagTest.Adaptive	thm
 EDGE	LeanDagTest.oBase._proof_2	LeanDagTest.oBase._proof_1
+NODE	LeanDagTest.Routes.synchronised_of_viewPace	LeanDagTest.Routes	thm
+EDGE	LeanDagTest.Routes.synchronised_of_viewPace	LeanDag.Faults
+EDGE	LeanDagTest.Routes.synchronised_of_viewPace	LeanDag.DriftOn
+EDGE	LeanDagTest.Routes.synchronised_of_viewPace	LeanDag.Correct
+EDGE	LeanDagTest.Routes.synchronised_of_viewPace	LeanDag.ViewPace.delay
+EDGE	LeanDagTest.Routes.synchronised_of_viewPace	LeanDag.ViewPace.synchronisedOn_of_converges
+EDGE	LeanDagTest.Routes.synchronised_of_viewPace	LeanDag.BlockUniverse
+EDGE	LeanDagTest.Routes.synchronised_of_viewPace	LeanDag.ViewPace
+EDGE	LeanDagTest.Routes.synchronised_of_viewPace	LeanDag.ViewPace.built
+EDGE	LeanDagTest.Routes.synchronised_of_viewPace	LeanDag.Slots
+EDGE	LeanDagTest.Routes.synchronised_of_viewPace	LeanDag.ViewPace.timeout
+EDGE	LeanDagTest.Routes.synchronised_of_viewPace	LeanDag.Synchronised
+EDGE	LeanDagTest.Routes.synchronised_of_viewPace	LeanDag.ViewPace.gst
 NODE	LeanDag.round_add_two_le_of_equivPair._proof_1_1	LeanDag.DoS.Exposure	thm
 EDGE	LeanDag.round_add_two_le_of_equivPair._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.round_add_two_le_of_equivPair._proof_1_1	LeanDag.BlockUniverse.block
@@ -9618,6 +9640,15 @@ EDGE	LeanDag.instDecidableHonestNoEquivOfDecidableEq._aux_1	LeanDag.Block.round
 EDGE	LeanDag.instDecidableHonestNoEquivOfDecidableEq._aux_1	LeanDag.BlockUniverse
 EDGE	LeanDag.instDecidableHonestNoEquivOfDecidableEq._aux_1	LeanDag.HybridFaults.byzantine
 EDGE	LeanDag.instDecidableHonestNoEquivOfDecidableEq._aux_1	LeanDag.Block.creator
+NODE	LeanDag.Odontoceti.epoch_closes._proof_1_11	LeanDag.Adaptive.Odontoceti	thm
+EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_11	LeanDag.Faults5
+EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_11	LeanDag.AdaptivePolicy.W
+EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_11	LeanDag.Slots.slotRound
+EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_11	LeanDag.epochOf
+EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_11	LeanDag.Faults.f
+EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_11	LeanDag.AdaptivePolicy
+EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_11	LeanDag.Slots
+EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_11	LeanDag.Faults5.toFaults
 NODE	LeanDag.card_exposedTo_le	LeanDag.DoS.Exposure	thm
 EDGE	LeanDag.card_exposedTo_le	LeanDag.exposedTo_subset_byzantine
 EDGE	LeanDag.card_exposedTo_le	LeanDag.Faults
@@ -10108,6 +10139,15 @@ EDGE	LeanDagTest.ugrowSkew_start	LeanDagTest.ugrowSkew
 EDGE	LeanDagTest.ugrowSkew_start	LeanDagTest.mem_T_bounds
 EDGE	LeanDagTest.ugrowSkew_start	LeanDag.Timing.delay
 EDGE	LeanDagTest.ugrowSkew_start	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+NODE	LeanDagTest.Routes.populated_of_viewPace	LeanDagTest.Routes	thm
+EDGE	LeanDagTest.Routes.populated_of_viewPace	LeanDag.Faults
+EDGE	LeanDagTest.Routes.populated_of_viewPace	LeanDag.Populated
+EDGE	LeanDagTest.Routes.populated_of_viewPace	LeanDag.card_correct
+EDGE	LeanDagTest.Routes.populated_of_viewPace	LeanDag.Correct
+EDGE	LeanDagTest.Routes.populated_of_viewPace	LeanDag.BlockUniverse
+EDGE	LeanDagTest.Routes.populated_of_viewPace	LeanDag.ViewPace
+EDGE	LeanDagTest.Routes.populated_of_viewPace	LeanDag.Slots
+EDGE	LeanDagTest.Routes.populated_of_viewPace	LeanDag.ViewPace.populatedOn
 NODE	LeanDag.Odontoceti.AdaptiveRun.vdct	LeanDag.Adaptive.Odontoceti	def
 EDGE	LeanDag.Odontoceti.AdaptiveRun.vdct	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.AdaptiveRun.vdct	LeanDag.BlockUniverse
@@ -10457,12 +10497,12 @@ NODE	LeanDag.Hybrid.decided_of_leader_of_populated	LeanDag.Hybrid.Liveness	thm
 EDGE	LeanDag.Hybrid.decided_of_leader_of_populated	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.decided_of_leader_of_populated	LeanDag.View.full
 EDGE	LeanDag.Hybrid.decided_of_leader_of_populated	LeanDag.Slots.slotRound
-EDGE	LeanDag.Hybrid.decided_of_leader_of_populated	LeanDag.Populated
 EDGE	LeanDag.Hybrid.decided_of_leader_of_populated	LeanDag.HybridFaults.toFaults
 EDGE	LeanDag.Hybrid.decided_of_leader_of_populated	LeanDag.Hybrid.Decided
 EDGE	LeanDag.Hybrid.decided_of_leader_of_populated	LeanDag.Slots.leader
 EDGE	LeanDag.Hybrid.decided_of_leader_of_populated	LeanDag.Correct
-EDGE	LeanDag.Hybrid.decided_of_leader_of_populated	LeanDag.PopulatedOn.mono
+EDGE	LeanDag.Hybrid.decided_of_leader_of_populated	LeanDag.PopulatedOn
+EDGE	LeanDag.Hybrid.decided_of_leader_of_populated	LeanDag.Hybrid.decided_of_leader_of_populated._proof_1_2
 EDGE	LeanDag.Hybrid.decided_of_leader_of_populated	LeanDag.BlockUniverse
 EDGE	LeanDag.Hybrid.decided_of_leader_of_populated	LeanDag.Hybrid.q
 EDGE	LeanDag.Hybrid.decided_of_leader_of_populated	LeanDag.Hybrid.decided_of_leader_of_populated._proof_1_1
@@ -13553,9 +13593,13 @@ NODE	LeanDag.epoch_closes._proof_1_10	LeanDag.Adaptive.Liveness	thm
 EDGE	LeanDag.epoch_closes._proof_1_10	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.epoch_closes._proof_1_10	LeanDag.Faults
 EDGE	LeanDag.epoch_closes._proof_1_10	LeanDag.Slots.slotRound
+EDGE	LeanDag.epoch_closes._proof_1_10	LeanDag.AdaptivePolicy.pick
+EDGE	LeanDag.epoch_closes._proof_1_10	LeanDag.slotsOf
+EDGE	LeanDag.epoch_closes._proof_1_10	LeanDag.BlockUniverse
 EDGE	LeanDag.epoch_closes._proof_1_10	LeanDag.Faults.f
 EDGE	LeanDag.epoch_closes._proof_1_10	LeanDag.AdaptivePolicy
 EDGE	LeanDag.epoch_closes._proof_1_10	LeanDag.Slots
+EDGE	LeanDag.epoch_closes._proof_1_10	LeanDag.AdaptivePolicy.inj
 NODE	LeanDag.votesIn.eq_1	LeanDag.Mysticeti	thm
 EDGE	LeanDag.votesIn.eq_1	LeanDag.votesIn
 EDGE	LeanDag.votesIn.eq_1	LeanDag.Faults
@@ -17195,7 +17239,6 @@ NODE	LeanDag.Odontoceti.epoch_closes._proof_1_10	LeanDag.Adaptive.Odontoceti	thm
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_10	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_10	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_10	LeanDag.Slots.slotRound
-EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_10	LeanDag.epochOf
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_10	LeanDag.Faults.f
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_10	LeanDag.AdaptivePolicy
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_10	LeanDag.Slots
@@ -17531,6 +17574,13 @@ EDGE	LeanDag.votesIn	LeanDag.BlockUniverse.block
 EDGE	LeanDag.votesIn	LeanDag.BlockUniverse
 NODE	LeanDagTest.urecover._proof_1	LeanDagTest.Integration	thm
 NODE	LeanDagTest.ugrowSkew._proof_6	LeanDagTest.Partial	thm
+NODE	LeanDag.epoch_closes._proof_1_12	LeanDag.Adaptive.Liveness	thm
+EDGE	LeanDag.epoch_closes._proof_1_12	LeanDag.AdaptivePolicy.W
+EDGE	LeanDag.epoch_closes._proof_1_12	LeanDag.Faults
+EDGE	LeanDag.epoch_closes._proof_1_12	LeanDag.Slots.slotRound
+EDGE	LeanDag.epoch_closes._proof_1_12	LeanDag.Faults.f
+EDGE	LeanDag.epoch_closes._proof_1_12	LeanDag.AdaptivePolicy
+EDGE	LeanDag.epoch_closes._proof_1_12	LeanDag.Slots
 NODE	LeanDag.Faults.mk	LeanDag.Validators	ctor
 EDGE	LeanDag.Faults.mk	LeanDag.Faults
 NODE	LeanDag.exists_mem_refs_of_correct_support_of_card	LeanDag.Support	thm
@@ -17597,7 +17647,6 @@ NODE	LeanDag.epoch_closes._proof_1_11	LeanDag.Adaptive.Liveness	thm
 EDGE	LeanDag.epoch_closes._proof_1_11	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.epoch_closes._proof_1_11	LeanDag.Faults
 EDGE	LeanDag.epoch_closes._proof_1_11	LeanDag.Slots.slotRound
-EDGE	LeanDag.epoch_closes._proof_1_11	LeanDag.epochOf
 EDGE	LeanDag.epoch_closes._proof_1_11	LeanDag.Faults.f
 EDGE	LeanDag.epoch_closes._proof_1_11	LeanDag.AdaptivePolicy
 EDGE	LeanDag.epoch_closes._proof_1_11	LeanDag.Slots
@@ -18692,10 +18741,10 @@ NODE	LeanDag.dos_resistance	LeanDag.DoS.Novelty	thm
 EDGE	LeanDag.dos_resistance	LeanDag.Delivery
 EDGE	LeanDag.dos_resistance	LeanDag.RefsAccepted
 EDGE	LeanDag.dos_resistance	LeanDag.Faults
-EDGE	LeanDag.dos_resistance	LeanDag.Populated
 EDGE	LeanDag.dos_resistance	LeanDag.UniformBudget
 EDGE	LeanDag.dos_resistance	LeanDag.Correct
 EDGE	LeanDag.dos_resistance	LeanDag.UniformBudget.byzBudget
+EDGE	LeanDag.dos_resistance	LeanDag.PopulatedOn
 EDGE	LeanDag.dos_resistance	LeanDag.BlockUniverse
 EDGE	LeanDag.dos_resistance	LeanDag.Faults.f
 EDGE	LeanDag.dos_resistance	LeanDag.viewUpto
@@ -18973,7 +19022,6 @@ EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Slots.slotRound
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.AdaptivePolicy.W_pos
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.epoch_closes._proof_1_6
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.epoch_closes._proof_1_4
-EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Populated
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.AdaptivePolicy.pick
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.slotsOf_leader
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.epoch_closes._proof_1_7
@@ -18984,10 +19032,10 @@ EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Correct
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.epoch_closes._proof_1_10
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.epoch_closes._proof_1_3
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.epoch_closes._proof_1_5
-EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.PopulatedOn.mono
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.directCommit_of_leader_mem
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.epoch_closes._proof_1_1
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.epochOf
+EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.PopulatedOn
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Faults.f
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.decidedWithin_below_of_committed_run
@@ -19001,6 +19049,7 @@ EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.SpansEligible
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.AdaptivePolicy
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.SynchronisedOn
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Slots
+EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.epoch_closes._proof_1_11
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.DirectCommit
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Slots.mono
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Faults5.toFaults
@@ -20550,7 +20599,6 @@ EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Odontoceti.exists_partialRun._
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.View.full
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Slots.slotRound
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.AdaptivePolicy.W_pos
-EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Populated
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Odontoceti.exists_partialRun._proof_1_2
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.AdaptivePolicy.pick
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Odontoceti.PartialRun.vdct
@@ -20563,6 +20611,7 @@ EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Odontoceti.exists_partialRun._
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Correct
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Odontoceti.exists_partialRun._proof_1_9
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.epochOf
+EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.PopulatedOn
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Odontoceti.decidedWithin_congr
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Faults.f
@@ -20636,6 +20685,14 @@ EDGE	LeanDag.card_historyBlocksOf_le'._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.card_historyBlocksOf_le'._proof_1_2	LeanDag.BlockUniverse
 EDGE	LeanDag.card_historyBlocksOf_le'._proof_1_2	LeanDag.Faults.f
 EDGE	LeanDag.card_historyBlocksOf_le'._proof_1_2	LeanDag.exposedTo
+NODE	LeanDag.epoch_closes._proof_1_13	LeanDag.Adaptive.Liveness	thm
+EDGE	LeanDag.epoch_closes._proof_1_13	LeanDag.AdaptivePolicy.W
+EDGE	LeanDag.epoch_closes._proof_1_13	LeanDag.Faults
+EDGE	LeanDag.epoch_closes._proof_1_13	LeanDag.Slots.slotRound
+EDGE	LeanDag.epoch_closes._proof_1_13	LeanDag.epochOf
+EDGE	LeanDag.epoch_closes._proof_1_13	LeanDag.Faults.f
+EDGE	LeanDag.epoch_closes._proof_1_13	LeanDag.AdaptivePolicy
+EDGE	LeanDag.epoch_closes._proof_1_13	LeanDag.Slots
 NODE	LeanDag.joinView._proof_2	LeanDag.GC.Bootstrap	thm
 EDGE	LeanDag.joinView._proof_2	LeanDag.Faults
 EDGE	LeanDag.joinView._proof_2	LeanDag.BlockUniverse.block
@@ -20973,10 +21030,10 @@ EDGE	LeanDag.dos_resistance'	LeanDag.card_viewUpto_le'
 EDGE	LeanDag.dos_resistance'	LeanDag.RefsAccepted
 EDGE	LeanDag.dos_resistance'	LeanDag.Faults
 EDGE	LeanDag.dos_resistance'	LeanDag.EventuallyDelivers
-EDGE	LeanDag.dos_resistance'	LeanDag.Populated
 EDGE	LeanDag.dos_resistance'	LeanDag.UniformBudget
 EDGE	LeanDag.dos_resistance'	LeanDag.Correct
 EDGE	LeanDag.dos_resistance'	LeanDag.UniformBudget.byzBudget
+EDGE	LeanDag.dos_resistance'	LeanDag.PopulatedOn
 EDGE	LeanDag.dos_resistance'	LeanDag.BlockUniverse
 EDGE	LeanDag.dos_resistance'	LeanDag.Faults.f
 EDGE	LeanDag.dos_resistance'	LeanDag.viewUpto
@@ -22791,6 +22848,12 @@ EDGE	LeanDag.Live.casesOn	LeanDag.Block.creator
 NODE	LeanDagTest.tightBBlk._proof_2	LeanDagTest.HybridTight	thm
 NODE	LeanDag.ViewGrowth.toDelivery._simp_1	LeanDag.ViewSync	thm
 NODE	LeanDagTest.ugrowCatch._proof_6	LeanDagTest.Catchup	thm
+NODE	LeanDag.Odontoceti.decided_of_leader_of_populated._proof_1_2	LeanDag.Odontoceti.Liveness	thm
+EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated._proof_1_2	LeanDag.Faults5
+EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated._proof_1_2	LeanDag.Slots.slotRound
+EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated._proof_1_2	LeanDag.Faults.f
+EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated._proof_1_2	LeanDag.Slots
+EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated._proof_1_2	LeanDag.Faults5.toFaults
 NODE	LeanDag.ValidWrt.mk	LeanDag.Block	ctor
 EDGE	LeanDag.ValidWrt.mk	LeanDag.Block
 EDGE	LeanDag.ValidWrt.mk	LeanDag.Faults
@@ -23326,9 +23389,13 @@ NODE	LeanDag.epoch_closes._proof_1_9	LeanDag.Adaptive.Liveness	thm
 EDGE	LeanDag.epoch_closes._proof_1_9	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.epoch_closes._proof_1_9	LeanDag.Faults
 EDGE	LeanDag.epoch_closes._proof_1_9	LeanDag.Slots.slotRound
+EDGE	LeanDag.epoch_closes._proof_1_9	LeanDag.AdaptivePolicy.pick
+EDGE	LeanDag.epoch_closes._proof_1_9	LeanDag.slotsOf
+EDGE	LeanDag.epoch_closes._proof_1_9	LeanDag.BlockUniverse
 EDGE	LeanDag.epoch_closes._proof_1_9	LeanDag.Faults.f
 EDGE	LeanDag.epoch_closes._proof_1_9	LeanDag.AdaptivePolicy
 EDGE	LeanDag.epoch_closes._proof_1_9	LeanDag.Slots
+EDGE	LeanDag.epoch_closes._proof_1_9	LeanDag.AdaptivePolicy.inj
 NODE	LeanDag.Hybrid.decidableEligible	LeanDag.Hybrid.Decision	def
 EDGE	LeanDag.Hybrid.decidableEligible	LeanDag.Hybrid.Eligible
 EDGE	LeanDag.Hybrid.decidableEligible	LeanDag.Hybrid.decidableEligible._aux_1
@@ -24140,10 +24207,10 @@ EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated	LeanDag.View.full
 EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated	LeanDag.Slots.slotRound
 EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated	LeanDag.Odontoceti.decided_of_leader_of_populated._proof_1_1
-EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated	LeanDag.Populated
+EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated	LeanDag.Odontoceti.decided_of_leader_of_populated._proof_1_2
 EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated	LeanDag.Slots.leader
 EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated	LeanDag.Correct
-EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated	LeanDag.PopulatedOn.mono
+EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated	LeanDag.PopulatedOn
 EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated	LeanDag.Faults.f
 EDGE	LeanDag.Odontoceti.decided_of_leader_of_populated	LeanDag.IsLeaderBlock
@@ -24276,6 +24343,7 @@ EDGE	LeanDag.adaptiveRun_exists	LeanDag.exists_partialRun
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.Correct
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.PartialRun.assign
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.adaptiveRun_exists._proof_1_2
+EDGE	LeanDag.adaptiveRun_exists	LeanDag.PopulatedOn.mono
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.epochOf
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.adaptiveRun_exists._proof_1_1
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.BlockUniverse
@@ -24310,6 +24378,7 @@ EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.Correct
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.Odontoceti.adaptiveRun_exists._proof_1_1
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.Odontoceti.adaptiveRun_exists._proof_1_2
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.Odontoceti.adaptiveRun_exists._proof_1_3
+EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.PopulatedOn.mono
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.epochOf
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.Odontoceti.decidedWithin_congr
@@ -25931,7 +26000,7 @@ EDGE	LeanDag.epoch_closes	LeanDag.Faults
 EDGE	LeanDag.epoch_closes	LeanDag.View.full
 EDGE	LeanDag.epoch_closes	LeanDag.Slots.slotRound
 EDGE	LeanDag.epoch_closes	LeanDag.AdaptivePolicy.W_pos
-EDGE	LeanDag.epoch_closes	LeanDag.Populated
+EDGE	LeanDag.epoch_closes	LeanDag.epoch_closes._proof_1_12
 EDGE	LeanDag.epoch_closes	LeanDag.DecidedWithin
 EDGE	LeanDag.epoch_closes	LeanDag.DirectCommit
 EDGE	LeanDag.epoch_closes	LeanDag.AdaptivePolicy.pick
@@ -25943,10 +26012,11 @@ EDGE	LeanDag.epoch_closes	LeanDag.Slots.leader
 EDGE	LeanDag.epoch_closes	LeanDag.Correct
 EDGE	LeanDag.epoch_closes	LeanDag.DecidedWithin.mono
 EDGE	LeanDag.epoch_closes	LeanDag.epoch_closes._proof_1_1
-EDGE	LeanDag.epoch_closes	LeanDag.PopulatedOn.mono
+EDGE	LeanDag.epoch_closes	LeanDag.epoch_closes._proof_1_13
 EDGE	LeanDag.epoch_closes	LeanDag.directCommitIn_full
 EDGE	LeanDag.epoch_closes	LeanDag.epoch_closes._proof_1_7
 EDGE	LeanDag.epoch_closes	LeanDag.epochOf
+EDGE	LeanDag.epoch_closes	LeanDag.PopulatedOn
 EDGE	LeanDag.epoch_closes	LeanDag.DecidedWithin.directCommit
 EDGE	LeanDag.epoch_closes	LeanDag.BlockUniverse
 EDGE	LeanDag.epoch_closes	LeanDag.epoch_closes._proof_1_2
@@ -26959,10 +27029,10 @@ EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.View.full
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Slots.slotRound
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Odontoceti.decided_of_leader_of_populated
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Slots.unbounded
-EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Populated
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Slots.leader
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.FairRunOn
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Correct
+EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.PopulatedOn
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Faults.f
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.IsLeaderBlock

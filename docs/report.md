@@ -2900,9 +2900,10 @@ hypothesis rather than a premise of the DoS argument: any of the routes of
 §§6.7–6.9 discharges it (§4.3):
 
 ```lean
-theorem dos_resistance {T N : ℕ} (hpop : ∀ r ≤ N, Populated U r)
+theorem dos_resistance {T N : ℕ} {P : Finset Validator}
+    (hpop : ∀ r ≤ N, PopulatedOn U P r)
     (hu : UniformBudget D T) (hra : RefsAccepted D) :
-    (∀ r ≤ N, Populated U r) ∧
+    (∀ r ≤ N, PopulatedOn U P r) ∧
       ∀ v ∈ (Correct : Finset Validator), ∀ n,
         (viewUpto D v n).card ≤
           (Correct : Finset Validator).card * (n + 1) +
@@ -3417,7 +3418,7 @@ theorem all_decided_below_of_fairRun (hc : 0 < c) (hT : T ⊆ Correct)
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hspan : SpansEligible Validator c) (fair : FairRunOn T c) (R k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ U N, (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
+      ∀ U N, (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
         S.slotRound (b + c - 1) + 1 ≤ N →
         ∀ i, i < b → ∃ v, Decided U (View.full U) i v
 ```
@@ -11890,9 +11891,10 @@ theorem card_viewUpto_le {κ : ℕ} (hbyz : ByzBudget D κ)
 *theorem, `DoS.Novelty.lean`*
 
 ```lean
-theorem dos_resistance {T N : ℕ} (hpop : ∀ r ≤ N, Populated U r)
+theorem dos_resistance {T N : ℕ} {P : Finset Validator}
+    (hpop : ∀ r ≤ N, PopulatedOn U P r)
     (hu : UniformBudget D T) (hra : RefsAccepted D) :
-    (∀ r ≤ N, Populated U r) ∧
+    (∀ r ≤ N, PopulatedOn U P r) ∧
       ∀ v ∈ (Correct : Finset Validator), ∀ n,
         (viewUpto D v n).card ≤
           (Correct : Finset Validator).card * (n + 1) +
@@ -11907,10 +11909,11 @@ theorem dos_resistance {T N : ℕ} (hpop : ∀ r ≤ N, Populated U r)
 *theorem, `DoS.Novelty.lean`*
 
 ```lean
-theorem dos_resistance' {T R N : ℕ} (hpop : ∀ r ≤ N, Populated U r)
+theorem dos_resistance' {T R N : ℕ} {P : Finset Validator}
+    (hpop : ∀ r ≤ N, PopulatedOn U P r)
     (hED : EventuallyDelivers D R) (hu : UniformBudget D T)
     (hra : RefsAccepted D) :
-    (∀ r ≤ N, Populated U r) ∧
+    (∀ r ≤ N, PopulatedOn U P r) ∧
       ∀ v ∈ (Correct : Finset Validator), ∀ n, R + 1 ≤ n →
         (viewUpto D v n).card ≤ (viewUpto D v (R + 1)).card +
           (n - (R + 1)) *
@@ -12594,7 +12597,7 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
+        (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
         S.slotRound (b + c - 1) + 1 ≤ N →
         ∀ i, i < b → ∃ v, Decided U (View.full U) i v
 ```
@@ -13639,7 +13642,7 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (fair : FairRunOn T c) (R : ℕ) (s : ℕ) :
     ∃ b, s ≤ b ∧ R ≤ S.slotRound b ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
+        (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
         S.slotRound (b + c - 1) + 1 ≤ N →
         ∀ i, i < b → ∃ v, Decided k U (View.full U) i v
 ```
@@ -13815,7 +13818,7 @@ theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r ≤ N, Populated U r) (v : ℕ → Option BlockId) (E : ℕ)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (v : ℕ → Option BlockId) (E : ℕ)
     (hN : S.slotRound (P.W * (E + 2)) + 2 ≤ N) :
     ∀ k, epochOf P.W k < E + 1 →
       ∃ w, DecidedWithin (S := slotsOf P.inj (fun m => P.pick U v m)) U
@@ -13834,7 +13837,7 @@ theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r ≤ N, Populated U r) (E : ℕ)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (E : ℕ)
     (hN : S.slotRound (P.W * (E + 1)) + 2 ≤ N) :
     Nonempty (PartialRun P U (View.full U) E)
 ```
@@ -13917,7 +13920,7 @@ theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible Validator c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r ≤ N, Populated U r) (v : ℕ → Option BlockId) (E : ℕ)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (v : ℕ → Option BlockId) (E : ℕ)
     (hN : S.slotRound (P.W * (E + 2)) + 1 ≤ N) :
     ∀ k, epochOf P.W k < E + 1 →
       ∃ w, DecidedWithin (S := slotsOf P.inj (fun m => P.pick U v m)) U
@@ -13936,7 +13939,7 @@ theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible Validator c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r ≤ N, Populated U r) (E : ℕ)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (E : ℕ)
     (hN : S.slotRound (P.W * (E + 1)) + 1 ≤ N) :
     Nonempty (PartialRun P U (View.full U) E)
 ```

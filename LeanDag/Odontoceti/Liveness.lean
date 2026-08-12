@@ -97,15 +97,14 @@ theorem decided_of_leader_mem
 `decided_of_leader_of_populated`: the rule needs the leader's round and
 the one above it, so two rounds are read off the horizon rather than
 three. -/
-theorem decided_of_leader_of_populated (hT : T ⊆ (Correct : Finset Validator))
+theorem decided_of_leader_of_populated (_hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
-    (hpop : ∀ r ≤ N, Populated U r) (hN : S.slotRound k + 1 ≤ N)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (hN : S.slotRound k + 1 ≤ N)
     (hlead : S.leader k ∈ T) :
     ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) :=
   decided_of_leader_mem hcard hs hR
-    (PopulatedOn.mono hT (hpop _ (by omega)))
-    (PopulatedOn.mono hT (hpop _ (by omega))) hlead
+    (hpop _ (by omega) (by omega)) (hpop _ (by omega) (by omega)) hlead
 
 /-- The same at `T := Correct`. -/
 theorem decided_of_correct_leader (hs : Synchronised U R)
@@ -209,7 +208,7 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
+        (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
         S.slotRound (b + c - 1) + 1 ≤ N →
         ∀ i, i < b → ∃ v, Decided U (View.full U) i v := by
   obtain ⟨k₀, hk₀⟩ := S.unbounded R
@@ -238,7 +237,7 @@ theorem all_decided_below_of_fairRun_correct {c : ℕ} (hc : 0 < c)
     (fair : FairRunOn (Correct : Finset Validator) c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → Synchronised U R →
+        (∀ r, R ≤ r → r ≤ N → Populated U r) → Synchronised U R →
         S.slotRound (b + c - 1) + 1 ≤ N →
         ∀ i, i < b → ∃ v, Decided U (View.full U) i v :=
   all_decided_below_of_fairRun hc Finset.Subset.rfl card_correct hspan
