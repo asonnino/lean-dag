@@ -293,14 +293,13 @@ theorem ugrowSkewGrowth_commits (k : ℕ) :
   exact ⟨k', hk', _, L, hL, hd⟩
 
 /-- **And the same from genesis**, with the seed at round `0` rather than at
-the synchrony round. `hcross` is the only new hypothesis, and on this model
-it is arithmetic: `gst = 0`, `delay = 2`, and every `T`-validator's round-`1`
-build is at `v + 4 ≥ 5`.
+the synchrony round. `hcross` is the only new hypothesis and it is **vacuous
+here**: it constrains the round that straddles GST, and this model has
+`gst = 0`, so no round was built before it.
 
-The two routes agree here because this model has `gst = 0`, so its `base` is
-already genesis. What the genesis route adds is that a model with `gst > 0`
-needs no seed *at the crossing* — only at round `0`, where no network is
-involved. -/
+That vacuity is the measure of how much `hcross` asks. It says nothing about
+a schedule already past GST; it bites only on the one round whose predecessor
+was built while the network was still asynchronous. -/
 theorem ugrowSkewGrowth_commits_via_genesis (k : ℕ) :
     ∃ k', k ≤ k' ∧ ∃ N L, IsLeaderBlock (Ugrow N) k' L ∧
       Decided (Ugrow N) (View.full (Ugrow N)) k' (some L) := by
@@ -311,10 +310,7 @@ theorem ugrowSkewGrowth_commits_via_genesis (k : ℕ) :
   obtain ⟨L, hL, hd⟩ :=
     hcommit (Ugrow (fairSlots.slotRound k' + 2)) _ 2 (ugrowSkewGrowth _)
       (ugrowSkewGrowth_drift _) (fun n => by change 2 + 2 ≤ 4; omega)
-      (fun v hv => by
-        obtain ⟨_, _⟩ := mem_T_bounds hv
-        change 0 + 2 ≤ (v : ℕ) + 4 * 1
-        omega)
+      (fun _ _ _ _ _ _ h => absurd h (Nat.not_lt.mpr (Nat.zero_le _)))
       (le_refl 0) (le_refl _)
   exact ⟨k', hk', _, L, hL, hd⟩
 

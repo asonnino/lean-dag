@@ -6150,17 +6150,6 @@ NODE	LeanDag.CatchupSync.proc	LeanDag.Drift.Catchup	def
 EDGE	LeanDag.CatchupSync.proc	LeanDag.Faults
 EDGE	LeanDag.CatchupSync.proc	LeanDag.BlockUniverse
 EDGE	LeanDag.CatchupSync.proc	LeanDag.CatchupSync
-NODE	LeanDag.ViewGrowth.populatedOn_of_genesis._proof_1_6	LeanDag.ViewSync	thm
-EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis._proof_1_6	LeanDag.Faults
-EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis._proof_1_6	LeanDag.ViewGrowth.gst
-EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis._proof_1_6	LeanDag.ViewGrowth.delay
-EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis._proof_1_6	LeanDag.ViewGrowth.timeout
-EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis._proof_1_6	LeanDag.BlockUniverse.block
-EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis._proof_1_6	LeanDag.Block.round
-EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis._proof_1_6	LeanDag.BlockUniverse
-EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis._proof_1_6	LeanDag.ViewGrowth
-EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis._proof_1_6	LeanDag.Faults.f
-EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis._proof_1_6	LeanDag.ViewGrowth.built
 NODE	LeanDag.PartialRun.vdct	LeanDag.Adaptive.Run	def
 EDGE	LeanDag.PartialRun.vdct	LeanDag.PartialRun
 EDGE	LeanDag.PartialRun.vdct	LeanDag.Faults
@@ -9765,7 +9754,6 @@ EDGE	LeanDag.Hybrid.Decided.below.directCommit	LeanDag.IsLeaderBlock
 EDGE	LeanDag.Hybrid.Decided.below.directCommit	LeanDag.Hybrid.Decided.directCommit
 EDGE	LeanDag.Hybrid.Decided.below.directCommit	LeanDag.Slots
 EDGE	LeanDag.Hybrid.Decided.below.directCommit	LeanDag.View
-NODE	LeanDag.built_mono_of_waits._proof_1_2	LeanDag.ViewSync	thm
 NODE	LeanDag.ViewSync.gst	LeanDag.ViewSync	def
 EDGE	LeanDag.ViewSync.gst	LeanDag.Faults
 EDGE	LeanDag.ViewSync.gst	LeanDag.ViewSync
@@ -11686,11 +11674,6 @@ EDGE	LeanDag.round_le_of_mem_viewUpto._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.round_le_of_mem_viewUpto._proof_1_2	LeanDag.BlockUniverse.block
 EDGE	LeanDag.round_le_of_mem_viewUpto._proof_1_2	LeanDag.Block.round
 EDGE	LeanDag.round_le_of_mem_viewUpto._proof_1_2	LeanDag.BlockUniverse
-NODE	LeanDag.built_mono_of_waits	LeanDag.ViewSync	thm
-EDGE	LeanDag.built_mono_of_waits	LeanDag.Faults
-EDGE	LeanDag.built_mono_of_waits	LeanDag.built_mono_of_waits._proof_1_1
-EDGE	LeanDag.built_mono_of_waits	LeanDag.built_mono_of_waits._proof_1_3
-EDGE	LeanDag.built_mono_of_waits	LeanDag.built_mono_of_waits._proof_1_2
 NODE	LeanDagTest.aBase	LeanDagTest.Adaptive	def
 NODE	LeanDag.ViewSync	LeanDag.ViewSync	ind
 EDGE	LeanDag.ViewSync	LeanDag.Faults
@@ -12907,7 +12890,6 @@ EDGE	LeanDagTest.ugrowTiming_rated	LeanDag.Timing.timeout
 EDGE	LeanDagTest.ugrowTiming_rated	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowTiming_rated	LeanDagTest.ugrowTiming
 NODE	LeanDagTest.ugrowSkewGrowth_commits_via_genesis	LeanDagTest.ViewSync	thm
-EDGE	LeanDagTest.ugrowSkewGrowth_commits_via_genesis	LeanDagTest.ugrowSkewGrowth_commits_via_genesis._proof_1_2
 EDGE	LeanDagTest.ugrowSkewGrowth_commits_via_genesis	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowSkewGrowth_commits_via_genesis	LeanDag.View.full
 EDGE	LeanDagTest.ugrowSkewGrowth_commits_via_genesis	LeanDag.Slots.slotRound
@@ -12920,7 +12902,6 @@ EDGE	LeanDagTest.ugrowSkewGrowth_commits_via_genesis	LeanDag.Decided
 EDGE	LeanDagTest.ugrowSkewGrowth_commits_via_genesis	LeanDag.Slots.leader
 EDGE	LeanDagTest.ugrowSkewGrowth_commits_via_genesis	LeanDag.Correct
 EDGE	LeanDagTest.ugrowSkewGrowth_commits_via_genesis	LeanDag.ViewGrowth.delay
-EDGE	LeanDagTest.ugrowSkewGrowth_commits_via_genesis	LeanDagTest.mem_T_bounds
 EDGE	LeanDagTest.ugrowSkewGrowth_commits_via_genesis	LeanDag.ViewGrowth.timeout
 EDGE	LeanDagTest.ugrowSkewGrowth_commits_via_genesis	LeanDag.BlockUniverse
 EDGE	LeanDagTest.ugrowSkewGrowth_commits_via_genesis	LeanDag.ViewGrowth
@@ -15232,7 +15213,6 @@ EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis	LeanDag.ViewGrowth.holds
 EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis	LeanDag.ViewGrowth.gst
 EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis	LeanDag.BlockUniverse.ids
 EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis	LeanDag.ViewGrowth.builds
-EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis	LeanDag.ViewGrowth.populatedOn_of_genesis._proof_1_6
 EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis	LeanDag.ViewGrowth.populatedOn_of_genesis._proof_1_2
 EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis	LeanDag.ViewGrowth.delay
 EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis	LeanDag.ViewGrowth.holds_own
@@ -15248,7 +15228,6 @@ EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis	LeanDag.Faults.f
 EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis	LeanDag.ViewGrowth.waits
 EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis	LeanDag.ViewGrowth.base
 EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis	LeanDag.ViewGrowth.built
-EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis	LeanDag.built_mono_of_waits
 EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis	LeanDag.ViewGrowth.converges
 EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis	LeanDag.Block.creator
 EDGE	LeanDag.ViewGrowth.populatedOn_of_genesis	LeanDag.ViewGrowth.populatedOn_of_genesis._proof_1_1
@@ -21300,9 +21279,6 @@ EDGE	LeanDag.Hybrid.instDecidableThickLink	LeanDag.Hybrid.instDecidableThickLink
 EDGE	LeanDag.Hybrid.instDecidableThickLink	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.instDecidableThickLink	LeanDag.HybridFaults.toFaults
 EDGE	LeanDag.Hybrid.instDecidableThickLink	LeanDag.BlockUniverse
-NODE	LeanDagTest.ugrowSkewGrowth_commits_via_genesis._proof_1_2	LeanDagTest.ViewSync	thm
-EDGE	LeanDagTest.ugrowSkewGrowth_commits_via_genesis._proof_1_2	LeanDag.Slots.slotRound
-EDGE	LeanDagTest.ugrowSkewGrowth_commits_via_genesis._proof_1_2	LeanDagTest.fairSlots
 NODE	LeanDag.ReactiveCore.mk.noConfusion	LeanDag.Reactive.Basic	def
 EDGE	LeanDag.ReactiveCore.mk.noConfusion	LeanDag.ReactiveCore.noConfusion
 EDGE	LeanDag.ReactiveCore.mk.noConfusion	LeanDag.Faults
@@ -22778,7 +22754,6 @@ EDGE	LeanDagTest.urecover._proof_6	LeanDagTest.Ucut
 EDGE	LeanDagTest.urecover._proof_6	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.urecover._proof_6	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.urecover._proof_6	LeanDag.Block.creator
-NODE	LeanDag.built_mono_of_waits._proof_1_1	LeanDag.ViewSync	thm
 NODE	LeanDag.ViewSync.built	LeanDag.ViewSync	def
 EDGE	LeanDag.ViewSync.built	LeanDag.Faults
 EDGE	LeanDag.ViewSync.built	LeanDag.ViewSync
@@ -23522,7 +23497,6 @@ EDGE	LeanDag.Odontoceti.decided_below_of_committed_run	LeanDag.View
 EDGE	LeanDag.Odontoceti.decided_below_of_committed_run	LeanDag.Faults5.toFaults
 EDGE	LeanDag.Odontoceti.decided_below_of_committed_run	LeanDag.Block.creator
 EDGE	LeanDag.Odontoceti.decided_below_of_committed_run	LeanDag.Odontoceti.decided_below_of_committed_run._proof_1_2
-NODE	LeanDag.built_mono_of_waits._proof_1_3	LeanDag.ViewSync	thm
 NODE	LeanDag.hybrid_f	LeanDag.Hybrid.Faults	thm
 EDGE	LeanDag.hybrid_f	LeanDag.HybridFaults
 EDGE	LeanDag.hybrid_f	LeanDag.HybridFaults.fc

@@ -2233,7 +2233,7 @@ still owes:
 | Timing (§6.8) | `Timing.covers` — Δ after GST, concludes on `refs` | P9, drift | `SynchronisedOn` |
 | View convergence (§6.9) | `converges` — Δ after GST, over views | P7, P9, drift | `SynchronisedOn`, and the other two |
 | View growth (§6.9) | `converges`, with `blk` removed | P7, P8, P9, drift, one seed round at `R` | `PopulatedOn` from `R` on, `SynchronisedOn`, and commits |
-| View growth from genesis (§6.9) | `converges`, and `gst ≤ R` | P7, P8, P9, drift, genesis, `hcross` | `PopulatedOn` from round `0`, `SynchronisedOn` from `R`, and commits |
+| View growth from genesis (§6.9) | `converges`, and `gst ≤ R` | P7, P8, P9, drift, genesis, the straddling round | `PopulatedOn` from round `0`, `SynchronisedOn` from `R`, and commits |
 | Untimed views (§6.9) | `ViewsConverge` — no bound, index-aligned | `HoldsOwn`, P8 | `Populated`, from round `0` |
 
 The three routes are interchangeable at the interface. Results above it
@@ -2279,15 +2279,32 @@ that time — so a genesis block, however early it was built, is in every
 round was built before or after `gst`, the first case being the ordinary
 one and the second discharged by a new hypothesis `hcross`.
 
-`hcross` — no `T`-validator finishes round `0` before `gst + delay` — is
-the entire residue, and it is a condition on the **schedule** rather than
-on the DAG. It says that a validator racing through rounds while the
-network delivers nothing is not being modelled, which is the intended
-reading: such a validator has no quorum to build on and would not
-advance. It cannot be dropped, because the structure fixes one build time
-per round, so a validator whose round-`1` build falls before `gst + delay`
-has no round-`1` block at all, and at `T.card = n − f` the quorum then
-fails for everyone.
+`hcross` is the entire residue. It constrains only the round that
+*straddles* GST — if the round below was built before `gst`, the round
+above is not built within `delay` of it — saying nothing about a schedule
+already past GST, and nothing at all when `gst = 0`, where it is vacuous.
+And it constrains the **schedule** rather than the DAG, which is the
+substantive difference: a pacemaker can discharge it, whereas a seed at
+`R` cannot be discharged at all.
+
+**It cannot simply be dropped**, and the obstruction is a limit of the
+structure rather than of the argument. `built` is a *total* function,
+assigning a build time to every round whether or not the validator could
+build there. A real validator lacking a quorum does not complete the
+round; it waits, and its build time lands after the quorum arrives —
+which is exactly what `hcross` says. Having no way to express *stuck*,
+the structure also admits schedules in which a validator "builds" round
+`n+1` at a time when no quorum exists, and there the round is permanently
+empty and, at `T.card = n − f`, so is everything above it.
+
+Nor does the obvious repair work. Adding P8's converse — *a validator
+builds for round `n+1` only once it holds a quorum at round `n`* —
+collapses into assuming the conclusion, for the same reason: `built v (n+1)`
+is a number that exists by totality, so saying the build waits for the
+quorum forces the quorum to be in hand at that time, which is production
+outright. Removing `hcross` honestly means making the build schedule
+partial, which is a change to the model rather than to this proof, and it
+is not attempted here.
 
 The two seeds are the two ends of one statement. If the pre-GST network
 did deliver enough for the DAG to reach round `R`, `base` at `R` is
@@ -10968,7 +10985,8 @@ theorem populatedOn_of_genesis (vg : ViewGrowth U T 0 N)
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hD : DriftOn vg.built T 0 D N)
     (hbackoff : ∀ n, D + vg.delay ≤ vg.timeout n)
-    (hcross : ∀ v ∈ T, vg.gst + vg.delay ≤ vg.built v 1) :
+    (hcross : ∀ v ∈ T, ∀ w ∈ T, ∀ n < N,
+      vg.built w n < vg.gst → vg.gst + vg.delay ≤ vg.built v (n + 1)) :
     ∀ n ≤ N, PopulatedOn U T n
 ```
 
@@ -10980,9 +10998,13 @@ At `R = 0` the structure's own `base` **is** genesis and `builds` is unguarded, 
 
 It does reach them afterwards, and that is the content of the theorem below. `converges` may be applied at any time past `gst`, and `holds_mono` carries a block built earlier forward to that time — so a genesis block built at `built w 0`, however early, is in every `T`-validator's hands by `gst + delay`. The step then splits on whether the round was built before or after `gst`:
 
-* **after** — the ordinary case, discharged by drift, the wait and the backoff, exactly as in `populatedOn`; * **before** — discharged by `hcross`, which says no `T`-validator finishes round `0` before `gst + delay`.
+* **after** — the ordinary case, discharged by drift, the wait and the backoff, exactly as in `populatedOn`; * **before** — discharged by `hcross`, which constrains only the round that *straddles* GST: if the round below was built before `gst`, the round above is not built within `delay` of it. Past GST it says nothing, and at `gst = 0` it is vacuous.
 
-`hcross` is the whole residue, and it is a condition on the *schedule* rather than on the DAG. It says a validator racing through rounds while the network delivers nothing is not being modelled — which is the intended reading, since such a validator has no quorum to build on and would not advance. It cannot be dropped: the structure fixes one build time per round, so a validator whose round-`1` build falls before `gst + delay` has no round-`1` block at all, and with `T.card = n - f` the quorum then fails for everyone. What it replaces is a hypothesis about which blocks the asynchronous network managed to deliver, which is not something a protocol designer can assume.
+`hcross` is the whole residue, and it constrains the **schedule** rather than the DAG — which is why it can be discharged by a pacemaker, where a seed at `R` cannot be discharged at all.
+
+**Why it cannot simply be dropped**, and the reason is a limit of this structure rather than of the argument. `built` is a *total* function: it assigns a build time to every round whether or not the validator could build there. A real validator that lacks a quorum does not complete the round — it waits, and its build time lands after the quorum arrives, which is exactly `hcross`. The structure has no way to say *stuck*, so it also admits schedules in which a validator "builds" round `n+1` at a time when no quorum exists; there the round is permanently empty and, at `T.card = n - f`, everything above it is too.
+
+Nor does the obvious repair work. Adding P8's converse — *a validator builds for round `n+1` only once it holds a quorum at round `n`* — collapses into assuming the conclusion, for the same reason: since `built v (n+1)` is a number that exists by totality, saying the build waits for the quorum forces the quorum to be in hand at that time, which is production outright. Removing `hcross` honestly means making the build schedule partial, which is a change to the model rather than to this proof.
 
 The two seeds are the two ends of one statement. If the pre-GST network did deliver enough for the DAG to reach round `R`, `base` at `R` is available and `populatedOn` applies; if it delivered nothing, `hcross` holds because nobody could advance, and this applies.
 
@@ -11032,7 +11054,8 @@ theorem commits_recur_via_genesis (hT : T ⊆ (Correct : Finset Validator))
         (vg : ViewGrowth U T 0 N),
         DriftOn vg.built T 0 D N →
         (∀ n, D + vg.delay ≤ vg.timeout n) →
-        (∀ v ∈ T, vg.gst + vg.delay ≤ vg.built v 1) →
+        (∀ v ∈ T, ∀ w ∈ T, ∀ n < N,
+          vg.built w n < vg.gst → vg.gst + vg.delay ≤ vg.built v (n + 1)) →
         vg.gst ≤ R →
         S.slotRound k' + 2 ≤ N →
         ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L)
@@ -13942,7 +13965,7 @@ Report §8.4's `RefsAccepted` asks for the author, and the pool argument uses on
 
 ## Appendix D. Index of internal lemmas
 
-The 331 lemmas used only within the file that proves
+The 330 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -14077,7 +14100,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `slotRound_le_of_lt` | A slot bound becomes a round bound. |
 | `unbounded_of_rated` | Every rated backoff is unbounded, so `Rated` really is a strengthening of `exists_backoff_ge`'s hypothesis … |
 
-### `ViewSync.lean` (23)
+### `ViewSync.lean` (22)
 
 | Lemma | Role |
 |:---|:---|
@@ -14085,7 +14108,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `ViewSync.convergesEventually` | Every `ViewSync` converges in the qualitative sense too — the bound is extra information, not a different … |
 | `ViewSync.convergesWithin` | The `converges` field *is* the bounded form — the definition is the field, unfolded. |
 | `blk_mem_holds` | Build-time views agree, from `R` on. Every `T`-authored round-`n` block is in *every* `T`-validator's … |
-| `built_mono_of_waits` | Build times do not decrease with the round. `waits` alone gives it — `timeout_pos` is not needed, since … |
 | `commits_recur_via_interface_correct` | The spine at `T := Correct`, the shape the earlier statement had. |
 | `convergesEventually_of_within` | A bounded lag is a lag: the timed form implies the untimed one, even before `gst`, since holdings only grow. |
 | `convergesWithin_of_bounded` | And conversely: eventual convergence whose lag is uniformly bounded after `gst` *is* convergence within … |

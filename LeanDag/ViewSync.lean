@@ -684,23 +684,6 @@ theorem Timing.driftFrom_iff_driftOn (tm : Timing U T N) :
     tm.DriftFrom R D ↔ DriftOn tm.built T R D N := Iff.rfl
 
 omit [DecidableEq BlockId] in
-/-- Build times do not decrease with the round. `waits` alone gives it —
-`timeout_pos` is not needed, since the wait is by a natural number. -/
-theorem built_mono_of_waits {built : Validator → ℕ → ℕ} {timeout : ℕ → ℕ}
-    (waits : ∀ v ∈ T, ∀ n, built v n + timeout n ≤ built v (n + 1))
-    {v : Validator} (hv : v ∈ T) {m n : ℕ} (h : m ≤ n) :
-    built v m ≤ built v n := by
-  induction n with
-  | zero => have : m = 0 := by omega
-            subst this; exact le_refl _
-  | succ n ih =>
-      rcases Nat.eq_or_lt_of_le h with rfl | hlt
-      · exact le_refl _
-      · have := waits v hv n
-        have := ih (by omega)
-        omega
-
-omit [DecidableEq BlockId] in
 /-- Rounds advance real time — `Timing.le_built`'s argument over a
 schedule alone, for the same reason. -/
 theorem le_built_of_waits {built : Validator → ℕ → ℕ} {timeout : ℕ → ℕ}
@@ -998,19 +981,32 @@ or after `gst`:
 
 * **after** — the ordinary case, discharged by drift, the wait and the
   backoff, exactly as in `populatedOn`;
-* **before** — discharged by `hcross`, which says no `T`-validator finishes
-  round `0` before `gst + delay`.
+* **before** — discharged by `hcross`, which constrains only the round that
+  *straddles* GST: if the round below was built before `gst`, the round above
+  is not built within `delay` of it. Past GST it says nothing, and at
+  `gst = 0` it is vacuous.
 
-`hcross` is the whole residue, and it is a condition on the *schedule*
-rather than on the DAG. It says a validator racing through rounds while the
-network delivers nothing is not being modelled — which is the intended
-reading, since such a validator has no quorum to build on and would not
-advance. It cannot be dropped: the structure fixes one build time per round,
-so a validator whose round-`1` build falls before `gst + delay` has no
-round-`1` block at all, and with `T.card = n - f` the quorum then fails for
-everyone. What it replaces is a hypothesis about which blocks the
-asynchronous network managed to deliver, which is not something a protocol
-designer can assume.
+`hcross` is the whole residue, and it constrains the **schedule** rather than
+the DAG — which is why it can be discharged by a pacemaker, where a seed at
+`R` cannot be discharged at all.
+
+**Why it cannot simply be dropped**, and the reason is a limit of this
+structure rather than of the argument. `built` is a *total* function: it
+assigns a build time to every round whether or not the validator could build
+there. A real validator that lacks a quorum does not complete the round — it
+waits, and its build time lands after the quorum arrives, which is exactly
+`hcross`. The structure has no way to say *stuck*, so it also admits
+schedules in which a validator "builds" round `n+1` at a time when no quorum
+exists; there the round is permanently empty and, at `T.card = n - f`,
+everything above it is too.
+
+Nor does the obvious repair work. Adding P8's converse — *a validator builds
+for round `n+1` only once it holds a quorum at round `n`* — collapses into
+assuming the conclusion, for the same reason: since `built v (n+1)` is a
+number that exists by totality, saying the build waits for the quorum forces
+the quorum to be in hand at that time, which is production outright. Removing
+`hcross` honestly means making the build schedule partial, which is a change
+to the model rather than to this proof.
 
 The two seeds are the two ends of one statement. If the pre-GST network did
 deliver enough for the DAG to reach round `R`, `base` at `R` is available
@@ -1020,7 +1016,8 @@ theorem populatedOn_of_genesis (vg : ViewGrowth U T 0 N)
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hD : DriftOn vg.built T 0 D N)
     (hbackoff : ∀ n, D + vg.delay ≤ vg.timeout n)
-    (hcross : ∀ v ∈ T, vg.gst + vg.delay ≤ vg.built v 1) :
+    (hcross : ∀ v ∈ T, ∀ w ∈ T, ∀ n < N,
+      vg.built w n < vg.gst → vg.gst + vg.delay ≤ vg.built v (n + 1)) :
     ∀ n ≤ N, PopulatedOn U T n := by
   intro n
   induction n with
@@ -1041,12 +1038,10 @@ theorem populatedOn_of_genesis (vg : ViewGrowth U T 0 N)
       have hdrift := hD v hv w hw n (Nat.zero_le _) (by omega)
       have hwait := vg.waits v hv n
       have hto := hbackoff n
-      have hc := hcross v hv
-      have hmono : vg.built v 1 ≤ vg.built v (n + 1) :=
-        built_mono_of_waits (fun u hu m => vg.waits u hu m) hv (by omega)
-      rcases le_total vg.gst (vg.built w n) with h | h
+      rcases Nat.lt_or_ge (vg.built w n) vg.gst with h | h
+      · have hc := hcross v hv w hw n (by omega) h
+        rw [max_eq_right h.le]; omega
       · rw [max_eq_left h]; omega
-      · rw [max_eq_right h]; omega
 
 section Liveness
 
@@ -1127,7 +1122,8 @@ theorem commits_recur_via_genesis (hT : T ⊆ (Correct : Finset Validator))
         (vg : ViewGrowth U T 0 N),
         DriftOn vg.built T 0 D N →
         (∀ n, D + vg.delay ≤ vg.timeout n) →
-        (∀ v ∈ T, vg.gst + vg.delay ≤ vg.built v 1) →
+        (∀ v ∈ T, ∀ w ∈ T, ∀ n < N,
+          vg.built w n < vg.gst → vg.gst + vg.delay ≤ vg.built v (n + 1)) →
         vg.gst ≤ R →
         S.slotRound k' + 2 ≤ N →
         ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
