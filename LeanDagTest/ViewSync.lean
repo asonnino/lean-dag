@@ -343,7 +343,6 @@ def ugrowSkewPace (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
   latest_mem _ _ := ⟨3, by decide, le_refl _⟩
   prompt _ _ _ _ := le_max_left _ _
   holds := skewHolds N
-  holds_sub := (ugrowSkewGrowth N).holds_sub
   holds_own := (ugrowSkewGrowth N).holds_own
   holds_mono := (ugrowSkewGrowth N).holds_mono
   converges := (ugrowSkewGrowth N).converges
@@ -434,10 +433,6 @@ def ugrowStuckPace : ViewPace (Ugrow 0) {1} 5 where
   latest_mem _ _ := ⟨1, by decide, le_refl _⟩
   prompt _ _ _ h := absurd h (Nat.not_lt.mpr (Nat.zero_le _))
   holds _ _ := {1}
-  holds_sub _ _ := by
-    intro b hb
-    simp only [Finset.mem_singleton] at hb
-    simp only [ugrow_ids, Finset.mem_range]; omega
   holds_own v hv n _ b hb hbc _ := by
     have hv1 : v = 1 := by simpa using hv
     subst hv1

@@ -108,7 +108,6 @@ structure ViewPace (U : BlockUniverse Validator BlockId Payload)
   prompt : ∀ v ∈ T, ∀ n < top v,
     built v (n + 1) ≤ max (built v n + timeout n) (latest n + delay)
   holds : Validator → ℕ → Finset BlockId
-  holds_sub : ∀ v t, holds v t ⊆ U.ids
   /-- A validator holds every block it authored, from the time it built it. -/
   holds_own : ∀ v ∈ T, ∀ n ≤ N, ∀ b ∈ U.ids,
     (U.block b).creator = v → (U.block b).round = n → b ∈ holds v (built v n)
