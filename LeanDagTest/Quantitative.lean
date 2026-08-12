@@ -121,7 +121,7 @@ theorem ugrow_commits_by_round (k : ℕ) :
   refine ⟨k', hk, by simp only [rrSlots_slotRound]; omega, ?_⟩
   intro N hN
   exact hcommit (Ugrow N) N
-    (fun r hr => no_stall (ugrow_live N) (ugrow_deliversQuorum N) r hr)
+    (fun r _ hr => no_stall (ugrow_live N) (ugrow_deliversQuorum N) r hr)
     (ugrow_synchronisedOn_of_rate N)
     (by simp only [rrSlots_slotRound, slotAt_zero, Nat.max_zero]; omega)
 

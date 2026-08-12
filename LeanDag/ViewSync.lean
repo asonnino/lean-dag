@@ -421,7 +421,7 @@ theorem commits_recur_via_interface (hT : T ⊆ (Correct : Finset Validator))
     commits_recur_on (BlockId := BlockId) (Payload := Payload) hT hcard fair R k
   refine ⟨k', hk, hR, fun U N D vs hD hgst hbackoff hN => ?_⟩
   exact hcommit U N
-    (fun r hr => vs.populatedOn hr)
+    (fun r _ hr => vs.populatedOn hr)
     (vs.synchronisedOn_of_converges hT hD hgst hbackoff)
     hN
 
@@ -908,17 +908,98 @@ noncomputable def toViewSync [Nonempty BlockId]
     (vg.toViewSync (D := D) hcard hD hgst hbackoff hbelow).timeout = vg.timeout := rfl
 
 /-- **L7c with production derived.** Reference coverage from view
-convergence, on a structure that assumes no blocks exist. -/
-theorem synchronisedOn_of_converges [Nonempty BlockId]
-    (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+convergence, on a structure that assumes no blocks exist.
+
+Proved directly rather than through `toViewSync`, and the hypotheses that
+removes are the point. Routing it through the reduction would need
+`hbelow : ∀ n < R, PopulatedOn U T n` — production *below* the seed round,
+which `SynchronisedOn U T R` never mentions — for no reason but that
+`ViewSync.blk` is total below the horizon and something has to fill it in
+under `R`. It would also need `hcard`, `Nonempty BlockId`, and
+`T ⊆ Correct`. None of the four is used here.
+
+`T ⊆ Correct` drops out for a structural reason worth naming. The `Timing`
+argument needs non-equivocation because it must identify the arbitrary
+`T`-authored block the statement quantifies over with the one `blk` names;
+`ViewGrowth.references` and `holds_own` are already stated over *any*
+block a validator authored, so there is nothing to identify. Coverage here
+is about the two blocks in hand, and the whole argument is the race:
+`holds_own` puts `a` in its author's hands when built, `converges` moves it
+to `b`'s author within `delay`, and drift, the wait and the backoff place
+that before `b` was built. -/
+theorem synchronisedOn_of_converges
     (hD : DriftOn vg.built T R D N) (hgst : vg.gst ≤ R)
-    (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n)
-    (hbelow : ∀ n < R, PopulatedOn U T n) :
-    SynchronisedOn U T R :=
-  (vg.toViewSync hcard hD hgst hbackoff hbelow).synchronisedOn_of_converges hT
-    (D := D) (by intro v hv w hw n hn hN; exact hD v hv w hw n hn hN)
-    hgst hbackoff
+    (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) :
+    SynchronisedOn U T R := by
+  intro n hn b hb hbr hbc a ha har hac
+  have hnN : n < N := by have := vg.rounds_le b hb; omega
+  refine vg.references _ hbc n hnN b hb rfl hbr a ?_ har
+  -- `a` is in its own author's hands at `built (creator a) n` …
+  have hown := vg.holds_own _ hac n (by omega) a ha rfl har
+  have hle := le_built_of_waits (N := N)
+    (fun v hv m _ => vg.waits v hv m) vg.timeout_pos hac n (by omega)
+  -- … reaches `b`'s author within `delay`, that moment being past GST …
+  have hconv := vg.converges _ hbc _ hac _ (by omega) hown
+  refine vg.holds_mono _ _ _ ?_ hconv
+  -- … and drift, the wait and the backoff put it before `b` was built.
+  have hdrift := hD _ hbc _ hac n hn (by omega)
+  have hwait := vg.waits _ hbc n
+  have hto := hbackoff n hn
+  omega
+
+section Liveness
+
+variable [S : Slots Validator]
+
+/-- **The liveness spine, with production derived from the build rule.**
+
+V14 (`ViewSync.commits_recur_via_interface`) takes production as data: `blk`
+is total below the horizon, which report §6.11 calls *P8 in its strongest
+form, a block at every round with no exception*. This is the same spine over
+a structure that assumes no blocks at all. Production is a **consequence** of
+
+* `builds` — P8 as an implementation states it: a validator holding a quorum
+  of distinct round-`n` authors when it builds produces a round-`n+1` block;
+* `base` — one populated seed round at the GST crossing;
+
+and the same view convergence that yields coverage. The induction is
+`ViewGrowth.populatedOn`: the previous round's population gives every member
+of `T` a block, `holds_own` puts each in its author's hands, `converges`
+moves them to the builder, and drift, the wait and the backoff put that
+before the builder acted — so the build-time view holds `T.card ≥ n - f`
+distinct authors and `builds` fires.
+
+So the whole chain is
+
+    view convergence + P7 + P8 + P9  ⟹  production and coverage  ⟹  commits
+
+with production assumed at exactly **one** round rather than all of them, and
+N1 (`DeliversQuorum`) absent, as it is on every route in this file.
+
+**The seed cannot be removed**, and that is the content of partial synchrony
+rather than a gap: `converges` says nothing below `gst`, so before GST the
+network may deliver nothing and no round need be populated. The untimed route
+begins at round `0` only because `ViewsConverge` is index-aligned by fiat; its
+`base` is `Live.genesis`. -/
+theorem commits_recur_via_growth (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (fair : FairScheduleOn T) (R k : ℕ) :
+    ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N D : ℕ)
+        (vg : ViewGrowth U T R N),
+        DriftOn vg.built T R D N → vg.gst ≤ R →
+        (∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) →
+        S.slotRound k' + 2 ≤ N →
+        ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
+  obtain ⟨k', hk, hR, hcommit⟩ :=
+    commits_recur_on (BlockId := BlockId) (Payload := Payload) hT hcard fair R k
+  refine ⟨k', hk, hR, fun U N D vg hD hgst hbackoff hN => ?_⟩
+  exact hcommit U N
+    (vg.populatedOn hcard hD hgst hbackoff)
+    (vg.synchronisedOn_of_converges hD hgst hbackoff)
+    hN
+
+end Liveness
 
 end ViewGrowth
 

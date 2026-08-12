@@ -262,12 +262,35 @@ example (N : ℕ) :
       (le_refl 0) (fun n _ => by change 2 + 2 ≤ 4; omega)
       (fun n hn => absurd hn (by omega))).delay = 2 := rfl
 
-/-- **L7c with nothing assumed about production.** -/
+/-- **L7c with nothing assumed about production** — and, since the proof no
+longer routes through `toViewSync`, nothing assumed about the quorum, the
+reliable set's correctness, or population below the seed round either. The
+three arguments left are the network's: drift, GST, and the backoff. -/
 theorem ugrowSkewGrowth_synchronised (N : ℕ) :
     SynchronisedOn (Ugrow N) {1, 2, 3} 0 :=
-  (ugrowSkewGrowth N).synchronisedOn_of_converges (by decide) (by decide)
+  (ugrowSkewGrowth N).synchronisedOn_of_converges
     (ugrowSkewGrowth_drift N) (le_refl 0) (fun n _ => by change 2 + 2 ≤ 4; omega)
-    (fun n hn => absurd hn (by omega))
+
+/-- **The spine from the build rule, on data.** `commits_recur_via_growth`
+applied to the one structure in this file that assumes no blocks exist:
+production comes from `builds` and the single seed round, coverage from
+`converges`, and — as in L6 — the slot is named before the horizon is chosen.
+
+This is the counterpart of `ugrow_commits_recur`, which reaches the same
+conclusion from `Live` and `DeliversQuorum`. Here N1 is absent and P8 appears
+in the conditional form an implementation can execute. -/
+theorem ugrowSkewGrowth_commits (k : ℕ) :
+    ∃ k', k ≤ k' ∧ ∃ N L, IsLeaderBlock (Ugrow N) k' L ∧
+      Decided (Ugrow N) (View.full (Ugrow N)) k' (some L) := by
+  obtain ⟨k', hk', _, hcommit⟩ :=
+    ViewGrowth.commits_recur_via_growth (BlockId := ℕ) (Payload := Unit)
+      (T := ({1, 2, 3} : Finset (Fin 4))) (by decide) (by decide)
+      (fun j => ⟨j, le_refl j, by simp only [fairSlots_leader]; decide⟩) 0 k
+  obtain ⟨L, hL, hd⟩ :=
+    hcommit (Ugrow (fairSlots.slotRound k' + 2)) _ 2 (ugrowSkewGrowth _)
+      (ugrowSkewGrowth_drift _) (le_refl 0)
+      (fun n _ => by change 2 + 2 ≤ 4; omega) (le_refl _)
+  exact ⟨k', hk', _, L, hL, hd⟩
 
 /-! ### The untimed condition, induced on data
 
@@ -328,7 +351,9 @@ example (N : ℕ) : Synchronised (Ugrow N) 0 :=
 #print axioms ugrowCorrectGrowth_viewsConverge
 #print axioms ugrowSkewGrowth_populated
 #print axioms ugrowSkewGrowth_synchronised
+#print axioms ugrowSkewGrowth_commits
 #print axioms ugrowSkewView_synchronised
+#print axioms LeanDag.ViewGrowth.commits_recur_via_growth
 #print axioms LeanDag.ViewSync.commits_recur_of_converges
 #print axioms LeanDag.ViewSync.all_decided_below_of_converges
 #print axioms LeanDag.ViewSync.covers_of_converges

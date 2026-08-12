@@ -1659,7 +1659,7 @@ had nothing to select.
 def FairScheduleOn (T : Finset Validator) : Prop := ∀ k, ∃ k', k ≤ k' ∧ S.leader k' ∈ T
 
 def CommitsAt (BlockId) (Payload) (T : Finset Validator) (R k : ℕ) : Prop :=
-  ∀ U N, (∀ r ≤ N, PopulatedOn U T r) → SynchronisedOn U T R →
+  ∀ U N, (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
     S.slotRound k + 2 ≤ N →
     ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
 
@@ -2243,6 +2243,39 @@ commitment baked into the statements.
 Read downward, the first three are increasingly primitive statements of
 the same assumption; the last two yield production as well as coverage,
 and differ only in the round at which their common induction may start.
+
+**The growth route reaches liveness** (V15). It did not, and what stood
+in the way was an artefact rather than a limit. `ViewGrowth` derives
+production only from its seed round `R` on, which is the most that can be
+claimed since `converges` is silent below `gst`; `CommitsAt` asked for
+production at *every* round below the horizon. The gap was never
+consumed — L4 reads production at three rounds, all at or above `R` — so
+cutting the hypothesis to the range that is used lets `ViewGrowth.populatedOn`
+discharge it directly. `ViewGrowth.commits_recur_via_growth` is then the
+composition, and `ugrowSkewGrowth_commits` applies it to data.
+
+The result is the spine of V14 with **P8 in the conditional form an
+implementation executes** — *a validator holding a quorum of distinct
+round-`n` authors when it builds produces a round-`n+1` block* — in place
+of the total `blk`. Production is assumed at one round rather than all of
+them. What no route removes is that seed: before GST the network may
+deliver nothing, and no round need be populated. That residue is the
+content of partial synchrony, and the untimed route escapes it only
+because `ViewsConverge` is index-aligned by fiat, its own seed being
+`Live.genesis` at round `0`.
+
+A second artefact went with it. `ViewGrowth`'s coverage result was proved
+by reduction through `toViewSync`, which needs production *below* `R` —
+a proposition `SynchronisedOn U T R` never mentions — for no reason but
+that `ViewSync.blk` is total and something must fill it in under `R`.
+Proved directly, it needs neither that, nor the quorum bound, nor
+`Nonempty BlockId`, nor `T ⊆ Correct`. The last is the informative one:
+the `Timing` argument needs non-equivocation to identify the arbitrary
+`T`-authored block the statement quantifies over with the one `blk`
+names, whereas `ViewGrowth.references` and `holds_own` are already stated
+over any block a validator authored, so there is nothing to identify.
+Coverage is about the two blocks in hand, and the argument is the race of
+§19.1 and nothing else.
 
 ### 6.11 Quantitative results
 
@@ -5574,6 +5607,7 @@ result in full.
 | V12 | as is its reliable set: coverage over `T` derived, over `Correct` false | `reliable_set_is_forced` *(LeanDagTest.Unbounded)* |
 | V13 | liveness on the view-convergence foundation | `ViewSync.commits_recur_of_converges`, `ViewSync.all_decided_below_of_converges` *(ViewSync)* |
 | V14 | the same liveness, routed through the two conditions §6 names | `ViewSync.commits_recur_via_interface` *(ViewSync)* |
+| V15 | and again with production derived from the build rule, not assumed | `ViewGrowth.synchronisedOn_of_converges`, `ViewGrowth.commits_recur_via_growth`, `ugrowSkewGrowth_commits` *(ViewSync, LeanDagTest.ViewSync)* |
 | L11 | drift is derived | `Timing.driftFrom_of_prompt` *(Timing)* |
 | L8a | the round of coverage, explicitly | `synchronisedOn_of_rate` *(Quantitative)* |
 | L8b | the committing slot, and its round | `commits_recur_within`, `commits_recur_by_round` *(Quantitative)* |
@@ -6470,7 +6504,7 @@ Every correct validator's *eventual* view. Downward-closed by `U.complete`.
 def CommitsAt (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
     [S : Slots Validator] (T : Finset Validator) (R k : ℕ) : Prop :=
   ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-    (∀ r ≤ N, PopulatedOn U T r) → SynchronisedOn U T R →
+    (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
     S.slotRound k + 2 ≤ N →
     ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
 ```
@@ -6480,6 +6514,8 @@ def CommitsAt (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
 The conclusion the recurrence results share. Naming it keeps their quantifier order visible — the slot is fixed by the schedule alone, before any execution is named — and keeps production and coverage as the two separate hypotheses they are, rather than bundling them.
 
 **Both hypotheses are relative to the same `T`.** They were not: production was asked over all of `Correct` while coverage was asked over `T`, which is strictly more than anything downstream consumes — `decided_of_leader_of_populated` discarded the excess immediately. Asking both over `T` makes this a statement about *any* quorum-sized set of reliable validators: the correct validators outside `T` may be permanently starved and the slot still commits. That is not a vacuous generality — `reliable_set_is_forced` (V12) exhibits a DAG in which coverage over a proper subset of `Correct` holds and coverage over `Correct` fails. It is a genuine weakening only below full fault load, since `|byzantine| = f` forces `T = Correct` (`reliable_eq_correct`).
+
+**Production is asked for only from `R` on.** The rule reads it off at three rounds, all of them at or above `R`, so rounds below the synchrony round were never consumed. Dropping them matters because that is exactly the range a structure carrying the *build rule* rather than a total block function can supply: `ViewGrowth.populatedOn` derives production from its seed round onwards and can say nothing beneath it, since `converges` is silent below `gst`. With the hypothesis cut to the range that is used, P8 in its conditional form reaches liveness — see `ViewGrowth.commits_recur_via_growth`.
 
 #### `FairScheduleOn`
 
@@ -9121,7 +9157,7 @@ def skipFillD (sk : SkipMsg U) (D : Delivery U)
 
 ## Appendix C. The theorem reference
 
-The 339 theorems that either another module of the
+The 340 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -10281,7 +10317,7 @@ theorem decided_of_leader_mem (hcard : (Fintype.card Validator - F.f) ≤ T.card
 theorem decided_of_leader_of_populated (_hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
-    (hpop : ∀ r ≤ N, PopulatedOn U T r) (hN : S.slotRound k + 2 ≤ N)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (hN : S.slotRound k + 2 ≤ N)
     (hlead : S.leader k ∈ T) :
     ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
 ```
@@ -10418,7 +10454,7 @@ theorem all_decided_below_of_spacing
     (fair : FairScheduleOn T) (R : ℕ) (k : ℕ) :
     ∃ n, k ≤ n ∧ R ≤ S.slotRound n ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, PopulatedOn U T r) → SynchronisedOn U T R →
+        (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
         S.slotRound n + 2 ≤ N →
         ∀ i, i ≤ n → ∃ v, Decided U (View.full U) i v
 ```
@@ -10462,7 +10498,7 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, PopulatedOn U T r) → SynchronisedOn U T R →
+        (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
         S.slotRound (b + c - 1) + 2 ≤ N →
         ∀ i, i < b → ∃ v, Decided U (View.full U) i v
 ```
@@ -10598,7 +10634,7 @@ theorem commits_recur_by_round {s : ℕ} (hT : T ⊆ (Correct : Finset Validator
     ∃ k', k ≤ k' ∧ S.slotRound k' ≤ S.slotRound (max k (slotAt Validator R)) + s * w ∧
       R ≤ S.slotRound k' ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, PopulatedOn U T r) → SynchronisedOn U T R →
+        (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
         S.slotRound (max k (slotAt Validator R)) + s * w + 2 ≤ N →
         ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L)
 ```
@@ -10874,16 +10910,50 @@ The conclusion starts at `R` rather than at `0`, and the hypothesis is a single 
 *theorem, `ViewSync.lean`*
 
 ```lean
-theorem synchronisedOn_of_converges [Nonempty BlockId]
-    (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+theorem synchronisedOn_of_converges
     (hD : DriftOn vg.built T R D N) (hgst : vg.gst ≤ R)
-    (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n)
-    (hbelow : ∀ n < R, PopulatedOn U T n) :
+    (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) :
     SynchronisedOn U T R
 ```
 
 **L7c with production derived.** Reference coverage from view convergence, on a structure that assumes no blocks exist.
+
+Proved directly rather than through `toViewSync`, and the hypotheses that removes are the point. Routing it through the reduction would need `hbelow : ∀ n < R, PopulatedOn U T n` — production *below* the seed round, which `SynchronisedOn U T R` never mentions — for no reason but that `ViewSync.blk` is total below the horizon and something has to fill it in under `R`. It would also need `hcard`, `Nonempty BlockId`, and `T ⊆ Correct`. None of the four is used here.
+
+`T ⊆ Correct` drops out for a structural reason worth naming. The `Timing` argument needs non-equivocation because it must identify the arbitrary `T`-authored block the statement quantifies over with the one `blk` names; `ViewGrowth.references` and `holds_own` are already stated over *any* block a validator authored, so there is nothing to identify. Coverage here is about the two blocks in hand, and the whole argument is the race: `holds_own` puts `a` in its author's hands when built, `converges` moves it to `b`'s author within `delay`, and drift, the wait and the backoff place that before `b` was built.
+
+#### `commits_recur_via_growth`
+
+*theorem, `ViewSync.lean`*
+
+```lean
+theorem commits_recur_via_growth (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (fair : FairScheduleOn T) (R k : ℕ) :
+    ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N D : ℕ)
+        (vg : ViewGrowth U T R N),
+        DriftOn vg.built T R D N → vg.gst ≤ R →
+        (∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) →
+        S.slotRound k' + 2 ≤ N →
+        ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L)
+```
+
+**The liveness spine, with production derived from the build rule.**
+
+V14 (`ViewSync.commits_recur_via_interface`) takes production as data: `blk` is total below the horizon, which report §6.11 calls *P8 in its strongest form, a block at every round with no exception*. This is the same spine over a structure that assumes no blocks at all. Production is a **consequence** of
+
+* `builds` — P8 as an implementation states it: a validator holding a quorum of distinct round-`n` authors when it builds produces a round-`n+1` block; * `base` — one populated seed round at the GST crossing;
+
+and the same view convergence that yields coverage. The induction is `ViewGrowth.populatedOn`: the previous round's population gives every member of `T` a block, `holds_own` puts each in its author's hands, `converges` moves them to the builder, and drift, the wait and the backoff put that before the builder acted — so the build-time view holds `T.card ≥ n - f` distinct authors and `builds` fires.
+
+So the whole chain is
+
+    view convergence + P7 + P8 + P9  ⟹  production and coverage  ⟹  commits
+
+with production assumed at exactly **one** round rather than all of them, and N1 (`DeliversQuorum`) absent, as it is on every route in this file.
+
+**The seed cannot be removed**, and that is the content of partial synchrony rather than a gap: `converges` says nothing below `gst`, so before GST the network may deliver nothing and no round need be populated. The untimed route begins at round `0` only because `ViewsConverge` is index-aligned by fiat; its `base` is `Live.genesis`.
 
 #### `mem_toDelivery`
 

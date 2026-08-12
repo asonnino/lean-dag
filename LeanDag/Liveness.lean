@@ -549,11 +549,12 @@ hand and threading it documents the setting. -/
 theorem decided_of_leader_of_populated (_hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
-    (hpop : ∀ r ≤ N, PopulatedOn U T r) (hN : S.slotRound k + 2 ≤ N)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (hN : S.slotRound k + 2 ≤ N)
     (hlead : S.leader k ∈ T) :
     ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) :=
   decided_of_leader_mem hcard hs hR
-    (hpop _ (by omega)) (hpop _ (by omega)) (hpop _ (by omega)) hlead
+    (hpop _ (by omega) (by omega)) (hpop _ (by omega) (by omega))
+    (hpop _ (by omega) (by omega)) hlead
 
 /-- The same at `T := Correct`. -/
 theorem decided_of_correct_leader (hs : Synchronised U R)
@@ -604,11 +605,20 @@ outside `T` may be permanently starved and the slot still commits. That is not
 a vacuous generality — `reliable_set_is_forced` (V12) exhibits a DAG in which
 coverage over a proper subset of `Correct` holds and coverage over `Correct`
 fails. It is a genuine weakening only below full fault load, since
-`|byzantine| = f` forces `T = Correct` (`reliable_eq_correct`). -/
+`|byzantine| = f` forces `T = Correct` (`reliable_eq_correct`).
+
+**Production is asked for only from `R` on.** The rule reads it off at three
+rounds, all of them at or above `R`, so rounds below the synchrony round were
+never consumed. Dropping them matters because that is exactly the range a
+structure carrying the *build rule* rather than a total block function can
+supply: `ViewGrowth.populatedOn` derives production from its seed round
+onwards and can say nothing beneath it, since `converges` is silent below
+`gst`. With the hypothesis cut to the range that is used, P8 in its
+conditional form reaches liveness — see `ViewGrowth.commits_recur_via_growth`. -/
 def CommitsAt (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
     [S : Slots Validator] (T : Finset Validator) (R k : ℕ) : Prop :=
   ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-    (∀ r ≤ N, PopulatedOn U T r) → SynchronisedOn U T R →
+    (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
     S.slotRound k + 2 ≤ N →
     ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
 
@@ -879,7 +889,7 @@ theorem all_decided_below_of_spacing
     (fair : FairScheduleOn T) (R : ℕ) (k : ℕ) :
     ∃ n, k ≤ n ∧ R ≤ S.slotRound n ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, PopulatedOn U T r) → SynchronisedOn U T R →
+        (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
         S.slotRound n + 2 ≤ N →
         ∀ i, i ≤ n → ∃ v, Decided U (View.full U) i v := by
   obtain ⟨n, hkn, hRn, hcommit⟩ := commits_recur_on (BlockId := BlockId) (Payload := Payload)
@@ -1073,7 +1083,7 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, PopulatedOn U T r) → SynchronisedOn U T R →
+        (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
         S.slotRound (b + c - 1) + 2 ≤ N →
         ∀ i, i < b → ∃ v, Decided U (View.full U) i v := by
   -- The run is fixed by the schedule: past `k`, and past a slot already at `R`.
@@ -1103,7 +1113,7 @@ theorem all_decided_below_of_fairRun_correct {c : ℕ} (hc : 0 < c)
     (fair : FairRunOn (Correct : Finset Validator) c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → Synchronised U R →
+        (∀ r, R ≤ r → r ≤ N → Populated U r) → Synchronised U R →
         S.slotRound (b + c - 1) + 2 ≤ N →
         ∀ i, i < b → ∃ v, Decided U (View.full U) i v :=
   all_decided_below_of_fairRun hc Finset.Subset.rfl card_correct hspan fair R k
