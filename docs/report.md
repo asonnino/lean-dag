@@ -5717,9 +5717,9 @@ result in full.
 | V7 | the assumed production clause is the derived one, Skolemised | `exists_blk_of_populatedOn`, `ViewGrowth.toViewSync` *(ViewSync)* |
 | V8 | the untimed condition induced by the timed structure | `ViewGrowth.toDelivery`, `ViewsConvergeOn`, `viewsConvergeOn_toDelivery` *(ViewSync)* |
 | V9 | N2a and L7a derived from view convergence | `ViewGrowth.eventuallyDelivers_toDelivery`, `ViewGrowth.synchronised_toDelivery` *(ViewSync)* |
-| V10 | the bound in `converges` is necessary for coverage | `bound_is_necessary` *(LeanDagTest.Unbounded)* |
-| V11 | and its starting round is forced, not chosen | `ugap_not_viewsConvergeOn` *(LeanDagTest.Unbounded)* |
-| V12 | as is its reliable set: coverage over `T` derived, over `Correct` false | `reliable_set_is_forced` *(LeanDagTest.Unbounded)* |
+| V10 | the bound in `converges` is necessary for coverage | `bound_is_necessary`, `bound_is_necessary_pace` *(LeanDagTest.Unbounded)* |
+| V11 | and its starting round is forced, not chosen | `ugap_not_viewsConvergeOn`; over the partial schedule `gst_is_forced_pace` *(LeanDagTest.Unbounded)* |
+| V12 | as is its reliable set: coverage over `T` derived, over `Correct` false | `reliable_set_is_forced`, `reliable_set_is_forced_pace` *(LeanDagTest.Unbounded)* |
 | V13 | liveness on the view-convergence foundation | `ViewSync.commits_recur_of_converges`, `ViewSync.all_decided_below_of_converges` *(ViewSync)* |
 | V14 | the same liveness, routed through the two conditions §6 names | `ViewSync.commits_recur_via_interface` *(ViewSync)* |
 | V15 | and again with production derived from the build rule, not assumed | `ViewGrowth.synchronisedOn_of_converges`, `ViewGrowth.commits_recur_via_growth`, `ugrowSkewGrowth_commits` *(ViewSync, LeanDagTest.ViewSync)* |

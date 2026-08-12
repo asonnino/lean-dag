@@ -1,4 +1,5 @@
 import LeanDag.ViewSync
+import LeanDag.ViewPace
 import LeanDagTest.Growth
 
 /-!
@@ -390,6 +391,148 @@ theorem reliable_set_is_forced {N : ℕ} (hN : 0 < N) :
       SynchronisedOn (Uomit 3 N) ({1, 2} : Finset (Fin 4)) 0 ∧
       ¬ SynchronisedOn (Uomit 3 N) (Correct : Finset (Fin 4)) 0 :=
   ⟨by decide, ustarve_synchronisedOn N, ustarve_not_synchronisedOn hN⟩
+
+/-! ## The same three witnesses, over the partial schedule
+
+The route the development is converging on is `ViewPace`, so the
+necessity claims must be stated over it — otherwise deleting the older
+structures would delete the evidence while keeping the conclusions. The
+models are the same; only the certifying instance changes, and `top := N`
+throughout, since every validator of `Uomit` builds every round. -/
+
+/-- `ugapGrowth`, as a `ViewPace`: every clause of the partial-schedule
+structure, with `gst` beyond every build in the run. -/
+def ugapPace (N : ℕ) : ViewPace (Uomit 2 N) (Correct : Finset (Fin 4)) N where
+  top _ := N
+  built v n := (v : ℕ) + 4 * n
+  timeout _ := 4
+  gst := 4 * N + 5
+  delay := 1
+  rounds_le := (ugapGrowth N).rounds_le
+  built_of_le_top v hv n hn := rrUniverse_populatedOn _ _ _ _ _ _ hn v hv
+  le_top_of_built _ _ b hb _ := (ugapGrowth N).rounds_le b hb
+  waits _ _ _ _ := by omega
+  timeout_pos _ := by omega
+  latest n := 3 + 4 * n
+  built_le_latest v _ _ _ := by have := v.isLt; omega
+  latest_mem _ _ := ⟨3, by decide, le_refl _⟩
+  prompt _ _ _ _ := le_max_left _ _
+  holds := gapHolds N
+  holds_own := (ugapGrowth N).holds_own
+  holds_mono := (ugapGrowth N).holds_mono
+  converges := (ugapGrowth N).converges
+  references := (ugapGrowth N).references
+  advances _ _ _ hn _ _ := hn
+
+/-- **V10 over the partial schedule.** Holdings converge from time `0`,
+every clause of `ViewPace` holds, and coverage fails at every round below
+the horizon: the bound in `converges` is what carries coverage, on this
+route as on the others. -/
+theorem bound_is_necessary_pace {N : ℕ} (hN : 0 < N) :
+    ConvergesEventually (ugapPace N).holds (Correct : Finset (Fin 4)) ∧
+      ¬ SynchronisedOn (Uomit 2 N) (Correct : Finset (Fin 4)) 0 :=
+  ⟨ugapGrowth_convergesEventually N, ugap_not_synchronisedOn 0 hN⟩
+
+/-- **V11 over the partial schedule** — the form the claim takes once the
+untimed bridge is gone: `gst ≤ R` cannot be dropped from
+`ViewPace.synchronisedOn_of_converges`. The instance satisfies the drift
+and backoff hypotheses at `R = 0` outright — spread `3`, `3 + 1 ≤ 4` —
+and coverage at `0` is false; only `gst ≤ 0` fails, so it is the working
+hypothesis. -/
+theorem gst_is_forced_pace {N : ℕ} (hN : 0 < N) :
+    DriftOn (ugapPace N).built (Correct : Finset (Fin 4)) 0 3 N ∧
+      (∀ n, 0 ≤ n → 3 + (ugapPace N).delay ≤ (ugapPace N).timeout n) ∧
+      ¬ SynchronisedOn (Uomit 2 N) (Correct : Finset (Fin 4)) 0 :=
+  ⟨fun v _ w _ n _ _ => by
+      have hv := v.isLt; have hw := w.isLt
+      change (w : ℕ) + 4 * n ≤ ((v : ℕ) + 4 * n) + 3
+      omega,
+   fun n _ => by change 3 + 1 ≤ 4; omega,
+   ugap_not_synchronisedOn 0 hN⟩
+
+/-- `ustarveSync`, as a `ViewPace` — over the two-member reliable set,
+with the network assumption met properly: `gst = 0`, bound `1`. -/
+def ustarvePace (N : ℕ) : ViewPace (Uomit 3 N) ({1, 2} : Finset (Fin 4)) N where
+  top _ := N
+  built v n := (v : ℕ) + 4 * n
+  timeout _ := 4
+  gst := 0
+  delay := 1
+  rounds_le b hb := by
+    simp only [uomit_ids, Finset.mem_range] at hb
+    simp only [uomit_block, rrBlock_round]
+    omega
+  built_of_le_top v hv n hn := rrUniverse_populatedOn _ _ _ _ _ _ hn v hv
+  le_top_of_built _ _ b hb _ := by
+    simp only [uomit_ids, Finset.mem_range] at hb
+    simp only [uomit_block, rrBlock_round]
+    omega
+  waits _ _ _ _ := by omega
+  timeout_pos _ := by omega
+  latest n := 2 + 4 * n
+  built_le_latest v hv _ _ := by obtain ⟨_, _⟩ := mem_T12_bounds hv; omega
+  latest_mem _ _ := ⟨2, by decide, le_refl _⟩
+  prompt _ _ _ _ := le_max_left _ _
+  holds := starveHolds N
+  holds_own v hv n _ b hb hbc hbr := by
+    obtain ⟨h1, h2⟩ := mem_T12_bounds hv
+    simp only [uomit_ids, Finset.mem_range] at hb
+    have hb4 : b % 4 = (v : ℕ) := by
+      have := congrArg (fun (x : Fin 4) => (x : ℕ)) hbc
+      simpa [uomit_block] using this
+    simp only [starveHolds, Finset.mem_filter, Finset.mem_range]
+    exact ⟨hb, Or.inl (by omega)⟩
+  holds_mono v s t _ := by
+    intro b hb
+    simp only [starveHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
+    exact hb
+  converges v hv w hw t _ := by
+    obtain ⟨_, _⟩ := mem_T12_bounds hv
+    obtain ⟨_, _⟩ := mem_T12_bounds hw
+    intro b hb
+    simp only [starveHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
+    refine ⟨hb.1, Or.inl ?_⟩
+    rcases hb.2 with h | h
+    · exact h
+    · omega
+  references v hv n hn c hc hcc hcr a ha har := by
+    obtain ⟨h1, h2⟩ := mem_T12_bounds hv
+    simp only [uomit_ids, Finset.mem_range] at hc
+    simp only [uomit_block, rrBlock_round] at hcr har
+    simp only [starveHolds, Finset.mem_filter, Finset.mem_range] at ha
+    simp only [uomit_block, rrBlock_refs, mem_omitRefs]
+    refine ⟨by omega, Or.inr ?_⟩
+    rcases ha.2 with h | h
+    · omega
+    · omega
+  advances _ _ _ hn _ _ := hn
+
+/-- Coverage over `T = {1, 2}` is **derived** — through the `ViewPace`
+route, which asks neither `T ⊆ Correct` nor a quorum for this half. -/
+theorem ustarvePace_synchronisedOn (N : ℕ) :
+    SynchronisedOn (Uomit 3 N) ({1, 2} : Finset (Fin 4)) 0 :=
+  (ustarvePace N).synchronisedOn_of_converges (D := 1)
+    (fun v hv w hw n _ _ => by
+      obtain ⟨_, _⟩ := mem_T12_bounds hv
+      obtain ⟨_, _⟩ := mem_T12_bounds hw
+      change (w : ℕ) + 4 * n ≤ ((v : ℕ) + 4 * n) + 1
+      omega)
+    (le_refl 0) (fun n _ => by change 1 + 1 ≤ 4; omega)
+
+/-- **V12 over the partial schedule.** The reliable set cannot be
+widened: with `T ⊊ Correct`, the `ViewPace` route yields coverage over
+`T` and coverage over `Correct` is false — a statement about the DAG,
+independent of any structure. -/
+theorem reliable_set_is_forced_pace {N : ℕ} (hN : 0 < N) :
+    ({1, 2} : Finset (Fin 4)) ⊂ (Correct : Finset (Fin 4)) ∧
+      SynchronisedOn (Uomit 3 N) ({1, 2} : Finset (Fin 4)) 0 ∧
+      ¬ SynchronisedOn (Uomit 3 N) (Correct : Finset (Fin 4)) 0 :=
+  ⟨by decide, ustarvePace_synchronisedOn N, ustarve_not_synchronisedOn hN⟩
+
+#print axioms bound_is_necessary_pace
+#print axioms gst_is_forced_pace
+#print axioms ustarvePace_synchronisedOn
+#print axioms reliable_set_is_forced_pace
 
 #print axioms ustarve_synchronisedOn
 #print axioms reliable_set_is_forced
