@@ -20,7 +20,7 @@ import LeanDagTest.GC.Bootstrap
 import LeanDagTest.GC.Horizon
 import LeanDagTest.Odontoceti.Model
 import LeanDagTest.Quality.Model
-import LeanDagTest.ViewSync
+import LeanDagTest.ViewPace
 import LeanDagTest.Unbounded
 import LeanDagTest.Reactive
 import LeanDagTest.Catchup
@@ -31,3 +31,4 @@ import LeanDagTest.Hybrid
 import LeanDagTest.Integration
 import LeanDagTest.HybridTight
 import LeanDagTest.SafeSkip
+import LeanDagTest.Routes

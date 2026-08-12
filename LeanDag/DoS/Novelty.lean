@@ -815,9 +815,10 @@ No hypothesis consults `Correct`, `byzantine`, or any identity. -/
 linear storage from round 0 under full asynchrony; every hypothesis is
 local protocol conduct or a pure network assumption, and the author-blind
 cap replaces every creator-guarded budget. -/
-theorem dos_resistance {T N : ℕ} (hpop : ∀ r ≤ N, Populated U r)
+theorem dos_resistance {T N : ℕ} {P : Finset Validator}
+    (hpop : ∀ r ≤ N, PopulatedOn U P r)
     (hu : UniformBudget D T) (hra : RefsAccepted D) :
-    (∀ r ≤ N, Populated U r) ∧
+    (∀ r ≤ N, PopulatedOn U P r) ∧
       ∀ v ∈ (Correct : Finset Validator), ∀ n,
         (viewUpto D v n).card ≤
           (Correct : Finset Validator).card * (n + 1) +
@@ -827,10 +828,11 @@ theorem dos_resistance {T N : ℕ} (hpop : ∀ r ≤ N, Populated U r)
 
 /-- The post-`R` incremental form of the headline: the same enforceable
 conduct, plus the network's `EventuallyDelivers`. -/
-theorem dos_resistance' {T R N : ℕ} (hpop : ∀ r ≤ N, Populated U r)
+theorem dos_resistance' {T R N : ℕ} {P : Finset Validator}
+    (hpop : ∀ r ≤ N, PopulatedOn U P r)
     (hED : EventuallyDelivers D R) (hu : UniformBudget D T)
     (hra : RefsAccepted D) :
-    (∀ r ≤ N, Populated U r) ∧
+    (∀ r ≤ N, PopulatedOn U P r) ∧
       ∀ v ∈ (Correct : Finset Validator), ∀ n, R + 1 ≤ n →
         (viewUpto D v n).card ≤ (viewUpto D v (R + 1)).card +
           (n - (R + 1)) *

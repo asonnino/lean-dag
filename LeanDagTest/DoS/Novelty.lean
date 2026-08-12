@@ -286,78 +286,13 @@ theorem dtwin_refsAccepted : RefsAccepted Dtwin := by
     have := twin_round_le b
     omega
 
-/-- Quorum delivery: whenever a round carries a quorum of authors, every
-correct validator's acceptances do too. -/
-theorem dtwin_deliversQuorum : DeliversQuorum Dtwin := by
-  intro n hq v hv
-  by_cases h0 : n = 0
-  · subst h0
-    exact (by decide : ∀ v ∈ (Correct : Finset (Fin 4)),
-      (Fintype.card (Fin 4) - Faults.f (Fin 4)) ≤
-        (creatorsOf Utwin.block (Dtwin.accepted v 0)).card) v hv
-  by_cases h1 : n = 1
-  · subst h1
-    exact (by decide : ∀ v ∈ (Correct : Finset (Fin 4)),
-      (Fintype.card (Fin 4) - Faults.f (Fin 4)) ≤
-        (creatorsOf Utwin.block (Dtwin.accepted v 1)).card) v hv
-  by_cases h2 : n = 2
-  · subst h2
-    exact absurd hq (by decide)
-  · exfalso
-    obtain ⟨a, ha⟩ := Finset.card_pos.mp (lt_of_lt_of_le (by decide) hq)
-    obtain ⟨i, _, hir, _⟩ := mem_authorsAt.mp ha
-    have := twin_round_le i
-    omega
-
-/-- Growth to the horizon `N = 1`: every correct validator, holding its
-round-0 quorum, has its round-1 block. -/
-theorem dtwin_live : Live Utwin Dtwin 1 where
-  genesis := by
-    intro v hv
-    exact (by decide : ∀ v ∈ (Correct : Finset (Fin 4)), ∃ b ∈ Utwin.ids,
-      (Utwin.block b).creator = v ∧ (Utwin.block b).round = 0) v hv
-  builds := by
-    intro r hr v hv hq
-    obtain rfl : r = 0 := by omega
-    exact (by decide : ∀ v ∈ (Correct : Finset (Fin 4)),
-      (Fintype.card (Fin 4) - Faults.f (Fin 4)) ≤
-        (creatorsOf Utwin.block (Dtwin.accepted v 0)).card →
+/-- Production to the horizon `N = 1`, read off the layout directly. -/
+theorem utwin_populated : ∀ r ≤ 1, Populated Utwin r := by
+  intro r hr
+  interval_cases r <;>
+    exact fun v hv => (by decide : ∀ v ∈ (Correct : Finset (Fin 4)),
       ∃ b ∈ Utwin.ids, (Utwin.block b).creator = v ∧
-        (Utwin.block b).round = 0 + 1) v hv hq
-
-/-- **C3′ applied** — the gap collapses to `f·κ = 0`: validator 3's own
-round-1 block (block 7) hands validator 1 everything validator 3 ever
-accepted, and validator 3 accepted nothing Byzantine. -/
-example : (viewGap Dtwin 1 3 1).card ≤ Faults.f (Fin 4) * 0 :=
-  card_viewGap_succ_le (c := 7) dtwin_byz dtwin_delivers (le_refl 1)
-    (by decide) (by decide) (by decide) (by decide) (by decide)
-
-/-- **C3″ applied** — the constant hysteresis threshold: the merge block 8
-costs validator 1 at most `f·κ + 1 = 1`, met exactly. Derived from the
-Byzantine clause alone. -/
-example : (novelty Utwin (viewUpto Dtwin 1 1) 8).card ≤
-    Faults.f (Fin 4) * 0 + 1 :=
-  card_novelty_le_of_byzBudget (v := 1) dtwin_byz dtwin_delivers (le_refl 1)
-    (by decide) (by decide) (by decide) (by decide) (by decide)
-
-/-- **The converse sandwich applied**: post-`R` the `ByzBudget 0` schedule
-is uniformly budgeted at `f·0 + 1 = 1`, creator guard gone — every round-2
-acceptance, whoever signed it, costs at most 1. -/
-example : (novelty Utwin (viewUpto Dtwin 1 1) 8).card ≤
-    Faults.f (Fin 4) * 0 + 1 :=
-  uniform_of_byzBudget (v := 1) dtwin_byz dtwin_delivers dtwin_refsAccepted
-    (by decide) (le_refl 1) (by decide)
-
-/-- **The capstone applied** — liveness and linear storage from one set of
-hypotheses, on data: `R = 1`, `N = 1`, `κ = 0`. -/
-example : (∀ r ≤ 1, Populated Utwin r) ∧
-    ∀ v ∈ (Correct : Finset (Fin 4)), ∀ n, 1 + 1 ≤ n →
-      (viewUpto Dtwin v n).card ≤ (viewUpto Dtwin v (1 + 1)).card +
-        (n - (1 + 1)) *
-          ((Correct : Finset (Fin 4)).card * (Faults.f (Fin 4) * 0 + 1) +
-            Faults.f (Fin 4) * 0) :=
-  no_stall_and_card_viewUpto_le' dtwin_live dtwin_deliversQuorum dtwin_delivers
-    dtwin_byz dtwin_refsAccepted
+        (Utwin.block b).round = _) v hv
 
 /-! ## B4 on data — the pool, and full asynchrony -/
 
@@ -383,7 +318,7 @@ example : (∀ r ≤ 1, Populated Utwin r) ∧
         (Correct : Finset (Fin 4)).card * (n + 1) +
           ((Correct : Finset (Fin 4)).card * Faults.f (Fin 4) +
             n * ((Correct : Finset (Fin 4)).card * (Faults.f (Fin 4) * 0))) :=
-  no_stall_and_card_viewUpto_le dtwin_live dtwin_deliversQuorum dtwin_byz
+  populated_and_card_viewUpto_le utwin_populated dtwin_byz
     dtwin_refsAccepted
 
 /-- **The headline applied** — `dos_resistance` from enforceable conditions
@@ -395,7 +330,7 @@ example : (∀ r ≤ 1, Populated Utwin r) ∧
         (Correct : Finset (Fin 4)).card * (n + 1) +
           ((Correct : Finset (Fin 4)).card * Faults.f (Fin 4) +
             n * ((Correct : Finset (Fin 4)).card * (Faults.f (Fin 4) * 3))) :=
-  dos_resistance (no_stall dtwin_live dtwin_deliversQuorum) dtwin_uniform
+  dos_resistance utwin_populated dtwin_uniform
     dtwin_refsAccepted
 
 /-! ## The composition — the pool freezes -/

@@ -48,7 +48,9 @@ def ugrowReactive (N : ℕ) : ReactiveM (Ugrow N) {1, 2, 3} N where
   proc := 5
   gst := 0
   delay := 2
-  rounds_le := (ugrowSkew N).rounds_le
+  rounds_le b hb := by
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round]; omega
   blk_mem v hv n hn := by
     obtain ⟨_, _⟩ := mem_T_bounds hv
     simp only [ugrow_ids, Finset.mem_range]; omega

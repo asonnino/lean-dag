@@ -1,4 +1,4 @@
-import LeanDag.ViewSync
+import LeanDag.Quantitative
 
 /-!
 # A build schedule that can be stuck
@@ -58,13 +58,97 @@ variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable {T : Finset Validator} {N : ℕ}
 
+/-- Drift over a build schedule alone: `T`-validators are never more than
+`D` apart in real time at the same round, from `R` on. -/
+def DriftOn (built : Validator → ℕ → ℕ) (T : Finset Validator)
+    (R D N : ℕ) : Prop :=
+  ∀ v ∈ T, ∀ w ∈ T, ∀ n, R ≤ n → n ≤ N → built w n ≤ built v n + D
+
+/-! ## Factoring the bound
+
+`converges` is partial synchrony in its usual two-part shape, and the
+parts can be separated. Qualitatively, holdings converge at all —
+whatever one correct validator holds, every correct validator holds
+*some time later*, with no claim about when. Quantitatively, from `gst`
+on that lag is uniformly at most `delay`.
+
+`convergesWithin_iff_bounded` is the factoring: under monotone holdings,
+convergence-with-a-bound is exactly eventual convergence whose lag is
+uniformly bounded after `gst`. So
+
+> **view convergence under synchrony  =  view convergence  +  a bound on
+> the lag.**
+
+The bound is not decoration. Eventual convergence alone cannot yield
+reference coverage, for the reason `covers_of_converges` makes visible:
+the block must be in the builder's hands *before it builds*, and the only
+way to arrange that is to choose a timeout exceeding the lag. A lag that
+merely exists cannot be compared with a timeout; a lag bounded by `delay`
+can, and `D + delay ≤ timeout n` is where the comparison happens. This is
+also why the bound is asserted only from `gst`: before it there is
+nothing for a timeout to clear, which is precisely the content of partial
+synchrony. -/
+
+section Factoring
+
+variable {holds : Validator → ℕ → Finset BlockId} {gst bound : ℕ}
+
+/-- **The qualitative half.** Holdings converge: whatever `w` holds at `t`,
+`v` holds at some later time. No bound and no GST. -/
+def ConvergesEventually (holds : Validator → ℕ → Finset BlockId)
+    (T : Finset Validator) : Prop :=
+  ∀ v ∈ T, ∀ w ∈ T, ∀ t, ∃ d, holds w t ⊆ holds v (t + d)
+
+/-- **The quantitative half.** From `gst` on, that lag is at most `bound` —
+and uniformly so, in the validators and in the time. This is exactly the
+`converges` field of `ViewPace`. -/
+def ConvergesWithin (holds : Validator → ℕ → Finset BlockId)
+    (T : Finset Validator) (gst bound : ℕ) : Prop :=
+  ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + bound)
+
+/-- A bounded lag is a lag: the timed form implies the untimed one, even
+before `gst`, since holdings only grow. -/
+theorem convergesEventually_of_within
+    (hmono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t)
+    (h : ConvergesWithin holds T gst bound) :
+    ConvergesEventually holds T := by
+  intro v hv w hw t
+  refine ⟨(gst - t) + bound, ?_⟩
+  refine le_trans (hmono w t (max t gst) (le_max_left _ _)) ?_
+  refine le_trans (h v hv w hw (max t gst) (le_max_right _ _)) ?_
+  exact hmono v _ _ (by omega)
+
+/-- And conversely: eventual convergence whose lag is uniformly bounded
+after `gst` *is* convergence within that bound. The two together are
+`converges`, and neither half alone is. -/
+theorem convergesWithin_of_bounded
+    (hmono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t)
+    (h : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t →
+      ∃ d ≤ bound, holds w t ⊆ holds v (t + d)) :
+    ConvergesWithin holds T gst bound := by
+  intro v hv w hw t ht
+  obtain ⟨d, hd, hsub⟩ := h v hv w hw t ht
+  exact le_trans hsub (hmono v _ _ (by omega))
+
+/-- **The factoring.** Under monotone holdings, convergence within a bound
+and bounded eventual convergence are the same condition. -/
+theorem convergesWithin_iff_bounded
+    (hmono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t) :
+    ConvergesWithin holds T gst bound ↔
+      (∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t →
+        ∃ d ≤ bound, holds w t ⊆ holds v (t + d)) :=
+  ⟨fun h v hv w hw t ht => ⟨bound, le_refl _, h v hv w hw t ht⟩,
+   convergesWithin_of_bounded hmono⟩
+
+end Factoring
+
 /-- View convergence over a **partial** build schedule.
 
 `top v` is the highest round `v` reached. Its two clauses say that `v`'s
 blocks are exactly the rounds `0` through `top v`: `built_of_le_top`
 supplies one at each of them, and `le_top_of_built` says there are none
 above. Neither is an assumption about the network — the first at `n = 0`
-is `Live.genesis`, which a validator satisfies alone, and the rest of it
+is genesis, which a validator satisfies alone, and the rest of it
 is the definition of how far the validator got.
 
 Everything else is `ViewGrowth`'s, with the schedule clauses guarded by
@@ -81,7 +165,7 @@ structure ViewPace (U : BlockUniverse Validator BlockId Payload)
   delay : ℕ
   rounds_le : ∀ b ∈ U.ids, (U.block b).round ≤ N
   /-- **Every round `v` reached, it built in.** At `n = 0` this is
-  `Live.genesis` — a validator produces its genesis block alone, so this
+  genesis — a validator produces its genesis block alone, so this
   much needs no network at all. Above `0` it is the reading of `top`: the
   validator got there, which is to say it built there. -/
   built_of_le_top : ∀ v ∈ T, ∀ n ≤ top v,
@@ -138,6 +222,46 @@ structure ViewPace (U : BlockUniverse Validator BlockId Payload)
 namespace ViewPace
 
 variable (vp : ViewPace U T N)
+
+/-- The `converges` field *is* the bounded form of the factoring above. -/
+theorem convergesWithin (vp : ViewPace U T N) :
+    ConvergesWithin vp.holds T vp.gst vp.delay := vp.converges
+
+/-- Every `ViewPace` converges in the qualitative sense too — the bound is
+extra information, not a different phenomenon. -/
+theorem convergesEventually (vp : ViewPace U T N) :
+    ConvergesEventually vp.holds T :=
+  convergesEventually_of_within vp.holds_mono vp.converges
+
+omit [DecidableEq BlockId] in
+/-- **The separation, on this route** — V1's content over the partial
+schedule. The fused clause the `Timing` layer carried as its network row
+(*a `T`-block built after GST and early enough is referenced*) is
+derivable from `converges` and `references` alone: the block is in its
+author's hands when built (`holds_own`), reaches the builder within
+`delay` (`converges`), is still there when the builder acts
+(`holds_mono`), and is therefore referenced (`references`). No counting,
+no drift, no waiting rule — those enter only when the *hypothesis*
+`built … + delay ≤ built … (n+1)` must itself be discharged, which is
+the race the drift argument wins.
+
+This is where report §4.3's claim that the network's whole contribution
+is one sentence about views is discharged on the route the development
+keeps: `converges` mentions no blocks, rounds or references, and the
+step from views to references is the protocol's clause P7. -/
+theorem covers_of_converges {n : ℕ} (hn : n < N)
+    {c : BlockId} (hc : c ∈ U.ids) (hcT : (U.block c).creator ∈ T)
+    (hcr : (U.block c).round = n + 1)
+    {a : BlockId} (ha : a ∈ U.ids) (haT : (U.block a).creator ∈ T)
+    (har : (U.block a).round = n)
+    (hgst : vp.gst ≤ vp.built ((U.block a).creator) n)
+    (hearly : vp.built ((U.block a).creator) n + vp.delay ≤
+      vp.built ((U.block c).creator) (n + 1)) :
+    a ∈ (U.block c).refs := by
+  refine vp.references _ hcT n hn c hc rfl hcr a ?_ har
+  refine vp.holds_mono _ _ _ hearly ?_
+  exact vp.converges _ hcT _ haT _ hgst
+    (vp.holds_own _ haT n (by omega) a ha rfl har)
 
 omit [DecidableEq BlockId] in
 /-- Rounds advance real time, over the rounds a validator reached. -/
@@ -202,9 +326,9 @@ theorem populatedOn (vp : ViewPace U T N)
   fun n hn v hv => vp.built_of_le_top v hv n (vp.reached hcard n hn v hv)
 
 omit [DecidableEq BlockId] in
-/-- **Drift is derived here too.** `Timing.driftFrom_of_prompt`'s argument
-over a partial schedule: the same two-case split on `prompt`'s `max`, with
-the round guards discharged by `reached` rather than by the horizon.
+/-- **Drift is derived here too**, by the total-schedule argument over the
+partial one: the same two-case split on `prompt`'s `max`, with the round
+guards discharged by `reached` rather than by the horizon.
 
 Keeping this is what stops the partial schedule being a step backwards. On
 the total-schedule routes drift is a consequence of promptness, not an
@@ -263,15 +387,12 @@ theorem synchronisedOn_of_converges {R D : ℕ}
     hbr ▸ vp.le_top_of_built _ hbc b hb rfl
   have htopa : n ≤ vp.top ((U.block a).creator) :=
     har ▸ vp.le_top_of_built _ hac a ha rfl
-  refine vp.references _ hbc n hnN b hb rfl hbr a ?_ har
-  have hown := vp.holds_own _ hac n (by omega) a ha rfl har
   have hle := vp.le_built hac n htopa
-  have hconv := vp.converges _ hbc _ hac _ (by omega) hown
-  refine vp.holds_mono _ _ _ ?_ hconv
+  -- the race, won: drift, the wait and the backoff place the arrival first
   have hdrift := hD _ hbc _ hac n hn (by omega)
   have hwait := vp.waits _ hbc n (by omega)
   have hto := hbackoff n hn
-  omega
+  exact vp.covers_of_converges hnN hb hbc hbr ha hac har (by omega) (by omega)
 
 section Liveness
 
@@ -285,7 +406,7 @@ What remains divides cleanly. The network contributes `converges` and
 `vp.gst ≤ R`. The protocol contributes `built_of_le_top` at round `0`
 (genesis), `advances` (the pacemaker does not stall), `references` (P7) and
 `waits` (P9); drift and the backoff are needed only for coverage, and
-`driftFrom_of_prompt`'s argument discharges the first from promptness as
+`driftOn_of_prompt` discharges the first from promptness as
 before. Production needs none of them. -/
 theorem commits_recur_via_pace (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
@@ -306,6 +427,93 @@ theorem commits_recur_via_pace (hT : T ⊆ (Correct : Finset Validator))
     hN
 
 end Liveness
+
+/-! ## The quantitative arc, on this route
+
+Report §6.10's results, over the partial schedule. `Rated`, `FairWithin`
+and `BoundedSpacing` are properties of the timeout and the schedule alone
+and carry over verbatim; what needs restating is everything that took a
+`Timing` — the explicit coverage round, and the wait bound.
+
+One question had to be settled first (`liveness-routes.md` §9): what a
+wait bound means when a validator can be stuck. The answer is `reached`:
+with `T` a quorum and the progress rule, no `T`-validator is stuck below
+the horizon — as a *theorem*, where the total schedule had it as the
+shape of a field. The bounds then read exactly as they did. -/
+
+section Quantitative
+
+omit [DecidableEq BlockId] in
+/-- Drift from a later round is implied by drift from an earlier one. -/
+theorem _root_.LeanDag.DriftOn.mono {built : Validator → ℕ → ℕ}
+    {n₀ n₁ D : ℕ} (h : n₀ ≤ n₁) (hd : DriftOn built T n₀ D N) :
+    DriftOn built T n₁ D N :=
+  fun v hv w hw n hn hN => hd v hv w hw n (le_trans h hn) hN
+
+omit [DecidableEq BlockId] in
+/-- **Q3 on this route** — coverage from an explicit round, under a rated
+backoff: `R = max (max (D + delay) n₀) gst`, each summand what it looks
+like — the total-schedule statement with the structure swapped and
+`T ⊆ Correct` gone. -/
+theorem synchronisedOn_of_rate (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hrate : Rated vp.timeout) {n₀ D : ℕ} (hn₀ : vp.delay ≤ n₀)
+    (hbase : ∀ v ∈ T, ∀ w ∈ T, vp.built w n₀ ≤ vp.built v n₀ + D) :
+    SynchronisedOn U T (max (max (D + vp.delay) n₀) vp.gst) := by
+  refine vp.synchronisedOn_of_converges
+    (DriftOn.mono (le_trans (le_max_right (D + vp.delay) n₀) (le_max_left _ _))
+      (vp.driftOn_of_prompt hcard hbase
+        (fun n hn => backoff_ge_of_rate hrate _ n (le_trans hn₀ hn))))
+    (le_max_right _ _) ?_
+  exact fun n hn =>
+    backoff_ge_of_rate hrate _ n (le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) hn)
+
+variable [S : Slots Validator] {D₀ k : ℕ}
+
+/-- **The wait bound** (Q2 headline, report §6.10): a validator that knows
+the delivery bound and its start spread needs no backoff — a constant
+timeout of `D₀ + Δ` commits every reliable-led slot past GST. Production
+here is derived, so unlike `directCommit_of_wait` over `Timing` nothing
+asserts blocks above round `0`, and `T ⊆ Correct` is not consumed. -/
+theorem directCommit_of_wait (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hstart : ∀ v ∈ T, ∀ w ∈ T, vp.built w 0 ≤ vp.built v 0 + D₀)
+    (hwait : ∀ n, D₀ + vp.delay ≤ vp.timeout n)
+    (hgst : vp.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k) := by
+  have hsync : SynchronisedOn U T (S.slotRound k) :=
+    vp.synchronisedOn_of_converges
+      (DriftOn.mono (Nat.zero_le _)
+        (vp.driftOn_of_prompt hcard hstart
+          (fun n _ => le_trans (Nat.le_add_left _ _) (hwait n))))
+      hgst (fun n _ => hwait n)
+  exact directCommit_of_leader_mem hcard hsync (le_refl _)
+    (vp.populatedOn hcard _ (by omega)) (vp.populatedOn hcard _ (by omega))
+    (vp.populatedOn hcard _ (by omega)) hlead
+
+/-- **The wait bound, as a decision.** -/
+theorem decided_of_wait (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hstart : ∀ v ∈ T, ∀ w ∈ T, vp.built w 0 ≤ vp.built v 0 + D₀)
+    (hwait : ∀ n, D₀ + vp.delay ≤ vp.timeout n)
+    (hgst : vp.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) := by
+  obtain ⟨L, hLb, hdc⟩ := vp.directCommit_of_wait hcard hstart hwait hgst hN hlead
+  exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_full hdc)⟩
+
+/-- **`Delay(Δ) = 2Δ`** — the headline case, over the partial schedule. -/
+theorem directCommit_of_wait_two_delay (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hstart : ∀ v ∈ T, ∀ w ∈ T, vp.built w 0 ≤ vp.built v 0 + vp.delay)
+    (hwait : ∀ n, 2 * vp.delay ≤ vp.timeout n)
+    (hgst : vp.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k) :=
+  vp.directCommit_of_wait hcard hstart (fun n => by have := hwait n; omega) hgst hN hlead
+
+end Quantitative
 
 end ViewPace
 

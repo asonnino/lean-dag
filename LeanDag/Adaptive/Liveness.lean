@@ -117,7 +117,7 @@ theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r ≤ N, Populated U r) (v : ℕ → Option BlockId) (E : ℕ)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (v : ℕ → Option BlockId) (E : ℕ)
     (hN : S.slotRound (P.W * (E + 2)) + 2 ≤ N) :
     ∀ k, epochOf P.W k < E + 1 →
       ∃ w, DecidedWithin (S := slotsOf P.inj (fun m => P.pick U v m)) U
@@ -145,9 +145,9 @@ theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
     obtain ⟨L, hL, hdc⟩ :=
       directCommit_of_leader_mem (S := slotsOf P.inj (fun m => P.pick U v m))
         hcard hs hRj
-        (PopulatedOn.mono hT (hpop _ (by omega)))
-        (PopulatedOn.mono hT (hpop _ (by omega)))
-        (PopulatedOn.mono hT (hpop _ (by omega))) hlead
+        (hpop _ (by omega) (by omega))
+        (hpop _ (by omega) (by omega))
+        (hpop _ (by omega) (by omega)) hlead
     exact ⟨L, DecidedWithin.directCommit
       (S := slotsOf P.inj (fun m => P.pick U v m)) (by omega) hL
       (directCommitIn_full hdc)⟩
@@ -172,7 +172,7 @@ theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r ≤ N, Populated U r) (E : ℕ)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (E : ℕ)
     (hN : S.slotRound (P.W * (E + 1)) + 2 ≤ N) :
     Nonempty (PartialRun P U (View.full U) E) := by
   classical
@@ -255,7 +255,7 @@ theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
   -- A partial run at every height, chosen arbitrarily.
   have hex : ∀ E, Nonempty (PartialRun P U (View.full U) E) := fun E =>
     exists_partialRun hT hcard hc hruns hspans hs hRW
-      (N := S.slotRound (P.W * (E + 1)) + 2) (fun r _ => hpop r) E (le_refl _)
+      (N := S.slotRound (P.W * (E + 1)) + 2) (fun r _ _ => PopulatedOn.mono hT (hpop r)) E (le_refl _)
   set Rs : ∀ E, PartialRun P U (View.full U) E :=
     fun E => (hex E).some with hRs
   -- The diagonal: each slot's verdict read from the first height above it.

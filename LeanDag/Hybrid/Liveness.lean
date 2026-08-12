@@ -96,15 +96,14 @@ theorem decided_of_leader_mem
   exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_full hdc)⟩
 
 /-- H7 against a horizon: two rounds read off it. -/
-theorem decided_of_leader_of_populated (hT : T ⊆ (Correct : Finset Validator))
+theorem decided_of_leader_of_populated (_hT : T ⊆ (Correct : Finset Validator))
     (hcard : q Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound s)
-    (hpop : ∀ r ≤ N, Populated U r) (hN : S.slotRound s + 1 ≤ N)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (hN : S.slotRound s + 1 ≤ N)
     (hlead : S.leader s ∈ T) :
     ∃ L, IsLeaderBlock U s L ∧ Decided k U (View.full U) s (some L) :=
   decided_of_leader_mem hcard hs hR
-    (PopulatedOn.mono hT (hpop _ (by omega)))
-    (PopulatedOn.mono hT (hpop _ (by omega))) hlead
+    (hpop _ (by omega) (by omega)) (hpop _ (by omega) (by omega)) hlead
 
 /-! ## H7b — a run of two spans eligibility -/
 
@@ -195,7 +194,7 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (fair : FairRunOn T c) (R : ℕ) (s : ℕ) :
     ∃ b, s ≤ b ∧ R ≤ S.slotRound b ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
+        (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
         S.slotRound (b + c - 1) + 1 ≤ N →
         ∀ i, i < b → ∃ v, Decided k U (View.full U) i v := by
   obtain ⟨k₀, hk₀⟩ := S.unbounded R
@@ -225,7 +224,7 @@ theorem all_decided_below_of_fairRun_correct {c : ℕ} (hc : 0 < c)
     (fair : FairRunOn (Correct : Finset Validator) c) (R : ℕ) (s : ℕ) :
     ∃ b, s ≤ b ∧ R ≤ S.slotRound b ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → Synchronised U R →
+        (∀ r, R ≤ r → r ≤ N → Populated U r) → Synchronised U R →
         S.slotRound (b + c - 1) + 1 ≤ N →
         ∀ i, i < b → ∃ v, Decided k U (View.full U) i v :=
   all_decided_below_of_fairRun hc Finset.Subset.rfl q_le_card_correct hspan
