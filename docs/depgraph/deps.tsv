@@ -66,6 +66,7 @@ EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_3	LeanDag.Faults.f
 EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_3	LeanDag.AdaptivePolicy
 EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_3	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_3	LeanDag.Faults5.toFaults
+NODE	LeanDag.card_filter_not_correct_le._simp_1_2	LeanDag.DoS.Novelty	thm
 NODE	LeanDag.decidablePopulatedOn	LeanDag.DoS.Exclusion	def
 EDGE	LeanDag.decidablePopulatedOn	LeanDag.decidablePopulatedOn._aux_1
 EDGE	LeanDag.decidablePopulatedOn	LeanDag.Faults
@@ -85,6 +86,7 @@ EDGE	LeanDag.decidableIsLeaderBlock	LeanDag.BlockUniverse
 EDGE	LeanDag.decidableIsLeaderBlock	LeanDag.IsLeaderBlock
 EDGE	LeanDag.decidableIsLeaderBlock	LeanDag.Slots
 EDGE	LeanDag.decidableIsLeaderBlock	LeanDag.decidableIsLeaderBlock._aux_1
+NODE	LeanDag.card_filter_not_correct_le._simp_1_3	LeanDag.DoS.Novelty	thm
 NODE	LeanDag.BlockUniverse.mk.inj	LeanDag.BlockDag	thm
 EDGE	LeanDag.BlockUniverse.mk.inj	LeanDag.Block
 EDGE	LeanDag.BlockUniverse.mk.inj	LeanDag.Faults
@@ -199,6 +201,16 @@ EDGE	LeanDagTest.uexcl_populated	LeanDag.Populated
 EDGE	LeanDagTest.uexcl_populated	LeanDag.Correct
 EDGE	LeanDagTest.uexcl_populated	LeanDagTest.Uexcl
 EDGE	LeanDagTest.uexcl_populated	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+NODE	LeanDag.card_missingAt_le_base._proof_1_3	LeanDag.DoS.Density	thm
+EDGE	LeanDag.card_missingAt_le_base._proof_1_3	LeanDag.missingAt
+EDGE	LeanDag.card_missingAt_le_base._proof_1_3	LeanDag.Faults
+EDGE	LeanDag.card_missingAt_le_base._proof_1_3	LeanDag.creators
+EDGE	LeanDag.card_missingAt_le_base._proof_1_3	LeanDag.Faults.byzantine
+EDGE	LeanDag.card_missingAt_le_base._proof_1_3	LeanDag.Correct
+EDGE	LeanDag.card_missingAt_le_base._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_missingAt_le_base._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.card_missingAt_le_base._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.card_missingAt_le_base._proof_1_3	LeanDag.Faults.f
 NODE	LeanDag.not_reaches_of_round_lt	LeanDag.CausalHistory	thm
 EDGE	LeanDag.not_reaches_of_round_lt	LeanDag.Faults
 EDGE	LeanDag.not_reaches_of_round_lt	LeanDag.BlockUniverse.ids
@@ -277,6 +289,7 @@ EDGE	LeanDag.ViewSync.convergesWithin	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewSync.convergesWithin	LeanDag.ViewSync.converges
 EDGE	LeanDag.ViewSync.convergesWithin	LeanDag.ViewSync.holds
 NODE	LeanDagTest.Dexcl._proof_6	LeanDagTest.GC.Bootstrap	thm
+EDGE	LeanDagTest.Dexcl._proof_6	LeanDagTest.excl_round_le
 EDGE	LeanDagTest.Dexcl._proof_6	LeanDag.BlockUniverse.ids
 EDGE	LeanDagTest.Dexcl._proof_6	LeanDag.Block.refs
 EDGE	LeanDagTest.Dexcl._proof_6	LeanDag.Correct
@@ -531,6 +544,20 @@ EDGE	LeanDagTest.starveHolds.eq_1	LeanDagTest.starveHolds
 NODE	LeanDagTest.Uskip._proof_1	LeanDagTest.Odontoceti.Model	thm
 EDGE	LeanDagTest.Uskip._proof_1	LeanDagTest.skipBlk
 EDGE	LeanDagTest.Uskip._proof_1	LeanDag.Block.refs
+NODE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5	LeanDag.Hybrid.Rules	thm
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5	LeanDag.HybridFaults
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5	LeanDag.creatorsOf
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5	LeanDag.HybridFaults.fc
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5	LeanDag.Hybrid.coneSupports
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5	LeanDag.Block.refs
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5	LeanDag.BlockUniverse
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5	LeanDag.supporters
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5	LeanDag.Honest
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5	LeanDag.HybridFaults.fb
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5	LeanDag.HybridFaults.byzantine
 NODE	LeanDag.Integration.regenesis_converges._proof_1_1	LeanDag.Integration.ReGenesis	thm
 NODE	LeanDag.ViewSync.commits_recur_of_converges	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewSync.commits_recur_of_converges	LeanDag.Faults
@@ -933,6 +960,15 @@ EDGE	LeanDag.viewUpto_chopD._proof_1_6	LeanDag.Faults
 EDGE	LeanDag.viewUpto_chopD._proof_1_6	LeanDag.BlockUniverse.block
 EDGE	LeanDag.viewUpto_chopD._proof_1_6	LeanDag.Block.round
 EDGE	LeanDag.viewUpto_chopD._proof_1_6	LeanDag.BlockUniverse
+NODE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_3	LeanDag.Odontoceti.Rules	thm
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_3	LeanDag.Faults5
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_3	LeanDag.creatorsOf
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_3	LeanDag.Block.refs
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_3	LeanDag.Faults.f
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_3	LeanDag.Faults5.toFaults
 NODE	LeanDag.Integration.regenesis_converges	LeanDag.Integration.ReGenesis	thm
 EDGE	LeanDag.Integration.regenesis_converges	LeanDag.Block
 EDGE	LeanDag.Integration.regenesis_converges	LeanDag.Faults
@@ -975,6 +1011,12 @@ EDGE	LeanDag.uniform_of_byzBudget	LeanDag.Faults.card_byzantine
 EDGE	LeanDag.uniform_of_byzBudget	LeanDag.novelty
 EDGE	LeanDag.uniform_of_byzBudget	LeanDag.viewUpto
 EDGE	LeanDag.uniform_of_byzBudget	LeanDag.Block.creator
+NODE	LeanDagTest.uodo_round_le	LeanDagTest.Odontoceti.Model	thm
+EDGE	LeanDagTest.uodo_round_le	LeanDagTest.instFaults5FinOfNatNat_leanDagTest
+EDGE	LeanDagTest.uodo_round_le	LeanDag.BlockUniverse.block
+EDGE	LeanDagTest.uodo_round_le	LeanDag.Block.round
+EDGE	LeanDagTest.uodo_round_le	LeanDagTest.Uodo
+EDGE	LeanDagTest.uodo_round_le	LeanDag.Faults5.toFaults
 NODE	LeanDag.Odontoceti.eq_of_directCommit_of_thickLink._proof_1_2	LeanDag.Odontoceti.Rules	thm
 EDGE	LeanDag.Odontoceti.eq_of_directCommit_of_thickLink._proof_1_2	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.eq_of_directCommit_of_thickLink._proof_1_2	LeanDag.Faults.byzantine
@@ -1038,6 +1080,7 @@ EDGE	LeanDag.Integration.chopMsg._proof_8	LeanDag.SkipMsg.line
 EDGE	LeanDag.Integration.chopMsg._proof_8	LeanDag.SkipMsg.B1
 NODE	LeanDagTest.Dtwin._proof_4	LeanDagTest.DoS.Novelty	thm
 EDGE	LeanDagTest.Dtwin._proof_4	LeanDagTest.Utwin
+EDGE	LeanDagTest.Dtwin._proof_4	LeanDagTest.twinAcc_eq_empty
 EDGE	LeanDagTest.Dtwin._proof_4	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.Dtwin._proof_4	LeanDagTest.twinAcc
 EDGE	LeanDagTest.Dtwin._proof_4	LeanDag.Block.creator
@@ -1101,6 +1144,7 @@ EDGE	LeanDag.chopBlock_chop	LeanDag.BlockUniverse
 EDGE	LeanDag.chopBlock_chop	LeanDag.chopBlock_round
 EDGE	LeanDag.chopBlock_chop	LeanDag.chopBlock_chop._proof_1_3
 EDGE	LeanDag.chopBlock_chop	LeanDag.chopBlock_payload
+EDGE	LeanDag.chopBlock_chop	LeanDag.block_eq_of
 EDGE	LeanDag.chopBlock_chop	LeanDag.Block.creator
 NODE	LeanDag.Faults5.mk.noConfusion	LeanDag.Odontoceti.Rules	def
 EDGE	LeanDag.Faults5.mk.noConfusion	LeanDag.Faults5
@@ -1628,6 +1672,7 @@ EDGE	LeanDag.mem_votesIn_spec	LeanDag.votesIn.eq_1
 NODE	LeanDagTest.dexcl_byz	LeanDagTest.GC.Bootstrap	thm
 EDGE	LeanDagTest.dexcl_byz	LeanDag.ByzBudget
 EDGE	LeanDagTest.dexcl_byz	LeanDagTest.dexcl_byz._proof_1_1
+EDGE	LeanDagTest.dexcl_byz	LeanDagTest.exclAcc_eq_empty
 EDGE	LeanDagTest.dexcl_byz	LeanDag.Correct
 EDGE	LeanDagTest.dexcl_byz	LeanDagTest.exclAcc
 EDGE	LeanDagTest.dexcl_byz	LeanDag.BlockUniverse.block
@@ -1668,6 +1713,7 @@ NODE	LeanDag.Timing.latest	LeanDag.Timing	def
 EDGE	LeanDag.Timing.latest	LeanDag.Faults
 EDGE	LeanDag.Timing.latest	LeanDag.Timing
 EDGE	LeanDag.Timing.latest	LeanDag.BlockUniverse
+NODE	LeanDag.card_filter_correct_le._simp_1_2	LeanDag.DoS.Novelty	thm
 NODE	LeanDagTest.ugrowLag._proof_42	LeanDagTest.Collapse	thm
 EDGE	LeanDagTest.ugrowLag._proof_42	LeanDagTest.ugrowLag._proof_16
 EDGE	LeanDagTest.ugrowLag._proof_42	LeanDagTest.ugrowLag._proof_17
@@ -1688,6 +1734,48 @@ EDGE	LeanDag.View.mk._flat_ctor	LeanDag.Block.refs
 EDGE	LeanDag.View.mk._flat_ctor	LeanDag.BlockUniverse.block
 EDGE	LeanDag.View.mk._flat_ctor	LeanDag.BlockUniverse
 EDGE	LeanDag.View.mk._flat_ctor	LeanDag.View
+NODE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.Hybrid.Rules	thm
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.Hybrid.ThickLink
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.HybridFaults
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.mem_honest._simp_1
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.creatorsOf
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.HybridFaults.fc
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.mem_creatorsOf
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.Hybrid.coneSupports
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_3
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.Hybrid.DirectCommit
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.mem_supporters
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.BlockUniverse.complete
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.HonestNoEquiv
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.mem_history_of_mem_refs
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.HybridFaults.card_byzantine
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.Block.refs
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.BlockUniverse.refs_nonempty
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.history
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.Block.round
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_7
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.BlockUniverse
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_2
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.supporters
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.Hybrid.coneSupports_subset_of_reaches
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.Honest
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.mem_honest
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.BlockUniverse.valid
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.BlockUniverse.round_of_mem_refs
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.Hybrid.mem_coneSupports
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.HybridFaults.fb
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.Reaches.single
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_6
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.HybridFaults.byzantine
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.ValidWrt.quorum
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.Block.creator
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_1
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.eq_of_creator_eq_honest
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux	LeanDag.ValidWrt
 NODE	LeanDagTest.ugrowSkewView._proof_3	LeanDagTest.ViewSync	thm
 NODE	LeanDag.ValidWrt.quorum	LeanDag.Block	thm
 EDGE	LeanDag.ValidWrt.quorum	LeanDag.Block
@@ -1900,6 +1988,16 @@ EDGE	LeanDag.ViewGrowth.converges	LeanDag.ViewGrowth.gst
 EDGE	LeanDag.ViewGrowth.converges	LeanDag.ViewGrowth.delay
 EDGE	LeanDag.ViewGrowth.converges	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.converges	LeanDag.ViewGrowth
+NODE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_2	LeanDag.Hybrid.Rules	thm
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_2	LeanDag.HybridFaults
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_2	LeanDag.creatorsOf
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_2	LeanDag.HybridFaults.fc
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_2	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_2	LeanDag.Block.refs
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_2	LeanDag.HybridFaults.fb
 NODE	LeanDag.commits_recur_by_round._proof_1_1	LeanDag.Quantitative	thm
 EDGE	LeanDag.commits_recur_by_round._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.commits_recur_by_round._proof_1_1	LeanDag.Slots.slotRound
@@ -2056,6 +2154,7 @@ EDGE	LeanDag.certifiedIn_chop	LeanDag.certificates_chop
 EDGE	LeanDag.certifiedIn_chop	LeanDag.certificates
 EDGE	LeanDag.certifiedIn_chop	LeanDag.Reaches
 NODE	LeanDagTest.rrSlots_fairWithin._proof_1_1	LeanDagTest.Quantitative	thm
+NODE	LeanDagTest.exclAcc_eq_empty._proof_1_2	LeanDagTest.GC.Bootstrap	thm
 NODE	LeanDagTest.ustarveSync._proof_2	LeanDagTest.Unbounded	thm
 NODE	LeanDagTest.uhyb4_slot1	LeanDagTest.Hybrid	thm
 EDGE	LeanDagTest.uhyb4_slot1	LeanDag.View.full
@@ -2403,6 +2502,11 @@ EDGE	LeanDag.eq_of_reaches_of_refs_empty	LeanDag.BlockUniverse.block
 EDGE	LeanDag.eq_of_reaches_of_refs_empty	LeanDag.BlockUniverse
 EDGE	LeanDag.eq_of_reaches_of_refs_empty	LeanDag.RefStep
 EDGE	LeanDag.eq_of_reaches_of_refs_empty	LeanDag.Reaches
+NODE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_2	LeanDag.DoS.Novelty	thm
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_2	LeanDag.BlockUniverse
 NODE	LeanDag.card_history_le'	LeanDag.DoS.Pedigree	thm
 EDGE	LeanDag.card_history_le'	LeanDag.mem_exposedTo
 EDGE	LeanDag.card_history_le'	LeanDag.Faults
@@ -2467,6 +2571,33 @@ EDGE	LeanDag.Integration.honestNoEquiv_skipFill._proof_1_4	LeanDag.SkipMsg
 EDGE	LeanDag.Integration.honestNoEquiv_skipFill._proof_1_4	LeanDag.SkipMsg.r0
 EDGE	LeanDag.Integration.honestNoEquiv_skipFill._proof_1_4	LeanDag.SkipMsg.B1
 NODE	LeanDagTest.ugrowSkewView._proof_13	LeanDagTest.ViewSync	thm
+NODE	LeanDag.card_missingAt_le_base	LeanDag.DoS.Density	thm
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.missingAt
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.creatorsOf
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.mem_creatorsOf
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.Faults
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.card_missingAt_le_base._proof_1_1
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.creators
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.Faults.byzantine
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.card_missingAt_le_base._proof_1_2
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.card_correct_add_byzantine
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.mem_history_of_mem_refs
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.mem_missingAt
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.Block.refs
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.Correct
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.card_missingAt_le_base._proof_1_3
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.card_le_card_inter_correct_add_byzantine
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.history
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.Block.round
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.BlockUniverse
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.Faults.f
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.Faults.card_byzantine
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.BlockUniverse.valid
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.BlockUniverse.round_of_mem_refs
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.ValidWrt.quorum
+EDGE	LeanDag.card_missingAt_le_base	LeanDag.Block.creator
 NODE	LeanDag.ViewGrowth.populatedOn._proof_1_2	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewGrowth.populatedOn._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.ViewGrowth.populatedOn._proof_1_2	LeanDag.ViewGrowth.gst
@@ -2496,6 +2627,11 @@ EDGE	LeanDag.BlockUniverse.rec	LeanDag.BlockUniverse
 EDGE	LeanDag.BlockUniverse.rec	LeanDag.Block.creator
 EDGE	LeanDag.BlockUniverse.rec	LeanDag.ValidWrt
 NODE	LeanDagTest.dtwin_uniform._proof_1_2	LeanDagTest.DoS.Novelty	thm
+NODE	LeanDag.card_missingAt_le_base._proof_1_1	LeanDag.DoS.Density	thm
+EDGE	LeanDag.card_missingAt_le_base._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.card_missingAt_le_base._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_missingAt_le_base._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.card_missingAt_le_base._proof_1_1	LeanDag.BlockUniverse
 NODE	LeanDagTest.ugrowCatch._proof_10	LeanDagTest.Catchup	thm
 NODE	LeanDag.Faults5.toHybrid._proof_1	LeanDag.Hybrid.Conservativity	thm
 EDGE	LeanDag.Faults5.toHybrid._proof_1	LeanDag.Faults5
@@ -2530,6 +2666,7 @@ EDGE	LeanDag.card_byzPool_zero_le	LeanDag.Faults
 EDGE	LeanDag.card_byzPool_zero_le	LeanDag.Correct
 EDGE	LeanDag.card_byzPool_zero_le	LeanDag.BlockUniverse.block
 EDGE	LeanDag.card_byzPool_zero_le	LeanDag.BlockUniverse
+EDGE	LeanDag.card_byzPool_zero_le	LeanDag.card_filter_not_correct_le
 EDGE	LeanDag.card_byzPool_zero_le	LeanDag.Delivery.accepted
 EDGE	LeanDag.card_byzPool_zero_le	LeanDag.Faults.f
 EDGE	LeanDag.card_byzPool_zero_le	LeanDag.viewUpto
@@ -2931,6 +3068,7 @@ EDGE	LeanDag.exists_pedigree._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.exists_pedigree._proof_1_3	LeanDag.BlockUniverse.block
 EDGE	LeanDag.exists_pedigree._proof_1_3	LeanDag.Block.round
 EDGE	LeanDag.exists_pedigree._proof_1_3	LeanDag.BlockUniverse
+NODE	LeanDag.support_threshold_arith._proof_1_2	LeanDag.CommonCore	thm
 NODE	LeanDag.Odontoceti.DirectCommit	LeanDag.Odontoceti.Rules	def
 EDGE	LeanDag.Odontoceti.DirectCommit	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.DirectCommit	LeanDag.BlockUniverse
@@ -4093,6 +4231,11 @@ EDGE	LeanDag.Integration.hybrid_agree_stack	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.hybrid_agree_stack	LeanDag.Slots
 EDGE	LeanDag.Integration.hybrid_agree_stack	LeanDag.SkipMsg
 EDGE	LeanDag.Integration.hybrid_agree_stack	LeanDag.View
+NODE	LeanDag.exists_self_ancestor_aux._proof_1_3	LeanDag.DoS.SelfParent	thm
+EDGE	LeanDag.exists_self_ancestor_aux._proof_1_3	LeanDag.Faults
+EDGE	LeanDag.exists_self_ancestor_aux._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.exists_self_ancestor_aux._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.exists_self_ancestor_aux._proof_1_3	LeanDag.BlockUniverse
 NODE	LeanDag.card_topsOf_le_pow._proof_1_2	LeanDag.DoS.Pedigree	thm
 EDGE	LeanDag.card_topsOf_le_pow._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.card_topsOf_le_pow._proof_1_2	LeanDag.PedigreeTo
@@ -4811,6 +4954,12 @@ EDGE	LeanDag.decidableDirectCommit._aux_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.decidableDirectCommit._aux_1	LeanDag.BlockUniverse
 EDGE	LeanDag.decidableDirectCommit._aux_1	LeanDag.Faults.f
 EDGE	LeanDag.decidableDirectCommit._aux_1	LeanDag.certificates
+NODE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_6	LeanDag.Odontoceti.Rules	thm
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_6	LeanDag.Faults5
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_6	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_6	LeanDag.Block.round
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_6	LeanDag.BlockUniverse
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_6	LeanDag.Faults5.toFaults
 NODE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.Faults
 EDGE	LeanDag.ViewGrowth.toViewSync._proof_5	LeanDag.DriftOn
@@ -5138,6 +5287,15 @@ EDGE	LeanDagTest.ucrashMsg._proof_13	LeanDag.Block.round
 EDGE	LeanDagTest.ucrashMsg._proof_13	LeanDagTest.Ucrash
 EDGE	LeanDagTest.ucrashMsg._proof_13	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ucrashMsg._proof_13	LeanDagTest.ucrashMsg._proof_2
+NODE	LeanDagTest.exclAcc_eq_empty	LeanDagTest.GC.Bootstrap	thm
+EDGE	LeanDagTest.exclAcc_eq_empty	LeanDagTest.exclAcc_eq_empty._proof_1_1
+EDGE	LeanDagTest.exclAcc_eq_empty	LeanDagTest.exclAcc_eq_empty._proof_1_6
+EDGE	LeanDagTest.exclAcc_eq_empty	LeanDagTest.exclAcc_eq_empty._proof_1_2
+EDGE	LeanDagTest.exclAcc_eq_empty	LeanDagTest.exclAcc
+EDGE	LeanDagTest.exclAcc_eq_empty	LeanDagTest.exclAcc_eq_empty._proof_1_4
+EDGE	LeanDagTest.exclAcc_eq_empty	LeanDagTest.exclAcc_eq_empty._proof_1_7
+EDGE	LeanDagTest.exclAcc_eq_empty	LeanDagTest.exclAcc_eq_empty._proof_1_5
+EDGE	LeanDagTest.exclAcc_eq_empty	LeanDagTest.exclAcc_eq_empty._proof_1_3
 NODE	LeanDagTest.twinBlk._proof_2	LeanDagTest.Odontoceti.Model	thm
 NODE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.Adaptive.Odontoceti	thm
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.Faults5
@@ -5219,6 +5377,7 @@ EDGE	LeanDagTest.ugrowLag_decided	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowLag_decided	LeanDagTest.ugrowLag_decided._proof_1_1
 EDGE	LeanDagTest.ugrowLag_decided	LeanDag.IsLeaderBlock
 EDGE	LeanDagTest.ugrowLag_decided	LeanDagTest.ugrowLag
+NODE	LeanDag.card_filter_not_correct_le._simp_1_4	LeanDag.DoS.Novelty	thm
 NODE	LeanDag.DirectCommitIn	LeanDag.Mysticeti	def
 EDGE	LeanDag.DirectCommitIn	LeanDag.creatorsOf
 EDGE	LeanDag.DirectCommitIn	LeanDag.Faults
@@ -6166,6 +6325,7 @@ NODE	LeanDagTest.dtwin_byz	LeanDagTest.DoS.Novelty	thm
 EDGE	LeanDagTest.dtwin_byz	LeanDagTest.dtwin_byz._proof_1_1
 EDGE	LeanDagTest.dtwin_byz	LeanDag.ByzBudget
 EDGE	LeanDagTest.dtwin_byz	LeanDagTest.Utwin
+EDGE	LeanDagTest.dtwin_byz	LeanDagTest.twinAcc_eq_empty
 EDGE	LeanDagTest.dtwin_byz	LeanDagTest.dtwin_byz._proof_1_2
 EDGE	LeanDagTest.dtwin_byz	LeanDag.Correct
 EDGE	LeanDagTest.dtwin_byz	LeanDag.BlockUniverse.block
@@ -6654,6 +6814,7 @@ EDGE	LeanDagTest.Ufault._proof_1	LeanDagTest.lky
 NODE	LeanDag.Odontoceti.thickLink_of_directCommit	LeanDag.Odontoceti.Rules	thm
 EDGE	LeanDag.Odontoceti.thickLink_of_directCommit	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.thickLink_of_directCommit	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit	LeanDag.Odontoceti.thickLink_of_directCommit_aux
 EDGE	LeanDag.Odontoceti.thickLink_of_directCommit	LeanDag.BlockUniverse.block
 EDGE	LeanDag.Odontoceti.thickLink_of_directCommit	LeanDag.Block.round
 EDGE	LeanDag.Odontoceti.thickLink_of_directCommit	LeanDag.BlockUniverse
@@ -6704,6 +6865,7 @@ EDGE	LeanDag.certificatesIn_chop._proof_1_4	LeanDag.Block.round
 EDGE	LeanDag.certificatesIn_chop._proof_1_4	LeanDag.BlockUniverse
 NODE	LeanDagTest.Dexcl._proof_3	LeanDagTest.GC.Bootstrap	thm
 EDGE	LeanDagTest.Dexcl._proof_3	LeanDag.BlockUniverse.ids
+EDGE	LeanDagTest.Dexcl._proof_3	LeanDagTest.exclAcc_eq_empty
 EDGE	LeanDagTest.Dexcl._proof_3	LeanDagTest.exclAcc
 EDGE	LeanDagTest.Dexcl._proof_3	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.Dexcl._proof_3	LeanDag.Block.round
@@ -6846,6 +7008,7 @@ EDGE	LeanDag.DecidedWithin.directCommit	LeanDag.Slots
 EDGE	LeanDag.DecidedWithin.directCommit	LeanDag.View
 NODE	LeanDag.exists_self_ancestor	LeanDag.DoS.SelfParent	thm
 EDGE	LeanDag.exists_self_ancestor	LeanDag.Faults
+EDGE	LeanDag.exists_self_ancestor	LeanDag.exists_self_ancestor_aux
 EDGE	LeanDag.exists_self_ancestor	LeanDag.BlockUniverse.ids
 EDGE	LeanDag.exists_self_ancestor	LeanDag.exists_self_ancestor._proof_1_1
 EDGE	LeanDag.exists_self_ancestor	LeanDag.BlockUniverse.block
@@ -7003,6 +7166,7 @@ EDGE	LeanDag.Odontoceti.AdaptiveRun.mk.sizeOf_spec	LeanDag.Faults5.toFaults
 EDGE	LeanDag.Odontoceti.AdaptiveRun.mk.sizeOf_spec	LeanDag.Odontoceti.DecidedWithin
 EDGE	LeanDag.Odontoceti.AdaptiveRun.mk.sizeOf_spec	LeanDag.AdaptivePolicy.inj
 NODE	LeanDagTest.Dexcl._proof_5	LeanDagTest.GC.Bootstrap	thm
+EDGE	LeanDagTest.Dexcl._proof_5	LeanDagTest.exclAcc_eq_empty
 EDGE	LeanDagTest.Dexcl._proof_5	LeanDagTest.exclAcc
 EDGE	LeanDagTest.Dexcl._proof_5	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.Dexcl._proof_5	LeanDagTest.Uexcl
@@ -7360,6 +7524,7 @@ EDGE	LeanDagTest.hyb8	LeanDagTest.hyb8._proof_4
 EDGE	LeanDagTest.hyb8	LeanDagTest.hyb8._proof_5
 EDGE	LeanDagTest.hyb8	LeanDagTest.hyb8._proof_1
 EDGE	LeanDagTest.hyb8	LeanDag.HybridFaults.mk
+NODE	LeanDag.card_filter_correct_le._simp_1_1	LeanDag.DoS.Novelty	thm
 NODE	LeanDag.Integration.chop_addGenesis._proof_1_1	LeanDag.Integration.ReGenesis	thm
 NODE	LeanDagTest.dblV1	LeanDagTest.DoS.Novelty	def
 EDGE	LeanDagTest.dblV1	LeanDagTest.dblV0
@@ -7566,6 +7731,7 @@ EDGE	LeanDag.card_correct_le_two_mul_coveredAt_of_decided	LeanDag.View
 NODE	LeanDag.CatchupSync	LeanDag.Drift.Catchup	ind
 EDGE	LeanDag.CatchupSync	LeanDag.Faults
 EDGE	LeanDag.CatchupSync	LeanDag.BlockUniverse
+NODE	LeanDagTest.exclAcc_eq_empty._proof_1_6	LeanDagTest.GC.Bootstrap	thm
 NODE	LeanDagTest.ugrowSkew._proof_9	LeanDagTest.Partial	thm
 NODE	LeanDag.Block.noConfusion	LeanDag.Block	def
 EDGE	LeanDag.Block.noConfusion	LeanDag.Block
@@ -7651,6 +7817,8 @@ EDGE	LeanDag.card_base_le	LeanDag.Faults.f
 EDGE	LeanDag.card_base_le	LeanDag.Base
 EDGE	LeanDag.card_base_le	LeanDag.viewUpto
 EDGE	LeanDag.card_base_le	LeanDag.card_retained_le
+NODE	LeanDagTest.twinAcc_eq_empty	LeanDagTest.DoS.Novelty	thm
+EDGE	LeanDagTest.twinAcc_eq_empty	LeanDagTest.twinAcc
 NODE	LeanDag.card_creatorsOf_correctBlocksAt	LeanDag.CommonCore	thm
 EDGE	LeanDag.card_creatorsOf_correctBlocksAt	LeanDag.creatorsOf
 EDGE	LeanDag.card_creatorsOf_correctBlocksAt	LeanDag.Faults
@@ -7712,6 +7880,11 @@ EDGE	LeanDag.ReactiveM.noConfusionType	LeanDag.IsLeaderBlock
 EDGE	LeanDag.ReactiveM.noConfusionType	LeanDag.Slots
 EDGE	LeanDag.ReactiveM.noConfusionType	LeanDag.ReactiveCore.timeout
 EDGE	LeanDag.ReactiveM.noConfusionType	LeanDag.ReactiveCore
+NODE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._simp_1_4	LeanDag.Odontoceti.Rules	thm
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._simp_1_4	LeanDag.Faults
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._simp_1_4	LeanDag.Faults.byzantine
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._simp_1_4	LeanDag.Correct
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._simp_1_4	LeanDag.mem_correct
 NODE	LeanDag.exposedIn_iff_of_view	LeanDag.DoS.Exposure	thm
 EDGE	LeanDag.exposedIn_iff_of_view	LeanDag.history_subset_view
 EDGE	LeanDag.exposedIn_iff_of_view	LeanDag.Faults
@@ -7885,6 +8058,7 @@ EDGE	LeanDagTest.ugrowReactive._proof_20	LeanDagTest.rrSlots
 NODE	LeanDagTest.lkx._proof_1	LeanDagTest.DoS.Exclusion	thm
 NODE	LeanDagTest.dexcl_eventuallyDelivers	LeanDagTest.GC.Bootstrap	thm
 EDGE	LeanDagTest.dexcl_eventuallyDelivers	LeanDag.EventuallyDelivers
+EDGE	LeanDagTest.dexcl_eventuallyDelivers	LeanDagTest.excl_round_le
 EDGE	LeanDagTest.dexcl_eventuallyDelivers	LeanDagTest.dexcl_eventuallyDelivers._proof_1_1
 EDGE	LeanDagTest.dexcl_eventuallyDelivers	LeanDag.BlockUniverse.ids
 EDGE	LeanDagTest.dexcl_eventuallyDelivers	LeanDag.Correct
@@ -8187,6 +8361,7 @@ EDGE	LeanDagTest.Dtwin._proof_5	LeanDagTest.Utwin
 EDGE	LeanDagTest.Dtwin._proof_5	LeanDag.BlockUniverse.ids
 EDGE	LeanDagTest.Dtwin._proof_5	LeanDag.Block.refs
 EDGE	LeanDagTest.Dtwin._proof_5	LeanDag.Correct
+EDGE	LeanDagTest.Dtwin._proof_5	LeanDagTest.twin_round_le
 EDGE	LeanDagTest.Dtwin._proof_5	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.Dtwin._proof_5	LeanDag.Block.round
 EDGE	LeanDagTest.Dtwin._proof_5	LeanDagTest.twinAcc
@@ -8204,6 +8379,7 @@ EDGE	LeanDag.history_chop_anti	LeanDag.history
 EDGE	LeanDag.history_chop_anti	LeanDag.Block.round
 EDGE	LeanDag.history_chop_anti	LeanDag.BlockUniverse
 EDGE	LeanDag.history_chop_anti	LeanDag.history_chop_anti._proof_1_1
+NODE	LeanDagTest.exclAcc_eq_empty._proof_1_4	LeanDagTest.GC.Bootstrap	thm
 NODE	LeanDag.Slots	LeanDag.Mysticeti	ind
 NODE	LeanDag.Hybrid.decided_below_of_committed_run._proof_1_3	LeanDag.Hybrid.Liveness	thm
 EDGE	LeanDag.Hybrid.decided_below_of_committed_run._proof_1_3	LeanDag.HybridFaults
@@ -8356,6 +8532,27 @@ EDGE	LeanDag.partialRun_agree._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.partialRun_agree._proof_1_3	LeanDag.epochOf
 EDGE	LeanDag.partialRun_agree._proof_1_3	LeanDag.AdaptivePolicy
 EDGE	LeanDag.partialRun_agree._proof_1_3	LeanDag.Slots
+NODE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.DoS.Novelty	thm
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.Faults
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_3
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_2
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.BlockUniverse.complete
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.ValidWrt.self_parent
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.card_history_le_card_add_card_novelty
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.Block.refs
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.Correct
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.history
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.Block.round
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.BlockUniverse
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.StepNovelty
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.history_eq_singleton_of_round_zero
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.novelty
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_1
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.BlockUniverse.valid
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.BlockUniverse.round_of_mem_refs
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux	LeanDag.Block.creator
 NODE	LeanDag.Hybrid.coneSupports.eq_1	LeanDag.Hybrid.Rules	thm
 EDGE	LeanDag.Hybrid.coneSupports.eq_1	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.coneSupports.eq_1	LeanDag.creatorsOf
@@ -9033,6 +9230,7 @@ EDGE	LeanDag.card_viewGap_succ_le	LeanDag.EventuallyDelivers
 EDGE	LeanDag.card_viewGap_succ_le	LeanDag.viewUpto_subset_history
 EDGE	LeanDag.card_viewGap_succ_le	LeanDag.BlockUniverse.ids
 EDGE	LeanDag.card_viewGap_succ_le	LeanDag.Correct
+EDGE	LeanDag.card_viewGap_succ_le	LeanDag.sum_novelty_not_correct_le
 EDGE	LeanDag.card_viewGap_succ_le	LeanDag.mem_novelty
 EDGE	LeanDag.card_viewGap_succ_le	LeanDag.BlockUniverse.block
 EDGE	LeanDag.card_viewGap_succ_le	LeanDag.Delivery.held
@@ -9160,6 +9358,11 @@ EDGE	LeanDag.mem_viewUpto	LeanDag.mem_viewUpto._proof_1_4
 EDGE	LeanDag.mem_viewUpto	LeanDag.Delivery.accepted
 EDGE	LeanDag.mem_viewUpto	LeanDag.viewUpto_succ
 EDGE	LeanDag.mem_viewUpto	LeanDag.viewUpto
+NODE	LeanDag.card_filter_not_correct_le._simp_1_1	LeanDag.DoS.Novelty	thm
+EDGE	LeanDag.card_filter_not_correct_le._simp_1_1	LeanDag.Faults
+EDGE	LeanDag.card_filter_not_correct_le._simp_1_1	LeanDag.Faults.byzantine
+EDGE	LeanDag.card_filter_not_correct_le._simp_1_1	LeanDag.Correct
+EDGE	LeanDag.card_filter_not_correct_le._simp_1_1	LeanDag.mem_correct
 NODE	LeanDag.ViewGrowth.toDelivery._proof_1	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewGrowth.toDelivery._proof_1	LeanDag.Faults
 EDGE	LeanDag.ViewGrowth.toDelivery._proof_1	LeanDag.ViewGrowth.holds
@@ -10068,6 +10271,7 @@ EDGE	LeanDag.Integration.dosValid_skipFill_of_covered._proof_1_4	LeanDag.SkipMsg
 EDGE	LeanDag.Integration.dosValid_skipFill_of_covered._proof_1_4	LeanDag.SkipMsg.r0
 EDGE	LeanDag.Integration.dosValid_skipFill_of_covered._proof_1_4	LeanDag.SkipMsg.B1
 NODE	LeanDag.exists_backoff_ge	LeanDag.Timing	thm
+NODE	LeanDag.support_threshold_arith._proof_1_4	LeanDag.CommonCore	thm
 NODE	LeanDag.ViewGrowth.gst	LeanDag.ViewSync	def
 EDGE	LeanDag.ViewGrowth.gst	LeanDag.Faults
 EDGE	LeanDag.ViewGrowth.gst	LeanDag.BlockUniverse
@@ -10146,6 +10350,19 @@ EDGE	LeanDagTest.uexcl_decided	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.uexcl_decided	LeanDagTest.uexcl_synchronised
 EDGE	LeanDagTest.uexcl_decided	LeanDag.IsLeaderBlock
 EDGE	LeanDagTest.uexcl_decided	LeanDagTest.fairSlots
+NODE	LeanDag.sum_novelty_not_correct_le	LeanDag.DoS.Novelty	thm
+EDGE	LeanDag.sum_novelty_not_correct_le	LeanDag.Delivery
+EDGE	LeanDag.sum_novelty_not_correct_le	LeanDag.ByzBudget
+EDGE	LeanDag.sum_novelty_not_correct_le	LeanDag.Faults
+EDGE	LeanDag.sum_novelty_not_correct_le	LeanDag.Correct
+EDGE	LeanDag.sum_novelty_not_correct_le	LeanDag.BlockUniverse.block
+EDGE	LeanDag.sum_novelty_not_correct_le	LeanDag.BlockUniverse
+EDGE	LeanDag.sum_novelty_not_correct_le	LeanDag.card_filter_not_correct_le
+EDGE	LeanDag.sum_novelty_not_correct_le	LeanDag.Delivery.accepted
+EDGE	LeanDag.sum_novelty_not_correct_le	LeanDag.Faults.f
+EDGE	LeanDag.sum_novelty_not_correct_le	LeanDag.novelty
+EDGE	LeanDag.sum_novelty_not_correct_le	LeanDag.viewUpto
+EDGE	LeanDag.sum_novelty_not_correct_le	LeanDag.Block.creator
 NODE	LeanDag.Faults.mk.noConfusion	LeanDag.Validators	def
 EDGE	LeanDag.Faults.mk.noConfusion	LeanDag.Faults
 EDGE	LeanDag.Faults.mk.noConfusion	LeanDag.Faults.noConfusion
@@ -10267,6 +10484,15 @@ EDGE	LeanDag.Timing.noConfusion	LeanDag.BlockUniverse
 EDGE	LeanDag.Timing.noConfusion	LeanDag.Timing.casesOn
 EDGE	LeanDag.Timing.noConfusion	LeanDag.Timing.noConfusionType
 EDGE	LeanDag.Timing.noConfusion	LeanDag.Block.creator
+NODE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_2	LeanDag.Odontoceti.Rules	thm
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_2	LeanDag.Faults5
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_2	LeanDag.creatorsOf
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_2	LeanDag.Block.refs
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_2	LeanDag.Faults.f
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_2	LeanDag.Faults5.toFaults
 NODE	LeanDag.Integration.joiner_leader_agree	LeanDag.Integration.Joiner	thm
 EDGE	LeanDag.Integration.joiner_leader_agree	LeanDag.AdaptiveRun
 EDGE	LeanDag.Integration.joiner_leader_agree	LeanDag.Faults
@@ -10363,6 +10589,15 @@ EDGE	LeanDag.Timing.built_le_latest	LeanDag.Timing
 EDGE	LeanDag.Timing.built_le_latest	LeanDag.Timing.built
 EDGE	LeanDag.Timing.built_le_latest	LeanDag.BlockUniverse
 EDGE	LeanDag.Timing.built_le_latest	LeanDag.Timing.latest
+NODE	LeanDag.block_eq_of	LeanDag.GC.Horizon	thm
+EDGE	LeanDag.block_eq_of	LeanDag.Block
+EDGE	LeanDag.block_eq_of	LeanDag.Faults
+EDGE	LeanDag.block_eq_of	LeanDag.Block.casesOn
+EDGE	LeanDag.block_eq_of	LeanDag.Block.mk
+EDGE	LeanDag.block_eq_of	LeanDag.Block.refs
+EDGE	LeanDag.block_eq_of	LeanDag.Block.payload
+EDGE	LeanDag.block_eq_of	LeanDag.Block.round
+EDGE	LeanDag.block_eq_of	LeanDag.Block.creator
 NODE	LeanDag.ValidWrt.refs_empty_of_round_zero._proof_1_1	LeanDag.Block	thm
 EDGE	LeanDag.ValidWrt.refs_empty_of_round_zero._proof_1_1	LeanDag.Block
 EDGE	LeanDag.ValidWrt.refs_empty_of_round_zero._proof_1_1	LeanDag.Block.round
@@ -10371,6 +10606,11 @@ EDGE	LeanDagTest.ugrowCatch._proof_20	LeanDagTest.ugrowCatch._proof_5
 NODE	LeanDagTest.ugrowLag._proof_38	LeanDagTest.Collapse	thm
 EDGE	LeanDagTest.ugrowLag._proof_38	LeanDagTest.lagBuilt
 EDGE	LeanDagTest.ugrowLag._proof_38	LeanDagTest.lagStamp
+NODE	LeanDag.exists_self_ancestor_aux._proof_1_2	LeanDag.DoS.SelfParent	thm
+EDGE	LeanDag.exists_self_ancestor_aux._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.exists_self_ancestor_aux._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.exists_self_ancestor_aux._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.exists_self_ancestor_aux._proof_1_2	LeanDag.BlockUniverse
 NODE	LeanDagTest.ugrowLag._proof_2	LeanDagTest.Collapse	thm
 NODE	LeanDagTest.Ucrash._proof_13	LeanDagTest.SafeSkip	thm
 NODE	LeanDag.byzPool_succ_subset	LeanDag.DoS.Composition	thm
@@ -10581,6 +10821,14 @@ EDGE	LeanDag.AdaptiveRun.mk.noConfusion	LeanDag.AdaptivePolicy.inj
 NODE	LeanDagTest.Uomit._proof_2	LeanDagTest.Unbounded	thm
 NODE	LeanDagTest.censBlk._proof_6	LeanDagTest.Quality.Model	thm
 EDGE	LeanDagTest.censBlk._proof_6	LeanDagTest.censBlk._proof_1
+NODE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_7	LeanDag.Hybrid.Rules	thm
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_7	LeanDag.HybridFaults
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_7	LeanDag.HybridFaults.fc
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_7	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_7	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_7	LeanDag.Block.round
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_7	LeanDag.BlockUniverse
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_7	LeanDag.HybridFaults.fb
 NODE	LeanDagTest.Uhyb9	LeanDagTest.Hybrid	def
 EDGE	LeanDagTest.Uhyb9	LeanDagTest.Uhyb9._proof_1
 EDGE	LeanDagTest.Uhyb9	LeanDag.HybridFaults.toFaults
@@ -10632,6 +10880,7 @@ EDGE	LeanDagTest.dtwin_refsAccepted	LeanDag.RefsAccepted
 EDGE	LeanDagTest.dtwin_refsAccepted	LeanDag.BlockUniverse.ids
 EDGE	LeanDagTest.dtwin_refsAccepted	LeanDag.Block.refs
 EDGE	LeanDagTest.dtwin_refsAccepted	LeanDag.Correct
+EDGE	LeanDagTest.dtwin_refsAccepted	LeanDagTest.twin_round_le
 EDGE	LeanDagTest.dtwin_refsAccepted	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.dtwin_refsAccepted	LeanDag.Block.round
 EDGE	LeanDagTest.dtwin_refsAccepted	LeanDag.Delivery.accepted
@@ -10779,6 +11028,16 @@ EDGE	LeanDag.correctBlocksAt	LeanDag.BlockUniverse
 EDGE	LeanDag.correctBlocksAt	LeanDag.blocksAt
 EDGE	LeanDag.correctBlocksAt	LeanDag.Block.creator
 NODE	LeanDagTest.ugapGrowth._proof_16	LeanDagTest.Unbounded	thm
+NODE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_3	LeanDag.Hybrid.Rules	thm
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_3	LeanDag.HybridFaults
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_3	LeanDag.creatorsOf
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_3	LeanDag.HybridFaults.fc
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_3	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_3	LeanDag.Block.refs
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_3	LeanDag.HybridFaults.fb
 NODE	LeanDagTest.uomit_not_synchronisedOn._proof_1_4	LeanDagTest.Unbounded	thm
 NODE	LeanDagTest.Ucrash	LeanDagTest.SafeSkip	def
 EDGE	LeanDagTest.Ucrash	LeanDagTest.Ucrash._proof_8
@@ -10801,6 +11060,10 @@ EDGE	LeanDag.Eligible.eq_1	LeanDag.Slots.slotRound
 EDGE	LeanDag.Eligible.eq_1	LeanDag.decisionRound
 EDGE	LeanDag.Eligible.eq_1	LeanDag.Eligible
 EDGE	LeanDag.Eligible.eq_1	LeanDag.Slots
+NODE	LeanDagTest.twin_round_le	LeanDagTest.DoS.Novelty	thm
+EDGE	LeanDagTest.twin_round_le	LeanDagTest.Utwin
+EDGE	LeanDagTest.twin_round_le	LeanDag.BlockUniverse.block
+EDGE	LeanDagTest.twin_round_le	LeanDag.Block.round
 NODE	LeanDag.CatchupSync.drift_collapse	LeanDag.Drift.Catchup	thm
 EDGE	LeanDag.CatchupSync.drift_collapse	LeanDag.CatchupSync.toViewSync
 EDGE	LeanDag.CatchupSync.drift_collapse	LeanDag.CatchupSync.drift_collapse._proof_1_1
@@ -10899,6 +11162,15 @@ EDGE	LeanDagTest.udouble_stepNovelty	LeanDag.instDecidableStepNovelty
 EDGE	LeanDagTest.udouble_stepNovelty	LeanDagTest.doubleFaults
 EDGE	LeanDagTest.udouble_stepNovelty	LeanDagTest.Udouble
 EDGE	LeanDagTest.udouble_stepNovelty	LeanDag.StepNovelty
+NODE	LeanDag.card_missingAt_le_aux._proof_1_5	LeanDag.DoS.Density	thm
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_5	LeanDag.Faults
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_5	LeanDag.creators
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_5	LeanDag.Faults.byzantine
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_5	LeanDag.Correct
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_5	LeanDag.BlockUniverse
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_5	LeanDag.Faults.f
 NODE	LeanDag.Odontoceti.DirectSkipIn	LeanDag.Odontoceti.Decision	def
 EDGE	LeanDag.Odontoceti.DirectSkipIn	LeanDag.Odontoceti.blamesIn
 EDGE	LeanDag.Odontoceti.DirectSkipIn	LeanDag.Faults5
@@ -11366,6 +11638,7 @@ EDGE	LeanDagTest.ugrowLag._proof_21	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ugrowLag._proof_21	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowLag._proof_21	LeanDag.Block.creator
 NODE	LeanDagTest.ugrowLag._proof_17	LeanDagTest.Collapse	thm
+NODE	LeanDagTest.exclAcc_eq_empty._proof_1_3	LeanDagTest.GC.Bootstrap	thm
 NODE	LeanDagTest.pipeSlots	LeanDagTest.Pipelined	def
 EDGE	LeanDagTest.pipeSlots	LeanDag.Slots.uniformSingle
 EDGE	LeanDagTest.pipeSlots	LeanDagTest.pipeSlots._proof_4
@@ -11450,6 +11723,19 @@ EDGE	LeanDag.exists_correct_common_support._proof_1_6	LeanDag.BlockUniverse.bloc
 EDGE	LeanDag.exists_correct_common_support._proof_1_6	LeanDag.BlockUniverse
 EDGE	LeanDag.exists_correct_common_support._proof_1_6	LeanDag.Faults.f
 EDGE	LeanDag.exists_correct_common_support._proof_1_6	LeanDag.correctBlocksAt
+NODE	LeanDag.universe_eq_of	LeanDag.GC.Horizon	thm
+EDGE	LeanDag.universe_eq_of	LeanDag.BlockUniverse.casesOn
+EDGE	LeanDag.universe_eq_of	LeanDag.Block
+EDGE	LeanDag.universe_eq_of	LeanDag.Faults
+EDGE	LeanDag.universe_eq_of	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.universe_eq_of	LeanDag.Block.refs
+EDGE	LeanDag.universe_eq_of	LeanDag.Correct
+EDGE	LeanDag.universe_eq_of	LeanDag.BlockUniverse.mk
+EDGE	LeanDag.universe_eq_of	LeanDag.BlockUniverse.block
+EDGE	LeanDag.universe_eq_of	LeanDag.Block.round
+EDGE	LeanDag.universe_eq_of	LeanDag.BlockUniverse
+EDGE	LeanDag.universe_eq_of	LeanDag.Block.creator
+EDGE	LeanDag.universe_eq_of	LeanDag.ValidWrt
 NODE	LeanDag.Odontoceti.spansEligible_two._proof_1_1	LeanDag.Odontoceti.Liveness	thm
 NODE	LeanDag.mem_missingAt	LeanDag.DoS.Density	thm
 EDGE	LeanDag.mem_missingAt	LeanDag.missingAt
@@ -11742,6 +12028,7 @@ EDGE	LeanDag.View.ofAccepted	LeanDag.history
 EDGE	LeanDag.View.ofAccepted	LeanDag.BlockUniverse
 EDGE	LeanDag.View.ofAccepted	LeanDag.View.ofAccepted._proof_1
 EDGE	LeanDag.View.ofAccepted	LeanDag.View
+NODE	LeanDagTest.exclAcc_eq_empty._proof_1_7	LeanDagTest.GC.Bootstrap	thm
 NODE	LeanDag.Live.mk	LeanDag.Liveness	ctor
 EDGE	LeanDag.Live.mk	LeanDag.Delivery
 EDGE	LeanDag.Live.mk	LeanDag.creatorsOf
@@ -11983,6 +12270,11 @@ EDGE	LeanDagTest.ugrowSkewGrowth._proof_11	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_11	LeanDag.PopulatedOn
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_11	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowSkewGrowth._proof_11	LeanDagTest.ugrow_populatedOn
+NODE	LeanDag.exists_self_ancestor_aux._proof_1_1	LeanDag.DoS.SelfParent	thm
+EDGE	LeanDag.exists_self_ancestor_aux._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.exists_self_ancestor_aux._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.exists_self_ancestor_aux._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.exists_self_ancestor_aux._proof_1_1	LeanDag.BlockUniverse
 NODE	LeanDag.CertifiedIn	LeanDag.Mysticeti	def
 EDGE	LeanDag.CertifiedIn	LeanDag.Faults
 EDGE	LeanDag.CertifiedIn	LeanDag.BlockUniverse
@@ -12042,6 +12334,7 @@ EDGE	LeanDag.card_viewUpto_le'	LeanDag.Faults
 EDGE	LeanDag.card_viewUpto_le'	LeanDag.Delivery.accepted_sub
 EDGE	LeanDag.card_viewUpto_le'	LeanDag.Delivery.held_spec
 EDGE	LeanDag.card_viewUpto_le'	LeanDag.card_novelty_le_of_byzBudget
+EDGE	LeanDag.card_viewUpto_le'	LeanDag.card_viewUpto_succ_le_of_bounds
 EDGE	LeanDag.card_viewUpto_le'	LeanDag.EventuallyDelivers
 EDGE	LeanDag.card_viewUpto_le'	LeanDag.BlockUniverse.ids
 EDGE	LeanDag.card_viewUpto_le'	LeanDag.Correct
@@ -12128,6 +12421,7 @@ EDGE	LeanDag.mem_history_of_pinned._proof_1_3	LeanDag.Faults.f
 EDGE	LeanDag.mem_history_of_pinned._proof_1_3	LeanDag.Block.creator
 NODE	LeanDagTest.Dtwin._proof_2	LeanDagTest.DoS.Novelty	thm
 EDGE	LeanDagTest.Dtwin._proof_2	LeanDagTest.Utwin
+EDGE	LeanDagTest.Dtwin._proof_2	LeanDagTest.twinAcc_eq_empty
 EDGE	LeanDagTest.Dtwin._proof_2	LeanDag.BlockUniverse.ids
 EDGE	LeanDagTest.Dtwin._proof_2	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.Dtwin._proof_2	LeanDag.Block.round
@@ -12589,6 +12883,11 @@ EDGE	LeanDag.CatchupSync.recOn	LeanDag.CatchupSync
 EDGE	LeanDag.CatchupSync.recOn	LeanDag.ViewSync.blk
 EDGE	LeanDag.CatchupSync.recOn	LeanDag.ViewSync.built
 EDGE	LeanDag.CatchupSync.recOn	LeanDag.ViewSync.holds
+NODE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_1	LeanDag.DoS.Novelty	thm
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_1	LeanDag.BlockUniverse
 NODE	LeanDag.Accepted.inj	LeanDag.DoS.Acceptance	thm
 EDGE	LeanDag.Accepted.inj	LeanDag.Faults
 EDGE	LeanDag.Accepted.inj	LeanDag.Accepted
@@ -12712,6 +13011,14 @@ NODE	LeanDagTest.urecover._proof_2	LeanDagTest.Integration	thm
 EDGE	LeanDagTest.urecover._proof_2	LeanDag.BlockUniverse.ids
 EDGE	LeanDagTest.urecover._proof_2	LeanDagTest.Ucut
 EDGE	LeanDagTest.urecover._proof_2	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+NODE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_1	LeanDag.Hybrid.Rules	thm
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_1	LeanDag.HybridFaults
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_1	LeanDag.HybridFaults.fc
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_1	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_1	LeanDag.HybridFaults.fb
 NODE	LeanDag.ReactiveCore.blk_mem	LeanDag.Reactive.Basic	thm
 EDGE	LeanDag.ReactiveCore.blk_mem	LeanDag.ReactiveCore.blk
 EDGE	LeanDag.ReactiveCore.blk_mem	LeanDag.Faults
@@ -12746,6 +13053,7 @@ EDGE	LeanDagTest.uodo_synchronised	LeanDag.BlockUniverse.ids
 EDGE	LeanDagTest.uodo_synchronised	LeanDag.Block.refs
 EDGE	LeanDagTest.uodo_synchronised	LeanDag.Correct
 EDGE	LeanDagTest.uodo_synchronised	LeanDagTest.instFaults5FinOfNatNat_leanDagTest
+EDGE	LeanDagTest.uodo_synchronised	LeanDagTest.uodo_round_le
 EDGE	LeanDagTest.uodo_synchronised	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.uodo_synchronised	LeanDag.Block.round
 EDGE	LeanDagTest.uodo_synchronised	LeanDagTest.Uodo
@@ -13374,6 +13682,13 @@ EDGE	LeanDag.Timing.prompt	LeanDag.Timing.timeout
 EDGE	LeanDag.Timing.prompt	LeanDag.Timing.delay
 EDGE	LeanDag.Timing.prompt	LeanDag.BlockUniverse
 EDGE	LeanDag.Timing.prompt	LeanDag.Timing.latest
+NODE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_3	LeanDag.DoS.Novelty	thm
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_3	LeanDag.Faults
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_3	LeanDag.history
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_3	LeanDag.novelty
 NODE	LeanDag.Hybrid.kTight_eq_of_fc_zero._proof_1_1	LeanDag.Hybrid.Conservativity	thm
 EDGE	LeanDag.Hybrid.kTight_eq_of_fc_zero._proof_1_1	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.kTight_eq_of_fc_zero._proof_1_1	LeanDag.HybridFaults.fc
@@ -13390,6 +13705,7 @@ EDGE	LeanDag.chop_chop	LeanDag.chopBlock_chop
 EDGE	LeanDag.chop_chop	LeanDag.Block
 EDGE	LeanDag.chop_chop	LeanDag.Faults
 EDGE	LeanDag.chop_chop	LeanDag.mem_chop_ids
+EDGE	LeanDag.chop_chop	LeanDag.universe_eq_of
 EDGE	LeanDag.chop_chop	LeanDag.chop_block_eq
 EDGE	LeanDag.chop_chop	LeanDag.chop
 EDGE	LeanDag.chop_chop	LeanDag.BlockUniverse.ids
@@ -13461,6 +13777,14 @@ EDGE	LeanDag.Reaches.single	LeanDag.Reaches
 NODE	LeanDag.ValidWrt	LeanDag.Block	ind
 EDGE	LeanDag.ValidWrt	LeanDag.Block
 EDGE	LeanDag.ValidWrt	LeanDag.Faults
+NODE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_6	LeanDag.Hybrid.Rules	thm
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_6	LeanDag.HybridFaults
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_6	LeanDag.HybridFaults.fc
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_6	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_6	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_6	LeanDag.Block.round
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_6	LeanDag.BlockUniverse
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_6	LeanDag.HybridFaults.fb
 NODE	LeanDagTest.urecover._proof_8	LeanDagTest.Integration	thm
 EDGE	LeanDagTest.urecover._proof_8	LeanDag.Block.refs
 EDGE	LeanDagTest.urecover._proof_8	LeanDagTest.Ucut
@@ -13817,6 +14141,12 @@ EDGE	LeanDag.Hybrid.admissible_kTight	LeanDag.Hybrid.Admissible
 EDGE	LeanDag.Hybrid.admissible_kTight	LeanDag.Hybrid.kTight
 EDGE	LeanDag.Hybrid.admissible_kTight	LeanDag.Hybrid.admissible_kTight._proof_1_1
 EDGE	LeanDag.Hybrid.admissible_kTight	LeanDag.HybridFaults.fb
+NODE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_1	LeanDag.Odontoceti.Rules	thm
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_1	LeanDag.Faults5
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_1	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.Dtwin._proof_3	LeanDagTest.DoS.Novelty	thm
 EDGE	LeanDagTest.Dtwin._proof_3	LeanDagTest.twinAcc
 NODE	LeanDagTest.hyb4._proof_1	LeanDagTest.Hybrid	thm
@@ -14212,6 +14542,7 @@ EDGE	LeanDag.Hybrid.thickLink_of_directCommit	LeanDag.Hybrid.thickLink_of_direct
 EDGE	LeanDag.Hybrid.thickLink_of_directCommit	LeanDag.BlockUniverse.block
 EDGE	LeanDag.Hybrid.thickLink_of_directCommit	LeanDag.Block.round
 EDGE	LeanDag.Hybrid.thickLink_of_directCommit	LeanDag.BlockUniverse
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit	LeanDag.Hybrid.thickLink_of_directCommit_aux
 EDGE	LeanDag.Hybrid.thickLink_of_directCommit	LeanDag.HybridFaults.fb
 NODE	LeanDag.Hybrid.q_le_card_correct._proof_1_1	LeanDag.Hybrid.Liveness	thm
 EDGE	LeanDag.Hybrid.q_le_card_correct._proof_1_1	LeanDag.HybridFaults
@@ -14573,6 +14904,11 @@ EDGE	LeanDag.commitSeq_agree	LeanDag.decided_agree
 EDGE	LeanDag.commitSeq_agree	LeanDag.BlockUniverse
 EDGE	LeanDag.commitSeq_agree	LeanDag.Slots
 EDGE	LeanDag.commitSeq_agree	LeanDag.View
+NODE	LeanDag.card_missingAt_le_aux._proof_1_2	LeanDag.DoS.Density	thm
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_2	LeanDag.BlockUniverse
 NODE	LeanDag.Odontoceti.DecidedWithin.toDecided	LeanDag.Adaptive.Odontoceti	thm
 EDGE	LeanDag.Odontoceti.DecidedWithin.toDecided	LeanDag.Odontoceti.DecidedWithin.rec
 EDGE	LeanDag.Odontoceti.DecidedWithin.toDecided	LeanDag.Faults5
@@ -15114,6 +15450,7 @@ NODE	LeanDagTest.ugrow_card	LeanDagTest.Growth	thm
 EDGE	LeanDagTest.ugrow_card	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrow_card	LeanDag.BlockUniverse.ids
 EDGE	LeanDagTest.ugrow_card	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+NODE	LeanDag.support_threshold_arith._proof_1_3	LeanDag.CommonCore	thm
 NODE	LeanDag.Timing.covers	LeanDag.Timing	thm
 EDGE	LeanDag.Timing.covers	LeanDag.Faults
 EDGE	LeanDag.Timing.covers	LeanDag.Timing
@@ -15128,6 +15465,11 @@ NODE	LeanDag.Faults.card_byzantine	LeanDag.Validators	thm
 EDGE	LeanDag.Faults.card_byzantine	LeanDag.Faults
 EDGE	LeanDag.Faults.card_byzantine	LeanDag.Faults.byzantine
 EDGE	LeanDag.Faults.card_byzantine	LeanDag.Faults.f
+NODE	LeanDag.card_missingAt_le_aux._proof_1_6	LeanDag.DoS.Density	thm
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_6	LeanDag.Faults
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_6	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_6	LeanDag.Block.round
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_6	LeanDag.BlockUniverse
 NODE	LeanDagTest.skipBlk._proof_4	LeanDagTest.Odontoceti.Model	thm
 NODE	LeanDag.Odontoceti.DecidedWithin.agree	LeanDag.Adaptive.Odontoceti	thm
 EDGE	LeanDag.Odontoceti.DecidedWithin.agree	LeanDag.Odontoceti.decided_unique
@@ -15355,6 +15697,7 @@ EDGE	LeanDagTest.dtwin_delivers	LeanDagTest.Utwin
 EDGE	LeanDagTest.dtwin_delivers	LeanDag.EventuallyDelivers
 EDGE	LeanDagTest.dtwin_delivers	LeanDag.BlockUniverse.ids
 EDGE	LeanDagTest.dtwin_delivers	LeanDag.Correct
+EDGE	LeanDagTest.dtwin_delivers	LeanDagTest.twin_round_le
 EDGE	LeanDagTest.dtwin_delivers	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.dtwin_delivers	LeanDagTest.dtwin_delivers._proof_1_1
 EDGE	LeanDagTest.dtwin_delivers	LeanDag.Delivery.held
@@ -15432,6 +15775,23 @@ EDGE	LeanDag.Integration.chopMsg._proof_9	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.chopMsg._proof_9	LeanDag.SkipMsg
 EDGE	LeanDag.Integration.chopMsg._proof_9	LeanDag.SkipMsg.line
 EDGE	LeanDag.Integration.chopMsg._proof_9	LeanDag.SkipMsg.B1
+NODE	LeanDag.card_viewUpto_succ_le_of_bounds	LeanDag.DoS.Novelty	thm
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds	LeanDag.Delivery
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds	LeanDag.Faults
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds	LeanDag.card_viewUpto_succ_le_of_bounds._proof_1_1
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds	LeanDag.Correct
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds	LeanDag.mem_novelty
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds	LeanDag.card_filter_correct_le
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds	LeanDag.history
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds	LeanDag.BlockUniverse
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds	LeanDag.card_filter_not_correct_le
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds	LeanDag.Delivery.accepted
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds	LeanDag.Faults.f
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds	LeanDag.viewUpto_succ
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds	LeanDag.novelty
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds	LeanDag.viewUpto
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds	LeanDag.Block.creator
 NODE	LeanDag.reaches_of_mem_historyUpto	LeanDag.History	thm
 EDGE	LeanDag.reaches_of_mem_historyUpto	LeanDag.Faults
 EDGE	LeanDag.reaches_of_mem_historyUpto	LeanDag.Reaches.of_mem_refs
@@ -15835,6 +16195,11 @@ EDGE	LeanDagTest.Ucrash._proof_1	LeanDagTest.rrBlock
 EDGE	LeanDagTest.Ucrash._proof_1	LeanDagTest.rrBlock_refs
 NODE	LeanDagTest.hyb9Blk._proof_5	LeanDagTest.Hybrid	thm
 EDGE	LeanDagTest.hyb9Blk._proof_5	LeanDagTest.hyb9Blk._proof_2
+NODE	LeanDag.Hybrid.thickLink_of_directCommit_aux._simp_1_4	LeanDag.Hybrid.Rules	thm
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._simp_1_4	LeanDag.HybridFaults
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._simp_1_4	LeanDag.Honest
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._simp_1_4	LeanDag.mem_honest
+EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._simp_1_4	LeanDag.HybridFaults.byzantine
 NODE	LeanDag.pedigreeVia_top	LeanDag.DoS.Pedigree	thm
 EDGE	LeanDag.pedigreeVia_top	LeanDag.PedigreeVia.step
 EDGE	LeanDag.pedigreeVia_top	LeanDag.Faults
@@ -16025,6 +16390,45 @@ EDGE	LeanDag.eq_of_creator_eq_honest	LeanDag.BlockUniverse
 EDGE	LeanDag.eq_of_creator_eq_honest	LeanDag.HybridFaults.byzantine
 EDGE	LeanDag.eq_of_creator_eq_honest	LeanDag.Block.creator
 NODE	LeanDagTest.ugapGrowth._proof_9	LeanDagTest.Unbounded	thm
+NODE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Odontoceti.Rules	thm
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Faults5
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.creatorsOf
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.mem_creatorsOf
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Faults.byzantine
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_6
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.mem_supporters
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.BlockUniverse.complete
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_2
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.mem_history_of_mem_refs
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Odontoceti.coneSupports_subset_of_reaches
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Block.refs
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.BlockUniverse.refs_nonempty
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Correct
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_1
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.history
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Block.round
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.BlockUniverse
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Faults.f
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Odontoceti.ThickLink
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.mem_correct._simp_1
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Odontoceti.coneSupports
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.supporters
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Faults.card_byzantine
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_3
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.BlockUniverse.valid
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_7
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.BlockUniverse.round_of_mem_refs
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Odontoceti.mem_coneSupports
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Reaches.single
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Odontoceti.DirectCommit
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Faults5.toFaults
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.BlockUniverse.eq_of_creator_eq
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.ValidWrt.quorum
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_5
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.Block.creator
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux	LeanDag.ValidWrt
 NODE	LeanDag.Odontoceti.PartialRun.mk.noConfusion	LeanDag.Adaptive.Odontoceti	def
 EDGE	LeanDag.Odontoceti.PartialRun.mk.noConfusion	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.PartialRun.mk.noConfusion	LeanDag.AdaptivePolicy.W
@@ -16366,6 +16770,7 @@ EDGE	LeanDag.eq_of_mem_history_of_round_eq	LeanDag.mem_history_succ_iff
 EDGE	LeanDag.eq_of_mem_history_of_round_eq	LeanDag.BlockUniverse.round_of_mem_refs
 EDGE	LeanDag.eq_of_mem_history_of_round_eq	LeanDag.round_le_of_reaches
 EDGE	LeanDag.eq_of_mem_history_of_round_eq	LeanDag.Reaches
+NODE	LeanDagTest.exclAcc_eq_empty._proof_1_1	LeanDagTest.GC.Bootstrap	thm
 NODE	LeanDagTest.lky._proof_4	LeanDagTest.DoS.TwoFaults	thm
 EDGE	LeanDagTest.lky._proof_4	LeanDagTest.lky._proof_1
 NODE	LeanDagTest.ugrowSkew_spread_constant._proof_1_1	LeanDagTest.Catchup	thm
@@ -16819,6 +17224,7 @@ EDGE	LeanDagTest.ugrowReactive._proof_32	LeanDagTest.reactHolds
 EDGE	LeanDagTest.ugrowReactive._proof_32	LeanDag.Block.creator
 NODE	LeanDagTest.dexcl_refsAccepted	LeanDagTest.GC.Bootstrap	thm
 EDGE	LeanDagTest.dexcl_refsAccepted	LeanDag.RefsAccepted
+EDGE	LeanDagTest.dexcl_refsAccepted	LeanDagTest.excl_round_le
 EDGE	LeanDagTest.dexcl_refsAccepted	LeanDag.BlockUniverse.ids
 EDGE	LeanDagTest.dexcl_refsAccepted	LeanDag.Block.refs
 EDGE	LeanDagTest.dexcl_refsAccepted	LeanDag.Correct
@@ -17587,6 +17993,17 @@ EDGE	LeanDag.Decided.below.rec	LeanDag.Decided.below
 EDGE	LeanDag.Decided.below.rec	LeanDag.IsLeaderBlock
 EDGE	LeanDag.Decided.below.rec	LeanDag.Slots
 EDGE	LeanDag.Decided.below.rec	LeanDag.View
+NODE	LeanDag.card_filter_correct_le	LeanDag.DoS.Novelty	thm
+EDGE	LeanDag.card_filter_correct_le	LeanDag.Delivery
+EDGE	LeanDag.card_filter_correct_le	LeanDag.Faults
+EDGE	LeanDag.card_filter_correct_le	LeanDag.Correct
+EDGE	LeanDag.card_filter_correct_le	LeanDag.card_filter_correct_le._simp_1_1
+EDGE	LeanDag.card_filter_correct_le	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_filter_correct_le	LeanDag.BlockUniverse
+EDGE	LeanDag.card_filter_correct_le	LeanDag.Delivery.accepted
+EDGE	LeanDag.card_filter_correct_le	LeanDag.Delivery.accepted_inj
+EDGE	LeanDag.card_filter_correct_le	LeanDag.card_filter_correct_le._simp_1_2
+EDGE	LeanDag.card_filter_correct_le	LeanDag.Block.creator
 NODE	LeanDag.ReactiveCore.votes._proof_1_1	LeanDag.Reactive.Basic	thm
 EDGE	LeanDag.ReactiveCore.votes._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.ReactiveCore.votes._proof_1_1	LeanDag.Slots.slotRound
@@ -17596,6 +18013,7 @@ EDGE	LeanDag.ReactiveCore.votes._proof_1_1	LeanDag.BlockUniverse
 EDGE	LeanDag.ReactiveCore.votes._proof_1_1	LeanDag.Slots
 EDGE	LeanDag.ReactiveCore.votes._proof_1_1	LeanDag.ReactiveCore.timeout
 EDGE	LeanDag.ReactiveCore.votes._proof_1_1	LeanDag.ReactiveCore
+NODE	LeanDagTest.exclAcc_eq_empty._proof_1_5	LeanDagTest.GC.Bootstrap	thm
 NODE	LeanDagTest.rrUniverse._proof_6	LeanDagTest.Growth	thm
 EDGE	LeanDagTest.rrUniverse._proof_6	LeanDagTest.rrBlock
 EDGE	LeanDagTest.rrUniverse._proof_6	LeanDag.Block.creator
@@ -17675,6 +18093,7 @@ EDGE	LeanDag.card_missingAt_le	LeanDag.BlockUniverse.block
 EDGE	LeanDag.card_missingAt_le	LeanDag.Block.round
 EDGE	LeanDag.card_missingAt_le	LeanDag.BlockUniverse
 EDGE	LeanDag.card_missingAt_le	LeanDag.Faults.f
+EDGE	LeanDag.card_missingAt_le	LeanDag.card_missingAt_le_aux
 NODE	LeanDag.Odontoceti.thickLink_of_directCommitIn_at_anchor	LeanDag.Odontoceti.Decision	thm
 EDGE	LeanDag.Odontoceti.thickLink_of_directCommitIn_at_anchor	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.thickLink_of_directCommitIn_at_anchor	LeanDag.Slots.slotRound
@@ -19510,6 +19929,7 @@ EDGE	LeanDag.card_history_le_of_stepNovelty	LeanDag.BlockUniverse.block
 EDGE	LeanDag.card_history_le_of_stepNovelty	LeanDag.history
 EDGE	LeanDag.card_history_le_of_stepNovelty	LeanDag.Block.round
 EDGE	LeanDag.card_history_le_of_stepNovelty	LeanDag.BlockUniverse
+EDGE	LeanDag.card_history_le_of_stepNovelty	LeanDag.card_history_le_of_stepNovelty_aux
 EDGE	LeanDag.card_history_le_of_stepNovelty	LeanDag.StepNovelty
 EDGE	LeanDag.card_history_le_of_stepNovelty	LeanDag.Block.creator
 NODE	LeanDag.card_historyBlocksOf_le'._proof_1_2	LeanDag.DoS.Pedigree	thm
@@ -19562,6 +19982,11 @@ EDGE	LeanDag.mem_historyUpto_of_reaches	LeanDag.RefStep
 EDGE	LeanDag.mem_historyUpto_of_reaches	LeanDag.BlockUniverse.valid
 EDGE	LeanDag.mem_historyUpto_of_reaches	LeanDag.BlockUniverse.round_of_mem_refs
 EDGE	LeanDag.mem_historyUpto_of_reaches	LeanDag.Reaches
+NODE	LeanDagTest.excl_round_le	LeanDagTest.GC.Bootstrap	thm
+EDGE	LeanDagTest.excl_round_le	LeanDag.BlockUniverse.block
+EDGE	LeanDagTest.excl_round_le	LeanDag.Block.round
+EDGE	LeanDagTest.excl_round_le	LeanDagTest.Uexcl
+EDGE	LeanDagTest.excl_round_le	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 NODE	LeanDagTest.ugrowHonest_deliversQuorum._simp_1_2	LeanDagTest.Partial	thm
 NODE	LeanDagTest.ugrowDelivery._proof_1	LeanDagTest.Growth	thm
 EDGE	LeanDagTest.ugrowDelivery._proof_1	LeanDagTest.Ugrow
@@ -20061,6 +20486,36 @@ EDGE	LeanDag.authorsAt_chop	LeanDag.blocksAt_chop
 NODE	LeanDagTest.ugrowReactive._proof_9	LeanDagTest.Reactive	thm
 NODE	LeanDagTest.oSwap	LeanDagTest.Adaptive	def
 EDGE	LeanDagTest.oSwap	LeanDagTest.oBase
+NODE	LeanDag.card_missingAt_le_aux	LeanDag.DoS.Density	thm
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.card_missingAt_le_aux._proof_1_4
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.missingAt
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.creatorsOf
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.mem_creatorsOf
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.Faults
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.creators
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.Faults.byzantine
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.Faults.card_validators
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.BlockUniverse.complete
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.card_missingAt_le_aux._proof_1_6
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.card_missingAt_le_aux._proof_1_2
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.Block.refs
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.Correct
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.card_le_card_inter_correct_add_byzantine
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.card_missingAt_le_base
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.Block.round
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.BlockUniverse
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.Faults.f
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.card_missingAt_le_aux._proof_1_3
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.Faults.card_byzantine
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.BlockUniverse.valid
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.BlockUniverse.round_of_mem_refs
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.card_missingAt_le_aux._proof_1_1
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.card_missingAt_le_aux._proof_1_5
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.ValidWrt.quorum
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.Block.creator
+EDGE	LeanDag.card_missingAt_le_aux	LeanDag.missingAt_subset_of_mem_refs
 NODE	LeanDag.exists_partialRun._proof_1_8	LeanDag.Adaptive.Liveness	thm
 EDGE	LeanDag.exists_partialRun._proof_1_8	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.exists_partialRun._proof_1_8	LeanDag.Faults
@@ -20223,6 +20678,12 @@ EDGE	LeanDag.directCommit_of_wait_two_delay	LeanDag.Faults.f
 EDGE	LeanDag.directCommit_of_wait_two_delay	LeanDag.directCommit_of_wait
 EDGE	LeanDag.directCommit_of_wait_two_delay	LeanDag.IsLeaderBlock
 EDGE	LeanDag.directCommit_of_wait_two_delay	LeanDag.Slots
+NODE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_7	LeanDag.Odontoceti.Rules	thm
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_7	LeanDag.Faults5
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_7	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_7	LeanDag.Block.round
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_7	LeanDag.BlockUniverse
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_7	LeanDag.Faults5.toFaults
 NODE	LeanDag.history_subset_viewUpto	LeanDag.DoS.Novelty	thm
 EDGE	LeanDag.history_subset_viewUpto	LeanDag.Delivery
 EDGE	LeanDag.history_subset_viewUpto	LeanDag.Faults
@@ -20301,6 +20762,7 @@ EDGE	LeanDag.card_byzPool_succ_le	LeanDag.Delivery.held_spec
 EDGE	LeanDag.card_byzPool_succ_le	LeanDag.BlockUniverse.ids
 EDGE	LeanDag.card_byzPool_succ_le	LeanDag.Block.refs
 EDGE	LeanDag.card_byzPool_succ_le	LeanDag.Correct
+EDGE	LeanDag.card_byzPool_succ_le	LeanDag.sum_novelty_not_correct_le
 EDGE	LeanDag.card_byzPool_succ_le	LeanDag.mem_novelty
 EDGE	LeanDag.card_byzPool_succ_le	LeanDag.BlockUniverse.block
 EDGE	LeanDag.card_byzPool_succ_le	LeanDag.history
@@ -20434,6 +20896,22 @@ EDGE	LeanDag.Timing.rec	LeanDag.BlockUniverse.block
 EDGE	LeanDag.Timing.rec	LeanDag.Block.round
 EDGE	LeanDag.Timing.rec	LeanDag.BlockUniverse
 EDGE	LeanDag.Timing.rec	LeanDag.Block.creator
+NODE	LeanDag.card_filter_not_correct_le	LeanDag.DoS.Novelty	thm
+EDGE	LeanDag.card_filter_not_correct_le	LeanDag.Delivery
+EDGE	LeanDag.card_filter_not_correct_le	LeanDag.Faults
+EDGE	LeanDag.card_filter_not_correct_le	LeanDag.Faults.byzantine
+EDGE	LeanDag.card_filter_not_correct_le	LeanDag.card_filter_not_correct_le._simp_1_1
+EDGE	LeanDag.card_filter_not_correct_le	LeanDag.card_filter_not_correct_le._simp_1_2
+EDGE	LeanDag.card_filter_not_correct_le	LeanDag.Correct
+EDGE	LeanDag.card_filter_not_correct_le	LeanDag.card_filter_not_correct_le._simp_1_4
+EDGE	LeanDag.card_filter_not_correct_le	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_filter_not_correct_le	LeanDag.BlockUniverse
+EDGE	LeanDag.card_filter_not_correct_le	LeanDag.Delivery.accepted
+EDGE	LeanDag.card_filter_not_correct_le	LeanDag.Faults.f
+EDGE	LeanDag.card_filter_not_correct_le	LeanDag.Faults.card_byzantine
+EDGE	LeanDag.card_filter_not_correct_le	LeanDag.Delivery.accepted_inj
+EDGE	LeanDag.card_filter_not_correct_le	LeanDag.card_filter_not_correct_le._simp_1_3
+EDGE	LeanDag.card_filter_not_correct_le	LeanDag.Block.creator
 NODE	LeanDagTest.mem_omitRefs._simp_1_2	LeanDagTest.Unbounded	thm
 NODE	LeanDag.card_historyBlocksOf_le'._proof_1_3	LeanDag.DoS.Pedigree	thm
 EDGE	LeanDag.card_historyBlocksOf_le'._proof_1_3	LeanDag.Faults
@@ -20457,11 +20935,21 @@ EDGE	LeanDagTest.dtwin_live	LeanDag.Block.creator
 NODE	LeanDag.decided_chop_of_decided._proof_1_4	LeanDag.GC.ChopDecided	thm
 EDGE	LeanDag.decided_chop_of_decided._proof_1_4	LeanDag.Slots.slotRound
 EDGE	LeanDag.decided_chop_of_decided._proof_1_4	LeanDag.Slots
+NODE	LeanDag.card_missingAt_le_base._proof_1_2	LeanDag.DoS.Density	thm
+EDGE	LeanDag.card_missingAt_le_base._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.card_missingAt_le_base._proof_1_2	LeanDag.creators
+EDGE	LeanDag.card_missingAt_le_base._proof_1_2	LeanDag.Faults.byzantine
+EDGE	LeanDag.card_missingAt_le_base._proof_1_2	LeanDag.Correct
+EDGE	LeanDag.card_missingAt_le_base._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_missingAt_le_base._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.card_missingAt_le_base._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.card_missingAt_le_base._proof_1_2	LeanDag.Faults.f
 NODE	LeanDag.decided_of_decided_chop._proof_1_2	LeanDag.GC.ChopDecided	thm
 EDGE	LeanDag.decided_of_decided_chop._proof_1_2	LeanDag.Slots.slotRound
 EDGE	LeanDag.decided_of_decided_chop._proof_1_2	LeanDag.Slots
 NODE	LeanDagTest.dtwin_uniform	LeanDagTest.DoS.Novelty	thm
 EDGE	LeanDagTest.dtwin_uniform	LeanDagTest.Utwin
+EDGE	LeanDagTest.dtwin_uniform	LeanDagTest.twinAcc_eq_empty
 EDGE	LeanDagTest.dtwin_uniform	LeanDagTest.dtwin_uniform._proof_1_3
 EDGE	LeanDagTest.dtwin_uniform	LeanDag.UniformBudget
 EDGE	LeanDagTest.dtwin_uniform	LeanDagTest.dtwin_uniform._proof_1_1
@@ -20935,6 +21423,25 @@ NODE	LeanDag.card_le_card_inter_correct_add_byzantine._proof_1_1	LeanDag.Validat
 EDGE	LeanDag.card_le_card_inter_correct_add_byzantine._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.card_le_card_inter_correct_add_byzantine._proof_1_1	LeanDag.Faults.byzantine
 EDGE	LeanDag.card_le_card_inter_correct_add_byzantine._proof_1_1	LeanDag.Correct
+NODE	LeanDag.exists_self_ancestor_aux	LeanDag.DoS.SelfParent	thm
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.Faults
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.exists_self_ancestor_aux._proof_1_3
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.history_subset_of_reaches
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.exists_self_ancestor_aux._proof_1_2
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.BlockUniverse.complete
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.ValidWrt.self_parent
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.Block.refs
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.mem_history_self
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.BlockUniverse.block
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.exists_self_ancestor_aux._proof_1_1
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.history
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.Block.round
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.BlockUniverse
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.BlockUniverse.valid
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.BlockUniverse.round_of_mem_refs
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.Reaches.single
+EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.Block.creator
 NODE	LeanDag.Hybrid.admissible_kTight._proof_1_1	LeanDag.Hybrid.Rules	thm
 EDGE	LeanDag.Hybrid.admissible_kTight._proof_1_1	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.admissible_kTight._proof_1_1	LeanDag.HybridFaults.fc
@@ -20967,6 +21474,7 @@ EDGE	LeanDagTest.dtwin_deliversQuorum	LeanDag.BlockUniverse.ids
 EDGE	LeanDagTest.dtwin_deliversQuorum	LeanDag.Correct
 EDGE	LeanDagTest.dtwin_deliversQuorum	LeanDag.mem_authorsAt
 EDGE	LeanDagTest.dtwin_deliversQuorum	LeanDag.authorsAt
+EDGE	LeanDagTest.dtwin_deliversQuorum	LeanDagTest.twin_round_le
 EDGE	LeanDagTest.dtwin_deliversQuorum	LeanDagTest.dtwin_deliversQuorum._proof_1_1
 EDGE	LeanDagTest.dtwin_deliversQuorum	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.dtwin_deliversQuorum	LeanDag.Block.round
@@ -21303,6 +21811,15 @@ EDGE	LeanDag.correct_subset_creators_correctBlocksAt	LeanDag.Block.round
 EDGE	LeanDag.correct_subset_creators_correctBlocksAt	LeanDag.BlockUniverse
 EDGE	LeanDag.correct_subset_creators_correctBlocksAt	LeanDag.Block.creator
 EDGE	LeanDag.correct_subset_creators_correctBlocksAt	LeanDag.correctBlocksAt
+NODE	LeanDag.card_missingAt_le_aux._proof_1_4	LeanDag.DoS.Density	thm
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_4	LeanDag.Faults
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_4	LeanDag.creators
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_4	LeanDag.Faults.byzantine
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_4	LeanDag.Correct
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_4	LeanDag.BlockUniverse
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_4	LeanDag.Faults.f
 NODE	LeanDagTest.mem_T_of_val_ne_zero	LeanDagTest.Pipelined	thm
 NODE	LeanDagTest.demotePolicy._proof_2	LeanDagTest.Adaptive	thm
 NODE	LeanDagTest.ugrowSkewView._proof_9	LeanDagTest.ViewSync	thm
@@ -21532,6 +22049,7 @@ EDGE	LeanDag.exists_correct_common_support	LeanDag.BlockUniverse.complete
 EDGE	LeanDag.exists_correct_common_support	LeanDag.exists_correct_common_support._proof_1_10
 EDGE	LeanDag.exists_correct_common_support	LeanDag.exists_correct_common_support._proof_1_6
 EDGE	LeanDag.exists_correct_common_support	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.exists_correct_common_support	LeanDag.support_threshold_arith
 EDGE	LeanDag.exists_correct_common_support	LeanDag.Block.refs
 EDGE	LeanDag.exists_correct_common_support	LeanDag.Correct
 EDGE	LeanDag.exists_correct_common_support	LeanDag.exists_correct_common_support._simp_1_9
@@ -22099,6 +22617,11 @@ EDGE	LeanDag.Odontoceti.reactive_decided	LeanDag.ReactiveCore
 NODE	LeanDagTest.ugrowReactive._proof_22	LeanDagTest.Reactive	thm
 EDGE	LeanDagTest.ugrowReactive._proof_22	LeanDag.Slots.slotRound
 EDGE	LeanDagTest.ugrowReactive._proof_22	LeanDagTest.rrSlots
+NODE	LeanDag.card_missingAt_le_aux._proof_1_1	LeanDag.DoS.Density	thm
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_1	LeanDag.BlockUniverse
 NODE	LeanDag.SkipMsg.liftView	LeanDag.SafeSkip.Invariance	def
 EDGE	LeanDag.SkipMsg.liftView	LeanDag.View.mk
 EDGE	LeanDag.SkipMsg.liftView	LeanDag.Faults
@@ -22143,6 +22666,11 @@ NODE	LeanDagTest.udouble_four_chains	LeanDagTest.DoS.Doubling	thm
 EDGE	LeanDagTest.udouble_four_chains	LeanDagTest.doubleFaults
 EDGE	LeanDagTest.udouble_four_chains	LeanDagTest.Udouble
 EDGE	LeanDagTest.udouble_four_chains	LeanDag.topsOf
+NODE	LeanDag.support_threshold_arith	LeanDag.CommonCore	thm
+EDGE	LeanDag.support_threshold_arith	LeanDag.support_threshold_arith._proof_1_1
+EDGE	LeanDag.support_threshold_arith	LeanDag.support_threshold_arith._proof_1_4
+EDGE	LeanDag.support_threshold_arith	LeanDag.support_threshold_arith._proof_1_3
+EDGE	LeanDag.support_threshold_arith	LeanDag.support_threshold_arith._proof_1_2
 NODE	LeanDagTest.ugrowReactive_fast._proof_1_4	LeanDagTest.Reactive	thm
 NODE	LeanDag.SkipMsg.liftView_ids	LeanDag.SafeSkip.Invariance	thm
 EDGE	LeanDag.SkipMsg.liftView_ids	LeanDag.Faults
@@ -22686,6 +23214,15 @@ EDGE	LeanDagTest.dtwin_delivers._proof_1_1	LeanDagTest.Utwin
 EDGE	LeanDagTest.dtwin_delivers._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.dtwin_delivers._proof_1_1	LeanDag.Block.round
 NODE	LeanDagTest.Ucrash._simp_2	LeanDagTest.SafeSkip	thm
+NODE	LeanDag.card_missingAt_le_aux._proof_1_3	LeanDag.DoS.Density	thm
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_3	LeanDag.Faults
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_3	LeanDag.creators
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_3	LeanDag.Faults.byzantine
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_3	LeanDag.Correct
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.card_missingAt_le_aux._proof_1_3	LeanDag.Faults.f
 NODE	LeanDagTest.utwin6_slot0._proof_1_2	LeanDagTest.Odontoceti.Model	thm
 NODE	LeanDag.Odontoceti.Decided.brecOn	LeanDag.Odontoceti.Decision	thm
 EDGE	LeanDag.Odontoceti.Decided.brecOn	LeanDag.Faults5
@@ -23363,6 +23900,19 @@ EDGE	LeanDagTest.ustarveSync	LeanDagTest.ustarveSync._proof_12
 EDGE	LeanDagTest.ustarveSync	LeanDagTest.ustarveSync._proof_21
 EDGE	LeanDagTest.ustarveSync	LeanDagTest.ustarveSync._proof_6
 EDGE	LeanDagTest.ustarveSync	LeanDagTest.ustarveSync._proof_20
+NODE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_5	LeanDag.Odontoceti.Rules	thm
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_5	LeanDag.Faults5
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_5	LeanDag.creatorsOf
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_5	LeanDag.Faults.byzantine
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_5	LeanDag.Block.refs
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_5	LeanDag.Correct
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_5	LeanDag.BlockUniverse
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_5	LeanDag.Faults.f
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_5	LeanDag.Odontoceti.coneSupports
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_5	LeanDag.supporters
+EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_5	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.ugrowLag._simp_1	LeanDagTest.Collapse	thm
 NODE	LeanDag.SkipMsg.r	LeanDag.SafeSkip.Basic	def
 EDGE	LeanDag.SkipMsg.r	LeanDag.Faults
@@ -24051,6 +24601,7 @@ EDGE	LeanDag.Integration.severed_of_pruned_anchor	LeanDag.SkipMsg
 EDGE	LeanDag.Integration.severed_of_pruned_anchor	LeanDag.SkipMsg.r0
 EDGE	LeanDag.Integration.severed_of_pruned_anchor	LeanDag.Block.creator
 EDGE	LeanDag.Integration.severed_of_pruned_anchor	LeanDag.SkipMsg.B1
+NODE	LeanDag.support_threshold_arith._proof_1_1	LeanDag.CommonCore	thm
 NODE	LeanDag.DecidedWithin.below.casesOn	LeanDag.Adaptive.Basic	def
 EDGE	LeanDag.DecidedWithin.below.casesOn	LeanDag.DecidedWithin.below
 EDGE	LeanDag.DecidedWithin.below.casesOn	LeanDag.Faults
@@ -24193,6 +24744,17 @@ EDGE	LeanDagTest.ucrash_populated._proof_1_6	LeanDagTest.instFaultsFinOfNatNat_l
 EDGE	LeanDagTest.ucrash_populated._proof_1_6	LeanDag.SkipMsg.r0
 NODE	LeanDagTest.oBase	LeanDagTest.Adaptive	def
 EDGE	LeanDagTest.oBase	LeanDagTest.oBase._proof_2
+NODE	LeanDag.card_viewUpto_succ_le_of_bounds._proof_1_1	LeanDag.DoS.Novelty	thm
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds._proof_1_1	LeanDag.Delivery
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds._proof_1_1	LeanDag.Correct
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds._proof_1_1	LeanDag.Delivery.accepted
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds._proof_1_1	LeanDag.Faults.f
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds._proof_1_1	LeanDag.novelty
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds._proof_1_1	LeanDag.viewUpto
+EDGE	LeanDag.card_viewUpto_succ_le_of_bounds._proof_1_1	LeanDag.Block.creator
 NODE	LeanDag.Integration.recoveryMsg._proof_4	LeanDag.Integration.ReGenesis	thm
 EDGE	LeanDag.Integration.recoveryMsg._proof_4	LeanDag.Faults
 EDGE	LeanDag.Integration.recoveryMsg._proof_4	LeanDag.Integration.addGenesis
