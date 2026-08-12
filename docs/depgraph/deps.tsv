@@ -6496,6 +6496,21 @@ EDGE	LeanDag.Timing.populatedOn	LeanDag.Block.round
 EDGE	LeanDag.Timing.populatedOn	LeanDag.PopulatedOn
 EDGE	LeanDag.Timing.populatedOn	LeanDag.BlockUniverse
 EDGE	LeanDag.Timing.populatedOn	LeanDag.Block.creator
+NODE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.ViewPace	thm
+EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.Faults
+EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.ViewPace.driftOn_of_prompt
+EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.Rated
+EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.ViewPace.delay
+EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.ViewPace.synchronisedOn_of_converges
+EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.Faults.f
+EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.DriftOn.mono
+EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.ViewPace
+EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.ViewPace.built
+EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.SynchronisedOn
+EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.ViewPace.timeout
+EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.backoff_ge_of_rate
+EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.ViewPace.gst
 NODE	LeanDag.Odontoceti.adaptiveRun_agree._proof_1_1	LeanDag.Adaptive.Odontoceti	thm
 EDGE	LeanDag.Odontoceti.adaptiveRun_agree._proof_1_1	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.adaptiveRun_agree._proof_1_1	LeanDag.AdaptivePolicy.W
@@ -8508,6 +8523,25 @@ EDGE	LeanDag.ViewGrowth.populatedOn._proof_1_8	LeanDag.ViewGrowth.gst
 EDGE	LeanDag.ViewGrowth.populatedOn._proof_1_8	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.populatedOn._proof_1_8	LeanDag.ViewGrowth
 EDGE	LeanDag.ViewGrowth.populatedOn._proof_1_8	LeanDag.Faults.f
+NODE	LeanDag.ViewPace.decided_of_wait	LeanDag.ViewPace	thm
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.ViewPace.directCommit_of_wait
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.Faults
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.View.full
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.Slots.slotRound
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.DirectCommit
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.Decided
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.Slots.leader
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.ViewPace.delay
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.Decided.directCommit
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.directCommitIn_full
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.Faults.f
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.IsLeaderBlock
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.ViewPace
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.ViewPace.built
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.Slots
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.ViewPace.timeout
+EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.ViewPace.gst
 NODE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.Drift.Catchup	thm
 EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.decided_of_leader_mem
 EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.Faults
@@ -8552,6 +8586,14 @@ EDGE	LeanDag.ViewPace.mk.sizeOf_spec	LeanDag.ViewPace
 EDGE	LeanDag.ViewPace.mk.sizeOf_spec	LeanDag.ViewPace._sizeOf_inst
 EDGE	LeanDag.ViewPace.mk.sizeOf_spec	LeanDag.Block.creator
 NODE	LeanDagTest.lkx._proof_1	LeanDagTest.DoS.Exclusion	thm
+NODE	LeanDag.ViewPace.directCommit_of_wait._proof_1_2	LeanDag.ViewPace	thm
+EDGE	LeanDag.ViewPace.directCommit_of_wait._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.ViewPace.directCommit_of_wait._proof_1_2	LeanDag.Slots.slotRound
+EDGE	LeanDag.ViewPace.directCommit_of_wait._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.directCommit_of_wait._proof_1_2	LeanDag.Faults.f
+EDGE	LeanDag.ViewPace.directCommit_of_wait._proof_1_2	LeanDag.ViewPace
+EDGE	LeanDag.ViewPace.directCommit_of_wait._proof_1_2	LeanDag.Slots
+EDGE	LeanDag.ViewPace.directCommit_of_wait._proof_1_2	LeanDag.ViewPace.gst
 NODE	LeanDagTest.dexcl_eventuallyDelivers	LeanDagTest.GC.Bootstrap	thm
 EDGE	LeanDagTest.dexcl_eventuallyDelivers	LeanDag.EventuallyDelivers
 EDGE	LeanDagTest.dexcl_eventuallyDelivers	LeanDagTest.excl_round_le
@@ -13925,6 +13967,9 @@ EDGE	LeanDagTest.uodo_synchronised	LeanDagTest.Uodo
 EDGE	LeanDagTest.uodo_synchronised	LeanDag.Faults5.toFaults
 EDGE	LeanDagTest.uodo_synchronised	LeanDag.Block.creator
 EDGE	LeanDagTest.uodo_synchronised	LeanDag.Synchronised
+NODE	LeanDag.DriftOn.mono	LeanDag.ViewPace	thm
+EDGE	LeanDag.DriftOn.mono	LeanDag.Faults
+EDGE	LeanDag.DriftOn.mono	LeanDag.DriftOn
 NODE	LeanDagTest.ugrowCorrectGrowth_eventuallyDelivers._proof_1_1	LeanDagTest.ViewSync	thm
 NODE	LeanDag.ViewGrowth.synchronised_toDelivery	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewGrowth.synchronised_toDelivery	LeanDag.ViewGrowth.toDelivery
@@ -14603,6 +14648,14 @@ EDGE	LeanDag.chop_chop	LeanDag.chop_chop._proof_1_1
 EDGE	LeanDag.chop_chop	LeanDag.chop_chop._proof_1_3
 EDGE	LeanDag.chop_chop	LeanDag.chop_chop._proof_1_2
 NODE	LeanDag.certificatesIn_chop._simp_1_1	LeanDag.GC.ChopDecided	thm
+NODE	LeanDag.ViewPace.directCommit_of_wait._proof_1_1	LeanDag.ViewPace	thm
+EDGE	LeanDag.ViewPace.directCommit_of_wait._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.ViewPace.directCommit_of_wait._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.ViewPace.directCommit_of_wait._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.directCommit_of_wait._proof_1_1	LeanDag.Faults.f
+EDGE	LeanDag.ViewPace.directCommit_of_wait._proof_1_1	LeanDag.ViewPace
+EDGE	LeanDag.ViewPace.directCommit_of_wait._proof_1_1	LeanDag.Slots
+EDGE	LeanDag.ViewPace.directCommit_of_wait._proof_1_1	LeanDag.ViewPace.gst
 NODE	LeanDag.Integration.lifecycle	LeanDag.Integration.Lifecycle	thm
 EDGE	LeanDag.Integration.lifecycle	LeanDag.SkipMsg.v1
 EDGE	LeanDag.Integration.lifecycle	LeanDag.HybridFaults
@@ -17632,6 +17685,16 @@ EDGE	LeanDagTest.uskip_slot4	LeanDag.IsLeaderBlock
 EDGE	LeanDagTest.uskip_slot4	LeanDag.Odontoceti.Decided.directCommit
 EDGE	LeanDagTest.uskip_slot4	LeanDag.Odontoceti.Decided
 EDGE	LeanDagTest.uskip_slot4	LeanDag.Faults5.toFaults
+NODE	LeanDag.ViewPace.directCommit_of_wait_two_delay._proof_1_1	LeanDag.ViewPace	thm
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay._proof_1_1	LeanDag.ViewPace.delay
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay._proof_1_1	LeanDag.Faults.f
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay._proof_1_1	LeanDag.ViewPace
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay._proof_1_1	LeanDag.Slots
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay._proof_1_1	LeanDag.ViewPace.timeout
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay._proof_1_1	LeanDag.ViewPace.gst
 NODE	LeanDag.Odontoceti.eq_of_directCommit._simp_1_1	LeanDag.Odontoceti.Rules	thm
 EDGE	LeanDag.Odontoceti.eq_of_directCommit._simp_1_1	LeanDag.Faults
 EDGE	LeanDag.Odontoceti.eq_of_directCommit._simp_1_1	LeanDag.Faults.byzantine
@@ -22794,6 +22857,22 @@ EDGE	LeanDag.SkipMsg.certificatesIn_subset_ids	LeanDag.View.ids
 EDGE	LeanDag.SkipMsg.certificatesIn_subset_ids	LeanDag.BlockUniverse
 EDGE	LeanDag.SkipMsg.certificatesIn_subset_ids	LeanDag.certificates
 EDGE	LeanDag.SkipMsg.certificatesIn_subset_ids	LeanDag.View
+NODE	LeanDag.ViewPace.directCommit_of_wait_two_delay	LeanDag.ViewPace	thm
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay	LeanDag.ViewPace.directCommit_of_wait
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay	LeanDag.Faults
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay	LeanDag.Slots.slotRound
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay	LeanDag.DirectCommit
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay	LeanDag.Slots.leader
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay	LeanDag.ViewPace.delay
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay	LeanDag.Faults.f
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay	LeanDag.ViewPace.directCommit_of_wait_two_delay._proof_1_1
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay	LeanDag.IsLeaderBlock
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay	LeanDag.ViewPace
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay	LeanDag.ViewPace.built
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay	LeanDag.Slots
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay	LeanDag.ViewPace.timeout
+EDGE	LeanDag.ViewPace.directCommit_of_wait_two_delay	LeanDag.ViewPace.gst
 NODE	LeanDag.blames_chop._proof_1_1	LeanDag.GC.Chop	thm
 EDGE	LeanDag.blames_chop._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.blames_chop._proof_1_1	LeanDag.BlockUniverse.ids
@@ -24229,6 +24308,28 @@ EDGE	LeanDagTest.ugrowLag._proof_1	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ugrowLag._proof_1	LeanDag.Timing.rounds_le
 EDGE	LeanDagTest.ugrowLag._proof_1	LeanDag.Block.round
 EDGE	LeanDagTest.ugrowLag._proof_1	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+NODE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.ViewPace	thm
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.directCommit_of_leader_mem
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.Faults
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.Slots.slotRound
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.ViewPace.driftOn_of_prompt
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.DirectCommit
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.ViewPace.directCommit_of_wait._proof_1_1
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.Slots.leader
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.ViewPace.delay
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.ViewPace.synchronisedOn_of_converges
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.ViewPace.directCommit_of_wait._proof_1_2
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.Faults.f
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.DriftOn.mono
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.IsLeaderBlock
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.ViewPace
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.ViewPace.built
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.SynchronisedOn
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.Slots
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.ViewPace.timeout
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.ViewPace.populatedOn
+EDGE	LeanDag.ViewPace.directCommit_of_wait	LeanDag.ViewPace.gst
 NODE	LeanDag.ViewGrowth.synchronisedOn_of_converges._proof_1_1	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewGrowth.synchronisedOn_of_converges._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.ViewGrowth.synchronisedOn_of_converges._proof_1_1	LeanDag.ViewGrowth.gst

@@ -334,6 +334,93 @@ theorem commits_recur_via_pace (hT : T ⊆ (Correct : Finset Validator))
 
 end Liveness
 
+/-! ## The quantitative arc, on this route
+
+Report §6.10's results, over the partial schedule. `Rated`, `FairWithin`
+and `BoundedSpacing` are properties of the timeout and the schedule alone
+and carry over verbatim; what needs restating is everything that took a
+`Timing` — the explicit coverage round, and the wait bound.
+
+One question had to be settled first (`liveness-routes.md` §9): what a
+wait bound means when a validator can be stuck. The answer is `reached`:
+with `T` a quorum and the progress rule, no `T`-validator is stuck below
+the horizon — as a *theorem*, where the total schedule had it as the
+shape of a field. The bounds then read exactly as they did. -/
+
+section Quantitative
+
+omit [DecidableEq BlockId] in
+/-- Drift from a later round is implied by drift from an earlier one. -/
+theorem _root_.LeanDag.DriftOn.mono {built : Validator → ℕ → ℕ}
+    {n₀ n₁ D : ℕ} (h : n₀ ≤ n₁) (hd : DriftOn built T n₀ D N) :
+    DriftOn built T n₁ D N :=
+  fun v hv w hw n hn hN => hd v hv w hw n (le_trans h hn) hN
+
+omit [DecidableEq BlockId] in
+/-- **Q3 on this route** — coverage from an explicit round, under a rated
+backoff: `R = max (max (D + delay) n₀) gst`, each summand what it looks
+like. `Timing.synchronisedOn_of_rate` with the structure swapped and
+`T ⊆ Correct` gone. -/
+theorem synchronisedOn_of_rate (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hrate : Rated vp.timeout) {n₀ D : ℕ} (hn₀ : vp.delay ≤ n₀)
+    (hbase : ∀ v ∈ T, ∀ w ∈ T, vp.built w n₀ ≤ vp.built v n₀ + D) :
+    SynchronisedOn U T (max (max (D + vp.delay) n₀) vp.gst) := by
+  refine vp.synchronisedOn_of_converges
+    (DriftOn.mono (le_trans (le_max_right (D + vp.delay) n₀) (le_max_left _ _))
+      (vp.driftOn_of_prompt hcard hbase
+        (fun n hn => backoff_ge_of_rate hrate _ n (le_trans hn₀ hn))))
+    (le_max_right _ _) ?_
+  exact fun n hn =>
+    backoff_ge_of_rate hrate _ n (le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) hn)
+
+variable [S : Slots Validator] {D₀ k : ℕ}
+
+/-- **The wait bound** (Q2 headline, report §6.10): a validator that knows
+the delivery bound and its start spread needs no backoff — a constant
+timeout of `D₀ + Δ` commits every reliable-led slot past GST. Production
+here is derived, so unlike `directCommit_of_wait` over `Timing` nothing
+asserts blocks above round `0`, and `T ⊆ Correct` is not consumed. -/
+theorem directCommit_of_wait (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hstart : ∀ v ∈ T, ∀ w ∈ T, vp.built w 0 ≤ vp.built v 0 + D₀)
+    (hwait : ∀ n, D₀ + vp.delay ≤ vp.timeout n)
+    (hgst : vp.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k) := by
+  have hsync : SynchronisedOn U T (S.slotRound k) :=
+    vp.synchronisedOn_of_converges
+      (DriftOn.mono (Nat.zero_le _)
+        (vp.driftOn_of_prompt hcard hstart
+          (fun n _ => le_trans (Nat.le_add_left _ _) (hwait n))))
+      hgst (fun n _ => hwait n)
+  exact directCommit_of_leader_mem hcard hsync (le_refl _)
+    (vp.populatedOn hcard _ (by omega)) (vp.populatedOn hcard _ (by omega))
+    (vp.populatedOn hcard _ (by omega)) hlead
+
+/-- **The wait bound, as a decision.** -/
+theorem decided_of_wait (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hstart : ∀ v ∈ T, ∀ w ∈ T, vp.built w 0 ≤ vp.built v 0 + D₀)
+    (hwait : ∀ n, D₀ + vp.delay ≤ vp.timeout n)
+    (hgst : vp.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) := by
+  obtain ⟨L, hLb, hdc⟩ := vp.directCommit_of_wait hcard hstart hwait hgst hN hlead
+  exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_full hdc)⟩
+
+/-- **`Delay(Δ) = 2Δ`** — the headline case, over the partial schedule. -/
+theorem directCommit_of_wait_two_delay (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hstart : ∀ v ∈ T, ∀ w ∈ T, vp.built w 0 ≤ vp.built v 0 + vp.delay)
+    (hwait : ∀ n, 2 * vp.delay ≤ vp.timeout n)
+    (hgst : vp.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k) :=
+  vp.directCommit_of_wait hcard hstart (fun n => by have := hwait n; omega) hgst hN hlead
+
+end Quantitative
+
 end ViewPace
 
 end LeanDag

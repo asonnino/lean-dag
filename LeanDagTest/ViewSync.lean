@@ -472,6 +472,21 @@ theorem ugrowStuckPace_stuck :
   simp only [ugrow_block, rrBlock_round] at hbr
   omega
 
+/-- **The wait bound, on data, production derived**: slot `3` committed at
+the constant timeout `4 = D₀ + Δ`, from a structure asserting no blocks
+above round `0`. -/
+example (N : ℕ) (hlead : rrSlots.leader 3 ∈ ({1, 2, 3} : Finset (Fin 4)))
+    (hN : rrSlots.slotRound 3 + 2 ≤ N) :
+    ∃ L, IsLeaderBlock (S := rrSlots) (Ugrow N) 3 L ∧
+      Decided (S := rrSlots) (Ugrow N) (View.full (Ugrow N)) 3 (some L) :=
+  (ugrowSkewPace N).decided_of_wait (S := rrSlots) (D₀ := 2) (by decide)
+    (fun v hv w hw => by
+      obtain ⟨_, _⟩ := mem_T_bounds hv
+      obtain ⟨_, _⟩ := mem_T_bounds hw
+      change (w : ℕ) + 4 * 0 ≤ ((v : ℕ) + 4 * 0) + 2
+      omega)
+    (fun n => by change 2 + 2 ≤ 4; omega) (Nat.zero_le _) hN hlead
+
 /-! ### The untimed condition, induced on data
 
 `{1,2,3}` is exactly `Correct` in this model and `gst = 0`, so the witness

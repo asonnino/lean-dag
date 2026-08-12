@@ -9368,7 +9368,7 @@ Everything else is `ViewGrowth`'s, with the schedule clauses guarded by `n < top
 
 ## Appendix C. The theorem reference
 
-The 353 theorems that either another module of the
+The 358 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -10782,6 +10782,19 @@ theorem exists_synchronisedOn_of_backoff (tm : Timing U T N)
 **The headline.** Under GST with a bounded drift and an unbounded backoff, `SynchronisedOn` holds from *some* round — no longer assumed.
 
 Everything above this file consumes `SynchronisedOn` and is unchanged: L4 and L6 still take it as a hypothesis, and this supplies it, exactly as `synchronised_of_delivery` supplies it from `Delivery`.
+
+#### `backoff_ge_of_rate`
+
+*theorem, `Quantitative.lean`*
+
+```lean
+theorem backoff_ge_of_rate {timeout : ℕ → ℕ} (hrate : Rated timeout) (m : ℕ) :
+    ∀ n, m ≤ n → m ≤ timeout n
+```
+
+**A rated backoff clears any threshold by the threshold itself.**
+
+Contrast `exists_backoff_ge`, which needs `Monotone` to turn one clearing round into all later ones. Monotonicity is not used here: the bound at `n` comes from `n` itself, so it cannot lapse afterwards.
 
 #### `synchronisedOn_of_rate`
 
@@ -14287,6 +14300,68 @@ theorem commits_recur_via_pace (hT : T ⊆ (Correct : Finset Validator))
 
 What remains divides cleanly. The network contributes `converges` and `vp.gst ≤ R`. The protocol contributes `built_of_le_top` at round `0` (genesis), `advances` (the pacemaker does not stall), `references` (P7) and `waits` (P9); drift and the backoff are needed only for coverage, and `driftFrom_of_prompt`'s argument discharges the first from promptness as before. Production needs none of them.
 
+#### `synchronisedOn_of_rate`
+
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem synchronisedOn_of_rate (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hrate : Rated vp.timeout) {n₀ D : ℕ} (hn₀ : vp.delay ≤ n₀)
+    (hbase : ∀ v ∈ T, ∀ w ∈ T, vp.built w n₀ ≤ vp.built v n₀ + D) :
+    SynchronisedOn U T (max (max (D + vp.delay) n₀) vp.gst)
+```
+
+**Q3 on this route** — coverage from an explicit round, under a rated backoff: `R = max (max (D + delay) n₀) gst`, each summand what it looks like. `Timing.synchronisedOn_of_rate` with the structure swapped and `T ⊆ Correct` gone.
+
+#### `directCommit_of_wait`
+
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem directCommit_of_wait (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hstart : ∀ v ∈ T, ∀ w ∈ T, vp.built w 0 ≤ vp.built v 0 + D₀)
+    (hwait : ∀ n, D₀ + vp.delay ≤ vp.timeout n)
+    (hgst : vp.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k)
+```
+
+**The wait bound** (Q2 headline, report §6.10): a validator that knows the delivery bound and its start spread needs no backoff — a constant timeout of `D₀ + Δ` commits every reliable-led slot past GST. Production here is derived, so unlike `directCommit_of_wait` over `Timing` nothing asserts blocks above round `0`, and `T ⊆ Correct` is not consumed.
+
+#### `decided_of_wait`
+
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem decided_of_wait (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hstart : ∀ v ∈ T, ∀ w ∈ T, vp.built w 0 ≤ vp.built v 0 + D₀)
+    (hwait : ∀ n, D₀ + vp.delay ≤ vp.timeout n)
+    (hgst : vp.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
+```
+
+**The wait bound, as a decision.**
+
+#### `directCommit_of_wait_two_delay`
+
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem directCommit_of_wait_two_delay (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hstart : ∀ v ∈ T, ∀ w ∈ T, vp.built w 0 ≤ vp.built v 0 + vp.delay)
+    (hwait : ∀ n, 2 * vp.delay ≤ vp.timeout n)
+    (hgst : vp.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k)
+```
+
+**`Delay(Δ) = 2Δ`** — the headline case, over the partial schedule.
+
 ---
 
 ## Appendix D. Index of internal lemmas
@@ -14417,12 +14492,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `DriftFrom.mono` | Drift from a later round is implied by drift from an earlier one. |
 | `exists_backoff_ge` | A backoff that grows without bound eventually clears any fixed threshold. |
 
-### `Quantitative.lean` (4)
+### `Quantitative.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `FairWithin.fairScheduleOn` | A rated schedule is a fair one, so everything already proved from `FairScheduleOn` applies to it unchanged. |
-| `backoff_ge_of_rate` | A rated backoff clears any threshold by the threshold itself. |
 | `slotRound_le_of_lt` | A slot bound becomes a round bound. |
 | `unbounded_of_rated` | Every rated backoff is unbounded, so `Rated` really is a strengthening of `exists_backoff_ge`'s hypothesis … |
 
@@ -14911,5 +14985,11 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `viewUpto_skipFillD` | Accepted blocks are old, so their cones are unchanged and the accumulated view is literally the same … |
+
+### `ViewPace.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `_root_.LeanDag.DriftOn.mono` | Drift from a later round is implied by drift from an earlier one. |
 
 <!-- END GENERATED REFERENCE -->
