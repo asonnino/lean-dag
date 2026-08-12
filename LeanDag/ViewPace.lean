@@ -140,6 +140,36 @@ namespace ViewPace
 variable (vp : ViewPace U T N)
 
 omit [DecidableEq BlockId] in
+/-- **The separation, on this route** — V1's content over the partial
+schedule. The fused clause the `Timing` layer carried as its network row
+(*a `T`-block built after GST and early enough is referenced*) is
+derivable from `converges` and `references` alone: the block is in its
+author's hands when built (`holds_own`), reaches the builder within
+`delay` (`converges`), is still there when the builder acts
+(`holds_mono`), and is therefore referenced (`references`). No counting,
+no drift, no waiting rule — those enter only when the *hypothesis*
+`built … + delay ≤ built … (n+1)` must itself be discharged, which is
+the race the drift argument wins.
+
+This is where report §4.3's claim that the network's whole contribution
+is one sentence about views is discharged on the route the development
+keeps: `converges` mentions no blocks, rounds or references, and the
+step from views to references is the protocol's clause P7. -/
+theorem covers_of_converges {n : ℕ} (hn : n < N)
+    {c : BlockId} (hc : c ∈ U.ids) (hcT : (U.block c).creator ∈ T)
+    (hcr : (U.block c).round = n + 1)
+    {a : BlockId} (ha : a ∈ U.ids) (haT : (U.block a).creator ∈ T)
+    (har : (U.block a).round = n)
+    (hgst : vp.gst ≤ vp.built ((U.block a).creator) n)
+    (hearly : vp.built ((U.block a).creator) n + vp.delay ≤
+      vp.built ((U.block c).creator) (n + 1)) :
+    a ∈ (U.block c).refs := by
+  refine vp.references _ hcT n hn c hc rfl hcr a ?_ har
+  refine vp.holds_mono _ _ _ hearly ?_
+  exact vp.converges _ hcT _ haT _ hgst
+    (vp.holds_own _ haT n (by omega) a ha rfl har)
+
+omit [DecidableEq BlockId] in
 /-- Rounds advance real time, over the rounds a validator reached. -/
 theorem le_built {v : Validator} (hv : v ∈ T) : ∀ n ≤ vp.top v, n ≤ vp.built v n := by
   intro n
@@ -263,15 +293,12 @@ theorem synchronisedOn_of_converges {R D : ℕ}
     hbr ▸ vp.le_top_of_built _ hbc b hb rfl
   have htopa : n ≤ vp.top ((U.block a).creator) :=
     har ▸ vp.le_top_of_built _ hac a ha rfl
-  refine vp.references _ hbc n hnN b hb rfl hbr a ?_ har
-  have hown := vp.holds_own _ hac n (by omega) a ha rfl har
   have hle := vp.le_built hac n htopa
-  have hconv := vp.converges _ hbc _ hac _ (by omega) hown
-  refine vp.holds_mono _ _ _ ?_ hconv
+  -- the race, won: drift, the wait and the backoff place the arrival first
   have hdrift := hD _ hbc _ hac n hn (by omega)
   have hwait := vp.waits _ hbc n (by omega)
   have hto := hbackoff n hn
-  omega
+  exact vp.covers_of_converges hnN hb hbc hbr ha hac har (by omega) (by omega)
 
 section Liveness
 

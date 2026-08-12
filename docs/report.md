@@ -5708,7 +5708,7 @@ result in full.
 | L7a | coverage from delivery | `synchronised_of_delivery` *(Liveness)* |
 | L7b | coverage from GST | `Timing.synchronisedOn_of_timing`, `exists_synchronisedOn_of_backoff` *(Timing)* |
 | L7c | coverage from view convergence | `ViewSync.synchronisedOn_of_converges` *(ViewSync)* |
-| V1 | the referencing clause, unfused from the network's | `ViewSync.covers_of_converges` *(ViewSync)* |
+| V1 | the referencing clause, unfused from the network's | `ViewSync.covers_of_converges`, `ViewPace.covers_of_converges` *(ViewSync, ViewPace)* |
 | V2 | the timing route derived from the view-level one | `ViewSync.toTiming` *(ViewSync)* |
 | V3 | build-time views agree | `ViewSync.ViewsAgree`, `ViewSync.viewsAgree_of_converges` *(ViewSync)* |
 | V4 | the bound factored out of convergence | `convergesWithin_iff_bounded` *(ViewSync)* |
@@ -9368,7 +9368,7 @@ Everything else is `ViewGrowth`'s, with the schedule clauses guarded by `n < top
 
 ## Appendix C. The theorem reference
 
-The 352 theorems that either another module of the
+The 353 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -14176,6 +14176,26 @@ theorem card_novelty_le_of_donor {κ R : ℕ} (hbyz : ByzBudget D κ)
 **I18.** The novelty budget holds for a block whose references lie inside **any** correct validator's acceptances, provided that validator has a block at the round — not specifically the block's own author.
 
 Report §8.4's `RefsAccepted` asks for the author, and the pool argument uses only this. The two component lemmas were already stated at the right generality; composing them at a `w` other than the author is what had not been done.
+
+#### `covers_of_converges`
+
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem covers_of_converges {n : ℕ} (hn : n < N)
+    {c : BlockId} (hc : c ∈ U.ids) (hcT : (U.block c).creator ∈ T)
+    (hcr : (U.block c).round = n + 1)
+    {a : BlockId} (ha : a ∈ U.ids) (haT : (U.block a).creator ∈ T)
+    (har : (U.block a).round = n)
+    (hgst : vp.gst ≤ vp.built ((U.block a).creator) n)
+    (hearly : vp.built ((U.block a).creator) n + vp.delay ≤
+      vp.built ((U.block c).creator) (n + 1)) :
+    a ∈ (U.block c).refs
+```
+
+**The separation, on this route** — V1's content over the partial schedule. The fused clause the `Timing` layer carried as its network row (*a `T`-block built after GST and early enough is referenced*) is derivable from `converges` and `references` alone: the block is in its author's hands when built (`holds_own`), reaches the builder within `delay` (`converges`), is still there when the builder acts (`holds_mono`), and is therefore referenced (`references`). No counting, no drift, no waiting rule — those enter only when the *hypothesis* `built … + delay ≤ built … (n+1)` must itself be discharged, which is the race the drift argument wins.
+
+This is where report §4.3's claim that the network's whole contribution is one sentence about views is discharged on the route the development keeps: `converges` mentions no blocks, rounds or references, and the step from views to references is the protocol's clause P7.
 
 #### `le_built`
 

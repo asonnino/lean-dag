@@ -3770,11 +3770,13 @@ EDGE	LeanDagTest.ugrowDelivery._proof_2	LeanDag.mem_blocksAt
 NODE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_4	LeanDag.ViewPace	thm
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_4	LeanDag.Faults
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_4	LeanDag.ViewPace.top
+EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_4	LeanDag.ViewPace.delay
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_4	LeanDag.BlockUniverse.block
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_4	LeanDag.Block.round
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_4	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_4	LeanDag.ViewPace
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_4	LeanDag.ViewPace.built
+EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_4	LeanDag.ViewPace.timeout
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_4	LeanDag.Block.creator
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_4	LeanDag.ViewPace.gst
 NODE	LeanDag.ViewGrowth.toViewSync._proof_6	LeanDag.ViewSync	thm
@@ -4437,29 +4439,25 @@ EDGE	LeanDag.ViewSync.rec	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewSync.rec	LeanDag.Block.creator
 NODE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace	thm
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.Faults
-EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.references
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.DriftOn
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.rounds_le
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.le_top_of_built
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.le_built
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.BlockUniverse.ids
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_5
-EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.holds_own
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.top
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.delay
-EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.holds_mono
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_1
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_4
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.BlockUniverse.block
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.Block.round
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.covers_of_converges
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_2
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.built
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.SynchronisedOn
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.timeout
-EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.holds
-EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.converges
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.Block.creator
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.waits
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_3
@@ -13582,6 +13580,7 @@ EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_2	LeanDag.BlockUniver
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_2	LeanDag.Block.round
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_2	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_2	LeanDag.ViewPace
+EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_2	LeanDag.ViewPace.built
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_2	LeanDag.Block.creator
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges._proof_1_2	LeanDag.ViewPace.gst
 NODE	LeanDag.Odontoceti.PartialRun._sizeOf_1	LeanDag.Adaptive.Odontoceti	def
@@ -24080,6 +24079,16 @@ EDGE	LeanDag.Odontoceti.reactive_decided	LeanDag.ReactiveCore
 NODE	LeanDagTest.ugrowReactive._proof_22	LeanDagTest.Reactive	thm
 EDGE	LeanDagTest.ugrowReactive._proof_22	LeanDag.Slots.slotRound
 EDGE	LeanDagTest.ugrowReactive._proof_22	LeanDagTest.rrSlots
+NODE	LeanDag.ViewPace.covers_of_converges._proof_1_1	LeanDag.ViewPace	thm
+EDGE	LeanDag.ViewPace.covers_of_converges._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.ViewPace.covers_of_converges._proof_1_1	LeanDag.ViewPace.delay
+EDGE	LeanDag.ViewPace.covers_of_converges._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.ViewPace.covers_of_converges._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.ViewPace.covers_of_converges._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.covers_of_converges._proof_1_1	LeanDag.ViewPace
+EDGE	LeanDag.ViewPace.covers_of_converges._proof_1_1	LeanDag.ViewPace.built
+EDGE	LeanDag.ViewPace.covers_of_converges._proof_1_1	LeanDag.Block.creator
+EDGE	LeanDag.ViewPace.covers_of_converges._proof_1_1	LeanDag.ViewPace.gst
 NODE	LeanDag.card_missingAt_le_aux._proof_1_1	LeanDag.DoS.Density	thm
 EDGE	LeanDag.card_missingAt_le_aux._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.card_missingAt_le_aux._proof_1_1	LeanDag.BlockUniverse.block
@@ -24767,6 +24776,23 @@ EDGE	LeanDag.ReactiveCore.proc	LeanDag.BlockUniverse
 EDGE	LeanDag.ReactiveCore.proc	LeanDag.Slots
 EDGE	LeanDag.ReactiveCore.proc	LeanDag.ReactiveCore
 NODE	LeanDagTest.u7_inj._proof_1_1	LeanDagTest.Adaptive	thm
+NODE	LeanDag.ViewPace.covers_of_converges	LeanDag.ViewPace	thm
+EDGE	LeanDag.ViewPace.covers_of_converges	LeanDag.Faults
+EDGE	LeanDag.ViewPace.covers_of_converges	LeanDag.ViewPace.references
+EDGE	LeanDag.ViewPace.covers_of_converges	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.ViewPace.covers_of_converges	LeanDag.Block.refs
+EDGE	LeanDag.ViewPace.covers_of_converges	LeanDag.ViewPace.holds_own
+EDGE	LeanDag.ViewPace.covers_of_converges	LeanDag.ViewPace.covers_of_converges._proof_1_1
+EDGE	LeanDag.ViewPace.covers_of_converges	LeanDag.ViewPace.delay
+EDGE	LeanDag.ViewPace.covers_of_converges	LeanDag.ViewPace.holds_mono
+EDGE	LeanDag.ViewPace.covers_of_converges	LeanDag.BlockUniverse.block
+EDGE	LeanDag.ViewPace.covers_of_converges	LeanDag.Block.round
+EDGE	LeanDag.ViewPace.covers_of_converges	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.covers_of_converges	LeanDag.ViewPace
+EDGE	LeanDag.ViewPace.covers_of_converges	LeanDag.ViewPace.built
+EDGE	LeanDag.ViewPace.covers_of_converges	LeanDag.ViewPace.converges
+EDGE	LeanDag.ViewPace.covers_of_converges	LeanDag.Block.creator
+EDGE	LeanDag.ViewPace.covers_of_converges	LeanDag.ViewPace.gst
 NODE	LeanDag.View.rec	LeanDag.BlockDag	rec
 EDGE	LeanDag.View.rec	LeanDag.View.mk
 EDGE	LeanDag.View.rec	LeanDag.Faults
