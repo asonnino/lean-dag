@@ -2234,6 +2234,7 @@ still owes:
 | View convergence (§6.9) | `converges` — Δ after GST, over views | P7, P9, drift | `SynchronisedOn`, and the other two |
 | View growth (§6.9) | `converges`, with `blk` removed | P7, P8, P9, drift, one seed round at `R` | `PopulatedOn` from `R` on, `SynchronisedOn`, and commits |
 | View growth from genesis (§6.9) | `converges`, and `gst ≤ R` | P7, P8, P9, drift, genesis, the straddling round | `PopulatedOn` from round `0`, `SynchronisedOn` from `R`, and commits |
+| View pace (§6.9) | `converges`, and `gst ≤ R` | P7, P9, drift, genesis, and P8 as advancement | the same, with no schedule hypothesis |
 | Untimed views (§6.9) | `ViewsConverge` — no bound, index-aligned | `HoldsOwn`, P8 | `Populated`, from round `0` |
 
 The three routes are interchangeable at the interface. Results above it
@@ -2302,9 +2303,50 @@ builds for round `n+1` only once it holds a quorum at round `n`* —
 collapses into assuming the conclusion, for the same reason: `built v (n+1)`
 is a number that exists by totality, so saying the build waits for the
 quorum forces the quorum to be in hand at that time, which is production
-outright. Removing `hcross` honestly means making the build schedule
-partial, which is a change to the model rather than to this proof, and it
-is not attempted here.
+outright.
+
+**Removing it needs a partial schedule**, which `ViewPace` supplies
+(V17, module `LeanDag/ViewPace.lean`). `top v` is the highest round `v`
+reached; `built v n` is read only at `n ≤ top v`, and rounds above were
+never built. Two clauses say that `v`'s blocks are exactly rounds `0`
+through `top v` — at `n = 0` the first is `Live.genesis`, which a
+validator satisfies alone — and the schedule clauses are guarded by
+`n < top v`, since a round never reached has no build time worth
+constraining.
+
+*Stuck* becomes expressible, and the deadline disappears with it. What
+replaces `hcross` is the pacemaker's own rule, that a validator which
+*can* advance *does*:
+
+```lean
+advances : ∀ v ∈ T, ∀ n < N, ∀ t,
+  (Fintype.card Validator - F.f) ≤
+    (creatorsOf U.block ((holds v t).filter fun b => (U.block b).round = n)).card →
+  n < top v
+```
+
+Note *at any time whatever*. It is conditional on holding a quorum, so it
+asserts no production; and because it names no time, there is no deadline
+to miss and nothing for a schedule hypothesis to protect. A validator that
+raced ahead of the network before GST is no longer excluded by assumption
+— it is not expressible, since a validator that never held a quorum at
+round `n` never reached round `n+1`.
+
+`ViewPace.populatedOn` therefore takes genesis, `converges` and `advances`
+and nothing else: no drift, no backoff, not even `timeout`, since with no
+deadline there is nothing to beat. Coverage is unchanged, the guards coming
+out of `le_top_of_built`, and the straddling case cannot arise there
+because coverage is claimed only from `R ≥ gst`. The spine is
+`ViewPace.commits_recur_via_pace`, and the schedule hypothesis is **gone
+rather than weakened**.
+
+That the model earns the change is witnessed twice. `ugrowSkewPace` is the
+running model over a partial schedule, at the same constants, with liveness
+running off it; and `ugrowStuckPace_stuck` exhibits a `ViewPace` satisfied
+by an execution that has genuinely halted — horizon `5`, `top = 0`, round
+`1` unpopulated — which is exactly what a total schedule cannot represent.
+The quorum bound is what keeps it out of `populatedOn`: its `T` is a single
+validator, not `n − f` of them.
 
 The two seeds are the two ends of one statement. If the pre-GST network
 did deliver enough for the DAG to reach round `R`, `base` at `R` is
@@ -5660,6 +5702,7 @@ result in full.
 | V14 | the same liveness, routed through the two conditions §6 names | `ViewSync.commits_recur_via_interface` *(ViewSync)* |
 | V15 | and again with production derived from the build rule, not assumed | `ViewGrowth.synchronisedOn_of_converges`, `ViewGrowth.commits_recur_via_growth`, `ugrowSkewGrowth_commits` *(ViewSync, LeanDagTest.ViewSync)* |
 | V16 | and with the seed at round `0`, where genesis needs no network | `ViewGrowth.populatedOn_of_genesis`, `ViewGrowth.commits_recur_via_genesis`, `ugrowSkewGrowth_commits_via_genesis` *(ViewSync, LeanDagTest.ViewSync)* |
+| V17 | a partial build schedule, in which *stuck* is expressible and the schedule hypothesis is gone | `ViewPace`, `ViewPace.populatedOn`, `ViewPace.commits_recur_via_pace`, `ugrowStuckPace_stuck` *(ViewPace, LeanDagTest.ViewSync)* |
 | L11 | drift is derived | `Timing.driftFrom_of_prompt` *(Timing)* |
 | L8a | the round of coverage, explicitly | `synchronisedOn_of_rate` *(Quantitative)* |
 | L8b | the committing slot, and its round | `commits_recur_within`, `commits_recur_by_round` *(Quantitative)* |
@@ -9204,12 +9247,81 @@ def skipFillD (sk : SkipMsg U) (D : Delivery U)
 
 `hdown` is the hypothesis `Delivery.includes` forces — the recovering validator accepted nothing while it was down. It is the acceptance-side counterpart of `hgap`, which says the same of production.
 
+#### `ViewPace`
+
+*structure, `ViewPace.lean`*
+
+```lean
+structure ViewPace (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (N : ℕ) where
+  /-- The highest round `v` reached. Rounds above it were never built. -/
+  top : Validator → ℕ
+  /-- When `v` built its round-`n` block — read only at `n ≤ top v`. -/
+  built : Validator → ℕ → ℕ
+  timeout : ℕ → ℕ
+  gst : ℕ
+  delay : ℕ
+  rounds_le : ∀ b ∈ U.ids, (U.block b).round ≤ N
+  /-- **Every round `v` reached, it built in.** At `n = 0` this is
+  `Live.genesis` — a validator produces its genesis block alone, so this
+  much needs no network at all. Above `0` it is the reading of `top`: the
+  validator got there, which is to say it built there. -/
+  built_of_le_top : ∀ v ∈ T, ∀ n ≤ top v,
+    ∃ b ∈ U.ids, (U.block b).creator = v ∧ (U.block b).round = n
+  /-- **And no round above it.** Together with the previous clause, `v`'s
+  blocks are exactly rounds `0` through `top v`. -/
+  le_top_of_built : ∀ v ∈ T, ∀ b ∈ U.ids,
+    (U.block b).creator = v → (U.block b).round ≤ top v
+  /-- **P9, the waiting rule** (protocol), over the rounds `v` reached. -/
+  waits : ∀ v ∈ T, ∀ n < top v, built v n + timeout n ≤ built v (n + 1)
+  timeout_pos : ∀ n, 1 ≤ timeout n
+  /-- An upper bound on when round `n` was built, over `T`. Only an upper
+  bound is needed here — `latest_mem` belongs to the drift argument, not
+  to this one. -/
+  latest : ℕ → ℕ
+  built_le_latest : ∀ v ∈ T, ∀ n ≤ N, built v n ≤ latest n
+  holds : Validator → ℕ → Finset BlockId
+  holds_sub : ∀ v t, holds v t ⊆ U.ids
+  /-- A validator holds every block it authored, from the time it built it. -/
+  holds_own : ∀ v ∈ T, ∀ n ≤ N, ∀ b ∈ U.ids,
+    (U.block b).creator = v → (U.block b).round = n → b ∈ holds v (built v n)
+  holds_mono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t
+  /-- **N2, as view convergence** (network). -/
+  converges : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + delay)
+  /-- **P7, referencing** (protocol), over any block the validator authors. -/
+  references : ∀ v ∈ T, ∀ n < N, ∀ c ∈ U.ids,
+    (U.block c).creator = v → (U.block c).round = n + 1 →
+    ∀ a ∈ holds v (built v (n + 1)), (U.block a).round = n →
+    a ∈ (U.block c).refs
+  /-- **P8, as the pacemaker's progress rule** (protocol). A validator that
+  holds a quorum of distinct round-`n` authors — *at any time whatever* —
+  gets past round `n`.
+
+  This is the clause a total schedule cannot carry honestly. There, the
+  quorum had to be in hand at the one time `built v (n+1)` names, so the
+  rule either missed it (and the round stayed empty for ever) or, stated as
+  a converse, forced the quorum to exist. Here there is no such time: the
+  hypothesis is that `v` ever holds a quorum, and the conclusion is that it
+  advances. It asserts no production, since it says nothing until a quorum
+  is in hand. -/
+  advances : ∀ v ∈ T, ∀ n < N, ∀ t,
+    (Fintype.card Validator - F.f) ≤
+      (creatorsOf U.block ((holds v t).filter fun b => (U.block b).round = n)).card →
+    n < top v
+```
+
+View convergence over a **partial** build schedule.
+
+`top v` is the highest round `v` reached. Its two clauses say that `v`'s blocks are exactly the rounds `0` through `top v`: `built_of_le_top` supplies one at each of them, and `le_top_of_built` says there are none above. Neither is an assumption about the network — the first at `n = 0` is `Live.genesis`, which a validator satisfies alone, and the rest of it is the definition of how far the validator got.
+
+Everything else is `ViewGrowth`'s, with the schedule clauses guarded by `n < top v`, since a round the validator never reached has no build time worth constraining.
+
 
 ---
 
 ## Appendix C. The theorem reference
 
-The 342 theorems that either another module of the
+The 345 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -13961,11 +14073,63 @@ theorem card_novelty_le_of_donor {κ R : ℕ} (hbyz : ByzBudget D κ)
 
 Report §8.4's `RefsAccepted` asks for the author, and the pool argument uses only this. The two component lemmas were already stated at the right generality; composing them at a `w` other than the author is what had not been done.
 
+#### `populatedOn`
+
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem populatedOn (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+    ∀ n ≤ N, PopulatedOn U T n
+```
+
+**Production, with no deadline to beat.** Every round below the horizon is populated, from genesis, view convergence and the progress rule — and from nothing else. No drift, no backoff, no `timeout`, and no counterpart to `ViewGrowth`'s `hcross`.
+
+The step is the familiar one with the deadline removed. Each `w ∈ T` reached round `n` (induction hypothesis), so it has a block there and holds it from `built w n`; `holds_mono` carries that forward to `max (latest n) gst`, a single time serving every `w` at once; `converges` puts all of them in `v`'s hands by `max (latest n) gst + delay`. That is a quorum of distinct authors, so `advances` fires and `v` is past round `n` — whereupon `built_of_le_top` supplies its round-`n+1` block.
+
+**Where `hcross` went.** In `ViewGrowth` the quorum had to arrive by `built v (n+1)`, a time fixed before the run, and `hcross` was what made the straddling round late enough to make it. Here the arrival time is not compared with anything: `advances` takes the quorum at whatever time it appears. A schedule that raced ahead of the network pre-GST is not excluded by hypothesis — it is not expressible, because a validator that never held a quorum at round `n` never reached round `n+1`.
+
+#### `synchronisedOn_of_converges`
+
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem synchronisedOn_of_converges {R D : ℕ}
+    (hD : DriftOn vp.built T R D N) (hgst : vp.gst ≤ R)
+    (hbackoff : ∀ n, R ≤ n → D + vp.delay ≤ vp.timeout n) :
+    SynchronisedOn U T R
+```
+
+**Reference coverage**, exactly `ViewGrowth`'s argument over the partial schedule. The guards come out of `le_top_of_built`: a block at round `n+1` authored by `v` puts `n + 1 ≤ top v`, so `waits` and `le_built` apply where they are used, and the straddling case cannot arise — coverage is claimed only from `R`, and `gst ≤ R ≤ n ≤ built w n`.
+
+As in `ViewGrowth`, this needs neither production, nor the quorum bound, nor `T ⊆ Correct`: `references` and `holds_own` are stated over any block a validator authored, so there is nothing to identify by non-equivocation.
+
+#### `commits_recur_via_pace`
+
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem commits_recur_via_pace (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (fair : FairScheduleOn T) (R k : ℕ) :
+    ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N D : ℕ)
+        (vp : ViewPace U T N),
+        DriftOn vp.built T R D N → vp.gst ≤ R →
+        (∀ n, R ≤ n → D + vp.delay ≤ vp.timeout n) →
+        S.slotRound k' + 2 ≤ N →
+        ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L)
+```
+
+**The liveness spine over a partial schedule.** The conclusion of V15 and V16 with the seed at round `0`, where it is genesis, and **no `hcross`**: the schedule hypothesis is gone, not weakened.
+
+What remains divides cleanly. The network contributes `converges` and `vp.gst ≤ R`. The protocol contributes `built_of_le_top` at round `0` (genesis), `advances` (the pacemaker does not stall), `references` (P7) and `waits` (P9); drift and the backoff are needed only for coverage, and `driftFrom_of_prompt`'s argument discharges the first from promptness as before. Production needs none of them.
+
 ---
 
 ## Appendix D. Index of internal lemmas
 
-The 330 lemmas used only within the file that proves
+The 331 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -14585,5 +14749,11 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `viewUpto_skipFillD` | Accepted blocks are old, so their cones are unchanged and the accumulated view is literally the same … |
+
+### `ViewPace.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `le_built` | Rounds advance real time, over the rounds a validator reached. |
 
 <!-- END GENERATED REFERENCE -->

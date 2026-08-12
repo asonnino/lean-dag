@@ -1,4 +1,5 @@
 import LeanDag.ViewSync
+import LeanDag.ViewPace
 import LeanDagTest.Partial
 import LeanDagTest.Quantitative
 import LeanDag.Network.Quorum
@@ -314,6 +315,150 @@ theorem ugrowSkewGrowth_commits_via_genesis (k : ℕ) :
       (le_refl 0) (le_refl _)
   exact ⟨k', hk', _, L, hL, hd⟩
 
+/-! ### The partial schedule, witnessed
+
+`ugrowSkewPace` is `ugrowSkewGrowth` again with the schedule made partial:
+`top v` records how far `v` got, and rounds above it were never built. In
+this model nobody is ever stuck — every validator reaches the horizon — so
+`top v = N` and `advances` is discharged by arithmetic. The point of the
+witness is that the structure carrying `stuck` as an expressible state is
+satisfiable at the same constants, and that liveness runs off it with
+**no `hcross`**.
+-/
+
+/-- The view-level witness over a partial build schedule. -/
+def ugrowSkewPace (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
+  top _ := N
+  built v n := (v : ℕ) + 4 * n
+  timeout _ := 4
+  gst := 0
+  delay := 2
+  rounds_le := (ugrowSkew N).rounds_le
+  built_of_le_top v hv n hn := ugrow_populatedOn hn v hv
+  le_top_of_built _ _ b hb _ := (ugrowSkew N).rounds_le b hb
+  waits _ _ _ _ := by omega
+  timeout_pos _ := by omega
+  latest n := 3 + 4 * n
+  built_le_latest v _ _ _ := by have := v.isLt; omega
+  holds := skewHolds N
+  holds_sub := (ugrowSkewGrowth N).holds_sub
+  holds_own := (ugrowSkewGrowth N).holds_own
+  holds_mono := (ugrowSkewGrowth N).holds_mono
+  converges := (ugrowSkewGrowth N).converges
+  references := (ugrowSkewGrowth N).references
+  advances _ _ _ hn _ _ := hn
+
+/-- **Production over the partial schedule.** Every round populated, from
+genesis, view convergence and the progress rule — no drift, no backoff, no
+`timeout`, and no schedule hypothesis. -/
+theorem ugrowSkewPace_populated (N : ℕ) :
+    ∀ n ≤ N, PopulatedOn (Ugrow N) {1, 2, 3} n :=
+  (ugrowSkewPace N).populatedOn (by decide)
+
+/-- **Coverage over the partial schedule**, at the same constants. -/
+theorem ugrowSkewPace_synchronised (N : ℕ) :
+    SynchronisedOn (Ugrow N) {1, 2, 3} 0 :=
+  (ugrowSkewPace N).synchronisedOn_of_converges (D := 2)
+    (ugrowSkewGrowth_drift N) (le_refl 0)
+    (fun n _ => by change 2 + 2 ≤ 4; omega)
+
+/-- **And the spine, with `hcross` gone rather than weakened.** Compare
+`ugrowSkewGrowth_commits_via_genesis`, which carries a schedule hypothesis
+that happens to be vacuous in this model; here there is no such hypothesis
+to discharge. -/
+theorem ugrowSkewPace_commits (k : ℕ) :
+    ∃ k', k ≤ k' ∧ ∃ N L, IsLeaderBlock (Ugrow N) k' L ∧
+      Decided (Ugrow N) (View.full (Ugrow N)) k' (some L) := by
+  obtain ⟨k', hk', _, hcommit⟩ :=
+    ViewPace.commits_recur_via_pace (BlockId := ℕ) (Payload := Unit)
+      (T := ({1, 2, 3} : Finset (Fin 4))) (by decide) (by decide)
+      (fun j => ⟨j, le_refl j, by simp only [fairSlots_leader]; decide⟩) 0 k
+  obtain ⟨L, hL, hd⟩ :=
+    hcommit (Ugrow (fairSlots.slotRound k' + 2)) _ 2 (ugrowSkewPace _)
+      (ugrowSkewGrowth_drift _) (le_refl 0)
+      (fun n _ => by change 2 + 2 ≤ 4; omega) (le_refl _)
+  exact ⟨k', hk', _, L, hL, hd⟩
+
+/-- **Stuck, expressed.** The claim the partial schedule is for: a
+`ViewPace` in which a validator never gets past round `0`, while the horizon
+is `5`.
+
+The universe is `Ugrow 0` — round-`0` blocks and nothing above — and `T` is
+the singleton `{1}`, which is *not* a quorum. `advances` is therefore never
+triggered: validator `1` holds one block, so one distinct round-`0` author,
+and `1 < 3 = n - f`. Nothing forces it forward and `top 1 = 0` stands.
+
+This is what no total schedule can say. There, `built 1 1` exists whatever
+happens, so the validator has a build time for a round it never reached, and
+the structure cannot distinguish *stuck at round 0* from *built round 1 with
+no quorum*. `ViewPace` separates them, and `hcross` — which existed only to
+rule out the second — is gone.
+
+Note also where the quorum bound does its work: `ViewPace.populatedOn` would
+give `PopulatedOn (Ugrow 0) {1} 1` from this structure were `hcard` dropped,
+and that is false, since validator `1` has no round-`1` block. -/
+def ugrowStuckPace : ViewPace (Ugrow 0) {1} 5 where
+  top _ := 0
+  built v n := (v : ℕ) + 4 * n
+  timeout _ := 4
+  gst := 0
+  delay := 2
+  rounds_le b hb := by
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round]; omega
+  built_of_le_top v hv n hn :=
+    PopulatedOn.mono (by decide) (ugrow_populatedOn (N := 0) hn) v hv
+  le_top_of_built _ _ b hb _ := by
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round]; omega
+  waits _ _ _ h := absurd h (Nat.not_lt.mpr (Nat.zero_le _))
+  timeout_pos _ := by omega
+  latest n := 3 + 4 * n
+  built_le_latest v _ _ _ := by have := v.isLt; omega
+  holds _ _ := {1}
+  holds_sub _ _ := by
+    intro b hb
+    simp only [Finset.mem_singleton] at hb
+    simp only [ugrow_ids, Finset.mem_range]; omega
+  holds_own v hv n _ b hb hbc _ := by
+    have hv1 : v = 1 := by simpa using hv
+    subst hv1
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    have hb4 : b % 4 = 1 := by
+      have := congrArg (fun (x : Fin 4) => (x : ℕ)) hbc
+      simpa [ugrow_block] using this
+    simp only [Finset.mem_singleton]
+    omega
+  holds_mono _ _ _ _ := Finset.Subset.refl _
+  converges _ _ _ _ _ _ := Finset.Subset.refl _
+  references _ _ _ _ c hc _ hcr _ _ _ := by
+    simp only [ugrow_ids, Finset.mem_range] at hc
+    simp only [ugrow_block, rrBlock_round] at hcr
+    omega
+  advances _ _ n _ _ hq := by
+    exfalso
+    have hle : (creatorsOf (Ugrow 0).block
+        (({1} : Finset ℕ).filter fun b => ((Ugrow 0).block b).round = n)).card ≤ 1 := by
+      simp only [creatorsOf]
+      refine le_trans (Finset.card_le_card
+        (Finset.image_subset_image (Finset.filter_subset _ _))) ?_
+      exact le_trans Finset.card_image_le (by simp)
+    have hq3 : Fintype.card (Fin 4) - Faults.f (Fin 4) = 3 := by decide
+    omega
+
+/-- **And it really is stuck.** The horizon is `5`, the validator's top is
+`0`, and round `1` is unpopulated — so the structure is satisfied by an
+execution that has genuinely halted, which is what the total schedule could
+not represent. Note the quorum bound is what excludes this from
+`ViewPace.populatedOn`: `{1}` is a single validator, not `n - f` of them. -/
+theorem ugrowStuckPace_stuck :
+    ugrowStuckPace.top 1 = 0 ∧ ¬ PopulatedOn (Ugrow 0) {1} 1 := by
+  refine ⟨rfl, fun h => ?_⟩
+  obtain ⟨b, hb, _, hbr⟩ := h 1 (by decide)
+  simp only [ugrow_ids, Finset.mem_range] at hb
+  simp only [ugrow_block, rrBlock_round] at hbr
+  omega
+
 /-! ### The untimed condition, induced on data
 
 `{1,2,3}` is exactly `Correct` in this model and `gst = 0`, so the witness
@@ -379,6 +524,12 @@ example (N : ℕ) : Synchronised (Ugrow N) 0 :=
 #print axioms LeanDag.ViewGrowth.commits_recur_via_growth
 #print axioms LeanDag.ViewGrowth.populatedOn_of_genesis
 #print axioms LeanDag.ViewGrowth.commits_recur_via_genesis
+#print axioms ugrowSkewPace_populated
+#print axioms ugrowSkewPace_synchronised
+#print axioms ugrowSkewPace_commits
+#print axioms ugrowStuckPace_stuck
+#print axioms LeanDag.ViewPace.populatedOn
+#print axioms LeanDag.ViewPace.commits_recur_via_pace
 #print axioms LeanDag.ViewSync.commits_recur_of_converges
 #print axioms LeanDag.ViewSync.all_decided_below_of_converges
 #print axioms LeanDag.ViewSync.covers_of_converges
