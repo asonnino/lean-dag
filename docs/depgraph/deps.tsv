@@ -17573,6 +17573,26 @@ EDGE	LeanDag.card_history_le'._proof_1_5	LeanDag.Faults
 EDGE	LeanDag.card_history_le'._proof_1_5	LeanDag.BlockUniverse
 EDGE	LeanDag.card_history_le'._proof_1_5	LeanDag.Faults.f
 EDGE	LeanDag.card_history_le'._proof_1_5	LeanDag.exposedTo
+NODE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.ViewSync	thm
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.Faults
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.View.full
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.Slots.slotRound
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.ViewSync.delay
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.ViewSync.populatedOn
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.Decided
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.ViewSync.gst
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.commits_recur_on
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.Correct
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.FairScheduleOn
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.ViewSync
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.ViewSync.timeout
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.Faults.f
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.ViewSync.synchronisedOn_of_converges
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.IsLeaderBlock
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.ViewSync.DriftFrom
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.Slots
+EDGE	LeanDag.ViewSync.commits_recur_via_interface	LeanDag.CommitsAt
 NODE	LeanDagTest.uomit_not_synchronisedOn._proof_1_9	LeanDagTest.Unbounded	thm
 EDGE	LeanDagTest.uomit_not_synchronisedOn._proof_1_9	LeanDagTest.Uomit
 EDGE	LeanDagTest.uomit_not_synchronisedOn._proof_1_9	LeanDag.BlockUniverse.block

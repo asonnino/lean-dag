@@ -2134,6 +2134,26 @@ constraint of `Timing`'s shape, not of the argument: deriving production
 needs one seed round, whereas presenting the result as a `ViewSync` needs
 blocks everywhere.
 
+
+**Two routes to the same conclusion, and which one is the story.** V13
+proves liveness from a `ViewSync` by the shortest path, through
+`decided_of_wait`, which reaches coverage *inside* the wait argument
+rather than as a step. That is the cheapest proof and it is not the
+clearest account, since it never passes through the two conditions this
+section says liveness consumes.
+
+**V14** takes the other route deliberately. It derives production
+(`populatedOn`) and coverage (`synchronisedOn_of_converges`), hands both
+to L6 in its general form (`commits_recur_on`), and so makes
+
+    view convergence  ⟹  production and coverage  ⟹  commits recur
+
+the proof rather than a gloss on it. Nothing new is established — the
+two differ in route, not in strength — and it is stated at
+`T := Correct` because that is where the halves meet: `CommitsAt` asks
+for production over `Correct`, and a `ViewSync` supplies it over its own
+reliable set.
+
 ### 6.10 The layering
 
 ![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §18 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
@@ -5534,6 +5554,7 @@ result in full.
 | V11 | and its starting round is forced, not chosen | `ugap_not_viewsConvergeOn` *(LeanDagTest.Unbounded)* |
 | V12 | as is its reliable set: coverage over `T` derived, over `Correct` false | `reliable_set_is_forced` *(LeanDagTest.Unbounded)* |
 | V13 | liveness on the view-convergence foundation | `ViewSync.commits_recur_of_converges`, `ViewSync.all_decided_below_of_converges` *(ViewSync)* |
+| V14 | the same liveness, routed through the two conditions §6 names | `ViewSync.commits_recur_via_interface` *(ViewSync)* |
 | L11 | drift is derived | `Timing.driftFrom_of_prompt` *(Timing)* |
 | L8a | the round of coverage, explicitly | `synchronisedOn_of_rate` *(Quantitative)* |
 | L8b | the committing slot, and its round | `commits_recur_within`, `commits_recur_by_round` *(Quantitative)* |
@@ -9079,7 +9100,7 @@ def skipFillD (sk : SkipMsg U) (D : Delivery U)
 
 ## Appendix C. The theorem reference
 
-The 338 theorems that either another module of the
+The 339 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -10737,6 +10758,27 @@ theorem all_decided_below_of_converges {c : ℕ} (hc : 0 < c)
 ```
 
 **L10 on this foundation.** Every slot below a committed run is decided, so the ledger does not stall — again with no `Delivery` and no N1 anywhere in the hypotheses.
+
+#### `commits_recur_via_interface`
+
+*theorem, `ViewSync.lean`*
+
+```lean
+theorem commits_recur_via_interface
+    (hcard : (Fintype.card Validator - F.f) ≤ (Correct : Finset Validator).card)
+    (fair : FairScheduleOn (Correct : Finset Validator)) (R k : ℕ) :
+    ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N D : ℕ)
+        (vs : ViewSync U (Correct : Finset Validator) N),
+        vs.DriftFrom R D → vs.gst ≤ R →
+        (∀ n, R ≤ n → D + vs.delay ≤ vs.timeout n) →
+        S.slotRound k' + 2 ≤ N →
+        ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L)
+```
+
+**The liveness spine.** View convergence gives production (`populatedOn`) and coverage (`synchronisedOn_of_converges`); L6 (`commits_recur_on`) consumes exactly those two and returns a committing slot past any bound.
+
+The quantifier order is L6's: the slot is fixed by the schedule and the bound alone, before any execution is named.
 
 #### `convergesWithin_iff_bounded`
 

@@ -344,6 +344,52 @@ theorem all_decided_below_of_converges {c : ℕ} (hc : 0 < c)
     exact ⟨L, hdec⟩
   exact decided_below_of_committed_run (by omega) (fun i hi => hspan b i hi) hrun
 
+/-! ### The spine, as a single chain
+
+`commits_recur_of_converges` above reaches coverage *inside* the wait
+argument, through `decided_of_wait`. That is the shortest proof, and it
+is not the shortest **story**: it does not pass through the two
+conditions report §6 says liveness consumes.
+
+The theorem below is the story. It composes the two derivations —
+production and coverage — and hands them to L6 in its general form, so
+that the chain
+
+    view convergence  ⟹  production and coverage  ⟹  commits recur
+
+is literally the proof rather than a gloss on it. Nothing new is proved;
+the point is which route is taken.
+
+Stated at `T := Correct` because that is where the two halves meet:
+`CommitsAt` asks for production over `Correct`, and a `ViewSync` supplies
+it over its own reliable set. -/
+
+/-- **The liveness spine.** View convergence gives production
+(`populatedOn`) and coverage (`synchronisedOn_of_converges`); L6
+(`commits_recur_on`) consumes exactly those two and returns a committing
+slot past any bound.
+
+The quantifier order is L6's: the slot is fixed by the schedule and the
+bound alone, before any execution is named. -/
+theorem commits_recur_via_interface
+    (hcard : (Fintype.card Validator - F.f) ≤ (Correct : Finset Validator).card)
+    (fair : FairScheduleOn (Correct : Finset Validator)) (R k : ℕ) :
+    ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N D : ℕ)
+        (vs : ViewSync U (Correct : Finset Validator) N),
+        vs.DriftFrom R D → vs.gst ≤ R →
+        (∀ n, R ≤ n → D + vs.delay ≤ vs.timeout n) →
+        S.slotRound k' + 2 ≤ N →
+        ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
+  obtain ⟨k', hk, hR, hcommit⟩ :=
+    commits_recur_on (BlockId := BlockId) (Payload := Payload)
+      (Finset.Subset.refl _) hcard fair R k
+  refine ⟨k', hk, hR, fun U N D vs hD hgst hbackoff hN => ?_⟩
+  exact hcommit U N
+    (fun r hr => vs.populatedOn hr)
+    (vs.synchronisedOn_of_converges (Finset.Subset.refl _) hD hgst hbackoff)
+    hN
+
 end Liveness
 
 end ViewSync
