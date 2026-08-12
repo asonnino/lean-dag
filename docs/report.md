@@ -735,9 +735,9 @@ the system actually falls.
 | P4 | a block is held only with its causal history | `BlockUniverse.complete` |
 | P5 | one block per round: correct validators do not equivocate | `BlockUniverse.no_equivocation` |
 | P6 | the slot schedule is monotone, unbounded and keyed | `Slots.mono`, `Slots.unbounded`, `Slots.keyed` |
-| P7 | a validator references everything it accepted | `Delivery.includes` |
-| P8 | a validator has a genesis block, and builds on holding a quorum | `Live.genesis`, `Live.builds`; timed counterpart `ViewGrowth.builds` |
-| P9 | a validator waits a full timeout, and does not dawdle | `Timing.waits`, `Timing.prompt` |
+| P7 | a validator references everything it accepted | `Delivery.includes`; timed `ViewSync.references`, `ViewGrowth.references`, `ViewPace.references` |
+| P8 | a validator has a genesis block, and builds on holding a quorum | `Live.genesis`, `Live.builds`; timed `ViewGrowth.base`, `ViewGrowth.builds`; over a partial schedule `ViewPace.built_of_le_top`, `ViewPace.advances` |
+| P9 | a validator waits a full timeout, and does not dawdle | `Timing.waits`, `Timing.prompt`; over a partial schedule `ViewPace.waits`, `ViewPace.prompt` |
 | P10 | the leader schedule names reliable validators arbitrarily far out | `FairScheduleOn` |
 
 P1–P6 are consumed by the safety development, P7–P10 additionally by liveness;
@@ -769,13 +769,30 @@ of the protocol in the sense of this section — a designer can implement it, an
 both cited works tell one how — which is why it appears here rather than in §4.3.
 The clause appears once per production route: as `Live.builds` in the untimed
 derivation (`populated_of_viewsConverge` (V5)); as `ViewGrowth.builds` — the same
-rule over the build-time view — in the timed derivation; and as the totality
+rule over the build-time view — in the timed derivation; as the totality
 of `blk` where production is assumed (§6.11 identifies that totality as P8 in
-its strongest form). The argument above applies to each incarnation alike.
-The form assumed here is stronger than either published fix: `Live.builds`
+its strongest form); and, over a partial build schedule, split into
+`ViewPace.built_of_le_top` and `ViewPace.advances` (V17). The argument above
+applies to each incarnation alike.
+
+The last is the one that answers [QXS26] in their own terms, and the shape is
+worth drawing out. Every other incarnation states P8 as *block production at a
+round*: hold a quorum, and a block exists one round up. `ViewPace` states it as
+*round advancement*: hold a quorum at any time, and the validator gets past the
+round (`advances`); and every round it reached, it built in
+(`built_of_le_top`), with none above (`le_top_of_built`). That pair is
+Starfish's pacemaker rule A2 as a structural invariant rather than a side
+condition — a validator has its round-`(r−1)` block before advancing to round
+`r`, because in this model reaching a round *is* having built there. It is also
+what makes round-jumping inexpressible rather than merely excluded: the
+counterexample of [QXS26] has honest validators skipping rounds, and no
+`ViewPace` describes such a run.
+
+The forms assumed here remain stronger than either published fix. `Live.builds`
 demands a block at every round unconditionally, where [QXS26] excuse a validator
 that has already decided round `r'-2`, and admit a *global catchup time* before
-which the rule need not hold. No minimality is claimed for the clause.
+which the rule need not hold; `ViewPace.advances` drops the deadline but still
+allows no exception. No minimality is claimed for the clause.
 
 P2 is a second place where the model does not simply transcribe the protocol.
 Mysticeti's validity check requires a block to cite `n−f` *distinct* authors at
@@ -1180,14 +1197,14 @@ by violating a clause; read across to see what a result depends on.
 | P3′ | `ValidWrt.self_parent` | C1′, C3′, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G11, G12, G8, G9, SS1, SS2, SS3, SS4, SS5, SS6, I1, I2, I4–I17 |
 | P4 | `BlockUniverse.complete` | T2, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L0, L3, L6, L8b, CQ3, CQ5, CQ6, CQ7, C2, D15a, C1′, C3′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, G9, O7, O10, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6, AL7, H7, I1, I2, I4–I17, I19 |
 | P5 | `BlockUniverse.no_equivocation` | T1, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L7b, L7c, L8a, L9, C2, D15a, C1′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G12, G8, O1, O1′, O2, O4′, O5, O6, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6, AL7, I1, I2, I4–I16, I19 |
-| P7 | `Delivery.includes` | L7a, C3′, B5, G6, G6b, G7, G11, G12, G9 |
-| P8 | `Live.builds` | V5; V6 via its timed counterpart `ViewGrowth.builds` |
-| P9a | `Timing.waits` | L7b, L7c, L8a, L9 |
-| P9b | `Timing.prompt` | L8a, L9 |
+| P7 | `Delivery.includes` | L7a, C3′, B5, G6, G6b, G7, G11, G12, G9; V17 via `ViewPace.references` |
+| P8 | `Live.builds` | V5; V6 via its timed counterpart `ViewGrowth.builds`; V17 via `ViewPace.advances` |
+| P9a | `Timing.waits` | L7b, L7c, L8a, L9; V17 via `ViewPace.waits` |
+| P9b | `Timing.prompt` | L8a, L9; V17 via `ViewPace.prompt` |
 | P10 | `FairScheduleOn` | L6, CQ6 |
 | N2a | `EventuallyDelivers` | L7a, C3′, G6b, G7, G9 |
 | N2b | `Timing.covers` | L7b, L7c, L8a, L9 |
-| N2v | `ViewSync.converges` | L7c |
+| N2v | `ViewSync.converges` | L7c; V17 via `ViewPace.converges` |
 
 N2a and N2b are derived forms of N2v (§4.3, §6.9); they hold rows of
 their own because the arcs consume them as stated hypotheses, each
