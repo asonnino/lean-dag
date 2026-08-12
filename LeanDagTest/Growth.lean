@@ -1,7 +1,7 @@
 import Mathlib
 import LeanDag.Schedule
 import LeanDag.Liveness
-import LeanDag.Timing
+import LeanDag.ViewPace
 import LeanDag.Network.Quorum
 
 /-!
@@ -182,52 +182,13 @@ def Ugrow (N : ℕ) : BlockUniverse (Fin 4) ℕ Unit :=
 
 @[simp] theorem ugrow_block (N : ℕ) : (Ugrow N).block = rrBlock growRefs := rfl
 
-/-- What a `Ugrow` validator held: the whole round below, for everyone. -/
-def ugrowDelivery (N : ℕ) : Delivery (Ugrow N) where
-  held _ n := blocksAt (Ugrow N) n
-  held_spec _ _ i hi := mem_blocksAt.mp hi
-  accepted _ n := blocksAt (Ugrow N) n
-  accepted_sub _ _ := Finset.Subset.rfl
-  accepted_inj := by
-    -- `Ugrow` has one block per validator per round, so accepting everything
-    -- already satisfies the acceptance rule.
-    intro _ n i hi j hj hij
-    rw [mem_blocksAt] at hi hj
-    have hv : (i % 4) = (j % 4) := by
-      have := congrArg (fun (v : Fin 4) => (v : ℕ)) hij
-      simpa using this
-    simp only [ugrow_block, rrBlock_round] at hi hj
-    omega
-  accepts_correct _ _ _ _ h _ := h
-  includes := by
-    intro _ _ n b _ _ hbr i hi
-    rw [mem_blocksAt] at hi
-    simp only [ugrow_block, rrBlock_round] at hbr hi
-    simp only [ugrow_block, mem_growBlock_refs]
-    omega
+/-! ## `Ugrow N` is populated at every round below its horizon
 
-theorem ugrow_delivers (N : ℕ) : EventuallyDelivers (ugrowDelivery N) 0 :=
-  fun _ _ _ _ _ ha har _ => mem_blocksAt.mpr ⟨ha, har⟩
-
-/-! ## `Ugrow N` satisfies `Live` at horizon `N`
-
-Both fields come down to naming the right id: validator `v`'s round-`r` block
-is `4 * r + v`. -/
+The fact every production route comes down to on this layout: validator
+`v`'s round-`r` block is `4 * r + v`. -/
 
 theorem ugrow_populated {N r : ℕ} (hr : r ≤ N) : Populated (Ugrow N) r :=
   rrUniverse_populatedOn _ _ _ _ _ _ hr
-
-/-- **The witness.** `Live` is satisfiable at *every* horizon — which is the
-form the claim has to take, since no single `Finset` universe can be tall
-enough for all of them. -/
-theorem ugrow_live (N : ℕ) : Live (Ugrow N) (ugrowDelivery N) N where
-  genesis := ugrow_populated (Nat.zero_le N)
-  builds _ hr v hv _ := ugrow_populated hr v hv
-
-/-- Delivery is immediate here: `held v n` is *every* round-`n` block, so a
-quorum that exists is held by construction. -/
-theorem ugrow_deliversQuorum (N : ℕ) : DeliversQuorum (ugrowDelivery N) :=
-  fun _ h _ _ => h
 
 /-- And it is synchronised from round 0: a `Ugrow` block references the
 *whole* round below, so honest-to-honest coverage is immediate. This is what
@@ -261,17 +222,14 @@ The point of the family is that L1 now says something. These also pin the
 horizon down as **tight**: L1 reaches round `N` and stops, and it stops
 because there is genuinely nothing above. -/
 
-/-- **L1 applied.** Every correct validator has a block at the top round. -/
-example (N : ℕ) : Populated (Ugrow N) N :=
-  no_stall (ugrow_live N) (ugrow_deliversQuorum N) N (le_refl N)
-
-/-- And at every round below it. -/
-example (N r : ℕ) (h : r ≤ N) : Populated (Ugrow N) r :=
-  no_stall (ugrow_live N) (ugrow_deliversQuorum N) r h
+/-- **Production at the top round** — every correct validator has a block
+there. -/
+example (N : ℕ) : Populated (Ugrow N) N := ugrow_populated (le_refl N)
 
 /-- The quorum corollary, which L4 will consume. -/
-example (N r : ℕ) (h : r ≤ N) : (Fintype.card (Fin 4) - Faults.f (Fin 4)) ≤ (authorsAt (Ugrow N) r).card :=
-  card_authorsAt_of_live (ugrow_live N) (ugrow_deliversQuorum N) h
+example (N r : ℕ) (h : r ≤ N) :
+    (Fintype.card (Fin 4) - Faults.f (Fin 4)) ≤ (authorsAt (Ugrow N) r).card :=
+  card_authorsAt_of_populated (ugrow_populated h)
 
 /-- **The horizon is tight, not slack.** One round further and the conclusion
 is false — so L1's bound `r ≤ N` is doing real work rather than being a
@@ -316,9 +274,9 @@ theorem ugrow_directCommit (N k : ℕ) (h : 3 * k + 2 ≤ N) :
     ∃ L, IsLeaderBlock (Ugrow N) k L ∧
       DirectCommit (Ugrow N) L (fairSlots.slotRound k) :=
   directCommit_of_correct_leader (R := 0) (ugrow_synchronised N) (Nat.zero_le _)
-    (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _ (by simp only [fairSlots_slotRound]; omega))
-    (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _ (by simp only [fairSlots_slotRound]; omega))
-    (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _ (by simp only [fairSlots_slotRound]; omega))
+    (ugrow_populated (by simp only [fairSlots_slotRound]; omega))
+    (ugrow_populated (by simp only [fairSlots_slotRound]; omega))
+    (ugrow_populated (by simp only [fairSlots_slotRound]; omega))
     (by simp only [fairSlots_leader]; decide)
 
 /-- **And as a decision** — the form L6 consumes and L3 propagates. -/
@@ -326,9 +284,9 @@ theorem ugrow_decided (N k : ℕ) (h : 3 * k + 2 ≤ N) :
     ∃ L, IsLeaderBlock (Ugrow N) k L ∧
       Decided (Ugrow N) (View.full (Ugrow N)) k (some L) :=
   decided_of_correct_leader (R := 0) (ugrow_synchronised N) (Nat.zero_le _)
-    (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _ (by simp only [fairSlots_slotRound]; omega))
-    (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _ (by simp only [fairSlots_slotRound]; omega))
-    (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _ (by simp only [fairSlots_slotRound]; omega))
+    (ugrow_populated (by simp only [fairSlots_slotRound]; omega))
+    (ugrow_populated (by simp only [fairSlots_slotRound]; omega))
+    (ugrow_populated (by simp only [fairSlots_slotRound]; omega))
     (by simp only [fairSlots_leader]; decide)
 
 -- Concretely: with the DAG grown to round 8, slot 2 commits.
@@ -361,19 +319,11 @@ theorem ugrow_commits_recur (k : ℕ) :
     commits_recur (BlockId := ℕ) (Payload := Unit) ugrow_fair 0 k
   obtain ⟨L, hL, hd⟩ :=
     hcommit (Ugrow (Slots.slotRound (Validator := Fin 4) k' + 2)) _
-      (fun r _ hr => no_stall (ugrow_live _) (ugrow_deliversQuorum _) r hr)
+      (fun r _ hr => ugrow_populated hr)
       (ugrow_synchronised _) (le_refl _)
   exact ⟨k', hk', _, L, hL, hd⟩
 
-/-- **L7 applied.** `Synchronised` comes out as a *theorem* here, from the
-protocol rule plus delivery — and it agrees with the direct proof, which is
-the check that the split did not quietly change the statement. -/
-example (N : ℕ) : Synchronised (Ugrow N) 0 :=
-  synchronised_of_delivery (ugrowDelivery N) (ugrow_delivers N)
-
-#print axioms ugrow_live
 #print axioms ugrow_synchronised
-#print axioms no_stall
 #print axioms ugrow_not_populated_succ
 #print axioms ugrow_directCommit
 #print axioms ugrow_decided
@@ -388,30 +338,31 @@ example (N k : ℕ) (h : 3 * k + 2 ≤ N) :
   directCommit_of_leader_mem (T := {1, 2, 3}) (R := 0) (by decide)
     (SynchronisedOn.mono (by decide) (ugrow_synchronised N)) (Nat.zero_le _)
     (PopulatedOn.mono (by decide)
-      (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _
+      (ugrow_populated
         (by simp only [fairSlots_slotRound]; omega)))
     (PopulatedOn.mono (by decide)
-      (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _
+      (ugrow_populated
         (by simp only [fairSlots_slotRound]; omega)))
     (PopulatedOn.mono (by decide)
-      (no_stall (ugrow_live N) (ugrow_deliversQuorum N) _
+      (ugrow_populated
         (by simp only [fairSlots_slotRound]; omega)))
     (by simp only [fairSlots_leader]; decide)
 
-/-! ## The timing layer against the witness
+/-! ## The rated schedule against the witness
 
-Non-vacuity for `Timing`. Writing this is what caught the horizon bug in the
-structure — `blk` at every round would have forced infinitely many blocks into
-a `Finset`, exactly as the first `Live` did.
+Non-vacuity for the rated backoff of `Quantitative.lean`, over the partial
+schedule. Real time is `2 ^ n`: every validator builds its round-`n` block
+at time `2 ^ n` with a timeout of `2 ^ n`, so the backoff is rated. Drift
+is `0` and delay is `0` — the no-adversity case, which is the point: it
+shows the hypotheses are *satisfiable*, not that they are easy to meet. -/
 
-Real time is `2 ^ n`: validator `v` builds its round-`n` block at time `2 ^ n`
-with a timeout of `2 ^ n`, so the backoff is unbounded and monotone, which is
-all `exists_synchronisedOn_of_backoff` asks of it. Drift is `0` and delay is
-`0` — this is the no-adversity case, which is the point: it shows the
-hypotheses are *satisfiable*, not that they are easy to meet. -/
+/-- What anyone holds at `t`: every block built by `t`. Lockstep and
+`delay = 0`, so holdings are homogeneous across validators. -/
+def timingHolds (N : ℕ) (_v : Fin 4) (t : ℕ) : Finset ℕ :=
+  (Finset.range (4 * (N + 1))).filter fun b => 2 ^ (b / 4) ≤ t
 
-def ugrowTiming (N : ℕ) : Timing (Ugrow N) {1, 2, 3} N where
-  blk v n := 4 * n + (v : ℕ)
+def ugrowTimingPace (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
+  top _ := N
   built _ n := 2 ^ n
   timeout n := 2 ^ n
   gst := 0
@@ -420,49 +371,49 @@ def ugrowTiming (N : ℕ) : Timing (Ugrow N) {1, 2, 3} N where
     simp only [ugrow_ids, Finset.mem_range] at hb
     simp only [ugrow_block, rrBlock_round]
     omega
-  blk_mem v _ n hn := by
-    have := v.isLt
-    simp only [ugrow_ids, Finset.mem_range]
-    omega
-  blk_creator v _ n _ := by
-    have := v.isLt
-    apply Fin.ext
-    simp only [ugrow_block, rrBlock_creator_val]
-    omega
-  blk_round v _ n _ := by
-    have := v.isLt
+  built_of_le_top v hv n hn := rrUniverse_populatedOn _ _ _ _ _ _ hn v hv
+  le_top_of_built _ _ b hb _ := by
+    simp only [ugrow_ids, Finset.mem_range] at hb
     simp only [ugrow_block, rrBlock_round]
     omega
   waits _ _ n _ := by
     have h : 2 ^ n + 2 ^ n = 2 ^ (n + 1) := by ring
     omega
   timeout_pos n := Nat.one_le_two_pow
-  covers v _ w _ n _ _ _ := by
-    have hv := v.isLt
-    have hw := w.isLt
-    simp only [ugrow_block, mem_growBlock_refs]
-    omega
   latest n := 2 ^ n
   built_le_latest _ _ _ _ := le_refl _
   latest_mem _ _ := ⟨1, by decide, le_refl _⟩
   prompt _ _ n _ := by
     have h : 2 ^ n + 2 ^ n = 2 ^ (n + 1) := by ring
     omega
+  holds := timingHolds N
+  holds_own v _ n _ b hb _ hbr := by
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round] at hbr
+    simp only [timingHolds, Finset.mem_filter, Finset.mem_range]
+    exact ⟨hb, by rw [hbr]⟩
+  holds_mono v s t hst := by
+    intro b hb
+    simp only [timingHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
+    exact ⟨hb.1, by omega⟩
+  converges _ _ _ _ t _ := by
+    intro b hb
+    simp only [timingHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
+    exact ⟨hb.1, by omega⟩
+  references v _ n _ c hc _ hcr a ha har := by
+    have hv := v.isLt
+    simp only [ugrow_ids, Finset.mem_range] at hc
+    simp only [ugrow_block, rrBlock_round] at hcr har
+    simp only [timingHolds, Finset.mem_filter, Finset.mem_range] at ha
+    simp only [ugrow_block, mem_growBlock_refs]
+    omega
+  advances _ _ _ hn _ _ := hn
 
-/-- **Q1 applied.** `SynchronisedOn` is *derived*, not assumed — from GST,
-an unbounded backoff, and the spread at a *single* round. Drift at every
-round is no longer a hypothesis: `driftFrom_of_prompt` propagates it. -/
-example (N : ℕ) : ∃ R, SynchronisedOn (Ugrow N) {1, 2, 3} R :=
-  exists_synchronisedOn_of_backoff (D := 0) (n₀ := 0) (ugrowTiming N) (by decide)
-    (fun _ _ h => Nat.pow_le_pow_right (by omega) h)
-    (fun m => ⟨m, Nat.le_of_lt (Nat.lt_two_pow_self)⟩)
-    (fun _ _ => Nat.zero_le _)
-    (fun _ _ _ _ => Nat.le_add_right _ _)
-
-#print axioms synchronised_of_delivery
-#print axioms directCommit_of_leader_mem
-#print axioms Timing.synchronisedOn_of_timing
-#print axioms exists_synchronisedOn_of_backoff
-#print axioms Timing.driftFrom_of_prompt
+#print axioms ugrow_synchronised
+#print axioms ugrow_not_populated_succ
+#print axioms ugrow_directCommit
+#print axioms ugrow_decided
+#print axioms ugrow_skip
+#print axioms ugrow_commits_recur
 
 end LeanDagTest

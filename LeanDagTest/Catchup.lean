@@ -1,5 +1,6 @@
 import LeanDag.Drift.Catchup
 import LeanDagTest.Reactive
+import LeanDagTest.ViewPace
 
 /-!
 # Catch-up, witnessed — and its absence
@@ -32,7 +33,7 @@ attribute [local instance 2000] rrSlots
 satisfies every clause of the timed schedule, and its spread is the
 round-`0` spread at every round, for ever. -/
 theorem ugrowSkew_spread_constant (N n : ℕ) :
-    (ugrowSkew N).built 3 n = (ugrowSkew N).built 1 n + 2 := by
+    (ugrowSkewPace N).built 3 n = (ugrowSkewPace N).built 1 n + 2 := by
   change (3 : ℕ) + 4 * n = ((1 : ℕ) + 4 * n) + 2
   omega
 
@@ -51,9 +52,13 @@ def ugrowCatchPace (N : ℕ) : CatchupPace (Ugrow N) {1, 2, 3} N where
   gst := 0
   delay := 2
   proc := 1
-  rounds_le := (ugrowSkew N).rounds_le
+  rounds_le b hb := by
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round]; omega
   built_of_le_top v hv n hn := rrUniverse_populatedOn _ _ _ _ _ _ hn v hv
-  le_top_of_built _ _ b hb _ := (ugrowSkew N).rounds_le b hb
+  le_top_of_built _ _ b hb _ := by
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round]; omega
   waits _ _ _ _ := by omega
   timeout_pos _ := by omega
   latest n := 3 + 5 * n

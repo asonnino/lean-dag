@@ -1,11 +1,15 @@
-import LeanDag.Timing
+import LeanDag.Liveness
 
 /-!
 # Quantitative liveness — bounds, from rated assumptions
 
-`liveness.md` §8 Q3 and Q4. Everything in `Liveness.lean` and `Timing.lean`
-stands unchanged; this file adds nothing to those and removes nothing from
-them.
+`liveness.md` §8 Q3 and Q4. Everything in `Liveness.lean` stands unchanged;
+this file adds nothing to it and removes nothing from it. The structure-bound
+halves of the story — coverage from a rated backoff, and the wait bound — are
+stated over the partial schedule in `ViewPace.lean`
+(`ViewPace.synchronisedOn_of_rate`, `ViewPace.directCommit_of_wait`); what
+lives here is the structure-free part: the rated hypotheses themselves, and
+the slot and round bounds they pin.
 
 **Why a separate file.** The results below are *strictly stronger* than their
 counterparts underneath, and they obtain that strength from *strictly stronger*
@@ -16,7 +20,7 @@ available to anyone unwilling to pay.
 **What was missing, and why.** Two results below conclude with a bare
 existential:
 
-- `exists_synchronisedOn_of_backoff` gives `∃ R, SynchronisedOn U T R`;
+- the backoff route gives `∃ R, SynchronisedOn U T R`;
 - `commits_recur_on` gives `∃ k', k ≤ k' ∧ …`.
 
 Neither says *where*. That is not slack in the proofs — it is forced, because
@@ -41,8 +45,7 @@ and that is all this file supplies:
 | *(none)* | `BoundedSpacing s` | a round bound, and an explicit horizon |
 
 **A hypothesis is dropped, not just added.** `backoff_ge_of_rate` needs no
-monotonicity, where `exists_backoff_ge` needs it to propagate a single clearing
-round upward. `Rated` implies `hub` (`unbounded_of_rated`), so the rated route
+monotonicity. `Rated` implies `hub` (`unbounded_of_rated`), so the rated route
 is a strengthening of one assumption and a deletion of another.
 -/
 
@@ -56,10 +59,10 @@ variable {T : Finset Validator} {D N : ℕ}
 
 /-! ## Part 1 — a rated backoff pins `R`
 
-`liveness.md` §8 Q3. The threshold `synchronisedOn_of_timing` consumes is
+`liveness.md` §8 Q3. The threshold coverage consumes is
 `D + delay ≤ timeout n` for every `n ≥ R`. With a rate the least such `R` is
-read off directly, instead of being extracted from an existential that does not
-say where it lives. -/
+read off directly (`ViewPace.synchronisedOn_of_rate`), instead of being
+extracted from an existential that does not say where it lives. -/
 
 /-- A backoff that grows **at least as fast as the round index**.
 
@@ -84,35 +87,6 @@ theorem backoff_ge_of_rate {timeout : ℕ → ℕ} (hrate : Rated timeout) (m : 
 theorem unbounded_of_rated {timeout : ℕ → ℕ} (hrate : Rated timeout) :
     ∀ m, ∃ n, m ≤ timeout n :=
   fun m => ⟨m, hrate m⟩
-
-omit [DecidableEq BlockId] in
-/-- **Q3, the synchrony half.** With a rated backoff, coverage holds from an
-**explicit** round:
-
-`R = max (max (D + delay) n₀) gst`
-
-and each summand is what it looks like — the threshold the timeout must clear,
-the round the drift bound is measured from, and GST. Compare
-`exists_synchronisedOn_of_backoff`, which concludes `∃ R` and can say no more.
-
-Nothing else changes: the drift argument and the coverage argument are reused
-verbatim, and `Monotone` is gone.
-
-The hypothesis `tm.delay ≤ n₀` is what lets `driftFrom_of_prompt` fire from
-`n₀` — it asks that the drift base be measured at a round by which the rate has
-already carried the timeout past `delay`. Taking `n₀ := tm.delay` always
-satisfies it. -/
-theorem synchronisedOn_of_rate (tm : Timing U T N) (hT : T ⊆ (Correct : Finset Validator))
-    (hrate : Rated tm.timeout) {n₀ : ℕ} (hn₀ : tm.delay ≤ n₀)
-    (hbase : ∀ v ∈ T, ∀ w ∈ T, tm.built w n₀ ≤ tm.built v n₀ + D) :
-    SynchronisedOn U T (max (max (D + tm.delay) n₀) tm.gst) := by
-  refine Timing.synchronisedOn_of_timing hT
-    (Timing.DriftFrom.mono (le_trans (le_max_right (D + tm.delay) n₀) (le_max_left _ _))
-      (Timing.driftFrom_of_prompt hbase
-        (fun n hn => backoff_ge_of_rate hrate _ n (le_trans hn₀ hn))))
-    (le_max_right _ _) ?_
-  exact fun n hn =>
-    backoff_ge_of_rate hrate _ n (le_trans (le_trans (le_max_left _ _) (le_max_left _ _)) hn)
 
 /-! ## Part 2 — a rated schedule pins the committing slot
 
@@ -245,99 +219,5 @@ theorem commits_recur_by_round {s : ℕ} (hT : T ⊆ (Correct : Finset Validator
   refine ⟨k', le_trans (le_max_left k _) hk, hround, hRk', ?_⟩
   intro U N hpop hsync hN
   exact hcommit U N hpop hsync (by omega)
-
-/-! ## Part 3 — the wait bound: how long is long enough?
-
-The question Parts 1 and 2 do not answer. They bound *when* coverage starts
-and *which slot* commits, both given a backoff that eventually clears
-`D + delay`. Neither says what a validator should actually set its timer to.
-
-**The backoff exists only because Δ is unknown.** If a validator knows the
-delivery bound and the spread it started with, it does not need a backoff, a
-`Rated` hypothesis, `Monotone`, or an existential `R` — it needs a **constant**
-timeout of `D₀ + Δ`, and correct leaders commit from GST onward. That is the
-content of this part, and it is why the results below assume neither `Rated`
-nor anything from Part 1.
-
-**Where `D₀` comes from, and why Obstacle 1 is not in the way.** The drift
-bound need not be *derived* from Δ by a compression argument — `Timing` cannot
-supply one, since `waits` forbids a lagging validator from catching up faster
-than its own timeout, and that is deliberate (an adversary answering instantly
-would otherwise fill an early quorum). Instead the bound is taken at **round
-`0`**, where it is a statement about how far apart validators *started*, and
-`driftFrom_of_prompt` carries it forward unchanged forever. A system whose
-validators start together has `D₀ = 0`; one started by a common broadcast has
-`D₀ ≤ Δ`, giving the headline `2Δ`. -/
-
-omit [DecidableEq BlockId] S in
-/-- `Timing` already asserts a block per `T`-validator per round below the
-horizon, so it populates rounds directly — no `Live`, no `DeliversQuorum`, no
-L1. This is what lets Part 3's statements mention only timing. -/
-theorem Timing.populatedOn (tm : Timing U T N) {n : ℕ} (hn : n ≤ N) :
-    PopulatedOn U T n :=
-  fun v hv => ⟨tm.blk v n, tm.blk_mem v hv n hn, tm.blk_creator v hv n hn,
-    tm.blk_round v hv n hn⟩
-
-variable {D₀ k : ℕ}
-
-/-- **The wait bound.** After GST, a correct leader is committed provided every
-`T`-validator waits at least `D₀ + Δ` before building, where `D₀` bounds the
-spread at round `0`.
-
-So `Delay(Δ) = D₀ + Δ`, and it is a **constant** — no backoff, no growth
-condition, no `∃ R`. The only hypotheses about time are the start spread, the
-wait, and that the slot sits past GST.
-
-The chain is three steps, all already proved:
-`driftFrom_of_prompt` turns the round-`0` spread into `DriftFrom 0 D₀`;
-`synchronisedOn_of_timing` turns that plus the wait into coverage from the
-slot's round; and L4 turns coverage plus three populated rounds into a direct
-commit. The populated rounds come from `Timing` itself.
-
-`hN` is the horizon condition, and it is L4's `r + 2` — the certificate round.
-Nothing here is asymptotic: the DAG must actually reach two rounds past the
-leader. -/
-theorem directCommit_of_wait (tm : Timing U T N) (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
-    (hstart : ∀ v ∈ T, ∀ w ∈ T, tm.built w 0 ≤ tm.built v 0 + D₀)
-    (hwait : ∀ n, D₀ + tm.delay ≤ tm.timeout n)
-    (hgst : tm.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
-    (hlead : S.leader k ∈ T) :
-    ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k) := by
-  have hsync : SynchronisedOn U T (S.slotRound k) :=
-    Timing.synchronisedOn_of_timing hT
-      (Timing.DriftFrom.mono (Nat.zero_le _)
-        (Timing.driftFrom_of_prompt hstart
-          (fun n _ => le_trans (Nat.le_add_left _ _) (hwait n))))
-      hgst (fun n _ => hwait n)
-  exact directCommit_of_leader_mem hcard hsync (le_refl _)
-    (tm.populatedOn (by omega)) (tm.populatedOn (by omega)) (tm.populatedOn (by omega)) hlead
-
-/-- **The wait bound, as a decision.** What the ledger is defined over. -/
-theorem decided_of_wait (tm : Timing U T N) (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
-    (hstart : ∀ v ∈ T, ∀ w ∈ T, tm.built w 0 ≤ tm.built v 0 + D₀)
-    (hwait : ∀ n, D₀ + tm.delay ≤ tm.timeout n)
-    (hgst : tm.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
-    (hlead : S.leader k ∈ T) :
-    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) := by
-  obtain ⟨L, hLb, hdc⟩ := directCommit_of_wait tm hT hcard hstart hwait hgst hN hlead
-  exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_full hdc)⟩
-
-/-- **`Delay(Δ) = 2Δ`.** The headline case: validators that started within one
-delivery bound of each other, waiting two, commit every correct leader after
-GST.
-
-`D₀ ≤ Δ` is what a common start signal gives — the signal itself takes at most
-Δ to reach everyone. `D₀ = 0` (a synchronised start) would give `Delay(Δ) = Δ`;
-the factor of two is the price of not having synchronised clocks. -/
-theorem directCommit_of_wait_two_delay (tm : Timing U T N)
-    (hT : T ⊆ (Correct : Finset Validator)) (hcard : (Fintype.card Validator - F.f) ≤ T.card)
-    (hstart : ∀ v ∈ T, ∀ w ∈ T, tm.built w 0 ≤ tm.built v 0 + tm.delay)
-    (hwait : ∀ n, 2 * tm.delay ≤ tm.timeout n)
-    (hgst : tm.gst ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
-    (hlead : S.leader k ∈ T) :
-    ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k) :=
-  directCommit_of_wait tm hT hcard hstart (fun n => by have := hwait n; omega) hgst hN hlead
 
 end LeanDag

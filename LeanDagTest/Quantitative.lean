@@ -35,7 +35,7 @@ monotone and unbounded, which is what `exists_synchronisedOn_of_backoff` asks;
 it is also **rated**, which is what pins `R`. -/
 
 /-- `2 ^ n` outruns the round index, so the lockstep witness is rated. -/
-theorem ugrowTiming_rated (N : ℕ) : Rated (ugrowTiming N).timeout :=
+theorem ugrowTimingPace_rated (N : ℕ) : Rated (ugrowTimingPace N).timeout :=
   fun _ => Nat.le_of_lt Nat.lt_two_pow_self
 
 /-- **Q3 applied.** Coverage from an **explicit** round rather than from an
@@ -47,9 +47,9 @@ number is small but that there *is* a number: the same theorem against
 `ugrowSkew`'s constants would read `max (max 4 n₀) 0`. -/
 theorem ugrow_synchronisedOn_of_rate (N : ℕ) :
     SynchronisedOn (Ugrow N) {1, 2, 3} 0 := by
-  have h := synchronisedOn_of_rate (D := 0) (n₀ := 0) (ugrowTiming N) (by decide)
-    (ugrowTiming_rated N) (le_refl _) (fun _ _ _ _ => le_refl _)
-  simpa [ugrowTiming] using h
+  have h := ViewPace.synchronisedOn_of_rate (D := 0) (n₀ := 0) (ugrowTimingPace N)
+    (by decide) (ugrowTimingPace_rated N) (le_refl _) (fun _ _ _ _ => le_refl _)
+  simpa [ugrowTimingPace] using h
 
 /-! ## Part 2 — the round-robin schedule
 
@@ -121,7 +121,7 @@ theorem ugrow_commits_by_round (k : ℕ) :
   refine ⟨k', hk, by simp only [rrSlots_slotRound]; omega, ?_⟩
   intro N hN
   exact hcommit (Ugrow N) N
-    (fun r _ hr => no_stall (ugrow_live N) (ugrow_deliversQuorum N) r hr)
+    (fun r _ hr => ugrow_populated hr)
     (ugrow_synchronisedOn_of_rate N)
     (by simp only [rrSlots_slotRound, slotAt_zero, Nat.max_zero]; omega)
 
@@ -146,42 +146,14 @@ So `D₀ = delay = 2` and `2 * delay = 4 = timeout` — every inequality in
 `directCommit_of_wait_two_delay` holds with **equality**. A witness that met
 the bound with slack would not show the constant `2` is the right one. -/
 
-/-- The round-`0` spread is exactly one delivery bound. `built w 0 = w` and
-`built v 0 + delay = v + 2`, so the worst pair is `w = 3, v = 1`: `3 ≤ 3`. -/
-theorem ugrowSkew_start (N : ℕ) :
-    ∀ v ∈ ({1, 2, 3} : Finset (Fin 4)), ∀ w ∈ ({1, 2, 3} : Finset (Fin 4)),
-      (ugrowSkew N).built w 0 ≤ (ugrowSkew N).built v 0 + (ugrowSkew N).delay := by
-  intro v hv w hw
-  have h1 := mem_T_bounds hv
-  have h2 := mem_T_bounds hw
-  change (w : ℕ) + 4 * 0 ≤ (v : ℕ) + 4 * 0 + 2
-  omega
+/-! The wait bound's witness lives with the structure now:
+`LeanDagTest/ViewPace.lean` commits slot `3` at the constant timeout
+`4 = D₀ + Δ` over `ugrowSkewPace`, with production derived. -/
 
-/-- **The wait bound applied, with `Delay(Δ) = 2Δ`.** A correct leader is
-committed once the DAG reaches two rounds past its slot — no backoff, no
-`Rated`, no existential `R`, and every hypothesis tight.
-
-`ugrowSkew` has `gst = 0`, so "after GST" is free here; the content is the
-wait, and `2 * delay = 4 = timeout` is where it binds. -/
-theorem ugrowSkew_directCommit_of_wait (N k : ℕ) (h : 3 * k + 2 ≤ N) :
-    ∃ L, IsLeaderBlock (Ugrow N) k L ∧
-      DirectCommit (Ugrow N) L (fairSlots.slotRound k) :=
-  directCommit_of_wait_two_delay (T := {1, 2, 3}) (ugrowSkew N) (by decide) (by decide)
-    (ugrowSkew_start N) (fun _ => (by omega : 2 * 2 ≤ (4 : ℕ))) (Nat.zero_le _)
-    (by simp only [fairSlots_slotRound]; omega)
-    (by simp only [fairSlots_leader]; decide)
-
-/-- Slack breaks it, which is the check that matters. At `timeout = 3` the
-wait hypothesis `2 * delay ≤ timeout` reads `4 ≤ 3` and fails — the same
-constraint S7 found by trying `timeout = 3` and watching
-`synchronisedOn_of_timing` reject it. -/
-example : ¬ (2 * (ugrowSkew 8).delay ≤ 3) := by decide
-
-#print axioms ugrowTiming_rated
+#print axioms ugrowTimingPace_rated
 #print axioms ugrow_synchronisedOn_of_rate
 #print axioms rrSlots_fairWithin
 #print axioms rrSlots_boundedSpacing
 #print axioms ugrow_commits_by_round
-#print axioms ugrowSkew_directCommit_of_wait
 
 end LeanDagTest
