@@ -684,6 +684,23 @@ theorem Timing.driftFrom_iff_driftOn (tm : Timing U T N) :
     tm.DriftFrom R D ↔ DriftOn tm.built T R D N := Iff.rfl
 
 omit [DecidableEq BlockId] in
+/-- Build times do not decrease with the round. `waits` alone gives it —
+`timeout_pos` is not needed, since the wait is by a natural number. -/
+theorem built_mono_of_waits {built : Validator → ℕ → ℕ} {timeout : ℕ → ℕ}
+    (waits : ∀ v ∈ T, ∀ n, built v n + timeout n ≤ built v (n + 1))
+    {v : Validator} (hv : v ∈ T) {m n : ℕ} (h : m ≤ n) :
+    built v m ≤ built v n := by
+  induction n with
+  | zero => have : m = 0 := by omega
+            subst this; exact le_refl _
+  | succ n ih =>
+      rcases Nat.eq_or_lt_of_le h with rfl | hlt
+      · exact le_refl _
+      · have := waits v hv n
+        have := ih (by omega)
+        omega
+
+omit [DecidableEq BlockId] in
 /-- Rounds advance real time — `Timing.le_built`'s argument over a
 schedule alone, for the same reason. -/
 theorem le_built_of_waits {built : Validator → ℕ → ℕ} {timeout : ℕ → ℕ}
@@ -907,6 +924,7 @@ noncomputable def toViewSync [Nonempty BlockId]
 @[simp] theorem toViewSync_timeout [Nonempty BlockId] (hcard) (hD) (hgst) (hbackoff) (hbelow) :
     (vg.toViewSync (D := D) hcard hD hgst hbackoff hbelow).timeout = vg.timeout := rfl
 
+omit [DecidableEq BlockId] in
 /-- **L7c with production derived.** Reference coverage from view
 convergence, on a structure that assumes no blocks exist.
 
@@ -926,11 +944,17 @@ block a validator authored, so there is nothing to identify. Coverage here
 is about the two blocks in hand, and the whole argument is the race:
 `holds_own` puts `a` in its author's hands when built, `converges` moves it
 to `b`'s author within `delay`, and drift, the wait and the backoff place
-that before `b` was built. -/
-theorem synchronisedOn_of_converges
-    (hD : DriftOn vg.built T R D N) (hgst : vg.gst ≤ R)
-    (hbackoff : ∀ n, R ≤ n → D + vg.delay ≤ vg.timeout n) :
-    SynchronisedOn U T R := by
+that before `b` was built.
+
+The round is a parameter of the *statement*, not the structure: nothing in
+the argument touches `base` or `builds`, so a structure seeded at one round
+yields coverage from any round its schedule has stabilised by. That is what
+lets the genesis route below take production from round `0` and coverage
+from the GST crossing, which are not the same round. -/
+theorem synchronisedOn_of_converges {R' : ℕ}
+    (hD : DriftOn vg.built T R' D N) (hgst : vg.gst ≤ R')
+    (hbackoff : ∀ n, R' ≤ n → D + vg.delay ≤ vg.timeout n) :
+    SynchronisedOn U T R' := by
   intro n hn b hb hbr hbc a ha har hac
   have hnN : n < N := by have := vg.rounds_le b hb; omega
   refine vg.references _ hbc n hnN b hb rfl hbr a ?_ har
@@ -946,6 +970,83 @@ theorem synchronisedOn_of_converges
   have hwait := vg.waits _ hbc n
   have hto := hbackoff n hn
   omega
+
+/-! ### The seed at round `0` -/
+
+omit [DecidableEq BlockId] in
+/-- **Genesis is enough.** Production from round `0` on, with the seed
+moved to the one round whose population needs no network.
+
+`base` is stated at the structure's round `R`, and at `R` past GST that is
+a substantial assumption: it says the DAG has *already grown* to the
+stabilisation round, which is a claim about what the network delivered
+before it stabilised. The seed one would rather assume is `Live.genesis` —
+every correct validator has a round-`0` block — because that needs no
+network at all. A validator produces its genesis block alone.
+
+At `R = 0` the structure's own `base` **is** genesis and `builds` is
+unguarded, so no new structure is needed. What blocks the induction is not
+the seed but `converges`, which says nothing before `gst`: a round-`0`
+block need not reach anyone until the network stabilises.
+
+It does reach them afterwards, and that is the content of the theorem
+below. `converges` may be applied at any time past `gst`, and `holds_mono`
+carries a block built earlier forward to that time — so a genesis block
+built at `built w 0`, however early, is in every `T`-validator's hands by
+`gst + delay`. The step then splits on whether the round was built before
+or after `gst`:
+
+* **after** — the ordinary case, discharged by drift, the wait and the
+  backoff, exactly as in `populatedOn`;
+* **before** — discharged by `hcross`, which says no `T`-validator finishes
+  round `0` before `gst + delay`.
+
+`hcross` is the whole residue, and it is a condition on the *schedule*
+rather than on the DAG. It says a validator racing through rounds while the
+network delivers nothing is not being modelled — which is the intended
+reading, since such a validator has no quorum to build on and would not
+advance. It cannot be dropped: the structure fixes one build time per round,
+so a validator whose round-`1` build falls before `gst + delay` has no
+round-`1` block at all, and with `T.card = n - f` the quorum then fails for
+everyone. What it replaces is a hypothesis about which blocks the
+asynchronous network managed to deliver, which is not something a protocol
+designer can assume.
+
+The two seeds are the two ends of one statement. If the pre-GST network did
+deliver enough for the DAG to reach round `R`, `base` at `R` is available
+and `populatedOn` applies; if it delivered nothing, `hcross` holds because
+nobody could advance, and this applies. -/
+theorem populatedOn_of_genesis (vg : ViewGrowth U T 0 N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hD : DriftOn vg.built T 0 D N)
+    (hbackoff : ∀ n, D + vg.delay ≤ vg.timeout n)
+    (hcross : ∀ v ∈ T, vg.gst + vg.delay ≤ vg.built v 1) :
+    ∀ n ≤ N, PopulatedOn U T n := by
+  intro n
+  induction n with
+  | zero => intro _; exact vg.base
+  | succ n ih =>
+      intro hn v hv
+      refine vg.builds v hv n (Nat.zero_le _) (by omega)
+        (le_trans hcard (Finset.card_le_card ?_))
+      intro w hw
+      obtain ⟨b, hb, hbc, hbr⟩ := ih (by omega) w hw
+      refine mem_creatorsOf.mpr ⟨b, Finset.mem_filter.mpr ⟨?_, hbr⟩, hbc⟩
+      -- `w` holds its own round-`n` block, and still holds it at `gst`
+      have hown := vg.holds_own w hw n (by omega) b hb hbc hbr
+      have hown' := vg.holds_mono w _ _ (le_max_left (vg.built w n) vg.gst) hown
+      -- convergence moves it, from a time past `gst` in either case
+      have hconv := vg.converges v hv w hw _ (le_max_right _ _) hown'
+      refine vg.holds_mono v _ _ ?_ hconv
+      have hdrift := hD v hv w hw n (Nat.zero_le _) (by omega)
+      have hwait := vg.waits v hv n
+      have hto := hbackoff n
+      have hc := hcross v hv
+      have hmono : vg.built v 1 ≤ vg.built v (n + 1) :=
+        built_mono_of_waits (fun u hu m => vg.waits u hu m) hv (by omega)
+      rcases le_total vg.gst (vg.built w n) with h | h
+      · rw [max_eq_left h]; omega
+      · rw [max_eq_right h]; omega
 
 section Liveness
 
@@ -997,6 +1098,47 @@ theorem commits_recur_via_growth (hT : T ⊆ (Correct : Finset Validator))
   exact hcommit U N
     (vg.populatedOn hcard hD hgst hbackoff)
     (vg.synchronisedOn_of_converges hD hgst hbackoff)
+    hN
+
+/-- **The spine from genesis.** The same conclusion with the seed round
+moved to `0`, where it is `Live.genesis` — every correct validator has a
+round-`0` block — and so carries no network content whatever. A validator
+produces its genesis block alone; nothing has to be delivered for it to
+exist.
+
+Production and coverage are now taken from *different* rounds, which is
+what `synchronisedOn_of_converges`' free round parameter is for.
+Production runs from `0`, since `populatedOn_of_genesis` carries genesis
+blocks across the GST crossing by `holds_mono`; coverage runs from `R`,
+which must be past `gst` because that is where the network's guarantee
+begins.
+
+What is assumed of the world reduces to `converges` and `vg.gst ≤ R`. The
+remaining three hypotheses are the protocol's: drift and the backoff, as
+before, and `hcross` — no `T`-validator finishes round `0` before
+`gst + delay`. The last is not a claim about what the asynchronous network
+delivered, which is what a seed at `R` amounts to; it is the statement that
+a validator does not advance a round it cannot build in. -/
+theorem commits_recur_via_genesis (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (fair : FairScheduleOn T) (R k : ℕ) :
+    ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N D : ℕ)
+        (vg : ViewGrowth U T 0 N),
+        DriftOn vg.built T 0 D N →
+        (∀ n, D + vg.delay ≤ vg.timeout n) →
+        (∀ v ∈ T, vg.gst + vg.delay ≤ vg.built v 1) →
+        vg.gst ≤ R →
+        S.slotRound k' + 2 ≤ N →
+        ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
+  obtain ⟨k', hk, hR, hcommit⟩ :=
+    commits_recur_on (BlockId := BlockId) (Payload := Payload) hT hcard fair R k
+  refine ⟨k', hk, hR, fun U N D vg hD hbackoff hcross hgst hN => ?_⟩
+  exact hcommit U N
+    (fun r _ hr => vg.populatedOn_of_genesis hcard hD hbackoff hcross r hr)
+    (vg.synchronisedOn_of_converges (R' := R) (D := D)
+      (fun v hv w hw n _ hNn => hD v hv w hw n (Nat.zero_le _) hNn)
+      hgst (fun n _ => hbackoff n))
     hN
 
 end Liveness

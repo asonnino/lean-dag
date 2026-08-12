@@ -292,6 +292,32 @@ theorem ugrowSkewGrowth_commits (k : ℕ) :
       (fun n _ => by change 2 + 2 ≤ 4; omega) (le_refl _)
   exact ⟨k', hk', _, L, hL, hd⟩
 
+/-- **And the same from genesis**, with the seed at round `0` rather than at
+the synchrony round. `hcross` is the only new hypothesis, and on this model
+it is arithmetic: `gst = 0`, `delay = 2`, and every `T`-validator's round-`1`
+build is at `v + 4 ≥ 5`.
+
+The two routes agree here because this model has `gst = 0`, so its `base` is
+already genesis. What the genesis route adds is that a model with `gst > 0`
+needs no seed *at the crossing* — only at round `0`, where no network is
+involved. -/
+theorem ugrowSkewGrowth_commits_via_genesis (k : ℕ) :
+    ∃ k', k ≤ k' ∧ ∃ N L, IsLeaderBlock (Ugrow N) k' L ∧
+      Decided (Ugrow N) (View.full (Ugrow N)) k' (some L) := by
+  obtain ⟨k', hk', _, hcommit⟩ :=
+    ViewGrowth.commits_recur_via_genesis (BlockId := ℕ) (Payload := Unit)
+      (T := ({1, 2, 3} : Finset (Fin 4))) (by decide) (by decide)
+      (fun j => ⟨j, le_refl j, by simp only [fairSlots_leader]; decide⟩) 0 k
+  obtain ⟨L, hL, hd⟩ :=
+    hcommit (Ugrow (fairSlots.slotRound k' + 2)) _ 2 (ugrowSkewGrowth _)
+      (ugrowSkewGrowth_drift _) (fun n => by change 2 + 2 ≤ 4; omega)
+      (fun v hv => by
+        obtain ⟨_, _⟩ := mem_T_bounds hv
+        change 0 + 2 ≤ (v : ℕ) + 4 * 1
+        omega)
+      (le_refl 0) (le_refl _)
+  exact ⟨k', hk', _, L, hL, hd⟩
+
 /-! ### The untimed condition, induced on data
 
 `{1,2,3}` is exactly `Correct` in this model and `gst = 0`, so the witness
@@ -352,8 +378,11 @@ example (N : ℕ) : Synchronised (Ugrow N) 0 :=
 #print axioms ugrowSkewGrowth_populated
 #print axioms ugrowSkewGrowth_synchronised
 #print axioms ugrowSkewGrowth_commits
+#print axioms ugrowSkewGrowth_commits_via_genesis
 #print axioms ugrowSkewView_synchronised
 #print axioms LeanDag.ViewGrowth.commits_recur_via_growth
+#print axioms LeanDag.ViewGrowth.populatedOn_of_genesis
+#print axioms LeanDag.ViewGrowth.commits_recur_via_genesis
 #print axioms LeanDag.ViewSync.commits_recur_of_converges
 #print axioms LeanDag.ViewSync.all_decided_below_of_converges
 #print axioms LeanDag.ViewSync.covers_of_converges
