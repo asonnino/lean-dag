@@ -8101,6 +8101,23 @@ structure CatchupSync (U : BlockUniverse Validator BlockId Payload)
 
 `ViewSync` with the catch-up rule: a validator that holds any block of a round has built its own block of that round within `proc` of the sighting.
 
+#### `CatchupPace`
+
+*structure, `Drift.Catchup.lean`*
+
+```lean
+structure CatchupPace (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (N : ℕ) extends ViewPace U T N where
+  /-- The processing bound: how long entry may lag evidence. -/
+  proc : ℕ
+  /-- **Catch-up** (protocol). Seeing a round is entering it: any
+  `T`-authored block of round `n` in hand at time `t` means the holder
+  reached round `n` and built its own block there by `t + proc`. -/
+  catchup : ∀ v ∈ T, ∀ n ≤ N, ∀ b ∈ U.ids,
+    (U.block b).creator ∈ T → (U.block b).round = n →
+    ∀ t, b ∈ holds v t → n ≤ top v ∧ built v n ≤ t + proc
+```
+
 ### Safe Skip: crash recovery in one message
 
 #### `SkipMsg`
@@ -9351,7 +9368,7 @@ Everything else is `ViewGrowth`'s, with the schedule clauses guarded by `n < top
 
 ## Appendix C. The theorem reference
 
-The 347 theorems that either another module of the
+The 352 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -12807,6 +12824,61 @@ theorem decided_of_catchup [S : Slots Validator] {k : ℕ}
 
 **The commit, with `D₀` eliminated.** A reliable-led slot past GST is committed by every view once the timeout clears `2Δ + proc`. Where `decided_of_wait` requires the round-`0` spread as a hypothesis — the one deployment quantity in the development — this requires nothing about how the validators started.
 
+#### `drift_collapse`
+
+*theorem, `Drift.Catchup.lean`*
+
+```lean
+theorem drift_collapse {n : ℕ} (hn : n ≤ N)
+    (htop : ∀ u ∈ T, n ≤ cp.top u)
+    (hg : ∀ u ∈ T, cp.gst ≤ cp.built u n) :
+    ∀ v ∈ T, ∀ w ∈ T, cp.built v n ≤ cp.built w n + (cp.delay + cp.proc)
+```
+
+**Drift collapses, from any starting value** — `drift_collapse` over the partial schedule. `htop` guards the rounds the statement reads; `driftOn_of_catchup` discharges it from the quorum bound.
+
+#### `driftOn_of_catchup`
+
+*theorem, `Drift.Catchup.lean`*
+
+```lean
+theorem driftOn_of_catchup
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (hgst : cp.gst ≤ R) :
+    DriftOn cp.built T R (cp.delay + cp.proc) N
+```
+
+The collapsed spread, in the form the development consumes — with no base hypothesis, where `driftOn_of_prompt` requires the spread supplied at its starting round.
+
+#### `synchronisedOn_of_catchup`
+
+*theorem, `Drift.Catchup.lean`*
+
+```lean
+theorem synchronisedOn_of_catchup
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (hgst : cp.gst ≤ R)
+    (hto : ∀ n, R ≤ n → (cp.delay + cp.proc) + cp.delay ≤ cp.timeout n) :
+    SynchronisedOn U T R
+```
+
+**Coverage at a deployment-free threshold**, from `R` on, once the timeout clears `2Δ + proc`. The start spread `D₀` does not appear, and — as everywhere on this route — neither does `T ⊆ Correct`.
+
+#### `decided_of_catchup`
+
+*theorem, `Drift.Catchup.lean`*
+
+```lean
+theorem decided_of_catchup [S : Slots Validator] {k : ℕ}
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hgst : cp.gst ≤ R)
+    (hto : ∀ n, R ≤ n → (cp.delay + cp.proc) + cp.delay ≤ cp.timeout n)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
+```
+
+**The commit, with `D₀` eliminated**, production derived rather than read off `blk`: a reliable-led slot past GST is committed once the timeout clears `2Δ + proc`, from genesis, convergence, the progress rule and catch-up.
+
 ### Safe Skip: crash recovery in one message
 
 #### `hB1uniq_of_correct`
@@ -14105,6 +14177,16 @@ theorem card_novelty_le_of_donor {κ R : ℕ} (hbyz : ByzBudget D κ)
 
 Report §8.4's `RefsAccepted` asks for the author, and the pool argument uses only this. The two component lemmas were already stated at the right generality; composing them at a `w` other than the author is what had not been done.
 
+#### `le_built`
+
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem le_built {v : Validator} (hv : v ∈ T) : ∀ n ≤ vp.top v, n ≤ vp.built v n
+```
+
+Rounds advance real time, over the rounds a validator reached.
+
 #### `reached`
 
 *theorem, `ViewPace.lean`*
@@ -14189,7 +14271,7 @@ What remains divides cleanly. The network contributes `converges` and `vp.gst �
 
 ## Appendix D. Index of internal lemmas
 
-The 331 lemmas used only within the file that proves
+The 330 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -14809,11 +14891,5 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `viewUpto_skipFillD` | Accepted blocks are old, so their cones are unchanged and the accumulated view is literally the same … |
-
-### `ViewPace.lean` (1)
-
-| Lemma | Role |
-|:---|:---|
-| `le_built` | Rounds advance real time, over the rounds a validator reached. |
 
 <!-- END GENERATED REFERENCE -->

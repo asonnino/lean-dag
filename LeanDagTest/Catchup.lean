@@ -131,6 +131,82 @@ example (N n : ℕ) (hn : n ≤ N) :
   fun v hv w hw =>
     (ugrowCatch N).drift_collapse hn (fun u _ => Nat.zero_le _) v hv w hw
 
+/-! ## The same witness, over the partial schedule
+
+`ugrowCatchPace` is `ugrowCatch` with `blk` deleted and the catch-up
+clause restated off it. Nobody is stuck here — `top v = N` — and the
+catch-up conclusion's reach half is immediate; the timing half is the
+same arithmetic as before, over the block's id rather than `blk u n`. -/
+def ugrowCatchPace (N : ℕ) : CatchupPace (Ugrow N) {1, 2, 3} N where
+  top _ := N
+  built v n := (v : ℕ) + 5 * n
+  timeout _ := 5
+  gst := 0
+  delay := 2
+  proc := 1
+  rounds_le := (ugrowSkew N).rounds_le
+  built_of_le_top v hv n hn := rrUniverse_populatedOn _ _ _ _ _ _ hn v hv
+  le_top_of_built _ _ b hb _ := (ugrowSkew N).rounds_le b hb
+  waits _ _ _ _ := by omega
+  timeout_pos _ := by omega
+  latest n := 3 + 5 * n
+  built_le_latest v _ _ _ := by have := v.isLt; omega
+  latest_mem _ _ := ⟨3, by decide, le_refl _⟩
+  prompt _ _ _ _ := le_max_left _ _
+  holds := catchHolds N
+  holds_own v hv n _ b hb hbc hbr := by
+    obtain ⟨h1, h3⟩ := mem_T_bounds hv
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round] at hbr
+    have hb4 : b % 4 = (v : ℕ) := by
+      have := congrArg (fun (x : Fin 4) => (x : ℕ)) hbc
+      simpa [ugrow_block] using this
+    simp only [catchHolds, Finset.mem_filter, Finset.mem_range]
+    exact ⟨hb, Or.inr ⟨hb4, by omega⟩⟩
+  holds_mono v s t hst := by
+    intro b hb
+    simp only [catchHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
+    exact ⟨hb.1, by omega⟩
+  converges v _ w _ t _ := by
+    intro b hb
+    simp only [catchHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
+    refine ⟨hb.1, Or.inl ?_⟩
+    rcases hb.2 with h | h
+    · omega
+    · omega
+  references v hv n hn c hc hcc hcr a ha har := by
+    obtain ⟨h1, h3⟩ := mem_T_bounds hv
+    simp only [catchHolds, Finset.mem_filter, Finset.mem_range] at ha
+    simp only [ugrow_block, rrBlock_round] at har hcr
+    simp only [ugrow_block, mem_growBlock_refs]
+    omega
+  advances _ _ _ hn _ _ := hn
+  catchup v hv n hn b hb hbT hbr t hheld := by
+    obtain ⟨hv1, hv3⟩ := mem_T_bounds hv
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round] at hbr
+    simp only [catchHolds, Finset.mem_filter, Finset.mem_range] at hheld
+    refine ⟨hn, ?_⟩
+    change (v : ℕ) + 5 * n ≤ t + 1
+    have hv4 := v.isLt
+    rcases hheld.2 with h | ⟨_, h⟩
+    · omega
+    · omega
+
+/-- **The commit at `2Δ + proc`, production derived, no start spread.**
+The `CatchupPace` counterpart of `ugrowCatch_decided`: same slot, same
+constants, and now nothing in the structure asserts a block above
+round `0`. -/
+theorem ugrowCatchPace_decided (N : ℕ) (hN : rrSlots.slotRound 1 + 2 ≤ N) :
+    ∃ L, IsLeaderBlock (S := rrSlots) (Ugrow N) 1 L ∧
+      Decided (S := rrSlots) (Ugrow N) (View.full (Ugrow N)) 1 (some L) :=
+  (ugrowCatchPace N).decided_of_catchup (R := 0) (by decide) (by decide)
+    (le_refl 0) (fun n _ => by change 2 + 1 + 2 ≤ 5; omega)
+    (Nat.zero_le _) hN (by decide)
+
+#print axioms ugrowCatchPace_decided
+#print axioms LeanDag.CatchupPace.drift_collapse
+#print axioms LeanDag.CatchupPace.decided_of_catchup
 #print axioms ugrowCatch_decided
 #print axioms LeanDag.CatchupSync.drift_collapse
 #print axioms LeanDag.CatchupSync.decided_of_catchup

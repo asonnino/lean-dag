@@ -2205,6 +2205,9 @@ EDGE	LeanDag.CatchupSync.decided_of_catchup	LeanDag.CatchupSync
 EDGE	LeanDag.CatchupSync.decided_of_catchup	LeanDag.IsLeaderBlock
 EDGE	LeanDag.CatchupSync.decided_of_catchup	LeanDag.Slots
 EDGE	LeanDag.CatchupSync.decided_of_catchup	LeanDag.CatchupSync.decided_of_catchup._proof_1_2
+NODE	LeanDag.CatchupPace	LeanDag.Drift.Catchup	ind
+EDGE	LeanDag.CatchupPace	LeanDag.Faults
+EDGE	LeanDag.CatchupPace	LeanDag.BlockUniverse
 NODE	LeanDag.certifiedIn_chop	LeanDag.GC.Chop	thm
 EDGE	LeanDag.certifiedIn_chop	LeanDag.Faults
 EDGE	LeanDag.certifiedIn_chop	LeanDag.CertifiedIn
@@ -2817,6 +2820,9 @@ EDGE	LeanDag.ViewPace.holds_mono	LeanDag.Faults
 EDGE	LeanDag.ViewPace.holds_mono	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewPace.holds_mono	LeanDag.ViewPace
 EDGE	LeanDag.ViewPace.holds_mono	LeanDag.ViewPace.holds
+NODE	LeanDagTest.ugrowCatchPace_decided._proof_1_1	LeanDagTest.Catchup	thm
+EDGE	LeanDagTest.ugrowCatchPace_decided._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDagTest.ugrowCatchPace_decided._proof_1_1	LeanDagTest.rrSlots
 NODE	LeanDag.HybridFaults.mk	LeanDag.Hybrid.Faults	ctor
 EDGE	LeanDag.HybridFaults.mk	LeanDag.HybridFaults
 NODE	LeanDagTest.ugrowSkewView._proof_2	LeanDagTest.ViewSync	thm
@@ -3197,6 +3203,24 @@ EDGE	LeanDag.exists_correct_mem_creators_inter	LeanDag.Faults
 EDGE	LeanDag.exists_correct_mem_creators_inter	LeanDag.exists_correct_mem_inter
 EDGE	LeanDag.exists_correct_mem_creators_inter	LeanDag.Correct
 EDGE	LeanDag.exists_correct_mem_creators_inter	LeanDag.Faults.f
+NODE	LeanDagTest.ugrowCatchPace_decided	LeanDagTest.Catchup	thm
+EDGE	LeanDagTest.ugrowCatchPace_decided	LeanDagTest.Ugrow
+EDGE	LeanDagTest.ugrowCatchPace_decided	LeanDag.View.full
+EDGE	LeanDagTest.ugrowCatchPace_decided	LeanDag.Slots.slotRound
+EDGE	LeanDagTest.ugrowCatchPace_decided	LeanDagTest.rrSlots
+EDGE	LeanDagTest.ugrowCatchPace_decided	LeanDag.CatchupPace.decided_of_catchup
+EDGE	LeanDagTest.ugrowCatchPace_decided	LeanDag.Decided
+EDGE	LeanDagTest.ugrowCatchPace_decided	LeanDag.Slots.leader
+EDGE	LeanDagTest.ugrowCatchPace_decided	LeanDagTest.ugrowCatchPace
+EDGE	LeanDagTest.ugrowCatchPace_decided	LeanDag.CatchupPace.proc
+EDGE	LeanDagTest.ugrowCatchPace_decided	LeanDag.Correct
+EDGE	LeanDagTest.ugrowCatchPace_decided	LeanDag.ViewPace.delay
+EDGE	LeanDagTest.ugrowCatchPace_decided	LeanDag.CatchupPace.toViewPace
+EDGE	LeanDagTest.ugrowCatchPace_decided	LeanDag.Faults.f
+EDGE	LeanDagTest.ugrowCatchPace_decided	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+EDGE	LeanDagTest.ugrowCatchPace_decided	LeanDag.IsLeaderBlock
+EDGE	LeanDagTest.ugrowCatchPace_decided	LeanDag.ViewPace.timeout
+EDGE	LeanDagTest.ugrowCatchPace_decided	LeanDagTest.ugrowCatchPace_decided._proof_1_1
 NODE	LeanDag.Integration.chopMsg._proof_2	LeanDag.Integration.Retention	thm
 EDGE	LeanDag.Integration.chopMsg._proof_2	LeanDag.Faults
 EDGE	LeanDag.Integration.chopMsg._proof_2	LeanDag.BlockUniverse.block
@@ -3444,6 +3468,20 @@ EDGE	LeanDag.View.mem_ofAccepted	LeanDag.View.ids
 EDGE	LeanDag.View.mem_ofAccepted	LeanDag.history
 EDGE	LeanDag.View.mem_ofAccepted	LeanDag.BlockUniverse
 NODE	LeanDagTest.Uomit._simp_1	LeanDagTest.Unbounded	thm
+NODE	LeanDag.CatchupPace.mk.inj	LeanDag.Drift.Catchup	thm
+EDGE	LeanDag.CatchupPace.mk.inj	LeanDag.CatchupPace.mk.noConfusion
+EDGE	LeanDag.CatchupPace.mk.inj	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.mk.inj	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.mk.inj	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.CatchupPace.mk.inj	LeanDag.ViewPace.top
+EDGE	LeanDag.CatchupPace.mk.inj	LeanDag.BlockUniverse.block
+EDGE	LeanDag.CatchupPace.mk.inj	LeanDag.Block.round
+EDGE	LeanDag.CatchupPace.mk.inj	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.mk.inj	LeanDag.CatchupPace.mk
+EDGE	LeanDag.CatchupPace.mk.inj	LeanDag.ViewPace
+EDGE	LeanDag.CatchupPace.mk.inj	LeanDag.ViewPace.built
+EDGE	LeanDag.CatchupPace.mk.inj	LeanDag.ViewPace.holds
+EDGE	LeanDag.CatchupPace.mk.inj	LeanDag.Block.creator
 NODE	LeanDag.chop_chop._proof_1_3	LeanDag.GC.Horizon	thm
 EDGE	LeanDag.chop_chop._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.chop_chop._proof_1_3	LeanDag.BlockUniverse.block
@@ -4127,6 +4165,26 @@ EDGE	LeanDag.mem_history_self._simp_1	LeanDag.Faults
 EDGE	LeanDag.mem_history_self._simp_1	LeanDag.mem_history_self
 EDGE	LeanDag.mem_history_self._simp_1	LeanDag.history
 EDGE	LeanDag.mem_history_self._simp_1	LeanDag.BlockUniverse
+NODE	LeanDag.CatchupPace.drift_collapse	LeanDag.Drift.Catchup	thm
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.CatchupPace.drift_collapse._proof_1_1
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.CatchupPace.proc
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.ViewPace.holds_own
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.ViewPace.top
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.ViewPace.delay
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.ViewPace.built_of_le_top
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.CatchupPace.toViewPace
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.BlockUniverse.block
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.Block.round
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.CatchupPace.catchup
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.ViewPace.built
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.ViewPace.holds
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.ViewPace.converges
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.Block.creator
+EDGE	LeanDag.CatchupPace.drift_collapse	LeanDag.ViewPace.gst
 NODE	LeanDagTest.Ucrash._simp_8	LeanDagTest.SafeSkip	thm
 NODE	LeanDag.ViewGrowth.populatedOn._proof_1_7	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewGrowth.populatedOn._proof_1_7	LeanDag.Faults
@@ -4825,6 +4883,18 @@ EDGE	LeanDagTest.uskip_decidedWithin_slot1	LeanDag.Faults5.toFaults
 EDGE	LeanDagTest.uskip_decidedWithin_slot1	LeanDagTest.odo_inj
 EDGE	LeanDagTest.uskip_decidedWithin_slot1	LeanDag.Odontoceti.DecidedWithin
 NODE	LeanDagTest.skewHolds	LeanDagTest.ViewSync	def
+NODE	LeanDagTest.ugrowCatchPace._proof_5	LeanDagTest.Catchup	thm
+EDGE	LeanDagTest.ugrowCatchPace._proof_5	LeanDagTest.Ugrow._proof_7
+EDGE	LeanDagTest.ugrowCatchPace._proof_5	LeanDagTest.Ugrow._proof_1
+EDGE	LeanDagTest.ugrowCatchPace._proof_5	LeanDag.BlockUniverse.ids
+EDGE	LeanDagTest.ugrowCatchPace._proof_5	LeanDagTest.Ugrow._proof_2
+EDGE	LeanDagTest.ugrowCatchPace._proof_5	LeanDag.BlockUniverse.block
+EDGE	LeanDagTest.ugrowCatchPace._proof_5	LeanDagTest.rrUniverse
+EDGE	LeanDagTest.ugrowCatchPace._proof_5	LeanDag.Block.round
+EDGE	LeanDagTest.ugrowCatchPace._proof_5	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+EDGE	LeanDagTest.ugrowCatchPace._proof_5	LeanDagTest.growRefs
+EDGE	LeanDagTest.ugrowCatchPace._proof_5	LeanDag.Block.creator
+EDGE	LeanDagTest.ugrowCatchPace._proof_5	LeanDagTest.rrUniverse_populatedOn
 NODE	LeanDag.Timing.mk.injEq	LeanDag.Timing	thm
 EDGE	LeanDag.Timing.mk.injEq	LeanDag.Faults
 EDGE	LeanDag.Timing.mk.injEq	LeanDag.Timing
@@ -5085,6 +5155,20 @@ EDGE	LeanDag.AdaptiveRun._sizeOf_inst	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptiveRun._sizeOf_inst	LeanDag.Slots
 EDGE	LeanDag.AdaptiveRun._sizeOf_inst	LeanDag.View
 NODE	LeanDagTest.fairSlots._proof_1	LeanDagTest.Growth	thm
+NODE	LeanDag.CatchupPace._sizeOf_1	LeanDag.Drift.Catchup	def
+EDGE	LeanDag.CatchupPace._sizeOf_1	LeanDag.Faults
+EDGE	LeanDag.CatchupPace._sizeOf_1	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace._sizeOf_1	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.CatchupPace._sizeOf_1	LeanDag.ViewPace.top
+EDGE	LeanDag.CatchupPace._sizeOf_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.CatchupPace._sizeOf_1	LeanDag.Block.round
+EDGE	LeanDag.CatchupPace._sizeOf_1	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace._sizeOf_1	LeanDag.ViewPace
+EDGE	LeanDag.CatchupPace._sizeOf_1	LeanDag.ViewPace.built
+EDGE	LeanDag.CatchupPace._sizeOf_1	LeanDag.CatchupPace.rec
+EDGE	LeanDag.CatchupPace._sizeOf_1	LeanDag.ViewPace._sizeOf_inst
+EDGE	LeanDag.CatchupPace._sizeOf_1	LeanDag.ViewPace.holds
+EDGE	LeanDag.CatchupPace._sizeOf_1	LeanDag.Block.creator
 NODE	LeanDagTest.Uhyb4	LeanDagTest.Hybrid	def
 EDGE	LeanDagTest.Uhyb4	LeanDag.HybridFaults.toFaults
 EDGE	LeanDagTest.Uhyb4	LeanDag.BlockUniverse.mk
@@ -5161,6 +5245,20 @@ EDGE	LeanDag.chopD._proof_9	LeanDag.chopBlock_round
 EDGE	LeanDag.chopD._proof_9	LeanDag.Delivery.accepted
 EDGE	LeanDag.chopD._proof_9	LeanDag.Delivery.includes
 EDGE	LeanDag.chopD._proof_9	LeanDag.Block.creator
+NODE	LeanDag.CatchupPace.mk.injEq	LeanDag.Drift.Catchup	thm
+EDGE	LeanDag.CatchupPace.mk.injEq	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.mk.injEq	LeanDag.CatchupPace.mk.inj
+EDGE	LeanDag.CatchupPace.mk.injEq	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.mk.injEq	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.CatchupPace.mk.injEq	LeanDag.ViewPace.top
+EDGE	LeanDag.CatchupPace.mk.injEq	LeanDag.BlockUniverse.block
+EDGE	LeanDag.CatchupPace.mk.injEq	LeanDag.Block.round
+EDGE	LeanDag.CatchupPace.mk.injEq	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.mk.injEq	LeanDag.CatchupPace.mk
+EDGE	LeanDag.CatchupPace.mk.injEq	LeanDag.ViewPace
+EDGE	LeanDag.CatchupPace.mk.injEq	LeanDag.ViewPace.built
+EDGE	LeanDag.CatchupPace.mk.injEq	LeanDag.ViewPace.holds
+EDGE	LeanDag.CatchupPace.mk.injEq	LeanDag.Block.creator
 NODE	LeanDag.Hybrid.decided_of_leader_of_populated._proof_1_2	LeanDag.Hybrid.Liveness	thm
 EDGE	LeanDag.Hybrid.decided_of_leader_of_populated._proof_1_2	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.decided_of_leader_of_populated._proof_1_2	LeanDag.Slots.slotRound
@@ -7837,6 +7935,19 @@ EDGE	LeanDag.AdaptivePolicy.inj	LeanDag.Slots.slotRound
 EDGE	LeanDag.AdaptivePolicy.inj	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy.inj	LeanDag.Slots
 NODE	LeanDagTest.mem_omitRefs._simp_1_1	LeanDagTest.Unbounded	thm
+NODE	LeanDag.CatchupPace.synchronisedOn_of_catchup	LeanDag.Drift.Catchup	thm
+EDGE	LeanDag.CatchupPace.synchronisedOn_of_catchup	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.synchronisedOn_of_catchup	LeanDag.CatchupPace.proc
+EDGE	LeanDag.CatchupPace.synchronisedOn_of_catchup	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.synchronisedOn_of_catchup	LeanDag.CatchupPace.driftOn_of_catchup
+EDGE	LeanDag.CatchupPace.synchronisedOn_of_catchup	LeanDag.ViewPace.delay
+EDGE	LeanDag.CatchupPace.synchronisedOn_of_catchup	LeanDag.CatchupPace.toViewPace
+EDGE	LeanDag.CatchupPace.synchronisedOn_of_catchup	LeanDag.ViewPace.synchronisedOn_of_converges
+EDGE	LeanDag.CatchupPace.synchronisedOn_of_catchup	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.synchronisedOn_of_catchup	LeanDag.Faults.f
+EDGE	LeanDag.CatchupPace.synchronisedOn_of_catchup	LeanDag.SynchronisedOn
+EDGE	LeanDag.CatchupPace.synchronisedOn_of_catchup	LeanDag.ViewPace.timeout
+EDGE	LeanDag.CatchupPace.synchronisedOn_of_catchup	LeanDag.ViewPace.gst
 NODE	LeanDagTest.run7small	LeanDagTest.Adaptive	def
 EDGE	LeanDagTest.run7small	LeanDag.AdaptiveRun
 EDGE	LeanDagTest.run7small	LeanDag.AdaptivePolicy.pick
@@ -8307,6 +8418,28 @@ EDGE	LeanDag.ViewGrowth.populatedOn._proof_1_8	LeanDag.ViewGrowth.gst
 EDGE	LeanDag.ViewGrowth.populatedOn._proof_1_8	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.populatedOn._proof_1_8	LeanDag.ViewGrowth
 EDGE	LeanDag.ViewGrowth.populatedOn._proof_1_8	LeanDag.Faults.f
+NODE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.Drift.Catchup	thm
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.decided_of_leader_mem
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.View.full
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.Slots.slotRound
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.CatchupPace.decided_of_catchup._proof_1_2
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.Decided
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.Slots.leader
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.CatchupPace.proc
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.Correct
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.ViewPace.delay
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.CatchupPace.toViewPace
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.CatchupPace.decided_of_catchup._proof_1_1
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.Faults.f
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.IsLeaderBlock
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.Slots
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.ViewPace.timeout
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.CatchupPace.synchronisedOn_of_catchup
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.ViewPace.populatedOn
+EDGE	LeanDag.CatchupPace.decided_of_catchup	LeanDag.ViewPace.gst
 NODE	LeanDag.lt_of_eligible._proof_1_1	LeanDag.Mysticeti	thm
 NODE	LeanDag.ViewPace.delay	LeanDag.ViewPace	def
 EDGE	LeanDag.ViewPace.delay	LeanDag.Faults
@@ -8391,6 +8524,21 @@ EDGE	LeanDag.ledgerSet_mono	LeanDag.ledgerSet_mono._proof_1_1
 EDGE	LeanDag.ledgerSet_mono	LeanDag.BlockUniverse
 EDGE	LeanDag.ledgerSet_mono	LeanDag.ledgerSet
 EDGE	LeanDag.ledgerSet_mono	LeanDag.Reaches
+NODE	LeanDag.CatchupPace.driftOn_of_catchup	LeanDag.Drift.Catchup	thm
+EDGE	LeanDag.CatchupPace.driftOn_of_catchup	LeanDag.ViewPace.reached
+EDGE	LeanDag.CatchupPace.driftOn_of_catchup	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.driftOn_of_catchup	LeanDag.DriftOn
+EDGE	LeanDag.CatchupPace.driftOn_of_catchup	LeanDag.ViewPace.le_built
+EDGE	LeanDag.CatchupPace.driftOn_of_catchup	LeanDag.CatchupPace.proc
+EDGE	LeanDag.CatchupPace.driftOn_of_catchup	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.driftOn_of_catchup	LeanDag.ViewPace.top
+EDGE	LeanDag.CatchupPace.driftOn_of_catchup	LeanDag.ViewPace.delay
+EDGE	LeanDag.CatchupPace.driftOn_of_catchup	LeanDag.CatchupPace.toViewPace
+EDGE	LeanDag.CatchupPace.driftOn_of_catchup	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.driftOn_of_catchup	LeanDag.Faults.f
+EDGE	LeanDag.CatchupPace.driftOn_of_catchup	LeanDag.CatchupPace.drift_collapse
+EDGE	LeanDag.CatchupPace.driftOn_of_catchup	LeanDag.ViewPace.built
+EDGE	LeanDag.CatchupPace.driftOn_of_catchup	LeanDag.ViewPace.gst
 NODE	LeanDag.ViewGrowth.toDelivery.eq_1	LeanDag.ViewSync	thm
 EDGE	LeanDag.ViewGrowth.toDelivery.eq_1	LeanDag.ViewGrowth.toDelivery._proof_1
 EDGE	LeanDag.ViewGrowth.toDelivery.eq_1	LeanDag.Delivery
@@ -9118,6 +9266,20 @@ EDGE	LeanDag.card_historyBlocksOf_le_card_topsOf	LeanDag.BlockUniverse
 EDGE	LeanDag.card_historyBlocksOf_le_card_topsOf	LeanDag.mem_historyBlocksOf
 EDGE	LeanDag.card_historyBlocksOf_le_card_topsOf	LeanDag.history_subset_ids
 EDGE	LeanDag.card_historyBlocksOf_le_card_topsOf	LeanDag.Block.creator
+NODE	LeanDag.CatchupPace.noConfusion	LeanDag.Drift.Catchup	def
+EDGE	LeanDag.CatchupPace.noConfusion	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.noConfusion	LeanDag.CatchupPace.casesOn
+EDGE	LeanDag.CatchupPace.noConfusion	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.noConfusion	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.CatchupPace.noConfusion	LeanDag.ViewPace.top
+EDGE	LeanDag.CatchupPace.noConfusion	LeanDag.CatchupPace.noConfusionType
+EDGE	LeanDag.CatchupPace.noConfusion	LeanDag.BlockUniverse.block
+EDGE	LeanDag.CatchupPace.noConfusion	LeanDag.Block.round
+EDGE	LeanDag.CatchupPace.noConfusion	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.noConfusion	LeanDag.ViewPace
+EDGE	LeanDag.CatchupPace.noConfusion	LeanDag.ViewPace.built
+EDGE	LeanDag.CatchupPace.noConfusion	LeanDag.ViewPace.holds
+EDGE	LeanDag.CatchupPace.noConfusion	LeanDag.Block.creator
 NODE	LeanDagTest.hyb4Blk._proof_3	LeanDagTest.Hybrid	thm
 NODE	LeanDag.View.ctorIdx	LeanDag.BlockDag	def
 EDGE	LeanDag.View.ctorIdx	LeanDag.Faults
@@ -9429,6 +9591,21 @@ EDGE	LeanDagTest.ugrowReactive._proof_13	LeanDagTest.ugrowReactive._proof_4
 EDGE	LeanDagTest.ugrowReactive._proof_13	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ugrowReactive._proof_13	LeanDag.Block.round
 EDGE	LeanDagTest.ugrowReactive._proof_13	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+NODE	LeanDag.CatchupPace.mk.sizeOf_spec	LeanDag.Drift.Catchup	thm
+EDGE	LeanDag.CatchupPace.mk.sizeOf_spec	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.mk.sizeOf_spec	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.mk.sizeOf_spec	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.CatchupPace.mk.sizeOf_spec	LeanDag.ViewPace.top
+EDGE	LeanDag.CatchupPace.mk.sizeOf_spec	LeanDag.CatchupPace._sizeOf_inst
+EDGE	LeanDag.CatchupPace.mk.sizeOf_spec	LeanDag.BlockUniverse.block
+EDGE	LeanDag.CatchupPace.mk.sizeOf_spec	LeanDag.Block.round
+EDGE	LeanDag.CatchupPace.mk.sizeOf_spec	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.mk.sizeOf_spec	LeanDag.CatchupPace.mk
+EDGE	LeanDag.CatchupPace.mk.sizeOf_spec	LeanDag.ViewPace
+EDGE	LeanDag.CatchupPace.mk.sizeOf_spec	LeanDag.ViewPace.built
+EDGE	LeanDag.CatchupPace.mk.sizeOf_spec	LeanDag.ViewPace._sizeOf_inst
+EDGE	LeanDag.CatchupPace.mk.sizeOf_spec	LeanDag.ViewPace.holds
+EDGE	LeanDag.CatchupPace.mk.sizeOf_spec	LeanDag.Block.creator
 NODE	LeanDag.AdaptivePolicy.const_run_decided	LeanDag.Adaptive.Run	thm
 EDGE	LeanDag.AdaptivePolicy.const_run_decided	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.AdaptivePolicy.const_run_decided	LeanDag.AdaptiveRun
@@ -9508,6 +9685,11 @@ EDGE	LeanDag.Timing.driftFrom_of_prompt._proof_1_4	LeanDag.Timing.timeout
 EDGE	LeanDag.Timing.driftFrom_of_prompt._proof_1_4	LeanDag.Timing.delay
 EDGE	LeanDag.Timing.driftFrom_of_prompt._proof_1_4	LeanDag.BlockUniverse
 EDGE	LeanDag.Timing.driftFrom_of_prompt._proof_1_4	LeanDag.Timing.latest
+NODE	LeanDag.CatchupPace.toViewPace	LeanDag.Drift.Catchup	def
+EDGE	LeanDag.CatchupPace.toViewPace	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.toViewPace	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.toViewPace	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.toViewPace	LeanDag.ViewPace
 NODE	LeanDag.decided_of_correct_leader	LeanDag.Liveness	thm
 EDGE	LeanDag.decided_of_correct_leader	LeanDag.decided_of_leader_mem
 EDGE	LeanDag.decided_of_correct_leader	LeanDag.Faults
@@ -10473,6 +10655,15 @@ EDGE	LeanDag.ViewSync.timeout_pos	LeanDag.Faults
 EDGE	LeanDag.ViewSync.timeout_pos	LeanDag.ViewSync
 EDGE	LeanDag.ViewSync.timeout_pos	LeanDag.ViewSync.timeout
 EDGE	LeanDag.ViewSync.timeout_pos	LeanDag.BlockUniverse
+NODE	LeanDagTest.ugrowCatchPace._proof_6	LeanDagTest.Catchup	thm
+EDGE	LeanDagTest.ugrowCatchPace._proof_6	LeanDagTest.Ugrow
+EDGE	LeanDagTest.ugrowCatchPace._proof_6	LeanDagTest.ugrowSkew
+EDGE	LeanDagTest.ugrowCatchPace._proof_6	LeanDag.BlockUniverse.ids
+EDGE	LeanDagTest.ugrowCatchPace._proof_6	LeanDag.BlockUniverse.block
+EDGE	LeanDagTest.ugrowCatchPace._proof_6	LeanDag.Timing.rounds_le
+EDGE	LeanDagTest.ugrowCatchPace._proof_6	LeanDag.Block.round
+EDGE	LeanDagTest.ugrowCatchPace._proof_6	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+EDGE	LeanDagTest.ugrowCatchPace._proof_6	LeanDag.Block.creator
 NODE	LeanDag.decided_mono	LeanDag.Liveness	thm
 EDGE	LeanDag.decided_mono	LeanDag.Decided.rec
 EDGE	LeanDag.decided_mono	LeanDag.Faults
@@ -10626,6 +10817,20 @@ EDGE	LeanDag.Integration.dosValid_skipFill_of_covered._proof_1_4	LeanDag.SkipMsg
 EDGE	LeanDag.Integration.dosValid_skipFill_of_covered._proof_1_4	LeanDag.SkipMsg.B1
 NODE	LeanDag.exists_backoff_ge	LeanDag.Timing	thm
 NODE	LeanDag.support_threshold_arith._proof_1_4	LeanDag.CommonCore	thm
+NODE	LeanDag.CatchupPace.mk.noConfusion	LeanDag.Drift.Catchup	def
+EDGE	LeanDag.CatchupPace.mk.noConfusion	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.mk.noConfusion	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.mk.noConfusion	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.CatchupPace.mk.noConfusion	LeanDag.ViewPace.top
+EDGE	LeanDag.CatchupPace.mk.noConfusion	LeanDag.BlockUniverse.block
+EDGE	LeanDag.CatchupPace.mk.noConfusion	LeanDag.Block.round
+EDGE	LeanDag.CatchupPace.mk.noConfusion	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.mk.noConfusion	LeanDag.CatchupPace.mk
+EDGE	LeanDag.CatchupPace.mk.noConfusion	LeanDag.ViewPace
+EDGE	LeanDag.CatchupPace.mk.noConfusion	LeanDag.CatchupPace.noConfusion
+EDGE	LeanDag.CatchupPace.mk.noConfusion	LeanDag.ViewPace.built
+EDGE	LeanDag.CatchupPace.mk.noConfusion	LeanDag.ViewPace.holds
+EDGE	LeanDag.CatchupPace.mk.noConfusion	LeanDag.Block.creator
 NODE	LeanDag.ViewGrowth.gst	LeanDag.ViewSync	def
 EDGE	LeanDag.ViewGrowth.gst	LeanDag.Faults
 EDGE	LeanDag.ViewGrowth.gst	LeanDag.BlockUniverse
@@ -11086,6 +11291,18 @@ EDGE	LeanDag.BlockUniverse.eq_of_creator_eq	LeanDag.Block.round
 EDGE	LeanDag.BlockUniverse.eq_of_creator_eq	LeanDag.BlockUniverse
 EDGE	LeanDag.BlockUniverse.eq_of_creator_eq	LeanDag.BlockUniverse.no_equivocation
 EDGE	LeanDag.BlockUniverse.eq_of_creator_eq	LeanDag.Block.creator
+NODE	LeanDagTest.ugrowCatchPace._proof_7	LeanDagTest.Catchup	thm
+EDGE	LeanDagTest.ugrowCatchPace._proof_7	LeanDagTest.Ugrow
+EDGE	LeanDagTest.ugrowCatchPace._proof_7	LeanDagTest.catchHolds
+EDGE	LeanDagTest.ugrowCatchPace._proof_7	LeanDag.BlockUniverse.ids
+EDGE	LeanDagTest.ugrowCatchPace._proof_7	LeanDagTest.mem_T_bounds
+EDGE	LeanDagTest.ugrowCatchPace._proof_7	LeanDag.BlockUniverse.block
+EDGE	LeanDagTest.ugrowCatchPace._proof_7	LeanDag.Block.round
+EDGE	LeanDagTest.ugrowCatchPace._proof_7	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+EDGE	LeanDagTest.ugrowCatchPace._proof_7	LeanDagTest.ugrowCatch._simp_1
+EDGE	LeanDagTest.ugrowCatchPace._proof_7	LeanDagTest.ugrowCatchPace._proof_1
+EDGE	LeanDagTest.ugrowCatchPace._proof_7	LeanDag.Block.creator
+EDGE	LeanDagTest.ugrowCatchPace._proof_7	LeanDagTest.ugrowCatch._simp_9
 NODE	LeanDagTest.ugrowSkewGrowth_drift	LeanDagTest.ViewSync	thm
 EDGE	LeanDagTest.ugrowSkewGrowth_drift	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowSkewGrowth_drift	LeanDag.DriftOn
@@ -12132,6 +12349,16 @@ EDGE	LeanDag.universe_eq_of	LeanDag.Block.round
 EDGE	LeanDag.universe_eq_of	LeanDag.BlockUniverse
 EDGE	LeanDag.universe_eq_of	LeanDag.Block.creator
 EDGE	LeanDag.universe_eq_of	LeanDag.ValidWrt
+NODE	LeanDag.CatchupPace.drift_collapse._proof_1_1	LeanDag.Drift.Catchup	thm
+EDGE	LeanDag.CatchupPace.drift_collapse._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.drift_collapse._proof_1_1	LeanDag.CatchupPace.proc
+EDGE	LeanDag.CatchupPace.drift_collapse._proof_1_1	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.drift_collapse._proof_1_1	LeanDag.ViewPace.delay
+EDGE	LeanDag.CatchupPace.drift_collapse._proof_1_1	LeanDag.CatchupPace.toViewPace
+EDGE	LeanDag.CatchupPace.drift_collapse._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.CatchupPace.drift_collapse._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.CatchupPace.drift_collapse._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.drift_collapse._proof_1_1	LeanDag.ViewPace.built
 NODE	LeanDag.Odontoceti.spansEligible_two._proof_1_1	LeanDag.Odontoceti.Liveness	thm
 NODE	LeanDag.mem_missingAt	LeanDag.DoS.Density	thm
 EDGE	LeanDag.mem_missingAt	LeanDag.missingAt
@@ -12628,6 +12855,19 @@ NODE	LeanDag.ViewGrowth.delay	LeanDag.ViewSync	def
 EDGE	LeanDag.ViewGrowth.delay	LeanDag.Faults
 EDGE	LeanDag.ViewGrowth.delay	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewGrowth.delay	LeanDag.ViewGrowth
+NODE	LeanDag.CatchupPace.mk._flat_ctor	LeanDag.Drift.Catchup	def
+EDGE	LeanDag.CatchupPace.mk._flat_ctor	LeanDag.creatorsOf
+EDGE	LeanDag.CatchupPace.mk._flat_ctor	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.mk._flat_ctor	LeanDag.ViewPace.mk
+EDGE	LeanDag.CatchupPace.mk._flat_ctor	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.mk._flat_ctor	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.CatchupPace.mk._flat_ctor	LeanDag.Block.refs
+EDGE	LeanDag.CatchupPace.mk._flat_ctor	LeanDag.BlockUniverse.block
+EDGE	LeanDag.CatchupPace.mk._flat_ctor	LeanDag.Block.round
+EDGE	LeanDag.CatchupPace.mk._flat_ctor	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.mk._flat_ctor	LeanDag.Faults.f
+EDGE	LeanDag.CatchupPace.mk._flat_ctor	LeanDag.CatchupPace.mk
+EDGE	LeanDag.CatchupPace.mk._flat_ctor	LeanDag.Block.creator
 NODE	LeanDag.View.chop._proof_1	LeanDag.GC.ChopDecided	thm
 EDGE	LeanDag.View.chop._proof_1	LeanDag.Faults
 EDGE	LeanDag.View.chop._proof_1	LeanDag.BlockUniverse.block
@@ -12885,6 +13125,20 @@ EDGE	LeanDag.Timing.le_built._proof_1_4	LeanDag.Timing.built
 EDGE	LeanDag.Timing.le_built._proof_1_4	LeanDag.Timing.timeout
 EDGE	LeanDag.Timing.le_built._proof_1_4	LeanDag.BlockUniverse
 NODE	LeanDagTest.lkd._proof_2	LeanDagTest.DoS.Doubling	thm
+NODE	LeanDag.CatchupPace.casesOn	LeanDag.Drift.Catchup	def
+EDGE	LeanDag.CatchupPace.casesOn	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.casesOn	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.casesOn	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.CatchupPace.casesOn	LeanDag.ViewPace.top
+EDGE	LeanDag.CatchupPace.casesOn	LeanDag.BlockUniverse.block
+EDGE	LeanDag.CatchupPace.casesOn	LeanDag.Block.round
+EDGE	LeanDag.CatchupPace.casesOn	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.casesOn	LeanDag.CatchupPace.mk
+EDGE	LeanDag.CatchupPace.casesOn	LeanDag.ViewPace
+EDGE	LeanDag.CatchupPace.casesOn	LeanDag.ViewPace.built
+EDGE	LeanDag.CatchupPace.casesOn	LeanDag.CatchupPace.rec
+EDGE	LeanDag.CatchupPace.casesOn	LeanDag.ViewPace.holds
+EDGE	LeanDag.CatchupPace.casesOn	LeanDag.Block.creator
 NODE	LeanDag.mem_history_of_mem_refs	LeanDag.History	thm
 EDGE	LeanDag.mem_history_of_mem_refs	LeanDag.Faults
 EDGE	LeanDag.mem_history_of_mem_refs	LeanDag.mem_history_iff
@@ -12908,6 +13162,19 @@ EDGE	LeanDag.DecidedWithin.agree	LeanDag.DecidedWithin.toDecided
 EDGE	LeanDag.DecidedWithin.agree	LeanDag.BlockUniverse
 EDGE	LeanDag.DecidedWithin.agree	LeanDag.Slots
 EDGE	LeanDag.DecidedWithin.agree	LeanDag.View
+NODE	LeanDag.CatchupPace.rec	LeanDag.Drift.Catchup	rec
+EDGE	LeanDag.CatchupPace.rec	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.rec	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.rec	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.CatchupPace.rec	LeanDag.ViewPace.top
+EDGE	LeanDag.CatchupPace.rec	LeanDag.BlockUniverse.block
+EDGE	LeanDag.CatchupPace.rec	LeanDag.Block.round
+EDGE	LeanDag.CatchupPace.rec	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.rec	LeanDag.CatchupPace.mk
+EDGE	LeanDag.CatchupPace.rec	LeanDag.ViewPace
+EDGE	LeanDag.CatchupPace.rec	LeanDag.ViewPace.built
+EDGE	LeanDag.CatchupPace.rec	LeanDag.ViewPace.holds
+EDGE	LeanDag.CatchupPace.rec	LeanDag.Block.creator
 NODE	LeanDag.ReactiveM.certifies	LeanDag.Reactive.Mysticeti	thm
 EDGE	LeanDag.ReactiveM.certifies	LeanDag.votesIn
 EDGE	LeanDag.ReactiveM.certifies	LeanDag.ReactiveM.certifies._proof_1_3
@@ -13003,6 +13270,19 @@ EDGE	LeanDagTest.ugrow_not_populated_succ	LeanDag.Block.creator
 NODE	LeanDag.Integration.spansEligible_chop._proof_1_2	LeanDag.Integration.ScheduleShape	thm
 EDGE	LeanDag.Integration.spansEligible_chop._proof_1_2	LeanDag.Slots.slotRound
 EDGE	LeanDag.Integration.spansEligible_chop._proof_1_2	LeanDag.Slots
+NODE	LeanDag.CatchupPace.noConfusionType	LeanDag.Drift.Catchup	def
+EDGE	LeanDag.CatchupPace.noConfusionType	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.noConfusionType	LeanDag.CatchupPace.casesOn
+EDGE	LeanDag.CatchupPace.noConfusionType	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.noConfusionType	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.CatchupPace.noConfusionType	LeanDag.ViewPace.top
+EDGE	LeanDag.CatchupPace.noConfusionType	LeanDag.BlockUniverse.block
+EDGE	LeanDag.CatchupPace.noConfusionType	LeanDag.Block.round
+EDGE	LeanDag.CatchupPace.noConfusionType	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.noConfusionType	LeanDag.ViewPace
+EDGE	LeanDag.CatchupPace.noConfusionType	LeanDag.ViewPace.built
+EDGE	LeanDag.CatchupPace.noConfusionType	LeanDag.ViewPace.holds
+EDGE	LeanDag.CatchupPace.noConfusionType	LeanDag.Block.creator
 NODE	LeanDag.DecidedWithin.indirectSkip	LeanDag.Adaptive.Basic	ctor
 EDGE	LeanDag.DecidedWithin.indirectSkip	LeanDag.Faults
 EDGE	LeanDag.DecidedWithin.indirectSkip	LeanDag.Slots.slotRound
@@ -13557,6 +13837,11 @@ NODE	LeanDag.ViewSync.holds	LeanDag.ViewSync	def
 EDGE	LeanDag.ViewSync.holds	LeanDag.Faults
 EDGE	LeanDag.ViewSync.holds	LeanDag.ViewSync
 EDGE	LeanDag.ViewSync.holds	LeanDag.BlockUniverse
+NODE	LeanDag.CatchupPace._sizeOf_inst	LeanDag.Drift.Catchup	def
+EDGE	LeanDag.CatchupPace._sizeOf_inst	LeanDag.CatchupPace._sizeOf_1
+EDGE	LeanDag.CatchupPace._sizeOf_inst	LeanDag.Faults
+EDGE	LeanDag.CatchupPace._sizeOf_inst	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace._sizeOf_inst	LeanDag.BlockUniverse
 NODE	LeanDagTest.ugrowSkew._proof_16	LeanDagTest.Partial	thm
 EDGE	LeanDagTest.ugrowSkew._proof_16	LeanDagTest.ugrowSkew._proof_9
 NODE	LeanDag.ReactiveCore.le_built	LeanDag.Reactive.Basic	thm
@@ -15739,6 +16024,20 @@ EDGE	LeanDag.ReactiveCore.ctorIdx	LeanDag.BlockUniverse
 EDGE	LeanDag.ReactiveCore.ctorIdx	LeanDag.Slots
 EDGE	LeanDag.ReactiveCore.ctorIdx	LeanDag.ReactiveCore
 NODE	LeanDag.populated_of_viewsConverge._proof_1_1	LeanDag.ViewSync	thm
+NODE	LeanDag.CatchupPace.recOn	LeanDag.Drift.Catchup	def
+EDGE	LeanDag.CatchupPace.recOn	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.recOn	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.recOn	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.CatchupPace.recOn	LeanDag.ViewPace.top
+EDGE	LeanDag.CatchupPace.recOn	LeanDag.BlockUniverse.block
+EDGE	LeanDag.CatchupPace.recOn	LeanDag.Block.round
+EDGE	LeanDag.CatchupPace.recOn	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.recOn	LeanDag.CatchupPace.mk
+EDGE	LeanDag.CatchupPace.recOn	LeanDag.ViewPace
+EDGE	LeanDag.CatchupPace.recOn	LeanDag.ViewPace.built
+EDGE	LeanDag.CatchupPace.recOn	LeanDag.CatchupPace.rec
+EDGE	LeanDag.CatchupPace.recOn	LeanDag.ViewPace.holds
+EDGE	LeanDag.CatchupPace.recOn	LeanDag.Block.creator
 NODE	LeanDag.AdaptivePolicy.mk.sizeOf_spec	LeanDag.Adaptive.Policy	thm
 EDGE	LeanDag.AdaptivePolicy.mk.sizeOf_spec	LeanDag.Faults
 EDGE	LeanDag.AdaptivePolicy.mk.sizeOf_spec	LeanDag.Slots.slotRound
@@ -16322,6 +16621,15 @@ EDGE	LeanDagTest.odoBlk	LeanDagTest.odoBlk._proof_4
 EDGE	LeanDagTest.odoBlk	LeanDagTest.odoBlk._proof_6
 EDGE	LeanDagTest.odoBlk	LeanDag.Block.mk
 EDGE	LeanDagTest.odoBlk	LeanDagTest.odoBlk._proof_5
+NODE	LeanDag.CatchupPace.decided_of_catchup._proof_1_2	LeanDag.Drift.Catchup	thm
+EDGE	LeanDag.CatchupPace.decided_of_catchup._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.decided_of_catchup._proof_1_2	LeanDag.Slots.slotRound
+EDGE	LeanDag.CatchupPace.decided_of_catchup._proof_1_2	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.decided_of_catchup._proof_1_2	LeanDag.CatchupPace.toViewPace
+EDGE	LeanDag.CatchupPace.decided_of_catchup._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.decided_of_catchup._proof_1_2	LeanDag.Faults.f
+EDGE	LeanDag.CatchupPace.decided_of_catchup._proof_1_2	LeanDag.Slots
+EDGE	LeanDag.CatchupPace.decided_of_catchup._proof_1_2	LeanDag.ViewPace.gst
 NODE	LeanDag.decided_below_of_committed_run._proof_1_2	LeanDag.Liveness	thm
 EDGE	LeanDag.decided_below_of_committed_run._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.decided_below_of_committed_run._proof_1_2	LeanDag.decidableEligible
@@ -16837,6 +17145,18 @@ EDGE	LeanDag.ViewPace.reached._proof_1_1	LeanDag.ViewPace.top
 EDGE	LeanDag.ViewPace.reached._proof_1_1	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewPace.reached._proof_1_1	LeanDag.Faults.f
 EDGE	LeanDag.ViewPace.reached._proof_1_1	LeanDag.ViewPace
+NODE	LeanDagTest.ugrowCatchPace._proof_8	LeanDagTest.Catchup	thm
+EDGE	LeanDagTest.ugrowCatchPace._proof_8	LeanDagTest.Ugrow
+EDGE	LeanDagTest.ugrowCatchPace._proof_8	LeanDagTest.catchHolds
+EDGE	LeanDagTest.ugrowCatchPace._proof_8	LeanDag.BlockUniverse.ids
+EDGE	LeanDagTest.ugrowCatchPace._proof_8	LeanDag.Block.refs
+EDGE	LeanDagTest.ugrowCatchPace._proof_8	LeanDagTest.mem_T_bounds
+EDGE	LeanDagTest.ugrowCatchPace._proof_8	LeanDag.BlockUniverse.block
+EDGE	LeanDagTest.ugrowCatchPace._proof_8	LeanDag.Block.round
+EDGE	LeanDagTest.ugrowCatchPace._proof_8	LeanDagTest.ugrowCatch._simp_14
+EDGE	LeanDagTest.ugrowCatchPace._proof_8	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+EDGE	LeanDagTest.ugrowCatchPace._proof_8	LeanDag.Block.creator
+EDGE	LeanDagTest.ugrowCatchPace._proof_8	LeanDagTest.ugrowCatchPace._proof_2
 NODE	LeanDag.history_subset_view	LeanDag.DoS.Exposure	thm
 EDGE	LeanDag.history_subset_view	LeanDag.Faults
 EDGE	LeanDag.history_subset_view	LeanDag.mem_history_iff
@@ -17064,6 +17384,10 @@ EDGE	LeanDag.exists_top_of_mem_history._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.exists_top_of_mem_history._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.exists_top_of_mem_history._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.exists_top_of_mem_history._proof_1_1	LeanDag.BlockUniverse
+NODE	LeanDag.CatchupPace.ctorIdx	LeanDag.Drift.Catchup	def
+EDGE	LeanDag.CatchupPace.ctorIdx	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.ctorIdx	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.ctorIdx	LeanDag.BlockUniverse
 NODE	LeanDagTest.ugapGrowth_convergesEventually._proof_1_3	LeanDagTest.Unbounded	thm
 NODE	LeanDagTest.ugrowCatch._proof_14	LeanDagTest.Catchup	thm
 EDGE	LeanDagTest.ugrowCatch._proof_14	LeanDagTest.Ugrow
@@ -17833,6 +18157,11 @@ EDGE	LeanDag.Odontoceti.PartialRun.rec	LeanDag.View
 EDGE	LeanDag.Odontoceti.PartialRun.rec	LeanDag.Faults5.toFaults
 EDGE	LeanDag.Odontoceti.PartialRun.rec	LeanDag.Odontoceti.DecidedWithin
 EDGE	LeanDag.Odontoceti.PartialRun.rec	LeanDag.AdaptivePolicy.inj
+NODE	LeanDagTest.ugrowCatchPace._proof_2	LeanDagTest.Catchup	thm
+EDGE	LeanDagTest.ugrowCatchPace._proof_2	LeanDagTest.Ugrow
+EDGE	LeanDagTest.ugrowCatchPace._proof_2	LeanDag.BlockUniverse.block
+EDGE	LeanDagTest.ugrowCatchPace._proof_2	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+EDGE	LeanDagTest.ugrowCatchPace._proof_2	LeanDag.Block.creator
 NODE	LeanDag.AdaptivePolicy.W	LeanDag.Adaptive.Policy	def
 EDGE	LeanDag.AdaptivePolicy.W	LeanDag.Faults
 EDGE	LeanDag.AdaptivePolicy.W	LeanDag.AdaptivePolicy
@@ -18931,6 +19260,11 @@ EDGE	LeanDag.ViewPace.mk.noConfusion	LeanDag.Faults.f
 EDGE	LeanDag.ViewPace.mk.noConfusion	LeanDag.ViewPace
 EDGE	LeanDag.ViewPace.mk.noConfusion	LeanDag.ViewPace.noConfusion
 EDGE	LeanDag.ViewPace.mk.noConfusion	LeanDag.Block.creator
+NODE	LeanDagTest.ugrowCatchPace._proof_1	LeanDagTest.Catchup	thm
+EDGE	LeanDagTest.ugrowCatchPace._proof_1	LeanDagTest.Ugrow
+EDGE	LeanDagTest.ugrowCatchPace._proof_1	LeanDag.BlockUniverse.block
+EDGE	LeanDagTest.ugrowCatchPace._proof_1	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+EDGE	LeanDagTest.ugrowCatchPace._proof_1	LeanDag.Block.creator
 NODE	LeanDag.viewGap	LeanDag.DoS.Novelty	def
 EDGE	LeanDag.viewGap	LeanDag.Delivery
 EDGE	LeanDag.viewGap	LeanDag.Faults
@@ -20094,6 +20428,19 @@ EDGE	LeanDag.AdaptivePolicy.rec	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.rec	LeanDag.AdaptivePolicy.mk
 EDGE	LeanDag.AdaptivePolicy.rec	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy.rec	LeanDag.Slots
+NODE	LeanDag.CatchupPace.catchup	LeanDag.Drift.Catchup	thm
+EDGE	LeanDag.CatchupPace.catchup	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.catchup	LeanDag.CatchupPace.proc
+EDGE	LeanDag.CatchupPace.catchup	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.catchup	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.CatchupPace.catchup	LeanDag.ViewPace.top
+EDGE	LeanDag.CatchupPace.catchup	LeanDag.CatchupPace.toViewPace
+EDGE	LeanDag.CatchupPace.catchup	LeanDag.BlockUniverse.block
+EDGE	LeanDag.CatchupPace.catchup	LeanDag.Block.round
+EDGE	LeanDag.CatchupPace.catchup	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.catchup	LeanDag.ViewPace.built
+EDGE	LeanDag.CatchupPace.catchup	LeanDag.ViewPace.holds
+EDGE	LeanDag.CatchupPace.catchup	LeanDag.Block.creator
 NODE	LeanDag.CatchupSync.casesOn	LeanDag.Drift.Catchup	def
 EDGE	LeanDag.CatchupSync.casesOn	LeanDag.CatchupSync.rec
 EDGE	LeanDag.CatchupSync.casesOn	LeanDag.Faults
@@ -21279,6 +21626,18 @@ EDGE	LeanDag.card_missingAt_le_aux	LeanDag.card_missingAt_le_aux._proof_1_5
 EDGE	LeanDag.card_missingAt_le_aux	LeanDag.ValidWrt.quorum
 EDGE	LeanDag.card_missingAt_le_aux	LeanDag.Block.creator
 EDGE	LeanDag.card_missingAt_le_aux	LeanDag.missingAt_subset_of_mem_refs
+NODE	LeanDag.CatchupPace.mk	LeanDag.Drift.Catchup	ctor
+EDGE	LeanDag.CatchupPace.mk	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.mk	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.mk	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.CatchupPace.mk	LeanDag.ViewPace.top
+EDGE	LeanDag.CatchupPace.mk	LeanDag.BlockUniverse.block
+EDGE	LeanDag.CatchupPace.mk	LeanDag.Block.round
+EDGE	LeanDag.CatchupPace.mk	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.mk	LeanDag.ViewPace
+EDGE	LeanDag.CatchupPace.mk	LeanDag.ViewPace.built
+EDGE	LeanDag.CatchupPace.mk	LeanDag.ViewPace.holds
+EDGE	LeanDag.CatchupPace.mk	LeanDag.Block.creator
 NODE	LeanDag.exists_partialRun._proof_1_8	LeanDag.Adaptive.Liveness	thm
 EDGE	LeanDag.exists_partialRun._proof_1_8	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.exists_partialRun._proof_1_8	LeanDag.Faults
@@ -23024,6 +23383,7 @@ EDGE	LeanDagTest.Udouble	LeanDag.BlockUniverse
 EDGE	LeanDagTest.Udouble	LeanDagTest.lkd
 EDGE	LeanDagTest.Udouble	LeanDagTest.Udouble._proof_3
 EDGE	LeanDagTest.Udouble	LeanDagTest.Udouble._proof_1
+NODE	LeanDagTest.ugrowCatchPace._proof_4	LeanDagTest.Catchup	thm
 NODE	LeanDagTest.Dexcl._proof_1	LeanDagTest.GC.Bootstrap	thm
 NODE	LeanDagTest.ugapGrowth._proof_14	LeanDagTest.Unbounded	thm
 EDGE	LeanDagTest.ugapGrowth._proof_14	LeanDagTest.Uomit
@@ -23867,6 +24227,15 @@ EDGE	LeanDagTest.demotePolicy	LeanDag.AdaptivePolicy.mk
 EDGE	LeanDagTest.demotePolicy	LeanDagTest.demotePolicy._proof_3
 EDGE	LeanDagTest.demotePolicy	LeanDagTest.demotePolicy._proof_1
 EDGE	LeanDagTest.demotePolicy	LeanDag.AdaptivePolicy
+NODE	LeanDag.CatchupPace.decided_of_catchup._proof_1_1	LeanDag.Drift.Catchup	thm
+EDGE	LeanDag.CatchupPace.decided_of_catchup._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.decided_of_catchup._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.CatchupPace.decided_of_catchup._proof_1_1	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.decided_of_catchup._proof_1_1	LeanDag.CatchupPace.toViewPace
+EDGE	LeanDag.CatchupPace.decided_of_catchup._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.CatchupPace.decided_of_catchup._proof_1_1	LeanDag.Faults.f
+EDGE	LeanDag.CatchupPace.decided_of_catchup._proof_1_1	LeanDag.Slots
+EDGE	LeanDag.CatchupPace.decided_of_catchup._proof_1_1	LeanDag.ViewPace.gst
 NODE	LeanDag.ViewPace.reached._proof_1_4	LeanDag.ViewPace	thm
 EDGE	LeanDag.ViewPace.reached._proof_1_4	LeanDag.Faults
 EDGE	LeanDag.ViewPace.reached._proof_1_4	LeanDag.BlockUniverse.block
@@ -24411,6 +24780,10 @@ NODE	LeanDagTest.censBlk._proof_9	LeanDagTest.Quality.Model	thm
 EDGE	LeanDagTest.censBlk._proof_9	LeanDagTest.censBlk._proof_4
 NODE	LeanDagTest.twinAcc.eq_1	LeanDagTest.DoS.Novelty	thm
 EDGE	LeanDagTest.twinAcc.eq_1	LeanDagTest.twinAcc
+NODE	LeanDag.CatchupPace.proc	LeanDag.Drift.Catchup	def
+EDGE	LeanDag.CatchupPace.proc	LeanDag.Faults
+EDGE	LeanDag.CatchupPace.proc	LeanDag.CatchupPace
+EDGE	LeanDag.CatchupPace.proc	LeanDag.BlockUniverse
 NODE	LeanDag.blames	LeanDag.Support	def
 EDGE	LeanDag.blames	LeanDag.creatorsOf
 EDGE	LeanDag.blames	LeanDag.Faults
@@ -25798,6 +26171,30 @@ EDGE	LeanDagTest.ucrash_populated._proof_1_6	LeanDagTest.ucrashMsg
 EDGE	LeanDagTest.ucrash_populated._proof_1_6	LeanDagTest.Ucrash
 EDGE	LeanDagTest.ucrash_populated._proof_1_6	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ucrash_populated._proof_1_6	LeanDag.SkipMsg.r0
+NODE	LeanDagTest.ugrowCatchPace	LeanDagTest.Catchup	def
+EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.ugrowCatchPace._proof_9
+EDGE	LeanDagTest.ugrowCatchPace	LeanDag.creatorsOf
+EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.Ugrow
+EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.ugrowCatch._proof_20
+EDGE	LeanDagTest.ugrowCatchPace	LeanDag.ViewPace.mk
+EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.ugrowCatch._proof_21
+EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.catchHolds
+EDGE	LeanDagTest.ugrowCatchPace	LeanDag.CatchupPace
+EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.ugrowCatchPace._proof_5
+EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.ugrowCatch._proof_26
+EDGE	LeanDagTest.ugrowCatchPace	LeanDag.BlockUniverse.block
+EDGE	LeanDagTest.ugrowCatchPace	LeanDag.Block.round
+EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.ugrowCatch._proof_24
+EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.ugrowCatchPace._proof_6
+EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.ugrowCatch._proof_1
+EDGE	LeanDagTest.ugrowCatchPace	LeanDag.Faults.f
+EDGE	LeanDagTest.ugrowCatchPace	LeanDag.CatchupPace.mk
+EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.ugrowCatch._proof_22
+EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.ugrowCatchPace._proof_8
+EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.ugrowCatch._proof_27
+EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.ugrowCatchPace._proof_7
+EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.ugrowCatch._proof_23
 NODE	LeanDagTest.oBase	LeanDagTest.Adaptive	def
 EDGE	LeanDagTest.oBase	LeanDagTest.oBase._proof_2
 NODE	LeanDag.card_viewUpto_succ_le_of_bounds._proof_1_1	LeanDag.DoS.Novelty	thm
@@ -26036,6 +26433,7 @@ EDGE	LeanDag.epoch_closes	LeanDag.Slots
 EDGE	LeanDag.epoch_closes	LeanDag.Slots.mono
 EDGE	LeanDag.epoch_closes	LeanDag.SpansEligible
 EDGE	LeanDag.epoch_closes	LeanDag.AdaptivePolicy.inj
+NODE	LeanDagTest.ugrowCatchPace._proof_3	LeanDagTest.Catchup	thm
 NODE	LeanDag.Block.mk.sizeOf_spec	LeanDag.Block	thm
 EDGE	LeanDag.Block.mk.sizeOf_spec	LeanDag.Block
 EDGE	LeanDag.Block.mk.sizeOf_spec	LeanDag.Block._sizeOf_inst
@@ -26743,6 +27141,19 @@ EDGE	LeanDag.ReactiveM.mk	LeanDag.IsLeaderBlock
 EDGE	LeanDag.ReactiveM.mk	LeanDag.Slots
 EDGE	LeanDag.ReactiveM.mk	LeanDag.ReactiveCore.timeout
 EDGE	LeanDag.ReactiveM.mk	LeanDag.ReactiveCore
+NODE	LeanDagTest.ugrowCatchPace._proof_9	LeanDagTest.Catchup	thm
+EDGE	LeanDagTest.ugrowCatchPace._proof_9	LeanDagTest.ugrowCatchPace._proof_4
+EDGE	LeanDagTest.ugrowCatchPace._proof_9	LeanDagTest.Ugrow
+EDGE	LeanDagTest.ugrowCatchPace._proof_9	LeanDagTest.catchHolds
+EDGE	LeanDagTest.ugrowCatchPace._proof_9	LeanDag.BlockUniverse.ids
+EDGE	LeanDagTest.ugrowCatchPace._proof_9	LeanDagTest.mem_T_bounds
+EDGE	LeanDagTest.ugrowCatchPace._proof_9	LeanDag.BlockUniverse.block
+EDGE	LeanDagTest.ugrowCatchPace._proof_9	LeanDag.Block.round
+EDGE	LeanDagTest.ugrowCatchPace._proof_9	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+EDGE	LeanDagTest.ugrowCatchPace._proof_9	LeanDagTest.ugrowCatch._simp_1
+EDGE	LeanDagTest.ugrowCatchPace._proof_9	LeanDagTest.ugrowCatchPace._proof_3
+EDGE	LeanDagTest.ugrowCatchPace._proof_9	LeanDag.Block.creator
+EDGE	LeanDagTest.ugrowCatchPace._proof_9	LeanDagTest.ugrowCatch._simp_9
 NODE	LeanDag.AdaptivePolicy.mk.inj	LeanDag.Adaptive.Policy	thm
 EDGE	LeanDag.AdaptivePolicy.mk.inj	LeanDag.Faults
 EDGE	LeanDag.AdaptivePolicy.mk.inj	LeanDag.Slots.slotRound
