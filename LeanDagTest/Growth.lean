@@ -361,7 +361,7 @@ theorem ugrow_commits_recur (k : ℕ) :
     commits_recur (BlockId := ℕ) (Payload := Unit) ugrow_fair 0 k
   obtain ⟨L, hL, hd⟩ :=
     hcommit (Ugrow (Slots.slotRound (Validator := Fin 4) k' + 2)) _
-      (fun r hr => no_stall (ugrow_live _) (ugrow_deliversQuorum _) r hr)
+      (fun r _ hr => no_stall (ugrow_live _) (ugrow_deliversQuorum _) r hr)
       (ugrow_synchronised _) (le_refl _)
   exact ⟨k', hk', _, L, hL, hd⟩
 

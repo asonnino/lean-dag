@@ -236,7 +236,7 @@ theorem commits_recur_by_round {s : ℕ} (hT : T ⊆ (Correct : Finset Validator
     ∃ k', k ≤ k' ∧ S.slotRound k' ≤ S.slotRound (max k (slotAt Validator R)) + s * w ∧
       R ≤ S.slotRound k' ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
+        (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
         S.slotRound (max k (slotAt Validator R)) + s * w + 2 ≤ N →
         ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
   obtain ⟨k', hk, hlt, hRk', hcommit⟩ :=
