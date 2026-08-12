@@ -340,6 +340,8 @@ def ugrowSkewPace (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
   timeout_pos _ := by omega
   latest n := 3 + 4 * n
   built_le_latest v _ _ _ := by have := v.isLt; omega
+  latest_mem _ _ := ⟨3, by decide, le_refl _⟩
+  prompt _ _ _ _ := le_max_left _ _
   holds := skewHolds N
   holds_sub := (ugrowSkewGrowth N).holds_sub
   holds_own := (ugrowSkewGrowth N).holds_own
@@ -361,6 +363,18 @@ theorem ugrowSkewPace_synchronised (N : ℕ) :
   (ugrowSkewPace N).synchronisedOn_of_converges (D := 2)
     (ugrowSkewGrowth_drift N) (le_refl 0)
     (fun n _ => by change 2 + 2 ≤ 4; omega)
+
+/-- **Drift derived, not assumed**, over the partial schedule — the
+counterpart of `Timing.driftFrom_of_prompt`, at the same constants. -/
+theorem ugrowSkewPace_drift (N : ℕ) :
+    DriftOn (ugrowSkewPace N).built {1, 2, 3} 0 2 N :=
+  (ugrowSkewPace N).driftOn_of_prompt (by decide)
+    (fun v hv w hw => by
+      obtain ⟨_, _⟩ := mem_T_bounds hv
+      obtain ⟨_, _⟩ := mem_T_bounds hw
+      change (w : ℕ) + 4 * 0 ≤ ((v : ℕ) + 4 * 0) + 2
+      omega)
+    (fun n _ => by change 2 ≤ 4; omega)
 
 /-- **And the spine, with `hcross` gone rather than weakened.** Compare
 `ugrowSkewGrowth_commits_via_genesis`, which carries a schedule hypothesis
@@ -413,8 +427,12 @@ def ugrowStuckPace : ViewPace (Ugrow 0) {1} 5 where
     simp only [ugrow_block, rrBlock_round]; omega
   waits _ _ _ h := absurd h (Nat.not_lt.mpr (Nat.zero_le _))
   timeout_pos _ := by omega
-  latest n := 3 + 4 * n
-  built_le_latest v _ _ _ := by have := v.isLt; omega
+  latest n := 1 + 4 * n
+  built_le_latest v hv _ _ := by
+    have hv1 : v = 1 := by simpa using hv
+    subst hv1; omega
+  latest_mem _ _ := ⟨1, by decide, le_refl _⟩
+  prompt _ _ _ h := absurd h (Nat.not_lt.mpr (Nat.zero_le _))
   holds _ _ := {1}
   holds_sub _ _ := by
     intro b hb
@@ -526,7 +544,9 @@ example (N : ℕ) : Synchronised (Ugrow N) 0 :=
 #print axioms LeanDag.ViewGrowth.commits_recur_via_genesis
 #print axioms ugrowSkewPace_populated
 #print axioms ugrowSkewPace_synchronised
+#print axioms ugrowSkewPace_drift
 #print axioms ugrowSkewPace_commits
+#print axioms LeanDag.ViewPace.driftOn_of_prompt
 #print axioms ugrowStuckPace_stuck
 #print axioms LeanDag.ViewPace.populatedOn
 #print axioms LeanDag.ViewPace.commits_recur_via_pace

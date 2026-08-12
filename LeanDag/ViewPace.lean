@@ -98,6 +98,15 @@ structure ViewPace (U : BlockUniverse Validator BlockId Payload)
   to this one. -/
   latest : ℕ → ℕ
   built_le_latest : ∀ v ∈ T, ∀ n ≤ N, built v n ≤ latest n
+  /-- `latest` is *attained*, not merely an upper bound — the clause the
+  drift argument consumes. -/
+  latest_mem : ∀ n ≤ N, ∃ w ∈ T, latest n ≤ built w n
+  /-- **P9, the promptness rule** (protocol), over the rounds `v` reached.
+  Kept so that drift remains *derived* here as it is for `Timing`: without
+  it `DriftOn` would have to be assumed, which would be a step backwards
+  from the total-schedule routes. -/
+  prompt : ∀ v ∈ T, ∀ n < top v,
+    built v (n + 1) ≤ max (built v n + timeout n) (latest n + delay)
   holds : Validator → ℕ → Finset BlockId
   holds_sub : ∀ v t, holds v t ⊆ U.ids
   /-- A validator holds every block it authored, from the time it built it. -/
@@ -165,28 +174,75 @@ compared with anything: `advances` takes the quorum at whatever time it
 appears. A schedule that raced ahead of the network pre-GST is not excluded
 by hypothesis — it is not expressible, because a validator that never held
 a quorum at round `n` never reached round `n+1`. -/
+theorem reached (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+    ∀ n ≤ N, ∀ v ∈ T, n ≤ vp.top v := by
+  intro n
+  induction n with
+  | zero => intro _ v _; omega
+  | succ n ih =>
+      intro hn v hv
+      -- every `w ∈ T` reached round `n`, so has a block there
+      refine Nat.succ_le_of_lt (vp.advances v hv n (by omega)
+        (max (vp.latest n) vp.gst + vp.delay) (le_trans hcard (Finset.card_le_card ?_)))
+      intro w hw
+      obtain ⟨b, hb, hbc, hbr⟩ := vp.built_of_le_top w hw n (ih (by omega) w hw)
+      refine mem_creatorsOf.mpr ⟨b, Finset.mem_filter.mpr ⟨?_, hbr⟩, hbc⟩
+      -- it holds it when built, hence at the common time `max (latest n) gst`
+      have hown := vp.holds_own w hw n (by omega) b hb hbc hbr
+      have hle : vp.built w n ≤ max (vp.latest n) vp.gst :=
+        le_trans (vp.built_le_latest w hw n (by omega)) (le_max_left _ _)
+      exact vp.converges v hv w hw _ (le_max_right _ _) (vp.holds_mono w _ _ hle hown)
+
+omit [DecidableEq BlockId] in
+/-- **Production**, read off `reached`: a round a validator got to is a round
+it built in. -/
 theorem populatedOn (vp : ViewPace U T N)
     (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
-    ∀ n ≤ N, PopulatedOn U T n := by
-  have key : ∀ n, n ≤ N → ∀ v ∈ T, n ≤ vp.top v := by
+    ∀ n ≤ N, PopulatedOn U T n :=
+  fun n hn v hv => vp.built_of_le_top v hv n (vp.reached hcard n hn v hv)
+
+omit [DecidableEq BlockId] in
+/-- **Drift is derived here too.** `Timing.driftFrom_of_prompt`'s argument
+over a partial schedule: the same two-case split on `prompt`'s `max`, with
+the round guards discharged by `reached` rather than by the horizon.
+
+Keeping this is what stops the partial schedule being a step backwards. On
+the total-schedule routes drift is a consequence of promptness, not an
+assumption, and it stays one: what is asked of the implementation is a
+common start spread and a backoff clearing `delay`. -/
+theorem driftOn_of_prompt (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card) {n₀ D : ℕ}
+    (hbase : ∀ v ∈ T, ∀ w ∈ T, vp.built w n₀ ≤ vp.built v n₀ + D)
+    (hto : ∀ n, n₀ ≤ n → vp.delay ≤ vp.timeout n) :
+    DriftOn vp.built T n₀ D N := by
+  have key : ∀ n, n₀ ≤ n → n ≤ N →
+      ∀ v ∈ T, ∀ w ∈ T, vp.built w n ≤ vp.built v n + D := by
     intro n
     induction n with
-    | zero => intro _ v _; omega
+    | zero => intro h0 _ v hv w hw; exact (Nat.le_zero.mp h0) ▸ hbase v hv w hw
     | succ n ih =>
-        intro hn v hv
-        -- every `w ∈ T` reached round `n`, so has a block there
-        refine Nat.succ_le_of_lt (vp.advances v hv n (by omega)
-          (max (vp.latest n) vp.gst + vp.delay) (le_trans hcard (Finset.card_le_card ?_)))
-        intro w hw
-        obtain ⟨b, hb, hbc, hbr⟩ := vp.built_of_le_top w hw n (ih (by omega) w hw)
-        refine mem_creatorsOf.mpr ⟨b, Finset.mem_filter.mpr ⟨?_, hbr⟩, hbc⟩
-        -- it holds it when built, hence at the common time `max (latest n) gst`
-        have hown := vp.holds_own w hw n (by omega) b hb hbc hbr
-        have hle : vp.built w n ≤ max (vp.latest n) vp.gst :=
-          le_trans (vp.built_le_latest w hw n (by omega)) (le_max_left _ _)
-        exact vp.converges v hv w hw _ (le_max_right _ _) (vp.holds_mono w _ _ hle hown)
-  intro n hn v hv
-  exact vp.built_of_le_top v hv n (key n hn v hv)
+        intro hn hN v hv w hw
+        rcases Nat.eq_or_lt_of_le hn with heq | hlt
+        · exact heq ▸ hbase v hv w hw
+        · have hn₀ : n₀ ≤ n := by omega
+          -- both validators reached round `n+1`, so the schedule clauses apply
+          have htw : n < vp.top w := by have := vp.reached hcard (n + 1) hN w hw; omega
+          have htv : n < vp.top v := by have := vp.reached hcard (n + 1) hN v hv; omega
+          have hprompt := vp.prompt w hw n htw
+          have hwait := vp.waits v hv n htv
+          have hdel := hto n hn₀
+          rcases le_total (vp.built w n + vp.timeout n) (vp.latest n + vp.delay) with hc | hc
+          · obtain ⟨x, hx, hxle⟩ := vp.latest_mem n (by omega)
+            have hxv := ih hn₀ (by omega) v hv x hx
+            have hmax : max (vp.built w n + vp.timeout n) (vp.latest n + vp.delay)
+                = vp.latest n + vp.delay := max_eq_right hc
+            omega
+          · have hwv := ih hn₀ (by omega) v hv w hw
+            have hmax : max (vp.built w n + vp.timeout n) (vp.latest n + vp.delay)
+                = vp.built w n + vp.timeout n := max_eq_left hc
+            omega
+  exact fun v hv w hw n hn hN => key n hn hN v hv w hw
 
 omit [DecidableEq BlockId] in
 /-- **Reference coverage**, exactly `ViewGrowth`'s argument over the partial

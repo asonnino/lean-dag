@@ -2334,7 +2334,11 @@ round `n` never reached round `n+1`.
 
 `ViewPace.populatedOn` therefore takes genesis, `converges` and `advances`
 and nothing else: no drift, no backoff, not even `timeout`, since with no
-deadline there is nothing to beat. Coverage is unchanged, the guards coming
+deadline there is nothing to beat. Drift remains **derived** rather than
+assumed — `ViewPace.driftOn_of_prompt` is `Timing.driftFrom_of_prompt`'s
+argument over the partial schedule, its round guards discharged by
+`ViewPace.reached` instead of by the horizon — so the partial schedule is
+not a step backwards on that count either. Coverage is unchanged, the guards coming
 out of `le_top_of_built`, and the straddling case cannot arise there
 because coverage is claimed only from `R ≥ gst`. The spine is
 `ViewPace.commits_recur_via_pace`, and the schedule hypothesis is **gone
@@ -5702,7 +5706,7 @@ result in full.
 | V14 | the same liveness, routed through the two conditions §6 names | `ViewSync.commits_recur_via_interface` *(ViewSync)* |
 | V15 | and again with production derived from the build rule, not assumed | `ViewGrowth.synchronisedOn_of_converges`, `ViewGrowth.commits_recur_via_growth`, `ugrowSkewGrowth_commits` *(ViewSync, LeanDagTest.ViewSync)* |
 | V16 | and with the seed at round `0`, where genesis needs no network | `ViewGrowth.populatedOn_of_genesis`, `ViewGrowth.commits_recur_via_genesis`, `ugrowSkewGrowth_commits_via_genesis` *(ViewSync, LeanDagTest.ViewSync)* |
-| V17 | a partial build schedule, in which *stuck* is expressible and the schedule hypothesis is gone | `ViewPace`, `ViewPace.populatedOn`, `ViewPace.commits_recur_via_pace`, `ugrowStuckPace_stuck` *(ViewPace, LeanDagTest.ViewSync)* |
+| V17 | a partial build schedule, in which *stuck* is expressible and the schedule hypothesis is gone | `ViewPace`, `ViewPace.reached`, `ViewPace.populatedOn`, `ViewPace.driftOn_of_prompt`, `ViewPace.commits_recur_via_pace`, `ugrowStuckPace_stuck` *(ViewPace, LeanDagTest.ViewSync)* |
 | L11 | drift is derived | `Timing.driftFrom_of_prompt` *(Timing)* |
 | L8a | the round of coverage, explicitly | `synchronisedOn_of_rate` *(Quantitative)* |
 | L8b | the committing slot, and its round | `commits_recur_within`, `commits_recur_by_round` *(Quantitative)* |
@@ -9280,6 +9284,15 @@ structure ViewPace (U : BlockUniverse Validator BlockId Payload)
   to this one. -/
   latest : ℕ → ℕ
   built_le_latest : ∀ v ∈ T, ∀ n ≤ N, built v n ≤ latest n
+  /-- `latest` is *attained*, not merely an upper bound — the clause the
+  drift argument consumes. -/
+  latest_mem : ∀ n ≤ N, ∃ w ∈ T, latest n ≤ built w n
+  /-- **P9, the promptness rule** (protocol), over the rounds `v` reached.
+  Kept so that drift remains *derived* here as it is for `Timing`: without
+  it `DriftOn` would have to be assumed, which would be a step backwards
+  from the total-schedule routes. -/
+  prompt : ∀ v ∈ T, ∀ n < top v,
+    built v (n + 1) ≤ max (built v n + timeout n) (latest n + delay)
   holds : Validator → ℕ → Finset BlockId
   holds_sub : ∀ v t, holds v t ⊆ U.ids
   /-- A validator holds every block it authored, from the time it built it. -/
@@ -9321,7 +9334,7 @@ Everything else is `ViewGrowth`'s, with the schedule clauses guarded by `n < top
 
 ## Appendix C. The theorem reference
 
-The 345 theorems that either another module of the
+The 347 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -14073,6 +14086,22 @@ theorem card_novelty_le_of_donor {κ R : ℕ} (hbyz : ByzBudget D κ)
 
 Report §8.4's `RefsAccepted` asks for the author, and the pool argument uses only this. The two component lemmas were already stated at the right generality; composing them at a `w` other than the author is what had not been done.
 
+#### `reached`
+
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem reached (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+    ∀ n ≤ N, ∀ v ∈ T, n ≤ vp.top v
+```
+
+**Production, with no deadline to beat.** Every round below the horizon is populated, from genesis, view convergence and the progress rule — and from nothing else. No drift, no backoff, no `timeout`, and no counterpart to `ViewGrowth`'s `hcross`.
+
+The step is the familiar one with the deadline removed. Each `w ∈ T` reached round `n` (induction hypothesis), so it has a block there and holds it from `built w n`; `holds_mono` carries that forward to `max (latest n) gst`, a single time serving every `w` at once; `converges` puts all of them in `v`'s hands by `max (latest n) gst + delay`. That is a quorum of distinct authors, so `advances` fires and `v` is past round `n` — whereupon `built_of_le_top` supplies its round-`n+1` block.
+
+**Where `hcross` went.** In `ViewGrowth` the quorum had to arrive by `built v (n+1)`, a time fixed before the run, and `hcross` was what made the straddling round late enough to make it. Here the arrival time is not compared with anything: `advances` takes the quorum at whatever time it appears. A schedule that raced ahead of the network pre-GST is not excluded by hypothesis — it is not expressible, because a validator that never held a quorum at round `n` never reached round `n+1`.
+
 #### `populatedOn`
 
 *theorem, `ViewPace.lean`*
@@ -14083,11 +14112,23 @@ theorem populatedOn (vp : ViewPace U T N)
     ∀ n ≤ N, PopulatedOn U T n
 ```
 
-**Production, with no deadline to beat.** Every round below the horizon is populated, from genesis, view convergence and the progress rule — and from nothing else. No drift, no backoff, no `timeout`, and no counterpart to `ViewGrowth`'s `hcross`.
+**Production**, read off `reached`: a round a validator got to is a round it built in.
 
-The step is the familiar one with the deadline removed. Each `w ∈ T` reached round `n` (induction hypothesis), so it has a block there and holds it from `built w n`; `holds_mono` carries that forward to `max (latest n) gst`, a single time serving every `w` at once; `converges` puts all of them in `v`'s hands by `max (latest n) gst + delay`. That is a quorum of distinct authors, so `advances` fires and `v` is past round `n` — whereupon `built_of_le_top` supplies its round-`n+1` block.
+#### `driftOn_of_prompt`
 
-**Where `hcross` went.** In `ViewGrowth` the quorum had to arrive by `built v (n+1)`, a time fixed before the run, and `hcross` was what made the straddling round late enough to make it. Here the arrival time is not compared with anything: `advances` takes the quorum at whatever time it appears. A schedule that raced ahead of the network pre-GST is not excluded by hypothesis — it is not expressible, because a validator that never held a quorum at round `n` never reached round `n+1`.
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem driftOn_of_prompt (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card) {n₀ D : ℕ}
+    (hbase : ∀ v ∈ T, ∀ w ∈ T, vp.built w n₀ ≤ vp.built v n₀ + D)
+    (hto : ∀ n, n₀ ≤ n → vp.delay ≤ vp.timeout n) :
+    DriftOn vp.built T n₀ D N
+```
+
+**Drift is derived here too.** `Timing.driftFrom_of_prompt`'s argument over a partial schedule: the same two-case split on `prompt`'s `max`, with the round guards discharged by `reached` rather than by the horizon.
+
+Keeping this is what stops the partial schedule being a step backwards. On the total-schedule routes drift is a consequence of promptness, not an assumption, and it stays one: what is asked of the implementation is a common start spread and a backoff clearing `delay`.
 
 #### `synchronisedOn_of_converges`
 
