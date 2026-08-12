@@ -75,15 +75,15 @@ def Rated (timeout : ℕ → ℕ) : Prop := ∀ n, n ≤ timeout n
 
 /-- **A rated backoff clears any threshold by the threshold itself.**
 
-Contrast `exists_backoff_ge`, which needs `Monotone` to turn one clearing round
-into all later ones. Monotonicity is not used here: the bound at `n` comes from
-`n` itself, so it cannot lapse afterwards. -/
+Monotonicity is not used here — the bound at `n` comes from `n` itself, so
+it cannot lapse afterwards — where the retired existential form needed
+`Monotone` to turn one clearing round into all later ones. -/
 theorem backoff_ge_of_rate {timeout : ℕ → ℕ} (hrate : Rated timeout) (m : ℕ) :
     ∀ n, m ≤ n → m ≤ timeout n :=
   fun n hn => le_trans hn (hrate n)
 
-/-- Every rated backoff is unbounded, so `Rated` really is a strengthening of
-`exists_backoff_ge`'s hypothesis rather than a sideways move. -/
+/-- Every rated backoff is unbounded, so `Rated` really is a strengthening
+of the retired existential hypothesis rather than a sideways move. -/
 theorem unbounded_of_rated {timeout : ℕ → ℕ} (hrate : Rated timeout) :
     ∀ m, ∃ n, m ≤ timeout n :=
   fun m => ⟨m, hrate m⟩

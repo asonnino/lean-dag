@@ -558,19 +558,17 @@ strictly more than anything downstream consumes — `decided_of_leader_of_popula
 discarded the excess immediately. Asking both over `T` makes this a statement
 about *any* quorum-sized set of reliable validators: the correct validators
 outside `T` may be permanently starved and the slot still commits. That is not
-a vacuous generality — `reliable_set_is_forced` (V12) exhibits a DAG in which
-coverage over a proper subset of `Correct` holds and coverage over `Correct`
-fails. It is a genuine weakening only below full fault load, since
+a vacuous generality — `reliable_set_is_forced_pace` (V12) exhibits a DAG in
+which coverage over a proper subset of `Correct` holds and coverage over
+`Correct` fails. It is a genuine weakening only below full fault load, since
 `|byzantine| = f` forces `T = Correct` (`reliable_eq_correct`).
 
 **Production is asked for only from `R` on.** The rule reads it off at three
 rounds, all of them at or above `R`, so rounds below the synchrony round were
 never consumed. Dropping them matters because that is exactly the range a
 structure carrying the *build rule* rather than a total block function can
-supply: `ViewGrowth.populatedOn` derives production from its seed round
-onwards and can say nothing beneath it, since `converges` is silent below
-`gst`. With the hypothesis cut to the range that is used, P8 in its
-conditional form reaches liveness — see `ViewGrowth.commits_recur_via_growth`. -/
+supply. With the hypothesis cut to the range that is used, P8 in its
+conditional form reaches liveness — `ViewPace.commits_recur_via_pace`. -/
 def CommitsAt (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
     [S : Slots Validator] (T : Finset Validator) (R k : ℕ) : Prop :=
   ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),

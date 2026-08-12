@@ -148,7 +148,7 @@ end Factoring
 blocks are exactly the rounds `0` through `top v`: `built_of_le_top`
 supplies one at each of them, and `le_top_of_built` says there are none
 above. Neither is an assumption about the network — the first at `n = 0`
-is `Live.genesis`, which a validator satisfies alone, and the rest of it
+is genesis, which a validator satisfies alone, and the rest of it
 is the definition of how far the validator got.
 
 Everything else is `ViewGrowth`'s, with the schedule clauses guarded by
@@ -165,7 +165,7 @@ structure ViewPace (U : BlockUniverse Validator BlockId Payload)
   delay : ℕ
   rounds_le : ∀ b ∈ U.ids, (U.block b).round ≤ N
   /-- **Every round `v` reached, it built in.** At `n = 0` this is
-  `Live.genesis` — a validator produces its genesis block alone, so this
+  genesis — a validator produces its genesis block alone, so this
   much needs no network at all. Above `0` it is the reading of `top`: the
   validator got there, which is to say it built there. -/
   built_of_le_top : ∀ v ∈ T, ∀ n ≤ top v,
@@ -326,9 +326,9 @@ theorem populatedOn (vp : ViewPace U T N)
   fun n hn v hv => vp.built_of_le_top v hv n (vp.reached hcard n hn v hv)
 
 omit [DecidableEq BlockId] in
-/-- **Drift is derived here too.** `Timing.driftFrom_of_prompt`'s argument
-over a partial schedule: the same two-case split on `prompt`'s `max`, with
-the round guards discharged by `reached` rather than by the horizon.
+/-- **Drift is derived here too**, by the total-schedule argument over the
+partial one: the same two-case split on `prompt`'s `max`, with the round
+guards discharged by `reached` rather than by the horizon.
 
 Keeping this is what stops the partial schedule being a step backwards. On
 the total-schedule routes drift is a consequence of promptness, not an
@@ -406,7 +406,7 @@ What remains divides cleanly. The network contributes `converges` and
 `vp.gst ≤ R`. The protocol contributes `built_of_le_top` at round `0`
 (genesis), `advances` (the pacemaker does not stall), `references` (P7) and
 `waits` (P9); drift and the backoff are needed only for coverage, and
-`driftFrom_of_prompt`'s argument discharges the first from promptness as
+`driftOn_of_prompt` discharges the first from promptness as
 before. Production needs none of them. -/
 theorem commits_recur_via_pace (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
@@ -453,7 +453,7 @@ theorem _root_.LeanDag.DriftOn.mono {built : Validator → ℕ → ℕ}
 omit [DecidableEq BlockId] in
 /-- **Q3 on this route** — coverage from an explicit round, under a rated
 backoff: `R = max (max (D + delay) n₀) gst`, each summand what it looks
-like. `Timing.synchronisedOn_of_rate` with the structure swapped and
+like — the total-schedule statement with the structure swapped and
 `T ⊆ Correct` gone. -/
 theorem synchronisedOn_of_rate (vp : ViewPace U T N)
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)

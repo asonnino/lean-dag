@@ -1,7 +1,17 @@
 # Converging liveness on `ViewPace`
 
-*Design record. Branch `liveness-route-audit`. Nothing here is implemented
-beyond the audit of §2 and the compatibility file `LeanDagTest/Routes.lean`.*
+*Design record, and now the record of the executed programme. The plan of
+§§3–8 was carried out on branch `liveness-route-audit`: the feature arcs
+are relativised (steps 1–2), the necessity witnesses, V1 and the
+quantitative arc are restated over `ViewPace` (steps 3–5), and the old
+routes are deleted (steps 6a–6c) — `ViewSync.lean` and `Timing.lean`
+removed, `ViewGrowth` and `CatchupSync` with them, `Live`,
+`DeliversQuorum`, `no_stall` and `synchronised_of_delivery` gone,
+`Delivery` demoted to the storage model with the DoS capstones restated
+interface-style, and report §§4, 6, 16–18 rewritten as the single-route
+account. §5's prediction held: `Delivery` could not be deleted, and was
+not. The open questions of §9 remain open except 9.4, settled by
+`ViewPace.reached`. What follows is the plan as written before the work.*
 
 ## 1. The goal
 
