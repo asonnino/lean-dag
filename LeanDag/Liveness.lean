@@ -378,6 +378,38 @@ question of §4.4 could be settled without touching this proof. -/
 
 variable {L C : BlockId} {R r : ℕ} {k : ℕ} {T : Finset Validator}
 
+omit S [DecidableEq BlockId] in
+/-- **What the two-round rules count** — the targeted half of coverage: every
+`T`-authored block one round above `r` references `L`. This is the meet
+point of the pacing disciplines (report §11): full coverage implies it
+outright (`votesAt_of_synchronisedOn`), and the reactive exit supplies it
+directly (`ReactivePace.votes`), so the commit arguments below are stated
+against it and proved once. Round-indexed and schedule-free, as L4's
+round-level forms are. -/
+def VotesAt (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (r : ℕ) (L : BlockId) : Prop :=
+  ∀ v ∈ T, ∀ c ∈ U.ids, (U.block c).creator = v →
+    (U.block c).round = r + 1 → L ∈ (U.block c).refs
+
+omit S in
+/-- **What the three-round rule counts**: every `T`-authored block at the
+decision round certifies `L`. Coverage implies it through the vote layer
+(`certifiesAt_of_synchronisedOn`); the reactive certificate wait supplies
+it directly (`ReactiveM.certifies`). -/
+def CertifiesAt (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (r : ℕ) (L : BlockId) : Prop :=
+  ∀ v ∈ T, ∀ c ∈ U.ids, (U.block c).creator = v →
+    (U.block c).round = r + 2 → Certifies U c L
+
+omit S [DecidableEq BlockId] in
+/-- Coverage gives the votes: the instantiation of `SynchronisedOn` at
+`n = r`, with `L` the one block singled out. -/
+theorem votesAt_of_synchronisedOn (hs : SynchronisedOn U T R) (hRr : R ≤ r)
+    (hL : L ∈ U.ids) (hLr : (U.block L).round = r)
+    (hLc : (U.block L).creator ∈ T) :
+    VotesAt U T r L :=
+  fun _v hv c hc hcc hcr => hs r hRr c hc hcr (hcc ▸ hv) L hL hLr hLc
+
 omit S in
 /-- A correct round-`(r+2)` block certifies any correct round-`r` block, once
 round `r+1` is populated and synchrony has taken hold.
@@ -402,24 +434,52 @@ theorem certifies_of_synchronisedOn (hcard : (Fintype.card Validator - F.f) ≤ 
          hs r hRr q hq hqr hqcorrect L hL hLr hLc⟩
 
 omit S in
+/-- Coverage gives the certificates, through the vote layer: the
+`CertifiesAt` form of the lemma above. -/
+theorem certifiesAt_of_synchronisedOn
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hs : SynchronisedOn U T R) (hRr : R ≤ r)
+    (hpop1 : PopulatedOn U T (r + 1))
+    (hL : L ∈ U.ids) (hLr : (U.block L).round = r)
+    (hLc : (U.block L).creator ∈ T) :
+    CertifiesAt U T r L :=
+  fun _v hv C hC hCc hCr =>
+    certifies_of_synchronisedOn hcard hs hRr hpop1 hL hLr hLc hC hCr (hCc ▸ hv)
+
+omit S in
+/-- **The commit argument, stated once.** A quorum-sized `T` whose
+decision-round blocks all certify `L` directly commits it: each `v ∈ T`
+has a round-`(r+2)` block by production, it certifies by hypothesis, and
+`T`'s cardinality does the counting. Both pacing disciplines end here —
+the full-timeout one arriving through `certifiesAt_of_synchronisedOn`,
+the reactive one through `ReactiveM.certifies`. -/
+theorem directCommit_of_certifiesAt
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hpop2 : PopulatedOn U T (r + 2))
+    (hc : CertifiesAt U T r L) :
+    DirectCommit U L r := by
+  refine le_trans hcard (Finset.card_le_card ?_)
+  intro v hv
+  obtain ⟨C, hC, hCc, hCr⟩ := hpop2 v hv
+  rw [mem_creatorsOf]
+  exact ⟨C, mem_certificates.mpr ⟨hC, hCr, hc v hv C hC hCc hCr⟩, hCc⟩
+
+omit S in
 /-- **L4, at the round level.** A correct block at round `r` is directly
 committed, given coverage from `r` and correct blocks at `r+1` and `r+2`.
 
 Stated without `Slots`: nothing in the argument cares that `L` is a leader
 block, only that it is correct-authored — the same separation Stage A makes
-for M1–M3. -/
+for M1–M3. The proof is the composition through the targeted interface:
+coverage supplies `CertifiesAt`, and the shared counting theorem does the
+rest. -/
 theorem directCommit_of_synchronisedOn (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hs : SynchronisedOn U T R) (hRr : R ≤ r)
     (hpop1 : PopulatedOn U T (r + 1)) (hpop2 : PopulatedOn U T (r + 2))
     (hL : L ∈ U.ids) (hLr : (U.block L).round = r) (hLc : (U.block L).creator ∈ T) :
-    DirectCommit U L r := by
-  refine le_trans hcard (Finset.card_le_card ?_)
-  intro v hv
-  obtain ⟨C, hC, hCc, hCr⟩ := hpop2 v hv
-  have hCcorrect : (U.block C).creator ∈ T := by rw [hCc]; exact hv
-  rw [mem_creatorsOf]
-  exact ⟨C, mem_certificates.mpr ⟨hC, hCr,
-    certifies_of_synchronisedOn hcard hs hRr hpop1 hL hLr hLc hC hCr hCcorrect⟩, hCc⟩
+    DirectCommit U L r :=
+  directCommit_of_certifiesAt hcard hpop2
+    (certifiesAt_of_synchronisedOn hcard hs hRr hpop1 hL hLr hLc)
 
 omit [DecidableEq BlockId] in
 /-- A correct leader has a candidate block, once its round is populated.

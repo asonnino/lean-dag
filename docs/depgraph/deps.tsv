@@ -3548,6 +3548,7 @@ EDGE	LeanDag.chop._proof_2	LeanDag.BlockUniverse
 EDGE	LeanDag.chop._proof_2	LeanDag.Faults.f
 NODE	LeanDag.ReactivePace.votes	LeanDag.Reactive.Basic	thm
 EDGE	LeanDag.ReactivePace.votes	LeanDag.ReactivePace.vote_or_wait
+EDGE	LeanDag.ReactivePace.votes	LeanDag.VotesAt
 EDGE	LeanDag.ReactivePace.votes	LeanDag.ReactivePace.le_built
 EDGE	LeanDag.ReactivePace.votes	LeanDag.Faults
 EDGE	LeanDag.ReactivePace.votes	LeanDag.Slots.slotRound
@@ -7532,6 +7533,18 @@ NODE	LeanDag.lt_of_eligible._proof_1_1	LeanDag.Mysticeti	thm
 NODE	LeanDagTest.ugrowReactive._proof_20	LeanDagTest.Reactive	thm
 EDGE	LeanDagTest.ugrowReactive._proof_20	LeanDag.Slots.slotRound
 EDGE	LeanDagTest.ugrowReactive._proof_20	LeanDagTest.rrSlots
+NODE	LeanDag.certifiesAt_of_synchronisedOn	LeanDag.Liveness	thm
+EDGE	LeanDag.certifiesAt_of_synchronisedOn	LeanDag.certifies_of_synchronisedOn
+EDGE	LeanDag.certifiesAt_of_synchronisedOn	LeanDag.Faults
+EDGE	LeanDag.certifiesAt_of_synchronisedOn	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.certifiesAt_of_synchronisedOn	LeanDag.BlockUniverse.block
+EDGE	LeanDag.certifiesAt_of_synchronisedOn	LeanDag.Block.round
+EDGE	LeanDag.certifiesAt_of_synchronisedOn	LeanDag.PopulatedOn
+EDGE	LeanDag.certifiesAt_of_synchronisedOn	LeanDag.CertifiesAt
+EDGE	LeanDag.certifiesAt_of_synchronisedOn	LeanDag.BlockUniverse
+EDGE	LeanDag.certifiesAt_of_synchronisedOn	LeanDag.Faults.f
+EDGE	LeanDag.certifiesAt_of_synchronisedOn	LeanDag.SynchronisedOn
+EDGE	LeanDag.certifiesAt_of_synchronisedOn	LeanDag.Block.creator
 NODE	LeanDag.ViewPace.mk.sizeOf_spec	LeanDag.ViewPace	thm
 EDGE	LeanDag.ViewPace.mk.sizeOf_spec	LeanDag.PaceCore._sizeOf_inst
 EDGE	LeanDag.ViewPace.mk.sizeOf_spec	LeanDag.Faults
@@ -7665,6 +7678,14 @@ EDGE	LeanDagTest.u7_decidedWithin_slot0	LeanDag.certificates
 EDGE	LeanDagTest.u7_decidedWithin_slot0	LeanDag.DecidedWithin.indirectCommit
 EDGE	LeanDagTest.u7_decidedWithin_slot0	LeanDag.Reaches
 NODE	LeanDagTest.odoBlk._proof_3	LeanDagTest.Odontoceti.Model	thm
+NODE	LeanDag.CertifiesAt	LeanDag.Liveness	def
+EDGE	LeanDag.CertifiesAt	LeanDag.Faults
+EDGE	LeanDag.CertifiesAt	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.CertifiesAt	LeanDag.Certifies
+EDGE	LeanDag.CertifiesAt	LeanDag.BlockUniverse.block
+EDGE	LeanDag.CertifiesAt	LeanDag.Block.round
+EDGE	LeanDag.CertifiesAt	LeanDag.BlockUniverse
+EDGE	LeanDag.CertifiesAt	LeanDag.Block.creator
 NODE	LeanDag.Odontoceti.epoch_closes._proof_1_5	LeanDag.Adaptive.Odontoceti	thm
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_5	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_5	LeanDag.AdaptivePolicy.W
@@ -8387,6 +8408,22 @@ EDGE	LeanDagTest.ugapPace._proof_3	LeanDagTest.Uomit
 EDGE	LeanDagTest.ugapPace._proof_3	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ugapPace._proof_3	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugapPace._proof_3	LeanDag.Block.creator
+NODE	LeanDag.Odontoceti.directCommit_of_votesAt	LeanDag.Odontoceti.Liveness	thm
+EDGE	LeanDag.Odontoceti.directCommit_of_votesAt	LeanDag.VotesAt
+EDGE	LeanDag.Odontoceti.directCommit_of_votesAt	LeanDag.Faults5
+EDGE	LeanDag.Odontoceti.directCommit_of_votesAt	LeanDag.mem_supporters
+EDGE	LeanDag.Odontoceti.directCommit_of_votesAt	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.Odontoceti.directCommit_of_votesAt	LeanDag.Block.refs
+EDGE	LeanDag.Odontoceti.directCommit_of_votesAt	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Odontoceti.directCommit_of_votesAt	LeanDag.Block.round
+EDGE	LeanDag.Odontoceti.directCommit_of_votesAt	LeanDag.PopulatedOn
+EDGE	LeanDag.Odontoceti.directCommit_of_votesAt	LeanDag.BlockUniverse
+EDGE	LeanDag.Odontoceti.directCommit_of_votesAt	LeanDag.Faults.f
+EDGE	LeanDag.Odontoceti.directCommit_of_votesAt	LeanDag.supporters
+EDGE	LeanDag.Odontoceti.directCommit_of_votesAt	LeanDag.Slots
+EDGE	LeanDag.Odontoceti.directCommit_of_votesAt	LeanDag.Odontoceti.DirectCommit
+EDGE	LeanDag.Odontoceti.directCommit_of_votesAt	LeanDag.Faults5.toFaults
+EDGE	LeanDag.Odontoceti.directCommit_of_votesAt	LeanDag.Block.creator
 NODE	LeanDagTest.odoBlk._proof_4	LeanDagTest.Odontoceti.Model	thm
 EDGE	LeanDagTest.odoBlk._proof_4	LeanDagTest.odoBlk._proof_1
 NODE	LeanDag.Odontoceti.PartialRun.mk.injEq	LeanDag.Adaptive.Odontoceti	thm
@@ -11906,6 +11943,7 @@ NODE	LeanDag.ReactiveM.certifies	LeanDag.Reactive.Mysticeti	thm
 EDGE	LeanDag.ReactiveM.certifies	LeanDag.votesIn
 EDGE	LeanDag.ReactiveM.certifies	LeanDag.ReactiveM.certifies._proof_1_3
 EDGE	LeanDag.ReactiveM.certifies	LeanDag.ReactiveM.toReactivePace
+EDGE	LeanDag.ReactiveM.certifies	LeanDag.VotesAt
 EDGE	LeanDag.ReactiveM.certifies	LeanDag.creatorsOf
 EDGE	LeanDag.ReactiveM.certifies	LeanDag.ReactivePace.le_built
 EDGE	LeanDag.ReactiveM.certifies	LeanDag.mem_creatorsOf
@@ -11936,6 +11974,7 @@ EDGE	LeanDag.ReactiveM.certifies	LeanDag.ReactiveM.certifies._proof_1_5
 EDGE	LeanDag.ReactiveM.certifies	LeanDag.PaceCore.top
 EDGE	LeanDag.ReactiveM.certifies	LeanDag.Block.round
 EDGE	LeanDag.ReactiveM.certifies	LeanDag.PopulatedOn
+EDGE	LeanDag.ReactiveM.certifies	LeanDag.CertifiesAt
 EDGE	LeanDag.ReactiveM.certifies	LeanDag.BlockUniverse
 EDGE	LeanDag.ReactiveM.certifies	LeanDag.ReactiveM.certifies._proof_1_2
 EDGE	LeanDag.ReactiveM.certifies	LeanDag.Faults.f
@@ -12815,6 +12854,14 @@ NODE	LeanDagTest.ugapPace._proof_20	LeanDagTest.Unbounded	thm
 EDGE	LeanDagTest.ugapPace._proof_20	LeanDagTest.ugapPace._proof_5
 EDGE	LeanDagTest.ugapPace._proof_20	LeanDag.Correct
 EDGE	LeanDagTest.ugapPace._proof_20	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+NODE	LeanDag.VotesAt	LeanDag.Liveness	def
+EDGE	LeanDag.VotesAt	LeanDag.Faults
+EDGE	LeanDag.VotesAt	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.VotesAt	LeanDag.Block.refs
+EDGE	LeanDag.VotesAt	LeanDag.BlockUniverse.block
+EDGE	LeanDag.VotesAt	LeanDag.Block.round
+EDGE	LeanDag.VotesAt	LeanDag.BlockUniverse
+EDGE	LeanDag.VotesAt	LeanDag.Block.creator
 NODE	LeanDagTest.ugapPace_convergesEventually	LeanDagTest.Unbounded	thm
 EDGE	LeanDagTest.ugapPace_convergesEventually	LeanDag.ViewPace.toPaceCore
 EDGE	LeanDagTest.ugapPace_convergesEventually	LeanDagTest.ugapPace._simp_7
@@ -12932,35 +12979,24 @@ EDGE	LeanDag.PaceCore.timeout	LeanDag.BlockUniverse
 EDGE	LeanDag.PaceCore.timeout	LeanDag.PaceCore
 NODE	LeanDag.ReactiveM.directCommit	LeanDag.Reactive.Mysticeti	thm
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.ReactiveM.toReactivePace
-EDGE	LeanDag.ReactiveM.directCommit	LeanDag.creatorsOf
-EDGE	LeanDag.ReactiveM.directCommit	LeanDag.mem_creatorsOf
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.Faults
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.Slots.slotRound
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.DriftOn
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.ReactiveM
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.DirectCommit
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.Slots.leader
-EDGE	LeanDag.ReactiveM.directCommit	LeanDag.BlockUniverse.ids
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.PaceCore.built
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.PaceCore.gst
-EDGE	LeanDag.ReactiveM.directCommit	LeanDag.Certifies
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.Correct
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.PaceCore.populatedOn
-EDGE	LeanDag.ReactiveM.directCommit	LeanDag.BlockUniverse.block
-EDGE	LeanDag.ReactiveM.directCommit	LeanDag.Block.round
-EDGE	LeanDag.ReactiveM.directCommit	LeanDag.PopulatedOn
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.BlockUniverse
-EDGE	LeanDag.ReactiveM.directCommit	LeanDag.blocksAt
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.Faults.f
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.ReactivePace.toPaceCore
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.PaceCore.timeout
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.ReactiveM.certifies
-EDGE	LeanDag.ReactiveM.directCommit	LeanDag.decidableCertifies
+EDGE	LeanDag.ReactiveM.directCommit	LeanDag.directCommit_of_certifiesAt
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.IsLeaderBlock
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.Slots
-EDGE	LeanDag.ReactiveM.directCommit	LeanDag.certificates
-EDGE	LeanDag.ReactiveM.directCommit	LeanDag.Block.creator
-EDGE	LeanDag.ReactiveM.directCommit	LeanDag.mem_blocksAt
 EDGE	LeanDag.ReactiveM.directCommit	LeanDag.PaceCore.delay
 NODE	LeanDag.View.complete	LeanDag.BlockDag	thm
 EDGE	LeanDag.View.complete	LeanDag.Faults
@@ -13180,28 +13216,21 @@ EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.ReactivePace.votes
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.Slots.slotRound
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.DriftOn
-EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.mem_supporters
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.Slots.leader
-EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.BlockUniverse.ids
-EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.Block.refs
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.PaceCore.built
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.PaceCore.gst
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.Correct
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.PaceCore.populatedOn
-EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.BlockUniverse.block
-EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.Block.round
-EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.PopulatedOn
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.Faults.f
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.ReactivePace.toPaceCore
-EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.supporters
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.PaceCore.timeout
+EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.Odontoceti.directCommit_of_votesAt
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.IsLeaderBlock
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.Odontoceti.DirectCommit
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.Faults5.toFaults
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.ReactivePace
-EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.Block.creator
 EDGE	LeanDag.Odontoceti.reactive_directCommit	LeanDag.PaceCore.delay
 NODE	LeanDag.round_le_of_mem_viewUpto._proof_1_1	LeanDag.DoS.Novelty	thm
 EDGE	LeanDag.round_le_of_mem_viewUpto._proof_1_1	LeanDag.Faults
@@ -20804,21 +20833,20 @@ EDGE	LeanDag.SkipMsg.mk.inj	LeanDag.Block.creator
 NODE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.Odontoceti.Liveness	thm
 EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.Slots.slotRound
-EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.mem_supporters
 EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.Slots.leader
 EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.BlockUniverse.ids
-EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.Block.refs
 EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.BlockUniverse.block
 EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.Block.round
 EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.PopulatedOn
 EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.Faults.f
-EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.supporters
+EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.Odontoceti.directCommit_of_votesAt
 EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.IsLeaderBlock
 EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.SynchronisedOn
 EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.Odontoceti.DirectCommit
 EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.Faults5.toFaults
+EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.votesAt_of_synchronisedOn
 EDGE	LeanDag.Odontoceti.directCommit_of_leader_mem	LeanDag.Block.creator
 NODE	LeanDag.not_directCommit_of_directSkip	LeanDag.Mysticeti	thm
 EDGE	LeanDag.not_directCommit_of_directSkip	LeanDag.creatorsOf
@@ -22721,6 +22749,22 @@ EDGE	LeanDag.BlockUniverse.no_equivocation	LeanDag.BlockUniverse.block
 EDGE	LeanDag.BlockUniverse.no_equivocation	LeanDag.Block.round
 EDGE	LeanDag.BlockUniverse.no_equivocation	LeanDag.BlockUniverse
 EDGE	LeanDag.BlockUniverse.no_equivocation	LeanDag.Block.creator
+NODE	LeanDag.directCommit_of_certifiesAt	LeanDag.Liveness	thm
+EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.creatorsOf
+EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.mem_creatorsOf
+EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.Faults
+EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.DirectCommit
+EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.mem_certificates
+EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.Certifies
+EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.BlockUniverse.block
+EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.Block.round
+EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.PopulatedOn
+EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.CertifiesAt
+EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.BlockUniverse
+EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.Faults.f
+EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.certificates
+EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.Block.creator
 NODE	LeanDag.Hybrid.ThickLink.congr_simp	LeanDag.Hybrid.Liveness	thm
 EDGE	LeanDag.Hybrid.ThickLink.congr_simp	LeanDag.Hybrid.ThickLink
 EDGE	LeanDag.Hybrid.ThickLink.congr_simp	LeanDag.HybridFaults
@@ -23491,21 +23535,17 @@ EDGE	LeanDag.ViewPace._sizeOf_inst	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewPace._sizeOf_inst	LeanDag.ViewPace
 NODE	LeanDagTest.Uomit._proof_7	LeanDagTest.Unbounded	thm
 NODE	LeanDag.directCommit_of_synchronisedOn	LeanDag.Liveness	thm
-EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.creatorsOf
-EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.certifies_of_synchronisedOn
-EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.mem_creatorsOf
 EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.Faults
 EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.DirectCommit
 EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.BlockUniverse.ids
-EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.mem_certificates
-EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.Certifies
 EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.BlockUniverse.block
 EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.Block.round
 EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.PopulatedOn
 EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.BlockUniverse
 EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.Faults.f
+EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.directCommit_of_certifiesAt
+EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.certifiesAt_of_synchronisedOn
 EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.SynchronisedOn
-EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.certificates
 EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.Block.creator
 NODE	LeanDagTest.lkd	LeanDagTest.DoS.Doubling	def
 EDGE	LeanDagTest.lkd	LeanDag.Block
@@ -23995,6 +24035,15 @@ EDGE	LeanDagTest.ugrow_blocksAt_eq_empty	LeanDag.Block.round
 EDGE	LeanDagTest.ugrow_blocksAt_eq_empty	LeanDag.blocksAt
 EDGE	LeanDagTest.ugrow_blocksAt_eq_empty	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrow_blocksAt_eq_empty	LeanDag.mem_blocksAt
+NODE	LeanDag.votesAt_of_synchronisedOn	LeanDag.Liveness	thm
+EDGE	LeanDag.votesAt_of_synchronisedOn	LeanDag.VotesAt
+EDGE	LeanDag.votesAt_of_synchronisedOn	LeanDag.Faults
+EDGE	LeanDag.votesAt_of_synchronisedOn	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.votesAt_of_synchronisedOn	LeanDag.BlockUniverse.block
+EDGE	LeanDag.votesAt_of_synchronisedOn	LeanDag.Block.round
+EDGE	LeanDag.votesAt_of_synchronisedOn	LeanDag.BlockUniverse
+EDGE	LeanDag.votesAt_of_synchronisedOn	LeanDag.SynchronisedOn
+EDGE	LeanDag.votesAt_of_synchronisedOn	LeanDag.Block.creator
 NODE	LeanDag.ReactiveM.mk.noConfusion	LeanDag.Reactive.Mysticeti	def
 EDGE	LeanDag.ReactiveM.mk.noConfusion	LeanDag.Faults
 EDGE	LeanDag.ReactiveM.mk.noConfusion	LeanDag.Slots.slotRound

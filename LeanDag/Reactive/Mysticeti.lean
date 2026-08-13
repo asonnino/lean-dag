@@ -72,8 +72,7 @@ theorem certifies (hT : T ⊆ (Correct : Finset Validator))
     (hto : ∀ n, R ≤ n → D + rm.delay ≤ rm.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
     (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
-    ∀ v ∈ T, ∀ c ∈ U.ids, (U.block c).creator = v →
-      (U.block c).round = S.slotRound k + 2 → Certifies U c L := by
+    CertifiesAt U T (S.slotRound k) L := by
   intro v hv c hc hcc hcr
   rcases rm.cert_or_wait v hv k hN hlead L hL c hc hcc hcr with hcert | ⟨hwait, hincl⟩
   · exact hcert
@@ -100,24 +99,20 @@ theorem certifies (hT : T ⊆ (Correct : Finset Validator))
     refine mem_creatorsOf.mpr ⟨b, ?_, hbc⟩
     exact Finset.mem_filter.mpr ⟨hincl b hb (hbc ▸ hu) hbr harrive hvote, hvote⟩
 
-/-- **The reactive direct commit.** Every reliable validator's
-round-`(r+2)` block certifies, and `T` is a quorum of certificate
-authors — with the certificate blocks supplied by derived production. -/
+/-- **The reactive direct commit** — the shared counting theorem
+(`directCommit_of_certifiesAt`) fed by the reactive certificate
+supplier, with the certificate blocks from derived production. One
+application; the argument lives in `Liveness.lean`, once. -/
 theorem directCommit (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hD : DriftOn rm.built T R D N) (hgst : rm.gst ≤ R)
     (hto : ∀ n, R ≤ n → D + rm.delay ≤ rm.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
     (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
-    DirectCommit U L (S.slotRound k) := by
-  have hcerts := rm.certifies hT hcard hD hgst hto hR hN hlead hL
-  have hpop := rm.toPaceCore.populatedOn hcard (S.slotRound k + 2) (by omega)
-  refine le_trans hcard (Finset.card_le_card ?_)
-  intro v hv
-  obtain ⟨c, hc, hcc, hcr⟩ := hpop v hv
-  refine mem_creatorsOf.mpr ⟨c, ?_, hcc⟩
-  refine Finset.mem_filter.mpr ⟨mem_blocksAt.mpr ⟨hc, hcr⟩, ?_⟩
-  exact hcerts v hv c hc hcc hcr
+    DirectCommit U L (S.slotRound k) :=
+  directCommit_of_certifiesAt hcard
+    (rm.toPaceCore.populatedOn hcard (S.slotRound k + 2) (by omega))
+    (rm.certifies hT hcard hD hgst hto hR hN hlead hL)
 
 /-- **Reactive liveness (Mysticeti).** A reliable-led slot past GST is
 committed by every view — the conclusion of `decided_of_leader_mem`,

@@ -140,8 +140,7 @@ theorem votes (hT : T ⊆ (Correct : Finset Validator))
     (hto : ∀ n, R ≤ n → D + rc.delay ≤ rc.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
     (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
-    ∀ v ∈ T, ∀ c ∈ U.ids, (U.block c).creator = v →
-      (U.block c).round = S.slotRound k + 1 → L ∈ (U.block c).refs := by
+    VotesAt U T (S.slotRound k) L := by
   intro v hv c hc hcc hcr
   rcases rc.vote_or_wait v hv k hN hlead L hL c hc hcc hcr with hvote | ⟨hwait, hheld⟩
   · exact hvote

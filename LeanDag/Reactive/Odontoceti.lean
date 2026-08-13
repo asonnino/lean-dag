@@ -32,10 +32,10 @@ variable {U : BlockUniverse Validator BlockId Payload}
 variable [S : Slots Validator]
 variable {T : Finset Validator} {D N R : ℕ} {k : ℕ} {L : BlockId}
 
-/-- **The reactive direct commit (Odontoceti).** Every reliable
-validator votes (`ReactivePace.votes`), a vote is a support, and `T` is
-a quorum of supporters — with the vote blocks supplied by the trunk's
-derived production. -/
+/-- **The reactive direct commit (Odontoceti)** — the shared counting
+theorem (`directCommit_of_votesAt`) fed by the reactive vote supplier,
+with the vote blocks from derived production. One application; the
+argument lives with O7, once. -/
 theorem reactive_directCommit (rc : ReactivePace U T N)
     (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
@@ -43,14 +43,10 @@ theorem reactive_directCommit (rc : ReactivePace U T N)
     (hto : ∀ n, R ≤ n → D + rc.delay ≤ rc.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
     (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
-    DirectCommit U L (S.slotRound k) := by
-  have hvotes := rc.votes hT hD hgst hto hR hN hlead hL
-  have hpop := rc.toPaceCore.populatedOn hcard (S.slotRound k + 1) hN
-  refine le_trans hcard (Finset.card_le_card ?_)
-  intro v hv
-  obtain ⟨b, hb, hbc, hbr⟩ := hpop v hv
-  rw [mem_supporters]
-  exact ⟨b, hb, hbr, hvotes v hv b hb hbc hbr, hbc⟩
+    DirectCommit U L (S.slotRound k) :=
+  directCommit_of_votesAt hcard
+    (rc.toPaceCore.populatedOn hcard (S.slotRound k + 1) hN)
+    (rc.votes hT hD hgst hto hR hN hlead hL)
 
 /-- **Reactive liveness (Odontoceti).** A reliable-led slot past GST is
 committed by every view — the conclusion of the two-round

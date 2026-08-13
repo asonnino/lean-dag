@@ -1594,6 +1594,29 @@ since nothing in the argument depends on `L` being a leader block.
 The hypotheses are three local population facts. Neither the horizon, nor growth,
 nor any limiting construction appears.
 
+**The commit argument is factored through what the rule counts.** Two
+predicates name the targeted half of coverage — the only part the commit
+rules read:
+
+```lean
+def VotesAt (U) (T) (r : ℕ) (L : BlockId) : Prop :=
+  ∀ v ∈ T, ∀ c ∈ U.ids, (U.block c).creator = v →
+    (U.block c).round = r + 1 → L ∈ (U.block c).refs
+
+def CertifiesAt (U) (T) (r : ℕ) (L : BlockId) : Prop :=
+  ∀ v ∈ T, ∀ c ∈ U.ids, (U.block c).creator = v →
+    (U.block c).round = r + 2 → Certifies U c L
+```
+
+and one counting theorem per rule consumes them —
+`directCommit_of_certifiesAt` here, `directCommit_of_votesAt` for the
+two-round rule of §10 — with production supplying the blocks counted.
+Coverage implies both predicates (`votesAt_of_synchronisedOn`,
+`certifiesAt_of_synchronisedOn`), which is how L4's proof runs; and the
+reactive schedule of §11 supplies them *directly*, without coverage, from
+its wait clauses. The two pacing disciplines therefore meet at this
+interface: one commit argument, two suppliers.
+
 **L5.**
 ```lean
 theorem decided_none_of_leader_absent {V : View …}
@@ -3047,8 +3070,7 @@ theorem votes (hT : T ⊆ (Correct : Finset Validator))
     (hto : ∀ n, R ≤ n → D + rc.delay ≤ rc.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
     (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
-    ∀ v ∈ T, ∀ c ∈ U.ids, (U.block c).creator = v →
-      (U.block c).round = S.slotRound k + 1 → L ∈ (U.block c).refs
+    VotesAt U T (S.slotRound k) L
 ```
 
 The fallback case is the whole argument, and it is the chain of
@@ -3058,10 +3080,18 @@ drift plus the full timeout place the arrival before the waiter's build,
 where the fallback clause obliges the vote. The reactive exit needs
 nothing — it *is* the vote.
 
+The conclusion is `VotesAt` — the targeted interface of §6.6 — and this
+is where the two pacing disciplines meet. The full-timeout discipline
+derives the same predicate from coverage
+(`votesAt_of_synchronisedOn`); the commit is then one counting theorem
+either way (`directCommit_of_votesAt`, `directCommit_of_certifiesAt`),
+proved once and fed by whichever supplier the schedule provides.
+
 Under Mysticeti, `ReactiveM` adds the certificate stage as the analogous
 dichotomy `cert_or_wait` — a round-`(r+2)` block either already
 certifies, or its builder waited the full timeout and references every
-reliable vote it holds — and the liveness statement mirrors L4's
+reliable vote it holds. `ReactiveM.certifies` concludes `CertifiesAt`,
+the second targeted predicate, and the liveness statement mirrors L4's
 conclusion with the coverage hypothesis replaced by the two wait
 clauses:
 
@@ -5169,7 +5199,7 @@ result in full.
 | L0 | the DAG is dense below its frontier | `card_authorsAt_of_lt` *(Liveness)* |
 | L2 | decisions are monotone in the view | `decided_mono` *(Liveness)* |
 | L3 | decisions propagate to the full view | `decided_full` *(Liveness)* |
-| L4 | a correct leader is committed | `directCommit_of_leader_mem`, `decided_of_leader_mem` *(Liveness)* |
+| L4 | a correct leader is committed | `directCommit_of_leader_mem`, `decided_of_leader_mem`; the targeted interface `VotesAt`, `CertifiesAt`, `directCommit_of_certifiesAt` *(Liveness)*, `directCommit_of_votesAt` *(Odontoceti/Liveness)* |
 | L4′ | at `T := Correct` | `directCommit_of_correct_leader`, `decided_of_correct_leader` *(Liveness)* |
 | L5 | an absent leader is skipped | `decided_none_of_leader_absent` *(Liveness)* |
 | L6 | commits recur | `commits_recur_on`, `commits_recur` *(Liveness)* |
@@ -6048,6 +6078,32 @@ def View.full (U : BlockUniverse Validator BlockId Payload) :
 ```
 
 Every correct validator's *eventual* view. Downward-closed by `U.complete`.
+
+#### `VotesAt`
+
+*def, `Liveness.lean`*
+
+```lean
+def VotesAt (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (r : ℕ) (L : BlockId) : Prop :=
+  ∀ v ∈ T, ∀ c ∈ U.ids, (U.block c).creator = v →
+    (U.block c).round = r + 1 → L ∈ (U.block c).refs
+```
+
+**What the two-round rules count** — the targeted half of coverage: every `T`-authored block one round above `r` references `L`. This is the meet point of the pacing disciplines (report §11): full coverage implies it outright (`votesAt_of_synchronisedOn`), and the reactive exit supplies it directly (`ReactivePace.votes`), so the commit arguments below are stated against it and proved once. Round-indexed and schedule-free, as L4's round-level forms are.
+
+#### `CertifiesAt`
+
+*def, `Liveness.lean`*
+
+```lean
+def CertifiesAt (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (r : ℕ) (L : BlockId) : Prop :=
+  ∀ v ∈ T, ∀ c ∈ U.ids, (U.block c).creator = v →
+    (U.block c).round = r + 2 → Certifies U c L
+```
+
+**What the three-round rule counts**: every `T`-authored block at the decision round certifies `L`. Coverage implies it through the vote layer (`certifiesAt_of_synchronisedOn`); the reactive certificate wait supplies it directly (`ReactiveM.certifies`).
 
 #### `CommitsAt`
 
@@ -8410,7 +8466,7 @@ The full-timeout discipline: `PaceCore` with P9 — the waiting floor and the pr
 
 ## Appendix C. The theorem reference
 
-The 321 theorems that either another module of the
+The 324 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -9478,6 +9534,33 @@ theorem decided_full {V : View Validator BlockId Payload U} {k : ℕ}
 **L3 — commit propagation.** Whatever any validator decides on any view, the same verdict holds on the full view.
 
 Since the full view is every correct validator's eventual view (`liveness.md` §4.2), this *is* "all correct validators eventually reach the same decision".
+
+#### `votesAt_of_synchronisedOn`
+
+*theorem, `Liveness.lean`*
+
+```lean
+theorem votesAt_of_synchronisedOn (hs : SynchronisedOn U T R) (hRr : R ≤ r)
+    (hL : L ∈ U.ids) (hLr : (U.block L).round = r)
+    (hLc : (U.block L).creator ∈ T) :
+    VotesAt U T r L
+```
+
+Coverage gives the votes: the instantiation of `SynchronisedOn` at `n = r`, with `L` the one block singled out.
+
+#### `directCommit_of_certifiesAt`
+
+*theorem, `Liveness.lean`*
+
+```lean
+theorem directCommit_of_certifiesAt
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hpop2 : PopulatedOn U T (r + 2))
+    (hc : CertifiesAt U T r L) :
+    DirectCommit U L r
+```
+
+**The commit argument, stated once.** A quorum-sized `T` whose decision-round blocks all certify `L` directly commits it: each `v ∈ T` has a round-`(r+2)` block by production, it certifies by hypothesis, and `T`'s cardinality does the counting. Both pacing disciplines end here — the full-timeout one arriving through `certifiesAt_of_synchronisedOn`, the reactive one through `ReactiveM.certifies`.
 
 #### `directCommit_of_leader_mem`
 
@@ -11006,6 +11089,20 @@ theorem safety {V₁ V₂ : View Validator BlockId Payload U} {k : ℕ}
 
 **O6 (safety).** Two committed blocks for one slot are the same block, across any two views and any two routes.
 
+#### `directCommit_of_votesAt`
+
+*theorem, `Odontoceti.Liveness.lean`*
+
+```lean
+theorem directCommit_of_votesAt {r : ℕ}
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hpop1 : PopulatedOn U T (r + 1))
+    (hv : VotesAt U T r L) :
+    DirectCommit U L r
+```
+
+**The commit argument, stated once** — the two-round counterpart of `directCommit_of_certifiesAt`. A quorum-sized `T` whose blocks one round above `r` all vote for `L` directly commits it: a vote *is* a support, each `v ∈ T` has a supporting block by production, and `T`'s cardinality does the counting. Both pacing disciplines end here — the full-timeout one arriving through `votesAt_of_synchronisedOn`, the reactive one through `ReactivePace.votes`.
+
 #### `directCommit_of_leader_mem`
 
 *theorem, `Odontoceti.Liveness.lean`*
@@ -11020,7 +11117,7 @@ theorem directCommit_of_leader_mem
     ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k)
 ```
 
-**O7, commit half (thesis Lemma 8 + Corollary 9).** Post-`R`, a `T`-led slot is directly committed: `SynchronisedOn` makes every `T` block at the decision round reference the leader's block, and `T` carries a quorum. Two populated rounds — propose and decide — and one synchronised step.
+**O7, commit half (thesis Lemma 8 + Corollary 9).** Post-`R`, a `T`-led slot is directly committed: `SynchronisedOn` makes every `T` block at the decision round reference the leader's block, and `T` carries a quorum. Two populated rounds — propose and decide — and one synchronised step, routed through the targeted interface.
 
 #### `directCommitIn_full`
 
@@ -11128,8 +11225,7 @@ theorem votes (hT : T ⊆ (Correct : Finset Validator))
     (hto : ∀ n, R ≤ n → D + rc.delay ≤ rc.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
     (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
-    ∀ v ∈ T, ∀ c ∈ U.ids, (U.block c).creator = v →
-      (U.block c).round = S.slotRound k + 1 → L ∈ (U.block c).refs
+    VotesAt U T (S.slotRound k) L
 ```
 
 **Every reliable vote block votes.** Past GST, with the timeout clearing drift plus the delivery bound, every `T`-authored block at the round above a reliable leader references the leader's block — whether by the reactive exit or by the fallback.
@@ -11186,8 +11282,7 @@ theorem certifies (hT : T ⊆ (Correct : Finset Validator))
     (hto : ∀ n, R ≤ n → D + rm.delay ≤ rm.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
     (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
-    ∀ v ∈ T, ∀ c ∈ U.ids, (U.block c).creator = v →
-      (U.block c).round = S.slotRound k + 2 → Certifies U c L
+    CertifiesAt U T (S.slotRound k) L
 ```
 
 **Every reliable certificate block certifies.** In the reactive exit the block certifies by construction. In the fallback, every reliable vote has arrived — each voter holds its own vote when it builds, convergence carries it across, and drift plus the full timeout place the arrival before the fallback build — so the block references all of `T`'s votes, and `T` is a quorum of distinct authors.
@@ -11208,7 +11303,7 @@ theorem directCommit (hT : T ⊆ (Correct : Finset Validator))
     DirectCommit U L (S.slotRound k)
 ```
 
-**The reactive direct commit.** Every reliable validator's round-`(r+2)` block certifies, and `T` is a quorum of certificate authors — with the certificate blocks supplied by derived production.
+**The reactive direct commit** — the shared counting theorem (`directCommit_of_certifiesAt`) fed by the reactive certificate supplier, with the certificate blocks from derived production. One application; the argument lives in `Liveness.lean`, once.
 
 #### `decided`
 
@@ -11241,7 +11336,7 @@ theorem reactive_directCommit (rc : ReactivePace U T N)
     DirectCommit U L (S.slotRound k)
 ```
 
-**The reactive direct commit (Odontoceti).** Every reliable validator votes (`ReactivePace.votes`), a vote is a support, and `T` is a quorum of supporters — with the vote blocks supplied by the trunk's derived production.
+**The reactive direct commit (Odontoceti)** — the shared counting theorem (`directCommit_of_votesAt`) fed by the reactive vote supplier, with the vote blocks from derived production. One application; the argument lives with O7, once.
 
 #### `reactive_decided`
 
@@ -12792,7 +12887,7 @@ theorem directCommit_of_wait_two_delay (vp : ViewPace U T N)
 
 ## Appendix D. Index of internal lemmas
 
-The 312 lemmas used only within the file that proves
+The 313 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -12889,7 +12984,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `slot_eq_of_decided_commit` | And so a committed block belongs to one slot. The ledger reads verdicts off in slot order, so without this … |
 | `slot_eq_of_isLeaderBlock` | A block is the candidate of at most one slot. |
 
-### `Liveness.lean` (18)
+### `Liveness.lean` (19)
 
 | Lemma | Role |
 |:---|:---|
@@ -12900,6 +12995,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `card_authorsAt_of_populated` | A populated round carries a quorum of authors — the step that feeds a production induction back into its … |
 | `card_authorsAt_of_succ` | One step of L0: a block at round `n+1` forces a quorum of authors at round `n`. |
 | `certificatesIn_full` | — |
+| `certifiesAt_of_synchronisedOn` | Coverage gives the certificates, through the vote layer: the `CertifiesAt` form of the lemma above. |
 | `certifies_of_synchronisedOn` | A correct round-`(r+2)` block certifies any correct round-`r` block, once round `r+1` is populated and … |
 | `decided_none_of_no_candidate` | L5, in the form the `Decided` constructor wants. |
 | `directCommitIn_mono` | A larger view can only see more certificates. |

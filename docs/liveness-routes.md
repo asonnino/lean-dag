@@ -248,7 +248,13 @@ two disciplines share production and differ only in how the commit
 hypotheses are discharged: coverage for the full-timeout discipline,
 targeted votes for the reactive one. The off-`blk` restatement of
 `vote_or_wait`, `prompt_vote` and `cert_or_wait` was the same move the
-Catchup port had made twice already.)*
+Catchup port had made twice already. Option B then named the meet point:
+`VotesAt` and `CertifiesAt` are the targeted half of coverage the commit
+rules count, `directCommit_of_votesAt` and `directCommit_of_certifiesAt`
+are the counting arguments proved once, and each discipline is a
+supplier — `votesAt_of_synchronisedOn`/`certifiesAt_of_synchronisedOn`
+from coverage, `ReactivePace.votes`/`ReactiveM.certifies` from the wait
+clauses.)*
 
 ## 8. Recommended sequence
 
