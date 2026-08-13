@@ -29,3 +29,4 @@ import LeanDagTest.Adaptive
 import LeanDagTest.Hybrid
 import LeanDagTest.HybridTight
 import LeanDagTest.SafeSkip
+import LeanDagTest.Nemo
