@@ -1,12 +1,11 @@
-import LeanDag.Drift.Catchup
 import LeanDagTest.Catchup
 
 /-!
 # The collapse, exhibited from a large spread
 
-`ugrowCatchPace` shows `CatchupPace` satisfiable, but it starts synchronised,
-so it cannot show the mechanism *working*. This model can: the round-`0`
-spread is `10` — five times the collapsed bound — because the laggard
+`ugrowCatchPace` runs at the collapse bound from the start, so it cannot
+show the mechanism *working*. This model can: the round-`0`
+spread is `10` — more than three times the collapsed bound — because the laggard
 starts late and GST has not yet arrived; at every round from `1` on the
 spread is exactly `Δ + proc = 3`, the collapse bound of
 `drift_collapse`, met with equality.
@@ -17,9 +16,9 @@ delivers nothing, so catch-up binds nobody — the large spread is
 admissible precisely because no evidence has crossed. The first round-`1`
 blocks appear at `12`; they reach the laggard at `14`, catch-up forces
 its round-`1` entry by `15`, and its own `waits` floor (`10 + 5`) meets
-that deadline exactly. From then on every clause is tight: the laggard
-builds at the catch-up deadline, the leaders at the `prompt` ceiling,
-and the spread neither grows past `3` nor shrinks below it.
+that deadline exactly. From then on the laggard builds at the catch-up
+deadline, the leaders keep their own pace, and the spread neither grows
+past `3` nor shrinks below it.
 
 This also settles the coexistence question: `catchup` and `waits` are
 jointly satisfiable *from* a large spread, not only near synchrony —
@@ -34,9 +33,9 @@ open LeanDag
 attribute [local instance 2000] rrSlots
 
 /-- Entry times: the laggard `3` starts round `0` nine ticks after `1`;
-from round `1` on, everyone is pinned — the leaders by `prompt` at
-`12 + 5(n−1)`, the laggard by catch-up at `15 + 5(n−1)`. Validator `0`
-is Byzantine and outside `T`; its times follow validator `1`. -/
+from round `1` on, the leaders build at `12 + 5(n−1)` and the laggard
+is pinned by catch-up at `15 + 5(n−1)`. Validator `0` is Byzantine and
+outside `T`; its times follow validator `1`. -/
 def lagBuilt (v : Fin 4) : ℕ → ℕ
   | 0 => if (v : ℕ) = 3 then 10 else (v : ℕ) - 1
   | n + 1 => (if (v : ℕ) = 3 then 15 else 12) + 5 * n
@@ -56,10 +55,11 @@ def lagHolds (N : ℕ) (v : Fin 4) (t : ℕ) : Finset ℕ :=
   (Finset.range (4 * (N + 1))).filter fun b =>
     max (lagStamp b) 12 + 2 ≤ t ∨ (b % 4 = (v : ℕ) ∧ lagStamp b ≤ t)
 
-/-- **`CatchupPace`, from a spread of `10`.** Every clause is proved for
+/-- **A `ViewPace` from a spread of `10`.** Every clause is proved for
 the run described in the module docstring; the laggard's `waits` floor
-and its catch-up deadline coincide at every round. -/
-def ugrowLag (N : ℕ) : CatchupPace (Ugrow N) {1, 2, 3} N where
+and its catch-up deadline coincide at every round — the coexistence of
+the floor and the trunk's catch-up rule, witnessed with no slack. -/
+def ugrowLag (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
   top _ := N
   built := lagBuilt
   timeout _ := 5
@@ -83,20 +83,6 @@ def ugrowLag (N : ℕ) : CatchupPace (Ugrow N) {1, 2, 3} N where
   built_le_latest v hv n _ := by
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
     cases n <;> simp only [lagBuilt_zero, lagBuilt_succ] <;> split <;> omega
-  latest_mem n _ := by
-    refine ⟨3, by decide, ?_⟩
-    cases n with
-    | zero => decide
-    | succ n =>
-        rw [lagBuilt_succ, if_pos (show ((3 : Fin 4) : ℕ) = 3 by decide)]
-        omega
-  prompt v hv n _ := by
-    obtain ⟨h1, h3⟩ := mem_T_bounds hv
-    by_cases h : (v : ℕ) = 3
-    · refine le_trans ?_ (le_max_left _ _)
-      cases n <;> simp only [lagBuilt_zero, lagBuilt_succ, if_pos h] <;> omega
-    · refine le_trans ?_ (le_max_right _ _)
-      cases n <;> simp only [lagBuilt_zero, lagBuilt_succ, if_neg h] <;> omega
   holds := lagHolds N
   holds_own v hv n _ b hb hbc hbr := by
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
@@ -132,7 +118,7 @@ def ugrowLag (N : ℕ) : CatchupPace (Ugrow N) {1, 2, 3} N where
     simp only [ugrow_block, mem_growBlock_refs]
     omega
   advances _ _ _ hn _ _ := hn
-  catchup v hv n hn b hb hbT hbr t hheld := by
+  catchup v hv n hn b hb hbT hbr t _ hheld := by
     obtain ⟨hv1, hv3⟩ := mem_T_bounds hv
     obtain ⟨hu1, hu3⟩ := mem_T_bounds hbT
     set u := ((Ugrow N).block b).creator with hu
@@ -192,8 +178,8 @@ round-`0` spread of `10` appearing in no hypothesis. -/
 theorem ugrowLag_decided (N : ℕ) (hN : rrSlots.slotRound 5 + 2 ≤ N) :
     ∃ L, IsLeaderBlock (S := rrSlots) (Ugrow N) 5 L ∧
       Decided (S := rrSlots) (Ugrow N) (View.full (Ugrow N)) 5 (some L) :=
-  (ugrowLag N).decided_of_catchup (R := 12) (by decide) (by decide)
-    (le_refl 12) (fun n _ => by change 2 + 1 + 2 ≤ 5; omega)
+  (ugrowLag N).decided_of_wait (R := 12) (by decide)
+    (le_refl 12) (fun n _ => by change 2 * 2 + 1 ≤ 5; omega)
     (by simp only [rrSlots_slotRound]; omega) hN (by decide)
 
 #print axioms ugrowLag_collapse

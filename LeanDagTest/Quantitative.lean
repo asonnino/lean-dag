@@ -41,14 +41,15 @@ theorem ugrowTimingPace_rated (N : ℕ) : Rated (ugrowTimingPace N).timeout :=
 /-- **Q3 applied.** Coverage from an **explicit** round rather than from an
 existential — and with no `Monotone` hypothesis anywhere.
 
-Here `delay = 0`, `gst = 0` and the execution is lockstep so `D = 0`, which
-collapses `max (max (D + delay) n₀) gst` to `0`. The point is not that the
-number is small but that there *is* a number: the same theorem against
-`ugrowSkew`'s constants would read `max (max 4 n₀) 0`. -/
+Here `delay = 0`, `proc = 0` and `gst = 0`, which collapses
+`max (2Δ + proc) gst` to `0`. The point is not that the number is small
+but that there *is* a number, with no start spread and no base round
+anywhere: the same theorem against `ugrowSkew`'s constants would read
+`max 4 0`. -/
 theorem ugrow_synchronisedOn_of_rate (N : ℕ) :
     SynchronisedOn (Ugrow N) {1, 2, 3} 0 := by
-  have h := ViewPace.synchronisedOn_of_rate (D := 0) (n₀ := 0) (ugrowTimingPace N)
-    (by decide) (ugrowTimingPace_rated N) (le_refl _) (fun _ _ _ _ => le_refl _)
+  have h := ViewPace.synchronisedOn_of_rate (ugrowTimingPace N)
+    (by decide) (ugrowTimingPace_rated N)
   simpa [ugrowTimingPace] using h
 
 /-! ## Part 2 — the round-robin schedule

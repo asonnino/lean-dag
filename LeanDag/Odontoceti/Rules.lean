@@ -67,13 +67,13 @@ round. -/
 decision round. -/
 def DirectCommit (U : BlockUniverse Validator BlockId Payload)
     (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (supporters U L (r + 1)).card
+  quorumCard Validator ≤ (supporters U L (r + 1)).card
 
 /-- **Direct skip**: a quorum of distinct authors blame `L` at its
 decision round. -/
 def DirectSkip (U : BlockUniverse Validator BlockId Payload)
     (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (blames U L (r + 1)).card
+  quorumCard Validator ≤ (blames U L (r + 1)).card
 
 instance : Decidable (DirectCommit U L r) :=
   inferInstanceAs (Decidable (_ ≤ _))
@@ -279,7 +279,7 @@ private theorem thickLink_of_directCommit_aux (h : DirectCommit U L r) :
       -- of whom the `≥ n−3f` correct ones put their (unique, hence
       -- supporting) block into `A`'s cone
       have hval := U.valid A hA
-      have hq : (Fintype.card Validator - F.f) ≤
+      have hq : quorumCard Validator ≤
           (creatorsOf U.block (U.block A).refs).card := hval.quorum (by omega)
       have hsub : (creatorsOf U.block (U.block A).refs ∩
           supporters U L (r + 1)) ∩ (Correct : Finset Validator) ⊆

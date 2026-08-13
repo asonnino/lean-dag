@@ -345,7 +345,7 @@ every reliable validator's block at the round above blames it. The
 mechanism restores production without touching the slots the network
 already passed. -/
 theorem directSkip_fresh {T : Finset Validator} {k : ℕ}
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hv1T : sk.v1 ∉ T)
     (hpop : PopulatedOn U T (k + 1)) (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r) :
     DirectSkip sk.skipFill (sk.fresh k) k := by

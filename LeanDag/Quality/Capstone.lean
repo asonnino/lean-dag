@@ -47,7 +47,7 @@ slot for round-`m` blocks lies within `w` slots of the first slot above
 round `m`. -/
 theorem committed_of_correct_block_within
     (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (fair : FairWithin T w) (R m : ℕ) (hRm : R ≤ m) :
     ∃ k', slotAt Validator (m + 1) ≤ k' ∧
       k' < slotAt Validator (m + 1) + w ∧
@@ -81,7 +81,7 @@ block is committed within a schedule-window of rounds of its creation,
 once the DAG is synchronous. -/
 theorem committed_of_correct_block_by_round
     (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (fair : FairWithin T w) (hs : BoundedSpacing (Validator := Validator) s)
     (R m : ℕ) (hRm : R ≤ m) :
     ∃ k', m < S.slotRound k' ∧
@@ -110,7 +110,7 @@ covers at least half of the correct validators at every round below
 it. Post-`R`, under a fair schedule: every correct block is in the
 flush of a committed slot fixed in advance by the schedule. -/
 theorem chain_quality (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (fair : FairScheduleOn T) (R m : ℕ) (hRm : R ≤ m) :
     (∀ (U : BlockUniverse Validator BlockId Payload)
         (V : View Validator BlockId Payload U) (k : ℕ) (L : BlockId)

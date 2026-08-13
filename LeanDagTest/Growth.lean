@@ -382,10 +382,7 @@ def ugrowTimingPace (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
   timeout_pos n := Nat.one_le_two_pow
   latest n := 2 ^ n
   built_le_latest _ _ _ _ := le_refl _
-  latest_mem _ _ := ⟨1, by decide, le_refl _⟩
-  prompt _ _ n _ := by
-    have h : 2 ^ n + 2 ^ n = 2 ^ (n + 1) := by ring
-    omega
+  proc := 0
   holds := timingHolds N
   holds_own v _ n _ b hb _ hbr := by
     simp only [ugrow_ids, Finset.mem_range] at hb
@@ -408,6 +405,12 @@ def ugrowTimingPace (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
     simp only [ugrow_block, mem_growBlock_refs]
     omega
   advances _ _ _ hn _ _ := hn
+  catchup v _ n hn b hb _ hbr t _ hheld := by
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round] at hbr
+    simp only [timingHolds, Finset.mem_filter, Finset.mem_range] at hheld
+    rw [hbr] at hheld
+    exact ⟨hn, by omega⟩
 
 #print axioms ugrow_synchronised
 #print axioms ugrow_not_populated_succ

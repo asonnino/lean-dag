@@ -300,3 +300,55 @@ programme.
    wait bound is derived from `Timing`. Whether it survives a schedule that
    can be stuck — and what it even means when a validator has not reached
    the round — needs thought before the port, not during it.
+
+## 10. Postscript: catch-up folded into the trunk (August 2026)
+
+A later decision, recorded here because it supersedes §7's framing of
+`CatchupPace` as an extension. The `catchup` clause and its processing
+bound `proc` were moved into `PaceCore` itself, making catch-up a clause
+of the base protocol (P11) rather than an optional layer; `CatchupPace`
+and `LeanDag/Drift/Catchup.lean` are gone.
+
+What this gained, and what it cost — both sides were priced before the
+move and the user chose the merge with the costs on the table:
+
+* **Gained.** Drift left every headline statement. `ViewPace` lost
+  `prompt` and `latest_mem` (the collapse argument uses neither), and
+  `driftOn_of_prompt` was deleted; coverage, the spine, the rate and
+  wait bounds, and the whole reactive line (`votes`, `certifies`,
+  `decided`, RS5) now take `gst ≤ R` and the constant backoff
+  `2Δ + proc ≤ timeout` — no `DriftOn` hypothesis, no start spread `D₀`,
+  no deployment quantity anywhere in the development. Clause count is a
+  wash (`prompt` + `latest_mem` out, `catchup` + `proc` in); statement
+  complexity is not.
+* **Cost.** The base protocol is stronger: every consumer now assumes
+  the catch-up rule, including results that never needed the
+  contraction. The `Delay(Δ) = D₀ + Δ` family is gone, and with it the
+  plain `2Δ` external check — retained only as the `proc = 0` case
+  (`directCommit_of_wait_two_delay`). The necessity witnesses had to be
+  re-crafted with arrival-gated holds (`gapHolds`, `starveHolds`),
+  since everything-held-from-`t = 0` models violate an unconditional
+  `catchup`; and the reactive witness's timeout rose from `7` to `9` to
+  clear `2Δ + proc` with the shared `proc = 5`.
+* **Kept.** The drift-parametric coverage engine survives as
+  `synchronisedOn_of_driftOn`: the drift-free headline consumes the
+  quorum (the collapse runs through `reached`), so a sub-quorum reliable
+  set — V12's two-member `T` — still needs drift supplied from outside.
+* **Gated on GST** (follow-up, same month). `catchup` was subsequently
+  weakened to fire only at `gst ≤ t`. The collapse proof applies the
+  clause only at post-GST times, so nothing downstream moved; the gain
+  is honesty about deployment — the executable rule is the GST-free
+  clamped one (enter a sighted round within `proc`, never before the
+  own floor), and pre-GST the clamp may bind, so the unconditional
+  clause was false of every real implementation. The rush bound (CU5:
+  `exists_reliable_parent`, `PaceCore.round_le_top_succ`,
+  `ViewPace.exists_honest_floor`) is the other half of the same
+  deployment story: valid evidence of a round certifies a reliable
+  validator that paid the full timeout bill below it, so author-blind
+  catch-up chases only the certified layer.
+* **One `proc`.** The catch-up deadline and the reactive exit bound
+  share the trunk's `proc`. They are the same kind of quantity (entry
+  or build lag behind a trigger), but the sharing is a modelling choice:
+  a system with fast reactive exits and slow catch-up would want two
+  constants, and would pay for the split in a second parameter
+  everywhere.

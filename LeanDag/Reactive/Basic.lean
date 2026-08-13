@@ -62,15 +62,14 @@ variable {T : Finset Validator} {D N R : ℕ} {k : ℕ} {L : BlockId}
 /-- The reactive schedule and network layer, shared by both protocols:
 `PaceCore` with the reactive discipline in place of the full-timeout one.
 
-Relative to `ViewPace`, the floor `waits` and the promptness clause
-`prompt` are replaced by `deadline`, `built_lt`, `vote_or_wait` and
-`prompt_vote`, and the referencing clause is carried inside
-`vote_or_wait`'s fallback rather than stated globally — a reactive
-builder deliberately does *not* reference everything it holds. -/
+Relative to `ViewPace`, the floor `waits` is replaced by `deadline`,
+`built_lt`, `vote_or_wait` and `prompt_vote`, and the referencing clause
+is carried inside `vote_or_wait`'s fallback rather than stated globally
+— a reactive builder deliberately does *not* reference everything it
+holds. The processing bound `proc` is the trunk's: the same constant
+bounds catch-up entry and the reactive exit. -/
 structure ReactivePace (U : BlockUniverse Validator BlockId Payload)
     (T : Finset Validator) (N : ℕ) extends PaceCore U T N where
-  /-- The processing bound: how long a reactive exit may lag its trigger. -/
-  proc : ℕ
   /-- Time advances with rounds — the only lower bound a reactive
   schedule keeps, over the rounds `v` reached. -/
   built_lt : ∀ v ∈ T, ∀ n < top v, built v n < built v (n + 1)
@@ -124,23 +123,35 @@ theorem slotRound_le_top (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
   have h2 := hL.2.1
   omega
 
+omit [DecidableEq BlockId] in
+/-- **Drift is derived here too**, from the trunk's catch-up rule — the
+same collapse the timed discipline uses, with `le_built` supplied by
+`built_lt` rather than by the waiting floor. -/
+theorem driftOn_of_catchup
+    (hcard : quorumCard Validator ≤ T.card) (hgst : rc.gst ≤ R) :
+    DriftOn rc.built T R (rc.delay + rc.proc) N :=
+  rc.toPaceCore.driftOn_of_catchup hcard hgst (fun u hu => rc.le_built hu)
+
 /-- **Every reliable vote block votes.** Past GST, with the timeout
-clearing drift plus the delivery bound, every `T`-authored block at the
-round above a reliable leader references the leader's block — whether by
-the reactive exit or by the fallback.
+clearing `2Δ + proc`, every `T`-authored block at the round above a
+reliable leader references the leader's block — whether by the reactive
+exit or by the fallback.
 
 The fallback case is the only argument: the leader holds its own block
-when it builds, convergence carries it across within `delay`, drift and
-the full timeout place that arrival before the waiter's build, and the
-fallback clause then obliges the vote. The reactive exit needs nothing:
-it *is* the vote. Stated over any `T`-authored block, so
+when it builds, convergence carries it across within `delay`, the
+collapsed drift (`driftOn_of_catchup` — no drift hypothesis is taken)
+and the full timeout place that arrival before the waiter's build, and
+the fallback clause then obliges the vote. The reactive exit needs
+nothing: it *is* the vote. Stated over any `T`-authored block, so
 non-equivocation is never consulted. -/
 theorem votes (hT : T ⊆ (Correct : Finset Validator))
-    (hD : DriftOn rc.built T R D N) (hgst : rc.gst ≤ R)
-    (hto : ∀ n, R ≤ n → D + rc.delay ≤ rc.timeout n)
+    (hcard : quorumCard Validator ≤ T.card)
+    (hgst : rc.gst ≤ R)
+    (hto : ∀ n, R ≤ n → 2 * rc.delay + rc.proc ≤ rc.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
     (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
     VotesAt U T (S.slotRound k) L := by
+  have hD := rc.driftOn_of_catchup hcard hgst
   intro v hv c hc hcc hcr
   rcases rc.vote_or_wait v hv k hN hlead L hL c hc hcc hcr with hvote | ⟨hwait, hheld⟩
   · exact hvote

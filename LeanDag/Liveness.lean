@@ -47,7 +47,7 @@ Immediate from validity — the block's references carry `2f+1` distinct
 creators, and every one of them holds a round-`n` block. -/
 theorem card_authorsAt_of_succ {n : ℕ} {i : BlockId}
     (hi : i ∈ U.ids) (hir : (U.block i).round = n + 1) :
-    (Fintype.card Validator - F.f) ≤ (authorsAt U n).card :=
+    quorumCard Validator ≤ (authorsAt U n).card :=
   le_trans (U.creators_quorum hi (by omega))
     (Finset.card_le_card (creators_refs_subset_authorsAt hi hir))
 
@@ -65,13 +65,13 @@ statement is not about `r`: nothing distinguishes the block's own round, and
 generalising over `n` is what lets the step re-enter at `n+1`. -/
 theorem card_authorsAt_of_lt {r n : ℕ} (hn : n < r) {i : BlockId}
     (hi : i ∈ U.ids) (hir : (U.block i).round = r) :
-    (Fintype.card Validator - F.f) ≤ (authorsAt U n).card := by
+    quorumCard Validator ≤ (authorsAt U n).card := by
   obtain ⟨d, rfl⟩ : ∃ d, r = n + 1 + d := ⟨r - n - 1, by omega⟩
   clear hn
   induction d generalizing n i with
   | zero => exact card_authorsAt_of_succ hi hir
   | succ d ih =>
-      have h1 : (Fintype.card Validator - F.f) ≤ (authorsAt U (n + 1)).card :=
+      have h1 : quorumCard Validator ≤ (authorsAt U (n + 1)).card :=
         ih (n := n + 1) (i := i) hi (by omega)
       obtain ⟨j, hj, hjr⟩ := exists_mem_of_authorsAt_card_pos (U := U) (n := n + 1)
         (by have := F.card_validators; omega)
@@ -196,7 +196,7 @@ omit [DecidableEq BlockId] in
 production induction back into its build rule, and the first consumer
 `card_correct` was kept for. -/
 theorem card_authorsAt_of_populated {r : ℕ} (h : Populated U r) :
-    (Fintype.card Validator - F.f) ≤ (authorsAt U r).card := by
+    quorumCard Validator ≤ (authorsAt U r).card := by
   refine le_trans card_correct (Finset.card_le_card ?_)
   intro w hw
   obtain ⟨b, hb, hbc, hbr⟩ := h w hw
@@ -416,7 +416,7 @@ round `r+1` is populated and synchrony has taken hold.
 
 This is both layers at once: `q` references `L` by coverage at `n = r`, and
 `C` references `q` by coverage at `n = r+1`. -/
-theorem certifies_of_synchronisedOn (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+theorem certifies_of_synchronisedOn (hcard : quorumCard Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hRr : R ≤ r)
     (hpop1 : PopulatedOn U T (r + 1))
     (hL : L ∈ U.ids) (hLr : (U.block L).round = r) (hLc : (U.block L).creator ∈ T)
@@ -437,7 +437,7 @@ omit S in
 /-- Coverage gives the certificates, through the vote layer: the
 `CertifiesAt` form of the lemma above. -/
 theorem certifiesAt_of_synchronisedOn
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hRr : R ≤ r)
     (hpop1 : PopulatedOn U T (r + 1))
     (hL : L ∈ U.ids) (hLr : (U.block L).round = r)
@@ -454,7 +454,7 @@ has a round-`(r+2)` block by production, it certifies by hypothesis, and
 the full-timeout one arriving through `certifiesAt_of_synchronisedOn`,
 the reactive one through `ReactiveM.certifies`. -/
 theorem directCommit_of_certifiesAt
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hpop2 : PopulatedOn U T (r + 2))
     (hc : CertifiesAt U T r L) :
     DirectCommit U L r := by
@@ -473,7 +473,7 @@ block, only that it is correct-authored — the same separation Stage A makes
 for M1–M3. The proof is the composition through the targeted interface:
 coverage supplies `CertifiesAt`, and the shared counting theorem does the
 rest. -/
-theorem directCommit_of_synchronisedOn (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+theorem directCommit_of_synchronisedOn (hcard : quorumCard Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hRr : R ≤ r)
     (hpop1 : PopulatedOn U T (r + 1)) (hpop2 : PopulatedOn U T (r + 2))
     (hL : L ∈ U.ids) (hLr : (U.block L).round = r) (hLc : (U.block L).creator ∈ T) :
@@ -492,7 +492,7 @@ theorem exists_isLeaderBlock (hpop : PopulatedOn U T (S.slotRound k))
 
 /-- **L4.** A slot with a correct leader, whose three rounds are populated and
 which sits after synchrony, is directly committed. -/
-theorem directCommit_of_leader_mem (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+theorem directCommit_of_leader_mem (hcard : quorumCard Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
     (hpop0 : PopulatedOn U T (S.slotRound k))
     (hpop1 : PopulatedOn U T (S.slotRound k + 1))
@@ -531,7 +531,7 @@ theorem directCommitIn_full (h : DirectCommit U L r) :
   exact h
 
 /-- **L4, as a decision.** What L6 consumes and L3 propagates. -/
-theorem decided_of_leader_mem (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+theorem decided_of_leader_mem (hcard : quorumCard Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
     (hpop0 : PopulatedOn U T (S.slotRound k))
     (hpop1 : PopulatedOn U T (S.slotRound k + 1))
@@ -563,7 +563,7 @@ nothing but the cardinality of `T`, which is what `commits_recur_on`'s comment
 already observed. It is kept in the signature because every capstone has it to
 hand and threading it documents the setting. -/
 theorem decided_of_leader_of_populated (_hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
     (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (hN : S.slotRound k + 2 ≤ N)
     (hlead : S.leader k ∈ T) :
@@ -767,7 +767,7 @@ that **every** sufficiently grown synchronous DAG commits.
 Note the conclusion quantifies over `U` and `N` *inside* the existential: the
 slot is fixed by the schedule alone, and any DAG grown past it commits it. -/
 theorem commits_recur_on (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (fair : FairScheduleOn T) (R : ℕ) (k : ℕ) :
+    (hcard : quorumCard Validator ≤ T.card) (fair : FairScheduleOn T) (R : ℕ) (k : ℕ) :
     ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
       CommitsAt BlockId Payload T R k' := by
   -- Some slot `k₀` already sits past round `R` (`unbounded`), and every slot
@@ -916,7 +916,7 @@ schedule does not satisfy it, and the counterexample above is why this is
 stated conditionally rather than dropped. -/
 theorem all_decided_below_of_spacing
     (hsp : ∀ k, S.slotRound k + 3 ≤ S.slotRound (k + 1))
-    (hT : T ⊆ (Correct : Finset Validator)) (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
     (fair : FairScheduleOn T) (R : ℕ) (k : ℕ) :
     ∃ n, k ≤ n ∧ R ≤ S.slotRound n ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
@@ -1109,7 +1109,7 @@ decided slots growing without bound is exactly the ledger advancing. Contrast
 L6, which gives infinitely many *commits* while saying nothing about the gaps
 between them. -/
 theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
-    (hT : T ⊆ (Correct : Finset Validator)) (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
     (hspan : SpansEligible (Validator := Validator) c)
     (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧

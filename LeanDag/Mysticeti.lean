@@ -39,14 +39,14 @@ def votesIn (U : BlockUniverse Validator BlockId Payload) (C L : BlockId) : Fins
 /-- A round-`(r+2)` block certifies `L` when its votes for `L` come from a
 quorum of distinct validators. -/
 def Certifies (U : BlockUniverse Validator BlockId Payload) (C L : BlockId) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (votesIn U C L)).card
+  quorumCard Validator ≤ (creatorsOf U.block (votesIn U C L)).card
 
 /-- All three rule predicates are cardinality comparisons and so decidable,
 but as `Prop`-valued `def`s Lean will not see that unaided. `certificates`
 needs this to filter on `Certifies`, and concrete models need it to settle
 the rules by `decide`. -/
 instance decidableCertifies (C L : BlockId) : Decidable (Certifies U C L) :=
-  inferInstanceAs (Decidable ((Fintype.card Validator - F.f) ≤ (creatorsOf U.block (votesIn U C L)).card))
+  inferInstanceAs (Decidable (quorumCard Validator ≤ (creatorsOf U.block (votesIn U C L)).card))
 
 /-- The certificates for a round-`r` block `L`: the round-`(r+2)` blocks that
 certify it. -/
@@ -74,18 +74,18 @@ theorem mem_votesIn_spec {C L q : BlockId} {r : ℕ}
 /-- `L` is directly committed when its certificates come from a quorum of
 distinct validators. -/
 def DirectCommit (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (certificates U L r)).card
+  quorumCard Validator ≤ (creatorsOf U.block (certificates U L r)).card
 
 /-- `L` is directly skipped when a quorum of distinct validators declined to
 vote for it. -/
 def DirectSkip (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (blames U L (r + 1)).card
+  quorumCard Validator ≤ (blames U L (r + 1)).card
 
 instance decidableDirectCommit (L : BlockId) (r : ℕ) : Decidable (DirectCommit U L r) :=
-  inferInstanceAs (Decidable ((Fintype.card Validator - F.f) ≤ (creatorsOf U.block (certificates U L r)).card))
+  inferInstanceAs (Decidable (quorumCard Validator ≤ (creatorsOf U.block (certificates U L r)).card))
 
 instance decidableDirectSkip (L : BlockId) (r : ℕ) : Decidable (DirectSkip U L r) :=
-  inferInstanceAs (Decidable ((Fintype.card Validator - F.f) ≤ (blames U L (r + 1)).card))
+  inferInstanceAs (Decidable (quorumCard Validator ≤ (blames U L (r + 1)).card))
 
 /-- **M3.** A directly skipped block has **no certificate anywhere** in the
 universe — not merely none in some view.
@@ -418,23 +418,23 @@ def certificatesIn (U : BlockUniverse Validator BlockId Payload)
 /-- Direct commit, as judged from a single view. -/
 def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (certificatesIn U V L r)).card
+  quorumCard Validator ≤ (creatorsOf U.block (certificatesIn U V L r)).card
 
 /-- Direct skip, as judged from a single view. -/
 def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤
+  quorumCard Validator ≤
     (creatorsOf U.block
       (((blocksAt U (r + 1)).filter (fun q => L ∉ (U.block q).refs)) ∩ V.ids)).card
 
 omit S in
 instance decidableDirectCommitIn (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) :
     Decidable (DirectCommitIn U V L r) :=
-  inferInstanceAs (Decidable ((Fintype.card Validator - F.f) ≤ (creatorsOf U.block (certificatesIn U V L r)).card))
+  inferInstanceAs (Decidable (quorumCard Validator ≤ (creatorsOf U.block (certificatesIn U V L r)).card))
 
 instance decidableDirectSkipIn (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) :
     Decidable (DirectSkipIn U V L r) :=
-  inferInstanceAs (Decidable ((Fintype.card Validator - F.f) ≤
+  inferInstanceAs (Decidable (quorumCard Validator ≤
     (creatorsOf U.block
       (((blocksAt U (r + 1)).filter (fun q => L ∉ (U.block q).refs)) ∩ V.ids)).card))
 

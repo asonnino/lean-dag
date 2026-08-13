@@ -254,7 +254,7 @@ candidate — and the count is the view's quorum at the round above. -/
 theorem decided_fill {V : View Validator BlockId Payload U} {k : ℕ}
     {v : Option BlockId}
     (hq : ∀ n, sk.r0 < n → n ≤ sk.r →
-      Fintype.card Validator - F.f ≤
+      quorumCard Validator ≤
         (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card)
     (h : Decided U V k v) :
     Decided sk.skipFill (sk.liftView V) k v := by
@@ -308,7 +308,7 @@ theorem decided_fill_agree {V : View Validator BlockId Payload U}
     {W : View Validator BlockId Payload sk.skipFill} {k : ℕ}
     {v w : Option BlockId}
     (hq : ∀ n, sk.r0 < n → n ≤ sk.r →
-      Fintype.card Validator - F.f ≤
+      quorumCard Validator ≤
         (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card)
     (hv : Decided U V k v) (hw : Decided sk.skipFill W k w) : v = w :=
   decided_agree (sk.decided_fill hq hv) hw
