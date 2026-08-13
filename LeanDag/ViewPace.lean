@@ -337,8 +337,8 @@ theorem le_built {v : Validator} (hv : v ∈ T) : ∀ n ≤ vp.top v, n ≤ vp.b
 omit [DecidableEq BlockId] in
 /-- **Production, with no deadline to beat.** Every round below the horizon
 is populated, from genesis, view convergence and the progress rule — and
-from nothing else. No drift, no backoff, no `timeout`, and no counterpart
-to `ViewGrowth`'s `hcross`.
+from nothing else. No drift, no backoff, no `timeout`, and no schedule
+side condition of any kind.
 
 The step is the familiar one with the deadline removed. Each `w ∈ T`
 reached round `n` (induction hypothesis), so it has a block there and holds
@@ -348,13 +348,14 @@ puts all of them in `v`'s hands by `max (latest n) gst + delay`. That is a
 quorum of distinct authors, so `advances` fires and `v` is past round `n` —
 whereupon `built_of_le_top` supplies its round-`n+1` block.
 
-**Where `hcross` went.** In `ViewGrowth` the quorum had to arrive by
-`built v (n+1)`, a time fixed before the run, and `hcross` was what made
-the straddling round late enough to make it. Here the arrival time is not
-compared with anything: `advances` takes the quorum at whatever time it
-appears. A schedule that raced ahead of the network pre-GST is not excluded
-by hypothesis — it is not expressible, because a validator that never held
-a quorum at round `n` never reached round `n+1`. -/
+**Why no side condition survives.** Over a total build schedule the
+quorum must arrive by `built v (n+1)`, a time fixed before the run, and a
+condition on the round straddling GST is what makes that deadline
+meetable. Here the arrival time is not compared with anything:
+`advances` takes the quorum at whatever time it appears. A schedule that
+raced ahead of the network pre-GST is not excluded by hypothesis — it is
+not expressible, because a validator that never held a quorum at round
+`n` never reached round `n+1`. -/
 theorem reached (vp : ViewPace U T N)
     (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
     ∀ n ≤ N, ∀ v ∈ T, n ≤ vp.top v :=
@@ -410,14 +411,13 @@ theorem driftOn_of_prompt (vp : ViewPace U T N)
   exact fun v hv w hw n hn hN => key n hn hN v hv w hw
 
 omit [DecidableEq BlockId] in
-/-- **Reference coverage**, exactly `ViewGrowth`'s argument over the partial
-schedule. The guards come out of `le_top_of_built`: a block at round `n+1`
-authored by `v` puts `n + 1 ≤ top v`, so `waits` and `le_built` apply where
-they are used, and the straddling case cannot arise — coverage is claimed
-only from `R`, and `gst ≤ R ≤ n ≤ built w n`.
+/-- **Reference coverage.** The guards come out of `le_top_of_built`: a
+block at round `n+1` authored by `v` puts `n + 1 ≤ top v`, so `waits` and
+`le_built` apply where they are used, and the straddling case cannot
+arise — coverage is claimed only from `R`, and `gst ≤ R ≤ n ≤ built w n`.
 
-As in `ViewGrowth`, this needs neither production, nor the quorum bound,
-nor `T ⊆ Correct`: `references` and `holds_own` are stated over any block a
+This needs neither production, nor the quorum bound, nor
+`T ⊆ Correct`: `references` and `holds_own` are stated over any block a
 validator authored, so there is nothing to identify by non-equivocation. -/
 theorem synchronisedOn_of_converges {R D : ℕ}
     (hD : DriftOn vp.built T R D N) (hgst : vp.gst ≤ R)
@@ -440,16 +440,15 @@ section Liveness
 
 variable [S : Slots Validator]
 
-/-- **The liveness spine over a partial schedule.** The conclusion of V15
-and V16 with the seed at round `0`, where it is genesis, and **no `hcross`**:
-the schedule hypothesis is gone, not weakened.
+/-- **The liveness spine** (V17): commits recur, with the seed at round
+`0`, where it is genesis, and no schedule side condition of any kind.
 
-What remains divides cleanly. The network contributes `converges` and
+What is assumed divides cleanly. The network contributes `converges` and
 `vp.gst ≤ R`. The protocol contributes `built_of_le_top` at round `0`
 (genesis), `advances` (the pacemaker does not stall), `references` (P7) and
 `waits` (P9); drift and the backoff are needed only for coverage, and
-`driftOn_of_prompt` discharges the first from promptness as
-before. Production needs none of them. -/
+`driftOn_of_prompt` discharges the first from promptness. Production
+needs none of them. -/
 theorem commits_recur_via_pace (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (fair : FairScheduleOn T) (R k : ℕ) :
@@ -515,8 +514,8 @@ variable [S : Slots Validator] {D₀ k : ℕ}
 /-- **The wait bound** (Q2 headline, report §6.10): a validator that knows
 the delivery bound and its start spread needs no backoff — a constant
 timeout of `D₀ + Δ` commits every reliable-led slot past GST. Production
-here is derived, so unlike `directCommit_of_wait` over `Timing` nothing
-asserts blocks above round `0`, and `T ⊆ Correct` is not consumed. -/
+is derived, so nothing asserts blocks above round `0`, and
+`T ⊆ Correct` is not consumed. -/
 theorem directCommit_of_wait (vp : ViewPace U T N)
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hstart : ∀ v ∈ T, ∀ w ∈ T, vp.built w 0 ≤ vp.built v 0 + D₀)
