@@ -22,13 +22,16 @@ This file makes the argument a theorem, in the only form a necessity claim
 can take: a model in which everything *except* the bound holds, and
 coverage fails.
 
-`Ugap` is `Ugrow` with one block per round withheld — validator `2`'s, from
-everyone but validator `2`. The withheld blocks arrive eventually, after
-every build in the run, so holdings do converge; they simply converge too
-late to be referenced. Every protocol clause is satisfied, which the
-`ViewPace` instance certifies field by field, and `ConvergesEventually`
-holds from time `0`. Yet `SynchronisedOn (Uomit 2 N) Correct R` fails for
-every `R` below the horizon.
+`Ugap` is `Ugrow` with one block per round withheld from the references —
+validator `2`'s, from everyone but validator `2`. On the network side,
+nothing crosses between validators until `4N + 5`, after every build in
+the run; then everything arrives at once. So holdings do converge — they
+simply converge too late to be referenced. Every protocol clause is
+satisfied, which the `ViewPace` instance certifies field by field —
+catch-up included, vacuously before `4N + 5`, since no foreign evidence
+is ever in hand earlier — and `ConvergesEventually` holds from time `0`.
+Yet `SynchronisedOn (Uomit 2 N) Correct R` fails for every `R` below the
+horizon.
 
 The instance carries `gst = 4 * N + 5`, a time after every build in the
 run, so `converges` is true of it but vacuously — which is the point.
@@ -131,12 +134,14 @@ theorem uomit_not_synchronisedOn {N : ℕ} {x y : Fin 4} (hxy : y ≠ x)
   simp only [uomit_block, rrBlock_refs, mem_omitRefs] at this
   omega
 
-/-- What `v` holds at time `t`: everything except validator `2`'s blocks,
-which reach the others only at `4 * N + 5` — after every build in the run,
-since the last is at `3 + 4 * N`. -/
+/-- What `v` holds at time `t`: its own blocks from their build times, and
+everyone else's only from `4 * N + 5` — after every build in the run,
+since the last is at `3 + 4 * N`. Nothing crosses between validators
+before that time, which is what keeps the trunk's catch-up clause
+honest: no evidence is ever in hand before the holder's own build. -/
 def gapHolds (N : ℕ) (v : Fin 4) (t : ℕ) : Finset ℕ :=
   (Finset.range (4 * (N + 1))).filter fun b =>
-    b % 4 ≠ 2 ∨ (v : ℕ) = 2 ∨ 4 * N + 5 ≤ t
+    4 * N + 5 ≤ t ∨ (b % 4 = (v : ℕ) ∧ b ≤ t)
 
 /-- **And coverage fails anyway**, at every round the horizon leaves room
 for: validator `1`'s block of round `R+1` does not reference validator
@@ -161,11 +166,13 @@ rather than vacuously. -/
 theorem mem_T12_bounds {v : Fin 4} (hv : v ∈ ({1, 2} : Finset (Fin 4))) :
     1 ≤ (v : ℕ) ∧ (v : ℕ) ≤ 2 := by fin_cases hv <;> exact ⟨by decide, by decide⟩
 
-/-- What `v` holds: everything except validator `3`'s blocks, which reach
-nobody but `3` itself. No time dependence — the starvation is permanent,
-so no bound is at issue here. -/
-def starveHolds (N : ℕ) (v : Fin 4) (_t : ℕ) : Finset ℕ :=
-  (Finset.range (4 * (N + 1))).filter fun b => b % 4 ≠ 3 ∨ (v : ℕ) = 3
+/-- What `v` holds at `t`: its own blocks from their build times, every
+non-`3` block one tick after its build — the bound `delay = 1`, met
+properly — and validator `3`'s blocks never. The starvation is permanent,
+so no bound is at issue for the starved author. -/
+def starveHolds (N : ℕ) (v : Fin 4) (t : ℕ) : Finset ℕ :=
+  (Finset.range (4 * (N + 1))).filter fun b =>
+    (b % 4 ≠ 3 ∧ b + 1 ≤ t) ∨ (b % 4 = (v : ℕ) ∧ b ≤ t)
 
 /-- **And coverage over `Correct` is false.** Validator `3` is correct and
 outside `T`, and nobody references its blocks. -/
@@ -203,8 +210,7 @@ def ugapPace (N : ℕ) : ViewPace (Uomit 2 N) (Correct : Finset (Fin 4)) N where
   timeout_pos _ := by omega
   latest n := 3 + 4 * n
   built_le_latest v _ _ _ := by have := v.isLt; omega
-  latest_mem _ _ := ⟨3, by decide, le_refl _⟩
-  prompt _ _ _ _ := le_max_left _ _
+  proc := 0
   holds := gapHolds N
   holds_own v _ n _ b hb hbc hbr := by
     have hv := v.isLt
@@ -214,22 +220,18 @@ def ugapPace (N : ℕ) : ViewPace (Uomit 2 N) (Correct : Finset (Fin 4)) N where
       have := congrArg (fun (x : Fin 4) => (x : ℕ)) hbc
       simpa using this
     simp only [gapHolds, Finset.mem_filter, Finset.mem_range]
-    refine ⟨hb, ?_⟩
-    by_cases h2 : (v : ℕ) = 2
-    · exact Or.inr (Or.inl h2)
-    · exact Or.inl (by omega)
+    exact ⟨hb, Or.inr ⟨hbc', by omega⟩⟩
   holds_mono v s t hst := by
     intro b hb
     simp only [gapHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
     refine ⟨hb.1, ?_⟩
-    rcases hb.2 with h | h | h
-    · exact Or.inl h
-    · exact Or.inr (Or.inl h)
-    · exact Or.inr (Or.inr (by omega))
+    rcases hb.2 with h | ⟨h1, h2⟩
+    · exact Or.inl (by omega)
+    · exact Or.inr ⟨h1, by omega⟩
   converges v _ w _ t ht := by
     intro b hb
     simp only [gapHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
-    exact ⟨hb.1, Or.inr (Or.inr (by omega))⟩
+    exact ⟨hb.1, Or.inl (by omega)⟩
   references v _ n hn c hc hcc hcr a ha har := by
     have hv := v.isLt
     simp only [uomit_ids, Finset.mem_range] at hc
@@ -239,15 +241,19 @@ def ugapPace (N : ℕ) : ViewPace (Uomit 2 N) (Correct : Finset (Fin 4)) N where
       simpa using this
     simp only [gapHolds, Finset.mem_filter, Finset.mem_range] at ha
     simp only [uomit_block, rrBlock_refs, mem_omitRefs]
-    have hlate : ¬ (4 * N + 5 ≤ (v : ℕ) + 4 * (n + 1)) := by omega
-    refine ⟨by omega, ?_⟩
-    by_cases h2 : (v : ℕ) = 2
-    · exact Or.inl (by omega)
-    · rcases ha.2 with h | h | h
-      · exact Or.inr (by omega)
-      · exact absurd h h2
-      · exact absurd h hlate
+    -- at build time nothing foreign has arrived, so `a` is `v`'s own
+    -- round-`n` block, and every author references its own predecessor
+    rcases ha.2 with h | ⟨h1, h2⟩
+    · omega
+    · omega
   advances _ _ _ hn _ _ := hn
+  catchup v hv n hn b hb hbT hbr t hheld := by
+    have hv4 := v.isLt
+    simp only [uomit_ids, Finset.mem_range] at hb
+    simp only [uomit_block, rrBlock_round] at hbr
+    simp only [gapHolds, Finset.mem_filter, Finset.mem_range] at hheld
+    refine ⟨hn, ?_⟩
+    rcases hheld.2 with h | ⟨h1, h2⟩ <;> omega
 
 /-- **V10 over the partial schedule.** Holdings converge from time `0`,
 every clause of `ViewPace` holds, and coverage fails at every round below
@@ -259,7 +265,7 @@ theorem ugapPace_convergesEventually (N : ℕ) :
   refine ⟨4 * N + 5, ?_⟩
   intro b hb
   simp only [ugapPace, gapHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
-  exact ⟨hb.1, Or.inr (Or.inr (by omega))⟩
+  exact ⟨hb.1, Or.inl (by omega)⟩
 
 theorem bound_is_necessary_pace {N : ℕ} (hN : 0 < N) :
     ConvergesEventually (ugapPace N).holds (Correct : Finset (Fin 4)) ∧
@@ -267,11 +273,11 @@ theorem bound_is_necessary_pace {N : ℕ} (hN : 0 < N) :
   ⟨ugapPace_convergesEventually N, ugap_not_synchronisedOn 0 hN⟩
 
 /-- **V11 over the partial schedule** — the form the claim takes once the
-untimed bridge is gone: `gst ≤ R` cannot be dropped from
-`ViewPace.synchronisedOn_of_converges`. The instance satisfies the drift
+untimed bridge is gone: `gst ≤ R` cannot be dropped from the coverage
+theorems, engine or headline. The instance satisfies the engine's drift
 and backoff hypotheses at `R = 0` outright — spread `3`, `3 + 1 ≤ 4` —
-and coverage at `0` is false; only `gst ≤ 0` fails, so it is the working
-hypothesis. -/
+and the headline's quorum bound too; coverage at `0` is false, and only
+`gst ≤ 0` fails, so it is the working hypothesis. -/
 theorem gst_is_forced_pace {N : ℕ} (hN : 0 < N) :
     DriftOn (ugapPace N).built (Correct : Finset (Fin 4)) 0 3 N ∧
       (∀ n, 0 ≤ n → 3 + (ugapPace N).delay ≤ (ugapPace N).timeout n) ∧
@@ -304,30 +310,32 @@ def ustarvePace (N : ℕ) : ViewPace (Uomit 3 N) ({1, 2} : Finset (Fin 4)) N whe
   timeout_pos _ := by omega
   latest n := 2 + 4 * n
   built_le_latest v hv _ _ := by obtain ⟨_, _⟩ := mem_T12_bounds hv; omega
-  latest_mem _ _ := ⟨2, by decide, le_refl _⟩
-  prompt _ _ _ _ := le_max_left _ _
+  proc := 0
   holds := starveHolds N
   holds_own v hv n _ b hb hbc hbr := by
     obtain ⟨h1, h2⟩ := mem_T12_bounds hv
     simp only [uomit_ids, Finset.mem_range] at hb
+    simp only [uomit_block, rrBlock_round] at hbr
     have hb4 : b % 4 = (v : ℕ) := by
       have := congrArg (fun (x : Fin 4) => (x : ℕ)) hbc
       simpa [uomit_block] using this
     simp only [starveHolds, Finset.mem_filter, Finset.mem_range]
-    exact ⟨hb, Or.inl (by omega)⟩
-  holds_mono v s t _ := by
+    exact ⟨hb, Or.inr ⟨hb4, by omega⟩⟩
+  holds_mono v s t hst := by
     intro b hb
     simp only [starveHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
-    exact hb
+    rcases hb.2 with ⟨h1, h2⟩ | ⟨h1, h2⟩
+    · exact ⟨hb.1, Or.inl ⟨h1, by omega⟩⟩
+    · exact ⟨hb.1, Or.inr ⟨h1, by omega⟩⟩
   converges v hv w hw t _ := by
     obtain ⟨_, _⟩ := mem_T12_bounds hv
     obtain ⟨_, _⟩ := mem_T12_bounds hw
     intro b hb
     simp only [starveHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
     refine ⟨hb.1, Or.inl ?_⟩
-    rcases hb.2 with h | h
-    · exact h
-    · omega
+    rcases hb.2 with ⟨h1, h2⟩ | ⟨h1, h2⟩
+    · exact ⟨h1, by omega⟩
+    · exact ⟨by omega, by omega⟩
   references v hv n hn c hc hcc hcr a ha har := by
     obtain ⟨h1, h2⟩ := mem_T12_bounds hv
     simp only [uomit_ids, Finset.mem_range] at hc
@@ -335,16 +343,31 @@ def ustarvePace (N : ℕ) : ViewPace (Uomit 3 N) ({1, 2} : Finset (Fin 4)) N whe
     simp only [starveHolds, Finset.mem_filter, Finset.mem_range] at ha
     simp only [uomit_block, rrBlock_refs, mem_omitRefs]
     refine ⟨by omega, Or.inr ?_⟩
-    rcases ha.2 with h | h
+    rcases ha.2 with ⟨ha1, ha2⟩ | ⟨ha1, ha2⟩
     · omega
     · omega
   advances _ _ _ hn _ _ := hn
+  catchup v hv n hn b hb hbT hbr t hheld := by
+    obtain ⟨hv1, hv2⟩ := mem_T12_bounds hv
+    simp only [uomit_ids, Finset.mem_range] at hb
+    simp only [uomit_block, rrBlock_round] at hbr
+    have hb4 : 1 ≤ b % 4 ∧ b % 4 ≤ 2 := by
+      obtain ⟨hbT1, hbT2⟩ := mem_T12_bounds hbT
+      have : (((Uomit 3 N).block b).creator : ℕ) = b % 4 := by
+        simp [uomit_block]
+      omega
+    simp only [starveHolds, Finset.mem_filter, Finset.mem_range] at hheld
+    refine ⟨hn, ?_⟩
+    rcases hheld.2 with ⟨h1, h2⟩ | ⟨h1, h2⟩ <;> omega
 
-/-- Coverage over `T = {1, 2}` is **derived** — through the `ViewPace`
-route, which asks neither `T ⊆ Correct` nor a quorum for this half. -/
+/-- Coverage over `T = {1, 2}` is **derived** — through the coverage
+engine, which asks neither `T ⊆ Correct` nor a quorum. The drift-free
+headline is out of reach here by design: two validators are no quorum,
+so the collapse cannot feed it, and the drift bound is supplied
+explicitly — which is exactly why the engine stays public. -/
 theorem ustarvePace_synchronisedOn (N : ℕ) :
     SynchronisedOn (Uomit 3 N) ({1, 2} : Finset (Fin 4)) 0 :=
-  (ustarvePace N).synchronisedOn_of_converges (D := 1)
+  (ustarvePace N).synchronisedOn_of_driftOn (D := 1)
     (fun v hv w hw n _ _ => by
       obtain ⟨_, _⟩ := mem_T12_bounds hv
       obtain ⟨_, _⟩ := mem_T12_bounds hw

@@ -7,9 +7,11 @@ import LeanDagTest.Quantitative
 
 A `ReactiveM` instance on `Ugrow`, at constants chosen to exhibit the
 point of the reactive rule: every build happens at spacing `6`, strictly
-inside the timeout `7`, so **no validator ever waits out a timeout** —
+inside the timeout `9`, so **no validator ever waits out a timeout** —
 the fallback branches of `vote_or_wait` and `cert_or_wait` are never
-taken, and both are discharged by their reactive exits.
+taken, and both are discharged by their reactive exits. The timeout is
+`9 = 2Δ + proc` exactly: the drift-free backoff hypothesis of the
+liveness theorems is met with equality.
 
 `Ugrow`'s blocks reference the whole round below, so every block votes
 for every leader block and every round-`(n+2)` block certifies; the
@@ -18,7 +20,7 @@ model is for. The fast-path constants are honest rather than generous:
 processing `5` is the least value `prompt_vote` admits here — a
 validator's shortcut to its *own* block lets the trigger fire a tick
 before the slowest peer's block would force it — so `D + δ + proc = 10`
-exceeds the timeout `7`, the sufficient condition of
+exceeds the timeout `9`, the sufficient condition of
 `no_timeout_of_fast` is deliberately unmet, and its conclusion is
 discharged directly by the run (`ugrowReactive_early`).
 `ugrowReactive_fast` exhibits the latency theorem itself.
@@ -44,11 +46,11 @@ def reactHolds (N : ℕ) (v : Fin 4) (t : ℕ) : Finset ℕ :=
     b % 4 + 6 * (b / 4) + 2 ≤ t ∨ (b % 4 = (v : ℕ) ∧ b % 4 + 6 * (b / 4) ≤ t)
 
 /-- The reactive witness: `Ugrow` on the round-robin schedule, builds at
-spacing `6` inside a timeout of `7`. -/
+spacing `6` inside a timeout of `9 = 2Δ + proc`. -/
 def ugrowReactive (N : ℕ) : ReactiveM (Ugrow N) {1, 2, 3} N where
   top _ := N
   built v n := (v : ℕ) + 6 * n
-  timeout _ := 7
+  timeout _ := 9
   proc := 5
   gst := 0
   delay := 2
@@ -87,6 +89,14 @@ def ugrowReactive (N : ℕ) : ReactiveM (Ugrow N) {1, 2, 3} N where
     · omega
     · omega
   advances _ _ _ hn _ _ := hn
+  catchup v hv n hn b hb hbT hbr t hheld := by
+    have hv4 := v.isLt
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round] at hbr
+    simp only [reactHolds, Finset.mem_filter, Finset.mem_range] at hheld
+    refine ⟨hn, ?_⟩
+    change (v : ℕ) + 6 * n ≤ t + 5
+    rcases hheld.2 with h | ⟨_, h⟩ <;> omega
   vote_or_wait v hv k hN _ L hL c hc hcc hcr := by
     -- the reactive exit is always available: every block references the
     -- whole round below, the leader block among it
@@ -158,26 +168,16 @@ def ugrowReactive (N : ℕ) : ReactiveM (Ugrow N) {1, 2, 3} N where
     have hn : Fintype.card (Fin 4) = 4 := rfl
     omega
 
-/-- Drift among `{1,2,3}` at spacing `6` is `2`; `3` is a safe bound. -/
-theorem ugrowReactive_drift (N : ℕ) :
-    DriftOn (ugrowReactive N).built {1, 2, 3} 0 3 N := by
-  intro v hv w hw n _ _
-  obtain ⟨_, _⟩ := mem_T_bounds hv
-  obtain ⟨_, _⟩ := mem_T_bounds hw
-  change (w : ℕ) + 6 * n ≤ ((v : ℕ) + 6 * n) + 3
-  omega
-
 /-- **Reactive liveness, on data.** Slot `1` (leader `1`, reliable) is
-committed by the full view, at spacing `6` with a timeout of `7` and
-delivery bound `2`: `3 + 2 ≤ 7` and the fallback is sound, though this
-run never uses it. Production appears in no field: the structure derives
-it. -/
+committed by the full view, at spacing `6` with a timeout of
+`9 = 2Δ + proc`, met with equality — and no drift hypothesis: the
+collapsed spread is derived inside the theorem. Production appears in no
+field: the structure derives it. -/
 theorem ugrowReactive_decided (N : ℕ) (hN : rrSlots.slotRound 1 + 2 ≤ N) :
     ∃ L, IsLeaderBlock (S := rrSlots) (Ugrow N) 1 L ∧
       Decided (S := rrSlots) (Ugrow N) (View.full (Ugrow N)) 1 (some L) :=
-  (ugrowReactive N).decided (D := 3) (R := 0) (by decide) (by decide)
-    (ugrowReactive_drift N) (le_refl 0)
-    (fun n _ => by change 3 + 2 ≤ 7; omega)
+  (ugrowReactive N).decided (R := 0) (by decide) (by decide)
+    (le_refl 0) (fun n _ => by change 2 * 2 + 5 ≤ 9; omega)
     (Nat.zero_le _) hN (by decide)
 
 /-- **No timeout fires, on data**: every build is strictly inside the
@@ -188,7 +188,7 @@ theorem ugrowReactive_early (N : ℕ) :
       (ugrowReactive N).built v (n + 1)
         < (ugrowReactive N).built v n + (ugrowReactive N).timeout n := by
   intro v _ n
-  change (v : ℕ) + 6 * (n + 1) < ((v : ℕ) + 6 * n) + 7
+  change (v : ℕ) + 6 * (n + 1) < ((v : ℕ) + 6 * n) + 9
   omega
 
 /-- **The latency theorem, on data.** Slot `1` sits at round `3`; its
@@ -256,8 +256,8 @@ example : ∃ k', 1 < rrSlots.slotRound k' ∧ rrSlots.leader k' = 2 ∧
       (Payload := Unit) (by decide) (by decide) rrSlots_fairToEach
       (u := 2) (by decide) 0 1 (Nat.zero_le 1)
   refine ⟨k', hm, hlead, fun N hN => ?_⟩
-  refine h (Ugrow N) N 3 (ugrowReactive N) (ugrowReactive_drift N) (le_refl 0)
-    (fun n _ => by change 3 + 2 ≤ 7; omega) hN 6 ?_ ?_ ?_
+  refine h (Ugrow N) N (ugrowReactive N) (le_refl 0)
+    (fun n _ => by change 2 * 2 + 5 ≤ 9; omega) hN 6 ?_ ?_ ?_
   · simp only [ugrow_ids, Finset.mem_range]
     have := rrSlots.mono (Nat.zero_le k')
     omega

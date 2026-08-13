@@ -31,7 +31,7 @@ variable [F : Faults Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable [S : Slots Validator]
-variable {T : Finset Validator} {D N R : ℕ} {k : ℕ} {L : BlockId}
+variable {T : Finset Validator} {N R : ℕ} {k : ℕ} {L : BlockId}
 
 /-- The reactive three-round schedule: `ReactivePace`'s vote stage,
 plus the certificate wait, stated over any `T`-authored block. -/
@@ -68,16 +68,17 @@ The vote blocks themselves come from the trunk's derived production
 (`PaceCore.populatedOn`): nothing here assumes a block exists. -/
 theorem certifies (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
-    (hD : DriftOn rm.built T R D N) (hgst : rm.gst ≤ R)
-    (hto : ∀ n, R ≤ n → D + rm.delay ≤ rm.timeout n)
+    (hgst : rm.gst ≤ R)
+    (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
     (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
     CertifiesAt U T (S.slotRound k) L := by
+  have hD := rm.driftOn_of_catchup hcard hgst
   intro v hv c hc hcc hcr
   rcases rm.cert_or_wait v hv k hN hlead L hL c hc hcc hcr with hcert | ⟨hwait, hincl⟩
   · exact hcert
   · -- the fallback block references every reliable vote; count them
-    have hvotes := rm.toReactivePace.votes hT hD hgst hto hR (by omega) hlead hL
+    have hvotes := rm.toReactivePace.votes hT hcard hgst hto hR (by omega) hlead hL
     -- each `u ∈ T` has a vote block, by derived production
     have hpop := rm.toPaceCore.populatedOn hcard (S.slotRound k + 1) (by omega)
     refine le_trans hcard (Finset.card_le_card ?_)
@@ -105,14 +106,14 @@ supplier, with the certificate blocks from derived production. One
 application; the argument lives in `Liveness.lean`, once. -/
 theorem directCommit (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
-    (hD : DriftOn rm.built T R D N) (hgst : rm.gst ≤ R)
-    (hto : ∀ n, R ≤ n → D + rm.delay ≤ rm.timeout n)
+    (hgst : rm.gst ≤ R)
+    (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
     (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
     DirectCommit U L (S.slotRound k) :=
   directCommit_of_certifiesAt hcard
     (rm.toPaceCore.populatedOn hcard (S.slotRound k + 2) (by omega))
-    (rm.certifies hT hcard hD hgst hto hR hN hlead hL)
+    (rm.certifies hT hcard hgst hto hR hN hlead hL)
 
 /-- **Reactive liveness (Mysticeti).** A reliable-led slot past GST is
 committed by every view — the conclusion of `decided_of_leader_mem`,
@@ -120,8 +121,8 @@ with reference coverage replaced by the two reactive wait clauses and
 the leader block supplied by derived production. -/
 theorem decided (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
-    (hD : DriftOn rm.built T R D N) (hgst : rm.gst ≤ R)
-    (hto : ∀ n, R ≤ n → D + rm.delay ≤ rm.timeout n)
+    (hgst : rm.gst ≤ R)
+    (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
     (hlead : S.leader k ∈ T) :
     ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) := by
@@ -129,7 +130,7 @@ theorem decided (hT : T ⊆ (Correct : Finset Validator))
     rm.toPaceCore.populatedOn hcard (S.slotRound k) (by omega) (S.leader k) hlead
   have hL : IsLeaderBlock U k L := ⟨hLmem, hLr, hLc⟩
   exact ⟨L, hL, Decided.directCommit hL
-    (directCommitIn_full (rm.directCommit hT hcard hD hgst hto hR hN hlead hL))⟩
+    (directCommitIn_full (rm.directCommit hT hcard hgst hto hR hN hlead hL))⟩
 
 /-! ## Inclusion without coverage: the rotation backbone
 
@@ -162,7 +163,7 @@ commits that slot with a leader block whose cone contains `u`'s
 round-`m` block — which is therefore in the agreed ledger of any verdict
 assignment covering the slot.
 
-No coverage appears: the hypotheses are the reactive wait clauses, drift
+No coverage appears: the hypotheses are the reactive wait clauses, GST
 and the backoff, exactly as in `ReactiveM.decided`. What is added is
 only `FairToEach` — the schedule must return to `u` itself — and the
 self-parent chain does the rest. -/
@@ -172,10 +173,10 @@ theorem committed_of_correct_block
     (fair : FairToEach (S := S) T) {u : Validator} (hu : u ∈ T) (R m : ℕ)
     (hRm : R ≤ m) :
     ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧ S.leader k' = u ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N D : ℕ)
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
         (rm : ReactiveM U T N),
-        DriftOn rm.built T R D N → rm.gst ≤ R →
-        (∀ n, R ≤ n → D + rm.delay ≤ rm.timeout n) →
+        rm.gst ≤ R →
+        (∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n) →
         S.slotRound k' + 2 ≤ N →
         ∀ b ∈ U.ids, (U.block b).creator = u → (U.block b).round = m →
           ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) ∧
@@ -189,10 +190,10 @@ theorem committed_of_correct_block
     have h2 := S.mono hk'
     omega
   refine ⟨k', hm, by omega, hlead, ?_⟩
-  intro U N D rm hD hgst hto hN b hb hbc hbr
+  intro U N rm hgst hto hN b hb hbc hbr
   -- the reactive commit at `u`'s slot
   obtain ⟨L, hL, hdec⟩ :=
-    rm.decided hT hcard hD hgst hto (by omega) hN (hlead ▸ hu)
+    rm.decided hT hcard hgst hto (by omega) hN (hlead ▸ hu)
   -- the leader block is `u`-authored above `m`: the self-parent chain
   -- carries it down to `b`
   have hreach : Reaches U L b :=
