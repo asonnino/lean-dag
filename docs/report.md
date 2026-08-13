@@ -426,8 +426,10 @@ two-round setting, by twin uniqueness (§10).
 `self_parent` — a non-genesis block references *some* block by its own
 creator, not a unique one: an equivocator's blocks form a forest of
 predecessor chains, and the condition does not collapse it. Mysticeti and
-Odontoceti both mandate the clause. The safety and liveness developments never
-consume it; it is indispensable to §8, where the self-parent
+Odontoceti both mandate the clause. The safety development never consumes it, and on the
+liveness side it has exactly one consumer: the rotation backbone of the
+reactive schedule (RS5, §11.5), whose whole argument is the self-parent
+chain. It is indispensable to §8, where that same
 chain is what turns per-acceptance budgets into per-round rates and a correct
 block's cone into a complete record of its author's acceptances. In §12 the
 clause is consumed in the other direction: the safe-skip fill's added self
@@ -738,7 +740,7 @@ the system actually falls.
 | P10 | the leader schedule names reliable validators arbitrarily far out | `FairScheduleOn` |
 
 P1–P6 are consumed by the safety development, P7–P10 additionally by liveness;
-P3′ by neither — it is indispensable to §8, and consumed again by the fill of §12.
+P3′ by safety never, and by liveness exactly once (RS5, §11.5) — it is indispensable to §8, and consumed again by the fill of §12.
 
 P10 is a joint condition rather than a pure specification: the schedule is the
 designer's, but which validators are reliable is not. Round-robin discharges it
@@ -1141,7 +1143,7 @@ by violating a clause; read across to see what a result depends on.
 | P1 | `ValidWrt.predecessor` | T2, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L0, CQ3, CQ5, CQ6, CQ7, C2, D15a, C1′, C3′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, G9, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6, I1, I2, I4–I17, I19 |
 | P2 | `ValidWrt.distinct_creators` | M5′, M5, M6, C1′, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G12, G8, O1′, O4′, O5, O6, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6, AL7, H2, H5, H6, I1, I2, I4–I16 |
 | P3 | `ValidWrt.quorum` | T3, T3a, T3c, M2, M4, M6, L0, CQ5, CQ6, CQ7, D15a, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6, I1, I2, I4–I16, I19 |
-| P3′ | `ValidWrt.self_parent` | C1′, C3′, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G11, G12, G8, G9, SS1, SS2, SS3, SS4, SS5, SS6, I1, I2, I4–I17 |
+| P3′ | `ValidWrt.self_parent` | RS5; C1′, C3′, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G11, G12, G8, G9, SS1, SS2, SS3, SS4, SS5, SS6, I1, I2, I4–I17 |
 | P4 | `BlockUniverse.complete` | T2, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L0, L3, L6, L8b, CQ3, CQ5, CQ6, CQ7, C2, D15a, C1′, C3′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, G9, O7, O10, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6, AL7, H7, I1, I2, I4–I17, I19 |
 | P5 | `BlockUniverse.no_equivocation` | T1, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L7b, L7c, L8a, L9, C2, D15a, C1′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G12, G8, O1, O1′, O2, O4′, O5, O6, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6, AL7, I1, I2, I4–I16, I19 |
 | P7 | `Delivery.includes` | L7a, C3′, B5, G6, G6b, G7, G11, G12, G9; V17 via `ViewPace.references` |
@@ -1155,10 +1157,11 @@ by violating a clause; read across to see what a result depends on.
 Three readings are worth drawing out. **P8's consumers are the
 production derivation**: the liveness results take production as a
 `PopulatedOn` hypothesis rather than deriving it inline, so the clause is
-reached only through `ViewPace.populatedOn` (V17). **P3′ is absent
-from safety and liveness entirely**, feeding only the DoS,
-garbage-collection, safe-skip and integration arcs — the report's claim
-to that effect is this table row.
+reached only through `ViewPace.populatedOn` (V17). **P3′ is absent from safety
+entirely**, and on the liveness side feeds exactly one result — the
+rotation backbone RS5 (§11.5) — beside the DoS, garbage-collection,
+safe-skip and integration arcs; the report's claim to that effect is
+this table row.
 
 Two absences in the integration column are worth reading. **I3 appears
 in no row**: it is the schedule layer, which §15.1 calls universe-
@@ -2233,6 +2236,11 @@ correct block is committed within a schedule-window of its creation,
 once the DAG is synchronous*. The capstone `chain_quality` packages
 both halves under enforceable or standard conditions only.
 
+The backbone consumes full coverage, so this route is proper to the
+full-timeout discipline. The reactive schedule, which forgoes coverage,
+recovers the inclusion conclusion by a different backbone at a different
+latency — one leadership rotation instead of one round (§11.5, RS5).
+
 A block-count purity variant was considered and rejected: under `DoSValid`
 alone the per-author block count carries the exponential constant of §8.3,
 and under the budget the cone-level Byzantine count is a whole-store
@@ -3160,6 +3168,70 @@ shortcut to its *own* round-`r` block lets the trigger fire one tick
 before the slowest peer's block would force it. The witness refused to
 compile at `4` — the house rule of §16 catching an over-tight constant
 in a clause that read as obviously right.
+
+### 11.5 Inclusion without coverage: the rotation backbone
+
+Chain quality's inclusion results (§7) run on full reference coverage,
+and the reactive discipline deliberately does without it: an early exit
+omits whatever had not arrived, so a straggler's block may be referenced
+by nobody at the round above — `SynchronisedOn` is false, and CQ5's
+per-round backbone with it.
+
+Inclusion survives anyway, by a different backbone. A correct author's
+blocks form a single descending chain under the self-parent clause P3′
+(`reaches_self_ancestor`): each block references its author's previous
+one, existence at every step coming from completeness rather than from
+any production hypothesis, and uniqueness from T1. A straggler's block
+therefore lies below every later block of its *own author* — and when
+that author leads a slot, the reactive vote discipline commits the
+leader block, pulling the whole chain into the common cone at once.
+
+The schedule must return to the author in particular, which is a
+strictly stronger fairness than `FairScheduleOn` promises:
+
+```lean
+def FairToEach (T : Finset Validator) : Prop :=
+  ∀ v ∈ T, ∀ k, ∃ k', k ≤ k' ∧ S.leader k' = v
+```
+
+Round-robin supplies it (`rrSlots_fairToEach`). The result then has
+CQ6's quantifier order — the slot is fixed by the schedule, before any
+execution is named:
+
+**RS5.**
+```lean
+theorem committed_of_correct_block
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (fair : FairToEach (S := S) T) {u : Validator} (hu : u ∈ T) (R m : ℕ)
+    (hRm : R ≤ m) :
+    ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧ S.leader k' = u ∧
+      ∀ U N D (rm : ReactiveM U T N),
+        DriftOn rm.built T R D N → rm.gst ≤ R →
+        (∀ n, R ≤ n → D + rm.delay ≤ rm.timeout n) →
+        S.slotRound k' + 2 ≤ N →
+        ∀ b ∈ U.ids, (U.block b).creator = u → (U.block b).round = m →
+          ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) ∧
+            Reaches U L b ∧
+            ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
+              b ∈ ledgerSet U g n
+```
+
+No coverage appears among the hypotheses — they are `ReactiveM.decided`'s,
+plus the per-validator fairness. So the reactive system trades the
+inclusion *latency*, not the guarantee: where full coverage puts a
+correct round-`m` block in every correct cone one round later (CQ5), the
+reactive discipline puts it in the agreed ledger one leadership rotation
+later. Commit latency at network speed, inclusion latency at rotation
+speed — and both halves of that sentence are theorems.
+
+This is also where the self-parent clause P3′ acquires its first
+liveness consumer: everywhere else it serves storage and recovery
+(§§8, 12), and the tables of §§2.2 and 4.8 record the shift.
+
+`ugrowReactive` exhibits the result on data: validator `2`'s round-`1`
+block enters the ledger through a slot led by `2` itself, the reach
+running down `2`'s own self-parent chain.
 
 ---
 
@@ -4738,10 +4810,10 @@ run through them.
 
 The extracted edges are also an independent check on this report's prose,
 and three of its claims come out exactly as written. `P3′`, the
-self-parent clause, has no outgoing edge in the core view and in the full
-view feeds only C1′, B7, G1 and SS1 — which is §2.2's assertion that
-safety and liveness never consume it and that it is indispensable to the
-denial-of-service, garbage-collection and safe-skip arcs. `L7 ← N2, P7,
+self-parent clause, feeds C1′, B7, G1, SS1 and — since the rotation
+backbone — RS5, which is §2.2's assertion that safety never consumes it,
+that its one liveness consumer is §11.5's, and that it is indispensable
+to the denial-of-service, garbage-collection and safe-skip arcs. `L7 ← N2, P7,
 P9` reproduces the §4.4 table row for row — coverage drawing on the
 network column and the two protocol clauses, with non-equivocation
 nowhere in it, since the route's referencing clause is stated over any
@@ -5300,6 +5372,7 @@ design records and the git history remain legible.
 | RS2 | reactive liveness, three rounds | `ReactiveM.certifies`, `ReactiveM.directCommit`, `ReactiveM.decided` *(Reactive/Mysticeti)* |
 | RS3 | reactive liveness, two rounds | `Odontoceti.reactive_directCommit`, `Odontoceti.reactive_decided` *(Reactive/Odontoceti)* |
 | RS4 | latency tracks delivery; the timeout never fires | `ReactivePace.built_succ_le_of_fast`, `ReactivePace.no_timeout_of_fast` *(Reactive/Basic)* |
+| RS5 | inclusion without coverage: the rotation backbone | `reaches_self_ancestor` *(CausalHistory)*, `FairToEach` *(Liveness)*, `ReactiveM.committed_of_correct_block` *(Reactive/Mysticeti)* |
 
 **Catch-up** (§6.11):
 
@@ -6146,6 +6219,17 @@ abbrev FairSchedule : Prop := FairScheduleOn (Correct : Finset Validator)
 ```
 
 The all-of-`Correct` case.
+
+#### `FairToEach`
+
+*def, `Liveness.lean`*
+
+```lean
+def FairToEach (T : Finset Validator) : Prop :=
+  ∀ v ∈ T, ∀ k, ∃ k', k ≤ k' ∧ S.leader k' = v
+```
+
+**Every member of `T` leads arbitrarily far out** — per-validator fairness, strictly stronger than `FairScheduleOn`, which promises only *some* `T`-leader. Round-robin supplies it (`rrSlots_fairToEach`), and the rotation-inclusion result of report §11.5 is what consumes it: a straggler's block enters the ledger when its *own author* leads, so the schedule must return to that author in particular.
 
 #### `FairRunOn`
 
@@ -8466,7 +8550,7 @@ The full-timeout discipline: `PaceCore` with P9 — the waiting floor and the pr
 
 ## Appendix C. The theorem reference
 
-The 324 theorems that either another module of the
+The 326 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -8779,6 +8863,23 @@ theorem eq_of_reaches_of_refs_empty {c b : BlockId} (hc : (U.block c).refs = ∅
 ```
 
 A block with no references reaches only itself. In particular genesis blocks (`spec.md` §3.2, `refs_empty_of_round_zero`) are causal-history leaves.
+
+#### `reaches_self_ancestor`
+
+*theorem, `CausalHistory.lean`*
+
+```lean
+theorem reaches_self_ancestor {u : Validator}
+    (hu : u ∈ (Correct : Finset Validator)) {c b : BlockId}
+    (hc : c ∈ U.ids) (hb : b ∈ U.ids)
+    (hcc : (U.block c).creator = u) (hbc : (U.block b).creator = u)
+    (hle : (U.block b).round ≤ (U.block c).round) :
+    Reaches U c b
+```
+
+**The self-parent chain.** A correct author's blocks form a single descending chain under P3′: any of its blocks reaches any earlier one.
+
+The walk needs no production hypothesis — each step's target *exists* because the reference exists (P3′ supplies a same-creator reference, P1 puts it one round down, completeness keeps it in the universe) — and it lands on the right block because a correct author has only one block per round (T1). This is the backbone of the rotation-inclusion argument (report §11.5): a straggler's block is woven into the common cone not by per-round coverage but by its author's own chain, the moment the author leads a slot.
 
 #### `round_le_of_reaches`
 
@@ -11321,6 +11422,33 @@ theorem decided (hT : T ⊆ (Correct : Finset Validator))
 
 **Reactive liveness (Mysticeti).** A reliable-led slot past GST is committed by every view — the conclusion of `decided_of_leader_mem`, with reference coverage replaced by the two reactive wait clauses and the leader block supplied by derived production.
 
+#### `committed_of_correct_block`
+
+*theorem, `Reactive.Mysticeti.lean`*
+
+```lean
+theorem committed_of_correct_block
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (fair : FairToEach (S := S) T) {u : Validator} (hu : u ∈ T) (R m : ℕ)
+    (hRm : R ≤ m) :
+    ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧ S.leader k' = u ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N D : ℕ)
+        (rm : ReactiveM U T N),
+        DriftOn rm.built T R D N → rm.gst ≤ R →
+        (∀ n, R ≤ n → D + rm.delay ≤ rm.timeout n) →
+        S.slotRound k' + 2 ≤ N →
+        ∀ b ∈ U.ids, (U.block b).creator = u → (U.block b).round = m →
+          ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) ∧
+            Reaches U L b ∧
+            ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
+              b ∈ ledgerSet U g n
+```
+
+**RS5 — reactive inclusion.** For every round `m` and author `u ∈ T`, the schedule fixes a `u`-led slot above `m` before any execution is named, and every sufficiently grown reactive execution commits that slot with a leader block whose cone contains `u`'s round-`m` block — which is therefore in the agreed ledger of any verdict assignment covering the slot.
+
+No coverage appears: the hypotheses are the reactive wait clauses, drift and the backoff, exactly as in `ReactiveM.decided`. What is added is only `FairToEach` — the schedule must return to `u` itself — and the self-parent chain does the rest.
+
 #### `reactive_directCommit`
 
 *theorem, `Reactive.Odontoceti.lean`*
@@ -12887,7 +13015,7 @@ theorem directCommit_of_wait_two_delay (vp : ViewPace U T N)
 
 ## Appendix D. Index of internal lemmas
 
-The 313 lemmas used only within the file that proves
+The 314 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -12984,11 +13112,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `slot_eq_of_decided_commit` | And so a committed block belongs to one slot. The ledger reads verdicts off in slot order, so without this … |
 | `slot_eq_of_isLeaderBlock` | A block is the candidate of at most one slot. |
 
-### `Liveness.lean` (19)
+### `Liveness.lean` (20)
 
 | Lemma | Role |
 |:---|:---|
 | `FairRunOn.fairScheduleOn` | A run of `c` slots contains a `T`-led slot, so `FairRunOn` refines `FairScheduleOn` and everything proved … |
+| `FairToEach.fairScheduleOn` | Per-validator fairness is fairness. |
 | `PopulatedOn.mono` | Population is antitone: a smaller set is easier to populate. This is what lets L1 keep concluding about … |
 | `SynchronisedOn.mono` | Coverage is antitone too: mutual coverage among a larger set implies it among any subset. So existing … |
 | `all_decided_below_of_fairRun_correct` | L10 at `T := Correct`. |

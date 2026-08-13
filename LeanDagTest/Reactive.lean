@@ -230,10 +230,49 @@ theorem ugrowReactive_fast (N : ℕ) (hN : 4 ≤ N) :
   rw [h34, h31] at hvle
   omega
 
+/-- Round-robin returns to every reliable validator: `k' = 4k + v` is at
+or past `k` and led by `v`. -/
+theorem rrSlots_fairToEach : FairToEach (S := rrSlots) ({1, 2, 3} : Finset (Fin 4)) := by
+  intro v hv k
+  refine ⟨4 * k + (v : ℕ), by omega, ?_⟩
+  apply Fin.ext
+  rw [rrSlots_leader_val]
+  have := v.isLt
+  omega
+
+/-- **RS5 on data.** Validator `2`'s round-`1` block (id `6`) enters the
+agreed ledger through a slot led by `2` itself, above round `1` — with no
+coverage anywhere: the commit is reactive, and the reach runs down `2`'s
+own self-parent chain. -/
+example : ∃ k', 1 < rrSlots.slotRound k' ∧ rrSlots.leader k' = 2 ∧
+    ∀ N, rrSlots.slotRound k' + 2 ≤ N →
+      ∃ L, IsLeaderBlock (S := rrSlots) (Ugrow N) k' L ∧
+        Decided (S := rrSlots) (Ugrow N) (View.full (Ugrow N)) k' (some L) ∧
+        Reaches (Ugrow N) L 6 ∧
+        ∀ (g : ℕ → Option ℕ) (n : ℕ), g k' = some L → k' < n →
+          6 ∈ ledgerSet (Ugrow N) g n := by
+  obtain ⟨k', hm, _, hlead, h⟩ :=
+    ReactiveM.committed_of_correct_block (S := rrSlots) (BlockId := ℕ)
+      (Payload := Unit) (by decide) (by decide) rrSlots_fairToEach
+      (u := 2) (by decide) 0 1 (Nat.zero_le 1)
+  refine ⟨k', hm, hlead, fun N hN => ?_⟩
+  refine h (Ugrow N) N 3 (ugrowReactive N) (ugrowReactive_drift N) (le_refl 0)
+    (fun n _ => by change 3 + 2 ≤ 7; omega) hN 6 ?_ ?_ ?_
+  · simp only [ugrow_ids, Finset.mem_range]
+    have := rrSlots.mono (Nat.zero_le k')
+    omega
+  · apply Fin.ext
+    simp only [ugrow_block, rrBlock_creator_val]
+    decide
+  · simp only [ugrow_block, rrBlock_round]
+
 #print axioms ugrowReactive_decided
 #print axioms ugrowReactive_fast
 #print axioms LeanDag.ReactiveM.decided
 #print axioms LeanDag.Odontoceti.reactive_decided
 #print axioms LeanDag.ReactivePace.no_timeout_of_fast
+#print axioms rrSlots_fairToEach
+#print axioms LeanDag.reaches_self_ancestor
+#print axioms LeanDag.ReactiveM.committed_of_correct_block
 
 end LeanDagTest

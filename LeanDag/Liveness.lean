@@ -662,6 +662,23 @@ def FairScheduleOn (T : Finset Validator) : Prop :=
 /-- The all-of-`Correct` case. -/
 abbrev FairSchedule : Prop := FairScheduleOn (Correct : Finset Validator)
 
+/-- **Every member of `T` leads arbitrarily far out** — per-validator
+fairness, strictly stronger than `FairScheduleOn`, which promises only
+*some* `T`-leader. Round-robin supplies it (`rrSlots_fairToEach`), and
+the rotation-inclusion result of report §11.5 is what consumes it: a
+straggler's block enters the ledger when its *own author* leads, so the
+schedule must return to that author in particular. -/
+def FairToEach (T : Finset Validator) : Prop :=
+  ∀ v ∈ T, ∀ k, ∃ k', k ≤ k' ∧ S.leader k' = v
+
+/-- Per-validator fairness is fairness. -/
+theorem FairToEach.fairScheduleOn {T : Finset Validator}
+    (h : FairToEach T) (hne : T.Nonempty) : FairScheduleOn T := by
+  obtain ⟨v, hv⟩ := hne
+  intro k
+  obtain ⟨k', hk, hlead⟩ := h v hv k
+  exact ⟨k', hk, hlead ▸ hv⟩
+
 /-- **The schedule puts `c` consecutive `T`-led slots arbitrarily far out.**
 
 Stronger than `FairScheduleOn`, which promises one `T`-led slot and no more, and

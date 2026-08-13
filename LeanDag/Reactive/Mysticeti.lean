@@ -131,6 +131,76 @@ theorem decided (hT : T ⊆ (Correct : Finset Validator))
   exact ⟨L, hL, Decided.directCommit hL
     (directCommitIn_full (rm.directCommit hT hcard hD hgst hto hR hN hlead hL))⟩
 
+/-! ## Inclusion without coverage: the rotation backbone
+
+The reference coverage of the main line is what chain quality's
+inclusion results (report §7) run on, and the reactive discipline
+deliberately does without it: an early exit omits whatever had not
+arrived, so a straggler's block may be referenced by nobody at the round
+above — `SynchronisedOn` is false, and the per-round backbone of CQ5
+with it.
+
+Inclusion survives anyway, by a different route. A correct author's
+blocks form a single chain under the self-parent clause
+(`reaches_self_ancestor`), so a straggler's block lies below every later
+block of its *own author* — and when that author leads a slot, which
+per-validator fairness guarantees (`FairToEach`), the reactive vote
+discipline commits the leader block, and the whole chain enters the
+common cone at once.
+
+So the reactive system trades the inclusion latency, not the guarantee:
+where full coverage puts a correct round-`m` block in *every* correct
+cone one round later, the reactive discipline puts it in the *agreed
+ledger* one leadership rotation later. Commit latency at network speed,
+inclusion latency at rotation speed — and both halves of that sentence
+are theorems. -/
+
+/-- **RS5 — reactive inclusion.** For every round `m` and author
+`u ∈ T`, the schedule fixes a `u`-led slot above `m` before any
+execution is named, and every sufficiently grown reactive execution
+commits that slot with a leader block whose cone contains `u`'s
+round-`m` block — which is therefore in the agreed ledger of any verdict
+assignment covering the slot.
+
+No coverage appears: the hypotheses are the reactive wait clauses, drift
+and the backoff, exactly as in `ReactiveM.decided`. What is added is
+only `FairToEach` — the schedule must return to `u` itself — and the
+self-parent chain does the rest. -/
+theorem committed_of_correct_block
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (fair : FairToEach (S := S) T) {u : Validator} (hu : u ∈ T) (R m : ℕ)
+    (hRm : R ≤ m) :
+    ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧ S.leader k' = u ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N D : ℕ)
+        (rm : ReactiveM U T N),
+        DriftOn rm.built T R D N → rm.gst ≤ R →
+        (∀ n, R ≤ n → D + rm.delay ≤ rm.timeout n) →
+        S.slotRound k' + 2 ≤ N →
+        ∀ b ∈ U.ids, (U.block b).creator = u → (U.block b).round = m →
+          ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) ∧
+            Reaches U L b ∧
+            ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
+              b ∈ ledgerSet U g n := by
+  -- the schedule fixes the slot: `u`-led, past round `m`
+  obtain ⟨k', hk', hlead⟩ := fair u hu (slotAt Validator (m + 1))
+  have hm : m < S.slotRound k' := by
+    have h1 := le_slotRound_slotAt (Validator := Validator) (m + 1)
+    have h2 := S.mono hk'
+    omega
+  refine ⟨k', hm, by omega, hlead, ?_⟩
+  intro U N D rm hD hgst hto hN b hb hbc hbr
+  -- the reactive commit at `u`'s slot
+  obtain ⟨L, hL, hdec⟩ :=
+    rm.decided hT hcard hD hgst hto (by omega) hN (hlead ▸ hu)
+  -- the leader block is `u`-authored above `m`: the self-parent chain
+  -- carries it down to `b`
+  have hreach : Reaches U L b :=
+    reaches_self_ancestor (hT hu) hL.1 hb
+      (by rw [hL.2.2, hlead]) hbc (by rw [hL.2.1, hbr]; omega)
+  exact ⟨L, hL, hdec, hreach,
+    fun g n hg hn => ⟨k', hn, L, hg, hreach⟩⟩
+
 end ReactiveM
 
 end LeanDag

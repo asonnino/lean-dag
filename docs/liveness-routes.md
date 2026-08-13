@@ -254,7 +254,12 @@ rules count, `directCommit_of_votesAt` and `directCommit_of_certifiesAt`
 are the counting arguments proved once, and each discipline is a
 supplier — `votesAt_of_synchronisedOn`/`certifiesAt_of_synchronisedOn`
 from coverage, `ReactivePace.votes`/`ReactiveM.certifies` from the wait
-clauses.)*
+clauses. Finally RS5 settled what the reactive discipline's missing
+coverage actually costs: not the inclusion guarantee but its latency —
+`ReactiveM.committed_of_correct_block` recovers CQ6's conclusion through
+the self-parent chain (`reaches_self_ancestor`) and per-validator
+fairness (`FairToEach`), one leadership rotation where coverage needs
+one round. P3′ thereby acquired its first liveness consumer.)*
 
 ## 8. Recommended sequence
 
