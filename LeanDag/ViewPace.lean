@@ -142,18 +142,30 @@ theorem convergesWithin_iff_bounded
 
 end Factoring
 
-/-- View convergence over a **partial** build schedule.
+/-- **The shared trunk of every pacing discipline**, over a **partial**
+build schedule.
 
 `top v` is the highest round `v` reached. Its two clauses say that `v`'s
 blocks are exactly the rounds `0` through `top v`: `built_of_le_top`
 supplies one at each of them, and `le_top_of_built` says there are none
 above. Neither is an assumption about the network — the first at `n = 0`
-is genesis, which a validator satisfies alone, and the rest of it
-is the definition of how far the validator got.
+is genesis, which a validator satisfies alone, and the rest of it is the
+definition of how far the validator got. The schedule clauses of the
+extensions are guarded by `n < top v`, since a round the validator never
+reached has no build time worth constraining.
 
-The schedule clauses are guarded by `n < top v`, since a round the
-validator never reached has no build time worth constraining. -/
-structure ViewPace (U : BlockUniverse Validator BlockId Payload)
+The trunk carries the schedule data, the views, the network's
+convergence clause and the pacemaker's progress rule — everything
+production consumes, and nothing about *when* a validator chooses to
+build within a round. The partial build
+schedule, the views, the network's convergence clause and the pacemaker's
+progress rule — everything production consumes, and nothing about *when*
+a validator chooses to build within a round. The timeout disciplines
+extend it: `ViewPace` adds the full-timeout floor and promptness (P9)
+with global referencing (P7); the reactive schedule (report §11) adds
+the deadline and the vote clauses in their place. Production
+(`PaceCore.populatedOn`) is proved here, once, and inherited by both. -/
+structure PaceCore (U : BlockUniverse Validator BlockId Payload)
     (T : Finset Validator) (N : ℕ) where
   /-- The highest round `v` reached. Rounds above it were never built. -/
   top : Validator → ℕ
@@ -173,22 +185,12 @@ structure ViewPace (U : BlockUniverse Validator BlockId Payload)
   blocks are exactly rounds `0` through `top v`. -/
   le_top_of_built : ∀ v ∈ T, ∀ b ∈ U.ids,
     (U.block b).creator = v → (U.block b).round ≤ top v
-  /-- **P9, the waiting rule** (protocol), over the rounds `v` reached. -/
-  waits : ∀ v ∈ T, ∀ n < top v, built v n + timeout n ≤ built v (n + 1)
   timeout_pos : ∀ n, 1 ≤ timeout n
   /-- An upper bound on when round `n` was built, over `T`. Only an upper
-  bound is needed here — `latest_mem` belongs to the drift argument, not
-  to this one. -/
+  bound is needed for production — attainment (`latest_mem`) belongs to
+  the drift argument, and to the discipline that supplies it. -/
   latest : ℕ → ℕ
   built_le_latest : ∀ v ∈ T, ∀ n ≤ N, built v n ≤ latest n
-  /-- `latest` is *attained*, not merely an upper bound — the clause the
-  drift argument consumes. -/
-  latest_mem : ∀ n ≤ N, ∃ w ∈ T, latest n ≤ built w n
-  /-- **P9, the promptness rule** (protocol), over the rounds `v` reached.
-  Kept so that drift remains *derived*: without it `DriftOn` would have
-  to be assumed rather than obtained from promptness. -/
-  prompt : ∀ v ∈ T, ∀ n < top v,
-    built v (n + 1) ≤ max (built v n + timeout n) (latest n + delay)
   holds : Validator → ℕ → Finset BlockId
   /-- A validator holds every block it authored, from the time it built it. -/
   holds_own : ∀ v ∈ T, ∀ n ≤ N, ∀ b ∈ U.ids,
@@ -196,11 +198,6 @@ structure ViewPace (U : BlockUniverse Validator BlockId Payload)
   holds_mono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t
   /-- **N2, as view convergence** (network). -/
   converges : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + delay)
-  /-- **P7, referencing** (protocol), over any block the validator authors. -/
-  references : ∀ v ∈ T, ∀ n < N, ∀ c ∈ U.ids,
-    (U.block c).creator = v → (U.block c).round = n + 1 →
-    ∀ a ∈ holds v (built v (n + 1)), (U.block a).round = n →
-    a ∈ (U.block c).refs
   /-- **P8, as the pacemaker's progress rule** (protocol). A validator that
   holds a quorum of distinct round-`n` authors — *at any time whatever* —
   gets past round `n`.
@@ -216,6 +213,69 @@ structure ViewPace (U : BlockUniverse Validator BlockId Payload)
     (Fintype.card Validator - F.f) ≤
       (creatorsOf U.block ((holds v t).filter fun b => (U.block b).round = n)).card →
     n < top v
+
+namespace PaceCore
+
+variable (pc : PaceCore U T N)
+
+omit [DecidableEq BlockId] in
+/-- **Every reliable validator reaches every round below the horizon** —
+with `T` a quorum, nobody in `T` is stuck. The induction: each `w ∈ T`
+reached round `n`, so holds its own block there; `holds_mono` carries it
+to the common time `max (latest n) gst`; `converges` puts a quorum of
+distinct round-`n` authors in `v`'s hands; `advances` fires.
+
+Proved on the trunk, so every pacing discipline inherits it: nothing
+here mentions a floor, a ceiling, or a timeout. -/
+theorem reached (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+    ∀ n ≤ N, ∀ v ∈ T, n ≤ pc.top v := by
+  intro n
+  induction n with
+  | zero => intro _ v _; omega
+  | succ n ih =>
+      intro hn v hv
+      refine Nat.succ_le_of_lt (pc.advances v hv n (by omega)
+        (max (pc.latest n) pc.gst + pc.delay) (le_trans hcard (Finset.card_le_card ?_)))
+      intro w hw
+      obtain ⟨b, hb, hbc, hbr⟩ := pc.built_of_le_top w hw n (ih (by omega) w hw)
+      refine mem_creatorsOf.mpr ⟨b, Finset.mem_filter.mpr ⟨?_, hbr⟩, hbc⟩
+      have hown := pc.holds_own w hw n (by omega) b hb hbc hbr
+      have hle : pc.built w n ≤ max (pc.latest n) pc.gst :=
+        le_trans (pc.built_le_latest w hw n (by omega)) (le_max_left _ _)
+      exact pc.converges v hv w hw _ (le_max_right _ _) (pc.holds_mono w _ _ hle hown)
+
+omit [DecidableEq BlockId] in
+/-- **Production, once for every discipline**: a round a validator got to
+is a round it built in. -/
+theorem populatedOn (pc : PaceCore U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+    ∀ n ≤ N, PopulatedOn U T n :=
+  fun n hn v hv => pc.built_of_le_top v hv n (pc.reached hcard n hn v hv)
+
+end PaceCore
+
+/-- The full-timeout discipline: `PaceCore` with P9 — the waiting floor
+and the promptness ceiling — and the global referencing clause P7. This
+is the structure the coverage derivation and the quantitative results
+run on; the reactive schedule (report §11) extends the same trunk with
+a deadline in place of the floor. -/
+structure ViewPace (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (N : ℕ) extends PaceCore U T N where
+  /-- **P9, the waiting rule** (protocol), over the rounds `v` reached. -/
+  waits : ∀ v ∈ T, ∀ n < top v, built v n + timeout n ≤ built v (n + 1)
+  /-- `latest` is *attained*, not merely an upper bound — the clause the
+  drift argument consumes. -/
+  latest_mem : ∀ n ≤ N, ∃ w ∈ T, latest n ≤ built w n
+  /-- **P9, the promptness rule** (protocol), over the rounds `v` reached.
+  Kept so that drift remains *derived*: without it `DriftOn` would have
+  to be assumed rather than obtained from promptness. -/
+  prompt : ∀ v ∈ T, ∀ n < top v,
+    built v (n + 1) ≤ max (built v n + timeout n) (latest n + delay)
+  /-- **P7, referencing** (protocol), over any block the validator authors. -/
+  references : ∀ v ∈ T, ∀ n < N, ∀ c ∈ U.ids,
+    (U.block c).creator = v → (U.block c).round = n + 1 →
+    ∀ a ∈ holds v (built v (n + 1)), (U.block a).round = n →
+    a ∈ (U.block c).refs
 
 namespace ViewPace
 
@@ -277,8 +337,8 @@ theorem le_built {v : Validator} (hv : v ∈ T) : ∀ n ≤ vp.top v, n ≤ vp.b
 omit [DecidableEq BlockId] in
 /-- **Production, with no deadline to beat.** Every round below the horizon
 is populated, from genesis, view convergence and the progress rule — and
-from nothing else. No drift, no backoff, no `timeout`, and no counterpart
-to `ViewGrowth`'s `hcross`.
+from nothing else. No drift, no backoff, no `timeout`, and no schedule
+side condition of any kind.
 
 The step is the familiar one with the deadline removed. Each `w ∈ T`
 reached round `n` (induction hypothesis), so it has a block there and holds
@@ -288,40 +348,25 @@ puts all of them in `v`'s hands by `max (latest n) gst + delay`. That is a
 quorum of distinct authors, so `advances` fires and `v` is past round `n` —
 whereupon `built_of_le_top` supplies its round-`n+1` block.
 
-**Where `hcross` went.** In `ViewGrowth` the quorum had to arrive by
-`built v (n+1)`, a time fixed before the run, and `hcross` was what made
-the straddling round late enough to make it. Here the arrival time is not
-compared with anything: `advances` takes the quorum at whatever time it
-appears. A schedule that raced ahead of the network pre-GST is not excluded
-by hypothesis — it is not expressible, because a validator that never held
-a quorum at round `n` never reached round `n+1`. -/
+**Why no side condition survives.** Over a total build schedule the
+quorum must arrive by `built v (n+1)`, a time fixed before the run, and a
+condition on the round straddling GST is what makes that deadline
+meetable. Here the arrival time is not compared with anything:
+`advances` takes the quorum at whatever time it appears. A schedule that
+raced ahead of the network pre-GST is not excluded by hypothesis — it is
+not expressible, because a validator that never held a quorum at round
+`n` never reached round `n+1`. -/
 theorem reached (vp : ViewPace U T N)
     (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
-    ∀ n ≤ N, ∀ v ∈ T, n ≤ vp.top v := by
-  intro n
-  induction n with
-  | zero => intro _ v _; omega
-  | succ n ih =>
-      intro hn v hv
-      -- every `w ∈ T` reached round `n`, so has a block there
-      refine Nat.succ_le_of_lt (vp.advances v hv n (by omega)
-        (max (vp.latest n) vp.gst + vp.delay) (le_trans hcard (Finset.card_le_card ?_)))
-      intro w hw
-      obtain ⟨b, hb, hbc, hbr⟩ := vp.built_of_le_top w hw n (ih (by omega) w hw)
-      refine mem_creatorsOf.mpr ⟨b, Finset.mem_filter.mpr ⟨?_, hbr⟩, hbc⟩
-      -- it holds it when built, hence at the common time `max (latest n) gst`
-      have hown := vp.holds_own w hw n (by omega) b hb hbc hbr
-      have hle : vp.built w n ≤ max (vp.latest n) vp.gst :=
-        le_trans (vp.built_le_latest w hw n (by omega)) (le_max_left _ _)
-      exact vp.converges v hv w hw _ (le_max_right _ _) (vp.holds_mono w _ _ hle hown)
+    ∀ n ≤ N, ∀ v ∈ T, n ≤ vp.top v :=
+  vp.toPaceCore.reached hcard
 
 omit [DecidableEq BlockId] in
-/-- **Production**, read off `reached`: a round a validator got to is a round
-it built in. -/
+/-- **Production**, inherited from the trunk (`PaceCore.populatedOn`). -/
 theorem populatedOn (vp : ViewPace U T N)
     (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
     ∀ n ≤ N, PopulatedOn U T n :=
-  fun n hn v hv => vp.built_of_le_top v hv n (vp.reached hcard n hn v hv)
+  vp.toPaceCore.populatedOn hcard
 
 omit [DecidableEq BlockId] in
 /-- **Drift is derived here too**, by the total-schedule argument over the
@@ -366,14 +411,13 @@ theorem driftOn_of_prompt (vp : ViewPace U T N)
   exact fun v hv w hw n hn hN => key n hn hN v hv w hw
 
 omit [DecidableEq BlockId] in
-/-- **Reference coverage**, exactly `ViewGrowth`'s argument over the partial
-schedule. The guards come out of `le_top_of_built`: a block at round `n+1`
-authored by `v` puts `n + 1 ≤ top v`, so `waits` and `le_built` apply where
-they are used, and the straddling case cannot arise — coverage is claimed
-only from `R`, and `gst ≤ R ≤ n ≤ built w n`.
+/-- **Reference coverage.** The guards come out of `le_top_of_built`: a
+block at round `n+1` authored by `v` puts `n + 1 ≤ top v`, so `waits` and
+`le_built` apply where they are used, and the straddling case cannot
+arise — coverage is claimed only from `R`, and `gst ≤ R ≤ n ≤ built w n`.
 
-As in `ViewGrowth`, this needs neither production, nor the quorum bound,
-nor `T ⊆ Correct`: `references` and `holds_own` are stated over any block a
+This needs neither production, nor the quorum bound, nor
+`T ⊆ Correct`: `references` and `holds_own` are stated over any block a
 validator authored, so there is nothing to identify by non-equivocation. -/
 theorem synchronisedOn_of_converges {R D : ℕ}
     (hD : DriftOn vp.built T R D N) (hgst : vp.gst ≤ R)
@@ -396,16 +440,15 @@ section Liveness
 
 variable [S : Slots Validator]
 
-/-- **The liveness spine over a partial schedule.** The conclusion of V15
-and V16 with the seed at round `0`, where it is genesis, and **no `hcross`**:
-the schedule hypothesis is gone, not weakened.
+/-- **The liveness spine** (V17): commits recur, with the seed at round
+`0`, where it is genesis, and no schedule side condition of any kind.
 
-What remains divides cleanly. The network contributes `converges` and
+What is assumed divides cleanly. The network contributes `converges` and
 `vp.gst ≤ R`. The protocol contributes `built_of_le_top` at round `0`
 (genesis), `advances` (the pacemaker does not stall), `references` (P7) and
 `waits` (P9); drift and the backoff are needed only for coverage, and
-`driftOn_of_prompt` discharges the first from promptness as
-before. Production needs none of them. -/
+`driftOn_of_prompt` discharges the first from promptness. Production
+needs none of them. -/
 theorem commits_recur_via_pace (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (fair : FairScheduleOn T) (R k : ℕ) :
@@ -471,8 +514,8 @@ variable [S : Slots Validator] {D₀ k : ℕ}
 /-- **The wait bound** (Q2 headline, report §6.10): a validator that knows
 the delivery bound and its start spread needs no backoff — a constant
 timeout of `D₀ + Δ` commits every reliable-led slot past GST. Production
-here is derived, so unlike `directCommit_of_wait` over `Timing` nothing
-asserts blocks above round `0`, and `T ⊆ Correct` is not consumed. -/
+is derived, so nothing asserts blocks above round `0`, and
+`T ⊆ Correct` is not consumed. -/
 theorem directCommit_of_wait (vp : ViewPace U T N)
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hstart : ∀ v ∈ T, ∀ w ∈ T, vp.built w 0 ≤ vp.built v 0 + D₀)

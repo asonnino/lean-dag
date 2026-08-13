@@ -137,8 +137,8 @@ here"*. Naming which hypothesis a result consumes, and where.
   the document from source until the next regeneration reverts the fix.
 - **A topic confined to its own section gets pointers only elsewhere.**
   Outside the section, at most a bare pointer — naming no theorem and no
-  assumption of the confined topic — as with the legacy quorum route
-  (report §17).
+  assumption of the confined topic — as with the rotation backbone
+  (report §11.5).
 
 ## 3. The Lean source
 

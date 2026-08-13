@@ -238,6 +238,29 @@ a second route that reaches `DirectCommit` without passing through
 production and coverage. That is interesting rather than embarrassing: it
 shows the interface is a choice, not a necessity.
 
+*(Superseded by the unification of branch `reactive-unification`. The
+calculus changed when `PaceCore` was carved out of `ViewPace`: the shared
+trunk carries everything production needs, so `ReactivePace extends
+PaceCore` — not `ViewPace`, resolving finding 2 — inherits derived
+production, resolving the `blk` totality of finding 3 by deletion rather
+than generalisation; and finding 1 stands but is now precise, since the
+two disciplines share production and differ only in how the commit
+hypotheses are discharged: coverage for the full-timeout discipline,
+targeted votes for the reactive one. The off-`blk` restatement of
+`vote_or_wait`, `prompt_vote` and `cert_or_wait` was the same move the
+Catchup port had made twice already. Option B then named the meet point:
+`VotesAt` and `CertifiesAt` are the targeted half of coverage the commit
+rules count, `directCommit_of_votesAt` and `directCommit_of_certifiesAt`
+are the counting arguments proved once, and each discipline is a
+supplier — `votesAt_of_synchronisedOn`/`certifiesAt_of_synchronisedOn`
+from coverage, `ReactivePace.votes`/`ReactiveM.certifies` from the wait
+clauses. Finally RS5 settled what the reactive discipline's missing
+coverage actually costs: not the inclusion guarantee but its latency —
+`ReactiveM.committed_of_correct_block` recovers CQ6's conclusion through
+the self-parent chain (`reaches_self_ancestor`) and per-validator
+fairness (`FairToEach`), one leadership rotation where coverage needs
+one round. P3′ thereby acquired its first liveness consumer.)*
+
 ## 8. Recommended sequence
 
 | | work | cost | risk |

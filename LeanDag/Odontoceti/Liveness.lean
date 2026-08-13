@@ -45,11 +45,28 @@ variable {T : Finset Validator} {L : BlockId} {k R N : ℕ}
 
 /-! ## O7 — honest leaders commit directly, in one step -/
 
+/-- **The commit argument, stated once** — the two-round counterpart of
+`directCommit_of_certifiesAt`. A quorum-sized `T` whose blocks one round
+above `r` all vote for `L` directly commits it: a vote *is* a support,
+each `v ∈ T` has a supporting block by production, and `T`'s cardinality
+does the counting. Both pacing disciplines end here — the full-timeout
+one arriving through `votesAt_of_synchronisedOn`, the reactive one
+through `ReactivePace.votes`. -/
+theorem directCommit_of_votesAt {r : ℕ}
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hpop1 : PopulatedOn U T (r + 1))
+    (hv : VotesAt U T r L) :
+    DirectCommit U L r := by
+  refine le_trans hcard (Finset.card_le_card ?_)
+  intro w hw
+  obtain ⟨b, hb, hbc, hbr⟩ := hpop1 w hw
+  exact mem_supporters.mpr ⟨b, hb, hbr, hv w hw b hb hbc hbr, hbc⟩
+
 /-- **O7, commit half (thesis Lemma 8 + Corollary 9).** Post-`R`, a
 `T`-led slot is directly committed: `SynchronisedOn` makes every `T`
 block at the decision round reference the leader's block, and `T`
 carries a quorum. Two populated rounds — propose and decide — and one
-synchronised step. -/
+synchronised step, routed through the targeted interface. -/
 theorem directCommit_of_leader_mem
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
@@ -58,14 +75,9 @@ theorem directCommit_of_leader_mem
     (hlead : S.leader k ∈ T) :
     ∃ L, IsLeaderBlock U k L ∧ DirectCommit U L (S.slotRound k) := by
   obtain ⟨L, hL, hLc, hLr⟩ := hpop0 (S.leader k) hlead
-  refine ⟨L, ⟨hL, hLr, hLc⟩, ?_⟩
-  have hsub : T ⊆ supporters U L (S.slotRound k + 1) := by
-    intro w hw
-    obtain ⟨b, hb, hbc, hbr⟩ := hpop1 w hw
-    refine mem_supporters.mpr ⟨b, hb, hbr, ?_, hbc⟩
-    exact hs (S.slotRound k) hR b hb hbr (by rw [hbc]; exact hw)
-      L hL hLr (by rw [hLc]; exact hlead)
-  exact le_trans hcard (Finset.card_le_card hsub)
+  exact ⟨L, ⟨hL, hLr, hLc⟩,
+    directCommit_of_votesAt hcard hpop1
+      (votesAt_of_synchronisedOn hs hR hL hLr (by rw [hLc]; exact hlead))⟩
 
 /-- The full view sees every supporter. -/
 theorem supportersIn_full {r : ℕ} :
