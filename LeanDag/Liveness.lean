@@ -105,7 +105,7 @@ there.
 
 Local and finite — no growth, no horizon. Splitting this out is what keeps
 the horizon `N` out of L4 entirely, so the only hard proof in the plan is
-independent of how `Live` is framed.
+independent of how production is framed.
 
 **Why a set `T` rather than all of `Correct`.** L4 counts to `2f+1` and never
 higher, so it needs a *quorum* of reliable validators, not every one of them.

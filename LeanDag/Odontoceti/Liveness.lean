@@ -196,8 +196,8 @@ theorem decided_below_of_committed_run
 
 /-! ## O10 — liveness, composed -/
 
-/-- **O10 (thesis Theorem 12).** Under `Live`, `DeliversQuorum`, and
-post-`R` synchrony, a recurring run of `c` correct-led slots decides
+/-- **O10 (thesis Theorem 12).** Under production and post-`R`
+synchrony, a recurring run of `c` correct-led slots decides
 every slot below it — with the run placed past both the target and `R`
 by fairness. Note the horizon: the run's last slot needs rounds up to
 its `slotRound + 1` only. -/

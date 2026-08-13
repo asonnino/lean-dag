@@ -503,7 +503,7 @@ Global symbols, fixed for the whole report:
 | `Δ`, GST | the post-stabilisation delivery bound and stabilisation time of partial synchrony (§6.8) |
 | `R` | the round from which eventual DAG synchrony holds (§6.4) |
 | `D₀` | the round-0 spread between correct validators' start times (§6.11) |
-| `N` | the growth horizon of `Live` (§6.3) |
+| `N` | the growth horizon: production is demanded up to it (§6.3) |
 | `κ`, `T` | the novelty budget: analysis-side (guarded) and mechanism-side (author-blind) constants (§8.4) |
 | `G`, `Λ` | a garbage-collection horizon round, and its lag behind the current round (§9) |
 
@@ -732,9 +732,9 @@ the system actually falls.
 | P4 | a block is held only with its causal history | `BlockUniverse.complete` |
 | P5 | one block per round: correct validators do not equivocate | `BlockUniverse.no_equivocation` |
 | P6 | the slot schedule is monotone, unbounded and keyed | `Slots.mono`, `Slots.unbounded`, `Slots.keyed` |
-| P7 | a validator references everything it accepted | `Delivery.includes`; timed `ViewSync.references`, `ViewGrowth.references`, `ViewPace.references` |
+| P7 | a validator references everything it accepted | `Delivery.includes` (storage side); `ViewPace.references` (liveness side) |
 | P8 | a validator has a genesis block, and builds on holding a quorum | `ViewPace.built_of_le_top` (genesis, at `n = 0`), `ViewPace.advances` |
-| P9 | a validator waits a full timeout, and does not dawdle | `Timing.waits`, `Timing.prompt`; over a partial schedule `ViewPace.waits`, `ViewPace.prompt` |
+| P9 | a validator waits a full timeout, and does not dawdle | `ViewPace.waits`, `ViewPace.prompt` |
 | P10 | the leader schedule names reliable validators arbitrarily far out | `FairScheduleOn` |
 
 P1–P6 are consumed by the safety development, P7–P10 additionally by liveness;
@@ -1146,8 +1146,8 @@ by violating a clause; read across to see what a result depends on.
 | P5 | `BlockUniverse.no_equivocation` | T1, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L7b, L7c, L8a, L9, C2, D15a, C1′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G12, G8, O1, O1′, O2, O4′, O5, O6, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6, AL7, I1, I2, I4–I16, I19 |
 | P7 | `Delivery.includes` | L7a, C3′, B5, G6, G6b, G7, G11, G12, G9; V17 via `ViewPace.references` |
 | P8 | `ViewPace.advances` | V17, and through it every liveness capstone |
-| P9a | `Timing.waits` | L7b, L7c, L8a, L9; V17 via `ViewPace.waits` |
-| P9b | `Timing.prompt` | L8a, L9; V17 via `ViewPace.prompt` |
+| P9a | `ViewPace.waits` | L7, L8a, L9, V17 |
+| P9b | `ViewPace.prompt` | L8a, L9, L11 |
 | P10 | `FairScheduleOn` | L6, CQ6 |
 | N2a | `EventuallyDelivers` | C3′, G6b, G7, G9 — store facts only (§4.3) |
 | N2 | `ViewPace.converges` | L7, V17, and through them every liveness capstone |
@@ -2977,8 +2977,8 @@ safety development are consumed as found; only the schedule changes.
 ### 11.1 The reactive dichotomy
 
 `ReactiveCore` is the schedule and network layer both protocols share.
-Relative to `ViewSync`, the full-timeout floor `waits` and the
-promptness clause `prompt` are gone; in their place:
+Relative to the timed schedule of §6.9, the full-timeout floor `waits`
+and the promptness clause `prompt` are gone; in their place:
 
 ```lean
 structure ReactiveCore (U) (T : Finset Validator) (N : ℕ) where
@@ -3014,7 +3014,7 @@ condition was met, so `SynchronisedOn` fails in general. It is also
 unneeded — the exit conditions are chosen so that exactly the references
 the commit rule counts are present, early exit and fallback alike — and
 the extraction confirms that neither liveness result below reaches
-`SynchronisedOn` or `Timing`.
+`SynchronisedOn`.
 
 ### 11.2 Liveness, both protocols
 
@@ -3957,7 +3957,7 @@ which mechanism can disturb them.
 
 At layer U the invariants are the DAG laws (§2.2), `PopulatedOn` and
 `SynchronisedOn` (§6.3–§6.4), `DoSValid` (§8.2), `HonestNoEquiv`
-(§14.1) and the verdict facts of §3.5. At layer D they are `Live`, the
+(§14.1) and the verdict facts of §3.5. At layer D they are the
 delivery conditions and the storage budgets of §8.4. At layer S they
 are `FairScheduleOn` and `FairRunOn` (§6.6), `SpansEligible`, and
 §13.4's `PlacesRuns`.
@@ -4602,11 +4602,10 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `CommonCore.lean` | T3a, T3c |
 | `Mysticeti.lean` | the commit rule; eligibility; M1–M6; the ledger |
 | `Schedule.lean` | concrete schedules (`uniform`, `uniformSingle`); conservativity |
-| `Liveness.lean` | L0, L2–L6, L7a; the committed-run results |
-| `Network/Quorum.lean` | the legacy quorum route (§17) |
-| `Timing.lean` | L7b |
-| `ViewSync.lean` | L7c: view convergence, the reduction to `Timing`, the factoring of the bound, the untimed variant, production derived rather than assumed, and the delivery a timed structure induces |
-| `Quantitative.lean` | L8a, L8b, L9 |
+| `Liveness.lean` | L0, L2–L6; the committed-run results |
+| `Network/Quorum.lean` | the DoS capstones, production bundled with the storage bound |
+| `ViewPace.lean` | the route (§6.9): the structure, V1, V4, coverage, production, the spine, and the quantitative results L8a, L9, L11 |
+| `Quantitative.lean` | the rated hypotheses; L8b |
 
 **The arcs** (§§7–15). All but the last consume the core read-only; §15 weakens one hypothesis of §12, for the reason given there:
 
@@ -4784,10 +4783,10 @@ references are fixed at its construction, so what bears on the derivation is not
 what a validator holds eventually but what it held when it built. `View.ids` is a
 finite set of identifiers with no temporal index, so a view-convergence statement
 cannot be applied directly. `Delivery.held : Validator → ℕ → Finset BlockId`
-supplies the index — `held v n` denotes what `v` had in hand when building for
-round `n+1` — and with it the delivery route (§6.7) is a single line. A
-time-indexed family of views would serve equally well; the requirement is the
-index, not the vehicle. This is an observation about formalisation, and it is the
+supplies the index for the storage arcs — `held v n` denotes what `v` had
+in hand when building for round `n+1` — and `ViewPace.holds` supplies it
+for liveness, indexed by the instant, with `built` ordering the two. The
+requirement is the index, not the vehicle. This is an observation about formalisation, and it is the
 reason `SynchronisedOn` is stated on `refs`.
 
 ### 19.2 Why coverage is derived rather than specified
@@ -4893,20 +4892,20 @@ indirect rule precisely enough to fail to prove it.
 
 ### 19.6 Limitations
 
-The quantitative bounds are established (§6.11). The following remain open.
+The quantitative bounds are established (§6.10). The following remain open.
 
 **The backoff loop.** `Rated` and the threshold of R4 are stipulated as clauses
 of the specification; no realistic adaptive scheme is shown to satisfy them, and
 the feedback mechanism of §19.2 is not modelled. Moreover
-`Timing.timeout : ℕ → ℕ` is indexed by round and common to the reliable set, so
+`ViewPace.timeout : ℕ → ℕ` is indexed by round and common to the reliable set, so
 that a per-validator backoff — in which validators increase their timeouts at
 different moments — cannot be expressed, let alone shown to converge. This
-requires a refinement of `Timing`.
+requires a refinement of the structure.
 
 **Wall-clock latency.** `Delay(Δ)` is a duration, but the total elapsed time to a
 commit is not derived: converting a bound of the form "`3k + 8` rounds, each of
 at least `2Δ`" into elapsed time requires a lemma accumulating `prompt` across
-rounds, which is not present. `Timing.le_built` relates rounds to time in one
+rounds, which is not present. `ViewPace.le_built` relates rounds to time in one
 direction only.
 
 **Byzantine leaders.** §6.11 bounds the wait until the next reliable leader,
@@ -5914,7 +5913,7 @@ def PopulatedOn (U : BlockUniverse Validator BlockId Payload)
 
 What L4 actually needs of a round: every validator in `T` has a block there.
 
-Local and finite — no growth, no horizon. Splitting this out is what keeps the horizon `N` out of L4 entirely, so the only hard proof in the plan is independent of how `Live` is framed.
+Local and finite — no growth, no horizon. Splitting this out is what keeps the horizon `N` out of L4 entirely, so the only hard proof in the plan is independent of how production is framed.
 
 **Why a set `T` rather than all of `Correct`.** L4 counts to `2f+1` and never higher, so it needs a *quorum* of reliable validators, not every one of them. Demanding all of `Correct` makes the theorem lapse when a single correct validator misses a single round — a GC pause, a restart — although the protocol still commits. See `liveness.md` §8 Q2.
 
@@ -7054,7 +7053,7 @@ structure ReactiveCore (U : BlockUniverse Validator BlockId Payload)
   holds : Validator → ℕ → Finset BlockId
   holds_own : ∀ v ∈ T, ∀ n ≤ N, blk v n ∈ holds v (built v n)
   holds_mono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t
-  /-- **N2, as view convergence** (network) — as in `ViewSync`. -/
+  /-- **N2, as view convergence** (network) — as in `ViewPace`. -/
   converges : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + delay)
   /-- **The leader wait.** At the round above a reliable leader, either
   the block votes (the reactive exit), or its builder waited the full
@@ -8345,9 +8344,8 @@ structure ViewPace (U : BlockUniverse Validator BlockId Payload)
   drift argument consumes. -/
   latest_mem : ∀ n ≤ N, ∃ w ∈ T, latest n ≤ built w n
   /-- **P9, the promptness rule** (protocol), over the rounds `v` reached.
-  Kept so that drift remains *derived* here as it is for `Timing`: without
-  it `DriftOn` would have to be assumed, which would be a step backwards
-  from the total-schedule routes. -/
+  Kept so that drift remains *derived*: without it `DriftOn` would have
+  to be assumed rather than obtained from promptness. -/
   prompt : ∀ v ∈ T, ∀ n < top v,
     built v (n + 1) ≤ max (built v n + timeout n) (latest n + delay)
   holds : Validator → ℕ → Finset BlockId
@@ -8383,7 +8381,7 @@ View convergence over a **partial** build schedule.
 
 `top v` is the highest round `v` reached. Its two clauses say that `v`'s blocks are exactly the rounds `0` through `top v`: `built_of_le_top` supplies one at each of them, and `le_top_of_built` says there are none above. Neither is an assumption about the network — the first at `n = 0` is genesis, which a validator satisfies alone, and the rest of it is the definition of how far the validator got.
 
-Everything else is `ViewGrowth`'s, with the schedule clauses guarded by `n < top v`, since a round the validator never reached has no build time worth constraining.
+The schedule clauses are guarded by `n < top v`, since a round the validator never reached has no build time worth constraining.
 
 
 ---
@@ -11084,7 +11082,7 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
         ∀ i, i < b → ∃ v, Decided U (View.full U) i v
 ```
 
-**O10 (thesis Theorem 12).** Under `Live`, `DeliversQuorum`, and post-`R` synchrony, a recurring run of `c` correct-led slots decides every slot below it — with the run placed past both the target and `R` by fairness. Note the horizon: the run's last slot needs rounds up to its `slotRound + 1` only.
+**O10 (thesis Theorem 12).** Under production and post-`R` synchrony, a recurring run of `c` correct-led slots decides every slot below it — with the run placed past both the target and `R` by fairness. Note the horizon: the run's last slot needs rounds up to its `slotRound + 1` only.
 
 ### The reactive schedule
 
@@ -12581,7 +12579,7 @@ theorem covers_of_converges {n : ℕ} (hn : n < N)
     a ∈ (U.block c).refs
 ```
 
-**The separation, on this route** — V1's content over the partial schedule. The fused clause the `Timing` layer carried as its network row (*a `T`-block built after GST and early enough is referenced*) is derivable from `converges` and `references` alone: the block is in its author's hands when built (`holds_own`), reaches the builder within `delay` (`converges`), is still there when the builder acts (`holds_mono`), and is therefore referenced (`references`). No counting, no drift, no waiting rule — those enter only when the *hypothesis* `built … + delay ≤ built … (n+1)` must itself be discharged, which is the race the drift argument wins.
+**The separation, on this route** — V1's content over the partial schedule. The fused covers-shape (*a `T`-block built after GST and early enough is referenced*) is derivable from `converges` and `references` alone: the block is in its author's hands when built (`holds_own`), reaches the builder within `delay` (`converges`), is still there when the builder acts (`holds_mono`), and is therefore referenced (`references`). No counting, no drift, no waiting rule — those enter only when the *hypothesis* `built … + delay ≤ built … (n+1)` must itself be discharged, which is the race the drift argument wins.
 
 This is where report §4.3's claim that the network's whole contribution is one sentence about views is discharged on the route the development keeps: `converges` mentions no blocks, rounds or references, and the step from views to references is the protocol's clause P7.
 

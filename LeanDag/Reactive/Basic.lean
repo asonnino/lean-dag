@@ -85,7 +85,7 @@ structure ReactiveCore (U : BlockUniverse Validator BlockId Payload)
   holds : Validator → ℕ → Finset BlockId
   holds_own : ∀ v ∈ T, ∀ n ≤ N, blk v n ∈ holds v (built v n)
   holds_mono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t
-  /-- **N2, as view convergence** (network) — as in `ViewSync`. -/
+  /-- **N2, as view convergence** (network) — as in `ViewPace`. -/
   converges : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + delay)
   /-- **The leader wait.** At the round above a reliable leader, either
   the block votes (the reactive exit), or its builder waited the full

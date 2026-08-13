@@ -151,9 +151,8 @@ above. Neither is an assumption about the network — the first at `n = 0`
 is genesis, which a validator satisfies alone, and the rest of it
 is the definition of how far the validator got.
 
-Everything else is `ViewGrowth`'s, with the schedule clauses guarded by
-`n < top v`, since a round the validator never reached has no build time
-worth constraining. -/
+The schedule clauses are guarded by `n < top v`, since a round the
+validator never reached has no build time worth constraining. -/
 structure ViewPace (U : BlockUniverse Validator BlockId Payload)
     (T : Finset Validator) (N : ℕ) where
   /-- The highest round `v` reached. Rounds above it were never built. -/
@@ -186,9 +185,8 @@ structure ViewPace (U : BlockUniverse Validator BlockId Payload)
   drift argument consumes. -/
   latest_mem : ∀ n ≤ N, ∃ w ∈ T, latest n ≤ built w n
   /-- **P9, the promptness rule** (protocol), over the rounds `v` reached.
-  Kept so that drift remains *derived* here as it is for `Timing`: without
-  it `DriftOn` would have to be assumed, which would be a step backwards
-  from the total-schedule routes. -/
+  Kept so that drift remains *derived*: without it `DriftOn` would have
+  to be assumed rather than obtained from promptness. -/
   prompt : ∀ v ∈ T, ∀ n < top v,
     built v (n + 1) ≤ max (built v n + timeout n) (latest n + delay)
   holds : Validator → ℕ → Finset BlockId
@@ -235,9 +233,9 @@ theorem convergesEventually (vp : ViewPace U T N) :
 
 omit [DecidableEq BlockId] in
 /-- **The separation, on this route** — V1's content over the partial
-schedule. The fused clause the `Timing` layer carried as its network row
-(*a `T`-block built after GST and early enough is referenced*) is
-derivable from `converges` and `references` alone: the block is in its
+schedule. The fused covers-shape (*a `T`-block built after GST and early
+enough is referenced*) is derivable from `converges` and `references`
+alone: the block is in its
 author's hands when built (`holds_own`), reaches the builder within
 `delay` (`converges`), is still there when the builder acts
 (`holds_mono`), and is therefore referenced (`references`). No counting,
