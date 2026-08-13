@@ -817,7 +817,10 @@ and align on advancing a round, not only on creating a block — and it is
 what makes drift a derived quantity rather than an assumed one: whatever
 the spread between validators' clocks, one post-GST round contracts it to
 `Δ + proc` (§6.11), so no start-spread hypothesis survives anywhere in the
-development.
+development. The clause cannot be exploited by a validator that does not
+wait: any valid block certifies a reliable validator that paid the full
+timeout bill for every round below it (CU5, §6.11), so the author-blind
+form a deployment runs never pulls anyone past the honest schedule.
 
 ### 4.2 The fault model
 
@@ -2121,6 +2124,42 @@ hypothesis. This also settles that `catchup` and `waits` are jointly
 satisfiable *from* a large spread, not only near synchrony: the floor
 and the deadline are in genuine tension — one holds a validator back,
 the other pulls it forward — and the witness threads both exactly.
+
+**The rush bound: the clause cannot be exploited (CU5).** The pacemaker
+rules are stated over `T`, but `T` is an analysis-side object no
+validator can test membership of, so a deployment runs the author-blind
+strengthening: catch up on *any* valid block sighted. The worry that
+raises is being rushed — a Byzantine validator, by not waiting, dragging
+correct validators past their own timeouts with manufactured evidence of
+a far-future round. It cannot: a block of round `n + 1` references a
+quorum of distinct round-`n` authors (P3), a quorum meets any
+quorum-sized `T` (`exists_reliable_parent`, with `n − 2f ≥ f + 1`
+members to spare), and by `waits` that parent's author has paid the full
+timeout bill for every round below:
+
+```lean
+theorem exists_honest_floor (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    {b : BlockId} (hb : b ∈ U.ids) {n : ℕ}
+    (hbr : (U.block b).round = n + 1) :
+    ∃ u ∈ T, n ≤ vp.top u ∧
+      vp.built u 0 + (∑ i ∈ Finset.range n, vp.timeout i) ≤ vp.built u n
+```
+
+Evidence of a round cannot exist before the honest schedule permits the
+round: catch-up only ever pulls a validator to where a reliable peer
+already is, and the adversary's whole freedom is the single layer it may
+build the instant a quorum forms beneath it —
+`PaceCore.round_le_top_succ`: no valid block's round exceeds some
+reliable `top` by more than one. On the running witness the floor is met
+with equality (§16). One caveat is recorded honestly: the model does not
+axiomatise that a block cannot be *held* before it exists — `holds` is
+constrained only by `holds_own`, monotonicity and `converges` — so the
+statement mechanised is about the block's existence certifying the
+floor, and the compatibility of the catch-up deadline with the `waits`
+floor is carried by the satisfiability witnesses (`ugrowLag`, where the
+two meet with no slack) rather than by a theorem quantifying over
+arrival times.
 
 **What catch-up does not supply is coverage.** A validator entering a
 round on evidence has not waited for the round below to assemble, so its
@@ -4617,8 +4656,9 @@ Three of the models are tight, which is what renders the constants meaningful.
   its `delay` is `2`, its `proc` is `0` and its `timeout` is `4`, so that
   the spread equals the collapse bound `Δ + proc` and
   `2Δ + proc = timeout`: every inequality of the wait bound holds with
-  equality. The constant is therefore exact rather than a conservative
-  estimate.
+  equality, and the accumulated honest floor of the rush bound (CU5) is
+  met with equality on the same schedule. The constant is therefore
+  exact rather than a conservative estimate.
 - `rrSlots_fairWithin` gives the window `f + 1 = 2`, and `f + 1` is forced, the
   validators outside the reliable set being permitted to occupy consecutive
   positions in the rotation.
@@ -5360,6 +5400,7 @@ reused.
 | CU2 | drift collapses to `Δ + proc`, from any spread | `PaceCore.drift_collapse` *(ViewPace)* |
 | CU3 | the deployment-free threshold `2Δ + proc` | merged into the main line: L7 (coverage) and L9 (the wait bound) |
 | CU4 | the collapse exhibited from a spread of ten | `ugrowLag_collapse`, `ugrowLag_decided` *(LeanDagTest.Collapse)* |
+| CU5 | the rush bound: a valid block certifies the honest floor | `exists_reliable_parent`, `PaceCore.round_le_top_succ`, `ViewPace.exists_honest_floor` *(ViewPace)* |
 
 **Safe Skip** (§12):
 
@@ -8513,7 +8554,7 @@ No promptness ceiling and no attainment clause appear: drift is derived from the
 
 ## Appendix C. The theorem reference
 
-The 325 theorems that either another module of the
+The 328 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -12893,6 +12934,48 @@ theorem commits_recur_via_pace (hT : T ⊆ (Correct : Finset Validator))
 
 What is assumed divides cleanly. The network contributes `converges` and `vp.gst ≤ R`. The protocol contributes `built_of_le_top` at round `0` (genesis), `advances` (the pacemaker does not stall), `catchup` (seeing a round is entering it), `references` (P7) and `waits` (P9). No drift appears: the backoff clears the constant `2Δ + proc`, and the spread — whatever it was at the start — is the collapsed `Δ + proc` by the time coverage reads it. Production needs none of the timing clauses.
 
+#### `exists_reliable_parent`
+
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem exists_reliable_parent
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    {b : BlockId} (hb : b ∈ U.ids) (hr : 0 < (U.block b).round) :
+    ∃ a ∈ (U.block b).refs, a ∈ U.ids ∧ (U.block a).creator ∈ T ∧
+      (U.block a).round + 1 = (U.block b).round
+```
+
+**Every valid non-genesis block carries a reliable parent.** Its reference quorum has at least `n − 2f ≥ f + 1` authors in any quorum-sized `T`; one is exhibited. Nothing about pacing enters: this is a fact about validity and cardinalities alone.
+
+#### `PaceCore.round_le_top_succ`
+
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem PaceCore.round_le_top_succ (pc : PaceCore U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    {b : BlockId} (hb : b ∈ U.ids) :
+    ∃ u ∈ T, (U.block b).round ≤ pc.top u + 1
+```
+
+**No block outruns the reliable frontier by more than one round.** Whatever a Byzantine validator publishes, some `T`-validator has reached the round below it — the adversary's whole freedom is the single layer it may build the instant a quorum forms beneath it.
+
+#### `ViewPace.exists_honest_floor`
+
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem ViewPace.exists_honest_floor (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    {b : BlockId} (hb : b ∈ U.ids) {n : ℕ}
+    (hbr : (U.block b).round = n + 1) :
+    ∃ u ∈ T, n ≤ vp.top u ∧
+      vp.built u 0 + (∑ i ∈ Finset.range n, vp.timeout i) ≤ vp.built u n
+```
+
+**The honest floor** (CU5): a valid block of round `n + 1` certifies that some reliable validator reached round `n` having genuinely waited out all `n` timeouts. Evidence of a round cannot exist before the honest schedule permits the round, so the author-blind catch-up a deployment runs is executable: it never pulls a validator past where a reliable peer already is, and the obligation `catchup` states over `T`-authored blocks is the analysis-side restriction of a rule that is safe over all of them.
+
 #### `synchronisedOn_of_rate`
 
 *theorem, `ViewPace.lean`*
@@ -12958,7 +13041,7 @@ theorem directCommit_of_wait_two_delay (vp : ViewPace U T N)
 
 ## Appendix D. Index of internal lemmas
 
-The 314 lemmas used only within the file that proves
+The 315 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -13548,10 +13631,11 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `viewUpto_skipFillD` | Accepted blocks are old, so their cones are unchanged and the accumulated view is literally the same … |
 
-### `ViewPace.lean` (5)
+### `ViewPace.lean` (6)
 
 | Lemma | Role |
 |:---|:---|
+| `ViewPace.built_ge_sum` | The full-timeout discipline's floor, accumulated: a validator's round-`n` entry lies at least the sum of … |
 | `convergesEventually` | Every `ViewPace` converges in the qualitative sense too — the bound is extra information, not a different … |
 | `convergesEventually_of_within` | A bounded lag is a lag: the timed form implies the untimed one, even before `gst`, since holdings only grow. |
 | `convergesWithin` | The `converges` field *is* the bounded form of the factoring above. |

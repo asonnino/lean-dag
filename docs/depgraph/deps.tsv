@@ -742,6 +742,12 @@ EDGE	LeanDag.reaches_self_ancestor._proof_1_3	LeanDag.BlockUniverse.block
 EDGE	LeanDag.reaches_self_ancestor._proof_1_3	LeanDag.Block.round
 EDGE	LeanDag.reaches_self_ancestor._proof_1_3	LeanDag.BlockUniverse
 NODE	LeanDagTest.catchHolds	LeanDagTest.Catchup	def
+NODE	LeanDag.PaceCore.round_le_top_succ._proof_1_1	LeanDag.ViewPace	thm
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_1	LeanDag.Faults.f
 NODE	LeanDagTest.rrSlots_fairWithin	LeanDagTest.Quantitative	thm
 EDGE	LeanDagTest.rrSlots_fairWithin	LeanDagTest.rrSlots_fairWithin._proof_1_4
 EDGE	LeanDagTest.rrSlots_fairWithin	LeanDagTest.rrSlots_fairWithin._proof_1_2
@@ -2013,6 +2019,15 @@ EDGE	LeanDag.EquivPair	LeanDag.BlockUniverse.block
 EDGE	LeanDag.EquivPair	LeanDag.Block.round
 EDGE	LeanDag.EquivPair	LeanDag.BlockUniverse
 EDGE	LeanDag.EquivPair	LeanDag.Block.creator
+NODE	LeanDag.PaceCore.round_le_top_succ._proof_1_3	LeanDag.ViewPace	thm
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_3	LeanDag.Faults
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_3	LeanDag.PaceCore.top
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_3	LeanDag.PaceCore
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_3	LeanDag.Faults.f
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_3	LeanDag.Block.creator
 NODE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.Hybrid.Liveness	thm
 EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.all_decided_below_of_fairRun	LeanDag.View.full
@@ -6050,6 +6065,18 @@ EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.all_decided_below_of_fairRun._
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.decided_below_of_committed_run
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.Slots.mono
 EDGE	LeanDag.all_decided_below_of_fairRun	LeanDag.SpansEligible
+NODE	LeanDag.ViewPace.built_ge_sum	LeanDag.ViewPace	thm
+EDGE	LeanDag.ViewPace.built_ge_sum	LeanDag.ViewPace.toPaceCore
+EDGE	LeanDag.ViewPace.built_ge_sum	LeanDag.Faults
+EDGE	LeanDag.ViewPace.built_ge_sum	LeanDag.ViewPace.built_ge_sum._proof_1_3
+EDGE	LeanDag.ViewPace.built_ge_sum	LeanDag.PaceCore.built
+EDGE	LeanDag.ViewPace.built_ge_sum	LeanDag.PaceCore.top
+EDGE	LeanDag.ViewPace.built_ge_sum	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.built_ge_sum	LeanDag.ViewPace.built_ge_sum._proof_1_2
+EDGE	LeanDag.ViewPace.built_ge_sum	LeanDag.PaceCore.timeout
+EDGE	LeanDag.ViewPace.built_ge_sum	LeanDag.ViewPace
+EDGE	LeanDag.ViewPace.built_ge_sum	LeanDag.ViewPace.built_ge_sum._proof_1_1
+EDGE	LeanDag.ViewPace.built_ge_sum	LeanDag.ViewPace.waits
 NODE	LeanDag.SkipMsg.mem_freshIds._simp_1_5	LeanDag.SafeSkip.Basic	thm
 NODE	LeanDag.Odontoceti.exists_partialRun._proof_1_8	LeanDag.Adaptive.Odontoceti	thm
 EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_8	LeanDag.Faults5
@@ -6192,6 +6219,25 @@ EDGE	LeanDag.Odontoceti.thickLink_of_directCommit	LeanDag.Odontoceti.ThickLink
 EDGE	LeanDag.Odontoceti.thickLink_of_directCommit	LeanDag.Odontoceti.thickLink_of_directCommit._proof_1_1
 EDGE	LeanDag.Odontoceti.thickLink_of_directCommit	LeanDag.Odontoceti.DirectCommit
 EDGE	LeanDag.Odontoceti.thickLink_of_directCommit	LeanDag.Faults5.toFaults
+NODE	LeanDag.exists_reliable_parent	LeanDag.ViewPace	thm
+EDGE	LeanDag.exists_reliable_parent	LeanDag.creatorsOf
+EDGE	LeanDag.exists_reliable_parent	LeanDag.mem_creatorsOf
+EDGE	LeanDag.exists_reliable_parent	LeanDag.Faults
+EDGE	LeanDag.exists_reliable_parent	LeanDag.creators
+EDGE	LeanDag.exists_reliable_parent	LeanDag.exists_reliable_parent._proof_1_1
+EDGE	LeanDag.exists_reliable_parent	LeanDag.Faults.card_validators
+EDGE	LeanDag.exists_reliable_parent	LeanDag.BlockUniverse.complete
+EDGE	LeanDag.exists_reliable_parent	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.exists_reliable_parent	LeanDag.Block.refs
+EDGE	LeanDag.exists_reliable_parent	LeanDag.BlockUniverse.block
+EDGE	LeanDag.exists_reliable_parent	LeanDag.Block.round
+EDGE	LeanDag.exists_reliable_parent	LeanDag.BlockUniverse
+EDGE	LeanDag.exists_reliable_parent	LeanDag.Faults.f
+EDGE	LeanDag.exists_reliable_parent	LeanDag.ValidWrt.predecessor
+EDGE	LeanDag.exists_reliable_parent	LeanDag.BlockUniverse.valid
+EDGE	LeanDag.exists_reliable_parent	LeanDag.ValidWrt.quorum
+EDGE	LeanDag.exists_reliable_parent	LeanDag.Block.creator
+EDGE	LeanDag.exists_reliable_parent	LeanDag.ValidWrt
 NODE	LeanDagTest.ugrowLag._proof_27	LeanDagTest.Collapse	thm
 NODE	LeanDag.Delivery.held_spec	LeanDag.Liveness	thm
 EDGE	LeanDag.Delivery.held_spec	LeanDag.Delivery
@@ -14064,6 +14110,25 @@ EDGE	LeanDag.exposedIn_of_exposedIn_chop	LeanDag.EquivPair
 EDGE	LeanDag.exposedIn_of_exposedIn_chop	LeanDag.BlockUniverse
 EDGE	LeanDag.exposedIn_of_exposedIn_chop	LeanDag.chopBlock_round
 EDGE	LeanDag.exposedIn_of_exposedIn_chop	LeanDag.Block.creator
+NODE	LeanDag.ViewPace.exists_honest_floor	LeanDag.ViewPace	thm
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.ViewPace.toPaceCore
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.Faults
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.PaceCore.le_top_of_built
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.ViewPace.built_ge_sum
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.Block.refs
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.PaceCore.built
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.ViewPace.exists_honest_floor._proof_1_2
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.ViewPace.exists_honest_floor._proof_1_1
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.BlockUniverse.block
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.exists_reliable_parent
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.PaceCore.top
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.Block.round
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.Faults.f
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.PaceCore.timeout
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.ViewPace
+EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.Block.creator
 NODE	LeanDag.decided_chop_of_decided	LeanDag.GC.ChopDecided	thm
 EDGE	LeanDag.decided_chop_of_decided	LeanDag.Decided.rec
 EDGE	LeanDag.decided_chop_of_decided	LeanDag.decided_chop_of_decided._proof_1_1
@@ -14486,6 +14551,24 @@ EDGE	LeanDag.Integration.fill_cone_subset._proof_1_2	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.fill_cone_subset._proof_1_2	LeanDag.SkipMsg
 EDGE	LeanDag.Integration.fill_cone_subset._proof_1_2	LeanDag.SkipMsg.r0
 EDGE	LeanDag.Integration.fill_cone_subset._proof_1_2	LeanDag.SkipMsg.B1
+NODE	LeanDag.PaceCore.round_le_top_succ._proof_1_2	LeanDag.ViewPace	thm
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_2	LeanDag.PaceCore.top
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_2	LeanDag.PaceCore
+EDGE	LeanDag.PaceCore.round_le_top_succ._proof_1_2	LeanDag.Faults.f
+NODE	LeanDag.ViewPace.exists_honest_floor._proof_1_2	LeanDag.ViewPace	thm
+EDGE	LeanDag.ViewPace.exists_honest_floor._proof_1_2	LeanDag.ViewPace.toPaceCore
+EDGE	LeanDag.ViewPace.exists_honest_floor._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.ViewPace.exists_honest_floor._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.ViewPace.exists_honest_floor._proof_1_2	LeanDag.PaceCore.top
+EDGE	LeanDag.ViewPace.exists_honest_floor._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.ViewPace.exists_honest_floor._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.exists_honest_floor._proof_1_2	LeanDag.Faults.f
+EDGE	LeanDag.ViewPace.exists_honest_floor._proof_1_2	LeanDag.ViewPace
+EDGE	LeanDag.ViewPace.exists_honest_floor._proof_1_2	LeanDag.Block.creator
 NODE	LeanDag.not_mem_creators_refs_of_correct_exposed._proof_1_1	LeanDag.DoS.Exclusion	thm
 EDGE	LeanDag.not_mem_creators_refs_of_correct_exposed._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.not_mem_creators_refs_of_correct_exposed._proof_1_1	LeanDag.BlockUniverse.block
@@ -15262,6 +15345,23 @@ EDGE	LeanDag.SkipMsg.skipFill._proof_5	LeanDag.BlockUniverse
 EDGE	LeanDag.SkipMsg.skipFill._proof_5	LeanDag.SkipMsg
 EDGE	LeanDag.SkipMsg.skipFill._proof_5	LeanDag.SkipMsg.r0
 EDGE	LeanDag.SkipMsg.skipFill._proof_5	LeanDag.SkipMsg.B1
+NODE	LeanDag.PaceCore.round_le_top_succ	LeanDag.ViewPace	thm
+EDGE	LeanDag.PaceCore.round_le_top_succ	LeanDag.PaceCore.round_le_top_succ._proof_1_3
+EDGE	LeanDag.PaceCore.round_le_top_succ	LeanDag.Faults
+EDGE	LeanDag.PaceCore.round_le_top_succ	LeanDag.PaceCore.round_le_top_succ._proof_1_2
+EDGE	LeanDag.PaceCore.round_le_top_succ	LeanDag.Faults.card_validators
+EDGE	LeanDag.PaceCore.round_le_top_succ	LeanDag.PaceCore.le_top_of_built
+EDGE	LeanDag.PaceCore.round_le_top_succ	LeanDag.PaceCore.round_le_top_succ._proof_1_1
+EDGE	LeanDag.PaceCore.round_le_top_succ	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.PaceCore.round_le_top_succ	LeanDag.Block.refs
+EDGE	LeanDag.PaceCore.round_le_top_succ	LeanDag.BlockUniverse.block
+EDGE	LeanDag.PaceCore.round_le_top_succ	LeanDag.exists_reliable_parent
+EDGE	LeanDag.PaceCore.round_le_top_succ	LeanDag.PaceCore.top
+EDGE	LeanDag.PaceCore.round_le_top_succ	LeanDag.Block.round
+EDGE	LeanDag.PaceCore.round_le_top_succ	LeanDag.BlockUniverse
+EDGE	LeanDag.PaceCore.round_le_top_succ	LeanDag.PaceCore
+EDGE	LeanDag.PaceCore.round_le_top_succ	LeanDag.Faults.f
+EDGE	LeanDag.PaceCore.round_le_top_succ	LeanDag.Block.creator
 NODE	LeanDag.card_correct._proof_1_1	LeanDag.Validators	thm
 EDGE	LeanDag.card_correct._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.card_correct._proof_1_1	LeanDag.Faults.byzantine
@@ -15408,6 +15508,12 @@ NODE	LeanDag.Faults5	LeanDag.Odontoceti.Rules	ind
 NODE	LeanDag.certificates_nonempty_of_directCommit._proof_1_2	LeanDag.Mysticeti	thm
 EDGE	LeanDag.certificates_nonempty_of_directCommit._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.certificates_nonempty_of_directCommit._proof_1_2	LeanDag.Faults.f
+NODE	LeanDag.ViewPace.built_ge_sum._proof_1_1	LeanDag.ViewPace	thm
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_1	LeanDag.ViewPace.toPaceCore
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_1	LeanDag.PaceCore.top
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_1	LeanDag.ViewPace
 NODE	LeanDagTest.ugrowCatchPace._proof_8	LeanDagTest.Catchup	thm
 EDGE	LeanDagTest.ugrowCatchPace._proof_8	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowCatchPace._proof_8	LeanDag.BlockUniverse.block
@@ -16383,6 +16489,14 @@ EDGE	LeanDag.exposedTo	LeanDag.Faults
 EDGE	LeanDag.exposedTo	LeanDag.decidableExposedIn
 EDGE	LeanDag.exposedTo	LeanDag.ExposedIn
 EDGE	LeanDag.exposedTo	LeanDag.BlockUniverse
+NODE	LeanDag.ViewPace.built_ge_sum._proof_1_3	LeanDag.ViewPace	thm
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_3	LeanDag.ViewPace.toPaceCore
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_3	LeanDag.Faults
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_3	LeanDag.PaceCore.built
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_3	LeanDag.PaceCore.top
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_3	LeanDag.PaceCore.timeout
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_3	LeanDag.ViewPace
 NODE	LeanDag.Decided.directSkip	LeanDag.Mysticeti	ctor
 EDGE	LeanDag.Decided.directSkip	LeanDag.Faults
 EDGE	LeanDag.Decided.directSkip	LeanDag.Slots.slotRound
@@ -18080,6 +18194,14 @@ EDGE	LeanDag.Integration.fill_cone_subset	LeanDag.SkipMsg.line
 EDGE	LeanDag.Integration.fill_cone_subset	LeanDag.Integration.fill_cone_subset._proof_1_3
 EDGE	LeanDag.Integration.fill_cone_subset	LeanDag.SkipMsg.B1
 EDGE	LeanDag.Integration.fill_cone_subset	LeanDag.Reaches
+NODE	LeanDag.ViewPace.built_ge_sum._proof_1_2	LeanDag.ViewPace	thm
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_2	LeanDag.ViewPace.toPaceCore
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_2	LeanDag.PaceCore.built
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_2	LeanDag.PaceCore.top
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_2	LeanDag.PaceCore.timeout
+EDGE	LeanDag.ViewPace.built_ge_sum._proof_1_2	LeanDag.ViewPace
 NODE	LeanDagTest.spaced_hspan	LeanDagTest.Pipelined	thm
 EDGE	LeanDagTest.spaced_hspan	LeanDag.Slots.slotRound
 EDGE	LeanDagTest.spaced_hspan	LeanDagTest.spaced_hspan._proof_1_2
@@ -19415,6 +19537,12 @@ EDGE	LeanDag.top_eq_of_mem_namer_history._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.top_eq_of_mem_namer_history._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.top_eq_of_mem_namer_history._proof_1_1	LeanDag.BlockUniverse
 NODE	LeanDag.directSkip_chop._proof_1_1	LeanDag.GC.Chop	thm
+NODE	LeanDag.ViewPace.exists_honest_floor._proof_1_1	LeanDag.ViewPace	thm
+EDGE	LeanDag.ViewPace.exists_honest_floor._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.ViewPace.exists_honest_floor._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.ViewPace.exists_honest_floor._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.ViewPace.exists_honest_floor._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.exists_honest_floor._proof_1_1	LeanDag.Faults.f
 NODE	LeanDag.View.recOn	LeanDag.BlockDag	def
 EDGE	LeanDag.View.recOn	LeanDag.View.rec
 EDGE	LeanDag.View.recOn	LeanDag.View.mk
@@ -19525,6 +19653,13 @@ NODE	LeanDag.Hybrid.toHybrid_toFaults._proof_1_1	LeanDag.Hybrid.Conservativity	t
 EDGE	LeanDag.Hybrid.toHybrid_toFaults._proof_1_1	LeanDag.Faults5
 EDGE	LeanDag.Hybrid.toHybrid_toFaults._proof_1_1	LeanDag.Faults.f
 EDGE	LeanDag.Hybrid.toHybrid_toFaults._proof_1_1	LeanDag.Faults5.toFaults
+NODE	LeanDag.exists_reliable_parent._proof_1_1	LeanDag.ViewPace	thm
+EDGE	LeanDag.exists_reliable_parent._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.exists_reliable_parent._proof_1_1	LeanDag.creators
+EDGE	LeanDag.exists_reliable_parent._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.exists_reliable_parent._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.exists_reliable_parent._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.exists_reliable_parent._proof_1_1	LeanDag.Faults.f
 NODE	LeanDag.directSkipIn_chop._proof_1_4	LeanDag.GC.ChopDecided	thm
 EDGE	LeanDag.directSkipIn_chop._proof_1_4	LeanDag.Faults
 EDGE	LeanDag.directSkipIn_chop._proof_1_4	LeanDag.BlockUniverse.block

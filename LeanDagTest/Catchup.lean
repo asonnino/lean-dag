@@ -110,9 +110,27 @@ theorem ugrowCatchPace_decided (N : ℕ) (hN : rrSlots.slotRound 1 + 2 ≤ N) :
     (le_refl 0) (fun n _ => by change 2 * 2 + 1 ≤ 5; omega)
     (Nat.zero_le _) hN (by decide)
 
+/-! ## The rush bound, on data
+
+The honest floor of `exists_honest_floor` (CU5) is met with equality on
+the running witness: at constant timeout `4`, the accumulated floor for
+round `n` is `built u 0 + 4n`, which is exactly `built u n` — a valid
+block of round `n + 1` certifies a reliable validator that paid the full
+bill, and on this schedule the bill is the whole build time. -/
+
+example (N n : ℕ) :
+    (ugrowSkewPace N).built 1 0 + (∑ i ∈ Finset.range n, (ugrowSkewPace N).timeout i)
+      = (ugrowSkewPace N).built 1 n := by
+  show (1 : ℕ) + 4 * 0 + (∑ _i ∈ Finset.range n, 4) = 1 + 4 * n
+  rw [Finset.sum_const, Finset.card_range, smul_eq_mul]
+  omega
+
 #print axioms ugrowCatchPace_decided
 #print axioms LeanDag.PaceCore.drift_collapse
 #print axioms LeanDag.ViewPace.decided_of_wait
 #print axioms ugrowSkew_spread_constant
+#print axioms LeanDag.exists_reliable_parent
+#print axioms LeanDag.PaceCore.round_le_top_succ
+#print axioms LeanDag.ViewPace.exists_honest_floor
 
 end LeanDagTest

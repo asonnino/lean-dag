@@ -1,4 +1,5 @@
 import LeanDag.Quantitative
+import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 
 /-!
 # A build schedule that can be stuck
@@ -499,6 +500,115 @@ theorem commits_recur_via_pace (hT : T ⊆ (Correct : Finset Validator))
     hN
 
 end Liveness
+
+end ViewPace
+
+/-! ## The rush bound
+
+The pacemaker rules are stated over `T`, but `T` is an analysis-side
+object: no validator can test membership of it, so a deployment runs the
+author-blind strengthening of each clause — in particular, it catches up
+on *any* valid block it holds, whoever authored it. The worry that
+clause raises is being rushed: could a Byzantine validator, by not
+waiting, manufacture evidence of a far-future round and drag every
+correct validator past its own timeouts?
+
+It cannot, and the reason is validity itself. A block of round `n + 1`
+references a quorum of distinct round-`n` authors (P3), and a quorum
+meets any quorum-sized `T` — so **every valid non-genesis block carries
+a reliable parent**, and by `waits` that parent's author has paid the
+full timeout bill for every round below. Evidence of a round cannot
+exist before the honest schedule permits the round: catch-up only ever
+pulls a validator to where a reliable peer already is. The adversary's
+whole freedom is the one layer it may build the instant a quorum forms
+beneath it. -/
+
+section RushBound
+
+omit [DecidableEq BlockId] in
+/-- **Every valid non-genesis block carries a reliable parent.** Its
+reference quorum has at least `n − 2f ≥ f + 1` authors in any
+quorum-sized `T`; one is exhibited. Nothing about pacing enters: this is
+a fact about validity and cardinalities alone. -/
+theorem exists_reliable_parent
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    {b : BlockId} (hb : b ∈ U.ids) (hr : 0 < (U.block b).round) :
+    ∃ a ∈ (U.block b).refs, a ∈ U.ids ∧ (U.block a).creator ∈ T ∧
+      (U.block a).round + 1 = (U.block b).round := by
+  have hv := U.valid b hb
+  have hq := hv.quorum hr
+  have hcap : 0 < ((creators U.block (U.block b)) ∩ T).card := by
+    have h1 := Finset.card_inter_add_card_union (creators U.block (U.block b)) T
+    have h2 : ((creators U.block (U.block b)) ∪ T).card ≤ Fintype.card Validator :=
+      Finset.card_le_univ _
+    have h3 := F.card_validators
+    omega
+  obtain ⟨u, hu⟩ := Finset.card_pos.mp hcap
+  rw [Finset.mem_inter] at hu
+  obtain ⟨a, ha, hac⟩ := mem_creatorsOf.mp hu.1
+  exact ⟨a, ha, U.complete b hb a ha, hac ▸ hu.2, hv.predecessor a ha⟩
+
+omit [DecidableEq BlockId] in
+/-- **No block outruns the reliable frontier by more than one round.**
+Whatever a Byzantine validator publishes, some `T`-validator has reached
+the round below it — the adversary's whole freedom is the single layer
+it may build the instant a quorum forms beneath it. -/
+theorem PaceCore.round_le_top_succ (pc : PaceCore U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    {b : BlockId} (hb : b ∈ U.ids) :
+    ∃ u ∈ T, (U.block b).round ≤ pc.top u + 1 := by
+  rcases Nat.eq_zero_or_pos (U.block b).round with h0 | hpos
+  · have hT : 0 < T.card := by have := F.card_validators; omega
+    obtain ⟨u, hu⟩ := Finset.card_pos.mp hT
+    exact ⟨u, hu, by omega⟩
+  · obtain ⟨a, _, ha, haT, har⟩ := exists_reliable_parent hcard hb hpos
+    refine ⟨_, haT, ?_⟩
+    have := pc.le_top_of_built _ haT a ha rfl
+    omega
+
+omit [DecidableEq BlockId] in
+/-- The full-timeout discipline's floor, accumulated: a validator's
+round-`n` entry lies at least the sum of all `n` timeouts past its
+start. -/
+theorem ViewPace.built_ge_sum (vp : ViewPace U T N) {u : Validator}
+    (hu : u ∈ T) : ∀ n ≤ vp.top u,
+    vp.built u 0 + (∑ i ∈ Finset.range n, vp.timeout i) ≤ vp.built u n := by
+  intro n
+  induction n with
+  | zero => simp
+  | succ n ih =>
+      intro hn
+      have hw := vp.waits u hu n (by omega)
+      have := ih (by omega)
+      rw [Finset.sum_range_succ]
+      omega
+
+omit [DecidableEq BlockId] in
+/-- **The honest floor** (CU5): a valid block of round `n + 1` certifies
+that some reliable validator reached round `n` having genuinely waited
+out all `n` timeouts. Evidence of a round cannot exist before the honest
+schedule permits the round, so the author-blind catch-up a deployment
+runs is executable: it never pulls a validator past where a reliable
+peer already is, and the obligation `catchup` states over `T`-authored
+blocks is the analysis-side restriction of a rule that is safe over all
+of them. -/
+theorem ViewPace.exists_honest_floor (vp : ViewPace U T N)
+    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    {b : BlockId} (hb : b ∈ U.ids) {n : ℕ}
+    (hbr : (U.block b).round = n + 1) :
+    ∃ u ∈ T, n ≤ vp.top u ∧
+      vp.built u 0 + (∑ i ∈ Finset.range n, vp.timeout i) ≤ vp.built u n := by
+  obtain ⟨a, _, ha, haT, har⟩ := exists_reliable_parent hcard hb (by omega)
+  have htop : n ≤ vp.top ((U.block a).creator) := by
+    have := vp.le_top_of_built _ haT a ha rfl
+    omega
+  exact ⟨_, haT, htop, vp.built_ge_sum haT n htop⟩
+
+end RushBound
+
+namespace ViewPace
+
+variable (vp : ViewPace U T N)
 
 /-! ## The quantitative arc, on this route
 
