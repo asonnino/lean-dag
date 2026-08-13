@@ -56,7 +56,7 @@ theorem correct_subset_creators_correctBlocksAt (h : Populated U n) :
 omit [DecidableEq BlockId] in
 /-- The correct blocks of a populated round carry a quorum of authors. -/
 theorem card_creators_correctBlocksAt (h : Populated U n) :
-    (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (correctBlocksAt U n)).card :=
+    quorumCard Validator ≤ (creatorsOf U.block (correctBlocksAt U n)).card :=
   le_trans card_correct (Finset.card_le_card (correct_subset_creators_correctBlocksAt h))
 
 /-- No correct block's author is ever excluded — D15, in the form a builder
@@ -77,7 +77,7 @@ and exclusion never starves it. What the adversary can force is the pool down
 to exactly `Correct` (D15a) — which is precisely the situation
 `|Correct| ≥ 2f+1` was there to survive. -/
 theorem correctBlocksAt_admissible_quorum (h : Populated U n) (hb : b ∈ U.ids) :
-    (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (correctBlocksAt U n)).card ∧
+    quorumCard Validator ≤ (creatorsOf U.block (correctBlocksAt U n)).card ∧
       ∀ i ∈ correctBlocksAt U n, (U.block i).creator ∉ exposedTo U b :=
   ⟨card_creators_correctBlocksAt h, fun _ hi =>
     creator_notMem_exposedTo_of_mem_correctBlocksAt hb hi⟩
@@ -148,7 +148,7 @@ holds from `R` rather than from round 0. -/
 theorem card_creators_accepted_of_eventuallyDelivers {R : ℕ} (D : Delivery U)
     (hd : EventuallyDelivers D R) (hn : R ≤ n) (hpop : Populated U n)
     {v : Validator} (hv : v ∈ (Correct : Finset Validator)) :
-    (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (D.accepted v n)).card := by
+    quorumCard Validator ≤ (creatorsOf U.block (D.accepted v n)).card := by
   refine le_trans card_correct (Finset.card_le_card ?_)
   intro w hw
   obtain ⟨a, ha, hac, har⟩ := hpop w hw
@@ -332,7 +332,7 @@ falls by the same amount. The adversary cannot have both. -/
 omit [DecidableEq BlockId] in
 /-- Two blocks of the same round share a correct reference, when the correct
 validators are as few as the fault bound permits. -/
-theorem exists_shared_correct_ref (hcard : (Correct : Finset Validator).card ≤ (Fintype.card Validator - F.f))
+theorem exists_shared_correct_ref (hcard : (Correct : Finset Validator).card ≤ quorumCard Validator)
     {c₁ c₂ : BlockId} (hc₁ : c₁ ∈ U.ids) (hc₂ : c₂ ∈ U.ids)
     (hround : (U.block c₁).round = (U.block c₂).round) (hpos : 0 < (U.block c₁).round) :
     ∃ w, w ∈ (U.block c₁).refs ∧ w ∈ (U.block c₂).refs ∧

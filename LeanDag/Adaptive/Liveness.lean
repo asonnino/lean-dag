@@ -113,7 +113,7 @@ function induces, every slot of epoch `E` is decided inside its window:
 the run `PlacesRuns` puts in epoch `E + 1` commits directly, and the
 bounded descent clears everything below it. -/
 theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
@@ -168,7 +168,7 @@ theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
 horizon form of existence, by induction on the height: each stage
 re-reads the schedule off the verdicts so far and closes one more epoch. -/
 theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
@@ -245,7 +245,7 @@ partial runs at every height glued along the diagonal, `partialRun_agree`
 making the stage-by-stage choices cohere. With `adaptiveRun_agree` it is
 THE fixpoint: adaptive Mysticeti decides every slot, and uniquely. -/
 theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)

@@ -201,9 +201,8 @@ def ugrowStuckPace : ViewPace (Ugrow 0) {1} 5 where
     omega
   advances _ _ n _ _ hq := by
     exfalso
-    have hle : (creatorsOf (Ugrow 0).block
-        (({1} : Finset ℕ).filter fun b => ((Ugrow 0).block b).round = n)).card ≤ 1 := by
-      simp only [creatorsOf]
+    have hle : (authorsIn (Ugrow 0) {1} n).card ≤ 1 := by
+      simp only [authorsIn, creatorsOf]
       refine le_trans (Finset.card_le_card
         (Finset.image_subset_image (Finset.filter_subset _ _))) ?_
       exact le_trans Finset.card_image_le (by simp)

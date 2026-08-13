@@ -62,7 +62,7 @@ conclusion prices the recovery window. -/
 theorem card_severed_le {T S : Finset Validator} {r : ℕ}
     (hsev : ∀ v ∈ S, ∀ b ∈ U.ids, (U.block b).creator ≠ v)
     (hpop : PopulatedOn U T r)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+    (hcard : quorumCard Validator ≤ T.card) :
     S.card ≤ F.f := by
   have hdisj : Disjoint T S := by
     rw [Finset.disjoint_right]

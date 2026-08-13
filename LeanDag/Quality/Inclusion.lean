@@ -78,7 +78,7 @@ The slot is produced *before* the universe is quantified, exactly as in
 L6: the schedule fixes it, and any sufficiently grown synchronous DAG
 then commits it. -/
 theorem committed_of_correct_block (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (fair : FairScheduleOn T) (R m : ℕ) (hRm : R ≤ m) :
     ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧
       IncludesAt (Validator := Validator) BlockId Payload R m k' := by

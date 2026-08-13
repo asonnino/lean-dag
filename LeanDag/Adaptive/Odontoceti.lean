@@ -253,7 +253,7 @@ theorem decidedWithin_below_of_committed_run
 populated rounds where Mysticeti needs three — and the bounded descent
 clears the epoch below. -/
 theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible Validator c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
@@ -303,7 +303,7 @@ theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
 
 /-- Partial runs exist at every height, two-round rule. -/
 theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible Validator c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
@@ -372,7 +372,7 @@ theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
 on the full view — glued along the diagonal exactly as on the
 three-round side — and by `Odontoceti.adaptiveRun_agree` it is unique. -/
 theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible Validator c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)

@@ -128,7 +128,7 @@ omit [DecidableEq BlockId] in
 same collapse the timed discipline uses, with `le_built` supplied by
 `built_lt` rather than by the waiting floor. -/
 theorem driftOn_of_catchup
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (hgst : rc.gst ≤ R) :
+    (hcard : quorumCard Validator ≤ T.card) (hgst : rc.gst ≤ R) :
     DriftOn rc.built T R (rc.delay + rc.proc) N :=
   rc.toPaceCore.driftOn_of_catchup hcard hgst (fun u hu => rc.le_built hu)
 
@@ -145,7 +145,7 @@ the fallback clause then obliges the vote. The reactive exit needs
 nothing: it *is* the vote. Stated over any `T`-authored block, so
 non-equivocation is never consulted. -/
 theorem votes (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : rc.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rc.delay + rc.proc ≤ rc.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)

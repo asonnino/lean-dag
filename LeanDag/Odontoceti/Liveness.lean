@@ -53,7 +53,7 @@ does the counting. Both pacing disciplines end here — the full-timeout
 one arriving through `votesAt_of_synchronisedOn`, the reactive one
 through `ReactivePace.votes`. -/
 theorem directCommit_of_votesAt {r : ℕ}
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hpop1 : PopulatedOn U T (r + 1))
     (hv : VotesAt U T r L) :
     DirectCommit U L r := by
@@ -68,7 +68,7 @@ block at the decision round reference the leader's block, and `T`
 carries a quorum. Two populated rounds — propose and decide — and one
 synchronised step, routed through the targeted interface. -/
 theorem directCommit_of_leader_mem
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
     (hpop0 : PopulatedOn U T (S.slotRound k))
     (hpop1 : PopulatedOn U T (S.slotRound k + 1))
@@ -95,7 +95,7 @@ theorem directCommitIn_full {r : ℕ} (h : DirectCommit U L r) :
 
 /-- **O7, as a decision.** -/
 theorem decided_of_leader_mem
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
     (hpop0 : PopulatedOn U T (S.slotRound k))
     (hpop1 : PopulatedOn U T (S.slotRound k + 1))
@@ -110,7 +110,7 @@ theorem decided_of_leader_mem
 the one above it, so two rounds are read off the horizon rather than
 three. -/
 theorem decided_of_leader_of_populated (_hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
     (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (hN : S.slotRound k + 1 ≤ N)
     (hlead : S.leader k ∈ T) :
@@ -215,7 +215,7 @@ by fairness. Note the horizon: the run's last slot needs rounds up to
 its `slotRound + 1` only. -/
 theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hspan : SpansEligible Validator c)
     (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧

@@ -48,9 +48,30 @@ variable {U : BlockUniverse Validator BlockId Payload}
 def blocksAt (U : BlockUniverse Validator BlockId Payload) (n : ℕ) : Finset BlockId :=
   U.ids.filter (fun i => (U.block i).round = n)
 
+/-- The distinct authors of the round-`n` blocks in a set of ids — an
+image, so an equivocator's duplicates collapse: this counts validators,
+not blocks, which is what makes a quorum of it a real quorum. Over
+`U.ids` it is `authorsAt`; over a validator's holdings it is the trigger
+of the pacemaker's progress rule (`PaceCore.advances`). -/
+def authorsIn (U : BlockUniverse Validator BlockId Payload)
+    (s : Finset BlockId) (n : ℕ) : Finset Validator :=
+  creatorsOf U.block (s.filter fun b => (U.block b).round = n)
+
+/-- Membership in `authorsIn`, unfolded. -/
+theorem mem_authorsIn {s : Finset BlockId} {v : Validator} {n : ℕ} :
+    v ∈ authorsIn U s n ↔ ∃ b ∈ s, (U.block b).round = n ∧ (U.block b).creator = v := by
+  simp [authorsIn, mem_creatorsOf]
+  tauto
+
 /-- The validators holding a block at a given round — the pool `p`. -/
 def authorsAt (U : BlockUniverse Validator BlockId Payload) (n : ℕ) : Finset Validator :=
   creatorsOf U.block (blocksAt U n)
+
+/-- `authorsAt` is `authorsIn` over the whole universe: L0's density and
+the progress rule's trigger are one measure, read off `U.ids` there and
+off a validator's holdings here. -/
+theorem authorsAt_eq_authorsIn (U : BlockUniverse Validator BlockId Payload) (n : ℕ) :
+    authorsAt U n = authorsIn U U.ids n := rfl
 
 /-- Membership in `blocksAt`, unfolded. -/
 @[simp]
@@ -106,7 +127,7 @@ theorem exists_mem_refs_of_correct_support
     {c : BlockId} (hc : c ∈ U.ids) (hcr : (U.block c).round = n + 1) :
     ∃ q ∈ (U.block c).refs, P q := by
   set A := creatorsOf U.block (U.block c).refs with hA
-  have hA_quorum : (Fintype.card Validator - F.f) ≤ A.card := U.creators_quorum hc (by omega)
+  have hA_quorum : quorumCard Validator ≤ A.card := U.creators_quorum hc (by omega)
   have hA_sub : A ⊆ authorsAt U n := creators_refs_subset_authorsAt hc hcr
   have hT_auth : T ⊆ authorsAt U n := by
     intro v hv
@@ -301,7 +322,7 @@ the Byzantine set: `|supporters| ≤ (3f+1) − (2f+1) + f = 2f`. Nothing about
 certificates enters, which is why this belongs here rather than beside the
 commit rules that consume it. -/
 theorem card_supporters_le_of_card_blames {L : BlockId} {n : ℕ}
-    (h : (Fintype.card Validator - F.f) ≤ (blames U L n).card) :
+    (h : quorumCard Validator ≤ (blames U L n).card) :
     (supporters U L n).card ≤ 2 * F.f := by
   have hunion : (blames U L n ∪ supporters U L n).card ≤ Fintype.card Validator := by
     have := Finset.card_le_univ (blames U L n ∪ supporters U L n)

@@ -67,7 +67,7 @@ and `T` is a quorum of distinct authors.
 The vote blocks themselves come from the trunk's derived production
 (`PaceCore.populatedOn`): nothing here assumes a block exists. -/
 theorem certifies (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : rm.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
@@ -105,7 +105,7 @@ theorem certifies (hT : T ⊆ (Correct : Finset Validator))
 supplier, with the certificate blocks from derived production. One
 application; the argument lives in `Liveness.lean`, once. -/
 theorem directCommit (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : rm.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
@@ -120,7 +120,7 @@ committed by every view — the conclusion of `decided_of_leader_mem`,
 with reference coverage replaced by the two reactive wait clauses and
 the leader block supplied by derived production. -/
 theorem decided (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : rm.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
@@ -169,7 +169,7 @@ only `FairToEach` — the schedule must return to `u` itself — and the
 self-parent chain does the rest. -/
 theorem committed_of_correct_block
     (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (fair : FairToEach (S := S) T) {u : Validator} (hu : u ∈ T) (R m : ℕ)
     (hRm : R ≤ m) :
     ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧ S.leader k' = u ∧

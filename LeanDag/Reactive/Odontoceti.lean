@@ -38,7 +38,7 @@ with the vote blocks from derived production. One application; the
 argument lives with O7, once. -/
 theorem reactive_directCommit (rc : ReactivePace U T N)
     (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : rc.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rc.delay + rc.proc ≤ rc.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
@@ -55,7 +55,7 @@ trunk's derived production. One delivery separates a fast leader from
 its commit. -/
 theorem reactive_decided (rc : ReactivePace U T N)
     (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : rc.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rc.delay + rc.proc ≤ rc.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)

@@ -403,7 +403,7 @@ structure ValidWrt (blk : BlockId → Block Validator BlockId Payload)
     (b : Block Validator BlockId Payload) : Prop where
   predecessor : ∀ i ∈ b.refs, (blk i).round + 1 = b.round
   distinct_creators : ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
-  quorum : 0 < b.round → (Fintype.card Validator - F.f) ≤ (creators blk b).card
+  quorum : 0 < b.round → quorumCard Validator ≤ (creators blk b).card
   self_parent : 0 < b.round → ∃ i ∈ b.refs, (blk i).creator = b.creator
 ```
 
@@ -497,7 +497,7 @@ Global symbols, fixed for the whole report:
 | Symbol | Meaning |
 |:---|:---|
 | `n`, `f` | committee size and fault bound; `n ≥ 3f+1` throughout, `n ≥ 5f+1` in §10 |
-| `n − f` | the quorum size; `2f+1` at the boundary `n = 3f+1` |
+| `n − f` | the quorum size; `2f+1` at the boundary `n = 3f+1`; spelled `quorumCard Validator` in the Lean (§4.2) |
 | `Correct` | the complement of the Byzantine set (§2.1) |
 | `r`, `k` | a round; a slot index (§3.4) |
 | `U`, `V`, `D` | the block universe, a view, a delivery layer (§2.3, §6.2) |
@@ -552,7 +552,7 @@ def votesIn (U) (C L : BlockId) : Finset BlockId :=
   (U.block C).refs.filter (fun q => L ∈ (U.block q).refs)
 
 def Certifies (U) (C L : BlockId) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (votesIn U C L)).card
+  quorumCard Validator ≤ (creatorsOf U.block (votesIn U C L)).card
 
 def certificates (U) (L : BlockId) (r : ℕ) : Finset BlockId :=
   (blocksAt U (r + 2)).filter (fun C => Certifies U C L)
@@ -567,10 +567,10 @@ references `L`.
 
 ```lean
 def DirectCommit (U) (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (certificates U L r)).card
+  quorumCard Validator ≤ (creatorsOf U.block (certificates U L r)).card
 
 def DirectSkip (U) (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (blames U L (r + 1)).card
+  quorumCard Validator ≤ (blames U L (r + 1)).card
 ```
 
 A validator applies these to what it holds. The view-relative forms
@@ -840,6 +840,12 @@ not on the validator.
 
 Byzantine validators are unconstrained: they may publish nothing, publish
 selectively, or equivocate freely.
+
+The quorum size `n − f` is written `quorumCard Validator` throughout the
+development — notation rather than a definition, deliberately: the term
+*is* `Fintype.card Validator - F.f`, so every lemma and every arithmetic
+tactic sees the subtraction it always saw, while statements read and
+print as the quantity they mean.
 
 **The combined budget.** The principal liveness argument counts to `n−f` and no
 higher, so what it requires is a quorum of validators that are both correct and
@@ -1205,8 +1211,8 @@ the DAG is, not conditions imposed on it.
 **T0.**
 ```lean
 theorem exists_correct_mem_inter {Q₁ Q₂ : Finset Validator}
-    (h₁ : Fintype.card Validator - F.f ≤ Q₁.card)
-    (h₂ : Fintype.card Validator - F.f ≤ Q₂.card) :
+    (h₁ : quorumCard Validator ≤ Q₁.card)
+    (h₂ : quorumCard Validator ≤ Q₂.card) :
     ∃ v ∈ Q₁ ∩ Q₂, v ∈ (Correct : Finset Validator)
 ```
 
@@ -1252,7 +1258,7 @@ theorem reaches_of_quorum_support
     {b : BlockId} {r : ℕ} {Q : Finset BlockId} (hQ : Q ⊆ U.ids)
     (hQround : ∀ q ∈ Q, (U.block q).round = r + 1)
     (hQref : ∀ q ∈ Q, b ∈ (U.block q).refs)
-    (hQquorum : (Fintype.card Validator - F.f) ≤ (creatorsOf U.block Q).card)
+    (hQquorum : quorumCard Validator ≤ (creatorsOf U.block Q).card)
     {c : BlockId} (hc : c ∈ U.ids) (hcr : r + 2 ≤ (U.block c).round) :
     Reaches U c b
 ```
@@ -1435,7 +1441,7 @@ the targeted predicates of §6.6.
 ```lean
 theorem card_authorsAt_of_lt {r n : ℕ} (hn : n < r) {i : BlockId}
     (hi : i ∈ U.ids) (hir : (U.block i).round = r) :
-    (Fintype.card Validator - F.f) ≤ (authorsAt U n).card
+    quorumCard Validator ≤ (authorsAt U n).card
 ```
 
 If any block exists at round `r`, every round below `r` has at least `n−f`
@@ -1584,7 +1590,7 @@ simply not in the universe.
 
 **L4.**
 ```lean
-theorem directCommit_of_leader_mem (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+theorem directCommit_of_leader_mem (hcard : quorumCard Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
     (hpop0 : PopulatedOn U T (S.slotRound k))
     (hpop1 : PopulatedOn U T (S.slotRound k + 1))
@@ -1666,7 +1672,7 @@ def CommitsAt (BlockId) (Payload) (T : Finset Validator) (R k : ℕ) : Prop :=
     ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
 
 theorem commits_recur_on (hT : T ⊆ Correct)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (fair : FairScheduleOn T) (R k : ℕ) :
     ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧ CommitsAt BlockId Payload T R k'
 ```
@@ -1779,9 +1785,7 @@ structure PaceCore (U) (T : Finset Validator) (N : ℕ) where
   holds_mono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t
   converges : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + delay)
   advances : ∀ v ∈ T, ∀ n < N, ∀ t,
-    (Fintype.card Validator - F.f) ≤
-      (creatorsOf U.block ((holds v t).filter fun b => (U.block b).round = n)).card →
-    n < top v
+    quorumCard Validator ≤ (authorsIn U (holds v t) n).card → n < top v
   proc : ℕ
   catchup : ∀ v ∈ T, ∀ n ≤ N, ∀ b ∈ U.ids,
     (U.block b).creator ∈ T → (U.block b).round = n →
@@ -1825,7 +1829,13 @@ validator could build there, so it cannot distinguish *stuck at round
 over it requires a side condition on the round straddling GST. The
 pacemaker's own rule replaces it: `advances` says a
 validator holding a quorum of distinct round-`n` authors — **at any time
-whatever** — gets past round `n`. Conditional on the quorum, so it
+whatever** — gets past round `n`. Its trigger is
+`authorsIn U (holds v t) n`, the distinct authors of the round-`n`
+blocks among `v`'s holdings — an image, so an equivocator's duplicates
+collapse and the count is of validators, not blocks. Over the whole
+universe the same measure is `authorsAt`
+(`authorsAt_eq_authorsIn`), so L0's density and the progress rule's
+trigger are one quantity read off two sets. Conditional on the quorum, so it
 asserts no production; naming no time, so there is no deadline to miss
 and nothing for a schedule hypothesis to protect. A validator racing
 ahead of the network before GST is not excluded by assumption; it is not
@@ -1869,7 +1879,7 @@ and `T ⊆ Correct` is not consumed anywhere in the coverage half.
 
 ```lean
 theorem synchronisedOn_of_converges {R : ℕ}
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (hgst : vp.gst ≤ R)
+    (hcard : quorumCard Validator ≤ T.card) (hgst : vp.gst ≤ R)
     (hbackoff : ∀ n, R ≤ n → 2 * vp.delay + vp.proc ≤ vp.timeout n) :
     SynchronisedOn U T R
 ```
@@ -1880,7 +1890,7 @@ because drift is **derived** from catch-up —
 
 ```lean
 theorem driftOn_of_catchup (vp : ViewPace U T N) {R : ℕ}
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (hgst : vp.gst ≤ R) :
+    (hcard : quorumCard Validator ≤ T.card) (hgst : vp.gst ≤ R) :
     DriftOn vp.built T R (vp.delay + vp.proc) N
 ```
 
@@ -1908,11 +1918,11 @@ comparison happens.
 **Production — on the trunk, once.**
 
 ```lean
-theorem PaceCore.reached (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+theorem PaceCore.reached (hcard : quorumCard Validator ≤ T.card) :
     ∀ n ≤ N, ∀ v ∈ T, n ≤ pc.top v
 
 theorem PaceCore.populatedOn (pc : PaceCore U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+    (hcard : quorumCard Validator ≤ T.card) :
     ∀ n ≤ N, PopulatedOn U T n
 ```
 
@@ -1932,7 +1942,7 @@ theorem, where the total schedule had it as the shape of a field.
 
 ```lean
 theorem commits_recur_via_pace (hT : T ⊆ Correct)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (fair : FairScheduleOn T) (R k : ℕ) :
     ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
       ∀ U N (vp : ViewPace U T N),
@@ -2005,7 +2015,7 @@ hypothesis rather than a better proof.
 def Rated (timeout : ℕ → ℕ) : Prop := ∀ n, n ≤ timeout n
 
 theorem synchronisedOn_of_rate (vp : ViewPace U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hrate : Rated vp.timeout) :
     SynchronisedOn U T (max (2 * vp.delay + vp.proc) vp.gst)
 ```
@@ -2046,7 +2056,7 @@ round.
 **The wait bound.**
 ```lean
 theorem directCommit_of_wait (vp : ViewPace U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : vp.gst ≤ R)
     (hwait : ∀ n, R ≤ n → 2 * vp.delay + vp.proc ≤ vp.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
@@ -2148,7 +2158,7 @@ timeout bill for every round below:
 
 ```lean
 theorem exists_honest_floor (vp : ViewPace U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     {b : BlockId} (hb : b ∈ U.ids) {n : ℕ}
     (hbr : (U.block b).round = n + 1) :
     ∃ u ∈ T, n ≤ vp.top u ∧
@@ -2258,7 +2268,7 @@ def IncludesAt (BlockId) (Payload) (R m k : ℕ) : Prop :=
         ∀ g n, g k = some L → k < n → b ∈ ledgerSet U g n
 
 theorem committed_of_correct_block (hT : T ⊆ Correct)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (fair : FairScheduleOn T) (R m : ℕ) (hRm : R ≤ m) :
     ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧
       IncludesAt BlockId Payload R m k'
@@ -2853,10 +2863,10 @@ was modified.
 
 ```lean
 def DirectCommit (U) (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (supporters U L (r + 1)).card
+  quorumCard Validator ≤ (supporters U L (r + 1)).card
 
 def DirectSkip (U) (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (blames U L (r + 1)).card
+  quorumCard Validator ≤ (blames U L (r + 1)).card
 
 def coneSupports (U) (A L : BlockId) (r : ℕ) : Finset Validator :=
   creatorsOf U.block
@@ -3028,7 +3038,7 @@ structure:
 **L10.**
 ```lean
 theorem all_decided_below_of_fairRun (hc : 0 < c) (hT : T ⊆ Correct)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hspan : SpansEligible Validator c) (fair : FairRunOn T c) (R k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
       ∀ U N, (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
@@ -3125,7 +3135,7 @@ The vote is the shared step:
 **RS1.**
 ```lean
 theorem votes (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : rc.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rc.delay + rc.proc ≤ rc.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
@@ -3162,7 +3172,7 @@ clauses:
 **RS2.**
 ```lean
 theorem decided (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : rm.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
@@ -3260,7 +3270,7 @@ execution is named:
 ```lean
 theorem committed_of_correct_block
     (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (fair : FairToEach (S := S) T) {u : Validator} (hu : u ∈ T) (R m : ℕ)
     (hRm : R ≤ m) :
     ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧ S.leader k' = u ∧
@@ -3436,7 +3446,7 @@ passed. It cannot be committed:
 **SS3.**
 ```lean
 theorem directSkip_fresh {T : Finset Validator} {k : ℕ}
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hv1T : sk.v1 ∉ T)
     (hpop : PopulatedOn U T (k + 1)) (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r) :
     DirectSkip sk.skipFill (sk.fresh k) k
@@ -3498,7 +3508,7 @@ the count is the single hypothesis of the theorem:
 theorem decided_fill {V : View Validator BlockId Payload U} {k : ℕ}
     {v : Option BlockId}
     (hq : ∀ n, sk.r0 < n → n ≤ sk.r →
-      Fintype.card Validator - F.f ≤
+      quorumCard Validator ≤
         (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card)
     (h : Decided U V k v) :
     Decided sk.skipFill (sk.liftView V) k v
@@ -3523,7 +3533,7 @@ theorem decided_fill_agree {V : View Validator BlockId Payload U}
     {W : View Validator BlockId Payload sk.skipFill} {k : ℕ}
     {v w : Option BlockId}
     (hq : ∀ n, sk.r0 < n → n ≤ sk.r →
-      Fintype.card Validator - F.f ≤
+      quorumCard Validator ≤
         (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card)
     (hv : Decided U V k v) (hw : Decided sk.skipFill W k w) : v = w
 ```
@@ -3772,7 +3782,7 @@ remains a joint condition exactly as P10 is.
 **AL5.**
 ```lean
 theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
@@ -5590,7 +5600,7 @@ structure ValidWrt (blk : BlockId → Block Validator BlockId Payload)
   /-- A block never cites the same author twice. -/
   distinct_creators : ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
   /-- Non-genesis blocks reference a quorum of distinct validators. -/
-  quorum : 0 < b.round → (Fintype.card Validator - F.f) ≤ (creators blk b).card
+  quorum : 0 < b.round → quorumCard Validator ≤ (creators blk b).card
   /-- Non-genesis blocks reference a block by their own creator — *some* such
   block, not a unique one: an equivocator's blocks form a forest of
   predecessor chains, one edge per block, and the condition does not (and
@@ -5713,6 +5723,18 @@ def blocksAt (U : BlockUniverse Validator BlockId Payload) (n : ℕ) : Finset Bl
 
 The ids present at a given round.
 
+#### `authorsIn`
+
+*def, `Support.lean`*
+
+```lean
+def authorsIn (U : BlockUniverse Validator BlockId Payload)
+    (s : Finset BlockId) (n : ℕ) : Finset Validator :=
+  creatorsOf U.block (s.filter fun b => (U.block b).round = n)
+```
+
+The distinct authors of the round-`n` blocks in a set of ids — an image, so an equivocator's duplicates collapse: this counts validators, not blocks, which is what makes a quorum of it a real quorum. Over `U.ids` it is `authorsAt`; over a validator's holdings it is the trigger of the pacemaker's progress rule (`PaceCore.advances`).
+
 #### `authorsAt`
 
 *def, `Support.lean`*
@@ -5829,7 +5851,7 @@ The references of `C` that vote for `L`.
 
 ```lean
 def Certifies (U : BlockUniverse Validator BlockId Payload) (C L : BlockId) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (votesIn U C L)).card
+  quorumCard Validator ≤ (creatorsOf U.block (votesIn U C L)).card
 ```
 
 A round-`(r+2)` block certifies `L` when its votes for `L` come from a quorum of distinct validators.
@@ -5852,7 +5874,7 @@ The certificates for a round-`r` block `L`: the round-`(r+2)` blocks that certif
 
 ```lean
 def DirectCommit (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (certificates U L r)).card
+  quorumCard Validator ≤ (creatorsOf U.block (certificates U L r)).card
 ```
 
 `L` is directly committed when its certificates come from a quorum of distinct validators.
@@ -5863,7 +5885,7 @@ def DirectCommit (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r 
 
 ```lean
 def DirectSkip (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (blames U L (r + 1)).card
+  quorumCard Validator ≤ (blames U L (r + 1)).card
 ```
 
 `L` is directly skipped when a quorum of distinct validators declined to vote for it.
@@ -5963,7 +5985,7 @@ The certificates for `L` that a view actually holds.
 ```lean
 def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (certificatesIn U V L r)).card
+  quorumCard Validator ≤ (creatorsOf U.block (certificatesIn U V L r)).card
 ```
 
 Direct commit, as judged from a single view.
@@ -5975,7 +5997,7 @@ Direct commit, as judged from a single view.
 ```lean
 def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤
+  quorumCard Validator ≤
     (creatorsOf U.block
       (((blocksAt U (r + 1)).filter (fun q => L ∉ (U.block q).refs)) ∩ V.ids)).card
 ```
@@ -7052,7 +7074,7 @@ The Odontoceti committee: `n ≥ 5f+1`. An extension of `Faults`, so every exist
 ```lean
 def DirectCommit (U : BlockUniverse Validator BlockId Payload)
     (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (supporters U L (r + 1)).card
+  quorumCard Validator ≤ (supporters U L (r + 1)).card
 ```
 
 **Direct commit**: a quorum of distinct authors support `L` at its decision round.
@@ -7064,7 +7086,7 @@ def DirectCommit (U : BlockUniverse Validator BlockId Payload)
 ```lean
 def DirectSkip (U : BlockUniverse Validator BlockId Payload)
     (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (blames U L (r + 1)).card
+  quorumCard Validator ≤ (blames U L (r + 1)).card
 ```
 
 **Direct skip**: a quorum of distinct authors blame `L` at its decision round.
@@ -7150,7 +7172,7 @@ The blamers a view actually holds.
 ```lean
 def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (supportersIn U V L r).card
+  quorumCard Validator ≤ (supportersIn U V L r).card
 ```
 
 Direct commit, as judged from a single view.
@@ -7162,7 +7184,7 @@ Direct commit, as judged from a single view.
 ```lean
 def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (blamesIn U V L r).card
+  quorumCard Validator ≤ (blamesIn U V L r).card
 ```
 
 Direct skip, as judged from a single view.
@@ -8520,9 +8542,7 @@ structure PaceCore (U : BlockUniverse Validator BlockId Payload)
   advances. It asserts no production, since it says nothing until a quorum
   is in hand. -/
   advances : ∀ v ∈ T, ∀ n < N, ∀ t,
-    (Fintype.card Validator - F.f) ≤
-      (creatorsOf U.block ((holds v t).filter fun b => (U.block b).round = n)).card →
-    n < top v
+    quorumCard Validator ≤ (authorsIn U (holds v t) n).card → n < top v
   /-- The processing bound: how long round entry may lag evidence. -/
   proc : ℕ
   /-- **Catch-up** (protocol). Seeing a round is entering it: any
@@ -8576,7 +8596,7 @@ No promptness ceiling and no attainment clause appear: drift is derived from the
 
 ## Appendix C. The theorem reference
 
-The 328 theorems that either another module of the
+The 329 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -8626,7 +8646,7 @@ A conjunction because the three are always wanted together — every counting ar
 *theorem, `Validators.lean`*
 
 ```lean
-theorem card_correct : Fintype.card Validator - F.f ≤ (Correct : Finset Validator).card
+theorem card_correct : quorumCard Validator ≤ (Correct : Finset Validator).card
 ```
 
 The correct validators alone meet the quorum threshold: at least `n − f` of them. This is what the threshold `n − f` is *for* — the correct pool suffices on its own.
@@ -8672,7 +8692,7 @@ The workhorse behind "a quorum still contains many correct validators". Stated a
 
 ```lean
 theorem card_inter_correct_of_quorum {S : Finset Validator}
-    (h : Fintype.card Validator - F.f ≤ S.card) :
+    (h : quorumCard Validator ≤ S.card) :
     F.f + 1 ≤ (S ∩ (Correct : Finset Validator)).card
 ```
 
@@ -8686,8 +8706,8 @@ The cardinality strengthening of `exists_correct_of_card`, which only produces o
 
 ```lean
 theorem exists_correct_mem_inter {Q₁ Q₂ : Finset Validator}
-    (h₁ : Fintype.card Validator - F.f ≤ Q₁.card)
-    (h₂ : Fintype.card Validator - F.f ≤ Q₂.card) :
+    (h₁ : quorumCard Validator ≤ Q₁.card)
+    (h₂ : quorumCard Validator ≤ Q₂.card) :
     ∃ v ∈ Q₁ ∩ Q₂, v ∈ (Correct : Finset Validator)
 ```
 
@@ -8749,8 +8769,8 @@ Proved from the quorum condition **alone**, deliberately not via `card_refs`: th
 ```lean
 theorem exists_correct_mem_creators_inter
     {blk : BlockId → Block Validator BlockId Payload} {s t : Finset BlockId}
-    (hs : (Fintype.card Validator - F.f) ≤ (creatorsOf blk s).card)
-    (ht : (Fintype.card Validator - F.f) ≤ (creatorsOf blk t).card) :
+    (hs : quorumCard Validator ≤ (creatorsOf blk s).card)
+    (ht : quorumCard Validator ≤ (creatorsOf blk t).card) :
     ∃ v ∈ creatorsOf blk s ∩ creatorsOf blk t, v ∈ (Correct : Finset Validator)
 ```
 
@@ -8791,7 +8811,7 @@ A reference sits in the round immediately below its referrer.
 
 ```lean
 theorem creators_quorum {i : BlockId} (hi : i ∈ U.ids) (hround : 0 < (U.block i).round) :
-    (Fintype.card Validator - F.f) ≤ (creatorsOf U.block (U.block i).refs).card
+    quorumCard Validator ≤ (creatorsOf U.block (U.block i).refs).card
 ```
 
 References of a non-genesis block carry a quorum of distinct authors. This is the hypothesis T0' consumes.
@@ -8815,8 +8835,8 @@ A non-genesis block references at least one block.
 theorem exists_common_mem_of_quorums {s t : Finset BlockId} {n : ℕ}
     (hs : ∀ q ∈ s, q ∈ U.ids ∧ (U.block q).round = n)
     (ht : ∀ q ∈ t, q ∈ U.ids ∧ (U.block q).round = n)
-    (hsq : (Fintype.card Validator - F.f) ≤ (creatorsOf U.block s).card)
-    (htq : (Fintype.card Validator - F.f) ≤ (creatorsOf U.block t).card) :
+    (hsq : quorumCard Validator ≤ (creatorsOf U.block s).card)
+    (htq : quorumCard Validator ≤ (creatorsOf U.block t).card) :
     ∃ q, q ∈ s ∧ q ∈ t
 ```
 
@@ -9045,6 +9065,17 @@ theorem mem_history_of_mem_refs {b j : BlockId} (hb : b ∈ U.ids) (hj : j ∈ (
 
 A block's references lie in its history, one step down.
 
+#### `mem_authorsIn`
+
+*theorem, `Support.lean`*
+
+```lean
+theorem mem_authorsIn {s : Finset BlockId} {v : Validator} {n : ℕ} :
+    v ∈ authorsIn U s n ↔ ∃ b ∈ s, (U.block b).round = n ∧ (U.block b).creator = v
+```
+
+Membership in `authorsIn`, unfolded.
+
 #### `mem_blocksAt`
 
 *theorem, `Support.lean`*
@@ -9200,7 +9231,7 @@ Membership in `blames`, unfolded: a blamer has a round-`n` block that omits `L`.
 
 ```lean
 theorem card_supporters_le_of_card_blames {L : BlockId} {n : ℕ}
-    (h : (Fintype.card Validator - F.f) ≤ (blames U L n).card) :
+    (h : quorumCard Validator ≤ (blames U L n).card) :
     (supporters U L n).card ≤ 2 * F.f
 ```
 
@@ -9226,7 +9257,7 @@ Membership in `correctBlocksAt`, unfolded.
 
 ```lean
 theorem exists_correct_common_support {r : ℕ}
-    (hp : (Fintype.card Validator - F.f) ≤ (authorsAt U (r + 1)).card) :
+    (hp : quorumCard Validator ≤ (authorsAt U (r + 1)).card) :
     ∃ bw ∈ U.ids, (U.block bw).round = r ∧
       (U.block bw).creator ∈ (Correct : Finset Validator) ∧
       (authorsAt U (r + 1)).card + F.f + 1
@@ -9265,7 +9296,7 @@ theorem reaches_of_quorum_support
     {Q : Finset BlockId} (hQ : Q ⊆ U.ids)
     (hQround : ∀ q ∈ Q, (U.block q).round = r + 1)
     (hQref : ∀ q ∈ Q, b ∈ (U.block q).refs)
-    (hQquorum : (Fintype.card Validator - F.f) ≤ (creatorsOf U.block Q).card)
+    (hQquorum : quorumCard Validator ≤ (creatorsOf U.block Q).card)
     {c : BlockId} (hc : c ∈ U.ids) (hcr : r + 2 ≤ (U.block c).round) :
     Reaches U c b
 ```
@@ -9626,7 +9657,7 @@ theorem outputAt_agree {V₁ V₂ : View Validator BlockId Payload U} {n : ℕ}
 ```lean
 theorem card_authorsAt_of_lt {r n : ℕ} (hn : n < r) {i : BlockId}
     (hi : i ∈ U.ids) (hir : (U.block i).round = r) :
-    (Fintype.card Validator - F.f) ≤ (authorsAt U n).card
+    quorumCard Validator ≤ (authorsAt U n).card
 ```
 
 **L0 — the DAG is dense below its frontier.** If any block exists at round `r`, then *every* round `n < r` has at least `2f+1` distinct authors.
@@ -9681,7 +9712,7 @@ Coverage gives the votes: the instantiation of `SynchronisedOn` at `n = r`, with
 
 ```lean
 theorem directCommit_of_certifiesAt
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hpop2 : PopulatedOn U T (r + 2))
     (hc : CertifiesAt U T r L) :
     DirectCommit U L r
@@ -9694,7 +9725,7 @@ theorem directCommit_of_certifiesAt
 *theorem, `Liveness.lean`*
 
 ```lean
-theorem directCommit_of_leader_mem (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+theorem directCommit_of_leader_mem (hcard : quorumCard Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
     (hpop0 : PopulatedOn U T (S.slotRound k))
     (hpop1 : PopulatedOn U T (S.slotRound k + 1))
@@ -9737,7 +9768,7 @@ A universe-level direct commit is one the full view also sees.
 *theorem, `Liveness.lean`*
 
 ```lean
-theorem decided_of_leader_mem (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+theorem decided_of_leader_mem (hcard : quorumCard Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
     (hpop0 : PopulatedOn U T (S.slotRound k))
     (hpop1 : PopulatedOn U T (S.slotRound k + 1))
@@ -9754,7 +9785,7 @@ theorem decided_of_leader_mem (hcard : (Fintype.card Validator - F.f) ≤ T.card
 
 ```lean
 theorem decided_of_leader_of_populated (_hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
     (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (hN : S.slotRound k + 2 ≤ N)
     (hlead : S.leader k ∈ T) :
@@ -9824,7 +9855,7 @@ Round `0` is served by slot `0`.
 
 ```lean
 theorem commits_recur_on (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (fair : FairScheduleOn T) (R : ℕ) (k : ℕ) :
+    (hcard : quorumCard Validator ≤ T.card) (fair : FairScheduleOn T) (R : ℕ) (k : ℕ) :
     ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
       CommitsAt BlockId Payload T R k'
 ```
@@ -9889,7 +9920,7 @@ Note the proof never consults the direct rules. It does not need to: where the d
 ```lean
 theorem all_decided_below_of_spacing
     (hsp : ∀ k, S.slotRound k + 3 ≤ S.slotRound (k + 1))
-    (hT : T ⊆ (Correct : Finset Validator)) (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
     (fair : FairScheduleOn T) (R : ℕ) (k : ℕ) :
     ∃ n, k ≤ n ∧ R ≤ S.slotRound n ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
@@ -9932,7 +9963,7 @@ That second step is the whole content. It is why three consecutive commits suffi
 
 ```lean
 theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
-    (hT : T ⊆ (Correct : Finset Validator)) (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
     (hspan : SpansEligible (Validator := Validator) c)
     (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
@@ -9967,7 +9998,7 @@ Monotonicity is not used here — the bound at `n` comes from `n` itself, so it 
 
 ```lean
 theorem commits_recur_within (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (fair : FairWithin T w) (R k : ℕ) :
+    (hcard : quorumCard Validator ≤ T.card) (fair : FairWithin T w) (R k : ℕ) :
     ∃ k', max k (slotAt Validator R) ≤ k' ∧ k' < max k (slotAt Validator R) + w ∧
       R ≤ S.slotRound k' ∧
       CommitsAt BlockId Payload T R k'
@@ -9997,7 +10028,7 @@ Bounded spacing accumulates: `d` slots on costs at most `s * d` rounds.
 
 ```lean
 theorem commits_recur_by_round {s : ℕ} (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (fair : FairWithin T w)
+    (hcard : quorumCard Validator ≤ T.card) (fair : FairWithin T w)
     (hs : BoundedSpacing (Validator := Validator) s) (R k : ℕ) :
     ∃ k', k ≤ k' ∧ S.slotRound k' ≤ S.slotRound (max k (slotAt Validator R)) + s * w ∧
       R ≤ S.slotRound k' ∧
@@ -10094,7 +10125,7 @@ theorem mem_history_of_decided_commit (hs : Synchronised U R)
 
 ```lean
 theorem committed_of_correct_block (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (fair : FairScheduleOn T) (R m : ℕ) (hRm : R ≤ m) :
     ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧
       IncludesAt (Validator := Validator) BlockId Payload R m k'
@@ -10111,7 +10142,7 @@ The slot is produced *before* the universe is quantified, exactly as in L6: the 
 ```lean
 theorem committed_of_correct_block_within
     (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (fair : FairWithin T w) (R m : ℕ) (hRm : R ≤ m) :
     ∃ k', slotAt Validator (m + 1) ≤ k' ∧
       k' < slotAt Validator (m + 1) + w ∧
@@ -10128,7 +10159,7 @@ theorem committed_of_correct_block_within
 ```lean
 theorem committed_of_correct_block_by_round
     (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (fair : FairWithin T w) (hs : BoundedSpacing (Validator := Validator) s)
     (R m : ℕ) (hRm : R ≤ m) :
     ∃ k', m < S.slotRound k' ∧
@@ -10145,7 +10176,7 @@ theorem committed_of_correct_block_by_round
 
 ```lean
 theorem chain_quality (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (fair : FairScheduleOn T) (R m : ℕ) (hRm : R ≤ m) :
     (∀ (U : BlockUniverse Validator BlockId Payload)
         (V : View Validator BlockId Payload U) (k : ℕ) (L : BlockId)
@@ -11222,7 +11253,7 @@ theorem safety {V₁ V₂ : View Validator BlockId Payload U} {k : ℕ}
 
 ```lean
 theorem directCommit_of_votesAt {r : ℕ}
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hpop1 : PopulatedOn U T (r + 1))
     (hv : VotesAt U T r L) :
     DirectCommit U L r
@@ -11236,7 +11267,7 @@ theorem directCommit_of_votesAt {r : ℕ}
 
 ```lean
 theorem directCommit_of_leader_mem
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
     (hpop0 : PopulatedOn U T (S.slotRound k))
     (hpop1 : PopulatedOn U T (S.slotRound k + 1))
@@ -11261,7 +11292,7 @@ theorem directCommitIn_full {r : ℕ} (h : DirectCommit U L r) :
 
 ```lean
 theorem decided_of_leader_mem
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
     (hpop0 : PopulatedOn U T (S.slotRound k))
     (hpop1 : PopulatedOn U T (S.slotRound k + 1))
@@ -11318,7 +11349,7 @@ theorem decided_below_of_committed_run
 ```lean
 theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hspan : SpansEligible Validator c)
     (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
@@ -11348,7 +11379,7 @@ Rounds advance real time, over the rounds a validator reached.
 
 ```lean
 theorem driftOn_of_catchup
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (hgst : rc.gst ≤ R) :
+    (hcard : quorumCard Validator ≤ T.card) (hgst : rc.gst ≤ R) :
     DriftOn rc.built T R (rc.delay + rc.proc) N
 ```
 
@@ -11360,7 +11391,7 @@ theorem driftOn_of_catchup
 
 ```lean
 theorem votes (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : rc.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rc.delay + rc.proc ≤ rc.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
@@ -11417,7 +11448,7 @@ theorem no_timeout_of_fast {δ : ℕ}
 
 ```lean
 theorem certifies (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : rm.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
@@ -11435,7 +11466,7 @@ The vote blocks themselves come from the trunk's derived production (`PaceCore.p
 
 ```lean
 theorem directCommit (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : rm.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
@@ -11451,7 +11482,7 @@ theorem directCommit (hT : T ⊆ (Correct : Finset Validator))
 
 ```lean
 theorem decided (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : rm.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
@@ -11468,7 +11499,7 @@ theorem decided (hT : T ⊆ (Correct : Finset Validator))
 ```lean
 theorem committed_of_correct_block
     (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (fair : FairToEach (S := S) T) {u : Validator} (hu : u ∈ T) (R m : ℕ)
     (hRm : R ≤ m) :
     ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧ S.leader k' = u ∧
@@ -11495,7 +11526,7 @@ No coverage appears: the hypotheses are the reactive wait clauses, GST and the b
 ```lean
 theorem reactive_directCommit (rc : ReactivePace U T N)
     (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : rc.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rc.delay + rc.proc ≤ rc.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
@@ -11512,7 +11543,7 @@ theorem reactive_directCommit (rc : ReactivePace U T N)
 ```lean
 theorem reactive_decided (rc : ReactivePace U T N)
     (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : rc.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rc.delay + rc.proc ≤ rc.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
@@ -11593,7 +11624,7 @@ theorem skipFill_populatedOn {T : Finset Validator} {k : ℕ}
 
 ```lean
 theorem directSkip_fresh {T : Finset Validator} {k : ℕ}
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hv1T : sk.v1 ∉ T)
     (hpop : PopulatedOn U T (k + 1)) (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r) :
     DirectSkip sk.skipFill (sk.fresh k) k
@@ -11646,7 +11677,7 @@ Reachability from an old block never leaves the old ids, in either universe, and
 theorem decided_fill {V : View Validator BlockId Payload U} {k : ℕ}
     {v : Option BlockId}
     (hq : ∀ n, sk.r0 < n → n ≤ sk.r →
-      Fintype.card Validator - F.f ≤
+      quorumCard Validator ≤
         (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card)
     (h : Decided U V k v) :
     Decided sk.skipFill (sk.liftView V) k v
@@ -11665,7 +11696,7 @@ theorem decided_fill_agree {V : View Validator BlockId Payload U}
     {W : View Validator BlockId Payload sk.skipFill} {k : ℕ}
     {v w : Option BlockId}
     (hq : ∀ n, sk.r0 < n → n ≤ sk.r →
-      Fintype.card Validator - F.f ≤
+      quorumCard Validator ≤
         (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card)
     (hv : Decided U V k v) (hw : Decided sk.skipFill W k w) : v = w
 ```
@@ -12529,7 +12560,7 @@ theorem const_run_decided {W : ℕ} {hW : 0 < W}
 
 ```lean
 theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
@@ -12548,7 +12579,7 @@ theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
 
 ```lean
 theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
@@ -12565,7 +12596,7 @@ theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
 
 ```lean
 theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
@@ -12631,7 +12662,7 @@ theorem adaptiveRun_agree {P : AdaptivePolicy Validator BlockId Payload}
 
 ```lean
 theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible Validator c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
@@ -12650,7 +12681,7 @@ One epoch closes, two-round rule: O7 commits the placed run — two populated ro
 
 ```lean
 theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible Validator c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
@@ -12667,7 +12698,7 @@ Partial runs exist at every height, two-round rule.
 
 ```lean
 theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible Validator c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
@@ -12755,7 +12786,7 @@ A validator with no blocks belongs to no populated set: production is what membe
 theorem card_severed_le {T S : Finset Validator} {r : ℕ}
     (hsev : ∀ v ∈ S, ∀ b ∈ U.ids, (U.block b).creator ≠ v)
     (hpop : PopulatedOn U T r)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+    (hcard : quorumCard Validator ≤ T.card) :
     S.card ≤ F.f
 ```
 
@@ -12801,7 +12832,7 @@ theorem convergesWithin_iff_bounded
 *theorem, `ViewPace.lean`*
 
 ```lean
-theorem reached (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+theorem reached (hcard : quorumCard Validator ≤ T.card) :
     ∀ n ≤ N, ∀ v ∈ T, n ≤ pc.top v
 ```
 
@@ -12815,7 +12846,7 @@ Proved on the trunk, so every pacing discipline inherits it: nothing here mentio
 
 ```lean
 theorem populatedOn (pc : PaceCore U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+    (hcard : quorumCard Validator ≤ T.card) :
     ∀ n ≤ N, PopulatedOn U T n
 ```
 
@@ -12840,7 +12871,7 @@ theorem drift_collapse {n : ℕ} (hn : n ≤ N)
 
 ```lean
 theorem driftOn_of_catchup {R : ℕ}
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (hgst : pc.gst ≤ R)
+    (hcard : quorumCard Validator ≤ T.card) (hgst : pc.gst ≤ R)
     (hle : ∀ u ∈ T, ∀ n ≤ pc.top u, n ≤ pc.built u n) :
     DriftOn pc.built T R (pc.delay + pc.proc) N
 ```
@@ -12873,7 +12904,7 @@ This is where report §4.3's claim that the network's whole contribution is one 
 
 ```lean
 theorem reached (vp : ViewPace U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+    (hcard : quorumCard Validator ≤ T.card) :
     ∀ n ≤ N, ∀ v ∈ T, n ≤ vp.top v
 ```
 
@@ -12889,7 +12920,7 @@ The step is the familiar one with the deadline removed. Each `w ∈ T` reached r
 
 ```lean
 theorem populatedOn (vp : ViewPace U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+    (hcard : quorumCard Validator ≤ T.card) :
     ∀ n ≤ N, PopulatedOn U T n
 ```
 
@@ -12901,7 +12932,7 @@ theorem populatedOn (vp : ViewPace U T N)
 
 ```lean
 theorem driftOn_of_catchup (vp : ViewPace U T N) {R : ℕ}
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (hgst : vp.gst ≤ R) :
+    (hcard : quorumCard Validator ≤ T.card) (hgst : vp.gst ≤ R) :
     DriftOn vp.built T R (vp.delay + vp.proc) N
 ```
 
@@ -12928,7 +12959,7 @@ This needs neither production, nor the quorum bound, nor `T ⊆ Correct`: `refer
 
 ```lean
 theorem synchronisedOn_of_converges {R : ℕ}
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (hgst : vp.gst ≤ R)
+    (hcard : quorumCard Validator ≤ T.card) (hgst : vp.gst ≤ R)
     (hbackoff : ∀ n, R ≤ n → 2 * vp.delay + vp.proc ≤ vp.timeout n) :
     SynchronisedOn U T R
 ```
@@ -12941,7 +12972,7 @@ theorem synchronisedOn_of_converges {R : ℕ}
 
 ```lean
 theorem commits_recur_via_pace (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (fair : FairScheduleOn T) (R k : ℕ) :
     ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
@@ -12962,7 +12993,7 @@ What is assumed divides cleanly. The network contributes `converges` and `vp.gst
 
 ```lean
 theorem exists_reliable_parent
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     {b : BlockId} (hb : b ∈ U.ids) (hr : 0 < (U.block b).round) :
     ∃ a ∈ (U.block b).refs, a ∈ U.ids ∧ (U.block a).creator ∈ T ∧
       (U.block a).round + 1 = (U.block b).round
@@ -12976,7 +13007,7 @@ theorem exists_reliable_parent
 
 ```lean
 theorem PaceCore.round_le_top_succ (pc : PaceCore U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     {b : BlockId} (hb : b ∈ U.ids) :
     ∃ u ∈ T, (U.block b).round ≤ pc.top u + 1
 ```
@@ -12989,7 +13020,7 @@ theorem PaceCore.round_le_top_succ (pc : PaceCore U T N)
 
 ```lean
 theorem ViewPace.exists_honest_floor (vp : ViewPace U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     {b : BlockId} (hb : b ∈ U.ids) {n : ℕ}
     (hbr : (U.block b).round = n + 1) :
     ∃ u ∈ T, n ≤ vp.top u ∧
@@ -13004,7 +13035,7 @@ theorem ViewPace.exists_honest_floor (vp : ViewPace U T N)
 
 ```lean
 theorem synchronisedOn_of_rate (vp : ViewPace U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hrate : Rated vp.timeout) :
     SynchronisedOn U T (max (2 * vp.delay + vp.proc) vp.gst)
 ```
@@ -13017,7 +13048,7 @@ theorem synchronisedOn_of_rate (vp : ViewPace U T N)
 
 ```lean
 theorem directCommit_of_wait (vp : ViewPace U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : vp.gst ≤ R)
     (hwait : ∀ n, R ≤ n → 2 * vp.delay + vp.proc ≤ vp.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
@@ -13033,7 +13064,7 @@ theorem directCommit_of_wait (vp : ViewPace U T N)
 
 ```lean
 theorem decided_of_wait (vp : ViewPace U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : vp.gst ≤ R)
     (hwait : ∀ n, R ≤ n → 2 * vp.delay + vp.proc ≤ vp.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
@@ -13049,7 +13080,7 @@ theorem decided_of_wait (vp : ViewPace U T N)
 
 ```lean
 theorem directCommit_of_wait_two_delay (vp : ViewPace U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hproc : vp.proc = 0) (hgst : vp.gst ≤ R)
     (hwait : ∀ n, R ≤ n → 2 * vp.delay ≤ vp.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
@@ -13063,7 +13094,7 @@ theorem directCommit_of_wait_two_delay (vp : ViewPace U T N)
 
 ## Appendix D. Index of internal lemmas
 
-The 315 lemmas used only within the file that proves
+The 316 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -13107,10 +13138,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_historyUpto_succ` | — |
 | `reaches_of_mem_historyUpto` | Soundness. Anything the fuelled search finds really is reachable. No hypothesis on `b`: even off the … |
 
-### `Support.lean` (4)
+### `Support.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
+| `authorsAt_eq_authorsIn` | `authorsAt` is `authorsIn` over the whole universe: L0's density and the progress rule's trigger are one … |
 | `blames_inter_supporters_subset_byzantine` | A correct validator cannot both vote for `L` and blame it: that would be two distinct round-`n` blocks by … |
 | `card_authorsAt_le_univ` | The author pool never exceeds the validator set. This is what turns the `p - 2f` threshold into the … |
 | `exists_mem_refs_of_correct_support` | The hitting lemma. A round-`(n+1)` block cannot avoid referencing a block satisfying `P`, once `f+1`-or-so … |

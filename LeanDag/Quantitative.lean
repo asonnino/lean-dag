@@ -130,7 +130,7 @@ round `R / m` — so the slot past round `R` is named explicitly by
 `slotAt Validator R`. Under three-round spacing `slotAt R ≤ R`, so the bound is
 no weaker than it was. -/
 theorem commits_recur_within (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (fair : FairWithin T w) (R k : ℕ) :
+    (hcard : quorumCard Validator ≤ T.card) (fair : FairWithin T w) (R k : ℕ) :
     ∃ k', max k (slotAt Validator R) ≤ k' ∧ k' < max k (slotAt Validator R) + w ∧
       R ≤ S.slotRound k' ∧
       CommitsAt BlockId Payload T R k' := by
@@ -205,7 +205,7 @@ slots however large `m` is. A bound that improves with `m` needs the schedule
 to expose it, which `Slots.uniform` does; this statement is kept because it is
 the only one that says anything about an irregular schedule. -/
 theorem commits_recur_by_round {s : ℕ} (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (fair : FairWithin T w)
+    (hcard : quorumCard Validator ≤ T.card) (fair : FairWithin T w)
     (hs : BoundedSpacing (Validator := Validator) s) (R k : ℕ) :
     ∃ k', k ≤ k' ∧ S.slotRound k' ≤ S.slotRound (max k (slotAt Validator R)) + s * w ∧
       R ≤ S.slotRound k' ∧

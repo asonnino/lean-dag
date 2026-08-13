@@ -123,7 +123,7 @@ over `c = n - b` correct validators, so some author `w` collects at least
 `l ≤ c` turns into `c ≤ 2f` — impossible, since `b ≤ f` and `n ≥ 3f+1`
 force `c ≥ 2f+1`. The same contradiction as at `n = 3f+1`, verbatim. -/
 theorem exists_correct_common_support {r : ℕ}
-    (hp : (Fintype.card Validator - F.f) ≤ (authorsAt U (r + 1)).card) :
+    (hp : quorumCard Validator ≤ (authorsAt U (r + 1)).card) :
     ∃ bw ∈ U.ids, (U.block bw).round = r ∧
       (U.block bw).creator ∈ (Correct : Finset Validator) ∧
       (authorsAt U (r + 1)).card + F.f + 1
@@ -143,7 +143,7 @@ theorem exists_correct_common_support {r : ℕ}
     fun w => (L.filter (fun q => w ∈ creatorsOf U.block (U.block q).refs)).card with hgdef
   -- Each correct round-(r+1) block names n−f validators, at most b Byzantine.
   have hper : ∀ q ∈ L,
-      (Fintype.card Validator - F.f) ≤ ((creatorsOf U.block (U.block q).refs) ∩ C).card + F.byzantine.card := by
+      quorumCard Validator ≤ ((creatorsOf U.block (U.block q).refs) ∩ C).card + F.byzantine.card := by
     intro q hq
     obtain ⟨hq_ids, hq_round, _⟩ := mem_correctBlocksAt.mp hq
     exact le_trans (U.creators_quorum hq_ids (by omega))
@@ -155,24 +155,24 @@ theorem exists_correct_common_support {r : ℕ}
   -- **Double counting** (`Finset.card_nsmul_le_card_nsmul`): each correct
   -- round-(r+1) block contributes at least `2f+1 - b` incidences, and each
   -- correct author absorbs at most `g w`.
-  have hbig : L.card * ((Fintype.card Validator - F.f) - F.byzantine.card) ≤ C.card * g w := by
+  have hbig : L.card * (quorumCard Validator - F.byzantine.card) ≤ C.card * g w := by
     have := Finset.card_nsmul_le_card_nsmul
       (r := fun (q : BlockId) (v : Validator) => v ∈ creatorsOf U.block (U.block q).refs)
       (s := L) (t := C)
-      (m := (Fintype.card Validator - F.f) - F.byzantine.card) (n := g w)
+      (m := quorumCard Validator - F.byzantine.card) (n := g w)
       (fun q hq => by
         have h := hper q hq
         -- `bipartiteAbove` is by definition the filter, so `change` retypes it.
-        change (Fintype.card Validator - F.f) - F.byzantine.card
+        change quorumCard Validator - F.byzantine.card
             ≤ (C.filter (fun v => v ∈ creatorsOf U.block (U.block q).refs)).card
         rw [Finset.filter_mem_eq_inter, Finset.inter_comm]
         omega)
       (fun v hv => hw_max v hv)
     simpa [smul_eq_mul] using this
-  have hb_le : F.byzantine.card ≤ (Fintype.card Validator - F.f) := by omega
-  have hA : L.card * ((Fintype.card Validator - F.f)) ≤ C.card * g w + L.card * F.byzantine.card := by
-    have hsplit : L.card * ((Fintype.card Validator - F.f))
-        = L.card * ((Fintype.card Validator - F.f) - F.byzantine.card) + L.card * F.byzantine.card := by
+  have hb_le : F.byzantine.card ≤ quorumCard Validator := by omega
+  have hA : L.card * (quorumCard Validator) ≤ C.card * g w + L.card * F.byzantine.card := by
+    have hsplit : L.card * (quorumCard Validator)
+        = L.card * (quorumCard Validator - F.byzantine.card) + L.card * F.byzantine.card := by
       rw [← Nat.mul_add, Nat.sub_add_cancel hb_le]
     omega
   -- The arithmetic core: p ≤ (max degree) + 2f.
@@ -242,7 +242,7 @@ theorem exists_common_correct_ancestor {r : ℕ} {c₀ : BlockId}
   classical
   -- A round-(r+2) block names n−f distinct round-(r+1) authors, so the
   -- author pool is at least that large -- exactly T3a's hypothesis.
-  have hp : (Fintype.card Validator - F.f) ≤ (authorsAt U (r + 1)).card :=
+  have hp : quorumCard Validator ≤ (authorsAt U (r + 1)).card :=
     le_trans (U.creators_quorum hc₀ (by omega))
       (Finset.card_le_card (creators_refs_subset_authorsAt hc₀ (by omega)))
   obtain ⟨bw, hbw_ids, hbw_round, hbw_correct, hbw_support⟩ :=

@@ -200,7 +200,7 @@ theorem blocksAt_disjoint (h : m ≠ n) : Disjoint (blocksAt U m) (blocksAt U n)
 omit [DecidableEq BlockId] in
 /-- L0 in blocks rather than authors. -/
 theorem card_blocksAt_of_lt (hn : n < r) {i : BlockId} (hi : i ∈ U.ids)
-    (hir : (U.block i).round = r) : (Fintype.card Validator - F.f) ≤ (blocksAt U n).card :=
+    (hir : (U.block i).round = r) : quorumCard Validator ≤ (blocksAt U n).card :=
   le_trans (card_authorsAt_of_lt hn hi hir) card_authorsAt_le_card_blocksAt
 
 /-- **D6.** A universe holding a block at round `r` holds at least
@@ -211,7 +211,7 @@ Rounds partition, which is what turns L0's per-round bound into a bound on the
 whole `Finset`. The `+1` matters: without it the statement would be vacuous at
 `r = 0` and would say nothing about a genesis-only DAG. -/
 theorem card_ids_ge_of_round {i : BlockId} (hi : i ∈ U.ids) (hir : (U.block i).round = r) :
-    ((Fintype.card Validator - F.f)) * r + 1 ≤ U.ids.card := by
+    (quorumCard Validator) * r + 1 ≤ U.ids.card := by
   have hsub : (Finset.range (r + 1)).biUnion (fun n => blocksAt U n) ⊆ U.ids := by
     intro j hj
     obtain ⟨n, -, hjn⟩ := Finset.mem_biUnion.mp hj
@@ -221,8 +221,8 @@ theorem card_ids_ge_of_round {i : BlockId} (hi : i ∈ U.ids) (hir : (U.block i)
     Finset.card_biUnion fun _ _ _ _ hmn => blocksAt_disjoint hmn
   have hle := Finset.card_le_card hsub
   rw [hcard, Finset.sum_range_succ] at hle
-  have hlow : ((Fintype.card Validator - F.f)) * r ≤ ∑ n ∈ Finset.range r, (blocksAt U n).card := by
-    calc ((Fintype.card Validator - F.f)) * r = ∑ _n ∈ Finset.range r, ((Fintype.card Validator - F.f)) := by
+  have hlow : (quorumCard Validator) * r ≤ ∑ n ∈ Finset.range r, (blocksAt U n).card := by
+    calc (quorumCard Validator) * r = ∑ _n ∈ Finset.range r, (quorumCard Validator) := by
           rw [Finset.sum_const_nat fun _ _ => rfl, Finset.card_range, Nat.mul_comm]
       _ ≤ _ := Finset.sum_le_sum fun n hn =>
           card_blocksAt_of_lt (Finset.mem_range.mp hn) hi hir
@@ -234,7 +234,7 @@ theorem card_ids_ge_of_round {i : BlockId} (hi : i ∈ U.ids) (hir : (U.block i)
 the round from both sides. -/
 theorem card_ids_bounds (h : EquivFree U U.ids) {i : BlockId} (hi : i ∈ U.ids)
     (hir : (U.block i).round = r) (hmax : ∀ j ∈ U.ids, (U.block j).round ≤ r) :
-    ((Fintype.card Validator - F.f)) * r + 1 ≤ U.ids.card ∧ U.ids.card ≤ (Fintype.card Validator) * (r + 1) :=
+    (quorumCard Validator) * r + 1 ≤ U.ids.card ∧ U.ids.card ≤ (Fintype.card Validator) * (r + 1) :=
   ⟨card_ids_ge_of_round hi hir, card_le_of_equivFree h hmax⟩
 
 end LeanDag

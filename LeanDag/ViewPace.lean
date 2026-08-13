@@ -210,9 +210,7 @@ structure PaceCore (U : BlockUniverse Validator BlockId Payload)
   advances. It asserts no production, since it says nothing until a quorum
   is in hand. -/
   advances : ∀ v ∈ T, ∀ n < N, ∀ t,
-    (Fintype.card Validator - F.f) ≤
-      (creatorsOf U.block ((holds v t).filter fun b => (U.block b).round = n)).card →
-    n < top v
+    quorumCard Validator ≤ (authorsIn U (holds v t) n).card → n < top v
   /-- The processing bound: how long round entry may lag evidence. -/
   proc : ℕ
   /-- **Catch-up** (protocol). Seeing a round is entering it: any
@@ -247,7 +245,7 @@ distinct round-`n` authors in `v`'s hands; `advances` fires.
 
 Proved on the trunk, so every pacing discipline inherits it: nothing
 here mentions a floor, a ceiling, or a timeout. -/
-theorem reached (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+theorem reached (hcard : quorumCard Validator ≤ T.card) :
     ∀ n ≤ N, ∀ v ∈ T, n ≤ pc.top v := by
   intro n
   induction n with
@@ -258,7 +256,7 @@ theorem reached (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
         (max (pc.latest n) pc.gst + pc.delay) (le_trans hcard (Finset.card_le_card ?_)))
       intro w hw
       obtain ⟨b, hb, hbc, hbr⟩ := pc.built_of_le_top w hw n (ih (by omega) w hw)
-      refine mem_creatorsOf.mpr ⟨b, Finset.mem_filter.mpr ⟨?_, hbr⟩, hbc⟩
+      refine mem_authorsIn.mpr ⟨b, ?_, hbr, hbc⟩
       have hown := pc.holds_own w hw n (by omega) b hb hbc hbr
       have hle : pc.built w n ≤ max (pc.latest n) pc.gst :=
         le_trans (pc.built_le_latest w hw n (by omega)) (le_max_left _ _)
@@ -268,7 +266,7 @@ omit [DecidableEq BlockId] in
 /-- **Production, once for every discipline**: a round a validator got to
 is a round it built in. -/
 theorem populatedOn (pc : PaceCore U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+    (hcard : quorumCard Validator ≤ T.card) :
     ∀ n ≤ N, PopulatedOn U T n :=
   fun n hn v hv => pc.built_of_le_top v hv n (pc.reached hcard n hn v hv)
 
@@ -297,7 +295,7 @@ with no base hypothesis anywhere. `hle` is the discipline's `le_built`
 (rounds advance real time), which each extension proves from its own
 schedule clauses; everything else is the trunk's. -/
 theorem driftOn_of_catchup {R : ℕ}
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (hgst : pc.gst ≤ R)
+    (hcard : quorumCard Validator ≤ T.card) (hgst : pc.gst ≤ R)
     (hle : ∀ u ∈ T, ∀ n ≤ pc.top u, n ≤ pc.built u n) :
     DriftOn pc.built T R (pc.delay + pc.proc) N := by
   intro v hv w hw n hRn hnN
@@ -407,14 +405,14 @@ raced ahead of the network pre-GST is not excluded by hypothesis — it is
 not expressible, because a validator that never held a quorum at round
 `n` never reached round `n+1`. -/
 theorem reached (vp : ViewPace U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+    (hcard : quorumCard Validator ≤ T.card) :
     ∀ n ≤ N, ∀ v ∈ T, n ≤ vp.top v :=
   vp.toPaceCore.reached hcard
 
 omit [DecidableEq BlockId] in
 /-- **Production**, inherited from the trunk (`PaceCore.populatedOn`). -/
 theorem populatedOn (vp : ViewPace U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) :
+    (hcard : quorumCard Validator ≤ T.card) :
     ∀ n ≤ N, PopulatedOn U T n :=
   vp.toPaceCore.populatedOn hcard
 
@@ -426,7 +424,7 @@ rounds every `T`-validator reached, which is `reached`'s conclusion; the
 schedule contributes only `le_built` (rounds advance real time), placing
 those builds past GST. -/
 theorem driftOn_of_catchup (vp : ViewPace U T N) {R : ℕ}
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (hgst : vp.gst ≤ R) :
+    (hcard : quorumCard Validator ≤ T.card) (hgst : vp.gst ≤ R) :
     DriftOn vp.built T R (vp.delay + vp.proc) N :=
   vp.toPaceCore.driftOn_of_catchup hcard hgst (fun u hu => vp.le_built hu)
 
@@ -470,7 +468,7 @@ the spread at `R` is whatever catch-up left, which is `delay + proc`
 constant. The quorum bound is consumed here — the collapse reads builds
 at rounds `reached` guarantees — where the engine alone needs none. -/
 theorem synchronisedOn_of_converges {R : ℕ}
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card) (hgst : vp.gst ≤ R)
+    (hcard : quorumCard Validator ≤ T.card) (hgst : vp.gst ≤ R)
     (hbackoff : ∀ n, R ≤ n → 2 * vp.delay + vp.proc ≤ vp.timeout n) :
     SynchronisedOn U T R :=
   vp.synchronisedOn_of_driftOn (vp.driftOn_of_catchup hcard hgst) hgst
@@ -491,7 +489,7 @@ appears: the backoff clears the constant `2Δ + proc`, and the spread —
 whatever it was at the start — is the collapsed `Δ + proc` by the time
 coverage reads it. Production needs none of the timing clauses. -/
 theorem commits_recur_via_pace (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (fair : FairScheduleOn T) (R k : ℕ) :
     ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
@@ -540,7 +538,7 @@ reference quorum has at least `n − 2f ≥ f + 1` authors in any
 quorum-sized `T`; one is exhibited. Nothing about pacing enters: this is
 a fact about validity and cardinalities alone. -/
 theorem exists_reliable_parent
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     {b : BlockId} (hb : b ∈ U.ids) (hr : 0 < (U.block b).round) :
     ∃ a ∈ (U.block b).refs, a ∈ U.ids ∧ (U.block a).creator ∈ T ∧
       (U.block a).round + 1 = (U.block b).round := by
@@ -563,7 +561,7 @@ Whatever a Byzantine validator publishes, some `T`-validator has reached
 the round below it — the adversary's whole freedom is the single layer
 it may build the instant a quorum forms beneath it. -/
 theorem PaceCore.round_le_top_succ (pc : PaceCore U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     {b : BlockId} (hb : b ∈ U.ids) :
     ∃ u ∈ T, (U.block b).round ≤ pc.top u + 1 := by
   rcases Nat.eq_zero_or_pos (U.block b).round with h0 | hpos
@@ -602,7 +600,7 @@ peer already is, and the obligation `catchup` states over `T`-authored
 blocks is the analysis-side restriction of a rule that is safe over all
 of them. -/
 theorem ViewPace.exists_honest_floor (vp : ViewPace U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     {b : BlockId} (hb : b ∈ U.ids) {n : ℕ}
     (hbr : (U.block b).round = n + 1) :
     ∃ u ∈ T, n ≤ vp.top u ∧
@@ -642,7 +640,7 @@ backoff: `R = max (2Δ + proc) gst`, each summand what it looks like. The
 rated timeout clears the constant threshold from the round named by the
 threshold itself, and no start spread or base round appears. -/
 theorem synchronisedOn_of_rate (vp : ViewPace U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hrate : Rated vp.timeout) :
     SynchronisedOn U T (max (2 * vp.delay + vp.proc) vp.gst) :=
   vp.synchronisedOn_of_converges hcard (le_max_right _ _)
@@ -658,7 +656,7 @@ in any hypothesis, because catch-up collapses whatever spread the
 deployment began with. Production is derived, so nothing asserts blocks
 above round `0`, and `T ⊆ Correct` is not consumed. -/
 theorem directCommit_of_wait (vp : ViewPace U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : vp.gst ≤ R)
     (hwait : ∀ n, R ≤ n → 2 * vp.delay + vp.proc ≤ vp.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
@@ -671,7 +669,7 @@ theorem directCommit_of_wait (vp : ViewPace U T N)
 
 /-- **The wait bound, as a decision.** -/
 theorem decided_of_wait (vp : ViewPace U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hgst : vp.gst ≤ R)
     (hwait : ∀ n, R ≤ n → 2 * vp.delay + vp.proc ≤ vp.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
@@ -685,7 +683,7 @@ theorem decided_of_wait (vp : ViewPace U T N)
 implementations run. The general threshold degrades linearly in the
 processing bound and in nothing else. -/
 theorem directCommit_of_wait_two_delay (vp : ViewPace U T N)
-    (hcard : (Fintype.card Validator - F.f) ≤ T.card)
+    (hcard : quorumCard Validator ≤ T.card)
     (hproc : vp.proc = 0) (hgst : vp.gst ≤ R)
     (hwait : ∀ n, R ≤ n → 2 * vp.delay ≤ vp.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)

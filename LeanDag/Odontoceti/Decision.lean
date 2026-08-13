@@ -104,12 +104,12 @@ def blamesIn (U : BlockUniverse Validator BlockId Payload)
 /-- Direct commit, as judged from a single view. -/
 def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (supportersIn U V L r).card
+  quorumCard Validator ≤ (supportersIn U V L r).card
 
 /-- Direct skip, as judged from a single view. -/
 def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  (Fintype.card Validator - F.f) ≤ (blamesIn U V L r).card
+  quorumCard Validator ≤ (blamesIn U V L r).card
 
 instance {V : View Validator BlockId Payload U} :
     Decidable (DirectCommitIn U V L r) :=

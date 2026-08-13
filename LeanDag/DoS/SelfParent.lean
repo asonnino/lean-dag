@@ -177,7 +177,7 @@ The flip side of every upper bound in the plan: under this model storage is
 `Θ(f·r)` per history from below, so the open question is only how far above
 the floor an adversary can push. -/
 theorem card_history_ge {b : BlockId} (hb : b ∈ U.ids) (h0 : 0 < (U.block b).round) :
-    ((Fintype.card Validator - F.f)) * (U.block b).round + 1 ≤ (history U b).card := by
+    (quorumCard Validator) * (U.block b).round + 1 ≤ (history U b).card := by
   set r := (U.block b).round with hr
   set C := creatorsOf U.block (U.block b).refs with hC
   set S := (history U b).filter (fun i => (U.block i).round < r) with hS
@@ -198,8 +198,8 @@ theorem card_history_ge {b : BlockId} (hb : b ∈ U.ids) (h0 : 0 < (U.block b).r
       exact ⟨history_subset_of_reaches hb (Reaches.single hp) hi, by omega⟩
     · show ((U.block i).creator, (U.block i).round) = (X, t)
       rw [hic, hpc, hir]
-  have hcount : ((Fintype.card Validator - F.f)) * r ≤ S.card := by
-    calc ((Fintype.card Validator - F.f)) * r
+  have hcount : (quorumCard Validator) * r ≤ S.card := by
+    calc (quorumCard Validator) * r
         ≤ C.card * r :=
           Nat.mul_le_mul_right r ((U.valid b hb).quorum h0)
       _ = (C ×ˢ Finset.range r).card := by rw [Finset.card_product, Finset.card_range]

@@ -288,7 +288,7 @@ theorem creators_refs_eq_correct (hdos : DoSValid U) {b : BlockId} (hb : b ∈ U
       (le_trans F.card_byzantine hk)
   have hcard_byz : F.byzantine.card = F.f :=
     le_antisymm F.card_byzantine (hbyz ▸ hk)
-  have hcorrect : (Correct : Finset Validator).card = (Fintype.card Validator - F.f) := by
+  have hcorrect : (Correct : Finset Validator).card = quorumCard Validator := by
     have := card_correct_add_byzantine (Validator := Validator)
     omega
   -- references avoid the exposed set, which is now the Byzantine set
