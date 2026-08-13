@@ -118,7 +118,7 @@ def ugrowLag (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
     simp only [ugrow_block, mem_growBlock_refs]
     omega
   advances _ _ _ hn _ _ := hn
-  catchup v hv n hn b hb hbT hbr t hheld := by
+  catchup v hv n hn b hb hbT hbr t _ hheld := by
     obtain ⟨hv1, hv3⟩ := mem_T_bounds hv
     obtain ⟨hu1, hu3⟩ := mem_T_bounds hbT
     set u := ((Ugrow N).block b).creator with hu

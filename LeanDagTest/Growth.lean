@@ -405,7 +405,7 @@ def ugrowTimingPace (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
     simp only [ugrow_block, mem_growBlock_refs]
     omega
   advances _ _ _ hn _ _ := hn
-  catchup v _ n hn b hb _ hbr t hheld := by
+  catchup v _ n hn b hb _ hbr t _ hheld := by
     simp only [ugrow_ids, Finset.mem_range] at hb
     simp only [ugrow_block, rrBlock_round] at hbr
     simp only [timingHolds, Finset.mem_filter, Finset.mem_range] at hheld

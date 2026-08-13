@@ -84,7 +84,7 @@ def ugrowSkewPace (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
     simp only [ugrow_block, mem_growBlock_refs]
     omega
   advances _ _ _ hn _ _ := hn
-  catchup v hv n hn b hb hbT hbr t hheld := by
+  catchup v hv n hn b hb hbT hbr t _ hheld := by
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
     have hv4 := v.isLt
     simp only [ugrow_ids, Finset.mem_range] at hb
@@ -209,7 +209,7 @@ def ugrowStuckPace : ViewPace (Ugrow 0) {1} 5 where
       exact le_trans Finset.card_image_le (by simp)
     have hq3 : Fintype.card (Fin 4) - Faults.f (Fin 4) = 3 := by decide
     omega
-  catchup v hv n _ b hb _ hbr t _ := by
+  catchup v hv n _ b hb _ hbr t _ _ := by
     have hv1 : v = 1 := by simpa using hv
     subst hv1
     simp only [ugrow_ids, Finset.mem_range] at hb

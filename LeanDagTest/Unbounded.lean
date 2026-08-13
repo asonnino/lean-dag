@@ -247,7 +247,7 @@ def ugapPace (N : ℕ) : ViewPace (Uomit 2 N) (Correct : Finset (Fin 4)) N where
     · omega
     · omega
   advances _ _ _ hn _ _ := hn
-  catchup v hv n hn b hb hbT hbr t hheld := by
+  catchup v hv n hn b hb hbT hbr t _ hheld := by
     have hv4 := v.isLt
     simp only [uomit_ids, Finset.mem_range] at hb
     simp only [uomit_block, rrBlock_round] at hbr
@@ -347,7 +347,7 @@ def ustarvePace (N : ℕ) : ViewPace (Uomit 3 N) ({1, 2} : Finset (Fin 4)) N whe
     · omega
     · omega
   advances _ _ _ hn _ _ := hn
-  catchup v hv n hn b hb hbT hbr t hheld := by
+  catchup v hv n hn b hb hbT hbr t _ hheld := by
     obtain ⟨hv1, hv2⟩ := mem_T12_bounds hv
     simp only [uomit_ids, Finset.mem_range] at hb
     simp only [uomit_block, rrBlock_round] at hbr

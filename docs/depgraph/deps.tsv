@@ -6253,6 +6253,7 @@ EDGE	LeanDag.PaceCore.catchup	LeanDag.Faults
 EDGE	LeanDag.PaceCore.catchup	LeanDag.PaceCore.holds
 EDGE	LeanDag.PaceCore.catchup	LeanDag.BlockUniverse.ids
 EDGE	LeanDag.PaceCore.catchup	LeanDag.PaceCore.built
+EDGE	LeanDag.PaceCore.catchup	LeanDag.PaceCore.gst
 EDGE	LeanDag.PaceCore.catchup	LeanDag.BlockUniverse.block
 EDGE	LeanDag.PaceCore.catchup	LeanDag.PaceCore.top
 EDGE	LeanDag.PaceCore.catchup	LeanDag.Block.round

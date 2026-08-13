@@ -334,6 +334,18 @@ move and the user chose the merge with the costs on the table:
   `synchronisedOn_of_driftOn`: the drift-free headline consumes the
   quorum (the collapse runs through `reached`), so a sub-quorum reliable
   set — V12's two-member `T` — still needs drift supplied from outside.
+* **Gated on GST** (follow-up, same month). `catchup` was subsequently
+  weakened to fire only at `gst ≤ t`. The collapse proof applies the
+  clause only at post-GST times, so nothing downstream moved; the gain
+  is honesty about deployment — the executable rule is the GST-free
+  clamped one (enter a sighted round within `proc`, never before the
+  own floor), and pre-GST the clamp may bind, so the unconditional
+  clause was false of every real implementation. The rush bound (CU5:
+  `exists_reliable_parent`, `PaceCore.round_le_top_succ`,
+  `ViewPace.exists_honest_floor`) is the other half of the same
+  deployment story: valid evidence of a round certifies a reliable
+  validator that paid the full timeout bill below it, so author-blind
+  catch-up chases only the certified layer.
 * **One `proc`.** The catch-up deadline and the reactive exit bound
   share the trunk's `proc`. They are the same kind of quantity (entry
   or build lag behind a trigger), but the sharing is a modelling choice:

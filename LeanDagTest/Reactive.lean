@@ -89,7 +89,7 @@ def ugrowReactive (N : ℕ) : ReactiveM (Ugrow N) {1, 2, 3} N where
     · omega
     · omega
   advances _ _ _ hn _ _ := hn
-  catchup v hv n hn b hb hbT hbr t hheld := by
+  catchup v hv n hn b hb hbT hbr t _ hheld := by
     have hv4 := v.isLt
     simp only [ugrow_ids, Finset.mem_range] at hb
     simp only [ugrow_block, rrBlock_round] at hbr

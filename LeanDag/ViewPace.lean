@@ -216,15 +216,23 @@ structure PaceCore (U : BlockUniverse Validator BlockId Payload)
   /-- The processing bound: how long round entry may lag evidence. -/
   proc : ℕ
   /-- **Catch-up** (protocol). Seeing a round is entering it: any
-  `T`-authored block of round `n` in hand at time `t` means the holder
-  reached round `n` and built its own block there by `t + proc`. This is
-  the rule real pacemakers run, and it is what makes drift a *derived*
-  quantity: the spread at any post-GST round is at most `delay + proc`,
-  whatever it was at the start (`drift_collapse`), so no start-spread
-  hypothesis survives into the headline statements. -/
+  `T`-authored block of round `n` in hand at a post-GST time `t` means
+  the holder reached round `n` and built its own block there by
+  `t + proc`. This is the rule real pacemakers run, and it is what makes
+  drift a *derived* quantity: the spread at any post-GST round is at
+  most `delay + proc`, whatever it was at the start (`drift_collapse`),
+  so no start-spread hypothesis survives into the headline statements.
+
+  The clause is asserted only from `gst` — like `converges`, and for the
+  same reason: what a validator runs is the GST-free clamped rule (enter
+  a sighted round within `proc`, never before the own floor), and past
+  GST the floor provably never delays it, while before GST it may. An
+  unconditional clause would over-claim about every real
+  implementation; the gated one asserts exactly what the clamped rule
+  delivers. -/
   catchup : ∀ v ∈ T, ∀ n ≤ N, ∀ b ∈ U.ids,
     (U.block b).creator ∈ T → (U.block b).round = n →
-    ∀ t, b ∈ holds v t → n ≤ top v ∧ built v n ≤ t + proc
+    ∀ t, gst ≤ t → b ∈ holds v t → n ≤ top v ∧ built v n ≤ t + proc
 
 namespace PaceCore
 
@@ -279,7 +287,8 @@ theorem drift_collapse {n : ℕ} (hn : n ≤ N)
   obtain ⟨b, hb, hbc, hbr⟩ := pc.built_of_le_top w hw n (htop w hw)
   have hown := pc.holds_own w hw n hn b hb hbc hbr
   have hconv := pc.converges v hv w hw _ (hg w hw) hown
-  have := (pc.catchup v hv n hn b hb (hbc ▸ hw) hbr _ hconv).2
+  have := (pc.catchup v hv n hn b hb (hbc ▸ hw) hbr _
+    (le_trans (hg w hw) (Nat.le_add_right _ _)) hconv).2
   omega
 
 omit [DecidableEq BlockId] in

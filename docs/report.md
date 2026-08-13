@@ -737,7 +737,7 @@ the system actually falls.
 | P8 | a validator has a genesis block, and builds on holding a quorum | `ViewPace.built_of_le_top` (genesis, at `n = 0`), `ViewPace.advances` |
 | P9 | a validator waits a full timeout before building | `ViewPace.waits` |
 | P10 | the leader schedule names reliable validators arbitrarily far out | `FairScheduleOn` |
-| P11 | seeing a round is entering it: a held round-`n` block forces entry within `proc` | `PaceCore.catchup` |
+| P11 | seeing a round is entering it: past GST, a held round-`n` block forces entry within `proc` | `PaceCore.catchup` |
 
 P1–P6 are consumed by the safety development, P7–P11 additionally by liveness;
 P3′ by safety never, and by liveness exactly once (RS5, §11.5) — it is indispensable to §8, and consumed again by the fill of §12.
@@ -821,6 +821,15 @@ development. The clause cannot be exploited by a validator that does not
 wait: any valid block certifies a reliable validator that paid the full
 timeout bill for every round below it (CU5, §6.11), so the author-blind
 form a deployment runs never pulls anyone past the honest schedule.
+
+Like `converges`, the clause is asserted only from `gst` — and for the
+same reason. No validator knows GST or `T`; what it runs is the GST-free
+clamped rule, *enter a sighted round within `proc`, never before your
+own floor*. Past GST the floor provably never delays the entry, so the
+clause holds of the run; before GST it may, so an unconditional clause
+would over-claim about every real implementation. The gate places the
+condition where partial synchrony always places it: on the guarantee,
+not on the validator.
 
 ### 4.2 The fault model
 
@@ -1776,7 +1785,7 @@ structure PaceCore (U) (T : Finset Validator) (N : ℕ) where
   proc : ℕ
   catchup : ∀ v ∈ T, ∀ n ≤ N, ∀ b ∈ U.ids,
     (U.block b).creator ∈ T → (U.block b).round = n →
-    ∀ t, b ∈ holds v t → n ≤ top v ∧ built v n ≤ t + proc
+    ∀ t, gst ≤ t → b ∈ holds v t → n ≤ top v ∧ built v n ≤ t + proc
 
 structure ViewPace (U) (T : Finset Validator) (N : ℕ) extends PaceCore U T N where
   waits : ∀ v ∈ T, ∀ n < top v, built v n + timeout n ≤ built v (n + 1)
@@ -2152,14 +2161,19 @@ already is, and the adversary's whole freedom is the single layer it may
 build the instant a quorum forms beneath it —
 `PaceCore.round_le_top_succ`: no valid block's round exceeds some
 reliable `top` by more than one. On the running witness the floor is met
-with equality (§16). One caveat is recorded honestly: the model does not
-axiomatise that a block cannot be *held* before it exists — `holds` is
-constrained only by `holds_own`, monotonicity and `converges` — so the
-statement mechanised is about the block's existence certifying the
-floor, and the compatibility of the catch-up deadline with the `waits`
-floor is carried by the satisfiability witnesses (`ugrowLag`, where the
-two meet with no slack) rather than by a theorem quantifying over
-arrival times.
+with equality (§16).
+
+The clause itself is asserted only from `gst` (§4.1), so what it demands
+coincides with what the clamped author-blind rule delivers: pre-GST it
+demands nothing — matching a network that may deliver nothing and a
+floor that may bind — and post-GST the collapse arithmetic puts every
+catch-up deadline at or past the holder's own floor, `ugrowLag`
+exhibiting the two meeting with no slack. One caveat is recorded
+honestly: the model does not axiomatise that a block cannot be *held*
+before it exists — `holds` is constrained only by `holds_own`,
+monotonicity and `converges` — so the statement mechanised is about the
+block's existence certifying the floor, with arrival-time realism
+carried by the satisfiability witnesses.
 
 **What catch-up does not supply is coverage.** A validator entering a
 round on evidence has not waited for the round below to assemble, so its
@@ -8512,15 +8526,23 @@ structure PaceCore (U : BlockUniverse Validator BlockId Payload)
   /-- The processing bound: how long round entry may lag evidence. -/
   proc : ℕ
   /-- **Catch-up** (protocol). Seeing a round is entering it: any
-  `T`-authored block of round `n` in hand at time `t` means the holder
-  reached round `n` and built its own block there by `t + proc`. This is
-  the rule real pacemakers run, and it is what makes drift a *derived*
-  quantity: the spread at any post-GST round is at most `delay + proc`,
-  whatever it was at the start (`drift_collapse`), so no start-spread
-  hypothesis survives into the headline statements. -/
+  `T`-authored block of round `n` in hand at a post-GST time `t` means
+  the holder reached round `n` and built its own block there by
+  `t + proc`. This is the rule real pacemakers run, and it is what makes
+  drift a *derived* quantity: the spread at any post-GST round is at
+  most `delay + proc`, whatever it was at the start (`drift_collapse`),
+  so no start-spread hypothesis survives into the headline statements.
+
+  The clause is asserted only from `gst` — like `converges`, and for the
+  same reason: what a validator runs is the GST-free clamped rule (enter
+  a sighted round within `proc`, never before the own floor), and past
+  GST the floor provably never delays it, while before GST it may. An
+  unconditional clause would over-claim about every real
+  implementation; the gated one asserts exactly what the clamped rule
+  delivers. -/
   catchup : ∀ v ∈ T, ∀ n ≤ N, ∀ b ∈ U.ids,
     (U.block b).creator ∈ T → (U.block b).round = n →
-    ∀ t, b ∈ holds v t → n ≤ top v ∧ built v n ≤ t + proc
+    ∀ t, gst ≤ t → b ∈ holds v t → n ≤ top v ∧ built v n ≤ t + proc
 ```
 
 **The shared trunk of every pacing discipline**, over a **partial** build schedule.
