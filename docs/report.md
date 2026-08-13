@@ -332,7 +332,7 @@ denial-of-service resistance (`dos_resistance`); garbage collection
 Odontoceti (`Odontoceti.decided_unique`,
 `Odontoceti.all_decided_below_of_fairRun`); the reactive schedule
 (`ReactiveM.decided` (RS2), `Odontoceti.reactive_decided` (RS3),
-`ReactiveCore.no_timeout_of_fast` (RS4)); safe-skip recovery
+`ReactivePace.no_timeout_of_fast` (RS4)); safe-skip recovery
 (`SkipMsg.decided_fill_agree` (SS6)); adaptive leader schedules
 (`adaptiveRun_agree` (AL3), `adaptiveRun_exists` (AL5)); and hybrid
 fault tolerance (`Hybrid.decided_unique` (H6),
@@ -2987,32 +2987,41 @@ safety development are consumed as found; only the schedule changes.
 
 ### 11.1 The reactive dichotomy
 
-`ReactiveCore` is the schedule and network layer both protocols share.
-Relative to the timed schedule of §6.9, the full-timeout floor `waits`
-and the promptness clause `prompt` are gone; in their place:
+`ReactivePace` is the schedule and network layer both protocols share,
+and it **extends the same trunk as the full-timeout discipline**:
+`PaceCore` (§6.9) supplies the partial schedule, the views, `converges`
+and the progress rule, so production is inherited
+(`PaceCore.populatedOn`) rather than assumed — the reactive arc carries
+no block function, and every block its statements name is produced by
+the derivation of §6.9. Relative to `ViewPace`, the full-timeout floor
+`waits` and the promptness clause `prompt` are gone; in their place:
 
 ```lean
-structure ReactiveCore (U) (T : Finset Validator) (N : ℕ) where
-  …
-  built_lt : ∀ v ∈ T, ∀ n, built v n < built v (n + 1)
-  deadline : ∀ v ∈ T, ∀ n < N, built v (n + 1) ≤ built v n + timeout n
-  …
+structure ReactivePace (U) (T : Finset Validator) (N : ℕ)
+    extends PaceCore U T N where
+  proc : ℕ
+  built_lt : ∀ v ∈ T, ∀ n < top v, built v n < built v (n + 1)
+  deadline : ∀ v ∈ T, ∀ n < top v, built v (n + 1) ≤ built v n + timeout n
   vote_or_wait : ∀ v ∈ T, ∀ k : ℕ, S.slotRound k + 1 ≤ N → S.leader k ∈ T →
     ∀ L, IsLeaderBlock U k L →
-    L ∈ (U.block (blk v (S.slotRound k + 1))).refs ∨
+    ∀ c ∈ U.ids, (U.block c).creator = v → (U.block c).round = S.slotRound k + 1 →
+    L ∈ (U.block c).refs ∨
       (built v (S.slotRound k) + timeout (S.slotRound k)
           ≤ built v (S.slotRound k + 1) ∧
-        (L ∈ holds v (built v (S.slotRound k + 1)) →
-          L ∈ (U.block (blk v (S.slotRound k + 1))).refs))
+        (L ∈ holds v (built v (S.slotRound k + 1)) → L ∈ (U.block c).refs))
+  prompt_vote : …
 ```
 
 `deadline` is the ceiling — a validator never waits *past* the timeout —
-and `built_lt` the only remaining floor. `vote_or_wait` is the reactive
-dichotomy: at the round above a reliable leader, a block either
-references the leader (the reactive exit), or its builder waited the
-full timeout and references any leader block it holds (the fallback).
-Building early *without* the leader is thereby excluded, which is the
-entire discipline: the schedule accelerates only where acceleration cannot cost the vote.
+and `built_lt` the only remaining floor, both over the rounds the
+validator reached. `vote_or_wait` is the reactive dichotomy: at the
+round above a reliable leader, any `T`-authored block either references
+the leader (the reactive exit), or its builder waited the full timeout
+and references any leader block it holds (the fallback). Building early
+*without* the leader is thereby excluded, which is the entire
+discipline: the schedule accelerates only where acceleration cannot cost
+the vote. The clauses are stated over any authored block, as everywhere
+on the pace line, so non-equivocation is never consulted.
 
 The clause is stated for slots whose leader lies in `T`. For a Byzantine
 leader nothing useful can be said — it may equivocate, and P2 forbids
@@ -3038,7 +3047,8 @@ theorem votes (hT : T ⊆ (Correct : Finset Validator))
     (hto : ∀ n, R ≤ n → D + rc.delay ≤ rc.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
     (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
-    ∀ v ∈ T, L ∈ (U.block (rc.blk v (S.slotRound k + 1))).refs
+    ∀ v ∈ T, ∀ c ∈ U.ids, (U.block c).creator = v →
+      (U.block c).round = S.slotRound k + 1 → L ∈ (U.block c).refs
 ```
 
 The fallback case is the whole argument, and it is the chain of
@@ -3066,13 +3076,14 @@ theorem decided (hT : T ⊆ (Correct : Finset Validator))
     ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
 ```
 
-The leader block is the one the schedule names, so its existence is a
-conclusion rather than a hypothesis.
+The leader block's existence is a conclusion rather than a hypothesis —
+supplied by the trunk's derived production, as are the vote and
+certificate blocks the proof counts.
 
 Odontoceti requires **no new structure at all**. With no certificates,
 the vote stage is the whole protocol: a vote is a support, `T` is a
 quorum of supporters, and `Odontoceti.reactive_decided` (RS3) concludes from
-`ReactiveCore` alone. The two-round rule is the natural home of the
+`ReactivePace` alone. The two-round rule is the natural home of the
 reactive discipline — one delivery separates a fast leader from its
 commit.
 
@@ -3087,8 +3098,9 @@ latency of a round is then bounded with the timeout appearing nowhere:
 **RS4.**
 ```lean
 theorem no_timeout_of_fast {δ : ℕ}
-    (hδ : ∀ u ∈ T, ∀ v ∈ T,
-      rc.blk u (S.slotRound k) ∈ rc.holds v (rc.built u (S.slotRound k) + δ))
+    (hδ : ∀ v ∈ T, ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = S.slotRound k →
+      b ∈ rc.holds v (rc.built ((U.block b).creator) (S.slotRound k) + δ))
     (hD : ∀ u ∈ T, ∀ v ∈ T,
       rc.built u (S.slotRound k) ≤ rc.built v (S.slotRound k) + D)
     (hN : S.slotRound k + 1 ≤ N) (hlead : S.leader k ∈ T)
@@ -5254,10 +5266,10 @@ design records and the git history remain legible.
 
 | Label | Statement | Lean |
 |:---|:---|:---|
-| RS1 | every reliable validator votes | `ReactiveCore.votes` *(Reactive/Basic)* |
+| RS1 | every reliable vote block votes | `ReactivePace.votes` *(Reactive/Basic)* |
 | RS2 | reactive liveness, three rounds | `ReactiveM.certifies`, `ReactiveM.directCommit`, `ReactiveM.decided` *(Reactive/Mysticeti)* |
 | RS3 | reactive liveness, two rounds | `Odontoceti.reactive_directCommit`, `Odontoceti.reactive_decided` *(Reactive/Odontoceti)* |
-| RS4 | latency tracks delivery; the timeout never fires | `ReactiveCore.built_succ_le_of_fast`, `ReactiveCore.no_timeout_of_fast` *(Reactive/Basic)* |
+| RS4 | latency tracks delivery; the timeout never fires | `ReactivePace.built_succ_le_of_fast`, `ReactivePace.no_timeout_of_fast` *(Reactive/Basic)* |
 
 **Catch-up** (§6.11):
 
@@ -7033,61 +7045,46 @@ A run of `c` slots reaches past everything below it: the last slot of a run star
 
 ### The reactive schedule
 
-#### `ReactiveCore`
+#### `ReactivePace`
 
 *structure, `Reactive.Basic.lean`*
 
 ```lean
-structure ReactiveCore (U : BlockUniverse Validator BlockId Payload)
-    (T : Finset Validator) (N : ℕ) where
-  /-- `v`'s round-`n` block. -/
-  blk : Validator → ℕ → BlockId
-  /-- The time at which `v` built it. -/
-  built : Validator → ℕ → ℕ
-  /-- The fallback timeout in force at round `n`. -/
-  timeout : ℕ → ℕ
+structure ReactivePace (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (N : ℕ) extends PaceCore U T N where
   /-- The processing bound: how long a reactive exit may lag its trigger. -/
   proc : ℕ
-  gst : ℕ
-  delay : ℕ
-  rounds_le : ∀ b ∈ U.ids, (U.block b).round ≤ N
-  blk_mem : ∀ v ∈ T, ∀ n ≤ N, blk v n ∈ U.ids
-  blk_creator : ∀ v ∈ T, ∀ n ≤ N, (U.block (blk v n)).creator = v
-  blk_round : ∀ v ∈ T, ∀ n ≤ N, (U.block (blk v n)).round = n
   /-- Time advances with rounds — the only lower bound a reactive
-  schedule keeps. -/
-  built_lt : ∀ v ∈ T, ∀ n, built v n < built v (n + 1)
+  schedule keeps, over the rounds `v` reached. -/
+  built_lt : ∀ v ∈ T, ∀ n < top v, built v n < built v (n + 1)
   /-- **The reactive ceiling.** A validator never waits past the
   timeout; it may build any time before it. -/
-  deadline : ∀ v ∈ T, ∀ n < N, built v (n + 1) ≤ built v n + timeout n
-  /-- What `v` holds at time `t`. -/
-  holds : Validator → ℕ → Finset BlockId
-  holds_own : ∀ v ∈ T, ∀ n ≤ N, blk v n ∈ holds v (built v n)
-  holds_mono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t
-  /-- **N2, as view convergence** (network) — as in `ViewPace`. -/
-  converges : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + delay)
-  /-- **The leader wait.** At the round above a reliable leader, either
-  the block votes (the reactive exit), or its builder waited the full
-  timeout and votes for any leader block it holds (the fallback). -/
+  deadline : ∀ v ∈ T, ∀ n < top v, built v (n + 1) ≤ built v n + timeout n
+  /-- **The leader wait.** At the round above a reliable leader, any
+  `T`-authored block either votes (the reactive exit), or its builder
+  waited the full timeout and votes for any leader block it holds (the
+  fallback). -/
   vote_or_wait : ∀ v ∈ T, ∀ k : ℕ, S.slotRound k + 1 ≤ N → S.leader k ∈ T →
     ∀ L, IsLeaderBlock U k L →
-    L ∈ (U.block (blk v (S.slotRound k + 1))).refs ∨
+    ∀ c ∈ U.ids, (U.block c).creator = v → (U.block c).round = S.slotRound k + 1 →
+    L ∈ (U.block c).refs ∨
       (built v (S.slotRound k) + timeout (S.slotRound k)
           ≤ built v (S.slotRound k + 1) ∧
-        (L ∈ holds v (built v (S.slotRound k + 1)) →
-          L ∈ (U.block (blk v (S.slotRound k + 1))).refs))
+        (L ∈ holds v (built v (S.slotRound k + 1)) → L ∈ (U.block c).refs))
   /-- **The reactive exit is prompt.** Once a validator past its round
   entry holds the leader and every reliable round-`r` block, it builds
   within `proc`. Consumed only by the fast-path results. -/
   prompt_vote : ∀ v ∈ T, ∀ k : ℕ, S.slotRound k + 1 ≤ N → S.leader k ∈ T →
     ∀ L, IsLeaderBlock U k L → ∀ t, built v (S.slotRound k) ≤ t →
-    L ∈ holds v t → (∀ u ∈ T, blk u (S.slotRound k) ∈ holds v t) →
+    L ∈ holds v t →
+    (∀ b ∈ U.ids, (U.block b).creator ∈ T → (U.block b).round = S.slotRound k →
+      b ∈ holds v t) →
     built v (S.slotRound k + 1) ≤ t + proc
 ```
 
-The reactive schedule and network layer, shared by both protocols.
+The reactive schedule and network layer, shared by both protocols: `PaceCore` with the reactive discipline in place of the full-timeout one.
 
-Relative to `ViewSync`: `waits` and `prompt` are replaced by `deadline`, `built_lt`, `vote_or_wait` and `prompt_vote`, and the referencing clause is carried inside `vote_or_wait`'s fallback rather than stated globally — a reactive builder deliberately does *not* reference everything it holds.
+Relative to `ViewPace`, the floor `waits` and the promptness clause `prompt` are replaced by `deadline`, `built_lt`, `vote_or_wait` and `prompt_vote`, and the referencing clause is carried inside `vote_or_wait`'s fallback rather than stated globally — a reactive builder deliberately does *not* reference everything it holds.
 
 #### `ReactiveM`
 
@@ -7095,22 +7092,25 @@ Relative to `ViewSync`: `waits` and `prompt` are replaced by `deadline`, `built_
 
 ```lean
 structure ReactiveM (U : BlockUniverse Validator BlockId Payload)
-    (T : Finset Validator) (N : ℕ) extends ReactiveCore U T N where
+    (T : Finset Validator) (N : ℕ) extends ReactivePace U T N where
   /-- **The certificate wait.** At two rounds above a reliable leader,
-  either the block already certifies (the reactive exit — its references
-  carry a quorum of votes), or its builder waited the full timeout and
-  references every reliable vote it holds (the fallback). -/
+  any `T`-authored block either already certifies (the reactive exit —
+  its references carry a quorum of votes), or its builder waited the
+  full timeout and references every reliable vote it holds (the
+  fallback). -/
   cert_or_wait : ∀ v ∈ T, ∀ k : ℕ, S.slotRound k + 2 ≤ N → S.leader k ∈ T →
     ∀ L, IsLeaderBlock U k L →
-    Certifies U (blk v (S.slotRound k + 2)) L ∨
+    ∀ c ∈ U.ids, (U.block c).creator = v → (U.block c).round = S.slotRound k + 2 →
+    Certifies U c L ∨
       (built v (S.slotRound k + 1) + timeout (S.slotRound k + 1)
           ≤ built v (S.slotRound k + 2) ∧
-        ∀ u ∈ T, blk u (S.slotRound k + 1) ∈ holds v (built v (S.slotRound k + 2)) →
-          L ∈ (U.block (blk u (S.slotRound k + 1))).refs →
-          blk u (S.slotRound k + 1) ∈ (U.block (blk v (S.slotRound k + 2))).refs)
+        ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+          (U.block b).round = S.slotRound k + 1 →
+          b ∈ holds v (built v (S.slotRound k + 2)) →
+          L ∈ (U.block b).refs → b ∈ (U.block c).refs)
 ```
 
-The reactive three-round schedule: `ReactiveCore`'s vote stage, plus the certificate wait.
+The reactive three-round schedule: `ReactivePace`'s vote stage, plus the certificate wait, stated over any `T`-authored block.
 
 ### Catch-up, and the start spread
 
@@ -11113,10 +11113,10 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
 *theorem, `Reactive.Basic.lean`*
 
 ```lean
-theorem le_built {v : Validator} (hv : v ∈ T) (n : ℕ) : n ≤ rc.built v n
+theorem le_built {v : Validator} (hv : v ∈ T) : ∀ n ≤ rc.top v, n ≤ rc.built v n
 ```
 
-Rounds advance real time.
+Rounds advance real time, over the rounds a validator reached.
 
 #### `votes`
 
@@ -11128,12 +11128,13 @@ theorem votes (hT : T ⊆ (Correct : Finset Validator))
     (hto : ∀ n, R ≤ n → D + rc.delay ≤ rc.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
     (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
-    ∀ v ∈ T, L ∈ (U.block (rc.blk v (S.slotRound k + 1))).refs
+    ∀ v ∈ T, ∀ c ∈ U.ids, (U.block c).creator = v →
+      (U.block c).round = S.slotRound k + 1 → L ∈ (U.block c).refs
 ```
 
-**Every reliable validator votes.** Past GST, with the timeout clearing drift plus the delivery bound, every `T`-block at the round above a reliable leader references the leader's block — whether by the reactive exit or by the fallback.
+**Every reliable vote block votes.** Past GST, with the timeout clearing drift plus the delivery bound, every `T`-authored block at the round above a reliable leader references the leader's block — whether by the reactive exit or by the fallback.
 
-The fallback case is the only argument: the leader holds its own block when it builds, convergence carries it across within `delay`, drift and the full timeout place that arrival before the waiter's build, and the fallback clause then obliges the vote. The reactive exit needs nothing: it *is* the vote.
+The fallback case is the only argument: the leader holds its own block when it builds, convergence carries it across within `delay`, drift and the full timeout place that arrival before the waiter's build, and the fallback clause then obliges the vote. The reactive exit needs nothing: it *is* the vote. Stated over any `T`-authored block, so non-equivocation is never consulted.
 
 #### `built_succ_le_of_fast`
 
@@ -11141,8 +11142,9 @@ The fallback case is the only argument: the leader holds its own block when it b
 
 ```lean
 theorem built_succ_le_of_fast {δ : ℕ}
-    (hδ : ∀ u ∈ T, ∀ v ∈ T,
-      rc.blk u (S.slotRound k) ∈ rc.holds v (rc.built u (S.slotRound k) + δ))
+    (hδ : ∀ v ∈ T, ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = S.slotRound k →
+      b ∈ rc.holds v (rc.built ((U.block b).creator) (S.slotRound k) + δ))
     (hD : ∀ u ∈ T, ∀ v ∈ T,
       rc.built u (S.slotRound k) ≤ rc.built v (S.slotRound k) + D)
     (hN : S.slotRound k + 1 ≤ N) (hlead : S.leader k ∈ T)
@@ -11159,8 +11161,9 @@ theorem built_succ_le_of_fast {δ : ℕ}
 
 ```lean
 theorem no_timeout_of_fast {δ : ℕ}
-    (hδ : ∀ u ∈ T, ∀ v ∈ T,
-      rc.blk u (S.slotRound k) ∈ rc.holds v (rc.built u (S.slotRound k) + δ))
+    (hδ : ∀ v ∈ T, ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = S.slotRound k →
+      b ∈ rc.holds v (rc.built ((U.block b).creator) (S.slotRound k) + δ))
     (hD : ∀ u ∈ T, ∀ v ∈ T,
       rc.built u (S.slotRound k) ≤ rc.built v (S.slotRound k) + D)
     (hN : S.slotRound k + 1 ≤ N) (hlead : S.leader k ∈ T)
@@ -11183,10 +11186,13 @@ theorem certifies (hT : T ⊆ (Correct : Finset Validator))
     (hto : ∀ n, R ≤ n → D + rm.delay ≤ rm.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
     (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
-    ∀ v ∈ T, Certifies U (rm.blk v (S.slotRound k + 2)) L
+    ∀ v ∈ T, ∀ c ∈ U.ids, (U.block c).creator = v →
+      (U.block c).round = S.slotRound k + 2 → Certifies U c L
 ```
 
-**Every reliable validator certifies.** In the reactive exit the block certifies by construction. In the fallback, every reliable vote has arrived — each voter holds its own vote when it builds, convergence carries it across, and drift plus the full timeout place the arrival before the fallback build — so the block references all of `T`'s votes, and `T` is a quorum of distinct authors.
+**Every reliable certificate block certifies.** In the reactive exit the block certifies by construction. In the fallback, every reliable vote has arrived — each voter holds its own vote when it builds, convergence carries it across, and drift plus the full timeout place the arrival before the fallback build — so the block references all of `T`'s votes, and `T` is a quorum of distinct authors.
+
+The vote blocks themselves come from the trunk's derived production (`PaceCore.populatedOn`): nothing here assumes a block exists.
 
 #### `directCommit`
 
@@ -11202,7 +11208,7 @@ theorem directCommit (hT : T ⊆ (Correct : Finset Validator))
     DirectCommit U L (S.slotRound k)
 ```
 
-**The reactive direct commit.** Every reliable validator's round-`(r+2)` block certifies, and `T` is a quorum of certificate authors.
+**The reactive direct commit.** Every reliable validator's round-`(r+2)` block certifies, and `T` is a quorum of certificate authors — with the certificate blocks supplied by derived production.
 
 #### `decided`
 
@@ -11218,14 +11224,14 @@ theorem decided (hT : T ⊆ (Correct : Finset Validator))
     ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
 ```
 
-**Reactive liveness (Mysticeti).** A reliable-led slot past GST is committed by every view — the conclusion of `decided_of_leader_mem`, with reference coverage replaced by the two reactive wait clauses. The leader block is the one the schedule names, so its existence is not a hypothesis.
+**Reactive liveness (Mysticeti).** A reliable-led slot past GST is committed by every view — the conclusion of `decided_of_leader_mem`, with reference coverage replaced by the two reactive wait clauses and the leader block supplied by derived production.
 
 #### `reactive_directCommit`
 
 *theorem, `Reactive.Odontoceti.lean`*
 
 ```lean
-theorem reactive_directCommit (rc : ReactiveCore U T N)
+theorem reactive_directCommit (rc : ReactivePace U T N)
     (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hD : DriftOn rc.built T R D N) (hgst : rc.gst ≤ R)
@@ -11235,14 +11241,14 @@ theorem reactive_directCommit (rc : ReactiveCore U T N)
     DirectCommit U L (S.slotRound k)
 ```
 
-**The reactive direct commit (Odontoceti).** Every reliable validator votes (`ReactiveCore.votes`), a vote is a support, and `T` is a quorum of supporters.
+**The reactive direct commit (Odontoceti).** Every reliable validator votes (`ReactivePace.votes`), a vote is a support, and `T` is a quorum of supporters — with the vote blocks supplied by the trunk's derived production.
 
 #### `reactive_decided`
 
 *theorem, `Reactive.Odontoceti.lean`*
 
 ```lean
-theorem reactive_decided (rc : ReactiveCore U T N)
+theorem reactive_decided (rc : ReactivePace U T N)
     (hT : T ⊆ (Correct : Finset Validator))
     (hcard : (Fintype.card Validator - F.f) ≤ T.card)
     (hD : DriftOn rc.built T R D N) (hgst : rc.gst ≤ R)
@@ -11252,7 +11258,7 @@ theorem reactive_decided (rc : ReactiveCore U T N)
     ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
 ```
 
-**Reactive liveness (Odontoceti).** A reliable-led slot past GST is committed by every view — the conclusion of the two-round `decided_of_leader_mem`, from the single reactive wait clause. One delivery separates a fast leader from its commit.
+**Reactive liveness (Odontoceti).** A reliable-led slot past GST is committed by every view — the conclusion of the two-round `decided_of_leader_mem`, from the single reactive wait clause and the trunk's derived production. One delivery separates a fast leader from its commit.
 
 ### Catch-up, and the start spread
 
@@ -13188,7 +13194,7 @@ subsection per module, in the layer order of Appendices B and C.
 
 | Lemma | Role |
 |:---|:---|
-| `leader_blk_eq` | The reliable leader's block of slot `k` is the one the schedule names: non-equivocation identifies any … |
+| `slotRound_le_top` | A reliable leader reached its slot's round: its block is in the universe, and `le_top_of_built` reads the … |
 
 ### `SafeSkip/Invariance.lean` (11)
 

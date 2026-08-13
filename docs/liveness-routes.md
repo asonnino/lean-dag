@@ -238,6 +238,18 @@ a second route that reaches `DirectCommit` without passing through
 production and coverage. That is interesting rather than embarrassing: it
 shows the interface is a choice, not a necessity.
 
+*(Superseded by the unification of branch `reactive-unification`. The
+calculus changed when `PaceCore` was carved out of `ViewPace`: the shared
+trunk carries everything production needs, so `ReactivePace extends
+PaceCore` — not `ViewPace`, resolving finding 2 — inherits derived
+production, resolving the `blk` totality of finding 3 by deletion rather
+than generalisation; and finding 1 stands but is now precise, since the
+two disciplines share production and differ only in how the commit
+hypotheses are discharged: coverage for the full-timeout discipline,
+targeted votes for the reactive one. The off-`blk` restatement of
+`vote_or_wait`, `prompt_vote` and `cert_or_wait` was the same move the
+Catchup port had made twice already.)*
+
 ## 8. Recommended sequence
 
 | | work | cost | risk |

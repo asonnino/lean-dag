@@ -22,6 +22,10 @@ exceeds the timeout `7`, the sufficient condition of
 `no_timeout_of_fast` is deliberately unmet, and its conclusion is
 discharged directly by the run (`ugrowReactive_early`).
 `ugrowReactive_fast` exhibits the latency theorem itself.
+
+Since the unification the structure extends `PaceCore`, so the witness
+asserts no blocks: production is derived, and the `top` clauses are the
+layout facts every pace witness carries.
 -/
 
 namespace LeanDagTest
@@ -42,7 +46,7 @@ def reactHolds (N : ℕ) (v : Fin 4) (t : ℕ) : Finset ℕ :=
 /-- The reactive witness: `Ugrow` on the round-robin schedule, builds at
 spacing `6` inside a timeout of `7`. -/
 def ugrowReactive (N : ℕ) : ReactiveM (Ugrow N) {1, 2, 3} N where
-  blk v n := 4 * n + (v : ℕ)
+  top _ := N
   built v n := (v : ℕ) + 6 * n
   timeout _ := 7
   proc := 5
@@ -51,33 +55,26 @@ def ugrowReactive (N : ℕ) : ReactiveM (Ugrow N) {1, 2, 3} N where
   rounds_le b hb := by
     simp only [ugrow_ids, Finset.mem_range] at hb
     simp only [ugrow_block, rrBlock_round]; omega
-  blk_mem v hv n hn := by
-    obtain ⟨_, _⟩ := mem_T_bounds hv
-    simp only [ugrow_ids, Finset.mem_range]; omega
-  blk_creator v hv n _ := by
-    obtain ⟨_, _⟩ := mem_T_bounds hv
-    apply Fin.ext
-    simp only [ugrow_block, rrBlock_creator_val]
-    omega
-  blk_round v hv n _ := by
-    obtain ⟨_, _⟩ := mem_T_bounds hv
+  built_of_le_top v hv n hn := rrUniverse_populatedOn _ _ _ _ _ _ hn v hv
+  le_top_of_built _ _ b hb _ := by
+    simp only [ugrow_ids, Finset.mem_range] at hb
     simp only [ugrow_block, rrBlock_round]; omega
-  built_lt _ _ _ := by omega
+  timeout_pos _ := by omega
+  latest n := 3 + 6 * n
+  built_le_latest v _ _ _ := by have := v.isLt; omega
+  built_lt _ _ _ _ := by omega
   deadline _ _ _ _ := by omega
   holds := reactHolds N
-  holds_own v hv n _ := by
+  holds_own v hv n _ b hb hbc hbr := by
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
-    simp only [reactHolds, Finset.mem_filter, Finset.mem_range]
     have hv4 := v.isLt
-    constructor
-    · omega
-    · right
-      constructor
-      · omega
-      · have : (4 * n + (v : ℕ)) % 4 = (v : ℕ) := by omega
-        rw [this]
-        have : (4 * n + (v : ℕ)) / 4 = n := by omega
-        rw [this]
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round] at hbr
+    have hb4 : b % 4 = (v : ℕ) := by
+      have := congrArg (fun (x : Fin 4) => (x : ℕ)) hbc
+      simpa [ugrow_block] using this
+    simp only [reactHolds, Finset.mem_filter, Finset.mem_range]
+    exact ⟨hb, Or.inr ⟨hb4, by omega⟩⟩
   holds_mono v s t hst := by
     intro b hb
     simp only [reactHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
@@ -89,14 +86,15 @@ def ugrowReactive (N : ℕ) : ReactiveM (Ugrow N) {1, 2, 3} N where
     rcases hb.2 with h | h
     · omega
     · omega
-  vote_or_wait v hv k hN _ L hL := by
+  advances _ _ _ hn _ _ := hn
+  vote_or_wait v hv k hN _ L hL c hc hcc hcr := by
     -- the reactive exit is always available: every block references the
     -- whole round below, the leader block among it
     left
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
     obtain ⟨hmem, hround, -⟩ := hL
-    simp only [ugrow_ids, Finset.mem_range] at hmem
-    simp only [ugrow_block, rrBlock_round] at hround
+    simp only [ugrow_ids, Finset.mem_range] at hmem hc
+    simp only [ugrow_block, rrBlock_round] at hround hcr
     simp only [ugrow_block, mem_growBlock_refs]
     omega
   prompt_vote v hv k hN hlead L hL t hbuilt hheld hall := by
@@ -104,31 +102,44 @@ def ugrowReactive (N : ℕ) : ReactiveM (Ugrow N) {1, 2, 3} N where
     have hv4 := v.isLt
     -- the trigger includes every reliable round-`r` block; blocks `2`
     -- and `3` of the round bound `t` from below far enough for `proc = 5`
-    have h2 := hall 2 (by decide)
-    have h3' := hall 3 (by decide)
+    have h2 := hall (4 * rrSlots.slotRound k + 2)
+      (by simp only [ugrow_ids, Finset.mem_range]; omega)
+      (by
+        have : ((Ugrow N).block (4 * rrSlots.slotRound k + 2)).creator = (2 : Fin 4) := by
+          apply Fin.ext
+          simp only [ugrow_block, rrBlock_creator_val]
+          omega
+        rw [this]; decide)
+      (by simp only [ugrow_block, rrBlock_round]; omega)
+    have h3' := hall (4 * rrSlots.slotRound k + 3)
+      (by simp only [ugrow_ids, Finset.mem_range]; omega)
+      (by
+        have : ((Ugrow N).block (4 * rrSlots.slotRound k + 3)).creator = (3 : Fin 4) := by
+          apply Fin.ext
+          simp only [ugrow_block, rrBlock_creator_val]
+          omega
+        rw [this]; decide)
+      (by simp only [ugrow_block, rrBlock_round]; omega)
     simp only [reactHolds, Finset.mem_filter, Finset.mem_range] at h2 h3'
-    have e2 : (4 * rrSlots.slotRound k + (2 : Fin 4).val) % 4 = 2 := by omega
-    have d2 : (4 * rrSlots.slotRound k + (2 : Fin 4).val) / 4 = rrSlots.slotRound k := by
-      omega
-    have e3 : (4 * rrSlots.slotRound k + (3 : Fin 4).val) % 4 = 3 := by omega
-    have d3 : (4 * rrSlots.slotRound k + (3 : Fin 4).val) / 4 = rrSlots.slotRound k := by
-      omega
+    have e2 : (4 * rrSlots.slotRound k + 2) % 4 = 2 := by omega
+    have d2 : (4 * rrSlots.slotRound k + 2) / 4 = rrSlots.slotRound k := by omega
+    have e3 : (4 * rrSlots.slotRound k + 3) % 4 = 3 := by omega
+    have d3 : (4 * rrSlots.slotRound k + 3) / 4 = rrSlots.slotRound k := by omega
     rw [e2, d2] at h2
     rw [e3, d3] at h3'
     change (v : ℕ) + 6 * (rrSlots.slotRound k + 1) ≤ t + 5
     rcases h2.2 with ha | ⟨hb, hc⟩ <;> rcases h3'.2 with hd | ⟨he, hf⟩ <;> omega
-  cert_or_wait v hv k hN _ L hL := by
+  cert_or_wait v hv k hN _ L hL c hc hcc hcr := by
     -- likewise: every round-`(r+2)` block references the whole round
     -- `(r+1)`, and every round-`(r+1)` block votes, so it certifies
     left
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
     obtain ⟨hmem, hround, -⟩ := hL
-    simp only [ugrow_ids, Finset.mem_range] at hmem
-    simp only [ugrow_block, rrBlock_round] at hround
+    simp only [ugrow_ids, Finset.mem_range] at hmem hc
+    simp only [ugrow_block, rrBlock_round] at hround hcr
     show (Fintype.card (Fin 4) - Faults.f (Fin 4)) ≤ _
     have hsub : ({0, 1, 2, 3} : Finset (Fin 4)) ⊆
-        creatorsOf (Ugrow N).block
-          (votesIn (Ugrow N) (4 * (rrSlots.slotRound k + 2) + (v : ℕ)) L) := by
+        creatorsOf (Ugrow N).block (votesIn (Ugrow N) c L) := by
       intro x _
       have hx4 := x.isLt
       refine mem_creatorsOf.mpr ⟨4 * (rrSlots.slotRound k + 1) + (x : ℕ), ?_, ?_⟩
@@ -159,7 +170,8 @@ theorem ugrowReactive_drift (N : ℕ) :
 /-- **Reactive liveness, on data.** Slot `1` (leader `1`, reliable) is
 committed by the full view, at spacing `6` with a timeout of `7` and
 delivery bound `2`: `3 + 2 ≤ 7` and the fallback is sound, though this
-run never uses it. -/
+run never uses it. Production appears in no field: the structure derives
+it. -/
 theorem ugrowReactive_decided (N : ℕ) (hN : rrSlots.slotRound 1 + 2 ≤ N) :
     ∃ L, IsLeaderBlock (S := rrSlots) (Ugrow N) 1 L ∧
       Decided (S := rrSlots) (Ugrow N) (View.full (Ugrow N)) 1 (some L) :=
@@ -194,15 +206,16 @@ theorem ugrowReactive_fast (N : ℕ) (hN : 4 ≤ N) :
       rw [rrSlots_leader_val]
       simp only [ugrow_block, rrBlock_creator_val]
   have h := (ugrowReactive N).built_succ_le_of_fast (k := 1) (D := 3) (δ := 2)
-    (fun u hu v _ => by
-      obtain ⟨h1, h3⟩ := mem_T_bounds hu
-      change (4 * rrSlots.slotRound 1 + (u : ℕ)) ∈
-        reactHolds N v ((u : ℕ) + 6 * rrSlots.slotRound 1 + 2)
+    (fun v _ b hb hbT hbr => by
+      simp only [ugrow_ids, Finset.mem_range] at hb
+      simp only [ugrow_block, rrBlock_round, rrSlots_slotRound] at hbr
+      have hb4 : ((Ugrow N).block b).creator = (⟨b % 4, by omega⟩ : Fin 4) := by
+        apply Fin.ext
+        simp only [ugrow_block, rrBlock_creator_val]
+      rw [hb4]
+      change b ∈ reactHolds N v ((b % 4 : ℕ) + 6 * rrSlots.slotRound 1 + 2)
       simp only [reactHolds, Finset.mem_filter, Finset.mem_range, rrSlots_slotRound]
-      refine ⟨by omega, Or.inl ?_⟩
-      have e : (4 * (3 * 1) + (u : ℕ)) % 4 = (u : ℕ) := by omega
-      have d : (4 * (3 * 1) + (u : ℕ)) / 4 = 3 := by omega
-      rw [e, d])
+      exact ⟨by omega, Or.inl (by omega)⟩)
     (fun u hu v hv => by
       obtain ⟨_, _⟩ := mem_T_bounds hu
       obtain ⟨_, _⟩ := mem_T_bounds hv
@@ -218,8 +231,9 @@ theorem ugrowReactive_fast (N : ℕ) (hN : 4 ≤ N) :
   omega
 
 #print axioms ugrowReactive_decided
+#print axioms ugrowReactive_fast
 #print axioms LeanDag.ReactiveM.decided
 #print axioms LeanDag.Odontoceti.reactive_decided
-#print axioms LeanDag.ReactiveCore.no_timeout_of_fast
+#print axioms LeanDag.ReactivePace.no_timeout_of_fast
 
 end LeanDagTest
