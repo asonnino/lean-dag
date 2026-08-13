@@ -166,6 +166,31 @@ theorem reaches_of_correct_support_of_card
   unfold majority at hcard ⊢
   omega
 
+/-- **Propagation.** Reaching something is inherited upward: if every block
+at round `N` reaches a `P`-block, so does every block above `N`.
+
+A verbatim port of the core lemma of the same name: the step needs nothing
+but nonempty references and transitivity — height is carried by `Reaches`
+alone, so no quorum content is involved. -/
+theorem reaches_pred_of_round_le {P : BlockId → Prop} {N : ℕ}
+    (hbase : ∀ c ∈ U.ids, (U.block c).round = N → ∃ b, P b ∧ Reaches U c b)
+    {c : BlockId} (hc : c ∈ U.ids) (hcr : N ≤ (U.block c).round) :
+    ∃ b, P b ∧ Reaches U c b := by
+  suffices H : ∀ m, ∀ c ∈ U.ids, (U.block c).round = m → N ≤ m → ∃ b, P b ∧ Reaches U c b by
+    exact H _ c hc rfl hcr
+  clear hcr hc c
+  intro m
+  induction m using Nat.strong_induction_on with
+  | _ m ih =>
+    intro c hc hcm hNm
+    rcases eq_or_lt_of_le hNm with heq | hlt
+    · exact hbase c hc (by omega)
+    · obtain ⟨i, hi_mem⟩ := U.refs_nonempty hc (by omega)
+      have hi_ids : i ∈ U.ids := U.complete c hc i hi_mem
+      have hi_round := U.round_of_mem_refs hc hi_mem
+      obtain ⟨b, hPb, hreach⟩ := ih (U.block i).round (by omega) i hi_ids rfl (by omega)
+      exact ⟨b, hPb, Reaches.of_mem_refs hi_mem hreach⟩
+
 /-! ## Support sets
 
 The coverage lemmas above take their support set as a bare `Finset Validator`

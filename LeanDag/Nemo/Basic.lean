@@ -131,6 +131,11 @@ theorem creators_quorum {i : BlockId} (hi : i ∈ U.ids) (hround : 0 < (U.block 
     majority Validator ≤ (creatorsOf U.block (U.block i).refs).card :=
   (U.valid i hi).quorum hround
 
+/-- A non-genesis block references at least one block. -/
+theorem refs_nonempty {i : BlockId} (hi : i ∈ U.ids) (hround : 0 < (U.block i).round) :
+    (U.block i).refs.Nonempty :=
+  (U.valid i hi).refs_nonempty hround
+
 /-- Distinct creators among references are automatic under crash: two refs of
 the same block sharing a creator sit at the same round (`predecessor`), so
 universal `no_equivocation` identifies them. This is why the crash `ValidWrt`
