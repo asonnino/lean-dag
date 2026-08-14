@@ -52,6 +52,7 @@ def series_group(label):
     if label.startswith('RS'): return 'reactive'
     if label.startswith('SS'): return 'safeskip'
     if label.startswith('AL'): return 'adaptive'
+    if label.startswith('NN'): return 'nemo'
     if label.startswith('H'): return 'hybrid'
     if label.startswith('E'): return 'dos'
     if label.startswith(('D', 'C', 'B')) and label != 'D': return 'dos'
@@ -72,6 +73,7 @@ GROUP_FILL = {
     'safeskip': ('#eef0d8', '#8f9a4a'),
     'adaptive': ('#f4e3f0', '#a45a92'),
     'hybrid': ('#fdf0d5', '#b0894a'),
+    'nemo': ('#d5efe9', '#3f8f7a'),
 }
 GROUP_TITLE = {
     'fault': 'fault model (§4.2)', 'protocol': 'protocol clauses (§4.1)',
@@ -82,6 +84,7 @@ GROUP_TITLE = {
     'safeskip': 'safe skip (§12)',
     'adaptive': 'adaptive leaders (§13)',
     'hybrid': 'hybrid faults (§14)',
+    'nemo': 'crash-fault consensus (§15)',
 }
 
 # ---------------------------------------------------------------- input
@@ -104,7 +107,7 @@ def load_labels():
                                         app, re.M):
         label, stmt = label.strip(), stmt.strip()
         if label in ('Label', '', '—', 'L1'):
-            # L1 is the legacy quorum route's result (report §13); the
+            # L1 is the legacy quorum route's result (report §17); the
             # diagrams show the main line.
             continue
         names = re.findall(r"`([A-Za-z][A-Za-z0-9_.']*)`", lean)

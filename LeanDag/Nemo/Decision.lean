@@ -87,7 +87,7 @@ theorem isLeaderBlock_unique {k : ℕ} {L₁ L₂ : BlockId}
 
 omit [DecidableEq BlockId] in
 /-- **A block is the candidate of at most one slot** — what `Slots.keyed`
-buys: two slots sharing a round are told apart by their leaders. -/
+yields: two slots sharing a round are told apart by their leaders. -/
 theorem slot_eq_of_isLeaderBlock {k₁ k₂ : ℕ} {L : BlockId}
     (h₁ : IsLeaderBlock U k₁ L) (h₂ : IsLeaderBlock U k₂ L) : k₁ = k₂ :=
   S.keyed (by simp only [← h₁.2.1, ← h₂.2.1, ← h₁.2.2, ← h₂.2.2])

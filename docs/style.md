@@ -93,7 +93,7 @@ here"*. Naming which hypothesis a result consumes, and where.
   layout; mark an elision with `…`.
 - **Labels** are alphanumeric by area — T, M, L (core), V, CU, RS
   (view convergence, catch-up, reactive), P, N, R (trust boundary),
-  CQ, D/C/B/E, G, O, SS, AL, H (the arcs) — and must be *introduced where
+  CQ, D/C/B/E, G, O, SS, AL, H, NN (the arcs) — and must be *introduced where
   the reader first meets them*, not only in the appendix.
 - **Tables are left-aligned** (`|:---|`), and carry short cells with the
   explanation in the surrounding prose.
@@ -117,7 +117,7 @@ here"*. Naming which hypothesis a result consumes, and where.
 - **A topic confined to its own section gets pointers only elsewhere.**
   Outside the section, at most a bare pointer — naming no theorem and no
   assumption of the confined topic — as with the legacy quorum route
-  (report §16).
+  (report §17).
 
 ## 3. The Lean source
 

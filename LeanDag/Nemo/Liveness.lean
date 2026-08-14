@@ -254,7 +254,7 @@ the nearest eligible committed slot.
 
 The core's proof, verbatim: the crash `indirectCommit` carries no canonicity
 premise (`isLeaderBlock_unique` leaves no twins), so the commit branch is a
-plain constructor application and no `Finset.min'` tie-break appears. -/
+plain constructor application and no minimum-selection tie-break appears. -/
 theorem decided_below_of_committed_run {V : View Validator BlockId Payload U} {b n : ℕ}
     (hbn : b ≤ n)
     (hspan : ∀ i, i < b → Eligible Validator i n)

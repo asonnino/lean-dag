@@ -28,7 +28,7 @@ LAYERS = [
      "Persistence"]),
     ("Slots and the schedule", ["Schedule"]),
     ("The commit rule, and the ledger", ["Mysticeti"]),
-    ("Delivery, growth, and coverage", ["Liveness"]),
+    ("Delivery, growth, and coverage", ["Participation", "Liveness"]),
     ("Time: GST, drift, and the backoff", ["Timing", "Quantitative"]),
     ("View convergence", ["ViewSync"]),
     ("Chain quality", ["Quality.Coverage", "Quality.Inclusion", "Quality.Capstone"]),
@@ -50,7 +50,10 @@ LAYERS = [
     ("Adaptive leaders: the schedule as a fixpoint",
      ["Adaptive.Basic", "Adaptive.Policy", "Adaptive.Run", "Adaptive.Liveness",
       "Adaptive.Odontoceti"]),
-    ("The legacy quorum route (report §13)", ["Network.Quorum"]),
+    ("Nemo-Nemo: crash-fault consensus in two rounds",
+     ["Nemo.Basic", "Nemo.CausalHistory", "Nemo.History", "Nemo.Support",
+      "Nemo.Rules", "Nemo.Decision", "Nemo.Liveness"]),
+    ("The legacy quorum route (report §17)", ["Network.Quorum"]),
 ]
 
 KINDS = ("def", "abbrev", "structure", "class", "inductive")
