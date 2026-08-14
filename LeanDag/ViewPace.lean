@@ -324,6 +324,32 @@ theorem holds_roundBlocks (pc : PaceCore U T N) {n : ℕ} (hn : n ≤ N)
   exact pc.converges v hv _ hbT (pc.latest n)
     (le_trans (hg _ hbT) hle) (pc.holds_mono _ _ _ hle hown)
 
+/-- **The local commit argument, stated once.** Given a leader block, a
+quorum-sized `T` whose decision-round blocks all certify it, and post-GST
+builds, every reliable validator decides the slot **on its own view**: the
+counting of `directCommit_of_certifiesAt` run inside `viewAt v t` rather than
+inside the universe, with the delivery lemma putting the certificates there.
+
+Stated on the trunk, so both pacing disciplines inherit it — the
+full-timeout one supplying `CertifiesAt` through coverage, the reactive one
+through its certificate wait. -/
+theorem decided_local_of_certifiesAt [S : Slots Validator] {k : ℕ} {L : BlockId}
+    (pc : PaceCore U T N) (hcard : quorumCard Validator ≤ T.card)
+    (hN : S.slotRound k + 2 ≤ N)
+    (hg : ∀ u ∈ T, pc.gst ≤ pc.built u (S.slotRound k + 2))
+    (hL : IsLeaderBlock U k L) (hcert : CertifiesAt U T (S.slotRound k) L) :
+    ∀ v ∈ T,
+      Decided U (pc.viewAt v (pc.latest (S.slotRound k + 2) + pc.delay)) k (some L) := by
+  have hpop2 := pc.populatedOn hcard (S.slotRound k + 2) hN
+  intro v hv
+  refine Decided.directCommit hL (le_trans hcard (Finset.card_le_card ?_))
+  intro u hu
+  obtain ⟨c, hc, hcc, hcr⟩ := hpop2 u hu
+  refine mem_creatorsOf.mpr ⟨c, ?_, hcc⟩
+  rw [certificatesIn, Finset.mem_inter]
+  refine ⟨mem_certificates.mpr ⟨hc, hcr, hcert u hu c hc hcc hcr⟩, ?_⟩
+  exact pc.mem_viewAt (pc.holds_roundBlocks hN hg v hv c hc (hcc ▸ hu) hcr)
+
 omit [DecidableEq BlockId] in
 /-- **Drift collapses, from any starting value.** At any round whose
 builds all lie past GST, the spread is at most `delay + proc`, whatever
@@ -595,7 +621,6 @@ theorem decided_local (vp : ViewPace U T N)
   obtain ⟨L, hLmem, hLc, hLr⟩ :=
     vp.populatedOn hcard (S.slotRound k) (by omega) (S.leader k) hlead
   have hL : IsLeaderBlock U k L := ⟨hLmem, hLr, hLc⟩
-  have hpop2 := vp.populatedOn hcard (S.slotRound k + 2) hN
   have hcert : CertifiesAt U T (S.slotRound k) L :=
     certifiesAt_of_synchronisedOn hcard hsync hR
       (vp.populatedOn hcard (S.slotRound k + 1) (by omega)) hLmem hLr (hLc ▸ hlead)
@@ -605,16 +630,7 @@ theorem decided_local (vp : ViewPace U T N)
     have htop := vp.reached hcard (S.slotRound k + 2) hN u hu
     have := vp.le_built hu (S.slotRound k + 2) htop
     omega
-  refine ⟨L, hL, fun v hv => ?_⟩
-  refine Decided.directCommit hL ?_
-  -- the counting, inside `v`'s own view
-  refine le_trans hcard (Finset.card_le_card ?_)
-  intro u hu
-  obtain ⟨c, hc, hcc, hcr⟩ := hpop2 u hu
-  refine mem_creatorsOf.mpr ⟨c, ?_, hcc⟩
-  rw [certificatesIn, Finset.mem_inter]
-  refine ⟨mem_certificates.mpr ⟨hc, hcr, hcert u hu c hc hcc hcr⟩, ?_⟩
-  exact vp.mem_viewAt (vp.holds_roundBlocks hN hg v hv c hc (hcc ▸ hu) hcr)
+  exact ⟨L, hL, vp.toPaceCore.decided_local_of_certifiesAt hcard hN hg hL hcert⟩
 
 /-- **The global statement is a corollary**, so V18 strictly strengthens the
 main line: a reliable validator exists (the quorum bound is nonvacuous), it

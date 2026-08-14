@@ -1,4 +1,5 @@
 import LeanDag.ViewPace
+import LeanDag.PaceDelivery
 import LeanDagTest.Quantitative
 
 /-!
@@ -246,6 +247,34 @@ theorem ugrowStuckPace_stuck :
   simp only [ugrow_block, rrBlock_round] at hbr
   omega
 
+/-! ## The induced delivery layer, on data (V19)
+
+`Correct` at `f = 1` with the Byzantine set `{0}` is exactly `{1, 2, 3}`, so
+the running witness is a pacing structure over the correct validators, and
+`toDelivery` turns it into a delivery layer. That the term typechecks is the
+result: every field of `Delivery` — including the acceptance rule, which the
+storage development assumes — is discharged from the pacing clauses. -/
+
+def ugrowSkewCorrect (N : ℕ) : ViewPace (Ugrow N) (Correct : Finset (Fin 4)) N := by
+  rw [show (Correct : Finset (Fin 4)) = {1, 2, 3} from by decide]
+  exact ugrowSkewPace N
+
+/-- A pacing structure induces a delivery layer, on data. -/
+def ugrowSkewDelivery (N : ℕ) : Delivery (Ugrow N) := (ugrowSkewCorrect N).toDelivery
+
+/-- **And nonvacuously**: validator `1` really did hold validator `0`'s
+round-`0` block when it built at round `1`, so the induced layer records a
+genuine acceptance rather than an empty one. -/
+example : (0 : ℕ) ∈ (ugrowSkewDelivery 3).held 1 0 := by
+  have h := ViewPace.toDelivery_held (ugrowSkewCorrect 3) (v := 1) (n := 0) (by omega)
+  rw [show (ugrowSkewDelivery 3) = (ugrowSkewCorrect 3).toDelivery from rfl, h]
+  refine Finset.mem_filter.mpr ⟨?_, by simp [ugrow_block, rrBlock_round]⟩
+  show (0 : ℕ) ∈ (ugrowSkewCorrect 3).holds 1 ((ugrowSkewCorrect 3).built 1 1)
+  simp only [ugrowSkewCorrect]
+  show (0 : ℕ) ∈ skewHolds 3 1 ((1 : Fin 4) + 4 * 1)
+  simp only [skewHolds, Finset.mem_filter, Finset.mem_range]
+  exact ⟨by omega, Or.inl (by omega)⟩
+
 #print axioms ugrowSkewPace_populated
 #print axioms ugrowSkewPace_synchronised
 #print axioms ugrowSkewPace_drift
@@ -256,6 +285,8 @@ theorem ugrowStuckPace_stuck :
 #print axioms LeanDag.ViewPace.driftOn_of_catchup
 #print axioms LeanDag.ViewPace.commits_recur_via_pace
 #print axioms LeanDag.ViewPace.decided_local
+#print axioms LeanDag.ViewPace.toDelivery
+#print axioms ugrowSkewDelivery
 #print axioms LeanDag.ViewPace.covers_of_converges
 
 end LeanDagTest

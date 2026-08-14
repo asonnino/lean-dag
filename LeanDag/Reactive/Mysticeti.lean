@@ -132,6 +132,31 @@ theorem decided (hT : T ⊆ (Correct : Finset Validator))
   exact ⟨L, hL, Decided.directCommit hL
     (directCommitIn_full (rm.directCommit hT hcard hgst hto hR hN hlead hL))⟩
 
+/-- **Reactive liveness is local too** (V18, reactive). Every reliable
+validator decides the slot on its own view, by the same explicit time as the
+timed discipline. The trunk supplies the argument
+(`decided_local_of_certifiesAt`); the reactive side supplies only its
+certificate stage, exactly as for the global statement. Reference coverage
+appears nowhere. -/
+theorem decided_local (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card)
+    (hgst : rm.gst ≤ R)
+    (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ ∀ v ∈ T,
+      Decided U (rm.viewAt v (rm.latest (S.slotRound k + 2) + rm.delay)) k (some L) := by
+  obtain ⟨L, hLmem, hLc, hLr⟩ :=
+    rm.toPaceCore.populatedOn hcard (S.slotRound k) (by omega) (S.leader k) hlead
+  have hL : IsLeaderBlock U k L := ⟨hLmem, hLr, hLc⟩
+  have hg : ∀ u ∈ T, rm.gst ≤ rm.built u (S.slotRound k + 2) := by
+    intro u hu
+    have htop := rm.toPaceCore.reached hcard (S.slotRound k + 2) hN u hu
+    have := rm.le_built hu (S.slotRound k + 2) htop
+    omega
+  exact ⟨L, hL, rm.toPaceCore.decided_local_of_certifiesAt hcard hN hg hL
+    (rm.certifies hT hcard hgst hto hR hN hlead hL)⟩
+
 /-! ## Inclusion without coverage: the rotation backbone
 
 The reference coverage of the main line is what chain quality's

@@ -352,3 +352,41 @@ move and the user chose the merge with the costs on the table:
   a system with fast reactive exits and slow catch-up would want two
   constants, and would pay for the split in a second parameter
   everywhere.
+
+## 11. Postscript: the view mechanism joined to the pace line (August 2026)
+
+Open question §9.2 --- "`ViewPace.holds` versus `Delivery.held`: two
+spellings of the same notion, one time-indexed and one round-indexed;
+possibly the largest simplification available" --- is now closed, and a
+second gap nobody had recorded was found alongside it.
+
+**The unrecorded gap.** `holds` was tied to the universe by *nothing*: not
+`⊆ U.ids`, not causal closure. So the pacing line and the view-relative
+commit rules were disjoint, and every liveness theorem concluded about
+`View.full` --- a view no deployed validator ever has. `decided_mono` and
+`decided_full` run the wrong way to fix it: they lift a verdict *up* to
+bigger views, never down to a validator's own.
+
+**One clause closes both.** `holds_sub` (a validator holds only blocks that
+exist) makes `viewAt v t`, the causal closure of what `v` holds, a
+legitimate `View` --- closure free by the `View.ofAccepted` argument. Then:
+
+* **V18, liveness is local.** `holds_roundBlocks` is the delivery lemma;
+  `decided_local_of_certifiesAt` runs L4's counting inside `viewAt v t`.
+  Proved on the trunk, so both disciplines inherit it. Hypotheses are the
+  main line's exactly. `decided_of_local` recovers the global form, so it is
+  a strict strengthening.
+* **V19, the delivery layer is induced.** `held v n` is `holds` read at
+  `built v (n+1)`, filtered to round `n`. Every `Delivery` field is then a
+  theorem --- notably `accepted_inj`, whose own docstring had said it was
+  "forced by `distinct_creators`" without proving it. It is: P7 puts every
+  held round-`n` block in the builder's references, P2 collapses duplicates.
+
+**What did not come free**, and is worth recording rather than papering
+over. `RefsAccepted` (a correct validator references *only* what it
+accepted) is the **converse** of P7, which the pacing structure does not
+have --- `references` is one-directional by design.
+`refsAccepted_toDelivery` isolates the gap as exactly that clause. And the
+correspondence is not an equivalence: a `Delivery` has no instants, so it
+cannot determine a schedule. `Delivery` stays the right object for arcs that
+never mention time; what is gone is the *independence* of the assumption.
