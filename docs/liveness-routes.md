@@ -419,5 +419,5 @@ leaving validator `2` starved and `converges` binding only from `4N+5`.
 `14`; leaders now build at `14`, the laggard's catch-up deadline moves
 `15 → 17`, and the collapse remains exact --- spread `10` at round `0`,
 `Δ + proc = 3` above. Both are stronger evidence than before: a
-counterexample that could not occur is weak evidence that a hypothesis is
-load-bearing.
+counterexample that could not occur is weak evidence that a hypothesis
+carries the argument.
