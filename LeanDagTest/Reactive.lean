@@ -67,6 +67,8 @@ def ugrowReactive (N : ℕ) : ReactiveM (Ugrow N) {1, 2, 3} N where
   built_lt _ _ _ _ := by omega
   deadline _ _ _ _ := by omega
   holds := reactHolds N
+  holds_sub _ _ := by
+    simp only [reactHolds, ugrow_ids]; exact Finset.filter_subset _ _
   holds_own v hv n _ b hb hbc hbr := by
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
     have hv4 := v.isLt

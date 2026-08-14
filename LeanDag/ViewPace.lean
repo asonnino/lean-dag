@@ -1,4 +1,5 @@
 import LeanDag.Quantitative
+import LeanDag.History
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 
 /-!
@@ -192,6 +193,12 @@ structure PaceCore (U : BlockUniverse Validator BlockId Payload)
   latest : ℕ → ℕ
   built_le_latest : ∀ v ∈ T, ∀ n ≤ N, built v n ≤ latest n
   holds : Validator → ℕ → Finset BlockId
+  /-- **S3.** A validator holds only blocks that exist. Nothing else ties
+  `holds` to the universe: the liveness development never needs it, and the
+  clause is stated here only so that a validator's holdings generate a
+  `View` (`viewAt`), which is what connects the pacing line to the
+  view-relative decision rules. -/
+  holds_sub : ∀ v, ∀ t, holds v t ⊆ U.ids
   /-- A validator holds every block it authored, from the time it built it. -/
   holds_own : ∀ v ∈ T, ∀ n ≤ N, ∀ b ∈ U.ids,
     (U.block b).creator = v → (U.block b).round = n → b ∈ holds v (built v n)
@@ -269,6 +276,53 @@ theorem populatedOn (pc : PaceCore U T N)
     (hcard : quorumCard Validator ≤ T.card) :
     ∀ n ≤ N, PopulatedOn U T n :=
   fun n hn v hv => pc.built_of_le_top v hv n (pc.reached hcard n hn v hv)
+
+/-- **The view a validator's holdings generate.** The causal closure of what
+`v` holds at `t` — a legitimate `View`, so the decision rules of the safety
+development apply to it directly. Closure is discharged by transitivity of
+`Reaches`, exactly as for `View.ofAccepted`: a union of causal histories is
+downward closed, and no closure obligation is met by hand.
+
+This is the object that connects the two halves of the development. The
+pacing line reasons about `holds`, a time-indexed set with no structure; the
+commit rules reason about a `View`. `viewAt` is the bridge, and it is what
+lets liveness be stated about a validator's *own* view rather than about the
+full universe. -/
+def viewAt (pc : PaceCore U T N) (v : Validator) (t : ℕ) :
+    View Validator BlockId Payload U where
+  ids := (pc.holds v t).biUnion (history U)
+  subset_ids := by
+    intro i hi
+    obtain ⟨a, ha, hia⟩ := Finset.mem_biUnion.mp hi
+    exact history_subset_ids (pc.holds_sub v t ha) hia
+  complete := by
+    intro i hi j hj
+    obtain ⟨a, ha, hia⟩ := Finset.mem_biUnion.mp hi
+    have ha_ids : a ∈ U.ids := pc.holds_sub v t ha
+    refine Finset.mem_biUnion.mpr ⟨a, ha, ?_⟩
+    exact (mem_history_iff ha_ids).mpr
+      (((mem_history_iff ha_ids).mp hia).trans (Reaches.single hj))
+
+/-- What a validator holds is in the view it generates. -/
+theorem mem_viewAt (pc : PaceCore U T N) {v : Validator} {t : ℕ} {b : BlockId}
+    (hb : b ∈ pc.holds v t) : b ∈ (pc.viewAt v t).ids :=
+  Finset.mem_biUnion.mpr ⟨b, hb, mem_history_self⟩
+
+omit [DecidableEq BlockId] in
+/-- **Delivery, in the form the local argument consumes.** Past GST, every
+reliable validator holds every `T`-authored round-`n` block by
+`latest n + delay`: its author holds it when built, `latest` is a common
+time for the whole round, and convergence carries it across. -/
+theorem holds_roundBlocks (pc : PaceCore U T N) {n : ℕ} (hn : n ≤ N)
+    (hg : ∀ u ∈ T, pc.gst ≤ pc.built u n) :
+    ∀ v ∈ T, ∀ b ∈ U.ids, (U.block b).creator ∈ T → (U.block b).round = n →
+      b ∈ pc.holds v (pc.latest n + pc.delay) := by
+  intro v hv b hb hbT hbr
+  have hown := pc.holds_own _ hbT n hn b hb rfl hbr
+  have hle : pc.built ((U.block b).creator) n ≤ pc.latest n :=
+    pc.built_le_latest _ hbT n hn
+  exact pc.converges v hv _ hbT (pc.latest n)
+    (le_trans (hg _ hbT) hle) (pc.holds_mono _ _ _ hle hown)
 
 omit [DecidableEq BlockId] in
 /-- **Drift collapses, from any starting value.** At any round whose
@@ -505,6 +559,76 @@ theorem commits_recur_via_pace (hT : T ⊆ (Correct : Finset Validator))
     (fun r _ hr => vp.populatedOn hcard r hr)
     (vp.synchronisedOn_of_converges hcard hgst hbackoff)
     hN
+
+/-! ### Liveness, localised to a validator's own view
+
+Every liveness statement above concludes `Decided U (View.full U) k (some L)`
+— the *full* view decides. That is the right statement for agreement, since
+`decided_full` (L3) lifts any view's verdict to it, but it is not what a
+deployed validator has: no validator ever holds the universe.
+
+The pacing structure can say more. A validator's holdings generate a view
+(`viewAt`), and past GST the delivery lemma puts every reliable
+decision-round block into every reliable validator's hands at an explicit
+time. So the commit is not merely available *somewhere* — each reliable
+validator reaches it *itself*, by `latest (slotRound k + 2) + delay`. -/
+
+/-- **Liveness is local** (V18): past GST, every reliable validator decides
+the slot **on its own view**, by an explicit time.
+
+The hypotheses are those of the main line — GST and the constant backoff —
+and nothing further. The proof is the counting argument of L4 run inside
+`viewAt v t` rather than inside the universe: coverage makes every
+`T`-authored decision-round block a certificate (`certifiesAt_of_synchronisedOn`),
+production supplies one per reliable validator, and the delivery lemma puts
+all of them in `v`'s view at once. `decided_full` recovers the global
+statement, so this strictly strengthens it. -/
+theorem decided_local (vp : ViewPace U T N)
+    (hcard : quorumCard Validator ≤ T.card) (hgst : vp.gst ≤ R)
+    (hbackoff : ∀ n, R ≤ n → 2 * vp.delay + vp.proc ≤ vp.timeout n)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ ∀ v ∈ T,
+      Decided U (vp.viewAt v (vp.latest (S.slotRound k + 2) + vp.delay)) k (some L) := by
+  have hsync := vp.synchronisedOn_of_converges hcard hgst hbackoff
+  -- the leader block, and the certificate blocks, from derived production
+  obtain ⟨L, hLmem, hLc, hLr⟩ :=
+    vp.populatedOn hcard (S.slotRound k) (by omega) (S.leader k) hlead
+  have hL : IsLeaderBlock U k L := ⟨hLmem, hLr, hLc⟩
+  have hpop2 := vp.populatedOn hcard (S.slotRound k + 2) hN
+  have hcert : CertifiesAt U T (S.slotRound k) L :=
+    certifiesAt_of_synchronisedOn hcard hsync hR
+      (vp.populatedOn hcard (S.slotRound k + 1) (by omega)) hLmem hLr (hLc ▸ hlead)
+  -- past GST every reliable validator is at or beyond the decision round
+  have hg : ∀ u ∈ T, vp.gst ≤ vp.built u (S.slotRound k + 2) := by
+    intro u hu
+    have htop := vp.reached hcard (S.slotRound k + 2) hN u hu
+    have := vp.le_built hu (S.slotRound k + 2) htop
+    omega
+  refine ⟨L, hL, fun v hv => ?_⟩
+  refine Decided.directCommit hL ?_
+  -- the counting, inside `v`'s own view
+  refine le_trans hcard (Finset.card_le_card ?_)
+  intro u hu
+  obtain ⟨c, hc, hcc, hcr⟩ := hpop2 u hu
+  refine mem_creatorsOf.mpr ⟨c, ?_, hcc⟩
+  rw [certificatesIn, Finset.mem_inter]
+  refine ⟨mem_certificates.mpr ⟨hc, hcr, hcert u hu c hc hcc hcr⟩, ?_⟩
+  exact vp.mem_viewAt (vp.holds_roundBlocks hN hg v hv c hc (hcc ▸ hu) hcr)
+
+/-- **The global statement is a corollary**, so V18 strictly strengthens the
+main line: a reliable validator exists (the quorum bound is nonvacuous), it
+decides locally, and `decided_full` (L3) lifts its verdict to the full view.
+`decided_of_leader_mem` reaches the same conclusion without ever naming a
+validator's own view; this route names one. -/
+theorem decided_of_local (vp : ViewPace U T N)
+    (hcard : quorumCard Validator ≤ T.card) (hgst : vp.gst ≤ R)
+    (hbackoff : ∀ n, R ≤ n → 2 * vp.delay + vp.proc ≤ vp.timeout n)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) := by
+  obtain ⟨L, hL, hloc⟩ := vp.decided_local hcard hgst hbackoff hR hN hlead
+  exact ⟨L, hL, decided_full (hloc _ hlead)⟩
 
 end Liveness
 

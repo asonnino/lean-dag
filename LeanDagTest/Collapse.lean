@@ -84,6 +84,8 @@ def ugrowLag (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
     cases n <;> simp only [lagBuilt_zero, lagBuilt_succ] <;> split <;> omega
   holds := lagHolds N
+  holds_sub _ _ := by
+    simp only [lagHolds, ugrow_ids]; exact Finset.filter_subset _ _
   holds_own v hv n _ b hb hbc hbr := by
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
     have hv4 := v.isLt

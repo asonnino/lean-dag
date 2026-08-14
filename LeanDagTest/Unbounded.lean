@@ -212,6 +212,8 @@ def ugapPace (N : ℕ) : ViewPace (Uomit 2 N) (Correct : Finset (Fin 4)) N where
   built_le_latest v _ _ _ := by have := v.isLt; omega
   proc := 0
   holds := gapHolds N
+  holds_sub _ _ := by
+    simp only [gapHolds, uomit_ids]; exact Finset.filter_subset _ _
   holds_own v _ n _ b hb hbc hbr := by
     have hv := v.isLt
     simp only [uomit_ids, Finset.mem_range] at hb
@@ -312,6 +314,8 @@ def ustarvePace (N : ℕ) : ViewPace (Uomit 3 N) ({1, 2} : Finset (Fin 4)) N whe
   built_le_latest v hv _ _ := by obtain ⟨_, _⟩ := mem_T12_bounds hv; omega
   proc := 0
   holds := starveHolds N
+  holds_sub _ _ := by
+    simp only [starveHolds, uomit_ids]; exact Finset.filter_subset _ _
   holds_own v hv n _ b hb hbc hbr := by
     obtain ⟨h1, h2⟩ := mem_T12_bounds hv
     simp only [uomit_ids, Finset.mem_range] at hb

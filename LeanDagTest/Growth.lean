@@ -384,6 +384,8 @@ def ugrowTimingPace (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
   built_le_latest _ _ _ _ := le_refl _
   proc := 0
   holds := timingHolds N
+  holds_sub _ _ := by
+    simp only [timingHolds, ugrow_ids]; exact Finset.filter_subset _ _
   holds_own v _ n _ b hb _ hbr := by
     simp only [ugrow_ids, Finset.mem_range] at hb
     simp only [ugrow_block, rrBlock_round] at hbr

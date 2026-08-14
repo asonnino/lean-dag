@@ -57,6 +57,8 @@ def ugrowSkewPace (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
   built_le_latest v _ _ _ := by have := v.isLt; omega
   proc := 0
   holds := skewHolds N
+  holds_sub _ _ := by
+    simp only [skewHolds, ugrow_ids]; exact Finset.filter_subset _ _
   holds_own v hv n _ b hb hbc hbr := by
     have hv4 := v.isLt
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
@@ -146,6 +148,22 @@ example (N : ℕ) (hlead : rrSlots.leader 3 ∈ ({1, 2, 3} : Finset (Fin 4)))
     (le_refl 0) (fun n _ => by change 2 * 2 + 0 ≤ 4; omega)
     (Nat.zero_le _) hN hlead
 
+/-- **Liveness is local, on data** (V18). Slot `3` is decided by validator
+`1` **on its own view** — the causal closure of what it holds at
+`latest 11 + delay`, not the full universe. The bound is the running
+constants: `latest (3*3+2) + 2`. -/
+example (N : ℕ) (hlead : rrSlots.leader 3 ∈ ({1, 2, 3} : Finset (Fin 4)))
+    (hN : rrSlots.slotRound 3 + 2 ≤ N) :
+    ∃ L, IsLeaderBlock (S := rrSlots) (Ugrow N) 3 L ∧
+      ∀ v ∈ ({1, 2, 3} : Finset (Fin 4)),
+        Decided (S := rrSlots) (Ugrow N)
+          ((ugrowSkewPace N).viewAt v
+            ((ugrowSkewPace N).latest (rrSlots.slotRound 3 + 2)
+              + (ugrowSkewPace N).delay)) 3 (some L) :=
+  (ugrowSkewPace N).decided_local (S := rrSlots) (R := 0) (by decide)
+    (le_refl 0) (fun n _ => by change 2 * 2 + 0 ≤ 4; omega)
+    (Nat.zero_le _) hN hlead
+
 /-- **Stuck, expressed.** A `ViewPace` in which a validator never gets past
 round `0`, while the horizon is `5`.
 
@@ -184,6 +202,7 @@ def ugrowStuckPace : ViewPace (Ugrow 0) {1} 5 where
     subst hv1; omega
   proc := 1
   holds _ _ := {1}
+  holds_sub _ _ := by decide
   holds_own v hv n _ b hb hbc _ := by
     have hv1 : v = 1 := by simpa using hv
     subst hv1
@@ -236,6 +255,7 @@ theorem ugrowStuckPace_stuck :
 #print axioms LeanDag.PaceCore.drift_collapse
 #print axioms LeanDag.ViewPace.driftOn_of_catchup
 #print axioms LeanDag.ViewPace.commits_recur_via_pace
+#print axioms LeanDag.ViewPace.decided_local
 #print axioms LeanDag.ViewPace.covers_of_converges
 
 end LeanDagTest
