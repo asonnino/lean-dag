@@ -275,6 +275,25 @@ example : (0 : ℕ) ∈ (ugrowSkewDelivery 3).held 1 0 := by
   simp only [skewHolds, Finset.mem_filter, Finset.mem_range]
   exact ⟨by omega, Or.inl (by omega)⟩
 
+/-- **The converse of P7, on data** (V20). Every block of `Ugrow`
+references the whole round below, and the skewed schedule delivers those
+blocks a full `delay` before the referring build --- so the witness
+references only what it held, and the denial-of-service capstone of report
+§8 applies to it through the induced delivery layer. -/
+theorem ugrowSkewCorrect_refsHeld (N : ℕ) : ViewPace.RefsHeld (ugrowSkewCorrect N) := by
+  intro v hv n b hb hbc hbr a ha
+  simp only [ugrow_ids, Finset.mem_range] at hb
+  simp only [ugrow_block, rrBlock_round] at hbr
+  simp only [ugrow_block, mem_growBlock_refs] at ha
+  have hv4 : (v : ℕ) < 4 := v.isLt
+  have hvc : (1 : ℕ) ≤ (v : ℕ) := by
+    have : v ≠ 0 := by
+      intro h; rw [h] at hv; revert hv; decide
+    omega
+  show a ∈ skewHolds N v ((v : ℕ) + 4 * (n + 1))
+  simp only [skewHolds, Finset.mem_filter, Finset.mem_range]
+  exact ⟨by omega, Or.inl (by omega)⟩
+
 #print axioms ugrowSkewPace_populated
 #print axioms ugrowSkewPace_synchronised
 #print axioms ugrowSkewPace_drift
@@ -287,6 +306,8 @@ example : (0 : ℕ) ∈ (ugrowSkewDelivery 3).held 1 0 := by
 #print axioms LeanDag.ViewPace.decided_local
 #print axioms LeanDag.ViewPace.toDelivery
 #print axioms ugrowSkewDelivery
+#print axioms ugrowSkewCorrect_refsHeld
+#print axioms LeanDag.ViewPace.dos_resistance_of_pace
 #print axioms LeanDag.ViewPace.covers_of_converges
 
 end LeanDagTest

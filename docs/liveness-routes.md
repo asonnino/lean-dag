@@ -389,3 +389,14 @@ have --- `references` is one-directional by design.
 correspondence is not an equivalence: a `Delivery` has no instants, so it
 cannot determine a schedule. `Delivery` stays the right object for arcs that
 never mention time; what is gone is the *independence* of the assumption.
+
+**Follow-up: the converse clause (V20).** `RefsHeld` --- a validator
+references only what it held --- is named as a *predicate* on a pacing
+structure, not a field of the trunk. The reason is on data: `ugrowLag` (CU4)
+fails it, its leaders building round `1` at `12` while the laggard's
+round-`0` block arrives at `14`. That is the pre-GST regime the spread-of-ten
+collapse exists to exhibit, so a mandatory clause would delete the witness.
+With the predicate, `dos_resistance_of_pace` gives liveness and linear
+storage from one structure, the acceptance budget being the only thing
+assumed beyond it; `ugrowSkewPace` discharges the predicate, so the capstone
+is non-vacuous.
