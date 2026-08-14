@@ -382,8 +382,7 @@ legitimate `View` --- closure free by the `View.ofAccepted` argument. Then:
   "forced by `distinct_creators`" without proving it. It is: P7 puts every
   held round-`n` block in the builder's references, P2 collapses duplicates.
 
-**What did not come free**, and is worth recording rather than papering
-over. `RefsAccepted` (a correct validator references *only* what it
+**What did not come free**, recorded rather than papered over. `RefsAccepted` (a correct validator references *only* what it
 accepted) is the **converse** of P7, which the pacing structure does not
 have --- `references` is one-directional by design.
 `refsAccepted_toDelivery` isolates the gap as exactly that clause. And the
