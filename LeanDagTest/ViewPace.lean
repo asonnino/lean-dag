@@ -151,6 +151,26 @@ theorem ugrowSkewPace_commits (k : ℕ) :
       (le_refl 0) (fun n _ => by change 2 * 2 + 0 ≤ 4; omega) (le_refl _)
   exact ⟨k', hk', _, L, hL, hd⟩
 
+/-- **The localised spine, on data**: commits recur, with the slot named
+before the horizon is chosen, and at that slot every reliable validator
+decides on its *own* view. No `T ⊆ Correct` is supplied --- the local
+spine does not ask for it. -/
+theorem ugrowSkewPace_commits_local (k : ℕ) :
+    ∃ k', k ≤ k' ∧ ∃ N L, IsLeaderBlock (Ugrow N) k' L ∧
+      ∀ v ∈ ({1, 2, 3} : Finset (Fin 4)),
+        Decided (Ugrow N)
+          ((ugrowSkewPace N).viewAt v
+            ((ugrowSkewPace N).latest (fairSlots.slotRound k' + 2)
+              + (ugrowSkewPace N).delay)) k' (some L) := by
+  obtain ⟨k', hk', _, hcommit⟩ :=
+    ViewPace.commits_recur_local (BlockId := ℕ) (Payload := Unit)
+      (T := ({1, 2, 3} : Finset (Fin 4))) (by decide)
+      (fun j => ⟨j, le_refl j, by simp only [fairSlots_leader]; decide⟩) 0 k
+  obtain ⟨L, hL, hd⟩ :=
+    hcommit (Ugrow (fairSlots.slotRound k' + 2)) _ (ugrowSkewPace _)
+      (le_refl 0) (fun n _ => by change 2 * 2 + 0 ≤ 4; omega) (le_refl _)
+  exact ⟨k', hk', _, L, hL, hd⟩
+
 /-- **The wait bound, on data, production derived**: slot `3` committed at
 the constant timeout `4 = 2Δ + proc`, from a structure asserting no
 blocks above round `0` — and with no start-spread hypothesis. -/
@@ -322,6 +342,7 @@ example (N : ℕ) {κ : ℕ}
 #print axioms LeanDag.ViewPace.driftOn_of_catchup
 #print axioms LeanDag.ViewPace.commits_recur_via_pace
 #print axioms LeanDag.ViewPace.decided_local
+#print axioms ugrowSkewPace_commits_local
 #print axioms LeanDag.ViewPace.toDelivery
 #print axioms ugrowSkewDelivery
 #print axioms LeanDag.ViewPace.dos_resistance_of_pace

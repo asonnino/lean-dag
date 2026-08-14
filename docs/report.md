@@ -2261,6 +2261,17 @@ through L3. The argument is proved on the trunk
 it with its own certificate supplier and no coverage anywhere
 (`ReactiveM.decided_local`).
 
+The spine follows in the same form. `commits_recur_local` keeps the
+quantifier order of §6.9's `commits_recur_via_pace` — the slot is fixed by
+the schedule and the round bound before any execution is named — and
+concludes locally at that slot, the slot-selection skeleton being pure
+schedule reasoning independent of what is proved there. One hypothesis
+drops: `T ⊆ Correct` is not needed. The global spine threads it through
+`commits_recur_on`, whose production comes from L1 over `Correct`; here
+production is the pacing structure's own, over `T` directly, so the
+hypothesis has nothing left to do. The local spine is weaker in hypotheses
+and stronger in conclusion.
+
 **The delivery layer is induced (V19).** `Delivery.held` is the same notion
 read at the build instant, and defining it so discharges every field of the
 structure:
@@ -8852,7 +8863,7 @@ No promptness ceiling and no attainment clause appear: drift is derived from the
 
 ## Appendix C. The theorem reference
 
-The 340 theorems that either another module of the
+The 341 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -13391,6 +13402,26 @@ theorem decided_local (vp : ViewPace U T N)
 **Liveness is local** (V18): past GST, every reliable validator decides the slot **on its own view**, by an explicit time.
 
 The hypotheses are those of the main line — GST and the constant backoff — and nothing further. The proof is the counting argument of L4 run inside `viewAt v t` rather than inside the universe: coverage makes every `T`-authored decision-round block a certificate (`certifiesAt_of_synchronisedOn`), production supplies one per reliable validator, and the delivery lemma puts all of them in `v`'s view at once. `decided_full` recovers the global statement, so this strictly strengthens it.
+
+#### `commits_recur_local`
+
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem commits_recur_local (hcard : quorumCard Validator ≤ T.card)
+    (fair : FairScheduleOn T) (R k : ℕ) :
+    ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ) (vp : ViewPace U T N),
+        vp.gst ≤ R → (∀ n, R ≤ n → 2 * vp.delay + vp.proc ≤ vp.timeout n) →
+        S.slotRound k' + 2 ≤ N →
+        ∃ L, IsLeaderBlock U k' L ∧ ∀ v ∈ T,
+          Decided U (vp.viewAt v (vp.latest (S.slotRound k' + 2) + vp.delay))
+            k' (some L)
+```
+
+**The liveness spine, localised** (V18): commits recur, and at the recurring slot every reliable validator decides **on its own view**.
+
+The quantifier order of `commits_recur_via_pace` is preserved --- the slot is fixed by the schedule and the round bound alone, before any execution is named --- and the conclusion is the local one. Note what is absent: `T ⊆ Correct` is not needed. The global spine threads it through `commits_recur_on`, whose production comes from L1 over `Correct`; here production is the pacing structure's own, over `T` directly, so the hypothesis has nothing left to do.
 
 #### `decided_of_local`
 

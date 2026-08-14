@@ -3720,6 +3720,27 @@ EDGE	LeanDag.Hybrid.instDecidableDirectCommit._aux_1	LeanDag.Hybrid.DirectCommit
 EDGE	LeanDag.Hybrid.instDecidableDirectCommit._aux_1	LeanDag.BlockUniverse
 EDGE	LeanDag.Hybrid.instDecidableDirectCommit._aux_1	LeanDag.Hybrid.q
 EDGE	LeanDag.Hybrid.instDecidableDirectCommit._aux_1	LeanDag.supporters
+NODE	LeanDagTest.ugrowSkewPace_commits_local	LeanDagTest.ViewPace	thm
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDag.ViewPace.toPaceCore
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDag.PaceCore.viewAt
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDagTest.Ugrow
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDag.Slots.slotRound
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDag.Decided
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDag.Slots.leader
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDag.PaceCore.gst
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDag.PaceCore.latest
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDagTest.ugrowSkewPace_commits_local._proof_1_1
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDagTest.ugrowSkewPace
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDag.ViewPace.commits_recur_local
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDag.BlockUniverse
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDag.Faults.f
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDag.PaceCore.timeout
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDag.PaceCore.proc
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDag.IsLeaderBlock
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDagTest.fairSlots
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDag.ViewPace
+EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDag.PaceCore.delay
 NODE	LeanDag.Odontoceti.mem_coneSupports._simp_1_2	LeanDag.Odontoceti.Rules	thm
 EDGE	LeanDag.Odontoceti.mem_coneSupports._simp_1_2	LeanDag.Block
 EDGE	LeanDag.Odontoceti.mem_coneSupports._simp_1_2	LeanDag.creatorsOf
@@ -24382,6 +24403,9 @@ EDGE	LeanDag.View.ofAccepted._proof_1	LeanDag.Accepted
 EDGE	LeanDag.View.ofAccepted._proof_1	LeanDag.history
 EDGE	LeanDag.View.ofAccepted._proof_1	LeanDag.BlockUniverse
 EDGE	LeanDag.View.ofAccepted._proof_1	LeanDag.history_subset_ids
+NODE	LeanDagTest.ugrowSkewPace_commits_local._proof_1_1	LeanDagTest.ViewPace	thm
+EDGE	LeanDagTest.ugrowSkewPace_commits_local._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDagTest.ugrowSkewPace_commits_local._proof_1_1	LeanDagTest.fairSlots
 NODE	LeanDag.SkipMsg.idx	LeanDag.SafeSkip.Basic	def
 EDGE	LeanDag.SkipMsg.idx	LeanDag.Faults
 EDGE	LeanDag.SkipMsg.idx	LeanDag.BlockUniverse
@@ -24769,6 +24793,27 @@ EDGE	LeanDag.Integration.skipFillD._proof_3	LeanDag.Block.round
 EDGE	LeanDag.Integration.skipFillD._proof_3	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.skipFillD._proof_3	LeanDag.SkipMsg.ids_subset_skipFill
 EDGE	LeanDag.Integration.skipFillD._proof_3	LeanDag.SkipMsg
+NODE	LeanDag.ViewPace.commits_recur_local	LeanDag.ViewPace	thm
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.ViewPace.decided_local
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.ViewPace.toPaceCore
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.PaceCore.viewAt
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.Faults
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.Slots.slotRound
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.Slots.unbounded
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.Decided
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.Slots.leader
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.PaceCore.gst
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.PaceCore.latest
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.FairScheduleOn
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.BlockUniverse
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.Faults.f
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.PaceCore.timeout
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.PaceCore.proc
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.IsLeaderBlock
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.ViewPace
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.Slots
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.Slots.mono
+EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.PaceCore.delay
 NODE	LeanDagTest.Dexcl	LeanDagTest.GC.Bootstrap	def
 EDGE	LeanDagTest.Dexcl	LeanDag.Delivery
 EDGE	LeanDagTest.Dexcl	LeanDagTest.Dexcl._proof_4
