@@ -57,6 +57,14 @@ def ugrowSkewPace (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
   latest n := 3 + 4 * n
   built_le_latest v _ _ _ := by have := v.isLt; omega
   proc := 0
+  refs_held v hv n b hb hbc hbr := by
+    obtain ⟨h1, h3⟩ := mem_T_bounds hv
+    intro j hj
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round] at hbr
+    simp only [ugrow_block, mem_growBlock_refs] at hj
+    simp only [skewHolds, Finset.mem_filter, Finset.mem_range]
+    exact ⟨by omega, Or.inl (by omega)⟩
   holds := skewHolds N
   holds_sub _ _ := by
     simp only [skewHolds, ugrow_ids]; exact Finset.filter_subset _ _
@@ -207,6 +215,10 @@ def ugrowStuckPace : ViewPace (Ugrow 0) {1} 5 where
     have hv1 : v = 1 := by simpa using hv
     subst hv1; omega
   proc := 1
+  refs_held _ _ n b hb _ hbr := by
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round] at hbr
+    omega
   holds _ _ := {1}
   holds_sub _ _ := by decide
   holds_closed _ _ _ b hb j hj := by
@@ -285,24 +297,20 @@ example : (0 : ℕ) ∈ (ugrowSkewDelivery 3).held 1 0 := by
   simp only [skewHolds, Finset.mem_filter, Finset.mem_range]
   exact ⟨by omega, Or.inl (by omega)⟩
 
-/-- **The converse of P7, on data** (V20). Every block of `Ugrow`
-references the whole round below, and the skewed schedule delivers those
-blocks a full `delay` before the referring build --- so the witness
-references only what it held, and the denial-of-service capstone of report
-§8 applies to it through the induced delivery layer. -/
-theorem ugrowSkewCorrect_refsHeld (N : ℕ) : ViewPace.RefsHeld (ugrowSkewCorrect N) := by
-  intro v hv n b hb hbc hbr a ha
-  simp only [ugrow_ids, Finset.mem_range] at hb
-  simp only [ugrow_block, rrBlock_round] at hbr
-  simp only [ugrow_block, mem_growBlock_refs] at ha
-  have hv4 : (v : ℕ) < 4 := v.isLt
-  have hvc : (1 : ℕ) ≤ (v : ℕ) := by
-    have : v ≠ 0 := by
-      intro h; rw [h] at hv; revert hv; decide
-    omega
-  show a ∈ skewHolds N v ((v : ℕ) + 4 * (n + 1))
-  simp only [skewHolds, Finset.mem_filter, Finset.mem_range]
-  exact ⟨by omega, Or.inl (by omega)⟩
+/-- **Liveness and bounded storage from one structure, on data** (V20).
+The running witness needs no hypothesis beyond the acceptance budget: the
+reference discipline is a clause of the trunk (S5) and production is
+derived, so the denial-of-service capstone applies to it through the
+induced delivery layer. -/
+example (N : ℕ) {κ : ℕ}
+    (hu : UniformBudget ((ugrowSkewCorrect N).toDelivery) κ) :
+    (∀ r ≤ N, Populated (Ugrow N) r) ∧
+      ∀ v ∈ (Correct : Finset (Fin 4)), ∀ n,
+        (viewUpto ((ugrowSkewCorrect N).toDelivery) v n).card ≤
+          (Correct : Finset (Fin 4)).card * (n + 1) +
+            ((Correct : Finset (Fin 4)).card * Faults.f (Fin 4) +
+              n * ((Correct : Finset (Fin 4)).card * (Faults.f (Fin 4) * κ))) :=
+  (ugrowSkewCorrect N).dos_resistance_of_pace hu
 
 #print axioms ugrowSkewPace_populated
 #print axioms ugrowSkewPace_synchronised
@@ -316,7 +324,6 @@ theorem ugrowSkewCorrect_refsHeld (N : ℕ) : ViewPace.RefsHeld (ugrowSkewCorrec
 #print axioms LeanDag.ViewPace.decided_local
 #print axioms LeanDag.ViewPace.toDelivery
 #print axioms ugrowSkewDelivery
-#print axioms ugrowSkewCorrect_refsHeld
 #print axioms LeanDag.ViewPace.dos_resistance_of_pace
 #print axioms LeanDag.ViewPace.covers_of_converges
 

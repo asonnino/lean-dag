@@ -390,16 +390,21 @@ correspondence is not an equivalence: a `Delivery` has no instants, so it
 cannot determine a schedule. `Delivery` stays the right object for arcs that
 never mention time; what is gone is the *independence* of the assumption.
 
-**Follow-up: the converse clause (V20).** `RefsHeld` --- a validator
-references only what it held --- is named as a *predicate* on a pacing
-structure, not a field of the trunk. The reason is on data: `ugrowLag` (CU4)
-fails it, its leaders building round `1` at `12` while the laggard's
-round-`0` block arrives at `14`. That is the pre-GST regime the spread-of-ten
-collapse exists to exhibit, so a mandatory clause would delete the witness.
-With the predicate, `dos_resistance_of_pace` gives liveness and linear
-storage from one structure, the acceptance budget being the only thing
-assumed beyond it; `ugrowSkewPace` discharges the predicate, so the capstone
-is non-vacuous.
+**Follow-up: the converse clause (V20), and its promotion.** A validator
+references only what it held. This was first named as a *predicate* on a
+pacing structure rather than a trunk field, because `ugrowLag` (CU4) failed
+it --- leaders building round `1` at `12` while the round-`0` blocks they
+reference arrived at `14`.
+
+That reading was wrong, and the closure work (S4) showed why: the same
+witness was incoherent for causal closure too, and had to be retimed
+regardless. With the leaders building at `14`, all eight witnesses in the
+development satisfy the clause --- checked one by one --- so it is now the
+trunk field `refs_held` (S5), and `dos_resistance_of_pace` is
+unconditional. The lesson generalises: a clause that no model can satisfy
+may be indicting the models rather than the clause, and the way to tell is
+to ask whether the failing model describes a run an implementation could
+produce.
 
 **Follow-up: causal closure of holdings (S4).** `holds` was tied to the
 universe by `holds_sub` alone, so the model admitted a validator holding a

@@ -155,78 +155,61 @@ theorem toDelivery_held {v : Validator} {n : ℕ} (hn : n < N) :
       (vp.holds v (vp.built v (n + 1))).filter (fun b => (U.block b).round = n) := by
   simp [toDelivery, heldOf, hn]
 
-/-! ## The converse of P7, and why it is not a trunk clause
+/-! ## The reference discipline, both ways
 
-`Delivery` is discharged in full, but the storage arcs take one hypothesis
-beyond it: `RefsAccepted`, that a correct validator references **only** what
-it accepted. That is the *converse* of P7, and the pacing structure does not
-have it. `references` is one-directional by design --- it obliges a builder
-to include everything it holds of the round below, and says nothing about
-what else its block may cite --- so the induced layer inherits the same
-silence.
+The storage arcs take one hypothesis beyond `Delivery`: `RefsAccepted`,
+that a correct validator references **only** what it accepted. That is the
+converse of P7, and P7 does not give it --- `references` obliges a builder
+to include everything it holds of the round below and says nothing about
+what else its block may cite.
 
-The gap is exactly one clause, and it is implementable: a validator
-references only blocks it had in hand. We name it `RefsHeld` and keep it a
-*predicate on a pacing structure* rather than a field of `PaceCore`, for a
-reason found on data: the collapse witness `ugrowLag` (CU4) does not satisfy
-it. There the leaders build round `1` at time `12` while the laggard's
-round-`0` block, stamped `10`, is delivered only at `14` --- pre-GST, where
-the model deliberately admits an arbitrary spread and delivers nothing. A
-dense-reference universe over such a run has validators citing blocks they
-have not received. That is physically loose, but it is exactly the regime the
-spread-of-ten collapse exists to exhibit, so making the clause mandatory would
-delete the witness rather than improve it.
+The trunk supplies it directly, as `refs_held` (S5). The clause was first
+tried and rejected: the collapse witness `ugrowLag` (CU4) failed it, its
+leaders building round `1` at time `12` while the round-`0` blocks they
+reference arrived at `14`. That failure was not evidence against the
+clause but against the witness, which was describing a run no
+implementation could produce; once the same incoherence was fixed for
+causal closure (S4) --- the leaders now build at `14`, as early as their
+references allow --- every witness in the development satisfies `refs_held`,
+and the collapse remains exact. A clause that every model satisfies, and
+whose absence let models be physically impossible, belongs on the trunk. -/
 
-As a predicate the clause burdens no structure that does not need it,
-and is discharged by those that do (`ugrowSkewPace`, report §16). -/
-
-/-- **The converse of P7**: a validator's block references only what it held
-when it built. Implementable and observable, like P7 itself, and independent
-of the pacing discipline --- a reactive builder omits what it holds, but no
-builder can cite what it never held. -/
-def RefsHeld (vp : ViewPace U (Correct : Finset Validator) N) : Prop :=
-  ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ U.ids,
-    (U.block b).creator = v → (U.block b).round = n + 1 →
-    (U.block b).refs ⊆ vp.holds v (vp.built v (n + 1))
-
-/-- **The remaining clause, isolated.** With the converse of P7 --- a
-correct validator's block references only what it held at the build --- the
-induced layer satisfies the reference discipline the storage bounds consume,
-and the denial-of-service results of report §8 apply to an execution the
-liveness development produced. The round bound is free: a referenced block
-sits one round below (P1), and the referring block is inside the horizon. -/
-theorem refsAccepted_toDelivery (hrefs : RefsHeld vp) :
-    RefsAccepted vp.toDelivery := by
+/-- **The reference discipline transfers** to the induced layer: a correct
+validator's block references only what it accepted, because `accepted` is
+what it held and `refs_held` says its references are among those. The round
+bound is free --- a referenced block sits one round below (P1), and the
+referring block is inside the horizon. -/
+theorem refsAccepted_toDelivery : RefsAccepted vp.toDelivery := by
   intro w hw n b hb hbc hbr
   have hn : n < N := by have := vp.rounds_le b hb; omega
   intro a ha
   have hround : (U.block a).round = n := by
     have := (U.valid b hb).predecessor a ha
     omega
-  have : a ∈ vp.holds w (vp.built w (n + 1)) := hrefs w hw n b hb hbc hbr ha
+  have : a ∈ vp.holds w (vp.built w (n + 1)) :=
+    vp.refs_held w hw n b hb hbc hbr ha
   simpa [toDelivery, acceptedOf, hw] using (vp.mem_heldOf hn).mpr ⟨this, hround⟩
 
 /-- **Liveness and bounded storage, from one structure** (V20). A pacing
-structure with the reference discipline of both directions, run under the
-enforceable acceptance budget, gives the denial-of-service capstone of report
+structure run under the enforceable acceptance budget gives the denial-of-service capstone of report
 §8 outright: no correct validator stalls, and no correct validator's retained
 view grows faster than linearly in the round.
 
 Production and the reference discipline are *derived* --- the first from
-genesis and the pacemaker's rules, the second from `RefsHeld` through the
-induced layer --- so the only thing assumed beyond the pacing structure is the
-budget itself, which is the mechanism a validator runs. The two conclusions do
+genesis and the pacemaker's rules, the second from S5 through the induced
+layer --- so the only thing assumed beyond the pacing structure is the budget
+itself, which is the mechanism a validator runs. The two conclusions do
 not compete: liveness never needs a Byzantine block, and enforcing the budget
 never defers a correct one. -/
 theorem dos_resistance_of_pace {κ : ℕ}
-    (hrh : RefsHeld vp) (hu : UniformBudget vp.toDelivery κ) :
+    (hu : UniformBudget vp.toDelivery κ) :
     (∀ r ≤ N, Populated U r) ∧
       ∀ v ∈ (Correct : Finset Validator), ∀ n,
         (viewUpto vp.toDelivery v n).card ≤
           (Correct : Finset Validator).card * (n + 1) +
             ((Correct : Finset Validator).card * F.f +
               n * ((Correct : Finset Validator).card * (F.f * κ))) :=
-  dos_resistance (vp.populatedOn card_correct) hu (vp.refsAccepted_toDelivery hrh)
+  dos_resistance (vp.populatedOn card_correct) hu vp.refsAccepted_toDelivery
 
 end ViewPace
 

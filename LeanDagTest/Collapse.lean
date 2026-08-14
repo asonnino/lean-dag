@@ -114,6 +114,26 @@ def ugrowLag (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
     have hle : max (lagStamp j) 12 ≤ 12 + 5 * m := max_le (by omega) (by omega)
     refine ⟨by omega, Or.inl ?_⟩
     rcases hb.2 with h | ⟨_, h⟩ <;> omega
+  refs_held v hv n b hb hbc hbr := by
+    obtain ⟨hv1, hv3⟩ := mem_T_bounds hv
+    have hv4 := v.isLt
+    intro j hj
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round] at hbr
+    simp only [ugrow_block, mem_growBlock_refs] at hj
+    simp only [lagHolds, Finset.mem_filter, Finset.mem_range]
+    have hjn : j / 4 = n := by omega
+    have hsj : lagStamp j = lagBuilt ⟨j % 4, by omega⟩ n := by
+      simp only [lagStamp, hjn]
+    have hjub : lagStamp j ≤ 12 + 5 * n := by
+      rw [hsj]
+      cases n with
+      | zero => simp only [lagBuilt_zero]; split <;> omega
+      | succ p => simp only [lagBuilt_succ]; split <;> omega
+    have hvlb : 14 + 5 * n ≤ lagBuilt v (n + 1) := by
+      simp only [lagBuilt_succ]; split <;> omega
+    have hle : max (lagStamp j) 12 ≤ 12 + 5 * n := max_le (by omega) (by omega)
+    exact ⟨by omega, Or.inl (by omega)⟩
   holds := lagHolds N
   holds_sub _ _ := by
     simp only [lagHolds, ugrow_ids]; exact Finset.filter_subset _ _

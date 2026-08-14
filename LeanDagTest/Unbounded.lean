@@ -216,6 +216,20 @@ def ugapPace (N : ℕ) : ViewPace (Uomit 2 N) (Correct : Finset (Fin 4)) N where
   latest n := 3 + 4 * n
   built_le_latest v _ _ _ := by have := v.isLt; omega
   proc := 0
+  refs_held v _ n b hb hbc hbr := by
+    have hv4 := v.isLt
+    intro j hj
+    simp only [uomit_ids, Finset.mem_range] at hb
+    simp only [uomit_block, rrBlock_round] at hbr
+    simp only [uomit_block, rrBlock_refs, mem_omitRefs] at hj
+    have hbc' : b % 4 = (v : ℕ) := by
+      have := congrArg (fun (x : Fin 4) => (x : ℕ)) hbc
+      simpa using this
+    simp only [gapHolds, Finset.mem_filter, Finset.mem_range]
+    refine ⟨by omega, ?_⟩
+    by_cases hj2 : j % 4 = 2
+    · exact Or.inr (Or.inl ⟨by omega, by omega⟩)
+    · exact Or.inl ⟨hj2, by omega⟩
   holds := gapHolds N
   holds_sub _ _ := by
     simp only [gapHolds, uomit_ids]; exact Finset.filter_subset _ _
@@ -334,6 +348,17 @@ def ustarvePace (N : ℕ) : ViewPace (Uomit 3 N) ({1, 2} : Finset (Fin 4)) N whe
   latest n := 2 + 4 * n
   built_le_latest v hv _ _ := by obtain ⟨_, _⟩ := mem_T12_bounds hv; omega
   proc := 0
+  refs_held v hv n b hb hbc hbr := by
+    obtain ⟨h1, h2⟩ := mem_T12_bounds hv
+    intro j hj
+    simp only [uomit_ids, Finset.mem_range] at hb
+    simp only [uomit_block, rrBlock_round] at hbr
+    simp only [uomit_block, rrBlock_refs, mem_omitRefs] at hj
+    have hbc' : b % 4 = (v : ℕ) := by
+      have := congrArg (fun (x : Fin 4) => (x : ℕ)) hbc
+      simpa using this
+    simp only [starveHolds, Finset.mem_filter, Finset.mem_range]
+    exact ⟨by omega, Or.inl ⟨by omega, by omega⟩⟩
   holds := starveHolds N
   holds_sub _ _ := by
     simp only [starveHolds, uomit_ids]; exact Finset.filter_subset _ _

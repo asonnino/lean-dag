@@ -1784,6 +1784,9 @@ structure PaceCore (U) (T : Finset Validator) (N : ℕ) where
   holds_sub : ∀ v, ∀ t, holds v t ⊆ U.ids
   holds_closed : ∀ v ∈ T, ∀ t, ∀ b ∈ holds v t,
     ∀ j ∈ (U.block b).refs, j ∈ holds v t
+  refs_held : ∀ v ∈ T, ∀ n, ∀ b ∈ U.ids,
+    (U.block b).creator = v → (U.block b).round = n + 1 →
+    (U.block b).refs ⊆ holds v (built v (n + 1))
   holds_own : …
   holds_mono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t
   converges : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + delay)
@@ -2285,26 +2288,28 @@ author twice, so a correct validator cannot be holding two blocks by one author
 when it builds (`heldOf_inj`). What the DoS arc assumed about acceptance is a
 consequence of the reference discipline.
 
-**The converse of P7 (V20).** `RefsAccepted` — a correct validator references
-*only* what it accepted — does not come free: `references` obliges a builder to
-include what it holds and says nothing about what else its block may cite. The
-missing clause is named `RefsHeld`, and it is deliberately a *predicate* on a
-pacing structure rather than a field of the trunk, for a reason found on data.
-The collapse witness `ugrowLag` (CU4) does not satisfy it: its leaders build
-round `1` at time `12` while the laggard's round-`0` block, stamped `10`, is
-delivered at `14` — pre-GST, where the model admits an arbitrary spread and
-delivers nothing, so a dense-reference universe has validators citing blocks
-they have not received. That is physically loose, but it is the regime the
-spread-of-ten collapse exists to exhibit; making the clause mandatory would
-delete the witness rather than improve it.
+**The reference discipline, both ways (V20).** The storage arcs take one
+hypothesis beyond `Delivery`: `RefsAccepted`, that a correct validator
+references *only* what it accepted. P7 does not give it — `references`
+obliges a builder to include what it holds and says nothing about what else
+its block may cite — so the trunk carries the converse directly, as
+`refs_held` (S5).
 
-As a predicate it burdens no structure that does not need it, and
-`ugrowSkewPace` discharges it, which makes the composition capstone
-non-vacuous:
+The clause was first tried and rejected. The collapse witness `ugrowLag`
+(CU4) failed it, its leaders building round `1` at time `12` while the
+round-`0` blocks they reference arrived at `14`. That was evidence against
+the *witness*, not the clause: it described a run no implementation could
+produce, and the same incoherence had to be fixed for causal closure
+anyway. With the leaders now building at `14`, every witness in the
+development satisfies `refs_held` — the eight were checked one by one — and
+the collapse remains exact. A clause that every model satisfies, and whose
+absence let models be physically impossible, belongs on the trunk.
+
+The composition capstone is then unconditional:
 
 ```lean
 theorem dos_resistance_of_pace {κ : ℕ}
-    (hrh : RefsHeld vp) (hu : UniformBudget vp.toDelivery κ) :
+    (hu : UniformBudget vp.toDelivery κ) :
     (∀ r ≤ N, Populated U r) ∧
       ∀ v ∈ (Correct : Finset Validator), ∀ n,
         (viewUpto vp.toDelivery v n).card ≤
@@ -2313,11 +2318,10 @@ theorem dos_resistance_of_pace {κ : ℕ}
               n * ((Correct : Finset Validator).card * (F.f * κ)))
 ```
 
-One structure now yields both halves of §8's capstone. Production and the
-reference discipline are derived — the first from genesis and the pacemaker's
-rules, the second from `RefsHeld` through the induced layer — so the only thing
-assumed beyond the pacing structure is the acceptance budget, which is the
-mechanism a validator runs.
+One structure yields both halves of §8's capstone, and the **only** thing
+assumed beyond the pacing structure is the acceptance budget — the mechanism
+a validator runs. Production comes from genesis and the pacemaker's rules;
+the reference discipline, in both directions, from P7 and S5.
 
 Nor is the correspondence an equivalence: a `Delivery` has no instants, so it
 cannot determine a schedule, and it remains the right object for arcs that never
@@ -5466,7 +5470,7 @@ result in full.
 | L9 | the wait bound | `ViewPace.directCommit_of_wait`, `ViewPace.decided_of_wait`, `ViewPace.directCommit_of_wait_two_delay` *(ViewPace)* |
 | V18 | liveness is local: a validator decides on its own view | `PaceCore.viewAt`, `PaceCore.viewAt_ids`, `PaceCore.history_subset_holds`, `PaceCore.holds_roundBlocks`, `PaceCore.decided_local_of_certifiesAt`, `ViewPace.decided_local`, `ViewPace.decided_of_local`, `ReactiveM.decided_local` *(ViewPace, Reactive/Mysticeti)* |
 | V19 | a pacing structure induces a delivery layer; the acceptance rule is derived | `ViewPace.heldOf_inj`, `ViewPace.toDelivery` *(PaceDelivery)* |
-| V20 | the converse of P7, and liveness with bounded storage from one structure | `ViewPace.RefsHeld`, `ViewPace.refsAccepted_toDelivery`, `ViewPace.dos_resistance_of_pace` *(PaceDelivery)*; `ugrowSkewCorrect_refsHeld` *(LeanDagTest.ViewPace)* |
+| V20 | the converse of P7 on the trunk; liveness with bounded storage from one structure | `PaceCore.refs_held`, `ViewPace.refsAccepted_toDelivery`, `ViewPace.dos_resistance_of_pace` *(ViewPace, PaceDelivery)* |
 
 Gaps in the numbering (L1, L7a–L7c, V2, V3, V5–V9, V13–V16) are
 deliberate: those labels belonged to superseded formulations and are not
@@ -8657,19 +8661,6 @@ def toDelivery : Delivery U where
 
 **A pacing structure induces a delivery layer** (V19). Every field is discharged from the pacing clauses: `held_spec` from `holds_sub` and the round filter, `accepted_inj` from P7 with P2 (`heldOf_inj`), and `includes` from P7 read at the build instant. The storage arcs of report §§8--9 can therefore be run over an execution the liveness development produces, rather than over a separately postulated layer.
 
-#### `RefsHeld`
-
-*def, `PaceDelivery.lean`*
-
-```lean
-def RefsHeld (vp : ViewPace U (Correct : Finset Validator) N) : Prop :=
-  ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ U.ids,
-    (U.block b).creator = v → (U.block b).round = n + 1 →
-    (U.block b).refs ⊆ vp.holds v (vp.built v (n + 1))
-```
-
-**The converse of P7**: a validator's block references only what it held when it built. Implementable and observable, like P7 itself, and independent of the pacing discipline --- a reactive builder omits what it holds, but no builder can cite what it never held.
-
 #### `DriftOn`
 
 *def, `ViewPace.lean`*
@@ -8756,6 +8747,14 @@ structure PaceCore (U : BlockUniverse Validator BlockId Payload)
   fragments (`viewAt_ids`). -/
   holds_closed : ∀ v ∈ T, ∀ t, ∀ b ∈ holds v t,
     ∀ j ∈ (U.block b).refs, j ∈ holds v t
+  /-- **S5.** A validator's block references only what it held when it
+  built --- the converse of P7, and like it implementable and observable.
+  It sits on the trunk rather than in a timeout discipline because it is
+  discipline-independent: a reactive builder omits what it holds, but no
+  builder can cite what it never held. -/
+  refs_held : ∀ v ∈ T, ∀ n, ∀ b ∈ U.ids,
+    (U.block b).creator = v → (U.block b).round = n + 1 →
+    (U.block b).refs ⊆ holds v (built v (n + 1))
   /-- A validator holds every block it authored, from the time it built it. -/
   holds_own : ∀ v ∈ T, ∀ n ≤ N, ∀ b ∈ U.ids,
     (U.block b).creator = v → (U.block b).round = n → b ∈ holds v (built v n)
@@ -8853,7 +8852,7 @@ No promptness ceiling and no attainment clause appear: drift is derived from the
 
 ## Appendix C. The theorem reference
 
-The 338 theorems that either another module of the
+The 340 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -13123,11 +13122,10 @@ This is the field the storage development assumes; here it is a theorem about th
 *theorem, `PaceDelivery.lean`*
 
 ```lean
-theorem refsAccepted_toDelivery (hrefs : RefsHeld vp) :
-    RefsAccepted vp.toDelivery
+theorem refsAccepted_toDelivery : RefsAccepted vp.toDelivery
 ```
 
-**The remaining clause, isolated.** With the converse of P7 --- a correct validator's block references only what it held at the build --- the induced layer satisfies the reference discipline the storage bounds consume, and the denial-of-service results of report §8 apply to an execution the liveness development produced. The round bound is free: a referenced block sits one round below (P1), and the referring block is inside the horizon.
+**The reference discipline transfers** to the induced layer: a correct validator's block references only what it accepted, because `accepted` is what it held and `refs_held` says its references are among those. The round bound is free --- a referenced block sits one round below (P1), and the referring block is inside the horizon.
 
 #### `dos_resistance_of_pace`
 
@@ -13135,7 +13133,7 @@ theorem refsAccepted_toDelivery (hrefs : RefsHeld vp) :
 
 ```lean
 theorem dos_resistance_of_pace {κ : ℕ}
-    (hrh : RefsHeld vp) (hu : UniformBudget vp.toDelivery κ) :
+    (hu : UniformBudget vp.toDelivery κ) :
     (∀ r ≤ N, Populated U r) ∧
       ∀ v ∈ (Correct : Finset Validator), ∀ n,
         (viewUpto vp.toDelivery v n).card ≤
@@ -13144,9 +13142,9 @@ theorem dos_resistance_of_pace {κ : ℕ}
               n * ((Correct : Finset Validator).card * (F.f * κ)))
 ```
 
-**Liveness and bounded storage, from one structure** (V20). A pacing structure with the reference discipline of both directions, run under the enforceable acceptance budget, gives the denial-of-service capstone of report §8 outright: no correct validator stalls, and no correct validator's retained view grows faster than linearly in the round.
+**Liveness and bounded storage, from one structure** (V20). A pacing structure run under the enforceable acceptance budget gives the denial-of-service capstone of report §8 outright: no correct validator stalls, and no correct validator's retained view grows faster than linearly in the round.
 
-Production and the reference discipline are *derived* --- the first from genesis and the pacemaker's rules, the second from `RefsHeld` through the induced layer --- so the only thing assumed beyond the pacing structure is the budget itself, which is the mechanism a validator runs. The two conclusions do not compete: liveness never needs a Byzantine block, and enforcing the budget never defers a correct one.
+Production and the reference discipline are *derived* --- the first from genesis and the pacemaker's rules, the second from S5 through the induced layer --- so the only thing assumed beyond the pacing structure is the budget itself, which is the mechanism a validator runs. The two conclusions do not compete: liveness never needs a Byzantine block, and enforcing the budget never defers a correct one.
 
 #### `convergesWithin_iff_bounded`
 
@@ -13186,6 +13184,29 @@ theorem populatedOn (pc : PaceCore U T N)
 ```
 
 **Production, once for every discipline**: a round a validator got to is a round it built in.
+
+#### `history_subset_holds`
+
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem history_subset_holds (pc : PaceCore U T N) {v : Validator} (hv : v ∈ T)
+    {t : ℕ} {b : BlockId} (hb : b ∈ pc.holds v t) :
+    history U b ⊆ pc.holds v t
+```
+
+**Closure, iterated**: a held block's whole causal cone is held. The step is `holds_closed`; the induction runs along the reachability chain.
+
+#### `viewAt_ids`
+
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem viewAt_ids (pc : PaceCore U T N) {v : Validator} (hv : v ∈ T) (t : ℕ) :
+    (pc.viewAt v t).ids = pc.holds v t
+```
+
+**The view a validator holds is exactly what it holds.** Under closure the causal closure is a no-op, so `viewAt` adds nothing: a reliable validator's view *is* its holdings, and the local liveness statement is about the blocks the validator actually has. Without `holds_closed` the inclusion runs one way only, and `viewAt` would be the closure of a validator's fragments rather than its view.
 
 #### `holds_roundBlocks`
 
@@ -13493,7 +13514,7 @@ theorem directCommit_of_wait_two_delay (vp : ViewPace U T N)
 
 ## Appendix D. Index of internal lemmas
 
-The 320 lemmas used only within the file that proves
+The 318 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -14090,7 +14111,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_heldOf` | — |
 | `toDelivery_held` | The induced layer reads the pacing structure's own holdings: what it records at round `n` is exactly what … |
 
-### `ViewPace.lean` (9)
+### `ViewPace.lean` (7)
 
 | Lemma | Role |
 |:---|:---|
@@ -14099,9 +14120,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `convergesEventually_of_within` | A bounded lag is a lag: the timed form implies the untimed one, even before `gst`, since holdings only grow. |
 | `convergesWithin` | The `converges` field *is* the bounded form of the factoring above. |
 | `convergesWithin_of_bounded` | And conversely: eventual convergence whose lag is uniformly bounded after `gst` *is* convergence within … |
-| `history_subset_holds` | Closure, iterated: a held block's whole causal cone is held. The step is `holds_closed`; the induction … |
 | `le_built` | Rounds advance real time, over the rounds a validator reached. |
 | `mem_viewAt` | What a validator holds is in the view it generates. |
-| `viewAt_ids` | The view a validator holds is exactly what it holds. Under closure the causal closure is a no-op, so … |
 
 <!-- END GENERATED REFERENCE -->

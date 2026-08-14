@@ -211,6 +211,14 @@ structure PaceCore (U : BlockUniverse Validator BlockId Payload)
   fragments (`viewAt_ids`). -/
   holds_closed : ∀ v ∈ T, ∀ t, ∀ b ∈ holds v t,
     ∀ j ∈ (U.block b).refs, j ∈ holds v t
+  /-- **S5.** A validator's block references only what it held when it
+  built --- the converse of P7, and like it implementable and observable.
+  It sits on the trunk rather than in a timeout discipline because it is
+  discipline-independent: a reactive builder omits what it holds, but no
+  builder can cite what it never held. -/
+  refs_held : ∀ v ∈ T, ∀ n, ∀ b ∈ U.ids,
+    (U.block b).creator = v → (U.block b).round = n + 1 →
+    (U.block b).refs ⊆ holds v (built v (n + 1))
   /-- A validator holds every block it authored, from the time it built it. -/
   holds_own : ∀ v ∈ T, ∀ n ≤ N, ∀ b ∈ U.ids,
     (U.block b).creator = v → (U.block b).round = n → b ∈ holds v (built v n)
