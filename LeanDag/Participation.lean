@@ -21,6 +21,13 @@ def PopulatedFrom (blk : BlockId → Block Validator BlockId Payload)
     (ids : Finset BlockId) (T : Finset Validator) (r : ℕ) : Prop :=
   ∀ v ∈ T, ∃ b ∈ ids, (blk b).creator = v ∧ (blk b).round = r
 
+/-- Decidable on concrete data: a bounded quantifier over two `Finset`s, so a
+model can settle it by `decide`. -/
+instance decidablePopulatedFrom [DecidableEq Validator]
+    (T : Finset Validator) (r : ℕ) : Decidable (PopulatedFrom blk ids T r) :=
+  inferInstanceAs (Decidable (∀ v ∈ T, ∃ b ∈ ids,
+    (blk b).creator = v ∧ (blk b).round = r))
+
 /-- Population is antitone: a smaller set is easier to populate. -/
 theorem PopulatedFrom.mono {T T' : Finset Validator} {r : ℕ} (hsub : T ⊆ T')
     (h : PopulatedFrom blk ids T' r) : PopulatedFrom blk ids T r :=

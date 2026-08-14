@@ -111,6 +111,10 @@ def PopulatedOn (U : Universe Validator BlockId Payload)
     (T : Finset Validator) (r : ℕ) : Prop :=
   PopulatedFrom U.block U.ids T r
 
+/-- Decidable on concrete data, so a model can settle it by `decide`. -/
+instance decidablePopulatedOn (r : ℕ) : Decidable (PopulatedOn U T r) :=
+  inferInstanceAs (Decidable (PopulatedFrom U.block U.ids T r))
+
 omit [DecidableEq BlockId] in
 /-- Population is antitone: a smaller set is easier to populate. -/
 theorem PopulatedOn.mono {T T' : Finset Validator} {r : ℕ} (hsub : T ⊆ T')
