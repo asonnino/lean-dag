@@ -199,6 +199,18 @@ structure PaceCore (U : BlockUniverse Validator BlockId Payload)
   `View` (`viewAt`), which is what connects the pacing line to the
   view-relative decision rules. -/
   holds_sub : ∀ v, ∀ t, holds v t ⊆ U.ids
+  /-- **S4.** Holdings are causally closed: a validator that holds a block
+  holds everything it references. This is P4 as a *store* property — the
+  universe-level version is already assumed, and this says a validator
+  receives blocks the same way it stores them. A block whose history is
+  missing cannot be validated (P3, P3′ read the referenced blocks) and
+  cannot be built upon, so an implementation that admitted one could not
+  act on it; the clause is what stops the model obliging a validator to
+  advance on evidence no implementation could use, and it is what makes
+  `viewAt` a validator's own view rather than the closure of its
+  fragments (`viewAt_ids`). -/
+  holds_closed : ∀ v ∈ T, ∀ t, ∀ b ∈ holds v t,
+    ∀ j ∈ (U.block b).refs, j ∈ holds v t
   /-- A validator holds every block it authored, from the time it built it. -/
   holds_own : ∀ v ∈ T, ∀ n ≤ N, ∀ b ∈ U.ids,
     (U.block b).creator = v → (U.block b).round = n → b ∈ holds v (built v n)
@@ -303,10 +315,34 @@ def viewAt (pc : PaceCore U T N) (v : Validator) (t : ℕ) :
     exact (mem_history_iff ha_ids).mpr
       (((mem_history_iff ha_ids).mp hia).trans (Reaches.single hj))
 
+/-- **Closure, iterated**: a held block's whole causal cone is held. The
+step is `holds_closed`; the induction runs along the reachability chain. -/
+theorem history_subset_holds (pc : PaceCore U T N) {v : Validator} (hv : v ∈ T)
+    {t : ℕ} {b : BlockId} (hb : b ∈ pc.holds v t) :
+    history U b ⊆ pc.holds v t := by
+  intro i hi
+  have hr := (mem_history_iff (pc.holds_sub v t hb)).mp hi
+  clear hi
+  induction hr with
+  | refl => exact hb
+  | tail _ hstep ih => exact pc.holds_closed v hv t _ ih _ hstep
+
 /-- What a validator holds is in the view it generates. -/
 theorem mem_viewAt (pc : PaceCore U T N) {v : Validator} {t : ℕ} {b : BlockId}
     (hb : b ∈ pc.holds v t) : b ∈ (pc.viewAt v t).ids :=
   Finset.mem_biUnion.mpr ⟨b, hb, mem_history_self⟩
+
+/-- **The view a validator holds is exactly what it holds.** Under closure
+the causal closure is a no-op, so `viewAt` adds nothing: a reliable
+validator's view *is* its holdings, and the local liveness statement is
+about the blocks the validator actually has. Without `holds_closed` the
+inclusion runs one way only, and `viewAt` would be the closure of a
+validator's fragments rather than its view. -/
+theorem viewAt_ids (pc : PaceCore U T N) {v : Validator} (hv : v ∈ T) (t : ℕ) :
+    (pc.viewAt v t).ids = pc.holds v t := by
+  refine Finset.Subset.antisymm (fun i hi => ?_) (fun b hb => pc.mem_viewAt hb)
+  obtain ⟨a, ha, hia⟩ := Finset.mem_biUnion.mp hi
+  exact pc.history_subset_holds hv ha hia
 
 omit [DecidableEq BlockId] in
 /-- **Delivery, in the form the local argument consumes.** Past GST, every

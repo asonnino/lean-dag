@@ -64,6 +64,13 @@ def ugrowCatchPace (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
   holds := catchHolds N
   holds_sub _ _ := by
     simp only [catchHolds, ugrow_ids]; exact Finset.filter_subset _ _
+  holds_closed v hv t b hb j hj := by
+    obtain ⟨h1, h3⟩ := mem_T_bounds hv
+    simp only [catchHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
+    simp only [ugrow_block, mem_growBlock_refs] at hj
+    have hjd : j / 4 + 1 = b / 4 := by omega
+    refine ⟨by omega, Or.inl ?_⟩
+    rcases hb.2 with h | ⟨_, h⟩ <;> omega
   holds_own v hv n _ b hb hbc hbr := by
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
     simp only [ugrow_ids, Finset.mem_range] at hb

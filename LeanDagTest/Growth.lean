@@ -386,6 +386,12 @@ def ugrowTimingPace (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
   holds := timingHolds N
   holds_sub _ _ := by
     simp only [timingHolds, ugrow_ids]; exact Finset.filter_subset _ _
+  holds_closed v hv t b hb j hj := by
+    simp only [timingHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
+    simp only [ugrow_block, mem_growBlock_refs] at hj
+    have hjd : j / 4 < b / 4 := by omega
+    have := Nat.pow_le_pow_right (by omega : 1 ≤ 2) (le_of_lt hjd)
+    exact ⟨by omega, by omega⟩
   holds_own v _ n _ b hb _ hbr := by
     simp only [ugrow_ids, Finset.mem_range] at hb
     simp only [ugrow_block, rrBlock_round] at hbr

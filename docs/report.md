@@ -1782,6 +1782,8 @@ structure PaceCore (U) (T : Finset Validator) (N : ℕ) where
     (U.block b).creator = v → (U.block b).round ≤ top v
   holds : Validator → ℕ → Finset BlockId
   holds_sub : ∀ v, ∀ t, holds v t ⊆ U.ids
+  holds_closed : ∀ v ∈ T, ∀ t, ∀ b ∈ holds v t,
+    ∀ j ∈ (U.block b).refs, j ∈ holds v t
   holds_own : …
   holds_mono : ∀ v, ∀ s t, s ≤ t → holds v s ⊆ holds v t
   converges : ∀ v ∈ T, ∀ w ∈ T, ∀ t, gst ≤ t → holds w t ⊆ holds v (t + delay)
@@ -2206,11 +2208,34 @@ over a refs-closed `View` — while the pacing line reasons about
 universe by nothing at all. The storage arcs add a third, `Delivery.held`,
 indexed by round. This section closes both gaps, and each needs one clause.
 
-**Liveness is local (V18).** `holds_sub` — a validator holds only blocks that
-exist — is enough to make a validator's holdings generate a view: `viewAt v t`
-is the causal closure of `holds v t`, and closure is free by the
-`View.ofAccepted` argument, since a union of causal histories is downward
-closed under `Reaches`. With `holds_roundBlocks` (past GST every reliable
+**The store clauses.** Two clauses tie `holds` to the universe, and they are
+what the section rests on. `holds_sub` says a validator holds only blocks that
+exist; `holds_closed` says holdings are causally closed — P4 as a *store*
+property. The second is not bookkeeping. A block whose history is missing
+cannot be validated, since P3 and P3′ read the referenced blocks, and cannot
+be built upon; without the clause the model would oblige a validator to
+advance on evidence no implementation could act on, and `viewAt` below would
+be the closure of a validator's fragments rather than its view. Adding it
+*weakens* what is assumed of an implementation.
+
+Two witnesses had to be repaired to satisfy it, and the repairs are
+instructive. `ugapPace` (V10, V11) had validators holding their own blocks
+while lacking the round below those blocks were built on; it now delivers
+every non-starved block one tick after its build, which leaves validator `2`
+starved exactly as before and `converges` binding only from its late GST.
+`ugrowLag` (CU4) had its leaders building round `1` at time `12` while the
+round-`0` blocks they reference arrived at `14`; they now build at `14`, the
+laggard's catch-up deadline moves from `15` to `17`, and the collapse is
+still met with equality — spread `10` at round `0`, exactly `Δ + proc = 3`
+above. A counterexample that could not physically occur is weaker evidence
+than one that could, so both witnesses are better for the change.
+
+**Liveness is local (V18).** With the store clauses a validator's holdings
+generate a view: `viewAt v t` is the causal closure of `holds v t`, free by
+the `View.ofAccepted` argument, and under `holds_closed` that closure is a
+no-op — `viewAt_ids` proves `(viewAt v t).ids = holds v t` for reliable `v`,
+so the view *is* the holdings and the statement below is about the blocks the
+validator actually has. With `holds_roundBlocks` (past GST every reliable
 validator holds every `T`-authored round-`n` block by `latest n + delay`), the
 counting of L4 runs *inside* that view:
 
@@ -5439,7 +5464,7 @@ result in full.
 | L8a | the round of coverage, explicitly | `ViewPace.synchronisedOn_of_rate` *(ViewPace)* |
 | L8b | the committing slot, and its round | `commits_recur_within`, `commits_recur_by_round` *(Quantitative)* |
 | L9 | the wait bound | `ViewPace.directCommit_of_wait`, `ViewPace.decided_of_wait`, `ViewPace.directCommit_of_wait_two_delay` *(ViewPace)* |
-| V18 | liveness is local: a validator decides on its own view | `PaceCore.viewAt`, `PaceCore.holds_roundBlocks`, `PaceCore.decided_local_of_certifiesAt`, `ViewPace.decided_local`, `ViewPace.decided_of_local`, `ReactiveM.decided_local` *(ViewPace, Reactive/Mysticeti)* |
+| V18 | liveness is local: a validator decides on its own view | `PaceCore.viewAt`, `PaceCore.viewAt_ids`, `PaceCore.history_subset_holds`, `PaceCore.holds_roundBlocks`, `PaceCore.decided_local_of_certifiesAt`, `ViewPace.decided_local`, `ViewPace.decided_of_local`, `ReactiveM.decided_local` *(ViewPace, Reactive/Mysticeti)* |
 | V19 | a pacing structure induces a delivery layer; the acceptance rule is derived | `ViewPace.heldOf_inj`, `ViewPace.toDelivery` *(PaceDelivery)* |
 | V20 | the converse of P7, and liveness with bounded storage from one structure | `ViewPace.RefsHeld`, `ViewPace.refsAccepted_toDelivery`, `ViewPace.dos_resistance_of_pace` *(PaceDelivery)*; `ugrowSkewCorrect_refsHeld` *(LeanDagTest.ViewPace)* |
 
@@ -8719,6 +8744,18 @@ structure PaceCore (U : BlockUniverse Validator BlockId Payload)
   `View` (`viewAt`), which is what connects the pacing line to the
   view-relative decision rules. -/
   holds_sub : ∀ v, ∀ t, holds v t ⊆ U.ids
+  /-- **S4.** Holdings are causally closed: a validator that holds a block
+  holds everything it references. This is P4 as a *store* property — the
+  universe-level version is already assumed, and this says a validator
+  receives blocks the same way it stores them. A block whose history is
+  missing cannot be validated (P3, P3′ read the referenced blocks) and
+  cannot be built upon, so an implementation that admitted one could not
+  act on it; the clause is what stops the model obliging a validator to
+  advance on evidence no implementation could use, and it is what makes
+  `viewAt` a validator's own view rather than the closure of its
+  fragments (`viewAt_ids`). -/
+  holds_closed : ∀ v ∈ T, ∀ t, ∀ b ∈ holds v t,
+    ∀ j ∈ (U.block b).refs, j ∈ holds v t
   /-- A validator holds every block it authored, from the time it built it. -/
   holds_own : ∀ v ∈ T, ∀ n ≤ N, ∀ b ∈ U.ids,
     (U.block b).creator = v → (U.block b).round = n → b ∈ holds v (built v n)
@@ -13456,7 +13493,7 @@ theorem directCommit_of_wait_two_delay (vp : ViewPace U T N)
 
 ## Appendix D. Index of internal lemmas
 
-The 318 lemmas used only within the file that proves
+The 320 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -14053,7 +14090,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_heldOf` | — |
 | `toDelivery_held` | The induced layer reads the pacing structure's own holdings: what it records at round `n` is exactly what … |
 
-### `ViewPace.lean` (7)
+### `ViewPace.lean` (9)
 
 | Lemma | Role |
 |:---|:---|
@@ -14062,7 +14099,9 @@ subsection per module, in the layer order of Appendices B and C.
 | `convergesEventually_of_within` | A bounded lag is a lag: the timed form implies the untimed one, even before `gst`, since holdings only grow. |
 | `convergesWithin` | The `converges` field *is* the bounded form of the factoring above. |
 | `convergesWithin_of_bounded` | And conversely: eventual convergence whose lag is uniformly bounded after `gst` *is* convergence within … |
+| `history_subset_holds` | Closure, iterated: a held block's whole causal cone is held. The step is `holds_closed`; the induction … |
 | `le_built` | Rounds advance real time, over the rounds a validator reached. |
 | `mem_viewAt` | What a validator holds is in the view it generates. |
+| `viewAt_ids` | The view a validator holds is exactly what it holds. Under closure the causal closure is a no-op, so … |
 
 <!-- END GENERATED REFERENCE -->

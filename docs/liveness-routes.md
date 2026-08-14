@@ -400,3 +400,24 @@ With the predicate, `dos_resistance_of_pace` gives liveness and linear
 storage from one structure, the acceptance budget being the only thing
 assumed beyond it; `ugrowSkewPace` discharges the predicate, so the capstone
 is non-vacuous.
+
+**Follow-up: causal closure of holdings (S4).** `holds` was tied to the
+universe by `holds_sub` alone, so the model admitted a validator holding a
+block whose history it lacked --- a block it could neither validate (P3, P3′
+read the referenced blocks) nor build upon. Two consequences: `advances`
+was obliged to fire on evidence no implementation could act on, and
+`viewAt` was the closure of a validator's fragments rather than its view.
+`holds_closed` fixes both, and *weakens* what is assumed of an
+implementation. `viewAt_ids` then gives `(viewAt v t).ids = holds v t`, so
+V18 is about the blocks the validator actually has.
+
+Two witnesses were physically incoherent in exactly this way and are
+repaired. `ugapPace` (V10, V11) held own blocks without the round below
+them; it now delivers every non-starved block one tick after its build,
+leaving validator `2` starved and `converges` binding only from `4N+5`.
+`ugrowLag` (CU4) built round `1` at `12` while its references arrived at
+`14`; leaders now build at `14`, the laggard's catch-up deadline moves
+`15 → 17`, and the collapse remains exact --- spread `10` at round `0`,
+`Δ + proc = 3` above. Both are stronger evidence than before: a
+counterexample that could not occur is weak evidence that a hypothesis is
+load-bearing.

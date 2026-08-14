@@ -60,6 +60,11 @@ def ugrowSkewPace (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
   holds := skewHolds N
   holds_sub _ _ := by
     simp only [skewHolds, ugrow_ids]; exact Finset.filter_subset _ _
+  holds_closed v hv t b hb j hj := by
+    obtain ⟨h1, h3⟩ := mem_T_bounds hv
+    simp only [skewHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
+    simp only [ugrow_block, mem_growBlock_refs] at hj
+    exact ⟨by omega, Or.inl (by omega)⟩
   holds_own v hv n _ b hb hbc hbr := by
     have hv4 := v.isLt
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
@@ -204,6 +209,11 @@ def ugrowStuckPace : ViewPace (Ugrow 0) {1} 5 where
   proc := 1
   holds _ _ := {1}
   holds_sub _ _ := by decide
+  holds_closed _ _ _ b hb j hj := by
+    have hb1 : b = 1 := by simpa using hb
+    subst hb1
+    simp only [ugrow_block, mem_growBlock_refs] at hj
+    omega
   holds_own v hv n _ b hb hbc _ := by
     have hv1 : v = 1 := by simpa using hv
     subst hv1
