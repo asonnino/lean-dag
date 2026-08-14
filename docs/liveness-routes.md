@@ -352,3 +352,77 @@ move and the user chose the merge with the costs on the table:
   a system with fast reactive exits and slow catch-up would want two
   constants, and would pay for the split in a second parameter
   everywhere.
+
+## 11. Postscript: the view mechanism joined to the pace line (August 2026)
+
+Open question §9.2 --- "`ViewPace.holds` versus `Delivery.held`: two
+spellings of the same notion, one time-indexed and one round-indexed;
+possibly the largest simplification available" --- is now closed, and a
+second gap nobody had recorded was found alongside it.
+
+**The unrecorded gap.** `holds` was tied to the universe by *nothing*: not
+`⊆ U.ids`, not causal closure. So the pacing line and the view-relative
+commit rules were disjoint, and every liveness theorem concluded about
+`View.full` --- a view no deployed validator ever has. `decided_mono` and
+`decided_full` run the wrong way to fix it: they lift a verdict *up* to
+bigger views, never down to a validator's own.
+
+**One clause closes both.** `holds_sub` (a validator holds only blocks that
+exist) makes `viewAt v t`, the causal closure of what `v` holds, a
+legitimate `View` --- closure free by the `View.ofAccepted` argument. Then:
+
+* **V18, liveness is local.** `holds_roundBlocks` is the delivery lemma;
+  `decided_local_of_certifiesAt` runs L4's counting inside `viewAt v t`.
+  Proved on the trunk, so both disciplines inherit it. Hypotheses are the
+  main line's exactly. `decided_of_local` recovers the global form, so it is
+  a strict strengthening.
+* **V19, the delivery layer is induced.** `held v n` is `holds` read at
+  `built v (n+1)`, filtered to round `n`. Every `Delivery` field is then a
+  theorem --- notably `accepted_inj`, whose own docstring had said it was
+  "forced by `distinct_creators`" without proving it. It is: P7 puts every
+  held round-`n` block in the builder's references, P2 collapses duplicates.
+
+**What did not come free**, recorded rather than papered over. `RefsAccepted` (a correct validator references *only* what it
+accepted) is the **converse** of P7, which the pacing structure does not
+have --- `references` is one-directional by design.
+`refsAccepted_toDelivery` isolates the gap as exactly that clause. And the
+correspondence is not an equivalence: a `Delivery` has no instants, so it
+cannot determine a schedule. `Delivery` stays the right object for arcs that
+never mention time; what is gone is the *independence* of the assumption.
+
+**Follow-up: the converse clause (V20), and its promotion.** A validator
+references only what it held. This was first named as a *predicate* on a
+pacing structure rather than a trunk field, because `ugrowLag` (CU4) failed
+it --- leaders building round `1` at `12` while the round-`0` blocks they
+reference arrived at `14`.
+
+That reading was wrong, and the closure work (S4) showed why: the same
+witness was incoherent for causal closure too, and had to be retimed
+regardless. With the leaders building at `14`, all eight witnesses in the
+development satisfy the clause --- checked one by one --- so it is now the
+trunk field `refs_held` (S5), and `dos_resistance_of_pace` is
+unconditional. The lesson generalises: a clause that no model can satisfy
+may be indicting the models rather than the clause, and the way to tell is
+to ask whether the failing model describes a run an implementation could
+produce.
+
+**Follow-up: causal closure of holdings (S4).** `holds` was tied to the
+universe by `holds_sub` alone, so the model admitted a validator holding a
+block whose history it lacked --- a block it could neither validate (P3, P3′
+read the referenced blocks) nor build upon. Two consequences: `advances`
+was obliged to fire on evidence no implementation could act on, and
+`viewAt` was the closure of a validator's fragments rather than its view.
+`holds_closed` fixes both, and *weakens* what is assumed of an
+implementation. `viewAt_ids` then gives `(viewAt v t).ids = holds v t`, so
+V18 is about the blocks the validator actually has.
+
+Two witnesses were physically incoherent in exactly this way and are
+repaired. `ugapPace` (V10, V11) held own blocks without the round below
+them; it now delivers every non-starved block one tick after its build,
+leaving validator `2` starved and `converges` binding only from `4N+5`.
+`ugrowLag` (CU4) built round `1` at `12` while its references arrived at
+`14`; leaders now build at `14`, the laggard's catch-up deadline moves
+`15 → 17`, and the collapse remains exact --- spread `10` at round `0`,
+`Δ + proc = 3` above. Both are stronger evidence than before: a
+counterexample that could not occur is weak evidence that a hypothesis
+carries the argument.

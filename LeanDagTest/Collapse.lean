@@ -14,11 +14,13 @@ The run: validators `1` and `2` enter round `0` at times `0` and `1`,
 the laggard `3` at time `10`; GST is `12`. Before GST the network
 delivers nothing, so catch-up binds nobody — the large spread is
 admissible precisely because no evidence has crossed. The first round-`1`
-blocks appear at `12`; they reach the laggard at `14`, catch-up forces
-its round-`1` entry by `15`, and its own `waits` floor (`10 + 5`) meets
-that deadline exactly. From then on the laggard builds at the catch-up
-deadline, the leaders keep their own pace, and the spread neither grows
-past `3` nor shrinks below it.
+round-`0` blocks reach everyone at `14`, which is the earliest the
+leaders can build round `1` --- a validator cannot reference what it has
+not received (`holds_closed`). Those round-`1` blocks reach the laggard
+at `16`, catch-up forces its round-`1` entry by `17`, and its own `waits`
+floor (`10 + 5`) is met with room. From then on the laggard builds at the
+catch-up deadline, the leaders as soon as their references arrive, and
+the spread neither grows past `3` nor shrinks below it.
 
 This also settles the coexistence question: `catchup` and `waits` are
 jointly satisfiable *from* a large spread, not only near synchrony —
@@ -33,24 +35,26 @@ open LeanDag
 attribute [local instance 2000] rrSlots
 
 /-- Entry times: the laggard `3` starts round `0` nine ticks after `1`;
-from round `1` on, the leaders build at `12 + 5(n−1)` and the laggard
-is pinned by catch-up at `15 + 5(n−1)`. Validator `0` is Byzantine and
-outside `T`; its times follow validator `1`. -/
+from round `1` on, the leaders build at `14 + 5(n−1)` --- as early as
+their own references allow --- and the laggard is pinned by catch-up at
+`17 + 5(n−1)`. Validator `0` is Byzantine and outside `T`; its times
+follow validator `1`. -/
 def lagBuilt (v : Fin 4) : ℕ → ℕ
   | 0 => if (v : ℕ) = 3 then 10 else (v : ℕ) - 1
-  | n + 1 => (if (v : ℕ) = 3 then 15 else 12) + 5 * n
+  | n + 1 => (if (v : ℕ) = 3 then 17 else 14) + 5 * n
 
 @[simp] theorem lagBuilt_zero (v : Fin 4) :
     lagBuilt v 0 = if (v : ℕ) = 3 then 10 else (v : ℕ) - 1 := rfl
 @[simp] theorem lagBuilt_succ (v : Fin 4) (n : ℕ) :
-    lagBuilt v (n + 1) = (if (v : ℕ) = 3 then 15 else 12) + 5 * n := rfl
+    lagBuilt v (n + 1) = (if (v : ℕ) = 3 then 17 else 14) + 5 * n := rfl
 
 /-- When block `b` was built by its author. -/
 def lagStamp (b : ℕ) : ℕ := lagBuilt ⟨b % 4, by omega⟩ (b / 4)
 
 /-- What `v` holds at `t`: nothing crosses before GST (`12`), a block
 arrives `delay = 2` after the later of its build and GST, and one's own
-block is in hand at once. -/
+block is in hand at once. Since a build waits for the round below to
+arrive, holdings are causally closed. -/
 def lagHolds (N : ℕ) (v : Fin 4) (t : ℕ) : Finset ℕ :=
   (Finset.range (4 * (N + 1))).filter fun b =>
     max (lagStamp b) 12 + 2 ≤ t ∨ (b % 4 = (v : ℕ) ∧ lagStamp b ≤ t)
@@ -79,11 +83,60 @@ def ugrowLag (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
     · cases n <;> simp only [lagBuilt_zero, lagBuilt_succ, if_pos h] <;> omega
     · cases n <;> simp only [lagBuilt_zero, lagBuilt_succ, if_neg h] <;> omega
   timeout_pos _ := by omega
-  latest n := 10 + 5 * n
+  latest n := 12 + 5 * n
   built_le_latest v hv n _ := by
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
     cases n <;> simp only [lagBuilt_zero, lagBuilt_succ] <;> split <;> omega
+  holds_closed v hv t b hb j hj := by
+    obtain ⟨hv1, hv3⟩ := mem_T_bounds hv
+    have hv4 := v.isLt
+    simp only [lagHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
+    simp only [ugrow_block, mem_growBlock_refs] at hj
+    -- `j` sits one round below `b`
+    have hjb : j / 4 + 1 = b / 4 := by omega
+    obtain ⟨m, hm⟩ : ∃ m, j / 4 = m := ⟨j / 4, rfl⟩
+    have hbm : b / 4 = m + 1 := by omega
+    have hsj : lagStamp j = lagBuilt ⟨j % 4, by omega⟩ m := by
+      simp only [lagStamp, hm]
+    have hsb : lagStamp b = lagBuilt ⟨b % 4, by omega⟩ (m + 1) := by
+      simp only [lagStamp, hbm]
+    -- the round below is stamped at least five earlier, and `b`'s own
+    -- build waits for it
+    have hjub : lagStamp j ≤ 12 + 5 * m := by
+      rw [hsj]
+      cases m with
+      | zero => simp only [lagBuilt_zero]; split <;> omega
+      | succ p => simp only [lagBuilt_succ]; split <;> omega
+    have hblb : 14 + 5 * m ≤ lagStamp b := by
+      rw [hsb]; simp only [lagBuilt_succ]; split <;> omega
+    have h1 := le_max_left (lagStamp b) 12
+    have h2 := le_max_right (lagStamp b) 12
+    have hle : max (lagStamp j) 12 ≤ 12 + 5 * m := max_le (by omega) (by omega)
+    refine ⟨by omega, Or.inl ?_⟩
+    rcases hb.2 with h | ⟨_, h⟩ <;> omega
+  refs_held v hv n b hb hbc hbr := by
+    obtain ⟨hv1, hv3⟩ := mem_T_bounds hv
+    have hv4 := v.isLt
+    intro j hj
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round] at hbr
+    simp only [ugrow_block, mem_growBlock_refs] at hj
+    simp only [lagHolds, Finset.mem_filter, Finset.mem_range]
+    have hjn : j / 4 = n := by omega
+    have hsj : lagStamp j = lagBuilt ⟨j % 4, by omega⟩ n := by
+      simp only [lagStamp, hjn]
+    have hjub : lagStamp j ≤ 12 + 5 * n := by
+      rw [hsj]
+      cases n with
+      | zero => simp only [lagBuilt_zero]; split <;> omega
+      | succ p => simp only [lagBuilt_succ]; split <;> omega
+    have hvlb : 14 + 5 * n ≤ lagBuilt v (n + 1) := by
+      simp only [lagBuilt_succ]; split <;> omega
+    have hle : max (lagStamp j) 12 ≤ 12 + 5 * n := max_le (by omega) (by omega)
+    exact ⟨by omega, Or.inl (by omega)⟩
   holds := lagHolds N
+  holds_sub _ _ := by
+    simp only [lagHolds, ugrow_ids]; exact Finset.filter_subset _ _
   holds_own v hv n _ b hb hbc hbr := by
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
     have hv4 := v.isLt
@@ -139,9 +192,9 @@ def ugrowLag (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
           have h12 := le_max_right (lagBuilt u 0) 12
           omega
       | succ n =>
-          have hL : lagBuilt v (n + 1) ≤ 15 + 5 * n := by
+          have hL : lagBuilt v (n + 1) ≤ 17 + 5 * n := by
             simp only [lagBuilt_succ]; split <;> omega
-          have hU : 12 + 5 * n ≤ lagBuilt u (n + 1) := by
+          have hU : 14 + 5 * n ≤ lagBuilt u (n + 1) := by
             simp only [lagBuilt_succ]; split <;> omega
           have hm := le_max_left (lagBuilt u (n + 1)) 12
           omega

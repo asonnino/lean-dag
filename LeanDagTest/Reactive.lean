@@ -66,7 +66,24 @@ def ugrowReactive (N : ℕ) : ReactiveM (Ugrow N) {1, 2, 3} N where
   built_le_latest v _ _ _ := by have := v.isLt; omega
   built_lt _ _ _ _ := by omega
   deadline _ _ _ _ := by omega
+  refs_held v hv n b hb hbc hbr := by
+    obtain ⟨h1, h3⟩ := mem_T_bounds hv
+    intro j hj
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round] at hbr
+    simp only [ugrow_block, mem_growBlock_refs] at hj
+    simp only [reactHolds, Finset.mem_filter, Finset.mem_range]
+    exact ⟨by omega, Or.inl (by omega)⟩
   holds := reactHolds N
+  holds_sub _ _ := by
+    simp only [reactHolds, ugrow_ids]; exact Finset.filter_subset _ _
+  holds_closed v hv t b hb j hj := by
+    obtain ⟨h1, h3⟩ := mem_T_bounds hv
+    simp only [reactHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
+    simp only [ugrow_block, mem_growBlock_refs] at hj
+    have hjd : j / 4 + 1 = b / 4 := by omega
+    refine ⟨by omega, Or.inl ?_⟩
+    rcases hb.2 with h | ⟨_, h⟩ <;> omega
   holds_own v hv n _ b hb hbc hbr := by
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
     have hv4 := v.isLt

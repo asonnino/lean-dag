@@ -1,4 +1,5 @@
 import LeanDag.ViewPace
+import LeanDag.PaceDelivery
 import LeanDagTest.Quantitative
 
 /-!
@@ -56,7 +57,22 @@ def ugrowSkewPace (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
   latest n := 3 + 4 * n
   built_le_latest v _ _ _ := by have := v.isLt; omega
   proc := 0
+  refs_held v hv n b hb hbc hbr := by
+    obtain ⟨h1, h3⟩ := mem_T_bounds hv
+    intro j hj
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round] at hbr
+    simp only [ugrow_block, mem_growBlock_refs] at hj
+    simp only [skewHolds, Finset.mem_filter, Finset.mem_range]
+    exact ⟨by omega, Or.inl (by omega)⟩
   holds := skewHolds N
+  holds_sub _ _ := by
+    simp only [skewHolds, ugrow_ids]; exact Finset.filter_subset _ _
+  holds_closed v hv t b hb j hj := by
+    obtain ⟨h1, h3⟩ := mem_T_bounds hv
+    simp only [skewHolds, Finset.mem_filter, Finset.mem_range] at hb ⊢
+    simp only [ugrow_block, mem_growBlock_refs] at hj
+    exact ⟨by omega, Or.inl (by omega)⟩
   holds_own v hv n _ b hb hbc hbr := by
     have hv4 := v.isLt
     obtain ⟨h1, h3⟩ := mem_T_bounds hv
@@ -146,6 +162,22 @@ example (N : ℕ) (hlead : rrSlots.leader 3 ∈ ({1, 2, 3} : Finset (Fin 4)))
     (le_refl 0) (fun n _ => by change 2 * 2 + 0 ≤ 4; omega)
     (Nat.zero_le _) hN hlead
 
+/-- **Liveness is local, on data** (V18). Slot `3` is decided by validator
+`1` **on its own view** — the causal closure of what it holds at
+`latest 11 + delay`, not the full universe. The bound is the running
+constants: `latest (3*3+2) + 2`. -/
+example (N : ℕ) (hlead : rrSlots.leader 3 ∈ ({1, 2, 3} : Finset (Fin 4)))
+    (hN : rrSlots.slotRound 3 + 2 ≤ N) :
+    ∃ L, IsLeaderBlock (S := rrSlots) (Ugrow N) 3 L ∧
+      ∀ v ∈ ({1, 2, 3} : Finset (Fin 4)),
+        Decided (S := rrSlots) (Ugrow N)
+          ((ugrowSkewPace N).viewAt v
+            ((ugrowSkewPace N).latest (rrSlots.slotRound 3 + 2)
+              + (ugrowSkewPace N).delay)) 3 (some L) :=
+  (ugrowSkewPace N).decided_local (S := rrSlots) (R := 0) (by decide)
+    (le_refl 0) (fun n _ => by change 2 * 2 + 0 ≤ 4; omega)
+    (Nat.zero_le _) hN hlead
+
 /-- **Stuck, expressed.** A `ViewPace` in which a validator never gets past
 round `0`, while the horizon is `5`.
 
@@ -183,7 +215,17 @@ def ugrowStuckPace : ViewPace (Ugrow 0) {1} 5 where
     have hv1 : v = 1 := by simpa using hv
     subst hv1; omega
   proc := 1
+  refs_held _ _ n b hb _ hbr := by
+    simp only [ugrow_ids, Finset.mem_range] at hb
+    simp only [ugrow_block, rrBlock_round] at hbr
+    omega
   holds _ _ := {1}
+  holds_sub _ _ := by decide
+  holds_closed _ _ _ b hb j hj := by
+    have hb1 : b = 1 := by simpa using hb
+    subst hb1
+    simp only [ugrow_block, mem_growBlock_refs] at hj
+    omega
   holds_own v hv n _ b hb hbc _ := by
     have hv1 : v = 1 := by simpa using hv
     subst hv1
@@ -227,6 +269,49 @@ theorem ugrowStuckPace_stuck :
   simp only [ugrow_block, rrBlock_round] at hbr
   omega
 
+/-! ## The induced delivery layer, on data (V19)
+
+`Correct` at `f = 1` with the Byzantine set `{0}` is exactly `{1, 2, 3}`, so
+the running witness is a pacing structure over the correct validators, and
+`toDelivery` turns it into a delivery layer. That the term typechecks is the
+result: every field of `Delivery` — including the acceptance rule, which the
+storage development assumes — is discharged from the pacing clauses. -/
+
+def ugrowSkewCorrect (N : ℕ) : ViewPace (Ugrow N) (Correct : Finset (Fin 4)) N := by
+  rw [show (Correct : Finset (Fin 4)) = {1, 2, 3} from by decide]
+  exact ugrowSkewPace N
+
+/-- A pacing structure induces a delivery layer, on data. -/
+def ugrowSkewDelivery (N : ℕ) : Delivery (Ugrow N) := (ugrowSkewCorrect N).toDelivery
+
+/-- **And nonvacuously**: validator `1` really did hold validator `0`'s
+round-`0` block when it built at round `1`, so the induced layer records a
+genuine acceptance rather than an empty one. -/
+example : (0 : ℕ) ∈ (ugrowSkewDelivery 3).held 1 0 := by
+  have h := ViewPace.toDelivery_held (ugrowSkewCorrect 3) (v := 1) (n := 0) (by omega)
+  rw [show (ugrowSkewDelivery 3) = (ugrowSkewCorrect 3).toDelivery from rfl, h]
+  refine Finset.mem_filter.mpr ⟨?_, by simp [ugrow_block, rrBlock_round]⟩
+  show (0 : ℕ) ∈ (ugrowSkewCorrect 3).holds 1 ((ugrowSkewCorrect 3).built 1 1)
+  simp only [ugrowSkewCorrect]
+  show (0 : ℕ) ∈ skewHolds 3 1 ((1 : Fin 4) + 4 * 1)
+  simp only [skewHolds, Finset.mem_filter, Finset.mem_range]
+  exact ⟨by omega, Or.inl (by omega)⟩
+
+/-- **Liveness and bounded storage from one structure, on data** (V20).
+The running witness needs no hypothesis beyond the acceptance budget: the
+reference discipline is a clause of the trunk (S5) and production is
+derived, so the denial-of-service capstone applies to it through the
+induced delivery layer. -/
+example (N : ℕ) {κ : ℕ}
+    (hu : UniformBudget ((ugrowSkewCorrect N).toDelivery) κ) :
+    (∀ r ≤ N, Populated (Ugrow N) r) ∧
+      ∀ v ∈ (Correct : Finset (Fin 4)), ∀ n,
+        (viewUpto ((ugrowSkewCorrect N).toDelivery) v n).card ≤
+          (Correct : Finset (Fin 4)).card * (n + 1) +
+            ((Correct : Finset (Fin 4)).card * Faults.f (Fin 4) +
+              n * ((Correct : Finset (Fin 4)).card * (Faults.f (Fin 4) * κ))) :=
+  (ugrowSkewCorrect N).dos_resistance_of_pace hu
+
 #print axioms ugrowSkewPace_populated
 #print axioms ugrowSkewPace_synchronised
 #print axioms ugrowSkewPace_drift
@@ -236,6 +321,10 @@ theorem ugrowStuckPace_stuck :
 #print axioms LeanDag.PaceCore.drift_collapse
 #print axioms LeanDag.ViewPace.driftOn_of_catchup
 #print axioms LeanDag.ViewPace.commits_recur_via_pace
+#print axioms LeanDag.ViewPace.decided_local
+#print axioms LeanDag.ViewPace.toDelivery
+#print axioms ugrowSkewDelivery
+#print axioms LeanDag.ViewPace.dos_resistance_of_pace
 #print axioms LeanDag.ViewPace.covers_of_converges
 
 end LeanDagTest
