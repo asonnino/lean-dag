@@ -676,6 +676,33 @@ theorem decided_local (vp : ViewPace U T N)
     omega
   exact ⟨L, hL, vp.toPaceCore.decided_local_of_certifiesAt hcard hN hg hL hcert⟩
 
+/-- **The liveness spine, localised** (V18): commits recur, and at the
+recurring slot every reliable validator decides **on its own view**.
+
+The quantifier order of `commits_recur_via_pace` is preserved --- the slot
+is fixed by the schedule and the round bound alone, before any execution is
+named --- and the conclusion is the local one. Note what is absent:
+`T ⊆ Correct` is not needed. The global spine threads it through
+`commits_recur_on`, whose production comes from L1 over `Correct`; here
+production is the pacing structure's own, over `T` directly, so the
+hypothesis has nothing left to do. -/
+theorem commits_recur_local (hcard : quorumCard Validator ≤ T.card)
+    (fair : FairScheduleOn T) (R k : ℕ) :
+    ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ) (vp : ViewPace U T N),
+        vp.gst ≤ R → (∀ n, R ≤ n → 2 * vp.delay + vp.proc ≤ vp.timeout n) →
+        S.slotRound k' + 2 ≤ N →
+        ∃ L, IsLeaderBlock U k' L ∧ ∀ v ∈ T,
+          Decided U (vp.viewAt v (vp.latest (S.slotRound k' + 2) + vp.delay))
+            k' (some L) := by
+  obtain ⟨k₀, hk₀⟩ := S.unbounded R
+  obtain ⟨k', hk', hlead⟩ := fair (max k k₀)
+  have hRk' : R ≤ S.slotRound k' :=
+    le_trans hk₀ (S.mono (le_trans (le_max_right k k₀) hk'))
+  refine ⟨k', le_trans (le_max_left _ _) hk', hRk', ?_⟩
+  intro U N vp hgst hbackoff hN
+  exact vp.decided_local hcard hgst hbackoff hRk' hN hlead
+
 /-- **The global statement is a corollary**, so V18 strictly strengthens the
 main line: a reliable validator exists (the quorum bound is nonvacuous), it
 decides locally, and `decided_full` (L3) lifts its verdict to the full view.
