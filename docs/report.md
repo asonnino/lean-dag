@@ -739,6 +739,31 @@ the system actually falls.
 | P10 | the leader schedule names reliable validators arbitrarily far out | `FairScheduleOn` |
 | P11 | seeing a round is entering it: past GST, a held round-`n` block forces entry within `proc` | `PaceCore.catchup` |
 
+The liveness development adds a **store model** — five clauses about a
+validator's own holdings, which is the third thing (beside the protocol and
+the network) an implementation must supply. They are not bookkeeping: each
+excludes a behaviour a deployment could exhibit, and the last two were added
+because omitting them let the model describe runs no implementation could
+produce (§6.12).
+
+| | Clause | Formalisation |
+|:---|:---|:---|
+| S1 | a validator holds only blocks that exist | `PaceCore.holds_sub` |
+| S2 | holdings are causally closed: a held block's references are held | `PaceCore.holds_closed` |
+| S3 | a block references only what its author held when it built | `PaceCore.refs_held` |
+| S4 | a validator holds its own block from the moment it built it | `PaceCore.holds_own` |
+| S5 | holdings only grow | `PaceCore.holds_mono` |
+
+S4 fails for a validator that crashes before persisting its own block, and S5
+for one that garbage collects inside the liveness window — which is why §9's
+results are stated over explicit windows. S2 is P4 as a *store* property: a
+block whose history is missing can be neither validated (P3 and P3′ read the
+referenced blocks) nor built upon, so without the clause the model would
+oblige a validator to advance on evidence no implementation could act on, and
+adding it therefore *weakens* what is asked. S3 is the converse of P7, and it
+is what makes the delivery layer of §8 derivable rather than postulated
+(§6.12).
+
 P1–P6 are consumed by the safety development, P7–P11 additionally by liveness;
 P3′ by safety never, and by liveness exactly once (RS5, §11.5) — it is indispensable to §8, and consumed again by the fill of §12.
 
@@ -1176,6 +1201,11 @@ by violating a clause; read across to see what a result depends on.
 | P11 | `PaceCore.catchup` | L11 (CU2), and through it L7, L8a, L9, RS1–RS3, RS5 |
 | N2a | `EventuallyDelivers` | C3′, G6b, G7, G9 — store facts only (§4.3) |
 | N2 | `ViewPace.converges` | L7, V17, and through them every liveness capstone |
+| S1 | `PaceCore.holds_sub` | V18, V19 |
+| S2 | `PaceCore.holds_closed` | V18 (`viewAt_ids`) |
+| S3 | `PaceCore.refs_held` | V19, V20 |
+| S4 | `PaceCore.holds_own` | L7, V17, V18, and through them every liveness capstone |
+| S5 | `PaceCore.holds_mono` | L7, V17, V18, and through them every liveness capstone |
 
 Three readings are worth drawing out. **P8's consumers are the
 production derivation**: the liveness results take production as a
@@ -1717,7 +1747,9 @@ reactive discipline of §11 derives production and the targeted
 predicates of §6.6, which the commit arguments consume in coverage's
 place.
 
-`Delivery` (§6.2) is the storage and acceptance model — the DoS budgets
+`Delivery` (§6.2) is the storage and acceptance model — no longer an
+independent assumption, since a pacing structure induces one (V19, §6.12) —
+the DoS budgets
 of §8 and the garbage-collection windows of §9 are stated over it — and
 `EventuallyDelivers` is the post-`R` delivery premise of their
 incremental bounds. Neither is consumed by any liveness result.
@@ -4808,6 +4840,9 @@ every theorem above it vacuous, and vacuity is not otherwise detectable.
 | `ugrowTimingPace` | `ViewPace` in lockstep, with a rated `2^n` backoff |
 | `ugrowSkewPace` | `ViewPace` with nonzero drift and delay, its spread pinned at the collapse bound `Δ + proc` (CU1) |
 | `ugrowStuckPace` | `ViewPace` genuinely stuck: `top = 0` under a horizon of `5`, round `1` unpopulated |
+| `ugrowLag` | `ViewPace` from a spread of ten, collapsing to exactly `Δ + proc` (CU4) |
+| `ugrowSkewCorrect`, `ugrowSkewDelivery` | a pacing structure over `Correct`, and the `Delivery` it induces (V19) |
+| `Dtwin` | `UniformBudget Dtwin 3` and `ByzBudget Dtwin 0`: the acceptance budget, on a schedule with a real equivocation |
 | `rrSlots` | `Slots`, round-robin, satisfying `FairWithin T (f+1)` and `BoundedSpacing 3` |
 | `Model.lean` | six `BlockUniverse` instances exercising the safety definitions |
 | `Ucrash N`, `ucrashMsg` | `SkipMsg`: a crashed line, the message against it, and the fill (SS7) |

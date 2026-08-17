@@ -30,11 +30,13 @@ Everything is stated for `n ≥ 3f+1` validators with quorums of size
   what the network must supply reduces to a single clause of **view
   convergence** — after stabilisation, whatever one correct validator
   holds reaches every correct validator within `Δ` — from which the
-  structural condition is derived three ways and block production is
-  derived rather than assumed. Quantitative forms give the wait
-  threshold (a correct leader commits once correct validators wait
-  `D₀ + Δ`, `2Δ` under a common start). The quorum-based alternative N1
-  is retained in `LeanDag/Network/`, which nothing else imports.
+  structural condition is derived, and block production with it, rather
+  than assumed. The threshold a deployment must meet is the constant
+  `2Δ + proc`: no quantity set by deployment appears, because the
+  pacemaker's catch-up rule collapses any clock spread to `Δ + proc` in
+  one post-stabilisation round. And liveness is **local** — not merely
+  that some view commits, but that every reliable validator decides on
+  *its own* view, at an explicit time (`commits_recur_local`).
 - **Denial-of-service resistance** (`LeanDag/DoS/`): safety is shown
   independent of any anti-equivocation condition; storage is bounded
   under an exposure condition (with a matching construction showing its
@@ -56,13 +58,24 @@ Everything is stated for `n ≥ 3f+1` validators with quorums of size
   fallback. The fast path is quantified: round latency is bounded by
   drift, delivery and processing with the timeout appearing nowhere,
   and when delivery undercuts the timeout no timeout ever fires.
-- **Catch-up** (`LeanDag/Drift/`): drift between validators is
-  *preserved*, not contracted, by the standard build rules — refuted on
-  data — and one further clause (seeing evidence of a round is entering
-  it) collapses any start spread to `Δ + proc` in a single post-GST
-  round, making the commit threshold `2Δ + proc` with no deployment
-  assumption; a witness starts with a spread of ten and collapses to
-  exactly three.
+- **Catch-up**, now a clause of the pacing core: drift between
+  validators is *preserved*, not contracted, by the waiting rule alone —
+  refuted on data — and the pacemaker's second rule (seeing evidence of a
+  round is entering it) collapses any spread to `Δ + proc` in a single
+  post-stabilisation round, whatever it was before; a witness starts with
+  a spread of ten and collapses to exactly three. A valid block cannot
+  outrun the honest schedule, so the author-blind rule a deployment runs
+  is safe (`exists_honest_floor`).
+- **The view a validator holds** (`LeanDag/PaceDelivery.lean`): the
+  commit rules are view-relative and the pacing line reasons about
+  time-indexed holdings; the two are now joined. A validator's holdings
+  *are* a view (`viewAt_ids`), which is what makes liveness local; and a
+  pacing structure **induces** a delivery layer, so the storage model of
+  the DoS arc is derived rather than postulated — including its
+  acceptance rule, at most one block per author, which follows from the
+  reference discipline (`heldOf_inj`). One structure plus the acceptance
+  budget then yields liveness and linear storage together
+  (`dos_resistance_of_pace`).
 - **Safe Skip** (`LeanDag/SafeSkip/`): a crashed validator rejoins with
   **one constant-size message** denoting a block for every missed round —
   a donor's references plus the self reference the validity rules force.
@@ -122,14 +135,15 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 ## Layout
 
 - `LeanDag/` — theorem/definition source: the core DAG and Mysticeti
-  development at the top level, with `Network/` holding the quorum-based
-  network assumption kept out of the main line, and the arcs in subdirectories
-  (`Quality/` — chain quality; `DoS/` — equivocation and the novelty
-  budget; `GC/` — garbage collection; `Odontoceti/` — the two-round
-  protocol; `Reactive/` — the reactive schedule; `Drift/` — catch-up
-  and the start spread; `SafeSkip/` — crash recovery in one message;
-  `Adaptive/` — adaptive leader schedules; `Hybrid/` — Byzantine and
-  crash faults apart; `Integration/` — how the arcs compose).
+  development at the top level, with the pacing structures in
+  `ViewPace.lean` and the delivery layer they induce in
+  `PaceDelivery.lean`, and the arcs in subdirectories (`Quality/` —
+  chain quality; `DoS/` — equivocation and the novelty budget; `GC/` —
+  garbage collection; `Odontoceti/` — the two-round protocol;
+  `Reactive/` — the reactive schedule; `SafeSkip/` — crash recovery in
+  one message; `Adaptive/` — adaptive leader schedules; `Hybrid/` —
+  Byzantine and crash faults apart; `Network/` — the composed
+  denial-of-service capstones; `Integration/` — how the arcs compose).
 - `LeanDag.lean` — root import file.
 - `LeanDagTest/` — `decide` witnesses and concrete models, mirroring the
   same layout.
@@ -153,6 +167,7 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 | [`docs/report.md`](docs/report.md) | **the entry point**: the full report — model, commit rule, trust boundary (including what the adversary may do), safety, liveness on view convergence, the extension arcs, satisfiability, mechanisation — plus generated reference appendices giving **every definition and public theorem verbatim** and an index of the internal lemmas |
 | [`docs/spec.md`](docs/spec.md) | the safety design record |
 | [`docs/liveness.md`](docs/liveness.md) | the liveness design record, and eventual DAG synchrony |
+| [`docs/liveness-routes.md`](docs/liveness-routes.md) | why one liveness route was kept and the others deleted, and what the later clause changes cost |
 | [`docs/pipelining-and-multi-leader.md`](docs/pipelining-and-multi-leader.md) | the schedule generalization: eligibility, runs, pipelined commits |
 | [`docs/chain-quality.md`](docs/chain-quality.md) | chain quality: coverage without synchrony, inclusion with it |
 | [`docs/dos-equivocation-and-growth.md`](docs/dos-equivocation-and-growth.md) | equivocation, exposure, view growth, and the novelty budget |
