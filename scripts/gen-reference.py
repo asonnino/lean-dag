@@ -24,8 +24,8 @@ END = "<!-- END GENERATED REFERENCE -->"
 LAYERS = [
     ("The validator set and the fault model", ["Validators"]),
     ("Blocks, validity, and the universe", ["Block", "BlockDag"]),
-    ("Causal structure", ["CausalHistory", "History", "Support", "CommonCore",
-     "Persistence"]),
+    ("Causal structure", ["Causality", "CausalHistory", "History", "Support",
+     "CommonCore", "Persistence"]),
     ("Slots and the schedule", ["Schedule"]),
     ("The commit rule, and the ledger", ["Mysticeti"]),
     ("Delivery, growth, and coverage", ["Participation", "Liveness"]),

@@ -154,7 +154,7 @@ theorem reaches_fill_old {a b : BlockId} (ha : a ∈ U.ids) :
     | refl => exact ⟨ha, Relation.ReflTransGen.refl⟩
     | tail _ hstep ih =>
         obtain ⟨hbo, hr⟩ := ih
-        unfold RefStep at hstep
+        unfold RefStepFrom at hstep
         rw [sk.skipFill_block_old hbo] at hstep
         exact ⟨U.complete _ hbo _ hstep, hr.tail hstep⟩
   · rintro ⟨_, h⟩
@@ -167,7 +167,7 @@ theorem reaches_fill_old {a b : BlockId} (ha : a ∈ U.ids) :
           | refl => exact ha
           | @tail x y _ hstep' ih' => exact U.complete _ ih' _ hstep'
         refine (ih hbo).tail ?_
-        unfold RefStep
+        unfold RefStepFrom
         rw [sk.skipFill_block_old hbo]
         exact hstep
 

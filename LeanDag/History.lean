@@ -1,24 +1,20 @@
 import LeanDag.CausalHistory
-import Mathlib.Data.Finset.Union
 
 /-!
-# Causal history as a finite set
+# Causal history as a `Finset`
 
-`dos-equivocation-and-growth.md` §7 S6.
+`Reaches` is a `Prop`, which the DoS budgets cannot count. `history U b` is
+the same relation as data: the block, its references, their references, and
+so on down to genesis.
 
-`Reaches` is `Relation.ReflTransGen`, a `Prop`, and nothing can be counted in a
-`Prop`. Every size result in the DoS plan is a statement about how many blocks
-lie in a causal history, so the history has to be a `Finset`. The obvious
-`U.ids.filter (Reaches U b ·)` needs a `DecidablePred` that `ReflTransGen` does
-not supply, and well-founded recursion on the round does not work either:
-`U.block` is junk outside `U.ids`, so the round need not decrease there. Fuel
-indexed by the round is structural, computable, and keeps concrete models
-checkable by `decide` — which is the whole reason not to reach for
-`Classical.dec`.
+The walk and its lemmas live in `Causality.lean`, over the raw block data;
+a universe supplies the `CausalStructure` they consume. This file is that
+layer read at `U.block`/`U.ids`, keeping the names the rest of the
+development uses.
 
-The fuel is never short: a reference step drops the round by exactly one (T2),
-so `round + 1` steps suffice from any block of the universe. That is
-`mem_history_iff`, and it is the only lemma here that does any work.
+The one lemma that does any work is `mem_history_iff`: the search is fuelled
+by a step count, and a reference drops the round by one (T2), so `round + 1`
+steps suffice from any block of the universe.
 -/
 
 namespace LeanDag
@@ -34,9 +30,8 @@ Structural in the fuel `n`, so it is computable and needs no decidability
 hypothesis. Outside `U.ids` it still evaluates — to junk, like `U.block`
 itself — and every statement below quantifies over ids of the universe. -/
 def historyUpto (U : BlockUniverse Validator BlockId Payload) :
-    ℕ → BlockId → Finset BlockId
-  | 0, b => {b}
-  | n + 1, b => insert b ((U.block b).refs.biUnion (historyUpto U n))
+    ℕ → BlockId → Finset BlockId :=
+  historyUptoFrom U.block
 
 @[simp]
 theorem historyUpto_zero (b : BlockId) : historyUpto U 0 b = {b} := rfl
@@ -46,145 +41,88 @@ theorem historyUpto_succ (n : ℕ) (b : BlockId) :
 
 theorem mem_historyUpto_succ {n : ℕ} {b i : BlockId} :
     i ∈ historyUpto U (n + 1) b ↔
-      i = b ∨ ∃ j ∈ (U.block b).refs, i ∈ historyUpto U n j := by
-  rw [historyUpto_succ, Finset.mem_insert, Finset.mem_biUnion]
+      i = b ∨ ∃ j ∈ (U.block b).refs, i ∈ historyUpto U n j :=
+  mem_historyUptoFrom_succ
 
-theorem mem_historyUpto_self {n : ℕ} {b : BlockId} : b ∈ historyUpto U n b := by
-  cases n with
-  | zero => simp
-  | succ n => exact mem_historyUpto_succ.mpr (Or.inl rfl)
+theorem mem_historyUpto_self {n : ℕ} {b : BlockId} : b ∈ historyUpto U n b :=
+  mem_historyUptoFrom_self
 
 /-- More fuel never loses anything. Needed because `mem_history_iff` fixes the
 fuel at `round + 1` while the recursion hands out whatever is left. -/
 theorem historyUpto_mono {m n : ℕ} (h : m ≤ n) (b : BlockId) :
-    historyUpto U m b ⊆ historyUpto U n b := by
-  induction n generalizing m b with
-  | zero =>
-      obtain rfl : m = 0 := Nat.le_zero.mp h
-      exact Finset.Subset.refl _
-  | succ n ih =>
-      intro i hi
-      rcases Nat.eq_zero_or_pos m with rfl | hm
-      · rw [historyUpto_zero, Finset.mem_singleton] at hi
-        exact hi ▸ mem_historyUpto_self
-      · obtain ⟨m, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
-        rcases mem_historyUpto_succ.mp hi with rfl | ⟨j, hj, hij⟩
-        · exact mem_historyUpto_self
-        · exact mem_historyUpto_succ.mpr (Or.inr ⟨j, hj, ih (by omega) j hij⟩)
+    historyUpto U m b ⊆ historyUpto U n b :=
+  historyUptoFrom_mono h b
 
 /-- **Soundness.** Anything the fuelled search finds really is reachable. No
 hypothesis on `b`: even off the universe, `historyUpto` only ever walks
 references. -/
 theorem reaches_of_mem_historyUpto {n : ℕ} {b i : BlockId}
-    (h : i ∈ historyUpto U n b) : Reaches U b i := by
-  induction n generalizing b with
-  | zero =>
-      rw [historyUpto_zero, Finset.mem_singleton] at h
-      exact h ▸ Reaches.refl
-  | succ n ih =>
-      rcases mem_historyUpto_succ.mp h with rfl | ⟨j, hj, hij⟩
-      · exact Reaches.refl
-      · exact Reaches.of_mem_refs hj (ih hij)
+    (h : i ∈ historyUpto U n b) : Reaches U b i :=
+  reaches_of_mem_historyUptoFrom h
 
 /-- **Completeness**, with the fuel accounted for. A path from `b` drops the
 round by one per step (T2), so `round b` steps exhaust it — and one more is
 harmless by `historyUpto_mono`.
 
-The base case is where the round bound does its work: at round `0` validity
-forces `refs = ∅` (`refs_empty_of_round_zero`), so `b` reaches only itself. -/
+The base case is where the round bound does its work: at round `0` a
+reference would have to sit below round `0`, so `b` reaches only itself. -/
 theorem mem_historyUpto_of_reaches {n : ℕ} {b i : BlockId} (hb : b ∈ U.ids)
-    (hn : (U.block b).round ≤ n) (h : Reaches U b i) : i ∈ historyUpto U n b := by
-  induction n generalizing b with
-  | zero =>
-      have hrefs : (U.block b).refs = ∅ :=
-        (U.valid b hb).refs_empty_of_round_zero (by omega)
-      rw [eq_of_reaches_of_refs_empty hrefs h]
-      simp
-  | succ n ih =>
-      rcases h.cases_head with rfl | ⟨j, hstep, hji⟩
-      · exact mem_historyUpto_self
-      · have hj_ids : j ∈ U.ids := U.complete b hb j hstep
-        have hj_round := U.round_of_mem_refs hb hstep
-        exact mem_historyUpto_succ.mpr (Or.inr ⟨j, hstep, ih hj_ids (by omega) hji⟩)
+    (hn : (U.block b).round ≤ n) (h : Reaches U b i) : i ∈ historyUpto U n b :=
+  U.causal.mem_historyUpto_of_reaches hb hn h
 
 /-- The causal history of `b`, as a `Finset`. -/
 def history (U : BlockUniverse Validator BlockId Payload) (b : BlockId) : Finset BlockId :=
-  historyUpto U ((U.block b).round + 1) b
+  historyFrom U.block b
 
 /-- **The representation is faithful** (`dos-equivocation-and-growth.md` §7 S6). For a block of the universe,
 membership of `history` and reachability are the same thing. -/
 theorem mem_history_iff {b i : BlockId} (hb : b ∈ U.ids) :
     i ∈ history U b ↔ Reaches U b i :=
-  ⟨reaches_of_mem_historyUpto, mem_historyUpto_of_reaches hb (by omega)⟩
+  U.causal.mem_history_iff hb
 
 /-- A block lies in its own causal history. -/
 @[simp]
-theorem mem_history_self {b : BlockId} : b ∈ history U b := mem_historyUpto_self
+theorem mem_history_self {b : BlockId} : b ∈ history U b := mem_historyFrom_self
 
 /-- Histories stay inside the universe. -/
 theorem history_subset_ids {b : BlockId} (hb : b ∈ U.ids) : history U b ⊆ U.ids :=
-  fun _ hi => mem_ids_of_reaches hb ((mem_history_iff hb).mp hi)
+  U.causal.history_subset_ids hb
 
 /-- Histories nest along reachability — the `Finset` form of transitivity, and
 what makes D12 one line. -/
 theorem history_subset_of_reaches {c b : BlockId} (hc : c ∈ U.ids) (h : Reaches U c b) :
-    history U b ⊆ history U c := by
-  have hb : b ∈ U.ids := mem_ids_of_reaches hc h
-  intro i hi
-  exact (mem_history_iff hc).mpr (h.trans ((mem_history_iff hb).mp hi))
+    history U b ⊆ history U c :=
+  U.causal.history_subset_of_reaches hc h
 
 /-- The one-step unfolding: a history is its block, plus the histories of its
 references. The fuel bookkeeping is what makes this need a proof rather than
 `rfl` — the recursion hands out `round b` steps, and each reference wants
 `round + 1` of its own, which the predecessor condition reconciles. -/
 theorem mem_history_succ_iff {b : BlockId} (hb : b ∈ U.ids) {i : BlockId} :
-    i ∈ history U b ↔ i = b ∨ ∃ j ∈ (U.block b).refs, i ∈ history U j := by
-  rw [history, mem_historyUpto_succ]
-  constructor
-  · rintro (rfl | ⟨j, hj, hij⟩)
-    · exact Or.inl rfl
-    · refine Or.inr ⟨j, hj, ?_⟩
-      rw [history, U.round_of_mem_refs hb hj]
-      exact hij
-  · rintro (rfl | ⟨j, hj, hij⟩)
-    · exact Or.inl rfl
-    · refine Or.inr ⟨j, hj, ?_⟩
-      rw [history, U.round_of_mem_refs hb hj] at hij
-      exact hij
+    i ∈ history U b ↔ i = b ∨ ∃ j ∈ (U.block b).refs, i ∈ history U j :=
+  U.causal.mem_history_succ_iff hb
 
 /-- Causal history runs downward (T2), in the `Finset` form. -/
 theorem round_le_of_mem_history {b i : BlockId} (hb : b ∈ U.ids) (hi : i ∈ history U b) :
     (U.block i).round ≤ (U.block b).round :=
-  round_le_of_reaches hb ((mem_history_iff hb).mp hi)
+  U.causal.round_le_of_mem_history hb hi
 
 /-- Nothing in a block's history sits at the block's own round except the block
 itself: a reference step drops the round strictly. -/
 theorem eq_of_mem_history_of_round_eq {b i : BlockId} (hb : b ∈ U.ids)
-    (hi : i ∈ history U b) (hround : (U.block i).round = (U.block b).round) : i = b := by
-  rcases (mem_history_succ_iff hb).mp hi with rfl | ⟨j, hj, hij⟩
-  · rfl
-  · exfalso
-    have hj_ids : j ∈ U.ids := U.complete b hb j hj
-    have h1 := U.round_of_mem_refs hb hj
-    have h2 := round_le_of_reaches hj_ids ((mem_history_iff hj_ids).mp hij)
-    omega
+    (hi : i ∈ history U b) (hround : (U.block i).round = (U.block b).round) : i = b :=
+  U.causal.eq_of_mem_history_of_round_eq hb hi hround
 
 /-- **The layer one below is exactly the reference set.** Anything in `b`'s
 history at round `round b - 1` is a direct reference of `b`. -/
 theorem mem_refs_of_mem_history_of_round_succ {b i : BlockId} (hb : b ∈ U.ids)
     (hi : i ∈ history U b) (hround : (U.block i).round + 1 = (U.block b).round) :
-    i ∈ (U.block b).refs := by
-  rcases (mem_history_succ_iff hb).mp hi with rfl | ⟨j, hj, hij⟩
-  · omega
-  · have hj_ids : j ∈ U.ids := U.complete b hb j hj
-    have h1 := U.round_of_mem_refs hb hj
-    have h2 := round_le_of_reaches hj_ids ((mem_history_iff hj_ids).mp hij)
-    have : i = j := eq_of_mem_history_of_round_eq hj_ids hij (by omega)
-    exact this ▸ hj
+    i ∈ (U.block b).refs :=
+  U.causal.mem_refs_of_mem_history_of_round_succ hb hi hround
 
 /-- A block's references lie in its history, one step down. -/
 theorem mem_history_of_mem_refs {b j : BlockId} (hb : b ∈ U.ids) (hj : j ∈ (U.block b).refs) :
     j ∈ history U b :=
-  (mem_history_iff hb).mpr (Reaches.single hj)
+  U.causal.mem_history_of_mem_refs hb hj
 
 end LeanDag

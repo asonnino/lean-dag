@@ -196,10 +196,10 @@ theorem reaches_addGenesis {b i : BlockId} (hb : b ∈ V.ids) :
           induction ‹Relation.ReflTransGen _ b x› with
           | refl => exact hb
           | @tail u w _ hs' ih' =>
-              unfold RefStep at hs'
+              unfold RefStepFrom at hs'
               rw [addGenesis_block_old ih'] at hs'
               exact V.complete _ ih' _ hs'
-        unfold RefStep at hstep
+        unfold RefStepFrom at hstep
         rw [addGenesis_block_old hxo] at hstep
         exact ih.tail hstep
   · intro h
@@ -208,7 +208,7 @@ theorem reaches_addGenesis {b i : BlockId} (hb : b ∈ V.ids) :
     | @tail x y hr hstep ih =>
         have hxo : x ∈ V.ids := mem_ids_of_reaches hb hr
         refine ih.tail ?_
-        unfold RefStep
+        unfold RefStepFrom
         rw [addGenesis_block_old hxo]
         exact hstep
 

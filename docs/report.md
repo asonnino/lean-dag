@@ -501,9 +501,18 @@ one. It also determines the shape of the growth clause P8 (§6.3).
 ### 2.4 Causal history
 
 ```lean
-def RefStep (U) (i j : BlockId) : Prop := j ∈ (U.block i).refs
-def Reaches (U) : BlockId → BlockId → Prop := Relation.ReflTransGen (RefStep U)
+def RefStepFrom (blk) (i j : BlockId) : Prop := j ∈ (blk i).refs
+def ReachesFrom (blk) : BlockId → BlockId → Prop := Relation.ReflTransGen (RefStepFrom blk)
+def Reaches (U) : BlockId → BlockId → Prop := ReachesFrom U.block
 ```
+
+The walk is stated over the block assignment rather than over a universe
+type, because it consumes nothing else: `Causality.lean` proves it once, and
+both the Byzantine universe here and the crash universe of §15 read it at
+their own data. What each supplies is a `CausalStructure` — references stay
+inside the population, and a reference sits one round below — which is
+everything reachability and the finite cone need. The same hoist serves
+production and coverage (§6.3).
 
 ### 2.5 Notation, and the labelling scheme
 
@@ -6099,16 +6108,68 @@ Views share `U.block`, so they disagree about *which* blocks they hold, never ab
 
 ### Causal structure
 
-#### `RefStep`
+#### `CausalStructure`
 
-*def, `CausalHistory.lean`*
+*structure, `Causality.lean`*
 
 ```lean
-def RefStep (U : BlockUniverse Validator BlockId Payload) (i j : BlockId) : Prop :=
-  j ∈ (U.block i).refs
+structure CausalStructure (blk : BlockId → Block Validator BlockId Payload)
+    (ids : Finset BlockId) : Prop where
+  /-- Every referenced block is itself present. -/
+  complete : ∀ i ∈ ids, ∀ j ∈ (blk i).refs, j ∈ ids
+  /-- A reference sits in the round immediately below its referrer. -/
+  refs_round : ∀ i ∈ ids, ∀ j ∈ (blk i).refs, (blk j).round + 1 = (blk i).round
+```
+
+**The structural core of a block DAG.** A population closed under references, whose references sit one round below. This is everything the causal-history layer consumes of a universe — no validity beyond the predecessor condition, no quorum, no fault model.
+
+#### `RefStepFrom`
+
+*def, `Causality.lean`*
+
+```lean
+def RefStepFrom (blk : BlockId → Block Validator BlockId Payload) (i j : BlockId) : Prop :=
+  j ∈ (blk i).refs
 ```
 
 One step of causal history: `j` is directly referenced by `i`.
+
+#### `ReachesFrom`
+
+*def, `Causality.lean`*
+
+```lean
+def ReachesFrom (blk : BlockId → Block Validator BlockId Payload) :
+    BlockId → BlockId → Prop :=
+  Relation.ReflTransGen (RefStepFrom blk)
+```
+
+`ReachesFrom blk c b` — `b` lies in the causal history of `c`.
+
+#### `historyUptoFrom`
+
+*def, `Causality.lean`*
+
+```lean
+def historyUptoFrom (blk : BlockId → Block Validator BlockId Payload) :
+    ℕ → BlockId → Finset BlockId
+  | 0, b => {b}
+  | n + 1, b => insert b ((blk b).refs.biUnion (historyUptoFrom blk n))
+```
+
+Everything reachable from `b` in at most `n` reference steps.
+
+#### `historyFrom`
+
+*def, `Causality.lean`*
+
+```lean
+def historyFrom (blk : BlockId → Block Validator BlockId Payload) (b : BlockId) :
+    Finset BlockId :=
+  historyUptoFrom blk ((blk b).round + 1) b
+```
+
+The causal history of `b`, as a `Finset`.
 
 #### `Reaches`
 
@@ -6116,7 +6177,7 @@ One step of causal history: `j` is directly referenced by `i`.
 
 ```lean
 def Reaches (U : BlockUniverse Validator BlockId Payload) : BlockId → BlockId → Prop :=
-  Relation.ReflTransGen (RefStep U)
+  ReachesFrom U.block
 ```
 
 `Reaches U c b` — `b` lies in the causal history of `c`.
@@ -6127,9 +6188,8 @@ def Reaches (U : BlockUniverse Validator BlockId Payload) : BlockId → BlockId 
 
 ```lean
 def historyUpto (U : BlockUniverse Validator BlockId Payload) :
-    ℕ → BlockId → Finset BlockId
-  | 0, b => {b}
-  | n + 1, b => insert b ((U.block b).refs.biUnion (historyUpto U n))
+    ℕ → BlockId → Finset BlockId :=
+  historyUptoFrom U.block
 ```
 
 Everything reachable from `b` in at most `n` reference steps.
@@ -6142,7 +6202,7 @@ Structural in the fuel `n`, so it is computable and needs no decidability hypoth
 
 ```lean
 def history (U : BlockUniverse Validator BlockId Payload) (b : BlockId) : Finset BlockId :=
-  historyUpto U ((U.block b).round + 1) b
+  historyFrom U.block b
 ```
 
 The causal history of `b`, as a `Finset`.
@@ -8919,24 +8979,13 @@ structure View (Validator BlockId Payload : Type*) [Fintype Validator]
 
 A view: one validator's local, reference-closed sub-DAG.
 
-#### `RefStep`
-
-*def, `Nemo.CausalHistory.lean`*
-
-```lean
-def RefStep (U : Universe Validator BlockId Payload) (i j : BlockId) : Prop :=
-  j ∈ (U.block i).refs
-```
-
-One step of causal history: `j` is directly referenced by `i`.
-
 #### `Reaches`
 
 *def, `Nemo.CausalHistory.lean`*
 
 ```lean
 def Reaches (U : Universe Validator BlockId Payload) : BlockId → BlockId → Prop :=
-  Relation.ReflTransGen (RefStep U)
+  ReachesFrom U.block
 ```
 
 `Reaches U c b` — `b` lies in the causal history of `c`.
@@ -8947,14 +8996,11 @@ def Reaches (U : Universe Validator BlockId Payload) : BlockId → BlockId → P
 
 ```lean
 def historyUpto (U : Universe Validator BlockId Payload) :
-    ℕ → BlockId → Finset BlockId
-  | 0, b => {b}
-  | n + 1, b => insert b ((U.block b).refs.biUnion (historyUpto U n))
+    ℕ → BlockId → Finset BlockId :=
+  historyUptoFrom U.block
 ```
 
 Everything reachable from `b` in at most `n` reference steps.
-
-Structural in the fuel `n`, so it is computable and needs no decidability hypothesis. Outside `U.ids` it still evaluates — to junk, like `U.block` itself — and every statement below quantifies over ids of the universe.
 
 #### `history`
 
@@ -8962,7 +9008,7 @@ Structural in the fuel `n`, so it is computable and needs no decidability hypoth
 
 ```lean
 def history (U : Universe Validator BlockId Payload) (b : BlockId) : Finset BlockId :=
-  historyUpto U ((U.block b).round + 1) b
+  historyFrom U.block b
 ```
 
 The causal history of `b`, as a `Finset`.
@@ -9560,7 +9606,7 @@ No promptness ceiling and no attainment clause appear: drift is derived from the
 
 ## Appendix C. The theorem reference
 
-The 383 theorems that either another module of the
+The 403 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -9814,6 +9860,272 @@ This is the recurring "peel off one certification layer" step: it is exactly wha
 
 #### `refl`
 
+*theorem, `Causality.lean`*
+
+```lean
+theorem refl {c : BlockId} : ReachesFrom blk c c
+```
+
+Every block is in its own causal history.
+
+#### `single`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem single {i j : BlockId} (h : j ∈ (blk i).refs) : ReachesFrom blk i j
+```
+
+A direct reference is one step of causal history.
+
+#### `trans`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem trans {a b c : BlockId} (h₁ : ReachesFrom blk a b) (h₂ : ReachesFrom blk b c) :
+    ReachesFrom blk a c
+```
+
+Causal history composes.
+
+#### `of_mem_refs`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem of_mem_refs {i j b : BlockId} (hij : j ∈ (blk i).refs) (hjb : ReachesFrom blk j b) :
+    ReachesFrom blk i b
+```
+
+Prepend a direct reference.
+
+#### `mem_of_reaches_of_closed`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem mem_of_reaches_of_closed {S : Finset BlockId}
+    (hS : ∀ i ∈ S, ∀ j ∈ (blk i).refs, j ∈ S) {c b : BlockId}
+    (hc : c ∈ S) (h : ReachesFrom blk c b) : b ∈ S
+```
+
+**Causal history never leaves a reference-closed set.** Stated over any such set, so one lemma serves both the population of a universe and the holdings of a view.
+
+#### `eq_of_reaches_of_refs_empty`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem eq_of_reaches_of_refs_empty {c b : BlockId} (hc : (blk c).refs = ∅)
+    (h : ReachesFrom blk c b) : b = c
+```
+
+A block with no references reaches only itself.
+
+#### `mem_ids_of_reaches`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem mem_ids_of_reaches (C : CausalStructure blk ids)
+    {c b : BlockId} (hc : c ∈ ids) (h : ReachesFrom blk c b) :
+    b ∈ ids
+```
+
+Causal history stays inside the population.
+
+#### `refs_empty_of_round_zero`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem refs_empty_of_round_zero (C : CausalStructure blk ids)
+    {b : BlockId} (hb : b ∈ ids) (hround : (blk b).round = 0) :
+    (blk b).refs = ∅
+```
+
+**A genesis block has no references** — one would have to sit a round below round `0`. Derived, so no validity clause is needed for it here.
+
+#### `round_le_of_reaches`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem round_le_of_reaches (C : CausalStructure blk ids)
+    {c b : BlockId} (hc : c ∈ ids) (h : ReachesFrom blk c b) :
+    (blk b).round ≤ (blk c).round
+```
+
+**Causal history runs downward in rounds.**
+
+#### `not_reaches_of_round_lt`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem not_reaches_of_round_lt (C : CausalStructure blk ids) {c b : BlockId} (hc : c ∈ ids)
+    (h : (blk c).round < (blk b).round) : ¬ ReachesFrom blk c b
+```
+
+A block cannot reach anything strictly above it.
+
+#### `mem_historyUptoFrom_succ`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem mem_historyUptoFrom_succ {n : ℕ} {b i : BlockId} :
+    i ∈ historyUptoFrom blk (n + 1) b ↔
+      i = b ∨ ∃ j ∈ (blk b).refs, i ∈ historyUptoFrom blk n j
+```
+
+#### `mem_historyUptoFrom_self`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem mem_historyUptoFrom_self {n : ℕ} {b : BlockId} : b ∈ historyUptoFrom blk n b
+```
+
+#### `historyUptoFrom_mono`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem historyUptoFrom_mono {m n : ℕ} (h : m ≤ n) (b : BlockId) :
+    historyUptoFrom blk m b ⊆ historyUptoFrom blk n b
+```
+
+More fuel never loses anything.
+
+#### `reaches_of_mem_historyUptoFrom`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem reaches_of_mem_historyUptoFrom {n : ℕ} {b i : BlockId}
+    (h : i ∈ historyUptoFrom blk n b) : ReachesFrom blk b i
+```
+
+**Soundness.** Anything the fuelled search finds really is reachable.
+
+#### `mem_historyFrom_self`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem mem_historyFrom_self {b : BlockId} : b ∈ historyFrom blk b
+```
+
+A block lies in its own causal history.
+
+#### `mem_historyUpto_of_reaches`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem mem_historyUpto_of_reaches (C : CausalStructure blk ids)
+    {n : ℕ} {b i : BlockId} (hb : b ∈ ids)
+    (hn : (blk b).round ≤ n) (h : ReachesFrom blk b i) :
+    i ∈ historyUptoFrom blk n b
+```
+
+**Completeness**, with the fuel accounted for. A path drops the round by one per step, so `round b` steps exhaust it; the base case is the derived `refs_empty_of_round_zero`.
+
+#### `mem_history_iff`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem mem_history_iff (C : CausalStructure blk ids) {b i : BlockId} (hb : b ∈ ids) :
+    i ∈ historyFrom blk b ↔ ReachesFrom blk b i
+```
+
+**The representation is faithful.** For a block of the population, membership of `historyFrom` and reachability are the same thing.
+
+#### `history_subset_ids`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem history_subset_ids (C : CausalStructure blk ids)
+    {b : BlockId} (hb : b ∈ ids) : historyFrom blk b ⊆ ids
+```
+
+Histories stay inside the population.
+
+#### `history_subset_of_reaches`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem history_subset_of_reaches (C : CausalStructure blk ids) {c b : BlockId} (hc : c ∈ ids)
+    (h : ReachesFrom blk c b) : historyFrom blk b ⊆ historyFrom blk c
+```
+
+Histories nest along reachability.
+
+#### `mem_history_succ_iff`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem mem_history_succ_iff (C : CausalStructure blk ids)
+    {b : BlockId} (hb : b ∈ ids) {i : BlockId} :
+    i ∈ historyFrom blk b ↔ i = b ∨ ∃ j ∈ (blk b).refs, i ∈ historyFrom blk j
+```
+
+The one-step unfolding: a history is its block, plus the histories of its references. The predecessor condition reconciles the fuel.
+
+#### `round_le_of_mem_history`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem round_le_of_mem_history (C : CausalStructure blk ids) {b i : BlockId} (hb : b ∈ ids)
+    (hi : i ∈ historyFrom blk b) : (blk i).round ≤ (blk b).round
+```
+
+Causal history runs downward, in the `Finset` form.
+
+#### `eq_of_mem_history_of_round_eq`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem eq_of_mem_history_of_round_eq (C : CausalStructure blk ids) {b i : BlockId} (hb : b ∈ ids)
+    (hi : i ∈ historyFrom blk b) (hround : (blk i).round = (blk b).round) : i = b
+```
+
+Nothing in a block's history sits at the block's own round except the block itself.
+
+#### `mem_refs_of_mem_history_of_round_succ`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem mem_refs_of_mem_history_of_round_succ (C : CausalStructure blk ids)
+    {b i : BlockId} (hb : b ∈ ids)
+    (hi : i ∈ historyFrom blk b) (hround : (blk i).round + 1 = (blk b).round) :
+    i ∈ (blk b).refs
+```
+
+**The layer one below is exactly the reference set.**
+
+#### `mem_history_of_mem_refs`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem mem_history_of_mem_refs (C : CausalStructure blk ids) {b j : BlockId} (hb : b ∈ ids)
+    (hj : j ∈ (blk b).refs) : j ∈ historyFrom blk b
+```
+
+A block's references lie in its history, one step down.
+
+#### `refl`
+
 *theorem, `CausalHistory.lean`*
 
 ```lean
@@ -9863,17 +10175,6 @@ theorem mem_ids_of_reaches {c b : BlockId} (hc : c ∈ U.ids) (h : Reaches U c b
 
 Causal history stays inside the universe: completeness propagates along every step.
 
-#### `eq_of_reaches_of_refs_empty`
-
-*theorem, `CausalHistory.lean`*
-
-```lean
-theorem eq_of_reaches_of_refs_empty {c b : BlockId} (hc : (U.block c).refs = ∅)
-    (h : Reaches U c b) : b = c
-```
-
-A block with no references reaches only itself. In particular genesis blocks (`spec.md` §3.2, `refs_empty_of_round_zero`) are causal-history leaves.
-
 #### `reaches_self_ancestor`
 
 *theorem, `CausalHistory.lean`*
@@ -9891,6 +10192,8 @@ theorem reaches_self_ancestor {u : Validator}
 
 The walk needs no production hypothesis — each step's target *exists* because the reference exists (P3′ supplies a same-creator reference, P1 puts it one round down, completeness keeps it in the universe) — and it lands on the right block because a correct author has only one block per round (T1). This is the backbone of the rotation-inclusion argument (report §11.5): a straggler's block is woven into the common cone not by per-round coverage but by its author's own chain, the moment the author leads a slot.
 
+This is the one result here the structural layer cannot state: it consumes the self-parent clause and non-equivocation, both of which are properties of the *Byzantine* validity notion.
+
 #### `round_le_of_reaches`
 
 *theorem, `CausalHistory.lean`*
@@ -9902,7 +10205,7 @@ theorem round_le_of_reaches {c b : BlockId} (hc : c ∈ U.ids) (h : Reaches U c 
 
 **T2.** Causal history runs downward in rounds: anything `c` reaches sits at a round no greater than `c`'s.
 
-This is the substantive half of T2 — reflexivity, single steps and transitivity are inherited from `ReflTransGen`. It rests on `spec.md` §3.2's predecessor condition, applied at each step to an intermediate id that `mem_ids_of_reaches` keeps inside the universe.
+This is the substantive half of T2 — reflexivity, single steps and transitivity are inherited from `ReflTransGen`. It rests on `spec.md` §3.2's predecessor condition, which is the second field of the universe's `CausalStructure`.
 
 #### `View.mem_of_reaches`
 
@@ -13801,28 +14104,12 @@ theorem exists_common_mem_of_quorums {s t : Finset BlockId} {n : ℕ}
 
 **Two majority-backed sets of round-`n` blocks share a block.** The crash analogue of the core's `exists_common_mem_of_quorums`: majority intersection (all honest) plus universal non-equivocation.
 
-#### `refl`
-
-*theorem, `Nemo.CausalHistory.lean`*
-
-```lean
-theorem refl {c : BlockId} : Reaches U c c
-```
-
 #### `single`
 
 *theorem, `Nemo.CausalHistory.lean`*
 
 ```lean
 theorem single {i j : BlockId} (h : j ∈ (U.block i).refs) : Reaches U i j
-```
-
-#### `trans`
-
-*theorem, `Nemo.CausalHistory.lean`*
-
-```lean
-theorem trans {a b c : BlockId} (h₁ : Reaches U a b) (h₂ : Reaches U b c) : Reaches U a c
 ```
 
 #### `of_mem_refs`
@@ -13833,16 +14120,6 @@ theorem trans {a b c : BlockId} (h₁ : Reaches U a b) (h₂ : Reaches U b c) : 
 theorem of_mem_refs {i j b : BlockId} (hij : j ∈ (U.block i).refs) (hjb : Reaches U j b) :
     Reaches U i b
 ```
-
-#### `mem_ids_of_reaches`
-
-*theorem, `Nemo.CausalHistory.lean`*
-
-```lean
-theorem mem_ids_of_reaches {c b : BlockId} (hc : c ∈ U.ids) (h : Reaches U c b) : b ∈ U.ids
-```
-
-Causal history stays inside the universe.
 
 #### `round_le_of_reaches`
 
@@ -13864,7 +14141,7 @@ theorem View.mem_of_reaches {V : View Validator BlockId Payload U} {c b : BlockI
     (hc : c ∈ V.ids) (h : Reaches U c b) : b ∈ V.ids
 ```
 
-Causal history never escapes a view.
+Causal history never escapes a view — the same closure argument, at a view's holdings rather than the universe's population.
 
 #### `mem_history_iff`
 
@@ -13886,7 +14163,7 @@ theorem history_subset_of_reaches {c b : BlockId} (hc : c ∈ U.ids) (h : Reache
     history U b ⊆ history U c
 ```
 
-Histories nest along reachability — the `Finset` form of transitivity.
+Histories nest along reachability.
 
 #### `mem_history_of_mem_refs`
 
@@ -14751,7 +15028,7 @@ theorem directCommit_of_wait_two_delay (vp : ViewPace U T N)
 
 ## Appendix D. Index of internal lemmas
 
-The 362 lemmas used only within the file that proves
+The 369 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -14777,10 +15054,18 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `refs_subset` | Completeness, as a subset statement. |
 
-### `CausalHistory.lean` (1)
+### `Causality.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
+| `historyUptoFrom_succ` | — |
+| `historyUptoFrom_zero` | — |
+
+### `CausalHistory.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `BlockUniverse.causal` | A universe is a causal structure. The two facts the history layer consumes, projected out of the … |
 | `not_reaches_of_round_lt` | A block cannot reach anything strictly above it. Contrapositive of T2, and the form that rules out … |
 
 ### `History.lean` (7)
@@ -15333,31 +15618,35 @@ subsection per module, in the layer order of Appendices B and C.
 | `eq_of_mem_refs_of_creator_eq` | Distinct creators among references are automatic under crash: two refs of the same block sharing a creator … |
 | `refs_subset` | Completeness, as a subset statement. |
 
-### `Nemo/CausalHistory.lean` (1)
+### `Nemo/CausalHistory.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
+| `Universe.causal` | The crash universe is a causal structure. Completeness is a field; the round condition is the predecessor … |
+| `mem_ids_of_reaches` | Causal history stays inside the universe. |
 | `not_reaches_of_round_lt` | A block cannot reach anything strictly above it. |
+| `refl` | — |
+| `trans` | — |
 
 ### `Nemo/History.lean` (15)
 
 | Lemma | Role |
 |:---|:---|
-| `eq_of_mem_history_of_round_eq` | Nothing in a block's history sits at the block's own round except the block itself: a reference step drops … |
-| `eq_of_reaches_of_refs_empty` | A block with no references reaches only itself — the crash port of the core's `eq_of_reaches_of_refs_empty`. |
-| `historyUpto_mono` | More fuel never loses anything. Needed because `mem_history_iff` fixes the fuel at `round + 1` while the … |
+| `eq_of_mem_history_of_round_eq` | Nothing in a block's history sits at the block's own round except the block itself. |
+| `eq_of_reaches_of_refs_empty` | A block with no references reaches only itself. |
+| `historyUpto_mono` | More fuel never loses anything. |
 | `historyUpto_succ` | — |
 | `historyUpto_zero` | — |
 | `history_subset_ids` | Histories stay inside the universe. |
-| `mem_historyUpto_of_reaches` | Completeness, with the fuel accounted for. A path from `b` drops the round by one per step (T2), so `round … |
+| `mem_historyUpto_of_reaches` | Completeness, with the fuel accounted for. |
 | `mem_historyUpto_self` | — |
 | `mem_historyUpto_succ` | — |
 | `mem_history_self` | A block lies in its own causal history. |
 | `mem_history_succ_iff` | The one-step unfolding: a history is its block, plus the histories of its references. |
-| `mem_refs_of_mem_history_of_round_succ` | The layer one below is exactly the reference set. Anything in `b`'s history at round `round b - 1` is a … |
-| `reaches_of_mem_historyUpto` | Soundness. Anything the fuelled search finds really is reachable. No hypothesis on `b`: even off the … |
+| `mem_refs_of_mem_history_of_round_succ` | The layer one below is exactly the reference set. |
+| `reaches_of_mem_historyUpto` | Soundness. Anything the fuelled search finds really is reachable. |
 | `refs_empty_of_round_zero` | Genesis blocks have no references: at round `0` the predecessor equation `round + 1 = 0` is unsatisfiable. |
-| `round_le_of_mem_history` | Causal history runs downward (T2), in the `Finset` form. |
+| `round_le_of_mem_history` | Causal history runs downward, in the `Finset` form. |
 
 ### `Nemo/Support.lean` (7)
 

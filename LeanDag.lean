@@ -1,5 +1,6 @@
 import LeanDag.Validators
 import LeanDag.Block
+import LeanDag.Causality
 import LeanDag.Participation
 import LeanDag.BlockDag
 import LeanDag.CausalHistory
