@@ -5,14 +5,14 @@ import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 /-!
 # A build schedule that can be stuck
 
-`ViewGrowth` derives production from the build rule, but pays for it with
-`hcross`: no `T`-validator completes the round straddling GST within
-`delay` of it. That hypothesis is not about the network and not about the
+The route this file replaced, `ViewGrowth`, derived production from the
+build rule, but paid for it with `hcross`: no `T`-validator completes the
+round straddling GST within `delay` of it. That hypothesis is not about the network and not about the
 DAG — it is about the *schedule*, and it is there for one reason.
 
-`Timing.built`, `ViewSync.built` and `ViewGrowth.built` are **total**
-functions. Each assigns a build time to every round, whether or not the
-validator could build there. A real validator lacking a quorum does not
+`built` is a **total** function --- as it was in each of the route
+structures this file replaced. It assigns a build time to every round,
+whether or not the validator could build there. A real validator lacking a quorum does not
 complete the round; it waits, and its build time lands after the quorum
 arrives. The total schedule cannot say that. It admits, alongside the real
 executions, schedules in which a validator "builds" round `n+1` at a time

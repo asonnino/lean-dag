@@ -12,7 +12,7 @@ three run on one construction, `Uomit x`, which is `Ugrow` with validator
 
 ## The bound
 
-`ViewSync.convergesWithin_iff_bounded` factors the network assumption into
+`convergesWithin_iff_bounded` (`ViewPace.lean`) factors the network assumption into
 a qualitative half — holdings converge at all — and a quantitative one —
 from `gst` on the lag is at most `delay`. The development argues that the
 second half cannot be dropped: a lag that merely exists cannot be ordered
