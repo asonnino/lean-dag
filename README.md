@@ -11,8 +11,11 @@ A Lean 4 + Mathlib formalization of uncertified DAG consensus in the
 style of Mysticeti: the DAG itself, the commit rule, and machine-checked
 safety and liveness — together with further developments built on the
 same foundation, each in its own module consuming the core read-only.
-Everything is stated for `n ≥ 3f+1` validators with quorums of size
-`n − f`, over pipelined, multi-leader slot schedules.
+The core is stated for `n ≥ 3f+1` validators with quorums of size
+`n − f`, over pipelined, multi-leader slot schedules; the variant arcs
+move the committee — `n ≥ 5f+1` for two-round commitment, `n ≥ 5·fb +
+3·fc + 1` for hybrid faults, and a bare majority at `n ≥ 2f+1` for crash
+faults alone.
 
 ## What is proved
 
@@ -148,7 +151,11 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 - `LeanDag/` — theorem/definition source: the core DAG and Mysticeti
   development at the top level, with the pacing structures in
   `ViewPace.lean` and the delivery layer they induce in
-  `PaceDelivery.lean`, and the arcs in subdirectories (`Quality/` —
+  `PaceDelivery.lean`; `Causality.lean` and `Participation.lean` hold the
+  fault-agnostic vocabulary — reachability, the finite cone, production
+  and coverage — stated over the raw block data, so the Byzantine and
+  crash universes instantiate one set of definitions rather than
+  restating them. The arcs are in subdirectories (`Quality/` —
   chain quality; `DoS/` — equivocation and the novelty budget; `GC/` —
   garbage collection; `Odontoceti/` — the two-round protocol;
   `Reactive/` — the reactive schedule; `SafeSkip/` — crash recovery in
@@ -190,6 +197,15 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 | [`docs/integration.md`](docs/integration.md) | composing the arcs: the invariant interface, and what composition revealed |
 | [`docs/related.md`](docs/related.md) | a survey of consensus on uncertified DAGs |
 | [`docs/style.md`](docs/style.md) | writing conventions for the documents and the source |
+
+## Contributors
+
+- [Alberto Sonnino](https://github.com/asonnino) — the crash-fault arc
+  (`LeanDag/Nemo/`,
+  [#1](https://github.com/gdanezis/lean-dag/pull/1)): the majority-quorum
+  foundation and its intersection lemma, the wave-two commit rule,
+  agreement without side conditions, liveness at `n ≥ 2f+1`, and the
+  three-validator witness model.
 
 ## License
 
