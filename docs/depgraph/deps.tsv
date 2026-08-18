@@ -1901,12 +1901,6 @@ EDGE	LeanDag.card_history_le_of_unique_equivocator._proof_1_1	LeanDag.history
 EDGE	LeanDag.card_history_le_of_unique_equivocator._proof_1_1	LeanDag.BlockUniverse
 EDGE	LeanDag.card_history_le_of_unique_equivocator._proof_1_1	LeanDag.Block.creator
 NODE	LeanDagTest.ucrashMsg._proof_10	LeanDagTest.SafeSkip	thm
-NODE	LeanDag.Nemo.mem_historyUpto_succ	LeanDag.Nemo.History	thm
-EDGE	LeanDag.Nemo.mem_historyUpto_succ	LeanDag.mem_historyUptoFrom_succ
-EDGE	LeanDag.Nemo.mem_historyUpto_succ	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.mem_historyUpto_succ	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.mem_historyUpto_succ	LeanDag.Block.refs
-EDGE	LeanDag.Nemo.mem_historyUpto_succ	LeanDag.Nemo.historyUpto
 NODE	LeanDag.blocksAt_chop	LeanDag.GC.Chop	thm
 EDGE	LeanDag.blocksAt_chop	LeanDag.Faults
 EDGE	LeanDag.blocksAt_chop	LeanDag.mem_chop_ids._simp_1
@@ -5101,14 +5095,6 @@ EDGE	LeanDag.Faults5.recOn	LeanDag.Faults
 EDGE	LeanDag.Faults5.recOn	LeanDag.Faults.f
 EDGE	LeanDag.Faults5.recOn	LeanDag.Faults5.rec
 EDGE	LeanDag.Faults5.recOn	LeanDag.Faults5.mk
-NODE	LeanDag.Nemo.View.mem_of_reaches	LeanDag.Nemo.CausalHistory	thm
-EDGE	LeanDag.Nemo.View.mem_of_reaches	LeanDag.Nemo.View.complete
-EDGE	LeanDag.Nemo.View.mem_of_reaches	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.View.mem_of_reaches	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.View.mem_of_reaches	LeanDag.mem_of_reaches_of_closed
-EDGE	LeanDag.Nemo.View.mem_of_reaches	LeanDag.Nemo.View.ids
-EDGE	LeanDag.Nemo.View.mem_of_reaches	LeanDag.Nemo.View
-EDGE	LeanDag.Nemo.View.mem_of_reaches	LeanDag.Nemo.Reaches
 NODE	LeanDagTest.Utwin	LeanDagTest.DoS.Density	def
 EDGE	LeanDagTest.Utwin	LeanDagTest.Utwin._proof_2
 EDGE	LeanDagTest.Utwin	LeanDag.BlockUniverse.mk
@@ -5116,13 +5102,6 @@ EDGE	LeanDagTest.Utwin	LeanDag.BlockUniverse
 EDGE	LeanDagTest.Utwin	LeanDagTest.lkt
 EDGE	LeanDagTest.Utwin	LeanDagTest.Utwin._proof_1
 EDGE	LeanDagTest.Utwin	LeanDagTest.Utwin._proof_3
-NODE	LeanDag.Nemo.mem_ids_of_reaches	LeanDag.Nemo.CausalHistory	thm
-EDGE	LeanDag.Nemo.mem_ids_of_reaches	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.mem_ids_of_reaches	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.mem_ids_of_reaches	LeanDag.Nemo.Reaches
-EDGE	LeanDag.Nemo.mem_ids_of_reaches	LeanDag.Nemo.Universe.causal
-EDGE	LeanDag.Nemo.mem_ids_of_reaches	LeanDag.CausalStructure.mem_ids_of_reaches
-EDGE	LeanDag.Nemo.mem_ids_of_reaches	LeanDag.Nemo.Universe.ids
 NODE	LeanDag.DirectCommit.eq_1	LeanDag.Mysticeti	thm
 EDGE	LeanDag.DirectCommit.eq_1	LeanDag.creatorsOf
 EDGE	LeanDag.DirectCommit.eq_1	LeanDag.Faults
@@ -8068,13 +8047,6 @@ NODE	LeanDag.Nemo.mem_live	LeanDag.Nemo.Liveness	thm
 EDGE	LeanDag.Nemo.mem_live	LeanDag.Nemo.Live
 EDGE	LeanDag.Nemo.mem_live	LeanDag.Nemo.CrashFaults.crashed
 EDGE	LeanDag.Nemo.mem_live	LeanDag.Nemo.CrashFaults
-NODE	LeanDag.Nemo.history_subset_ids	LeanDag.Nemo.History	thm
-EDGE	LeanDag.Nemo.history_subset_ids	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.history_subset_ids	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.history_subset_ids	LeanDag.Nemo.history
-EDGE	LeanDag.Nemo.history_subset_ids	LeanDag.CausalStructure.history_subset_ids
-EDGE	LeanDag.Nemo.history_subset_ids	LeanDag.Nemo.Universe.causal
-EDGE	LeanDag.Nemo.history_subset_ids	LeanDag.Nemo.Universe.ids
 NODE	LeanDagTest.exclAcc_eq_empty._proof_1_6	LeanDagTest.GC.Bootstrap	thm
 NODE	LeanDag.PaceCore.built_of_le_top	LeanDag.ViewPace	thm
 EDGE	LeanDag.PaceCore.built_of_le_top	LeanDag.Faults
@@ -9215,14 +9187,6 @@ EDGE	LeanDagTest.ugrowCatchPace._proof_14	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowCatchPace._proof_14	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ugrowCatchPace._proof_14	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowCatchPace._proof_14	LeanDag.Block.creator
-NODE	LeanDag.Nemo.round_le_of_mem_history	LeanDag.Nemo.History	thm
-EDGE	LeanDag.Nemo.round_le_of_mem_history	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.round_le_of_mem_history	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.round_le_of_mem_history	LeanDag.Nemo.history
-EDGE	LeanDag.Nemo.round_le_of_mem_history	LeanDag.Block.round
-EDGE	LeanDag.Nemo.round_le_of_mem_history	LeanDag.Nemo.Universe.causal
-EDGE	LeanDag.Nemo.round_le_of_mem_history	LeanDag.CausalStructure.round_le_of_mem_history
-EDGE	LeanDag.Nemo.round_le_of_mem_history	LeanDag.Nemo.Universe.ids
 NODE	LeanDagTest.nemoSlots_leader_val	LeanDagTest.Nemo	thm
 EDGE	LeanDagTest.nemoSlots_leader_val	LeanDag.Slots.leader
 EDGE	LeanDagTest.nemoSlots_leader_val	LeanDagTest.nemoSlots
@@ -9385,10 +9349,6 @@ EDGE	LeanDag.View.full._proof_1	LeanDag.Faults
 EDGE	LeanDag.View.full._proof_1	LeanDag.BlockUniverse.ids
 EDGE	LeanDag.View.full._proof_1	LeanDag.BlockUniverse
 NODE	LeanDagTest.growRefs	LeanDagTest.Growth	def
-NODE	LeanDag.Nemo.historyUpto	LeanDag.Nemo.History	def
-EDGE	LeanDag.Nemo.historyUpto	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.historyUpto	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.historyUpto	LeanDag.historyUptoFrom
 NODE	LeanDag.directCommit_chop	LeanDag.GC.Chop	thm
 EDGE	LeanDag.directCommit_chop	LeanDag.Block
 EDGE	LeanDag.directCommit_chop	LeanDag.creatorsOf
@@ -9713,15 +9673,6 @@ EDGE	LeanDag.card_history_le'._proof_1_4	LeanDag.Faults
 EDGE	LeanDag.card_history_le'._proof_1_4	LeanDag.BlockUniverse
 EDGE	LeanDag.card_history_le'._proof_1_4	LeanDag.Faults.f
 EDGE	LeanDag.card_history_le'._proof_1_4	LeanDag.exposedTo
-NODE	LeanDag.Nemo.mem_historyUpto_of_reaches	LeanDag.Nemo.History	thm
-EDGE	LeanDag.Nemo.mem_historyUpto_of_reaches	LeanDag.CausalStructure.mem_historyUpto_of_reaches
-EDGE	LeanDag.Nemo.mem_historyUpto_of_reaches	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.mem_historyUpto_of_reaches	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.mem_historyUpto_of_reaches	LeanDag.Block.round
-EDGE	LeanDag.Nemo.mem_historyUpto_of_reaches	LeanDag.Nemo.Reaches
-EDGE	LeanDag.Nemo.mem_historyUpto_of_reaches	LeanDag.Nemo.historyUpto
-EDGE	LeanDag.Nemo.mem_historyUpto_of_reaches	LeanDag.Nemo.Universe.causal
-EDGE	LeanDag.Nemo.mem_historyUpto_of_reaches	LeanDag.Nemo.Universe.ids
 NODE	LeanDag.Odontoceti.eq_of_directCommit_of_thickLink._simp_1_1	LeanDag.Odontoceti.Rules	thm
 EDGE	LeanDag.Odontoceti.eq_of_directCommit_of_thickLink._simp_1_1	LeanDag.Faults
 EDGE	LeanDag.Odontoceti.eq_of_directCommit_of_thickLink._simp_1_1	LeanDag.Faults.byzantine
@@ -10243,14 +10194,6 @@ EDGE	LeanDag.Nemo.mem_authorsAt._simp_1_2	LeanDag.Block
 EDGE	LeanDag.Nemo.mem_authorsAt._simp_1_2	LeanDag.creatorsOf
 EDGE	LeanDag.Nemo.mem_authorsAt._simp_1_2	LeanDag.mem_creatorsOf
 EDGE	LeanDag.Nemo.mem_authorsAt._simp_1_2	LeanDag.Block.creator
-NODE	LeanDag.Nemo.not_reaches_of_round_lt	LeanDag.Nemo.CausalHistory	thm
-EDGE	LeanDag.Nemo.not_reaches_of_round_lt	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.not_reaches_of_round_lt	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.not_reaches_of_round_lt	LeanDag.Block.round
-EDGE	LeanDag.Nemo.not_reaches_of_round_lt	LeanDag.Nemo.Reaches
-EDGE	LeanDag.Nemo.not_reaches_of_round_lt	LeanDag.CausalStructure.not_reaches_of_round_lt
-EDGE	LeanDag.Nemo.not_reaches_of_round_lt	LeanDag.Nemo.Universe.causal
-EDGE	LeanDag.Nemo.not_reaches_of_round_lt	LeanDag.Nemo.Universe.ids
 NODE	LeanDag.Odontoceti.DecidedWithin.recOn	LeanDag.Adaptive.Odontoceti	def
 EDGE	LeanDag.Odontoceti.DecidedWithin.recOn	LeanDag.Odontoceti.DecidedWithin.rec
 EDGE	LeanDag.Odontoceti.DecidedWithin.recOn	LeanDag.Faults5
@@ -10403,10 +10346,6 @@ EDGE	LeanDag.Nemo.decided_full	LeanDag.Nemo.Universe
 EDGE	LeanDag.Nemo.decided_full	LeanDag.Nemo.View.subset_ids
 EDGE	LeanDag.Nemo.decided_full	LeanDag.Nemo.View
 EDGE	LeanDag.Nemo.decided_full	LeanDag.Slots
-NODE	LeanDag.Nemo.mem_history_self._simp_1	LeanDag.Nemo.History	thm
-EDGE	LeanDag.Nemo.mem_history_self._simp_1	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.mem_history_self._simp_1	LeanDag.Nemo.history
-EDGE	LeanDag.Nemo.mem_history_self._simp_1	LeanDag.Nemo.mem_history_self
 NODE	LeanDag.ViewPace.convergesEventually	LeanDag.ViewPace	thm
 EDGE	LeanDag.ViewPace.convergesEventually	LeanDag.ViewPace.toPaceCore
 EDGE	LeanDag.ViewPace.convergesEventually	LeanDag.ConvergesEventually
@@ -10969,15 +10908,6 @@ NODE	LeanDag.Hybrid.kTight	LeanDag.Hybrid.Rules	def
 EDGE	LeanDag.Hybrid.kTight	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.kTight	LeanDag.HybridFaults.fc
 EDGE	LeanDag.Hybrid.kTight	LeanDag.HybridFaults.fb
-NODE	LeanDag.Nemo.mem_refs_of_mem_history_of_round_succ	LeanDag.Nemo.History	thm
-EDGE	LeanDag.Nemo.mem_refs_of_mem_history_of_round_succ	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.mem_refs_of_mem_history_of_round_succ	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.mem_refs_of_mem_history_of_round_succ	LeanDag.Nemo.history
-EDGE	LeanDag.Nemo.mem_refs_of_mem_history_of_round_succ	LeanDag.Block.refs
-EDGE	LeanDag.Nemo.mem_refs_of_mem_history_of_round_succ	LeanDag.Block.round
-EDGE	LeanDag.Nemo.mem_refs_of_mem_history_of_round_succ	LeanDag.Nemo.Universe.causal
-EDGE	LeanDag.Nemo.mem_refs_of_mem_history_of_round_succ	LeanDag.Nemo.Universe.ids
-EDGE	LeanDag.Nemo.mem_refs_of_mem_history_of_round_succ	LeanDag.CausalStructure.mem_refs_of_mem_history_of_round_succ
 NODE	LeanDag.Odontoceti.Decided.below	LeanDag.Odontoceti.Decision	ind
 EDGE	LeanDag.Odontoceti.Decided.below	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.Decided.below	LeanDag.BlockUniverse
@@ -11424,11 +11354,6 @@ EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_2	LeanDag.Faults.f
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_2	LeanDag.AdaptivePolicy
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_2	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_2	LeanDag.Faults5.toFaults
-NODE	LeanDag.Nemo.Reaches.refl	LeanDag.Nemo.CausalHistory	thm
-EDGE	LeanDag.Nemo.Reaches.refl	LeanDag.ReachesFrom.refl
-EDGE	LeanDag.Nemo.Reaches.refl	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.Reaches.refl	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.Reaches.refl	LeanDag.Nemo.Reaches
 NODE	LeanDag.ReactivePace.mk.injEq	LeanDag.Reactive.Basic	thm
 EDGE	LeanDag.ReactivePace.mk.injEq	LeanDag.Faults
 EDGE	LeanDag.ReactivePace.mk.injEq	LeanDag.Slots.slotRound
@@ -13563,14 +13488,6 @@ EDGE	LeanDag.ViewPace.mk.congr_simp	LeanDag.Block.creator
 NODE	LeanDag.Nemo.View.ids	LeanDag.Nemo.Basic	def
 EDGE	LeanDag.Nemo.View.ids	LeanDag.Nemo.Universe
 EDGE	LeanDag.Nemo.View.ids	LeanDag.Nemo.View
-NODE	LeanDag.Nemo.refs_empty_of_round_zero	LeanDag.Nemo.History	thm
-EDGE	LeanDag.Nemo.refs_empty_of_round_zero	LeanDag.CausalStructure.refs_empty_of_round_zero
-EDGE	LeanDag.Nemo.refs_empty_of_round_zero	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.refs_empty_of_round_zero	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.refs_empty_of_round_zero	LeanDag.Block.refs
-EDGE	LeanDag.Nemo.refs_empty_of_round_zero	LeanDag.Block.round
-EDGE	LeanDag.Nemo.refs_empty_of_round_zero	LeanDag.Nemo.Universe.causal
-EDGE	LeanDag.Nemo.refs_empty_of_round_zero	LeanDag.Nemo.Universe.ids
 NODE	LeanDagTest.ugrow_not_populated_succ	LeanDagTest.Growth	thm
 EDGE	LeanDagTest.ugrow_not_populated_succ	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrow_not_populated_succ	LeanDag.Populated
@@ -15190,11 +15107,6 @@ EDGE	LeanDagTest.nemo_fairRun	LeanDagTest.nemo_fairRun._proof_1_1
 EDGE	LeanDagTest.nemo_fairRun	LeanDag.Nemo.Live
 EDGE	LeanDagTest.nemo_fairRun	LeanDagTest.nemoSlots
 EDGE	LeanDagTest.nemo_fairRun	LeanDagTest.nemoSlots_leader_val
-NODE	LeanDag.Nemo.mem_history_self	LeanDag.Nemo.History	thm
-EDGE	LeanDag.Nemo.mem_history_self	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.mem_history_self	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.mem_history_self	LeanDag.Nemo.history
-EDGE	LeanDag.Nemo.mem_history_self	LeanDag.mem_historyFrom_self
 NODE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_1	LeanDag.Odontoceti.Rules	thm
 EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_1	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_1	LeanDag.BlockUniverse.block
@@ -15521,12 +15433,6 @@ EDGE	LeanDag.Integration.chopMsg._proof_6	LeanDag.SkipMsg.r
 EDGE	LeanDag.Integration.chopMsg._proof_6	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.chopMsg._proof_6	LeanDag.SkipMsg
 EDGE	LeanDag.Integration.chopMsg._proof_6	LeanDag.SkipMsg.B1
-NODE	LeanDag.Nemo.reaches_of_mem_historyUpto	LeanDag.Nemo.History	thm
-EDGE	LeanDag.Nemo.reaches_of_mem_historyUpto	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.reaches_of_mem_historyUpto	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.reaches_of_mem_historyUpto	LeanDag.reaches_of_mem_historyUptoFrom
-EDGE	LeanDag.Nemo.reaches_of_mem_historyUpto	LeanDag.Nemo.Reaches
-EDGE	LeanDag.Nemo.reaches_of_mem_historyUpto	LeanDag.Nemo.historyUpto
 NODE	LeanDag.Block.casesOn	LeanDag.Block	def
 EDGE	LeanDag.Block.casesOn	LeanDag.Block
 EDGE	LeanDag.Block.casesOn	LeanDag.Block.rec
@@ -16352,14 +16258,6 @@ EDGE	LeanDag.partialRun_assign_agree._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.partialRun_assign_agree._proof_1_1	LeanDag.epochOf
 EDGE	LeanDag.partialRun_assign_agree._proof_1_1	LeanDag.AdaptivePolicy
 EDGE	LeanDag.partialRun_assign_agree._proof_1_1	LeanDag.Slots
-NODE	LeanDag.Nemo.round_le_of_reaches	LeanDag.Nemo.CausalHistory	thm
-EDGE	LeanDag.Nemo.round_le_of_reaches	LeanDag.CausalStructure.round_le_of_reaches
-EDGE	LeanDag.Nemo.round_le_of_reaches	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.round_le_of_reaches	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.round_le_of_reaches	LeanDag.Block.round
-EDGE	LeanDag.Nemo.round_le_of_reaches	LeanDag.Nemo.Reaches
-EDGE	LeanDag.Nemo.round_le_of_reaches	LeanDag.Nemo.Universe.causal
-EDGE	LeanDag.Nemo.round_le_of_reaches	LeanDag.Nemo.Universe.ids
 NODE	LeanDag.AdaptivePolicy.mk.sizeOf_spec	LeanDag.Adaptive.Policy	thm
 EDGE	LeanDag.AdaptivePolicy.mk.sizeOf_spec	LeanDag.Faults
 EDGE	LeanDag.AdaptivePolicy.mk.sizeOf_spec	LeanDag.Slots.slotRound
@@ -17002,11 +16900,6 @@ EDGE	LeanDag.decided_below_of_committed_run._proof_1_2	LeanDag.Decided
 EDGE	LeanDag.decided_below_of_committed_run._proof_1_2	LeanDag.BlockUniverse
 EDGE	LeanDag.decided_below_of_committed_run._proof_1_2	LeanDag.Slots
 EDGE	LeanDag.decided_below_of_committed_run._proof_1_2	LeanDag.View
-NODE	LeanDag.Nemo.mem_historyUpto_self	LeanDag.Nemo.History	thm
-EDGE	LeanDag.Nemo.mem_historyUpto_self	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.mem_historyUpto_self	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.mem_historyUpto_self	LeanDag.mem_historyUptoFrom_self
-EDGE	LeanDag.Nemo.mem_historyUpto_self	LeanDag.Nemo.historyUpto
 NODE	LeanDagTest.ugrowLag._proof_14	LeanDagTest.Collapse	thm
 NODE	LeanDag.authorsIn	LeanDag.Support	def
 EDGE	LeanDag.authorsIn	LeanDag.creatorsOf
@@ -19206,14 +19099,6 @@ EDGE	LeanDag.decidableExposedIn._aux_1	LeanDag.decidableEquivPair
 EDGE	LeanDag.decidableExposedIn._aux_1	LeanDag.history
 EDGE	LeanDag.decidableExposedIn._aux_1	LeanDag.EquivPair
 EDGE	LeanDag.decidableExposedIn._aux_1	LeanDag.BlockUniverse
-NODE	LeanDag.Nemo.mem_history_succ_iff	LeanDag.Nemo.History	thm
-EDGE	LeanDag.Nemo.mem_history_succ_iff	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.mem_history_succ_iff	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.mem_history_succ_iff	LeanDag.Nemo.history
-EDGE	LeanDag.Nemo.mem_history_succ_iff	LeanDag.Block.refs
-EDGE	LeanDag.Nemo.mem_history_succ_iff	LeanDag.CausalStructure.mem_history_succ_iff
-EDGE	LeanDag.Nemo.mem_history_succ_iff	LeanDag.Nemo.Universe.causal
-EDGE	LeanDag.Nemo.mem_history_succ_iff	LeanDag.Nemo.Universe.ids
 NODE	LeanDagTest.nemoBlk._proof_5	LeanDagTest.Nemo	thm
 NODE	LeanDag.Decided.below	LeanDag.Mysticeti	ind
 EDGE	LeanDag.Decided.below	LeanDag.Faults
@@ -19225,12 +19110,6 @@ NODE	LeanDagTest.Unemo._proof_3	LeanDagTest.Nemo	thm
 EDGE	LeanDagTest.Unemo._proof_3	LeanDag.Block.round
 EDGE	LeanDagTest.Unemo._proof_3	LeanDagTest.nemoBlk
 EDGE	LeanDagTest.Unemo._proof_3	LeanDag.Block.creator
-NODE	LeanDag.Nemo.eq_of_reaches_of_refs_empty	LeanDag.Nemo.History	thm
-EDGE	LeanDag.Nemo.eq_of_reaches_of_refs_empty	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.eq_of_reaches_of_refs_empty	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.eq_of_reaches_of_refs_empty	LeanDag.Block.refs
-EDGE	LeanDag.Nemo.eq_of_reaches_of_refs_empty	LeanDag.eq_of_reaches_of_refs_empty
-EDGE	LeanDag.Nemo.eq_of_reaches_of_refs_empty	LeanDag.Nemo.Reaches
 NODE	LeanDag.ViewPace.ctorIdx	LeanDag.ViewPace	def
 EDGE	LeanDag.ViewPace.ctorIdx	LeanDag.Faults
 EDGE	LeanDag.ViewPace.ctorIdx	LeanDag.BlockUniverse
@@ -19329,11 +19208,6 @@ EDGE	LeanDag.Odontoceti.decided_below_of_committed_run._proof_1_4	LeanDag.Odonto
 EDGE	LeanDag.Odontoceti.decided_below_of_committed_run._proof_1_4	LeanDag.View
 EDGE	LeanDag.Odontoceti.decided_below_of_committed_run._proof_1_4	LeanDag.Faults5.toFaults
 NODE	LeanDag.Hybrid.mem_coneSupports._simp_1_3	LeanDag.Hybrid.Rules	thm
-NODE	LeanDag.Nemo.historyUpto_succ	LeanDag.Nemo.History	thm
-EDGE	LeanDag.Nemo.historyUpto_succ	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.historyUpto_succ	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.historyUpto_succ	LeanDag.Block.refs
-EDGE	LeanDag.Nemo.historyUpto_succ	LeanDag.Nemo.historyUpto
 NODE	LeanDagTest.Uexcl._proof_2	LeanDagTest.DoS.Exclusion	thm
 EDGE	LeanDagTest.Uexcl._proof_2	LeanDagTest.lkx
 EDGE	LeanDagTest.Uexcl._proof_2	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
@@ -20375,14 +20249,6 @@ EDGE	LeanDag.instDecidableValidWrtOfDecidableEq._proof_1	LeanDag.ValidWrt.mk
 EDGE	LeanDag.instDecidableValidWrtOfDecidableEq._proof_1	LeanDag.ValidWrt.quorum
 EDGE	LeanDag.instDecidableValidWrtOfDecidableEq._proof_1	LeanDag.Block.creator
 EDGE	LeanDag.instDecidableValidWrtOfDecidableEq._proof_1	LeanDag.ValidWrt
-NODE	LeanDag.Nemo.eq_of_mem_history_of_round_eq	LeanDag.Nemo.History	thm
-EDGE	LeanDag.Nemo.eq_of_mem_history_of_round_eq	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.eq_of_mem_history_of_round_eq	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.eq_of_mem_history_of_round_eq	LeanDag.Nemo.history
-EDGE	LeanDag.Nemo.eq_of_mem_history_of_round_eq	LeanDag.CausalStructure.eq_of_mem_history_of_round_eq
-EDGE	LeanDag.Nemo.eq_of_mem_history_of_round_eq	LeanDag.Block.round
-EDGE	LeanDag.Nemo.eq_of_mem_history_of_round_eq	LeanDag.Nemo.Universe.causal
-EDGE	LeanDag.Nemo.eq_of_mem_history_of_round_eq	LeanDag.Nemo.Universe.ids
 NODE	LeanDag.ValidWrt.recOn	LeanDag.Block	def
 EDGE	LeanDag.ValidWrt.recOn	LeanDag.Block
 EDGE	LeanDag.ValidWrt.recOn	LeanDag.Faults
@@ -20807,11 +20673,6 @@ EDGE	LeanDag.Nemo.Decided.below.indirectCommit	LeanDag.Nemo.Decided.indirectComm
 EDGE	LeanDag.Nemo.Decided.below.indirectCommit	LeanDag.Nemo.View
 EDGE	LeanDag.Nemo.Decided.below.indirectCommit	LeanDag.Slots
 EDGE	LeanDag.Nemo.Decided.below.indirectCommit	LeanDag.Nemo.Decided.below
-NODE	LeanDag.Nemo.historyUpto_mono	LeanDag.Nemo.History	thm
-EDGE	LeanDag.Nemo.historyUpto_mono	LeanDag.historyUptoFrom_mono
-EDGE	LeanDag.Nemo.historyUpto_mono	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.historyUpto_mono	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.historyUpto_mono	LeanDag.Nemo.historyUpto
 NODE	LeanDagTest.Uodo._proof_2	LeanDagTest.Odontoceti.Model	thm
 EDGE	LeanDagTest.Uodo._proof_2	LeanDagTest.instFaults5FinOfNatNat_leanDagTest
 EDGE	LeanDagTest.Uodo._proof_2	LeanDagTest.odoBlk
@@ -21721,11 +21582,6 @@ EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_6	LeanDag.Faults.f
 EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_6	LeanDag.AdaptivePolicy
 EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_6	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_6	LeanDag.Faults5.toFaults
-NODE	LeanDag.Nemo.Reaches.trans	LeanDag.Nemo.CausalHistory	thm
-EDGE	LeanDag.Nemo.Reaches.trans	LeanDag.ReachesFrom.trans
-EDGE	LeanDag.Nemo.Reaches.trans	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.Reaches.trans	LeanDag.Nemo.Universe.block
-EDGE	LeanDag.Nemo.Reaches.trans	LeanDag.Nemo.Reaches
 NODE	LeanDag.card_authorsAt_of_lt._proof_1_1	LeanDag.Liveness	thm
 EDGE	LeanDag.card_authorsAt_of_lt._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.card_authorsAt_of_lt._proof_1_1	LeanDag.BlockUniverse.block
@@ -25201,9 +25057,6 @@ EDGE	LeanDagTest.ugrowCatchPace._proof_32	LeanDag.Block.round
 EDGE	LeanDagTest.ugrowCatchPace._proof_32	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowCatchPace._proof_32	LeanDagTest.ugrowCatchPace._proof_22
 EDGE	LeanDagTest.ugrowCatchPace._proof_32	LeanDag.Block.creator
-NODE	LeanDag.Nemo.historyUpto_zero	LeanDag.Nemo.History	thm
-EDGE	LeanDag.Nemo.historyUpto_zero	LeanDag.Nemo.Universe
-EDGE	LeanDag.Nemo.historyUpto_zero	LeanDag.Nemo.historyUpto
 NODE	LeanDagTest.dtwin_delivers._proof_1_1	LeanDagTest.DoS.Novelty	thm
 EDGE	LeanDagTest.dtwin_delivers._proof_1_1	LeanDagTest.Utwin
 EDGE	LeanDagTest.dtwin_delivers._proof_1_1	LeanDag.BlockUniverse.block

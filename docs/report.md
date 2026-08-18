@@ -8990,18 +8990,6 @@ def Reaches (U : Universe Validator BlockId Payload) : BlockId → BlockId → P
 
 `Reaches U c b` — `b` lies in the causal history of `c`.
 
-#### `historyUpto`
-
-*def, `Nemo.History.lean`*
-
-```lean
-def historyUpto (U : Universe Validator BlockId Payload) :
-    ℕ → BlockId → Finset BlockId :=
-  historyUptoFrom U.block
-```
-
-Everything reachable from `b` in at most `n` reference steps.
-
 #### `history`
 
 *def, `Nemo.History.lean`*
@@ -9606,7 +9594,7 @@ No promptness ceiling and no attainment clause appear: drift is derived from the
 
 ## Appendix C. The theorem reference
 
-The 403 theorems that either another module of the
+The 401 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -14112,6 +14100,8 @@ theorem exists_common_mem_of_quorums {s t : Finset BlockId} {n : ℕ}
 theorem single {i j : BlockId} (h : j ∈ (U.block i).refs) : Reaches U i j
 ```
 
+A direct reference is one step of causal history.
+
 #### `of_mem_refs`
 
 *theorem, `Nemo.CausalHistory.lean`*
@@ -14121,27 +14111,7 @@ theorem of_mem_refs {i j b : BlockId} (hij : j ∈ (U.block i).refs) (hjb : Reac
     Reaches U i b
 ```
 
-#### `round_le_of_reaches`
-
-*theorem, `Nemo.CausalHistory.lean`*
-
-```lean
-theorem round_le_of_reaches {c b : BlockId} (hc : c ∈ U.ids) (h : Reaches U c b) :
-    (U.block b).round ≤ (U.block c).round
-```
-
-Causal history runs downward in rounds.
-
-#### `View.mem_of_reaches`
-
-*theorem, `Nemo.CausalHistory.lean`*
-
-```lean
-theorem View.mem_of_reaches {V : View Validator BlockId Payload U} {c b : BlockId}
-    (hc : c ∈ V.ids) (h : Reaches U c b) : b ∈ V.ids
-```
-
-Causal history never escapes a view — the same closure argument, at a view's holdings rather than the universe's population.
+Prepend a direct reference.
 
 #### `mem_history_iff`
 
@@ -15028,7 +14998,7 @@ theorem directCommit_of_wait_two_delay (vp : ViewPace U T N)
 
 ## Appendix D. Index of internal lemmas
 
-The 369 lemmas used only within the file that proves
+The 350 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -15618,35 +15588,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `eq_of_mem_refs_of_creator_eq` | Distinct creators among references are automatic under crash: two refs of the same block sharing a creator … |
 | `refs_subset` | Completeness, as a subset statement. |
 
-### `Nemo/CausalHistory.lean` (5)
+### `Nemo/CausalHistory.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
 | `Universe.causal` | The crash universe is a causal structure. Completeness is a field; the round condition is the predecessor … |
-| `mem_ids_of_reaches` | Causal history stays inside the universe. |
-| `not_reaches_of_round_lt` | A block cannot reach anything strictly above it. |
-| `refl` | — |
-| `trans` | — |
-
-### `Nemo/History.lean` (15)
-
-| Lemma | Role |
-|:---|:---|
-| `eq_of_mem_history_of_round_eq` | Nothing in a block's history sits at the block's own round except the block itself. |
-| `eq_of_reaches_of_refs_empty` | A block with no references reaches only itself. |
-| `historyUpto_mono` | More fuel never loses anything. |
-| `historyUpto_succ` | — |
-| `historyUpto_zero` | — |
-| `history_subset_ids` | Histories stay inside the universe. |
-| `mem_historyUpto_of_reaches` | Completeness, with the fuel accounted for. |
-| `mem_historyUpto_self` | — |
-| `mem_historyUpto_succ` | — |
-| `mem_history_self` | A block lies in its own causal history. |
-| `mem_history_succ_iff` | The one-step unfolding: a history is its block, plus the histories of its references. |
-| `mem_refs_of_mem_history_of_round_succ` | The layer one below is exactly the reference set. |
-| `reaches_of_mem_historyUpto` | Soundness. Anything the fuelled search finds really is reachable. |
-| `refs_empty_of_round_zero` | Genesis blocks have no references: at round `0` the predecessor equation `round + 1 = 0` is unsatisfiable. |
-| `round_le_of_mem_history` | Causal history runs downward, in the `Finset` form. |
 
 ### `Nemo/Support.lean` (7)
 
