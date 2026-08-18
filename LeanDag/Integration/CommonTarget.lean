@@ -4,11 +4,11 @@ import LeanDag.CommonCore
 /-!
 # I19 — Safe Skip against a common-core target
 
-The design question report §15.8 leaves open is which reference
+The design question report §16.8 leaves open is which reference
 discipline the protocol should state, and the residual worry behind it
 is *availability*: a validator that cites blocks it does not hold
 cannot serve them, however sound the storage accounting turns out to
-be (§15.7's I17).
+be (§16.7's I17).
 
 Choosing the fill's target from the **common core** removes the worry
 at its source rather than trading it away. Report §5.2's T3c produces,
@@ -26,7 +26,7 @@ Three consequences, and they are the ones the mechanism wants:
 * **The recovering validator holds what it cites.** After bootstrap it
   has the common core like everyone else, so the tight, author-
   attributed discipline is satisfiable rather than something to weaken.
-* **The choice of §15.8 stops mattering in practice.** Either clause is
+* **The choice of §16.8 stops mattering in practice.** Either clause is
   met, so the specification can state whichever it prefers on other
   grounds.
 

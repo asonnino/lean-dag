@@ -117,6 +117,17 @@ Everything is stated for `n ≥ 3f+1` validators with quorums of size
   history can read but not produce until it **re-genesises** — a
   provision that needs no exemption from the self-parent rule and no
   agreement on where anyone's cut falls.
+- **Crash-fault consensus** (`LeanDag/Nemo/`): Nemo-Nemo, the same
+  commit rule at a **bare majority quorum** — `n ≥ 2f + 1`, at most `f`
+  validators halting, none equivocating — proved safe with **no fault
+  bound and no side conditions** (`Nemo.decided_unique`): universal
+  non-equivocation retires the twin machinery, and the quorum is
+  consumed exactly once in the agreement proof. Liveness holds at the
+  classical bound (`Nemo.all_decided_below_of_fairRun`) under a
+  fairness clause the mechanisation sharpens: with no failure detector
+  a lone committed leader settles only the slot two rounds below it,
+  and progress requires committed leaders at **adjacent** rounds —
+  which round-robin provides by counting.
 
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on
@@ -142,7 +153,8 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
   garbage collection; `Odontoceti/` — the two-round protocol;
   `Reactive/` — the reactive schedule; `SafeSkip/` — crash recovery in
   one message; `Adaptive/` — adaptive leader schedules; `Hybrid/` —
-  Byzantine and crash faults apart; `Network/` — the composed
+  Byzantine and crash faults apart; `Nemo/` — crash-fault consensus at
+  a majority quorum; `Network/` — the composed
   denial-of-service capstones; `Integration/` — how the arcs compose).
 - `LeanDag.lean` — root import file.
 - `LeanDagTest/` — `decide` witnesses and concrete models, mirroring the

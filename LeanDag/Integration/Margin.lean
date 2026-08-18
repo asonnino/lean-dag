@@ -25,7 +25,7 @@ which a donor line does at every gap round. So the budget holds for a
 block whose references sit inside *any* correct validator's
 acceptances, its author's or not.
 
-That settles the modelling choice report §15.8 records: the Safe Skip
+That settles the modelling choice report §16.8 records: the Safe Skip
 fill's blocks respect the novelty budget under either reading of what a
 `Delivery` records, because their material is attributable to the
 donor whether or not the recovering validator ever accepted it.

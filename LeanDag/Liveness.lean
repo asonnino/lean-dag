@@ -1,4 +1,5 @@
 import LeanDag.Mysticeti
+import LeanDag.Participation
 
 /-!
 # Liveness — results needing no new primitives
@@ -114,7 +115,7 @@ validator misses a single round — a GC pause, a restart — although the
 protocol still commits. See `liveness.md` §8 Q2. -/
 def PopulatedOn (U : BlockUniverse Validator BlockId Payload)
     (T : Finset Validator) (r : ℕ) : Prop :=
-  ∀ v ∈ T, ∃ b ∈ U.ids, (U.block b).creator = v ∧ (U.block b).round = r
+  PopulatedFrom U.block U.ids T r
 
 /-- The all-of-`Correct` case, which is what L1 produces. -/
 abbrev Populated (U : BlockUniverse Validator BlockId Payload) (r : ℕ) : Prop :=
@@ -126,7 +127,7 @@ what lets L1 keep concluding about all of `Correct` while L4 consumes only a
 quorum. -/
 theorem PopulatedOn.mono {T T' : Finset Validator} {r : ℕ} (hsub : T ⊆ T')
     (h : PopulatedOn U T' r) : PopulatedOn U T r :=
-  fun v hv => h v (hsub hv)
+  PopulatedFrom.mono hsub h
 
 /-! ## The delivery layer
 
@@ -227,10 +228,7 @@ this is an assumption, not a theorem — see `liveness.md` §4.3, and its
 §8 question 8 for how it is meant to be split and derived. -/
 def SynchronisedOn (U : BlockUniverse Validator BlockId Payload)
     (T : Finset Validator) (R : ℕ) : Prop :=
-  ∀ n, R ≤ n → ∀ b ∈ U.ids, (U.block b).round = n + 1 →
-    (U.block b).creator ∈ T →
-    ∀ a ∈ U.ids, (U.block a).round = n →
-      (U.block a).creator ∈ T → a ∈ (U.block b).refs
+  SynchronisedFrom U.block U.ids T R
 
 /-- The all-of-`Correct` case. -/
 abbrev Synchronised (U : BlockUniverse Validator BlockId Payload) (R : ℕ) : Prop :=
@@ -242,7 +240,7 @@ it among any subset. So existing witnesses of `Synchronised` feed the
 quorum-relative L4 unchanged. -/
 theorem SynchronisedOn.mono {T T' : Finset Validator} {R : ℕ} (hsub : T ⊆ T')
     (h : SynchronisedOn U T' R) : SynchronisedOn U T R :=
-  fun n hn b hb hbr hbc a ha har hac => h n hn b hb hbr (hsub hbc) a ha har (hsub hac)
+  SynchronisedFrom.mono hsub h
 
 /-! ## L7 — `Synchronised`, derived
 

@@ -7,7 +7,7 @@ import LeanDag.DoS.Novelty
 The arc's last open composition. Report §8.4's budgets range over a
 `Delivery U`, not over `U`, so they cannot be *stated* for the fill
 until the fill has a delivery structure of its own — the dependency
-report §15.1 records for layer D. Garbage collection has `chopD`;
+report §16.1 records for layer D. Garbage collection has `chopD`;
 Safe Skip had nothing.
 
 The construction is smaller than it looks, and the reason is worth
@@ -142,7 +142,7 @@ what its filled blocks cite. Both `includes` and `RefsAccepted` then
 hold by construction, `accepted_inj` following from the P2 clause
 `skipFill` already proves for `fillBlock`. What that model does not
 give away is the budget: the novelty of the newly accepted blocks is
-then a property of the fill, to be checked as in report §15.7 rather
+then a property of the fill, to be checked as in report §16.7 rather
 than inherited. Which model is right is a specification question about
 what a `Delivery` is meant to record, and it is recorded here rather
 than settled. -/

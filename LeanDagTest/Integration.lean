@@ -98,7 +98,7 @@ example (hs : SynchronisedOn (Ucrash 2) (Finset.univ : Finset (Fin 4)) 0) :
 #print axioms LeanDag.Integration.hybrid_agree_stack
 /-! ## The constructions, witnessed
 
-The house rule of report §16 applies with particular force to the
+The house rule of report §17 applies with particular force to the
 structures this arc introduces: `recoveryMsg` and `skipFillD` carry
 many hypotheses, and hypotheses that cannot be met jointly make every
 theorem above them vacuous. The severed-validator scenario is the one
