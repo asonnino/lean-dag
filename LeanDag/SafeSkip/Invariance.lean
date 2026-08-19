@@ -301,15 +301,22 @@ theorem decided_fill {V : View Validator BlockId Payload U} {k : ℕ}
         exact hnone L hold ((sk.certifiedIn_fill hA).mp hc)
       · exact sk.not_certifiedIn_fresh hA
 
+/-- **The view is quorate over the gap**: at every gap round it holds blocks
+from a quorum of distinct authors at the round above. This is the condition
+the agreement result below consumes --- the recovering validator may be
+counted on only where the pre-crash view could already have decided. -/
+def QuorateOverGap (V : View Validator BlockId Payload U) : Prop :=
+  ∀ n, sk.r0 < n → n ≤ sk.r →
+    quorumCard Validator ≤
+      (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card
+
 /-- **Agreement across a recovery.** A verdict reached before the fill
 agrees with any verdict reached after it, whatever view either side
 held — verdict invariance composed with agreement in the extension. -/
 theorem decided_fill_agree {V : View Validator BlockId Payload U}
     {W : View Validator BlockId Payload sk.skipFill} {k : ℕ}
     {v w : Option BlockId}
-    (hq : ∀ n, sk.r0 < n → n ≤ sk.r →
-      quorumCard Validator ≤
-        (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card)
+    (hq : sk.QuorateOverGap V)
     (hv : Decided U V k v) (hw : Decided sk.skipFill W k w) : v = w :=
   decided_agree (sk.decided_fill hq hv) hw
 

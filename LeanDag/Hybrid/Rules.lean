@@ -77,6 +77,19 @@ theorem admissible_kRel
   unfold Admissible kRel
   omega
 
+/-- **The committee bound is the existence of a threshold.** The admissible
+interval is nonempty exactly when `n ≥ 5·fb + 3·fc + 1`, so the bound is not a
+separate hypothesis of the hybrid arc: every safety result consumes an
+admissible `k`, and having one is the bound. -/
+theorem exists_admissible_iff :
+    (∃ k, Admissible Validator k) ↔
+      5 * H.fb + 3 * H.fc + 1 ≤ Fintype.card Validator := by
+  constructor
+  · rintro ⟨k, hk⟩
+    unfold Admissible at hk
+    omega
+  · exact fun hn => ⟨kTight Validator, admissible_kTight hn⟩
+
 /-- The converse: an admissible threshold forces the committee bound.
 Nonemptiness of the interval *is* `n ≥ 5·fb + 3·fc + 1`. -/
 theorem committee_bound_of_admissible {k : ℕ}

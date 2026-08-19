@@ -703,6 +703,26 @@ theorem commits_recur_local (hcard : quorumCard Validator ≤ T.card)
   intro U N vp hgst hbackoff hN
   exact vp.decided_local hcard hgst hbackoff hRk' hN hlead
 
+/-- **Liveness, execution first** (V18′). The same result with the pacing
+structure fixed before the slot, which is the order the statement is read in:
+in a given run, past GST and with the timeout clearing `2Δ + proc`, commits
+recur and every reliable validator decides on its own view.
+
+`commits_recur_local` fixes the slot from the schedule and `R` alone, ahead of
+any execution, and that is the stronger reading; this is it, instantiated. -/
+theorem commits_recur_local_of_pace (vp : ViewPace U T N)
+    (hcard : quorumCard Validator ≤ T.card)
+    (fair : FairScheduleOn T) (R : ℕ) (hgst : vp.gst ≤ R)
+    (hbackoff : ∀ n, R ≤ n → 2 * vp.delay + vp.proc ≤ vp.timeout n) (k : ℕ) :
+    ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧
+      (S.slotRound k' + 2 ≤ N →
+        ∃ L : BlockId, IsLeaderBlock U k' L ∧ ∀ v ∈ T,
+          Decided U (vp.viewAt v (vp.latest (S.slotRound k' + 2) + vp.delay))
+            k' (some L)) := by
+  obtain ⟨k', hk, hR, hrest⟩ :=
+    commits_recur_local (BlockId := BlockId) (Payload := Payload) (T := T) hcard fair R k
+  exact ⟨k', hk, hR, fun hN => hrest U N vp hgst hbackoff hN⟩
+
 /-- **The global statement is a corollary**, so V18 strictly strengthens the
 main line: a reliable validator exists (the quorum bound is nonvacuous), it
 decides locally, and `decided_full` (L3) lifts its verdict to the full view.

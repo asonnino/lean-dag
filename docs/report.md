@@ -3745,12 +3745,14 @@ view either side held:
 
 **SS6.**
 ```lean
+def QuorateOverGap (V : View Validator BlockId Payload U) : Prop :=
+  ∀ n, sk.r0 < n → n ≤ sk.r →
+    quorumCard Validator ≤
+      (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card
 theorem decided_fill_agree {V : View Validator BlockId Payload U}
     {W : View Validator BlockId Payload sk.skipFill} {k : ℕ}
     {v w : Option BlockId}
-    (hq : ∀ n, sk.r0 < n → n ≤ sk.r →
-      quorumCard Validator ≤
-        (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card)
+    (hq : sk.QuorateOverGap V)
     (hv : Decided U V k v) (hw : Decided sk.skipFill W k w) : v = w
 ```
 
@@ -8368,6 +8370,19 @@ def liftView (V : View Validator BlockId Payload U) :
 
 A view of `U` is a view of the extension, unchanged: its blocks are old, and old references are preserved.
 
+#### `QuorateOverGap`
+
+*def, `SafeSkip.Invariance.lean`*
+
+```lean
+def QuorateOverGap (V : View Validator BlockId Payload U) : Prop :=
+  ∀ n, sk.r0 < n → n ≤ sk.r →
+    quorumCard Validator ≤
+      (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card
+```
+
+**The view is quorate over the gap**: at every gap round it holds blocks from a quorum of distinct authors at the round above. This is the condition the agreement result below consumes --- the recovering validator may be counted on only where the pre-crash view could already have decided.
+
 ### Integration: composing the arcs
 
 #### `HorizonStable`
@@ -9588,6 +9603,24 @@ abbrev Synchronised (U : Universe Validator BlockId Payload) (R : ℕ) : Prop :=
 ```
 
 The all-of-`Live` coverage case.
+
+### Not otherwise grouped
+
+#### `SoundOn`
+
+*structure, `Integration.Sound.lean`*
+
+```lean
+structure SoundOn (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (R : ℕ) : Prop where
+  /-- No correct validator has two blocks at one round. -/
+  honest : HonestNoEquiv U
+  /-- Every `T`-authored block references every `T`-authored block of the
+  round below, from `R` on. -/
+  covered : SynchronisedOn U T R
+```
+
+**What a universe must still supply after being transformed.** The two conditions every safety result of the hybrid arc consumes: correct validators do not equivocate, and the DAG is covered from round `R` on.
 
 
 ---
@@ -13402,9 +13435,7 @@ The hypothesis `hq` is consumed at exactly one point: a slot of the recovering v
 theorem decided_fill_agree {V : View Validator BlockId Payload U}
     {W : View Validator BlockId Payload sk.skipFill} {k : ℕ}
     {v w : Option BlockId}
-    (hq : ∀ n, sk.r0 < n → n ≤ sk.r →
-      quorumCard Validator ≤
-        (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card)
+    (hq : sk.QuorateOverGap V)
     (hv : Decided U V k v) (hw : Decided sk.skipFill W k w) : v = w
 ```
 
@@ -14975,7 +15006,7 @@ The quantifier order is the content: the slot `b` is fixed by the *schedule* alo
 
 ## Appendix D. Index of internal lemmas
 
-The 352 lemmas used only within the file that proves
+The 363 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -15121,11 +15152,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `slotRound_le_of_lt` | A slot bound becomes a round bound. |
 | `unbounded_of_rated` | Every rated backoff is unbounded, so `Rated` really is a strengthening of the retired existential … |
 
-### `ViewPace.lean` (7)
+### `ViewPace.lean` (8)
 
 | Lemma | Role |
 |:---|:---|
 | `ViewPace.built_ge_sum` | The full-timeout discipline's floor, accumulated: a validator's round-`n` entry lies at least the sum of … |
+| `commits_recur_local_of_pace` | Liveness, execution first (V18′). The same result with the pacing structure fixed before the slot, which … |
 | `convergesEventually` | Every `ViewPace` converges in the qualitative sense too — the bound is extra information, not a different … |
 | `convergesEventually_of_within` | A bounded lag is a lag: the timed form implies the untimed one, even before `gst`, since holdings only grow. |
 | `convergesWithin` | The `converges` field *is* the bounded form of the factoring above. |
@@ -15133,10 +15165,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `le_built` | Rounds advance real time, over the rounds a validator reached. |
 | `mem_viewAt` | What a validator holds is in the view it generates. |
 
-### `PaceDelivery.lean` (2)
+### `PaceDelivery.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
+| `dos_resistance_of_pace'` | The same bound, factored (V20′). The three summands of `dos_resistance_of_pace` are one product: a correct … |
 | `mem_heldOf` | — |
 | `toDelivery_held` | The induced layer reads the pacing structure's own holdings: what it records at round `n` is exactly what … |
 
@@ -15155,10 +15188,11 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `committed_of_correct_block_correct` | CQ6 at `T := Correct`. |
 
-### `Quality/Capstone.lean` (1)
+### `Quality/Capstone.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
+| `chain_quality_of_run` | The inclusion half, in a given execution (CQ4′). `chain_quality` conjoins the unconditional coverage bound … |
 | `slotAt_le_slotAt` | The least slot at or above a round is monotone in the round. |
 
 ### `DoS/Exposure.lean` (13)
@@ -15410,11 +15444,19 @@ subsection per module, in the layer order of Appendices B and C.
 | `decided_of_leader_of_populated` | O7 against a horizon, the two-round counterpart of `decided_of_leader_of_populated`: the rule needs the … |
 | `supportersIn_full` | The full view sees every supporter. |
 
-### `Reactive/Basic.lean` (1)
+### `Reactive/Basic.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
+| `built_succ_le_of_fast_gst` | Latency, in the deployment's own constants. Past GST, with a quorum reliable, every reliable validator … |
+| `no_timeout_of_fast_gst` | When the timeout never fires, in the same constants. At the minimal timeout `2Δ + proc` the hypothesis … |
 | `slotRound_le_top` | A reliable leader reached its slot's round: its block is in the universe, and `le_top_of_built` reads the … |
+
+### `Reactive/Mysticeti.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `committed_of_correct_block_of_run` | No reliable validator's block is censored (RS5, execution first). In a reactive run past GST whose timeout … |
 
 ### `SafeSkip/Invariance.lean` (11)
 
@@ -15509,7 +15551,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `hybrid_byzantine` | — |
 | `hybrid_f` | — |
 
-### `Hybrid/Rules.lean` (9)
+### `Hybrid/Rules.lean` (10)
 
 | Lemma | Role |
 |:---|:---|
@@ -15520,6 +15562,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `committee_bound_of_admissible` | The converse: an admissible threshold forces the committee bound. Nonemptiness of the interval *is* `n ≥ … |
 | `coneSupports_subset_of_reaches` | Cones nest, so in-cone support does. |
 | `coneSupports_subset_supporters` | In-cone supporters are supporters. |
+| `exists_admissible_iff` | The committee bound is the existence of a threshold. The admissible interval is nonempty exactly when `n ≥ … |
 | `mem_coneSupports` | — |
 | `thickLink_of_directCommit_aux` | — |
 
@@ -15657,5 +15700,14 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `populated_and_card_viewUpto_le` | The capstone, unconditional. `EventuallyDelivers` is gone: production plus the enforceable budget plus the … |
 | `populated_and_card_viewUpto_le'` | The composed statement — DoS resistance in one theorem. One set of hypotheses — production, post-`R` … |
+
+### `Integration/Sound.lean` (4)
+
+| Lemma | Role |
+|:---|:---|
+| `hybrid_agree_of_soundOn` | The capstone, from the bundle. A validator that has recovered from a crash and pruned its history still … |
+| `soundOn_chop` | Truncation preserves it, shifting the synchrony round by the cut. |
+| `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
+| `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
 
 <!-- END GENERATED REFERENCE -->

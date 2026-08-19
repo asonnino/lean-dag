@@ -122,4 +122,28 @@ theorem chain_quality (hT : T ⊆ (Correct : Finset Validator))
     card_correct_le_two_mul_coveredAt_of_decided hdec hδ,
    committed_of_correct_block hT hcard fair R m hRm⟩
 
+/-- **The inclusion half, in a given execution** (CQ4′). `chain_quality`
+conjoins the unconditional coverage bound with an inclusion statement whose
+slot is fixed by the schedule ahead of any execution. The coverage bound is
+`card_correct_le_two_mul_coveredAt_of_decided` on its own, and this is the
+other half read in a fixed universe: production and coverage hold, and the
+schedule then supplies a slot whose commit carries every correct round-`m`
+block into the ledger. -/
+theorem chain_quality_of_run (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card)
+    (fair : FairScheduleOn T) (R m : ℕ) (hRm : R ≤ m)
+    (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
+    (hpop : ∀ r ≤ N, Populated U r) (hs : Synchronised U R) :
+    ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧
+      (S.slotRound k' + 2 ≤ N →
+        ∃ L : BlockId, Decided U (View.full U) k' (some L) ∧
+          ∀ b ∈ U.ids, (U.block b).creator ∈ (Correct : Finset Validator) →
+            (U.block b).round = m →
+            b ∈ history U L ∧
+            ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
+              b ∈ ledgerSet U g n) := by
+  obtain ⟨k', hm, hR, hinc⟩ :=
+    (chain_quality (BlockId := BlockId) (Payload := Payload) hT hcard fair R m hRm).2
+  exact ⟨k', hm, hR, fun hN => hinc U N hpop hs hN⟩
+
 end LeanDag
