@@ -155,6 +155,95 @@ def addGenesis_of_severed {U : BlockUniverse Validator BlockId Payload}
     BlockUniverse Validator BlockId Payload :=
   addGenesis (chop U G) sk.v1 g p hg (severed_of_pruned_anchor sk hG1 hG2)
 
+/-! ## I20 — the cut derives the genesis the fill already built
+
+`addGenesis` is stated for a universe in which the stranded validator is
+absent, and the arc reaches such a universe by truncating first and filling
+afterwards. In the other order the block it adds is already there.
+
+Fill first and truncate afterwards, with the horizon inside the gap
+(`r0 < G ≤ r`): the fill has authored a block for `v1` at every gap round,
+and `chopBlock` rebases the one at round `G` to round `0` and empties its
+references, since it empties them at every round `≤ G`. What remains is a
+reference-free round-`0` block authored by `v1` — a genesis block, with the
+identifier the message already allocated.
+
+So the two routes agree, and the second needs no fresh identifier: the
+re-genesis universe embeds in the truncated fill, with `sk.fresh G` serving
+as the derived genesis. The material the cut discards is exactly the material
+that block referenced, which is why the pruned rounds are never consulted.
+-/
+
+section CutGenesis
+
+variable {U : BlockUniverse Validator BlockId Payload} (sk : SkipMsg U) {G : ℕ}
+
+/-- **The cut turns the boundary fill block into a genesis block.** At a
+horizon inside the gap, `v1`'s filled block at round `G` is retained, rebased
+to round `0`, and stripped of its references. -/
+theorem stack_block_fresh_horizon (hG1 : sk.r0 < G) (hG2 : G ≤ sk.r) :
+    sk.fresh G ∈ (chop sk.skipFill G).ids ∧
+      (chop sk.skipFill G).block (sk.fresh G) =
+        ⟨0, sk.v1, ∅, (U.block (sk.line G)).payload⟩ := by
+  have hmem : sk.fresh G ∈ sk.skipFill.ids :=
+    Finset.mem_union_right _ (sk.mem_freshIds.mpr ⟨G, hG1, hG2, rfl⟩)
+  have hround : (sk.skipFill.block (sk.fresh G)).round = G := by
+    rw [sk.skipFill_block_fresh]; rfl
+  refine ⟨mem_chop_ids.mpr ⟨hmem, by omega⟩, ?_⟩
+  rw [chop_block_eq]
+  unfold chopBlock
+  rw [sk.skipFill_block_fresh]
+  simp only [SkipMsg.fillBlock, le_refl, if_pos, Nat.sub_self]
+
+/-- **Re-genesis adds nothing the truncated fill lacks.** Every block of the
+re-genesis universe over `chop U G` is present in `chop sk.skipFill G`, with
+the same content --- the derived genesis being the filled block at the
+horizon. Truncating after the fill therefore reaches the construction that
+truncating first has to build by hand. -/
+theorem addGenesis_sub_stack (hG1 : sk.r0 < G) (hG2 : G ≤ sk.r)
+    (hg : sk.fresh G ∉ (chop U G).ids)
+    (hsev : ∀ b ∈ (chop U G).ids, ((chop U G).block b).creator ≠ sk.v1) :
+    ∀ b ∈ (addGenesis (chop U G) sk.v1 (sk.fresh G)
+            (U.block (sk.line G)).payload hg hsev).ids,
+      b ∈ (chop sk.skipFill G).ids ∧
+        (chop sk.skipFill G).block b
+          = (addGenesis (chop U G) sk.v1 (sk.fresh G)
+              (U.block (sk.line G)).payload hg hsev).block b := by
+  obtain ⟨hfmem, hfblk⟩ := stack_block_fresh_horizon sk hG1 hG2
+  intro b hb
+  rcases Finset.mem_insert.mp hb with rfl | hbo
+  · exact ⟨hfmem, by rw [hfblk, addGenesis_block_new]⟩
+  · -- an old block: the fill leaves it alone, so both cuts agree on it
+    obtain ⟨hbU, hbr⟩ := mem_chop_ids.mp hbo
+    have hfill : sk.skipFill.block b = U.block b := sk.skipFill_block_old hbU
+    refine ⟨mem_chop_ids.mpr ⟨Finset.mem_union_left _ hbU, by rw [hfill]; exact hbr⟩, ?_⟩
+    rw [addGenesis_block_old hbo, chop_block_eq, chop_block_eq]
+    unfold chopBlock
+    rw [hfill]
+
+/-- **A restart is a genesis block, necessarily.** If a validator has any
+block at all in a universe, it has one at round `0` with no references. So a
+validator absent from `V` can be returned to production only by an extension
+that gives it exactly the block `addGenesis` supplies: re-genesis is forced by
+P3$'$ rather than chosen, and a recovery message can at best carry the block
+rather than dispense with it.
+
+The two ingredients are P3$'$, through `no_blocks_of_no_genesis`, and the
+round-`0` case of the predecessor condition, which leaves a genesis block no
+references to have. -/
+theorem genesis_forced {W : BlockUniverse Validator BlockId Payload}
+    {v : Validator} {b : BlockId} (hb : b ∈ W.ids) (hbc : (W.block b).creator = v) :
+    ∃ g ∈ W.ids, (W.block g).creator = v ∧ (W.block g).round = 0 ∧
+      (W.block g).refs = ∅ := by
+  by_contra hcon
+  simp only [not_exists, not_and] at hcon
+  have hgen : ∀ c ∈ W.ids, (W.block c).creator = v → (W.block c).round ≠ 0 := by
+    intro c hc hcc hr0
+    exact hcon c hc hcc hr0 (W.causal.refs_empty_of_round_zero hc hr0)
+  exact no_blocks_of_no_genesis hgen b hb hbc
+
+end CutGenesis
+
 /-! ## I19 — the exposure condition survives re-genesis
 
 Report report §2.2 credits P3′ to report §8 because the self-parent chain makes a
