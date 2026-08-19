@@ -1172,9 +1172,9 @@ within the referencing block's own history. Checkable locally, since
 exposure is a fact about the cone a validator already holds.
 
 ```lean
-def UniformBudget (D : Delivery U) (T : ℕ) : Prop :=
+def UniformBudget (D : Delivery U) (τ : ℕ) : Prop :=
   ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ D.accepted v (n + 1),
-    (novelty U (viewUpto D v n) b).card ≤ T
+    (novelty U (viewUpto D v n) b).card ≤ τ
 ```
 
 **The novelty budget — accept nothing that costs more than `T` new
@@ -2739,15 +2739,15 @@ hypothesis rather than a premise of the DoS argument: any of the routes of
 §§6.7–6.9 discharges it (§4.3):
 
 ```lean
-theorem dos_resistance {T N : ℕ} {P : Finset Validator}
+theorem dos_resistance {τ N : ℕ} {P : Finset Validator}
     (hpop : ∀ r ≤ N, PopulatedOn U P r)
-    (hu : UniformBudget D T) (hra : RefsAccepted D) :
+    (hu : UniformBudget D τ) (hra : RefsAccepted D) :
     (∀ r ≤ N, PopulatedOn U P r) ∧
       ∀ v ∈ (Correct : Finset Validator), ∀ n,
         (viewUpto D v n).card ≤
           (Correct : Finset Validator).card * (n + 1) +
             ((Correct : Finset Validator).card * F.f +
-              n * ((Correct : Finset Validator).card * (F.f * T)))
+              n * ((Correct : Finset Validator).card * (F.f * τ)))
 ```
 
 with a post-`R` incremental form (`dos_resistance'`) in which the slope is
@@ -7509,9 +7509,9 @@ The **analysis-side budget**: only the Byzantine clause. This is the weakest thi
 *def, `DoS.Novelty.lean`*
 
 ```lean
-def UniformBudget (D : Delivery U) (T : ℕ) : Prop :=
+def UniformBudget (D : Delivery U) (τ : ℕ) : Prop :=
   ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ D.accepted v (n + 1),
-    (novelty U (viewUpto D v n) b).card ≤ T
+    (novelty U (viewUpto D v n) b).card ≤ τ
 ```
 
 **The mechanism-side budget** — the rule a validator actually runs: a guard-free cap on every acceptance, author-blind. Enforcing the cap on everyone enforces it on the Byzantine authors (`UniformBudget.byzBudget`), and post-`R` the converse holds at `f·κ + 1` (`uniform_of_byzBudget` below) — the two formulations sandwich within one factor of `f`, the exact price of author-blindness.
@@ -12234,8 +12234,8 @@ An accepted block's whole history is retained.
 *theorem, `DoS.Novelty.lean`*
 
 ```lean
-theorem UniformBudget.byzBudget {T : ℕ} (h : UniformBudget D T) :
-    ByzBudget D T
+theorem UniformBudget.byzBudget {τ : ℕ} (h : UniformBudget D τ) :
+    ByzBudget D τ
 ```
 
 Dropping a guard weakens nothing: the author-blind cap implies the Byzantine-side budget with the same constant.
@@ -12379,15 +12379,15 @@ theorem card_viewUpto_le {κ : ℕ} (hbyz : ByzBudget D κ)
 *theorem, `DoS.Novelty.lean`*
 
 ```lean
-theorem dos_resistance {T N : ℕ} {P : Finset Validator}
+theorem dos_resistance {τ N : ℕ} {P : Finset Validator}
     (hpop : ∀ r ≤ N, PopulatedOn U P r)
-    (hu : UniformBudget D T) (hra : RefsAccepted D) :
+    (hu : UniformBudget D τ) (hra : RefsAccepted D) :
     (∀ r ≤ N, PopulatedOn U P r) ∧
       ∀ v ∈ (Correct : Finset Validator), ∀ n,
         (viewUpto D v n).card ≤
           (Correct : Finset Validator).card * (n + 1) +
             ((Correct : Finset Validator).card * F.f +
-              n * ((Correct : Finset Validator).card * (F.f * T)))
+              n * ((Correct : Finset Validator).card * (F.f * τ)))
 ```
 
 **DoS resistance, from enforceable conditions only.** Liveness and linear storage from round 0 under full asynchrony; every hypothesis is local protocol conduct or a pure network assumption, and the author-blind cap replaces every creator-guarded budget.
@@ -12397,15 +12397,15 @@ theorem dos_resistance {T N : ℕ} {P : Finset Validator}
 *theorem, `DoS.Novelty.lean`*
 
 ```lean
-theorem dos_resistance' {T R N : ℕ} {P : Finset Validator}
+theorem dos_resistance' {τ R N : ℕ} {P : Finset Validator}
     (hpop : ∀ r ≤ N, PopulatedOn U P r)
-    (hED : EventuallyDelivers D R) (hu : UniformBudget D T)
+    (hED : EventuallyDelivers D R) (hu : UniformBudget D τ)
     (hra : RefsAccepted D) :
     (∀ r ≤ N, PopulatedOn U P r) ∧
       ∀ v ∈ (Correct : Finset Validator), ∀ n, R + 1 ≤ n →
         (viewUpto D v n).card ≤ (viewUpto D v (R + 1)).card +
           (n - (R + 1)) *
-            ((Correct : Finset Validator).card * (F.f * T + 1) + F.f * T)
+            ((Correct : Finset Validator).card * (F.f * τ + 1) + F.f * τ)
 ```
 
 The post-`R` incremental form of the headline: the same enforceable conduct, plus the network's `EventuallyDelivers`.

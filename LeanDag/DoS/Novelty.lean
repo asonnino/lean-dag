@@ -240,14 +240,14 @@ everyone enforces it on the Byzantine authors (`UniformBudget.byzBudget`),
 and post-`R` the converse holds at `f·κ + 1` (`uniform_of_byzBudget`
 below) — the two formulations sandwich within one factor of `f`, the
 exact price of author-blindness. -/
-def UniformBudget (D : Delivery U) (T : ℕ) : Prop :=
+def UniformBudget (D : Delivery U) (τ : ℕ) : Prop :=
   ∀ v ∈ (Correct : Finset Validator), ∀ n, ∀ b ∈ D.accepted v (n + 1),
-    (novelty U (viewUpto D v n) b).card ≤ T
+    (novelty U (viewUpto D v n) b).card ≤ τ
 
 /-- Dropping a guard weakens nothing: the author-blind cap implies the
 Byzantine-side budget with the same constant. -/
-theorem UniformBudget.byzBudget {T : ℕ} (h : UniformBudget D T) :
-    ByzBudget D T := fun v hv n b hb _ => h v hv n b hb
+theorem UniformBudget.byzBudget {τ : ℕ} (h : UniformBudget D τ) :
+    ByzBudget D τ := fun v hv n b hb _ => h v hv n b hb
 
 omit [DecidableEq BlockId] in
 /-- One acceptance per author: the frontier splits into at most `|Correct|`
@@ -815,28 +815,28 @@ No hypothesis consults `Correct`, `byzantine`, or any identity. -/
 linear storage from round 0 under full asynchrony; every hypothesis is
 local protocol conduct or a pure network assumption, and the author-blind
 cap replaces every creator-guarded budget. -/
-theorem dos_resistance {T N : ℕ} {P : Finset Validator}
+theorem dos_resistance {τ N : ℕ} {P : Finset Validator}
     (hpop : ∀ r ≤ N, PopulatedOn U P r)
-    (hu : UniformBudget D T) (hra : RefsAccepted D) :
+    (hu : UniformBudget D τ) (hra : RefsAccepted D) :
     (∀ r ≤ N, PopulatedOn U P r) ∧
       ∀ v ∈ (Correct : Finset Validator), ∀ n,
         (viewUpto D v n).card ≤
           (Correct : Finset Validator).card * (n + 1) +
             ((Correct : Finset Validator).card * F.f +
-              n * ((Correct : Finset Validator).card * (F.f * T))) :=
+              n * ((Correct : Finset Validator).card * (F.f * τ))) :=
   ⟨hpop, fun _v hv n => card_viewUpto_le hu.byzBudget hra hv n⟩
 
 /-- The post-`R` incremental form of the headline: the same enforceable
 conduct, plus the network's `EventuallyDelivers`. -/
-theorem dos_resistance' {T R N : ℕ} {P : Finset Validator}
+theorem dos_resistance' {τ R N : ℕ} {P : Finset Validator}
     (hpop : ∀ r ≤ N, PopulatedOn U P r)
-    (hED : EventuallyDelivers D R) (hu : UniformBudget D T)
+    (hED : EventuallyDelivers D R) (hu : UniformBudget D τ)
     (hra : RefsAccepted D) :
     (∀ r ≤ N, PopulatedOn U P r) ∧
       ∀ v ∈ (Correct : Finset Validator), ∀ n, R + 1 ≤ n →
         (viewUpto D v n).card ≤ (viewUpto D v (R + 1)).card +
           (n - (R + 1)) *
-            ((Correct : Finset Validator).card * (F.f * T + 1) + F.f * T) :=
+            ((Correct : Finset Validator).card * (F.f * τ + 1) + F.f * τ) :=
   ⟨hpop, fun _v hv _n hn => card_viewUpto_le' hu.byzBudget hED hra hv hn⟩
 
 end LeanDag
