@@ -1,5 +1,6 @@
 import LeanDag.ViewPace
 import LeanDag.DoS.Novelty
+import Mathlib.Tactic.Ring
 
 /-!
 # The delivery layer a pacing structure induces
@@ -210,6 +211,28 @@ theorem dos_resistance_of_pace {κ : ℕ}
             ((Correct : Finset Validator).card * F.f +
               n * ((Correct : Finset Validator).card * (F.f * κ))) :=
   dos_resistance (vp.populatedOn card_correct) hu vp.refsAccepted_toDelivery
+
+/-- **The same bound, factored** (V20′). The three summands of
+`dos_resistance_of_pace` are one product: a correct validator's retained view
+grows at a rate of `|Correct| * (1 + f * κ)` blocks per round, over a constant
+offset of `|Correct| * (1 + f)`. Nothing new is proved --- the two bounds are
+equal --- but the rate the budget buys is now readable off the statement. -/
+theorem dos_resistance_of_pace' {κ : ℕ}
+    (hu : UniformBudget vp.toDelivery κ) :
+    (∀ r ≤ N, Populated U r) ∧
+      ∀ v ∈ (Correct : Finset Validator), ∀ n,
+        (viewUpto vp.toDelivery v n).card ≤
+          (Correct : Finset Validator).card * ((1 + F.f * κ) * n + 1 + F.f) := by
+  obtain ⟨hpop, hview⟩ := vp.dos_resistance_of_pace hu
+  refine ⟨hpop, fun v hv n => ?_⟩
+  have h := hview v hv n
+  have harith :
+      (Correct : Finset Validator).card * (n + 1) +
+          ((Correct : Finset Validator).card * F.f +
+            n * ((Correct : Finset Validator).card * (F.f * κ)))
+        = (Correct : Finset Validator).card * ((1 + F.f * κ) * n + 1 + F.f) := by
+    ring
+  omega
 
 end ViewPace
 

@@ -231,6 +231,58 @@ theorem no_timeout_of_fast {δ : ℕ}
   have := rc.built_succ_le_of_fast hδ hD hN hlead hL hT v hv
   omega
 
+/-! ### The spread, discharged
+
+The two results above take the spread `D` between reliable round entries as a
+parameter, which leaves the reader to supply it. Past GST there is nothing to
+supply: the catch-up rule collapses the spread to `delay + proc`
+(`driftOn_of_catchup`), and the latency is then stated in the constants the
+deployment already knows --- `Δ`, the actual delivery `δ`, and `proc`. -/
+
+omit [DecidableEq BlockId] in
+/-- **Latency, in the deployment's own constants.** Past GST, with a quorum
+reliable, every reliable validator builds the round above within
+`Δ + δ + 2 * proc` of entering it: `Δ + proc` of collapsed spread to the last
+builder, `δ` for the block to arrive, `proc` to build on it. No free spread
+parameter, and the timeout does not appear. -/
+theorem built_succ_le_of_fast_gst {δ : ℕ}
+    (hcard : quorumCard Validator ≤ T.card) (hgst : rc.gst ≤ R)
+    (hR : R ≤ S.slotRound k)
+    (hδ : ∀ v ∈ T, ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = S.slotRound k →
+      b ∈ rc.holds v (rc.built ((U.block b).creator) (S.slotRound k) + δ))
+    (hN : S.slotRound k + 1 ≤ N) (hlead : S.leader k ∈ T)
+    (hL : IsLeaderBlock U k L) (hT : T ⊆ (Correct : Finset Validator)) :
+    ∀ v ∈ T, rc.built v (S.slotRound k + 1)
+      ≤ rc.built v (S.slotRound k) + rc.delay + δ + 2 * rc.proc := by
+  have hdrift := rc.driftOn_of_catchup hcard hgst
+  have hD : ∀ u ∈ T, ∀ v ∈ T,
+      rc.built u (S.slotRound k) ≤ rc.built v (S.slotRound k) + (rc.delay + rc.proc) :=
+    fun u hu v hv => hdrift v hv u hu (S.slotRound k) hR (by omega)
+  intro v hv
+  have := rc.built_succ_le_of_fast hδ hD hN hlead hL hT v hv
+  omega
+
+omit [DecidableEq BlockId] in
+/-- **When the timeout never fires**, in the same constants. At the minimal
+timeout `2Δ + proc` the hypothesis reads `δ + proc < Δ`: the fallback is dead
+exactly when actual delivery, plus one processing step, beats the bound the
+timeout was set against. -/
+theorem no_timeout_of_fast_gst {δ : ℕ}
+    (hcard : quorumCard Validator ≤ T.card) (hgst : rc.gst ≤ R)
+    (hR : R ≤ S.slotRound k)
+    (hδ : ∀ v ∈ T, ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = S.slotRound k →
+      b ∈ rc.holds v (rc.built ((U.block b).creator) (S.slotRound k) + δ))
+    (hN : S.slotRound k + 1 ≤ N) (hlead : S.leader k ∈ T)
+    (hL : IsLeaderBlock U k L) (hT : T ⊆ (Correct : Finset Validator))
+    (hfast : rc.delay + δ + 2 * rc.proc < rc.timeout (S.slotRound k)) :
+    ∀ v ∈ T, rc.built v (S.slotRound k + 1)
+      < rc.built v (S.slotRound k) + rc.timeout (S.slotRound k) := by
+  intro v hv
+  have := rc.built_succ_le_of_fast_gst hcard hgst hR hδ hN hlead hL hT v hv
+  omega
+
 end ReactivePace
 
 end LeanDag

@@ -54,6 +54,7 @@ import LeanDag.Integration.Coverage
 import LeanDag.Integration.ScheduleShape
 import LeanDag.Integration.Joiner
 import LeanDag.Integration.Stack
+import LeanDag.Integration.Sound
 import LeanDag.Integration.Lifecycle
 import LeanDag.Integration.Retention
 import LeanDag.Integration.ReGenesis

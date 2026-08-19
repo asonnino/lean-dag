@@ -227,6 +227,44 @@ theorem committed_of_correct_block
   exact ⟨L, hL, hdec, hreach,
     fun g n hg hn => ⟨k', hn, L, hg, hreach⟩⟩
 
+/-! ### The same result, execution first
+
+`committed_of_correct_block` fixes the slot *before* any execution is named:
+the schedule alone decides where `u`'s block will be picked up, and the
+statement then quantifies over every reactive execution reaching that far.
+That order is the strong reading, and it is why the theorem's conclusion
+carries a universally quantified execution inside an existential.
+
+The reader's order is the other one --- take an execution, ask what happens
+to a block. That is the corollary below: it says of a *given* run what the
+theorem says of all of them, and it is what the paper states. -/
+
+/-- **No reliable validator's block is censored** (RS5, execution first). In
+a reactive run past GST whose timeout clears `2Δ + proc`, every block a
+reliable validator authors is reached by a later commit --- at a slot the
+validator leads itself --- and so enters the agreed ledger.
+
+The slot is still the schedule's choice, so the horizon condition remains: the
+run must reach two rounds past it. Everything else is fixed before the
+statement begins. -/
+theorem committed_of_correct_block_of_run
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card)
+    (fair : FairToEach (S := S) T) (rm : ReactiveM U T N) {R m : ℕ}
+    (hgst : rm.gst ≤ R) (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
+    {u : Validator} (hu : u ∈ T) (hRm : R ≤ m) :
+    ∃ k', m < S.slotRound k' ∧ S.leader k' = u ∧
+      (S.slotRound k' + 2 ≤ N →
+        ∀ b ∈ U.ids, (U.block b).creator = u → (U.block b).round = m →
+          ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) ∧
+            Reaches U L b ∧
+            ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
+              b ∈ ledgerSet U g n) := by
+  obtain ⟨k', hm, hR, hlead, hrest⟩ :=
+    committed_of_correct_block (BlockId := BlockId) (Payload := Payload)
+      hT hcard fair hu R m hRm
+  exact ⟨k', hm, hlead, fun hN => hrest U N rm hgst hto hN⟩
+
 end ReactiveM
 
 end LeanDag
