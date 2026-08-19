@@ -15006,7 +15006,7 @@ The quantifier order is the content: the slot `b` is fixed by the *schedule* alo
 
 ## Appendix D. Index of internal lemmas
 
-The 366 lemmas used only within the file that proves
+The 367 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -15498,7 +15498,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `chopMsg_r0` | The rebased crash round: the truncation sees the gap starting `G` lower, as it sees every round. |
 | `chopMsg_v1` | The induced message keeps the anchor and the recovering validator, and its gap is the original's shifted — … |
 
-### `Integration/ReGenesis.lean` (7)
+### `Integration/ReGenesis.lean` (8)
 
 | Lemma | Role |
 |:---|:---|
@@ -15508,6 +15508,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `history_addGenesis` | Cones are unchanged, so every cone-based condition reads the same. |
 | `mem_addGenesis` | — |
 | `reaches_addGenesis` | Reachability is unchanged among old blocks: the new block references nothing, and nothing references it. |
+| `rejoin_populated` | — |
 | `stack_block_fresh_horizon` | The cut turns the boundary fill block into a genesis block. At a horizon inside the gap, `v1`'s filled … |
 
 ### `Integration/Stack.lean` (3)

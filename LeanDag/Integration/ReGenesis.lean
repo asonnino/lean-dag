@@ -520,6 +520,41 @@ def recoveryMsg (r : ℕ) (line fresh : ℕ → BlockId) (idx : BlockId → ℕ)
     · rw [addGenesis_block_old ho] at hbc
       exact absurd hbc (hsev b ho)
 
+/-! ### Rejoining from the truncated universe alone
+
+The construction above uses nothing of the universe the validator fell out
+of. Given the truncation, a donor line inside it, and fresh identifiers, the
+returning validator obtains a block at every round from `0` to the target:
+the block at round `0` is reference-free, and each block above it cites the
+donor's references at its round together with the one below.
+
+This is the fill your recipients can check with the history they retain. The
+block at the cut is empty because the cut emptied it, and it serves as round
+`0` without any separate provision. -/
+theorem rejoin_populated (msg : SkipMsg (addGenesis V v g p hg hsev))
+    (hB1 : msg.B1 = g) :
+    ∀ k ≤ msg.r, ∃ b ∈ msg.skipFill.ids,
+      (msg.skipFill.block b).creator = v ∧ (msg.skipFill.block b).round = k := by
+  have hr0 : msg.r0 = 0 := by
+    show ((addGenesis V v g p hg hsev).block msg.B1).round = 0
+    rw [hB1, addGenesis_block_new]
+  have hv : msg.v1 = v := by
+    have h := msg.hB1c
+    rw [hB1, addGenesis_block_new] at h
+    exact h.symm
+  intro k hk
+  rcases Nat.eq_zero_or_pos k with rfl | hk0
+  · refine ⟨g, Finset.mem_union_left _ mem_addGenesis, ?_, ?_⟩
+    · rw [msg.skipFill_block_old mem_addGenesis, addGenesis_block_new]
+    · rw [msg.skipFill_block_old mem_addGenesis, addGenesis_block_new]
+  · refine ⟨msg.fresh k,
+      Finset.mem_union_right _ (msg.mem_freshIds.mpr ⟨k, by omega, hk, rfl⟩), ?_, ?_⟩
+    · rw [msg.skipFill_block_fresh]
+      show msg.v1 = v
+      exact hv
+    · rw [msg.skipFill_block_fresh]
+      rfl
+
 end Recovery
 
 end Integration
