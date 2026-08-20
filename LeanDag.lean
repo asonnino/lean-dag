@@ -87,3 +87,6 @@ import LeanDag.MahiMahi.Model.Unpredictable
 import LeanDag.MahiMahi.Liveness.Statement
 import LeanDag.MahiMahi.Helpers.Liveness
 import LeanDag.MahiMahi.Liveness.Proof
+import LeanDag.MahiMahi.Synchrony.Statement
+import LeanDag.MahiMahi.Helpers.Synchrony
+import LeanDag.MahiMahi.Synchrony.Proof
