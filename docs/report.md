@@ -246,7 +246,12 @@ proof effort with no corresponding proof content.
    proved a block universe; production is restored at every missed round,
    a filled leader candidate is directly skipped, and every verdict
    reached before the fill re-derives and agrees after it
-   (`SkipMsg.decided_fill_agree` (SS6)).
+   (`SkipMsg.decided_fill_agree` (SS6)). The fill is moreover *derived,
+   not transmitted*: the donor line is the self-parent chain below its
+   tip, so the whole denotation is a function of two block names that
+   every receiver elaborates locally
+   (`JumpMsg.denote_eq_of_core` (SS10)) — round jumping at one message
+   of constant size (§12.7).
 
 13. **Adaptive leaders** (§13): a Hammerhead-style schedule — the leaders
    ahead recomputed from the agreed prefix — proved safe and live for both
@@ -1212,11 +1217,11 @@ by violating a clause; read across to see what a result depends on.
 
 | | Clause | Consumed by |
 |:---|:---|:---|
-| P1 | `ValidWrt.predecessor` | T2, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L0, CQ3, CQ5, CQ6, CQ7, C2, D15a, C1′, C3′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, G9, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6, I1, I2, I4–I17, I19 |
-| P2 | `ValidWrt.distinct_creators` | M5′, M5, M6, C1′, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G12, G8, O1′, O4′, O5, O6, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6, AL7, H2, H5, H6, I1, I2, I4–I16 |
+| P1 | `ValidWrt.predecessor` | T2, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L0, CQ3, CQ5, CQ6, CQ7, C2, D15a, C1′, C3′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, G9, SS1, SS2, SS3, SS4, SS5, SS6, SS10, AL3, AL5, AL6, I1, I2, I4–I17, I19 |
+| P2 | `ValidWrt.distinct_creators` | M5′, M5, M6, C1′, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G12, G8, O1′, O4′, O5, O6, SS1, SS2, SS3, SS4, SS5, SS6, SS8, SS9, SS10, AL3, AL5, AL6, AL7, H2, H5, H6, I1, I2, I4–I16 |
 | P3 | `ValidWrt.quorum` | T3, T3a, T3c, M2, M4, M6, L0, CQ5, CQ6, CQ7, D15a, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6, I1, I2, I4–I16, I19 |
-| P3′ | `ValidWrt.self_parent` | RS5; C1′, C3′, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G11, G12, G8, G9, SS1, SS2, SS3, SS4, SS5, SS6, I1, I2, I4–I17 |
-| P4 | `BlockUniverse.complete` | T2, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L0, L3, L6, L8b, CQ3, CQ5, CQ6, CQ7, C2, D15a, C1′, C3′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, G9, O7, O10, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6, AL7, H7, I1, I2, I4–I17, I19 |
+| P3′ | `ValidWrt.self_parent` | RS5; C1′, C3′, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G11, G12, G8, G9, SS1, SS2, SS3, SS4, SS5, SS6, SS8, SS9, SS10, I1, I2, I4–I17 |
+| P4 | `BlockUniverse.complete` | T2, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, L0, L3, L6, L8b, CQ3, CQ5, CQ6, CQ7, C2, D15a, C1′, C3′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G10, G11, G12, G8, G9, O7, O10, SS1, SS2, SS3, SS4, SS5, SS6, SS10, AL3, AL5, AL6, AL7, H7, I1, I2, I4–I17, I19 |
 | P5 | `BlockUniverse.no_equivocation` | T1, T3, T3a, T3c, M1, M2, M3, M4, M5′, M5, M6, RS5, C2, D15a, C1′, B4, B, B5, G1, G2, G3, G4, G5, G13, G14, G6, G6b, G7, G12, G8, O1, O1′, O2, O4′, O5, O6, SS1, SS2, SS3, SS4, SS5, SS6, AL3, AL5, AL6, AL7, I1, I2, I4–I16, I19 |
 | P7 | `Delivery.includes` | C3′, B5, G6, G6b, G7, G11, G12, G9; on the liveness side `ViewPace.references`, feeding L7 and V17 |
 | P8 | `ViewPace.advances` | V17, and through it every liveness capstone; L11, through `reached` |
@@ -3784,7 +3789,9 @@ every round and under no assumption, a correct-authored block that
 every block two rounds later reaches. A donor line chosen from such
 blocks cites only material every recipient already holds (§16.7), so
 the message needs to carry nothing but the target's name — which is the
-property the mechanism was designed for — and the recovering validator
+property the mechanism was designed for, and which §12.7 proves: the
+line, and the whole fill, are derived from that name alone (SS8, SS9) —
+and the recovering validator
 holds what it cites, rather than pointing at history it cannot serve.
 
 **Check the fill before accepting it.** The self reference P3′ obliges
@@ -3809,6 +3816,111 @@ middle step needs no exemption from P3′, the retained layer being
 genesis after truncation. Until it completes, the validator counts
 against the fault budget however well caught up it is, which prices the
 recovery window (§16.6).
+
+### 12.7 Round jumping: the fill is derived, not transmitted
+
+*(results in `LeanDag/SafeSkip/Jump.lean`; witness in
+`LeanDagTest/SafeSkip.lean`)*
+
+A slow validator at round `r` that sights a quorum at round `R ≫ r`
+wants its next block at `R + 1`, not `R − r` blocks of catch-up. The
+pacemaker already permits the jump — P11 turns evidence of a round into
+entry into it (§6.11) — and what pins the DAG is P3′: a block at
+`R + 1` must reference a block by its own creator at round `R`, and the
+laggard has none above `r`. The fill is exactly what closes that gap,
+so the question is what the jump *costs*, and §12.5 already claimed the
+answer in prose: the message "needs to carry nothing but the target's
+name". This section makes the claim a theorem — the fill is not data
+but a *denotation*, derived by every receiver from a message of
+constant size.
+
+The first step is that the donor line was never free data. P2 admits at
+most one reference per author and P3′ guarantees one by the block's
+own, so "the self-parent" is a well-defined function (`selfParent`, its
+uniqueness `eq_selfParent_of_mem` being P2 verbatim), and the chain
+descending from the message's pinned target is the only line there is:
+
+**SS8.**
+```lean
+theorem SkipMsg.line_eq_lineOf (sk : SkipMsg U) :
+    ∀ k, sk.r0 ≤ k → k ≤ sk.r → sk.line k = lineOf U (sk.line sk.r) k
+```
+
+Any `line` satisfying a `SkipMsg`'s four clauses coincides, on the
+whole interval the clauses govern, with the derived chain `lineOf` —
+the self-parent iterated down from the top block. The message's largest
+field is thereby redundant, and with it the two validator names: the
+anchor determines `v1` (`v1_eq_of_B1`) and the target determines `v2`.
+What remains is the compact core, and the denotation is a function
+of it:
+
+**SS9.**
+```lean
+theorem SkipMsg.skipFill_eq_of_core (sk₁ sk₂ : SkipMsg U)
+    (hB1 : sk₁.B1 = sk₂.B1) (hr : sk₁.r = sk₂.r)
+    (htop : sk₁.line sk₁.r = sk₂.line sk₂.r) (hfresh : sk₁.fresh = sk₂.fresh) :
+    sk₁.skipFill.ids = sk₂.skipFill.ids
+      ∧ ∀ b ∈ sk₁.skipFill.ids, sk₁.skipFill.block b = sk₂.skipFill.block b
+```
+
+Two messages naming the same anchor and the same target denote
+observationally equal universes — equal identifiers, equal blocks at
+every one of them, the statement shaped like `regenesis_converges`
+(I11) because the two objects differ only on junk nothing reads. The
+decoder `idx` needs no hypothesis: `block` consults it only at fresh
+identifiers, where `hidx` pins both decoders. The `hfresh` hypothesis
+is the model's rendering of content addressing — deployments name
+blocks by hash, so two parties deriving the same blocks assign the same
+identifiers.
+
+`JumpMsg` packages the core as the message a recovering validator
+actually sends — four names and the fresh-identifier supply, no line —
+and its elaboration `JumpMsg.toSkipMsg` rebuilds the `SkipMsg` with
+`lineOf` as the line, every clause discharged by the derivation lemmas.
+`JumpMsg.denote`, the elaboration's fill, is the round jump: the
+universe in which the sender produces at `R + 1`. Being a `skipFill`,
+everything §12.1–§12.3 proved — SS1 through SS6 — applies to it
+verbatim.
+
+The last step is that receivers can run the elaboration at all, and
+here the view structure of §2.3 pays off twice. Views are closed
+downward, so a view holding the target holds the entire derived line —
+the message points at nothing a receiver lacks; and views share
+`U.block`, so all parties derive the *same* fill:
+
+**SS10.**
+```lean
+theorem lineOf_mem_view (V : View Validator BlockId Payload U) {B2 : BlockId}
+    (hB2 : B2 ∈ U.ids) (hB2V : B2 ∈ V.ids) :
+    ∀ k, k ≤ (U.block B2).round → lineOf U B2 k ∈ V.ids
+theorem JumpMsg.denote_eq_of_core (j₁ j₂ : JumpMsg U)
+    (hB1 : j₁.B1 = j₂.B1) (hB2 : j₁.B2 = j₂.B2) (hfresh : j₁.fresh = j₂.fresh) :
+    j₁.denote.ids = j₂.denote.ids
+      ∧ ∀ b ∈ j₁.denote.ids, j₁.denote.block b = j₂.denote.block b
+```
+
+This is I11's move — *derive rather than transmit, so nothing is sent
+and nothing can be rejected* — applied to the whole fill rather than to
+one genesis block, and it is what licenses reading Safe Skip as round
+jumping: the wire carries a constant-size message, the gap blocks exist
+only as the denotation every party reconstructs identically, and the
+laggard produces at `R + 1` after one message rather than `R − r`
+round trips.
+
+**The witness (SS11).** `ucrashJump` is `ucrashMsg`'s compact core —
+the same four names, no line — and the two theorems are exercised
+against the hand-built original: the elaboration reproduces the line
+`ucrashMsg` wrote by hand (`ucrashJump_line_eq`, SS8 on data), and the
+two denotations agree on identifiers and blocks
+(`ucrashJump_denote_eq`, SS9 on data). The jump and the hand-built fill
+are the same universe.
+
+What is deliberately not claimed: the *logical* universe still grows by
+one block per gap round, so the counting results of §8 and §9 read
+unchanged. The theorems price the wire and the derivation, not the
+denotation — and the gap itself stays bounded by the
+garbage-collection lag, since an outage longer than the lag recovers
+by §12.6's longer route, whose fill spans at most the retained window.
 
 ---
 
@@ -5070,6 +5182,7 @@ every theorem above it vacuous, and vacuity is not otherwise detectable.
 | `rrSlots` | `Slots`, round-robin, satisfying `FairWithin T (f+1)` and `BoundedSpacing 3` |
 | `Model.lean` | six `BlockUniverse` instances exercising the safety definitions |
 | `Ucrash N`, `ucrashMsg` | `SkipMsg`: a crashed line, the message against it, and the fill (SS7) |
+| `ucrashJump` | `JumpMsg`: the compact core of `ucrashMsg`, elaborating to the same fill (SS11) |
 | `demotePolicy`, `run7` | `AdaptivePolicy`, `AdaptiveRun`, `PlacesRuns`: a genuinely adapting policy and its total runs (AL8) |
 | `Uhyb4`, `Uhyb9` | `HybridFaults`, `HonestNoEquiv`: one crash at four validators; the tight hybrid committee (H9) |
 | `UtightA`, `UtightB` | the one-short committee: agreement refuted at every threshold (H10) |
@@ -5115,7 +5228,10 @@ schedule is witnessed at §11.4's `ugrowReactive`, and Safe Skip on `Ucrash`
 (SS7): the fill's reference sets and cardinality computed by `decide`, the
 gap populated, the filled candidate skipped, and `decided_fill` applied to
 the full view with its quorum hypothesis discharged by counting the three
-live authors. Adaptive leaders are witnessed on `demotePolicy` (AL8): the
+live authors. The jump message is witnessed on the same family (SS11):
+`ucrashJump` carries `ucrashMsg`'s four names and no line, its
+elaboration reproduces the hand-written line (`ucrashJump_line_eq`),
+and the two denotations agree (`ucrashJump_denote_eq`). Adaptive leaders are witnessed on `demotePolicy` (AL8): the
 same DAG under a reassigned leader commits a different block on both
 rules, a vacuous skip moves a later slot's leader off the base rotation,
 and two views' total runs are constructed and shown identical by AL3.
@@ -5143,8 +5259,8 @@ rather than an unsatisfiable hypothesis.
 
 ## 18. Mechanisation
 
-The development comprises approximately 26,500 lines of Lean 4 (v4.32.2)
-against Mathlib, of which some 17,600 constitute the library and 7,400 the
+The development comprises approximately 27,000 lines of Lean 4 (v4.32.2)
+against Mathlib, of which some 18,000 constitute the library and 7,500 the
 models of §17 and the witness files of the arcs. A full build reports no
 errors.
 
@@ -5157,7 +5273,8 @@ errors.
 `chop_chop`, `Odontoceti.decided_unique`, `Odontoceti.safety` and
 `Odontoceti.all_decided_below_of_fairRun`, `chain_quality`,
 `committed_of_correct_block`, `SkipMsg.decided_fill` (SS5) and
-`SkipMsg.decided_fill_agree` (SS6), `adaptiveRun_agree` (AL3) and
+`SkipMsg.decided_fill_agree` (SS6), `SkipMsg.skipFill_eq_of_core` (SS9)
+and `JumpMsg.denote_eq_of_core` (SS10), `adaptiveRun_agree` (AL3) and
 `adaptiveRun_exists` (AL5), `Hybrid.decided_unique` (H6),
 `Hybrid.safety`, `hybrid_bound_necessary` (H10), `Nemo.decided_unique`
 (NN5), `Nemo.outputAt_agree` (NN6) and
@@ -5212,6 +5329,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Drift/Catchup.lean` | the catch-up clause; the collapse; the deployment-free threshold |
 | `SafeSkip/Basic.lean` | the message and its denotation; the fill is a universe; production restored; the filled candidate skipped |
 | `SafeSkip/Invariance.lean` | conservativity at the rule layer; verdict invariance; agreement across a recovery |
+| `SafeSkip/Jump.lean` | the self-parent function; the derived line; the jump message and its elaboration |
 | `Adaptive/Basic.lean` | epochs; the induced instance; the bounded relation, its embedding and congruence |
 | `Adaptive/Policy.lean` | the reassignment policy and its clauses |
 | `Adaptive/Run.lean` | the adaptive run; safety as uniqueness; conservativity; the agreed ledger |
@@ -5713,7 +5831,7 @@ quality, C, D,
 B and E for the denial-of-service arc, G for garbage collection, O for
 Odontoceti; P, N and R name clauses of the trust boundary rather than
 results. Labels resolving to witness models rather than library
-theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7, AL8, H9, H10) are
+theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7, SS11, AL8, H9, H10) are
 excluded from the diagrams, which show the library. Appendix C displays every indexed
 result in full.
 
@@ -5874,6 +5992,10 @@ reused.
 | SS5 | verdict invariance across the fill | `SkipMsg.decided_fill` *(SafeSkip/Invariance)* |
 | SS6 | agreement across a recovery | `SkipMsg.decided_fill_agree` *(SafeSkip/Invariance)* |
 | SS7 | the crash, the message and the fill, on data | `Ucrash` witnesses *(LeanDagTest/SafeSkip)* |
+| SS8 | the donor line is unique given its tip | `SkipMsg.line_eq_lineOf` *(SafeSkip/Jump)* |
+| SS9 | the denotation is a function of the compact core | `SkipMsg.skipFill_eq_of_core` *(SafeSkip/Jump)* |
+| SS10 | receivers derive the same fill, locally | `lineOf_mem_view`, `JumpMsg.denote_eq_of_core` *(SafeSkip/Jump)* |
+| SS11 | the jump message and its elaboration, on data | `ucrashJump` witnesses *(LeanDagTest/SafeSkip)* |
 
 **Adaptive leaders** (§13):
 
@@ -8383,6 +8505,112 @@ def QuorateOverGap (V : View Validator BlockId Payload U) : Prop :=
 
 **The view is quorate over the gap**: at every gap round it holds blocks from a quorum of distinct authors at the round above. This is the condition the agreement result below consumes --- the recovering validator may be counted on only where the pre-crash view could already have decided.
 
+#### `selfParent`
+
+*def, `SafeSkip.Jump.lean`*
+
+```lean
+noncomputable def selfParent (U : BlockUniverse Validator BlockId Payload)
+    (b : BlockId) : BlockId :=
+  if h : ∃ i ∈ (U.block b).refs, (U.block i).creator = (U.block b).creator then
+    h.choose
+  else b
+```
+
+The self-parent of a block: its unique reference by its own creator. Total, with the block itself as junk value when no such reference exists (a genesis block, or an identifier outside the universe); every lemma below assumes the good case.
+
+#### `lineOf`
+
+*def, `SafeSkip.Jump.lean`*
+
+```lean
+noncomputable def lineOf (U : BlockUniverse Validator BlockId Payload)
+    (B2 : BlockId) (k : ℕ) : BlockId :=
+  (selfParent U)^[(U.block B2).round - k] B2
+```
+
+The self-parent chain below `B2`, indexed by round: `lineOf U B2 k` is the ancestor of `B2` at round `k` on its self-parent line. Junk above `B2`'s round or off a valid chain, as usual.
+
+#### `JumpMsg`
+
+*structure, `SafeSkip.Jump.lean`*
+
+```lean
+structure JumpMsg (U : BlockUniverse Validator BlockId Payload) where
+  /-- The recovering validator. -/
+  v1 : Validator
+  /-- Its last block before the crash — the anchor. -/
+  B1 : BlockId
+  /-- The donor of the reference structure. -/
+  v2 : Validator
+  /-- The pinned target block on the donor's line. -/
+  B2 : BlockId
+  /-- Fresh ids for the filled blocks, and their decoder. -/
+  fresh : ℕ → BlockId
+  idx : BlockId → ℕ
+  /-- The anchor is `v1`'s only block at its round (see
+  `SkipMsg.hB1uniq` for why this is a field rather than derived from
+  correctness). -/
+  hB1uniq : ∀ j ∈ U.ids, (U.block j).creator = v1 →
+    (U.block j).round = (U.block B1).round → j = B1
+  hv12 : v1 ≠ v2
+  hB1 : B1 ∈ U.ids
+  hB1c : (U.block B1).creator = v1
+  hB2 : B2 ∈ U.ids
+  hB2c : (U.block B2).creator = v2
+  hB2r : (U.block B1).round ≤ (U.block B2).round
+  hfresh_new : ∀ k, fresh k ∉ U.ids
+  hidx : ∀ k, idx (fresh k) = k
+  /-- The crash: `v1` authored nothing in the gap. -/
+  hgap : ∀ b ∈ U.ids, (U.block b).creator = v1 →
+    (U.block B1).round < (U.block b).round →
+    (U.block b).round ≤ (U.block B2).round → False
+```
+
+**The jump message**: the compact core a recovering validator actually sends — its own name and anchor, the target block and its author — together with the fresh-identifier supply and the semantic clauses a `SkipMsg` carries about them. No line: the line is derived.
+
+`hB2r` places the target at or above the anchor; the gap may be empty, in which case the denotation is `U` plus nothing.
+
+#### `toSkipMsg`
+
+*def, `SafeSkip.Jump.lean`*
+
+```lean
+noncomputable def toSkipMsg : SkipMsg U where
+  v1 := j.v1
+  B1 := j.B1
+  v2 := j.v2
+  r := (U.block j.B2).round
+  line := lineOf U j.B2
+  fresh := j.fresh
+  idx := j.idx
+  hB1uniq := j.hB1uniq
+  hv12 := j.hv12
+  hB1 := j.hB1
+  hB1c := j.hB1c
+  hline_mem := fun _ _ hk2 => lineOf_mem j.hB2 hk2
+  hline_creator := fun _ _ hk2 => (lineOf_creator j.hB2 hk2).trans j.hB2c
+  hline_round := fun _ _ hk2 => lineOf_round j.hB2 hk2
+  hline_chain := fun _ hk1 hk2 =>
+    lineOf_chain j.hB2 hk2 (by omega)
+  hfresh_new := j.hfresh_new
+  hidx := j.hidx
+  hgap := j.hgap
+```
+
+**The elaboration.** The `SkipMsg` a jump message denotes: target round the target's round, line the derived chain. Every line clause is discharged by the `lineOf` lemmas — the receiver holds no data the sender chose.
+
+#### `denote`
+
+*def, `SafeSkip.Jump.lean`*
+
+```lean
+noncomputable def denote [DecidableEq BlockId] : BlockUniverse Validator BlockId Payload :=
+  j.toSkipMsg.skipFill
+```
+
+**The round jump.** The universe in which the sender produces at the round above the target: the fill, elaborated from the compact message. Being a `skipFill`, everything proved of the fill — SS1 through SS6 — applies to it verbatim.
+
 ### Integration: composing the arcs
 
 #### `HorizonStable`
@@ -9627,7 +9855,7 @@ structure SoundOn (U : BlockUniverse Validator BlockId Payload)
 
 ## Appendix C. The theorem reference
 
-The 399 theorems that either another module of the
+The 406 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -9944,6 +10172,18 @@ theorem mem_ids_of_reaches (C : CausalStructure blk ids)
 ```
 
 Causal history stays inside the population.
+
+#### `refs_empty_of_round_zero`
+
+*theorem, `Causality.lean`*
+
+```lean
+theorem refs_empty_of_round_zero (C : CausalStructure blk ids)
+    {b : BlockId} (hb : b ∈ ids) (hround : (blk b).round = 0) :
+    (blk b).refs = ∅
+```
+
+**A genesis block has no references** — one would have to sit a round below round `0`. Derived, so no validity clause is needed for it here.
 
 #### `round_le_of_reaches`
 
@@ -13441,6 +13681,66 @@ theorem decided_fill_agree {V : View Validator BlockId Payload U}
 
 **Agreement across a recovery.** A verdict reached before the fill agrees with any verdict reached after it, whatever view either side held — verdict invariance composed with agreement in the extension.
 
+#### `SkipMsg.line_eq_lineOf`
+
+*theorem, `SafeSkip.Jump.lean`*
+
+```lean
+theorem SkipMsg.line_eq_lineOf (sk : SkipMsg U) :
+    ∀ k, sk.r0 ≤ k → k ≤ sk.r → sk.line k = lineOf U (sk.line sk.r) k
+```
+
+**SS8.** A `SkipMsg`'s donor line is determined by its top block: on the whole interval the message's clauses govern, `line` coincides with the chain derived by following self-parents down from `line r`. The step is P2 through `eq_selfParent_of_mem`: the chain clause hands the line's next block to the one above as an own-creator reference, and there is only one of those.
+
+#### `SkipMsg.skipFill_eq_of_core`
+
+*theorem, `SafeSkip.Jump.lean`*
+
+```lean
+theorem SkipMsg.skipFill_eq_of_core [DecidableEq BlockId] (sk₁ sk₂ : SkipMsg U)
+    (hB1 : sk₁.B1 = sk₂.B1) (hr : sk₁.r = sk₂.r)
+    (htop : sk₁.line sk₁.r = sk₂.line sk₂.r) (hfresh : sk₁.fresh = sk₂.fresh) :
+    sk₁.skipFill.ids = sk₂.skipFill.ids
+      ∧ ∀ b ∈ sk₁.skipFill.ids, sk₁.skipFill.block b = sk₂.skipFill.block b
+```
+
+**SS9.** Two messages naming the same anchor and the same target, drawing fresh identifiers from the same supply, denote observationally equal universes: the identifier sets are equal and the blocks agree at every member. Stated in the style of `regenesis_converges` — the two objects may differ on junk outside their identifiers, which nothing reads.
+
+The decoder needs no hypothesis: `block` consults `idx` only at fresh identifiers, where `hidx` pins both decoders to the same index.
+
+#### `toSkipMsg_top`
+
+*theorem, `SafeSkip.Jump.lean`*
+
+```lean
+@[simp] theorem toSkipMsg_top : j.toSkipMsg.line j.toSkipMsg.r = j.B2
+```
+
+#### `lineOf_mem_view`
+
+*theorem, `SafeSkip.Jump.lean`*
+
+```lean
+theorem lineOf_mem_view (V : View Validator BlockId Payload U) {B2 : BlockId}
+    (hB2 : B2 ∈ U.ids) (hB2V : B2 ∈ V.ids) :
+    ∀ k, k ≤ (U.block B2).round → lineOf U B2 k ∈ V.ids
+```
+
+**SS10a: the receiver holds everything the elaboration reads.** Views are closed downward, so a view holding the target holds the whole derived line — the sender's message points at nothing a receiver lacks.
+
+#### `JumpMsg.denote_eq_of_core`
+
+*theorem, `SafeSkip.Jump.lean`*
+
+```lean
+theorem JumpMsg.denote_eq_of_core [DecidableEq BlockId] (j₁ j₂ : JumpMsg U)
+    (hB1 : j₁.B1 = j₂.B1) (hB2 : j₁.B2 = j₂.B2) (hfresh : j₁.fresh = j₂.fresh) :
+    j₁.denote.ids = j₂.denote.ids
+      ∧ ∀ b ∈ j₁.denote.ids, j₁.denote.block b = j₂.denote.block b
+```
+
+**SS10b: derivations converge.** Two jump messages with the same compact core denote observationally equal universes — since views share `U.block`, every receiver elaborating the message arrives at this one object. The elaborated lines both being the derived chain, this is SS9 applied to the elaborations.
+
 ### Integration: composing the arcs
 
 #### `honestNoEquiv_chop`
@@ -13745,6 +14045,19 @@ theorem honestNoEquiv_stack (sk : SkipMsg U) (hne : HonestNoEquiv U) :
 ```
 
 **I16a.** Honest non-equivocation survives the whole stack — I3 then I2, with no new argument. This is what lets the hybrid safety development be used by a validator that both recovered and pruned.
+
+#### `synchronisedOn_stack`
+
+*theorem, `Integration.Stack.lean`*
+
+```lean
+theorem synchronisedOn_stack (sk : SkipMsg U) {T : Finset Validator} {R R' R'' : ℕ}
+    (hs : SynchronisedOn U T R) (hR : R ≤ R') (hfill : sk.r < R')
+    (hcut : R' ≤ G + R'') :
+    SynchronisedOn (stack sk G) T R''
+```
+
+**I16b.** Coverage survives the stack above the fill and the cut — I5-positive then I4. The two offsets compose exactly as their statements suggest: the fill demands strictly above `sk.r`, the truncation shifts by `G`.
 
 #### `hybrid_agree_stack`
 
@@ -15006,7 +15319,7 @@ The quantifier order is the content: the slot `b` is fixed by the *schedule* alo
 
 ## Appendix D. Index of internal lemmas
 
-The 367 lemmas used only within the file that proves
+The 381 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -15032,14 +15345,13 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `refs_subset` | Completeness, as a subset statement. |
 
-### `Causality.lean` (4)
+### `Causality.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `eq_of_reaches_of_refs_empty` | A block with no references reaches only itself. |
 | `historyUptoFrom_succ` | — |
 | `historyUptoFrom_zero` | — |
-| `refs_empty_of_round_zero` | A genesis block has no references — one would have to sit a round below round `0`. Derived, so no validity … |
 
 ### `CausalHistory.lean` (2)
 
@@ -15474,6 +15786,27 @@ subsection per module, in the layer order of Appendices B and C.
 | `votesIn_fill` | Votes read identically on old certificates — for *every* candidate: an old block's references are … |
 | `votesIn_subset_ids` | — |
 
+### `SafeSkip/Jump.lean` (16)
+
+| Lemma | Role |
+|:---|:---|
+| `SkipMsg.v1_eq_of_B1` | The recovering validator is determined by the anchor: it is the anchor's creator. |
+| `eq_selfParent_of_mem` | The crux: the self-parent is unique. P2 collapses any reference carrying the block's own creator onto … |
+| `lineOf_aux` | — |
+| `lineOf_chain` | The derived line is a chain: each block references the one below. |
+| `lineOf_creator` | The derived line carries `B2`'s creator throughout. |
+| `lineOf_mem` | The derived line stays in the universe. |
+| `lineOf_pred` | Peeling one step: the line at `k - 1` is the self-parent of the line at `k`. |
+| `lineOf_round` | The derived line's block at index `k` sits at round `k`. |
+| `lineOf_top` | The line tops out at `B2` itself. |
+| `selfParent_creator` | The self-parent carries the block's own creator. |
+| `selfParent_mem_ids` | The self-parent is in the universe. |
+| `selfParent_mem_refs` | The self-parent is a reference of its block. |
+| `selfParent_round` | The self-parent sits one round below its block. |
+| `selfParent_spec` | — |
+| `toSkipMsg_line` | — |
+| `toSkipMsg_r` | — |
+
 ### `Integration/Coverage.lean` (1)
 
 | Lemma | Role |
@@ -15511,13 +15844,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `rejoin_populated` | — |
 | `stack_block_fresh_horizon` | The cut turns the boundary fill block into a genesis block. At a horizon inside the gap, `v1`'s filled … |
 
-### `Integration/Stack.lean` (3)
+### `Integration/Stack.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `populated_stack` | I16c. Production survives the stack — SS2 then the truncation's own rebasing. The reliable set gains the … |
 | `schedule_stack` | I16e. A validator running the stack still has a fair, spanning schedule inside its truncation, for any … |
-| `synchronisedOn_stack` | I16b. Coverage survives the stack above the fill and the cut — I5-positive then I4. The two offsets … |
 
 ### `Integration/Lifecycle.lean` (2)
 

@@ -1,5 +1,6 @@
 import LeanDag.SafeSkip.Basic
 import LeanDag.SafeSkip.Invariance
+import LeanDag.SafeSkip.Jump
 import LeanDagTest.Unbounded
 import LeanDagTest.Quantitative
 
@@ -141,7 +142,7 @@ def ucrashMsg (N r : ℕ) (hr : r ≤ N) : SkipMsg (Ucrash N) where
   hline_chain k hk1 hk2 := by
     have h3 : ((3 : Fin 4) : ℕ) = 3 := rfl
     simp only [ucrash_block, rrBlock_round] at hk1
-    simp only [ucrash_block, rrBlock_refs, mem_omitRefs, rrBlock_round, h3]
+    simp only [ucrash_block, rrBlock_refs, mem_omitRefs, h3]
     omega
   hfresh_new k := by
     simp only [ucrash_ids, Finset.mem_filter, Finset.mem_range]
@@ -254,11 +255,97 @@ example (N r : ℕ) (hrN : r < N) {k : ℕ} {v : Option ℕ}
       ((ucrashMsg N r (le_of_lt hrN)).liftView (View.full (Ucrash N))) k v :=
   SkipMsg.decided_fill _ (ucrash_full_hq N r hrN) h
 
+/-! ## The jump message, witnessed (SS11)
+
+`ucrashJump` is the compact form of `ucrashMsg`: the same four names —
+recovering validator `3`, anchor `3`, donor `1`, target `4r + 1` — and
+no line. The elaboration derives the line by following self-parents
+down from the target, and SS8 applied to `ucrashMsg` shows it lands on
+exactly the line that message wrote by hand
+(`ucrashJump_line_eq`). SS9 then makes the two denotations
+observationally equal (`ucrashJump_denote_eq`): the round jump and the
+hand-built fill are the same universe. -/
+
+/-- The jump message: `ucrashMsg`'s compact core, with the donor line
+replaced by the pinned target block `B2 = 4r + 1`. -/
+def ucrashJump (N r : ℕ) (hr : r ≤ N) : JumpMsg (Ucrash N) where
+  v1 := 3
+  B1 := 3
+  v2 := 1
+  B2 := 4 * r + 1
+  fresh k := 4 * (N + 1) + k
+  idx b := b - 4 * (N + 1)
+  hB1uniq :=
+    hB1uniq_of_correct
+      (Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega), Or.inr rfl⟩)
+      (by apply Fin.ext; simp only [ucrash_block, rrBlock_creator_val]; decide)
+      (by decide)
+  hv12 := by decide
+  hB1 := Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega), Or.inr rfl⟩
+  hB1c := by
+    apply Fin.ext
+    simp only [ucrash_block, rrBlock_creator_val]
+    decide
+  hB2 := by
+    simp only [ucrash_ids, Finset.mem_filter, Finset.mem_range]
+    omega
+  hB2c := by
+    apply Fin.ext
+    simp only [ucrash_block, rrBlock_creator_val]
+    omega
+  hB2r := by
+    simp only [ucrash_block, rrBlock_round]
+    omega
+  hfresh_new k := by
+    simp only [ucrash_ids, Finset.mem_filter, Finset.mem_range]
+    omega
+  hidx k := by omega
+  hgap b hb hbc h1 h2 := by
+    simp only [ucrash_ids, Finset.mem_filter, Finset.mem_range] at hb
+    simp only [ucrash_block, rrBlock_round] at h1 h2
+    have hbc' : b % 4 = 3 := by
+      have := congrArg (fun (v : Fin 4) => (v : ℕ)) hbc
+      simpa using this
+    rcases hb.2 with h | h
+    · exact h hbc'
+    · omega
+
+/-- **SS8 on data: the elaboration reproduces the hand-written line.**
+The derived chain below the target is exactly the `4k + 1` line
+`ucrashMsg` spells out. -/
+theorem ucrashJump_line_eq (N r : ℕ) (hr : r ≤ N) {k : ℕ} (hk : k ≤ r) :
+    (ucrashJump N r hr).toSkipMsg.line k = 4 * k + 1 := by
+  have hr0 : (ucrashMsg N r hr).r0 = 0 := by simp [SkipMsg.r0, ucrashMsg]
+  have h := ((ucrashMsg N r hr).line_eq_lineOf k (by omega) hk).symm
+  exact h
+
+/-- **SS9 on data: the jump and the hand-built fill denote the same
+universe** — equal identifiers, equal blocks at every one of them. -/
+theorem ucrashJump_denote_eq (N r : ℕ) (hr : r ≤ N) :
+    (ucrashJump N r hr).denote.ids = (ucrashMsg N r hr).skipFill.ids
+      ∧ ∀ b ∈ (ucrashJump N r hr).denote.ids,
+          (ucrashJump N r hr).denote.block b
+            = (ucrashMsg N r hr).skipFill.block b := by
+  refine SkipMsg.skipFill_eq_of_core _ _ rfl ?_ ?_ rfl
+  · change ((Ucrash N).block (4 * r + 1)).round = r
+    simp only [ucrash_block, rrBlock_round]
+    omega
+  · rw [JumpMsg.toSkipMsg_top]
+    rfl
+
+/-- The derived line at round `1` of the small instance, concretely. -/
+example : (ucrashJump 2 2 (by omega)).toSkipMsg.line 1 = 5 :=
+  ucrashJump_line_eq 2 2 (by omega) (by omega)
+
 #print axioms LeanDag.SkipMsg.decided_fill
 #print axioms LeanDag.SkipMsg.decided_fill_agree
 #print axioms ucrash_populated
 #print axioms ucrash_directSkip
 #print axioms LeanDag.SkipMsg.skipFill_populatedOn
 #print axioms LeanDag.SkipMsg.directSkip_fresh
+#print axioms LeanDag.SkipMsg.line_eq_lineOf
+#print axioms LeanDag.SkipMsg.skipFill_eq_of_core
+#print axioms LeanDag.JumpMsg.denote_eq_of_core
+#print axioms ucrashJump_denote_eq
 
 end LeanDagTest
