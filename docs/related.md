@@ -190,17 +190,31 @@ commit rule that commits **multiple leader blocks in each DAG round**.
   progress against a continuously active asynchronous adversary; Mysticeti-C's
   liveness argument requires partial synchrony. This is the single largest
   difference and the reason the commit rule must change.
-- *Multiple leader slots committed per round*, parameterised as either a 5-hop
-  commit delay (maximising commit probability under a continuously active
-  asynchronous adversary) or a 4-hop delay (lower latency under a moderate
-  adversary). Mysticeti commits on a fixed 3-round pattern.
-- The leader-election mechanism (whether a common coin or threshold randomness is
-  used, as asynchrony would ordinarily require) could not be confirmed from the
-  sources consulted (unconfirmed).
+- *Longer waves, votes through the cone.* The rule is Mysticeti's with the wave
+  stretched to four or five rounds and a vote counted through the voting block's
+  causal history (the first block of the slot met in a depth-first walk) rather
+  than among its direct references; the thresholds are unchanged. Mysticeti
+  commits on a fixed 3-round pattern.
+- *Leaders revealed after the wave.* A common coin, reconstructed from the
+  decision round's blocks, names the slots of a round only once the wave is
+  built, so the adversary cannot aim its delivery schedule at the leader's block.
 
-**Bearing on this development:** the parameterised commit depth suggests the
-commit rule here could be generalised over a "certificate distance" parameter
-rather than fixed at two rounds above the leader.
+**Bearing on this development:** formalised as the `LeanDag/MahiMahi/` arc
+(report §17; `mahi-mahi.md`). The rule is the core's generalised over the wave
+length `w`, safe at every `w ≥ 3` and collapsing onto the core at `w = 3`. Its
+liveness is stated with no synchrony hypothesis, under a single clause on the
+pair (schedule, DAG) — the schedule keeps naming a validator whose block the
+DAG directly committed — which is what the late-revealed leader amounts to on
+a DAG; the coin is one mechanism that makes the clause true, and under
+synchrony the clause is derived from the core's fairness. The counting behind
+it is the core's own common-core lemma (T3c). Two points where the
+mechanisation sharpens the paper: the paper's Lemma C.13 counts every
+reference of the common core as committable, where an equivocating author's
+block can be denied by splitting the voters, so the guaranteed count at five
+rounds is `n − f − |byzantine|` (a `1/3` probability per wave, not `2/3`) and
+the deterministic multi-leader threshold is `2f + 1` slots, not `f + 1`; and the
+core's own skip rule, which blames per candidate, is weaker than the
+implementation's, which blames the slot.
 
 ### 4.2 Odontoceti
 

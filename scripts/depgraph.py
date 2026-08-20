@@ -53,6 +53,7 @@ def series_group(label):
     if label.startswith('SS'): return 'safeskip'
     if label.startswith('AL'): return 'adaptive'
     if label.startswith('NN'): return 'nemo'
+    if label.startswith('MM'): return 'mahimahi'
     if label.startswith('H'): return 'hybrid'
     if label.startswith('I'): return 'integration'
     if label.startswith('E'): return 'dos'
@@ -75,6 +76,7 @@ GROUP_FILL = {
     'adaptive': ('#f4e3f0', '#a45a92'),
     'hybrid': ('#fdf0d5', '#b0894a'),
     'nemo': ('#d5efe9', '#3f8f7a'),
+    'mahimahi': ('#e0ecf8', '#4a6fa5'),
     'integration': ('#dbe7e0', '#5f8a76'),
 }
 GROUP_TITLE = {
@@ -87,6 +89,7 @@ GROUP_TITLE = {
     'adaptive': 'adaptive leaders (§13)',
     'hybrid': 'hybrid faults (§14)',
     'nemo': 'crash-fault consensus (§15)',
+    'mahimahi': 'Mahi-Mahi (§17)',
     'integration': 'integration (§16)',
 }
 

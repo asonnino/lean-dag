@@ -60,6 +60,15 @@ LAYERS = [
     ("Nemo-Nemo: crash-fault consensus in two rounds",
      ["Nemo.Basic", "Nemo.CausalHistory", "Nemo.History", "Nemo.Support",
       "Nemo.Rules", "Nemo.Decision", "Nemo.Liveness"]),
+    ("Mahi-Mahi: the asynchronous rule at wave w",
+     ["MahiMahi.Model.Rules", "MahiMahi.Model.Decision", "MahiMahi.Model.Good",
+      "MahiMahi.Model.Unpredictable", "MahiMahi.Safety.Statement",
+      "MahiMahi.Counting.Statement", "MahiMahi.Liveness.Statement",
+      "MahiMahi.Synchrony.Statement", "MahiMahi.Helpers.Rules",
+      "MahiMahi.Helpers.Decision", "MahiMahi.Helpers.Counting",
+      "MahiMahi.Helpers.Liveness", "MahiMahi.Helpers.Synchrony",
+      "MahiMahi.Safety.Proof", "MahiMahi.Counting.Proof",
+      "MahiMahi.Liveness.Proof", "MahiMahi.Synchrony.Proof"]),
     ("The legacy quorum route (report §17)", ["Network.Quorum"]),
 ]
 
