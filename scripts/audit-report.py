@@ -59,6 +59,10 @@ ALLOW = {
     "Environment.constants", "ConstantInfo.value", "Finset.card", "Fintype.card",
     "Finset.filter", "Finset.min", "Finset.max", "lt_trichotomy", "Correct.card", "Finset.max'", "Nat.succ", "refs.card",
     "LeanDagTest.Growth", "LeanDagTest.Unbounded", "Environment.constants",
+    "le_antisymm", "not_lt",
+    # Names of the reference implementation (the `mysticeti` repository, Rust)
+    # that the Mahi-Mahi arc's docstrings quote.
+    "enough_leader_blame", "is_certificate", "try_indirect_decide",
 }
 
 

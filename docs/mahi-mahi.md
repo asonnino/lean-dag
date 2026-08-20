@@ -63,14 +63,15 @@ hypothesis on a DAG, and to prove liveness from that hypothesis alone.
   views and routes, for `w ≥ 2`, with `w = 3` collapsing onto the core's
   `Decided`. The paper's Lemmas C.1–C.6.
 - **MM2 — the counting lemma** (§4), generic in `w ≥ 4`: in every
-  populated wave of any valid DAG, the set of directly committed
-  candidates is nonempty; at `w ≥ 5` it has at least `n − f` members. No
-  network hypothesis of any kind. The paper's Lemmas C.12–C.14 and C.19.
+  populated wave of any valid DAG, some correct validator's block is
+  directly committed; at `w ≥ 5` at least `n − f − |byzantine|` correct
+  validators' blocks are. No network hypothesis of any kind. The paper's
+  Lemmas C.12–C.14 and C.19, with the `w ≥ 5` count corrected for
+  equivocating authors (§4.2).
 - **MM2b — deterministic commits under multiple leaders** (§4.3): with
-  `ℓ ≥ f + 1` distinct leaders per round at `w ≥ 5`, or `ℓ = n` at
-  `w = 4`, every round has a directly committed slot, for _every_
-  schedule — no randomness clause at all. The paper's Lemmas C.15 and
-  C.20, deterministic cases.
+  `2f + 1` distinct leaders at a round and `w ≥ 5`, one of those slots is
+  directly committed, for _every_ schedule — no randomness clause at
+  all; at `w ≥ 4` with every validator leading, likewise.
 - **MM3 — liveness under `UnpredictableWithin`** (§6): if in every
   window of `c` waves the schedule names a committed candidate, commits
   recur; and under the run form of the clause every slot is decided, in
@@ -81,7 +82,8 @@ hypothesis on a DAG, and to prove liveness from that hypothesis alone.
   the core's fairness and violates `UnpredictableWithin` on a valid,
   populated DAG — so Mahi-Mahi under a predictable schedule is not
   asynchronously live, which is the reason the coin exists; and
-  `UnpredictableWithin` is not implied by `FairScheduleOn`.
+  `UnpredictableWithin` is not implied by `FairScheduleOn`. Witnesses,
+  not theorems: they live in `LeanDagTest/MahiMahi/`.
 - **MM5 — partial synchrony recovered** (§7): under `SynchronisedOn`
   the clause is derived, not assumed.
 
@@ -95,9 +97,9 @@ hypothesis on a DAG, and to prove liveness from that hypothesis alone.
 | Lemmas C.3, C.4 (commit excludes skip) | MM1a and the indirect cases of MM1c | |
 | Lemmas C.5, C.6 (agreement) | MM1c | |
 | Lemma C.12 (common core at `r`, reached from `r + 2`) | `commonCore`, §4.1 | the lemma that carries every liveness result |
-| Lemmas C.13, C.14 (`w = 5`: `n − f` committable) | MM2 at `w ≥ 5` | |
+| Lemmas C.13, C.14 (`w = 5`: `n − f` committable) | MM2 at `w ≥ 5` | the count holds for the references by non-equivocating authors; §4.2 |
 | Lemma C.19 (`w = 4`: one committable) | MM2 at `w ≥ 4` | |
-| Lemmas C.15, C.20 (probability per wave) | MM2b for the deterministic cases; the probabilistic cases are prose over MM2 | |
+| Lemmas C.15, C.20 (probability per wave) | MM2b for the deterministic cases; the probabilistic cases are prose over MM2 | the deterministic threshold is `2f + 1` slots, not `ℓ > f`; §4.3 |
 | Lemma C.16 / C.23 (every slot eventually decided) | MM3c | §5.5 on what the chain argument needs |
 | note on `w = 3` (safe, not live) | MM1d, and §5.1 | the core's rule, which is why the core assumes synchrony |
 
@@ -221,9 +223,19 @@ The statements, one file (`Safety/Statement.lean`):
   for any two views — the core's M6 argument, which is entirely a
   consequence of MM1a, MM1b and eligibility, and is expected to
   transcribe.
-- **MM1d, conservativity.** At `w = 3` the rule's `Decided` coincides
-  with the core's: `MahiMahi.Decided 3 U V k v ↔ LeanDag.Decided U V k v`.
-  This pins the definitions to the audited ones.
+- **MM1d, conservativity.** At `w = 3` a derivation of the rule's
+  `Decided` is a derivation of the core's, and the direct commit
+  predicates coincide on every candidate at its own round. One direction
+  only: the core's `directSkip` quantifies over the candidates — a quorum
+  of blames _per twin_ — where this arc's, like the implementation's
+  `enough_leader_blame`, blames the _slot_, a quorum of voting blocks
+  supporting no twin at all. The arc's premise is the stronger one; the
+  converse fails when a leader equivocates and its twins' blaming quorums
+  differ, and the two coincide on any slot with at most one candidate.
+  The core's rule is safe either way, but it skips in a corner where the
+  implementation leaves the slot undecided. A statement about
+  definitions, not about any commit occurring: at `w = 3` commits need
+  the core's synchrony hypothesis (§4.2).
 
 ## 4. `good` and the counting lemma (MM2)
 
@@ -260,52 +272,57 @@ needs.
 
 ### 4.2 The counting lemma, generic in `w`
 
-**MM2.** Under the same hypotheses with `Populated` at the rounds
-`r, …, r + w − 1` of the wave:
+**MM2.** Under the fault model, `ValidWrt`, `no_equivocation`, and
+population by a reliable set `T` (`T ⊆ Correct`, a quorum) at **two**
+rounds — the round that supplies the common core's existence and the
+decision round `r + w − 1`:
 
-- for every `w ≥ 4`: `(good U w k ∩ Correct).Nonempty` — the common
-  core of round `r` is voted for by every voting-round block (round
-  `r + w − 2 ≥ r + 2`), so every correct decision-round block is a
-  certificate, and the `n − f` of them are a direct commit;
-- for every `w ≥ 5`: `n − f ≤ (good U w k ∩ Correct).card` — the
-  common core `b` of round `r + 1` is reached by every block at round
-  `≥ r + 3`, and through `b` so is each of the `n − f` distinct-creator
-  round-`r` blocks it references (Lemma C.13); every voting-round block
-  votes for all of them, every decision-round block certifies all of
-  them (Lemma C.14).
+- for every `w ≥ 4`, with `T` populating `r + 2`:
+  `(goodAt U w r ∩ Correct).Nonempty` — the common core of round `r` is
+  voted for by every voting-round block (round `r + w − 2 ≥ r + 2`), so
+  every decision-round block certifies it, and the `T`-authored ones are
+  a quorum;
+- for every `w ≥ 5`, with `T` populating `r + 3`:
+  `n − f ≤ (goodAt U w r ∩ Correct).card + |byzantine|` — the common core
+  `b` of round `r + 1` is reached by every block at round `≥ r + 3`, and
+  through `b` so is each of the `n − f` distinct-creator round-`r` blocks
+  it references; those by correct authors are voted for by every
+  voting-round block and certified by every decision-round block.
 
-Both bounds are stated for all `w` above the threshold rather than for
-the two values the paper deploys, and the proofs are the same for every
-`w` in range since `commonCore` already reaches every higher round. At
-`w = 3` the voting round is `r + 1` and the common-core argument has no
-room, which is the paper's closing note and the core's reason for
-`SynchronisedOn`. The `aim4` witness (§8) shows the `w = 4` bound is
-tight at two candidates on four validators, which is why the paper
-describes the four-round configuration as the one for a moderate
-adversary.
+Both bounds are stated for all `w` above the threshold, and the proofs
+are the same for every `w` in range since `commonCore` reaches every
+higher round. At `w = 3` the voting round is `r + 1` and the common-core
+argument has no room, which is the paper's closing note and the core's
+reason for `SynchronisedOn`.
+
+**The `w ≥ 5` count.** The paper's Lemma C.13 counts all `n − f`
+references of the round-`(r+1)` common core as committable. A reference
+by an equivocating author is not: a voting block whose cone also holds a
+second twin votes for whichever its support rule orders first, and the
+adversary can expose the other twin to part of the voters so that no twin
+of that author gathers a quorum. What the argument proves is the bound on
+the correct references — at `n = 3f + 1` and `|byzantine| = f`, `f + 1`
+good correct validators, a commit probability of at least `1/3` per wave
+under a uniform draw rather than the paper's `2/3`. The paper's count is
+recovered in any wave whose round-`r` authors do not equivocate, which is
+the hypothesis under which Cordial Miners states the same `2/3`; a
+statement with that hypothesis is a possible follow-up. The protocol's
+liveness is unaffected: a constant fraction is all Lemma C.16 needs.
 
 ### 4.3 Deterministic commits under multiple leaders (MM2b)
 
-The core's `Slots.uniform 1 m` already models `m` distinct leaders per
-round. MM2 gives, with no clause on the schedule:
-
-- at `w ≥ 5`, if the `m` leaders of a round are distinct and
-  `f + 1 ≤ m`, then some slot of the round is directly committed
-  (`n − f` good candidates and `f + 1` distinct leaders meet);
-- at `w ≥ 4`, if `m = n` (every validator leads every round), some
-  slot of the round is directly committed.
-
-These are the deterministic halves of the paper's Lemmas C.15 and
-C.20, and they hold for round-robin, for an adversarial schedule, for
-any `Slots` instance with distinct leaders per round. They do not make
-every slot decided (§5.5), but they make commits recur unconditionally.
-
-**Measurability (MM2′).** `good U w k` depends only on the blocks at
-rounds `≤ slotRound k + w − 1`: two universes agreeing below the
-decision round have the same `good`. This is the "round 4" of the
-informal description stated as mathematics — whatever decides `good`
-is fixed before the round at which a deployment reveals the leader — and
-it is the lemma a future probabilistic layer would consume.
+The core's `Slots.uniform 1 m` models `m` distinct leaders per round.
+MM2 gives, with no clause on the schedule: at `w ≥ 5`, if `2f + 1`
+distinct validators lead slots at a round, one of those slots is good
+(`f + 1` good correct validators and `2f + 1` leaders cannot be disjoint
+in `3f + 1`); at `w ≥ 4`, if every validator leads, `GoodNonempty` is the
+statement. The paper's Lemma C.15 has `ℓ > f` for the five-round case,
+which the corrected count does not support: with `f + 1 ≤ ℓ ≤ 2f` slots
+the draw may name `f` equivocators and `ℓ − f` starved correct
+validators. These results hold for round-robin, for an adversarial
+schedule, for any `Slots` instance with distinct leaders at the round.
+They do not make every slot decided (§5.5), but they make commits recur
+unconditionally.
 
 ## 5. `UnpredictableWithin`
 
@@ -336,10 +353,16 @@ In words: _in every stretch of `c` consecutive waves, at least once the
 schedule names a validator whose block the DAG actually committed._
 
 ```lean
--- proposal; Model/Unpredictable.lean
-def UnpredictableWithin (U) (w c : ℕ) : Prop :=
-  ∀ k, ∃ k', k ≤ k' ∧ k' < k + c ∧ S.leader k' ∈ good U w k'
+-- Model/Unpredictable.lean
+def UnpredictableWithin (U) (w c N : ℕ) : Prop :=
+  ∀ k, decisionRound Validator w (k + c) ≤ N →
+    ∃ k', k ≤ k' ∧ k' < k + c ∧ S.leader k' ∈ good U w k'
 ```
+
+The horizon `N` is part of the definition: `U.ids` is a `Finset`, so
+`good` is empty past some round and no finite DAG satisfies an unbounded
+`∀ k`; the clause quantifies over the windows whose decision rounds lie
+below `N`, and every liveness statement carries the same bound.
 
 Compare the core's `FairScheduleOn T := ∀ k, ∃ k' ≥ k, leader k' ∈ T`
 and its rated form `FairWithin T c`. The shape is the same; the target
@@ -398,9 +421,8 @@ validators (§8):
 **The horizon.** `U.ids` is a `Finset`, so `good U w k = ∅` past the
 horizon and no finite DAG satisfies an unbounded `∀ k, ∃ k' ≥ k`. The
 core met the same wall with production (`liveness.md` §4.4). The rated
-form is the one that survives: `UnpredictableWithin` is consumed only
-for windows inside the horizon, `slotRound (k + c) + w − 1 ≤ N`, and
-every liveness theorem carries that side condition.
+form with the horizon in its definition is the one that survives (§5.2),
+and every liveness theorem carries the same side condition.
 
 **Quantifier order.** The core's `commits_recur_on` names the committing
 slot _before_ `U` and `N` are introduced, and its docstring explains
@@ -437,8 +459,9 @@ renderings of the chain argument are possible:
   consecutive good slots, with `d` spanning eligibility:
 
   ```lean
-  def UnpredictableRunWithin (U) (w c d : ℕ) : Prop :=
-    ∀ k, ∃ k', k ≤ k' ∧ k' < k + c ∧ ∀ i < d, S.leader (k' + i) ∈ good U w (k' + i)
+  def UnpredictableRunWithin (U) (w c d N : ℕ) : Prop :=
+    ∀ k, decisionRound Validator w (k + c + d - 1) ≤ N →
+      ∃ k', k ≤ k' ∧ k' < k + c ∧ ∀ i < d, S.leader (k' + i) ∈ good U w (k' + i)
   ```
 
   This is the rated analogue of the core's `FairRunOn`, it plugs into
@@ -448,9 +471,8 @@ renderings of the chain argument are possible:
   probability at most `(1 − p^d)^c`.
 
 **Decision (Phase 0): the run form**, with the single-hit clause kept
-for MM3b, and `UnpredictableWithin` a consequence of the run form at
-`d ≥ 1`. Both are properties of the pair (schedule, DAG) and both are
-refuted by the `aim4` witness.
+for MM3b. Both are properties of the pair (schedule, DAG); the `aim4`
+witness refutes both, and shows the run form strictly stronger (§8).
 
 A remark the author may want to check against the paper: Lemma C.16
 bounds the chain by "the probability of an infinite sequence of rounds
@@ -466,31 +488,38 @@ does not by itself yield "every slot decided". The `chain` witness
 
 ## 6. Liveness (MM3)
 
-All statements at wave `w`, for a reliable set `T ⊆ Correct` with
-`quorumCard ≤ T.card` where the core's theorems are `T`-relative.
+All statements at wave `w` (`Liveness/Statement.lean`), with no
+`SynchronisedOn`, `EventuallyDelivers`, `gst`, `delay` or `timeout` among
+the hypotheses.
 
 - **MM3a, the leader commits when it is good.** `S.leader k ∈ good U w k
-  → ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)`. This
-  is L4's role, and it is the unfolding of `good`.
-- **MM3b, commits within the window.** `UnpredictableWithin U w c →
-  ∀ k, slotRound (k + c) + w − 1 ≤ N → ∃ k' ∈ [k, k + c), ∃ L, …
-  Decided U (View.full U) k' (some L)`. Also in the unconditional form
-  of MM2b for multi-leader schedules.
-- **MM3c, every slot decided.** `UnpredictableRunWithin U w c d →
-  SpansEligible d → ∀ k, (window in horizon) → ∀ i < k, ∃ v, Decided U
-  (View.full U) i v` — the core's `all_decided_below_of_fairRun` with
-  the run supplied by the clause instead of by fairness and synchrony.
-- **MM3d, local liveness.** On the pacing structure of `ViewPace.lean`,
-  every reliable validator decides on its own view by an explicit time.
-  The core's production theorems consume no timing (`PaceCore.reached`),
-  so the structure should instantiate with its timing fields unused;
-  if it does not port cleanly the statement is dropped and the reason
-  recorded.
+  → ∃ L, IsLeaderBlock U k L ∧ Decided w U (View.full U) k (some L)` —
+  L4's role, and the unfolding of `good`.
+- **MM3b, commits within the window.** Under `UnpredictableWithin U w c N`,
+  every window below the horizon contains a committed slot. The clause
+  restated through MM3a, and nothing more: the window is assumed, not
+  derived, as in the core's rated `commits_recur_within`.
+- **MM3c, every slot decided.** Under `UnpredictableRunWithin U w c d N`
+  with `SpansEligible w d` and `1 ≤ w`, for every window below the
+  horizon there is a slot `b ≥ k` below which every slot is decided — the
+  core's descent `decided_below_of_committed_run` transcribed at wave `w`,
+  with the run supplied by the clause instead of by fairness and
+  synchrony. The descent consumes one property of eligibility, that an
+  eligible anchor lies strictly above the slot, which needs `1 ≤ w`.
+- **MM3d, local liveness.** On any pacing structure `PaceCore U T N` with
+  `T` a quorum, a candidate certified by every `T`-authored decision-round
+  block is decided on each reliable validator's own view at the explicit
+  time `max (latest d) gst + delay`. The premise is universal
+  certification rather than a bare `DirectCommit`: a quorum of
+  certificates by arbitrary authors need not reach a reliable view,
+  whereas reliable blocks do (`holds_roundBlocks`); the counting lemma
+  supplies the premise for the common-core candidates. The structure's
+  convergence is consumed as eventual delivery only — no `gst ≤ R`, no
+  backoff — and its production needs no timing.
 
-The hypotheses of MM3b–d: the fault model, `ValidWrt`,
-`no_equivocation`, production to the horizon, the clause. Not among
-them: `SynchronisedOn`, `EventuallyDelivers`, `gst`, `delay`,
-`timeout`.
+Not stated: an analogue of the core's L5, "an absent leader is skipped".
+The arc's `directSkip` blames the slot with a real quorum, so the core's
+vacuous-skip route does not exist here; no liveness result needs it.
 
 ## 7. Partial synchrony, recovered (MM5)
 
@@ -502,27 +531,37 @@ of counting), so
 
     SynchronisedOn U T R → R ≤ slotRound k → leader k ∈ T → Populated … → leader k ∈ good U w k.
 
-Hence under synchrony `UnpredictableWithin` is _derived_ from
-`FairWithin T c` and the run form from `FairRunOn T d`, and the `ViewPace` route instantiates at wave `w`
-unchanged. This is conservativity in the liveness direction, and it
+Hence under synchrony from round `0` and population through the
+horizon, `UnpredictableWithin` is _derived_ from the core's rated
+`FairWithin T c` (`Synchrony/Statement.lean`), and the partially
+synchronous route instantiates with the clause as a theorem. This is conservativity in the liveness direction, and it
 records a small fact about Mahi-Mahi's rule: at `w ≥ 4` it needs
 coverage at one round where Mysticeti's needs it at two.
 
 ## 8. Witnesses (`LeanDagTest/MahiMahi/`)
 
-Four validators, `f = 1`, `n = 4`, `quorumCard = 3`, `w = 4` unless stated.
+Four validators, `f = 1`, `n = 4`, `quorumCard = 3`, `w = 4` unless stated;
+the schedules are local instances, round-robin with one leader per round
+unless stated. Every definition is settled by `decide` before anything is
+proved from it, and every witness is a default build target.
 
-| witness | what it pins                                                                                                                                                                                                                                   |
-| :------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `full4` | fully connected DAG over five rounds: every predicate of §1 by `decide`; `good = univ` at wave 0; `UnpredictableWithin` holds under round-robin                                                                                                |
-| `twin4` | a Byzantine leader with two round-0 twins, both in one voter's cone: `supportsAt` picks one; without canonicity both would be voted, pinning why §2 exists                                                                                     |
-| `aim4`  | the pattern of §5.1: valid, populated, leader 0's block held by one correct validator at round 1; `leader 0 ∉ good`; `good` is exactly the two survivors (MM2 tight); `FairScheduleOn Correct` holds, `UnpredictableWithin` fails (MM4a, MM4b) |
-| `w3`    | `decide` that `MahiMahi.Decided 3` and `LeanDag.Decided` agree on `full4` for the first slots (MM1d on data)                                                                                                                                   |
-| `multi` | `Slots.uniform 1 2` (two leaders per round, `f + 1 = 2`) at `w = 5` on `aim4` extended by one round: a slot of every round is directly committed under round-robin (MM2b on data)                                                              |
-| `chain` | a schedule and DAG in which a slot's lowest eligible slot is undecided while a later slot is directly committed, and the slot is undecided in `View.full` — the §5.5 regress on data, and why the run form is needed                          |
+| file | witness | what it pins |
+| :-- | :-- | :-- |
+| `Model.lean` | `full4` | six fully connected rounds: the wave arithmetic; `candidatesAt`, `Votes`, `Blames`; certificates and `DirectCommit` at `w = 4` and `w = 5`; `Eligible`; `Decided` by its constructors; a `CertifiedIn` witness |
+| `Model.lean` | `twin4` | a Byzantine leader's two round-`0` twins in one voter's cone: `Votes` picks the least and only the least; without the minimality clause both are candidates |
+| `Model.lean` | `w3` | at `w = 3` the direct predicates, `certificates`, `votesIn` and `Eligible` agree with the core's on `full4`, and slot `1` is decided by both relations (MM1d on data) |
+| `Counting.lean` | `aim4` | the aiming pattern of §5.1 against slot `1`: the target is not committed and directly skipped at `w = 4`; `goodAt aim4 4 1 = {0, 2, 3}` — round-robin names exactly the validator that is not good; the common core on data; at `w = 5` the starved block is reached again and `goodAt = univ`; the statement hypotheses hold; `GoodCard`'s inequality on data |
+| `Counting.lean` | `multi` | `Slots.uniform 1 3`, three distinct leaders per round: slot `3` at round `1` is good at both wave lengths, the `∃ k` of `MultiLeader` exhibited |
+| `Liveness.lean` | satisfiable | both forms of the clause hold on `full4` under round-robin |
+| `Liveness.lean` | MM4a | `¬ UnpredictableWithin aim4 4 1 5`: the one window that matters names the starved validator |
+| `Liveness.lean` | MM4b | `FairScheduleOn Correct` for the same schedule, so the clause is not a consequence of fairness |
+| `Liveness.lean` | run form | `UnpredictableWithin aim4 4 2 5` holds while `UnpredictableRunWithin aim4 4 1 2 5` fails: the two forms are distinct hypotheses |
+| `Liveness.lean` | `SpansEligible` | at one leader per round a run of `w` slots spans eligibility |
+| `Axioms.lean` | — | every `holds` depends on the three standard axioms |
 
-Every witness is a default build target, so a definition that drifts
-into vacuity fails the build.
+The regress of §5.5 is not pinned as an undecidability proof — that would
+need inversion over the relation for every slot of a model — and is
+recorded in prose; the run-form witness is what the tests carry.
 
 ## 9. Layout and discipline
 
@@ -533,18 +572,19 @@ their conventions.
 ```
 LeanDag/MahiMahi/
   Model/         definitions only, theorem-free: Rules, Decision, Good, Unpredictable
+                 (decidable instances by `inferInstanceAs` included: definitions, not proofs)
   Helpers/       generated lemma infrastructure; unaudited
   <Result>/Statement.lean   imports Model/ only; definitions, prose, `def Statement : Prop`; never a proof
-  <Result>/Proof.lean       `theorem holds : Statement` and its lemmas; unaudited
+  <Result>/Proof.lean       `theorem holds : Statement`; unaudited
 LeanDagTest/MahiMahi/       witness models; the instantiations are audited
 scripts/check-mahi-mahi-holes.py   sorry/admit/axiom/native_decide/unsafe/partial absent;
-                                   Statement.lean files proof-free
+                                   Statement.lean files proof-free; Model/ files theorem-free
 ```
 
 The audit surface is `Model/`, every `Statement.lean`, the witness
 instantiations and the checker. Results: `Safety` (MM1), `Counting`
-(`commonCore`, MM2, MM2′, MM2b), `Liveness` (MM3), `Refutation` (MM4),
-`Synchrony` (MM5).
+(`CommonCore`, MM2, MM2b), `Liveness` (MM3, MM2′), `Synchrony` (MM5).
+MM4 is witnesses, in `LeanDagTest/MahiMahi/Liveness.lean`.
 
 **The freeze protocol.** For each phase: statements are written; the
 author reviews them; they are discussed until agreed; from then on they
@@ -563,34 +603,53 @@ the core, that is a finding to report, not a refactor to perform.
 
 **Modelling choices recorded.** (i) Canonical support by least block in
 the cone rather than the implementation's and the paper's depth-first
-hash order (§2). (ii)
-`DirectSkip` on the slot, as `enough_leader_blame` has it. (iii) The
-leader mechanism is abstract; its effect is `UnpredictableWithin` and
-its run form (§5). (iv) The wave length is an explicit parameter, not a
-class, and every statement is generic in `w` above its threshold.
+hash order (§2). (ii) `DirectSkip` on the slot, as `enough_leader_blame`
+has it, which is what makes MM1d one-directional (§3). (iii) The leader
+mechanism is abstract; its effect is `UnpredictableWithin` and its run
+form, both carrying the horizon (§5). (iv) The wave length is an
+explicit parameter, not a class, and every statement is generic in `w`
+above its threshold. (v) `Votes` reads the candidate's own author and
+round, so `certificates U w L r` does not by itself pin `L`'s round to
+`r`; every use goes through `IsLeaderBlock`, which does, and the
+statements that need it carry the round as a hypothesis.
 
 ## 10. Phases
 
-| phase | deliverable                                                                                            | planning                                                                                            | audit surface                      |
-| :---- | :----------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------- | :--------------------------------- |
-| 0     | this record                                                                                            | —                                                                                                   | the record                         |
-| 1     | `Model/Rules.lean`, `Model/Decision.lean`; `full4`, `twin4`, `w3`                                      | **yes** — §2, the exact signature of `supportsAt` and the lemma it owes                             | the two model files, the witnesses |
-| 2     | `Safety/Statement.lean` + proof (MM1a–d)                                                               | no — transcription of core M3–M6                                                                    | the statement file                 |
-| 3     | `Model/Good.lean`, `Counting/Statement.lean` + proof (`commonCore`, MM2, MM2′, MM2b); `aim4`, `multi`  | **yes** — the hypotheses, existence vs count in `commonCore`, the `w`-generic statements, tightness | model file, statement, witnesses   |
-| 4     | `Model/Unpredictable.lean`, `Liveness/Statement.lean`, `Refutation/Statement.lean` + proofs (MM3, MM4); `chain` | **yes** — quantifier order, horizon side conditions, the two clause forms and `SpansEligible`, MM3d's portability | model file, two statements, witness |
-| 5     | `Synchrony/Statement.lean` + proof (MM5)                                                               | no                                                                                                  | the statement                      |
-| 6     | root import, depgraph, `related.md` §4.1, report section, README                                       | no                                                                                                  | the report text                    |
+| phase | deliverable | commit |
+| :-- | :-- | :-- |
+| 0 | this record | `e79b54f` |
+| 1 | `Model/Rules.lean`, `Model/Decision.lean`; `full4`, `twin4`, `w3`; the hole checker | `fbfc555` |
+| 2 | `Safety/` (MM1a–d) | `f3fd531` |
+| 3 | `Model/Good.lean`, `Counting/` (`CommonCore`, MM2, MM2b); `aim4`, `multi` | `0257c8e` |
+| 4 | `Model/Unpredictable.lean`, `Liveness/` (MM3a–d, MM2′); the clause witnesses | `544eeda` |
+| 5 | `Synchrony/` (MM5) | `72dea05` |
+| 6 | this record brought to the final position; report §17; `related.md` §4.1; README | — |
 
-Dependencies: 1 → 2; 1 → 3; 3 → 4; 1 → 5; all → 6.
+Each phase ran as statements → review → freeze → proofs → commit; phases
+1, 3 and 4 were planned before their statements were written.
 
-## 11. Decisions and what remains open
+## 11. Decisions, and what the development changed
 
 Settled in Phase 0: canonical support is (A), least in the cone (§2);
-every statement is generic in `w` above its threshold, `w ≥ 4` for
-existence and `w ≥ 5` for the `n − f` bound (§4); MM3d is in scope; the
-window `c` is a free parameter throughout; the clause has a single-hit
-form for MM3b and a run form for MM3c (§5.5).
+every statement is generic in `w` above its threshold, `w ≥ 3` for
+safety, `w ≥ 4` for existence and `w ≥ 5` for the cardinality bound
+(§4); local liveness is in scope; the window `c` is a free parameter
+throughout; the clause has a single-hit form for MM3b and a run form for
+MM3c (§5.5); the regress witness is a test, not a reported finding; the
+common core is stated as existence.
 
-The `chain` witness is a test, not a reported finding (§5.5); and
-`commonCore` is stated as existence, with the closed-form count as a
-separate optional statement (§4.1).
+What the proofs changed against the plan, each recorded where it
+applies: population at two rounds rather than every round of the wave
+(§4.2); the `w ≥ 5` bound counts correct references only, with the
+`2f + 1` leader threshold for MM2b (§4.2, §4.3); the clause carries the
+horizon in its definition (§5.2); MM1d is one-directional (§3); MM3d's
+premise is universal certification, on `PaceCore` with convergence read
+as eventual delivery (§6); MM4 lives in the witnesses, and no
+`Refutation/` file exists (§9); no L5 at wave `w` (§6).
+
+The core is unchanged: the arc consumes `Block`, `BlockDag`,
+`Causality`, `History`, `Support`, `CommonCore`, `Validators`,
+`Mysticeti`, `Liveness`, `Quantitative` and `ViewPace` read-only. The
+paper's Lemma C.12 was already in the core as T3c
+(`exists_common_correct_ancestor`), which is why the counting phase
+needed no new counting.

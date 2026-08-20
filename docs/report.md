@@ -176,7 +176,7 @@ proof effort with no corresponding proof content.
    refinement into LiDO-DAG. What is claimed is the *form* of the account —
    theirs is operational, quantified over traces and instants; here liveness is
    stated as a condition on the DAG, and the dependence on time is
-   confined below a `Prop`-valued interface (§6.7, §20).
+   confined below a `Prop`-valued interface (§6.7, §21).
 
 4. **A derivation** of the structural property from **view convergence**
    (§6.9), together with the protocol's build rules, and nothing beyond
@@ -192,7 +192,7 @@ proof effort with no corresponding proof content.
    coverage and production alike; every other condition is a clause of the
    protocol, which a designer controls. In particular reference coverage
    is derived rather than assumed, and the one point at which a network parameter
-   constrains the specification is the wait threshold of §19.1.
+   constrains the specification is the wait threshold of §20.1.
 
 6. **Quantitative forms** (§6.10): the round from which coverage holds, given
    explicitly; a bound on the slot at which the next commit occurs; and an
@@ -305,6 +305,19 @@ proof effort with no corresponding proof content.
    requires (I17), while a fill drawn against a common-core target
    carries no material its recipients lack (I19).
 
+17. **Mahi-Mahi** (§17): the asynchronous protocol's rule — the core's
+   at a wave of `w` rounds, votes through the cone — proved safe at every
+   `w ≥ 3` and collapsing onto the core at `w = 3` (`MahiMahi.Safety.holds`
+   (MM1)), and live with **no synchrony hypothesis** under one clause on
+   the schedule and the DAG (`MahiMahi.Liveness.holds` (MM3)): the
+   late-revealed leader keeps landing among the candidates the DAG
+   commits, a set the core's own common-core lemma bounds below at every
+   wave (`MahiMahi.Counting.holds` (MM2)) and synchrony derives from
+   fairness (`MahiMahi.Synchrony.holds` (MM5)). The five-round count
+   holds for non-equivocating authors only — `1/3` per wave, not the
+   paper's `2/3` — and the core's per-candidate skip rule is weaker than
+   the implementation's slot blame.
+
 ### 1.4 Scope and non-goals
 
 The development is deliberately bounded in four respects — a fifth, the
@@ -332,7 +345,7 @@ first.
   are shown agreed; totally ordering the blocks released by a single commit
   requires a tie-break which the development declines to assume (§5.6).
 - **No wall-clock latency.** The wait bound of §6.11 is a duration, but the total
-  elapsed time to a commit is not derived (§19.6).
+  elapsed time to a commit is not derived (§20.6).
 
 ### 1.5 Organisation
 
@@ -361,9 +374,9 @@ fault tolerance (`Hybrid.decided_unique` (H6),
 (`hybrid_agree_stack` (I7)) and collects the deployment conditions
 their composition reveals.
 
-§17 exhibits the witness models. §18 describes the mechanisation, §19
+§18 exhibits the witness models. §19 describes the mechanisation, §20
 discusses the formulation, the lessons of the extensions, and the
-limitations, §20 surveys related work, and §21 concludes. Appendix A indexes every
+limitations, §21 surveys related work, and §22 concludes. Appendix A indexes every
 principal statement against its Lean name and module. Throughout, displayed
 Lean is drawn from the source; binders are occasionally elided for layout,
 and `…` marks an elision.
@@ -545,7 +558,8 @@ boundary, §4), **CQ** (chain quality, §7),
 **G** (garbage collection, §9), **O** (Odontoceti, §10), **RS** (the
 reactive schedule, §11), **SS** (safe skip, §12), and **AL** (adaptive
 leaders, §13), **H** (hybrid fault tolerance, §14), **NN**
-(crash-fault consensus, §15), and **I** (integration, §16). The labels match
+(crash-fault consensus, §15), **I** (integration, §16), and **MM**
+(Mahi-Mahi, §17). The labels match
 the companion documents and the source comments; Appendix A maps each to its Lean
 name and module.
 
@@ -745,8 +759,8 @@ computing base (§4.3). Assumed.
 
 Logically all of these are antecedents: each is a field of a structure or class,
 and every theorem quantifying over a block universe or over the relevant
-instances carries it. None is an axiom in the sense of §18, and their joint
-satisfiability is a proof obligation discharged by exhibition (§17) rather than
+instances carries it. None is an axiom in the sense of §19, and their joint
+satisfiability is a proof obligation discharged by exhibition (§18) rather than
 something the logic must be trusted for. The distinction drawn here is
 epistemic, not logical, and it is what determines where the trust boundary of
 the system actually falls.
@@ -800,7 +814,7 @@ P10 is a joint condition rather than a pure specification: the schedule is the
 designer's, but which validators are reliable is not. Round-robin discharges it
 whenever the reliable set is of quorum size, since at most `f` of every `n`
 consecutive leaders then lie outside it; `rrSlots` witnesses this with a window
-of `f + 1` (§17).
+of `f + 1` (§18).
 
 **P8 deserves the most emphasis of any clause here**, and is easily mistaken for
 a routine one. It states that a correct validator holding a quorum at round `r`
@@ -861,7 +875,7 @@ the model constrains it, `Correct` being a set complement (§2.1).
 P9 is the clause whose *sufficiency* is not under the designer's control: the
 timeout may be chosen freely, but whether the chosen value is long enough
 depends on the network. §6.10 determines the threshold it must meet — the
-constant `2Δ + proc` — and §19.1 discusses the consequences.
+constant `2Δ + proc` — and §20.1 discusses the consequences.
 
 P11 is the second pacemaker rule, and the counterpart of `advances`: where
 P8 forces a validator forward on a *quorum*, P11 forces it forward on a
@@ -946,7 +960,7 @@ differences matter more than they appear to.
 
 `held v n` is what `v` had in hand *at the moment it built its
 round-`(n+1)` block* — not what it eventually receives. That build-time
-index is the essential modelling device (§19.1): a block's references are
+index is the essential modelling device (§20.1): a block's references are
 frozen at construction, so what bears on the DAG's shape is what was held
 when the builder acted. `View.ids` is a finite set of identifiers with no
 index of either kind, which is why no formulation is stated over it.
@@ -1009,7 +1023,7 @@ rather than inside it.
 #### Where they are consumed
 
 Neither role is discharged where its name suggests, and the extracted
-support graph (§18) makes the pattern checkable rather than asserted.
+support graph (§19) makes the pattern checkable rather than asserted.
 
 Production is consumed as a `PopulatedOn` hypothesis: L6, the
 committed-run results, the quantitative results and the capstones of
@@ -1058,7 +1072,7 @@ together with clauses of the protocol:
 | Production | N2 (`converges`) with P8 and genesis | `ViewPace.populatedOn` (V17) |
 
 It is stated as a hypothesis of L4 and L6 in order to keep those arguments free
-of temporal notions (§6.8), and supplied to them by the results above. §19
+of temporal notions (§6.8), and supplied to them by the results above. §20
 discusses the formulation.
 
 **What "derived" does and does not mean here.** Coverage is derived
@@ -1484,7 +1498,7 @@ enter it within the processing bound.
 Reference coverage is not among them. It is not a clause a validator could
 execute, since it refers to `Correct`, which no validator can observe; it is
 what (a) and (b) *produce* against a synchronous network, and it is derived
-accordingly (§4.4, §19.2).
+accordingly (§4.4, §20.2).
 
 The chapter is organised around two interface predicates, and every
 result above them consumes them as hypotheses rather than reaching for a
@@ -1527,7 +1541,7 @@ structure Delivery (U) where
 
 The indexing of `held` is essential: `held v n` denotes what `v` had in hand *at
 the moment it built its round-`(n+1)` block*, not what `v` eventually receives.
-This is the build-time index which a view cannot supply (§19.1). Between holding
+This is the build-time index which a view cannot supply (§20.1). Between holding
 and referencing sits **acceptance** — at most one block per author, correct
 blocks always taken — which is deliberately where the protocol may refuse:
 the DoS arc's novelty budget (§8) is a rule about `accepted`, and the
@@ -1542,7 +1556,7 @@ are stated over it, `EventuallyDelivers` (§6.4) feeds their post-`R`
 increments, and P7's untimed incarnation is its `includes` clause. The
 liveness development never reads it — production and coverage come from
 the timed route of §6.9, whose `holds` is indexed by *time* rather than by
-round, which is exactly the index this structure cannot supply (§19.1).
+round, which is exactly the index this structure cannot supply (§20.1).
 
 ### 6.3 Progress, and the horizon
 
@@ -1573,7 +1587,7 @@ formulation demanding blocks at every round unconditionally would require
 infinitely many distinct blocks in a finite set, so that no universe
 satisfies it and every theorem assuming it is vacuous. An early
 formulation of the production clause had exactly that flaw, caught by
-sitting down to write its witness (§17).
+sitting down to write its witness (§18).
 
 Three consequences follow.
 
@@ -1633,7 +1647,7 @@ The predicate is antitone in `T` (`SynchronisedOn.mono`), which allows results
 established at `T := Correct` to be supplied to the quorum-relative statements of
 §6.6.
 
-The condition is derived, not assumed (§4.4); §19 discusses its formulation.
+The condition is derived, not assumed (§4.4); §20 discusses its formulation.
 
 ### 6.5 Monotonicity and propagation
 
@@ -1800,7 +1814,7 @@ incremental bounds. Neither is consumed by any liveness result.
 
 ### 6.8 The layering
 
-![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §18 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
+![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §19 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
 
 No theorem above `SynchronisedOn` mentions time, and no theorem below it
 mentions certificates. The diagram also locates the trust boundary: the
@@ -2253,7 +2267,7 @@ already is, and the adversary's whole freedom is the single layer it may
 build the instant a quorum forms beneath it —
 `PaceCore.round_le_top_succ`: no valid block's round exceeds some
 reliable `top` by more than one. On the running witness the floor is met
-with equality (§17).
+with equality (§18).
 
 The clause itself is asserted only from `gst` (§4.1), so what it demands
 coincides with what the clamped author-blind rule delivers: pre-GST it
@@ -2464,7 +2478,7 @@ each with a round-`δ` block in `ledgerSet`. No synchrony, no delivery
 model, no populated rounds appear in any hypothesis.
 
 **The boundary, witnessed.** Aggregate coverage is *not* individual
-inclusion. The witness model `Ucens` (CQ8) (§17) runs six rounds in which
+inclusion. The witness model `Ucens` (CQ8) (§18) runs six rounds in which
 three validators reference only each other and commit with the full
 certificate pattern, while a fourth — correct, building validly, never
 referenced — is the missing author of **every** layer of **every**
@@ -2609,7 +2623,7 @@ theorem creators_refs_eq_correct (hdos : DoSValid U) (hb : b ∈ U.ids)
 and the commit chain still operates over
 them: the witness model `Uexcl` carries a
 direct commit whose three rounds all lie after the exclusion of its
-equivocator (§17). Nor does exclusion depend on favourable circumstances:
+equivocator (§18). Nor does exclusion depend on favourable circumstances:
 *density* establishes that a
 cone can be selectively blind to at most `f` correct authors per round, even
 below Byzantine blocks, because the quorum clause forces every layer of
@@ -2642,7 +2656,7 @@ theorem card_history_le' (hdos : DoSValid U) (hb : b ∈ U.ids) :
 ```
 
 The exponential constant is not an artefact of the proof: a matching family of
-witnesses (`Udouble` (C5), §17) realises `2^(e−2)` growth from `e` equivocators,
+witnesses (`Udouble` (C5), §18) realises `2^(e−2)` growth from `e` equivocators,
 so any bound obtainable from reference-validity conditions alone carries a
 constant exponential in `f`. This is the assessment of the exposure
 mechanism as a *storage* defence: it is the right accountability layer — it
@@ -2779,7 +2793,7 @@ exclusion terminates it. On data,
 the budget is satisfiable at its exact constant: the witness schedule
 `Dtwin` satisfies `UniformBudget 3` with its costliest acceptance costing
 exactly `3`, and `ByzBudget 0` — nothing Byzantine accepted after the
-genesis round (§17).
+genesis round (§18).
 
 How should the parameter `T` be set? Any `T ≥ 1` admits every correct block
 post-`R` (the sandwich's `f·κ + 1` with `κ = 0` would be the correct-only
@@ -2843,7 +2857,7 @@ limitations**: an equivocation whose witnessing pair falls strictly below
 the cut is forgiven — in `chop U G` its author is no longer exposed — while
 a pair *at* the cut survives into the base layer. §9.5 prices the
 forgiveness; the witness file exhibits it on data, an exposure present in
-the full universe and absent from its truncation (§17).
+the full universe and absent from its truncation (§18).
 
 ### 9.2 Verdicts survive the cut
 
@@ -2983,7 +2997,7 @@ correct store, the store rides into its keeper's next block
 (`viewUpto_subset_history` (B7), §8.4), and the backbone carries that block into
 every correct round-`t` cone — a cone *is* an attestation. The lag is tight
 on data: at `t = m + 1` the witness exhibits an accepted equivocation half
-missing from the base (§17). Consequently the joiner's assembly — base as
+missing from the base (§18). Consequently the joiner's assembly — base as
 genesis layer plus a correct peer's window strictly above the cut — is a
 bona-fide view of the truncation (`joinView`; downward closure is the
 content: window references above the cut stay in the window, references *at*
@@ -3077,7 +3091,7 @@ continues to apply to the same types. The stronger bound is consumed in
 exactly two proofs (O2 and O4′ below) — the two-round rule's *direct* safety
 already holds at `3f+1`. The witness file proves the reuse claim as a
 computation: a quorum-5 universe over six validators satisfies the untouched
-`BlockUniverse` by `decide` (§17). Nothing outside `LeanDag/Odontoceti/`
+`BlockUniverse` by `decide` (§18). Nothing outside `LeanDag/Odontoceti/`
 was modified.
 
 ### 10.2 The rule layer, and the arithmetic core
@@ -3206,7 +3220,7 @@ from both passing the test at one anchor. The counting that would be needed
 valid six-validator universe, a Byzantine leader's two round-0 twins each
 gather exactly three supporters (disjoint correct pairs plus the
 equivocator's own split), and a round-3 block sees all of round 1 — **both
-twins pass `ThickLink` against it**, by `decide` (`utwin6_both_pass` (O11), §17).
+twins pass `ThickLink` against it**, by `decide` (`utwin6_both_pass` (O11), §18).
 An indirect rule that commits "some passing candidate" therefore admits
 derivations committing either twin: agreement is *refutable*.
 
@@ -3446,7 +3460,7 @@ processing per round.
 
 ### 11.4 The witness, and a constant it corrected
 
-`ugrowReactive` (§17) runs the Mysticeti structure on the round-robin
+`ugrowReactive` (§18) runs the Mysticeti structure on the round-robin
 schedule at build spacing `6` inside a timeout of `9 = 2Δ + proc` — the
 drift-free backoff met with equality: every fallback branch untaken, the
 commit, the latency bound and the strictly-inside-deadline conclusion
@@ -3455,7 +3469,7 @@ processing constant is honest rather than generous: `proc = 5` is the
 least value `prompt_vote` admits on this model, because a validator's
 shortcut to its *own* round-`r` block lets the trigger fire one tick
 before the slowest peer's block would force it. The witness refused to
-compile at `4` — the house rule of §17 catching an over-tight constant
+compile at `4` — the house rule of §18 catching an over-tight constant
 in a clause that read as obviously right.
 
 ### 11.5 Inclusion without coverage: the rotation backbone
@@ -3763,7 +3777,7 @@ theorem decided_fill_agree {V : View Validator BlockId Payload U}
 
 ### 12.4 The witness
 
-`Ucrash N` (SS7, §17) is the round-robin family with validator `3`
+`Ucrash N` (SS7, §18) is the round-robin family with validator `3`
 crashed after its genesis block: three validators run full lines whose
 references omit the absent author, and `3` owns exactly one block. The
 message `ucrashMsg` targets validator `1`'s line, and the development's
@@ -4183,7 +4197,7 @@ expects, so nothing is restated on the way.
 
 ### 13.7 The witness, and what remains
 
-`demotePolicy` (AL8, §17) is genuinely adaptive at epoch length one —
+`demotePolicy` (AL8, §18) is genuinely adaptive at epoch length one —
 a slot whose verdict two below was a skip is handed to a fixed
 replacement — and the witness exhibits the phenomena the theorems govern:
 the same DAG under a reassigned leader commits a *different block* for
@@ -4371,7 +4385,7 @@ no liveness argument counts an equivocator — and every statement holds
 at *every* threshold `k`: only agreement prices the interval. And the
 tight committee has no slack: at `n = 5·fb + 3·fc + 1` the correct
 class numbers exactly `q`, so the reliable set must be all of it — the
-hybrid analogue of §17's remark that at `f = 1` every correct
+hybrid analogue of §18's remark that at `f = 1` every correct
 validator is needed for a quorum.
 
 ### 14.5 Conservativity
@@ -4416,7 +4430,7 @@ least sufficient committee.
 
 ### 14.7 The witnesses
 
-`Uhyb4` (H9, §17) is the arc's principal witness: `fb = 0, fc = 1,
+`Uhyb4` (H9, §18) is the arc's principal witness: `fb = 0, fc = 1,
 n = 4` — the classical `3f + 1` committee with two-round finality when
 the single tolerated fault is a crash. Validator `3` halts after its
 genesis block; the survivors run three rounds at quorum `3`, slots
@@ -4594,7 +4608,7 @@ pairwise non-adjacent on a cycle of `2f + 1`.
 
 ### 15.5 The witness
 
-`Unemo` (NN9, §17) is the arc on data: three validators at the tight
+`Unemo` (NN9, §18) is the arc on data: three validators at the tight
 committee, fourteen blocks, validator `2` authoring rounds 0–1 and
 then halting, the live pair carrying the DAG to round 5 with the
 parent quorum at exactly `majority` from round 3 on. Slots 0, 1, 3
@@ -4669,7 +4683,7 @@ are `FairScheduleOn` and `FairRunOn` (§6.6), `SpansEligible`, and
 §13.4's `PlacesRuns`.
 
 That every theorem of §§5–14 is stated against some subset of this list
-is checked rather than assumed: the extraction of §18 is queried for
+is checked rather than assumed: the extraction of §19 is queried for
 hypothesis-position identifiers of thirteen capstones, and the
 dependency is that the layering is closed. Two corrections came out of
 that check. The schedule layer appears in five capstones and belongs in
@@ -4740,7 +4754,7 @@ block references a fresh identifier*; coverage asks the opposite, that
 every reliable block at round `n+1` reference every reliable block at
 round `n`. One fact, two consequences: the fill can manufacture neither
 a commit nor coverage. The hypotheses are exhibited satisfiable on
-`Ucrash` (§17), so the refutation is not vacuous.
+`Ucrash` (§18), so the refutation is not vacuous.
 
 **It is preserved for any reliable set that excludes the recovering
 validator** (`synchronisedOn_skipFill_of_notMem`). The filled blocks
@@ -5162,7 +5176,227 @@ every round of every universe.
 
 ---
 
-## 17. Satisfiability
+## 17. Mahi-Mahi: the asynchronous rule, and the clause
+
+*(modules `LeanDag/MahiMahi/`; the protocol is Mahi-Mahi [Jov+24], the
+Mysticeti rule stretched to a wave of four or five rounds with the
+leader revealed only after the wave)*
+
+Mahi-Mahi is the asynchronous member of the family. Its rule is the
+core's with three changes: the wave has `w` rounds, a candidate
+proposed at `r` being voted on at `r + w − 2` and decided at
+`r + w − 1`; a vote is counted through the voting block's causal cone
+rather than among its direct references; and the leader of a round is
+named by a common coin reconstructed from the decision round's blocks,
+so that an adversary scheduling deliveries during the wave does not
+know whose block to starve. The thresholds, the anchor rule and the
+indirect decision are unchanged, and the reference implementation runs
+the rule at `w ∈ {4, 5}` under round-robin, leaving the coin to the
+paper.
+
+The arc asks two questions. Is the rule at wave `w` safe on the
+unmodified DAG layer — and is `w = 3` the core? And under what
+hypothesis is it live with **no synchrony assumption**, given that the
+model has neither an adversary nor a clock in which "revealed late"
+could be said? The answer to the second is a single clause on the pair
+(schedule, DAG), stated in §17.3, which the counting of §17.2 makes
+non-vacuous and which synchrony derives from the core's fairness
+(§17.4). The arc is also the first in this development built under a
+statement/proof partition (§17.5): definitions and statements are the
+audited surface, proofs are generated, and a checker enforces the
+split.
+
+### 17.1 The rule at wave `w`, and safety
+
+At `w = 3` a vote is a direct reference and validity's distinct-creator
+clause makes "a block votes for at most one candidate of a slot" a
+consequence of validity. At `w ≥ 4` a voting block's cone may hold two
+twins of a Byzantine leader, reached by different paths, so the vote
+must be a choice. The implementation chooses the first block of the
+slot met in a depth-first walk over the block's stored references; this
+development's references carry no order, so the choice is the least
+block of the author and round in the cone under a `LinearOrder` on
+identifiers — hash order, in a deployment:
+
+```lean
+def Votes (U : BlockUniverse Validator BlockId Payload) (q L : BlockId) : Prop :=
+  L ∈ candidatesAt U q (U.block L).creator (U.block L).round ∧
+    ∀ L' ∈ candidatesAt U q (U.block L).creator (U.block L).round, ¬ L' < L
+```
+
+Safety consumes only that the choice is unique per block; which block a
+shared rule picks is immaterial, and the support order of the
+implementation is consensus-critical exactly through that uniqueness. A
+blame is on the slot, as the implementation's `enough_leader_blame` has
+it: a voting block that supports no twin of the slot's author. The
+decision relation `MahiMahi.Decided` has the core's four constructors
+with the wave length substituted, and the generic anchor comparison
+`anchor_eq` of §5.6 closes its agreement proof as it does the core's.
+
+**MM1** (`MahiMahi.Safety.holds`) states, for every `w ≥ 3`: a skipped
+slot has no certificate for any of its candidates
+(`MahiMahi.certificates_eq_empty_of_directSkip`); two certified
+candidates of one author and round coincide
+(`MahiMahi.eq_of_certificates_nonempty`); two views deciding one slot
+agree (`MahiMahi.decided_unique`); and conservativity at `w = 3` — a
+derivation of the arc's relation is a derivation of the core's
+(`MahiMahi.core_decided_of_decided`), and the direct commit predicates
+coincide on every candidate at its own round. Conservativity holds in
+one direction, and the reason is a finding about the core: the core's
+`directSkip` quantifies over the candidates, a quorum of blames *per
+twin*, whereas the implementation and this arc blame the *slot*. The
+arc's premise is the stronger, so its derivations are the core's; the
+converse fails when a leader equivocates and its twins' blaming quorums
+differ. The core's rule is safe either way — its proofs go through per
+twin — but it skips in a corner where the implementation leaves the
+slot undecided. On a slot with at most one candidate the two coincide.
+
+### 17.2 What a wave commits, with no network hypothesis
+
+`goodAt U w r` is the set of validators whose round-`r` block is
+directly committed at wave `w`; `good U w k` is the same at a slot's
+round. A property of the DAG alone. The counting results bound it from
+below under the fault model, validity, and population by a reliable
+quorum `T` at **two** rounds — the one that supplies a common core and
+the decision round — and nothing else.
+
+The common core is the core's own T3c: if any round-`(r+2)` block
+exists, a correct round-`r` block lies in the cone of every block at
+every round `≥ r + 2` (`MahiMahi.exists_commonCore`, which is
+`exists_common_correct_ancestor` carried upward). The paper's Lemma
+C.12 was therefore already in this development. From it, **MM2**
+(`MahiMahi.Counting.holds`): at every `w ≥ 4` some correct validator's
+round-`r` block is directly committed — every voting-round block
+reaches the common core, so every decision-round block certifies it
+(`MahiMahi.goodNonempty`); at every `w ≥ 5`,
+
+    n − f ≤ |goodAt U w r ∩ Correct| + |byzantine|
+
+(`MahiMahi.goodCard`) — the round-`(r+1)` common core is reached by
+every voting-round block, and through it each of the `n − f`
+distinct-creator round-`r` blocks it references; those by correct
+authors are voted for by everyone. And **MM2b**
+(`MahiMahi.multiLeader`): with `2f + 1` distinct validators leading
+slots at a round and `w ≥ 5`, one of those slots is good, for every
+schedule and with no randomness clause.
+
+The `w ≥ 5` count differs from the paper's. Lemma C.13 there counts all
+`n − f` references of the common core as committable; a reference by an
+equivocating author is not, since a voting block whose cone also holds a
+second twin votes for whichever its support rule orders first, and the
+adversary can expose the other twin to part of the voters so that no
+twin of that author gathers a quorum. What the argument proves is the
+bound on the correct references: at `n = 3f + 1` with `f` equivocators,
+`f + 1` good correct validators, a commit probability of at least `1/3`
+per wave under a uniform draw rather than `2/3`, and `2f + 1` leader
+slots for a deterministic commit where Lemma C.15 has `f + 1`. The
+paper's count holds in any wave whose round-`r` authors do not
+equivocate, which is the hypothesis under which Cordial Miners states
+the same `2/3`; the protocol's liveness needs only a constant fraction
+and is unaffected. The `aim4` witness (§17.5) shows the four-round count
+tight: an adversary aiming at slot `1` leaves `goodAt = {0, 2, 3}` on
+four validators, and round-robin names exactly the validator that is
+not good; at `w = 5` the same DAG has every validator good.
+
+### 17.3 The clause, and liveness under it
+
+The model has no adversary and no time, so "the leader is revealed
+after the wave" cannot be said directly. What can be said is its
+observable consequence on the pair (schedule, DAG): the leader keeps
+landing among the committed candidates.
+
+```lean
+def UnpredictableWithin (U : BlockUniverse Validator BlockId Payload)
+    (w c N : ℕ) : Prop :=
+  ∀ k,
+    decisionRound Validator w (k + c) ≤ N →
+    ∃ k', k ≤ k' ∧ k' < k + c ∧ S.leader k' ∈ good U w k'
+```
+
+In words: in every window of `c` consecutive slots below the horizon
+`N`, the schedule names a validator whose block the DAG actually
+committed. Compare the core's `FairScheduleOn` and its rated form
+`FairWithin`: the shape is the same, and the fixed target set `T` has
+become `good U w k'`, a property of the DAG. Under partial synchrony the
+schedule need only hit a *correct* validator, because synchrony then
+guarantees that validator's block commits (L4); under asynchrony nothing
+about a validator guarantees that, so the hypothesis must relate the
+schedule to the DAG. No clause on the schedule alone can serve: for
+every deterministic schedule the adversary starves the named leader's
+block, which is the aiming pattern of `aim4`. The horizon `N` is in the
+definition because identifiers form a `Finset`, so `good` is empty past
+some round and no finite DAG satisfies an unbounded `∀ k`. The clause
+says nothing about how the leader is chosen, and carries no probability:
+a uniform draw after the wave lands in `good` with probability at least
+the bound of MM2, so `c` consecutive misses have probability at most
+`(1 − p)^c`, and the clause holds with probability one; any mechanism
+with the same effect qualifies, and the measure stays in prose exactly
+as GST does for the core.
+
+A commit does not decide every slot below it: a slot is decided through
+its lowest eligible slot, and an undecided slot there blocks it, so
+commits at rounds `10, 20, 30, …` leave slot `17` undecided forever at
+`w = 4`. Deciding every slot needs a *run* of consecutive committed
+slots spanning eligibility — the core's `FairRunOn` and
+`SpansEligible` under synchrony — and the clause has a run form,
+`UnpredictableRunWithin`, accordingly. **MM3**
+(`MahiMahi.Liveness.holds`): a good leader's slot is committed in the
+full view (`MahiMahi.decided_of_mem_good`); under the single-hit clause
+every window below the horizon commits a slot; under the run form with a
+spanning run length every slot below the run is decided
+(`MahiMahi.allDecidedBelow`, the core's descent transcribed at wave
+`w`); and every reliable validator commits a candidate certified by
+every reliable decision-round block on its own view, at the explicit
+time `max (latest d) gst + delay` (`MahiMahi.localCommit`), the pacing
+structure's convergence read as eventual delivery — no `gst ≤ R`, no
+backoff. **MM2′** (`MahiMahi.AgreeUpto.goodAt_eq`) is the measurability
+fact the informal "revealed in the last round of the wave" rests on:
+two universes agreeing on the blocks at rounds up to the decision round
+have the same `good`.
+
+On data (§17.5): round-robin satisfies both forms of the clause on the
+fully connected universe; on the aiming pattern it satisfies the core's
+`FairScheduleOn Correct` and violates the clause — so the clause is not
+a consequence of fairness, and Mahi-Mahi under a predictable schedule
+is not asynchronously live, which is the reason the coin exists; and
+the single-hit clause holds where the run form fails, so the two are
+distinct hypotheses.
+
+### 17.4 Partial synchrony, recovered
+
+The arc remains usable by the partially synchronous development. **MM5**
+(`MahiMahi.Synchrony.holds`): under the core's coverage hypothesis
+`SynchronisedOn` at a slot's round, a reliable leader's block is a
+committed candidate at `w ≥ 4` (`MahiMahi.good_of_synchronisedOn`) —
+coverage at **one** round suffices, where L4 needs it at two, since once
+every reliable round-`(r+1)` block references the candidate every block
+two rounds up reaches it through its reference quorum; and hence under
+coverage from the start and population through the horizon the clause
+is *derived* from `FairWithin`
+(`MahiMahi.unpredictableWithin_of_synchronisedOn`). The two liveness
+accounts are one: under synchrony the clause is discharged by fairness,
+under asynchrony by the coin.
+
+### 17.5 The partition, and the witnesses
+
+The arc is laid out as `Model/` (definitions only, theorem-free),
+`<Result>/Statement.lean` (definitions and a `def Statement : Prop`,
+never a proof), `<Result>/Proof.lean` and `Helpers/` (generated,
+unaudited), with `scripts/check-mahi-mahi-holes.py` rejecting proof
+holes anywhere in the arc, proofs in a statement file, and theorems in a
+model file. The audited surface is the model files, the four statement
+files and the witness instantiations; each phase ran as statements →
+review → freeze → proofs, and every `holds` depends on the three
+standard axioms. The witnesses (`LeanDagTest/MahiMahi/`) are four
+validators with one Byzantine: `full4`, six fully connected rounds, on
+which every predicate is settled by `decide` at `w = 4` and `w = 5` and
+the `w = 3` predicates agree with the core's; `twin4`, two twins in one
+voter's cone, where the vote goes to the least and only the least;
+`aim4`, the aiming pattern, with the common core, `goodAt` at both wave
+lengths and the statement hypotheses pinned; `multi`, three leaders per
+round; and the clause witnesses of §17.3.
+
+## 18. Satisfiability
 
 Every structure carrying conditions is exhibited satisfiable by a concrete model
 over four validators at `f = 1`. This is a substantive component of the
@@ -5258,11 +5492,11 @@ rather than an unsatisfiable hypothesis.
 
 ---
 
-## 18. Mechanisation
+## 19. Mechanisation
 
 The development comprises approximately 27,000 lines of Lean 4 (v4.32.2)
 against Mathlib, of which some 18,000 constitute the library and 7,500 the
-models of §17 and the witness files of the arcs. A full build reports no
+models of §18 and the witness files of the arcs. A full build reports no
 errors.
 
 **Axiom audit.** Every principal result — among them
@@ -5359,10 +5593,14 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Nemo/Rules.lean` | the wave-two rules: the vote is the certificate; link integrity |
 | `Nemo/Decision.lean` | the three-constructor decision relation; agreement without hypotheses; the ledger |
 | `Nemo/Liveness.lean` | the crash bound and its bridge; the commit half; the descent |
+| `MahiMahi/Model/Rules.lean`, `MahiMahi/Model/Decision.lean` | the rule at wave `w`: canonical support, certificates, the direct rules, the decision relation |
+| `MahiMahi/Model/Good.lean`, `MahiMahi/Model/Unpredictable.lean` | the committed candidates of a wave; the clause in both forms; agreement below a round |
+| `MahiMahi/Safety/`, `MahiMahi/Counting/`, `MahiMahi/Liveness/`, `MahiMahi/Synchrony/` | the four statements and their proofs (MM1, MM2, MM3, MM5) |
+| `MahiMahi/Helpers/` | the generated lemma layer |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
 | `Quality/Capstone.lean` | the windowed bounds and `chain_quality` (CQ7) |
-| `LeanDagTest/` | the models of §17 and the witness files of every arc |
+| `LeanDagTest/` | the models of §18 and the witness files of every arc |
 
 **The support graph, extracted.** The dependency structure of the
 development is not documented by hand: `scripts/DepGraph.lean` walks
@@ -5413,13 +5651,13 @@ literature. Every statement in this report is drawn from the source.
 
 ---
 
-## 19. Discussion
+## 20. Discussion
 
 The first four subsections concern the core account's central design
-choice — where the synchrony assumption lives; §19.5 draws the lessons of
-the three extensions; §19.6 records what remains open.
+choice — where the synchrony assumption lives; §20.5 draws the lessons of
+the three extensions; §20.6 records what remains open.
 
-### 19.1 Locating the synchrony assumption
+### 20.1 Locating the synchrony assumption
 
 The synchrony assumption may be stated in terms of views:
 
@@ -5480,7 +5718,7 @@ is `2Δ`.
 Because Δ is not known to an implementation, no constant can be fixed in
 advance. A backoff is the specification's response — a search for a sufficient
 constant, written into the algorithm — and its only relevant property is that
-the search terminates (§19.2).
+the search terminates (§20.2).
 
 **The network guarantee must be indexed to the moment of building.** A block's
 references are fixed at its construction, so what bears on the derivation is not
@@ -5493,7 +5731,7 @@ for liveness, indexed by the instant, with `built` ordering the two. The
 requirement is the index, not the vehicle. This is an observation about formalisation, and it is the
 reason `SynchronisedOn` is stated on `refs`.
 
-### 19.2 Why coverage is derived rather than specified
+### 20.2 Why coverage is derived rather than specified
 
 Reference coverage could not have been made a clause of the protocol, which is
 the deeper reason it appears as a derived property. `SynchronisedOn` refers to
@@ -5520,7 +5758,7 @@ from some round onwards — with no condition on shape, rate, or driving
 signal. §6.10 carries this to its conclusion: with Δ known, a constant
 timeout of `2Δ + proc` suffices and the loop disappears.
 
-### 19.3 Consequences of the abstraction
+### 20.3 Consequences of the abstraction
 
 1. The consensus argument is purely combinatorial, involving round indices and
    finite-set cardinalities. Under a message-level assumption every statement
@@ -5532,7 +5770,7 @@ timeout of `2Δ + proc` suffices and the loop disappears.
 4. The condition composes with the safety development, mentioning only `U.ids`,
    `U.block` and `refs` — the vocabulary that development already employs.
 
-### 19.4 Costs
+### 20.4 Costs
 
 Δ does not appear above the interface. Introducing it would require views indexed
 by an instant and every statement quantified over instants, for no proof content.
@@ -5545,7 +5783,7 @@ chain must terminate at a network assumption; what the reformulation achieves
 is to place that assumption where it belongs — on the network, as one clause
 over views — and to keep it out of every statement above.
 
-### 19.5 Lessons from the extensions
+### 20.5 Lessons from the extensions
 
 Three lessons generalise beyond the particular arcs.
 
@@ -5594,13 +5832,13 @@ behind the canonicity gap fits in six validators and twenty-five blocks;
 what was needed to find it was not scale but the obligation to state the
 indirect rule precisely enough to fail to prove it.
 
-### 19.6 Limitations
+### 20.6 Limitations
 
 The quantitative bounds are established (§6.10). The following remain open.
 
 **The backoff loop.** `Rated` and the threshold of R4 are stipulated as clauses
 of the specification; no realistic adaptive scheme is shown to satisfy them, and
-the feedback mechanism of §19.2 is not modelled. Moreover
+the feedback mechanism of §20.2 is not modelled. Moreover
 `ViewPace.timeout : ℕ → ℕ` is indexed by round and common to the reliable set, so
 that a per-validator backoff — in which validators increase their timeouts at
 different moments — cannot be expressed, let alone shown to converge. This
@@ -5655,7 +5893,7 @@ much they say.
 
 ---
 
-## 20. Related work
+## 21. Related work
 
 **Hybrid fault models.** Orcaella [KS26] derives the tight committee
 `n ≥ 5f + 3c + 1` for two-round commitment under separate Byzantine
@@ -5750,11 +5988,11 @@ pacemaker by refinement. The account here is structural, and no theorem above
 dependence of liveness on the round-jumping clause surfaces as a named hypothesis
 of a single lemma rather than as a condition inside a transition relation. The
 cost is that the theorems of [QXS26] cannot be stated here at all, "within
-bounded time" not being expressible in this vocabulary (§19.6).
+bounded time" not being expressible in this vocabulary (§20.6).
 
 ---
 
-## 21. Conclusion
+## 22. Conclusion
 
 This report has given a machine-checked account of uncertified DAG consensus
 organised around one idea: state the liveness condition on the object the
@@ -5780,7 +6018,7 @@ without consensus, and — in the one place the formalization diverged from a
 published argument by necessity — the observation that Odontoceti's
 agreement rests on a canonical candidate order that its paper never states.
 
-What remains open is catalogued in §19.6: the backoff dynamics, wall-clock
+What remains open is catalogued in §20.6: the backoff dynamics, wall-clock
 latency, block-level total order, and liveness below the growth clause.
 Beyond those, two directions suggest themselves. The commit-free,
 evidence-based horizon rule sketched in the garbage-collection document
@@ -5827,13 +6065,13 @@ the consumption map of §4.8 and the support diagrams of §6.10 refer to
 results through them. The series are alphabetic by area: T and M for
 the safety core, L for liveness, V for the view-convergence family, CU
 for catch-up, RS for the reactive schedule, SS for safe skip, AL for adaptive
-leaders, H for the hybrid fault model, I for integration, CQ for chain
+leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, CQ for chain
 quality, C, D,
 B and E for the denial-of-service arc, G for garbage collection, O for
 Odontoceti; P, N and R name clauses of the trust boundary rather than
 results. Labels resolving to witness models rather than library
 theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7, SS11, AL8, H9, H10) are
-excluded from the diagrams, which show the library. Appendix C displays every indexed
+excluded from the diagrams, which show the library; so is MM4. Appendix C displays every indexed
 result in full.
 
 ### Safety
@@ -6035,6 +6273,22 @@ reused.
 | NN7 | a reliable-led slot commits directly | `Nemo.decided_of_leader_mem` *(Nemo/Liveness)* |
 | NN8 | every slot below a recurring adjacent pair is decided | `Nemo.all_decided_below_of_fairRun` *(Nemo/Liveness)* |
 | NN9 | one crash at three validators; the crashed slot settled indirectly | `Unemo` witnesses *(LeanDagTest/Nemo)* |
+
+**Mahi-Mahi** (§17):
+
+| Label | Statement | Lean |
+|:---|:---|:---|
+| MM1 | safety at wave `w`: skip excludes certificates, certificate uniqueness, agreement, conservativity at `w = 3` | `MahiMahi.Safety.holds` *(MahiMahi/Safety/Proof)* |
+| MM1a | a skipped slot has no certificate for any candidate | `MahiMahi.certificates_eq_empty_of_directSkip` *(MahiMahi/Helpers/Rules)* |
+| MM1b | two certified candidates of one author and round coincide | `MahiMahi.eq_of_certificates_nonempty` *(MahiMahi/Helpers/Rules)* |
+| MM1c | two views agree on every slot | `MahiMahi.decided_unique` *(MahiMahi/Helpers/Decision)* |
+| MM1d | at `w = 3` every derivation is the core's | `MahiMahi.core_decided_of_decided` *(MahiMahi/Helpers/Decision)* |
+| MM2 | the counting lemma: the common core; some correct block commits at `w ≥ 4`; `n − f − |byzantine|` of them at `w ≥ 5` | `MahiMahi.Counting.holds`, `MahiMahi.exists_commonCore`, `MahiMahi.goodNonempty`, `MahiMahi.goodCard` *(MahiMahi/Helpers/Counting)* |
+| MM2b | `2f + 1` distinct leaders at a round include a good one | `MahiMahi.multiLeader` *(MahiMahi/Helpers/Counting)* |
+| MM2′ | `good` depends only on the rounds up to the decision round | `MahiMahi.AgreeUpto.goodAt_eq` *(MahiMahi/Helpers/Liveness)* |
+| MM3 | liveness under the clause: a good leader commits; commits within every window; every slot below a run decided; local liveness | `MahiMahi.Liveness.holds`, `MahiMahi.decided_of_mem_good`, `MahiMahi.allDecidedBelow`, `MahiMahi.localCommit` *(MahiMahi/Helpers/Liveness)* |
+| MM4 | the clause is satisfiable, refuted by round-robin on the aiming pattern, and independent of fairness | `aim4`, `full4` witnesses *(LeanDagTest/MahiMahi)* |
+| MM5 | under coverage at one round a reliable leader is good; the clause is derived from fairness | `MahiMahi.Synchrony.holds`, `MahiMahi.good_of_synchronisedOn`, `MahiMahi.unpredictableWithin_of_synchronisedOn` *(MahiMahi/Helpers/Synchrony)* |
 
 **Integration** (§16):
 
@@ -9834,6 +10088,732 @@ abbrev Synchronised (U : Universe Validator BlockId Payload) (R : ℕ) : Prop :=
 
 The all-of-`Live` coverage case.
 
+### Mahi-Mahi: the asynchronous rule at wave w
+
+#### `votingRound`
+
+*def, `MahiMahi.Model.Rules.lean`*
+
+```lean
+def votingRound (w r : ℕ) : ℕ := r + w - 2
+```
+
+The round at which a candidate proposed at `r` is voted on. The last round before the decision round, as `Wave::voting_round` computes it for every `w ≥ 3`.
+
+#### `decisionRoundAt`
+
+*def, `MahiMahi.Model.Rules.lean`*
+
+```lean
+def decisionRoundAt (w r : ℕ) : ℕ := r + w - 1
+```
+
+The round at which a candidate proposed at `r` is decided: its certificates live here (`Wave::decision_round`). Named with the suffix because `decisionRound`, on slots, is the name the core's schedule layer uses.
+
+#### `candidatesAt`
+
+*def, `MahiMahi.Model.Rules.lean`*
+
+```lean
+def candidatesAt (U : BlockUniverse Validator BlockId Payload)
+    (q : BlockId) (a : Validator) (r : ℕ) : Finset BlockId :=
+  (blocksAt U r).filter (fun b => (U.block b).creator = a ∧ b ∈ history U q)
+```
+
+The blocks of author `a` at round `r` in the cone of `q` — the set the vote is chosen from. A correct author has at most one; an equivocator may have several, which is what the minimality clause of `Votes` arbitrates. Stated with `blocksAt` outermost so that membership unfolds through `mem_blocksAt`, as the Odontoceti arc's `coneSupports` does.
+
+#### `Votes`
+
+*def, `MahiMahi.Model.Rules.lean`*
+
+```lean
+def Votes (U : BlockUniverse Validator BlockId Payload) (q L : BlockId) : Prop :=
+  L ∈ candidatesAt U q (U.block L).creator (U.block L).round ∧
+    ∀ L' ∈ candidatesAt U q (U.block L).creator (U.block L).round, ¬ L' < L
+```
+
+**`q` votes for `L`**: `L` is the least block of its own author and round in `q`'s cone. The minimality clause is the canonical-support choice (`mahi-mahi.md` §2), written `¬ L' < L` rather than `L ≤ L'` so that agreement closes by `le_antisymm` on two `not_lt`s, the form the Odontoceti arc's canonicity premise takes. `L`'s author and round are read off `L` itself, so the rules keep the proposal round `r` as a separate parameter exactly as the core does.
+
+#### `Blames`
+
+*def, `MahiMahi.Model.Rules.lean`*
+
+```lean
+def Blames (U : BlockUniverse Validator BlockId Payload)
+    (q : BlockId) (a : Validator) (r : ℕ) : Prop :=
+  candidatesAt U q a r = ∅
+```
+
+**`q` blames the slot `(a, r)`**: no block of that author and round lies in its cone. On the slot rather than on a block, as the implementation's `enough_leader_blame` has it — a blame is the absence of any supported block, not a vote against a particular twin.
+
+#### `votesIn`
+
+*def, `MahiMahi.Model.Rules.lean`*
+
+```lean
+def votesIn (U : BlockUniverse Validator BlockId Payload) (C L : BlockId) : Finset BlockId :=
+  (U.block C).refs.filter (fun q => Votes U q L)
+```
+
+The references of `C` that vote for `L`. Counted among the *references* of the decision-round block, as `is_certificate` counts them, and not through `C`'s whole cone.
+
+#### `Certifies`
+
+*def, `MahiMahi.Model.Rules.lean`*
+
+```lean
+def Certifies (U : BlockUniverse Validator BlockId Payload) (C L : BlockId) : Prop :=
+  quorumCard Validator ≤ (creatorsOf U.block (votesIn U C L)).card
+```
+
+A decision-round block certifies `L` when its votes for `L` come from a quorum of distinct validators. The core's definition over the new `votesIn`.
+
+#### `certificates`
+
+*def, `MahiMahi.Model.Rules.lean`*
+
+```lean
+def certificates (U : BlockUniverse Validator BlockId Payload)
+    (w : ℕ) (L : BlockId) (r : ℕ) : Finset BlockId :=
+  (blocksAt U (decisionRoundAt w r)).filter (fun C => Certifies U C L)
+```
+
+The certificates for a candidate `L` proposed at `r`: the blocks of the decision round `r + w − 1` that certify it.
+
+#### `DirectCommit`
+
+*def, `MahiMahi.Model.Rules.lean`*
+
+```lean
+def DirectCommit (U : BlockUniverse Validator BlockId Payload)
+    (w : ℕ) (L : BlockId) (r : ℕ) : Prop :=
+  quorumCard Validator ≤ (creatorsOf U.block (certificates U w L r)).card
+```
+
+**Direct commit**: a quorum of distinct validators certify `L`.
+
+#### `blamers`
+
+*def, `MahiMahi.Model.Rules.lean`*
+
+```lean
+def blamers (U : BlockUniverse Validator BlockId Payload)
+    (w : ℕ) (a : Validator) (r : ℕ) : Finset Validator :=
+  creatorsOf U.block ((blocksAt U (votingRound w r)).filter (fun q => Blames U q a r))
+```
+
+The validators whose voting-round block blames the slot `(a, r)`.
+
+#### `DirectSkip`
+
+*def, `MahiMahi.Model.Rules.lean`*
+
+```lean
+def DirectSkip (U : BlockUniverse Validator BlockId Payload)
+    (w : ℕ) (a : Validator) (r : ℕ) : Prop :=
+  quorumCard Validator ≤ (blamers U w a r).card
+```
+
+**Direct skip**: a quorum of distinct validators blame the slot. On the slot `(a, r)`, not on a candidate: at `w = 3` this is the core's `DirectSkip` quantified over every candidate of the slot, which is how the core's `directSkip` constructor consumes it.
+
+#### `certificatesIn`
+
+*def, `MahiMahi.Model.Decision.lean`*
+
+```lean
+def certificatesIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (w : ℕ) (L : BlockId) (r : ℕ) : Finset BlockId :=
+  certificates U w L r ∩ V.ids
+```
+
+The certificates for `L` that a view holds.
+
+#### `DirectCommitIn`
+
+*def, `MahiMahi.Model.Decision.lean`*
+
+```lean
+def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (w : ℕ) (L : BlockId) (r : ℕ) : Prop :=
+  quorumCard Validator ≤ (creatorsOf U.block (certificatesIn U V w L r)).card
+```
+
+Direct commit, as judged from a single view.
+
+#### `blamersIn`
+
+*def, `MahiMahi.Model.Decision.lean`*
+
+```lean
+def blamersIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (w : ℕ) (a : Validator) (r : ℕ) : Finset Validator :=
+  creatorsOf U.block
+    (((blocksAt U (votingRound w r)).filter (fun q => Blames U q a r)) ∩ V.ids)
+```
+
+The blamers of the slot `(a, r)` whose voting block a view holds.
+
+#### `DirectSkipIn`
+
+*def, `MahiMahi.Model.Decision.lean`*
+
+```lean
+def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (w : ℕ) (a : Validator) (r : ℕ) : Prop :=
+  quorumCard Validator ≤ (blamersIn U V w a r).card
+```
+
+Direct skip, as judged from a single view.
+
+#### `CertifiedIn`
+
+*def, `MahiMahi.Model.Decision.lean`*
+
+```lean
+def CertifiedIn (U : BlockUniverse Validator BlockId Payload)
+    (w : ℕ) (A L : BlockId) (r : ℕ) : Prop :=
+  ∃ C ∈ certificates U w L r, Reaches U A C
+```
+
+**The indirect test**: a certificate for `L` lies in the causal history of the anchor `A`. The core's `CertifiedIn` at wave `w`. Not decidable as stated — `Reaches` is a `Prop` — and not made so: the witnesses exhibit the certificate.
+
+#### `decisionRound`
+
+*def, `MahiMahi.Model.Decision.lean`*
+
+```lean
+def decisionRound (w k : ℕ) : ℕ := S.slotRound k + w - 1
+```
+
+The round at which slot `k`'s direct rules are settled: its certificates live at `slotRound k + w − 1`. `Validator` is explicit for the reason the core gives — the result is a bare `ℕ`.
+
+#### `Eligible`
+
+*def, `MahiMahi.Model.Decision.lean`*
+
+```lean
+def Eligible (w k j : ℕ) : Prop := decisionRound Validator w k < S.slotRound j
+```
+
+**`j` may anchor `k`**: `j`'s proposal lies past `k`'s decision round. A predicate on the pair of slots and the wave length alone, which is what makes agreement go through: two validators deciding one slot agree on which slots may anchor it.
+
+#### `Decided`
+
+*inductive, `MahiMahi.Model.Decision.lean`*
+
+```lean
+inductive Decided (w : ℕ) (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) : ℕ → Option BlockId → Prop
+  /-- The direct rule commits a candidate: a quorum of certificates in
+  view. -/
+  | directCommit {k : ℕ} {L : BlockId} :
+      -- L is a candidate for slot k: its round and author are the slot's
+      IsLeaderBlock U k L →
+      -- a quorum of distinct validators certify L at the decision round,
+      -- among the blocks the view holds
+      DirectCommitIn U V w L (S.slotRound k) →
+      Decided w U V k (some L)
+  /-- The direct rule skips the slot: a quorum of blames in view (covers
+  the case of no candidate at all — blames target the slot). -/
+  | directSkip {k : ℕ} :
+      -- a quorum of distinct validators hold a voting-round block whose
+      -- cone contains no block of the slot's leader at the slot's round
+      DirectSkipIn U V w (S.leader k) (S.slotRound k) →
+      Decided w U V k none
+  /-- Anchored on the nearest eligible committed slot, a certificate for
+  `L` is in the anchor's reach. -/
+  | indirectCommit {k j : ℕ} {A L : BlockId} :
+      -- the anchor slot lies ahead of k
+      k < j →
+      -- ... proposed past k's decision round, slotRound k + w − 1
+      Eligible Validator w k j →
+      -- slot j committed A, by any route
+      Decided w U V j (some A) →
+      -- j is the NEAREST such slot: every eligible slot in between skipped
+      -- (an undecided one in between leaves this underivable — the
+      -- implementation's "stop at the first undecided slot")
+      (∀ i, k < i → i < j → Eligible Validator w k i → Decided w U V i none) →
+      -- L is a candidate for slot k
+      IsLeaderBlock U k L →
+      -- a certificate for L lies in the anchor's cone
+      CertifiedIn U w A L (S.slotRound k) →
+      Decided w U V k (some L)
+  /-- Anchored on the nearest eligible committed slot, no candidate has a
+  certificate in the anchor's reach. -/
+  | indirectSkip {k j : ℕ} {A : BlockId} :
+      -- the anchor slot lies ahead of k
+      k < j →
+      -- ... proposed past k's decision round
+      Eligible Validator w k j →
+      -- slot j committed A, by any route
+      Decided w U V j (some A) →
+      -- j is the nearest such slot (as in indirectCommit)
+      (∀ i, k < i → i < j → Eligible Validator w k i → Decided w U V i none) →
+      -- no candidate of slot k has a certificate in the anchor's cone:
+      -- only then skip
+      (∀ L, IsLeaderBlock U k L → ¬ CertifiedIn U w A L (S.slotRound k)) →
+      Decided w U V k none
+```
+
+**The decision relation at wave `w`** — the verdicts a validator holding view `V` may reach on slot `k`. `Decided w U V k (some L)`: the validator may commit `L` at `k`; `Decided w U V k none`: it may skip the slot; *undecided* is the absence of any derivation.
+
+The relation is order-free between constructors: the implementation tries the direct rule before the indirect one, but any justifiable verdict is derivable here, and the safety results prove the routes never disagree. The anchor premises follow `try_indirect_decide`: the anchor is the **nearest eligible committed** slot — `Decided … j (some A)` with every eligible slot strictly between decided `none` (a skipped slot cannot anchor; a committed one would be the nearer anchor). "Stop at the first undecided slot" needs no encoding: an undecided slot in between leaves no derivation.
+
+The one departure from the core: `directSkip` takes the slot's blame directly, `DirectSkipIn U V w (S.leader k) (S.slotRound k)`, where the core quantifies `∀ L, IsLeaderBlock U k L → DirectSkipIn U V L …`. The skip rule is on the slot in the paper and in the implementation, and at `w = 3` the two readings agree, which the conservativity result MM1d states (`mahi-mahi.md` §3).
+
+#### `goodAt`
+
+*def, `MahiMahi.Model.Good.lean`*
+
+```lean
+def goodAt (U : BlockUniverse Validator BlockId Payload) (w r : ℕ) : Finset Validator :=
+  Finset.univ.filter (fun v => ∃ L ∈ U.ids,
+    (U.block L).round = r ∧ (U.block L).creator = v ∧ DirectCommit U w L r)
+```
+
+The validators whose round-`r` block is directly committed at wave `w`. Round-indexed and slot-free, so that the counting theorems mention no schedule; decidable on a concrete universe, as a bounded search over `U.ids` of decidable conjuncts.
+
+#### `good`
+
+*def, `MahiMahi.Model.Good.lean`*
+
+```lean
+def good (U : BlockUniverse Validator BlockId Payload) [S : Slots Validator]
+    (w k : ℕ) : Finset Validator :=
+  goodAt U w (S.slotRound k)
+```
+
+The slot-`k` candidates the DAG directly commits: `goodAt` at the slot's round. The schedule enters only through `slotRound`.
+
+#### `AgreeUpto`
+
+*structure, `MahiMahi.Model.Unpredictable.lean`*
+
+```lean
+structure AgreeUpto (U₁ U₂ : BlockUniverse Validator BlockId Payload) (d : ℕ) : Prop where
+  /-- The ids at rounds `≤ d` coincide. -/
+  ids : ∀ i, (i ∈ U₁.ids ∧ (U₁.block i).round ≤ d) ↔ (i ∈ U₂.ids ∧ (U₂.block i).round ≤ d)
+  /-- And they denote the same blocks. -/
+  block : ∀ i ∈ U₁.ids, (U₁.block i).round ≤ d → U₁.block i = U₂.block i
+```
+
+**Two universes agree up to round `d`**: the same ids at rounds `≤ d`, denoting the same blocks. What the measurability result MM2′ consumes — whatever decides `good` at a wave is fixed by the rounds up to its decision round, which is the round at which a deployment reveals the leader.
+
+#### `UnpredictableWithin`
+
+*def, `MahiMahi.Model.Unpredictable.lean`*
+
+```lean
+def UnpredictableWithin (U : BlockUniverse Validator BlockId Payload)
+    (w c N : ℕ) : Prop :=
+  ∀ k,
+    -- the window's last decision round lies below the horizon
+    decisionRound Validator w (k + c) ≤ N →
+    -- some slot of the window is led by a validator whose block commits
+    ∃ k', k ≤ k' ∧ k' < k + c ∧ S.leader k' ∈ good U w k'
+```
+
+**The single-hit form.** In every window of `c` slots whose decision rounds lie below the horizon `N`, the schedule names a committed candidate at least once.
+
+#### `UnpredictableRunWithin`
+
+*def, `MahiMahi.Model.Unpredictable.lean`*
+
+```lean
+def UnpredictableRunWithin (U : BlockUniverse Validator BlockId Payload)
+    (w c d N : ℕ) : Prop :=
+  ∀ k,
+    -- the latest run's last decision round lies below the horizon
+    decisionRound Validator w (k + c + d - 1) ≤ N →
+    -- some run of d slots starting in the window is led by committed candidates
+    ∃ k', k ≤ k' ∧ k' < k + c ∧ ∀ i < d, S.leader (k' + i) ∈ good U w (k' + i)
+```
+
+**The run form.** In every window of `c` slots below the horizon, a run of `d` consecutive slots whose leaders are all committed candidates. The bound reads the last slot of the latest possible run, `k + c + d − 1`, so that small universes are not vacuously covered.
+
+#### `SpansEligible`
+
+*def, `MahiMahi.Model.Unpredictable.lean`*
+
+```lean
+def SpansEligible (w c : ℕ) : Prop :=
+  ∀ b i : ℕ, i < b → Eligible Validator w i (b + c - 1)
+```
+
+**A run of `c` slots spans eligibility**: every slot below its start is eligible for its last slot. The core's `SpansEligible` at wave `w`; at one leader per round it holds for `c = w`.
+
+#### `SkipExcludesCertificates`
+
+*def, `MahiMahi.Safety.Statement.lean`*
+
+```lean
+def SkipExcludesCertificates (U : BlockUniverse Validator BlockId Payload) (w : ℕ) : Prop :=
+  ∀ (a : Validator) (r : ℕ) (L : BlockId),
+    3 ≤ w → DirectSkip U w a r →
+    L ∈ U.ids → (U.block L).creator = a → (U.block L).round = r →
+    certificates U w L r = ∅
+```
+
+**MM1a, skip excludes certificates**: a directly skipped slot `(a, r)` has no certificate for any block of that author and round. The quorum of blamers and the quorum of voters behind a certificate would share a correct validator, whose unique voting block cannot both hold a candidate in its cone and hold none.
+
+#### `CertificateUniqueness`
+
+*def, `MahiMahi.Safety.Statement.lean`*
+
+```lean
+def CertificateUniqueness (U : BlockUniverse Validator BlockId Payload) (w : ℕ) : Prop :=
+  ∀ (r : ℕ) (L₁ L₂ : BlockId),
+    3 ≤ w →
+    (certificates U w L₁ r).Nonempty → (certificates U w L₂ r).Nonempty →
+    (U.block L₁).creator = (U.block L₂).creator →
+    (U.block L₁).round = (U.block L₂).round →
+    L₁ = L₂
+```
+
+**MM1b, certificate uniqueness**: two certified blocks of one author and round are equal — universe-level, no views. Two voter quorums share a correct validator, whose unique voting block votes for the least candidate of that author and round, and only for it.
+
+#### `Agreement`
+
+*def, `MahiMahi.Safety.Statement.lean`*
+
+```lean
+def Agreement (U : BlockUniverse Validator BlockId Payload) (w : ℕ) : Prop :=
+  ∀ (V₁ V₂ : View Validator BlockId Payload U) (k : ℕ) (v₁ v₂ : Option BlockId),
+    3 ≤ w → Decided w U V₁ k v₁ → Decided w U V₂ k v₂ → v₁ = v₂
+```
+
+**MM1c, agreement**: two views deciding one slot agree on the verdict, whatever routes each took — the core's M6 at wave `w`.
+
+#### `DecidedConservative`
+
+*def, `MahiMahi.Safety.Statement.lean`*
+
+```lean
+def DecidedConservative (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (V : View Validator BlockId Payload U) (k : ℕ) (v : Option BlockId),
+    Decided 3 U V k v → LeanDag.Decided U V k v
+```
+
+**MM1d, conservativity of the relation**: at `w = 3` a derivation of this arc's `Decided` is a derivation of the core's. A statement about the two definitions, not about any verdict occurring: it says the three-round instance of the wave-`w` relation *is* Mysticeti's, as `uniformSingle_spacing` says for the schedule generalisation. Whether anything commits is a liveness question, and at `w = 3` the answer needs the core's synchrony hypothesis (`mahi-mahi.md` §4.2).
+
+#### `DirectCommitConservative`
+
+*def, `MahiMahi.Safety.Statement.lean`*
+
+```lean
+def DirectCommitConservative (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (L : BlockId) (r : ℕ),
+    L ∈ U.ids → (U.block L).round = r →
+    (DirectCommit U 3 L r ↔ LeanDag.DirectCommit U L r)
+```
+
+**MM1d, conservativity of direct commit**: at `w = 3` the two direct commit predicates coincide on every candidate at its own round — a round-`(r+1)` block's candidates at `(a, r)` are its references by `a`. An equivalence of predicates on a given DAG, true whether or not either side holds; it does not assert that a direct commit occurs.
+
+#### `DirectSkipConservative`
+
+*def, `MahiMahi.Safety.Statement.lean`*
+
+```lean
+def DirectSkipConservative (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  (∀ (a : Validator) (r : ℕ),
+    DirectSkip U 3 a r →
+    ∀ L ∈ U.ids, (U.block L).creator = a → (U.block L).round = r →
+      LeanDag.DirectSkip U L r) ∧
+  (∀ (a : Validator) (r : ℕ) (L : BlockId),
+    L ∈ U.ids → (U.block L).creator = a → (U.block L).round = r →
+    (∀ L' ∈ U.ids, (U.block L').creator = a → (U.block L').round = r → L' = L) →
+    (DirectSkip U 3 a r ↔ LeanDag.DirectSkip U L r))
+```
+
+**MM1d, conservativity of direct skip**: at `w = 3` this arc's skip implies the core's for every candidate of the slot, and the two coincide on a slot with at most one candidate.
+
+#### `Statement`
+
+*def, `MahiMahi.Safety.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [LinearOrder BlockId] [Slots Validator]
+    (U : BlockUniverse Validator BlockId Payload) (w : ℕ),
+    SkipExcludesCertificates U w ∧ CertificateUniqueness U w ∧ Agreement U w ∧
+      DecidedConservative U ∧ DirectCommitConservative U ∧ DirectSkipConservative U
+```
+
+Safety of the rule at wave `w`, over every fault configuration, schedule, block universe and wave length the model admits.
+
+#### `CommonCore`
+
+*def, `MahiMahi.Counting.Statement.lean`*
+
+```lean
+def CommonCore (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (r : ℕ) (c₀ : BlockId),
+    -- some block exists two rounds above r (its own quorum of references
+    -- is what makes the round-(r+1) author pool large enough to count)
+    c₀ ∈ U.ids → (U.block c₀).round = r + 2 →
+    -- then there is a round-r block b ...
+    ∃ b ∈ U.ids, (U.block b).round = r ∧
+      -- ... by a correct validator ...
+      (U.block b).creator ∈ (Correct : Finset Validator) ∧
+      -- ... in the causal history of EVERY block at round ≥ r + 2
+      ∀ c ∈ U.ids, r + 2 ≤ (U.block c).round → Reaches U c b
+```
+
+**The common core.** If some block exists at round `r + 2`, a correct validator's round-`r` block lies in the causal history of every block at every round `≥ r + 2`. The core's T3c (`CommonCore.lean`) at round `r + 2`, carried upward through references.
+
+#### `GoodNonempty`
+
+*def, `MahiMahi.Counting.Statement.lean`*
+
+```lean
+def GoodNonempty (U : BlockUniverse Validator BlockId Payload) (w : ℕ) : Prop :=
+  ∀ (T : Finset Validator) (r : ℕ),
+    -- at least four rounds: the voting round r + w − 2 is at or above r + 2,
+    -- where the common core is reached by everyone
+    4 ≤ w →
+    -- T is a reliable set: correct, and a quorum
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    -- every member of T has a block at round r + 2 (so the common core
+    -- exists) ...
+    PopulatedOn U T (r + 2) →
+    -- ... and at the decision round r + w − 1 (so the certificates form a
+    -- quorum)
+    PopulatedOn U T (decisionRoundAt w r) →
+    -- then some correct validator's round-r block is directly committed
+    (goodAt U w r ∩ (Correct : Finset Validator)).Nonempty
+```
+
+**MM2 at `w ≥ 4`.** Some correct validator's round-`r` block is directly committed. The common core of round `r` is reached by every voting-round block (`r + w − 2 ≥ r + 2`), so every decision-round block certifies it, and the reliable ones are a quorum.
+
+#### `GoodCard`
+
+*def, `MahiMahi.Counting.Statement.lean`*
+
+```lean
+def GoodCard (U : BlockUniverse Validator BlockId Payload) (w : ℕ) : Prop :=
+  ∀ (T : Finset Validator) (r : ℕ),
+    -- at least five rounds: the voting round r + w − 2 is at or above r + 3,
+    -- where the common core of round r + 1 is reached by everyone
+    5 ≤ w →
+    -- T is a reliable set: correct, and a quorum
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    -- every member of T has a block at round r + 3 (so the round-(r+1)
+    -- common core exists) ...
+    PopulatedOn U T (r + 3) →
+    -- ... and at the decision round r + w − 1
+    PopulatedOn U T (decisionRoundAt w r) →
+    -- then n − f ≤ |good ∩ Correct| + |byzantine|: the core's n − f
+    -- references have distinct creators, and every correct one is good
+    quorumCard Validator ≤
+      (goodAt U w r ∩ (Correct : Finset Validator)).card + F.byzantine.card
+```
+
+**MM2 at `w ≥ 5`.** `n − f ≤ |good ∩ Correct| + |byzantine|`: the correct authors among the `n − f` references of the round-`(r + 1)` common core are all directly committed, since every voting-round block (`r + w − 2 ≥ r + 3`) reaches the core and, through it, each reference. At `n = 3f + 1` and `|byzantine| = f` this is `f + 1` good correct validators.
+
+#### `MultiLeader`
+
+*def, `MahiMahi.Counting.Statement.lean`*
+
+```lean
+def MultiLeader (U : BlockUniverse Validator BlockId Payload) (w : ℕ) : Prop :=
+  ∀ (T : Finset Validator) (r : ℕ),
+    -- the hypotheses of GoodCard, verbatim
+    5 ≤ w →
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    PopulatedOn U T (r + 3) → PopulatedOn U T (decisionRoundAt w r) →
+    -- M is a set of validators each of which leads some slot at round r ...
+    ∀ M : Finset Validator, (∀ v ∈ M, ∃ k, S.slotRound k = r ∧ S.leader k = v) →
+      -- ... with at least 2f + 1 members (distinct, being a Finset)
+      2 * F.f + 1 ≤ M.card →
+      -- then one of those slots is led by a good validator
+      ∃ k, S.slotRound k = r ∧ S.leader k ∈ good U w k
+```
+
+**MM2b, deterministic commits under multiple leaders.** If `2f + 1` distinct validators lead slots at round `r` and `w ≥ 5`, one of those slots is good — for every schedule, with no randomness clause: `f + 1` good correct validators and `2f + 1` leaders cannot be disjoint in `3f + 1`. The `w ≥ 4` analogue with every validator leading is `GoodNonempty` itself.
+
+#### `Statement`
+
+*def, `MahiMahi.Counting.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [LinearOrder BlockId] [Slots Validator]
+    (U : BlockUniverse Validator BlockId Payload) (w : ℕ),
+    CommonCore U ∧ GoodNonempty U w ∧ GoodCard U w ∧ MultiLeader U w
+```
+
+The counting lemma, over every fault configuration, schedule, block universe and wave length the model admits.
+
+#### `GoodCommits`
+
+*def, `MahiMahi.Liveness.Statement.lean`*
+
+```lean
+def GoodCommits (U : BlockUniverse Validator BlockId Payload) (w : ℕ) : Prop :=
+  ∀ k,
+    -- the slot's leader is a committed candidate of its round
+    S.leader k ∈ good U w k →
+    -- then its block is a candidate, decided as committed from the full view
+    ∃ L, IsLeaderBlock U k L ∧ Decided w U (View.full U) k (some L)
+```
+
+**MM3a, a good leader commits.**
+
+#### `CommitsWithin`
+
+*def, `MahiMahi.Liveness.Statement.lean`*
+
+```lean
+def CommitsWithin (U : BlockUniverse Validator BlockId Payload) (w : ℕ) : Prop :=
+  ∀ (c N : ℕ),
+    -- the single-hit clause, with window c below horizon N
+    UnpredictableWithin U w c N →
+    -- for every window below the horizon ...
+    ∀ k, decisionRound Validator w (k + c) ≤ N →
+      -- ... some slot of it commits
+      ∃ k', k ≤ k' ∧ k' < k + c ∧
+        ∃ L, IsLeaderBlock U k' L ∧ Decided w U (View.full U) k' (some L)
+```
+
+**MM3b, commits within every window.**
+
+#### `AllDecidedBelow`
+
+*def, `MahiMahi.Liveness.Statement.lean`*
+
+```lean
+def AllDecidedBelow (U : BlockUniverse Validator BlockId Payload) (w : ℕ) : Prop :=
+  ∀ (c d N : ℕ),
+    -- a wave has at least one round (what `k < j` for an eligible anchor needs)
+    1 ≤ w →
+    -- a run of d slots spans eligibility
+    SpansEligible Validator w d →
+    -- the run form of the clause
+    UnpredictableRunWithin U w c d N →
+    -- for every window below the horizon ...
+    ∀ k, decisionRound Validator w (k + c + d - 1) ≤ N →
+      -- ... there is a slot b at or past k below which every slot is decided
+      ∃ b, k ≤ b ∧ ∀ i, i < b → ∃ v, Decided w U (View.full U) i v
+```
+
+**MM3c, every slot below a run is decided.**
+
+#### `LocalCommit`
+
+*def, `MahiMahi.Liveness.Statement.lean`*
+
+```lean
+def LocalCommit (U : BlockUniverse Validator BlockId Payload) (w : ℕ) : Prop :=
+  ∀ (T : Finset Validator) (N : ℕ) (pc : PaceCore U T N),
+    -- T is a quorum (its correctness is the pacing structure's own)
+    quorumCard Validator ≤ T.card →
+    ∀ (k : ℕ) (L : BlockId),
+      -- L is slot k's candidate, and its decision round is within the horizon
+      IsLeaderBlock U k L → decisionRound Validator w k ≤ N →
+      -- every reliable decision-round block certifies L
+      (∀ u ∈ T, ∀ C ∈ U.ids, (U.block C).creator = u →
+        (U.block C).round = decisionRound Validator w k → Certifies U C L) →
+      -- then every reliable validator commits L on its own view, by the time
+      -- the decision round's reliable blocks have converged
+      ∀ v ∈ T, Decided w U
+        (pc.viewAt v (max (pc.latest (decisionRound Validator w k)) pc.gst + pc.delay))
+        k (some L)
+```
+
+**MM3d, local liveness.**
+
+#### `GoodMeasurable`
+
+*def, `MahiMahi.Liveness.Statement.lean`*
+
+```lean
+def GoodMeasurable : Prop :=
+  ∀ (U₁ U₂ : BlockUniverse Validator BlockId Payload) (w r : ℕ),
+    -- the voting round is at or above the proposal round
+    2 ≤ w →
+    -- the two universes agree up to the decision round ...
+    AgreeUpto U₁ U₂ (decisionRoundAt w r) →
+    -- ... so they commit the same candidates there
+    goodAt U₁ w r = goodAt U₂ w r
+```
+
+**MM2′, measurability of `good`.**
+
+#### `Statement`
+
+*def, `MahiMahi.Liveness.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [LinearOrder BlockId] [Slots Validator]
+    (U : BlockUniverse Validator BlockId Payload) (w : ℕ),
+    GoodCommits U w ∧ CommitsWithin U w ∧ AllDecidedBelow U w ∧ LocalCommit U w ∧
+      GoodMeasurable (Validator := Validator) (BlockId := BlockId) (Payload := Payload)
+```
+
+Liveness under the clause, over every fault configuration, schedule, block universe and wave length the model admits.
+
+#### `GoodOfSynchrony`
+
+*def, `MahiMahi.Synchrony.Statement.lean`*
+
+```lean
+def GoodOfSynchrony (U : BlockUniverse Validator BlockId Payload) (w : ℕ) : Prop :=
+  ∀ (T : Finset Validator) (R k : ℕ),
+    -- four rounds: the voting round is at or above r + 2, where every block
+    -- reaches a candidate referenced by every reliable round-(r+1) block
+    4 ≤ w →
+    -- T is a reliable set: correct, and a quorum
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    -- the core's coverage hypothesis, in force at the slot's round
+    SynchronisedOn U T R → R ≤ S.slotRound k →
+    -- T populates the proposal round, the round above it, and the decision round
+    PopulatedOn U T (S.slotRound k) → PopulatedOn U T (S.slotRound k + 1) →
+    PopulatedOn U T (decisionRound Validator w k) →
+    -- the slot's leader is reliable
+    S.leader k ∈ T →
+    -- then the leader is a committed candidate of its round
+    S.leader k ∈ good U w k
+```
+
+**MM5a, a reliable leader is good under coverage at one round.**
+
+#### `ClauseOfSynchrony`
+
+*def, `MahiMahi.Synchrony.Statement.lean`*
+
+```lean
+def ClauseOfSynchrony (U : BlockUniverse Validator BlockId Payload) (w : ℕ) : Prop :=
+  ∀ (T : Finset Validator) (c N : ℕ),
+    4 ≤ w →
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    -- coverage from round 0 and population through the horizon
+    SynchronisedOn U T 0 → (∀ n, n ≤ N → PopulatedOn U T n) →
+    -- the core's rated fairness: a T-leader in every window of c slots
+    FairWithin T c →
+    -- then the single-hit clause holds with the same window
+    UnpredictableWithin U w c N
+```
+
+**MM5b, the clause is derived under synchrony.**
+
+#### `Statement`
+
+*def, `MahiMahi.Synchrony.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [LinearOrder BlockId] [Slots Validator]
+    (U : BlockUniverse Validator BlockId Payload) (w : ℕ),
+    GoodOfSynchrony U w ∧ ClauseOfSynchrony U w
+```
+
+Partial synchrony recovered, over every fault configuration, schedule, block universe and wave length the model admits.
+
 ### Not otherwise grouped
 
 #### `SoundOn`
@@ -9870,7 +10850,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 409 theorems that either another module of the
+The 442 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -11646,6 +12626,17 @@ theorem history_subset_holds (pc : PaceCore U T N) {v : Validator} (hv : v ∈ T
 ```
 
 **Closure, iterated**: a held block's whole causal cone is held. The step is `holds_closed`; the induction runs along the reachability chain.
+
+#### `mem_viewAt`
+
+*theorem, `ViewPace.lean`*
+
+```lean
+theorem mem_viewAt (pc : PaceCore U T N) {v : Validator} {t : ℕ} {b : BlockId}
+    (hb : b ∈ pc.holds v t) : b ∈ (pc.viewAt v t).ids
+```
+
+What a validator holds is in the view it generates.
 
 #### `viewAt_ids`
 
@@ -15330,6 +16321,383 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
 
 The quantifier order is the content: the slot `b` is fixed by the *schedule* alone, before any universe is named, so "eventually" means "any DAG grown past this schedule-fixed slot". Crashed-leader slots are settled here and only here: they descend onto the run via `indirectSkip`.
 
+### Mahi-Mahi: the asynchronous rule at wave w
+
+#### `mem_candidatesAt`
+
+*theorem, `MahiMahi.Helpers.Rules.lean`*
+
+```lean
+theorem mem_candidatesAt {q b : BlockId} {a : Validator} {r : ℕ} :
+    b ∈ candidatesAt U q a r ↔
+      b ∈ U.ids ∧ (U.block b).round = r ∧ (U.block b).creator = a ∧ b ∈ history U q
+```
+
+#### `mem_votesIn`
+
+*theorem, `MahiMahi.Helpers.Rules.lean`*
+
+```lean
+theorem mem_votesIn {C L q : BlockId} :
+    q ∈ votesIn U C L ↔ q ∈ (U.block C).refs ∧ Votes U q L
+```
+
+#### `mem_certificates`
+
+*theorem, `MahiMahi.Helpers.Rules.lean`*
+
+```lean
+theorem mem_certificates {C L : BlockId} {w r : ℕ} :
+    C ∈ certificates U w L r ↔
+      C ∈ U.ids ∧ (U.block C).round = decisionRoundAt w r ∧ Certifies U C L
+```
+
+#### `decisionRoundAt_eq_votingRound_succ`
+
+*theorem, `MahiMahi.Helpers.Rules.lean`*
+
+```lean
+theorem decisionRoundAt_eq_votingRound_succ {w r : ℕ} (hw : 2 ≤ w) :
+    decisionRoundAt w r = votingRound w r + 1
+```
+
+#### `certificates_eq_empty_of_directSkip`
+
+*theorem, `MahiMahi.Helpers.Rules.lean`*
+
+```lean
+theorem certificates_eq_empty_of_directSkip {w : ℕ} {a : Validator} {r : ℕ} {L : BlockId}
+    (hw : 2 ≤ w) (h : DirectSkip U w a r)
+    (hLc : (U.block L).creator = a) (hLr : (U.block L).round = r) :
+    certificates U w L r = ∅
+```
+
+**Skip excludes certificates.** A quorum of blamers and a quorum of voters at the voting round share a block, which would both vote for `L` and blame its slot.
+
+#### `eq_of_certificates_nonempty`
+
+*theorem, `MahiMahi.Helpers.Rules.lean`*
+
+```lean
+theorem eq_of_certificates_nonempty {w r : ℕ} {L₁ L₂ : BlockId} (hw : 2 ≤ w)
+    (h₁ : (certificates U w L₁ r).Nonempty) (h₂ : (certificates U w L₂ r).Nonempty)
+    (hc : (U.block L₁).creator = (U.block L₂).creator)
+    (hr : (U.block L₁).round = (U.block L₂).round) : L₁ = L₂
+```
+
+**Certificate uniqueness.** Two voter quorums at the voting round share a block, which votes for one candidate of a given author and round.
+
+#### `certificates_nonempty_of_directCommit`
+
+*theorem, `MahiMahi.Helpers.Rules.lean`*
+
+```lean
+theorem certificates_nonempty_of_directCommit {w : ℕ} {L : BlockId} {r : ℕ}
+    (h : DirectCommit U w L r) : (certificates U w L r).Nonempty
+```
+
+A direct commit needs a quorum of certificate authors, so at least one certificate.
+
+#### `exists_certificate_reaches_of_directCommit`
+
+*theorem, `MahiMahi.Helpers.Rules.lean`*
+
+```lean
+theorem exists_certificate_reaches_of_directCommit {w : ℕ} {L : BlockId} {r : ℕ}
+    (h : DirectCommit U w L r) {c : BlockId} (hc : c ∈ U.ids)
+    (hcr : decisionRoundAt w r + 1 ≤ (U.block c).round) :
+    ∃ C ∈ certificates U w L r, Reaches U c C
+```
+
+**Certificates persist upward** (the paper's Lemma C.1). A block above the decision round references a certificate's correct author at the layer below, and higher blocks reach one through their references.
+
+#### `votingRound_three`
+
+*theorem, `MahiMahi.Helpers.Rules.lean`*
+
+```lean
+theorem votingRound_three (r : ℕ) : votingRound 3 r = r + 1
+```
+
+#### `certificates_eq_of_three`
+
+*theorem, `MahiMahi.Helpers.Rules.lean`*
+
+```lean
+theorem certificates_eq_of_three {L : BlockId} {r : ℕ} (hLr : (U.block L).round = r) :
+    certificates U 3 L r = LeanDag.certificates U L r
+```
+
+At wave three the certificates of a round-`r` block are the core's.
+
+#### `not_mem_refs_of_blames`
+
+*theorem, `MahiMahi.Helpers.Rules.lean`*
+
+```lean
+theorem not_mem_refs_of_blames {q L : BlockId} {a : Validator} {r : ℕ} (hq : q ∈ U.ids)
+    (hb : Blames U q a r) (hLc : (U.block L).creator = a) (hLr : (U.block L).round = r) :
+    L ∉ (U.block q).refs
+```
+
+A blame of the slot is a blame of each of its candidates.
+
+#### `blames_of_not_mem_refs_of_unique`
+
+*theorem, `MahiMahi.Helpers.Rules.lean`*
+
+```lean
+theorem blames_of_not_mem_refs_of_unique {q L : BlockId} {a : Validator} {r : ℕ}
+    (hq : q ∈ U.ids) (hqr : (U.block q).round = r + 1)
+    (hLc : (U.block L).creator = a) (hLr : (U.block L).round = r)
+    (huniq : ∀ L' ∈ U.ids, (U.block L').creator = a → (U.block L').round = r → L' = L)
+    (hL : L ∉ (U.block q).refs) : Blames U q a r
+```
+
+At wave three, a block at the voting round that does not reference the only candidate of a slot blames the slot.
+
+#### `certifiedIn_of_directCommit`
+
+*theorem, `MahiMahi.Helpers.Decision.lean`*
+
+```lean
+theorem certifiedIn_of_directCommit {w : ℕ} {L : BlockId} {r : ℕ} (h : DirectCommit U w L r)
+    {A : BlockId} (hA : A ∈ U.ids) (hAr : decisionRoundAt w r + 1 ≤ (U.block A).round) :
+    CertifiedIn U w A L r
+```
+
+The commit half of M4: a directly committed candidate is certified in the cone of every block above its decision round.
+
+#### `decided_unique`
+
+*theorem, `MahiMahi.Helpers.Decision.lean`*
+
+```lean
+theorem decided_unique {w : ℕ} (hw : 2 ≤ w) {V₁ : View Validator BlockId Payload U} {k : ℕ}
+    {v₁ : Option BlockId} (h₁ : Decided w U V₁ k v₁) :
+    ∀ (V₂ : View Validator BlockId Payload U) (v₂ : Option BlockId),
+      Decided w U V₂ k v₂ → v₁ = v₂
+```
+
+**Agreement** (the core's M6 at wave `w`): structural induction on the first derivation; the one real case compares anchors through the core's `anchor_eq`.
+
+#### `core_decided_of_decided`
+
+*theorem, `MahiMahi.Helpers.Decision.lean`*
+
+```lean
+theorem core_decided_of_decided {V : View Validator BlockId Payload U} {k : ℕ}
+    {v : Option BlockId} (h : Decided 3 U V k v) : LeanDag.Decided U V k v
+```
+
+At wave three every derivation is a derivation of the core's relation.
+
+#### `mem_goodAt`
+
+*theorem, `MahiMahi.Helpers.Counting.lean`*
+
+```lean
+theorem mem_goodAt {w r : ℕ} {v : Validator} :
+    v ∈ goodAt U w r ↔ ∃ L ∈ U.ids,
+      (U.block L).round = r ∧ (U.block L).creator = v ∧ DirectCommit U w L r
+```
+
+#### `exists_commonCore`
+
+*theorem, `MahiMahi.Helpers.Counting.lean`*
+
+```lean
+theorem exists_commonCore {r : ℕ} {c₀ : BlockId}
+    (hc₀ : c₀ ∈ U.ids) (hc₀r : (U.block c₀).round = r + 2) :
+    ∃ b ∈ U.ids, (U.block b).round = r ∧ (U.block b).creator ∈ (Correct : Finset Validator) ∧
+      ∀ c ∈ U.ids, r + 2 ≤ (U.block c).round → Reaches U c b
+```
+
+The core's common correct ancestor (T3c), carried to every round `≥ r + 2` through references.
+
+#### `directCommit_of_voting_reach`
+
+*theorem, `MahiMahi.Helpers.Counting.lean`*
+
+```lean
+theorem directCommit_of_voting_reach {w r : ℕ} {L : BlockId} {T : Finset Validator}
+    (hw : 2 ≤ w) (hcard : quorumCard Validator ≤ T.card)
+    (hpop : PopulatedOn U T (decisionRoundAt w r))
+    (hL : L ∈ U.ids) (hLc : (U.block L).creator ∈ (Correct : Finset Validator))
+    (hreach : ∀ q ∈ U.ids, (U.block q).round = votingRound w r → Reaches U q L) :
+    DirectCommit U w L r
+```
+
+If every voting-round block reaches a correct candidate, and a quorum populates the decision round, the candidate is directly committed.
+
+#### `goodNonempty`
+
+*theorem, `MahiMahi.Helpers.Counting.lean`*
+
+```lean
+theorem goodNonempty {w : ℕ} {T : Finset Validator} {r : ℕ} (hw : 4 ≤ w)
+    (hcard : quorumCard Validator ≤ T.card)
+    (hpop2 : PopulatedOn U T (r + 2)) (hpopd : PopulatedOn U T (decisionRoundAt w r)) :
+    (goodAt U w r ∩ (Correct : Finset Validator)).Nonempty
+```
+
+**MM2 at `w ≥ 4`.**
+
+#### `goodCard`
+
+*theorem, `MahiMahi.Helpers.Counting.lean`*
+
+```lean
+theorem goodCard {w : ℕ} {T : Finset Validator} {r : ℕ} (hw : 5 ≤ w)
+    (hcard : quorumCard Validator ≤ T.card)
+    (hpop3 : PopulatedOn U T (r + 3)) (hpopd : PopulatedOn U T (decisionRoundAt w r)) :
+    quorumCard Validator ≤
+      (goodAt U w r ∩ (Correct : Finset Validator)).card + F.byzantine.card
+```
+
+**MM2 at `w ≥ 5`.**
+
+#### `multiLeader`
+
+*theorem, `MahiMahi.Helpers.Counting.lean`*
+
+```lean
+theorem multiLeader [S : Slots Validator] {w : ℕ} {T : Finset Validator} {r : ℕ} (hw : 5 ≤ w)
+    (hcard : quorumCard Validator ≤ T.card)
+    (hpop3 : PopulatedOn U T (r + 3)) (hpopd : PopulatedOn U T (decisionRoundAt w r))
+    {M : Finset Validator} (hM : ∀ v ∈ M, ∃ k, S.slotRound k = r ∧ S.leader k = v)
+    (hMcard : 2 * F.f + 1 ≤ M.card) :
+    ∃ k, S.slotRound k = r ∧ S.leader k ∈ good U w k
+```
+
+**MM2b.** `f + 1` good correct validators and `2f + 1` leaders cannot be disjoint in `3f + 1`.
+
+#### `decided_of_mem_good`
+
+*theorem, `MahiMahi.Helpers.Liveness.lean`*
+
+```lean
+theorem decided_of_mem_good {w k : ℕ} (h : S.leader k ∈ good U w k) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided w U (View.full U) k (some L)
+```
+
+**MM3a.**
+
+#### `decided_below_of_committed_run`
+
+*theorem, `MahiMahi.Helpers.Liveness.lean`*
+
+```lean
+theorem decided_below_of_committed_run {w : ℕ} (hw : 1 ≤ w)
+    {V : View Validator BlockId Payload U} {b n : ℕ} (hbn : b ≤ n)
+    (hspan : ∀ i, i < b → Eligible Validator w i n)
+    (hrun : ∀ j, b ≤ j → j ≤ n → ∃ B, Decided w U V j (some B)) :
+    ∀ i, i < b → ∃ v, Decided w U V i v
+```
+
+**Every slot below a committed run is decided** — the core's `decided_below_of_committed_run` at wave `w`, verbatim up to the relation: strong induction on the distance to the run, each slot anchored on the nearest eligible committed slot, the eligible slots between it being skipped by the induction hypothesis.
+
+#### `allDecidedBelow`
+
+*theorem, `MahiMahi.Helpers.Liveness.lean`*
+
+```lean
+theorem allDecidedBelow {w c d N : ℕ} (hw : 1 ≤ w)
+    (hspan : SpansEligible Validator w d) (hrun : UnpredictableRunWithin U w c d N)
+    (k : ℕ) (hk : decisionRound Validator w (k + c + d - 1) ≤ N) :
+    ∃ b, k ≤ b ∧ ∀ i, i < b → ∃ v, Decided w U (View.full U) i v
+```
+
+**MM3c.** The run form supplies the committed run; the descent does the rest. A spanning run has at least one slot.
+
+#### `localCommit`
+
+*theorem, `MahiMahi.Helpers.Liveness.lean`*
+
+```lean
+theorem localCommit {w : ℕ} {T : Finset Validator} {N : ℕ} (pc : PaceCore U T N)
+    (hcard : quorumCard Validator ≤ T.card) {k : ℕ} {L : BlockId}
+    (hL : IsLeaderBlock U k L) (hN : decisionRound Validator w k ≤ N)
+    (hcert : ∀ u ∈ T, ∀ C ∈ U.ids, (U.block C).creator = u →
+      (U.block C).round = decisionRound Validator w k → Certifies U C L) :
+    ∀ v ∈ T, Decided w U
+      (pc.viewAt v (max (pc.latest (decisionRound Validator w k)) pc.gst + pc.delay))
+      k (some L)
+```
+
+**MM3d.** The counting re-run inside the view: production gives every reliable validator a decision-round block, the premise makes each a certificate, and eventual delivery puts each in the view.
+
+#### `AgreeUpto.goodAt_eq`
+
+*theorem, `MahiMahi.Helpers.Liveness.lean`*
+
+```lean
+theorem AgreeUpto.goodAt_eq (h : AgreeUpto U₁ U₂ d) {w r : ℕ} (hw : 1 ≤ w)
+    (hd : decisionRoundAt w r ≤ d) : goodAt U₁ w r = goodAt U₂ w r
+```
+
+**MM2′.**
+
+#### `good_of_synchronisedOn`
+
+*theorem, `MahiMahi.Helpers.Synchrony.lean`*
+
+```lean
+theorem good_of_synchronisedOn {w : ℕ} {T : Finset Validator} {R k : ℕ} (hw : 4 ≤ w)
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
+    (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
+    (hpop0 : PopulatedOn U T (S.slotRound k)) (hpop1 : PopulatedOn U T (S.slotRound k + 1))
+    (hpopd : PopulatedOn U T (decisionRound Validator w k))
+    (hlead : S.leader k ∈ T) : S.leader k ∈ good U w k
+```
+
+**MM5a.**
+
+#### `unpredictableWithin_of_synchronisedOn`
+
+*theorem, `MahiMahi.Helpers.Synchrony.lean`*
+
+```lean
+theorem unpredictableWithin_of_synchronisedOn {w : ℕ} {T : Finset Validator} {c N : ℕ}
+    (hw : 4 ≤ w) (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
+    (hs : SynchronisedOn U T 0) (hpop : ∀ n, n ≤ N → PopulatedOn U T n)
+    (fair : FairWithin T c) : UnpredictableWithin U w c N
+```
+
+**MM5b.**
+
+#### `holds`
+
+*theorem, `MahiMahi.Safety.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `MahiMahi.Counting.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `MahiMahi.Liveness.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `MahiMahi.Synchrony.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
 ### Not otherwise grouped
 
 #### `waveRobin_fairRun`
@@ -15371,7 +16739,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 384 lemmas used only within the file that proves
+The 427 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -15516,7 +16884,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `slotRound_le_of_lt` | A slot bound becomes a round bound. |
 | `unbounded_of_rated` | Every rated backoff is unbounded, so `Rated` really is a strengthening of the retired existential … |
 
-### `ViewPace.lean` (8)
+### `ViewPace.lean` (7)
 
 | Lemma | Role |
 |:---|:---|
@@ -15527,7 +16895,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `convergesWithin` | The `converges` field *is* the bounded form of the factoring above. |
 | `convergesWithin_of_bounded` | And conversely: eventual convergence whose lag is uniformly bounded after `gst` *is* convergence within … |
 | `le_built` | Rounds advance real time, over the rounds a validator reached. |
-| `mem_viewAt` | What a validator holds is in the view it generates. |
 
 ### `PaceDelivery.lean` (3)
 
@@ -16081,6 +17448,75 @@ subsection per module, in the layer order of Appendices B and C.
 | `majority_le_card_live` | The bridge — the arc's only consumer of the fault bound: the live class carries the majority quorum, since … |
 | `mem_live` | — |
 | `supportersIn_full` | The full view sees every supporter. |
+
+### `MahiMahi/Helpers/Rules.lean` (9)
+
+| Lemma | Role |
+|:---|:---|
+| `Votes.mem_history` | — |
+| `Votes.mem_ids` | — |
+| `decisionRoundAt_three` | — |
+| `eq_of_votes` | A block votes for at most one candidate of a given author and round: both are least in the same candidate set. |
+| `mem_blamers` | — |
+| `not_blames_of_votes` | A vote for `L` is not a blame of `L`'s slot. |
+| `votesIn_eq_of_three` | The votes a round-`(r+2)` block counts for a round-`r` block are the core's. |
+| `votesIn_spec` | A vote counted by a decision-round certificate is a voting-round block of the universe. |
+| `votes_iff_mem_refs` | At the round below a block, a vote is a direct reference: the cone at that round is the reference set, and … |
+
+### `MahiMahi/Helpers/Decision.lean` (15)
+
+| Lemma | Role |
+|:---|:---|
+| `anchor_round` | An eligible anchor's block sits above the slot's decision round. |
+| `certificates_nonempty_of_certifiedIn` | — |
+| `certifiedIn_of_directCommitIn_at_anchor` | A direct commit is seen from any eligible anchor. |
+| `certifiedIn_three_iff` | — |
+| `core_directSkipIn_of_directSkipIn` | A blame of the slot in view is a blame of each candidate in view. |
+| `decisionRound_eq` | — |
+| `directCommitIn_three_iff` | — |
+| `directCommit_of_directCommitIn` | — |
+| `directSkip_of_directSkipIn` | — |
+| `eligible_three_iff` | — |
+| `eq_of_directCommitIn` | — |
+| `eq_of_hasCertificate` | Two candidates of one slot with certificates coincide. |
+| `isLeaderBlock_of_decided` | — |
+| `not_certifiedIn_of_directSkip` | The skip half of M4: a skipped slot's candidates are certified nowhere. |
+| `not_directSkipIn_of_directCommitIn` | A committed candidate's slot is not skipped, across views. |
+
+### `MahiMahi/Helpers/Counting.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `certifies_of_refs_reach` | A decision-round block all of whose references reach a correct candidate certifies it: every reference … |
+| `nonempty_of_quorum` | A reliable quorum is nonempty. |
+| `votes_of_reaches` | Reaching a correct block is voting for it: it is in the cone, and no other block of that author and round … |
+
+### `MahiMahi/Helpers/Liveness.lean` (16)
+
+| Lemma | Role |
+|:---|:---|
+| `AgreeUpto.blocksAt_eq` | — |
+| `AgreeUpto.candidatesAt_eq` | — |
+| `AgreeUpto.certificates_eq` | — |
+| `AgreeUpto.certifies_iff` | — |
+| `AgreeUpto.creatorsOf_eq` | — |
+| `AgreeUpto.directCommit_iff` | — |
+| `AgreeUpto.goodAt_subset` | — |
+| `AgreeUpto.history` | — |
+| `AgreeUpto.reaches` | Reachability from a block below the round is the same in both universes: every step stays below the round, … |
+| `AgreeUpto.symm` | — |
+| `AgreeUpto.votesIn_eq` | — |
+| `AgreeUpto.votes_iff` | — |
+| `certificatesIn_full` | — |
+| `directCommitIn_full` | — |
+| `holds_roundBlocks_eventually` | Every reliable round-`n` block is held by every reliable validator by `max (latest n) gst + delay`: its … |
+| `lt_of_eligible` | An eligible anchor lies strictly above the slot; the one property of eligibility the descent uses. Needs a … |
+
+### `MahiMahi/Helpers/Synchrony.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `reaches_of_synchronisedOn` | Under coverage at round `r`, every block at round `≥ r + 2` reaches a reliable round-`r` block: its … |
 
 ### `Network/Quorum.lean` (2)
 

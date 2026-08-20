@@ -131,6 +131,23 @@ faults alone.
   a lone committed leader settles only the slot two rounds below it,
   and progress requires committed leaders at **adjacent** rounds —
   which round-robin provides by counting.
+- **Mahi-Mahi** (`LeanDag/MahiMahi/`): the asynchronous protocol
+  (arXiv:2410.08670) — the same rule at a **wave of `w` rounds**, votes
+  counted through the causal cone with a canonical support choice —
+  proved safe for every `w ≥ 3` (collapsing onto the core at `w = 3`)
+  and live with **no synchrony hypothesis**: every wave directly
+  commits some correct validator's block at `w ≥ 4`, at least
+  `n − f − |byzantine|` of them at `w ≥ 5` (the core's own common-core
+  lemma), and liveness follows from one clause on the schedule and the
+  DAG — the late-revealed leader keeps landing among the committed
+  candidates — which a coin makes true and which synchrony derives from
+  fairness. Two findings about the published argument: the five-round
+  count holds only for non-equivocating authors (`1/3` per wave, not
+  `2/3`; `2f + 1` leader slots for a deterministic commit, not `f + 1`),
+  and the core's per-candidate skip rule is weaker than the
+  implementation's slot blame. The arc is built under a
+  statement/proof partition: definitions and statements are the audited
+  surface, proofs are generated, and a checker enforces the split.
 
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on
@@ -161,7 +178,9 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
   `Reactive/` — the reactive schedule; `SafeSkip/` — crash recovery in
   one message; `Adaptive/` — adaptive leader schedules; `Hybrid/` —
   Byzantine and crash faults apart; `Nemo/` — crash-fault consensus at
-  a majority quorum; `Network/` — the composed
+  a majority quorum; `MahiMahi/` — the asynchronous rule at wave `w`,
+  under a statement/proof partition (`Model/`, `<Result>/Statement.lean`,
+  `<Result>/Proof.lean`); `Network/` — the composed
   denial-of-service capstones; `Integration/` — how the arcs compose).
 - `LeanDag.lean` — root import file.
 - `LeanDagTest/` — `decide` witnesses and concrete models, mirroring the
