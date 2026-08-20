@@ -2,6 +2,7 @@ import LeanDagTest.Model
 import LeanDagTest.Growth
 import LeanDagTest.Partial
 import LeanDagTest.Pipelined
+import LeanDagTest.WaveRobin
 import LeanDagTest.Quantitative
 import LeanDagTest.DoS.Exposure
 import LeanDagTest.DoS.Acceptance

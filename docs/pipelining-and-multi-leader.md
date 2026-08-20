@@ -717,6 +717,16 @@ rather than caught downstream.
 
 An axiom audit covers eighteen results, new and reproved.
 
+`LeanDag/WaveRobin.lean` frees the pipelined pair of the committee: the
+wave-aligned rotation `waveRobin` — pipelined, the leader holding for a
+three-slot wave before the rotation advances — satisfies `FairRunOn Correct 3`
+and `SpansEligible 3` at *every* `n` and every fault configuration, with no
+premise beyond the fault model. One correct leader's wave is a full correct
+3-run by itself, so fairness needs only `Correct.Nonempty`, where per-slot
+rotation would need the pigeonhole argument recorded on `FairRunOn`.
+`LeanDagTest/WaveRobin.lean` pins the wave shape at `Fin 4` and instantiates
+L10 with no schedule hypothesis left.
+
 The existing instances in `LeanDagTest/{Model,Growth,Quantitative}.lean` were
 rebuilt through `uniformSingle 3`. One practical note: `uniform` puts `k / m`
 where a literal round used to be, so `rfl` proofs of `slotRound k = 3 * k` stop
