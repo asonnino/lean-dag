@@ -34,3 +34,4 @@ import LeanDagTest.HybridTight
 import LeanDagTest.SafeSkip
 import LeanDagTest.Routes
 import LeanDagTest.Nemo
+import LeanDagTest.MahiMahi.Model

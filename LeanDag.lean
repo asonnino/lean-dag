@@ -73,3 +73,5 @@ import LeanDag.Nemo.Support
 import LeanDag.Nemo.Rules
 import LeanDag.Nemo.Decision
 import LeanDag.Nemo.Liveness
+import LeanDag.MahiMahi.Model.Rules
+import LeanDag.MahiMahi.Model.Decision
