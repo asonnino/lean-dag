@@ -79,3 +79,7 @@ import LeanDag.MahiMahi.Helpers.Rules
 import LeanDag.MahiMahi.Helpers.Decision
 import LeanDag.MahiMahi.Safety.Statement
 import LeanDag.MahiMahi.Safety.Proof
+import LeanDag.MahiMahi.Model.Good
+import LeanDag.MahiMahi.Counting.Statement
+import LeanDag.MahiMahi.Helpers.Counting
+import LeanDag.MahiMahi.Counting.Proof
