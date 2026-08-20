@@ -4845,6 +4845,7 @@ EDGE	LeanDag.epoch_closes._proof_1_7	LeanDag.Faults.f
 EDGE	LeanDag.epoch_closes._proof_1_7	LeanDag.AdaptivePolicy
 EDGE	LeanDag.epoch_closes._proof_1_7	LeanDag.Slots
 EDGE	LeanDag.epoch_closes._proof_1_7	LeanDag.AdaptivePolicy.inj
+NODE	LeanDag.waveRobin_fairRun._proof_1_2	LeanDag.WaveRobin	thm
 NODE	LeanDag.ViewPace.synchronisedOn_of_driftOn._proof_1_3	LeanDag.ViewPace	thm
 EDGE	LeanDag.ViewPace.synchronisedOn_of_driftOn._proof_1_3	LeanDag.ViewPace.toPaceCore
 EDGE	LeanDag.ViewPace.synchronisedOn_of_driftOn._proof_1_3	LeanDag.Faults
@@ -5144,6 +5145,14 @@ EDGE	LeanDag.Hybrid.not_directSkipIn_of_directCommitIn	LeanDag.Hybrid.directSkip
 EDGE	LeanDag.Hybrid.not_directSkipIn_of_directCommitIn	LeanDag.Slots
 EDGE	LeanDag.Hybrid.not_directSkipIn_of_directCommitIn	LeanDag.View
 EDGE	LeanDag.Hybrid.not_directSkipIn_of_directCommitIn	LeanDag.Hybrid.DirectSkipIn
+NODE	LeanDag.waveRobin_fairSchedule	LeanDag.WaveRobin	thm
+EDGE	LeanDag.waveRobin_fairSchedule	LeanDag.waveRobin
+EDGE	LeanDag.waveRobin_fairSchedule	LeanDag.Faults
+EDGE	LeanDag.waveRobin_fairSchedule	LeanDag.waveRobin_fairSchedule._proof_1_1
+EDGE	LeanDag.waveRobin_fairSchedule	LeanDag.FairRunOn.fairScheduleOn
+EDGE	LeanDag.waveRobin_fairSchedule	LeanDag.Correct
+EDGE	LeanDag.waveRobin_fairSchedule	LeanDag.FairScheduleOn
+EDGE	LeanDag.waveRobin_fairSchedule	LeanDag.waveRobin_fairRun
 NODE	LeanDagTest.ugrowSkewPace._proof_14	LeanDagTest.ViewPace	thm
 NODE	LeanDagTest.uskip_decidedWithin_slot1	LeanDagTest.Adaptive	thm
 EDGE	LeanDagTest.uskip_decidedWithin_slot1	LeanDag.Odontoceti.instDecidableDirectCommitIn
@@ -6536,6 +6545,16 @@ EDGE	LeanDag.exists_correct_common_support._proof_1_4	LeanDag.BlockUniverse.bloc
 EDGE	LeanDag.exists_correct_common_support._proof_1_4	LeanDag.BlockUniverse
 EDGE	LeanDag.exists_correct_common_support._proof_1_4	LeanDag.Faults.f
 EDGE	LeanDag.exists_correct_common_support._proof_1_4	LeanDag.correctBlocksAt
+NODE	LeanDag.waveRobin_fairRun	LeanDag.WaveRobin	thm
+EDGE	LeanDag.waveRobin_fairRun	LeanDag.waveRobin_fairRun._proof_1_1
+EDGE	LeanDag.waveRobin_fairRun	LeanDag.waveRobin
+EDGE	LeanDag.waveRobin_fairRun	LeanDag.Faults
+EDGE	LeanDag.waveRobin_fairRun	LeanDag.correct_nonempty
+EDGE	LeanDag.waveRobin_fairRun	LeanDag.Slots.leader
+EDGE	LeanDag.waveRobin_fairRun	LeanDag.FairRunOn
+EDGE	LeanDag.waveRobin_fairRun	LeanDag.Correct
+EDGE	LeanDag.waveRobin_fairRun	LeanDag.waveRobin_fairRun._proof_1_2
+EDGE	LeanDag.waveRobin_fairRun	LeanDag.waveRobin_leader_val
 NODE	LeanDagTest.ustarvePace._proof_19	LeanDagTest.Unbounded	thm
 EDGE	LeanDagTest.ustarvePace._proof_19	LeanDag.creators
 EDGE	LeanDagTest.ustarvePace._proof_19	LeanDagTest.omitRefs
@@ -7327,6 +7346,9 @@ EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_8	LeanDag.Faults.f
 EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_8	LeanDag.AdaptivePolicy
 EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_8	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_8	LeanDag.Faults5.toFaults
+NODE	LeanDag.waveRobin_leader_val	LeanDag.WaveRobin	thm
+EDGE	LeanDag.waveRobin_leader_val	LeanDag.waveRobin
+EDGE	LeanDag.waveRobin_leader_val	LeanDag.Slots.leader
 NODE	LeanDagTest.Ugrow._proof_2	LeanDagTest.Growth	thm
 EDGE	LeanDagTest.Ugrow._proof_2	LeanDag.creatorsOf
 EDGE	LeanDagTest.Ugrow._proof_2	LeanDag.creators
@@ -7777,6 +7799,12 @@ EDGE	LeanDag.JumpMsg.noConfusionType	LeanDag.Block.round
 EDGE	LeanDag.JumpMsg.noConfusionType	LeanDag.BlockUniverse
 EDGE	LeanDag.JumpMsg.noConfusionType	LeanDag.JumpMsg.casesOn
 EDGE	LeanDag.JumpMsg.noConfusionType	LeanDag.Block.creator
+NODE	LeanDag.correct_nonempty	LeanDag.WaveRobin	thm
+EDGE	LeanDag.correct_nonempty	LeanDag.Faults
+EDGE	LeanDag.correct_nonempty	LeanDag.two_f_add_one_le_card_correct
+EDGE	LeanDag.correct_nonempty	LeanDag.Correct
+EDGE	LeanDag.correct_nonempty	LeanDag.correct_nonempty._proof_1_1
+EDGE	LeanDag.correct_nonempty	LeanDag.Faults.f
 NODE	LeanDag.decided_chop_of_decided._proof_1_2	LeanDag.GC.ChopDecided	thm
 EDGE	LeanDag.decided_chop_of_decided._proof_1_2	LeanDag.Slots.slotRound
 EDGE	LeanDag.decided_chop_of_decided._proof_1_2	LeanDag.Slots
@@ -7798,6 +7826,7 @@ EDGE	LeanDag.Nemo.View.mk.inj	LeanDag.Nemo.View
 EDGE	LeanDag.Nemo.View.mk.inj	LeanDag.Nemo.View.mk
 EDGE	LeanDag.Nemo.View.mk.inj	LeanDag.Nemo.View.mk.noConfusion
 EDGE	LeanDag.Nemo.View.mk.inj	LeanDag.Nemo.Universe.ids
+NODE	LeanDagTest.waveFaults._proof_2	LeanDagTest.WaveRobin	thm
 NODE	LeanDagTest.odoSlots.eq_1	LeanDagTest.Odontoceti.Model	thm
 EDGE	LeanDagTest.odoSlots.eq_1	LeanDagTest.odoSlots._proof_3
 EDGE	LeanDagTest.odoSlots.eq_1	LeanDag.Slots.uniformSingle
@@ -9065,6 +9094,8 @@ EDGE	LeanDag.card_history_le'._proof_1_3	LeanDag.Faults.f
 EDGE	LeanDag.card_history_le'._proof_1_3	LeanDag.exposedTo
 NODE	LeanDagTest.odoSlots._proof_3	LeanDagTest.Odontoceti.Model	thm
 EDGE	LeanDagTest.odoSlots._proof_3	LeanDagTest.odoSlots._proof_1
+NODE	LeanDagTest.waveFaults._proof_3	LeanDagTest.WaveRobin	thm
+EDGE	LeanDagTest.waveFaults._proof_3	LeanDagTest.waveFaults._proof_1
 NODE	LeanDag.Odontoceti.Decided	LeanDag.Odontoceti.Decision	ind
 EDGE	LeanDag.Odontoceti.Decided	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.Decided	LeanDag.BlockUniverse
@@ -10468,6 +10499,10 @@ EDGE	LeanDagTest.ugrowTimingPace._proof_4	LeanDagTest.instFaultsFinOfNatNat_lean
 EDGE	LeanDagTest.ugrowTimingPace._proof_4	LeanDagTest.growRefs
 EDGE	LeanDagTest.ugrowTimingPace._proof_4	LeanDag.Block.creator
 EDGE	LeanDagTest.ugrowTimingPace._proof_4	LeanDagTest.rrUniverse_populatedOn
+NODE	LeanDag.correct_nonempty._proof_1_1	LeanDag.WaveRobin	thm
+EDGE	LeanDag.correct_nonempty._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.correct_nonempty._proof_1_1	LeanDag.Correct
+EDGE	LeanDag.correct_nonempty._proof_1_1	LeanDag.Faults.f
 NODE	LeanDag.Hybrid.Decided.indirectSkip	LeanDag.Hybrid.Decision	ctor
 EDGE	LeanDag.Hybrid.Decided.indirectSkip	LeanDag.Hybrid.ThickLink
 EDGE	LeanDag.Hybrid.Decided.indirectSkip	LeanDag.HybridFaults
@@ -12137,6 +12172,14 @@ EDGE	LeanDagTest.ugapPace._proof_16	LeanDag.Block.creator
 NODE	LeanDag.PedigreeVia	LeanDag.DoS.Pedigree	ind
 EDGE	LeanDag.PedigreeVia	LeanDag.Faults
 EDGE	LeanDag.PedigreeVia	LeanDag.BlockUniverse
+NODE	LeanDag.waveRobin_spansEligible	LeanDag.WaveRobin	thm
+EDGE	LeanDag.waveRobin_spansEligible	LeanDag.waveRobin_spansEligible._simp_1_1
+EDGE	LeanDag.waveRobin_spansEligible	LeanDag.waveRobin
+EDGE	LeanDag.waveRobin_spansEligible	LeanDag.Slots.slotRound
+EDGE	LeanDag.waveRobin_spansEligible	LeanDag.waveRobin_spansEligible._proof_1_2
+EDGE	LeanDag.waveRobin_spansEligible	LeanDag.Eligible
+EDGE	LeanDag.waveRobin_spansEligible	LeanDag.waveRobin_slotRound
+EDGE	LeanDag.waveRobin_spansEligible	LeanDag.SpansEligible
 NODE	LeanDagTest.instFaults5FinOfNatNat_leanDagTest	LeanDagTest.Odontoceti.Model	def
 EDGE	LeanDagTest.instFaults5FinOfNatNat_leanDagTest	LeanDag.Faults5
 EDGE	LeanDagTest.instFaults5FinOfNatNat_leanDagTest	LeanDagTest.instFaults5FinOfNatNat_leanDagTest._proof_2
@@ -14211,6 +14254,7 @@ EDGE	LeanDagTest.ugrow_not_populated_succ	LeanDagTest.ugrow_not_populated_succ._
 EDGE	LeanDagTest.ugrow_not_populated_succ	LeanDag.Block.round
 EDGE	LeanDagTest.ugrow_not_populated_succ	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrow_not_populated_succ	LeanDag.Block.creator
+NODE	LeanDag.waveRobin_spansEligible._proof_1_2	LeanDag.WaveRobin	thm
 NODE	LeanDag.Integration.spansEligible_chop._proof_1_2	LeanDag.Integration.ScheduleShape	thm
 EDGE	LeanDag.Integration.spansEligible_chop._proof_1_2	LeanDag.Slots.slotRound
 EDGE	LeanDag.Integration.spansEligible_chop._proof_1_2	LeanDag.Slots
@@ -15121,6 +15165,7 @@ EDGE	LeanDag.AdaptiveRun.closed	LeanDag.View
 EDGE	LeanDag.AdaptiveRun.closed	LeanDag.AdaptivePolicy.inj
 EDGE	LeanDag.AdaptiveRun.closed	LeanDag.AdaptiveRun.vdct
 NODE	LeanDagTest.ugapPace._proof_20	LeanDagTest.Unbounded	thm
+NODE	LeanDagTest.waveFaults._proof_1	LeanDagTest.WaveRobin	thm
 NODE	LeanDag.VotesAt	LeanDag.Liveness	def
 EDGE	LeanDag.VotesAt	LeanDag.Faults
 EDGE	LeanDag.VotesAt	LeanDag.BlockUniverse.ids
@@ -17774,6 +17819,7 @@ EDGE	LeanDag.authorsIn	LeanDag.BlockUniverse.block
 EDGE	LeanDag.authorsIn	LeanDag.Block.round
 EDGE	LeanDag.authorsIn	LeanDag.BlockUniverse
 NODE	LeanDagTest.ugrowTimingPace._proof_6	LeanDagTest.Growth	thm
+NODE	LeanDag.waveRobin_fairSchedule._proof_1_1	LeanDag.WaveRobin	thm
 NODE	LeanDag.AdaptivePolicy._sizeOf_1	LeanDag.Adaptive.Policy	def
 EDGE	LeanDag.AdaptivePolicy._sizeOf_1	LeanDag.Faults
 EDGE	LeanDag.AdaptivePolicy._sizeOf_1	LeanDag.Slots.slotRound
@@ -21952,6 +21998,7 @@ EDGE	LeanDag.BlockUniverse._sizeOf_1	LeanDag.BlockUniverse
 EDGE	LeanDag.BlockUniverse._sizeOf_1	LeanDag.Block.creator
 EDGE	LeanDag.BlockUniverse._sizeOf_1	LeanDag.ValidWrt
 NODE	LeanDag.card_filter_creator_le_card_topsOf._simp_1_1	LeanDag.DoS.Adoption	thm
+NODE	LeanDag.waveRobin._proof_1	LeanDag.WaveRobin	thm
 NODE	LeanDag.ReactivePace.votes._proof_1_1	LeanDag.Reactive.Basic	thm
 EDGE	LeanDag.ReactivePace.votes._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.ReactivePace.votes._proof_1_1	LeanDag.Slots.slotRound
@@ -22346,6 +22393,7 @@ EDGE	LeanDag.SkipMsg.hline_round	LeanDag.BlockUniverse
 EDGE	LeanDag.SkipMsg.hline_round	LeanDag.SkipMsg
 EDGE	LeanDag.SkipMsg.hline_round	LeanDag.SkipMsg.line
 EDGE	LeanDag.SkipMsg.hline_round	LeanDag.SkipMsg.B1
+NODE	LeanDag.waveRobin_fairRun._proof_1_1	LeanDag.WaveRobin	thm
 NODE	LeanDag.chopD_accepted	LeanDag.GC.Window	thm
 EDGE	LeanDag.chopD_accepted	LeanDag.Delivery
 EDGE	LeanDag.chopD_accepted	LeanDag.chopD
@@ -22886,6 +22934,11 @@ NODE	LeanDag.slotAt	LeanDag.Liveness	def
 EDGE	LeanDag.slotAt	LeanDag.Slots.slotRound
 EDGE	LeanDag.slotAt	LeanDag.Slots.unbounded
 EDGE	LeanDag.slotAt	LeanDag.Slots
+NODE	LeanDag.waveRobin_spansEligible._simp_1_1	LeanDag.WaveRobin	thm
+EDGE	LeanDag.waveRobin_spansEligible._simp_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.waveRobin_spansEligible._simp_1_1	LeanDag.eligible_iff
+EDGE	LeanDag.waveRobin_spansEligible._simp_1_1	LeanDag.Eligible
+EDGE	LeanDag.waveRobin_spansEligible._simp_1_1	LeanDag.Slots
 NODE	LeanDagTest.ugapPace._proof_7	LeanDagTest.Unbounded	thm
 EDGE	LeanDagTest.ugapPace._proof_7	LeanDag.creators
 EDGE	LeanDagTest.ugapPace._proof_7	LeanDagTest.omitRefs
@@ -23087,6 +23140,10 @@ EDGE	LeanDag.Nemo.decided_below_of_committed_run	LeanDag.Nemo.decided_below_of_c
 EDGE	LeanDag.Nemo.decided_below_of_committed_run	LeanDag.Nemo.decided_below_of_committed_run._proof_1_4
 EDGE	LeanDag.Nemo.decided_below_of_committed_run	LeanDag.Slots
 EDGE	LeanDag.Nemo.decided_below_of_committed_run	LeanDag.Nemo.decided_below_of_committed_run._proof_1_1
+NODE	LeanDag.waveRobin	LeanDag.WaveRobin	def
+EDGE	LeanDag.waveRobin	LeanDag.Slots.uniformSingle
+EDGE	LeanDag.waveRobin	LeanDag.waveRobin._proof_1
+EDGE	LeanDag.waveRobin	LeanDag.Slots
 NODE	LeanDag.directSkip_chop._proof_1_1	LeanDag.GC.Chop	thm
 NODE	LeanDag.ViewPace.exists_honest_floor._proof_1_1	LeanDag.ViewPace	thm
 EDGE	LeanDag.ViewPace.exists_honest_floor._proof_1_1	LeanDag.Faults
@@ -24720,6 +24777,12 @@ EDGE	LeanDag.correct_subset_creators_correctBlocksAt	LeanDag.Block.round
 EDGE	LeanDag.correct_subset_creators_correctBlocksAt	LeanDag.BlockUniverse
 EDGE	LeanDag.correct_subset_creators_correctBlocksAt	LeanDag.Block.creator
 EDGE	LeanDag.correct_subset_creators_correctBlocksAt	LeanDag.correctBlocksAt
+NODE	LeanDagTest.waveFaults	LeanDagTest.WaveRobin	def
+EDGE	LeanDagTest.waveFaults	LeanDag.Faults
+EDGE	LeanDagTest.waveFaults	LeanDagTest.waveFaults._proof_1
+EDGE	LeanDagTest.waveFaults	LeanDag.Faults.mk
+EDGE	LeanDagTest.waveFaults	LeanDagTest.waveFaults._proof_2
+EDGE	LeanDagTest.waveFaults	LeanDagTest.waveFaults._proof_3
 NODE	LeanDag.card_missingAt_le_aux._proof_1_4	LeanDag.DoS.Density	thm
 EDGE	LeanDag.card_missingAt_le_aux._proof_1_4	LeanDag.Faults
 EDGE	LeanDag.card_missingAt_le_aux._proof_1_4	LeanDag.creators
@@ -26472,6 +26535,9 @@ EDGE	LeanDag.View.ofAccepted._proof_2	LeanDag.history
 EDGE	LeanDag.View.ofAccepted._proof_2	LeanDag.BlockUniverse
 EDGE	LeanDag.View.ofAccepted._proof_2	LeanDag.Reaches.single
 EDGE	LeanDag.View.ofAccepted._proof_2	LeanDag.Reaches
+NODE	LeanDag.waveRobin_slotRound	LeanDag.WaveRobin	thm
+EDGE	LeanDag.waveRobin_slotRound	LeanDag.waveRobin
+EDGE	LeanDag.waveRobin_slotRound	LeanDag.Slots.slotRound
 NODE	LeanDag.Block.mk.inj	LeanDag.Block	thm
 EDGE	LeanDag.Block.mk.inj	LeanDag.Block
 EDGE	LeanDag.Block.mk.inj	LeanDag.Block.mk.noConfusion

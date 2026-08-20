@@ -10,6 +10,7 @@ import LeanDag.CommonCore
 import LeanDag.Mysticeti
 import LeanDag.Schedule
 import LeanDag.Liveness
+import LeanDag.WaveRobin
 import LeanDag.Quantitative
 import LeanDag.ViewPace
 import LeanDag.PaceDelivery

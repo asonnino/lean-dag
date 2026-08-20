@@ -5180,6 +5180,7 @@ every theorem above it vacuous, and vacuity is not otherwise detectable.
 | `ugrowSkewCorrect`, `ugrowSkewDelivery` | a pacing structure over `Correct`, and the `Delivery` it induces (V19) |
 | `Dtwin` | `UniformBudget Dtwin 3` and `ByzBudget Dtwin 0`: the acceptance budget, on a schedule with a real equivocation |
 | `rrSlots` | `Slots`, round-robin, satisfying `FairWithin T (f+1)` and `BoundedSpacing 3` |
+| `waveRobin n` | `Slots` at *every* `n`: the wave-aligned rotation, whose `FairRunOn Correct 3` and `SpansEligible 3` are theorems with no premise beyond the fault model (L12) — the one schedule family not pinned to a committee |
 | `Model.lean` | six `BlockUniverse` instances exercising the safety definitions |
 | `Ucrash N`, `ucrashMsg` | `SkipMsg`: a crashed line, the message against it, and the fill (SS7) |
 | `ucrashJump` | `JumpMsg`: the compact core of `ucrashMsg`, elaborating to the same fill (SS11) |
@@ -5875,6 +5876,7 @@ result in full.
 | L8d | a committed slot above decides everything below (spaced schedules) | `decided_of_committed_above`, `all_decided_below_of_spacing` *(Liveness)* |
 | L8e | a committed run of eligible span clears everything below | `decided_below_of_committed_run` *(Liveness)* |
 | L10 | every slot below a fair run is decided (pipelined) | `all_decided_below_of_fairRun` *(Liveness)* |
+| L12 | a schedule satisfying L10's fairness and shape hypotheses exists at every committee: the wave-aligned rotation, with no premise beyond the fault model | `waveRobin`, `waveRobin_fairRun`, `waveRobin_spansEligible`, `waveRobin_fairSchedule` *(WaveRobin)* |
 | L7 | coverage from view convergence, drift-free | `ViewPace.synchronisedOn_of_converges`; the drift-parametric engine `ViewPace.synchronisedOn_of_driftOn` *(ViewPace)* |
 | V1 | the referencing clause, unfused from the network's | `ViewPace.covers_of_converges` *(ViewPace)* |
 | V4 | the bound factored out of convergence | `convergesWithin_iff_bounded` *(ViewPace)* |
@@ -9850,12 +9852,25 @@ structure SoundOn (U : BlockUniverse Validator BlockId Payload)
 
 **What a universe must still supply after being transformed.** The two conditions every safety result of the hybrid arc consumes: correct validators do not equivocate, and the DAG is covered from round `R` on.
 
+#### `waveRobin`
+
+*def, `WaveRobin.lean`*
+
+```lean
+def waveRobin (n : ℕ) (hn : 0 < n) : Slots (Fin n) :=
+  Slots.uniformSingle 1 Nat.one_pos (fun k => ⟨k / 3 % n, Nat.mod_lt _ hn⟩)
+```
+
+**The wave-aligned round-robin schedule** on `n` validators: pipelined (one slot per round), with the leader holding for a whole wave — three consecutive slots — before the rotation advances.
+
+Built from `Slots.uniformSingle` rather than by hand, so the class fields need no new proofs; only the electorate function is new. A `def` rather than an `instance`, like `rrSlots` in the witness files: a second `Slots` instance on the same type would make synthesis ambiguous, so every use passes `(S := waveRobin n hn)` explicitly.
+
 
 ---
 
 ## Appendix C. The theorem reference
 
-The 406 theorems that either another module of the
+The 409 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -15315,11 +15330,48 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
 
 The quantifier order is the content: the slot `b` is fixed by the *schedule* alone, before any universe is named, so "eventually" means "any DAG grown past this schedule-fixed slot". Crashed-leader slots are settled here and only here: they descend onto the run via `indirectSkip`.
 
+### Not otherwise grouped
+
+#### `waveRobin_fairRun`
+
+*theorem, `WaveRobin.lean`*
+
+```lean
+theorem waveRobin_fairRun (n : ℕ) (hn : 0 < n) [F : Faults (Fin n)] :
+    FairRunOn (S := waveRobin n hn) (Correct : Finset (Fin n)) 3
+```
+
+**A fair schedule exists — wave-aligned rotation, unconditionally.**
+
+The witness for slot `k` is the correct validator `v`'s wave in the `k`-th rotation cycle: slot `3 * (v + n * k)` opens a wave led by `v`, lies past `k`, and its three slots are all `v`-led. This is `FairRunOn` produced with no premise at all, where per-slot rotation would need the pigeonhole argument recorded on `FairRunOn` — which is exactly why the wave-aligned schedule is the canonical witness.
+
+#### `waveRobin_spansEligible`
+
+*theorem, `WaveRobin.lean`*
+
+```lean
+theorem waveRobin_spansEligible (n : ℕ) (hn : 0 < n) :
+    SpansEligible (Validator := Fin n) (S := waveRobin n hn) 3
+```
+
+**`SpansEligible 3`, the pipelined shape, at every `n`.** A run of three consecutive slots reaches three rounds past everything below it — the same arithmetic as `pipe_spansEligible`, freed of the committee.
+
+#### `waveRobin_fairSchedule`
+
+*theorem, `WaveRobin.lean`*
+
+```lean
+theorem waveRobin_fairSchedule (n : ℕ) (hn : 0 < n) [F : Faults (Fin n)] :
+    FairScheduleOn (S := waveRobin n hn) (Correct : Finset (Fin n))
+```
+
+The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `ViewPace` results apply to it unchanged.
+
 ---
 
 ## Appendix D. Index of internal lemmas
 
-The 381 lemmas used only within the file that proves
+The 384 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -16045,5 +16097,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_chop` | Truncation preserves it, shifting the synchrony round by the cut. |
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
+
+### `WaveRobin.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `correct_nonempty` | The correct pool is nonempty — at least `2 F.f + 1 ≥ 1` members. All the fault model contributes to … |
+| `waveRobin_leader_val` | The leader holds for a wave: slots `3v, 3v+1, 3v+2` of each rotation cycle are led by validator `v`. |
+| `waveRobin_slotRound` | The schedule is pipelined: slot `k` is proposed at round `k`. |
 
 <!-- END GENERATED REFERENCE -->
