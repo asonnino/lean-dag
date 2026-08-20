@@ -1,5 +1,6 @@
 import LeanDag.MahiMahi.Safety.Proof
 import LeanDag.MahiMahi.Counting.Proof
+import LeanDag.MahiMahi.Liveness.Proof
 
 /-!
 # Mahi-Mahi — axiom audit
@@ -12,3 +13,4 @@ bespoke axiom would show here before anywhere else.
 #print axioms LeanDag.MahiMahi.Safety.holds
 
 #print axioms LeanDag.MahiMahi.Counting.holds
+#print axioms LeanDag.MahiMahi.Liveness.holds
