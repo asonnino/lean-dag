@@ -5557,6 +5557,9 @@ them it machine-checks same-epoch checkpoint uniqueness, prefix
 consistency, resilient finality, and highest-checkpoint recovery under
 alive-but-corrupt signing faults. It does not derive an AbC-induced
 fork from OrcDAG or compose checkpoint safety with the DAG proofs. It
+treats `BaseSpec.lean` and `RecoverySpec.lean` as the human-reviewed
+trust boundary, with derivations isolated in the two `*Proofs.lean`
+modules. It
 treats authenticated Byzantine broadcast through its agreement,
 integrity, and correct-input delivery contract; the Dolev--Strong
 implementation and executable cryptographic parsing remain outside the

@@ -113,6 +113,9 @@ faults alone.
   emitted from append-only per-validator protocol state. Forked
   per-validator histories are execution inputs: this layer does not
   derive an AbC fork from the DAG or compose with the DAG safety proofs.
+  `BaseSpec.lean` and `RecoverySpec.lean` are the human-review trust
+  boundary; theorem statements still require review, while the bodies
+  in `SafetyProofs.lean` and `RecoveryProofs.lean` are Lean-checked.
   Conditional on those inputs, at
   `fabc < n - 3·fb - 2·fc`, quorum intersection derives same-height
   uniqueness and within-epoch prefix consistency; checkpoint safety is

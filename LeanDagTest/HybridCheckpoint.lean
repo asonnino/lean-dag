@@ -1,4 +1,4 @@
-import LeanDag.Hybrid.Checkpoint.Recovery
+import LeanDag.Hybrid.Checkpoint.RecoveryProofs
 
 /-!
 # Adversarial checkpoint and recovery witnesses
@@ -414,10 +414,16 @@ theorem concrete_selection_eq :
 
 /-- The concrete epoch transition adopts the recovery selection as the
 next genesis. -/
-def checkpointTransition :
+noncomputable def checkpointTransition :
     Model.Execution.RecoveryRound.EpochTransition checkpointModel
       checkpointExecution checkpointRecovery genesisCheckpoint 2 where
   receiver_correct := by decide
+  selected :=
+    Model.Execution.RecoveryRound.select checkpointModel
+      checkpointExecution checkpointRecovery genesisCheckpoint 2
+  selection :=
+    Model.Execution.RecoveryRound.select_isSelected checkpointModel
+      checkpointExecution checkpointRecovery genesisCheckpoint 2
   next_epoch := 1
   next_epoch_eq := rfl
   adopted := by

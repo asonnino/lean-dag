@@ -1,12 +1,18 @@
 import LeanDag.Hybrid.Rules
 
 /-!
-# Protocol objects for resilient checkpoints
+# Human-reviewed base specification for resilient checkpoints
+
+Every declaration in this file is part of the trusted protocol model.
+Human reviewers must check that its types, predicates, fault bounds, and
+structure fields express the intended checkpoint protocol. Downstream
+proof files machine-check consequences of these declarations but cannot
+establish that this specification matches an implementation or paper.
 
 Checkpoint signatures are emitted from explicit per-validator protocol
-state.  A correct signer has one state at each `(epoch,height)`, and its
-states extend with height.  Byzantine and alive-but-corrupt validators
-are not constrained by these transition rules.  Certificates contain
+state. A correct signer has one state at each `(epoch,height)`, and its
+states extend with height. Byzantine and alive-but-corrupt validators
+are not constrained by these transition rules. Certificates contain
 the actual authenticated proposal messages from which their signer sets
 are obtained.
 
@@ -17,7 +23,7 @@ fork from the DAG model nor composes its results with the DAG safety
 proofs; its guarantee is conditional checkpoint safety for any execution
 satisfying the state and quorum clauses below.
 
-Histories are represented directly as lists.  Equality of histories is
+Histories are represented directly as lists. Equality of histories is
 the minimal abstraction of collision-resistant content binding; no
 cryptographic or checkpoint-safety conclusion is assumed.
 -/
@@ -74,30 +80,16 @@ variable (M : Model Validator Value)
 def ReliableSigner : Finset Validator :=
   (H.byzantine ∪ M.abc)ᶜ
 
-/-- Reliable signing excludes precisely the two classes allowed to
-equivocate. -/
-@[simp]
-theorem mem_reliableSigner {v : Validator} :
-    v ∈ M.ReliableSigner ↔ v ∉ H.byzantine ∧ v ∉ M.abc := by
-  simp [ReliableSigner]
-
 /-- Reliable signers that also remain available during recovery.
 Membership identifies eligible recovery participants; it does not by
 itself imply that checkpoint recovery occurs. -/
 def RecoveryCorrect : Finset Validator :=
   M.ReliableSigner \ H.crash
 
-/-- Recovery-correct membership excludes all three fault classes. -/
-@[simp]
-theorem mem_recoveryCorrect {v : Validator} :
-    v ∈ M.RecoveryCorrect ↔
-      v ∉ H.byzantine ∧ v ∉ H.crash ∧ v ∉ M.abc := by
-  simp [RecoveryCorrect, ReliableSigner, and_assoc, and_left_comm, and_comm]
-
 /-- A protocol execution exposes local checkpoint state, emitted
-messages, and recorded certificates.  The two state clauses are the
-normal append-only transition invariant; signatures inherit safety from
-them through `emitted_from_state`. -/
+messages, and recorded certificates. The state clauses are the normal
+append-only transition invariant; signatures inherit safety from them
+through `emitted_from_state`. -/
 structure Execution (Value : Type*) where
   /-- Genesis history adopted for each recovery epoch. -/
   genesis : ℕ → History Value
@@ -116,8 +108,8 @@ structure Execution (Value : Type*) where
   local_extension :
     ∀ {v e h₁ h₂}, v ∈ M.ReliableSigner → h₁ ≤ h₂ →
       (localHistory v e h₁).IsPrefix (localHistory v e h₂)
-  /-- A reliable sender emits only the proposal represented by its
-  unique local state at that `(epoch,height)`. -/
+  /-- A reliable sender emits only the checkpoint proposal represented
+  by its unique local state at that `(epoch,height)`. -/
   emitted_from_state :
     ∀ {m}, emitted m → m.sender ∈ M.ReliableSigner →
       m.checkpoint.history =
@@ -156,7 +148,7 @@ structure CertificatePayload where
 
 namespace CertificatePayload
 
-/-- Explicit certificate verifier semantics.  It checks the quorum and
+/-- Explicit certificate verifier semantics. It checks the quorum and
 every signer-indexed authenticated proposal contained in the payload;
 this predicate is local protocol logic, not a broadcast assumption. -/
 def Valid (payload : CertificatePayload (Validator := Validator)
@@ -165,25 +157,29 @@ def Valid (payload : CertificatePayload (Validator := Validator)
     ∀ v ∈ payload.signers,
       E.emitted ⟨v, payload.checkpoint⟩
 
-/-- A payload accepted by the verifier yields a genuine checkpoint QC. -/
-def toCheckpointQC (payload : CertificatePayload (Validator := Validator)
-    (Value := Value))
-    (valid : CertificatePayload.Valid M E payload) :
-    Model.Execution.CheckpointQC M E payload.checkpoint where
-  signers := payload.signers
-  quorum := valid.1
-  messages := valid.2
 end CertificatePayload
 
-/-- A validated witness message retains the concrete certificate that
-the sender received. Recovery-correct senders must have recorded it
-before emission; faulty senders remain unconstrained. -/
+/-- A second-phase witness says that `sender` received and validated a
+concrete first-phase certificate for exactly `checkpoint`. The
+certificate is retained in the message object rather than represented
+by an abstract possession predicate, so later proofs can inspect the
+same signer evidence that justified the witness.
+
+For a recovery-correct sender, `recorded` requires durable protocol
+storage before the witness is emitted. This lets a finality quorum yield
+at least one honest, available validator that can resubmit the finalized
+checkpoint during recovery. The implication deliberately constrains
+only recovery-correct senders; Byzantine, crashed, and AbC senders make
+no storage promise. -/
 structure ChkWitness (checkpoint : CheckpointData Value) where
-  /-- Authenticated witness sender. -/
+  /-- Authenticated validator claiming to have validated the certificate. -/
   sender : Validator
-  /-- The concrete certificate received and validated by the sender. -/
+  /-- The concrete first-phase certificate received by the sender. Its
+  dependent type binds the witness to this exact `checkpoint`. -/
   certificate : Model.Execution.CheckpointQC M E checkpoint
-  /-- Protocol storage precedes a recovery-correct sender's witness. -/
+  /-- If the sender follows recovery and remains available, it stored
+  the checkpoint before witnessing it. No condition is imposed when the
+  sender is outside `RecoveryCorrect`. -/
   recorded :
     sender ∈ M.RecoveryCorrect → E.recorded sender checkpoint
 

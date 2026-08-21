@@ -1,7 +1,12 @@
-import LeanDag.Hybrid.Checkpoint.Basic
+import LeanDag.Hybrid.Checkpoint.BaseSpec
 
 /-!
-# Safety derived from checkpoint protocol state
+# Machine-checked checkpoint safety derivations
+
+Human reviewers must inspect the theorem statements in this file to
+confirm that they express the intended guarantees. Once those statements
+and `BaseSpec.lean` are accepted, the `by` bodies are proof engineering
+checked by Lean and need not be trusted by inspection.
 
 Quorum arithmetic supplies a signer outside the Byzantine and AbC
 classes. Authentication connects that signer to an emitted proposal;
@@ -25,6 +30,20 @@ variable [H : HybridFaults Validator]
 namespace Model
 
 variable (M : Model Validator Value)
+
+/-- Reliable signing excludes precisely the two classes allowed to
+equivocate. -/
+@[simp]
+theorem mem_reliableSigner {v : Validator} :
+    v ∈ M.ReliableSigner ↔ v ∉ H.byzantine ∧ v ∉ M.abc := by
+  simp [ReliableSigner]
+
+/-- Recovery-correct membership excludes all three fault classes. -/
+@[simp]
+theorem mem_recoveryCorrect {v : Validator} :
+    v ∈ M.RecoveryCorrect ↔
+      v ∉ H.byzantine ∧ v ∉ H.crash ∧ v ∉ M.abc := by
+  simp [RecoveryCorrect, ReliableSigner, and_assoc, and_left_comm, and_comm]
 
 /-!
 The next two counting arguments follow the same pattern as
@@ -92,6 +111,19 @@ theorem exists_recoveryCorrect_mem {a : Finset Validator}
 namespace Execution
 
 variable (E : M.Execution Value)
+
+namespace CertificatePayload
+
+/-- A payload accepted by the verifier yields a genuine checkpoint QC. -/
+def toCheckpointQC (payload : CertificatePayload (Validator := Validator)
+    (Value := Value))
+    (valid : CertificatePayload.Valid M E payload) :
+    Model.Execution.CheckpointQC M E payload.checkpoint where
+  signers := payload.signers
+  quorum := valid.1
+  messages := valid.2
+
+end CertificatePayload
 
 /-- A reliable sender's two messages at one epoch and height carry the
 same content. -/

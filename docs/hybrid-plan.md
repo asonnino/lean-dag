@@ -268,9 +268,10 @@ on it.
 | `Hybrid/Decision.lean` | the decision relation with canonicity; H5, H6 |
 | `Hybrid/Liveness.lean` | H7 over the `T`-relativised interface |
 | `Hybrid/Conservativity.lean` | H8, the `fc = 0` collapse |
-| `Hybrid/Checkpoint/Basic.lean` | AbC classes, epoch/height/history protocol messages, local signing state, concrete certificate wire payloads and witness certificates |
-| `Hybrid/Checkpoint/Safety.lean` | quorum-derived same-height uniqueness, single-epoch prefix consistency, and a recovery-correct finality recorder |
-| `Hybrid/Checkpoint/Recovery.lean` | payload broadcast boundary, explicit signer-evidence validation and soundness, finite highest selection, and next-epoch preservation |
+| `Hybrid/Checkpoint/BaseSpec.lean` | **human review:** AbC classes, execution assumptions, proposal and certificate objects |
+| `Hybrid/Checkpoint/RecoverySpec.lean` | **human review:** broadcast, validation, selection, and epoch-transition contracts |
+| `Hybrid/Checkpoint/SafetyProofs.lean` | **Lean-checked:** quorum, uniqueness, prefix consistency, and recorder derivations |
+| `Hybrid/Checkpoint/RecoveryProofs.lean` | **Lean-checked:** concrete selection, agreement, and preservation derivations |
 | `LeanDagTest/Hybrid.lean` | H9: the `n = 4` crash model and the `n = 9` hybrid model |
 | `LeanDagTest/HybridCheckpoint.lean` | concrete checkpoint certificate, finality certificate and recovery output |
 

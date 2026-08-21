@@ -49,9 +49,10 @@ import LeanDag.Hybrid.Rules
 import LeanDag.Hybrid.Decision
 import LeanDag.Hybrid.Liveness
 import LeanDag.Hybrid.Conservativity
-import LeanDag.Hybrid.Checkpoint.Basic
-import LeanDag.Hybrid.Checkpoint.Safety
-import LeanDag.Hybrid.Checkpoint.Recovery
+import LeanDag.Hybrid.Checkpoint.BaseSpec
+import LeanDag.Hybrid.Checkpoint.RecoverySpec
+import LeanDag.Hybrid.Checkpoint.SafetyProofs
+import LeanDag.Hybrid.Checkpoint.RecoveryProofs
 import LeanDag.Integration.Preservation
 import LeanDag.Integration.Coverage
 import LeanDag.Integration.ScheduleShape
