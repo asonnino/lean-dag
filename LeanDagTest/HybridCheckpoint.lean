@@ -77,13 +77,20 @@ def checkpointEmitted (m : ChkProp (Fin 9) ℕ) : Prop :=
 def checkpointRecorded (_ : Fin 9) (checkpoint : CheckpointData ℕ) : Prop :=
   checkpoint = checkpointTwo
 
-/-- Taking a shorter prefix of one list yields a prefix of a longer
-take. -/
-private theorem take_prefix_of_le {α : Type*} {l : List α} {h₁ h₂ : ℕ}
-    (hh : h₁ ≤ h₂) : l.take h₁ <+: l.take h₂ := by
-  have heq : h₂ = h₁ + (h₂ - h₁) := by omega
-  rw [heq, List.take_add]
-  exact List.prefix_append _ _
+/-- The reliable signers of this model are exactly the senders other
+than `0` and `1`, which is the side condition every emission clause
+below discharges. -/
+private theorem reliable_not_faulty {v : Fin 9}
+    (hv : v ∈ checkpointModel.ReliableSigner) :
+    v ∉ ({0, 1} : Finset (Fin 9)) := by
+  have hv' :
+      v ≠ 1 ∧ v ∉ checkpointFaults.byzantine := by
+    simpa [checkpointModel, Model.ReliableSigner] using hv
+  have h0 : v ≠ 0 := by
+    have hb := hv'.2
+    change v ∉ ({0} : Finset (Fin 9)) at hb
+    simpa using hb
+  simp [h0, hv'.1]
 
 /-- The concrete protocol execution, including the genesis adopted after
 the recovery epoch. -/
@@ -95,16 +102,7 @@ def checkpointExecution : checkpointModel.Execution ℕ where
   genesis_prefix := by
     intro m hm hv
     rcases hm with ⟨hlen, hstate, hepoch⟩
-    have hv' :
-        m.sender ≠ 1 ∧ m.sender ∉ checkpointFaults.byzantine := by
-      simpa [checkpointModel, Model.ReliableSigner] using hv
-    have hgood : m.sender ∉ ({0, 1} : Finset (Fin 9)) := by
-      have h1 : m.sender ≠ 1 := hv'.1
-      have h0 : m.sender ≠ 0 := by
-        have hb := hv'.2
-        change m.sender ∉ ({0} : Finset (Fin 9)) at hb
-        simpa using hb
-      simp [h0, h1]
+    have hgood := reliable_not_faulty hv
     have hs := hstate.resolve_left hgood
     have he := hepoch.resolve_left hgood
     by_cases hz : m.checkpoint.epoch = 0
@@ -119,32 +117,14 @@ def checkpointExecution : checkpointModel.Execution ℕ where
       rfl
   local_extension := by
     intro v e h₁ h₂ hv hh
-    exact take_prefix_of_le hh
+    exact List.take_prefix_take_left hh
   emitted_from_state := by
     intro m hm hv
-    have hv' :
-        m.sender ≠ 1 ∧ m.sender ∉ checkpointFaults.byzantine := by
-      simpa [checkpointModel, Model.ReliableSigner] using hv
-    have hgood : m.sender ∉ ({0, 1} : Finset (Fin 9)) := by
-      have h1 : m.sender ≠ 1 := hv'.1
-      have h0 : m.sender ≠ 0 := by
-        have hb := hv'.2
-        change m.sender ∉ ({0} : Finset (Fin 9)) at hb
-        simpa using hb
-      simp [h0, h1]
+    have hgood := reliable_not_faulty hv
     exact hm.2.1.resolve_left hgood
   local_height := by
     intro m hm hv
-    have hv' :
-        m.sender ≠ 1 ∧ m.sender ∉ checkpointFaults.byzantine := by
-      simpa [checkpointModel, Model.ReliableSigner] using hv
-    have hgood : m.sender ∉ ({0, 1} : Finset (Fin 9)) := by
-      have h1 : m.sender ≠ 1 := hv'.1
-      have h0 : m.sender ≠ 0 := by
-        have hb := hv'.2
-        change m.sender ∉ ({0} : Finset (Fin 9)) at hb
-        simpa using hb
-      simp [h0, h1]
+    have hgood := reliable_not_faulty hv
     have hs := hm.2.1.resolve_left hgood
     rw [← hs]
     exact hm.1.resolve_left hgood

@@ -79,6 +79,27 @@ theorem exists_reliableSigner_mem_inter {a b : Finset Validator}
   obtain ⟨v, hv, hgood⟩ := Finset.not_subset.mp hnsub
   exact ⟨v, hv, by simpa [ReliableSigner] using hgood⟩
 
+/-- Every hybrid quorum contains a validator outside both classes
+allowed to violate checkpoint signing rules. -/
+theorem exists_reliableSigner_mem {a : Finset Validator}
+    (ha : Hybrid.q Validator ≤ a.card) :
+    ∃ v ∈ a, v ∈ M.ReliableSigner := by
+  have hlarge : H.fb + M.fabc < a.card := by
+    have hbase := H.card_validators
+    have hres := M.resilient
+    unfold Hybrid.q at ha
+    omega
+  have hbad :
+      (H.byzantine ∪ M.abc).card ≤ H.fb + M.fabc :=
+    le_trans (Finset.card_union_le _ _)
+      (Nat.add_le_add H.card_byzantine M.card_abc)
+  have hnsub : ¬ a ⊆ H.byzantine ∪ M.abc := by
+    intro hsub
+    have hcard := Finset.card_le_card hsub
+    omega
+  obtain ⟨v, hv, hgood⟩ := Finset.not_subset.mp hnsub
+  exact ⟨v, hv, by simpa [ReliableSigner] using hgood⟩
+
 /-- Every hybrid quorum contains an available validator outside all
 three fault classes. -/
 theorem exists_recoveryCorrect_mem {a : Finset Validator}

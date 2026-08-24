@@ -1,5 +1,6 @@
 import LeanDag.Hybrid.Checkpoint.SafetyProofs
 import LeanDag.Hybrid.Checkpoint.RecoverySpec
+import Mathlib.Data.Finset.Max
 
 /-!
 # Machine-checked recovery derivations
@@ -70,33 +71,8 @@ theorem validated_sound {receiver : Validator}
 
 /-- Every nonempty finite checkpoint set has a highest member. -/
 theorem exists_highest {s : Finset (CheckpointData Value)} (hs : s.Nonempty) :
-    ∃ checkpoint, IsHighest s checkpoint := by
-  classical
-  induction s using Finset.induction_on with
-  | empty => simp at hs
-  | @insert checkpoint s hnot ih =>
-      by_cases hse : s.Nonempty
-      · obtain ⟨best, hbest, hmax⟩ := ih hse
-        by_cases hle : checkpoint.height ≤ best.height
-        · exact ⟨best, by
-            refine ⟨Finset.mem_insert_of_mem hbest, ?_⟩
-            intro other ho
-            rcases Finset.mem_insert.mp ho with rfl | ho
-            · exact hle
-            · exact hmax other ho⟩
-        · exact ⟨checkpoint, by
-            refine ⟨Finset.mem_insert_self _ _, ?_⟩
-            intro other ho
-            rcases Finset.mem_insert.mp ho with rfl | ho
-            · exact le_rfl
-            · exact le_trans (hmax other ho)
-                (Nat.le_of_lt (lt_of_not_ge hle))⟩
-      · exact ⟨checkpoint, by
-          refine ⟨Finset.mem_insert_self _ _, ?_⟩
-          intro other ho
-          rcases Finset.mem_insert.mp ho with rfl | ho
-          · exact le_rfl
-          · exact (hse ⟨other, ho⟩).elim⟩
+    ∃ checkpoint, IsHighest s checkpoint :=
+  Finset.exists_max_image s (·.height) hs
 
 /-- Concrete highest-checkpoint selection. Classical choice implements
 the human-reviewed `IsSelected` semantics from `RecoverySpec.lean`. -/
@@ -236,8 +212,8 @@ theorem recovery_preserves_recorded {sender receiver : Validator}
   exact validated_prefix_select M E R ⟨checkpoint, hm⟩ hm
 
 /-- A checkpoint finalized in the closing epoch is included in every
-correct recipient's validated set. This derives protocol submission,
-broadcast delivery, and local validation in three separate steps. -/
+correct recipient's validated set: the finality quorum supplies a
+recovery-correct recorder, and the recorded case supplies the rest. -/
 theorem finalized_mem_validated {receiver : Validator}
     (hr : receiver ∈ M.RecoveryCorrect) {checkpoint : CheckpointData Value}
     (F : Model.Execution.FinalityQC M E checkpoint)
@@ -245,14 +221,11 @@ theorem finalized_mem_validated {receiver : Validator}
     checkpoint ∈ R.validated receiver := by
   obtain ⟨sender, hs, hrec⟩ :=
     exists_recoveryCorrect_recorder M E F
-  obtain ⟨payload, heq, hvalid, hin⟩ :=
-    R.submits_recorded hs hrec hepoch
-  have hdel := B.delivery hs hr hin
-  exact R.validated_spec.mpr
-    ⟨sender, payload, hdel, hvalid, heq⟩
+  exact recorded_mem_validated M E R hs hr hrec hepoch
 
 /-- Highest-checkpoint recovery preserves every checkpoint finalized in
-the closing epoch. -/
+the closing epoch: finality is the recorded case at the recorder the
+finality quorum supplies. -/
 theorem recovery_preserves_finality {receiver : Validator}
     (hr : receiver ∈ M.RecoveryCorrect)
     {checkpoint : CheckpointData Value}
@@ -260,8 +233,9 @@ theorem recovery_preserves_finality {receiver : Validator}
     (hepoch : checkpoint.epoch = epoch) :
     checkpoint.history.IsPrefix
       (select M E R receiver).history := by
-  have hm := finalized_mem_validated M E R hr F hepoch
-  exact validated_prefix_select M E R ⟨checkpoint, hm⟩ hm
+  obtain ⟨sender, hs, hrec⟩ :=
+    exists_recoveryCorrect_recorder M E F
+  exact recovery_preserves_recorded M E R hs hr hrec hepoch
 
 /-- A finalized checkpoint remains a prefix of the genesis adopted by
 the human-reviewed recovery transition. -/
@@ -285,9 +259,8 @@ theorem finalized_prefix_next_checkpoint {receiver : Validator}
     (Q : Model.Execution.CheckpointQC M E new)
     (hne : new.epoch = T.next_epoch) :
     old.history.IsPrefix new.history := by
-  obtain ⟨v, hv, hgood⟩ :=
-    M.exists_reliableSigner_mem_inter Q.quorum Q.quorum
-  have hem := Q.messages v (Finset.mem_inter.mp hv).1
+  obtain ⟨v, hv, hgood⟩ := M.exists_reliableSigner_mem Q.quorum
+  have hem := Q.messages v hv
   have hg := E.genesis_prefix hem hgood
   have hold := finalized_prefix_next_genesis M E R T F hold_epoch
   exact hold.trans (by simpa [hne] using hg)
