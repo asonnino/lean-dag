@@ -81,7 +81,12 @@ structure RecoveryRound (B : AuthenticatedBroadcast M) (epoch : ℕ) where
   validated : Validator → Finset (CheckpointData Value)
   /-- A correct handler inputs a concrete valid payload for every
   closing-epoch checkpoint certificate it recorded. Retained records
-  from older epochs impose no submission obligation in this round. -/
+  from older epochs impose no submission obligation in this round.
+
+  This clause carries two obligations. Requiring the payload to be
+  input is submission; requiring it to validate is what makes a
+  closing-epoch record a certified checkpoint, which is the reading
+  `recorded_certified` extracts. -/
   submits_recorded :
     ∀ {sender checkpoint}, sender ∈ M.RecoveryCorrect →
       E.recorded sender checkpoint →

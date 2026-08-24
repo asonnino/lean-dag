@@ -182,6 +182,20 @@ theorem validated_prefix_select {receiver : Validator}
     (hec.trans hes.symm)
     (height_le_select M E R hs hc)
 
+include R in
+/-- What a closing-epoch record is: a recovery-correct handler holds one
+only for a checkpoint some quorum certified. The `Execution` structure
+does not say so — `submits_recorded` does, through the payload it
+requires the handler to input, and `validateCertificate_sound` returns
+that payload as a certificate. `R` is explicit because the fact belongs
+to the round's submission contract rather than to the execution. -/
+theorem recorded_certified {v : Validator} {checkpoint : CheckpointData Value}
+    (hv : v ∈ M.RecoveryCorrect) (hrecorded : E.recorded v checkpoint)
+    (hepoch : checkpoint.epoch = epoch) :
+    Nonempty (Model.Execution.CheckpointQC M E checkpoint) := by
+  obtain ⟨payload, heq, hvalid, _⟩ := R.submits_recorded hv hrecorded hepoch
+  exact heq ▸ validateCertificate_sound M E hvalid
+
 /-- A checkpoint recorded by a recovery-correct handler enters every
 correct recipient's validated set through protocol submission,
 broadcast delivery, and local certificate validation. -/
@@ -199,7 +213,9 @@ theorem recorded_mem_validated {sender receiver : Validator}
     ⟨sender, payload, hdel, hvalid, heq⟩
 
 /-- Highest-checkpoint recovery preserves every closing-epoch checkpoint
-recorded by a recovery-correct participant, not only those later finalized. -/
+recorded by a recovery-correct participant, not only those later
+finalized. Such a record is a certified checkpoint, by
+`recorded_certified`. -/
 theorem recovery_preserves_recorded {sender receiver : Validator}
     (hs : sender ∈ M.RecoveryCorrect)
     (hr : receiver ∈ M.RecoveryCorrect)
