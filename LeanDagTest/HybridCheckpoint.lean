@@ -305,8 +305,8 @@ theorem invalid_fork_payload_rejected :
       0 invalidForkPayload := by
   intro hvalid
   have hem := hvalid.2.2 (2 : Fin 9) (by simp [invalidForkPayload])
-  simpa [invalidForkPayload, checkpointExecution, checkpointEmitted,
-    forkTwo, checkpointLocal] using hem
+  simp [invalidForkPayload, checkpointExecution, checkpointEmitted,
+    forkTwo, checkpointLocal] at hem
 
 /-- Broadcast transports only authenticated inputs; no validity or
 storage predicate occurs in this channel contract. -/
@@ -330,7 +330,7 @@ def checkpointRecovery :
       checkpointBroadcast 0 where
   validated := fun _ => {checkpointOne, checkpointTwo}
   submits_recorded := by
-    intro sender checkpoint hs hr
+    intro sender checkpoint hs hr hepoch
     subst checkpoint
     refine ⟨checkpointTwoPayload, rfl, ?_, Or.inr (Or.inl rfl)⟩
     constructor
@@ -378,19 +378,53 @@ example :
   · exact Or.inr (Or.inr ⟨rfl, rfl⟩)
   · simp [checkpointRecovery, forkTwo, checkpointOne, checkpointTwo]
 
+/-- A later recovery round may retain old records without treating them
+as certificates for the new closing epoch. -/
+def emptyRecoveryBroadcast :
+    Model.Execution.AuthenticatedBroadcast checkpointModel where
+  input := fun _ _ => False
+  delivered := fun _ _ _ => False
+  integrity := by simp
+  agreement := by simp
+  delivery := by simp
+
+/-- Multi-epoch regression witness: the execution still records the
+epoch-0 checkpoint, while an epoch-1 round has no current-epoch input.
+The stale record does not make the round contract inconsistent. -/
+def retainedRecordRecovery :
+    Model.Execution.RecoveryRound checkpointModel checkpointExecution
+      emptyRecoveryBroadcast 1 where
+  validated := fun _ => ∅
+  submits_recorded := by
+    intro sender checkpoint hs hrecorded hepoch
+    have hc : checkpoint = checkpointTwo := by
+      simpa [checkpointExecution, checkpointRecorded] using hrecorded
+    subst checkpoint
+    simp [checkpointTwo] at hepoch
+  validated_spec := by
+    simp [emptyRecoveryBroadcast]
+
+/-- Empty recovery selects the canonical checkpoint induced by the
+closing epoch's execution genesis, not caller-supplied data. -/
+example :
+    Model.Execution.RecoveryRound.select checkpointModel checkpointExecution
+      retainedRecordRecovery 2 =
+        Model.Execution.epochGenesis checkpointModel checkpointExecution 1 := by
+  simp [Model.Execution.RecoveryRound.select, retainedRecordRecovery]
+
 /-- Recovery really selects the higher certificate. -/
 theorem concrete_selection_eq :
     Model.Execution.RecoveryRound.select checkpointModel checkpointExecution
-      checkpointRecovery genesisCheckpoint 2 = checkpointTwo := by
+      checkpointRecovery 2 = checkpointTwo := by
   have hs : (checkpointRecovery.validated 2).Nonempty :=
     ⟨checkpointOne, by simp [checkpointRecovery]⟩
   have hm :
       Model.Execution.RecoveryRound.select checkpointModel
-          checkpointExecution checkpointRecovery genesisCheckpoint 2 ∈
+          checkpointExecution checkpointRecovery 2 ∈
         checkpointRecovery.validated 2 :=
     Model.Execution.RecoveryRound.select_mem
       checkpointModel checkpointExecution checkpointRecovery
-        (genesis := genesisCheckpoint) (receiver := (2 : Fin 9)) hs
+        (receiver := (2 : Fin 9)) hs
   apply Model.Execution.RecoveryRound.eq_of_validated_height
     checkpointModel checkpointExecution checkpointRecovery
   · exact hm
@@ -398,15 +432,15 @@ theorem concrete_selection_eq :
   · apply Nat.le_antisymm
     · have hcases :
           Model.Execution.RecoveryRound.select checkpointModel
-                checkpointExecution checkpointRecovery genesisCheckpoint 2 =
+                checkpointExecution checkpointRecovery 2 =
               checkpointOne ∨
             Model.Execution.RecoveryRound.select checkpointModel
-                checkpointExecution checkpointRecovery genesisCheckpoint 2 =
+                checkpointExecution checkpointRecovery 2 =
               checkpointTwo := by
           simpa only [checkpointRecovery, Finset.mem_insert,
             Finset.mem_singleton] using hm
       rcases hcases with hcase | hcase
-      · simpa [hcase, checkpointOne, checkpointTwo]
+      · simp [hcase, checkpointOne, checkpointTwo]
       · simp [hcase]
     · exact Model.Execution.RecoveryRound.height_le_select
         checkpointModel checkpointExecution checkpointRecovery hs
@@ -416,14 +450,14 @@ theorem concrete_selection_eq :
 next genesis. -/
 noncomputable def checkpointTransition :
     Model.Execution.RecoveryRound.EpochTransition checkpointModel
-      checkpointExecution checkpointRecovery genesisCheckpoint 2 where
+      checkpointExecution checkpointRecovery 2 where
   receiver_correct := by decide
   selected :=
     Model.Execution.RecoveryRound.select checkpointModel
-      checkpointExecution checkpointRecovery genesisCheckpoint 2
+      checkpointExecution checkpointRecovery 2
   selection :=
     Model.Execution.RecoveryRound.select_isSelected checkpointModel
-      checkpointExecution checkpointRecovery genesisCheckpoint 2
+      checkpointExecution checkpointRecovery 2
   next_epoch := 1
   next_epoch_eq := rfl
   adopted := by
@@ -436,7 +470,7 @@ theorem concrete_recovery_extends :
     checkpointTwo.history <+: checkpointThree.history :=
   Model.Execution.RecoveryRound.finalized_prefix_next_checkpoint
     checkpointModel checkpointExecution checkpointRecovery
-      checkpointTransition checkpointFinality checkpointThreeQC rfl
+      checkpointTransition checkpointFinality rfl checkpointThreeQC rfl
 
 example : checkpointTwo.history ≠ checkpointThree.history := by decide
 
@@ -446,7 +480,8 @@ example : checkpointTwo.history ≠ checkpointThree.history := by decide
 #print axioms LeanDag.Hybrid.Checkpoint.Model.Execution.validateCertificate_sound
 #print axioms LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.validated_sound
 #print axioms LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.recovery_preserves_finality
-#print axioms LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.finalized_prefix_next_checkpoint
+#print axioms
+  LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.finalized_prefix_next_checkpoint
 #print axioms concrete_recovery_extends
 
 end LeanDagTest

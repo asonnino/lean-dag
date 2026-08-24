@@ -126,11 +126,14 @@ faults alone.
   quorum, and every authenticated proposal, with a soundness theorem
   constructing a `CheckpointQC`; malformed broadcast inputs are not
   channel-excluded. Finite highest-checkpoint selection handles the
-  empty/genesis case and preserves finalized state into next-epoch
-  signing. This recovers checkpoint history under explicit submission,
-  broadcast, validation, and adoption assumptions; it does not recover
-  the discarded DAG or restart consensus. The broadcast algorithm and
-  the paper's post-checkpoint VoteQC extension are not formalized.
+  empty case with the closing epoch's canonical execution genesis.
+  Submission and preservation are explicitly scoped to the closing
+  epoch, so retained older records do not make later recovery rounds
+  inconsistent. This recovers checkpoint history under explicit
+  submission, broadcast, validation, and adoption assumptions; it does
+  not recover the discarded DAG or restart consensus. The broadcast
+  algorithm and the paper's post-checkpoint VoteQC extension are not
+  formalized.
 - **Integration** (`LeanDag/Integration/`): the arcs are proved to
   **compose** — not by settling a quadratic matrix, but by naming the
   invariants each consumes and proving the two universe transformers

@@ -5,9 +5,11 @@ import LeanDag.Hybrid.Rules
 
 Every declaration in this file is part of the trusted protocol model.
 Human reviewers must check that its types, predicates, fault bounds, and
-structure fields express the intended checkpoint protocol. Downstream
-proof files machine-check consequences of these declarations but cannot
-establish that this specification matches an implementation or paper.
+structure fields express the intended checkpoint protocol. Structure
+fields are contract obligations: concrete executions must prove them,
+while generic downstream theorems use them as assumptions. Proof files
+machine-check consequences of these declarations but cannot establish
+that this specification matches an implementation or paper.
 
 Checkpoint signatures are emitted from explicit per-validator protocol
 state. A correct signer has one state at each `(epoch,height)`, and its
@@ -55,16 +57,26 @@ structure ChkProp (Validator Value : Type*) where
   checkpoint : CheckpointData Value
   deriving DecidableEq
 
-/-- The client-side AbC extension of the hybrid fault classes. -/
+/-- Checkpoint-specific extension of the imported `HybridFaults` model.
+This is not a second definition of hybrid faults: `H` supplies the
+Byzantine/crash classes and their bounds, while this structure adds the
+AbC class and the stronger checkpoint resilience bound.
+
+The disjointness fields preserve the paper's interpretation as distinct
+fault classes. Current safety derivations do not consume them: their
+cardinality arguments conservatively use union upper bounds and remain
+valid if classes overlap. -/
 structure Model (Validator Value : Type*) [Fintype Validator]
     [DecidableEq Validator] [H : HybridFaults Validator] where
   /-- Alive-but-corrupt fault bound. -/
   fabc : ℕ
   /-- Validators that may violate the normal signing rules. -/
   abc : Finset Validator
-  /-- Byzantine and AbC validators are distinct classes. -/
+  /-- Paper-faithfulness condition: Byzantine and AbC are distinct.
+  This condition is not required by the current safety derivations. -/
   disjoint_byzantine : Disjoint H.byzantine abc
-  /-- Crash-prone and AbC validators are distinct classes. -/
+  /-- Paper-faithfulness condition: crash-prone and AbC are distinct.
+  This condition is not required by the current safety derivations. -/
   disjoint_crash : Disjoint H.crash abc
   /-- The actual AbC population respects its bound. -/
   card_abc : abc.card ≤ fabc
@@ -87,9 +99,10 @@ def RecoveryCorrect : Finset Validator :=
   M.ReliableSigner \ H.crash
 
 /-- A protocol execution exposes local checkpoint state, emitted
-messages, and recorded certificates. The state clauses are the normal
-append-only transition invariant; signatures inherit safety from them
-through `emitted_from_state`. -/
+messages, and recorded certificates. Its fields are required execution
+invariants, not conclusions proved by this structure. The state clauses
+describe normal append-only transitions; signatures inherit safety from
+them through `emitted_from_state`. -/
 structure Execution (Value : Type*) where
   /-- Genesis history adopted for each recovery epoch. -/
   genesis : ℕ → History Value

@@ -5,8 +5,10 @@ import LeanDag.Hybrid.Checkpoint.BaseSpec
 
 Every declaration in this file is part of the trusted recovery model.
 Human reviewers must check the authenticated-broadcast contract, local
-validation predicate, handler-state assumptions, selection semantics,
-and epoch-transition requirements. `RecoveryProofs.lean` constructs a
+validation predicate, handler-state obligations, selection semantics,
+and epoch-transition requirements. Structure fields are contract
+obligations: concrete instances must prove them, while generic recovery
+theorems use them as assumptions. `RecoveryProofs.lean` constructs a
 selector and machine-checks consequences of this specification.
 
 `RecoveryCorrect` membership alone is not a recovery protocol. The
@@ -64,22 +66,32 @@ def validateCertificate (epoch : ℕ)
   payload.checkpoint.epoch = epoch ∧
     CertificatePayload.Valid M E payload
 
+/-- The canonical checkpoint used when the closing epoch has no
+validated certificate. It is determined by execution state rather than
+supplied by the transition caller. -/
+def epochGenesis (epoch : ℕ) : CheckpointData Value where
+  height := (E.genesis epoch).length
+  epoch := epoch
+  history := E.genesis epoch
+
 /-- Recovery-handler state separates protocol submission and local
 certificate validation from the broadcast channel. -/
 structure RecoveryRound (B : AuthenticatedBroadcast M) (epoch : ℕ) where
   /-- Finite set of checkpoint contents parsed and validated locally. -/
   validated : Validator → Finset (CheckpointData Value)
   /-- A correct handler inputs a concrete valid payload for every
-  checkpoint certificate it recorded. This is the assumed correct
-  recovery submission behavior. -/
+  closing-epoch checkpoint certificate it recorded. Retained records
+  from older epochs impose no submission obligation in this round. -/
   submits_recorded :
     ∀ {sender checkpoint}, sender ∈ M.RecoveryCorrect →
       E.recorded sender checkpoint →
+      checkpoint.epoch = epoch →
       ∃ payload, payload.checkpoint = checkpoint ∧
         validateCertificate (M := M) (E := E) epoch payload ∧
           B.input sender payload
-  /-- The finite handler state contains exactly checkpoint contents of
-  delivered payloads accepted by the explicit local verifier. -/
+  /-- Required handler-state invariant: the finite validated set
+  contains exactly checkpoint contents of delivered payloads accepted
+  by the explicit local verifier. -/
   validated_spec :
     ∀ {receiver checkpoint}, checkpoint ∈ validated receiver ↔
       ∃ sender payload, B.delivered receiver sender payload ∧
@@ -100,25 +112,24 @@ def IsHighest (s : Finset (CheckpointData Value))
 
 /-- Declarative recovery-selection semantics. A nonempty validated set
 selects one of its highest checkpoints; an empty set retains the
-explicit epoch genesis. Concrete selection code belongs in the proof
-layer and must prove that it satisfies this predicate. -/
-def IsSelected (genesis : CheckpointData Value) (receiver : Validator)
+canonical genesis of the closing epoch. Concrete selection code belongs
+in the proof layer and must satisfy this predicate. -/
+def IsSelected (receiver : Validator)
     (checkpoint : CheckpointData Value) : Prop :=
   if (R.validated receiver).Nonempty then
     IsHighest (R.validated receiver) checkpoint
   else
-    checkpoint = genesis
+    checkpoint = epochGenesis M E epoch
 
-/-- A recovery transition adopts a checkpoint satisfying `IsSelected`
-as the genesis used by the next epoch's signing state. -/
-structure EpochTransition (genesis : CheckpointData Value)
-    (receiver : Validator) where
+/-- Recovery-transition contract: adopt a checkpoint satisfying
+`IsSelected` as the genesis used by the next epoch's signing state. -/
+structure EpochTransition (receiver : Validator) where
   /-- The receiver follows the recovery protocol. -/
   receiver_correct : receiver ∈ M.RecoveryCorrect
   /-- Checkpoint chosen according to the recovery selection semantics. -/
   selected : CheckpointData Value
   /-- The chosen checkpoint is highest, or genesis when none validates. -/
-  selection : IsSelected M E R genesis receiver selected
+  selection : IsSelected M E R receiver selected
   /-- The next epoch is the successor of the closing epoch. -/
   next_epoch : ℕ
   /-- Epoch numbering advances once. -/
