@@ -45,7 +45,7 @@ for the quorum rather than count what it has, and waiting does not close
 it either: the deciding supporter of `12` is authored by the
 equivocator and referenced by no reliable block, so a view holding every
 reliable block still sees neither twin supported. Deciding early is
-unsafe and waiting can stop, which is the dichotomy `report.md` §18.13
+unsafe and waiting can stop, which is the dichotomy `report.md` §18.14
 draws.
 -/
 

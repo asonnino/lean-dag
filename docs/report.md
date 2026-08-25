@@ -357,8 +357,11 @@ proof effort with no corresponding proof content.
    among twins can repair (§18.12). The rule that repairs both descends
    to a supported anchor, and no validator can run it: deciding from its
    own view loses safety and waiting for the evidence loses liveness
-   (§18.13). What does hold at a validator's view, and exactly how far,
-   is §18.14.
+   (§18.14). Both failures are traced to a named step of the paper's own
+   argument: Lemma 11 carries a conclusion about the commit test into a
+   claim about what validators output, and the recursion that determines
+   output is never given a lemma (§18.13). What does hold at a
+   validator's view, and exactly how far, is §18.15.
 
 ### 1.4 Scope and non-goals
 
@@ -5461,8 +5464,9 @@ argument (§18.5), the round rule of L38–L41 and the responsiveness it
 yields (§18.6), Definition 1's Agreement (§18.7), and the order
 `commit`'s descent delivers in (§18.8–§18.10), a refutation of
 Definition 1's Agreement (§18.11), a refutation of its Total order
-(§18.12), the repair that would restore both and why no validator can
-run it (§18.13), and what does hold at a validator's view (§18.14). It
+(§18.12), where the paper's own proofs go wrong (§18.13), the repair
+that would restore both and why no validator can run it (§18.14), and
+what does hold at a validator's view (§18.15). It
 is the second arc under the statement/proof partition (§17.5), and
 `docs/black-marlin.md` is its design record.
 
@@ -5487,14 +5491,24 @@ both descends to a supported anchor, which is a quorum over the
 implementations: deciding from what is held, which can be too little and
 selects the wrong block, and waiting until the quorum is held, which up
 to `f` Byzantine supporters need never complete. The first loses safety
-and the second loses liveness (§18.13).
+and the second loses liveness (§18.14).
+
+**And the failures are located in the paper's own argument.** Every
+lemma of its safety section is about the test at L16; what a validator
+outputs is governed by the recursion, which reads support nowhere.
+Lemma 11 carries the one into the other in a single clause — "by
+construction of the delivery function, party `j` must have also
+committed `B`" — which is asserted rather than argued, and is false.
+Theorem 12's Agreement and Total order clauses both depend on it, and
+the Total order clause additionally cites a Lemma 12 that the paper does
+not contain (§18.13).
 
 **What does hold at the view is stated and bounded.** Every reliable
 validator commits at recurring rounds on its own view, by an explicit
 time, and delivers there whatever any view committed below; and two
 records agree on the delivered order for as long as the rotation names
 reliable validators. Both boundaries fall in the same place and neither
-extends past it (§18.14).
+extends past it (§18.15).
 
 ### 18.1 The rule
 
@@ -5639,7 +5653,9 @@ are honest, Lemma 10 on the expected number of rounds to a correct
 anchor. This development states liveness above the structural condition
 instead (§6), so those are replaced rather than transcribed, and no
 timeout, message delay, stabilisation time or probability appears in
-what follows. Five claims (`BlackMarlin.Liveness.holds`):
+what follows. §18.13 records why the last of them cannot be
+transcribed: Lemma 10 takes an expectation over a rotation the protocol
+deploys deterministically. Five claims (`BlackMarlin.Liveness.holds`):
 
 **BML1** — a run of two consecutive reliable anchors, over three
 populated rounds, is committed. `Supported` is the core's `DirectCommit`
@@ -6014,7 +6030,7 @@ different blocks when the anchor party is Byzantine" — which holds of
 L16, and of the path that runs when L16 fails does not.
 
 A repair is visible — let the descent prefer a *supported* anchor among
-tied candidates, which BM1 makes unique — and §18.13 tests it as a
+tied candidates, which BM1 makes unique — and §18.14 tests it as a
 side-condition on the record rather than as a change to the model. The
 same execution costs the protocol its Total order as well, on blocks
 that have nothing to do with the equivocation, which is §18.12.
@@ -6067,15 +6083,10 @@ record with no round-0 boundary emits it inside the round-2 segment. The
 pair the order turns on is unaffected, and the witness checks that the
 two sequences agree once `3` is removed.
 
-**One further defect surfaces in the reading.** L30 sits outside the
-loop L27 guards, so on a literal reading the anchor `B` is
-`ab-deliver`ed whatever `D` holds — and the first validator, having
-delivered `8` and later descending to `12`, would deliver both, breaking
-Integrity outright. §4.4's prose says otherwise: "In case of conflicting
-blocks from the same party and round, only the first block ... is
-ab-delivered". `commitSeq` takes the prose and filters `B` as well, which
-is the reading under which the refutations above stand; under the
-literal one Integrity fails without any of this argument.
+`commitSeq` filters the anchor `B` as well as the blocks of its segment,
+which is what the paper's §4.4 requires in prose and what the pseudocode
+at L30 does not implement. That is the reading under which the
+refutations above stand, and §18.13 records what the literal one costs.
 
 **Where the defect sits.** The equivocation is a necessary condition and
 not the mechanism, and a controlled comparison separates the two. Hold
@@ -6124,13 +6135,13 @@ choice among what it finds, or `descendS`. The descent supplies two of
 the three.
 
 Where the equivocation is irreducible is one level further down: `descendS`
-repairs the descent over the universe, and §18.13 is why no validator can
+repairs the descent over the universe, and §18.14 is why no validator can
 run it — telling the twins apart needs support a view need not carry.
 
 **This is the more robust of the two failures.** It does not depend on
 which twin the filter prefers, so no rule for choosing among twins
-repairs it — and §18.13 refutes that family for Agreement anyway. What
-would repair it is a rule that makes the two descents agree, and §18.13
+repairs it — and §18.14 refutes that family for Agreement anyway. What
+would repair it is a rule that makes the two descents agree, and §18.14
 is why no validator can run one.
 
 It also disposes of the reading that relaxes Integrity. Dropping L27, so
@@ -6139,7 +6150,121 @@ twice, leaves the segmentation untouched, and the segmentation is what
 differs — the twins then come out in opposite orders as well, turning
 the Agreement failure into a second Total order failure.
 
-### 18.13 The repair, and why no validator can run it
+### 18.13 Where the paper's proofs go wrong
+
+Every lemma of the paper's §5.1 is a statement about the test at **L16**. What a
+validator outputs is governed by the recursion of L18–L32, which selects
+anchors by `maxAnchor` and L24's metric and reads support nowhere. Those
+are different predicates, and the proofs substitute one for the other at
+a step that can be named.
+
+**Lemmas 1 to 5 are sound**, and this arc reproduces them with no
+hypothesis beyond `n ≥ 3f + 1`: Lemma 2 is BM1, Lemma 3 is BM3, Lemma 4
+is BM2, Lemma 5 is BM5 (§18.2). Lemmas 6 to 9, the timing arguments, are
+replaced here by the structural condition rather than transcribed
+(§18.5), and nothing below turns on them.
+
+**Lemma 11 is false.** It claims that if honest `i` commits `B` then
+every honest `j` eventually commits `B`, and its proof ends:
+
+> If `B ∈ past(B′)` and `B ≠ B′`, then by construction of the delivery
+> function, party `j` must have also committed `B`.
+
+Two things go wrong there. First, the proof **equivocates on "commit"**.
+Lemmas 2 and 5, which it invokes, are about blocks satisfying L16; the
+recursion calls `commit(B′)` on blocks that never satisfied L16, which
+is the entire purpose of the recursion. The premises are in one sense
+and the conclusion in the other, and no lemma connects them. Second, the
+connecting claim is **asserted rather than argued**, and it does not
+hold: the descent visits one anchor per round, chosen by `maxAnchor` and
+L24's metric, so `B ∈ past(B′)` gives `j` no reason to descend through
+`B` rather than through a twin. §18.11's execution is exactly that —
+`i` commits `8` under L16, `j` commits `19` with `8 ∈ past(19)`, and
+
+```lean
+flushRecord Udiv 8 2 = some 8 ∧ flushRecord Udiv 19 2 = some 12
+```
+
+so `j` never commits `8` in either sense, and never delivers it. Lemma
+11 is also stated unconditionally while its proof invokes Lemma 10,
+which holds only after GST.
+
+**Theorem 12, Agreement**, inherits the break and adds one of its own:
+
+> …and thus `B ∈ past(B′)`. Therefore, party `j` eventually
+> ab-delivers`(B, j, r)`, ensuring agreement.
+
+Reachability is not delivery. L27 drops `B` when `j` has already output a
+block of the same author and round, which is precisely the twin case, so
+the step omits the filter it needs to survive.
+
+**Theorem 12, Total order**, rests on three faults. Its premise —
+
+> the order of delivery of non-anchor blocks is determined by the order
+> in which the anchor blocks are committed (L16)
+
+— is false: the order is fixed by the anchors the *recursion* flushes,
+and those include blocks that never satisfied L16. In §18.12's execution
+one validator's boundary at round `2` is `12`, carrying one supporter,
+and the other's at round `1` is `7`, carrying two of four; neither is
+L16-committed, and they are what order `5` and `7` oppositely. The clause
+then cites "Lemma 12" for the claim that every honest party commits the
+same set of blocks, and **there is no Lemma 12** — the paper has Lemmas 1
+to 11 and then Theorem 12 itself, and this citation is the only
+occurrence of the string. Lemma 11 is presumably meant, which is the
+false one. Finally it cites Lemma 6 for committed blocks lying in each
+other's past; Lemma 6 is the `3∆` round-advance lemma, and Lemma 5 is
+meant.
+
+**Theorem 12, Integrity**, argues that the delivered set makes `j` output
+at most once per author and round. L30 sits outside the loop L27 guards,
+so the anchor `B` is `ab-deliver`ed whatever the delivered set holds, and
+on the literal pseudocode the first validator of §18.11's execution —
+having delivered `8`, then descending to `12` — delivers both, breaking
+Integrity with none of the preceding argument needed. The paper's §4.4
+says in prose that the filter applies to every block, and the pseudocode
+does not implement it. This arc reads the prose, so Integrity holds here
+and the refutations above are of Agreement and Total order rather than
+of it.
+
+**Lemma 10 is not false so much as addressed to a different protocol.**
+It computes the probability that the anchors of rounds `r − 2` and
+`r − 1` are both honest as `(n − t)² / n²`, which treats the rotation as
+random. `RR(r)` is a deterministic round robin (the paper's §4.5), so an adversary
+reads the schedule and corrupts the anchors it chooses; there is no
+distribution to take an expectation over. What is available instead is
+stronger and needs no probability: at `n ≥ 3f + 1` under round robin, two
+cyclically adjacent anchors are reliable infinitely often, which is BML5
+and a pigeonhole. That yields the recurrence but not the expectation, so
+the paper's
+headline of `4.25` rounds of communication in the average case, quoted in
+its time-complexity section, does not follow from anything proved.
+
+**The results of §5, and their status here.**
+
+| paper | what it says | status |
+| --- | --- | --- |
+| Lemma 1 | honest messages are valid on receipt | no message layer is modelled (§18.4) |
+| Lemma 2 | two L16-committed blocks of a round are one block | BM1, proved |
+| Lemma 3 | rounds below the top carry `n − f` authors | BM3, proved |
+| Lemma 4 | an L16-committed block is in every past two rounds up | BM2, proved |
+| Lemma 5 | committed anchors form a chain | BM5, proved |
+| Lemmas 6–9 | round advance and support after GST | replaced by the structural condition (§18.5) |
+| Lemma 10 | expected rounds to a commit | probability over a deterministic rotation; BML5 gives the recurrence without it |
+| Lemma 11 | `i` commits `B` iff `j` eventually commits `B` | **false** (§18.11) |
+| Thm 12, Validity | | holds for reliable authors, BMO9 |
+| Thm 12, Agreement | | **refuted** (§18.11) |
+| Thm 12, Integrity | | holds of the filter as the paper's §4.4 reads it; fails on the literal L30 |
+| Thm 12, Total order | | **refuted** (§18.12) |
+
+**What the pattern is.** Nothing in §5.1 is wrong about the commit rule,
+and the paper's §4.4 claims, correctly, that its conditions "prevent honest parties from
+committing different blocks when the anchor party is Byzantine", which
+is true of L16. The proofs go wrong where they carry a conclusion about L16 into
+a claim about what validators output, and the recursion — which is what
+determines output — is never given a lemma of its own.
+
+### 18.14 The repair, and why no validator can run it
 
 §18.11 names a repair. This section makes it as a **side-condition**
 rather than a change to the model — `descend`, `flushRecord` and
@@ -6274,7 +6399,7 @@ Total order, the rule that restores both cannot be evaluated by a
 validator that decides from its own view, and the rule that waits for the
 evidence can be made to wait without end.
 
-### 18.14 Liveness and the delivered order at a validator's view
+### 18.15 Liveness and the delivered order at a validator's view
 
 §18.5, §18.6 and BMP12 conclude `Committed U L r`: the **universe**
 admits a commit at that round. Liveness asserts something else. A
@@ -6328,7 +6453,7 @@ rotation names, and where the rotation names a reliable validator
 coverage supplies the input; the descent reads support at whichever
 anchor its chain lands on, and no clause constrains that anchor's author.
 So BMV3 and BMT1 hold at reliably anchored rounds and have no counterpart
-elsewhere: §18.13 exhibits a view holding every reliable block in which
+elsewhere: §18.14 exhibits a view holding every reliable block in which
 neither twin is supported, and §18.12 exhibits two records that order two
 reliable authors' blocks oppositely with one Byzantine anchor below them.
 
