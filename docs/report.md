@@ -339,6 +339,10 @@ proof effort with no corresponding proof content.
    processing — and showing the fast exit to cost a run of three
    (§18.6). Agreement follows: the anchor is committed by each reliable
    validator on its own view, so what one delivers all deliver (§18.7).
+   And the delivered order: `commit`'s descent segments a flush by anchor
+   round, and the link clause keeps it from skipping the round above a
+   committed anchor, which is what stops it ever facing a tie
+   (§18.8).
 
 ### 1.4 Scope and non-goals
 
@@ -5438,8 +5442,9 @@ The arc formalises `delivery(r)` (Algorithm 2, L14–L17): §5.1 of the
 paper — the rule and every safety result stated about it (§18.2) — its
 liveness above the structural condition of §6, in place of §5.2's timing
 argument (§18.5), the round rule of L38–L41 and the responsiveness it
-yields (§18.6), and Definition 1's Agreement (§18.7). It is the second
-arc under the statement/proof partition (§17.5), and
+yields (§18.6), Definition 1's Agreement (§18.7), and the order
+`commit`'s descent delivers in (§18.8). It is the second arc under the
+statement/proof partition (§17.5), and
 `docs/black-marlin.md` is its design record.
 
 ### 18.1 The rule
@@ -5739,6 +5744,52 @@ Definition 1's four properties, Validity holds for reliable authors
 (BML3 with BML4) and Agreement is BMA3; Integrity rests on the delivered
 set `D` and Total Order on `τ`, and neither is modelled.
 
+### 18.8 The delivered order, and the second job of the link clause
+
+`commit(B)` does not deliver `past(B)` in one piece. It descends through
+the undelivered anchors of `strong(B)`, flushing one `τ`-sorted segment
+per anchor round from the lowest up (Algorithm 1, L18–L32). That
+segmentation *is* the delivered order, and it is also what makes two
+validators' orders agree: a validator that committed at rounds `3` and
+`5` and one that committed only at `7` flush the same segments, because
+the second one's descent visits `5`, `4` and `3` on the way down. The
+record the descent leaves is modelled here, not the recursion that builds
+it, as §5 models `Decided` rather than an implementation.
+
+**BMD1** is why no tie-break is needed most of the time: the candidates
+at round `ρ` below a round-`(ρ+1)` block are that block's references, and
+`distinct_creators` allows one block per author, so a consecutive step
+has at most one candidate. **BMD2** and **BMD3** turn that into
+agreement — two records agreeing at a round agree at the round below, and
+so throughout any stretch they both descend — and **BMD4** supplies the
+starting point, two records flushing directly committed anchors at one
+round flushing the same block by BM1.
+
+**BMD5 is the result.** Ties can only arise where the descent *skips* an
+anchor round, leaving two twins of an equivocating anchor in a deeper
+cone. Above a committed anchor sits a **supported** anchor — the link
+clause says so — and BM2 puts it in the cone of every block from three
+rounds up, so the round above a committed anchor is never the one
+skipped. The clause that makes adjacent committed anchors comparable
+(§18.3) is also what keeps the delivery order determinate around them.
+It is the same clause doing two jobs, and the second is not in the paper.
+
+**BMD6** is then the ledger: nothing output is dropped, records that
+agree output the same blocks, a block enters at exactly one round, and
+records that agree concur on which. The last two are Definition 1's Total
+Order at the granularity of segments; the order *within* a segment is
+`τ`, which the rule does not constrain and this arc does not model.
+
+**What is left over, and why.** Where the descent does skip a round,
+nothing above applies, and the paper's rule for that case cannot be
+transcribed: Algorithm 1 uses `maxAnchor(A)` as a set on L21 and as an
+element on L22, binds `A` as a member of `A` on L24, and leaves the
+function undefined when the candidate set holds no anchor. BMD3 therefore
+carries its stretch as a hypothesis rather than deriving it. Of
+Definition 1's four properties the arc now has Validity for reliable
+authors (BML3 with BML4), Agreement (BMA3) and Total Order by segment
+(BMD6); Integrity rests on the delivered set `D`, which is not modelled.
+
 ## 19. Satisfiability
 
 Every structure carrying conditions is exhibited satisfiable by a concrete model
@@ -5942,7 +5993,8 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `MahiMahi/Helpers/` | the generated lemma layer |
 | `BlackMarlin/Model/Rules.lean`, `BlackMarlin/Model/Decision.lean` | the anchor rotation; support, the link, the commit rule; the same rules read from a view |
 | `BlackMarlin/Model/Round.lean` | the round rule of L38–L41, and the pacing structure it induces |
-| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/` | the four statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4) |
+| `BlackMarlin/Model/Ledger.lean` | the flush record of `commit`'s descent, and the ledger it defines |
+| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/` | the five statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6) |
 | `BlackMarlin/Helpers/` | the generated lemma layer |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
@@ -6413,13 +6465,13 @@ the consumption map of §4.8 and the support diagrams of §6.10 refer to
 results through them. The series are alphabetic by area: T and M for
 the safety core, L for liveness, V for the view-convergence family, CU
 for catch-up, RS for the reactive schedule, SS for safe skip, AL for adaptive
-leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, BM, BML, BMR and BMA for Black Marlin, CQ for chain
+leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, BM, BML, BMR, BMA and BMD for Black Marlin, CQ for chain
 quality, C, D,
 B and E for the denial-of-service arc, G for garbage collection, O for
 Odontoceti; P, N and R name clauses of the trust boundary rather than
 results. Labels resolving to witness models rather than library
 theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7, SS11, AL8, H9, H10) are
-excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7 and BMA5. Appendix C displays every indexed
+excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7, BMA5 and BMD7. Appendix C displays every indexed
 result in full.
 
 ### Safety
@@ -6668,6 +6720,13 @@ reused.
 | BMA3 | what one validator delivered, every reliable validator delivers | `BlackMarlin.Pace.agreement` *(BlackMarlin/Helpers/Agreement)* |
 | BMA4 | a reliably anchored run of two lies above every round | `BlackMarlin.Agreement.holds` *(BlackMarlin/Agreement/Proof)* |
 | BMA5 | agreement on data, on the four-round model and on the pace | `Ufull`, `ugrowBM` witnesses *(LeanDagTest/BlackMarlin)* |
+| BMD1 | the descent has one candidate where it steps by one round | `BlackMarlin.coneAnchors_subsingleton` *(BlackMarlin/Helpers/Ledger)* |
+| BMD2 | two records agreeing at a round agree at the round below | `BlackMarlin.block_eq_of_succ` *(BlackMarlin/Helpers/Ledger)* |
+| BMD3 | and throughout any stretch they both descend | `BlackMarlin.block_eq_of_add` *(BlackMarlin/Helpers/Ledger)* |
+| BMD4 | records flushing committed anchors at one round agree there | `BlackMarlin.block_eq_of_committed` *(BlackMarlin/Helpers/Ledger)* |
+| BMD5 | the link clause keeps the descent from skipping | `BlackMarlin.coneAnchors_succ_nonempty_of_committed` *(BlackMarlin/Helpers/Ledger)* |
+| BMD6 | no retraction, agreement, and one position per block | `BlackMarlin.ledgerSet_mono`, `BlackMarlin.ledgerSet_agree`, `BlackMarlin.outputAt_unique`, `BlackMarlin.outputAt_agree` *(BlackMarlin/Helpers/Ledger)* |
+| BMD7 | the descent on data: singleton candidate sets, and a block's position | `fullFlush` witnesses *(LeanDagTest/BlackMarlin)* |
 
 **Integration** (§16):
 
@@ -11908,6 +11967,167 @@ def Statement : Prop :=
 
 Agreement for the Black Marlin commit rule, over every fault configuration, rotation, block universe and pacing structure the model admits.
 
+#### `coneAnchors`
+
+*def, `BlackMarlin.Model.Ledger.lean`*
+
+```lean
+def coneAnchors (U : BlockUniverse Validator BlockId Payload)
+    (A : BlockId) (ρ : ℕ) : Finset BlockId :=
+  (blocksAt U ρ).filter (fun X => (U.block X).creator = Rot.anchor ρ ∧ X ∈ history U A)
+```
+
+The anchors of round `ρ` in `A`'s causal history — the candidates the descent chooses among when it arrives at that round.
+
+#### `Flush`
+
+*structure, `BlackMarlin.Model.Ledger.lean`*
+
+```lean
+structure Flush (U : BlockUniverse Validator BlockId Payload) where
+  /-- The anchor flushed at each round, where the descent flushed one. -/
+  block : ℕ → Option BlockId
+  /-- What is flushed at a round is that round's anchor. -/
+  isAnchor : ∀ ρ L, block ρ = some L → IsAnchor U ρ L
+  /-- **The descent steps by one round.** -/
+  step : ∀ ρ L M, block ρ = some L → block (ρ + 1) = some M → L ∈ (U.block M).refs
+  /-- **And does not pass over an anchor it references.** -/
+  dense : ∀ ρ M, block (ρ + 1) = some M → (coneAnchors U M ρ).Nonempty →
+    (block ρ).isSome
+```
+
+**A flush record**: the anchor block a validator flushed at each round, and what the descent guarantees of it.
+
+`step` is the descent's own shape — the anchor flushed at `ρ` is a reference of the anchor flushed at `ρ + 1` — and `dense` says the descent does not pass over a round whose anchor that reference set contains. Neither says anything about a round the descent skips, which is the case the paper's tie-break is for.
+
+#### `ledgerSet`
+
+*def, `BlackMarlin.Model.Ledger.lean`*
+
+```lean
+def ledgerSet (U : BlockUniverse Validator BlockId Payload) (f : Flush U) (n : ℕ) :
+    Set BlockId :=
+  {b | ∃ ρ, ρ < n ∧ ∃ L, f.block ρ = some L ∧ Reaches U L b}
+```
+
+The blocks a record has output through round `n`: everything in the causal history of an anchor it flushed below `n`. Ordering *within* a segment is the deterministic sort `τ`, which the rule does not constrain and this arc does not model, so the ledger is a set and the record's rounds are its positions.
+
+#### `OutputAt`
+
+*def, `BlackMarlin.Model.Ledger.lean`*
+
+```lean
+def OutputAt (U : BlockUniverse Validator BlockId Payload) (f : Flush U)
+    (b : BlockId) (ρ : ℕ) : Prop :=
+  (∃ L, f.block ρ = some L ∧ Reaches U L b) ∧
+    ∀ σ, σ < ρ → ∀ L, f.block σ = some L → ¬ Reaches U L b
+```
+
+`b` enters the ledger at round `ρ`: the first flushed anchor whose causal history holds it. This is a block's position in the delivered sequence, at the granularity of segments.
+
+#### `StepUnique`
+
+*def, `BlackMarlin.Ledger.Statement.lean`*
+
+```lean
+def StepUnique (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (ρ : ℕ) (M X Y : BlockId),
+    M ∈ U.ids → (U.block M).round = ρ + 1 →
+    X ∈ coneAnchors U M ρ → Y ∈ coneAnchors U M ρ → X = Y
+```
+
+**BMD1, the step is unambiguous.**
+
+#### `AgreeStep`
+
+*def, `BlackMarlin.Ledger.Statement.lean`*
+
+```lean
+def AgreeStep (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (ρ : ℕ) (M : BlockId),
+    f₁.block (ρ + 1) = some M → f₂.block (ρ + 1) = some M →
+    f₁.block ρ = f₂.block ρ
+```
+
+**BMD2, agreement descends one round.** Where both records flush, the step makes their blocks candidates of one cone; where one does not, the cone is empty and neither does.
+
+#### `AgreeBelow`
+
+*def, `BlackMarlin.Ledger.Statement.lean`*
+
+```lean
+def AgreeBelow (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (ρ d : ℕ),
+    f₁.block (ρ + d) = f₂.block (ρ + d) →
+    (∀ i, 0 < i → i ≤ d → (f₁.block (ρ + i)).isSome) →
+    f₁.block ρ = f₂.block ρ
+```
+
+**BMD3, agreement descends a stretch.** The definedness hypothesis is exactly the descent not skipping a round; where it does, the paper's tie-break would be needed and this says nothing.
+
+#### `CommittedPins`
+
+*def, `BlackMarlin.Ledger.Statement.lean`*
+
+```lean
+def CommittedPins (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (σ : ℕ) (L₁ L₂ : BlockId),
+    f₁.block σ = some L₁ → f₂.block σ = some L₂ →
+    Committed U L₁ σ → Committed U L₂ σ →
+    f₁.block σ = f₂.block σ
+```
+
+**BMD4, directly committed anchors pin the record.**
+
+#### `LinkPopulates`
+
+*def, `BlackMarlin.Ledger.Statement.lean`*
+
+```lean
+def LinkPopulates (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (L C : BlockId) (ρ : ℕ),
+    Committed U L ρ → C ∈ U.ids → ρ + 3 ≤ (U.block C).round →
+    (coneAnchors U C (ρ + 1)).Nonempty
+```
+
+**BMD5, the link clause keeps the descent from skipping.** Above a committed anchor sits a supported anchor, which propagation puts in every cone from three rounds up — so a descent arriving there finds a candidate rather than an empty round.
+
+#### `Ledger`
+
+*def, `BlackMarlin.Ledger.Statement.lean`*
+
+```lean
+def Ledger (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  (∀ (f : Flush U) (n m : ℕ), n ≤ m → ledgerSet U f n ⊆ ledgerSet U f m) ∧
+  (∀ (f₁ f₂ : Flush U) (n : ℕ),
+    (∀ ρ, ρ < n → f₁.block ρ = f₂.block ρ) →
+    ledgerSet U f₁ n = ledgerSet U f₂ n) ∧
+  (∀ (f : Flush U) (b : BlockId) (ρ₁ ρ₂ : ℕ),
+    OutputAt U f b ρ₁ → OutputAt U f b ρ₂ → ρ₁ = ρ₂) ∧
+  (∀ (f₁ f₂ : Flush U) (n : ℕ) (b : BlockId) (ρ : ℕ),
+    (∀ σ, σ < n → f₁.block σ = f₂.block σ) → ρ < n →
+    OutputAt U f₁ b ρ → OutputAt U f₂ b ρ) ∧
+  (∀ (f : Flush U) (ρ : ℕ) (L b : BlockId),
+    f.block ρ = some L → Reaches U L b → b ∈ ledgerSet U f (ρ + 1))
+```
+
+**BMD6, the ledger.** Nothing output is dropped; records that agree below a round output the same blocks there; a block enters at exactly one round; and records that agree concur on which. The last is total-order safety at the granularity of segments — the order *within* one needs `τ`.
+
+#### `Statement`
+
+*def, `BlackMarlin.Ledger.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [DecidableEq BlockId] [Rotation Validator]
+    (U : BlockUniverse Validator BlockId Payload),
+    StepUnique U ∧ AgreeStep U ∧ AgreeBelow U ∧ CommittedPins U ∧
+      LinkPopulates U ∧ Ledger U
+```
+
+The delivered order of the Black Marlin commit rule, over every fault configuration, rotation and block universe the model admits.
+
 ### Not otherwise grouped
 
 #### `SoundOn`
@@ -11944,7 +12164,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 474 theorems that either another module of the
+The 485 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -18254,6 +18474,135 @@ The two halves are the prefix result — the lower committed anchor's causal his
 theorem holds : Statement
 ```
 
+#### `coneAnchors_subsingleton`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem coneAnchors_subsingleton (hM : M ∈ U.ids) (hMr : (U.block M).round = ρ + 1) :
+    ∀ X ∈ coneAnchors U M ρ, ∀ Y ∈ coneAnchors U M ρ, X = Y
+```
+
+**The step is unambiguous.** At most one anchor of round `ρ` lies in the cone of a round-`(ρ + 1)` block: the round-`ρ` members of that cone are its references, and `distinct_creators` allows one block per author. No tie-break is needed where the descent steps by one round.
+
+#### `block_eq_of_succ`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem block_eq_of_succ {f₁ f₂ : Flush U}
+    (hM₁ : f₁.block (ρ + 1) = some M) (hM₂ : f₂.block (ρ + 1) = some M) :
+    f₁.block ρ = f₂.block ρ
+```
+
+**Two records that agree at a round agree at the round below it.** Where both flush, the step makes their blocks candidates of one cone and the subsingleton makes them equal; where one does not flush, the cone is empty and neither does.
+
+#### `block_eq_of_add`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem block_eq_of_add {f₁ f₂ : Flush U} :
+    ∀ (d ρ : ℕ), f₁.block (ρ + d) = f₂.block (ρ + d) →
+      (∀ i, 0 < i → i ≤ d → (f₁.block (ρ + i)).isSome) →
+      f₁.block ρ = f₂.block ρ
+```
+
+**And so throughout a stretch they both descend.** Agreement at `ρ + d` propagates down to `ρ`, provided the record flushes at every round strictly between.
+
+#### `block_eq_of_committed`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem block_eq_of_committed {f₁ f₂ : Flush U} {L₁ L₂ : BlockId}
+    (h₁ : f₁.block σ = some L₁) (h₂ : f₂.block σ = some L₂)
+    (hc₁ : Committed U L₁ σ) (hc₂ : Committed U L₂ σ) :
+    f₁.block σ = f₂.block σ
+```
+
+**The starting point.** Two records that flush directly committed anchors at one round flush the same block, by anchor uniqueness. This is what a round every reliable validator commits at supplies.
+
+#### `coneAnchors_succ_nonempty_of_committed`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem coneAnchors_succ_nonempty_of_committed (h : Committed U L ρ)
+    {C : BlockId} (hC : C ∈ U.ids) (hCr : ρ + 3 ≤ (U.block C).round) :
+    (coneAnchors U C (ρ + 1)).Nonempty
+```
+
+**The link clause keeps the descent from skipping.** Above a committed anchor at round `ρ` sits a *supported* anchor at `ρ + 1`, so by propagation it lies in the cone of every block from round `ρ + 3` up: a descent arriving there finds a candidate rather than an empty round.
+
+This is the second clause of the commit rule doing a second job. Safety uses it in one case of one theorem; here it is what stops the descent from reaching a round where two twins of an equivocating anchor are both candidates.
+
+#### `ledgerSet_mono`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem ledgerSet_mono (f : Flush U) {n m : ℕ} (h : n ≤ m) :
+    ledgerSet U f n ⊆ ledgerSet U f m
+```
+
+**Nothing is ever dropped.** The ledger only grows as the record reaches higher rounds.
+
+#### `ledgerSet_agree`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem ledgerSet_agree {f₁ f₂ : Flush U} {n : ℕ}
+    (h : ∀ ρ, ρ < n → f₁.block ρ = f₂.block ρ) :
+    ledgerSet U f₁ n = ledgerSet U f₂ n
+```
+
+**Two records that agree output the same blocks.**
+
+#### `outputAt_unique`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem outputAt_unique {f : Flush U} {b : BlockId} {ρ₁ ρ₂ : ℕ}
+    (h₁ : OutputAt U f b ρ₁) (h₂ : OutputAt U f b ρ₂) : ρ₁ = ρ₂
+```
+
+**A block enters the ledger once.** Its position is not merely stable over time — there is no second round it could have entered at.
+
+#### `outputAt_agree`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem outputAt_agree {f₁ f₂ : Flush U} {n : ℕ} {b : BlockId} {ρ : ℕ}
+    (h : ∀ σ, σ < n → f₁.block σ = f₂.block σ) (hρ : ρ < n)
+    (ho : OutputAt U f₁ b ρ) : OutputAt U f₂ b ρ
+```
+
+**And two records that agree concur on which round that is.**
+
+#### `mem_ledgerSet_of_block`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem mem_ledgerSet_of_block (f : Flush U)
+    (hL : f.block ρ = some L) {b : BlockId} (hb : Reaches U L b) :
+    b ∈ ledgerSet U f (ρ + 1)
+```
+
+**A flushed anchor's cone is in the ledger.** The link between the record and what it delivers, and with the recurrence of committed anchors the sense in which the ledger extends.
+
+#### `holds`
+
+*theorem, `BlackMarlin.Ledger.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
 ### Not otherwise grouped
 
 #### `waveRobin_fairRun`
@@ -18295,7 +18644,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 444 lemmas used only within the file that proves
+The 446 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -19115,6 +19464,13 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `gst_le_built` | Every build at a round past GST lies past GST: rounds advance real time, so the round number itself bounds … |
 | `holds_two_rounds` | The two rounds the rule reads, in hand. Past GST every reliable validator holds every reliable block of … |
+
+### `BlackMarlin/Helpers/Ledger.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `mem_coneAnchors` | Membership in `coneAnchors`, unfolded. |
+| `mem_coneAnchors_of_step` | A flushed anchor is a candidate of its own round below the anchor above it. |
 
 ### `Network/Quorum.lean` (2)
 

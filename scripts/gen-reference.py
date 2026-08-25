@@ -77,7 +77,9 @@ LAYERS = [
       "BlackMarlin.Liveness.Proof", "BlackMarlin.Model.Round",
       "BlackMarlin.Reactive.Statement", "BlackMarlin.Helpers.Reactive",
       "BlackMarlin.Reactive.Proof", "BlackMarlin.Agreement.Statement",
-      "BlackMarlin.Helpers.Agreement", "BlackMarlin.Agreement.Proof"]),
+      "BlackMarlin.Helpers.Agreement", "BlackMarlin.Agreement.Proof",
+      "BlackMarlin.Model.Ledger", "BlackMarlin.Ledger.Statement",
+      "BlackMarlin.Helpers.Ledger", "BlackMarlin.Ledger.Proof"]),
     ("The legacy quorum route (report §17)", ["Network.Quorum"]),
 ]
 

@@ -10,7 +10,8 @@
 The design record for `LeanDag/BlackMarlin/`: the commit rule of *DAG it
 off: Latency Prefers No Common Coins* (Amores-Sesar, Grøndal, Holmgård
 and Ottendal, arXiv:2508.14716v3): its safety, its liveness, the round
-rule it advances on, and Definition 1's Agreement.
+rule it advances on, Definition 1's Agreement, and the order its
+deliveries come out in.
 
 ## 1. The protocol, and what this arc covers
 
@@ -25,8 +26,9 @@ Byzantine, which is what keeps the protocol responsive.
 This arc covers the commit rule of `delivery(r)` (Algorithm 2, L14–L17)
 with §5.1's safety results (§4), liveness above the structural condition
 in place of §5.2's timing argument (§8), the round rule of L38–L41 and
-the responsiveness it yields (§9), and Definition 1's Agreement (§10).
-§11 says what remains.
+the responsiveness it yields (§9), Definition 1's Agreement (§10), and
+the order the descent of `commit` delivers in (§11). §12 says what
+remains.
 
 ## 2. The rule
 
@@ -136,11 +138,11 @@ per round, slot `r` led by the validator the rotation elects for round
 conversely. It asserts nothing about any verdict.
 
 `commit(B)`'s recursion over `strong(B) \ D` selects `maxAnchor`, the
-highest-round undelivered anchor in the strong past, and breaks ties
-deterministically when the elected validator equivocated. That choice
-fixes the order in which anchors are visited; it does not enlarge the
-set of blocks delivered, which is why BM5 and BM6 are stated about
-`history` and the recursion is not modelled.
+highest-round undelivered anchor in the strong past. That choice fixes
+the order in which anchors are visited; it does not enlarge the set of
+blocks delivered, since `past(B′) ∪ {B′} ⊆ past(B)` for every
+`B′ ∈ strong(B)`, which is why BM5 and BM6 are stated about `history`.
+The order it fixes is §11.
 
 ## 5. Modelling choices
 
@@ -211,19 +213,20 @@ The arc adopts the statement/proof partition of `LeanDag/MahiMahi/`
 
 ```
 LeanDag/BlackMarlin/
-  Model/         definitions only, theorem-free: Rules, Decision, Round
+  Model/         definitions only, theorem-free: Rules, Decision, Round, Ledger
                  (decidable instances by `inferInstanceAs` included: definitions, not proofs)
   Helpers/       generated lemma infrastructure; unaudited
   <Result>/Statement.lean imports Model/ only; definitions, prose, `def Statement : Prop`
   <Result>/Proof.lean     `theorem holds : Statement`; unaudited
                           Results: Safety (BM1-BM7), Liveness (BML1-BML5),
-                          Reactive (BMR1-BMR6)
+                          Reactive (BMR1-BMR6), Agreement (BMA1-BMA4),
+                          Ledger (BMD1-BMD6)
 LeanDagTest/BlackMarlin/  witness models; the instantiations are audited
 scripts/check-arc-holes.py   sorry/admit/axiom/native_decide/unsafe/partial absent;
                              Statement.lean files proof-free; Model/ files theorem-free
 ```
 
-The audit surface is `Model/`, the two `Statement.lean` files, the
+The audit surface is `Model/`, the four `Statement.lean` files, the
 witness instantiations and the checker. `scripts/check-arc-holes.py` covers both
 partitioned arcs; it was named for Mahi-Mahi and is renamed here, its
 checks unchanged.
@@ -370,7 +373,102 @@ reactive arc uses, at the same holdings and the same build spacing of
 bounded by the round rule rather than by holding one block, and the
 timeout is `25`, which is what lets both routes fire on one model.
 
-## 10. What is not covered
+## 10. Agreement
+
+Definition 1's **Agreement** — if an honest party delivers a block, every
+honest party eventually delivers it. Four claims, in
+`LeanDag/BlackMarlin/Agreement/Statement.lean`:
+
+| | Claim | Paper |
+|:---|:---|:---|
+| BMA1 | `Monotone` — a block delivered with a committed anchor is delivered with every committed anchor from that round on | Lemma 5, corollary |
+| BMA2 | `LocalCommit` — a run of two is committed by each reliable validator on its **own view**, at an explicit time | Lemma 11, half |
+| BMA3 | `Delivered` — the two composed | Definition 1, Agreement |
+| BMA4 | `RunRecurs` — such a round exists above every round | — |
+
+**BMA2 is the new work.** BML1 and BMR2 say a verdict is *available* over
+the universe; Definition 1 speaks about what a party outputs. BMA2 runs
+the same run-of-two argument inside `viewAt v t` rather than inside the
+universe, with `PaceCore.holds_roundBlocks` putting the two rounds the
+rule reads into every reliable validator's hands by
+`max (latest (r+1)) (latest (r+2)) + Δ`. It needs no hypothesis beyond
+BMR2's: that every build past round `R` lies past GST is derived from
+`built_lt`, since the round number itself bounds the build time from
+below.
+
+**What is stated, and what is not.** A validator delivers `B` when it
+calls `commit(A)` for an anchor it committed with `B ∈ past(A)`, so the
+claims are about `B ∈ history U L` for the anchor `L` each validator
+commits. Two things stand between that and the `ab-deliver` events of
+Definition 1. The recursion of `commit` visits the undelivered anchors of
+`strong(A)` before flushing, which fixes the **order** in which blocks
+are delivered; that is §11. And the per-`(creator, round)` filter of L27
+decides which of an equivocator's twins is delivered, which the
+segmentation and the deterministic sort `τ` together arbitrate; `τ` is
+not modelled. So the claims here are agreement on the delivered **set**,
+with the order treated separately.
+
+The witness is the covered four-round model for BMA1 — rounds `0` and `1`
+are committed there and round `2` is not, the DAG stopping before its
+link can be supported — and the pace of §9 for BMA2.
+
+## 11. The delivered order
+
+`commit(B)` does not deliver `past(B)` in one piece. It descends through
+the undelivered anchors of `strong(B)`, flushing one `τ`-sorted segment
+per anchor round from the lowest up (L18–L32). That segmentation *is* the
+delivered order, and it is also what makes two validators' orders agree:
+a validator that committed at rounds `3` and `5` and one that committed
+only at `7` flush the same segments, because the second one's descent
+visits `5`, `4` and `3` on the way down. `Model/Ledger.lean` models the
+record the descent leaves rather than the recursion that builds it, as
+the core models `Decided` rather than the implementation.
+
+| | Claim | Paper |
+|:---|:---|:---|
+| BMD1 | `StepUnique` — the descent has one candidate where it steps by one round | — |
+| BMD2 | `AgreeStep` — records agreeing at a round agree at the round below | — |
+| BMD3 | `AgreeBelow` — and throughout any stretch they both descend | — |
+| BMD4 | `CommittedPins` — records flushing committed anchors at one round agree there | Lemma 2 |
+| BMD5 | `LinkPopulates` — the link clause keeps the descent from skipping | — |
+| BMD6 | `Ledger` — no retraction, agreement, and one position per block | Definition 1, Total Order |
+
+**BMD1 is why no tie-break is needed most of the time.** The candidates
+at round `ρ` below a round-`(ρ+1)` block are that block's references, and
+`ValidWrt.distinct_creators` allows one block per author — so a
+consecutive step has at most one candidate. Ties can only arise where the
+descent *skips* an anchor round, leaving two twins of an equivocating
+anchor in a deeper cone.
+
+**BMD5 is the point of the phase.** The commit rule's second clause was
+used in exactly one case of one theorem for safety (§4). Here it does a
+second job: above a committed anchor sits a *supported* anchor, which BM2
+puts in the cone of every block from three rounds up — so the round above
+a committed anchor is never the one skipped. The clause that makes
+adjacent committed anchors comparable is also what keeps the delivery
+order determinate around them.
+
+**What is left over.** Where the descent does skip a round — an anchor
+round carrying no anchor in the cone below it — nothing above applies,
+and the paper's rule for that case cannot be transcribed. Algorithm 1
+uses `maxAnchor(A)` as a set on L21 and as an element on L22, binds `A`
+as a member of `A` on L24, and leaves the function undefined when the
+candidate set holds no anchor. So BMD3 carries its stretch as a
+hypothesis rather than deriving it, and the residual case is recorded
+rather than resolved.
+
+Ordering *within* a segment is `τ`, which the rule does not constrain and
+this arc does not model, so the ledger is a set and a record's rounds are
+the positions in it. BMD6's last two clauses — a block enters at exactly
+one round, and records that agree concur on which — are total-order
+safety at that granularity.
+
+The witness is the covered four-round model with its four anchors: the
+candidate sets are singletons on data, and validator `3`'s genesis block
+is placed at round `1`, with the anti-vacuity that it is not in the
+round-0 anchor's cone.
+
+## 12. What is not covered
 
 **Lemma 10.** No counterpart, and none needed: BML5 makes the recurring
 run deterministic where the paper bounds an expectation.
@@ -385,10 +483,15 @@ message schedule.
 block reaches the ledger needs the weak-reference window of §4.3.
 
 **Integrity**, the third property of Definition 1. It rests on the
-delivered set `D`, which is not modelled — Validity is BML3 with BML4,
-Agreement is §10, and Total Order is next.
+delivered set `D`, which is not modelled. Validity is BML3 with BML4,
+Agreement is §10, and Total Order is §11 at the granularity of
+segments.
 
-**The deterministic sort.** `τ` orders each delivered increment, and
-Total Order in Definition 1 is a statement about the resulting sequence.
-BM6 gives the nesting the sequence is built from; turning it into a
-sequence needs `τ` modelled.
+**The deterministic sort.** `τ` orders each delivered segment. §11 gives
+Total Order at the granularity of segments — a block enters at exactly
+one round, and records that agree concur on which; the order *within* a
+segment needs `τ` modelled.
+
+**The skipped-round tie-break.** L21–L24, whose text does not parse
+(§11). Everything §11 proves is about a descent that steps by one
+round.

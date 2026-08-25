@@ -106,3 +106,7 @@ import LeanDag.BlackMarlin.Reactive.Proof
 import LeanDag.BlackMarlin.Agreement.Statement
 import LeanDag.BlackMarlin.Helpers.Agreement
 import LeanDag.BlackMarlin.Agreement.Proof
+import LeanDag.BlackMarlin.Model.Ledger
+import LeanDag.BlackMarlin.Ledger.Statement
+import LeanDag.BlackMarlin.Helpers.Ledger
+import LeanDag.BlackMarlin.Ledger.Proof
