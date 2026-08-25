@@ -71,7 +71,7 @@ def divBlk : Fin 29 → Block (Fin 4) (Fin 29) Unit := fun i =>
     refs :=
       match (i : ℕ) with
       | 0 | 1 | 2 | 3 => ∅
-      | 4 => {0, 1, 2} | 5 => {0, 1, 2} | 6 => {0, 1, 2} | 7 => {1, 2, 3}
+      | 4 => {0, 1, 2} | 5 => {0, 1, 2} | 6 => {1, 2, 3} | 7 => {1, 2, 3}
       | 8 => {4, 5, 6} | 9 => {4, 5, 6} | 10 => {4, 5, 6} | 11 => {5, 6, 7}
       | 12 => {4, 6, 7}
       | 13 => {9, 10, 12} | 14 => {8, 9, 10} | 15 => {8, 9, 10} | 16 => {8, 9, 11}
@@ -118,6 +118,20 @@ example : Committed Udiv 19 4 := by decide
 L24 prefers `12`. -/
 example : maxAnchor Udiv (strongOf Udiv 19) = {8, 12} ∧
     anchorGap Udiv 12 = 1 ∧ anchorGap Udiv 8 = 2 := by decide
+
+/-- Both metrics are readings of a real anchor rather than of an absent
+one: each twin's cone holds an anchor, so L24 compares two defined
+quantities and the preference for `12` does not rest on how the empty
+case is read. -/
+example : (anchorsOf Udiv (strongOf Udiv 8)).Nonempty ∧
+    (anchorsOf Udiv (strongOf Udiv 12)).Nonempty ∧
+    maxAnchorRound Udiv (strongOf Udiv 8) = 0 ∧
+    maxAnchorRound Udiv (strongOf Udiv 12) = 1 := by decide
+
+/-- And neither twin lies in the other's cone, so which twin a validator
+flushes at round `2` is settled by the record alone — no property of the
+sort `τ` enters. -/
+example : (8 : Fin 29) ∉ history Udiv 12 ∧ (12 : Fin 29) ∉ history Udiv 8 := by decide
 
 /-- **The records disagree at round `2`.** The validator that committed
 `8` flushed `8`; the descent from the round-4 anchor takes `12`. -/

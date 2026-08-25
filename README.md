@@ -245,7 +245,7 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
   appendices from it; `audit-report.py` checks the report's
   cross-references, its Lean identifiers, and every displayed statement
   verbatim against the compiled source. Regeneration is deterministic,
-  so regenerate-and-diff is the pre-merge check. `check-arc-holes.py` enforces the statement/proof partition of the arcs that adopt it.
+  so regenerate-and-diff is the pre-merge check. `check-arc-holes.py` enforces the statement/proof partition of the arcs that adopt it, and `black-marlin-figure.py` draws the execution that refutes Agreement (`docs/figures/`).
 
 ## Documents
 

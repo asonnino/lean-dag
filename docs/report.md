@@ -5903,6 +5903,9 @@ rounds `0` to `6` by `3, 3, 0, 1, 2, 3, 1`, and validator `0`
 equivocating at round `2` with blocks `8` and `12`. Every step is settled
 by `decide`.
 
+![**Agreement refuted, on data.** The execution of `LeanDagTest/BlackMarlin/Divergence.lean`. Validator `0` is Byzantine and equivocates at round `2`; three round-3 blocks support `8` and the round-3 anchor `14` links it, so the rule commits `8`, while `12` has one supporter and the rule never admits it. The round-4 anchor `19` omits `14` — legal, since a block needs three references of four — so its cone holds no round-3 anchor at all. A validator that missed the round-2 commit and commits `19` instead therefore descends past round `3` and meets both twins at round `2`, where L24's metric prefers `12`: one round from the nearest anchor of its own cone, against two for `8`. Each validator then bars the other's block at the filter of L27. Rounds `5` and `6` carry the support that makes `19` committed and are drawn without highlighting.](figures/black-marlin-divergence.svg)
+
+
 The rule commits `8` and only `8`: three round-3 blocks reference it and
 the round-3 anchor `14` both references it and carries three supporters,
 while the twin has one supporter, so BM1 is untouched. The round-4 anchor
