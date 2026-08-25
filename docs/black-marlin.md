@@ -27,7 +27,7 @@ This arc covers the commit rule of `delivery(r)` (Algorithm 2, L14–L17)
 with §5.1's safety results (§4), liveness above the structural condition
 in place of §5.2's timing argument (§8), the round rule of L38–L41 and
 the responsiveness it yields (§9), Definition 1's Agreement (§10), and
-the order the descent of `commit` delivers in (§11). §12 says what
+the order the descent of `commit` delivers in (§11, §12). §13 says what
 remains.
 
 ## 2. The rule
@@ -213,20 +213,22 @@ The arc adopts the statement/proof partition of `LeanDag/MahiMahi/`
 
 ```
 LeanDag/BlackMarlin/
-  Model/         definitions only, theorem-free: Rules, Decision, Round, Ledger, Descent
+  Model/         definitions only, theorem-free: Rules, Decision, Round,
+                 Ledger, Descent, Order
                  (decidable instances by `inferInstanceAs` included: definitions, not proofs)
   Helpers/       generated lemma infrastructure; unaudited
   <Result>/Statement.lean imports Model/ only; definitions, prose, `def Statement : Prop`
   <Result>/Proof.lean     `theorem holds : Statement`; unaudited
                           Results: Safety (BM1-BM7), Liveness (BML1-BML5),
                           Reactive (BMR1-BMR6), Agreement (BMA1-BMA4),
-                          Ledger (BMD1-BMD6), Descent (BME1-BME5)
+                          Ledger (BMD1-BMD6), Descent (BME1-BME5),
+                          Order (BMO1-BMO9)
 LeanDagTest/BlackMarlin/  witness models; the instantiations are audited
 scripts/check-arc-holes.py   sorry/admit/axiom/native_decide/unsafe/partial absent;
                              Statement.lean files proof-free; Model/ files theorem-free
 ```
 
-The audit surface is `Model/`, the five `Statement.lean` files, the
+The audit surface is `Model/`, the six `Statement.lean` files, the
 witness instantiations and the checker. `scripts/check-arc-holes.py` covers both
 partitioned arcs; it was named for Mahi-Mahi and is renamed here, its
 checks unchanged.
@@ -507,7 +509,74 @@ candidate sets are singletons on data, and validator `3`'s genesis block
 is placed at round `1`, with the anti-vacuity that it is not in the
 round-0 anchor's cone.
 
-## 12. What is not covered
+## 12. The delivered sequence
+
+Definition 1 speaks about `ab-deliver` events — a **list**, not a set.
+§10 and §11 gave the set and the segment boundaries; this section gives
+the list, by modelling the sort `τ` of L26 and the filter of L27.
+
+`TopoSort` asks of `τ` exactly what the paper uses: that it is a
+function of the set, hence shared, and that it respects causality.
+`filterFirstFrom` threads the delivered set through L27, which is
+stateful within a segment as well as between them. Nine claims:
+
+| | Claim | Paper |
+|:---|:---|:---|
+| BMO1 | `AnchorLast` — the anchor is last in its own segment | L26, L30 |
+| BMO2 | `SeqAgree` — records that agree output the same list | — |
+| BMO3 | `SeqPrefix` — and the list only extends | — |
+| BMO4 | `Integrity` — no author-and-round twice | Definition 1, Integrity |
+| BMO5 | `KeyDelivered` — every author-and-round flushed is output | — |
+| BMO6 | `CorrectDelivered` — and for a correct author, by the block itself | — |
+| BMO7 | `TotalOrder` — records that agree cannot invert a pair | Definition 1, Total order |
+| BMO8 | `DescentOrder` — two descents that meet output the same list | Lemma 11, half |
+| BMO9 | `Validity` — a reliable author's block is output | Definition 1, Validity |
+
+**BMO1 is a fidelity check.** L26 flushes `τ(past(B) \ 𝒟)` and L30 then
+emits `B`; since every block of `history U B` is reachable from `B`, a
+topological sort of `history U B \ 𝒟` places `B` last of its own accord,
+so the two are one list and the model's single `segment` is faithful.
+
+**BMO4 and BMO7 are Definition 1's Integrity and Total order.** The first
+is a property of the filter alone; the second follows from BMO2, since
+records that agree produce one list and a single list cannot order a pair
+two ways.
+
+**BMO6 is what closes Validity and Agreement at the level of events.**
+BMO5 says *some* block of a flushed author-and-round is output; for a
+correct author there is no twin for the filter to prefer, so it is that
+block. With BMO9 — a reliable author's block reaches an anchor two rounds
+up, by BML3, and is therefore flushed — Definition 1's Validity holds for
+reliable authors as an `ab-deliver` statement rather than a membership
+one.
+
+**What is *not* closed, and a correction.** §10 said the remaining
+distance to Definition 1's Agreement was the filter, and implied that
+Lemma 11 and Validity were compositions of results already in hand. That
+was too optimistic. The filter is closed for correct authors (BMO6), but
+for an **equivocator** the twin that is output depends on the
+segmentation, and two validators' records can differ at a round where
+neither committed directly: the descent from a higher anchor picks the
+round-`ρ` anchor its own chain reaches, and nothing forces that to be the
+anchor another validator committed directly at `ρ`. BMO8 rules the
+divergence out wherever the two descents meet at a common block; what is
+not established is that they always do. The paper asserts the missing
+step twice — Lemma 11's "by construction of the delivery function, party
+`j` must have also committed `B`", and Theorem 12's Agreement clause
+"therefore party `j` eventually ab-delivers(B, j, r)" — without argument.
+
+Realising the divergence would need equivocating anchors at two adjacent
+rounds and a round-`(ρ+2)` anchor that does not support the linking
+anchor, hence `f ≥ 2` and `n ≥ 7`. No witness is attempted here.
+
+The witness is the covered four-round model: identifiers run downward
+along references there, so sorting by identifier is a topological sort
+and `TopoSort` is not vacuous. The list it delivers is
+`[0, 1, 2, 3, 5, 4, 6, 7, 10, 8, 9, 11, 15]` — one sorted segment per
+anchor round, each anchor last in its own — settled by `decide`, with the
+round-3 blocks no committed anchor reaches absent from it.
+
+## 13. What is not covered
 
 **Lemma 10.** No counterpart, and none needed: BML5 makes the recurring
 run deterministic where the paper bounds an expectation.
@@ -521,15 +590,10 @@ message schedule.
 **Delivery completeness.** BML3 covers reliable authors. That *every*
 block reaches the ledger needs the weak-reference window of §4.3.
 
-**Integrity**, the third property of Definition 1. It rests on the
-delivered set `D`, which is not modelled. Validity is BML3 with BML4,
-Agreement is §10, and Total Order is §11 at the granularity of
-segments.
-
-**The deterministic sort.** `τ` orders each delivered segment. §11 gives
-Total Order at the granularity of segments — a block enters at exactly
-one round, and records that agree concur on which; the order *within* a
-segment needs `τ` modelled.
+**Agreement for an equivocator's twins** (§12). Definition 1's other
+three properties are Validity (BMO9), Integrity (BMO4) and Total order
+(BMO7); Agreement holds for correct authors' blocks and, for an
+equivocator's, wherever two descents meet (BMO8).
 
 **The deterministic tie-break as a rule.** L24's metric is transcribed
 (§11); "break ties deterministically" is read as `≤`-least under a

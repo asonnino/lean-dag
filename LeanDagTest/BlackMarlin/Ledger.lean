@@ -1,6 +1,7 @@
 import LeanDagTest.BlackMarlin.Agreement
 import LeanDag.BlackMarlin.Ledger.Proof
 import LeanDag.BlackMarlin.Descent.Proof
+import LeanDag.BlackMarlin.Order.Proof
 import Mathlib.Tactic.IntervalCases
 
 /-!
@@ -133,6 +134,47 @@ example : flushRecord Ufull 15 0 = flushRecord Ufull 5 0 :=
     (by decide) (by decide) (by decide) (by decide) (by omega)
 
 #print axioms LeanDag.BlackMarlin.Descent.holds
+
+
+/-! ## The delivered sequence
+
+Identifiers of this model run downward along references — a block of
+round `r` has id `4r + j` and references round `r − 1` — so sorting by
+identifier is a topological sort, and `TopoSort` is not vacuous. -/
+
+example : ∀ b : Fin 16, ∀ j ∈ (Ufull.block b).refs, j < b := by decide
+
+/-- The sort of the covered four-round model. -/
+def fullSort : TopoSort Ufull := TopoSort.ofFinOrder Ufull (by decide)
+
+/-- **The list a validator outputs.** One segment per anchor round, each
+sorted, each anchor last in its own segment: `[0]`, then `[1,2,3,5]`,
+then `[4,6,7,10]`, then `[8,9,11,15]`. -/
+example : deliverSeq Ufull fullFlush fullSort 4 =
+    [0, 1, 2, 3, 5, 4, 6, 7, 10, 8, 9, 11, 15] := by decide
+
+/-- Anti-vacuity: the round-3 blocks that no committed anchor reaches are
+not output. -/
+example : (12 : Fin 16) ∉ deliverSeq Ufull fullFlush fullSort 4 ∧
+    (13 : Fin 16) ∉ deliverSeq Ufull fullFlush fullSort 4 := by decide
+
+/-- **BMO4 on data**: no author-and-round appears twice. -/
+example : (deliverSeq Ufull fullFlush fullSort 4).Pairwise
+    (fun a b => key Ufull a ≠ key Ufull b) :=
+  ((Order.holds (Fin 4) (Fin 16) Unit Ufull).2.2.2.1 fullFlush fullSort 4).1
+
+/-- **BMO3 on data**: the list through round `2` is a prefix of the list
+through round `4`. -/
+example : deliverSeq Ufull fullFlush fullSort 2 <+: deliverSeq Ufull fullFlush fullSort 4 :=
+  (Order.holds (Fin 4) (Fin 16) Unit Ufull).2.2.1 fullFlush fullSort 2 4 (by omega)
+
+/-- **BMO6 on data**: validator `3`'s genesis block is output, by itself
+rather than by a twin — validator `3` is not Byzantine here. -/
+example : (3 : Fin 16) ∈ deliverSeq Ufull fullFlush fullSort 4 :=
+  (Order.holds (Fin 4) (Fin 16) Unit Ufull).2.2.2.2.2.1 fullFlush fullSort 4 3
+    (by decide) (by decide)
+
+#print axioms LeanDag.BlackMarlin.Order.holds
 
 #print axioms LeanDag.BlackMarlin.Ledger.holds
 

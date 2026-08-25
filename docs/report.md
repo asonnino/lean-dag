@@ -345,7 +345,10 @@ proof effort with no corresponding proof content.
    The descent is then computed rather than assumed, and since L24's
    tie-break reads only the candidate and its own cone, the record of a
    commit is a function of the block it starts from — which makes the
-   delivered order's agreement a consequence (§18.9).
+   delivered order's agreement a consequence (§18.9). With `τ` and the
+   per-author-and-round filter modelled, what a validator outputs is a
+   list, and Validity for reliable authors, Integrity and Total order
+   hold of it (§18.10).
 
 ### 1.4 Scope and non-goals
 
@@ -5446,7 +5449,7 @@ paper — the rule and every safety result stated about it (§18.2) — its
 liveness above the structural condition of §6, in place of §5.2's timing
 argument (§18.5), the round rule of L38–L41 and the responsiveness it
 yields (§18.6), Definition 1's Agreement (§18.7), and the order
-`commit`'s descent delivers in (§18.8, §18.9). It is the second arc under
+`commit`'s descent delivers in (§18.8–§18.10). It is the second arc under
 the statement/proof partition (§17.5), and
 `docs/black-marlin.md` is its design record.
 
@@ -5836,6 +5839,58 @@ On data, the computed record of the four-round model's round-3 anchor is
 its four anchors, by `decide`, and it is the record the hand-built flush
 of §18.8 carries.
 
+### 18.10 The delivered sequence, and what Definition 1 now has
+
+Definition 1 speaks about `ab-deliver` events — a list, not a set.
+§18.8 and §18.9 fixed the segment boundaries; this section models the
+sort `τ` of L26 and the filter of L27, so that what a validator outputs
+is a list.
+
+`TopoSort` asks of `τ` what the paper uses of it: that it is a function
+of the set, hence shared between validators, and that it respects
+causality. **BMO1** then checks the model against the algorithm — L26
+flushes `τ(past(B) \ 𝒟)` and L30 emits `B`, and since every block of
+`history U B` is reachable from `B`, a topological sort of
+`history U B \ 𝒟` puts `B` last of its own accord, so the two are one
+list.
+
+**BMO4** is Definition 1's Integrity: no author-and-round is output
+twice, which is a property of the filter alone. **BMO7** is its Total
+order, and follows from **BMO2** — records that agree produce one list,
+and a single list cannot order a pair two ways. **BMO3** says the list
+only extends, so nothing output is retracted or reordered.
+
+**BMO6** is what lifts the earlier results from membership to events:
+**BMO5** says some block of a flushed author-and-round is output, and for
+a *correct* author there is no twin for the filter to prefer, so it is
+that block. With **BMO9** — a reliable author's block reaches an anchor
+two rounds up by BML3 and is therefore flushed — Definition 1's Validity
+holds for reliable authors as a statement about `ab-deliver`.
+
+**What remains, and a correction.** §18.7 recorded the distance to
+Agreement as the filter, and suggested Lemma 11 and Validity were
+compositions of results already in hand. That was too optimistic. The
+filter is closed for correct authors, but for an **equivocator** the twin
+that is output depends on the segmentation, and two validators' records
+can differ at a round where neither committed directly: a descent from a
+higher anchor takes the round-`ρ` anchor its own chain reaches, and
+nothing forces that to be the anchor another validator committed at `ρ`.
+**BMO8** rules the divergence out wherever the two descents meet at a
+common block; that they always do is not established. The paper asserts
+the missing step twice — Lemma 11's "by construction of the delivery
+function, party `j` must have also committed `B`", and Theorem 12's
+Agreement clause "therefore party `j` eventually ab-delivers(B, j, r)" —
+in each case without argument. Realising the divergence would need
+equivocating anchors at two adjacent rounds and a round-`(ρ+2)` anchor
+that does not support the linking anchor, hence `f ≥ 2`; no witness is
+attempted.
+
+On data, identifiers of the four-round model run downward along
+references, so sorting by identifier is a topological sort and `TopoSort`
+is not vacuous. The list delivered there is
+`[0, 1, 2, 3, 5, 4, 6, 7, 10, 8, 9, 11, 15]`, one sorted segment per
+anchor round with each anchor last in its own, settled by `decide`.
+
 ## 19. Satisfiability
 
 Every structure carrying conditions is exhibited satisfiable by a concrete model
@@ -6041,7 +6096,8 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `BlackMarlin/Model/Round.lean` | the round rule of L38–L41, and the pacing structure it induces |
 | `BlackMarlin/Model/Ledger.lean` | the flush record of `commit`'s descent, and the ledger it defines |
 | `BlackMarlin/Model/Descent.lean` | `maxAnchor`, the tie-break of L24, and the record the descent computes |
-| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/`, `BlackMarlin/Descent/` | the six statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6, BME1–BME5) |
+| `BlackMarlin/Model/Order.lean` | the sort `τ`, the filter of L27, and the list a validator outputs |
+| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/`, `BlackMarlin/Descent/`, `BlackMarlin/Order/` | the seven statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6, BME1–BME5, BMO1–BMO9) |
 | `BlackMarlin/Helpers/` | the generated lemma layer |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
@@ -6512,13 +6568,13 @@ the consumption map of §4.8 and the support diagrams of §6.10 refer to
 results through them. The series are alphabetic by area: T and M for
 the safety core, L for liveness, V for the view-convergence family, CU
 for catch-up, RS for the reactive schedule, SS for safe skip, AL for adaptive
-leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, BM, BML, BMR, BMA, BMD and BME for Black Marlin, CQ for chain
+leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, BM, BML, BMR, BMA, BMD, BME and BMO for Black Marlin, CQ for chain
 quality, C, D,
 B and E for the denial-of-service arc, G for garbage collection, O for
 Odontoceti; P, N and R name clauses of the trust boundary rather than
 results. Labels resolving to witness models rather than library
 theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7, SS11, AL8, H9, H10) are
-excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7, BMA5, BMD7 and BME6. Appendix C displays every indexed
+excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7, BMA5, BMD7, BME6 and BMO10. Appendix C displays every indexed
 result in full.
 
 ### Safety
@@ -6781,6 +6837,16 @@ reused.
 | BME4 | the record below a visited block is that block's own record | `BlackMarlin.flushRecord_suffix` *(BlackMarlin/Helpers/Descent)* |
 | BME5 | two records reaching one block agree at every round below it | `BlackMarlin.flushRecord_agree` *(BlackMarlin/Helpers/Descent)* |
 | BME6 | the computed record on data, and its agreement | `flushRecord` witnesses *(LeanDagTest/BlackMarlin)* |
+| BMO1 | the anchor is last in its own segment | `BlackMarlin.idxOf_le_idxOf_anchor` *(BlackMarlin/Helpers/Order)* |
+| BMO2 | records that agree output the same list | `BlackMarlin.deliverSeq_agree` *(BlackMarlin/Helpers/Order)* |
+| BMO3 | and the list only extends | `BlackMarlin.deliverSeq_prefix` *(BlackMarlin/Helpers/Order)* |
+| BMO4 | no author-and-round is output twice | `BlackMarlin.deliverSeq_pairwise` *(BlackMarlin/Helpers/Order)* |
+| BMO5 | every author-and-round flushed is output | `BlackMarlin.deliverSeq_key_mem` *(BlackMarlin/Helpers/Order)* |
+| BMO6 | and for a correct author, by the block itself | `BlackMarlin.deliverSeq_of_correct` *(BlackMarlin/Helpers/Order)* |
+| BMO7 | records that agree cannot invert a pair | `BlackMarlin.Order.holds` *(BlackMarlin/Order/Proof)* |
+| BMO8 | two descents that meet output the same list | `BlackMarlin.Order.holds` *(BlackMarlin/Order/Proof)* |
+| BMO9 | a reliable author's block is output | `BlackMarlin.mem_ledgerSeq_of_mem_history` *(BlackMarlin/Helpers/Order)* |
+| BMO10 | a sort exists, and the sequence on data | `TopoSort.ofFinOrder`, `fullSort` witnesses *(LeanDagTest/BlackMarlin)* |
 
 **Integration** (§16):
 
@@ -12409,6 +12475,286 @@ def toFlush (U : BlockUniverse Validator BlockId Payload) (B : BlockId)
 
 **The record of `commit(B)` is a flush record.**
 
+#### `TopoSort`
+
+*structure, `BlackMarlin.Model.Order.lean`*
+
+```lean
+structure TopoSort (U : BlockUniverse Validator BlockId Payload) where
+  /-- The sorted list. -/
+  sort : Finset BlockId → List BlockId
+  /-- It holds exactly the set. -/
+  mem : ∀ s b, b ∈ sort s ↔ b ∈ s
+  /-- Without repetition. -/
+  nodup : ∀ s, (sort s).Nodup
+  /-- And in causal order: what a block reaches comes no later than it. -/
+  topo : ∀ s a b, a ∈ s → b ∈ s → Reaches U b a →
+    (sort s).idxOf a ≤ (sort s).idxOf b
+```
+
+**`τ`**: a deterministic topological sort of a set of blocks. A function of the set alone, so two validators sorting the same set produce the same list; and causally ordered, so a block never precedes what it reaches.
+
+#### `deliveredBelow`
+
+*def, `BlackMarlin.Model.Order.lean`*
+
+```lean
+def deliveredBelow (U : BlockUniverse Validator BlockId Payload) (f : Flush U) (ρ : ℕ) :
+    Finset BlockId :=
+  (Finset.range ρ).biUnion (fun σ =>
+    match f.block σ with
+    | none => ∅
+    | some L => history U L)
+```
+
+What a record has delivered below a round: the causal history of every anchor it flushed there — the paper's `𝒟` at that point.
+
+#### `segment`
+
+*def, `BlackMarlin.Model.Order.lean`*
+
+```lean
+def segment (U : BlockUniverse Validator BlockId Payload) (f : Flush U)
+    (τ : TopoSort U) (ρ : ℕ) : List BlockId :=
+  match f.block ρ with
+  | none => []
+  | some L => τ.sort (history U L \ deliveredBelow U f ρ)
+```
+
+The segment a record flushes at a round: what the anchor's cone adds, sorted. Empty where the record flushes nothing.
+
+#### `ledgerSeq`
+
+*def, `BlackMarlin.Model.Order.lean`*
+
+```lean
+def ledgerSeq (U : BlockUniverse Validator BlockId Payload) (f : Flush U)
+    (τ : TopoSort U) (n : ℕ) : List BlockId :=
+  (List.range n).flatMap (segment U f τ)
+```
+
+The blocks a record flushes through round `n`, in order.
+
+#### `key`
+
+*def, `BlackMarlin.Model.Order.lean`*
+
+```lean
+def key (U : BlockUniverse Validator BlockId Payload) (b : BlockId) : Validator × ℕ :=
+  ((U.block b).creator, (U.block b).round)
+```
+
+What L27 tests a block by: its author and its round.
+
+#### `filterFirstFrom`
+
+*def, `BlackMarlin.Model.Order.lean`*
+
+```lean
+def filterFirstFrom (U : BlockUniverse Validator BlockId Payload) :
+    List BlockId → Finset (Validator × ℕ) → List BlockId × Finset (Validator × ℕ)
+  | [], seen => ([], seen)
+  | (b :: bs), seen =>
+      if key U b ∈ seen then filterFirstFrom U bs seen
+      else
+        (b :: (filterFirstFrom U bs (insert (key U b) seen)).1,
+          (filterFirstFrom U bs (insert (key U b) seen)).2)
+```
+
+**The filter of L27**, threading the delivered set: the emitted list, and the keys it leaves behind.
+
+#### `deliverSeq`
+
+*def, `BlackMarlin.Model.Order.lean`*
+
+```lean
+def deliverSeq (U : BlockUniverse Validator BlockId Payload) (f : Flush U)
+    (τ : TopoSort U) (n : ℕ) : List BlockId :=
+  (filterFirstFrom U (ledgerSeq U f τ n) ∅).1
+```
+
+**What a validator outputs**: the flushed sequence with L27 applied. Definition 1 speaks about this list.
+
+#### `AnchorLast`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def AnchorLast (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f : Flush U) (τ : TopoSort U) (ρ : ℕ) (L b : BlockId),
+    f.block ρ = some L → b ∈ segment U f τ ρ →
+    (segment U f τ ρ).idxOf b ≤ (segment U f τ ρ).idxOf L
+```
+
+**BMO1, the anchor is last in its segment.**
+
+#### `SeqAgree`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def SeqAgree (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (τ : TopoSort U) (n : ℕ),
+    (∀ σ, σ < n → f₁.block σ = f₂.block σ) →
+    deliverSeq U f₁ τ n = deliverSeq U f₂ τ n
+```
+
+**BMO2, records that agree flush the same list.**
+
+#### `SeqPrefix`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def SeqPrefix (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f : Flush U) (τ : TopoSort U) (n m : ℕ), n ≤ m →
+    deliverSeq U f τ n <+: deliverSeq U f τ m
+```
+
+**BMO3, and the list only extends.** Nothing output is retracted, and nothing already output is reordered.
+
+#### `Integrity`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def Integrity (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f : Flush U) (τ : TopoSort U) (n : ℕ),
+    (deliverSeq U f τ n).Pairwise (fun a b => key U a ≠ key U b) ∧
+      ∀ b ∈ deliverSeq U f τ n, b ∈ U.ids
+```
+
+**BMO4, Definition 1's Integrity.** No author-and-round is output twice, and everything output is a block of the universe — which for a correct author is a block it produced, since blocks carry their creator.
+
+#### `KeyDelivered`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def KeyDelivered (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f : Flush U) (τ : TopoSort U) (n : ℕ) (b : BlockId),
+    b ∈ ledgerSeq U f τ n → ∃ c ∈ deliverSeq U f τ n, key U c = key U b
+```
+
+**BMO5, every author-and-round flushed is output.**
+
+#### `CorrectDelivered`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def CorrectDelivered (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f : Flush U) (τ : TopoSort U) (n : ℕ) (b : BlockId),
+    b ∈ ledgerSeq U f τ n → (U.block b).creator ∈ (Correct : Finset Validator) →
+    b ∈ deliverSeq U f τ n
+```
+
+**BMO6, and for a correct author, by the block itself.**
+
+#### `TotalOrder`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def TotalOrder (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (τ : TopoSort U) (n : ℕ) (a b : BlockId),
+    (∀ σ, σ < n → f₁.block σ = f₂.block σ) →
+    (deliverSeq U f₁ τ n).idxOf a < (deliverSeq U f₁ τ n).idxOf b →
+    ¬ ((deliverSeq U f₂ τ n).idxOf b < (deliverSeq U f₂ τ n).idxOf a)
+```
+
+**BMO7, Definition 1's Total order.**
+
+#### `DescentOrder`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def DescentOrder (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (τ : TopoSort U) (B₁ B₂ M : BlockId) (σ n : ℕ),
+    B₁ ∈ U.ids → B₂ ∈ U.ids →
+    f₁.block = flushRecord U B₁ → f₂.block = flushRecord U B₂ →
+    flushRecord U B₁ σ = some M → flushRecord U B₂ σ = some M →
+    n ≤ σ + 1 →
+    deliverSeq U f₁ τ n = deliverSeq U f₂ τ n
+```
+
+**BMO8, two descents that meet output the same list.** The composition of BME5 with BMO2: below a block both descents reached, their records coincide, so their lists do.
+
+#### `Validity`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def Validity (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f : Flush U) (τ : TopoSort U) (T : Finset Validator) (R ρ n : ℕ) (b L : BlockId),
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    SynchronisedOn U T R → R ≤ ρ → PopulatedOn U T (ρ + 1) →
+    b ∈ U.ids → (U.block b).round = ρ → (U.block b).creator ∈ T →
+    f.block (ρ + 2) = some L → ρ + 2 < n →
+    b ∈ deliverSeq U f τ n
+```
+
+**BMO9, Definition 1's Validity for reliable authors.** A block a reliable validator produced at round `ρ`, once coverage has taken hold, is output by any record that flushes an anchor at round `ρ + 2`.
+
+#### `Statement`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [LinearOrder BlockId] [Rotation Validator]
+    (U : BlockUniverse Validator BlockId Payload),
+    AnchorLast U ∧ SeqAgree U ∧ SeqPrefix U ∧ Integrity U ∧ KeyDelivered U ∧
+      CorrectDelivered U ∧ TotalOrder U ∧ DescentOrder U ∧ Validity U
+```
+
+The delivered sequence of the Black Marlin commit rule, over every fault configuration, rotation, block universe and topological sort the model admits.
+
+#### `TopoSort.ofIdOrder`
+
+*def, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+def TopoSort.ofIdOrder (W : BlockUniverse Validator Id Payload)
+    (h : ∀ b : Id, ∀ j ∈ (W.block b).refs, j < b) : TopoSort W where
+  sort s := s.sort (· ≤ ·)
+  mem _ _ := Finset.mem_sort _
+  nodup _ := Finset.sort_nodup _ _
+  topo s a b ha hb hr := by
+    refine idxOf_le_of_pairwise (Finset.pairwise_sort s _) (Finset.sort_nodup _ _)
+      ((Finset.mem_sort _).mpr ha) ((Finset.mem_sort _).mpr hb) ?_
+    clear ha hb
+    induction hr with
+    | refl => exact le_refl _
+    | tail _ hstep ihr => exact le_trans (le_of_lt (h _ _ hstep)) ihr
+```
+
+**Sorting by identifier is a topological sort**, when a block's references carry smaller identifiers — which is how ids are assigned in production order. This is what keeps `TopoSort` from being vacuous.
+
+#### `TopoSort.ofFinOrder`
+
+*def, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+def TopoSort.ofFinOrder {n : ℕ} (W : BlockUniverse Validator (Fin n) Payload)
+    (h : ∀ b : Fin n, ∀ j ∈ (W.block b).refs, j < b) : TopoSort W where
+  sort s := (List.finRange n).filter (fun x => decide (x ∈ s))
+  mem s b := by simp
+  nodup s := (List.nodup_finRange n).filter _
+  topo s a b ha hb hr := by
+    refine idxOf_le_of_pairwise
+      ((List.pairwise_le_finRange n).filter _) ((List.nodup_finRange n).filter _)
+      (by simp [ha]) (by simp [hb]) ?_
+    clear ha hb
+    induction hr with
+    | refl => exact le_refl _
+    | tail _ hstep ihr => exact le_trans (le_of_lt (h _ _ hstep)) ihr
+```
+
+**The same sort, in a form the kernel evaluates.** `Finset.sort` rests on a merge sort the kernel does not reduce, so a witness filters `List.finRange` instead: the same order, structurally computed, which is what lets a concrete model settle the delivered sequence by `decide`.
+
 ### Not otherwise grouped
 
 #### `SoundOn`
@@ -12445,7 +12791,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 500 theorems that either another module of the
+The 509 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -19041,6 +19387,104 @@ theorem flushRecord_agree {B₁ B₂ : BlockId} (h₁ : B₁ ∈ U.ids) (h₂ : 
 theorem holds : Statement
 ```
 
+#### `idxOf_le_idxOf_anchor`
+
+*theorem, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+theorem idxOf_le_idxOf_anchor {L b : BlockId} (hL : f.block ρ = some L)
+    (hb : b ∈ segment U f τ ρ) :
+    (segment U f τ ρ).idxOf b ≤ (segment U f τ ρ).idxOf L
+```
+
+**The anchor is last in its segment.** L26 flushes `past(B) \ 𝒟` and L30 then emits `B`; a topological sort of `history U B \ 𝒟` puts `B` last of its own accord, so the two are one list.
+
+#### `deliverSeq_agree`
+
+*theorem, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+theorem deliverSeq_agree (h : ∀ σ, σ < n → f₁.block σ = f₂.block σ) :
+    deliverSeq U f₁ τ n = deliverSeq U f₂ τ n
+```
+
+**Records that agree below a round output the same list.** Definition 1's Total order follows: neither can deliver two blocks in opposite orders, because there is one list.
+
+#### `deliverSeq_prefix`
+
+*theorem, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+theorem deliverSeq_prefix (h : n ≤ m) :
+    deliverSeq U f τ n <+: deliverSeq U f τ m
+```
+
+**And what is output is never retracted**: the list through a round is a prefix of the list through any later one.
+
+#### `deliverSeq_pairwise`
+
+*theorem, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+theorem deliverSeq_pairwise :
+    (deliverSeq U f τ n).Pairwise (fun a b => key U a ≠ key U b)
+```
+
+**Integrity.** No author-and-round is output twice.
+
+#### `deliverSeq_mem_ids`
+
+*theorem, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+theorem deliverSeq_mem_ids {b : BlockId} (hb : b ∈ deliverSeq U f τ n) : b ∈ U.ids
+```
+
+Everything output was flushed, hence is a block of the universe.
+
+#### `deliverSeq_key_mem`
+
+*theorem, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+theorem deliverSeq_key_mem {b : BlockId} (hb : b ∈ ledgerSeq U f τ n) :
+    ∃ c ∈ deliverSeq U f τ n, key U c = key U b
+```
+
+**Every author-and-round flushed is output**, by that block or by one of the same author and round.
+
+#### `deliverSeq_of_correct`
+
+*theorem, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+theorem deliverSeq_of_correct {b : BlockId} (hb : b ∈ ledgerSeq U f τ n)
+    (hc : (U.block b).creator ∈ (Correct : Finset Validator)) :
+    b ∈ deliverSeq U f τ n
+```
+
+**And for a correct author, by the block itself.** A correct validator has one block per round, so the filter of L27 has no twin to prefer.
+
+#### `mem_ledgerSeq_of_mem_history`
+
+*theorem, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+theorem mem_ledgerSeq_of_mem_history :
+    ∀ (ρ : ℕ) (L b : BlockId), f.block ρ = some L → b ∈ history U L → ρ < n →
+      b ∈ ledgerSeq U f τ n
+```
+
+**What a flushed anchor's cone holds is flushed**, at that round or at a lower one where it was first reached.
+
+#### `holds`
+
+*theorem, `BlackMarlin.Order.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
 ### Not otherwise grouped
 
 #### `waveRobin_fairRun`
@@ -19082,7 +19526,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 462 lemmas used only within the file that proves
+The 473 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -19930,6 +20374,22 @@ subsection per module, in the layer order of Appendices B and C.
 | `pick_isSome` | — |
 | `pick_mem` | — |
 | `strongOf_eq_empty_of_round_zero` | A round-`0` block reaches only itself. |
+
+### `BlackMarlin/Helpers/Order.lean` (11)
+
+| Lemma | Role |
+|:---|:---|
+| `filterFirstFrom_append` | — |
+| `filterFirstFrom_key_mem` | Every key of the flushed sequence is emitted, by that block or by one of the same author and round. |
+| `filterFirstFrom_key_notMem` | An emitted block's key was not already delivered. |
+| `filterFirstFrom_pairwise` | Integrity. No author-and-round is emitted twice. |
+| `filterFirstFrom_subset` | Emitted blocks are blocks of the flushed sequence. |
+| `idxOf_le_of_pairwise` | — |
+| `ledgerSeq_agree` | Records that agree below a round flush the same sequence. |
+| `ledgerSeq_prefix` | And the sequence only extends. |
+| `mem_ledgerSeq_mem_ids` | Everything flushed is a block of the universe. |
+| `notMem_deliveredBelow` | — |
+| `segment_congr` | Records that agree below a round flush the same segments there. |
 
 ### `Network/Quorum.lean` (2)
 

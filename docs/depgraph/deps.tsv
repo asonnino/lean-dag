@@ -156,6 +156,10 @@ EDGE	LeanDag.ViewPace.decided_of_local	LeanDag.ViewPace
 EDGE	LeanDag.ViewPace.decided_of_local	LeanDag.Slots
 EDGE	LeanDag.ViewPace.decided_of_local	LeanDag.PaceCore.delay
 NODE	LeanDag.mem_viewUpto._proof_1_1	LeanDag.GC.Window	thm
+NODE	LeanDag.BlackMarlin.TopoSort.ctorIdx	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.TopoSort.ctorIdx	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.ctorIdx	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.ctorIdx	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.creators	LeanDag.Block	def
 EDGE	LeanDag.creators	LeanDag.Block
 EDGE	LeanDag.creators	LeanDag.creatorsOf
@@ -666,6 +670,10 @@ EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5	LeanDag.Honest
 EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5	LeanDag.HybridFaults.fb
 EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_5	LeanDag.HybridFaults.byzantine
 NODE	LeanDag.Integration.regenesis_converges._proof_1_1	LeanDag.Integration.ReGenesis	thm
+NODE	LeanDag.BlackMarlin.TopoSort.sort	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.TopoSort.sort	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.sort	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.sort	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds._proof_1_9	LeanDag.BlackMarlin.Helpers.Reactive	thm
 EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds._proof_1_9	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds._proof_1_9	LeanDag.Faults.f
@@ -687,6 +695,11 @@ EDGE	LeanDag.exposedIn_of_exposedIn_chop._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.exposedIn_of_exposedIn_chop._proof_1_1	LeanDag.history
 EDGE	LeanDag.exposedIn_of_exposedIn_chop._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.exposedIn_of_exposedIn_chop._proof_1_1	LeanDag.BlockUniverse
+NODE	LeanDag.BlackMarlin.TopoSort.mem	LeanDag.BlackMarlin.Model.Order	thm
+EDGE	LeanDag.BlackMarlin.TopoSort.mem	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.mem	LeanDag.BlackMarlin.TopoSort.sort
+EDGE	LeanDag.BlackMarlin.TopoSort.mem	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.mem	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.Integration.reaches_addGenesis	LeanDag.Integration.ReGenesis	thm
 EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.Block
 EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.Integration.addGenesis_block_old
@@ -1251,6 +1264,18 @@ EDGE	LeanDag.Integration.regenesis_converges	LeanDag.BlockUniverse.block
 EDGE	LeanDag.Integration.regenesis_converges	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.regenesis_converges	LeanDag.chop_chop
 EDGE	LeanDag.Integration.regenesis_converges	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.TopoSort.ofIdOrder	LeanDag.BlackMarlin.Helpers.Order	def
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_2
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_4
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_5
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder	LeanDag.Block.refs
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_1
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_3
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder	LeanDag.BlackMarlin.TopoSort.mk
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDagTest.gapHolds	LeanDagTest.Unbounded	def
 NODE	LeanDag.MahiMahi.Decided.recOn	LeanDag.MahiMahi.Model.Decision	def
 EDGE	LeanDag.MahiMahi.Decided.recOn	LeanDag.MahiMahi.DirectSkipIn
@@ -1601,6 +1626,11 @@ EDGE	LeanDag.BlackMarlin.Linked	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Linked	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.Linked	LeanDag.BlackMarlin.linkers
 EDGE	LeanDag.BlackMarlin.Linked	LeanDag.BlackMarlin.Rotation
+NODE	LeanDag.BlackMarlin.filterFirstFrom._f	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.filterFirstFrom._f	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.filterFirstFrom._f	LeanDag.BlackMarlin.filterFirstFrom.match_1
+EDGE	LeanDag.BlackMarlin.filterFirstFrom._f	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.filterFirstFrom._f	LeanDag.BlackMarlin.key
 NODE	LeanDag.ExposedIn.mono	LeanDag.DoS.Exposure	thm
 EDGE	LeanDag.ExposedIn.mono	LeanDag.Faults
 EDGE	LeanDag.ExposedIn.mono	LeanDag.history_subset_of_reaches
@@ -2189,6 +2219,12 @@ EDGE	LeanDagTest.ustarvePace._proof_8	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ustarvePace._proof_8	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ustarvePace._proof_8	LeanDag.Block.creator
 NODE	LeanDagTest.ucrashJump._proof_1	LeanDagTest.SafeSkip	thm
+NODE	LeanDag.BlackMarlin.filterFirstFrom_subset	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_subset	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_subset	LeanDag.BlackMarlin.filterFirstFrom
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_subset	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_subset	LeanDag.BlackMarlin.filterFirstFrom.eq_2
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_subset	LeanDag.BlackMarlin.key
 NODE	LeanDag.dosValid_refs_of_correctBlocksAt	LeanDag.DoS.Exclusion	thm
 EDGE	LeanDag.dosValid_refs_of_correctBlocksAt	LeanDag.mem_exposedTo
 EDGE	LeanDag.dosValid_refs_of_correctBlocksAt	LeanDag.Faults
@@ -2514,6 +2550,12 @@ EDGE	LeanDag.Hybrid.not_directSkip_of_directCommit._proof_1_1	LeanDag.HybridFaul
 EDGE	LeanDag.Hybrid.not_directSkip_of_directCommit._proof_1_1	LeanDag.blames
 EDGE	LeanDag.Hybrid.not_directSkip_of_directCommit._proof_1_1	LeanDag.HybridFaults.byzantine
 NODE	LeanDagTest.BlackMarlin.ugrowBM._proof_9	LeanDagTest.BlackMarlin.Reactive	thm
+NODE	LeanDag.BlackMarlin.TopoSort.noConfusionType	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.TopoSort.noConfusionType	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.noConfusionType	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.noConfusionType	LeanDag.BlackMarlin.TopoSort.casesOn
+EDGE	LeanDag.BlackMarlin.TopoSort.noConfusionType	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.TopoSort.noConfusionType	LeanDag.Reaches
 NODE	LeanDag.mem_honest._simp_1	LeanDag.Hybrid.Faults	thm
 EDGE	LeanDag.mem_honest._simp_1	LeanDag.HybridFaults
 EDGE	LeanDag.mem_honest._simp_1	LeanDag.Honest
@@ -2946,6 +2988,19 @@ EDGE	LeanDag.mem_historyUpto_succ	LeanDag.mem_historyUptoFrom_succ
 EDGE	LeanDag.mem_historyUpto_succ	LeanDag.Block.refs
 EDGE	LeanDag.mem_historyUpto_succ	LeanDag.BlockUniverse.block
 EDGE	LeanDag.mem_historyUpto_succ	LeanDag.BlockUniverse
+NODE	LeanDag.BlackMarlin.Order.Statement	LeanDag.BlackMarlin.Order.Statement	def
+EDGE	LeanDag.BlackMarlin.Order.Statement	LeanDag.BlackMarlin.Order.DescentOrder
+EDGE	LeanDag.BlackMarlin.Order.Statement	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Order.Statement	LeanDag.BlackMarlin.Order.SeqPrefix
+EDGE	LeanDag.BlackMarlin.Order.Statement	LeanDag.BlackMarlin.Order.SeqAgree
+EDGE	LeanDag.BlackMarlin.Order.Statement	LeanDag.BlackMarlin.Order.TotalOrder
+EDGE	LeanDag.BlackMarlin.Order.Statement	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Order.Statement	LeanDag.BlackMarlin.Order.AnchorLast
+EDGE	LeanDag.BlackMarlin.Order.Statement	LeanDag.BlackMarlin.Order.Integrity
+EDGE	LeanDag.BlackMarlin.Order.Statement	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Order.Statement	LeanDag.BlackMarlin.Order.Validity
+EDGE	LeanDag.BlackMarlin.Order.Statement	LeanDag.BlackMarlin.Order.CorrectDelivered
+EDGE	LeanDag.BlackMarlin.Order.Statement	LeanDag.BlackMarlin.Order.KeyDelivered
 NODE	LeanDagTest.ugrowReactive._proof_50	LeanDagTest.Reactive	thm
 EDGE	LeanDagTest.ugrowReactive._proof_50	LeanDagTest.ugrowReactive._proof_21
 NODE	LeanDagTest.nemoFaults	LeanDagTest.Nemo	def
@@ -3406,6 +3461,13 @@ NODE	LeanDag.Slots.uniformSingle	LeanDag.Schedule	def
 EDGE	LeanDag.Slots.uniformSingle	LeanDag.Slots.uniform
 EDGE	LeanDag.Slots.uniformSingle	LeanDag.Slots.one_hblock
 EDGE	LeanDag.Slots.uniformSingle	LeanDag.Slots
+NODE	LeanDag.BlackMarlin.TopoSort.recOn	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.TopoSort.recOn	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.recOn	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.recOn	LeanDag.BlackMarlin.TopoSort.rec
+EDGE	LeanDag.BlackMarlin.TopoSort.recOn	LeanDag.BlackMarlin.TopoSort.mk
+EDGE	LeanDag.BlackMarlin.TopoSort.recOn	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.TopoSort.recOn	LeanDag.Reaches
 NODE	LeanDag.Integration.recoveryMsg._proof_1	LeanDag.Integration.ReGenesis	thm
 EDGE	LeanDag.Integration.recoveryMsg._proof_1	LeanDag.Faults
 EDGE	LeanDag.Integration.recoveryMsg._proof_1	LeanDag.Integration.addGenesis
@@ -4975,6 +5037,11 @@ EDGE	LeanDag.Hybrid.instDecidableDirectCommit._aux_1	LeanDag.Hybrid.DirectCommit
 EDGE	LeanDag.Hybrid.instDecidableDirectCommit._aux_1	LeanDag.BlockUniverse
 EDGE	LeanDag.Hybrid.instDecidableDirectCommit._aux_1	LeanDag.Hybrid.q
 EDGE	LeanDag.Hybrid.instDecidableDirectCommit._aux_1	LeanDag.supporters
+NODE	LeanDag.BlackMarlin.filterFirstFrom.eq_2	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.filterFirstFrom.eq_2	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.filterFirstFrom.eq_2	LeanDag.BlackMarlin.filterFirstFrom
+EDGE	LeanDag.BlackMarlin.filterFirstFrom.eq_2	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.filterFirstFrom.eq_2	LeanDag.BlackMarlin.key
 NODE	LeanDagTest.ugrowSkewPace_commits_local	LeanDagTest.ViewPace	thm
 EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDag.ViewPace.toPaceCore
 EDGE	LeanDagTest.ugrowSkewPace_commits_local	LeanDag.PaceCore.viewAt
@@ -5215,6 +5282,13 @@ NODE	LeanDag.ReachesFrom.trans	LeanDag.Causality	thm
 EDGE	LeanDag.ReachesFrom.trans	LeanDag.Block
 EDGE	LeanDag.ReachesFrom.trans	LeanDag.RefStepFrom
 EDGE	LeanDag.ReachesFrom.trans	LeanDag.ReachesFrom
+NODE	LeanDag.BlackMarlin.TopoSort.mk.sizeOf_spec	LeanDag.BlackMarlin.Model.Order	thm
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.sizeOf_spec	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.sizeOf_spec	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.sizeOf_spec	LeanDag.BlackMarlin.TopoSort.mk
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.sizeOf_spec	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.sizeOf_spec	LeanDag.BlackMarlin.TopoSort._sizeOf_inst
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.sizeOf_spec	LeanDag.Reaches
 NODE	LeanDag.historyUptoFrom	LeanDag.Causality	def
 EDGE	LeanDag.historyUptoFrom	LeanDag.Block
 EDGE	LeanDag.historyUptoFrom	LeanDag.historyUptoFrom._f
@@ -5233,6 +5307,7 @@ EDGE	LeanDag.adaptiveRun_exists._proof_1_3	LeanDag.Faults.f
 EDGE	LeanDag.adaptiveRun_exists._proof_1_3	LeanDag.AdaptivePolicy
 EDGE	LeanDag.adaptiveRun_exists._proof_1_3	LeanDag.Slots
 NODE	LeanDag.termQuorumCard_	LeanDag.Validators	def
+NODE	LeanDag.BlackMarlin.segment_congr._simp_1_1	LeanDag.BlackMarlin.Helpers.Order	thm
 NODE	LeanDagTest.mmSlots._proof_4	LeanDagTest.MahiMahi.Model	thm
 EDGE	LeanDagTest.mmSlots._proof_4	LeanDagTest.mmSlots._proof_2
 NODE	LeanDag.MahiMahi.instDecidableDirectCommitIn._aux_1	LeanDag.MahiMahi.Model.Decision	def
@@ -6042,6 +6117,50 @@ EDGE	LeanDag.PedigreeVia.below	LeanDag.Faults
 EDGE	LeanDag.PedigreeVia.below	LeanDag.PedigreeVia
 EDGE	LeanDag.PedigreeVia.below	LeanDag.BlockUniverse
 NODE	LeanDag.BlackMarlin.block_eq_of_add._proof_1_2	LeanDag.BlackMarlin.Helpers.Ledger	thm
+NODE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Order.Proof	thm
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.deliverSeq
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.deliverSeq_mem_ids
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Order.DescentOrder
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.deliverSeq_pairwise
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.deliverSeq_prefix
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Order.SeqPrefix
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Order.SeqAgree
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.deliverSeq_agree
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.segment
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Order.holds._proof_1_1
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.deliverSeq_of_correct
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Order.Statement
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.deliverSeq_key_mem
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.Correct
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Order.TotalOrder
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.PopulatedOn
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Rotation.anchor
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.flushRecord
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Order.AnchorLast
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Order.holds._proof_1_2
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.ledgerSeq
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Order.Integrity
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.flushRecord_agree
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Flush.isAnchor
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Order.Validity
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.mem_history_of_mem
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.SynchronisedOn
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.key
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Order.CorrectDelivered
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.Block.creator
+EDGE	LeanDag.BlackMarlin.Order.holds	LeanDag.BlackMarlin.Order.KeyDelivered
 NODE	LeanDag.Faults.casesOn	LeanDag.Validators	def
 EDGE	LeanDag.Faults.casesOn	LeanDag.Faults
 EDGE	LeanDag.Faults.casesOn	LeanDag.Faults.rec
@@ -6289,6 +6408,10 @@ EDGE	LeanDagTest.Ucens	LeanDag.BlockUniverse
 EDGE	LeanDagTest.Ucens	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.Ucens	LeanDagTest.Ucens._proof_1
 NODE	LeanDagTest.ugapPace._simp_1	LeanDagTest.Unbounded	thm
+NODE	LeanDag.BlackMarlin.filterFirstFrom	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.filterFirstFrom	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.filterFirstFrom	LeanDag.BlackMarlin.filterFirstFrom._f
+EDGE	LeanDag.BlackMarlin.filterFirstFrom	LeanDag.BlockUniverse
 NODE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_12	LeanDag.BlackMarlin.Helpers.Agreement	thm
 EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_12	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_12	LeanDag.PaceCore.gst
@@ -6949,6 +7072,14 @@ EDGE	LeanDag.BlackMarlin.Agreement.Statement	LeanDag.BlackMarlin.Agreement.Monot
 NODE	LeanDag.Hybrid.decisionRound	LeanDag.Hybrid.Decision	def
 EDGE	LeanDag.Hybrid.decisionRound	LeanDag.Slots.slotRound
 EDGE	LeanDag.Hybrid.decisionRound	LeanDag.Slots
+NODE	LeanDag.BlackMarlin.Order.TotalOrder	LeanDag.BlackMarlin.Order.Statement	def
+EDGE	LeanDag.BlackMarlin.Order.TotalOrder	LeanDag.BlackMarlin.deliverSeq
+EDGE	LeanDag.BlackMarlin.Order.TotalOrder	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Order.TotalOrder	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.Order.TotalOrder	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Order.TotalOrder	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.Order.TotalOrder	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Order.TotalOrder	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDagTest.u7_decidedWithin_slot0._proof_1_3	LeanDagTest.Adaptive	thm
 NODE	LeanDag.reaches_of_mem_historyUptoFrom	LeanDag.Causality	thm
 EDGE	LeanDag.reaches_of_mem_historyUptoFrom	LeanDag.Block
@@ -7184,6 +7315,16 @@ EDGE	LeanDag.PedigreeTo.brecOn	LeanDag.AdoptedUnder
 EDGE	LeanDag.PedigreeTo.brecOn	LeanDag.PedigreeTo.below.base
 EDGE	LeanDag.PedigreeTo.brecOn	LeanDag.PedigreeTo.below.step
 EDGE	LeanDag.PedigreeTo.brecOn	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.TopoSort.ofFinOrder	LeanDag.BlackMarlin.Helpers.Order	def
+EDGE	LeanDag.BlackMarlin.TopoSort.ofFinOrder	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.ofFinOrder	LeanDag.BlackMarlin.TopoSort.ofFinOrder._proof_2
+EDGE	LeanDag.BlackMarlin.TopoSort.ofFinOrder	LeanDag.BlackMarlin.TopoSort.ofFinOrder._proof_1
+EDGE	LeanDag.BlackMarlin.TopoSort.ofFinOrder	LeanDag.Block.refs
+EDGE	LeanDag.BlackMarlin.TopoSort.ofFinOrder	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.TopoSort.ofFinOrder	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.ofFinOrder	LeanDag.BlackMarlin.TopoSort.ofFinOrder._proof_3
+EDGE	LeanDag.BlackMarlin.TopoSort.ofFinOrder	LeanDag.BlackMarlin.TopoSort.mk
+EDGE	LeanDag.BlackMarlin.TopoSort.ofFinOrder	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.exists_child_of_mem_history_of_creator_eq._proof_1_2	LeanDag.DoS.Pedigree	thm
 EDGE	LeanDag.exists_child_of_mem_history_of_creator_eq._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.exists_child_of_mem_history_of_creator_eq._proof_1_2	LeanDag.BlockUniverse.block
@@ -8665,6 +8806,14 @@ EDGE	LeanDag.BlackMarlin.Pace.gst_le_built	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.Pace.gst_le_built	LeanDag.Faults.f
 EDGE	LeanDag.BlackMarlin.Pace.gst_le_built	LeanDag.BlackMarlin.Pace.toPaceCore
 EDGE	LeanDag.BlackMarlin.Pace.gst_le_built	LeanDag.BlackMarlin.Rotation
+NODE	LeanDag.BlackMarlin.deliverSeq	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.deliverSeq	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.deliverSeq	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.deliverSeq	LeanDag.BlackMarlin.filterFirstFrom
+EDGE	LeanDag.BlackMarlin.deliverSeq	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.deliverSeq	LeanDag.BlackMarlin.ledgerSeq
+EDGE	LeanDag.BlackMarlin.deliverSeq	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.deliverSeq	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.Nemo.Reaches.single	LeanDag.Nemo.CausalHistory	thm
 EDGE	LeanDag.Nemo.Reaches.single	LeanDag.ReachesFrom.single
 EDGE	LeanDag.Nemo.Reaches.single	LeanDag.Nemo.Universe
@@ -8900,6 +9049,17 @@ EDGE	LeanDag.epoch_closes._proof_1_5	LeanDag.Slots.slotRound
 EDGE	LeanDag.epoch_closes._proof_1_5	LeanDag.Faults.f
 EDGE	LeanDag.epoch_closes._proof_1_5	LeanDag.AdaptivePolicy
 EDGE	LeanDag.epoch_closes._proof_1_5	LeanDag.Slots
+NODE	LeanDag.BlackMarlin.deliverSeq_mem_ids	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.deliverSeq_mem_ids	LeanDag.BlackMarlin.deliverSeq
+EDGE	LeanDag.BlackMarlin.deliverSeq_mem_ids	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.deliverSeq_mem_ids	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.deliverSeq_mem_ids	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.BlackMarlin.deliverSeq_mem_ids	LeanDag.BlackMarlin.filterFirstFrom_subset
+EDGE	LeanDag.BlackMarlin.deliverSeq_mem_ids	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.deliverSeq_mem_ids	LeanDag.BlackMarlin.ledgerSeq
+EDGE	LeanDag.BlackMarlin.deliverSeq_mem_ids	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.deliverSeq_mem_ids	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids
+EDGE	LeanDag.BlackMarlin.deliverSeq_mem_ids	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.MahiMahi.goodAt	LeanDag.MahiMahi.Model.Good	def
 EDGE	LeanDag.MahiMahi.goodAt	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.goodAt	LeanDag.MahiMahi.DirectCommit
@@ -9421,6 +9581,14 @@ EDGE	LeanDag.decidableEquivPair	LeanDag.decidableEquivPair._aux_1
 EDGE	LeanDag.decidableEquivPair	LeanDag.Faults
 EDGE	LeanDag.decidableEquivPair	LeanDag.EquivPair
 EDGE	LeanDag.decidableEquivPair	LeanDag.BlockUniverse
+NODE	LeanDag.BlackMarlin.filterFirstFrom.eq_def	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.filterFirstFrom.eq_def	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.filterFirstFrom.eq_def	LeanDag.BlackMarlin.filterFirstFrom.match_1
+EDGE	LeanDag.BlackMarlin.filterFirstFrom.eq_def	LeanDag.BlackMarlin.filterFirstFrom.match_1.splitter
+EDGE	LeanDag.BlackMarlin.filterFirstFrom.eq_def	LeanDag.BlackMarlin.filterFirstFrom
+EDGE	LeanDag.BlackMarlin.filterFirstFrom.eq_def	LeanDag.BlackMarlin.filterFirstFrom._f
+EDGE	LeanDag.BlackMarlin.filterFirstFrom.eq_def	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.filterFirstFrom.eq_def	LeanDag.BlackMarlin.key
 NODE	LeanDag.JumpMsg.ctorIdx	LeanDag.SafeSkip.Jump	def
 EDGE	LeanDag.JumpMsg.ctorIdx	LeanDag.Faults
 EDGE	LeanDag.JumpMsg.ctorIdx	LeanDag.JumpMsg
@@ -10286,6 +10454,16 @@ EDGE	LeanDag.bootstrap_agree	LeanDag.Slots.chop
 EDGE	LeanDag.bootstrap_agree	LeanDag.Slots
 EDGE	LeanDag.bootstrap_agree	LeanDag.View
 EDGE	LeanDag.bootstrap_agree	LeanDag.Synchronised
+NODE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_5	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_5	LeanDag.RefStepFrom
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_5	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_5	LeanDag.BlackMarlin.idxOf_le_of_pairwise
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_5	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_2
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_5	LeanDag.Block.refs
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_5	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_1
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_5	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_5	LeanDag.Reaches
 NODE	LeanDag.BlackMarlin.Rotation.recOn	LeanDag.BlackMarlin.Model.Rules	def
 EDGE	LeanDag.BlackMarlin.Rotation.recOn	LeanDag.BlackMarlin.Rotation.mk
 EDGE	LeanDag.BlackMarlin.Rotation.recOn	LeanDag.BlackMarlin.Rotation.rec
@@ -10354,6 +10532,13 @@ EDGE	LeanDag.BlackMarlin.Pace.ctorIdx	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Pace.ctorIdx	LeanDag.BlackMarlin.Pace
 EDGE	LeanDag.BlackMarlin.Pace.ctorIdx	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.Pace.ctorIdx	LeanDag.BlackMarlin.Rotation
+NODE	LeanDag.BlackMarlin.Order.SeqPrefix	LeanDag.BlackMarlin.Order.Statement	def
+EDGE	LeanDag.BlackMarlin.Order.SeqPrefix	LeanDag.BlackMarlin.deliverSeq
+EDGE	LeanDag.BlackMarlin.Order.SeqPrefix	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Order.SeqPrefix	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.Order.SeqPrefix	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Order.SeqPrefix	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Order.SeqPrefix	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.Block.noConfusion	LeanDag.Block	def
 EDGE	LeanDag.Block.noConfusion	LeanDag.Block
 EDGE	LeanDag.Block.noConfusion	LeanDag.Block.casesOn
@@ -10604,6 +10789,13 @@ EDGE	LeanDagTest.unemo_round_le	LeanDagTest.Unemo
 EDGE	LeanDagTest.unemo_round_le	LeanDag.Nemo.Universe.block
 EDGE	LeanDagTest.unemo_round_le	LeanDag.Block.round
 NODE	LeanDagTest.dtwin_uniform._proof_1_3	LeanDagTest.DoS.Novelty	thm
+NODE	LeanDag.BlackMarlin.TopoSort.casesOn	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.TopoSort.casesOn	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.casesOn	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.casesOn	LeanDag.BlackMarlin.TopoSort.rec
+EDGE	LeanDag.BlackMarlin.TopoSort.casesOn	LeanDag.BlackMarlin.TopoSort.mk
+EDGE	LeanDag.BlackMarlin.TopoSort.casesOn	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.TopoSort.casesOn	LeanDag.Reaches
 NODE	LeanDag.mem_correctBlocksAt	LeanDag.CommonCore	thm
 EDGE	LeanDag.mem_correctBlocksAt	LeanDag.Faults
 EDGE	LeanDag.mem_correctBlocksAt	LeanDag.Faults.byzantine
@@ -10994,6 +11186,14 @@ EDGE	LeanDagTest.u7_decidedWithin_slot0	LeanDag.Reaches.single
 EDGE	LeanDagTest.u7_decidedWithin_slot0	LeanDag.certificates
 EDGE	LeanDagTest.u7_decidedWithin_slot0	LeanDag.DecidedWithin.indirectCommit
 EDGE	LeanDagTest.u7_decidedWithin_slot0	LeanDag.Reaches
+NODE	LeanDag.BlackMarlin.ledgerSeq.eq_1	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.ledgerSeq.eq_1	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.ledgerSeq.eq_1	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.ledgerSeq.eq_1	LeanDag.BlackMarlin.segment
+EDGE	LeanDag.BlackMarlin.ledgerSeq.eq_1	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.ledgerSeq.eq_1	LeanDag.BlackMarlin.ledgerSeq
+EDGE	LeanDag.BlackMarlin.ledgerSeq.eq_1	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.ledgerSeq.eq_1	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDagTest.ustarvePace._proof_25	LeanDagTest.Unbounded	thm
 EDGE	LeanDagTest.ustarvePace._proof_25	LeanDagTest.ugapPace._simp_7
 EDGE	LeanDagTest.ustarvePace._proof_25	LeanDagTest.ustarvePace._proof_4
@@ -11045,6 +11245,28 @@ EDGE	LeanDag.Odontoceti.eligible_iff	LeanDag.Slots.slotRound
 EDGE	LeanDag.Odontoceti.eligible_iff	LeanDag.Odontoceti.eligible_iff._proof_1_3
 EDGE	LeanDag.Odontoceti.eligible_iff	LeanDag.Odontoceti.Eligible
 EDGE	LeanDag.Odontoceti.eligible_iff	LeanDag.Slots
+NODE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.BlackMarlin.deliveredBelow
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.BlackMarlin.segment
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.BlackMarlin.deliveredBelow.match_1
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.BlackMarlin.TopoSort.sort
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.BlackMarlin.TopoSort.mem
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.history
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.BlackMarlin.ledgerSeq.eq_1
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.BlackMarlin.Rotation.anchor
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.BlackMarlin.ledgerSeq
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.history_subset_ids
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.BlackMarlin.Flush.isAnchor
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids	LeanDag.Block.creator
 NODE	LeanDag.SkipMsg.noConfusionType	LeanDag.SafeSkip.Basic	def
 EDGE	LeanDag.SkipMsg.noConfusionType	LeanDag.Faults
 EDGE	LeanDag.SkipMsg.noConfusionType	LeanDag.BlockUniverse.ids
@@ -11728,6 +11950,14 @@ EDGE	LeanDag.Odontoceti.AdaptiveRun.casesOn	LeanDag.View
 EDGE	LeanDag.Odontoceti.AdaptiveRun.casesOn	LeanDag.Faults5.toFaults
 EDGE	LeanDag.Odontoceti.AdaptiveRun.casesOn	LeanDag.Odontoceti.DecidedWithin
 EDGE	LeanDag.Odontoceti.AdaptiveRun.casesOn	LeanDag.AdaptivePolicy.inj
+NODE	LeanDag.BlackMarlin.Order.AnchorLast	LeanDag.BlackMarlin.Order.Statement	def
+EDGE	LeanDag.BlackMarlin.Order.AnchorLast	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Order.AnchorLast	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.Order.AnchorLast	LeanDag.BlackMarlin.segment
+EDGE	LeanDag.BlackMarlin.Order.AnchorLast	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Order.AnchorLast	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.Order.AnchorLast	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Order.AnchorLast	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.PopulatedFrom.mono	LeanDag.Participation	thm
 EDGE	LeanDag.PopulatedFrom.mono	LeanDag.Block
 EDGE	LeanDag.PopulatedFrom.mono	LeanDag.PopulatedFrom
@@ -11814,6 +12044,17 @@ EDGE	LeanDag.BlackMarlin.Ledger.CorrectAnchorUnique	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.Ledger.CorrectAnchorUnique	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.Ledger.CorrectAnchorUnique	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.Ledger.CorrectAnchorUnique	LeanDag.BlackMarlin.coneAnchors
+NODE	LeanDag.BlackMarlin.deliverSeq_key_mem	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.deliverSeq_key_mem	LeanDag.BlackMarlin.deliverSeq
+EDGE	LeanDag.BlackMarlin.deliverSeq_key_mem	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.deliverSeq_key_mem	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.deliverSeq_key_mem	LeanDag.BlackMarlin.filterFirstFrom
+EDGE	LeanDag.BlackMarlin.deliverSeq_key_mem	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.deliverSeq_key_mem	LeanDag.BlackMarlin.ledgerSeq
+EDGE	LeanDag.BlackMarlin.deliverSeq_key_mem	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.deliverSeq_key_mem	LeanDag.BlackMarlin.key
+EDGE	LeanDag.BlackMarlin.deliverSeq_key_mem	LeanDag.BlackMarlin.filterFirstFrom_key_mem
+EDGE	LeanDag.BlackMarlin.deliverSeq_key_mem	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDagTest.ugrowCatchPace._proof_14	LeanDagTest.Catchup	thm
 EDGE	LeanDagTest.ugrowCatchPace._proof_14	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowCatchPace._proof_14	LeanDag.BlockUniverse.block
@@ -12863,6 +13104,9 @@ EDGE	LeanDag.MahiMahi.allDecidedBelow	LeanDag.MahiMahi.allDecidedBelow._proof_1_
 EDGE	LeanDag.MahiMahi.allDecidedBelow	LeanDag.IsLeaderBlock
 EDGE	LeanDag.MahiMahi.allDecidedBelow	LeanDag.Slots
 EDGE	LeanDag.MahiMahi.allDecidedBelow	LeanDag.MahiMahi.Decided
+NODE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_3	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_3	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_2
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_3	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_1
 NODE	LeanDag.exists_correct_common_support._proof_1_3	LeanDag.CommonCore	thm
 EDGE	LeanDag.exists_correct_common_support._proof_1_3	LeanDag.creatorsOf
 EDGE	LeanDag.exists_correct_common_support._proof_1_3	LeanDag.Faults
@@ -13043,6 +13287,8 @@ EDGE	LeanDag.card_viewUpto_le'._proof_1_2	LeanDag.Block.round
 EDGE	LeanDag.card_viewUpto_le'._proof_1_2	LeanDag.BlockUniverse
 EDGE	LeanDag.card_viewUpto_le'._proof_1_2	LeanDag.Faults.f
 EDGE	LeanDag.card_viewUpto_le'._proof_1_2	LeanDag.viewUpto
+NODE	LeanDag.BlackMarlin.filterFirstFrom.match_1.splitter	LeanDag.BlackMarlin.Helpers.Order	def
+EDGE	LeanDag.BlackMarlin.filterFirstFrom.match_1.splitter	LeanDag.BlackMarlin.filterFirstFrom.match_1
 NODE	LeanDag.Odontoceti.AdaptiveRun.ctorIdx	LeanDag.Adaptive.Odontoceti	def
 EDGE	LeanDag.Odontoceti.AdaptiveRun.ctorIdx	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.AdaptiveRun.ctorIdx	LeanDag.BlockUniverse
@@ -13490,6 +13736,11 @@ EDGE	LeanDagTest.ugrowReactive._proof_48	LeanDagTest.ugrowReactive._proof_18
 EDGE	LeanDagTest.ugrowReactive._proof_48	LeanDagTest.ugrowReactive._simp_7
 EDGE	LeanDagTest.ugrowReactive._proof_48	LeanDagTest.reactHolds
 EDGE	LeanDagTest.ugrowReactive._proof_48	LeanDagTest.ugrowReactive._proof_17
+NODE	LeanDag.BlackMarlin.notMem_deliveredBelow._proof_1_1	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow._proof_1_1	LeanDag.BlockUniverse
 NODE	LeanDag.DecidedWithin.casesOn	LeanDag.Adaptive.Basic	def
 EDGE	LeanDag.DecidedWithin.casesOn	LeanDag.Faults
 EDGE	LeanDag.DecidedWithin.casesOn	LeanDag.Slots.slotRound
@@ -13660,6 +13911,8 @@ EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_4	LeanDag.SkipMsg
 EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_4	LeanDag.SkipMsg.r0
 EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_4	LeanDag.SkipMsg.line
 EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_4	LeanDag.SkipMsg.B1
+NODE	LeanDag.BlackMarlin.filterFirstFrom.match_1.eq_1	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.filterFirstFrom.match_1.eq_1	LeanDag.BlackMarlin.filterFirstFrom.match_1
 NODE	LeanDag.SkipMsg.rec	LeanDag.SafeSkip.Basic	rec
 EDGE	LeanDag.SkipMsg.rec	LeanDag.Faults
 EDGE	LeanDag.SkipMsg.rec	LeanDag.SkipMsg.mk
@@ -13679,6 +13932,11 @@ EDGE	LeanDag.Nemo.supporters.eq_1	LeanDag.Nemo.Universe.block
 EDGE	LeanDag.Nemo.supporters.eq_1	LeanDag.Block.refs
 EDGE	LeanDag.Nemo.supporters.eq_1	LeanDag.Nemo.blocksAt
 EDGE	LeanDag.Nemo.supporters.eq_1	LeanDag.Nemo.supporters
+NODE	LeanDag.BlackMarlin.TopoSort._sizeOf_inst	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.TopoSort._sizeOf_inst	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort._sizeOf_inst	LeanDag.BlackMarlin.TopoSort._sizeOf_1
+EDGE	LeanDag.BlackMarlin.TopoSort._sizeOf_inst	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort._sizeOf_inst	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDagTest.hyb9Slots	LeanDagTest.Hybrid	def
 EDGE	LeanDagTest.hyb9Slots	LeanDag.Slots.uniformSingle
 EDGE	LeanDagTest.hyb9Slots	LeanDagTest.hyb4Slots._proof_3
@@ -14367,6 +14625,10 @@ EDGE	LeanDagTest.Uhyb9._proof_2	LeanDagTest.hyb9
 EDGE	LeanDagTest.Uhyb9._proof_2	LeanDag.instDecidableValidWrtOfDecidableEq
 EDGE	LeanDagTest.Uhyb9._proof_2	LeanDagTest.hyb9Blk
 EDGE	LeanDagTest.Uhyb9._proof_2	LeanDag.ValidWrt
+NODE	LeanDag.BlackMarlin.filterFirstFrom.eq_1	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.filterFirstFrom.eq_1	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.filterFirstFrom.eq_1	LeanDag.BlackMarlin.filterFirstFrom
+EDGE	LeanDag.BlackMarlin.filterFirstFrom.eq_1	LeanDag.BlockUniverse
 NODE	LeanDagTest.BlackMarlin.ugrowBM._proof_14	LeanDagTest.BlackMarlin.Reactive	thm
 EDGE	LeanDagTest.BlackMarlin.ugrowBM._proof_14	LeanDagTest.Ugrow
 EDGE	LeanDagTest.BlackMarlin.ugrowBM._proof_14	LeanDag.BlockUniverse.block
@@ -14709,6 +14971,11 @@ EDGE	LeanDagTest.ustarve_not_synchronisedOn	LeanDagTest.Uomit
 EDGE	LeanDagTest.ustarve_not_synchronisedOn	LeanDag.Correct
 EDGE	LeanDagTest.ustarve_not_synchronisedOn	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ustarve_not_synchronisedOn	LeanDag.SynchronisedOn
+NODE	LeanDag.BlackMarlin.filterFirstFrom._unsafe_rec	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.filterFirstFrom._unsafe_rec	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.filterFirstFrom._unsafe_rec	LeanDag.BlackMarlin.filterFirstFrom.match_1
+EDGE	LeanDag.BlackMarlin.filterFirstFrom._unsafe_rec	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.filterFirstFrom._unsafe_rec	LeanDag.BlackMarlin.key
 NODE	LeanDag.PaceCore.noConfusionType	LeanDag.ViewPace	def
 EDGE	LeanDag.PaceCore.noConfusionType	LeanDag.Faults
 EDGE	LeanDag.PaceCore.noConfusionType	LeanDag.authorsIn
@@ -15012,6 +15279,13 @@ EDGE	LeanDag.reaches_of_correct_support_of_card	LeanDag.card_authorsAt_le_univ
 EDGE	LeanDag.reaches_of_correct_support_of_card	LeanDag.Faults.f
 EDGE	LeanDag.reaches_of_correct_support_of_card	LeanDag.Block.creator
 EDGE	LeanDag.reaches_of_correct_support_of_card	LeanDag.Reaches
+NODE	LeanDag.BlackMarlin.TopoSort.mk.injEq	LeanDag.BlackMarlin.Model.Order	thm
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.injEq	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.injEq	LeanDag.BlackMarlin.TopoSort.mk.inj
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.injEq	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.injEq	LeanDag.BlackMarlin.TopoSort.mk
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.injEq	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.injEq	LeanDag.Reaches
 NODE	LeanDag.MahiMahi.Synchrony.Statement	LeanDag.MahiMahi.Synchrony.Statement	def
 EDGE	LeanDag.MahiMahi.Synchrony.Statement	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.Synchrony.Statement	LeanDag.BlockUniverse
@@ -15156,6 +15430,12 @@ EDGE	LeanDag.MahiMahi.not_blames_of_votes	LeanDag.BlockUniverse
 EDGE	LeanDag.MahiMahi.not_blames_of_votes	LeanDag.MahiMahi.Blames.eq_1
 EDGE	LeanDag.MahiMahi.not_blames_of_votes	LeanDag.MahiMahi.candidatesAt
 EDGE	LeanDag.MahiMahi.not_blames_of_votes	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.filterFirstFrom_append	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_append	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_append	LeanDag.BlackMarlin.filterFirstFrom
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_append	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_append	LeanDag.BlackMarlin.filterFirstFrom.eq_2
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_append	LeanDag.BlackMarlin.key
 NODE	LeanDag.card_ids_bounds	LeanDag.DoS.Counting	thm
 EDGE	LeanDag.card_ids_bounds	LeanDag.card_le_of_equivFree
 EDGE	LeanDag.card_ids_bounds	LeanDag.Faults
@@ -15201,6 +15481,12 @@ EDGE	LeanDag.BlackMarlin.descentUpto_suffix._proof_1_5	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.descentUpto_suffix._proof_1_5	LeanDag.BlockUniverse.block
 EDGE	LeanDag.BlackMarlin.descentUpto_suffix._proof_1_5	LeanDag.Block.round
 EDGE	LeanDag.BlackMarlin.descentUpto_suffix._proof_1_5	LeanDag.BlockUniverse
+NODE	LeanDag.BlackMarlin.filterFirstFrom._sunfold	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.filterFirstFrom._sunfold	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.filterFirstFrom._sunfold	LeanDag.BlackMarlin.filterFirstFrom.match_1
+EDGE	LeanDag.BlackMarlin.filterFirstFrom._sunfold	LeanDag.BlackMarlin.filterFirstFrom
+EDGE	LeanDag.BlackMarlin.filterFirstFrom._sunfold	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.filterFirstFrom._sunfold	LeanDag.BlackMarlin.key
 NODE	LeanDag.Integration.skipFillD._proof_6	LeanDag.Integration.DeliveryFill	thm
 EDGE	LeanDag.Integration.skipFillD._proof_6	LeanDag.Delivery
 EDGE	LeanDag.Integration.skipFillD._proof_6	LeanDag.SkipMsg.v1
@@ -15234,6 +15520,10 @@ EDGE	LeanDag.MahiMahi.decisionRound	LeanDag.Slots
 NODE	LeanDag.MahiMahi.Liveness.holds._proof_1_1	LeanDag.MahiMahi.Liveness.Proof	thm
 NODE	LeanDagTest.rrSlots._proof_4	LeanDagTest.Quantitative	thm
 EDGE	LeanDagTest.rrSlots._proof_4	LeanDagTest.rrSlots._proof_2
+NODE	LeanDagTest.BlackMarlin.fullSort._proof_1	LeanDagTest.BlackMarlin.Ledger	thm
+EDGE	LeanDagTest.BlackMarlin.fullSort._proof_1	LeanDagTest.BlackMarlin.Ufull
+EDGE	LeanDagTest.BlackMarlin.fullSort._proof_1	LeanDag.Block.refs
+EDGE	LeanDagTest.BlackMarlin.fullSort._proof_1	LeanDag.BlockUniverse.block
 NODE	LeanDag.Nemo.Universe.no_equivocation	LeanDag.Nemo.Basic	thm
 EDGE	LeanDag.Nemo.Universe.no_equivocation	LeanDag.Nemo.Universe
 EDGE	LeanDag.Nemo.Universe.no_equivocation	LeanDag.Nemo.Universe.block
@@ -15510,6 +15800,7 @@ EDGE	LeanDagTest.ucrash_directSkip._proof_1_8	LeanDagTest.ucrashMsg
 EDGE	LeanDagTest.ucrash_directSkip._proof_1_8	LeanDagTest.Ucrash
 EDGE	LeanDagTest.ucrash_directSkip._proof_1_8	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ucrash_directSkip._proof_1_8	LeanDag.SkipMsg.r0
+NODE	LeanDag.BlackMarlin.TopoSort.ofFinOrder._proof_2	LeanDag.BlackMarlin.Helpers.Order	thm
 NODE	LeanDag.directCommit_of_leader_mem	LeanDag.Liveness	thm
 EDGE	LeanDag.directCommit_of_leader_mem	LeanDag.Faults
 EDGE	LeanDag.directCommit_of_leader_mem	LeanDag.Slots.slotRound
@@ -15843,6 +16134,13 @@ EDGE	LeanDag.Odontoceti.Decided.directSkip	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.Decided.directSkip	LeanDag.Odontoceti.Decided
 EDGE	LeanDag.Odontoceti.Decided.directSkip	LeanDag.View
 EDGE	LeanDag.Odontoceti.Decided.directSkip	LeanDag.Faults5.toFaults
+NODE	LeanDag.BlackMarlin.TopoSort.mk.inj	LeanDag.BlackMarlin.Model.Order	thm
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.inj	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.inj	LeanDag.BlackMarlin.TopoSort.mk.noConfusion
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.inj	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.inj	LeanDag.BlackMarlin.TopoSort.mk
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.inj	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.inj	LeanDag.Reaches
 NODE	LeanDag.ViewPace.rec	LeanDag.ViewPace	rec
 EDGE	LeanDag.ViewPace.rec	LeanDag.Faults
 EDGE	LeanDag.ViewPace.rec	LeanDag.ViewPace.mk
@@ -16915,6 +17213,12 @@ EDGE	LeanDag.CertifiedIn	LeanDag.Faults
 EDGE	LeanDag.CertifiedIn	LeanDag.BlockUniverse
 EDGE	LeanDag.CertifiedIn	LeanDag.certificates
 EDGE	LeanDag.CertifiedIn	LeanDag.Reaches
+NODE	LeanDag.BlackMarlin.TopoSort._sizeOf_1	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.TopoSort._sizeOf_1	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort._sizeOf_1	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort._sizeOf_1	LeanDag.BlackMarlin.TopoSort.rec
+EDGE	LeanDag.BlackMarlin.TopoSort._sizeOf_1	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.TopoSort._sizeOf_1	LeanDag.Reaches
 NODE	LeanDagTest.twinBlk._proof_3	LeanDagTest.Odontoceti.Model	thm
 NODE	LeanDagTest.ugapPace._proof_5	LeanDagTest.Unbounded	thm
 NODE	LeanDag.ViewPace.mk	LeanDag.ViewPace	ctor
@@ -17385,6 +17689,13 @@ EDGE	LeanDagTest.ugrow_not_populated_succ	LeanDagTest.instFaultsFinOfNatNat_lean
 EDGE	LeanDagTest.ugrow_not_populated_succ	LeanDag.Block.creator
 NODE	LeanDagTest.BlackMarlin.ugrowBM._proof_15	LeanDagTest.BlackMarlin.Reactive	thm
 NODE	LeanDag.waveRobin_spansEligible._proof_1_2	LeanDag.WaveRobin	thm
+NODE	LeanDag.BlackMarlin.Order.holds._proof_1_1	LeanDag.BlackMarlin.Order.Proof	thm
+EDGE	LeanDag.BlackMarlin.Order.holds._proof_1_1	LeanDag.BlackMarlin.deliverSeq
+EDGE	LeanDag.BlackMarlin.Order.holds._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Order.holds._proof_1_1	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.Order.holds._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Order.holds._proof_1_1	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Order.holds._proof_1_1	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.Integration.spansEligible_chop._proof_1_2	LeanDag.Integration.ScheduleShape	thm
 EDGE	LeanDag.Integration.spansEligible_chop._proof_1_2	LeanDag.Slots.slotRound
 EDGE	LeanDag.Integration.spansEligible_chop._proof_1_2	LeanDag.Slots
@@ -17860,6 +18171,30 @@ EDGE	LeanDag.eq_of_certificates_nonempty	LeanDag.BlockUniverse
 EDGE	LeanDag.eq_of_certificates_nonempty	LeanDag.BlockUniverse.valid
 EDGE	LeanDag.eq_of_certificates_nonempty	LeanDag.certificates
 EDGE	LeanDag.eq_of_certificates_nonempty	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.BlackMarlin.deliveredBelow
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.mem_history_iff
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.BlackMarlin.segment
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.BlackMarlin.deliveredBelow.match_1
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.BlackMarlin.notMem_deliveredBelow
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.BlackMarlin.TopoSort.sort
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.BlackMarlin.TopoSort.topo
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.mem_history_self
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.BlackMarlin.TopoSort.mem
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.history
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.BlackMarlin.Rotation.anchor
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.BlackMarlin.Flush.isAnchor
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.Block.creator
+EDGE	LeanDag.BlackMarlin.idxOf_le_idxOf_anchor	LeanDag.Reaches
 NODE	LeanDagTest.ugrowCatchPace._proof_17	LeanDagTest.Catchup	thm
 NODE	LeanDag.Faults5.casesOn	LeanDag.Odontoceti.Rules	def
 EDGE	LeanDag.Faults5.casesOn	LeanDag.Faults5
@@ -17923,6 +18258,7 @@ EDGE	LeanDagTest.twoFaults	LeanDag.Faults.mk
 NODE	LeanDag.CausalStructure.not_reaches_of_round_lt._proof_1_1	LeanDag.Causality	thm
 EDGE	LeanDag.CausalStructure.not_reaches_of_round_lt._proof_1_1	LeanDag.Block
 EDGE	LeanDag.CausalStructure.not_reaches_of_round_lt._proof_1_1	LeanDag.Block.round
+NODE	LeanDag.BlackMarlin.ledgerSeq_prefix._proof_1_2	LeanDag.BlackMarlin.Helpers.Order	thm
 NODE	LeanDag.SkipMsg.votesIn_subset_ids	LeanDag.SafeSkip.Invariance	thm
 EDGE	LeanDag.SkipMsg.votesIn_subset_ids	LeanDag.votesIn
 EDGE	LeanDag.SkipMsg.votesIn_subset_ids	LeanDag.Faults
@@ -18151,6 +18487,7 @@ EDGE	LeanDag.JumpMsg.toSkipMsg_top	LeanDag.BlockUniverse
 EDGE	LeanDag.JumpMsg.toSkipMsg_top	LeanDag.JumpMsg.B2
 EDGE	LeanDag.JumpMsg.toSkipMsg_top	LeanDag.lineOf_top
 EDGE	LeanDag.JumpMsg.toSkipMsg_top	LeanDag.SkipMsg.line
+NODE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history._proof_1_1	LeanDag.BlackMarlin.Helpers.Order	thm
 NODE	LeanDag.MahiMahi.candidatesAt.eq_1	LeanDag.MahiMahi.Helpers.Rules	thm
 EDGE	LeanDag.MahiMahi.candidatesAt.eq_1	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.candidatesAt.eq_1	LeanDag.BlockUniverse.block
@@ -18311,6 +18648,17 @@ EDGE	LeanDag.BlackMarlin.round_descend	LeanDag.BlackMarlin.mem_maxAnchor
 EDGE	LeanDag.BlackMarlin.round_descend	LeanDag.BlackMarlin.descend
 EDGE	LeanDag.BlackMarlin.round_descend	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.round_descend	LeanDag.BlackMarlin.maxAnchor
+NODE	LeanDag.BlackMarlin.deliverSeq_prefix	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.deliverSeq_prefix	LeanDag.BlackMarlin.deliverSeq
+EDGE	LeanDag.BlackMarlin.deliverSeq_prefix	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.deliverSeq_prefix	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.deliverSeq_prefix	LeanDag.BlackMarlin.filterFirstFrom_append
+EDGE	LeanDag.BlackMarlin.deliverSeq_prefix	LeanDag.BlackMarlin.ledgerSeq_prefix
+EDGE	LeanDag.BlackMarlin.deliverSeq_prefix	LeanDag.BlackMarlin.filterFirstFrom
+EDGE	LeanDag.BlackMarlin.deliverSeq_prefix	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.deliverSeq_prefix	LeanDag.BlackMarlin.ledgerSeq
+EDGE	LeanDag.BlackMarlin.deliverSeq_prefix	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.deliverSeq_prefix	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDagTest.aim4._proof_3	LeanDagTest.MahiMahi.Counting	thm
 EDGE	LeanDagTest.aim4._proof_3	LeanDagTest.mmAimBlk
 EDGE	LeanDagTest.aim4._proof_3	LeanDag.Correct
@@ -18375,6 +18723,17 @@ EDGE	LeanDag.BlackMarlin.Reactive.Exit	LeanDag.Faults.f
 EDGE	LeanDag.BlackMarlin.Reactive.Exit	LeanDag.BlackMarlin.Pace.toPaceCore
 EDGE	LeanDag.BlackMarlin.Reactive.Exit	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.Reactive.Exit	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.segment	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.segment	LeanDag.BlackMarlin.deliveredBelow
+EDGE	LeanDag.BlackMarlin.segment	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.segment	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.segment	LeanDag.BlackMarlin.deliveredBelow.match_1
+EDGE	LeanDag.BlackMarlin.segment	LeanDag.BlackMarlin.TopoSort.sort
+EDGE	LeanDag.BlackMarlin.segment	LeanDag.history
+EDGE	LeanDag.BlackMarlin.segment	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.segment	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.segment	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.segment	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDagTest.ugrowLag._proof_59	LeanDagTest.Collapse	thm
 EDGE	LeanDagTest.ugrowLag._proof_59	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowLag._proof_59	LeanDagTest.lagStamp._proof_2
@@ -18546,6 +18905,17 @@ EDGE	LeanDag.viewUpto._sunfold	LeanDag.viewUpto.match_1
 EDGE	LeanDag.viewUpto._sunfold	LeanDag.BlockUniverse
 EDGE	LeanDag.viewUpto._sunfold	LeanDag.Delivery.accepted
 EDGE	LeanDag.viewUpto._sunfold	LeanDag.viewUpto
+NODE	LeanDag.BlackMarlin.deliverSeq_agree	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.deliverSeq_agree	LeanDag.BlackMarlin.deliverSeq
+EDGE	LeanDag.BlackMarlin.deliverSeq_agree	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.deliverSeq_agree	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.deliverSeq_agree	LeanDag.BlackMarlin.filterFirstFrom
+EDGE	LeanDag.BlackMarlin.deliverSeq_agree	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.deliverSeq_agree	LeanDag.BlackMarlin.ledgerSeq
+EDGE	LeanDag.BlackMarlin.deliverSeq_agree	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.deliverSeq_agree	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.deliverSeq_agree	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.deliverSeq_agree	LeanDag.BlackMarlin.ledgerSeq_agree
 NODE	LeanDag.not_exposedIn_self_creator	LeanDag.DoS.SelfParent	thm
 EDGE	LeanDag.not_exposedIn_self_creator	LeanDag.Faults
 EDGE	LeanDag.not_exposedIn_self_creator	LeanDag.ValidWrt.self_parent
@@ -18743,6 +19113,14 @@ EDGE	LeanDag.viewUpto_subset_history._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.viewUpto_subset_history._proof_1_2	LeanDag.BlockUniverse.block
 EDGE	LeanDag.viewUpto_subset_history._proof_1_2	LeanDag.Block.round
 EDGE	LeanDag.viewUpto_subset_history._proof_1_2	LeanDag.BlockUniverse
+NODE	LeanDag.BlackMarlin.deliveredBelow	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.deliveredBelow	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.deliveredBelow	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.deliveredBelow	LeanDag.BlackMarlin.deliveredBelow.match_1
+EDGE	LeanDag.BlackMarlin.deliveredBelow	LeanDag.history
+EDGE	LeanDag.BlackMarlin.deliveredBelow	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.deliveredBelow	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.deliveredBelow	LeanDag.BlackMarlin.Rotation
 NODE	LeanDag.Odontoceti.all_decided_below_of_fairRun._proof_1_2	LeanDag.Odontoceti.Liveness	thm
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun._proof_1_2	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun._proof_1_2	LeanDag.Slots.slotRound
@@ -19797,6 +20175,7 @@ EDGE	LeanDagTest.uomit_block	LeanDagTest.rrBlock
 NODE	LeanDag.Odontoceti.decisionRound	LeanDag.Odontoceti.Decision	def
 EDGE	LeanDag.Odontoceti.decisionRound	LeanDag.Slots.slotRound
 EDGE	LeanDag.Odontoceti.decisionRound	LeanDag.Slots
+NODE	LeanDag.BlackMarlin.ledgerSeq_prefix._proof_1_1	LeanDag.BlackMarlin.Helpers.Order	thm
 NODE	LeanDag.BlackMarlin.Flush.noConfusion	LeanDag.BlackMarlin.Model.Ledger	def
 EDGE	LeanDag.BlackMarlin.Flush.noConfusion	LeanDag.BlackMarlin.Flush.noConfusionType
 EDGE	LeanDag.BlackMarlin.Flush.noConfusion	LeanDag.Faults
@@ -19990,6 +20369,17 @@ EDGE	LeanDagTest.ugrow_commits_by_round	LeanDagTest.instFaultsFinOfNatNat_leanDa
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDag.IsLeaderBlock
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDagTest.ugrow_populated
 EDGE	LeanDagTest.ugrow_commits_by_round	LeanDag.SynchronisedOn
+NODE	LeanDag.BlackMarlin.Order.CorrectDelivered	LeanDag.BlackMarlin.Order.Statement	def
+EDGE	LeanDag.BlackMarlin.Order.CorrectDelivered	LeanDag.BlackMarlin.deliverSeq
+EDGE	LeanDag.BlackMarlin.Order.CorrectDelivered	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Order.CorrectDelivered	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.Order.CorrectDelivered	LeanDag.Correct
+EDGE	LeanDag.BlackMarlin.Order.CorrectDelivered	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Order.CorrectDelivered	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Order.CorrectDelivered	LeanDag.BlackMarlin.ledgerSeq
+EDGE	LeanDag.BlackMarlin.Order.CorrectDelivered	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Order.CorrectDelivered	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.Order.CorrectDelivered	LeanDag.Block.creator
 NODE	LeanDag.PedigreeVia.below.base	LeanDag.DoS.Pedigree	ctor
 EDGE	LeanDag.PedigreeVia.below.base	LeanDag.Faults
 EDGE	LeanDag.PedigreeVia.below.base	LeanDag.PedigreeVia
@@ -20203,6 +20593,15 @@ NODE	LeanDag.historyUptoFrom_mono._proof_1_2	LeanDag.Causality	thm
 NODE	LeanDag.BlackMarlin.recurrence._proof_1_4	LeanDag.BlackMarlin.Helpers.Liveness	thm
 EDGE	LeanDag.BlackMarlin.recurrence._proof_1_4	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.recurrence._proof_1_4	LeanDag.Faults.f
+NODE	LeanDag.BlackMarlin.Order.Integrity	LeanDag.BlackMarlin.Order.Statement	def
+EDGE	LeanDag.BlackMarlin.Order.Integrity	LeanDag.BlackMarlin.deliverSeq
+EDGE	LeanDag.BlackMarlin.Order.Integrity	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Order.Integrity	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.Order.Integrity	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.BlackMarlin.Order.Integrity	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Order.Integrity	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Order.Integrity	LeanDag.BlackMarlin.key
+EDGE	LeanDag.BlackMarlin.Order.Integrity	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.byzPool	LeanDag.DoS.Novelty	def
 EDGE	LeanDag.byzPool	LeanDag.Delivery
 EDGE	LeanDag.byzPool	LeanDag.Faults
@@ -20215,6 +20614,12 @@ NODE	LeanDag.Nemo.DirectCommit	LeanDag.Nemo.Rules	def
 EDGE	LeanDag.Nemo.DirectCommit	LeanDag.Nemo.majority
 EDGE	LeanDag.Nemo.DirectCommit	LeanDag.Nemo.Universe
 EDGE	LeanDag.Nemo.DirectCommit	LeanDag.Nemo.supporters
+NODE	LeanDag.BlackMarlin.key	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.key	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.key	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.key	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.key	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.key	LeanDag.Block.creator
 NODE	LeanDag.BlackMarlin.Pace.anchor_or_wait	LeanDag.BlackMarlin.Model.Round	thm
 EDGE	LeanDag.BlackMarlin.Pace.anchor_or_wait	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Pace.anchor_or_wait	LeanDag.BlackMarlin.IsAnchor
@@ -20331,6 +20736,13 @@ EDGE	LeanDag.Integration.exposedIn_skipFill_old	LeanDag.mem_ids_of_reaches
 EDGE	LeanDag.Integration.exposedIn_skipFill_old	LeanDag.SkipMsg
 EDGE	LeanDag.Integration.exposedIn_skipFill_old	LeanDag.Block.creator
 EDGE	LeanDag.Integration.exposedIn_skipFill_old	LeanDag.Reaches
+NODE	LeanDag.BlackMarlin.ledgerSeq	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.ledgerSeq	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.ledgerSeq	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.ledgerSeq	LeanDag.BlackMarlin.segment
+EDGE	LeanDag.BlackMarlin.ledgerSeq	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.ledgerSeq	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.ledgerSeq	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.MahiMahi.directCommitIn_full	LeanDag.MahiMahi.Helpers.Liveness	thm
 EDGE	LeanDag.MahiMahi.directCommitIn_full	LeanDag.creatorsOf
 EDGE	LeanDag.MahiMahi.directCommitIn_full	LeanDag.MahiMahi.certificates
@@ -20472,6 +20884,7 @@ EDGE	LeanDag.notMem_ofAccepted_self._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.notMem_ofAccepted_self._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.notMem_ofAccepted_self._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.notMem_ofAccepted_self._proof_1_1	LeanDag.BlockUniverse
+NODE	LeanDag.BlackMarlin.deliveredBelow.match_1	LeanDag.BlackMarlin.Model.Order	def
 NODE	LeanDag.DecidedWithin.mono	LeanDag.Adaptive.Basic	thm
 EDGE	LeanDag.DecidedWithin.mono	LeanDag.Faults
 EDGE	LeanDag.DecidedWithin.mono	LeanDag.Slots.slotRound
@@ -20583,6 +20996,11 @@ EDGE	LeanDag.Nemo.decided_below_of_committed_run._proof_1_3	LeanDag.Nemo.decidab
 EDGE	LeanDag.Nemo.decided_below_of_committed_run._proof_1_3	LeanDag.Nemo.Eligible
 EDGE	LeanDag.Nemo.decided_below_of_committed_run._proof_1_3	LeanDag.Nemo.View
 EDGE	LeanDag.Nemo.decided_below_of_committed_run._proof_1_3	LeanDag.Slots
+NODE	LeanDag.BlackMarlin.TopoSort.mk	LeanDag.BlackMarlin.Model.Order	ctor
+EDGE	LeanDag.BlackMarlin.TopoSort.mk	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.mk	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.mk	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.TopoSort.mk	LeanDag.Reaches
 NODE	LeanDag.ViewPace.exists_honest_floor	LeanDag.ViewPace	thm
 EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.ViewPace.toPaceCore
 EDGE	LeanDag.ViewPace.exists_honest_floor	LeanDag.Faults
@@ -22392,6 +22810,7 @@ EDGE	LeanDagTest.Ucrash._proof_1	LeanDagTest.mem_omitRefs
 EDGE	LeanDagTest.Ucrash._proof_1	LeanDagTest.omitRefs
 EDGE	LeanDagTest.Ucrash._proof_1	LeanDagTest.rrBlock
 EDGE	LeanDagTest.Ucrash._proof_1	LeanDagTest.rrBlock_refs
+NODE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_1	LeanDag.BlackMarlin.Helpers.Order	thm
 NODE	LeanDag.MahiMahi.eq_of_certificates_nonempty	LeanDag.MahiMahi.Helpers.Rules	thm
 EDGE	LeanDag.MahiMahi.eq_of_certificates_nonempty	LeanDag.MahiMahi.certificates
 EDGE	LeanDag.MahiMahi.eq_of_certificates_nonempty	LeanDag.Faults
@@ -22629,6 +23048,14 @@ EDGE	LeanDag.ReactiveM.certifies._proof_1_3	LeanDag.Faults.f
 EDGE	LeanDag.ReactiveM.certifies._proof_1_3	LeanDag.ReactivePace.toPaceCore
 EDGE	LeanDag.ReactiveM.certifies._proof_1_3	LeanDag.PaceCore.timeout
 EDGE	LeanDag.ReactiveM.certifies._proof_1_3	LeanDag.Slots
+NODE	LeanDag.BlackMarlin.Order.SeqAgree	LeanDag.BlackMarlin.Order.Statement	def
+EDGE	LeanDag.BlackMarlin.Order.SeqAgree	LeanDag.BlackMarlin.deliverSeq
+EDGE	LeanDag.BlackMarlin.Order.SeqAgree	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Order.SeqAgree	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.Order.SeqAgree	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Order.SeqAgree	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.Order.SeqAgree	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Order.SeqAgree	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.viewUpto_succ	LeanDag.DoS.Novelty	thm
 EDGE	LeanDag.viewUpto_succ	LeanDag.Delivery
 EDGE	LeanDag.viewUpto_succ	LeanDag.Faults
@@ -23358,6 +23785,22 @@ EDGE	LeanDag.PedigreeTo.casesOn	LeanDag.PedigreeTo.base
 EDGE	LeanDag.PedigreeTo.casesOn	LeanDag.AdoptedUnder
 EDGE	LeanDag.PedigreeTo.casesOn	LeanDag.PedigreeTo.step
 EDGE	LeanDag.PedigreeTo.casesOn	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.deliverSeq_of_correct	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.deliverSeq_of_correct	LeanDag.BlackMarlin.deliverSeq
+EDGE	LeanDag.BlackMarlin.deliverSeq_of_correct	LeanDag.BlackMarlin.deliverSeq_mem_ids
+EDGE	LeanDag.BlackMarlin.deliverSeq_of_correct	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.deliverSeq_of_correct	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.deliverSeq_of_correct	LeanDag.BlackMarlin.deliverSeq_key_mem
+EDGE	LeanDag.BlackMarlin.deliverSeq_of_correct	LeanDag.Correct
+EDGE	LeanDag.BlackMarlin.deliverSeq_of_correct	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.deliverSeq_of_correct	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.deliverSeq_of_correct	LeanDag.BlackMarlin.ledgerSeq
+EDGE	LeanDag.BlackMarlin.deliverSeq_of_correct	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.deliverSeq_of_correct	LeanDag.BlackMarlin.key
+EDGE	LeanDag.BlackMarlin.deliverSeq_of_correct	LeanDag.BlackMarlin.mem_ledgerSeq_mem_ids
+EDGE	LeanDag.BlackMarlin.deliverSeq_of_correct	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.deliverSeq_of_correct	LeanDag.BlockUniverse.eq_of_creator_eq
+EDGE	LeanDag.BlackMarlin.deliverSeq_of_correct	LeanDag.Block.creator
 NODE	LeanDagTest.ugrowReactive._proof_8	LeanDagTest.Reactive	thm
 EDGE	LeanDagTest.ugrowReactive._proof_8	LeanDagTest.ugrowReactive._proof_4
 NODE	LeanDagTest.ucrash_directSkip	LeanDagTest.SafeSkip	thm
@@ -23716,6 +24159,7 @@ NODE	LeanDagTest.ugrowLag._proof_51	LeanDagTest.Collapse	thm
 NODE	LeanDag.BlackMarlin.Liveness.FairRun	LeanDag.BlackMarlin.Liveness.Statement	def
 EDGE	LeanDag.BlackMarlin.Liveness.FairRun	LeanDag.BlackMarlin.Rotation.anchor
 EDGE	LeanDag.BlackMarlin.Liveness.FairRun	LeanDag.BlackMarlin.Rotation
+NODE	LeanDag.BlackMarlin.idxOf_le_of_pairwise	LeanDag.BlackMarlin.Helpers.Order	thm
 NODE	LeanDagTest.ugrowReactive._proof_32	LeanDagTest.Reactive	thm
 EDGE	LeanDagTest.ugrowReactive._proof_32	LeanDag.Slots.slotRound
 EDGE	LeanDagTest.ugrowReactive._proof_32	LeanDagTest.rrSlots
@@ -23769,6 +24213,23 @@ EDGE	LeanDag.BlackMarlin.Pace.reactive_committed._proof_1_4	LeanDag.Faults.f
 EDGE	LeanDag.BlackMarlin.Pace.reactive_committed._proof_1_4	LeanDag.BlackMarlin.Pace.toPaceCore
 EDGE	LeanDag.BlackMarlin.Pace.reactive_committed._proof_1_4	LeanDag.BlackMarlin.Rotation
 NODE	LeanDagTest.odoSlots._proof_2	LeanDagTest.Odontoceti.Model	thm
+NODE	LeanDag.BlackMarlin.notMem_deliveredBelow	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow	LeanDag.BlackMarlin.deliveredBelow
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow	LeanDag.BlackMarlin.notMem_deliveredBelow._proof_1_1
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow	LeanDag.BlackMarlin.deliveredBelow.match_1
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow	LeanDag.round_le_of_mem_history
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow	LeanDag.history
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow	LeanDag.BlackMarlin.Rotation.anchor
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow	LeanDag.BlackMarlin.Flush.isAnchor
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.notMem_deliveredBelow	LeanDag.Block.creator
 NODE	LeanDag.Decided.indirectCommit	LeanDag.Mysticeti	ctor
 EDGE	LeanDag.Decided.indirectCommit	LeanDag.Faults
 EDGE	LeanDag.Decided.indirectCommit	LeanDag.Slots.slotRound
@@ -24184,6 +24645,20 @@ EDGE	LeanDag.topsOf	LeanDag.BlockUniverse.block
 EDGE	LeanDag.topsOf	LeanDag.history
 EDGE	LeanDag.topsOf	LeanDag.BlockUniverse
 EDGE	LeanDag.topsOf	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.segment_congr	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.segment_congr	LeanDag.BlackMarlin.deliveredBelow
+EDGE	LeanDag.BlackMarlin.segment_congr	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.segment_congr	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.segment_congr	LeanDag.BlackMarlin.segment_congr._simp_1_1
+EDGE	LeanDag.BlackMarlin.segment_congr	LeanDag.BlackMarlin.segment
+EDGE	LeanDag.BlackMarlin.segment_congr	LeanDag.BlackMarlin.deliveredBelow.match_1
+EDGE	LeanDag.BlackMarlin.segment_congr	LeanDag.BlackMarlin.TopoSort.sort
+EDGE	LeanDag.BlackMarlin.segment_congr	LeanDag.history
+EDGE	LeanDag.BlackMarlin.segment_congr	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.segment_congr	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.segment_congr	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.segment_congr	LeanDag.BlackMarlin.segment_congr._proof_1_2
+EDGE	LeanDag.BlackMarlin.segment_congr	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.decidablePopulatedFrom	LeanDag.Participation	def
 EDGE	LeanDag.decidablePopulatedFrom	LeanDag.Block
 EDGE	LeanDag.decidablePopulatedFrom	LeanDag.PopulatedFrom
@@ -24636,6 +25111,11 @@ EDGE	LeanDag.Odontoceti.decided_below_of_committed_run._proof_1_3	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.decided_below_of_committed_run._proof_1_3	LeanDag.Odontoceti.Decided
 EDGE	LeanDag.Odontoceti.decided_below_of_committed_run._proof_1_3	LeanDag.View
 EDGE	LeanDag.Odontoceti.decided_below_of_committed_run._proof_1_3	LeanDag.Faults5.toFaults
+NODE	LeanDag.BlackMarlin.TopoSort.nodup	LeanDag.BlackMarlin.Model.Order	thm
+EDGE	LeanDag.BlackMarlin.TopoSort.nodup	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.nodup	LeanDag.BlackMarlin.TopoSort.sort
+EDGE	LeanDag.BlackMarlin.TopoSort.nodup	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.nodup	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.Odontoceti.exists_partialRun._proof_1_4	LeanDag.Adaptive.Odontoceti	thm
 EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_4	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_4	LeanDag.AdaptivePolicy.W
@@ -25779,6 +26259,7 @@ EDGE	LeanDagTest.aim4._proof_2	LeanDagTest.mmAimBlk
 EDGE	LeanDagTest.aim4._proof_2	LeanDag.instDecidableValidWrtOfDecidableEq
 EDGE	LeanDagTest.aim4._proof_2	LeanDag.ValidWrt
 NODE	LeanDagTest.lkd._proof_4	LeanDagTest.DoS.Doubling	thm
+NODE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_2	LeanDag.BlackMarlin.Helpers.Order	thm
 NODE	LeanDag.exists_top_of_mem_history	LeanDag.DoS.Adoption	thm
 EDGE	LeanDag.exists_top_of_mem_history	LeanDag.Faults
 EDGE	LeanDag.exists_top_of_mem_history	LeanDag.history_subset_of_reaches
@@ -26121,6 +26602,22 @@ EDGE	LeanDag.Integration.chopMsg._proof_5	LeanDag.SkipMsg.r
 EDGE	LeanDag.Integration.chopMsg._proof_5	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.chopMsg._proof_5	LeanDag.SkipMsg
 EDGE	LeanDag.Integration.chopMsg._proof_5	LeanDag.SkipMsg.B1
+NODE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history	LeanDag.BlackMarlin.deliveredBelow
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history	LeanDag.BlackMarlin.segment
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history	LeanDag.BlackMarlin.deliveredBelow.match_1
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history._proof_1_1
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history	LeanDag.BlackMarlin.TopoSort.sort
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history	LeanDag.BlackMarlin.TopoSort.mem
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history	LeanDag.history
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history	LeanDag.BlackMarlin.ledgerSeq.eq_1
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history	LeanDag.BlackMarlin.ledgerSeq
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDagTest.instFaults5FinOfNatNat_leanDagTest._proof_3	LeanDagTest.Odontoceti.Model	thm
 NODE	LeanDag.not_mem_creators_refs_of_correct_exposed	LeanDag.DoS.Exclusion	thm
 EDGE	LeanDag.not_mem_creators_refs_of_correct_exposed	LeanDag.creatorsOf
@@ -26328,6 +26825,7 @@ EDGE	LeanDag.DecidedWithin.below.indirectSkip	LeanDag.IsLeaderBlock
 EDGE	LeanDag.DecidedWithin.below.indirectSkip	LeanDag.DecidedWithin.indirectSkip
 EDGE	LeanDag.DecidedWithin.below.indirectSkip	LeanDag.Slots
 EDGE	LeanDag.DecidedWithin.below.indirectSkip	LeanDag.View
+NODE	LeanDag.BlackMarlin.segment_congr._proof_1_2	LeanDag.BlackMarlin.Helpers.Order	thm
 NODE	LeanDagTest.ucrashMsg._proof_1	LeanDagTest.SafeSkip	thm
 NODE	LeanDag.BlackMarlin.descentUpto_eq_of_le._proof_1_1	LeanDag.BlackMarlin.Helpers.Descent	thm
 EDGE	LeanDag.BlackMarlin.descentUpto_eq_of_le._proof_1_1	LeanDag.Faults
@@ -27973,6 +28471,14 @@ EDGE	LeanDag.Nemo.exists_mem_refs_of_correct_support._proof_1_2	LeanDag.Nemo.Uni
 EDGE	LeanDag.Nemo.exists_mem_refs_of_correct_support._proof_1_2	LeanDag.Block.refs
 EDGE	LeanDag.Nemo.exists_mem_refs_of_correct_support._proof_1_2	LeanDag.Block.round
 EDGE	LeanDag.Nemo.exists_mem_refs_of_correct_support._proof_1_2	LeanDag.Nemo.authorsAt
+NODE	LeanDag.BlackMarlin.TopoSort.ofFinOrder._proof_3	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.TopoSort.ofFinOrder._proof_3	LeanDag.RefStepFrom
+EDGE	LeanDag.BlackMarlin.TopoSort.ofFinOrder._proof_3	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.ofFinOrder._proof_3	LeanDag.BlackMarlin.idxOf_le_of_pairwise
+EDGE	LeanDag.BlackMarlin.TopoSort.ofFinOrder._proof_3	LeanDag.Block.refs
+EDGE	LeanDag.BlackMarlin.TopoSort.ofFinOrder._proof_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.TopoSort.ofFinOrder._proof_3	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.ofFinOrder._proof_3	LeanDag.Reaches
 NODE	LeanDag.BlackMarlin.Safety.AnchorsAreLeaderBlocks	LeanDag.BlackMarlin.Safety.Statement	def
 EDGE	LeanDag.BlackMarlin.Safety.AnchorsAreLeaderBlocks	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Safety.AnchorsAreLeaderBlocks	LeanDag.BlackMarlin.IsAnchor
@@ -28073,6 +28579,22 @@ EDGE	LeanDag.waveRobin_spansEligible._simp_1_1	LeanDag.Slots.slotRound
 EDGE	LeanDag.waveRobin_spansEligible._simp_1_1	LeanDag.eligible_iff
 EDGE	LeanDag.waveRobin_spansEligible._simp_1_1	LeanDag.Eligible
 EDGE	LeanDag.waveRobin_spansEligible._simp_1_1	LeanDag.Slots
+NODE	LeanDag.BlackMarlin.Order.Validity	LeanDag.BlackMarlin.Order.Statement	def
+EDGE	LeanDag.BlackMarlin.Order.Validity	LeanDag.BlackMarlin.deliverSeq
+EDGE	LeanDag.BlackMarlin.Order.Validity	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Order.Validity	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.Order.Validity	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.BlackMarlin.Order.Validity	LeanDag.Correct
+EDGE	LeanDag.BlackMarlin.Order.Validity	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Order.Validity	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Order.Validity	LeanDag.PopulatedOn
+EDGE	LeanDag.BlackMarlin.Order.Validity	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Order.Validity	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Order.Validity	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.Order.Validity	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Order.Validity	LeanDag.SynchronisedOn
+EDGE	LeanDag.BlackMarlin.Order.Validity	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.Order.Validity	LeanDag.Block.creator
 NODE	LeanDagTest.BlackMarlin.fullBlock.match_1.eq_1	LeanDagTest.BlackMarlin.Ledger	thm
 EDGE	LeanDagTest.BlackMarlin.fullBlock.match_1.eq_1	LeanDagTest.BlackMarlin.fullBlock.match_1
 NODE	LeanDagTest.ugapPace._proof_7	LeanDagTest.Unbounded	thm
@@ -28141,6 +28663,12 @@ EDGE	LeanDagTest.uhyb4_slot3	LeanDagTest.Uhyb4
 EDGE	LeanDagTest.uhyb4_slot3	LeanDagTest.hyb4
 EDGE	LeanDagTest.uhyb4_slot3	LeanDag.IsLeaderBlock
 EDGE	LeanDagTest.uhyb4_slot3	LeanDag.Hybrid.DirectSkipIn
+NODE	LeanDag.BlackMarlin.TopoSort.topo	LeanDag.BlackMarlin.Model.Order	thm
+EDGE	LeanDag.BlackMarlin.TopoSort.topo	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.topo	LeanDag.BlackMarlin.TopoSort.sort
+EDGE	LeanDag.BlackMarlin.TopoSort.topo	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.topo	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.TopoSort.topo	LeanDag.Reaches
 NODE	LeanDag.BlackMarlin.Flush._sizeOf_1	LeanDag.BlackMarlin.Model.Ledger	def
 EDGE	LeanDag.BlackMarlin.Flush._sizeOf_1	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Flush._sizeOf_1	LeanDag.BlackMarlin.Flush
@@ -28597,6 +29125,16 @@ EDGE	LeanDag.directSkipIn_chop._proof_1_6	LeanDag.BlockUniverse.block
 EDGE	LeanDag.directSkipIn_chop._proof_1_6	LeanDag.Block.round
 EDGE	LeanDag.directSkipIn_chop._proof_1_6	LeanDag.BlockUniverse
 NODE	LeanDagTest.censBlk._proof_5	LeanDagTest.Quality.Model	thm
+NODE	LeanDag.BlackMarlin.Order.DescentOrder	LeanDag.BlackMarlin.Order.Statement	def
+EDGE	LeanDag.BlackMarlin.Order.DescentOrder	LeanDag.BlackMarlin.deliverSeq
+EDGE	LeanDag.BlackMarlin.Order.DescentOrder	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Order.DescentOrder	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.Order.DescentOrder	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.BlackMarlin.Order.DescentOrder	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Order.DescentOrder	LeanDag.BlackMarlin.flushRecord
+EDGE	LeanDag.BlackMarlin.Order.DescentOrder	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.Order.DescentOrder	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Order.DescentOrder	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.MahiMahi.core_decided_of_decided	LeanDag.MahiMahi.Helpers.Decision	thm
 EDGE	LeanDag.MahiMahi.core_decided_of_decided	LeanDag.MahiMahi.DirectSkipIn
 EDGE	LeanDag.MahiMahi.core_decided_of_decided	LeanDag.MahiMahi.certifiedIn_three_iff
@@ -28641,6 +29179,15 @@ EDGE	LeanDag.CausalStructure.history_subset_of_reaches	LeanDag.ReachesFrom
 EDGE	LeanDag.CausalStructure.history_subset_of_reaches	LeanDag.historyFrom
 EDGE	LeanDag.CausalStructure.history_subset_of_reaches	LeanDag.CausalStructure
 EDGE	LeanDag.CausalStructure.history_subset_of_reaches	LeanDag.CausalStructure.mem_ids_of_reaches
+NODE	LeanDag.BlackMarlin.Order.KeyDelivered	LeanDag.BlackMarlin.Order.Statement	def
+EDGE	LeanDag.BlackMarlin.Order.KeyDelivered	LeanDag.BlackMarlin.deliverSeq
+EDGE	LeanDag.BlackMarlin.Order.KeyDelivered	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Order.KeyDelivered	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.Order.KeyDelivered	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Order.KeyDelivered	LeanDag.BlackMarlin.ledgerSeq
+EDGE	LeanDag.BlackMarlin.Order.KeyDelivered	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Order.KeyDelivered	LeanDag.BlackMarlin.key
+EDGE	LeanDag.BlackMarlin.Order.KeyDelivered	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_7	LeanDag.Odontoceti.Rules	thm
 EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_7	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.thickLink_of_directCommit_aux._proof_1_7	LeanDag.BlockUniverse.block
@@ -28936,6 +29483,16 @@ EDGE	LeanDag.ViewPace.dos_resistance_of_pace	LeanDag.ViewPace
 EDGE	LeanDag.ViewPace.dos_resistance_of_pace	LeanDag.viewUpto
 EDGE	LeanDag.ViewPace.dos_resistance_of_pace	LeanDag.ViewPace.toDelivery
 EDGE	LeanDag.ViewPace.dos_resistance_of_pace	LeanDag.ViewPace.populatedOn
+NODE	LeanDag.BlackMarlin.ledgerSeq_agree	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.ledgerSeq_agree	LeanDag.BlackMarlin.segment_congr
+EDGE	LeanDag.BlackMarlin.ledgerSeq_agree	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.ledgerSeq_agree	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.ledgerSeq_agree	LeanDag.BlackMarlin.segment
+EDGE	LeanDag.BlackMarlin.ledgerSeq_agree	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.ledgerSeq_agree	LeanDag.BlackMarlin.ledgerSeq
+EDGE	LeanDag.BlackMarlin.ledgerSeq_agree	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.ledgerSeq_agree	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.ledgerSeq_agree	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.SkipMsg.directSkip_fresh	LeanDag.SafeSkip.Basic	thm
 EDGE	LeanDag.SkipMsg.directSkip_fresh	LeanDag.SkipMsg.v1
 EDGE	LeanDag.SkipMsg.directSkip_fresh	LeanDag.Block
@@ -29227,6 +29784,13 @@ EDGE	LeanDag.Hybrid.instDecidableThickLink	LeanDag.Hybrid.instDecidableThickLink
 EDGE	LeanDag.Hybrid.instDecidableThickLink	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.instDecidableThickLink	LeanDag.HybridFaults.toFaults
 EDGE	LeanDag.Hybrid.instDecidableThickLink	LeanDag.BlockUniverse
+NODE	LeanDag.BlackMarlin.filterFirstFrom_pairwise	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_pairwise	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_pairwise	LeanDag.BlackMarlin.filterFirstFrom
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_pairwise	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_pairwise	LeanDag.BlackMarlin.filterFirstFrom.eq_2
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_pairwise	LeanDag.BlackMarlin.key
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_pairwise	LeanDag.BlackMarlin.filterFirstFrom_key_notMem
 NODE	LeanDag.committed_of_correct_block._proof_1_3	LeanDag.Quality.Inclusion	thm
 EDGE	LeanDag.committed_of_correct_block._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.committed_of_correct_block._proof_1_3	LeanDag.Slots.slotRound
@@ -29829,6 +30393,13 @@ EDGE	LeanDag.ReactiveM.mk.inj	LeanDag.ReactiveM.mk
 EDGE	LeanDag.ReactiveM.mk.inj	LeanDag.ReactivePace
 EDGE	LeanDag.ReactiveM.mk.inj	LeanDag.ReactiveM.mk.noConfusion
 EDGE	LeanDag.ReactiveM.mk.inj	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.TopoSort.noConfusion	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.TopoSort.noConfusion	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.noConfusion	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.noConfusion	LeanDag.BlackMarlin.TopoSort.casesOn
+EDGE	LeanDag.BlackMarlin.TopoSort.noConfusion	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.TopoSort.noConfusion	LeanDag.BlackMarlin.TopoSort.noConfusionType
+EDGE	LeanDag.BlackMarlin.TopoSort.noConfusion	LeanDag.Reaches
 NODE	LeanDagTest.uexcl_decided._proof_1_3	LeanDagTest.DoS.Exclusion	thm
 NODE	LeanDagTest.utwin6_slot0._proof_1_1	LeanDagTest.Odontoceti.Model	thm
 NODE	LeanDag.history_chop_subset_retained	LeanDag.GC.Bootstrap	thm
@@ -30267,6 +30838,16 @@ EDGE	LeanDag.indirect_agrees_with_direct	LeanDag.Block.round
 EDGE	LeanDag.indirect_agrees_with_direct	LeanDag.BlockUniverse
 EDGE	LeanDag.indirect_agrees_with_direct	LeanDag.DirectSkip
 EDGE	LeanDag.indirect_agrees_with_direct	LeanDag.certifiedIn_of_directCommit
+NODE	LeanDag.BlackMarlin.deliverSeq_pairwise	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.deliverSeq_pairwise	LeanDag.BlackMarlin.deliverSeq
+EDGE	LeanDag.BlackMarlin.deliverSeq_pairwise	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.deliverSeq_pairwise	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.deliverSeq_pairwise	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.deliverSeq_pairwise	LeanDag.BlackMarlin.ledgerSeq
+EDGE	LeanDag.BlackMarlin.deliverSeq_pairwise	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.deliverSeq_pairwise	LeanDag.BlackMarlin.key
+EDGE	LeanDag.BlackMarlin.deliverSeq_pairwise	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.deliverSeq_pairwise	LeanDag.BlackMarlin.filterFirstFrom_pairwise
 NODE	LeanDagTest.uskip_decidedWithin_slot1._proof_1_3	LeanDagTest.Adaptive	thm
 NODE	LeanDag.Integration.refs_mem_history_of_commonAt	LeanDag.Integration.CommonTarget	thm
 EDGE	LeanDag.Integration.refs_mem_history_of_commonAt	LeanDag.RefStepFrom
@@ -30442,6 +31023,12 @@ EDGE	LeanDag.chopBlock	LeanDag.BlockUniverse.block
 EDGE	LeanDag.chopBlock	LeanDag.Block.round
 EDGE	LeanDag.chopBlock	LeanDag.BlockUniverse
 EDGE	LeanDag.chopBlock	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.TopoSort.mk._flat_ctor	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.TopoSort.mk._flat_ctor	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.mk._flat_ctor	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.mk._flat_ctor	LeanDag.BlackMarlin.TopoSort.mk
+EDGE	LeanDag.BlackMarlin.TopoSort.mk._flat_ctor	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.TopoSort.mk._flat_ctor	LeanDag.Reaches
 NODE	LeanDag.BlackMarlin.SupportedIn	LeanDag.BlackMarlin.Model.Decision	def
 EDGE	LeanDag.BlackMarlin.SupportedIn	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.SupportedIn	LeanDag.BlockUniverse
@@ -31309,6 +31896,12 @@ EDGE	LeanDag.ViewPace.covers_of_converges._proof_1_1	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewPace.covers_of_converges._proof_1_1	LeanDag.ViewPace
 EDGE	LeanDag.ViewPace.covers_of_converges._proof_1_1	LeanDag.Block.creator
 EDGE	LeanDag.ViewPace.covers_of_converges._proof_1_1	LeanDag.PaceCore.delay
+NODE	LeanDag.BlackMarlin.filterFirstFrom_key_mem	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_key_mem	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_key_mem	LeanDag.BlackMarlin.filterFirstFrom
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_key_mem	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_key_mem	LeanDag.BlackMarlin.filterFirstFrom.eq_2
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_key_mem	LeanDag.BlackMarlin.key
 NODE	LeanDag.card_missingAt_le_aux._proof_1_1	LeanDag.DoS.Density	thm
 EDGE	LeanDag.card_missingAt_le_aux._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.card_missingAt_le_aux._proof_1_1	LeanDag.BlockUniverse.block
@@ -31556,6 +32149,13 @@ EDGE	LeanDag.ViewPace.mk._flat_ctor	LeanDag.ViewPace
 EDGE	LeanDag.ViewPace.mk._flat_ctor	LeanDag.Block.creator
 NODE	LeanDag.Block.creator	LeanDag.Block	def
 EDGE	LeanDag.Block.creator	LeanDag.Block
+NODE	LeanDag.BlackMarlin.TopoSort.mk.noConfusion	LeanDag.BlackMarlin.Model.Order	def
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.noConfusion	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.noConfusion	LeanDag.BlackMarlin.TopoSort.noConfusion
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.noConfusion	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.noConfusion	LeanDag.BlackMarlin.TopoSort.mk
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.noConfusion	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.TopoSort.mk.noConfusion	LeanDag.Reaches
 NODE	LeanDag.Nemo.View.mk.injEq	LeanDag.Nemo.Basic	thm
 EDGE	LeanDag.Nemo.View.mk.injEq	LeanDag.Nemo.Universe
 EDGE	LeanDag.Nemo.View.mk.injEq	LeanDag.Nemo.Universe.block
@@ -31564,6 +32164,11 @@ EDGE	LeanDag.Nemo.View.mk.injEq	LeanDag.Nemo.View
 EDGE	LeanDag.Nemo.View.mk.injEq	LeanDag.Nemo.View.mk
 EDGE	LeanDag.Nemo.View.mk.injEq	LeanDag.Nemo.Universe.ids
 EDGE	LeanDag.Nemo.View.mk.injEq	LeanDag.Nemo.View.mk.inj
+NODE	LeanDagTest.BlackMarlin.fullSort	LeanDagTest.BlackMarlin.Ledger	def
+EDGE	LeanDagTest.BlackMarlin.fullSort	LeanDagTest.BlackMarlin.Ufull
+EDGE	LeanDagTest.BlackMarlin.fullSort	LeanDag.BlackMarlin.TopoSort.ofFinOrder
+EDGE	LeanDagTest.BlackMarlin.fullSort	LeanDagTest.BlackMarlin.fullSort._proof_1
+EDGE	LeanDagTest.BlackMarlin.fullSort	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDagTest.ugrowLag._proof_3	LeanDagTest.Collapse	thm
 EDGE	LeanDagTest.ugrowLag._proof_3	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowLag._proof_3	LeanDag.BlockUniverse.block
@@ -31766,6 +32371,7 @@ EDGE	LeanDag.MahiMahi.Votes.mem_history	LeanDag.BlockUniverse
 EDGE	LeanDag.MahiMahi.Votes.mem_history	LeanDag.MahiMahi.candidatesAt
 EDGE	LeanDag.MahiMahi.Votes.mem_history	LeanDag.MahiMahi.mem_candidatesAt
 EDGE	LeanDag.MahiMahi.Votes.mem_history	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.Order.holds._proof_1_2	LeanDag.BlackMarlin.Order.Proof	thm
 NODE	LeanDagTest.BlackMarlin.ugrowBM._proof_31	LeanDagTest.BlackMarlin.Reactive	thm
 EDGE	LeanDagTest.BlackMarlin.ugrowBM._proof_31	LeanDagTest.BlackMarlin.ugrowBM._proof_17
 EDGE	LeanDagTest.BlackMarlin.ugrowBM._proof_31	LeanDagTest.BlackMarlin.ugrowBM._proof_16
@@ -32256,6 +32862,8 @@ EDGE	LeanDag.Odontoceti.decided_below_of_committed_run	LeanDag.Faults5.toFaults
 EDGE	LeanDag.Odontoceti.decided_below_of_committed_run	LeanDag.Block.creator
 EDGE	LeanDag.Odontoceti.decided_below_of_committed_run	LeanDag.Odontoceti.decided_below_of_committed_run._proof_1_2
 NODE	LeanDagTest.ugrowSkewPace._proof_18	LeanDagTest.ViewPace	thm
+NODE	LeanDag.BlackMarlin.filterFirstFrom.match_1.eq_2	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.filterFirstFrom.match_1.eq_2	LeanDag.BlackMarlin.filterFirstFrom.match_1
 NODE	LeanDag.hybrid_f	LeanDag.Hybrid.Faults	thm
 EDGE	LeanDag.hybrid_f	LeanDag.HybridFaults
 EDGE	LeanDag.hybrid_f	LeanDag.HybridFaults.fc
@@ -33570,6 +34178,12 @@ EDGE	LeanDag.BlackMarlin.linkersIn_subset	LeanDag.BlackMarlin.linkersIn_subset._
 NODE	LeanDag.SpansEligible	LeanDag.Liveness	def
 EDGE	LeanDag.SpansEligible	LeanDag.Eligible
 EDGE	LeanDag.SpansEligible	LeanDag.Slots
+NODE	LeanDag.BlackMarlin.TopoSort.rec	LeanDag.BlackMarlin.Model.Order	rec
+EDGE	LeanDag.BlackMarlin.TopoSort.rec	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort.rec	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.TopoSort.rec	LeanDag.BlackMarlin.TopoSort.mk
+EDGE	LeanDag.BlackMarlin.TopoSort.rec	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.TopoSort.rec	LeanDag.Reaches
 NODE	LeanDagTest.mmAimBlk._proof_4	LeanDagTest.MahiMahi.Counting	thm
 NODE	LeanDag.Odontoceti.PartialRun	LeanDag.Adaptive.Odontoceti	ind
 EDGE	LeanDag.Odontoceti.PartialRun	LeanDag.Faults5
@@ -33582,6 +34196,12 @@ NODE	LeanDag.Nemo.Decided	LeanDag.Nemo.Decision	ind
 EDGE	LeanDag.Nemo.Decided	LeanDag.Nemo.Universe
 EDGE	LeanDag.Nemo.Decided	LeanDag.Nemo.View
 EDGE	LeanDag.Nemo.Decided	LeanDag.Slots
+NODE	LeanDag.BlackMarlin.filterFirstFrom_key_notMem	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_key_notMem	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_key_notMem	LeanDag.BlackMarlin.filterFirstFrom
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_key_notMem	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_key_notMem	LeanDag.BlackMarlin.filterFirstFrom.eq_2
+EDGE	LeanDag.BlackMarlin.filterFirstFrom_key_notMem	LeanDag.BlackMarlin.key
 NODE	LeanDag.mem_history_of_correct._proof_1_1	LeanDag.DoS.Exclusion	thm
 EDGE	LeanDag.mem_history_of_correct._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.mem_history_of_correct._proof_1_1	LeanDag.BlockUniverse.block
@@ -34109,6 +34729,16 @@ NODE	LeanDagTest.udouble_exposed	LeanDagTest.DoS.Doubling	thm
 EDGE	LeanDagTest.udouble_exposed	LeanDagTest.doubleFaults
 EDGE	LeanDagTest.udouble_exposed	LeanDagTest.Udouble
 EDGE	LeanDagTest.udouble_exposed	LeanDag.exposedTo
+NODE	LeanDag.BlackMarlin.ledgerSeq_prefix	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.ledgerSeq_prefix	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.ledgerSeq_prefix	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.ledgerSeq_prefix	LeanDag.BlackMarlin.segment
+EDGE	LeanDag.BlackMarlin.ledgerSeq_prefix	LeanDag.BlackMarlin.ledgerSeq_prefix._proof_1_1
+EDGE	LeanDag.BlackMarlin.ledgerSeq_prefix	LeanDag.BlackMarlin.ledgerSeq_prefix._proof_1_2
+EDGE	LeanDag.BlackMarlin.ledgerSeq_prefix	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.ledgerSeq_prefix	LeanDag.BlackMarlin.ledgerSeq
+EDGE	LeanDag.BlackMarlin.ledgerSeq_prefix	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.ledgerSeq_prefix	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.mem_viewUpto._proof_1_3	LeanDag.GC.Window	thm
 NODE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_7	LeanDag.SafeSkip.Jump	thm
 EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_7	LeanDag.Faults
@@ -34395,6 +35025,9 @@ EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.ugrowCatchPace._proof_26
 EDGE	LeanDagTest.ugrowCatchPace	LeanDagTest.ugrowCatchPace._proof_1
 NODE	LeanDagTest.oBase	LeanDagTest.Adaptive	def
 EDGE	LeanDagTest.oBase	LeanDagTest.oBase._proof_2
+NODE	LeanDag.BlackMarlin.TopoSort	LeanDag.BlackMarlin.Model.Order	ind
+EDGE	LeanDag.BlackMarlin.TopoSort	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.TopoSort	LeanDag.BlockUniverse
 NODE	LeanDag.card_viewUpto_succ_le_of_bounds._proof_1_1	LeanDag.DoS.Novelty	thm
 EDGE	LeanDag.card_viewUpto_succ_le_of_bounds._proof_1_1	LeanDag.Delivery
 EDGE	LeanDag.card_viewUpto_succ_le_of_bounds._proof_1_1	LeanDag.Faults
@@ -34851,6 +35484,10 @@ EDGE	LeanDag.ValidWrt.self_parent	LeanDag.Block.refs
 EDGE	LeanDag.ValidWrt.self_parent	LeanDag.Block.round
 EDGE	LeanDag.ValidWrt.self_parent	LeanDag.Block.creator
 EDGE	LeanDag.ValidWrt.self_parent	LeanDag.ValidWrt
+NODE	LeanDag.BlackMarlin.filterFirstFrom.match_1	LeanDag.BlackMarlin.Model.Order	def
+NODE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_4	LeanDag.BlackMarlin.Helpers.Order	thm
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_4	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_2
+EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_4	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_1
 NODE	LeanDagTest.twinBlk	LeanDagTest.Odontoceti.Model	def
 EDGE	LeanDagTest.twinBlk	LeanDag.Block
 EDGE	LeanDagTest.twinBlk	LeanDagTest.twinBlk._proof_5
@@ -35114,6 +35751,7 @@ EDGE	LeanDag.Integration.chopMsg_B1	LeanDag.Integration.chopMsg
 EDGE	LeanDag.Integration.chopMsg_B1	LeanDag.SkipMsg
 EDGE	LeanDag.Integration.chopMsg_B1	LeanDag.SkipMsg.B1
 NODE	LeanDagTest.doubleFaults._proof_1	LeanDagTest.DoS.Doubling	thm
+NODE	LeanDag.BlackMarlin.TopoSort.ofFinOrder._proof_1	LeanDag.BlackMarlin.Helpers.Order	thm
 NODE	LeanDag.spansEligible_slotsOf	LeanDag.Adaptive.Liveness	thm
 EDGE	LeanDag.spansEligible_slotsOf	LeanDag.Slots.slotRound
 EDGE	LeanDag.spansEligible_slotsOf	LeanDag.slotsOf

@@ -114,3 +114,7 @@ import LeanDag.BlackMarlin.Model.Descent
 import LeanDag.BlackMarlin.Descent.Statement
 import LeanDag.BlackMarlin.Helpers.Descent
 import LeanDag.BlackMarlin.Descent.Proof
+import LeanDag.BlackMarlin.Model.Order
+import LeanDag.BlackMarlin.Order.Statement
+import LeanDag.BlackMarlin.Helpers.Order
+import LeanDag.BlackMarlin.Order.Proof
