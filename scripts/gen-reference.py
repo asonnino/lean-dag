@@ -69,6 +69,10 @@ LAYERS = [
       "MahiMahi.Helpers.Liveness", "MahiMahi.Helpers.Synchrony",
       "MahiMahi.Safety.Proof", "MahiMahi.Counting.Proof",
       "MahiMahi.Liveness.Proof", "MahiMahi.Synchrony.Proof"]),
+    ("Black Marlin: the three-round commit rule",
+     ["BlackMarlin.Model.Rules", "BlackMarlin.Model.Decision",
+      "BlackMarlin.Safety.Statement", "BlackMarlin.Helpers.Rules",
+      "BlackMarlin.Helpers.Decision", "BlackMarlin.Safety.Proof"]),
     ("The legacy quorum route (report §17)", ["Network.Quorum"]),
 ]
 

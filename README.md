@@ -148,6 +148,19 @@ faults alone.
   implementation's slot blame. The arc is built under a
   statement/proof partition: definitions and statements are the audited
   surface, proofs are generated, and a checker enforces the split.
+- **Black Marlin** (`LeanDag/BlackMarlin/`): the three-round commit rule
+  of a partially synchronous protocol (arXiv:2508.14716) that uses
+  neither reliable broadcast nor a common coin and elects an anchor in
+  **every round**, proved safe at the core's committee `n ≥ 3f+1` with
+  no certificate round. An anchor is committed when it carries `n − f`
+  support and the anchor above it both references it and carries `n − f`
+  support; from that, committed anchors are unique per round and
+  **linearly ordered by causal history**, so the delivered prefixes
+  nest. The second clause is used in exactly one case of one theorem —
+  two committed anchors one round apart, which support alone leaves
+  incomparable, refuted on the paper's own Figure 1 — where a supported
+  anchor is correctly refused for want of the link.
+  The arc is the second under the statement/proof partition.
 
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on
@@ -179,8 +192,9 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
   one message; `Adaptive/` — adaptive leader schedules; `Hybrid/` —
   Byzantine and crash faults apart; `Nemo/` — crash-fault consensus at
   a majority quorum; `MahiMahi/` — the asynchronous rule at wave `w`,
-  under a statement/proof partition (`Model/`, `<Result>/Statement.lean`,
-  `<Result>/Proof.lean`); `Network/` — the composed
+  and `BlackMarlin/` — the three-round rule with an anchor every round,
+  both under a statement/proof partition (`Model/`,
+  `<Result>/Statement.lean`, `<Result>/Proof.lean`); `Network/` — the composed
   denial-of-service capstones; `Integration/` — how the arcs compose).
 - `LeanDag.lean` — root import file.
 - `LeanDagTest/` — `decide` witnesses and concrete models, mirroring the
@@ -196,7 +210,7 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
   appendices from it; `audit-report.py` checks the report's
   cross-references, its Lean identifiers, and every displayed statement
   verbatim against the compiled source. Regeneration is deterministic,
-  so regenerate-and-diff is the pre-merge check.
+  so regenerate-and-diff is the pre-merge check. `check-arc-holes.py` enforces the statement/proof partition of the arcs that adopt it.
 
 ## Documents
 
@@ -213,6 +227,8 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 | [`docs/odontoceti.md`](docs/odontoceti.md) | the two-round protocol: the generalized thresholds, and the findings |
 | [`docs/adaptive-leaders.md`](docs/adaptive-leaders.md) | adaptive leader schedules: the design record and theorem plan |
 | [`docs/hybrid-plan.md`](docs/hybrid-plan.md) | hybrid fault tolerance: the design record and theorem plan |
+| [`docs/mahi-mahi.md`](docs/mahi-mahi.md) | the asynchronous rule at wave `w`: the clause, and the statement/proof partition |
+| [`docs/black-marlin.md`](docs/black-marlin.md) | the three-round commit rule: the link clause, and what it is used for |
 | [`docs/integration.md`](docs/integration.md) | composing the arcs: the invariant interface, and what composition revealed |
 | [`docs/related.md`](docs/related.md) | a survey of consensus on uncertified DAGs |
 | [`docs/style.md`](docs/style.md) | writing conventions for the documents and the source |
