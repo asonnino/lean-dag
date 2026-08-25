@@ -1002,6 +1002,34 @@ which twin the filter prefers, so no rule for choosing among twins
 repairs it. Only a rule making the two descents agree does, which is
 `descendS`, and §15 is why that has no live implementation.
 
+![**Total order refuted, on data.** The two `ab-deliver` sequences of `LeanDagTest/BlackMarlin/Divergence.lean`, computed by `commitSeq` — Algorithm 1's own recursion — and grouped by the invocation of `commit` that emitted each block. Blocks `5` and `7` are authored by reliable validators and have no twins, so L27's filter never examines either, yet they come out in opposite orders. Block `7` is also the anchor of round `1`, so an honest leader's block is a segment boundary for one validator and mid-segment for the other.](figures/black-marlin-order.svg)
+
+### Checked against Algorithm 1, and one more defect
+
+`Flush` records a validator's boundaries as a function of round and
+`ledgerSeq` reads them off in round order. `commit(B)` is invoked afresh
+at each successful `delivery(r)` and threads `D` across invocations, so a
+later commit can descend below a boundary an earlier one passed and emit
+those blocks *after* blocks of a higher round — which a round-indexed
+record cannot express. `Model/Recursion.lean` writes L18–L32 out
+directly so the abstraction can be checked rather than assumed.
+
+Run through it, the second validator's `Flush` reproduces its sequence
+exactly, and the first's differs in one position and no more: the
+round-0 anchor `3` is flushed as its own segment at `delivery(4)`, where
+a record with no round-0 boundary emits it inside the round-2 segment.
+The pair the order turns on is unaffected. So the inversion is a
+property of the algorithm as written.
+
+**L30 sits outside the loop L27 guards.** Read literally, the anchor `B`
+is `ab-deliver`ed whatever `D` holds, so the first validator — having
+delivered `8`, then descending to `12` — would deliver both, breaking
+Integrity outright. §4.4's prose says otherwise: "In case of conflicting
+blocks from the same party and round, only the first block ... is
+ab-delivered". `commitSeq` takes the prose and filters `B` as well,
+which is the reading under which everything above stands; under the
+literal one Integrity fails with no argument needed.
+
 The order therefore agrees exactly as far as the rotation is reliable
 and no further. The boundary is not a limitation of this record: BMT3 is
 proved, its converse is refuted on data, and between them nothing is

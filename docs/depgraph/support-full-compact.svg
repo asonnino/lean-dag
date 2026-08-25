@@ -111,10 +111,13 @@
 <path d="M628.0,1665.0 C651.0,1665.0 651.0,1698.0 674.0,1698.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
 <path d="M196.0,741.0 C219.0,741.0 219.0,2325.0 242.0,2325.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
 <path d="M196.0,741.0 C219.0,741.0 219.0,2292.0 242.0,2292.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,2028.0 C489.0,2028.0 489.0,1714.5 782.0,1714.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
 <path d="M196.0,2028.0 C165.0,2028.0 165.0,2094.0 134.0,2094.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M196.0,2028.0 C165.0,2028.0 165.0,2061.0 134.0,2061.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
-<path d="M196.0,2028.0 C165.0,2028.0 165.0,708.0 134.0,708.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
 <path d="M196.0,2028.0 C165.0,2028.0 165.0,2127.0 134.0,2127.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,2028.0 C165.0,2028.0 165.0,708.0 134.0,708.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,2028.0 C273.0,2028.0 273.0,2061.0 350.0,2061.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,2028.0 C165.0,2028.0 165.0,2061.0 134.0,2061.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
+<path d="M196.0,2028.0 C543.0,2028.0 543.0,1698.0 890.0,1698.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
 <path d="M736.0,1665.0 C759.0,1665.0 759.0,1648.5 782.0,1648.5" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
 <path d="M88.0,1747.5 C165.0,1747.5 165.0,1038.0 242.0,1038.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
 <path d="M88.0,1747.5 C111.0,1747.5 111.0,543.0 134.0,543.0" fill="none" stroke="#8894a4" stroke-width="1" opacity="0.5" marker-end="url(#a)"/>
@@ -599,7 +602,7 @@
 <g><title>LeanDag.BlackMarlin.committed_of_committedIn — a view&#x27;s verdict is the universe&#x27;s, and the view holds the block it committed</title>
 <rect x="134.0" y="1983.0" width="62" height="24" rx="5" fill="#fbe9d6" stroke="#c0844a" stroke-width="1.2"/>
 <text class="lbl" x="165.0" y="1995.0" text-anchor="middle">BM4</text></g>
-<g><title>LeanDag.BlackMarlin.deliverSeq — and one Byzantine anchor below suffices to order two reliable authors&#x27; blocks oppositely</title>
+<g><title>LeanDag.BlackMarlin.deliverSeq — and one Byzantine anchor below suffices to order two reliable authors&#x27; blocks oppositely, refuting Total order</title>
 <rect x="134.0" y="2016.0" width="62" height="24" rx="5" fill="#fbe9d6" stroke="#c0844a" stroke-width="1.2"/>
 <text class="lbl" x="165.0" y="2028.0" text-anchor="middle">BMT4</text></g>
 <g><title>LeanDag.BlackMarlin.deliverSeq_agree — records that agree output the same list</title>

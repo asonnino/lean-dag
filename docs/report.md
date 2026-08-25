@@ -6041,7 +6041,41 @@ orders:
 
 What orders them is which segment they fall in. `5` lies in the cone of
 one twin and `7` in the cone of the other, so each record takes one of
-them in its round-2 segment and the other only in the round-4 segment.
+them with the twin it committed and the other only later.
+
+![**Total order refuted, on data.** The two `ab-deliver` sequences of `LeanDagTest/BlackMarlin/Divergence.lean`, computed there by `commitSeq` — Algorithm 1's own recursion — and grouped by the invocation of `commit` that emitted each block. The first validator commits `8` at `delivery(4)` and `19` at `delivery(6)`; the second fails `delivery(4)` for want of `17`, `18` and `20`, and commits `19` alone. Blocks `5` and `7` are authored by reliable validators and have no twins, so L27's filter never examines either, yet they come out in opposite orders. Block `7` is also the anchor of round `1`, so an honest leader's block is a segment boundary for one validator and mid-segment for the other.](figures/black-marlin-order.svg)
+
+**Checked against Algorithm 1 itself.** `Flush` records a validator's
+boundaries as a function of round and `ledgerSeq` reads them off in
+round order, which is an abstraction: `commit(B)` is invoked afresh at
+each successful `delivery(r)` and threads `D` across invocations, so a
+later commit can descend below a boundary an earlier one passed and emit
+those blocks *after* blocks of a higher round. `Model/Recursion.lean`
+writes L18–L32 out directly, and the two validators run through it give
+
+```lean
+vRec = [3, 0, 1, 2, 4, 5, 6, 8, 7, 9, 10, 11, 13, 15, 16, 19] ∧
+    wRec = [3, 1, 2, 7, 0, 4, 6, 12, 5, 9, 10, 11, 13, 15, 16, 19] ∧
+    vRec.idxOf 5 < vRec.idxOf 7 ∧ wRec.idxOf 7 < wRec.idxOf 5
+```
+
+so the inversion is a property of the algorithm as written, not of the
+abstraction. The second validator's `Flush` reproduces its sequence
+exactly; the first's differs in one position and no more, the round-0
+anchor `3` being flushed as its own segment at `delivery(4)` where a
+record with no round-0 boundary emits it inside the round-2 segment. The
+pair the order turns on is unaffected, and the witness checks that the
+two sequences agree once `3` is removed.
+
+**One further defect surfaces in the reading.** L30 sits outside the
+loop L27 guards, so on a literal reading the anchor `B` is
+`ab-deliver`ed whatever `D` holds — and the first validator, having
+delivered `8` and later descending to `12`, would deliver both, breaking
+Integrity outright. §4.4's prose says otherwise: "In case of conflicting
+blocks from the same party and round, only the first block ... is
+ab-delivered". `commitSeq` takes the prose and filters `B` as well, which
+is the reading under which the refutations above stand; under the
+literal one Integrity fails without any of this argument.
 
 **This is the more robust of the two failures.** It does not depend on
 which twin the filter prefers, so no rule for choosing among twins
@@ -7231,7 +7265,7 @@ reused.
 | BMT1 | a reliably anchored round pins every record, no view entering | `BlackMarlin.ViewOrder.holds` *(BlackMarlin/ViewOrder/Proof)* |
 | BMT2 | so agreement descends from it through any flushed stretch | `BlackMarlin.ViewOrder.holds` *(BlackMarlin/ViewOrder/Proof)* |
 | BMT3 | and with every anchor below reliable, the delivered lists coincide | `BlackMarlin.ViewOrder.holds` *(BlackMarlin/ViewOrder/Proof)* |
-| BMT4 | and one Byzantine anchor below suffices to order two reliable authors' blocks oppositely, refuting Total order | `deliverSeq` witnesses *(LeanDagTest/BlackMarlin/Divergence)* |
+| BMT4 | and one Byzantine anchor below suffices to order two reliable authors' blocks oppositely, refuting Total order | `deliverSeq` and `commitSeq` witnesses *(LeanDagTest/BlackMarlin/Divergence)* |
 | BMP14 | both repairs on the execution of §18.11, what they cost, a view that misses the support, and a counting rule that reads it wrongly at `f = 1` | `descendSupp`, `descendS`, `coneView`, `Ucnt` witnesses *(LeanDagTest/BlackMarlin)* |
 
 **Integration** (§16):
@@ -13452,6 +13486,67 @@ def Statement : Prop :=
 The repaired descent, over every fault configuration, rotation and block universe the model admits.
 
 ### Not otherwise grouped
+
+#### `descendD`
+
+*def, `BlackMarlin.Model.Recursion.lean`*
+
+```lean
+def descendD (U : BlockUniverse Validator BlockId Payload) (B : BlockId)
+    (D : Finset BlockId) : Option BlockId :=
+  pick ((maxAnchor U (strongOf U B \ D)).filter
+    (fun X => ∀ C ∈ maxAnchor U (strongOf U B \ D), anchorGap U X ≤ anchorGap U C))
+```
+
+**L21–L24 against the delivered set** (L19): the choice is made among the anchors of `strong(B) \ D`, where `descend` takes all of `strong(B)`. The metric of L24 is unchanged, reading `strong(A)` in full.
+
+#### `keyHeld`
+
+*def, `BlackMarlin.Model.Recursion.lean`*
+
+```lean
+def keyHeld (U : BlockUniverse Validator BlockId Payload) (b : BlockId)
+    (D : Finset BlockId) : Prop :=
+  ∃ c ∈ D, key U c = key U b
+```
+
+**L27's test**: some delivered block shares this one's author and round.
+
+#### `emitFrom`
+
+*def, `BlackMarlin.Model.Recursion.lean`*
+
+```lean
+def emitFrom (U : BlockUniverse Validator BlockId Payload) :
+    List BlockId → Finset BlockId → List BlockId × Finset BlockId
+  | [], D => ([], D)
+  | b :: bs, D =>
+      if keyHeld U b D then emitFrom U bs D
+      else
+        let r := emitFrom U bs (insert b D)
+        (b :: r.1, r.2)
+```
+
+**L26–L29**: emit a sorted segment, dropping any block whose author and round have already gone out, and threading `D`.
+
+#### `commitSeq`
+
+*def, `BlackMarlin.Model.Recursion.lean`*
+
+```lean
+def commitSeq (U : BlockUniverse Validator BlockId Payload) (τ : TopoSort U) :
+    ℕ → BlockId → Finset BlockId → List BlockId × Finset BlockId
+  | 0, B, D => ([], insert B D)
+  | (n + 1), B, D =>
+      let pd :=
+        match descendD U B D with
+        | none => (([] : List BlockId), D)
+        | some B' => commitSeq U τ n B' D
+      let md := emitFrom U (τ.sort ((history U B).erase B \ pd.2)) pd.2
+      (pd.1 ++ md.1 ++ (if keyHeld U B md.2 then [] else [B]), insert B md.2)
+```
+
+**L18–L32**, with fuel for the recursion: descend first, then emit `τ(past(B) \ D)`, then `B` itself. Returns what the invocation `ab-deliver`s and the delivered set it leaves behind, so successive invocations compose.
 
 #### `CommitsInViews`
 

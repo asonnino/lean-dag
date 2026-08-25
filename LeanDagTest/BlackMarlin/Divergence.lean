@@ -1,4 +1,5 @@
 import LeanDagTest.BlackMarlin.Ledger
+import LeanDag.BlackMarlin.Model.Recursion
 import LeanDag.BlackMarlin.Repair.Proof
 
 /-!
@@ -454,6 +455,49 @@ example : flushRecord Utie' 19 2 = some 8 ∧ flushRecord Utie' 12 2 = some 12 �
 
 /-- The support-preferring repair does answer them apart. -/
 example : descendS Utie 19 = some 8 ∧ descendS Utie' 19 = some 12 := by decide
+
+/-! ## The same two validators, under Algorithm 1 itself
+
+`Flush` records the boundaries a validator flushed as a function of
+round, and `ledgerSeq` reads them off in round order. Algorithm 1 runs
+`commit(B)` afresh at each successful `delivery(r)`, threading `D`
+across invocations, so a later commit can descend below a boundary an
+earlier one passed and emit those blocks *after* blocks of a higher
+round. `commitSeq` writes that recursion out, and the two validators of
+this execution are run through it below.
+
+The first commits `8` at `delivery(4)` and `19` at `delivery(6)`; the
+second, lacking `17`, `18` and `20`, fails `delivery(4)` and commits
+`19` at `delivery(6)` alone. -/
+
+/-- What the first validator `ab-deliver`s, across both its commits. -/
+def vRec : List (Fin 29) :=
+  let a := commitSeq Udiv divSort 10 8 ∅
+  a.1 ++ (commitSeq Udiv divSort 10 19 a.2).1
+
+/-- And what the second does. -/
+def wRec : List (Fin 29) := (commitSeq Udiv divSort 10 19 ∅).1
+
+/-- **The inversion, under the algorithm as written.** -/
+example : vRec = [3, 0, 1, 2, 4, 5, 6, 8, 7, 9, 10, 11, 13, 15, 16, 19] ∧
+    wRec = [3, 1, 2, 7, 0, 4, 6, 12, 5, 9, 10, 11, 13, 15, 16, 19] ∧
+    vRec.idxOf 5 < vRec.idxOf 7 ∧ wRec.idxOf 7 < wRec.idxOf 5 := by decide
+
+/-- And the Agreement failure with it: each delivers one twin only. -/
+example : (8 : Fin 29) ∈ vRec ∧ (12 : Fin 29) ∉ vRec ∧
+    (12 : Fin 29) ∈ wRec ∧ (8 : Fin 29) ∉ wRec := by decide
+
+/-- **The record abstraction, checked against the recursion.** The second
+validator's `Flush` reproduces its output exactly. The first's differs in
+one position and no more: the round-0 anchor `3` is flushed as its own
+segment at `delivery(4)`, which a record with no round-0 boundary emits
+inside the round-2 segment instead. The pair the order turns on is
+unaffected. -/
+example : deliverSeq Udiv wFlush divSort 5 = wRec ∧
+    deliverSeq Udiv vFlushFull divSort 5 =
+      [0, 1, 2, 3, 4, 5, 6, 8, 7, 9, 10, 11, 13, 15, 16, 19] ∧
+    (deliverSeq Udiv vFlushFull divSort 5).filter (fun b => b ≠ 3) =
+      vRec.filter (fun b => b ≠ 3) := by decide
 
 end BlackMarlin
 
