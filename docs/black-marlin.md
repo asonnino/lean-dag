@@ -459,13 +459,20 @@ adjacent committed anchors comparable is also what keeps the delivery
 order determinate around them.
 
 **What is left over.** Where the descent skips a round *and* the round it
-lands on has an equivocating anchor, nothing above applies,
-and the paper's rule for that case cannot be transcribed. Algorithm 1
-uses `maxAnchor(A)` as a set on L21 and as an element on L22, binds `A`
-as a member of `A` on L24, and leaves the function undefined when the
-candidate set holds no anchor. So BMD3 carries its stretch as a
-hypothesis rather than deriving it, and the residual case is recorded
-rather than resolved.
+lands on has an equivocating anchor, nothing above applies. The paper's
+rule for that case, L21–L24, is well formed and **block-intrinsic**: the
+quantity it minimises, `|round(A) − round(maxAnchor(strong(A)))|`,
+depends on the candidate and its own cone alone, so every validator
+computes it identically — which is the property a canonical choice needs.
+It is not modelled here, since that would mean modelling `maxAnchor` and
+the sort `τ`, so BMD3 carries its stretch as a hypothesis rather than
+deriving it.
+
+The one defect in the pseudocode is small. L20 guards `𝒜 ≠ ∅` where
+L21–L24 need `maxAnchor(𝒜) ≠ ∅`: when the undelivered remainder of
+`strong(B)` holds no anchor at all, `B′` is undefined. An implementation
+would skip the recursion there, and the arc's `dense` clause is the
+condition under which the case does not arise.
 
 Ordering *within* a segment is `τ`, which the rule does not constrain and
 this arc does not model, so the ledger is a set and a record's rounds are
@@ -502,6 +509,7 @@ Total Order at the granularity of segments — a block enters at exactly
 one round, and records that agree concur on which; the order *within* a
 segment needs `τ` modelled.
 
-**The skipped-round tie-break.** L21–L24, whose text does not parse
-(§11). Everything §11 proves is about a descent that steps by one
-round.
+**The skipped-round tie-break.** L21–L24 (§11). Everything §11 proves is
+about a descent that steps by one round or lands on a reliably anchored
+one; the paper's rule for the remaining case is well formed but is not
+transcribed here.

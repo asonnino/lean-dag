@@ -5788,11 +5788,16 @@ Order at the granularity of segments; the order *within* a segment is
 `τ`, which the rule does not constrain and this arc does not model.
 
 **What is left over, and why.** Where the descent skips a round *and*
-the round it lands on has an equivocating anchor, nothing above applies, and the paper's rule for that case cannot be
-transcribed: Algorithm 1 uses `maxAnchor(A)` as a set on L21 and as an
-element on L22, binds `A` as a member of `A` on L24, and leaves the
-function undefined when the candidate set holds no anchor. BMD3 therefore
-carries its stretch as a hypothesis rather than deriving it. Of
+the round it lands on has an equivocating anchor, nothing above applies.
+The paper's rule for that case, L21–L24, is well formed and
+**block-intrinsic** — the quantity it minimises,
+`|round(A) − round(maxAnchor(strong(A)))|`, depends on the candidate and
+its own cone alone, so every validator computes it identically, which is
+the property a canonical choice needs. Modelling it would mean modelling
+`maxAnchor` and the sort `τ`, so BMD3 carries its stretch as a hypothesis
+instead. The one defect in the pseudocode is small: L20 guards `𝒜 ≠ ∅`
+where L21–L24 need `maxAnchor(𝒜) ≠ ∅`, leaving `B′` undefined when the
+undelivered remainder holds no anchor at all. Of
 Definition 1's four properties the arc now has Validity for reliable
 authors (BML3 with BML4), Agreement (BMA3) and Total Order by segment
 (BMD6); Integrity rests on the delivered set `D`, which is not modelled.

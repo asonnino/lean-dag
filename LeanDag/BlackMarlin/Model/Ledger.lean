@@ -22,12 +22,13 @@ candidates at round `ρ` below a round-`(ρ+1)` block are that block's
 references, and `ValidWrt.distinct_creators` allows at most one block per
 author — so a consecutive step has at most one candidate and needs no
 tie-break at all. The paper's L21–L24 supplies a tie-break for the case
-where the descent skips an anchor round; its text does not parse (it uses
-`maxAnchor(A)` as a set on L21 and as an element on L22, binds `A` as an
-element of `A` on L24, and is undefined when the candidate set holds no
-anchor), so nothing here transcribes it. `step` and `dense` are what the
-descent guarantees when it does not skip, and `black-marlin.md` §11
-records what is left over.
+where the descent skips an anchor round, and that rule is
+**block-intrinsic**: the quantity it minimises,
+`|round(A) − round(maxAnchor(strong(A)))|`, depends on the candidate and
+its own cone alone, so every validator computes it identically. It is
+not modelled here, which would mean modelling `maxAnchor` and the sort
+`τ`; `step` and `dense` are what the descent guarantees where it does
+not skip, and `black-marlin.md` §11 records what is left over.
 
 **Trusted core of the arc: definitions only.** No theorem lives in this
 file.

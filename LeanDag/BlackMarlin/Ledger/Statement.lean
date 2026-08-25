@@ -36,13 +36,16 @@ both candidates, and that needs an anchor round to have been skipped. The
 link clause is what stops a *committed* anchor's round from being the one
 skipped.
 
-**What is left over.** Where the descent does skip — an anchor round
-carrying no anchor in the cone below it — nothing here applies, and the
-paper's rule for that case cannot be transcribed: L21 uses `maxAnchor(A)`
-as a set and L22 as an element, L24 binds `A` as a member of `A`, and the
-function is undefined when the candidate set holds no anchor. So BMD3
-carries its stretch as a hypothesis rather than deriving it, and the
-residual case is recorded rather than resolved.
+**What is left over.** Where the descent does skip an anchor round *and*
+the round it lands on has an equivocating anchor, nothing here applies.
+The paper's rule for that case, L21–L24, is well formed and
+**block-intrinsic** — the quantity it minimises depends on the candidate
+and its own cone alone, so every validator computes it identically — but
+it is not modelled, which would mean modelling `maxAnchor` and the sort
+`τ`. So BMD3 carries its stretch as a hypothesis rather than deriving
+it. The one defect in the pseudocode is small: L20 guards
+`𝒜 ≠ ∅` where L21–L24 need `maxAnchor(𝒜) ≠ ∅`, so `B′` is undefined
+when the undelivered remainder holds no anchor at all.
 
 Ordering *within* a segment is the deterministic sort `τ`, which the rule
 does not constrain and this arc does not model, so the ledger is a set
