@@ -211,7 +211,10 @@ faults alone.
   universe, not implementable as a view-local rule. And no support-blind
   rule stands in for it: twins given the same references agree in round,
   creator and cone, so any function of the candidates answers two
-  universes alike where the committed twin differs between them. The arc is the second under the statement/proof
+  universes alike where the committed twin differs between them. Nor
+  does counting support within the descent's own cone, which is
+  view-independent but promises the committed twin a single supporter
+  against its twin's `2f`, and fails already at four validators. The arc is the second under the statement/proof
   partition.
 
 Every definition is exercised on concrete models by `decide` before

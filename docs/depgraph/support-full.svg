@@ -658,7 +658,7 @@
 <rect x="294.0" y="3020.0" width="158" height="36" rx="5" fill="#fbe9d6" stroke="#c0844a" stroke-width="1.2"/>
 <text class="lbl" x="373.0" y="3032.0" text-anchor="middle">BMO3</text>
 <text class="nm" x="373.0" y="3046.0" text-anchor="middle">deliverSeq_prefix</text></g>
-<g><title>LeanDag.BlackMarlin.descendSupp — both repairs on the execution of §18.11, what they cost, and a view that misses the support</title>
+<g><title>LeanDag.BlackMarlin.descendSupp — both repairs on the execution of §18.11, what they cost, a view that misses the support, and a counting rule that reads it wrongly at `f = 1`</title>
 <rect x="294.0" y="3068.0" width="158" height="36" rx="5" fill="#fbe9d6" stroke="#c0844a" stroke-width="1.2"/>
 <text class="lbl" x="373.0" y="3080.0" text-anchor="middle">BMP14</text>
 <text class="nm" x="373.0" y="3094.0" text-anchor="middle">descendSupp</text></g>

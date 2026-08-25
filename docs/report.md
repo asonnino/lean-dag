@@ -5457,10 +5457,31 @@ liveness above the structural condition of §6, in place of §5.2's timing
 argument (§18.5), the round rule of L38–L41 and the responsiveness it
 yields (§18.6), Definition 1's Agreement (§18.7), and the order
 `commit`'s descent delivers in (§18.8–§18.10), a refutation of
-Definition 1's Agreement (§18.11), and a repair tested as a
-side-condition (§18.12). It is the second arc under the statement/proof
+Definition 1's Agreement (§18.11), a repair tested as a
+side-condition (§18.12), and what a validator could evaluate of it for
+itself (§18.13). It is the second arc under the statement/proof
 partition (§17.5), and
 `docs/black-marlin.md` is its design record.
+
+**Where the arc lands.** The commit rule's own safety statements hold as
+the paper gives them (§18.2), and so does liveness above the structural
+condition of §6 (§18.5, §18.6). Definition 1's **Agreement** does not.
+§18.11 exhibits an execution, machine-checked at `n = 4`, `f = 1`, in
+which two reliable validators output different blocks for one author and
+round and neither ever outputs the other's — so the protocol as
+presented does not satisfy the property its own Definition 1 asks for.
+
+**And liveness is not what stands in the way of repairing it.** §18.12
+supplies a rule that restores Agreement and keeps liveness: BMP7, BMP9
+and BMP11 for the first, BMP10 and BMP12 for the second, so no execution
+is stuck after synchrony and nothing is left undelivered. What is
+missing is a rule a validator can **run**. `descendS` reads a quorum of
+support over the universe, and §18.13 shows that a view need not carry
+that, while every view-evaluable rule tried — the paper's own metric, a
+canonical order, any support-blind function, and counting support inside
+the descent's own cone — selects the wrong block. The obstacle is the
+distance between the universe and a view, not a conflict between safety
+and liveness.
 
 ### 18.1 The rule
 
@@ -5506,6 +5527,11 @@ that it does admit, and the whole of what a validator decides is
 transcribing §5.1 of the paper. None assumes synchrony, a global
 stabilisation time, or any bound beyond `n ≥ 3f + 1`; as in the paper
 they hold during the asynchronous period as well.
+
+They survive intact, and they are not Definition 1's Agreement. These
+are statements about which anchors the rule admits; Agreement is a
+statement about what validators output, which the rule alone does not
+settle. §18.11 refutes it.
 
 **BM1** (`eq_of_isAnchor_of_supported`, the paper's Lemma 2): two
 supported anchor blocks of one round are one block. Their support
@@ -5759,6 +5785,11 @@ Definition 1's four properties, Validity holds for reliable authors
 (BML3 with BML4) and Agreement is BMA3; Integrity rests on the delivered
 set `D` and Total Order on `τ`, and neither is modelled.
 
+Agreement on the delivered **event** does not follow from BMA3, and does
+not hold: §18.10 models the filter and finds the gap, and §18.11 closes
+it with an execution in which two reliable validators output different
+twins.
+
 ### 18.8 The delivered order, and the second job of the link clause
 
 `commit(B)` does not deliver `past(B)` in one piece. It descends through
@@ -5980,6 +6011,11 @@ side-condition on the record rather than as a change to the model.
 `flushRecord` and everything proved of them stand, and what is added sits
 beside them.
 
+The outcome, before the detail: the strengthened form restores Agreement
+and costs no liveness. Both halves are proved, so what remains against
+the repair is not that it stops the protocol — it is that a validator
+cannot always evaluate it, which is §18.13.
+
 A record is **support-preferring** when, at any round where some anchor
 carries a quorum of support, what it flushes there is supported; and
 `descendSupp` filters the candidates of L21–L24 to those the rule could
@@ -6039,48 +6075,119 @@ stuck after synchrony; **BMP10** adds that the descent still terminates.
 Segments only coarsen, so nothing is delivered later than the next
 committed anchor.
 
-**The support is not in view when the descent needs it.** Both repairs
-read `Supported`, a fact about the universe, where a validator reads its
-own view. **BMP13** closes the gap in one case and not the one that
-matters: an anchor by a *reliable* author, past the round coverage takes
+### 18.13 What a validator can actually run
+
+Everything §18.12 proves is proved of the **universe**. A validator reads
+a **view**, and the two are not the same object. This section asks which
+of these rules a validator could evaluate for itself, and answers that
+the one that works is not among them.
+
+**BMP13 is the fragment that closes, and it is not the case that needs
+it.** An anchor by a *reliable* author, past the round coverage takes
 hold, is referenced by every reliable block of the round above, so any
-view holding those sees the quorum. Coverage says nothing about a
-Byzantine author's anchor, and a Byzantine anchor is what the repair
-exists for.
+view holding those sees the quorum. `SynchronisedOn` constrains only
+`T`-authored blocks, so coverage says nothing about a Byzantine author's
+anchor — and a Byzantine author's anchor is the whole occasion for the
+repair.
 
-There it fails by counting: a view carrying a quorum at the round above
-shares only `n − 2f` authors with an anchor's supporters, which at
-`n = 3f + 1` is `f + 1`, short of the `2f + 1` the test wants. §18.11's
-execution carries such a view — the cone of the round-4 anchor holds a
-quorum of authors at round `3`, so its holder could conclude that round,
-and yet it sees two of `8`'s three supporters, the third being the block
-that anchor does not reference. The second validator of that execution
-does see the support, holding a quorum at round `6` and so those blocks'
-cones; what the witness shows is that nothing in the model *forces* the
-support into view, not that it is missing there. So the repair is proved
-of the universe and is **not established as a view-local rule**: a
-validator applying it applies a test it cannot always evaluate.
+**The counting behind the gap.** A view carrying a quorum at the round
+above an anchor shares only `n − 2f` authors with that anchor's
+supporters, which at `n = 3f + 1` is `f + 1`, short of the `2f + 1` the
+test wants. §18.11's execution carries such a view: the cone of the
+round-4 anchor holds a quorum of authors at round `3`, so its holder
+could conclude that round and run the rule, and yet it sees two of `8`'s
+three supporters, the third being the block that anchor does not
+reference. The second validator of that execution does see the support,
+holding a quorum at round `6` and so those blocks' cones — so what the
+witness establishes is that nothing in the model *forces* the support
+into view, not that it is missing there.
 
-**And no support-blind rule can stand in for it.** Two weaker repairs
-fail on data. Delivering both twins — dropping L27's
-per-`(creator, round)` filter, which is there because Integrity forbids
-two outputs for one party and round whatever the blocks are — leaves the
-segmentation untouched, and the segmentation is what differs: one
-validator delivers `8` before `12` and the other `12` before `8`, so an
-Agreement failure becomes a Total-order failure. A canonical order on the
-twins is already in the model, `descend` taking the `≤`-least of the
-gap-minimisers, and it still takes the wrong twin.
+**Every rule a validator could run, and how each answers.**
 
-The order alone fails generally, not just there. Give the twins the same
-references and they agree in round, creator and cone, so every function
-of the candidate blocks and their own histories answers both alike:
-L24's metric ties exactly and a canonical order decides by identifier.
-Two universes witness it, alike in all those respects and differing only
-in which twin the round-3 blocks reference. `8` is the committed twin in
-one and `12` in the other, and `descend` answers `8` in both — right
-once and wrong once. So the tie-break must read support, and support is
-what a view need not carry. That is the tension, and it is not an
-artefact of the model.
+| rule | what it reads | verdict |
+| --- | --- | --- |
+| L24's gap metric | the candidates and their own cones | takes the uncommitted twin in §18.11; ties exactly where the twins share a cone |
+| a canonical order on the candidates | the identifiers | already in the model — `descend` takes the `≤`-least of the gap-minimisers — and takes the uncommitted twin |
+| any support-blind function | the candidates and their own cones | refuted as a class |
+| delivering both twins | nothing — L27's filter dropped | turns the Agreement failure into a Total-order failure |
+| counting support in the descent's cone | the cone, view-independently | promises the committed twin `1` against its twin's `2f`; wrong at `f = 1` |
+| a quorum of support (`descendS`) | the universe | correct, and not evaluable from a view |
+
+**Delivering both twins.** L27's per-`(creator, round)` filter is what
+makes a boundary observable, and it is there because Integrity forbids
+two outputs for one party and round whatever the blocks are. Dropping it
+leaves the segmentation untouched, and the segmentation is what differs:
+the first validator's segment at round `2` is the cone of `8` and the
+second's is the cone of `12`, each picking the other twin up only in the
+round-4 segment. One delivers `8` before `12` and the other `12` before
+`8`, and likewise `5` and `7`, which lie below one twin each.
+
+**The support-blind rules, as a class.** Give the twins the same
+references. They then agree in round, in creator and in cone, so every
+function of the candidate blocks and their own histories returns one
+answer on both: L24's metric ties exactly, and a canonical order decides
+by identifier. Two universes witness the consequence, alike in all of
+those respects and differing only in which twin the round-3 blocks
+reference. `strongOf` agrees on the twins within each and across both;
+`8` is the committed twin in one and `12` in the other; and `descend`,
+which reads neither, answers `8` in both — right once and wrong once.
+Any rule blind to support receives the same input in the two, so answers
+them alike, so is wrong in one.
+
+**Counting support in the cone.** The natural weakening is relative
+rather than absolute — prefer the twin more of the descent's own cone
+references — and it is view-independent by construction, every validator
+descending from one block reading one cone. On §18.11's execution it
+answers correctly, `{2, 3}` against `{0}`, where the quorum test needed
+three and found two. It has no margin in general. A committed twin holds
+`2f + 1` supporters of `3f + 1`, at least `f + 1` of them reliable; a
+reliable supporter authors one block at the round above and that block
+references the twin, so it counts exactly when the cone holds it, and a
+cone need only carry `n − f` authors. **One** cone-supporter is all the
+committed twin is promised. Its twin may hold `2f`: the two supporter
+sets meet only inside the `f` Byzantine validators, since supporting
+both means authoring two blocks at one round, and `f` more sit outside
+the quorum, and all of them can be in the cone — the Byzantine ones
+contributing the block that references the twin rather than the one that
+references the anchor.
+
+Both ends are realised at `f = 1`, so the rule fails at the smallest
+committee the protocol admits. Four validators over seven rounds, the
+twins given the same references so that nothing block-intrinsic
+separates them: the round-4 anchor omits the round-3 anchor, skips the
+round, and of the three round-3 blocks in its cone two reference the
+uncommitted twin and one references the committed one. The identifier
+order prefers the uncommitted twin as well, and `descendS` is the only
+one of the three that answers correctly.
+
+**What this leaves.** The tie-break must read support, and support is
+what a view need not carry. Those two are in direct tension, and the
+tension is not an artefact of how this arc models the protocol.
+
+It is worth naming what the tension is *not*. Liveness is not the price
+of safety here: BMP10 and BMP12 hold of the repaired protocol, so the
+descent still terminates, committed rounds still recur, and no execution
+is stuck after synchrony. A rule that reads support over the universe
+has both properties. The difficulty is entirely that a validator reads a
+view, and the rule cannot be evaluated there.
+
+The root cause is upstream of the tie-break. Black Marlin gives a round
+no **decision**: `delivery(r)` either commits or fails, a failure is
+never revisited, and so which rounds are segment boundaries depends on
+what a validator happened to hold at the time. The descent is an attempt
+to recover that after the fact from the DAG, and what it would need to
+recover it is exactly the information a view need not have. The rules of
+§17 do not face this, because every slot there receives a verdict —
+commit or skip — that all validators agree on, so the boundaries are
+agreed and no tie-break arises. That is the change a repair would have
+to make, and it is a change to the shape of the protocol rather than to
+the descent.
+
+**What is not established.** The class refuted is the support-blind one,
+together with the three named rules above. No claim is made here that
+every conceivable view-local rule fails — only that the natural ones do,
+and that the one which succeeds reads a fact a validator cannot always
+evaluate.
 
 ## 19. Satisfiability
 
@@ -7053,7 +7160,7 @@ reused.
 | BMP11 | two records with committed tops agree outright | `BlackMarlin.flushRecordS_agree_of_committed` *(BlackMarlin/Helpers/Repair)* |
 | BMP12 | committed rounds still recur, so no execution is stuck | `BlackMarlin.Repair.holds` *(BlackMarlin/Repair/Proof)* |
 | BMP13 | a reliable author's anchor is seen as supported, past coverage | `BlackMarlin.supportedIn_of_synchronised` *(BlackMarlin/Helpers/Repair)* |
-| BMP14 | both repairs on the execution of §18.11, what they cost, and a view that misses the support | `descendSupp`, `descendS`, `coneView` witnesses *(LeanDagTest/BlackMarlin)* |
+| BMP14 | both repairs on the execution of §18.11, what they cost, a view that misses the support, and a counting rule that reads it wrongly at `f = 1` | `descendSupp`, `descendS`, `coneView`, `Ucnt` witnesses *(LeanDagTest/BlackMarlin)* |
 
 **Integration** (§16):
 

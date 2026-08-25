@@ -845,8 +845,43 @@ the two. The support-preferring descent separates them: `descendS`
 answers `8` and `12` respectively.
 
 **So the tie-break must read support, and support is what a view need
-not carry.** That is the tension, and it is not an artefact of how this
-arc models the protocol. It is what stands between the repair and an
+not carry.**
+
+### Counting support in the cone does not settle it either
+
+The obvious weakening is to read support **relatively**: prefer the twin
+that more of the descent's own cone references. That is view-independent
+by construction — every validator descending from one block reads one
+cone — and on §13's execution it answers correctly, `{2, 3}` against
+`{0}`, where the quorum test needed three and found two.
+
+It has no margin. A committed twin holds `2f + 1` supporters of
+`3f + 1`, of which at least `f + 1` are reliable; a reliable supporter
+authors one block at the round above and that block references the twin,
+so it is counted exactly when the cone holds it — and a cone need only
+carry `n − f` authors, omitting up to `f`. **One** cone-supporter is all
+the committed twin is promised. Its twin is bounded the other way: a
+supporter of both authors two blocks at one round, so the two supporter
+sets meet only inside the `f` Byzantine validators, and outside the
+quorum there are `f` more. That gives `2f`, and every one of them can
+sit in the cone, the Byzantine ones contributing the block that
+references the twin rather than the one that references the anchor.
+
+Both ends are realised at `f = 1`, where they are `1` and `2`, so the
+rule fails at the smallest committee the protocol admits. Four
+validators, `0` Byzantine, seven rounds; `0` equivocates at round `2`
+with `8` and `12` and gives them the same references, so nothing
+block-intrinsic separates them. Round `3` gives `12` the quorum
+`{0, 1, 2}` and `8` only `{0, 3}`, one short, with `0` equivocating
+again to support both. The round-4 anchor `21` omits the round-3 anchor,
+so a descent arriving there skips the round and faces both twins — and
+of the three round-3 blocks in its cone, two reference `8` and one
+references `12`. Counting prefers the twin that was not committed, and
+the identifier order prefers it too. Only the quorum reading separates
+them, and that is the reading a view need not be able to evaluate.
+
+That is the tension, and it is not an artefact of how this arc models
+the protocol. It is what stands between the repair and an
 implementation.
 
 ## 15. What is not covered

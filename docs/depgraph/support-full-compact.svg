@@ -596,7 +596,7 @@
 <g><title>LeanDag.BlackMarlin.deliverSeq_prefix — and the list only extends</title>
 <rect x="134.0" y="2082.0" width="62" height="24" rx="5" fill="#fbe9d6" stroke="#c0844a" stroke-width="1.2"/>
 <text class="lbl" x="165.0" y="2094.0" text-anchor="middle">BMO3</text></g>
-<g><title>LeanDag.BlackMarlin.descendSupp — both repairs on the execution of §18.11, what they cost, and a view that misses the support</title>
+<g><title>LeanDag.BlackMarlin.descendSupp — both repairs on the execution of §18.11, what they cost, a view that misses the support, and a counting rule that reads it wrongly at `f = 1`</title>
 <rect x="134.0" y="2115.0" width="62" height="24" rx="5" fill="#fbe9d6" stroke="#c0844a" stroke-width="1.2"/>
 <text class="lbl" x="165.0" y="2127.0" text-anchor="middle">BMP14</text></g>
 <g><title>LeanDag.BlackMarlin.descendSupp_eq_descend — and is L21–L24 where there is not</title>
