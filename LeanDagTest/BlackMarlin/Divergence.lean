@@ -284,6 +284,145 @@ example : Supported Udiv 8 2 ∧ ¬ SupportedIn Udiv coneView 8 2 ∧
 third supporter is `14`, which the round-4 anchor does not reference. -/
 example : (14 : Fin 29) ∉ history Udiv 19 ∧ supporters Udiv 8 3 = {1, 2, 3} := by decide
 
+
+/-! ## Relaxing the filter does not help
+
+Dropping L27 — delivering both twins and forbidding only a repeated
+*block* — leaves the segmentation as it was, and the segmentation is what
+differs. The first validator's flush at round `2` is the cone of `8`, the
+second's is the cone of `12`, and each picks the other twin up only in
+the round-4 segment. So one emits `8` before `12` and the other `12`
+before `8`: an Agreement failure becomes a Total-order failure. -/
+
+/-- The first validator's record over both its commits: `8` at round `2`,
+then the round-4 anchor. -/
+def vBlockFull : ℕ → Option (Fin 29)
+  | 2 => some 8
+  | 4 => some 19
+  | _ => none
+
+def vFlushFull : Flush Udiv where
+  block := vBlockFull
+  isAnchor := by
+    intro ρ L h
+    match ρ with
+    | 2 | 4 => simp only [vBlockFull, Option.some.injEq] at h; subst h; decide
+    | 0 | 1 | 3 | (n + 5) => simp [vBlockFull] at h
+  step := by
+    intro ρ L M hL hM
+    match ρ with
+    | 2 | 4 => simp [vBlockFull] at hM
+    | 0 | 1 | 3 | (n + 5) => simp [vBlockFull] at hL
+  dense := by
+    intro ρ M hM hne
+    match ρ with
+    | 1 =>
+      simp only [vBlockFull, Option.some.injEq] at hM
+      subst hM
+      exact absurd hne (by decide)
+    | 3 =>
+      simp only [vBlockFull, Option.some.injEq] at hM
+      subst hM
+      exact absurd hne (by decide)
+    | 0 | 2 | (n + 4) => simp [vBlockFull] at hM
+
+/-- **Both twins are delivered, in opposite orders.** -/
+example :
+    (ledgerSeq Udiv vFlushFull divSort 5).idxOf 8 <
+      (ledgerSeq Udiv vFlushFull divSort 5).idxOf 12 ∧
+    (ledgerSeq Udiv wFlush divSort 5).idxOf 12 <
+      (ledgerSeq Udiv wFlush divSort 5).idxOf 8 := by decide
+
+/-- And it is not only the twins: their cones differ, so ordinary blocks
+invert too. `5` lies below `8` and not below `12`, `7` the other way
+about. -/
+example : (5 : Fin 29) ∈ history Udiv 8 ∧ (5 : Fin 29) ∉ history Udiv 12 ∧
+    (7 : Fin 29) ∈ history Udiv 12 ∧ (7 : Fin 29) ∉ history Udiv 8 := by decide
+
+
+/-! ## No support-blind tie-break resolves it
+
+A canonical order on the twins is already in the model: `descend` picks
+the `≤`-least of the gap-minimisers, and it still takes the wrong one,
+because the gap decides before the order is reached. Dropping the metric
+and going by the order alone does not help either, and the reason is
+general.
+
+Give the twins the **same references**. Then they agree in round, in
+creator and in cone, so every function of the candidate blocks and their
+own histories returns the same answer on both — the metric of L24 ties
+exactly, and any canonical order picks by identifier. What differs is
+which of them the round-3 blocks reference, and that is support.
+
+Two universes below, alike in every one of those respects and differing
+only there. Any rule blind to support answers them the same way, and the
+committed twin is `8` in one and `12` in the other. So one of the two
+answers is wrong, whatever the rule is. -/
+
+/-- The twins made cone-identical: `12` now carries `8`'s references. -/
+def tieBlk (i : Fin 29) : Block (Fin 4) (Fin 29) Unit :=
+  let b := divBlk i
+  if (i : ℕ) = 12 then { b with refs := {4, 5, 6} } else b
+
+/-- The same, with the round-3 support moved from `8` to `12`. -/
+def tieBlk' (i : Fin 29) : Block (Fin 4) (Fin 29) Unit :=
+  match (i : ℕ) with
+  | 12 => { divBlk i with refs := {4, 5, 6} }
+  | 13 => { divBlk i with refs := {9, 10, 8} }
+  | 14 => { divBlk i with refs := {12, 9, 10} }
+  | 15 => { divBlk i with refs := {12, 9, 10} }
+  | 16 => { divBlk i with refs := {12, 9, 11} }
+  | _ => divBlk i
+
+def Utie : BlockUniverse (Fin 4) (Fin 29) Unit where
+  ids := Finset.univ
+  block := tieBlk
+  complete := by decide
+  valid := by decide
+  no_equivocation := by decide
+
+def Utie' : BlockUniverse (Fin 4) (Fin 29) Unit where
+  ids := Finset.univ
+  block := tieBlk'
+  complete := by decide
+  valid := by decide
+  no_equivocation := by decide
+
+/-- **The two are indistinguishable to any support-blind rule.** The
+twins have one round, one creator and one history, in both universes. -/
+example : strongOf Utie 8 = strongOf Utie 12 ∧ strongOf Utie' 8 = strongOf Utie' 12 ∧
+    strongOf Utie 8 = strongOf Utie' 8 ∧
+    (Utie.block 8).refs = (Utie.block 12).refs ∧
+    (Utie.block 8).round = (Utie.block 12).round ∧
+    (Utie.block 8).creator = (Utie.block 12).creator := by decide
+
+/-- **And the committed twin is a different one in each.** -/
+example : Committed Utie 8 2 ∧ ¬ Supported Utie 12 2 ∧
+    Committed Utie' 12 2 ∧ ¬ Supported Utie' 8 2 := by decide
+
+/-- The rest of the construction survives: the round-4 anchor commits,
+skips round `3`, and faces both twins at round `2`. -/
+example : Committed Utie 19 4 ∧ coneAnchors Utie 19 3 = ∅ ∧
+    coneAnchors Utie 19 2 = {8, 12} ∧
+    Committed Utie' 19 4 ∧ coneAnchors Utie' 19 3 = ∅ ∧
+    coneAnchors Utie' 19 2 = {8, 12} := by decide
+
+/-- **L24's metric ties exactly**, so the paper's rule is decided by the
+identifier order alone — and answers both universes the same way. -/
+example : anchorGap Utie 8 = anchorGap Utie 12 ∧
+    anchorGap Utie' 8 = anchorGap Utie' 12 ∧
+    descend Utie 19 = some 8 ∧ descend Utie' 19 = some 8 := by decide
+
+/-- Which is wrong in the second: a validator that committed `12` at
+round `2` flushes it, and the descent from the round-4 anchor takes `8`.
+The same divergence, now beyond the reach of any rule that does not read
+support. -/
+example : flushRecord Utie' 19 2 = some 8 ∧ flushRecord Utie' 12 2 = some 12 ∧
+    Committed Utie' 12 2 := by decide
+
+/-- The support-preferring repair does answer them apart. -/
+example : descendS Utie 19 = some 8 ∧ descendS Utie' 19 = some 12 := by decide
+
 end BlackMarlin
 
 end LeanDagTest

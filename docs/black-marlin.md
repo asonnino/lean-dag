@@ -810,14 +810,44 @@ view-local rule**: a validator applying it is applying a test it cannot
 always evaluate, and no hypothesis in this development supplies the
 missing one.
 
-**Which puts the root cause back where §13 found it.** The observable
-that makes boundaries matter is L27's per-`(creator, round)` filter, and
-that filter exists because Definition 1's Integrity forbids two outputs
-for one party and round *whatever the blocks are*. Relax Integrity to one
-output per **block** and the twins may both be delivered, in the causal
-order every record already agrees on, and neither repair is needed. That
-is a change to the specification rather than to the algorithm, and it is
-the direction this arc would take next.
+### Two repairs that do not work, and why the third must read support
+
+**Delivering both twins does not work.** L27's per-`(creator, round)`
+filter is what makes a boundary observable, and it is there because
+Definition 1's Integrity forbids two outputs for one party and round
+whatever the blocks are. Dropping it — one output per *block* — leaves
+the segmentation untouched, and the segmentation is what differs. The
+first validator's segment at round `2` is the cone of `8` and the
+second's is the cone of `12`, and each picks the other twin up only in
+the round-4 segment. So one delivers `8` before `12` and the other `12`
+before `8`, by `decide`; and the same for ordinary blocks, `5` lying
+below one twin and `7` below the other. An Agreement failure becomes a
+Total-order failure, which is no better.
+
+**A canonical order on the twins does not work either.** One is already
+in the model: `descend` takes the `≤`-least of the gap-minimisers, and it
+still takes the wrong twin, because L24's metric decides before the order
+is consulted. Nor does the order alone suffice, and the reason is
+general rather than particular to §13's execution.
+
+Give the twins the **same references**. They then agree in round, in
+creator and in cone, so every function of the candidate blocks and their
+own histories returns one answer on both: L24's metric ties exactly, and
+a canonical order decides by identifier. What is left to tell them apart
+is which of them the round-3 blocks reference — that is, support.
+
+Two universes witness it, alike in all of those respects and differing
+only there. `strongOf` agrees on the twins within each and across both;
+`8` is the committed twin in one and `12` in the other; and `descend`,
+which reads neither, answers `8` in both — right once and wrong once.
+No rule blind to support does better, because its input is the same in
+the two. The support-preferring descent separates them: `descendS`
+answers `8` and `12` respectively.
+
+**So the tie-break must read support, and support is what a view need
+not carry.** That is the tension, and it is not an artefact of how this
+arc models the protocol. It is what stands between the repair and an
+implementation.
 
 ## 15. What is not covered
 

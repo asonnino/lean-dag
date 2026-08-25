@@ -6061,13 +6061,26 @@ support into view, not that it is missing there. So the repair is proved
 of the universe and is **not established as a view-local rule**: a
 validator applying it applies a test it cannot always evaluate.
 
-That puts the root cause back where §18.11 found it. What makes
-boundaries observable is L27's per-`(creator, round)` filter, and that
-filter exists because Integrity forbids two outputs for one party and
-round whatever the blocks are. Relaxing Integrity to one output per
-*block* would let both twins be delivered in the causal order every
-record already agrees on, and neither repair would be needed — a change
-to the specification rather than to the algorithm.
+**And no support-blind rule can stand in for it.** Two weaker repairs
+fail on data. Delivering both twins — dropping L27's
+per-`(creator, round)` filter, which is there because Integrity forbids
+two outputs for one party and round whatever the blocks are — leaves the
+segmentation untouched, and the segmentation is what differs: one
+validator delivers `8` before `12` and the other `12` before `8`, so an
+Agreement failure becomes a Total-order failure. A canonical order on the
+twins is already in the model, `descend` taking the `≤`-least of the
+gap-minimisers, and it still takes the wrong twin.
+
+The order alone fails generally, not just there. Give the twins the same
+references and they agree in round, creator and cone, so every function
+of the candidate blocks and their own histories answers both alike:
+L24's metric ties exactly and a canonical order decides by identifier.
+Two universes witness it, alike in all those respects and differing only
+in which twin the round-3 blocks reference. `8` is the committed twin in
+one and `12` in the other, and `descend` answers `8` in both — right
+once and wrong once. So the tie-break must read support, and support is
+what a view need not carry. That is the tension, and it is not an
+artefact of the model.
 
 ## 19. Satisfiability
 

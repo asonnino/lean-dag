@@ -208,7 +208,10 @@ faults alone.
   own view, and that gap does not close: a view carrying a quorum at the
   round above an anchor shares only `n − 2f` authors with its supporters,
   so a Byzantine anchor's support need not be visible — proved of the
-  universe, not implementable as a view-local rule. The arc is the second under the statement/proof
+  universe, not implementable as a view-local rule. And no support-blind
+  rule stands in for it: twins given the same references agree in round,
+  creator and cone, so any function of the candidates answers two
+  universes alike where the committed twin differs between them. The arc is the second under the statement/proof
   partition.
 
 Every definition is exercised on concrete models by `decide` before
