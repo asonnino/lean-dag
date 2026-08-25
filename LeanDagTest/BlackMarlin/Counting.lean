@@ -25,7 +25,7 @@ that references the anchor. So `1` is weighed against `2f`.
 
 Both ends are realised below at `f = 1`, where they are `1` and `2`.
 Four validators, `0` Byzantine, seven rounds; the rotation anchors
-rounds `0` to `6` by `3, 3, 0, 2, 3, 0, 1`.
+rounds `0` to `6` by `3, 3, 0, 2, 3, 1, 1`.
 
 Validator `0` equivocates at round `2` with `8` and `12`, **giving them
 the same references**, so the twins agree in round, in creator and in
@@ -39,6 +39,14 @@ round-3 anchor, so a descent arriving there skips the round and faces
 both twins — and of the three round-3 blocks in its cone, **two
 reference `8` and one references `12`**. Counting prefers the twin that
 was not committed.
+
+The second half of the file is the other horn. A validator could wait
+for the quorum rather than count what it has, and waiting does not close
+it either: the deciding supporter of `12` is authored by the
+equivocator and referenced by no reliable block, so a view holding every
+reliable block still sees neither twin supported. Deciding early is
+unsafe and waiting can stop, which is the dichotomy `report.md` §18.13
+draws.
 -/
 
 namespace LeanDagTest
@@ -49,11 +57,11 @@ set_option maxRecDepth 4000000
 
 open LeanDag LeanDag.BlackMarlin
 
-/-- Rounds `0` to `6` anchored by `3, 3, 0, 2, 3, 0, 1`. Round `2` is
+/-- Rounds `0` to `6` anchored by `3, 3, 0, 2, 3, 1, 1`. Round `2` is
 anchored by the Byzantine validator. -/
 local instance cntRot : Rotation (Fin 4) where
   anchor r := match r with
-    | 0 => 3 | 1 => 3 | 2 => 0 | 3 => 2 | 4 => 3 | 5 => 0 | _ => 1
+    | 0 => 3 | 1 => 3 | 2 => 0 | 3 => 2 | 4 => 3 | _ => 1
 
 /-- The blocks. Id order is production order. -/
 def cntBlk : Fin 30 → Block (Fin 4) (Fin 30) Unit := fun i =>
@@ -80,12 +88,13 @@ def cntBlk : Fin 30 → Block (Fin 4) (Fin 30) Unit := fun i =>
       | 9 => {4, 5, 6} | 10 => {4, 5, 6} | 11 => {5, 6, 7}
       | 13 | 14 | 15 => {12, 9, 10}
       | 16 | 17 => {8, 10, 11}
-      | 18 | 19 | 20 => {13, 14, 15}
+      | 18 => {13, 14, 15}
+      | 19 | 20 => {14, 15, 16}
       | 21 => {14, 16, 17}
-      | 22 | 23 | 25 => {18, 19, 21}
-      | 24 => {20, 19, 21}
-      | 29 => {22, 23, 25}
-      | _ => {22, 23, 24},
+      | 22 => {18, 19, 21}
+      | 23 | 24 | 25 => {19, 20, 21}
+      | 26 => {22, 23, 24}
+      | _ => {23, 24, 25},
     payload := () }
 
 def Ucnt : BlockUniverse (Fin 4) (Fin 30) Unit where
@@ -142,6 +151,44 @@ example : flushRecord Ucnt 21 2 = some 8 ∧ flushRecord Ucnt 12 2 = some 12 ∧
 /-- Only the quorum reading separates them, and that is the reading a
 view need not be able to evaluate. -/
 example : descendS Ucnt 21 = some 12 := by decide
+
+
+/-! ## And waiting for the support does not help
+
+A validator could decline to descend until it can see the quorum for
+itself. That is the other horn, and it does not close either: the quorum
+for `12` is `{0, 1, 2}`, and `0` is the Byzantine validator. Its
+supporting block `13` is referenced by no reliable block, so a validator
+holding **every** reliable block, and everything those reference, still
+holds only `{1, 2}` — and holds `{0, 3}` for the other twin, so it
+cannot tell the two apart in either direction.
+
+Nothing obliges the equivocator to send `13`. Under partial synchrony
+only the messages of reliable validators are delivered, so the wait need
+never end, and a rule that waits is a rule that can stop. -/
+
+/-- Every reliable block, and everything reliable blocks reference. -/
+def relIds : Finset (Fin 30) :=
+  (Finset.univ.filter (fun i => (Ucnt.block i).creator ∈ (Correct : Finset (Fin 4)))).biUnion
+    (history Ucnt)
+
+def relView : View (Fin 4) (Fin 30) Unit Ucnt where
+  ids := relIds
+  subset_ids := by decide
+  complete := by decide
+
+/-- The view holds every reliable block; what it misses is authored by
+the equivocator. -/
+example : (∀ i : Fin 30, (Ucnt.block i).creator ∈ (Correct : Finset (Fin 4)) → i ∈ relIds) ∧
+    (13 : Fin 30) ∉ relIds ∧ (Ucnt.block 13).creator ∉ (Correct : Finset (Fin 4)) ∧
+    (13 : Fin 30) ∈ (Ucnt.block 18).refs := by decide
+
+/-- **Neither twin is supported in that view.** A validator that has
+received everything it is owed cannot tell which of them was committed,
+and no further reliable block will settle it. -/
+example : supportersIn Ucnt relView 12 3 = {1, 2} ∧ supportersIn Ucnt relView 8 3 = {0, 3} ∧
+    ¬ SupportedIn Ucnt relView 12 2 ∧ ¬ SupportedIn Ucnt relView 8 2 ∧
+    Supported Ucnt 12 2 := by decide
 
 end BlackMarlin
 

@@ -214,7 +214,14 @@ faults alone.
   universes alike where the committed twin differs between them. Nor
   does counting support within the descent's own cone, which is
   view-independent but promises the committed twin a single supporter
-  against its twin's `2f`, and fails already at four validators. The arc is the second under the statement/proof
+  against its twin's `2f`, and fails already at four validators. What
+  is left is a dichotomy: a validator that decides from what it holds
+  can hold too little and select the wrong block, and one that waits for
+  the quorum can wait without end, since up to `f` of a quorum's
+  supporters are authored by Byzantine validators and need never be
+  sent — witnessed by a view holding every reliable block that still
+  sees neither twin supported. So no implementation of the repair keeps
+  both safety and liveness. The arc is the second under the statement/proof
   partition.
 
 Every definition is exercised on concrete models by `decide` before

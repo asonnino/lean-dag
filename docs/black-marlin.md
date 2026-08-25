@@ -880,9 +880,40 @@ references `12`. Counting prefers the twin that was not committed, and
 the identifier order prefers it too. Only the quorum reading separates
 them, and that is the reading a view need not be able to evaluate.
 
-That is the tension, and it is not an artefact of how this arc models
-the protocol. It is what stands between the repair and an
-implementation.
+### Which leaves a dichotomy, not a gap
+
+The tie-break must read support, and a view need not carry it. Read
+operationally that is a choice between two unsound implementations.
+
+**Decide from what is held**, evaluating the rule against `SupportedIn`.
+That under-reports: §13's execution carries a view seeing two of three
+supporters, and the `f = 1` model above carries one seeing *no* twin
+supported at all. A validator that descends regardless selects by some
+fallback, and every fallback available to it is one of the rules refuted
+above. **Safety fails.**
+
+**Or wait until the quorum is held.** A committed twin's `2f + 1`
+supporters include at least `f + 1` reliable ones and up to `f`
+Byzantine ones. The reliable blocks arrive; the Byzantine ones need
+never be sent, and under partial synchrony nothing obliges them to be.
+The `f = 1` model exhibits it: the deciding supporter of the committed
+twin is authored by the equivocator and referenced by no reliable block,
+so a view holding every reliable block and everything those reference
+sees `{1, 2}` for one twin and `{0, 3}` for the other — neither a
+quorum, and no further reliable block will settle it. **Liveness
+fails.**
+
+**A correction.** This section previously recorded liveness as untouched
+by the repair, because BMP10 and BMP12 are untouched. They are, and they
+conclude `Committed U L r` — a statement about the universe, which is a
+modelling device rather than anything a validator holds. Liveness is
+conventionally about what a party outputs from its own view, and on that
+reading the repaired rule is not live. BML1–BML5, BMR1–BMR6 and BMP12
+are all stated at the universe; BMA2 alone is stated at a view, because
+Agreement forced it to be. For the unrepaired rule the distinction is
+harmless, coverage putting a reliable anchor's supporters into every
+reliable view, which is BMP13 — and it is exactly where the repaired
+rule needs a *Byzantine* anchor's supporters that coverage is silent.
 
 ## 15. What is not covered
 

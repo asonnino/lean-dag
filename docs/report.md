@@ -5471,17 +5471,20 @@ which two reliable validators output different blocks for one author and
 round and neither ever outputs the other's — so the protocol as
 presented does not satisfy the property its own Definition 1 asks for.
 
-**And liveness is not what stands in the way of repairing it.** §18.12
-supplies a rule that restores Agreement and keeps liveness: BMP7, BMP9
-and BMP11 for the first, BMP10 and BMP12 for the second, so no execution
-is stuck after synchrony and nothing is left undelivered. What is
-missing is a rule a validator can **run**. `descendS` reads a quorum of
-support over the universe, and §18.13 shows that a view need not carry
-that, while every view-evaluable rule tried — the paper's own metric, a
-canonical order, any support-blind function, and counting support inside
-the descent's own cone — selects the wrong block. The obstacle is the
-distance between the universe and a view, not a conflict between safety
-and liveness.
+**And no repair of it keeps both safety and liveness.** §18.12 supplies
+a rule that restores Agreement — BMP7, BMP9, BMP11 — and leaves the
+recurrence of committed rounds standing, BMP10 and BMP12. Those two
+quantify over `Committed U L r`, an assertion about the **universe**,
+which is the wrong object for liveness: what a validator delivers is a
+function of its view. Read at the view, the repaired rule has two
+implementations and neither is sound. One decides from what the
+validator holds, which can be too little, and selects the wrong block —
+safety fails, and §18.13 refutes every fallback available to it. The
+other waits until the validator holds the quorum, and the wait need
+never end, because up to `f` of a quorum's supporters are authored by
+Byzantine validators and nothing obliges them to send. §18.13 exhibits a
+view holding **every** reliable block that still sees neither twin
+supported.
 
 ### 18.1 The rule
 
@@ -6012,9 +6015,10 @@ side-condition on the record rather than as a change to the model.
 beside them.
 
 The outcome, before the detail: the strengthened form restores Agreement
-and costs no liveness. Both halves are proved, so what remains against
-the repair is not that it stops the protocol — it is that a validator
-cannot always evaluate it, which is §18.13.
+and leaves every liveness statement of §18.5 and §18.6 standing word for
+word. Both halves are proved **of the universe**, which is where this
+section works. §18.13 reads them at a validator's view instead, and
+there the repair does not survive.
 
 A record is **support-preferring** when, at any round where some anchor
 carries a quorum of support, what it flushes there is supported; and
@@ -6160,16 +6164,47 @@ uncommitted twin and one references the committed one. The identifier
 order prefers the uncommitted twin as well, and `descendS` is the only
 one of the three that answers correctly.
 
-**What this leaves.** The tie-break must read support, and support is
-what a view need not carry. Those two are in direct tension, and the
-tension is not an artefact of how this arc models the protocol.
+**What this leaves: a dichotomy.** The tie-break must read support, and
+a view need not carry it. Operationally that is not a gap but a choice
+between two unsound implementations.
 
-It is worth naming what the tension is *not*. Liveness is not the price
-of safety here: BMP10 and BMP12 hold of the repaired protocol, so the
-descent still terminates, committed rounds still recur, and no execution
-is stuck after synchrony. A rule that reads support over the universe
-has both properties. The difficulty is entirely that a validator reads a
-view, and the rule cannot be evaluated there.
+*Decide from what is held.* The rule is evaluated against `SupportedIn`,
+which under-reports. §18.11's execution carries a view seeing two of
+three supporters; the `f = 1` model above carries one seeing **no** twin
+supported at all. A validator that descends regardless selects by some
+fallback, and every fallback available to it is one of the rules refuted
+in the table. **Safety fails.**
+
+*Wait until the quorum is held.* A committed twin's `2f + 1` supporters
+include at least `f + 1` reliable ones and up to `f` Byzantine ones. The
+reliable blocks arrive; the Byzantine ones need never be sent, and under
+partial synchrony nothing obliges them to be. The `f = 1` model exhibits
+it: the deciding supporter of the committed twin is authored by the
+equivocator and is referenced by no reliable block, so a view holding
+every reliable block and everything those reference sees `{1, 2}` for
+one twin and `{0, 3}` for the other — neither a quorum, and no further
+reliable block will settle it. **Liveness fails.**
+
+**A correction to the previous revision of this section.** It recorded
+liveness as untouched by the repair, on the ground that BMP10 and BMP12
+are untouched. They are. But they conclude `Committed U L r`, and the
+universe is a modelling device rather than anything a validator holds;
+liveness is conventionally a statement about what a party outputs from
+its own view, and on that reading the repaired rule is not live. The
+earlier claim that the obstacle was the distance between universe and
+view "rather than a conflict between safety and liveness" was wrong: the
+distance between universe and view is *how* that conflict presents
+itself here.
+
+**Which level the arc's liveness is stated at.** BML1–BML5, BMR1–BMR6
+and BMP12 conclude `Committed U L r` — the universe admits a commit at
+that round. BMA2 is the exception, running the argument inside
+`viewAt v t` with an explicit time, because Agreement forced it to. For
+the unrepaired rule the distinction is harmless: the rule reads `supp`,
+and coverage puts a reliable anchor's supporters into every reliable
+view, which is BMP13. It is exactly where the repaired rule needs a
+Byzantine anchor's supporters that coverage says nothing, so the
+distinction is recorded here rather than left implicit.
 
 The root cause is upstream of the tie-break. Black Marlin gives a round
 no **decision**: `delivery(r)` either commits or fails, a failure is
@@ -6184,10 +6219,12 @@ to make, and it is a change to the shape of the protocol rather than to
 the descent.
 
 **What is not established.** The class refuted is the support-blind one,
-together with the three named rules above. No claim is made here that
-every conceivable view-local rule fails — only that the natural ones do,
-and that the one which succeeds reads a fact a validator cannot always
-evaluate.
+together with the named rules above and the two implementations of
+`descendS`. No claim is made that every conceivable view-local rule
+fails. What is claimed is narrower and enough: the protocol as presented
+does not satisfy Definition 1's Agreement, the rule that restores it
+cannot be evaluated by a validator that decides from its own view, and
+the rule that waits for the evidence can be made to wait without end.
 
 ## 19. Satisfiability
 
