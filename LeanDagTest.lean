@@ -38,3 +38,4 @@ import LeanDagTest.MahiMahi.Model
 import LeanDagTest.MahiMahi.Axioms
 import LeanDagTest.MahiMahi.Counting
 import LeanDagTest.MahiMahi.Liveness
+import LeanDagTest.BlackMarlin.Model
