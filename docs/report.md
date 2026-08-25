@@ -337,7 +337,8 @@ proof effort with no corresponding proof content.
    rule is modelled on the same pacing trunk as §11, giving reactive
    liveness with no coverage assumption and latency in `Δ`, `δ` and
    processing — and showing the fast exit to cost a run of three
-   (§18.6).
+   (§18.6). Agreement follows: the anchor is committed by each reliable
+   validator on its own view, so what one delivers all deliver (§18.7).
 
 ### 1.4 Scope and non-goals
 
@@ -5434,10 +5435,12 @@ obtain from a certificate; §18.3 states what it is used for, which is
 one case of one theorem.
 
 The arc formalises `delivery(r)` (Algorithm 2, L14–L17): §5.1 of the
-paper — the rule and every safety result stated about it (§18.2) — and
-its liveness above the structural condition of §6, in place of §5.2's
-timing argument (§18.5). It is the second arc under the statement/proof
-partition (§17.5), and `docs/black-marlin.md` is its design record.
+paper — the rule and every safety result stated about it (§18.2) — its
+liveness above the structural condition of §6, in place of §5.2's timing
+argument (§18.5), the round rule of L38–L41 and the responsiveness it
+yields (§18.6), and Definition 1's Agreement (§18.7). It is the second
+arc under the statement/proof partition (§17.5), and
+`docs/black-marlin.md` is its design record.
 
 ### 18.1 The rule
 
@@ -5696,6 +5699,46 @@ model §11's reactive arc uses, at the same holdings and the same build
 spacing of `6`; processing is `7` against the core's `5`, because the
 exit is bounded by the round rule rather than by holding one block.
 
+### 18.7 Agreement
+
+Definition 1's Agreement — if an honest party delivers a block, every
+honest party eventually delivers it. Four claims
+(`BlackMarlin.Agreement.holds`).
+
+**BMA1** is the no-divergence half, and it is BM6 read at a single
+block: a block delivered with a committed anchor is delivered with every
+committed anchor from that round on, whichever views the two verdicts
+came from.
+
+**BMA2** is the new work. BML1 and BMR2 say a verdict is *available*
+over the universe; Definition 1 speaks about what a party outputs. BMA2
+runs the same run-of-two argument inside `viewAt v t` rather than inside
+the universe, with `PaceCore.holds_roundBlocks` (§6.9) putting the two
+rounds the rule reads into every reliable validator's hands by
+`max (latest (r+1)) (latest (r+2)) + Δ`. It needs no hypothesis beyond
+BMR2's: that every build past round `R` lies past GST is derived from
+`built_lt`, since the round number bounds the build time from below.
+
+**BMA3** composes them — what one validator delivered with an anchor
+committed at round `ρ`, every reliable validator delivers with the
+anchor it commits at a reliably anchored `r ≥ ρ`, on its own view and by
+an explicit time — and **BMA4** says such an `r` lies above every round,
+so the "eventually" is discharged by the rotation rather than assumed.
+
+**What is stated, and what is not.** A validator delivers `B` when it
+calls `commit(A)` for an anchor it committed with `B ∈ past(A)`, so the
+claims are about `B ∈ history U L` for the anchor `L` each validator
+commits. Two things stand between that and the `ab-deliver` events of
+Definition 1, and neither is modelled: the recursion of `commit`, which
+visits the undelivered anchors of `strong(A)` before flushing and so
+fixes the **order** blocks are delivered in, and the
+per-`(creator, round)` filter of L27, which decides which of an
+equivocator's twins is delivered. This is agreement on the delivered
+**set**, not on the sequence, and not on the choice among twins. Of
+Definition 1's four properties, Validity holds for reliable authors
+(BML3 with BML4) and Agreement is BMA3; Integrity rests on the delivered
+set `D` and Total Order on `τ`, and neither is modelled.
+
 ## 19. Satisfiability
 
 Every structure carrying conditions is exhibited satisfiable by a concrete model
@@ -5899,7 +5942,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `MahiMahi/Helpers/` | the generated lemma layer |
 | `BlackMarlin/Model/Rules.lean`, `BlackMarlin/Model/Decision.lean` | the anchor rotation; support, the link, the commit rule; the same rules read from a view |
 | `BlackMarlin/Model/Round.lean` | the round rule of L38–L41, and the pacing structure it induces |
-| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/` | the three statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6) |
+| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/` | the four statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4) |
 | `BlackMarlin/Helpers/` | the generated lemma layer |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
@@ -6370,13 +6413,13 @@ the consumption map of §4.8 and the support diagrams of §6.10 refer to
 results through them. The series are alphabetic by area: T and M for
 the safety core, L for liveness, V for the view-convergence family, CU
 for catch-up, RS for the reactive schedule, SS for safe skip, AL for adaptive
-leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, BM, BML and BMR for Black Marlin, CQ for chain
+leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, BM, BML, BMR and BMA for Black Marlin, CQ for chain
 quality, C, D,
 B and E for the denial-of-service arc, G for garbage collection, O for
 Odontoceti; P, N and R name clauses of the trust boundary rather than
 results. Labels resolving to witness models rather than library
 theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7, SS11, AL8, H9, H10) are
-excluded from the diagrams, which show the library; so are MM4, BM8, BML6 and BMR7. Appendix C displays every indexed
+excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7 and BMA5. Appendix C displays every indexed
 result in full.
 
 ### Safety
@@ -6620,6 +6663,11 @@ reused.
 | BMR5 | latency `D + δ + proc`, and `Δ + δ + 2·proc` past GST | `BlackMarlin.Pace.built_succ_le_of_fast`, `BlackMarlin.Pace.built_succ_le_of_fast_gst` *(BlackMarlin/Helpers/Reactive)* |
 | BMR6 | the timeout never fires when those constants undercut it | `BlackMarlin.Pace.no_timeout_of_fast_gst` *(BlackMarlin/Helpers/Reactive)* |
 | BMR7 | the round rule on data, and a pace at spacing `6` | `ugrowBM` witnesses *(LeanDagTest/BlackMarlin)* |
+| BMA1 | a delivered block is delivered by every committed anchor from its round on | `BlackMarlin.history_subset_of_committed` *(BlackMarlin/Helpers/Rules)* |
+| BMA2 | a run of two is committed by each reliable validator on its own view | `BlackMarlin.Pace.committedIn_local` *(BlackMarlin/Helpers/Agreement)* |
+| BMA3 | what one validator delivered, every reliable validator delivers | `BlackMarlin.Pace.agreement` *(BlackMarlin/Helpers/Agreement)* |
+| BMA4 | a reliably anchored run of two lies above every round | `BlackMarlin.Agreement.holds` *(BlackMarlin/Agreement/Proof)* |
+| BMA5 | agreement on data, on the four-round model and on the pace | `Ufull`, `ugrowBM` witnesses *(LeanDagTest/BlackMarlin)* |
 
 **Integration** (§16):
 
@@ -11185,7 +11233,9 @@ def Supported (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : �
 
 **`supp(L) ≥ n − f`** for a block proposed at round `r`: a quorum of distinct validators reference `L` from round `r + 1`.
 
-The core's `supporters` counts authors rather than blocks, which is what makes the count a quorum: an equivocator contributes one either way. The paper's side condition — a supporter's block references no second block of `L`'s author and round — is `ValidWrt.distinct_creators` and needs no restatement here.
+The core's `supporters` counts authors rather than blocks, which is what makes the count a quorum: an equivocator contributes one either way.
+
+The paper's side condition on `supp` excludes a supporter whose **cone** holds a second block of `L`'s author and round, not merely one whose references do. The two coincide, and the reason is a fact about the model rather than a modelling choice: a reference sits exactly one round below its referrer (`ValidWrt.predecessor`), so the round-`r` members of a round-`(r+1)` block's cone are exactly its references, and the condition reduces to `ValidWrt.distinct_creators`.
 
 #### `linkers`
 
@@ -11776,6 +11826,88 @@ def Statement : Prop :=
 
 The reactive schedule of Black Marlin, over every fault configuration, rotation, block universe and pacing structure the model admits.
 
+#### `Monotone`
+
+*def, `BlackMarlin.Agreement.Statement.lean`*
+
+```lean
+def Monotone (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (V₁ V₂ : View Validator BlockId Payload U) (A₁ A₂ B : BlockId) (r₁ r₂ : ℕ),
+    CommittedIn U V₁ A₁ r₁ → CommittedIn U V₂ A₂ r₂ → r₁ ≤ r₂ →
+    B ∈ history U A₁ → B ∈ history U A₂
+```
+
+**BMA1, no divergence.** A block delivered with a committed anchor is delivered with every committed anchor from that round on, whichever views the two verdicts were reached from.
+
+#### `LocalCommit`
+
+*def, `BlackMarlin.Agreement.Statement.lean`*
+
+```lean
+def LocalCommit (pc : Pace U T N) : Prop :=
+  ∀ (R r : ℕ),
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    pc.gst ≤ R → (∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n) →
+    R ≤ r → r + 2 ≤ N →
+    Rot.anchor r ∈ T → Rot.anchor (r + 1) ∈ T →
+    ∃ L, IsAnchor U r L ∧ Committed U L r ∧
+      ∀ v ∈ T, CommittedIn U
+        (pc.toPaceCore.viewAt v (max (pc.latest (r + 1)) (pc.latest (r + 2)) + pc.delay))
+        L r
+```
+
+**BMA2, the commit is local.** Past GST, with the timeout clearing `2Δ + proc`, a run of two reliable anchors is committed by **every** reliable validator on its own view, by the time the two rounds the rule reads have converged.
+
+The universe-level results say a verdict is available; this says each validator reaches it, which is what Definition 1 speaks about.
+
+#### `Delivered`
+
+*def, `BlackMarlin.Agreement.Statement.lean`*
+
+```lean
+def Delivered (pc : Pace U T N) : Prop :=
+  ∀ (R r ρ : ℕ) (V : View Validator BlockId Payload U) (A B : BlockId),
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    pc.gst ≤ R → (∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n) →
+    R ≤ r → r + 2 ≤ N → ρ ≤ r →
+    Rot.anchor r ∈ T → Rot.anchor (r + 1) ∈ T →
+    CommittedIn U V A ρ → B ∈ history U A →
+    ∃ L, IsAnchor U r L ∧ B ∈ history U L ∧
+      ∀ v ∈ T, CommittedIn U
+        (pc.toPaceCore.viewAt v (max (pc.latest (r + 1)) (pc.latest (r + 2)) + pc.delay))
+        L r
+```
+
+**BMA3, agreement.** What one validator delivered with an anchor committed at round `ρ` — from any view, by any route — every reliable validator delivers with the anchor it commits at a reliably anchored round `r ≥ ρ`, on its own view and by an explicit time.
+
+#### `RunRecurs`
+
+*def, `BlackMarlin.Agreement.Statement.lean`*
+
+```lean
+def RunRecurs : Prop :=
+  ∀ (T : Finset Validator) (r : ℕ), Liveness.FairRun T 2 →
+    ∃ r', r ≤ r' ∧ Rot.anchor r' ∈ T ∧ Rot.anchor (r' + 1) ∈ T
+```
+
+**BMA4, the round BMA3 asks for recurs.** Under the fairness clause the rotation puts a reliably anchored run of two above every round, so the growth hypothesis of BMA3 is met by any DAG grown far enough rather than assumed. This is `FairRun` at `c = 2`, read as the two rounds the commit rule names.
+
+#### `Statement`
+
+*def, `BlackMarlin.Agreement.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [DecidableEq BlockId] [Rotation Validator]
+    (U : BlockUniverse Validator BlockId Payload),
+    Monotone U ∧ RunRecurs Validator ∧
+      ∀ (T : Finset Validator) (N : ℕ) (pc : Pace U T N),
+        LocalCommit pc ∧ Delivered pc
+```
+
+Agreement for the Black Marlin commit rule, over every fault configuration, rotation, block universe and pacing structure the model admits.
+
 ### Not otherwise grouped
 
 #### `SoundOn`
@@ -11812,7 +11944,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 469 theorems that either another module of the
+The 474 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -17753,6 +17885,18 @@ theorem reaches_of_committed_of_le {L₁ L₂ : BlockId} {r₁ r₂ : ℕ}
 
 Three cases, one per clause of the rule. At equal rounds Lemma 2 makes them the same block. At a gap of one the linking anchor of the lower is supported at the same round as the higher one, so Lemma 2 identifies the two and the link is a direct reference. At a gap of two or more Lemma 4 applies to the higher block itself.
 
+#### `history_subset_of_committed`
+
+*theorem, `BlackMarlin.Helpers.Rules.lean`*
+
+```lean
+theorem history_subset_of_committed {L₁ L₂ : BlockId} {r₁ r₂ : ℕ}
+    (h₁ : Committed U L₁ r₁) (h₂ : Committed U L₂ r₂) (hr : r₁ ≤ r₂) :
+    history U L₁ ⊆ history U L₂
+```
+
+**The prefix corollary of Lemma 5.** Of two committed anchors, the causal history of the lower is contained in that of the higher — what one delivers, the other delivers too.
+
 #### `quorum_authorsAt_of_lt`
 
 *theorem, `BlackMarlin.Helpers.Rules.lean`*
@@ -17883,6 +18027,16 @@ theorem roundRobin_fairRun [F : Faults (Fin n)] :
 ```lean
 theorem holds : Statement
 ```
+
+#### `le_built`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem le_built {v : Validator} (hv : v ∈ T) : ∀ n ≤ pc.top v, n ≤ pc.built v n
+```
+
+Rounds advance real time, over the rounds a validator reached.
 
 #### `driftOn_of_catchup`
 
@@ -18050,6 +18204,56 @@ theorem no_timeout_of_fast_gst {δ : ℕ} {v : Validator}
 theorem holds : Statement
 ```
 
+#### `committedIn_local`
+
+*theorem, `BlackMarlin.Helpers.Agreement.lean`*
+
+```lean
+theorem committedIn_local (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card) (hgst : pc.gst ≤ R)
+    (hto : ∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n)
+    (hR : R ≤ r) (hN : r + 2 ≤ N)
+    (hlead : Rot.anchor r ∈ T) (hlead1 : Rot.anchor (r + 1) ∈ T) :
+    ∃ L, IsAnchor U r L ∧ Committed U L r ∧
+      ∀ v ∈ T, CommittedIn U
+        (pc.toPaceCore.viewAt v (max (pc.latest (r + 1)) (pc.latest (r + 2)) + pc.delay))
+        L r
+```
+
+**The commit, on every reliable validator's own view.** A run of two reliable anchors past GST is committed by each of them separately, at the explicit time the two rounds' blocks have converged — the local counterpart of `reactive_committed`, which states the same verdict over the universe.
+
+This is what makes agreement a statement about validators rather than about the DAG: the anchor is not merely committable, it is committed by each of them.
+
+#### `agreement`
+
+*theorem, `BlackMarlin.Helpers.Agreement.lean`*
+
+```lean
+theorem agreement (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card) (hgst : pc.gst ≤ R)
+    (hto : ∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n)
+    (hR : R ≤ r) (hN : r + 2 ≤ N)
+    (hlead : Rot.anchor r ∈ T) (hlead1 : Rot.anchor (r + 1) ∈ T)
+    {V : View Validator BlockId Payload U} {A B : BlockId} {ρ : ℕ} (hρ : ρ ≤ r)
+    (hA : CommittedIn U V A ρ) (hB : B ∈ history U A) :
+    ∃ L, IsAnchor U r L ∧ B ∈ history U L ∧
+      ∀ v ∈ T, CommittedIn U
+        (pc.toPaceCore.viewAt v (max (pc.latest (r + 1)) (pc.latest (r + 2)) + pc.delay))
+        L r
+```
+
+**Agreement.** What one validator delivered with an anchor committed at round `ρ`, every reliable validator delivers with the anchor they each commit at any reliably anchored round `r ≥ ρ`.
+
+The two halves are the prefix result — the lower committed anchor's causal history is contained in the higher's — and the local commit above, which says the higher anchor really is committed by each of them.
+
+#### `holds`
+
+*theorem, `BlackMarlin.Agreement.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
 ### Not otherwise grouped
 
 #### `waveRobin_fairRun`
@@ -18091,7 +18295,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 443 lemmas used only within the file that proves
+The 444 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -18897,14 +19101,20 @@ subsection per module, in the layer order of Appendices B and C.
 | `supported_of_mem` | A reliable author's block is supported: coverage makes every reliable block one round up reference it, and … |
 | `supportersIn_full` | The full view holds every supporter there is. |
 
-### `BlackMarlin/Helpers/Reactive.lean` (4)
+### `BlackMarlin/Helpers/Reactive.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `anchor_le_top` | A reliable anchor reached its round: its block is in the universe, and `le_top_of_built` reads the reach … |
-| `le_built` | Rounds advance real time, over the rounds a validator reached. |
 | `suppAnchorIn_mono` | A supported anchor stays supported. What the round rule checked once it never has to check again, which is … |
 | `viewAt_ids_mono` | Holdings only grow, so the view they generate does. |
+
+### `BlackMarlin/Helpers/Agreement.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `gst_le_built` | Every build at a round past GST lies past GST: rounds advance real time, so the round number itself bounds … |
+| `holds_two_rounds` | The two rounds the rule reads, in hand. Past GST every reliable validator holds every reliable block of … |
 
 ### `Network/Quorum.lean` (2)
 

@@ -9,7 +9,8 @@
 
 The design record for `LeanDag/BlackMarlin/`: the commit rule of *DAG it
 off: Latency Prefers No Common Coins* (Amores-Sesar, Grøndal, Holmgård
-and Ottendal, arXiv:2508.14716v3), and its safety.
+and Ottendal, arXiv:2508.14716v3): its safety, its liveness, the round
+rule it advances on, and Definition 1's Agreement.
 
 ## 1. The protocol, and what this arc covers
 
@@ -21,10 +22,11 @@ parties, has the anchor of the round, and sees the two anchors below it
 supported; a timeout supplies the second disjunct when an anchor is
 Byzantine, which is what keeps the protocol responsive.
 
-This arc covers `delivery(r)` (Algorithm 2, L14–L17) and §5.1 of the
-paper — the commit rule and every safety result stated about it. The
-round structure, the timeouts, the weak-reference window and §5.2's
-liveness are not covered; §8 says what taking them on would require.
+This arc covers the commit rule of `delivery(r)` (Algorithm 2, L14–L17)
+with §5.1's safety results (§4), liveness above the structural condition
+in place of §5.2's timing argument (§8), the round rule of L38–L41 and
+the responsiveness it yields (§9), and Definition 1's Agreement (§10).
+§11 says what remains.
 
 ## 2. The rule
 
@@ -43,9 +45,13 @@ appears, and no certificate round: the second clause is what the other
 protocols of this repository obtain from a certificate.
 
 `supp` is the core's `supporters`, which counts authors rather than
-blocks. The paper's side condition on `supp` — a supporter's block
-references no second block of `B`'s author and round — is the core's
-`ValidWrt.distinct_creators` and needs no restatement.
+blocks. The paper's side condition on `supp` excludes a supporter whose
+**cone** holds a second block of `B`'s author and round, not merely one
+whose references do. The two coincide, and the reason is a fact about
+the model rather than a modelling choice: a reference sits exactly one
+round below its referrer, so the round-`r` members of a round-`(r+1)`
+block's cone are exactly its references, and the condition reduces to
+the core's `ValidWrt.distinct_creators`.
 
 `Linked` is a `Finset` of witnesses rather than a bare existential, so
 that the rule is decidable on a concrete DAG. The rotation is a class
@@ -376,9 +382,11 @@ the processing bound, above the pacing structure rather than over a
 message schedule.
 
 **Delivery completeness.** BML3 covers reliable authors. That *every*
-block reaches the ledger needs the weak-reference window of §4.3 and is
-a validity property in the paper's sense (Definition 1), not a safety
-one.
+block reaches the ledger needs the weak-reference window of §4.3.
+
+**Integrity**, the third property of Definition 1. It rests on the
+delivered set `D`, which is not modelled — Validity is BML3 with BML4,
+Agreement is §10, and Total Order is next.
 
 **The deterministic sort.** `τ` orders each delivered increment, and
 Total Order in Definition 1 is a statement about the resulting sequence.

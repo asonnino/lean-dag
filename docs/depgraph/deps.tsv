@@ -735,6 +735,29 @@ EDGE	LeanDag.Odontoceti.AdaptiveRun.toPartial	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.AdaptiveRun.toPartial	LeanDag.Odontoceti.AdaptiveRun
 EDGE	LeanDag.Odontoceti.AdaptiveRun.toPartial	LeanDag.View
 EDGE	LeanDag.Odontoceti.AdaptiveRun.toPartial	LeanDag.Faults5.toFaults
+NODE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_4
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.PaceCore.holds
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_3
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.BlackMarlin.Pace.gst_le_built
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.PaceCore.built
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.PaceCore.holds_mono
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_2
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_1
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.PaceCore.holds_roundBlocks
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.Block.creator
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.PaceCore.delay
 NODE	LeanDagTest.rrSlots_fairToEach._proof_1_2	LeanDagTest.Reactive	thm
 NODE	LeanDag.round_add_two_le_of_equivPair	LeanDag.DoS.Exposure	thm
 EDGE	LeanDag.round_add_two_le_of_equivPair	LeanDag.Faults
@@ -1345,6 +1368,34 @@ EDGE	LeanDag.PaceCore.refs_held	LeanDag.Block.round
 EDGE	LeanDag.PaceCore.refs_held	LeanDag.BlockUniverse
 EDGE	LeanDag.PaceCore.refs_held	LeanDag.PaceCore
 EDGE	LeanDag.PaceCore.refs_held	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.Agreement.Proof	thm
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.Agreement.RunRecurs
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.Agreement.Delivered
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.Agreement.Statement
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.Agreement.LocalCommit
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.Agreement.holds._proof_1_2
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.Pace.committedIn_local
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.Correct
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.history
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.Rotation.anchor
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.Liveness.FairRun
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.committed_of_committedIn
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.PaceCore.timeout
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.PaceCore.proc
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.CommittedIn
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.Agreement.Monotone
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.Agreement.holds._proof_1_1
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.View
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.history_subset_of_committed
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.PaceCore.delay
+EDGE	LeanDag.BlackMarlin.Agreement.holds	LeanDag.BlackMarlin.Pace.agreement
 NODE	LeanDag.Integration.chopMsg._proof_8	LeanDag.Integration.Retention	thm
 EDGE	LeanDag.Integration.chopMsg._proof_8	LeanDag.Faults
 EDGE	LeanDag.Integration.chopMsg._proof_8	LeanDag.BlockUniverse.block
@@ -4119,6 +4170,18 @@ EDGE	LeanDag.card_inter_correct_of_quorum._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.card_inter_correct_of_quorum._proof_1_1	LeanDag.Faults.byzantine
 EDGE	LeanDag.card_inter_correct_of_quorum._proof_1_1	LeanDag.Correct
 EDGE	LeanDag.card_inter_correct_of_quorum._proof_1_1	LeanDag.Faults.f
+NODE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_2	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_2	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_2	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_2	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_2	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_2	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_2	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_2	LeanDag.PaceCore.delay
 NODE	LeanDagTest.Ufault	LeanDagTest.DoS.TwoFaults	def
 EDGE	LeanDagTest.Ufault	LeanDagTest.Ufault._proof_1
 EDGE	LeanDagTest.Ufault	LeanDagTest.twoFaults
@@ -5214,6 +5277,18 @@ EDGE	LeanDag.CausalStructure.mk	LeanDag.Block
 EDGE	LeanDag.CausalStructure.mk	LeanDag.Block.refs
 EDGE	LeanDag.CausalStructure.mk	LeanDag.Block.round
 EDGE	LeanDag.CausalStructure.mk	LeanDag.CausalStructure
+NODE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_6	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_6	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_6	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_6	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_6	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_6	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_6	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_6	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_6	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_6	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_6	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_6	LeanDag.PaceCore.delay
 NODE	LeanDagTest.uomit_not_synchronisedOn._proof_1_2	LeanDagTest.Unbounded	thm
 NODE	LeanDag.Odontoceti.lt_of_eligible	LeanDag.Odontoceti.Decision	thm
 EDGE	LeanDag.Odontoceti.lt_of_eligible	LeanDag.Slots.slotRound
@@ -6037,6 +6112,18 @@ EDGE	LeanDagTest.Ucens	LeanDag.BlockUniverse
 EDGE	LeanDagTest.Ucens	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.Ucens	LeanDagTest.Ucens._proof_1
 NODE	LeanDagTest.ugapPace._simp_1	LeanDagTest.Unbounded	thm
+NODE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_12	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_12	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_12	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_12	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_12	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_12	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_12	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_12	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_12	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_12	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_12	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_12	LeanDag.PaceCore.delay
 NODE	LeanDag.SkipMsg.fillBlock	LeanDag.SafeSkip.Basic	def
 EDGE	LeanDag.SkipMsg.fillBlock	LeanDag.SkipMsg.v1
 EDGE	LeanDag.SkipMsg.fillBlock	LeanDag.Block
@@ -6428,6 +6515,16 @@ EDGE	LeanDagTest.ucut_severed	LeanDagTest.Ucut
 EDGE	LeanDagTest.ucut_severed	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ucut_severed	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ucut_severed	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_1	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_1	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_1	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_1	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_1	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_1	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_1	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_1	LeanDag.PaceCore.delay
 NODE	LeanDag.MahiMahi.goodCard._proof_1_4	LeanDag.MahiMahi.Helpers.Counting	thm
 EDGE	LeanDag.MahiMahi.goodCard._proof_1_4	LeanDag.creatorsOf
 EDGE	LeanDag.MahiMahi.goodCard._proof_1_4	LeanDag.Faults
@@ -6622,6 +6719,15 @@ EDGE	LeanDag.MahiMahi.Liveness.LocalCommit	LeanDag.Slots
 EDGE	LeanDag.MahiMahi.Liveness.LocalCommit	LeanDag.MahiMahi.Decided
 EDGE	LeanDag.MahiMahi.Liveness.LocalCommit	LeanDag.Block.creator
 EDGE	LeanDag.MahiMahi.Liveness.LocalCommit	LeanDag.PaceCore.delay
+NODE	LeanDag.BlackMarlin.Agreement.Statement	LeanDag.BlackMarlin.Agreement.Statement	def
+EDGE	LeanDag.BlackMarlin.Agreement.Statement	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Agreement.Statement	LeanDag.BlackMarlin.Agreement.RunRecurs
+EDGE	LeanDag.BlackMarlin.Agreement.Statement	LeanDag.BlackMarlin.Agreement.Delivered
+EDGE	LeanDag.BlackMarlin.Agreement.Statement	LeanDag.BlackMarlin.Agreement.LocalCommit
+EDGE	LeanDag.BlackMarlin.Agreement.Statement	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Agreement.Statement	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Agreement.Statement	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Agreement.Statement	LeanDag.BlackMarlin.Agreement.Monotone
 NODE	LeanDag.Hybrid.decisionRound	LeanDag.Hybrid.Decision	def
 EDGE	LeanDag.Hybrid.decisionRound	LeanDag.Slots.slotRound
 EDGE	LeanDag.Hybrid.decisionRound	LeanDag.Slots
@@ -6773,6 +6879,13 @@ EDGE	LeanDag.MahiMahi.Counting.Statement	LeanDag.BlockUniverse
 EDGE	LeanDag.MahiMahi.Counting.Statement	LeanDag.MahiMahi.Counting.GoodCard
 EDGE	LeanDag.MahiMahi.Counting.Statement	LeanDag.Slots
 EDGE	LeanDag.MahiMahi.Counting.Statement	LeanDag.MahiMahi.Counting.CommonCore
+NODE	LeanDag.BlackMarlin.Agreement.Monotone	LeanDag.BlackMarlin.Agreement.Statement	def
+EDGE	LeanDag.BlackMarlin.Agreement.Monotone	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Agreement.Monotone	LeanDag.history
+EDGE	LeanDag.BlackMarlin.Agreement.Monotone	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Agreement.Monotone	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Agreement.Monotone	LeanDag.BlackMarlin.CommittedIn
+EDGE	LeanDag.BlackMarlin.Agreement.Monotone	LeanDag.View
 NODE	LeanDag.View.ofAccepted_subset_of_refs	LeanDag.DoS.Acceptance	thm
 EDGE	LeanDag.View.ofAccepted_subset_of_refs	LeanDag.View.ofAccepted
 EDGE	LeanDag.View.ofAccepted_subset_of_refs	LeanDag.Faults
@@ -7276,6 +7389,18 @@ NODE	LeanDag.RefStepFrom.eq_1	LeanDag.Causality	thm
 EDGE	LeanDag.RefStepFrom.eq_1	LeanDag.Block
 EDGE	LeanDag.RefStepFrom.eq_1	LeanDag.RefStepFrom
 EDGE	LeanDag.RefStepFrom.eq_1	LeanDag.Block.refs
+NODE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_4	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_4	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_4	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_4	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_4	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_4	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_4	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_4	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_4	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_4	LeanDag.PaceCore.delay
 NODE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_3	LeanDag.SafeSkip.Jump	thm
 EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_3	LeanDag.BlockUniverse.block
@@ -8269,6 +8394,18 @@ EDGE	LeanDagTest.ugrow_commits_recur	LeanDagTest.fairSlots
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDag.commits_recur
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDagTest.ugrow_populated
 EDGE	LeanDagTest.ugrow_commits_recur	LeanDag.CommitsAt
+NODE	LeanDag.BlackMarlin.Pace.gst_le_built	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built	LeanDag.BlackMarlin.Pace.gst_le_built._proof_1_1
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built	LeanDag.PaceCore.reached
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built	LeanDag.PaceCore.built
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built	LeanDag.BlackMarlin.Pace.le_built
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built	LeanDag.BlackMarlin.Rotation
 NODE	LeanDag.Nemo.Reaches.single	LeanDag.Nemo.CausalHistory	thm
 EDGE	LeanDag.Nemo.Reaches.single	LeanDag.ReachesFrom.single
 EDGE	LeanDag.Nemo.Reaches.single	LeanDag.Nemo.Universe
@@ -8459,6 +8596,10 @@ EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_8	LeanDag.Faults.f
 EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_8	LeanDag.AdaptivePolicy
 EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_8	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.exists_partialRun._proof_1_8	LeanDag.Faults5.toFaults
+NODE	LeanDagTest.BlackMarlin.bmRR2	LeanDagTest.BlackMarlin.Agreement	def
+EDGE	LeanDagTest.BlackMarlin.bmRR2	LeanDag.BlackMarlin.Liveness.roundRobin
+EDGE	LeanDagTest.BlackMarlin.bmRR2	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDagTest.BlackMarlin.bmRR2	LeanDagTest.BlackMarlin.bmRR2._proof_2
 NODE	LeanDag.waveRobin_leader_val	LeanDag.WaveRobin	thm
 EDGE	LeanDag.waveRobin_leader_val	LeanDag.waveRobin
 EDGE	LeanDag.waveRobin_leader_val	LeanDag.Slots.leader
@@ -8783,6 +8924,29 @@ EDGE	LeanDag.pedigree_deterministic	LeanDag.pedigree_spec
 EDGE	LeanDag.pedigree_deterministic	LeanDag.Block.creator
 EDGE	LeanDag.pedigree_deterministic	LeanDag.top_eq_of_mem_namer_history
 EDGE	LeanDag.pedigree_deterministic	LeanDag.Reaches
+NODE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.PaceCore.viewAt
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.BlackMarlin.IsAnchor
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.BlackMarlin.Pace.committedIn_local
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.Correct
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.history
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.BlackMarlin.Rotation.anchor
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.BlackMarlin.committed_of_committedIn
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.PaceCore.timeout
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.PaceCore.proc
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.BlackMarlin.CommittedIn
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.View
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.BlackMarlin.history_subset_of_committed
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.BlackMarlin.Committed
+EDGE	LeanDag.BlackMarlin.Pace.agreement	LeanDag.PaceCore.delay
 NODE	LeanDag.card_history_ge._proof_1_4	LeanDag.DoS.SelfParent	thm
 EDGE	LeanDag.card_history_ge._proof_1_4	LeanDag.Faults
 EDGE	LeanDag.card_history_ge._proof_1_4	LeanDag.BlockUniverse.block
@@ -9055,6 +9219,24 @@ EDGE	LeanDagTest.uhyb9_slot0	LeanDagTest.hyb9
 EDGE	LeanDagTest.uhyb9_slot0	LeanDag.IsLeaderBlock
 EDGE	LeanDagTest.uhyb9_slot0	LeanDagTest.Uhyb9
 EDGE	LeanDagTest.uhyb9_slot0	LeanDag.Hybrid.Decided.directCommit
+NODE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.BlackMarlin.Agreement.Statement	def
+EDGE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.PaceCore.viewAt
+EDGE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.BlackMarlin.IsAnchor
+EDGE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.Correct
+EDGE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.BlackMarlin.Rotation.anchor
+EDGE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.PaceCore.timeout
+EDGE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.PaceCore.proc
+EDGE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.BlackMarlin.CommittedIn
+EDGE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.BlackMarlin.Committed
+EDGE	LeanDag.BlackMarlin.Agreement.LocalCommit	LeanDag.PaceCore.delay
 NODE	LeanDagTest.hyb4Slots._proof_4	LeanDagTest.Hybrid	thm
 EDGE	LeanDagTest.hyb4Slots._proof_4	LeanDagTest.hyb4Slots._proof_2
 NODE	LeanDag.Odontoceti.AdaptiveRun.mk.sizeOf_spec	LeanDag.Adaptive.Odontoceti	thm
@@ -9086,6 +9268,16 @@ EDGE	LeanDag.populated_chop._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.populated_chop._proof_1_3	LeanDag.BlockUniverse.block
 EDGE	LeanDag.populated_chop._proof_1_3	LeanDag.Block.round
 EDGE	LeanDag.populated_chop._proof_1_3	LeanDag.BlockUniverse
+NODE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_1	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_1	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_1	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_1	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_1	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_1	LeanDag.BlackMarlin.Rotation
 NODE	LeanDag.BlackMarlin.nxt_inj._proof_1_3	LeanDag.BlackMarlin.Helpers.Liveness	thm
 EDGE	LeanDag.BlackMarlin.nxt_inj._proof_1_3	LeanDag.BlackMarlin.nxt
 NODE	LeanDag.MahiMahi.certificates_nonempty_of_directCommit._proof_1_2	LeanDag.MahiMahi.Helpers.Rules	thm
@@ -11837,6 +12029,25 @@ EDGE	LeanDagTest.ugrowSkewPace._proof_8	LeanDagTest.ugrowSkewPace._proof_5
 NODE	LeanDag.Faults5.toFaults	LeanDag.Odontoceti.Rules	def
 EDGE	LeanDag.Faults5.toFaults	LeanDag.Faults5
 EDGE	LeanDag.Faults5.toFaults	LeanDag.Faults
+NODE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.BlackMarlin.Agreement.Statement	def
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.PaceCore.viewAt
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.BlackMarlin.IsAnchor
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.Correct
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.history
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.BlackMarlin.Rotation.anchor
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.PaceCore.timeout
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.PaceCore.proc
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.BlackMarlin.CommittedIn
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.View
+EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.PaceCore.delay
 NODE	LeanDag.AdoptedUnder	LeanDag.DoS.Pedigree	def
 EDGE	LeanDag.AdoptedUnder	LeanDag.Faults
 EDGE	LeanDag.AdoptedUnder	LeanDag.Block.refs
@@ -13291,6 +13502,18 @@ EDGE	LeanDag.card_filter_self_creator._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.card_filter_self_creator._proof_1_2	LeanDag.BlockUniverse.block
 EDGE	LeanDag.card_filter_self_creator._proof_1_2	LeanDag.Block.round
 EDGE	LeanDag.card_filter_self_creator._proof_1_2	LeanDag.BlockUniverse
+NODE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_8	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_8	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_8	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_8	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_8	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_8	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_8	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_8	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_8	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_8	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_8	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_8	LeanDag.PaceCore.delay
 NODE	LeanDag.card_historyBlocksOf_of_mem_refs	LeanDag.DoS.SelfParent	thm
 EDGE	LeanDag.card_historyBlocksOf_of_mem_refs	LeanDag.exists_self_ancestor
 EDGE	LeanDag.card_historyBlocksOf_of_mem_refs	LeanDag.Faults
@@ -13422,6 +13645,7 @@ EDGE	LeanDag.certificatesIn_chop._simp_1_3	LeanDag.BlockUniverse.block
 EDGE	LeanDag.certificatesIn_chop._simp_1_3	LeanDag.Block.round
 EDGE	LeanDag.certificatesIn_chop._simp_1_3	LeanDag.BlockUniverse
 EDGE	LeanDag.certificatesIn_chop._simp_1_3	LeanDag.certificates
+NODE	LeanDagTest.BlackMarlin.bmRR2._proof_1	LeanDagTest.BlackMarlin.Agreement	thm
 NODE	LeanDag.equivFree_history_iff	LeanDag.DoS.Counting	thm
 EDGE	LeanDag.equivFree_history_iff	LeanDag.Faults
 EDGE	LeanDag.equivFree_history_iff	LeanDag.EquivFree
@@ -16116,6 +16340,7 @@ EDGE	LeanDag.exists_self_ancestor_aux._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.exists_self_ancestor_aux._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.exists_self_ancestor_aux._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.exists_self_ancestor_aux._proof_1_1	LeanDag.BlockUniverse
+NODE	LeanDag.BlackMarlin.Agreement.holds._proof_1_1	LeanDag.BlackMarlin.Agreement.Proof	thm
 NODE	LeanDag.CertifiedIn	LeanDag.Mysticeti	def
 EDGE	LeanDag.CertifiedIn	LeanDag.Faults
 EDGE	LeanDag.CertifiedIn	LeanDag.BlockUniverse
@@ -16376,6 +16601,23 @@ EDGE	LeanDag.MahiMahi.instDecidableDirectCommit	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.instDecidableDirectCommit	LeanDag.MahiMahi.DirectCommit
 EDGE	LeanDag.MahiMahi.instDecidableDirectCommit	LeanDag.MahiMahi.instDecidableDirectCommit._aux_1
 EDGE	LeanDag.MahiMahi.instDecidableDirectCommit	LeanDag.BlockUniverse
+NODE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.BlackMarlin.Helpers.Rules	thm
+EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.BlackMarlin.Linked
+EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.BlackMarlin.IsAnchor
+EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.history_subset_of_reaches
+EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.history
+EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.BlackMarlin.Rotation.anchor
+EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.BlackMarlin.reaches_of_committed_of_le
+EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.BlackMarlin.Committed
+EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.BlackMarlin.Supported
+EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.Block.creator
+EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.Reaches
 NODE	LeanDag.SkipMsg.skipFill_eq_of_core	LeanDag.SafeSkip.Jump	thm
 EDGE	LeanDag.SkipMsg.skipFill_eq_of_core	LeanDag.SkipMsg.v1
 EDGE	LeanDag.SkipMsg.skipFill_eq_of_core	LeanDag.Block
@@ -16675,6 +16917,18 @@ EDGE	LeanDagTest.Uodo._proof_3	LeanDag.Block.round
 EDGE	LeanDagTest.Uodo._proof_3	LeanDagTest.odoBlk
 EDGE	LeanDagTest.Uodo._proof_3	LeanDag.Faults5.toFaults
 EDGE	LeanDagTest.Uodo._proof_3	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_10	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_10	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_10	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_10	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_10	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_10	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_10	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_10	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_10	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_10	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_10	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_10	LeanDag.PaceCore.delay
 NODE	LeanDag.Hybrid.Decided.brecOn	LeanDag.Hybrid.Decision	thm
 EDGE	LeanDag.Hybrid.Decided.brecOn	LeanDag.Hybrid.ThickLink
 EDGE	LeanDag.Hybrid.Decided.brecOn	LeanDag.HybridFaults
@@ -17800,6 +18054,10 @@ NODE	LeanDagTest.u7_spansEligible	LeanDagTest.Adaptive	thm
 EDGE	LeanDagTest.u7_spansEligible	LeanDag.Eligible
 EDGE	LeanDagTest.u7_spansEligible	LeanDagTest.u7_spansEligible._proof_1_1
 EDGE	LeanDagTest.u7_spansEligible	LeanDag.SpansEligible
+NODE	LeanDag.BlackMarlin.Agreement.RunRecurs	LeanDag.BlackMarlin.Agreement.Statement	def
+EDGE	LeanDag.BlackMarlin.Agreement.RunRecurs	LeanDag.BlackMarlin.Rotation.anchor
+EDGE	LeanDag.BlackMarlin.Agreement.RunRecurs	LeanDag.BlackMarlin.Liveness.FairRun
+EDGE	LeanDag.BlackMarlin.Agreement.RunRecurs	LeanDag.BlackMarlin.Rotation
 NODE	LeanDag.correctSupporters	LeanDag.Support	def
 EDGE	LeanDag.correctSupporters	LeanDag.Faults
 EDGE	LeanDag.correctSupporters	LeanDag.Correct
@@ -19602,6 +19860,16 @@ EDGE	LeanDag.Odontoceti.instDecidableDirectCommit	LeanDag.Odontoceti.instDecidab
 EDGE	LeanDag.Odontoceti.instDecidableDirectCommit	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.instDecidableDirectCommit	LeanDag.Odontoceti.DirectCommit
 EDGE	LeanDag.Odontoceti.instDecidableDirectCommit	LeanDag.Faults5.toFaults
+NODE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_2	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_2	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_2	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_2	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_2	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_2	LeanDag.BlackMarlin.Rotation
 NODE	LeanDag.encodeList_injOn._proof_1_4	LeanDag.DoS.Pedigree	thm
 NODE	LeanDagTest.ugrowReactive._proof_27	LeanDagTest.Reactive	thm
 EDGE	LeanDagTest.ugrowReactive._proof_27	LeanDag.Slots.slotRound
@@ -20573,6 +20841,18 @@ EDGE	LeanDag.PaceCore.mk	LeanDag.BlockUniverse
 EDGE	LeanDag.PaceCore.mk	LeanDag.PaceCore
 EDGE	LeanDag.PaceCore.mk	LeanDag.Faults.f
 EDGE	LeanDag.PaceCore.mk	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_13	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_13	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_13	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_13	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_13	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_13	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_13	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_13	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_13	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_13	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_13	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_13	LeanDag.PaceCore.delay
 NODE	LeanDag.exists_certificate_reaches_of_directCommit	LeanDag.Mysticeti	thm
 EDGE	LeanDag.exists_certificate_reaches_of_directCommit	LeanDag.creatorsOf
 EDGE	LeanDag.exists_certificate_reaches_of_directCommit	LeanDag.mem_creatorsOf
@@ -20978,6 +21258,18 @@ EDGE	LeanDag.card_filter_creator_le_card_topsOf._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.card_filter_creator_le_card_topsOf._proof_1_3	LeanDag.BlockUniverse.block
 EDGE	LeanDag.card_filter_creator_le_card_topsOf._proof_1_3	LeanDag.Block.round
 EDGE	LeanDag.card_filter_creator_le_card_topsOf._proof_1_3	LeanDag.BlockUniverse
+NODE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_3	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_3	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_3	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_3	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_3	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_3	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_3	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_3	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_3	LeanDag.PaceCore.delay
 NODE	LeanDag.MahiMahi.goodNonempty	LeanDag.MahiMahi.Helpers.Counting	thm
 EDGE	LeanDag.MahiMahi.goodNonempty	LeanDag.MahiMahi.nonempty_of_quorum
 EDGE	LeanDag.MahiMahi.goodNonempty	LeanDag.MahiMahi.exists_commonCore
@@ -21526,6 +21818,7 @@ EDGE	LeanDag.ByzBudget	LeanDag.Delivery.accepted
 EDGE	LeanDag.ByzBudget	LeanDag.novelty
 EDGE	LeanDag.ByzBudget	LeanDag.viewUpto
 EDGE	LeanDag.ByzBudget	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.Agreement.holds._proof_1_2	LeanDag.BlackMarlin.Agreement.Proof	thm
 NODE	LeanDag.Odontoceti.decidedWithin_below_of_committed_run._proof_1_4	LeanDag.Adaptive.Odontoceti	thm
 EDGE	LeanDag.Odontoceti.decidedWithin_below_of_committed_run._proof_1_4	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.decidedWithin_below_of_committed_run._proof_1_4	LeanDag.Odontoceti.Eligible
@@ -22370,6 +22663,18 @@ EDGE	LeanDag.votesIn	LeanDag.Faults
 EDGE	LeanDag.votesIn	LeanDag.Block.refs
 EDGE	LeanDag.votesIn	LeanDag.BlockUniverse.block
 EDGE	LeanDag.votesIn	LeanDag.BlockUniverse
+NODE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_9	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_9	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_9	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_9	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_9	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_9	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_9	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_9	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_9	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_9	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_9	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_9	LeanDag.PaceCore.delay
 NODE	LeanDagTest.urecover._proof_1	LeanDagTest.Integration	thm
 NODE	LeanDag.epoch_closes._proof_1_12	LeanDag.Adaptive.Liveness	thm
 EDGE	LeanDag.epoch_closes._proof_1_12	LeanDag.AdaptivePolicy.W
@@ -23057,6 +23362,8 @@ NODE	LeanDag.FairRunOn	LeanDag.Liveness	def
 EDGE	LeanDag.FairRunOn	LeanDag.Slots.leader
 EDGE	LeanDag.FairRunOn	LeanDag.Slots
 NODE	LeanDagTest.tightBBlk._proof_1	LeanDagTest.HybridTight	thm
+NODE	LeanDagTest.BlackMarlin.bmRR2._proof_2	LeanDagTest.BlackMarlin.Agreement	thm
+EDGE	LeanDagTest.BlackMarlin.bmRR2._proof_2	LeanDagTest.BlackMarlin.bmRR2._proof_1
 NODE	LeanDag.history	LeanDag.History	def
 EDGE	LeanDag.history	LeanDag.Faults
 EDGE	LeanDag.history	LeanDag.BlockUniverse.block
@@ -24839,6 +25146,18 @@ EDGE	LeanDag.PartialRun.mk.inj	LeanDag.Slots
 EDGE	LeanDag.PartialRun.mk.inj	LeanDag.View
 EDGE	LeanDag.PartialRun.mk.inj	LeanDag.PartialRun.mk.noConfusion
 EDGE	LeanDag.PartialRun.mk.inj	LeanDag.AdaptivePolicy.inj
+NODE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_11	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_11	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_11	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_11	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_11	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_11	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_11	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_11	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_11	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_11	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_11	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_11	LeanDag.PaceCore.delay
 NODE	LeanDagTest.run7._proof_5	LeanDagTest.Adaptive	thm
 EDGE	LeanDagTest.run7._proof_5	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.run7._proof_5	LeanDag.Block.round
@@ -26344,6 +26663,15 @@ EDGE	LeanDag.AdaptivePolicy.const._proof_2	LeanDag.epochOf
 EDGE	LeanDag.AdaptivePolicy.const._proof_2	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.const._proof_2	LeanDag.Slots
 NODE	LeanDagTest.ugapPace._simp_7	LeanDagTest.Unbounded	thm
+NODE	LeanDag.BlackMarlin.Pace.gst_le_built._proof_1_1	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built._proof_1_1	LeanDag.PaceCore.built
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built._proof_1_1	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built._proof_1_1	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built._proof_1_1	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built._proof_1_1	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.gst_le_built._proof_1_1	LeanDag.BlackMarlin.Rotation
 NODE	LeanDag.self_mem_topsOf._proof_1_1	LeanDag.DoS.Pedigree	thm
 EDGE	LeanDag.self_mem_topsOf._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.self_mem_topsOf._proof_1_1	LeanDag.BlockUniverse.block
@@ -28482,6 +28810,16 @@ EDGE	LeanDag.MahiMahi.not_mem_refs_of_blames	LeanDag.MahiMahi.Blames.eq_1
 EDGE	LeanDag.MahiMahi.not_mem_refs_of_blames	LeanDag.MahiMahi.candidatesAt
 EDGE	LeanDag.MahiMahi.not_mem_refs_of_blames	LeanDag.MahiMahi.mem_candidatesAt
 EDGE	LeanDag.MahiMahi.not_mem_refs_of_blames	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_3	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_3	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_3	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_3	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_3	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_3	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds._proof_1_3	LeanDag.BlackMarlin.Rotation
 NODE	LeanDag.ViewPace.toPaceCore	LeanDag.ViewPace	def
 EDGE	LeanDag.ViewPace.toPaceCore	LeanDag.Faults
 EDGE	LeanDag.ViewPace.toPaceCore	LeanDag.BlockUniverse
@@ -29351,6 +29689,18 @@ EDGE	LeanDag.Hybrid.eq_of_directCommit	LeanDag.HybridFaults.fb
 EDGE	LeanDag.Hybrid.eq_of_directCommit	LeanDag.HybridFaults.byzantine
 EDGE	LeanDag.Hybrid.eq_of_directCommit	LeanDag.HybridFaults.card_validators
 EDGE	LeanDag.Hybrid.eq_of_directCommit	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_5	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_5	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_5	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_5	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_5	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_5	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_5	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_5	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_5	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_5	LeanDag.PaceCore.delay
 NODE	LeanDagTest.ugrowCatchPace._proof_30	LeanDagTest.Catchup	thm
 EDGE	LeanDagTest.ugrowCatchPace._proof_30	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowCatchPace._proof_30	LeanDagTest.ugrowCatchPace._simp_1
@@ -31644,6 +31994,18 @@ EDGE	LeanDag.mem_blames	LeanDag.blocksAt
 EDGE	LeanDag.mem_blames	LeanDag.mem_blocksAt._simp_1
 EDGE	LeanDag.mem_blames	LeanDag.blames
 EDGE	LeanDag.mem_blames	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_4	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_4	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_4	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_4	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_4	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_4	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_4	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_4	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_4	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_4	LeanDag.PaceCore.delay
 NODE	LeanDag.eq_of_decided_commit	LeanDag.Mysticeti	thm
 EDGE	LeanDag.eq_of_decided_commit	LeanDag.Faults
 EDGE	LeanDag.eq_of_decided_commit	LeanDag.Decided
@@ -31877,6 +32239,18 @@ EDGE	LeanDag.SkipMsg.isLeaderBlock_fill	LeanDag.IsLeaderBlock
 EDGE	LeanDag.SkipMsg.isLeaderBlock_fill	LeanDag.Slots
 EDGE	LeanDag.SkipMsg.isLeaderBlock_fill	LeanDag.SkipMsg
 EDGE	LeanDag.SkipMsg.isLeaderBlock_fill	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_7	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_7	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_7	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_7	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_7	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_7	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_7	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_7	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_7	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_7	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_7	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_7	LeanDag.PaceCore.delay
 NODE	LeanDag.directSkipIn_chop._simp_1_2	LeanDag.GC.ChopDecided	thm
 NODE	LeanDagTest.lky._proof_2	LeanDagTest.DoS.TwoFaults	thm
 NODE	LeanDag.MahiMahi.certificates_eq_of_three	LeanDag.MahiMahi.Helpers.Rules	thm
@@ -32894,6 +33268,64 @@ EDGE	LeanDag.BlackMarlin.instDecidableCommitted	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.instDecidableCommitted	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.instDecidableCommitted	LeanDag.BlackMarlin.Committed
 EDGE	LeanDag.BlackMarlin.instDecidableCommitted	LeanDag.BlackMarlin.instDecidableCommitted._aux_1
+NODE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Helpers.Agreement	thm
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.VotesAt
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.creatorsOf
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_5
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_3
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Linked
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.PaceCore.viewAt
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.mem_creatorsOf
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.PaceCore.mem_viewAt
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_1
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.IsAnchor
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_4
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_2
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_10
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.PaceCore.holds
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.supported_of_votesAt
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_12
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_6
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.instDecidableSupportedIn
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.Block.refs
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.PaceCore.gst
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.Correct
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.PaceCore.populatedOn
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.PaceCore.latest
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Pace
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_13
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.View.ids
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Pace.holds_two_rounds
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.PopulatedOn
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Rotation.anchor
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.linkersIn
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.blocksAt
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.linkers
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.Faults.f
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_9
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Pace.toPaceCore
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_8
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.PaceCore.timeout
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Pace.votes
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.PaceCore.proc
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.CommittedIn
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.LinkedIn
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Committed
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_7
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.mem_linkers
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Supported
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.supportersIn
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.Block.creator
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.SupportedIn
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_11
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.mem_blocksAt
+EDGE	LeanDag.BlackMarlin.Pace.committedIn_local	LeanDag.PaceCore.delay
 NODE	LeanDag.chop_block_eq	LeanDag.GC.Chop	thm
 EDGE	LeanDag.chop_block_eq	LeanDag.Block
 EDGE	LeanDag.chop_block_eq	LeanDag.Faults

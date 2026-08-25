@@ -103,3 +103,6 @@ import LeanDag.BlackMarlin.Model.Round
 import LeanDag.BlackMarlin.Reactive.Statement
 import LeanDag.BlackMarlin.Helpers.Reactive
 import LeanDag.BlackMarlin.Reactive.Proof
+import LeanDag.BlackMarlin.Agreement.Statement
+import LeanDag.BlackMarlin.Helpers.Agreement
+import LeanDag.BlackMarlin.Agreement.Proof

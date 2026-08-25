@@ -78,10 +78,15 @@ instance (r : ℕ) (L : BlockId) : Decidable (IsAnchor U r L) :=
 distinct validators reference `L` from round `r + 1`.
 
 The core's `supporters` counts authors rather than blocks, which is what
-makes the count a quorum: an equivocator contributes one either way. The
-paper's side condition — a supporter's block references no second block
-of `L`'s author and round — is `ValidWrt.distinct_creators` and needs no
-restatement here. -/
+makes the count a quorum: an equivocator contributes one either way.
+
+The paper's side condition on `supp` excludes a supporter whose **cone**
+holds a second block of `L`'s author and round, not merely one whose
+references do. The two coincide, and the reason is a fact about the
+model rather than a modelling choice: a reference sits exactly one round
+below its referrer (`ValidWrt.predecessor`), so the round-`r` members of
+a round-`(r+1)` block's cone are exactly its references, and the
+condition reduces to `ValidWrt.distinct_creators`. -/
 def Supported (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) : Prop :=
   quorumCard Validator ≤ (supporters U L (r + 1)).card
 

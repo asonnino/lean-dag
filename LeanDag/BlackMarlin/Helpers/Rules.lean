@@ -128,6 +128,16 @@ theorem reaches_of_committed_of_le {L₁ L₂ : BlockId} {r₁ r₂ : ℕ}
       have : L' = L₂ := eq_of_isAnchor_of_supported ha' ha₂ hs' hs₂
       exact Or.inr (this ▸ Reaches.single href)
 
+/-- **The prefix corollary of Lemma 5.** Of two committed anchors, the
+causal history of the lower is contained in that of the higher — what
+one delivers, the other delivers too. -/
+theorem history_subset_of_committed {L₁ L₂ : BlockId} {r₁ r₂ : ℕ}
+    (h₁ : Committed U L₁ r₁) (h₂ : Committed U L₂ r₂) (hr : r₁ ≤ r₂) :
+    history U L₁ ⊆ history U L₂ := by
+  rcases reaches_of_committed_of_le h₁ h₂ hr with heq | hre
+  · exact heq ▸ Finset.Subset.refl _
+  · exact history_subset_of_reaches h₂.1.1 hre
+
 omit Rot [DecidableEq BlockId] in
 /-- **The paper's Lemma 3.** Below the highest round of the DAG, every
 round carries blocks from a quorum of distinct authors.
