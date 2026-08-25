@@ -6077,6 +6077,56 @@ ab-delivered". `commitSeq` takes the prose and filters `B` as well, which
 is the reading under which the refutations above stand; under the
 literal one Integrity fails without any of this argument.
 
+**Where the defect sits.** The equivocation is a necessary condition and
+not the mechanism, and a controlled comparison separates the two. Hold
+the DAG fixed — same twins, same references, same everything — and change
+only the descent:
+
+```lean
+flushRecord Udiv 8 2 = some 8 ∧ flushRecord Udiv 19 2 = some 12
+```
+
+```lean
+suppAnchorsOf Udiv (strongOf Udiv 19) = {8} ∧
+    descendS Udiv 19 = some 8 ∧
+    flushRecordS Udiv 19 2 = flushRecordS Udiv 8 2
+```
+
+The same equivocation, and no divergence. BMT1 gives the converse: remove
+the equivocation and there is no divergence either. Both are necessary,
+and only one of them is a component that could have been written
+differently.
+
+**The commit rule's safety is not what is lost.** BM1 through BM7 stand,
+and `¬ Supported Udiv 12 2` — the rule never admits `12`, correctly. §4.4
+of the paper claims "These conditions prevent honest parties from
+committing different blocks when the anchor party is Byzantine", and of
+L16 that is true. The failure is on the path taken when L16 *fails*: the
+second validator committed nothing at round `2`, and reached `12` by
+descending from a later commit.
+
+**So the protocol carries two notions of segment boundary and they
+disagree.** The commit rule admits an anchor only with a quorum of
+support. The descent admits any anchor in the cone, chosen by `maxAnchor`
+and L24's metric, and consults support nowhere. Where no anchor
+equivocates the two coincide, because `no_equivocation` leaves one
+candidate block in the universe — that is BMT1's whole proof. Equivocation
+is what makes them come apart, and it is then the descent's notion that
+governs what is delivered.
+
+**Three conditions, each necessary.** An equivocating anchor, or BMT1
+applies. A *skipped* anchor round — `19` omits `14`, so
+`coneAnchors Udiv 19 3 = ∅` and the descent lands on the twins instead of
+stepping through round `3`, where BMD1's `StepUnique` would leave one
+candidate; BMD5 shows the link clause forbids this above a *committed*
+anchor, and `14` is supported but not committed. And a support-blind
+choice among what it finds, or `descendS`. The descent supplies two of
+the three.
+
+Where the equivocation is irreducible is one level further down: `descendS`
+repairs the descent over the universe, and §18.13 is why no validator can
+run it — telling the twins apart needs support a view need not carry.
+
 **This is the more robust of the two failures.** It does not depend on
 which twin the filter prefers, so no rule for choosing among twins
 repairs it — and §18.13 refutes that family for Agreement anyway. What
