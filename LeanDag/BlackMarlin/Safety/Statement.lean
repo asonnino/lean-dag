@@ -56,7 +56,7 @@ namespace BlackMarlin
 namespace Safety
 
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-  [F : Faults Validator] [R : Rotation Validator]
+  [F : Faults Validator] [Rot : Rotation Validator]
   {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 
 /-- **BM1, anchor uniqueness** (the paper's Lemma 2): two supported anchor
@@ -140,7 +140,7 @@ whether an anchor is committed is the business of the clauses above. -/
 def AnchorsAreLeaderBlocks (U : BlockUniverse Validator BlockId Payload) : Prop :=
   ∀ (r : ℕ) (L : BlockId),
     IsAnchor U r L ↔
-      IsLeaderBlock (S := Slots.uniformSingle 1 Nat.one_pos R.anchor) U r L
+      IsLeaderBlock (S := Slots.uniformSingle 1 Nat.one_pos Rot.anchor) U r L
 
 /-- Safety of the Black Marlin commit rule, over every fault
 configuration, anchor rotation and block universe the model admits. -/

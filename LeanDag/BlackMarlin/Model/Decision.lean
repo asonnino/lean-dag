@@ -30,7 +30,7 @@ namespace LeanDag
 namespace BlackMarlin
 
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-variable [F : Faults Validator] [R : Rotation Validator]
+variable [F : Faults Validator] [Rot : Rotation Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {U : BlockUniverse Validator BlockId Payload}
 
@@ -55,7 +55,7 @@ has not received. -/
 def linkersIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Finset BlockId :=
   ((blocksAt U (r + 1)).filter
-    (fun L' => (U.block L').creator = R.anchor (r + 1) ∧ L ∈ (U.block L').refs ∧
+    (fun L' => (U.block L').creator = Rot.anchor (r + 1) ∧ L ∈ (U.block L').refs ∧
       SupportedIn U V L' (r + 1))) ∩ V.ids
 
 /-- `L` is linked, as judged from a view. -/

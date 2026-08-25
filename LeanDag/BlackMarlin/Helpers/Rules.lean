@@ -14,7 +14,7 @@ namespace LeanDag
 namespace BlackMarlin
 
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-variable [F : Faults Validator] [R : Rotation Validator]
+variable [F : Faults Validator] [Rot : Rotation Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {U : BlockUniverse Validator BlockId Payload}
 
@@ -33,7 +33,7 @@ theorem creator_eq_of_isAnchor {L₁ L₂ : BlockId} {r : ℕ}
     (U.block L₁).creator = (U.block L₂).creator := by
   rw [h₁.2.2, h₂.2.2]
 
-omit R in
+omit Rot in
 /-- A validator supporting two distinct blocks of one author and round is
 not correct: one supporting block cannot reference both, since that would
 cite one author twice, and two supporting blocks are an equivocation. -/
@@ -48,7 +48,7 @@ theorem not_correct_of_supports_two {L₁ L₂ : BlockId} {v : Validator} {n : �
   subst hq
   exact hne ((U.valid q₁ hq₁).distinct_creators L₁ hq₁L L₂ hq₂L hcr)
 
-omit R in
+omit Rot in
 /-- **The paper's Lemma 2.** Two supported blocks of one author at one
 round are the same block: their support quorums share `n − 2f ≥ f + 1`
 authors, each supporting both, and all of them equivocators. Needs only
@@ -78,7 +78,7 @@ theorem eq_of_isAnchor_of_supported {L₁ L₂ : BlockId} {r : ℕ}
     (h₁ : Supported U L₁ r) (h₂ : Supported U L₂ r) : L₁ = L₂ :=
   eq_of_supported h₁ h₂ (creator_eq_of_isAnchor ha₁ ha₂)
 
-omit R in
+omit Rot in
 /-- **The paper's Lemma 4.** A supported block is in the causal history of
 **every** block two rounds above it or higher — Byzantine-authored
 included, since validity is structural.
@@ -128,7 +128,7 @@ theorem reaches_of_committed_of_le {L₁ L₂ : BlockId} {r₁ r₂ : ℕ}
       have : L' = L₂ := eq_of_isAnchor_of_supported ha' ha₂ hs' hs₂
       exact Or.inr (this ▸ Reaches.single href)
 
-omit R [DecidableEq BlockId] in
+omit Rot [DecidableEq BlockId] in
 /-- **The paper's Lemma 3.** Below the highest round of the DAG, every
 round carries blocks from a quorum of distinct authors.
 

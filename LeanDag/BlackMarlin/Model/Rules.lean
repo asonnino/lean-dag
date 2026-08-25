@@ -56,7 +56,7 @@ class Rotation (Validator : Type*) where
   anchor : ℕ → Validator
 
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-variable [F : Faults Validator] [R : Rotation Validator]
+variable [F : Faults Validator] [Rot : Rotation Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {U : BlockUniverse Validator BlockId Payload}
 
@@ -69,7 +69,7 @@ when the elected validator equivocates: an anchor round has one elected
 rule needs is a theorem about supported anchors, not a property of the
 rotation. -/
 def IsAnchor (U : BlockUniverse Validator BlockId Payload) (r : ℕ) (L : BlockId) : Prop :=
-  L ∈ U.ids ∧ (U.block L).round = r ∧ (U.block L).creator = R.anchor r
+  L ∈ U.ids ∧ (U.block L).round = r ∧ (U.block L).creator = Rot.anchor r
 
 instance (r : ℕ) (L : BlockId) : Decidable (IsAnchor U r L) :=
   inferInstanceAs (Decidable (_ ∧ _ ∧ _))
@@ -99,7 +99,7 @@ unchanged, since `blocksAt` already pins the round and the universe. -/
 def linkers (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) :
     Finset BlockId :=
   (blocksAt U (r + 1)).filter
-    (fun L' => (U.block L').creator = R.anchor (r + 1) ∧ L ∈ (U.block L').refs ∧
+    (fun L' => (U.block L').creator = Rot.anchor (r + 1) ∧ L ∈ (U.block L').refs ∧
       Supported U L' (r + 1))
 
 /-- **`L` is linked**: some anchor of the round above references it and is

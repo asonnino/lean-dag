@@ -72,7 +72,9 @@ LAYERS = [
     ("Black Marlin: the three-round commit rule",
      ["BlackMarlin.Model.Rules", "BlackMarlin.Model.Decision",
       "BlackMarlin.Safety.Statement", "BlackMarlin.Helpers.Rules",
-      "BlackMarlin.Helpers.Decision", "BlackMarlin.Safety.Proof"]),
+      "BlackMarlin.Helpers.Decision", "BlackMarlin.Safety.Proof",
+      "BlackMarlin.Liveness.Statement", "BlackMarlin.Helpers.Liveness",
+      "BlackMarlin.Liveness.Proof"]),
     ("The legacy quorum route (report §17)", ["Network.Quorum"]),
 ]
 

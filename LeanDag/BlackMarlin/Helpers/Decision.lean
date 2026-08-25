@@ -14,18 +14,18 @@ namespace LeanDag
 namespace BlackMarlin
 
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-variable [F : Faults Validator] [R : Rotation Validator]
+variable [F : Faults Validator] [Rot : Rotation Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable {V : View Validator BlockId Payload U}
 
-omit R in
+omit Rot in
 /-- A view can only under-report support. -/
 theorem supportersIn_subset {L : BlockId} {n : ℕ} :
     supportersIn U V L n ⊆ supporters U L n :=
   Finset.image_subset_image Finset.inter_subset_left
 
-omit R in
+omit Rot in
 /-- A view's support quorum is a genuine one. -/
 theorem supported_of_supportedIn {L : BlockId} {r : ℕ} (h : SupportedIn U V L r) :
     Supported U L r :=

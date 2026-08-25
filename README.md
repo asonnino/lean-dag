@@ -159,8 +159,15 @@ faults alone.
   nest. The second clause is used in exactly one case of one theorem —
   two committed anchors one round apart, which support alone leaves
   incomparable, refuted on the paper's own Figure 1 — where a supported
-  anchor is correctly refused for want of the link.
-  The arc is the second under the statement/proof partition.
+  anchor is correctly refused for want of the link. **Liveness** follows
+  above the same structural condition as the rest of the development, in
+  place of the paper's `∆`-quantified argument: a run of **two**
+  consecutive reliable anchors commits, and every reliable block is
+  delivered by the anchors above it. Where the core's corresponding
+  fairness clause is an assumption discharged by a wave-aligned witness,
+  a run of two is short enough that the rotation Black Marlin deploys
+  discharges it as a **theorem**. The arc is the second under the
+  statement/proof partition.
 
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on
@@ -228,7 +235,7 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 | [`docs/adaptive-leaders.md`](docs/adaptive-leaders.md) | adaptive leader schedules: the design record and theorem plan |
 | [`docs/hybrid-plan.md`](docs/hybrid-plan.md) | hybrid fault tolerance: the design record and theorem plan |
 | [`docs/mahi-mahi.md`](docs/mahi-mahi.md) | the asynchronous rule at wave `w`: the clause, and the statement/proof partition |
-| [`docs/black-marlin.md`](docs/black-marlin.md) | the three-round commit rule: the link clause, and what it is used for |
+| [`docs/black-marlin.md`](docs/black-marlin.md) | the three-round commit rule: the link clause, what it is used for, and the run of two |
 | [`docs/integration.md`](docs/integration.md) | composing the arcs: the invariant interface, and what composition revealed |
 | [`docs/related.md`](docs/related.md) | a survey of consensus on uncertified DAGs |
 | [`docs/style.md`](docs/style.md) | writing conventions for the documents and the source |

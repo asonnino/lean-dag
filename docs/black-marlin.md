@@ -208,39 +208,110 @@ LeanDag/BlackMarlin/
   Model/         definitions only, theorem-free: Rules, Decision
                  (decidable instances by `inferInstanceAs` included: definitions, not proofs)
   Helpers/       generated lemma infrastructure; unaudited
-  Safety/Statement.lean   imports Model/ only; definitions, prose, `def Statement : Prop`
-  Safety/Proof.lean       `theorem holds : Statement`; unaudited
+  <Result>/Statement.lean imports Model/ only; definitions, prose, `def Statement : Prop`
+  <Result>/Proof.lean     `theorem holds : Statement`; unaudited
+                          Results: Safety (BM1-BM7), Liveness (BML1-BML5)
 LeanDagTest/BlackMarlin/  witness models; the instantiations are audited
 scripts/check-arc-holes.py   sorry/admit/axiom/native_decide/unsafe/partial absent;
                              Statement.lean files proof-free; Model/ files theorem-free
 ```
 
-The audit surface is `Model/`, `Safety/Statement.lean`, the witness
-instantiations and the checker. `scripts/check-arc-holes.py` covers both
+The audit surface is `Model/`, the two `Statement.lean` files, the
+witness instantiations and the checker. `scripts/check-arc-holes.py` covers both
 partitioned arcs; it was named for Mahi-Mahi and is renamed here, its
 checks unchanged.
 
 **Relation to the core.** The core is consumed read-only: `Block`,
 `BlockDag`, `Causality`, `CausalHistory`, `History`, `Support`,
-`Validators`, and `Schedule` for BM7 alone. The self-parent clause of
+`Validators`, `Schedule` for BM7 alone, and `Liveness` for the
+participation vocabulary and the counting step BML1 reuses. The self-parent clause of
 §5(i) is the one place a change to the core would strengthen a result,
 and it is reported rather than made.
 
-## 8. What is not covered
+## 8. Liveness
 
-**Liveness (§5.2 of the paper).** Lemmas 6 to 11 and Theorem 12 rest on
-the round structure — the timeout, the `3∆` weak-reference window, and
-the dual condition under which a round is concluded — none of which is
-modelled here. Lemma 10 is also probabilistic, bounding the expected
-number of rounds to a correct anchor, where this repository's liveness
-results are stated above the structural condition of *eventual DAG
-synchrony* (`liveness.md`); the two would have to be reconciled before
-the paper's argument could be transcribed.
+The paper reaches liveness through §5.2's timing argument: Lemma 6's
+`3∆` bound on a round, Lemma 9 on the timeout not firing when anchors
+are honest, Lemma 10 on the expected number of rounds to a correct
+anchor. This development states liveness above the structural condition
+instead (`liveness.md`), so those are replaced rather than transcribed,
+and no timeout, message delay, stabilisation time or probability appears
+below. Five claims, in `LeanDag/BlackMarlin/Liveness/Statement.lean`:
 
-**Delivery completeness.** That every block reaches the ledger, rather
-than every committed anchor's history nesting, needs the weak-reference
-window of §4.3 and is a validity property in the paper's sense
-(Definition 1), not a safety one.
+| | Claim | Paper |
+|:---|:---|:---|
+| BML1 | `CommitStep` — a run of two reliable anchors over three populated rounds is committed | — |
+| BML2 | `FullViewSound` — the full view reaches the verdict the rule reaches | — |
+| BML3 | `Inclusion` — a reliable validator's block is in the causal history of every block two rounds above | Lemma 7 |
+| BML4 | `Recurrence` — the rotation names a committing round arbitrarily far out | Lemma 10, role |
+| BML5 | `RotationFair` — round robin supplies the run of two | — |
+
+**BML1** is the core's counting step read twice. `Supported U L r` is
+the core's `DirectCommit` under another name, so
+`directCommit_of_votesAt` applies verbatim: coverage makes every
+reliable block one round above `L` reference it, and those authors carry
+a quorum. The link clause then costs no hypothesis of its own. The
+round-`(r+1)` anchor is one of those reliable blocks, so the same
+coverage fact already makes it reference the round-`r` anchor; and it is
+supported by the same argument one round higher. Hence three populated
+rounds and a run of two reliable anchors — where the core's three-round
+rule needs a run that spans eligibility.
+
+**BML3** consumes no clause of the commit rule. Coverage gives the block
+a support quorum and BM2 carries it upward, so inclusion does not depend
+on which anchors the rule admits, only on one being admitted above.
+Together with BML4 this is the Validity property of Definition 1 for
+reliable authors.
+
+**BML4** plays the role of the paper's Lemma 10 — that commits keep
+happening — without its probability. It quantifies the universe *inside*
+the conclusion, as the core's
+`CommitsAt` does and for the same reason: the rotation names the round,
+and any DAG grown two rounds past it and covered from `R` commits it.
+Fixing a universe first would cap how far the rotation may reach.
+
+**BML5 is a theorem here where the core's counterpart is an assumption.**
+The core's `FairRunOn` needs runs of three, and its docstring records the
+pigeonhole for per-slot rotation as prose rather than proving it;
+`WaveRobin.lean` supplies runs of three by rotating in waves instead.
+Black Marlin needs runs of two, and that case is a short counting
+argument: if no two cyclically adjacent anchors were reliable, the
+successor map would inject the reliable set into the Byzantine one,
+giving `n − f ≤ f` against `3f + 1 ≤ n`. So the rotation Black Marlin
+actually deploys — `RR(r) = r mod n` — discharges the clause outright,
+at every committee and whichever validators are Byzantine. This is a
+consequence of the two-round rule rather than of the mechanisation:
+three consecutive reliable leaders is a strictly harder fact than two,
+and the second commit clause is what lets the rule ask only for two.
+
+The witness is a second universe (`LeanDagTest/BlackMarlin/Liveness.lean`)
+— four rounds, every block referencing the whole round beneath it.
+Figure 1 cannot serve, and `decide` says why: its point is that
+validator `0` omits the round-3 anchor from its round-4 block, which is
+exactly a failure of coverage among the reliable validators.
+
+## 9. What is not covered
+
+**The timing argument (Lemmas 6, 9, 10).** Replaced rather than
+transcribed, as §8 records. Lemma 10 has no counterpart at all: BML5
+makes the recurring run deterministic.
+
+**Responsiveness.** The paper's round advances on a dual condition —
+a quorum, and either the anchor of the round with the two anchors below
+it supported, or a timeout — which is what keeps the protocol running at
+the actual network delay rather than at `∆`. The core's `ReactivePace`
+models the first disjunct's shape exactly: its `vote_or_wait` clause is
+the statement that a validator's block references the anchor of the
+round below, which is what concluding a round requires. Its
+`prompt_vote` clause is not: that says holding the anchor suffices to
+build within `proc`, where Black Marlin also requires the two support
+conditions. So the fast-path latency results transfer only with a
+Black Marlin variant of that clause, which is not attempted here.
+
+**Delivery completeness.** BML3 covers reliable authors. That *every*
+block reaches the ledger needs the weak-reference window of §4.3 and is
+a validity property in the paper's sense (Definition 1), not a safety
+one.
 
 **The deterministic sort.** `τ` orders each delivered increment, and
 Total Order in Definition 1 is a statement about the resulting sequence.
