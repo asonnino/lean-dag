@@ -411,6 +411,24 @@ theorem flushRecordS_agree {B₁ B₂ : BlockId} (h₁ : B₁ ∈ U.ids) (h₂ :
     (hρ : ρ ≤ σ) : flushRecordS U B₁ ρ = flushRecordS U B₂ ρ := by
   rw [flushRecordS_suffix h₁ hm₁ hρ, flushRecordS_suffix h₂ hm₂ hρ]
 
+/-- **Two strengthened records with committed tops agree.** Chaining
+puts the lower top in the higher's cone (BM5), BMP8 makes both descents
+reach it, and the suffix property carries agreement to every round below
+it. This is the composition the refutation needed and did not have. -/
+theorem flushRecordS_agree_of_committed {B₁ B₂ : BlockId} {r₁ r₂ ρ : ℕ}
+    (h₁ : B₁ ∈ U.ids) (h₂ : B₂ ∈ U.ids)
+    (hc₁ : Committed U B₁ r₁) (hc₂ : Committed U B₂ r₂) (hr : r₁ ≤ r₂)
+    (hρ : ρ ≤ r₁) : flushRecordS U B₁ ρ = flushRecordS U B₂ ρ := by
+  rcases reaches_of_committed_of_le hc₁ hc₂ hr with heq | hre
+  · rw [heq]
+  · by_cases hbb : B₁ = B₂
+    · rw [hbb]
+    · have hmem : B₁ ∈ strongOf U B₂ :=
+        mem_strongOf.mpr ⟨hbb, (mem_history_iff h₂).mpr hre⟩
+      refine flushRecordS_agree h₁ h₂ ?_ (descentSUpto_reaches _ B₂ h₂ (le_refl _) B₁ r₁ hc₁ hmem) hρ
+      rw [flushRecordS, hc₁.1.2.1]
+      exact descentUpto_self_gen _ B₁ hc₁.1.2.1
+
 end BlackMarlin
 
 end LeanDag

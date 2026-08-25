@@ -30,10 +30,11 @@ sits beside them. Six claims:
 * **BMP6, `LivenessUntouched`** — nothing the liveness results speak
   about mentions the descent: `Committed` is a property of the rule
   alone, so BML1 and BMR2 hold of the repaired protocol word for word;
-* **BMP7–BMP10** are the strengthened form, which drops the tie-break
+* **BMP7–BMP12** are the strengthened form, which drops the tie-break
   rather than filtering it: every boundary is supported, no committed
-  anchor is passed by, agreement runs down from any meeting point, and
-  the descent still terminates and delivers everything.
+  anchor is passed by, agreement runs down from any meeting point, two
+  records with committed tops therefore agree outright, and the descent
+  still terminates while committed rounds still recur.
 
 **What this does not settle.** `Supported` is a fact about the universe,
 and a validator computes support from its own view, which under-reports.
@@ -140,8 +141,18 @@ def StrongNoStall (U : BlockUniverse Validator BlockId Payload) : Prop :=
   (∀ (B L : BlockId), B ∈ U.ids → descendS U B = some L →
     (U.block L).round < (U.block B).round)
 
+/-- **BMP11, two records with committed tops agree.** The composition:
+chaining puts the lower top in the higher's cone (BM5), BMP8 makes both
+descents reach it, and BMP9 carries agreement to every round below. This
+is what the execution of `black-marlin.md` §13 needed and did not have,
+and it holds with no hypothesis about what lies between the two tops. -/
+def StrongAgreesCommitted (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B₁ B₂ : BlockId) (r₁ r₂ ρ : ℕ), B₁ ∈ U.ids → B₂ ∈ U.ids →
+    Committed U B₁ r₁ → Committed U B₂ r₂ → r₁ ≤ r₂ → ρ ≤ r₁ →
+    flushRecordS U B₁ ρ = flushRecordS U B₂ ρ
+
 variable (Validator BlockId Payload) in
-/-- **BMP11, and no execution is stuck.** The recurrence of committed
+/-- **BMP12, and no execution is stuck.** The recurrence of committed
 rounds is a statement about `Committed` and the rotation, neither of
 which the repair touches, so it holds of the repaired protocol word for
 word: for every round the rotation names a later one that any
@@ -161,7 +172,7 @@ def Statement : Prop :=
     AtMostOneSupported U ∧ RepairPrefers U ∧ RepairRefines U ∧ NoStall U ∧
       Agrees U ∧ LivenessUntouched U ∧
       StrongSupported U ∧ StrongReaches U ∧ StrongAgrees U ∧ StrongNoStall U ∧
-      NotStuck Validator BlockId Payload
+      StrongAgreesCommitted U ∧ NotStuck Validator BlockId Payload
 
 end Repair
 

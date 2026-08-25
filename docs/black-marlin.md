@@ -227,7 +227,7 @@ LeanDag/BlackMarlin/
                           Results: Safety (BM1-BM7), Liveness (BML1-BML5),
                           Reactive (BMR1-BMR6), Agreement (BMA1-BMA4),
                           Ledger (BMD1-BMD6), Descent (BME1-BME5),
-                          Order (BMO1-BMO9), Repair (BMP1-BMP11)
+                          Order (BMO1-BMO9), Repair (BMP1-BMP12)
 LeanDagTest/BlackMarlin/  witness models; the instantiations are audited
 scripts/check-arc-holes.py   sorry/admit/axiom/native_decide/unsafe/partial absent;
                              Statement.lean files proof-free; Model/ files theorem-free
@@ -743,7 +743,8 @@ more claims, and one about liveness.
 | BMP8 | `StrongReaches` — no committed anchor is passed by | BM1, BM2 |
 | BMP9 | `StrongAgrees` — agreement runs down from any meeting point | — |
 | BMP10 | `StrongNoStall` — a choice is made where one exists, and sits lower | — |
-| BMP11 | `NotStuck` — committed rounds still recur | BML4, BML5 |
+| BMP11 | `StrongAgreesCommitted` — two records with committed tops agree outright | BM5 |
+| BMP12 | `NotStuck` — committed rounds still recur | BML4, BML5 |
 
 **BMP7 answers the equivocation-without-quorum case.** A round whose
 anchors carry no quorum is not a boundary at all, so the strengthened
@@ -757,13 +758,14 @@ anchor at `ρ + 1` is supported because the commit rule says so — and BM1
 fixes which block each of those is. So the chain cannot step over `ρ`;
 it lands on the committed anchor.
 
-**BMP9 completes it.** Two records whose tops are committed anchors both
-reach the lower of the two — BM5 puts it in the higher's cone — and
-therefore agree at every round below it. On §13's execution the only
+**BMP9 and BMP11 complete it.** Two records whose tops are committed
+anchors both reach the lower of the two — BM5 puts it in the higher's
+cone — and therefore agree at every round below it, with no hypothesis
+about what lies between the two tops. On §13's execution the only
 supported anchor in the round-4 anchor's cone is `8`, so the descent goes
 straight to it and the two records agree at every round.
 
-**Liveness survives.** BMP11 is the recurrence of committed rounds
+**Liveness survives.** BMP12 is the recurrence of committed rounds
 restated for the repaired protocol: it is a statement about `Committed`
 and the rotation, neither of which the repair touches, so no execution is
 stuck after synchrony. BMP10 adds that the descent still terminates.

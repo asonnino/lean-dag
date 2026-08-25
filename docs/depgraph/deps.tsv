@@ -4296,6 +4296,31 @@ EDGE	LeanDag.decided_of_decided_chop	LeanDag.decided_of_decided_chop._proof_1_4
 EDGE	LeanDag.decided_of_decided_chop	LeanDag.Slots
 EDGE	LeanDag.decided_of_decided_chop	LeanDag.View
 EDGE	LeanDag.decided_of_decided_chop	LeanDag.Block.creator
+NODE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.Helpers.Repair	thm
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.descentSUpto_reaches
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.Linked
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.IsAnchor
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.strongOf
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.mem_history_iff
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.flushRecordS
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.flushRecordS.eq_1
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.mem_strongOf
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.flushRecordS_agree
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.descentUpto_self_gen
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.history
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.Rotation.anchor
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.reaches_of_committed_of_le
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.Committed
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.Supported
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.descentSUpto
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.Block.creator
+EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.Reaches
 NODE	LeanDag.Integration.not_refsAccepted_skipFillD	LeanDag.Integration.DeliveryFill	thm
 EDGE	LeanDag.Integration.not_refsAccepted_skipFillD	LeanDag.Delivery
 EDGE	LeanDag.Integration.not_refsAccepted_skipFillD	LeanDag.SkipMsg.v1
@@ -16023,6 +16048,7 @@ EDGE	LeanDag.BlackMarlin.Repair.Statement	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.Repair.Statement	LeanDag.BlackMarlin.Repair.StrongNoStall
 EDGE	LeanDag.BlackMarlin.Repair.Statement	LeanDag.BlackMarlin.Repair.NoStall
 EDGE	LeanDag.BlackMarlin.Repair.Statement	LeanDag.BlackMarlin.Repair.LivenessUntouched
+EDGE	LeanDag.BlackMarlin.Repair.Statement	LeanDag.BlackMarlin.Repair.StrongAgreesCommitted
 NODE	LeanDagTest.BlackMarlin.ugrowBM._proof_27	LeanDagTest.BlackMarlin.Reactive	thm
 EDGE	LeanDagTest.BlackMarlin.ugrowBM._proof_27	LeanDagTest.Ugrow
 EDGE	LeanDagTest.BlackMarlin.ugrowBM._proof_27	LeanDagTest.BlackMarlin.ugrowBM._proof_11
@@ -22829,6 +22855,13 @@ EDGE	LeanDag.MahiMahi.Liveness.CommitsWithin	LeanDag.BlockUniverse
 EDGE	LeanDag.MahiMahi.Liveness.CommitsWithin	LeanDag.IsLeaderBlock
 EDGE	LeanDag.MahiMahi.Liveness.CommitsWithin	LeanDag.Slots
 EDGE	LeanDag.MahiMahi.Liveness.CommitsWithin	LeanDag.MahiMahi.Decided
+NODE	LeanDag.BlackMarlin.Repair.StrongAgreesCommitted	LeanDag.BlackMarlin.Repair.Statement	def
+EDGE	LeanDag.BlackMarlin.Repair.StrongAgreesCommitted	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.Repair.StrongAgreesCommitted	LeanDag.BlackMarlin.flushRecordS
+EDGE	LeanDag.BlackMarlin.Repair.StrongAgreesCommitted	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.BlackMarlin.Repair.StrongAgreesCommitted	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.Repair.StrongAgreesCommitted	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.Repair.StrongAgreesCommitted	LeanDag.BlackMarlin.Committed
 NODE	LeanDagTest.ucrashMsg._proof_18	LeanDagTest.SafeSkip	thm
 EDGE	LeanDagTest.ucrashMsg._proof_18	LeanDagTest.ucrashMsg._proof_8
 NODE	LeanDag.Integration.chopMsg._proof_9	LeanDag.Integration.Retention	thm
@@ -25753,11 +25786,13 @@ EDGE	LeanDag.BlackMarlin.Repair.holds	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.Repair.holds	LeanDag.BlackMarlin.descendS
 EDGE	LeanDag.BlackMarlin.Repair.holds	LeanDag.BlackMarlin.Repair.StrongNoStall
 EDGE	LeanDag.BlackMarlin.Repair.holds	LeanDag.BlackMarlin.descendS_mem
+EDGE	LeanDag.BlackMarlin.Repair.holds	LeanDag.BlackMarlin.flushRecordS_agree_of_committed
 EDGE	LeanDag.BlackMarlin.Repair.holds	LeanDag.BlackMarlin.Committed
 EDGE	LeanDag.BlackMarlin.Repair.holds	LeanDag.BlackMarlin.Supported
 EDGE	LeanDag.BlackMarlin.Repair.holds	LeanDag.BlackMarlin.Repair.NoStall
 EDGE	LeanDag.BlackMarlin.Repair.holds	LeanDag.BlackMarlin.Repair.Statement
 EDGE	LeanDag.BlackMarlin.Repair.holds	LeanDag.BlackMarlin.Repair.LivenessUntouched
+EDGE	LeanDag.BlackMarlin.Repair.holds	LeanDag.BlackMarlin.Repair.StrongAgreesCommitted
 NODE	LeanDag.Slots.noConfusion	LeanDag.Mysticeti	def
 EDGE	LeanDag.Slots.noConfusion	LeanDag.Slots.casesOn
 EDGE	LeanDag.Slots.noConfusion	LeanDag.Slots.noConfusionType

@@ -6025,11 +6025,12 @@ all, so no choice is made there and two records cannot part over one.
 anchor at `ρ` a supported anchor sits at every round the chain could land
 on, the anchor itself from `ρ + 2` up by BM2 and its linking anchor at
 `ρ + 1` because the commit rule makes it supported, with BM1 fixing which
-block each is. **BMP9** completes it: two records whose tops are committed
+block each is. **BMP9** and **BMP11** complete it: two records whose tops are committed
 anchors both reach the lower of the two, BM5 putting it in the higher's
-cone, and so agree at every round below.
+cone, and so agree at every round below — with no hypothesis about what
+lies between the two tops.
 
-**Liveness survives.** **BMP11** is the recurrence of committed rounds
+**Liveness survives.** **BMP12** is the recurrence of committed rounds
 restated for the repaired protocol — a statement about `Committed` and
 the rotation, neither of which the repair touches — so no execution is
 stuck after synchrony; **BMP10** adds that the descent still terminates.
@@ -6252,7 +6253,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `BlackMarlin/Model/Descent.lean` | `maxAnchor`, the tie-break of L24, and the record the descent computes |
 | `BlackMarlin/Model/Order.lean` | the sort `τ`, the filter of L27, and the list a validator outputs |
 | `BlackMarlin/Model/Repair.lean` | the support-preferring side-condition, and a descent that meets it |
-| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/`, `BlackMarlin/Descent/`, `BlackMarlin/Order/`, `BlackMarlin/Repair/` | the eight statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6, BME1–BME5, BMO1–BMO9, BMP1–BMP11) |
+| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/`, `BlackMarlin/Descent/`, `BlackMarlin/Order/`, `BlackMarlin/Repair/` | the eight statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6, BME1–BME5, BMO1–BMO9, BMP1–BMP12) |
 | `BlackMarlin/Helpers/` | the generated lemma layer |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
@@ -6729,7 +6730,7 @@ B and E for the denial-of-service arc, G for garbage collection, O for
 Odontoceti; P, N and R name clauses of the trust boundary rather than
 results. Labels resolving to witness models rather than library
 theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7, SS11, AL8, H9, H10) are
-excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7, BMA5, BMD7, BME6, BMO10, BMO11 and BMP12. Appendix C displays every indexed
+excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7, BMA5, BMD7, BME6, BMO10, BMO11 and BMP13. Appendix C displays every indexed
 result in full.
 
 ### Safety
@@ -7013,8 +7014,9 @@ reused.
 | BMP8 | and no committed anchor is passed by | `BlackMarlin.descentSUpto_reaches` *(BlackMarlin/Helpers/Repair)* |
 | BMP9 | agreement runs down from any meeting point | `BlackMarlin.flushRecordS_agree` *(BlackMarlin/Helpers/Repair)* |
 | BMP10 | the strengthened descent does not stall | `BlackMarlin.descendS_isSome`, `BlackMarlin.descendS_round_lt` *(BlackMarlin/Helpers/Repair)* |
-| BMP11 | committed rounds still recur, so no execution is stuck | `BlackMarlin.Repair.holds` *(BlackMarlin/Repair/Proof)* |
-| BMP12 | both repairs on the execution of §18.11, and what they cost | `descendSupp`, `descendS` witnesses *(LeanDagTest/BlackMarlin)* |
+| BMP11 | two records with committed tops agree outright | `BlackMarlin.flushRecordS_agree_of_committed` *(BlackMarlin/Helpers/Repair)* |
+| BMP12 | committed rounds still recur, so no execution is stuck | `BlackMarlin.Repair.holds` *(BlackMarlin/Repair/Proof)* |
+| BMP13 | both repairs on the execution of §18.11, and what they cost | `descendSupp`, `descendS` witnesses *(LeanDagTest/BlackMarlin)* |
 
 **Integration** (§16):
 
@@ -13171,6 +13173,19 @@ def StrongNoStall (U : BlockUniverse Validator BlockId Payload) : Prop :=
 
 **BMP10, and it does not stall.** A choice is made whenever the cone holds a supported anchor, and it sits strictly lower, so the descent terminates. Coarser segments deliver the same blocks: a round that is no longer a boundary has its blocks come out inside the next segment above.
 
+#### `StrongAgreesCommitted`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def StrongAgreesCommitted (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B₁ B₂ : BlockId) (r₁ r₂ ρ : ℕ), B₁ ∈ U.ids → B₂ ∈ U.ids →
+    Committed U B₁ r₁ → Committed U B₂ r₂ → r₁ ≤ r₂ → ρ ≤ r₁ →
+    flushRecordS U B₁ ρ = flushRecordS U B₂ ρ
+```
+
+**BMP11, two records with committed tops agree.** The composition: chaining puts the lower top in the higher's cone (BM5), BMP8 makes both descents reach it, and BMP9 carries agreement to every round below. This is what the execution of `black-marlin.md` §13 needed and did not have, and it holds with no hypothesis about what lies between the two tops.
+
 #### `NotStuck`
 
 *def, `BlackMarlin.Repair.Statement.lean`*
@@ -13182,7 +13197,7 @@ def NotStuck : Prop :=
     ∃ r', r ≤ r' ∧ R ≤ r' ∧ Liveness.CommitsAtRound BlockId Payload T R r'
 ```
 
-**BMP11, and no execution is stuck.** The recurrence of committed rounds is a statement about `Committed` and the rotation, neither of which the repair touches, so it holds of the repaired protocol word for word: for every round the rotation names a later one that any sufficiently grown covered DAG commits, and BML5 supplies the clause it needs at every committee.
+**BMP12, and no execution is stuck.** The recurrence of committed rounds is a statement about `Committed` and the rotation, neither of which the repair touches, so it holds of the repaired protocol word for word: for every round the rotation names a later one that any sufficiently grown covered DAG commits, and BML5 supplies the clause it needs at every committee.
 
 #### `Statement`
 
@@ -13196,7 +13211,7 @@ def Statement : Prop :=
     AtMostOneSupported U ∧ RepairPrefers U ∧ RepairRefines U ∧ NoStall U ∧
       Agrees U ∧ LivenessUntouched U ∧
       StrongSupported U ∧ StrongReaches U ∧ StrongAgrees U ∧ StrongNoStall U ∧
-      NotStuck Validator BlockId Payload
+      StrongAgreesCommitted U ∧ NotStuck Validator BlockId Payload
 ```
 
 The repaired descent, over every fault configuration, rotation and block universe the model admits.
@@ -13237,7 +13252,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 527 theorems that either another module of the
+The 528 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -20111,6 +20126,19 @@ theorem flushRecordS_agree {B₁ B₂ : BlockId} (h₁ : B₁ ∈ U.ids) (h₂ :
 ```
 
 **Two strengthened descents agree below any block they both reach.**
+
+#### `flushRecordS_agree_of_committed`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem flushRecordS_agree_of_committed {B₁ B₂ : BlockId} {r₁ r₂ ρ : ℕ}
+    (h₁ : B₁ ∈ U.ids) (h₂ : B₂ ∈ U.ids)
+    (hc₁ : Committed U B₁ r₁) (hc₂ : Committed U B₂ r₂) (hr : r₁ ≤ r₂)
+    (hρ : ρ ≤ r₁) : flushRecordS U B₁ ρ = flushRecordS U B₂ ρ
+```
+
+**Two strengthened records with committed tops agree.** Chaining puts the lower top in the higher's cone (BM5), BMP8 makes both descents reach it, and the suffix property carries agreement to every round below it. This is the composition the refutation needed and did not have.
 
 #### `holds`
 
