@@ -351,7 +351,9 @@ proof effort with no corresponding proof content.
    hold of it (§18.10). **Agreement does not**: two honest validators can
    output different twins of an equivocating anchor, refuting the
    paper's Theorem 12 at `n = 4` on a seven-round model, with the commit
-   rule untouched (§18.11).
+   rule untouched (§18.11). A repair — the descent preferring a
+   supported anchor among tied candidates — is tested as a
+   side-condition and closes it without costing liveness (§18.12).
 
 ### 1.4 Scope and non-goals
 
@@ -5452,9 +5454,10 @@ paper — the rule and every safety result stated about it (§18.2) — its
 liveness above the structural condition of §6, in place of §5.2's timing
 argument (§18.5), the round rule of L38–L41 and the responsiveness it
 yields (§18.6), Definition 1's Agreement (§18.7), and the order
-`commit`'s descent delivers in (§18.8–§18.10), and a refutation of
-Definition 1's Agreement (§18.11). It is the second arc under the
-statement/proof partition (§17.5), and
+`commit`'s descent delivers in (§18.8–§18.10), a refutation of
+Definition 1's Agreement (§18.11), and a repair tested as a
+side-condition (§18.12). It is the second arc under the statement/proof
+partition (§17.5), and
 `docs/black-marlin.md` is its design record.
 
 ### 18.1 The rule
@@ -5965,8 +5968,56 @@ different blocks when the anchor party is Byzantine" — which holds of
 L16, and of the path that runs when L16 fails does not.
 
 A repair is visible — let the descent prefer a *supported* anchor among
-tied candidates, which BM1 makes unique — but that is a change to the
-protocol rather than a reading of it, and none is attempted here.
+tied candidates, which BM1 makes unique — and §18.12 tests it as a
+side-condition on the record rather than as a change to the model.
+
+### 18.12 The repair, tested as a side-condition
+
+§18.11 named a repair and left it unmade. This section makes it as a
+**side-condition** rather than a change to the model: `descend`,
+`flushRecord` and everything proved of them stand, and what is added sits
+beside them.
+
+A record is **support-preferring** when, at any round where some anchor
+carries a quorum of support, what it flushes there is supported; and
+`descendSupp` filters the candidates of L21–L24 to those the rule could
+commit, falling back to L24 only where none is. **BMP1** is why that is
+enough to be deterministic: the candidates of a step share a round, and
+BM1 gives a round one supported anchor, so where the filter bites nothing
+is left to break ties over. **BMP2** and **BMP3** say the repair takes it
+where there is one and is the original rule where there is not, so it
+refines L21–L24 rather than replacing it.
+
+**BMP5 is the answer.** Two support-preferring records that both flush at
+a round with a supported anchor flush the same block — which is exactly
+what §18.11's execution lacked. On that execution the repair closes it:
+`8` is the only supported candidate below the round-4 anchor, so the
+repaired descent takes it and the two records agree at round `2`.
+
+**Liveness does not fail.** What the liveness results conclude is
+`Committed`, the conjunction of `IsAnchor`, `Supported` and `Linked`,
+which mentions no part of the descent — **BMP6** is that observation, and
+that it is an identity is the point. BML1–BML5 and BMR1–BMR6 hold of the
+repaired protocol word for word, and **BMP4** adds that a step never
+stalls and never moves to another round, so the descent still terminates
+and nothing is left undelivered.
+
+**The cost is the delivered order.** A chain through a different block
+descends through a different cone, so a record may flush at different
+rounds: on §18.11's execution the repaired chain reaches `8`, whose cone
+holds no round-1 anchor, and flushes nothing at round `1` where the
+unrepaired chain flushed `7`. No block is lost — `7` comes out in the
+round-4 segment instead — but the segmentation differs, which is why BMP4
+speaks of a step and not of a record.
+
+**What is not settled.** `Supported` is a fact about the universe, and a
+validator computes support from its own view, which under-reports. A real
+validator's record meets the side-condition only where the support it
+needs is in view when it descends. In §18.11's execution it is — the
+three supporters of `8` lie in the cone of every round-6 block, and the
+second validator holds a quorum of those by the time it commits the
+round-4 anchor — but in general it is not established. That is what
+separates a repair stated from a repair supplied.
 
 ## 19. Satisfiability
 
@@ -6174,7 +6225,8 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `BlackMarlin/Model/Ledger.lean` | the flush record of `commit`'s descent, and the ledger it defines |
 | `BlackMarlin/Model/Descent.lean` | `maxAnchor`, the tie-break of L24, and the record the descent computes |
 | `BlackMarlin/Model/Order.lean` | the sort `τ`, the filter of L27, and the list a validator outputs |
-| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/`, `BlackMarlin/Descent/`, `BlackMarlin/Order/` | the seven statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6, BME1–BME5, BMO1–BMO9) |
+| `BlackMarlin/Model/Repair.lean` | the support-preferring side-condition, and a descent that meets it |
+| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/`, `BlackMarlin/Descent/`, `BlackMarlin/Order/`, `BlackMarlin/Repair/` | the eight statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6, BME1–BME5, BMO1–BMO9, BMP1–BMP6) |
 | `BlackMarlin/Helpers/` | the generated lemma layer |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
@@ -6645,13 +6697,13 @@ the consumption map of §4.8 and the support diagrams of §6.10 refer to
 results through them. The series are alphabetic by area: T and M for
 the safety core, L for liveness, V for the view-convergence family, CU
 for catch-up, RS for the reactive schedule, SS for safe skip, AL for adaptive
-leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, BM, BML, BMR, BMA, BMD, BME and BMO for Black Marlin, CQ for chain
+leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, BM, BML, BMR, BMA, BMD, BME, BMO and BMP for Black Marlin, CQ for chain
 quality, C, D,
 B and E for the denial-of-service arc, G for garbage collection, O for
 Odontoceti; P, N and R name clauses of the trust boundary rather than
 results. Labels resolving to witness models rather than library
 theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7, SS11, AL8, H9, H10) are
-excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7, BMA5, BMD7, BME6, BMO10 and BMO11. Appendix C displays every indexed
+excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7, BMA5, BMD7, BME6, BMO10, BMO11 and BMP7. Appendix C displays every indexed
 result in full.
 
 ### Safety
@@ -6925,6 +6977,13 @@ reused.
 | BMO9 | a reliable author's block is output | `BlackMarlin.mem_ledgerSeq_of_mem_history` *(BlackMarlin/Helpers/Order)* |
 | BMO10 | a sort exists, and the sequence on data | `TopoSort.ofFinOrder`, `fullSort` witnesses *(LeanDagTest/BlackMarlin)* |
 | BMO11 | two honest validators output different twins: Agreement refuted | `Udiv`, `vFlush`, `wFlush` witnesses *(LeanDagTest/BlackMarlin)* |
+| BMP1 | at most one candidate of a step is supported | `BlackMarlin.suppCandidates_subsingleton` *(BlackMarlin/Helpers/Repair)* |
+| BMP2 | the repaired descent takes it where there is one | `BlackMarlin.descendSupp_supported` *(BlackMarlin/Helpers/Repair)* |
+| BMP3 | and is L21–L24 where there is not | `BlackMarlin.descendSupp_eq_descend` *(BlackMarlin/Helpers/Repair)* |
+| BMP4 | a step never stalls and never moves to another round | `BlackMarlin.descendSupp_isSome_iff`, `BlackMarlin.descendSupp_round_eq` *(BlackMarlin/Helpers/Repair)* |
+| BMP5 | support-preferring records cannot part at a supported round | `BlackMarlin.block_eq_of_supportPreferring` *(BlackMarlin/Helpers/Repair)* |
+| BMP6 | `Committed` mentions no part of the descent, so liveness is untouched | `BlackMarlin.Repair.holds` *(BlackMarlin/Repair/Proof)* |
+| BMP7 | the repair closes the execution of §18.11, and what it costs there | `descendSupp`, `flushRecordSupp` witnesses *(LeanDagTest/BlackMarlin)* |
 
 **Integration** (§16):
 
@@ -12833,6 +12892,158 @@ def TopoSort.ofFinOrder {n : ℕ} (W : BlockUniverse Validator (Fin n) Payload)
 
 **The same sort, in a form the kernel evaluates.** `Finset.sort` rests on a merge sort the kernel does not reduce, so a witness filters `List.finRange` instead: the same order, structurally computed, which is what lets a concrete model settle the delivered sequence by `decide`.
 
+#### `suppCandidates`
+
+*def, `BlackMarlin.Model.Repair.lean`*
+
+```lean
+def suppCandidates (U : BlockUniverse Validator BlockId Payload) (B : BlockId) :
+    Finset BlockId :=
+  (maxAnchor U (strongOf U B)).filter (fun A => Supported U A (U.block A).round)
+```
+
+The candidates of L21–L24 that the rule could commit.
+
+#### `descendSupp`
+
+*def, `BlackMarlin.Model.Repair.lean`*
+
+```lean
+def descendSupp (U : BlockUniverse Validator BlockId Payload) (B : BlockId) :
+    Option BlockId :=
+  if (suppCandidates U B).Nonempty then pick (suppCandidates U B) else descend U B
+```
+
+**The repaired choice**: a supported candidate where there is one, and L21–L24 otherwise.
+
+#### `descentSuppUpto`
+
+*def, `BlackMarlin.Model.Repair.lean`*
+
+```lean
+def descentSuppUpto (U : BlockUniverse Validator BlockId Payload) :
+    ℕ → BlockId → ℕ → Option BlockId
+  | 0, B, ρ => if (U.block B).round = ρ then some B else none
+  | (n + 1), B, ρ =>
+      if (U.block B).round = ρ then some B
+      else (descendSupp U B).bind (fun A => descentSuppUpto U n A ρ)
+```
+
+The repaired descent, with fuel, as `descentUpto` is.
+
+#### `flushRecordSupp`
+
+*def, `BlackMarlin.Model.Repair.lean`*
+
+```lean
+def flushRecordSupp (U : BlockUniverse Validator BlockId Payload) (B : BlockId) (ρ : ℕ) :
+    Option BlockId :=
+  descentSuppUpto U ((U.block B).round) B ρ
+```
+
+The record the repaired descent leaves.
+
+#### `SupportPreferring`
+
+*def, `BlackMarlin.Model.Repair.lean`*
+
+```lean
+def SupportPreferring (U : BlockUniverse Validator BlockId Payload) (f : Flush U) : Prop :=
+  ∀ (ρ : ℕ) (L : BlockId), f.block ρ = some L →
+    (∃ A, IsAnchor U ρ A ∧ Supported U A ρ) → Supported U L ρ
+```
+
+**The side-condition.** Where a round has a supported anchor, the record flushes a supported one.
+
+#### `AtMostOneSupported`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def AtMostOneSupported (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B A C : BlockId), A ∈ suppCandidates U B → C ∈ suppCandidates U B → A = C
+```
+
+**BMP1, at most one candidate of a step is supported.**
+
+#### `RepairPrefers`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def RepairPrefers (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B L : BlockId), descendSupp U B = some L → (suppCandidates U B).Nonempty →
+    Supported U L (U.block L).round
+```
+
+**BMP2, the repair takes the supported candidate.**
+
+#### `RepairRefines`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def RepairRefines (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B : BlockId), ¬ (suppCandidates U B).Nonempty → descendSupp U B = descend U B
+```
+
+**BMP3, and is the original rule where there is none.**
+
+#### `NoStall`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def NoStall (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  (∀ (B : BlockId), (descendSupp U B).isSome ↔ (descend U B).isSome) ∧
+  (∀ (B L L' : BlockId), descendSupp U B = some L → descend U B = some L' →
+    (U.block L).round = (U.block L').round)
+```
+
+**BMP4, the repair changes which block a step returns, never whether it returns one nor at which round.** Stated of a step, not of a record: a chain through a different block descends through a different cone, so the rounds a record flushes at may differ downstream.
+
+#### `Agrees`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def Agrees (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (ρ : ℕ),
+    SupportPreferring U f₁ → SupportPreferring U f₂ →
+    (f₁.block ρ).isSome → (f₂.block ρ).isSome →
+    (∃ A, IsAnchor U ρ A ∧ Supported U A ρ) →
+    f₁.block ρ = f₂.block ρ
+```
+
+**BMP5, support-preferring records cannot part at a supported round.** The whole content of the repair, and what the execution of `black-marlin.md` §13 needed.
+
+#### `LivenessUntouched`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def LivenessUntouched (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (L : BlockId) (ρ : ℕ),
+    Committed U L ρ ↔ (IsAnchor U ρ L ∧ Supported U L ρ ∧ Linked U L ρ)
+```
+
+**BMP6, liveness is untouched.** What the liveness results conclude is `Committed`, which is a property of the commit rule and mentions no part of the descent — so the repair leaves them untouched, and the statement is the identity it looks like.
+
+#### `Statement`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [LinearOrder BlockId] [Rotation Validator]
+    (U : BlockUniverse Validator BlockId Payload),
+    AtMostOneSupported U ∧ RepairPrefers U ∧ RepairRefines U ∧ NoStall U ∧
+      Agrees U ∧ LivenessUntouched U
+```
+
+The repaired descent, over every fault configuration, rotation and block universe the model admits.
+
 ### Not otherwise grouped
 
 #### `SoundOn`
@@ -12869,7 +13080,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 509 theorems that either another module of the
+The 520 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -18770,6 +18981,18 @@ theorem mem_linkers {L L' : BlockId} {r : ℕ} :
 
 Membership in `linkers`, unfolded.
 
+#### `eq_of_supported`
+
+*theorem, `BlackMarlin.Helpers.Rules.lean`*
+
+```lean
+theorem eq_of_supported {L₁ L₂ : BlockId} {r : ℕ}
+    (h₁ : Supported U L₁ r) (h₂ : Supported U L₂ r)
+    (hcr : (U.block L₁).creator = (U.block L₂).creator) : L₁ = L₂
+```
+
+**The paper's Lemma 2.** Two supported blocks of one author at one round are the same block: their support quorums share `n − 2f ≥ f + 1` authors, each supporting both, and all of them equivocators. Needs only `n ≥ 3f + 1`, which is the whole committee of this arc.
+
 #### `eq_of_isAnchor_of_supported`
 
 *theorem, `BlackMarlin.Helpers.Rules.lean`*
@@ -19340,6 +19563,15 @@ theorem mem_anchorsOf {X : BlockId} :
     X ∈ anchorsOf U s ↔ X ∈ s ∧ IsAnchorBlock U X
 ```
 
+#### `mem_strongOf`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem mem_strongOf {X : BlockId} :
+    X ∈ strongOf U B ↔ X ≠ B ∧ X ∈ history U B
+```
+
 #### `mem_maxAnchor`
 
 *theorem, `BlackMarlin.Helpers.Descent.lean`*
@@ -19347,6 +19579,22 @@ theorem mem_anchorsOf {X : BlockId} :
 ```lean
 theorem mem_maxAnchor {X : BlockId} :
     X ∈ maxAnchor U s ↔ X ∈ anchorsOf U s ∧ (U.block X).round = maxAnchorRound U s
+```
+
+#### `pick_mem`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem pick_mem {t : Finset BlockId} (h : pick t = some A) : A ∈ t
+```
+
+#### `pick_isSome`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem pick_isSome {t : Finset BlockId} (h : t.Nonempty) : (pick t).isSome
 ```
 
 #### `descend_mem`
@@ -19563,6 +19811,83 @@ theorem mem_ledgerSeq_of_mem_history :
 theorem holds : Statement
 ```
 
+#### `suppCandidates_subsingleton`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem suppCandidates_subsingleton :
+    ∀ A ∈ suppCandidates U B, ∀ C ∈ suppCandidates U B, A = C
+```
+
+**At most one candidate is supported.** The candidates of a step share a round, and an anchor round has one supported anchor (BM1) — so where the filter bites there is nothing left to break ties over.
+
+#### `descendSupp_supported`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem descendSupp_supported (h : descendSupp U B = some L)
+    (hne : (suppCandidates U B).Nonempty) : Supported U L (U.block L).round
+```
+
+**The repaired choice is supported where one is.**
+
+#### `descendSupp_isSome_iff`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem descendSupp_isSome_iff :
+    (descendSupp U B).isSome ↔ (descend U B).isSome
+```
+
+**The repair never stalls the descent.**
+
+#### `descendSupp_round_eq`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem descendSupp_round_eq {L' : BlockId} (h : descendSupp U B = some L)
+    (h' : descend U B = some L') : (U.block L).round = (U.block L').round
+```
+
+**And never moves a step to another round.**
+
+#### `descendSupp_eq_descend`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem descendSupp_eq_descend (h : ¬ (suppCandidates U B).Nonempty) :
+    descendSupp U B = descend U B
+```
+
+**Where no candidate is supported, the repair is the original rule.** So it refines L21–L24 rather than replacing it.
+
+#### `block_eq_of_supportPreferring`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem block_eq_of_supportPreferring {f₁ f₂ : Flush U}
+    (hp₁ : SupportPreferring U f₁) (hp₂ : SupportPreferring U f₂)
+    (hs₁ : (f₁.block ρ).isSome) (hs₂ : (f₂.block ρ).isSome)
+    (hex : ∃ A, IsAnchor U ρ A ∧ Supported U A ρ) :
+    f₁.block ρ = f₂.block ρ
+```
+
+And so they agree there.
+
+#### `holds`
+
+*theorem, `BlackMarlin.Repair.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
 ### Not otherwise grouped
 
 #### `waveRobin_fairRun`
@@ -19604,7 +19929,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 473 lemmas used only within the file that proves
+The 474 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -20381,12 +20706,11 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `reaches_of_synchronisedOn` | Under coverage at round `r`, every block at round `≥ r + 2` reaches a reliable round-`r` block: its … |
 
-### `BlackMarlin/Helpers/Rules.lean` (3)
+### `BlackMarlin/Helpers/Rules.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `creator_eq_of_isAnchor` | Two anchor blocks of one round share an author: the rotation elects one validator per round. |
-| `eq_of_supported` | The paper's Lemma 2. Two supported blocks of one author at one round are the same block: their support … |
 | `not_correct_of_supports_two` | A validator supporting two distinct blocks of one author and round is not correct: one supporting block … |
 
 ### `BlackMarlin/Helpers/Decision.lean` (4)
@@ -20431,7 +20755,7 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `mem_coneAnchors_of_step` | A flushed anchor is a candidate of its own round below the anchor above it. |
 
-### `BlackMarlin/Helpers/Descent.lean` (17)
+### `BlackMarlin/Helpers/Descent.lean` (14)
 
 | Lemma | Role |
 |:---|:---|
@@ -20448,9 +20772,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `flushRecord_eq` | The record with the fuel its own round supplies. |
 | `le_maxAnchorRound` | No anchor of a set sits above its highest anchor round. |
 | `maxAnchor_nonempty` | A set holding an anchor holds one at its highest anchor round. |
-| `mem_strongOf` | — |
-| `pick_isSome` | — |
-| `pick_mem` | — |
 | `strongOf_eq_empty_of_round_zero` | A round-`0` block reaches only itself. |
 
 ### `BlackMarlin/Helpers/Order.lean` (11)
@@ -20468,6 +20789,16 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_ledgerSeq_mem_ids` | Everything flushed is a block of the universe. |
 | `notMem_deliveredBelow` | — |
 | `segment_congr` | Records that agree below a round flush the same segments there. |
+
+### `BlackMarlin/Helpers/Repair.lean` (5)
+
+| Lemma | Role |
+|:---|:---|
+| `descendSupp_mem` | The repaired choice is still a candidate of the step, so everything `descend` guarantees of its result … |
+| `descendSupp_mem_ids` | — |
+| `descendSupp_round_lt` | — |
+| `eq_of_supportPreferring` | Two support-preferring records cannot part at a supported round. The whole content of the repair: BM1 … |
+| `mem_suppCandidates` | — |
 
 ### `Network/Quorum.lean` (2)
 

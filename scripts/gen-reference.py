@@ -83,7 +83,9 @@ LAYERS = [
       "BlackMarlin.Model.Descent", "BlackMarlin.Descent.Statement",
       "BlackMarlin.Helpers.Descent", "BlackMarlin.Descent.Proof",
       "BlackMarlin.Model.Order", "BlackMarlin.Order.Statement",
-      "BlackMarlin.Helpers.Order", "BlackMarlin.Order.Proof"]),
+      "BlackMarlin.Helpers.Order", "BlackMarlin.Order.Proof",
+      "BlackMarlin.Model.Repair", "BlackMarlin.Repair.Statement",
+      "BlackMarlin.Helpers.Repair", "BlackMarlin.Repair.Proof"]),
     ("The legacy quorum route (report §17)", ["Network.Quorum"]),
 ]
 

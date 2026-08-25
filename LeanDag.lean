@@ -118,3 +118,7 @@ import LeanDag.BlackMarlin.Model.Order
 import LeanDag.BlackMarlin.Order.Statement
 import LeanDag.BlackMarlin.Helpers.Order
 import LeanDag.BlackMarlin.Order.Proof
+import LeanDag.BlackMarlin.Model.Repair
+import LeanDag.BlackMarlin.Repair.Statement
+import LeanDag.BlackMarlin.Helpers.Repair
+import LeanDag.BlackMarlin.Repair.Proof

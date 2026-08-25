@@ -1,4 +1,5 @@
 import LeanDagTest.BlackMarlin.Ledger
+import LeanDag.BlackMarlin.Repair.Proof
 
 /-!
 # Black Marlin — two honest parties, two different blocks
@@ -196,6 +197,42 @@ example : key Udiv 8 = key Udiv 12 ∧
 /-- Nothing above contradicts safety of the rule: the two records agree
 wherever both flush a committed anchor, and `12` is not one. -/
 example : ¬ Committed Udiv 12 2 := by decide
+
+
+/-! ## The repair, on this execution -/
+
+/-- **The side-condition closes it.** Only one of the two candidates
+below the round-4 anchor is supported, so the repaired descent takes `8`
+— the block the rule committed and the first validator output — and the
+two records now agree at round `2`. -/
+example : suppCandidates Udiv 19 = {8} ∧ descendSupp Udiv 19 = some 8 ∧
+    flushRecordSupp Udiv 19 2 = some 8 ∧ flushRecordSupp Udiv 8 2 = some 8 := by decide
+
+/-- **And what it costs, on data.** The repaired chain passes through
+`8`, whose cone holds no round-1 anchor, so it flushes nothing at round
+`1` where the unrepaired chain flushed `7`. No block is lost — `7` is in
+the round-4 anchor's cone and is delivered in that segment instead — but
+the segmentation differs, which is why BMP4 speaks of a step and not of
+a record. -/
+example : flushRecordSupp Udiv 19 1 = none ∧ flushRecord Udiv 19 1 = some 7 ∧
+    (7 : Fin 29) ∈ history Udiv 19 := by decide
+
+/-- Nothing the commit rule admits has changed: `8` is still committed
+and `12` still is not, since `Committed` mentions no part of the
+descent. -/
+example : Committed Udiv 8 2 ∧ ¬ Committed Udiv 12 2 := by decide
+
+/-- **And here the support really is in view.** `Supported` is a fact
+about the universe, so a validator can act on it only where its own view
+carries the witnesses. The three supporters of `8` lie in the cone of
+every round-6 block, and the second validator holds a quorum of those by
+the time it concludes round `6` and commits the round-4 anchor — so it
+can see `8` supported exactly when its descent needs to know. That this
+holds in general is not established. -/
+example : ∀ b : Fin 29, (Udiv.block b).round = 6 →
+    ({14, 15, 16} : Finset (Fin 29)) ⊆ history Udiv b := by decide
+
+example : supporters Udiv 8 3 = {1, 2, 3} := by decide
 
 end BlackMarlin
 

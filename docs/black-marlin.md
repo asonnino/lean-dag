@@ -27,8 +27,9 @@ This arc covers the commit rule of `delivery(r)` (Algorithm 2, L14–L17)
 with §5.1's safety results (§4), liveness above the structural condition
 in place of §5.2's timing argument (§8), the round rule of L38–L41 and
 the responsiveness it yields (§9), Definition 1's Agreement (§10), and
-the order the descent of `commit` delivers in (§11, §12), and a
-refutation of Definition 1's Agreement (§13). §14 says what remains.
+the order the descent of `commit` delivers in (§11, §12), a
+refutation of Definition 1's Agreement (§13), and a repair tested as a
+side-condition (§14). §15 says what remains.
 
 ## 2. The rule
 
@@ -218,7 +219,7 @@ the script does.
 ```
 LeanDag/BlackMarlin/
   Model/         definitions only, theorem-free: Rules, Decision, Round,
-                 Ledger, Descent, Order
+                 Ledger, Descent, Order, Repair
                  (decidable instances by `inferInstanceAs` included: definitions, not proofs)
   Helpers/       generated lemma infrastructure; unaudited
   <Result>/Statement.lean imports Model/ only; definitions, prose, `def Statement : Prop`
@@ -226,13 +227,13 @@ LeanDag/BlackMarlin/
                           Results: Safety (BM1-BM7), Liveness (BML1-BML5),
                           Reactive (BMR1-BMR6), Agreement (BMA1-BMA4),
                           Ledger (BMD1-BMD6), Descent (BME1-BME5),
-                          Order (BMO1-BMO9)
+                          Order (BMO1-BMO9), Repair (BMP1-BMP6)
 LeanDagTest/BlackMarlin/  witness models; the instantiations are audited
 scripts/check-arc-holes.py   sorry/admit/axiom/native_decide/unsafe/partial absent;
                              Statement.lean files proof-free; Model/ files theorem-free
 ```
 
-The audit surface is `Model/`, the six `Statement.lean` files, the
+The audit surface is `Model/`, the seven `Statement.lean` files, the
 witness instantiations and the checker. `scripts/check-arc-holes.py` covers both
 partitioned arcs; it was named for Mahi-Mahi and is renamed here, its
 checks unchanged.
@@ -672,12 +673,68 @@ the twins' own references, which their Byzantine author writes. It can
 give the twin it feeds the honest majority the *larger* metric, as `8`
 has here, so this is an attack rather than an unlucky configuration.
 
-**What would repair it** is not attempted here. Making the descent prefer
-a *supported* anchor among tied candidates would do it — BM1 makes the
-supported one unique — but that is a change to the protocol rather than
-a reading of it.
+**What would repair it** is §14: making the descent prefer a *supported*
+anchor among tied candidates, which BM1 makes unique. That is tested
+there as a side-condition on the record rather than as a change to the
+model.
 
-## 14. What is not covered
+## 14. The repair, tested
+
+§13 named a repair — let the descent prefer a supported anchor among
+tied candidates — and left it unmade. This section makes it as a
+**side-condition** rather than a change to the model: `descend`,
+`flushRecord` and everything proved of them stand, and
+`LeanDag/BlackMarlin/Model/Repair.lean` sits beside them.
+
+A record is **support-preferring** when, at any round where some anchor
+carries a quorum of support, what it flushes there is supported. And
+`descendSupp` filters the candidates of L21–L24 to those the rule could
+commit, falling back to L24 only where none is. Six claims:
+
+| | Claim | |
+|:---|:---|:---|
+| BMP1 | `AtMostOneSupported` — at most one candidate of a step is supported | BM1 |
+| BMP2 | `RepairPrefers` — `descendSupp` takes it where there is one | — |
+| BMP3 | `RepairRefines` — and is L21–L24 verbatim where there is not | — |
+| BMP4 | `NoStall` — a step never stalls and never moves to another round | — |
+| BMP5 | `Agrees` — support-preferring records cannot part at a supported round | BM1 |
+| BMP6 | `LivenessUntouched` — `Committed` mentions no part of the descent | definitional |
+
+**BMP5 is the answer to the question.** Two records that both flush at a
+round where a supported anchor exists flush the same block, because BM1
+makes the supported anchor of a round unique. That is exactly what §13's
+execution lacked, and on that execution the repair closes it: only `8` is
+supported among the two candidates, so `descendSupp` takes it, and the
+two records agree at round `2` where before they did not.
+
+**Liveness does not fail.** What the liveness results conclude is
+`Committed`, which is the conjunction of `IsAnchor`, `Supported` and
+`Linked` and mentions no part of the descent — BMP6 is that observation,
+and it is an identity, which is the point. BML1 through BML5 and BMR1
+through BMR6 hold of the repaired protocol word for word. BMP4 adds that
+the descent still terminates and still visits a block at every step the
+unrepaired one did, so nothing is left undelivered.
+
+**What it does cost.** The delivered *order* changes. A chain through a
+different block descends through a different cone, so a record may flush
+at different rounds: on §13's execution the repaired chain reaches `8`,
+whose cone holds no round-1 anchor, and so flushes nothing at round `1`
+where the unrepaired chain flushed `7`. No block is lost — `7` is in the
+round-4 anchor's cone and comes out in that segment instead — but the
+segmentation differs, which is why BMP4 speaks of a step and not of a
+record.
+
+**What is not settled.** `Supported` is a fact about the universe, and a
+validator computes support from its own view, which under-reports. So a
+real validator's record meets the side-condition only where the support
+it needs is in view when it descends. In §13's execution it is: the three
+supporters of `8` lie in the cone of every round-6 block, and the second
+validator holds a quorum of those by the time it commits the round-4
+anchor. In general it is not established, and establishing it — or
+finding the execution where it fails — is what turns this from a repair
+stated into a repair supplied.
+
+## 15. What is not covered
 
 **Lemma 10.** No counterpart, and none needed: BML5 makes the recurring
 run deterministic where the paper bounds an expectation. The expectation
