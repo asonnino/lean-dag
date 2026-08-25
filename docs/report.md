@@ -6054,9 +6054,12 @@ shares only `n − 2f` authors with an anchor's supporters, which at
 execution carries such a view — the cone of the round-4 anchor holds a
 quorum of authors at round `3`, so its holder could conclude that round,
 and yet it sees two of `8`'s three supporters, the third being the block
-that anchor does not reference. So the repair is proved of the universe
-and is **not implementable as a view-local rule** without a further
-hypothesis this development does not supply.
+that anchor does not reference. The second validator of that execution
+does see the support, holding a quorum at round `6` and so those blocks'
+cones; what the witness shows is that nothing in the model *forces* the
+support into view, not that it is missing there. So the repair is proved
+of the universe and is **not established as a view-local rule**: a
+validator applying it applies a test it cannot always evaluate.
 
 That puts the root cause back where §18.11 found it. What makes
 boundaries observable is L27's per-`(creator, round)` filter, and that

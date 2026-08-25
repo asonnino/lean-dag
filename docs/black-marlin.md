@@ -797,12 +797,18 @@ third is `14`, which the round-4 anchor does not reference — the same
 omission the whole construction turns on. So the repaired descent, run
 against that view, would not make `8` a boundary.
 
-Earlier this section said the support "is in view" in §13's execution.
-That was true of a validator holding the whole round-6 layer, and is not
-true of one holding the round-4 anchor's cone, which is what the descent
-reads. The repair is therefore **stated and proved of the universe**, and
-**not implementable as a view-local rule** without a further hypothesis
-that no part of this development supplies.
+A caveat on that witness, in the other direction. The second validator of
+§13 *does* see the support: it holds a quorum at round `6`, hence those
+blocks' cones, hence `14`. The cone of the round-4 anchor is a view that
+misses it, and it is a legal one — ref-closed, carrying a quorum at the
+round it would run the rule on — so **nothing in the model forces the
+support into view**. What is refuted is that it is always there, not that
+it is missing in §13's run.
+
+So the repair is **proved of the universe** and **not established as a
+view-local rule**: a validator applying it is applying a test it cannot
+always evaluate, and no hypothesis in this development supplies the
+missing one.
 
 **Which puts the root cause back where §13 found it.** The observable
 that makes boundaries matter is L27's per-`(creator, round)` filter, and
