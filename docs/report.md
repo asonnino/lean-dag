@@ -5932,10 +5932,24 @@ affected. What it refutes is the atomic-broadcast Agreement property, and
 it locates the defect at the two steps the paper asserts without
 argument — Lemma 11's "by construction of the delivery function, party
 `j` must have also committed `B`" and Theorem 12's Agreement clause
-"therefore party `j` eventually ab-delivers(B, j, r)". A repair is
-visible — let the descent prefer a *supported* anchor among tied
-candidates, which BM1 makes unique — but that is a change to the protocol
-rather than a reading of it, and none is attempted here.
+"therefore party `j` eventually ab-delivers(B, j, r)".
+
+It is not a slip in the pseudocode. The recursion is described three
+times — §4.4's prose, Figure 2's caption and §4.5's account of
+`maxAnchor` — and none of the three is support-aware, while the commit
+rule is and considers every twin. Equivocation is excluded only in
+the paper's complexity section, and there only to size the messages for
+the communication bound.
+And which twin loses the tie-break is fixed by the twins' own references,
+which their Byzantine author writes, so the configuration is chosen
+rather than met. §4.4 states the property this refutes in the same
+paragraph — "These conditions prevent honest parties from committing
+different blocks when the anchor party is Byzantine" — which holds of
+L16, and of the path that runs when L16 fails does not.
+
+A repair is visible — let the descent prefer a *supported* anchor among
+tied candidates, which BM1 makes unique — but that is a change to the
+protocol rather than a reading of it, and none is attempted here.
 
 ## 19. Satisfiability
 

@@ -618,6 +618,34 @@ argument, Lemma 11's "by construction of the delivery function, party
 `j` must have also committed `B`" and Theorem 12's Agreement clause
 "therefore party `j` eventually ab-delivers(B, j, r)".
 
+**Is it a slip in the pseudocode?** No. The recursion is described three
+times and no description is support-aware. §4.4's prose has "party `i`
+searches for a non-delivered block `B′` from a higher round reachable
+through strong references from `B`" — not even restricted to anchors.
+Figure 2's caption has "it will recursively commit earlier uncommitted
+anchor blocks first". §4.5 has "`maxAnchor(𝒜)` … returns the anchor from
+the highest round". And L21–L24's tie-break is the round-distance metric.
+The commit *rule* is support-aware and considers every twin — L15's "if
+multiple consider them all", and `RR` "returns both blocks" when the
+anchor equivocates — so the design has the Byzantine-anchor case in view
+throughout. The recursion simply does not inherit it.
+
+§4.4 states the property this refutes, in the same paragraph: "These
+conditions prevent honest parties from committing different blocks when
+the anchor party is Byzantine." That is true of L16, and BM1 proves it.
+It is not true of the code path that runs when L16 *fails*.
+
+**Nor is equivocation assumed away.** The one place the paper excludes it
+is its complexity section, and explicitly only to size
+`DAG \ history[j]` for the communication bound; the safety and liveness
+sections assume nothing of the kind, and Lemma 2's proof reasons about
+multiple blocks per party directly.
+
+**And the adversary chooses.** Which twin loses the tie-break is fixed by
+the twins' own references, which their Byzantine author writes. It can
+give the twin it feeds the honest majority the *larger* metric, as `8`
+has here, so this is an attack rather than an unlucky configuration.
+
 **What would repair it** is not attempted here. Making the descent prefer
 a *supported* anchor among tied candidates would do it — BM1 makes the
 supported one unique — but that is a change to the protocol rather than
@@ -626,7 +654,11 @@ a reading of it.
 ## 14. What is not covered
 
 **Lemma 10.** No counterpart, and none needed: BML5 makes the recurring
-run deterministic where the paper bounds an expectation.
+run deterministic where the paper bounds an expectation. The expectation
+sits oddly with the paper's own "substitution of the common coin with a
+deterministic round-robin mechanism", and its time-complexity section
+derives the headline latency — `4.25` rounds under Byzantine faults —
+from it.
 
 **Lemmas 6 and 9 in their own terms.** BMR5 and BMR6 play their roles —
 a bound on the time to conclude a round, and the timeout not firing when
