@@ -228,7 +228,7 @@ LeanDag/BlackMarlin/
                           Reactive (BMR1-BMR6), Agreement (BMA1-BMA4),
                           Ledger (BMD1-BMD6), Descent (BME1-BME5),
                           Order (BMO1-BMO9), Repair (BMP1-BMP13),
-                          ViewLiveness (BMV1-BMV3)
+                          ViewLiveness (BMV1-BMV3), ViewOrder (BMT1-BMT3)
 LeanDagTest/BlackMarlin/  witness models; the instantiations are audited
 scripts/check-arc-holes.py   sorry/admit/axiom/native_decide/unsafe/partial absent;
                              Statement.lean files proof-free; Model/ files theorem-free
@@ -965,7 +965,49 @@ block the equivocator need never send and loses liveness. BMV3 is the
 boundary between the two, and it is a narrow one — the commit rule sits
 on the near side and the descent does not.
 
-## 16. What is not covered
+## 16. The delivered order at a validator's view
+
+§15 concludes `B ∈ history U L` — membership in what a validator
+delivers, not position in the sequence it delivers. The position is
+fixed by the descent. This settles it, in both directions.
+
+**BMT1.** Two records that flush at a round whose anchor is *reliable*
+flush the same block, whatever views they came from. Not an agreement
+argument and needing no coverage: the block flushed there is that
+round's anchor, its author is correct, and `no_equivocation` leaves one
+such block in the universe. A reliable anchor gives the descent no
+choice, so every view makes the same one.
+
+**BMT2.** BMD3 needs a round two records agree at, and BMT1 supplies
+one, so agreement descends from any reliably anchored round through the
+stretch a record flushes at.
+
+**BMT3.** Where every anchor below a round is reliable, two records
+flushing at the same rounds deliver the **same list** — Definition 1's
+Total order, unconditionally, on that stretch.
+
+### And the hypothesis is tight
+
+One Byzantine anchor below is enough, and the break is not confined to
+the equivocator's blocks. In §13's execution the two records deliver `5`
+before `7` and `7` before `5`. Both are authored by **reliable**
+validators, neither has a twin, and L27's filter never touches either.
+What orders them is which segment they fall in: `5` lies below one twin
+and `7` below the other, so each record takes one in its round-2 segment
+and the other only in the round-4 segment.
+
+So Definition 1's **Total order** fails, and on honest blocks. That is a
+sharper failure than §13's and a more robust one — it does not depend on
+which twin the filter prefers, so no rule for choosing among twins
+repairs it. Only a rule making the two descents agree does, which is
+`descendS`, and §15 is why that has no live implementation.
+
+The order therefore agrees exactly as far as the rotation is reliable
+and no further. The boundary is not a limitation of this record: BMT3 is
+proved, its converse is refuted on data, and between them nothing is
+left open.
+
+## 17. What is not covered
 
 **Lemma 10.** No counterpart, and none needed: BML5 makes the recurring
 run deterministic where the paper bounds an expectation. The expectation

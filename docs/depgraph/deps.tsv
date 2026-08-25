@@ -1538,6 +1538,14 @@ EDGE	LeanDagTest.aim4	LeanDagTest.aim4._proof_1
 EDGE	LeanDagTest.aim4	LeanDag.BlockUniverse.mk
 EDGE	LeanDagTest.aim4	LeanDag.BlockUniverse
 EDGE	LeanDagTest.aim4	LeanDagTest.aim4._proof_2
+NODE	LeanDag.BlackMarlin.ViewOrder.ReliableAnchorPins	LeanDag.BlackMarlin.ViewOrder.Statement	def
+EDGE	LeanDag.BlackMarlin.ViewOrder.ReliableAnchorPins	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.ViewOrder.ReliableAnchorPins	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.ViewOrder.ReliableAnchorPins	LeanDag.Correct
+EDGE	LeanDag.BlackMarlin.ViewOrder.ReliableAnchorPins	LeanDag.BlackMarlin.Rotation.anchor
+EDGE	LeanDag.BlackMarlin.ViewOrder.ReliableAnchorPins	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.ViewOrder.ReliableAnchorPins	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.ViewOrder.ReliableAnchorPins	LeanDag.BlackMarlin.Rotation
 NODE	LeanDag.mem_novelty	LeanDag.DoS.Novelty	thm
 EDGE	LeanDag.mem_novelty	LeanDag.Faults
 EDGE	LeanDag.mem_novelty	LeanDag.history
@@ -19420,6 +19428,14 @@ EDGE	LeanDag.JumpMsg.toSkipMsg._proof_2	LeanDag.BlockUniverse
 EDGE	LeanDag.JumpMsg.toSkipMsg._proof_2	LeanDag.lineOf_mem
 EDGE	LeanDag.JumpMsg.toSkipMsg._proof_2	LeanDag.JumpMsg.B2
 EDGE	LeanDag.JumpMsg.toSkipMsg._proof_2	LeanDag.JumpMsg.hB2
+NODE	LeanDag.BlackMarlin.ViewOrder.AgreeOnReliableStretch	LeanDag.BlackMarlin.ViewOrder.Statement	def
+EDGE	LeanDag.BlackMarlin.ViewOrder.AgreeOnReliableStretch	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.ViewOrder.AgreeOnReliableStretch	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.ViewOrder.AgreeOnReliableStretch	LeanDag.Correct
+EDGE	LeanDag.BlackMarlin.ViewOrder.AgreeOnReliableStretch	LeanDag.BlackMarlin.Rotation.anchor
+EDGE	LeanDag.BlackMarlin.ViewOrder.AgreeOnReliableStretch	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.ViewOrder.AgreeOnReliableStretch	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.ViewOrder.AgreeOnReliableStretch	LeanDag.BlackMarlin.Rotation
 NODE	LeanDag.eligible_iff._proof_1_3	LeanDag.Mysticeti	thm
 EDGE	LeanDag.eligible_iff._proof_1_3	LeanDag.Slots.slotRound
 EDGE	LeanDag.eligible_iff._proof_1_3	LeanDag.Slots
@@ -19828,6 +19844,44 @@ EDGE	LeanDag.Hybrid.q_le_card_correct	LeanDag.Faults.card_byzantine
 EDGE	LeanDag.Hybrid.q_le_card_correct	LeanDag.Hybrid.q_le_card_correct._proof_1_1
 EDGE	LeanDag.Hybrid.q_le_card_correct	LeanDag.HybridFaults.fb
 EDGE	LeanDag.Hybrid.q_le_card_correct	LeanDag.Slots
+NODE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.ViewOrder.Proof	thm
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Ledger.AgreeBelow
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Order.DescentOrder
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Ledger.CommittedPins
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.ViewOrder.ReliableAnchorPins
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Order.SeqPrefix
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.IsAnchor
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Order.SeqAgree
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Ledger.LinkPopulates
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Ledger.AgreeStep
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Order.holds
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.ViewOrder.Statement
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Ledger.Ledger
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.Correct
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Order.TotalOrder
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlockUniverse.block
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Ledger.holds
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.Block.round
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Rotation.anchor
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Order.AnchorLast
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Order.Integrity
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Flush.isAnchor
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Order.Validity
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Order.CorrectDelivered
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Ledger.StepUnique
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.TopoSort
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlockUniverse.eq_of_creator_eq
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.Block.creator
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Order.KeyDelivered
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.Ledger.CorrectAnchorUnique
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.ViewOrder.OrderAgreesWhenAnchorsReliable
+EDGE	LeanDag.BlackMarlin.ViewOrder.holds	LeanDag.BlackMarlin.ViewOrder.AgreeOnReliableStretch
 NODE	LeanDag.ReactivePace.no_timeout_of_fast._proof_1_1	LeanDag.Reactive.Basic	thm
 EDGE	LeanDag.ReactivePace.no_timeout_of_fast._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.ReactivePace.no_timeout_of_fast._proof_1_1	LeanDag.Slots.slotRound
@@ -25420,6 +25474,16 @@ EDGE	LeanDag.Nemo.mem_live._simp_1	LeanDag.Nemo.Live
 EDGE	LeanDag.Nemo.mem_live._simp_1	LeanDag.Nemo.CrashFaults.crashed
 EDGE	LeanDag.Nemo.mem_live._simp_1	LeanDag.Nemo.CrashFaults
 EDGE	LeanDag.Nemo.mem_live._simp_1	LeanDag.Nemo.mem_live
+NODE	LeanDag.BlackMarlin.ViewOrder.OrderAgreesWhenAnchorsReliable	LeanDag.BlackMarlin.ViewOrder.Statement	def
+EDGE	LeanDag.BlackMarlin.ViewOrder.OrderAgreesWhenAnchorsReliable	LeanDag.BlackMarlin.deliverSeq
+EDGE	LeanDag.BlackMarlin.ViewOrder.OrderAgreesWhenAnchorsReliable	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.ViewOrder.OrderAgreesWhenAnchorsReliable	LeanDag.BlackMarlin.Flush
+EDGE	LeanDag.BlackMarlin.ViewOrder.OrderAgreesWhenAnchorsReliable	LeanDag.Correct
+EDGE	LeanDag.BlackMarlin.ViewOrder.OrderAgreesWhenAnchorsReliable	LeanDag.BlackMarlin.Rotation.anchor
+EDGE	LeanDag.BlackMarlin.ViewOrder.OrderAgreesWhenAnchorsReliable	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.ViewOrder.OrderAgreesWhenAnchorsReliable	LeanDag.BlackMarlin.Flush.block
+EDGE	LeanDag.BlackMarlin.ViewOrder.OrderAgreesWhenAnchorsReliable	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.ViewOrder.OrderAgreesWhenAnchorsReliable	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDag.Block	LeanDag.Block	ind
 NODE	LeanDagTest.BlackMarlin.ugrowBM._proof_4	LeanDagTest.BlackMarlin.Reactive	thm
 NODE	LeanDag.BlackMarlin.Reactive.ReactiveCommit	LeanDag.BlackMarlin.Reactive.Statement	def
@@ -27238,6 +27302,13 @@ EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.Correct
 EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.FairScheduleOn
 EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.committed_of_correct_block
 EDGE	LeanDag.committed_of_correct_block_correct	LeanDag.Slots
+NODE	LeanDag.BlackMarlin.ViewOrder.Statement	LeanDag.BlackMarlin.ViewOrder.Statement	def
+EDGE	LeanDag.BlackMarlin.ViewOrder.Statement	LeanDag.BlackMarlin.ViewOrder.ReliableAnchorPins
+EDGE	LeanDag.BlackMarlin.ViewOrder.Statement	LeanDag.Faults
+EDGE	LeanDag.BlackMarlin.ViewOrder.Statement	LeanDag.BlockUniverse
+EDGE	LeanDag.BlackMarlin.ViewOrder.Statement	LeanDag.BlackMarlin.Rotation
+EDGE	LeanDag.BlackMarlin.ViewOrder.Statement	LeanDag.BlackMarlin.ViewOrder.OrderAgreesWhenAnchorsReliable
+EDGE	LeanDag.BlackMarlin.ViewOrder.Statement	LeanDag.BlackMarlin.ViewOrder.AgreeOnReliableStretch
 NODE	LeanDag.Integration.chopMsg._proof_15	LeanDag.Integration.Retention	thm
 EDGE	LeanDag.Integration.chopMsg._proof_15	LeanDag.SkipMsg.v1
 EDGE	LeanDag.Integration.chopMsg._proof_15	LeanDag.SkipMsg.hB1c

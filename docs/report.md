@@ -5459,8 +5459,9 @@ yields (§18.6), Definition 1's Agreement (§18.7), and the order
 `commit`'s descent delivers in (§18.8–§18.10), a refutation of
 Definition 1's Agreement (§18.11), a repair tested as a
 side-condition (§18.12), what a validator could evaluate of it for
-itself (§18.13), and liveness restated at a validator's view
-(§18.14). It is the second arc under the statement/proof
+itself (§18.13), liveness restated at a validator's view (§18.14), and
+the delivered order settled in both directions (§18.15). It is the
+second arc under the statement/proof
 partition (§17.5), and
 `docs/black-marlin.md` is its design record.
 
@@ -6274,7 +6275,55 @@ supported.
 So: **the protocol as the paper states it is live at the view for the
 delivered set, and the repair of §18.12 has no live implementation.**
 BMV3 is the boundary between them, and it is narrow — the commit rule
-sits on the near side and the descent does not.
+sits on the near side and the descent does not. What the delivered
+*order* does at that boundary is §18.15.
+
+### 18.15 The delivered order, settled in both directions
+
+§18.14 concludes `B ∈ history U L`: membership in what a validator
+delivers, not position in the sequence. The position is fixed by the
+descent, and this section settles it
+(`BlackMarlin.ViewOrder.holds`) — the positive as far as it reaches and
+the negative immediately past it.
+
+**BMT1, `ReliableAnchorPins`.** Two records that flush at a round whose
+anchor is *reliable* flush the same block, whatever views they came
+from. This is not an agreement argument and needs no coverage: the block
+flushed there is that round's anchor, its author is correct, and
+`no_equivocation` leaves exactly one such block in the universe. A
+reliable anchor gives the descent no choice, so every view makes the
+same one.
+
+**BMT2, `AgreeOnReliableStretch`.** BMD3 needs a round two records agree
+at; BMT1 supplies one, so agreement descends from any reliably anchored
+round through the stretch a record flushes at, with nothing assumed
+about how either validator got there.
+
+**BMT3, `OrderAgreesWhenAnchorsReliable`.** Where every anchor below a
+round is reliable, two records flushing at the same rounds deliver the
+**same list**. That is Definition 1's Total order, unconditionally, on
+that stretch.
+
+**And the hypothesis is tight, in a way that matters.** One Byzantine
+anchor below is enough to break it, and the break is not confined to the
+equivocator's own blocks. In §18.11's execution the two records deliver
+`5` before `7` and `7` before `5`. Both are authored by **reliable**
+validators, neither has a twin, and L27's filter never touches either.
+What orders them is which segment they fall in: `5` lies below one twin
+and `7` below the other, so each record takes one in its round-2 segment
+and the other only in the round-4 segment.
+
+So Definition 1's **Total order** fails, and it fails on honest blocks.
+This is a sharper failure than §18.11's, and a more robust one: it does
+not depend on which twin the filter prefers, so no rule for choosing
+among twins repairs it. Only a rule that makes the two descents agree
+does — which is `descendS`, and §18.14 is why that has no live
+implementation.
+
+**What is now closed.** The delivered order agrees exactly as far as the
+rotation is reliable and no further. The boundary is not a limitation of
+this development: BMT3 is proved, its converse is refuted on data, and
+between them there is nothing left to establish.
 
 ## 19. Satisfiability
 
@@ -6483,7 +6532,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `BlackMarlin/Model/Descent.lean` | `maxAnchor`, the tie-break of L24, and the record the descent computes |
 | `BlackMarlin/Model/Order.lean` | the sort `τ`, the filter of L27, and the list a validator outputs |
 | `BlackMarlin/Model/Repair.lean` | the support-preferring side-condition, and a descent that meets it |
-| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/`, `BlackMarlin/Descent/`, `BlackMarlin/Order/`, `BlackMarlin/Repair/` | the eight statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6, BME1–BME5, BMO1–BMO9, BMP1–BMP13, BMV1–BMV3) |
+| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/`, `BlackMarlin/Descent/`, `BlackMarlin/Order/`, `BlackMarlin/Repair/` | the eight statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6, BME1–BME5, BMO1–BMO9, BMP1–BMP13, BMV1–BMV3, BMT1–BMT3) |
 | `BlackMarlin/Helpers/` | the generated lemma layer |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
@@ -7251,6 +7300,10 @@ reused.
 | BMV2 | and delivers there whatever any view committed below | `BlackMarlin.ViewLiveness.holds` *(BlackMarlin/ViewLiveness/Proof)* |
 | BMV3 | the rule is readable at a reliably anchored round, and only there | `BlackMarlin.ViewLiveness.holds` *(BlackMarlin/ViewLiveness/Proof)* |
 | BMV4 | BMV1–BMV3 on the four-round model, and the reliable supporters alone a quorum | `ViewLiveness` witnesses *(LeanDagTest/BlackMarlin)* |
+| BMT1 | a reliably anchored round pins every record, no view entering | `BlackMarlin.ViewOrder.holds` *(BlackMarlin/ViewOrder/Proof)* |
+| BMT2 | so agreement descends from it through any flushed stretch | `BlackMarlin.ViewOrder.holds` *(BlackMarlin/ViewOrder/Proof)* |
+| BMT3 | and with every anchor below reliable, the delivered lists coincide | `BlackMarlin.ViewOrder.holds` *(BlackMarlin/ViewOrder/Proof)* |
+| BMT4 | and one Byzantine anchor below suffices to order two reliable authors' blocks oppositely | `deliverSeq` witnesses *(LeanDagTest/BlackMarlin/Divergence)* |
 | BMP14 | both repairs on the execution of §18.11, what they cost, a view that misses the support, and a counting rule that reads it wrongly at `f = 1` | `descendSupp`, `descendS`, `coneView`, `Ucnt` witnesses *(LeanDagTest/BlackMarlin)* |
 
 **Integration** (§16):
@@ -13571,6 +13624,64 @@ def Statement : Prop :=
 
 Liveness of the Black Marlin commit rule read at a validator's view, over every fault configuration, rotation and block universe the model admits.
 
+#### `ReliableAnchorPins`
+
+*def, `BlackMarlin.ViewOrder.Statement.lean`*
+
+```lean
+def ReliableAnchorPins (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (ρ : ℕ) (L₁ L₂ : BlockId),
+    Rot.anchor ρ ∈ (Correct : Finset Validator) →
+    f₁.block ρ = some L₁ → f₂.block ρ = some L₂ → L₁ = L₂
+```
+
+**BMT1, a reliable anchor pins every record.** The block flushed at such a round is that round's anchor, and its author is correct, so `no_equivocation` leaves one candidate in the whole universe. No view enters the argument.
+
+#### `AgreeOnReliableStretch`
+
+*def, `BlackMarlin.ViewOrder.Statement.lean`*
+
+```lean
+def AgreeOnReliableStretch (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (ρ d : ℕ),
+    Rot.anchor (ρ + d) ∈ (Correct : Finset Validator) →
+    (f₁.block (ρ + d)).isSome → (f₂.block (ρ + d)).isSome →
+    (∀ i, 0 < i → i ≤ d → (f₁.block (ρ + i)).isSome) →
+    f₁.block ρ = f₂.block ρ
+```
+
+**BMT2, and agreement descends from it.** BMD3 needs a round the two records agree at; a reliably anchored round both flush at is one, by BMT1, with nothing assumed about either validator's view.
+
+#### `OrderAgreesWhenAnchorsReliable`
+
+*def, `BlackMarlin.ViewOrder.Statement.lean`*
+
+```lean
+def OrderAgreesWhenAnchorsReliable (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (τ : TopoSort U) (n : ℕ),
+    (∀ σ, σ < n → Rot.anchor σ ∈ (Correct : Finset Validator)) →
+    (∀ σ, σ < n → ((f₁.block σ).isSome ↔ (f₂.block σ).isSome)) →
+    deliverSeq U f₁ τ n = deliverSeq U f₂ τ n
+```
+
+**BMT3, and the delivered lists coincide.** Where no Byzantine validator anchors a round below `n`, two records that flush at the same rounds deliver one list — Definition 1's Total order, unconditionally, on that stretch.
+
+The hypothesis is tight. `LeanDagTest/BlackMarlin/Divergence` exhibits two records with a single Byzantine anchor below them that deliver two reliably authored blocks in opposite orders.
+
+#### `Statement`
+
+*def, `BlackMarlin.ViewOrder.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [LinearOrder BlockId] [Rotation Validator]
+    (U : BlockUniverse Validator BlockId Payload),
+    ReliableAnchorPins U ∧ AgreeOnReliableStretch U ∧ OrderAgreesWhenAnchorsReliable U
+```
+
+The delivered order of the Black Marlin commit rule where the rotation names reliable validators, over every fault configuration, rotation and block universe the model admits.
+
 #### `SoundOn`
 
 *structure, `Integration.Sound.lean`*
@@ -13605,7 +13716,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 530 theorems that either another module of the
+The 531 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -20524,6 +20635,14 @@ theorem holds : Statement
 #### `holds`
 
 *theorem, `BlackMarlin.ViewLiveness.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `BlackMarlin.ViewOrder.Proof.lean`*
 
 ```lean
 theorem holds : Statement

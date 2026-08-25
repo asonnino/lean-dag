@@ -285,14 +285,21 @@ third supporter is `14`, which the round-4 anchor does not reference. -/
 example : (14 : Fin 29) ∉ history Udiv 19 ∧ supporters Udiv 8 3 = {1, 2, 3} := by decide
 
 
-/-! ## Relaxing the filter does not help
+/-! ## Total order fails, and on blocks of reliable authors
 
-Dropping L27 — delivering both twins and forbidding only a repeated
-*block* — leaves the segmentation as it was, and the segmentation is what
-differs. The first validator's flush at round `2` is the cone of `8`, the
-second's is the cone of `12`, and each picks the other twin up only in
-the round-4 segment. So one emits `8` before `12` and the other `12`
-before `8`: an Agreement failure becomes a Total-order failure. -/
+The refutation above is of Agreement, and turns on which twin each
+record delivers. The delivered **sequence** fails for a reason that does
+not involve the twins at all. Blocks `5` and `7` are authored by
+reliable validators, neither has a twin, and L27's filter never touches
+either — yet the first validator delivers `5` before `7` and the second
+`7` before `5`. What orders them is which segment they fall in: `5` lies
+below `8` and `7` below `12`, so each record takes one of them in its
+round-2 segment and the other only in the round-4 segment.
+
+So Definition 1's **Total order** fails independently of which twin the
+filter prefers, and no rule for choosing among twins repairs it. Only a
+rule that makes the two descents agree does, which is `descendS`. This
+is the tightness of BMT3: one Byzantine anchor below is enough. -/
 
 /-- The first validator's record over both its commits: `8` at round `2`,
 then the round-4 anchor. -/
@@ -325,6 +332,31 @@ def vFlushFull : Flush Udiv where
       subst hM
       exact absurd hne (by decide)
     | 0 | 2 | (n + 4) => simp [vBlockFull] at hM
+
+/-- **Two reliable authors' blocks, delivered in opposite orders.** -/
+example : (Udiv.block 5).creator ∈ (Correct : Finset (Fin 4)) ∧
+    (Udiv.block 7).creator ∈ (Correct : Finset (Fin 4)) ∧
+    (deliverSeq Udiv vFlushFull divSort 5).idxOf 5 <
+      (deliverSeq Udiv vFlushFull divSort 5).idxOf 7 ∧
+    (deliverSeq Udiv wFlush divSort 5).idxOf 7 <
+      (deliverSeq Udiv wFlush divSort 5).idxOf 5 := by decide
+
+/-- And neither is a twin: each is the only block of its author and
+round, so the filter has no choice to make about them. -/
+example : (∀ b ∈ Udiv.ids, (Udiv.block b).creator = (Udiv.block 5).creator →
+      (Udiv.block b).round = (Udiv.block 5).round → b = 5) ∧
+    (∀ b ∈ Udiv.ids, (Udiv.block b).creator = (Udiv.block 7).creator →
+      (Udiv.block b).round = (Udiv.block 7).round → b = 7) := by decide
+
+/-! ## Relaxing the filter does not help
+
+Dropping L27 — delivering both twins and forbidding only a repeated
+*block* — does not reach the failure above, and does not repair the one
+it aims at either: the segmentation is what differs, and dropping the
+filter leaves it as it was. The first validator's flush at round `2` is the cone of `8`, the
+second's is the cone of `12`, and each picks the other twin up only in
+the round-4 segment. So one emits `8` before `12` and the other `12`
+before `8`: an Agreement failure becomes a Total-order failure. -/
 
 /-- **Both twins are delivered, in opposite orders.** -/
 example :

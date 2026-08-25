@@ -230,7 +230,16 @@ faults alone.
   supplies, and delivers there whatever any view committed below. BMV3
   is the line — the commit rule is readable from a reliable view because
   coverage delivers reliable blocks, and the descent is not, because the
-  anchor it reads may be the equivocator's. The arc is the second under the statement/proof
+  anchor it reads may be the equivocator's.
+- **And the delivered order, settled both ways.** A reliably anchored
+  round pins every record, non-equivocation leaving one candidate in the
+  universe, so where every anchor below a round is reliable two records
+  deliver the same list (BMT1–BMT3). One Byzantine anchor below is
+  enough to break it, and not only for the equivocator's blocks: in the
+  refuting execution two validators deliver `5` before `7` and `7`
+  before `5`, both authored by reliable validators and neither a twin.
+  So Definition 1's **Total order** fails on honest blocks, which no
+  rule for choosing among twins can repair. The arc is the second under the statement/proof
   partition.
 
 Every definition is exercised on concrete models by `decide` before
