@@ -205,12 +205,13 @@ The arc adopts the statement/proof partition of `LeanDag/MahiMahi/`
 
 ```
 LeanDag/BlackMarlin/
-  Model/         definitions only, theorem-free: Rules, Decision
+  Model/         definitions only, theorem-free: Rules, Decision, Round
                  (decidable instances by `inferInstanceAs` included: definitions, not proofs)
   Helpers/       generated lemma infrastructure; unaudited
   <Result>/Statement.lean imports Model/ only; definitions, prose, `def Statement : Prop`
   <Result>/Proof.lean     `theorem holds : Statement`; unaudited
-                          Results: Safety (BM1-BM7), Liveness (BML1-BML5)
+                          Results: Safety (BM1-BM7), Liveness (BML1-BML5),
+                          Reactive (BMR1-BMR6)
 LeanDagTest/BlackMarlin/  witness models; the instantiations are audited
 scripts/check-arc-holes.py   sorry/admit/axiom/native_decide/unsafe/partial absent;
                              Statement.lean files proof-free; Model/ files theorem-free
@@ -223,8 +224,9 @@ checks unchanged.
 
 **Relation to the core.** The core is consumed read-only: `Block`,
 `BlockDag`, `Causality`, `CausalHistory`, `History`, `Support`,
-`Validators`, `Schedule` for BM7 alone, and `Liveness` for the
-participation vocabulary and the counting step BML1 reuses. The self-parent clause of
+`Validators`, `Schedule` for BM7 alone, `Liveness` for the participation
+vocabulary and the counting step BML1 reuses, and `ViewPace` for the
+pacing trunk `Pace` extends. The self-parent clause of
 §5(i) is the one place a change to the core would strengthen a result,
 and it is reported rather than made.
 
@@ -290,23 +292,88 @@ Figure 1 cannot serve, and `decide` says why: its point is that
 validator `0` omits the round-3 anchor from its round-4 block, which is
 exactly a failure of coverage among the reliable validators.
 
-## 9. What is not covered
+## 9. The round rule, and the reactive schedule
 
-**The timing argument (Lemmas 6, 9, 10).** Replaced rather than
-transcribed, as §8 records. Lemma 10 has no counterpart at all: BML5
-makes the recurring run deterministic.
+`delivery(r)` is one half of the protocol; the other is L38–L41, which
+says when a round is concluded. A validator waits for blocks from `n − f`
+parties and then for **either** the round's anchor together with the two
+anchors below it supported, **or** the round's timeout. The dual
+condition is what makes the protocol responsive: it runs at the actual
+delivery time rather than at `∆`, and it does not deadlock when an anchor
+is Byzantine.
 
-**Responsiveness.** The paper's round advances on a dual condition —
-a quorum, and either the anchor of the round with the two anchors below
-it supported, or a timeout — which is what keeps the protocol running at
-the actual network delay rather than at `∆`. The core's `ReactivePace`
-models the first disjunct's shape exactly: its `vote_or_wait` clause is
-the statement that a validator's block references the anchor of the
-round below, which is what concluding a round requires. Its
-`prompt_vote` clause is not: that says holding the anchor suffices to
-build within `proc`, where Black Marlin also requires the two support
-conditions. So the fast-path latency results transfer only with a
-Black Marlin variant of that clause, which is not attempted here.
+`LeanDag/BlackMarlin/Model/Round.lean` states the three clauses as
+`QuorumIn`, `AnchorIn` and `SuppAnchorIn` over a `View`, and their
+conjunction as `ConcludesAt`. `SuppAnchorIn` reads the same `SupportedIn`
+the commit rule reads, so the round rule and the commit rule share their
+arithmetic. The two lower clauses are written `∀ ρ, ρ + 1 = r → …` and
+`∀ ρ, ρ + 2 = r → …` rather than with truncated subtraction, so the first
+two rounds — where the paper's initialisation has no such anchors to
+check — are vacuous rather than a separate branch.
+
+`Pace` extends the core's `PaceCore` (report §6.9): the views,
+convergence, the progress rule and production are inherited. Two clauses
+are new. `anchor_or_wait` is the round rule read on the block a validator
+produces — at the round above a reliable anchor, a block either
+references that anchor or its builder waited the full timeout —  and it
+is the same clause as the core's `ReactivePace.vote_or_wait`, since
+concluding a round requires holding that round's anchor.
+`prompt_conclude` bounds the exit from above, and it is **not** the same
+as the core's `prompt_vote`: there the exit fires once the leader's block
+is held, here once the whole round rule is satisfied.
+
+Six claims, in `LeanDag/BlackMarlin/Reactive/Statement.lean`:
+
+| | Claim | Paper |
+|:---|:---|:---|
+| BMR1 | `Votes` — every reliable block above a reliable anchor references it | — |
+| BMR2 | `ReactiveCommit` — a run of two is committed, with no coverage hypothesis | — |
+| BMR3 | `Exit` — the exit fires, given a run of **three** reliable anchors | — |
+| BMR4 | `ExitSustained` — but only to enter: one further anchor per round after that | — |
+| BMR5 | `Latency` — `D + δ + proc`, and `Δ + δ + 2 · proc` past GST | Lemma 6, role |
+| BMR6 | `NoTimeout` — the timeout never fires when those undercut it | Lemma 9, role |
+
+**BMR2 replaces BML1's coverage hypothesis.** `SynchronisedOn` asks that
+every reliable block reference every reliable block below it, which a
+reactive builder deliberately does not do. What survives is exactly what
+the commit rule counts, and `anchor_or_wait` guarantees it — so reactive
+liveness needs no coverage assumption at all.
+
+**BMR3 is the cost of the extra clauses, and it is a run of three.** For
+the exit to be guaranteed at round `r + 2`, the anchors of rounds `r`,
+`r + 1` and `r + 2` must all be reliable: `quorum` and `anchor` come from
+the round-`(r+2)` blocks, `suppAnchor(r+1)` from those blocks referencing
+the round-`(r+1)` anchor, and `suppAnchor(r)` from the round-`(r+1)`
+blocks referencing the round-`r` anchor. The commit rule asks for two
+(§8); the fast path asks for three.
+
+**BMR4 says the third is paid once.** `suppAnchor(r)` was already checked
+to conclude round `r + 1`, and holdings only grow, so a validator already
+on the fast path needs one further reliable anchor per round. Entering
+costs a run of three; remaining costs a run of two. This is where the
+run-of-three pigeonhole the core sidesteps re-enters the Black Marlin
+arc — not for the commit rule, where BML5 discharges a run of two
+outright, but for the guarantee that no timeout ever fires.
+
+The witnesses are two (`LeanDagTest/BlackMarlin/Reactive.lean`).
+`ConcludesAt` and its clauses are settled by `decide` on the covered
+four-round model: round `3` may be concluded and round `4` may not. The
+pacing structure is witnessed on `Ugrow`, the growing model the core's
+reactive arc uses, at the same holdings and the same build spacing of
+`6`; processing is `7` rather than the core's `5`, because the exit is
+bounded by the round rule rather than by holding one block, and the
+timeout is `25`, which is what lets both routes fire on one model.
+
+## 10. What is not covered
+
+**Lemma 10.** No counterpart, and none needed: BML5 makes the recurring
+run deterministic where the paper bounds an expectation.
+
+**Lemmas 6 and 9 in their own terms.** BMR5 and BMR6 play their roles —
+a bound on the time to conclude a round, and the timeout not firing when
+anchors are reliable — but state them in `∆`, the actual delivery `δ` and
+the processing bound, above the pacing structure rather than over a
+message schedule.
 
 **Delivery completeness.** BML3 covers reliable authors. That *every*
 block reaches the ledger needs the weak-reference window of §4.3 and is

@@ -166,8 +166,14 @@ faults alone.
   delivered by the anchors above it. Where the core's corresponding
   fairness clause is an assumption discharged by a wave-aligned witness,
   a run of two is short enough that the rotation Black Marlin deploys
-  discharges it as a **theorem**. The arc is the second under the
-  statement/proof partition.
+  discharges it as a **theorem**. The **round rule** — wait for a quorum,
+  then for the anchor and the two anchors below it supported, or for the
+  timeout — is modelled too, on the core's pacing trunk: reactive
+  liveness needs **no coverage assumption at all**, latency is bounded in
+  `Δ`, the actual delivery `δ` and processing with the timeout appearing
+  nowhere, and the fast exit is shown to cost a run of **three** reliable
+  anchors to enter and two to sustain, against the commit rule's two. The
+  arc is the second under the statement/proof partition.
 
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on
@@ -235,7 +241,7 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 | [`docs/adaptive-leaders.md`](docs/adaptive-leaders.md) | adaptive leader schedules: the design record and theorem plan |
 | [`docs/hybrid-plan.md`](docs/hybrid-plan.md) | hybrid fault tolerance: the design record and theorem plan |
 | [`docs/mahi-mahi.md`](docs/mahi-mahi.md) | the asynchronous rule at wave `w`: the clause, and the statement/proof partition |
-| [`docs/black-marlin.md`](docs/black-marlin.md) | the three-round commit rule: the link clause, what it is used for, and the run of two |
+| [`docs/black-marlin.md`](docs/black-marlin.md) | the three-round commit rule: the link clause, the run of two, and what the reactive exit costs |
 | [`docs/integration.md`](docs/integration.md) | composing the arcs: the invariant interface, and what composition revealed |
 | [`docs/related.md`](docs/related.md) | a survey of consensus on uncertified DAGs |
 | [`docs/style.md`](docs/style.md) | writing conventions for the documents and the source |

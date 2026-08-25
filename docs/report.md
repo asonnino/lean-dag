@@ -333,7 +333,11 @@ proof effort with no corresponding proof content.
    consecutive reliable anchors commits, and where the core's
    corresponding fairness clause is an assumption discharged by a
    wave-aligned witness, a run of two is short enough that the rotation
-   Black Marlin deploys discharges it as a theorem (§18.5).
+   Black Marlin deploys discharges it as a theorem (§18.5). The round
+   rule is modelled on the same pacing trunk as §11, giving reactive
+   liveness with no coverage assumption and latency in `Δ`, `δ` and
+   processing — and showing the fast exit to cost a run of three
+   (§18.6).
 
 ### 1.4 Scope and non-goals
 
@@ -5623,18 +5627,74 @@ referencing the whole round beneath it. Figure 1 cannot serve, and
 round-4 block is exactly a failure of coverage among the reliable
 validators.
 
-Three things §5.2 asserts are still not covered. **Responsiveness**: the
-paper's round advances on a dual condition, and the core's `ReactivePace`
-models the first disjunct's shape exactly — its `vote_or_wait` clause is
-the statement that a validator's block references the anchor of the round
-below, which is what concluding a round requires. Its `prompt_vote`
-clause is not, since it says holding the anchor suffices to build within
-`proc` where Black Marlin also requires the two support conditions, so
-the fast-path bounds of §11 transfer only with a variant of that clause.
-**Delivery completeness** for blocks of arbitrary authors needs the
-weak-reference window. And **the deterministic sort** `τ`, which turns
-BM6's nesting into the sequence Definition 1's Total Order speaks of, is
-not modelled.
+Two things §5.2 asserts are still not covered. **Delivery completeness**
+for blocks of arbitrary authors needs the weak-reference window; and
+**the deterministic sort** `τ`, which turns BM6's nesting into the
+sequence Definition 1's Total Order speaks of, is not modelled.
+
+### 18.6 The round rule, and what the reactive exit costs
+
+`delivery(r)` is one half of the protocol. The other is L38–L41, which
+says when a round is concluded: a validator waits for blocks from `n − f`
+parties and then for **either** the round's anchor together with the two
+anchors below it supported, **or** the round's timeout. That dual
+condition is what keeps the protocol running at the actual delivery time
+rather than at `Δ` without deadlocking on a Byzantine anchor, and it is
+the analogue of the reactive schedule of §11.
+
+`ConcludesAt` states the first disjunct over a `View`, from the three
+clauses `QuorumIn`, `AnchorIn` and `SuppAnchorIn`; the last reads the
+same `SupportedIn` the commit rule reads, so the round rule and the
+commit rule share their arithmetic. `Pace` extends `PaceCore` (§6.9), so
+views, convergence, the progress rule and production are inherited, and
+two clauses are new. `anchor_or_wait` is the round rule read on the block
+a validator produces — a block at the round above a reliable anchor
+either references it, or its builder waited the full timeout — and it is
+the core's `ReactivePace.vote_or_wait`, unchanged, since concluding a
+round requires holding that round's anchor. `prompt_conclude` bounds the
+exit from above, and it is *not* the core's `prompt_vote`: there the exit
+fires once the leader's block is held, here once the whole round rule is
+satisfied.
+
+**BMR1** carries the fallback: past GST, with the timeout clearing
+`2Δ + proc`, every reliable block at the round above a reliable anchor
+references it, by the exit or by the fallback. **BMR2** is what that
+yields — a run of two reliable anchors is committed **with no coverage
+hypothesis at all**. `SynchronisedOn` asks that every reliable block
+reference every reliable block beneath it, which a reactive builder
+deliberately does not do; what survives is exactly what the commit rule
+counts.
+
+**BMR3 is the price of the extra clauses, and it is a round.** For the
+exit to be guaranteed at round `r + 2`, the anchors of rounds `r`,
+`r + 1` and `r + 2` must all be reliable: `quorum` and `anchor` come from
+the round-`(r+2)` blocks, `suppAnchor(r+1)` from those blocks referencing
+the round-`(r+1)` anchor, and `suppAnchor(r)` from the round-`(r+1)`
+blocks referencing the round-`r` anchor. A run of three, where the commit
+rule asks for two (§18.5).
+
+**BMR4** says the third is paid once. `suppAnchor(r)` was already checked
+to conclude round `r + 1`, and holdings only grow, so a validator already
+on the fast path needs one further reliable anchor per round: entering
+costs a run of three, remaining costs a run of two. This is where the
+run-of-three pigeonhole `WaveRobin.lean` sidesteps re-enters the arc —
+not for the commit rule, where BML5 discharges a run of two outright, but
+for the guarantee that no timeout ever fires.
+
+**BMR5** and **BMR6** are then the §11 bounds in Black Marlin's
+constants: the round above is entered within `D + δ + proc` of round
+entry, past GST within `Δ + δ + 2 · proc` with the spread supplied by
+catch-up, and when those undercut the timeout the fallback branch of
+`anchor_or_wait` is dead. The timeout appears in neither latency bound.
+They play the roles of the paper's Lemmas 6 and 9 without their message
+schedule.
+
+The witnesses are two. `ConcludesAt` and its clauses are settled by
+`decide` on the covered four-round model — round `3` may be concluded,
+round `4` may not. The pacing structure is witnessed on `Ugrow`, the
+model §11's reactive arc uses, at the same holdings and the same build
+spacing of `6`; processing is `7` against the core's `5`, because the
+exit is bounded by the round rule rather than by holding one block.
 
 ## 19. Satisfiability
 
@@ -5838,7 +5898,8 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `MahiMahi/Safety/`, `MahiMahi/Counting/`, `MahiMahi/Liveness/`, `MahiMahi/Synchrony/` | the four statements and their proofs (MM1, MM2, MM3, MM5) |
 | `MahiMahi/Helpers/` | the generated lemma layer |
 | `BlackMarlin/Model/Rules.lean`, `BlackMarlin/Model/Decision.lean` | the anchor rotation; support, the link, the commit rule; the same rules read from a view |
-| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/` | the two statements and their proofs (BM1–BM7, BML1–BML5) |
+| `BlackMarlin/Model/Round.lean` | the round rule of L38–L41, and the pacing structure it induces |
+| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/` | the three statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6) |
 | `BlackMarlin/Helpers/` | the generated lemma layer |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
@@ -6309,13 +6370,13 @@ the consumption map of §4.8 and the support diagrams of §6.10 refer to
 results through them. The series are alphabetic by area: T and M for
 the safety core, L for liveness, V for the view-convergence family, CU
 for catch-up, RS for the reactive schedule, SS for safe skip, AL for adaptive
-leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, BM and BML for Black Marlin, CQ for chain
+leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, BM, BML and BMR for Black Marlin, CQ for chain
 quality, C, D,
 B and E for the denial-of-service arc, G for garbage collection, O for
 Odontoceti; P, N and R name clauses of the trust boundary rather than
 results. Labels resolving to witness models rather than library
 theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7, SS11, AL8, H9, H10) are
-excluded from the diagrams, which show the library; so are MM4, BM8 and BML6. Appendix C displays every indexed
+excluded from the diagrams, which show the library; so are MM4, BM8, BML6 and BMR7. Appendix C displays every indexed
 result in full.
 
 ### Safety
@@ -6552,6 +6613,13 @@ reused.
 | BML4 | the rotation names a committing round arbitrarily far out | `BlackMarlin.recurrence` *(BlackMarlin/Helpers/Liveness)* |
 | BML5 | round robin supplies the run of two, unconditionally | `BlackMarlin.roundRobin_fairRun` *(BlackMarlin/Helpers/Liveness)* |
 | BML6 | liveness on a covered four-round model, and why Figure 1 is not one | `Ufull` witnesses *(LeanDagTest/BlackMarlin)* |
+| BMR1 | every reliable block above a reliable anchor references it | `BlackMarlin.Pace.votes` *(BlackMarlin/Helpers/Reactive)* |
+| BMR2 | a run of two is committed with no coverage hypothesis | `BlackMarlin.Pace.reactive_committed` *(BlackMarlin/Helpers/Reactive)* |
+| BMR3 | the exit fires, given a run of three reliable anchors | `BlackMarlin.Pace.concludesAt_of_holds` *(BlackMarlin/Helpers/Reactive)* |
+| BMR4 | one further reliable anchor per round sustains it | `BlackMarlin.Pace.concludesAt_of_sustained` *(BlackMarlin/Helpers/Reactive)* |
+| BMR5 | latency `D + δ + proc`, and `Δ + δ + 2·proc` past GST | `BlackMarlin.Pace.built_succ_le_of_fast`, `BlackMarlin.Pace.built_succ_le_of_fast_gst` *(BlackMarlin/Helpers/Reactive)* |
+| BMR6 | the timeout never fires when those constants undercut it | `BlackMarlin.Pace.no_timeout_of_fast_gst` *(BlackMarlin/Helpers/Reactive)* |
+| BMR7 | the round rule on data, and a pace at spacing `6` | `ugrowBM` witnesses *(LeanDagTest/BlackMarlin)* |
 
 **Integration** (§16):
 
@@ -11487,6 +11555,227 @@ private def nxt (i : Fin n) : Fin n := ⟨(i.val + 1) % n, Nat.mod_lt _ hn⟩
 
 The cyclic successor on `Fin n` — the rotation's step.
 
+#### `QuorumIn`
+
+*def, `BlackMarlin.Model.Round.lean`*
+
+```lean
+def QuorumIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (r : ℕ) : Prop :=
+  quorumCard Validator ≤ (authorsIn U V.ids r).card
+```
+
+**`quorum(r)`**, as the validator computes it: blocks from at least `n − f` distinct authors at round `r` among what the view holds.
+
+#### `AnchorIn`
+
+*def, `BlackMarlin.Model.Round.lean`*
+
+```lean
+def AnchorIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (r : ℕ) : Prop :=
+  ∃ A ∈ V.ids, IsAnchor U r A
+```
+
+**`anchor(r)`**: the view holds a block by the validator the rotation elected for round `r`.
+
+#### `SuppAnchorIn`
+
+*def, `BlackMarlin.Model.Round.lean`*
+
+```lean
+def SuppAnchorIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (r : ℕ) : Prop :=
+  ∃ A, IsAnchor U r A ∧ SupportedIn U V A r
+```
+
+**`suppAnchor(r)`**: the view holds an anchor of round `r` carrying a quorum of support, counted among the round-`(r+1)` blocks the view holds. The same `SupportedIn` the commit rule reads, which is why the round rule and the commit rule share their arithmetic.
+
+#### `ConcludesAt`
+
+*def, `BlackMarlin.Model.Round.lean`*
+
+```lean
+def ConcludesAt (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (r : ℕ) : Prop :=
+  QuorumIn U V r ∧ AnchorIn U V r ∧
+    (∀ ρ, ρ + 1 = r → SuppAnchorIn U V ρ) ∧
+    (∀ ρ, ρ + 2 = r → SuppAnchorIn U V ρ)
+```
+
+**The round rule** (L40, first disjunct): what a validator must see before it may conclude round `r` without waiting out the timeout.
+
+#### `Pace`
+
+*structure, `BlackMarlin.Model.Round.lean`*
+
+```lean
+structure Pace (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (N : ℕ) extends PaceCore U T N where
+  /-- Time advances with rounds, over the rounds `v` reached. -/
+  built_lt : ∀ v ∈ T, ∀ n < top v, built v n < built v (n + 1)
+  /-- **The ceiling.** A validator never waits past the round's timeout;
+  it may build any time before it. -/
+  deadline : ∀ v ∈ T, ∀ n < top v, built v (n + 1) ≤ built v n + timeout n
+  /-- **The anchor wait**, the round rule read on the block a validator
+  produces. At the round above a reliable anchor, a `T`-authored block
+  either references that anchor — the exit fired, and concluding the
+  round required holding it — or its builder waited the full timeout and
+  would have referenced the anchor had it held it.
+
+  Stated only where the round's elected validator lies in `T`. For a
+  Byzantine anchor nothing useful can be said: it may equivocate, and
+  `ValidWrt.distinct_creators` forbids referencing two of its blocks. -/
+  anchor_or_wait : ∀ v ∈ T, ∀ r, r + 1 ≤ N → Rot.anchor r ∈ T →
+    ∀ A, IsAnchor U r A →
+    ∀ c ∈ U.ids, (U.block c).creator = v → (U.block c).round = r + 1 →
+    A ∈ (U.block c).refs ∨
+      (built v r + timeout r ≤ built v (r + 1) ∧
+        (A ∈ holds v (built v (r + 1)) → A ∈ (U.block c).refs))
+  /-- **The exit is prompt.** A validator past its round entry that can
+  conclude the round does so within the processing bound.
+
+  The core's `ReactivePace.prompt_vote` asks only that the leader's block
+  be held. Here the whole of `ConcludesAt` is asked for, which is what
+  the protocol checks, and the extra clauses are what
+  `Reactive/Statement.lean` measures. -/
+  prompt_conclude : ∀ v ∈ T, ∀ r, r + 1 ≤ N → ∀ t, built v r ≤ t →
+    ConcludesAt U (toPaceCore.viewAt v t) r →
+    built v (r + 1) ≤ t + proc
+```
+
+**The Black Marlin pacing structure**: the core's `PaceCore` with the reactive discipline of L38–L41 in place of the full-timeout one.
+
+`built_lt` and `deadline` are the core reactive pair — time advances with rounds, and no validator waits past its timeout — and the full-timeout floor is absent, which is the whole of what makes the schedule responsive.
+
+#### `Votes`
+
+*def, `BlackMarlin.Reactive.Statement.lean`*
+
+```lean
+def Votes (pc : Pace U T N) : Prop :=
+  ∀ (R r : ℕ) (A : BlockId),
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    pc.gst ≤ R → (∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n) →
+    R ≤ r → r + 1 ≤ N →
+    Rot.anchor r ∈ T → IsAnchor U r A →
+    VotesAt U T r A
+```
+
+**BMR1, the fallback route.** Past GST, every reliable block at the round above a reliable anchor references that anchor.
+
+The exit needs no argument — concluding the round required holding the anchor, so the block cites it. The fallback is the whole content: the anchor holds its own block when it builds, convergence carries it across within `Δ`, and the collapsed drift plus the full timeout place that arrival before the waiter's build.
+
+#### `ReactiveCommit`
+
+*def, `BlackMarlin.Reactive.Statement.lean`*
+
+```lean
+def ReactiveCommit (pc : Pace U T N) : Prop :=
+  ∀ (R r : ℕ),
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    pc.gst ≤ R → (∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n) →
+    R ≤ r → r + 2 ≤ N →
+    Rot.anchor r ∈ T → Rot.anchor (r + 1) ∈ T →
+    ∃ L, IsAnchor U r L ∧ Committed U L r
+```
+
+**BMR2, reactive liveness.** A run of two reliable anchors past GST is committed — the premise of BML1 with `SynchronisedOn` removed, since the reactive discipline supplies the references the rule counts and the trunk supplies the production.
+
+#### `Exit`
+
+*def, `BlackMarlin.Reactive.Statement.lean`*
+
+```lean
+def Exit (pc : Pace U T N) : Prop :=
+  ∀ (r : ℕ) (v : Validator) (t : ℕ),
+    quorumCard Validator ≤ T.card → v ∈ T → r + 2 ≤ N →
+    (∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n → b ∈ pc.holds v t) →
+    Rot.anchor r ∈ T → Rot.anchor (r + 1) ∈ T → Rot.anchor (r + 2) ∈ T →
+    (∀ n, r ≤ n → n < r + 2 → ∀ A, IsAnchor U n A → VotesAt U T n A) →
+    ConcludesAt U (pc.toPaceCore.viewAt v t) (r + 2)
+```
+
+**BMR3, the exit fires — at a run of three.** A validator holding every reliable block of rounds `r + 1` and `r + 2` can conclude round `r + 2`, given reliable anchors at `r`, `r + 1` and `r + 2` and the references the rounds above them carry.
+
+`quorum` and `anchor` come from the round-`(r+2)` blocks, `suppAnchor(r+1)` from those blocks referencing the round-`(r+1)` anchor, and `suppAnchor(r)` from the round-`(r+1)` blocks referencing the round-`r` anchor. Three rounds of anchors, against the commit rule's two.
+
+#### `ExitSustained`
+
+*def, `BlackMarlin.Reactive.Statement.lean`*
+
+```lean
+def ExitSustained (pc : Pace U T N) : Prop :=
+  ∀ (r : ℕ) (v : Validator) (t₀ t : ℕ),
+    quorumCard Validator ≤ T.card → v ∈ T → r + 2 ≤ N →
+    (∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n → b ∈ pc.holds v t) →
+    SuppAnchorIn U (pc.toPaceCore.viewAt v t₀) r → t₀ ≤ t →
+    Rot.anchor (r + 1) ∈ T → Rot.anchor (r + 2) ∈ T →
+    (∀ A, IsAnchor U (r + 1) A → VotesAt U T (r + 1) A) →
+    ConcludesAt U (pc.toPaceCore.viewAt v t) (r + 2)
+```
+
+**BMR4, and a run of two to stay.** A validator that already saw the round-`r` anchor supported needs neither that anchor reliable nor the references at round `r`: what the round rule checked once it never checks again, since holdings only grow. So the run of three is the cost of entering the fast path, not of remaining on it.
+
+#### `Latency`
+
+*def, `BlackMarlin.Reactive.Statement.lean`*
+
+```lean
+def Latency (pc : Pace U T N) : Prop :=
+  ∀ (r : ℕ) (v : Validator) (δ D R : ℕ),
+    quorumCard Validator ≤ T.card → v ∈ T → r + 3 ≤ N →
+    (∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n →
+      b ∈ pc.holds v (pc.built ((U.block b).creator) n + δ)) →
+    Rot.anchor r ∈ T → Rot.anchor (r + 1) ∈ T → Rot.anchor (r + 2) ∈ T →
+    (∀ n, r ≤ n → n < r + 2 → ∀ A, IsAnchor U n A → VotesAt U T n A) →
+    ((∀ u ∈ T, ∀ w ∈ T, pc.built u (r + 2) ≤ pc.built w (r + 2) + D) →
+      pc.built v (r + 3) ≤ pc.built v (r + 2) + D + δ + pc.proc) ∧
+    (pc.gst ≤ R → R ≤ r + 2 →
+      pc.built v (r + 3) ≤ pc.built v (r + 2) + pc.delay + δ + 2 * pc.proc)
+```
+
+**BMR5, latency.** With reliable blocks propagating within `δ`, the round above is entered within `D + δ + proc` of round entry — drift to the last builder, `δ` to arrive, `proc` to conclude — and past GST the spread needs no supplying, catch-up collapsing it to `Δ + proc`. The timeout appears in neither bound.
+
+#### `NoTimeout`
+
+*def, `BlackMarlin.Reactive.Statement.lean`*
+
+```lean
+def NoTimeout (pc : Pace U T N) : Prop :=
+  ∀ (r : ℕ) (v : Validator) (δ R : ℕ),
+    quorumCard Validator ≤ T.card → v ∈ T → r + 3 ≤ N →
+    pc.gst ≤ R → R ≤ r + 2 →
+    (∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n →
+      b ∈ pc.holds v (pc.built ((U.block b).creator) n + δ)) →
+    Rot.anchor r ∈ T → Rot.anchor (r + 1) ∈ T → Rot.anchor (r + 2) ∈ T →
+    (∀ n, r ≤ n → n < r + 2 → ∀ A, IsAnchor U n A → VotesAt U T n A) →
+    pc.delay + δ + 2 * pc.proc < pc.timeout (r + 2) →
+    pc.built v (r + 3) < pc.built v (r + 2) + pc.timeout (r + 2)
+```
+
+**BMR6, the timeout never fires.** When delivery, drift and processing together undercut the timeout, every reliable validator concludes strictly before its deadline: the fallback branch of `anchor_or_wait` is dead, and the protocol runs at network speed. At the minimal timeout `2Δ + proc` the second hypothesis reads `δ + proc < Δ`.
+
+#### `Statement`
+
+*def, `BlackMarlin.Reactive.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [DecidableEq BlockId] [Rotation Validator]
+    (U : BlockUniverse Validator BlockId Payload) (T : Finset Validator) (N : ℕ)
+    (pc : Pace U T N),
+    Votes pc ∧ ReactiveCommit pc ∧ Exit pc ∧ ExitSustained pc ∧
+      Latency pc ∧ NoTimeout pc
+```
+
+The reactive schedule of Black Marlin, over every fault configuration, rotation, block universe and pacing structure the model admits.
+
 ### Not otherwise grouped
 
 #### `SoundOn`
@@ -11523,7 +11812,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 456 theorems that either another module of the
+The 469 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -15084,6 +15373,45 @@ theorem no_timeout_of_fast {δ : ℕ}
 
 **The timeout never fires.** When delivery, drift and processing together undercut the timeout, every reliable validator builds strictly before its deadline — the fallback branch of `vote_or_wait` is never taken, and consensus proceeds at network speed.
 
+#### `built_succ_le_of_fast_gst`
+
+*theorem, `Reactive.Basic.lean`*
+
+```lean
+theorem built_succ_le_of_fast_gst {δ : ℕ}
+    (hcard : quorumCard Validator ≤ T.card) (hgst : rc.gst ≤ R)
+    (hR : R ≤ S.slotRound k)
+    (hδ : ∀ v ∈ T, ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = S.slotRound k →
+      b ∈ rc.holds v (rc.built ((U.block b).creator) (S.slotRound k) + δ))
+    (hN : S.slotRound k + 1 ≤ N) (hlead : S.leader k ∈ T)
+    (hL : IsLeaderBlock U k L) (hT : T ⊆ (Correct : Finset Validator)) :
+    ∀ v ∈ T, rc.built v (S.slotRound k + 1)
+      ≤ rc.built v (S.slotRound k) + rc.delay + δ + 2 * rc.proc
+```
+
+**Latency, in the deployment's own constants.** Past GST, with a quorum reliable, every reliable validator builds the round above within `Δ + δ + 2 * proc` of entering it: `Δ + proc` of collapsed spread to the last builder, `δ` for the block to arrive, `proc` to build on it. No free spread parameter, and the timeout does not appear.
+
+#### `no_timeout_of_fast_gst`
+
+*theorem, `Reactive.Basic.lean`*
+
+```lean
+theorem no_timeout_of_fast_gst {δ : ℕ}
+    (hcard : quorumCard Validator ≤ T.card) (hgst : rc.gst ≤ R)
+    (hR : R ≤ S.slotRound k)
+    (hδ : ∀ v ∈ T, ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = S.slotRound k →
+      b ∈ rc.holds v (rc.built ((U.block b).creator) (S.slotRound k) + δ))
+    (hN : S.slotRound k + 1 ≤ N) (hlead : S.leader k ∈ T)
+    (hL : IsLeaderBlock U k L) (hT : T ⊆ (Correct : Finset Validator))
+    (hfast : rc.delay + δ + 2 * rc.proc < rc.timeout (S.slotRound k)) :
+    ∀ v ∈ T, rc.built v (S.slotRound k + 1)
+      < rc.built v (S.slotRound k) + rc.timeout (S.slotRound k)
+```
+
+**When the timeout never fires**, in the same constants. At the minimal timeout `2Δ + proc` the hypothesis reads `δ + proc < Δ`: the fallback is dead exactly when actual delivery, plus one processing step, beats the bound the timeout was set against.
+
 #### `certifies`
 
 *theorem, `Reactive.Mysticeti.lean`*
@@ -17469,6 +17797,18 @@ A validator that commits an anchor holds it. Not a clause of `CommittedIn` but a
 theorem holds : Statement
 ```
 
+#### `supported_of_votesAt`
+
+*theorem, `BlackMarlin.Helpers.Liveness.lean`*
+
+```lean
+theorem supported_of_votesAt (hcard : quorumCard Validator ≤ T.card)
+    (hpop1 : PopulatedOn U T (r + 1)) (hv : VotesAt U T r L) :
+    Supported U L r
+```
+
+**The counting step**, the core's `directCommit_of_votesAt` at this arc's `Supported` — the same predicate under another name, so the proof is the same three lines. A quorum-sized `T` whose blocks one round above `r` all reference `L` supports it.
+
 #### `committed_of_run`
 
 *theorem, `BlackMarlin.Helpers.Liveness.lean`*
@@ -17544,6 +17884,172 @@ theorem roundRobin_fairRun [F : Faults (Fin n)] :
 theorem holds : Statement
 ```
 
+#### `driftOn_of_catchup`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem driftOn_of_catchup (hcard : quorumCard Validator ≤ T.card)
+    (hgst : pc.gst ≤ R) :
+    DriftOn pc.built T R (pc.delay + pc.proc) N
+```
+
+Drift collapses here as it does under the timed discipline, from the trunk's catch-up rule with `le_built` supplied by `built_lt`.
+
+#### `votes`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem votes (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card) (hgst : pc.gst ≤ R)
+    (hto : ∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n)
+    (hR : R ≤ r) (hN : r + 1 ≤ N)
+    (hlead : Rot.anchor r ∈ T) (hA : IsAnchor U r A) :
+    VotesAt U T r A
+```
+
+**Every reliable block at the round above a reliable anchor references it.** Past GST, with the timeout clearing `2Δ + proc`, whether by the exit or by the fallback.
+
+The fallback is the only argument: the anchor holds its own block when it builds, convergence carries it across within `delay`, the collapsed drift and the full timeout place that arrival before the waiter's build, and the fallback clause then obliges the reference. The exit needs nothing — concluding the round required holding the anchor, so the block cites it.
+
+#### `reactive_committed`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem reactive_committed (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card) (hgst : pc.gst ≤ R)
+    (hto : ∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n)
+    (hR : R ≤ r) (hN : r + 2 ≤ N)
+    (hlead : Rot.anchor r ∈ T) (hlead1 : Rot.anchor (r + 1) ∈ T) :
+    ∃ L, IsAnchor U r L ∧ Committed U L r
+```
+
+**Reactive liveness.** A run of two reliable anchors past GST is committed, with no coverage hypothesis: the reactive discipline supplies exactly the references the commit rule counts, and production comes off the trunk.
+
+#### `concludesAt_of_holds`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem concludesAt_of_holds {v : Validator} {t : ℕ}
+    (hcard : quorumCard Validator ≤ T.card) (hv : v ∈ T) (hN : r + 2 ≤ N)
+    (hheld : ∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n → b ∈ pc.holds v t)
+    (ha0 : Rot.anchor r ∈ T) (ha1 : Rot.anchor (r + 1) ∈ T)
+    (ha2 : Rot.anchor (r + 2) ∈ T)
+    (hvotes : ∀ n, r ≤ n → n < r + 2 → ∀ A, IsAnchor U n A → VotesAt U T n A) :
+    ConcludesAt U (pc.toPaceCore.viewAt v t) (r + 2)
+```
+
+**The exit fires.** A validator holding every reliable block of the two rounds below `r + 2` can conclude round `r + 2` — provided the anchors of rounds `r`, `r + 1` and `r + 2` are all reliable, and the reliable blocks of rounds `r + 1` and `r + 2` reference the anchors beneath them.
+
+Three anchors, where the commit rule asks for two. `quorum` and `anchor` are supplied by the round-`(r+2)` blocks, `suppAnchor(r+1)` by those same blocks referencing the round-`(r+1)` anchor, and `suppAnchor(r)` by the round-`(r+1)` blocks referencing the round-`r` anchor.
+
+#### `concludesAt_of_sustained`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem concludesAt_of_sustained {v : Validator} {t₀ t : ℕ}
+    (hcard : quorumCard Validator ≤ T.card) (hv : v ∈ T) (hN : r + 2 ≤ N)
+    (hheld : ∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n → b ∈ pc.holds v t)
+    (hprev : SuppAnchorIn U (pc.toPaceCore.viewAt v t₀) r) (ht : t₀ ≤ t)
+    (ha1 : Rot.anchor (r + 1) ∈ T) (ha2 : Rot.anchor (r + 2) ∈ T)
+    (hvotes : ∀ A, IsAnchor U (r + 1) A → VotesAt U T (r + 1) A) :
+    ConcludesAt U (pc.toPaceCore.viewAt v t) (r + 2)
+```
+
+**The exit, sustained.** A validator that already saw the round-`r` anchor supported needs neither that anchor reliable nor the votes at round `r`: the check it passed to conclude the previous round carries forward. Entering the fast path costs a run of three reliable anchors; staying on it costs one more per round.
+
+#### `built_succ_le_of_fast`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem built_succ_le_of_fast {δ : ℕ} {v : Validator}
+    (hcard : quorumCard Validator ≤ T.card) (hv : v ∈ T) (hN : r + 3 ≤ N)
+    (hδ : ∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n →
+      b ∈ pc.holds v (pc.built ((U.block b).creator) n + δ))
+    (hD : ∀ u ∈ T, ∀ w ∈ T, pc.built u (r + 2) ≤ pc.built w (r + 2) + D)
+    (ha0 : Rot.anchor r ∈ T) (ha1 : Rot.anchor (r + 1) ∈ T)
+    (ha2 : Rot.anchor (r + 2) ∈ T)
+    (hvotes : ∀ n, r ≤ n → n < r + 2 → ∀ A, IsAnchor U n A → VotesAt U T n A) :
+    pc.built v (r + 3) ≤ pc.built v (r + 2) + D + δ + pc.proc
+```
+
+**Latency tracks delivery.** When every reliable block of the two rounds below reaches every reliable validator within `δ` of its build, the next round is entered within `D + δ + proc` of round entry: drift to the last builder, `δ` to arrive, `proc` to conclude. The timeout does not appear.
+
+#### `no_timeout_of_fast`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem no_timeout_of_fast {δ : ℕ} {v : Validator}
+    (hcard : quorumCard Validator ≤ T.card) (hv : v ∈ T) (hN : r + 3 ≤ N)
+    (hδ : ∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n →
+      b ∈ pc.holds v (pc.built ((U.block b).creator) n + δ))
+    (hD : ∀ u ∈ T, ∀ w ∈ T, pc.built u (r + 2) ≤ pc.built w (r + 2) + D)
+    (ha0 : Rot.anchor r ∈ T) (ha1 : Rot.anchor (r + 1) ∈ T)
+    (ha2 : Rot.anchor (r + 2) ∈ T)
+    (hvotes : ∀ n, r ≤ n → n < r + 2 → ∀ A, IsAnchor U n A → VotesAt U T n A)
+    (hfast : D + δ + pc.proc < pc.timeout (r + 2)) :
+    pc.built v (r + 3) < pc.built v (r + 2) + pc.timeout (r + 2)
+```
+
+**The timeout never fires.** When delivery, drift and processing together undercut the timeout, every reliable validator concludes the round strictly before its deadline: the fallback branch of `anchor_or_wait` is never taken, and the protocol runs at network speed.
+
+#### `built_succ_le_of_fast_gst`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem built_succ_le_of_fast_gst {δ : ℕ} {v : Validator}
+    (hcard : quorumCard Validator ≤ T.card) (hv : v ∈ T) (hN : r + 3 ≤ N)
+    (hgst : pc.gst ≤ R) (hR : R ≤ r + 2)
+    (hδ : ∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n →
+      b ∈ pc.holds v (pc.built ((U.block b).creator) n + δ))
+    (ha0 : Rot.anchor r ∈ T) (ha1 : Rot.anchor (r + 1) ∈ T)
+    (ha2 : Rot.anchor (r + 2) ∈ T)
+    (hvotes : ∀ n, r ≤ n → n < r + 2 → ∀ A, IsAnchor U n A → VotesAt U T n A) :
+    pc.built v (r + 3) ≤ pc.built v (r + 2) + pc.delay + δ + 2 * pc.proc
+```
+
+**Latency, in the deployment's own constants.** Past GST, with a quorum reliable, the spread needs no supplying: catch-up collapses it to `Δ + proc`, and the bound reads `Δ + δ + 2 * proc`.
+
+#### `no_timeout_of_fast_gst`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem no_timeout_of_fast_gst {δ : ℕ} {v : Validator}
+    (hcard : quorumCard Validator ≤ T.card) (hv : v ∈ T) (hN : r + 3 ≤ N)
+    (hgst : pc.gst ≤ R) (hR : R ≤ r + 2)
+    (hδ : ∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n →
+      b ∈ pc.holds v (pc.built ((U.block b).creator) n + δ))
+    (ha0 : Rot.anchor r ∈ T) (ha1 : Rot.anchor (r + 1) ∈ T)
+    (ha2 : Rot.anchor (r + 2) ∈ T)
+    (hvotes : ∀ n, r ≤ n → n < r + 2 → ∀ A, IsAnchor U n A → VotesAt U T n A)
+    (hfast : pc.delay + δ + 2 * pc.proc < pc.timeout (r + 2)) :
+    pc.built v (r + 3) < pc.built v (r + 2) + pc.timeout (r + 2)
+```
+
+**When the timeout never fires**, in the same constants. At the minimal timeout `2Δ + proc` the hypothesis reads `δ + proc < Δ`.
+
+#### `holds`
+
+*theorem, `BlackMarlin.Reactive.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
 ### Not otherwise grouped
 
 #### `waveRobin_fairRun`
@@ -17585,7 +18091,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 442 lemmas used only within the file that proves
+The 443 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -18021,12 +18527,10 @@ subsection per module, in the layer order of Appendices B and C.
 | `decided_of_leader_of_populated` | O7 against a horizon, the two-round counterpart of `decided_of_leader_of_populated`: the rule needs the … |
 | `supportersIn_full` | The full view sees every supporter. |
 
-### `Reactive/Basic.lean` (3)
+### `Reactive/Basic.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
-| `built_succ_le_of_fast_gst` | Latency, in the deployment's own constants. Past GST, with a quorum reliable, every reliable validator … |
-| `no_timeout_of_fast_gst` | When the timeout never fires, in the same constants. At the minimal timeout `2Δ + proc` the hypothesis … |
 | `slotRound_le_top` | A reliable leader reached its slot's round: its block is in the universe, and `le_top_of_built` reads the … |
 
 ### `Reactive/Mysticeti.lean` (1)
@@ -18381,7 +18885,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `supported_of_supportedIn` | A view's support quorum is a genuine one. |
 | `supportersIn_subset` | A view can only under-report support. |
 
-### `BlackMarlin/Helpers/Liveness.lean` (8)
+### `BlackMarlin/Helpers/Liveness.lean` (7)
 
 | Lemma | Role |
 |:---|:---|
@@ -18391,8 +18895,16 @@ subsection per module, in the layer order of Appendices B and C.
 | `nxt_inj` | The step is injective, which is what turns "no adjacent pair is reliable" into a cardinality bound. |
 | `supportedIn_full` | So it counts the same quorum. |
 | `supported_of_mem` | A reliable author's block is supported: coverage makes every reliable block one round up reference it, and … |
-| `supported_of_votesAt` | The counting step, the core's `directCommit_of_votesAt` at this arc's `Supported` — the same predicate … |
 | `supportersIn_full` | The full view holds every supporter there is. |
+
+### `BlackMarlin/Helpers/Reactive.lean` (4)
+
+| Lemma | Role |
+|:---|:---|
+| `anchor_le_top` | A reliable anchor reached its round: its block is in the universe, and `le_top_of_built` reads the reach … |
+| `le_built` | Rounds advance real time, over the rounds a validator reached. |
+| `suppAnchorIn_mono` | A supported anchor stays supported. What the round rule checked once it never has to check again, which is … |
+| `viewAt_ids_mono` | Holdings only grow, so the view they generate does. |
 
 ### `Network/Quorum.lean` (2)
 
