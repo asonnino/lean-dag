@@ -227,7 +227,8 @@ LeanDag/BlackMarlin/
                           Results: Safety (BM1-BM7), Liveness (BML1-BML5),
                           Reactive (BMR1-BMR6), Agreement (BMA1-BMA4),
                           Ledger (BMD1-BMD6), Descent (BME1-BME5),
-                          Order (BMO1-BMO9), Repair (BMP1-BMP13)
+                          Order (BMO1-BMO9), Repair (BMP1-BMP13),
+                          ViewLiveness (BMV1-BMV3)
 LeanDagTest/BlackMarlin/  witness models; the instantiations are audited
 scripts/check-arc-holes.py   sorry/admit/axiom/native_decide/unsafe/partial absent;
                              Statement.lean files proof-free; Model/ files theorem-free
@@ -915,7 +916,56 @@ harmless, coverage putting a reliable anchor's supporters into every
 reliable view, which is BMP13 — and it is exactly where the repaired
 rule needs a *Byzantine* anchor's supporters that coverage is silent.
 
-## 15. What is not covered
+## 15. Liveness at a validator's view
+
+§8 and §9 conclude `Committed U L r`: the **universe** admits a commit
+at that round. That is not what liveness asserts. A validator delivers
+from its own view, and the universe is a device of this model rather
+than an object anyone holds, so a liveness result read there is about
+the wrong thing. This section restates the arc where liveness lives, and
+draws the line the rest of the record has been circling.
+
+**BMV1, no reliable validator is stuck.** Above every round the rotation
+names a later one that *every* reliable validator commits **on its own
+view**, by a time the pace supplies, in any sufficiently grown DAG.
+BML4 said such a round exists; this says everyone reaches it.
+
+**BMV2, nothing is held back.** And what any view committed below that
+round is in what every reliable validator delivers at it. BMA3 asked for
+a reliably anchored round above `ρ`; the rotation supplies one, so the
+hypothesis becomes a conclusion.
+
+Neither is new work at the level of the DAG. BMA2 and BMA3 already
+concluded at a view, and BMA4 already discharged the round they ask for;
+what was missing was the composition and the statement that the earlier
+results were being read at the wrong level.
+
+### Where it holds, and where it stops
+
+**BMV3 is the line.** At a reliably anchored round past coverage, an
+anchor is referenced by every reliable block of the round above, so a
+view holding those sees the quorum. The commit rule's input at such a
+round is reliable blocks, and coverage delivers reliable blocks. So the
+rule can be applied without waiting for anything a Byzantine validator
+might withhold, which is why BMV1 has a time in it and not merely an
+"eventually".
+
+**Past that line there is nothing.** The descent reads `Supported` at
+whichever anchor its chain lands on, and no clause constrains that
+anchor's author. Where the author is the equivocator, coverage is silent
+— it constrains `T`-authored blocks only — and a committed anchor's
+quorum of `2f + 1` supporters need contain just `f + 1` reliable ones.
+§14 exhibits a view holding every reliable block, and everything those
+reference, in which neither twin is supported.
+
+So the protocol as the paper states it is live at the view for the
+delivered **set**, and the repair of §14 has no live implementation: its
+validator either decides from too little and loses safety, or waits on a
+block the equivocator need never send and loses liveness. BMV3 is the
+boundary between the two, and it is a narrow one — the commit rule sits
+on the near side and the descent does not.
+
+## 16. What is not covered
 
 **Lemma 10.** No counterpart, and none needed: BML5 makes the recurring
 run deterministic where the paper bounds an expectation. The expectation

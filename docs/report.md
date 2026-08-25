@@ -5458,8 +5458,9 @@ argument (§18.5), the round rule of L38–L41 and the responsiveness it
 yields (§18.6), Definition 1's Agreement (§18.7), and the order
 `commit`'s descent delivers in (§18.8–§18.10), a refutation of
 Definition 1's Agreement (§18.11), a repair tested as a
-side-condition (§18.12), and what a validator could evaluate of it for
-itself (§18.13). It is the second arc under the statement/proof
+side-condition (§18.12), what a validator could evaluate of it for
+itself (§18.13), and liveness restated at a validator's view
+(§18.14). It is the second arc under the statement/proof
 partition (§17.5), and
 `docs/black-marlin.md` is its design record.
 
@@ -6199,12 +6200,12 @@ itself here.
 **Which level the arc's liveness is stated at.** BML1–BML5, BMR1–BMR6
 and BMP12 conclude `Committed U L r` — the universe admits a commit at
 that round. BMA2 is the exception, running the argument inside
-`viewAt v t` with an explicit time, because Agreement forced it to. For
-the unrepaired rule the distinction is harmless: the rule reads `supp`,
-and coverage puts a reliable anchor's supporters into every reliable
-view, which is BMP13. It is exactly where the repaired rule needs a
-Byzantine anchor's supporters that coverage says nothing, so the
-distinction is recorded here rather than left implicit.
+`viewAt v t` with an explicit time, because Agreement forced it to.
+§18.14 restates the rest at the view and settles which side of the line
+each result falls: the commit rule is applied from a reliable view
+without waiting (BMV3), so no reliable validator is stuck (BMV1) and
+nothing is held back (BMV2); the descent is not, and that is where the
+repair's two horns come from.
 
 The root cause is upstream of the tie-break. Black Marlin gives a round
 no **decision**: `delivery(r)` either commits or fails, a failure is
@@ -6225,6 +6226,55 @@ fails. What is claimed is narrower and enough: the protocol as presented
 does not satisfy Definition 1's Agreement, the rule that restores it
 cannot be evaluated by a validator that decides from its own view, and
 the rule that waits for the evidence can be made to wait without end.
+
+### 18.14 Liveness at a validator's view
+
+§18.5, §18.6 and BMP12 conclude `Committed U L r`: the **universe**
+admits a commit at that round. Liveness asserts something else. A
+validator delivers from its own view, and the universe is a device of
+this model rather than an object anyone holds, so a liveness result read
+there is about the wrong object. This section restates the arc at the
+view (`BlackMarlin.ViewLiveness.holds`).
+
+**BMV1, `NoValidatorStuck`.** Above every round the rotation names a
+later one that *every* reliable validator commits **on its own view**,
+by a time the pace supplies, in any sufficiently grown DAG under any
+pace. BML4 said such a round exists; this says everyone reaches it.
+
+**BMV2, `NothingHeldBack`.** And what any view committed below that
+round is in what every reliable validator delivers at it. BMA3 asks for
+a reliably anchored round above `ρ` and the rotation supplies one, so
+the hypothesis becomes a conclusion.
+
+Neither is new work at the level of the DAG, and that is the point of
+stating them. BMA2 and BMA3 already concluded at a view and BMA4 already
+discharged the round they ask for; what was missing was the composition,
+and the recognition that the arc's own liveness claims were being read
+one level too high.
+
+**BMV3, `ReadableAtReliableAnchor`, is the line.** At a reliably
+anchored round past coverage, an anchor is referenced by every reliable
+block of the round above, so a view holding those sees the quorum. The
+commit rule's input at such a round is reliable blocks, and coverage
+delivers reliable blocks — so the rule applies without waiting on
+anything a Byzantine validator might withhold, which is why BMV1 carries
+a time rather than an "eventually". On the four-round model the reliable
+supporters of the round-2 anchor are already a quorum, so the
+equivocator's block there is not needed even though it exists.
+
+**Past that line there is nothing, and this is where the arc ends.** The
+descent reads `Supported` at whichever anchor its chain lands on, and no
+clause constrains that anchor's author. Where the author is the
+equivocator, coverage is silent — it constrains `T`-authored blocks only
+— and a committed anchor's `2f + 1` supporters need contain just `f + 1`
+reliable ones. §18.13's model exhibits a view holding every reliable
+block, and everything those reference, in which neither twin is
+supported.
+
+So: **the protocol as the paper states it is live at the view for the
+delivered set, and the repair of §18.12 has no live implementation.**
+BMV3 is the boundary between them, and it is narrow — the commit rule
+sits on the near side and the descent does not.
 
 ## 19. Satisfiability
 
@@ -6433,7 +6483,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `BlackMarlin/Model/Descent.lean` | `maxAnchor`, the tie-break of L24, and the record the descent computes |
 | `BlackMarlin/Model/Order.lean` | the sort `τ`, the filter of L27, and the list a validator outputs |
 | `BlackMarlin/Model/Repair.lean` | the support-preferring side-condition, and a descent that meets it |
-| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/`, `BlackMarlin/Descent/`, `BlackMarlin/Order/`, `BlackMarlin/Repair/` | the eight statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6, BME1–BME5, BMO1–BMO9, BMP1–BMP13) |
+| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/`, `BlackMarlin/Descent/`, `BlackMarlin/Order/`, `BlackMarlin/Repair/` | the eight statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6, BME1–BME5, BMO1–BMO9, BMP1–BMP13, BMV1–BMV3) |
 | `BlackMarlin/Helpers/` | the generated lemma layer |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
@@ -7196,7 +7246,11 @@ reused.
 | BMP10 | the strengthened descent does not stall | `BlackMarlin.descendS_isSome`, `BlackMarlin.descendS_round_lt` *(BlackMarlin/Helpers/Repair)* |
 | BMP11 | two records with committed tops agree outright | `BlackMarlin.flushRecordS_agree_of_committed` *(BlackMarlin/Helpers/Repair)* |
 | BMP12 | committed rounds still recur, so no execution is stuck | `BlackMarlin.Repair.holds` *(BlackMarlin/Repair/Proof)* |
-| BMP13 | a reliable author's anchor is seen as supported, past coverage | `BlackMarlin.supportedIn_of_synchronised` *(BlackMarlin/Helpers/Repair)* |
+| BMP13 | a reliable author's anchor is seen as supported, past coverage | `BlackMarlin.supportedIn_of_synchronised` *(BlackMarlin/Helpers/Liveness)* |
+| BMV1 | above every round, one that every reliable validator commits on its own view | `BlackMarlin.ViewLiveness.holds` *(BlackMarlin/ViewLiveness/Proof)* |
+| BMV2 | and delivers there whatever any view committed below | `BlackMarlin.ViewLiveness.holds` *(BlackMarlin/ViewLiveness/Proof)* |
+| BMV3 | the rule is readable at a reliably anchored round, and only there | `BlackMarlin.ViewLiveness.holds` *(BlackMarlin/ViewLiveness/Proof)* |
+| BMV4 | BMV1–BMV3 on the four-round model, and the reliable supporters alone a quorum | `ViewLiveness` witnesses *(LeanDagTest/BlackMarlin)* |
 | BMP14 | both repairs on the execution of §18.11, what they cost, a view that misses the support, and a counting rule that reads it wrongly at `f = 1` | `descendSupp`, `descendS`, `coneView`, `Ucnt` witnesses *(LeanDagTest/BlackMarlin)* |
 
 **Integration** (§16):
@@ -13418,6 +13472,105 @@ The repaired descent, over every fault configuration, rotation and block univers
 
 ### Not otherwise grouped
 
+#### `CommitsInViews`
+
+*def, `BlackMarlin.ViewLiveness.Statement.lean`*
+
+```lean
+def CommitsInViews (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
+    (T : Finset Validator) (R r : ℕ) : Prop :=
+  ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ) (pc : Pace U T N),
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    pc.gst ≤ R → (∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n) →
+    r + 2 ≤ N →
+    ∃ L, IsAnchor U r L ∧ Committed U L r ∧
+      ∀ v ∈ T, CommittedIn U
+        (pc.toPaceCore.viewAt v (max (pc.latest (r + 1)) (pc.latest (r + 2)) + pc.delay))
+        L r
+```
+
+**What it means for a round to be committed by every reliable validator on its own view.** Universe, growth and pace are quantified inside, as `Liveness.CommitsAtRound` quantifies the universe and for the same reason: the rotation names the round before any DAG is fixed, and fixing one first would cap how far the rotation may reach.
+
+#### `NoValidatorStuck`
+
+*def, `BlackMarlin.ViewLiveness.Statement.lean`*
+
+```lean
+def NoValidatorStuck : Prop :=
+  ∀ (T : Finset Validator) (R r : ℕ),
+    quorumCard Validator ≤ T.card → Liveness.FairRun T 2 →
+    ∃ r', r ≤ r' ∧ R ≤ r' ∧ CommitsInViews BlockId Payload T R r'
+```
+
+**BMV1, no reliable validator is stuck.** BML4 says a round recurs that the universe admits a commit at; this says a round recurs that every reliable validator commits at, on its own view and by a time the pace names.
+
+#### `DeliversInViews`
+
+*def, `BlackMarlin.ViewLiveness.Statement.lean`*
+
+```lean
+def DeliversInViews (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
+    (T : Finset Validator) (R ρ r : ℕ) : Prop :=
+  ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ) (pc : Pace U T N)
+    (V : View Validator BlockId Payload U) (A B : BlockId),
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    pc.gst ≤ R → (∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n) →
+    r + 2 ≤ N →
+    CommittedIn U V A ρ → B ∈ history U A →
+    ∃ L, IsAnchor U r L ∧ B ∈ history U L ∧
+      ∀ v ∈ T, CommittedIn U
+        (pc.toPaceCore.viewAt v (max (pc.latest (r + 1)) (pc.latest (r + 2)) + pc.delay))
+        L r
+```
+
+**What it means for a round to deliver, at every reliable view, what some view committed below.**
+
+#### `NothingHeldBack`
+
+*def, `BlackMarlin.ViewLiveness.Statement.lean`*
+
+```lean
+def NothingHeldBack : Prop :=
+  ∀ (T : Finset Validator) (R ρ : ℕ),
+    quorumCard Validator ≤ T.card → Liveness.FairRun T 2 →
+    ∃ r, ρ ≤ r ∧ R ≤ r ∧ DeliversInViews BlockId Payload T R ρ r
+```
+
+**BMV2, nothing one validator delivered is held back from another.** BMA3 asks for a reliably anchored round above `ρ`; the rotation supplies one, so the hypothesis becomes a conclusion.
+
+#### `ReadableAtReliableAnchor`
+
+*def, `BlackMarlin.ViewLiveness.Statement.lean`*
+
+```lean
+def ReadableAtReliableAnchor (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (T : Finset Validator) (R ρ : ℕ) (V : View Validator BlockId Payload U) (L : BlockId),
+    quorumCard Validator ≤ T.card →
+    SynchronisedOn U T R → R ≤ ρ → PopulatedOn U T (ρ + 1) →
+    Rot.anchor ρ ∈ T → IsAnchor U ρ L →
+    (∀ b ∈ U.ids, (U.block b).creator ∈ T → (U.block b).round = ρ + 1 → b ∈ V.ids) →
+    SupportedIn U V L ρ
+```
+
+**BMV3, the rule is readable at a reliable anchor.** Past the round coverage takes hold, an anchor whose author is reliable is referenced by every reliable block of the round above, so a view holding those sees the quorum — the support clause needs no block a Byzantine validator might withhold.
+
+This is the boundary of the arc. Replace `Rot.anchor ρ ∈ T` by nothing and the statement is false: coverage constrains only `T`-authored blocks, and a committed anchor's `2f + 1` supporters need contain only `f + 1` reliable ones. That is the case the descent meets and the repair needs, and `black-marlin.md` §14 records what it costs.
+
+#### `Statement`
+
+*def, `BlackMarlin.ViewLiveness.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [DecidableEq BlockId] [Rotation Validator],
+    NoValidatorStuck Validator BlockId Payload ∧
+      NothingHeldBack Validator BlockId Payload ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload), ReadableAtReliableAnchor U
+```
+
+Liveness of the Black Marlin commit rule read at a validator's view, over every fault configuration, rotation and block universe the model admits.
+
 #### `SoundOn`
 
 *structure, `Integration.Sound.lean`*
@@ -13452,7 +13605,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 529 theorems that either another module of the
+The 530 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -19540,6 +19693,24 @@ theorem roundRobin_fairRun [F : Faults (Fin n)] :
 
 **BML5.** Round-robin puts two consecutive reliable anchors arbitrarily far out, at every committee and whichever validators are Byzantine. The pair recurs once per cycle, which is what carries it past any given round.
 
+#### `supportedIn_of_synchronised`
+
+*theorem, `BlackMarlin.Helpers.Liveness.lean`*
+
+```lean
+theorem supportedIn_of_synchronised {T : Finset Validator} {R ρ : ℕ}
+    {V : View Validator BlockId Payload U}
+    (hcard : quorumCard Validator ≤ T.card)
+    (hs : SynchronisedOn U T R) (hR : R ≤ ρ) (hpop : PopulatedOn U T (ρ + 1))
+    (hL : L ∈ U.ids) (hLr : (U.block L).round = ρ)
+    (hLc : (U.block L).creator ∈ T)
+    (hheld : ∀ b ∈ U.ids, (U.block b).creator ∈ T → (U.block b).round = ρ + 1 →
+      b ∈ V.ids) :
+    SupportedIn U V L ρ
+```
+
+**A reliable author's anchor is seen as supported**, by any view that holds the reliable blocks of the round above, once coverage has taken hold.
+
 #### `holds`
 
 *theorem, `BlackMarlin.Liveness.Proof.lean`*
@@ -20340,24 +20511,6 @@ theorem flushRecordS_agree_of_committed {B₁ B₂ : BlockId} {r₁ r₂ ρ : �
 
 **Two strengthened records with committed tops agree.** Chaining puts the lower top in the higher's cone (BM5), BMP8 makes both descents reach it, and the suffix property carries agreement to every round below it. This is the composition the refutation needed and did not have.
 
-#### `supportedIn_of_synchronised`
-
-*theorem, `BlackMarlin.Helpers.Repair.lean`*
-
-```lean
-theorem supportedIn_of_synchronised {T : Finset Validator} {R ρ : ℕ}
-    {V : View Validator BlockId Payload U}
-    (hcard : quorumCard Validator ≤ T.card)
-    (hs : SynchronisedOn U T R) (hR : R ≤ ρ) (hpop : PopulatedOn U T (ρ + 1))
-    (hL : L ∈ U.ids) (hLr : (U.block L).round = ρ)
-    (hLc : (U.block L).creator ∈ T)
-    (hheld : ∀ b ∈ U.ids, (U.block b).creator ∈ T → (U.block b).round = ρ + 1 →
-      b ∈ V.ids) :
-    SupportedIn U V L ρ
-```
-
-**A reliable author's anchor is seen as supported**, by any view that holds the reliable blocks of the round above, once coverage has taken hold.
-
 #### `holds`
 
 *theorem, `BlackMarlin.Repair.Proof.lean`*
@@ -20367,6 +20520,14 @@ theorem holds : Statement
 ```
 
 ### Not otherwise grouped
+
+#### `holds`
+
+*theorem, `BlackMarlin.ViewLiveness.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
 
 #### `waveRobin_fairRun`
 

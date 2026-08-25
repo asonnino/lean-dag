@@ -221,7 +221,16 @@ faults alone.
   supporters are authored by Byzantine validators and need never be
   sent — witnessed by a view holding every reliable block that still
   sees neither twin supported. So no implementation of the repair keeps
-  both safety and liveness. The arc is the second under the statement/proof
+  both safety and liveness.
+- **Liveness read where liveness lives.** The arc's earlier results
+  conclude `Committed U L r`, which is a fact about the universe rather
+  than about anything a validator holds. BMV1 and BMV2 restate them at a
+  validator's view: above every round the rotation names one that every
+  reliable validator commits on its own view, by a time the pace
+  supplies, and delivers there whatever any view committed below. BMV3
+  is the line — the commit rule is readable from a reliable view because
+  coverage delivers reliable blocks, and the descent is not, because the
+  anchor it reads may be the equivocator's. The arc is the second under the statement/proof
   partition.
 
 Every definition is exercised on concrete models by `decide` before

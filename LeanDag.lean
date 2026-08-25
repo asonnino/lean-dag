@@ -122,3 +122,4 @@ import LeanDag.BlackMarlin.Model.Repair
 import LeanDag.BlackMarlin.Repair.Statement
 import LeanDag.BlackMarlin.Helpers.Repair
 import LeanDag.BlackMarlin.Repair.Proof
+import LeanDag.BlackMarlin.ViewLiveness.Proof
