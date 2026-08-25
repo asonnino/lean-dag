@@ -67,6 +67,18 @@ def StepUnique (U : BlockUniverse Validator BlockId Payload) : Prop :=
     M ∈ U.ids → (U.block M).round = ρ + 1 →
     X ∈ coneAnchors U M ρ → Y ∈ coneAnchors U M ρ → X = Y
 
+/-- **BMD1′, a Byzantine anchor is necessary for a tie.** BMD1 says the
+descent has one candidate where it steps by one round. This says the
+other half: at a round whose elected validator is reliable, the
+candidates are a singleton however deep the cone — non-equivocation
+gives it one block there. So a choice needs *both* a skipped anchor round
+and an equivocating anchor at the round the descent lands on; either
+alone leaves the descent determinate. -/
+def CorrectAnchorUnique (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (ρ : ℕ) (C X Y : BlockId),
+    Rot.anchor ρ ∈ (Correct : Finset Validator) →
+    X ∈ coneAnchors U C ρ → Y ∈ coneAnchors U C ρ → X = Y
+
 /-- **BMD2, agreement descends one round.** Where both records flush, the
 step makes their blocks candidates of one cone; where one does not, the
 cone is empty and neither does. -/
@@ -124,7 +136,7 @@ def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [Faults Validator] [DecidableEq BlockId] [Rotation Validator]
     (U : BlockUniverse Validator BlockId Payload),
-    StepUnique U ∧ AgreeStep U ∧ AgreeBelow U ∧ CommittedPins U ∧
+    StepUnique U ∧ CorrectAnchorUnique U ∧ AgreeStep U ∧ AgreeBelow U ∧ CommittedPins U ∧
       LinkPopulates U ∧ Ledger U
 
 end Ledger

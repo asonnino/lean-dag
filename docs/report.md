@@ -5756,18 +5756,25 @@ the second one's descent visits `5`, `4` and `3` on the way down. The
 record the descent leaves is modelled here, not the recursion that builds
 it, as §5 models `Decided` rather than an implementation.
 
-**BMD1** is why no tie-break is needed most of the time: the candidates
+**BMD1** and **BMD1′** say a tie needs two things at once. The candidates
 at round `ρ` below a round-`(ρ+1)` block are that block's references, and
 `distinct_creators` allows one block per author, so a consecutive step
-has at most one candidate. **BMD2** and **BMD3** turn that into
+has at most one candidate whoever anchors; and at a round whose elected
+validator is reliable the candidates are a singleton however deep the
+cone, non-equivocation giving it one block there. So a choice requires a
+**skipped anchor round** — the elected validator produced nothing, or its
+block is not referenced — **and** an equivocating anchor at the round the
+descent then lands on. Either alone leaves the descent determinate, and a
+skip costs only the propagation below it: BML3's inclusion, BMA3's
+agreement and the whole of §18.2 are statements about causal history
+rather than about segment boundaries. **BMD2** and **BMD3** turn that
+into
 agreement — two records agreeing at a round agree at the round below, and
 so throughout any stretch they both descend — and **BMD4** supplies the
 starting point, two records flushing directly committed anchors at one
 round flushing the same block by BM1.
 
-**BMD5 is the result.** Ties can only arise where the descent *skips* an
-anchor round, leaving two twins of an equivocating anchor in a deeper
-cone. Above a committed anchor sits a **supported** anchor — the link
+**BMD5 is the result.** Above a committed anchor sits a **supported** anchor — the link
 clause says so — and BM2 puts it in the cone of every block from three
 rounds up, so the round above a committed anchor is never the one
 skipped. The clause that makes adjacent committed anchors comparable
@@ -5780,8 +5787,8 @@ records that agree concur on which. The last two are Definition 1's Total
 Order at the granularity of segments; the order *within* a segment is
 `τ`, which the rule does not constrain and this arc does not model.
 
-**What is left over, and why.** Where the descent does skip a round,
-nothing above applies, and the paper's rule for that case cannot be
+**What is left over, and why.** Where the descent skips a round *and*
+the round it lands on has an equivocating anchor, nothing above applies, and the paper's rule for that case cannot be
 transcribed: Algorithm 1 uses `maxAnchor(A)` as a set on L21 and as an
 element on L22, binds `A` as a member of `A` on L24, and leaves the
 function undefined when the candidate set holds no anchor. BMD3 therefore
@@ -6721,6 +6728,7 @@ reused.
 | BMA4 | a reliably anchored run of two lies above every round | `BlackMarlin.Agreement.holds` *(BlackMarlin/Agreement/Proof)* |
 | BMA5 | agreement on data, on the four-round model and on the pace | `Ufull`, `ugrowBM` witnesses *(LeanDagTest/BlackMarlin)* |
 | BMD1 | the descent has one candidate where it steps by one round | `BlackMarlin.coneAnchors_subsingleton` *(BlackMarlin/Helpers/Ledger)* |
+| BMD1′ | and at a round whose anchor is reliable, however deep the cone | `BlackMarlin.coneAnchors_subsingleton_of_correct` *(BlackMarlin/Helpers/Ledger)* |
 | BMD2 | two records agreeing at a round agree at the round below | `BlackMarlin.block_eq_of_succ` *(BlackMarlin/Helpers/Ledger)* |
 | BMD3 | and throughout any stretch they both descend | `BlackMarlin.block_eq_of_add` *(BlackMarlin/Helpers/Ledger)* |
 | BMD4 | records flushing committed anchors at one round agree there | `BlackMarlin.block_eq_of_committed` *(BlackMarlin/Helpers/Ledger)* |
@@ -12038,6 +12046,19 @@ def StepUnique (U : BlockUniverse Validator BlockId Payload) : Prop :=
 
 **BMD1, the step is unambiguous.**
 
+#### `CorrectAnchorUnique`
+
+*def, `BlackMarlin.Ledger.Statement.lean`*
+
+```lean
+def CorrectAnchorUnique (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (ρ : ℕ) (C X Y : BlockId),
+    Rot.anchor ρ ∈ (Correct : Finset Validator) →
+    X ∈ coneAnchors U C ρ → Y ∈ coneAnchors U C ρ → X = Y
+```
+
+**BMD1′, a Byzantine anchor is necessary for a tie.** BMD1 says the descent has one candidate where it steps by one round. This says the other half: at a round whose elected validator is reliable, the candidates are a singleton however deep the cone — non-equivocation gives it one block there. So a choice needs *both* a skipped anchor round and an equivocating anchor at the round the descent lands on; either alone leaves the descent determinate.
+
 #### `AgreeStep`
 
 *def, `BlackMarlin.Ledger.Statement.lean`*
@@ -12122,7 +12143,7 @@ def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [Faults Validator] [DecidableEq BlockId] [Rotation Validator]
     (U : BlockUniverse Validator BlockId Payload),
-    StepUnique U ∧ AgreeStep U ∧ AgreeBelow U ∧ CommittedPins U ∧
+    StepUnique U ∧ CorrectAnchorUnique U ∧ AgreeStep U ∧ AgreeBelow U ∧ CommittedPins U ∧
       LinkPopulates U ∧ Ledger U
 ```
 
@@ -12164,7 +12185,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 485 theorems that either another module of the
+The 486 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -18484,6 +18505,18 @@ theorem coneAnchors_subsingleton (hM : M ∈ U.ids) (hMr : (U.block M).round = �
 ```
 
 **The step is unambiguous.** At most one anchor of round `ρ` lies in the cone of a round-`(ρ + 1)` block: the round-`ρ` members of that cone are its references, and `distinct_creators` allows one block per author. No tie-break is needed where the descent steps by one round.
+
+#### `coneAnchors_subsingleton_of_correct`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem coneAnchors_subsingleton_of_correct {C : BlockId}
+    (hc : Rot.anchor ρ ∈ (Correct : Finset Validator)) :
+    ∀ X ∈ coneAnchors U C ρ, ∀ Y ∈ coneAnchors U C ρ, X = Y
+```
+
+**A Byzantine anchor is necessary for a tie.** Where the round's elected validator is reliable it has one block at that round, so the candidates are a singleton however deep the cone the descent is reading — no skipped round can produce a choice there.
 
 #### `block_eq_of_succ`
 

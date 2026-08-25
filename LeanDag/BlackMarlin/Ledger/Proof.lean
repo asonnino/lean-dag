@@ -16,9 +16,11 @@ namespace Ledger
 
 theorem holds : Statement := by
   intro Validator BlockId Payload _ _ _ _ _ U
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · intro ρ M X Y hM hMr hX hY
     exact coneAnchors_subsingleton hM hMr X hX Y hY
+  · intro ρ C X Y hc hX hY
+    exact coneAnchors_subsingleton_of_correct hc X hX Y hY
   · intro f₁ f₂ ρ M h₁ h₂
     exact block_eq_of_succ h₁ h₂
   · intro f₁ f₂ ρ d h hdef

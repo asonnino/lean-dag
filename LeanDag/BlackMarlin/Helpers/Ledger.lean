@@ -42,6 +42,18 @@ theorem coneAnchors_subsingleton (hM : M ∈ U.ids) (hMr : (U.block M).round = �
     mem_refs_of_mem_history_of_round_succ hM hYh (by rw [hYa.2.1, hMr])
   exact (U.valid M hM).distinct_creators X hXr Y hYr (by rw [hXa.2.2, hYa.2.2])
 
+/-- **A Byzantine anchor is necessary for a tie.** Where the round's
+elected validator is reliable it has one block at that round, so the
+candidates are a singleton however deep the cone the descent is reading —
+no skipped round can produce a choice there. -/
+theorem coneAnchors_subsingleton_of_correct {C : BlockId}
+    (hc : Rot.anchor ρ ∈ (Correct : Finset Validator)) :
+    ∀ X ∈ coneAnchors U C ρ, ∀ Y ∈ coneAnchors U C ρ, X = Y := by
+  intro X hX Y hY
+  obtain ⟨hXa, -⟩ := mem_coneAnchors.mp hX
+  obtain ⟨hYa, -⟩ := mem_coneAnchors.mp hY
+  exact U.eq_of_creator_eq hXa.1 hYa.1 hc hXa.2.2 hYa.2.2 (by rw [hXa.2.1, hYa.2.1])
+
 /-- A flushed anchor is a candidate of its own round below the anchor
 above it. -/
 theorem mem_coneAnchors_of_step (f : Flush U)

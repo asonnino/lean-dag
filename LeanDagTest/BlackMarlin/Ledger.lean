@@ -33,6 +33,21 @@ example : coneAnchors Ufull 15 2 = {10} := by decide
 it holds the round-0 anchor as well, which is why the step matters. -/
 example : (0 : Fin 16) ∈ coneAnchors Ufull 10 0 := by decide
 
+/-- **BMD1′ on data**: at a round whose anchor is reliable the candidates
+are a singleton however deep the cone — here validator `2` anchors round
+`2` and is not Byzantine, so the round-3 anchor's cone holds exactly one
+of its blocks. -/
+example : ∀ X ∈ coneAnchors Ufull 15 2, ∀ Y ∈ coneAnchors Ufull 15 2, X = Y :=
+  fun X hX Y hY =>
+    (Ledger.holds (Fin 4) (Fin 16) Unit Ufull).2.1 2 15 X Y (by decide) hX hY
+
+/-- The Byzantine validator is `0`, which anchors round `0`; that is the
+only round of this model where a tie could arise at all. -/
+example : Rotation.anchor (Validator := Fin 4) 0 ∉ (Correct : Finset (Fin 4)) ∧
+    Rotation.anchor (Validator := Fin 4) 1 ∈ (Correct : Finset (Fin 4)) ∧
+    Rotation.anchor (Validator := Fin 4) 2 ∈ (Correct : Finset (Fin 4)) ∧
+    Rotation.anchor (Validator := Fin 4) 3 ∈ (Correct : Finset (Fin 4)) := by decide
+
 /-! ## The record -/
 
 /-- The anchor of round `ρ` is validator `ρ % 4`, whose block at that
@@ -90,7 +105,7 @@ example : OutputAt Ufull fullFlush 3 1 := by
 
 /-- And so it is in the ledger from round `2` on, but not before. -/
 example : (3 : Fin 16) ∈ ledgerSet Ufull fullFlush 2 :=
-  (Ledger.holds (Fin 4) (Fin 16) Unit Ufull).2.2.2.2.2.2.2.2.2
+  (Ledger.holds (Fin 4) (Fin 16) Unit Ufull).2.2.2.2.2.2.2.2.2.2
     fullFlush 1 5 3 (by decide) ((mem_history_iff (by decide)).mp (by decide))
 
 #print axioms LeanDag.BlackMarlin.Ledger.holds

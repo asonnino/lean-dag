@@ -427,18 +427,28 @@ the core models `Decided` rather than the implementation.
 | | Claim | Paper |
 |:---|:---|:---|
 | BMD1 | `StepUnique` — the descent has one candidate where it steps by one round | — |
+| BMD1′ | `CorrectAnchorUnique` — and at a round whose anchor is reliable, however deep the cone | — |
 | BMD2 | `AgreeStep` — records agreeing at a round agree at the round below | — |
 | BMD3 | `AgreeBelow` — and throughout any stretch they both descend | — |
 | BMD4 | `CommittedPins` — records flushing committed anchors at one round agree there | Lemma 2 |
 | BMD5 | `LinkPopulates` — the link clause keeps the descent from skipping | — |
 | BMD6 | `Ledger` — no retraction, agreement, and one position per block | Definition 1, Total Order |
 
-**BMD1 is why no tie-break is needed most of the time.** The candidates
-at round `ρ` below a round-`(ρ+1)` block are that block's references, and
+**BMD1 and BMD1′ say a tie needs two things at once.** The candidates at
+round `ρ` below a round-`(ρ+1)` block are that block's references, and
 `ValidWrt.distinct_creators` allows one block per author — so a
-consecutive step has at most one candidate. Ties can only arise where the
-descent *skips* an anchor round, leaving two twins of an equivocating
-anchor in a deeper cone.
+consecutive step has at most one candidate, whoever anchors. And at a
+round whose elected validator is reliable the candidates are a singleton
+however deep the cone, since non-equivocation gives it one block there.
+So a choice requires a **skipped anchor round** — the elected validator
+produced nothing, or its block is not referenced — **and** an
+equivocating anchor at the round the descent then lands on. Either alone
+leaves the descent determinate.
+
+A skip stops the propagation of BMD2 and BMD3 there, and affects nothing
+else: BML3's inclusion, BMA3's agreement and the whole of §4 are
+statements about causal history rather than about segment boundaries, and
+none of them reads the record.
 
 **BMD5 is the point of the phase.** The commit rule's second clause was
 used in exactly one case of one theorem for safety (§4). Here it does a
@@ -448,8 +458,8 @@ a committed anchor is never the one skipped. The clause that makes
 adjacent committed anchors comparable is also what keeps the delivery
 order determinate around them.
 
-**What is left over.** Where the descent does skip a round — an anchor
-round carrying no anchor in the cone below it — nothing above applies,
+**What is left over.** Where the descent skips a round *and* the round it
+lands on has an equivocating anchor, nothing above applies,
 and the paper's rule for that case cannot be transcribed. Algorithm 1
 uses `maxAnchor(A)` as a set on L21 and as an element on L22, binds `A`
 as a member of `A` on L24, and leaves the function undefined when the
