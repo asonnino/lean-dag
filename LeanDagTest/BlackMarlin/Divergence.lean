@@ -222,6 +222,26 @@ and `12` still is not, since `Committed` mentions no part of the
 descent. -/
 example : Committed Udiv 8 2 ∧ ¬ Committed Udiv 12 2 := by decide
 
+/-! ### The strengthened repair -/
+
+/-- **The strengthened descent never faces the choice at all.** The only
+supported anchor in the round-4 anchor's cone is `8`, so the descent goes
+straight to it, and the two records agree at every round. `12` is never a
+boundary for anyone: a round whose anchors carry no quorum is not one. -/
+example : suppAnchorsOf Udiv (strongOf Udiv 19) = {8} ∧
+    descendS Udiv 19 = some 8 ∧
+    flushRecordS Udiv 19 2 = flushRecordS Udiv 8 2 ∧
+    flushRecordS Udiv 19 1 = flushRecordS Udiv 8 1 ∧
+    flushRecordS Udiv 19 0 = flushRecordS Udiv 8 0 := by decide
+
+/-- Its boundaries are the committed anchors and nothing else here: the
+round-1 and round-0 anchors carry two supporters apiece, one short, so
+neither is a boundary and their blocks come out inside the segment
+above. -/
+example : ¬ Supported Udiv 7 1 ∧ ¬ Supported Udiv 3 0 ∧
+    flushRecordS Udiv 19 4 = some 19 ∧ flushRecordS Udiv 19 3 = none ∧
+    flushRecordS Udiv 19 1 = none ∧ flushRecordS Udiv 19 0 = none := by decide
+
 /-- **And here the support really is in view.** `Supported` is a fact
 about the universe, so a validator can act on it only where its own view
 carries the witnesses. The three supporters of `8` lie in the cone of

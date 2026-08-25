@@ -1,4 +1,5 @@
 import LeanDag.BlackMarlin.Model.Repair
+import LeanDag.BlackMarlin.Liveness.Statement
 
 /-!
 # Black Marlin — the repair, stated
@@ -28,7 +29,11 @@ sits beside them. Six claims:
   `black-marlin.md` §13 needed and did not have;
 * **BMP6, `LivenessUntouched`** — nothing the liveness results speak
   about mentions the descent: `Committed` is a property of the rule
-  alone, so BML1 and BMR2 hold of the repaired protocol word for word.
+  alone, so BML1 and BMR2 hold of the repaired protocol word for word;
+* **BMP7–BMP10** are the strengthened form, which drops the tie-break
+  rather than filtering it: every boundary is supported, no committed
+  anchor is passed by, agreement runs down from any meeting point, and
+  the descent still terminates and delivers everything.
 
 **What this does not settle.** `Supported` is a fact about the universe,
 and a validator computes support from its own view, which under-reports.
@@ -92,6 +97,61 @@ def LivenessUntouched (U : BlockUniverse Validator BlockId Payload) : Prop :=
   ∀ (L : BlockId) (ρ : ℕ),
     Committed U L ρ ↔ (IsAnchor U ρ L ∧ Supported U L ρ ∧ Linked U L ρ)
 
+/-! ## The strengthened repair
+
+`descendSupp` chooses among the candidates L21–L24 already offers, so it
+helps only where the supported anchor is among them — and a step through
+a block that cites a twin instead offers none. `descendS` drops the
+tie-break: it descends to the highest-round **supported** anchor of the
+cone and nowhere else. Four further claims. -/
+
+/-- **BMP7, every boundary is supported.** So a round whose anchors carry
+no quorum is not a boundary at all: where an anchor equivocates and
+neither twin is supported, the strengthened descent makes no choice
+there, and two records cannot part over one. -/
+def StrongSupported (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B L : BlockId), descendS U B = some L → Supported U L (U.block L).round
+
+/-- **BMP8, and no committed anchor is passed by.** A supported anchor
+sits at every round the chain could land on above a committed one — the
+committed anchor itself from two rounds up, and its linking anchor from
+one, which the commit rule makes supported — and anchor uniqueness fixes
+which block each of those is. -/
+def StrongReaches (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B L : BlockId) (ρ : ℕ), B ∈ U.ids → Committed U L ρ → L ∈ strongOf U B →
+    flushRecordS U B ρ = some L
+
+/-- **BMP9, and agreement runs down from any meeting point.** With BMP8
+this is what the refutation needed: two records whose tops are committed
+anchors both reach the lower of the two — BM5 puts it in the higher's
+cone — and so agree at every round below it. -/
+def StrongAgrees (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B₁ B₂ M : BlockId) (σ ρ : ℕ), B₁ ∈ U.ids → B₂ ∈ U.ids →
+    flushRecordS U B₁ σ = some M → flushRecordS U B₂ σ = some M → ρ ≤ σ →
+    flushRecordS U B₁ ρ = flushRecordS U B₂ ρ
+
+/-- **BMP10, and it does not stall.** A choice is made whenever the cone
+holds a supported anchor, and it sits strictly lower, so the descent
+terminates. Coarser segments deliver the same blocks: a round that is no
+longer a boundary has its blocks come out inside the next segment
+above. -/
+def StrongNoStall (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  (∀ (B : BlockId), (suppAnchorsOf U (strongOf U B)).Nonempty → (descendS U B).isSome) ∧
+  (∀ (B L : BlockId), B ∈ U.ids → descendS U B = some L →
+    (U.block L).round < (U.block B).round)
+
+variable (Validator BlockId Payload) in
+/-- **BMP11, and no execution is stuck.** The recurrence of committed
+rounds is a statement about `Committed` and the rotation, neither of
+which the repair touches, so it holds of the repaired protocol word for
+word: for every round the rotation names a later one that any
+sufficiently grown covered DAG commits, and BML5 supplies the clause it
+needs at every committee. -/
+def NotStuck : Prop :=
+  ∀ (T : Finset Validator) (R r : ℕ),
+    quorumCard Validator ≤ T.card → Liveness.FairRun T 2 →
+    ∃ r', r ≤ r' ∧ R ≤ r' ∧ Liveness.CommitsAtRound BlockId Payload T R r'
+
 /-- The repaired descent, over every fault configuration, rotation and
 block universe the model admits. -/
 def Statement : Prop :=
@@ -99,7 +159,9 @@ def Statement : Prop :=
     [Faults Validator] [LinearOrder BlockId] [Rotation Validator]
     (U : BlockUniverse Validator BlockId Payload),
     AtMostOneSupported U ∧ RepairPrefers U ∧ RepairRefines U ∧ NoStall U ∧
-      Agrees U ∧ LivenessUntouched U
+      Agrees U ∧ LivenessUntouched U ∧
+      StrongSupported U ∧ StrongReaches U ∧ StrongAgrees U ∧ StrongNoStall U ∧
+      NotStuck Validator BlockId Payload
 
 end Repair
 

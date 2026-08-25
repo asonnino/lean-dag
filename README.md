@@ -197,9 +197,13 @@ faults alone.
   the defect sits at two steps the paper asserts without argument. A
   **repair** is then tested as a side-condition rather than a change to
   the model — let the descent prefer a supported anchor among tied
-  candidates, which anchor uniqueness makes unique — and it closes the
-  execution without costing liveness, at the price of a different
-  delivery order. The arc is the second under the statement/proof
+  candidates, which anchor uniqueness makes unique. Its **strengthened**
+  form — descend to the highest-round *supported* anchor and nowhere
+  else — drops the tie-break altogether: a round whose anchors carry no
+  quorum is then not a boundary at all, no committed anchor is ever
+  passed by, and two records agree at every round below any block they
+  both reach. Liveness survives: committed rounds still recur, so no
+  execution is stuck after synchrony, and segments only coarsen. The arc is the second under the statement/proof
   partition.
 
 Every definition is exercised on concrete models by `decide` before

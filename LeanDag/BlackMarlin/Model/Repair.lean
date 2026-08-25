@@ -72,6 +72,50 @@ def SupportPreferring (U : BlockUniverse Validator BlockId Payload) (f : Flush U
   ∀ (ρ : ℕ) (L : BlockId), f.block ρ = some L →
     (∃ A, IsAnchor U ρ A ∧ Supported U A ρ) → Supported U L ρ
 
+/-! ## The strengthened repair
+
+`descendSupp` chooses among the candidates L21–L24 already offers, so it
+can only help where the supported anchor is among them. Where the cone
+above reaches the supported anchor of a round but the *step* does not —
+because the block it steps through references a twin instead — the filter
+is empty and the fallback takes the twin.
+
+`descendS` drops the tie-break altogether: it descends to the
+highest-round **supported** anchor of the cone, and nowhere else. Anchor
+uniqueness (BM1) makes that one block, so no tie ever arises, and there
+is no rule left for an adversary to steer. Rounds whose anchor carries no
+quorum are simply not boundaries; their blocks come out inside the next
+segment above, so nothing is delivered later than before and nothing is
+lost. -/
+
+/-- The anchors of a set that carry a quorum of support. -/
+def suppAnchorsOf (U : BlockUniverse Validator BlockId Payload) (s : Finset BlockId) :
+    Finset BlockId :=
+  (anchorsOf U s).filter (fun A => Supported U A (U.block A).round)
+
+/-- The highest round at which a set holds a supported anchor. -/
+def maxSuppRound (U : BlockUniverse Validator BlockId Payload) (s : Finset BlockId) : ℕ :=
+  (suppAnchorsOf U s).sup (fun A => (U.block A).round)
+
+/-- **The strengthened descent**: to the highest-round supported anchor
+of the cone, and nowhere else. -/
+def descendS (U : BlockUniverse Validator BlockId Payload) (B : BlockId) : Option BlockId :=
+  pick ((suppAnchorsOf U (strongOf U B)).filter
+    (fun A => (U.block A).round = maxSuppRound U (strongOf U B)))
+
+/-- The strengthened descent, with fuel. -/
+def descentSUpto (U : BlockUniverse Validator BlockId Payload) :
+    ℕ → BlockId → ℕ → Option BlockId
+  | 0, B, ρ => if (U.block B).round = ρ then some B else none
+  | (n + 1), B, ρ =>
+      if (U.block B).round = ρ then some B
+      else (descendS U B).bind (fun A => descentSUpto U n A ρ)
+
+/-- The record it leaves. -/
+def flushRecordS (U : BlockUniverse Validator BlockId Payload) (B : BlockId) (ρ : ℕ) :
+    Option BlockId :=
+  descentSUpto U ((U.block B).round) B ρ
+
 end BlackMarlin
 
 end LeanDag
