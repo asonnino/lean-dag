@@ -341,8 +341,11 @@ proof effort with no corresponding proof content.
    validator on its own view, so what one delivers all deliver (§18.7).
    And the delivered order: `commit`'s descent segments a flush by anchor
    round, and the link clause keeps it from skipping the round above a
-   committed anchor, which is what stops it ever facing a tie
-   (§18.8).
+   committed anchor, which is what stops it ever facing a tie (§18.8).
+   The descent is then computed rather than assumed, and since L24's
+   tie-break reads only the candidate and its own cone, the record of a
+   commit is a function of the block it starts from — which makes the
+   delivered order's agreement a consequence (§18.9).
 
 ### 1.4 Scope and non-goals
 
@@ -5443,8 +5446,8 @@ paper — the rule and every safety result stated about it (§18.2) — its
 liveness above the structural condition of §6, in place of §5.2's timing
 argument (§18.5), the round rule of L38–L41 and the responsiveness it
 yields (§18.6), Definition 1's Agreement (§18.7), and the order
-`commit`'s descent delivers in (§18.8). It is the second arc under the
-statement/proof partition (§17.5), and
+`commit`'s descent delivers in (§18.8, §18.9). It is the second arc under
+the statement/proof partition (§17.5), and
 `docs/black-marlin.md` is its design record.
 
 ### 18.1 The rule
@@ -5787,20 +5790,51 @@ records that agree concur on which. The last two are Definition 1's Total
 Order at the granularity of segments; the order *within* a segment is
 `τ`, which the rule does not constrain and this arc does not model.
 
-**What is left over, and why.** Where the descent skips a round *and*
-the round it lands on has an equivocating anchor, nothing above applies.
-The paper's rule for that case, L21–L24, is well formed and
-**block-intrinsic** — the quantity it minimises,
-`|round(A) − round(maxAnchor(strong(A)))|`, depends on the candidate and
-its own cone alone, so every validator computes it identically, which is
-the property a canonical choice needs. Modelling it would mean modelling
-`maxAnchor` and the sort `τ`, so BMD3 carries its stretch as a hypothesis
-instead. The one defect in the pseudocode is small: L20 guards `𝒜 ≠ ∅`
-where L21–L24 need `maxAnchor(𝒜) ≠ ∅`, leaving `B′` undefined when the
-undelivered remainder holds no anchor at all. Of
+**BMD3's stretch hypothesis is an artifact of taking the record as
+given**, and §18.9 removes it by computing the descent instead. Of
 Definition 1's four properties the arc now has Validity for reliable
 authors (BML3 with BML4), Agreement (BMA3) and Total Order by segment
 (BMD6); Integrity rests on the delivered set `D`, which is not modelled.
+
+### 18.9 The descent computed, and BMD3 closed
+
+L24 chooses among tied candidates by minimising
+`|round(A) − round(maxAnchor(strong(A)))|`. That quantity reads the
+candidate and **its own cone** alone, so every validator evaluates it
+identically and the descent from a block is a function of that block —
+the property a canonical choice needs, and one the Odontoceti and
+Mahi-Mahi arcs had to supply as a premise rather than find in their
+protocols. `Model/Descent.lean` transcribes `maxAnchor`, the metric and
+the descent, and defines the record of `commit(B)` as what the descent
+returns.
+
+**BME1** and **BME2** are the choice: an anchor of the universe strictly
+below `B`, at the highest anchor round its cone reaches, made whenever an
+anchor lies below. The second states the condition L20 should have
+guarded — it tests `𝒜 ≠ ∅` where L21–L24 need `maxAnchor(𝒜) ≠ ∅`, so
+`B′` is undefined when the undelivered remainder holds no anchor at all,
+which is the one defect in the pseudocode.
+
+**BME3** derives what `Flush` assumes: the computed record satisfies
+`isAnchor`, `step` and `dense`, so BMD6's ledger results apply to it
+unchanged. **BME4** is the suffix property — below a block the descent
+visited, a record *is* that block's record — and **BME5** reads
+agreement off it: two records reaching the same block at a round agree at
+**every** round below, with no hypothesis about the rounds between. That
+is BMD3 without its stretch condition, and it holds whether or not the
+descent skipped an anchor round.
+
+Two modelling choices are recorded rather than derived. `𝒟` is dropped,
+since the delivered set only removes what an earlier descent visited, so
+a validator's flushes over all its commits are one chain read from its
+highest commit down. And "break ties deterministically" is read as
+`≤`-least under a `LinearOrder` on identifiers, which the paper leaves
+open; nothing depends on which rule it is, only that it is shared and
+reads the candidate alone.
+
+On data, the computed record of the four-round model's round-3 anchor is
+its four anchors, by `decide`, and it is the record the hand-built flush
+of §18.8 carries.
 
 ## 19. Satisfiability
 
@@ -6006,7 +6040,8 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `BlackMarlin/Model/Rules.lean`, `BlackMarlin/Model/Decision.lean` | the anchor rotation; support, the link, the commit rule; the same rules read from a view |
 | `BlackMarlin/Model/Round.lean` | the round rule of L38–L41, and the pacing structure it induces |
 | `BlackMarlin/Model/Ledger.lean` | the flush record of `commit`'s descent, and the ledger it defines |
-| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/` | the five statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6) |
+| `BlackMarlin/Model/Descent.lean` | `maxAnchor`, the tie-break of L24, and the record the descent computes |
+| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/`, `BlackMarlin/Descent/` | the six statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6, BME1–BME5) |
 | `BlackMarlin/Helpers/` | the generated lemma layer |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
@@ -6477,13 +6512,13 @@ the consumption map of §4.8 and the support diagrams of §6.10 refer to
 results through them. The series are alphabetic by area: T and M for
 the safety core, L for liveness, V for the view-convergence family, CU
 for catch-up, RS for the reactive schedule, SS for safe skip, AL for adaptive
-leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, BM, BML, BMR, BMA and BMD for Black Marlin, CQ for chain
+leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, BM, BML, BMR, BMA, BMD and BME for Black Marlin, CQ for chain
 quality, C, D,
 B and E for the denial-of-service arc, G for garbage collection, O for
 Odontoceti; P, N and R name clauses of the trust boundary rather than
 results. Labels resolving to witness models rather than library
 theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7, SS11, AL8, H9, H10) are
-excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7, BMA5 and BMD7. Appendix C displays every indexed
+excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7, BMA5, BMD7 and BME6. Appendix C displays every indexed
 result in full.
 
 ### Safety
@@ -6740,6 +6775,12 @@ reused.
 | BMD5 | the link clause keeps the descent from skipping | `BlackMarlin.coneAnchors_succ_nonempty_of_committed` *(BlackMarlin/Helpers/Ledger)* |
 | BMD6 | no retraction, agreement, and one position per block | `BlackMarlin.ledgerSet_mono`, `BlackMarlin.ledgerSet_agree`, `BlackMarlin.outputAt_unique`, `BlackMarlin.outputAt_agree` *(BlackMarlin/Helpers/Ledger)* |
 | BMD7 | the descent on data: singleton candidate sets, and a block's position | `fullFlush` witnesses *(LeanDagTest/BlackMarlin)* |
+| BME1 | the descent's choice is an anchor strictly below, at the highest anchor round | `BlackMarlin.descend_mem`, `BlackMarlin.descend_round_lt`, `BlackMarlin.round_descend` *(BlackMarlin/Helpers/Descent)* |
+| BME2 | and is made whenever an anchor lies below | `BlackMarlin.descend_isSome` *(BlackMarlin/Helpers/Descent)* |
+| BME3 | the computed record satisfies `Flush` | `BlackMarlin.flushRecord_step`, `BlackMarlin.flushRecord_dense`, `BlackMarlin.toFlush` *(BlackMarlin/Helpers/Descent)* |
+| BME4 | the record below a visited block is that block's own record | `BlackMarlin.flushRecord_suffix` *(BlackMarlin/Helpers/Descent)* |
+| BME5 | two records reaching one block agree at every round below it | `BlackMarlin.flushRecord_agree` *(BlackMarlin/Helpers/Descent)* |
+| BME6 | the computed record on data, and its agreement | `flushRecord` witnesses *(LeanDagTest/BlackMarlin)* |
 
 **Integration** (§16):
 
@@ -12154,6 +12195,220 @@ def Statement : Prop :=
 
 The delivered order of the Black Marlin commit rule, over every fault configuration, rotation and block universe the model admits.
 
+#### `IsAnchorBlock`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def IsAnchorBlock (U : BlockUniverse Validator BlockId Payload) (X : BlockId) : Prop :=
+  (U.block X).creator = Rot.anchor (U.block X).round
+```
+
+A block that anchors its own round. The round-free reading of `IsAnchor`, which is what a set of blocks of mixed rounds needs.
+
+#### `anchorsOf`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def anchorsOf (U : BlockUniverse Validator BlockId Payload) (s : Finset BlockId) :
+    Finset BlockId :=
+  s.filter (IsAnchorBlock U)
+```
+
+The anchors among a set of blocks.
+
+#### `strongOf`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def strongOf (U : BlockUniverse Validator BlockId Payload) (B : BlockId) : Finset BlockId :=
+  (history U B).erase B
+```
+
+**`strong(B)`**: the blocks strictly below `B` in its cone. `history` is reflexive where the paper's `strong` is not, so the block itself is removed.
+
+#### `maxAnchorRound`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def maxAnchorRound (U : BlockUniverse Validator BlockId Payload) (s : Finset BlockId) : ℕ :=
+  (anchorsOf U s).sup (fun X => (U.block X).round)
+```
+
+The highest round at which a set holds an anchor, and `0` when it holds none — which is the case L20's guard does not exclude and L21–L24 need.
+
+#### `maxAnchor`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def maxAnchor (U : BlockUniverse Validator BlockId Payload) (s : Finset BlockId) :
+    Finset BlockId :=
+  (anchorsOf U s).filter (fun X => (U.block X).round = maxAnchorRound U s)
+```
+
+**`maxAnchor(s)`**: the anchors of `s` at the highest round they reach. A set, as L21 reads it.
+
+#### `anchorGap`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def anchorGap (U : BlockUniverse Validator BlockId Payload) (A : BlockId) : ℕ :=
+  (U.block A).round - maxAnchorRound U (strongOf U A)
+```
+
+**The metric of L24**: how far a candidate's round stands above the highest anchor of its own cone. Truncated subtraction is exact here — an anchor below `A` sits below `A`'s round — so no absolute value is needed.
+
+#### `pick`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def pick (s : Finset BlockId) : Option BlockId :=
+  if h : s.Nonempty then some (s.min' h) else none
+```
+
+The `≤`-least member of a set, as an `Option`.
+
+#### `descend`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def descend (U : BlockUniverse Validator BlockId Payload) (B : BlockId) : Option BlockId :=
+  pick ((maxAnchor U (strongOf U B)).filter
+    (fun A => ∀ C ∈ maxAnchor U (strongOf U B), anchorGap U A ≤ anchorGap U C))
+```
+
+**The descent's choice** (L21–L24): the `≤`-least of the highest-round anchors below `B` that minimise the metric. At `|maxAnchor| = 1` this is L22, and otherwise L24.
+
+#### `descentUpto`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def descentUpto (U : BlockUniverse Validator BlockId Payload) :
+    ℕ → BlockId → ℕ → Option BlockId
+  | 0, B, ρ => if (U.block B).round = ρ then some B else none
+  | (n + 1), B, ρ =>
+      if (U.block B).round = ρ then some B
+      else (descend U B).bind (fun A => descentUpto U n A ρ)
+```
+
+The descent from `B`, read at a round, with fuel.
+
+#### `flushRecord`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def flushRecord (U : BlockUniverse Validator BlockId Payload) (B : BlockId) (ρ : ℕ) :
+    Option BlockId :=
+  descentUpto U ((U.block B).round) B ρ
+```
+
+**The flush record of `commit(B)`**: the anchor its descent visits at each round. A step drops the round strictly, so `round B` steps are enough and the fuel is not a parameter of the result.
+
+#### `DescendSound`
+
+*def, `BlackMarlin.Descent.Statement.lean`*
+
+```lean
+def DescendSound (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B A : BlockId), B ∈ U.ids → descend U B = some A →
+    A ∈ U.ids ∧ IsAnchorBlock U A ∧ A ∈ strongOf U B ∧
+      (U.block A).round = maxAnchorRound U (strongOf U B) ∧
+      (U.block A).round < (U.block B).round
+```
+
+**BME1, the choice is sound.**
+
+#### `DescendTotal`
+
+*def, `BlackMarlin.Descent.Statement.lean`*
+
+```lean
+def DescendTotal (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B : BlockId), (anchorsOf U (strongOf U B)).Nonempty → (descend U B).isSome
+```
+
+**BME2, and total where an anchor lies below.**
+
+#### `RecordIsFlush`
+
+*def, `BlackMarlin.Descent.Statement.lean`*
+
+```lean
+def RecordIsFlush (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B : BlockId), B ∈ U.ids → IsAnchorBlock U B →
+    (∀ (ρ : ℕ) (L : BlockId), flushRecord U B ρ = some L → IsAnchor U ρ L) ∧
+    (∀ (ρ : ℕ) (L M : BlockId), flushRecord U B ρ = some L →
+      flushRecord U B (ρ + 1) = some M → L ∈ (U.block M).refs) ∧
+    (∀ (ρ : ℕ) (M : BlockId), flushRecord U B (ρ + 1) = some M →
+      (coneAnchors U M ρ).Nonempty → (flushRecord U B ρ).isSome)
+```
+
+**BME3, the record is a flush record.** The three conditions `Flush` asks for, here derived from the descent rather than assumed of it.
+
+#### `Suffix`
+
+*def, `BlackMarlin.Descent.Statement.lean`*
+
+```lean
+def Suffix (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B M : BlockId) (σ ρ : ℕ), B ∈ U.ids →
+    flushRecord U B σ = some M → ρ ≤ σ →
+    flushRecord U B ρ = flushRecord U M ρ
+```
+
+**BME4, the record below a visited block is that block's own.**
+
+#### `AgreeBelow`
+
+*def, `BlackMarlin.Descent.Statement.lean`*
+
+```lean
+def AgreeBelow (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B₁ B₂ M : BlockId) (σ ρ : ℕ), B₁ ∈ U.ids → B₂ ∈ U.ids →
+    flushRecord U B₁ σ = some M → flushRecord U B₂ σ = some M → ρ ≤ σ →
+    flushRecord U B₁ ρ = flushRecord U B₂ ρ
+```
+
+**BME5, agreement with no definedness hypothesis.** Two descents that reach the same block at a round agree at every round below it, whatever happens between — which is what BMD3 has to assume of an abstract record.
+
+#### `Statement`
+
+*def, `BlackMarlin.Descent.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [LinearOrder BlockId] [Rotation Validator]
+    (U : BlockUniverse Validator BlockId Payload),
+    DescendSound U ∧ DescendTotal U ∧ RecordIsFlush U ∧ Suffix U ∧ AgreeBelow U
+```
+
+The descent of `commit`, over every fault configuration, rotation and block universe the model admits.
+
+#### `toFlush`
+
+*def, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+def toFlush (U : BlockUniverse Validator BlockId Payload) (B : BlockId)
+    (hB : B ∈ U.ids) (haB : IsAnchorBlock U B) : Flush U where
+  block := flushRecord U B
+  isAnchor := fun _ _ h => flushRecord_isAnchor hB haB h
+  step := fun _ _ _ hL hM => flushRecord_step hB hL hM
+  dense := fun _ _ hM hcone => flushRecord_dense hB hM hcone
+```
+
+**The record of `commit(B)` is a flush record.**
+
 ### Not otherwise grouped
 
 #### `SoundOn`
@@ -12190,7 +12445,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 486 theorems that either another module of the
+The 500 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -18500,6 +18755,17 @@ The two halves are the prefix result — the lower committed anchor's causal his
 theorem holds : Statement
 ```
 
+#### `mem_coneAnchors`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem mem_coneAnchors {A X : BlockId} :
+    X ∈ coneAnchors U A ρ ↔ IsAnchor U ρ X ∧ X ∈ history U A
+```
+
+Membership in `coneAnchors`, unfolded.
+
 #### `coneAnchors_subsingleton`
 
 *theorem, `BlackMarlin.Helpers.Ledger.lean`*
@@ -18641,6 +18907,140 @@ theorem mem_ledgerSet_of_block (f : Flush U)
 theorem holds : Statement
 ```
 
+#### `mem_anchorsOf`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem mem_anchorsOf {X : BlockId} :
+    X ∈ anchorsOf U s ↔ X ∈ s ∧ IsAnchorBlock U X
+```
+
+#### `mem_maxAnchor`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem mem_maxAnchor {X : BlockId} :
+    X ∈ maxAnchor U s ↔ X ∈ anchorsOf U s ∧ (U.block X).round = maxAnchorRound U s
+```
+
+#### `descend_mem`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem descend_mem (h : descend U B = some A) : A ∈ maxAnchor U (strongOf U B)
+```
+
+**The descent's choice is one of the candidates.**
+
+#### `descend_isSome`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem descend_isSome (h : (anchorsOf U (strongOf U B)).Nonempty) :
+    (descend U B).isSome
+```
+
+**And it makes one whenever an anchor lies below.** The gap-minimal survivors of a nonempty candidate set are themselves nonempty.
+
+#### `round_descend`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem round_descend (h : descend U B = some A) :
+    (U.block A).round = maxAnchorRound U (strongOf U B)
+```
+
+The chosen block sits at the highest anchor round below.
+
+#### `descend_mem_ids`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem descend_mem_ids (hB : B ∈ U.ids) (h : descend U B = some A) : A ∈ U.ids
+```
+
+#### `descend_round_lt`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem descend_round_lt (hB : B ∈ U.ids) (h : descend U B = some A) :
+    (U.block A).round < (U.block B).round
+```
+
+**A step drops the round strictly**, which is what makes the fuelled descent exhaust.
+
+#### `flushRecord_suffix`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem flushRecord_suffix (hB : B ∈ U.ids) {σ : ℕ} (h : flushRecord U B σ = some M)
+    {ρ : ℕ} (hρ : ρ ≤ σ) : flushRecord U B ρ = flushRecord U M ρ
+```
+
+**The record below a visited anchor is that anchor's own record.** This is what makes the descent's agreement a consequence rather than a hypothesis: below a block both records reached, both are the record of that block.
+
+#### `flushRecord_isAnchor`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem flushRecord_isAnchor (hB : B ∈ U.ids) (haB : IsAnchorBlock U B)
+    {ρ : ℕ} {L : BlockId} (h : flushRecord U B ρ = some L) : IsAnchor U ρ L
+```
+
+#### `flushRecord_step`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem flushRecord_step (hB : B ∈ U.ids) {ρ : ℕ} {L M : BlockId}
+    (hL : flushRecord U B ρ = some L) (hM : flushRecord U B (ρ + 1) = some M) :
+    L ∈ (U.block M).refs
+```
+
+**The descent steps by one round when it can.** Where the record holds blocks at `ρ` and `ρ + 1`, the lower is a reference of the higher — `Flush.step`, derived rather than assumed.
+
+#### `flushRecord_dense`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem flushRecord_dense (hB : B ∈ U.ids) {ρ : ℕ} {M : BlockId}
+    (hM : flushRecord U B (ρ + 1) = some M) (hcone : (coneAnchors U M ρ).Nonempty) :
+    (flushRecord U B ρ).isSome
+```
+
+**And does not pass over an anchor it references** — `Flush.dense`, also derived: an anchor of the round below is a candidate, and the descent takes the highest round its candidates reach.
+
+#### `flushRecord_agree`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem flushRecord_agree {B₁ B₂ : BlockId} (h₁ : B₁ ∈ U.ids) (h₂ : B₂ ∈ U.ids)
+    {σ : ℕ} {M : BlockId}
+    (hm₁ : flushRecord U B₁ σ = some M) (hm₂ : flushRecord U B₂ σ = some M)
+    {ρ : ℕ} (hρ : ρ ≤ σ) : flushRecord U B₁ ρ = flushRecord U B₂ ρ
+```
+
+**Agreement, with no definedness hypothesis.** Two descents that reach the same block at a round agree at every round below it: below that block both records *are* its record. This is what `Ledger`'s BMD3 has to assume of an abstract record and what the descent supplies.
+
+#### `holds`
+
+*theorem, `BlackMarlin.Descent.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
 ### Not otherwise grouped
 
 #### `waveRobin_fairRun`
@@ -18682,7 +19082,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 446 lemmas used only within the file that proves
+The 462 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -19503,12 +19903,33 @@ subsection per module, in the layer order of Appendices B and C.
 | `gst_le_built` | Every build at a round past GST lies past GST: rounds advance real time, so the round number itself bounds … |
 | `holds_two_rounds` | The two rounds the rule reads, in hand. Past GST every reliable validator holds every reliable block of … |
 
-### `BlackMarlin/Helpers/Ledger.lean` (2)
+### `BlackMarlin/Helpers/Ledger.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
-| `mem_coneAnchors` | Membership in `coneAnchors`, unfolded. |
 | `mem_coneAnchors_of_step` | A flushed anchor is a candidate of its own round below the anchor above it. |
+
+### `BlackMarlin/Helpers/Descent.lean` (17)
+
+| Lemma | Role |
+|:---|:---|
+| `descend_eq_none_of_round_zero` | So the descent bottoms out there. |
+| `descentUpto_add` | — |
+| `descentUpto_eq_of_le` | — |
+| `descentUpto_isAnchorBlock` | And, below the top, anchors its round. |
+| `descentUpto_mem_ids` | And is a block of the universe. |
+| `descentUpto_round` | What the record holds at a round sits at that round. |
+| `descentUpto_round_le` | The descent never rises. |
+| `descentUpto_self` | — |
+| `descentUpto_succ_eq` | Fuel beyond the block's round changes nothing: a step drops the round strictly, so the descent has … |
+| `descentUpto_suffix` | — |
+| `flushRecord_eq` | The record with the fuel its own round supplies. |
+| `le_maxAnchorRound` | No anchor of a set sits above its highest anchor round. |
+| `maxAnchor_nonempty` | A set holding an anchor holds one at its highest anchor round. |
+| `mem_strongOf` | — |
+| `pick_isSome` | — |
+| `pick_mem` | — |
+| `strongOf_eq_empty_of_round_zero` | A round-`0` block reaches only itself. |
 
 ### `Network/Quorum.lean` (2)
 

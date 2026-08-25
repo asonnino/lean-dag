@@ -1,5 +1,6 @@
 import LeanDagTest.BlackMarlin.Agreement
 import LeanDag.BlackMarlin.Ledger.Proof
+import LeanDag.BlackMarlin.Descent.Proof
 import Mathlib.Tactic.IntervalCases
 
 /-!
@@ -107,6 +108,31 @@ example : OutputAt Ufull fullFlush 3 1 := by
 example : (3 : Fin 16) ∈ ledgerSet Ufull fullFlush 2 :=
   (Ledger.holds (Fin 4) (Fin 16) Unit Ufull).2.2.2.2.2.2.2.2.2.2
     fullFlush 1 5 3 (by decide) ((mem_history_iff (by decide)).mp (by decide))
+
+
+/-! ## The descent computed
+
+`flushRecord` runs L21–L24 rather than assuming a record, so the four
+anchors above are what it returns. -/
+
+example : flushRecord Ufull 15 3 = some 15 ∧ flushRecord Ufull 15 2 = some 10 ∧
+    flushRecord Ufull 15 1 = some 5 ∧ flushRecord Ufull 15 0 = some 0 := by decide
+
+/-- The computed record is the one built by hand. -/
+example : flushRecord Ufull 15 0 = fullFlush.block 0 ∧
+    flushRecord Ufull 15 1 = fullFlush.block 1 ∧
+    flushRecord Ufull 15 2 = fullFlush.block 2 ∧
+    flushRecord Ufull 15 3 = fullFlush.block 3 ∧
+    flushRecord Ufull 15 4 = fullFlush.block 4 := by decide
+
+/-- **BME5 on data**: the descent from the round-3 anchor and the descent
+from the round-1 anchor meet at round `1`, so they agree at round `0` —
+with no hypothesis about what lies between. -/
+example : flushRecord Ufull 15 0 = flushRecord Ufull 5 0 :=
+  (Descent.holds (Fin 4) (Fin 16) Unit Ufull).2.2.2.2 15 5 5 1 0
+    (by decide) (by decide) (by decide) (by decide) (by omega)
+
+#print axioms LeanDag.BlackMarlin.Descent.holds
 
 #print axioms LeanDag.BlackMarlin.Ledger.holds
 

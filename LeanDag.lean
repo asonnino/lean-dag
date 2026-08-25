@@ -110,3 +110,7 @@ import LeanDag.BlackMarlin.Model.Ledger
 import LeanDag.BlackMarlin.Ledger.Statement
 import LeanDag.BlackMarlin.Helpers.Ledger
 import LeanDag.BlackMarlin.Ledger.Proof
+import LeanDag.BlackMarlin.Model.Descent
+import LeanDag.BlackMarlin.Descent.Statement
+import LeanDag.BlackMarlin.Helpers.Descent
+import LeanDag.BlackMarlin.Descent.Proof

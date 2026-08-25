@@ -213,20 +213,20 @@ The arc adopts the statement/proof partition of `LeanDag/MahiMahi/`
 
 ```
 LeanDag/BlackMarlin/
-  Model/         definitions only, theorem-free: Rules, Decision, Round, Ledger
+  Model/         definitions only, theorem-free: Rules, Decision, Round, Ledger, Descent
                  (decidable instances by `inferInstanceAs` included: definitions, not proofs)
   Helpers/       generated lemma infrastructure; unaudited
   <Result>/Statement.lean imports Model/ only; definitions, prose, `def Statement : Prop`
   <Result>/Proof.lean     `theorem holds : Statement`; unaudited
                           Results: Safety (BM1-BM7), Liveness (BML1-BML5),
                           Reactive (BMR1-BMR6), Agreement (BMA1-BMA4),
-                          Ledger (BMD1-BMD6)
+                          Ledger (BMD1-BMD6), Descent (BME1-BME5)
 LeanDagTest/BlackMarlin/  witness models; the instantiations are audited
 scripts/check-arc-holes.py   sorry/admit/axiom/native_decide/unsafe/partial absent;
                              Statement.lean files proof-free; Model/ files theorem-free
 ```
 
-The audit surface is `Model/`, the four `Statement.lean` files, the
+The audit surface is `Model/`, the five `Statement.lean` files, the
 witness instantiations and the checker. `scripts/check-arc-holes.py` covers both
 partitioned arcs; it was named for Mahi-Mahi and is renamed here, its
 checks unchanged.
@@ -458,21 +458,43 @@ a committed anchor is never the one skipped. The clause that makes
 adjacent committed anchors comparable is also what keeps the delivery
 order determinate around them.
 
-**What is left over.** Where the descent skips a round *and* the round it
-lands on has an equivocating anchor, nothing above applies. The paper's
-rule for that case, L21–L24, is well formed and **block-intrinsic**: the
-quantity it minimises, `|round(A) − round(maxAnchor(strong(A)))|`,
-depends on the candidate and its own cone alone, so every validator
-computes it identically — which is the property a canonical choice needs.
-It is not modelled here, since that would mean modelling `maxAnchor` and
-the sort `τ`, so BMD3 carries its stretch as a hypothesis rather than
-deriving it.
+**The skipped-round case, closed.** BMD3's stretch hypothesis is an
+artifact of taking the record as given. `Model/Descent.lean` computes it
+instead: `maxAnchor`, the metric of L24 and the descent are definitions,
+and the record of `commit(B)` is what the descent returns. Five further
+claims follow.
 
-The one defect in the pseudocode is small. L20 guards `𝒜 ≠ ∅` where
+| | Claim | Paper |
+|:---|:---|:---|
+| BME1 | `DescendSound` — the choice is an anchor strictly below, at the highest anchor round | L21–L24 |
+| BME2 | `DescendTotal` — and is made whenever an anchor lies below | L20–L21 |
+| BME3 | `RecordIsFlush` — the record satisfies `Flush`, so BMD6 applies to it | — |
+| BME4 | `Suffix` — the record below a visited block is that block's own record | — |
+| BME5 | `AgreeBelow` — two records reaching the same block agree at every round below | — |
+
+**BME5 closes BMD3.** L24's metric,
+`|round(A) − round(maxAnchor(strong(A)))|`, reads the candidate and its
+own cone alone, so every validator evaluates it identically and the
+descent from a block is a function of that block. BME4 turns that into
+the suffix property — below a visited block, a record *is* that block's
+record — and BME5 reads off agreement with no hypothesis about the rounds
+in between. `step` and `dense`, which `Flush` assumes, are derived
+(BME3), so the ledger results of BMD6 apply to the computed record
+unchanged.
+
+Two modelling choices are recorded rather than derived. `𝒟` is dropped:
+the delivered set only removes what an earlier descent visited, so a
+validator's flushes over all its commits are one chain read from its
+highest commit down. And "break ties deterministically" is read as the
+`≤`-least survivor under a `LinearOrder` on identifiers, as the
+Odontoceti and Mahi-Mahi arcs read their canonical choices; nothing
+depends on which rule it is, only that it is shared and reads the
+candidate alone.
+
+The one defect in the pseudocode stands. L20 guards `𝒜 ≠ ∅` where
 L21–L24 need `maxAnchor(𝒜) ≠ ∅`: when the undelivered remainder of
-`strong(B)` holds no anchor at all, `B′` is undefined. An implementation
-would skip the recursion there, and the arc's `dense` clause is the
-condition under which the case does not arise.
+`strong(B)` holds no anchor at all, `B′` is undefined. BME2 states the
+condition that is actually required.
 
 Ordering *within* a segment is `τ`, which the rule does not constrain and
 this arc does not model, so the ledger is a set and a record's rounds are
@@ -509,7 +531,6 @@ Total Order at the granularity of segments — a block enters at exactly
 one round, and records that agree concur on which; the order *within* a
 segment needs `τ` modelled.
 
-**The skipped-round tie-break.** L21–L24 (§11). Everything §11 proves is
-about a descent that steps by one round or lands on a reliably anchored
-one; the paper's rule for the remaining case is well formed but is not
-transcribed here.
+**The deterministic tie-break as a rule.** L24's metric is transcribed
+(§11); "break ties deterministically" is read as `≤`-least under a
+`LinearOrder` on identifiers, which is a choice the paper leaves open.
