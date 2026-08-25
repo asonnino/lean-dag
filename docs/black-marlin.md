@@ -227,7 +227,7 @@ LeanDag/BlackMarlin/
                           Results: Safety (BM1-BM7), Liveness (BML1-BML5),
                           Reactive (BMR1-BMR6), Agreement (BMA1-BMA4),
                           Ledger (BMD1-BMD6), Descent (BME1-BME5),
-                          Order (BMO1-BMO9), Repair (BMP1-BMP12)
+                          Order (BMO1-BMO9), Repair (BMP1-BMP13)
 LeanDagTest/BlackMarlin/  witness models; the instantiations are audited
 scripts/check-arc-holes.py   sorry/admit/axiom/native_decide/unsafe/partial absent;
                              Statement.lean files proof-free; Model/ files theorem-free
@@ -774,15 +774,44 @@ anchors carry two supporters apiece, one short, so neither is a boundary
 and their blocks come out inside the segment above — so nothing is
 delivered later than the next committed anchor.
 
-**What is not settled.** `Supported` is a fact about the universe, and a
-validator computes support from its own view, which under-reports. So a
-real validator's record meets either condition only where the support it
-needs is in view when it descends. In §13's execution it is: the three
-supporters of `8` lie in the cone of every round-6 block, and the second
-validator holds a quorum of those by the time it commits the round-4
-anchor. In general it is not established, and establishing it — or
-finding the execution where it fails — is what turns this from a repair
-stated into a repair supplied.
+### Is the support in view when the descent needs it?
+
+Both repairs read `Supported`, a fact about the **universe**, where a
+validator reads its own view. That gap is the last thing between a repair
+proved and a repair deployable, and it does not close.
+
+**It closes in one case, and not the one that matters.** BMP13: an anchor
+by a *reliable* author, past the round coverage takes hold, is referenced
+by every reliable block of the round above, so any view holding those
+sees the whole quorum. Coverage says nothing about a **Byzantine**
+author's anchor — and a Byzantine anchor is exactly what the repair
+exists for.
+
+**And there it fails, by counting.** A view carrying a quorum at the
+round above shares only `n − 2f` authors with an anchor's supporters,
+which at `n = 3f + 1` is `f + 1` — short of the `2f + 1` the test wants.
+§13's execution carries such a view: the cone of the round-4 anchor holds
+a quorum of authors at round `3`, so its holder could conclude that round
+and run the rule, and yet it sees two of `8`'s three supporters. The
+third is `14`, which the round-4 anchor does not reference — the same
+omission the whole construction turns on. So the repaired descent, run
+against that view, would not make `8` a boundary.
+
+Earlier this section said the support "is in view" in §13's execution.
+That was true of a validator holding the whole round-6 layer, and is not
+true of one holding the round-4 anchor's cone, which is what the descent
+reads. The repair is therefore **stated and proved of the universe**, and
+**not implementable as a view-local rule** without a further hypothesis
+that no part of this development supplies.
+
+**Which puts the root cause back where §13 found it.** The observable
+that makes boundaries matter is L27's per-`(creator, round)` filter, and
+that filter exists because Definition 1's Integrity forbids two outputs
+for one party and round *whatever the blocks are*. Relax Integrity to one
+output per **block** and the twins may both be delivered, in the causal
+order every record already agrees on, and neither repair is needed. That
+is a change to the specification rather than to the algorithm, and it is
+the direction this arc would take next.
 
 ## 15. What is not covered
 

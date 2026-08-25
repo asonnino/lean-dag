@@ -18,7 +18,7 @@ namespace Repair
 
 theorem holds : Statement := by
   intro Validator BlockId Payload _ _ _ _ _ U
-  refine ⟨?_, ?_, ?_, ⟨?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ⟨?_, ?_⟩, ?_, ?_⟩
+  refine ⟨?_, ?_, ?_, ⟨?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ⟨?_, ?_⟩, ?_, ?_, ?_⟩
   · intro B A C hA hC
     exact suppCandidates_subsingleton A hA C hC
   · intro B L h hne
@@ -45,6 +45,8 @@ theorem holds : Statement := by
     exact descendS_round_lt hB h
   · intro B₁ B₂ r₁ r₂ ρ h₁ h₂ hc₁ hc₂ hr hρ
     exact flushRecordS_agree_of_committed h₁ h₂ hc₁ hc₂ hr hρ
+  · intro T R ρ V L hcard hs hR hpop hL hLr hLc hheld
+    exact supportedIn_of_synchronised hcard hs hR hpop hL hLr hLc hheld
   · intro T R r hcard hfair
     exact recurrence hcard hfair
 

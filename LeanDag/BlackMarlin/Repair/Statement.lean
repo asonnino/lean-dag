@@ -30,6 +30,10 @@ sits beside them. Six claims:
 * **BMP6, `LivenessUntouched`** — nothing the liveness results speak
   about mentions the descent: `Committed` is a property of the rule
   alone, so BML1 and BMR2 hold of the repaired protocol word for word;
+* **BMP13, `SupportInView`** — and the one case where a validator can
+  apply either condition from its own view: a *reliable* author's
+  anchor, past the round coverage takes hold. Which is not the case the
+  repair exists for;
 * **BMP7–BMP12** are the strengthened form, which drops the tie-break
   rather than filtering it: every boundary is supported, no committed
   anchor is passed by, agreement runs down from any meeting point, two
@@ -151,6 +155,25 @@ def StrongAgreesCommitted (U : BlockUniverse Validator BlockId Payload) : Prop :
     Committed U B₁ r₁ → Committed U B₂ r₂ → r₁ ≤ r₂ → ρ ≤ r₁ →
     flushRecordS U B₁ ρ = flushRecordS U B₂ ρ
 
+/-- **BMP13, when the support is in view.** Both repairs read
+`Supported`, a fact about the universe, where a validator reads its own
+view. They agree in one case: an anchor by a **reliable** author, past
+the round coverage takes hold, is referenced by every reliable block of
+the round above, so a view holding those sees the quorum.
+
+For a Byzantine author's anchor coverage says nothing, and a view
+holding a quorum at the round above shares only `n − 2f` authors with
+the supporters — `f + 1` at `n = 3f + 1`, short of the `2f + 1` the test
+wants. So this claim does not reach the case the repair exists for, and
+`black-marlin.md` §13's execution carries a view that misses it. -/
+def SupportInView (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (T : Finset Validator) (R ρ : ℕ) (V : View Validator BlockId Payload U) (L : BlockId),
+    quorumCard Validator ≤ T.card →
+    SynchronisedOn U T R → R ≤ ρ → PopulatedOn U T (ρ + 1) →
+    L ∈ U.ids → (U.block L).round = ρ → (U.block L).creator ∈ T →
+    (∀ b ∈ U.ids, (U.block b).creator ∈ T → (U.block b).round = ρ + 1 → b ∈ V.ids) →
+    SupportedIn U V L ρ
+
 variable (Validator BlockId Payload) in
 /-- **BMP12, and no execution is stuck.** The recurrence of committed
 rounds is a statement about `Committed` and the rotation, neither of
@@ -172,7 +195,8 @@ def Statement : Prop :=
     AtMostOneSupported U ∧ RepairPrefers U ∧ RepairRefines U ∧ NoStall U ∧
       Agrees U ∧ LivenessUntouched U ∧
       StrongSupported U ∧ StrongReaches U ∧ StrongAgrees U ∧ StrongNoStall U ∧
-      StrongAgreesCommitted U ∧ NotStuck Validator BlockId Payload
+      StrongAgreesCommitted U ∧ SupportInView U ∧
+      NotStuck Validator BlockId Payload
 
 end Repair
 

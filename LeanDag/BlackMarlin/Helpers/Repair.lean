@@ -1,5 +1,6 @@
 import LeanDag.BlackMarlin.Model.Repair
 import LeanDag.BlackMarlin.Helpers.Descent
+import LeanDag.BlackMarlin.Helpers.Liveness
 
 /-!
 # Black Marlin — the repair layer
@@ -428,6 +429,36 @@ theorem flushRecordS_agree_of_committed {B₁ B₂ : BlockId} {r₁ r₂ ρ : �
       refine flushRecordS_agree h₁ h₂ ?_ (descentSUpto_reaches _ B₂ h₂ (le_refl _) B₁ r₁ hc₁ hmem) hρ
       rw [flushRecordS, hc₁.1.2.1]
       exact descentUpto_self_gen _ B₁ hc₁.1.2.1
+
+/-! ## When the support *is* in view
+
+The repairs read `Supported`, a fact about the universe, where a
+validator reads its own view. The two agree in one case, and it is not
+the case the repair needs: for an anchor by a **reliable** author, past
+the round coverage takes hold, every reliable block of the round above
+references it, so a view holding those sees the quorum. For a Byzantine
+author's anchor coverage says nothing, and a view holding a quorum at
+the round above shares only `n − 2f` authors with the supporters. -/
+
+/-- **A reliable author's anchor is seen as supported**, by any view that
+holds the reliable blocks of the round above, once coverage has taken
+hold. -/
+theorem supportedIn_of_synchronised {T : Finset Validator} {R ρ : ℕ}
+    {V : View Validator BlockId Payload U}
+    (hcard : quorumCard Validator ≤ T.card)
+    (hs : SynchronisedOn U T R) (hR : R ≤ ρ) (hpop : PopulatedOn U T (ρ + 1))
+    (hL : L ∈ U.ids) (hLr : (U.block L).round = ρ)
+    (hLc : (U.block L).creator ∈ T)
+    (hheld : ∀ b ∈ U.ids, (U.block b).creator ∈ T → (U.block b).round = ρ + 1 →
+      b ∈ V.ids) :
+    SupportedIn U V L ρ := by
+  refine le_trans hcard (Finset.card_le_card ?_)
+  intro u hu
+  obtain ⟨c, hc, hcc, hcr⟩ := hpop u hu
+  refine mem_creatorsOf.mpr ⟨c, Finset.mem_inter.mpr ⟨?_, ?_⟩, hcc⟩
+  · exact Finset.mem_filter.mpr ⟨mem_blocksAt.mpr ⟨hc, hcr⟩,
+      votesAt_of_synchronisedOn hs hR hL hLr hLc u hu c hc hcc hcr⟩
+  · exact hheld c hc (hcc ▸ hu) hcr
 
 end BlackMarlin
 

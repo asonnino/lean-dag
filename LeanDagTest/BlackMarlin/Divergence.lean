@@ -254,6 +254,36 @@ example : ∀ b : Fin 29, (Udiv.block b).round = 6 →
 
 example : supporters Udiv 8 3 = {1, 2, 3} := by decide
 
+
+/-! ## Is the support in view when the descent needs it?
+
+Both repairs read `Supported`, a fact about the universe. A validator
+reads its own view, and the two need not agree — a view carrying a
+quorum at the round below an anchor shares only `n − 2f` authors with
+that anchor's supporters, which at `n = 3f + 1` is `f + 1`, short of the
+`2f + 1` the test wants. The cone of the round-4 anchor is such a view.
+-/
+
+/-- A validator whose holdings are the cone of a block it holds. Views
+are closed under references, so this is a legitimate one. -/
+def coneView : View (Fin 4) (Fin 29) Unit Udiv where
+  ids := history Udiv 19
+  subset_ids := history_subset_ids (by decide)
+  complete := by decide
+
+/-- **The support is not in view.** This view carries a quorum of authors
+at round `3`, so its holder could conclude that round and run the rule —
+and yet it sees two of `8`'s three supporters, one short. So it cannot
+tell that `8` is the supported anchor of round `2`, and the repaired
+descent, run against it, would not make `8` a boundary. -/
+example : Supported Udiv 8 2 ∧ ¬ SupportedIn Udiv coneView 8 2 ∧
+    quorumCard (Fin 4) ≤ (authorsIn Udiv coneView.ids 3).card ∧
+    supportersIn Udiv coneView 8 3 = {2, 3} := by decide
+
+/-- And the reason is the omission the whole construction turns on: the
+third supporter is `14`, which the round-4 anchor does not reference. -/
+example : (14 : Fin 29) ∉ history Udiv 19 ∧ supporters Udiv 8 3 = {1, 2, 3} := by decide
+
 end BlackMarlin
 
 end LeanDagTest

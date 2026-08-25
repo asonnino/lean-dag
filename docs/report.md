@@ -353,7 +353,9 @@ proof effort with no corresponding proof content.
    paper's Theorem 12 at `n = 4` on a seven-round model, with the commit
    rule untouched (§18.11). A repair — the descent preferring a
    supported anchor among tied candidates — is tested as a
-   side-condition and closes it without costing liveness (§18.12).
+   side-condition and closes it without costing liveness, though it
+   reads a fact about the universe that a validator's own view need not
+   carry (§18.12).
 
 ### 1.4 Scope and non-goals
 
@@ -6037,14 +6039,32 @@ stuck after synchrony; **BMP10** adds that the descent still terminates.
 Segments only coarsen, so nothing is delivered later than the next
 committed anchor.
 
-**What is not settled.** `Supported` is a fact about the universe, and a
-validator computes support from its own view, which under-reports. A real
-validator's record meets either condition only where the support it needs
-is in view when it descends. In §18.11's execution it is — the three
-supporters of `8` lie in the cone of every round-6 block, and the second
-validator holds a quorum of those by the time it commits the round-4
-anchor — but in general it is not established. That is what separates a
-repair stated from a repair supplied.
+**The support is not in view when the descent needs it.** Both repairs
+read `Supported`, a fact about the universe, where a validator reads its
+own view. **BMP13** closes the gap in one case and not the one that
+matters: an anchor by a *reliable* author, past the round coverage takes
+hold, is referenced by every reliable block of the round above, so any
+view holding those sees the quorum. Coverage says nothing about a
+Byzantine author's anchor, and a Byzantine anchor is what the repair
+exists for.
+
+There it fails by counting: a view carrying a quorum at the round above
+shares only `n − 2f` authors with an anchor's supporters, which at
+`n = 3f + 1` is `f + 1`, short of the `2f + 1` the test wants. §18.11's
+execution carries such a view — the cone of the round-4 anchor holds a
+quorum of authors at round `3`, so its holder could conclude that round,
+and yet it sees two of `8`'s three supporters, the third being the block
+that anchor does not reference. So the repair is proved of the universe
+and is **not implementable as a view-local rule** without a further
+hypothesis this development does not supply.
+
+That puts the root cause back where §18.11 found it. What makes
+boundaries observable is L27's per-`(creator, round)` filter, and that
+filter exists because Integrity forbids two outputs for one party and
+round whatever the blocks are. Relaxing Integrity to one output per
+*block* would let both twins be delivered in the causal order every
+record already agrees on, and neither repair would be needed — a change
+to the specification rather than to the algorithm.
 
 ## 19. Satisfiability
 
@@ -6253,7 +6273,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `BlackMarlin/Model/Descent.lean` | `maxAnchor`, the tie-break of L24, and the record the descent computes |
 | `BlackMarlin/Model/Order.lean` | the sort `τ`, the filter of L27, and the list a validator outputs |
 | `BlackMarlin/Model/Repair.lean` | the support-preferring side-condition, and a descent that meets it |
-| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/`, `BlackMarlin/Descent/`, `BlackMarlin/Order/`, `BlackMarlin/Repair/` | the eight statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6, BME1–BME5, BMO1–BMO9, BMP1–BMP12) |
+| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/`, `BlackMarlin/Descent/`, `BlackMarlin/Order/`, `BlackMarlin/Repair/` | the eight statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6, BME1–BME5, BMO1–BMO9, BMP1–BMP13) |
 | `BlackMarlin/Helpers/` | the generated lemma layer |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
@@ -6730,7 +6750,7 @@ B and E for the denial-of-service arc, G for garbage collection, O for
 Odontoceti; P, N and R name clauses of the trust boundary rather than
 results. Labels resolving to witness models rather than library
 theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7, SS11, AL8, H9, H10) are
-excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7, BMA5, BMD7, BME6, BMO10, BMO11 and BMP13. Appendix C displays every indexed
+excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7, BMA5, BMD7, BME6, BMO10, BMO11 and BMP14. Appendix C displays every indexed
 result in full.
 
 ### Safety
@@ -7016,7 +7036,8 @@ reused.
 | BMP10 | the strengthened descent does not stall | `BlackMarlin.descendS_isSome`, `BlackMarlin.descendS_round_lt` *(BlackMarlin/Helpers/Repair)* |
 | BMP11 | two records with committed tops agree outright | `BlackMarlin.flushRecordS_agree_of_committed` *(BlackMarlin/Helpers/Repair)* |
 | BMP12 | committed rounds still recur, so no execution is stuck | `BlackMarlin.Repair.holds` *(BlackMarlin/Repair/Proof)* |
-| BMP13 | both repairs on the execution of §18.11, and what they cost | `descendSupp`, `descendS` witnesses *(LeanDagTest/BlackMarlin)* |
+| BMP13 | a reliable author's anchor is seen as supported, past coverage | `BlackMarlin.supportedIn_of_synchronised` *(BlackMarlin/Helpers/Repair)* |
+| BMP14 | both repairs on the execution of §18.11, what they cost, and a view that misses the support | `descendSupp`, `descendS`, `coneView` witnesses *(LeanDagTest/BlackMarlin)* |
 
 **Integration** (§16):
 
@@ -13186,6 +13207,24 @@ def StrongAgreesCommitted (U : BlockUniverse Validator BlockId Payload) : Prop :
 
 **BMP11, two records with committed tops agree.** The composition: chaining puts the lower top in the higher's cone (BM5), BMP8 makes both descents reach it, and BMP9 carries agreement to every round below. This is what the execution of `black-marlin.md` §13 needed and did not have, and it holds with no hypothesis about what lies between the two tops.
 
+#### `SupportInView`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def SupportInView (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (T : Finset Validator) (R ρ : ℕ) (V : View Validator BlockId Payload U) (L : BlockId),
+    quorumCard Validator ≤ T.card →
+    SynchronisedOn U T R → R ≤ ρ → PopulatedOn U T (ρ + 1) →
+    L ∈ U.ids → (U.block L).round = ρ → (U.block L).creator ∈ T →
+    (∀ b ∈ U.ids, (U.block b).creator ∈ T → (U.block b).round = ρ + 1 → b ∈ V.ids) →
+    SupportedIn U V L ρ
+```
+
+**BMP13, when the support is in view.** Both repairs read `Supported`, a fact about the universe, where a validator reads its own view. They agree in one case: an anchor by a **reliable** author, past the round coverage takes hold, is referenced by every reliable block of the round above, so a view holding those sees the quorum.
+
+For a Byzantine author's anchor coverage says nothing, and a view holding a quorum at the round above shares only `n − 2f` authors with the supporters — `f + 1` at `n = 3f + 1`, short of the `2f + 1` the test wants. So this claim does not reach the case the repair exists for, and `black-marlin.md` §13's execution carries a view that misses it.
+
 #### `NotStuck`
 
 *def, `BlackMarlin.Repair.Statement.lean`*
@@ -13211,7 +13250,8 @@ def Statement : Prop :=
     AtMostOneSupported U ∧ RepairPrefers U ∧ RepairRefines U ∧ NoStall U ∧
       Agrees U ∧ LivenessUntouched U ∧
       StrongSupported U ∧ StrongReaches U ∧ StrongAgrees U ∧ StrongNoStall U ∧
-      StrongAgreesCommitted U ∧ NotStuck Validator BlockId Payload
+      StrongAgreesCommitted U ∧ SupportInView U ∧
+      NotStuck Validator BlockId Payload
 ```
 
 The repaired descent, over every fault configuration, rotation and block universe the model admits.
@@ -13252,7 +13292,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 528 theorems that either another module of the
+The 529 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -20139,6 +20179,24 @@ theorem flushRecordS_agree_of_committed {B₁ B₂ : BlockId} {r₁ r₂ ρ : �
 ```
 
 **Two strengthened records with committed tops agree.** Chaining puts the lower top in the higher's cone (BM5), BMP8 makes both descents reach it, and the suffix property carries agreement to every round below it. This is the composition the refutation needed and did not have.
+
+#### `supportedIn_of_synchronised`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem supportedIn_of_synchronised {T : Finset Validator} {R ρ : ℕ}
+    {V : View Validator BlockId Payload U}
+    (hcard : quorumCard Validator ≤ T.card)
+    (hs : SynchronisedOn U T R) (hR : R ≤ ρ) (hpop : PopulatedOn U T (ρ + 1))
+    (hL : L ∈ U.ids) (hLr : (U.block L).round = ρ)
+    (hLc : (U.block L).creator ∈ T)
+    (hheld : ∀ b ∈ U.ids, (U.block b).creator ∈ T → (U.block b).round = ρ + 1 →
+      b ∈ V.ids) :
+    SupportedIn U V L ρ
+```
+
+**A reliable author's anchor is seen as supported**, by any view that holds the reliable blocks of the round above, once coverage has taken hold.
 
 #### `holds`
 

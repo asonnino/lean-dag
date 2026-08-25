@@ -203,7 +203,12 @@ faults alone.
   quorum is then not a boundary at all, no committed anchor is ever
   passed by, and two records agree at every round below any block they
   both reach. Liveness survives: committed rounds still recur, so no
-  execution is stuck after synchrony, and segments only coarsen. The arc is the second under the statement/proof
+  execution is stuck after synchrony, and segments only coarsen. But the
+  repair reads a fact about the **universe** where a validator reads its
+  own view, and that gap does not close: a view carrying a quorum at the
+  round above an anchor shares only `n − 2f` authors with its supporters,
+  so a Byzantine anchor's support need not be visible — proved of the
+  universe, not implementable as a view-local rule. The arc is the second under the statement/proof
   partition.
 
 Every definition is exercised on concrete models by `decide` before
