@@ -609,12 +609,31 @@ Every step is settled by `decide`:
   `8` — it lies in the round-4 anchor's cone — and drops it at the filter
   of L27, that author and round having already gone out.
 
-The execution behind the two records: one validator concludes round `4`
-seeing enough, runs `delivery(4)`, and commits `8`. The other concludes
-round `4` on its **timeout**, so `delivery(4)` finds `14` unsupported in
-its view and the attempt fails; the protocol never retries a round, so
-it commits nothing until round `6`, where `delivery(6)` admits the
-round-4 anchor and the descent takes `12`.
+The execution behind the two records: one validator runs `delivery(4)`
+with `17`, `18` and `20` in view, sees `14` supported, and commits `8`.
+The other lacks those three, so `delivery(4)` finds `14` unsupported and
+the attempt fails; the protocol never retries a round, so it commits
+nothing until round `6`, where `delivery(6)` admits the round-4 anchor
+and the descent takes `12`.
+
+**No timing hypothesis is needed.** Agreement is a safety property, and
+§5 of the paper states that the safety properties "are satisfied during
+both synchrony and asynchrony". Asynchrony is exactly the freedom to
+delay `17`, `18` and `20` to the second validator, which is all the
+execution asks for. The DAG itself is buildable: every block references
+only blocks of the round beneath it that its author could have held, each
+honest one carries every block of that round it holds as L46–L48
+require, and each carries a quorum of three distinct authors.
+
+**And the protocol cannot escape by not filtering.** Both twins are
+flushed by the second validator — `8` lies in the round-4 anchor's cone —
+and they carry one author-and-round between them. L27 must drop one:
+emitting both would output two blocks for a single `(party, round)`,
+which Definition 1's Integrity forbids "at most once **regardless of
+`B`**". So the execution admits no reading that satisfies both
+properties. Filter, and Agreement fails; do not filter, and Integrity
+does. Neither depends on tracing what the first validator does at its
+later commit.
 
 **What this does and does not touch.** It does not contradict the commit
 rule: `12` is never committed by the rule, and BM1 through BM7 are

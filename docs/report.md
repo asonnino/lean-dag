@@ -5922,12 +5922,26 @@ never `12`, the second emits `12` and never `8`. The second does flush
 `8` — it lies in the round-4 anchor's cone — and drops it at the filter
 of L27, that author and round having already gone out.
 
-The execution behind the two records is the ordinary one. One validator
-concludes round `4` seeing enough, runs `delivery(4)` and commits `8`.
-The other concludes round `4` on its timeout, so `delivery(4)` finds `14`
-unsupported in its view and fails; the protocol never retries a round, so
-that validator commits nothing until round `6`, where `delivery(6)`
-admits the round-4 anchor and the descent takes `12`.
+The execution behind the two records asks for nothing beyond asynchrony.
+One validator runs `delivery(4)` with `17`, `18` and `20` in view, sees
+`14` supported, and commits `8`. The other lacks those three, so
+`delivery(4)` finds `14` unsupported and fails; the protocol never
+retries a round, so that validator commits nothing until round `6`, where
+`delivery(6)` admits the round-4 anchor and the descent takes `12`.
+Agreement is a safety property, which the paper states holds during
+asynchrony as well, and asynchrony is exactly the freedom to delay those
+three blocks. The DAG is buildable: each block references only blocks of
+the round beneath it that its author could have held, each honest one
+carries every block of that round it holds as L46–L48 require, and each
+carries a quorum of three distinct authors.
+
+**Nor can the protocol escape by not filtering.** Both twins are flushed
+by the second validator — `8` lies in the round-4 anchor's cone — and
+they carry one author-and-round between them. L27 must drop one, since
+emitting both would output two blocks for a single `(party, round)`,
+which Integrity forbids "at most once regardless of `B`". So the
+execution admits no reading satisfying both: filter, and Agreement fails;
+do not filter, and Integrity does.
 
 **Scope.** This does not contradict the commit rule. The twin is never
 committed by the rule, and BM1 through BM7 stand; nor is liveness

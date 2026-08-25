@@ -28,12 +28,17 @@ The construction turns on three facts, each settled by `decide` below.
   its own references and `12` includes it, so `12` is one round from the
   highest anchor of its cone and `8` is two.
 
-A validator that committed `8` at round `2` flushes it then. One that
-concluded round `4` on the timeout — so `delivery(4)` found `14`
-unsupported in its view and the attempt failed, and the protocol never
-retries a round — commits `19` at round `6` instead, and its descent
-takes `12`. The filter of L27 then bars each from ever outputting the
-other's block.
+A validator that committed `8` at round `2` flushes it then. One whose
+view at `delivery(4)` lacked `17`, `18` and `20` saw `14` unsupported,
+so the attempt failed; the protocol never retries a round, so it commits
+`19` at round `6` instead and its descent takes `12`.
+
+**No timing hypothesis is needed.** Agreement is a safety property, which
+the paper states holds during asynchrony as well, and asynchrony is
+exactly the freedom to delay those three blocks to the second validator.
+Every block below references only blocks of the round beneath it that
+its author could have held, and each honest one carries every block of
+that round it holds, as L46–L48 require.
 -/
 
 namespace LeanDagTest
@@ -174,6 +179,19 @@ cone — and drops it only at the filter. So the divergence is not a
 missing block but a **different choice of twin**. -/
 example : (8 : Fin 29) ∈ ledgerSeq Udiv wFlush divSort 5 ∧
     key Udiv 8 = key Udiv 12 := by decide
+
+/-- **The dilemma.** Both twins are flushed by the second validator, and
+they carry one author-and-round between them, so L27 must drop one:
+emitting both would output two blocks for a single `(party, round)`,
+which Definition 1's Integrity forbids "at most once regardless of `B`".
+It drops `8` — the block the first validator has already output. So the
+execution admits no reading that satisfies both properties: filter, and
+Agreement fails; do not filter, and Integrity does. -/
+example : key Udiv 8 = key Udiv 12 ∧
+    (8 : Fin 29) ∈ ledgerSeq Udiv wFlush divSort 5 ∧
+    (12 : Fin 29) ∈ ledgerSeq Udiv wFlush divSort 5 ∧
+    (8 : Fin 29) ∉ deliverSeq Udiv wFlush divSort 5 ∧
+    (12 : Fin 29) ∈ deliverSeq Udiv wFlush divSort 5 := by decide
 
 /-- Nothing above contradicts safety of the rule: the two records agree
 wherever both flush a committed anchor, and `12` is not one. -/

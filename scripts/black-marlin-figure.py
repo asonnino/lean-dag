@@ -66,7 +66,7 @@ def edge(a, b, stroke, width, dash="", arrow=""):
 
 
 def main():
-    W, H = 1290, 830
+    W, H = 1290, 850
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" '
            f'viewBox="0 0 {W} {H}" font-family="Helvetica,Arial,sans-serif">',
            f'<rect width="{W}" height="{H}" fill="#ffffff"/>',
@@ -169,14 +169,17 @@ def main():
         out.append(f'<text x="130" y="{y + 5}" font-size="13" fill="#333">{text}</text>')
 
     out.append(f'<text x="66" y="{ly + 5 * 26 + 16}" font-size="13" fill="#111">'
-               f'The first validator commits 8 at round 2 and outputs it. The second times out at '
-               f'round 4, so its commit attempt there fails, and</text>')
+               f'The first validator has 17, 18 and 20 in view at delivery(4), sees 14 supported, and '
+               f'commits 8. The second lacks those three — all</text>')
     out.append(f'<text x="66" y="{ly + 5 * 26 + 36}" font-size="13" fill="#111">'
-               f'the protocol never retries a round; it commits 19 at round 6 instead, whose descent '
-               f'takes 12 — L24 prefers it, one round from the</text>')
+               f'asynchrony allows, and Agreement is a safety property — so its attempt fails, and the '
+               f'protocol never retries a round; it commits 19 at</text>')
     out.append(f'<text x="66" y="{ly + 5 * 26 + 56}" font-size="13" fill="#111">'
-               f'nearest anchor of its own cone against two for 8. Each then bars the other\'s block: '
-               f'that author and round has already gone out.</text>')
+               f'round 6 instead, whose descent takes 12. Both twins are then flushed by the second '
+               f'validator and share one author and round, so L27 must</text>')
+    out.append(f'<text x="66" y="{ly + 5 * 26 + 76}" font-size="13" fill="#111">'
+               f'drop one: filter, and Agreement fails; do not filter, and Integrity does — it forbids '
+               f'two outputs for one party and round, whatever the block.</text>')
 
     out.append('</svg>')
     OUT.parent.mkdir(parents=True, exist_ok=True)

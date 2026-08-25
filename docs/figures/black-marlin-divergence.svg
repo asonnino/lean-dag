@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1290" height="830" viewBox="0 0 1290 830" font-family="Helvetica,Arial,sans-serif">
-<rect width="1290" height="830" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1290" height="850" viewBox="0 0 1290 850" font-family="Helvetica,Arial,sans-serif">
+<rect width="1290" height="850" fill="#ffffff"/>
 <defs>
 <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2e7d32"/></marker>
 <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c62828"/></marker>
@@ -168,17 +168,18 @@
 <text x="1113" y="513" font-size="15" fill="#222" text-anchor="middle">28</text>
 <text x="412" y="237" font-size="12" fill="#2e7d32" text-anchor="end">3 supporters</text>
 <text x="412" y="133" font-size="12" fill="#c62828" text-anchor="end">1 supporter</text>
-<line x1="66" y1="634" x2="118" y2="634" stroke="#2e7d32" stroke-width="2.6"/>
-<text x="130" y="639" font-size="13" fill="#333">support for 8, and 14 links it: 8 is committed by the rule</text>
-<line x1="66" y1="660" x2="118" y2="660" stroke="#c62828" stroke-width="2.6"/>
-<text x="130" y="665" font-size="13" fill="#333">support for 12: one validator, so the rule never admits it</text>
-<line x1="66" y1="686" x2="118" y2="686" stroke="#1565c0" stroke-width="2.6"/>
-<text x="130" y="691" font-size="13" fill="#333">the references of the round-4 anchor 19</text>
-<line x1="66" y1="712" x2="118" y2="712" stroke="#c62828" stroke-width="2.6" stroke-dasharray="7,5"/>
-<text x="130" y="717" font-size="13" fill="#333">the reference 19 does not carry — 3 of 4 suffice, so this is legal</text>
-<line x1="66" y1="738" x2="118" y2="738" stroke="#6a1b9a" stroke-width="2.6" stroke-dasharray="2,6"/>
-<text x="130" y="743" font-size="13" fill="#333">the descent of commit(19): no round-3 anchor in its cone, so it skips round 3 and meets both twins</text>
-<text x="66" y="780" font-size="13" fill="#111">The first validator commits 8 at round 2 and outputs it. The second times out at round 4, so its commit attempt there fails, and</text>
-<text x="66" y="800" font-size="13" fill="#111">the protocol never retries a round; it commits 19 at round 6 instead, whose descent takes 12 — L24 prefers it, one round from the</text>
-<text x="66" y="820" font-size="13" fill="#111">nearest anchor of its own cone against two for 8. Each then bars the other's block: that author and round has already gone out.</text>
+<line x1="66" y1="654" x2="118" y2="654" stroke="#2e7d32" stroke-width="2.6"/>
+<text x="130" y="659" font-size="13" fill="#333">support for 8, and 14 links it: 8 is committed by the rule</text>
+<line x1="66" y1="680" x2="118" y2="680" stroke="#c62828" stroke-width="2.6"/>
+<text x="130" y="685" font-size="13" fill="#333">support for 12: one validator, so the rule never admits it</text>
+<line x1="66" y1="706" x2="118" y2="706" stroke="#1565c0" stroke-width="2.6"/>
+<text x="130" y="711" font-size="13" fill="#333">the references of the round-4 anchor 19</text>
+<line x1="66" y1="732" x2="118" y2="732" stroke="#c62828" stroke-width="2.6" stroke-dasharray="7,5"/>
+<text x="130" y="737" font-size="13" fill="#333">the reference 19 does not carry — 3 of 4 suffice, so this is legal</text>
+<line x1="66" y1="758" x2="118" y2="758" stroke="#6a1b9a" stroke-width="2.6" stroke-dasharray="2,6"/>
+<text x="130" y="763" font-size="13" fill="#333">the descent of commit(19): no round-3 anchor in its cone, so it skips round 3 and meets both twins</text>
+<text x="66" y="800" font-size="13" fill="#111">The first validator has 17, 18 and 20 in view at delivery(4), sees 14 supported, and commits 8. The second lacks those three — all</text>
+<text x="66" y="820" font-size="13" fill="#111">asynchrony allows, and Agreement is a safety property — so its attempt fails, and the protocol never retries a round; it commits 19 at</text>
+<text x="66" y="840" font-size="13" fill="#111">round 6 instead, whose descent takes 12. Both twins are then flushed by the second validator and share one author and round, so L27 must</text>
+<text x="66" y="860" font-size="13" fill="#111">drop one: filter, and Agreement fails; do not filter, and Integrity does — it forbids two outputs for one party and round, whatever the block.</text>
 </svg>
