@@ -347,15 +347,18 @@ proof effort with no corresponding proof content.
    commit is a function of the block it starts from — which makes the
    delivered order's agreement a consequence (§18.9). With `τ` and the
    per-author-and-round filter modelled, what a validator outputs is a
-   list, and Validity for reliable authors, Integrity and Total order
-   hold of it (§18.10). **Agreement does not**: two honest validators can
-   output different twins of an equivocating anchor, refuting the
-   paper's Theorem 12 at `n = 4` on a seven-round model, with the commit
-   rule untouched (§18.11). A repair — the descent preferring a
-   supported anchor among tied candidates — is tested as a
-   side-condition and closes it without costing liveness, though it
-   reads a fact about the universe that a validator's own view need not
-   carry (§18.12).
+   list, and Validity for reliable authors and Integrity hold of it,
+   with Total order holding of records that agree (§18.10).
+   **Two of Definition 1's four properties fail.** Two honest validators
+   can output different twins of an equivocating anchor, refuting the
+   paper's Theorem 12 at `n = 4` on a seven-round model with the commit
+   rule untouched (§18.11); and on the same execution they order two
+   *reliable* authors' blocks oppositely, which no rule for choosing
+   among twins can repair (§18.12). The rule that repairs both descends
+   to a supported anchor, and no validator can run it: deciding from its
+   own view loses safety and waiting for the evidence loses liveness
+   (§18.13). What does hold at a validator's view, and exactly how far,
+   is §18.14.
 
 ### 1.4 Scope and non-goals
 
@@ -5457,12 +5460,10 @@ liveness above the structural condition of §6, in place of §5.2's timing
 argument (§18.5), the round rule of L38–L41 and the responsiveness it
 yields (§18.6), Definition 1's Agreement (§18.7), and the order
 `commit`'s descent delivers in (§18.8–§18.10), a refutation of
-Definition 1's Agreement (§18.11), a repair tested as a
-side-condition (§18.12), what a validator could evaluate of it for
-itself (§18.13), liveness restated at a validator's view (§18.14), and
-the delivered order settled in both directions (§18.15). It is the
-second arc under the statement/proof
-partition (§17.5), and
+Definition 1's Agreement (§18.11), a refutation of its Total order
+(§18.12), the repair that would restore both and why no validator can
+run it (§18.13), and what does hold at a validator's view (§18.14). It
+is the second arc under the statement/proof partition (§17.5), and
 `docs/black-marlin.md` is its design record.
 
 **Where the arc lands.** The commit rule's own safety statements hold as
@@ -5473,20 +5474,27 @@ which two reliable validators output different blocks for one author and
 round and neither ever outputs the other's — so the protocol as
 presented does not satisfy the property its own Definition 1 asks for.
 
-**And no repair of it keeps both safety and liveness.** §18.12 supplies
-a rule that restores Agreement — BMP7, BMP9, BMP11 — and leaves the
-recurrence of committed rounds standing, BMP10 and BMP12. Those two
-quantify over `Committed U L r`, an assertion about the **universe**,
-which is the wrong object for liveness: what a validator delivers is a
-function of its view. Read at the view, the repaired rule has two
-implementations and neither is sound. One decides from what the
-validator holds, which can be too little, and selects the wrong block —
-safety fails, and §18.13 refutes every fallback available to it. The
-other waits until the validator holds the quorum, and the wait need
-never end, because up to `f` of a quorum's supporters are authored by
-Byzantine validators and nothing obliges them to send. §18.13 exhibits a
-view holding **every** reliable block that still sees neither twin
-supported.
+**Its Total order fails too, and on honest blocks.** On the same
+execution two reliable validators deliver two blocks of *reliable*
+authors in opposite orders (§18.12). Neither block has a twin and L27's
+filter never examines either; what orders them is which segment they
+fall in. That failure does not depend on which twin the filter prefers,
+so no rule for choosing among twins repairs it.
+
+**And no repair keeps both safety and liveness.** The rule that restores
+both descends to a supported anchor, which is a quorum over the
+**universe**. A validator reads a view, and there the rule has two
+implementations: deciding from what is held, which can be too little and
+selects the wrong block, and waiting until the quorum is held, which up
+to `f` Byzantine supporters need never complete. The first loses safety
+and the second loses liveness (§18.13).
+
+**What does hold at the view is stated and bounded.** Every reliable
+validator commits at recurring rounds on its own view, by an explicit
+time, and delivers there whatever any view committed below; and two
+records agree on the delivered order for as long as the rotation names
+reliable validators. Both boundaries fall in the same place and neither
+extends past it (§18.14).
 
 ### 18.1 The rule
 
@@ -5839,10 +5847,12 @@ Order at the granularity of segments; the order *within* a segment is
 `τ`, which the rule does not constrain and this arc does not model.
 
 **BMD3's stretch hypothesis is an artifact of taking the record as
-given**, and §18.9 removes it by computing the descent instead. Of
-Definition 1's four properties the arc now has Validity for reliable
-authors (BML3 with BML4), Agreement (BMA3) and Total Order by segment
-(BMD6); Integrity rests on the delivered set `D`, which is not modelled.
+given**, and §18.9 removes it by computing the descent instead. What the
+arc has at this point is Validity for reliable authors (BML3 with BML4),
+agreement on the delivered **set** between committed anchors (BMA3), and
+agreement by segment between records that agree (BMD6). None of the
+three is Definition 1's Agreement or its Total order, both of which are
+about what validators output; §18.11 and §18.12 refute those.
 
 ### 18.9 The descent computed, and BMD3 closed
 
@@ -5884,7 +5894,7 @@ On data, the computed record of the four-round model's round-3 anchor is
 its four anchors, by `decide`, and it is the record the hand-built flush
 of §18.8 carries.
 
-### 18.10 The delivered sequence, and what Definition 1 now has
+### 18.10 The delivered sequence, and what Definition 1 has
 
 Definition 1 speaks about `ab-deliver` events — a list, not a set.
 §18.8 and §18.9 fixed the segment boundaries; this section models the
@@ -5912,17 +5922,15 @@ that block. With **BMO9** — a reliable author's block reaches an anchor
 two rounds up by BML3 and is therefore flushed — Definition 1's Validity
 holds for reliable authors as a statement about `ab-deliver`.
 
-**What remains, and a correction.** §18.7 recorded the distance to
-Agreement as the filter, and suggested Lemma 11 and Validity were
-compositions of results already in hand. That was too optimistic. The
-filter is closed for correct authors, but for an **equivocator** the twin
-that is output depends on the segmentation, and two validators' records
-can differ at a round where neither committed directly: a descent from a
-higher anchor takes the round-`ρ` anchor its own chain reaches, and
-nothing forces that to be the anchor another validator committed at `ρ`.
-**BMO8** rules the divergence out wherever the two descents meet at a
-common block. They need not, and §18.11 exhibits an execution where they
-do not.
+**What these do not give.** BMO7 is Total order for records that
+*agree*, and BMO4 is Integrity for a single record. Neither says two
+validators' records agree, and they need not: for an **equivocator** the
+twin that is output depends on the segmentation, and a descent from a
+higher anchor takes the round-`ρ` anchor its own chain reaches, which
+need not be the anchor another validator committed at `ρ`. **BMO8** rules
+the divergence out wherever the two descents meet at a common block, and
+§18.11 and §18.12 exhibit an execution where they do not — costing
+Agreement and Total order respectively.
 
 On data, identifiers of the four-round model run downward along
 references, so sorting by identifier is a topological sort and `TopoSort`
@@ -5932,12 +5940,12 @@ anchor round with each anchor last in its own, settled by `decide`.
 
 ### 18.11 Agreement, refuted on data
 
-§18.10 left one thing open: whether two validators' records must agree at
-a round where neither committed directly. They need not, and the arc
-exhibits an execution where two honest validators output **different
-blocks** of the same author and round, neither ever outputting the
-other's. That refutes Definition 1's Agreement — and with it Theorem 12 —
-for the protocol as specified, at `n = 4`, `f = 1`.
+Two validators' records need not agree at a round where neither
+committed directly, and the arc exhibits an execution where two honest
+validators output **different blocks** of the same author and round,
+neither ever outputting the other's. That refutes Definition 1's
+Agreement — and with it Theorem 12 — for the protocol as specified, at
+`n = 4`, `f = 1`.
 
 Four validators with `0` Byzantine, seven rounds, the rotation anchoring
 rounds `0` to `6` by `3, 3, 0, 1, 2, 3, 1`, and validator `0`
@@ -6006,107 +6014,116 @@ different blocks when the anchor party is Byzantine" — which holds of
 L16, and of the path that runs when L16 fails does not.
 
 A repair is visible — let the descent prefer a *supported* anchor among
-tied candidates, which BM1 makes unique — and §18.12 tests it as a
-side-condition on the record rather than as a change to the model.
+tied candidates, which BM1 makes unique — and §18.13 tests it as a
+side-condition on the record rather than as a change to the model. The
+same execution costs the protocol its Total order as well, on blocks
+that have nothing to do with the equivocation, which is §18.12.
 
-### 18.12 The repair, tested as a side-condition
+### 18.12 Total order, refuted on blocks of reliable authors
 
-§18.11 named a repair and left it unmade. This section makes it as a
-**side-condition** rather than a change to the model: `descend`,
-`flushRecord` and everything proved of them stand, and what is added sits
-beside them.
+§18.11 refutes Agreement, and that refutation turns on which twin each
+record delivers. The delivered **sequence** fails for a reason that does
+not involve the twins at all, and the same execution exhibits it.
 
-The outcome, before the detail: the strengthened form restores Agreement
-and leaves every liveness statement of §18.5 and §18.6 standing word for
-word. Both halves are proved **of the universe**, which is where this
-section works. §18.13 reads them at a validator's view instead, and
-there the repair does not survive.
+Blocks `5` and `7` are authored by reliable validators, and neither has
+a twin — each is the only block of its author and round — so L27's
+filter never examines either. The two records deliver them in opposite
+orders:
 
-A record is **support-preferring** when, at any round where some anchor
-carries a quorum of support, what it flushes there is supported; and
-`descendSupp` filters the candidates of L21–L24 to those the rule could
-commit, falling back to L24 only where none is. **BMP1** is why that is
-enough to be deterministic: the candidates of a step share a round, and
-BM1 gives a round one supported anchor, so where the filter bites nothing
-is left to break ties over. **BMP2** and **BMP3** say the repair takes it
+```lean
+(Udiv.block 5).creator ∈ (Correct : Finset (Fin 4)) ∧
+    (Udiv.block 7).creator ∈ (Correct : Finset (Fin 4)) ∧
+    (deliverSeq Udiv vFlushFull divSort 5).idxOf 5 <
+      (deliverSeq Udiv vFlushFull divSort 5).idxOf 7 ∧
+    (deliverSeq Udiv wFlush divSort 5).idxOf 7 <
+      (deliverSeq Udiv wFlush divSort 5).idxOf 5
+```
+
+What orders them is which segment they fall in. `5` lies in the cone of
+one twin and `7` in the cone of the other, so each record takes one of
+them in its round-2 segment and the other only in the round-4 segment.
+
+**This is the more robust of the two failures.** It does not depend on
+which twin the filter prefers, so no rule for choosing among twins
+repairs it — and §18.13 refutes that family for Agreement anyway. What
+would repair it is a rule that makes the two descents agree, and §18.13
+is why no validator can run one.
+
+It also disposes of the reading that relaxes Integrity. Dropping L27, so
+that a *block* rather than an author-and-round is what may not be output
+twice, leaves the segmentation untouched, and the segmentation is what
+differs — the twins then come out in opposite orders as well, turning
+the Agreement failure into a second Total order failure.
+
+### 18.13 The repair, and why no validator can run it
+
+§18.11 names a repair. This section makes it as a **side-condition**
+rather than a change to the model — `descend`, `flushRecord` and
+everything proved of them stand, and what is added sits beside them —
+and then asks whether a validator could apply it.
+
+**The weak form filters the tie-break.** A record is
+*support-preferring* when, at any round where some anchor carries a
+quorum of support, what it flushes there is supported; `descendSupp`
+filters the candidates of L21–L24 to those the rule could commit,
+falling back to L24 where none is. **BMP1** is why that is deterministic:
+the candidates of a step share a round, and BM1 gives a round one
+supported anchor, so where the filter bites nothing is left to break ties
+over. **BMP2** and **BMP3** say the repair takes the supported anchor
 where there is one and is the original rule where there is not, so it
-refines L21–L24 rather than replacing it.
+refines L21–L24 rather than replacing it. **BMP5** is the conclusion: two
+support-preferring records that both flush at a round with a supported
+anchor flush the same block, which is what §18.11's execution lacked.
 
-**BMP5 is the answer.** Two support-preferring records that both flush at
-a round with a supported anchor flush the same block — which is exactly
-what §18.11's execution lacked. On that execution the repair closes it:
-`8` is the only supported candidate below the round-4 anchor, so the
-repaired descent takes it and the two records agree at round `2`.
-
-**Liveness does not fail.** What the liveness results conclude is
-`Committed`, the conjunction of `IsAnchor`, `Supported` and `Linked`,
-which mentions no part of the descent — **BMP6** is that observation, and
-that it is an identity is the point. BML1–BML5 and BMR1–BMR6 hold of the
-repaired protocol word for word, and **BMP4** adds that a step never
-stalls and never moves to another round, so the descent still terminates
-and nothing is left undelivered.
-
-**The cost is the delivered order.** A chain through a different block
-descends through a different cone, so a record may flush at different
-rounds: on §18.11's execution the repaired chain reaches `8`, whose cone
-holds no round-1 anchor, and flushes nothing at round `1` where the
-unrepaired chain flushed `7`. No block is lost — `7` comes out in the
-round-4 segment instead — but the segmentation differs, which is why BMP4
-speaks of a step and not of a record.
-
-**The weak form does not close the general case.** `descendSupp` chooses
-among the candidates L21–L24 already offers, so where the cone reaches
-the supported anchor of a round but the *step* does not — the block it
-steps through citing a twin instead — the filter is empty and the
-fallback takes the twin.
+**It does not close the general case.** `descendSupp` chooses among the
+candidates L21–L24 already offers, so where the cone reaches a round's
+supported anchor but the *step* does not — the block it steps through
+citing a twin instead — the filter is empty and the fallback takes the
+twin.
 
 **The strengthened form drops the tie-break instead of filtering it.**
 `descendS` descends to the highest-round supported anchor of the cone and
-nowhere else. **BMP7** is then the answer to the equivocation-without-
-quorum case: a round whose anchors carry no quorum is not a boundary at
-all, so no choice is made there and two records cannot part over one.
-**BMP8** is the argument that nothing is passed by — above a committed
-anchor at `ρ` a supported anchor sits at every round the chain could land
-on, the anchor itself from `ρ + 2` up by BM2 and its linking anchor at
-`ρ + 1` because the commit rule makes it supported, with BM1 fixing which
-block each is. **BMP9** and **BMP11** complete it: two records whose tops are committed
+nowhere else. **BMP7** answers the equivocation-without-quorum case: a
+round whose anchors carry no quorum is not a boundary at all, so no
+choice is made there and two records cannot part over one. **BMP8** is
+that nothing is passed by — above a committed anchor at `ρ` a supported
+anchor sits at every round the chain could land on, the anchor itself
+from `ρ + 2` up by BM2 and its linking anchor at `ρ + 1` because the
+commit rule makes it supported, with BM1 fixing which block each is.
+**BMP9** and **BMP11** complete it: two records whose tops are committed
 anchors both reach the lower of the two, BM5 putting it in the higher's
-cone, and so agree at every round below — with no hypothesis about what
+cone, so they agree at every round below, with no hypothesis about what
 lies between the two tops.
 
-**Liveness survives.** **BMP12** is the recurrence of committed rounds
-restated for the repaired protocol — a statement about `Committed` and
-the rotation, neither of which the repair touches — so no execution is
-stuck after synchrony; **BMP10** adds that the descent still terminates.
-Segments only coarsen, so nothing is delivered later than the next
-committed anchor.
+**Neither form costs anything of the universe.** What the liveness
+results conclude is `Committed`, the conjunction of `IsAnchor`,
+`Supported` and `Linked`, which mentions no part of the descent —
+**BMP6** is that observation. BML1–BML5 and BMR1–BMR6 hold of the
+repaired protocol word for word; **BMP4** adds that a step never stalls
+and never moves to another round, and **BMP10** that the descent still
+terminates; **BMP12** is the recurrence of committed rounds restated, so
+no execution is stuck after synchrony. The one price is segmentation: a
+chain through a different block descends through a different cone, so a
+record may flush at different rounds. No block is lost, and segments only
+coarsen.
 
-### 18.13 What a validator can actually run
-
-Everything §18.12 proves is proved of the **universe**. A validator reads
-a **view**, and the two are not the same object. This section asks which
-of these rules a validator could evaluate for itself, and answers that
-the one that works is not among them.
-
-**BMP13 is the fragment that closes, and it is not the case that needs
-it.** An anchor by a *reliable* author, past the round coverage takes
+**Which is where the repair stops, because a validator reads a view.**
+`Supported` is a quorum over the universe. **BMP13** closes the gap in
+one case: an anchor by a *reliable* author, past the round coverage takes
 hold, is referenced by every reliable block of the round above, so any
 view holding those sees the quorum. `SynchronisedOn` constrains only
-`T`-authored blocks, so coverage says nothing about a Byzantine author's
-anchor — and a Byzantine author's anchor is the whole occasion for the
-repair.
+`T`-authored blocks, so coverage says nothing about a **Byzantine**
+author's anchor — and a Byzantine author's anchor is the whole occasion
+for the repair.
 
-**The counting behind the gap.** A view carrying a quorum at the round
+The counting is the obstruction. A view carrying a quorum at the round
 above an anchor shares only `n − 2f` authors with that anchor's
 supporters, which at `n = 3f + 1` is `f + 1`, short of the `2f + 1` the
 test wants. §18.11's execution carries such a view: the cone of the
 round-4 anchor holds a quorum of authors at round `3`, so its holder
 could conclude that round and run the rule, and yet it sees two of `8`'s
 three supporters, the third being the block that anchor does not
-reference. The second validator of that execution does see the support,
-holding a quorum at round `6` and so those blocks' cones — so what the
-witness establishes is that nothing in the model *forces* the support
-into view, not that it is missing there.
+reference.
 
 **Every rule a validator could run, and how each answers.**
 
@@ -6115,20 +6132,11 @@ into view, not that it is missing there.
 | L24's gap metric | the candidates and their own cones | takes the uncommitted twin in §18.11; ties exactly where the twins share a cone |
 | a canonical order on the candidates | the identifiers | already in the model — `descend` takes the `≤`-least of the gap-minimisers — and takes the uncommitted twin |
 | any support-blind function | the candidates and their own cones | refuted as a class |
-| delivering both twins | nothing — L27's filter dropped | turns the Agreement failure into a Total-order failure |
+| delivering both twins | nothing — L27's filter dropped | turns the Agreement failure into a Total order failure (§18.12) |
 | counting support in the descent's cone | the cone, view-independently | promises the committed twin `1` against its twin's `2f`; wrong at `f = 1` |
 | a quorum of support (`descendS`) | the universe | correct, and not evaluable from a view |
 
-**Delivering both twins.** L27's per-`(creator, round)` filter is what
-makes a boundary observable, and it is there because Integrity forbids
-two outputs for one party and round whatever the blocks are. Dropping it
-leaves the segmentation untouched, and the segmentation is what differs:
-the first validator's segment at round `2` is the cone of `8` and the
-second's is the cone of `12`, each picking the other twin up only in the
-round-4 segment. One delivers `8` before `12` and the other `12` before
-`8`, and likewise `5` and `7`, which lie below one twin each.
-
-**The support-blind rules, as a class.** Give the twins the same
+**The support-blind rules fall as a class.** Give the twins the same
 references. They then agree in round, in creator and in cone, so every
 function of the candidate blocks and their own histories returns one
 answer on both: L24's metric ties exactly, and a canonical order decides
@@ -6137,193 +6145,113 @@ those respects and differing only in which twin the round-3 blocks
 reference. `strongOf` agrees on the twins within each and across both;
 `8` is the committed twin in one and `12` in the other; and `descend`,
 which reads neither, answers `8` in both — right once and wrong once.
-Any rule blind to support receives the same input in the two, so answers
-them alike, so is wrong in one.
 
-**Counting support in the cone.** The natural weakening is relative
-rather than absolute — prefer the twin more of the descent's own cone
-references — and it is view-independent by construction, every validator
-descending from one block reading one cone. On §18.11's execution it
-answers correctly, `{2, 3}` against `{0}`, where the quorum test needed
-three and found two. It has no margin in general. A committed twin holds
-`2f + 1` supporters of `3f + 1`, at least `f + 1` of them reliable; a
-reliable supporter authors one block at the round above and that block
-references the twin, so it counts exactly when the cone holds it, and a
-cone need only carry `n − f` authors. **One** cone-supporter is all the
-committed twin is promised. Its twin may hold `2f`: the two supporter
-sets meet only inside the `f` Byzantine validators, since supporting
-both means authoring two blocks at one round, and `f` more sit outside
-the quorum, and all of them can be in the cone — the Byzantine ones
-contributing the block that references the twin rather than the one that
-references the anchor.
+**Counting support in the cone falls too.** The natural weakening is
+relative rather than absolute — prefer the twin more of the descent's own
+cone references — and it is view-independent by construction, every
+validator descending from one block reading one cone. It has no margin. A
+committed twin holds `2f + 1` supporters of `3f + 1`, at least `f + 1` of
+them reliable; a reliable supporter authors one block at the round above
+and that block references the twin, so it counts exactly when the cone
+holds it, and a cone need only carry `n − f` authors. **One**
+cone-supporter is all the committed twin is promised. Its twin may hold
+`2f`: the two supporter sets meet only inside the `f` Byzantine
+validators, since supporting both means authoring two blocks at one
+round, and `f` more sit outside the quorum. Both ends are realised at
+`f = 1`, on four validators over seven rounds with the twins given the
+same references, so the rule fails at the smallest committee the protocol
+admits.
 
-Both ends are realised at `f = 1`, so the rule fails at the smallest
-committee the protocol admits. Four validators over seven rounds, the
-twins given the same references so that nothing block-intrinsic
-separates them: the round-4 anchor omits the round-3 anchor, skips the
-round, and of the three round-3 blocks in its cone two reference the
-uncommitted twin and one references the committed one. The identifier
-order prefers the uncommitted twin as well, and `descendS` is the only
-one of the three that answers correctly.
-
-**What this leaves: a dichotomy.** The tie-break must read support, and
-a view need not carry it. Operationally that is not a gap but a choice
-between two unsound implementations.
+**So the repair has two implementations and neither is sound.**
 
 *Decide from what is held.* The rule is evaluated against `SupportedIn`,
 which under-reports. §18.11's execution carries a view seeing two of
-three supporters; the `f = 1` model above carries one seeing **no** twin
+three supporters; the `f = 1` model carries one seeing **no** twin
 supported at all. A validator that descends regardless selects by some
-fallback, and every fallback available to it is one of the rules refuted
-in the table. **Safety fails.**
+fallback, and every fallback available to it is a refuted row of the
+table. **Safety fails.**
 
 *Wait until the quorum is held.* A committed twin's `2f + 1` supporters
 include at least `f + 1` reliable ones and up to `f` Byzantine ones. The
 reliable blocks arrive; the Byzantine ones need never be sent, and under
 partial synchrony nothing obliges them to be. The `f = 1` model exhibits
 it: the deciding supporter of the committed twin is authored by the
-equivocator and is referenced by no reliable block, so a view holding
-every reliable block and everything those reference sees `{1, 2}` for
-one twin and `{0, 3}` for the other — neither a quorum, and no further
-reliable block will settle it. **Liveness fails.**
+equivocator and referenced by no reliable block, so a view holding every
+reliable block and everything those reference sees `{1, 2}` for one twin
+and `{0, 3}` for the other — neither a quorum, and no further reliable
+block will settle it. **Liveness fails.**
 
-**A correction to the previous revision of this section.** It recorded
-liveness as untouched by the repair, on the ground that BMP10 and BMP12
-are untouched. They are. But they conclude `Committed U L r`, and the
-universe is a modelling device rather than anything a validator holds;
-liveness is conventionally a statement about what a party outputs from
-its own view, and on that reading the repaired rule is not live. The
-earlier claim that the obstacle was the distance between universe and
-view "rather than a conflict between safety and liveness" was wrong: the
-distance between universe and view is *how* that conflict presents
-itself here.
+**What is and is not established.** The refuted class is the
+support-blind one, together with the named rules of the table and the two
+implementations of `descendS`. No claim is made that every conceivable
+view-local rule fails. What is claimed is narrower and enough: the
+protocol as presented satisfies neither Definition 1's Agreement nor its
+Total order, the rule that restores both cannot be evaluated by a
+validator that decides from its own view, and the rule that waits for the
+evidence can be made to wait without end.
 
-**Which level the arc's liveness is stated at.** BML1–BML5, BMR1–BMR6
-and BMP12 conclude `Committed U L r` — the universe admits a commit at
-that round. BMA2 is the exception, running the argument inside
-`viewAt v t` with an explicit time, because Agreement forced it to.
-§18.14 restates the rest at the view and settles which side of the line
-each result falls: the commit rule is applied from a reliable view
-without waiting (BMV3), so no reliable validator is stuck (BMV1) and
-nothing is held back (BMV2); the descent is not, and that is where the
-repair's two horns come from.
-
-The root cause is upstream of the tie-break. Black Marlin gives a round
-no **decision**: `delivery(r)` either commits or fails, a failure is
-never revisited, and so which rounds are segment boundaries depends on
-what a validator happened to hold at the time. The descent is an attempt
-to recover that after the fact from the DAG, and what it would need to
-recover it is exactly the information a view need not have. The rules of
-§17 do not face this, because every slot there receives a verdict —
-commit or skip — that all validators agree on, so the boundaries are
-agreed and no tie-break arises. That is the change a repair would have
-to make, and it is a change to the shape of the protocol rather than to
-the descent.
-
-**What is not established.** The class refuted is the support-blind one,
-together with the named rules above and the two implementations of
-`descendS`. No claim is made that every conceivable view-local rule
-fails. What is claimed is narrower and enough: the protocol as presented
-does not satisfy Definition 1's Agreement, the rule that restores it
-cannot be evaluated by a validator that decides from its own view, and
-the rule that waits for the evidence can be made to wait without end.
-
-### 18.14 Liveness at a validator's view
+### 18.14 Liveness and the delivered order at a validator's view
 
 §18.5, §18.6 and BMP12 conclude `Committed U L r`: the **universe**
 admits a commit at that round. Liveness asserts something else. A
 validator delivers from its own view, and the universe is a device of
 this model rather than an object anyone holds, so a liveness result read
-there is about the wrong object. This section restates the arc at the
-view (`BlackMarlin.ViewLiveness.holds`).
+there is about the wrong object. The same applies to the delivered order,
+whose agreement §18.8 states of records rather than of validators. This
+section states both where they belong
+(`BlackMarlin.ViewLiveness.holds`, `BlackMarlin.ViewOrder.holds`).
 
 **BMV1, `NoValidatorStuck`.** Above every round the rotation names a
-later one that *every* reliable validator commits **on its own view**,
-by a time the pace supplies, in any sufficiently grown DAG under any
-pace. BML4 said such a round exists; this says everyone reaches it.
+later one that *every* reliable validator commits **on its own view**, by
+a time the pace supplies, in any sufficiently grown DAG under any pace.
+BML4 said such a round exists; this says everyone reaches it.
 
-**BMV2, `NothingHeldBack`.** And what any view committed below that
-round is in what every reliable validator delivers at it. BMA3 asks for
-a reliably anchored round above `ρ` and the rotation supplies one, so
-the hypothesis becomes a conclusion.
+**BMV2, `NothingHeldBack`.** And what any view committed below that round
+is in what every reliable validator delivers at it. BMA3 asks for a
+reliably anchored round above `ρ` and the rotation supplies one, so the
+hypothesis becomes a conclusion.
 
-Neither is new work at the level of the DAG, and that is the point of
-stating them. BMA2 and BMA3 already concluded at a view and BMA4 already
-discharged the round they ask for; what was missing was the composition,
-and the recognition that the arc's own liveness claims were being read
-one level too high.
+**BMV3, `ReadableAtReliableAnchor`, is why BMV1 carries a time.** At a
+reliably anchored round past coverage, an anchor is referenced by every
+reliable block of the round above, so a view holding those sees the
+quorum. The commit rule's input at such a round is reliable blocks, and
+coverage delivers reliable blocks — so the rule applies without waiting
+on anything a Byzantine validator might withhold. On the four-round model
+the reliable supporters of the round-2 anchor are already a quorum, so
+the equivocator's block there is not needed even though it exists.
 
-**BMV3, `ReadableAtReliableAnchor`, is the line.** At a reliably
-anchored round past coverage, an anchor is referenced by every reliable
-block of the round above, so a view holding those sees the quorum. The
-commit rule's input at such a round is reliable blocks, and coverage
-delivers reliable blocks — so the rule applies without waiting on
-anything a Byzantine validator might withhold, which is why BMV1 carries
-a time rather than an "eventually". On the four-round model the reliable
-supporters of the round-2 anchor are already a quorum, so the
-equivocator's block there is not needed even though it exists.
-
-**Past that line there is nothing, and this is where the arc ends.** The
-descent reads `Supported` at whichever anchor its chain lands on, and no
-clause constrains that anchor's author. Where the author is the
-equivocator, coverage is silent — it constrains `T`-authored blocks only
-— and a committed anchor's `2f + 1` supporters need contain just `f + 1`
-reliable ones. §18.13's model exhibits a view holding every reliable
-block, and everything those reference, in which neither twin is
-supported.
-
-So: **the protocol as the paper states it is live at the view for the
-delivered set, and the repair of §18.12 has no live implementation.**
-BMV3 is the boundary between them, and it is narrow — the commit rule
-sits on the near side and the descent does not. What the delivered
-*order* does at that boundary is §18.15.
-
-### 18.15 The delivered order, settled in both directions
-
-§18.14 concludes `B ∈ history U L`: membership in what a validator
-delivers, not position in the sequence. The position is fixed by the
-descent, and this section settles it
-(`BlackMarlin.ViewOrder.holds`) — the positive as far as it reaches and
-the negative immediately past it.
-
-**BMT1, `ReliableAnchorPins`.** Two records that flush at a round whose
-anchor is *reliable* flush the same block, whatever views they came
-from. This is not an agreement argument and needs no coverage: the block
-flushed there is that round's anchor, its author is correct, and
-`no_equivocation` leaves exactly one such block in the universe. A
-reliable anchor gives the descent no choice, so every view makes the
-same one.
+**BMT1, `ReliableAnchorPins`, does the same for the order.** Two records
+that flush at a round whose anchor is reliable flush the same block,
+whatever views they came from. This needs no agreement argument and no
+coverage: the block flushed there is that round's anchor, its author is
+correct, and `no_equivocation` leaves exactly one such block in the
+universe. A reliable anchor gives the descent no choice, so every view
+makes the same one.
 
 **BMT2, `AgreeOnReliableStretch`.** BMD3 needs a round two records agree
 at; BMT1 supplies one, so agreement descends from any reliably anchored
-round through the stretch a record flushes at, with nothing assumed
-about how either validator got there.
+round through the stretch a record flushes at, with nothing assumed about
+how either validator got there.
 
 **BMT3, `OrderAgreesWhenAnchorsReliable`.** Where every anchor below a
 round is reliable, two records flushing at the same rounds deliver the
-**same list**. That is Definition 1's Total order, unconditionally, on
-that stretch.
+**same list** — Definition 1's Total order, unconditionally, on that
+stretch.
 
-**And the hypothesis is tight, in a way that matters.** One Byzantine
-anchor below is enough to break it, and the break is not confined to the
-equivocator's own blocks. In §18.11's execution the two records deliver
-`5` before `7` and `7` before `5`. Both are authored by **reliable**
-validators, neither has a twin, and L27's filter never touches either.
-What orders them is which segment they fall in: `5` lies below one twin
-and `7` below the other, so each record takes one in its round-2 segment
-and the other only in the round-4 segment.
+**Where the arc ends, and why there is nothing past it.** Both boundaries
+fall in the same place. The commit rule reads support at a round the
+rotation names, and where the rotation names a reliable validator
+coverage supplies the input; the descent reads support at whichever
+anchor its chain lands on, and no clause constrains that anchor's author.
+So BMV3 and BMT1 hold at reliably anchored rounds and have no counterpart
+elsewhere: §18.13 exhibits a view holding every reliable block in which
+neither twin is supported, and §18.12 exhibits two records that order two
+reliable authors' blocks oppositely with one Byzantine anchor below them.
 
-So Definition 1's **Total order** fails, and it fails on honest blocks.
-This is a sharper failure than §18.11's, and a more robust one: it does
-not depend on which twin the filter prefers, so no rule for choosing
-among twins repairs it. Only a rule that makes the two descents agree
-does — which is `descendS`, and §18.14 is why that has no live
-implementation.
-
-**What is now closed.** The delivered order agrees exactly as far as the
-rotation is reliable and no further. The boundary is not a limitation of
-this development: BMT3 is proved, its converse is refuted on data, and
-between them there is nothing left to establish.
+The protocol is therefore live at the view for the delivered **set**, its
+delivered order agrees exactly as far as the rotation is reliable, and
+neither statement extends. BMT3 is proved and its converse refuted on
+data, so between them nothing is left open.
 
 ## 19. Satisfiability
 
@@ -7303,7 +7231,7 @@ reused.
 | BMT1 | a reliably anchored round pins every record, no view entering | `BlackMarlin.ViewOrder.holds` *(BlackMarlin/ViewOrder/Proof)* |
 | BMT2 | so agreement descends from it through any flushed stretch | `BlackMarlin.ViewOrder.holds` *(BlackMarlin/ViewOrder/Proof)* |
 | BMT3 | and with every anchor below reliable, the delivered lists coincide | `BlackMarlin.ViewOrder.holds` *(BlackMarlin/ViewOrder/Proof)* |
-| BMT4 | and one Byzantine anchor below suffices to order two reliable authors' blocks oppositely | `deliverSeq` witnesses *(LeanDagTest/BlackMarlin/Divergence)* |
+| BMT4 | and one Byzantine anchor below suffices to order two reliable authors' blocks oppositely, refuting Total order | `deliverSeq` witnesses *(LeanDagTest/BlackMarlin/Divergence)* |
 | BMP14 | both repairs on the execution of §18.11, what they cost, a view that misses the support, and a counting rule that reads it wrongly at `f = 1` | `descendSupp`, `descendS`, `coneView`, `Ucnt` witnesses *(LeanDagTest/BlackMarlin)* |
 
 **Integration** (§16):
