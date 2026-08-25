@@ -348,7 +348,10 @@ proof effort with no corresponding proof content.
    delivered order's agreement a consequence (§18.9). With `τ` and the
    per-author-and-round filter modelled, what a validator outputs is a
    list, and Validity for reliable authors, Integrity and Total order
-   hold of it (§18.10).
+   hold of it (§18.10). **Agreement does not**: two honest validators can
+   output different twins of an equivocating anchor, refuting the
+   paper's Theorem 12 at `n = 4` on a seven-round model, with the commit
+   rule untouched (§18.11).
 
 ### 1.4 Scope and non-goals
 
@@ -5449,8 +5452,9 @@ paper — the rule and every safety result stated about it (§18.2) — its
 liveness above the structural condition of §6, in place of §5.2's timing
 argument (§18.5), the round rule of L38–L41 and the responsiveness it
 yields (§18.6), Definition 1's Agreement (§18.7), and the order
-`commit`'s descent delivers in (§18.8–§18.10). It is the second arc under
-the statement/proof partition (§17.5), and
+`commit`'s descent delivers in (§18.8–§18.10), and a refutation of
+Definition 1's Agreement (§18.11). It is the second arc under the
+statement/proof partition (§17.5), and
 `docs/black-marlin.md` is its design record.
 
 ### 18.1 The rule
@@ -5876,20 +5880,62 @@ can differ at a round where neither committed directly: a descent from a
 higher anchor takes the round-`ρ` anchor its own chain reaches, and
 nothing forces that to be the anchor another validator committed at `ρ`.
 **BMO8** rules the divergence out wherever the two descents meet at a
-common block; that they always do is not established. The paper asserts
-the missing step twice — Lemma 11's "by construction of the delivery
-function, party `j` must have also committed `B`", and Theorem 12's
-Agreement clause "therefore party `j` eventually ab-delivers(B, j, r)" —
-in each case without argument. Realising the divergence would need
-equivocating anchors at two adjacent rounds and a round-`(ρ+2)` anchor
-that does not support the linking anchor, hence `f ≥ 2`; no witness is
-attempted.
+common block. They need not, and §18.11 exhibits an execution where they
+do not.
 
 On data, identifiers of the four-round model run downward along
 references, so sorting by identifier is a topological sort and `TopoSort`
 is not vacuous. The list delivered there is
 `[0, 1, 2, 3, 5, 4, 6, 7, 10, 8, 9, 11, 15]`, one sorted segment per
 anchor round with each anchor last in its own, settled by `decide`.
+
+### 18.11 Agreement, refuted on data
+
+§18.10 left one thing open: whether two validators' records must agree at
+a round where neither committed directly. They need not, and the arc
+exhibits an execution where two honest validators output **different
+blocks** of the same author and round, neither ever outputting the
+other's. That refutes Definition 1's Agreement — and with it Theorem 12 —
+for the protocol as specified, at `n = 4`, `f = 1`.
+
+Four validators with `0` Byzantine, seven rounds, the rotation anchoring
+rounds `0` to `6` by `3, 3, 0, 1, 2, 3, 1`, and validator `0`
+equivocating at round `2` with blocks `8` and `12`. Every step is settled
+by `decide`.
+
+The rule commits `8` and only `8`: three round-3 blocks reference it and
+the round-3 anchor `14` both references it and carries three supporters,
+while the twin has one supporter, so BM1 is untouched. The round-4 anchor
+`19` **omits `14`** — a block needs `n − f = 3` of `4`, so a correct
+validator that has not received `14` builds without it — and therefore
+its cone holds no round-3 anchor at all. A descent arriving at `19` skips
+round `3` and meets both twins at round `2`, where L24's metric prefers
+`12`: block `8` omits the round-1 anchor from its own references and `12`
+includes it, so the metric reads `2` against `1`.
+
+So `flushRecord Udiv 8 2 = some 8` and `flushRecord Udiv 19 2 = some 12`,
+and the outputs part with the records: the first validator emits `8` and
+never `12`, the second emits `12` and never `8`. The second does flush
+`8` — it lies in the round-4 anchor's cone — and drops it at the filter
+of L27, that author and round having already gone out.
+
+The execution behind the two records is the ordinary one. One validator
+concludes round `4` seeing enough, runs `delivery(4)` and commits `8`.
+The other concludes round `4` on its timeout, so `delivery(4)` finds `14`
+unsupported in its view and fails; the protocol never retries a round, so
+that validator commits nothing until round `6`, where `delivery(6)`
+admits the round-4 anchor and the descent takes `12`.
+
+**Scope.** This does not contradict the commit rule. The twin is never
+committed by the rule, and BM1 through BM7 stand; nor is liveness
+affected. What it refutes is the atomic-broadcast Agreement property, and
+it locates the defect at the two steps the paper asserts without
+argument — Lemma 11's "by construction of the delivery function, party
+`j` must have also committed `B`" and Theorem 12's Agreement clause
+"therefore party `j` eventually ab-delivers(B, j, r)". A repair is
+visible — let the descent prefer a *supported* anchor among tied
+candidates, which BM1 makes unique — but that is a change to the protocol
+rather than a reading of it, and none is attempted here.
 
 ## 19. Satisfiability
 
@@ -6574,7 +6620,7 @@ B and E for the denial-of-service arc, G for garbage collection, O for
 Odontoceti; P, N and R name clauses of the trust boundary rather than
 results. Labels resolving to witness models rather than library
 theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7, SS11, AL8, H9, H10) are
-excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7, BMA5, BMD7, BME6 and BMO10. Appendix C displays every indexed
+excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7, BMA5, BMD7, BME6, BMO10 and BMO11. Appendix C displays every indexed
 result in full.
 
 ### Safety
@@ -6847,6 +6893,7 @@ reused.
 | BMO8 | two descents that meet output the same list | `BlackMarlin.Order.holds` *(BlackMarlin/Order/Proof)* |
 | BMO9 | a reliable author's block is output | `BlackMarlin.mem_ledgerSeq_of_mem_history` *(BlackMarlin/Helpers/Order)* |
 | BMO10 | a sort exists, and the sequence on data | `TopoSort.ofFinOrder`, `fullSort` witnesses *(LeanDagTest/BlackMarlin)* |
+| BMO11 | two honest validators output different twins: Agreement refuted | `Udiv`, `vFlush`, `wFlush` witnesses *(LeanDagTest/BlackMarlin)* |
 
 **Integration** (§16):
 

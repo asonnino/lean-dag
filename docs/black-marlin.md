@@ -27,8 +27,8 @@ This arc covers the commit rule of `delivery(r)` (Algorithm 2, L14–L17)
 with §5.1's safety results (§4), liveness above the structural condition
 in place of §5.2's timing argument (§8), the round rule of L38–L41 and
 the responsiveness it yields (§9), Definition 1's Agreement (§10), and
-the order the descent of `commit` delivers in (§11, §12). §13 says what
-remains.
+the order the descent of `commit` delivers in (§11, §12), and a
+refutation of Definition 1's Agreement (§13). §14 says what remains.
 
 ## 2. The rule
 
@@ -559,15 +559,8 @@ segmentation, and two validators' records can differ at a round where
 neither committed directly: the descent from a higher anchor picks the
 round-`ρ` anchor its own chain reaches, and nothing forces that to be the
 anchor another validator committed directly at `ρ`. BMO8 rules the
-divergence out wherever the two descents meet at a common block; what is
-not established is that they always do. The paper asserts the missing
-step twice — Lemma 11's "by construction of the delivery function, party
-`j` must have also committed `B`", and Theorem 12's Agreement clause
-"therefore party `j` eventually ab-delivers(B, j, r)" — without argument.
-
-Realising the divergence would need equivocating anchors at two adjacent
-rounds and a round-`(ρ+2)` anchor that does not support the linking
-anchor, hence `f ≥ 2` and `n ≥ 7`. No witness is attempted here.
+divergence out wherever the two descents meet at a common block; they
+need not, and §13 exhibits an execution where they do not.
 
 The witness is the covered four-round model: identifiers run downward
 along references there, so sorting by identifier is a topological sort
@@ -576,7 +569,61 @@ and `TopoSort` is not vacuous. The list it delivers is
 anchor round, each anchor last in its own — settled by `decide`, with the
 round-3 blocks no committed anchor reaches absent from it.
 
-## 13. What is not covered
+## 13. Agreement, refuted
+
+§12 left one thing open: whether two validators' records must agree at a
+round where neither committed directly. They need not, and
+`LeanDagTest/BlackMarlin/Divergence.lean` exhibits an execution where two
+honest validators output **different blocks** of the same author and
+round, neither ever outputting the other's. That is Definition 1's
+Agreement refuted for the protocol as specified, at `n = 4`, `f = 1`.
+
+The universe has four validators with `0` Byzantine, seven rounds, and
+the rotation anchoring rounds `0` to `6` by `3, 3, 0, 1, 2, 3, 1`.
+Validator `0` equivocates at round `2`, producing blocks `8` and `12`.
+Every step is settled by `decide`:
+
+* **The rule commits `8`, and only `8`.** Three round-3 blocks reference
+  it, and the round-3 anchor `14` both references it and carries three
+  supporters, so `Committed Udiv 8 2`. Its twin `12` has one supporter,
+  so BM1 is untouched — the rule admits exactly one of them.
+* **The round-4 anchor omits `14`.** A block needs `n − f = 3` references
+  of `4`, so a correct validator that has not yet received `14` builds
+  without it, legally. Then `coneAnchors Udiv 19 3 = ∅`: a descent
+  arriving at `19` finds no round-3 anchor and skips the round.
+* **At round `2` it therefore faces both twins**, and the tie-break of
+  L24 prefers `12`: block `8` omits the round-1 anchor from its own
+  references where `12` includes it, so the metric reads `2` for `8` and
+  `1` for `12`.
+* **The records part.** `flushRecord Udiv 8 2 = some 8`, and
+  `flushRecord Udiv 19 2 = some 12`.
+* **And so do the outputs.** The first validator outputs `8` and never
+  `12`; the second outputs `12` and never `8`. The second does *flush*
+  `8` — it lies in the round-4 anchor's cone — and drops it at the filter
+  of L27, that author and round having already gone out.
+
+The execution behind the two records: one validator concludes round `4`
+seeing enough, runs `delivery(4)`, and commits `8`. The other concludes
+round `4` on its **timeout**, so `delivery(4)` finds `14` unsupported in
+its view and the attempt fails; the protocol never retries a round, so
+it commits nothing until round `6`, where `delivery(6)` admits the
+round-4 anchor and the descent takes `12`.
+
+**What this does and does not touch.** It does not contradict the commit
+rule: `12` is never committed by the rule, and BM1 through BM7 are
+untouched. It does not touch liveness. What it refutes is Definition 1's
+Agreement, and with it Theorem 12, for the algorithm as written — and it
+locates the defect precisely at the two steps the paper asserts without
+argument, Lemma 11's "by construction of the delivery function, party
+`j` must have also committed `B`" and Theorem 12's Agreement clause
+"therefore party `j` eventually ab-delivers(B, j, r)".
+
+**What would repair it** is not attempted here. Making the descent prefer
+a *supported* anchor among tied candidates would do it — BM1 makes the
+supported one unique — but that is a change to the protocol rather than
+a reading of it.
+
+## 14. What is not covered
 
 **Lemma 10.** No counterpart, and none needed: BML5 makes the recurring
 run deterministic where the paper bounds an expectation.
@@ -590,10 +637,11 @@ message schedule.
 **Delivery completeness.** BML3 covers reliable authors. That *every*
 block reaches the ledger needs the weak-reference window of §4.3.
 
-**Agreement for an equivocator's twins** (§12). Definition 1's other
-three properties are Validity (BMO9), Integrity (BMO4) and Total order
-(BMO7); Agreement holds for correct authors' blocks and, for an
-equivocator's, wherever two descents meet (BMO8).
+**Agreement for an equivocator's twins** — refuted rather than left
+open (§13). Definition 1's other three properties are Validity (BMO9),
+Integrity (BMO4) and Total order (BMO7); Agreement holds for correct
+authors' blocks and, for an equivocator's, wherever two descents meet
+(BMO8), which §13 shows they need not.
 
 **The deterministic tie-break as a rule.** L24's metric is transcribed
 (§11); "break ties deterministically" is read as `≤`-least under a

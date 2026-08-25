@@ -189,8 +189,12 @@ faults alone.
   filter modelled, what a validator outputs is a **list**, and three of
   the four atomic-broadcast properties hold of it: Validity for reliable
   authors, Integrity, and Total order. Agreement holds for correct
-  authors' blocks, and for an equivocator's wherever two descents meet —
-  the residue being a step the paper asserts twice without argument. The
+  authors' blocks, and for an equivocator's wherever two descents meet.
+  **They need not**: a seven-round model at `n = 4`, `f = 1` has two
+  honest validators output different twins of an equivocating anchor,
+  neither ever outputting the other's — Definition 1's Agreement, and so
+  the paper's Theorem 12, refuted on data. The commit rule is untouched;
+  the defect sits at two steps the paper asserts without argument. The
   arc is the second under the statement/proof partition.
 
 Every definition is exercised on concrete models by `decide` before
@@ -259,7 +263,7 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 | [`docs/adaptive-leaders.md`](docs/adaptive-leaders.md) | adaptive leader schedules: the design record and theorem plan |
 | [`docs/hybrid-plan.md`](docs/hybrid-plan.md) | hybrid fault tolerance: the design record and theorem plan |
 | [`docs/mahi-mahi.md`](docs/mahi-mahi.md) | the asynchronous rule at wave `w`: the clause, and the statement/proof partition |
-| [`docs/black-marlin.md`](docs/black-marlin.md) | the three-round commit rule: the link clause, the run of two, what the reactive exit costs, agreement, the delivered order the descent computes, and the sequence it outputs |
+| [`docs/black-marlin.md`](docs/black-marlin.md) | the three-round commit rule: the link clause, the run of two, what the reactive exit costs, agreement, the delivered order the descent computes, the sequence it outputs, and where Agreement fails |
 | [`docs/integration.md`](docs/integration.md) | composing the arcs: the invariant interface, and what composition revealed |
 | [`docs/related.md`](docs/related.md) | a survey of consensus on uncertified DAGs |
 | [`docs/style.md`](docs/style.md) | writing conventions for the documents and the source |

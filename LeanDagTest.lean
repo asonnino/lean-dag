@@ -43,3 +43,4 @@ import LeanDagTest.BlackMarlin.Liveness
 import LeanDagTest.BlackMarlin.Reactive
 import LeanDagTest.BlackMarlin.Agreement
 import LeanDagTest.BlackMarlin.Ledger
+import LeanDagTest.BlackMarlin.Divergence
