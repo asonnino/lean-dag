@@ -129,7 +129,7 @@ round-above vertices points at `l`.
 
 Definition 9 writes "there are `2f + 1` vertices", but the quorum clause
 two lines above counts "vertices issued by distinct processes", and every
-other quorum in the paper is over processes. `report.md` §19.3 is why the
+other quorum in the paper is over processes. `report.md` §19.2 is why the
 vertex reading cannot be meant: under it a vertex may be committed and
 skipped at once. -/
 def Skipped (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=

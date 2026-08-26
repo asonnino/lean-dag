@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Draw the three executions that defeat Minnow's `crs*` (`minnow.md`).
+"""Draw the executions that bear on Minnow's `crs*` (`minnow.md`).
 
 Each figure is generated from the same vertex and edge tables as the
 witnesses in `LeanDagTest/Minnow/`, so the pictures assert nothing the
-machine has not checked. The empty-slot reading of §19.2 has no figure:
-it is a reading of a sentence, and the reading it loses to is the right
-one.
+machine has not checked. The empty-slot reading of `report.md` §19.2 has
+no figure: it is a reading of a sentence, and the reading it loses to is
+the right one.
 
     scripts/minnow-figures.py   ->  docs/figures/minnow-skip.svg
                                     docs/figures/minnow-deadlock.svg
                                     docs/figures/minnow-equivocation.svg
+                                    docs/figures/minnow-schedule.svg
 """
 import pathlib
 
@@ -286,9 +287,89 @@ def equivocation():
     return "minnow-equivocation.svg"
 
 
+def schedules():
+    """The same DAG under two leader sequences."""
+    W, H = 1180, 620
+    X0, DX, CW, CH = 210, 152, 112, 30
+    out = head(W, H, "The same DAG, two leader schedules",
+               "The Byzantine habit does not change: every vertex process 0 issues "
+               "reaches process 1 alone, and sits in the dead zone at two pointers "
+               "of four.")
+    GREEN_FILL = "#e8f4ea"
+
+    def chip(x, y, txt, kind):
+        fill, stroke, tcol = {
+            "dead": (DEAD, BYZ, BYZ),
+            "blocked": ("#ffffff", "#cccccc", "#999999"),
+            "commits": (GREEN_FILL, OK, OK),
+        }[kind]
+        out.append(f'<rect x="{x - CW // 2}" y="{y}" width="{CW}" height="{CH}" rx="7" '
+                   f'fill="{fill}" stroke="{stroke}" stroke-width="1.6"/>')
+        out.append(f'<text x="{x}" y="{y + 20}" font-size="13" fill="{tcol}" '
+                   f'text-anchor="middle">{txt}</text>')
+
+    def panel(y0, rows, caption, slots, verdict, vcol):
+        out.append(f'<text x="24" y="{y0 - 26}" font-size="14" fill="#111">{caption}</text>')
+        for r in range(6):
+            x = X0 + DX * r
+            out.append(f'<text x="{x}" y="{y0 - 8}" font-size="12" fill="#555" '
+                       f'text-anchor="middle">round {r}</text>')
+            for n, (txt, kind) in enumerate(slots(r)):
+                chip(x, y0 + n * (CH + 6), txt, kind)
+        y = y0 + rows * (CH + 6) + 24
+        out.append(f'<text x="24" y="{y}" font-size="13" fill="{vcol}">{verdict}</text>')
+
+    def two(r):
+        a = (2 * r) % 4
+        b = (2 * r + 1) % 4
+        return [(f"({a},{r})", "dead" if a == 0 else "blocked"),
+                (f"({b},{r})", "dead" if b == 0 else "blocked")]
+
+    def one(r):
+        p = [0, 2, 3, 1][r % 4]
+        kind = "dead" if p == 0 else ("blocked" if [0, 2, 3, 1][(r - 1) % 4] == 0
+                                      else "commits")
+        return [(f"({p},{r})", kind)]
+
+    panel(150, 2, "round robin, two leaders a round — the schedule of the section above",
+          two, "Not one of the ten leader slots commits. Each round carries a fresh "
+               "dead slot or sits directly above one.", BYZ)
+    panel(300, 1, "round robin, one leader a round", one,
+          "The round after a dead slot is blocked; the two after that commit, and are "
+          "checked to.", OK)
+
+    for n, (kind, txt) in enumerate((
+            ("dead", "the Byzantine process leads: two pointers, neither committable "
+                     "nor skippable, and decided in no view"),
+            ("blocked", "a correct leader that does not hold the dead vertex, and "
+                        "cannot skip it either"),
+            ("commits", "a correct leader two rounds above the dead slot, which has "
+                        "it in its causal past"))):
+        y = 410 + n * 36
+        chip(70, y - 16, "", kind)
+        out.append(f'<text x="140" y="{y + 4}" font-size="13" fill="#111">{txt}</text>')
+
+    tail = [
+        "A dead slot is out of reach for exactly two rounds of leaders — its own, where "
+        "there is no causal path either way, and the one above, whose leaders",
+        "need not hold it. From two rounds up it lies in every causal past, because it "
+        "has f + 1 pointers and a vertex misses at most f of the round below.",
+        "So a schedule offering two consecutive rounds of correct leaders commits at the "
+        "second. Round robin at l = 1 always offers one: f faulty processes cut",
+        "the cycle into at most f runs of the 2f + 1 correct, so some run has three. At "
+        "l = 2 or more an adversary can meet every such window with the f it has.",
+    ]
+    for n, txt in enumerate(tail):
+        out.append(f'<text x="24" y="{H - 78 + n * 20}" font-size="13" '
+                   f'fill="#111">{txt}</text>')
+    out.append('</svg>')
+    (FIGS / "minnow-schedule.svg").write_text("\n".join(out) + "\n")
+    return "minnow-schedule.svg"
+
+
 def main():
     FIGS.mkdir(parents=True, exist_ok=True)
-    for f in (skip(), deadlock(), equivocation()):
+    for f in (skip(), deadlock(), equivocation(), schedules()):
         print(f"docs/figures/{f}")
 
 

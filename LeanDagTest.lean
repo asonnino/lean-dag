@@ -49,3 +49,4 @@ import LeanDagTest.BlackMarlin.ViewLiveness
 import LeanDagTest.Minnow.Deadlock
 import LeanDagTest.Minnow.Skip
 import LeanDagTest.Minnow.Safety
+import LeanDagTest.Minnow.Fair

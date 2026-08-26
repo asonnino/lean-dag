@@ -4,7 +4,7 @@ import LeanDagTest.Model
 /-!
 # Minnow — one twin resolves a slot the other later commits
 
-`report.md` §19.5. The second condition of `Φ*s` is satisfied by *some*
+`report.md` §19.3. The second condition of `Φ*s` is satisfied by *some*
 vertex of an earlier slot — "there is a vertex `v′` in slot `s′` in `D`
 such that `v′ ⇝ ϕ(l)` …" — and resolving a slot that way does not decide
 it. Where the slot's process equivocates, one twin can carry a later
@@ -100,7 +100,7 @@ example : pointers Dpart 0 1 = {2, 3} ∧ ¬ Quorum Dpart 0 ∧
     ¬ Skipped Dpart 0 := by decide
 
 /-- And undecided on the *literal* reading of the skip clause too, so the
-finding does not rest on how `report.md` §19.3 settles it. Only one
+finding does not rest on how `report.md` §19.2 settles it. Only one
 round-`1` vertex of the view carries no edge to `0`, where three are
 needed. -/
 example : ¬ SkippedByVertex Dpart 0 := by decide

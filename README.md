@@ -251,18 +251,23 @@ faults alone.
   vertex resolves nothing at the letter, and the skip clause counts
   vertices where the quorum clause counts processes — which would make
   one vertex committed and skipped at once, so it must count processes.
-  **The defects are what survive both readings.** The two thresholds leave
-  a gap: a vertex pointed to by between `f+1` and `2f` processes is
-  neither committable nor skippable, and a faulty process can occupy that
-  gap every round it leads, so **nothing is ever committed** and
-  Live-Commit fails outright. It admits no repair at this shape — `2f+1`
-  is the least threshold the skip clause can safely take, so the gap is
-  forced. And an earlier slot counts as resolved when *some* vertex of it
-  lies in a candidate's causal past, which is not the same as that vertex
-  being decided: where the slot's process equivocates, one twin carries a
-  later leader past the slot while the other is undecided, and the other
-  then acquires its quorum and demands a place before what is already
-  output — **Safe-Commit**, and with it Total-order and Agreement.
+  **Both defects come from one sentence.** An earlier slot counts as
+  resolved when *some* vertex of it lies in a candidate's causal past,
+  which is not the same as that vertex being decided. Where the slot's
+  process equivocates, one twin carries a later leader past the slot
+  while the other is undecided, and the other then acquires its quorum
+  and demands a place before what is already output — **Safe-Commit**,
+  and with it Total-order and Agreement. And the clause that does decide
+  a slot cannot reach far enough: the two thresholds leave a gap — a
+  vertex pointed to by between `f+1` and `2f` processes is neither
+  committable nor skippable — which `2f+1` being the least safe skip
+  threshold makes forced. What that costs turns on the schedule. A dead
+  slot lies in every causal past two rounds up, so two consecutive rounds
+  of correct leaders commit at the second; round robin at one leader a
+  round always supplies them, and at two or more an adversary can deny
+  them for every `f`. So **Live-Commit** fails for the rule paired with a
+  multi-leader round robin rather than for the rule alone — and the
+  escape that rescues it is the disjunct that costs safety.
 
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on

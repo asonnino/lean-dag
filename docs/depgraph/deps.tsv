@@ -9725,6 +9725,7 @@ EDGE	LeanDagTest.ugrowLag._proof_27	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowLag._proof_27	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ugrowLag._proof_27	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowLag._proof_27	LeanDag.Block.creator
+NODE	LeanDagTest.Minnow.mFair._proof_1	LeanDagTest.Minnow.Fair	thm
 NODE	LeanDag.Delivery.held_spec	LeanDag.Liveness	thm
 EDGE	LeanDag.Delivery.held_spec	LeanDag.Delivery
 EDGE	LeanDag.Delivery.held_spec	LeanDag.Faults
@@ -26191,6 +26192,9 @@ EDGE	LeanDag.Integration.synchronisedOn_chop._proof_1_4	LeanDag.BlockUniverse.id
 EDGE	LeanDag.Integration.synchronisedOn_chop._proof_1_4	LeanDag.BlockUniverse.block
 EDGE	LeanDag.Integration.synchronisedOn_chop._proof_1_4	LeanDag.Block.round
 EDGE	LeanDag.Integration.synchronisedOn_chop._proof_1_4	LeanDag.BlockUniverse
+NODE	LeanDagTest.Minnow.mFair	LeanDagTest.Minnow.Fair	def
+EDGE	LeanDagTest.Minnow.mFair	LeanDag.Minnow.Slot
+EDGE	LeanDagTest.Minnow.mFair	LeanDagTest.Minnow.mFair._proof_2
 NODE	LeanDag.topsOf	LeanDag.DoS.Adoption	def
 EDGE	LeanDag.topsOf	LeanDag.Faults
 EDGE	LeanDag.topsOf	LeanDag.Block.refs
@@ -28808,6 +28812,8 @@ EDGE	LeanDag.Nemo.ValidWrt.casesOn	LeanDag.Nemo.ValidWrt.rec
 EDGE	LeanDag.Nemo.ValidWrt.casesOn	LeanDag.Nemo.ValidWrt
 EDGE	LeanDag.Nemo.ValidWrt.casesOn	LeanDag.Block.refs
 EDGE	LeanDag.Nemo.ValidWrt.casesOn	LeanDag.Block.round
+NODE	LeanDagTest.Minnow.mFair._proof_2	LeanDagTest.Minnow.Fair	thm
+EDGE	LeanDagTest.Minnow.mFair._proof_2	LeanDagTest.Minnow.mFair._proof_1
 NODE	LeanDag.BlackMarlin.Pace.no_timeout_of_fast	LeanDag.BlackMarlin.Helpers.Reactive	thm
 EDGE	LeanDag.BlackMarlin.Pace.no_timeout_of_fast	LeanDag.VotesAt
 EDGE	LeanDag.BlackMarlin.Pace.no_timeout_of_fast	LeanDag.Faults

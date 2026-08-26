@@ -366,28 +366,33 @@ proof effort with no corresponding proof content.
 **Minnow's minimal commit rule fails in two ways** (§19). `crs*`, the
 rule proposed for eventual synchrony, decides a leader slot from the
 round immediately above it: a quorum of `2f + 1` processes pointing
-commits it, and `2f + 1` vertices not pointing skips it. Two of its
-clauses are written in a way their own sentences do not support — a slot
-with no vertex resolves nothing, and the skip clause counts vertices
-where the quorum clause counts processes, which would make one vertex
-committed and skipped at once. A phrase repairs each, and §19.2 and
-§19.3 settle them. **The defects are what survive both readings.** The
-two thresholds leave a gap — a vertex pointed to by
-between `f + 1` and `2f` processes is neither committable nor skippable —
-which a faulty process can occupy every round it leads, so that nothing
-is ever committed and Live-Commit fails outright (§19.4). It admits no
-repair at this shape: `2f + 1` is the least threshold the skip
-clause can safely take, so the gap is forced. And an earlier slot counts
-as resolved when *some* vertex of it lies in the candidate's causal past,
-which is not the same as that vertex being decided: where the slot's
-process equivocates one twin carries a later leader past the slot while
-the other is undecided, and the other then acquires its quorum and
-demands a place before what is already output — Safe-Commit, and with it
-Total-order and Agreement (§19.5). The two are independent: the first
-needs no equivocation, the second no dead zone. All four findings are
-exhibited on four processes at `f = 1`, machine-checked, with the model
-held to the paper's own validity rule and its own reading of each clause
-(§19.1).
+commits it, and `2f + 1` not pointing skips it. Two of its clauses are
+written in a way their own sentences do not support — a slot with no
+vertex resolves nothing, and the skip clause counts vertices where the
+quorum clause counts processes, which would make one vertex committed and
+skipped at once. A phrase repairs each, and §19.2 settles both.
+**Both defects come from the same sentence.** An earlier slot counts as
+resolved when *some* vertex of it lies in the candidate's causal past,
+which is not the same as that vertex being decided. Read one way the
+clause is too generous: where the slot's process equivocates, one twin
+carries a later leader past the slot while the other is undecided, and
+the other then acquires its quorum and demands a place before what is
+already output — Safe-Commit, and with it Total-order and Agreement
+(§19.3). Read the other way the rule cannot reach far enough: the two
+thresholds leave a gap — a vertex pointed to by between `f + 1` and `2f`
+processes is neither committable nor skippable — which a Byzantine
+process can occupy every round it leads, and `2f + 1` is the least
+threshold the skip clause can safely take, so the gap is forced (§19.4).
+What that costs turns on the leader schedule. A dead slot lies in every
+causal past two rounds up, so a schedule offering two consecutive rounds
+of correct leaders commits at the second: round robin with one leader a
+round always offers such a pair, and round robin with two or more can be
+denied it for every `f`. So Live-Commit fails for the rule paired with a
+multi-leader round robin rather than for the rule alone, and the escape
+that rescues it is the disjunct that costs safety (§19.5). Every finding
+is exhibited on four processes at `f = 1`, machine-checked, with the
+model held to the paper's own validity rule and its own reading of each
+clause (§19.1).
 
 ### 1.4 Scope and non-goals
 
@@ -6508,39 +6513,50 @@ every leader slot that precedes `l`'s in the sequence `leaders` is
 concurrent with `l` and either committed or skipped, where *skipped*
 means `2f + 1` vertices of the round above carry no edge to it.
 
-**Two defects, and two readings that must be settled to state them.**
+**One sentence generates both defects.** The second condition resolves an
+earlier slot when *some vertex of it* lies in the candidate's causal
+past. That is a test of position, where a commit is a verdict:
+**resolved is not decided**. The disjunct therefore reaches without
+discriminating. Where a slot's process equivocates it holds two vertices,
+either of which may be the one in the way; one twin carries a later
+leader past the slot while the other is undecided, and the other then
+acquires its quorum and demands a place before what is already output.
+That is Safe-Commit, and §3.2 of the paper obtains Total-order and
+Agreement from Safe-Commit (§19.3).
+
+**The clause that does decide a slot cannot reach far enough.** The only
+verdict `crs*` reaches about a slot reads the single round above it:
+`2f + 1` processes pointing commits, `2f + 1` not pointing skips. At
+`n = 3f + 1` those leave a gap — a vertex pointed to by between `f + 1`
+and `2f` processes is neither — and `2f + 1` is the least threshold the
+skip clause can safely take, so the gap belongs to the rule's shape
+rather than to its constants. A Byzantine process that keeps its vertices
+in the gap is never decided, in any view (§19.4).
+
+**What that costs depends on the leader schedule.** An undecided slot
+does not block for ever, and the reason is the disjunct above: two rounds
+up the dead vertex lies in every causal past, resolving the slot without
+deciding it. So a schedule offering two consecutive rounds whose leader
+slots all belong to correct processes commits at the second of them.
+Round robin with one leader a round always offers such a pair; round
+robin with two or more can be denied it, for every `f`, by an adversary
+choosing which processes to corrupt. So Live-Commit fails for `crs*`
+paired with a multi-leader round robin rather than for `crs*` alone
+(§19.5) — and the escape that rescues it is the disjunct that costs
+safety.
+
+**Two readings must be settled before either defect can be stated.**
 Definition 9 is written twice in a way its own sentences do not support.
-Its second condition binds a vertex existentially, so read at the letter
-a leader slot holding no vertex resolves nothing and a silent process
-blocks everything; the reading that skips such a slot at once is right,
-and §19.2 says why. Its skip clause counts vertices where the quorum
-clause two lines above counts processes; the vertex reading makes one
-vertex committed and skipped at the same time, so the process reading is
-forced, and §19.3 says why. Neither is a defect of the rule so much as of
-its statement, and the arc records both because a formalisation has to
-choose.
+Its second condition binds a vertex existentially, so at the letter a
+leader slot holding no vertex resolves nothing and a silent process
+blocks everything. Its skip clause counts vertices where the quorum
+clause two lines above counts processes, which would make one vertex
+committed and skipped at once. Neither is a defect of the rule so much as
+of its statement; §19.2 settles both, and no finding depends on how they
+go.
 
-**The defects escape every reading.** At `n = 3f + 1` the two thresholds
-leave a gap — a vertex pointed to by between `f + 1` and `2f` processes is
-neither committable nor skippable — and a Byzantine process that keeps its
-vertices in that gap stops the rule from committing anything, ever
-(§19.4). The gap cannot be closed by lowering a threshold: `2f + 1` is the
-least value the skip clause can safely take, so it is a property of the
-rule's shape rather than of its constants. That costs Live-Commit.
-
-The other costs Safe-Commit, and with it Total-order and Agreement. An
-earlier slot is resolved when *some* vertex of it lies in the candidate's
-causal past, which is not the same as that vertex being decided. Where the
-slot's process equivocates it holds two vertices, one may resolve the slot
-while the other is undecided, and the other may then acquire its quorum
-and demand a place before the leader already committed (§19.5). Neither
-defect needs the other: the first uses no equivocation and the second no
-dead zone.
-
-The chapter records counterexamples and the little theory they need, and
-nothing else. Where the paper's own liveness argument (its Lemma 11)
-reaches the case that fails, it says "we leave the details to a later
-version".
+Where the paper's own liveness argument — its Lemma 11 — reaches the case
+that fails, it says "we leave the details to a later version".
 
 ### 19.1 What is modelled, and how the model is held to the paper
 
@@ -6614,7 +6630,7 @@ than assume it.
 **The skip clause counts processes, in line with every other quorum.**
 Definition 9 writes "`Skip: or there are 2f + 1 vertices that do not have
 an edge to v′ in round r + 1`", but the quorum clause two lines above
-counts "vertices issued by distinct processes", and §19.3 shows the
+counts "vertices issued by distinct processes", and §19.2 shows the
 vertex reading to be unsound. So what is counted is distinct processes,
 none of whose round-above vertices points at `l`:
 
@@ -6626,8 +6642,7 @@ def Skipped (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
 ```
 
 The literal reading is kept beside it as `SkippedByVertex`, used only to
-state what it costs. Nothing in §19.4 turns on the choice: the DAG there
-carries no equivocation at all, so the two counts coincide on it.
+state what it costs.
 
 **The second clause is an existential over the slot's vertices, because
 that is what is written.** Definition 9: "`there is a vertex v′ in slot
@@ -6661,9 +6676,9 @@ leader's past; the deterministic sort that orders the output; and
 Algorithm 3's round advance, timer and message layer. None of them can
 make a leader commit that the pattern disables, because Definition 4 is
 explicit: "a leader vertex `l` is committed **if and only if** the
-pattern `P` is enabled for `l` in `D`". Every finding below is of the
-form "this leader is not committed", so it is a statement about the
-pattern alone, and the omitted machinery is downstream of it.
+pattern `P` is enabled for `l` in `D`". Every negative finding below is
+of the form "this leader is not committed", so it is a statement about
+the pattern alone, and the omitted machinery is downstream of it.
 
 **The two theorems the counterexamples rest on.** Both are read off
 Definition 9 and proved, not assumed. `quorum_of_committedAt` — a commit
@@ -6685,70 +6700,60 @@ positive — that an earlier one *is* — is checked beside it.
 **The leader sequence is round robin, not one chosen to suit.** §5:
 S-Minnow "instantiates the `leaders` function with a deterministic,
 pre-defined, sequence, e.g., round-robin, of `l` leaders each round". The
-witnesses take `l = 2` over four processes, so the leaders of round `r`
-are processes `2r` and `2r + 1` modulo `4`, and the sequence is checked
-on data. This matters for §19.4: the adversary chooses which processes to
-send its vertex to, and it is round robin that tells it which two to
-avoid.
+witnesses of §19.2 to §19.4 take `l = 2` over four processes, so the
+leaders of round `r` are processes `2r` and `2r + 1` modulo `4`, and the
+sequence is checked on data. This matters for §19.4: the adversary
+chooses which processes to send its vertex to, and it is round robin that
+tells it which two to avoid. §19.5 runs the same DAG at `l = 1`, and the
+difference between the two is that section's subject.
 
-**The committee.** All three witnesses are at `n = 4`, `f = 1`, the
+**The committee.** All four witnesses are at `n = 4`, `f = 1`, the
 smallest committee satisfying the paper's `f < n/3`, with process `0`
 faulty and the other three correct.
 
-### 19.2 An ambiguity that does not become a defect: the empty slot
+### 19.2 Two ambiguities in Definition 9, and how they must be read
 
-The second clause opens "there is a vertex `v′` in slot `s′` in `D` such
-that …", and all three ways of resolving the slot — a vertex of it in
-`l`'s causal past, a vertex of it committed, a vertex of it skipped — sit
-inside that existential. Taken at the letter, a slot holding **no**
-vertex satisfies none of them, and a process that falls silent would
-block every later leader for ever.
+Definition 9 is written twice in a way its own sentences do not support.
+Neither is a defect of the rule, but a formalisation has to choose, and
+what it chooses fixes what the two sections after this one are about. So
+both are settled here, and this section closes by checking that neither
+defect depends on the choice.
 
-**That is not the reading to take**, and it is worth saying why rather
-than leaving it as a finding. The skip disjunct does not need a `v′` at
-all. What it asks is that `2f + 1` vertices of the round above carry no
-edge *into the slot*, and where the slot is empty every vertex of that
+**The empty slot.** The second condition opens "there is a vertex `v′` in
+slot `s′` in `D` such that …", and all three ways of resolving the slot —
+a vertex of it in `l`'s causal past, a vertex of it committed, a vertex
+of it skipped — sit inside that existential. Taken at the letter, a slot
+holding **no** vertex satisfies none of them, and a process that falls
+silent would block every later leader for ever.
+
+That is not the reading to take. The skip disjunct does not need a `v′`
+at all: what it asks is that `2f + 1` vertices of the round above carry
+no edge *into the slot*, and where the slot is empty every vertex of that
 round qualifies trivially. Read so — a slot is resolved when some vertex
 of it lies in `l`'s causal past, or some vertex of it is committed, or
 `2f + 1` vertices of the round above have no edge into it — a silent
 leader is skipped at once, which is plainly what the clause exists to do.
-Nothing else in `crs*` pushes back against that reading; on the contrary,
-§19.3 finds an independent reason to state the skip clause over the slot
-rather than over a chosen vertex of it.
+The count below gives an independent reason to state the skip clause over
+the slot rather than over a chosen vertex of it.
 
-**The model implements the letter, and no finding depends on it.**
-`CommittedAt` binds `v` existentially over `slotBlocks`, because a
-formalisation has to choose and the written form is the safer thing to be
-held to. The choice is recorded rather than buried, and
+The model implements the letter, because the written form is the safer
+thing to be held to: `CommittedAt` binds `v` existentially over
+`slotBlocks`. The choice is recorded rather than buried, and
 `LeanDagTest/Minnow/Deadlock` carries a DAG in which process `0` issues
 nothing and five leaders are blocked, so the consequence of the literal
-reading is on the record.
+reading is on the record. The paper's own Lemma 11 shares the ambiguity
+silently, reasoning throughout about "a leader vertex `l′′` issued by a
+faulty process" and never about a slot holding none.
 
-**No finding below depends on the choice.** In §19.3 and §19.4 every
-slot whose resolution matters holds exactly **one** vertex, and on a
-singleton slot the two readings coincide: "some vertex of the slot is
-skipped" and "`2f + 1` vertices have no edge into the slot" are the same
-sentence. In §19.5 the slot that matters holds **two**, and is resolved
-through the causal-past disjunct rather than the skip clause, so no empty
-slot arises there either. So every result below holds on the letter and
-on the charitable reading alike, and the ambiguity above is a defect of
-the write-up only — one the paper's own Lemma 11 shares silently,
-reasoning throughout about "a leader vertex `l′′` issued by a faulty
-process" and never about a slot holding none.
-
-### 19.3 A second ambiguity, and why it must go the same way
-
-Definition 9's skip disjunct reads "there are `2f + 1` **vertices** that
-do not have an edge to `v′`". Two lines above, the quorum clause counts
-"a set `Q` of `2f + 1` vertices issued by **distinct processes**", and
-every other quorum in the paper is over processes. The arc reads the skip
-clause over processes too, and this section is why it has no choice.
+**The count.** Definition 9's skip disjunct reads "there are `2f + 1`
+**vertices** that do not have an edge to `v′`". Two lines above, the
+quorum clause counts "a set `Q` of `2f + 1` vertices issued by **distinct
+processes**", and every other quorum in the paper is over processes. The
+vertex reading is not a matter of taste: it makes the rule unsafe.
 
 ![**What the vertex reading costs.** The quorum clause counts processes and the skip clause, at the letter, counts vertices. A faulty process issuing three vertices in one round contributes to the second without giving up its place in the first, and both clauses hold of one vertex at once.](figures/minnow-skip.svg)
 
 At `n = 4`, `f = 1`, both thresholds read `2f + 1 = 3`.
-
-**The execution, step by step.**
 
 1. **Round `0`** carries one vertex per process, and the vertex in
    question is process `0`'s.
@@ -6772,30 +6777,104 @@ At `n = 4`, `f = 1`, both thresholds read `2f + 1 = 3`.
    commits the slot, and the clause that exists to resolve slots the rule
    cannot commit skips it.
 
-**What that would cost.** The two clauses are read by different processes
-from different views. One holds the three pointing vertices and commits
-the slot, placing it in its output; another holds the three non-pointing
-ones, skips it, and commits the next leader without it. Neither output is
-a prefix of the other, which is what Safe-Commit forbids — and §3.2 of the
-paper obtains Total-order and Agreement from Safe-Commit. A reading on
-which the rule is not safe cannot be the reading meant.
+The two clauses are read by different processes from different views. One
+holds the three pointing vertices and commits the slot, placing it in its
+output; another holds the three non-pointing ones, skips it, and commits
+the next leader without it. Neither output is a prefix of the other,
+which is what Safe-Commit forbids. A reading on which the rule is not
+safe cannot be the reading meant.
 
 **So the clause is over processes**, and then the two stop competing:
 `¬ Skipped Dk 0`, checked, the processes with no pointing vertex being
 `{3}` alone. `Skipped` in the model is this, and `SkippedByVertex` is
 kept only to state what the letter costs.
 
-**Which settles the shape of §19.4's argument.** The threshold that
-cannot be lowered there is the threshold of the process reading, and the
-execution of §19.4 has no equivocation at all, so the two readings agree
-on it and the finding holds either way. §19.5 does turn on an
-equivocation, and there the two counts could have parted; they do not.
-The twin it leaves undecided is unskippable on both — one round-above
-vertex of the view carries no edge to it, where three are needed, so
-`¬ SkippedByVertex Dpart 0` alongside `¬ Skipped Dpart 0`, both checked.
-Every finding of this chapter holds on either reading.
+**Neither defect depends on either choice.** In §19.4 every slot whose
+resolution matters holds exactly **one** vertex, and on a singleton slot
+the two readings of the skip clause coincide: "some vertex of the slot is
+skipped" and "`2f + 1` vertices have no edge into the slot" are the same
+sentence. That execution carries no equivocation at all, so the two
+counts are the same count throughout it. In §19.3 the slot that matters
+holds **two**, and both counts leave the twin undecided —
+`¬ Skipped Dpart 0` and `¬ SkippedByVertex Dpart 0`, both checked — while
+the slot itself is resolved through the causal-past disjunct rather than
+the skip clause, so no empty slot arises there either. Every finding of
+this chapter holds on the letter and on the charitable reading alike.
 
-### 19.4 The dead zone, and a DAG in which nothing ever commits
+### 19.3 The safety defect: one twin resolves a slot, the other commits it
+
+The first disjunct of the second condition resolves an earlier slot when
+*some* vertex of it lies in the candidate's causal past — "there is a
+vertex `v′` in slot `s′` in `D` such that `v′ ⇝ ϕ(l)`". Nothing there
+asks what the rule will decide about that slot. Being in the way is not
+being committed. Where the slot holds one vertex the difference is
+immaterial, since the vertex in the way is the one any verdict will be
+about. Where
+the slot's process **equivocates** it holds two, and the disjunct is
+satisfied by whichever of them happens to lie in the way, which need not
+be the one later committed.
+
+So a validator can carry a leader past an earlier slot through one twin
+while the other twin is still undecided — and then watch the other twin
+acquire its quorum.
+
+![**Resolved through one twin, committed as the other.** Process `0` equivocates at round `0`, and slot `(0, 0)` is the first leader slot. Three round-1 vertices point to the twin `0`, giving it a quorum in the whole DAG; the fourth is process `1`'s, the round-1 leader, and it points to the twin `4` instead. A view missing one of the three sees `0` undecided — two pointers, one short of a quorum; one non-pointer, two short of a skip — yet resolves the slot through `4` and commits the round-1 leader. The missing vertex then arrives.](figures/minnow-equivocation.svg)
+
+**The execution, step by step.** Four processes at `f = 1`, one leader a
+round by round robin, so the leader of round `r` is process `r` and slot
+`(0, 0)` precedes slot `(1, 1)`.
+
+1. **Round `0`** carries five vertices, because process `0` issues two:
+   `slotBlocks Dfull (0, 0) = {0, 4}`, checked, and process `0` is the
+   faulty one, so `correct_single` is satisfied.
+2. **Round `1`** carries four. Three of them point to the twin `0` and
+   the fourth — process `1`'s, which is the round-1 leader — points to
+   the twin `4`: `pointers Dfull 0 1 = {0, 2, 3}` and
+   `pointers Dfull 4 1 = {1}`, checked. So in the whole DAG `0` carries a
+   quorum and `4` does not, and no two vertices of the slot are both
+   committable.
+3. **A validator's view is missing one of the three.** `Dpart` drops
+   vertex `5` and, to stay reference-closed, vertex `12`, the only one
+   that cites it. It is a valid DAG by the paper's own rule, checked, and
+   `Dpart.ids ⊆ Dfull.ids`.
+4. **In that view the twin `0` is undecided.** `pointers Dpart 0 1 =
+   {2, 3}` — two, one short of a quorum — and one process does not point
+   at it, two short of a skip. So `¬ Quorum Dpart 0 ∧ ¬ Skipped Dpart 0`,
+   checked, and `¬ SkippedByVertex Dpart 0` beside it.
+5. **The slot is resolved all the same.** `Reaches Dpart 6 4` and
+   `¬ Reaches Dpart 6 0`: the round-1 leader has the *other* twin in its
+   causal past, which satisfies the first disjunct. And it carries a
+   quorum of its own, `Quorum Dpart 6`.
+6. So `CommittedAt Dpart sfLead 1 6`, checked: **the round-1 leader is
+   committed with an earlier leader slot undecided.**
+7. **Then vertex `5` arrives.** `Quorum Dfull 0`, so
+   `CommittedAt Dfull sfLead 0 0` — the earlier leader is committed, and
+   `leaders` puts it before the one already output.
+
+**This is Safe-Commit, in the form the paper spells out.** "If `P` is
+enabled for a leader vertex `l` in `D`, then for all leader `l′ < l` in
+`leaders` … if `P` is disabled for `l′` in `D` then it is also disabled
+for `l′` in `D′`". Here `P` is enabled for the round-1 leader in `Dpart`;
+the round-0 leader is *disabled* there and *enabled* in `Dfull`; and it
+precedes the other in `leaders`. The witness states exactly that
+conjunction. And §3.2 of the paper obtains Total-order and Agreement from
+Safe-Commit, so what fails with it is agreement on the output.
+
+**The equivocation is what does it**, and the witness checks the
+converse: with only one vertex in the slot, that vertex is not in the
+round-1 leader's causal past, carries no quorum in the partial view and
+cannot be skipped there, so the leader is blocked and nothing goes wrong.
+A single-vertex slot is either resolved by the vertex the rule will
+eventually decide, or not resolved at all. Two vertices break that tie
+between resolving and deciding.
+
+This is the same defect §18 finds in Black Marlin, where a descent
+chooses among an equivocator's twins by a test that does not read
+support. The mechanism is the same: **a slot with two vertices is
+resolved by whichever one is in the way, and being in the way is not
+being committed.**
+
+### 19.4 The liveness defect: the dead zone
 
 ![**Neither committable nor skippable, every other round.** Process `0` sends each of its vertices to process `1` alone, so exactly two processes point to it: itself and process `1`. Three are needed to commit and three non-pointers to skip, and there are two of each. Round robin then supplies the rest: the other leader of the round is concurrent with the dead slot, and the next round's leaders are the two processes that never received the vertex.](figures/minnow-deadlock.svg)
 
@@ -6811,7 +6890,7 @@ single value `a = 2`. A vertex there is neither committable nor
 skippable, and the count cannot change once the round is full.
 
 **The threshold cannot be lowered to close it.** Suppose the skip clause
-is read over distinct processes — as §19.3 requires — with threshold `s`.
+is read over distinct processes — as §19.2 requires — with threshold `s`.
 For two views not to disagree, no view may skip a vertex another
 commits. A view that skips holds `s` processes with no pointing vertex,
 of which at most `f` are faulty, so at least `s − f` *correct* processes
@@ -6861,14 +6940,12 @@ send each of its vertices to **process `1` alone**.
    ∧ Quorum Dm 15`, checked — so what stops them is the second clause and
    not the first.
 
-**Why once is not enough.** If the round-`0` slot is never decided, and
-the second condition asks that *every* earlier slot be resolved, one dead
-slot might seem to block everything by itself. It does not, and the
-reason is worth stating: **resolved is not decided.** The first disjunct
-asks only that some vertex of the slot lie in the candidate's causal
-past, not that it be committed or skipped. Two pointers carry it there in
-two rounds, because a vertex references `2f + 1` of the `3f + 1` below it
-and so cannot miss both of them.
+**How far a dead slot reaches.** One dead slot does not block everything
+by itself, and the reason is §19.3's sentence read the other way round:
+*resolved is not decided*. The first disjunct asks only that some vertex
+of the slot lie in the candidate's causal past, not that it be committed
+or skipped. Two pointers carry it there in two rounds, because a vertex
+references `2f + 1` of the `3f + 1` below it and so cannot miss both.
 
 So a dead slot is out of reach for exactly two rounds of leaders: its own
 — where there is no causal path either way — and the one above, whose
@@ -6876,11 +6953,12 @@ leaders under round robin are the two processes that did not point to it.
 From two rounds up it lies in every causal past and resolves for
 everyone. On the model: `¬ Reaches Dm 1 0`, `¬ Reaches Dm 6 0` and
 `¬ Reaches Dm 7 0` against `Reaches Dm 8 0`, `Reaches Dm 9 0` and
-`Reaches Dm 14 0`, all checked. **One dead slot holds two rounds
-and no more**, which is why the figure shows the habit repeating —
-and round robin at `l = 2` over four processes puts the faulty process in
-a leader slot every other round, which is exactly the cadence that keeps a fresh dead
-slot within reach of every leader.
+`Reaches Dm 14 0`, all checked. **One dead slot holds two rounds and no
+more**, which is why the figure shows the habit repeating — and round
+robin at `l = 2` over four processes puts the faulty process in a leader
+slot every other round, which is exactly the cadence that keeps a fresh
+dead slot within reach of every leader. §19.5 is what happens when the
+schedule does not supply that cadence.
 
 **The gap in the decision sequence is permanent, and by itself harmless.**
 The slot is undecided in every view, not merely in the full DAG: a
@@ -6888,19 +6966,18 @@ partial view sees fewer pointers, so no quorum, and fewer non-pointers,
 so no skip, and as it grows the counts converge to two and two. So every
 correct process has the same permanent hole at the same position of
 `leaders`, and Safe-Commit is content — a leader disabled in one DAG
-stays disabled in every larger one. What defeats the rule is not the hole
-but its recurrence.
+stays disabled in every larger one. What defeats the rule under this
+schedule is not the hole but its recurrence.
 
 One thing the hole does cost belongs with the wording matters of §19.2
-and §19.3 rather than with this one.
-Definition 9 commits "all **non-leader** vertices that are in the causal
-past of a leader vertex `l` for which `Ps*` is satisfied", and Definition
-4 commits a leader vertex "if and only if the pattern `P` is enabled" for
-it. Taken together, a dead leader vertex is in the causal past of
-committed vertices and is never committed itself, so the output omits a
-vertex that others delivered depend on. The phrase surely means every
-vertex of the past; at the letter the dead slot leaves a hole in the
-delivered set and not only in the decision sequence.
+rather than with this one. Definition 9 commits "all **non-leader**
+vertices that are in the causal past of a leader vertex `l` for which
+`Ps*` is satisfied", and Definition 4 commits a leader vertex "if and
+only if the pattern `P` is enabled" for it. Taken together, a dead leader
+vertex is in the causal past of committed vertices and is never committed
+itself, so the output omits a vertex that others delivered depend on. The
+phrase surely means every vertex of the past; at the letter the dead slot
+leaves a hole in the delivered set and not only in the decision sequence.
 
 **No timing assumption helps.** Eventual synchrony guarantees that a
 vertex a *correct* process sends is received; it says nothing about one a
@@ -6908,118 +6985,155 @@ faulty process withheld. Nothing in the execution turns on message delay,
 and the same DAG is available after the global stabilisation time as
 before it.
 
-**This defeats Live-Commit outright.** The paper's liveness property asks
-that "for every vertex `v` issued by a correct process `i`, `i` will
-eventually have a DAG `D` such that `v ∈ cr(D)`". Here `cr(D)` is empty:
-no leader is committed, so no vertex is committed, so no correct
-process's vertex ever appears in the output.
+**What this costs.** The paper's liveness property asks that "for every
+vertex `v` issued by a correct process `i`, `i` will eventually have a
+DAG `D` such that `v ∈ cr(D)`". On this DAG under this schedule `cr(D)`
+is empty: no leader is committed, so no vertex is committed, so no
+correct process's vertex ever appears in the output. Whether that
+survives a change of schedule is §19.5.
 
-**And the paper's argument reaches this case and stops.** Lemma 11 says a
-faulty leader "is eventually decided (committed or skipped) because
-either all correct processes will issue a vertex that does not point to
-`l′` (and thus `l′` is 'skipped') or there will be a vertex issued by a
-correct process in the causal future of `l′` that satisfies `P*`", and
-then: "we leave the details to a later version". The dichotomy has a
-middle: some correct processes point and some do not. That middle is the
-dead zone, and it is where the argument is left unfinished.
+**The paper's argument reaches this case and stops, whatever the schedule
+is.** Lemma 11 says a faulty leader "is eventually decided (committed or
+skipped) because either all correct processes will issue a vertex that
+does not point to `l′` (and thus `l′` is 'skipped') or there will be a
+vertex issued by a correct process in the causal future of `l′` that
+satisfies `P*`", and then: "we leave the details to a later version". The
+dichotomy has a middle: some correct processes point and some do not.
+That middle is the dead zone. No schedule closes it — the dead slot is
+decided in no view, however `leaders` runs — so the lemma is refuted
+independently of everything in §19.5.
 
-### 19.5 One twin resolves a slot, the other commits it
+### 19.5 The schedule the dead zone needs
 
-§19.4 turned on the observation that **resolved is not decided** — the
-first disjunct of the second condition asks only that some vertex of an
-earlier slot lie in the candidate's causal past. There it was a
-reassurance, bounding how far one dead slot reaches. It is also a hole.
+§19.4's execution is a DAG and a leader sequence, and the finding belongs
+to the pair. This section separates them: the DAG is held fixed, its
+Byzantine habit unchanged, and only `leaders` is varied.
 
-Where the slot's process **equivocates**, the slot holds two vertices,
-and the disjunct is satisfied by whichever of them happens to lie in the
-way. That need not be the one which is later committed. A validator can
-therefore carry a leader past an earlier slot through one twin while the
-other twin is still undecided — and then watch the other twin acquire its
-quorum.
+![**The same DAG, two leader schedules.** The Byzantine habit does not change: every vertex process `0` issues reaches process `1` alone, and sits in the dead zone at two pointers of four. At `l = 2` the faulty process leads every other round, and a fresh dead slot is always within reach of every leader. At `l = 1` it leads one round in four, so three correct leader rounds follow every dead slot: the first is still blocked by it, and the two after that commit.](figures/minnow-schedule.svg)
 
-![**Resolved through one twin, committed as the other.** Process `0` equivocates at round `0`, and slot `(0, 0)` is the first leader slot. Three round-1 vertices point to the twin `0`, giving it a quorum in the whole DAG; the fourth is process `1`'s, the round-1 leader, and it points to the twin `4` instead. A view missing one of the three sees `0` undecided — two pointers, one short of a quorum; one non-pointer, two short of a skip — yet resolves the slot through `4` and commits the round-1 leader. The missing vertex then arrives.](figures/minnow-equivocation.svg)
+**A dead slot is out of reach for exactly two rounds.** A vertex in the
+dead zone has at least `f + 1` processes pointing at it from the round
+above. A vertex two rounds up references `2f + 1` of the `3f + 1`
+processes below it, so it misses at most `f`, and `f + 1 > f`: it must
+reference at least one of the pointers, and so has the dead vertex in its
+causal past. The same count carries upward, since a vertex at any higher
+round references `2f + 1` vertices each of which already reaches it. So
+from two rounds above, the slot is resolved for every candidate — not
+decided, but resolved, which is all the second condition asks.
 
-**The execution, step by step.** Four processes at `f = 1`, one leader a
-round by round robin, so the leader of round `r` is process `r` and slot
-`(0, 0)` precedes slot `(1, 1)`.
+**Two consecutive correct leader rounds are therefore enough.** Suppose
+rounds `r` and `r + 1` have every leader slot owned by a correct process,
+the rounds are full, and the DAG is synchronous across them, so that each
+vertex references every correct vertex of the round below. Take a leader
+`l` of round `r + 1`. Every leader slot at a round `s ≤ r − 1` is
+resolved for it: a vertex of the slot with `f + 1` or more pointers lies
+in `l`'s causal past by the count above, and one with `f` or fewer has
+`2f + 1` non-pointers and is skipped. Every leader slot at round `r`
+holds one vertex by a correct process, which `l` references. Every leader
+slot at round `r + 1` before `l` is concurrent with it and committed, by
+induction along the order within the round. And `l` carries a quorum,
+since the `2f + 1` correct processes of round `r + 2` reference it. So
+`l` commits. The argument is stated here rather than proved in general;
+what is machine-checked is the instance below.
 
-1. **Round `0`** carries five vertices, because process `0` issues two:
-   `slotBlocks Dfull (0, 0) = {0, 4}`, checked, and process `0` is the
-   faulty one, so `correct_single` is satisfied.
-2. **Round `1`** carries four. Three of them point to the twin `0` and
-   the fourth — process `1`'s, which is the round-1 leader — points to
-   the twin `4`: `pointers Dfull 0 1 = {0, 2, 3}` and
-   `pointers Dfull 4 1 = {1}`, checked. So in the whole DAG `0` carries a
-   quorum and `4` does not, and no two vertices of the slot are both
-   committable.
-3. **A validator's view is missing one of the three.** `Dpart` drops
-   vertex `5` and, to stay reference-closed, vertex `12`, the only one
-   that cites it. It is a valid DAG by the paper's own rule, checked, and
-   `Dpart.ids ⊆ Dfull.ids`.
-4. **In that view the twin `0` is undecided.** `pointers Dpart 0 1 =
-   {2, 3}` — two, one short of a quorum — and one process does not point
-   at it, two short of a skip. So `¬ Quorum Dpart 0 ∧ ¬ Skipped Dpart 0`,
-   checked, and `¬ SkippedByVertex Dpart 0` beside it — one round-above
-   vertex carries no edge to it, where three are needed — so nothing here
-   depends on how §19.3 settles that clause.
-5. **The slot is resolved all the same.** `Reaches Dpart 6 4` and
-   `¬ Reaches Dpart 6 0`: the round-1 leader has the *other* twin in its
-   causal past, which satisfies the first disjunct. And it carries a
-   quorum of its own, `Quorum Dpart 6`.
-6. So `CommittedAt Dpart sfLead 1 6`, checked: **the round-1 leader is
-   committed with an earlier leader slot undecided.**
-7. **Then vertex `5` arrives.** `Quorum Dfull 0`, so
-   `CommittedAt Dfull sfLead 0 0` — the earlier leader is committed, and
-   `leaders` puts it before the one already output.
+**On the model, with the DAG of §19.4 unchanged.**
+`LeanDagTest/Minnow/Fair` takes `Dm` — the same vertices, the same edges,
+the same withheld vertex — and replaces round robin at `l = 2` with round
+robin at `l = 1`, offset so the round-1 leader is a process the Byzantine
+one did *not* send to, which is the case the schedule has to survive to
+be worth stating.
 
-**This is Safe-Commit, in the form the paper spells out.** "If `P` is
-enabled for a leader vertex `l` in `D`, then for all leader `l′ < l` in
-`leaders` … if `P` is disabled for `l′` in `D` then it is also disabled
-for `l′` in `D′`". Here `P` is enabled for the round-1 leader in `Dpart`;
-the round-0 leader is *disabled* there and *enabled* in `Dfull`; and it
-precedes the other in `leaders`. The witness states exactly that
-conjunction. And §3.2 of the paper obtains Total-order and Agreement from
-Safe-Commit, so what fails with it is agreement on the output.
+1. **The slot is still dead.** `pointers Dm 0 1 = {0, 1} ∧ ¬ Quorum Dm 0
+   ∧ ¬ Skipped Dm 0`, checked, exactly as in §19.4.
+2. **The first correct leader after it is still blocked.** Process `2`
+   never received the dead vertex, so `¬ Reaches Dm 6 0`, and the slot is
+   neither committed nor skipped: `¬ CommittedAt Dm mFair 1 6`, by
+   `not_committedAt_of_dead`.
+3. **The second commits.** Two rounds up the dead vertex is in every
+   causal past, through process `1`'s round-1 vertex, and the round-1
+   slot is directly referenced: `Reaches Dm 11 0 ∧ Reaches Dm 11 6 ∧
+   Quorum Dm 11`, and so `CommittedAt Dm mFair 2 11`, checked.
+4. **And so does the next**, `CommittedAt Dm mFair 3 13`, so this is a
+   chain and not one commit. `crs*` delivers a non-empty output on the
+   DAG that §19.4's schedule starves.
 
-**The equivocation is what does it**, and the witness checks the
-converse: with only one vertex in the slot, that vertex is not in the
-round-1 leader's causal past, carries no quorum in the partial view and
-cannot be skipped there, so the leader is blocked and nothing goes wrong.
-A single-vertex slot is either resolved by the vertex the rule will
-eventually decide, or not resolved at all. Two vertices break that tie
-between resolving and deciding.
+**Which schedules supply the pair, and which can be denied it.** The
+question is whether an adversary, choosing which `f` of the `3f + 1`
+processes to corrupt against a fixed rotation, can arrange that no two
+consecutive rounds have all-correct leader slots.
 
-**Where this sits among the others.** §19.4 costs Live-Commit and needs
-no equivocation; this costs Safe-Commit and needs nothing else. They are
-independent, and the second is the closer analogue of the defect §18
-finds in Black Marlin, where a descent chooses among an equivocator's
-twins by a test that does not read support. The mechanism is the same:
-**a slot with two vertices is resolved by whichever one is in the way,
-and being in the way is not being committed.**
+- **At `l = 1` it cannot**, for any `f`. The `f` faulty processes cut the
+  cycle into at most `f` runs of correct ones, and there are `2f + 1`
+  correct processes, so some run has length at least
+  `⌈(2f + 1) / f⌉ = 3`. Three consecutive correct leaders is more than
+  the two the argument needs.
+- **At `l ≥ 2` it always can.** Two consecutive rounds span `2l`
+  consecutive positions of the rotation, and corrupting one process every
+  `2l` positions meets every such window; that needs `⌈n / 2l⌉` faulty,
+  and at `n = 3f + 1` with `l ≥ 2` this is `⌈(3f + 1)/4⌉ ≤ f` for every
+  `f ≥ 1`. Exhaustive search over `f ≤ 5` agrees, and names the
+  placements: `{0}` at `f = 1`, `{0, 3}` at `f = 2`, `{0, 2, 6}` at
+  `f = 3`.
+
+So the schedule §19.4 uses is not a contrivance — it is round robin as
+§5 proposes it, at a value of `l` the paper explicitly admits — but the
+finding is about that pair. At one leader a round, this defect does not
+arise.
+
+**What survives, and what does not.** Three things.
+
+The word *outright* does not: `crs*` is not unconditionally starved, and
+Live-Commit fails for the rule paired with a multi-leader round robin
+rather than for the rule alone. §19.4's execution stands as it is
+checked; its reach is what changes.
+
+Lemma 11 does not survive either way. It claims each leader slot is
+eventually decided, and the dead slot is decided in no view under any
+schedule. What a fair schedule restores is that undecided slots stop
+blocking — not that they get decided.
+
+And the escape runs through the disjunct §19.3 breaks. What resolves the
+dead slot two rounds up is a vertex that is never committed and never
+will be. That is the same reading of the same clause which, where the
+slot holds two vertices, lets one twin resolve a slot the other commits.
+The rule is live under a fair schedule by exactly the mechanism that
+costs it safety under an equivocating one, and no reading of Definition 9
+separates the two.
+
+**What is not checked.** Whether the blocking construction generalises
+beyond `n = 4`, `f = 1`, `l = 2`. Denying the fairness window is not the
+same as blocking every leader: the leaders that precede a dead slot
+within its own round must be blocked by the previous round's dead slot,
+and that placement is a combinatorial question this arc does not settle.
 
 ### 19.6 What these amount to
 
 | finding | kind | what it costs | repair |
 | --- | --- | --- | --- |
 | the empty slot (§19.2) | wording | every later leader, at the letter | state the skip clause over the slot |
-| the counting (§19.3) | wording | Safe-Commit, at the letter | count processes, as the quorum clause does |
-| the dead zone (§19.4) | defect | Live-Commit outright | none available at this shape |
-| resolving through a twin (§19.5) | defect | Safe-Commit, hence Total-order and Agreement | none stated here |
+| the count (§19.2) | wording | Safe-Commit, at the letter | count processes, as the quorum clause does |
+| resolving through a twin (§19.3) | defect | Safe-Commit, hence Total-order and Agreement | none stated here |
+| the dead zone (§19.4, §19.5) | defect | Live-Commit, for a multi-leader round robin | one leader a round, or any schedule offering two consecutive correct leader rounds |
 
 The first two are matters of wording, and a phrase repairs each. The last
-two are not, and both survive every reading of the first two. Of the dead
-zone, `2f + 1` is the least threshold the skip clause can safely take, so the window
-`f + 1 ≤ a ≤ 2f` cannot be closed from inside the rule, and `crs*`'s only
-other way to resolve a slot — a vertex of it lying in the candidate's
-causal past — is unavailable for exactly the leaders that follow a dead
-slot within one round. Round robin hands the adversary one such slot per
-cycle, which is enough.
+two are not, and both survive every reading of the first two.
 
-And the other way round, §19.5 shows the causal-past escape to be no
-sound substitute where a slot holds two vertices, since lying in the way
-and being committed are different things. The two escapes fail in
-opposite directions: the skip clause cannot reach far enough, and the
-causal-past clause reaches without discriminating.
+They fail in opposite directions, and the second condition of Definition
+9 is where both live. Its skip clause cannot reach far enough: `2f + 1`
+is the least threshold it can safely take, so the window
+`f + 1 ≤ a ≤ 2f` cannot be closed from inside the rule, and a slot in
+that window is decided in no view, for ever. Its causal-past clause
+reaches without discriminating: a slot is resolved by whichever of its
+vertices is in the way, which under equivocation need not be the one the
+rule will commit.
+
+The two are not independent in the way the constructions are. The
+constructions share nothing — §19.4 uses no equivocation and §19.3 no
+dead zone — but the clauses do. What rescues liveness where the skip
+clause fails is the causal-past clause resolving a slot it has not
+decided, and that is precisely what costs safety where a slot holds
+twins. `crs*` cannot give up the first without losing liveness under
+every schedule, or keep it without losing safety under equivocation.
 
 What the rule lacks in both cases is a way to decide a slot from evidence
 *later* than the round immediately above it — a verdict that every
