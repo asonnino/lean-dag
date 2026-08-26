@@ -61,7 +61,7 @@ The second is deliberately weak. It concludes nothing about what *is*
 committed — only that a particular leader is not — so it cannot be
 accused of resolving the recursion in a way the paper would not.
 
-## 3. Two readings, and one defect
+## 3. Two readings, and two defects
 
 **An empty slot, at the letter, resolves nothing.** Definition 9's second
 clause opens "there is a vertex `v′` in slot `s′` in `D` such that …",
@@ -114,6 +114,25 @@ more. The witness sustains the habit every cycle — round robin at
 every other round, which is exactly the cadence that keeps a fresh dead
 slot within reach of every leader — and `crs*` then commits nothing at
 all.
+
+**One twin resolves a slot the other commits.** The first disjunct of the
+second condition asks only that some vertex of an earlier slot lie in the
+candidate's causal past — resolving a slot, not deciding it. Where the
+slot's process equivocates it holds two vertices, and the disjunct is
+satisfied by whichever is in the way, which need not be the one later
+committed. A validator whose view is one short of a twin's quorum sees
+that twin undecided, resolves the slot through the other, and commits a
+later leader; the missing vertex then arrives and the twin acquires its
+quorum, demanding a place before what is already output. That is
+Safe-Commit in the form the paper spells out, and with it Total-order and
+Agreement.
+
+The equivocation is what does it, and the witness checks the converse: a
+slot with one vertex is either resolved by the vertex the rule will
+decide, or not resolved at all. Two vertices break the tie between
+resolving and deciding. This is the closer analogue of what `report.md`
+§18 finds in Black Marlin — a slot with two vertices resolved by a test
+that does not read support.
 
 ## 4. What is not covered
 

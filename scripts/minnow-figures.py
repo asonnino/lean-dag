@@ -9,6 +9,7 @@ one.
 
     scripts/minnow-figures.py   ->  docs/figures/minnow-skip.svg
                                     docs/figures/minnow-deadlock.svg
+                                    docs/figures/minnow-equivocation.svg
 """
 import pathlib
 
@@ -205,9 +206,89 @@ def deadlock():
     return "minnow-deadlock.svg"
 
 
+def equivocation():
+    """One twin resolves the slot, the other keeps its quorum."""
+    W, H = 1180, 720
+    X0, DX, R = 290, 300, 20
+    LANE = {0: 232, 1: 312, 2: 392, 3: 472}
+    TWIN_Y = 146
+    out = head(W, H, "One twin resolves a slot, the other commits it",
+               "The second condition is satisfied by some vertex of an earlier slot. "
+               "Where the slot's process equivocates, that need not be the vertex "
+               "which is later committed.")
+    pos = {0: (X0, LANE[0]), 1: (X0, LANE[1]), 2: (X0, LANE[2]), 3: (X0, LANE[3]),
+           4: (X0, TWIN_Y)}
+    for k, p in enumerate([0, 1, 2, 3]):
+        pos[5 + k] = (X0 + DX, LANE[p])
+        pos[9 + k] = (X0 + 2 * DX, LANE[p])
+    refs = {5: [0, 1, 2], 6: [4, 2, 3], 7: [0, 1, 2], 8: [0, 2, 3],
+            9: [6, 7, 8], 10: [6, 7, 8], 11: [6, 7, 8], 12: [5, 6, 7]}
+    for r in range(3):
+        out.append(f'<text x="{X0 + DX * r}" y="96" font-size="14" fill="#555" '
+                   f'text-anchor="middle">round {r}</text>')
+        out.append(f'<text x="{X0 + DX * r}" y="112" font-size="11" fill="{LEAD}" '
+                   f'text-anchor="middle">leader p{r}</text>')
+    for p in range(4):
+        col = BYZ if p == 0 else "#999"
+        note = " (faulty)" if p == 0 else ""
+        out.append(f'<text x="{X0 - 190}" y="{LANE[p] + 5}" font-size="12" '
+                   f'fill="{col}">p{p}{note}</text>')
+    special = [((5, 0), OK), ((7, 0), OK), ((8, 0), OK), ((6, 4), "#e65100")]
+    fills = {0: ("#dff0d8", OK, 3.0), 4: (DEAD, "#e65100", 3.0),
+             5: ("#f2f2f2", "#bbbbbb", 1.3), 12: ("#f2f2f2", "#bbbbbb", 1.3)}
+    labels = [
+        (X0 + DX, LANE[0] - R - 40, "missing from the view", "#777", "middle", 11),
+        (X0 + 2 * DX + R + 14, LANE[3] + 5, "missing from the view", "#777", "start", 11),
+    ]
+    draw(out, pos, refs, R, special, fills, labels)
+    for y, txt, col in ((TWIN_Y + R + 17, "one pointer — never committed", "#e65100"),
+                        (LANE[0] + R + 17, "quorum of three — committed", OK)):
+        out.append(f'<rect x="{X0 - len(txt) * 3.4}" y="{y - 13}" '
+                   f'width="{len(txt) * 6.8}" height="18" fill="#ffffff"/>')
+        out.append(f'<text x="{X0}" y="{y}" font-size="12" fill="{col}" '
+                   f'text-anchor="middle">{txt}</text>')
+    for v in (0, 4, 6, 11):
+        x, y = pos[v]
+        out.append(f'<circle cx="{x}" cy="{y}" r="{R + 5}" fill="none" stroke="{LEAD}" '
+                   f'stroke-width="1.6"/>')
+    msg = "the round-1 leader — it points to the other twin"
+    out.append(f'<rect x="{X0 + DX - len(msg) * 3.4}" y="{LANE[1] - R - 29}" '
+               f'width="{len(msg) * 6.8}" height="18" fill="#ffffff"/>')
+    out.append(f'<text x="{X0 + DX}" y="{LANE[1] - R - 16}" font-size="12" '
+               f'fill="#e65100" text-anchor="middle">{msg}</text>')
+    out.append(f'<circle cx="40" cy="{H - 176}" r="9" fill="none" stroke="{LEAD}" '
+               f'stroke-width="1.6"/>')
+    out.append(f'<text x="60" y="{H - 172}" font-size="13" fill="#111">'
+               f'a leader slot — one a round, by round robin</text>')
+    out.append(f'<circle cx="40" cy="{H - 150}" r="9" fill="#f2f2f2" stroke="#bbbbbb" '
+               f'stroke-width="1.3"/>')
+    out.append(f'<text x="60" y="{H - 146}" font-size="13" fill="#111">'
+               f'held by the whole DAG but not by the view considered below</text>')
+    tail = [
+        "The view is missing vertex 5, one of the three that point to the committed twin, "
+        "and vertex 12, the only one that references 5. It is",
+        "reference-closed and valid. In it the twin 0 has two pointers, one short of a "
+        "quorum, and one process not pointing at it, two short of a skip:",
+        "it is undecided. But slot (0,0) is resolved all the same, because the other twin "
+        "lies in the round-1 leader's causal past — and resolving a slot is",
+        "not deciding it. So the round-1 leader commits with an earlier leader slot "
+        "undecided, and vertex 5 then arrives and gives the twin its quorum.",
+        "Safe-Commit asks that a leader disabled when a later one commits stay disabled. "
+        "Here it does not, and the equivocation is what makes the difference:",
+        "without a second vertex in the slot there is nothing to resolve it with, and the "
+        "round-1 leader is blocked instead.",
+    ]
+    for n, txt in enumerate(tail):
+        out.append(f'<text x="24" y="{H - 122 + n * 20}" font-size="13" '
+                   f'fill="#111">{txt}</text>')
+    out.append('</svg>')
+    (FIGS / "minnow-equivocation.svg").write_text("\n".join(out) + "\n")
+    return "minnow-equivocation.svg"
+
+
 def main():
     FIGS.mkdir(parents=True, exist_ok=True)
-    for f in (skip(), deadlock()):
+    for f in (skip(), deadlock(), equivocation()):
         print(f"docs/figures/{f}")
 
 

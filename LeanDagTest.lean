@@ -48,3 +48,4 @@ import LeanDagTest.BlackMarlin.Counting
 import LeanDagTest.BlackMarlin.ViewLiveness
 import LeanDagTest.Minnow.Deadlock
 import LeanDagTest.Minnow.Skip
+import LeanDagTest.Minnow.Safety

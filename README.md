@@ -257,7 +257,12 @@ faults alone.
   gap every round it leads, so **nothing is ever committed** and
   Live-Commit fails outright. It admits no repair at this shape — `2f+1`
   is the least threshold the skip clause can safely take, so the gap is
-  forced.
+  forced. And an earlier slot counts as resolved when *some* vertex of it
+  lies in a candidate's causal past, which is not the same as that vertex
+  being decided: where the slot's process equivocates, one twin carries a
+  later leader past the slot while the other is undecided, and the other
+  then acquires its quorum and demands a place before what is already
+  output — **Safe-Commit**, and with it Total-order and Agreement.
 
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on
