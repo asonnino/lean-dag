@@ -136,3 +136,5 @@ import LeanDag.FinWhale.Consequences
 import LeanDag.FinWhale.Skip
 import LeanDag.FinWhale.Propagation
 import LeanDag.FinWhale.Decision
+import LeanDag.FinWhale.Anchor
+import LeanDag.FinWhale.Consistency
