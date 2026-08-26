@@ -1,4 +1,5 @@
 import LeanDag.FinWhale.Order
+import Mathlib.Data.Finset.Sort
 import LeanDag.FinWhale.Rotation
 
 /-!
@@ -117,9 +118,8 @@ variable {Payload : Type*} {D : Dag Validator BlockId Payload}
 /-- **A committed triple above every round.** -/
 theorem committed_triple {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
-    (hwf : WellFormed dc ds choose dec)
-    (hsees : ∀ r l, l ∈ slotBlocks D r → DirectCommit D l → dc r l)
-    {R N t : ℕ}
+    (hwf : WellFormed dc ds choose dec) {R N t : ℕ}
+    (hsees : ∀ r l, r + 2 ≤ N → l ∈ slotBlocks D r → DirectCommit D l → dc r l)
     (hsync : SynchronisedFrom D.block D.ids (Correct : Finset Validator) R)
     (hpop : ∀ n, n ≤ N → PopulatedFrom D.block D.ids (Correct : Finset Validator) n)
     (hrr : RoundRobin D.leader) (hR : R ≤ t) (hN : t + (3 * F.f + 5) ≤ N) :
@@ -139,7 +139,7 @@ theorem committed_triple {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
   have hcom : DirectCommit D l :=
     Or.inr (lemma20 hsync (by omega) (hpop (s + 1) (by omega)) (hpop (s + 2) (by omega))
       hl hlr (by rw [hlc]; exact hsc))
-  rw [hwf.direct_commit s l (hsees s l hslot hcom)]
+  rw [hwf.direct_commit s l (hsees s l (by omega) hslot hcom)]
   exact ⟨by simp, by simp⟩
 
 /-- **Lemma 23, composed.** Every slot below the horizon is decided —
@@ -149,9 +149,8 @@ which is why `R` enters through a maximum rather than as a floor on
 `r`. -/
 theorem all_decided {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
-    (hwf : WellFormed dc ds choose dec)
-    (hsees : ∀ r l, l ∈ slotBlocks D r → DirectCommit D l → dc r l)
-    {R N r : ℕ}
+    (hwf : WellFormed dc ds choose dec) {R N r : ℕ}
+    (hsees : ∀ r l, r + 2 ≤ N → l ∈ slotBlocks D r → DirectCommit D l → dc r l)
     (hsync : SynchronisedFrom D.block D.ids (Correct : Finset Validator) R)
     (hpop : ∀ n, n ≤ N → PopulatedFrom D.block D.ids (Correct : Finset Validator) n)
     (hrr : RoundRobin D.leader) (hN : max r R + (3 * F.f + 5) ≤ N) :
@@ -267,6 +266,53 @@ theorem theorem26_of_synchronised {dec : ℕ → Verdict BlockId}
     b ∈ linearise hist (commitSeq dec k) :=
   theorem26 hk hcom (hhist b (reaches_of_synchronised hsync hR hb hbr hbc hl hlr hlc))
 
+/-- **A FinWhale DAG is a causal structure.** Its two conditions are the
+DAG's closure under references and validity's predecessor clause. -/
+theorem causalStructure (D : Dag Validator BlockId Payload) :
+    CausalStructure D.block D.ids :=
+  ⟨D.complete, fun i hi j hj => (D.valid i hi).predecessor j hj⟩
+
+/-- **The delivery order's input, concretely.** A leader contributes its
+causal history, which `historyFrom` computes from the references alone,
+listed in the identifier order.
+
+The paper asks only for "a deterministic sort", and what Theorems 24 and
+26 read is that the list is a function of the block and lists its causal
+history once each. Sorting by identifier is the cheapest such function
+and keeps the definition computable; a causal order would serve equally
+and is not what any result here consumes. -/
+def histOf [LinearOrder BlockId] (D : Dag Validator BlockId Payload) (l : BlockId) :
+    List BlockId :=
+  (historyFrom D.block l).sort (· ≤ ·)
+
+/-- `histOf` is the causal history: the faithfulness condition Theorem 26
+asks for, discharged. -/
+theorem mem_histOf [LinearOrder BlockId] {l c : BlockId} (hl : l ∈ D.ids)
+    (h : ReachesFrom D.block l c) : c ∈ histOf D l :=
+  (Finset.mem_sort _).2 (((causalStructure D).mem_history_iff hl).2 h)
+
+/-- And it lists each block once, which is the condition Theorem 15 asks
+for. -/
+theorem nodup_histOf [LinearOrder BlockId] {l : BlockId} : (histOf D l).Nodup :=
+  Finset.sort_nodup _ _
+
+/-- **Theorem 15 at the concrete order.** No block is delivered twice. -/
+theorem nodup_delivery [LinearOrder BlockId] (ls : List BlockId) : (linearise (histOf D) ls).Nodup :=
+  theorem15 _ (fun _ => nodup_histOf) ls
+
+/-- **Theorem 26 at the concrete order.** A correct validator's block is
+delivered once the leader above it is committed — with no hypothesis about
+what the ordering reads, since it reads the causal history. -/
+theorem delivered_of_synchronised [LinearOrder BlockId] {dec : ℕ → Verdict BlockId} {R n k : ℕ}
+    (hsync : SynchronisedFrom D.block D.ids (Correct : Finset Validator) R) (hR : R ≤ n)
+    {b l : BlockId} (hb : b ∈ D.ids) (hbr : (D.block b).round = n)
+    (hbc : (D.block b).creator ∈ (Correct : Finset Validator))
+    (hl : l ∈ D.ids) (hlr : (D.block l).round = n + 1)
+    (hlc : (D.block l).creator ∈ (Correct : Finset Validator))
+    (hk : n + 1 < k) (hcom : dec (n + 1) = Verdict.commit l) :
+    b ∈ linearise (histOf D) (commitSeq dec k) :=
+  theorem26_of_synchronised hsync hR hb hbr hbc hl hlr hlc (fun _ h => mem_histOf hl h) hk hcom
+
 end Validity
 
 /-! ## The two theorems, end to end -/
@@ -330,8 +376,8 @@ theorem agreement_of_viewPace {U : BlockUniverse Validator BlockId Payload} {N R
     (hdc : ∀ r l, dc r l → l ∈ slotBlocks D r ∧ DirectCommit D l)
     (hdc' : ∀ r l, dc' r l → l ∈ slotBlocks D r ∧ DirectCommit D l)
     (hds : ∀ r, ds r → DirectSkip D r) (hds' : ∀ r, ds' r → DirectSkip D r)
-    (hsees : ∀ r l, l ∈ slotBlocks D r → DirectCommit D l → dc r l)
-    (hsees' : ∀ r l, l ∈ slotBlocks D r → DirectCommit D l → dc' r l)
+    (hsees : ∀ r l, r + 2 ≤ N → l ∈ slotBlocks D r → DirectCommit D l → dc r l)
+    (hsees' : ∀ r l, r + 2 ≤ N → l ∈ slotBlocks D r → DirectCommit D l → dc' r l)
     (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks D r)
     (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks D r)
     {M : ℕ} (hbound : ∀ s, M ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)

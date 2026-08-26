@@ -1,6 +1,7 @@
 import LeanDag.FinWhale.Order
 import LeanDag.FinWhale.Rotation
 import LeanDag.FinWhale.Decided
+import LeanDag.FinWhale.View
 import Mathlib.Tactic.IntervalCases
 
 /-!
@@ -573,6 +574,49 @@ both leaders' histories. -/
 example : (0 : Fin 4) ∈ linearise histFW (commitSeq decB 3) :=
   theorem26 (r := 2) (l := 2) (by omega) (by decide) (by decide)
 
+/-! ## A view that has seen one version of an equivocation
+
+`Dequiv` has the leader of round `0` issue two blocks, `0` and `27`. A
+validator that has received only the first holds a reference-closed part
+of the DAG — everything except `27` and the blocks whose parents include
+it — and that part is a `Dag` in its own right.
+
+It is what makes the skip rule's first condition view-relative: the slot
+has two blocks, and this view sees one. -/
+
+/-- Everything except the second version and the blocks that reference
+it, directly or through a parent. -/
+def Vpart : Finset (Fin 28) := Finset.univ \ {14, 15, 18, 20, 27}
+
+theorem isViewPart : IsView Dequiv Vpart := by
+  constructor
+  · decide
+  · decide
+
+/-- **The slot looks different from inside.** The universe has two blocks
+of slot `0`; the view has one. -/
+example : slotBlocks Dequiv 0 = {0, 27} ∧
+    slotBlocks (restrict Dequiv Vpart isViewPart) 0 = {0} := by decide
+
+/-- The view is smaller, and genuinely so. -/
+example : (27 : Fin 28) ∈ Dequiv.ids ∧ (27 : Fin 28) ∉ Vpart := by decide
+
+/-- What a block's parents say does not change with the view, which is
+why FP-evidence transfers: block `19` reads the same parents either
+way. -/
+example : parentsVoting (restrict Dequiv Vpart isViewPart) 19 0 = parentsVoting Dequiv 19 0 :=
+  rfl
+
+/-- And the rules the view can evaluate agree with the universe's where
+the view holds the rounds they read. On `Dsync`, which holds everything,
+the whole DAG is a view and the direct commit is seen there. -/
+theorem isViewFull : IsView Dsync Finset.univ :=
+  ⟨fun _ _ => Finset.mem_univ _, fun _ _ _ _ => Finset.mem_univ _⟩
+
+example : DirectCommit (restrict Dsync Finset.univ isViewFull) 2 :=
+  directCommit_of_holds (hV := isViewFull) (fun _ _ => Finset.mem_univ _)
+    (fun _ _ => Finset.mem_univ _) (Or.inl (by decide))
+
 /-! ## The arc's axioms -/
 
 #print axioms LeanDag.FinWhale.lemma12
@@ -581,6 +625,8 @@ example : (0 : Fin 4) ∈ linearise histFW (commitSeq decB 3) :=
 #print axioms LeanDag.FinWhale.lemma22
 #print axioms LeanDag.FinWhale.agreement_of_viewPace
 #print axioms LeanDag.FinWhale.delivered_of_viewPace
+#print axioms LeanDag.FinWhale.safety_of_views
+#print axioms LeanDag.FinWhale.agreement_of_views
 
 end FinWhale
 

@@ -255,6 +255,19 @@ slot `0` decided indirectly from its anchor, which the model shows is
 slot `3` and nothing else. `WellFormed` is discharged for it field by
 field, and Lemma 23 is then applied to that triple.
 
+Views have one too: a reference-closed part of `Dequiv` that holds one of
+the leader's two blocks and not the other, where the slot has two blocks
+in the universe and one in the view.
+
+`LeanDagTest/FinWhale/Pace.lean` carries the liveness capstones down to a
+pacing structure. FinWhale's smallest committee is `f = 1` and `p = 1`,
+which is `n = 4` — the committee the development's own pacing witness is
+built over — so `Ugrow N` is a FinWhale DAG once the leader clause is
+checked, and `ugrowSkewCorrect N` is its `ViewPace`. Lemma 20 and
+Theorem 26 then run on it: an honest leader's block is directly
+committed, and a correct validator's block is delivered, from view
+convergence and the backoff and nothing else.
+
 The list layer is exercised on concrete verdicts: a commit sequence, its
 extension, and the delivery order that repeats a block of two causal
 histories and delivers it once.
@@ -376,33 +389,81 @@ second, the two finiteness conditions sit together rather than in
 conflict: `hbound` says nothing above `M` is decided, and the horizon is
 placed below what the DAG's own reach decides.
 
-## 11. What is not modelled, and what is not done
+## 11. Views, and the rules relative to one
 
-`safety` states its own side conditions, and each is either a fact about
-the DAG or a faithfulness condition on the model. Three are worth naming
-as gaps rather than facts.
+The safety and liveness results above took each validator's direct rules
+as parameters, with two conditions tying them to the universe: that a
+view's direct verdict is one of the universe, and that a caught-up view
+sees the universe's direct commits. `View.lean` replaces the parameters
+with the rules evaluated on the validator's own sub-DAG and proves both
+conditions.
 
-**Views are read as sub-DAGs, not modelled.** `exclusions_of_dag` takes
-`∀ r l, dc r l → l ∈ slotBlocks D r ∧ DirectCommit D l` as a hypothesis.
-Modelling a view as its own `Dag` and proving the direct rules monotone
-under inclusion would discharge it.
+A **view** is a reference-closed subset of the universe's blocks, and it
+is a `Dag` in its own right — validity and non-equivocation are
+inherited, and closure is its completeness. `restrict` builds it.
+
+**Most of the vocabulary does not read the population.** `parentsVoting`,
+`parentSet` and `SPCertificate` are computed from a block's references,
+so they are literally the same in a view as in the universe.
+
+**Closure carries a block into the view whenever anything in the view
+votes for it.** `mem_view_of_parentsVoting` is the immediate form. The
+counting form matters more: a view holding a *single* round-`(r+2)` block
+holds every block a quorum of round-`(r+1)` validators votes for
+(`mem_view_of_voters`), because that block's `n − f` parents meet the
+quorum in `f + p` authors, one of them correct, and a correct author's
+round-`(r+1)` block is one block.
+
+**So FP-evidence is view-independent.** Its equivocation test quantifies
+over the population, but the conflicting versions it can find are voted
+for by the block's own parents, hence in any view holding the block. The
+equivocating branch's bound on conflicting votes needs one extra step: a
+conflicting block outside the view has no parents voting for it there,
+and the bound holds of it for nothing.
+
+**The skip rule is where the two directions part, and it is worth
+stating plainly.** Its first condition quantifies over the slot's blocks
+*as the view holds them* — the paper writes "for each leader block of `s`
+(if any) in the local DAG of `vj`" — so a view's direct skip is not a
+direct skip of the universe, and a validator that has seen no block of a
+slot satisfies that condition for nothing. The exclusions it takes part
+in therefore cannot be transported; they are proved directly
+(`no_directSkip_of_commit_view`, `no_indirectCommit_of_directSkip_view`),
+and both run through the *second* condition, the quorum of
+Non-FP-evidence blocks. That quorum is what makes the missing block
+visible: one of its round-`(r+2)` blocks already forces the committed
+block into the view by the counting above, and then the same block is
+FP-evidence for it — by Lemma 4 under a fast commit, by Lemma 2 under a
+slow one — which is what Non-FP-evidence denies.
+
+`exclusions_of_views` assembles the nine fields from two views of one
+DAG, and `safety_of_views`, `all_decided_of_view` and
+`agreement_of_views` are the capstones with the view conditions supplied
+rather than assumed. On the liveness side `directCommit_of_holds`
+discharges the last of them: a view holding the two rounds above a slot
+sees whatever direct commit is there, which is what catching up means.
+
+## 12. What is not modelled, and what is not done
+
+The capstones state their own side conditions. §11 discharged the view
+conditions and §8's ordering hypothesis, and §9 exhibits an execution
+that is a pacing structure. Three gaps remain, and they are of a
+different kind from the ones that closed: each is a piece of the protocol
+this development does not model at all.
+
+**Liveness rests on the pacing line rather than on `∆`.** Lemmas 16 and
+17 are derived from `ViewPace` rather than proved from the timeouts, as
+§10 records, and §9's pacing witness exhibits an execution that is one.
+What remains outstanding is the pacemaker itself: `converges`, `advances`
+and `catchup` are `ViewPace`'s fields, and deriving them from FinWhale's
+own block-creation conditions C1 to C3 and its `2∆` timeout is not
+attempted here — nor anywhere else in this development.
 
 **The reverse pass is a condition, not a procedure.** `WellFormed`
-constrains a verdict assignment; nothing here constructs one, and nothing
-shows a validator running the pass produces one.
+constrains a verdict assignment; nothing constructs one, and nothing
+shows that a validator running the pass produces one. This is the one
+modelling gap of §7 that the view work does not close.
 
 **Termination is a hypothesis.** `hbound` says both validators have
 finitely many decided slots, and `hk` says a commit sequence stops at the
 first undecided slot; neither is derived.
-
-**Liveness rests on the pacing line rather than on `∆`.** Lemmas 16 and
-17 are derived from `ViewPace` rather than proved from the timeouts, as
-§10 records. What that leaves outstanding is not a lemma of the paper but
-the pacing structure itself: no execution is exhibited as a `ViewPace`
-here, so the timing argument is discharged against the core's
-formalisation of it, not against the protocol's pseudocode.
-
-**Two hypotheses carry what growth would.** `hsees` says the deciding
-validator's view holds the direct commits the universe holds, and
-`hhist` says the list a leader contributes to the order is its causal
-history. Both are conditions on the model rather than facts about it.

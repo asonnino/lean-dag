@@ -52,3 +52,4 @@ import LeanDagTest.Minnow.Skip
 import LeanDagTest.Minnow.Safety
 import LeanDagTest.Minnow.Fair
 import LeanDagTest.FinWhale.Model
+import LeanDagTest.FinWhale.Pace
