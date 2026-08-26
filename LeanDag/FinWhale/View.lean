@@ -490,11 +490,10 @@ theorem all_decided_of_view {V : Finset BlockId} (hV : IsView D V)
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed (viewCommit D V hV) (viewSkip D V hV) choose dec) {R N r : ℕ}
     (hheld : ∀ n, n ≤ N → blocksAt D n ⊆ V)
-    (hsync : SynchronisedFrom D.block D.ids (Correct : Finset Validator) R)
-    (hpop : ∀ n, n ≤ N → PopulatedFrom D.block D.ids (Correct : Finset Validator) n)
+    (hcommits : CommitsCorrectLeaders D R N)
     (hrr : RoundRobin D.leader) (hN : max r R + (3 * F.f + 5) ≤ N) :
     dec r ≠ Verdict.undecided := by
-  refine all_decided hwf (fun s l hs hslot hcom => ⟨?_, ?_⟩) hsync hpop hrr hN
+  refine all_decided hwf (fun s l hs hslot hcom => ⟨?_, ?_⟩) hcommits hrr hN
   · have hmem := hslot
     simp only [slotBlocks, blocksAt, Finset.mem_filter] at hmem
     simp only [slotBlocks, blocksAt, restrict_ids, restrict_block, restrict_leader,
@@ -518,8 +517,7 @@ theorem agreement_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsVi
     {M : ℕ} (hbound : ∀ s, M ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)
     {R N k : ℕ}
     (hheld : ∀ n, n ≤ N → blocksAt D n ⊆ V) (hheld' : ∀ n, n ≤ N → blocksAt D n ⊆ V')
-    (hsync : SynchronisedFrom D.block D.ids (Correct : Finset Validator) R)
-    (hpop : ∀ n, n ≤ N → PopulatedFrom D.block D.ids (Correct : Finset Validator) n)
+    (hcommits : CommitsCorrectLeaders D R N)
     (hrr : RoundRobin D.leader) (hkN : max k R + (3 * F.f + 5) ≤ N)
     (hist : BlockId → List BlockId) :
     linearise hist (commitSeq dec k) = linearise hist (commitSeq dec' k) := by
@@ -533,10 +531,10 @@ theorem agreement_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsVi
   refine theorem24
     (lemma12 hwf hwf' (exclusions_of_views hV hV' hch)
       (habove dec hslot) (habove dec' hslot') hbound)
-    (fun s hs => all_decided_of_view hV hwf hheld hsync hpop hrr (by
+    (fun s hs => all_decided_of_view hV hwf hheld hcommits hrr (by
       have : max s R ≤ max k R := max_le_max (by omega) le_rfl
       omega))
-    (fun s hs => all_decided_of_view hV' hwf' hheld' hsync hpop hrr (by
+    (fun s hs => all_decided_of_view hV' hwf' hheld' hcommits hrr (by
       have : max s R ≤ max k R := max_le_max (by omega) le_rfl
       omega))
     hist

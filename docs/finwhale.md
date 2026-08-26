@@ -261,12 +261,15 @@ in the universe and one in the view.
 
 `LeanDagTest/FinWhale/Pace.lean` carries the liveness capstones down to a
 pacing structure. FinWhale's smallest committee is `f = 1` and `p = 1`,
-which is `n = 4` — the committee the development's own pacing witness is
-built over — so `Ugrow N` is a FinWhale DAG once the leader clause is
-checked, and `ugrowSkewCorrect N` is its `ViewPace`. Lemma 20 and
-Theorem 26 then run on it: an honest leader's block is directly
-committed, and a correct validator's block is delivered, from view
-convergence and the backoff and nothing else.
+which is `n = 4` — the committee the development's own pacing witnesses
+are built over — so `Ugrow N` is a FinWhale DAG at any leader schedule
+once the leader clause is checked. On the full-timeout route
+`ugrowSkewCorrect N` is its `ViewPace`, and Lemma 20 and Theorem 26 run
+on it. On the reactive route the same execution carries a `ReactiveM` at
+one leader per round: every block there references the whole round below,
+so both wait clauses hold by their exit and neither fallback is needed,
+and `commits_of_reactive` yields the liveness interface with no coverage
+anywhere.
 
 The list layer is exercised on concrete verdicts: a commit sequence, its
 extension, and the delivery order that repeats a block of two causal
@@ -317,6 +320,45 @@ Above coverage the rest is counting.
 `directCommit_of_viewPace` is the composition: a `ViewPace`, a round past
 GST, the backoff, and a correct leader give a direct commit. No timing
 hypothesis appears in it.
+
+
+**The schedule is reactive, and the route now says so.** FinWhale's
+pacemaker builds a round-`r` block when any of three conditions holds:
+C1, the local DAG has the round-`(r−1)` leader's block together with a
+quorum of voters for the round-`(r−2)` leader (or an SP-skip pattern for
+it); C2, the `2∆` timeout has expired; or C3, the local DAG has `n − f`
+round-`r` blocks. The timeout is the fallback, not the rule.
+
+`ViewPace`, which the derivation above runs on, carries a waiting
+*floor*: `waits` says a validator never builds before the timeout
+expires, and that floor is exactly what `synchronisedOn_of_converges`
+spends to win the race against drift. That is the C2-only discipline.
+The results over it are not vacuous — §9's witness exhibits such an
+execution — but they cover fewer runs than FinWhale has.
+
+`Reactive.lean` runs the same liveness off `ReactivePace`, where the
+floor is replaced by a ceiling (`deadline`) and two wait clauses:
+`vote_or_wait`, that a round-`(r+1)` block either references the
+round-`r` leader's block or waited the full timeout, and `cert_or_wait`,
+the same at the certificate round. Those two clauses are what FinWhale's
+Lemmas 18 and 19 establish by case analysis on C1, C2 and C3; they are
+taken here as the discipline's clauses rather than re-derived from the
+pseudocode, exactly as the core's reactive arc takes them for Mysticeti.
+Coverage is not available on this route and is not used: a reactive
+builder omits whatever had not arrived when its exit fired.
+
+Nothing else changes, for an arithmetical reason: **Mysticeti's
+certificate is FinWhale's SP-certificate**, since the slow-path quorum
+`2f + p` is no larger than the validity quorum `n − f`. So the reactive
+certificate stage the core already proves supplies the slow-path commit
+(`spCommit_of_reactive`), and the votes it rests on supply the fast one
+(`fastCommit_of_reactive`).
+
+Both routes end at the same interface. `CommitsCorrectLeaders` says every
+correct-led slot below the horizon carries a direct commit;
+`commits_of_synchronised` supplies it from coverage and
+`commits_of_reactive` from the wait clauses, and Lemma 23 and everything
+above it never learn which schedule produced it.
 
 **Lemma 22, and where its proof stops working.** The lemma says any
 window of `3f + 3` rounds contains three consecutive rounds with correct
@@ -451,13 +493,21 @@ that is a pacing structure. Three gaps remain, and they are of a
 different kind from the ones that closed: each is a piece of the protocol
 this development does not model at all.
 
-**Liveness rests on the pacing line rather than on `∆`.** Lemmas 16 and
-17 are derived from `ViewPace` rather than proved from the timeouts, as
-§10 records, and §9's pacing witness exhibits an execution that is one.
-What remains outstanding is the pacemaker itself: `converges`, `advances`
-and `catchup` are `ViewPace`'s fields, and deriving them from FinWhale's
-own block-creation conditions C1 to C3 and its `2∆` timeout is not
-attempted here — nor anywhere else in this development.
+**The pacemaker's clauses are modelled, not derived.** `converges`,
+`advances`, `catchup` and the two reactive wait clauses are fields of
+`ReactivePace`; each stands for a condition of the protocol — C1 to C3,
+A1′, B1, B2 — and the correspondence is recorded in prose here and
+checked by eye, as it is for every other arc in this development. It is
+not the kind of thing that gets proved: the pace *is* the model of the
+pacemaker. What could still be done is to label each field with the
+FinWhale condition it stands for, the way the core labels its own with
+P7, P8, P9 and N2.
+
+**Two protocol conditions have no counterpart at all.** A1′ — that
+advancement needs a leader-consistent set of round-`(r−1)` blocks, or one
+excluding the leader's — and the parent-selection procedure are not
+modelled; the arc takes their *result*, validity's leader clause, and
+`cert_or_wait`'s exit.
 
 **The reverse pass is a condition, not a procedure.** `WellFormed`
 constrains a verdict assignment; nothing constructs one, and nothing

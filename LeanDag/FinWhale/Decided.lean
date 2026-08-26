@@ -115,30 +115,43 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {Payload : Type*} {D : Dag Validator BlockId Payload}
 
+/-- **The liveness input, as an interface.** Every correct-led slot past
+the coverage round and below the horizon carries a direct commit. Both
+pacing disciplines supply this — the full-timeout one through coverage
+(`commits_of_synchronised`), the reactive one through its wait clauses
+(`FinWhale.Reactive`) — and nothing below cares which. -/
+def CommitsCorrectLeaders (D : Dag Validator BlockId Payload) (R N : ℕ) : Prop :=
+  ∀ s, R ≤ s → s + 2 ≤ N → D.leader s ∈ (Correct : Finset Validator) →
+    ∃ l, l ∈ slotBlocks D s ∧ DirectCommit D l
+
+/-- **The full-timeout route supplies it**, by Lemma 20. -/
+theorem commits_of_synchronised {R N : ℕ}
+    (hsync : SynchronisedFrom D.block D.ids (Correct : Finset Validator) R)
+    (hpop : ∀ n, n ≤ N → PopulatedFrom D.block D.ids (Correct : Finset Validator) n) :
+    CommitsCorrectLeaders D R N := by
+  intro s hR hN hsc
+  obtain ⟨l, hl, hlc, hlr⟩ := hpop s (by omega) (D.leader s) hsc
+  refine ⟨l, ?_, Or.inr (lemma20 hsync hR (hpop (s + 1) (by omega)) (hpop (s + 2) (by omega))
+    hl hlr (by rw [hlc]; exact hsc))⟩
+  simp only [slotBlocks, blocksAt, Finset.mem_filter]
+  exact ⟨⟨hl, hlr⟩, hlc⟩
+
 /-- **A committed triple above every round.** -/
 theorem committed_triple {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed dc ds choose dec) {R N t : ℕ}
     (hsees : ∀ r l, r + 2 ≤ N → l ∈ slotBlocks D r → DirectCommit D l → dc r l)
-    (hsync : SynchronisedFrom D.block D.ids (Correct : Finset Validator) R)
-    (hpop : ∀ n, n ≤ N → PopulatedFrom D.block D.ids (Correct : Finset Validator) n)
+    (hcommits : CommitsCorrectLeaders D R N)
     (hrr : RoundRobin D.leader) (hR : R ≤ t) (hN : t + (3 * F.f + 5) ≤ N) :
     ∃ a, t < a ∧ a + 4 ≤ N ∧
       ∀ s, a ≤ s → s ≤ a + 2 →
         dec s ≠ Verdict.undecided ∧ dec s ≠ Verdict.skip := by
   obtain ⟨a, hlo, hhi, h0, h1, h2⟩ := lemma22 hrr (t + 1)
   refine ⟨a, by omega, by omega, fun s hs1 hs2 => ?_⟩
-  -- the leader of `s` is correct, so its block is directly committed
   have hsc : D.leader s ∈ (Correct : Finset Validator) := by
     rcases (by omega : s = a ∨ s = a + 1 ∨ s = a + 2) with rfl | rfl | rfl
     exacts [h0, h1, h2]
-  obtain ⟨l, hl, hlc, hlr⟩ := hpop s (by omega) (D.leader s) hsc
-  have hslot : l ∈ slotBlocks D s := by
-    simp only [slotBlocks, blocksAt, Finset.mem_filter]
-    exact ⟨⟨hl, hlr⟩, hlc⟩
-  have hcom : DirectCommit D l :=
-    Or.inr (lemma20 hsync (by omega) (hpop (s + 1) (by omega)) (hpop (s + 2) (by omega))
-      hl hlr (by rw [hlc]; exact hsc))
+  obtain ⟨l, hslot, hcom⟩ := hcommits s (by omega) (by omega) hsc
   rw [hwf.direct_commit s l (hsees s l (by omega) hslot hcom)]
   exact ⟨by simp, by simp⟩
 
@@ -151,12 +164,11 @@ theorem all_decided {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed dc ds choose dec) {R N r : ℕ}
     (hsees : ∀ r l, r + 2 ≤ N → l ∈ slotBlocks D r → DirectCommit D l → dc r l)
-    (hsync : SynchronisedFrom D.block D.ids (Correct : Finset Validator) R)
-    (hpop : ∀ n, n ≤ N → PopulatedFrom D.block D.ids (Correct : Finset Validator) n)
+    (hcommits : CommitsCorrectLeaders D R N)
     (hrr : RoundRobin D.leader) (hN : max r R + (3 * F.f + 5) ≤ N) :
     dec r ≠ Verdict.undecided := by
   obtain ⟨a, hlo, -, htri⟩ :=
-    committed_triple hwf hsees hsync hpop hrr (le_max_right r R) hN
+    committed_triple hwf hsees hcommits hrr (le_max_right r R) hN
   exact lemma23 hwf (lt_of_le_of_lt (le_max_left r R) hlo) htri
 
 end Triple
@@ -396,10 +408,10 @@ theorem agreement_of_viewPace {U : BlockUniverse Validator BlockId Payload} {N R
   refine theorem24
     (lemma12 hwf hwf' (exclusions_of_dag hch hdc hdc' hds hds')
       (habove dec hslot) (habove dec' hslot') hbound)
-    (fun s hs => all_decided hwf hsees hsync hpop hrr (by
+    (fun s hs => all_decided hwf hsees (commits_of_synchronised hsync hpop) hrr (by
       have : max s R ≤ max k R := max_le_max (by omega) le_rfl
       omega))
-    (fun s hs => all_decided hwf' hsees' hsync hpop hrr (by
+    (fun s hs => all_decided hwf' hsees' (commits_of_synchronised hsync hpop) hrr (by
       have : max s R ≤ max k R := max_le_max (by omega) le_rfl
       omega))
     hist
