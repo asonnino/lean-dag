@@ -23,7 +23,7 @@ parties, has the anchor of the round, and sees the two anchors below it
 supported; a timeout supplies the second disjunct when an anchor is
 Byzantine, which is what keeps the protocol responsive.
 
-This arc covers the commit rule of `delivery(r)` (Algorithm 2, L14–L17)
+This arc covers the commit rule of `delivery(r)` (Algorithm 1, L14–L17)
 with §5.1's safety results (§4), liveness above the structural condition
 in place of §5.2's timing argument (§8), the round rule of L38–L41 and
 the responsiveness it yields (§9), Definition 1's Agreement (§10), and

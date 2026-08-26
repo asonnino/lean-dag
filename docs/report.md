@@ -5491,7 +5491,7 @@ both references `B` and carries support from `n − f` validators at round
 obtain from a certificate; §18.3 states what it is used for, which is
 one case of one theorem.
 
-The arc formalises `delivery(r)` (Algorithm 2, L14–L17): §5.1 of the
+The arc formalises `delivery(r)` (Algorithm 1, L14–L17): §5.1 of the
 paper — the rule and every safety result stated about it (§18.2) — its
 liveness above the structural condition of §6, in place of §5.2's timing
 argument (§18.5), the round rule of L38–L41 and the responsiveness it
