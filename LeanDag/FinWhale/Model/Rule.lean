@@ -52,11 +52,14 @@ structure ValidHere (blk : BlockId → Block Validator BlockId Payload)
   distinct_creators : ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
   /-- A non-genesis block carries `n − f` edges by distinct validators. -/
   quorum : 0 < b.round → quorumCard Validator ≤ (creators blk b).card
-  /-- **FinWhale's clause.** Either the parents agree on the leader two
-  rounds down, or that leader's block is not among them. -/
+  /-- **FinWhale's clause.** Either the parent set is leader-consistent
+  with respect to the leader two rounds down — the parents vote for at
+  most one of that leader's blocks — or that leader's block is not among
+  the parents. Leader-consistency is a condition on what the parents
+  *reference*, not on who authored them. -/
   leader_clause : 2 ≤ b.round →
-    (∀ i ∈ b.refs, ∀ j ∈ b.refs,
-      (blk i).creator = leader (b.round - 2) → (blk j).creator = leader (b.round - 2) → i = j)
+    (∀ i ∈ b.refs, ∀ j ∈ b.refs, ∀ x ∈ (blk i).refs, ∀ y ∈ (blk j).refs,
+      (blk x).creator = leader (b.round - 2) → (blk y).creator = leader (b.round - 2) → x = y)
     ∨ (∀ i ∈ b.refs, (blk i).creator ≠ leader (b.round - 2))
 
 /-- A DAG the communication component can build. Equivocating blocks are
@@ -111,7 +114,8 @@ vote for two different blocks of the round-`r` leader. This is the
 reading the validity rule is stated in, and the one Lemma 4 needs. -/
 def ExposesEquivocation (D : Dag Validator BlockId Payload) (b : BlockId) : Prop :=
   ∃ l ∈ (D.ids : Finset BlockId), ∃ l' ∈ (D.ids : Finset BlockId),
-    Conflicting D l l' ∧ (parentsVoting D b l).Nonempty ∧ (parentsVoting D b l').Nonempty
+    Conflicting D l l' ∧ (D.block l).creator = D.leader ((D.block b).round - 2) ∧
+      (parentsVoting D b l).Nonempty ∧ (parentsVoting D b l').Nonempty
 
 instance (D : Dag Validator BlockId Payload) (b : BlockId) :
     Decidable (ExposesEquivocation D b) :=

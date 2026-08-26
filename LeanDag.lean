@@ -131,3 +131,4 @@ import LeanDag.BlackMarlin.ViewOrder.Proof
 import LeanDag.Minnow.Blocking
 import LeanDag.FinWhale.Counting
 import LeanDag.FinWhale.Model.Rule
+import LeanDag.FinWhale.Evidence
