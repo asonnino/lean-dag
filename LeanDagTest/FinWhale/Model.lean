@@ -1,5 +1,6 @@
 import LeanDag.FinWhale.Order
 import LeanDag.FinWhale.Rotation
+import LeanDag.FinWhale.Decided
 import Mathlib.Tactic.IntervalCases
 
 /-!
@@ -450,12 +451,136 @@ is not about a committee without faults. -/
 example : fwLeader 0 ∉ (Correct : Finset (Fin 9)) ∧
     fwLeader 1 ∉ (Correct : Finset (Fin 9)) := by decide
 
+/-! ## The reverse pass, on a concrete verdict assignment
+
+`WellFormed` and `Anchor` settled on data. Slots `3`, `4` and `5` are
+committed directly, slots `1` and `2` are skipped directly, and slot `0`
+is decided indirectly: its anchor is the first slot above `2` that is not
+skipped, which is `3`, and the deterministic rule names block `1` there.
+Nothing above `5` is decided, as a DAG that stops must have it. -/
+
+/-- The verdicts. -/
+def decW : ℕ → Verdict (Fin 4) := fun s =>
+  if s = 0 then Verdict.commit 1
+  else if s ≤ 2 then Verdict.skip
+  else if s ≤ 5 then Verdict.commit 0
+  else Verdict.undecided
+
+/-- The direct commit rule of this validator's view. -/
+def dcW : ℕ → Fin 4 → Prop := fun r l => 3 ≤ r ∧ r ≤ 5 ∧ l = 0
+
+/-- Its direct skip rule. -/
+def dsW : ℕ → Prop := fun r => r = 1 ∨ r = 2
+
+/-- The deterministic tie-break, which names a block only at slot `0`. -/
+def chooseW : Fin 4 → ℕ → Option (Fin 4) := fun _ r => if r = 0 then some 1 else none
+
+/-- **The anchor of slot `0` is slot `3`**, and nothing else: the slots
+between are skipped, and `3` is not. -/
+theorem anchorW : ∀ a, Anchor decW 0 a → a = 3 := by
+  rintro a ⟨h1, h2, h3⟩
+  by_contra hne
+  have hlt : 3 < a := by omega
+  have := h3 3 (by omega) hlt
+  simp [decW] at this
+
+example : Anchor decW 0 3 := ⟨by omega, by decide, by intro a' h1 h2; omega⟩
+
+/-- **The reverse pass is followed.** -/
+theorem wellFormedW : WellFormed dcW dsW chooseW decW where
+  direct_commit r l := by
+    rintro ⟨h3, h5, rfl⟩
+    simp only [decW, if_neg (by omega : ¬ r = 0), if_neg (by omega : ¬ r ≤ 2), if_pos h5]
+  direct_skip r := by rintro (rfl | rfl) <;> decide
+  indirect_undecided r a := by
+    intro hdc hds hanc hau
+    rcases Nat.lt_or_ge r 6 with hr | hr
+    · interval_cases r
+      · rw [anchorW a hanc] at hau
+        simp [decW] at hau
+      · exact absurd (Or.inl rfl) hds
+      · exact absurd (Or.inr rfl) hds
+      · exact absurd ⟨0, by exact ⟨by omega, by omega, rfl⟩⟩ hdc
+      · exact absurd ⟨0, by exact ⟨by omega, by omega, rfl⟩⟩ hdc
+      · exact absurd ⟨0, by exact ⟨by omega, by omega, rfl⟩⟩ hdc
+    · simp only [decW, if_neg (by omega : ¬ r = 0), if_neg (by omega : ¬ r ≤ 2),
+        if_neg (by omega : ¬ r ≤ 5)]
+  indirect_commit r a A := by
+    intro hdc hds hanc hcom
+    rcases Nat.lt_or_ge r 6 with hr | hr
+    · interval_cases r
+      · have ha3 : a = 3 := anchorW a hanc
+        subst ha3
+        have hA : (0 : Fin 4) = A := by simpa [decW] using hcom
+        subst hA
+        simp [decW, chooseW]
+      · exact absurd (Or.inl rfl) hds
+      · exact absurd (Or.inr rfl) hds
+      · exact absurd ⟨0, by exact ⟨by omega, by omega, rfl⟩⟩ hdc
+      · exact absurd ⟨0, by exact ⟨by omega, by omega, rfl⟩⟩ hdc
+      · exact absurd ⟨0, by exact ⟨by omega, by omega, rfl⟩⟩ hdc
+    · -- above the decided range no anchor is committed
+      have h1 : (6 : ℕ) ≤ a := by have := hanc.1; omega
+      rw [show decW a = Verdict.undecided by
+        simp only [decW, if_neg (by omega : ¬ a = 0), if_neg (by omega : ¬ a ≤ 2),
+          if_neg (by omega : ¬ a ≤ 5)]] at hcom
+      exact absurd hcom (by simp)
+  has_anchor r := by
+    intro hdc hds hdecided
+    rcases Nat.lt_or_ge r 6 with hr | hr
+    · interval_cases r
+      · exact ⟨3, by omega, by decide, by intro a' h1 h2; omega⟩
+      · exact absurd (Or.inl rfl) hds
+      · exact absurd (Or.inr rfl) hds
+      · exact absurd ⟨0, by exact ⟨by omega, by omega, rfl⟩⟩ hdc
+      · exact absurd ⟨0, by exact ⟨by omega, by omega, rfl⟩⟩ hdc
+      · exact absurd ⟨0, by exact ⟨by omega, by omega, rfl⟩⟩ hdc
+    · exact absurd (by
+        simp only [decW, if_neg (by omega : ¬ r = 0), if_neg (by omega : ¬ r ≤ 2),
+          if_neg (by omega : ¬ r ≤ 5)]) hdecided
+
+/-- **Lemma 23 on data.** Slots `3`, `4` and `5` are a committed triple,
+and slot `0` lies below it, so the reverse pass decides it. -/
+example : decW 0 ≠ Verdict.undecided :=
+  lemma23 wellFormedW (show (0 : ℕ) < 3 by omega)
+    (fun s h1 h2 => by interval_cases s <;> exact ⟨by decide, by decide⟩)
+
+/-- Anti-vacuity: the triple is genuinely needed. Nothing above `5` is
+decided here, and the slots between `0` and its anchor are skipped. -/
+example : decW 6 = Verdict.undecided ∧ decW 1 = Verdict.skip ∧ decW 2 = Verdict.skip := by
+  decide
+
+/-! ## Delivery, on the same verdicts -/
+
+/-- **Lemma 25 on data**: the block committed at slot `2` is in the
+commit sequence. -/
+example : (2 : Fin 4) ∈ commitSeq decB 3 := lemma25 (r := 2) (by omega) (by decide)
+
+/-- **Theorem 24 on data**: two validators that have decided the same
+slots deliver the same sequence. -/
+example : linearise histFW (commitSeq decA 2) = linearise histFW (commitSeq decB 2) :=
+  theorem24 (by
+      intro s h1 _
+      match s with
+      | 0 => rfl
+      | 1 => rfl
+      | (n + 2) => exact absurd (by simp [decA]) h1)
+    (by decide) (by decide) histFW
+
+/-- **Theorem 26 on data**: the genesis block lies in the history of the
+leader committed at slot `2`, and is delivered — once, though it lies in
+both leaders' histories. -/
+example : (0 : Fin 4) ∈ linearise histFW (commitSeq decB 3) :=
+  theorem26 (r := 2) (l := 2) (by omega) (by decide) (by decide)
+
 /-! ## The arc's axioms -/
 
 #print axioms LeanDag.FinWhale.lemma12
 #print axioms LeanDag.FinWhale.safety
 #print axioms LeanDag.FinWhale.directCommit_of_viewPace
 #print axioms LeanDag.FinWhale.lemma22
+#print axioms LeanDag.FinWhale.agreement_of_viewPace
+#print axioms LeanDag.FinWhale.delivered_of_viewPace
 
 end FinWhale
 

@@ -249,11 +249,17 @@ than settled by `decide`. The rotation is exercised too: `fwLeader` is a
 `RoundRobin`, and Lemma 22 names a correct triple in the window from
 round `0`.
 
+The reverse pass has its own witness, on verdicts rather than blocks:
+slots `3` to `5` committed directly, `1` and `2` skipped directly, and
+slot `0` decided indirectly from its anchor, which the model shows is
+slot `3` and nothing else. `WellFormed` is discharged for it field by
+field, and Lemma 23 is then applied to that triple.
+
 The list layer is exercised on concrete verdicts: a commit sequence, its
 extension, and the delivery order that repeats a block of two causal
 histories and delivers it once.
 
-## 10. Liveness: an honest leader is committed
+## 10. Liveness
 
 Lemmas 16 and 17 are a timing argument — round synchronisation within
 `∆`, and delivery before the round timeout expires — and what they
@@ -326,6 +332,50 @@ rather than proving it, and `WaveRobin.lean` supplies runs of three by
 rotating in waves instead. `three_correct_window` is that pigeonhole,
 proved, for the round-robin schedule.
 
+**Lemma 23 is a statement about one DAG, not about time.** The paper
+reads it as "after GST any undecided slot eventually gets decided", where
+eventually means in a later and larger DAG. Written that way it would
+contradict the finiteness Lemma 12 consumes: nothing above some `N` is
+decided in a DAG that stops. What holds of a single DAG is the content of
+the argument, and `lemma23` states it — a slot below a committed triple
+is decided. Growth enters through the hypothesis instead: a larger DAG
+carries a triple further up, and every slot below it is decided.
+
+The proof is the paper's maximality argument with the maximum made
+explicit. If some slot below the triple were undecided, take the highest
+such (`Nat.findGreatest`). Everything above it up to the triple is then
+decided, so the first non-skipped slot above it is a commit, which is its
+anchor, and `WellFormed.indirect_commit` decides it — a contradiction.
+The triple is what covers the three offsets: the anchor must sit above
+`r + 2`, so for a slot within two of the triple's start only its later
+members qualify.
+
+`committed_triple` supplies the triple from §10's liveness: Lemma 22
+names three consecutive correct leaders, Lemma 20 commits each of their
+blocks. One hypothesis carries the growth there — `hsees`, that a direct
+commit of the universe is a direct commit of this validator's view. Read
+the other way it says the certificates have arrived, which is the
+"eventually" of the paper's statement, and it is the converse of what
+`exclusions_of_dag` consumes for safety. `all_decided` composes the two,
+and covers the slots before GST as well: only the triple has to sit past
+the coverage round, since the reverse pass decides everything below it.
+
+**Theorems 24 and 26.** With every slot decided, Lemma 12's agreement
+becomes equality: `theorem24` says two validators deliver the *same*
+sequence at a common horizon, not merely comparable ones. `lemma25` puts
+a committed leader block into the commit sequence, and `mem_linearise`
+puts everything in its causal history into the delivery order — either an
+earlier leader delivered it, or this one does. `theorem26` is the
+composition, and `reaches_of_synchronised` is the DAG-level step that
+feeds it: coverage puts a correct validator's block in the causal history
+of the next round's correct leader.
+
+`delivered_of_viewPace` and `agreement_of_viewPace` are the two theorems
+end to end, from a `ViewPace` and nothing else of the network. In the
+second, the two finiteness conditions sit together rather than in
+conflict: `hbound` says nothing above `M` is decided, and the horizon is
+placed below what the DAG's own reach decides.
+
 ## 11. What is not modelled, and what is not done
 
 `safety` states its own side conditions, and each is either a fact about
@@ -345,10 +395,14 @@ shows a validator running the pass produces one.
 finitely many decided slots, and `hk` says a commit sequence stops at the
 first undecided slot; neither is derived.
 
-**Liveness stops at Lemma 22.** Lemmas 16 and 17 are derived from the
-pacing line rather than proved from `∆` and the timeouts, as §10 records;
-what remains untouched is Lemma 23 (every slot is eventually decided),
-Lemma 25, and Theorems 24 and 26. Lemma 23 is the next step, and it
-formalises at the verdict level: under the maximality of an undecided
-slot every slot above it is decided, so the first non-skipped slot above
-`r + 2` is a commit, and `WellFormed.indirect_commit` then decides `r`.
+**Liveness rests on the pacing line rather than on `∆`.** Lemmas 16 and
+17 are derived from `ViewPace` rather than proved from the timeouts, as
+§10 records. What that leaves outstanding is not a lemma of the paper but
+the pacing structure itself: no execution is exhibited as a `ViewPace`
+here, so the timing argument is discharged against the core's
+formalisation of it, not against the protocol's pseudocode.
+
+**Two hypotheses carry what growth would.** `hsees` says the deciding
+validator's view holds the direct commits the universe holds, and
+`hhist` says the list a leader contributes to the order is its causal
+history. Both are conditions on the model rather than facts about it.

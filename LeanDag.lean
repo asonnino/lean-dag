@@ -141,3 +141,4 @@ import LeanDag.FinWhale.Consistency
 import LeanDag.FinWhale.Order
 import LeanDag.FinWhale.Liveness
 import LeanDag.FinWhale.Rotation
+import LeanDag.FinWhale.Decided
