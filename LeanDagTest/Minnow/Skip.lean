@@ -51,6 +51,7 @@ def Dk : Dag (Fin 4) (Fin 10) Unit where
   block := kBlk
   complete := by decide
   valid := by decide
+  correct_single := by decide
 
 /-- The equivocator issues three vertices in round `1`, so the round
 holds six. -/

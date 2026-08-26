@@ -29,8 +29,11 @@ vertices issued in the previous round by distinct processes". Imposing a
 self-parent would not be a harmless strengthening — it would force the
 faulty process of §3 to point at its own previous vertex, which is one of
 the pointers that construction counts. So `Minnow.ValidHere` has exactly
-three clauses, and `Minnow.Dag` carries no `no_equivocation` field,
-because section 2 admits equivocating vertices explicitly.
+three clauses. `Minnow.Dag` does keep a `correct_single` field — the
+core's `no_equivocation` with its correctness guard intact — because
+section 2 admits equivocating vertices of *faulty* processes only, and a
+correct process issues one vertex a round. Dropping it would admit DAGs
+the communication component cannot build.
 
 **Where the paper is ambiguous, the model takes the reading that
 favours the protocol.** The skip clause is counted by vertices, which is
@@ -56,13 +59,16 @@ accused of resolving the recursion in a way the paper would not.
 
 ## 3. The three defects
 
-**An empty slot resolves nothing.** Definition 9's second clause opens
-"there is a vertex `v′` in slot `s′` in `D` such that …". A slot holding
-no vertex satisfies neither disjunct, so a process that stops issuing
-blocks every later leader. Almost certainly a drafting slip, and the
-repair is a single word; recorded because the paper's Lemma 11 makes the
-same assumption silently, reasoning about "a leader vertex `l′′` issued
-by a faulty process" and never about a slot holding none.
+**An empty slot, at the letter, resolves nothing.** Definition 9's second
+clause opens "there is a vertex `v′` in slot `s′` in `D` such that …",
+and all three ways of resolving a slot sit inside that existential, so a
+slot holding no vertex satisfies none of them. That is not the reading to
+take: the skip disjunct needs no `v′` at all — it asks that `2f + 1`
+vertices of the round above carry no edge into the slot, which an empty
+slot satisfies trivially. The model implements the letter because a
+formalisation must choose, and the two findings below are unaffected,
+turning only on slots that hold exactly one vertex, where the readings
+coincide.
 
 **The skip clause counts vertices where the quorum clause counts
 processes.** Two lines apart, Definition 9 asks for "a set `Q` of

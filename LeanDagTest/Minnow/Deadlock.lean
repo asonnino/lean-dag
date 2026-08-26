@@ -75,6 +75,7 @@ def Dm : Dag (Fin 4) (Fin 24) Unit where
   block := mBlk
   complete := by decide
   valid := by decide
+  correct_single := by decide
 
 /-- Two leaders a round, processes `0` then `1` — round robin at
 `l = 2`. -/
@@ -186,6 +187,7 @@ def Ds : Dag (Fin 4) (Fin 12) Unit where
   block := sBlk
   complete := by decide
   valid := by decide
+  correct_single := by decide
 
 /-- The silent process's slots are empty, and every other vertex carries
 a quorum — so nothing but the second clause is in the way. -/

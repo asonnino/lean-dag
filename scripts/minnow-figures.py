@@ -3,10 +3,11 @@
 
 Each figure is generated from the same vertex and edge tables as the
 witnesses in `LeanDagTest/Minnow/`, so the pictures assert nothing the
-machine has not checked.
+machine has not checked. The empty-slot reading of §19.2 has no figure:
+it is a reading of a sentence, and the reading it loses to is the right
+one.
 
-    scripts/minnow-figures.py   ->  docs/figures/minnow-empty-slot.svg
-                                    docs/figures/minnow-skip.svg
+    scripts/minnow-figures.py   ->  docs/figures/minnow-skip.svg
                                     docs/figures/minnow-deadlock.svg
 """
 import pathlib
@@ -82,55 +83,6 @@ def rounds_and_lanes(out, x0, dx, y0, dy, nrounds, procs, leadfn, byz=None):
         note = " (faulty)" if p == byz else ""
         out.append(f'<text x="{x0 - 108}" y="{y0 + dy * i + 5}" font-size="12" '
                    f'fill="{col}">p{p}{note}</text>')
-
-
-def empty_slot():
-    """Three processes issuing, process 0 silent."""
-    W, H = 1120, 660
-    X0, DX, Y0, DY, R = 190, 200, 210, 78, 20
-    out = head(W, H, "A silent leader blocks every later leader",
-               "Process 0 issues nothing, so slots (0, r) hold no vertex at all — "
-               "and Definition 9 asks for one.")
-    procs = [0, 1, 2, 3]
-    pos, refs = {}, {}
-    for r in range(4):
-        for k, p in enumerate([1, 2, 3]):
-            v = 3 * r + k
-            pos[v] = (X0 + DX * r, Y0 + DY * (p))
-            refs[v] = [3 * (r - 1), 3 * (r - 1) + 1, 3 * (r - 1) + 2] if r else []
-    rounds_and_lanes(out, X0, DX, Y0, DY, 4, procs,
-                     lambda r: f"(0,{r}) then (1,{r})" if r % 2 == 0 else f"(2,{r}) then (3,{r})",
-                     byz=0)
-    fills = {v: ("#ffffff", OK, 2.2) for v in pos}
-    labels = []
-    for r in range(4):
-        x, y = X0 + DX * r, Y0
-        out.append(f'<rect x="{x - R}" y="{y - R}" width="{2 * R}" height="{2 * R}" '
-                   f'rx="6" fill="{DEAD}" stroke="{BYZ}" stroke-width="1.6" '
-                   f'stroke-dasharray="5,4"/>')
-        labels.append((x, y + 5, "—", BYZ, "middle", 15))
-    labels.append((X0, Y0 - R - 10, "slot (0,0) is empty", BYZ, "middle", 12))
-    draw(out, pos, refs, R, (), fills, labels)
-    for v in (0, 4, 5, 6, 10, 11):
-        x, y = pos[v]
-        out.append(f'<circle cx="{x}" cy="{y}" r="{R + 5}" fill="none" stroke="{LEAD}" '
-                   f'stroke-width="1.6"/>')
-    out.append(f'<circle cx="40" cy="{H - 148}" r="9" fill="none" stroke="{LEAD}" '
-               f'stroke-width="1.6"/>')
-    out.append(f'<text x="60" y="{H - 144}" font-size="13" fill="#111">'
-               f'a leader slot under round robin, two a round</text>')
-    out.append(f'<text x="24" y="{H - 96}" font-size="13" fill="#111">'
-               f'Rounds still advance: a round completes on n − f = 3 vertices, and '
-               f'the three correct processes supply them. Every vertex they issue</text>')
-    out.append(f'<text x="24" y="{H - 76}" font-size="13" fill="#111">'
-               f'carries a quorum. But the second clause of Φ*s asks that "there is a '
-               f'vertex v′ in slot s′ in D such that …", and for slot (0,0) there is</text>')
-    out.append(f'<text x="24" y="{H - 56}" font-size="13" fill="#111">'
-               f'none: nothing to reach, nothing to commit, nothing to skip. So every '
-               f'leader after the first empty slot is blocked, for ever.</text>')
-    out.append('</svg>')
-    (FIGS / "minnow-empty-slot.svg").write_text("\n".join(out) + "\n")
-    return "minnow-empty-slot.svg"
 
 
 def skip():
@@ -255,7 +207,7 @@ def deadlock():
 
 def main():
     FIGS.mkdir(parents=True, exist_ok=True)
-    for f in (empty_slot(), skip(), deadlock()):
+    for f in (skip(), deadlock()):
         print(f"docs/figures/{f}")
 
 

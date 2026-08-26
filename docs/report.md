@@ -366,20 +366,20 @@ proof effort with no corresponding proof content.
 **Minnow's minimal commit rule fails in three ways** (§19). `crs*`, the
 rule proposed for eventual synchrony, decides a leader slot from the
 round immediately above it: a quorum of `2f + 1` processes pointing
-commits it, and `2f + 1` vertices not pointing skips it. A slot holding
-no vertex satisfies neither disjunct of the clause that consults it, so a
-process that falls silent blocks every later leader (§19.2). The skip
+commits it, and `2f + 1` vertices not pointing skips it. The skip
 clause counts vertices where the quorum clause counts processes, so an
 equivocator's spare vertices make one vertex committed and skipped at
 once, which is Safe-Commit and with it Total-order and Agreement
 (§19.3). And the two thresholds leave a gap — a vertex pointed to by
 between `f + 1` and `2f` processes is neither committable nor skippable —
 which a faulty process can occupy every round it leads, so that nothing
-is ever committed and Live-Commit fails outright (§19.4). The third
+is ever committed and Live-Commit fails outright (§19.4). The second
 admits no repair at this shape: `2f + 1` is the least threshold the skip
 clause can safely take, so the gap is forced. All three are exhibited on
 four processes at `f = 1`, machine-checked, with the model held to the
-paper's own validity rule and its own reading of each clause (§19.1).
+paper's own validity rule and its own reading of each clause (§19.1). A
+third reading, on which a leader slot holding no vertex resolves nothing,
+is the wrong one and is set aside (§19.2).
 
 ### 1.4 Scope and non-goals
 
@@ -6500,18 +6500,21 @@ every leader slot that precedes `l`'s in the sequence `leaders` is
 concurrent with `l` and either committed or skipped, where *skipped*
 means `2f + 1` vertices of the round above carry no edge to it.
 
-**Three defects, in increasing order of seriousness.** A leader slot that
-holds no vertex satisfies neither disjunct of the second condition, so a
-silent process blocks every later leader for ever (§19.2). The skip
-clause counts vertices where the quorum clause counts processes, so an
+**Two defects, and one ambiguity that is not one.** The skip clause
+counts vertices where the quorum clause counts processes, so an
 equivocator's spare vertices can make one vertex committed and skipped at
 the same time (§19.3). And the two thresholds leave a gap: at
 `n = 3f + 1` a vertex pointed to by between `f + 1` and `2f` processes is
 neither committable nor skippable, and a Byzantine process that keeps its
 vertices in that gap stops the rule from committing anything ever
-(§19.4). The third is not a threshold that can be lowered — `2f + 1` is
+(§19.4). The second is not a threshold that can be lowered — `2f + 1` is
 the least value the skip clause can safely take — so it is a property of
 the rule's shape rather than of its constants.
+
+The ambiguity is that the second condition binds its vertex
+existentially, so read at the letter an empty slot resolves nothing. The
+natural reading skips such a slot at once, and §19.2 sets out why that
+reading is right and why neither finding turns on the choice.
 
 The chapter records counterexamples and the little theory they need, and
 nothing else. Where the paper's own liveness argument (its Lemma 11)
@@ -6551,14 +6554,19 @@ is one of the pointers the counterexample counts. `Minnow.ValidHere` is
 therefore defined afresh rather than reused, and `Minnow.Dag` is a
 separate structure carrying it.
 
-**Equivocation is admitted, because §2 admits it**: "if a faulty process
-issues two valid vertices in the same round, then correct processes
-include both in their local DAG but when they issue their vertex for the
-next round, correct processes will choose (it does not matter how) only
-one vertex per process to add an edge to". So `Minnow.Dag` has **no**
-`no_equivocation` field, unlike the universes of §17 and §18, and
-`distinct_creators` above is what enforces the second half of that
-sentence — a vertex points at one vertex per process.
+**Equivocation is admitted, of faulty processes only**, because that is
+what §2 admits: "if a faulty process issues two valid vertices in the
+same round, then correct processes include both in their local DAG but
+when they issue their vertex for the next round, correct processes will
+choose (it does not matter how) only one vertex per process to add an
+edge to". Both halves are modelled. `distinct_creators` above is the
+second — a vertex points at one vertex per process. The first is
+`Minnow.Dag`'s `correct_single`, which is the core's `no_equivocation`
+with its correctness guard intact: a *correct* process follows its
+algorithm and issues one vertex a round, and only a faulty one may put
+two in a slot. Dropping the field altogether would admit DAGs the
+communication component cannot build; what Minnow drops relative to §17
+and §18 is validity's self-parent clause, not this.
 
 **A slot is a pair, and may be empty.** §2: "a slot is a pair `(p, r)`
 that identifies a proposal, i.e., a vertex issued by process `p` in round
@@ -6666,43 +6674,44 @@ avoid.
 smallest committee satisfying the paper's `f < n/3`, with process `0`
 faulty and the other three correct.
 
-### 19.2 A silent leader blocks every later leader
+### 19.2 An ambiguity that does not become a defect: the empty slot
 
-![**A slot with no vertex.** Process `0` issues nothing, so every slot `(0, r)` is empty. Rounds still advance on `n − f = 3` vertices and every vertex issued carries a quorum, but the second clause of `Φ*s` asks that "there is a vertex `v′` in slot `s′` in `D`", and for an empty slot there is not: nothing to reach, nothing to commit, nothing to skip.](figures/minnow-empty-slot.svg)
+The second clause opens "there is a vertex `v′` in slot `s′` in `D` such
+that …", and all three ways of resolving the slot — a vertex of it in
+`l`'s causal past, a vertex of it committed, a vertex of it skipped — sit
+inside that existential. Taken at the letter, a slot holding **no**
+vertex satisfies none of them, and a process that falls silent would
+block every later leader for ever.
 
-**The execution, step by step.** Process `0` never issues a vertex.
-Processes `1`, `2` and `3` issue one each round, and since only three
-vertices exist per round, validity forces each of them to reference all
-three of the round below.
+**That is not the reading to take**, and it is worth saying why rather
+than leaving it as a finding. The skip disjunct does not need a `v′` at
+all. What it asks is that `2f + 1` vertices of the round above carry no
+edge *into the slot*, and where the slot is empty every vertex of that
+round qualifies trivially. Read so — a slot is resolved when some vertex
+of it lies in `l`'s causal past, or some vertex of it is committed, or
+`2f + 1` vertices of the round above have no edge into it — a silent
+leader is skipped at once, which is plainly what the clause exists to do.
+Nothing else in `crs*` pushes back against that reading; on the contrary,
+§19.3 finds an independent reason to state the skip clause over the slot
+rather than over a chosen vertex of it.
 
-1. **Round `0`** carries vertices by processes `1`, `2` and `3`.
-   Algorithm 3 completes a round on `n − f = 3` vertices, so the
-   execution proceeds normally.
-2. **Round `1`** carries three more, each referencing all of round `0`.
-   Every round-`0` vertex is therefore pointed to by three distinct
-   processes, which is `2f + 1`: `Quorum Ds 0 ∧ Quorum Ds 3` is checked,
-   so the *first* clause is satisfied for every vertex in the DAG.
-3. **The leader sequence** is round robin over four processes, two a
-   round, so slot `(0, 0)` is the first leader slot. It holds no vertex:
-   `slotBlocks Ds (0, 0) = ∅`, checked, as are `(0, 1)` and `(0, 2)`.
-4. **Every later leader is now blocked.** Its second clause requires,
-   for slot `(0, 0)`, a vertex `v′` of that slot which is in its causal
-   past, or concurrent and committed, or concurrent and skipped. All
-   three are quantified over a vertex that does not exist.
+**The model implements the letter, and no finding depends on it.**
+`CommittedAt` binds `v` existentially over `slotBlocks`, because a
+formalisation has to choose and the written form is the safer thing to be
+held to. The choice is recorded rather than buried, and
+`LeanDagTest/Minnow/Deadlock` carries a DAG in which process `0` issues
+nothing and five leaders are blocked, so the consequence of the literal
+reading is on the record.
 
-Five leaders are checked individually, and none commits — the hypothesis
-of `not_committedAt_of_dead` holding vacuously, which is the formal shape
-of "there is nothing there to resolve".
-
-**What this is.** Most likely a drafting slip: the intended reading
-surely treats an empty slot as resolved by default, and the repair is a
-single word. It is recorded because the paper's own liveness argument makes
-the same assumption without stating it — Lemma 11 reasons about "a leader
-vertex `l′′` issued by a faulty process", never about a slot that holds
-none — and because the case is not exotic. A crashed process is a
-Byzantine process, `leaders` assigns slots by a fixed rotation whatever
-the processes do, and a protocol that stops when one process falls silent
-would not be tolerating `f` faults at all.
+**Neither finding below depends on the choice.** In §19.3 and §19.4 every
+slot whose resolution matters holds exactly **one** vertex, and on a
+singleton slot the two readings coincide: "some vertex of the slot is
+skipped" and "`2f + 1` vertices have no edge into the slot" are the same
+sentence. So both results hold on the letter and on the charitable
+reading alike, and the ambiguity above is a defect of the write-up only —
+one the paper's own Lemma 11 shares silently, reasoning throughout about
+"a leader vertex `l′′` issued by a faulty process" and never about a slot
+holding none.
 
 ### 19.3 A vertex committed and skipped at the same time
 
@@ -6837,14 +6846,15 @@ dead zone, and it is where the argument is left unfinished.
 
 ### 19.5 What the three amount to
 
-| defect | what it costs | reading | repair |
-| --- | --- | --- | --- |
-| an empty leader slot resolves nothing (§19.2) | every later leader, for ever | as written; surely unintended | treat an empty slot as resolved |
-| the skip clause counts vertices (§19.3) | Safe-Commit, hence Total-order and Agreement | as written; the quorum clause counts processes two lines above | count processes |
-| the dead zone (§19.4) | Live-Commit outright | on either reading | none available at this shape |
+| finding | what it costs | repair |
+| --- | --- | --- |
+| an empty leader slot resolves nothing at the letter (§19.2) | nothing — the natural reading skips it | state the skip clause over the slot |
+| the skip clause counts vertices (§19.3) | Safe-Commit, hence Total-order and Agreement | count processes |
+| the dead zone (§19.4) | Live-Commit outright | none available at this shape |
 
-The first two are defects of the write-up. The third is not: `2f + 1` is
-the least threshold the skip clause can safely take, so the window
+The first two are matters of wording; the second still costs a safety
+property until it is reworded, and the third is not a matter of wording
+at all. `2f + 1` is the least threshold the skip clause can safely take, so the window
 `f + 1 ≤ a ≤ 2f` cannot be closed from inside the rule, and `crs*`'s only
 other way to resolve a slot — a vertex of it lying in the candidate's
 causal past — is unavailable for exactly the leaders that follow a dead
@@ -14322,6 +14332,13 @@ structure Dag (Validator BlockId Payload : Type*) [Fintype Validator]
   complete : ∀ i ∈ ids, ∀ j ∈ (block i).refs, j ∈ ids
   /-- Every vertex is valid. -/
   valid : ∀ i ∈ ids, ValidHere block (block i)
+  /-- **Only a faulty process issues two vertices in one round.** Section
+  2 of the paper admits equivocating vertices into the DAG, but a correct
+  process follows its algorithm, which issues one vertex a round. -/
+  correct_single : ∀ i ∈ ids, ∀ j ∈ ids,
+    (block i).creator ∈ (Correct : Finset Validator) →
+    (block i).creator = (block j).creator →
+    (block i).round = (block j).round → i = j
 ```
 
 A DAG the communication component can build. Equivocating vertices are admitted: a faulty process may issue two, and both are held.

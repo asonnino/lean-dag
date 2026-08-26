@@ -246,16 +246,14 @@ faults alone.
   *minimal* for eventual synchrony (arXiv:2608.18029), which decides a
   leader slot from the round immediately above it — `2f+1` processes
   pointing commits, `2f+1` vertices not pointing skips. **Three
-  counterexamples**, all at four processes with `f = 1`. A slot holding
-  no vertex satisfies neither disjunct of the clause that consults it,
-  so a process that falls silent blocks every later leader. The skip
+  counterexamples**, all at four processes with `f = 1`. The skip
   clause counts vertices where the quorum clause counts processes, so an
   equivocator's spare vertices make one vertex committed and skipped at
   once — Safe-Commit, and with it Total-order and Agreement. And the two
   thresholds leave a gap: a vertex pointed to by between `f+1` and `2f`
   processes is neither committable nor skippable, and a faulty process
   can occupy that gap every round it leads, so **nothing is ever
-  committed** and Live-Commit fails outright. The last admits no repair
+  committed** and Live-Commit fails outright. The second admits no repair
   at this shape — `2f+1` is the least threshold the skip clause can
   safely take, so the gap is forced.
 

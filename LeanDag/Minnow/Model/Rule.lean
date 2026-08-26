@@ -17,10 +17,14 @@ vertices issued in the previous round by distinct processes". Reusing
 the core's `ValidWrt` would impose an edge the protocol does not, and
 would change which DAGs the counterexample is drawn from.
 
-**Equivocation is admitted.** Section 2 of the paper says that if a faulty process issues two
-valid vertices in one round, correct processes hold both, and choose one
-to point at. So a slot may carry no vertex, one, or several, and no
-`no_equivocation` field appears below.
+**Equivocation is admitted, of faulty processes only.** Section 2 of the
+paper says that if a *faulty* process issues two valid vertices in one
+round, correct processes hold both and choose one to point at. So a slot
+may carry no vertex, one, or several — but a correct process follows its
+algorithm, which issues one vertex a round, and `correct_single` records
+that. It is the core's `no_equivocation` with its correctness guard
+intact; what Minnow drops relative to the arcs of `report.md` §17 and
+§18 is validity's self-parent clause, not this.
 
 **Trusted core of the arc: definitions only.** No theorem lives in this
 file.
@@ -66,6 +70,13 @@ structure Dag (Validator BlockId Payload : Type*) [Fintype Validator]
   complete : ∀ i ∈ ids, ∀ j ∈ (block i).refs, j ∈ ids
   /-- Every vertex is valid. -/
   valid : ∀ i ∈ ids, ValidHere block (block i)
+  /-- **Only a faulty process issues two vertices in one round.** Section
+  2 of the paper admits equivocating vertices into the DAG, but a correct
+  process follows its algorithm, which issues one vertex a round. -/
+  correct_single : ∀ i ∈ ids, ∀ j ∈ ids,
+    (block i).creator ∈ (Correct : Finset Validator) →
+    (block i).creator = (block j).creator →
+    (block i).round = (block j).round → i = j
 
 variable {D : Dag Validator BlockId Payload}
 
