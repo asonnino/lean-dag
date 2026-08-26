@@ -577,7 +577,7 @@ LeanDag/MahiMahi/
   <Result>/Statement.lean   imports Model/ only; definitions, prose, `def Statement : Prop`; never a proof
   <Result>/Proof.lean       `theorem holds : Statement`; unaudited
 LeanDagTest/MahiMahi/       witness models; the instantiations are audited
-scripts/check-mahi-mahi-holes.py   sorry/admit/axiom/native_decide/unsafe/partial absent;
+scripts/check-arc-holes.py         sorry/admit/axiom/native_decide/unsafe/partial absent;
                                    Statement.lean files proof-free; Model/ files theorem-free
 ```
 

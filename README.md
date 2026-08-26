@@ -174,6 +174,128 @@ faults alone.
   implementation's slot blame. The arc is built under a
   statement/proof partition: definitions and statements are the audited
   surface, proofs are generated, and a checker enforces the split.
+- **Black Marlin** (`LeanDag/BlackMarlin/`): the three-round commit rule
+  of a partially synchronous protocol (arXiv:2508.14716) that uses
+  neither reliable broadcast nor a common coin and elects an anchor in
+  **every round**, proved safe at the core's committee `n ≥ 3f+1` with
+  no certificate round. An anchor is committed when it carries `n − f`
+  support and the anchor above it both references it and carries `n − f`
+  support; from that, committed anchors are unique per round and
+  **linearly ordered by causal history**, so the delivered prefixes
+  nest. The second clause is used in exactly one case of one theorem —
+  two committed anchors one round apart, which support alone leaves
+  incomparable, refuted on the paper's own Figure 1 — where a supported
+  anchor is correctly refused for want of the link. **Liveness** follows
+  above the same structural condition as the rest of the development, in
+  place of the paper's `∆`-quantified argument: a run of **two**
+  consecutive reliable anchors commits, and every reliable block is
+  delivered by the anchors above it. Where the core's corresponding
+  fairness clause is an assumption discharged by a wave-aligned witness,
+  a run of two is short enough that the rotation Black Marlin deploys
+  discharges it as a **theorem**. The **round rule** — wait for a quorum,
+  then for the anchor and the two anchors below it supported, or for the
+  timeout — is modelled too, on the core's pacing trunk: reactive
+  liveness needs **no coverage assumption at all**, latency is bounded in
+  `Δ`, the actual delivery `δ` and processing with the timeout appearing
+  nowhere, and the fast exit is shown to cost a run of **three** reliable
+  anchors to enter and two to sustain, against the commit rule's two.
+  **Agreement** in the sense of the atomic-broadcast definition follows:
+  the run-of-two anchor is committed by each reliable validator on its
+  own view, so what one validator delivers, all deliver. The **delivered
+  order** follows too: `commit`'s descent segments a flush by anchor
+  round, the candidates at a one-round step are a block's own references
+  and so a singleton, and the link clause — used once in safety — turns
+  out to do a second job, keeping the descent from skipping the round
+  above a committed anchor and so from ever facing a tie. The descent
+  itself is then **computed** — `maxAnchor` and the tie-break of L24 are
+  transcribed — and because that tie-break reads only the candidate and
+  its own cone, the record of a commit is a function of the block it
+  starts from, which makes agreement of the delivered order a consequence
+  rather than a hypothesis. With the sort and the per-author-and-round
+  filter modelled, what a validator outputs is a **list**, and three of
+  the four atomic-broadcast properties hold of it: Validity for reliable
+  authors, Integrity, and Total order. Agreement holds for correct
+  authors' blocks, and for an equivocator's wherever two descents meet.
+  **They need not**: a seven-round model at `n = 4`, `f = 1` has two
+  honest validators output different twins of an equivocating anchor,
+  neither ever outputting the other's — Definition 1's Agreement, and so
+  the paper's Theorem 13, refuted on data. The commit rule is untouched;
+  the defect sits at two steps the paper asserts without argument. A
+  **repair** is then tested as a side-condition rather than a change to
+  the model — let the descent prefer a supported anchor among tied
+  candidates, which anchor uniqueness makes unique. Its **strengthened**
+  form — descend to the highest-round *supported* anchor and nowhere
+  else — drops the tie-break altogether: a round whose anchors carry no
+  quorum is then not a boundary at all, no committed anchor is ever
+  passed by, and two records agree at every round below any block they
+  both reach. Liveness survives: committed rounds still recur, so no
+  execution is stuck after synchrony, and segments only coarsen. But the
+  repair reads a fact about the **universe** where a validator reads its
+  own view, and that gap does not close: a view carrying a quorum at the
+  round above an anchor shares only `n − 2f` authors with its supporters,
+  so a Byzantine anchor's support need not be visible — proved of the
+  universe, not implementable as a view-local rule. And no support-blind
+  rule stands in for it: twins given the same references agree in round,
+  creator and cone, so any function of the candidates answers two
+  universes alike where the committed twin differs between them. Nor
+  does counting support within the descent's own cone, which is
+  view-independent but promises the committed twin a single supporter
+  against its twin's `2f`, and fails already at four validators. What
+  is left is a dichotomy: a validator that decides from what it holds
+  can hold too little and select the wrong block, and one that waits for
+  the quorum can wait without end, since up to `f` of a quorum's
+  supporters are authored by Byzantine validators and need never be
+  sent — witnessed by a view holding every reliable block that still
+  sees neither twin supported. So no implementation of the repair keeps
+  both safety and liveness.
+- **Liveness read where liveness lives.** The arc's earlier results
+  conclude `Committed U L r`, which is a fact about the universe rather
+  than about anything a validator holds. BMV1 and BMV2 restate them at a
+  validator's view: above every round the rotation names one that every
+  reliable validator commits on its own view, by a time the pace
+  supplies, and delivers there whatever any view committed below. BMV3
+  is the line — the commit rule is readable from a reliable view because
+  coverage delivers reliable blocks, and the descent is not, because the
+  anchor it reads may be the equivocator's.
+- **And the delivered order, settled both ways.** A reliably anchored
+  round pins every record, non-equivocation leaving one candidate in the
+  universe, so where every anchor below a round is reliable two records
+  deliver the same list (BMT1–BMT3). One Byzantine anchor below is
+  enough to break it, and not only for the equivocator's blocks: in the
+  refuting execution two validators deliver `5` before `7` and `7`
+  before `5`, both authored by reliable validators and neither a twin.
+  So Definition 1's **Total order** fails on honest blocks, which no
+  rule for choosing among twins can repair. The arc is the second under the statement/proof
+  partition.
+
+- **Minnow** (`LeanDag/Minnow/`): `crs*`, the commit rule proposed as
+  *minimal* for eventual synchrony (arXiv:2608.18029), which decides a
+  leader slot from the round immediately above it — `2f+1` processes
+  pointing commits, `2f+1` not pointing skips. Two of its clauses are
+  written in a way their own sentences do not support, and both are
+  settled on data at four processes with `f = 1`: a slot holding no
+  vertex resolves nothing at the letter, and the skip clause counts
+  vertices where the quorum clause counts processes — which would make
+  one vertex committed and skipped at once, so it must count processes.
+  **Both defects come from one sentence.** An earlier slot counts as
+  resolved when *some* vertex of it lies in a candidate's causal past,
+  which is not the same as that vertex being decided. Where the slot's
+  process equivocates, one twin carries a later leader past the slot
+  while the other is undecided, and the other then acquires its quorum
+  and demands a place before what is already output — **Safe-Commit**,
+  and with it Total-order and Agreement. The step of the paper's own
+  safety proof that permits it is located: Lemma 10 reads an existential
+  over a slot as though the slot held one vertex. And the clause that does decide
+  a slot cannot reach far enough: the two thresholds leave a gap — a
+  vertex pointed to by between `f+1` and `2f` processes is neither
+  committable nor skippable — which `2f+1` being the least safe skip
+  threshold makes forced. What that costs turns on the schedule. A dead
+  slot lies in every causal past two rounds up, so two consecutive rounds
+  of correct leaders commit at the second; round robin at one leader a
+  round always supplies them, and at two or more an adversary can deny
+  them for every `f`. So **Live-Commit** fails for the rule paired with a
+  multi-leader round robin rather than for the rule alone — and the
+  escape that rescues it is the disjunct that costs safety.
 
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on
@@ -205,8 +327,9 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
   one message; `Adaptive/` — adaptive leader schedules; `Hybrid/` —
   Byzantine and crash faults apart; `Nemo/` — crash-fault consensus at
   a majority quorum; `MahiMahi/` — the asynchronous rule at wave `w`,
-  under a statement/proof partition (`Model/`, `<Result>/Statement.lean`,
-  `<Result>/Proof.lean`); `Network/` — the composed
+  and `BlackMarlin/` — the three-round rule with an anchor every round,
+  both under a statement/proof partition (`Model/`,
+  `<Result>/Statement.lean`, `<Result>/Proof.lean`); `Network/` — the composed
   denial-of-service capstones; `Integration/` — how the arcs compose).
 - `LeanDag.lean` — root import file.
 - `LeanDagTest/` — `decide` witnesses and concrete models, mirroring the
@@ -222,7 +345,7 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
   appendices from it; `audit-report.py` checks the report's
   cross-references, its Lean identifiers, and every displayed statement
   verbatim against the compiled source. Regeneration is deterministic,
-  so regenerate-and-diff is the pre-merge check.
+  so regenerate-and-diff is the pre-merge check. `check-arc-holes.py` enforces the statement/proof partition of the arcs that adopt it, and `black-marlin-figure.py` draws the execution that refutes Agreement (`docs/figures/`).
 
 ## Documents
 
@@ -239,6 +362,8 @@ is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 | [`docs/odontoceti.md`](docs/odontoceti.md) | the two-round protocol: the generalized thresholds, and the findings |
 | [`docs/adaptive-leaders.md`](docs/adaptive-leaders.md) | adaptive leader schedules: the design record and theorem plan |
 | [`docs/hybrid-plan.md`](docs/hybrid-plan.md) | hybrid fault tolerance: the design record and theorem plan |
+| [`docs/mahi-mahi.md`](docs/mahi-mahi.md) | the asynchronous rule at wave `w`: the clause, and the statement/proof partition |
+| [`docs/black-marlin.md`](docs/black-marlin.md) | the three-round commit rule: the link clause, the run of two, what the reactive exit costs, agreement, the delivered order the descent computes, the sequence it outputs, where Agreement fails, and a repair |
 | [`docs/integration.md`](docs/integration.md) | composing the arcs: the invariant interface, and what composition revealed |
 | [`docs/related.md`](docs/related.md) | a survey of consensus on uncertified DAGs |
 | [`docs/style.md`](docs/style.md) | writing conventions for the documents and the source |

@@ -23,7 +23,10 @@ cp "$src" "$work/doc.md"
 # source stays readable and hand-editable.
 python3 "$here/pdf/table-widths.py" "$work/doc.md"
 
+# Figures are referenced relative to the source document, which is not the
+# copy pandoc reads, so give it the source's directory to resolve them in.
 pandoc "$work/doc.md" -o "$out" \
+  --resource-path="$(cd "$(dirname "$src")" && pwd)" \
   --pdf-engine=typst \
   --lua-filter="$here/pdf/title.lua" \
   --include-in-header="$here/pdf/head.typ" \

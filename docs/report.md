@@ -176,7 +176,7 @@ proof effort with no corresponding proof content.
    refinement into LiDO-DAG. What is claimed is the *form* of the account —
    theirs is operational, quantified over traces and instants; here liveness is
    stated as a condition on the DAG, and the dependence on time is
-   confined below a `Prop`-valued interface (§6.7, §21).
+   confined below a `Prop`-valued interface (§6.7, §23).
 
 4. **A derivation** of the structural property from **view convergence**
    (§6.9), together with the protocol's build rules, and nothing beyond
@@ -192,7 +192,7 @@ proof effort with no corresponding proof content.
    coverage and production alike; every other condition is a clause of the
    protocol, which a designer controls. In particular reference coverage
    is derived rather than assumed, and the one point at which a network parameter
-   constrains the specification is the wait threshold of §20.1.
+   constrains the specification is the wait threshold of §22.1.
 
 6. **Quantitative forms** (§6.10): the round from which coverage holds, given
    explicitly; a bound on the slot at which the next commit occurs; and an
@@ -318,6 +318,85 @@ proof effort with no corresponding proof content.
    paper's `2/3` — and the core's per-candidate skip rule is weaker than
    the implementation's slot blame.
 
+18. **Black Marlin** (§18): the three-round rule of a partially
+   synchronous protocol with an anchor in every round and no certificate
+   round, proved safe at the core's committee `n ≥ 3f + 1`
+   (`BlackMarlin.Safety.holds` (BM1–BM7)) — anchor uniqueness, the
+   propagation lemma, and the chaining of committed anchors from which
+   the delivered prefixes nest. The rule's second clause, that the
+   anchor above both references the candidate and is itself supported,
+   is used in exactly one case of one theorem: two committed anchors one
+   round apart, which support alone leaves incomparable — refuted on the
+   paper's own Figure 1 (§18.3). Liveness follows above the structural
+   condition of §6, in place of the paper's timing argument
+   (`BlackMarlin.Liveness.holds` (BML1–BML5)): a run of **two**
+   consecutive reliable anchors commits, and where the core's
+   corresponding fairness clause is an assumption discharged by a
+   wave-aligned witness, a run of two is short enough that the rotation
+   Black Marlin deploys discharges it as a theorem (§18.5). The round
+   rule is modelled on the same pacing trunk as §11, giving reactive
+   liveness with no coverage assumption and latency in `Δ`, `δ` and
+   processing — and showing the fast exit to cost a run of three
+   (§18.6). Agreement follows: the anchor is committed by each reliable
+   validator on its own view, so what one delivers all deliver (§18.7).
+   And the delivered order: `commit`'s descent segments a flush by anchor
+   round, and the link clause keeps it from skipping the round above a
+   committed anchor, which is what stops it ever facing a tie (§18.8).
+   The descent is then computed rather than assumed, and since L24's
+   tie-break reads only the candidate and its own cone, the record of a
+   commit is a function of the block it starts from — which makes the
+   delivered order's agreement a consequence (§18.9). With `τ` and the
+   per-author-and-round filter modelled, what a validator outputs is a
+   list, and Validity for reliable authors and Integrity hold of it,
+   with Total order holding of records that agree (§18.10).
+   **Two of Definition 1's four properties fail.** Two honest validators
+   can output different twins of an equivocating anchor, refuting the
+   paper's Theorem 13 at `n = 4` on a seven-round model with the commit
+   rule untouched (§18.11); and on the same execution they order two
+   *reliable* authors' blocks oppositely, which no rule for choosing
+   among twins can repair (§18.12). The rule that repairs both descends
+   to a supported anchor, and no validator can run it: deciding from its
+   own view loses safety and waiting for the evidence loses liveness
+   (§18.14). Both failures are traced to a named step of the paper's own
+   argument: Lemma 12 carries a conclusion about the commit test into a
+   claim about what validators output, and the recursion that determines
+   output is never given a lemma (§18.13). What does hold at a
+   validator's view, and exactly how far, is §18.15.
+
+**Minnow's minimal commit rule fails in two ways** (§19). `crs*`, the
+rule proposed for eventual synchrony, decides a leader slot from the
+round immediately above it: a quorum of `2f + 1` processes pointing
+commits it, and `2f + 1` not pointing skips it. Two of its clauses are
+written in a way their own sentences do not support — a slot with no
+vertex resolves nothing, and the skip clause counts vertices where the
+quorum clause counts processes, which would make one vertex committed and
+skipped at once. A phrase repairs each, and §19.2 settles both.
+**Both defects come from the same sentence.** An earlier slot counts as
+resolved when *some* vertex of it lies in the candidate's causal past,
+which is not the same as that vertex being decided. Read one way the
+clause is too generous: where the slot's process equivocates, one twin
+carries a later leader past the slot while the other is undecided, and
+the other then acquires its quorum and demands a place before what is
+already output — Safe-Commit, and with it Total-order and Agreement.
+The step of the paper's own safety proof that permits it is located:
+Lemma 10's case for concurrent leaders reads an existential over a slot
+as though the slot held one vertex (§19.3). Read the other way the rule
+cannot reach far enough: the two
+thresholds leave a gap — a vertex pointed to by between `f + 1` and `2f`
+processes is neither committable nor skippable — which a Byzantine
+process can occupy every round it leads, and `2f + 1` is the least
+threshold the skip clause can safely take, so the gap is forced (§19.4).
+What that costs turns on the leader schedule. A dead slot lies in every
+causal past two rounds up, so a schedule offering two consecutive rounds
+of correct leaders commits at the second: round robin with one leader a
+round always offers such a pair, and round robin with two or more can be
+denied it for every `f`. So Live-Commit fails for the rule paired with a
+multi-leader round robin rather than for the rule alone, and the escape
+that rescues it is the disjunct that costs safety (§19.5). Every finding
+is exhibited on four processes at `f = 1`, machine-checked, with the
+model held to the paper's own validity rule and its own reading of each
+clause (§19.1).
+
 ### 1.4 Scope and non-goals
 
 The development is deliberately bounded in four respects — a fifth, the
@@ -345,7 +424,7 @@ first.
   are shown agreed; totally ordering the blocks released by a single commit
   requires a tie-break which the development declines to assume (§5.6).
 - **No wall-clock latency.** The wait bound of §6.11 is a duration, but the total
-  elapsed time to a commit is not derived (§20.6).
+  elapsed time to a commit is not derived (§22.6).
 
 ### 1.5 Organisation
 
@@ -374,9 +453,9 @@ fault tolerance (`Hybrid.decided_unique` (H6),
 (`hybrid_agree_stack` (I7)) and collects the deployment conditions
 their composition reveals.
 
-§18 exhibits the witness models. §19 describes the mechanisation, §20
+§20 exhibits the witness models. §21 describes the mechanisation, §22
 discusses the formulation, the lessons of the extensions, and the
-limitations, §21 surveys related work, and §22 concludes. Appendix A indexes every
+limitations, §23 surveys related work, and §24 concludes. Appendix A indexes every
 principal statement against its Lean name and module. Throughout, displayed
 Lean is drawn from the source; binders are occasionally elided for layout,
 and `…` marks an elision.
@@ -759,8 +838,8 @@ computing base (§4.3). Assumed.
 
 Logically all of these are antecedents: each is a field of a structure or class,
 and every theorem quantifying over a block universe or over the relevant
-instances carries it. None is an axiom in the sense of §19, and their joint
-satisfiability is a proof obligation discharged by exhibition (§18) rather than
+instances carries it. None is an axiom in the sense of §21, and their joint
+satisfiability is a proof obligation discharged by exhibition (§20) rather than
 something the logic must be trusted for. The distinction drawn here is
 epistemic, not logical, and it is what determines where the trust boundary of
 the system actually falls.
@@ -814,7 +893,7 @@ P10 is a joint condition rather than a pure specification: the schedule is the
 designer's, but which validators are reliable is not. Round-robin discharges it
 whenever the reliable set is of quorum size, since at most `f` of every `n`
 consecutive leaders then lie outside it; `rrSlots` witnesses this with a window
-of `f + 1` (§18).
+of `f + 1` (§20).
 
 **P8 deserves the most emphasis of any clause here**, and is easily mistaken for
 a routine one. It states that a correct validator holding a quorum at round `r`
@@ -875,7 +954,7 @@ the model constrains it, `Correct` being a set complement (§2.1).
 P9 is the clause whose *sufficiency* is not under the designer's control: the
 timeout may be chosen freely, but whether the chosen value is long enough
 depends on the network. §6.10 determines the threshold it must meet — the
-constant `2Δ + proc` — and §20.1 discusses the consequences.
+constant `2Δ + proc` — and §22.1 discusses the consequences.
 
 P11 is the second pacemaker rule, and the counterpart of `advances`: where
 P8 forces a validator forward on a *quorum*, P11 forces it forward on a
@@ -960,7 +1039,7 @@ differences matter more than they appear to.
 
 `held v n` is what `v` had in hand *at the moment it built its
 round-`(n+1)` block* — not what it eventually receives. That build-time
-index is the essential modelling device (§20.1): a block's references are
+index is the essential modelling device (§22.1): a block's references are
 frozen at construction, so what bears on the DAG's shape is what was held
 when the builder acted. `View.ids` is a finite set of identifiers with no
 index of either kind, which is why no formulation is stated over it.
@@ -1023,7 +1102,7 @@ rather than inside it.
 #### Where they are consumed
 
 Neither role is discharged where its name suggests, and the extracted
-support graph (§19) makes the pattern checkable rather than asserted.
+support graph (§21) makes the pattern checkable rather than asserted.
 
 Production is consumed as a `PopulatedOn` hypothesis: L6, the
 committed-run results, the quantitative results and the capstones of
@@ -1072,7 +1151,7 @@ together with clauses of the protocol:
 | Production | N2 (`converges`) with P8 and genesis | `ViewPace.populatedOn` (V17) |
 
 It is stated as a hypothesis of L4 and L6 in order to keep those arguments free
-of temporal notions (§6.8), and supplied to them by the results above. §20
+of temporal notions (§6.8), and supplied to them by the results above. §22
 discusses the formulation.
 
 **What "derived" does and does not mean here.** Coverage is derived
@@ -1498,7 +1577,7 @@ enter it within the processing bound.
 Reference coverage is not among them. It is not a clause a validator could
 execute, since it refers to `Correct`, which no validator can observe; it is
 what (a) and (b) *produce* against a synchronous network, and it is derived
-accordingly (§4.4, §20.2).
+accordingly (§4.4, §22.2).
 
 The chapter is organised around two interface predicates, and every
 result above them consumes them as hypotheses rather than reaching for a
@@ -1541,7 +1620,7 @@ structure Delivery (U) where
 
 The indexing of `held` is essential: `held v n` denotes what `v` had in hand *at
 the moment it built its round-`(n+1)` block*, not what `v` eventually receives.
-This is the build-time index which a view cannot supply (§20.1). Between holding
+This is the build-time index which a view cannot supply (§22.1). Between holding
 and referencing sits **acceptance** — at most one block per author, correct
 blocks always taken — which is deliberately where the protocol may refuse:
 the DoS arc's novelty budget (§8) is a rule about `accepted`, and the
@@ -1556,7 +1635,7 @@ are stated over it, `EventuallyDelivers` (§6.4) feeds their post-`R`
 increments, and P7's untimed incarnation is its `includes` clause. The
 liveness development never reads it — production and coverage come from
 the timed route of §6.9, whose `holds` is indexed by *time* rather than by
-round, which is exactly the index this structure cannot supply (§20.1).
+round, which is exactly the index this structure cannot supply (§22.1).
 
 ### 6.3 Progress, and the horizon
 
@@ -1587,7 +1666,7 @@ formulation demanding blocks at every round unconditionally would require
 infinitely many distinct blocks in a finite set, so that no universe
 satisfies it and every theorem assuming it is vacuous. An early
 formulation of the production clause had exactly that flaw, caught by
-sitting down to write its witness (§18).
+sitting down to write its witness (§20).
 
 Three consequences follow.
 
@@ -1647,7 +1726,7 @@ The predicate is antitone in `T` (`SynchronisedOn.mono`), which allows results
 established at `T := Correct` to be supplied to the quorum-relative statements of
 §6.6.
 
-The condition is derived, not assumed (§4.4); §20 discusses its formulation.
+The condition is derived, not assumed (§4.4); §22 discusses its formulation.
 
 ### 6.5 Monotonicity and propagation
 
@@ -1814,7 +1893,7 @@ incremental bounds. Neither is consumed by any liveness result.
 
 ### 6.8 The layering
 
-![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §19 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
+![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §21 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
 
 No theorem above `SynchronisedOn` mentions time, and no theorem below it
 mentions certificates. The diagram also locates the trust boundary: the
@@ -2267,7 +2346,7 @@ already is, and the adversary's whole freedom is the single layer it may
 build the instant a quorum forms beneath it —
 `PaceCore.round_le_top_succ`: no valid block's round exceeds some
 reliable `top` by more than one. On the running witness the floor is met
-with equality (§18).
+with equality (§20).
 
 The clause itself is asserted only from `gst` (§4.1), so what it demands
 coincides with what the clamped author-blind rule delivers: pre-GST it
@@ -2478,7 +2557,7 @@ each with a round-`δ` block in `ledgerSet`. No synchrony, no delivery
 model, no populated rounds appear in any hypothesis.
 
 **The boundary, witnessed.** Aggregate coverage is *not* individual
-inclusion. The witness model `Ucens` (CQ8) (§18) runs six rounds in which
+inclusion. The witness model `Ucens` (CQ8) (§20) runs six rounds in which
 three validators reference only each other and commit with the full
 certificate pattern, while a fourth — correct, building validly, never
 referenced — is the missing author of **every** layer of **every**
@@ -2623,7 +2702,7 @@ theorem creators_refs_eq_correct (hdos : DoSValid U) (hb : b ∈ U.ids)
 and the commit chain still operates over
 them: the witness model `Uexcl` carries a
 direct commit whose three rounds all lie after the exclusion of its
-equivocator (§18). Nor does exclusion depend on favourable circumstances:
+equivocator (§20). Nor does exclusion depend on favourable circumstances:
 *density* establishes that a
 cone can be selectively blind to at most `f` correct authors per round, even
 below Byzantine blocks, because the quorum clause forces every layer of
@@ -2656,7 +2735,7 @@ theorem card_history_le' (hdos : DoSValid U) (hb : b ∈ U.ids) :
 ```
 
 The exponential constant is not an artefact of the proof: a matching family of
-witnesses (`Udouble` (C5), §18) realises `2^(e−2)` growth from `e` equivocators,
+witnesses (`Udouble` (C5), §20) realises `2^(e−2)` growth from `e` equivocators,
 so any bound obtainable from reference-validity conditions alone carries a
 constant exponential in `f`. This is the assessment of the exposure
 mechanism as a *storage* defence: it is the right accountability layer — it
@@ -2793,7 +2872,7 @@ exclusion terminates it. On data,
 the budget is satisfiable at its exact constant: the witness schedule
 `Dtwin` satisfies `UniformBudget 3` with its costliest acceptance costing
 exactly `3`, and `ByzBudget 0` — nothing Byzantine accepted after the
-genesis round (§18).
+genesis round (§20).
 
 How should the parameter `T` be set? Any `T ≥ 1` admits every correct block
 post-`R` (the sandwich's `f·κ + 1` with `κ = 0` would be the correct-only
@@ -2857,7 +2936,7 @@ limitations**: an equivocation whose witnessing pair falls strictly below
 the cut is forgiven — in `chop U G` its author is no longer exposed — while
 a pair *at* the cut survives into the base layer. §9.5 prices the
 forgiveness; the witness file exhibits it on data, an exposure present in
-the full universe and absent from its truncation (§18).
+the full universe and absent from its truncation (§20).
 
 ### 9.2 Verdicts survive the cut
 
@@ -2997,7 +3076,7 @@ correct store, the store rides into its keeper's next block
 (`viewUpto_subset_history` (B7), §8.4), and the backbone carries that block into
 every correct round-`t` cone — a cone *is* an attestation. The lag is tight
 on data: at `t = m + 1` the witness exhibits an accepted equivocation half
-missing from the base (§18). Consequently the joiner's assembly — base as
+missing from the base (§20). Consequently the joiner's assembly — base as
 genesis layer plus a correct peer's window strictly above the cut — is a
 bona-fide view of the truncation (`joinView`; downward closure is the
 content: window references above the cut stay in the window, references *at*
@@ -3091,7 +3170,7 @@ continues to apply to the same types. The stronger bound is consumed in
 exactly two proofs (O2 and O4′ below) — the two-round rule's *direct* safety
 already holds at `3f+1`. The witness file proves the reuse claim as a
 computation: a quorum-5 universe over six validators satisfies the untouched
-`BlockUniverse` by `decide` (§18). Nothing outside `LeanDag/Odontoceti/`
+`BlockUniverse` by `decide` (§20). Nothing outside `LeanDag/Odontoceti/`
 was modified.
 
 ### 10.2 The rule layer, and the arithmetic core
@@ -3220,7 +3299,7 @@ from both passing the test at one anchor. The counting that would be needed
 valid six-validator universe, a Byzantine leader's two round-0 twins each
 gather exactly three supporters (disjoint correct pairs plus the
 equivocator's own split), and a round-3 block sees all of round 1 — **both
-twins pass `ThickLink` against it**, by `decide` (`utwin6_both_pass` (O11), §18).
+twins pass `ThickLink` against it**, by `decide` (`utwin6_both_pass` (O11), §20).
 An indirect rule that commits "some passing candidate" therefore admits
 derivations committing either twin: agreement is *refutable*.
 
@@ -3460,7 +3539,7 @@ processing per round.
 
 ### 11.4 The witness, and a constant it corrected
 
-`ugrowReactive` (§18) runs the Mysticeti structure on the round-robin
+`ugrowReactive` (§20) runs the Mysticeti structure on the round-robin
 schedule at build spacing `6` inside a timeout of `9 = 2Δ + proc` — the
 drift-free backoff met with equality: every fallback branch untaken, the
 commit, the latency bound and the strictly-inside-deadline conclusion
@@ -3469,7 +3548,7 @@ processing constant is honest rather than generous: `proc = 5` is the
 least value `prompt_vote` admits on this model, because a validator's
 shortcut to its *own* round-`r` block lets the trigger fire one tick
 before the slowest peer's block would force it. The witness refused to
-compile at `4` — the house rule of §18 catching an over-tight constant
+compile at `4` — the house rule of §20 catching an over-tight constant
 in a clause that read as obviously right.
 
 ### 11.5 Inclusion without coverage: the rotation backbone
@@ -3649,7 +3728,7 @@ equal in author and round to an old one would contradict the crash. The
 companion fact is conservativity —
 
 ```lean
-@[simp] theorem skipFill_block_old {b : BlockId} (hb : b ∈ U.ids) :
+[simp] theorem skipFill_block_old {b : BlockId} (hb : b ∈ U.ids) :
     sk.skipFill.block b = U.block b
 ```
 
@@ -3777,7 +3856,7 @@ theorem decided_fill_agree {V : View Validator BlockId Payload U}
 
 ### 12.4 The witness
 
-`Ucrash N` (SS7, §18) is the round-robin family with validator `3`
+`Ucrash N` (SS7, §20) is the round-robin family with validator `3`
 crashed after its genesis block: three validators run full lines whose
 references omit the absent author, and `3` owns exactly one block. The
 message `ucrashMsg` targets validator `1`'s line, and the development's
@@ -4197,7 +4276,7 @@ expects, so nothing is restated on the way.
 
 ### 13.7 The witness, and what remains
 
-`demotePolicy` (AL8, §18) is genuinely adaptive at epoch length one —
+`demotePolicy` (AL8, §20) is genuinely adaptive at epoch length one —
 a slot whose verdict two below was a skip is handed to a fixed
 replacement — and the witness exhibits the phenomena the theorems govern:
 the same DAG under a reassigned leader commits a *different block* for
@@ -4385,7 +4464,7 @@ no liveness argument counts an equivocator — and every statement holds
 at *every* threshold `k`: only agreement prices the interval. And the
 tight committee has no slack: at `n = 5·fb + 3·fc + 1` the correct
 class numbers exactly `q`, so the reliable set must be all of it — the
-hybrid analogue of §18's remark that at `f = 1` every correct
+hybrid analogue of §20's remark that at `f = 1` every correct
 validator is needed for a quorum.
 
 ### 14.5 Conservativity
@@ -4430,7 +4509,7 @@ least sufficient committee.
 
 ### 14.7 The witnesses
 
-`Uhyb4` (H9, §18) is the arc's principal witness: `fb = 0, fc = 1,
+`Uhyb4` (H9, §20) is the arc's principal witness: `fb = 0, fc = 1,
 n = 4` — the classical `3f + 1` committee with two-round finality when
 the single tolerated fault is a crash. Validator `3` halts after its
 genesis block; the survivors run three rounds at quorum `3`, slots
@@ -4608,7 +4687,7 @@ pairwise non-adjacent on a cycle of `2f + 1`.
 
 ### 15.5 The witness
 
-`Unemo` (NN9, §18) is the arc on data: three validators at the tight
+`Unemo` (NN9, §20) is the arc on data: three validators at the tight
 committee, fourteen blocks, validator `2` authoring rounds 0–1 and
 then halting, the live pair carrying the DAG to round 5 with the
 parent quorum at exactly `majority` from round 3 on. Slots 0, 1, 3
@@ -4683,7 +4762,7 @@ are `FairScheduleOn` and `FairRunOn` (§6.6), `SpansEligible`, and
 §13.4's `PlacesRuns`.
 
 That every theorem of §§5–14 is stated against some subset of this list
-is checked rather than assumed: the extraction of §19 is queried for
+is checked rather than assumed: the extraction of §21 is queried for
 hypothesis-position identifiers of thirteen capstones, and the
 dependency is that the layering is closed. Two corrections came out of
 that check. The schedule layer appears in five capstones and belongs in
@@ -4754,7 +4833,7 @@ block references a fresh identifier*; coverage asks the opposite, that
 every reliable block at round `n+1` reference every reliable block at
 round `n`. One fact, two consequences: the fill can manufacture neither
 a commit nor coverage. The hypotheses are exhibited satisfiable on
-`Ucrash` (§18), so the refutation is not vacuous.
+`Ucrash` (§20), so the refutation is not vacuous.
 
 **It is preserved for any reliable set that excludes the recovering
 validator** (`synchronisedOn_skipFill_of_notMem`). The filled blocks
@@ -5382,7 +5461,7 @@ under asynchrony by the coin.
 The arc is laid out as `Model/` (definitions only, theorem-free),
 `<Result>/Statement.lean` (definitions and a `def Statement : Prop`,
 never a proof), `<Result>/Proof.lean` and `Helpers/` (generated,
-unaudited), with `scripts/check-mahi-mahi-holes.py` rejecting proof
+unaudited), with `scripts/check-arc-holes.py` rejecting proof
 holes anywhere in the arc, proofs in a statement file, and theorems in a
 model file. The audited surface is the model files, the four statement
 files and the witness instantiations; each phase ran as statements →
@@ -5396,7 +5475,1754 @@ voter's cone, where the vote goes to the least and only the least;
 lengths and the statement hypotheses pinned; `multi`, three leaders per
 round; and the clause witnesses of §17.3.
 
-## 18. Satisfiability
+## 18. Black Marlin: the three-round commit rule
+
+*(modules `LeanDag/BlackMarlin/`; the protocol is Black Marlin [Amo+25],
+a partially synchronous DAG protocol that uses neither reliable
+broadcast nor a common coin, and elects an anchor in every round)*
+
+Black Marlin commits three rounds after proposal at the core's committee
+`n ≥ 3f + 1`, and without a certificate round. It elects one anchor per
+round rather than one per wave, and the test it applies to the anchor
+`B` of round `r` has two clauses: `B` carries support from `n − f`
+distinct validators at round `r + 1`, and some anchor of round `r + 1`
+both references `B` and carries support from `n − f` validators at round
+`r + 2`. The second clause is what the other rules of this development
+obtain from a certificate; §18.3 states what it is used for, which is
+one case of one theorem.
+
+The arc formalises `delivery(r)` (Algorithm 1, L14–L17): §5.1 of the
+paper — the rule and every safety result stated about it (§18.2) — its
+liveness above the structural condition of §6, in place of §5.2's timing
+argument (§18.5), the round rule of L38–L41 and the responsiveness it
+yields (§18.6), Definition 1's Agreement (§18.7), and the order
+`commit`'s descent delivers in (§18.8–§18.10), a refutation of
+Definition 1's Agreement (§18.11), a refutation of its Total order
+(§18.12), where the paper's own proofs go wrong (§18.13), the repair
+that would restore both and why no validator can run it (§18.14), and
+what does hold at a validator's view (§18.15). It
+is the second arc under the statement/proof partition (§17.5), and
+`docs/black-marlin.md` is its design record.
+
+**Where the arc lands.** The commit rule's own safety statements hold as
+the paper gives them (§18.2), and so does liveness above the structural
+condition of §6 (§18.5, §18.6). Definition 1's **Agreement** does not.
+§18.11 exhibits an execution, machine-checked at `n = 4`, `f = 1`, in
+which two reliable validators output different blocks for one author and
+round and neither ever outputs the other's — so the protocol as
+presented does not satisfy the property its own Definition 1 asks for.
+
+**Its Total order fails too, and on honest blocks.** On the same
+execution two reliable validators deliver two blocks of *reliable*
+authors in opposite orders (§18.12). Neither block has a twin and L27's
+filter never examines either; what orders them is which segment they
+fall in. That failure does not depend on which twin the filter prefers,
+so no rule for choosing among twins repairs it.
+
+**And no repair keeps both safety and liveness.** The rule that restores
+both descends to a supported anchor, which is a quorum over the
+**universe**. A validator reads a view, and there the rule has two
+implementations: deciding from what is held, which can be too little and
+selects the wrong block, and waiting until the quorum is held, which up
+to `f` Byzantine supporters need never complete. The first loses safety
+and the second loses liveness (§18.14).
+
+**And the failures are located in the paper's own argument.** Every
+lemma of its safety section is about the test at L16; what a validator
+outputs is governed by the recursion, which reads support nowhere.
+Lemma 12 carries the one into the other in a single clause — "by
+construction of the delivery function, party `j` must have also
+committed `B`" — which is asserted rather than argued, and is false.
+Theorem 13's Agreement and Total order clauses both depend on it
+(§18.13).
+
+**What does hold at the view is stated and bounded.** Every reliable
+validator commits at recurring rounds on its own view, by an explicit
+time, and delivers there whatever any view committed below; and two
+records agree on the delivered order for as long as the rotation names
+reliable validators. Both boundaries fall in the same place and neither
+extends past it (§18.15).
+
+### 18.1 The rule
+
+The DAG layer is the core's, unchanged. The paper's validity predicate
+is `ValidWrt` (§3.2), and the paper's support function is the core's
+`supporters`, which counts authors rather than blocks; the paper's side
+condition on it — that a supporter's block references no second block of
+the same author and round — is validity's distinct-creator clause and
+needs no restatement.
+
+```lean
+def Supported (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) : Prop :=
+  quorumCard Validator ≤ (supporters U L (r + 1)).card
+
+def Committed (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) : Prop :=
+  IsAnchor U r L ∧ Supported U L r ∧ Linked U L r
+```
+
+`Linked U L r` is the nonemptiness of `linkers U L r`, the round-`(r+1)`
+anchors that reference `L` and are themselves supported — a `Finset` of
+witnesses rather than a bare existential, so that the rule is decidable
+on a concrete DAG.
+
+The rotation is a class with one field, `Rotation.anchor : ℕ → Validator`,
+rather than the core's `Slots`: the protocol is indexed by rounds, and
+every clause names round `r + 1` explicitly, which under `Slots` would
+be a hypothesis `slotRound (k + 1) = slotRound k + 1` carried through
+every statement. **BM7** reconciles the two — under
+`Slots.uniformSingle 1` an anchor block of round `r` is a leader block
+of slot `r`, and conversely.
+
+A validator applies the rule to its own DAG, so `SupportedIn`,
+`LinkedIn` and `CommittedIn` are the same definitions with each block
+set intersected against a `View`. There is no decision relation: Black
+Marlin has no skip verdict and no indirect rule, so an anchor the rule
+does not admit is delivered inside the causal history of a later anchor
+that it does admit, and the whole of what a validator decides is
+`CommittedIn`.
+
+### 18.2 Safety
+
+**BM1**–**BM7** are the conjuncts of `BlackMarlin.Safety.holds`,
+transcribing §5.1 of the paper. None assumes synchrony, a global
+stabilisation time, or any bound beyond `n ≥ 3f + 1`; as in the paper
+they hold during the asynchronous period as well.
+
+They survive intact, and they are not Definition 1's Agreement. These
+are statements about which anchors the rule admits; Agreement is a
+statement about what validators output, which the rule alone does not
+settle. §18.11 refutes it.
+
+**BM1** (`eq_of_isAnchor_of_supported`, the paper's Lemma 3): two
+supported anchor blocks of one round are one block. Their support
+quorums share `n − 2f ≥ f + 1` authors, each supporting both, and a
+validator supporting two blocks of one author and round is an
+equivocator.
+
+**BM2** (`reaches_of_supported`, Lemma 5): a supported block is in the
+causal history of every block of the universe two rounds above it or
+higher, whoever authored it. It consumes no definition of this arc
+beyond `Supported`, being the core's
+`reaches_of_correct_support_of_card` followed by
+`reaches_pred_of_round_le`.
+
+**BM3** (`quorum_authorsAt_of_lt`, Lemma 4): below the highest round of
+the DAG, every round carries blocks from a quorum of distinct authors —
+a consequence of validity alone.
+
+**BM4** (`committed_of_committedIn`, `mem_ids_of_committedIn`): a
+validator's verdict is a verdict of the universe, and the validator
+holds the block it committed. The second half is not a clause of
+`CommittedIn` but a consequence of one — the linking anchor is in the
+view, a view is closed under references, and the link is a reference.
+
+**BM5** (`reaches_of_committed_of_le`, Lemma 6): two committed anchors,
+read from any two views, are one block or one lies in the causal history
+of the other.
+
+**BM6**: the causal history of the lower of two committed anchors is
+contained in that of the higher. `commit(B)` delivers the undelivered
+blocks of `past(B)` and then `B`, so containment of causal histories is
+containment of delivered prefixes: two validators' deliveries agree
+wherever both have delivered, and neither can retract. The order within
+each increment is the deterministic sort the paper writes `τ`, which the
+rule does not constrain and this arc does not model.
+
+### 18.3 The second clause, and the case that uses it
+
+The three cases of BM5 are three ranges of the round gap between the two
+committed anchors. At gap `0`, BM1 identifies them. At gap `2` or more,
+BM2 applies to the higher block itself and the link clause is never
+consulted. The gap of exactly `1` is the only case that uses it: the
+lower anchor's linking block and the higher anchor are both supported
+anchors of round `r + 1`, so BM1 identifies *them*, and the link is then
+a direct reference from the higher anchor to the lower.
+
+Support alone would not suffice, and the refutation is on data. BM2
+begins at a gap of two, and Figure 1 carries the gap of one: `B3` and
+`B4` are both supported anchors, one round apart, and `decide` settles
+that neither is in the causal history of the other. A rule with the
+first clause only would admit both, and BM6 would fail of them. That is
+the whole of what the second clause contributes, and it is why the rule
+commits at three rounds rather than at two.
+
+### 18.4 The partition, the witness, and the departures
+
+The arc is laid out as `Model/` (definitions only, theorem-free),
+`Safety/Statement.lean` (definitions and a `def Statement : Prop`, never
+a proof), `Safety/Proof.lean` and `Helpers/` (generated, unaudited);
+`scripts/check-arc-holes.py`, which covers both partitioned arcs,
+rejects proof holes anywhere in the arc, proofs in a statement file and
+theorems in a model file. `BlackMarlin.Safety.holds` depends on the
+three standard axioms.
+
+The witness (`LeanDagTest/BlackMarlin/Model.lean`) is the paper's
+Figure 1: four validators with validator `0` Byzantine, `f = 1`, six
+rounds, one anchor per round. Anchors `B0` to `B3` all carry a quorum of
+support, but validator `0` omits `B3` from `B4`, so `B3` fails the link
+clause while `B0`, `B1` and `B2` satisfy the whole rule — `decide`
+settles both halves, and `linkers Ubm 15 3 = ∅` names the clause that
+fails. The seven claims are then instantiated at this universe through
+`Safety.holds` itself, so what the witness exercises is the proved
+theorem rather than a restatement of it.
+
+Three departures from the paper are recorded rather than repaired.
+First, the core's `ValidWrt` carries a self-parent clause (P3′, §4.4)
+that Black Marlin does not require; it restricts the universes the
+results range over and is consumed by none of them, so what is proved
+here is weaker than the paper by exactly that clause, and removing it
+would be a change to the core rather than an addition to an arc.
+Second, weak references are not modelled, so the causal history followed
+throughout is the strong one and BM2 and BM5 conclude something stronger
+than the paper's `past`. Third, `Reaches` is reflexive where the paper's
+`past` and `strong` exclude their own argument, which is why BM5 states
+equality as a separate disjunct.
+
+### 18.5 Liveness, and the run of two
+
+The paper reaches liveness through §5.2's timing argument: Lemma 7's
+`3∆` bound on a round, Lemma 10 on the timeout not firing when anchors
+are honest, Lemma 11 on the expected number of rounds to a correct
+anchor. This development states liveness above the structural condition
+instead (§6), so those are replaced rather than transcribed, and no
+timeout, message delay, stabilisation time or probability appears in
+what follows. §18.13 records why the last of them cannot be
+transcribed: Lemma 11 takes an expectation over a rotation the protocol
+deploys deterministically. Five claims (`BlackMarlin.Liveness.holds`):
+
+**BML1** — a run of two consecutive reliable anchors, over three
+populated rounds, is committed. `Supported` is the core's `DirectCommit`
+under another name, so `directCommit_of_votesAt` applies verbatim:
+coverage makes every reliable block one round above the anchor
+reference it, and those authors carry a quorum. The link clause then
+costs no hypothesis of its own — the round-`(r+1)` anchor is one of
+those reliable blocks, so the same coverage fact already makes it
+reference the round-`r` anchor, and it is supported by the same
+argument one round higher.
+
+**BML2** — the full view reaches the verdict the rule reaches, so BML1
+is about a decision some validator can take.
+
+**BML3** (the paper's Lemma 8) — a reliable validator's block lies in
+the causal history of every block two rounds above it, hence of every
+committed anchor there. It consumes no clause of the commit rule:
+coverage gives the block a support quorum and BM2 carries it upward.
+With BML4 this is Definition 1's Validity property, for reliable
+authors.
+
+**BML4** — the rotation names, for every round, a later round that any
+DAG grown two rounds past it and covered from `R` commits. The universe
+is quantified inside the conclusion, as the core's `CommitsAt` is and
+for the same reason (§6.6).
+
+**BML5** — round robin supplies the run of two, at every committee and
+whichever validators are Byzantine.
+
+The last is a theorem where the core's counterpart is an assumption, and
+the difference is the protocol's rather than the mechanisation's. The
+core's `FairRunOn` needs runs of three; its docstring records the
+pigeonhole for per-slot rotation as prose rather than proving it, and
+`WaveRobin.lean` supplies runs of three by rotating in waves instead.
+Black Marlin needs runs of two, and that case is a short counting
+argument: were no two cyclically adjacent anchors reliable, the
+successor map would inject the reliable set into the Byzantine one,
+giving `n − f ≤ f` against `3f + 1 ≤ n`. So the rotation the paper
+deploys discharges the clause outright. What the second commit clause
+contributes to safety (§18.3), it recovers here: asking only for two
+consecutive reliable anchors is what makes the deployed rotation's
+fairness provable.
+
+Liveness runs on a second witness universe — four rounds, every block
+referencing the whole round beneath it. Figure 1 cannot serve, and
+`decide` says why: validator `0` omitting the round-3 anchor from its
+round-4 block is exactly a failure of coverage among the reliable
+validators.
+
+Two things §5.2 asserts are still not covered. **Delivery completeness**
+for blocks of arbitrary authors needs the weak-reference window; and
+**the deterministic sort** `τ`, which turns BM6's nesting into the
+sequence Definition 1's Total Order speaks of, is not modelled.
+
+### 18.6 The round rule, and what the reactive exit costs
+
+`delivery(r)` is one half of the protocol. The other is L38–L41, which
+says when a round is concluded: a validator waits for blocks from `n − f`
+parties and then for **either** the round's anchor together with the two
+anchors below it supported, **or** the round's timeout. That dual
+condition is what keeps the protocol running at the actual delivery time
+rather than at `Δ` without deadlocking on a Byzantine anchor, and it is
+the analogue of the reactive schedule of §11.
+
+`ConcludesAt` states the first disjunct over a `View`, from the three
+clauses `QuorumIn`, `AnchorIn` and `SuppAnchorIn`; the last reads the
+same `SupportedIn` the commit rule reads, so the round rule and the
+commit rule share their arithmetic. `Pace` extends `PaceCore` (§6.9), so
+views, convergence, the progress rule and production are inherited, and
+two clauses are new. `anchor_or_wait` is the round rule read on the block
+a validator produces — a block at the round above a reliable anchor
+either references it, or its builder waited the full timeout — and it is
+the core's `ReactivePace.vote_or_wait`, unchanged, since concluding a
+round requires holding that round's anchor. `prompt_conclude` bounds the
+exit from above, and it is *not* the core's `prompt_vote`: there the exit
+fires once the leader's block is held, here once the whole round rule is
+satisfied.
+
+**BMR1** carries the fallback: past GST, with the timeout clearing
+`2Δ + proc`, every reliable block at the round above a reliable anchor
+references it, by the exit or by the fallback. **BMR2** is what that
+yields — a run of two reliable anchors is committed **with no coverage
+hypothesis at all**. `SynchronisedOn` asks that every reliable block
+reference every reliable block beneath it, which a reactive builder
+deliberately does not do; what survives is exactly what the commit rule
+counts.
+
+**BMR3 is the price of the extra clauses, and it is a round.** For the
+exit to be guaranteed at round `r + 2`, the anchors of rounds `r`,
+`r + 1` and `r + 2` must all be reliable: `quorum` and `anchor` come from
+the round-`(r+2)` blocks, `suppAnchor(r+1)` from those blocks referencing
+the round-`(r+1)` anchor, and `suppAnchor(r)` from the round-`(r+1)`
+blocks referencing the round-`r` anchor. A run of three, where the commit
+rule asks for two (§18.5).
+
+**BMR4** says the third is paid once. `suppAnchor(r)` was already checked
+to conclude round `r + 1`, and holdings only grow, so a validator already
+on the fast path needs one further reliable anchor per round: entering
+costs a run of three, remaining costs a run of two. This is where the
+run-of-three pigeonhole `WaveRobin.lean` sidesteps re-enters the arc —
+not for the commit rule, where BML5 discharges a run of two outright, but
+for the guarantee that no timeout ever fires.
+
+**BMR5** and **BMR6** are then the §11 bounds in Black Marlin's
+constants: the round above is entered within `D + δ + proc` of round
+entry, past GST within `Δ + δ + 2 · proc` with the spread supplied by
+catch-up, and when those undercut the timeout the fallback branch of
+`anchor_or_wait` is dead. The timeout appears in neither latency bound.
+They play the roles of the paper's Lemmas 7 and 10 without their message
+schedule.
+
+The witnesses are two. `ConcludesAt` and its clauses are settled by
+`decide` on the covered four-round model — round `3` may be concluded,
+round `4` may not. The pacing structure is witnessed on `Ugrow`, the
+model §11's reactive arc uses, at the same holdings and the same build
+spacing of `6`; processing is `7` against the core's `5`, because the
+exit is bounded by the round rule rather than by holding one block.
+
+### 18.7 Agreement
+
+Definition 1's Agreement — if an honest party delivers a block, every
+honest party eventually delivers it. Four claims
+(`BlackMarlin.Agreement.holds`).
+
+**BMA1** is the no-divergence half, and it is BM6 read at a single
+block: a block delivered with a committed anchor is delivered with every
+committed anchor from that round on, whichever views the two verdicts
+came from.
+
+**BMA2** is the new work. BML1 and BMR2 say a verdict is *available*
+over the universe; Definition 1 speaks about what a party outputs. BMA2
+runs the same run-of-two argument inside `viewAt v t` rather than inside
+the universe, with `PaceCore.holds_roundBlocks` (§6.9) putting the two
+rounds the rule reads into every reliable validator's hands by
+`max (latest (r+1)) (latest (r+2)) + Δ`. It needs no hypothesis beyond
+BMR2's: that every build past round `R` lies past GST is derived from
+`built_lt`, since the round number bounds the build time from below.
+
+**BMA3** composes them — what one validator delivered with an anchor
+committed at round `ρ`, every reliable validator delivers with the
+anchor it commits at a reliably anchored `r ≥ ρ`, on its own view and by
+an explicit time — and **BMA4** says such an `r` lies above every round,
+so the "eventually" is discharged by the rotation rather than assumed.
+
+**What is stated, and what is not.** A validator delivers `B` when it
+calls `commit(A)` for an anchor it committed with `B ∈ past(A)`, so the
+claims are about `B ∈ history U L` for the anchor `L` each validator
+commits. Two things stand between that and the `ab-deliver` events of
+Definition 1, and neither is modelled: the recursion of `commit`, which
+visits the undelivered anchors of `strong(A)` before flushing and so
+fixes the **order** blocks are delivered in, and the
+per-`(creator, round)` filter of L27, which decides which of an
+equivocator's twins is delivered. This is agreement on the delivered
+**set**, not on the sequence, and not on the choice among twins. Of
+Definition 1's four properties, Validity holds for reliable authors
+(BML3 with BML4) and Agreement is BMA3; Integrity rests on the delivered
+set `D` and Total Order on `τ`, and neither is modelled.
+
+Agreement on the delivered **event** does not follow from BMA3, and does
+not hold: §18.10 models the filter and finds the gap, and §18.11 closes
+it with an execution in which two reliable validators output different
+twins.
+
+### 18.8 The delivered order, and the second job of the link clause
+
+`commit(B)` does not deliver `past(B)` in one piece. It descends through
+the undelivered anchors of `strong(B)`, flushing one `τ`-sorted segment
+per anchor round from the lowest up (Algorithm 1, L18–L32). That
+segmentation *is* the delivered order, and it is also what makes two
+validators' orders agree: a validator that committed at rounds `3` and
+`5` and one that committed only at `7` flush the same segments, because
+the second one's descent visits `5`, `4` and `3` on the way down. The
+record the descent leaves is modelled here, not the recursion that builds
+it, as §5 models `Decided` rather than an implementation.
+
+**BMD1** and **BMD1′** say a tie needs two things at once. The candidates
+at round `ρ` below a round-`(ρ+1)` block are that block's references, and
+`distinct_creators` allows one block per author, so a consecutive step
+has at most one candidate whoever anchors; and at a round whose elected
+validator is reliable the candidates are a singleton however deep the
+cone, non-equivocation giving it one block there. So a choice requires a
+**skipped anchor round** — the elected validator produced nothing, or its
+block is not referenced — **and** an equivocating anchor at the round the
+descent then lands on. Either alone leaves the descent determinate, and a
+skip costs only the propagation below it: BML3's inclusion, BMA3's
+agreement and the whole of §18.2 are statements about causal history
+rather than about segment boundaries. **BMD2** and **BMD3** turn that
+into
+agreement — two records agreeing at a round agree at the round below, and
+so throughout any stretch they both descend — and **BMD4** supplies the
+starting point, two records flushing directly committed anchors at one
+round flushing the same block by BM1.
+
+**BMD5 is the result.** Above a committed anchor sits a **supported** anchor — the link
+clause says so — and BM2 puts it in the cone of every block from three
+rounds up, so the round above a committed anchor is never the one
+skipped. The clause that makes adjacent committed anchors comparable
+(§18.3) is also what keeps the delivery order determinate around them.
+It is the same clause doing two jobs, and the second is not in the paper.
+
+**BMD6** is then the ledger: nothing output is dropped, records that
+agree output the same blocks, a block enters at exactly one round, and
+records that agree concur on which. The last two are Definition 1's Total
+Order at the granularity of segments; the order *within* a segment is
+`τ`, which the rule does not constrain and this arc does not model.
+
+**BMD3's stretch hypothesis is an artifact of taking the record as
+given**, and §18.9 removes it by computing the descent instead. What the
+arc has at this point is Validity for reliable authors (BML3 with BML4),
+agreement on the delivered **set** between committed anchors (BMA3), and
+agreement by segment between records that agree (BMD6). None of the
+three is Definition 1's Agreement or its Total order, both of which are
+about what validators output; §18.11 and §18.12 refute those.
+
+### 18.9 The descent computed, and BMD3 closed
+
+L24 chooses among tied candidates by minimising
+`|round(A) − round(maxAnchor(strong(A)))|`. That quantity reads the
+candidate and **its own cone** alone, so every validator evaluates it
+identically and the descent from a block is a function of that block —
+the property a canonical choice needs, and one the Odontoceti and
+Mahi-Mahi arcs had to supply as a premise rather than find in their
+protocols. `Model/Descent.lean` transcribes `maxAnchor`, the metric and
+the descent, and defines the record of `commit(B)` as what the descent
+returns.
+
+**BME1** and **BME2** are the choice: an anchor of the universe strictly
+below `B`, at the highest anchor round its cone reaches, made whenever an
+anchor lies below. The second states the condition L20 should have
+guarded — it tests `𝒜 ≠ ∅` where L21–L24 need `maxAnchor(𝒜) ≠ ∅`, so
+`B′` is undefined when the undelivered remainder holds no anchor at all,
+which is the one defect in the pseudocode.
+
+**BME3** derives what `Flush` assumes: the computed record satisfies
+`isAnchor`, `step` and `dense`, so BMD6's ledger results apply to it
+unchanged. **BME4** is the suffix property — below a block the descent
+visited, a record *is* that block's record — and **BME5** reads
+agreement off it: two records reaching the same block at a round agree at
+**every** round below, with no hypothesis about the rounds between. That
+is BMD3 without its stretch condition, and it holds whether or not the
+descent skipped an anchor round.
+
+Two modelling choices are recorded rather than derived. `𝒟` is dropped,
+since the delivered set only removes what an earlier descent visited, so
+a validator's flushes over all its commits are one chain read from its
+highest commit down. And "break ties deterministically" is read as
+`≤`-least under a `LinearOrder` on identifiers, which the paper leaves
+open; nothing depends on which rule it is, only that it is shared and
+reads the candidate alone.
+
+On data, the computed record of the four-round model's round-3 anchor is
+its four anchors, by `decide`, and it is the record the hand-built flush
+of §18.8 carries.
+
+### 18.10 The delivered sequence, and what Definition 1 has
+
+Definition 1 speaks about `ab-deliver` events — a list, not a set.
+§18.8 and §18.9 fixed the segment boundaries; this section models the
+sort `τ` of L26 and the filter of L27, so that what a validator outputs
+is a list.
+
+`TopoSort` asks of `τ` what the paper uses of it: that it is a function
+of the set, hence shared between validators, and that it respects
+causality. **BMO1** then checks the model against the algorithm — L26
+flushes `τ(past(B) \ 𝒟)` and L30 emits `B`, and since every block of
+`history U B` is reachable from `B`, a topological sort of
+`history U B \ 𝒟` puts `B` last of its own accord, so the two are one
+list.
+
+**BMO4** is Definition 1's Integrity: no author-and-round is output
+twice, which is a property of the filter alone. **BMO7** is its Total
+order, and follows from **BMO2** — records that agree produce one list,
+and a single list cannot order a pair two ways. **BMO3** says the list
+only extends, so nothing output is retracted or reordered.
+
+**BMO6** is what lifts the earlier results from membership to events:
+**BMO5** says some block of a flushed author-and-round is output, and for
+a *correct* author there is no twin for the filter to prefer, so it is
+that block. With **BMO9** — a reliable author's block reaches an anchor
+two rounds up by BML3 and is therefore flushed — Definition 1's Validity
+holds for reliable authors as a statement about `ab-deliver`.
+
+**What these do not give.** BMO7 is Total order for records that
+*agree*, and BMO4 is Integrity for a single record. Neither says two
+validators' records agree, and they need not: for an **equivocator** the
+twin that is output depends on the segmentation, and a descent from a
+higher anchor takes the round-`ρ` anchor its own chain reaches, which
+need not be the anchor another validator committed at `ρ`. **BMO8** rules
+the divergence out wherever the two descents meet at a common block, and
+§18.11 and §18.12 exhibit an execution where they do not — costing
+Agreement and Total order respectively.
+
+On data, identifiers of the four-round model run downward along
+references, so sorting by identifier is a topological sort and `TopoSort`
+is not vacuous. The list delivered there is
+`[0, 1, 2, 3, 5, 4, 6, 7, 10, 8, 9, 11, 15]`, one sorted segment per
+anchor round with each anchor last in its own, settled by `decide`.
+
+### 18.11 Agreement, refuted on data
+
+Two validators' records need not agree at a round where neither
+committed directly, and the arc exhibits an execution where two honest
+validators output **different blocks** of the same author and round,
+neither ever outputting the other's. That refutes Definition 1's
+Agreement — and with it Theorem 13 — for the protocol as specified, at
+`n = 4`, `f = 1`.
+
+Four validators with `0` Byzantine, seven rounds, the rotation anchoring
+rounds `0` to `6` by `3, 3, 0, 1, 2, 3, 1`, and validator `0`
+equivocating at round `2` with blocks `8` and `12`. Every step is settled
+by `decide`.
+
+![**Agreement refuted, on data.** The execution of `LeanDagTest/BlackMarlin/Divergence.lean`. Validator `0` is Byzantine and equivocates at round `2`; three round-3 blocks support `8` and the round-3 anchor `14` links it, so the rule commits `8`, while `12` has one supporter and the rule never admits it. The round-4 anchor `19` omits `14` — legal, since a block needs three references of four — so its cone holds no round-3 anchor at all. A validator that missed the round-2 commit and commits `19` instead therefore descends past round `3` and meets both twins at round `2`, where L24's metric prefers `12`: one round from the nearest anchor of its own cone, against two for `8`. Each validator then bars the other's block at the filter of L27. Rounds `5` and `6` carry the support that makes `19` committed and are drawn without highlighting.](figures/black-marlin-divergence.svg)
+
+
+The rule commits `8` and only `8`: three round-3 blocks reference it and
+the round-3 anchor `14` both references it and carries three supporters,
+while the twin has one supporter, so BM1 is untouched. The round-4 anchor
+`19` **omits `14`** — a block needs `n − f = 3` of `4`, so a correct
+validator that has not received `14` builds without it — and therefore
+its cone holds no round-3 anchor at all. A descent arriving at `19` skips
+round `3` and meets both twins at round `2`, where L24's metric prefers
+`12`: block `8` omits the round-1 anchor from its own references and `12`
+includes it, so the metric reads `2` against `1`.
+
+So `flushRecord Udiv 8 2 = some 8` and `flushRecord Udiv 19 2 = some 12`,
+and the outputs part with the records: the first validator emits `8` and
+never `12`, the second emits `12` and never `8`. The second does flush
+`8` — it lies in the round-4 anchor's cone — and drops it at the filter
+of L27, that author and round having already gone out.
+
+The execution behind the two records asks for nothing beyond asynchrony.
+One validator runs `delivery(4)` with `17`, `18` and `20` in view, sees
+`14` supported, and commits `8`. The other lacks those three, so
+`delivery(4)` finds `14` unsupported and fails; the protocol never
+retries a round, so that validator commits nothing until round `6`, where
+`delivery(6)` admits the round-4 anchor and the descent takes `12`.
+Agreement is a safety property, which the paper states holds during
+asynchrony as well, and asynchrony is exactly the freedom to delay those
+three blocks. The DAG is buildable: each block references only blocks of
+the round beneath it that its author could have held, each honest one
+carries every block of that round it holds as L46–L48 require, and each
+carries a quorum of three distinct authors.
+
+**Nor can the protocol escape by not filtering.** Both twins are flushed
+by the second validator — `8` lies in the round-4 anchor's cone — and
+they carry one author-and-round between them. L27 must drop one, since
+emitting both would output two blocks for a single `(party, round)`,
+which Integrity forbids "at most once regardless of `B`". So the
+execution admits no reading satisfying both: filter, and Agreement fails;
+do not filter, and Integrity does.
+
+**Scope.** This does not contradict the commit rule. The twin is never
+committed by the rule, and BM1 through BM7 stand; nor is liveness
+affected. What it refutes is the atomic-broadcast Agreement property, and
+it locates the defect at the two steps the paper asserts without
+argument — Lemma 12's "by construction of the delivery function, party
+`j` must have also committed `B`" and Theorem 13's Agreement clause
+"therefore party `j` eventually ab-delivers(B, j, r)".
+
+It is not a slip in the pseudocode. The recursion is described three
+times — §4.4's prose, Figure 2's caption and §4.5's account of
+`maxAnchor` — and none of the three is support-aware, while the commit
+rule is and considers every twin. Equivocation is excluded only in
+the paper's complexity section, and there only to size the messages for
+the communication bound.
+And which twin loses the tie-break is fixed by the twins' own references,
+which their Byzantine author writes, so the configuration is chosen
+rather than met. §4.4 states the property this refutes in the same
+paragraph — "These conditions prevent honest parties from committing
+different blocks when the anchor party is Byzantine" — which holds of
+L16, and of the path that runs when L16 fails does not.
+
+A repair is visible — let the descent prefer a *supported* anchor among
+tied candidates, which BM1 makes unique — and §18.14 tests it as a
+side-condition on the record rather than as a change to the model. The
+same execution costs the protocol its Total order as well, on blocks
+that have nothing to do with the equivocation, which is §18.12.
+
+### 18.12 Total order, refuted on blocks of reliable authors
+
+§18.11 refutes Agreement, and that refutation turns on which twin each
+record delivers. The delivered **sequence** fails for a reason that does
+not involve the twins at all, and the same execution exhibits it.
+
+Blocks `5` and `7` are authored by reliable validators, and neither has
+a twin — each is the only block of its author and round — so L27's
+filter never examines either. The two records deliver them in opposite
+orders:
+
+```lean
+(Udiv.block 5).creator ∈ (Correct : Finset (Fin 4)) ∧
+    (Udiv.block 7).creator ∈ (Correct : Finset (Fin 4)) ∧
+    (deliverSeq Udiv vFlushFull divSort 5).idxOf 5 <
+      (deliverSeq Udiv vFlushFull divSort 5).idxOf 7 ∧
+    (deliverSeq Udiv wFlush divSort 5).idxOf 7 <
+      (deliverSeq Udiv wFlush divSort 5).idxOf 5
+```
+
+What orders them is which segment they fall in. `5` lies in the cone of
+one twin and `7` in the cone of the other, so each record takes one of
+them with the twin it committed and the other only later.
+
+![**Total order refuted, on data.** Above, the DAG of `LeanDagTest/BlackMarlin/Divergence.lean`: the equivocator's twins differ in one reference, `8` taking `5` and `12` taking `7`, drawn in colour. Below, the two `ab-deliver` sequences `commitSeq` — Algorithm 1's own recursion — computes from it, grouped by the invocation of `commit` that emitted each block. The first validator commits `8` at `delivery(4)` and `19` at `delivery(6)`; the second fails `delivery(4)` for want of `17`, `18` and `20`, and commits `19` alone, its descent reaching `12` and so `7`. Blocks `5` and `7` are authored by reliable validators and have no twins, so L27's filter never examines either, yet they come out in opposite orders. Block `7` is the anchor of round `1`, so an honest leader's block is a segment boundary for one validator and mid-segment for the other.](figures/black-marlin-order.svg)
+
+**Checked against Algorithm 1 itself.** `Flush` records a validator's
+boundaries as a function of round and `ledgerSeq` reads them off in
+round order, which is an abstraction: `commit(B)` is invoked afresh at
+each successful `delivery(r)` and threads `D` across invocations, so a
+later commit can descend below a boundary an earlier one passed and emit
+those blocks *after* blocks of a higher round. `Model/Recursion.lean`
+writes L18–L32 out directly, and the two validators run through it give
+
+```lean
+vRec = [3, 0, 1, 2, 4, 5, 6, 8, 7, 9, 10, 11, 13, 15, 16, 19] ∧
+    wRec = [3, 1, 2, 7, 0, 4, 6, 12, 5, 9, 10, 11, 13, 15, 16, 19] ∧
+    vRec.idxOf 5 < vRec.idxOf 7 ∧ wRec.idxOf 7 < wRec.idxOf 5
+```
+
+so the inversion is a property of the algorithm as written, not of the
+abstraction. The second validator's `Flush` reproduces its sequence
+exactly; the first's differs in one position and no more, the round-0
+anchor `3` being flushed as its own segment at `delivery(4)` where a
+record with no round-0 boundary emits it inside the round-2 segment. The
+pair the order turns on is unaffected, and the witness checks that the
+two sequences agree once `3` is removed.
+
+`commitSeq` filters the anchor `B` as well as the blocks of its segment,
+which is what the paper's §4.4 requires in prose and what the pseudocode
+at L30 does not implement. That is the reading under which the
+refutations above stand, and §18.13 records what the literal one costs.
+
+**Where the defect sits.** The equivocation is a necessary condition and
+not the mechanism, and a controlled comparison separates the two. Hold
+the DAG fixed — same twins, same references, same everything — and change
+only the descent:
+
+```lean
+flushRecord Udiv 8 2 = some 8 ∧ flushRecord Udiv 19 2 = some 12
+```
+
+```lean
+suppAnchorsOf Udiv (strongOf Udiv 19) = {8} ∧
+    descendS Udiv 19 = some 8 ∧
+    flushRecordS Udiv 19 2 = flushRecordS Udiv 8 2
+```
+
+The same equivocation, and no divergence. BMT1 gives the converse: remove
+the equivocation and there is no divergence either. Both are necessary,
+and only one of them is a component that could have been written
+differently.
+
+**The commit rule's safety is not what is lost.** BM1 through BM7 stand,
+and `¬ Supported Udiv 12 2` — the rule never admits `12`, correctly. §4.4
+of the paper claims "These conditions prevent honest parties from
+committing different blocks when the anchor party is Byzantine", and of
+L16 that is true. The failure is on the path taken when L16 *fails*: the
+second validator committed nothing at round `2`, and reached `12` by
+descending from a later commit.
+
+**So the protocol carries two notions of segment boundary and they
+disagree.** The commit rule admits an anchor only with a quorum of
+support. The descent admits any anchor in the cone, chosen by `maxAnchor`
+and L24's metric, and consults support nowhere. Where no anchor
+equivocates the two coincide, because `no_equivocation` leaves one
+candidate block in the universe — that is BMT1's whole proof. Equivocation
+is what makes them come apart, and it is then the descent's notion that
+governs what is delivered.
+
+**Three conditions, each necessary.** An equivocating anchor, or BMT1
+applies. A *skipped* anchor round — `19` omits `14`, so
+`coneAnchors Udiv 19 3 = ∅` and the descent lands on the twins instead of
+stepping through round `3`, where BMD1's `StepUnique` would leave one
+candidate; BMD5 shows the link clause forbids this above a *committed*
+anchor, and `14` is supported but not committed. And a support-blind
+choice among what it finds, or `descendS`. The descent supplies two of
+the three.
+
+Where the equivocation is irreducible is one level further down: `descendS`
+repairs the descent over the universe, and §18.14 is why no validator can
+run it — telling the twins apart needs support a view need not carry.
+
+**This is the more robust of the two failures.** It does not depend on
+which twin the filter prefers, so no rule for choosing among twins
+repairs it — and §18.14 refutes that family for Agreement anyway. What
+would repair it is a rule that makes the two descents agree, and §18.14
+is why no validator can run one.
+
+It also disposes of the reading that relaxes Integrity. Dropping L27, so
+that a *block* rather than an author-and-round is what may not be output
+twice, leaves the segmentation untouched, and the segmentation is what
+differs — the twins then come out in opposite orders as well, turning
+the Agreement failure into a second Total order failure.
+
+### 18.13 Where the paper's proofs go wrong
+
+Every lemma of the paper's §5.1 is a statement about the test at **L16**. What a
+validator outputs is governed by the recursion of L18–L32, which selects
+anchors by `maxAnchor` and L24's metric and reads support nowhere. Those
+are different predicates, and the proofs substitute one for the other at
+a step that can be named.
+
+**Lemmas 2 to 6 are sound**, and this arc reproduces them with no
+hypothesis beyond `n ≥ 3f + 1`: Lemma 3 is BM1, Lemma 4 is BM3, Lemma 5
+is BM2, Lemma 6 is BM5 (§18.2). Lemmas 7 to 10, the timing arguments, are
+replaced here by the structural condition rather than transcribed
+(§18.5), and nothing below turns on them.
+
+**Lemma 12 is false.** It claims that if honest `i` commits `B` then
+every honest `j` eventually commits `B`, and its proof ends:
+
+> If `B ∈ past(B′)` and `B ≠ B′`, then by construction of the delivery
+> function, party `j` must have also committed `B`.
+
+Two things go wrong there. First, the proof **equivocates on "commit"**.
+Lemmas 3 and 6, which it invokes, are about blocks satisfying L16; the
+recursion calls `commit(B′)` on blocks that never satisfied L16, which
+is the entire purpose of the recursion. The premises are in one sense
+and the conclusion in the other, and no lemma connects them. Second, the
+connecting claim is **asserted rather than argued**, and it does not
+hold: the descent visits one anchor per round, chosen by `maxAnchor` and
+L24's metric, so `B ∈ past(B′)` gives `j` no reason to descend through
+`B` rather than through a twin. §18.11's execution is exactly that —
+`i` commits `8` under L16, `j` commits `19` with `8 ∈ past(19)`, and
+
+```lean
+flushRecord Udiv 8 2 = some 8 ∧ flushRecord Udiv 19 2 = some 12
+```
+
+so `j` never commits `8` in either sense, and never delivers it. Lemma
+11 is also stated unconditionally while its proof invokes Lemma 11,
+which holds only after GST.
+
+**Theorem 13, Agreement**, inherits the break and adds one of its own:
+
+> …and thus `B ∈ past(B′)`. Therefore, party `j` eventually
+> ab-delivers`(B, j, r)`, ensuring agreement.
+
+Reachability is not delivery. L27 drops `B` when `j` has already output a
+block of the same author and round, which is precisely the twin case, so
+the step omits the filter it needs to survive.
+
+**Theorem 13, Total order**, rests on a false premise. It reads —
+
+> the order of delivery of non-anchor blocks is determined by the order
+> in which the anchor blocks are committed (L16)
+
+— and that is false: the order is fixed by the anchors the *recursion*
+flushes, and those include blocks that never satisfied L16. In §18.12's
+execution one validator's boundary at round `2` is `12`, carrying one
+supporter, and the other's at round `1` is `7`, carrying two of four;
+neither is L16-committed, and they are what order `5` and `7` oppositely.
+The clause's two supporting citations are sound in the published version:
+Lemma 12 does say that every honest party commits the same set of blocks,
+and Lemma 6 does say that committed blocks lie in each other's past. Both
+were misnumbered in the preprint this arc was first written against — it
+cited a Lemma 12 that did not exist there, and a Lemma 6 that was the
+`3∆` round-advance lemma — and DISC 2025 corrects both.
+
+**Theorem 13, Integrity**, argues that the delivered set makes `j` output
+at most once per author and round. L30 sits outside the loop L27 guards,
+so the anchor `B` is `ab-deliver`ed whatever the delivered set holds, and
+on the literal pseudocode the first validator of §18.11's execution —
+having delivered `8`, then descending to `12` — delivers both, breaking
+Integrity with none of the preceding argument needed. The paper's §4.4
+says in prose that the filter applies to every block, and the pseudocode
+does not implement it. This arc reads the prose, so Integrity holds here
+and the refutations above are of Agreement and Total order rather than
+of it.
+
+**Lemma 11 is not false so much as addressed to a different protocol.**
+It computes the probability that the anchors of rounds `r − 2` and
+`r − 1` are both honest as `(n − t)² / n²`, which treats the rotation as
+random. `RR(r)` is a deterministic round robin (the paper's §4.5), so an adversary
+reads the schedule and corrupts the anchors it chooses; there is no
+distribution to take an expectation over. What is available instead is
+stronger and needs no probability: at `n ≥ 3f + 1` under round robin, two
+cyclically adjacent anchors are reliable infinitely often, which is BML5
+and a pigeonhole. That yields the recurrence but not the expectation, so
+the paper's
+headline of `4.25` rounds of communication in the average case, quoted in
+its time-complexity section, does not follow from anything proved.
+
+**The results of §5, and their status here.**
+
+| paper | what it says | status |
+| --- | --- | --- |
+| Lemma 2 | honest messages are valid on receipt | no message layer is modelled (§18.4) |
+| Lemma 3 | two L16-committed blocks of a round are one block | BM1, proved |
+| Lemma 4 | rounds below the top carry `n − f` authors | BM3, proved |
+| Lemma 5 | an L16-committed block is in every past two rounds up | BM2, proved |
+| Lemma 6 | committed anchors form a chain | BM5, proved |
+| Lemmas 7–10 | round advance and support after GST | replaced by the structural condition (§18.5) |
+| Lemma 11 | expected rounds to a commit | probability over a deterministic rotation; BML5 gives the recurrence without it |
+| Lemma 12 | `i` commits `B` iff `j` eventually commits `B` | **false** (§18.11) |
+| Thm 13, Validity | | holds for reliable authors, BMO9 |
+| Thm 13, Agreement | | **refuted** (§18.11) |
+| Thm 13, Integrity | | holds of the filter as the paper's §4.4 reads it; fails on the literal L30 |
+| Thm 13, Total order | | **refuted** (§18.12) |
+
+**What the pattern is.** Nothing in §5.1 is wrong about the commit rule,
+and the paper's §4.4 claims, correctly, that its conditions "prevent honest parties from
+committing different blocks when the anchor party is Byzantine", which
+is true of L16. The proofs go wrong where they carry a conclusion about L16 into
+a claim about what validators output, and the recursion — which is what
+determines output — is never given a lemma of its own.
+
+### 18.14 The repair, and why no validator can run it
+
+§18.11 names a repair. This section makes it as a **side-condition**
+rather than a change to the model — `descend`, `flushRecord` and
+everything proved of them stand, and what is added sits beside them —
+and then asks whether a validator could apply it.
+
+**The weak form filters the tie-break.** A record is
+*support-preferring* when, at any round where some anchor carries a
+quorum of support, what it flushes there is supported; `descendSupp`
+filters the candidates of L21–L24 to those the rule could commit,
+falling back to L24 where none is. **BMP1** is why that is deterministic:
+the candidates of a step share a round, and BM1 gives a round one
+supported anchor, so where the filter bites nothing is left to break ties
+over. **BMP2** and **BMP3** say the repair takes the supported anchor
+where there is one and is the original rule where there is not, so it
+refines L21–L24 rather than replacing it. **BMP5** is the conclusion: two
+support-preferring records that both flush at a round with a supported
+anchor flush the same block, which is what §18.11's execution lacked.
+
+**It does not close the general case.** `descendSupp` chooses among the
+candidates L21–L24 already offers, so where the cone reaches a round's
+supported anchor but the *step* does not — the block it steps through
+citing a twin instead — the filter is empty and the fallback takes the
+twin.
+
+**The strengthened form drops the tie-break instead of filtering it.**
+`descendS` descends to the highest-round supported anchor of the cone and
+nowhere else. **BMP7** answers the equivocation-without-quorum case: a
+round whose anchors carry no quorum is not a boundary at all, so no
+choice is made there and two records cannot part over one. **BMP8** is
+that nothing is passed by — above a committed anchor at `ρ` a supported
+anchor sits at every round the chain could land on, the anchor itself
+from `ρ + 2` up by BM2 and its linking anchor at `ρ + 1` because the
+commit rule makes it supported, with BM1 fixing which block each is.
+**BMP9** and **BMP11** complete it: two records whose tops are committed
+anchors both reach the lower of the two, BM5 putting it in the higher's
+cone, so they agree at every round below, with no hypothesis about what
+lies between the two tops.
+
+**Neither form costs anything of the universe.** What the liveness
+results conclude is `Committed`, the conjunction of `IsAnchor`,
+`Supported` and `Linked`, which mentions no part of the descent —
+**BMP6** is that observation. BML1–BML5 and BMR1–BMR6 hold of the
+repaired protocol word for word; **BMP4** adds that a step never stalls
+and never moves to another round, and **BMP10** that the descent still
+terminates; **BMP12** is the recurrence of committed rounds restated, so
+no execution is stuck after synchrony. The one price is segmentation: a
+chain through a different block descends through a different cone, so a
+record may flush at different rounds. No block is lost, and segments only
+coarsen.
+
+**Which is where the repair stops, because a validator reads a view.**
+`Supported` is a quorum over the universe. **BMP13** closes the gap in
+one case: an anchor by a *reliable* author, past the round coverage takes
+hold, is referenced by every reliable block of the round above, so any
+view holding those sees the quorum. `SynchronisedOn` constrains only
+`T`-authored blocks, so coverage says nothing about a **Byzantine**
+author's anchor — and a Byzantine author's anchor is the whole occasion
+for the repair.
+
+The counting is the obstruction. A view carrying a quorum at the round
+above an anchor shares only `n − 2f` authors with that anchor's
+supporters, which at `n = 3f + 1` is `f + 1`, short of the `2f + 1` the
+test wants. §18.11's execution carries such a view: the cone of the
+round-4 anchor holds a quorum of authors at round `3`, so its holder
+could conclude that round and run the rule, and yet it sees two of `8`'s
+three supporters, the third being the block that anchor does not
+reference.
+
+**Every rule a validator could run, and how each answers.**
+
+| rule | what it reads | verdict |
+| --- | --- | --- |
+| L24's gap metric | the candidates and their own cones | takes the uncommitted twin in §18.11; ties exactly where the twins share a cone |
+| a canonical order on the candidates | the identifiers | already in the model — `descend` takes the `≤`-least of the gap-minimisers — and takes the uncommitted twin |
+| any support-blind function | the candidates and their own cones | refuted as a class |
+| delivering both twins | nothing — L27's filter dropped | turns the Agreement failure into a Total order failure (§18.12) |
+| counting support in the descent's cone | the cone, view-independently | promises the committed twin `1` against its twin's `2f`; wrong at `f = 1` |
+| a quorum of support (`descendS`) | the universe | correct, and not evaluable from a view |
+
+**The support-blind rules fall as a class.** Give the twins the same
+references. They then agree in round, in creator and in cone, so every
+function of the candidate blocks and their own histories returns one
+answer on both: L24's metric ties exactly, and a canonical order decides
+by identifier. Two universes witness the consequence, alike in all of
+those respects and differing only in which twin the round-3 blocks
+reference. `strongOf` agrees on the twins within each and across both;
+`8` is the committed twin in one and `12` in the other; and `descend`,
+which reads neither, answers `8` in both — right once and wrong once.
+
+**Counting support in the cone falls too.** The natural weakening is
+relative rather than absolute — prefer the twin more of the descent's own
+cone references — and it is view-independent by construction, every
+validator descending from one block reading one cone. It has no margin. A
+committed twin holds `2f + 1` supporters of `3f + 1`, at least `f + 1` of
+them reliable; a reliable supporter authors one block at the round above
+and that block references the twin, so it counts exactly when the cone
+holds it, and a cone need only carry `n − f` authors. **One**
+cone-supporter is all the committed twin is promised. Its twin may hold
+`2f`: the two supporter sets meet only inside the `f` Byzantine
+validators, since supporting both means authoring two blocks at one
+round, and `f` more sit outside the quorum. Both ends are realised at
+`f = 1`, on four validators over seven rounds with the twins given the
+same references, so the rule fails at the smallest committee the protocol
+admits.
+
+**So the repair has two implementations and neither is sound.**
+
+*Decide from what is held.* The rule is evaluated against `SupportedIn`,
+which under-reports. §18.11's execution carries a view seeing two of
+three supporters; the `f = 1` model carries one seeing **no** twin
+supported at all. A validator that descends regardless selects by some
+fallback, and every fallback available to it is a refuted row of the
+table. **Safety fails.**
+
+*Wait until the quorum is held.* A committed twin's `2f + 1` supporters
+include at least `f + 1` reliable ones and up to `f` Byzantine ones. The
+reliable blocks arrive; the Byzantine ones need never be sent, and under
+partial synchrony nothing obliges them to be. The `f = 1` model exhibits
+it: the deciding supporter of the committed twin is authored by the
+equivocator and referenced by no reliable block, so a view holding every
+reliable block and everything those reference sees `{1, 2}` for one twin
+and `{0, 3}` for the other — neither a quorum, and no further reliable
+block will settle it. **Liveness fails.**
+
+**What is and is not established.** The refuted class is the
+support-blind one, together with the named rules of the table and the two
+implementations of `descendS`. No claim is made that every conceivable
+view-local rule fails. What is claimed is narrower and enough: the
+protocol as presented satisfies neither Definition 1's Agreement nor its
+Total order, the rule that restores both cannot be evaluated by a
+validator that decides from its own view, and the rule that waits for the
+evidence can be made to wait without end.
+
+### 18.15 Liveness and the delivered order at a validator's view
+
+§18.5, §18.6 and BMP12 conclude `Committed U L r`: the **universe**
+admits a commit at that round. Liveness asserts something else. A
+validator delivers from its own view, and the universe is a device of
+this model rather than an object anyone holds, so a liveness result read
+there is about the wrong object. The same applies to the delivered order,
+whose agreement §18.8 states of records rather than of validators. This
+section states both where they belong
+(`BlackMarlin.ViewLiveness.holds`, `BlackMarlin.ViewOrder.holds`).
+
+**BMV1, `NoValidatorStuck`.** Above every round the rotation names a
+later one that *every* reliable validator commits **on its own view**, by
+a time the pace supplies, in any sufficiently grown DAG under any pace.
+BML4 said such a round exists; this says everyone reaches it.
+
+**BMV2, `NothingHeldBack`.** And what any view committed below that round
+is in what every reliable validator delivers at it. BMA3 asks for a
+reliably anchored round above `ρ` and the rotation supplies one, so the
+hypothesis becomes a conclusion.
+
+**BMV3, `ReadableAtReliableAnchor`, is why BMV1 carries a time.** At a
+reliably anchored round past coverage, an anchor is referenced by every
+reliable block of the round above, so a view holding those sees the
+quorum. The commit rule's input at such a round is reliable blocks, and
+coverage delivers reliable blocks — so the rule applies without waiting
+on anything a Byzantine validator might withhold. On the four-round model
+the reliable supporters of the round-2 anchor are already a quorum, so
+the equivocator's block there is not needed even though it exists.
+
+**BMT1, `ReliableAnchorPins`, does the same for the order.** Two records
+that flush at a round whose anchor is reliable flush the same block,
+whatever views they came from. This needs no agreement argument and no
+coverage: the block flushed there is that round's anchor, its author is
+correct, and `no_equivocation` leaves exactly one such block in the
+universe. A reliable anchor gives the descent no choice, so every view
+makes the same one.
+
+**BMT2, `AgreeOnReliableStretch`.** BMD3 needs a round two records agree
+at; BMT1 supplies one, so agreement descends from any reliably anchored
+round through the stretch a record flushes at, with nothing assumed about
+how either validator got there.
+
+**BMT3, `OrderAgreesWhenAnchorsReliable`.** Where every anchor below a
+round is reliable, two records flushing at the same rounds deliver the
+**same list** — Definition 1's Total order, unconditionally, on that
+stretch.
+
+**Where the arc ends, and why there is nothing past it.** Both boundaries
+fall in the same place. The commit rule reads support at a round the
+rotation names, and where the rotation names a reliable validator
+coverage supplies the input; the descent reads support at whichever
+anchor its chain lands on, and no clause constrains that anchor's author.
+So BMV3 and BMT1 hold at reliably anchored rounds and have no counterpart
+elsewhere: §18.14 exhibits a view holding every reliable block in which
+neither twin is supported, and §18.12 exhibits two records that order two
+reliable authors' blocks oppositely with one Byzantine anchor below them.
+
+The protocol is therefore live at the view for the delivered **set**, its
+delivered order agrees exactly as far as the rotation is reliable, and
+neither statement extends. BMT3 is proved and its converse refuted on
+data, so between them nothing is left open.
+
+## 19. Minnow: the minimal commit rule, and two defects
+
+*(modules `LeanDag/Minnow/`; the protocol is Minnow [KPT26], which
+proposes commit rules claimed minimal — no safe and live rule commits on
+less DAG — for eventual synchrony and for asynchrony)*
+
+Minnow separates a DAG-based atomic broadcast protocol into a
+communication component, which builds a round-based DAG, and a **commit
+rule**, which reads that DAG and returns the sequence of committed
+vertices. This chapter examines `crs*`, the rule proposed for the
+eventually synchronous model (the paper's Definition 9), as instantiated
+by S-Minnow.
+
+`crs*` commits a leader vertex `l` when two conditions hold: a **quorum**
+of `2f + 1` distinct processes point to `l` from the round above, and
+every leader slot that precedes `l`'s in the sequence `leaders` is
+**resolved** — some vertex of that slot lies in `l`'s causal past, or is
+concurrent with `l` and either committed or skipped, where *skipped*
+means `2f + 1` vertices of the round above carry no edge to it.
+
+**One sentence generates both defects.** The second condition resolves an
+earlier slot when *some vertex of it* lies in the candidate's causal
+past. That is a test of position, where a commit is a verdict:
+**resolved is not decided**. The disjunct therefore reaches without
+discriminating. Where a slot's process equivocates it holds two vertices,
+either of which may be the one in the way; one twin carries a later
+leader past the slot while the other is undecided, and the other then
+acquires its quorum and demands a place before what is already output.
+That is Safe-Commit, and §3.2 of the paper obtains Total-order and
+Agreement from Safe-Commit (§19.3).
+
+**The clause that does decide a slot cannot reach far enough.** The only
+verdict `crs*` reaches about a slot reads the single round above it:
+`2f + 1` processes pointing commits, `2f + 1` not pointing skips. At
+`n = 3f + 1` those leave a gap — a vertex pointed to by between `f + 1`
+and `2f` processes is neither — and `2f + 1` is the least threshold the
+skip clause can safely take, so the gap belongs to the rule's shape
+rather than to its constants. A Byzantine process that keeps its vertices
+in the gap is never decided, in any view (§19.4).
+
+**What that costs depends on the leader schedule.** An undecided slot
+does not block for ever, and the reason is the disjunct above: two rounds
+up the dead vertex lies in every causal past, resolving the slot without
+deciding it. So a schedule offering two consecutive rounds whose leader
+slots all belong to correct processes commits at the second of them.
+Round robin with one leader a round always offers such a pair; round
+robin with two or more can be denied it, for every `f`, by an adversary
+choosing which processes to corrupt. So Live-Commit fails for `crs*`
+paired with a multi-leader round robin rather than for `crs*` alone
+(§19.5) — and the escape that rescues it is the disjunct that costs
+safety.
+
+**Two readings must be settled before either defect can be stated.**
+Definition 9 is written twice in a way its own sentences do not support.
+Its second condition binds a vertex existentially, so at the letter a
+leader slot holding no vertex resolves nothing and a silent process
+blocks everything. Its skip clause counts vertices where the quorum
+clause two lines above counts processes, which would make one vertex
+committed and skipped at once. Neither is a defect of the rule so much as
+of its statement; §19.2 settles both, and no finding depends on how they
+go.
+
+Where the paper's own liveness argument — its Lemma 11 — reaches the case
+that fails, it says "we leave the details to a later version".
+
+### 19.1 What is modelled, and how the model is held to the paper
+
+Everything below turns on the model being Minnow's and not a neighbour's,
+so this section sets out each modelling decision, the sentence of the
+paper it answers to, and what was checked.
+
+**A DAG is what the paper's §2 says it is.** Vertices carry a round, a
+creator and a set of edges, and
+
+```lean
+structure ValidHere (blk : BlockId → Block Validator BlockId Payload)
+    (b : Block Validator BlockId Payload) : Prop where
+  /-- Every edge points to the round immediately below. -/
+  predecessor : ∀ i ∈ b.refs, (blk i).round + 1 = b.round
+  /-- No two edges share a process. -/
+  distinct_creators : ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
+  /-- A non-genesis vertex carries `2f + 1` edges by distinct processes. -/
+  quorum : 0 < b.round → quorumCard Validator ≤ (creators blk b).card
+```
+
+which is §2's "vertices are valid only if they reference at least
+`2f + 1` valid vertices issued in the previous round by distinct
+processes", and nothing more.
+
+**In particular there is no self-parent condition.** The rest of this
+development uses a `ValidWrt` that also requires a non-genesis block to
+reference a block by its own author. Minnow does not ask for that, and
+imposing it would not be a harmless strengthening: it would force the
+equivocating process of §19.4 to point at its own previous vertex, which
+is one of the pointers the counterexample counts. `Minnow.ValidHere` is
+therefore defined afresh rather than reused, and `Minnow.Dag` is a
+separate structure carrying it.
+
+**Equivocation is admitted, of faulty processes only**, because that is
+what §2 admits: "if a faulty process issues two valid vertices in the
+same round, then correct processes include both in their local DAG but
+when they issue their vertex for the next round, correct processes will
+choose (it does not matter how) only one vertex per process to add an
+edge to". Both halves are modelled. `distinct_creators` above is the
+second — a vertex points at one vertex per process. The first is
+`Minnow.Dag`'s `correct_single`, which is the core's `no_equivocation`
+with its correctness guard intact: a *correct* process follows its
+algorithm and issues one vertex a round, and only a faulty one may put
+two in a slot. Dropping the field altogether would admit DAGs the
+communication component cannot build; what Minnow drops relative to §17
+and §18 is validity's self-parent clause, not this.
+
+**A slot is a pair, and may be empty.** §2: "a slot is a pair `(p, r)`
+that identifies a proposal, i.e., a vertex issued by process `p` in round
+`r` (but there may be no, or many such vertices if `p` is faulty)".
+`slotBlocks D (p, r)` is the vertices of the DAG with that creator and
+round, and the definitions below never assume it is a singleton or
+nonempty. §19.2 is what that assumption would have hidden.
+
+**The quorum clause counts processes.** Definition 9's witnesses are
+"`Ws*[1] is a set Q of 2f + 1 vertices issued by distinct processes`",
+and the clause is "`Quorum: l is pointed to by all vertices in Q`". So
+what is counted is distinct processes with a pointing vertex:
+
+```lean
+def Quorum (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
+  quorumCard Validator ≤ (pointers D l ((D.block l).round + 1)).card
+```
+
+with `pointers D l r` the creators of the round-`r` vertices carrying an
+edge to `l`. `quorumCard Validator` is `n − f`, which is `2f + 1` at
+`n = 3f + 1`, and the witnesses check that arithmetic on the model rather
+than assume it.
+
+**The skip clause counts processes, in line with every other quorum.**
+Definition 9 writes "`Skip: or there are 2f + 1 vertices that do not have
+an edge to v′ in round r + 1`", but the quorum clause two lines above
+counts "vertices issued by distinct processes", and §19.2 shows the
+vertex reading to be unsound. So what is counted is distinct processes,
+none of whose round-above vertices points at `l`:
+
+```lean
+def Skipped (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
+  quorumCard Validator ≤
+    ((creatorsOf D.block (verticesAt D ((D.block l).round + 1)))
+      \ pointers D l ((D.block l).round + 1)).card
+```
+
+The literal reading is kept beside it as `SkippedByVertex`, used only to
+state what it costs.
+
+**The second clause is an existential over the slot's vertices, because
+that is what is written.** Definition 9: "`there is a vertex v′ in slot
+s′ in D such that v′ ⇝ ϕ(l) in D, or if ϕ(l) and v′ are concurrent:`
+…". So one vertex of a slot resolving it is enough, and the model does
+not quietly universalise:
+
+```lean
+def CommittedAt (D : Dag Validator BlockId Payload) (L : ℕ → Slot Validator) :
+    ℕ → BlockId → Prop
+  | 0, l => Quorum D l
+  | (k + 1), l =>
+      Quorum D l ∧
+      ∀ j ≤ k, ∃ v ∈ slotBlocks D (L j),
+        Reaches D l v ∨ (Concurrent D l v ∧ (CommittedAt D L j v ∨ Skipped D v))
+```
+
+`Reaches D l v` is `v ⇝ l`, `v` in `l`'s causal past, computed as
+membership of `l`'s cone; `Concurrent` is §2's "if there is no causal
+path from a vertex `v` to a vertex `v′` and vice versa". The recursion is
+on the position in `leaders`, matching §3.1's "a commit rule is a
+function that … follows the order defined by `leaders` and commits
+iteratively the leader vertices", and Definition 9's footnote 2, which
+says the recursive `v′ ∈ crs*(D)` may be written as a predicate over
+fresh variables in the past of `l`. Recursion on the index is
+well-founded, so `CommittedAt` is a definition and not an assumption.
+
+**What is deliberately not modelled, and why it cannot matter.** Three
+things are left out. The delivery of non-leader vertices in a committed
+leader's past; the deterministic sort that orders the output; and
+Algorithm 3's round advance, timer and message layer. None of them can
+make a leader commit that the pattern disables, because Definition 4 is
+explicit: "a leader vertex `l` is committed **if and only if** the
+pattern `P` is enabled for `l` in `D`". Every negative finding below is
+of the form "this leader is not committed", so it is a statement about
+the pattern alone, and the omitted machinery is downstream of it.
+
+**The two theorems the counterexamples rest on.** Both are read off
+Definition 9 and proved, not assumed. `quorum_of_committedAt` — a commit
+needs a quorum, at every position in `leaders`, since the quorum clause
+is a conjunct at each. And `not_committedAt_of_dead` — if every vertex of
+an earlier leader slot lies outside `l`'s causal past, carries no quorum
+and cannot be skipped, then the second clause is unsatisfiable for `l`.
+The second is the workhorse, and it is deliberately weak: it concludes
+nothing about what *is* committed, only that a particular leader is not.
+
+**Anti-vacuity.** Each witness checks that its DAG is valid by the rule
+above, by `decide` and not by construction; that the rounds are as full
+as claimed; and that the vertices which are *supposed* to be committable
+are — the correct processes' leader vertices in §19.4 all carry quorums,
+so what stops them is the second clause and not the first. Where a claim
+is that some vertex is *not* in a causal past, the corresponding
+positive — that an earlier one *is* — is checked beside it.
+
+**The leader sequence is round robin, not one chosen to suit.** §5:
+S-Minnow "instantiates the `leaders` function with a deterministic,
+pre-defined, sequence, e.g., round-robin, of `l` leaders each round". The
+witnesses of §19.2 to §19.4 take `l = 2` over four processes, so the
+leaders of round `r` are processes `2r` and `2r + 1` modulo `4`, and the
+sequence is checked on data. This matters for §19.4: the adversary
+chooses which processes to send its vertex to, and it is round robin that
+tells it which two to avoid. §19.5 runs the same DAG at `l = 1`, and the
+difference between the two is that section's subject.
+
+**The committee.** All four witnesses are at `n = 4`, `f = 1`, the
+smallest committee satisfying the paper's `f < n/3`, with process `0`
+faulty and the other three correct.
+
+### 19.2 Two ambiguities in Definition 9, and how they must be read
+
+Definition 9 is written twice in a way its own sentences do not support.
+Neither is a defect of the rule, but a formalisation has to choose, and
+what it chooses fixes what the two sections after this one are about. So
+both are settled here, and this section closes by checking that neither
+defect depends on the choice.
+
+**The empty slot.** The second condition opens "there is a vertex `v′` in
+slot `s′` in `D` such that …", and all three ways of resolving the slot —
+a vertex of it in `l`'s causal past, a vertex of it committed, a vertex
+of it skipped — sit inside that existential. Taken at the letter, a slot
+holding **no** vertex satisfies none of them, and a process that falls
+silent would block every later leader for ever.
+
+That is not the reading to take. The skip disjunct does not need a `v′`
+at all: what it asks is that `2f + 1` vertices of the round above carry
+no edge *into the slot*, and where the slot is empty every vertex of that
+round qualifies trivially. Read so — a slot is resolved when some vertex
+of it lies in `l`'s causal past, or some vertex of it is committed, or
+`2f + 1` vertices of the round above have no edge into it — a silent
+leader is skipped at once, which is plainly what the clause exists to do.
+The count below gives an independent reason to state the skip clause over
+the slot rather than over a chosen vertex of it.
+
+The model implements the letter, because the written form is the safer
+thing to be held to: `CommittedAt` binds `v` existentially over
+`slotBlocks`. The choice is recorded rather than buried, and
+`LeanDagTest/Minnow/Deadlock` carries a DAG in which process `0` issues
+nothing and five leaders are blocked, so the consequence of the literal
+reading is on the record. The paper's own Lemma 11 shares the ambiguity
+silently, reasoning throughout about "a leader vertex `l′′` issued by a
+faulty process" and never about a slot holding none.
+
+**The count.** Definition 9's skip disjunct reads "there are `2f + 1`
+**vertices** that do not have an edge to `v′`". Two lines above, the
+quorum clause counts "a set `Q` of `2f + 1` vertices issued by **distinct
+processes**", and every other quorum in the paper is over processes. The
+vertex reading is not a matter of taste: it makes the rule unsafe.
+
+![**What the vertex reading costs.** The quorum clause counts processes and the skip clause, at the letter, counts vertices. A faulty process issuing three vertices in one round contributes to the second without giving up its place in the first, and both clauses hold of one vertex at once.](figures/minnow-skip.svg)
+
+At `n = 4`, `f = 1`, both thresholds read `2f + 1 = 3`.
+
+1. **Round `0`** carries one vertex per process, and the vertex in
+   question is process `0`'s.
+2. **Round `1`** carries six vertices, because process `0` issues
+   **three**. Section 2 of the paper permits exactly this of a faulty
+   process: "if a faulty process issues two valid vertices in the same
+   round, then correct processes include both in their local DAG". Each
+   of the six is valid — three edges, distinct processes, the round below
+   — which is checked by `decide` and not by construction, as is the DAG
+   itself, so no correct process equivocates in it.
+3. **Of process `0`'s three vertices, one points** at the round-`0`
+   vertex and two do not. Processes `1` and `2` point to it; process `3`
+   does not.
+4. **The quorum clause holds.** The processes with a pointing vertex are
+   `{0, 1, 2}`, three of four: `pointers Dk 0 1 = {0, 1, 2}`, checked.
+5. **The skip clause holds too, at the letter.** The vertices with no
+   edge to it are the equivocator's other two and process `3`'s — three
+   vertices, which is `2f + 1`.
+6. So `Quorum Dk 0 ∧ SkippedByVertex Dk 0`, checked, and with it
+   `CommittedAt Dk (fun _ => (0, 0)) 0 0 ∧ SkippedByVertex Dk 0`: the rule
+   commits the slot, and the clause that exists to resolve slots the rule
+   cannot commit skips it.
+
+The two clauses are read by different processes from different views. One
+holds the three pointing vertices and commits the slot, placing it in its
+output; another holds the three non-pointing ones, skips it, and commits
+the next leader without it. Neither output is a prefix of the other,
+which is what Safe-Commit forbids. A reading on which the rule is not
+safe cannot be the reading meant.
+
+**So the clause is over processes**, and then the two stop competing:
+`¬ Skipped Dk 0`, checked, the processes with no pointing vertex being
+`{3}` alone. `Skipped` in the model is this, and `SkippedByVertex` is
+kept only to state what the letter costs.
+
+**Neither defect depends on either choice.** In §19.4 every slot whose
+resolution matters holds exactly **one** vertex, and on a singleton slot
+the two readings of the skip clause coincide: "some vertex of the slot is
+skipped" and "`2f + 1` vertices have no edge into the slot" are the same
+sentence. That execution carries no equivocation at all, so the two
+counts are the same count throughout it. In §19.3 the slot that matters
+holds **two**, and both counts leave the twin undecided —
+`¬ Skipped Dpart 0` and `¬ SkippedByVertex Dpart 0`, both checked — while
+the slot itself is resolved through the causal-past disjunct rather than
+the skip clause, so no empty slot arises there either. Every finding of
+this chapter holds on the letter and on the charitable reading alike.
+
+### 19.3 The safety defect: one twin resolves a slot, the other commits it
+
+The first disjunct of the second condition resolves an earlier slot when
+*some* vertex of it lies in the candidate's causal past — "there is a
+vertex `v′` in slot `s′` in `D` such that `v′ ⇝ ϕ(l)`". Nothing there
+asks what the rule will decide about that slot. Being in the way is not
+being committed. Where the slot holds one vertex the difference is
+immaterial, since the vertex in the way is the one any verdict will be
+about. Where
+the slot's process **equivocates** it holds two, and the disjunct is
+satisfied by whichever of them happens to lie in the way, which need not
+be the one later committed.
+
+So a validator can carry a leader past an earlier slot through one twin
+while the other twin is still undecided — and then watch the other twin
+acquire its quorum.
+
+![**Resolved through one twin, committed as the other.** Process `0` equivocates at round `0`, and slot `(0, 0)` is the first leader slot. Three round-1 vertices point to the twin `0`, giving it a quorum in the whole DAG; the fourth is process `1`'s, the round-1 leader, and it points to the twin `4` instead. A view missing one of the three sees `0` undecided — two pointers, one short of a quorum; one non-pointer, two short of a skip — yet resolves the slot through `4` and commits the round-1 leader. The missing vertex then arrives.](figures/minnow-equivocation.svg)
+
+**The execution, step by step.** Four processes at `f = 1`, one leader a
+round by round robin, so the leader of round `r` is process `r` and slot
+`(0, 0)` precedes slot `(1, 1)`.
+
+1. **Round `0`** carries five vertices, because process `0` issues two:
+   `slotBlocks Dfull (0, 0) = {0, 4}`, checked, and process `0` is the
+   faulty one, so `correct_single` is satisfied.
+2. **Round `1`** carries four. Three of them point to the twin `0` and
+   the fourth — process `1`'s, which is the round-1 leader — points to
+   the twin `4`: `pointers Dfull 0 1 = {0, 2, 3}` and
+   `pointers Dfull 4 1 = {1}`, checked. So in the whole DAG `0` carries a
+   quorum and `4` does not, and no two vertices of the slot are both
+   committable.
+3. **A validator's view is missing one of the three.** `Dpart` drops
+   vertex `5` and, to stay reference-closed, vertex `12`, the only one
+   that cites it. It is a valid DAG by the paper's own rule, checked, and
+   `Dpart.ids ⊆ Dfull.ids`.
+4. **In that view the twin `0` is undecided.** `pointers Dpart 0 1 =
+   {2, 3}` — two, one short of a quorum — and one process does not point
+   at it, two short of a skip. So `¬ Quorum Dpart 0 ∧ ¬ Skipped Dpart 0`,
+   checked, and `¬ SkippedByVertex Dpart 0` beside it.
+5. **The slot is resolved all the same.** `Reaches Dpart 6 4` and
+   `¬ Reaches Dpart 6 0`: the round-1 leader has the *other* twin in its
+   causal past, which satisfies the first disjunct. And it carries a
+   quorum of its own, `Quorum Dpart 6`.
+6. So `CommittedAt Dpart sfLead 1 6`, checked: **the round-1 leader is
+   committed with an earlier leader slot undecided.**
+7. **Then vertex `5` arrives.** `Quorum Dfull 0`, so
+   `CommittedAt Dfull sfLead 0 0` — the earlier leader is committed, and
+   `leaders` puts it before the one already output.
+
+**This is Safe-Commit, in the form the paper spells out.** "If `P` is
+enabled for a leader vertex `l` in `D`, then for all leader `l′ < l` in
+`leaders` … if `P` is disabled for `l′` in `D` then it is also disabled
+for `l′` in `D′`". Here `P` is enabled for the round-1 leader in `Dpart`;
+the round-0 leader is *disabled* there and *enabled* in `Dfull`; and it
+precedes the other in `leaders`. The witness states exactly that
+conjunction. And §3.2 of the paper obtains Total-order and Agreement from
+Safe-Commit, so what fails with it is agreement on the output.
+
+**The equivocation is what does it**, and the witness checks the
+converse: with only one vertex in the slot, that vertex is not in the
+round-1 leader's causal past, carries no quorum in the partial view and
+cannot be skipped there, so the leader is blocked and nothing goes wrong.
+A single-vertex slot is either resolved by the vertex the rule will
+eventually decide, or not resolved at all. Two vertices break that tie
+between resolving and deciding.
+
+**Where the paper's proof of safety fails.** Lemma 10 — "`crs*` is
+safe" — ends in a case split. With `D ⊆ D′`, `vz` committed in `D`, and
+`vk` committed in `D′` and ordered before it, the proof concludes: "This
+is a contradiction because if `vk ⇝ vz` in `D` then `vk` is also
+committed by indirect commit in `crs*(D)`, or if they are concurrent then
+`vk < vz` by `leaders` and `vz` is not committed in `crs*(D)` because
+`Ps*(vk, D) = false`."
+
+Read `vk` as the twin `0`, `vz` as the round-1 leader `6`, `D` as `Dpart`
+and `D′` as `Dfull`. The execution is in the **second** case, and the
+case hypothesis holds — `Concurrent Dpart 6 0 ∧ ¬ Quorum Dpart 0`,
+checked. So the proof concludes that `6` is not committed in `Dpart`, and
+step 6 above checks that it is.
+
+**The step needs a quantifier Definition 9 does not have.** Its
+inference is `Ps*(vk, D) = false`, therefore `vz` is not committed in
+`D`, and that holds only if the Non-conflicting-leaders condition,
+applied by `vz` to `vk`'s slot, is a condition *on `vk`*. It is not. What
+the condition asks is that "there is a vertex `v′` in slot `s′` in `D`
+such that `v′ ⇝ ϕ(l)` …" — an existential over the slot's vertices, whose
+first disjunct is reachability alone, with no quorum and no verdict in
+it. The proof reads `∃ v′ ∈ s′` as though `s′` held one vertex. Here it
+holds two, and the other one satisfies the disjunct:
+`4 ∈ slotBlocks Dpart (0, 0) ∧ 0 ∈ slotBlocks Dpart (0, 0) ∧
+Reaches Dpart 6 4`, checked.
+
+**The uniqueness the proof does establish is the wrong one.** It opens by
+observing that "if `Ps*(v, D) = true` for a vertex `v` in a DAG `D`, then
+there is no other vertex `v′` in any DAG `D′` that is in the same slot as
+`v` and such that `Ps*(v′, D′) = true`". That is correct — two quorums of
+`2f + 1` in one slot would share a correct process pointing at both twins
+— and it holds on the witness: `Quorum Dfull 0 ∧ ¬ Quorum Dfull 4`,
+checked, so nothing below refutes it. But it is uniqueness of the
+**committable** vertex of a slot, where the step needs uniqueness of the
+**resolving** vertex, and the causal-past disjunct does not read
+commitability. On this execution the two come apart in the worst way, the
+vertex that resolves the slot being exactly the one that can never carry
+a quorum: `¬ Quorum Dfull 4 ∧ Reaches Dpart 6 4 ∧ ¬ Reaches Dpart 6 0`,
+checked.
+
+Sharper: a leader slot has two ways to be filled. `Ps*` fills it
+*directly*, and that is what the opening observation makes unique.
+Definition 9's last clause fills it *indirectly* — everything in a
+committed leader's causal past is committed — and indirect commitment
+carries no uniqueness at all. When `6` commits in `Dpart` the twin `4`
+occupies slot `(0, 0)`; when `0` acquires its quorum in `Dfull` the twin
+`0` occupies it. The proof's uniqueness observation never reaches the
+second mechanism.
+
+**Two further steps of the same proof are unsupported.** The first case
+of the split says that if `vk ⇝ vz` then `vk` "is also committed by
+indirect commit", but Definition 9's clause commits "all **non-leader**
+vertices that are in the causal past of a leader vertex `l`", and `vk` is
+a leader vertex; the phrase §19.4 records as a delivery imprecision is a
+proof step here. And earlier, "since `vz` is also in the past of `2f + 1`
+processes in `D` then `vk` must also be in `D` (by the causality of the
+correct process in common)" does not follow from Minnow's validity, which
+imposes no self-parent condition (§19.1): a correct process's later
+vertex need not reference its own earlier one, so its causality carries
+nothing downward. That step happens to hold on this witness — `0` is in
+`Dpart` — so nothing here refutes it, but it is unargued rather than
+merely unstated.
+
+Lemma 10 is offered as a proof sketch, and the gap is not one of missing
+detail. The quantifier the step requires is not the quantifier Definition
+9 carries, and closing it means the second condition must **decide** an
+earlier slot rather than resolve it — which is the escape §19.5 shows
+liveness to depend on.
+
+This is the same defect §18 finds in Black Marlin, where a descent
+chooses among an equivocator's twins by a test that does not read
+support. The mechanism is the same: **a slot with two vertices is
+resolved by whichever one is in the way, and being in the way is not
+being committed.**
+
+### 19.4 The liveness defect: the dead zone
+
+![**Neither committable nor skippable, every other round.** Process `0` sends each of its vertices to process `1` alone, so exactly two processes point to it: itself and process `1`. Three are needed to commit and three non-pointers to skip, and there are two of each. Round robin then supplies the rest: the other leader of the round is concurrent with the dead slot, and the next round's leaders are the two processes that never received the vertex.](figures/minnow-deadlock.svg)
+
+**The arithmetic first.** Let `a` be the number of distinct processes
+with a round-above vertex pointing at a leader vertex, out of the
+`n = 3f + 1` processes. The quorum clause needs `a ≥ 2f + 1`. The skip
+clause needs `2f + 1` non-pointers, so `a ≤ f`. Between them lies
+
+`f + 1 ≤ a ≤ 2f`,
+
+a window of width `f`, non-empty for every `f ≥ 1`. At `f = 1` it is the
+single value `a = 2`. A vertex there is neither committable nor
+skippable, and the count cannot change once the round is full.
+
+**The threshold cannot be lowered to close it.** Suppose the skip clause
+is read over distinct processes — as §19.2 requires — with threshold `s`.
+For two views not to disagree, no view may skip a vertex another
+commits. A view that skips holds `s` processes with no pointing vertex,
+of which at most `f` are faulty, so at least `s − f` *correct* processes
+have none; a correct process issues one vertex per round, so those have
+none in any view. A view that commits holds `2f + 1` processes with a
+pointing vertex, at most `f` faulty, so at least `f + 1` correct
+processes point. The two sets of correct processes are disjoint and there
+are `2f + 1` correct processes in all, so a disagreement requires
+
+`(s − f) + (f + 1) ≤ 2f + 1`, that is `s ≤ 2f`.
+
+So `s = 2f + 1` is the least safe threshold, and the window it leaves is
+forced. The dead zone is not a constant chosen badly; it is what a rule
+deciding a slot from the single round above must live with at
+`n = 3f + 1`.
+
+**The execution, step by step.** Four processes, process `0` faulty, six
+rounds, four vertices a round. The one habit of the faulty process is to
+send each of its vertices to **process `1` alone**.
+
+1. **Round `r`.** Processes `0` and `1` hold process `0`'s vertex and
+   reference it; processes `2` and `3` never received it and reference
+   the other three. All four vertices of round `r + 1` are valid — three
+   or four edges, distinct processes, the round below.
+2. **The count.** `pointers Dm 0 1 = {0, 1}`, and likewise at rounds `3`
+   and `5`: exactly two processes, checked. So `¬ Quorum ∧ ¬ Skipped`
+   for each, checked, and the round is full — `(verticesAt Dm r).card = 4`
+   for every round — so nothing later can move either count.
+3. **The round's other leader.** Round robin makes slots `(0, r)` and
+   `(1, r)` the leaders of round `r` for even `r`. The second leader sits
+   in the same round as the dead slot, so there is no causal path between
+   them; the causal-past escape is unavailable, and the slot is neither
+   committed nor skipped. Blocked.
+4. **The next round's leaders** are processes `2` and `3` — precisely the
+   two that never received the vertex. It is not in their causal past
+   either, so they are blocked by the same slot.
+5. **Two rounds later** the vertex has entered every causal past, through
+   the two round-above vertices that did point to it. That slot is
+   resolved — `Reaches Dm 14 4` is checked, against `¬ Reaches Dm 14 8`
+   for the newer one — but by then process `0` leads again, and its new
+   vertex is dead in the same way.
+6. **Nothing commits.** All ten leader positions over rounds `0` to `4`
+   are checked individually. The three that are process `0`'s own
+   vertices fail the quorum clause; the other seven fail the second
+   clause. Every correct process's leader vertex carries a quorum —
+   `Quorum Dm 1 ∧ Quorum Dm 6 ∧ Quorum Dm 7 ∧ Quorum Dm 9 ∧ Quorum Dm 14
+   ∧ Quorum Dm 15`, checked — so what stops them is the second clause and
+   not the first.
+
+**How far a dead slot reaches.** One dead slot does not block everything
+by itself, and the reason is §19.3's sentence read the other way round:
+*resolved is not decided*. The first disjunct asks only that some vertex
+of the slot lie in the candidate's causal past, not that it be committed
+or skipped. Two pointers carry it there in two rounds, because a vertex
+references `2f + 1` of the `3f + 1` below it and so cannot miss both.
+
+So a dead slot is out of reach for exactly two rounds of leaders: its own
+— where there is no causal path either way — and the one above, whose
+leaders under round robin are the two processes that did not point to it.
+From two rounds up it lies in every causal past and resolves for
+everyone. On the model: `¬ Reaches Dm 1 0`, `¬ Reaches Dm 6 0` and
+`¬ Reaches Dm 7 0` against `Reaches Dm 8 0`, `Reaches Dm 9 0` and
+`Reaches Dm 14 0`, all checked. **One dead slot holds two rounds and no
+more**, which is why the figure shows the habit repeating — and round
+robin at `l = 2` over four processes puts the faulty process in a leader
+slot every other round, which is exactly the cadence that keeps a fresh
+dead slot within reach of every leader. §19.5 is what happens when the
+schedule does not supply that cadence.
+
+**The gap in the decision sequence is permanent, and by itself harmless.**
+The slot is undecided in every view, not merely in the full DAG: a
+partial view sees fewer pointers, so no quorum, and fewer non-pointers,
+so no skip, and as it grows the counts converge to two and two. So every
+correct process has the same permanent hole at the same position of
+`leaders`, and Safe-Commit is content — a leader disabled in one DAG
+stays disabled in every larger one. What defeats the rule under this
+schedule is not the hole but its recurrence.
+
+One thing the hole does cost belongs with the wording matters of §19.2
+rather than with this one. Definition 9 commits "all **non-leader**
+vertices that are in the causal past of a leader vertex `l` for which
+`Ps*` is satisfied", and Definition 4 commits a leader vertex "if and
+only if the pattern `P` is enabled" for it. Taken together, a dead leader
+vertex is in the causal past of committed vertices and is never committed
+itself, so the output omits a vertex that others delivered depend on. The
+phrase surely means every vertex of the past; at the letter the dead slot
+leaves a hole in the delivered set and not only in the decision sequence.
+
+**No timing assumption helps.** Eventual synchrony guarantees that a
+vertex a *correct* process sends is received; it says nothing about one a
+faulty process withheld. Nothing in the execution turns on message delay,
+and the same DAG is available after the global stabilisation time as
+before it.
+
+**What this costs.** The paper's liveness property asks that "for every
+vertex `v` issued by a correct process `i`, `i` will eventually have a
+DAG `D` such that `v ∈ cr(D)`". On this DAG under this schedule `cr(D)`
+is empty: no leader is committed, so no vertex is committed, so no
+correct process's vertex ever appears in the output. Whether that
+survives a change of schedule is §19.5.
+
+**The paper's argument reaches this case and stops, whatever the schedule
+is.** Lemma 11 says a faulty leader "is eventually decided (committed or
+skipped) because either all correct processes will issue a vertex that
+does not point to `l′` (and thus `l′` is 'skipped') or there will be a
+vertex issued by a correct process in the causal future of `l′` that
+satisfies `P*`", and then: "we leave the details to a later version". The
+dichotomy has a middle: some correct processes point and some do not.
+That middle is the dead zone. No schedule closes it — the dead slot is
+decided in no view, however `leaders` runs — so the lemma is refuted
+independently of everything in §19.5.
+
+### 19.5 The schedule the dead zone needs
+
+§19.4's execution is a DAG and a leader sequence, and the finding belongs
+to the pair. This section separates them: the DAG is held fixed, its
+Byzantine habit unchanged, and only `leaders` is varied.
+
+![**The same DAG, two leader schedules.** The Byzantine habit does not change: every vertex process `0` issues reaches process `1` alone, and sits in the dead zone at two pointers of four. At `l = 2` the faulty process leads every other round, and a fresh dead slot is always within reach of every leader. At `l = 1` it leads one round in four, so three correct leader rounds follow every dead slot: the first is still blocked by it, and the two after that commit.](figures/minnow-schedule.svg)
+
+**A dead slot is out of reach for exactly two rounds.** A vertex in the
+dead zone has at least `f + 1` processes pointing at it from the round
+above. A vertex two rounds up references `2f + 1` of the `3f + 1`
+processes below it, so it misses at most `f`, and `f + 1 > f`: it must
+reference at least one of the pointers, and so has the dead vertex in its
+causal past. The same count carries upward, since a vertex at any higher
+round references `2f + 1` vertices each of which already reaches it. So
+from two rounds above, the slot is resolved for every candidate — not
+decided, but resolved, which is all the second condition asks.
+
+**Two consecutive correct leader rounds are therefore enough.** Suppose
+rounds `r` and `r + 1` have every leader slot owned by a correct process,
+the rounds are full, and the DAG is synchronous across them, so that each
+vertex references every correct vertex of the round below. Take a leader
+`l` of round `r + 1`. Every leader slot at a round `s ≤ r − 1` is
+resolved for it: a vertex of the slot with `f + 1` or more pointers lies
+in `l`'s causal past by the count above, and one with `f` or fewer has
+`2f + 1` non-pointers and is skipped. Every leader slot at round `r`
+holds one vertex by a correct process, which `l` references. Every leader
+slot at round `r + 1` before `l` is concurrent with it and committed, by
+induction along the order within the round. And `l` carries a quorum,
+since the `2f + 1` correct processes of round `r + 2` reference it. So
+`l` commits. The argument is stated here rather than proved in general;
+what is machine-checked is the instance below.
+
+**On the model, with the DAG of §19.4 unchanged.**
+`LeanDagTest/Minnow/Fair` takes `Dm` — the same vertices, the same edges,
+the same withheld vertex — and replaces round robin at `l = 2` with round
+robin at `l = 1`, offset so the round-1 leader is a process the Byzantine
+one did *not* send to, which is the case the schedule has to survive to
+be worth stating.
+
+1. **The slot is still dead.** `pointers Dm 0 1 = {0, 1} ∧ ¬ Quorum Dm 0
+   ∧ ¬ Skipped Dm 0`, checked, exactly as in §19.4.
+2. **The first correct leader after it is still blocked.** Process `2`
+   never received the dead vertex, so `¬ Reaches Dm 6 0`, and the slot is
+   neither committed nor skipped: `¬ CommittedAt Dm mFair 1 6`, by
+   `not_committedAt_of_dead`.
+3. **The second commits.** Two rounds up the dead vertex is in every
+   causal past, through process `1`'s round-1 vertex, and the round-1
+   slot is directly referenced: `Reaches Dm 11 0 ∧ Reaches Dm 11 6 ∧
+   Quorum Dm 11`, and so `CommittedAt Dm mFair 2 11`, checked.
+4. **And so does the next**, `CommittedAt Dm mFair 3 13`, so this is a
+   chain and not one commit. `crs*` delivers a non-empty output on the
+   DAG that §19.4's schedule starves.
+
+**Which schedules supply the pair, and which can be denied it.** The
+question is whether an adversary, choosing which `f` of the `3f + 1`
+processes to corrupt against a fixed rotation, can arrange that no two
+consecutive rounds have all-correct leader slots.
+
+- **At `l = 1` it cannot**, for any `f`. The `f` faulty processes cut the
+  cycle into at most `f` runs of correct ones, and there are `2f + 1`
+  correct processes, so some run has length at least
+  `⌈(2f + 1) / f⌉ = 3`. Three consecutive correct leaders is more than
+  the two the argument needs.
+- **At `l ≥ 2` it always can.** Two consecutive rounds span `2l`
+  consecutive positions of the rotation, and corrupting one process every
+  `2l` positions meets every such window; that needs `⌈n / 2l⌉` faulty,
+  and at `n = 3f + 1` with `l ≥ 2` this is `⌈(3f + 1)/4⌉ ≤ f` for every
+  `f ≥ 1`. Exhaustive search over `f ≤ 5` agrees, and names the
+  placements: `{0}` at `f = 1`, `{0, 3}` at `f = 2`, `{0, 2, 6}` at
+  `f = 3`.
+
+So the schedule §19.4 uses is not a contrivance — it is round robin as
+§5 proposes it, at a value of `l` the paper explicitly admits — but the
+finding is about that pair. At one leader a round, this defect does not
+arise.
+
+**What survives, and what does not.** Three things.
+
+The word *outright* does not: `crs*` is not unconditionally starved, and
+Live-Commit fails for the rule paired with a multi-leader round robin
+rather than for the rule alone. §19.4's execution stands as it is
+checked; its reach is what changes.
+
+Lemma 11 does not survive either way. It claims each leader slot is
+eventually decided, and the dead slot is decided in no view under any
+schedule. What a fair schedule restores is that undecided slots stop
+blocking — not that they get decided.
+
+And the escape runs through the disjunct §19.3 breaks. What resolves the
+dead slot two rounds up is a vertex that is never committed and never
+will be. That is the same reading of the same clause which, where the
+slot holds two vertices, lets one twin resolve a slot the other commits.
+The rule is live under a fair schedule by exactly the mechanism that
+costs it safety under an equivocating one, and no reading of Definition 9
+separates the two.
+
+**What is not checked.** Whether the blocking construction generalises
+beyond `n = 4`, `f = 1`, `l = 2`. Denying the fairness window is not the
+same as blocking every leader: the leaders that precede a dead slot
+within its own round must be blocked by the previous round's dead slot,
+and that placement is a combinatorial question this arc does not settle.
+
+### 19.6 What these amount to
+
+| finding | kind | what it costs | repair |
+| --- | --- | --- | --- |
+| the empty slot (§19.2) | wording | every later leader, at the letter | state the skip clause over the slot |
+| the count (§19.2) | wording | Safe-Commit, at the letter | count processes, as the quorum clause does |
+| resolving through a twin (§19.3) | defect | Safe-Commit, hence Total-order and Agreement | none stated here |
+| the dead zone (§19.4, §19.5) | defect | Live-Commit, for a multi-leader round robin | one leader a round, or any schedule offering two consecutive correct leader rounds |
+
+The first two are matters of wording, and a phrase repairs each. The last
+two are not, and both survive every reading of the first two.
+
+They fail in opposite directions, and the second condition of Definition
+9 is where both live. Its skip clause cannot reach far enough: `2f + 1`
+is the least threshold it can safely take, so the window
+`f + 1 ≤ a ≤ 2f` cannot be closed from inside the rule, and a slot in
+that window is decided in no view, for ever. Its causal-past clause
+reaches without discriminating: a slot is resolved by whichever of its
+vertices is in the way, which under equivocation need not be the one the
+rule will commit.
+
+Both are reached by the paper's own arguments, and neither argument
+carries. Lemma 10 obtains its contradiction from `Ps*(vk, D) = false`
+where what the rule requires is that *some* vertex of `vk`'s slot resolve
+it, which under equivocation is a different vertex (§19.3). Lemma 11
+obtains a decision from a dichotomy — all correct processes point, or
+none does — whose middle is the dead zone, and says "we leave the details
+to a later version" (§19.4).
+
+The two are not independent in the way the constructions are. The
+constructions share nothing — §19.4 uses no equivocation and §19.3 no
+dead zone — but the clauses do. What rescues liveness where the skip
+clause fails is the causal-past clause resolving a slot it has not
+decided, and that is precisely what costs safety where a slot holds
+twins. `crs*` cannot give up the first without losing liveness under
+every schedule, or keep it without losing safety under equivocation.
+
+What the rule lacks in both cases is a way to decide a slot from evidence
+*later* than the round immediately above it — a verdict that every
+validator reaching a given point agrees on, whichever vertices of the
+slot it happens to hold. That is what the indirect decision rules of §17
+supply, and their cost in rounds is what Minnow's minimality argument is
+trying to avoid. §18 finds the same shape of defect in Black Marlin, by
+the same mechanism: a slot with two vertices resolved by a test that does
+not read support.
+
+## 20. Satisfiability
 
 Every structure carrying conditions is exhibited satisfiable by a concrete model
 over four validators at `f = 1`. This is a substantive component of the
@@ -5492,11 +7318,11 @@ rather than an unsatisfiable hypothesis.
 
 ---
 
-## 19. Mechanisation
+## 21. Mechanisation
 
 The development comprises approximately 27,000 lines of Lean 4 (v4.32.2)
 against Mathlib, of which some 18,000 constitute the library and 7,500 the
-models of §18 and the witness files of the arcs. A full build reports no
+models of §20 and the witness files of the arcs. A full build reports no
 errors.
 
 **Axiom audit.** Every principal result — among them
@@ -5538,7 +7364,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `ViewPace.lean` | the route (§6.9): the structure, V1, V4, coverage, production, the spine, and the quantitative results L8a, L9, L11 |
 | `Quantitative.lean` | the rated hypotheses; L8b |
 
-**The arcs** (§§7–15). All but the last consume the core read-only; §16 weakens one hypothesis of §12, for the reason given there:
+**The arcs** (§§7–18). All but `Integration/` consume the core read-only; §16 weakens one hypothesis of §12, for the reason given there:
 
 | Module | Contents |
 |:---|:---|
@@ -5597,10 +7423,18 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `MahiMahi/Model/Good.lean`, `MahiMahi/Model/Unpredictable.lean` | the committed candidates of a wave; the clause in both forms; agreement below a round |
 | `MahiMahi/Safety/`, `MahiMahi/Counting/`, `MahiMahi/Liveness/`, `MahiMahi/Synchrony/` | the four statements and their proofs (MM1, MM2, MM3, MM5) |
 | `MahiMahi/Helpers/` | the generated lemma layer |
+| `BlackMarlin/Model/Rules.lean`, `BlackMarlin/Model/Decision.lean` | the anchor rotation; support, the link, the commit rule; the same rules read from a view |
+| `BlackMarlin/Model/Round.lean` | the round rule of L38–L41, and the pacing structure it induces |
+| `BlackMarlin/Model/Ledger.lean` | the flush record of `commit`'s descent, and the ledger it defines |
+| `BlackMarlin/Model/Descent.lean` | `maxAnchor`, the tie-break of L24, and the record the descent computes |
+| `BlackMarlin/Model/Order.lean` | the sort `τ`, the filter of L27, and the list a validator outputs |
+| `BlackMarlin/Model/Repair.lean` | the support-preferring side-condition, and a descent that meets it |
+| `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/`, `BlackMarlin/Descent/`, `BlackMarlin/Order/`, `BlackMarlin/Repair/` | the eight statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6, BME1–BME5, BMO1–BMO9, BMP1–BMP13, BMV1–BMV3, BMT1–BMT3) |
+| `BlackMarlin/Helpers/` | the generated lemma layer |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
 | `Quality/Capstone.lean` | the windowed bounds and `chain_quality` (CQ7) |
-| `LeanDagTest/` | the models of §18 and the witness files of every arc |
+| `LeanDagTest/` | the models of §20 and the witness files of every arc |
 
 **The support graph, extracted.** The dependency structure of the
 development is not documented by hand: `scripts/DepGraph.lean` walks
@@ -5651,13 +7485,13 @@ literature. Every statement in this report is drawn from the source.
 
 ---
 
-## 20. Discussion
+## 22. Discussion
 
 The first four subsections concern the core account's central design
-choice — where the synchrony assumption lives; §20.5 draws the lessons of
-the three extensions; §20.6 records what remains open.
+choice — where the synchrony assumption lives; §22.5 draws the lessons of
+the three extensions; §22.6 records what remains open.
 
-### 20.1 Locating the synchrony assumption
+### 22.1 Locating the synchrony assumption
 
 The synchrony assumption may be stated in terms of views:
 
@@ -5718,7 +7552,7 @@ is `2Δ`.
 Because Δ is not known to an implementation, no constant can be fixed in
 advance. A backoff is the specification's response — a search for a sufficient
 constant, written into the algorithm — and its only relevant property is that
-the search terminates (§20.2).
+the search terminates (§22.2).
 
 **The network guarantee must be indexed to the moment of building.** A block's
 references are fixed at its construction, so what bears on the derivation is not
@@ -5731,7 +7565,7 @@ for liveness, indexed by the instant, with `built` ordering the two. The
 requirement is the index, not the vehicle. This is an observation about formalisation, and it is the
 reason `SynchronisedOn` is stated on `refs`.
 
-### 20.2 Why coverage is derived rather than specified
+### 22.2 Why coverage is derived rather than specified
 
 Reference coverage could not have been made a clause of the protocol, which is
 the deeper reason it appears as a derived property. `SynchronisedOn` refers to
@@ -5758,7 +7592,7 @@ from some round onwards — with no condition on shape, rate, or driving
 signal. §6.10 carries this to its conclusion: with Δ known, a constant
 timeout of `2Δ + proc` suffices and the loop disappears.
 
-### 20.3 Consequences of the abstraction
+### 22.3 Consequences of the abstraction
 
 1. The consensus argument is purely combinatorial, involving round indices and
    finite-set cardinalities. Under a message-level assumption every statement
@@ -5770,7 +7604,7 @@ timeout of `2Δ + proc` suffices and the loop disappears.
 4. The condition composes with the safety development, mentioning only `U.ids`,
    `U.block` and `refs` — the vocabulary that development already employs.
 
-### 20.4 Costs
+### 22.4 Costs
 
 Δ does not appear above the interface. Introducing it would require views indexed
 by an instant and every statement quantified over instants, for no proof content.
@@ -5783,7 +7617,7 @@ chain must terminate at a network assumption; what the reformulation achieves
 is to place that assumption where it belongs — on the network, as one clause
 over views — and to keep it out of every statement above.
 
-### 20.5 Lessons from the extensions
+### 22.5 Lessons from the extensions
 
 Three lessons generalise beyond the particular arcs.
 
@@ -5832,13 +7666,13 @@ behind the canonicity gap fits in six validators and twenty-five blocks;
 what was needed to find it was not scale but the obligation to state the
 indirect rule precisely enough to fail to prove it.
 
-### 20.6 Limitations
+### 22.6 Limitations
 
 The quantitative bounds are established (§6.10). The following remain open.
 
 **The backoff loop.** `Rated` and the threshold of R4 are stipulated as clauses
 of the specification; no realistic adaptive scheme is shown to satisfy them, and
-the feedback mechanism of §20.2 is not modelled. Moreover
+the feedback mechanism of §22.2 is not modelled. Moreover
 `ViewPace.timeout : ℕ → ℕ` is indexed by round and common to the reliable set, so
 that a per-validator backoff — in which validators increase their timeouts at
 different moments — cannot be expressed, let alone shown to converge. This
@@ -5893,7 +7727,7 @@ much they say.
 
 ---
 
-## 21. Related work
+## 23. Related work
 
 **Hybrid fault models.** Orcaella [KS26] derives the tight committee
 `n ≥ 5f + 3c + 1` for two-round commitment under separate Byzantine
@@ -5998,11 +7832,11 @@ pacemaker by refinement. The account here is structural, and no theorem above
 dependence of liveness on the round-jumping clause surfaces as a named hypothesis
 of a single lemma rather than as a condition inside a transition relation. The
 cost is that the theorems of [QXS26] cannot be stated here at all, "within
-bounded time" not being expressible in this vocabulary (§20.6).
+bounded time" not being expressible in this vocabulary (§22.6).
 
 ---
 
-## 22. Conclusion
+## 24. Conclusion
 
 This report has given a machine-checked account of uncertified DAG consensus
 organised around one idea: state the liveness condition on the object the
@@ -6028,7 +7862,7 @@ without consensus, and — in the one place the formalization diverged from a
 published argument by necessity — the observation that Odontoceti's
 agreement rests on a canonical candidate order that its paper never states.
 
-What remains open is catalogued in §20.6: the backoff dynamics, wall-clock
+What remains open is catalogued in §22.6: the backoff dynamics, wall-clock
 latency, block-level total order, and liveness below the growth clause.
 Beyond those, two directions suggest themselves. The commit-free,
 evidence-based horizon rule sketched in the garbage-collection document
@@ -6041,6 +7875,7 @@ development additive, but natural the third time a commit rule arrives.
 
 ## References
 
+- [Amo+25] I. Amores-Sesar, V. Grøndal, A. Holmgård, M. Ottendal. *DAG It Off: Latency Prefers No Common Coins.* DISC 2025, LIPIcs 356, 5:1–5:17. doi:10.4230/LIPIcs.DISC.2025.5. (The preprint, arXiv:2508.14716, numbers every lemma one lower; §18 follows the published version.)
 - [Aru+25] B. Arun, Z. Li, F. Suri-Payer, S. Das, A. Spiegelman. *Shoal++: High Throughput DAG BFT Can Be Fast and Robust!* NSDI 2025. arXiv:2405.20488.
 - [Bab+25] K. Babel, A. Chursin, G. Danezis, A. Kichidis, L. Kokoris-Kogias, A. Koshy, A. Sonnino, M. Tian. *Mysticeti: Reaching the Limits of Latency with Uncertified DAGs.* NDSS 2025. arXiv:2310.14821.
 - [Bai16] L. Baird. *The Swirlds Hashgraph Consensus Algorithm.* Swirlds Tech Report SWIRLDS-TR-2016-01, 2016.
@@ -6075,13 +7910,13 @@ the consumption map of §4.8 and the support diagrams of §6.10 refer to
 results through them. The series are alphabetic by area: T and M for
 the safety core, L for liveness, V for the view-convergence family, CU
 for catch-up, RS for the reactive schedule, SS for safe skip, AL for adaptive
-leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, CQ for chain
+leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, BM, BML, BMR, BMA, BMD, BME, BMO and BMP for Black Marlin, CQ for chain
 quality, C, D,
 B and E for the denial-of-service arc, G for garbage collection, O for
 Odontoceti; P, N and R name clauses of the trust boundary rather than
 results. Labels resolving to witness models rather than library
 theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7, SS11, AL8, H9, H10) are
-excluded from the diagrams, which show the library; so is MM4. Appendix C displays every indexed
+excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7, BMA5, BMD7, BME6, BMO10, BMO11 and BMP14. Appendix C displays every indexed
 result in full.
 
 ### Safety
@@ -6299,6 +8134,84 @@ reused.
 | MM3 | liveness under the clause: a good leader commits; commits within every window; every slot below a run decided; local liveness | `MahiMahi.Liveness.holds`, `MahiMahi.decided_of_mem_good`, `MahiMahi.allDecidedBelow`, `MahiMahi.localCommit` *(MahiMahi/Helpers/Liveness)* |
 | MM4 | the clause is satisfiable, refuted by round-robin on the aiming pattern, and independent of fairness | `aim4`, `full4` witnesses *(LeanDagTest/MahiMahi)* |
 | MM5 | under coverage at one round a reliable leader is good; the clause is derived from fairness | `MahiMahi.Synchrony.holds`, `MahiMahi.good_of_synchronisedOn`, `MahiMahi.unpredictableWithin_of_synchronisedOn` *(MahiMahi/Helpers/Synchrony)* |
+
+**Black Marlin** (§18):
+
+| Label | Statement | Lean |
+|:---|:---|:---|
+| BM1 | two supported anchor blocks of one round are one block | `BlackMarlin.eq_of_isAnchor_of_supported` *(BlackMarlin/Helpers/Rules)* |
+| BM2 | a supported block is in the causal history of every block two rounds above it | `BlackMarlin.reaches_of_supported` *(BlackMarlin/Helpers/Rules)* |
+| BM3 | below the highest round, every round carries a quorum of distinct authors | `BlackMarlin.quorum_authorsAt_of_lt` *(BlackMarlin/Helpers/Rules)* |
+| BM4 | a view's verdict is the universe's, and the view holds the block it committed | `BlackMarlin.committed_of_committedIn`, `BlackMarlin.mem_ids_of_committedIn` *(BlackMarlin/Helpers/Decision)* |
+| BM5 | two committed anchors are one block, or one is in the causal history of the other | `BlackMarlin.reaches_of_committed_of_le` *(BlackMarlin/Helpers/Rules)* |
+| BM6 | the lower committed anchor's causal history is contained in the higher's | `BlackMarlin.Safety.holds` *(BlackMarlin/Safety/Proof)* |
+| BM7 | under the pipelined round-robin schedule the anchors are the core's leader blocks | `BlackMarlin.Safety.holds` *(BlackMarlin/Safety/Proof)* |
+| BM8 | Figure 1 on data: `B0`–`B2` committed, `B3` supported but unlinked | `Ubm` witnesses *(LeanDagTest/BlackMarlin)* |
+| BML1 | a run of two reliable anchors over three populated rounds is committed | `BlackMarlin.committed_of_run` *(BlackMarlin/Helpers/Liveness)* |
+| BML2 | the full view reaches the verdict the rule reaches | `BlackMarlin.committedIn_full_iff` *(BlackMarlin/Helpers/Liveness)* |
+| BML3 | a reliable validator's block is delivered by every committed anchor two rounds above | `BlackMarlin.mem_history_of_mem` *(BlackMarlin/Helpers/Liveness)* |
+| BML4 | the rotation names a committing round arbitrarily far out | `BlackMarlin.recurrence` *(BlackMarlin/Helpers/Liveness)* |
+| BML5 | round robin supplies the run of two, unconditionally | `BlackMarlin.roundRobin_fairRun` *(BlackMarlin/Helpers/Liveness)* |
+| BML6 | liveness on a covered four-round model, and why Figure 1 is not one | `Ufull` witnesses *(LeanDagTest/BlackMarlin)* |
+| BMR1 | every reliable block above a reliable anchor references it | `BlackMarlin.Pace.votes` *(BlackMarlin/Helpers/Reactive)* |
+| BMR2 | a run of two is committed with no coverage hypothesis | `BlackMarlin.Pace.reactive_committed` *(BlackMarlin/Helpers/Reactive)* |
+| BMR3 | the exit fires, given a run of three reliable anchors | `BlackMarlin.Pace.concludesAt_of_holds` *(BlackMarlin/Helpers/Reactive)* |
+| BMR4 | one further reliable anchor per round sustains it | `BlackMarlin.Pace.concludesAt_of_sustained` *(BlackMarlin/Helpers/Reactive)* |
+| BMR5 | latency `D + δ + proc`, and `Δ + δ + 2·proc` past GST | `BlackMarlin.Pace.built_succ_le_of_fast`, `BlackMarlin.Pace.built_succ_le_of_fast_gst` *(BlackMarlin/Helpers/Reactive)* |
+| BMR6 | the timeout never fires when those constants undercut it | `BlackMarlin.Pace.no_timeout_of_fast_gst` *(BlackMarlin/Helpers/Reactive)* |
+| BMR7 | the round rule on data, and a pace at spacing `6` | `ugrowBM` witnesses *(LeanDagTest/BlackMarlin)* |
+| BMA1 | a delivered block is delivered by every committed anchor from its round on | `BlackMarlin.history_subset_of_committed` *(BlackMarlin/Helpers/Rules)* |
+| BMA2 | a run of two is committed by each reliable validator on its own view | `BlackMarlin.Pace.committedIn_local` *(BlackMarlin/Helpers/Agreement)* |
+| BMA3 | what one validator delivered, every reliable validator delivers | `BlackMarlin.Pace.agreement` *(BlackMarlin/Helpers/Agreement)* |
+| BMA4 | a reliably anchored run of two lies above every round | `BlackMarlin.Agreement.holds` *(BlackMarlin/Agreement/Proof)* |
+| BMA5 | agreement on data, on the four-round model and on the pace | `Ufull`, `ugrowBM` witnesses *(LeanDagTest/BlackMarlin)* |
+| BMD1 | the descent has one candidate where it steps by one round | `BlackMarlin.coneAnchors_subsingleton` *(BlackMarlin/Helpers/Ledger)* |
+| BMD1′ | and at a round whose anchor is reliable, however deep the cone | `BlackMarlin.coneAnchors_subsingleton_of_correct` *(BlackMarlin/Helpers/Ledger)* |
+| BMD2 | two records agreeing at a round agree at the round below | `BlackMarlin.block_eq_of_succ` *(BlackMarlin/Helpers/Ledger)* |
+| BMD3 | and throughout any stretch they both descend | `BlackMarlin.block_eq_of_add` *(BlackMarlin/Helpers/Ledger)* |
+| BMD4 | records flushing committed anchors at one round agree there | `BlackMarlin.block_eq_of_committed` *(BlackMarlin/Helpers/Ledger)* |
+| BMD5 | the link clause keeps the descent from skipping | `BlackMarlin.coneAnchors_succ_nonempty_of_committed` *(BlackMarlin/Helpers/Ledger)* |
+| BMD6 | no retraction, agreement, and one position per block | `BlackMarlin.ledgerSet_mono`, `BlackMarlin.ledgerSet_agree`, `BlackMarlin.outputAt_unique`, `BlackMarlin.outputAt_agree` *(BlackMarlin/Helpers/Ledger)* |
+| BMD7 | the descent on data: singleton candidate sets, and a block's position | `fullFlush` witnesses *(LeanDagTest/BlackMarlin)* |
+| BME1 | the descent's choice is an anchor strictly below, at the highest anchor round | `BlackMarlin.descend_mem`, `BlackMarlin.descend_round_lt`, `BlackMarlin.round_descend` *(BlackMarlin/Helpers/Descent)* |
+| BME2 | and is made whenever an anchor lies below | `BlackMarlin.descend_isSome` *(BlackMarlin/Helpers/Descent)* |
+| BME3 | the computed record satisfies `Flush` | `BlackMarlin.flushRecord_step`, `BlackMarlin.flushRecord_dense`, `BlackMarlin.toFlush` *(BlackMarlin/Helpers/Descent)* |
+| BME4 | the record below a visited block is that block's own record | `BlackMarlin.flushRecord_suffix` *(BlackMarlin/Helpers/Descent)* |
+| BME5 | two records reaching one block agree at every round below it | `BlackMarlin.flushRecord_agree` *(BlackMarlin/Helpers/Descent)* |
+| BME6 | the computed record on data, and its agreement | `flushRecord` witnesses *(LeanDagTest/BlackMarlin)* |
+| BMO1 | the anchor is last in its own segment | `BlackMarlin.idxOf_le_idxOf_anchor` *(BlackMarlin/Helpers/Order)* |
+| BMO2 | records that agree output the same list | `BlackMarlin.deliverSeq_agree` *(BlackMarlin/Helpers/Order)* |
+| BMO3 | and the list only extends | `BlackMarlin.deliverSeq_prefix` *(BlackMarlin/Helpers/Order)* |
+| BMO4 | no author-and-round is output twice | `BlackMarlin.deliverSeq_pairwise` *(BlackMarlin/Helpers/Order)* |
+| BMO5 | every author-and-round flushed is output | `BlackMarlin.deliverSeq_key_mem` *(BlackMarlin/Helpers/Order)* |
+| BMO6 | and for a correct author, by the block itself | `BlackMarlin.deliverSeq_of_correct` *(BlackMarlin/Helpers/Order)* |
+| BMO7 | records that agree cannot invert a pair | `BlackMarlin.Order.holds` *(BlackMarlin/Order/Proof)* |
+| BMO8 | two descents that meet output the same list | `BlackMarlin.Order.holds` *(BlackMarlin/Order/Proof)* |
+| BMO9 | a reliable author's block is output | `BlackMarlin.mem_ledgerSeq_of_mem_history` *(BlackMarlin/Helpers/Order)* |
+| BMO10 | a sort exists, and the sequence on data | `TopoSort.ofFinOrder`, `fullSort` witnesses *(LeanDagTest/BlackMarlin)* |
+| BMO11 | two honest validators output different twins: Agreement refuted | `Udiv`, `vFlush`, `wFlush` witnesses *(LeanDagTest/BlackMarlin)* |
+| BMP1 | at most one candidate of a step is supported | `BlackMarlin.suppCandidates_subsingleton` *(BlackMarlin/Helpers/Repair)* |
+| BMP2 | the repaired descent takes it where there is one | `BlackMarlin.descendSupp_supported` *(BlackMarlin/Helpers/Repair)* |
+| BMP3 | and is L21–L24 where there is not | `BlackMarlin.descendSupp_eq_descend` *(BlackMarlin/Helpers/Repair)* |
+| BMP4 | a step never stalls and never moves to another round | `BlackMarlin.descendSupp_isSome_iff`, `BlackMarlin.descendSupp_round_eq` *(BlackMarlin/Helpers/Repair)* |
+| BMP5 | support-preferring records cannot part at a supported round | `BlackMarlin.block_eq_of_supportPreferring` *(BlackMarlin/Helpers/Repair)* |
+| BMP6 | `Committed` mentions no part of the descent, so liveness is untouched | `BlackMarlin.Repair.holds` *(BlackMarlin/Repair/Proof)* |
+| BMP7 | every boundary of the strengthened descent is supported | `BlackMarlin.descendS_mem` *(BlackMarlin/Helpers/Repair)* |
+| BMP8 | and no committed anchor is passed by | `BlackMarlin.descentSUpto_reaches` *(BlackMarlin/Helpers/Repair)* |
+| BMP9 | agreement runs down from any meeting point | `BlackMarlin.flushRecordS_agree` *(BlackMarlin/Helpers/Repair)* |
+| BMP10 | the strengthened descent does not stall | `BlackMarlin.descendS_isSome`, `BlackMarlin.descendS_round_lt` *(BlackMarlin/Helpers/Repair)* |
+| BMP11 | two records with committed tops agree outright | `BlackMarlin.flushRecordS_agree_of_committed` *(BlackMarlin/Helpers/Repair)* |
+| BMP12 | committed rounds still recur, so no execution is stuck | `BlackMarlin.Repair.holds` *(BlackMarlin/Repair/Proof)* |
+| BMP13 | a reliable author's anchor is seen as supported, past coverage | `BlackMarlin.supportedIn_of_synchronised` *(BlackMarlin/Helpers/Liveness)* |
+| BMV1 | above every round, one that every reliable validator commits on its own view | `BlackMarlin.ViewLiveness.holds` *(BlackMarlin/ViewLiveness/Proof)* |
+| BMV2 | and delivers there whatever any view committed below | `BlackMarlin.ViewLiveness.holds` *(BlackMarlin/ViewLiveness/Proof)* |
+| BMV3 | the rule is readable at a reliably anchored round, and only there | `BlackMarlin.ViewLiveness.holds` *(BlackMarlin/ViewLiveness/Proof)* |
+| BMV4 | BMV1–BMV3 on the four-round model, and the reliable supporters alone a quorum | `ViewLiveness` witnesses *(LeanDagTest/BlackMarlin)* |
+| BMT1 | a reliably anchored round pins every record, no view entering | `BlackMarlin.ViewOrder.holds` *(BlackMarlin/ViewOrder/Proof)* |
+| BMT2 | so agreement descends from it through any flushed stretch | `BlackMarlin.ViewOrder.holds` *(BlackMarlin/ViewOrder/Proof)* |
+| BMT3 | and with every anchor below reliable, the delivered lists coincide | `BlackMarlin.ViewOrder.holds` *(BlackMarlin/ViewOrder/Proof)* |
+| BMT4 | and one Byzantine anchor below suffices to order two reliable authors' blocks oppositely, refuting Total order | `deliverSeq` and `commitSeq` witnesses *(LeanDagTest/BlackMarlin/Divergence)* |
+| BMP14 | both repairs on the execution of §18.11, what they cost, a view that misses the support, and a counting rule that reads it wrongly at `f = 1` | `descendSupp`, `descendS`, `coneView`, `Ucnt` witnesses *(LeanDagTest/BlackMarlin)* |
 
 **Integration** (§16):
 
@@ -10824,7 +12737,1918 @@ def Statement : Prop :=
 
 Partial synchrony recovered, over every fault configuration, schedule, block universe and wave length the model admits.
 
+### Black Marlin: the three-round commit rule
+
+#### `Rotation`
+
+*class, `BlackMarlin.Model.Rules.lean`*
+
+```lean
+class Rotation (Validator : Type*) where
+  /-- The validator elected to anchor round `r`. -/
+  anchor : ℕ → Validator
+```
+
+**The anchor rotation.** Black Marlin elects one anchor per round — the paper's `RR(r)`, round-robin in a deployment.
+
+A class of its own rather than the core's `Slots`, because the protocol is indexed by rounds and not by slots: every rule below names round `r + 1` explicitly, which under `Slots` would be a hypothesis `slotRound (k + 1) = slotRound k + 1` carried through every statement. The two are reconciled once, by `RotationIsSchedule` (`Safety/Statement.lean`): under the pipelined schedule `Slots.uniformSingle 1` an anchor of round `r` is a leader block of slot `r`, so the arc's anchors are the core's candidates.
+
+#### `IsAnchor`
+
+*def, `BlackMarlin.Model.Rules.lean`*
+
+```lean
+def IsAnchor (U : BlockUniverse Validator BlockId Payload) (r : ℕ) (L : BlockId) : Prop :=
+  L ∈ U.ids ∧ (U.block L).round = r ∧ (U.block L).creator = Rot.anchor r
+```
+
+**`L` is an anchor block of round `r`**: a block of the universe, at that round, by the validator the rotation elected for it.
+
+A predicate rather than a function, because `RR` "returns both blocks" when the elected validator equivocates: an anchor round has one elected *author* but may hold several anchor *blocks*, and the uniqueness the rule needs is a theorem about supported anchors, not a property of the rotation.
+
+#### `Supported`
+
+*def, `BlackMarlin.Model.Rules.lean`*
+
+```lean
+def Supported (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) : Prop :=
+  quorumCard Validator ≤ (supporters U L (r + 1)).card
+```
+
+**`supp(L) ≥ n − f`** for a block proposed at round `r`: a quorum of distinct validators reference `L` from round `r + 1`.
+
+The core's `supporters` counts authors rather than blocks, which is what makes the count a quorum: an equivocator contributes one either way.
+
+The paper's side condition on `supp` excludes a supporter whose **cone** holds a second block of `L`'s author and round, not merely one whose references do. The two coincide, and the reason is a fact about the model rather than a modelling choice: a reference sits exactly one round below its referrer (`ValidWrt.predecessor`), so the round-`r` members of a round-`(r+1)` block's cone are exactly its references, and the condition reduces to `ValidWrt.distinct_creators`.
+
+#### `linkers`
+
+*def, `BlackMarlin.Model.Rules.lean`*
+
+```lean
+def linkers (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) :
+    Finset BlockId :=
+  (blocksAt U (r + 1)).filter
+    (fun L' => (U.block L').creator = Rot.anchor (r + 1) ∧ L ∈ (U.block L').refs ∧
+      Supported U L' (r + 1))
+```
+
+**The anchors of round `r + 1` that link `L` to the round above**: the second clause of L16, as the set of blocks that witness it.
+
+A `Finset` rather than a bare existential, so that the rule is decidable on a concrete DAG and can be settled by `decide` — the same reason the core keeps `certificates` as a `Finset`. The filter over `blocksAt` is the paper's `∃B' ∈ DAG(r − 1)`; membership recovers `IsAnchor` unchanged, since `blocksAt` already pins the round and the universe.
+
+#### `Linked`
+
+*def, `BlackMarlin.Model.Rules.lean`*
+
+```lean
+def Linked (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) : Prop :=
+  (linkers U L r).Nonempty
+```
+
+**`L` is linked**: some anchor of the round above references it and is itself supported.
+
+Reference rather than reachability, which at a one-round gap is the same thing: the paper writes `B ∈ strong(B')`, and every reference of a valid block sits in the round immediately below it.
+
+#### `Committed`
+
+*def, `BlackMarlin.Model.Rules.lean`*
+
+```lean
+def Committed (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) : Prop :=
+  IsAnchor U r L ∧ Supported U L r ∧ Linked U L r
+```
+
+**The commit rule** (L14–L17). The anchor of round `r` is committed when it is supported and linked.
+
+Three conjuncts, in the order the paper's line reads them. The rule is the whole of what safety consumes: `commit(B)`'s recursion over `strong(B) \ D`, and the deterministic sort of `past(B)`, decide the *order* in which blocks are delivered, but every block they deliver lies in the causal history of a block this rule admitted — which is why the chain and prefix results below are stated about `history` rather than about the sort (`black-marlin.md` §4).
+
+#### `supportersIn`
+
+*def, `BlackMarlin.Model.Decision.lean`*
+
+```lean
+def supportersIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (L : BlockId) (n : ℕ) : Finset Validator :=
+  creatorsOf U.block (((blocksAt U n).filter (fun q => L ∈ (U.block q).refs)) ∩ V.ids)
+```
+
+The supporters of `L` at round `n` that a view actually holds.
+
+#### `SupportedIn`
+
+*def, `BlackMarlin.Model.Decision.lean`*
+
+```lean
+def SupportedIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
+  quorumCard Validator ≤ (supportersIn U V L (r + 1)).card
+```
+
+`supp(L) ≥ n − f`, counted in a view.
+
+#### `linkersIn`
+
+*def, `BlackMarlin.Model.Decision.lean`*
+
+```lean
+def linkersIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Finset BlockId :=
+  ((blocksAt U (r + 1)).filter
+    (fun L' => (U.block L').creator = Rot.anchor (r + 1) ∧ L ∈ (U.block L').refs ∧
+      SupportedIn U V L' (r + 1))) ∩ V.ids
+```
+
+The linking anchors a view holds, each supported within that same view. Both the linking block and the quorum behind it must be present: `delivery(r)` reads one `DAG`, and a validator cannot count support it has not received.
+
+#### `LinkedIn`
+
+*def, `BlackMarlin.Model.Decision.lean`*
+
+```lean
+def LinkedIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
+  (linkersIn U V L r).Nonempty
+```
+
+`L` is linked, as judged from a view.
+
+#### `CommittedIn`
+
+*def, `BlackMarlin.Model.Decision.lean`*
+
+```lean
+def CommittedIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
+  IsAnchor U r L ∧ SupportedIn U V L r ∧ LinkedIn U V L r
+```
+
+**The commit rule, as a validator applies it.** `IsAnchor` is not relativised: which validator anchors a round is a schedule fact rather than an observation, and that the block exists at all is implied by the view holding a block that references it.
+
+#### `AnchorUniqueness`
+
+*def, `BlackMarlin.Safety.Statement.lean`*
+
+```lean
+def AnchorUniqueness (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (r : ℕ) (L₁ L₂ : BlockId),
+    IsAnchor U r L₁ → IsAnchor U r L₂ →
+    Supported U L₁ r → Supported U L₂ r → L₁ = L₂
+```
+
+**BM1, anchor uniqueness** (the paper's Lemma 2): two supported anchor blocks of one round are the same block. Their support quorums share `n − 2f ≥ f + 1` authors, each supporting both, and a validator supporting two blocks of one author and round is an equivocator — one more than the fault bound admits.
+
+#### `Propagation`
+
+*def, `BlackMarlin.Safety.Statement.lean`*
+
+```lean
+def Propagation (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (L : BlockId) (r : ℕ) (c : BlockId),
+    Supported U L r → c ∈ U.ids → r + 2 ≤ (U.block c).round → Reaches U c L
+```
+
+**BM2, propagation** (the paper's Lemma 4): a block supported at round `r` lies in the causal history of every block of the universe at round `r + 2` or above, whoever authored it.
+
+The support quorum holds `f + 1` correct authors, each with a single round-`(r + 1)` block, and a round-`(r + 2)` block names `n − f` of the at most `n` authors of that round; above `r + 2` the property is inherited along references.
+
+#### `Density`
+
+*def, `BlackMarlin.Safety.Statement.lean`*
+
+```lean
+def Density (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (c : BlockId) (r : ℕ), c ∈ U.ids → r < (U.block c).round →
+    quorumCard Validator ≤ (authorsAt U r).card
+```
+
+**BM3, density** (the paper's Lemma 3): if the universe holds a block above round `r`, then round `r` carries blocks from a quorum of distinct authors. A consequence of validity alone, and the reason the rule never inspects a round that could be sparse.
+
+#### `ViewSound`
+
+*def, `BlackMarlin.Safety.Statement.lean`*
+
+```lean
+def ViewSound (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ),
+    CommittedIn U V L r → Committed U L r ∧ L ∈ V.ids
+```
+
+**BM4, soundness of the view reading**: a validator's verdict is a verdict of the universe, and the validator holds the block it committed.
+
+The second conjunct is not a clause of `CommittedIn` but a consequence of one: the linking anchor is in the view, a view is closed under references, and the link is a reference.
+
+#### `Chained`
+
+*def, `BlackMarlin.Safety.Statement.lean`*
+
+```lean
+def Chained (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (V₁ V₂ : View Validator BlockId Payload U) (L₁ L₂ : BlockId) (r₁ r₂ : ℕ),
+    CommittedIn U V₁ L₁ r₁ → CommittedIn U V₂ L₂ r₂ →
+    L₁ = L₂ ∨ Reaches U L₁ L₂ ∨ Reaches U L₂ L₁
+```
+
+**BM5, chaining** (the paper's Lemma 5): two committed anchors, read from any two views, are the same block or one lies in the causal history of the other.
+
+The three cases of the rule are the three ranges of the round gap. At equal rounds BM1 identifies the two blocks. At a gap of one, the lower anchor's linking block and the higher anchor are both supported anchors of the same round, so BM1 identifies *them*, and the link is a direct reference. At a gap of two or more BM2 applies to the higher block itself. The rule's second clause exists for the middle case alone: with support but no link, two anchors one round apart need not be comparable.
+
+#### `HistoryPrefix`
+
+*def, `BlackMarlin.Safety.Statement.lean`*
+
+```lean
+def HistoryPrefix (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (V₁ V₂ : View Validator BlockId Payload U) (L₁ L₂ : BlockId) (r₁ r₂ : ℕ),
+    CommittedIn U V₁ L₁ r₁ → CommittedIn U V₂ L₂ r₂ → r₁ ≤ r₂ →
+    history U L₁ ⊆ history U L₂
+```
+
+**BM6, prefix**: of two committed anchors, the causal history of the one at the lower round is contained in that of the one at the higher.
+
+`commit(B)` delivers the undelivered blocks of `past(B)` and then `B`, so containment of histories is containment of delivered prefixes: two validators' deliveries agree wherever both have delivered, and neither can retract. The order within each increment is the deterministic sort `τ`, which the rule does not constrain and this arc does not model.
+
+#### `AnchorsAreLeaderBlocks`
+
+*def, `BlackMarlin.Safety.Statement.lean`*
+
+```lean
+def AnchorsAreLeaderBlocks (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (r : ℕ) (L : BlockId),
+    IsAnchor U r L ↔
+      IsLeaderBlock (S := Slots.uniformSingle 1 Nat.one_pos Rot.anchor) U r L
+```
+
+**BM7, the anchors are the core's candidates**: under the pipelined round-robin schedule — one slot per round, slot `r` led by the validator the rotation elects for round `r` — an anchor block of round `r` is a leader block of slot `r`, and conversely.
+
+This is what connects a round-indexed arc to the slot-indexed vocabulary of the rest of the development. It asserts nothing about any verdict: whether an anchor is committed is the business of the clauses above.
+
+#### `Statement`
+
+*def, `BlackMarlin.Safety.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [DecidableEq BlockId] [Rotation Validator]
+    (U : BlockUniverse Validator BlockId Payload),
+    AnchorUniqueness U ∧ Propagation U ∧ Density U ∧ ViewSound U ∧
+      Chained U ∧ HistoryPrefix U ∧ AnchorsAreLeaderBlocks U
+```
+
+Safety of the Black Marlin commit rule, over every fault configuration, anchor rotation and block universe the model admits.
+
+#### `FairRun`
+
+*def, `BlackMarlin.Liveness.Statement.lean`*
+
+```lean
+def FairRun (T : Finset Validator) (c : ℕ) : Prop :=
+  ∀ r, ∃ r', r ≤ r' ∧ ∀ i, i < c → Rot.anchor (r' + i) ∈ T
+```
+
+**The fairness clause**: the rotation puts `c` consecutive `T`-anchored rounds arbitrarily far out.
+
+The round-indexed counterpart of the core's `FairRunOn`, which is stated over slots. Like it, this is a property of the rotation alone — no DAG occurs in it — which is what lets BML4 name a round before any universe is fixed. Unlike it, BML5 discharges this one.
+
+#### `CommitStep`
+
+*def, `BlackMarlin.Liveness.Statement.lean`*
+
+```lean
+def CommitStep (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (T : Finset Validator) (R r : ℕ),
+    -- a quorum of reliable validators
+    quorumCard Validator ≤ T.card →
+    -- coverage among them from round `R` on, and the anchor is at or above it
+    SynchronisedOn U T R → R ≤ r →
+    -- the three rounds the rule reads are populated by them
+    PopulatedOn U T r → PopulatedOn U T (r + 1) → PopulatedOn U T (r + 2) →
+    -- and the rotation names reliable validators at two consecutive rounds
+    Rot.anchor r ∈ T → Rot.anchor (r + 1) ∈ T →
+    -- then round `r` has a committed anchor
+    ∃ L, IsAnchor U r L ∧ Committed U L r
+```
+
+**BML1, the commit step.** Two consecutive reliable anchors over three populated rounds are committed.
+
+`R` is the round from which coverage holds. Support for the anchor comes from the round above it and support for its linking anchor from the round above that, which is why three rounds are asked for and why the run is of length two.
+
+#### `FullViewSound`
+
+*def, `BlackMarlin.Liveness.Statement.lean`*
+
+```lean
+def FullViewSound (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (L : BlockId) (r : ℕ), CommittedIn U (View.full U) L r ↔ Committed U L r
+```
+
+**BML2, the full view commits what the rule commits.** The converse of BM4 at the view that holds everything, so a universe-level `Committed` is a verdict some validator can actually reach.
+
+#### `Inclusion`
+
+*def, `BlackMarlin.Liveness.Statement.lean`*
+
+```lean
+def Inclusion (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (T : Finset Validator) (R ρ : ℕ) (b c : BlockId),
+    -- a quorum of reliable validators, covering from `R` on
+    quorumCard Validator ≤ T.card → SynchronisedOn U T R → R ≤ ρ →
+    -- the round above `b` is populated by them
+    PopulatedOn U T (ρ + 1) →
+    -- `b` is a reliable validator's block at round `ρ`
+    b ∈ U.ids → (U.block b).round = ρ → (U.block b).creator ∈ T →
+    -- and `c` is any block two rounds above it or higher
+    c ∈ U.ids → ρ + 2 ≤ (U.block c).round →
+    -- then `b` is in what committing `c` delivers
+    b ∈ history U c
+```
+
+**BML3, inclusion** (the paper's Lemma 7): a reliable validator's block lies in the causal history of every block two rounds above it.
+
+The delivery half of atomic broadcast, for reliable authors: a committed anchor at round `ρ + 2` or above delivers `past` of itself, so the block is delivered when that anchor commits. The proof is coverage giving the block a support quorum and BM2 carrying it upward, so no clause of the commit rule is consumed — inclusion does not depend on which anchors the rule admits, only on one being admitted above.
+
+#### `CommitsAtRound`
+
+*def, `BlackMarlin.Liveness.Statement.lean`*
+
+```lean
+def CommitsAtRound (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
+    (T : Finset Validator) (R r : ℕ) : Prop :=
+  ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+    (∀ n, R ≤ n → n ≤ N → PopulatedOn U T n) → SynchronisedOn U T R →
+    r + 2 ≤ N →
+    ∃ L, IsAnchor U r L ∧ Committed U L r
+```
+
+**What it means for a round to commit in every grown covered DAG.**
+
+The universe is quantified **inside**, as the core's `CommitsAt` is and for the same reason: the rotation names the round, and any DAG grown two rounds past it and covered from `R` commits it. Fixing a universe first would cap how far the rotation may reach.
+
+#### `Recurrence`
+
+*def, `BlackMarlin.Liveness.Statement.lean`*
+
+```lean
+def Recurrence : Prop :=
+  ∀ (T : Finset Validator) (R r : ℕ),
+    quorumCard Validator ≤ T.card → FairRun T 2 →
+    ∃ r', r ≤ r' ∧ R ≤ r' ∧ CommitsAtRound BlockId Payload T R r'
+```
+
+**BML4, recurrence.** Under a recurring run of two, no round is the last one a DAG can be grown far enough to commit above.
+
+#### `roundRobin`
+
+*def, `BlackMarlin.Liveness.Statement.lean`*
+
+```lean
+def roundRobin (n : ℕ) (hn : 0 < n) : Rotation (Fin n) where
+  anchor r := ⟨r % n, Nat.mod_lt _ hn⟩
+```
+
+**Round-robin rotation** on `Fin n`: round `r` anchored by `r % n`. The rotation Black Marlin deploys, written as an instance of the arc's one-field class.
+
+#### `RotationFair`
+
+*def, `BlackMarlin.Liveness.Statement.lean`*
+
+```lean
+def RotationFair : Prop :=
+  ∀ (n : ℕ) (hn : 0 < n) [Faults (Fin n)],
+    FairRun (Rot := roundRobin n hn) (Correct : Finset (Fin n)) 2
+```
+
+**BML5, the fairness clause is a theorem.** Round-robin puts two consecutive reliable anchors arbitrarily far out, at every committee and whichever validators are Byzantine.
+
+The core's corresponding fact is an assumption discharged by a wave-aligned witness, because it needs runs of three. Two is the case a counting argument settles outright.
+
+#### `Statement`
+
+*def, `BlackMarlin.Liveness.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  (∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [DecidableEq BlockId] [Rotation Validator]
+    (U : BlockUniverse Validator BlockId Payload),
+    CommitStep U ∧ FullViewSound U ∧ Inclusion U ∧
+      Recurrence Validator BlockId Payload) ∧
+  RotationFair
+```
+
+Liveness of the Black Marlin commit rule, over every fault configuration, anchor rotation and block universe the model admits, plus the satisfiability of the one clause it assumes.
+
+#### `nxt`
+
+*def, `BlackMarlin.Helpers.Liveness.lean`*
+
+```lean
+private def nxt (i : Fin n) : Fin n := ⟨(i.val + 1) % n, Nat.mod_lt _ hn⟩
+```
+
+The cyclic successor on `Fin n` — the rotation's step.
+
+#### `QuorumIn`
+
+*def, `BlackMarlin.Model.Round.lean`*
+
+```lean
+def QuorumIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (r : ℕ) : Prop :=
+  quorumCard Validator ≤ (authorsIn U V.ids r).card
+```
+
+**`quorum(r)`**, as the validator computes it: blocks from at least `n − f` distinct authors at round `r` among what the view holds.
+
+#### `AnchorIn`
+
+*def, `BlackMarlin.Model.Round.lean`*
+
+```lean
+def AnchorIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (r : ℕ) : Prop :=
+  ∃ A ∈ V.ids, IsAnchor U r A
+```
+
+**`anchor(r)`**: the view holds a block by the validator the rotation elected for round `r`.
+
+#### `SuppAnchorIn`
+
+*def, `BlackMarlin.Model.Round.lean`*
+
+```lean
+def SuppAnchorIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (r : ℕ) : Prop :=
+  ∃ A, IsAnchor U r A ∧ SupportedIn U V A r
+```
+
+**`suppAnchor(r)`**: the view holds an anchor of round `r` carrying a quorum of support, counted among the round-`(r+1)` blocks the view holds. The same `SupportedIn` the commit rule reads, which is why the round rule and the commit rule share their arithmetic.
+
+#### `ConcludesAt`
+
+*def, `BlackMarlin.Model.Round.lean`*
+
+```lean
+def ConcludesAt (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (r : ℕ) : Prop :=
+  QuorumIn U V r ∧ AnchorIn U V r ∧
+    (∀ ρ, ρ + 1 = r → SuppAnchorIn U V ρ) ∧
+    (∀ ρ, ρ + 2 = r → SuppAnchorIn U V ρ)
+```
+
+**The round rule** (L40, first disjunct): what a validator must see before it may conclude round `r` without waiting out the timeout.
+
+#### `Pace`
+
+*structure, `BlackMarlin.Model.Round.lean`*
+
+```lean
+structure Pace (U : BlockUniverse Validator BlockId Payload)
+    (T : Finset Validator) (N : ℕ) extends PaceCore U T N where
+  /-- Time advances with rounds, over the rounds `v` reached. -/
+  built_lt : ∀ v ∈ T, ∀ n < top v, built v n < built v (n + 1)
+  /-- **The ceiling.** A validator never waits past the round's timeout;
+  it may build any time before it. -/
+  deadline : ∀ v ∈ T, ∀ n < top v, built v (n + 1) ≤ built v n + timeout n
+  /-- **The anchor wait**, the round rule read on the block a validator
+  produces. At the round above a reliable anchor, a `T`-authored block
+  either references that anchor — the exit fired, and concluding the
+  round required holding it — or its builder waited the full timeout and
+  would have referenced the anchor had it held it.
+
+  Stated only where the round's elected validator lies in `T`. For a
+  Byzantine anchor nothing useful can be said: it may equivocate, and
+  `ValidWrt.distinct_creators` forbids referencing two of its blocks. -/
+  anchor_or_wait : ∀ v ∈ T, ∀ r, r + 1 ≤ N → Rot.anchor r ∈ T →
+    ∀ A, IsAnchor U r A →
+    ∀ c ∈ U.ids, (U.block c).creator = v → (U.block c).round = r + 1 →
+    A ∈ (U.block c).refs ∨
+      (built v r + timeout r ≤ built v (r + 1) ∧
+        (A ∈ holds v (built v (r + 1)) → A ∈ (U.block c).refs))
+  /-- **The exit is prompt.** A validator past its round entry that can
+  conclude the round does so within the processing bound.
+
+  The core's `ReactivePace.prompt_vote` asks only that the leader's block
+  be held. Here the whole of `ConcludesAt` is asked for, which is what
+  the protocol checks, and the extra clauses are what
+  `Reactive/Statement.lean` measures. -/
+  prompt_conclude : ∀ v ∈ T, ∀ r, r + 1 ≤ N → ∀ t, built v r ≤ t →
+    ConcludesAt U (toPaceCore.viewAt v t) r →
+    built v (r + 1) ≤ t + proc
+```
+
+**The Black Marlin pacing structure**: the core's `PaceCore` with the reactive discipline of L38–L41 in place of the full-timeout one.
+
+`built_lt` and `deadline` are the core reactive pair — time advances with rounds, and no validator waits past its timeout — and the full-timeout floor is absent, which is the whole of what makes the schedule responsive.
+
+#### `Votes`
+
+*def, `BlackMarlin.Reactive.Statement.lean`*
+
+```lean
+def Votes (pc : Pace U T N) : Prop :=
+  ∀ (R r : ℕ) (A : BlockId),
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    pc.gst ≤ R → (∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n) →
+    R ≤ r → r + 1 ≤ N →
+    Rot.anchor r ∈ T → IsAnchor U r A →
+    VotesAt U T r A
+```
+
+**BMR1, the fallback route.** Past GST, every reliable block at the round above a reliable anchor references that anchor.
+
+The exit needs no argument — concluding the round required holding the anchor, so the block cites it. The fallback is the whole content: the anchor holds its own block when it builds, convergence carries it across within `Δ`, and the collapsed drift plus the full timeout place that arrival before the waiter's build.
+
+#### `ReactiveCommit`
+
+*def, `BlackMarlin.Reactive.Statement.lean`*
+
+```lean
+def ReactiveCommit (pc : Pace U T N) : Prop :=
+  ∀ (R r : ℕ),
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    pc.gst ≤ R → (∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n) →
+    R ≤ r → r + 2 ≤ N →
+    Rot.anchor r ∈ T → Rot.anchor (r + 1) ∈ T →
+    ∃ L, IsAnchor U r L ∧ Committed U L r
+```
+
+**BMR2, reactive liveness.** A run of two reliable anchors past GST is committed — the premise of BML1 with `SynchronisedOn` removed, since the reactive discipline supplies the references the rule counts and the trunk supplies the production.
+
+#### `Exit`
+
+*def, `BlackMarlin.Reactive.Statement.lean`*
+
+```lean
+def Exit (pc : Pace U T N) : Prop :=
+  ∀ (r : ℕ) (v : Validator) (t : ℕ),
+    quorumCard Validator ≤ T.card → v ∈ T → r + 2 ≤ N →
+    (∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n → b ∈ pc.holds v t) →
+    Rot.anchor r ∈ T → Rot.anchor (r + 1) ∈ T → Rot.anchor (r + 2) ∈ T →
+    (∀ n, r ≤ n → n < r + 2 → ∀ A, IsAnchor U n A → VotesAt U T n A) →
+    ConcludesAt U (pc.toPaceCore.viewAt v t) (r + 2)
+```
+
+**BMR3, the exit fires — at a run of three.** A validator holding every reliable block of rounds `r + 1` and `r + 2` can conclude round `r + 2`, given reliable anchors at `r`, `r + 1` and `r + 2` and the references the rounds above them carry.
+
+`quorum` and `anchor` come from the round-`(r+2)` blocks, `suppAnchor(r+1)` from those blocks referencing the round-`(r+1)` anchor, and `suppAnchor(r)` from the round-`(r+1)` blocks referencing the round-`r` anchor. Three rounds of anchors, against the commit rule's two.
+
+#### `ExitSustained`
+
+*def, `BlackMarlin.Reactive.Statement.lean`*
+
+```lean
+def ExitSustained (pc : Pace U T N) : Prop :=
+  ∀ (r : ℕ) (v : Validator) (t₀ t : ℕ),
+    quorumCard Validator ≤ T.card → v ∈ T → r + 2 ≤ N →
+    (∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n → b ∈ pc.holds v t) →
+    SuppAnchorIn U (pc.toPaceCore.viewAt v t₀) r → t₀ ≤ t →
+    Rot.anchor (r + 1) ∈ T → Rot.anchor (r + 2) ∈ T →
+    (∀ A, IsAnchor U (r + 1) A → VotesAt U T (r + 1) A) →
+    ConcludesAt U (pc.toPaceCore.viewAt v t) (r + 2)
+```
+
+**BMR4, and a run of two to stay.** A validator that already saw the round-`r` anchor supported needs neither that anchor reliable nor the references at round `r`: what the round rule checked once it never checks again, since holdings only grow. So the run of three is the cost of entering the fast path, not of remaining on it.
+
+#### `Latency`
+
+*def, `BlackMarlin.Reactive.Statement.lean`*
+
+```lean
+def Latency (pc : Pace U T N) : Prop :=
+  ∀ (r : ℕ) (v : Validator) (δ D R : ℕ),
+    quorumCard Validator ≤ T.card → v ∈ T → r + 3 ≤ N →
+    (∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n →
+      b ∈ pc.holds v (pc.built ((U.block b).creator) n + δ)) →
+    Rot.anchor r ∈ T → Rot.anchor (r + 1) ∈ T → Rot.anchor (r + 2) ∈ T →
+    (∀ n, r ≤ n → n < r + 2 → ∀ A, IsAnchor U n A → VotesAt U T n A) →
+    ((∀ u ∈ T, ∀ w ∈ T, pc.built u (r + 2) ≤ pc.built w (r + 2) + D) →
+      pc.built v (r + 3) ≤ pc.built v (r + 2) + D + δ + pc.proc) ∧
+    (pc.gst ≤ R → R ≤ r + 2 →
+      pc.built v (r + 3) ≤ pc.built v (r + 2) + pc.delay + δ + 2 * pc.proc)
+```
+
+**BMR5, latency.** With reliable blocks propagating within `δ`, the round above is entered within `D + δ + proc` of round entry — drift to the last builder, `δ` to arrive, `proc` to conclude — and past GST the spread needs no supplying, catch-up collapsing it to `Δ + proc`. The timeout appears in neither bound.
+
+#### `NoTimeout`
+
+*def, `BlackMarlin.Reactive.Statement.lean`*
+
+```lean
+def NoTimeout (pc : Pace U T N) : Prop :=
+  ∀ (r : ℕ) (v : Validator) (δ R : ℕ),
+    quorumCard Validator ≤ T.card → v ∈ T → r + 3 ≤ N →
+    pc.gst ≤ R → R ≤ r + 2 →
+    (∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n →
+      b ∈ pc.holds v (pc.built ((U.block b).creator) n + δ)) →
+    Rot.anchor r ∈ T → Rot.anchor (r + 1) ∈ T → Rot.anchor (r + 2) ∈ T →
+    (∀ n, r ≤ n → n < r + 2 → ∀ A, IsAnchor U n A → VotesAt U T n A) →
+    pc.delay + δ + 2 * pc.proc < pc.timeout (r + 2) →
+    pc.built v (r + 3) < pc.built v (r + 2) + pc.timeout (r + 2)
+```
+
+**BMR6, the timeout never fires.** When delivery, drift and processing together undercut the timeout, every reliable validator concludes strictly before its deadline: the fallback branch of `anchor_or_wait` is dead, and the protocol runs at network speed. At the minimal timeout `2Δ + proc` the second hypothesis reads `δ + proc < Δ`.
+
+#### `Statement`
+
+*def, `BlackMarlin.Reactive.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [DecidableEq BlockId] [Rotation Validator]
+    (U : BlockUniverse Validator BlockId Payload) (T : Finset Validator) (N : ℕ)
+    (pc : Pace U T N),
+    Votes pc ∧ ReactiveCommit pc ∧ Exit pc ∧ ExitSustained pc ∧
+      Latency pc ∧ NoTimeout pc
+```
+
+The reactive schedule of Black Marlin, over every fault configuration, rotation, block universe and pacing structure the model admits.
+
+#### `Monotone`
+
+*def, `BlackMarlin.Agreement.Statement.lean`*
+
+```lean
+def Monotone (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (V₁ V₂ : View Validator BlockId Payload U) (A₁ A₂ B : BlockId) (r₁ r₂ : ℕ),
+    CommittedIn U V₁ A₁ r₁ → CommittedIn U V₂ A₂ r₂ → r₁ ≤ r₂ →
+    B ∈ history U A₁ → B ∈ history U A₂
+```
+
+**BMA1, no divergence.** A block delivered with a committed anchor is delivered with every committed anchor from that round on, whichever views the two verdicts were reached from.
+
+#### `LocalCommit`
+
+*def, `BlackMarlin.Agreement.Statement.lean`*
+
+```lean
+def LocalCommit (pc : Pace U T N) : Prop :=
+  ∀ (R r : ℕ),
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    pc.gst ≤ R → (∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n) →
+    R ≤ r → r + 2 ≤ N →
+    Rot.anchor r ∈ T → Rot.anchor (r + 1) ∈ T →
+    ∃ L, IsAnchor U r L ∧ Committed U L r ∧
+      ∀ v ∈ T, CommittedIn U
+        (pc.toPaceCore.viewAt v (max (pc.latest (r + 1)) (pc.latest (r + 2)) + pc.delay))
+        L r
+```
+
+**BMA2, the commit is local.** Past GST, with the timeout clearing `2Δ + proc`, a run of two reliable anchors is committed by **every** reliable validator on its own view, by the time the two rounds the rule reads have converged.
+
+The universe-level results say a verdict is available; this says each validator reaches it, which is what Definition 1 speaks about.
+
+#### `Delivered`
+
+*def, `BlackMarlin.Agreement.Statement.lean`*
+
+```lean
+def Delivered (pc : Pace U T N) : Prop :=
+  ∀ (R r ρ : ℕ) (V : View Validator BlockId Payload U) (A B : BlockId),
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    pc.gst ≤ R → (∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n) →
+    R ≤ r → r + 2 ≤ N → ρ ≤ r →
+    Rot.anchor r ∈ T → Rot.anchor (r + 1) ∈ T →
+    CommittedIn U V A ρ → B ∈ history U A →
+    ∃ L, IsAnchor U r L ∧ B ∈ history U L ∧
+      ∀ v ∈ T, CommittedIn U
+        (pc.toPaceCore.viewAt v (max (pc.latest (r + 1)) (pc.latest (r + 2)) + pc.delay))
+        L r
+```
+
+**BMA3, agreement.** What one validator delivered with an anchor committed at round `ρ` — from any view, by any route — every reliable validator delivers with the anchor it commits at a reliably anchored round `r ≥ ρ`, on its own view and by an explicit time.
+
+#### `RunRecurs`
+
+*def, `BlackMarlin.Agreement.Statement.lean`*
+
+```lean
+def RunRecurs : Prop :=
+  ∀ (T : Finset Validator) (r : ℕ), Liveness.FairRun T 2 →
+    ∃ r', r ≤ r' ∧ Rot.anchor r' ∈ T ∧ Rot.anchor (r' + 1) ∈ T
+```
+
+**BMA4, the round BMA3 asks for recurs.** Under the fairness clause the rotation puts a reliably anchored run of two above every round, so the growth hypothesis of BMA3 is met by any DAG grown far enough rather than assumed. This is `FairRun` at `c = 2`, read as the two rounds the commit rule names.
+
+#### `Statement`
+
+*def, `BlackMarlin.Agreement.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [DecidableEq BlockId] [Rotation Validator]
+    (U : BlockUniverse Validator BlockId Payload),
+    Monotone U ∧ RunRecurs Validator ∧
+      ∀ (T : Finset Validator) (N : ℕ) (pc : Pace U T N),
+        LocalCommit pc ∧ Delivered pc
+```
+
+Agreement for the Black Marlin commit rule, over every fault configuration, rotation, block universe and pacing structure the model admits.
+
+#### `coneAnchors`
+
+*def, `BlackMarlin.Model.Ledger.lean`*
+
+```lean
+def coneAnchors (U : BlockUniverse Validator BlockId Payload)
+    (A : BlockId) (ρ : ℕ) : Finset BlockId :=
+  (blocksAt U ρ).filter (fun X => (U.block X).creator = Rot.anchor ρ ∧ X ∈ history U A)
+```
+
+The anchors of round `ρ` in `A`'s causal history — the candidates the descent chooses among when it arrives at that round.
+
+#### `Flush`
+
+*structure, `BlackMarlin.Model.Ledger.lean`*
+
+```lean
+structure Flush (U : BlockUniverse Validator BlockId Payload) where
+  /-- The anchor flushed at each round, where the descent flushed one. -/
+  block : ℕ → Option BlockId
+  /-- What is flushed at a round is that round's anchor. -/
+  isAnchor : ∀ ρ L, block ρ = some L → IsAnchor U ρ L
+  /-- **The descent steps by one round.** -/
+  step : ∀ ρ L M, block ρ = some L → block (ρ + 1) = some M → L ∈ (U.block M).refs
+  /-- **And does not pass over an anchor it references.** -/
+  dense : ∀ ρ M, block (ρ + 1) = some M → (coneAnchors U M ρ).Nonempty →
+    (block ρ).isSome
+```
+
+**A flush record**: the anchor block a validator flushed at each round, and what the descent guarantees of it.
+
+`step` is the descent's own shape — the anchor flushed at `ρ` is a reference of the anchor flushed at `ρ + 1` — and `dense` says the descent does not pass over a round whose anchor that reference set contains. Neither says anything about a round the descent skips, which is the case the paper's tie-break is for.
+
+#### `ledgerSet`
+
+*def, `BlackMarlin.Model.Ledger.lean`*
+
+```lean
+def ledgerSet (U : BlockUniverse Validator BlockId Payload) (f : Flush U) (n : ℕ) :
+    Set BlockId :=
+  {b | ∃ ρ, ρ < n ∧ ∃ L, f.block ρ = some L ∧ Reaches U L b}
+```
+
+The blocks a record has output through round `n`: everything in the causal history of an anchor it flushed below `n`. Ordering *within* a segment is the deterministic sort `τ`, which the rule does not constrain and this arc does not model, so the ledger is a set and the record's rounds are its positions.
+
+#### `OutputAt`
+
+*def, `BlackMarlin.Model.Ledger.lean`*
+
+```lean
+def OutputAt (U : BlockUniverse Validator BlockId Payload) (f : Flush U)
+    (b : BlockId) (ρ : ℕ) : Prop :=
+  (∃ L, f.block ρ = some L ∧ Reaches U L b) ∧
+    ∀ σ, σ < ρ → ∀ L, f.block σ = some L → ¬ Reaches U L b
+```
+
+`b` enters the ledger at round `ρ`: the first flushed anchor whose causal history holds it. This is a block's position in the delivered sequence, at the granularity of segments.
+
+#### `StepUnique`
+
+*def, `BlackMarlin.Ledger.Statement.lean`*
+
+```lean
+def StepUnique (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (ρ : ℕ) (M X Y : BlockId),
+    M ∈ U.ids → (U.block M).round = ρ + 1 →
+    X ∈ coneAnchors U M ρ → Y ∈ coneAnchors U M ρ → X = Y
+```
+
+**BMD1, the step is unambiguous.**
+
+#### `CorrectAnchorUnique`
+
+*def, `BlackMarlin.Ledger.Statement.lean`*
+
+```lean
+def CorrectAnchorUnique (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (ρ : ℕ) (C X Y : BlockId),
+    Rot.anchor ρ ∈ (Correct : Finset Validator) →
+    X ∈ coneAnchors U C ρ → Y ∈ coneAnchors U C ρ → X = Y
+```
+
+**BMD1′, a Byzantine anchor is necessary for a tie.** BMD1 says the descent has one candidate where it steps by one round. This says the other half: at a round whose elected validator is reliable, the candidates are a singleton however deep the cone — non-equivocation gives it one block there. So a choice needs *both* a skipped anchor round and an equivocating anchor at the round the descent lands on; either alone leaves the descent determinate.
+
+#### `AgreeStep`
+
+*def, `BlackMarlin.Ledger.Statement.lean`*
+
+```lean
+def AgreeStep (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (ρ : ℕ) (M : BlockId),
+    f₁.block (ρ + 1) = some M → f₂.block (ρ + 1) = some M →
+    f₁.block ρ = f₂.block ρ
+```
+
+**BMD2, agreement descends one round.** Where both records flush, the step makes their blocks candidates of one cone; where one does not, the cone is empty and neither does.
+
+#### `AgreeBelow`
+
+*def, `BlackMarlin.Ledger.Statement.lean`*
+
+```lean
+def AgreeBelow (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (ρ d : ℕ),
+    f₁.block (ρ + d) = f₂.block (ρ + d) →
+    (∀ i, 0 < i → i ≤ d → (f₁.block (ρ + i)).isSome) →
+    f₁.block ρ = f₂.block ρ
+```
+
+**BMD3, agreement descends a stretch.** The definedness hypothesis is exactly the descent not skipping a round; where it does, the paper's tie-break would be needed and this says nothing.
+
+#### `CommittedPins`
+
+*def, `BlackMarlin.Ledger.Statement.lean`*
+
+```lean
+def CommittedPins (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (σ : ℕ) (L₁ L₂ : BlockId),
+    f₁.block σ = some L₁ → f₂.block σ = some L₂ →
+    Committed U L₁ σ → Committed U L₂ σ →
+    f₁.block σ = f₂.block σ
+```
+
+**BMD4, directly committed anchors pin the record.**
+
+#### `LinkPopulates`
+
+*def, `BlackMarlin.Ledger.Statement.lean`*
+
+```lean
+def LinkPopulates (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (L C : BlockId) (ρ : ℕ),
+    Committed U L ρ → C ∈ U.ids → ρ + 3 ≤ (U.block C).round →
+    (coneAnchors U C (ρ + 1)).Nonempty
+```
+
+**BMD5, the link clause keeps the descent from skipping.** Above a committed anchor sits a supported anchor, which propagation puts in every cone from three rounds up — so a descent arriving there finds a candidate rather than an empty round.
+
+#### `Ledger`
+
+*def, `BlackMarlin.Ledger.Statement.lean`*
+
+```lean
+def Ledger (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  (∀ (f : Flush U) (n m : ℕ), n ≤ m → ledgerSet U f n ⊆ ledgerSet U f m) ∧
+  (∀ (f₁ f₂ : Flush U) (n : ℕ),
+    (∀ ρ, ρ < n → f₁.block ρ = f₂.block ρ) →
+    ledgerSet U f₁ n = ledgerSet U f₂ n) ∧
+  (∀ (f : Flush U) (b : BlockId) (ρ₁ ρ₂ : ℕ),
+    OutputAt U f b ρ₁ → OutputAt U f b ρ₂ → ρ₁ = ρ₂) ∧
+  (∀ (f₁ f₂ : Flush U) (n : ℕ) (b : BlockId) (ρ : ℕ),
+    (∀ σ, σ < n → f₁.block σ = f₂.block σ) → ρ < n →
+    OutputAt U f₁ b ρ → OutputAt U f₂ b ρ) ∧
+  (∀ (f : Flush U) (ρ : ℕ) (L b : BlockId),
+    f.block ρ = some L → Reaches U L b → b ∈ ledgerSet U f (ρ + 1))
+```
+
+**BMD6, the ledger.** Nothing output is dropped; records that agree below a round output the same blocks there; a block enters at exactly one round; and records that agree concur on which. The last is total-order safety at the granularity of segments — the order *within* one needs `τ`.
+
+#### `Statement`
+
+*def, `BlackMarlin.Ledger.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [DecidableEq BlockId] [Rotation Validator]
+    (U : BlockUniverse Validator BlockId Payload),
+    StepUnique U ∧ CorrectAnchorUnique U ∧ AgreeStep U ∧ AgreeBelow U ∧ CommittedPins U ∧
+      LinkPopulates U ∧ Ledger U
+```
+
+The delivered order of the Black Marlin commit rule, over every fault configuration, rotation and block universe the model admits.
+
+#### `IsAnchorBlock`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def IsAnchorBlock (U : BlockUniverse Validator BlockId Payload) (X : BlockId) : Prop :=
+  (U.block X).creator = Rot.anchor (U.block X).round
+```
+
+A block that anchors its own round. The round-free reading of `IsAnchor`, which is what a set of blocks of mixed rounds needs.
+
+#### `anchorsOf`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def anchorsOf (U : BlockUniverse Validator BlockId Payload) (s : Finset BlockId) :
+    Finset BlockId :=
+  s.filter (IsAnchorBlock U)
+```
+
+The anchors among a set of blocks.
+
+#### `strongOf`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def strongOf (U : BlockUniverse Validator BlockId Payload) (B : BlockId) : Finset BlockId :=
+  (history U B).erase B
+```
+
+**`strong(B)`**: the blocks strictly below `B` in its cone. `history` is reflexive where the paper's `strong` is not, so the block itself is removed.
+
+#### `maxAnchorRound`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def maxAnchorRound (U : BlockUniverse Validator BlockId Payload) (s : Finset BlockId) : ℕ :=
+  (anchorsOf U s).sup (fun X => (U.block X).round)
+```
+
+The highest round at which a set holds an anchor, and `0` when it holds none — which is the case L20's guard does not exclude and L21–L24 need.
+
+#### `maxAnchor`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def maxAnchor (U : BlockUniverse Validator BlockId Payload) (s : Finset BlockId) :
+    Finset BlockId :=
+  (anchorsOf U s).filter (fun X => (U.block X).round = maxAnchorRound U s)
+```
+
+**`maxAnchor(s)`**: the anchors of `s` at the highest round they reach. A set, as L21 reads it.
+
+#### `anchorGap`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def anchorGap (U : BlockUniverse Validator BlockId Payload) (A : BlockId) : ℕ :=
+  (U.block A).round - maxAnchorRound U (strongOf U A)
+```
+
+**The metric of L24**: how far a candidate's round stands above the highest anchor of its own cone. Truncated subtraction is exact here — an anchor below `A` sits below `A`'s round — so no absolute value is needed.
+
+#### `pick`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def pick (s : Finset BlockId) : Option BlockId :=
+  if h : s.Nonempty then some (s.min' h) else none
+```
+
+The `≤`-least member of a set, as an `Option`.
+
+#### `descend`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def descend (U : BlockUniverse Validator BlockId Payload) (B : BlockId) : Option BlockId :=
+  pick ((maxAnchor U (strongOf U B)).filter
+    (fun A => ∀ C ∈ maxAnchor U (strongOf U B), anchorGap U A ≤ anchorGap U C))
+```
+
+**The descent's choice** (L21–L24): the `≤`-least of the highest-round anchors below `B` that minimise the metric. At `|maxAnchor| = 1` this is L22, and otherwise L24.
+
+#### `descentUpto`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def descentUpto (U : BlockUniverse Validator BlockId Payload) :
+    ℕ → BlockId → ℕ → Option BlockId
+  | 0, B, ρ => if (U.block B).round = ρ then some B else none
+  | (n + 1), B, ρ =>
+      if (U.block B).round = ρ then some B
+      else (descend U B).bind (fun A => descentUpto U n A ρ)
+```
+
+The descent from `B`, read at a round, with fuel.
+
+#### `flushRecord`
+
+*def, `BlackMarlin.Model.Descent.lean`*
+
+```lean
+def flushRecord (U : BlockUniverse Validator BlockId Payload) (B : BlockId) (ρ : ℕ) :
+    Option BlockId :=
+  descentUpto U ((U.block B).round) B ρ
+```
+
+**The flush record of `commit(B)`**: the anchor its descent visits at each round. A step drops the round strictly, so `round B` steps are enough and the fuel is not a parameter of the result.
+
+#### `DescendSound`
+
+*def, `BlackMarlin.Descent.Statement.lean`*
+
+```lean
+def DescendSound (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B A : BlockId), B ∈ U.ids → descend U B = some A →
+    A ∈ U.ids ∧ IsAnchorBlock U A ∧ A ∈ strongOf U B ∧
+      (U.block A).round = maxAnchorRound U (strongOf U B) ∧
+      (U.block A).round < (U.block B).round
+```
+
+**BME1, the choice is sound.**
+
+#### `DescendTotal`
+
+*def, `BlackMarlin.Descent.Statement.lean`*
+
+```lean
+def DescendTotal (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B : BlockId), (anchorsOf U (strongOf U B)).Nonempty → (descend U B).isSome
+```
+
+**BME2, and total where an anchor lies below.**
+
+#### `RecordIsFlush`
+
+*def, `BlackMarlin.Descent.Statement.lean`*
+
+```lean
+def RecordIsFlush (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B : BlockId), B ∈ U.ids → IsAnchorBlock U B →
+    (∀ (ρ : ℕ) (L : BlockId), flushRecord U B ρ = some L → IsAnchor U ρ L) ∧
+    (∀ (ρ : ℕ) (L M : BlockId), flushRecord U B ρ = some L →
+      flushRecord U B (ρ + 1) = some M → L ∈ (U.block M).refs) ∧
+    (∀ (ρ : ℕ) (M : BlockId), flushRecord U B (ρ + 1) = some M →
+      (coneAnchors U M ρ).Nonempty → (flushRecord U B ρ).isSome)
+```
+
+**BME3, the record is a flush record.** The three conditions `Flush` asks for, here derived from the descent rather than assumed of it.
+
+#### `Suffix`
+
+*def, `BlackMarlin.Descent.Statement.lean`*
+
+```lean
+def Suffix (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B M : BlockId) (σ ρ : ℕ), B ∈ U.ids →
+    flushRecord U B σ = some M → ρ ≤ σ →
+    flushRecord U B ρ = flushRecord U M ρ
+```
+
+**BME4, the record below a visited block is that block's own.**
+
+#### `AgreeBelow`
+
+*def, `BlackMarlin.Descent.Statement.lean`*
+
+```lean
+def AgreeBelow (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B₁ B₂ M : BlockId) (σ ρ : ℕ), B₁ ∈ U.ids → B₂ ∈ U.ids →
+    flushRecord U B₁ σ = some M → flushRecord U B₂ σ = some M → ρ ≤ σ →
+    flushRecord U B₁ ρ = flushRecord U B₂ ρ
+```
+
+**BME5, agreement with no definedness hypothesis.** Two descents that reach the same block at a round agree at every round below it, whatever happens between — which is what BMD3 has to assume of an abstract record.
+
+#### `Statement`
+
+*def, `BlackMarlin.Descent.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [LinearOrder BlockId] [Rotation Validator]
+    (U : BlockUniverse Validator BlockId Payload),
+    DescendSound U ∧ DescendTotal U ∧ RecordIsFlush U ∧ Suffix U ∧ AgreeBelow U
+```
+
+The descent of `commit`, over every fault configuration, rotation and block universe the model admits.
+
+#### `toFlush`
+
+*def, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+def toFlush (U : BlockUniverse Validator BlockId Payload) (B : BlockId)
+    (hB : B ∈ U.ids) (haB : IsAnchorBlock U B) : Flush U where
+  block := flushRecord U B
+  isAnchor := fun _ _ h => flushRecord_isAnchor hB haB h
+  step := fun _ _ _ hL hM => flushRecord_step hB hL hM
+  dense := fun _ _ hM hcone => flushRecord_dense hB hM hcone
+```
+
+**The record of `commit(B)` is a flush record.**
+
+#### `TopoSort`
+
+*structure, `BlackMarlin.Model.Order.lean`*
+
+```lean
+structure TopoSort (U : BlockUniverse Validator BlockId Payload) where
+  /-- The sorted list. -/
+  sort : Finset BlockId → List BlockId
+  /-- It holds exactly the set. -/
+  mem : ∀ s b, b ∈ sort s ↔ b ∈ s
+  /-- Without repetition. -/
+  nodup : ∀ s, (sort s).Nodup
+  /-- And in causal order: what a block reaches comes no later than it. -/
+  topo : ∀ s a b, a ∈ s → b ∈ s → Reaches U b a →
+    (sort s).idxOf a ≤ (sort s).idxOf b
+```
+
+**`τ`**: a deterministic topological sort of a set of blocks. A function of the set alone, so two validators sorting the same set produce the same list; and causally ordered, so a block never precedes what it reaches.
+
+#### `deliveredBelow`
+
+*def, `BlackMarlin.Model.Order.lean`*
+
+```lean
+def deliveredBelow (U : BlockUniverse Validator BlockId Payload) (f : Flush U) (ρ : ℕ) :
+    Finset BlockId :=
+  (Finset.range ρ).biUnion (fun σ =>
+    match f.block σ with
+    | none => ∅
+    | some L => history U L)
+```
+
+What a record has delivered below a round: the causal history of every anchor it flushed there — the paper's `𝒟` at that point.
+
+#### `segment`
+
+*def, `BlackMarlin.Model.Order.lean`*
+
+```lean
+def segment (U : BlockUniverse Validator BlockId Payload) (f : Flush U)
+    (τ : TopoSort U) (ρ : ℕ) : List BlockId :=
+  match f.block ρ with
+  | none => []
+  | some L => τ.sort (history U L \ deliveredBelow U f ρ)
+```
+
+The segment a record flushes at a round: what the anchor's cone adds, sorted. Empty where the record flushes nothing.
+
+#### `ledgerSeq`
+
+*def, `BlackMarlin.Model.Order.lean`*
+
+```lean
+def ledgerSeq (U : BlockUniverse Validator BlockId Payload) (f : Flush U)
+    (τ : TopoSort U) (n : ℕ) : List BlockId :=
+  (List.range n).flatMap (segment U f τ)
+```
+
+The blocks a record flushes through round `n`, in order.
+
+#### `key`
+
+*def, `BlackMarlin.Model.Order.lean`*
+
+```lean
+def key (U : BlockUniverse Validator BlockId Payload) (b : BlockId) : Validator × ℕ :=
+  ((U.block b).creator, (U.block b).round)
+```
+
+What L27 tests a block by: its author and its round.
+
+#### `filterFirstFrom`
+
+*def, `BlackMarlin.Model.Order.lean`*
+
+```lean
+def filterFirstFrom (U : BlockUniverse Validator BlockId Payload) :
+    List BlockId → Finset (Validator × ℕ) → List BlockId × Finset (Validator × ℕ)
+  | [], seen => ([], seen)
+  | (b :: bs), seen =>
+      if key U b ∈ seen then filterFirstFrom U bs seen
+      else
+        (b :: (filterFirstFrom U bs (insert (key U b) seen)).1,
+          (filterFirstFrom U bs (insert (key U b) seen)).2)
+```
+
+**The filter of L27**, threading the delivered set: the emitted list, and the keys it leaves behind.
+
+#### `deliverSeq`
+
+*def, `BlackMarlin.Model.Order.lean`*
+
+```lean
+def deliverSeq (U : BlockUniverse Validator BlockId Payload) (f : Flush U)
+    (τ : TopoSort U) (n : ℕ) : List BlockId :=
+  (filterFirstFrom U (ledgerSeq U f τ n) ∅).1
+```
+
+**What a validator outputs**: the flushed sequence with L27 applied. Definition 1 speaks about this list.
+
+#### `AnchorLast`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def AnchorLast (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f : Flush U) (τ : TopoSort U) (ρ : ℕ) (L b : BlockId),
+    f.block ρ = some L → b ∈ segment U f τ ρ →
+    (segment U f τ ρ).idxOf b ≤ (segment U f τ ρ).idxOf L
+```
+
+**BMO1, the anchor is last in its segment.**
+
+#### `SeqAgree`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def SeqAgree (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (τ : TopoSort U) (n : ℕ),
+    (∀ σ, σ < n → f₁.block σ = f₂.block σ) →
+    deliverSeq U f₁ τ n = deliverSeq U f₂ τ n
+```
+
+**BMO2, records that agree flush the same list.**
+
+#### `SeqPrefix`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def SeqPrefix (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f : Flush U) (τ : TopoSort U) (n m : ℕ), n ≤ m →
+    deliverSeq U f τ n <+: deliverSeq U f τ m
+```
+
+**BMO3, and the list only extends.** Nothing output is retracted, and nothing already output is reordered.
+
+#### `Integrity`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def Integrity (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f : Flush U) (τ : TopoSort U) (n : ℕ),
+    (deliverSeq U f τ n).Pairwise (fun a b => key U a ≠ key U b) ∧
+      ∀ b ∈ deliverSeq U f τ n, b ∈ U.ids
+```
+
+**BMO4, Definition 1's Integrity.** No author-and-round is output twice, and everything output is a block of the universe — which for a correct author is a block it produced, since blocks carry their creator.
+
+#### `KeyDelivered`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def KeyDelivered (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f : Flush U) (τ : TopoSort U) (n : ℕ) (b : BlockId),
+    b ∈ ledgerSeq U f τ n → ∃ c ∈ deliverSeq U f τ n, key U c = key U b
+```
+
+**BMO5, every author-and-round flushed is output.**
+
+#### `CorrectDelivered`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def CorrectDelivered (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f : Flush U) (τ : TopoSort U) (n : ℕ) (b : BlockId),
+    b ∈ ledgerSeq U f τ n → (U.block b).creator ∈ (Correct : Finset Validator) →
+    b ∈ deliverSeq U f τ n
+```
+
+**BMO6, and for a correct author, by the block itself.**
+
+#### `TotalOrder`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def TotalOrder (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (τ : TopoSort U) (n : ℕ) (a b : BlockId),
+    (∀ σ, σ < n → f₁.block σ = f₂.block σ) →
+    (deliverSeq U f₁ τ n).idxOf a < (deliverSeq U f₁ τ n).idxOf b →
+    ¬ ((deliverSeq U f₂ τ n).idxOf b < (deliverSeq U f₂ τ n).idxOf a)
+```
+
+**BMO7, Definition 1's Total order.**
+
+#### `DescentOrder`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def DescentOrder (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (τ : TopoSort U) (B₁ B₂ M : BlockId) (σ n : ℕ),
+    B₁ ∈ U.ids → B₂ ∈ U.ids →
+    f₁.block = flushRecord U B₁ → f₂.block = flushRecord U B₂ →
+    flushRecord U B₁ σ = some M → flushRecord U B₂ σ = some M →
+    n ≤ σ + 1 →
+    deliverSeq U f₁ τ n = deliverSeq U f₂ τ n
+```
+
+**BMO8, two descents that meet output the same list.** The composition of BME5 with BMO2: below a block both descents reached, their records coincide, so their lists do.
+
+#### `Validity`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def Validity (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f : Flush U) (τ : TopoSort U) (T : Finset Validator) (R ρ n : ℕ) (b L : BlockId),
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    SynchronisedOn U T R → R ≤ ρ → PopulatedOn U T (ρ + 1) →
+    b ∈ U.ids → (U.block b).round = ρ → (U.block b).creator ∈ T →
+    f.block (ρ + 2) = some L → ρ + 2 < n →
+    b ∈ deliverSeq U f τ n
+```
+
+**BMO9, Definition 1's Validity for reliable authors.** A block a reliable validator produced at round `ρ`, once coverage has taken hold, is output by any record that flushes an anchor at round `ρ + 2`.
+
+#### `Statement`
+
+*def, `BlackMarlin.Order.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [LinearOrder BlockId] [Rotation Validator]
+    (U : BlockUniverse Validator BlockId Payload),
+    AnchorLast U ∧ SeqAgree U ∧ SeqPrefix U ∧ Integrity U ∧ KeyDelivered U ∧
+      CorrectDelivered U ∧ TotalOrder U ∧ DescentOrder U ∧ Validity U
+```
+
+The delivered sequence of the Black Marlin commit rule, over every fault configuration, rotation, block universe and topological sort the model admits.
+
+#### `TopoSort.ofIdOrder`
+
+*def, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+def TopoSort.ofIdOrder (W : BlockUniverse Validator Id Payload)
+    (h : ∀ b : Id, ∀ j ∈ (W.block b).refs, j < b) : TopoSort W where
+  sort s := s.sort (· ≤ ·)
+  mem _ _ := Finset.mem_sort _
+  nodup _ := Finset.sort_nodup _ _
+  topo s a b ha hb hr := by
+    refine idxOf_le_of_pairwise (Finset.pairwise_sort s _) (Finset.sort_nodup _ _)
+      ((Finset.mem_sort _).mpr ha) ((Finset.mem_sort _).mpr hb) ?_
+    clear ha hb
+    induction hr with
+    | refl => exact le_refl _
+    | tail _ hstep ihr => exact le_trans (le_of_lt (h _ _ hstep)) ihr
+```
+
+**Sorting by identifier is a topological sort**, when a block's references carry smaller identifiers — which is how ids are assigned in production order. This is what keeps `TopoSort` from being vacuous.
+
+#### `TopoSort.ofFinOrder`
+
+*def, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+def TopoSort.ofFinOrder {n : ℕ} (W : BlockUniverse Validator (Fin n) Payload)
+    (h : ∀ b : Fin n, ∀ j ∈ (W.block b).refs, j < b) : TopoSort W where
+  sort s := (List.finRange n).filter (fun x => decide (x ∈ s))
+  mem s b := by simp
+  nodup s := (List.nodup_finRange n).filter _
+  topo s a b ha hb hr := by
+    refine idxOf_le_of_pairwise
+      ((List.pairwise_le_finRange n).filter _) ((List.nodup_finRange n).filter _)
+      (by simp [ha]) (by simp [hb]) ?_
+    clear ha hb
+    induction hr with
+    | refl => exact le_refl _
+    | tail _ hstep ihr => exact le_trans (le_of_lt (h _ _ hstep)) ihr
+```
+
+**The same sort, in a form the kernel evaluates.** `Finset.sort` rests on a merge sort the kernel does not reduce, so a witness filters `List.finRange` instead: the same order, structurally computed, which is what lets a concrete model settle the delivered sequence by `decide`.
+
+#### `suppCandidates`
+
+*def, `BlackMarlin.Model.Repair.lean`*
+
+```lean
+def suppCandidates (U : BlockUniverse Validator BlockId Payload) (B : BlockId) :
+    Finset BlockId :=
+  (maxAnchor U (strongOf U B)).filter (fun A => Supported U A (U.block A).round)
+```
+
+The candidates of L21–L24 that the rule could commit.
+
+#### `descendSupp`
+
+*def, `BlackMarlin.Model.Repair.lean`*
+
+```lean
+def descendSupp (U : BlockUniverse Validator BlockId Payload) (B : BlockId) :
+    Option BlockId :=
+  if (suppCandidates U B).Nonempty then pick (suppCandidates U B) else descend U B
+```
+
+**The repaired choice**: a supported candidate where there is one, and L21–L24 otherwise.
+
+#### `descentSuppUpto`
+
+*def, `BlackMarlin.Model.Repair.lean`*
+
+```lean
+def descentSuppUpto (U : BlockUniverse Validator BlockId Payload) :
+    ℕ → BlockId → ℕ → Option BlockId
+  | 0, B, ρ => if (U.block B).round = ρ then some B else none
+  | (n + 1), B, ρ =>
+      if (U.block B).round = ρ then some B
+      else (descendSupp U B).bind (fun A => descentSuppUpto U n A ρ)
+```
+
+The repaired descent, with fuel, as `descentUpto` is.
+
+#### `flushRecordSupp`
+
+*def, `BlackMarlin.Model.Repair.lean`*
+
+```lean
+def flushRecordSupp (U : BlockUniverse Validator BlockId Payload) (B : BlockId) (ρ : ℕ) :
+    Option BlockId :=
+  descentSuppUpto U ((U.block B).round) B ρ
+```
+
+The record the repaired descent leaves.
+
+#### `SupportPreferring`
+
+*def, `BlackMarlin.Model.Repair.lean`*
+
+```lean
+def SupportPreferring (U : BlockUniverse Validator BlockId Payload) (f : Flush U) : Prop :=
+  ∀ (ρ : ℕ) (L : BlockId), f.block ρ = some L →
+    (∃ A, IsAnchor U ρ A ∧ Supported U A ρ) → Supported U L ρ
+```
+
+**The side-condition.** Where a round has a supported anchor, the record flushes a supported one.
+
+#### `suppAnchorsOf`
+
+*def, `BlackMarlin.Model.Repair.lean`*
+
+```lean
+def suppAnchorsOf (U : BlockUniverse Validator BlockId Payload) (s : Finset BlockId) :
+    Finset BlockId :=
+  (anchorsOf U s).filter (fun A => Supported U A (U.block A).round)
+```
+
+The anchors of a set that carry a quorum of support.
+
+#### `maxSuppRound`
+
+*def, `BlackMarlin.Model.Repair.lean`*
+
+```lean
+def maxSuppRound (U : BlockUniverse Validator BlockId Payload) (s : Finset BlockId) : ℕ :=
+  (suppAnchorsOf U s).sup (fun A => (U.block A).round)
+```
+
+The highest round at which a set holds a supported anchor.
+
+#### `descendS`
+
+*def, `BlackMarlin.Model.Repair.lean`*
+
+```lean
+def descendS (U : BlockUniverse Validator BlockId Payload) (B : BlockId) : Option BlockId :=
+  pick ((suppAnchorsOf U (strongOf U B)).filter
+    (fun A => (U.block A).round = maxSuppRound U (strongOf U B)))
+```
+
+**The strengthened descent**: to the highest-round supported anchor of the cone, and nowhere else.
+
+#### `descentSUpto`
+
+*def, `BlackMarlin.Model.Repair.lean`*
+
+```lean
+def descentSUpto (U : BlockUniverse Validator BlockId Payload) :
+    ℕ → BlockId → ℕ → Option BlockId
+  | 0, B, ρ => if (U.block B).round = ρ then some B else none
+  | (n + 1), B, ρ =>
+      if (U.block B).round = ρ then some B
+      else (descendS U B).bind (fun A => descentSUpto U n A ρ)
+```
+
+The strengthened descent, with fuel.
+
+#### `flushRecordS`
+
+*def, `BlackMarlin.Model.Repair.lean`*
+
+```lean
+def flushRecordS (U : BlockUniverse Validator BlockId Payload) (B : BlockId) (ρ : ℕ) :
+    Option BlockId :=
+  descentSUpto U ((U.block B).round) B ρ
+```
+
+The record it leaves.
+
+#### `AtMostOneSupported`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def AtMostOneSupported (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B A C : BlockId), A ∈ suppCandidates U B → C ∈ suppCandidates U B → A = C
+```
+
+**BMP1, at most one candidate of a step is supported.**
+
+#### `RepairPrefers`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def RepairPrefers (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B L : BlockId), descendSupp U B = some L → (suppCandidates U B).Nonempty →
+    Supported U L (U.block L).round
+```
+
+**BMP2, the repair takes the supported candidate.**
+
+#### `RepairRefines`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def RepairRefines (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B : BlockId), ¬ (suppCandidates U B).Nonempty → descendSupp U B = descend U B
+```
+
+**BMP3, and is the original rule where there is none.**
+
+#### `NoStall`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def NoStall (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  (∀ (B : BlockId), (descendSupp U B).isSome ↔ (descend U B).isSome) ∧
+  (∀ (B L L' : BlockId), descendSupp U B = some L → descend U B = some L' →
+    (U.block L).round = (U.block L').round)
+```
+
+**BMP4, the repair changes which block a step returns, never whether it returns one nor at which round.** Stated of a step, not of a record: a chain through a different block descends through a different cone, so the rounds a record flushes at may differ downstream.
+
+#### `Agrees`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def Agrees (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (ρ : ℕ),
+    SupportPreferring U f₁ → SupportPreferring U f₂ →
+    (f₁.block ρ).isSome → (f₂.block ρ).isSome →
+    (∃ A, IsAnchor U ρ A ∧ Supported U A ρ) →
+    f₁.block ρ = f₂.block ρ
+```
+
+**BMP5, support-preferring records cannot part at a supported round.** The whole content of the repair, and what the execution of `black-marlin.md` §13 needed.
+
+#### `LivenessUntouched`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def LivenessUntouched (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (L : BlockId) (ρ : ℕ),
+    Committed U L ρ ↔ (IsAnchor U ρ L ∧ Supported U L ρ ∧ Linked U L ρ)
+```
+
+**BMP6, liveness is untouched.** What the liveness results conclude is `Committed`, which is a property of the commit rule and mentions no part of the descent — so the repair leaves them untouched, and the statement is the identity it looks like.
+
+#### `StrongSupported`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def StrongSupported (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B L : BlockId), descendS U B = some L → Supported U L (U.block L).round
+```
+
+**BMP7, every boundary is supported.** So a round whose anchors carry no quorum is not a boundary at all: where an anchor equivocates and neither twin is supported, the strengthened descent makes no choice there, and two records cannot part over one.
+
+#### `StrongReaches`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def StrongReaches (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B L : BlockId) (ρ : ℕ), B ∈ U.ids → Committed U L ρ → L ∈ strongOf U B →
+    flushRecordS U B ρ = some L
+```
+
+**BMP8, and no committed anchor is passed by.** A supported anchor sits at every round the chain could land on above a committed one — the committed anchor itself from two rounds up, and its linking anchor from one, which the commit rule makes supported — and anchor uniqueness fixes which block each of those is.
+
+#### `StrongAgrees`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def StrongAgrees (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B₁ B₂ M : BlockId) (σ ρ : ℕ), B₁ ∈ U.ids → B₂ ∈ U.ids →
+    flushRecordS U B₁ σ = some M → flushRecordS U B₂ σ = some M → ρ ≤ σ →
+    flushRecordS U B₁ ρ = flushRecordS U B₂ ρ
+```
+
+**BMP9, and agreement runs down from any meeting point.** With BMP8 this is what the refutation needed: two records whose tops are committed anchors both reach the lower of the two — BM5 puts it in the higher's cone — and so agree at every round below it.
+
+#### `StrongNoStall`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def StrongNoStall (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  (∀ (B : BlockId), (suppAnchorsOf U (strongOf U B)).Nonempty → (descendS U B).isSome) ∧
+  (∀ (B L : BlockId), B ∈ U.ids → descendS U B = some L →
+    (U.block L).round < (U.block B).round)
+```
+
+**BMP10, and it does not stall.** A choice is made whenever the cone holds a supported anchor, and it sits strictly lower, so the descent terminates. Coarser segments deliver the same blocks: a round that is no longer a boundary has its blocks come out inside the next segment above.
+
+#### `StrongAgreesCommitted`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def StrongAgreesCommitted (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (B₁ B₂ : BlockId) (r₁ r₂ ρ : ℕ), B₁ ∈ U.ids → B₂ ∈ U.ids →
+    Committed U B₁ r₁ → Committed U B₂ r₂ → r₁ ≤ r₂ → ρ ≤ r₁ →
+    flushRecordS U B₁ ρ = flushRecordS U B₂ ρ
+```
+
+**BMP11, two records with committed tops agree.** The composition: chaining puts the lower top in the higher's cone (BM5), BMP8 makes both descents reach it, and BMP9 carries agreement to every round below. This is what the execution of `black-marlin.md` §13 needed and did not have, and it holds with no hypothesis about what lies between the two tops.
+
+#### `SupportInView`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def SupportInView (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (T : Finset Validator) (R ρ : ℕ) (V : View Validator BlockId Payload U) (L : BlockId),
+    quorumCard Validator ≤ T.card →
+    SynchronisedOn U T R → R ≤ ρ → PopulatedOn U T (ρ + 1) →
+    L ∈ U.ids → (U.block L).round = ρ → (U.block L).creator ∈ T →
+    (∀ b ∈ U.ids, (U.block b).creator ∈ T → (U.block b).round = ρ + 1 → b ∈ V.ids) →
+    SupportedIn U V L ρ
+```
+
+**BMP13, when the support is in view.** Both repairs read `Supported`, a fact about the universe, where a validator reads its own view. They agree in one case: an anchor by a **reliable** author, past the round coverage takes hold, is referenced by every reliable block of the round above, so a view holding those sees the quorum.
+
+For a Byzantine author's anchor coverage says nothing, and a view holding a quorum at the round above shares only `n − 2f` authors with the supporters — `f + 1` at `n = 3f + 1`, short of the `2f + 1` the test wants. So this claim does not reach the case the repair exists for, and `black-marlin.md` §13's execution carries a view that misses it.
+
+#### `NotStuck`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def NotStuck : Prop :=
+  ∀ (T : Finset Validator) (R r : ℕ),
+    quorumCard Validator ≤ T.card → Liveness.FairRun T 2 →
+    ∃ r', r ≤ r' ∧ R ≤ r' ∧ Liveness.CommitsAtRound BlockId Payload T R r'
+```
+
+**BMP12, and no execution is stuck.** The recurrence of committed rounds is a statement about `Committed` and the rotation, neither of which the repair touches, so it holds of the repaired protocol word for word: for every round the rotation names a later one that any sufficiently grown covered DAG commits, and BML5 supplies the clause it needs at every committee.
+
+#### `Statement`
+
+*def, `BlackMarlin.Repair.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [LinearOrder BlockId] [Rotation Validator]
+    (U : BlockUniverse Validator BlockId Payload),
+    AtMostOneSupported U ∧ RepairPrefers U ∧ RepairRefines U ∧ NoStall U ∧
+      Agrees U ∧ LivenessUntouched U ∧
+      StrongSupported U ∧ StrongReaches U ∧ StrongAgrees U ∧ StrongNoStall U ∧
+      StrongAgreesCommitted U ∧ SupportInView U ∧
+      NotStuck Validator BlockId Payload
+```
+
+The repaired descent, over every fault configuration, rotation and block universe the model admits.
+
 ### Not otherwise grouped
+
+#### `descendD`
+
+*def, `BlackMarlin.Model.Recursion.lean`*
+
+```lean
+def descendD (U : BlockUniverse Validator BlockId Payload) (B : BlockId)
+    (D : Finset BlockId) : Option BlockId :=
+  pick ((maxAnchor U (strongOf U B \ D)).filter
+    (fun X => ∀ C ∈ maxAnchor U (strongOf U B \ D), anchorGap U X ≤ anchorGap U C))
+```
+
+**L21–L24 against the delivered set** (L19): the choice is made among the anchors of `strong(B) \ D`, where `descend` takes all of `strong(B)`. The metric of L24 is unchanged, reading `strong(A)` in full.
+
+#### `keyHeld`
+
+*def, `BlackMarlin.Model.Recursion.lean`*
+
+```lean
+def keyHeld (U : BlockUniverse Validator BlockId Payload) (b : BlockId)
+    (D : Finset BlockId) : Prop :=
+  ∃ c ∈ D, key U c = key U b
+```
+
+**L27's test**: some delivered block shares this one's author and round.
+
+#### `emitFrom`
+
+*def, `BlackMarlin.Model.Recursion.lean`*
+
+```lean
+def emitFrom (U : BlockUniverse Validator BlockId Payload) :
+    List BlockId → Finset BlockId → List BlockId × Finset BlockId
+  | [], D => ([], D)
+  | b :: bs, D =>
+      if keyHeld U b D then emitFrom U bs D
+      else
+        let r := emitFrom U bs (insert b D)
+        (b :: r.1, r.2)
+```
+
+**L26–L29**: emit a sorted segment, dropping any block whose author and round have already gone out, and threading `D`.
+
+#### `commitSeq`
+
+*def, `BlackMarlin.Model.Recursion.lean`*
+
+```lean
+def commitSeq (U : BlockUniverse Validator BlockId Payload) (τ : TopoSort U) :
+    ℕ → BlockId → Finset BlockId → List BlockId × Finset BlockId
+  | 0, B, D => ([], insert B D)
+  | (n + 1), B, D =>
+      let pd :=
+        match descendD U B D with
+        | none => (([] : List BlockId), D)
+        | some B' => commitSeq U τ n B' D
+      let md := emitFrom U (τ.sort ((history U B).erase B \ pd.2)) pd.2
+      (pd.1 ++ md.1 ++ (if keyHeld U B md.2 then [] else [B]), insert B md.2)
+```
+
+**L18–L32**, with fuel for the recursion: descend first, then emit `τ(past(B) \ D)`, then `B` itself. Returns what the invocation `ab-deliver`s and the delivered set it leaves behind, so successive invocations compose.
+
+#### `CommitsInViews`
+
+*def, `BlackMarlin.ViewLiveness.Statement.lean`*
+
+```lean
+def CommitsInViews (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
+    (T : Finset Validator) (R r : ℕ) : Prop :=
+  ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ) (pc : Pace U T N),
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    pc.gst ≤ R → (∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n) →
+    r + 2 ≤ N →
+    ∃ L, IsAnchor U r L ∧ Committed U L r ∧
+      ∀ v ∈ T, CommittedIn U
+        (pc.toPaceCore.viewAt v (max (pc.latest (r + 1)) (pc.latest (r + 2)) + pc.delay))
+        L r
+```
+
+**What it means for a round to be committed by every reliable validator on its own view.** Universe, growth and pace are quantified inside, as `Liveness.CommitsAtRound` quantifies the universe and for the same reason: the rotation names the round before any DAG is fixed, and fixing one first would cap how far the rotation may reach.
+
+#### `NoValidatorStuck`
+
+*def, `BlackMarlin.ViewLiveness.Statement.lean`*
+
+```lean
+def NoValidatorStuck : Prop :=
+  ∀ (T : Finset Validator) (R r : ℕ),
+    quorumCard Validator ≤ T.card → Liveness.FairRun T 2 →
+    ∃ r', r ≤ r' ∧ R ≤ r' ∧ CommitsInViews BlockId Payload T R r'
+```
+
+**BMV1, no reliable validator is stuck.** BML4 says a round recurs that the universe admits a commit at; this says a round recurs that every reliable validator commits at, on its own view and by a time the pace names.
+
+#### `DeliversInViews`
+
+*def, `BlackMarlin.ViewLiveness.Statement.lean`*
+
+```lean
+def DeliversInViews (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
+    (T : Finset Validator) (R ρ r : ℕ) : Prop :=
+  ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ) (pc : Pace U T N)
+    (V : View Validator BlockId Payload U) (A B : BlockId),
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    pc.gst ≤ R → (∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n) →
+    r + 2 ≤ N →
+    CommittedIn U V A ρ → B ∈ history U A →
+    ∃ L, IsAnchor U r L ∧ B ∈ history U L ∧
+      ∀ v ∈ T, CommittedIn U
+        (pc.toPaceCore.viewAt v (max (pc.latest (r + 1)) (pc.latest (r + 2)) + pc.delay))
+        L r
+```
+
+**What it means for a round to deliver, at every reliable view, what some view committed below.**
+
+#### `NothingHeldBack`
+
+*def, `BlackMarlin.ViewLiveness.Statement.lean`*
+
+```lean
+def NothingHeldBack : Prop :=
+  ∀ (T : Finset Validator) (R ρ : ℕ),
+    quorumCard Validator ≤ T.card → Liveness.FairRun T 2 →
+    ∃ r, ρ ≤ r ∧ R ≤ r ∧ DeliversInViews BlockId Payload T R ρ r
+```
+
+**BMV2, nothing one validator delivered is held back from another.** BMA3 asks for a reliably anchored round above `ρ`; the rotation supplies one, so the hypothesis becomes a conclusion.
+
+#### `ReadableAtReliableAnchor`
+
+*def, `BlackMarlin.ViewLiveness.Statement.lean`*
+
+```lean
+def ReadableAtReliableAnchor (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (T : Finset Validator) (R ρ : ℕ) (V : View Validator BlockId Payload U) (L : BlockId),
+    quorumCard Validator ≤ T.card →
+    SynchronisedOn U T R → R ≤ ρ → PopulatedOn U T (ρ + 1) →
+    Rot.anchor ρ ∈ T → IsAnchor U ρ L →
+    (∀ b ∈ U.ids, (U.block b).creator ∈ T → (U.block b).round = ρ + 1 → b ∈ V.ids) →
+    SupportedIn U V L ρ
+```
+
+**BMV3, the rule is readable at a reliable anchor.** Past the round coverage takes hold, an anchor whose author is reliable is referenced by every reliable block of the round above, so a view holding those sees the quorum — the support clause needs no block a Byzantine validator might withhold.
+
+This is the boundary of the arc. Replace `Rot.anchor ρ ∈ T` by nothing and the statement is false: coverage constrains only `T`-authored blocks, and a committed anchor's `2f + 1` supporters need contain only `f + 1` reliable ones. That is the case the descent meets and the repair needs, and `black-marlin.md` §14 records what it costs.
+
+#### `Statement`
+
+*def, `BlackMarlin.ViewLiveness.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [DecidableEq BlockId] [Rotation Validator],
+    NoValidatorStuck Validator BlockId Payload ∧
+      NothingHeldBack Validator BlockId Payload ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload), ReadableAtReliableAnchor U
+```
+
+Liveness of the Black Marlin commit rule read at a validator's view, over every fault configuration, rotation and block universe the model admits.
+
+#### `ReliableAnchorPins`
+
+*def, `BlackMarlin.ViewOrder.Statement.lean`*
+
+```lean
+def ReliableAnchorPins (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (ρ : ℕ) (L₁ L₂ : BlockId),
+    Rot.anchor ρ ∈ (Correct : Finset Validator) →
+    f₁.block ρ = some L₁ → f₂.block ρ = some L₂ → L₁ = L₂
+```
+
+**BMT1, a reliable anchor pins every record.** The block flushed at such a round is that round's anchor, and its author is correct, so `no_equivocation` leaves one candidate in the whole universe. No view enters the argument.
+
+#### `AgreeOnReliableStretch`
+
+*def, `BlackMarlin.ViewOrder.Statement.lean`*
+
+```lean
+def AgreeOnReliableStretch (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (ρ d : ℕ),
+    Rot.anchor (ρ + d) ∈ (Correct : Finset Validator) →
+    (f₁.block (ρ + d)).isSome → (f₂.block (ρ + d)).isSome →
+    (∀ i, 0 < i → i ≤ d → (f₁.block (ρ + i)).isSome) →
+    f₁.block ρ = f₂.block ρ
+```
+
+**BMT2, and agreement descends from it.** BMD3 needs a round the two records agree at; a reliably anchored round both flush at is one, by BMT1, with nothing assumed about either validator's view.
+
+#### `OrderAgreesWhenAnchorsReliable`
+
+*def, `BlackMarlin.ViewOrder.Statement.lean`*
+
+```lean
+def OrderAgreesWhenAnchorsReliable (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (f₁ f₂ : Flush U) (τ : TopoSort U) (n : ℕ),
+    (∀ σ, σ < n → Rot.anchor σ ∈ (Correct : Finset Validator)) →
+    (∀ σ, σ < n → ((f₁.block σ).isSome ↔ (f₂.block σ).isSome)) →
+    deliverSeq U f₁ τ n = deliverSeq U f₂ τ n
+```
+
+**BMT3, and the delivered lists coincide.** Where no Byzantine validator anchors a round below `n`, two records that flush at the same rounds deliver one list — Definition 1's Total order, unconditionally, on that stretch.
+
+The hypothesis is tight. `LeanDagTest/BlackMarlin/Divergence` exhibits two records with a single Byzantine anchor below them that deliver two reliably authored blocks in opposite orders.
+
+#### `Statement`
+
+*def, `BlackMarlin.ViewOrder.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [LinearOrder BlockId] [Rotation Validator]
+    (U : BlockUniverse Validator BlockId Payload),
+    ReliableAnchorPins U ∧ AgreeOnReliableStretch U ∧ OrderAgreesWhenAnchorsReliable U
+```
+
+The delivered order of the Black Marlin commit rule where the rotation names reliable validators, over every fault configuration, rotation and block universe the model admits.
 
 #### `SoundOn`
 
@@ -10841,6 +14665,181 @@ structure SoundOn (U : BlockUniverse Validator BlockId Payload)
 ```
 
 **What a universe must still supply after being transformed.** The two conditions every safety result of the hybrid arc consumes: correct validators do not equivocate, and the DAG is covered from round `R` on.
+
+#### `ValidHere`
+
+*structure, `Minnow.Model.Rule.lean`*
+
+```lean
+structure ValidHere (blk : BlockId → Block Validator BlockId Payload)
+    (b : Block Validator BlockId Payload) : Prop where
+  /-- Every edge points to the round immediately below. -/
+  predecessor : ∀ i ∈ b.refs, (blk i).round + 1 = b.round
+  /-- No two edges share a process. -/
+  distinct_creators : ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
+  /-- A non-genesis vertex carries `2f + 1` edges by distinct processes. -/
+  quorum : 0 < b.round → quorumCard Validator ≤ (creators blk b).card
+```
+
+**Validity, as Minnow's communication component defines it**: every edge sits in the round below, no two edges share a process, and a non-genesis vertex carries `2f + 1` of them. No self-parent.
+
+#### `Dag`
+
+*structure, `Minnow.Model.Rule.lean`*
+
+```lean
+structure Dag (Validator BlockId Payload : Type*) [Fintype Validator]
+    [DecidableEq Validator] [Faults Validator] where
+  /-- Which vertices exist. -/
+  ids : Finset BlockId
+  /-- What each id denotes. -/
+  block : BlockId → Block Validator BlockId Payload
+  /-- The DAG is closed under edges. -/
+  complete : ∀ i ∈ ids, ∀ j ∈ (block i).refs, j ∈ ids
+  /-- Every vertex is valid. -/
+  valid : ∀ i ∈ ids, ValidHere block (block i)
+  /-- **Only a faulty process issues two vertices in one round.** Section
+  2 of the paper admits equivocating vertices into the DAG, but a correct
+  process follows its algorithm, which issues one vertex a round. -/
+  correct_single : ∀ i ∈ ids, ∀ j ∈ ids,
+    (block i).creator ∈ (Correct : Finset Validator) →
+    (block i).creator = (block j).creator →
+    (block i).round = (block j).round → i = j
+```
+
+A DAG the communication component can build. Equivocating vertices are admitted: a faulty process may issue two, and both are held.
+
+#### `verticesAt`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def verticesAt (D : Dag Validator BlockId Payload) (r : ℕ) : Finset BlockId :=
+  D.ids.filter (fun b => (D.block b).round = r)
+```
+
+The vertices of a round.
+
+#### `cone`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def cone (D : Dag Validator BlockId Payload) (v : BlockId) : Finset BlockId :=
+  historyFrom D.block v
+```
+
+The causal past of `v`, `v` included.
+
+#### `Reaches`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def Reaches (D : Dag Validator BlockId Payload) (v u : BlockId) : Prop :=
+  u ∈ cone D v
+```
+
+`u ⇝ v`: `u` lies in the causal past of `v`.
+
+#### `Concurrent`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def Concurrent (D : Dag Validator BlockId Payload) (a b : BlockId) : Prop :=
+  ¬ Reaches D a b ∧ ¬ Reaches D b a
+```
+
+Neither vertex is in the other's causal past.
+
+#### `Slot`
+
+*abbrev, `Minnow.Model.Rule.lean`*
+
+```lean
+abbrev Slot (Validator : Type*) := Validator × ℕ
+```
+
+**A slot**: a process and a round, as section 2 of the paper has it — "a slot is a pair `(p, r)` that identifies a proposal … but there may be no, or many such vertices if `p` is faulty".
+
+#### `slotBlocks`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def slotBlocks (D : Dag Validator BlockId Payload) (s : Slot Validator) : Finset BlockId :=
+  D.ids.filter (fun b => (D.block b).creator = s.1 ∧ (D.block b).round = s.2)
+```
+
+The vertices occupying a slot.
+
+#### `pointers`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def pointers (D : Dag Validator BlockId Payload) (l : BlockId) (r : ℕ) : Finset Validator :=
+  creatorsOf D.block ((verticesAt D r).filter (fun q => l ∈ (D.block q).refs))
+```
+
+The processes with a vertex of round `r` carrying an edge to `l`.
+
+#### `Quorum`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def Quorum (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
+  quorumCard Validator ≤ (pointers D l ((D.block l).round + 1)).card
+```
+
+**Quorum**, the first clause of `Φ*s`: `l` is pointed to by `2f + 1` vertices of the round above, issued by distinct processes.
+
+#### `Skipped`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def Skipped (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
+  quorumCard Validator ≤
+    ((creatorsOf D.block (verticesAt D ((D.block l).round + 1)))
+      \ pointers D l ((D.block l).round + 1)).card
+```
+
+**Skip**, the escape in the second clause: `2f + 1` of the round above carry no edge to `l`, counted by **distinct process**, none of whose round-above vertices points at `l`.
+
+Definition 9 writes "there are `2f + 1` vertices", but the quorum clause two lines above counts "vertices issued by distinct processes", and every other quorum in the paper is over processes. `report.md` §19.3 is why the vertex reading cannot be meant: under it a vertex may be committed and skipped at once.
+
+#### `SkippedByVertex`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def SkippedByVertex (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
+  quorumCard Validator ≤ ((verticesAt D ((D.block l).round + 1)).filter
+    (fun q => l ∉ (D.block q).refs)).card
+```
+
+**Skip, counted by vertex** — Definition 9 at the letter. Kept only to state what that reading costs; `Skipped` is what the rule is taken to mean.
+
+#### `CommittedAt`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def CommittedAt (D : Dag Validator BlockId Payload) (L : ℕ → Slot Validator) :
+    ℕ → BlockId → Prop
+  | 0, l => Quorum D l
+  | (k + 1), l =>
+      Quorum D l ∧
+      ∀ j ≤ k, ∃ v ∈ slotBlocks D (L j),
+        Reaches D l v ∨ (Concurrent D l v ∧ (CommittedAt D L j v ∨ Skipped D v))
+```
+
+**`crs*`** (Definition 9), by recursion on the position in `leaders`. `CommittedAt D L k l` is the pattern `Ps*` enabled for the vertex `l` occupying the `k`-th leader slot: a quorum points to it, and every earlier slot is *resolved* — some vertex of that slot lies in `l`'s causal past, or is concurrent with `l` and either committed or skipped.
+
+The existential over `v` is the paper's: "there is a vertex `v′` in slot `s′` in `D` such that …". One vertex of a slot resolving it is what makes `minnow.md` §3 possible.
 
 #### `waveRobin`
 
@@ -10860,7 +14859,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 442 theorems that either another module of the
+The 531 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -14421,6 +18420,45 @@ theorem no_timeout_of_fast {δ : ℕ}
 
 **The timeout never fires.** When delivery, drift and processing together undercut the timeout, every reliable validator builds strictly before its deadline — the fallback branch of `vote_or_wait` is never taken, and consensus proceeds at network speed.
 
+#### `built_succ_le_of_fast_gst`
+
+*theorem, `Reactive.Basic.lean`*
+
+```lean
+theorem built_succ_le_of_fast_gst {δ : ℕ}
+    (hcard : quorumCard Validator ≤ T.card) (hgst : rc.gst ≤ R)
+    (hR : R ≤ S.slotRound k)
+    (hδ : ∀ v ∈ T, ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = S.slotRound k →
+      b ∈ rc.holds v (rc.built ((U.block b).creator) (S.slotRound k) + δ))
+    (hN : S.slotRound k + 1 ≤ N) (hlead : S.leader k ∈ T)
+    (hL : IsLeaderBlock U k L) (hT : T ⊆ (Correct : Finset Validator)) :
+    ∀ v ∈ T, rc.built v (S.slotRound k + 1)
+      ≤ rc.built v (S.slotRound k) + rc.delay + δ + 2 * rc.proc
+```
+
+**Latency, in the deployment's own constants.** Past GST, with a quorum reliable, every reliable validator builds the round above within `Δ + δ + 2 * proc` of entering it: `Δ + proc` of collapsed spread to the last builder, `δ` for the block to arrive, `proc` to build on it. No free spread parameter, and the timeout does not appear.
+
+#### `no_timeout_of_fast_gst`
+
+*theorem, `Reactive.Basic.lean`*
+
+```lean
+theorem no_timeout_of_fast_gst {δ : ℕ}
+    (hcard : quorumCard Validator ≤ T.card) (hgst : rc.gst ≤ R)
+    (hR : R ≤ S.slotRound k)
+    (hδ : ∀ v ∈ T, ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = S.slotRound k →
+      b ∈ rc.holds v (rc.built ((U.block b).creator) (S.slotRound k) + δ))
+    (hN : S.slotRound k + 1 ≤ N) (hlead : S.leader k ∈ T)
+    (hL : IsLeaderBlock U k L) (hT : T ⊆ (Correct : Finset Validator))
+    (hfast : rc.delay + δ + 2 * rc.proc < rc.timeout (S.slotRound k)) :
+    ∀ v ∈ T, rc.built v (S.slotRound k + 1)
+      < rc.built v (S.slotRound k) + rc.timeout (S.slotRound k)
+```
+
+**When the timeout never fires**, in the same constants. At the minimal timeout `2Δ + proc` the hypothesis reads `δ + proc < Δ`: the fallback is dead exactly when actual delivery, plus one processing step, beats the bound the timeout was set against.
+
 #### `certifies`
 
 *theorem, `Reactive.Mysticeti.lean`*
@@ -16708,7 +20746,1050 @@ theorem holds : Statement
 theorem holds : Statement
 ```
 
+### Black Marlin: the three-round commit rule
+
+#### `mem_linkers`
+
+*theorem, `BlackMarlin.Helpers.Rules.lean`*
+
+```lean
+theorem mem_linkers {L L' : BlockId} {r : ℕ} :
+    L' ∈ linkers U L r ↔
+      IsAnchor U (r + 1) L' ∧ L ∈ (U.block L').refs ∧ Supported U L' (r + 1)
+```
+
+Membership in `linkers`, unfolded.
+
+#### `eq_of_supported`
+
+*theorem, `BlackMarlin.Helpers.Rules.lean`*
+
+```lean
+theorem eq_of_supported {L₁ L₂ : BlockId} {r : ℕ}
+    (h₁ : Supported U L₁ r) (h₂ : Supported U L₂ r)
+    (hcr : (U.block L₁).creator = (U.block L₂).creator) : L₁ = L₂
+```
+
+**The paper's Lemma 2.** Two supported blocks of one author at one round are the same block: their support quorums share `n − 2f ≥ f + 1` authors, each supporting both, and all of them equivocators. Needs only `n ≥ 3f + 1`, which is the whole committee of this arc.
+
+#### `eq_of_isAnchor_of_supported`
+
+*theorem, `BlackMarlin.Helpers.Rules.lean`*
+
+```lean
+theorem eq_of_isAnchor_of_supported {L₁ L₂ : BlockId} {r : ℕ}
+    (ha₁ : IsAnchor U r L₁) (ha₂ : IsAnchor U r L₂)
+    (h₁ : Supported U L₁ r) (h₂ : Supported U L₂ r) : L₁ = L₂
+```
+
+Lemma 2 for anchors: at most one anchor block of a round is supported, so at most one is committed there.
+
+#### `reaches_of_supported`
+
+*theorem, `BlackMarlin.Helpers.Rules.lean`*
+
+```lean
+theorem reaches_of_supported {L : BlockId} {r : ℕ} (h : Supported U L r)
+    {c : BlockId} (hc : c ∈ U.ids) (hcr : r + 2 ≤ (U.block c).round) :
+    Reaches U c L
+```
+
+**The paper's Lemma 4.** A supported block is in the causal history of **every** block two rounds above it or higher — Byzantine-authored included, since validity is structural.
+
+The quorum behind the support contains `f + 1` correct authors, each with one round-`(r + 1)` block, and a round-`(r + 2)` block names `n − f` of the at most `n` authors of that round, so it cannot miss all of them. The core's `reaches_of_correct_support_of_card` is that step and `reaches_pred_of_round_le` carries it upward.
+
+#### `reaches_of_committed_of_le`
+
+*theorem, `BlackMarlin.Helpers.Rules.lean`*
+
+```lean
+theorem reaches_of_committed_of_le {L₁ L₂ : BlockId} {r₁ r₂ : ℕ}
+    (h₁ : Committed U L₁ r₁) (h₂ : Committed U L₂ r₂) (hr : r₁ ≤ r₂) :
+    L₁ = L₂ ∨ Reaches U L₂ L₁
+```
+
+**The paper's Lemma 5**, in the form the round comparison gives: of two committed anchors, the lower lies in the causal history of the higher.
+
+Three cases, one per clause of the rule. At equal rounds Lemma 2 makes them the same block. At a gap of one the linking anchor of the lower is supported at the same round as the higher one, so Lemma 2 identifies the two and the link is a direct reference. At a gap of two or more Lemma 4 applies to the higher block itself.
+
+#### `history_subset_of_committed`
+
+*theorem, `BlackMarlin.Helpers.Rules.lean`*
+
+```lean
+theorem history_subset_of_committed {L₁ L₂ : BlockId} {r₁ r₂ : ℕ}
+    (h₁ : Committed U L₁ r₁) (h₂ : Committed U L₂ r₂) (hr : r₁ ≤ r₂) :
+    history U L₁ ⊆ history U L₂
+```
+
+**The prefix corollary of Lemma 5.** Of two committed anchors, the causal history of the lower is contained in that of the higher — what one delivers, the other delivers too.
+
+#### `quorum_authorsAt_of_lt`
+
+*theorem, `BlackMarlin.Helpers.Rules.lean`*
+
+```lean
+theorem quorum_authorsAt_of_lt {c : BlockId} {r : ℕ} (hc : c ∈ U.ids)
+    (hlt : r < (U.block c).round) :
+    quorumCard Validator ≤ (authorsAt U r).card
+```
+
+**The paper's Lemma 3.** Below the highest round of the DAG, every round carries blocks from a quorum of distinct authors.
+
+Downward induction on the gap: a valid block names `n − f` distinct authors one round below, and those authors hold blocks there.
+
+#### `committed_of_committedIn`
+
+*theorem, `BlackMarlin.Helpers.Decision.lean`*
+
+```lean
+theorem committed_of_committedIn {L : BlockId} {r : ℕ} (h : CommittedIn U V L r) :
+    Committed U L r
+```
+
+**The view reading is sound.** What a validator commits by reading its own DAG, the rule commits over the universe.
+
+#### `mem_ids_of_committedIn`
+
+*theorem, `BlackMarlin.Helpers.Decision.lean`*
+
+```lean
+theorem mem_ids_of_committedIn {L : BlockId} {r : ℕ} (h : CommittedIn U V L r) :
+    L ∈ V.ids
+```
+
+A validator that commits an anchor holds it. Not a clause of `CommittedIn` but a consequence of one: the linking anchor is in the view, the view is closed under references, and the link is a reference.
+
+#### `holds`
+
+*theorem, `BlackMarlin.Safety.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `supported_of_votesAt`
+
+*theorem, `BlackMarlin.Helpers.Liveness.lean`*
+
+```lean
+theorem supported_of_votesAt (hcard : quorumCard Validator ≤ T.card)
+    (hpop1 : PopulatedOn U T (r + 1)) (hv : VotesAt U T r L) :
+    Supported U L r
+```
+
+**The counting step**, the core's `directCommit_of_votesAt` at this arc's `Supported` — the same predicate under another name, so the proof is the same three lines. A quorum-sized `T` whose blocks one round above `r` all reference `L` supports it.
+
+#### `committed_of_run`
+
+*theorem, `BlackMarlin.Helpers.Liveness.lean`*
+
+```lean
+theorem committed_of_run (hcard : quorumCard Validator ≤ T.card)
+    (hs : SynchronisedOn U T R) (hR : R ≤ r)
+    (hpop : PopulatedOn U T r) (hpop1 : PopulatedOn U T (r + 1))
+    (hpop2 : PopulatedOn U T (r + 2))
+    (hlead : Rot.anchor r ∈ T) (hlead1 : Rot.anchor (r + 1) ∈ T) :
+    ∃ L, IsAnchor U r L ∧ Committed U L r
+```
+
+**BML1.** Two consecutive reliably anchored rounds, over three populated rounds, are committed.
+
+The link costs no hypothesis of its own. The round-`(r+1)` anchor is a reliable author's block at the round above `r`, so the very coverage fact that supported the round-`r` anchor also makes that anchor reference it; and the round-`(r+1)` anchor is supported by the same argument one round up, which is the third populated round.
+
+#### `committedIn_full_iff`
+
+*theorem, `BlackMarlin.Helpers.Liveness.lean`*
+
+```lean
+theorem committedIn_full_iff :
+    CommittedIn U (View.full U) L r ↔ Committed U L r
+```
+
+**BML2.** The rule and the full view's reading of it coincide.
+
+#### `mem_history_of_mem`
+
+*theorem, `BlackMarlin.Helpers.Liveness.lean`*
+
+```lean
+theorem mem_history_of_mem (hcard : quorumCard Validator ≤ T.card)
+    (hs : SynchronisedOn U T R) (hR : R ≤ r) (hpop1 : PopulatedOn U T (r + 1))
+    (hL : L ∈ U.ids) (hLr : (U.block L).round = r) (hLc : (U.block L).creator ∈ T)
+    {c : BlockId} (hc : c ∈ U.ids) (hcr : r + 2 ≤ (U.block c).round) :
+    L ∈ history U c
+```
+
+**BML3.** A reliable author's block lies in the causal history of every block two rounds above it — so it is delivered by whichever anchor the rule admits up there.
+
+No clause of the commit rule is consumed: coverage gives the block a support quorum, and BM2 carries it upward.
+
+#### `recurrence`
+
+*theorem, `BlackMarlin.Helpers.Liveness.lean`*
+
+```lean
+theorem recurrence (hcard : quorumCard Validator ≤ T.card)
+    (hfair : Liveness.FairRun T 2) :
+    ∃ r', r ≤ r' ∧ R ≤ r' ∧ Liveness.CommitsAtRound BlockId Payload T R r'
+```
+
+**BML4.** Under a recurring run of two, the rotation names a round — before any DAG is fixed — that every DAG grown two rounds past it and covered from `R` commits.
+
+#### `roundRobin_fairRun`
+
+*theorem, `BlackMarlin.Helpers.Liveness.lean`*
+
+```lean
+theorem roundRobin_fairRun [F : Faults (Fin n)] :
+    Liveness.FairRun (Rot := Liveness.roundRobin n hn) (Correct : Finset (Fin n)) 2
+```
+
+**BML5.** Round-robin puts two consecutive reliable anchors arbitrarily far out, at every committee and whichever validators are Byzantine. The pair recurs once per cycle, which is what carries it past any given round.
+
+#### `supportedIn_of_synchronised`
+
+*theorem, `BlackMarlin.Helpers.Liveness.lean`*
+
+```lean
+theorem supportedIn_of_synchronised {T : Finset Validator} {R ρ : ℕ}
+    {V : View Validator BlockId Payload U}
+    (hcard : quorumCard Validator ≤ T.card)
+    (hs : SynchronisedOn U T R) (hR : R ≤ ρ) (hpop : PopulatedOn U T (ρ + 1))
+    (hL : L ∈ U.ids) (hLr : (U.block L).round = ρ)
+    (hLc : (U.block L).creator ∈ T)
+    (hheld : ∀ b ∈ U.ids, (U.block b).creator ∈ T → (U.block b).round = ρ + 1 →
+      b ∈ V.ids) :
+    SupportedIn U V L ρ
+```
+
+**A reliable author's anchor is seen as supported**, by any view that holds the reliable blocks of the round above, once coverage has taken hold.
+
+#### `holds`
+
+*theorem, `BlackMarlin.Liveness.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `le_built`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem le_built {v : Validator} (hv : v ∈ T) : ∀ n ≤ pc.top v, n ≤ pc.built v n
+```
+
+Rounds advance real time, over the rounds a validator reached.
+
+#### `driftOn_of_catchup`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem driftOn_of_catchup (hcard : quorumCard Validator ≤ T.card)
+    (hgst : pc.gst ≤ R) :
+    DriftOn pc.built T R (pc.delay + pc.proc) N
+```
+
+Drift collapses here as it does under the timed discipline, from the trunk's catch-up rule with `le_built` supplied by `built_lt`.
+
+#### `votes`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem votes (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card) (hgst : pc.gst ≤ R)
+    (hto : ∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n)
+    (hR : R ≤ r) (hN : r + 1 ≤ N)
+    (hlead : Rot.anchor r ∈ T) (hA : IsAnchor U r A) :
+    VotesAt U T r A
+```
+
+**Every reliable block at the round above a reliable anchor references it.** Past GST, with the timeout clearing `2Δ + proc`, whether by the exit or by the fallback.
+
+The fallback is the only argument: the anchor holds its own block when it builds, convergence carries it across within `delay`, the collapsed drift and the full timeout place that arrival before the waiter's build, and the fallback clause then obliges the reference. The exit needs nothing — concluding the round required holding the anchor, so the block cites it.
+
+#### `reactive_committed`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem reactive_committed (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card) (hgst : pc.gst ≤ R)
+    (hto : ∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n)
+    (hR : R ≤ r) (hN : r + 2 ≤ N)
+    (hlead : Rot.anchor r ∈ T) (hlead1 : Rot.anchor (r + 1) ∈ T) :
+    ∃ L, IsAnchor U r L ∧ Committed U L r
+```
+
+**Reactive liveness.** A run of two reliable anchors past GST is committed, with no coverage hypothesis: the reactive discipline supplies exactly the references the commit rule counts, and production comes off the trunk.
+
+#### `concludesAt_of_holds`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem concludesAt_of_holds {v : Validator} {t : ℕ}
+    (hcard : quorumCard Validator ≤ T.card) (hv : v ∈ T) (hN : r + 2 ≤ N)
+    (hheld : ∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n → b ∈ pc.holds v t)
+    (ha0 : Rot.anchor r ∈ T) (ha1 : Rot.anchor (r + 1) ∈ T)
+    (ha2 : Rot.anchor (r + 2) ∈ T)
+    (hvotes : ∀ n, r ≤ n → n < r + 2 → ∀ A, IsAnchor U n A → VotesAt U T n A) :
+    ConcludesAt U (pc.toPaceCore.viewAt v t) (r + 2)
+```
+
+**The exit fires.** A validator holding every reliable block of the two rounds below `r + 2` can conclude round `r + 2` — provided the anchors of rounds `r`, `r + 1` and `r + 2` are all reliable, and the reliable blocks of rounds `r + 1` and `r + 2` reference the anchors beneath them.
+
+Three anchors, where the commit rule asks for two. `quorum` and `anchor` are supplied by the round-`(r+2)` blocks, `suppAnchor(r+1)` by those same blocks referencing the round-`(r+1)` anchor, and `suppAnchor(r)` by the round-`(r+1)` blocks referencing the round-`r` anchor.
+
+#### `concludesAt_of_sustained`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem concludesAt_of_sustained {v : Validator} {t₀ t : ℕ}
+    (hcard : quorumCard Validator ≤ T.card) (hv : v ∈ T) (hN : r + 2 ≤ N)
+    (hheld : ∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n → b ∈ pc.holds v t)
+    (hprev : SuppAnchorIn U (pc.toPaceCore.viewAt v t₀) r) (ht : t₀ ≤ t)
+    (ha1 : Rot.anchor (r + 1) ∈ T) (ha2 : Rot.anchor (r + 2) ∈ T)
+    (hvotes : ∀ A, IsAnchor U (r + 1) A → VotesAt U T (r + 1) A) :
+    ConcludesAt U (pc.toPaceCore.viewAt v t) (r + 2)
+```
+
+**The exit, sustained.** A validator that already saw the round-`r` anchor supported needs neither that anchor reliable nor the votes at round `r`: the check it passed to conclude the previous round carries forward. Entering the fast path costs a run of three reliable anchors; staying on it costs one more per round.
+
+#### `built_succ_le_of_fast`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem built_succ_le_of_fast {δ : ℕ} {v : Validator}
+    (hcard : quorumCard Validator ≤ T.card) (hv : v ∈ T) (hN : r + 3 ≤ N)
+    (hδ : ∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n →
+      b ∈ pc.holds v (pc.built ((U.block b).creator) n + δ))
+    (hD : ∀ u ∈ T, ∀ w ∈ T, pc.built u (r + 2) ≤ pc.built w (r + 2) + D)
+    (ha0 : Rot.anchor r ∈ T) (ha1 : Rot.anchor (r + 1) ∈ T)
+    (ha2 : Rot.anchor (r + 2) ∈ T)
+    (hvotes : ∀ n, r ≤ n → n < r + 2 → ∀ A, IsAnchor U n A → VotesAt U T n A) :
+    pc.built v (r + 3) ≤ pc.built v (r + 2) + D + δ + pc.proc
+```
+
+**Latency tracks delivery.** When every reliable block of the two rounds below reaches every reliable validator within `δ` of its build, the next round is entered within `D + δ + proc` of round entry: drift to the last builder, `δ` to arrive, `proc` to conclude. The timeout does not appear.
+
+#### `no_timeout_of_fast`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem no_timeout_of_fast {δ : ℕ} {v : Validator}
+    (hcard : quorumCard Validator ≤ T.card) (hv : v ∈ T) (hN : r + 3 ≤ N)
+    (hδ : ∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n →
+      b ∈ pc.holds v (pc.built ((U.block b).creator) n + δ))
+    (hD : ∀ u ∈ T, ∀ w ∈ T, pc.built u (r + 2) ≤ pc.built w (r + 2) + D)
+    (ha0 : Rot.anchor r ∈ T) (ha1 : Rot.anchor (r + 1) ∈ T)
+    (ha2 : Rot.anchor (r + 2) ∈ T)
+    (hvotes : ∀ n, r ≤ n → n < r + 2 → ∀ A, IsAnchor U n A → VotesAt U T n A)
+    (hfast : D + δ + pc.proc < pc.timeout (r + 2)) :
+    pc.built v (r + 3) < pc.built v (r + 2) + pc.timeout (r + 2)
+```
+
+**The timeout never fires.** When delivery, drift and processing together undercut the timeout, every reliable validator concludes the round strictly before its deadline: the fallback branch of `anchor_or_wait` is never taken, and the protocol runs at network speed.
+
+#### `built_succ_le_of_fast_gst`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem built_succ_le_of_fast_gst {δ : ℕ} {v : Validator}
+    (hcard : quorumCard Validator ≤ T.card) (hv : v ∈ T) (hN : r + 3 ≤ N)
+    (hgst : pc.gst ≤ R) (hR : R ≤ r + 2)
+    (hδ : ∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n →
+      b ∈ pc.holds v (pc.built ((U.block b).creator) n + δ))
+    (ha0 : Rot.anchor r ∈ T) (ha1 : Rot.anchor (r + 1) ∈ T)
+    (ha2 : Rot.anchor (r + 2) ∈ T)
+    (hvotes : ∀ n, r ≤ n → n < r + 2 → ∀ A, IsAnchor U n A → VotesAt U T n A) :
+    pc.built v (r + 3) ≤ pc.built v (r + 2) + pc.delay + δ + 2 * pc.proc
+```
+
+**Latency, in the deployment's own constants.** Past GST, with a quorum reliable, the spread needs no supplying: catch-up collapses it to `Δ + proc`, and the bound reads `Δ + δ + 2 * proc`.
+
+#### `no_timeout_of_fast_gst`
+
+*theorem, `BlackMarlin.Helpers.Reactive.lean`*
+
+```lean
+theorem no_timeout_of_fast_gst {δ : ℕ} {v : Validator}
+    (hcard : quorumCard Validator ≤ T.card) (hv : v ∈ T) (hN : r + 3 ≤ N)
+    (hgst : pc.gst ≤ R) (hR : R ≤ r + 2)
+    (hδ : ∀ n, r + 1 ≤ n → n ≤ r + 2 → ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = n →
+      b ∈ pc.holds v (pc.built ((U.block b).creator) n + δ))
+    (ha0 : Rot.anchor r ∈ T) (ha1 : Rot.anchor (r + 1) ∈ T)
+    (ha2 : Rot.anchor (r + 2) ∈ T)
+    (hvotes : ∀ n, r ≤ n → n < r + 2 → ∀ A, IsAnchor U n A → VotesAt U T n A)
+    (hfast : pc.delay + δ + 2 * pc.proc < pc.timeout (r + 2)) :
+    pc.built v (r + 3) < pc.built v (r + 2) + pc.timeout (r + 2)
+```
+
+**When the timeout never fires**, in the same constants. At the minimal timeout `2Δ + proc` the hypothesis reads `δ + proc < Δ`.
+
+#### `holds`
+
+*theorem, `BlackMarlin.Reactive.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `committedIn_local`
+
+*theorem, `BlackMarlin.Helpers.Agreement.lean`*
+
+```lean
+theorem committedIn_local (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card) (hgst : pc.gst ≤ R)
+    (hto : ∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n)
+    (hR : R ≤ r) (hN : r + 2 ≤ N)
+    (hlead : Rot.anchor r ∈ T) (hlead1 : Rot.anchor (r + 1) ∈ T) :
+    ∃ L, IsAnchor U r L ∧ Committed U L r ∧
+      ∀ v ∈ T, CommittedIn U
+        (pc.toPaceCore.viewAt v (max (pc.latest (r + 1)) (pc.latest (r + 2)) + pc.delay))
+        L r
+```
+
+**The commit, on every reliable validator's own view.** A run of two reliable anchors past GST is committed by each of them separately, at the explicit time the two rounds' blocks have converged — the local counterpart of `reactive_committed`, which states the same verdict over the universe.
+
+This is what makes agreement a statement about validators rather than about the DAG: the anchor is not merely committable, it is committed by each of them.
+
+#### `agreement`
+
+*theorem, `BlackMarlin.Helpers.Agreement.lean`*
+
+```lean
+theorem agreement (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card) (hgst : pc.gst ≤ R)
+    (hto : ∀ n, R ≤ n → 2 * pc.delay + pc.proc ≤ pc.timeout n)
+    (hR : R ≤ r) (hN : r + 2 ≤ N)
+    (hlead : Rot.anchor r ∈ T) (hlead1 : Rot.anchor (r + 1) ∈ T)
+    {V : View Validator BlockId Payload U} {A B : BlockId} {ρ : ℕ} (hρ : ρ ≤ r)
+    (hA : CommittedIn U V A ρ) (hB : B ∈ history U A) :
+    ∃ L, IsAnchor U r L ∧ B ∈ history U L ∧
+      ∀ v ∈ T, CommittedIn U
+        (pc.toPaceCore.viewAt v (max (pc.latest (r + 1)) (pc.latest (r + 2)) + pc.delay))
+        L r
+```
+
+**Agreement.** What one validator delivered with an anchor committed at round `ρ`, every reliable validator delivers with the anchor they each commit at any reliably anchored round `r ≥ ρ`.
+
+The two halves are the prefix result — the lower committed anchor's causal history is contained in the higher's — and the local commit above, which says the higher anchor really is committed by each of them.
+
+#### `holds`
+
+*theorem, `BlackMarlin.Agreement.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `mem_coneAnchors`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem mem_coneAnchors {A X : BlockId} :
+    X ∈ coneAnchors U A ρ ↔ IsAnchor U ρ X ∧ X ∈ history U A
+```
+
+Membership in `coneAnchors`, unfolded.
+
+#### `coneAnchors_subsingleton`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem coneAnchors_subsingleton (hM : M ∈ U.ids) (hMr : (U.block M).round = ρ + 1) :
+    ∀ X ∈ coneAnchors U M ρ, ∀ Y ∈ coneAnchors U M ρ, X = Y
+```
+
+**The step is unambiguous.** At most one anchor of round `ρ` lies in the cone of a round-`(ρ + 1)` block: the round-`ρ` members of that cone are its references, and `distinct_creators` allows one block per author. No tie-break is needed where the descent steps by one round.
+
+#### `coneAnchors_subsingleton_of_correct`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem coneAnchors_subsingleton_of_correct {C : BlockId}
+    (hc : Rot.anchor ρ ∈ (Correct : Finset Validator)) :
+    ∀ X ∈ coneAnchors U C ρ, ∀ Y ∈ coneAnchors U C ρ, X = Y
+```
+
+**A Byzantine anchor is necessary for a tie.** Where the round's elected validator is reliable it has one block at that round, so the candidates are a singleton however deep the cone the descent is reading — no skipped round can produce a choice there.
+
+#### `block_eq_of_succ`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem block_eq_of_succ {f₁ f₂ : Flush U}
+    (hM₁ : f₁.block (ρ + 1) = some M) (hM₂ : f₂.block (ρ + 1) = some M) :
+    f₁.block ρ = f₂.block ρ
+```
+
+**Two records that agree at a round agree at the round below it.** Where both flush, the step makes their blocks candidates of one cone and the subsingleton makes them equal; where one does not flush, the cone is empty and neither does.
+
+#### `block_eq_of_add`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem block_eq_of_add {f₁ f₂ : Flush U} :
+    ∀ (d ρ : ℕ), f₁.block (ρ + d) = f₂.block (ρ + d) →
+      (∀ i, 0 < i → i ≤ d → (f₁.block (ρ + i)).isSome) →
+      f₁.block ρ = f₂.block ρ
+```
+
+**And so throughout a stretch they both descend.** Agreement at `ρ + d` propagates down to `ρ`, provided the record flushes at every round strictly between.
+
+#### `block_eq_of_committed`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem block_eq_of_committed {f₁ f₂ : Flush U} {L₁ L₂ : BlockId}
+    (h₁ : f₁.block σ = some L₁) (h₂ : f₂.block σ = some L₂)
+    (hc₁ : Committed U L₁ σ) (hc₂ : Committed U L₂ σ) :
+    f₁.block σ = f₂.block σ
+```
+
+**The starting point.** Two records that flush directly committed anchors at one round flush the same block, by anchor uniqueness. This is what a round every reliable validator commits at supplies.
+
+#### `coneAnchors_succ_nonempty_of_committed`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem coneAnchors_succ_nonempty_of_committed (h : Committed U L ρ)
+    {C : BlockId} (hC : C ∈ U.ids) (hCr : ρ + 3 ≤ (U.block C).round) :
+    (coneAnchors U C (ρ + 1)).Nonempty
+```
+
+**The link clause keeps the descent from skipping.** Above a committed anchor at round `ρ` sits a *supported* anchor at `ρ + 1`, so by propagation it lies in the cone of every block from round `ρ + 3` up: a descent arriving there finds a candidate rather than an empty round.
+
+This is the second clause of the commit rule doing a second job. Safety uses it in one case of one theorem; here it is what stops the descent from reaching a round where two twins of an equivocating anchor are both candidates.
+
+#### `ledgerSet_mono`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem ledgerSet_mono (f : Flush U) {n m : ℕ} (h : n ≤ m) :
+    ledgerSet U f n ⊆ ledgerSet U f m
+```
+
+**Nothing is ever dropped.** The ledger only grows as the record reaches higher rounds.
+
+#### `ledgerSet_agree`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem ledgerSet_agree {f₁ f₂ : Flush U} {n : ℕ}
+    (h : ∀ ρ, ρ < n → f₁.block ρ = f₂.block ρ) :
+    ledgerSet U f₁ n = ledgerSet U f₂ n
+```
+
+**Two records that agree output the same blocks.**
+
+#### `outputAt_unique`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem outputAt_unique {f : Flush U} {b : BlockId} {ρ₁ ρ₂ : ℕ}
+    (h₁ : OutputAt U f b ρ₁) (h₂ : OutputAt U f b ρ₂) : ρ₁ = ρ₂
+```
+
+**A block enters the ledger once.** Its position is not merely stable over time — there is no second round it could have entered at.
+
+#### `outputAt_agree`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem outputAt_agree {f₁ f₂ : Flush U} {n : ℕ} {b : BlockId} {ρ : ℕ}
+    (h : ∀ σ, σ < n → f₁.block σ = f₂.block σ) (hρ : ρ < n)
+    (ho : OutputAt U f₁ b ρ) : OutputAt U f₂ b ρ
+```
+
+**And two records that agree concur on which round that is.**
+
+#### `mem_ledgerSet_of_block`
+
+*theorem, `BlackMarlin.Helpers.Ledger.lean`*
+
+```lean
+theorem mem_ledgerSet_of_block (f : Flush U)
+    (hL : f.block ρ = some L) {b : BlockId} (hb : Reaches U L b) :
+    b ∈ ledgerSet U f (ρ + 1)
+```
+
+**A flushed anchor's cone is in the ledger.** The link between the record and what it delivers, and with the recurrence of committed anchors the sense in which the ledger extends.
+
+#### `holds`
+
+*theorem, `BlackMarlin.Ledger.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `mem_anchorsOf`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem mem_anchorsOf {X : BlockId} :
+    X ∈ anchorsOf U s ↔ X ∈ s ∧ IsAnchorBlock U X
+```
+
+#### `mem_strongOf`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem mem_strongOf {X : BlockId} :
+    X ∈ strongOf U B ↔ X ≠ B ∧ X ∈ history U B
+```
+
+#### `mem_maxAnchor`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem mem_maxAnchor {X : BlockId} :
+    X ∈ maxAnchor U s ↔ X ∈ anchorsOf U s ∧ (U.block X).round = maxAnchorRound U s
+```
+
+#### `pick_mem`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem pick_mem {t : Finset BlockId} (h : pick t = some A) : A ∈ t
+```
+
+#### `pick_isSome`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem pick_isSome {t : Finset BlockId} (h : t.Nonempty) : (pick t).isSome
+```
+
+#### `descend_mem`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem descend_mem (h : descend U B = some A) : A ∈ maxAnchor U (strongOf U B)
+```
+
+**The descent's choice is one of the candidates.**
+
+#### `descend_isSome`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem descend_isSome (h : (anchorsOf U (strongOf U B)).Nonempty) :
+    (descend U B).isSome
+```
+
+**And it makes one whenever an anchor lies below.** The gap-minimal survivors of a nonempty candidate set are themselves nonempty.
+
+#### `round_descend`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem round_descend (h : descend U B = some A) :
+    (U.block A).round = maxAnchorRound U (strongOf U B)
+```
+
+The chosen block sits at the highest anchor round below.
+
+#### `descend_mem_ids`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem descend_mem_ids (hB : B ∈ U.ids) (h : descend U B = some A) : A ∈ U.ids
+```
+
+#### `descend_round_lt`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem descend_round_lt (hB : B ∈ U.ids) (h : descend U B = some A) :
+    (U.block A).round < (U.block B).round
+```
+
+**A step drops the round strictly**, which is what makes the fuelled descent exhaust.
+
+#### `strongOf_eq_empty_of_round_zero`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem strongOf_eq_empty_of_round_zero (hB : B ∈ U.ids) (h0 : (U.block B).round = 0) :
+    strongOf U B = ∅
+```
+
+A round-`0` block reaches only itself.
+
+#### `flushRecord_suffix`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem flushRecord_suffix (hB : B ∈ U.ids) {σ : ℕ} (h : flushRecord U B σ = some M)
+    {ρ : ℕ} (hρ : ρ ≤ σ) : flushRecord U B ρ = flushRecord U M ρ
+```
+
+**The record below a visited anchor is that anchor's own record.** This is what makes the descent's agreement a consequence rather than a hypothesis: below a block both records reached, both are the record of that block.
+
+#### `flushRecord_isAnchor`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem flushRecord_isAnchor (hB : B ∈ U.ids) (haB : IsAnchorBlock U B)
+    {ρ : ℕ} {L : BlockId} (h : flushRecord U B ρ = some L) : IsAnchor U ρ L
+```
+
+#### `flushRecord_step`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem flushRecord_step (hB : B ∈ U.ids) {ρ : ℕ} {L M : BlockId}
+    (hL : flushRecord U B ρ = some L) (hM : flushRecord U B (ρ + 1) = some M) :
+    L ∈ (U.block M).refs
+```
+
+**The descent steps by one round when it can.** Where the record holds blocks at `ρ` and `ρ + 1`, the lower is a reference of the higher — `Flush.step`, derived rather than assumed.
+
+#### `flushRecord_dense`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem flushRecord_dense (hB : B ∈ U.ids) {ρ : ℕ} {M : BlockId}
+    (hM : flushRecord U B (ρ + 1) = some M) (hcone : (coneAnchors U M ρ).Nonempty) :
+    (flushRecord U B ρ).isSome
+```
+
+**And does not pass over an anchor it references** — `Flush.dense`, also derived: an anchor of the round below is a candidate, and the descent takes the highest round its candidates reach.
+
+#### `flushRecord_agree`
+
+*theorem, `BlackMarlin.Helpers.Descent.lean`*
+
+```lean
+theorem flushRecord_agree {B₁ B₂ : BlockId} (h₁ : B₁ ∈ U.ids) (h₂ : B₂ ∈ U.ids)
+    {σ : ℕ} {M : BlockId}
+    (hm₁ : flushRecord U B₁ σ = some M) (hm₂ : flushRecord U B₂ σ = some M)
+    {ρ : ℕ} (hρ : ρ ≤ σ) : flushRecord U B₁ ρ = flushRecord U B₂ ρ
+```
+
+**Agreement, with no definedness hypothesis.** Two descents that reach the same block at a round agree at every round below it: below that block both records *are* its record. This is what `Ledger`'s BMD3 has to assume of an abstract record and what the descent supplies.
+
+#### `holds`
+
+*theorem, `BlackMarlin.Descent.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `idxOf_le_idxOf_anchor`
+
+*theorem, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+theorem idxOf_le_idxOf_anchor {L b : BlockId} (hL : f.block ρ = some L)
+    (hb : b ∈ segment U f τ ρ) :
+    (segment U f τ ρ).idxOf b ≤ (segment U f τ ρ).idxOf L
+```
+
+**The anchor is last in its segment.** L26 flushes `past(B) \ 𝒟` and L30 then emits `B`; a topological sort of `history U B \ 𝒟` puts `B` last of its own accord, so the two are one list.
+
+#### `deliverSeq_agree`
+
+*theorem, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+theorem deliverSeq_agree (h : ∀ σ, σ < n → f₁.block σ = f₂.block σ) :
+    deliverSeq U f₁ τ n = deliverSeq U f₂ τ n
+```
+
+**Records that agree below a round output the same list.** Definition 1's Total order follows: neither can deliver two blocks in opposite orders, because there is one list.
+
+#### `deliverSeq_prefix`
+
+*theorem, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+theorem deliverSeq_prefix (h : n ≤ m) :
+    deliverSeq U f τ n <+: deliverSeq U f τ m
+```
+
+**And what is output is never retracted**: the list through a round is a prefix of the list through any later one.
+
+#### `deliverSeq_pairwise`
+
+*theorem, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+theorem deliverSeq_pairwise :
+    (deliverSeq U f τ n).Pairwise (fun a b => key U a ≠ key U b)
+```
+
+**Integrity.** No author-and-round is output twice.
+
+#### `deliverSeq_mem_ids`
+
+*theorem, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+theorem deliverSeq_mem_ids {b : BlockId} (hb : b ∈ deliverSeq U f τ n) : b ∈ U.ids
+```
+
+Everything output was flushed, hence is a block of the universe.
+
+#### `deliverSeq_key_mem`
+
+*theorem, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+theorem deliverSeq_key_mem {b : BlockId} (hb : b ∈ ledgerSeq U f τ n) :
+    ∃ c ∈ deliverSeq U f τ n, key U c = key U b
+```
+
+**Every author-and-round flushed is output**, by that block or by one of the same author and round.
+
+#### `deliverSeq_of_correct`
+
+*theorem, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+theorem deliverSeq_of_correct {b : BlockId} (hb : b ∈ ledgerSeq U f τ n)
+    (hc : (U.block b).creator ∈ (Correct : Finset Validator)) :
+    b ∈ deliverSeq U f τ n
+```
+
+**And for a correct author, by the block itself.** A correct validator has one block per round, so the filter of L27 has no twin to prefer.
+
+#### `mem_ledgerSeq_of_mem_history`
+
+*theorem, `BlackMarlin.Helpers.Order.lean`*
+
+```lean
+theorem mem_ledgerSeq_of_mem_history :
+    ∀ (ρ : ℕ) (L b : BlockId), f.block ρ = some L → b ∈ history U L → ρ < n →
+      b ∈ ledgerSeq U f τ n
+```
+
+**What a flushed anchor's cone holds is flushed**, at that round or at a lower one where it was first reached.
+
+#### `holds`
+
+*theorem, `BlackMarlin.Order.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `suppCandidates_subsingleton`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem suppCandidates_subsingleton :
+    ∀ A ∈ suppCandidates U B, ∀ C ∈ suppCandidates U B, A = C
+```
+
+**At most one candidate is supported.** The candidates of a step share a round, and an anchor round has one supported anchor (BM1) — so where the filter bites there is nothing left to break ties over.
+
+#### `descendSupp_supported`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem descendSupp_supported (h : descendSupp U B = some L)
+    (hne : (suppCandidates U B).Nonempty) : Supported U L (U.block L).round
+```
+
+**The repaired choice is supported where one is.**
+
+#### `descendSupp_isSome_iff`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem descendSupp_isSome_iff :
+    (descendSupp U B).isSome ↔ (descend U B).isSome
+```
+
+**The repair never stalls the descent.**
+
+#### `descendSupp_round_eq`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem descendSupp_round_eq {L' : BlockId} (h : descendSupp U B = some L)
+    (h' : descend U B = some L') : (U.block L).round = (U.block L').round
+```
+
+**And never moves a step to another round.**
+
+#### `descendSupp_eq_descend`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem descendSupp_eq_descend (h : ¬ (suppCandidates U B).Nonempty) :
+    descendSupp U B = descend U B
+```
+
+**Where no candidate is supported, the repair is the original rule.** So it refines L21–L24 rather than replacing it.
+
+#### `block_eq_of_supportPreferring`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem block_eq_of_supportPreferring {f₁ f₂ : Flush U}
+    (hp₁ : SupportPreferring U f₁) (hp₂ : SupportPreferring U f₂)
+    (hs₁ : (f₁.block ρ).isSome) (hs₂ : (f₂.block ρ).isSome)
+    (hex : ∃ A, IsAnchor U ρ A ∧ Supported U A ρ) :
+    f₁.block ρ = f₂.block ρ
+```
+
+And so they agree there.
+
+#### `mem_suppAnchorsOf`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem mem_suppAnchorsOf {A : BlockId} {s : Finset BlockId} :
+    A ∈ suppAnchorsOf U s ↔ A ∈ anchorsOf U s ∧ Supported U A (U.block A).round
+```
+
+#### `descendS_mem`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem descendS_mem (h : descendS U B = some L) :
+    L ∈ suppAnchorsOf U (strongOf U B) ∧
+      (U.block L).round = maxSuppRound U (strongOf U B)
+```
+
+#### `descendS_isSome`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem descendS_isSome (h : (suppAnchorsOf U (strongOf U B)).Nonempty) :
+    (descendS U B).isSome
+```
+
+**It makes a choice whenever the cone holds a supported anchor.**
+
+#### `descendS_round_lt`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem descendS_round_lt (hB : B ∈ U.ids) (h : descendS U B = some L) :
+    (U.block L).round < (U.block B).round
+```
+
+#### `descentSUpto_reaches`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem descentSUpto_reaches : ∀ (n : ℕ) (B : BlockId), B ∈ U.ids →
+    (U.block B).round ≤ n → ∀ (L : BlockId) (ρ : ℕ), Committed U L ρ →
+    L ∈ strongOf U B → descentSUpto U n B ρ = some L
+```
+
+**The strengthened descent reaches every committed anchor of the cone.** The step down cannot pass one by: a supported anchor sits at every round the chain could land on above it — the committed anchor itself two rounds up or more, and its linking anchor one round up, which the commit rule makes supported — and anchor uniqueness fixes which block each of those is.
+
+#### `flushRecordS_agree`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem flushRecordS_agree {B₁ B₂ : BlockId} (h₁ : B₁ ∈ U.ids) (h₂ : B₂ ∈ U.ids)
+    {σ : ℕ} {M : BlockId} {ρ : ℕ}
+    (hm₁ : flushRecordS U B₁ σ = some M) (hm₂ : flushRecordS U B₂ σ = some M)
+    (hρ : ρ ≤ σ) : flushRecordS U B₁ ρ = flushRecordS U B₂ ρ
+```
+
+**Two strengthened descents agree below any block they both reach.**
+
+#### `flushRecordS_agree_of_committed`
+
+*theorem, `BlackMarlin.Helpers.Repair.lean`*
+
+```lean
+theorem flushRecordS_agree_of_committed {B₁ B₂ : BlockId} {r₁ r₂ ρ : ℕ}
+    (h₁ : B₁ ∈ U.ids) (h₂ : B₂ ∈ U.ids)
+    (hc₁ : Committed U B₁ r₁) (hc₂ : Committed U B₂ r₂) (hr : r₁ ≤ r₂)
+    (hρ : ρ ≤ r₁) : flushRecordS U B₁ ρ = flushRecordS U B₂ ρ
+```
+
+**Two strengthened records with committed tops agree.** Chaining puts the lower top in the higher's cone (BM5), BMP8 makes both descents reach it, and the suffix property carries agreement to every round below it. This is the composition the refutation needed and did not have.
+
+#### `holds`
+
+*theorem, `BlackMarlin.Repair.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
 ### Not otherwise grouped
+
+#### `holds`
+
+*theorem, `BlackMarlin.ViewLiveness.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `BlackMarlin.ViewOrder.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
 
 #### `waveRobin_fairRun`
 
@@ -16749,7 +21830,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 427 lemmas used only within the file that proves
+The 490 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -17185,12 +22266,10 @@ subsection per module, in the layer order of Appendices B and C.
 | `decided_of_leader_of_populated` | O7 against a horizon, the two-round counterpart of `decided_of_leader_of_populated`: the rule needs the … |
 | `supportersIn_full` | The full view sees every supporter. |
 
-### `Reactive/Basic.lean` (3)
+### `Reactive/Basic.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
-| `built_succ_le_of_fast_gst` | Latency, in the deployment's own constants. Past GST, with a quorum reliable, every reliable validator … |
-| `no_timeout_of_fast_gst` | When the timeout never fires, in the same constants. At the minimal timeout `2Δ + proc` the hypothesis … |
 | `slotRound_le_top` | A reliable leader reached its slot's round: its block is in the universe, and `le_top_of_built` reads the … |
 
 ### `Reactive/Mysticeti.lean` (1)
@@ -17528,6 +22607,113 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `reaches_of_synchronisedOn` | Under coverage at round `r`, every block at round `≥ r + 2` reaches a reliable round-`r` block: its … |
 
+### `BlackMarlin/Helpers/Rules.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `creator_eq_of_isAnchor` | Two anchor blocks of one round share an author: the rotation elects one validator per round. |
+| `not_correct_of_supports_two` | A validator supporting two distinct blocks of one author and round is not correct: one supporting block … |
+
+### `BlackMarlin/Helpers/Decision.lean` (4)
+
+| Lemma | Role |
+|:---|:---|
+| `linked_of_linkedIn` | A view's link is a genuine one. |
+| `linkersIn_subset` | A view's linking anchors link. |
+| `supported_of_supportedIn` | A view's support quorum is a genuine one. |
+| `supportersIn_subset` | A view can only under-report support. |
+
+### `BlackMarlin/Helpers/Liveness.lean` (7)
+
+| Lemma | Role |
+|:---|:---|
+| `exists_adjacent_correct` | Two cyclically adjacent validators are both reliable. Were there none, the successor map would inject the … |
+| `exists_supported_anchor` | A reliably anchored round has a supported anchor. |
+| `linkersIn_full` | And it holds every linking anchor there is. |
+| `nxt_inj` | The step is injective, which is what turns "no adjacent pair is reliable" into a cardinality bound. |
+| `supportedIn_full` | So it counts the same quorum. |
+| `supported_of_mem` | A reliable author's block is supported: coverage makes every reliable block one round up reference it, and … |
+| `supportersIn_full` | The full view holds every supporter there is. |
+
+### `BlackMarlin/Helpers/Reactive.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `anchor_le_top` | A reliable anchor reached its round: its block is in the universe, and `le_top_of_built` reads the reach … |
+| `suppAnchorIn_mono` | A supported anchor stays supported. What the round rule checked once it never has to check again, which is … |
+| `viewAt_ids_mono` | Holdings only grow, so the view they generate does. |
+
+### `BlackMarlin/Helpers/Agreement.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `gst_le_built` | Every build at a round past GST lies past GST: rounds advance real time, so the round number itself bounds … |
+| `holds_two_rounds` | The two rounds the rule reads, in hand. Past GST every reliable validator holds every reliable block of … |
+
+### `BlackMarlin/Helpers/Ledger.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `mem_coneAnchors_of_step` | A flushed anchor is a candidate of its own round below the anchor above it. |
+
+### `BlackMarlin/Helpers/Descent.lean` (13)
+
+| Lemma | Role |
+|:---|:---|
+| `descend_eq_none_of_round_zero` | So the descent bottoms out there. |
+| `descentUpto_add` | — |
+| `descentUpto_eq_of_le` | — |
+| `descentUpto_isAnchorBlock` | And, below the top, anchors its round. |
+| `descentUpto_mem_ids` | And is a block of the universe. |
+| `descentUpto_round` | What the record holds at a round sits at that round. |
+| `descentUpto_round_le` | The descent never rises. |
+| `descentUpto_self` | — |
+| `descentUpto_succ_eq` | Fuel beyond the block's round changes nothing: a step drops the round strictly, so the descent has … |
+| `descentUpto_suffix` | — |
+| `flushRecord_eq` | The record with the fuel its own round supplies. |
+| `le_maxAnchorRound` | No anchor of a set sits above its highest anchor round. |
+| `maxAnchor_nonempty` | A set holding an anchor holds one at its highest anchor round. |
+
+### `BlackMarlin/Helpers/Order.lean` (11)
+
+| Lemma | Role |
+|:---|:---|
+| `filterFirstFrom_append` | — |
+| `filterFirstFrom_key_mem` | Every key of the flushed sequence is emitted, by that block or by one of the same author and round. |
+| `filterFirstFrom_key_notMem` | An emitted block's key was not already delivered. |
+| `filterFirstFrom_pairwise` | Integrity. No author-and-round is emitted twice. |
+| `filterFirstFrom_subset` | Emitted blocks are blocks of the flushed sequence. |
+| `idxOf_le_of_pairwise` | — |
+| `ledgerSeq_agree` | Records that agree below a round flush the same sequence. |
+| `ledgerSeq_prefix` | And the sequence only extends. |
+| `mem_ledgerSeq_mem_ids` | Everything flushed is a block of the universe. |
+| `notMem_deliveredBelow` | — |
+| `segment_congr` | Records that agree below a round flush the same segments there. |
+
+### `BlackMarlin/Helpers/Repair.lean` (19)
+
+| Lemma | Role |
+|:---|:---|
+| `descendS_eq_none_of_round_zero` | — |
+| `descendS_mem_ids` | — |
+| `descendSupp_mem` | The repaired choice is still a candidate of the step, so everything `descend` guarantees of its result … |
+| `descendSupp_mem_ids` | — |
+| `descendSupp_round_lt` | — |
+| `descentSUpto_add` | — |
+| `descentSUpto_eq_of_le` | — |
+| `descentSUpto_mem_ids` | — |
+| `descentSUpto_round` | — |
+| `descentSUpto_round_le` | — |
+| `descentSUpto_succ_eq` | — |
+| `descentSUpto_suffix` | — |
+| `descentUpto_self_gen` | — |
+| `eq_of_supportPreferring` | Two support-preferring records cannot part at a supported round. The whole content of the repair: BM1 … |
+| `flushRecordS_eq` | — |
+| `flushRecordS_suffix` | — |
+| `le_maxSuppRound` | A supported anchor of the cone is at or below the highest such round. |
+| `mem_suppAnchorsOf_of_committed` | A committed anchor of the cone is one of the supported anchors of the cone. |
+| `mem_suppCandidates` | — |
+
 ### `Network/Quorum.lean` (2)
 
 | Lemma | Role |
@@ -17543,6 +22729,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_chop` | Truncation preserves it, shifting the synchrony round by the cut. |
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
+
+### `Minnow/Blocking.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `not_committedAt_of_dead` | A dead slot blocks every later leader. If every vertex of the `j`-th leader slot lies outside `l`'s causal … |
+| `not_committedAt_of_not_quorum` | A vertex with no quorum is never committed. |
+| `quorum_of_committedAt` | A commit needs a quorum, at every position in `leaders`. |
 
 ### `WaveRobin.lean` (3)
 

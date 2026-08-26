@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Fail if the Mahi-Mahi arc contains a proof hole or breaks its file discipline.
+"""Fail if a partitioned arc contains a proof hole or breaks its file discipline.
 
-Scoped to `LeanDag/MahiMahi/` and `LeanDagTest/MahiMahi/`, the one arc of
-this repository under the statement/proof partition (`docs/mahi-mahi.md`
-§9). Two checks, after stripping comments so prose may use the words:
+Scoped to the arcs of this repository under the statement/proof
+partition — Mahi-Mahi (`docs/mahi-mahi.md` §9) and Black Marlin
+(`docs/black-marlin.md` §7) — over both their source and their witness
+directories. Two checks, after stripping comments so prose may use the
+words:
 
   sorry / admit / axiom / native_decide / unsafe / partial
       are absent everywhere in the arc;
@@ -22,7 +24,8 @@ FORBIDDEN = re.compile(r"\b(sorry|admit|axiom|native_decide|unsafe|partial)\b")
 STATEMENT_FORBIDDEN = re.compile(r"^\s*(theorem|lemma|example|instance)\b")
 MODEL_FORBIDDEN = re.compile(r"^\s*(theorem|lemma|example)\b")
 ROOT = Path(__file__).resolve().parent.parent
-SOURCES = ["LeanDag/MahiMahi", "LeanDagTest/MahiMahi"]
+ARCS = ["MahiMahi", "BlackMarlin"]
+SOURCES = [f"{top}/{arc}" for arc in ARCS for top in ("LeanDag", "LeanDagTest")]
 
 
 def lean_files():
@@ -68,16 +71,16 @@ def main():
                 match = STATEMENT_FORBIDDEN.search(code)
                 if match:
                     holes.append(f"{rel}:{lineno}: {match.group(1)} (proof material in a Statement file)")
-            elif in_model and str(rel).startswith("LeanDag/MahiMahi/Model"):
+            elif in_model and str(rel).startswith("LeanDag/"):
                 match = MODEL_FORBIDDEN.search(code)
                 if match:
                     holes.append(f"{rel}:{lineno}: {match.group(1)} (theorem material in a Model file)")
     if holes:
-        print("Mahi-Mahi discipline violations:")
+        print("Partitioned-arc discipline violations:")
         for hole in holes:
             print(f"  {hole}")
         return 1
-    print("Mahi-Mahi arc: no holes, discipline intact.")
+    print(f"Partitioned arcs ({', '.join(ARCS)}): no holes, discipline intact.")
     return 0
 
 
