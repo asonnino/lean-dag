@@ -25,6 +25,17 @@ line, which §10 uses to derive the condition liveness consumes. Every
 result is about which leader slots are committed and which blocks are
 delivered in what order.
 
+**References sit one round below, which the paper does not require.** Its
+block structure gives a block "`n` edges to the latest blocks created by
+distinct validators in rounds up to `r − 1`", of which at least `n − f`
+are in round `r − 1`; `ValidHere.predecessor` asks that *every* reference
+be at `r − 1`. That is the core's convention throughout this development
+rather than a choice made here, and it strengthens validity: the results
+below hold of fewer DAGs than the paper's rule admits. Every count the
+commit rules take is over round-`(r+1)` or round-`(r+2)` blocks, so the
+dropped edges carry no votes and no certificates, but a faithful model
+would admit them.
+
 **Why the DAG type is new.** FinWhale strengthens Mysticeti's validity
 rule with a clause about the leader two rounds down (§2), and the fast
 path's counting rests on it. `FinWhale.ValidHere` therefore has four
