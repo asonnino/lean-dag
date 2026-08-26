@@ -135,21 +135,22 @@ theorem reaches_round : ∀ k : ℕ, ∀ c ∈ D.ids, ∀ t : ℕ, (D.block c).r
     exact ⟨b, hb, ReachesFrom.of_mem_refs hq hreach, hbr⟩
 
 /-- **Lemma 5, at any height.** Under a fast commit for `l`, every block
-at round `r + 3` or above reaches a quorum of round-`(r+2)` blocks, from
-distinct validators, all of them FP-evidence for `l`.
+at round `r + 3` or above reaches `n − f` round-`(r+2)` blocks, from
+distinct validators, all of them FP-evidence for `l` — the paper's count,
+at every height rather than only at `r + 3`.
 
 The block descends to round `r + 3` first; there Lemma 5 applies to its
 parents, and reachability composes. -/
 theorem reaches_fpEvidence_quorum {c l : BlockId} (hc : c ∈ D.ids) (hl : l ∈ D.ids)
     (hround : (D.block l).round + 3 ≤ (D.block c).round) (hfast : FastCommit D l) :
-    ∃ ev : Finset Validator, spQuorum Validator ≤ ev.card ∧
+    ∃ ev : Finset Validator, quorumCard Validator ≤ ev.card ∧
       ∀ v ∈ ev, ∃ b ∈ blocksAt D ((D.block l).round + 2),
         ReachesFrom D.block c b ∧ (D.block b).creator = v ∧ FPEvidence D b l := by
   obtain ⟨d, hd, hreach, hdr⟩ :=
     reaches_round ((D.block c).round - ((D.block l).round + 3)) c hc
       ((D.block l).round + 3) (by omega)
   obtain ⟨hqcard, hall⟩ := parents_all_fpEvidence hd hl hdr hfast
-  refine ⟨parentSet D d, le_trans (spQuorum_le_quorumCard (Validator := Validator)) hqcard, ?_⟩
+  refine ⟨parentSet D d, hqcard, ?_⟩
   intro v hv
   obtain ⟨q, hq, hqv⟩ := mem_creatorsOf.1 hv
   have hqids : q ∈ D.ids := D.complete d hd q hq
@@ -158,6 +159,16 @@ theorem reaches_fpEvidence_quorum {c l : BlockId} (hc : c ∈ D.ids) (hl : l ∈
   refine ⟨q, ?_, ReachesFrom.trans hreach (ReachesFrom.single hq), hqv, hall q hq⟩
   simp only [blocksAt, Finset.mem_filter]
   exact ⟨hqids, hqround⟩
+
+/-- The same, at the slow path's quorum, which is what the indirect rule
+reads. -/
+theorem reaches_fpEvidence_spQuorum {c l : BlockId} (hc : c ∈ D.ids) (hl : l ∈ D.ids)
+    (hround : (D.block l).round + 3 ≤ (D.block c).round) (hfast : FastCommit D l) :
+    ∃ ev : Finset Validator, spQuorum Validator ≤ ev.card ∧
+      ∀ v ∈ ev, ∃ b ∈ blocksAt D ((D.block l).round + 2),
+        ReachesFrom D.block c b ∧ (D.block b).creator = v ∧ FPEvidence D b l := by
+  obtain ⟨ev, hev, hevb⟩ := reaches_fpEvidence_quorum hc hl hround hfast
+  exact ⟨ev, le_trans (spQuorum_le_quorumCard (Validator := Validator)) hev, hevb⟩
 
 /-- **An SP-certificate sits two rounds above what it certifies.** Its
 parents that vote for `l` are one round below it and one round above `l`,

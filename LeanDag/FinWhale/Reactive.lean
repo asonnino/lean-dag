@@ -114,6 +114,53 @@ theorem fastCommit_of_reactive (rc : ReactivePace U T N)
     simp only [fastCard]; omega
   exact le_trans hcard (Finset.card_le_card hsub)
 
+/-! ## Definition 1's latency
+
+Theorem 21 says the fast commit exists. Definition 1 says more: that it
+happens "within two message delays" when the network is momentarily
+synchronous. The reactive schedule is where that can be said, because its
+exit is not bounded below by the timeout, and the core proves the bound
+for any protocol on it. -/
+
+/-- **The fast commit, and when its votes are built.** Under
+`δ`-propagation past GST and at most `p` actual faults, the correct
+validators' round-`(r+1)` blocks all vote for a correct leader's block —
+which is a fast commit — and each is built within `Δ + δ + 2·proc` of its
+author entering round `r`: the collapsed spread, one delivery, and two
+processing steps. The timeout does not appear. -/
+theorem fastCommit_latency (rc : ReactivePace U T N)
+    (hids : D.ids = U.ids) (hblk : D.block = U.block)
+    (hTeq : T = (Correct : Finset Validator)) (hfew : F.byzantine.card ≤ P.p)
+    (hgst : rc.gst ≤ R) (hto : ∀ n, R ≤ n → 2 * rc.delay + rc.proc ≤ rc.timeout n)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
+    (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L)
+    {δ : ℕ} (hδ : ∀ v ∈ T, ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = S.slotRound k →
+      b ∈ rc.holds v (rc.built ((U.block b).creator) (S.slotRound k) + δ)) :
+    FastCommit D L ∧
+      ∀ v ∈ T, rc.built v (S.slotRound k + 1)
+        ≤ rc.built v (S.slotRound k) + rc.delay + δ + 2 * rc.proc := by
+  refine ⟨fastCommit_of_reactive rc hids hblk hTeq hfew hgst hto hR hN hlead hL, ?_⟩
+  subst hTeq
+  exact rc.built_succ_le_of_fast_gst card_correct hgst hR hδ hN hlead hL (fun _ h => h)
+
+omit P [DecidableEq BlockId] in
+/-- **And the timeout never fires**, where actual delivery beats it. This
+is Definition 1's "momentarily synchronous" clause: the fallback branch
+of the vote rule is dead, and the round advances at network speed. -/
+theorem no_timeout_of_fast (rc : ReactivePace U T N)
+    (hTeq : T = (Correct : Finset Validator))
+    (hgst : rc.gst ≤ R) (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
+    (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L)
+    {δ : ℕ} (hδ : ∀ v ∈ T, ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = S.slotRound k →
+      b ∈ rc.holds v (rc.built ((U.block b).creator) (S.slotRound k) + δ))
+    (hfast : rc.delay + δ + 2 * rc.proc < rc.timeout (S.slotRound k)) :
+    ∀ v ∈ T, rc.built v (S.slotRound k + 1)
+      < rc.built v (S.slotRound k) + rc.timeout (S.slotRound k) := by
+  subst hTeq
+  exact rc.no_timeout_of_fast_gst card_correct hgst hR hδ hN hlead hL (fun _ h => h) hfast
+
 /-- **The reactive route supplies the liveness interface.** Every
 correct-led slot below the horizon carries a direct commit, with the
 schedule's two wait clauses in place of coverage.

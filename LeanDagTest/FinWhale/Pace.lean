@@ -243,6 +243,47 @@ example (N : ℕ) (hN : 2 ≤ N) : FastCommit (Dreact N) 5 :=
     ⟨by simp only [ugrow_ids, Finset.mem_range]; omega, by simp,
       by apply Fin.ext; simp only [ugrow_block, rrBlock_creator_val]; rfl⟩
 
+@[simp] theorem fwReactiveCorrect_built (N : ℕ) (v : Fin 4) (n : ℕ) :
+    (fwReactiveCorrect N).built v n = (v : ℕ) + 6 * n := rfl
+
+@[simp] theorem fwReactiveCorrect_holds (N : ℕ) (v : Fin 4) (t : ℕ) :
+    (fwReactiveCorrect N).holds v t = reactHolds N v t := rfl
+
+@[simp] theorem fwReactiveCorrect_delay (N : ℕ) : (fwReactiveCorrect N).delay = 2 := rfl
+
+@[simp] theorem fwReactiveCorrect_proc (N : ℕ) : (fwReactiveCorrect N).proc = 5 := rfl
+
+/-- **δ-propagation on this execution**: a block reaches every validator
+within `delay = 2` of its build. -/
+theorem fwReactive_delta (N : ℕ) (r : ℕ) :
+    ∀ v ∈ (Correct : Finset (Fin 4)), ∀ b ∈ (Ugrow N).ids,
+      ((Ugrow N).block b).creator ∈ (Correct : Finset (Fin 4)) →
+      ((Ugrow N).block b).round = fwSlots.slotRound r →
+      b ∈ (fwReactiveCorrect N).holds v
+        ((fwReactiveCorrect N).built (((Ugrow N).block b).creator) (fwSlots.slotRound r) + 2) := by
+  intro v _ b hb _ hbr
+  simp only [ugrow_ids, Finset.mem_range] at hb
+  simp only [ugrow_block, rrBlock_round, fwSlots_slotRound] at hbr
+  simp only [fwReactiveCorrect_holds, reactHolds, Finset.mem_filter, Finset.mem_range]
+  refine ⟨hb, Or.inl ?_⟩
+  simp only [fwReactiveCorrect_built, ugrow_block, rrBlock_creator_val, fwSlots_slotRound]
+  omega
+
+/-- **Definition 1 on data.** The fast commit of round `1`'s leader
+block, together with the bound on when its votes were built: within
+`Δ + δ + 2·proc` of round entry, with the timeout nowhere in it. -/
+example (N : ℕ) (hN : 2 ≤ N) :
+    FastCommit (Dreact N) 5 ∧
+      ∀ v ∈ (Correct : Finset (Fin 4)), (fwReactiveCorrect N).built v 2 ≤
+        (fwReactiveCorrect N).built v 1 + (fwReactiveCorrect N).delay + 2 +
+          2 * (fwReactiveCorrect N).proc :=
+  fastCommit_latency (D := Dreact N) (k := 1) (R := 0) (δ := 2)
+    (fwReactiveCorrect N).toReactivePace rfl rfl rfl (by decide) (Nat.le_refl _)
+    (fun n _ => Nat.le_refl _) (by omega) (by simpa using hN) (by decide)
+    ⟨by simp only [ugrow_ids, Finset.mem_range]; omega, by simp,
+      by apply Fin.ext; simp only [ugrow_block, rrBlock_creator_val]; rfl⟩
+    (fwReactive_delta N 1)
+
 end FinWhalePace
 
 end LeanDagTest
