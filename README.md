@@ -251,7 +251,7 @@ faults alone.
   vertex resolves nothing at the letter, and the skip clause counts
   vertices where the quorum clause counts processes — which would make
   one vertex committed and skipped at once, so it must count processes.
-  **The defect is what survives both readings.** The two thresholds leave
+  **The defects are what survive both readings.** The two thresholds leave
   a gap: a vertex pointed to by between `f+1` and `2f` processes is
   neither committable nor skippable, and a faulty process can occupy that
   gap every round it leads, so **nothing is ever committed** and

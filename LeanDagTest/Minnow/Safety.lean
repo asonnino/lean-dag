@@ -99,6 +99,12 @@ and only one process not pointing at it, two short of a skip. -/
 example : pointers Dpart 0 1 = {2, 3} ∧ ¬ Quorum Dpart 0 ∧
     ¬ Skipped Dpart 0 := by decide
 
+/-- And undecided on the *literal* reading of the skip clause too, so the
+finding does not rest on how `report.md` §19.3 settles it. Only one
+round-`1` vertex of the view carries no edge to `0`, where three are
+needed. -/
+example : ¬ SkippedByVertex Dpart 0 := by decide
+
 /-! ## The violation
 
 The round-1 leader points to the other twin, which resolves the slot

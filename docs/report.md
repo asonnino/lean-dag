@@ -363,7 +363,7 @@ proof effort with no corresponding proof content.
    output is never given a lemma (§18.13). What does hold at a
    validator's view, and exactly how far, is §18.15.
 
-**Minnow's minimal commit rule fails in three ways** (§19). `crs*`, the
+**Minnow's minimal commit rule fails in two ways** (§19). `crs*`, the
 rule proposed for eventual synchrony, decides a leader slot from the
 round immediately above it: a quorum of `2f + 1` processes pointing
 commits it, and `2f + 1` vertices not pointing skips it. Two of its
@@ -371,15 +371,23 @@ clauses are written in a way their own sentences do not support — a slot
 with no vertex resolves nothing, and the skip clause counts vertices
 where the quorum clause counts processes, which would make one vertex
 committed and skipped at once. A phrase repairs each, and §19.2 and
-§19.3 settle them. **The defect is the third thing.** The two
-thresholds leave a gap — a vertex pointed to by
+§19.3 settle them. **The defects are what survive both readings.** The
+two thresholds leave a gap — a vertex pointed to by
 between `f + 1` and `2f` processes is neither committable nor skippable —
 which a faulty process can occupy every round it leads, so that nothing
 is ever committed and Live-Commit fails outright (§19.4). It admits no
 repair at this shape: `2f + 1` is the least threshold the skip
-clause can safely take, so the gap is forced. All three are exhibited on
-four processes at `f = 1`, machine-checked, with the model held to the
-paper's own validity rule and its own reading of each clause (§19.1).
+clause can safely take, so the gap is forced. And an earlier slot counts
+as resolved when *some* vertex of it lies in the candidate's causal past,
+which is not the same as that vertex being decided: where the slot's
+process equivocates one twin carries a later leader past the slot while
+the other is undecided, and the other then acquires its quorum and
+demands a place before what is already output — Safe-Commit, and with it
+Total-order and Agreement (§19.5). The two are independent: the first
+needs no equivocation, the second no dead zone. All four findings are
+exhibited on four processes at `f = 1`, machine-checked, with the model
+held to the paper's own validity rule and its own reading of each clause
+(§19.1).
 
 ### 1.4 Scope and non-goals
 
@@ -6480,7 +6488,7 @@ delivered order agrees exactly as far as the rotation is reliable, and
 neither statement extends. BMT3 is proved and its converse refuted on
 data, so between them nothing is left open.
 
-## 19. Minnow: the minimal commit rule, and three defects
+## 19. Minnow: the minimal commit rule, and two defects
 
 *(modules `LeanDag/Minnow/`; the protocol is Minnow [KPT26], which
 proposes commit rules claimed minimal — no safe and live rule commits on
@@ -6716,15 +6724,17 @@ held to. The choice is recorded rather than buried, and
 nothing and five leaders are blocked, so the consequence of the literal
 reading is on the record.
 
-**Neither finding below depends on the choice.** In §19.3 and §19.4 every
+**No finding below depends on the choice.** In §19.3 and §19.4 every
 slot whose resolution matters holds exactly **one** vertex, and on a
 singleton slot the two readings coincide: "some vertex of the slot is
 skipped" and "`2f + 1` vertices have no edge into the slot" are the same
-sentence. So both results hold on the letter and on the charitable
-reading alike, and the ambiguity above is a defect of the write-up only —
-one the paper's own Lemma 11 shares silently, reasoning throughout about
-"a leader vertex `l′′` issued by a faulty process" and never about a slot
-holding none.
+sentence. In §19.5 the slot that matters holds **two**, and is resolved
+through the causal-past disjunct rather than the skip clause, so no empty
+slot arises there either. So every result below holds on the letter and
+on the charitable reading alike, and the ambiguity above is a defect of
+the write-up only — one the paper's own Lemma 11 shares silently,
+reasoning throughout about "a leader vertex `l′′` issued by a faulty
+process" and never about a slot holding none.
 
 ### 19.3 A second ambiguity, and why it must go the same way
 
@@ -6778,7 +6788,12 @@ kept only to state what the letter costs.
 **Which settles the shape of §19.4's argument.** The threshold that
 cannot be lowered there is the threshold of the process reading, and the
 execution of §19.4 has no equivocation at all, so the two readings agree
-on it and the finding holds either way.
+on it and the finding holds either way. §19.5 does turn on an
+equivocation, and there the two counts could have parted; they do not.
+The twin it leaves undecided is unskippable on both — one round-above
+vertex of the view carries no edge to it, where three are needed, so
+`¬ SkippedByVertex Dpart 0` alongside `¬ Skipped Dpart 0`, both checked.
+Every finding of this chapter holds on either reading.
 
 ### 19.4 The dead zone, and a DAG in which nothing ever commits
 
@@ -6944,7 +6959,9 @@ round by round robin, so the leader of round `r` is process `r` and slot
 4. **In that view the twin `0` is undecided.** `pointers Dpart 0 1 =
    {2, 3}` — two, one short of a quorum — and one process does not point
    at it, two short of a skip. So `¬ Quorum Dpart 0 ∧ ¬ Skipped Dpart 0`,
-   checked.
+   checked, and `¬ SkippedByVertex Dpart 0` beside it — one round-above
+   vertex carries no edge to it, where three are needed — so nothing here
+   depends on how §19.3 settles that clause.
 5. **The slot is resolved all the same.** `Reaches Dpart 6 4` and
    `¬ Reaches Dpart 6 0`: the round-1 leader has the *other* twin in its
    causal past, which satisfies the first disjunct. And it carries a

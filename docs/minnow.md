@@ -1,4 +1,4 @@
-# Minnow — the minimal commit rule, and three defects
+# Minnow — the minimal commit rule, and two defects
 
 The design record for `LeanDag/Minnow/`. The report chapter is §19; this
 is where the reasoning behind the model lives.
@@ -70,9 +70,10 @@ slot holding no vertex satisfies none of them. That is not the reading to
 take: the skip disjunct needs no `v′` at all — it asks that `2f + 1`
 vertices of the round above carry no edge into the slot, which an empty
 slot satisfies trivially. The model implements the letter because a
-formalisation must choose, and the two findings below are unaffected,
-turning only on slots that hold exactly one vertex, where the readings
-coincide.
+formalisation must choose, and neither finding below is affected: the
+dead zone turns only on slots that hold exactly one vertex, where the
+readings coincide, and the twin turns on a slot that holds two, resolved
+through the causal-past disjunct rather than the skip clause.
 
 **The skip clause, at the letter, counts vertices where the quorum
 clause counts processes.** Two lines apart, Definition 9 asks for "a set
@@ -139,6 +140,6 @@ that does not read support.
 No attempt is made to prove anything positive about `crs*`, to model
 `cra*` — the asynchronous rule — or to assess the minimality claim of
 Definition 7 and Theorem 8. The sub-rule relation compares patterns, and
-two of the three defects above are defects of the pattern's wording
+two of the four findings above are matters of the pattern's wording
 rather than of its strength, so what they bear on is whether `crs*` is a
 commit rule at all rather than whether it is a minimal one.
