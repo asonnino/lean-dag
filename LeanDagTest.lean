@@ -47,6 +47,7 @@ import LeanDagTest.BlackMarlin.Ledger
 import LeanDagTest.BlackMarlin.Divergence
 import LeanDagTest.BlackMarlin.Counting
 import LeanDagTest.BlackMarlin.ViewLiveness
+import LeanDagTest.HammerheadTwo.Model
 import LeanDagTest.Minnow.Deadlock
 import LeanDagTest.Minnow.Skip
 import LeanDagTest.Minnow.Safety

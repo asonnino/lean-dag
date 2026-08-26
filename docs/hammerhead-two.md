@@ -127,45 +127,76 @@ decision relation parametric in the schedule, agreement across views for
 a fixed schedule, and — for the measurement — the direct-commit
 predicate. The three protocols differ in their universe and view types
 (Nemo has `Nemo.Universe` and `Nemo.View`; the Byzantine rules share
-`BlockUniverse` and `View`) and in their fault classes, so the interface
-bundles the types:
+`BlockUniverse` and `View`) and in their fault classes — Mysticeti needs
+`Faults`, Odontoceti `Faults5` and a linear order on ids, Nemo's safety
+none at all — so the interface bundles the types and puts each rule's
+fault class on its instantiation, never on the interface
+(`Model/Rule.lean`):
 
 ```lean
 structure BaseRule (Validator : Type) [Fintype Validator] [DecidableEq Validator]
     (BlockId : Type) [DecidableEq BlockId] (Payload : Type) where
-  /-- The universe type of the base development. -/
   Universe : Type
-  /-- The view type, indexed by universe. -/
   View : Universe → Type
-  /-- The block an id denotes: rounds, creators and references. -/
   block : Universe → BlockId → Block Validator BlockId Payload
   ids : Universe → Finset BlockId
-  viewIds : ∀ {U}, View U → Finset BlockId
-  /-- The full view. -/
-  full : ∀ U, View U
-  /-- A3: the direct commit predicate, view-relative. -/
-  DirectCommitIn : ∀ {U}, View U → BlockId → ℕ → Prop
-  /-- The decision relation, parametric in the schedule. -/
-  Decided : [Slots Validator] → ∀ {U}, View U → ℕ → Option BlockId → Prop
-  /-- A4, safety: verdicts agree across views for a fixed schedule. -/
-  agree : ∀ [Slots Validator] {U} (V₁ V₂ : View U) k v₁ v₂,
-    Decided V₁ k v₁ → Decided V₂ k v₂ → v₁ = v₂
-  /-- A direct commit of a candidate is a commit verdict. -/
-  decided_of_directCommitIn : ∀ [Slots Validator] {U} (V : View U) k L,
-    IsLeaderBlock block U k L → DirectCommitIn V L (Slots.slotRound k) →
-    Decided V k (some L)
-  /-- Verdicts persist into larger views. -/
-  mono : ∀ [Slots Validator] {U} (V V' : View U) k v,
-    viewIds V ⊆ viewIds V' → Decided V k v → Decided V' k v
+  viewIds : ∀ {U : Universe}, View U → Finset BlockId
+  full : ∀ U : Universe, View U
+  historyView : ∀ (U : Universe) (A : BlockId), A ∈ ids U → View U
+  waveLength : ℕ
+  DirectCommitIn : ∀ {U : Universe}, View U → BlockId → ℕ → Prop
+  decDirect : ∀ {U : Universe} (V : View U) (L : BlockId) (r : ℕ),
+    Decidable (DirectCommitIn V L r)
+  Decided : Slots Validator → ∀ {U : Universe}, View U → ℕ → Option BlockId → Prop
+
+structure BaseRule.Laws (R : BaseRule Validator BlockId Payload) : Prop where
+  view_subset : ∀ {U : R.Universe} (V : R.View U), R.viewIds V ⊆ R.ids U
+  view_complete : ∀ {U : R.Universe} (V : R.View U),
+    ∀ i ∈ R.viewIds V, ∀ j ∈ (R.block U i).refs, j ∈ R.viewIds V
+  full_ids : ∀ U, R.viewIds (R.full U) = R.ids U
+  historyView_ids : ∀ U A (hA : A ∈ R.ids U),
+    R.viewIds (R.historyView U A hA) = historyFrom (R.block U) A
+  agree : ∀ (S : Slots Validator) {U : R.Universe} (V₁ V₂ : R.View U) (k : ℕ)
+    (v₁ v₂ : Option BlockId), R.Decided S V₁ k v₁ → R.Decided S V₂ k v₂ → v₁ = v₂
+  decided_of_directCommitIn : ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U)
+    (k : ℕ) (L : BlockId), R.IsLeaderBlock S U k L →
+    R.DirectCommitIn V L (S.slotRound k) → R.Decided S V k (some L)
 ```
 
-`IsLeaderBlock block U k L` is the generic candidate predicate — the
-right round, the right author — stated over the `block` function rather
-than a particular universe type; each instantiation shows it coincides
-with its own `IsLeaderBlock`. The liveness fields are in §7. Types live
-in `Type` rather than `Type*`: every concrete universe of the
-development is in `Type`, and a universe-polymorphic structure field
-would complicate every statement for no instance (§12, D1).
+The interface is split into **data** and **laws**, so that the data —
+what the rule *is* — is proof-free and audited, and the laws — what it
+must satisfy — are a proposition each instantiation is proved to meet
+as a result of the house shape: `Mysticeti/Statement.lean` defines the
+data and states `Laws mysticeti`, `Mysticeti/Proof.lean` proves it, and
+Phase 5 adds the same pair for Odontoceti and Nemo. Every generic
+theorem takes `(hR : R.Laws)`. The laws render the paper's
+assumptions: `view_subset` and `view_complete` are A2 (a validator
+holds a block only with its whole causal history), `DirectCommitIn` and
+`waveLength` are A3, `agree` is the safety half of A4; the liveness
+half is §7. `BaseRule.IsLeaderBlock
+R S U k L` is the generic candidate predicate — the right round, the
+right author — over the interface's `block` and `ids`; it is the
+conjunction every rule of the development states, so each
+instantiation's `Decided.directCommit` accepts it by unfolding.
+
+Three shapes are fixed by the instantiations rather than by taste. The
+schedule is an *explicit* argument of `Decided`, `R.Decided S V k v`: an
+instance binder in a structure field is never referenced by the field's
+type and trips the unused-variable linter, and an anonymous one cannot
+be passed by name. Types live in `Type`, not `Type*`: every concrete
+universe of the development is in `Type`, and a universe-polymorphic
+field would complicate every statement for no instance (§12, D1). And
+there is no view-monotonicity law: Odontoceti has no `decided_mono`,
+safety does not need one, and the local form of liveness that would is
+deferred with the liveness fields to Phase 3's extension of this
+structure, so that the frozen file is not reopened.
+
+One construction the data needs cannot be proof-free: the anchor's
+history as a `View`, whose closure the core's `View` type requires as a
+field. It lives in `Helpers/Mysticeti.lean` (`historyViewOf`), the one
+helper a `Statement.lean` of this arc imports, and it is not trusted:
+the law `historyView_ids` pins its ids to the history whatever the
+helper builds.
 
 `decided_of_directCommitIn` is what makes the window count well defined:
 two directly committed candidates of one slot on one view are one block
@@ -183,18 +214,20 @@ development a schedule with `m` leaders in every pipelined round is
 
 ```lean
 /-- `m` leaders in every round, slot `(r, l)` led by `getLeader (r + l)`. -/
-def Sched (getLeader : ℕ → Validator) (hwin : WindowInjective getLeader maxLeaders)
-    (m : ℕ) (hm : 0 < m) (hmax : m ≤ maxLeaders) : Slots Validator :=
-  Slots.uniform 1 m Nat.one_pos hm (fun κ => getLeader (κ / m + κ % m)) (…)
+@[reducible] def Sched (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLeader w)
+    (m : ℕ) (hm : 0 < m) (hmax : m ≤ w) : Slots Validator :=
+  Slots.uniform 1 m Nat.one_pos hm (fun κ => getLeader (κ / m + κ % m)) (hk m hm hmax)
 ```
 
 `Slots.keyed` asks that the `m` leaders of a round be distinct
-validators, which under `getLeader (r + l)` is injectivity of
-`getLeader` on every window of `maxLeaders` consecutive naturals
-(`WindowInjective`). Round-robin `getLeader r = r % n` satisfies it for
-`maxLeaders ≤ n`, and is the arc's witness schedule (HH1). Whether the
-model should carry `getLeader` abstract with this clause, or fix
-round-robin, is D8.
+validators. `Keyed getLeader w` states that obligation of the leader
+function at every count up to `w`, in the form `Slots.uniform`
+consumes — so `Sched` passes it through and `Model/Schedule.lean` holds
+no proof. The readable form, injectivity of `getLeader` on every window
+of `w` consecutive rounds (`WindowInjective`), implies it
+(`Helpers/Schedule.lean`, `keyed_of_windowInjective`), and round-robin
+`getLeader r = r % n` has it for `w ≤ n` (`roundRobin_keyed`); it is the
+arc's witness schedule (HH1). `getLeader` is abstract (D8).
 
 `Sched` is a `def`, not an instance, and every use passes
 `(S := Sched … m …)`: the arc's whole point is several `Slots` instances
@@ -203,44 +236,44 @@ on one validator type.
 ## 4. The window and the update
 
 **The window.** `GetSubDag` is the anchor's causal history restricted to
-rounds `[r − Interval, r]`. In this development `history U A` is the
-finite causal history (`History.lean`), and its restriction by round is
-a `View`: `View.complete` holds because references descend in round, so
-a block of the restriction references only blocks of the restriction or
-below the cut — and the cut is a lower bound on round, so below the cut
-is outside the *universe* of the count only, not of the view. The
-definition is the restriction of `history U A` to rounds `≥ r −
-Interval`, closed by adding nothing: a block at round `r − Interval`
-references round `r − Interval − 1`, which the view must hold. So the
-window view is `history U A` itself, and the round bound is applied by
-the count, not by the view (D9 records the alternative). Both readings
-give the same count, since the direct predicate at round `r'` reads
-rounds `[r', r' + w)` only (A3).
-
-```lean
-/-- The anchor's causal history, as the view a validator measures on. -/
-def windowView (R : BaseRule …) (U : R.Universe) (A : BlockId) : R.View U
-```
-
-For `BlockUniverse` this is `⟨history U A, history_subset_ids, …⟩`; the
-interface asks each instantiation for it (a field `historyView`).
+rounds `[r − Interval, r]`. In this development the window view is the
+anchor's whole history, `historyFrom (block U) A`, supplied by the
+instantiation as `historyView` — for `BlockUniverse` it is `history U A`
+with closure through `Reaches`, as `viewAt` builds views — and the round
+bound is applied by the count, not by the view (D9). Both readings give
+the same count, since the direct predicate at round `r'` reads rounds
+`[r', r' + w)` only (A3).
 
 **The measurement.** For each round `r'` of `[r − Interval, r]` and each
-offset `l < m`, the slot `(r', l)` of `Sched m` counts if some candidate
-of it is directly committed on the window view:
+offset `l < m`, the slot `(r', l)` of `Sched m` — slot `m · r' + l` —
+counts if some candidate of it is directly committed on the window view
+(`Model/Window.lean`):
 
 ```lean
-def observed (R : BaseRule …) (P : Params) (U) (A : BlockId) (m : ℕ) : ℕ :=
-  ((Finset.range (P.interval + 1)) ×ˢ (Finset.range m)).filter (fun ⟨d, l⟩ =>
-    let r' := (R.block U A).round - d
-    ∃ L ∈ R.ids U, IsLeaderBlock R.block U (m * r' + l) L ∧
-      R.DirectCommitIn (windowView R U A) L r').card
+def BaseRule.SlotDirect (R : BaseRule Validator BlockId Payload) (S : Slots Validator)
+    (U : R.Universe) (V : R.View U) (κ : ℕ) : Prop :=
+  ∃ L ∈ R.ids U, R.IsLeaderBlock S U κ L ∧ R.DirectCommitIn V L (S.slotRound κ)
 
-def expected (P : Params) (m : ℕ) : ℕ := (P.interval - P.waveLength + 1) * m
+def observed (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
+    (U : R.Universe) (A : BlockId) (m : ℕ) (hm : 0 < m) (hmax : m ≤ P.maxLeaders) : ℕ :=
+  if hA : A ∈ R.ids U then
+    ((Finset.range (P.interval + 1) ×ˢ Finset.range m).filter (fun dl : ℕ × ℕ =>
+      dl.1 ≤ (R.block U A).round ∧
+      R.SlotDirect (Sched getLeader hk m hm hmax) U (R.historyView U A hA)
+        (m * ((R.block U A).round - dl.1) + dl.2))).card
+  else 0
+
+def expected (R : BaseRule Validator BlockId Payload) (P : Params) (m : ℕ) : ℕ :=
+  (P.interval - R.waveLength + 1) * m
 ```
 
 The paper counts leader blocks; by §2 the two counts agree, and the arc
-counts slots because that is what `expected` counts.
+counts slots because that is what `expected` counts. The clause
+`dl.1 ≤ round` keeps truncated subtraction from counting round `0` once
+per excess `d`; inside a run the anchor's round exceeds the interval and
+the clause is vacuous. The wave length is the rule's (`R.waveLength`),
+not a parameter of the mechanism.
 
 **The rule.** `threshold` is a rational in the paper and an integer
 comparison in the implementation; the arc takes an integer pair
@@ -277,10 +310,14 @@ other hand the anchor's own round contributes one block to the window,
 so at round `r − w + 1` a direct commit needs a quorum of certifiers
 among a single block, and the count there is zero whenever the quorum
 exceeds one; the decidable rounds are then `Interval − w + 1`, the
-paper's number, for a reason the paper does not give. Which of the two
-holds is settled on data in Phase 1 (§9), and the paper is told
-(§11, F2). The bound `observed ≤ expected` is protocol-specific — it
-needs A3's locality and a quorum above one — and is proved for
+paper's number, for a reason the paper does not give. **Settled on
+data** (Phase 1, `LeanDagTest/HammerheadTwo/Model.lean`): on `U7` with
+the anchor at round `5`, the slot `(3, 1)` two rounds below it — block
+`12` — has three certifiers on the full view and is directly committed
+there, and has exactly one on the window, the anchor itself, and is
+not; rounds `r − 3` and `r − 4` score. The paper's number, for the
+second reason (§11, F2). The bound `observed ≤ expected` is protocol-specific
+— it needs A3's locality and a quorum above one — and is proved for
 Mysticeti in Phase 5 rather than assumed of the interface.
 
 ## 5. The run
@@ -289,35 +326,35 @@ What a validator holds mid-execution is a *partial run* closed up to a
 configuration height; the object safety and liveness are stated on.
 
 ```lean
-structure PartialRun (R : BaseRule …) (P : Params) (upd : UpdateRule R)
-    (U : R.Universe) (V : R.View U) (K : ℕ) where
-  /-- `start k`, the round after which configuration `k` is in force. -/
+structure PartialRun (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
+    (upd : UpdateRule R) (U : R.Universe) (V : R.View U) (K : ℕ) where
   start : ℕ → ℕ
-  /-- The leader count of configuration `k`. -/
   count : ℕ → ℕ
   backoff : ℕ → ℕ
-  /-- `anchor k` is the slot index, in `Sched (count k)`, of `A_{k+1}`. -/
   anchor : ℕ → ℕ
-  /-- `vdct k κ` is the verdict of slot `κ` of `Sched (count k)`. -/
   vdct : ℕ → ℕ → Option BlockId
   init : start 0 = 0 ∧ count 0 = 1 ∧ backoff 0 = 0
   count_pos : ∀ k, 0 < count k
   count_le : ∀ k, count k ≤ P.maxLeaders
-  /-- Every slot of the range, through the anchor, is decided against the
-  configuration's schedule. -/
-  closed : ∀ k, k < K → ∀ κ, start k < (Sched (count k)).slotRound κ → κ ≤ anchor k →
-    R.Decided (S := Sched (count k)) V κ (vdct k κ)
-  /-- The anchor is committed and past the threshold … -/
+  closed : ∀ k, k < K → ∀ κ, start k < κ / count k → κ ≤ anchor k →
+    R.Decided (Sched getLeader hk (count k) (count_pos k) (count_le k)) V κ (vdct k κ)
   anchor_commits : ∀ k, k < K →
-    (∃ A, vdct k (anchor k) = some A) ∧ start k + P.interval < (Sched (count k)).slotRound (anchor k)
-  /-- … and is the least such slot. -/
+    (∃ A, vdct k (anchor k) = some A) ∧ start k + P.interval < anchor k / count k
   anchor_least : ∀ k, k < K → ∀ κ, κ < anchor k →
-    start k + P.interval < (Sched (count k)).slotRound κ → vdct k κ = none
-  start_succ : ∀ k, k < K → start (k + 1) = (Sched (count k)).slotRound (anchor k)
-  /-- The next configuration is the rule's. -/
+    start k + P.interval < κ / count k → vdct k κ = none
+  start_succ : ∀ k, k < K → start (k + 1) = anchor k / count k
   update : ∀ k, k < K → ∀ A, vdct k (anchor k) = some A →
     (count (k + 1), backoff (k + 1)) = upd (count k) (backoff k) U A
 ```
+
+`start k` is the round after which configuration `k` is in force,
+`anchor k` the slot index in `Sched (count k)` of the anchor that closes
+it, and `vdct k κ` the verdict of slot `κ` of `Sched (count k)`. The
+round clauses are written as `κ / count k`, which is `Sched`'s
+`slotRound`, so that only `closed` names the instance. `start 0 = 0`
+is Algorithm 2's `lastRound ← 0`: round `0` lies in no range, as in the
+algorithm, whose first decision walk starts at round `1`.
 
 A `ConfigRun` is the total form (`K` unbounded), with `closed`
 strengthened to the whole range — through the end of the anchor's round
@@ -333,11 +370,12 @@ are discharged.
 
 Slots are numbered per configuration (D2): `vdct k` is a verdict
 function on `Sched (count k)`, which is the object every base theorem
-speaks about, and the ledger of the range is `commitSeq` of that
-function restricted to the range. A global `(round, offset)` indexing
-was considered and rejected: it would need a fourth schedule structure
-the base development does not have, and every derivation would be
-translated into it and back.
+speaks about, and the ledger of the range is `ledgerOf (vdct k)` over
+the range's slot interval, `(List.range' lo (hi − lo)).filterMap`; the
+core's `commitSeq` has no offset and is reached by a shift. A global
+`(round, offset)` indexing was considered and rejected: it would need a
+fourth schedule structure the base development does not have, and every
+derivation would be translated into it and back.
 
 ## 6. Safety
 
@@ -401,16 +439,25 @@ The paper's A4 liveness is "after GST, honest validators commit new
 leaders infinitely often". In this development liveness is structural:
 `SynchronisedOn U T R` and `PopulatedOn U T r` say what the DAG must
 contain, view convergence supplies them (report §5), and no theorem
-mentions time. The interface therefore carries those two predicates as
-fields and states A4 as a clause on a schedule:
+mentions time. A structure extending `BaseRule` — Phase 3's, so that
+the frozen Phase 1 file is not reopened — carries those two predicates
+as fields, together with view-monotonicity for the local form, and A4
+is stated as a clause on a schedule:
 
 ```lean
-  /-- The structural interface of the base liveness route. -/
+structure LiveRule (Validator BlockId Payload) extends BaseRule Validator BlockId Payload where
   SynchronisedOn : Universe → Finset Validator → ℕ → Prop
   PopulatedOn : Universe → Finset Validator → ℕ → Prop
   Reliable : Finset Validator          -- `Correct`, or Nemo's `Live`
   quorum : ℕ                            -- the count `T` must reach
+  mono : ∀ (S : Slots Validator) {U} (V V' : View U) k v,
+    viewIds V ⊆ viewIds V' → Decided S V k v → Decided S V' k v
 ```
+
+Odontoceti has no `decided_mono`; the field is owed there and proved
+in Phase 5 (a copy of Mysticeti's four cases with the canonicity clause
+carried through), which is a finding about the base development rather
+than about the paper.
 
 ```lean
 /-- **A4, liveness, on one schedule.** Above the synchrony round every slot
@@ -555,18 +602,29 @@ Phase 1.
 
 ```
 LeanDag/HammerheadTwo/
-  Model/         definitions only, theorem-free:
+  Model/         definitions only — no theorem and no proof term:
                  Rule (§2, §7), Schedule (§3), Window (§4), Run (§5), Heads (§8)
-  Helpers/       lemma infrastructure; unaudited
+  Helpers/       lemma and construction infrastructure; unaudited
   <Result>/Statement.lean   imports Model/ only; `def Statement : Prop`; never a proof
   <Result>/Proof.lean       `theorem holds : Statement`; unaudited
-  Instances/     the three `BaseRule`s; audited (they are definitions)
+  <Rule>/Statement.lean     the rule's `BaseRule` data and `Statement := Laws …`;
+                            imports Model/ and the one helper the data needs
+  <Rule>/Proof.lean         the laws, proved; unaudited
 LeanDagTest/HammerheadTwo/  witness models; audited
 ```
 
+The bar for `Model/` is the Hydrozoan formalisation's: definitions
+that carry no proof at all, so that a reviewer reads meaning and never
+argument. An obligation a definition would otherwise discharge inline
+is stated as a definition in the form its consumer needs (`Keyed`) and
+discharged in `Helpers/`; a conversion with a proof inside
+(`ConfigRun.toPartial`) is a helper.
+
 Results: `Window` (HH2), `Agreement` (HH3, HH4), `Ledger` (HH5),
 `Conservativity` (HH6), `Aimd` (HH7), `Liveness` (HH8), `Heads`
-(HH9a–d). HH1 is a definition and its `Slots` proof obligations.
+(HH9a–d); and per rule, `Mysticeti`, `Odontoceti`, `Nemo` — the
+rule's data and the proof that it satisfies `Laws` (HH10). HH1 is
+`Sched` with `Keyed`.
 
 **The freeze protocol**, as in the two arcs before: for each phase,
 statements are written, reviewed, agreed, and then frozen — no edit to
@@ -601,7 +659,9 @@ author comment when confirmed.
   (`sections/protocol.tex`).
 - **F2 — `expected`.** The window's decidable rounds are
   `Interval − w + 2` by the stated reason and `Interval − w + 1` by
-  another (§4). *To be settled by the Phase 1 witness.*
+  another (§4). *Settled in Phase 1: the paper's number, for the other
+  reason — round `r − 2`'s only certifier inside the window is the
+  anchor itself.*
 - **F3 — A4 under multiple leaders.** Run fairness fails for the paper's
   schedule at `m ≥ 2` and small `n`; liveness holds by the heads
   descent, and the paper's A4 is a theorem for its own schedule
@@ -621,7 +681,8 @@ author comment when confirmed.
 
 ## 12. Decisions for the author
 
-Settle before Phase 1; each is written with the recommendation first.
+Settled 2026-08-26, each on its recommendation (the first option
+below); the Phase 1 sources implement them as written.
 
 - **D1 — the interface's types.** Bundle `Universe`/`View` in `Type`
   inside `BaseRule` (recommended: three instantiations, one statement
