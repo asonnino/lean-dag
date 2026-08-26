@@ -245,17 +245,19 @@ faults alone.
 - **Minnow** (`LeanDag/Minnow/`): `crs*`, the commit rule proposed as
   *minimal* for eventual synchrony (arXiv:2608.18029), which decides a
   leader slot from the round immediately above it — `2f+1` processes
-  pointing commits, `2f+1` vertices not pointing skips. **Three
-  counterexamples**, all at four processes with `f = 1`. The skip
-  clause counts vertices where the quorum clause counts processes, so an
-  equivocator's spare vertices make one vertex committed and skipped at
-  once — Safe-Commit, and with it Total-order and Agreement. And the two
-  thresholds leave a gap: a vertex pointed to by between `f+1` and `2f`
-  processes is neither committable nor skippable, and a faulty process
-  can occupy that gap every round it leads, so **nothing is ever
-  committed** and Live-Commit fails outright. The second admits no repair
-  at this shape — `2f+1` is the least threshold the skip clause can
-  safely take, so the gap is forced.
+  pointing commits, `2f+1` not pointing skips. Two of its clauses are
+  written in a way their own sentences do not support, and both are
+  settled on data at four processes with `f = 1`: a slot holding no
+  vertex resolves nothing at the letter, and the skip clause counts
+  vertices where the quorum clause counts processes — which would make
+  one vertex committed and skipped at once, so it must count processes.
+  **The defect is what survives both readings.** The two thresholds leave
+  a gap: a vertex pointed to by between `f+1` and `2f` processes is
+  neither committable nor skippable, and a faulty process can occupy that
+  gap every round it leads, so **nothing is ever committed** and
+  Live-Commit fails outright. It admits no repair at this shape — `2f+1`
+  is the least threshold the skip clause can safely take, so the gap is
+  forced.
 
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on

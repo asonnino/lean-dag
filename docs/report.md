@@ -366,20 +366,20 @@ proof effort with no corresponding proof content.
 **Minnow's minimal commit rule fails in three ways** (§19). `crs*`, the
 rule proposed for eventual synchrony, decides a leader slot from the
 round immediately above it: a quorum of `2f + 1` processes pointing
-commits it, and `2f + 1` vertices not pointing skips it. The skip
-clause counts vertices where the quorum clause counts processes, so an
-equivocator's spare vertices make one vertex committed and skipped at
-once, which is Safe-Commit and with it Total-order and Agreement
-(§19.3). And the two thresholds leave a gap — a vertex pointed to by
+commits it, and `2f + 1` vertices not pointing skips it. Two of its
+clauses are written in a way their own sentences do not support — a slot
+with no vertex resolves nothing, and the skip clause counts vertices
+where the quorum clause counts processes, which would make one vertex
+committed and skipped at once. A phrase repairs each, and §19.2 and
+§19.3 settle them. **The defect is the third thing.** The two
+thresholds leave a gap — a vertex pointed to by
 between `f + 1` and `2f` processes is neither committable nor skippable —
 which a faulty process can occupy every round it leads, so that nothing
-is ever committed and Live-Commit fails outright (§19.4). The second
-admits no repair at this shape: `2f + 1` is the least threshold the skip
+is ever committed and Live-Commit fails outright (§19.4). It admits no
+repair at this shape: `2f + 1` is the least threshold the skip
 clause can safely take, so the gap is forced. All three are exhibited on
 four processes at `f = 1`, machine-checked, with the model held to the
-paper's own validity rule and its own reading of each clause (§19.1). A
-third reading, on which a leader slot holding no vertex resolves nothing,
-is the wrong one and is set aside (§19.2).
+paper's own validity rule and its own reading of each clause (§19.1).
 
 ### 1.4 Scope and non-goals
 
@@ -6500,21 +6500,26 @@ every leader slot that precedes `l`'s in the sequence `leaders` is
 concurrent with `l` and either committed or skipped, where *skipped*
 means `2f + 1` vertices of the round above carry no edge to it.
 
-**Two defects, and one ambiguity that is not one.** The skip clause
-counts vertices where the quorum clause counts processes, so an
-equivocator's spare vertices can make one vertex committed and skipped at
-the same time (§19.3). And the two thresholds leave a gap: at
-`n = 3f + 1` a vertex pointed to by between `f + 1` and `2f` processes is
-neither committable nor skippable, and a Byzantine process that keeps its
-vertices in that gap stops the rule from committing anything ever
-(§19.4). The second is not a threshold that can be lowered — `2f + 1` is
-the least value the skip clause can safely take — so it is a property of
-the rule's shape rather than of its constants.
+**One defect, and two readings that must be settled to state it.**
+Definition 9 is written twice in a way its own sentences do not support.
+Its second condition binds a vertex existentially, so read at the letter
+a leader slot holding no vertex resolves nothing and a silent process
+blocks everything; the reading that skips such a slot at once is right,
+and §19.2 says why. Its skip clause counts vertices where the quorum
+clause two lines above counts processes; the vertex reading makes one
+vertex committed and skipped at the same time, so the process reading is
+forced, and §19.3 says why. Neither is a defect of the rule so much as of
+its statement, and the arc records both because a formalisation has to
+choose.
 
-The ambiguity is that the second condition binds its vertex
-existentially, so read at the letter an empty slot resolves nothing. The
-natural reading skips such a slot at once, and §19.2 sets out why that
-reading is right and why neither finding turns on the choice.
+**The defect is the third thing, and no reading escapes it.** At
+`n = 3f + 1` the two thresholds leave a gap — a vertex pointed to by
+between `f + 1` and `2f` processes is neither committable nor skippable —
+and a Byzantine process that keeps its vertices in that gap stops the rule
+from committing anything, ever (§19.4). The gap cannot be closed by
+lowering a threshold: `2f + 1` is the least value the skip clause can
+safely take. It is a property of the rule's shape rather than of its
+constants.
 
 The chapter records counterexamples and the little theory they need, and
 nothing else. Where the paper's own liveness argument (its Lemma 11)
@@ -6590,23 +6595,23 @@ edge to `l`. `quorumCard Validator` is `n − f`, which is `2f + 1` at
 `n = 3f + 1`, and the witnesses check that arithmetic on the model rather
 than assume it.
 
-**The skip clause counts vertices, because that is what is written.**
-Definition 9: "`Skip: or there are 2f + 1 vertices that do not have an
-edge to v′ in round r + 1`".
+**The skip clause counts processes, in line with every other quorum.**
+Definition 9 writes "`Skip: or there are 2f + 1 vertices that do not have
+an edge to v′ in round r + 1`", but the quorum clause two lines above
+counts "vertices issued by distinct processes", and §19.3 shows the
+vertex reading to be unsound. So what is counted is distinct processes,
+none of whose round-above vertices points at `l`:
 
 ```lean
 def Skipped (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
-  quorumCard Validator ≤ ((verticesAt D ((D.block l).round + 1)).filter
-    (fun q => l ∉ (D.block q).refs)).card
+  quorumCard Validator ≤
+    ((creatorsOf D.block (verticesAt D ((D.block l).round + 1)))
+      \ pointers D l ((D.block l).round + 1)).card
 ```
 
-This is the reading most favourable to the protocol for §19.4: a round
-holds at least as many vertices as processes, so counting vertices makes
-skipping *easier*, and a deadlock proved against it is proved against the
-stricter reading too. It is also the reading §19.3 refutes, and the
-alternative — `SkippedByProcess`, counting distinct processes none of
-whose round-above vertices point at `l` — is defined alongside so the two
-can be told apart on data rather than in prose.
+The literal reading is kept beside it as `SkippedByVertex`, used only to
+state what it costs. Nothing in §19.4 turns on the choice: the DAG there
+carries no equivocation at all, so the two counts coincide on it.
 
 **The second clause is an existential over the slot's vertices, because
 that is what is written.** Definition 9: "`there is a vertex v′ in slot
@@ -6713,9 +6718,15 @@ one the paper's own Lemma 11 shares silently, reasoning throughout about
 "a leader vertex `l′′` issued by a faulty process" and never about a slot
 holding none.
 
-### 19.3 A vertex committed and skipped at the same time
+### 19.3 A second ambiguity, and why it must go the same way
 
-![**Both clauses, of one vertex.** The quorum clause counts processes — "a set `Q` of `2f + 1` vertices issued by distinct processes" — and the skip clause counts vertices — "there are `2f + 1` vertices that do not have an edge to `v′`". A faulty process issuing three vertices in one round contributes to the second without giving up its place in the first, and both clauses hold at once.](figures/minnow-skip.svg)
+Definition 9's skip disjunct reads "there are `2f + 1` **vertices** that
+do not have an edge to `v′`". Two lines above, the quorum clause counts
+"a set `Q` of `2f + 1` vertices issued by **distinct processes**", and
+every other quorum in the paper is over processes. The arc reads the skip
+clause over processes too, and this section is why it has no choice.
+
+![**What the vertex reading costs.** The quorum clause counts processes and the skip clause, at the letter, counts vertices. A faulty process issuing three vertices in one round contributes to the second without giving up its place in the first, and both clauses hold of one vertex at once.](figures/minnow-skip.svg)
 
 At `n = 4`, `f = 1`, both thresholds read `2f + 1 = 3`.
 
@@ -6724,38 +6735,42 @@ At `n = 4`, `f = 1`, both thresholds read `2f + 1 = 3`.
 1. **Round `0`** carries one vertex per process, and the vertex in
    question is process `0`'s.
 2. **Round `1`** carries six vertices, because process `0` issues
-   **three**. Section 2 of the paper permits exactly this: "if a faulty
-   process issues two valid vertices in the same round, then correct
-   processes include both in their local DAG". Each of the six is valid —
-   three edges, distinct processes, the round below — which is checked by
-   `decide` and not by construction.
+   **three**. Section 2 of the paper permits exactly this of a faulty
+   process: "if a faulty process issues two valid vertices in the same
+   round, then correct processes include both in their local DAG". Each
+   of the six is valid — three edges, distinct processes, the round below
+   — which is checked by `decide` and not by construction, as is the DAG
+   itself, so no correct process equivocates in it.
 3. **Of process `0`'s three vertices, one points** at the round-`0`
    vertex and two do not. Processes `1` and `2` point to it; process `3`
    does not.
 4. **The quorum clause holds.** The processes with a pointing vertex are
    `{0, 1, 2}`, three of four: `pointers Dk 0 1 = {0, 1, 2}`, checked.
-5. **The skip clause holds too.** The vertices with no edge to it are the
-   equivocator's other two and process `3`'s — three vertices, which is
-   `2f + 1`.
-6. So `Quorum Dk 0 ∧ Skipped Dk 0`, checked, and with it
-   `CommittedAt Dk (fun _ => (0, 0)) 0 0 ∧ Skipped Dk 0`: the rule commits
-   the slot, and the clause that exists to resolve slots the rule cannot
-   commit skips it.
+5. **The skip clause holds too, at the letter.** The vertices with no
+   edge to it are the equivocator's other two and process `3`'s — three
+   vertices, which is `2f + 1`.
+6. So `Quorum Dk 0 ∧ SkippedByVertex Dk 0`, checked, and with it
+   `CommittedAt Dk (fun _ => (0, 0)) 0 0 ∧ SkippedByVertex Dk 0`: the rule
+   commits the slot, and the clause that exists to resolve slots the rule
+   cannot commit skips it.
 
-**Why it is a safety failure and not merely untidy.** The two clauses are
-read by different processes from different views. One holds the three
-pointing vertices and commits the slot, placing it in its output; another
-holds the three non-pointing ones, skips it, and commits the next leader
-without it. Neither output is a prefix of the other, which is exactly
-what Safe-Commit forbids — and Safe-Commit is what §3.2 of the paper uses
-to obtain Total-order and Agreement.
+**What that would cost.** The two clauses are read by different processes
+from different views. One holds the three pointing vertices and commits
+the slot, placing it in its output; another holds the three non-pointing
+ones, skips it, and commits the next leader without it. Neither output is
+a prefix of the other, which is what Safe-Commit forbids — and §3.2 of the
+paper obtains Total-order and Agreement from Safe-Commit. A reading on
+which the rule is not safe cannot be the reading meant.
 
-**The reading is what does it.** Counting the skip by process instead
-puts it out of reach: `¬ SkippedByProcess Dk 0`, checked, the processes
-with no pointing vertex being `{3}` alone. So the clause must be read
-over distinct processes, and Definition 9 does not say so. §19.4 shows
-that the process reading cannot then be given a smaller threshold to
-compensate.
+**So the clause is over processes**, and then the two stop competing:
+`¬ Skipped Dk 0`, checked, the processes with no pointing vertex being
+`{3}` alone. `Skipped` in the model is this, and `SkippedByVertex` is
+kept only to state what the letter costs.
+
+**Which settles the shape of §19.4's argument.** The threshold that
+cannot be lowered there is the threshold of the process reading, and the
+execution of §19.4 has no equivocation at all, so the two readings agree
+on it and the finding holds either way.
 
 ### 19.4 The dead zone, and a DAG in which nothing ever commits
 
@@ -6846,15 +6861,16 @@ dead zone, and it is where the argument is left unfinished.
 
 ### 19.5 What the three amount to
 
-| finding | what it costs | repair |
-| --- | --- | --- |
-| an empty leader slot resolves nothing at the letter (§19.2) | nothing — the natural reading skips it | state the skip clause over the slot |
-| the skip clause counts vertices (§19.3) | Safe-Commit, hence Total-order and Agreement | count processes |
-| the dead zone (§19.4) | Live-Commit outright | none available at this shape |
+| finding | what the letter says | what that costs | repair |
+| --- | --- | --- | --- |
+| the empty slot (§19.2) | a slot with no vertex resolves nothing | every later leader | state the skip clause over the slot |
+| the counting (§19.3) | `2f + 1` *vertices* skip | Safe-Commit, hence Total-order and Agreement | count processes, as the quorum clause does |
+| the dead zone (§19.4) | — | Live-Commit outright | none available at this shape |
 
-The first two are matters of wording; the second still costs a safety
-property until it is reworded, and the third is not a matter of wording
-at all. `2f + 1` is the least threshold the skip clause can safely take, so the window
+The first two are matters of wording, and a phrase repairs each. The
+third is not a matter of wording at all, and survives every reading of
+the other two. `2f + 1` is the least threshold the skip clause can safely
+take, so the window
 `f + 1 ≤ a ≤ 2f` cannot be closed from inside the rule, and `crs*`'s only
 other way to resolve a slot — a vertex of it lying in the candidate's
 causal past — is unavailable for exactly the leaders that follow a dead
@@ -14436,24 +14452,26 @@ def Quorum (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
 
 ```lean
 def Skipped (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
-  quorumCard Validator ≤ ((verticesAt D ((D.block l).round + 1)).filter
-    (fun q => l ∉ (D.block q).refs)).card
-```
-
-**Skip**, the escape in the second clause: `2f + 1` vertices of the round above carry no edge to `l`. Counted as vertices, which is what Definition 9 writes and is the weaker demand — counting processes would make skipping harder still.
-
-#### `SkippedByProcess`
-
-*def, `Minnow.Model.Rule.lean`*
-
-```lean
-def SkippedByProcess (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
   quorumCard Validator ≤
     ((creatorsOf D.block (verticesAt D ((D.block l).round + 1)))
       \ pointers D l ((D.block l).round + 1)).card
 ```
 
-**Skip, counted by process** rather than by vertex: `2f + 1` distinct processes, none of whose round-above vertices carries an edge to `l`. Definition 9 writes vertices; `minnow.md` §4 is why that cannot be what is meant.
+**Skip**, the escape in the second clause: `2f + 1` of the round above carry no edge to `l`, counted by **distinct process**, none of whose round-above vertices points at `l`.
+
+Definition 9 writes "there are `2f + 1` vertices", but the quorum clause two lines above counts "vertices issued by distinct processes", and every other quorum in the paper is over processes. `report.md` §19.3 is why the vertex reading cannot be meant: under it a vertex may be committed and skipped at once.
+
+#### `SkippedByVertex`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def SkippedByVertex (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
+  quorumCard Validator ≤ ((verticesAt D ((D.block l).round + 1)).filter
+    (fun q => l ∉ (D.block q).refs)).card
+```
+
+**Skip, counted by vertex** — Definition 9 at the letter. Kept only to state what that reading costs; `Skipped` is what the rule is taken to mean.
 
 #### `CommittedAt`
 

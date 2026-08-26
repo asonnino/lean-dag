@@ -123,28 +123,32 @@ def Quorum (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
 instance (D : Dag Validator BlockId Payload) (l : BlockId) :
     Decidable (Quorum D l) := inferInstanceAs (Decidable (_ ≤ _))
 
-/-- **Skip**, the escape in the second clause: `2f + 1` vertices of the
-round above carry no edge to `l`. Counted as vertices, which is what
-Definition 9 writes and is the weaker demand — counting processes would
-make skipping harder still. -/
+/-- **Skip**, the escape in the second clause: `2f + 1` of the round above
+carry no edge to `l`, counted by **distinct process**, none of whose
+round-above vertices points at `l`.
+
+Definition 9 writes "there are `2f + 1` vertices", but the quorum clause
+two lines above counts "vertices issued by distinct processes", and every
+other quorum in the paper is over processes. `report.md` §19.3 is why the
+vertex reading cannot be meant: under it a vertex may be committed and
+skipped at once. -/
 def Skipped (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
-  quorumCard Validator ≤ ((verticesAt D ((D.block l).round + 1)).filter
-    (fun q => l ∉ (D.block q).refs)).card
-
-instance (D : Dag Validator BlockId Payload) (l : BlockId) :
-    Decidable (Skipped D l) := inferInstanceAs (Decidable (_ ≤ _))
-
-/-- **Skip, counted by process** rather than by vertex: `2f + 1` distinct
-processes, none of whose round-above vertices carries an edge to `l`.
-Definition 9 writes vertices; `minnow.md` §4 is why that cannot be what
-is meant. -/
-def SkippedByProcess (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
   quorumCard Validator ≤
     ((creatorsOf D.block (verticesAt D ((D.block l).round + 1)))
       \ pointers D l ((D.block l).round + 1)).card
 
 instance (D : Dag Validator BlockId Payload) (l : BlockId) :
-    Decidable (SkippedByProcess D l) := inferInstanceAs (Decidable (_ ≤ _))
+    Decidable (Skipped D l) := inferInstanceAs (Decidable (_ ≤ _))
+
+/-- **Skip, counted by vertex** — Definition 9 at the letter. Kept only
+to state what that reading costs; `Skipped` is what the rule is taken to
+mean. -/
+def SkippedByVertex (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
+  quorumCard Validator ≤ ((verticesAt D ((D.block l).round + 1)).filter
+    (fun q => l ∉ (D.block q).refs)).card
+
+instance (D : Dag Validator BlockId Payload) (l : BlockId) :
+    Decidable (SkippedByVertex D l) := inferInstanceAs (Decidable (_ ≤ _))
 
 /-- **`crs*`** (Definition 9), by recursion on the position in `leaders`.
 `CommittedAt D L k l` is the pattern `Ps*` enabled for the vertex `l`

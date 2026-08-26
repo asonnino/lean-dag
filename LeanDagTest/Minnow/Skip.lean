@@ -60,16 +60,16 @@ example : (verticesAt Dk 1).card = 6 ∧ (slotBlocks Dk (0, 1)).card = 3 := by d
 /-- **Both clauses hold of the same vertex.** Three distinct processes
 point to it, which is the quorum; and three vertices do not, which is the
 skip. -/
-example : Quorum Dk 0 ∧ Skipped Dk 0 := by decide
+example : Quorum Dk 0 ∧ SkippedByVertex Dk 0 := by decide
 
 /-- Counting the skip by process instead leaves it out of reach, as it
 must: the two sets then compete for the same `n` places. -/
-example : ¬ SkippedByProcess Dk 0 ∧ pointers Dk 0 1 = {0, 1, 2} := by decide
+example : ¬ Skipped Dk 0 ∧ pointers Dk 0 1 = {0, 1, 2} := by decide
 
 /-- So the vertex is committed by the rule at the first position of
 `leaders`, and simultaneously skipped by the clause that exists to
 resolve slots the rule cannot commit. -/
-example : CommittedAt Dk (fun _ => (0, 0)) 0 0 ∧ Skipped Dk 0 :=
+example : CommittedAt Dk (fun _ => (0, 0)) 0 0 ∧ SkippedByVertex Dk 0 :=
   ⟨by simp only [CommittedAt]; decide, by decide⟩
 
 end Minnow

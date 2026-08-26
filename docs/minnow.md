@@ -35,14 +35,18 @@ section 2 admits equivocating vertices of *faulty* processes only, and a
 correct process issues one vertex a round. Dropping it would admit DAGs
 the communication component cannot build.
 
-**Where the paper is ambiguous, the model takes the reading that
-favours the protocol.** The skip clause is counted by vertices, which is
-what Definition 9 writes and is the weaker demand — a round holds at
-least as many vertices as processes, so counting vertices makes skipping
-easier and the deadlock of §3 harder to exhibit. The leader sequence is
-genuine round robin over all four processes rather than one chosen to
-suit the construction. Both choices are recorded because both could have
-been made the other way to make a finding look stronger than it is.
+**Where the paper is ambiguous, the reading is argued rather than
+assumed.** Two clauses are written in a way their own sentences do not
+support, and §3 settles both: a slot holding no vertex resolves nothing
+at the letter, and the skip clause counts vertices where the quorum
+clause counts processes. The second reading is the one that matters — the
+vertex count is unsound — so `Skipped` is over distinct processes, in
+line with every other quorum in the paper and with the rest of this
+development, and `SkippedByVertex` is kept only to state what the letter
+costs. The leader sequence is genuine round robin over all four processes
+rather than one chosen to suit the construction; that choice is recorded
+because it could have been made the other way to make a finding look
+stronger than it is.
 
 ## 2. What the counterexamples rest on
 
@@ -57,7 +61,7 @@ The second is deliberately weak. It concludes nothing about what *is*
 committed — only that a particular leader is not — so it cannot be
 accused of resolving the recursion in a way the paper would not.
 
-## 3. The three defects
+## 3. Two readings, and one defect
 
 **An empty slot, at the letter, resolves nothing.** Definition 9's second
 clause opens "there is a vertex `v′` in slot `s′` in `D` such that …",
@@ -70,15 +74,17 @@ formalisation must choose, and the two findings below are unaffected,
 turning only on slots that hold exactly one vertex, where the readings
 coincide.
 
-**The skip clause counts vertices where the quorum clause counts
-processes.** Two lines apart, Definition 9 asks for "a set `Q` of
-`2f + 1` vertices issued by distinct processes" and for "`2f + 1`
+**The skip clause, at the letter, counts vertices where the quorum
+clause counts processes.** Two lines apart, Definition 9 asks for "a set
+`Q` of `2f + 1` vertices issued by distinct processes" and for "`2f + 1`
 vertices that do not have an edge to `v′`". A faulty process issuing
 three vertices in one round contributes to the second without giving up
-its place in the first, and both clauses then hold of one vertex. Two
+its place in the first, and both clauses then hold of one vertex — so two
 processes with different views may commit and skip the same slot, which
-is Safe-Commit — and §3.2 of the paper obtains Total-order and Agreement
-from Safe-Commit.
+is Safe-Commit, and §3.2 of the paper obtains Total-order and Agreement
+from Safe-Commit. A reading on which the rule is unsafe is not the
+reading meant, so the clause is over processes. This is the second
+reading settled, not a defect of the rule.
 
 **The dead zone.** Commit needs `a ≥ 2f + 1` pointing processes; skip
 needs `2f + 1` non-pointers, so `a ≤ f`. The window `f + 1 ≤ a ≤ 2f` is

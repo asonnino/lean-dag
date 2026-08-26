@@ -557,12 +557,13 @@ EDGE	LeanDag.BlackMarlin.supportersIn_subset	LeanDag.View
 EDGE	LeanDag.BlackMarlin.supportersIn_subset	LeanDag.BlackMarlin.supportersIn
 EDGE	LeanDag.BlackMarlin.supportersIn_subset	LeanDag.Block.creator
 NODE	LeanDag.Minnow.Skipped	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.Skipped	LeanDag.creatorsOf
 EDGE	LeanDag.Minnow.Skipped	LeanDag.Faults
-EDGE	LeanDag.Minnow.Skipped	LeanDag.Block.refs
 EDGE	LeanDag.Minnow.Skipped	LeanDag.Minnow.Dag
 EDGE	LeanDag.Minnow.Skipped	LeanDag.Block.round
 EDGE	LeanDag.Minnow.Skipped	LeanDag.Faults.f
 EDGE	LeanDag.Minnow.Skipped	LeanDag.Minnow.Dag.block
+EDGE	LeanDag.Minnow.Skipped	LeanDag.Minnow.pointers
 EDGE	LeanDag.Minnow.Skipped	LeanDag.Minnow.verticesAt
 NODE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_8	LeanDag.SafeSkip.Jump	thm
 EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_8	LeanDag.Faults
@@ -5069,6 +5070,15 @@ EDGE	LeanDag.two_f_add_one_le_card_correct._proof_1_1	LeanDag.Faults.f
 NODE	LeanDagTest.fairSlots_leader	LeanDagTest.Growth	thm
 EDGE	LeanDagTest.fairSlots_leader	LeanDag.Slots.leader
 EDGE	LeanDagTest.fairSlots_leader	LeanDagTest.fairSlots
+NODE	LeanDag.Minnow.instDecidableSkippedByVertex._aux_1	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.instDecidableSkippedByVertex._aux_1	LeanDag.Minnow.SkippedByVertex
+EDGE	LeanDag.Minnow.instDecidableSkippedByVertex._aux_1	LeanDag.Faults
+EDGE	LeanDag.Minnow.instDecidableSkippedByVertex._aux_1	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.instDecidableSkippedByVertex._aux_1	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.instDecidableSkippedByVertex._aux_1	LeanDag.Block.round
+EDGE	LeanDag.Minnow.instDecidableSkippedByVertex._aux_1	LeanDag.Faults.f
+EDGE	LeanDag.Minnow.instDecidableSkippedByVertex._aux_1	LeanDag.Minnow.Dag.block
+EDGE	LeanDag.Minnow.instDecidableSkippedByVertex._aux_1	LeanDag.Minnow.verticesAt
 NODE	LeanDag.card_retained_le	LeanDag.GC.Window	thm
 EDGE	LeanDag.card_retained_le	LeanDag.Delivery
 EDGE	LeanDag.card_retained_le	LeanDag.ByzBudget
@@ -5245,15 +5255,6 @@ EDGE	LeanDag.BlackMarlin.instDecidableQuorumIn	LeanDag.BlackMarlin.instDecidable
 EDGE	LeanDag.BlackMarlin.instDecidableQuorumIn	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.instDecidableQuorumIn	LeanDag.BlackMarlin.QuorumIn
 EDGE	LeanDag.BlackMarlin.instDecidableQuorumIn	LeanDag.View
-NODE	LeanDag.Minnow.SkippedByProcess	LeanDag.Minnow.Model.Rule	def
-EDGE	LeanDag.Minnow.SkippedByProcess	LeanDag.creatorsOf
-EDGE	LeanDag.Minnow.SkippedByProcess	LeanDag.Faults
-EDGE	LeanDag.Minnow.SkippedByProcess	LeanDag.Minnow.Dag
-EDGE	LeanDag.Minnow.SkippedByProcess	LeanDag.Block.round
-EDGE	LeanDag.Minnow.SkippedByProcess	LeanDag.Faults.f
-EDGE	LeanDag.Minnow.SkippedByProcess	LeanDag.Minnow.Dag.block
-EDGE	LeanDag.Minnow.SkippedByProcess	LeanDag.Minnow.pointers
-EDGE	LeanDag.Minnow.SkippedByProcess	LeanDag.Minnow.verticesAt
 NODE	LeanDag.exists_partialRun._proof_1_1	LeanDag.Adaptive.Liveness	thm
 EDGE	LeanDag.exists_partialRun._proof_1_1	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.exists_partialRun._proof_1_1	LeanDag.Faults
@@ -13452,16 +13453,6 @@ NODE	LeanDagTest.BlackMarlin.bmRRv	LeanDagTest.BlackMarlin.ViewLiveness	def
 EDGE	LeanDagTest.BlackMarlin.bmRRv	LeanDagTest.BlackMarlin.bmRRv._proof_2
 EDGE	LeanDagTest.BlackMarlin.bmRRv	LeanDag.BlackMarlin.Liveness.roundRobin
 EDGE	LeanDagTest.BlackMarlin.bmRRv	LeanDag.BlackMarlin.Rotation
-NODE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Minnow.Model.Rule	def
-EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.creatorsOf
-EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Faults
-EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Minnow.SkippedByProcess
-EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Minnow.Dag
-EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Block.round
-EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Faults.f
-EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Minnow.Dag.block
-EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Minnow.pointers
-EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Minnow.verticesAt
 NODE	LeanDag.Hybrid.DirectCommitIn	LeanDag.Hybrid.Decision	def
 EDGE	LeanDag.Hybrid.DirectCommitIn	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.DirectCommitIn	LeanDag.HybridFaults.toFaults
@@ -16286,11 +16277,6 @@ EDGE	LeanDag.ReactivePace.le_built	LeanDag.ReactivePace.toPaceCore
 EDGE	LeanDag.ReactivePace.le_built	LeanDag.Slots
 EDGE	LeanDag.ReactivePace.le_built	LeanDag.ReactivePace
 EDGE	LeanDag.ReactivePace.le_built	LeanDag.ReactivePace.le_built._proof_1_2
-NODE	LeanDag.Minnow.instDecidableSkippedByProcess	LeanDag.Minnow.Model.Rule	def
-EDGE	LeanDag.Minnow.instDecidableSkippedByProcess	LeanDag.Faults
-EDGE	LeanDag.Minnow.instDecidableSkippedByProcess	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1
-EDGE	LeanDag.Minnow.instDecidableSkippedByProcess	LeanDag.Minnow.SkippedByProcess
-EDGE	LeanDag.Minnow.instDecidableSkippedByProcess	LeanDag.Minnow.Dag
 NODE	LeanDag.Eligible.eq_1	LeanDag.Mysticeti	thm
 EDGE	LeanDag.Eligible.eq_1	LeanDag.Slots.slotRound
 EDGE	LeanDag.Eligible.eq_1	LeanDag.decisionRound
@@ -19576,6 +19562,11 @@ EDGE	LeanDag.BlackMarlin.Flush.recOn	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.Flush.recOn	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.Flush.recOn	LeanDag.BlackMarlin.Flush.mk
 EDGE	LeanDag.BlackMarlin.Flush.recOn	LeanDag.BlackMarlin.coneAnchors
+NODE	LeanDag.Minnow.instDecidableSkippedByVertex	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.instDecidableSkippedByVertex	LeanDag.Minnow.SkippedByVertex
+EDGE	LeanDag.Minnow.instDecidableSkippedByVertex	LeanDag.Faults
+EDGE	LeanDag.Minnow.instDecidableSkippedByVertex	LeanDag.Minnow.instDecidableSkippedByVertex._aux_1
+EDGE	LeanDag.Minnow.instDecidableSkippedByVertex	LeanDag.Minnow.Dag
 NODE	LeanDagTest.BlackMarlin.ugrowBM._proof_2	LeanDagTest.BlackMarlin.Reactive	thm
 NODE	LeanDag.JumpMsg.toSkipMsg_top	LeanDag.SafeSkip.Jump	thm
 EDGE	LeanDag.JumpMsg.toSkipMsg_top	LeanDag.Faults
@@ -25029,13 +25020,14 @@ EDGE	LeanDag.SkipMsg.skipFill._proof_15	LeanDag.SkipMsg.r0
 EDGE	LeanDag.SkipMsg.skipFill._proof_15	LeanDag.SkipMsg.B1
 NODE	LeanDagTest.gst_is_forced_pace._proof_1_2	LeanDagTest.Unbounded	thm
 NODE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.creatorsOf
 EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Faults
-EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Block.refs
 EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Minnow.Skipped
 EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Minnow.Dag
 EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Block.round
 EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Faults.f
 EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Minnow.Dag.block
+EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Minnow.pointers
 EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Minnow.verticesAt
 NODE	LeanDag.Nemo.View.mk.noConfusion	LeanDag.Nemo.Basic	def
 EDGE	LeanDag.Nemo.View.mk.noConfusion	LeanDag.Nemo.View.noConfusion
@@ -36511,6 +36503,14 @@ EDGE	LeanDag.Nemo.Universe.complete	LeanDag.Nemo.Universe
 EDGE	LeanDag.Nemo.Universe.complete	LeanDag.Nemo.Universe.block
 EDGE	LeanDag.Nemo.Universe.complete	LeanDag.Block.refs
 EDGE	LeanDag.Nemo.Universe.complete	LeanDag.Nemo.Universe.ids
+NODE	LeanDag.Minnow.SkippedByVertex	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.SkippedByVertex	LeanDag.Faults
+EDGE	LeanDag.Minnow.SkippedByVertex	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.SkippedByVertex	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.SkippedByVertex	LeanDag.Block.round
+EDGE	LeanDag.Minnow.SkippedByVertex	LeanDag.Faults.f
+EDGE	LeanDag.Minnow.SkippedByVertex	LeanDag.Minnow.Dag.block
+EDGE	LeanDag.Minnow.SkippedByVertex	LeanDag.Minnow.verticesAt
 NODE	LeanDag.ViewPace.recOn	LeanDag.ViewPace	def
 EDGE	LeanDag.ViewPace.recOn	LeanDag.Faults
 EDGE	LeanDag.ViewPace.recOn	LeanDag.ViewPace.mk
