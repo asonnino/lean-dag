@@ -133,14 +133,24 @@ def FPEvidence (D : Dag Validator BlockId Payload) (b l : BlockId) : Prop :=
   else
     F.f + P.p ≤ (parentsVoting D b l).card + 1
 
+instance (D : Dag Validator BlockId Payload) (b l : BlockId) :
+    Decidable (FPEvidence D b l) := by
+  unfold FPEvidence; infer_instance
+
 /-- **An SP-certificate**, Mysticeti's, at this committee's quorum. -/
 def SPCertificate (D : Dag Validator BlockId Payload) (b l : BlockId) : Prop :=
   spQuorum Validator ≤ (parentsVoting D b l).card
+
+instance (D : Dag Validator BlockId Payload) (b l : BlockId) :
+    Decidable (SPCertificate D b l) := inferInstanceAs (Decidable (_ ≤ _))
 
 /-- **The fast direct commit**: `n − p` distinct validators vote for `l`
 one round up. -/
 def FastCommit (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
   fastCard Validator ≤ (voters D l).card
+
+instance (D : Dag Validator BlockId Payload) (l : BlockId) :
+    Decidable (FastCommit D l) := inferInstanceAs (Decidable (_ ≤ _))
 
 end FinWhale
 

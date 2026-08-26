@@ -1753,6 +1753,7 @@ EDGE	LeanDag.BlackMarlin.Repair.LivenessUntouched	LeanDag.BlackMarlin.Supported
 NODE	LeanDagTest.lagStamp	LeanDagTest.Collapse	def
 EDGE	LeanDagTest.lagStamp	LeanDagTest.lagStamp._proof_2
 EDGE	LeanDagTest.lagStamp	LeanDagTest.lagBuilt
+NODE	LeanDagTest.FinWhale.fastBlk._proof_2	LeanDagTest.FinWhale.Model	thm
 NODE	LeanDagTest.checkpointThree	LeanDagTest.HybridCheckpoint	def
 EDGE	LeanDagTest.checkpointThree	LeanDag.Hybrid.Checkpoint.CheckpointData.mk
 EDGE	LeanDagTest.checkpointThree	LeanDag.Hybrid.Checkpoint.CheckpointData
@@ -2206,6 +2207,13 @@ EDGE	LeanDag.Slots.noConfusionType	LeanDag.Slots
 NODE	LeanDag.Hybrid.eligible_iff._proof_1_3	LeanDag.Hybrid.Decision	thm
 EDGE	LeanDag.Hybrid.eligible_iff._proof_1_3	LeanDag.Slots.slotRound
 EDGE	LeanDag.Hybrid.eligible_iff._proof_1_3	LeanDag.Slots
+NODE	LeanDag.FinWhale.instDecidableSPCertificate._aux_1	LeanDag.FinWhale.Model.Rule	def
+EDGE	LeanDag.FinWhale.instDecidableSPCertificate._aux_1	LeanDag.Faults
+EDGE	LeanDag.FinWhale.instDecidableSPCertificate._aux_1	LeanDag.FinWhale.parentsVoting
+EDGE	LeanDag.FinWhale.instDecidableSPCertificate._aux_1	LeanDag.FinWhale.SPCertificate
+EDGE	LeanDag.FinWhale.instDecidableSPCertificate._aux_1	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.instDecidableSPCertificate._aux_1	LeanDag.FinWhale.spQuorum
+EDGE	LeanDag.FinWhale.instDecidableSPCertificate._aux_1	LeanDag.FinWhale.Dag
 NODE	LeanDag.certifies_of_synchronisedOn._proof_1_1	LeanDag.Liveness	thm
 EDGE	LeanDag.certifies_of_synchronisedOn._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.certifies_of_synchronisedOn._proof_1_1	LeanDag.BlockUniverse.block
@@ -3249,6 +3257,12 @@ EDGE	LeanDag.Nemo.decided_below_of_committed_run._proof_1_4	LeanDag.Nemo.decidab
 EDGE	LeanDag.Nemo.decided_below_of_committed_run._proof_1_4	LeanDag.Nemo.Eligible
 EDGE	LeanDag.Nemo.decided_below_of_committed_run._proof_1_4	LeanDag.Nemo.View
 EDGE	LeanDag.Nemo.decided_below_of_committed_run._proof_1_4	LeanDag.Slots
+NODE	LeanDagTest.FinWhale.Dequiv._proof_2	LeanDagTest.FinWhale.Model	thm
+EDGE	LeanDagTest.FinWhale.Dequiv._proof_2	LeanDagTest.FinWhale.eqBlk
+EDGE	LeanDagTest.FinWhale.Dequiv._proof_2	LeanDagTest.FinWhale.fwFaults
+EDGE	LeanDagTest.FinWhale.Dequiv._proof_2	LeanDag.Correct
+EDGE	LeanDagTest.FinWhale.Dequiv._proof_2	LeanDag.Block.round
+EDGE	LeanDagTest.FinWhale.Dequiv._proof_2	LeanDag.Block.creator
 NODE	LeanDagTest.uhyb4_slot1	LeanDagTest.Hybrid	thm
 EDGE	LeanDagTest.uhyb4_slot1	LeanDag.View.full
 EDGE	LeanDagTest.uhyb4_slot1	LeanDag.Slots.slotRound
@@ -3365,6 +3379,12 @@ EDGE	LeanDag.card_history_le'._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.card_history_le'._proof_1_1	LeanDag.BlockUniverse
 EDGE	LeanDag.card_history_le'._proof_1_1	LeanDag.Faults.f
 EDGE	LeanDag.card_history_le'._proof_1_1	LeanDag.exposedTo
+NODE	LeanDagTest.FinWhale.decA	LeanDagTest.FinWhale.Model	def
+EDGE	LeanDagTest.FinWhale.decA	LeanDag.FinWhale.Verdict.undecided
+EDGE	LeanDagTest.FinWhale.decA	LeanDag.FinWhale.Verdict
+EDGE	LeanDagTest.FinWhale.decA	LeanDag.FinWhale.Verdict.commit
+EDGE	LeanDagTest.FinWhale.decA	LeanDag.FinWhale.Verdict.skip
+EDGE	LeanDagTest.FinWhale.decA	LeanDagTest.FinWhale.decA._proof_1
 NODE	LeanDag.exposedTo.congr_simp	LeanDag.DoS.Exposure	thm
 EDGE	LeanDag.exposedTo.congr_simp	LeanDag.Faults
 EDGE	LeanDag.exposedTo.congr_simp	LeanDag.BlockUniverse
@@ -4769,6 +4789,17 @@ EDGE	LeanDag.exists_pedigree._proof_1_3	LeanDag.BlockUniverse.block
 EDGE	LeanDag.exists_pedigree._proof_1_3	LeanDag.Block.round
 EDGE	LeanDag.exists_pedigree._proof_1_3	LeanDag.BlockUniverse
 NODE	LeanDag.support_threshold_arith._proof_1_2	LeanDag.CommonCore	thm
+NODE	LeanDagTest.FinWhale.fastValid	LeanDagTest.FinWhale.Model	thm
+EDGE	LeanDagTest.FinWhale.fastValid	LeanDag.FinWhale.ValidHere.mk
+EDGE	LeanDagTest.FinWhale.fastValid	LeanDagTest.FinWhale.fwLeader
+EDGE	LeanDagTest.FinWhale.fastValid	LeanDag.creators
+EDGE	LeanDagTest.FinWhale.fastValid	LeanDagTest.FinWhale.fwFaults
+EDGE	LeanDagTest.FinWhale.fastValid	LeanDag.Block.refs
+EDGE	LeanDagTest.FinWhale.fastValid	LeanDag.Block.round
+EDGE	LeanDagTest.FinWhale.fastValid	LeanDag.Faults.f
+EDGE	LeanDagTest.FinWhale.fastValid	LeanDag.FinWhale.ValidHere
+EDGE	LeanDagTest.FinWhale.fastValid	LeanDagTest.FinWhale.fastBlk
+EDGE	LeanDagTest.FinWhale.fastValid	LeanDag.Block.creator
 NODE	LeanDag.Odontoceti.DirectCommit	LeanDag.Odontoceti.Rules	def
 EDGE	LeanDag.Odontoceti.DirectCommit	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.DirectCommit	LeanDag.BlockUniverse
@@ -5103,6 +5134,12 @@ NODE	LeanDag.ReachesFrom.refl	LeanDag.Causality	thm
 EDGE	LeanDag.ReachesFrom.refl	LeanDag.Block
 EDGE	LeanDag.ReachesFrom.refl	LeanDag.RefStepFrom
 EDGE	LeanDag.ReachesFrom.refl	LeanDag.ReachesFrom
+NODE	LeanDag.FinWhale.instDecidableNonFPEvidence	LeanDag.FinWhale.Skip	def
+EDGE	LeanDag.FinWhale.instDecidableNonFPEvidence	LeanDag.FinWhale.NonFPEvidence
+EDGE	LeanDag.FinWhale.instDecidableNonFPEvidence	LeanDag.Faults
+EDGE	LeanDag.FinWhale.instDecidableNonFPEvidence	LeanDag.FinWhale.instDecidableNonFPEvidence._aux_1
+EDGE	LeanDag.FinWhale.instDecidableNonFPEvidence	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.instDecidableNonFPEvidence	LeanDag.FinWhale.Dag
 NODE	LeanDag.BlackMarlin.nxt_inj	LeanDag.BlackMarlin.Helpers.Liveness	thm
 EDGE	LeanDag.BlackMarlin.nxt_inj	LeanDag.BlackMarlin.nxt_inj._proof_1_2
 EDGE	LeanDag.BlackMarlin.nxt_inj	LeanDag.BlackMarlin.nxt_inj._proof_1_6
@@ -5261,6 +5298,16 @@ EDGE	LeanDag.FinWhale.Params.p_pos	LeanDag.Faults
 EDGE	LeanDag.FinWhale.Params.p_pos	LeanDag.FinWhale.Params
 EDGE	LeanDag.FinWhale.Params.p_pos	LeanDag.FinWhale.Params.p
 NODE	LeanDagTest.skipBlk._proof_3	LeanDagTest.Odontoceti.Model	thm
+NODE	LeanDagTest.FinWhale.Dfast	LeanDagTest.FinWhale.Model	def
+EDGE	LeanDagTest.FinWhale.Dfast	LeanDagTest.FinWhale.fwLeader
+EDGE	LeanDagTest.FinWhale.Dfast	LeanDag.FinWhale.Dag.mk
+EDGE	LeanDagTest.FinWhale.Dfast	LeanDagTest.FinWhale.fwFaults
+EDGE	LeanDagTest.FinWhale.Dfast	LeanDagTest.FinWhale.fastValid
+EDGE	LeanDagTest.FinWhale.Dfast	LeanDagTest.FinWhale.Dfast._proof_1
+EDGE	LeanDagTest.FinWhale.Dfast	LeanDagTest.FinWhale.Dfast._proof_2
+EDGE	LeanDagTest.FinWhale.Dfast	LeanDag.FinWhale.Dag
+EDGE	LeanDagTest.FinWhale.Dfast	LeanDagTest.FinWhale.fastBlk
+EDGE	LeanDagTest.FinWhale.Dfast	LeanDagTest.FinWhale.fwParams
 NODE	LeanDag.FinWhale.commitSeq_congr._proof_1_4	LeanDag.FinWhale.Order	thm
 NODE	LeanDag.ViewPace.dos_resistance_of_pace'	LeanDag.PaceDelivery	thm
 EDGE	LeanDag.ViewPace.dos_resistance_of_pace'	LeanDag.ViewPace.dos_resistance_of_pace'._proof_1_1
@@ -6757,6 +6804,12 @@ EDGE	LeanDag.Odontoceti.mem_coneSupports._simp_1_4	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.mem_coneSupports._simp_1_4	LeanDag.blocksAt
 EDGE	LeanDag.Odontoceti.mem_coneSupports._simp_1_4	LeanDag.mem_blocksAt
 NODE	LeanDagTest.BlackMarlin.cntRot.match_1	LeanDagTest.BlackMarlin.Counting	def
+NODE	LeanDag.FinWhale.instDecidableSPCertificate	LeanDag.FinWhale.Model.Rule	def
+EDGE	LeanDag.FinWhale.instDecidableSPCertificate	LeanDag.Faults
+EDGE	LeanDag.FinWhale.instDecidableSPCertificate	LeanDag.FinWhale.SPCertificate
+EDGE	LeanDag.FinWhale.instDecidableSPCertificate	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.instDecidableSPCertificate	LeanDag.FinWhale.instDecidableSPCertificate._aux_1
+EDGE	LeanDag.FinWhale.instDecidableSPCertificate	LeanDag.FinWhale.Dag
 NODE	LeanDag.MahiMahi.AgreeUpto.rec	LeanDag.MahiMahi.Model.Unpredictable	rec
 EDGE	LeanDag.MahiMahi.AgreeUpto.rec	LeanDag.Block
 EDGE	LeanDag.MahiMahi.AgreeUpto.rec	LeanDag.Faults
@@ -8589,6 +8642,8 @@ EDGE	LeanDag.BlackMarlin.Order.TotalOrder	LeanDag.BlackMarlin.Flush.block
 EDGE	LeanDag.BlackMarlin.Order.TotalOrder	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.Order.TotalOrder	LeanDag.BlackMarlin.TopoSort
 NODE	LeanDagTest.u7_decidedWithin_slot0._proof_1_3	LeanDagTest.Adaptive	thm
+NODE	LeanDagTest.FinWhale.fwLeader._proof_2	LeanDagTest.FinWhale.Model	thm
+EDGE	LeanDagTest.FinWhale.fwLeader._proof_2	LeanDagTest.FinWhale.fwLeader._proof_1
 NODE	LeanDag.reaches_of_mem_historyUptoFrom	LeanDag.Causality	thm
 EDGE	LeanDag.reaches_of_mem_historyUptoFrom	LeanDag.Block
 EDGE	LeanDag.reaches_of_mem_historyUptoFrom	LeanDag.historyUptoFrom_zero
@@ -9230,6 +9285,7 @@ EDGE	LeanDag.BlackMarlin.descend_isSome	LeanDag.BlackMarlin.pick_isSome
 EDGE	LeanDag.BlackMarlin.descend_isSome	LeanDag.BlackMarlin.descend
 EDGE	LeanDag.BlackMarlin.descend_isSome	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.descend_isSome	LeanDag.BlackMarlin.maxAnchor
+NODE	LeanDagTest.FinWhale.decA._proof_1	LeanDagTest.FinWhale.Model	thm
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.mk._flat_ctor	LeanDag.Hybrid.Checkpoint.BaseSpec	def
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.mk._flat_ctor	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.mk._flat_ctor	LeanDag.Hybrid.Checkpoint.CheckpointData.height
@@ -9633,6 +9689,16 @@ EDGE	LeanDag.history_chop_anti._proof_1_1	LeanDag.BlockUniverse.ids
 EDGE	LeanDag.history_chop_anti._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.history_chop_anti._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.history_chop_anti._proof_1_1	LeanDag.BlockUniverse
+NODE	LeanDagTest.FinWhale.Dequiv	LeanDagTest.FinWhale.Model	def
+EDGE	LeanDagTest.FinWhale.Dequiv	LeanDagTest.FinWhale.eqBlk
+EDGE	LeanDagTest.FinWhale.Dequiv	LeanDagTest.FinWhale.fwLeader
+EDGE	LeanDagTest.FinWhale.Dequiv	LeanDagTest.FinWhale.Dequiv._proof_1
+EDGE	LeanDagTest.FinWhale.Dequiv	LeanDagTest.FinWhale.eqValid
+EDGE	LeanDagTest.FinWhale.Dequiv	LeanDag.FinWhale.Dag.mk
+EDGE	LeanDagTest.FinWhale.Dequiv	LeanDagTest.FinWhale.Dequiv._proof_2
+EDGE	LeanDagTest.FinWhale.Dequiv	LeanDagTest.FinWhale.fwFaults
+EDGE	LeanDagTest.FinWhale.Dequiv	LeanDag.FinWhale.Dag
+EDGE	LeanDagTest.FinWhale.Dequiv	LeanDagTest.FinWhale.fwParams
 NODE	LeanDagTest.ucrash_populated	LeanDagTest.SafeSkip	thm
 EDGE	LeanDagTest.ucrash_populated	LeanDagTest.Ucrash._simp_2
 EDGE	LeanDagTest.ucrash_populated	LeanDag.SkipMsg.skipFill_populatedOn
@@ -11938,6 +12004,7 @@ EDGE	LeanDagTest.hyb4Slots	LeanDag.Slots.uniformSingle
 EDGE	LeanDagTest.hyb4Slots	LeanDagTest.hyb4Slots._proof_3
 EDGE	LeanDagTest.hyb4Slots	LeanDagTest.hyb4Slots._proof_4
 EDGE	LeanDagTest.hyb4Slots	LeanDag.Slots
+NODE	LeanDagTest.FinWhale.fwLeader._proof_1	LeanDagTest.FinWhale.Model	thm
 NODE	LeanDag.eq_of_both_name_of_shared	LeanDag.DoS.Exclusion	thm
 EDGE	LeanDag.eq_of_both_name_of_shared	LeanDag.creatorsOf
 EDGE	LeanDag.eq_of_both_name_of_shared	LeanDag.mem_creatorsOf
@@ -12694,6 +12761,12 @@ EDGE	LeanDag.bootstrap_agree	LeanDag.Slots.chop
 EDGE	LeanDag.bootstrap_agree	LeanDag.Slots
 EDGE	LeanDag.bootstrap_agree	LeanDag.View
 EDGE	LeanDag.bootstrap_agree	LeanDag.Synchronised
+NODE	LeanDagTest.FinWhale.decB	LeanDagTest.FinWhale.Model	def
+EDGE	LeanDagTest.FinWhale.decB	LeanDag.FinWhale.Verdict.undecided
+EDGE	LeanDagTest.FinWhale.decB	LeanDag.FinWhale.Verdict
+EDGE	LeanDagTest.FinWhale.decB	LeanDag.FinWhale.Verdict.commit
+EDGE	LeanDagTest.FinWhale.decB	LeanDag.FinWhale.Verdict.skip
+EDGE	LeanDagTest.FinWhale.decB	LeanDagTest.FinWhale.decA._proof_1
 NODE	LeanDag.Minnow.CommittedAt.match_1.splitter	LeanDag.Minnow.Model.Rule	def
 EDGE	LeanDag.Minnow.CommittedAt.match_1.splitter	LeanDag.Minnow.CommittedAt.match_1
 NODE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_5	LeanDag.BlackMarlin.Helpers.Order	thm
@@ -12724,6 +12797,17 @@ EDGE	LeanDag.Odontoceti.DecidedWithin.below.directCommit	LeanDag.View
 EDGE	LeanDag.Odontoceti.DecidedWithin.below.directCommit	LeanDag.Faults5.toFaults
 EDGE	LeanDag.Odontoceti.DecidedWithin.below.directCommit	LeanDag.Odontoceti.DecidedWithin
 NODE	LeanDag.encodeList	LeanDag.DoS.Pedigree	def
+NODE	LeanDagTest.FinWhale.skipValid	LeanDagTest.FinWhale.Model	thm
+EDGE	LeanDagTest.FinWhale.skipValid	LeanDag.FinWhale.ValidHere.mk
+EDGE	LeanDagTest.FinWhale.skipValid	LeanDagTest.FinWhale.fwLeader
+EDGE	LeanDagTest.FinWhale.skipValid	LeanDag.creators
+EDGE	LeanDagTest.FinWhale.skipValid	LeanDagTest.FinWhale.skipBlk
+EDGE	LeanDagTest.FinWhale.skipValid	LeanDagTest.FinWhale.fwFaults
+EDGE	LeanDagTest.FinWhale.skipValid	LeanDag.Block.refs
+EDGE	LeanDagTest.FinWhale.skipValid	LeanDag.Block.round
+EDGE	LeanDagTest.FinWhale.skipValid	LeanDag.Faults.f
+EDGE	LeanDagTest.FinWhale.skipValid	LeanDag.FinWhale.ValidHere
+EDGE	LeanDagTest.FinWhale.skipValid	LeanDag.Block.creator
 NODE	LeanDag.PaceCore.holds_roundBlocks	LeanDag.ViewPace	thm
 EDGE	LeanDag.PaceCore.holds_roundBlocks	LeanDag.Faults
 EDGE	LeanDag.PaceCore.holds_roundBlocks	LeanDag.PaceCore.built_le_latest
@@ -13876,6 +13960,9 @@ EDGE	LeanDagTest.Dtwin._proof_5	LeanDag.Block.round
 EDGE	LeanDagTest.Dtwin._proof_5	LeanDagTest.twinAcc
 EDGE	LeanDagTest.Dtwin._proof_5	LeanDagTest.Dtwin._proof_1
 EDGE	LeanDagTest.Dtwin._proof_5	LeanDag.Block.creator
+NODE	LeanDagTest.FinWhale.Dequiv._proof_1	LeanDagTest.FinWhale.Model	thm
+EDGE	LeanDagTest.FinWhale.Dequiv._proof_1	LeanDagTest.FinWhale.eqBlk
+EDGE	LeanDagTest.FinWhale.Dequiv._proof_1	LeanDag.Block.refs
 NODE	LeanDag.history_chop_anti	LeanDag.GC.Window	thm
 EDGE	LeanDag.history_chop_anti	LeanDag.history_chop_anti._proof_1_2
 EDGE	LeanDag.history_chop_anti	LeanDag.Faults
@@ -19160,6 +19247,19 @@ EDGE	LeanDag.BlackMarlin.descendS	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.descendS	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.descendS	LeanDag.BlackMarlin.pick
 NODE	LeanDagTest.rrSlots_fairWithin._proof_1_2	LeanDagTest.Quantitative	thm
+NODE	LeanDag.FinWhale.instDecidableFPEvidence	LeanDag.FinWhale.Model.Rule	def
+EDGE	LeanDag.FinWhale.instDecidableFPEvidence	LeanDag.Faults
+EDGE	LeanDag.FinWhale.instDecidableFPEvidence	LeanDag.FinWhale.parentsVoting
+EDGE	LeanDag.FinWhale.instDecidableFPEvidence	LeanDag.FinWhale.Dag.ids
+EDGE	LeanDag.FinWhale.instDecidableFPEvidence	LeanDag.FinWhale.instDecidableConflicting
+EDGE	LeanDag.FinWhale.instDecidableFPEvidence	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.instDecidableFPEvidence	LeanDag.FinWhale.ExposesEquivocation
+EDGE	LeanDag.FinWhale.instDecidableFPEvidence	LeanDag.Faults.f
+EDGE	LeanDag.FinWhale.instDecidableFPEvidence	LeanDag.FinWhale.FPEvidence
+EDGE	LeanDag.FinWhale.instDecidableFPEvidence	LeanDag.FinWhale.Conflicting
+EDGE	LeanDag.FinWhale.instDecidableFPEvidence	LeanDag.FinWhale.instDecidableExposesEquivocation
+EDGE	LeanDag.FinWhale.instDecidableFPEvidence	LeanDag.FinWhale.Params.p
+EDGE	LeanDag.FinWhale.instDecidableFPEvidence	LeanDag.FinWhale.Dag
 NODE	LeanDag.Integration.rejoin_populated	LeanDag.Integration.ReGenesis	thm
 EDGE	LeanDag.Integration.rejoin_populated	LeanDag.Integration.addGenesis_block_new
 EDGE	LeanDag.Integration.rejoin_populated	LeanDag.SkipMsg.v1
@@ -20292,6 +20392,9 @@ EDGE	LeanDag.certifiedIn_of_directCommitIn	LeanDag.View
 NODE	LeanDag.nonempty_of_creatorsOf_card_pos	LeanDag.Block	thm
 EDGE	LeanDag.nonempty_of_creatorsOf_card_pos	LeanDag.Block
 EDGE	LeanDag.nonempty_of_creatorsOf_card_pos	LeanDag.creatorsOf
+NODE	LeanDagTest.FinWhale.Dskip._proof_1	LeanDagTest.FinWhale.Model	thm
+EDGE	LeanDagTest.FinWhale.Dskip._proof_1	LeanDagTest.FinWhale.skipBlk
+EDGE	LeanDagTest.FinWhale.Dskip._proof_1	LeanDag.Block.refs
 NODE	LeanDag.ViewPace.le_built._proof_1_4	LeanDag.ViewPace	thm
 EDGE	LeanDag.ViewPace.le_built._proof_1_4	LeanDag.ViewPace.toPaceCore
 EDGE	LeanDag.ViewPace.le_built._proof_1_4	LeanDag.Faults
@@ -20300,6 +20403,8 @@ EDGE	LeanDag.ViewPace.le_built._proof_1_4	LeanDag.PaceCore.top
 EDGE	LeanDag.ViewPace.le_built._proof_1_4	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewPace.le_built._proof_1_4	LeanDag.PaceCore.timeout
 EDGE	LeanDag.ViewPace.le_built._proof_1_4	LeanDag.ViewPace
+NODE	LeanDagTest.FinWhale.fwFaults._proof_3	LeanDagTest.FinWhale.Model	thm
+EDGE	LeanDagTest.FinWhale.fwFaults._proof_3	LeanDagTest.FinWhale.fwFaults._proof_1
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.finalized_prefix_next_genesis	LeanDag.Hybrid.Checkpoint.RecoveryProofs	thm
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.finalized_prefix_next_genesis	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.finalized_prefix_next_genesis	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound
@@ -20626,6 +20731,13 @@ EDGE	LeanDag.Decided	LeanDag.Faults
 EDGE	LeanDag.Decided	LeanDag.BlockUniverse
 EDGE	LeanDag.Decided	LeanDag.Slots
 EDGE	LeanDag.Decided	LeanDag.View
+NODE	LeanDag.FinWhale.instDecidableFastCommit._aux_1	LeanDag.FinWhale.Model.Rule	def
+EDGE	LeanDag.FinWhale.instDecidableFastCommit._aux_1	LeanDag.Faults
+EDGE	LeanDag.FinWhale.instDecidableFastCommit._aux_1	LeanDag.FinWhale.voters
+EDGE	LeanDag.FinWhale.instDecidableFastCommit._aux_1	LeanDag.FinWhale.fastCard
+EDGE	LeanDag.FinWhale.instDecidableFastCommit._aux_1	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.instDecidableFastCommit._aux_1	LeanDag.FinWhale.FastCommit
+EDGE	LeanDag.FinWhale.instDecidableFastCommit._aux_1	LeanDag.FinWhale.Dag
 NODE	LeanDag.FinWhale.DirectCommit	LeanDag.FinWhale.Decision	def
 EDGE	LeanDag.FinWhale.DirectCommit	LeanDag.Faults
 EDGE	LeanDag.FinWhale.DirectCommit	LeanDag.FinWhale.SPCommit
@@ -20997,6 +21109,9 @@ EDGE	LeanDag.BlackMarlin.TopoSort._sizeOf_1	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.TopoSort._sizeOf_1	LeanDag.BlackMarlin.TopoSort.rec
 EDGE	LeanDag.BlackMarlin.TopoSort._sizeOf_1	LeanDag.BlackMarlin.TopoSort
 EDGE	LeanDag.BlackMarlin.TopoSort._sizeOf_1	LeanDag.Reaches
+NODE	LeanDagTest.FinWhale.fwParams._proof_4	LeanDagTest.FinWhale.Model	thm
+EDGE	LeanDagTest.FinWhale.fwParams._proof_4	LeanDagTest.FinWhale.fwFaults
+EDGE	LeanDagTest.FinWhale.fwParams._proof_4	LeanDag.Faults.f
 NODE	LeanDagTest.twinBlk._proof_3	LeanDagTest.Odontoceti.Model	thm
 NODE	LeanDagTest.ugapPace._proof_5	LeanDagTest.Unbounded	thm
 NODE	LeanDag.ViewPace.mk	LeanDag.ViewPace	ctor
@@ -21314,6 +21429,8 @@ EDGE	LeanDag.MahiMahi.instDecidableDirectCommit	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.instDecidableDirectCommit	LeanDag.MahiMahi.DirectCommit
 EDGE	LeanDag.MahiMahi.instDecidableDirectCommit	LeanDag.MahiMahi.instDecidableDirectCommit._aux_1
 EDGE	LeanDag.MahiMahi.instDecidableDirectCommit	LeanDag.BlockUniverse
+NODE	LeanDagTest.FinWhale.fastBlk._proof_1	LeanDagTest.FinWhale.Model	thm
+EDGE	LeanDagTest.FinWhale.fastBlk._proof_1	LeanDagTest.FinWhale.fwLeader._proof_1
 NODE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.BlackMarlin.Helpers.Rules	thm
 EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.BlackMarlin.Linked
 EDGE	LeanDag.BlackMarlin.history_subset_of_committed	LeanDag.Faults
@@ -22802,6 +22919,12 @@ EDGE	LeanDag.BlackMarlin.Reactive.Exit	LeanDag.Faults.f
 EDGE	LeanDag.BlackMarlin.Reactive.Exit	LeanDag.BlackMarlin.Pace.toPaceCore
 EDGE	LeanDag.BlackMarlin.Reactive.Exit	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.Reactive.Exit	LeanDag.Block.creator
+NODE	LeanDag.FinWhale.instDecidableDirectCommit	LeanDag.FinWhale.Decision	def
+EDGE	LeanDag.FinWhale.instDecidableDirectCommit	LeanDag.Faults
+EDGE	LeanDag.FinWhale.instDecidableDirectCommit	LeanDag.FinWhale.DirectCommit
+EDGE	LeanDag.FinWhale.instDecidableDirectCommit	LeanDag.FinWhale.instDecidableDirectCommit._aux_1
+EDGE	LeanDag.FinWhale.instDecidableDirectCommit	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.instDecidableDirectCommit	LeanDag.FinWhale.Dag
 NODE	LeanDagTest.BlackMarlin.vBlockFull.eq_2	LeanDagTest.BlackMarlin.Divergence	thm
 EDGE	LeanDagTest.BlackMarlin.vBlockFull.eq_2	LeanDagTest.BlackMarlin.vBlockFull
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.ChkWitness._sizeOf_1	LeanDag.Hybrid.Checkpoint.BaseSpec	def
@@ -22912,6 +23035,12 @@ EDGE	LeanDag.BlackMarlin.flushRecord_dense._proof_1_7	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.flushRecord_dense._proof_1_7	LeanDag.BlockUniverse.block
 EDGE	LeanDag.BlackMarlin.flushRecord_dense._proof_1_7	LeanDag.Block.round
 EDGE	LeanDag.BlackMarlin.flushRecord_dense._proof_1_7	LeanDag.BlockUniverse
+NODE	LeanDag.FinWhale.instDecidableSPSkip	LeanDag.FinWhale.Skip	def
+EDGE	LeanDag.FinWhale.instDecidableSPSkip	LeanDag.Faults
+EDGE	LeanDag.FinWhale.instDecidableSPSkip	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.instDecidableSPSkip	LeanDag.FinWhale.instDecidableSPSkip._aux_1
+EDGE	LeanDag.FinWhale.instDecidableSPSkip	LeanDag.FinWhale.SPSkip
+EDGE	LeanDag.FinWhale.instDecidableSPSkip	LeanDag.FinWhale.Dag
 NODE	LeanDag.MahiMahi.unpredictableWithin_of_synchronisedOn._proof_1_1	LeanDag.MahiMahi.Helpers.Synchrony	thm
 EDGE	LeanDag.MahiMahi.unpredictableWithin_of_synchronisedOn._proof_1_1	LeanDag.MahiMahi.decisionRound
 EDGE	LeanDag.MahiMahi.unpredictableWithin_of_synchronisedOn._proof_1_1	LeanDag.Faults
@@ -23291,6 +23420,13 @@ EDGE	LeanDag.ReactivePace.no_timeout_of_fast._proof_1_1	LeanDag.PaceCore.timeout
 EDGE	LeanDag.ReactivePace.no_timeout_of_fast._proof_1_1	LeanDag.PaceCore.proc
 EDGE	LeanDag.ReactivePace.no_timeout_of_fast._proof_1_1	LeanDag.Slots
 EDGE	LeanDag.ReactivePace.no_timeout_of_fast._proof_1_1	LeanDag.ReactivePace
+NODE	LeanDag.FinWhale.instDecidableSPSkip._aux_1	LeanDag.FinWhale.Skip	def
+EDGE	LeanDag.FinWhale.instDecidableSPSkip._aux_1	LeanDag.FinWhale.nonVoters
+EDGE	LeanDag.FinWhale.instDecidableSPSkip._aux_1	LeanDag.Faults
+EDGE	LeanDag.FinWhale.instDecidableSPSkip._aux_1	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.instDecidableSPSkip._aux_1	LeanDag.FinWhale.spQuorum
+EDGE	LeanDag.FinWhale.instDecidableSPSkip._aux_1	LeanDag.FinWhale.SPSkip
+EDGE	LeanDag.FinWhale.instDecidableSPSkip._aux_1	LeanDag.FinWhale.Dag
 NODE	LeanDag.FinWhale.spQuorum_le_fastCard	LeanDag.FinWhale.Model.Params	thm
 EDGE	LeanDag.FinWhale.spQuorum_le_fastCard	LeanDag.Faults
 EDGE	LeanDag.FinWhale.spQuorum_le_fastCard	LeanDag.Faults.byzantine
@@ -24249,6 +24385,7 @@ EDGE	LeanDag.ValidWrt.rec	LeanDag.Faults.f
 EDGE	LeanDag.ValidWrt.rec	LeanDag.ValidWrt.mk
 EDGE	LeanDag.ValidWrt.rec	LeanDag.Block.creator
 EDGE	LeanDag.ValidWrt.rec	LeanDag.ValidWrt
+NODE	LeanDagTest.FinWhale.eqBlk._proof_2	LeanDagTest.FinWhale.Model	thm
 NODE	LeanDag.Integration.chopMsg._proof_11	LeanDag.Integration.Retention	thm
 EDGE	LeanDag.Integration.chopMsg._proof_11	LeanDag.Faults
 EDGE	LeanDag.Integration.chopMsg._proof_11	LeanDag.BlockUniverse.ids
@@ -24516,6 +24653,20 @@ EDGE	LeanDag.certificates.eq_1	LeanDag.BlockUniverse
 EDGE	LeanDag.certificates.eq_1	LeanDag.blocksAt
 EDGE	LeanDag.certificates.eq_1	LeanDag.decidableCertifies
 EDGE	LeanDag.certificates.eq_1	LeanDag.certificates
+NODE	LeanDag.FinWhale.instDecidableDirectSkip	LeanDag.FinWhale.Decision	def
+EDGE	LeanDag.FinWhale.instDecidableDirectSkip	LeanDag.FinWhale.NonFPEvidence
+EDGE	LeanDag.FinWhale.instDecidableDirectSkip	LeanDag.Faults
+EDGE	LeanDag.FinWhale.instDecidableDirectSkip	LeanDag.FinWhale.DirectSkip
+EDGE	LeanDag.FinWhale.instDecidableDirectSkip	LeanDag.FinWhale.instDecidableSPSkip
+EDGE	LeanDag.FinWhale.instDecidableDirectSkip	LeanDag.FinWhale.instDecidableNonFPEvidence
+EDGE	LeanDag.FinWhale.instDecidableDirectSkip	LeanDag.FinWhale.Dag.block
+EDGE	LeanDag.FinWhale.instDecidableDirectSkip	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.instDecidableDirectSkip	LeanDag.FinWhale.slotBlocks
+EDGE	LeanDag.FinWhale.instDecidableDirectSkip	LeanDag.FinWhale.spQuorum
+EDGE	LeanDag.FinWhale.instDecidableDirectSkip	LeanDag.FinWhale.SPSkip
+EDGE	LeanDag.FinWhale.instDecidableDirectSkip	LeanDag.FinWhale.blocksAt
+EDGE	LeanDag.FinWhale.instDecidableDirectSkip	LeanDag.FinWhale.Dag
+EDGE	LeanDag.FinWhale.instDecidableDirectSkip	LeanDag.Block.creator
 NODE	LeanDag.BlackMarlin.commitSeq	LeanDag.BlackMarlin.Model.Recursion	def
 EDGE	LeanDag.BlackMarlin.commitSeq	LeanDag.BlackMarlin.commitSeq._f
 EDGE	LeanDag.BlackMarlin.commitSeq	LeanDag.Faults
@@ -25892,6 +26043,11 @@ EDGE	LeanDag.FinWhale.IndirectCommit	LeanDag.FinWhale.spQuorum
 EDGE	LeanDag.FinWhale.IndirectCommit	LeanDag.FinWhale.blocksAt
 EDGE	LeanDag.FinWhale.IndirectCommit	LeanDag.FinWhale.Dag
 EDGE	LeanDag.FinWhale.IndirectCommit	LeanDag.Block.creator
+NODE	LeanDagTest.FinWhale.fastBlk	LeanDagTest.FinWhale.Model	def
+EDGE	LeanDagTest.FinWhale.fastBlk	LeanDag.Block
+EDGE	LeanDagTest.FinWhale.fastBlk	LeanDagTest.FinWhale.fastBlk._proof_2
+EDGE	LeanDagTest.FinWhale.fastBlk	LeanDag.Block.mk
+EDGE	LeanDagTest.FinWhale.fastBlk	LeanDagTest.FinWhale.fastBlk._proof_1
 NODE	LeanDag.FinWhale.references_spCertificate._proof_1_1	LeanDag.FinWhale.Propagation	thm
 EDGE	LeanDag.FinWhale.references_spCertificate._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.FinWhale.references_spCertificate._proof_1_1	LeanDag.FinWhale.Dag.block
@@ -26088,6 +26244,7 @@ EDGE	LeanDag.card_filter_creator_of_mem_refs._proof_1_1	LeanDag.BlockUniverse.bl
 EDGE	LeanDag.card_filter_creator_of_mem_refs._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.card_filter_creator_of_mem_refs._proof_1_1	LeanDag.BlockUniverse
 NODE	LeanDag.mem_attesters._simp_1_2	LeanDag.GC.AttestedBase	thm
+NODE	LeanDagTest.FinWhale.fwParams._proof_1	LeanDagTest.FinWhale.Model	thm
 NODE	LeanDag.ReactivePace.le_built._proof_1_1	LeanDag.Reactive.Basic	thm
 EDGE	LeanDag.ReactivePace.le_built._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.ReactivePace.le_built._proof_1_1	LeanDag.PaceCore.built
@@ -27735,6 +27892,7 @@ EDGE	LeanDag.card_correct._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.card_correct._proof_1_1	LeanDag.Faults.byzantine
 EDGE	LeanDag.card_correct._proof_1_1	LeanDag.Correct
 EDGE	LeanDag.card_correct._proof_1_1	LeanDag.Faults.f
+NODE	LeanDagTest.FinWhale.fwFaults._proof_2	LeanDagTest.FinWhale.Model	thm
 NODE	LeanDag.viewUpto._unsafe_rec	LeanDag.DoS.Novelty	def
 EDGE	LeanDag.viewUpto._unsafe_rec	LeanDag.Delivery
 EDGE	LeanDag.viewUpto._unsafe_rec	LeanDag.Faults
@@ -28989,6 +29147,8 @@ EDGE	LeanDag.Integration.synchronisedOn_skipFill_above._proof_1_2	LeanDag.Block.
 EDGE	LeanDag.Integration.synchronisedOn_skipFill_above._proof_1_2	LeanDag.SkipMsg.r
 EDGE	LeanDag.Integration.synchronisedOn_skipFill_above._proof_1_2	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.synchronisedOn_skipFill_above._proof_1_2	LeanDag.SkipMsg
+NODE	LeanDagTest.FinWhale.fwLeader	LeanDagTest.FinWhale.Model	def
+EDGE	LeanDagTest.FinWhale.fwLeader	LeanDagTest.FinWhale.fwLeader._proof_2
 NODE	LeanDagTest.ugrowSkewPace_commits._proof_1_1	LeanDagTest.ViewPace	thm
 EDGE	LeanDagTest.ugrowSkewPace_commits._proof_1_1	LeanDag.Slots.slotRound
 EDGE	LeanDagTest.ugrowSkewPace_commits._proof_1_1	LeanDagTest.fairSlots
@@ -29579,6 +29739,12 @@ NODE	LeanDagTest.ugrowLag._proof_51	LeanDagTest.Collapse	thm
 NODE	LeanDag.BlackMarlin.Liveness.FairRun	LeanDag.BlackMarlin.Liveness.Statement	def
 EDGE	LeanDag.BlackMarlin.Liveness.FairRun	LeanDag.BlackMarlin.Rotation.anchor
 EDGE	LeanDag.BlackMarlin.Liveness.FairRun	LeanDag.BlackMarlin.Rotation
+NODE	LeanDagTest.FinWhale.Dskip._proof_2	LeanDagTest.FinWhale.Model	thm
+EDGE	LeanDagTest.FinWhale.Dskip._proof_2	LeanDagTest.FinWhale.skipBlk
+EDGE	LeanDagTest.FinWhale.Dskip._proof_2	LeanDagTest.FinWhale.fwFaults
+EDGE	LeanDagTest.FinWhale.Dskip._proof_2	LeanDag.Correct
+EDGE	LeanDagTest.FinWhale.Dskip._proof_2	LeanDag.Block.round
+EDGE	LeanDagTest.FinWhale.Dskip._proof_2	LeanDag.Block.creator
 NODE	LeanDag.BlackMarlin.idxOf_le_of_pairwise	LeanDag.BlackMarlin.Helpers.Order	thm
 NODE	LeanDagTest.ugrowReactive._proof_32	LeanDagTest.Reactive	thm
 EDGE	LeanDagTest.ugrowReactive._proof_32	LeanDag.Slots.slotRound
@@ -30361,6 +30527,12 @@ EDGE	LeanDag.le_slotRound_slotAt	LeanDag.Slots.slotRound
 EDGE	LeanDag.le_slotRound_slotAt	LeanDag.Slots.unbounded
 EDGE	LeanDag.le_slotRound_slotAt	LeanDag.slotAt
 EDGE	LeanDag.le_slotRound_slotAt	LeanDag.Slots
+NODE	LeanDagTest.FinWhale.fwFaults	LeanDagTest.FinWhale.Model	def
+EDGE	LeanDagTest.FinWhale.fwFaults	LeanDagTest.FinWhale.fwFaults._proof_1
+EDGE	LeanDagTest.FinWhale.fwFaults	LeanDag.Faults
+EDGE	LeanDagTest.FinWhale.fwFaults	LeanDagTest.FinWhale.fwFaults._proof_3
+EDGE	LeanDagTest.FinWhale.fwFaults	LeanDag.Faults.mk
+EDGE	LeanDagTest.FinWhale.fwFaults	LeanDagTest.FinWhale.fwFaults._proof_2
 NODE	LeanDag.Hybrid.DirectCommit	LeanDag.Hybrid.Rules	def
 EDGE	LeanDag.Hybrid.DirectCommit	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.DirectCommit	LeanDag.HybridFaults.toFaults
@@ -30512,6 +30684,8 @@ NODE	LeanDagTest.BlackMarlin.ugrowBM._simp_6	LeanDagTest.BlackMarlin.Reactive	th
 NODE	LeanDagTest.rrBlock_refs	LeanDagTest.Growth	thm
 EDGE	LeanDagTest.rrBlock_refs	LeanDag.Block.refs
 EDGE	LeanDagTest.rrBlock_refs	LeanDagTest.rrBlock
+NODE	LeanDagTest.FinWhale.histFW	LeanDagTest.FinWhale.Model	def
+EDGE	LeanDagTest.FinWhale.histFW	LeanDagTest.FinWhale.decA._proof_1
 NODE	LeanDag.top_eq_of_mem_namer_history._proof_1_5	LeanDag.DoS.Adoption	thm
 EDGE	LeanDag.top_eq_of_mem_namer_history._proof_1_5	LeanDag.Faults
 EDGE	LeanDag.top_eq_of_mem_namer_history._proof_1_5	LeanDag.BlockUniverse.block
@@ -30603,6 +30777,12 @@ EDGE	LeanDagTest.Unemo._proof_3	LeanDagTest.nemoBlk
 EDGE	LeanDagTest.Unemo._proof_3	LeanDag.Block.creator
 NODE	LeanDagTest.BlackMarlin.fullBlock.eq_3	LeanDagTest.BlackMarlin.Ledger	thm
 EDGE	LeanDagTest.BlackMarlin.fullBlock.eq_3	LeanDagTest.BlackMarlin.fullBlock
+NODE	LeanDag.FinWhale.instDecidableFastCommit	LeanDag.FinWhale.Model.Rule	def
+EDGE	LeanDag.FinWhale.instDecidableFastCommit	LeanDag.Faults
+EDGE	LeanDag.FinWhale.instDecidableFastCommit	LeanDag.FinWhale.instDecidableFastCommit._aux_1
+EDGE	LeanDag.FinWhale.instDecidableFastCommit	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.instDecidableFastCommit	LeanDag.FinWhale.FastCommit
+EDGE	LeanDag.FinWhale.instDecidableFastCommit	LeanDag.FinWhale.Dag
 NODE	LeanDag.ViewPace.ctorIdx	LeanDag.ViewPace	def
 EDGE	LeanDag.ViewPace.ctorIdx	LeanDag.Faults
 EDGE	LeanDag.ViewPace.ctorIdx	LeanDag.BlockUniverse
@@ -35005,6 +35185,13 @@ EDGE	LeanDag.top_eq_of_mem_namer_history._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.top_eq_of_mem_namer_history._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.top_eq_of_mem_namer_history._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.top_eq_of_mem_namer_history._proof_1_1	LeanDag.BlockUniverse
+NODE	LeanDagTest.FinWhale.fwParams	LeanDagTest.FinWhale.Model	def
+EDGE	LeanDagTest.FinWhale.fwParams	LeanDagTest.FinWhale.fwParams._proof_2
+EDGE	LeanDagTest.FinWhale.fwParams	LeanDagTest.FinWhale.fwParams._proof_4
+EDGE	LeanDagTest.FinWhale.fwParams	LeanDagTest.FinWhale.fwFaults
+EDGE	LeanDagTest.FinWhale.fwParams	LeanDag.FinWhale.Params
+EDGE	LeanDagTest.FinWhale.fwParams	LeanDag.FinWhale.Params.mk
+EDGE	LeanDagTest.FinWhale.fwParams	LeanDagTest.FinWhale.fwParams._proof_3
 NODE	LeanDag.ViewPace.commits_recur_local_of_pace	LeanDag.ViewPace	thm
 EDGE	LeanDag.ViewPace.commits_recur_local_of_pace	LeanDag.ViewPace.toPaceCore
 EDGE	LeanDag.ViewPace.commits_recur_local_of_pace	LeanDag.PaceCore.viewAt
@@ -36306,6 +36493,8 @@ EDGE	LeanDag.BlackMarlin.filterFirstFrom_pairwise	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.filterFirstFrom_pairwise	LeanDag.BlackMarlin.filterFirstFrom.eq_2
 EDGE	LeanDag.BlackMarlin.filterFirstFrom_pairwise	LeanDag.BlackMarlin.key
 EDGE	LeanDag.BlackMarlin.filterFirstFrom_pairwise	LeanDag.BlackMarlin.filterFirstFrom_key_notMem
+NODE	LeanDagTest.FinWhale.fwParams._proof_2	LeanDagTest.FinWhale.Model	thm
+EDGE	LeanDagTest.FinWhale.fwParams._proof_2	LeanDagTest.FinWhale.fwParams._proof_1
 NODE	LeanDag.committed_of_correct_block._proof_1_3	LeanDag.Quality.Inclusion	thm
 EDGE	LeanDag.committed_of_correct_block._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.committed_of_correct_block._proof_1_3	LeanDag.Slots.slotRound
@@ -36760,6 +36949,12 @@ EDGE	LeanDag.JumpMsg.mk	LeanDag.Block.round
 EDGE	LeanDag.JumpMsg.mk	LeanDag.BlockUniverse
 EDGE	LeanDag.JumpMsg.mk	LeanDag.Block.creator
 NODE	LeanDag.historyUptoFrom_mono._proof_1_1	LeanDag.Causality	thm
+NODE	LeanDagTest.FinWhale.eqBlk	LeanDagTest.FinWhale.Model	def
+EDGE	LeanDagTest.FinWhale.eqBlk	LeanDag.Block
+EDGE	LeanDagTest.FinWhale.eqBlk	LeanDagTest.FinWhale.fwFaults._proof_1
+EDGE	LeanDagTest.FinWhale.eqBlk	LeanDagTest.FinWhale.eqBlk._proof_1
+EDGE	LeanDagTest.FinWhale.eqBlk	LeanDag.Block.mk
+EDGE	LeanDagTest.FinWhale.eqBlk	LeanDagTest.FinWhale.eqBlk._proof_2
 NODE	LeanDag.committed_of_correct_block_within._proof_1_2	LeanDag.Quality.Capstone	thm
 EDGE	LeanDag.committed_of_correct_block_within._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.committed_of_correct_block_within._proof_1_2	LeanDag.Slots.slotRound
@@ -36883,6 +37078,13 @@ EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.Reaches.single
 EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.Block.creator
 NODE	LeanDag.Minnow.CommittedAt.match_1.eq_2	LeanDag.Minnow.Blocking	thm
 EDGE	LeanDag.Minnow.CommittedAt.match_1.eq_2	LeanDag.Minnow.CommittedAt.match_1
+NODE	LeanDag.FinWhale.instDecidableNonFPEvidence._aux_1	LeanDag.FinWhale.Skip	def
+EDGE	LeanDag.FinWhale.instDecidableNonFPEvidence._aux_1	LeanDag.FinWhale.NonFPEvidence
+EDGE	LeanDag.FinWhale.instDecidableNonFPEvidence._aux_1	LeanDag.Faults
+EDGE	LeanDag.FinWhale.instDecidableNonFPEvidence._aux_1	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.instDecidableNonFPEvidence._aux_1	LeanDag.FinWhale.FPEvidence
+EDGE	LeanDag.FinWhale.instDecidableNonFPEvidence._aux_1	LeanDag.FinWhale.Dag
+EDGE	LeanDag.FinWhale.instDecidableNonFPEvidence._aux_1	LeanDag.FinWhale.instDecidableFPEvidence
 NODE	LeanDag.FinWhale.Exclusions.skip_bars_choose	LeanDag.FinWhale.Consistency	thm
 EDGE	LeanDag.FinWhale.Exclusions.skip_bars_choose	LeanDag.FinWhale.Exclusions
 NODE	LeanDag.Hybrid.admissible_kTight._proof_1_1	LeanDag.Hybrid.Rules	thm
@@ -37767,6 +37969,18 @@ NODE	LeanDagTest.lagStamp.eq_1	LeanDagTest.Collapse	thm
 EDGE	LeanDagTest.lagStamp.eq_1	LeanDagTest.lagStamp._proof_2
 EDGE	LeanDagTest.lagStamp.eq_1	LeanDagTest.lagBuilt
 EDGE	LeanDagTest.lagStamp.eq_1	LeanDagTest.lagStamp
+NODE	LeanDag.FinWhale.instDecidableSPCommit	LeanDag.FinWhale.Decision	def
+EDGE	LeanDag.FinWhale.instDecidableSPCommit	LeanDag.Faults
+EDGE	LeanDag.FinWhale.instDecidableSPCommit	LeanDag.FinWhale.instDecidableSPCertificate
+EDGE	LeanDag.FinWhale.instDecidableSPCommit	LeanDag.FinWhale.SPCommit
+EDGE	LeanDag.FinWhale.instDecidableSPCommit	LeanDag.FinWhale.SPCertificate
+EDGE	LeanDag.FinWhale.instDecidableSPCommit	LeanDag.FinWhale.Dag.block
+EDGE	LeanDag.FinWhale.instDecidableSPCommit	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.instDecidableSPCommit	LeanDag.Block.round
+EDGE	LeanDag.FinWhale.instDecidableSPCommit	LeanDag.FinWhale.spQuorum
+EDGE	LeanDag.FinWhale.instDecidableSPCommit	LeanDag.FinWhale.blocksAt
+EDGE	LeanDag.FinWhale.instDecidableSPCommit	LeanDag.FinWhale.Dag
+EDGE	LeanDag.FinWhale.instDecidableSPCommit	LeanDag.Block.creator
 NODE	LeanDag.BlackMarlin.flushRecordS_suffix._proof_1_3	LeanDag.BlackMarlin.Helpers.Repair	thm
 EDGE	LeanDag.BlackMarlin.flushRecordS_suffix._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.flushRecordS_suffix._proof_1_3	LeanDag.BlockUniverse.block
@@ -38844,6 +39058,9 @@ EDGE	LeanDag.card_novelty_le_of_byzBudget._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.card_novelty_le_of_byzBudget._proof_1_2	LeanDag.BlockUniverse.block
 EDGE	LeanDag.card_novelty_le_of_byzBudget._proof_1_2	LeanDag.Block.round
 EDGE	LeanDag.card_novelty_le_of_byzBudget._proof_1_2	LeanDag.BlockUniverse
+NODE	LeanDagTest.FinWhale.fwParams._proof_3	LeanDagTest.FinWhale.Model	thm
+EDGE	LeanDagTest.FinWhale.fwParams._proof_3	LeanDagTest.FinWhale.fwFaults
+EDGE	LeanDagTest.FinWhale.fwParams._proof_3	LeanDag.Faults.f
 NODE	LeanDagTest.twinBlk._proof_4	LeanDagTest.Odontoceti.Model	thm
 EDGE	LeanDagTest.twinBlk._proof_4	LeanDagTest.twinBlk._proof_1
 NODE	LeanDagTest.udouble_four_chains	LeanDagTest.DoS.Doubling	thm
@@ -38985,6 +39202,16 @@ EDGE	LeanDagTest.ugrowLag._proof_1	LeanDagTest.ugrowLag._simp_1
 EDGE	LeanDagTest.ugrowLag._proof_1	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ugrowLag._proof_1	LeanDag.Block.round
 EDGE	LeanDagTest.ugrowLag._proof_1	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+NODE	LeanDagTest.FinWhale.Dskip	LeanDagTest.FinWhale.Model	def
+EDGE	LeanDagTest.FinWhale.Dskip	LeanDagTest.FinWhale.fwLeader
+EDGE	LeanDagTest.FinWhale.Dskip	LeanDagTest.FinWhale.skipBlk
+EDGE	LeanDagTest.FinWhale.Dskip	LeanDag.FinWhale.Dag.mk
+EDGE	LeanDagTest.FinWhale.Dskip	LeanDagTest.FinWhale.skipValid
+EDGE	LeanDagTest.FinWhale.Dskip	LeanDagTest.FinWhale.fwFaults
+EDGE	LeanDagTest.FinWhale.Dskip	LeanDagTest.FinWhale.Dskip._proof_1
+EDGE	LeanDagTest.FinWhale.Dskip	LeanDagTest.FinWhale.Dskip._proof_2
+EDGE	LeanDagTest.FinWhale.Dskip	LeanDag.FinWhale.Dag
+EDGE	LeanDagTest.FinWhale.Dskip	LeanDagTest.FinWhale.fwParams
 NODE	LeanDag.MahiMahi.Certifies	LeanDag.MahiMahi.Model.Rules	def
 EDGE	LeanDag.MahiMahi.Certifies	LeanDag.creatorsOf
 EDGE	LeanDag.MahiMahi.Certifies	LeanDag.Faults
@@ -39982,6 +40209,11 @@ EDGE	LeanDag.Nemo.Universe.refs_nonempty	LeanDag.Block.round
 EDGE	LeanDag.Nemo.Universe.refs_nonempty	LeanDag.Nemo.ValidWrt.refs_nonempty
 EDGE	LeanDag.Nemo.Universe.refs_nonempty	LeanDag.Nemo.Universe.valid
 EDGE	LeanDag.Nemo.Universe.refs_nonempty	LeanDag.Nemo.Universe.ids
+NODE	LeanDagTest.FinWhale.skipBlk	LeanDagTest.FinWhale.Model	def
+EDGE	LeanDagTest.FinWhale.skipBlk	LeanDag.Block
+EDGE	LeanDagTest.FinWhale.skipBlk	LeanDagTest.FinWhale.skipBlk._proof_1
+EDGE	LeanDagTest.FinWhale.skipBlk	LeanDag.Block.mk
+EDGE	LeanDagTest.FinWhale.skipBlk	LeanDagTest.FinWhale.skipBlk._proof_2
 NODE	LeanDag.MahiMahi.decided_below_of_committed_run._proof_1_2	LeanDag.MahiMahi.Helpers.Liveness	thm
 EDGE	LeanDag.MahiMahi.decided_below_of_committed_run._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.decided_below_of_committed_run._proof_1_2	LeanDag.MahiMahi.instDecidableEligible
@@ -40665,6 +40897,12 @@ EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_1	LeanDag.SkipMsg.r0
 EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_1	LeanDag.SkipMsg.B1
 NODE	LeanDag.FinWhale.Verdict.undecided	LeanDag.FinWhale.Consistency	ctor
 EDGE	LeanDag.FinWhale.Verdict.undecided	LeanDag.FinWhale.Verdict
+NODE	LeanDagTest.FinWhale.Dfast._proof_2	LeanDagTest.FinWhale.Model	thm
+EDGE	LeanDagTest.FinWhale.Dfast._proof_2	LeanDagTest.FinWhale.fwFaults
+EDGE	LeanDagTest.FinWhale.Dfast._proof_2	LeanDag.Correct
+EDGE	LeanDagTest.FinWhale.Dfast._proof_2	LeanDag.Block.round
+EDGE	LeanDagTest.FinWhale.Dfast._proof_2	LeanDagTest.FinWhale.fastBlk
+EDGE	LeanDagTest.FinWhale.Dfast._proof_2	LeanDag.Block.creator
 NODE	LeanDag.SkipMsg.liftView._proof_2	LeanDag.SafeSkip.Invariance	thm
 EDGE	LeanDag.SkipMsg.liftView._proof_2	LeanDag.Block
 EDGE	LeanDag.SkipMsg.liftView._proof_2	LeanDag.Faults
@@ -42207,6 +42445,9 @@ EDGE	LeanDagTest.BlackMarlin.Ucnt	LeanDagTest.BlackMarlin.Ucnt._proof_1
 EDGE	LeanDagTest.BlackMarlin.Ucnt	LeanDag.BlockUniverse
 EDGE	LeanDagTest.BlackMarlin.Ucnt	LeanDagTest.BlackMarlin.Ucnt._proof_3
 EDGE	LeanDagTest.BlackMarlin.Ucnt	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+NODE	LeanDagTest.FinWhale.Dfast._proof_1	LeanDagTest.FinWhale.Model	thm
+EDGE	LeanDagTest.FinWhale.Dfast._proof_1	LeanDag.Block.refs
+EDGE	LeanDagTest.FinWhale.Dfast._proof_1	LeanDagTest.FinWhale.fastBlk
 NODE	LeanDagTest.ucrash_full_hq._proof_1_1	LeanDagTest.SafeSkip	thm
 EDGE	LeanDagTest.ucrash_full_hq._proof_1_1	LeanDagTest.ucrashMsg
 EDGE	LeanDagTest.ucrash_full_hq._proof_1_1	LeanDagTest.Ucrash
@@ -42338,12 +42579,15 @@ EDGE	LeanDag.DecidedWithin.below.casesOn	LeanDag.DecidedWithin.indirectCommit
 EDGE	LeanDag.DecidedWithin.below.casesOn	LeanDag.View
 EDGE	LeanDag.DecidedWithin.below.casesOn	LeanDag.DecidedWithin.below.directSkip
 EDGE	LeanDag.DecidedWithin.below.casesOn	LeanDag.DecidedWithin.below.directCommit
+NODE	LeanDagTest.FinWhale.eqBlk._proof_1	LeanDagTest.FinWhale.Model	thm
+EDGE	LeanDagTest.FinWhale.eqBlk._proof_1	LeanDagTest.FinWhale.fwLeader._proof_1
 NODE	LeanDag.historyUpto_succ	LeanDag.History	thm
 EDGE	LeanDag.historyUpto_succ	LeanDag.Faults
 EDGE	LeanDag.historyUpto_succ	LeanDag.historyUpto
 EDGE	LeanDag.historyUpto_succ	LeanDag.Block.refs
 EDGE	LeanDag.historyUpto_succ	LeanDag.BlockUniverse.block
 EDGE	LeanDag.historyUpto_succ	LeanDag.BlockUniverse
+NODE	LeanDagTest.FinWhale.skipBlk._proof_2	LeanDagTest.FinWhale.Model	thm
 NODE	LeanDag.BlackMarlin.mem_linkers._simp_1_3	LeanDag.BlackMarlin.Helpers.Rules	thm
 EDGE	LeanDag.BlackMarlin.mem_linkers._simp_1_3	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.mem_linkers._simp_1_3	LeanDag.BlockUniverse.ids
@@ -43890,6 +44134,7 @@ EDGE	LeanDag.BlackMarlin.Reactive.Latency	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.Reactive.Latency	LeanDag.PaceCore.proc
 EDGE	LeanDag.BlackMarlin.Reactive.Latency	LeanDag.Block.creator
 EDGE	LeanDag.BlackMarlin.Reactive.Latency	LeanDag.PaceCore.delay
+NODE	LeanDagTest.FinWhale.fwFaults._proof_1	LeanDagTest.FinWhale.Model	thm
 NODE	LeanDag.FinWhale.voters_of_spCertificate._simp_1_1	LeanDag.FinWhale.Decision	thm
 EDGE	LeanDag.FinWhale.voters_of_spCertificate._simp_1_1	LeanDag.Block
 EDGE	LeanDag.FinWhale.voters_of_spCertificate._simp_1_1	LeanDag.creatorsOf
@@ -43909,6 +44154,15 @@ EDGE	LeanDag.Integration.fill_cone_subset._proof_1_5	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.fill_cone_subset._proof_1_5	LeanDag.SkipMsg
 EDGE	LeanDag.Integration.fill_cone_subset._proof_1_5	LeanDag.SkipMsg.r0
 EDGE	LeanDag.Integration.fill_cone_subset._proof_1_5	LeanDag.SkipMsg.B1
+NODE	LeanDag.FinWhale.instDecidableDirectCommit._aux_1	LeanDag.FinWhale.Decision	def
+EDGE	LeanDag.FinWhale.instDecidableDirectCommit._aux_1	LeanDag.Faults
+EDGE	LeanDag.FinWhale.instDecidableDirectCommit._aux_1	LeanDag.FinWhale.instDecidableSPCommit
+EDGE	LeanDag.FinWhale.instDecidableDirectCommit._aux_1	LeanDag.FinWhale.DirectCommit
+EDGE	LeanDag.FinWhale.instDecidableDirectCommit._aux_1	LeanDag.FinWhale.SPCommit
+EDGE	LeanDag.FinWhale.instDecidableDirectCommit._aux_1	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.instDecidableDirectCommit._aux_1	LeanDag.FinWhale.instDecidableFastCommit
+EDGE	LeanDag.FinWhale.instDecidableDirectCommit._aux_1	LeanDag.FinWhale.FastCommit
+EDGE	LeanDag.FinWhale.instDecidableDirectCommit._aux_1	LeanDag.FinWhale.Dag
 NODE	LeanDag.Hybrid.Checkpoint.CheckpointData.history	LeanDag.Hybrid.Checkpoint.BaseSpec	def
 EDGE	LeanDag.Hybrid.Checkpoint.CheckpointData.history	LeanDag.Hybrid.Checkpoint.CheckpointData
 EDGE	LeanDag.Hybrid.Checkpoint.CheckpointData.history	LeanDag.Hybrid.Checkpoint.History
@@ -44408,6 +44662,8 @@ EDGE	LeanDag.Hybrid.Checkpoint.Model.ReliableSigner	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.Checkpoint.Model.ReliableSigner	LeanDag.Hybrid.Checkpoint.Model.abc
 EDGE	LeanDag.Hybrid.Checkpoint.Model.ReliableSigner	LeanDag.Hybrid.Checkpoint.Model
 EDGE	LeanDag.Hybrid.Checkpoint.Model.ReliableSigner	LeanDag.HybridFaults.byzantine
+NODE	LeanDagTest.FinWhale.skipBlk._proof_1	LeanDagTest.FinWhale.Model	thm
+EDGE	LeanDagTest.FinWhale.skipBlk._proof_1	LeanDagTest.FinWhale.fwLeader._proof_1
 NODE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Odontoceti.Liveness	thm
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.all_decided_below_of_fairRun	LeanDag.View.full
@@ -44660,6 +44916,17 @@ EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.FinalityQC.mk	LeanDag.Hybrid.Chec
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.FinalityQC.mk	LeanDag.Hybrid.Checkpoint.Model
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.FinalityQC.mk	LeanDag.Hybrid.Checkpoint.Model.Execution.CheckpointQC
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.FinalityQC.mk	LeanDag.Hybrid.Checkpoint.Model.Execution
+NODE	LeanDagTest.FinWhale.eqValid	LeanDagTest.FinWhale.Model	thm
+EDGE	LeanDagTest.FinWhale.eqValid	LeanDag.FinWhale.ValidHere.mk
+EDGE	LeanDagTest.FinWhale.eqValid	LeanDagTest.FinWhale.eqBlk
+EDGE	LeanDagTest.FinWhale.eqValid	LeanDagTest.FinWhale.fwLeader
+EDGE	LeanDagTest.FinWhale.eqValid	LeanDag.creators
+EDGE	LeanDagTest.FinWhale.eqValid	LeanDagTest.FinWhale.fwFaults
+EDGE	LeanDagTest.FinWhale.eqValid	LeanDag.Block.refs
+EDGE	LeanDagTest.FinWhale.eqValid	LeanDag.Block.round
+EDGE	LeanDagTest.FinWhale.eqValid	LeanDag.Faults.f
+EDGE	LeanDagTest.FinWhale.eqValid	LeanDag.FinWhale.ValidHere
+EDGE	LeanDagTest.FinWhale.eqValid	LeanDag.Block.creator
 NODE	LeanDag.Odontoceti.DecidedWithin.below.indirectCommit	LeanDag.Adaptive.Odontoceti	ctor
 EDGE	LeanDag.Odontoceti.DecidedWithin.below.indirectCommit	LeanDag.Odontoceti.DecidedWithin.below
 EDGE	LeanDag.Odontoceti.DecidedWithin.below.indirectCommit	LeanDag.Faults5

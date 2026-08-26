@@ -134,8 +134,8 @@ The induction is the paper's maximality argument, made downward-explicit:
 both DAGs are finite, so nothing above some `N` is decided, and the proof
 runs on the distance from `N`. At each slot either some direct rule fires
 — and the exclusions settle it — or both validators decided from an
-anchor, and then the anchors coincide. That last step is where the
-induction is spent: if the anchors differed, the lower of the two is
+anchor, and then the anchors coincide. That last step is what the
+induction is for: if the anchors differed, the lower of the two is
 skipped by one validator and committed by the other, and it lies above
 `r`, so the induction hypothesis already forbids it. -/
 theorem lemma12

@@ -1,4 +1,5 @@
 import LeanDag.FinWhale.Propagation
+import Mathlib.Data.Fintype.Powerset
 
 /-!
 # FinWhale — the direct decision rule, and how far Lemma 12 gets
@@ -50,9 +51,16 @@ def SPCommit (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
     ∀ v ∈ certs, ∃ b ∈ blocksAt D ((D.block l).round + 2),
       (D.block b).creator = v ∧ SPCertificate D b l
 
+set_option synthInstance.maxSize 1000 in
+instance (D : Dag Validator BlockId Payload) (l : BlockId) :
+    Decidable (SPCommit D l) := by unfold SPCommit; infer_instance
+
 /-- **The direct commit rule**: either path. -/
 def DirectCommit (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
   FastCommit D l ∨ SPCommit D l
+
+instance (D : Dag Validator BlockId Payload) (l : BlockId) :
+    Decidable (DirectCommit D l) := inferInstanceAs (Decidable (_ ∨ _))
 
 /-- **The direct skip rule**: an SP-skip pattern at every block of the
 slot, and a quorum of Non-FP-evidence blocks at round `r + 2`. -/
@@ -61,6 +69,10 @@ def DirectSkip (D : Dag Validator BlockId Payload) (r : ℕ) : Prop :=
     ∃ nonev : Finset Validator, spQuorum Validator ≤ nonev.card ∧
       ∀ v ∈ nonev, ∃ b ∈ blocksAt D (r + 2),
         (D.block b).creator = v ∧ NonFPEvidence D b (slotBlocks D r)
+
+set_option synthInstance.maxSize 1000 in
+instance (D : Dag Validator BlockId Payload) (r : ℕ) :
+    Decidable (DirectSkip D r) := by unfold DirectSkip; infer_instance
 
 /-- **An SP-certificate exhibits the voters it certifies.** Its parents
 voting for `l` are round-`(r+1)` blocks referencing `l`, so a certificate

@@ -51,10 +51,17 @@ def NonFPEvidence (D : Dag Validator BlockId Payload) (b : BlockId) (slot : Fins
     Prop :=
   ∀ l ∈ slot, ¬ FPEvidence D b l
 
+instance (D : Dag Validator BlockId Payload) (b : BlockId) (slot : Finset BlockId) :
+    Decidable (NonFPEvidence D b slot) :=
+  inferInstanceAs (Decidable (∀ l ∈ slot, ¬ FPEvidence D b l))
+
 /-- **The SP-skip half of the direct skip rule**, at one block of the
 slot: a quorum of round-`(r+1)` validators decline to vote for it. -/
 def SPSkip (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
   spQuorum Validator ≤ (nonVoters D l).card
+
+instance (D : Dag Validator BlockId Payload) (l : BlockId) :
+    Decidable (SPSkip D l) := inferInstanceAs (Decidable (_ ≤ _))
 
 /-- **No correct validator both votes and declines.** Its round-`(r+1)`
 block is one block, and either references `l` or does not. -/

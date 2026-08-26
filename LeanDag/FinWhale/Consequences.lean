@@ -1,7 +1,7 @@
 import LeanDag.FinWhale.Evidence
 
 /-!
-# FinWhale — what Lemma 4 buys
+# FinWhale — what follows from Lemma 4
 
 The paper's Lemmas 2, 5, 8, and the direct-commit halves of 9 and 10.
 
