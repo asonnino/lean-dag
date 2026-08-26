@@ -6771,6 +6771,12 @@ EDGE	LeanDagTest.BlackMarlin.ugrowBM._proof_32	LeanDagTest.BlackMarlin.ugrowBM._
 EDGE	LeanDagTest.BlackMarlin.ugrowBM._proof_32	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.BlackMarlin.ugrowBM._proof_32	LeanDagTest.reactHolds
 EDGE	LeanDagTest.BlackMarlin.ugrowBM._proof_32	LeanDag.Block.creator
+NODE	LeanDag.FinWhale.chooseLeast	LeanDag.FinWhale.Consistency	def
+EDGE	LeanDag.FinWhale.chooseLeast	LeanDag.Faults
+EDGE	LeanDag.FinWhale.chooseLeast	LeanDag.FinWhale.IndirectCommit
+EDGE	LeanDag.FinWhale.chooseLeast	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.chooseLeast	LeanDag.FinWhale.slotBlocks
+EDGE	LeanDag.FinWhale.chooseLeast	LeanDag.FinWhale.Dag
 NODE	LeanDagTest.full4._proof_2	LeanDagTest.MahiMahi.Model	thm
 EDGE	LeanDagTest.full4._proof_2	LeanDag.instDecidableValidWrtOfDecidableEq
 EDGE	LeanDagTest.full4._proof_2	LeanDag.ValidWrt
@@ -18956,6 +18962,23 @@ EDGE	LeanDagTest.FinWhalePace.dgrow_block	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.FinWhalePace.dgrow_block	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.FinWhalePace.dgrow_block	LeanDagTest.FinWhalePace.Dgrow
 NODE	LeanDag.support_threshold_arith._proof_1_4	LeanDag.CommonCore	thm
+NODE	LeanDag.FinWhale.chooseSound_least	LeanDag.FinWhale.Consistency	thm
+EDGE	LeanDag.FinWhale.chooseSound_least	LeanDag.FinWhale.ChooseSound
+EDGE	LeanDag.FinWhale.chooseSound_least	LeanDag.Faults
+EDGE	LeanDag.FinWhale.chooseSound_least	LeanDag.FinWhale.chooseLeast
+EDGE	LeanDag.FinWhale.chooseSound_least	LeanDag.FinWhale.chooseSound_least.match_1_2
+EDGE	LeanDag.FinWhale.chooseSound_least	LeanDag.FinWhale.SPCertificate
+EDGE	LeanDag.FinWhale.chooseSound_least	LeanDag.FinWhale.Dag.block
+EDGE	LeanDag.FinWhale.chooseSound_least	LeanDag.FinWhale.IndirectCommit
+EDGE	LeanDag.FinWhale.chooseSound_least	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.chooseSound_least	LeanDag.ReachesFrom
+EDGE	LeanDag.FinWhale.chooseSound_least	LeanDag.FinWhale.FPEvidence
+EDGE	LeanDag.FinWhale.chooseSound_least	LeanDag.FinWhale.slotBlocks
+EDGE	LeanDag.FinWhale.chooseSound_least	LeanDag.FinWhale.spQuorum
+EDGE	LeanDag.FinWhale.chooseSound_least	LeanDag.FinWhale.blocksAt
+EDGE	LeanDag.FinWhale.chooseSound_least	LeanDag.FinWhale.ChooseSound.mk
+EDGE	LeanDag.FinWhale.chooseSound_least	LeanDag.FinWhale.Dag
+EDGE	LeanDag.FinWhale.chooseSound_least	LeanDag.Block.creator
 NODE	LeanDagTest.FinWhalePace.fwReactive._proof_17	LeanDagTest.FinWhale.Pace	thm
 EDGE	LeanDagTest.FinWhalePace.fwReactive._proof_17	LeanDagTest.FinWhalePace.fwSlots
 EDGE	LeanDagTest.FinWhalePace.fwReactive._proof_17	LeanDagTest.Ugrow
@@ -19970,6 +19993,11 @@ EDGE	LeanDag.Nemo.slot_eq_of_isLeaderBlock	LeanDag.Slots
 EDGE	LeanDag.Nemo.slot_eq_of_isLeaderBlock	LeanDag.Block.creator
 EDGE	LeanDag.Nemo.slot_eq_of_isLeaderBlock	LeanDag.Nemo.Universe.ids
 NODE	LeanDag.FinWhale.safety._simp_1_1	LeanDag.FinWhale.Order	thm
+NODE	LeanDag.FinWhale.chooseSound_least.match_1_2	LeanDag.FinWhale.Consistency	def
+EDGE	LeanDag.FinWhale.chooseSound_least.match_1_2	LeanDag.Faults
+EDGE	LeanDag.FinWhale.chooseSound_least.match_1_2	LeanDag.FinWhale.IndirectCommit
+EDGE	LeanDag.FinWhale.chooseSound_least.match_1_2	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.chooseSound_least.match_1_2	LeanDag.FinWhale.Dag
 NODE	LeanDagTest.BlackMarlin.fullFlush.match_9	LeanDagTest.BlackMarlin.Ledger	def
 EDGE	LeanDagTest.BlackMarlin.fullFlush.match_9	LeanDagTest.BlackMarlin.fullBlock
 NODE	LeanDag.FinWhale.Creation.c3_quorum	LeanDag.FinWhale.Creation	thm
@@ -39310,6 +39338,13 @@ EDGE	LeanDagTest.ucrashMsg._proof_5	LeanDagTest.Ucrash
 EDGE	LeanDagTest.ucrashMsg._proof_5	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ucrashMsg._proof_5	LeanDag.hB1uniq_of_correct
 EDGE	LeanDagTest.ucrashMsg._proof_5	LeanDag.Block.creator
+NODE	LeanDag.FinWhale.chooseLeast.eq_1	LeanDag.FinWhale.Consistency	thm
+EDGE	LeanDag.FinWhale.chooseLeast.eq_1	LeanDag.Faults
+EDGE	LeanDag.FinWhale.chooseLeast.eq_1	LeanDag.FinWhale.chooseLeast
+EDGE	LeanDag.FinWhale.chooseLeast.eq_1	LeanDag.FinWhale.IndirectCommit
+EDGE	LeanDag.FinWhale.chooseLeast.eq_1	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.chooseLeast.eq_1	LeanDag.FinWhale.slotBlocks
+EDGE	LeanDag.FinWhale.chooseLeast.eq_1	LeanDag.FinWhale.Dag
 NODE	LeanDag.historyUptoFrom._unsafe_rec	LeanDag.Causality	def
 EDGE	LeanDag.historyUptoFrom._unsafe_rec	LeanDag.Block
 EDGE	LeanDag.historyUptoFrom._unsafe_rec	LeanDag.historyUptoFrom.match_1

@@ -20,10 +20,10 @@ The arc models the decision layer: block validity, votes, FP-evidence,
 SP-certificates, the direct commit and skip rules, the anchor, and the
 reverse pass that turns them into a verdict per leader slot. It models
 neither the timers nor the delivery of non-leader blocks; the network and
-the round-advance loop enter only through the development's own pacing
-line, which §10 uses to derive the condition liveness consumes. Every
-result is about which leader slots are committed and which blocks are
-delivered in what order.
+the round-advance loop enter only as §10's schedule, over which the
+protocol's own block-creation conditions are read. Every result is about
+which leader slots are committed and which blocks are delivered in what
+order.
 
 **References sit one round below, which the paper does not require.** Its
 block structure gives a block "`n` edges to the latest blocks created by
@@ -178,11 +178,12 @@ The converse direction is Lemma 7's indirect half: a direct commit leaves
 a trail every anchor at round `r + 3` or above reaches
 (`indirectCommit_of_directCommit`), so the rule always has a candidate to
 name. Under the slow path this is Lemma 3 (`reaches_spCertificate`);
-under the fast path it is Lemma 5, and the arc proves it at any height by
-descending to round `r + 3` first (`reaches_round`) and applying Lemma 4
-to the parents there (`reaches_fpEvidence_quorum`). The paper's Lemma 5
-concludes `n − f` FP-evidence blocks; the arc concludes `2f + p`, which
-is what the indirect rule reads and is implied by the paper's count.
+under the fast path it is Lemma 5, proved at any height by descending to
+round `r + 3` first (`reaches_round`) and applying Lemma 4 to the parents
+there. `reaches_fpEvidence_quorum` gives the paper's `n − f` count at
+every height, where the paper's own proof justifies it only at `r + 3`;
+`reaches_fpEvidence_spQuorum` weakens it to the `2f + p` the indirect
+rule reads.
 
 ## 7. Lemma 12, and the interface it consumes
 
@@ -204,6 +205,12 @@ commit forces the rule to name something, and a direct skip bars it from
 naming anything. `exclusions_of_dag` discharges all nine from the
 DAG-level theorems, under the reading that a view is a sub-DAG, so a
 direct verdict in a view is a direct verdict of the universe.
+
+`choose` is abstract in all of that, and it need not be.  `chooseLeast`
+picks the least candidate in the identifier order and satisfies
+`ChooseSound` — it names only blocks the anchor could indirectly commit,
+and names one whenever there is one. The paper resolves the choice
+"according to a deterministic rule" and gives none; this is one.
 
 The induction is the paper's maximality argument, made downward-explicit.
 Both DAGs are finite, so nothing above some `N` is decided, and the proof
@@ -227,6 +234,13 @@ Theorem 15 is that no block is delivered twice, because each leader
 appends only what the accumulator does not already hold. `safety`
 composes Lemma 12, Lemma 13 and Theorem 14 into one statement about two
 validators of one DAG.
+
+The list a leader contributes is its causal history: `histOf` is
+`historyFrom` sorted by identifier, `mem_histOf` says it lists everything
+the leader reaches, and `nodup_histOf` that it lists each once. The paper
+asks only for "a deterministic sort", and those two facts are all
+Theorems 15 and 26 read; sorting by identifier is the cheapest function
+of the block with them, and `nodup_delivery` is Theorem 15 at it.
 
 ## 9. The witnesses
 
@@ -252,13 +266,11 @@ Three executions, because the rules exclude one another.
 - `Dskip`, three rounds: no round-1 block references the leader, all nine
   validators decline, and no anchor can reverse the skip.
 
-A fourth, `Dsync`, is the liveness input: three rounds in which every
-block references the whole round below, so coverage over the correct
-validators holds. The round-0 leader is correct there, and the slow-path
-commit and the fast commit are both derived through §10's route rather
-than settled by `decide`. The rotation is exercised too: `fwLeader` is a
-`RoundRobin`, and Lemma 22 names a correct triple in the window from
-round `0`.
+A fourth, `Dsync`, is a synchronised execution: three rounds in which
+every block references the whole round below. The round-0 leader is
+correct there, and its slot is committed by both paths. The rotation is
+exercised too: `fwLeader` is a `RoundRobin`, and Lemma 22 names a correct
+triple in the window from round `0`.
 
 The reverse pass has its own witness, on verdicts rather than blocks:
 slots `3` to `5` committed directly, `1` and `2` skipped directly, and
@@ -270,17 +282,24 @@ Views have one too: a reference-closed part of `Dequiv` that holds one of
 the leader's two blocks and not the other, where the slot has two blocks
 in the universe and one in the view.
 
-`LeanDagTest/FinWhale/Pace.lean` carries the liveness capstones down to a
-pacing structure. FinWhale's smallest committee is `f = 1` and `p = 1`,
-which is `n = 4` — the committee the development's own pacing witnesses
-are built over — so `Ugrow N` is a FinWhale DAG at any leader schedule
-once the leader clause is checked. On the full-timeout route
-`ugrowSkewCorrect N` is its `ViewPace`, and Lemma 20 and Theorem 26 run
-on it. On the reactive route the same execution carries a `ReactiveM` at
-one leader per round: every block there references the whole round below,
-so both wait clauses hold by their exit and neither fallback is needed,
-and `commits_of_reactive` yields the liveness interface with no coverage
-anywhere.
+`LeanDagTest/FinWhale/Pace.lean` carries the liveness results down to a
+schedule. FinWhale's smallest committee is `f = 1` and `p = 1`, which is
+`n = 4` — the committee the development's own pacing witnesses are built
+over — so `Ugrow N` is a FinWhale DAG at any leader schedule once the
+leader clause is checked, and every block there references the whole
+round below.
+
+Four things run on it. The same execution carries a `ReactiveM` at one
+leader per round, where both wait clauses hold by their exit and neither
+fallback is needed. It carries a `Creation` with two triggers in play —
+validator `3` catches up by C3 on blocks of its own round, everyone else
+builds by C1 — so both interesting cases of §10's derivation are
+exercised, and `commits_of_creation` yields the liveness interface with
+no coverage assumption anywhere. `fastCommit_latency` runs at `δ = 2`,
+and the self-parent chain carries validator `1`'s genesis block into its
+own round-`1` block. The bridge of `Liveness.lean` is exhibited
+separately, as production and coverage over the correct validators and
+nothing further.
 
 The list layer is exercised on concrete verdicts: a commit sequence, its
 extension, and the delivery order that repeats a block of two causal
@@ -288,115 +307,82 @@ histories and delivers it once.
 
 ## 10. Liveness
 
-Lemmas 16 and 17 are a timing argument — round synchronisation within
-`∆`, and delivery before the round timeout expires — and what they
-establish is a condition on the DAG: after GST every correct validator's
-block references every correct block of the round below. That condition
-is `SynchronisedFrom`, and this arc derives it rather than assuming it.
+Liveness asks three things of the schedule and the network: that correct
+validators keep producing blocks, that what they produce reaches each
+other, and that a correct leader's block is then voted for and certified.
+Lemmas 16 and 17 establish the second from `∆` and the `2∆` timeout. This
+arc does not prove them — timeouts and message delivery are not modelled
+— and what stands in their place is `PaceCore`, the development's model
+of a schedule and a network: `converges`, that a validator's holdings
+reach every other within `delay` past GST; `advances` and `catchup`, the
+pacemaker's progress rules; and, on the creation route below,
+`holds_built` and `builds_distinct`. Everything above those is derived.
 
-**The derivation is the development's own pacing line** (report §6.9). A
-`ViewPace` carries view convergence — a validator's holdings reach every
-other within `delay` past GST — together with the pacemaker's progress
-and catch-up rules. From those, `ViewPace.driftOn_of_catchup` derives the
-drift bound `delay + proc` with no hypothesis about the starting spread,
-and `ViewPace.synchronisedOn_of_converges` wins the race between drift
-and the timeout, giving coverage from any round past GST once the timeout
-clears `2∆ + proc`. Both are the core's, used read-only.
-`synchronised_of_viewPace` and `populated_of_viewPace` carry them to a
-FinWhale DAG.
+**The schedule is reactive.** FinWhale creates a round-`r` block when any
+of three conditions holds: **C1**, the local DAG has the round-`(r−1)`
+leader's block together with a quorum of voters for the round-`(r−2)`
+leader (or an SP-skip pattern for it); **C2**, the `2∆` timeout has
+expired; **C3**, the local DAG has `n − f` round-`r` blocks. The timeout
+is the fallback, not the rule, so the discipline is `ReactivePace`, whose
+`deadline` is a ceiling on waiting, rather than `ViewPace`, whose `waits`
+is a floor. One consequence shapes the rest: **reference coverage is
+unavailable**. A reactive builder omits whatever had not arrived when its
+exit fired, so `SynchronisedFrom` is false in general and nothing below
+uses it.
 
-The bridge is a hypothesis about two structures rather than a coercion.
-`ViewPace` is stated over a `BlockUniverse`, whose validity rule carries
-the self-parent clause; `FinWhale.ValidHere` does not, because no result
-of the safety arc reads it. The paper's block structure has it — "every
-block includes an edge that references the previous block created by the
-same validator" — so a FinWhale execution satisfies both rules, and the
-bridge asks only that the two structures describe the same blocks.
+**Lemmas 18 and 19 come from the conditions themselves.** `Creation.lean`
+records which condition created each block and derives both.
 
-Above coverage the rest is counting.
+- **C1** holds the leader's block by its own L1, and a quorum of voters
+  by L2. L2's other branch, an SP-skip pattern, is refuted by Lemma 18: a
+  quorum declining to vote for a correct leader would have to be
+  Byzantine, and `f < 2f + p`.
+- **C2** waited the full timeout, and the drift bound places every
+  reliable block of the round below in hand before the build
+  (`holds_of_timeout`). This is the argument coverage would have
+  supplied, made about one block instead of all of them.
+- **C3** holds `n − f` blocks of the round it is building. Those meet the
+  reliable validators in two or more, so one of them is a reliable
+  validator other than the builder, which built strictly earlier.
+  Induction on build time makes its block a vote, and a DAG closed under
+  references holds whatever that block cites.
 
-- **Lemma 18** is coverage read at the leader: every correct round-`(r+1)`
-  block references the correct leader's round-`r` block.
-- **Lemma 19**: a correct round-`(r+2)` block references every correct
-  round-`(r+1)` block, each of which votes for the leader, so it carries
-  `n − f ≥ 2f + p` parents voting — an SP-certificate. The paper's
-  parent-selection argument is what coverage replaces: a correct leader
-  does not equivocate, so the leader clause drops no correct parent.
-- **Lemma 20**: those certificates number `n − f ≥ 2f + p`, which is a
-  slow-path commit, at every `p` in range.
-- **Theorem 21**: where at most `p` validators are actually Byzantine, the
-  correct validators number `n − p`, and their votes alone are a fast
-  commit.
+`Creation.lemma18` and `Creation.lemma19` are the results, the second by
+the same induction one round up. What stays assumed of the algorithm is
+parent selection — `selects_leader` and `selects_votes`, that what is
+held is chosen as a parent — which the paper states for C1 and uses for
+all three. The C3 case departs from the paper's, which runs through the
+fastest `n − 2f` honest validators; §12 gives the two counting problems
+with that route, neither of which the induction has.
 
-`directCommit_of_viewPace` is the composition: a `ViewPace`, a round past
-GST, the backoff, and a correct leader give a direct commit. No timing
-hypothesis appears in it.
+**Lemma 20 and Theorem 21 follow by counting.** `lemma20_of_creation`
+assembles the certificates: every reliable validator's round-`(r+2)`
+block certifies a reliable leader's block, and they number
+`n − f ≥ 2f + p`. `theorem21_of_creation` is the fast path — where at
+most `p` validators are actually Byzantine, the reliable validators
+number `n − p`, and their votes alone are a fast commit.
 
+**Two routes, one interface.** `CommitsCorrectLeaders` is where liveness
+meets the decision layer: every correct-led slot below the horizon
+carries a direct commit. `commits_of_creation` is the route above.
+`commits_of_reactive` takes `ReactivePace`'s wait clauses as given
+instead — that a block either votes or waited the timeout out, which is
+what Lemmas 18 and 19 conclude — and reuses the core's reactive
+certificate stage unchanged. That reuse rests on an arithmetical accident
+worth naming: **Mysticeti's certificate is FinWhale's SP-certificate**,
+since the slow-path quorum `2f + p` is no larger than the validity quorum
+`n − f` (`spCertificate_of_certifies`). Lemma 23 and everything above it
+consume the interface and never learn which route produced it.
 
-**The schedule is reactive, and the route says so.** FinWhale's
-pacemaker builds a round-`r` block when any of three conditions holds:
-C1, the local DAG has the round-`(r−1)` leader's block together with a
-quorum of voters for the round-`(r−2)` leader (or an SP-skip pattern for
-it); C2, the `2∆` timeout has expired; or C3, the local DAG has `n − f`
-round-`r` blocks. The timeout is the fallback, not the rule.
-
-`ViewPace` carries a waiting *floor*: `waits` says a validator never
-builds before the timeout expires, and that floor is exactly what
-`synchronisedOn_of_converges` spends to win the race against drift. That
-is the C2-only discipline, and liveness was once derived on it here. It
-is not FinWhale's, and the derivation is gone: `Liveness.lean` keeps only
-the bridge — that a FinWhale DAG can be fed coverage and production from
-the development's main line — which is a compatibility statement in the
-sense `LeanDagTest/Routes.lean` gives the word, not a route. The argument
-the floor would have supplied survives where it belongs, as the C2 case
-of the creation rule below.
-
-`Reactive.lean` runs the liveness off `ReactivePace`, where the
-floor is replaced by a ceiling (`deadline`) and two wait clauses:
-`vote_or_wait`, that a round-`(r+1)` block either references the
-round-`r` leader's block or waited the full timeout, and `cert_or_wait`,
-the same at the certificate round. Those two clauses are what FinWhale's
-Lemmas 18 and 19 establish by case analysis on C1, C2 and C3; they are
-taken here as the discipline's clauses rather than re-derived from the
-pseudocode, exactly as the core's reactive arc takes them for Mysticeti.
-Coverage is not available on this route and is not used: a reactive
-builder omits whatever had not arrived when its exit fired.
-
-**And the wait clauses are themselves derivable.** `Creation.lean` takes
-the three block-creation conditions instead: C1 holds the leader's block
-and a quorum of votes by its own L1 and L2; C2 waited the full timeout,
-so the drift bound places every reliable block of the round below in
-hand; C3 holds `n − f` blocks of the round it is building. Two properties
-of the network — that a block is held only after it is built, and that no
-two reliable validators build one round at one instant — and one of
-parent selection, that it takes the leader's block and the votes when
-they are held, then give Lemmas 18 and 19 as theorems, and with them the
-liveness interface.
-
-The C3 case is where this differs from the paper. Its argument there runs
-through the fastest `n − 2f` honest validators, and the pigeonhole that
-puts one of their blocks in a C3-triggered validator's hands needs the
-honest set to be exactly `n − f`; with fewer than `f` actual faults the
-count does not close, and the set is one member too large besides.
-Induction on build time needs neither: a C3-triggered validator holds
-`n − f` blocks of its own round, at least one from a reliable validator
-that built strictly earlier, and the induction hypothesis applies to
-that one. A view closed under references then holds what that block
-references. The same induction serves Lemma 19, one round up.
-
-Nothing else changes, for an arithmetical reason: **Mysticeti's
-certificate is FinWhale's SP-certificate**, since the slow-path quorum
-`2f + p` is no larger than the validity quorum `n − f`. So the reactive
-certificate stage the core already proves supplies the slow-path commit
-(`spCommit_of_reactive`), and the votes it rests on supply the fast one
-(`fastCommit_of_reactive`).
-
-Two routes end at the same interface. `CommitsCorrectLeaders` says every
-correct-led slot below the horizon carries a direct commit;
-`commits_of_reactive` supplies it from the schedule's wait clauses and
-`commits_of_creation` from the block-creation conditions themselves —
-the second being the first with its clauses discharged. Lemma 23 and
-everything above it never learn which produced it.
+**Definition 1's latency.** Theorem 21 establishes that the fast commit
+exists; Definition 1 claims it happens within two message delays. The
+reactive schedule is where the second can be said, because its exit is
+not bounded below by the timeout. `fastCommit_latency` gives both at
+once: under `δ`-propagation past GST the votes are built within
+`Δ + δ + 2·proc` of round entry — the collapsed spread, one delivery, two
+processing steps — with the timeout nowhere in the bound.
+`no_timeout_of_fast` is its companion: where actual delivery undercuts
+the timeout, the fallback branch is never taken.
 
 **Lemma 22, and where its proof stops working.** The lemma says any
 window of `3f + 3` rounds contains three consecutive rounds with correct
@@ -443,31 +429,40 @@ The triple is what covers the three offsets: the anchor must sit above
 `r + 2`, so for a slot within two of the triple's start only its later
 members qualify.
 
-`committed_triple` supplies the triple from §10's liveness: Lemma 22
-names three consecutive correct leaders, Lemma 20 commits each of their
-blocks. One hypothesis carries the growth there — `hsees`, that a direct
+`committed_triple` supplies the triple from the interface above: Lemma
+22 names three consecutive correct leaders, and each of their blocks is
+directly committed. One hypothesis carries the growth there — `hsees`, that a direct
 commit of the universe is a direct commit of this validator's view. Read
 the other way it says the certificates have arrived, which is the
 "eventually" of the paper's statement, and it is the converse of what
 `exclusions_of_dag` consumes for safety. `all_decided` composes the two,
-and covers the slots before GST as well: only the triple has to sit past
-the coverage round, since the reverse pass decides everything below it.
+and covers the slots before `R` as well: only the triple has to sit past
+it, since the reverse pass decides everything below.
 
-**Theorems 24 and 26.** With every slot decided, Lemma 12's agreement
-becomes equality: `theorem24` says two validators deliver the *same*
-sequence at a common horizon, not merely comparable ones. `lemma25` puts
-a committed leader block into the commit sequence, and `mem_linearise`
-puts everything in its causal history into the delivery order — either an
-earlier leader delivered it, or this one does. `theorem26` is the
-composition, and `reaches_of_synchronised` is the DAG-level step that
-feeds it: coverage puts a correct validator's block in the causal history
-of the next round's correct leader.
+**Theorems 24, 25 and 26.** With every slot decided, Lemma 12's
+agreement becomes equality: `theorem24` says two validators deliver the
+*same* sequence at a common horizon, not merely comparable ones, and
+`agreement_of_commits` composes it with Lemma 23 over the liveness
+interface — no schedule appears in it. `lemma25` puts a committed leader
+block into the commit sequence, and `mem_linearise` puts everything in
+its causal history into the delivery order.
 
-`delivered_of_viewPace` and `agreement_of_viewPace` are the two theorems
-end to end, from a `ViewPace` and nothing else of the network. In the
-second, the two finiteness conditions sit together rather than in
-conflict: `hbound` says nothing above `M` is decided, and the horizon is
-placed below what the DAG's own reach decides.
+Validity needs one more step: that a correct validator's block lies in
+some correct leader's causal history. Coverage would give it in one
+round, and coverage is unavailable here. `Validity.lean` takes the
+paper's block structure instead — every block references its author's
+previous block (`SelfParented`) — so a correct validator's blocks form a
+chain, each reaching all the earlier ones (`reaches_of_same_creator`),
+and round robin names that validator a leader once a cycle
+(`exists_round_led_by`). `theorem26_of_selfParent` is Theorem 26 on any
+schedule, whatever else a builder chose to reference.
+
+**The bridge that remains.** `Liveness.lean` keeps `populated_of_viewPace`
+and `synchronised_of_viewPace`: a FinWhale DAG can be fed production and
+coverage from the development's main line. That is a compatibility
+statement in the sense `LeanDagTest/Routes.lean` gives the word, not a
+route to liveness — the coverage it yields rests on `ViewPace`'s waiting
+floor, which FinWhale's pacemaker does not have.
 
 ## 11. Views, and the rules relative to one
 
@@ -501,8 +496,7 @@ equivocating branch's bound on conflicting votes needs one extra step: a
 conflicting block outside the view has no parents voting for it there,
 and the bound holds of it for nothing.
 
-**The skip rule is where the two directions part, and it is worth
-stating plainly.** Its first condition quantifies over the slot's blocks
+**The skip rule is where the two directions part.** Its first condition quantifies over the slot's blocks
 *as the view holds them* — the paper writes "for each leader block of `s`
 (if any) in the local DAG of `vj`" — so a view's direct skip is not a
 direct skip of the universe, and a validator that has seen no block of a
@@ -654,9 +648,9 @@ delivery are not modelled at all. §13 says what stands in their place.
 
 ## 13. What is not modelled, and what is not done
 
-The capstones state their own side conditions. §11 discharged the view
-conditions and §8's ordering hypothesis, and §9 exhibits an execution
-that is a pacing structure. Four gaps remain, and they are of a
+The capstones state their own side conditions. §8 discharged the
+ordering hypothesis, §11 the view conditions, and §9 exhibits an
+execution that is a schedule. Four gaps remain, and they are of a
 different kind from the ones that closed: each is a piece of the protocol
 this development does not model at all.
 

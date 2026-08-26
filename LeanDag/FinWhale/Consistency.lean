@@ -1,4 +1,5 @@
 import LeanDag.FinWhale.Anchor
+import Mathlib.Data.Finset.Max
 
 /-!
 # FinWhale — the anchor recursion, and Lemma 12
@@ -244,6 +245,42 @@ structure ChooseSound (D : Dag Validator BlockId Payload)
   sound : ∀ A r b, choose A r = some b → IndirectCommit D A r b
   /-- Where there is a candidate, it names one. -/
   total : ∀ A r, (∃ b, IndirectCommit D A r b) → ∃ b, choose A r = some b
+
+open scoped Classical in
+/-- **The deterministic rule, exhibited.** The paper resolves the choice
+among an anchor's candidates "according to a deterministic rule" and
+names none; this is one — the least candidate in the identifier order.
+
+Soundness and totality are all any result here reads, and both hold of it
+by construction. It is a function of the anchor and the round, so two
+validators holding the same anchor make the same choice, which is what
+`finwhale.md` §6 turns on. -/
+noncomputable def chooseLeast [LinearOrder BlockId] (D : Dag Validator BlockId Payload)
+    (A : BlockId) (r : ℕ) : Option BlockId :=
+  if h : ((slotBlocks D r).filter (fun b => IndirectCommit D A r b)).Nonempty then
+    some (((slotBlocks D r).filter (fun b => IndirectCommit D A r b)).min' h)
+  else none
+
+open scoped Classical in
+/-- And it satisfies the interface. -/
+theorem chooseSound_least [LinearOrder BlockId] : ChooseSound D (chooseLeast D) where
+  sound := by
+    intro A r b h
+    simp only [chooseLeast] at h
+    split at h
+    · rename_i hne
+      have hb : (((slotBlocks D r).filter (fun b => IndirectCommit D A r b)).min' hne) = b :=
+        Option.some.inj h
+      have hmem := Finset.min'_mem ((slotBlocks D r).filter (fun b => IndirectCommit D A r b)) hne
+      rw [hb] at hmem
+      exact (Finset.mem_filter.1 hmem).2
+    · exact absurd h (by simp)
+  total := by
+    intro A r ⟨b, hb⟩
+    have hne : ((slotBlocks D r).filter (fun b => IndirectCommit D A r b)).Nonempty :=
+      ⟨b, Finset.mem_filter.2 ⟨hb.1, hb⟩⟩
+    refine ⟨((slotBlocks D r).filter (fun b => IndirectCommit D A r b)).min' hne, ?_⟩
+    simp only [chooseLeast, dif_pos hne]
 
 /-- **Lemma 12's side conditions, discharged on the DAG.** Each
 validator's direct verdicts are direct verdicts of the universe, because
