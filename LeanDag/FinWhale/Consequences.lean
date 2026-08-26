@@ -86,7 +86,7 @@ theorem lemma2 {b l : BlockId} (hb : b ∈ D.ids) (hcert : SPCertificate D b l) 
 /-- **Lemma 8.** At most one block of a slot gathers a quorum of votes.
 Two quorums of `2f + p` among `n = 3f + 2p − 1` share `f + 1` validators,
 one of them correct, and a correct validator votes once. -/
-theorem lemma8 {l l' : BlockId} (hl : l ∈ D.ids) (hconf : Conflicting D l l')
+theorem lemma8 {l l' : BlockId} (hconf : Conflicting D l l')
     (h : spQuorum Validator ≤ (voters D l).card)
     (h' : spQuorum Validator ≤ (voters D l').card) : False := by
   -- the two voter sets meet in more than `f` validators
@@ -96,16 +96,15 @@ theorem lemma8 {l l' : BlockId} (hl : l ∈ D.ids) (hconf : Conflicting D l l')
     simp only [spQuorum] at h h'; omega
   obtain ⟨v, hv, hvc⟩ := exists_correct_of_card hcard
   rw [Finset.mem_inter] at hv
-  exact not_voter_of_conflicting hl hconf v hv.2 hvc hv.1
+  exact not_voter_of_conflicting hconf v hv.2 hvc hv.1
 
 /-- **Lemma 9 and Lemma 10, the direct halves.** A block with a quorum of
 votes excludes any other block of its slot from a direct commit, fast or
 slow, since either path needs a quorum of its own. -/
-theorem no_conflicting_direct_commit {l l' : BlockId} (hl : l ∈ D.ids)
-    (hconf : Conflicting D l l')
+theorem no_conflicting_direct_commit {l l' : BlockId} (hconf : Conflicting D l l')
     (h : spQuorum Validator ≤ (voters D l).card)
     (h' : spQuorum Validator ≤ (voters D l').card) : False :=
-  lemma8 hl hconf h h'
+  lemma8 hconf h h'
 
 /-- A fast commit carries a quorum of votes, so it feeds the above. -/
 theorem spQuorum_le_of_fastCommit {l : BlockId} (hfast : FastCommit D l) :
@@ -144,6 +143,32 @@ theorem not_fpEvidence_conflicting {b l l' : BlockId}
     -- both; both counts are positive, which is the equivocation it would
     -- have to have seen
     rw [if_neg hexp] at hev hev'
+    refine hexp ⟨l, hl, l', hl', hconf, hlead, ?_, ?_⟩
+    · rw [← Finset.card_pos]; omega
+    · rw [← Finset.card_pos]; omega
+
+/-- **The same exclusion, under a slow-path commit.** A block carrying an
+SP-certificate for `l` is not FP-evidence for a conflicting `l'`.
+
+If it has seen the equivocation, the FP-evidence branch caps its parents
+voting for `l` below `f + p`, and the certificate already has `2f + p` of
+them. If it has not, both counts are positive — `f + p − 1` for `l'` and
+`2f + p` for `l` — which is the equivocation it would have to have seen. -/
+theorem not_fpEvidence_of_spCertificate {c l l' : BlockId}
+    (hl : l ∈ D.ids) (hl' : l' ∈ D.ids)
+    (hlead : (D.block l).creator = D.leader ((D.block c).round - 2))
+    (hconf : Conflicting D l l') (hcert : SPCertificate D c l) :
+    ¬ FPEvidence D c l' := by
+  intro hev'
+  have := params_arith (Validator := Validator)
+  have hcard : spQuorum Validator ≤ (parentsVoting D c l).card := hcert
+  simp only [spQuorum] at hcard
+  simp only [FPEvidence] at hev'
+  by_cases hexp : ExposesEquivocation D c
+  · rw [if_pos hexp] at hev'
+    have := hev'.2 l hl ⟨Ne.symm hconf.1, hconf.2.1.symm, hconf.2.2.symm⟩
+    omega
+  · rw [if_neg hexp] at hev'
     refine hexp ⟨l, hl, l', hl', hconf, hlead, ?_, ?_⟩
     · rw [← Finset.card_pos]; omega
     · rw [← Finset.card_pos]; omega

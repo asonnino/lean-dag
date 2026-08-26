@@ -116,6 +116,64 @@ theorem parents_all_fpEvidence {c l : BlockId}
     have := parent_round hc hq; omega
   exact lemma4 hqids hl hqround hfast
 
+/-- **Descent.** A block reaches a block of its own view at every round
+below its own. The `k`-fold step is the same one `reaches_spCertificate`
+takes: validity gives a parent one round down, and the view is closed
+under references. -/
+theorem reaches_round : ∀ k : ℕ, ∀ c ∈ D.ids, ∀ t : ℕ, (D.block c).round = t + k →
+    ∃ b, b ∈ D.ids ∧ ReachesFrom D.block c b ∧ (D.block b).round = t := by
+  intro k
+  induction k with
+  | zero => intro c hc t hround; exact ⟨c, hc, ReachesFrom.refl, by omega⟩
+  | succ k ih =>
+    intro c hc t hround
+    obtain ⟨q, hq⟩ := exists_parent hc (by omega)
+    have hqids : q ∈ D.ids := D.complete c hc q hq
+    have hqround : (D.block q).round = t + k := by
+      have := parent_round hc hq; omega
+    obtain ⟨b, hb, hreach, hbr⟩ := ih q hqids t hqround
+    exact ⟨b, hb, ReachesFrom.of_mem_refs hq hreach, hbr⟩
+
+/-- **Lemma 5, at any height.** Under a fast commit for `l`, every block
+at round `r + 3` or above reaches a quorum of round-`(r+2)` blocks, from
+distinct validators, all of them FP-evidence for `l`.
+
+The block descends to round `r + 3` first; there Lemma 5 applies to its
+parents, and reachability composes. -/
+theorem reaches_fpEvidence_quorum {c l : BlockId} (hc : c ∈ D.ids) (hl : l ∈ D.ids)
+    (hround : (D.block l).round + 3 ≤ (D.block c).round) (hfast : FastCommit D l) :
+    ∃ ev : Finset Validator, spQuorum Validator ≤ ev.card ∧
+      ∀ v ∈ ev, ∃ b ∈ blocksAt D ((D.block l).round + 2),
+        ReachesFrom D.block c b ∧ (D.block b).creator = v ∧ FPEvidence D b l := by
+  obtain ⟨d, hd, hreach, hdr⟩ :=
+    reaches_round ((D.block c).round - ((D.block l).round + 3)) c hc
+      ((D.block l).round + 3) (by omega)
+  obtain ⟨hqcard, hall⟩ := parents_all_fpEvidence hd hl hdr hfast
+  refine ⟨parentSet D d, le_trans (spQuorum_le_quorumCard (Validator := Validator)) hqcard, ?_⟩
+  intro v hv
+  obtain ⟨q, hq, hqv⟩ := mem_creatorsOf.1 hv
+  have hqids : q ∈ D.ids := D.complete d hd q hq
+  have hqround : (D.block q).round = (D.block l).round + 2 := by
+    have := parent_round hd hq; omega
+  refine ⟨q, ?_, ReachesFrom.trans hreach (ReachesFrom.single hq), hqv, hall q hq⟩
+  simp only [blocksAt, Finset.mem_filter]
+  exact ⟨hqids, hqround⟩
+
+/-- **An SP-certificate sits two rounds above what it certifies.** Its
+parents that vote for `l` are one round below it and one round above `l`,
+and it has at least one. -/
+theorem spCertificate_round {b l : BlockId} (hb : b ∈ D.ids)
+    (hcert : SPCertificate D b l) : (D.block b).round = (D.block l).round + 2 := by
+  have hpos : 0 < (parentsVoting D b l).card := by
+    have := params_arith (Validator := Validator)
+    simp only [SPCertificate, spQuorum] at hcert; omega
+  obtain ⟨v, hv⟩ := Finset.card_pos.1 hpos
+  simp only [parentsVoting, mem_creatorsOf, Finset.mem_filter] at hv
+  obtain ⟨q, ⟨hq, hql⟩, -⟩ := hv
+  have h1 := parent_round hb hq
+  have h2 := parent_round (D.complete b hb q hq) hql
+  omega
+
 end FinWhale
 
 end LeanDag

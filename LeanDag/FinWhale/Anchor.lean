@@ -80,7 +80,7 @@ theorem no_indirectCommit_of_fastCommit {A : BlockId} {r : ℕ} {b b' : BlockId}
   rcases hroute with ⟨c, hc, -, hcert⟩ | ⟨ev, hev, hevb⟩
   · -- an SP-certificate for `b'` carries a quorum of voters for `b'`
     simp only [blocksAt, Finset.mem_filter] at hc
-    exact lemma8 hb hconf (spQuorum_le_of_fastCommit hfast)
+    exact lemma8 hconf (spQuorum_le_of_fastCommit hfast)
       (voters_of_spCertificate hc.1 (by rw [hc.2, ← hconf.2.1, hbround]) hcert)
   · -- a quorum of FP-evidence blocks for `b'` cannot exist under a fast
     -- commit for `b`, since no round-`(r+2)` block is FP-evidence for a
@@ -120,6 +120,81 @@ theorem no_indirectCommit_of_directSkip {A : BlockId} {r : ℕ} {b : BlockId}
       obtain ⟨c, hc, hcv, hnonfp⟩ := hnonb v hv
       exact ⟨c, by rw [hbround]; exact hc, hcv, hnonfp⟩
     exact no_skip_of_fpEvidence hbslot hev hnon hevb' hnonb'
+
+/-- **A direct commit is visible from every anchor above it.** This is
+Lemma 7's indirect half: whichever path committed `l` directly leaves a
+trail that any block at round `r + 3` or above reaches — a quorum of
+FP-evidence blocks under the fast path, an SP-certificate under the slow
+one. So the anchor's rule always has a candidate to name. -/
+theorem indirectCommit_of_directCommit {A : BlockId} {r : ℕ} {l : BlockId}
+    (hA : A ∈ D.ids) (hAround : r + 3 ≤ (D.block A).round)
+    (hl : l ∈ slotBlocks D r) (hcom : DirectCommit D l) :
+    IndirectCommit D A r l := by
+  have hl' := hl
+  simp only [slotBlocks, blocksAt, Finset.mem_filter] at hl'
+  obtain ⟨⟨hlids, hlround⟩, -⟩ := hl'
+  refine ⟨hl, ?_⟩
+  rcases hcom with hfast | hsp
+  · refine Or.inr ?_
+    obtain ⟨ev, hev, hevb⟩ := reaches_fpEvidence_quorum hA hlids (by omega) hfast
+    refine ⟨ev, hev, fun v hv => ?_⟩
+    obtain ⟨b, hb, hreach, hbv, hfp⟩ := hevb v hv
+    exact ⟨b, by rw [hlround] at hb; exact hb, hreach, hbv, hfp⟩
+  · refine Or.inl ?_
+    obtain ⟨certs, hcerts, hcertb⟩ := hsp
+    obtain ⟨b, hreach, hbcert⟩ :=
+      reaches_spCertificate hcerts hcertb ((D.block A).round - ((D.block l).round + 3))
+        A hA (by omega)
+    have hbids : b ∈ D.ids :=
+      mem_of_reaches_of_closed (fun i hi j hj => D.complete i hi j hj) hA hreach
+    refine ⟨b, ?_, hreach, hbcert⟩
+    simp only [blocksAt, Finset.mem_filter]
+    exact ⟨hbids, by rw [spCertificate_round hbids hbcert, hlround]⟩
+
+/-- **A slow-path commit rules out an indirect commit of a conflicting
+block.** An SP-certificate for the conflicting block would carry a second
+quorum of voters, which Lemma 8 forbids. A quorum of FP-evidence blocks
+for it meets the quorum of SP-certificates in a correct validator, whose
+single round-`(r+2)` block would have to be both. -/
+theorem no_indirectCommit_of_spCommit {A : BlockId} {r : ℕ} {b b' : BlockId}
+    (hb : b ∈ D.ids) (hb' : b' ∈ D.ids) (hbslot : b ∈ slotBlocks D r)
+    (hlead : (D.block b).creator = D.leader r)
+    (hconf : Conflicting D b b') (hsp : SPCommit D b) :
+    ¬ IndirectCommit D A r b' := by
+  have hbround : (D.block b).round = r := by
+    simp only [slotBlocks, blocksAt, Finset.mem_filter] at hbslot; exact hbslot.1.2
+  obtain ⟨certs, hcerts, hcertb⟩ := hsp
+  rintro ⟨-, hroute⟩
+  rcases hroute with ⟨c, hc, -, hcert⟩ | ⟨ev, hev, hevb⟩
+  · simp only [blocksAt, Finset.mem_filter] at hc
+    exact lemma8 hconf (voters_of_directCommit (Or.inr ⟨certs, hcerts, hcertb⟩))
+      (voters_of_spCertificate hc.1 (by rw [hc.2, ← hconf.2.1, hbround]) hcert)
+  · -- the two quorums meet in a correct validator
+    have hmeet := card_add_card_le_card_inter_add_card certs ev
+    have := params_arith (Validator := Validator)
+    have hcard : F.f + 1 ≤ (certs ∩ ev).card := by
+      simp only [spQuorum] at hcerts hev; omega
+    obtain ⟨v, hv, hvc⟩ := exists_correct_of_card hcard
+    rw [Finset.mem_inter] at hv
+    obtain ⟨c₁, hc₁, hc₁v, hc₁cert⟩ := hcertb v hv.1
+    obtain ⟨c₂, hc₂, -, hc₂v, hc₂fp⟩ := hevb v hv.2
+    simp only [blocksAt, Finset.mem_filter] at hc₁ hc₂
+    have heq : c₁ = c₂ :=
+      D.correct_single c₁ hc₁.1 c₂ hc₂.1 (by rw [hc₁v]; exact hvc) (by rw [hc₁v, hc₂v])
+        (by rw [hc₁.2, hc₂.2, hbround])
+    exact not_fpEvidence_of_spCertificate hb hb'
+      (by rw [hc₁.2, hbround]; simpa using hlead) hconf hc₁cert (heq ▸ hc₂fp)
+
+/-- **A direct commit rules out an indirect commit of a conflicting
+block**, by either path. -/
+theorem no_indirectCommit_of_directCommit {A : BlockId} {r : ℕ} {b b' : BlockId}
+    (hb : b ∈ D.ids) (hb' : b' ∈ D.ids) (hbslot : b ∈ slotBlocks D r)
+    (hlead : (D.block b).creator = D.leader r)
+    (hconf : Conflicting D b b') (hcom : DirectCommit D b) :
+    ¬ IndirectCommit D A r b' := by
+  rcases hcom with hfast | hsp
+  · exact no_indirectCommit_of_fastCommit hb hb' hbslot hlead hconf hfast
+  · exact no_indirectCommit_of_spCommit hb hb' hbslot hlead hconf hsp
 
 end FinWhale
 

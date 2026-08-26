@@ -72,8 +72,7 @@ theorem byzantine_of_conflicting {l l' : BlockId}
 /-- **A correct validator votes for at most one block of a slot.** Its
 single round-`(r+1)` block carries at most one edge per validator, and
 two conflicting leader blocks share a creator. -/
-theorem not_voter_of_conflicting {l l' : BlockId} (hl : l ∈ D.ids)
-    (hconf : Conflicting D l l') :
+theorem not_voter_of_conflicting {l l' : BlockId} (hconf : Conflicting D l l') :
     ∀ v ∈ voters D l', v ∈ (Correct : Finset Validator) → v ∉ voters D l := by
   intro v hv' hcorr hv
   simp only [voters, mem_creatorsOf, blocksAt, Finset.mem_filter] at hv hv'
@@ -118,7 +117,7 @@ theorem fpEvidence_equivocating {b l : BlockId}
 parents drop the Byzantine leader references fewer than `f + p` parents
 voting for any conflicting `l'`. -/
 theorem conflicting_parents_lt {b l l' : BlockId}
-    (hb : b ∈ D.ids) (hl : l ∈ D.ids)
+    (hb : b ∈ D.ids)
     (hround : (D.block b).round = (D.block l).round + 2)
     (hconf : Conflicting D l l') (hfast : FastCommit D l)
     (hbyz : (parentSet D b ∩ F.byzantine).card + 1 ≤ F.f) :
@@ -137,7 +136,7 @@ theorem conflicting_parents_lt {b l l' : BlockId}
     rw [Finset.mem_filter]
     exact ⟨by rw [blocksAt, Finset.mem_filter]; exact ⟨hqids, hqround⟩, hqref⟩
   have hcount := conflicting_voters_le (voters := voters D l) (parents := parentSet D b)
-    (conflicting := voters D l') hfast hbyz (not_voter_of_conflicting hl hconf)
+    (conflicting := voters D l') hfast hbyz (not_voter_of_conflicting hconf)
   have hle : (parentsVoting D b l').card ≤ (parentSet D b ∩ voters D l').card :=
     Finset.card_le_card hsub
   omega
@@ -192,7 +191,7 @@ Both branches of the definition are met: the count of parents voting for
 `l`, and — where the block has seen the equivocation — the bound on the
 parents voting for anything conflicting. -/
 theorem lemma4 {b l : BlockId}
-    (hb : b ∈ D.ids) (hl : l ∈ D.ids)
+    (hb : b ∈ D.ids) (_hl : l ∈ D.ids)
     (hround : (D.block b).round = (D.block l).round + 2)
     (hfast : FastCommit D l) :
     FPEvidence D b l := by
@@ -201,7 +200,7 @@ theorem lemma4 {b l : BlockId}
   · rw [if_pos hexp]
     have hbyz := parents_byzantine_lt hb (by omega) hexp
     exact ⟨fpEvidence_equivocating hb hround hfast hbyz,
-      fun l' _ hconf => conflicting_parents_lt hb hl hround hconf hfast hbyz⟩
+      fun l' _ hconf => conflicting_parents_lt hb hround hconf hfast hbyz⟩
   · rw [if_neg hexp]
     exact fpEvidence_nonequivocating hb hround hfast
 

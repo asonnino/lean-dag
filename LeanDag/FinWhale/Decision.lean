@@ -101,7 +101,7 @@ theorem direct_commit_unique {r : ℕ} {l l' : BlockId}
     (hcom : DirectCommit D l) (hcom' : DirectCommit D l') : l = l' := by
   by_contra hne
   simp only [slotBlocks, blocksAt, Finset.mem_filter] at hl hl'
-  exact lemma8 hl.1.1 ⟨hne, by rw [hl.1.2, hl'.1.2], by rw [hl.2, hl'.2]⟩
+  exact lemma8 ⟨hne, by rw [hl.1.2, hl'.1.2], by rw [hl.2, hl'.2]⟩
     (voters_of_directCommit hcom) (voters_of_directCommit hcom')
 
 /-- **Lemma 6 and Lemma 7, the direct half.** A slot with a directly
