@@ -136,6 +136,22 @@ theorem three_correct_of_roundRobin {leader : ℕ → Validator} (h : RoundRobin
   have := F.card_byzantine
   omega
 
+/-- **Round robin names every validator once a cycle.** For any validator
+and any starting round there is a round within the cycle it leads. -/
+theorem exists_round_led_by {leader : ℕ → Validator} (h : RoundRobin leader)
+    (v : Validator) (r₀ : ℕ) :
+    ∃ s, r₀ ≤ s ∧ s < r₀ + Fintype.card Validator ∧ leader s = v := by
+  obtain ⟨e, he⟩ := h
+  haveI := neZero_card (Validator := Validator)
+  refine ⟨r₀ + (e.symm v - (r₀ : ZMod (Fintype.card Validator))).val, by omega,
+    by have := ZMod.val_lt (e.symm v - (r₀ : ZMod (Fintype.card Validator))); omega, ?_⟩
+  rw [he]
+  have hcast : ((r₀ + (e.symm v - (r₀ : ZMod (Fintype.card Validator))).val : ℕ) :
+      ZMod (Fintype.card Validator)) = e.symm v := by
+    push_cast [ZMod.natCast_val, ZMod.cast_id]
+    ring
+  rw [hcast, Equiv.apply_symm_apply]
+
 omit [DecidableEq Validator] F in
 /-- **Round robin is injective within a cycle.** Two rounds of one cycle
 with the same leader are the same round. -/

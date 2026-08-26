@@ -2,6 +2,7 @@ import LeanDagTest.ViewPace
 import LeanDagTest.Reactive
 import LeanDag.FinWhale.View
 import LeanDag.FinWhale.Reactive
+import LeanDag.FinWhale.Validity
 
 /-!
 # FinWhale witnesses — the pacing structure under liveness
@@ -72,6 +73,12 @@ def DgrowFor (lead : ℕ → Fin 4) (N : ℕ) : Dag (Fin 4) ℕ Unit where
       simpa [ugrow_block] using this
     omega
   correct_single := (Ugrow N).no_equivocation
+
+@[simp] theorem dgrowFor_ids (lead : ℕ → Fin 4) (N : ℕ) :
+    (DgrowFor lead N).ids = (Ugrow N).ids := rfl
+
+@[simp] theorem dgrowFor_block (lead : ℕ → Fin 4) (N : ℕ) :
+    (DgrowFor lead N).block = (Ugrow N).block := rfl
 
 /-- The execution under the shifted schedule. -/
 abbrev Dgrow (N : ℕ) : Dag (Fin 4) ℕ Unit := DgrowFor growLeader N
@@ -283,6 +290,36 @@ example (N : ℕ) (hN : 2 ≤ N) :
     ⟨by simp only [ugrow_ids, Finset.mem_range]; omega, by simp,
       by apply Fin.ext; simp only [ugrow_block, rrBlock_creator_val]; rfl⟩
     (fwReactive_delta N 1)
+
+/-! ## Validity's step, without coverage
+
+Every block of this layout references the whole round below, its author's
+own block among it, so the execution has the paper's self-parent edge.
+That is all Validity needs: a correct validator's block lies in the
+causal history of its own later blocks, and the rotation makes that
+validator a leader once a cycle. -/
+
+theorem selfParented_Dreact (N : ℕ) : SelfParented (Dreact N) := by
+  intro b hb hround
+  simp only [dgrowFor_ids, ugrow_ids, Finset.mem_range] at hb
+  simp only [dgrowFor_block, ugrow_block, rrBlock_round] at hround
+  refine ⟨4 * (b / 4) - 4 + b % 4, ?_, ?_⟩
+  · simp only [dgrowFor_block, ugrow_block, mem_growBlock_refs]
+    omega
+  · apply Fin.ext
+    simp only [dgrowFor_block, ugrow_block, rrBlock_creator_val]
+    omega
+
+/-- Validator `1`'s genesis block lies in the causal history of its
+round-`1` block — by the self-parent chain, with no reference to what
+else either block cited. -/
+example (N : ℕ) (hN : 1 ≤ N) : ReachesFrom (Dreact N).block 5 1 :=
+  reaches_of_same_creator (selfParented_Dreact N)
+    (by simp only [dgrowFor_ids, ugrow_ids, Finset.mem_range]; omega)
+    (by simp only [dgrowFor_ids, ugrow_ids, Finset.mem_range]; omega)
+    (by simp only [dgrowFor_block, ugrow_block]; decide)
+    (by simp only [dgrowFor_block, ugrow_block]; decide)
+    (by simp only [dgrowFor_block, ugrow_block]; decide)
 
 end FinWhalePace
 
