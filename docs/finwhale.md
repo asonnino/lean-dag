@@ -523,11 +523,140 @@ rather than assumed. On the liveness side `directCommit_of_holds`
 discharges the last of them: a view holding the two rounds above a slot
 sees whatever direct commit is there, which is what catching up means.
 
-## 12. What is not modelled, and what is not done
+## 12. What the paper should change
+
+No statement of the paper is false on the reading this arc takes. Four of
+its proofs need work, two in each half, and the liveness results rest on
+properties of the network that it states informally. What follows is
+ordered by how much of the argument turns on it.
+
+### Two proofs that do not establish their statements
+
+**Lemma 22 covers `p = 1` only.** Its proof concludes from "a window of
+`3f + 3` rounds contains a full cycle of `n` rounds plus the first two
+rounds of the next cycle". That step needs `3f + 3 ≥ n + 2`, which at
+`n = 3f + 2p − 1` holds exactly when `p ≤ 1`. For `p ≥ 2` the window is
+shorter than a cycle and the argument does not apply. The statement holds
+at every `p`, by a second argument: where `3f + 3 ≤ n` the window's
+rounds name distinct validators, and `f + 1` disjoint consecutive triples
+would need `f + 1` distinct Byzantine leaders. §10 has both. An
+alternative is to replace the maximal-runs count with an incidence count,
+which is shorter and uniform in `p`: if every cyclic triple held a
+Byzantine leader, each Byzantine validator would answer for at most three
+of the `n` triples, giving `n ≤ 3f` against `n ≥ 3f + 1`.
+
+**The C3 case of Lemmas 18 and 19 does not close**, for two separate
+reasons.
+
+The set `H` is one member too large. A validator with `j` honest
+validators ahead of it holds at most `j + 1 + f` blocks of its own round
+— `j` from those ahead, its own, and at most `f` from Byzantine authors —
+so C3's `n − f` becomes possible as soon as `j ≥ n − 2f − 1`. The
+validators that certainly cannot use C3 are the fastest `n − 2f − 1`.
+
+And the pigeonhole assumes exactly `f` faults. "Among the `n − 2f` honest
+blocks received by `vi`, at least one belongs to `H`" needs
+`(n − 2f) + |H| − |honest| ≥ 1`, which holds at `|honest| = n − f` and
+degrades as the actual fault count falls: at `f = 3`, `p = 1` and no
+actual faults it is negative.
+
+Induction on block-creation time needs neither correction, and is the
+route §10 takes: a C3-triggered validator holds `n − f` blocks of the
+round it is building, at least one of them from an honest validator that
+created strictly earlier, so the induction hypothesis applies to that
+one, and a DAG closed under references holds what that block cites. It is
+uniform in `f`, `p` and the actual fault count, and the same induction
+serves Lemma 19 one round up.
+
+**Lemma 4's proof names the wrong round.** Its equivocating case says the
+block "does not reference the `r − 1` block of the Byzantine leader"; the
+parents of a round-`(r+2)` block sit at round `r + 1`, and the block
+excluded is the leader's round-`(r+1)` one. The count of at most `f − 1`
+Byzantine parents is unaffected. §3 records the reading this arc takes.
+
+### An argument that has to be redirected
+
+**Lemmas 6 and 7 cannot run through the SP-skip condition.** That
+condition quantifies over "each leader block of `s` (if any) in the local
+DAG of `vj`", and a validator that has not seen the committed block
+satisfies it for nothing. The argument runs through the second condition
+instead: one of the `2f + p` Non-FP-evidence blocks carries `n − f`
+parents, which meet the committed block's `2f + p` voters in an honest
+validator whose single round-`(r+1)` block both votes for it and is that
+parent — so the committed block is in the skipping validator's DAG after
+all, and the same round-`(r+2)` block is FP-evidence for it by Lemma 4 or
+Lemma 2. §11 carries this out. As the proofs stand, a reader is invited
+to take the route that does not work.
+
+### What the liveness proofs use without saying
+
+**Parent selection is never specified.** Lemmas 18 and 19 both need "what
+is held is selected" — the round-`(r−1)` leader's block, and the votes
+for the round-`(r−2)` leader — under C2 and C3 as much as under C1, where
+alone the paper states it. It belongs in the protocol description as a
+property of the selection algorithm, subject to leader-consistency.
+
+**Two properties of the network are used implicitly**: that a block
+enters a DAG only after its creator made it, and that honest validators
+do not create the same round simultaneously. The first is needed by any
+timing argument. The second is needed only by the `H` argument, and the
+induction above dispenses with it.
+
+**A1′ belongs with block validity.** That excluding the leader's block
+could leave `n − f − 1` parents, and that A1′ prevents it, appears only
+in the parent-selection prose. Every count in the safety proof rests on
+block validity, so the constraint belongs there.
+
+**Lemma 12 presupposes a maximum.** "Let `s` be the latest leader slot
+for which such inconsistent decisions were made" needs the decided slots
+to be finite, which they are, and which should be said. §7 takes it as a
+hypothesis for that reason.
+
+**Lemma 23's "eventually" does not survive a literal reading.** Being
+decided is relative to a DAG, and in a fixed DAG nothing above its reach
+is decided. The content is that a slot below a committed anchor is
+decided and that the DAG grows; stating it that way also makes the
+interaction with Lemma 12's finiteness visible. §10 states the per-DAG
+form.
+
+### Two claims the paper does not establish
+
+**Definition 1's latency is not proved.** Theorem 21 establishes that the
+fast commit exists, not that it happens within two message delays. The
+timing claim follows from C1 and C3 once the reactive exit is bounded
+above, and §10 proves it: past GST, with actual delivery `δ`, the votes
+are built within `Δ + δ + 2·proc` of round entry, and the timeout never
+fires where `Δ + δ + 2·proc` undercuts it.
+
+**The optimality of `n = 3f + 2p − 1` is asserted by citation.** Nothing
+in the paper shows this protocol requires exactly that committee. There
+is a tightness result available to it, and it is the paper's own: at
+`n = 3f + 2p − 1` the equivocating branch of Lemma 4 reaches exactly the
+`f + p` its FP-evidence definition demands, and at `n = 3f + 2p − 2` it
+reaches `f + p − 1`, one short, for every `f` and `p` in range (§4). The
+committee is the least at which the paper's argument closes, which is a
+statement about this protocol rather than about the literature.
+
+### What holds
+
+Every statement this arc formalises is proved: Lemmas 2 to 13 and
+Theorems 14 and 15 on the safety side, Lemmas 18 to 20, 22, 23 and 25 and
+Theorems 21, 24 and 26 on the liveness side. The deterministic tie-break
+among an anchor's candidates — the construction closest to the defect the
+Black Marlin arc reports (report §18) — is safe here, and §6 says why:
+the rule reads the anchor's causal history and no view. That is worth
+stating in the paper, since the failure mode is live in a neighbouring
+protocol.
+
+Lemmas 16 and 17 are the exception in the other direction: they are
+neither confirmed nor contradicted here, because timeouts and message
+delivery are not modelled at all. §13 says what stands in their place.
+
+## 13. What is not modelled, and what is not done
 
 The capstones state their own side conditions. §11 discharged the view
 conditions and §8's ordering hypothesis, and §9 exhibits an execution
-that is a pacing structure. Three gaps remain, and they are of a
+that is a pacing structure. Four gaps remain, and they are of a
 different kind from the ones that closed: each is a piece of the protocol
 this development does not model at all.
 
@@ -541,11 +670,13 @@ the pace *is* the model of the network. The protocol's own clauses — C1,
 C2, C3 and parent selection — are no longer among them: §10 derives
 Lemmas 18 and 19 from those rather than assuming their conclusions.
 
-**Two protocol conditions have no counterpart at all.** A1′ — that
-advancement needs a leader-consistent set of round-`(r−1)` blocks, or one
-excluding the leader's — and the parent-selection procedure are not
-modelled; the arc takes their *result*, validity's leader clause, and
-`cert_or_wait`'s exit.
+**A1′ has no counterpart at all**, and parent selection has one only as
+an assumption. A1′ — that advancement needs a leader-consistent set of
+round-`(r−1)` blocks, or one excluding the leader's — is not modelled;
+the arc takes its result, validity's leader clause. Selection appears on
+the creation route as `selects_leader` and `selects_votes`, which say
+what the algorithm does with what it holds rather than deriving it from
+an algorithm.
 
 **The reverse pass is a condition, not a procedure.** `WellFormed`
 constrains a verdict assignment; nothing constructs one, and nothing
