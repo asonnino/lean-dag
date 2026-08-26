@@ -134,3 +134,5 @@ import LeanDag.FinWhale.Model.Rule
 import LeanDag.FinWhale.Evidence
 import LeanDag.FinWhale.Consequences
 import LeanDag.FinWhale.Skip
+import LeanDag.FinWhale.Propagation
+import LeanDag.FinWhale.Decision
