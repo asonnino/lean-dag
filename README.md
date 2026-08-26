@@ -219,6 +219,12 @@ lake build
 Requires [elan](https://github.com/leanprover/elan). The toolchain version
 is pinned in `lean-toolchain`; `lake build` will fetch it automatically.
 
+A `Makefile` splits the work by what it costs. `make fast` builds the
+library alone and runs the checks that cost nothing, which is the loop to
+work in; `make check` adds the concrete-model layer and is what a commit
+needs; `make deps` regenerates the dependency graph and is only needed when
+the set of declarations changes. `make help` lists them.
+
 ## Layout
 
 - `LeanDag/` — theorem/definition source: the core DAG and Mysticeti
