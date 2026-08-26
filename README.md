@@ -193,7 +193,7 @@ faults alone.
   **They need not**: a seven-round model at `n = 4`, `f = 1` has two
   honest validators output different twins of an equivocating anchor,
   neither ever outputting the other's — Definition 1's Agreement, and so
-  the paper's Theorem 12, refuted on data. The commit rule is untouched;
+  the paper's Theorem 13, refuted on data. The commit rule is untouched;
   the defect sits at two steps the paper asserts without argument. A
   **repair** is then tested as a side-condition rather than a change to
   the model — let the descent prefer a supported anchor among tied

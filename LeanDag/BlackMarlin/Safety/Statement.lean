@@ -8,16 +8,16 @@ The commit rule of `delivery(r)` never admits two anchors that disagree,
 whatever DAG the validators hold. Seven claims (`black-marlin.md` §4),
 following §5.1 of the paper:
 
-* **BM1, anchor uniqueness** — the paper's Lemma 2: at most one anchor
+* **BM1, anchor uniqueness** — the paper's Lemma 3: at most one anchor
   block of a round is supported, so at most one is committed there;
-* **BM2, propagation** — the paper's Lemma 4: a supported block lies in
+* **BM2, propagation** — the paper's Lemma 5: a supported block lies in
   the causal history of every block two rounds above it or higher;
-* **BM3, density** — the paper's Lemma 3: below the highest round of the
+* **BM3, density** — the paper's Lemma 4: below the highest round of the
   DAG, every round carries a quorum of distinct authors;
 * **BM4, soundness of the view reading** — what a validator commits by
   reading its own DAG, the rule commits over the universe, and the
   validator holds the block it committed;
-* **BM5, chaining** — the paper's Lemma 5: any two committed anchors,
+* **BM5, chaining** — the paper's Lemma 6: any two committed anchors,
   from any two views, are the same block or one lies in the causal
   history of the other;
 * **BM6, prefix** — the causal history of the lower of two committed
@@ -59,7 +59,7 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
   [F : Faults Validator] [Rot : Rotation Validator]
   {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 
-/-- **BM1, anchor uniqueness** (the paper's Lemma 2): two supported anchor
+/-- **BM1, anchor uniqueness** (the paper's Lemma 3): two supported anchor
 blocks of one round are the same block. Their support quorums share
 `n − 2f ≥ f + 1` authors, each supporting both, and a validator
 supporting two blocks of one author and round is an equivocator — one
@@ -69,7 +69,7 @@ def AnchorUniqueness (U : BlockUniverse Validator BlockId Payload) : Prop :=
     IsAnchor U r L₁ → IsAnchor U r L₂ →
     Supported U L₁ r → Supported U L₂ r → L₁ = L₂
 
-/-- **BM2, propagation** (the paper's Lemma 4): a block supported at round
+/-- **BM2, propagation** (the paper's Lemma 5): a block supported at round
 `r` lies in the causal history of every block of the universe at round
 `r + 2` or above, whoever authored it.
 
@@ -81,7 +81,7 @@ def Propagation (U : BlockUniverse Validator BlockId Payload) : Prop :=
   ∀ (L : BlockId) (r : ℕ) (c : BlockId),
     Supported U L r → c ∈ U.ids → r + 2 ≤ (U.block c).round → Reaches U c L
 
-/-- **BM3, density** (the paper's Lemma 3): if the universe holds a block
+/-- **BM3, density** (the paper's Lemma 4): if the universe holds a block
 above round `r`, then round `r` carries blocks from a quorum of distinct
 authors. A consequence of validity alone, and the reason the rule never
 inspects a round that could be sparse. -/
@@ -99,7 +99,7 @@ def ViewSound (U : BlockUniverse Validator BlockId Payload) : Prop :=
   ∀ (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ),
     CommittedIn U V L r → Committed U L r ∧ L ∈ V.ids
 
-/-- **BM5, chaining** (the paper's Lemma 5): two committed anchors, read
+/-- **BM5, chaining** (the paper's Lemma 6): two committed anchors, read
 from any two views, are the same block or one lies in the causal history
 of the other.
 

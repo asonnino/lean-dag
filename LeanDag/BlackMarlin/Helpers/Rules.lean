@@ -4,7 +4,7 @@ import LeanDag.BlackMarlin.Model.Decision
 # Black Marlin — the counting layer
 
 Generated proof layer; not part of the audit surface. The universe-level
-lemmas behind `Safety/Statement.lean`: the paper's Lemmas 2, 3, 4 and 5
+lemmas behind `Safety/Statement.lean`: the paper's Lemmas 3, 4, 5 and 6
 (`black-marlin.md` §4), each stated over the whole universe, where the
 counting happens.
 -/
@@ -49,7 +49,7 @@ theorem not_correct_of_supports_two {L₁ L₂ : BlockId} {v : Validator} {n : �
   exact hne ((U.valid q₁ hq₁).distinct_creators L₁ hq₁L L₂ hq₂L hcr)
 
 omit Rot in
-/-- **The paper's Lemma 2.** Two supported blocks of one author at one
+/-- **The paper's Lemma 3.** Two supported blocks of one author at one
 round are the same block: their support quorums share `n − 2f ≥ f + 1`
 authors, each supporting both, and all of them equivocators. Needs only
 `n ≥ 3f + 1`, which is the whole committee of this arc. -/
@@ -71,7 +71,7 @@ theorem eq_of_supported {L₁ L₂ : BlockId} {r : ℕ}
   unfold Supported at h₁ h₂
   omega
 
-/-- Lemma 2 for anchors: at most one anchor block of a round is
+/-- Lemma 3 for anchors: at most one anchor block of a round is
 supported, so at most one is committed there. -/
 theorem eq_of_isAnchor_of_supported {L₁ L₂ : BlockId} {r : ℕ}
     (ha₁ : IsAnchor U r L₁) (ha₂ : IsAnchor U r L₂)
@@ -79,7 +79,7 @@ theorem eq_of_isAnchor_of_supported {L₁ L₂ : BlockId} {r : ℕ}
   eq_of_supported h₁ h₂ (creator_eq_of_isAnchor ha₁ ha₂)
 
 omit Rot in
-/-- **The paper's Lemma 4.** A supported block is in the causal history of
+/-- **The paper's Lemma 5.** A supported block is in the causal history of
 **every** block two rounds above it or higher — Byzantine-authored
 included, since validity is structural.
 
@@ -102,14 +102,14 @@ theorem reaches_of_supported {L : BlockId} {r : ℕ} (h : Supported U L r)
   obtain ⟨b, hb, hreach⟩ := reaches_pred_of_round_le hbase hc hcr
   exact hb ▸ hreach
 
-/-- **The paper's Lemma 5**, in the form the round comparison gives: of
+/-- **The paper's Lemma 6**, in the form the round comparison gives: of
 two committed anchors, the lower lies in the causal history of the
 higher.
 
-Three cases, one per clause of the rule. At equal rounds Lemma 2 makes
+Three cases, one per clause of the rule. At equal rounds Lemma 3 makes
 them the same block. At a gap of one the linking anchor of the lower is
-supported at the same round as the higher one, so Lemma 2 identifies the
-two and the link is a direct reference. At a gap of two or more Lemma 4
+supported at the same round as the higher one, so Lemma 3 identifies the
+two and the link is a direct reference. At a gap of two or more Lemma 5
 applies to the higher block itself. -/
 theorem reaches_of_committed_of_le {L₁ L₂ : BlockId} {r₁ r₂ : ℕ}
     (h₁ : Committed U L₁ r₁) (h₂ : Committed U L₂ r₂) (hr : r₁ ≤ r₂) :
@@ -128,7 +128,7 @@ theorem reaches_of_committed_of_le {L₁ L₂ : BlockId} {r₁ r₂ : ℕ}
       have : L' = L₂ := eq_of_isAnchor_of_supported ha' ha₂ hs' hs₂
       exact Or.inr (this ▸ Reaches.single href)
 
-/-- **The prefix corollary of Lemma 5.** Of two committed anchors, the
+/-- **The prefix corollary of Lemma 6.** Of two committed anchors, the
 causal history of the lower is contained in that of the higher — what
 one delivers, the other delivers too. -/
 theorem history_subset_of_committed {L₁ L₂ : BlockId} {r₁ r₂ : ℕ}
@@ -139,7 +139,7 @@ theorem history_subset_of_committed {L₁ L₂ : BlockId} {r₁ r₂ : ℕ}
   · exact history_subset_of_reaches h₂.1.1 hre
 
 omit Rot [DecidableEq BlockId] in
-/-- **The paper's Lemma 3.** Below the highest round of the DAG, every
+/-- **The paper's Lemma 4.** Below the highest round of the DAG, every
 round carries blocks from a quorum of distinct authors.
 
 Downward induction on the gap: a valid block names `n − f` distinct

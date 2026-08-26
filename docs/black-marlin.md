@@ -93,12 +93,12 @@ paper, they hold during the asynchronous period as well.
 
 | | Claim | Paper |
 |:---|:---|:---|
-| BM1 | `AnchorUniqueness` — two supported anchors of one round are one block | Lemma 2 |
-| BM2 | `Propagation` — a supported block is in the causal history of every block two rounds above | Lemma 4 |
-| BM3 | `Density` — below the highest round, every round carries a quorum of authors | Lemma 3 |
+| BM1 | `AnchorUniqueness` — two supported anchors of one round are one block | Lemma 3 |
+| BM2 | `Propagation` — a supported block is in the causal history of every block two rounds above | Lemma 5 |
+| BM3 | `Density` — below the highest round, every round carries a quorum of authors | Lemma 4 |
 | BM4 | `ViewSound` — a view's verdict is the universe's, and the view holds the block | — |
-| BM5 | `Chained` — two committed anchors are one block, or one is in the causal history of the other | Lemma 5 |
-| BM6 | `HistoryPrefix` — the lower committed anchor's history is contained in the higher's | Lemma 5, corollary |
+| BM5 | `Chained` — two committed anchors are one block, or one is in the causal history of the other | Lemma 6 |
+| BM6 | `HistoryPrefix` — the lower committed anchor's history is contained in the higher's | Lemma 6, corollary |
 | BM7 | `AnchorsAreLeaderBlocks` — the anchors are the core's leader blocks | — |
 
 **BM1** is quorum intersection: two support quorums share `n − 2f ≥ f+1`
@@ -115,7 +115,7 @@ each with one block at the round above; a block two rounds above names
 them.
 
 **BM5** is where the rule's second clause is used, and the only place.
-The three cases of the paper's Lemma 5 are the three ranges of the round
+The three cases of the paper's Lemma 6 are the three ranges of the round
 gap between the two committed anchors: at gap `0` BM1 identifies them;
 at gap `≥ 2` BM2 applies to the higher block itself; at gap `1` the
 lower anchor's linking block and the higher anchor are both supported
@@ -249,9 +249,9 @@ and it is reported rather than made.
 
 ## 8. Liveness
 
-The paper reaches liveness through §5.2's timing argument: Lemma 6's
-`3∆` bound on a round, Lemma 9 on the timeout not firing when anchors
-are honest, Lemma 10 on the expected number of rounds to a correct
+The paper reaches liveness through §5.2's timing argument: Lemma 7's
+`3∆` bound on a round, Lemma 10 on the timeout not firing when anchors
+are honest, Lemma 11 on the expected number of rounds to a correct
 anchor. This development states liveness above the structural condition
 instead (`liveness.md`), so those are replaced rather than transcribed,
 and no timeout, message delay, stabilisation time or probability appears
@@ -261,8 +261,8 @@ below. Five claims, in `LeanDag/BlackMarlin/Liveness/Statement.lean`:
 |:---|:---|:---|
 | BML1 | `CommitStep` — a run of two reliable anchors over three populated rounds is committed | — |
 | BML2 | `FullViewSound` — the full view reaches the verdict the rule reaches | — |
-| BML3 | `Inclusion` — a reliable validator's block is in the causal history of every block two rounds above | Lemma 7 |
-| BML4 | `Recurrence` — the rotation names a committing round arbitrarily far out | Lemma 10, role |
+| BML3 | `Inclusion` — a reliable validator's block is in the causal history of every block two rounds above | Lemma 8 |
+| BML4 | `Recurrence` — the rotation names a committing round arbitrarily far out | Lemma 11, role |
 | BML5 | `RotationFair` — round robin supplies the run of two | — |
 
 **BML1** is the core's counting step read twice. `Supported U L r` is
@@ -282,7 +282,7 @@ on which anchors the rule admits, only on one being admitted above.
 Together with BML4 this is the Validity property of Definition 1 for
 reliable authors.
 
-**BML4** plays the role of the paper's Lemma 10 — that commits keep
+**BML4** plays the role of the paper's Lemma 11 — that commits keep
 happening — without its probability. It quantifies the universe *inside*
 the conclusion, as the core's
 `CommitsAt` does and for the same reason: the rotation names the round,
@@ -347,8 +347,8 @@ Six claims, in `LeanDag/BlackMarlin/Reactive/Statement.lean`:
 | BMR2 | `ReactiveCommit` — a run of two is committed, with no coverage hypothesis | — |
 | BMR3 | `Exit` — the exit fires, given a run of **three** reliable anchors | — |
 | BMR4 | `ExitSustained` — but only to enter: one further anchor per round after that | — |
-| BMR5 | `Latency` — `D + δ + proc`, and `Δ + δ + 2 · proc` past GST | Lemma 6, role |
-| BMR6 | `NoTimeout` — the timeout never fires when those undercut it | Lemma 9, role |
+| BMR5 | `Latency` — `D + δ + proc`, and `Δ + δ + 2 · proc` past GST | Lemma 7, role |
+| BMR6 | `NoTimeout` — the timeout never fires when those undercut it | Lemma 10, role |
 
 **BMR2 replaces BML1's coverage hypothesis.** `SynchronisedOn` asks that
 every reliable block reference every reliable block below it, which a
@@ -389,8 +389,8 @@ honest party eventually delivers it. Four claims, in
 
 | | Claim | Paper |
 |:---|:---|:---|
-| BMA1 | `Monotone` — a block delivered with a committed anchor is delivered with every committed anchor from that round on | Lemma 5, corollary |
-| BMA2 | `LocalCommit` — a run of two is committed by each reliable validator on its **own view**, at an explicit time | Lemma 11, half |
+| BMA1 | `Monotone` — a block delivered with a committed anchor is delivered with every committed anchor from that round on | Lemma 6, corollary |
+| BMA2 | `LocalCommit` — a run of two is committed by each reliable validator on its **own view**, at an explicit time | Lemma 12, half |
 | BMA3 | `Delivered` — the two composed | Definition 1, Agreement |
 | BMA4 | `RunRecurs` — such a round exists above every round | — |
 
@@ -438,7 +438,7 @@ the core models `Decided` rather than the implementation.
 | BMD1′ | `CorrectAnchorUnique` — and at a round whose anchor is reliable, however deep the cone | — |
 | BMD2 | `AgreeStep` — records agreeing at a round agree at the round below | — |
 | BMD3 | `AgreeBelow` — and throughout any stretch they both descend | — |
-| BMD4 | `CommittedPins` — records flushing committed anchors at one round agree there | Lemma 2 |
+| BMD4 | `CommittedPins` — records flushing committed anchors at one round agree there | Lemma 3 |
 | BMD5 | `LinkPopulates` — the link clause keeps the descent from skipping | — |
 | BMD6 | `Ledger` — no retraction, agreement, and one position per block | Definition 1, Total Order |
 
@@ -535,7 +535,7 @@ stateful within a segment as well as between them. Nine claims:
 | BMO5 | `KeyDelivered` — every author-and-round flushed is output | — |
 | BMO6 | `CorrectDelivered` — and for a correct author, by the block itself | — |
 | BMO7 | `TotalOrder` — records that agree cannot invert a pair | Definition 1, Total order |
-| BMO8 | `DescentOrder` — two descents that meet output the same list | Lemma 11, half |
+| BMO8 | `DescentOrder` — two descents that meet output the same list | Lemma 12, half |
 | BMO9 | `Validity` — a reliable author's block is output | Definition 1, Validity |
 
 **BMO1 is a fidelity check.** L26 flushes `τ(past(B) \ 𝒟)` and L30 then
@@ -558,7 +558,7 @@ one.
 
 **What is *not* closed, and a correction.** §10 said the remaining
 distance to Definition 1's Agreement was the filter, and implied that
-Lemma 11 and Validity were compositions of results already in hand. That
+Lemma 12 and Validity were compositions of results already in hand. That
 was too optimistic. The filter is closed for correct authors (BMO6), but
 for an **equivocator** the twin that is output depends on the
 segmentation, and two validators' records can differ at a round where
@@ -640,10 +640,10 @@ later commit.
 **What this does and does not touch.** It does not contradict the commit
 rule: `12` is never committed by the rule, and BM1 through BM7 are
 untouched. It does not touch liveness. What it refutes is Definition 1's
-Agreement, and with it Theorem 12, for the algorithm as written — and it
+Agreement, and with it Theorem 13, for the algorithm as written — and it
 locates the defect precisely at the two steps the paper asserts without
-argument, Lemma 11's "by construction of the delivery function, party
-`j` must have also committed `B`" and Theorem 12's Agreement clause
+argument, Lemma 12's "by construction of the delivery function, party
+`j` must have also committed `B`" and Theorem 13's Agreement clause
 "therefore party `j` eventually ab-delivers(B, j, r)".
 
 **Is it a slip in the pseudocode?** No. The recursion is described three
@@ -666,7 +666,7 @@ It is not true of the code path that runs when L16 *fails*.
 **Nor is equivocation assumed away.** The one place the paper excludes it
 is its complexity section, and explicitly only to size
 `DAG \ history[j]` for the communication bound; the safety and liveness
-sections assume nothing of the kind, and Lemma 2's proof reasons about
+sections assume nothing of the kind, and Lemma 3's proof reasons about
 multiple blocks per party directly.
 
 **And the adversary chooses.** Which twin loses the tie-break is fixed by
@@ -1037,14 +1037,14 @@ left open.
 
 ## 17. What is not covered
 
-**Lemma 10.** No counterpart, and none needed: BML5 makes the recurring
+**Lemma 11.** No counterpart, and none needed: BML5 makes the recurring
 run deterministic where the paper bounds an expectation. The expectation
 sits oddly with the paper's own "substitution of the common coin with a
 deterministic round-robin mechanism", and its time-complexity section
 derives the headline latency — `4.25` rounds under Byzantine faults —
 from it.
 
-**Lemmas 6 and 9 in their own terms.** BMR5 and BMR6 play their roles —
+**Lemmas 7 and 10 in their own terms.** BMR5 and BMR6 play their roles —
 a bound on the time to conclude a round, and the timeout not firing when
 anchors are reliable — but state them in `∆`, the actual delivery `δ` and
 the processing bound, above the pacing structure rather than over a

@@ -14,7 +14,7 @@ taken hold (`black-marlin.md` §8). Five claims:
   actually reached;
 * **BML3, `Inclusion`** — every reliable validator's block lies in the
   causal history of every block two rounds above it, hence of every
-  committed anchor there. The paper's Lemma 7, and its Validity property
+  committed anchor there. The paper's Lemma 8, and its Validity property
   for reliable authors;
 * **BML4, `Recurrence`** — under a recurring run of two the rotation
   names, for every round, a later round that any sufficiently grown
@@ -25,11 +25,11 @@ taken hold (`black-marlin.md` §8). Five claims:
 
 Not among the hypotheses: a timeout, a message delay, a global
 stabilisation time, or a probability. The paper reaches liveness through
-§5.2's timing argument — Lemma 6's `3∆` round bound, Lemma 9 on the
-timeout not firing with honest anchors, Lemma 10 on the expected number
+§5.2's timing argument — Lemma 7's `3∆` round bound, Lemma 10 on the
+timeout not firing with honest anchors, Lemma 11 on the expected number
 of rounds to a correct anchor. This development states liveness above
 the structural condition instead (`liveness.md`), so those are replaced
-rather than transcribed, and Lemma 10 has no counterpart: BML5 makes the
+rather than transcribed, and Lemma 11 has no counterpart: BML5 makes the
 recurring run deterministic.
 
 **Why two rounds, and where each is used.** The rule reads three rounds
@@ -98,7 +98,7 @@ is a verdict some validator can actually reach. -/
 def FullViewSound (U : BlockUniverse Validator BlockId Payload) : Prop :=
   ∀ (L : BlockId) (r : ℕ), CommittedIn U (View.full U) L r ↔ Committed U L r
 
-/-- **BML3, inclusion** (the paper's Lemma 7): a reliable validator's
+/-- **BML3, inclusion** (the paper's Lemma 8): a reliable validator's
 block lies in the causal history of every block two rounds above it.
 
 The delivery half of atomic broadcast, for reliable authors: a committed
