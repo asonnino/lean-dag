@@ -96,24 +96,17 @@ example : ((Dgrow 5).block 1).round = 0 ∧ ((Dgrow 5).block 1).creator = 1 ∧
 /-- And validator `1` is correct, so round `0` has an honest leader. -/
 example : ((Dgrow 5).block 1).creator ∈ (Correct : Finset (Fin 4)) := by decide
 
-/-- **Lemma 20 on a pacing structure.** The honest leader's block of
-round `0` is directly committed, derived from `ugrowSkewCorrect` — view
-convergence, the drift bound and the backoff — and nothing else. -/
-example : DirectCommit (Dgrow 5) 1 :=
-  directCommit_of_viewPace (D := Dgrow 5) (R := 0) (r := 0) (l := 1) (ugrowSkewCorrect 5) rfl rfl
-    (by decide) (fun n _ => Nat.le_refl _) (by omega) (by omega) (by decide) (by decide) (by decide)
+/-- **The bridge on data.** Coverage and production over the correct
+validators, from `ugrowSkewCorrect` — view convergence, the drift bound
+and the backoff — and nothing else. This is a compatibility statement,
+not FinWhale's liveness route: the coverage it yields is bought by the
+waiting floor, which FinWhale's pacemaker does not have. -/
+example : SynchronisedFrom (Dgrow 5).block (Dgrow 5).ids (Correct : Finset (Fin 4)) 0 :=
+  synchronised_of_viewPace (D := Dgrow 5) (ugrowSkewCorrect 5) rfl rfl (by decide)
+    (fun n _ => Nat.le_refl _)
 
-/-- **Theorem 26 on a pacing structure.** Validator `2`'s genesis block
-is delivered, once the round-`1` leader's slot is committed: it lies in
-that leader's causal history, and the ordering is the causal history. -/
-example {dec : ℕ → Verdict ℕ} (hcom : dec 1 = Verdict.commit 6) :
-    (2 : ℕ) ∈ linearise (histOf (Dgrow 5)) (commitSeq dec 3) :=
-  delivered_of_synchronised (D := Dgrow 5) (R := 0)
-    (synchronised_of_viewPace (D := Dgrow 5) (ugrowSkewCorrect 5) rfl rfl (by decide)
-      (fun n _ => Nat.le_refl _))
-    (by omega) (by decide) (by decide) (by decide) (by decide) (by decide) (by decide)
-    (by omega) hcom
-
+example : ∀ r ≤ 5, PopulatedFrom (Dgrow 5).block (Dgrow 5).ids (Correct : Finset (Fin 4)) r :=
+  populated_of_viewPace (D := Dgrow 5) (ugrowSkewCorrect 5) rfl rfl
 
 /-! ## The reactive schedule
 
@@ -435,6 +428,13 @@ assumed: the votes and the certificates come out of C1 and C3. -/
 example (N : ℕ) : CommitsCorrectLeaders (Dreact N) 0 N :=
   commits_of_creation (D := Dreact N) (fwCreation N) rfl rfl (by decide)
     (Nat.le_refl _) (fun n _ => Nat.le_refl _)
+
+/-! ## The arc's axioms, on the routes this file supplies -/
+
+#print axioms LeanDag.FinWhale.Creation.lemma18
+#print axioms LeanDag.FinWhale.Creation.lemma19
+#print axioms LeanDag.FinWhale.commits_of_creation
+#print axioms LeanDag.FinWhale.theorem26_of_selfParent
 
 end FinWhalePace
 

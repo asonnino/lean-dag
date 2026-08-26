@@ -168,7 +168,7 @@ round it is building, and the two quorums meet in a reliable validator
 other than the builder, which built strictly earlier — so the induction
 hypothesis makes *its* block a vote, and a view closed under references
 holds what that block references. Parent selection does the rest. -/
-theorem votes {R n : ℕ} (hcard : quorumCard Validator ≤ T.card)
+theorem lemma18 {R n : ℕ} (hcard : quorumCard Validator ≤ T.card)
     (hgst : cr.gst ≤ R) (hto : ∀ m, R ≤ m → 2 * cr.delay + cr.proc ≤ cr.timeout m)
     (hR : R ≤ n) (hN : n + 1 ≤ N)
     {L : BlockId} (hL : L ∈ U.ids) (hLr : (U.block L).round = n)
@@ -225,7 +225,7 @@ round-`(n+1)` block does vote, so such a quorum would be Byzantine and
 one round up. C3 goes through a strictly earlier reliable builder of its
 own round, whose parents are votes and whose references the holder
 therefore holds. -/
-theorem certifies {R n : ℕ} (hcard : quorumCard Validator ≤ T.card)
+theorem lemma19 {R n : ℕ} (hcard : quorumCard Validator ≤ T.card)
     (hgst : cr.gst ≤ R) (hto : ∀ m, R ≤ m → 2 * cr.delay + cr.proc ≤ cr.timeout m)
     (hR : R ≤ n) (hN : n + 2 ≤ N)
     {L : BlockId} (hL : L ∈ U.ids) (hLr : (U.block L).round = n)
@@ -233,7 +233,7 @@ theorem certifies {R n : ℕ} (hcard : quorumCard Validator ≤ T.card)
     ∀ v ∈ T, ∀ c ∈ U.ids, (U.block c).creator = v → (U.block c).round = n + 2 →
       CertifiesSP U c L := by
   have harith := params_arith (Validator := Validator)
-  have hvotes := cr.votes hcard hgst hto hR (by omega) hL hLr hLc hlead
+  have hvotes := cr.lemma18 hcard hgst hto hR (by omega) hL hLr hLc hlead
   -- what the conclusion comes to: a quorum of held votes, selected
   have key : ∀ (v : Validator), v ∈ T → ∀ c ∈ U.ids, (U.block c).creator = v →
       (U.block c).round = n + 2 → ∀ S : Finset Validator, spQuorum Validator ≤ S.card →
@@ -327,7 +327,7 @@ theorem spCertificate_of_certifiesSP (hblk : D.block = U.block) {c L : BlockId}
 /-- **Lemma 20, from the creation rule.** A reliable leader's block is
 committed by the slow path: every reliable validator's round-`(r+2)`
 block certifies it, and they are `n − f ≥ 2f + p`. -/
-theorem spCommit_of_creation (cr : Creation U T N D.leader)
+theorem lemma20_of_creation (cr : Creation U T N D.leader)
     (hids : D.ids = U.ids) (hblk : D.block = U.block)
     (hcard : quorumCard Validator ≤ T.card) {R n : ℕ}
     (hgst : cr.gst ≤ R) (hto : ∀ m, R ≤ m → 2 * cr.delay + cr.proc ≤ cr.timeout m)
@@ -337,7 +337,7 @@ theorem spCommit_of_creation (cr : Creation U T N D.leader)
     SPCommit D L := by
   have hLu : L ∈ U.ids := hids ▸ hL
   have hLrU : (U.block L).round = n := by rw [← hblk]; exact hLr
-  have hcert := cr.certifies hcard hgst hto hR hN hLu hLrU
+  have hcert := cr.lemma19 hcard hgst hto hR hN hLu hLrU
     (by rw [← hblk]; exact hLc) hlead
   refine ⟨T, le_trans (spQuorum_le_quorumCard (Validator := Validator)) hcard, fun v hv => ?_⟩
   obtain ⟨b, hb, hbc, hbr⟩ := cr.toPaceCore.populatedOn hcard (n + 2) (by omega) v hv
@@ -358,14 +358,14 @@ theorem commits_of_creation (cr : Creation U T N D.leader)
   intro s hR hN hsc
   obtain ⟨L, hL, hLc, hLr⟩ :=
     cr.toPaceCore.populatedOn card_correct s (by omega) (D.leader s) hsc
-  refine ⟨L, ?_, Or.inr (spCommit_of_creation cr hids hblk card_correct hgst hto hR hN
+  refine ⟨L, ?_, Or.inr (lemma20_of_creation cr hids hblk card_correct hgst hto hR hN
     (hids ▸ hL) (by rw [hblk]; exact hLr) (by rw [hblk]; exact hLc) hsc)⟩
   simp only [slotBlocks, blocksAt, Finset.mem_filter, hids, hblk]
   exact ⟨⟨hL, hLr⟩, hLc⟩
 
 /-- **Theorem 21, from the creation rule.** Where at most `p` validators
 are Byzantine, the reliable validators' votes alone are a fast commit. -/
-theorem fastCommit_of_creation (cr : Creation U T N D.leader)
+theorem theorem21_of_creation (cr : Creation U T N D.leader)
     (hids : D.ids = U.ids) (hblk : D.block = U.block)
     (hTeq : T = (Correct : Finset Validator)) (hfew : F.byzantine.card ≤ P.p)
     {R n : ℕ} (hgst : cr.gst ≤ R)
@@ -377,7 +377,7 @@ theorem fastCommit_of_creation (cr : Creation U T N D.leader)
   subst hTeq
   have hLu : L ∈ U.ids := hids ▸ hL
   have hLrU : (U.block L).round = n := by rw [← hblk]; exact hLr
-  have hvotes := cr.votes card_correct hgst hto hR hN hLu hLrU
+  have hvotes := cr.lemma18 card_correct hgst hto hR hN hLu hLrU
     (by rw [← hblk]; exact hLc) hlead
   have hsub : (Correct : Finset Validator) ⊆ voters D L := by
     intro v hv

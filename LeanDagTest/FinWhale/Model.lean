@@ -404,18 +404,15 @@ example : ∀ v ∈ (Correct : Finset (Fin 9)),
 for it. -/
 example : ∀ b ∈ blocksAt Dsync 2, SPCertificate Dsync b 2 := by decide
 
-/-- **Lemma 20 on data**, through the derived route rather than by
-`decide`: coverage and production give the slow-path commit. -/
-example : SPCommit Dsync 2 :=
-  lemma20 syncCovers (Nat.zero_le 0) (syncPopulated 1 (by omega))
-    (syncPopulated 2 (by omega)) (by decide) (by decide) (by decide)
+/-- **Lemma 20 on data**: the slot is committed by the slow path. Which
+route reached it is not this model's business — the schedule lives in
+`Pace.lean`, and this execution only exhibits the pattern. -/
+example : SPCommit Dsync 2 := by decide
 
 /-- **Theorem 21 on data.** Two Byzantine validators is `p`, so the
 correct validators alone are the `n − p = 7` votes a fast commit needs —
 and here they are nine. -/
-example : FastCommit Dsync 2 :=
-  theorem21 syncCovers (Nat.zero_le 0) (syncPopulated 1 (by omega)) (by decide)
-    (by decide) (by decide) (by decide)
+example : FastCommit Dsync 2 := by decide
 
 /-- And the slot is not skipped, by Lemma 6 rather than by search. -/
 example : ¬ DirectSkip Dsync 0 :=
@@ -621,10 +618,8 @@ example : DirectCommit (restrict Dsync Finset.univ isViewFull) 2 :=
 
 #print axioms LeanDag.FinWhale.lemma12
 #print axioms LeanDag.FinWhale.safety
-#print axioms LeanDag.FinWhale.directCommit_of_viewPace
 #print axioms LeanDag.FinWhale.lemma22
-#print axioms LeanDag.FinWhale.agreement_of_viewPace
-#print axioms LeanDag.FinWhale.delivered_of_viewPace
+#print axioms LeanDag.FinWhale.agreement_of_commits
 #print axioms LeanDag.FinWhale.safety_of_views
 #print axioms LeanDag.FinWhale.agreement_of_views
 

@@ -333,21 +333,25 @@ GST, the backoff, and a correct leader give a direct commit. No timing
 hypothesis appears in it.
 
 
-**The schedule is reactive, and the route now says so.** FinWhale's
+**The schedule is reactive, and the route says so.** FinWhale's
 pacemaker builds a round-`r` block when any of three conditions holds:
 C1, the local DAG has the round-`(r−1)` leader's block together with a
 quorum of voters for the round-`(r−2)` leader (or an SP-skip pattern for
 it); C2, the `2∆` timeout has expired; or C3, the local DAG has `n − f`
 round-`r` blocks. The timeout is the fallback, not the rule.
 
-`ViewPace`, which the derivation above runs on, carries a waiting
-*floor*: `waits` says a validator never builds before the timeout
-expires, and that floor is exactly what `synchronisedOn_of_converges`
-spends to win the race against drift. That is the C2-only discipline.
-The results over it are not vacuous — §9's witness exhibits such an
-execution — but they cover fewer runs than FinWhale has.
+`ViewPace` carries a waiting *floor*: `waits` says a validator never
+builds before the timeout expires, and that floor is exactly what
+`synchronisedOn_of_converges` spends to win the race against drift. That
+is the C2-only discipline, and liveness was once derived on it here. It
+is not FinWhale's, and the derivation is gone: `Liveness.lean` keeps only
+the bridge — that a FinWhale DAG can be fed coverage and production from
+the development's main line — which is a compatibility statement in the
+sense `LeanDagTest/Routes.lean` gives the word, not a route. The argument
+the floor would have supplied survives where it belongs, as the C2 case
+of the creation rule below.
 
-`Reactive.lean` runs the same liveness off `ReactivePace`, where the
+`Reactive.lean` runs the liveness off `ReactivePace`, where the
 floor is replaced by a ceiling (`deadline`) and two wait clauses:
 `vote_or_wait`, that a round-`(r+1)` block either references the
 round-`r` leader's block or waited the full timeout, and `cert_or_wait`,
@@ -387,12 +391,12 @@ certificate stage the core already proves supplies the slow-path commit
 (`spCommit_of_reactive`), and the votes it rests on supply the fast one
 (`fastCommit_of_reactive`).
 
-Three routes end at the same interface. `CommitsCorrectLeaders` says
-every correct-led slot below the horizon carries a direct commit;
-`commits_of_synchronised` supplies it from coverage,
-`commits_of_reactive` from the wait clauses, and `commits_of_creation`
-from the block-creation conditions themselves. Lemma 23 and everything
-above it never learn which schedule produced it.
+Two routes end at the same interface. `CommitsCorrectLeaders` says every
+correct-led slot below the horizon carries a direct commit;
+`commits_of_reactive` supplies it from the schedule's wait clauses and
+`commits_of_creation` from the block-creation conditions themselves —
+the second being the first with its clauses discharged. Lemma 23 and
+everything above it never learn which produced it.
 
 **Lemma 22, and where its proof stops working.** The lemma says any
 window of `3f + 3` rounds contains three consecutive rounds with correct

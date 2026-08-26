@@ -124,18 +124,6 @@ def CommitsCorrectLeaders (D : Dag Validator BlockId Payload) (R N : ℕ) : Prop
   ∀ s, R ≤ s → s + 2 ≤ N → D.leader s ∈ (Correct : Finset Validator) →
     ∃ l, l ∈ slotBlocks D s ∧ DirectCommit D l
 
-/-- **The full-timeout route supplies it**, by Lemma 20. -/
-theorem commits_of_synchronised {R N : ℕ}
-    (hsync : SynchronisedFrom D.block D.ids (Correct : Finset Validator) R)
-    (hpop : ∀ n, n ≤ N → PopulatedFrom D.block D.ids (Correct : Finset Validator) n) :
-    CommitsCorrectLeaders D R N := by
-  intro s hR hN hsc
-  obtain ⟨l, hl, hlc, hlr⟩ := hpop s (by omega) (D.leader s) hsc
-  refine ⟨l, ?_, Or.inr (lemma20 hsync hR (hpop (s + 1) (by omega)) (hpop (s + 2) (by omega))
-    hl hlr (by rw [hlc]; exact hsc))⟩
-  simp only [slotBlocks, blocksAt, Finset.mem_filter]
-  exact ⟨⟨hl, hlr⟩, hlc⟩
-
 /-- **A committed triple above every round.** -/
 theorem committed_triple {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
@@ -242,41 +230,13 @@ theorem theorem26 {dec : ℕ → Verdict BlockId} {hist : BlockId → List Block
     b ∈ linearise hist (commitSeq dec k) :=
   mem_linearise hist _ [] l (lemma25 hr hcom) b hb
 
-section Validity
+/-! ## The delivery order, concretely -/
+
+section Order
 
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {Payload : Type*} {D : Dag Validator BlockId Payload}
-
-/-- **Every correct block reaches the next round's correct leader.**
-Coverage, read as a statement about causal history: this is what carries
-a correct validator's payload into a committed leader's history. -/
-theorem reaches_of_synchronised {R n : ℕ}
-    (hsync : SynchronisedFrom D.block D.ids (Correct : Finset Validator) R) (hR : R ≤ n)
-    {b l : BlockId} (hb : b ∈ D.ids) (hbr : (D.block b).round = n)
-    (hbc : (D.block b).creator ∈ (Correct : Finset Validator))
-    (hl : l ∈ D.ids) (hlr : (D.block l).round = n + 1)
-    (hlc : (D.block l).creator ∈ (Correct : Finset Validator)) :
-    ReachesFrom D.block l b :=
-  ReachesFrom.single (hsync n hR l hl hlr hlc b hb hbr hbc)
-
-/-- **Theorem 26 (Validity).** A correct validator's block is delivered,
-once the leader of the round above it is correct and its slot is
-committed.
-
-`hhist` is the faithfulness condition on the ordering: the list a leader
-contributes is its causal history. -/
-theorem theorem26_of_synchronised {dec : ℕ → Verdict BlockId}
-    {hist : BlockId → List BlockId} {R n k : ℕ}
-    (hsync : SynchronisedFrom D.block D.ids (Correct : Finset Validator) R) (hR : R ≤ n)
-    {b l : BlockId} (hb : b ∈ D.ids) (hbr : (D.block b).round = n)
-    (hbc : (D.block b).creator ∈ (Correct : Finset Validator))
-    (hl : l ∈ D.ids) (hlr : (D.block l).round = n + 1)
-    (hlc : (D.block l).creator ∈ (Correct : Finset Validator))
-    (hhist : ∀ c, ReachesFrom D.block l c → c ∈ hist l)
-    (hk : n + 1 < k) (hcom : dec (n + 1) = Verdict.commit l) :
-    b ∈ linearise hist (commitSeq dec k) :=
-  theorem26 hk hcom (hhist b (reaches_of_synchronised hsync hR hb hbr hbc hl hlr hlc))
 
 /-- **A FinWhale DAG is a causal structure.** Its two conditions are the
 DAG's closure under references and validity's predecessor clause. -/
@@ -309,23 +269,11 @@ theorem nodup_histOf [LinearOrder BlockId] {l : BlockId} : (histOf D l).Nodup :=
   Finset.sort_nodup _ _
 
 /-- **Theorem 15 at the concrete order.** No block is delivered twice. -/
-theorem nodup_delivery [LinearOrder BlockId] (ls : List BlockId) : (linearise (histOf D) ls).Nodup :=
+theorem nodup_delivery [LinearOrder BlockId] (ls : List BlockId) :
+    (linearise (histOf D) ls).Nodup :=
   theorem15 _ (fun _ => nodup_histOf) ls
 
-/-- **Theorem 26 at the concrete order.** A correct validator's block is
-delivered once the leader above it is committed — with no hypothesis about
-what the ordering reads, since it reads the causal history. -/
-theorem delivered_of_synchronised [LinearOrder BlockId] {dec : ℕ → Verdict BlockId} {R n k : ℕ}
-    (hsync : SynchronisedFrom D.block D.ids (Correct : Finset Validator) R) (hR : R ≤ n)
-    {b l : BlockId} (hb : b ∈ D.ids) (hbr : (D.block b).round = n)
-    (hbc : (D.block b).creator ∈ (Correct : Finset Validator))
-    (hl : l ∈ D.ids) (hlr : (D.block l).round = n + 1)
-    (hlc : (D.block l).creator ∈ (Correct : Finset Validator))
-    (hk : n + 1 < k) (hcom : dec (n + 1) = Verdict.commit l) :
-    b ∈ linearise (histOf D) (commitSeq dec k) :=
-  theorem26_of_synchronised hsync hR hb hbr hbc hl hlr hlc (fun _ h => mem_histOf hl h) hk hcom
-
-end Validity
+end Order
 
 /-! ## The two theorems, end to end -/
 
@@ -335,52 +283,17 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {Payload : Type*} {D : Dag Validator BlockId Payload}
 
-/-- **Theorem 26 (Validity), end to end.** A correct validator's block is
-delivered, given the pacing line and a correct leader one round above it.
-The leader's slot being committed is derived here rather than assumed:
-coverage commits it (Lemma 20), and `hsees` is what puts that commit in
-the deciding validator's view. -/
-theorem delivered_of_viewPace {U : BlockUniverse Validator BlockId Payload} {N R : ℕ}
-    (vp : ViewPace U (Correct : Finset Validator) N)
-    (hids : D.ids = U.ids) (hblk : D.block = U.block)
-    (hgst : vp.gst ≤ R) (hbackoff : ∀ n, R ≤ n → 2 * vp.delay + vp.proc ≤ vp.timeout n)
-    {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
-    {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
-    (hwf : WellFormed dc ds choose dec)
-    (hsees : ∀ r l, l ∈ slotBlocks D r → DirectCommit D l → dc r l)
-    {hist : BlockId → List BlockId} {n k : ℕ} (hR : R ≤ n) (hk : n + 1 < k) (hkN : n + 3 ≤ N)
-    {b l : BlockId} (hb : b ∈ D.ids) (hbr : (D.block b).round = n)
-    (hbc : (D.block b).creator ∈ (Correct : Finset Validator))
-    (hl : l ∈ D.ids) (hlr : (D.block l).round = n + 1)
-    (hlead : (D.block l).creator = D.leader (n + 1))
-    (hlc : (D.block l).creator ∈ (Correct : Finset Validator))
-    (hhist : ∀ c, ReachesFrom D.block l c → c ∈ hist l) :
-    b ∈ linearise hist (commitSeq dec k) := by
-  have hsync := synchronised_of_viewPace vp hids hblk hgst hbackoff
-  have hpop := populated_of_viewPace vp hids hblk
-  have hslot : l ∈ slotBlocks D (n + 1) := by
-    simp only [slotBlocks, blocksAt, Finset.mem_filter]
-    exact ⟨⟨hl, hlr⟩, hlead⟩
-  have hcom : DirectCommit D l :=
-    Or.inr (lemma20 hsync (show R ≤ n + 1 by omega) (hpop (n + 2) (by omega))
-      (hpop (n + 3) (by omega)) hl hlr hlc)
-  exact theorem26_of_synchronised hsync hR hb hbr hbc hl hlr hlc hhist hk
-    (hwf.direct_commit _ _ (hsees _ _ hslot hcom))
-
 /-- **Theorem 24 (Agreement), end to end.** Two validators of one DAG
 deliver the same sequence at every horizon the DAG supports.
 
 Both halves are consumed here: Lemma 12 makes the verdicts agree wherever
-both are decided, and Lemma 23 makes them decided. The two finiteness
-conditions are compatible rather than contradictory — `hbound` says
-nothing above `M` is decided, `hkN` places the horizon well below the
-DAG's own, and a DAG that reaches `N` decides everything up to about
-`N − 3f`. -/
-theorem agreement_of_viewPace {U : BlockUniverse Validator BlockId Payload} {N R : ℕ}
-    (vp : ViewPace U (Correct : Finset Validator) N)
-    (hids : D.ids = U.ids) (hblk : D.block = U.block)
-    (hgst : vp.gst ≤ R) (hbackoff : ∀ n, R ≤ n → 2 * vp.delay + vp.proc ≤ vp.timeout n)
-    (hrr : RoundRobin D.leader)
+both are decided, and Lemma 23 makes them decided. `hcommits` is the
+liveness interface, and the schedule that supplies it does not appear.
+The two finiteness conditions sit together rather than in conflict —
+`hbound` says nothing above `M` is decided, and the horizon is placed
+below what the DAG's own reach decides. -/
+theorem agreement_of_commits {R N : ℕ}
+    (hcommits : CommitsCorrectLeaders D R N) (hrr : RoundRobin D.leader)
     {dc dc' : ℕ → BlockId → Prop} {ds ds' : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
     (hwf : WellFormed dc ds choose dec) (hwf' : WellFormed dc' ds' choose dec')
@@ -396,8 +309,6 @@ theorem agreement_of_viewPace {U : BlockUniverse Validator BlockId Payload} {N R
     {k : ℕ} (hkN : max k R + (3 * F.f + 5) ≤ N)
     (hist : BlockId → List BlockId) :
     linearise hist (commitSeq dec k) = linearise hist (commitSeq dec' k) := by
-  have hsync := synchronised_of_viewPace vp hids hblk hgst hbackoff
-  have hpop := populated_of_viewPace vp hids hblk
   have habove : ∀ (dq : ℕ → Verdict BlockId),
       (∀ r A, dq r = Verdict.commit A → A ∈ slotBlocks D r) →
       ∀ r a A, r + 2 < a → dq a = Verdict.commit A → A ∈ D.ids ∧ r + 3 ≤ (D.block A).round := by
@@ -408,10 +319,10 @@ theorem agreement_of_viewPace {U : BlockUniverse Validator BlockId Payload} {N R
   refine theorem24
     (lemma12 hwf hwf' (exclusions_of_dag hch hdc hdc' hds hds')
       (habove dec hslot) (habove dec' hslot') hbound)
-    (fun s hs => all_decided hwf hsees (commits_of_synchronised hsync hpop) hrr (by
+    (fun s hs => all_decided hwf hsees hcommits hrr (by
       have : max s R ≤ max k R := max_le_max (by omega) le_rfl
       omega))
-    (fun s hs => all_decided hwf' hsees' (commits_of_synchronised hsync hpop) hrr (by
+    (fun s hs => all_decided hwf' hsees' hcommits hrr (by
       have : max s R ≤ max k R := max_le_max (by omega) le_rfl
       omega))
     hist
