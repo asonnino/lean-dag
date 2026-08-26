@@ -9,30 +9,25 @@ vocabulary the paper states Lemma 4 in: votes, leader-consistency, the
 two branches of FP-evidence, and the direct decision rules. Only what the
 fast path needs is modelled; the slow path is Mysticeti's and unchanged.
 
-**Two readings of "exposes equivocation", and only one of them works.**
-The paper writes: "a block `b′` of round `r+2` exposes equivocation by
-`Lr` if its parent set is not leader-consistent, i.e., its causal history
+**Why the paper's gloss on "exposes equivocation" is exact.** The paper
+writes that a block `b′` of round `r+2` exposes equivocation by `Lr` if
+"its parent set is not leader-consistent, i.e., its causal history
 contains multiple conflicting versions of `Lr`'s block". The two halves
-of that sentence are not the same condition. A parent set that votes for
-two versions puts both in the causal history, so the first implies the
-second; the converse fails, since a history can carry both versions
-through a grandparent while every parent votes for at most one.
+are stated as if interchangeable, and at this depth they are, for a
+reason worth naming: `b′`'s parents sit at round `r+1` and their
+references at round `r`, so the round-`r` blocks in `b′`'s causal history
+are exactly the blocks its parents vote for. Validity gives each parent
+at most one edge per validator, so no single parent votes for two
+versions. Two versions below `b′` therefore means two parents voting
+differently, which is what a parent set failing to be leader-consistent
+is.
 
-The reading matters, because Lemma 4's equivocating branch needs the
-*parent-set* one. Its argument is that a block exposing equivocation may
-not reference `Lr`'s block, so at most `f − 1` of its parents are
-Byzantine — and that comes from the block-validity rule, which is itself
-stated over the parent set: a round-`r` block is valid when its parents
-are leader-consistent with respect to `Lr₋₂`, **or** exclude `Lr₋₂`'s
-block. A block whose parents are leader-consistent satisfies the first
-clause and is under no obligation to exclude anything, whatever its
-deeper history holds. So under the causal-history reading the `f − 1`
-bound is unavailable and the branch is unsupported.
-
-`ExposesEquivocation` is therefore the parent-set condition, and
-`ExposesEquivocationHistory` is kept beside it to state the difference
-(`exposes_of_parents`, and the converse refuted on data in
-`LeanDagTest/FinWhale/Reading`).
+The equivalence is what lets Lemma 4 use block validity the way it does.
+Validity's leader clause is stated over the parent set — a round-`r`
+block's parents are leader-consistent with respect to `Lr₋₂` or exclude
+its block — and Lemma 4's equivocating branch reads the causal-history
+side. `ExposesEquivocation` is the parent-set condition, the one the
+validity rule constrains, and the one every count here is taken against.
 -/
 
 namespace LeanDag
@@ -118,14 +113,6 @@ def ExposesEquivocation (D : Dag Validator BlockId Payload) (b : BlockId) : Prop
   ∃ l ∈ (D.ids : Finset BlockId), ∃ l' ∈ (D.ids : Finset BlockId),
     Conflicting D l l' ∧ (parentsVoting D b l).Nonempty ∧ (parentsVoting D b l').Nonempty
 
-/-- **Exposing equivocation, the causal-history reading**, the paper's
-"i.e." gloss: the two conflicting blocks are anywhere below `b`, not
-necessarily voted for by its parents. Weaker, and not what the validity
-rule constrains. -/
-def ExposesEquivocationHistory (D : Dag Validator BlockId Payload) (b : BlockId) : Prop :=
-  ∃ l ∈ (D.ids : Finset BlockId), ∃ l' ∈ (D.ids : Finset BlockId),
-    Conflicting D l l' ∧ l ∈ historyFrom D.block b ∧ l' ∈ historyFrom D.block b
-
 instance (D : Dag Validator BlockId Payload) (b : BlockId) :
     Decidable (ExposesEquivocation D b) :=
   inferInstanceAs (Decidable (∃ _ ∈ _, ∃ _ ∈ _, _))
@@ -150,16 +137,6 @@ def SPCertificate (D : Dag Validator BlockId Payload) (b l : BlockId) : Prop :=
 one round up. -/
 def FastCommit (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
   fastCard Validator ≤ (voters D l).card
-
-/-- The parent-set reading implies the causal-history one, since a
-parent voting for a block puts it in the history. The converse fails, and
-`LeanDagTest/FinWhale/Reading` exhibits a block that separates them. -/
-theorem exposes_history_of_parents_of_mem
-    (h : ExposesEquivocation D b)
-    (hmem : ∀ l : BlockId, (parentsVoting D b l).Nonempty → l ∈ historyFrom D.block b) :
-    ExposesEquivocationHistory D b := by
-  obtain ⟨l, hl, l', hl', hconf, hv, hv'⟩ := h
-  exact ⟨l, hl, l', hl', hconf, hmem l hv, hmem l' hv'⟩
 
 end FinWhale
 
