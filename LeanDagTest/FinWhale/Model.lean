@@ -1,4 +1,6 @@
 import LeanDag.FinWhale.Order
+import LeanDag.FinWhale.Rotation
+import Mathlib.Tactic.IntervalCases
 
 /-!
 # FinWhale witnesses — the commit rules on data
@@ -330,10 +332,130 @@ example : linearise histFW [1] <+: linearise histFW [1, 2] :=
 /-- Theorem 15: block `0` lies in both histories and is delivered once. -/
 example : (linearise histFW [1, 2]).Nodup := theorem15 _ (by decide) _
 
+/-! ## `Dsync` — the liveness input, and the commit it forces
+
+A synchronised execution: three rounds of nine blocks, each referencing
+every block of the round below. Coverage over the correct validators is
+what the pacing line derives (`synchronised_of_viewPace`), and this is a
+DAG that has it.
+
+The leader schedule is shifted so that round `0` is led by validator `2`,
+which is correct — validators `0` and `1` are the Byzantine pair, and a
+Byzantine leader proves nothing about liveness. -/
+def syncLeader : ℕ → Fin 9 := fun r => ⟨(r + 2) % 9, Nat.mod_lt _ (by omega)⟩
+
+/-- Every block references the whole round below it. -/
+def syncBlk : Fin 27 → Block (Fin 9) (Fin 27) Unit := fun i =>
+  { round := (i : ℕ) / 9,
+    creator := ⟨(i : ℕ) % 9, Nat.mod_lt _ (by omega)⟩,
+    refs :=
+      if (i : ℕ) < 9 then ∅
+      else if (i : ℕ) < 18 then {0, 1, 2, 3, 4, 5, 6, 7, 8}
+      else {9, 10, 11, 12, 13, 14, 15, 16, 17},
+    payload := () }
+
+theorem syncValid : ∀ i : Fin 27, ValidHere syncBlk syncLeader (syncBlk i) := by
+  intro i
+  refine ⟨?_, ?_, ?_, ?_⟩ <;> revert i <;> decide
+
+/-- The synchronised execution. -/
+def Dsync : Dag (Fin 9) (Fin 27) Unit where
+  ids := Finset.univ
+  block := syncBlk
+  leader := syncLeader
+  complete := by decide
+  valid := fun i _ => syncValid i
+  correct_single := by decide
+
+/-- No block sits above round `2`, which is what makes coverage a finite
+check. -/
+theorem syncRounds : ∀ b : Fin 27, (syncBlk b).round ≤ 2 := by decide
+
+/-- **Coverage on data.** Every correct block references every correct
+block of the round below, from round `0` on. Above round `1` the
+condition is empty, the DAG having stopped. -/
+theorem syncCovers :
+    SynchronisedFrom Dsync.block Dsync.ids (Correct : Finset (Fin 9)) 0 := by
+  intro n _
+  rcases Nat.lt_or_ge n 2 with h2 | h2
+  · interval_cases n <;> decide
+  · intro b _ hbr _ _ _ _ _
+    have hb2 : (Dsync.block b).round ≤ 2 := syncRounds b
+    omega
+
+/-- Production on data, at the two rounds the commit reads. -/
+theorem syncPopulated : ∀ r ≤ 2,
+    PopulatedFrom Dsync.block Dsync.ids (Correct : Finset (Fin 9)) r := by
+  intro r hr
+  interval_cases r <;> decide
+
+/-- The round-0 leader block is `2`, and its author is correct. -/
+example : (2 : Fin 27) ∈ slotBlocks Dsync 0 ∧
+    (Dsync.block 2).creator ∈ (Correct : Finset (Fin 9)) := by decide
+
+/-- **Lemma 18 on data**: every correct round-1 block votes for it. -/
+example : ∀ v ∈ (Correct : Finset (Fin 9)),
+    ∃ b ∈ blocksAt Dsync 1, (Dsync.block b).creator = v ∧ (2 : Fin 27) ∈ (Dsync.block b).refs := by
+  decide
+
+/-- **Lemma 19 on data**: every correct round-2 block is an SP-certificate
+for it. -/
+example : ∀ b ∈ blocksAt Dsync 2, SPCertificate Dsync b 2 := by decide
+
+/-- **Lemma 20 on data**, through the derived route rather than by
+`decide`: coverage and production give the slow-path commit. -/
+example : SPCommit Dsync 2 :=
+  lemma20 syncCovers (Nat.zero_le 0) (syncPopulated 1 (by omega))
+    (syncPopulated 2 (by omega)) (by decide) (by decide) (by decide)
+
+/-- **Theorem 21 on data.** Two Byzantine validators is `p`, so the
+correct validators alone are the `n − p = 7` votes a fast commit needs —
+and here they are nine. -/
+example : FastCommit Dsync 2 :=
+  theorem21 syncCovers (Nat.zero_le 0) (syncPopulated 1 (by omega)) (by decide)
+    (by decide) (by decide) (by decide)
+
+/-- And the slot is not skipped, by Lemma 6 rather than by search. -/
+example : ¬ DirectSkip Dsync 0 :=
+  no_directSkip_of_commit (l := 2) (by decide) (Or.inl (by decide))
+
+/-! ## The rotation
+
+`fwLeader` is round robin over nine validators, which `RoundRobin`
+records as a cyclic order. Lemma 22 then names three consecutive correct
+leaders in any window of `3f + 3 = 9` rounds. -/
+
+theorem fwRoundRobin : RoundRobin fwLeader := by
+  refine ⟨Equiv.refl (Fin 9), fun r => ?_⟩
+  apply Fin.ext
+  show r % 9 = ZMod.val ((r : ZMod 9))
+  exact (ZMod.val_natCast (n := 9) r).symm
+
+/-- The window of Lemma 22, here: three consecutive rounds whose leaders
+are all correct, from round `0`. -/
+example : ∃ r, 0 ≤ r ∧ r + 2 < 0 + (3 * Faults.f (Fin 9) + 3) ∧
+    fwLeader r ∈ (Correct : Finset (Fin 9)) ∧
+    fwLeader (r + 1) ∈ (Correct : Finset (Fin 9)) ∧
+    fwLeader (r + 2) ∈ (Correct : Finset (Fin 9)) :=
+  lemma22 fwRoundRobin 0
+
+/-- And one such triple, exhibited: rounds `2`, `3` and `4` are led by
+validators `2`, `3` and `4`, none of them Byzantine. -/
+example : fwLeader 2 ∈ (Correct : Finset (Fin 9)) ∧
+    fwLeader 3 ∈ (Correct : Finset (Fin 9)) ∧
+    fwLeader 4 ∈ (Correct : Finset (Fin 9)) := by decide
+
+/-- Anti-vacuity: the schedule does name Byzantine leaders, so the lemma
+is not about a committee without faults. -/
+example : fwLeader 0 ∉ (Correct : Finset (Fin 9)) ∧
+    fwLeader 1 ∉ (Correct : Finset (Fin 9)) := by decide
+
 /-! ## The arc's axioms -/
 
 #print axioms LeanDag.FinWhale.lemma12
 #print axioms LeanDag.FinWhale.safety
+#print axioms LeanDag.FinWhale.directCommit_of_viewPace
+#print axioms LeanDag.FinWhale.lemma22
 
 end FinWhale
 

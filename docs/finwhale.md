@@ -18,10 +18,12 @@ path.
 
 The arc models the decision layer: block validity, votes, FP-evidence,
 SP-certificates, the direct commit and skip rules, the anchor, and the
-reverse pass that turns them into a verdict per leader slot. It does not
-model the network, the round-advance loop, the timers, or the delivery of
-non-leader blocks. Every result is about which leader slots are committed
-and which blocks are delivered in what order.
+reverse pass that turns them into a verdict per leader slot. It models
+neither the timers nor the delivery of non-leader blocks; the network and
+the round-advance loop enter only through the development's own pacing
+line, which §10 uses to derive the condition liveness consumes. Every
+result is about which leader slots are committed and which blocks are
+delivered in what order.
 
 **Why the DAG type is new.** FinWhale strengthens Mysticeti's validity
 rule with a clause about the leader two rounds down (§2), and the fast
@@ -239,11 +241,92 @@ Three executions, because the rules exclude one another.
 - `Dskip`, three rounds: no round-1 block references the leader, all nine
   validators decline, and no anchor can reverse the skip.
 
+A fourth, `Dsync`, is the liveness input: three rounds in which every
+block references the whole round below, so coverage over the correct
+validators holds. The round-0 leader is correct there, and the slow-path
+commit and the fast commit are both derived through §10's route rather
+than settled by `decide`. The rotation is exercised too: `fwLeader` is a
+`RoundRobin`, and Lemma 22 names a correct triple in the window from
+round `0`.
+
 The list layer is exercised on concrete verdicts: a commit sequence, its
 extension, and the delivery order that repeats a block of two causal
 histories and delivers it once.
 
-## 10. What is not modelled, and what is not done
+## 10. Liveness: an honest leader is committed
+
+Lemmas 16 and 17 are a timing argument — round synchronisation within
+`∆`, and delivery before the round timeout expires — and what they
+establish is a condition on the DAG: after GST every correct validator's
+block references every correct block of the round below. That condition
+is `SynchronisedFrom`, and this arc derives it rather than assuming it.
+
+**The derivation is the development's own pacing line** (report §6.9). A
+`ViewPace` carries view convergence — a validator's holdings reach every
+other within `delay` past GST — together with the pacemaker's progress
+and catch-up rules. From those, `ViewPace.driftOn_of_catchup` derives the
+drift bound `delay + proc` with no hypothesis about the starting spread,
+and `ViewPace.synchronisedOn_of_converges` wins the race between drift
+and the timeout, giving coverage from any round past GST once the timeout
+clears `2∆ + proc`. Both are the core's, used read-only.
+`synchronised_of_viewPace` and `populated_of_viewPace` carry them to a
+FinWhale DAG.
+
+The bridge is a hypothesis about two structures rather than a coercion.
+`ViewPace` is stated over a `BlockUniverse`, whose validity rule carries
+the self-parent clause; `FinWhale.ValidHere` does not, because no result
+of the safety arc reads it. The paper's block structure has it — "every
+block includes an edge that references the previous block created by the
+same validator" — so a FinWhale execution satisfies both rules, and the
+bridge asks only that the two structures describe the same blocks.
+
+Above coverage the rest is counting.
+
+- **Lemma 18** is coverage read at the leader: every correct round-`(r+1)`
+  block references the correct leader's round-`r` block.
+- **Lemma 19**: a correct round-`(r+2)` block references every correct
+  round-`(r+1)` block, each of which votes for the leader, so it carries
+  `n − f ≥ 2f + p` parents voting — an SP-certificate. The paper's
+  parent-selection argument is what coverage replaces: a correct leader
+  does not equivocate, so the leader clause drops no correct parent.
+- **Lemma 20**: those certificates number `n − f ≥ 2f + p`, which is a
+  slow-path commit, at every `p` in range.
+- **Theorem 21**: where at most `p` validators are actually Byzantine, the
+  correct validators number `n − p`, and their votes alone are a fast
+  commit.
+
+`directCommit_of_viewPace` is the composition: a `ViewPace`, a round past
+GST, the backoff, and a correct leader give a direct commit. No timing
+hypothesis appears in it.
+
+**Lemma 22, and where its proof stops working.** The lemma says any
+window of `3f + 3` rounds contains three consecutive rounds with correct
+leaders. The paper's proof counts maximal runs of correct leaders in the
+cyclic order, then observes that such a window "contains a full cycle of
+`n` rounds plus the first two rounds of the next cycle". That step needs
+`3f + 3 ≥ n + 2`, and at `n = 3f + 2p − 1` it holds only for `p = 1`. For
+`p ≥ 2` the window is shorter than a cycle, and the argument does not
+apply.
+
+The statement is true at every `p`, by two arguments rather than one.
+`three_correct_of_roundRobin` is the cyclic half and gives a triple
+within any `n + 2` rounds; it counts incidences rather than runs, which
+avoids reasoning about maximal runs: if every cyclic triple held a
+Byzantine leader, each Byzantine validator would answer for at most three
+of the `n` triples, so `n ≤ 3f`, against `3f + 1 ≤ n`. This half uses the
+fault bound alone, not `Params`. `three_correct_window` is the pigeonhole
+half, for `3f + 3 ≤ n`: the window then lies inside one cycle, so its
+leaders are distinct, and `f + 1` disjoint triples would need `f + 1`
+distinct Byzantine validators. `lemma22` is the paper's statement, by the
+first argument at `p = 1` — where `3f + 3` is exactly `n + 2` — and the
+second at `p ≥ 2`.
+
+The core's `FairRunOn` records the pigeonhole for runs of three as prose
+rather than proving it, and `WaveRobin.lean` supplies runs of three by
+rotating in waves instead. `three_correct_window` is that pigeonhole,
+proved, for the round-robin schedule.
+
+## 11. What is not modelled, and what is not done
 
 `safety` states its own side conditions, and each is either a fact about
 the DAG or a faithfulness condition on the model. Three are worth naming
@@ -262,6 +345,10 @@ shows a validator running the pass produces one.
 finitely many decided slots, and `hk` says a commit sequence stops at the
 first undecided slot; neither is derived.
 
-Liveness is not started: Lemmas 16 to 20, 22, 23 and 25, and Theorems 21,
-24 and 26, are untouched, as is the round-robin window argument of
-Lemma 22.
+**Liveness stops at Lemma 22.** Lemmas 16 and 17 are derived from the
+pacing line rather than proved from `∆` and the timeouts, as §10 records;
+what remains untouched is Lemma 23 (every slot is eventually decided),
+Lemma 25, and Theorems 24 and 26. Lemma 23 is the next step, and it
+formalises at the verdict level: under the maximality of an undecided
+slot every slot above it is decided, so the first non-skipped slot above
+`r + 2` is a commit, and `WellFormed.indirect_commit` then decides `r`.
