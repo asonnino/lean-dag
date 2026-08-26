@@ -358,6 +358,28 @@ pseudocode, exactly as the core's reactive arc takes them for Mysticeti.
 Coverage is not available on this route and is not used: a reactive
 builder omits whatever had not arrived when its exit fired.
 
+**And the wait clauses are themselves derivable.** `Creation.lean` takes
+the three block-creation conditions instead: C1 holds the leader's block
+and a quorum of votes by its own L1 and L2; C2 waited the full timeout,
+so the drift bound places every reliable block of the round below in
+hand; C3 holds `n − f` blocks of the round it is building. Two properties
+of the network — that a block is held only after it is built, and that no
+two reliable validators build one round at one instant — and one of
+parent selection, that it takes the leader's block and the votes when
+they are held, then give Lemmas 18 and 19 as theorems, and with them the
+liveness interface.
+
+The C3 case is where this differs from the paper. Its argument there runs
+through the fastest `n − 2f` honest validators, and the pigeonhole that
+puts one of their blocks in a C3-triggered validator's hands needs the
+honest set to be exactly `n − f`; with fewer than `f` actual faults the
+count does not close, and the set is one member too large besides.
+Induction on build time needs neither: a C3-triggered validator holds
+`n − f` blocks of its own round, at least one from a reliable validator
+that built strictly earlier, and the induction hypothesis applies to
+that one. A view closed under references then holds what that block
+references. The same induction serves Lemma 19, one round up.
+
 Nothing else changes, for an arithmetical reason: **Mysticeti's
 certificate is FinWhale's SP-certificate**, since the slow-path quorum
 `2f + p` is no larger than the validity quorum `n − f`. So the reactive
@@ -365,10 +387,11 @@ certificate stage the core already proves supplies the slow-path commit
 (`spCommit_of_reactive`), and the votes it rests on supply the fast one
 (`fastCommit_of_reactive`).
 
-Both routes end at the same interface. `CommitsCorrectLeaders` says every
-correct-led slot below the horizon carries a direct commit;
-`commits_of_synchronised` supplies it from coverage and
-`commits_of_reactive` from the wait clauses, and Lemma 23 and everything
+Three routes end at the same interface. `CommitsCorrectLeaders` says
+every correct-led slot below the horizon carries a direct commit;
+`commits_of_synchronised` supplies it from coverage,
+`commits_of_reactive` from the wait clauses, and `commits_of_creation`
+from the block-creation conditions themselves. Lemma 23 and everything
 above it never learn which schedule produced it.
 
 **Lemma 22, and where its proof stops working.** The lemma says any
@@ -504,15 +527,15 @@ that is a pacing structure. Three gaps remain, and they are of a
 different kind from the ones that closed: each is a piece of the protocol
 this development does not model at all.
 
-**The pacemaker's clauses are modelled, not derived.** `converges`,
-`advances`, `catchup` and the two reactive wait clauses are fields of
-`ReactivePace`; each stands for a condition of the protocol — C1 to C3,
-A1′, B1, B2 — and the correspondence is recorded in prose here and
-checked by eye, as it is for every other arc in this development. It is
-not the kind of thing that gets proved: the pace *is* the model of the
-pacemaker. What could still be done is to label each field with the
-FinWhale condition it stands for, the way the core labels its own with
-P7, P8, P9 and N2.
+**The network's clauses are modelled, not derived.** `converges`,
+`advances` and `catchup` are fields of the pacing trunk, and so are
+`holds_built` and `builds_distinct` on the creation route. Each stands
+for a property of the network or of the schedule, and the correspondence
+is recorded in prose here and checked by eye, as it is for every other
+arc in this development. It is not the kind of thing that gets proved:
+the pace *is* the model of the network. The protocol's own clauses — C1,
+C2, C3 and parent selection — are no longer among them: §10 derives
+Lemmas 18 and 19 from those rather than assuming their conclusions.
 
 **Two protocol conditions have no counterpart at all.** A1′ — that
 advancement needs a leader-consistent set of round-`(r−1)` blocks, or one

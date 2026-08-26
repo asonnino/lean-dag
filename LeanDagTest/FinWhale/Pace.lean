@@ -3,6 +3,7 @@ import LeanDagTest.Reactive
 import LeanDag.FinWhale.View
 import LeanDag.FinWhale.Reactive
 import LeanDag.FinWhale.Validity
+import LeanDag.FinWhale.Creation
 
 /-!
 # FinWhale witnesses — the pacing structure under liveness
@@ -320,6 +321,120 @@ example (N : ℕ) (hN : 1 ≤ N) : ReachesFrom (Dreact N).block 5 1 :=
     (by simp only [dgrowFor_block, ugrow_block]; decide)
     (by simp only [dgrowFor_block, ugrow_block]; decide)
     (by simp only [dgrowFor_block, ugrow_block]; decide)
+
+/-! ## The creation rule, on data
+
+The reactive witness above takes the vote and certificate clauses as
+given. `Creation` derives them from C1, C2 and C3 instead, and the same
+execution carries one — with two triggers in play, so the derivation's
+two interesting cases are both exercised.
+
+Validator `3` builds by C3: at its build time it holds the round's blocks
+from validators `0`, `1` and itself, which is `n − f = 3`. Everyone else
+builds by C1, holding the leader's block and a quorum of votes. The
+induction then runs through validator `1`, which is correct, builds
+strictly earlier, and votes. -/
+
+@[simp] theorem dreact_leader (N n : ℕ) : (((Dreact N).leader n : Fin 4) : ℕ) = n % 4 := rfl
+
+/-- Validator `3` catches up on the round's own blocks; the rest build on
+the leader and its votes. -/
+def fwTrigger : Fin 4 → ℕ → Trigger := fun v _ =>
+  if (v : ℕ) = 3 then Trigger.roundQuorum else Trigger.leaderAndQuorum
+
+/-- **The creation rule, on the grown execution.** -/
+def fwCreation (N : ℕ) : Creation (Ugrow N) {1, 2, 3} N (Dreact N).leader :=
+  { fwPaceCore N with
+    built_lt := fun _ _ _ _ => by simp only [fwPaceCore_built]; omega
+    trigger := fwTrigger
+    holds_built := by
+      intro v _ t b hb _
+      simp only [fwPaceCore_holds, reactHolds, Finset.mem_filter, Finset.mem_range] at hb
+      simp only [fwPaceCore_built, ugrow_block, rrBlock_creator_val, rrBlock_round]
+      rcases hb.2 with h | ⟨-, h⟩ <;> omega
+    builds_distinct := by
+      intro u _ v _ n hne
+      have : (u : ℕ) ≠ (v : ℕ) := fun h => hne (Fin.ext h)
+      simp only [fwPaceCore_built]
+      omega
+    c1_leader := by
+      intro v hv n hN _ L hL hLr hLc
+      obtain ⟨h1, h3⟩ := mem_T_bounds hv
+      simp only [ugrow_ids, Finset.mem_range] at hL
+      simp only [ugrow_block, rrBlock_round] at hLr
+      have hLv : L % 4 = n % 4 := by
+        have := congrArg (fun (x : Fin 4) => (x : ℕ)) hLc
+        simpa [ugrow_block, dreact_leader] using this
+      simp only [fwPaceCore_holds, reactHolds, Finset.mem_filter, Finset.mem_range,
+        fwPaceCore_built]
+      exact ⟨hL, Or.inl (by omega)⟩
+    c1_votes := by
+      intro v hv n hN _ L hL hLr hLc
+      obtain ⟨h1, h3⟩ := mem_T_bounds hv
+      simp only [ugrow_ids, Finset.mem_range] at hL
+      simp only [ugrow_block, rrBlock_round] at hLr
+      refine Or.inl ⟨Finset.univ, by decide, fun u _ => ⟨4 * (n + 1) + (u : ℕ), ?_, ?_, ?_, ?_, ?_⟩⟩
+      · simp only [ugrow_ids, Finset.mem_range]; have := u.isLt; omega
+      · simp only [fwPaceCore_holds, reactHolds, Finset.mem_filter, Finset.mem_range,
+          fwPaceCore_built]
+        have := u.isLt
+        exact ⟨by omega, Or.inl (by omega)⟩
+      · apply Fin.ext
+        simp only [ugrow_block, rrBlock_creator_val]
+        have := u.isLt; omega
+      · simp only [ugrow_block, rrBlock_round]; have := u.isLt; omega
+      · simp only [ugrow_block, mem_growBlock_refs]
+        have := u.isLt; omega
+    c2_wait := by
+      intro v _ n htrig
+      -- no block of this execution is created by the timeout
+      exfalso
+      simp only [fwTrigger] at htrig
+      split at htrig <;> exact absurd htrig (by decide)
+    c3_quorum := by
+      intro v hv n hN htrig
+      obtain ⟨h1, h3⟩ := mem_T_bounds hv
+      have hv3 : (v : ℕ) = 3 := by
+        simp only [fwTrigger] at htrig
+        split at htrig
+        · assumption
+        · exact absurd htrig (by decide)
+      refine ⟨{0, 1, 3}, by decide, fun u hu => ⟨4 * (n + 1) + (u : ℕ), ?_, ?_, ?_, ?_⟩⟩
+      · simp only [ugrow_ids, Finset.mem_range]; have := u.isLt; omega
+      · simp only [fwPaceCore_holds, reactHolds, Finset.mem_filter, Finset.mem_range,
+          fwPaceCore_built]
+        have := u.isLt
+        have hu' : (u : ℕ) = 0 ∨ (u : ℕ) = 1 ∨ (u : ℕ) = 3 := by
+          simp only [Finset.mem_insert, Finset.mem_singleton] at hu
+          rcases hu with rfl | rfl | rfl
+          exacts [Or.inl rfl, Or.inr (Or.inl rfl), Or.inr (Or.inr rfl)]
+        refine ⟨by omega, ?_⟩
+        rcases hu' with h | h | h
+        · exact Or.inl (by omega)
+        · exact Or.inl (by omega)
+        · exact Or.inr ⟨by omega, by omega⟩
+      · apply Fin.ext
+        simp only [ugrow_block, rrBlock_creator_val]
+        have := u.isLt; omega
+      · simp only [ugrow_block, rrBlock_round]; have := u.isLt; omega
+    selects_leader := by
+      intro v _ n c hc _ hcr L hL hLr _ _
+      simp only [ugrow_ids, Finset.mem_range] at hc hL
+      simp only [ugrow_block, rrBlock_round] at hcr hLr
+      simp only [ugrow_block, mem_growBlock_refs]
+      omega
+    selects_votes := by
+      intro v _ n c hc _ hcr b hb hbr _
+      simp only [ugrow_ids, Finset.mem_range] at hc hb
+      simp only [ugrow_block, rrBlock_round] at hcr hbr
+      simp only [ugrow_block, mem_growBlock_refs]
+      omega }
+
+/-- **The liveness interface, from the creation rule.** No wait clause is
+assumed: the votes and the certificates come out of C1 and C3. -/
+example (N : ℕ) : CommitsCorrectLeaders (Dreact N) 0 N :=
+  commits_of_creation (D := Dreact N) (fwCreation N) rfl rfl (by decide)
+    (Nat.le_refl _) (fun n _ => Nat.le_refl _)
 
 end FinWhalePace
 
