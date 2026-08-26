@@ -257,7 +257,9 @@ faults alone.
   process equivocates, one twin carries a later leader past the slot
   while the other is undecided, and the other then acquires its quorum
   and demands a place before what is already output — **Safe-Commit**,
-  and with it Total-order and Agreement. And the clause that does decide
+  and with it Total-order and Agreement. The step of the paper's own
+  safety proof that permits it is located: Lemma 10 reads an existential
+  over a slot as though the slot held one vertex. And the clause that does decide
   a slot cannot reach far enough: the two thresholds leave a gap — a
   vertex pointed to by between `f+1` and `2f` processes is neither
   committable nor skippable — which `2f+1` being the least safe skip

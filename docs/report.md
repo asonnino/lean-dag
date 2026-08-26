@@ -377,8 +377,11 @@ which is not the same as that vertex being decided. Read one way the
 clause is too generous: where the slot's process equivocates, one twin
 carries a later leader past the slot while the other is undecided, and
 the other then acquires its quorum and demands a place before what is
-already output — Safe-Commit, and with it Total-order and Agreement
-(§19.3). Read the other way the rule cannot reach far enough: the two
+already output — Safe-Commit, and with it Total-order and Agreement.
+The step of the paper's own safety proof that permits it is located:
+Lemma 10's case for concurrent leaders reads an existential over a slot
+as though the slot held one vertex (§19.3). Read the other way the rule
+cannot reach far enough: the two
 thresholds leave a gap — a vertex pointed to by between `f + 1` and `2f`
 processes is neither committable nor skippable — which a Byzantine
 process can occupy every round it leads, and `2f + 1` is the least
@@ -6868,6 +6871,75 @@ A single-vertex slot is either resolved by the vertex the rule will
 eventually decide, or not resolved at all. Two vertices break that tie
 between resolving and deciding.
 
+**Where the paper's proof of safety fails.** Lemma 10 — "`crs*` is
+safe" — ends in a case split. With `D ⊆ D′`, `vz` committed in `D`, and
+`vk` committed in `D′` and ordered before it, the proof concludes: "This
+is a contradiction because if `vk ⇝ vz` in `D` then `vk` is also
+committed by indirect commit in `crs*(D)`, or if they are concurrent then
+`vk < vz` by `leaders` and `vz` is not committed in `crs*(D)` because
+`Ps*(vk, D) = false`."
+
+Read `vk` as the twin `0`, `vz` as the round-1 leader `6`, `D` as `Dpart`
+and `D′` as `Dfull`. The execution is in the **second** case, and the
+case hypothesis holds — `Concurrent Dpart 6 0 ∧ ¬ Quorum Dpart 0`,
+checked. So the proof concludes that `6` is not committed in `Dpart`, and
+step 6 above checks that it is.
+
+**The step needs a quantifier Definition 9 does not have.** Its
+inference is `Ps*(vk, D) = false`, therefore `vz` is not committed in
+`D`, and that holds only if the Non-conflicting-leaders condition,
+applied by `vz` to `vk`'s slot, is a condition *on `vk`*. It is not. What
+the condition asks is that "there is a vertex `v′` in slot `s′` in `D`
+such that `v′ ⇝ ϕ(l)` …" — an existential over the slot's vertices, whose
+first disjunct is reachability alone, with no quorum and no verdict in
+it. The proof reads `∃ v′ ∈ s′` as though `s′` held one vertex. Here it
+holds two, and the other one satisfies the disjunct:
+`4 ∈ slotBlocks Dpart (0, 0) ∧ 0 ∈ slotBlocks Dpart (0, 0) ∧
+Reaches Dpart 6 4`, checked.
+
+**The uniqueness the proof does establish is the wrong one.** It opens by
+observing that "if `Ps*(v, D) = true` for a vertex `v` in a DAG `D`, then
+there is no other vertex `v′` in any DAG `D′` that is in the same slot as
+`v` and such that `Ps*(v′, D′) = true`". That is correct — two quorums of
+`2f + 1` in one slot would share a correct process pointing at both twins
+— and it holds on the witness: `Quorum Dfull 0 ∧ ¬ Quorum Dfull 4`,
+checked, so nothing below refutes it. But it is uniqueness of the
+**committable** vertex of a slot, where the step needs uniqueness of the
+**resolving** vertex, and the causal-past disjunct does not read
+commitability. On this execution the two come apart in the worst way, the
+vertex that resolves the slot being exactly the one that can never carry
+a quorum: `¬ Quorum Dfull 4 ∧ Reaches Dpart 6 4 ∧ ¬ Reaches Dpart 6 0`,
+checked.
+
+Sharper: a leader slot has two ways to be filled. `Ps*` fills it
+*directly*, and that is what the opening observation makes unique.
+Definition 9's last clause fills it *indirectly* — everything in a
+committed leader's causal past is committed — and indirect commitment
+carries no uniqueness at all. When `6` commits in `Dpart` the twin `4`
+occupies slot `(0, 0)`; when `0` acquires its quorum in `Dfull` the twin
+`0` occupies it. The proof's uniqueness observation never reaches the
+second mechanism.
+
+**Two further steps of the same proof are unsupported.** The first case
+of the split says that if `vk ⇝ vz` then `vk` "is also committed by
+indirect commit", but Definition 9's clause commits "all **non-leader**
+vertices that are in the causal past of a leader vertex `l`", and `vk` is
+a leader vertex; the phrase §19.4 records as a delivery imprecision is a
+proof step here. And earlier, "since `vz` is also in the past of `2f + 1`
+processes in `D` then `vk` must also be in `D` (by the causality of the
+correct process in common)" does not follow from Minnow's validity, which
+imposes no self-parent condition (§19.1): a correct process's later
+vertex need not reference its own earlier one, so its causality carries
+nothing downward. That step happens to hold on this witness — `0` is in
+`Dpart` — so nothing here refutes it, but it is unargued rather than
+merely unstated.
+
+Lemma 10 is offered as a proof sketch, and the gap is not one of missing
+detail. The quantifier the step requires is not the quantifier Definition
+9 carries, and closing it means the second condition must **decide** an
+earlier slot rather than resolve it — which is the escape §19.5 shows
+liveness to depend on.
+
 This is the same defect §18 finds in Black Marlin, where a descent
 chooses among an equivocator's twins by a test that does not read
 support. The mechanism is the same: **a slot with two vertices is
@@ -7126,6 +7198,14 @@ that window is decided in no view, for ever. Its causal-past clause
 reaches without discriminating: a slot is resolved by whichever of its
 vertices is in the way, which under equivocation need not be the one the
 rule will commit.
+
+Both are reached by the paper's own arguments, and neither argument
+carries. Lemma 10 obtains its contradiction from `Ps*(vk, D) = false`
+where what the rule requires is that *some* vertex of `vk`'s slot resolve
+it, which under equivocation is a different vertex (§19.3). Lemma 11
+obtains a decision from a dichotomy — all correct processes point, or
+none does — whose middle is the dead zone, and says "we leave the details
+to a later version" (§19.4).
 
 The two are not independent in the way the constructions are. The
 constructions share nothing — §19.4 uses no equivocation and §19.3 no

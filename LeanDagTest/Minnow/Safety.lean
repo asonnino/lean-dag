@@ -151,6 +151,42 @@ be skipped there. -/
 example : ∀ v ∈ ({0} : Finset (Fin 13)), ¬ Reaches Dpart 6 v ∧
     ¬ Quorum Dpart v ∧ ¬ Skipped Dpart v := by decide
 
+/-! ## Where Lemma 10 goes wrong
+
+The paper's proof that `crs*` is safe ends in a case split. With
+`D ⊆ D'`, `vz` committed in `D`, and `vk` committed in `D'` and ordered
+before it: "if `vk ⇝ vz` in `D` then `vk` is also committed by indirect
+commit in `crs*(D)`, or if they are concurrent then `vk < vz` by
+`leaders` and `vz` is not committed in `crs*(D)` because
+`Ps*(vk, D) = false`."
+
+Read `vk` as the twin `0`, `vz` as the round-1 leader `6`, `D` as `Dpart`
+and `D'` as `Dfull`. `report.md` §19.3 is where this is set out. -/
+
+/-- **The execution is in the second case, and its hypothesis holds.**
+The two are concurrent and the earlier one fails `Ps*` in the smaller
+DAG, which is exactly what the proof concludes from. -/
+example : Concurrent Dpart 6 0 ∧ ¬ Quorum Dpart 0 := by decide
+
+/-- **And the conclusion drawn from it is false**: the later leader is
+committed in the smaller DAG all the same. The proof's step needs the
+second condition, applied by `vz` to `vk`'s slot, to be about `vk`. It is
+an existential over the slot, and the slot holds two vertices — the other
+one is in `vz`'s causal past. -/
+example : (4 : Fin 13) ∈ slotBlocks Dpart (0, 0) ∧
+    (0 : Fin 13) ∈ slotBlocks Dpart (0, 0) ∧ Reaches Dpart 6 4 := by decide
+
+/-- **The uniqueness the proof opens with is true here**, and is not what
+the step needs. At most one vertex of a slot can satisfy `Ps*`, because
+two quorums of `2f + 1` would share a correct process pointing at both. -/
+example : Quorum Dfull 0 ∧ ¬ Quorum Dfull 4 := by decide
+
+/-- **The two come apart in the worst way.** The twin that resolves the
+slot is the one that can never satisfy `Ps*`, and the twin that satisfies
+it is the one out of reach. Uniqueness of the committable vertex says
+nothing about which vertex may resolve the slot. -/
+example : ¬ Quorum Dfull 4 ∧ Reaches Dpart 6 4 ∧ ¬ Reaches Dpart 6 0 := by decide
+
 end Minnow
 
 end LeanDagTest

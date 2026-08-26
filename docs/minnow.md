@@ -101,6 +101,21 @@ and the twin acquires its quorum, demanding a place before what is
 already output. That is Safe-Commit in the form the paper spells out, and
 with it Total-order and Agreement.
 
+**Where Lemma 10 fails.** The paper's safety proof ends in a case split,
+and this execution is in its second case: `vk` and `vz` concurrent, `vk`
+before `vz` in `leaders`, and `Ps*(vk, D)` false — from which the proof
+concludes that `vz` is not committed. It is. The inference treats the
+second condition as a condition on `vk`, where the rule states an
+existential over `vk`'s slot, and the slot holds two vertices. The
+proof's opening observation — at most one vertex of a slot satisfies
+`Ps*` — is true and is checked on the witness, but it is uniqueness of
+the *committable* vertex where the step needs uniqueness of the
+*resolving* one. Two further steps of the same proof are unsupported: the
+first case commits a leader vertex "by indirect commit", which Definition
+9's clause restricts to non-leader vertices, and the step carrying `vk`
+into `D` "by the causality of the correct process in common" assumes a
+self-parent condition Minnow does not impose.
+
 The equivocation is what does it, and the witness checks the converse: a
 slot with one vertex is either resolved by the vertex the rule will
 decide, or not resolved at all. Two vertices break the tie between
