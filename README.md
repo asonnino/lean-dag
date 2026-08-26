@@ -242,6 +242,23 @@ faults alone.
   rule for choosing among twins can repair. The arc is the second under the statement/proof
   partition.
 
+- **Minnow** (`LeanDag/Minnow/`): `crs*`, the commit rule proposed as
+  *minimal* for eventual synchrony (arXiv:2608.18029), which decides a
+  leader slot from the round immediately above it — `2f+1` processes
+  pointing commits, `2f+1` vertices not pointing skips. **Three
+  counterexamples**, all at four processes with `f = 1`. A slot holding
+  no vertex satisfies neither disjunct of the clause that consults it,
+  so a process that falls silent blocks every later leader. The skip
+  clause counts vertices where the quorum clause counts processes, so an
+  equivocator's spare vertices make one vertex committed and skipped at
+  once — Safe-Commit, and with it Total-order and Agreement. And the two
+  thresholds leave a gap: a vertex pointed to by between `f+1` and `2f`
+  processes is neither committable nor skippable, and a faulty process
+  can occupy that gap every round it leads, so **nothing is ever
+  committed** and Live-Commit fails outright. The last admits no repair
+  at this shape — `2f+1` is the least threshold the skip clause can
+  safely take, so the gap is forced.
+
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on
 exactly Lean's three standard axioms (`propext`, `Classical.choice`,

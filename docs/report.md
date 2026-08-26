@@ -176,7 +176,7 @@ proof effort with no corresponding proof content.
    refinement into LiDO-DAG. What is claimed is the *form* of the account —
    theirs is operational, quantified over traces and instants; here liveness is
    stated as a condition on the DAG, and the dependence on time is
-   confined below a `Prop`-valued interface (§6.7, §22).
+   confined below a `Prop`-valued interface (§6.7, §23).
 
 4. **A derivation** of the structural property from **view convergence**
    (§6.9), together with the protocol's build rules, and nothing beyond
@@ -192,7 +192,7 @@ proof effort with no corresponding proof content.
    coverage and production alike; every other condition is a clause of the
    protocol, which a designer controls. In particular reference coverage
    is derived rather than assumed, and the one point at which a network parameter
-   constrains the specification is the wait threshold of §21.1.
+   constrains the specification is the wait threshold of §22.1.
 
 6. **Quantitative forms** (§6.10): the round from which coverage holds, given
    explicitly; a bound on the slot at which the next commit occurs; and an
@@ -363,6 +363,24 @@ proof effort with no corresponding proof content.
    output is never given a lemma (§18.13). What does hold at a
    validator's view, and exactly how far, is §18.15.
 
+**Minnow's minimal commit rule fails in three ways** (§19). `crs*`, the
+rule proposed for eventual synchrony, decides a leader slot from the
+round immediately above it: a quorum of `2f + 1` processes pointing
+commits it, and `2f + 1` vertices not pointing skips it. A slot holding
+no vertex satisfies neither disjunct of the clause that consults it, so a
+process that falls silent blocks every later leader (§19.2). The skip
+clause counts vertices where the quorum clause counts processes, so an
+equivocator's spare vertices make one vertex committed and skipped at
+once, which is Safe-Commit and with it Total-order and Agreement
+(§19.3). And the two thresholds leave a gap — a vertex pointed to by
+between `f + 1` and `2f` processes is neither committable nor skippable —
+which a faulty process can occupy every round it leads, so that nothing
+is ever committed and Live-Commit fails outright (§19.4). The third
+admits no repair at this shape: `2f + 1` is the least threshold the skip
+clause can safely take, so the gap is forced. All three are exhibited on
+four processes at `f = 1`, machine-checked, with the model held to the
+paper's own validity rule and its own reading of each clause (§19.1).
+
 ### 1.4 Scope and non-goals
 
 The development is deliberately bounded in four respects — a fifth, the
@@ -390,7 +408,7 @@ first.
   are shown agreed; totally ordering the blocks released by a single commit
   requires a tie-break which the development declines to assume (§5.6).
 - **No wall-clock latency.** The wait bound of §6.11 is a duration, but the total
-  elapsed time to a commit is not derived (§21.6).
+  elapsed time to a commit is not derived (§22.6).
 
 ### 1.5 Organisation
 
@@ -419,9 +437,9 @@ fault tolerance (`Hybrid.decided_unique` (H6),
 (`hybrid_agree_stack` (I7)) and collects the deployment conditions
 their composition reveals.
 
-§19 exhibits the witness models. §20 describes the mechanisation, §21
+§20 exhibits the witness models. §21 describes the mechanisation, §22
 discusses the formulation, the lessons of the extensions, and the
-limitations, §22 surveys related work, and §23 concludes. Appendix A indexes every
+limitations, §23 surveys related work, and §24 concludes. Appendix A indexes every
 principal statement against its Lean name and module. Throughout, displayed
 Lean is drawn from the source; binders are occasionally elided for layout,
 and `…` marks an elision.
@@ -804,8 +822,8 @@ computing base (§4.3). Assumed.
 
 Logically all of these are antecedents: each is a field of a structure or class,
 and every theorem quantifying over a block universe or over the relevant
-instances carries it. None is an axiom in the sense of §20, and their joint
-satisfiability is a proof obligation discharged by exhibition (§19) rather than
+instances carries it. None is an axiom in the sense of §21, and their joint
+satisfiability is a proof obligation discharged by exhibition (§20) rather than
 something the logic must be trusted for. The distinction drawn here is
 epistemic, not logical, and it is what determines where the trust boundary of
 the system actually falls.
@@ -859,7 +877,7 @@ P10 is a joint condition rather than a pure specification: the schedule is the
 designer's, but which validators are reliable is not. Round-robin discharges it
 whenever the reliable set is of quorum size, since at most `f` of every `n`
 consecutive leaders then lie outside it; `rrSlots` witnesses this with a window
-of `f + 1` (§19).
+of `f + 1` (§20).
 
 **P8 deserves the most emphasis of any clause here**, and is easily mistaken for
 a routine one. It states that a correct validator holding a quorum at round `r`
@@ -920,7 +938,7 @@ the model constrains it, `Correct` being a set complement (§2.1).
 P9 is the clause whose *sufficiency* is not under the designer's control: the
 timeout may be chosen freely, but whether the chosen value is long enough
 depends on the network. §6.10 determines the threshold it must meet — the
-constant `2Δ + proc` — and §21.1 discusses the consequences.
+constant `2Δ + proc` — and §22.1 discusses the consequences.
 
 P11 is the second pacemaker rule, and the counterpart of `advances`: where
 P8 forces a validator forward on a *quorum*, P11 forces it forward on a
@@ -1005,7 +1023,7 @@ differences matter more than they appear to.
 
 `held v n` is what `v` had in hand *at the moment it built its
 round-`(n+1)` block* — not what it eventually receives. That build-time
-index is the essential modelling device (§21.1): a block's references are
+index is the essential modelling device (§22.1): a block's references are
 frozen at construction, so what bears on the DAG's shape is what was held
 when the builder acted. `View.ids` is a finite set of identifiers with no
 index of either kind, which is why no formulation is stated over it.
@@ -1068,7 +1086,7 @@ rather than inside it.
 #### Where they are consumed
 
 Neither role is discharged where its name suggests, and the extracted
-support graph (§20) makes the pattern checkable rather than asserted.
+support graph (§21) makes the pattern checkable rather than asserted.
 
 Production is consumed as a `PopulatedOn` hypothesis: L6, the
 committed-run results, the quantitative results and the capstones of
@@ -1117,7 +1135,7 @@ together with clauses of the protocol:
 | Production | N2 (`converges`) with P8 and genesis | `ViewPace.populatedOn` (V17) |
 
 It is stated as a hypothesis of L4 and L6 in order to keep those arguments free
-of temporal notions (§6.8), and supplied to them by the results above. §21
+of temporal notions (§6.8), and supplied to them by the results above. §22
 discusses the formulation.
 
 **What "derived" does and does not mean here.** Coverage is derived
@@ -1543,7 +1561,7 @@ enter it within the processing bound.
 Reference coverage is not among them. It is not a clause a validator could
 execute, since it refers to `Correct`, which no validator can observe; it is
 what (a) and (b) *produce* against a synchronous network, and it is derived
-accordingly (§4.4, §21.2).
+accordingly (§4.4, §22.2).
 
 The chapter is organised around two interface predicates, and every
 result above them consumes them as hypotheses rather than reaching for a
@@ -1586,7 +1604,7 @@ structure Delivery (U) where
 
 The indexing of `held` is essential: `held v n` denotes what `v` had in hand *at
 the moment it built its round-`(n+1)` block*, not what `v` eventually receives.
-This is the build-time index which a view cannot supply (§21.1). Between holding
+This is the build-time index which a view cannot supply (§22.1). Between holding
 and referencing sits **acceptance** — at most one block per author, correct
 blocks always taken — which is deliberately where the protocol may refuse:
 the DoS arc's novelty budget (§8) is a rule about `accepted`, and the
@@ -1601,7 +1619,7 @@ are stated over it, `EventuallyDelivers` (§6.4) feeds their post-`R`
 increments, and P7's untimed incarnation is its `includes` clause. The
 liveness development never reads it — production and coverage come from
 the timed route of §6.9, whose `holds` is indexed by *time* rather than by
-round, which is exactly the index this structure cannot supply (§21.1).
+round, which is exactly the index this structure cannot supply (§22.1).
 
 ### 6.3 Progress, and the horizon
 
@@ -1632,7 +1650,7 @@ formulation demanding blocks at every round unconditionally would require
 infinitely many distinct blocks in a finite set, so that no universe
 satisfies it and every theorem assuming it is vacuous. An early
 formulation of the production clause had exactly that flaw, caught by
-sitting down to write its witness (§19).
+sitting down to write its witness (§20).
 
 Three consequences follow.
 
@@ -1692,7 +1710,7 @@ The predicate is antitone in `T` (`SynchronisedOn.mono`), which allows results
 established at `T := Correct` to be supplied to the quorum-relative statements of
 §6.6.
 
-The condition is derived, not assumed (§4.4); §21 discusses its formulation.
+The condition is derived, not assumed (§4.4); §22 discusses its formulation.
 
 ### 6.5 Monotonicity and propagation
 
@@ -1859,7 +1877,7 @@ incremental bounds. Neither is consumed by any liveness result.
 
 ### 6.8 The layering
 
-![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §20 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
+![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §21 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
 
 No theorem above `SynchronisedOn` mentions time, and no theorem below it
 mentions certificates. The diagram also locates the trust boundary: the
@@ -2312,7 +2330,7 @@ already is, and the adversary's whole freedom is the single layer it may
 build the instant a quorum forms beneath it —
 `PaceCore.round_le_top_succ`: no valid block's round exceeds some
 reliable `top` by more than one. On the running witness the floor is met
-with equality (§19).
+with equality (§20).
 
 The clause itself is asserted only from `gst` (§4.1), so what it demands
 coincides with what the clamped author-blind rule delivers: pre-GST it
@@ -2523,7 +2541,7 @@ each with a round-`δ` block in `ledgerSet`. No synchrony, no delivery
 model, no populated rounds appear in any hypothesis.
 
 **The boundary, witnessed.** Aggregate coverage is *not* individual
-inclusion. The witness model `Ucens` (CQ8) (§19) runs six rounds in which
+inclusion. The witness model `Ucens` (CQ8) (§20) runs six rounds in which
 three validators reference only each other and commit with the full
 certificate pattern, while a fourth — correct, building validly, never
 referenced — is the missing author of **every** layer of **every**
@@ -2668,7 +2686,7 @@ theorem creators_refs_eq_correct (hdos : DoSValid U) (hb : b ∈ U.ids)
 and the commit chain still operates over
 them: the witness model `Uexcl` carries a
 direct commit whose three rounds all lie after the exclusion of its
-equivocator (§19). Nor does exclusion depend on favourable circumstances:
+equivocator (§20). Nor does exclusion depend on favourable circumstances:
 *density* establishes that a
 cone can be selectively blind to at most `f` correct authors per round, even
 below Byzantine blocks, because the quorum clause forces every layer of
@@ -2701,7 +2719,7 @@ theorem card_history_le' (hdos : DoSValid U) (hb : b ∈ U.ids) :
 ```
 
 The exponential constant is not an artefact of the proof: a matching family of
-witnesses (`Udouble` (C5), §19) realises `2^(e−2)` growth from `e` equivocators,
+witnesses (`Udouble` (C5), §20) realises `2^(e−2)` growth from `e` equivocators,
 so any bound obtainable from reference-validity conditions alone carries a
 constant exponential in `f`. This is the assessment of the exposure
 mechanism as a *storage* defence: it is the right accountability layer — it
@@ -2838,7 +2856,7 @@ exclusion terminates it. On data,
 the budget is satisfiable at its exact constant: the witness schedule
 `Dtwin` satisfies `UniformBudget 3` with its costliest acceptance costing
 exactly `3`, and `ByzBudget 0` — nothing Byzantine accepted after the
-genesis round (§19).
+genesis round (§20).
 
 How should the parameter `T` be set? Any `T ≥ 1` admits every correct block
 post-`R` (the sandwich's `f·κ + 1` with `κ = 0` would be the correct-only
@@ -2902,7 +2920,7 @@ limitations**: an equivocation whose witnessing pair falls strictly below
 the cut is forgiven — in `chop U G` its author is no longer exposed — while
 a pair *at* the cut survives into the base layer. §9.5 prices the
 forgiveness; the witness file exhibits it on data, an exposure present in
-the full universe and absent from its truncation (§19).
+the full universe and absent from its truncation (§20).
 
 ### 9.2 Verdicts survive the cut
 
@@ -3042,7 +3060,7 @@ correct store, the store rides into its keeper's next block
 (`viewUpto_subset_history` (B7), §8.4), and the backbone carries that block into
 every correct round-`t` cone — a cone *is* an attestation. The lag is tight
 on data: at `t = m + 1` the witness exhibits an accepted equivocation half
-missing from the base (§19). Consequently the joiner's assembly — base as
+missing from the base (§20). Consequently the joiner's assembly — base as
 genesis layer plus a correct peer's window strictly above the cut — is a
 bona-fide view of the truncation (`joinView`; downward closure is the
 content: window references above the cut stay in the window, references *at*
@@ -3136,7 +3154,7 @@ continues to apply to the same types. The stronger bound is consumed in
 exactly two proofs (O2 and O4′ below) — the two-round rule's *direct* safety
 already holds at `3f+1`. The witness file proves the reuse claim as a
 computation: a quorum-5 universe over six validators satisfies the untouched
-`BlockUniverse` by `decide` (§19). Nothing outside `LeanDag/Odontoceti/`
+`BlockUniverse` by `decide` (§20). Nothing outside `LeanDag/Odontoceti/`
 was modified.
 
 ### 10.2 The rule layer, and the arithmetic core
@@ -3265,7 +3283,7 @@ from both passing the test at one anchor. The counting that would be needed
 valid six-validator universe, a Byzantine leader's two round-0 twins each
 gather exactly three supporters (disjoint correct pairs plus the
 equivocator's own split), and a round-3 block sees all of round 1 — **both
-twins pass `ThickLink` against it**, by `decide` (`utwin6_both_pass` (O11), §19).
+twins pass `ThickLink` against it**, by `decide` (`utwin6_both_pass` (O11), §20).
 An indirect rule that commits "some passing candidate" therefore admits
 derivations committing either twin: agreement is *refutable*.
 
@@ -3505,7 +3523,7 @@ processing per round.
 
 ### 11.4 The witness, and a constant it corrected
 
-`ugrowReactive` (§19) runs the Mysticeti structure on the round-robin
+`ugrowReactive` (§20) runs the Mysticeti structure on the round-robin
 schedule at build spacing `6` inside a timeout of `9 = 2Δ + proc` — the
 drift-free backoff met with equality: every fallback branch untaken, the
 commit, the latency bound and the strictly-inside-deadline conclusion
@@ -3514,7 +3532,7 @@ processing constant is honest rather than generous: `proc = 5` is the
 least value `prompt_vote` admits on this model, because a validator's
 shortcut to its *own* round-`r` block lets the trigger fire one tick
 before the slowest peer's block would force it. The witness refused to
-compile at `4` — the house rule of §19 catching an over-tight constant
+compile at `4` — the house rule of §20 catching an over-tight constant
 in a clause that read as obviously right.
 
 ### 11.5 Inclusion without coverage: the rotation backbone
@@ -3694,7 +3712,7 @@ equal in author and round to an old one would contradict the crash. The
 companion fact is conservativity —
 
 ```lean
-@[simp] theorem skipFill_block_old {b : BlockId} (hb : b ∈ U.ids) :
+[simp] theorem skipFill_block_old {b : BlockId} (hb : b ∈ U.ids) :
     sk.skipFill.block b = U.block b
 ```
 
@@ -3822,7 +3840,7 @@ theorem decided_fill_agree {V : View Validator BlockId Payload U}
 
 ### 12.4 The witness
 
-`Ucrash N` (SS7, §19) is the round-robin family with validator `3`
+`Ucrash N` (SS7, §20) is the round-robin family with validator `3`
 crashed after its genesis block: three validators run full lines whose
 references omit the absent author, and `3` owns exactly one block. The
 message `ucrashMsg` targets validator `1`'s line, and the development's
@@ -4242,7 +4260,7 @@ expects, so nothing is restated on the way.
 
 ### 13.7 The witness, and what remains
 
-`demotePolicy` (AL8, §19) is genuinely adaptive at epoch length one —
+`demotePolicy` (AL8, §20) is genuinely adaptive at epoch length one —
 a slot whose verdict two below was a skip is handed to a fixed
 replacement — and the witness exhibits the phenomena the theorems govern:
 the same DAG under a reassigned leader commits a *different block* for
@@ -4430,7 +4448,7 @@ no liveness argument counts an equivocator — and every statement holds
 at *every* threshold `k`: only agreement prices the interval. And the
 tight committee has no slack: at `n = 5·fb + 3·fc + 1` the correct
 class numbers exactly `q`, so the reliable set must be all of it — the
-hybrid analogue of §19's remark that at `f = 1` every correct
+hybrid analogue of §20's remark that at `f = 1` every correct
 validator is needed for a quorum.
 
 ### 14.5 Conservativity
@@ -4475,7 +4493,7 @@ least sufficient committee.
 
 ### 14.7 The witnesses
 
-`Uhyb4` (H9, §19) is the arc's principal witness: `fb = 0, fc = 1,
+`Uhyb4` (H9, §20) is the arc's principal witness: `fb = 0, fc = 1,
 n = 4` — the classical `3f + 1` committee with two-round finality when
 the single tolerated fault is a crash. Validator `3` halts after its
 genesis block; the survivors run three rounds at quorum `3`, slots
@@ -4653,7 +4671,7 @@ pairwise non-adjacent on a cycle of `2f + 1`.
 
 ### 15.5 The witness
 
-`Unemo` (NN9, §19) is the arc on data: three validators at the tight
+`Unemo` (NN9, §20) is the arc on data: three validators at the tight
 committee, fourteen blocks, validator `2` authoring rounds 0–1 and
 then halting, the live pair carrying the DAG to round 5 with the
 parent quorum at exactly `majority` from round 3 on. Slots 0, 1, 3
@@ -4728,7 +4746,7 @@ are `FairScheduleOn` and `FairRunOn` (§6.6), `SpansEligible`, and
 §13.4's `PlacesRuns`.
 
 That every theorem of §§5–14 is stated against some subset of this list
-is checked rather than assumed: the extraction of §20 is queried for
+is checked rather than assumed: the extraction of §21 is queried for
 hypothesis-position identifiers of thirteen capstones, and the
 dependency is that the layering is closed. Two corrections came out of
 that check. The schedule layer appears in five capstones and belongs in
@@ -4799,7 +4817,7 @@ block references a fresh identifier*; coverage asks the opposite, that
 every reliable block at round `n+1` reference every reliable block at
 round `n`. One fact, two consequences: the fill can manufacture neither
 a commit nor coverage. The hypotheses are exhibited satisfiable on
-`Ucrash` (§19), so the refutation is not vacuous.
+`Ucrash` (§20), so the refutation is not vacuous.
 
 **It is preserved for any reliable set that excludes the recovering
 validator** (`synchronisedOn_skipFill_of_notMem`). The filled blocks
@@ -6462,7 +6480,383 @@ delivered order agrees exactly as far as the rotation is reliable, and
 neither statement extends. BMT3 is proved and its converse refuted on
 data, so between them nothing is left open.
 
-## 19. Satisfiability
+## 19. Minnow: the minimal commit rule, and three defects
+
+*(modules `LeanDag/Minnow/`; the protocol is Minnow [KPT26], which
+proposes commit rules claimed minimal — no safe and live rule commits on
+less DAG — for eventual synchrony and for asynchrony)*
+
+Minnow separates a DAG-based atomic broadcast protocol into a
+communication component, which builds a round-based DAG, and a **commit
+rule**, which reads that DAG and returns the sequence of committed
+vertices. This chapter examines `crs*`, the rule proposed for the
+eventually synchronous model (the paper's Definition 9), as instantiated
+by S-Minnow.
+
+`crs*` commits a leader vertex `l` when two conditions hold: a **quorum**
+of `2f + 1` distinct processes point to `l` from the round above, and
+every leader slot that precedes `l`'s in the sequence `leaders` is
+**resolved** — some vertex of that slot lies in `l`'s causal past, or is
+concurrent with `l` and either committed or skipped, where *skipped*
+means `2f + 1` vertices of the round above carry no edge to it.
+
+**Three defects, in increasing order of seriousness.** A leader slot that
+holds no vertex satisfies neither disjunct of the second condition, so a
+silent process blocks every later leader for ever (§19.2). The skip
+clause counts vertices where the quorum clause counts processes, so an
+equivocator's spare vertices can make one vertex committed and skipped at
+the same time (§19.3). And the two thresholds leave a gap: at
+`n = 3f + 1` a vertex pointed to by between `f + 1` and `2f` processes is
+neither committable nor skippable, and a Byzantine process that keeps its
+vertices in that gap stops the rule from committing anything ever
+(§19.4). The third is not a threshold that can be lowered — `2f + 1` is
+the least value the skip clause can safely take — so it is a property of
+the rule's shape rather than of its constants.
+
+The chapter records counterexamples and the little theory they need, and
+nothing else. Where the paper's own liveness argument (its Lemma 11)
+reaches the case that fails, it says "we leave the details to a later
+version".
+
+### 19.1 What is modelled, and how the model is held to the paper
+
+Everything below turns on the model being Minnow's and not a neighbour's,
+so this section sets out each modelling decision, the sentence of the
+paper it answers to, and what was checked.
+
+**A DAG is what the paper's §2 says it is.** Vertices carry a round, a
+creator and a set of edges, and
+
+```lean
+structure ValidHere (blk : BlockId → Block Validator BlockId Payload)
+    (b : Block Validator BlockId Payload) : Prop where
+  /-- Every edge points to the round immediately below. -/
+  predecessor : ∀ i ∈ b.refs, (blk i).round + 1 = b.round
+  /-- No two edges share a process. -/
+  distinct_creators : ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
+  /-- A non-genesis vertex carries `2f + 1` edges by distinct processes. -/
+  quorum : 0 < b.round → quorumCard Validator ≤ (creators blk b).card
+```
+
+which is §2's "vertices are valid only if they reference at least
+`2f + 1` valid vertices issued in the previous round by distinct
+processes", and nothing more.
+
+**In particular there is no self-parent condition.** The rest of this
+development uses a `ValidWrt` that also requires a non-genesis block to
+reference a block by its own author. Minnow does not ask for that, and
+imposing it would not be a harmless strengthening: it would force the
+equivocating process of §19.4 to point at its own previous vertex, which
+is one of the pointers the counterexample counts. `Minnow.ValidHere` is
+therefore defined afresh rather than reused, and `Minnow.Dag` is a
+separate structure carrying it.
+
+**Equivocation is admitted, because §2 admits it**: "if a faulty process
+issues two valid vertices in the same round, then correct processes
+include both in their local DAG but when they issue their vertex for the
+next round, correct processes will choose (it does not matter how) only
+one vertex per process to add an edge to". So `Minnow.Dag` has **no**
+`no_equivocation` field, unlike the universes of §17 and §18, and
+`distinct_creators` above is what enforces the second half of that
+sentence — a vertex points at one vertex per process.
+
+**A slot is a pair, and may be empty.** §2: "a slot is a pair `(p, r)`
+that identifies a proposal, i.e., a vertex issued by process `p` in round
+`r` (but there may be no, or many such vertices if `p` is faulty)".
+`slotBlocks D (p, r)` is the vertices of the DAG with that creator and
+round, and the definitions below never assume it is a singleton or
+nonempty. §19.2 is what that assumption would have hidden.
+
+**The quorum clause counts processes.** Definition 9's witnesses are
+"`Ws*[1] is a set Q of 2f + 1 vertices issued by distinct processes`",
+and the clause is "`Quorum: l is pointed to by all vertices in Q`". So
+what is counted is distinct processes with a pointing vertex:
+
+```lean
+def Quorum (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
+  quorumCard Validator ≤ (pointers D l ((D.block l).round + 1)).card
+```
+
+with `pointers D l r` the creators of the round-`r` vertices carrying an
+edge to `l`. `quorumCard Validator` is `n − f`, which is `2f + 1` at
+`n = 3f + 1`, and the witnesses check that arithmetic on the model rather
+than assume it.
+
+**The skip clause counts vertices, because that is what is written.**
+Definition 9: "`Skip: or there are 2f + 1 vertices that do not have an
+edge to v′ in round r + 1`".
+
+```lean
+def Skipped (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
+  quorumCard Validator ≤ ((verticesAt D ((D.block l).round + 1)).filter
+    (fun q => l ∉ (D.block q).refs)).card
+```
+
+This is the reading most favourable to the protocol for §19.4: a round
+holds at least as many vertices as processes, so counting vertices makes
+skipping *easier*, and a deadlock proved against it is proved against the
+stricter reading too. It is also the reading §19.3 refutes, and the
+alternative — `SkippedByProcess`, counting distinct processes none of
+whose round-above vertices point at `l` — is defined alongside so the two
+can be told apart on data rather than in prose.
+
+**The second clause is an existential over the slot's vertices, because
+that is what is written.** Definition 9: "`there is a vertex v′ in slot
+s′ in D such that v′ ⇝ ϕ(l) in D, or if ϕ(l) and v′ are concurrent:`
+…". So one vertex of a slot resolving it is enough, and the model does
+not quietly universalise:
+
+```lean
+def CommittedAt (D : Dag Validator BlockId Payload) (L : ℕ → Slot Validator) :
+    ℕ → BlockId → Prop
+  | 0, l => Quorum D l
+  | (k + 1), l =>
+      Quorum D l ∧
+      ∀ j ≤ k, ∃ v ∈ slotBlocks D (L j),
+        Reaches D l v ∨ (Concurrent D l v ∧ (CommittedAt D L j v ∨ Skipped D v))
+```
+
+`Reaches D l v` is `v ⇝ l`, `v` in `l`'s causal past, computed as
+membership of `l`'s cone; `Concurrent` is §2's "if there is no causal
+path from a vertex `v` to a vertex `v′` and vice versa". The recursion is
+on the position in `leaders`, matching §3.1's "a commit rule is a
+function that … follows the order defined by `leaders` and commits
+iteratively the leader vertices", and Definition 9's footnote 2, which
+says the recursive `v′ ∈ crs*(D)` may be written as a predicate over
+fresh variables in the past of `l`. Recursion on the index is
+well-founded, so `CommittedAt` is a definition and not an assumption.
+
+**What is deliberately not modelled, and why it cannot matter.** Three
+things are left out. The delivery of non-leader vertices in a committed
+leader's past; the deterministic sort that orders the output; and
+Algorithm 3's round advance, timer and message layer. None of them can
+make a leader commit that the pattern disables, because Definition 4 is
+explicit: "a leader vertex `l` is committed **if and only if** the
+pattern `P` is enabled for `l` in `D`". Every finding below is of the
+form "this leader is not committed", so it is a statement about the
+pattern alone, and the omitted machinery is downstream of it.
+
+**The two theorems the counterexamples rest on.** Both are read off
+Definition 9 and proved, not assumed. `quorum_of_committedAt` — a commit
+needs a quorum, at every position in `leaders`, since the quorum clause
+is a conjunct at each. And `not_committedAt_of_dead` — if every vertex of
+an earlier leader slot lies outside `l`'s causal past, carries no quorum
+and cannot be skipped, then the second clause is unsatisfiable for `l`.
+The second is the workhorse, and it is deliberately weak: it concludes
+nothing about what *is* committed, only that a particular leader is not.
+
+**Anti-vacuity.** Each witness checks that its DAG is valid by the rule
+above, by `decide` and not by construction; that the rounds are as full
+as claimed; and that the vertices which are *supposed* to be committable
+are — the correct processes' leader vertices in §19.4 all carry quorums,
+so what stops them is the second clause and not the first. Where a claim
+is that some vertex is *not* in a causal past, the corresponding
+positive — that an earlier one *is* — is checked beside it.
+
+**The leader sequence is round robin, not one chosen to suit.** §5:
+S-Minnow "instantiates the `leaders` function with a deterministic,
+pre-defined, sequence, e.g., round-robin, of `l` leaders each round". The
+witnesses take `l = 2` over four processes, so the leaders of round `r`
+are processes `2r` and `2r + 1` modulo `4`, and the sequence is checked
+on data. This matters for §19.4: the adversary chooses which processes to
+send its vertex to, and it is round robin that tells it which two to
+avoid.
+
+**The committee.** All three witnesses are at `n = 4`, `f = 1`, the
+smallest committee satisfying the paper's `f < n/3`, with process `0`
+faulty and the other three correct.
+
+### 19.2 A silent leader blocks every later leader
+
+![**A slot with no vertex.** Process `0` issues nothing, so every slot `(0, r)` is empty. Rounds still advance on `n − f = 3` vertices and every vertex issued carries a quorum, but the second clause of `Φ*s` asks that "there is a vertex `v′` in slot `s′` in `D`", and for an empty slot there is not: nothing to reach, nothing to commit, nothing to skip.](figures/minnow-empty-slot.svg)
+
+**The execution, step by step.** Process `0` never issues a vertex.
+Processes `1`, `2` and `3` issue one each round, and since only three
+vertices exist per round, validity forces each of them to reference all
+three of the round below.
+
+1. **Round `0`** carries vertices by processes `1`, `2` and `3`.
+   Algorithm 3 completes a round on `n − f = 3` vertices, so the
+   execution proceeds normally.
+2. **Round `1`** carries three more, each referencing all of round `0`.
+   Every round-`0` vertex is therefore pointed to by three distinct
+   processes, which is `2f + 1`: `Quorum Ds 0 ∧ Quorum Ds 3` is checked,
+   so the *first* clause is satisfied for every vertex in the DAG.
+3. **The leader sequence** is round robin over four processes, two a
+   round, so slot `(0, 0)` is the first leader slot. It holds no vertex:
+   `slotBlocks Ds (0, 0) = ∅`, checked, as are `(0, 1)` and `(0, 2)`.
+4. **Every later leader is now blocked.** Its second clause requires,
+   for slot `(0, 0)`, a vertex `v′` of that slot which is in its causal
+   past, or concurrent and committed, or concurrent and skipped. All
+   three are quantified over a vertex that does not exist.
+
+Five leaders are checked individually, and none commits — the hypothesis
+of `not_committedAt_of_dead` holding vacuously, which is the formal shape
+of "there is nothing there to resolve".
+
+**What this is.** Most likely a drafting slip: the intended reading
+surely treats an empty slot as resolved by default, and the repair is a
+single word. It is recorded because the paper's own liveness argument makes
+the same assumption without stating it — Lemma 11 reasons about "a leader
+vertex `l′′` issued by a faulty process", never about a slot that holds
+none — and because the case is not exotic. A crashed process is a
+Byzantine process, `leaders` assigns slots by a fixed rotation whatever
+the processes do, and a protocol that stops when one process falls silent
+would not be tolerating `f` faults at all.
+
+### 19.3 A vertex committed and skipped at the same time
+
+![**Both clauses, of one vertex.** The quorum clause counts processes — "a set `Q` of `2f + 1` vertices issued by distinct processes" — and the skip clause counts vertices — "there are `2f + 1` vertices that do not have an edge to `v′`". A faulty process issuing three vertices in one round contributes to the second without giving up its place in the first, and both clauses hold at once.](figures/minnow-skip.svg)
+
+At `n = 4`, `f = 1`, both thresholds read `2f + 1 = 3`.
+
+**The execution, step by step.**
+
+1. **Round `0`** carries one vertex per process, and the vertex in
+   question is process `0`'s.
+2. **Round `1`** carries six vertices, because process `0` issues
+   **three**. Section 2 of the paper permits exactly this: "if a faulty
+   process issues two valid vertices in the same round, then correct
+   processes include both in their local DAG". Each of the six is valid —
+   three edges, distinct processes, the round below — which is checked by
+   `decide` and not by construction.
+3. **Of process `0`'s three vertices, one points** at the round-`0`
+   vertex and two do not. Processes `1` and `2` point to it; process `3`
+   does not.
+4. **The quorum clause holds.** The processes with a pointing vertex are
+   `{0, 1, 2}`, three of four: `pointers Dk 0 1 = {0, 1, 2}`, checked.
+5. **The skip clause holds too.** The vertices with no edge to it are the
+   equivocator's other two and process `3`'s — three vertices, which is
+   `2f + 1`.
+6. So `Quorum Dk 0 ∧ Skipped Dk 0`, checked, and with it
+   `CommittedAt Dk (fun _ => (0, 0)) 0 0 ∧ Skipped Dk 0`: the rule commits
+   the slot, and the clause that exists to resolve slots the rule cannot
+   commit skips it.
+
+**Why it is a safety failure and not merely untidy.** The two clauses are
+read by different processes from different views. One holds the three
+pointing vertices and commits the slot, placing it in its output; another
+holds the three non-pointing ones, skips it, and commits the next leader
+without it. Neither output is a prefix of the other, which is exactly
+what Safe-Commit forbids — and Safe-Commit is what §3.2 of the paper uses
+to obtain Total-order and Agreement.
+
+**The reading is what does it.** Counting the skip by process instead
+puts it out of reach: `¬ SkippedByProcess Dk 0`, checked, the processes
+with no pointing vertex being `{3}` alone. So the clause must be read
+over distinct processes, and Definition 9 does not say so. §19.4 shows
+that the process reading cannot then be given a smaller threshold to
+compensate.
+
+### 19.4 The dead zone, and a DAG in which nothing ever commits
+
+![**Neither committable nor skippable, every other round.** Process `0` sends each of its vertices to process `1` alone, so exactly two processes point to it: itself and process `1`. Three are needed to commit and three non-pointers to skip, and there are two of each. Round robin then supplies the rest: the other leader of the round is concurrent with the dead slot, and the next round's leaders are the two processes that never received the vertex.](figures/minnow-deadlock.svg)
+
+**The arithmetic first.** Let `a` be the number of distinct processes
+with a round-above vertex pointing at a leader vertex, out of the
+`n = 3f + 1` processes. The quorum clause needs `a ≥ 2f + 1`. The skip
+clause needs `2f + 1` non-pointers, so `a ≤ f`. Between them lies
+
+`f + 1 ≤ a ≤ 2f`,
+
+a window of width `f`, non-empty for every `f ≥ 1`. At `f = 1` it is the
+single value `a = 2`. A vertex there is neither committable nor
+skippable, and the count cannot change once the round is full.
+
+**The threshold cannot be lowered to close it.** Suppose the skip clause
+is read over distinct processes — as §19.3 requires — with threshold `s`.
+For two views not to disagree, no view may skip a vertex another
+commits. A view that skips holds `s` processes with no pointing vertex,
+of which at most `f` are faulty, so at least `s − f` *correct* processes
+have none; a correct process issues one vertex per round, so those have
+none in any view. A view that commits holds `2f + 1` processes with a
+pointing vertex, at most `f` faulty, so at least `f + 1` correct
+processes point. The two sets of correct processes are disjoint and there
+are `2f + 1` correct processes in all, so a disagreement requires
+
+`(s − f) + (f + 1) ≤ 2f + 1`, that is `s ≤ 2f`.
+
+So `s = 2f + 1` is the least safe threshold, and the window it leaves is
+forced. The dead zone is not a constant chosen badly; it is what a rule
+deciding a slot from the single round above must live with at
+`n = 3f + 1`.
+
+**The execution, step by step.** Four processes, process `0` faulty, six
+rounds, four vertices a round. The one habit of the faulty process is to
+send each of its vertices to **process `1` alone**.
+
+1. **Round `r`.** Processes `0` and `1` hold process `0`'s vertex and
+   reference it; processes `2` and `3` never received it and reference
+   the other three. All four vertices of round `r + 1` are valid — three
+   or four edges, distinct processes, the round below.
+2. **The count.** `pointers Dm 0 1 = {0, 1}`, and likewise at rounds `3`
+   and `5`: exactly two processes, checked. So `¬ Quorum ∧ ¬ Skipped`
+   for each, checked, and the round is full — `(verticesAt Dm r).card = 4`
+   for every round — so nothing later can move either count.
+3. **The round's other leader.** Round robin makes slots `(0, r)` and
+   `(1, r)` the leaders of round `r` for even `r`. The second leader sits
+   in the same round as the dead slot, so there is no causal path between
+   them; the causal-past escape is unavailable, and the slot is neither
+   committed nor skipped. Blocked.
+4. **The next round's leaders** are processes `2` and `3` — precisely the
+   two that never received the vertex. It is not in their causal past
+   either, so they are blocked by the same slot.
+5. **Two rounds later** the vertex has entered every causal past, through
+   the two round-above vertices that did point to it. That slot is
+   resolved — `Reaches Dm 14 4` is checked, against `¬ Reaches Dm 14 8`
+   for the newer one — but by then process `0` leads again, and its new
+   vertex is dead in the same way.
+6. **Nothing commits.** All ten leader positions over rounds `0` to `4`
+   are checked individually. The three that are process `0`'s own
+   vertices fail the quorum clause; the other seven fail the second
+   clause. Every correct process's leader vertex carries a quorum —
+   `Quorum Dm 1 ∧ Quorum Dm 6 ∧ Quorum Dm 7 ∧ Quorum Dm 9 ∧ Quorum Dm 14
+   ∧ Quorum Dm 15`, checked — so what stops them is the second clause and
+   not the first.
+
+**No timing assumption helps.** Eventual synchrony guarantees that a
+vertex a *correct* process sends is received; it says nothing about one a
+faulty process withheld. Nothing in the execution turns on message delay,
+and the same DAG is available after the global stabilisation time as
+before it.
+
+**This defeats Live-Commit outright.** The paper's liveness property asks
+that "for every vertex `v` issued by a correct process `i`, `i` will
+eventually have a DAG `D` such that `v ∈ cr(D)`". Here `cr(D)` is empty:
+no leader is committed, so no vertex is committed, so no correct
+process's vertex ever appears in the output.
+
+**And the paper's argument reaches this case and stops.** Lemma 11 says a
+faulty leader "is eventually decided (committed or skipped) because
+either all correct processes will issue a vertex that does not point to
+`l′` (and thus `l′` is 'skipped') or there will be a vertex issued by a
+correct process in the causal future of `l′` that satisfies `P*`", and
+then: "we leave the details to a later version". The dichotomy has a
+middle: some correct processes point and some do not. That middle is the
+dead zone, and it is where the argument is left unfinished.
+
+### 19.5 What the three amount to
+
+| defect | what it costs | reading | repair |
+| --- | --- | --- | --- |
+| an empty leader slot resolves nothing (§19.2) | every later leader, for ever | as written; surely unintended | treat an empty slot as resolved |
+| the skip clause counts vertices (§19.3) | Safe-Commit, hence Total-order and Agreement | as written; the quorum clause counts processes two lines above | count processes |
+| the dead zone (§19.4) | Live-Commit outright | on either reading | none available at this shape |
+
+The first two are defects of the write-up. The third is not: `2f + 1` is
+the least threshold the skip clause can safely take, so the window
+`f + 1 ≤ a ≤ 2f` cannot be closed from inside the rule, and `crs*`'s only
+other way to resolve a slot — a vertex of it lying in the candidate's
+causal past — is unavailable for exactly the leaders that follow a dead
+slot within one round. Round robin hands the adversary one such slot per
+cycle, which is enough.
+
+What the rule lacks is a way to decide a slot from evidence *later* than
+the round immediately above it. That is what the indirect decision rules
+of §17 supply, and their cost in rounds is what Minnow's minimality
+argument is trying to avoid.
+
+## 20. Satisfiability
 
 Every structure carrying conditions is exhibited satisfiable by a concrete model
 over four validators at `f = 1`. This is a substantive component of the
@@ -6558,11 +6952,11 @@ rather than an unsatisfiable hypothesis.
 
 ---
 
-## 20. Mechanisation
+## 21. Mechanisation
 
 The development comprises approximately 27,000 lines of Lean 4 (v4.32.2)
 against Mathlib, of which some 18,000 constitute the library and 7,500 the
-models of §19 and the witness files of the arcs. A full build reports no
+models of §20 and the witness files of the arcs. A full build reports no
 errors.
 
 **Axiom audit.** Every principal result — among them
@@ -6674,7 +7068,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
 | `Quality/Capstone.lean` | the windowed bounds and `chain_quality` (CQ7) |
-| `LeanDagTest/` | the models of §19 and the witness files of every arc |
+| `LeanDagTest/` | the models of §20 and the witness files of every arc |
 
 **The support graph, extracted.** The dependency structure of the
 development is not documented by hand: `scripts/DepGraph.lean` walks
@@ -6725,13 +7119,13 @@ literature. Every statement in this report is drawn from the source.
 
 ---
 
-## 21. Discussion
+## 22. Discussion
 
 The first four subsections concern the core account's central design
-choice — where the synchrony assumption lives; §21.5 draws the lessons of
-the three extensions; §21.6 records what remains open.
+choice — where the synchrony assumption lives; §22.5 draws the lessons of
+the three extensions; §22.6 records what remains open.
 
-### 21.1 Locating the synchrony assumption
+### 22.1 Locating the synchrony assumption
 
 The synchrony assumption may be stated in terms of views:
 
@@ -6792,7 +7186,7 @@ is `2Δ`.
 Because Δ is not known to an implementation, no constant can be fixed in
 advance. A backoff is the specification's response — a search for a sufficient
 constant, written into the algorithm — and its only relevant property is that
-the search terminates (§21.2).
+the search terminates (§22.2).
 
 **The network guarantee must be indexed to the moment of building.** A block's
 references are fixed at its construction, so what bears on the derivation is not
@@ -6805,7 +7199,7 @@ for liveness, indexed by the instant, with `built` ordering the two. The
 requirement is the index, not the vehicle. This is an observation about formalisation, and it is the
 reason `SynchronisedOn` is stated on `refs`.
 
-### 21.2 Why coverage is derived rather than specified
+### 22.2 Why coverage is derived rather than specified
 
 Reference coverage could not have been made a clause of the protocol, which is
 the deeper reason it appears as a derived property. `SynchronisedOn` refers to
@@ -6832,7 +7226,7 @@ from some round onwards — with no condition on shape, rate, or driving
 signal. §6.10 carries this to its conclusion: with Δ known, a constant
 timeout of `2Δ + proc` suffices and the loop disappears.
 
-### 21.3 Consequences of the abstraction
+### 22.3 Consequences of the abstraction
 
 1. The consensus argument is purely combinatorial, involving round indices and
    finite-set cardinalities. Under a message-level assumption every statement
@@ -6844,7 +7238,7 @@ timeout of `2Δ + proc` suffices and the loop disappears.
 4. The condition composes with the safety development, mentioning only `U.ids`,
    `U.block` and `refs` — the vocabulary that development already employs.
 
-### 21.4 Costs
+### 22.4 Costs
 
 Δ does not appear above the interface. Introducing it would require views indexed
 by an instant and every statement quantified over instants, for no proof content.
@@ -6857,7 +7251,7 @@ chain must terminate at a network assumption; what the reformulation achieves
 is to place that assumption where it belongs — on the network, as one clause
 over views — and to keep it out of every statement above.
 
-### 21.5 Lessons from the extensions
+### 22.5 Lessons from the extensions
 
 Three lessons generalise beyond the particular arcs.
 
@@ -6906,13 +7300,13 @@ behind the canonicity gap fits in six validators and twenty-five blocks;
 what was needed to find it was not scale but the obligation to state the
 indirect rule precisely enough to fail to prove it.
 
-### 21.6 Limitations
+### 22.6 Limitations
 
 The quantitative bounds are established (§6.10). The following remain open.
 
 **The backoff loop.** `Rated` and the threshold of R4 are stipulated as clauses
 of the specification; no realistic adaptive scheme is shown to satisfy them, and
-the feedback mechanism of §21.2 is not modelled. Moreover
+the feedback mechanism of §22.2 is not modelled. Moreover
 `ViewPace.timeout : ℕ → ℕ` is indexed by round and common to the reliable set, so
 that a per-validator backoff — in which validators increase their timeouts at
 different moments — cannot be expressed, let alone shown to converge. This
@@ -6967,7 +7361,7 @@ much they say.
 
 ---
 
-## 22. Related work
+## 23. Related work
 
 **Hybrid fault models.** Orcaella [KS26] derives the tight committee
 `n ≥ 5f + 3c + 1` for two-round commitment under separate Byzantine
@@ -7062,11 +7456,11 @@ pacemaker by refinement. The account here is structural, and no theorem above
 dependence of liveness on the round-jumping clause surfaces as a named hypothesis
 of a single lemma rather than as a condition inside a transition relation. The
 cost is that the theorems of [QXS26] cannot be stated here at all, "within
-bounded time" not being expressible in this vocabulary (§21.6).
+bounded time" not being expressible in this vocabulary (§22.6).
 
 ---
 
-## 23. Conclusion
+## 24. Conclusion
 
 This report has given a machine-checked account of uncertified DAG consensus
 organised around one idea: state the liveness condition on the object the
@@ -7092,7 +7486,7 @@ without consensus, and — in the one place the formalization diverged from a
 published argument by necessity — the observation that Odontoceti's
 agreement rests on a canonical candidate order that its paper never states.
 
-What remains open is catalogued in §21.6: the backoff dynamics, wall-clock
+What remains open is catalogued in §22.6: the backoff dynamics, wall-clock
 latency, block-level total order, and liveness below the growth clause.
 Beyond those, two directions suggest themselves. The commit-free,
 evidence-based horizon rule sketched in the garbage-collection document
@@ -13895,6 +14289,172 @@ structure SoundOn (U : BlockUniverse Validator BlockId Payload)
 ```
 
 **What a universe must still supply after being transformed.** The two conditions every safety result of the hybrid arc consumes: correct validators do not equivocate, and the DAG is covered from round `R` on.
+
+#### `ValidHere`
+
+*structure, `Minnow.Model.Rule.lean`*
+
+```lean
+structure ValidHere (blk : BlockId → Block Validator BlockId Payload)
+    (b : Block Validator BlockId Payload) : Prop where
+  /-- Every edge points to the round immediately below. -/
+  predecessor : ∀ i ∈ b.refs, (blk i).round + 1 = b.round
+  /-- No two edges share a process. -/
+  distinct_creators : ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
+  /-- A non-genesis vertex carries `2f + 1` edges by distinct processes. -/
+  quorum : 0 < b.round → quorumCard Validator ≤ (creators blk b).card
+```
+
+**Validity, as Minnow's communication component defines it**: every edge sits in the round below, no two edges share a process, and a non-genesis vertex carries `2f + 1` of them. No self-parent.
+
+#### `Dag`
+
+*structure, `Minnow.Model.Rule.lean`*
+
+```lean
+structure Dag (Validator BlockId Payload : Type*) [Fintype Validator]
+    [DecidableEq Validator] [Faults Validator] where
+  /-- Which vertices exist. -/
+  ids : Finset BlockId
+  /-- What each id denotes. -/
+  block : BlockId → Block Validator BlockId Payload
+  /-- The DAG is closed under edges. -/
+  complete : ∀ i ∈ ids, ∀ j ∈ (block i).refs, j ∈ ids
+  /-- Every vertex is valid. -/
+  valid : ∀ i ∈ ids, ValidHere block (block i)
+```
+
+A DAG the communication component can build. Equivocating vertices are admitted: a faulty process may issue two, and both are held.
+
+#### `verticesAt`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def verticesAt (D : Dag Validator BlockId Payload) (r : ℕ) : Finset BlockId :=
+  D.ids.filter (fun b => (D.block b).round = r)
+```
+
+The vertices of a round.
+
+#### `cone`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def cone (D : Dag Validator BlockId Payload) (v : BlockId) : Finset BlockId :=
+  historyFrom D.block v
+```
+
+The causal past of `v`, `v` included.
+
+#### `Reaches`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def Reaches (D : Dag Validator BlockId Payload) (v u : BlockId) : Prop :=
+  u ∈ cone D v
+```
+
+`u ⇝ v`: `u` lies in the causal past of `v`.
+
+#### `Concurrent`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def Concurrent (D : Dag Validator BlockId Payload) (a b : BlockId) : Prop :=
+  ¬ Reaches D a b ∧ ¬ Reaches D b a
+```
+
+Neither vertex is in the other's causal past.
+
+#### `Slot`
+
+*abbrev, `Minnow.Model.Rule.lean`*
+
+```lean
+abbrev Slot (Validator : Type*) := Validator × ℕ
+```
+
+**A slot**: a process and a round, as section 2 of the paper has it — "a slot is a pair `(p, r)` that identifies a proposal … but there may be no, or many such vertices if `p` is faulty".
+
+#### `slotBlocks`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def slotBlocks (D : Dag Validator BlockId Payload) (s : Slot Validator) : Finset BlockId :=
+  D.ids.filter (fun b => (D.block b).creator = s.1 ∧ (D.block b).round = s.2)
+```
+
+The vertices occupying a slot.
+
+#### `pointers`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def pointers (D : Dag Validator BlockId Payload) (l : BlockId) (r : ℕ) : Finset Validator :=
+  creatorsOf D.block ((verticesAt D r).filter (fun q => l ∈ (D.block q).refs))
+```
+
+The processes with a vertex of round `r` carrying an edge to `l`.
+
+#### `Quorum`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def Quorum (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
+  quorumCard Validator ≤ (pointers D l ((D.block l).round + 1)).card
+```
+
+**Quorum**, the first clause of `Φ*s`: `l` is pointed to by `2f + 1` vertices of the round above, issued by distinct processes.
+
+#### `Skipped`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def Skipped (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
+  quorumCard Validator ≤ ((verticesAt D ((D.block l).round + 1)).filter
+    (fun q => l ∉ (D.block q).refs)).card
+```
+
+**Skip**, the escape in the second clause: `2f + 1` vertices of the round above carry no edge to `l`. Counted as vertices, which is what Definition 9 writes and is the weaker demand — counting processes would make skipping harder still.
+
+#### `SkippedByProcess`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def SkippedByProcess (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
+  quorumCard Validator ≤
+    ((creatorsOf D.block (verticesAt D ((D.block l).round + 1)))
+      \ pointers D l ((D.block l).round + 1)).card
+```
+
+**Skip, counted by process** rather than by vertex: `2f + 1` distinct processes, none of whose round-above vertices carries an edge to `l`. Definition 9 writes vertices; `minnow.md` §4 is why that cannot be what is meant.
+
+#### `CommittedAt`
+
+*def, `Minnow.Model.Rule.lean`*
+
+```lean
+def CommittedAt (D : Dag Validator BlockId Payload) (L : ℕ → Slot Validator) :
+    ℕ → BlockId → Prop
+  | 0, l => Quorum D l
+  | (k + 1), l =>
+      Quorum D l ∧
+      ∀ j ≤ k, ∃ v ∈ slotBlocks D (L j),
+        Reaches D l v ∨ (Concurrent D l v ∧ (CommittedAt D L j v ∨ Skipped D v))
+```
+
+**`crs*`** (Definition 9), by recursion on the position in `leaders`. `CommittedAt D L k l` is the pattern `Ps*` enabled for the vertex `l` occupying the `k`-th leader slot: a quorum points to it, and every earlier slot is *resolved* — some vertex of that slot lies in `l`'s causal past, or is concurrent with `l` and either committed or skipped.
+
+The existential over `v` is the paper's: "there is a vertex `v′` in slot `s′` in `D` such that …". One vertex of a slot resolving it is what makes `minnow.md` §3 possible.
 
 #### `waveRobin`
 
@@ -20885,7 +21445,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 487 lemmas used only within the file that proves
+The 490 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -21784,6 +22344,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_chop` | Truncation preserves it, shifting the synchrony round by the cut. |
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
+
+### `Minnow/Blocking.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `not_committedAt_of_dead` | A dead slot blocks every later leader. If every vertex of the `j`-th leader slot lies outside `l`'s causal … |
+| `not_committedAt_of_not_quorum` | A vertex with no quorum is never committed. |
+| `quorum_of_committedAt` | A commit needs a quorum, at every position in `leaders`. |
 
 ### `WaveRobin.lean` (3)
 

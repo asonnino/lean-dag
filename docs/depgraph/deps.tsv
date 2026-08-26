@@ -31,6 +31,8 @@ NODE	LeanDag.JumpMsg.fresh	LeanDag.SafeSkip.Jump	def
 EDGE	LeanDag.JumpMsg.fresh	LeanDag.Faults
 EDGE	LeanDag.JumpMsg.fresh	LeanDag.JumpMsg
 EDGE	LeanDag.JumpMsg.fresh	LeanDag.BlockUniverse
+NODE	LeanDagTest.Minnow.sBlk._proof_1	LeanDagTest.Minnow.Deadlock	thm
+EDGE	LeanDagTest.Minnow.sBlk._proof_1	LeanDagTest.Minnow.sBlk._proof_3
 NODE	LeanDagTest.ugrowReactive._proof_29	LeanDagTest.Reactive	thm
 EDGE	LeanDagTest.ugrowReactive._proof_29	LeanDag.Slots.slotRound
 EDGE	LeanDagTest.ugrowReactive._proof_29	LeanDagTest.rrSlots
@@ -245,6 +247,11 @@ EDGE	LeanDagTest.uexcl_populated	LeanDag.Populated
 EDGE	LeanDagTest.uexcl_populated	LeanDag.Correct
 EDGE	LeanDagTest.uexcl_populated	LeanDagTest.Uexcl
 EDGE	LeanDagTest.uexcl_populated	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+NODE	LeanDag.Minnow.instDecidableReaches	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.instDecidableReaches	LeanDag.Faults
+EDGE	LeanDag.Minnow.instDecidableReaches	LeanDag.Minnow.Reaches
+EDGE	LeanDag.Minnow.instDecidableReaches	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.instDecidableReaches	LeanDag.Minnow.instDecidableReaches._aux_1
 NODE	LeanDagTest.ugrowStuckPace._proof_3	LeanDagTest.ViewPace	thm
 NODE	LeanDagTest.nemo_slot1	LeanDagTest.Nemo	thm
 EDGE	LeanDagTest.nemo_slot1	LeanDagTest.Unemo
@@ -291,6 +298,11 @@ EDGE	LeanDag.not_reaches_of_round_lt	LeanDag.BlockUniverse
 EDGE	LeanDag.not_reaches_of_round_lt	LeanDag.CausalStructure.not_reaches_of_round_lt
 EDGE	LeanDag.not_reaches_of_round_lt	LeanDag.BlockUniverse.causal
 EDGE	LeanDag.not_reaches_of_round_lt	LeanDag.Reaches
+NODE	LeanDag.Minnow.quorum_of_committedAt.match_1_1	LeanDag.Minnow.Blocking	def
+EDGE	LeanDag.Minnow.quorum_of_committedAt.match_1_1	LeanDag.Faults
+EDGE	LeanDag.Minnow.quorum_of_committedAt.match_1_1	LeanDag.Minnow.Slot
+EDGE	LeanDag.Minnow.quorum_of_committedAt.match_1_1	LeanDag.Minnow.CommittedAt
+EDGE	LeanDag.Minnow.quorum_of_committedAt.match_1_1	LeanDag.Minnow.Dag
 NODE	LeanDag.Odontoceti.not_directSkip_of_directCommit._simp_1_1	LeanDag.Odontoceti.Rules	thm
 EDGE	LeanDag.Odontoceti.not_directSkip_of_directCommit._simp_1_1	LeanDag.Faults
 EDGE	LeanDag.Odontoceti.not_directSkip_of_directCommit._simp_1_1	LeanDag.Faults.byzantine
@@ -544,6 +556,14 @@ EDGE	LeanDag.BlackMarlin.supportersIn_subset	LeanDag.supporters
 EDGE	LeanDag.BlackMarlin.supportersIn_subset	LeanDag.View
 EDGE	LeanDag.BlackMarlin.supportersIn_subset	LeanDag.BlackMarlin.supportersIn
 EDGE	LeanDag.BlackMarlin.supportersIn_subset	LeanDag.Block.creator
+NODE	LeanDag.Minnow.Skipped	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.Skipped	LeanDag.Faults
+EDGE	LeanDag.Minnow.Skipped	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.Skipped	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.Skipped	LeanDag.Block.round
+EDGE	LeanDag.Minnow.Skipped	LeanDag.Faults.f
+EDGE	LeanDag.Minnow.Skipped	LeanDag.Minnow.Dag.block
+EDGE	LeanDag.Minnow.Skipped	LeanDag.Minnow.verticesAt
 NODE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_8	LeanDag.SafeSkip.Jump	thm
 EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_8	LeanDag.Faults
 EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_8	LeanDag.BlockUniverse.block
@@ -641,6 +661,12 @@ EDGE	LeanDag.card_history_le_of_not_exposed	LeanDag.BlockUniverse.block
 EDGE	LeanDag.card_history_le_of_not_exposed	LeanDag.history
 EDGE	LeanDag.card_history_le_of_not_exposed	LeanDag.Block.round
 EDGE	LeanDag.card_history_le_of_not_exposed	LeanDag.BlockUniverse
+NODE	LeanDag.Minnow.ValidHere.distinct_creators	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.ValidHere.distinct_creators	LeanDag.Block
+EDGE	LeanDag.Minnow.ValidHere.distinct_creators	LeanDag.Faults
+EDGE	LeanDag.Minnow.ValidHere.distinct_creators	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.ValidHere.distinct_creators	LeanDag.Minnow.ValidHere
+EDGE	LeanDag.Minnow.ValidHere.distinct_creators	LeanDag.Block.creator
 NODE	LeanDagTest.BlackMarlin.Utie	LeanDagTest.BlackMarlin.Divergence	def
 EDGE	LeanDagTest.BlackMarlin.Utie	LeanDagTest.BlackMarlin.Utie._proof_1
 EDGE	LeanDagTest.BlackMarlin.Utie	LeanDag.BlockUniverse.mk
@@ -717,6 +743,9 @@ EDGE	LeanDag.exposedIn_of_exposedIn_chop._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.exposedIn_of_exposedIn_chop._proof_1_1	LeanDag.history
 EDGE	LeanDag.exposedIn_of_exposedIn_chop._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.exposedIn_of_exposedIn_chop._proof_1_1	LeanDag.BlockUniverse
+NODE	LeanDag.Minnow.Dag.ids	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.Dag.ids	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag.ids	LeanDag.Minnow.Dag
 NODE	LeanDag.BlackMarlin.TopoSort.mem	LeanDag.BlackMarlin.Model.Order	thm
 EDGE	LeanDag.BlackMarlin.TopoSort.mem	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.TopoSort.mem	LeanDag.BlackMarlin.TopoSort.sort
@@ -793,6 +822,17 @@ EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.BlackMarlin.Pace.holds_tw
 EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.PaceCore.holds_roundBlocks
 EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.Block.creator
 EDGE	LeanDag.BlackMarlin.Pace.holds_two_rounds	LeanDag.PaceCore.delay
+NODE	LeanDag.Minnow.CommittedAt._unary	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.CommittedAt._unary	LeanDag.Faults
+EDGE	LeanDag.Minnow.CommittedAt._unary	LeanDag.Minnow.Reaches
+EDGE	LeanDag.Minnow.CommittedAt._unary	LeanDag.Minnow.Slot
+EDGE	LeanDag.Minnow.CommittedAt._unary	LeanDag.Minnow.CommittedAt.match_1
+EDGE	LeanDag.Minnow.CommittedAt._unary	LeanDag.Minnow.Concurrent
+EDGE	LeanDag.Minnow.CommittedAt._unary	LeanDag.Minnow.Skipped
+EDGE	LeanDag.Minnow.CommittedAt._unary	LeanDag.Minnow.Quorum
+EDGE	LeanDag.Minnow.CommittedAt._unary	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.CommittedAt._unary	LeanDag.Minnow.CommittedAt._unary._proof_1
+EDGE	LeanDag.Minnow.CommittedAt._unary	LeanDag.Minnow.slotBlocks
 NODE	LeanDagTest.rrSlots_fairToEach._proof_1_2	LeanDagTest.Reactive	thm
 NODE	LeanDag.round_add_two_le_of_equivPair	LeanDag.DoS.Exposure	thm
 EDGE	LeanDag.round_add_two_le_of_equivPair	LeanDag.Faults
@@ -3347,6 +3387,10 @@ EDGE	LeanDag.eq_of_reaches_of_refs_empty	LeanDag.Block
 EDGE	LeanDag.eq_of_reaches_of_refs_empty	LeanDag.RefStepFrom
 EDGE	LeanDag.eq_of_reaches_of_refs_empty	LeanDag.Block.refs
 EDGE	LeanDag.eq_of_reaches_of_refs_empty	LeanDag.ReachesFrom
+NODE	LeanDag.Minnow.Quorum.congr_simp	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.Quorum.congr_simp	LeanDag.Faults
+EDGE	LeanDag.Minnow.Quorum.congr_simp	LeanDag.Minnow.Quorum
+EDGE	LeanDag.Minnow.Quorum.congr_simp	LeanDag.Minnow.Dag
 NODE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_2	LeanDag.DoS.Novelty	thm
 EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_2	LeanDag.BlockUniverse.block
@@ -3366,6 +3410,12 @@ EDGE	LeanDag.BlackMarlin.Pace.driftOn_of_catchup	LeanDag.PaceCore.driftOn_of_cat
 EDGE	LeanDag.BlackMarlin.Pace.driftOn_of_catchup	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.Pace.driftOn_of_catchup	LeanDag.PaceCore.proc
 EDGE	LeanDag.BlackMarlin.Pace.driftOn_of_catchup	LeanDag.PaceCore.delay
+NODE	LeanDagTest.Minnow.Dk	LeanDagTest.Minnow.Skip	def
+EDGE	LeanDagTest.Minnow.Dk	LeanDagTest.Minnow.Dk._proof_2
+EDGE	LeanDagTest.Minnow.Dk	LeanDag.Minnow.Dag.mk
+EDGE	LeanDagTest.Minnow.Dk	LeanDagTest.Minnow.Dk._proof_1
+EDGE	LeanDagTest.Minnow.Dk	LeanDag.Minnow.Dag
+EDGE	LeanDagTest.Minnow.Dk	LeanDagTest.Minnow.kBlk
 NODE	LeanDag.ReactivePace.built_succ_le_of_fast._proof_1_3	LeanDag.Reactive.Basic	thm
 EDGE	LeanDag.ReactivePace.built_succ_le_of_fast._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.ReactivePace.built_succ_le_of_fast._proof_1_3	LeanDag.Slots.slotRound
@@ -3465,6 +3515,11 @@ EDGE	LeanDag.card_missingAt_le_base	LeanDag.BlockUniverse.valid
 EDGE	LeanDag.card_missingAt_le_base	LeanDag.BlockUniverse.round_of_mem_refs
 EDGE	LeanDag.card_missingAt_le_base	LeanDag.ValidWrt.quorum
 EDGE	LeanDag.card_missingAt_le_base	LeanDag.Block.creator
+NODE	LeanDagTest.Minnow.sBlk	LeanDagTest.Minnow.Deadlock	def
+EDGE	LeanDagTest.Minnow.sBlk	LeanDag.Block
+EDGE	LeanDagTest.Minnow.sBlk	LeanDagTest.Minnow.sBlk.match_1
+EDGE	LeanDagTest.Minnow.sBlk	LeanDag.Block.mk
+EDGE	LeanDagTest.Minnow.sBlk	LeanDagTest.Minnow.sBlk._proof_1
 NODE	LeanDagTest.ugrowTimingPace._proof_16	LeanDagTest.Growth	thm
 NODE	LeanDagTest.BlackMarlin.ugrowBM._simp_7	LeanDagTest.BlackMarlin.Reactive	thm
 EDGE	LeanDagTest.BlackMarlin.ugrowBM._simp_7	LeanDag.Block.refs
@@ -3626,6 +3681,11 @@ EDGE	LeanDag.BlackMarlin.TopoSort.recOn	LeanDag.BlackMarlin.TopoSort.rec
 EDGE	LeanDag.BlackMarlin.TopoSort.recOn	LeanDag.BlackMarlin.TopoSort.mk
 EDGE	LeanDag.BlackMarlin.TopoSort.recOn	LeanDag.BlackMarlin.TopoSort
 EDGE	LeanDag.BlackMarlin.TopoSort.recOn	LeanDag.Reaches
+NODE	LeanDag.Minnow.instDecidableSkipped	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.instDecidableSkipped	LeanDag.Faults
+EDGE	LeanDag.Minnow.instDecidableSkipped	LeanDag.Minnow.instDecidableSkipped._aux_1
+EDGE	LeanDag.Minnow.instDecidableSkipped	LeanDag.Minnow.Skipped
+EDGE	LeanDag.Minnow.instDecidableSkipped	LeanDag.Minnow.Dag
 NODE	LeanDag.Integration.recoveryMsg._proof_1	LeanDag.Integration.ReGenesis	thm
 EDGE	LeanDag.Integration.recoveryMsg._proof_1	LeanDag.Faults
 EDGE	LeanDag.Integration.recoveryMsg._proof_1	LeanDag.Integration.addGenesis
@@ -3704,6 +3764,7 @@ EDGE	LeanDag.Odontoceti.card_supporters_le_of_directSkip._proof_1_2	LeanDag.Faul
 NODE	LeanDagTest.censBlk._proof_10	LeanDagTest.Quality.Model	thm
 EDGE	LeanDagTest.censBlk._proof_10	LeanDagTest.censBlk._proof_5
 NODE	LeanDagTest.ugrowTimingPace._proof_10	LeanDagTest.Growth	thm
+NODE	LeanDagTest.Minnow.kBlk.match_1	LeanDagTest.Minnow.Skip	def
 NODE	LeanDagTest.ugrowCatchPace_decided._proof_1_1	LeanDagTest.Catchup	thm
 EDGE	LeanDagTest.ugrowCatchPace_decided._proof_1_1	LeanDag.Slots.slotRound
 EDGE	LeanDagTest.ugrowCatchPace_decided._proof_1_1	LeanDagTest.rrSlots
@@ -4345,6 +4406,8 @@ EDGE	LeanDag.decided_of_decided_chop	LeanDag.decided_of_decided_chop._proof_1_4
 EDGE	LeanDag.decided_of_decided_chop	LeanDag.Slots
 EDGE	LeanDag.decided_of_decided_chop	LeanDag.View
 EDGE	LeanDag.decided_of_decided_chop	LeanDag.Block.creator
+NODE	LeanDag.Minnow.CommittedAt.match_1.splitter	LeanDag.Minnow.Blocking	def
+EDGE	LeanDag.Minnow.CommittedAt.match_1.splitter	LeanDag.Minnow.CommittedAt.match_1
 NODE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.Helpers.Repair	thm
 EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.descentSUpto_reaches
 EDGE	LeanDag.BlackMarlin.flushRecordS_agree_of_committed	LeanDag.BlackMarlin.Linked
@@ -4886,6 +4949,11 @@ EDGE	LeanDag.mem_history_self	LeanDag.mem_historyFrom_self
 EDGE	LeanDag.mem_history_self	LeanDag.BlockUniverse.block
 EDGE	LeanDag.mem_history_self	LeanDag.history
 EDGE	LeanDag.mem_history_self	LeanDag.BlockUniverse
+NODE	LeanDag.Minnow.instDecidableQuorum	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.instDecidableQuorum	LeanDag.Faults
+EDGE	LeanDag.Minnow.instDecidableQuorum	LeanDag.Minnow.instDecidableQuorum._aux_1
+EDGE	LeanDag.Minnow.instDecidableQuorum	LeanDag.Minnow.Quorum
+EDGE	LeanDag.Minnow.instDecidableQuorum	LeanDag.Minnow.Dag
 NODE	LeanDagTest.uexcl_synchronised	LeanDagTest.DoS.Exclusion	thm
 EDGE	LeanDagTest.uexcl_synchronised	LeanDagTest.uexcl_synchronised._proof_1_1
 EDGE	LeanDagTest.uexcl_synchronised	LeanDag.BlockUniverse.ids
@@ -5151,6 +5219,10 @@ EDGE	LeanDag.DecidedWithin.recOn	LeanDag.DecidedWithin.directSkip
 EDGE	LeanDag.DecidedWithin.recOn	LeanDag.DecidedWithin.indirectCommit
 EDGE	LeanDag.DecidedWithin.recOn	LeanDag.View
 EDGE	LeanDag.DecidedWithin.recOn	LeanDag.DecidedWithin.rec
+NODE	LeanDag.Minnow.Dag._sizeOf_inst	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.Dag._sizeOf_inst	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag._sizeOf_inst	LeanDag.Minnow.Dag._sizeOf_1
+EDGE	LeanDag.Minnow.Dag._sizeOf_inst	LeanDag.Minnow.Dag
 NODE	LeanDagTest.uexcl_commits._proof_1_3	LeanDagTest.DoS.Exclusion	thm
 NODE	LeanDag.stuck_empty_below_commit_of_spacing	LeanDag.Liveness	thm
 EDGE	LeanDag.stuck_empty_below_commit_of_spacing	LeanDag.Faults
@@ -5172,6 +5244,15 @@ EDGE	LeanDag.BlackMarlin.instDecidableQuorumIn	LeanDag.BlackMarlin.instDecidable
 EDGE	LeanDag.BlackMarlin.instDecidableQuorumIn	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.instDecidableQuorumIn	LeanDag.BlackMarlin.QuorumIn
 EDGE	LeanDag.BlackMarlin.instDecidableQuorumIn	LeanDag.View
+NODE	LeanDag.Minnow.SkippedByProcess	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.SkippedByProcess	LeanDag.creatorsOf
+EDGE	LeanDag.Minnow.SkippedByProcess	LeanDag.Faults
+EDGE	LeanDag.Minnow.SkippedByProcess	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.SkippedByProcess	LeanDag.Block.round
+EDGE	LeanDag.Minnow.SkippedByProcess	LeanDag.Faults.f
+EDGE	LeanDag.Minnow.SkippedByProcess	LeanDag.Minnow.Dag.block
+EDGE	LeanDag.Minnow.SkippedByProcess	LeanDag.Minnow.pointers
+EDGE	LeanDag.Minnow.SkippedByProcess	LeanDag.Minnow.verticesAt
 NODE	LeanDag.exists_partialRun._proof_1_1	LeanDag.Adaptive.Liveness	thm
 EDGE	LeanDag.exists_partialRun._proof_1_1	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.exists_partialRun._proof_1_1	LeanDag.Faults
@@ -5479,6 +5560,12 @@ NODE	LeanDag.SkipMsg.fresh	LeanDag.SafeSkip.Basic	def
 EDGE	LeanDag.SkipMsg.fresh	LeanDag.Faults
 EDGE	LeanDag.SkipMsg.fresh	LeanDag.BlockUniverse
 EDGE	LeanDag.SkipMsg.fresh	LeanDag.SkipMsg
+NODE	LeanDag.Minnow.ValidHere.predecessor	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.ValidHere.predecessor	LeanDag.Block
+EDGE	LeanDag.Minnow.ValidHere.predecessor	LeanDag.Faults
+EDGE	LeanDag.Minnow.ValidHere.predecessor	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.ValidHere.predecessor	LeanDag.Block.round
+EDGE	LeanDag.Minnow.ValidHere.predecessor	LeanDag.Minnow.ValidHere
 NODE	LeanDag.Nemo.decidableCertifiedIn	LeanDag.Nemo.Rules	def
 EDGE	LeanDag.Nemo.decidableCertifiedIn	LeanDag.Nemo.CertifiedIn
 EDGE	LeanDag.Nemo.decidableCertifiedIn	LeanDag.Nemo.decidableCertifiedIn._aux_1
@@ -5881,6 +5968,11 @@ EDGE	LeanDag.exists_self_ancestor_aux._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.exists_self_ancestor_aux._proof_1_3	LeanDag.BlockUniverse.block
 EDGE	LeanDag.exists_self_ancestor_aux._proof_1_3	LeanDag.Block.round
 EDGE	LeanDag.exists_self_ancestor_aux._proof_1_3	LeanDag.BlockUniverse
+NODE	LeanDagTest.Minnow.mBlk	LeanDagTest.Minnow.Deadlock	def
+EDGE	LeanDagTest.Minnow.mBlk	LeanDag.Block
+EDGE	LeanDagTest.Minnow.mBlk	LeanDagTest.Minnow.mBlk.match_1
+EDGE	LeanDagTest.Minnow.mBlk	LeanDag.Block.mk
+EDGE	LeanDagTest.Minnow.mBlk	LeanDagTest.Minnow.mBlk._proof_1
 NODE	LeanDag.card_topsOf_le_pow._proof_1_2	LeanDag.DoS.Pedigree	thm
 EDGE	LeanDag.card_topsOf_le_pow._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.card_topsOf_le_pow._proof_1_2	LeanDag.PedigreeTo
@@ -6197,6 +6289,7 @@ EDGE	LeanDag.BlackMarlin.descentSuppUpto._sunfold	LeanDag.BlockUniverse.block
 EDGE	LeanDag.BlackMarlin.descentSuppUpto._sunfold	LeanDag.Block.round
 EDGE	LeanDag.BlackMarlin.descentSuppUpto._sunfold	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.descentSuppUpto._sunfold	LeanDag.BlackMarlin.Rotation
+NODE	LeanDag.Minnow.CommittedAt.match_1	LeanDag.Minnow.Model.Rule	def
 NODE	LeanDag.Hybrid.eq_of_directCommit_of_thickLink	LeanDag.Hybrid.Rules	thm
 EDGE	LeanDag.Hybrid.eq_of_directCommit_of_thickLink	LeanDag.Hybrid.ThickLink
 EDGE	LeanDag.Hybrid.eq_of_directCommit_of_thickLink	LeanDag.HybridFaults
@@ -6438,6 +6531,11 @@ EDGE	LeanDag.reaches_pred_of_round_le._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.reaches_pred_of_round_le._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.reaches_pred_of_round_le._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.reaches_pred_of_round_le._proof_1_1	LeanDag.BlockUniverse
+NODE	LeanDag.Minnow.cone	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.cone	LeanDag.Faults
+EDGE	LeanDag.Minnow.cone	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.cone	LeanDag.historyFrom
+EDGE	LeanDag.Minnow.cone	LeanDag.Minnow.Dag.block
 NODE	LeanDag.Hybrid.not_directSkipIn_of_directCommitIn	LeanDag.Hybrid.Decision	thm
 EDGE	LeanDag.Hybrid.not_directSkipIn_of_directCommitIn	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.not_directSkipIn_of_directCommitIn	LeanDag.Hybrid.not_directSkip_of_directCommit
@@ -6624,6 +6722,12 @@ EDGE	LeanDag.Nemo.commitSeq_agree	LeanDag.Nemo.Universe
 EDGE	LeanDag.Nemo.commitSeq_agree	LeanDag.Nemo.View
 EDGE	LeanDag.Nemo.commitSeq_agree	LeanDag.Nemo.decided_agree
 EDGE	LeanDag.Nemo.commitSeq_agree	LeanDag.Slots
+NODE	LeanDagTest.Minnow.Dm	LeanDagTest.Minnow.Deadlock	def
+EDGE	LeanDagTest.Minnow.Dm	LeanDag.Minnow.Dag.mk
+EDGE	LeanDagTest.Minnow.Dm	LeanDagTest.Minnow.mBlk
+EDGE	LeanDagTest.Minnow.Dm	LeanDagTest.Minnow.Dm._proof_2
+EDGE	LeanDagTest.Minnow.Dm	LeanDag.Minnow.Dag
+EDGE	LeanDagTest.Minnow.Dm	LeanDagTest.Minnow.Dm._proof_1
 NODE	LeanDag.Hybrid.Decided.rec	LeanDag.Hybrid.Decision	rec
 EDGE	LeanDag.Hybrid.Decided.rec	LeanDag.Hybrid.ThickLink
 EDGE	LeanDag.Hybrid.Decided.rec	LeanDag.Hybrid.Decided.indirectCommit
@@ -6933,6 +7037,18 @@ EDGE	LeanDag.decidableDirectCommit._aux_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.decidableDirectCommit._aux_1	LeanDag.BlockUniverse
 EDGE	LeanDag.decidableDirectCommit._aux_1	LeanDag.Faults.f
 EDGE	LeanDag.decidableDirectCommit._aux_1	LeanDag.certificates
+NODE	LeanDag.Minnow.CommittedAt.eq_1	LeanDag.Minnow.Blocking	thm
+EDGE	LeanDag.Minnow.CommittedAt.eq_1	LeanDag.Faults
+EDGE	LeanDag.Minnow.CommittedAt.eq_1	LeanDag.Minnow.Reaches
+EDGE	LeanDag.Minnow.CommittedAt.eq_1	LeanDag.Minnow.Slot
+EDGE	LeanDag.Minnow.CommittedAt.eq_1	LeanDag.Minnow.CommittedAt.match_1
+EDGE	LeanDag.Minnow.CommittedAt.eq_1	LeanDag.Minnow.Concurrent
+EDGE	LeanDag.Minnow.CommittedAt.eq_1	LeanDag.Minnow.CommittedAt
+EDGE	LeanDag.Minnow.CommittedAt.eq_1	LeanDag.Minnow.Skipped
+EDGE	LeanDag.Minnow.CommittedAt.eq_1	LeanDag.Minnow.Quorum
+EDGE	LeanDag.Minnow.CommittedAt.eq_1	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.CommittedAt.eq_1	LeanDag.Minnow.slotBlocks
+EDGE	LeanDag.Minnow.CommittedAt.eq_1	LeanDag.Minnow.CommittedAt.eq_def
 NODE	LeanDag.MahiMahi.decisionRound_eq	LeanDag.MahiMahi.Helpers.Decision	thm
 EDGE	LeanDag.MahiMahi.decisionRound_eq	LeanDag.MahiMahi.decisionRound
 EDGE	LeanDag.MahiMahi.decisionRound_eq	LeanDag.Slots.slotRound
@@ -8080,6 +8196,10 @@ EDGE	LeanDag.Odontoceti.instDecidableDirectSkip._aux_1	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.instDecidableDirectSkip._aux_1	LeanDag.Faults.f
 EDGE	LeanDag.Odontoceti.instDecidableDirectSkip._aux_1	LeanDag.blames
 EDGE	LeanDag.Odontoceti.instDecidableDirectSkip._aux_1	LeanDag.Faults5.toFaults
+NODE	LeanDag.Minnow.Concurrent	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.Concurrent	LeanDag.Faults
+EDGE	LeanDag.Minnow.Concurrent	LeanDag.Minnow.Reaches
+EDGE	LeanDag.Minnow.Concurrent	LeanDag.Minnow.Dag
 NODE	LeanDag.RefStepFrom.eq_1	LeanDag.Causality	thm
 EDGE	LeanDag.RefStepFrom.eq_1	LeanDag.Block
 EDGE	LeanDag.RefStepFrom.eq_1	LeanDag.RefStepFrom
@@ -8597,6 +8717,8 @@ EDGE	LeanDag.BlackMarlin.instDecidableSupportedIn	LeanDag.BlackMarlin.instDecida
 EDGE	LeanDag.BlackMarlin.instDecidableSupportedIn	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.instDecidableSupportedIn	LeanDag.View
 EDGE	LeanDag.BlackMarlin.instDecidableSupportedIn	LeanDag.BlackMarlin.SupportedIn
+NODE	LeanDagTest.Minnow.mLead._proof_1	LeanDagTest.Minnow.Deadlock	thm
+EDGE	LeanDagTest.Minnow.mLead._proof_1	LeanDagTest.Minnow.mBlk._proof_3
 NODE	LeanDag.PartialRun.vdct	LeanDag.Adaptive.Run	def
 EDGE	LeanDag.PartialRun.vdct	LeanDag.PartialRun
 EDGE	LeanDag.PartialRun.vdct	LeanDag.Faults
@@ -8907,6 +9029,19 @@ EDGE	LeanDagTest.ugrowReactive_decided	LeanDagTest.instFaultsFinOfNatNat_leanDag
 EDGE	LeanDagTest.ugrowReactive_decided	LeanDag.PaceCore.proc
 EDGE	LeanDagTest.ugrowReactive_decided	LeanDag.IsLeaderBlock
 EDGE	LeanDagTest.ugrowReactive_decided	LeanDag.PaceCore.delay
+NODE	LeanDag.Minnow.CommittedAt._unary.eq_def	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.CommittedAt._unary.eq_def	LeanDag.Minnow.CommittedAt.match_1._arg_pusher
+EDGE	LeanDag.Minnow.CommittedAt._unary.eq_def	LeanDag.Faults
+EDGE	LeanDag.Minnow.CommittedAt._unary.eq_def	LeanDag.Minnow.Reaches
+EDGE	LeanDag.Minnow.CommittedAt._unary.eq_def	LeanDag.Minnow.Slot
+EDGE	LeanDag.Minnow.CommittedAt._unary.eq_def	LeanDag.Minnow.CommittedAt.match_1
+EDGE	LeanDag.Minnow.CommittedAt._unary.eq_def	LeanDag.Minnow.Concurrent
+EDGE	LeanDag.Minnow.CommittedAt._unary.eq_def	LeanDag.Minnow.Skipped
+EDGE	LeanDag.Minnow.CommittedAt._unary.eq_def	LeanDag.Minnow.Quorum
+EDGE	LeanDag.Minnow.CommittedAt._unary.eq_def	LeanDag.Minnow.CommittedAt._unary
+EDGE	LeanDag.Minnow.CommittedAt._unary.eq_def	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.CommittedAt._unary.eq_def	LeanDag.Minnow.CommittedAt._unary._proof_1
+EDGE	LeanDag.Minnow.CommittedAt._unary.eq_def	LeanDag.Minnow.slotBlocks
 NODE	LeanDag.BlockUniverse.mk.noConfusion	LeanDag.BlockDag	def
 EDGE	LeanDag.BlockUniverse.mk.noConfusion	LeanDag.Block
 EDGE	LeanDag.BlockUniverse.mk.noConfusion	LeanDag.Faults
@@ -9595,6 +9730,7 @@ EDGE	LeanDag.lineOf_mem_view._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.lineOf_mem_view._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.lineOf_mem_view._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.lineOf_mem_view._proof_1_1	LeanDag.BlockUniverse
+NODE	LeanDagTest.Minnow.mBlk.match_1	LeanDagTest.Minnow.Deadlock	def
 NODE	LeanDagTest.hyb9._proof_4	LeanDagTest.Hybrid	thm
 NODE	LeanDag.PaceCore.catchup	LeanDag.ViewPace	thm
 EDGE	LeanDag.PaceCore.catchup	LeanDag.Faults
@@ -9822,6 +9958,11 @@ EDGE	LeanDag.decided_of_leader_mem	LeanDag.Faults.f
 EDGE	LeanDag.decided_of_leader_mem	LeanDag.IsLeaderBlock
 EDGE	LeanDag.decided_of_leader_mem	LeanDag.SynchronisedOn
 EDGE	LeanDag.decided_of_leader_mem	LeanDag.Slots
+NODE	LeanDag.Minnow.instDecidableConcurrent	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.instDecidableConcurrent	LeanDag.Faults
+EDGE	LeanDag.Minnow.instDecidableConcurrent	LeanDag.Minnow.instDecidableConcurrent._aux_1
+EDGE	LeanDag.Minnow.instDecidableConcurrent	LeanDag.Minnow.Concurrent
+EDGE	LeanDag.Minnow.instDecidableConcurrent	LeanDag.Minnow.Dag
 NODE	LeanDag.epoch_closes._proof_1_6	LeanDag.Adaptive.Liveness	thm
 EDGE	LeanDag.epoch_closes._proof_1_6	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.epoch_closes._proof_1_6	LeanDag.Faults
@@ -9861,6 +10002,11 @@ EDGE	LeanDagTest.ugrowHonest	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowHonest	LeanDag.Delivery.mk
 EDGE	LeanDagTest.ugrowHonest	LeanDagTest.ugrowHonest._proof_4
 EDGE	LeanDagTest.ugrowHonest	LeanDag.Block.creator
+NODE	LeanDag.Minnow.CommittedAt.congr_simp	LeanDag.Minnow.Blocking	thm
+EDGE	LeanDag.Minnow.CommittedAt.congr_simp	LeanDag.Faults
+EDGE	LeanDag.Minnow.CommittedAt.congr_simp	LeanDag.Minnow.Slot
+EDGE	LeanDag.Minnow.CommittedAt.congr_simp	LeanDag.Minnow.CommittedAt
+EDGE	LeanDag.Minnow.CommittedAt.congr_simp	LeanDag.Minnow.Dag
 NODE	LeanDag.SkipMsg.decided_fill_agree	LeanDag.SafeSkip.Invariance	thm
 EDGE	LeanDag.SkipMsg.decided_fill_agree	LeanDag.Faults
 EDGE	LeanDag.SkipMsg.decided_fill_agree	LeanDag.Decided
@@ -10279,6 +10425,12 @@ EDGE	LeanDag.MahiMahi.votesIn	LeanDag.BlockUniverse.block
 EDGE	LeanDag.MahiMahi.votesIn	LeanDag.MahiMahi.Votes
 EDGE	LeanDag.MahiMahi.votesIn	LeanDag.BlockUniverse
 EDGE	LeanDag.MahiMahi.votesIn	LeanDag.MahiMahi.instDecidableVotes
+NODE	LeanDagTest.Minnow.Ds	LeanDagTest.Minnow.Deadlock	def
+EDGE	LeanDagTest.Minnow.Ds	LeanDagTest.Minnow.Ds._proof_1
+EDGE	LeanDagTest.Minnow.Ds	LeanDag.Minnow.Dag.mk
+EDGE	LeanDagTest.Minnow.Ds	LeanDag.Minnow.Dag
+EDGE	LeanDagTest.Minnow.Ds	LeanDagTest.Minnow.sBlk
+EDGE	LeanDagTest.Minnow.Ds	LeanDagTest.Minnow.Ds._proof_2
 NODE	LeanDagTest.ugrowLag._proof_20	LeanDagTest.Collapse	thm
 EDGE	LeanDagTest.ugrowLag._proof_20	LeanDagTest.ugrowLag._proof_16
 EDGE	LeanDagTest.ugrowLag._proof_20	LeanDagTest.ugrowLag._proof_14
@@ -10843,6 +10995,8 @@ EDGE	LeanDag.bootstrap_agree	LeanDag.Slots.chop
 EDGE	LeanDag.bootstrap_agree	LeanDag.Slots
 EDGE	LeanDag.bootstrap_agree	LeanDag.View
 EDGE	LeanDag.bootstrap_agree	LeanDag.Synchronised
+NODE	LeanDag.Minnow.CommittedAt.match_1.splitter	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.CommittedAt.match_1.splitter	LeanDag.Minnow.CommittedAt.match_1
 NODE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_5	LeanDag.BlackMarlin.Helpers.Order	thm
 EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_5	LeanDag.RefStepFrom
 EDGE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_5	LeanDag.Faults
@@ -11066,6 +11220,12 @@ EDGE	LeanDag.card_base_le	LeanDag.viewUpto
 EDGE	LeanDag.card_base_le	LeanDag.card_retained_le
 NODE	LeanDagTest.twinAcc_eq_empty	LeanDagTest.DoS.Novelty	thm
 EDGE	LeanDagTest.twinAcc_eq_empty	LeanDagTest.twinAcc
+NODE	LeanDag.Minnow.Dag.complete	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.Dag.complete	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag.complete	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.Dag.complete	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.Dag.complete	LeanDag.Minnow.Dag.block
+EDGE	LeanDag.Minnow.Dag.complete	LeanDag.Minnow.Dag.ids
 NODE	LeanDag.card_creatorsOf_correctBlocksAt	LeanDag.CommonCore	thm
 EDGE	LeanDag.card_creatorsOf_correctBlocksAt	LeanDag.creatorsOf
 EDGE	LeanDag.card_creatorsOf_correctBlocksAt	LeanDag.Faults
@@ -11658,6 +11818,13 @@ EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_5	LeanDag.Faults.f
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_5	LeanDag.AdaptivePolicy
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_5	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_5	LeanDag.Faults5.toFaults
+NODE	LeanDag.Minnow.pointers	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.pointers	LeanDag.creatorsOf
+EDGE	LeanDag.Minnow.pointers	LeanDag.Faults
+EDGE	LeanDag.Minnow.pointers	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.pointers	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.pointers	LeanDag.Minnow.Dag.block
+EDGE	LeanDag.Minnow.pointers	LeanDag.Minnow.verticesAt
 NODE	LeanDag.Odontoceti.eligible_iff	LeanDag.Odontoceti.Decision	thm
 EDGE	LeanDag.Odontoceti.eligible_iff	LeanDag.Slots.slotRound
 EDGE	LeanDag.Odontoceti.eligible_iff	LeanDag.Odontoceti.eligible_iff._proof_1_3
@@ -11907,6 +12074,7 @@ EDGE	LeanDag.BlackMarlin.Safety.holds	LeanDag.BlackMarlin.SupportedIn
 EDGE	LeanDag.BlackMarlin.Safety.holds	LeanDag.BlackMarlin.eq_of_isAnchor_of_supported
 EDGE	LeanDag.BlackMarlin.Safety.holds	LeanDag.Reaches
 NODE	LeanDagTest.exclAcc_eq_empty._proof_1_4	LeanDagTest.GC.Bootstrap	thm
+NODE	LeanDagTest.Minnow.kBlk.match_3	LeanDagTest.Minnow.Skip	def
 NODE	LeanDag.PaceCore.viewAt._proof_1	LeanDag.ViewPace	thm
 EDGE	LeanDag.PaceCore.viewAt._proof_1	LeanDag.Faults
 EDGE	LeanDag.PaceCore.viewAt._proof_1	LeanDag.PaceCore.holds
@@ -12935,6 +13103,8 @@ EDGE	LeanDag.AdaptiveRun.vdct	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptiveRun.vdct	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptiveRun.vdct	LeanDag.Slots
 EDGE	LeanDag.AdaptiveRun.vdct	LeanDag.View
+NODE	LeanDag.Minnow.CommittedAt.match_1.eq_1	LeanDag.Minnow.Blocking	thm
+EDGE	LeanDag.Minnow.CommittedAt.match_1.eq_1	LeanDag.Minnow.CommittedAt.match_1
 NODE	LeanDag.BlackMarlin.Flush.noConfusionType	LeanDag.BlackMarlin.Model.Ledger	def
 EDGE	LeanDag.BlackMarlin.Flush.noConfusionType	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Flush.noConfusionType	LeanDag.BlackMarlin.Flush
@@ -13266,6 +13436,16 @@ NODE	LeanDagTest.BlackMarlin.bmRRv	LeanDagTest.BlackMarlin.ViewLiveness	def
 EDGE	LeanDagTest.BlackMarlin.bmRRv	LeanDagTest.BlackMarlin.bmRRv._proof_2
 EDGE	LeanDagTest.BlackMarlin.bmRRv	LeanDag.BlackMarlin.Liveness.roundRobin
 EDGE	LeanDagTest.BlackMarlin.bmRRv	LeanDag.BlackMarlin.Rotation
+NODE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.creatorsOf
+EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Faults
+EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Minnow.SkippedByProcess
+EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Block.round
+EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Faults.f
+EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Minnow.Dag.block
+EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Minnow.pointers
+EDGE	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1	LeanDag.Minnow.verticesAt
 NODE	LeanDag.Hybrid.DirectCommitIn	LeanDag.Hybrid.Decision	def
 EDGE	LeanDag.Hybrid.DirectCommitIn	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.DirectCommitIn	LeanDag.HybridFaults.toFaults
@@ -13415,6 +13595,11 @@ EDGE	LeanDag.Odontoceti.decided_unique	LeanDag.Odontoceti.Decided.casesOn
 EDGE	LeanDag.Odontoceti.decided_unique	LeanDag.View
 EDGE	LeanDag.Odontoceti.decided_unique	LeanDag.Faults5.toFaults
 EDGE	LeanDag.Odontoceti.decided_unique	LeanDag.Odontoceti.Decided.directSkip
+NODE	LeanDagTest.Minnow.kBlk	LeanDagTest.Minnow.Skip	def
+EDGE	LeanDagTest.Minnow.kBlk	LeanDag.Block
+EDGE	LeanDagTest.Minnow.kBlk	LeanDagTest.Minnow.kBlk.match_1
+EDGE	LeanDagTest.Minnow.kBlk	LeanDag.Block.mk
+EDGE	LeanDagTest.Minnow.kBlk	LeanDagTest.Minnow.kBlk.match_3
 NODE	LeanDag.Nemo.Universe.mk.noConfusion	LeanDag.Nemo.Basic	def
 EDGE	LeanDag.Nemo.Universe.mk.noConfusion	LeanDag.Block
 EDGE	LeanDag.Nemo.Universe.mk.noConfusion	LeanDag.Nemo.Universe
@@ -13457,6 +13642,17 @@ EDGE	LeanDag.card_exposedTo_le	LeanDag.BlockUniverse
 EDGE	LeanDag.card_exposedTo_le	LeanDag.Faults.f
 EDGE	LeanDag.card_exposedTo_le	LeanDag.Faults.card_byzantine
 EDGE	LeanDag.card_exposedTo_le	LeanDag.exposedTo
+NODE	LeanDag.Minnow.ValidHere.casesOn	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.ValidHere.casesOn	LeanDag.Block
+EDGE	LeanDag.Minnow.ValidHere.casesOn	LeanDag.Faults
+EDGE	LeanDag.Minnow.ValidHere.casesOn	LeanDag.creators
+EDGE	LeanDag.Minnow.ValidHere.casesOn	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.ValidHere.casesOn	LeanDag.Block.round
+EDGE	LeanDag.Minnow.ValidHere.casesOn	LeanDag.Minnow.ValidHere.mk
+EDGE	LeanDag.Minnow.ValidHere.casesOn	LeanDag.Faults.f
+EDGE	LeanDag.Minnow.ValidHere.casesOn	LeanDag.Minnow.ValidHere.rec
+EDGE	LeanDag.Minnow.ValidHere.casesOn	LeanDag.Minnow.ValidHere
+EDGE	LeanDag.Minnow.ValidHere.casesOn	LeanDag.Block.creator
 NODE	LeanDag.mem_viewUpto	LeanDag.GC.Window	thm
 EDGE	LeanDag.mem_viewUpto	LeanDag.Delivery
 EDGE	LeanDag.mem_viewUpto	LeanDag.Faults
@@ -14051,6 +14247,9 @@ EDGE	LeanDag.Nemo.decided_full	LeanDag.Nemo.Universe
 EDGE	LeanDag.Nemo.decided_full	LeanDag.Nemo.View.subset_ids
 EDGE	LeanDag.Nemo.decided_full	LeanDag.Nemo.View
 EDGE	LeanDag.Nemo.decided_full	LeanDag.Slots
+NODE	LeanDagTest.Minnow.Dm._proof_1	LeanDagTest.Minnow.Deadlock	thm
+EDGE	LeanDagTest.Minnow.Dm._proof_1	LeanDagTest.Minnow.mBlk
+EDGE	LeanDagTest.Minnow.Dm._proof_1	LeanDag.Block.refs
 NODE	LeanDagTest.BlackMarlin.Ufull	LeanDagTest.BlackMarlin.Liveness	def
 EDGE	LeanDagTest.BlackMarlin.Ufull	LeanDagTest.BlackMarlin.Ufull._proof_1
 EDGE	LeanDagTest.BlackMarlin.Ufull	LeanDagTest.BlackMarlin.Ufull._proof_3
@@ -14435,6 +14634,9 @@ EDGE	LeanDag.MahiMahi.instDecidableDirectSkipIn	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.instDecidableDirectSkipIn	LeanDag.MahiMahi.instDecidableDirectSkipIn._aux_1
 EDGE	LeanDag.MahiMahi.instDecidableDirectSkipIn	LeanDag.BlockUniverse
 EDGE	LeanDag.MahiMahi.instDecidableDirectSkipIn	LeanDag.View
+NODE	LeanDagTest.Minnow.Ds._proof_1	LeanDagTest.Minnow.Deadlock	thm
+EDGE	LeanDagTest.Minnow.Ds._proof_1	LeanDag.Block.refs
+EDGE	LeanDagTest.Minnow.Ds._proof_1	LeanDagTest.Minnow.sBlk
 NODE	LeanDag.Integration.anchor_pruned	LeanDag.Integration.Retention	thm
 EDGE	LeanDag.Integration.anchor_pruned	LeanDag.Faults
 EDGE	LeanDag.Integration.anchor_pruned	LeanDag.mem_chop_ids
@@ -14812,6 +15014,12 @@ EDGE	LeanDag.BlackMarlin.Liveness.Statement	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.Liveness.Statement	LeanDag.BlackMarlin.Liveness.RotationFair
 EDGE	LeanDag.BlackMarlin.Liveness.Statement	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.Liveness.Statement	LeanDag.BlackMarlin.Liveness.Inclusion
+NODE	LeanDag.Minnow.verticesAt	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.verticesAt	LeanDag.Faults
+EDGE	LeanDag.Minnow.verticesAt	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.verticesAt	LeanDag.Block.round
+EDGE	LeanDag.Minnow.verticesAt	LeanDag.Minnow.Dag.block
+EDGE	LeanDag.Minnow.verticesAt	LeanDag.Minnow.Dag.ids
 NODE	LeanDag.card_filter_self_creator._proof_1_2	LeanDag.DoS.SelfParent	thm
 EDGE	LeanDag.card_filter_self_creator._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.card_filter_self_creator._proof_1_2	LeanDag.BlockUniverse.block
@@ -15347,6 +15555,13 @@ EDGE	LeanDag.MahiMahi.CertifiedIn	LeanDag.MahiMahi.certificates
 EDGE	LeanDag.MahiMahi.CertifiedIn	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.CertifiedIn	LeanDag.BlockUniverse
 EDGE	LeanDag.MahiMahi.CertifiedIn	LeanDag.Reaches
+NODE	LeanDag.Minnow.Quorum	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.Quorum	LeanDag.Faults
+EDGE	LeanDag.Minnow.Quorum	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.Quorum	LeanDag.Block.round
+EDGE	LeanDag.Minnow.Quorum	LeanDag.Faults.f
+EDGE	LeanDag.Minnow.Quorum	LeanDag.Minnow.Dag.block
+EDGE	LeanDag.Minnow.Quorum	LeanDag.Minnow.pointers
 NODE	LeanDagTest.ugrowLag._proof_2	LeanDagTest.Collapse	thm
 NODE	LeanDag.lineOf_mem	LeanDag.SafeSkip.Jump	thm
 EDGE	LeanDag.lineOf_mem	LeanDag.lineOf_aux
@@ -16055,6 +16270,11 @@ EDGE	LeanDag.ReactivePace.le_built	LeanDag.ReactivePace.toPaceCore
 EDGE	LeanDag.ReactivePace.le_built	LeanDag.Slots
 EDGE	LeanDag.ReactivePace.le_built	LeanDag.ReactivePace
 EDGE	LeanDag.ReactivePace.le_built	LeanDag.ReactivePace.le_built._proof_1_2
+NODE	LeanDag.Minnow.instDecidableSkippedByProcess	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.instDecidableSkippedByProcess	LeanDag.Faults
+EDGE	LeanDag.Minnow.instDecidableSkippedByProcess	LeanDag.Minnow.instDecidableSkippedByProcess._aux_1
+EDGE	LeanDag.Minnow.instDecidableSkippedByProcess	LeanDag.Minnow.SkippedByProcess
+EDGE	LeanDag.Minnow.instDecidableSkippedByProcess	LeanDag.Minnow.Dag
 NODE	LeanDag.Eligible.eq_1	LeanDag.Mysticeti	thm
 EDGE	LeanDag.Eligible.eq_1	LeanDag.Slots.slotRound
 EDGE	LeanDag.Eligible.eq_1	LeanDag.decisionRound
@@ -17386,6 +17606,9 @@ EDGE	LeanDag.slotAt.eq_1	LeanDag.Slots.slotRound
 EDGE	LeanDag.slotAt.eq_1	LeanDag.Slots.unbounded
 EDGE	LeanDag.slotAt.eq_1	LeanDag.slotAt
 EDGE	LeanDag.slotAt.eq_1	LeanDag.Slots
+NODE	LeanDag.Minnow.Dag.ctorIdx	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.Dag.ctorIdx	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag.ctorIdx	LeanDag.Minnow.Dag
 NODE	LeanDag.certifiedIn_of_directCommitIn	LeanDag.Mysticeti	thm
 EDGE	LeanDag.certifiedIn_of_directCommitIn	LeanDag.Faults
 EDGE	LeanDag.certifiedIn_of_directCommitIn	LeanDag.Slots.slotRound
@@ -17521,6 +17744,10 @@ EDGE	LeanDagTest.uskip_slot1	LeanDag.Faults5.toFaults
 EDGE	LeanDagTest.uskip_slot1	LeanDagTest.uskip_slot3
 NODE	LeanDag.BlackMarlin.Rotation.ctorIdx	LeanDag.BlackMarlin.Model.Rules	def
 EDGE	LeanDag.BlackMarlin.Rotation.ctorIdx	LeanDag.BlackMarlin.Rotation
+NODE	LeanDag.Minnow.Reaches.congr_simp	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.Reaches.congr_simp	LeanDag.Faults
+EDGE	LeanDag.Minnow.Reaches.congr_simp	LeanDag.Minnow.Reaches
+EDGE	LeanDag.Minnow.Reaches.congr_simp	LeanDag.Minnow.Dag
 NODE	LeanDag.MahiMahi.decided_below_of_committed_run._proof_1_3	LeanDag.MahiMahi.Helpers.Liveness	thm
 EDGE	LeanDag.MahiMahi.decided_below_of_committed_run._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.decided_below_of_committed_run._proof_1_3	LeanDag.MahiMahi.instDecidableEligible
@@ -17618,6 +17845,17 @@ EDGE	LeanDag.supporters	LeanDag.Block.refs
 EDGE	LeanDag.supporters	LeanDag.BlockUniverse.block
 EDGE	LeanDag.supporters	LeanDag.BlockUniverse
 EDGE	LeanDag.supporters	LeanDag.blocksAt
+NODE	LeanDag.Minnow.ValidHere.recOn	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.ValidHere.recOn	LeanDag.Block
+EDGE	LeanDag.Minnow.ValidHere.recOn	LeanDag.Faults
+EDGE	LeanDag.Minnow.ValidHere.recOn	LeanDag.creators
+EDGE	LeanDag.Minnow.ValidHere.recOn	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.ValidHere.recOn	LeanDag.Block.round
+EDGE	LeanDag.Minnow.ValidHere.recOn	LeanDag.Minnow.ValidHere.mk
+EDGE	LeanDag.Minnow.ValidHere.recOn	LeanDag.Faults.f
+EDGE	LeanDag.Minnow.ValidHere.recOn	LeanDag.Minnow.ValidHere.rec
+EDGE	LeanDag.Minnow.ValidHere.recOn	LeanDag.Minnow.ValidHere
+EDGE	LeanDag.Minnow.ValidHere.recOn	LeanDag.Block.creator
 NODE	LeanDagTest.odoBlk._proof_6	LeanDagTest.Odontoceti.Model	thm
 EDGE	LeanDagTest.odoBlk._proof_6	LeanDagTest.odoBlk._proof_3
 NODE	LeanDag.CausalStructure.rec	LeanDag.Causality	rec
@@ -18165,6 +18403,10 @@ NODE	LeanDag.Nemo.View.ctorIdx	LeanDag.Nemo.Basic	def
 EDGE	LeanDag.Nemo.View.ctorIdx	LeanDag.Nemo.Universe
 EDGE	LeanDag.Nemo.View.ctorIdx	LeanDag.Nemo.View
 NODE	LeanDagTest.reactHolds	LeanDagTest.Reactive	def
+NODE	LeanDagTest.Minnow.Dk._proof_2	LeanDagTest.Minnow.Skip	thm
+EDGE	LeanDagTest.Minnow.Dk._proof_2	LeanDag.Minnow.instDecidableValidHere
+EDGE	LeanDagTest.Minnow.Dk._proof_2	LeanDag.Minnow.ValidHere
+EDGE	LeanDagTest.Minnow.Dk._proof_2	LeanDagTest.Minnow.kBlk
 NODE	LeanDag.mem_history_of_pinned._proof_1_3	LeanDag.DoS.Exclusion	thm
 EDGE	LeanDag.mem_history_of_pinned._proof_1_3	LeanDag.creatorsOf
 EDGE	LeanDag.mem_history_of_pinned._proof_1_3	LeanDag.Faults
@@ -18176,6 +18418,26 @@ EDGE	LeanDag.mem_history_of_pinned._proof_1_3	LeanDag.Block.round
 EDGE	LeanDag.mem_history_of_pinned._proof_1_3	LeanDag.BlockUniverse
 EDGE	LeanDag.mem_history_of_pinned._proof_1_3	LeanDag.Faults.f
 EDGE	LeanDag.mem_history_of_pinned._proof_1_3	LeanDag.Block.creator
+NODE	LeanDag.Minnow.Dag.mk.inj	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.Dag.mk.inj	LeanDag.Block
+EDGE	LeanDag.Minnow.Dag.mk.inj	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag.mk.inj	LeanDag.Minnow.Dag.mk
+EDGE	LeanDag.Minnow.Dag.mk.inj	LeanDag.Minnow.Dag.mk.noConfusion
+EDGE	LeanDag.Minnow.Dag.mk.inj	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.Dag.mk.inj	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.Dag.mk.inj	LeanDag.Minnow.ValidHere
+NODE	LeanDag.Minnow.CommittedAt.eq_def	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.CommittedAt.eq_def	LeanDag.Faults
+EDGE	LeanDag.Minnow.CommittedAt.eq_def	LeanDag.Minnow.Reaches
+EDGE	LeanDag.Minnow.CommittedAt.eq_def	LeanDag.Minnow.Slot
+EDGE	LeanDag.Minnow.CommittedAt.eq_def	LeanDag.Minnow.CommittedAt.match_1
+EDGE	LeanDag.Minnow.CommittedAt.eq_def	LeanDag.Minnow.Concurrent
+EDGE	LeanDag.Minnow.CommittedAt.eq_def	LeanDag.Minnow.CommittedAt
+EDGE	LeanDag.Minnow.CommittedAt.eq_def	LeanDag.Minnow.Skipped
+EDGE	LeanDag.Minnow.CommittedAt.eq_def	LeanDag.Minnow.Quorum
+EDGE	LeanDag.Minnow.CommittedAt.eq_def	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.CommittedAt.eq_def	LeanDag.Minnow.CommittedAt._unary.eq_def
+EDGE	LeanDag.Minnow.CommittedAt.eq_def	LeanDag.Minnow.slotBlocks
 NODE	LeanDagTest.Dtwin._proof_2	LeanDagTest.DoS.Novelty	thm
 EDGE	LeanDagTest.Dtwin._proof_2	LeanDagTest.Utwin
 EDGE	LeanDagTest.Dtwin._proof_2	LeanDagTest.twinAcc_eq_empty
@@ -18751,6 +19013,10 @@ EDGE	LeanDag.JumpMsg.mk.inj	LeanDag.BlockUniverse.block
 EDGE	LeanDag.JumpMsg.mk.inj	LeanDag.Block.round
 EDGE	LeanDag.JumpMsg.mk.inj	LeanDag.BlockUniverse
 EDGE	LeanDag.JumpMsg.mk.inj	LeanDag.Block.creator
+NODE	LeanDag.Minnow.Reaches	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.Reaches	LeanDag.Minnow.cone
+EDGE	LeanDag.Minnow.Reaches	LeanDag.Faults
+EDGE	LeanDag.Minnow.Reaches	LeanDag.Minnow.Dag
 NODE	LeanDag.PartialRun.mk.noConfusion	LeanDag.Adaptive.Run	def
 EDGE	LeanDag.PartialRun.mk.noConfusion	LeanDag.PartialRun
 EDGE	LeanDag.PartialRun.mk.noConfusion	LeanDag.PartialRun.noConfusion
@@ -18847,6 +19113,13 @@ EDGE	LeanDag.BlackMarlin.instDecidableCommitted._aux_1	LeanDag.BlackMarlin.Rotat
 EDGE	LeanDag.BlackMarlin.instDecidableCommitted._aux_1	LeanDag.BlackMarlin.instDecidableIsAnchor
 EDGE	LeanDag.BlackMarlin.instDecidableCommitted._aux_1	LeanDag.BlackMarlin.Committed
 EDGE	LeanDag.BlackMarlin.instDecidableCommitted._aux_1	LeanDag.BlackMarlin.Supported
+NODE	LeanDag.Minnow.Dag.noConfusionType	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.Dag.noConfusionType	LeanDag.Block
+EDGE	LeanDag.Minnow.Dag.noConfusionType	LeanDag.Minnow.Dag.casesOn
+EDGE	LeanDag.Minnow.Dag.noConfusionType	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag.noConfusionType	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.Dag.noConfusionType	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.Dag.noConfusionType	LeanDag.Minnow.ValidHere
 NODE	LeanDagTest.Ucut	LeanDagTest.Integration	def
 EDGE	LeanDagTest.Ucut	LeanDag.chop
 EDGE	LeanDagTest.Ucut	LeanDag.BlockUniverse
@@ -19127,6 +19400,14 @@ EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_1	LeanDag.BlockUniver
 EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_1	LeanDag.BlockUniverse
 EDGE	LeanDag.Hybrid.thickLink_of_directCommit_aux._proof_1_1	LeanDag.HybridFaults.fb
+NODE	LeanDag.Minnow.Dag.recOn	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.Dag.recOn	LeanDag.Block
+EDGE	LeanDag.Minnow.Dag.recOn	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag.recOn	LeanDag.Minnow.Dag.rec
+EDGE	LeanDag.Minnow.Dag.recOn	LeanDag.Minnow.Dag.mk
+EDGE	LeanDag.Minnow.Dag.recOn	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.Dag.recOn	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.Dag.recOn	LeanDag.Minnow.ValidHere
 NODE	LeanDag.MahiMahi.Counting.holds	LeanDag.MahiMahi.Counting.Proof	thm
 EDGE	LeanDag.MahiMahi.Counting.holds	LeanDag.MahiMahi.Counting.GoodNonempty
 EDGE	LeanDag.MahiMahi.Counting.holds	LeanDag.MahiMahi.Counting.MultiLeader
@@ -19280,6 +19561,8 @@ EDGE	LeanDag.JumpMsg.toSkipMsg_top	LeanDag.BlockUniverse
 EDGE	LeanDag.JumpMsg.toSkipMsg_top	LeanDag.JumpMsg.B2
 EDGE	LeanDag.JumpMsg.toSkipMsg_top	LeanDag.lineOf_top
 EDGE	LeanDag.JumpMsg.toSkipMsg_top	LeanDag.SkipMsg.line
+NODE	LeanDag.Minnow.CommittedAt.match_1.eq_1	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.CommittedAt.match_1.eq_1	LeanDag.Minnow.CommittedAt.match_1
 NODE	LeanDag.BlackMarlin.mem_ledgerSeq_of_mem_history._proof_1_1	LeanDag.BlackMarlin.Helpers.Order	thm
 NODE	LeanDag.BlackMarlin.descentSUpto_reaches._proof_1_7	LeanDag.BlackMarlin.Helpers.Repair	thm
 EDGE	LeanDag.BlackMarlin.descentSUpto_reaches._proof_1_7	LeanDag.Faults
@@ -19294,6 +19577,10 @@ EDGE	LeanDag.MahiMahi.candidatesAt.eq_1	LeanDag.BlockUniverse
 EDGE	LeanDag.MahiMahi.candidatesAt.eq_1	LeanDag.blocksAt
 EDGE	LeanDag.MahiMahi.candidatesAt.eq_1	LeanDag.MahiMahi.candidatesAt
 EDGE	LeanDag.MahiMahi.candidatesAt.eq_1	LeanDag.Block.creator
+NODE	LeanDag.Minnow.Dag.block	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.Dag.block	LeanDag.Block
+EDGE	LeanDag.Minnow.Dag.block	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag.block	LeanDag.Minnow.Dag
 NODE	LeanDagTest.Uexcl._proof_3	LeanDagTest.DoS.Exclusion	thm
 EDGE	LeanDagTest.Uexcl._proof_3	LeanDagTest.lkx
 EDGE	LeanDagTest.Uexcl._proof_3	LeanDag.Correct
@@ -19967,6 +20254,7 @@ EDGE	LeanDag.viewUpto_subset_history._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.viewUpto_subset_history._proof_1_2	LeanDag.BlockUniverse.block
 EDGE	LeanDag.viewUpto_subset_history._proof_1_2	LeanDag.Block.round
 EDGE	LeanDag.viewUpto_subset_history._proof_1_2	LeanDag.BlockUniverse
+NODE	LeanDag.Minnow.CommittedAt._unary._proof_1	LeanDag.Minnow.Model.Rule	thm
 NODE	LeanDag.BlackMarlin.deliveredBelow	LeanDag.BlackMarlin.Model.Order	def
 EDGE	LeanDag.BlackMarlin.deliveredBelow	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.deliveredBelow	LeanDag.BlackMarlin.Flush
@@ -19985,6 +20273,8 @@ NODE	LeanDag.Nemo.all_decided_below_of_fairRun._proof_1_3	LeanDag.Nemo.Liveness	
 EDGE	LeanDag.Nemo.all_decided_below_of_fairRun._proof_1_3	LeanDag.Nemo.majority
 EDGE	LeanDag.Nemo.all_decided_below_of_fairRun._proof_1_3	LeanDag.Slots.slotRound
 EDGE	LeanDag.Nemo.all_decided_below_of_fairRun._proof_1_3	LeanDag.Slots
+NODE	LeanDagTest.Minnow.mBlk._proof_1	LeanDagTest.Minnow.Deadlock	thm
+EDGE	LeanDagTest.Minnow.mBlk._proof_1	LeanDagTest.Minnow.mBlk._proof_3
 NODE	LeanDag.Integration.anchor_pruned._proof_1_1	LeanDag.Integration.Retention	thm
 EDGE	LeanDag.Integration.anchor_pruned._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.Integration.anchor_pruned._proof_1_1	LeanDag.BlockUniverse.ids
@@ -20680,6 +20970,13 @@ EDGE	LeanDagTest.UtightB._proof_3	LeanDag.Correct
 EDGE	LeanDagTest.UtightB._proof_3	LeanDag.Block.round
 EDGE	LeanDagTest.UtightB._proof_3	LeanDagTest.tightBBlk
 EDGE	LeanDagTest.UtightB._proof_3	LeanDag.Block.creator
+NODE	LeanDag.Minnow.not_committedAt_of_not_quorum	LeanDag.Minnow.Blocking	thm
+EDGE	LeanDag.Minnow.not_committedAt_of_not_quorum	LeanDag.Faults
+EDGE	LeanDag.Minnow.not_committedAt_of_not_quorum	LeanDag.Minnow.quorum_of_committedAt
+EDGE	LeanDag.Minnow.not_committedAt_of_not_quorum	LeanDag.Minnow.Slot
+EDGE	LeanDag.Minnow.not_committedAt_of_not_quorum	LeanDag.Minnow.CommittedAt
+EDGE	LeanDag.Minnow.not_committedAt_of_not_quorum	LeanDag.Minnow.Quorum
+EDGE	LeanDag.Minnow.not_committedAt_of_not_quorum	LeanDag.Minnow.Dag
 NODE	LeanDagTest.BlackMarlin.divBlk.match_1	LeanDagTest.BlackMarlin.Divergence	def
 NODE	LeanDagTest.ugrowReactive._proof_42	LeanDagTest.Reactive	thm
 EDGE	LeanDagTest.ugrowReactive._proof_42	LeanDagTest.ugrowReactive._proof_5
@@ -20858,6 +21155,7 @@ EDGE	LeanDagTest.ugrowStuckPace._proof_2	LeanDag.Block.creator
 NODE	LeanDag.slotRound_le_of_boundedSpacing._proof_1_1	LeanDag.Quantitative	thm
 EDGE	LeanDag.slotRound_le_of_boundedSpacing._proof_1_1	LeanDag.Slots.slotRound
 EDGE	LeanDag.slotRound_le_of_boundedSpacing._proof_1_1	LeanDag.Slots
+NODE	LeanDagTest.Minnow.mBlk._proof_3	LeanDagTest.Minnow.Deadlock	thm
 NODE	LeanDagTest.tightABlk._proof_1	LeanDagTest.HybridTight	thm
 NODE	LeanDag.PaceCore.casesOn	LeanDag.ViewPace	def
 EDGE	LeanDag.PaceCore.casesOn	LeanDag.Faults
@@ -21379,6 +21677,9 @@ EDGE	LeanDagTest.ugrowSkewCorrect	LeanDagTest.ugrowSkewPace
 EDGE	LeanDagTest.ugrowSkewCorrect	LeanDagTest.ugrowSkewCorrect._proof_1
 EDGE	LeanDagTest.ugrowSkewCorrect	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowSkewCorrect	LeanDag.ViewPace
+NODE	LeanDag.Minnow.ValidHere	LeanDag.Minnow.Model.Rule	ind
+EDGE	LeanDag.Minnow.ValidHere	LeanDag.Block
+EDGE	LeanDag.Minnow.ValidHere	LeanDag.Faults
 NODE	LeanDag.ValidWrt.refs_nonempty._proof_1_1	LeanDag.Block	thm
 EDGE	LeanDag.ValidWrt.refs_nonempty._proof_1_1	LeanDag.Block
 EDGE	LeanDag.ValidWrt.refs_nonempty._proof_1_1	LeanDag.creatorsOf
@@ -21467,6 +21768,19 @@ EDGE	LeanDag.BlackMarlin.SupportPreferring	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.SupportPreferring	LeanDag.BlackMarlin.Flush.block
 EDGE	LeanDag.BlackMarlin.SupportPreferring	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.SupportPreferring	LeanDag.BlackMarlin.Supported
+NODE	LeanDag.Minnow.instDecidableValidHere._proof_1	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.instDecidableValidHere._proof_1	LeanDag.Block
+EDGE	LeanDag.Minnow.instDecidableValidHere._proof_1	LeanDag.Minnow.ValidHere.quorum
+EDGE	LeanDag.Minnow.instDecidableValidHere._proof_1	LeanDag.Faults
+EDGE	LeanDag.Minnow.instDecidableValidHere._proof_1	LeanDag.creators
+EDGE	LeanDag.Minnow.instDecidableValidHere._proof_1	LeanDag.Minnow.ValidHere.distinct_creators
+EDGE	LeanDag.Minnow.instDecidableValidHere._proof_1	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.instDecidableValidHere._proof_1	LeanDag.Block.round
+EDGE	LeanDag.Minnow.instDecidableValidHere._proof_1	LeanDag.Minnow.ValidHere.mk
+EDGE	LeanDag.Minnow.instDecidableValidHere._proof_1	LeanDag.Faults.f
+EDGE	LeanDag.Minnow.instDecidableValidHere._proof_1	LeanDag.Minnow.ValidHere
+EDGE	LeanDag.Minnow.instDecidableValidHere._proof_1	LeanDag.Block.creator
+EDGE	LeanDag.Minnow.instDecidableValidHere._proof_1	LeanDag.Minnow.ValidHere.predecessor
 NODE	LeanDag.historyUptoFrom_mono._proof_1_2	LeanDag.Causality	thm
 NODE	LeanDag.BlackMarlin.recurrence._proof_1_4	LeanDag.BlackMarlin.Helpers.Liveness	thm
 EDGE	LeanDag.BlackMarlin.recurrence._proof_1_4	LeanDag.Faults
@@ -22217,6 +22531,10 @@ EDGE	LeanDag.ValidWrt.refs_empty_of_round_zero	LeanDag.ValidWrt
 NODE	LeanDagTest.mmSlotsC._proof_4	LeanDagTest.MahiMahi.Counting	thm
 EDGE	LeanDagTest.mmSlotsC._proof_4	LeanDagTest.mmSlotsC._proof_2
 NODE	LeanDagTest.BlackMarlin.bmRR._proof_1	LeanDagTest.BlackMarlin.Liveness	thm
+NODE	LeanDagTest.Minnow.Ds._proof_2	LeanDagTest.Minnow.Deadlock	thm
+EDGE	LeanDagTest.Minnow.Ds._proof_2	LeanDag.Minnow.instDecidableValidHere
+EDGE	LeanDagTest.Minnow.Ds._proof_2	LeanDagTest.Minnow.sBlk
+EDGE	LeanDagTest.Minnow.Ds._proof_2	LeanDag.Minnow.ValidHere
 NODE	LeanDag.CausalStructure.mem_refs_of_mem_history_of_round_succ._proof_1_1	LeanDag.Causality	thm
 EDGE	LeanDag.CausalStructure.mem_refs_of_mem_history_of_round_succ._proof_1_1	LeanDag.Block
 EDGE	LeanDag.CausalStructure.mem_refs_of_mem_history_of_round_succ._proof_1_1	LeanDag.Block.round
@@ -22735,6 +23053,13 @@ EDGE	LeanDag.AdaptivePolicy.noConfusionType	LeanDag.Slots
 NODE	LeanDag.CausalStructure.refs_empty_of_round_zero._proof_1_1	LeanDag.Causality	thm
 EDGE	LeanDag.CausalStructure.refs_empty_of_round_zero._proof_1_1	LeanDag.Block
 EDGE	LeanDag.CausalStructure.refs_empty_of_round_zero._proof_1_1	LeanDag.Block.round
+NODE	LeanDag.Minnow.ValidHere.quorum	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.ValidHere.quorum	LeanDag.Block
+EDGE	LeanDag.Minnow.ValidHere.quorum	LeanDag.Faults
+EDGE	LeanDag.Minnow.ValidHere.quorum	LeanDag.creators
+EDGE	LeanDag.Minnow.ValidHere.quorum	LeanDag.Block.round
+EDGE	LeanDag.Minnow.ValidHere.quorum	LeanDag.Faults.f
+EDGE	LeanDag.Minnow.ValidHere.quorum	LeanDag.Minnow.ValidHere
 NODE	LeanDag.Nemo.decidableDirectCommit._aux_1	LeanDag.Nemo.Rules	def
 EDGE	LeanDag.Nemo.decidableDirectCommit._aux_1	LeanDag.Nemo.majority
 EDGE	LeanDag.Nemo.decidableDirectCommit._aux_1	LeanDag.Nemo.Universe
@@ -24109,6 +24434,11 @@ EDGE	LeanDag.committed_of_correct_block	LeanDag.Slots.mono
 EDGE	LeanDag.committed_of_correct_block	LeanDag.mem_history_of_decided_commit
 EDGE	LeanDag.committed_of_correct_block	LeanDag.Block.creator
 EDGE	LeanDag.committed_of_correct_block	LeanDag.Synchronised
+NODE	LeanDag.Minnow.instDecidableReaches._aux_1	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.instDecidableReaches._aux_1	LeanDag.Minnow.cone
+EDGE	LeanDag.Minnow.instDecidableReaches._aux_1	LeanDag.Faults
+EDGE	LeanDag.Minnow.instDecidableReaches._aux_1	LeanDag.Minnow.Reaches
+EDGE	LeanDag.Minnow.instDecidableReaches._aux_1	LeanDag.Minnow.Dag
 NODE	LeanDag.ReactiveM.certifies._proof_1_3	LeanDag.Reactive.Mysticeti	thm
 EDGE	LeanDag.ReactiveM.certifies._proof_1_3	LeanDag.ReactiveM.toReactivePace
 EDGE	LeanDag.ReactiveM.certifies._proof_1_3	LeanDag.Faults
@@ -24663,6 +24993,15 @@ EDGE	LeanDag.SkipMsg.skipFill._proof_15	LeanDag.SkipMsg
 EDGE	LeanDag.SkipMsg.skipFill._proof_15	LeanDag.SkipMsg.r0
 EDGE	LeanDag.SkipMsg.skipFill._proof_15	LeanDag.SkipMsg.B1
 NODE	LeanDagTest.gst_is_forced_pace._proof_1_2	LeanDagTest.Unbounded	thm
+NODE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Faults
+EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Minnow.Skipped
+EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Block.round
+EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Faults.f
+EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Minnow.Dag.block
+EDGE	LeanDag.Minnow.instDecidableSkipped._aux_1	LeanDag.Minnow.verticesAt
 NODE	LeanDag.Nemo.View.mk.noConfusion	LeanDag.Nemo.Basic	def
 EDGE	LeanDag.Nemo.View.mk.noConfusion	LeanDag.Nemo.View.noConfusion
 EDGE	LeanDag.Nemo.View.mk.noConfusion	LeanDag.Nemo.Universe
@@ -24722,6 +25061,14 @@ EDGE	LeanDag.Nemo.blocksAt.eq_1	LeanDag.Nemo.Universe.block
 EDGE	LeanDag.Nemo.blocksAt.eq_1	LeanDag.Block.round
 EDGE	LeanDag.Nemo.blocksAt.eq_1	LeanDag.Nemo.blocksAt
 EDGE	LeanDag.Nemo.blocksAt.eq_1	LeanDag.Nemo.Universe.ids
+NODE	LeanDag.Minnow.Dag.casesOn	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.Dag.casesOn	LeanDag.Block
+EDGE	LeanDag.Minnow.Dag.casesOn	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag.casesOn	LeanDag.Minnow.Dag.rec
+EDGE	LeanDag.Minnow.Dag.casesOn	LeanDag.Minnow.Dag.mk
+EDGE	LeanDag.Minnow.Dag.casesOn	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.Dag.casesOn	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.Dag.casesOn	LeanDag.Minnow.ValidHere
 NODE	LeanDagTest.ugrowTimingPace._proof_19	LeanDagTest.Growth	thm
 EDGE	LeanDagTest.ugrowTimingPace._proof_19	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowTimingPace._proof_19	LeanDag.BlockUniverse.block
@@ -24951,6 +25298,14 @@ EDGE	LeanDag.byzPool_mono	LeanDag.viewUpto
 EDGE	LeanDag.byzPool_mono	LeanDag.mem_byzPool
 EDGE	LeanDag.byzPool_mono	LeanDag.Block.creator
 EDGE	LeanDag.byzPool_mono	LeanDag.byzPool
+NODE	LeanDag.Minnow.Dag.noConfusion	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.Dag.noConfusion	LeanDag.Block
+EDGE	LeanDag.Minnow.Dag.noConfusion	LeanDag.Minnow.Dag.casesOn
+EDGE	LeanDag.Minnow.Dag.noConfusion	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag.noConfusion	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.Dag.noConfusion	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.Dag.noConfusion	LeanDag.Minnow.ValidHere
+EDGE	LeanDag.Minnow.Dag.noConfusion	LeanDag.Minnow.Dag.noConfusionType
 NODE	LeanDag.ViewPace	LeanDag.ViewPace	ind
 EDGE	LeanDag.ViewPace	LeanDag.Faults
 EDGE	LeanDag.ViewPace	LeanDag.BlockUniverse
@@ -25228,6 +25583,8 @@ EDGE	LeanDagTest.ugapPace._proof_6	LeanDagTest.omitRefs
 NODE	LeanDagTest.odoSlots_slotRound	LeanDagTest.Odontoceti.Model	thm
 EDGE	LeanDagTest.odoSlots_slotRound	LeanDag.Slots.slotRound
 EDGE	LeanDagTest.odoSlots_slotRound	LeanDagTest.odoSlots
+NODE	LeanDag.Minnow.Dag	LeanDag.Minnow.Model.Rule	ind
+EDGE	LeanDag.Minnow.Dag	LeanDag.Faults
 NODE	LeanDag.Odontoceti.PartialRun.rec	LeanDag.Adaptive.Odontoceti	rec
 EDGE	LeanDag.Odontoceti.PartialRun.rec	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.PartialRun.rec	LeanDag.AdaptivePolicy.W
@@ -25411,6 +25768,9 @@ EDGE	LeanDag.exists_mem_refs_of_correct_support	LeanDag.creators_refs_subset_aut
 EDGE	LeanDag.exists_mem_refs_of_correct_support	LeanDag.BlockUniverse.eq_of_creator_eq
 EDGE	LeanDag.exists_mem_refs_of_correct_support	LeanDag.Block.creator
 EDGE	LeanDag.exists_mem_refs_of_correct_support	LeanDag.BlockUniverse.creators_quorum
+NODE	LeanDagTest.Minnow.mLead	LeanDagTest.Minnow.Deadlock	def
+EDGE	LeanDagTest.Minnow.mLead	LeanDag.Minnow.Slot
+EDGE	LeanDagTest.Minnow.mLead	LeanDagTest.Minnow.mLead._proof_1
 NODE	LeanDagTest.skTight._proof_1	LeanDagTest.Integration	thm
 NODE	LeanDagTest.ugrowReactive._proof_25	LeanDagTest.Reactive	thm
 EDGE	LeanDagTest.ugrowReactive._proof_25	LeanDag.Slots.slotRound
@@ -25443,6 +25803,7 @@ EDGE	LeanDag.Delivery.mk._flat_ctor	LeanDag.Block.round
 EDGE	LeanDag.Delivery.mk._flat_ctor	LeanDag.BlockUniverse
 EDGE	LeanDag.Delivery.mk._flat_ctor	LeanDag.Delivery.mk
 EDGE	LeanDag.Delivery.mk._flat_ctor	LeanDag.Block.creator
+NODE	LeanDagTest.Minnow.sBlk._proof_3	LeanDagTest.Minnow.Deadlock	thm
 NODE	LeanDag.SkipMsg.mem_freshIds._proof_1_6	LeanDag.SafeSkip.Basic	thm
 EDGE	LeanDag.SkipMsg.mem_freshIds._proof_1_6	LeanDag.Faults
 EDGE	LeanDag.SkipMsg.mem_freshIds._proof_1_6	LeanDag.SkipMsg.r
@@ -25796,6 +26157,22 @@ EDGE	LeanDagTest.uomit_not_synchronisedOn._proof_1_9	LeanDagTest.Uomit
 EDGE	LeanDagTest.uomit_not_synchronisedOn._proof_1_9	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.uomit_not_synchronisedOn._proof_1_9	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.uomit_not_synchronisedOn._proof_1_9	LeanDag.Block.creator
+NODE	LeanDag.Minnow.Dag.valid	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.Dag.valid	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag.valid	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.Dag.valid	LeanDag.Minnow.Dag.block
+EDGE	LeanDag.Minnow.Dag.valid	LeanDag.Minnow.Dag.ids
+EDGE	LeanDag.Minnow.Dag.valid	LeanDag.Minnow.ValidHere
+NODE	LeanDag.Minnow.instDecidableValidHere	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.instDecidableValidHere	LeanDag.Block
+EDGE	LeanDag.Minnow.instDecidableValidHere	LeanDag.Minnow.instDecidableValidHere._proof_1
+EDGE	LeanDag.Minnow.instDecidableValidHere	LeanDag.Faults
+EDGE	LeanDag.Minnow.instDecidableValidHere	LeanDag.creators
+EDGE	LeanDag.Minnow.instDecidableValidHere	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.instDecidableValidHere	LeanDag.Block.round
+EDGE	LeanDag.Minnow.instDecidableValidHere	LeanDag.Faults.f
+EDGE	LeanDag.Minnow.instDecidableValidHere	LeanDag.Minnow.ValidHere
+EDGE	LeanDag.Minnow.instDecidableValidHere	LeanDag.Block.creator
 NODE	LeanDagTest.ugrowSkewPace._proof_27	LeanDagTest.ViewPace	thm
 EDGE	LeanDagTest.ugrowSkewPace._proof_27	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowSkewPace._proof_27	LeanDagTest.ugrowSkewPace._proof_16
@@ -25988,6 +26365,10 @@ NODE	LeanDag.convergesWithin_iff_bounded	LeanDag.ViewPace	thm
 EDGE	LeanDag.convergesWithin_iff_bounded	LeanDag.Faults
 EDGE	LeanDag.convergesWithin_iff_bounded	LeanDag.convergesWithin_of_bounded
 EDGE	LeanDag.convergesWithin_iff_bounded	LeanDag.ConvergesWithin
+NODE	LeanDag.Minnow.Concurrent.congr_simp	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.Concurrent.congr_simp	LeanDag.Faults
+EDGE	LeanDag.Minnow.Concurrent.congr_simp	LeanDag.Minnow.Concurrent
+EDGE	LeanDag.Minnow.Concurrent.congr_simp	LeanDag.Minnow.Dag
 NODE	LeanDag.PartialRun.ctorIdx	LeanDag.Adaptive.Run	def
 EDGE	LeanDag.PartialRun.ctorIdx	LeanDag.PartialRun
 EDGE	LeanDag.PartialRun.ctorIdx	LeanDag.Faults
@@ -26118,6 +26499,12 @@ EDGE	LeanDag.MahiMahi.votesIn_eq_of_three._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.votesIn_eq_of_three._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.MahiMahi.votesIn_eq_of_three._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.MahiMahi.votesIn_eq_of_three._proof_1_1	LeanDag.BlockUniverse
+NODE	LeanDag.Minnow.instDecidableConcurrent._aux_1	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.instDecidableConcurrent._aux_1	LeanDag.Faults
+EDGE	LeanDag.Minnow.instDecidableConcurrent._aux_1	LeanDag.Minnow.Reaches
+EDGE	LeanDag.Minnow.instDecidableConcurrent._aux_1	LeanDag.Minnow.Concurrent
+EDGE	LeanDag.Minnow.instDecidableConcurrent._aux_1	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.instDecidableConcurrent._aux_1	LeanDag.Minnow.instDecidableReaches
 NODE	LeanDag.exists_partialRun._proof_1_2	LeanDag.Adaptive.Liveness	thm
 EDGE	LeanDag.exists_partialRun._proof_1_2	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.exists_partialRun._proof_1_2	LeanDag.Faults
@@ -28786,6 +29173,7 @@ EDGE	LeanDag.reliable_eq_correct._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.reliable_eq_correct._proof_1_1	LeanDag.Faults.byzantine
 EDGE	LeanDag.reliable_eq_correct._proof_1_1	LeanDag.Correct
 EDGE	LeanDag.reliable_eq_correct._proof_1_1	LeanDag.Faults.f
+NODE	LeanDagTest.Minnow.sBlk.match_1	LeanDagTest.Minnow.Deadlock	def
 NODE	LeanDag.AdaptiveRun._sizeOf_1	LeanDag.Adaptive.Run	def
 EDGE	LeanDag.AdaptiveRun._sizeOf_1	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.AdaptiveRun._sizeOf_1	LeanDag.AdaptiveRun
@@ -29113,6 +29501,9 @@ EDGE	LeanDag.Delivery.recOn	LeanDag.BlockUniverse
 EDGE	LeanDag.Delivery.recOn	LeanDag.Delivery.mk
 EDGE	LeanDag.Delivery.recOn	LeanDag.Delivery.rec
 EDGE	LeanDag.Delivery.recOn	LeanDag.Block.creator
+NODE	LeanDagTest.Minnow.Dk._proof_1	LeanDagTest.Minnow.Skip	thm
+EDGE	LeanDagTest.Minnow.Dk._proof_1	LeanDag.Block.refs
+EDGE	LeanDagTest.Minnow.Dk._proof_1	LeanDagTest.Minnow.kBlk
 NODE	LeanDag.BlackMarlin.eq_of_supported._proof_1_2	LeanDag.BlackMarlin.Helpers.Rules	thm
 EDGE	LeanDag.BlackMarlin.eq_of_supported._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.eq_of_supported._proof_1_2	LeanDag.Faults.byzantine
@@ -29382,6 +29773,14 @@ EDGE	LeanDag.MahiMahi.AgreeUpto.goodAt_eq	LeanDag.MahiMahi.AgreeUpto.symm
 EDGE	LeanDag.MahiMahi.AgreeUpto.goodAt_eq	LeanDag.BlockUniverse
 EDGE	LeanDag.MahiMahi.AgreeUpto.goodAt_eq	LeanDag.MahiMahi.AgreeUpto.goodAt_subset
 EDGE	LeanDag.MahiMahi.AgreeUpto.goodAt_eq	LeanDag.MahiMahi.decisionRoundAt
+NODE	LeanDag.Minnow.slotBlocks	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.slotBlocks	LeanDag.Faults
+EDGE	LeanDag.Minnow.slotBlocks	LeanDag.Minnow.Slot
+EDGE	LeanDag.Minnow.slotBlocks	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.slotBlocks	LeanDag.Block.round
+EDGE	LeanDag.Minnow.slotBlocks	LeanDag.Minnow.Dag.block
+EDGE	LeanDag.Minnow.slotBlocks	LeanDag.Minnow.Dag.ids
+EDGE	LeanDag.Minnow.slotBlocks	LeanDag.Block.creator
 NODE	LeanDagTest.excl_round_le	LeanDagTest.GC.Bootstrap	thm
 EDGE	LeanDagTest.excl_round_le	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.excl_round_le	LeanDag.Block.round
@@ -29882,6 +30281,18 @@ NODE	LeanDag.slotAt	LeanDag.Liveness	def
 EDGE	LeanDag.slotAt	LeanDag.Slots.slotRound
 EDGE	LeanDag.slotAt	LeanDag.Slots.unbounded
 EDGE	LeanDag.slotAt	LeanDag.Slots
+NODE	LeanDag.Minnow.CommittedAt.eq_2	LeanDag.Minnow.Blocking	thm
+EDGE	LeanDag.Minnow.CommittedAt.eq_2	LeanDag.Faults
+EDGE	LeanDag.Minnow.CommittedAt.eq_2	LeanDag.Minnow.Reaches
+EDGE	LeanDag.Minnow.CommittedAt.eq_2	LeanDag.Minnow.Slot
+EDGE	LeanDag.Minnow.CommittedAt.eq_2	LeanDag.Minnow.CommittedAt.match_1
+EDGE	LeanDag.Minnow.CommittedAt.eq_2	LeanDag.Minnow.Concurrent
+EDGE	LeanDag.Minnow.CommittedAt.eq_2	LeanDag.Minnow.CommittedAt
+EDGE	LeanDag.Minnow.CommittedAt.eq_2	LeanDag.Minnow.Skipped
+EDGE	LeanDag.Minnow.CommittedAt.eq_2	LeanDag.Minnow.Quorum
+EDGE	LeanDag.Minnow.CommittedAt.eq_2	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.CommittedAt.eq_2	LeanDag.Minnow.slotBlocks
+EDGE	LeanDag.Minnow.CommittedAt.eq_2	LeanDag.Minnow.CommittedAt.eq_def
 NODE	LeanDag.waveRobin_spansEligible._simp_1_1	LeanDag.WaveRobin	thm
 EDGE	LeanDag.waveRobin_spansEligible._simp_1_1	LeanDag.Slots.slotRound
 EDGE	LeanDag.waveRobin_spansEligible._simp_1_1	LeanDag.eligible_iff
@@ -30023,6 +30434,8 @@ EDGE	LeanDag.mem_authorsIn	LeanDag.BlockUniverse.block
 EDGE	LeanDag.mem_authorsIn	LeanDag.Block.round
 EDGE	LeanDag.mem_authorsIn	LeanDag.BlockUniverse
 EDGE	LeanDag.mem_authorsIn	LeanDag.Block.creator
+NODE	LeanDag.Minnow.CommittedAt.match_1.eq_2	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.CommittedAt.match_1.eq_2	LeanDag.Minnow.CommittedAt.match_1
 NODE	LeanDag.card_viewUpto_le'._proof_1_3	LeanDag.DoS.Novelty	thm
 EDGE	LeanDag.card_viewUpto_le'._proof_1_3	LeanDag.Delivery
 EDGE	LeanDag.card_viewUpto_le'._proof_1_3	LeanDag.Faults
@@ -30463,6 +30876,14 @@ EDGE	LeanDag.directSkipIn_chop._proof_1_6	LeanDag.BlockUniverse.block
 EDGE	LeanDag.directSkipIn_chop._proof_1_6	LeanDag.Block.round
 EDGE	LeanDag.directSkipIn_chop._proof_1_6	LeanDag.BlockUniverse
 NODE	LeanDagTest.censBlk._proof_5	LeanDagTest.Quality.Model	thm
+NODE	LeanDag.Minnow.instDecidableQuorum._aux_1	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.instDecidableQuorum._aux_1	LeanDag.Faults
+EDGE	LeanDag.Minnow.instDecidableQuorum._aux_1	LeanDag.Minnow.Quorum
+EDGE	LeanDag.Minnow.instDecidableQuorum._aux_1	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.instDecidableQuorum._aux_1	LeanDag.Block.round
+EDGE	LeanDag.Minnow.instDecidableQuorum._aux_1	LeanDag.Faults.f
+EDGE	LeanDag.Minnow.instDecidableQuorum._aux_1	LeanDag.Minnow.Dag.block
+EDGE	LeanDag.Minnow.instDecidableQuorum._aux_1	LeanDag.Minnow.pointers
 NODE	LeanDag.BlackMarlin.Order.DescentOrder	LeanDag.BlackMarlin.Order.Statement	def
 EDGE	LeanDag.BlackMarlin.Order.DescentOrder	LeanDag.BlackMarlin.deliverSeq
 EDGE	LeanDag.BlackMarlin.Order.DescentOrder	LeanDag.Faults
@@ -30582,6 +31003,18 @@ EDGE	LeanDag.decidableEquivFree._aux_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.decidableEquivFree._aux_1	LeanDag.Block.round
 EDGE	LeanDag.decidableEquivFree._aux_1	LeanDag.BlockUniverse
 EDGE	LeanDag.decidableEquivFree._aux_1	LeanDag.Block.creator
+NODE	LeanDag.Minnow.not_committedAt_of_dead	LeanDag.Minnow.Blocking	thm
+EDGE	LeanDag.Minnow.not_committedAt_of_dead	LeanDag.Faults
+EDGE	LeanDag.Minnow.not_committedAt_of_dead	LeanDag.Minnow.quorum_of_committedAt
+EDGE	LeanDag.Minnow.not_committedAt_of_dead	LeanDag.Minnow.Reaches
+EDGE	LeanDag.Minnow.not_committedAt_of_dead	LeanDag.Minnow.CommittedAt.eq_2
+EDGE	LeanDag.Minnow.not_committedAt_of_dead	LeanDag.Minnow.Slot
+EDGE	LeanDag.Minnow.not_committedAt_of_dead	LeanDag.Minnow.Concurrent
+EDGE	LeanDag.Minnow.not_committedAt_of_dead	LeanDag.Minnow.CommittedAt
+EDGE	LeanDag.Minnow.not_committedAt_of_dead	LeanDag.Minnow.Skipped
+EDGE	LeanDag.Minnow.not_committedAt_of_dead	LeanDag.Minnow.Quorum
+EDGE	LeanDag.Minnow.not_committedAt_of_dead	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.not_committedAt_of_dead	LeanDag.Minnow.slotBlocks
 NODE	LeanDag.ViewPace.toDelivery_held	LeanDag.PaceDelivery	thm
 EDGE	LeanDag.ViewPace.toDelivery_held	LeanDag.ViewPace.toPaceCore
 EDGE	LeanDag.ViewPace.toDelivery_held	LeanDag.Faults
@@ -30662,6 +31095,14 @@ EDGE	LeanDag.PaceCore.drift_collapse._proof_1_1	LeanDag.PaceCore.delay
 NODE	LeanDag.eligible_of_lt_of_spacing._proof_1_2	LeanDag.Mysticeti	thm
 EDGE	LeanDag.eligible_of_lt_of_spacing._proof_1_2	LeanDag.Slots.slotRound
 EDGE	LeanDag.eligible_of_lt_of_spacing._proof_1_2	LeanDag.Slots
+NODE	LeanDag.Minnow.Dag.mk.injEq	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.Dag.mk.injEq	LeanDag.Block
+EDGE	LeanDag.Minnow.Dag.mk.injEq	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag.mk.injEq	LeanDag.Minnow.Dag.mk
+EDGE	LeanDag.Minnow.Dag.mk.injEq	LeanDag.Minnow.Dag.mk.inj
+EDGE	LeanDag.Minnow.Dag.mk.injEq	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.Dag.mk.injEq	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.Dag.mk.injEq	LeanDag.Minnow.ValidHere
 NODE	LeanDagTest.growBlock_refs	LeanDagTest.Growth	thm
 EDGE	LeanDagTest.growBlock_refs	LeanDag.Block.refs
 EDGE	LeanDagTest.growBlock_refs	LeanDagTest.rrBlock
@@ -31181,6 +31622,15 @@ EDGE	LeanDag.pruned_subset_peer_store	LeanDag.BlockUniverse.block
 EDGE	LeanDag.pruned_subset_peer_store	LeanDag.Block.round
 EDGE	LeanDag.pruned_subset_peer_store	LeanDag.BlockUniverse
 EDGE	LeanDag.pruned_subset_peer_store	LeanDag.viewUpto
+NODE	LeanDag.Minnow.ValidHere.mk	LeanDag.Minnow.Model.Rule	ctor
+EDGE	LeanDag.Minnow.ValidHere.mk	LeanDag.Block
+EDGE	LeanDag.Minnow.ValidHere.mk	LeanDag.Faults
+EDGE	LeanDag.Minnow.ValidHere.mk	LeanDag.creators
+EDGE	LeanDag.Minnow.ValidHere.mk	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.ValidHere.mk	LeanDag.Block.round
+EDGE	LeanDag.Minnow.ValidHere.mk	LeanDag.Faults.f
+EDGE	LeanDag.Minnow.ValidHere.mk	LeanDag.Minnow.ValidHere
+EDGE	LeanDag.Minnow.ValidHere.mk	LeanDag.Block.creator
 NODE	LeanDag.creatorsOf.eq_1	LeanDag.Block	thm
 EDGE	LeanDag.creatorsOf.eq_1	LeanDag.Block
 EDGE	LeanDag.creatorsOf.eq_1	LeanDag.creatorsOf
@@ -31627,6 +32077,8 @@ EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.BlockUniverse.valid
 EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.BlockUniverse.round_of_mem_refs
 EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.Reaches.single
 EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.Block.creator
+NODE	LeanDag.Minnow.CommittedAt.match_1.eq_2	LeanDag.Minnow.Blocking	thm
+EDGE	LeanDag.Minnow.CommittedAt.match_1.eq_2	LeanDag.Minnow.CommittedAt.match_1
 NODE	LeanDag.Hybrid.admissible_kTight._proof_1_1	LeanDag.Hybrid.Rules	thm
 EDGE	LeanDag.Hybrid.admissible_kTight._proof_1_1	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.admissible_kTight._proof_1_1	LeanDag.HybridFaults.fc
@@ -33172,6 +33624,7 @@ EDGE	LeanDagTest.urecover._proof_6	LeanDagTest.Ucut
 EDGE	LeanDagTest.urecover._proof_6	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.urecover._proof_6	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.urecover._proof_6	LeanDag.Block.creator
+NODE	LeanDag.Minnow.Slot	LeanDag.Minnow.Model.Rule	def
 NODE	LeanDagTest.Utwin6	LeanDagTest.Odontoceti.Model	def
 EDGE	LeanDagTest.Utwin6	LeanDagTest.Utwin6._proof_2
 EDGE	LeanDagTest.Utwin6	LeanDagTest.Utwin6._proof_3
@@ -33796,6 +34249,16 @@ EDGE	LeanDagTest.ugrowReactive._proof_40	LeanDagTest.rrSlots
 EDGE	LeanDagTest.ugrowReactive._proof_40	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ugrowReactive._proof_40	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowReactive._proof_40	LeanDag.Block.creator
+NODE	LeanDag.Minnow.ValidHere.rec	LeanDag.Minnow.Model.Rule	rec
+EDGE	LeanDag.Minnow.ValidHere.rec	LeanDag.Block
+EDGE	LeanDag.Minnow.ValidHere.rec	LeanDag.Faults
+EDGE	LeanDag.Minnow.ValidHere.rec	LeanDag.creators
+EDGE	LeanDag.Minnow.ValidHere.rec	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.ValidHere.rec	LeanDag.Block.round
+EDGE	LeanDag.Minnow.ValidHere.rec	LeanDag.Minnow.ValidHere.mk
+EDGE	LeanDag.Minnow.ValidHere.rec	LeanDag.Faults.f
+EDGE	LeanDag.Minnow.ValidHere.rec	LeanDag.Minnow.ValidHere
+EDGE	LeanDag.Minnow.ValidHere.rec	LeanDag.Block.creator
 NODE	LeanDagTest.rrSlots._proof_2	LeanDagTest.Quantitative	thm
 NODE	LeanDag.creatorsOf_correctBlocksAt_subset	LeanDag.CommonCore	thm
 EDGE	LeanDag.creatorsOf_correctBlocksAt_subset	LeanDag.creatorsOf
@@ -33958,6 +34421,12 @@ EDGE	LeanDag.mem_blocksAt._simp_1	LeanDag.Block.round
 EDGE	LeanDag.mem_blocksAt._simp_1	LeanDag.BlockUniverse
 EDGE	LeanDag.mem_blocksAt._simp_1	LeanDag.blocksAt
 EDGE	LeanDag.mem_blocksAt._simp_1	LeanDag.mem_blocksAt
+NODE	LeanDag.Minnow.Dag.mk	LeanDag.Minnow.Model.Rule	ctor
+EDGE	LeanDag.Minnow.Dag.mk	LeanDag.Block
+EDGE	LeanDag.Minnow.Dag.mk	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag.mk	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.Dag.mk	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.Dag.mk	LeanDag.Minnow.ValidHere
 NODE	LeanDag.Accepted.mk	LeanDag.DoS.Acceptance	ctor
 EDGE	LeanDag.Accepted.mk	LeanDag.Faults
 EDGE	LeanDag.Accepted.mk	LeanDag.BlockUniverse.ids
@@ -34292,6 +34761,16 @@ EDGE	LeanDagTest.ugrowLag._proof_24	LeanDagTest.ugrowLag._proof_16
 EDGE	LeanDagTest.ugrowLag._proof_24	LeanDagTest.ugrowLag._proof_14
 EDGE	LeanDagTest.ugrowLag._proof_24	LeanDagTest.lagBuilt
 EDGE	LeanDagTest.ugrowLag._proof_24	LeanDagTest.lagStamp
+NODE	LeanDag.Minnow.CommittedAt._unsafe_rec	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.CommittedAt._unsafe_rec	LeanDag.Faults
+EDGE	LeanDag.Minnow.CommittedAt._unsafe_rec	LeanDag.Minnow.Reaches
+EDGE	LeanDag.Minnow.CommittedAt._unsafe_rec	LeanDag.Minnow.Slot
+EDGE	LeanDag.Minnow.CommittedAt._unsafe_rec	LeanDag.Minnow.CommittedAt.match_1
+EDGE	LeanDag.Minnow.CommittedAt._unsafe_rec	LeanDag.Minnow.Concurrent
+EDGE	LeanDag.Minnow.CommittedAt._unsafe_rec	LeanDag.Minnow.Skipped
+EDGE	LeanDag.Minnow.CommittedAt._unsafe_rec	LeanDag.Minnow.Quorum
+EDGE	LeanDag.Minnow.CommittedAt._unsafe_rec	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.CommittedAt._unsafe_rec	LeanDag.Minnow.slotBlocks
 NODE	LeanDagTest.ucrashJump_line_eq	LeanDagTest.SafeSkip	thm
 EDGE	LeanDagTest.ucrashJump_line_eq	LeanDagTest.ucrashMsg
 EDGE	LeanDagTest.ucrashJump_line_eq	LeanDagTest.ucrashJump_line_eq._proof_1_4
@@ -34562,6 +35041,10 @@ EDGE	LeanDag.Hybrid.DirectSkip	LeanDag.HybridFaults.toFaults
 EDGE	LeanDag.Hybrid.DirectSkip	LeanDag.BlockUniverse
 EDGE	LeanDag.Hybrid.DirectSkip	LeanDag.Hybrid.q
 EDGE	LeanDag.Hybrid.DirectSkip	LeanDag.blames
+NODE	LeanDagTest.Minnow.Dm._proof_2	LeanDagTest.Minnow.Deadlock	thm
+EDGE	LeanDagTest.Minnow.Dm._proof_2	LeanDag.Minnow.instDecidableValidHere
+EDGE	LeanDagTest.Minnow.Dm._proof_2	LeanDagTest.Minnow.mBlk
+EDGE	LeanDagTest.Minnow.Dm._proof_2	LeanDag.Minnow.ValidHere
 NODE	LeanDag.all_decided_below_of_fairRun._proof_1_2	LeanDag.Liveness	thm
 EDGE	LeanDag.all_decided_below_of_fairRun._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.all_decided_below_of_fairRun._proof_1_2	LeanDag.Slots.slotRound
@@ -34778,6 +35261,16 @@ EDGE	LeanDag.mem_ids_of_reaches	LeanDag.BlockUniverse
 EDGE	LeanDag.mem_ids_of_reaches	LeanDag.BlockUniverse.causal
 EDGE	LeanDag.mem_ids_of_reaches	LeanDag.CausalStructure.mem_ids_of_reaches
 EDGE	LeanDag.mem_ids_of_reaches	LeanDag.Reaches
+NODE	LeanDag.Minnow.ValidHere.mk._flat_ctor	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.ValidHere.mk._flat_ctor	LeanDag.Block
+EDGE	LeanDag.Minnow.ValidHere.mk._flat_ctor	LeanDag.Faults
+EDGE	LeanDag.Minnow.ValidHere.mk._flat_ctor	LeanDag.creators
+EDGE	LeanDag.Minnow.ValidHere.mk._flat_ctor	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.ValidHere.mk._flat_ctor	LeanDag.Block.round
+EDGE	LeanDag.Minnow.ValidHere.mk._flat_ctor	LeanDag.Minnow.ValidHere.mk
+EDGE	LeanDag.Minnow.ValidHere.mk._flat_ctor	LeanDag.Faults.f
+EDGE	LeanDag.Minnow.ValidHere.mk._flat_ctor	LeanDag.Minnow.ValidHere
+EDGE	LeanDag.Minnow.ValidHere.mk._flat_ctor	LeanDag.Block.creator
 NODE	LeanDag.Delivery.rec	LeanDag.Liveness	rec
 EDGE	LeanDag.Delivery.rec	LeanDag.Delivery
 EDGE	LeanDag.Delivery.rec	LeanDag.Faults
@@ -34949,6 +35442,9 @@ EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.BlockUniverse
 EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.Faults.f
 EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.certificates
 EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.Block.creator
+NODE	LeanDag.Minnow.CommittedAt.match_1._arg_pusher	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.CommittedAt.match_1._arg_pusher	LeanDag.Minnow.CommittedAt.match_1.splitter
+EDGE	LeanDag.Minnow.CommittedAt.match_1._arg_pusher	LeanDag.Minnow.CommittedAt.match_1
 NODE	LeanDagTest.BlackMarlin.ugrowBM._proof_5	LeanDagTest.BlackMarlin.Reactive	thm
 NODE	LeanDag.BlackMarlin.mem_coneAnchors._simp_1_2	LeanDag.BlackMarlin.Helpers.Ledger	thm
 NODE	LeanDag.ViewPace.toDelivery.eq_1	LeanDag.PaceDelivery	thm
@@ -35830,6 +36326,11 @@ NODE	LeanDag.SkipMsg.idx	LeanDag.SafeSkip.Basic	def
 EDGE	LeanDag.SkipMsg.idx	LeanDag.Faults
 EDGE	LeanDag.SkipMsg.idx	LeanDag.BlockUniverse
 EDGE	LeanDag.SkipMsg.idx	LeanDag.SkipMsg
+NODE	LeanDag.Minnow.CommittedAt	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.CommittedAt	LeanDag.Faults
+EDGE	LeanDag.Minnow.CommittedAt	LeanDag.Minnow.Slot
+EDGE	LeanDag.Minnow.CommittedAt	LeanDag.Minnow.CommittedAt._unary
+EDGE	LeanDag.Minnow.CommittedAt	LeanDag.Minnow.Dag
 NODE	LeanDag.card_serve_le	LeanDag.GC.Bootstrap	thm
 EDGE	LeanDag.card_serve_le	LeanDag.Delivery
 EDGE	LeanDag.card_serve_le	LeanDag.ByzBudget
@@ -36401,6 +36902,19 @@ EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.ViewPace
 EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.Slots
 EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.Slots.mono
 EDGE	LeanDag.ViewPace.commits_recur_local	LeanDag.PaceCore.delay
+NODE	LeanDag.Minnow.quorum_of_committedAt	LeanDag.Minnow.Blocking	thm
+EDGE	LeanDag.Minnow.quorum_of_committedAt	LeanDag.Faults
+EDGE	LeanDag.Minnow.quorum_of_committedAt	LeanDag.Minnow.Reaches
+EDGE	LeanDag.Minnow.quorum_of_committedAt	LeanDag.Minnow.CommittedAt.eq_2
+EDGE	LeanDag.Minnow.quorum_of_committedAt	LeanDag.Minnow.quorum_of_committedAt.match_1_1
+EDGE	LeanDag.Minnow.quorum_of_committedAt	LeanDag.Minnow.Slot
+EDGE	LeanDag.Minnow.quorum_of_committedAt	LeanDag.Minnow.Concurrent
+EDGE	LeanDag.Minnow.quorum_of_committedAt	LeanDag.Minnow.CommittedAt
+EDGE	LeanDag.Minnow.quorum_of_committedAt	LeanDag.Minnow.Skipped
+EDGE	LeanDag.Minnow.quorum_of_committedAt	LeanDag.Minnow.Quorum
+EDGE	LeanDag.Minnow.quorum_of_committedAt	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.quorum_of_committedAt	LeanDag.Minnow.slotBlocks
+EDGE	LeanDag.Minnow.quorum_of_committedAt	LeanDag.Minnow.CommittedAt.eq_1
 NODE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds._proof_1_3	LeanDag.BlackMarlin.Helpers.Reactive	thm
 EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds._proof_1_3	LeanDag.Faults.f
@@ -36606,6 +37120,14 @@ EDGE	LeanDag.BlackMarlin.descentUpto_suffix._proof_1_4	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.descentUpto_suffix._proof_1_4	LeanDag.BlockUniverse.block
 EDGE	LeanDag.BlackMarlin.descentUpto_suffix._proof_1_4	LeanDag.Block.round
 EDGE	LeanDag.BlackMarlin.descentUpto_suffix._proof_1_4	LeanDag.BlockUniverse
+NODE	LeanDag.Minnow.Dag.mk.noConfusion	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.Dag.mk.noConfusion	LeanDag.Block
+EDGE	LeanDag.Minnow.Dag.mk.noConfusion	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag.mk.noConfusion	LeanDag.Minnow.Dag.noConfusion
+EDGE	LeanDag.Minnow.Dag.mk.noConfusion	LeanDag.Minnow.Dag.mk
+EDGE	LeanDag.Minnow.Dag.mk.noConfusion	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.Dag.mk.noConfusion	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.Dag.mk.noConfusion	LeanDag.Minnow.ValidHere
 NODE	LeanDagTest.BlackMarlin.fullFlush.match_1	LeanDagTest.BlackMarlin.Ledger	def
 EDGE	LeanDagTest.BlackMarlin.fullFlush.match_1	LeanDagTest.BlackMarlin.fullBlock
 NODE	LeanDag.BlackMarlin.Pace.recOn	LeanDag.BlackMarlin.Model.Round	def
@@ -36993,6 +37515,14 @@ EDGE	LeanDagTest.twinBlk	LeanDagTest.twinBlk._proof_5
 EDGE	LeanDagTest.twinBlk	LeanDagTest.twinBlk._proof_6
 EDGE	LeanDagTest.twinBlk	LeanDag.Block.mk
 EDGE	LeanDagTest.twinBlk	LeanDagTest.twinBlk._proof_4
+NODE	LeanDag.Minnow.Dag.mk.sizeOf_spec	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.Dag.mk.sizeOf_spec	LeanDag.Block
+EDGE	LeanDag.Minnow.Dag.mk.sizeOf_spec	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag.mk.sizeOf_spec	LeanDag.Minnow.Dag.mk
+EDGE	LeanDag.Minnow.Dag.mk.sizeOf_spec	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.Dag.mk.sizeOf_spec	LeanDag.Minnow.Dag._sizeOf_inst
+EDGE	LeanDag.Minnow.Dag.mk.sizeOf_spec	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.Dag.mk.sizeOf_spec	LeanDag.Minnow.ValidHere
 NODE	LeanDag.notMem_stuck_of_decided	LeanDag.Liveness	thm
 EDGE	LeanDag.notMem_stuck_of_decided	LeanDag.Decided.rec
 EDGE	LeanDag.notMem_stuck_of_decided	LeanDag.Faults
@@ -37540,6 +38070,13 @@ EDGE	LeanDag.SkipMsg.skipFill._proof_10	LeanDag.SkipMsg
 EDGE	LeanDag.SkipMsg.skipFill._proof_10	LeanDag.SkipMsg.r0
 EDGE	LeanDag.SkipMsg.skipFill._proof_10	LeanDag.SkipMsg.line
 EDGE	LeanDag.SkipMsg.skipFill._proof_10	LeanDag.SkipMsg.B1
+NODE	LeanDag.Minnow.Dag._sizeOf_1	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.Dag._sizeOf_1	LeanDag.Block
+EDGE	LeanDag.Minnow.Dag._sizeOf_1	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag._sizeOf_1	LeanDag.Minnow.Dag.rec
+EDGE	LeanDag.Minnow.Dag._sizeOf_1	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.Dag._sizeOf_1	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.Dag._sizeOf_1	LeanDag.Minnow.ValidHere
 NODE	LeanDag.MahiMahi.AgreeUpto.blocksAt_eq._proof_1_2	LeanDag.MahiMahi.Helpers.Liveness	thm
 EDGE	LeanDag.MahiMahi.AgreeUpto.blocksAt_eq._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.AgreeUpto.blocksAt_eq._proof_1_2	LeanDag.BlockUniverse.block
@@ -37589,6 +38126,17 @@ EDGE	LeanDag.Integration.fill_cone_subset._proof_1_5	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.fill_cone_subset._proof_1_5	LeanDag.SkipMsg
 EDGE	LeanDag.Integration.fill_cone_subset._proof_1_5	LeanDag.SkipMsg.r0
 EDGE	LeanDag.Integration.fill_cone_subset._proof_1_5	LeanDag.SkipMsg.B1
+NODE	LeanDag.Minnow.Skipped.congr_simp	LeanDag.Minnow.Model.Rule	thm
+EDGE	LeanDag.Minnow.Skipped.congr_simp	LeanDag.Faults
+EDGE	LeanDag.Minnow.Skipped.congr_simp	LeanDag.Minnow.Skipped
+EDGE	LeanDag.Minnow.Skipped.congr_simp	LeanDag.Minnow.Dag
+NODE	LeanDag.Minnow.Dag.mk._flat_ctor	LeanDag.Minnow.Model.Rule	def
+EDGE	LeanDag.Minnow.Dag.mk._flat_ctor	LeanDag.Block
+EDGE	LeanDag.Minnow.Dag.mk._flat_ctor	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag.mk._flat_ctor	LeanDag.Minnow.Dag.mk
+EDGE	LeanDag.Minnow.Dag.mk._flat_ctor	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.Dag.mk._flat_ctor	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.Dag.mk._flat_ctor	LeanDag.Minnow.ValidHere
 NODE	LeanDagTest.BlackMarlin.Udiv	LeanDagTest.BlackMarlin.Divergence	def
 EDGE	LeanDagTest.BlackMarlin.Udiv	LeanDagTest.BlackMarlin.divBlk
 EDGE	LeanDagTest.BlackMarlin.Udiv	LeanDagTest.BlackMarlin.Udiv._proof_2
@@ -37678,6 +38226,13 @@ EDGE	LeanDagTest.ugap_not_synchronisedOn	LeanDagTest.Uomit
 EDGE	LeanDagTest.ugap_not_synchronisedOn	LeanDag.Correct
 EDGE	LeanDagTest.ugap_not_synchronisedOn	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugap_not_synchronisedOn	LeanDag.SynchronisedOn
+NODE	LeanDag.Minnow.Dag.rec	LeanDag.Minnow.Model.Rule	rec
+EDGE	LeanDag.Minnow.Dag.rec	LeanDag.Block
+EDGE	LeanDag.Minnow.Dag.rec	LeanDag.Faults
+EDGE	LeanDag.Minnow.Dag.rec	LeanDag.Minnow.Dag.mk
+EDGE	LeanDag.Minnow.Dag.rec	LeanDag.Block.refs
+EDGE	LeanDag.Minnow.Dag.rec	LeanDag.Minnow.Dag
+EDGE	LeanDag.Minnow.Dag.rec	LeanDag.Minnow.ValidHere
 NODE	LeanDagTest.Uhyb9._proof_1	LeanDagTest.Hybrid	thm
 EDGE	LeanDagTest.Uhyb9._proof_1	LeanDag.Block.refs
 EDGE	LeanDagTest.Uhyb9._proof_1	LeanDagTest.hyb9Blk
