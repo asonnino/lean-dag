@@ -6838,6 +6838,47 @@ send each of its vertices to **process `1` alone**.
    ∧ Quorum Dm 15`, checked — so what stops them is the second clause and
    not the first.
 
+**Why once is not enough.** If the round-`0` slot is never decided, and
+the second condition asks that *every* earlier slot be resolved, one dead
+slot might seem to block everything by itself. It does not, and the
+reason is worth stating: **resolved is not decided.** The first disjunct
+asks only that some vertex of the slot lie in the candidate's causal
+past, not that it be committed or skipped. Two pointers carry it there in
+two rounds, because a vertex references `2f + 1` of the `3f + 1` below it
+and so cannot miss both of them.
+
+So a dead slot is out of reach for exactly two rounds of leaders: its own
+— where there is no causal path either way — and the one above, whose
+leaders under round robin are the two processes that did not point to it.
+From two rounds up it lies in every causal past and resolves for
+everyone. On the model: `¬ Reaches Dm 1 0`, `¬ Reaches Dm 6 0` and
+`¬ Reaches Dm 7 0` against `Reaches Dm 8 0`, `Reaches Dm 9 0` and
+`Reaches Dm 14 0`, all checked. **One dead slot holds two rounds
+and no more**, which is why the figure shows the habit repeating —
+and round robin at `l = 2` over four processes puts the faulty process in
+a leader slot every other round, which is exactly the cadence that keeps a fresh dead
+slot within reach of every leader.
+
+**The gap in the decision sequence is permanent, and by itself harmless.**
+The slot is undecided in every view, not merely in the full DAG: a
+partial view sees fewer pointers, so no quorum, and fewer non-pointers,
+so no skip, and as it grows the counts converge to two and two. So every
+correct process has the same permanent hole at the same position of
+`leaders`, and Safe-Commit is content — a leader disabled in one DAG
+stays disabled in every larger one. What defeats the rule is not the hole
+but its recurrence.
+
+One thing the hole does cost belongs with the wording matters of §19.2
+and §19.3 rather than with this one.
+Definition 9 commits "all **non-leader** vertices that are in the causal
+past of a leader vertex `l` for which `Ps*` is satisfied", and Definition
+4 commits a leader vertex "if and only if the pattern `P` is enabled" for
+it. Taken together, a dead leader vertex is in the causal past of
+committed vertices and is never committed itself, so the output omits a
+vertex that others delivered depend on. The phrase surely means every
+vertex of the past; at the letter the dead slot leaves a hole in the
+delivered set and not only in the decision sequence.
+
 **No timing assumption helps.** Eventual synchrony guarantees that a
 vertex a *correct* process sends is received; it says nothing about one a
 faulty process withheld. Nothing in the execution turns on message delay,

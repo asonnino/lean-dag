@@ -148,6 +148,20 @@ example : ¬ CommittedAt Dm mLead 8 16 := not_committedAt_of_not_quorum (by deci
 example : ¬ CommittedAt Dm mLead 9 17 :=
   not_committedAt_of_dead (j := 8) (by omega) (by decide)
 
+/-- **Why the construction has to repeat.** A dead slot is *resolved* for
+later leaders without ever being *decided*: the first disjunct of the
+second clause asks only that some vertex of the slot lie in the
+candidate's causal past, not that it be committed or skipped. Two
+pointers carry it there in two rounds, because a vertex references
+`2f + 1` of the `3f + 1` below it and so cannot miss both. So the
+round-`0` dead slot is out of reach for the leaders of rounds `0` and
+`1` — its own round, where there is no causal path, and the round above,
+whose leaders are the two processes that did not point to it — and is in
+the causal past of every leader from round `2` on. One dead slot holds two
+rounds and no more. -/
+example : ¬ Reaches Dm 1 0 ∧ ¬ Reaches Dm 6 0 ∧ ¬ Reaches Dm 7 0 ∧
+    Reaches Dm 8 0 ∧ Reaches Dm 9 0 ∧ Reaches Dm 14 0 := by decide
+
 /-- The blocking slot is always the newest dead one, the older having
 been absorbed: the round-1 dead vertex is in the round-3 leader's causal
 past, and the round-2 one is not. -/

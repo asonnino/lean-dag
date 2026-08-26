@@ -102,8 +102,18 @@ disagreement needs `(s − f) + (f + 1) ≤ 2f + 1`, that is `s ≤ 2f`. So
 What is left is the causal-past escape, and that is unavailable for
 exactly the leaders that follow a dead slot within one round: the other
 leader of its own round is concurrent with it, and under round robin the
-next round's leaders can be the processes that never received it. The
-witness sustains this every cycle, and `crs*` commits nothing at all.
+next round's leaders can be the processes that never received it.
+
+**One dead slot is not enough, and that is the point.** Resolved is not
+decided: the first disjunct asks only that some vertex of the slot lie in
+the candidate's causal past, and two pointers carry it there in two
+rounds, since a vertex references `2f + 1` of the `3f + 1` below it and
+cannot miss both. So a dead slot blocks two rounds of leaders and no
+more. The witness sustains the habit every cycle — round robin at
+`l = 2` over four processes puts the faulty process in a leader slot
+every other round, which is exactly the cadence that keeps a fresh dead
+slot within reach of every leader — and `crs*` then commits nothing at
+all.
 
 ## 4. What is not covered
 
