@@ -72,3 +72,7 @@ import LeanDagTest.Hydrozoan.BlockUniverse
 import LeanDagTest.Hydrozoan.CausalHistory
 import LeanDagTest.Hydrozoan.DirectRules
 import LeanDagTest.Hydrozoan.Decided
+import LeanDagTest.Hydrozoan.DirectSafety
+import LeanDagTest.Hydrozoan.SlotAgreement
+import LeanDagTest.Hydrozoan.PrefixAgreement
+import LeanDagTest.Hydrozoan.Liveness
