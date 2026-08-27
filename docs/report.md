@@ -7684,6 +7684,20 @@ universe are one object rather than two readings of one, so the `ids_eq`
 and `block_eq` conditions every liveness result carries hold by `rfl`,
 and `Run.ofDoSValid` asks for three fewer fields than `Run` does.
 
+`Run.ofDoSValidReactive` carries this to liveness. Over the core's
+reactive schedule such a universe is a `Run`, so the four guarantees of
+§20.6 hold of it with no further hypothesis, and the two disciplines do
+not collide: a reactive builder's citation obligations are confined to
+reliable authors — `ReactivePace.vote_or_wait` is guarded by the leader
+being reliable and `ReactiveM.cert_or_wait`'s fallback by the author
+being in `T` — while a correct validator is never exposed
+(`citable_of_correct`). That is particular to this route. The
+block-creation discipline of §20.5 obliges a builder to reference a block
+by the author of *any* held vote, reliable or not, and that clause and
+`DoSValid` are not jointly satisfiable where a convicted equivocator
+votes for a reliable leader. Whether the composite is inhabited where
+equivocation actually happens is not settled here.
+
 What this does not claim: `DoSValid` is strictly stronger than FinWhale
 specifies, the protocol admitting a DAG that cites an equivocating
 non-leader. The statement is about a deployment running FinWhale over a

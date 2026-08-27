@@ -60,6 +60,21 @@ specifies — the protocol admits a DAG citing an equivocating non-leader —
 so this says what a deployment over a DoS-protected DAG gets, not what
 the paper's model gives.
 
+`Run.ofDoSValidReactive` carries that to liveness. Over the core's
+reactive schedule a DoS-valid universe is a `Run`, so the four guarantees
+of §12 hold of it — and the two disciplines do not collide, because a
+reactive builder's citation obligations are confined to reliable authors
+(`ReactivePace.vote_or_wait` is guarded by the leader being reliable,
+`ReactiveM.cert_or_wait`'s fallback by the author being in `T`) and a
+correct validator is never exposed (`citable_of_correct`, from the DoS
+arc's `ExposedIn.not_correct`). That is particular to this route: the
+block-creation discipline of §10 obliges a builder to reference a block
+by the author of *any* held vote, and that clause and `DoSValid` are not
+jointly satisfiable where a convicted equivocator votes for a reliable
+leader. What is not settled is whether the composite is inhabited where
+equivocation actually happens; that wants a witness with a real
+equivocation, which §9's reactive execution does not have.
+
 ## 2. The committee, and where the numbers come from
 
 `Params` fixes `p` with `1 ≤ p ≤ f` and `n + 1 = 3f + 2p`, stated

@@ -1,4 +1,5 @@
 import LeanDag.FinWhale.Protocol
+import LeanDag.FinWhale.Reactive
 import LeanDag.DoS.Exposure
 
 /-!
@@ -23,6 +24,11 @@ the DAG and the universe are the *same object*, so the `ids_eq` and
 `block_eq` conditions every liveness result carries are `rfl` — a `Run`
 built this way names one execution rather than two and an equation
 between them.
+
+`Run.ofDoSValidReactive` closes the last gap: over the core's reactive
+schedule such a universe is a `Run`, so the four guarantees hold of it
+with no further hypothesis. Whether that composite is *inhabited* where
+equivocation actually happens is not settled here and wants a witness.
 
 **What this does not claim.** `DoSValid` is strictly stronger than what
 FinWhale specifies: the protocol admits a DAG that cites an equivocating
@@ -155,6 +161,63 @@ def Run.ofDoSValid [LinearOrder BlockId] (U : BlockUniverse Validator BlockId Pa
   selfParented := selfParented_ofDoSValid hdos
   choose := choose
   chooseSound := chooseSound
+
+/-! ## A reactive deployment over a DoS-protected DAG
+
+The construction above is structural: it gives the DAG, and every safety
+result with it, but `Run.ofDoSValid` still asks for the liveness input.
+This section supplies it from the core's reactive schedule.
+
+**The two disciplines do not collide.** `DoSValid` forbids citing an
+author a block's own history convicts of equivocating, and a reactive
+builder's two citation obligations are both confined to reliable authors:
+`ReactivePace.vote_or_wait` is guarded by `S.leader k ∈ T`, and
+`ReactiveM.cert_or_wait`'s fallback obliges referencing only blocks whose
+creator is in `T`. At `T = Correct` every block either clause demands is
+authored by a correct validator, and `ExposedIn.not_correct` says a
+correct validator is never exposed. So nothing the schedule requires is
+anything the condition forbids.
+
+That is particular to this route. The block-creation discipline of
+`Creation.lean` obliges a builder to reference a block by the author of
+*any* held vote, reliable or not, and that clause and `DoSValid` are not
+jointly satisfiable where a convicted equivocator votes for a reliable
+leader. -/
+
+variable [S : Slots Validator]
+
+omit P S in
+/-- **Correct authors are always citable.** An exposed author has
+equivocated, so it is Byzantine; the DoS condition therefore never
+forbids citing a correct validator, which is every block either reactive
+clause obliges a builder to reference. -/
+theorem citable_of_correct {b : BlockId} (hb : b ∈ U.ids) {X : Validator}
+    (hX : X ∈ (Correct : Finset Validator)) : ¬ ExposedIn U b X :=
+  fun h => absurd hX (by simpa using h.not_correct hb)
+
+/-- **A DoS-valid universe on the reactive schedule is a run.** The DAG
+is the universe, the pace is the reactive one, and the liveness input is
+`commits_of_reactive`; the tie-break is `chooseLeast`. Four of `Run`'s
+fields that a caller would otherwise discharge are `rfl` or theorems
+here: the two readings of the blocks, the self-parent edge, and the
+schedule's leader being the DAG's.
+
+The horizon of the schedule serves as the horizon of the liveness
+argument, so no relation between them is asked for. -/
+noncomputable def Run.ofDoSValidReactive [LinearOrder BlockId]
+    (U : BlockUniverse Validator BlockId Payload) (hdos : DoSValid U) {N : ℕ}
+    (rm : ReactiveM U (Correct : Finset Validator) N)
+    (hround : ∀ k, S.slotRound k = k) (hrr : RoundRobin S.leader)
+    (horizon : ℕ) (rounds_le : ∀ b ∈ U.ids, (U.block b).round ≤ horizon)
+    (rounds_advance : ∀ u ∈ (Correct : Finset Validator), ∀ n ≤ rm.top u,
+      n ≤ rm.built u n)
+    (stable : ℕ) (hgst : rm.gst ≤ stable)
+    (hto : ∀ n, stable ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n) :
+    Run Validator BlockId Payload :=
+  Run.ofDoSValid U S.leader hdos horizon rounds_le N rm.toPaceCore rounds_advance
+    stable hgst N
+    (commits_of_reactive rm rfl rfl hround (fun _ => rfl) rfl hgst hto)
+    (le_refl N) hrr (chooseLeast _) chooseSound_least
 
 end FinWhale
 
