@@ -67,7 +67,7 @@ structure OptUniverse (Replica BlockId : Type*) [Fintype Replica]
   round (twice `predecessor`, from a voted candidate at `k`'s propose
   round), so no witness can tell its presence — it is here so the rule
   reads as the paper states it. With several slots per round the rule
-  applies to each slot separately, which the `∀ k` gives for free
+  applies to each slot separately, which the `∀ k` gives directly
   (pinned by the two-slots-per-round schedule of the witness file). -/
   leader_excluded : ∀ b ∈ ids, ∀ k,
     (block b).round = decisionRound Replica k →
