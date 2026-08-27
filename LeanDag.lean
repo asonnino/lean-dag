@@ -221,3 +221,10 @@ import LeanDag.Hydrozoan.Helpers.IndirectRules
 import LeanDag.Hydrozoan.Helpers.Counting
 import LeanDag.Hydrozoan.ThresholdArithmetic.Statement
 import LeanDag.Hydrozoan.ThresholdArithmetic.Proof
+import LeanDag.Hydrozoan.DirectSafety.Statement
+import LeanDag.Hydrozoan.DirectSafety.Proof
+import LeanDag.Hydrozoan.Helpers.SlotAgreement
+import LeanDag.Hydrozoan.SlotAgreement.Statement
+import LeanDag.Hydrozoan.SlotAgreement.Proof
+import LeanDag.Hydrozoan.PrefixAgreement.Statement
+import LeanDag.Hydrozoan.PrefixAgreement.Proof
