@@ -54,3 +54,4 @@ import LeanDagTest.Minnow.Fair
 import LeanDagTest.FinWhale.Model
 import LeanDagTest.FinWhale.Pace
 import LeanDagTest.FinWhale.DoS
+import LeanDagTest.FinWhale.Equivocation

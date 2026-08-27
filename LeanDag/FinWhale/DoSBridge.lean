@@ -27,8 +27,10 @@ between them.
 
 `Run.ofDoSValidReactive` closes the last gap: over the core's reactive
 schedule such a universe is a `Run`, so the four guarantees hold of it
-with no further hypothesis. Whether that composite is *inhabited* where
-equivocation actually happens is not settled here and wants a witness.
+with no further hypothesis. `LeanDagTest/FinWhale/Equivocation.lean`
+exhibits one where the condition is active — validator `0` equivocates,
+three round-`2` blocks are exposed to it and drop its round-`1` block —
+so the composite is not vacuous.
 
 **What this does not claim.** `DoSValid` is strictly stronger than what
 FinWhale specifies: the protocol admits a DAG that cites an equivocating

@@ -71,9 +71,8 @@ arc's `ExposedIn.not_correct`). That is particular to this route: the
 block-creation discipline of §10 obliges a builder to reference a block
 by the author of *any* held vote, and that clause and `DoSValid` are not
 jointly satisfiable where a convicted equivocator votes for a reliable
-leader. What is not settled is whether the composite is inhabited where
-equivocation actually happens; that wants a witness with a real
-equivocation, which §9's reactive execution does not have.
+leader. The composite is inhabited: §9's equivocating execution
+satisfies both conditions at once.
 
 ## 2. The committee, and where the numbers come from
 
@@ -393,6 +392,30 @@ own round-`1` block. And `fwRun` assembles the lot into a `Run`, which
 §12 reads its properties off. The bridge of `Liveness.lean` is exhibited
 separately, as production and coverage over the correct validators and
 nothing further.
+
+`LeanDagTest/FinWhale/Equivocation.lean` is the composite of §1 on data,
+and the one execution here where the DoS condition is active. Sixteen
+blocks over four rounds at `n = 4`: validator `0` equivocates at round
+`0`, the round-`1` blocks split over the two versions, and a round-`2`
+block citing two of them reaches both — so blocks `10`, `11` and `12` are
+*exposed* to the equivocator and may not cite its round-`1` block, though
+validity would otherwise admit it. Block `9` has seen one version only
+and cites it, which is what makes the prohibition a property of the
+citing block rather than of the author. All by `decide`.
+
+The reactive structure exists over that execution, and this is what the
+bridge's claim comes to: both wait clauses hold by their first disjunct,
+because every correct validator's block references every correct
+validator's block of the round below, and the clauses never mention the
+equivocator. The round-`1` leader's block is committed by both paths —
+four validators vote for it, and each round-`3` block carries a slow-path
+quorum — so the equivocation costs the execution nothing.
+`Run.ofDoSValidReactive` closes over it.
+
+That run reaches round `3`, which carries the liveness interface and is
+short of the `3f + 5` window `Run.agreement` asks for; non-vacuity of the
+four properties is witnessed on the tall execution above, which in turn
+cannot show this, nothing equivocating in it.
 
 The list layer is exercised on concrete verdicts: a commit sequence, its
 extension, and the delivery order that repeats a block of two causal

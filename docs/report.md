@@ -7695,8 +7695,8 @@ being in `T` — while a correct validator is never exposed
 block-creation discipline of §20.5 obliges a builder to reference a block
 by the author of *any* held vote, reliable or not, and that clause and
 `DoSValid` are not jointly satisfiable where a convicted equivocator
-votes for a reliable leader. Whether the composite is inhabited where
-equivocation actually happens is not settled here.
+votes for a reliable leader. The composite is inhabited where equivocation
+is live, which §20.9 exhibits.
 
 What this does not claim: `DoSValid` is strictly stronger than FinWhale
 specifies, the protocol admitting a DAG that cites an equivocating
@@ -7855,6 +7855,22 @@ the liveness interface with no coverage assumption anywhere.
 `fastCommit_latency` runs at `δ = 2`, and `fwRun` assembles the lot into
 a `Run`, off which agreement and integrity are read — which is what keeps
 FW12 from being vacuous.
+
+`LeanDagTest/FinWhale/Equivocation.lean` is where the DoS condition is
+active rather than merely satisfied. Sixteen blocks over four rounds at
+`n = 4`: validator `0` equivocates at round `0`, the round-`1` blocks
+split over the two versions, and a round-`2` block citing two of them
+reaches both — so three of them are *exposed* to the equivocator and may
+not cite its round-`1` block, where validity alone would admit it. One
+round-`2` block has seen a single version and cites it, which makes the
+prohibition a property of the citing block rather than of the author. The
+reactive structure exists over that execution, both wait clauses holding
+by their first disjunct, and the round-`1` leader is committed by both
+paths — so `Run.ofDoSValidReactive` closes over an execution where
+equivocation is live, and is not vacuous. The run reaches round `3`,
+which carries the liveness interface and is short of the `3f + 5` window
+agreement asks for; the tall execution above supplies that, and cannot
+supply this, nothing equivocating in it.
 
 `LeanDagTest/FinWhale/DoS.lean` witnesses §20.7 on the denial-of-service
 arc's own execution. `Utwin` has validator `0` equivocating at round `0`;
