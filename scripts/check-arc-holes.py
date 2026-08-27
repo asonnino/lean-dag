@@ -25,7 +25,7 @@ FORBIDDEN = re.compile(r"\b(sorry|admit|axiom|native_decide|unsafe|partial)\b")
 STATEMENT_FORBIDDEN = re.compile(r"^\s*(theorem|lemma|example|instance)\b")
 MODEL_FORBIDDEN = re.compile(r"^\s*(theorem|lemma|example)\b")
 ROOT = Path(__file__).resolve().parent.parent
-ARCS = ["MahiMahi", "BlackMarlin", "FinWhale", "Barnacle", "Hydrozoan"]
+ARCS = ["MahiMahi", "BlackMarlin", "FinWhale", "Barnacle", "Hydrozoan", "OptimalHydrozoan"]
 SOURCES = [f"{top}/{arc}" for arc in ARCS for top in ("LeanDag", "LeanDagTest")]
 
 

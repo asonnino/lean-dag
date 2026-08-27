@@ -68,6 +68,7 @@ ALLOW = {
     # The paper's threshold names and the core names the Hydrozoan
     # docstrings quote.
     "q_fast", "q_cert", "q_slow", "q_weak", "parents.card", "Nat.find",
+    "t_plain", "t_equiv",
 }
 
 
