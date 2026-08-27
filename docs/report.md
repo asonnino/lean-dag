@@ -7708,9 +7708,14 @@ properties of the network it states informally.
 **Lemma 22 covers `p = 1` only.** Its proof concludes from "a window of
 `3f + 3` rounds contains a full cycle of `n` rounds plus the first two
 rounds of the next cycle". That needs `3f + 3 ≥ n + 2`, which at
-`n = 3f + 2p − 1` holds exactly when `p ≤ 1`. For `p ≥ 2` the window is
-shorter than a cycle and the argument does not apply. The statement holds
-at every `p`, by the two arguments of §20.5.
+`n = 3f + 2p − 1` holds exactly when `p ≤ 1`. The difference `3f + 3 − n`
+is `4 − 2p`, independent of `f`: the window is a cycle plus two rounds at
+`p = 1`, exactly one cycle at `p = 2`, and `2p − 4` rounds short of one
+at `p ≥ 3`. So from `p = 2` up there is no such decomposition to read
+off. The statement holds at every `p`, and the window being a smaller
+part of the cycle makes it a stronger claim rather than a weaker one:
+`f` does not grow with `p`, so correct leaders only become denser, and
+the pigeonhole of §20.5 replaces the count the paper takes.
 
 **The C3 case of Lemmas 18 and 19 does not close**, for two separate
 reasons. The set of validators that cannot use C3 is one member too

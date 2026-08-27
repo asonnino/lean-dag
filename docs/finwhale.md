@@ -484,9 +484,11 @@ window of `3f + 3` rounds contains three consecutive rounds with correct
 leaders. The paper's proof counts maximal runs of correct leaders in the
 cyclic order, then observes that such a window "contains a full cycle of
 `n` rounds plus the first two rounds of the next cycle". That step needs
-`3f + 3 ≥ n + 2`, and at `n = 3f + 2p − 1` it holds only for `p = 1`. For
-`p ≥ 2` the window is shorter than a cycle, and the argument does not
-apply.
+`3f + 3 ≥ n + 2`, and at `n = 3f + 2p − 1` it holds only for `p = 1`. The
+difference `3f + 3 − n` is `4 − 2p`, independent of `f`: the window is a
+cycle plus two rounds at `p = 1`, exactly one cycle at `p = 2`, and
+`2p − 4` rounds short of one at `p ≥ 3`. So from `p = 2` up there is no
+such decomposition to read off, and the argument does not apply.
 
 The statement is true at every `p`, by two arguments rather than one.
 `three_correct_of_roundRobin` is the cyclic half and gives a triple
@@ -692,8 +694,10 @@ ordered by how much of the argument turns on it.
 **Lemma 22 covers `p = 1` only.** Its proof concludes from "a window of
 `3f + 3` rounds contains a full cycle of `n` rounds plus the first two
 rounds of the next cycle". That step needs `3f + 3 ≥ n + 2`, which at
-`n = 3f + 2p − 1` holds exactly when `p ≤ 1`. For `p ≥ 2` the window is
-shorter than a cycle and the argument does not apply. The statement holds
+`n = 3f + 2p − 1` holds exactly when `p ≤ 1`: the difference `3f + 3 − n`
+is `4 − 2p`, independent of `f`, so the window is a cycle plus two rounds
+at `p = 1`, exactly one cycle at `p = 2`, and shorter than one beyond
+that. The statement holds
 at every `p`, by a second argument: where `3f + 3 ≤ n` the window's
 rounds name distinct validators, and `f + 1` disjoint consecutive triples
 would need `f + 1` distinct Byzantine leaders. §10 has both. An
