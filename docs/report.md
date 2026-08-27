@@ -363,18 +363,18 @@ proof effort with no corresponding proof content.
    output is never given a lemma (§18.13). What does hold at a
    validator's view, and exactly how far, is §18.15.
 
-**Hammerhead 2.0** (§20):
+**Barnacle** (§20):
 
 | Label | Statement | Lean |
 |:---|:---|:---|
-| HH2 | the window is agreed: a view holding the anchor holds its history, and two views restrict it to one set | `HammerheadTwo.Window.holds` *(HammerheadTwo/Window/Proof)* |
-| HH3 | the configuration sequence is agreed, for any update rule: two runs to any heights agree on every configuration and verdict of their common ranges | `HammerheadTwo.Agreement.holds` *(HammerheadTwo/Agreement/Proof)* |
-| HH5 | the ledger is agreed as far as both runs reach, grows by prefixes, and holds each block once | `HammerheadTwo.Ledger.holds` *(HammerheadTwo/Ledger/Proof)* |
-| HH6 | under the constant rule the count never moves and every verdict is a one-leader verdict | `HammerheadTwo.Conservativity.holds` *(HammerheadTwo/Conservativity/Proof)* |
-| HH7 | the AIMD rule keeps its count in range, steps as the paper says, and is the integer test | `HammerheadTwo.Aimd.holds` *(HammerheadTwo/Aimd/Proof)* |
-| HH8 | progress: a run past the synchrony round extends by one configuration; runs of every height exist under the horizon | `HammerheadTwo.Progress.holds` *(HammerheadTwo/Progress/Proof)* |
-| HH9 | the heads descent: the liveness clause from the descent laws and a run of heads; round-robin has runs of heads by pigeonhole and is live at every count | `HammerheadTwo.Heads.holds` *(HammerheadTwo/Heads/Proof)* |
-| HH10 | the three rules satisfy the laws and the descent laws, and are live under round-robin at every count | `HammerheadTwo.Mysticeti.holds`, `HammerheadTwo.MysticetiLive.holds`, `HammerheadTwo.Odontoceti.holds`, `HammerheadTwo.Nemo.holds` *(HammerheadTwo/Mysticeti/Proof, HammerheadTwo/MysticetiLive/Proof, HammerheadTwo/Odontoceti/Proof, HammerheadTwo/Nemo/Proof)* |
+| BN2 | the window is agreed: a view holding the anchor holds its history, and two views restrict it to one set | `Barnacle.Window.holds` *(Barnacle/Window/Proof)* |
+| BN3 | the configuration sequence is agreed, for any update rule: two runs to any heights agree on every configuration and verdict of their common ranges | `Barnacle.Agreement.holds` *(Barnacle/Agreement/Proof)* |
+| BN5 | the ledger is agreed as far as both runs reach, grows by prefixes, and holds each block once | `Barnacle.Ledger.holds` *(Barnacle/Ledger/Proof)* |
+| BN6 | under the constant rule the count never moves and every verdict is a one-leader verdict | `Barnacle.Conservativity.holds` *(Barnacle/Conservativity/Proof)* |
+| BN7 | the AIMD rule keeps its count in range, steps as the paper says, and is the integer test | `Barnacle.Aimd.holds` *(Barnacle/Aimd/Proof)* |
+| BN8 | progress: a run past the synchrony round extends by one configuration; runs of every height exist under the horizon | `Barnacle.Progress.holds` *(Barnacle/Progress/Proof)* |
+| BN9 | the heads descent: the liveness clause from the descent laws and a run of heads; round-robin has runs of heads by pigeonhole and is live at every count | `Barnacle.Heads.holds` *(Barnacle/Heads/Proof)* |
+| BN10 | the three rules satisfy the laws and the descent laws, and are live under round-robin at every count | `Barnacle.Mysticeti.holds`, `Barnacle.MysticetiLive.holds`, `Barnacle.Odontoceti.holds`, `Barnacle.Nemo.holds` *(Barnacle/Mysticeti/Proof, Barnacle/MysticetiLive/Proof, Barnacle/Odontoceti/Proof, Barnacle/Nemo/Proof)* |
 
 **Minnow's minimal commit rule fails in two ways** (§19). `crs*`, the
 rule proposed for eventual synchrony, decides a leader slot from the
@@ -410,7 +410,7 @@ is exhibited on four processes at `f = 1`, machine-checked, with the
 model held to the paper's own validity rule and its own reading of each
 clause (§19.1).
 
-**Hammerhead 2.0 adapts the number of leaders per round** (§20), a
+**Barnacle adapts the number of leaders per round** (§20), a
 control loop that measures on the agreed DAG the fraction of leader
 slots the base protocol decided directly and drives the count with an
 additive-increase, multiplicative-decrease rule. It is proved safe and
@@ -418,21 +418,21 @@ live over an explicit interface rendering the paper's assumptions
 A1–A4, instantiated on Mysticeti, Odontoceti and Nemo-Nemo. Safety —
 agreement of the configuration sequence and of the ledger — holds for
 **any** update rule, with no synchrony or fairness hypothesis
-(`Agreement.holds` (HH3), `Ledger.holds` (HH5)), because the
+(`Agreement.holds` (BN3), `Ledger.holds` (BN5)), because the
 algorithm decides under the count in force and only then switches, so
 each configuration's verdicts are derivations against one fixed
 schedule. There is no total run: a finite universe closes finitely
 many configurations, and the paper's sequence of configurations is
 what every prefix of it agrees on. Liveness is the paper's
 Configuration Progress at the run's own count and runs of every height
-under a horizon (`Progress.holds` (HH8)), from a clause on a schedule
+under a horizon (`Progress.holds` (BN8)), from a clause on a schedule
 that the paper assumes of its base protocols — and that its own
 rotation does not meet by the route this development takes, a run of
 correct-led slots, which has no instance at two leaders and four
 validators. The clause holds by a descent through the *heads* of
-rounds and a pigeonhole on residues (`Heads.holds` (HH9)), so each of
+rounds and a pigeonhole on residues (`Heads.holds` (BN9)), so each of
 the three rules is live under round-robin at **every** leader count
-(`MysticetiLive.holds`, `Odontoceti.holds`, `Nemo.holds` (HH10)) —
+(`MysticetiLive.holds`, `Odontoceti.holds`, `Nemo.holds` (BN10)) —
 the paper's A4 for its schedule, proved. Findings for the paper are
 listed in §20.5.
 
@@ -7261,17 +7261,17 @@ trying to avoid. §18 finds the same shape of defect in Black Marlin, by
 the same mechanism: a slot with two vertices resolved by a test that does
 not read support.
 
-## 20. Hammerhead 2.0: the adaptive leader count
+## 20. Barnacle: the adaptive leader count
 
-*(modules `LeanDag/HammerheadTwo/`; the design record is
-`hammerhead-two.md`; the protocol is Hammerhead 2.0, a control loop on
+*(modules `LeanDag/Barnacle/`; the design record is
+`barnacle.md`; the protocol is Barnacle, a control loop on
 the number of leaders per round of a DAG-based protocol, layered on
 Mysticeti, Odontoceti and Nemo-Nemo)*
 
 Multi-leader rounds cut queuing latency and are unused in production
 because of head-of-line blocking: one slow leader's slot is not decided
 by the direct rule, and every later slot of the sequence waits.
-Hammerhead 2.0 adapts the number of leaders per round to observed
+Barnacle adapts the number of leaders per round to observed
 conditions. Every `interval` rounds, upon committing the first leader
 whose round exceeds `lastRound + interval` — the *anchor* — a validator
 takes the anchor's causal history over the last `interval` rounds as
@@ -7287,7 +7287,7 @@ fixed configuration.
 This chapter proves the mechanism safe and live over an explicit
 interface rendering A1–A4, instantiated three times, and states what
 the paper's own schedule needs of its base protocols. Its results carry
-**HH**-labels; the arc is the third under the statement/proof partition
+**BN**-labels; the arc is the third under the statement/proof partition
 of §17. The structural observation that shapes it is that the paper's
 algorithm **decides under the count in force and only then switches**:
 the verdicts of one configuration's range are derivations of the base
@@ -7327,7 +7327,7 @@ configuration with `m` leaders is `Sched m`, the uniform pipelined
 schedule of §3 with slot `(r, l)` led by `getLeader (r + l)`, the
 paper's `GetLeader`, so that only which slots exist changes across
 configurations. The window count reads the anchor's history as a view
-and counts slots with a directly committed candidate (HH2 makes it a
+and counts slots with a directly committed candidate (BN2 makes it a
 function of the universe and the anchor):
 
 ```lean
@@ -7348,7 +7348,7 @@ A run closed to height `K` (`PartialRun`) holds `K` configurations —
 start round, leader count, back-off, anchor — with every slot of each
 range decided against the configuration's schedule, the anchor the
 least committed slot past the threshold, and the next configuration
-the update rule's. **HH3** — two runs over one universe, from any two
+the update rule's. **BN3** — two runs over one universe, from any two
 views, to any two heights, agree:
 
 ```lean
@@ -7366,13 +7366,13 @@ def PartialRunAgreement (R : BaseRule Validator BlockId Payload) (P : Params)
 
 The theorem carries no synchrony or fairness hypothesis and quantifies
 over **every** update rule: the AIMD rule is one instance. The ledger
-follows (**HH5**): two runs read one committed sequence as far as both
+follows (**BN5**): two runs read one committed sequence as far as both
 reach, a run's ledger to a lower height is a prefix of its ledger to a
 higher one, and no block appears twice — the paper's Agreement, Total
 Order and Integrity. Under the constant rule the arc collapses onto the
-base development at one leader (**HH6**), and the AIMD rule keeps its
+base development at one leader (**BN6**), and the AIMD rule keeps its
 count in `[1, maxLeaders]` and is the integer test the implementation
-runs (**HH7**).
+runs (**BN7**).
 
 **There is no total run.** Every configuration commits an anchor at its
 own round and a universe is finite, so a run with a configuration for
@@ -7403,7 +7403,7 @@ def LiveRule.LiveOn (R : LiveRule Validator BlockId Payload) (S : Slots Validato
 The gap is also the margin a slot needs above it: a slot the direct
 rule does not settle is decided by a committed anchor a wave above,
 whose own wave must fit under the horizon, so no rule decides every
-slot up to `N − waveLength`. **HH8** is the paper's Configuration
+slot up to `N − waveLength`. **BN8** is the paper's Configuration
 Progress and Liveness in the only form a finite universe admits: a run
 whose current configuration lies past the synchrony round extends by
 one, needing the clause at its own count only —
@@ -7463,7 +7463,7 @@ def HeadsRun (getLeader : ℕ → Validator) (T : Finset Validator) (g c₀ : �
   ∀ r, ∃ ρ, r ≤ ρ ∧ ρ + g ≤ r + c₀ ∧ ∀ i, i < g → getLeader (ρ + i) ∈ T
 ```
 
-**HH9.** From the descent laws, a stretch of consecutive decided slots
+**BN9.** From the descent laws, a stretch of consecutive decided slots
 with a committed top decides everything a wave below it; `waveLength`
 consecutive good-led heads decide every slot up to a wave below the
 first and commit it; a run of heads with gap `c₀` makes every count's
@@ -7476,7 +7476,7 @@ would inject `Fin n` into `Fin waveLength × Tᶜ`. The bound is sharp:
 Mysticeti's committee bound `3f + 1 ≤ n` is exactly this at
 `waveLength = 3`, `slack = f`.
 
-**HH10.** Mysticeti, Odontoceti and Nemo-Nemo each satisfy the laws and
+**BN10.** Mysticeti, Odontoceti and Nemo-Nemo each satisfy the laws and
 the descent laws — Odontoceti's indirect law commits the least
 candidate with a thick link, the canonicity clause of §10; Nemo-Nemo's
 good set is any synchronised majority, which misses `n − majority`
@@ -7530,7 +7530,7 @@ here.
 Every definition is exercised by `decide` before anything is proved
 from it, on `U7` and two new universes over four validators: `Usun`,
 eight rounds fully connected, on which a run's count rises from one to
-two at the anchor and two views' runs are identified through HH3, and
+two at the anchor and two views' runs are identified through BN3, and
 `Usk`, `Usun` with one block referenced by its author alone, on which a
 slot is directly skipped past the threshold and the theorems' anchors
 skip it. `LiveOn` cannot be decided in general — it quantifies over
@@ -7566,7 +7566,7 @@ every theorem above it vacuous, and vacuity is not otherwise detectable.
 | `waveRobin n` | `Slots` at *every* `n`: the wave-aligned rotation, whose `FairRunOn Correct 3` and `SpansEligible 3` are theorems with no premise beyond the fault model (L12) — the one schedule family not pinned to a committee |
 | `Model.lean` | six `BlockUniverse` instances exercising the safety definitions |
 | `Ucrash N`, `ucrashMsg` | `SkipMsg`: a crashed line, the message against it, and the fill (SS7) |
-| `Usun`, `Usk`, `U44`, `U3` | `PartialRun` with a rising count, a skipped slot past the threshold, the real `Good` with the theorems yielding verdicts, and a bare majority under attack (HH3, HH8, HH9, HH10) |
+| `Usun`, `Usk`, `U44`, `U3` | `PartialRun` with a rising count, a skipped slot past the threshold, the real `Good` with the theorems yielding verdicts, and a bare majority under attack (BN3, BN8, BN9, BN10) |
 | `ucrashJump` | `JumpMsg`: the compact core of `ucrashMsg`, elaborating to the same fill (SS11) |
 | `demotePolicy`, `run7` | `AdaptivePolicy`, `AdaptiveRun`, `PlacesRuns`: a genuinely adapting policy and its total runs (AL8) |
 | `Uhyb4`, `Uhyb9` | `HybridFaults`, `HonestNoEquiv`: one crash at four validators; the tight hybrid committee (H9) |
@@ -7754,12 +7754,12 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `BlackMarlin/Model/Order.lean` | the sort `τ`, the filter of L27, and the list a validator outputs |
 | `BlackMarlin/Model/Repair.lean` | the support-preferring side-condition, and a descent that meets it |
 | `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/`, `BlackMarlin/Descent/`, `BlackMarlin/Order/`, `BlackMarlin/Repair/` | the eight statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6, BME1–BME5, BMO1–BMO9, BMP1–BMP13, BMV1–BMV3, BMT1–BMT3) |
-| `HammerheadTwo/Model/Rule.lean` | the base-protocol interface: data and laws (A1–A4), the candidate predicate, update rules |
-| `HammerheadTwo/Model/Schedule.lean`, `HammerheadTwo/Model/Window.lean`, `HammerheadTwo/Model/Run.lean` | the schedule of a configuration; the window count and the AIMD rule; the run and the ledger |
-| `HammerheadTwo/Model/Live.lean`, `HammerheadTwo/Model/Heads.lean` | the liveness clause with its gap; the descent laws and runs of heads |
-| `HammerheadTwo/Window/`, `HammerheadTwo/Agreement/`, `HammerheadTwo/Ledger/`, `HammerheadTwo/Conservativity/`, `HammerheadTwo/Aimd/`, `HammerheadTwo/Progress/`, `HammerheadTwo/Heads/` | the seven statements and their proofs (HH2, HH3, HH5, HH6, HH7, HH8, HH9) |
-| `HammerheadTwo/Mysticeti/`, `HammerheadTwo/MysticetiLive/`, `HammerheadTwo/Odontoceti/`, `HammerheadTwo/Nemo/` | the three rules as base and live rules, their laws, and their liveness under round-robin (HH10) |
-| `HammerheadTwo/Helpers/` | the generated lemma layer |
+| `Barnacle/Model/Rule.lean` | the base-protocol interface: data and laws (A1–A4), the candidate predicate, update rules |
+| `Barnacle/Model/Schedule.lean`, `Barnacle/Model/Window.lean`, `Barnacle/Model/Run.lean` | the schedule of a configuration; the window count and the AIMD rule; the run and the ledger |
+| `Barnacle/Model/Live.lean`, `Barnacle/Model/Heads.lean` | the liveness clause with its gap; the descent laws and runs of heads |
+| `Barnacle/Window/`, `Barnacle/Agreement/`, `Barnacle/Ledger/`, `Barnacle/Conservativity/`, `Barnacle/Aimd/`, `Barnacle/Progress/`, `Barnacle/Heads/` | the seven statements and their proofs (BN2, BN3, BN5, BN6, BN7, BN8, BN9) |
+| `Barnacle/Mysticeti/`, `Barnacle/MysticetiLive/`, `Barnacle/Odontoceti/`, `Barnacle/Nemo/` | the three rules as base and live rules, their laws, and their liveness under round-robin (BN10) |
+| `Barnacle/Helpers/` | the generated lemma layer |
 | `BlackMarlin/Helpers/` | the generated lemma layer |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
@@ -14760,11 +14760,11 @@ def Statement : Prop :=
 
 The repaired descent, over every fault configuration, rotation and block universe the model admits.
 
-### Hammerhead 2.0: the adaptive leader count
+### Barnacle: the adaptive leader count
 
 #### `BaseRule`
 
-*structure, `HammerheadTwo.Model.Rule.lean`*
+*structure, `Barnacle.Model.Rule.lean`*
 
 ```lean
 structure BaseRule (Validator : Type) [Fintype Validator] [DecidableEq Validator]
@@ -14804,7 +14804,7 @@ structure BaseRule (Validator : Type) [Fintype Validator] [DecidableEq Validator
 
 #### `IsLeaderBlock`
 
-*def, `HammerheadTwo.Model.Rule.lean`*
+*def, `Barnacle.Model.Rule.lean`*
 
 ```lean
 def IsLeaderBlock (R : BaseRule Validator BlockId Payload) (S : Slots Validator)
@@ -14816,7 +14816,7 @@ def IsLeaderBlock (R : BaseRule Validator BlockId Payload) (S : Slots Validator)
 
 #### `Laws`
 
-*structure, `HammerheadTwo.Model.Rule.lean`*
+*structure, `Barnacle.Model.Rule.lean`*
 
 ```lean
 structure Laws (R : BaseRule Validator BlockId Payload) : Prop where
@@ -14848,18 +14848,18 @@ structure Laws (R : BaseRule Validator BlockId Payload) : Prop where
 
 #### `UpdateRule`
 
-*abbrev, `HammerheadTwo.Model.Rule.lean`*
+*abbrev, `Barnacle.Model.Rule.lean`*
 
 ```lean
 abbrev UpdateRule (R : BaseRule Validator BlockId Payload) : Type :=
   ℕ → ℕ → R.Universe → BlockId → ℕ × ℕ
 ```
 
-**An update rule**: from the current leader count and back-off, the universe and the anchor block, the next count and back-off. Safety is stated for every such function (`hammerhead-two.md` §1); the paper's AIMD rule is one instance (`Model/Window.lean`).
+**An update rule**: from the current leader count and back-off, the universe and the anchor block, the next count and back-off. Safety is stated for every such function (`barnacle.md` §1); the paper's AIMD rule is one instance (`Model/Window.lean`).
 
 #### `Keyed`
 
-*def, `HammerheadTwo.Model.Schedule.lean`*
+*def, `Barnacle.Model.Schedule.lean`*
 
 ```lean
 def Keyed (getLeader : ℕ → Validator) (w : ℕ) : Prop :=
@@ -14871,7 +14871,7 @@ def Keyed (getLeader : ℕ → Validator) (w : ℕ) : Prop :=
 
 #### `Sched`
 
-*def, `HammerheadTwo.Model.Schedule.lean`*
+*def, `Barnacle.Model.Schedule.lean`*
 
 ```lean
 @[reducible] def Sched (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLeader w)
@@ -14883,7 +14883,7 @@ def Keyed (getLeader : ℕ → Validator) (w : ℕ) : Prop :=
 
 #### `roundRobin`
 
-*def, `HammerheadTwo.Model.Schedule.lean`*
+*def, `Barnacle.Model.Schedule.lean`*
 
 ```lean
 def roundRobin (n : ℕ) (hn : 0 < n) : ℕ → Fin n :=
@@ -14894,7 +14894,7 @@ Round-robin over `n` validators: round `r`'s first leader is `r % n`, and slot `
 
 #### `Params`
 
-*structure, `HammerheadTwo.Model.Window.lean`*
+*structure, `Barnacle.Model.Window.lean`*
 
 ```lean
 structure Params where
@@ -14914,7 +14914,7 @@ The mechanism's parameters: the reconfiguration interval in rounds, the cap on t
 
 #### `SlotDirect`
 
-*def, `HammerheadTwo.Model.Window.lean`*
+*def, `Barnacle.Model.Window.lean`*
 
 ```lean
 def SlotDirect (R : BaseRule Validator BlockId Payload) (S : Slots Validator)
@@ -14926,7 +14926,7 @@ Slot `κ` of schedule `S` has a candidate directly committed on view `V`. The un
 
 #### `observed`
 
-*def, `HammerheadTwo.Model.Window.lean`*
+*def, `Barnacle.Model.Window.lean`*
 
 ```lean
 def observed (R : BaseRule Validator BlockId Payload) (P : Params)
@@ -14946,7 +14946,7 @@ The clause `d ≤ round` keeps truncated subtraction from counting round `0` onc
 
 #### `expected`
 
-*def, `HammerheadTwo.Model.Window.lean`*
+*def, `Barnacle.Model.Window.lean`*
 
 ```lean
 def expected (R : BaseRule Validator BlockId Payload) (P : Params) (m : ℕ) : ℕ :=
@@ -14957,7 +14957,7 @@ def expected (R : BaseRule Validator BlockId Payload) (P : Params) (m : ℕ) : �
 
 #### `update`
 
-*def, `HammerheadTwo.Model.Window.lean`*
+*def, `Barnacle.Model.Window.lean`*
 
 ```lean
 def update (P : Params) (m backoff : ℕ) (healthy : Bool) : ℕ × ℕ :=
@@ -14969,7 +14969,7 @@ def update (P : Params) (m backoff : ℕ) (healthy : Bool) : ℕ × ℕ :=
 
 #### `rule`
 
-*def, `HammerheadTwo.Model.Window.lean`*
+*def, `Barnacle.Model.Window.lean`*
 
 ```lean
 def rule (R : BaseRule Validator BlockId Payload) (P : Params)
@@ -14987,7 +14987,7 @@ def rule (R : BaseRule Validator BlockId Payload) (P : Params)
 
 #### `constRule`
 
-*def, `HammerheadTwo.Model.Window.lean`*
+*def, `Barnacle.Model.Window.lean`*
 
 ```lean
 def constRule (R : BaseRule Validator BlockId Payload) : UpdateRule R :=
@@ -14998,7 +14998,7 @@ The constant rule: reconfigure nothing. The conservativity anchor — under it t
 
 #### `PartialRun`
 
-*structure, `HammerheadTwo.Model.Run.lean`*
+*structure, `Barnacle.Model.Run.lean`*
 
 ```lean
 structure PartialRun (R : BaseRule Validator BlockId Payload) (P : Params)
@@ -15042,7 +15042,7 @@ structure PartialRun (R : BaseRule Validator BlockId Payload) (P : Params)
 
 #### `PartialRun.sched`
 
-*abbrev, `HammerheadTwo.Model.Run.lean`*
+*abbrev, `Barnacle.Model.Run.lean`*
 
 ```lean
 abbrev PartialRun.sched {K : ℕ} (Rn : PartialRun R P getLeader hk upd U V K) (k : ℕ) :
@@ -15054,7 +15054,7 @@ The schedule of configuration `k`.
 
 #### `ledgerOf`
 
-*def, `HammerheadTwo.Model.Run.lean`*
+*def, `Barnacle.Model.Run.lean`*
 
 ```lean
 def ledgerOf (v : ℕ → Option BlockId) (lo hi : ℕ) : List BlockId :=
@@ -15065,7 +15065,7 @@ The committed blocks of the slots `[lo, hi)`, in slot order.
 
 #### `PartialRun.rangeLedger`
 
-*def, `HammerheadTwo.Model.Run.lean`*
+*def, `Barnacle.Model.Run.lean`*
 
 ```lean
 def PartialRun.rangeLedger {K : ℕ} (Rn : PartialRun R P getLeader hk upd U V K) (k : ℕ) :
@@ -15077,7 +15077,7 @@ The ledger of configuration `k`: its range's committed blocks, from the first sl
 
 #### `PartialRun.ledgerUpto`
 
-*def, `HammerheadTwo.Model.Run.lean`*
+*def, `Barnacle.Model.Run.lean`*
 
 ```lean
 def PartialRun.ledgerUpto {K : ℕ} (Rn : PartialRun R P getLeader hk upd U V K) (K' : ℕ) :
@@ -15089,7 +15089,7 @@ The ledger through configuration `K' − 1`: the ranges' ledgers, concatenated i
 
 #### `LiveRule`
 
-*structure, `HammerheadTwo.Model.Live.lean`*
+*structure, `Barnacle.Model.Live.lean`*
 
 ```lean
 structure LiveRule (Validator : Type) [Fintype Validator] [DecidableEq Validator]
@@ -15103,7 +15103,7 @@ structure LiveRule (Validator : Type) [Fintype Validator] [DecidableEq Validator
 
 #### `LiveRule.LiveOn`
 
-*def, `HammerheadTwo.Model.Live.lean`*
+*def, `Barnacle.Model.Live.lean`*
 
 ```lean
 def LiveRule.LiveOn (R : LiveRule Validator BlockId Payload) (S : Slots Validator) (c : ℕ) :
@@ -15126,7 +15126,7 @@ def LiveRule.LiveOn (R : LiveRule Validator BlockId Payload) (S : Slots Validato
 
 #### `UpdBounded`
 
-*def, `HammerheadTwo.Model.Live.lean`*
+*def, `Barnacle.Model.Live.lean`*
 
 ```lean
 def UpdBounded {R : BaseRule Validator BlockId Payload} (P : Params) (upd : UpdateRule R) :
@@ -15134,11 +15134,11 @@ def UpdBounded {R : BaseRule Validator BlockId Payload} (P : Params) (upd : Upda
   ∀ m b U A, 0 < (upd m b U A).1 ∧ (upd m b U A).1 ≤ P.maxLeaders
 ```
 
-An update rule keeps the count in `[1, maxLeaders]`, whatever it is given — what extending a run needs of it; HH7a for the AIMD rule.
+An update rule keeps the count in `[1, maxLeaders]`, whatever it is given — what extending a run needs of it; BN7a for the AIMD rule.
 
 #### `horizon`
 
-*def, `HammerheadTwo.Model.Live.lean`*
+*def, `Barnacle.Model.Live.lean`*
 
 ```lean
 def horizon (P : Params) (R : LiveRule Validator BlockId Payload) (c K : ℕ) : ℕ :=
@@ -15149,7 +15149,7 @@ The horizon a run of height `K` needs from a synchrony round at genesis: each co
 
 #### `LiveRule.Descent`
 
-*structure, `HammerheadTwo.Model.Heads.lean`*
+*structure, `Barnacle.Model.Heads.lean`*
 
 ```lean
 structure LiveRule.Descent (R : LiveRule Validator BlockId Payload) (slack : ℕ) : Prop where
@@ -15175,7 +15175,7 @@ structure LiveRule.Descent (R : LiveRule Validator BlockId Payload) (slack : ℕ
 
 #### `HeadsRun`
 
-*def, `HammerheadTwo.Model.Heads.lean`*
+*def, `Barnacle.Model.Heads.lean`*
 
 ```lean
 def HeadsRun (getLeader : ℕ → Validator) (T : Finset Validator) (g c₀ : ℕ) : Prop :=
@@ -15186,7 +15186,7 @@ def HeadsRun (getLeader : ℕ → Validator) (T : Finset Validator) (g c₀ : �
 
 #### `HistoryInView`
 
-*def, `HammerheadTwo.Window.Statement.lean`*
+*def, `Barnacle.Window.Statement.lean`*
 
 ```lean
 def HistoryInView (R : BaseRule Validator BlockId Payload) : Prop :=
@@ -15194,11 +15194,11 @@ def HistoryInView (R : BaseRule Validator BlockId Payload) : Prop :=
     A ∈ R.viewIds V → historyFrom (R.block U) A ⊆ R.viewIds V
 ```
 
-**HH2a, the history is in view**: a view holding a block holds its whole causal history. A2 is what carries it — views are closed under references, and the history is what references reach.
+**BN2a, the history is in view**: a view holding a block holds its whole causal history. A2 is what carries it — views are closed under references, and the history is what references reach.
 
 #### `WindowAgreement`
 
-*def, `HammerheadTwo.Window.Statement.lean`*
+*def, `Barnacle.Window.Statement.lean`*
 
 ```lean
 def WindowAgreement (R : BaseRule Validator BlockId Payload) : Prop :=
@@ -15207,11 +15207,11 @@ def WindowAgreement (R : BaseRule Validator BlockId Payload) : Prop :=
     historyFrom (R.block U) A ∩ R.viewIds V₁ = historyFrom (R.block U) A ∩ R.viewIds V₂
 ```
 
-**HH2b, window agreement**: two validators holding the anchor compute the same window — the anchor's history restricted to either view is the history itself, so the two restrictions coincide.
+**BN2b, window agreement**: two validators holding the anchor compute the same window — the anchor's history restricted to either view is the history itself, so the two restrictions coincide.
 
 #### `Statement`
 
-*def, `HammerheadTwo.Window.Statement.lean`*
+*def, `Barnacle.Window.Statement.lean`*
 
 ```lean
 def Statement : Prop :=
@@ -15224,7 +15224,7 @@ The window is agreed, for every base rule satisfying the laws.
 
 #### `PartialRunAgreement`
 
-*def, `HammerheadTwo.Agreement.Statement.lean`*
+*def, `Barnacle.Agreement.Statement.lean`*
 
 ```lean
 def PartialRunAgreement (R : BaseRule Validator BlockId Payload) (P : Params)
@@ -15250,11 +15250,11 @@ def PartialRunAgreement (R : BaseRule Validator BlockId Payload) (P : Params)
           R₁.vdct k κ = R₂.vdct k κ)
 ```
 
-**HH3, partial runs agree.** Two partial runs over one universe — whatever views, whatever heights `K₁`, `K₂` — agree on `start`, `count` and `backoff` up to `min K₁ K₂`, and below it on the anchor and on every verdict of the range. The paper's Leader-Count Agreement, with the "same value" half the outline found missing.
+**BN3, partial runs agree.** Two partial runs over one universe — whatever views, whatever heights `K₁`, `K₂` — agree on `start`, `count` and `backoff` up to `min K₁ K₂`, and below it on the anchor and on every verdict of the range. The paper's Leader-Count Agreement, with the "same value" half the outline found missing.
 
 #### `Statement`
 
-*def, `HammerheadTwo.Agreement.Statement.lean`*
+*def, `Barnacle.Agreement.Statement.lean`*
 
 ```lean
 def Statement : Prop :=
@@ -15269,7 +15269,7 @@ Agreement of the configuration sequence and the verdicts, for every base rule sa
 
 #### `LedgerAgreement`
 
-*def, `HammerheadTwo.Ledger.Statement.lean`*
+*def, `Barnacle.Ledger.Statement.lean`*
 
 ```lean
 def LedgerAgreement (R : BaseRule Validator BlockId Payload) (P : Params)
@@ -15286,11 +15286,11 @@ def LedgerAgreement (R : BaseRule Validator BlockId Payload) (P : Params)
       ∀ K, K ≤ min K₁ K₂ → R₁.ledgerUpto K = R₂.ledgerUpto K
 ```
 
-**HH5a, the ledger is agreed**: two runs over one universe read the same committed sequence from every range both have closed, hence the same list to every height both reach.
+**BN5a, the ledger is agreed**: two runs over one universe read the same committed sequence from every range both have closed, hence the same list to every height both reach.
 
 #### `LedgerPrefix`
 
-*def, `HammerheadTwo.Ledger.Statement.lean`*
+*def, `Barnacle.Ledger.Statement.lean`*
 
 ```lean
 def LedgerPrefix (R : BaseRule Validator BlockId Payload) (P : Params)
@@ -15302,11 +15302,11 @@ def LedgerPrefix (R : BaseRule Validator BlockId Payload) (P : Params)
     (K₁ K₂ : ℕ), K₁ ≤ K₂ → Rn.ledgerUpto K₁ <+: Rn.ledgerUpto K₂
 ```
 
-**HH5b, the ledger grows**: to a lower height it is a prefix of itself to a higher one — nothing committed is ever reordered or withdrawn.
+**BN5b, the ledger grows**: to a lower height it is a prefix of itself to a higher one — nothing committed is ever reordered or withdrawn.
 
 #### `LedgerNodup`
 
-*def, `HammerheadTwo.Ledger.Statement.lean`*
+*def, `Barnacle.Ledger.Statement.lean`*
 
 ```lean
 def LedgerNodup (R : BaseRule Validator BlockId Payload) (P : Params)
@@ -15318,11 +15318,11 @@ def LedgerNodup (R : BaseRule Validator BlockId Payload) (P : Params)
     (K' : ℕ), K' ≤ K → (Rn.ledgerUpto K').Nodup
 ```
 
-**HH5c, integrity**: no block appears twice in the ledger, to any height the run reaches.
+**BN5c, integrity**: no block appears twice in the ledger, to any height the run reaches.
 
 #### `Statement`
 
-*def, `HammerheadTwo.Ledger.Statement.lean`*
+*def, `Barnacle.Ledger.Statement.lean`*
 
 ```lean
 def Statement : Prop :=
@@ -15338,7 +15338,7 @@ The ledger is agreed, grows, and holds each block once, for every base rule sati
 
 #### `ConstCount`
 
-*def, `HammerheadTwo.Conservativity.Statement.lean`*
+*def, `Barnacle.Conservativity.Statement.lean`*
 
 ```lean
 def ConstCount (R : BaseRule Validator BlockId Payload) (P : Params)
@@ -15352,11 +15352,11 @@ def ConstCount (R : BaseRule Validator BlockId Payload) (P : Params)
     ∀ k, k ≤ K → Rn.count k = 1 ∧ Rn.backoff k = 0
 ```
 
-**HH6a, the count never moves** under the constant rule.
+**BN6a, the count never moves** under the constant rule.
 
 #### `ConstDecided`
 
-*def, `HammerheadTwo.Conservativity.Statement.lean`*
+*def, `Barnacle.Conservativity.Statement.lean`*
 
 ```lean
 def ConstDecided (R : BaseRule Validator BlockId Payload) (P : Params)
@@ -15374,11 +15374,11 @@ def ConstDecided (R : BaseRule Validator BlockId Payload) (P : Params)
       R.Decided (Sched getLeader hk 1 Nat.one_pos P.max_pos) V κ (Rn.vdct k κ)
 ```
 
-**HH6b, the verdicts are the base verdicts**: every verdict of a run under the constant rule is a verdict of the one-leader schedule.
+**BN6b, the verdicts are the base verdicts**: every verdict of a run under the constant rule is a verdict of the one-leader schedule.
 
 #### `Statement`
 
-*def, `HammerheadTwo.Conservativity.Statement.lean`*
+*def, `Barnacle.Conservativity.Statement.lean`*
 
 ```lean
 def Statement : Prop :=
@@ -15392,7 +15392,7 @@ Conservativity, for every base rule, parameter set and keyed leader function. No
 
 #### `RuleBounds`
 
-*def, `HammerheadTwo.Aimd.Statement.lean`*
+*def, `Barnacle.Aimd.Statement.lean`*
 
 ```lean
 def RuleBounds (R : BaseRule Validator BlockId Payload) (P : Params)
@@ -15402,11 +15402,11 @@ def RuleBounds (R : BaseRule Validator BlockId Payload) (P : Params)
       (rule R P getLeader hk m backoff U A).1 ≤ P.maxLeaders
 ```
 
-**HH7a, bounds**: the rule's count lies in `[1, maxLeaders]` for every input — a run under the AIMD rule never leaves the range `Sched` is defined on.
+**BN7a, bounds**: the rule's count lies in `[1, maxLeaders]` for every input — a run under the AIMD rule never leaves the range `Sched` is defined on.
 
 #### `Healthy`
 
-*def, `HammerheadTwo.Aimd.Statement.lean`*
+*def, `Barnacle.Aimd.Statement.lean`*
 
 ```lean
 def Healthy (P : Params) : Prop :=
@@ -15414,11 +15414,11 @@ def Healthy (P : Params) : Prop :=
     ∀ backoff, update P P.maxLeaders backoff true = (P.maxLeaders, 0)
 ```
 
-**HH7b, healthy**: below the cap the count rises by one and the back-off resets; at the cap it stays.
+**BN7b, healthy**: below the cap the count rises by one and the back-off resets; at the cap it stays.
 
 #### `Unhealthy`
 
-*def, `HammerheadTwo.Aimd.Statement.lean`*
+*def, `Barnacle.Aimd.Statement.lean`*
 
 ```lean
 def Unhealthy (P : Params) : Prop :=
@@ -15428,11 +15428,11 @@ def Unhealthy (P : Params) : Prop :=
     ∀ backoff, (update P 1 backoff false).1 = 1
 ```
 
-**HH7c, unhealthy**: above the floor the count falls, by `2^backoff` when that keeps it above one, and the back-off is incremented; at the floor the count stays.
+**BN7c, unhealthy**: above the floor the count falls, by `2^backoff` when that keeps it above one, and the back-off is incremented; at the floor the count stays.
 
 #### `Test`
 
-*def, `HammerheadTwo.Aimd.Statement.lean`*
+*def, `Barnacle.Aimd.Statement.lean`*
 
 ```lean
 def Test (R : BaseRule Validator BlockId Payload) (P : Params)
@@ -15443,11 +15443,11 @@ def Test (R : BaseRule Validator BlockId Payload) (P : Params)
         (decide (P.num * expected R P m ≤ P.den * observed R P getLeader hk U A m hm hmax))
 ```
 
-**HH7d, the test**: for a count in range, the rule takes the healthy step exactly when `den · observed ≥ num · expected`.
+**BN7d, the test**: for a count in range, the rule takes the healthy step exactly when `den · observed ≥ num · expected`.
 
 #### `Statement`
 
-*def, `HammerheadTwo.Aimd.Statement.lean`*
+*def, `Barnacle.Aimd.Statement.lean`*
 
 ```lean
 def Statement : Prop :=
@@ -15461,7 +15461,7 @@ The AIMD rule, for every base rule, parameter set and keyed leader function. No 
 
 #### `ProgressStmt`
 
-*def, `HammerheadTwo.Progress.Statement.lean`*
+*def, `Barnacle.Progress.Statement.lean`*
 
 ```lean
 def ProgressStmt (R : LiveRule Validator BlockId Payload) (P : Params)
@@ -15482,11 +15482,11 @@ def ProgressStmt (R : LiveRule Validator BlockId Payload) (P : Params)
     Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) (K + 1))
 ```
 
-**HH8a, progress**: a run past the synchrony round extends by one configuration.
+**BN8a, progress**: a run past the synchrony round extends by one configuration.
 
 #### `EveryHeight`
 
-*def, `HammerheadTwo.Progress.Statement.lean`*
+*def, `Barnacle.Progress.Statement.lean`*
 
 ```lean
 def EveryHeight (R : LiveRule Validator BlockId Payload) (P : Params)
@@ -15501,11 +15501,11 @@ def EveryHeight (R : LiveRule Validator BlockId Payload) (P : Params)
       Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K)
 ```
 
-**HH8b, every height**: from a synchrony round at genesis, a run of every height exists under the horizon that height needs.
+**BN8b, every height**: from a synchrony round at genesis, a run of every height exists under the horizon that height needs.
 
 #### `Statement`
 
-*def, `HammerheadTwo.Progress.Statement.lean`*
+*def, `Barnacle.Progress.Statement.lean`*
 
 ```lean
 def Statement : Prop :=
@@ -15520,7 +15520,7 @@ Progress and every height, for every live rule satisfying the laws, every parame
 
 #### `StretchDescent`
 
-*def, `HammerheadTwo.Heads.Statement.lean`*
+*def, `Barnacle.Heads.Statement.lean`*
 
 ```lean
 def StretchDescent (R : LiveRule Validator BlockId Payload) (slack : ℕ) : Prop :=
@@ -15538,11 +15538,11 @@ def StretchDescent (R : LiveRule Validator BlockId Payload) (slack : ℕ) : Prop
     ∀ i, i < b → ∃ v, R.Decided S V i v
 ```
 
-**HH9a, the stretch descent**: from `indirect` alone.
+**BN9a, the stretch descent**: from `indirect` alone.
 
 #### `HeadsDecide`
 
-*def, `HammerheadTwo.Heads.Statement.lean`*
+*def, `Barnacle.Heads.Statement.lean`*
 
 ```lean
 def HeadsDecide (R : LiveRule Validator BlockId Payload) (slack : ℕ)
@@ -15567,11 +15567,11 @@ def HeadsDecide (R : LiveRule Validator BlockId Payload) (slack : ℕ)
       ∃ L, R.Decided (Sched getLeader hk m hm hmax) (R.full U) (m * ρ) (some L)
 ```
 
-**HH9b, heads decide**: under `Sched m`, `waveLength` consecutive good-led heads from round `ρ` decide every slot at a round in `[ρ − waveLength, ρ)` and commit the head of `ρ`.
+**BN9b, heads decide**: under `Sched m`, `waveLength` consecutive good-led heads from round `ρ` decide every slot at a round in `[ρ − waveLength, ρ)` and commit the head of `ρ`.
 
 #### `LiveOnOfHeads`
 
-*def, `HammerheadTwo.Heads.Statement.lean`*
+*def, `Barnacle.Heads.Statement.lean`*
 
 ```lean
 def LiveOnOfHeads (R : LiveRule Validator BlockId Payload) (slack : ℕ)
@@ -15584,11 +15584,11 @@ def LiveOnOfHeads (R : LiveRule Validator BlockId Payload) (slack : ℕ)
   ∀ (m : ℕ) (hm : 0 < m) (hmax : m ≤ w), R.LiveOn (Sched getLeader hk m hm hmax) c₀
 ```
 
-**HH9c, live from heads**: a run of good-led heads with gap `c₀`, for the good set of every good DAG, makes every count's schedule live with gap `c₀`.
+**BN9c, live from heads**: a run of good-led heads with gap `c₀`, for the good set of every good DAG, makes every count's schedule live with gap `c₀`.
 
 #### `RoundRobinHeads`
 
-*def, `HammerheadTwo.Heads.Statement.lean`*
+*def, `Barnacle.Heads.Statement.lean`*
 
 ```lean
 def RoundRobinHeads : Prop :=
@@ -15597,11 +15597,11 @@ def RoundRobinHeads : Prop :=
     HeadsRun (roundRobin n hn) T g (n + g - 1)
 ```
 
-**HH9d, round-robin has runs of heads**: on `n` validators, for every set missing at most `slack`, when `g · slack + 1 ≤ n` — within `n + g − 1` rounds.
+**BN9d, round-robin has runs of heads**: on `n` validators, for every set missing at most `slack`, when `g · slack + 1 ≤ n` — within `n + g − 1` rounds.
 
 #### `LiveOnRoundRobin`
 
-*def, `HammerheadTwo.Heads.Statement.lean`*
+*def, `Barnacle.Heads.Statement.lean`*
 
 ```lean
 def LiveOnRoundRobin : Prop :=
@@ -15612,11 +15612,11 @@ def LiveOnRoundRobin : Prop :=
       R.LiveOn (Sched (roundRobin n hn) hk m hm hmax) (n + R.waveLength - 1)
 ```
 
-**HH9e, round-robin is live**: a live rule with descent laws at `slack`, on `n ≥ waveLength · slack + 1` validators, is live under round-robin at every count, with gap `n + waveLength − 1`.
+**BN9e, round-robin is live**: a live rule with descent laws at `slack`, on `n ≥ waveLength · slack + 1` validators, is live under round-robin at every count, with gap `n + waveLength − 1`.
 
 #### `Statement`
 
-*def, `HammerheadTwo.Heads.Statement.lean`*
+*def, `Barnacle.Heads.Statement.lean`*
 
 ```lean
 def Statement : Prop :=
@@ -15632,7 +15632,7 @@ The heads descent, for every live rule with descent laws, every keyed leader fun
 
 #### `mysticeti`
 
-*def, `HammerheadTwo.Mysticeti.Statement.lean`*
+*def, `Barnacle.Mysticeti.Statement.lean`*
 
 ```lean
 def mysticeti [Faults Validator] : BaseRule Validator BlockId Payload where
@@ -15653,7 +15653,7 @@ def mysticeti [Faults Validator] : BaseRule Validator BlockId Payload where
 
 #### `Statement`
 
-*def, `HammerheadTwo.Mysticeti.Statement.lean`*
+*def, `Barnacle.Mysticeti.Statement.lean`*
 
 ```lean
 def Statement : Prop :=
@@ -15666,7 +15666,7 @@ def Statement : Prop :=
 
 #### `mysticetiLive`
 
-*def, `HammerheadTwo.MysticetiLive.Statement.lean`*
+*def, `Barnacle.MysticetiLive.Statement.lean`*
 
 ```lean
 def mysticetiLive [Faults Validator] : LiveRule Validator BlockId Payload :=
@@ -15680,7 +15680,7 @@ def mysticetiLive [Faults Validator] : LiveRule Validator BlockId Payload :=
 
 #### `Descent`
 
-*def, `HammerheadTwo.MysticetiLive.Statement.lean`*
+*def, `Barnacle.MysticetiLive.Statement.lean`*
 
 ```lean
 def Descent : Prop :=
@@ -15693,7 +15693,7 @@ def Descent : Prop :=
 
 #### `RoundRobinLive`
 
-*def, `HammerheadTwo.MysticetiLive.Statement.lean`*
+*def, `Barnacle.MysticetiLive.Statement.lean`*
 
 ```lean
 def RoundRobinLive : Prop :=
@@ -15707,7 +15707,7 @@ def RoundRobinLive : Prop :=
 
 #### `Statement`
 
-*def, `HammerheadTwo.MysticetiLive.Statement.lean`*
+*def, `Barnacle.MysticetiLive.Statement.lean`*
 
 ```lean
 def Statement : Prop := Descent ∧ RoundRobinLive
@@ -15717,7 +15717,7 @@ The descent laws, and liveness under round-robin at every count.
 
 #### `odontoceti`
 
-*def, `HammerheadTwo.Odontoceti.Statement.lean`*
+*def, `Barnacle.Odontoceti.Statement.lean`*
 
 ```lean
 def odontoceti [Faults5 Validator] : BaseRule Validator BlockId Payload where
@@ -15738,7 +15738,7 @@ def odontoceti [Faults5 Validator] : BaseRule Validator BlockId Payload where
 
 #### `odontocetiLive`
 
-*def, `HammerheadTwo.Odontoceti.Statement.lean`*
+*def, `Barnacle.Odontoceti.Statement.lean`*
 
 ```lean
 def odontocetiLive [Faults5 Validator] : LiveRule Validator BlockId Payload :=
@@ -15752,7 +15752,7 @@ def odontocetiLive [Faults5 Validator] : LiveRule Validator BlockId Payload :=
 
 #### `Laws`
 
-*def, `HammerheadTwo.Odontoceti.Statement.lean`*
+*def, `Barnacle.Odontoceti.Statement.lean`*
 
 ```lean
 def Laws : Prop :=
@@ -15765,7 +15765,7 @@ def Laws : Prop :=
 
 #### `Descent`
 
-*def, `HammerheadTwo.Odontoceti.Statement.lean`*
+*def, `Barnacle.Odontoceti.Statement.lean`*
 
 ```lean
 def Descent : Prop :=
@@ -15778,7 +15778,7 @@ def Descent : Prop :=
 
 #### `RoundRobinLive`
 
-*def, `HammerheadTwo.Odontoceti.Statement.lean`*
+*def, `Barnacle.Odontoceti.Statement.lean`*
 
 ```lean
 def RoundRobinLive : Prop :=
@@ -15792,7 +15792,7 @@ def RoundRobinLive : Prop :=
 
 #### `Statement`
 
-*def, `HammerheadTwo.Odontoceti.Statement.lean`*
+*def, `Barnacle.Odontoceti.Statement.lean`*
 
 ```lean
 def Statement : Prop := Laws ∧ Descent ∧ RoundRobinLive
@@ -15802,7 +15802,7 @@ The laws, the descent laws, and liveness under round-robin.
 
 #### `nemo`
 
-*def, `HammerheadTwo.Nemo.Statement.lean`*
+*def, `Barnacle.Nemo.Statement.lean`*
 
 ```lean
 def nemo : BaseRule Validator BlockId Payload where
@@ -15823,7 +15823,7 @@ def nemo : BaseRule Validator BlockId Payload where
 
 #### `nemoLive`
 
-*def, `HammerheadTwo.Nemo.Statement.lean`*
+*def, `Barnacle.Nemo.Statement.lean`*
 
 ```lean
 def nemoLive [Nemo.CrashFaults Validator] : LiveRule Validator BlockId Payload :=
@@ -15837,7 +15837,7 @@ def nemoLive [Nemo.CrashFaults Validator] : LiveRule Validator BlockId Payload :
 
 #### `Laws`
 
-*def, `HammerheadTwo.Nemo.Statement.lean`*
+*def, `Barnacle.Nemo.Statement.lean`*
 
 ```lean
 def Laws : Prop :=
@@ -15850,7 +15850,7 @@ def Laws : Prop :=
 
 #### `Descent`
 
-*def, `HammerheadTwo.Nemo.Statement.lean`*
+*def, `Barnacle.Nemo.Statement.lean`*
 
 ```lean
 def Descent : Prop :=
@@ -15864,7 +15864,7 @@ def Descent : Prop :=
 
 #### `RoundRobinLive`
 
-*def, `HammerheadTwo.Nemo.Statement.lean`*
+*def, `Barnacle.Nemo.Statement.lean`*
 
 ```lean
 def RoundRobinLive : Prop :=
@@ -15879,7 +15879,7 @@ def RoundRobinLive : Prop :=
 
 #### `Statement`
 
-*def, `HammerheadTwo.Nemo.Statement.lean`*
+*def, `Barnacle.Nemo.Statement.lean`*
 
 ```lean
 def Statement : Prop := Laws ∧ Descent ∧ RoundRobinLive
@@ -15889,7 +15889,7 @@ The laws, the descent laws, and liveness under round-robin.
 
 #### `WindowInjective`
 
-*def, `HammerheadTwo.Helpers.Schedule.lean`*
+*def, `Barnacle.Helpers.Schedule.lean`*
 
 ```lean
 def WindowInjective (getLeader : ℕ → Validator) (w : ℕ) : Prop :=
@@ -15900,7 +15900,7 @@ def WindowInjective (getLeader : ℕ → Validator) (w : ℕ) : Prop :=
 
 #### `historyViewOf`
 
-*def, `HammerheadTwo.Helpers.Mysticeti.lean`*
+*def, `Barnacle.Helpers.Mysticeti.lean`*
 
 ```lean
 def historyViewOf (U : BlockUniverse Validator BlockId Payload) (A : BlockId)
@@ -15915,7 +15915,7 @@ The causal history of a block of the universe, as a view.
 
 #### `ConfigAgree`
 
-*def, `HammerheadTwo.Helpers.Agreement.lean`*
+*def, `Barnacle.Helpers.Agreement.lean`*
 
 ```lean
 def ConfigAgree (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
@@ -15927,7 +15927,7 @@ Configuration `k` agrees between two runs.
 
 #### `PartialRun.zero`
 
-*def, `HammerheadTwo.Helpers.Progress.lean`*
+*def, `Barnacle.Helpers.Progress.lean`*
 
 ```lean
 def PartialRun.zero (R : BaseRule Validator BlockId Payload) (P : Params)
@@ -15953,7 +15953,7 @@ The height-`0` run: `init` only.
 
 #### `nemoHistoryViewOf`
 
-*def, `HammerheadTwo.Helpers.Nemo.lean`*
+*def, `Barnacle.Helpers.Nemo.lean`*
 
 ```lean
 def nemoHistoryViewOf (U : Nemo.Universe Validator BlockId Payload) (A : BlockId)
@@ -23736,11 +23736,11 @@ theorem flushRecordS_agree_of_committed {B₁ B₂ : BlockId} {r₁ r₂ ρ : �
 theorem holds : Statement
 ```
 
-### Hammerhead 2.0: the adaptive leader count
+### Barnacle: the adaptive leader count
 
 #### `roundRobin_keyed`
 
-*theorem, `HammerheadTwo.Helpers.Schedule.lean`*
+*theorem, `Barnacle.Helpers.Schedule.lean`*
 
 ```lean
 theorem roundRobin_keyed (n : ℕ) (hn : 0 < n) : Keyed (roundRobin n hn) n
@@ -23750,7 +23750,7 @@ Round-robin is keyed at every count up to `n`.
 
 #### `Sched_slotRound`
 
-*theorem, `HammerheadTwo.Helpers.Schedule.lean`*
+*theorem, `Barnacle.Helpers.Schedule.lean`*
 
 ```lean
 @[simp] theorem Sched_slotRound (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLeader w)
@@ -23762,7 +23762,7 @@ Round-robin is keyed at every count up to `n`.
 
 #### `Sched_leader`
 
-*theorem, `HammerheadTwo.Helpers.Schedule.lean`*
+*theorem, `Barnacle.Helpers.Schedule.lean`*
 
 ```lean
 theorem Sched_leader (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLeader w)
@@ -23774,7 +23774,7 @@ theorem Sched_leader (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLe
 
 #### `Sched_congr`
 
-*theorem, `HammerheadTwo.Helpers.Schedule.lean`*
+*theorem, `Barnacle.Helpers.Schedule.lean`*
 
 ```lean
 theorem Sched_congr (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLeader w)
@@ -23786,7 +23786,7 @@ Two schedules with equal counts are equal, whatever their proof arguments — th
 
 #### `vdct_agree`
 
-*theorem, `HammerheadTwo.Helpers.Agreement.lean`*
+*theorem, `Barnacle.Helpers.Agreement.lean`*
 
 ```lean
 theorem vdct_agree (hR : R.Laws) (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
@@ -23801,7 +23801,7 @@ Verdicts of a slot both runs have closed agree — the base rule's agreement law
 
 #### `anchor_agree`
 
-*theorem, `HammerheadTwo.Helpers.Agreement.lean`*
+*theorem, `Barnacle.Helpers.Agreement.lean`*
 
 ```lean
 theorem anchor_agree (hR : R.Laws) (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
@@ -23813,7 +23813,7 @@ The anchors agree: the lesser of two anchors is, in the other run, a committed s
 
 #### `configAgree`
 
-*theorem, `HammerheadTwo.Helpers.Agreement.lean`*
+*theorem, `Barnacle.Helpers.Agreement.lean`*
 
 ```lean
 theorem configAgree (hR : R.Laws) (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
@@ -23829,7 +23829,7 @@ theorem configAgree (hR : R.Laws) (R₁ : PartialRun R P getLeader hk upd U V₁
 
 #### `ledgerOf_congr`
 
-*theorem, `HammerheadTwo.Helpers.Ledger.lean`*
+*theorem, `Barnacle.Helpers.Ledger.lean`*
 
 ```lean
 theorem ledgerOf_congr {v w : ℕ → Option BlockId} {lo hi : ℕ}
@@ -23840,7 +23840,7 @@ theorem ledgerOf_congr {v w : ℕ → Option BlockId} {lo hi : ℕ}
 
 #### `round_of_mem_interval`
 
-*theorem, `HammerheadTwo.Helpers.Ledger.lean`*
+*theorem, `Barnacle.Helpers.Ledger.lean`*
 
 ```lean
 theorem round_of_mem_interval (Rn : PartialRun R P getLeader hk upd U V K) {k κ : ℕ}
@@ -23852,7 +23852,7 @@ A slot of the interval of range `k` lies in the range's rounds.
 
 #### `rangeLedger_nodup`
 
-*theorem, `HammerheadTwo.Helpers.Ledger.lean`*
+*theorem, `Barnacle.Helpers.Ledger.lean`*
 
 ```lean
 theorem rangeLedger_nodup (hR : R.Laws) (Rn : PartialRun R P getLeader hk upd U V K)
@@ -23863,7 +23863,7 @@ A closed range's ledger has no repetition.
 
 #### `rangeLedger_disjoint`
 
-*theorem, `HammerheadTwo.Helpers.Ledger.lean`*
+*theorem, `Barnacle.Helpers.Ledger.lean`*
 
 ```lean
 theorem rangeLedger_disjoint (hR : R.Laws) (Rn : PartialRun R P getLeader hk upd U V K)
@@ -23874,7 +23874,7 @@ Two closed ranges' ledgers are disjoint: their blocks have rounds in disjoint in
 
 #### `progress`
 
-*theorem, `HammerheadTwo.Helpers.Progress.lean`*
+*theorem, `Barnacle.Helpers.Progress.lean`*
 
 ```lean
 theorem progress (hR : R.Laws) (hupd : UpdBounded P upd) {c K Rnd N : ℕ}
@@ -23887,7 +23887,7 @@ theorem progress (hR : R.Laws) (hupd : UpdBounded P upd) {c K Rnd N : ℕ}
 
 #### `everyHeight`
 
-*theorem, `HammerheadTwo.Helpers.Progress.lean`*
+*theorem, `Barnacle.Helpers.Progress.lean`*
 
 ```lean
 theorem everyHeight (hR : R.Laws) (hupd : UpdBounded P upd) {c : ℕ}
@@ -23900,7 +23900,7 @@ theorem everyHeight (hR : R.Laws) (hupd : UpdBounded P upd) {c : ℕ}
 
 #### `stretchDescent`
 
-*theorem, `HammerheadTwo.Helpers.Heads.lean`*
+*theorem, `Barnacle.Helpers.Heads.lean`*
 
 ```lean
 theorem stretchDescent (hD : R.Descent slack) (S : Slots Validator) {U : R.Universe}
@@ -23911,11 +23911,11 @@ theorem stretchDescent (hD : R.Descent slack) (S : Slots Validator) {U : R.Unive
     ∀ i, i < b → ∃ v, R.Decided S V i v
 ```
 
-**HH9a, the stretch descent.**
+**BN9a, the stretch descent.**
 
 #### `headsDecide_at`
 
-*theorem, `HammerheadTwo.Helpers.Heads.lean`*
+*theorem, `Barnacle.Helpers.Heads.lean`*
 
 ```lean
 theorem headsDecide_at (hD : R.Descent slack) (hw : 0 < R.waveLength)
@@ -23930,11 +23930,11 @@ theorem headsDecide_at (hD : R.Descent slack) (hw : 0 < R.waveLength)
     ∃ L, R.Decided (Sched getLeader hk m hm hmax) (R.full U) (m * ρ) (some L)
 ```
 
-**HH9b′, subtraction-free.** Heads of rounds `ρ, …, ρ + w − 1` `T`-led, waves under `N`: every slot at a round `r` with `r < ρ ≤ r + w` is decided, and the head of `ρ` is committed.
+**BN9b′, subtraction-free.** Heads of rounds `ρ, …, ρ + w − 1` `T`-led, waves under `N`: every slot at a round `r` with `r < ρ ≤ r + w` is decided, and the head of `ρ` is committed.
 
 #### `liveOn_of_headsRun`
 
-*theorem, `HammerheadTwo.Helpers.Heads.lean`*
+*theorem, `Barnacle.Helpers.Heads.lean`*
 
 ```lean
 theorem liveOn_of_headsRun (hD : R.Descent slack) (hw : 0 < R.waveLength)
@@ -23943,11 +23943,11 @@ theorem liveOn_of_headsRun (hD : R.Descent slack) (hw : 0 < R.waveLength)
     R.LiveOn (Sched getLeader hk m hm hmax) c₀
 ```
 
-**HH9c′ at gap `c₀`**: `HeadsRun` called at `r + 1`.
+**BN9c′ at gap `c₀`**: `HeadsRun` called at `r + 1`.
 
 #### `roundRobin_headsRun`
 
-*theorem, `HammerheadTwo.Helpers.Heads.lean`*
+*theorem, `Barnacle.Helpers.Heads.lean`*
 
 ```lean
 theorem roundRobin_headsRun (n : ℕ) (hn : 0 < n) (T : Finset (Fin n)) (slack g : ℕ)
@@ -23959,7 +23959,7 @@ theorem roundRobin_headsRun (n : ℕ) (hn : 0 < n) (T : Finset (Fin n)) (slack g
 
 #### `liveOn_roundRobin`
 
-*theorem, `HammerheadTwo.Helpers.Heads.lean`*
+*theorem, `Barnacle.Helpers.Heads.lean`*
 
 ```lean
 theorem liveOn_roundRobin {n : ℕ} (hn : 0 < n) {BlockId : Type} [DecidableEq BlockId]
@@ -23973,7 +23973,7 @@ theorem liveOn_roundRobin {n : ℕ} (hn : 0 < n) {BlockId : Type} [DecidableEq B
 
 #### `mysticetiLive_descent`
 
-*theorem, `HammerheadTwo.Helpers.MysticetiLive.lean`*
+*theorem, `Barnacle.Helpers.MysticetiLive.lean`*
 
 ```lean
 theorem mysticetiLive_descent [F : Faults Validator] :
@@ -23984,7 +23984,7 @@ theorem mysticetiLive_descent [F : Faults Validator] :
 
 #### `odontoceti_laws`
 
-*theorem, `HammerheadTwo.Helpers.Odontoceti.lean`*
+*theorem, `Barnacle.Helpers.Odontoceti.lean`*
 
 ```lean
 theorem odontoceti_laws [Faults5 Validator] :
@@ -23996,7 +23996,7 @@ The laws, for Odontoceti.
 
 #### `odontocetiLive_descent`
 
-*theorem, `HammerheadTwo.Helpers.Odontoceti.lean`*
+*theorem, `Barnacle.Helpers.Odontoceti.lean`*
 
 ```lean
 theorem odontocetiLive_descent [F : Faults5 Validator] :
@@ -24009,7 +24009,7 @@ The descent laws, for Odontoceti at slack `f`.
 
 #### `nemo_laws`
 
-*theorem, `HammerheadTwo.Helpers.NemoLive.lean`*
+*theorem, `Barnacle.Helpers.NemoLive.lean`*
 
 ```lean
 theorem nemo_laws :
@@ -24021,7 +24021,7 @@ The laws, for Nemo-Nemo.
 
 #### `nemoLive_descent`
 
-*theorem, `HammerheadTwo.Helpers.NemoLive.lean`*
+*theorem, `Barnacle.Helpers.NemoLive.lean`*
 
 ```lean
 theorem nemoLive_descent [Nemo.CrashFaults Validator] :
@@ -24034,7 +24034,7 @@ The descent laws, for Nemo-Nemo, at the slack a majority may miss: `n − majori
 
 #### `majority_bound`
 
-*theorem, `HammerheadTwo.Helpers.NemoLive.lean`*
+*theorem, `Barnacle.Helpers.NemoLive.lean`*
 
 ```lean
 theorem majority_bound (n : ℕ) (hn : 0 < n) :
@@ -24045,7 +24045,7 @@ The pigeonhole's committee bound holds for the majority slack at every `n`: `2 �
 
 #### `holds`
 
-*theorem, `HammerheadTwo.Window.Proof.lean`*
+*theorem, `Barnacle.Window.Proof.lean`*
 
 ```lean
 theorem holds : Statement
@@ -24053,7 +24053,7 @@ theorem holds : Statement
 
 #### `holds`
 
-*theorem, `HammerheadTwo.Agreement.Proof.lean`*
+*theorem, `Barnacle.Agreement.Proof.lean`*
 
 ```lean
 theorem holds : Statement
@@ -24061,7 +24061,7 @@ theorem holds : Statement
 
 #### `holds`
 
-*theorem, `HammerheadTwo.Ledger.Proof.lean`*
+*theorem, `Barnacle.Ledger.Proof.lean`*
 
 ```lean
 theorem holds : Statement
@@ -24069,7 +24069,7 @@ theorem holds : Statement
 
 #### `holds`
 
-*theorem, `HammerheadTwo.Conservativity.Proof.lean`*
+*theorem, `Barnacle.Conservativity.Proof.lean`*
 
 ```lean
 theorem holds : Statement
@@ -24077,7 +24077,7 @@ theorem holds : Statement
 
 #### `holds`
 
-*theorem, `HammerheadTwo.Aimd.Proof.lean`*
+*theorem, `Barnacle.Aimd.Proof.lean`*
 
 ```lean
 theorem holds : Statement
@@ -24085,7 +24085,7 @@ theorem holds : Statement
 
 #### `holds`
 
-*theorem, `HammerheadTwo.Progress.Proof.lean`*
+*theorem, `Barnacle.Progress.Proof.lean`*
 
 ```lean
 theorem holds : Statement
@@ -24093,7 +24093,7 @@ theorem holds : Statement
 
 #### `holds`
 
-*theorem, `HammerheadTwo.Heads.Proof.lean`*
+*theorem, `Barnacle.Heads.Proof.lean`*
 
 ```lean
 theorem holds : Statement
@@ -24101,7 +24101,7 @@ theorem holds : Statement
 
 #### `holds`
 
-*theorem, `HammerheadTwo.Mysticeti.Proof.lean`*
+*theorem, `Barnacle.Mysticeti.Proof.lean`*
 
 ```lean
 theorem holds : Statement
@@ -24109,7 +24109,7 @@ theorem holds : Statement
 
 #### `holds`
 
-*theorem, `HammerheadTwo.MysticetiLive.Proof.lean`*
+*theorem, `Barnacle.MysticetiLive.Proof.lean`*
 
 ```lean
 theorem holds : Statement
@@ -24117,7 +24117,7 @@ theorem holds : Statement
 
 #### `holds`
 
-*theorem, `HammerheadTwo.Odontoceti.Proof.lean`*
+*theorem, `Barnacle.Odontoceti.Proof.lean`*
 
 ```lean
 theorem holds : Statement
@@ -24125,7 +24125,7 @@ theorem holds : Statement
 
 #### `holds`
 
-*theorem, `HammerheadTwo.Nemo.Proof.lean`*
+*theorem, `Barnacle.Nemo.Proof.lean`*
 
 ```lean
 theorem holds : Statement
@@ -25188,20 +25188,20 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_suppAnchorsOf_of_committed` | A committed anchor of the cone is one of the supported anchors of the cone. |
 | `mem_suppCandidates` | — |
 
-### `HammerheadTwo/Helpers/Schedule.lean` (2)
+### `Barnacle/Helpers/Schedule.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `keyed_of_windowInjective` | Window-injectivity gives `Keyed`: two slots of one round with one leader have equal offsets (both below `m … |
 | `roundRobin_windowInjective` | Round-robin is injective on every window of `n` consecutive rounds: the residues `(r + l) % n` for `l < n` … |
 
-### `HammerheadTwo/Helpers/Agreement.lean` (1)
+### `Barnacle/Helpers/Agreement.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
 | `configAgree_succ` | Agreement at `k` carries to `k + 1`: the anchors agree, so the anchor blocks agree, so one update of one … |
 
-### `HammerheadTwo/Helpers/Ledger.lean` (5)
+### `Barnacle/Helpers/Ledger.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
@@ -25211,24 +25211,24 @@ subsection per module, in the layer order of Appendices B and C.
 | `start_lt_succ` | `start` grows strictly across a closed configuration: the next start is the anchor's round, past the … |
 | `start_mono` | `start` is monotone over the determined configurations. |
 
-### `HammerheadTwo/Helpers/Progress.lean` (2)
+### `Barnacle/Helpers/Progress.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `everyHeight_bound` | (D) |
 | `progress_exists` | Configuration progress, with the bound on the new start. |
 
-### `HammerheadTwo/Helpers/Heads.lean` (7)
+### `Barnacle/Helpers/Heads.lean` (7)
 
 | Lemma | Role |
 |:---|:---|
-| `Sched_head_above` | What HH9b needs. For a slot `κ` at round `r` and the head `h := m * (r + w)` of round `r + w`: `κ`'s round … |
+| `Sched_head_above` | What BN9b needs. For a slot `κ` at round `r` and the head `h := m * (r + w)` of round `r + w`: `κ`'s round … |
 | `Sched_leader_head` | The head of round `ρ` is led by `getLeader ρ`, whatever the count. |
 | `Sched_lt_head_of_slotRound_lt` | A slot at a round below `ρ` sits below the head of `ρ`. |
 | `Sched_slotRound_head` | The head of round `ρ` is slot `m * ρ`. |
 | `Sched_slotRound_lt_of_lt_head` | A slot below the head of `ρ` sits at a round below `ρ`. |
 | `decided_of_head_committed` | A slot is decided once the head a wave above it is committed: the intermediates are vacuous. From … |
-| `headsDecide` | HH9b. Heads of rounds `ρ + w, …, ρ + 2w − 1` `T`-led (with `T` from `goodLeaders`) and their waves under … |
+| `headsDecide` | BN9b. Heads of rounds `ρ + w, …, ρ + 2w − 1` `T`-led (with `T` from `goodLeaders`) and their waves under … |
 
 ### `Network/Quorum.lean` (2)
 

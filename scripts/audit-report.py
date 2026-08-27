@@ -63,7 +63,7 @@ ALLOW = {
     # Names of the reference implementation (the `mysticeti` repository, Rust)
     # that the Mahi-Mahi arc's docstrings quote.
     "enough_leader_blame", "is_certificate", "try_indirect_decide",
-    # Core Lean names the Hammerhead 2.0 statements name in comments.
+    # Core Lean names the Barnacle statements name in comments.
     "Nat.one_pos",
 }
 

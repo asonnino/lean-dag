@@ -190,7 +190,7 @@ faults alone.
   for the evidence loses liveness. The arc is the second under the
   statement/proof partition.
 
-- **Hammerhead 2.0** (`LeanDag/HammerheadTwo/`): the adaptive **leader
+- **Barnacle** (`LeanDag/Barnacle/`): the adaptive **leader
   count** — every few seconds, measure on the agreed DAG the fraction
   of leader slots the base protocol decided directly and drive the
   number of leaders per round with an additive-increase,
@@ -268,7 +268,7 @@ the set of declarations changes. `make help` lists them.
   Byzantine and crash faults apart; `Nemo/` — crash-fault consensus at
   a majority quorum; `MahiMahi/` — the asynchronous rule at wave `w`,
   `BlackMarlin/` — the three-round rule with an anchor every round, and
-  `HammerheadTwo/` — the adaptive leader count over an interface for the
+  `Barnacle/` — the adaptive leader count over an interface for the
   three base rules, all three under a statement/proof partition (`Model/`,
   `<Result>/Statement.lean`, `<Result>/Proof.lean`); `Network/` — the composed
   denial-of-service capstones; `Integration/` — how the arcs compose).
@@ -304,7 +304,7 @@ the set of declarations changes. `make help` lists them.
 | [`docs/adaptive-leaders.md`](docs/adaptive-leaders.md) | adaptive leader schedules: the design record and theorem plan |
 | [`docs/hybrid-plan.md`](docs/hybrid-plan.md) | hybrid fault tolerance: the design record and theorem plan |
 | [`docs/mahi-mahi.md`](docs/mahi-mahi.md) | the asynchronous rule at wave `w`: the clause, and the statement/proof partition |
-| [`docs/hammerhead-two.md`](docs/hammerhead-two.md) | the adaptive leader count: the interface A1–A4, the configuration-sequence model and why it needs no fixpoint, the liveness clause and its margin, the heads descent, the three instantiations, and the findings |
+| [`docs/barnacle.md`](docs/barnacle.md) | the adaptive leader count: the interface A1–A4, the configuration-sequence model and why it needs no fixpoint, the liveness clause and its margin, the heads descent, the three instantiations, and the findings |
 | [`docs/black-marlin.md`](docs/black-marlin.md) | the three-round commit rule: the link clause, the run of two, what the reactive exit costs, agreement, the delivered order the descent computes, the sequence it outputs, where Agreement fails, and a repair |
 | [`docs/integration.md`](docs/integration.md) | composing the arcs: the invariant interface, and what composition revealed |
 | [`docs/related.md`](docs/related.md) | a survey of consensus on uncertified DAGs |
