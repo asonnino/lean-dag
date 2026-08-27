@@ -66,3 +66,9 @@ import LeanDagTest.FinWhale.Pace
 import LeanDagTest.FinWhale.DoS
 import LeanDagTest.FinWhale.Equivocation
 import LeanDagTest.Barnacle.Real
+import LeanDagTest.Hydrozoan.Model
+import LeanDagTest.Hydrozoan.Thresholds
+import LeanDagTest.Hydrozoan.BlockUniverse
+import LeanDagTest.Hydrozoan.CausalHistory
+import LeanDagTest.Hydrozoan.DirectRules
+import LeanDagTest.Hydrozoan.Decided
