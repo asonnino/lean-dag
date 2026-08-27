@@ -337,7 +337,7 @@ structure PartialRun (R : BaseRule Validator BlockId Payload) (P : Params)
   init : start 0 = 0 ∧ count 0 = 1 ∧ backoff 0 = 0
   count_pos : ∀ k, 0 < count k
   count_le : ∀ k, count k ≤ P.maxLeaders
-  closed : ∀ k, k < K → ∀ κ, start k < κ / count k → κ ≤ anchor k →
+  closed : ∀ k, k < K → ∀ κ, start k < κ / count k → κ / count k ≤ start (k + 1) →
     R.Decided (Sched getLeader hk (count k) (count_pos k) (count_le k)) V κ (vdct k κ)
   anchor_commits : ∀ k, k < K →
     (∃ A, vdct k (anchor k) = some A) ∧ start k + P.interval < anchor k / count k
@@ -445,76 +445,69 @@ two forms §4 turns out to hold on data.
 ## 7. Liveness, interface half
 
 The paper's A4 liveness is "after GST, honest validators commit new
-leaders infinitely often". In this development liveness is structural:
-`SynchronisedOn U T R` and `PopulatedOn U T r` say what the DAG must
-contain, view convergence supplies them (report §5), and no theorem
-mentions time. A structure extending `BaseRule` — Phase 3's, so that
-the frozen Phase 1 file is not reopened — carries those two predicates
-as fields, together with view-monotonicity for the local form, and A4
-is stated as a clause on a schedule:
+leaders infinitely often". In this development liveness is structural —
+a condition on the DAG, no clock — and every statement carries a
+horizon, because a universe is finite (§5). The interface adds one
+field (D10): `LiveRule extends BaseRule` with `Good : Universe → ℕ → ℕ →
+Prop`, the rule's own notion of a DAG good from a round to a horizon —
+for the rules of this development, synchronised over a reliable quorum
+and populated (`∃ T ⊆ Correct, quorumCard ≤ T.card ∧ SynchronisedOn U T
+Rnd ∧ ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn U T r`), defined at each
+instantiation where its predicates are checked. The mechanism never
+inspects it. A4 is then a clause on a schedule, with a commit gap `c`
+(D11) so that each configuration's anchor is found before the horizon
+(`Model/Live.lean`):
 
 ```lean
-structure LiveRule (Validator BlockId Payload) extends BaseRule Validator BlockId Payload where
-  SynchronisedOn : Universe → Finset Validator → ℕ → Prop
-  PopulatedOn : Universe → Finset Validator → ℕ → Prop
-  Reliable : Finset Validator          -- `Correct`, or Nemo's `Live`
-  quorum : ℕ                            -- the count `T` must reach
-  mono : ∀ (S : Slots Validator) {U} (V V' : View U) k v,
-    viewIds V ⊆ viewIds V' → Decided S V k v → Decided S V' k v
+def LiveRule.LiveOn (R : LiveRule Validator BlockId Payload) (S : Slots Validator) (c : ℕ) :
+    Prop :=
+  ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
+    (∀ κ, Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
+      ∃ v, R.Decided S (R.full U) κ v) ∧
+    (∀ r, Rnd ≤ r → r + c + R.waveLength ≤ N →
+      ∃ κ, r ≤ S.slotRound κ ∧ S.slotRound κ ≤ r + c ∧
+        ∃ L, R.Decided S (R.full U) κ (some L))
 ```
 
-Odontoceti has no `decided_mono`; the field is owed there and proved
-in Phase 5 (a copy of Mysticeti's four cases with the canonicity clause
-carried through), which is a finding about the base development rather
-than about the paper.
+No view-monotonicity field: only the local form of liveness needs it
+(D6, deferred), and Odontoceti has none. Extending a run by a
+configuration needs the update rule to keep the count in range,
+`UpdBounded P upd` (D13), which HH7a supplies for the AIMD rule.
+
+**HH8a (progress).** The paper's Configuration Progress, at the run's
+own count (D12): a run whose current configuration's range lies at or
+after the synchrony round, whose schedule is live with gap `c`, on a DAG
+good to a horizon leaving room for the threshold, the gap and one wave,
+extends by one configuration:
 
 ```lean
-/-- **A4, liveness, on one schedule.** Above the synchrony round every slot
-is decided on the full view, and committed slots recur. -/
-def BaseRule.LiveOn (R : BaseRule …) (S : Slots Validator) : Prop :=
-  ∀ (U : R.Universe) (T : Finset Validator) (Rnd : ℕ),
-    T ⊆ R.Reliable → R.quorum ≤ T.card →
-    R.SynchronisedOn U T Rnd → (∀ r, Rnd ≤ r → R.PopulatedOn U T r) →
-    (∀ k, Rnd ≤ S.slotRound k → ∃ v, R.Decided (S := S) (R.full U) k v) ∧
-    (∀ r, ∃ k, r ≤ S.slotRound k ∧ ∃ L, R.Decided (S := S) (R.full U) k (some L))
+  ∀ (U : R.Universe) (Rnd N K : ℕ)
+    (Rn : PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K),
+    R.LiveOn (Sched getLeader hk (Rn.count K) (Rn.count_pos K) (Rn.count_le K)) c →
+    R.Good U Rnd N → Rnd ≤ Rn.start K + 1 →
+    Rn.start K + P.interval + 1 + c + R.waveLength ≤ N →
+    Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) (K + 1))
 ```
 
-The population hypothesis is stated at every round above `Rnd` rather
-than to a horizon `N`, which is the shape of `adaptiveRun_exists` and
-of every total-run statement; the finite-horizon form belongs to the
-witnesses.
+The new range's slots lie at rounds above `start K`, hence at or after
+`Rnd`, and at most `start K + interval + 1 + c`, hence one wave under
+`N`: the first clause decides them. The second clause at `r := start K
++ interval + 1` yields a committed slot past the threshold within `c`;
+the anchor is the least such slot, `anchor_least` its minimality; the
+safety law `agree` identifies the verdict chosen for the anchor's slot
+with the commit the clause provides — safety is consumed inside
+liveness. The rule gives the next state, in range by `UpdBounded`.
 
-**HH8 (the configuration sequence exists).** If `LiveOn (Sched m)` holds
-for every `m` in `[1, maxLeaders]`, then on a universe synchronised over
-a reliable quorum and populated above `Rnd` a run of every height exists
-on the full view — the prefix form, the only one there is (§5):
+**HH8b (every height).** From a synchrony round at genesis and the
+clause at every count, a run of every height exists under the horizon
+its height needs, `horizon P R c K := K · (interval + 1 + c) +
+waveLength`: HH8a iterated, the induction carrying `start K ≤ K ·
+(interval + 1 + c)`. The paper's Liveness, in the prefix form.
 
-```lean
-theorem configRun_exists (hlive : ∀ m (hm : 0 < m) (hmax : m ≤ P.maxLeaders), R.LiveOn (Sched m …))
-    (hT : T ⊆ R.Reliable) (hcard : R.quorum ≤ T.card)
-    (hs : R.SynchronisedOn U T Rnd) (hpop : ∀ r, Rnd ≤ r → R.PopulatedOn U T r) :
-    ∀ K, Nonempty (PartialRun R P getLeader hk upd U (R.full U) K)
-```
-
-By recursion on `k`: range `k` is decided by the first conjunct at
-`Sched (count k)`; some committed slot lies past `start k + interval` by
-the second; the least such slot is the anchor; the rule gives the next
-state, and `count_pos`/`count_le` hold by HH7 for `Aimd.rule` (the
-theorem is stated for rules that keep the count in range). The paper's
-Configuration Progress is the inductive step; its Liveness is the
-existence of runs of every height together with HH5. Population at
-every round above `Rnd` is what a finite universe cannot supply for
-every height at once; the statement will carry a horizon, as every
-base liveness statement does, with the height it reaches a function of
-the horizon.
-
-Two things are deliberately not in HH8. Ranges below `Rnd` are not
-decided by the clause — the run's `closed` for those ranges is taken as
-a hypothesis, exactly as the base liveness statements start at the
-synchrony round. And the statement is on the full view; the *local*
-form — every reliable validator decides on its own view at an explicit
-time — needs the pacing structures of report §5 and `R.mono`, and is
-deferred to a later phase (D6) rather than promised here.
+Both statements are on the full view; the local form — every reliable
+validator decides on its own view at an explicit time — needs the
+pacing structures of report §5 and view-monotonicity, and is deferred
+(D6).
 
 ## 8. Liveness, the descent under multiple leaders
 
@@ -687,6 +680,10 @@ author comment when confirmed.
   Agreement is stated for the AIMD rule; it holds for any deterministic
   function of the universe and the anchor, which is a stronger and
   simpler statement for the Lean appendix. *Phase 2.*
+- **F8 — safety inside liveness.** Configuration Progress consumes
+  the agreement law: the verdict the liveness clause chooses for the
+  anchor's slot and the commit it provides for it are identified by
+  `agree`. The paper's Progress lemma does not say so. *Phase 3.*
 - **F7 — no total run.** A finite DAG closes finitely many
   configurations; the paper's sequence of configurations exists only as
   the family of its prefixes, and its safety theorem is agreement of
@@ -726,6 +723,23 @@ below); the Phase 1 sources implement them as written.
   the round bound in the count (recommended; it is a `View` with no
   closure proof — the history is closed), or the round-restricted
   set with the closure argument of §4.
+
+Settled 2026-08-27 for Phase 3, on the recommendations:
+
+- **D10 — the liveness interface.** One field, `Good : Universe → ℕ → ℕ
+  → Prop`, the rule's own notion of a good DAG (recommended), or the
+  four predicates `SynchronisedOn`, `PopulatedOn`, `Reliable`, `quorum`
+  as fields.
+- **D11 — the commit gap.** `LiveOn` bounds the recurrence of committed
+  slots by a gap `c` (recommended), or leaves it unbounded and states
+  liveness without a horizon — which a finite universe cannot inhabit.
+- **D12 — progress at the run's own count.** Configuration Progress
+  needs `LiveOn` at the current count only, and every height follows by
+  induction (recommended), or a single statement under the clause at
+  every count.
+- **D13 — bounded rules.** Extending a run consumes `UpdBounded`
+  (recommended), or the run structure drops its `count_pos`/`count_le`
+  clauses and every consumer re-derives them.
 
 ## 13. Out of scope
 
