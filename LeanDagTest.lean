@@ -76,3 +76,9 @@ import LeanDagTest.Hydrozoan.DirectSafety
 import LeanDagTest.Hydrozoan.SlotAgreement
 import LeanDagTest.Hydrozoan.PrefixAgreement
 import LeanDagTest.Hydrozoan.Liveness
+import LeanDagTest.Hydrozoan.DirectLiveness
+import LeanDagTest.Hydrozoan.IndirectLiveness
+import LeanDagTest.Hydrozoan.EventualDecision
+import LeanDagTest.Hydrozoan.LivenessHardening
+import LeanDagTest.Hydrozoan.Grounding
+import LeanDagTest.Hydrozoan.Axioms
