@@ -7728,89 +7728,141 @@ for, and not about the paper's model.
 ### 20.8 What the paper should change
 
 No statement of the paper is false on the reading this arc takes. Four of
-its proofs need work, two in each half, and its liveness results rest on
-properties of the network it states informally.
+its proofs do not establish their statements, and each fails on a case
+its argument does not reach; two further claims are made without proof.
+The table names the case first, because that is what has to be seen
+before a repair means anything.
 
-| finding | kind | what it affects | repair |
+| finding | kind | the case the argument does not reach | repair |
 |:---|:---|:---|:---|
-| Lemma 22 covers `p = 1` only | proof | the rotation, at `p ≥ 2` | count incidences, or the pigeonhole at `3f + 3 ≤ n` (§20.5) |
-| the C3 case of Lemmas 18 and 19 | proof | delivery, at `p = 1` | induct on block-creation time (§20.5) |
-| Lemma 4's proof names round `r − 1` | wording | nothing; the count is unaffected | name round `r + 1` |
-| Lemmas 6 and 7 run through SP-skip | argument | the commit-bars-skip exclusion | run through the Non-FP-evidence quorum (§20.4) |
-| Definition 1's latency | unproved claim | the two-delay guarantee | `fastCommit_latency` (§20.5) |
-| optimality of `n = 3f + 2p − 1` | unproved claim | the committee | the tightness of Lemma 4 (§20.3) |
+| Lemma 22's window | proof | every `p ≥ 2`, least at `f = p = 2` | count incidences, or the pigeonhole at `3f + 3 ≤ n` (§20.5) |
+| the C3 case of Lemmas 18 and 19 | proof | `p = 1`, at every `f` | induct on block-creation time (§20.5) |
+| Lemmas 6 and 7 through SP-skip | argument | a validator holding no block of the committed slot | run through the Non-FP-evidence quorum (§20.4) |
+| Lemma 4's round index | wording | none — the count is unaffected | name round `r + 1` |
+| Definition 1's latency | unproved claim | — | `fastCommit_latency` (§20.5) |
+| optimality of `n = 3f + 2p − 1` | unproved claim | — | the tightness of Lemma 4 (§20.3) |
 
-**Lemma 22 covers `p = 1` only.** Its proof concludes from "a window of
+**Lemma 22 covers `p = 1` only.** The proof concludes from "a window of
 `3f + 3` rounds contains a full cycle of `n` rounds plus the first two
-rounds of the next cycle". That needs `3f + 3 ≥ n + 2`, which at
-`n = 3f + 2p − 1` holds exactly when `p ≤ 1`. The difference `3f + 3 − n`
-is `4 − 2p`, independent of `f`: the window is a cycle plus two rounds at
-`p = 1`, exactly one cycle at `p = 2`, and `2p − 4` rounds short of one
-at `p ≥ 3`. So from `p = 2` up there is no such decomposition to read
-off. The statement holds at every `p`, and the window being a smaller
-part of the cycle makes it a stronger claim rather than a weaker one:
-`f` does not grow with `p`, so correct leaders only become denser, and
-the pigeonhole of §20.5 replaces the count the paper takes.
+rounds of the next cycle".
+
+*Where it breaks.* The difference `3f + 3 − n` is `4 − 2p`, and does not
+involve `f`: the window is a cycle plus two rounds at `p = 1`, exactly
+one cycle at `p = 2`, and `2p − 4` rounds short of one at `p ≥ 3`. The
+least broken instance is `f = 2`, `p = 2`, where `n = 9` and the window
+is `9` rounds — one cycle, where the sentence reads off eleven. At
+`f = 3`, `p = 3` the window is `12` against a cycle of `14`.
+
+*Why the statement survives.* It quantifies over every window of that
+length, so a window that is a smaller part of the cycle is a stronger
+claim, not a weaker one. It holds because `f` does not grow with `p`:
+more validators, the same number of Byzantine ones, so correct leaders
+are denser. §20.5 gives the two arguments, and `3f + 3 ≤ n` is exactly
+`p ≥ 2`, so they partition the parameter space with no gap at the
+boundary and no overlap.
 
 **The C3 case of Lemmas 18 and 19 does not close at `p = 1`.** A
 C3-triggered validator built because it already held `n − f` blocks of
 the round it was building, so it waited on nothing and never read the
 leader. The proof recovers the lemma by finding, among those blocks, one
-whose author did not itself use C3, and it finds one by pigeonhole
-against a set `H` of validators that cannot have used it. `H` is one
-member too large. A validator with `j` honest validators ahead of it
-holds at most `j + 1 + f` blocks of its own round — `j` from those ahead,
-its own, and at most `f` from Byzantine authors — so C3's `n − f` becomes
-reachable as soon as `j ≥ n − 2f − 1`, and the validators that certainly
-cannot use it are the fastest `n − 2f − 1`, where the proof takes
-`n − 2f`.
+whose author did not itself use C3, by pigeonhole against a set `H` of
+validators that cannot have used it.
 
-That one member is the whole margin. Writing `b` for the number of
-validators that actually fail, a C3-triggered validator holds at least
-`n − f − b` blocks by honest authors out of `n − b`, so the intersection
-with `H` is at least `|H| − f` — independent of `b`, the two counts
-moving together. At the proof's `|H| = n − 2f` that is `2p − 1`, positive
-at every `p`; at the correct `|H| = n − 2f − 1` it is `2p − 2`, which is
-zero at `p = 1`. So the argument closes for `p ≥ 2` and yields nothing at
-the core committee, for every `f`. Note that this is the opposite regime
-to Lemma 22's, whose proof holds only at `p = 1`: no single argument of
-the paper covers the whole range of `p`. Induction on
-block-creation time needs neither count and is uniform in `f`, `p`
-and the actual fault count.
+*Where it breaks.* `H` is one member too large. A validator with `j`
+honest validators ahead of it holds at most `j + 1 + f` blocks of its own
+round — `j` from those ahead, its own, and at most `f` from Byzantine
+authors — so C3's `n − f` becomes reachable as soon as `j ≥ n − 2f − 1`.
+The validators that certainly cannot use it are the fastest
+`n − 2f − 1`, where the proof takes `n − 2f`.
+
+*That one member is the whole margin.* Write `b` for the number of
+validators that actually fail. A C3-triggered validator holds at least
+`n − f − b` blocks by honest authors out of `n − b` honest validators, so
+the intersection with `H` is at least `|H| − f` — independent of `b`, the
+two counts moving together. At the proof's `|H| = n − 2f` that is
+`2p − 1`, positive at every `p`; at the correct `|H| = n − 2f − 1` it is
+`2p − 2`, which is zero at `p = 1`.
+
+*The instance.* At `f = 1`, `p = 1`, `n = 4`, C3 asks for three blocks of
+the round being built. The fastest honest validator holds at most
+`0 + 1 + 1 = 2` and cannot use C3; the second holds at most
+`1 + 1 + 1 = 3` and can. So `H` is the single fastest validator where the
+proof counts two, and the intersection bound is `1 − 1 = 0`: the
+pigeonhole names no block at all, at the smallest committee the protocol
+admits.
+
+*The repair.* Induction on block-creation time needs no set and no
+threshold count. A C3-triggered validator holds `n − f` blocks by
+distinct authors, none of them its own, of which at most `f` are by
+faulty authors — leaving at least `n − 2f ≥ 2` honest authors, each of
+which built strictly earlier, so the induction hypothesis applies to one
+of them. It is uniform in `f`, `p` and `b`, and works at any C3 threshold
+above `f`.
+
+*And note the direction.* This case fails where Lemma 22's proof
+succeeds and succeeds where that one fails, so no single argument in the
+paper covers the whole range of `p`.
 
 **Lemmas 6 and 7 cannot run through the SP-skip condition.** That
 condition quantifies over "each leader block of `s` (if any) in the local
-DAG of `vj`", and a validator that has not seen the committed block
-satisfies it for nothing. The argument runs through the second condition
-instead: one of the `2f + p` Non-FP-evidence blocks carries `n − f`
-parents, which meet the committed block's `2f + p` voters in an honest
-validator whose single round-`(r+1)` block both votes for it and is that
-parent, so the committed block is in the skipping validator's DAG after
-all, and the same round-`(r+2)` block is FP-evidence for it by Lemma 4 or
-Lemma 2. As the proofs stand, a reader is directed to the route that does
-not work.
+DAG of `vj`".
+
+*Where it breaks.* On the case the lemma is about: a validator that has
+received **no** block of the committed slot. Its SP-skip condition is
+then satisfied for nothing — there is no block of the slot for a quorum
+to decline to vote for — so nothing about the committed block follows
+from it, and the contradiction the proof wants has no block to run on.
+The parenthesis "(if any)" is what admits the case, and the argument
+above it assumes the case away.
+
+*The repair.* The second condition supplies the missing block. One of the
+`2f + p` Non-FP-evidence blocks carries `n − f` parents, which meet the
+committed block's `2f + p` voters in an honest validator whose single
+round-`(r+1)` block both votes for it and is that parent — so the
+committed block is in the skipping validator's DAG after all, and the
+same round-`(r+2)` block is FP-evidence for it by Lemma 4 or Lemma 2. As
+the proofs stand, a reader is directed to the route that does not work.
+
+**Lemma 4's proof names the wrong round.** Its equivocating case says the
+block "does not reference the `r − 1` block of the Byzantine leader". The
+parents of a round-`(r+2)` block sit at round `r + 1`, and the block
+excluded is the leader's round-`(r+1)` one. No case is lost — the count
+of at most `f − 1` Byzantine parents is what the argument uses, and it is
+unaffected — but the sentence does not name the block it excludes.
 
 **Two claims are not established.** Definition 1's latency is stated and
 not proved; §20.5 proves it. And the optimality of `n = 3f + 2p − 1` is
 asserted by citation, where a tightness result is available and is the
 paper's own (§20.3).
 
-**What the liveness proofs use without saying.** Parent selection is
-never specified, though Lemmas 18 and 19 both need "what is held is
-selected" under C2 and C3 as much as under C1, where alone the paper
-states it; it belongs in the protocol description as a property of the
-selection algorithm, subject to leader-consistency. Two properties of the
-network are used implicitly — that a block enters a DAG only after its
-creator made it, and that honest validators do not create one round
-simultaneously — of which the first is needed by any timing argument and
-the second only by the counting the induction dispenses with. A1′, that
-excluding the leader's block could leave `n − f − 1` parents and that A1′
-prevents it, appears only in the parent-selection prose, where every
-count in the safety proof rests on block validity and the constraint
-belongs there. Lemma 12 presupposes that the decided slots are finite,
-which they are and which should be said. And Lemma 23's "eventually" does
-not survive a literal reading, since being decided is relative to a DAG;
-§20.5 states the per-DAG form.
+**What the proofs use without saying.** Five gaps of a different kind:
+not proofs that fail on a case, but steps whose premises are never
+stated. Each is given with the case that exposes it.
+
+- **Parent selection is specified for C1 only.** Lemmas 18 and 19 both
+  need "what is held is selected", and the case that needs it is a block
+  created under C2 or C3 — which is the case those lemmas exist for. It
+  belongs in the protocol description, as a property of the selection
+  algorithm subject to leader-consistency.
+- **Two properties of the network are assumed.** That a block enters a
+  DAG only after its creator made it, which any timing argument needs;
+  and that honest validators do not create one round simultaneously,
+  which only the `H` counting needs and which the induction above
+  dispenses with.
+- **A1′ is stated where it cannot be used.** The case it addresses —
+  that excluding the leader's block may leave `n − f − 1` parents — is a
+  constraint on block validity, and every count in the safety proof
+  rests on block validity; but A1′ appears only in the parent-selection
+  prose. §20.7 shows the corner closes by counting under the
+  denial-of-service condition.
+- **Lemma 12 presupposes a maximum.** "The latest leader slot for which
+  such inconsistent decisions were made" needs the decided slots to be
+  finite. The case is a DAG with no bound: without finiteness there is no
+  latest slot, and the induction has no base to run from.
+- **Lemma 23's "eventually" does not survive a literal reading.** The
+  case is a fixed DAG: nothing above its reach is decided in it, so
+  eventual decision cannot be a statement about one DAG. §20.5 states the
+  per-DAG form, with growth moved into the hypothesis.
 
 Two things are worth adding rather than repairing. The deterministic
 tie-break among an anchor's candidates is safe here, and §20.4 says why —
