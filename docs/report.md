@@ -8919,8 +8919,9 @@ every `holds` is applied end to end, so that a silently strengthened
 hypothesis fails the build by arity or type, including at a
 proper-subset *T* whose actual faults undershoot the bounds, where
 `T = Correct` and synchrony over all of `Correct` are pinned false. The
-axioms tripwire pins every `holds` by `#guard_msgs` to `propext`,
-`Classical.choice` and `Quot.sound`, a build failure on drift.
+axioms tripwire pins every `holds` by `#guard_msgs` to its exact axiom
+list, within `propext`, `Classical.choice` and `Quot.sound`, a build
+failure on drift.
 
 ## 23. Satisfiability
 

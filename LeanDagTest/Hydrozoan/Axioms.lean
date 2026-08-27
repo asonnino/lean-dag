@@ -22,7 +22,7 @@ loudly).
 -/
 
 /--
-info: 'LeanDag.Hydrozoan.ThresholdArithmetic.holds' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'LeanDag.Hydrozoan.ThresholdArithmetic.holds' depends on axioms: [propext, Quot.sound]
 -/
 #guard_msgs in
 #print axioms LeanDag.Hydrozoan.ThresholdArithmetic.holds
