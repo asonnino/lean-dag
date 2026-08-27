@@ -30,7 +30,10 @@ schedule such a universe is a `Run`, so the four guarantees hold of it
 with no further hypothesis. `LeanDagTest/FinWhale/Equivocation.lean`
 exhibits one where the condition is active — validator `0` equivocates,
 three round-`2` blocks are exposed to it and drop its round-`1` block —
-so the composite is not vacuous.
+so the composite is not vacuous. `quorumCard_le_citable` is why it cannot
+become so at any height: the authors a block may cite always include a
+validity quorum, so the condition never leaves a builder unable to
+build.
 
 **What this does not claim.** `DoSValid` is strictly stronger than what
 FinWhale specifies: the protocol admits a DAG that cites an equivocating
@@ -196,6 +199,26 @@ clause obliges a builder to reference. -/
 theorem citable_of_correct {b : BlockId} (hb : b ∈ U.ids) {X : Validator}
     (hX : X ∈ (Correct : Finset Validator)) : ¬ ExposedIn U b X :=
   fun h => absurd hX (by simpa using h.not_correct hb)
+
+omit P S in
+/-- **The condition never exhausts a builder's parents.** Validity asks
+for `n − f` parents by distinct authors, and `DoSValid` withdraws the
+authors a block's own history convicts. Those are equivocators, hence
+Byzantine, hence at most `f`; the correct validators are never among them
+and number at least `n − f`. So the authors a block may cite always
+include a validity quorum, and the two conditions cannot squeeze a
+builder between them.
+
+The margin is nil, not small: at exactly `f` Byzantine validators the
+citable authors are the `n − f` correct ones and no others, so every one
+of them has to be cited. That is a condition on what has arrived rather
+than on what may be cited, and it is what the pacing structure supplies
+past GST. -/
+theorem quorumCard_le_citable {b : BlockId} (hb : b ∈ U.ids) :
+    quorumCard Validator ≤ ((exposedTo U b)ᶜ).card := by
+  refine le_trans card_correct (Finset.card_le_card fun X hX => ?_)
+  simp only [Finset.mem_compl, mem_exposedTo]
+  exact fun h => h.not_correct hb hX
 
 /-- **A DoS-valid universe on the reactive schedule is a run.** The DAG
 is the universe, the pace is the reactive one, and the liveness input is

@@ -7695,8 +7695,15 @@ being in `T` — while a correct validator is never exposed
 block-creation discipline of §20.5 obliges a builder to reference a block
 by the author of *any* held vote, reliable or not, and that clause and
 `DoSValid` are not jointly satisfiable where a convicted equivocator
-votes for a reliable leader. The composite is inhabited where equivocation
-is live, which §20.9 exhibits.
+votes for a reliable leader. The composite is inhabited where
+equivocation is live, which §20.9 exhibits, and cannot cease to be at any
+height: `quorumCard_le_citable` shows the authors a block may cite always
+include a validity quorum, since an exposed author has equivocated and so
+is one of at most `f`, while the `n − f` correct validators are never
+exposed. The margin is nil rather than small — at exactly `f` Byzantine
+validators the citable authors are the correct ones and no others, so
+every one of them must be cited, which is a condition on what has arrived
+and is what the pacing structure supplies past GST.
 
 What this does not claim: `DoSValid` is strictly stronger than FinWhale
 specifies, the protocol admitting a DAG that cites an equivocating

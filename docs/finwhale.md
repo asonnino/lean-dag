@@ -71,8 +71,17 @@ arc's `ExposedIn.not_correct`). That is particular to this route: the
 block-creation discipline of §10 obliges a builder to reference a block
 by the author of *any* held vote, and that clause and `DoSValid` are not
 jointly satisfiable where a convicted equivocator votes for a reliable
-leader. The composite is inhabited: §9's equivocating execution
-satisfies both conditions at once.
+leader. The composite is inhabited — §9's equivocating execution
+satisfies both conditions at once — and `quorumCard_le_citable` is why it
+stays so at any height: an exposed author has equivocated, hence is
+Byzantine, hence one of at most `f`, while the correct validators are
+never exposed and number at least `n − f`. So the authors a block may
+cite always include a validity quorum, and the two conditions cannot
+squeeze a builder between them. The margin is nil rather than small: at
+exactly `f` Byzantine validators the citable authors are the `n − f`
+correct ones and no others, so every one of them must be cited — a
+condition on what has arrived, which the pacing structure supplies past
+GST, rather than on what may be cited.
 
 ## 2. The committee, and where the numbers come from
 

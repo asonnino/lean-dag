@@ -300,6 +300,12 @@ EDGE	LeanDagTest.uexcl_populated	LeanDag.Populated
 EDGE	LeanDagTest.uexcl_populated	LeanDag.Correct
 EDGE	LeanDagTest.uexcl_populated	LeanDagTest.Uexcl
 EDGE	LeanDagTest.uexcl_populated	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+NODE	LeanDag.FinWhale.quorumCard_le_citable._simp_1_2	LeanDag.FinWhale.DoSBridge	thm
+EDGE	LeanDag.FinWhale.quorumCard_le_citable._simp_1_2	LeanDag.mem_exposedTo
+EDGE	LeanDag.FinWhale.quorumCard_le_citable._simp_1_2	LeanDag.Faults
+EDGE	LeanDag.FinWhale.quorumCard_le_citable._simp_1_2	LeanDag.ExposedIn
+EDGE	LeanDag.FinWhale.quorumCard_le_citable._simp_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.FinWhale.quorumCard_le_citable._simp_1_2	LeanDag.exposedTo
 NODE	LeanDag.Minnow.instDecidableReaches	LeanDag.Minnow.Model.Rule	def
 EDGE	LeanDag.Minnow.instDecidableReaches	LeanDag.Faults
 EDGE	LeanDag.Minnow.instDecidableReaches	LeanDag.Minnow.Reaches
@@ -16337,6 +16343,18 @@ EDGE	LeanDag.Nemo.history_subset_of_reaches	LeanDag.Nemo.Reaches
 EDGE	LeanDag.Nemo.history_subset_of_reaches	LeanDag.Nemo.Universe.causal
 EDGE	LeanDag.Nemo.history_subset_of_reaches	LeanDag.CausalStructure.history_subset_of_reaches
 EDGE	LeanDag.Nemo.history_subset_of_reaches	LeanDag.Nemo.Universe.ids
+NODE	LeanDag.FinWhale.quorumCard_le_citable	LeanDag.FinWhale.DoSBridge	thm
+EDGE	LeanDag.FinWhale.quorumCard_le_citable	LeanDag.Faults
+EDGE	LeanDag.FinWhale.quorumCard_le_citable	LeanDag.FinWhale.quorumCard_le_citable._simp_1_1
+EDGE	LeanDag.FinWhale.quorumCard_le_citable	LeanDag.card_correct
+EDGE	LeanDag.FinWhale.quorumCard_le_citable	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.FinWhale.quorumCard_le_citable	LeanDag.ExposedIn
+EDGE	LeanDag.FinWhale.quorumCard_le_citable	LeanDag.Correct
+EDGE	LeanDag.FinWhale.quorumCard_le_citable	LeanDag.BlockUniverse
+EDGE	LeanDag.FinWhale.quorumCard_le_citable	LeanDag.ExposedIn.not_correct
+EDGE	LeanDag.FinWhale.quorumCard_le_citable	LeanDag.Faults.f
+EDGE	LeanDag.FinWhale.quorumCard_le_citable	LeanDag.FinWhale.quorumCard_le_citable._simp_1_2
+EDGE	LeanDag.FinWhale.quorumCard_le_citable	LeanDag.exposedTo
 NODE	LeanDag.MahiMahi.allDecidedBelow._proof_1_1	LeanDag.MahiMahi.Helpers.Liveness	thm
 EDGE	LeanDag.MahiMahi.allDecidedBelow._proof_1_1	LeanDag.MahiMahi.decisionRound
 EDGE	LeanDag.MahiMahi.allDecidedBelow._proof_1_1	LeanDag.Slots
@@ -22987,6 +23005,7 @@ EDGE	LeanDag.MahiMahi.Safety.DecidedConservative	LeanDag.BlockUniverse
 EDGE	LeanDag.MahiMahi.Safety.DecidedConservative	LeanDag.Slots
 EDGE	LeanDag.MahiMahi.Safety.DecidedConservative	LeanDag.MahiMahi.Decided
 EDGE	LeanDag.MahiMahi.Safety.DecidedConservative	LeanDag.View
+NODE	LeanDag.FinWhale.quorumCard_le_citable._simp_1_1	LeanDag.FinWhale.DoSBridge	thm
 NODE	LeanDagTest.ucrash_full_hq._proof_1_4	LeanDagTest.SafeSkip	thm
 EDGE	LeanDagTest.ucrash_full_hq._proof_1_4	LeanDag.creatorsOf
 EDGE	LeanDagTest.ucrash_full_hq._proof_1_4	LeanDag.View.full

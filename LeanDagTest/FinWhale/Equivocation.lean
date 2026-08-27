@@ -219,6 +219,21 @@ example : DirectCommit Dequiv 6 := by decide
 rule leaves round `0` undecided directly, as it should. -/
 example : ¬ DirectCommit Dequiv 0 ∧ ¬ DirectCommit Dequiv 4 := by decide
 
+/-! ## The condition never exhausts a builder's parents
+
+`quorumCard_le_citable` says the authors a block may cite always include
+a validity quorum. Here the bound is met with equality and nothing to
+spare: block `10` has convicted validator `0`, the three correct
+validators are all that remain, and `n − f = 3` is exactly what validity
+asks for — so it cites all three and could not have cited fewer. -/
+
+example : exposedTo Uequiv 10 = {0} ∧ ((exposedTo Uequiv 10)ᶜ).card = 3 := by decide
+
+example : quorumCard (Fin 4) ≤ ((exposedTo Uequiv 10)ᶜ).card :=
+  quorumCard_le_citable (by decide)
+
+example : parentSet Dequiv 10 = {1, 2, 3} := by decide
+
 /-! ## The horizon
 
 `eqRun` runs to round `3`, which is enough for the liveness interface —
