@@ -603,8 +603,29 @@ synchronised from `Rnd` and populating the rounds to `N` — and the
 result is its descent laws at slack `f` together with
 `LiveOn (Sched (roundRobin n hn) hk m hm hmax) (n + 2)` at every count:
 the paper's A4 for Mysticeti under its own schedule, assumed there,
-proved here (§11, F3). The two-round rules follow in Phase 5 with
-`w = 2`.
+proved here (§11, F3).
+
+**The two-round rules (`Odontoceti/`, `Nemo/`, Phase 5).** Each is a
+`BaseRule` with its laws, a `LiveRule` with its descent laws, and live
+under round-robin at every count with gap `n + 1`. Odontoceti's
+`indirect` commits the *least* candidate with a thick link
+(`Finset.min'` over the candidates), which is the canonicity clause of
+its indirect rule; its slack is `f`, as Mysticeti's, its `Good`
+demanding a quorum of `n − f`. Nemo's `Good` demands a synchronised
+*majority* of the live validators, as its own L4 does, and a majority
+misses `n − majority` validators — so its slack is `n − majority`, not
+`f` — `n − majority = (n − 1) / 2`, the largest crash bound admissible
+at `n`, equal to `f` exactly at `n = 2f + 1` and `n = 2f + 2`. As a
+descent law this is *weaker* than slack `f` would be, and the strength
+is in the weaker `Good`: the mechanism is live over any synchronised
+majority. The pigeonhole's bound `2 · (n − majority) + 1 ≤ n` holds at
+every `n`, so the crash bound is consumed nowhere in the proofs; it is
+what makes `Good` satisfiable, the live set being a majority. The
+witness `Majority.lean` attacks the choice: a bare majority strictly
+inside the live set, an adversarial live validator outside it, and the
+theorem applied with both clauses non-vacuous and its verdicts pinned;
+the slack is exact at `n = 3`. Nemo's laws consume no fault class at
+all.
 
 ## 9. Witnesses (`LeanDagTest/HammerheadTwo/`)
 

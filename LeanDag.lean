@@ -159,4 +159,11 @@ import LeanDag.HammerheadTwo.Heads.Proof
 import LeanDag.HammerheadTwo.MysticetiLive.Statement
 import LeanDag.HammerheadTwo.Helpers.MysticetiLive
 import LeanDag.HammerheadTwo.MysticetiLive.Proof
+import LeanDag.HammerheadTwo.Odontoceti.Statement
+import LeanDag.HammerheadTwo.Helpers.Odontoceti
+import LeanDag.HammerheadTwo.Odontoceti.Proof
+import LeanDag.HammerheadTwo.Helpers.Nemo
+import LeanDag.HammerheadTwo.Nemo.Statement
+import LeanDag.HammerheadTwo.Helpers.NemoLive
+import LeanDag.HammerheadTwo.Nemo.Proof
 import LeanDag.Minnow.Blocking

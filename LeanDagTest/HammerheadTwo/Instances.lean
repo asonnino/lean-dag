@@ -1,0 +1,311 @@
+import LeanDagTest.HammerheadTwo.Model
+import LeanDag.HammerheadTwo.Odontoceti.Proof
+import LeanDag.HammerheadTwo.Nemo.Proof
+import LeanDagTest.Nemo
+
+/-!
+# Hammerhead 2.0 witnesses — the two-round rules on data
+
+Odontoceti, the paper's Blue Bottle, on the six-validator model of
+`LeanDagTest/Odontoceti/Model.lean` (`Uodo`, four sunny rounds;
+`Uskip`, with a direct skip and an indirect commit). What this file
+exhibits:
+
+* the window count under the two-round rule: on `Uodo` with the anchor
+  at round `3` and a three-round interval, two rounds score at every
+  count, against an expected `(3 − 2 + 1) · m` — where Mysticeti's
+  three-round wave scored one; the wave length is read off the rule;
+* Odontoceti's own `Good` on `Uodo`, and its descent law yielding a
+  committed slot through `Odontoceti.holds`;
+* the laws through `Odontoceti.holds`: agreement of two views' verdicts
+  on `Uskip`; and its `indirect` descent law doing the work — the
+  indirect commit of `Uskip`'s slot `1` off its anchor, and on a twin
+  universe where both twins of a Byzantine leader pass the thick-link
+  test at the slot's actual anchor, the *least* twin committed and the
+  greater refused.
+
+Nemo-Nemo on the three-validator model of `LeanDagTest/Nemo.lean`
+(`Unemo`: validator `2` halts after round `1`):
+
+* the window count under the crash rule: with the anchor at round `4`
+  and a three-round interval, one slot scores at count `1` — the
+  crashed validator's round has no candidate, and the round below the
+  anchor has one supporter in the window — against an expected two: the
+  window is unhealthy, the count holds at the floor and the back-off
+  moves, the mechanism reacting to a halt;
+* Nemo's own `Good` on `Unemo` over the live pair `{0, 1}`, a majority
+  of three, and the descent law at the majority slack yielding a
+  committed slot through `Nemo.holds` — with no fault class consumed
+  beyond `Good`;
+* the laws through `Nemo.holds`, with no fault class at all; `Good` on
+  `Unemo` fails one round past the universe; and the arithmetic of the
+  majority slack — `n − majority = (n − 1) / 2`, equal to `f` exactly
+  at `n = 2f + 1` and `n = 2f + 2`. `Majority.lean` then attacks the
+  slack on a DAG good over a bare majority with an adversarial live
+  validator outside it.
+-/
+
+namespace LeanDagTest
+
+namespace HammerheadTwo
+
+set_option maxRecDepth 2000000
+
+open LeanDag LeanDag.HammerheadTwo
+
+/-- Odontoceti over the six-validator committee. -/
+abbrev hhOdo : BaseRule (Fin 6) (Fin 24) Unit := odontoceti
+
+/-- Round-robin on six validators, keyed up to six. -/
+def hhLeader6' : ℕ → Fin 6 := roundRobin 6 (by omega)
+
+theorem hhWin6' : Keyed hhLeader6' 6 := roundRobin_keyed 6 (by omega)
+
+/-- Three-round interval, at most six leaders. -/
+def hhPo : Params := ⟨3, 6, 96, 100, by decide, by decide⟩
+
+/-! ## The window count at wave length two -/
+
+-- Anchor `20` (round `3`, author `2`); the window is rounds `0` to `3`.
+-- Rounds `0` and `1` score: their supporters, at rounds `1` and `2`, are
+-- all in the anchor's history; round `2`'s only supporter in the window
+-- is the anchor itself.
+example : observed hhOdo hhPo hhLeader6' hhWin6' Uodo 20 1 (by decide) (by decide) = 2 := by
+  decide
+example : observed hhOdo hhPo hhLeader6' hhWin6' Uodo 20 3 (by decide) (by decide) = 6 := by
+  decide
+example : expected hhOdo hhPo 1 = 2 := by decide
+example : expected hhOdo hhPo 3 = 6 := by decide
+example : Aimd.rule hhOdo hhPo hhLeader6' hhWin6' 1 0 Uodo 20 = (2, 0) := by decide
+example : Aimd.rule hhOdo hhPo hhLeader6' hhWin6' 6 0 Uodo 20 = (6, 0) := by decide
+
+/-! ## Odontoceti's `Good` on `Uodo`, and its descent law -/
+
+theorem odoCorrect : (Correct : Finset (Fin 6)) = {1, 2, 3, 4, 5} := by decide
+
+/-- The model's own synchrony from round `0`, over the correct set. -/
+theorem uodo_sync : SynchronisedOn Uodo {1, 2, 3, 4, 5} 1 := by
+  rw [← odoCorrect]
+  exact fun n hn => uodo_synchronised n (by omega)
+
+theorem uodo_good :
+    (odontocetiLive (Validator := Fin 6) (BlockId := Fin 24) (Payload := Unit)).Good Uodo 1 3 :=
+  ⟨{1, 2, 3, 4, 5}, by rw [odoCorrect], by decide, uodo_sync, fun r h1 h2 => by
+    interval_cases r <;> decide⟩
+
+/-- Through `Odontoceti.holds`: the good set commits a round-`1` slot.
+`goodLeaders` bounds `T` by cardinality only — five of six — so no
+validator can be assumed in it; at count `6` every validator leads a
+slot of round `1`, and a member of `T` leads one of them. -/
+example : ∃ κ, (Sched hhLeader6' hhWin6' 6 (by decide) (by decide)).slotRound κ = 1 ∧
+    ∃ L, hhOdo.Decided (Sched hhLeader6' hhWin6' 6 (by decide) (by decide)) (View.full Uodo)
+      κ (some L) := by
+  obtain ⟨T, hcard, hT⟩ :=
+    (Odontoceti.holds.2.1 (Fin 6) (Fin 24) Unit).goodLeaders Uodo 1 3 uodo_good
+  have h5 : 5 ≤ T.card := by
+    have h := hcard
+    simp only [Fintype.card_fin] at h
+    change 6 ≤ T.card + 1 at h
+    omega
+  obtain ⟨v, hv⟩ := Finset.card_pos.mp (show 0 < T.card by omega)
+  fin_cases v
+  · exact ⟨11, by decide, hT _ 11 (by decide) (by decide) hv⟩
+  · exact ⟨6, by decide, hT _ 6 (by decide) (by decide) hv⟩
+  · exact ⟨7, by decide, hT _ 7 (by decide) (by decide) hv⟩
+  · exact ⟨8, by decide, hT _ 8 (by decide) (by decide) hv⟩
+  · exact ⟨9, by decide, hT _ 9 (by decide) (by decide) hv⟩
+  · exact ⟨10, by decide, hT _ 10 (by decide) (by decide) hv⟩
+
+/-! ## The laws, on `Uskip` -/
+
+/-- Agreement through `Odontoceti.holds`: the direct skip of slot `0`
+and any verdict on any view agree. -/
+example : ∀ (V : View (Fin 6) (Fin 36) Unit Uskip) (v : Option (Fin 36)),
+    (odontoceti (Validator := Fin 6) (BlockId := Fin 36) (Payload := Unit)).Decided odoSlots
+      V 0 v →
+    v = none := fun V v h =>
+  (Odontoceti.holds.1 (Fin 6) (Fin 36) Unit).agree odoSlots V (View.full Uskip) 0 v none h
+    uskip_slot0
+
+/-! ## The `indirect` law, on `Uskip` and on twins -/
+
+abbrev O36 : BaseRule (Fin 6) (Fin 36) Unit := odontoceti
+
+/-- `indirect` at `uskip_slot1`'s slot: anchor slot 3 (block 21), nothing eligible between. -/
+theorem uskip_indirect : ∃ v, O36.Decided odoSlots (View.full Uskip) 1 v ∧ v = some 7 := by
+  obtain ⟨v, hv⟩ := (Odontoceti.holds.2.1 (Fin 6) (Fin 36) Unit).indirect odoSlots
+    (View.full Uskip) 1 3 21 (by decide) uskip_slot3
+    (fun i' h1 h2 h3 => by
+      simp only [odoSlots_slotRound] at h3
+      change 1 + 2 ≤ i' at h3
+      omega)
+  exact ⟨v, hv, (Odontoceti.holds.1 (Fin 6) (Fin 36) Unit).agree odoSlots _ _ 1 v (some 7) hv
+    uskip_slot1⟩
+
+/-- `Utwin6` with the slot-2 leader block `15` referencing all of round 1. -/
+def twinBlk' : Fin 25 → Block (Fin 6) (Fin 25) Unit := fun i =>
+  if (i : ℕ) = 15 then
+    { round := 2, creator := 2, refs := {7, 8, 9, 10, 11, 12}, payload := () }
+  else twinBlk i
+
+def Utwin6' : BlockUniverse (Fin 6) (Fin 25) Unit where
+  ids := Finset.univ
+  block := twinBlk'
+  complete := by decide
+  valid := by decide
+  no_equivocation := by decide
+
+abbrev O25 : BaseRule (Fin 6) (Fin 25) Unit := odontoceti
+
+theorem twin'_slot2 : Odontoceti.Decided Utwin6' (View.full Utwin6') 2 (some 15) :=
+  Odontoceti.Decided.directCommit (by decide) (by decide)
+
+-- Slot 1 is not committed (its candidate is block 8; nothing at round 2 in
+-- `Utwin6'` is decided directly for slot 1? — only what matters: slot 2 is the
+-- first eligible slot, so the intermediate premise is vacuous).
+
+/-- At the slot's *actual* anchor both twins pass. -/
+theorem twin'_both_pass_at_anchor :
+    Odontoceti.ThickLink Utwin6' 15 0 0 ∧ Odontoceti.ThickLink Utwin6' 15 6 0 := by
+  constructor <;> decide
+
+/-- The arc's `indirect` law yields a verdict for slot 0 … -/
+theorem twin'_indirect : ∃ v, O25.Decided odoSlots (View.full Utwin6') 0 v :=
+  (Odontoceti.holds.2.1 (Fin 6) (Fin 25) Unit).indirect odoSlots (View.full Utwin6') 0 2 15
+    (by decide) twin'_slot2
+    (fun i' h1 h2 h3 => by
+      simp only [odoSlots_slotRound] at h3
+      change 0 + 2 ≤ i' at h3
+      omega)
+
+/-- … and by hand the least twin commits: the `¬ L' < 0` clause is trivial. -/
+theorem twin'_slot0 : Odontoceti.Decided Utwin6' (View.full Utwin6') 0 (some 0) :=
+  Odontoceti.Decided.indirectCommit (by omega) (by decide) twin'_slot2
+    (fun i h1 h2 h3 => by
+      have : i = 1 := by omega
+      subst this
+      exact absurd h3 (by decide))
+    (by decide) (by decide) (fun _ _ _ hlt => absurd hlt (Nat.not_lt_zero _))
+
+/-- So the law's verdict is the least twin, and the greater twin is refused. -/
+theorem twin'_least :
+    (∃ v, O25.Decided odoSlots (View.full Utwin6') 0 v ∧ v = some 0) ∧
+      ¬ O25.Decided odoSlots (View.full Utwin6') 0 (some 6) := by
+  obtain ⟨v, hv⟩ := twin'_indirect
+  refine ⟨⟨v, hv, (Odontoceti.holds.1 (Fin 6) (Fin 25) Unit).agree odoSlots _ _ 0 v (some 0) hv
+    twin'_slot0⟩, fun h => ?_⟩
+  have := (Odontoceti.holds.1 (Fin 6) (Fin 25) Unit).agree odoSlots _ _ 0 _ _ h twin'_slot0
+  simp at this
+
+#print axioms uskip_indirect
+#print axioms twin'_least
+
+/-! ## Nemo-Nemo on `Unemo` -/
+
+/-- Nemo-Nemo over three validators; no fault class. -/
+abbrev hhNemo : BaseRule (Fin 3) (Fin 14) Unit := nemo
+
+def hhLeader3 : ℕ → Fin 3 := roundRobin 3 (by omega)
+
+theorem hhWin3 : Keyed hhLeader3 3 := roundRobin_keyed 3 (by omega)
+
+/-- Three-round interval, at most three leaders. -/
+def hhPn : Params := ⟨3, 3, 96, 100, by decide, by decide⟩
+
+-- Anchor `11` (round `4`, author `1`); window rounds `1` to `4`. Round `1`
+-- scores (block `4`, both round-`2` blocks support it); round `2`'s head
+-- is the crashed validator's, with no candidate; round `3`'s only
+-- supporter in the window is the anchor. One against an expected two:
+-- unhealthy, the count stays at the floor and the back-off moves.
+example : observed hhNemo hhPn hhLeader3 hhWin3 Unemo 11 1 (by decide) (by decide) = 1 := by
+  decide
+example : expected hhNemo hhPn 1 = 2 := by decide
+example : Aimd.rule hhNemo hhPn hhLeader3 hhWin3 1 0 Unemo 11 = (1, 1) := by decide
+-- At count `3` every validator leads every round: round `1` scores three
+-- slots, round `2` two (validator `2` has no block), round `3` none.
+example : observed hhNemo hhPn hhLeader3 hhWin3 Unemo 11 3 (by decide) (by decide) = 5 := by
+  decide
+example : expected hhNemo hhPn 3 = 6 := by decide
+
+/-- The model's own synchrony from round `0`, over the live pair. -/
+theorem unemo_sync : LeanDag.Nemo.SynchronisedOn Unemo {0, 1} 1 := by
+  have h : LeanDag.Nemo.Live (Fin 3) = {0, 1} := by decide
+  rw [← h]
+  exact fun n hn => unemo_synchronised n (by omega)
+
+theorem unemo_good :
+    (nemoLive (Validator := Fin 3) (BlockId := Fin 14) (Payload := Unit)).Good Unemo 1 5 :=
+  ⟨{0, 1}, by decide, by decide, unemo_sync, fun r h1 h2 => by interval_cases r <;> decide⟩
+
+-- Not to round `6`: the universe ends at round `5`.
+example : ¬ LeanDag.Nemo.PopulatedOn Unemo {0, 1} 6 := by decide
+
+/-- Through `Nemo.holds`: the good set — two of three, by cardinality
+alone — commits a round-`1` slot at count `3`, where every validator
+leads one; the crashed validator's round-`1` block is supported too. -/
+example : ∃ κ, (Sched hhLeader3 hhWin3 3 (by decide) (by decide)).slotRound κ = 1 ∧
+    ∃ L, hhNemo.Decided (Sched hhLeader3 hhWin3 3 (by decide) (by decide))
+      (LeanDag.Nemo.View.full Unemo) κ (some L) := by
+  obtain ⟨T, hcard, hT⟩ :=
+    (Nemo.holds.2.1 (Fin 3) (Fin 14) Unit).goodLeaders Unemo 1 5 unemo_good
+  have h2 : 2 ≤ T.card := by
+    have h := hcard
+    simp only [Fintype.card_fin] at h
+    change 3 ≤ T.card + (3 - 2) at h
+    omega
+  obtain ⟨v, hv⟩ := Finset.card_pos.mp (show 0 < T.card by omega)
+  fin_cases v
+  · exact ⟨5, by decide, hT _ 5 (by decide) (by decide) hv⟩
+  · exact ⟨3, by decide, hT _ 3 (by decide) (by decide) hv⟩
+  · exact ⟨4, by decide, hT _ 4 (by decide) (by decide) hv⟩
+
+/-- Agreement through `Nemo.holds`: slot `2`, the crashed validator's,
+skips on every view. -/
+example : ∀ (V : LeanDag.Nemo.View (Fin 3) (Fin 14) Unit Unemo) (v : Option (Fin 14)),
+    hhNemo.Decided nemoSlots V 2 v → v = none := fun V v h =>
+  (Nemo.holds.1 (Fin 3) (Fin 14) Unit).agree nemoSlots V (LeanDag.Nemo.View.full Unemo) 2 v none h
+    nemo_slot2
+
+/-! ## `Good` has a horizon, and the slack in numbers -/
+
+/-- The horizon is real for `Good` itself, not just for `PopulatedOn`. -/
+theorem unemo_not_good_6 :
+    ¬ (nemoLive (Validator := Fin 3) (BlockId := Fin 14) (Payload := Unit)).Good Unemo 1 6 := by
+  rintro ⟨T, hT, hcard, -, hpop⟩
+  have hlive : (LeanDag.Nemo.Live (Fin 3)).card = 2 := by decide
+  have hmaj : LeanDag.Nemo.majority (Fin 3) = 2 := by decide
+  have hTeq : T = LeanDag.Nemo.Live (Fin 3) :=
+    Finset.eq_of_subset_of_card_le hT (by omega)
+  subst hTeq
+  exact absurd (hpop 6 (by omega) le_rfl) (by decide)
+
+/-- On `Unemo`, `T ⊆ Live` never bites: the non-live majority `{0, 2}` fails
+`PopulatedOn` at round 2 already. -/
+example : ¬ LeanDag.Nemo.PopulatedOn Unemo {0, 2} 2 := by decide
+
+/-! ### The slack, arithmetically -/
+
+theorem slack_eq (n : ℕ) (hn : 0 < n) :
+    n - LeanDag.Nemo.majority (Fin n) = (n - 1) / 2 := by
+  unfold LeanDag.Nemo.majority; rw [Fintype.card_fin]; omega
+
+theorem slack_ge_f (n f : ℕ) (h : 2 * f + 1 ≤ n) :
+    f ≤ n - LeanDag.Nemo.majority (Fin n) := by
+  unfold LeanDag.Nemo.majority; rw [Fintype.card_fin]; omega
+
+theorem slack_eq_f_iff (n f : ℕ) (h : 2 * f + 1 ≤ n) :
+    n - LeanDag.Nemo.majority (Fin n) = f ↔ n = 2 * f + 1 ∨ n = 2 * f + 2 := by
+  unfold LeanDag.Nemo.majority; rw [Fintype.card_fin]; omega
+
+example : LeanDag.Nemo.majority (Fin 1) = 1 ∧ LeanDag.Nemo.majority (Fin 2) = 2 := by decide
+example : 1 - LeanDag.Nemo.majority (Fin 1) = 0 ∧ 2 - LeanDag.Nemo.majority (Fin 2) = 0 := by
+  decide
+example : 5 - LeanDag.Nemo.majority (Fin 5) = 2 ∧ 6 - LeanDag.Nemo.majority (Fin 6) = 2 := by
+  decide
+
+#print axioms LeanDag.HammerheadTwo.Odontoceti.holds
+#print axioms LeanDag.HammerheadTwo.Nemo.holds
+
+end HammerheadTwo
+
+end LeanDagTest
