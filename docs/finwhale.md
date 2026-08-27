@@ -58,7 +58,8 @@ quantities follow, and the arc keeps them apart:
 
 `spQuorum_eq_ceil` checks that `2f + p` is the paper's
 `⌈(n + f + 1)/2⌉`. The three are ordered `spQuorum ≤ quorumCard ≤
-fastCard`, and neither inequality is strict in general: at `p = 1` the
+fastCard` (`spQuorum_le_quorumCard`, `quorumCard_le_fastCard`), and
+neither inequality is strict in general: at `p = 1` the
 slow-path quorum and the validity quorum coincide, and at `p = f` the
 validity quorum and the fast-path threshold do. The witnesses of §7 use
 `p = 2` with `f = 2`, where the first inequality is strict.
@@ -143,6 +144,11 @@ round-`(r+2)` block cannot be FP-evidence for `b` and for nothing at
 once. That is the one place in the skip argument where correctness rather
 than distinctness is consumed.
 
+Lemma 7's fast-path premise is `no_nonFPEvidence_of_fastCommit`: under a
+fast commit every round-`(r+2)` block is evidence for the committed
+block, so none is evidence for nothing, and the skip rule's second
+condition is unsatisfiable whatever the first says.
+
 Lemma 9's third case — no round-`(r+2)` block is FP-evidence for a block
 conflicting with a fast-committed one — is proved from the two branches
 of the FP-evidence definition (`not_fpEvidence_conflicting`), not from
@@ -212,7 +218,10 @@ skip in the other, a direct commit pins whatever the rule names, a direct
 commit forces the rule to name something, and a direct skip bars it from
 naming anything. `exclusions_of_dag` discharges all nine from the
 DAG-level theorems, under the reading that a view is a sub-DAG, so a
-direct verdict in a view is a direct verdict of the universe.
+direct verdict in a view is a direct verdict of the universe; §11
+replaces that reading with views themselves, and `exclusions_of_views`
+with it. `lemma12_direct` is the paper's own first branch, where either
+validator decided directly.
 
 **The pass is a procedure, not only a condition.** `Pass.lean` defines
 it: `slotVerdict` decides one slot from the verdicts above it — a direct
@@ -232,7 +241,8 @@ that nothing above the horizon is decided, which is the finiteness Lemma
 validators running the pass on their own views deliver prefix-comparable
 sequences, and nothing is assumed about their verdicts. What is left of
 the three is `hk`, how far each sequence runs, which is a choice of
-horizon that §10's `all_decided` settles.
+horizon that §10's `all_decided` settles. §12 states the result without
+any of them.
 
 `choose` is abstract in all of that, and it need not be.  `chooseLeast`
 picks the least candidate in the identifier order and satisfies
@@ -302,7 +312,13 @@ correct there, and its slot is committed by both paths. The rotation is
 exercised too: `fwLeader` is a `RoundRobin`, and Lemma 22 names a correct
 triple in the window from round `0`.
 
-The reverse pass has its own witness, on verdicts rather than blocks:
+The pass runs on those executions: `decOf` commits slot `0` of `Dfast`
+and skips slot `0` of `Dskip`, both through its own well-formedness
+rather than by evaluation — the pass recurses down from the horizon,
+which the kernel does not unfold — and decides nothing above the horizon.
+
+The reverse pass has its own witness too, on verdicts rather than
+blocks:
 slots `3` to `5` committed directly, `1` and `2` skipped directly, and
 slot `0` decided indirectly from its anchor, which the model shows is
 slot `3` and nothing else. `WellFormed` is discharged for it field by
@@ -310,7 +326,9 @@ field, and Lemma 23 is then applied to that triple.
 
 Views have one too: a reference-closed part of `Dequiv` that holds one of
 the leader's two blocks and not the other, where the slot has two blocks
-in the universe and one in the view.
+in the universe and one in the view. Beside it, that no block of that
+execution cites both versions — the fact behind §10's selection guards,
+by `decide` and again through `not_refs_conflicting`.
 
 `LeanDagTest/FinWhale/Pace.lean` carries the liveness results down to a
 schedule. FinWhale's smallest committee is `f = 1` and `p = 1`, which is
@@ -319,7 +337,7 @@ over — so `Ugrow N` is a FinWhale DAG at any leader schedule once the
 leader clause is checked, and every block there references the whole
 round below.
 
-Four things run on it. The same execution carries a `ReactiveM` at one
+Five things run on it. The same execution carries a `ReactiveM` at one
 leader per round, where both wait clauses hold by their exit and neither
 fallback is needed. It carries a `Creation` with two triggers in play —
 validator `3` catches up by C3 on blocks of its own round, everyone else
@@ -327,7 +345,8 @@ builds by C1 — so both interesting cases of §10's derivation are
 exercised, and `commits_of_creation` yields the liveness interface with
 no coverage assumption anywhere. `fastCommit_latency` runs at `δ = 2`,
 and the self-parent chain carries validator `1`'s genesis block into its
-own round-`1` block. The bridge of `Liveness.lean` is exhibited
+own round-`1` block. And `fwRun` assembles the lot into a `Run`, which
+§12 reads its properties off. The bridge of `Liveness.lean` is exhibited
 separately, as production and coverage over the correct validators and
 nothing further.
 
@@ -595,7 +614,7 @@ its committed leader blocks in order.
 
 The four properties are then stated in those terms and nothing else.
 
-| | statement |
+| theorem | statement |
 |:---|:---|
 | `Run.agreement` | two correct validators deliver the same sequence |
 | `Run.totalOrder` | one's sequence is a prefix of the other's, at any two horizons |
@@ -761,9 +780,9 @@ delivery are not modelled at all. §14 says what stands in their place.
 The capstones state their own side conditions, and §12 removes them from
 what a reader has to check: §8 discharged the ordering hypothesis, §11
 the view conditions and the holdings behind them, §7 the reverse pass,
-and §9 exhibits an execution that is a schedule. Three gaps remain, and they are of a
-different kind from the ones that closed: each is a piece of the protocol
-this development does not model at all.
+and §9 exhibits an execution that is a schedule. Three gaps remain, and
+they are of a different kind from the ones that closed: each is a piece
+of the protocol this development does not model at all.
 
 **The network's clauses are modelled, not derived.** `converges`,
 `advances` and `catchup` are fields of the pacing trunk, and so are
