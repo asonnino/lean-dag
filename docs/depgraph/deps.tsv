@@ -11301,6 +11301,7 @@ EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.ViewPace
 EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.SynchronisedOn
 EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.backoff_ge_of_rate
 EDGE	LeanDag.ViewPace.synchronisedOn_of_rate	LeanDag.PaceCore.delay
+NODE	LeanDag.FinWhale.window_margin._proof_1_1	LeanDag.FinWhale.Counting	thm
 NODE	LeanDag.Odontoceti.adaptiveRun_agree._proof_1_1	LeanDag.Adaptive.Odontoceti	thm
 EDGE	LeanDag.Odontoceti.adaptiveRun_agree._proof_1_1	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.adaptiveRun_agree._proof_1_1	LeanDag.AdaptivePolicy.W
@@ -12920,6 +12921,7 @@ EDGE	LeanDagTest.ugrowHonest	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowHonest	LeanDag.Delivery.mk
 EDGE	LeanDagTest.ugrowHonest	LeanDagTest.ugrowHonest._proof_4
 EDGE	LeanDagTest.ugrowHonest	LeanDag.Block.creator
+NODE	LeanDagTest.FinWhaleEquiv.Vmiss	LeanDagTest.FinWhale.Equivocation	def
 NODE	LeanDag.Minnow.CommittedAt.congr_simp	LeanDag.Minnow.Blocking	thm
 EDGE	LeanDag.Minnow.CommittedAt.congr_simp	LeanDag.Faults
 EDGE	LeanDag.Minnow.CommittedAt.congr_simp	LeanDag.Minnow.Slot
@@ -18311,6 +18313,8 @@ EDGE	LeanDag.outputAt_unique	LeanDag.Faults
 EDGE	LeanDag.outputAt_unique	LeanDag.OutputAt
 EDGE	LeanDag.outputAt_unique	LeanDag.BlockUniverse
 EDGE	LeanDag.outputAt_unique	LeanDag.Reaches
+NODE	LeanDag.FinWhale.c3_margin	LeanDag.FinWhale.Counting	thm
+EDGE	LeanDag.FinWhale.c3_margin	LeanDag.FinWhale.c3_margin._proof_1_1
 NODE	LeanDag.BlackMarlin.Flush._sizeOf_inst	LeanDag.BlackMarlin.Model.Ledger	def
 EDGE	LeanDag.BlackMarlin.Flush._sizeOf_inst	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Flush._sizeOf_inst	LeanDag.BlackMarlin.Flush
@@ -28882,6 +28886,8 @@ EDGE	LeanDag.notMem_ofAccepted_self._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.notMem_ofAccepted_self._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.notMem_ofAccepted_self._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.notMem_ofAccepted_self._proof_1_1	LeanDag.BlockUniverse
+NODE	LeanDag.FinWhale.c3_reachable	LeanDag.FinWhale.Counting	thm
+EDGE	LeanDag.FinWhale.c3_reachable	LeanDag.FinWhale.c3_reachable._proof_1_1
 NODE	LeanDag.BlackMarlin.deliveredBelow.match_1	LeanDag.BlackMarlin.Model.Order	def
 NODE	LeanDag.DecidedWithin.mono	LeanDag.Adaptive.Basic	thm
 EDGE	LeanDag.DecidedWithin.mono	LeanDag.Faults
@@ -31048,6 +31054,7 @@ EDGE	LeanDag.mem_supporters._simp_1_2	LeanDag.Block
 EDGE	LeanDag.mem_supporters._simp_1_2	LeanDag.creatorsOf
 EDGE	LeanDag.mem_supporters._simp_1_2	LeanDag.mem_creatorsOf
 EDGE	LeanDag.mem_supporters._simp_1_2	LeanDag.Block.creator
+NODE	LeanDag.FinWhale.c3_margin._proof_1_1	LeanDag.FinWhale.Counting	thm
 NODE	LeanDag.Hybrid.thickLink_of_directCommitIn	LeanDag.Hybrid.Decision	thm
 EDGE	LeanDag.Hybrid.thickLink_of_directCommitIn	LeanDag.Hybrid.ThickLink
 EDGE	LeanDag.Hybrid.thickLink_of_directCommitIn	LeanDag.HybridFaults
@@ -38483,6 +38490,16 @@ EDGE	LeanDag.ViewPace.synchronisedOn_of_driftOn._proof_1_1	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewPace.synchronisedOn_of_driftOn._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.ViewPace.synchronisedOn_of_driftOn._proof_1_1	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewPace.synchronisedOn_of_driftOn._proof_1_1	LeanDag.ViewPace
+NODE	LeanDagTest.FinWhaleEquiv.isView_Vmiss	LeanDagTest.FinWhale.Equivocation	thm
+EDGE	LeanDagTest.FinWhaleEquiv.isView_Vmiss	LeanDagTest.FinWhaleEquiv.Dequiv
+EDGE	LeanDagTest.FinWhaleEquiv.isView_Vmiss	LeanDagTest.FinWhaleEquiv.Vmiss
+EDGE	LeanDagTest.FinWhaleEquiv.isView_Vmiss	LeanDag.FinWhale.Dag.ids
+EDGE	LeanDagTest.FinWhaleEquiv.isView_Vmiss	LeanDag.Block.refs
+EDGE	LeanDagTest.FinWhaleEquiv.isView_Vmiss	LeanDag.FinWhale.Dag.block
+EDGE	LeanDagTest.FinWhaleEquiv.isView_Vmiss	LeanDag.FinWhale.IsView.mk
+EDGE	LeanDagTest.FinWhaleEquiv.isView_Vmiss	LeanDagTest.FinWhaleEquiv.eqParams
+EDGE	LeanDagTest.FinWhaleEquiv.isView_Vmiss	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+EDGE	LeanDagTest.FinWhaleEquiv.isView_Vmiss	LeanDag.FinWhale.IsView
 NODE	LeanDagTest.UtightA	LeanDagTest.HybridTight	def
 EDGE	LeanDagTest.UtightA	LeanDagTest.hyb8
 EDGE	LeanDagTest.UtightA	LeanDagTest.UtightA._proof_2
@@ -39721,6 +39738,7 @@ EDGE	LeanDag.BlackMarlin.descentSUpto_eq_of_le	LeanDag.Block.round
 EDGE	LeanDag.BlackMarlin.descentSUpto_eq_of_le	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.descentSUpto_eq_of_le	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.descentSUpto_eq_of_le	LeanDag.BlackMarlin.descentSUpto
+NODE	LeanDag.FinWhale.c3_reachable._proof_1_1	LeanDag.FinWhale.Counting	thm
 NODE	LeanDag.BlackMarlin.Repair.StrongAgrees	LeanDag.BlackMarlin.Repair.Statement	def
 EDGE	LeanDag.BlackMarlin.Repair.StrongAgrees	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Repair.StrongAgrees	LeanDag.BlackMarlin.flushRecordS
@@ -46292,6 +46310,8 @@ EDGE	LeanDag.BlockUniverse.no_equivocation	LeanDag.BlockUniverse.block
 EDGE	LeanDag.BlockUniverse.no_equivocation	LeanDag.Block.round
 EDGE	LeanDag.BlockUniverse.no_equivocation	LeanDag.BlockUniverse
 EDGE	LeanDag.BlockUniverse.no_equivocation	LeanDag.Block.creator
+NODE	LeanDag.FinWhale.window_margin	LeanDag.FinWhale.Counting	thm
+EDGE	LeanDag.FinWhale.window_margin	LeanDag.FinWhale.window_margin._proof_1_1
 NODE	LeanDag.directCommit_of_certifiesAt	LeanDag.Liveness	thm
 EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.creatorsOf
 EDGE	LeanDag.directCommit_of_certifiesAt	LeanDag.mem_creatorsOf

@@ -216,7 +216,7 @@
 <g><title>LeanDag.round_le_of_reaches — causal history is non-increasing in round</title>
 <rect x="134.0" y="696.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
 <text class="lbl" x="165.0" y="708.0" text-anchor="middle">T2</text></g>
-<g><title>LeanDag.FinWhale.equivocating_margin — and the committee is the least at which that holds</title>
+<g><title>LeanDag.FinWhale.equivocating_margin — the committee is the least at which that holds, and the counting behind the findings of §20.8</title>
 <rect x="134.0" y="729.0" width="62" height="24" rx="5" fill="#dce8f7" stroke="#5a7fa8" stroke-width="1.2"/>
 <text class="lbl" x="165.0" y="741.0" text-anchor="middle">FW2</text></g>
 <g><title>LeanDag.FinWhale.lemma12 — two validators never decide a leader slot differently</title>

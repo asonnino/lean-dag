@@ -234,6 +234,41 @@ example : quorumCard (Fin 4) ≤ ((exposedTo Uequiv 10)ᶜ).card :=
 
 example : parentSet Dequiv 10 = {1, 2, 3} := by decide
 
+/-! ## The case Lemmas 6 and 7 do not reach
+
+The paper's skip rule has a first condition quantifying over "each leader
+block of `s` (if any) in the local DAG of `vj`", and Lemmas 6 and 7 argue
+against a commit through it. The case it does not reach is a validator
+holding **no** block of the committed slot, where the condition is
+satisfied for nothing.
+
+That case is realisable here. Slot `1` is led by validator `1` and its
+block `6` is committed in the universe. `Vmiss` is a reference-closed
+part of the execution that holds every round-`0` and round-`1` block
+except `6` — a validator that has not yet received the committed block —
+and in it the slot is empty, so the condition holds with no block to hold
+of. -/
+
+/-- Everything below round `2` except the committed block. -/
+def Vmiss : Finset (Fin 16) := {0, 1, 2, 3, 4, 5, 7, 8}
+
+theorem isView_Vmiss : IsView Dequiv Vmiss := ⟨by decide, by decide⟩
+
+/-- **The commit is real, and the view holds no block of its slot.** -/
+example : DirectCommit Dequiv 6 ∧
+    slotBlocks (restrict Dequiv Vmiss isView_Vmiss) 1 = ∅ := by decide
+
+/-- **So the SP-skip half is satisfied for nothing there** — vacuously,
+over an empty slot — which is what leaves the paper's argument without a
+block to run on. -/
+example : ∀ l ∈ slotBlocks (restrict Dequiv Vmiss isView_Vmiss) 1,
+    SPSkip (restrict Dequiv Vmiss isView_Vmiss) l := by decide
+
+/-- The arc's own exclusions do not go through that condition, and hold
+here: no view of this DAG directly skips a slot whose block is
+committed. -/
+example : ¬ DirectSkip (restrict Dequiv Vmiss isView_Vmiss) 1 := by decide
+
 /-! ## The horizon
 
 `eqRun` runs to round `3`, which is enough for the liveness interface —

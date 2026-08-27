@@ -179,6 +179,44 @@ theorem equivocating_margin (f p n m : ℕ) (hp : 1 ≤ p) (_hpf : p ≤ f)
     (n - 2 * f + 1) - p = f + p ∧ (m - 2 * f + 1) - p + 1 = f + p := by
   omega
 
+/-! ## The arithmetic of the findings
+
+Three facts about the paper's own arguments, in the same form as
+`equivocating_margin` above: pure statements about `f`, `p` and `n`,
+so that the counting behind report §20.8 is checked rather than asserted.
+
+What these settle is the arithmetic. That the paper's proofs *depend* on
+it is a reading of their text, and no formalisation can check that. -/
+
+/-- **Lemma 22's window against the cycle.** Its proof reads a window of
+`3f + 3` rounds as "a full cycle of `n` rounds plus the first two rounds
+of the next". The difference `3f + 3 − n` is `4 − 2p` and does not
+involve `f`, so the reading is available exactly at `p ≤ 1`: a cycle plus
+two rounds at `p = 1`, one cycle at `p = 2`, and short of a cycle
+beyond. -/
+theorem window_margin (f p n : ℕ) (hp : 1 ≤ p) (hn : n + 1 = 3 * f + 2 * p) :
+    3 * f + 3 + 2 * p = n + 4 ∧ (n + 2 ≤ 3 * f + 3 ↔ p ≤ 1) := by
+  omega
+
+/-- **When C3 becomes reachable.** A validator with `j` honest validators
+ahead of it holds at most `j + 1 + f` blocks of its own round, so C3's
+threshold of `n − f` is within reach exactly from `j = n − 2f − 1`. The
+validators that certainly cannot use C3 are therefore the fastest
+`n − 2f − 1`, one fewer than the `n − 2f` the paper's set has. -/
+theorem c3_reachable (f n j : ℕ) (hn : 2 * f ≤ n) :
+    n - f ≤ j + 1 + f ↔ n - 2 * f - 1 ≤ j := by
+  omega
+
+/-- **And what that one member costs.** The pigeonhole margin over the
+`f` faulty authors is `|H| − f`. At the paper's `|H| = n − 2f` it is
+`2p − 1`, positive at every `p`; at the correct `|H| = n − 2f − 1` it is
+`2p − 2`, and at `p = 1` the set has exactly `f` members, so the
+intersection bound is zero and the argument names no block. -/
+theorem c3_margin (f p n : ℕ) (hp : 1 ≤ p) (hn : n + 1 = 3 * f + 2 * p) :
+    (n - 2 * f) + 1 = f + 2 * p ∧ (n - 2 * f - 1) + 2 = f + 2 * p ∧
+      (p = 1 → n - 2 * f - 1 = f) := by
+  omega
+
 end FinWhale
 
 end LeanDag

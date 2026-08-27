@@ -766,6 +766,14 @@ the argument turns on it.
 | Lemmas 6 and 7 through SP-skip | a validator holding no block of the committed slot |
 | Lemma 4's round index | none — the count is unaffected |
 
+The repairs are all in the library, and so is the arithmetic of each
+diagnosis: `window_margin`, `c3_reachable` and `c3_margin` sit beside
+`equivocating_margin` in `Counting.lean`, and §9's equivocating execution
+exhibits the case Lemmas 6 and 7 do not reach. What is not
+machine-checked, and cannot be, is that the paper's proofs *depend* on
+that arithmetic — a reading of their text, given below in enough detail
+to be checked against the paper.
+
 ### Two proofs that do not establish their statements
 
 **Lemma 22 covers `p = 1` only.** Its proof concludes from "a window of

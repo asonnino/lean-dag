@@ -7742,12 +7742,26 @@ before a repair means anything.
 | Definition 1's latency | unproved claim | — | `fastCommit_latency` (§20.5) |
 | optimality of `n = 3f + 2p − 1` | unproved claim | — | the tightness of Lemma 4 (§20.3) |
 
+**What is checked, and what is read.** The repairs are all in the
+library: Lemma 22 at every `p` (`lemma22`), Lemmas 18 and 19 by induction
+on build time (`Creation.lemma18`, `Creation.lemma19`), the exclusion
+routed through the Non-FP-evidence quorum
+(`no_directSkip_of_commit_view`), the latency (`fastCommit_latency`) and
+the tightness of Lemma 4 (`equivocating_margin`). So is the arithmetic of
+each diagnosis — `window_margin` for the window against the cycle,
+`c3_reachable` for where C3 becomes usable, `c3_margin` for what the
+extra member of `H` costs — and the case Lemmas 6 and 7 do not reach is
+exhibited on data (§20.9). What is **not** machine-checked, and cannot
+be, is that the paper's proofs depend on that arithmetic: that is a
+reading of their text, given here in enough detail to be checked against
+the paper directly.
+
 **Lemma 22 covers `p = 1` only.** The proof concludes from "a window of
 `3f + 3` rounds contains a full cycle of `n` rounds plus the first two
 rounds of the next cycle".
 
-*Where it breaks.* The difference `3f + 3 − n` is `4 − 2p`, and does not
-involve `f`: the window is a cycle plus two rounds at `p = 1`, exactly
+*Where it breaks* (`window_margin`). The difference `3f + 3 − n` is
+`4 − 2p`, and does not involve `f`: the window is a cycle plus two rounds at `p = 1`, exactly
 one cycle at `p = 2`, and `2p − 4` rounds short of one at `p ≥ 3`. The
 least broken instance is `f = 2`, `p = 2`, where `n = 9` and the window
 is `9` rounds — one cycle, where the sentence reads off eleven. At
@@ -7768,14 +7782,14 @@ leader. The proof recovers the lemma by finding, among those blocks, one
 whose author did not itself use C3, by pigeonhole against a set `H` of
 validators that cannot have used it.
 
-*Where it breaks.* `H` is one member too large. A validator with `j`
+*Where it breaks* (`c3_reachable`). `H` is one member too large. A validator with `j`
 honest validators ahead of it holds at most `j + 1 + f` blocks of its own
 round — `j` from those ahead, its own, and at most `f` from Byzantine
 authors — so C3's `n − f` becomes reachable as soon as `j ≥ n − 2f − 1`.
 The validators that certainly cannot use it are the fastest
 `n − 2f − 1`, where the proof takes `n − 2f`.
 
-*That one member is the whole margin.* Write `b` for the number of
+*That one member is the whole margin* (`c3_margin`). Write `b` for the number of
 validators that actually fail. A C3-triggered validator holds at least
 `n − f − b` blocks by honest authors out of `n − b` honest validators, so
 the intersection with `H` is at least `|H| − f` — independent of `b`, the
@@ -7807,8 +7821,8 @@ paper covers the whole range of `p`.
 condition quantifies over "each leader block of `s` (if any) in the local
 DAG of `vj`".
 
-*Where it breaks.* On the case the lemma is about: a validator that has
-received **no** block of the committed slot. Its SP-skip condition is
+*Where it breaks* (§20.9 exhibits it). On the case the lemma is about: a
+validator that has received **no** block of the committed slot. Its SP-skip condition is
 then satisfied for nothing — there is no block of the slot for a quorum
 to decline to vote for — so nothing about the committed block follows
 from it, and the contradiction the proof wants has no block to run on.
@@ -8980,7 +8994,7 @@ reused.
 | Label | Statement | Lean |
 |:---|:---|:---|
 | FW1 | a fast commit makes every block two rounds up FP-evidence for it | `lemma4` *(FinWhale/Evidence)* |
-| FW2 | and the committee is the least at which that holds | `equivocating_margin` *(FinWhale/Counting)* |
+| FW2 | the committee is the least at which that holds, and the counting behind the findings of §20.8 | `equivocating_margin`, `window_margin`, `c3_reachable`, `c3_margin` *(FinWhale/Counting)* |
 | FW3 | a fast commit excludes a second commit, a skip, and any other indirect commit | `direct_commit_unique`, `no_nonFPEvidence_of_fastCommit`, `no_indirectCommit_of_fastCommit`, `exclusions_of_dag` *(FinWhale/Decision, Skip, Anchor, Consistency)* |
 | FW4 | two validators never decide a leader slot differently | `lemma12` *(FinWhale/Consistency)* |
 | FW5 | the delivery order extends rather than revises, and repeats nothing | `theorem14`, `theorem15` *(FinWhale/Order)* |
