@@ -14,7 +14,7 @@ namespace LeanDagTest
 
 namespace Hydrozoan
 
-open LeanDag.Hydrozoan Hydrozoan.PrefixAgreement
+open LeanDag LeanDag.Hydrozoan Hydrozoan.PrefixAgreement
 
 set_option maxRecDepth 16384
 
