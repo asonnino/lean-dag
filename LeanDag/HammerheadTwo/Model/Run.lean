@@ -11,7 +11,7 @@ of the range is decided by the base relation against the configuration's
 own schedule, `Sched (count k)` — including whatever decision-anchors
 above the next anchor an indirect decision reads, because Algorithm 2
 decides under the count in force and switches only afterwards
-(`hammerhead-two.md` §0). That is what makes the dependency well-founded
+(`hammerhead-two.md` §5). That is what makes the dependency well-founded
 by induction on `k`.
 
 A `PartialRun` is closed up to a configuration height `K`: the ranges

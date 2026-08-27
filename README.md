@@ -190,6 +190,32 @@ faults alone.
   for the evidence loses liveness. The arc is the second under the
   statement/proof partition.
 
+- **Hammerhead 2.0** (`LeanDag/HammerheadTwo/`): the adaptive **leader
+  count** — every few seconds, measure on the agreed DAG the fraction
+  of leader slots the base protocol decided directly and drive the
+  number of leaders per round with an additive-increase,
+  multiplicative-decrease rule — proved safe and live over an explicit
+  interface rendering the paper's assumptions A1–A4, and instantiated
+  on Mysticeti, Odontoceti and Nemo-Nemo. Safety is agreement of the
+  configuration sequence and of the ledger for **any** update rule,
+  under no synchrony or fairness hypothesis (`Agreement.holds`,
+  `Ledger.holds`): the algorithm decides under the count in force and
+  only then switches, so each configuration's verdicts are derivations
+  against one fixed schedule and no fixpoint is needed. There is no
+  total run — a finite universe closes finitely many configurations —
+  and the paper's sequence of configurations is what every prefix of it
+  agrees on. Liveness is Configuration Progress and runs of every
+  height under a horizon (`Progress.holds`), from a clause on a
+  schedule the paper assumes of its base protocols and that its own
+  rotation does not meet by this development's run-fairness route at
+  two leaders and four validators; it holds by a descent through the
+  *heads* of rounds and a pigeonhole on residues (`Heads.holds`), so
+  each rule is live under round-robin at **every** leader count — the
+  paper's A4 for its schedule, proved. Seven findings for the paper,
+  among them that its liveness clause needs a margin above the slot and
+  that Nemo-Nemo's slack is what a majority may miss, not the crash
+  bound. The arc is the third under the statement/proof partition.
+
 - **Minnow** (`LeanDag/Minnow/`): `crs*`, the commit rule proposed as
   *minimal* for eventual synchrony (arXiv:2608.18029), which decides a
   leader slot from the round immediately above it — `2f+1` processes
@@ -241,8 +267,9 @@ the set of declarations changes. `make help` lists them.
   one message; `Adaptive/` — adaptive leader schedules; `Hybrid/` —
   Byzantine and crash faults apart; `Nemo/` — crash-fault consensus at
   a majority quorum; `MahiMahi/` — the asynchronous rule at wave `w`,
-  and `BlackMarlin/` — the three-round rule with an anchor every round,
-  both under a statement/proof partition (`Model/`,
+  `BlackMarlin/` — the three-round rule with an anchor every round, and
+  `HammerheadTwo/` — the adaptive leader count over an interface for the
+  three base rules, all three under a statement/proof partition (`Model/`,
   `<Result>/Statement.lean`, `<Result>/Proof.lean`); `Network/` — the composed
   denial-of-service capstones; `Integration/` — how the arcs compose).
 - `LeanDag.lean` — root import file.
@@ -277,6 +304,7 @@ the set of declarations changes. `make help` lists them.
 | [`docs/adaptive-leaders.md`](docs/adaptive-leaders.md) | adaptive leader schedules: the design record and theorem plan |
 | [`docs/hybrid-plan.md`](docs/hybrid-plan.md) | hybrid fault tolerance: the design record and theorem plan |
 | [`docs/mahi-mahi.md`](docs/mahi-mahi.md) | the asynchronous rule at wave `w`: the clause, and the statement/proof partition |
+| [`docs/hammerhead-two.md`](docs/hammerhead-two.md) | the adaptive leader count: the interface A1–A4, the configuration-sequence model and why it needs no fixpoint, the liveness clause and its margin, the heads descent, the three instantiations, and the findings |
 | [`docs/black-marlin.md`](docs/black-marlin.md) | the three-round commit rule: the link clause, the run of two, what the reactive exit costs, agreement, the delivered order the descent computes, the sequence it outputs, where Agreement fails, and a repair |
 | [`docs/integration.md`](docs/integration.md) | composing the arcs: the invariant interface, and what composition revealed |
 | [`docs/related.md`](docs/related.md) | a survey of consensus on uncertified DAGs |

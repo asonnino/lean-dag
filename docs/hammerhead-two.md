@@ -8,9 +8,10 @@
 > only human-plus-LLM review behind it. Read critically.
 
 This document is the design record for the **Hammerhead 2.0** arc,
-written before the development: the definitions and theorems below are
-a plan, the Lean signatures are proposals, and §12 lists the decisions
-the plan asks the author to settle before Phase 1 begins. The question
+written before the development and brought to its final position after
+it (§10, §14): the definitions and theorems below are what was built,
+the Lean signatures are the sources', and §12 records the decisions
+taken along the way. The question
 is whether the adaptive *leader-count* mechanism of the Hammerhead 2.0
 paper (working title; `\sysname` in the manuscript) — every few seconds,
 measure on the agreed DAG the fraction of leader slots the base protocol
@@ -814,6 +815,26 @@ Settled 2026-08-27 for Phase 4, on the recommendations:
   `Fin g × Tᶜ` (recommended), or witnessed only on small committees.
 - **D18 — the gap is `c₀`**: HH9b on the heads themselves and `HeadsRun`
   called one round up (recommended), or `c₀ + w` with the offset form.
+
+## 14. Phases
+
+| phase | deliverable | commit |
+| :-- | :-- | :-- |
+| 0 | this record | `31ee0da` |
+| 1 | `Model/{Rule,Schedule,Window,Run}.lean`; `Mysticeti/`; the witnesses on `U7`, `Uodo`, `U6`; the checker | `80e59bc` |
+| 2 | `Window/`, `Agreement/`, `Ledger/`, `Conservativity/`, `Aimd/` (HH2–HH7); `Usun`; F7 | `e99b364` |
+| 3 | `Model/Live.lean`, `Progress/` (HH8); the test rule; `Usk`; F8 | `e209281` |
+| 4 | `Model/Heads.lean`, `Heads/`, `MysticetiLive/` (HH9, HH10 for Mysticeti); `U44`; F3 proved, F9 | `ebddc72` |
+| 5 | `Odontoceti/`, `Nemo/` (HH10); the twin universe; `Majority.lean` | `0856ea1` |
+| 6 | this record brought to the final position; report §20; README; the reference pipeline; the paper's Lean appendix | — |
+
+Each phase ran as statements → review → freeze → proofs → witnesses →
+a reviewing agent over the witness file → commit; phases 1, 3 and 4
+were planned before their statements were written. Two frozen
+statements were amended after their phase, each on notice: `LiveOn`'s
+first clause gained its margin (F9, Phase 4), and Nemo's slack became
+the majority's (Phase 5); a third, the total run, was withdrawn as
+uninhabited (F7, Phase 2).
 
 ## 13. Out of scope
 

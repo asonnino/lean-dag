@@ -5,7 +5,7 @@ import LeanDag.Causality
 # Hammerhead 2.0: the base-protocol interface
 
 The paper abstracts the protocol it runs on as four assumptions, A1–A4
-(`hammerhead-two.md` §0.1): rounds and slots, causal completeness, a
+(`hammerhead-two.md` §2): rounds and slots, causal completeness, a
 direct decision predicate, and safety and liveness for every fixed
 configuration. `BaseRule` is that abstraction as a Lean structure — its
 data — and `BaseRule.Laws` the proposition the data must satisfy. The
@@ -146,7 +146,7 @@ end BaseRule
 
 /-- **An update rule**: from the current leader count and back-off, the
 universe and the anchor block, the next count and back-off. Safety is
-stated for every such function (`hammerhead-two.md` §0); the paper's
+stated for every such function (`hammerhead-two.md` §1); the paper's
 AIMD rule is one instance (`Model/Window.lean`). -/
 abbrev UpdateRule (R : BaseRule Validator BlockId Payload) : Type :=
   ℕ → ℕ → R.Universe → BlockId → ℕ × ℕ

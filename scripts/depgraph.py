@@ -54,6 +54,7 @@ def series_group(label):
     if label.startswith('AL'): return 'adaptive'
     if label.startswith('NN'): return 'nemo'
     if label.startswith('MM'): return 'mahimahi'
+    if label.startswith('HH'): return 'hh'
     if label.startswith('H'): return 'hybrid'
     if label.startswith('I'): return 'integration'
     if label.startswith('E'): return 'dos'
@@ -77,6 +78,7 @@ GROUP_FILL = {
     'hybrid': ('#fdf0d5', '#b0894a'),
     'nemo': ('#d5efe9', '#3f8f7a'),
     'mahimahi': ('#e0ecf8', '#4a6fa5'),
+    'hh': ('#fbe9d7', '#b5652a'),
     'integration': ('#dbe7e0', '#5f8a76'),
 }
 GROUP_TITLE = {
@@ -90,6 +92,7 @@ GROUP_TITLE = {
     'hybrid': 'hybrid faults (§14)',
     'nemo': 'crash-fault consensus (§15)',
     'mahimahi': 'Mahi-Mahi (§17)',
+    'hh': 'Hammerhead 2.0 (§20)',
     'integration': 'integration (§16)',
 }
 
