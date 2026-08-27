@@ -273,7 +273,7 @@ def run1 : PartialRun hhRule hhP1 hhLeader hhWin (Aimd.rule hhRule hhP1 hhLeader
     intro k hk κ h1 h2
     have hk0 : k = 0 := by omega
     subst hk0
-    simp only [if_true, Nat.div_one] at h1 h2
+    simp at h1 h2
     have : κ = 1 ∨ κ = 2 := by omega
     rcases this with rfl | rfl
     · exact Decided.directCommit (S := hhSched1) (by decide) (by decide)

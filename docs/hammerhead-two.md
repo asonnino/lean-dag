@@ -61,7 +61,7 @@ Three consequences shape the plan.
   rule's own agreement theorem. So two validators agree on every
   configuration and every verdict for **any** deterministic update, with
   no synchrony or fairness hypothesis — the AIMD rule is one instance
-  (HH3, HH4).
+  (HH3).
 - **Liveness is the existence of the configuration sequence.** Each
   range closes because the base rule decides every slot of a fixed
   schedule on the full view; the next anchor exists because committed
@@ -91,11 +91,11 @@ Mysticeti.
 | A3 direct decision predicate | `BaseRule.DirectCommitIn` (§2) |
 | A4 base safety | `BaseRule.agree` (§2) |
 | A4 base liveness | `BaseRule.LiveOn S` (§7), discharged in Phases 4–5 |
-| Algorithm 2 (`TryCommit`, `TryDecide`) | `PartialRun`, `ConfigRun` (§5) |
+| Algorithm 2 (`TryCommit`, `TryDecide`) | `PartialRun` (§5) |
 | Algorithm 3 (`UpdateLeaders`, `GetSubDag`, `CountDirectCommits`, `ExpectedCommits`) | `window`, `observed`, `expected`, `Aimd.update` (§4) |
 | Window Agreement | HH2 |
 | Leader-Count Agreement | HH3 |
-| Safety (Agreement, Integrity, Total Order) | HH4, HH5 |
+| Safety (Agreement, Integrity, Total Order) | HH3, HH5 |
 | Configuration Progress; Liveness | HH8 |
 | Lean appendix: assumed vs. proved, witnesses | §9, §11 |
 
@@ -356,12 +356,18 @@ round clauses are written as `κ / count k`, which is `Sched`'s
 is Algorithm 2's `lastRound ← 0`: round `0` lies in no range, as in the
 algorithm, whose first decision walk starts at round `1`.
 
-A `ConfigRun` is the total form (`K` unbounded), with `closed`
-strengthened to the whole range — through the end of the anchor's round
-— so that the ledger of range `k` is defined. The distinction matters
-for what a validator holds: at the instant it commits `A_{k+1}` the
-trailing slots of that round may be undecided, and the configuration
-sequence must not wait for them (§1).
+**There is no total run.** Every configuration commits an anchor, the
+`candidates` law places it at its own round, `start` grows strictly, and
+a universe holds finitely many blocks: a run with a configuration for
+every `k` would inject `ℕ` into `ids U`. The Phase 2 review proved this
+(`configRun_empty`, on the Phase 2 draft's total structure), and the
+draft's `ConfigRun`, with the results stated over it, was withdrawn as
+vacuous. The paper's *sequence of configurations* is therefore what
+every prefix of it agrees on: `PartialRun` at height `K` closes `K`
+ranges in full — through the end of each anchor's round, so that each
+range's ledger is defined — and determines configuration `K`; safety
+is agreement of prefixes of any two heights (HH3), and liveness will be
+that prefixes of every height exist (HH8).
 
 `count_pos` and `count_le` are clauses of the run rather than
 consequences of the rule because the run is stated for an arbitrary
@@ -412,19 +418,22 @@ threshold in one verdict function, so the anchors agree; the update is
 one function of one universe, one anchor and one state. No synchrony, no
 fairness, no clause on `upd`.
 
-**HH4 (safety).** Total runs agree everywhere; the corollary in the
-shape of M6.
+**HH4** — withdrawn: there is no total run (§5), and HH3 at equal
+heights is the form there is.
 
-**HH5 (the ledger).** The concatenated committed sequences of two total
-runs are equal, range by range and hence as one list; a block appears at
-most once (`Slots.keyed` per range, distinct rounds across ranges). This
-is the paper's Agreement, Integrity and Total Order in the form the
-development states them (M7, `outputAt_unique`).
+**HH5 (the ledger).** The concatenated committed sequences of two runs
+are equal on every range both have closed, hence as one list to every
+height both reach; the ledger to a lower height is a prefix of the
+ledger to a higher one; and a block appears at most once — `Slots.keyed`
+within a range through the `candidates` law, distinct rounds across
+ranges. This is the paper's Agreement, Total Order and Integrity in the
+form the development states them (M7, `outputAt_unique`).
 
 **HH6 (conservativity).** Under the constant rule
-`fun m b _ _ => (m, b)` every configuration has the initial count and a
-run's verdicts are `Decided` verdicts of `Sched 1`: the arc collapses
-onto the base development.
+`fun m b _ _ => (m, b)` every configuration a run determines — `k ≤ K`,
+the height; above it a run holds no data — has the initial count and
+back-off, and a run's verdicts are `Decided` verdicts of `Sched 1`: the
+arc collapses onto the base development.
 
 **HH7 (the AIMD rule).** `Aimd.update` keeps the count in
 `[1, maxLeaders]`; an unhealthy window strictly decreases a count above
@@ -484,7 +493,7 @@ full view:
 theorem configRun_exists (hlive : ∀ m (hm : 0 < m) (hmax : m ≤ P.maxLeaders), R.LiveOn (Sched m …))
     (hT : T ⊆ R.Reliable) (hcard : R.quorum ≤ T.card)
     (hs : R.SynchronisedOn U T Rnd) (hpop : ∀ r, Rnd ≤ r → R.PopulatedOn U T r) :
-    Nonempty (ConfigRun R P upd U (R.full U))
+    ∀ K, Nonempty (PartialRun R P getLeader hk upd U (R.full U) K)
 ```
 
 By recursion on `k`: range `k` is decided by the first conjunct at
@@ -617,10 +626,9 @@ The bar for `Model/` is the Hydrozoan formalisation's: definitions
 that carry no proof at all, so that a reviewer reads meaning and never
 argument. An obligation a definition would otherwise discharge inline
 is stated as a definition in the form its consumer needs (`Keyed`) and
-discharged in `Helpers/`; a conversion with a proof inside
-(`ConfigRun.toPartial`) is a helper.
+discharged in `Helpers/`.
 
-Results: `Window` (HH2), `Agreement` (HH3, HH4), `Ledger` (HH5),
+Results: `Window` (HH2), `Agreement` (HH3), `Ledger` (HH5),
 `Conservativity` (HH6), `Aimd` (HH7), `Liveness` (HH8), `Heads`
 (HH9a–d); and per rule, `Mysticeti`, `Odontoceti`, `Nemo` — the
 rule's data and the proof that it satisfies `Laws` (HH10). HH1 is
@@ -675,6 +683,10 @@ author comment when confirmed.
   Agreement is stated for the AIMD rule; it holds for any deterministic
   function of the universe and the anchor, which is a stronger and
   simpler statement for the Lean appendix. *Phase 2.*
+- **F7 — no total run.** A finite DAG closes finitely many
+  configurations; the paper's sequence of configurations exists only as
+  the family of its prefixes, and its safety theorem is agreement of
+  prefixes. *Phase 2; for the Lean appendix.*
 - **F6 — blocks versus slots.** `CountDirectCommits` iterates over
   leader blocks and could in principle count a slot twice; it cannot,
   by the base agreement theorem (§2). *Phase 2.*

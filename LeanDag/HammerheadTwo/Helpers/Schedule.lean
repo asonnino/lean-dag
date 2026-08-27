@@ -53,3 +53,32 @@ theorem roundRobin_keyed (n : ℕ) (hn : 0 < n) : Keyed (roundRobin n hn) n :=
 end HammerheadTwo
 
 end LeanDag
+
+namespace LeanDag
+
+namespace HammerheadTwo
+
+variable {Validator : Type}
+
+/-- `Sched`'s round is the quotient by the count. -/
+@[simp] theorem Sched_slotRound (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLeader w)
+    (m : ℕ) (hm : 0 < m) (hmax : m ≤ w) (κ : ℕ) :
+    (Sched getLeader hk m hm hmax).slotRound κ = κ / m := by
+  simp
+
+/-- `Sched`'s leader. -/
+theorem Sched_leader (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLeader w)
+    (m : ℕ) (hm : 0 < m) (hmax : m ≤ w) (κ : ℕ) :
+    (Sched getLeader hk m hm hmax).leader κ = getLeader (κ / m + κ % m) := rfl
+
+/-- Two schedules with equal counts are equal, whatever their proof
+arguments — the transport every agreement argument needs, since a run's
+count is a projection and cannot be substituted. -/
+theorem Sched_congr (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLeader w)
+    {m₁ m₂ : ℕ} (h : m₁ = m₂) (h₁ : 0 < m₁) (h₁' : m₁ ≤ w) (h₂ : 0 < m₂) (h₂' : m₂ ≤ w) :
+    Sched getLeader hk m₁ h₁ h₁' = Sched getLeader hk m₂ h₂ h₂' := by
+  subst h; rfl
+
+end HammerheadTwo
+
+end LeanDag

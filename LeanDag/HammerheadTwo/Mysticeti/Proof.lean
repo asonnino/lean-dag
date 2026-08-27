@@ -6,7 +6,8 @@ import LeanDag.Liveness
 
 Generated proof layer; not part of the audit surface. Every law is a
 core theorem applied: the view structure's own fields, `rfl` for the
-two id equations, `decided_agree` (M6) and `Decided.directCommit`.
+two id equations, `decided_agree` (M6), `Decided.directCommit` and
+`isLeaderBlock_of_decided`.
 -/
 
 namespace LeanDag
@@ -23,7 +24,8 @@ theorem holds : Statement := by
       full_ids := fun _ => rfl
       historyView_ids := fun _ _ _ => rfl
       agree := fun _ {_} _ _ _ _ _ h₁ h₂ => decided_agree h₁ h₂
-      decided_of_directCommitIn := fun _ {_} _ _ _ hL hdc => Decided.directCommit hL hdc }
+      decided_of_directCommitIn := fun _ {_} _ _ _ hL hdc => Decided.directCommit hL hdc
+      candidates := fun _ {_} _ _ _ h => isLeaderBlock_of_decided h }
 
 end Mysticeti
 

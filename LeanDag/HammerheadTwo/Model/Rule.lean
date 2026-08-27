@@ -115,8 +115,9 @@ the safety half of A4 (for a fixed schedule, verdicts agree across
 views); `decided_of_directCommitIn` ties the direct predicate to the
 relation, which is what makes the window count a count of *verdicts*:
 two directly committed candidates of one slot are one block, by
-`agree`. The liveness half of A4 is stated in Phase 3 over an extension
-of the data. -/
+`agree`; `candidates` is its converse, a committed block is a candidate
+of its slot. The liveness half of A4 is stated in Phase 3 over an
+extension of the data. -/
 structure Laws (R : BaseRule Validator BlockId Payload) : Prop where
   /-- A view holds only blocks of the universe. -/
   view_subset : ∀ {U : R.Universe} (V : R.View U), R.viewIds V ⊆ R.ids U
@@ -135,6 +136,11 @@ structure Laws (R : BaseRule Validator BlockId Payload) : Prop where
   decided_of_directCommitIn : ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U)
     (k : ℕ) (L : BlockId), R.IsLeaderBlock S U k L →
     R.DirectCommitIn V L (S.slotRound k) → R.Decided S V k (some L)
+  /-- A committed block is a candidate of its slot: the right round, the
+  right author. The other half of "verdicts are about candidates", and
+  what makes a block appear at most once in the ledger. -/
+  candidates : ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (k : ℕ) (L : BlockId),
+    R.Decided S V k (some L) → R.IsLeaderBlock S U k L
 
 end BaseRule
 
