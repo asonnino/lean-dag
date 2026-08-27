@@ -34038,6 +34038,13 @@ EDGE	LeanDagTest.FinWhale.syncPopulated	LeanDag.Correct
 EDGE	LeanDagTest.FinWhale.syncPopulated	LeanDag.FinWhale.Dag.block
 EDGE	LeanDagTest.FinWhale.syncPopulated	LeanDag.decidablePopulatedFrom
 EDGE	LeanDagTest.FinWhale.syncPopulated	LeanDagTest.FinWhale.fwParams
+NODE	LeanDagTest.FinWhaleDoS.DfwTwin	LeanDagTest.FinWhale.DoS	def
+EDGE	LeanDagTest.FinWhaleDoS.DfwTwin	LeanDagTest.Utwin
+EDGE	LeanDagTest.FinWhaleDoS.DfwTwin	LeanDagTest.FinWhaleDoS.twinLeader
+EDGE	LeanDagTest.FinWhaleDoS.DfwTwin	LeanDag.FinWhale.Dag.ofDoSValid
+EDGE	LeanDagTest.FinWhaleDoS.DfwTwin	LeanDagTest.utwin_dosValid
+EDGE	LeanDagTest.FinWhaleDoS.DfwTwin	LeanDagTest.FinWhaleDoS.twinParams
+EDGE	LeanDagTest.FinWhaleDoS.DfwTwin	LeanDag.FinWhale.Dag
 NODE	LeanDag.reaches_pred_of_round_le._proof_1_4	LeanDag.Support	thm
 EDGE	LeanDag.reaches_pred_of_round_le._proof_1_4	LeanDag.Faults
 EDGE	LeanDag.reaches_pred_of_round_le._proof_1_4	LeanDag.BlockUniverse.block
@@ -36948,13 +36955,6 @@ EDGE	LeanDag.SkipMsg.skipFill._proof_18	LeanDag.BlockUniverse
 EDGE	LeanDag.SkipMsg.skipFill._proof_18	LeanDag.SkipMsg
 EDGE	LeanDag.SkipMsg.skipFill._proof_18	LeanDag.SkipMsg.r0
 EDGE	LeanDag.SkipMsg.skipFill._proof_18	LeanDag.SkipMsg.B1
-NODE	LeanDagTest.FinWhaleDoS.Dtwin	LeanDagTest.FinWhale.DoS	def
-EDGE	LeanDagTest.FinWhaleDoS.Dtwin	LeanDagTest.Utwin
-EDGE	LeanDagTest.FinWhaleDoS.Dtwin	LeanDagTest.FinWhaleDoS.twinLeader
-EDGE	LeanDagTest.FinWhaleDoS.Dtwin	LeanDag.FinWhale.Dag.ofDoSValid
-EDGE	LeanDagTest.FinWhaleDoS.Dtwin	LeanDagTest.utwin_dosValid
-EDGE	LeanDagTest.FinWhaleDoS.Dtwin	LeanDagTest.FinWhaleDoS.twinParams
-EDGE	LeanDagTest.FinWhaleDoS.Dtwin	LeanDag.FinWhale.Dag
 NODE	LeanDag.Nemo.CrashFaults.mk	LeanDag.Nemo.Liveness	ctor
 EDGE	LeanDag.Nemo.CrashFaults.mk	LeanDag.Nemo.CrashFaults
 NODE	LeanDag.mem_history_of_decided_commit._proof_1_1	LeanDag.Quality.Inclusion	thm

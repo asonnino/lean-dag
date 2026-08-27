@@ -38,8 +38,10 @@ would admit them.
 
 **Why the DAG type is new.** FinWhale strengthens Mysticeti's validity
 rule with a clause about the leader two rounds down (§2), and the fast
-path's counting rests on it. `FinWhale.ValidHere` therefore has four
-clauses rather than the core's three. `FinWhale.Dag` keeps a
+path's counting rests on it. `FinWhale.ValidHere` and the core's
+`ValidWrt` each have four clauses and share three: where the core's
+fourth is the self-parent edge, FinWhale's is the leader clause.
+`FinWhale.Dag` keeps a
 `correct_single` field — one block per correct validator per round — as
 the core does, because equivocating blocks are admitted of faulty
 validators only.

@@ -24,8 +24,8 @@ simply does not fire.
 So `p` counts missing votes, whatever their cause — a crash, a Byzantine
 validator withholding, or one voting for a conflicting block. The
 threshold counts distinct authors that did vote and does not ask why the
-others did not. A correct validator that is merely slow costs nothing
-past GST, since reactive delivery puts its vote in time.
+others did not. A correct validator that is merely slow consumes none of
+it past GST, since reactive delivery puts its vote in time.
 
 Two thresholds follow, and every counting argument of the arc is about
 one of them.

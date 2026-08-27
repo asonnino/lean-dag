@@ -86,6 +86,17 @@ LAYERS = [
       "BlackMarlin.Helpers.Order", "BlackMarlin.Order.Proof",
       "BlackMarlin.Model.Repair", "BlackMarlin.Repair.Statement",
       "BlackMarlin.Helpers.Repair", "BlackMarlin.Repair.Proof"]),
+    ("FinWhale: the two-round commit rule",
+     ["FinWhale.Model.Params", "FinWhale.Model.Rule", "FinWhale.Counting",
+      "FinWhale.Evidence", "FinWhale.Consequences", "FinWhale.Skip",
+      "FinWhale.Decision", "FinWhale.Anchor", "FinWhale.Propagation",
+      "FinWhale.Consistency", "FinWhale.Order", "FinWhale.Pass",
+      "FinWhale.View", "FinWhale.Decided", "FinWhale.Validity",
+      "FinWhale.Rotation", "FinWhale.Reactive", "FinWhale.Creation",
+      "FinWhale.Holdings", "FinWhale.Protocol", "FinWhale.Liveness",
+      "FinWhale.DoSBridge"]),
+    ("Minnow: the minimal commit rule",
+     ["Minnow.Model.Rule", "Minnow.Blocking"]),
     ("The legacy quorum route (report §17)", ["Network.Quorum"]),
 ]
 

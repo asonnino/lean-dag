@@ -12,7 +12,7 @@ bound `ViewPace.driftOn_of_catchup`. This file carries both to a FinWhale
 DAG.
 
 **What this is not.** It is not the route FinWhale's liveness runs on.
-Coverage is bought by `ViewPace.waits`, a waiting *floor* — a validator
+Coverage is obtained from `ViewPace.waits`, a waiting *floor* — a validator
 never builds before the timeout expires — and FinWhale's pacemaker builds
 on C1 or C3 long before that. Its liveness is established in
 `Creation.lean`, from the block-creation conditions themselves, and the

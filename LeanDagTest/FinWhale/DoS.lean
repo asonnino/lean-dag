@@ -37,32 +37,32 @@ for. -/
 def twinLeader : ℕ → Fin 4 := fun _ => 0
 
 /-- **The bridge, on data**: a DoS-valid universe as a FinWhale DAG. -/
-def Dtwin : Dag (Fin 4) (Fin 9) Unit :=
+def DfwTwin : Dag (Fin 4) (Fin 9) Unit :=
   Dag.ofDoSValid Utwin twinLeader utwin_dosValid
 
 /-- The slot of round `0` has both versions, and they conflict. -/
-example : slotBlocks Dtwin 0 = {0, 4} ∧ Conflicting Dtwin 0 4 := by decide
+example : slotBlocks DfwTwin 0 = {0, 4} ∧ Conflicting DfwTwin 0 4 := by decide
 
 /-- Their author is Byzantine, which is what `correct_single` — inherited
 from the universe's non-equivocation — leaves room for. -/
-example : (Dtwin.block 0).creator ∉ (Correct : Finset (Fin 4)) := by decide
+example : (DfwTwin.block 0).creator ∉ (Correct : Finset (Fin 4)) := by decide
 
 /-- **Block `8` exposes the equivocation.** Its parents vote for both
 versions. -/
-example : ExposesEquivocation Dtwin 8 := by decide
+example : ExposesEquivocation DfwTwin 8 := by decide
 
 /-- **So it does not cite the equivocator**, which is the leader clause's
 second branch — here forced by the DoS condition rather than assumed. -/
-example : Dtwin.leader ((Dtwin.block 8).round - 2) ∉ parentSet Dtwin 8 :=
+example : DfwTwin.leader ((DfwTwin.block 8).round - 2) ∉ parentSet DfwTwin 8 :=
   leader_not_parent_of_exposes (by decide) (by decide) (by decide)
 
 /-- And the self-parent edge comes with the universe, so Validity needs
 no hypothesis here. -/
-example : SelfParented Dtwin := selfParented_ofDoSValid utwin_dosValid
+example : SelfParented DfwTwin := selfParented_ofDoSValid utwin_dosValid
 
 /-- Anti-vacuity: the clause is not satisfied by an empty parent set —
 block `8` has three parents, and one of them is its author's own. -/
-example : parentSet Dtwin 8 = {1, 2, 3} ∧ (7 : Fin 9) ∈ (Dtwin.block 8).refs := by decide
+example : parentSet DfwTwin 8 = {1, 2, 3} ∧ (7 : Fin 9) ∈ (DfwTwin.block 8).refs := by decide
 
 end FinWhaleDoS
 

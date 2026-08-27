@@ -116,10 +116,10 @@ variable [F : Faults Validator] [P : Params Validator]
 variable {Payload : Type*} {D : Dag Validator BlockId Payload}
 
 /-- **The liveness input, as an interface.** Every correct-led slot past
-the coverage round and below the horizon carries a direct commit. Both
-pacing disciplines supply this — the full-timeout one through coverage
-(`commits_of_synchronised`), the reactive one through its wait clauses
-(`FinWhale.Reactive`) — and nothing below cares which. -/
+the coverage round and below the horizon carries a direct commit. Two
+routes supply it — `commits_of_reactive`, from the reactive schedule's
+wait clauses, and `commits_of_creation`, from the block-creation
+conditions themselves — and nothing below cares which. -/
 def CommitsCorrectLeaders (D : Dag Validator BlockId Payload) (R N : ℕ) : Prop :=
   ∀ s, R ≤ s → s + 2 ≤ N → D.leader s ∈ (Correct : Finset Validator) →
     ∃ l ∈ slotBlocks D s, SPCommitBy D l (Correct : Finset Validator)

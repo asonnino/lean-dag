@@ -29,7 +29,8 @@ FinWhale specifies: the protocol admits a DAG that cites an equivocating
 non-leader, and this file says nothing about such a DAG. What it gives is
 that a deployment running FinWhale over a DoS-protected DAG — which is
 the deployment one would want, by the storage bound of
-`dos-equivocation-and-growth.md` §5 — gets the whole arc for free.
+`dos-equivocation-and-growth.md` §5 — obtains the whole arc with no
+further hypothesis.
 -/
 
 namespace LeanDag
