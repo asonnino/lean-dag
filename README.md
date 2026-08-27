@@ -222,8 +222,9 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   coverage, which a reactive builder does not have; the
   two-message-delay latency of Definition 1, stated and not proved
   there, is proved here. **Three further findings**: Lemma 22's proof
-  covers `p = 1` only, the C3 case of Lemmas 18 and 19 has two counting
-  problems, and Lemmas 6 and 7 are routed through a clause that a
+  covers `p = 1` only, the C3 case of Lemmas 18 and 19 counts one
+  validator too many into a set and has no margin left at `p = 1` once
+  that is fixed, and Lemmas 6 and 7 are routed through a clause that a
   validator which has not seen the committed block satisfies for
   nothing. A `Run` bundles one execution and states what a validator
   guarantees — agreement, total order, integrity, validity — with no

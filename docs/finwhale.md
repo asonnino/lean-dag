@@ -440,8 +440,8 @@ only for a *reliable* leader's block, which is one block by
 `correct_single`, and `selects_votes` asks not that a held vote be a
 parent but that some parent by the same validator votes, which is what
 the certificate counts. The C3 case departs from the paper's, which runs through the
-fastest `n − 2f` honest validators; §13 gives the two counting problems
-with that route, neither of which the induction has.
+fastest `n − 2f` honest validators; §13 gives the off-by-one in that
+count and what it costs, which the induction does not have.
 
 **Lemma 20 and Theorem 21 follow by counting.** `Creation.lemma20`
 assembles the certificates: every reliable validator's round-`(r+2)`
@@ -706,22 +706,33 @@ which is shorter and uniform in `p`: if every cyclic triple held a
 Byzantine leader, each Byzantine validator would answer for at most three
 of the `n` triples, giving `n ≤ 3f` against `n ≥ 3f + 1`.
 
-**The C3 case of Lemmas 18 and 19 does not close**, for two separate
-reasons.
+**The C3 case of Lemmas 18 and 19 does not close at `p = 1`.** A
+C3-triggered validator built because it already held `n − f` blocks of
+the round it was building, so it waited on nothing and never read the
+leader. The proof recovers the lemma by finding, among those blocks, one
+whose author did not itself use C3, by pigeonhole against a set `H` of
+validators that cannot have used it.
 
-The set `H` is one member too large. A validator with `j` honest
-validators ahead of it holds at most `j + 1 + f` blocks of its own round
-— `j` from those ahead, its own, and at most `f` from Byzantine authors —
-so C3's `n − f` becomes possible as soon as `j ≥ n − 2f − 1`. The
-validators that certainly cannot use C3 are the fastest `n − 2f − 1`.
+`H` is one member too large. A validator with `j` honest validators ahead
+of it holds at most `j + 1 + f` blocks of its own round — `j` from those
+ahead, its own, and at most `f` from Byzantine authors — so C3's `n − f`
+becomes reachable as soon as `j ≥ n − 2f − 1`. The validators that
+certainly cannot use C3 are the fastest `n − 2f − 1`, where the proof
+takes `n − 2f`.
 
-And the pigeonhole assumes exactly `f` faults. "Among the `n − 2f` honest
-blocks received by `vi`, at least one belongs to `H`" needs
-`(n − 2f) + |H| − |honest| ≥ 1`, which holds at `|honest| = n − f` and
-degrades as the actual fault count falls: at `f = 3`, `p = 1` and no
-actual faults it is negative.
+That one member is the whole margin. Write `b` for the number of
+validators that actually fail. A C3-triggered validator holds at least
+`n − f − b` blocks by honest authors out of `n − b` honest validators, so
+"among the honest blocks received by `vi`, at least one belongs to `H`"
+has margin `(n − f − b) + |H| − (n − b) = |H| − f`, independent of `b` —
+the two counts move together and the actual fault count cancels. At the
+proof's `|H| = n − 2f` the margin is `2p − 1`, positive at every `p`; at
+the correct `|H| = n − 2f − 1` it is `2p − 2`, zero at `p = 1`. So the
+argument closes for `p ≥ 2` and yields nothing at the core committee, for
+every `f` — the opposite regime to Lemma 22, whose proof holds only at
+`p = 1`.
 
-Induction on block-creation time needs neither correction, and is the
+Induction on block-creation time needs neither count, and is the
 route §10 takes: a C3-triggered validator holds `n − f` blocks of the
 round it is building, at least one of them from an honest validator that
 created strictly earlier, so the induction hypothesis applies to that

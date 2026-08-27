@@ -7699,7 +7699,7 @@ properties of the network it states informally.
 | finding | kind | what it affects | repair |
 |:---|:---|:---|:---|
 | Lemma 22 covers `p = 1` only | proof | the rotation, at `p ≥ 2` | count incidences, or the pigeonhole at `3f + 3 ≤ n` (§20.5) |
-| the C3 case of Lemmas 18 and 19 | proof | delivery, at every `p` | induct on block-creation time (§20.5) |
+| the C3 case of Lemmas 18 and 19 | proof | delivery, at `p = 1` | induct on block-creation time (§20.5) |
 | Lemma 4's proof names round `r − 1` | wording | nothing; the count is unaffected | name round `r + 1` |
 | Lemmas 6 and 7 run through SP-skip | argument | the commit-bars-skip exclusion | run through the Non-FP-evidence quorum (§20.4) |
 | Definition 1's latency | unproved claim | the two-delay guarantee | `fastCommit_latency` (§20.5) |
@@ -7717,17 +7717,30 @@ part of the cycle makes it a stronger claim rather than a weaker one:
 `f` does not grow with `p`, so correct leaders only become denser, and
 the pigeonhole of §20.5 replaces the count the paper takes.
 
-**The C3 case of Lemmas 18 and 19 does not close**, for two separate
-reasons. The set of validators that cannot use C3 is one member too
-large: a validator with `j` honest validators ahead of it holds at most
-`j + 1 + f` blocks of its own round, so C3's `n − f` becomes possible as
-soon as `j ≥ n − 2f − 1`, and the validators that certainly cannot use it
-are the fastest `n − 2f − 1`. And the pigeonhole assumes exactly `f`
-faults: "among the `n − 2f` honest blocks received by `vi`, at least one
-belongs to `H`" needs `(n − 2f) + |H| − |honest| ≥ 1`, which holds at
-`|honest| = n − f` and degrades as the actual fault count falls — at
-`f = 3`, `p = 1` and no actual faults it is negative. Induction on
-block-creation time needs neither correction and is uniform in `f`, `p`
+**The C3 case of Lemmas 18 and 19 does not close at `p = 1`.** A
+C3-triggered validator built because it already held `n − f` blocks of
+the round it was building, so it waited on nothing and never read the
+leader. The proof recovers the lemma by finding, among those blocks, one
+whose author did not itself use C3, and it finds one by pigeonhole
+against a set `H` of validators that cannot have used it. `H` is one
+member too large. A validator with `j` honest validators ahead of it
+holds at most `j + 1 + f` blocks of its own round — `j` from those ahead,
+its own, and at most `f` from Byzantine authors — so C3's `n − f` becomes
+reachable as soon as `j ≥ n − 2f − 1`, and the validators that certainly
+cannot use it are the fastest `n − 2f − 1`, where the proof takes
+`n − 2f`.
+
+That one member is the whole margin. Writing `b` for the number of
+validators that actually fail, a C3-triggered validator holds at least
+`n − f − b` blocks by honest authors out of `n − b`, so the intersection
+with `H` is at least `|H| − f` — independent of `b`, the two counts
+moving together. At the proof's `|H| = n − 2f` that is `2p − 1`, positive
+at every `p`; at the correct `|H| = n − 2f − 1` it is `2p − 2`, which is
+zero at `p = 1`. So the argument closes for `p ≥ 2` and yields nothing at
+the core committee, for every `f`. Note that this is the opposite regime
+to Lemma 22's, whose proof holds only at `p = 1`: no single argument of
+the paper covers the whole range of `p`. Induction on
+block-creation time needs neither count and is uniform in `f`, `p`
 and the actual fault count.
 
 **Lemmas 6 and 7 cannot run through the SP-skip condition.** That
