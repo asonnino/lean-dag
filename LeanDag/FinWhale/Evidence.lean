@@ -35,6 +35,16 @@ theorem parent_round {b i : BlockId} (hb : b ∈ D.ids) (hi : i ∈ (D.block b).
     (D.block i).round + 1 = (D.block b).round :=
   (D.valid b hb).predecessor i hi
 
+/-- **No block references two blocks of one author.** Validity's
+`distinct_creators` says so directly, and it is why `selects_leader` and
+`selects_votes` below are guarded: a selection clause that obliged a
+builder to reference every version of an equivocating leader's block it
+held would be satisfiable by no valid DAG at all. -/
+theorem not_refs_conflicting {c l l' : BlockId}
+    (hc : c ∈ D.ids) (hconf : Conflicting D l l')
+    (hl : l ∈ (D.block c).refs) (hl' : l' ∈ (D.block c).refs) : False :=
+  hconf.1 ((D.valid c hc).distinct_creators l hl l' hl' hconf.2.2)
+
 /-- **The bridge.** A correct validator that both parents `b` and votes
 for `l` votes for `l` among `b`'s parents. Its round-`(r+1)` block is one
 block, so the vote the fast path counted and the parent `b` references

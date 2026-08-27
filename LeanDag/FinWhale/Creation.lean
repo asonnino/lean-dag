@@ -97,15 +97,33 @@ structure Creation (U : BlockUniverse Validator BlockId Payload)
     ∃ S : Finset Validator, quorumCard Validator ≤ S.card ∧ ∀ u ∈ S, ∃ b ∈ U.ids,
       b ∈ holds v (built v (n + 1)) ∧ (U.block b).creator = u ∧
       (U.block b).round = n + 1
-  /-- **Parent selection takes the leader's block** when it is held. -/
-  selects_leader : ∀ v ∈ T, ∀ n, ∀ c ∈ U.ids, (U.block c).creator = v →
+  /-- **Parent selection takes the leader's block** when it is held and
+  the leader is reliable.
+
+  The guard is not decoration. Without it the clause would range over
+  every block of an equivocating leader, and a validator holding two of
+  them would have to reference both — which `distinct_creators` forbids,
+  so no execution with an equivocating leader would admit a `Creation` at
+  all. A reliable leader has one block per round, and every use below has
+  a reliable leader. -/
+  selects_leader : ∀ v ∈ T, ∀ n, lead n ∈ T → ∀ c ∈ U.ids, (U.block c).creator = v →
     (U.block c).round = n + 1 → ∀ L ∈ U.ids, (U.block L).round = n →
     (U.block L).creator = lead n → L ∈ holds v (built v (n + 1)) →
       L ∈ (U.block c).refs
-  /-- **And it takes the votes** it holds. -/
-  selects_votes : ∀ v ∈ T, ∀ n, ∀ c ∈ U.ids, (U.block c).creator = v →
-    (U.block c).round = n + 2 → ∀ b ∈ U.ids, (U.block b).round = n + 1 →
-    b ∈ holds v (built v (n + 2)) → b ∈ (U.block c).refs
+  /-- **And it takes the votes** it holds: where the builder holds a
+  round-`(n+1)` block voting for the reliable leader's block, its own
+  block has a parent by that same validator, voting for it too.
+
+  Stated that way rather than as "the held block is itself a parent",
+  which would force two references by one author where a Byzantine
+  validator issued two voting blocks. What the certificate counts is
+  authors of voting parents, so this is what it reads. -/
+  selects_votes : ∀ v ∈ T, ∀ n, lead n ∈ T → ∀ c ∈ U.ids, (U.block c).creator = v →
+    (U.block c).round = n + 2 → ∀ L ∈ U.ids, (U.block L).round = n →
+    (U.block L).creator = lead n → ∀ b ∈ U.ids, (U.block b).round = n + 1 →
+    b ∈ holds v (built v (n + 2)) → L ∈ (U.block b).refs →
+      ∃ q ∈ (U.block c).refs, (U.block q).creator = (U.block b).creator ∧
+        L ∈ (U.block q).refs
 
 /-- A block whose parents voting for `L` are a slow-path quorum —
 `SPCertificate`, in the universe's vocabulary. -/
@@ -212,7 +230,7 @@ theorem lemma18 {R n : ℕ} (hcard : quorumCard Validator ≤ T.card)
           omega
         have hvote := ih _ hlt w hw.2 rfl b hb hbc hbr
         exact cr.holds_closed v hv _ b hbheld L hvote
-    exact cr.selects_leader v hv n c hc hcc hcr L hL hLr hLc hheld
+    exact cr.selects_leader v hv n hlead c hc hcc hcr L hL hLr hLc hheld
 
 /-- **Lemma 19, derived from the creation rule.** Every reliable
 round-`(n+2)` block carries a slow-path quorum of parents voting for a
@@ -243,8 +261,9 @@ theorem lemma19 {R n : ℕ} (hcard : quorumCard Validator ≤ T.card)
     intro v hv c hc hcc hcr S hS hSb
     refine le_trans hS (Finset.card_le_card fun u hu => ?_)
     obtain ⟨b, hb, hbheld, hbc, hbr, hbvote⟩ := hSb u hu
-    refine mem_creatorsOf.2 ⟨b, ?_, hbc⟩
-    exact Finset.mem_filter.2 ⟨cr.selects_votes v hv n c hc hcc hcr b hb hbr hbheld, hbvote⟩
+    obtain ⟨q, hq, hqc, hqvote⟩ :=
+      cr.selects_votes v hv n hlead c hc hcc hcr L hL hLr hLc b hb hbr hbheld hbvote
+    exact mem_creatorsOf.2 ⟨q, Finset.mem_filter.2 ⟨hq, hqvote⟩, by rw [hqc, hbc]⟩
   suffices h : ∀ t, ∀ v ∈ T, cr.built v (n + 2) = t → ∀ c ∈ U.ids,
       (U.block c).creator = v → (U.block c).round = n + 2 → CertifiesSP U c L by
     intro v hv c hc hcc hcr
@@ -305,10 +324,10 @@ theorem lemma19 {R n : ℕ} (hcard : quorumCard Validator ≤ T.card)
       have hqids : q ∈ U.ids := U.complete b hb q hq.1
       have hqr : (U.block q).round = n + 1 := by
         have := U.round_of_mem_refs hb hq.1; omega
-      refine mem_creatorsOf.2 ⟨q, ?_, hqc⟩
-      refine Finset.mem_filter.2 ⟨?_, hq.2⟩
-      exact cr.selects_votes v hv n c hc hcc hcr q hqids hqr
-        (cr.holds_closed v hv _ b hbheld q hq.1)
+      obtain ⟨q', hq', hq'c, hq'vote⟩ :=
+        cr.selects_votes v hv n hlead c hc hcc hcr L hL hLr hLc q hqids hqr
+          (cr.holds_closed v hv _ b hbheld q hq.1) hq.2
+      exact mem_creatorsOf.2 ⟨q', Finset.mem_filter.2 ⟨hq', hq'vote⟩, by rw [hq'c, hqc]⟩
 
 end Creation
 

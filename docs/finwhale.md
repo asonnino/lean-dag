@@ -349,9 +349,19 @@ records which condition created each block and derives both.
 
 `Creation.lemma18` and `Creation.lemma19` are the results, the second by
 the same induction one round up. What stays assumed of the algorithm is
-parent selection — `selects_leader` and `selects_votes`, that what is
-held is chosen as a parent — which the paper states for C1 and uses for
-all three. The C3 case departs from the paper's, which runs through the
+parent selection — `selects_leader` and `selects_votes` — which the paper
+states for C1 and uses for all three.
+
+Both selection clauses are guarded, and the guards are not decoration. A
+clause obliging a builder to reference every version of the leader's
+block it holds is satisfiable by no valid DAG, since `distinct_creators`
+admits one reference per author (`not_refs_conflicting`); unguarded, it
+would make every execution with an equivocating leader — which is every
+execution the safety half is about — vacuous. So `selects_leader` asks
+only for a *reliable* leader's block, which is one block by
+`correct_single`, and `selects_votes` asks not that a held vote be a
+parent but that some parent by the same validator votes, which is what
+the certificate counts. The C3 case departs from the paper's, which runs through the
 fastest `n − 2f` honest validators; §12 gives the two counting problems
 with that route, neither of which the induction has.
 

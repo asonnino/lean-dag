@@ -598,6 +598,19 @@ example : slotBlocks Dequiv 0 = {0, 27} ∧
 /-- The view is smaller, and genuinely so. -/
 example : (27 : Fin 28) ∈ Dequiv.ids ∧ (27 : Fin 28) ∉ Vpart := by decide
 
+/-- **And no block cites both versions**, in this execution or any other:
+validity admits one reference per author. That is what a parent-selection
+clause must respect — obliging a builder to reference every version of
+the leader's block it holds would be satisfiable by no valid DAG
+(`not_refs_conflicting`). -/
+example : ∀ c ∈ Dequiv.ids,
+    ¬ ((0 : Fin 28) ∈ (Dequiv.block c).refs ∧ (27 : Fin 28) ∈ (Dequiv.block c).refs) := by
+  decide
+
+example {c : Fin 28} (hc : c ∈ Dequiv.ids) (h0 : (0 : Fin 28) ∈ (Dequiv.block c).refs)
+    (h27 : (27 : Fin 28) ∈ (Dequiv.block c).refs) : False :=
+  not_refs_conflicting hc (by decide) h0 h27
+
 /-- What a block's parents say does not change with the view, which is
 why FP-evidence transfers: block `19` reads the same parents either
 way. -/

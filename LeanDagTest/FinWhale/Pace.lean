@@ -411,13 +411,16 @@ def fwCreation (N : ℕ) : Creation (Ugrow N) {1, 2, 3} N (Dreact N).leader :=
         have := u.isLt; omega
       · simp only [ugrow_block, rrBlock_round]; have := u.isLt; omega
     selects_leader := by
-      intro v _ n c hc _ hcr L hL hLr _ _
+      intro v _ n _ c hc _ hcr L hL hLr _ _
       simp only [ugrow_ids, Finset.mem_range] at hc hL
       simp only [ugrow_block, rrBlock_round] at hcr hLr
       simp only [ugrow_block, mem_growBlock_refs]
       omega
     selects_votes := by
-      intro v _ n c hc _ hcr b hb hbr _
+      intro v _ n _ c hc _ hcr L _ _ _ b hb hbr _ hbvote
+      -- the held block is itself a parent here, every block of this
+      -- layout referencing the whole round below
+      refine ⟨b, ?_, rfl, hbvote⟩
       simp only [ugrow_ids, Finset.mem_range] at hc hb
       simp only [ugrow_block, rrBlock_round] at hcr hbr
       simp only [ugrow_block, mem_growBlock_refs]
