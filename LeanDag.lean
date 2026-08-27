@@ -146,3 +146,4 @@ import LeanDag.FinWhale.View
 import LeanDag.FinWhale.Reactive
 import LeanDag.FinWhale.Validity
 import LeanDag.FinWhale.Creation
+import LeanDag.FinWhale.Pass

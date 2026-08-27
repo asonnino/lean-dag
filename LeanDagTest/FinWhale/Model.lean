@@ -2,6 +2,7 @@ import LeanDag.FinWhale.Order
 import LeanDag.FinWhale.Rotation
 import LeanDag.FinWhale.Decided
 import LeanDag.FinWhale.View
+import LeanDag.FinWhale.Pass
 import Mathlib.Tactic.IntervalCases
 
 /-!
@@ -626,6 +627,35 @@ theorem isViewFull : IsView Dsync Finset.univ :=
 example : DirectCommit (restrict Dsync Finset.univ isViewFull) 2 :=
   directCommit_of_holds (hV := isViewFull) (fun _ _ => Finset.mem_univ _)
     (fun _ _ => Finset.mem_univ _) (Or.inl (by decide))
+
+/-! ## The pass, on data
+
+`decOf` is a function of the DAG, so the verdicts of `Dfast` are not a
+hypothesis about a validator but a computation. Its equations are proved
+rather than evaluated: the pass is defined by recursion down from the
+horizon, which the kernel does not unfold. -/
+
+/-- Every block of `Dfast` sits at round `3` or below. -/
+theorem dfast_horizon : ∀ b ∈ Dfast.ids, (Dfast.block b).round ≤ 3 := by decide
+
+/-- **The pass commits slot `0`**, by its direct rule and whatever
+tie-break the validator applies. -/
+example (choose : Fin 36 → ℕ → Option (Fin 36)) :
+    decOf Dfast choose 3 0 = Verdict.commit 0 :=
+  (wellFormed_decOf dfast_horizon choose).direct_commit 0 0 ⟨by decide, Or.inl (by decide)⟩
+
+/-- And decides nothing above the horizon, which is the finiteness Lemma
+12 consumes. -/
+example (choose : Fin 36 → ℕ → Option (Fin 36)) (s : ℕ) (hs : 3 < s) :
+    decOf Dfast choose 3 s = Verdict.undecided :=
+  decOf_of_gt hs
+
+/-- The skipping execution decides its slot the other way, by the same
+route. -/
+example (choose : Fin 27 → ℕ → Option (Fin 27)) :
+    decOf Dskip choose 2 0 = Verdict.skip :=
+  (wellFormed_decOf (by decide) choose).direct_skip 0
+    ⟨by decide, {0, 1, 2, 3, 4, 5}, by decide, by decide⟩
 
 /-! ## The arc's axioms -/
 

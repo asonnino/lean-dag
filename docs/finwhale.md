@@ -206,6 +206,26 @@ naming anything. `exclusions_of_dag` discharges all nine from the
 DAG-level theorems, under the reading that a view is a sub-DAG, so a
 direct verdict in a view is a direct verdict of the universe.
 
+**The pass is a procedure, not only a condition.** `Pass.lean` defines
+it: `slotVerdict` decides one slot from the verdicts above it — a direct
+commit if there is one, a direct skip if there is one, and otherwise the
+first slot above `r + 2` that is not skipped, read through the tie-break
+— and `passFrom` threads that down from the horizon, where nothing is
+decided, to slot `0`. `decOf` is the result, a function of the DAG and
+the tie-break.
+
+`wellFormed_decOf` proves the five fields of it, off one equation:
+`decOf_eq`, that at or below the horizon a slot's verdict is
+`slotVerdict` applied to the pass itself. Two of the conditions the
+capstones carried are discharged with it — `mem_slotBlocks_of_decOf`,
+that a committed verdict names a block of its slot, and `decOf_of_gt`,
+that nothing above the horizon is decided, which is the finiteness Lemma
+12 consumes. `safety_of_pass` is the capstone with those gone: two
+validators running the pass on their own views deliver prefix-comparable
+sequences, and nothing is assumed about their verdicts. What is left of
+the three is `hk`, how far each sequence runs, which is a choice of
+horizon that §10's `all_decided` settles.
+
 `choose` is abstract in all of that, and it need not be.  `chooseLeast`
 picks the least candidate in the identifier order and satisfies
 `ChooseSound` — it names only blocks the anchor could indirectly commit,
@@ -660,7 +680,7 @@ delivery are not modelled at all. §13 says what stands in their place.
 
 The capstones state their own side conditions. §8 discharged the
 ordering hypothesis, §11 the view conditions, and §9 exhibits an
-execution that is a schedule. Four gaps remain, and they are of a
+execution that is a schedule. Three gaps remain, and they are of a
 different kind from the ones that closed: each is a piece of the protocol
 this development does not model at all.
 
@@ -682,11 +702,6 @@ the creation route as `selects_leader` and `selects_votes`, which say
 what the algorithm does with what it holds rather than deriving it from
 an algorithm.
 
-**The reverse pass is a condition, not a procedure.** `WellFormed`
-constrains a verdict assignment; nothing constructs one, and nothing
-shows that a validator running the pass produces one. This is the one
-modelling gap of §7 that the view work does not close.
-
-**Termination is a hypothesis.** `hbound` says both validators have
-finitely many decided slots, and `hk` says a commit sequence stops at the
-first undecided slot; neither is derived.
+**How far a commit sequence runs is a choice.** `hk` says it stops at the
+first undecided slot. That is not derived: it is the horizon the caller
+picks, and `all_decided` is what makes a given horizon legitimate.
