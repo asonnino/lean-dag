@@ -1,0 +1,106 @@
+import LeanDag.FinWhale.Decided
+import LeanDag.FinWhale.Rotation
+import LeanDag.FinWhale.Model.Schedule
+
+/-!
+# FinWhale — Validity, on any schedule
+
+Theorem 26 says a correct validator's block is eventually delivered. The
+step it rests on is the paper's remark that "every block created by an
+honest validator becomes part of the causal history of some honest leader
+block". Where does that come from?
+
+Coverage gives it in one round — the next round's correct leader
+references everything correct below it — but coverage is the full-timeout
+discipline's, and a reactive builder has none. This file gives it without
+coverage, from the paper's own block structure instead: **every block
+references its author's previous block**. A correct validator's blocks
+therefore form a chain, each reaching all the earlier ones, and round
+robin makes that validator a leader once a cycle. So a correct block lies
+in the causal history of its own author's next leader block, whatever the
+schedule, and whatever the builder chose to reference besides.
+
+`SelfParented` is that clause, taken as a hypothesis rather than added to
+`ValidHere`: no safety result reads it, and the arc's other witnesses are
+not built to satisfy it. The paper's block structure does — "every block
+includes an edge that references the previous block created by the same
+validator".
+-/
+
+
+namespace LeanDag
+
+namespace FinWhale
+
+variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable [F : Faults Validator] [P : Params Validator]
+variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {D : Dag Validator BlockId Payload}
+
+/-- **A correct validator's blocks form a chain.** Each of its blocks
+reaches all its earlier ones: the self-parent edge steps down one round,
+and one block per correct validator per round makes the step unique. -/
+theorem reaches_own (hself : SelfParented D) :
+    ∀ d : ℕ, ∀ b ∈ D.ids, ∀ c ∈ D.ids,
+      (D.block b).creator ∈ (Correct : Finset Validator) →
+      (D.block c).creator = (D.block b).creator →
+      (D.block c).round = (D.block b).round + d → ReachesFrom D.block c b := by
+  intro d
+  induction d with
+  | zero =>
+    intro b hb c hc hbc hcc hcr
+    have : c = b := D.correct_single c hc b hb (by rw [hcc]; exact hbc) hcc (by omega)
+    rw [this]
+  | succ d ih =>
+    intro b hb c hc hbc hcc hcr
+    obtain ⟨q, hq, hqc⟩ := hself c hc (by omega)
+    have hqids : q ∈ D.ids := D.complete c hc q hq
+    have hqr : (D.block q).round = (D.block b).round + d := by
+      have := parent_round hc hq; omega
+    exact ReachesFrom.of_mem_refs hq (ih b hb q hqids hbc (by rw [hqc, hcc]) hqr)
+
+/-- **And so a correct validator's block lies in the causal history of
+every later block of its own.** -/
+theorem reaches_of_same_creator (hself : SelfParented D) {b c : BlockId}
+    (hb : b ∈ D.ids) (hc : c ∈ D.ids)
+    (hbc : (D.block b).creator ∈ (Correct : Finset Validator))
+    (hcc : (D.block c).creator = (D.block b).creator)
+    (hle : (D.block b).round ≤ (D.block c).round) : ReachesFrom D.block c b :=
+  reaches_own hself ((D.block c).round - (D.block b).round) b hb c hc hbc hcc (by omega)
+
+/-- **Theorem 26 (Validity), on any schedule.** A correct validator's
+block is delivered, once the rotation has named its author a leader above
+it and that slot is committed.
+
+Nothing here is a coverage assumption, so the reactive schedule carries
+it as readily as the timed one: the block reaches the leader block
+because the leader block is the *same validator's*, later. -/
+theorem theorem26_of_selfParent (hself : SelfParented D)
+    {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
+    {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
+    (hwf : WellFormed dc ds choose dec) {R N : ℕ}
+    (hsees : SeesCommits D dc R N)
+    (hrr : RoundRobin D.leader) [LinearOrder BlockId]
+    {b : BlockId} {k : ℕ} (hb : b ∈ D.ids)
+    (hbc : (D.block b).creator ∈ (Correct : Finset Validator))
+    (hbound : max ((D.block b).round) R + Fintype.card Validator + 2 ≤ N)
+    (hk : max ((D.block b).round) R + Fintype.card Validator < k) :
+    b ∈ linearise (histOf D) (commitSeq dec k) := by
+  -- the rotation names the author a leader within the cycle above `b`
+  obtain ⟨s, hlo, hhi, hlead⟩ :=
+    exists_round_led_by hrr ((D.block b).creator) (max ((D.block b).round) R)
+  obtain ⟨l, hslot, hdcl⟩ := hsees s (le_trans (le_max_right _ R) hlo) (by omega)
+    (by rw [hlead]; exact hbc)
+  have hlu : l ∈ D.ids ∧ (D.block l).round = s ∧ (D.block l).creator = D.leader s := by
+    simp only [slotBlocks, blocksAt, Finset.mem_filter] at hslot
+    exact ⟨hslot.1.1, hslot.1.2, hslot.2⟩
+  -- and the leader block is the author's own, later
+  have hreach : ReachesFrom D.block l b :=
+    reaches_of_same_creator hself hb hlu.1 hbc (by rw [hlu.2.2, hlead])
+      (by have := le_max_left ((D.block b).round) R; omega)
+  exact theorem26 (r := s) (l := l) (by omega)
+    (hwf.direct_commit s l hdcl) (mem_histOf hlu.1 hreach)
+
+end FinWhale
+
+end LeanDag

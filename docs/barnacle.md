@@ -826,7 +826,7 @@ Settled 2026-08-27 for Phase 4, on the recommendations:
 | 3 | `Model/Live.lean`, `Progress/` (BN8); the test rule; `Usk`; F8 | `e209281` |
 | 4 | `Model/Heads.lean`, `Heads/`, `MysticetiLive/` (BN9, BN10 for Mysticeti); `U44`; F3 proved, F9 | `ebddc72` |
 | 5 | `Odontoceti/`, `Nemo/` (BN10); the twin universe; `Majority.lean` | `0856ea1` |
-| 6 | this record brought to the final position; report §20; README; the reference pipeline; the paper's Lean appendix | — |
+| 6 | this record brought to the final position; report §21; README; the reference pipeline; the paper's Lean appendix | — |
 
 Each phase ran as statements → review → freeze → proofs → witnesses →
 a reviewing agent over the witness file → commit; phases 1, 3 and 4

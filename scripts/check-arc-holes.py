@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Fail if a partitioned arc contains a proof hole or breaks its file discipline.
 
-Scoped to the arcs of this repository under the statement/proof
-partition — Mahi-Mahi (`docs/mahi-mahi.md` §9), Black Marlin
-(`docs/black-marlin.md` §7) and Barnacle (`docs/barnacle.md`
-§10) — over both their source and their witness directories. Two
-checks, after stripping comments so prose may use the words:
+Scoped to the arcs of this repository under the model/proof partition —
+Mahi-Mahi (`docs/mahi-mahi.md` §9), Black Marlin (`docs/black-marlin.md`
+§7), FinWhale (`docs/finwhale.md` §15) and Barnacle
+(`docs/barnacle.md` §10) — over both their source and
+their witness directories. Two checks, after stripping comments so prose may use the
+words:
 
   sorry / admit / axiom / native_decide / unsafe / partial
       are absent everywhere in the arc;
@@ -24,7 +25,7 @@ FORBIDDEN = re.compile(r"\b(sorry|admit|axiom|native_decide|unsafe|partial)\b")
 STATEMENT_FORBIDDEN = re.compile(r"^\s*(theorem|lemma|example|instance)\b")
 MODEL_FORBIDDEN = re.compile(r"^\s*(theorem|lemma|example)\b")
 ROOT = Path(__file__).resolve().parent.parent
-ARCS = ["MahiMahi", "BlackMarlin", "Barnacle"]
+ARCS = ["MahiMahi", "BlackMarlin", "FinWhale", "Barnacle"]
 SOURCES = [f"{top}/{arc}" for arc in ARCS for top in ("LeanDag", "LeanDagTest")]
 
 

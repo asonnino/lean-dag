@@ -92,7 +92,7 @@ GROUP_TITLE = {
     'hybrid': 'hybrid faults (§14)',
     'nemo': 'crash-fault consensus (§15)',
     'mahimahi': 'Mahi-Mahi (§17)',
-    'bn': 'Barnacle (§20)',
+    'bn': 'Barnacle (§21)',
     'integration': 'integration (§16)',
 }
 

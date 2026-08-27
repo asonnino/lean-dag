@@ -13,9 +13,10 @@ safety and liveness — together with further developments built on the
 same foundation, each in its own module consuming the core read-only.
 The core is stated for `n ≥ 3f+1` validators with quorums of size
 `n − f`, over pipelined, multi-leader slot schedules; the variant arcs
-move the committee — `n ≥ 5f+1` for two-round commitment, `n ≥ 5·fb +
-3·fc + 1` for hybrid faults, and a bare majority at `n ≥ 2f+1` for crash
-faults alone.
+move the committee — `n ≥ 5f+1` for two-round commitment,
+`n = 3f + 2p − 1` for a fast path that tolerates `p` missing votes,
+`n ≥ 5·fb + 3·fc + 1` for hybrid faults, and a bare majority at
+`n ≥ 2f+1` for crash faults alone.
 
 ## What is proved
 
@@ -190,6 +191,51 @@ faults alone.
   for the evidence loses liveness. The arc is the second under the
   statement/proof partition.
 
+
+- **Minnow** (`LeanDag/Minnow/`): `crs*`, the commit rule proposed as
+  *minimal* for eventual synchrony (arXiv:2608.18029), which decides a
+  leader slot from the round immediately above it — `2f+1` processes
+  pointing commits, `2f+1` not pointing skips. Two of its clauses are
+  written in a way their own sentences do not support, and both are
+  settled on data at four processes with `f = 1`. **Two defects survive
+  either reading.** A slot counts as *resolved* when some vertex of it
+  lies in a candidate's causal past, which is not that vertex being
+  decided: under equivocation one twin carries a later leader past the
+  slot while the other acquires its quorum, costing **Safe-Commit** —
+  and Lemma 10's own case split is where the paper's proof permits it.
+  The commit and skip thresholds then leave a gap no view ever decides,
+  costing **Live-Commit** for the rule paired with a multi-leader round
+  robin, though not for the rule alone.
+
+- **FinWhale** (`LeanDag/FinWhale/`): a fast path at a tunable committee
+  (arXiv:2606.26292), which commits a leader block **one round above
+  it** — `n − p` distinct validators referencing it — at
+  `n = 3f + 2p − 1`, `1 ≤ p ≤ f`, where `p` is not a second class of
+  fault but how many of the round's votes the path can do without. Its
+  safety rests on one statement: under such a commit **every** block two
+  rounds up is evidence for it, so no view can commit a conflicting
+  block, skip the slot, or reach a different verdict through an anchor. The committee is exactly the
+  least at which that closes — at one validator fewer the count falls
+  one short, for every `f` and `p` in range — which is a tightness
+  result the paper has and does not use, asserting optimality by
+  citation instead. Liveness is derived from the protocol's own
+  block-creation conditions C1, C2 and C3 rather than from reference
+  coverage, which a reactive builder does not have; the
+  two-message-delay latency of Definition 1, stated and not proved
+  there, is proved here. **Three further findings**: Lemma 22's proof
+  covers `p = 1` only, the C3 case of Lemmas 18 and 19 counts one
+  validator too many into a set and has no margin left at `p = 1` once
+  that is fixed, and Lemmas 6 and 7 are routed through a clause that a
+  validator which has not seen the committed block satisfies for
+  nothing. A `Run` bundles one execution and states what a validator
+  guarantees — agreement, total order, integrity, validity — with no
+  verdict assignment, view or well-formedness condition in the
+  statements. And a Mysticeti DAG under this development's
+  denial-of-service condition satisfies FinWhale's validity rule with
+  the self-parent edge included, so the whole arc applies to it
+  unchanged — on the reactive schedule such a universe is a run at every
+  horizon, and the condition provably never leaves a builder short of
+  authors it may cite.
 - **Barnacle** (`LeanDag/Barnacle/`): the adaptive **leader
   count** — every few seconds, measure on the agreed DAG the fraction
   of leader slots the base protocol decided directly and drive the
@@ -215,21 +261,6 @@ faults alone.
   among them that its liveness clause needs a margin above the slot and
   that Nemo-Nemo's slack is what a majority may miss, not the crash
   bound. The arc is the third under the statement/proof partition.
-
-- **Minnow** (`LeanDag/Minnow/`): `crs*`, the commit rule proposed as
-  *minimal* for eventual synchrony (arXiv:2608.18029), which decides a
-  leader slot from the round immediately above it — `2f+1` processes
-  pointing commits, `2f+1` not pointing skips. Two of its clauses are
-  written in a way their own sentences do not support, and both are
-  settled on data at four processes with `f = 1`. **Two defects survive
-  either reading.** A slot counts as *resolved* when some vertex of it
-  lies in a candidate's causal past, which is not that vertex being
-  decided: under equivocation one twin carries a later leader past the
-  slot while the other acquires its quorum, costing **Safe-Commit** —
-  and Lemma 10's own case split is where the paper's proof permits it.
-  The commit and skip thresholds then leave a gap no view ever decides,
-  costing **Live-Commit** for the rule paired with a multi-leader round
-  robin, though not for the rule alone.
 
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on
@@ -266,10 +297,12 @@ the set of declarations changes. `make help` lists them.
   `Reactive/` — the reactive schedule; `SafeSkip/` — crash recovery in
   one message; `Adaptive/` — adaptive leader schedules; `Hybrid/` —
   Byzantine and crash faults apart; `Nemo/` — crash-fault consensus at
-  a majority quorum; `MahiMahi/` — the asynchronous rule at wave `w`,
+  a majority quorum; `FinWhale/` — the fast path at
+  `n = 3f + 2p − 1`, whose `Model/` holds every definition of the
+  protocol and no proof; `MahiMahi/` — the asynchronous rule at wave `w`,
   `BlackMarlin/` — the three-round rule with an anchor every round, and
   `Barnacle/` — the adaptive leader count over an interface for the
-  three base rules, all three under a statement/proof partition (`Model/`,
+  three base rules, all under a statement/proof partition (`Model/`,
   `<Result>/Statement.lean`, `<Result>/Proof.lean`); `Network/` — the composed
   denial-of-service capstones; `Integration/` — how the arcs compose).
 - `LeanDag.lean` — root import file.
@@ -304,8 +337,10 @@ the set of declarations changes. `make help` lists them.
 | [`docs/adaptive-leaders.md`](docs/adaptive-leaders.md) | adaptive leader schedules: the design record and theorem plan |
 | [`docs/hybrid-plan.md`](docs/hybrid-plan.md) | hybrid fault tolerance: the design record and theorem plan |
 | [`docs/mahi-mahi.md`](docs/mahi-mahi.md) | the asynchronous rule at wave `w`: the clause, and the statement/proof partition |
-| [`docs/barnacle.md`](docs/barnacle.md) | the adaptive leader count: the interface A1–A4, the configuration-sequence model and why it needs no fixpoint, the liveness clause and its margin, the heads descent, the three instantiations, and the findings |
 | [`docs/black-marlin.md`](docs/black-marlin.md) | the three-round commit rule: the link clause, the run of two, what the reactive exit costs, agreement, the delivered order the descent computes, the sequence it outputs, where Agreement fails, and a repair |
+| [`docs/minnow.md`](docs/minnow.md) | the minimal commit rule: the two readings its own sentences force, and the two defects that survive both |
+| [`docs/finwhale.md`](docs/finwhale.md) | the fast path at `n = 3f + 2p − 1`: the committee and its tightness, the validity clause the fast path needs, liveness from the block-creation conditions, what a validator guarantees, and what the paper should change |
+| [`docs/barnacle.md`](docs/barnacle.md) | the adaptive leader count: the interface A1–A4, the configuration-sequence model and why it needs no fixpoint, the liveness clause and its margin, the heads descent, the three instantiations, and the findings |
 | [`docs/integration.md`](docs/integration.md) | composing the arcs: the invariant interface, and what composition revealed |
 | [`docs/related.md`](docs/related.md) | a survey of consensus on uncertified DAGs |
 | [`docs/style.md`](docs/style.md) | writing conventions for the documents and the source |
