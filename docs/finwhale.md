@@ -44,6 +44,20 @@ clauses rather than the core's three. `FinWhale.Dag` keeps a
 the core does, because equivocating blocks are admitted of faulty
 validators only.
 
+The two rules are not ordered: FinWhale adds the leader clause and drops
+the self-parent edge, which the core requires and the paper's block
+structure has. Both differences vanish under the denial-of-service
+condition of `dos-equivocation-and-growth.md`. `DoSValid` — a block may
+not cite an author its own causal history convicts of equivocating — is
+the leader clause with three of its narrowings removed: every author, at
+unbounded depth, permanently. `DoSBridge.lean` proves the implication
+(`leaderClause_of_dosValid`) and builds the DAG (`Dag.ofDoSValid`), so a
+DoS-valid `BlockUniverse` is a FinWhale DAG at any leader schedule, with
+the self-parent edge included. It is strictly stronger than what FinWhale
+specifies — the protocol admits a DAG citing an equivocating non-leader —
+so this says what a deployment over a DoS-protected DAG gets, not what
+the paper's model gives.
+
 ## 2. The committee, and where the numbers come from
 
 `Params` fixes `p` with `1 ≤ p ≤ f` and `n + 1 = 3f + 2p`, stated
@@ -611,6 +625,11 @@ and three definitions read a validator off it: `view v` is what it holds
 once the network has delivered, `verdicts` are the reverse pass on that
 view, and `delivers` is the sequence it outputs, the causal histories of
 its committed leader blocks in order.
+
+`Run.ofDoSValid` builds one from a DoS-valid universe (§1) and asks for
+three fewer things: the DAG *is* the universe, so `ids_eq` and `block_eq`
+are `rfl`, and the self-parent edge is the core's, so `selfParented` is a
+theorem rather than a field to discharge.
 
 The four properties are then stated in those terms and nothing else.
 
