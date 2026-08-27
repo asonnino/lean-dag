@@ -232,7 +232,9 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   statements. And a Mysticeti DAG under this development's
   denial-of-service condition satisfies FinWhale's validity rule with
   the self-parent edge included, so the whole arc applies to it
-  unchanged.
+  unchanged — on the reactive schedule such a universe is a run at every
+  horizon, and the condition provably never leaves a builder short of
+  authors it may cite.
 
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on

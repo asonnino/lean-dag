@@ -60,28 +60,41 @@ specifies — the protocol admits a DAG citing an equivocating non-leader —
 so this says what a deployment over a DoS-protected DAG gets, not what
 the paper's model gives.
 
-`Run.ofDoSValidReactive` carries that to liveness. Over the core's
-reactive schedule a DoS-valid universe is a `Run`, so the four guarantees
-of §12 hold of it — and the two disciplines do not collide, because a
-reactive builder's citation obligations are confined to reliable authors
-(`ReactivePace.vote_or_wait` is guarded by the leader being reliable,
-`ReactiveM.cert_or_wait`'s fallback by the author being in `T`) and a
-correct validator is never exposed (`citable_of_correct`, from the DoS
-arc's `ExposedIn.not_correct`). That is particular to this route: the
-block-creation discipline of §10 obliges a builder to reference a block
-by the author of *any* held vote, and that clause and `DoSValid` are not
-jointly satisfiable where a convicted equivocator votes for a reliable
-leader. The composite is inhabited — §9's equivocating execution
-satisfies both conditions at once — and `quorumCard_le_citable` is why it
-stays so at any height: an exposed author has equivocated, hence is
-Byzantine, hence one of at most `f`, while the correct validators are
-never exposed and number at least `n − f`. So the authors a block may
-cite always include a validity quorum, and the two conditions cannot
-squeeze a builder between them. The margin is nil rather than small: at
-exactly `f` Byzantine validators the citable authors are the `n − f`
-correct ones and no others, so every one of them must be cited — a
-condition on what has arrived, which the pacing structure supplies past
-GST, rather than on what may be cited.
+**And on the reactive schedule it is live.** `Run.ofDoSValidReactive`
+takes such a universe together with a `ReactiveM` over it, at one slot
+per round under a round-robin schedule, and returns a `Run` — so
+`commits_of_reactive` supplies the liveness input and the four guarantees
+of §12 hold of it. Nothing in the statement is bounded above: it is
+universal in the horizon, so every correct-led slot between the
+stabilisation round and `N` commits, at every `N`, and §10's rotation
+result makes correct-led slots recur.
+
+**The two disciplines do not collide, and the reason is specific to this
+route.** A reactive builder's citation obligations are confined to
+reliable authors — `ReactivePace.vote_or_wait` is guarded by the leader
+being reliable, `ReactiveM.cert_or_wait`'s fallback by the author being
+in `T` — and a correct validator is never exposed (`citable_of_correct`,
+which is the DoS arc's `ExposedIn.not_correct` read for this purpose). So
+nothing the schedule requires is anything the condition forbids. The
+block-creation discipline of §10 has no such guard: `selects_votes`
+obliges a builder to reference a block by the author of *any* held vote,
+reliable or not, and that clause and `DoSValid` are not jointly
+satisfiable where a convicted equivocator votes for a reliable leader.
+Composing through `commits_of_creation` would need the selection clause
+guarded and the certificate confined to its witnesses first; through
+`commits_of_reactive` it needs neither.
+
+**And the composite cannot become vacuous.** It is inhabited where
+equivocation is live — §9's equivocating execution satisfies both
+conditions at once — and `quorumCard_le_citable` is why no height can
+exhaust it: an exposed author has equivocated, hence is Byzantine, hence
+one of at most `f`, while the correct validators are never exposed and
+number at least `n − f`. So the authors a block may cite always include a
+validity quorum. The margin is nil rather than small: at exactly `f`
+Byzantine validators the citable authors are the `n − f` correct ones and
+no others, so every one of them must be cited — which turns the question
+from what may be cited into what has arrived, and that is what the pacing
+structure supplies past GST.
 
 ## 2. The committee, and where the numbers come from
 
@@ -694,6 +707,11 @@ its committed leader blocks in order.
 three fewer things: the DAG *is* the universe, so `ids_eq` and `block_eq`
 are `rfl`, and the self-parent edge is the core's, so `selfParented` is a
 theorem rather than a field to discharge.
+`Run.ofDoSValidReactive` goes further and asks for none of the decision
+layer at all: a DoS-valid universe and a `ReactiveM` over it, at one slot
+per round under a round-robin schedule, and the rest — the liveness
+input, the tie-break and its soundness among them — is discharged
+inside.
 
 The four properties are then stated in those terms and nothing else.
 
@@ -890,10 +908,15 @@ the pace *is* the model of the network. The protocol's own clauses — C1,
 C2, C3 and parent selection — are no longer among them: §10 derives
 Lemmas 18 and 19 from those rather than assuming their conclusions.
 
-**A1′ has no counterpart at all**, and parent selection has one only as
-an assumption. A1′ — that advancement needs a leader-consistent set of
+**A1′ has no counterpart as a rule**, and parent selection has one only
+as an assumption. A1′ — that advancement needs a leader-consistent set of
 round-`(r−1)` blocks, or one excluding the leader's — is not modelled;
-the arc takes its result, validity's leader clause. Selection appears on
+the arc takes its result, validity's leader clause. What A1′ is *for* is
+settled under the denial-of-service condition, where the corner it
+addresses is closed by counting rather than by a rule:
+`quorumCard_le_citable` says the authors a block may cite always include
+a validity quorum, so excluding the convicted ones can never leave a
+builder short. Selection appears on
 the creation route as `selects_leader` and `selects_votes`, which say
 what the algorithm does with what it holds rather than deriving it from
 an algorithm.

@@ -7249,9 +7249,10 @@ supplies a fast commit, given that FinWhale's pacemaker is reactive and
 so has no waiting floor from which reference coverage could be read? And
 what does a validator running the protocol guarantee, stated with no
 verdict assignment, view or well-formedness condition in it? §20.3 to
-§20.5 answer them, §20.6 states the four guarantees, and §20.7 shows that
-a Mysticeti DAG under the denial-of-service condition of §8 satisfies
-FinWhale's validity rule, so the whole arc applies to it.
+§20.5 answer them, §20.6 states the four guarantees, and §20.7 shows
+that a Mysticeti DAG under the denial-of-service condition of §8
+satisfies FinWhale's validity rule and, on the core's reactive schedule,
+is live — so a deployment of that shape obtains the whole arc.
 
 Every statement the paper makes, on the reading taken here, is proved:
 its Lemmas 2 to 13 and Theorems 14 and 15 on the safety side, Lemmas 18
@@ -7654,7 +7655,7 @@ Fast termination is not among the four, because it is not a statement
 about delivery: Theorem 21 says a commit pattern exists in the DAG and
 `fastCommit_latency` says when, and both belong with the schedule.
 
-### 20.7 A DoS-valid universe is a FinWhale DAG
+### 20.7 Deploying over a DoS-protected DAG
 
 FinWhale's validity rule and Mysticeti's are not ordered: FinWhale adds
 the leader clause and drops the self-parent edge, which the core requires
@@ -7684,26 +7685,39 @@ universe are one object rather than two readings of one, so the `ids_eq`
 and `block_eq` conditions every liveness result carries hold by `rfl`,
 and `Run.ofDoSValid` asks for three fewer fields than `Run` does.
 
-`Run.ofDoSValidReactive` carries this to liveness. Over the core's
-reactive schedule such a universe is a `Run`, so the four guarantees of
-§20.6 hold of it with no further hypothesis, and the two disciplines do
-not collide: a reactive builder's citation obligations are confined to
+**FW14** carries that to liveness. `Run.ofDoSValidReactive` takes such a
+universe together with a `ReactiveM` over it, at one slot per round under
+a round-robin schedule, and returns a `Run` — so `commits_of_reactive`
+supplies the liveness input and the four guarantees of §20.6 hold with no
+further hypothesis. Nothing in it is bounded above: the theorem is
+universal in the horizon, so every correct-led slot between the
+stabilisation round and `N` commits, at every `N`, and §20.5's rotation
+result makes correct-led slots recur.
+
+**The two disciplines do not collide, and the reason is specific to this
+route.** A reactive builder's citation obligations are confined to
 reliable authors — `ReactivePace.vote_or_wait` is guarded by the leader
-being reliable and `ReactiveM.cert_or_wait`'s fallback by the author
-being in `T` — while a correct validator is never exposed
-(`citable_of_correct`). That is particular to this route. The
-block-creation discipline of §20.5 obliges a builder to reference a block
-by the author of *any* held vote, reliable or not, and that clause and
-`DoSValid` are not jointly satisfiable where a convicted equivocator
-votes for a reliable leader. The composite is inhabited where
-equivocation is live, which §20.9 exhibits, and cannot cease to be at any
-height: `quorumCard_le_citable` shows the authors a block may cite always
-include a validity quorum, since an exposed author has equivocated and so
-is one of at most `f`, while the `n − f` correct validators are never
-exposed. The margin is nil rather than small — at exactly `f` Byzantine
-validators the citable authors are the correct ones and no others, so
-every one of them must be cited, which is a condition on what has arrived
-and is what the pacing structure supplies past GST.
+being reliable, `ReactiveM.cert_or_wait`'s fallback by the author being
+in `T` — and a correct validator is never exposed (`citable_of_correct`),
+so nothing the schedule requires is anything the condition forbids. The
+block-creation discipline of §20.5 has no such guard: `selects_votes`
+obliges a builder to reference a block by the author of *any* held vote,
+reliable or not, and that clause and `DoSValid` are not jointly
+satisfiable where a convicted equivocator votes for a reliable leader.
+Composing through `commits_of_creation` would need the selection clause
+guarded and the certificate confined to its witnesses first; through
+`commits_of_reactive` it needs neither.
+
+**And the composite cannot become vacuous.** It is inhabited where
+equivocation is live, which §20.9 exhibits, and `quorumCard_le_citable`
+shows why no height can exhaust it: an exposed author has equivocated, so
+it is Byzantine and one of at most `f`, while the `n − f` correct
+validators are never exposed — so the authors a block may cite always
+include a validity quorum. The margin is nil rather than small. At
+exactly `f` Byzantine validators the citable authors are the correct ones
+and no others, so every one of them has to be cited, which turns the
+question from what may be cited into what has arrived — and that is what
+the pacing structure supplies past GST.
 
 What this does not claim: `DoSValid` is strictly stronger than FinWhale
 specifies, the protocol admitting a DAG that cites an equivocating
@@ -7874,7 +7888,11 @@ prohibition a property of the citing block rather than of the author. The
 reactive structure exists over that execution, both wait clauses holding
 by their first disjunct, and the round-`1` leader is committed by both
 paths — so `Run.ofDoSValidReactive` closes over an execution where
-equivocation is live, and is not vacuous. The run reaches round `3`,
+equivocation is live, and is not vacuous. The counting bound of §20.7 is
+met there with nothing to spare: block `10` has convicted validator `0`,
+the three correct validators are all that remain, `n − f = 3` is exactly
+what validity asks, and its parent set is those three. The run reaches
+round `3`,
 which carries the liveness interface and is short of the `3f + 5` window
 agreement asks for; the tall execution above supplies that, and cannot
 supply this, nothing equivocating in it.
@@ -8921,7 +8939,8 @@ reused.
 | FW10 | three consecutive correct leaders in every window of `3f + 3` | `lemma22`, `three_correct_of_roundRobin`, `three_correct_window` *(FinWhale/Rotation)* |
 | FW11 | every slot below a committed triple is decided, and the sequences then coincide | `lemma23`, `all_decided`, `theorem24`, `theorem26_of_selfParent` *(FinWhale/Decided, Validity)* |
 | FW12 | what a validator guarantees: agreement, total order, integrity, validity | `Run.agreement`, `Run.totalOrder`, `Run.integrity`, `Run.validity` *(FinWhale/Protocol)* |
-| FW13 | a DoS-valid universe is a FinWhale DAG at any leader schedule | `leaderClause_of_dosValid`, `Dag.ofDoSValid` *(FinWhale/DoSBridge)* |
+| FW13 | a DoS-valid universe is a FinWhale DAG at any leader schedule | `leaderClause_of_dosValid`, `Dag.ofDoSValid`, `selfParented_ofDoSValid` *(FinWhale/DoSBridge)* |
+| FW14 | and on the reactive schedule it is a run, at every horizon; the condition never leaves a builder short of citable authors | `Run.ofDoSValidReactive`, `citable_of_correct`, `quorumCard_le_citable` *(FinWhale/DoSBridge)* |
 
 ---
 
