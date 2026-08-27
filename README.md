@@ -262,6 +262,34 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   that Nemo-Nemo's slack is what a majority may miss, not the crash
   bound. The arc is the third under the statement/proof partition.
 
+- **Hydrozoan** (`LeanDag/Hydrozoan/`): the dual-path commit rule of
+  the Hydrozoan paper under the hybrid fault model of DagHydrangea —
+  `n ≥ 3f + 2c + k + 1`, at most `f` Byzantine, at most `c` crashed,
+  `k` a tunable slack — which commits a leader in two message delays on
+  `n − p` votes, `p = ⌊(c + k)/2⌋`, or in three on `2f + c + 1`
+  certificates, skips it on `n − p` blames, and decides a slot none of
+  those settles from the nearest committed anchor by a graded rule
+  (certificate, weak quorum, skip). Safety is agreement of any two
+  verdicts across views and routes, from six threshold inequalities
+  that hold for every fault configuration the class admits — no cap on
+  the slack is needed, though the Hydrangea paper states one — and
+  prefix consistency of the committed sequences. Liveness above a
+  structural rendering of synchrony routes through the slow path, the
+  only one a quorum of correct replicas is sure to reach; the fast
+  path and the direct skip are stated as performance facts outside the
+  liveness claim, firing exactly when the actual faults fit `p`. The
+  hypotheses are grounded by exhibition: the wave-aligned rotation is
+  fair with no premise, where per-slot rotation is starved inside the
+  hybrid bound, and the synchrony package is realizable at every
+  horizon. Two findings for the paper: the anchor-sees-the-fast-footprint
+  row is consumed in a strengthened, non-Byzantine form, and a slot can
+  fast-commit while no certificate for it exists anywhere, so the
+  indirect rule's weak rung is necessary. The arc is the fourth under
+  the statement/proof partition, and the one that partition was
+  designed for; it is developed in
+  [`asonnino/mysticeti`](https://github.com/asonnino/mysticeti) beside
+  the reference implementation.
+
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on
 exactly Lean's three standard axioms (`propext`, `Classical.choice`,
@@ -302,8 +330,10 @@ the set of declarations changes. `make help` lists them.
   protocol and no proof; `MahiMahi/` — the asynchronous rule at wave `w`,
   `BlackMarlin/` — the three-round rule with an anchor every round, and
   `Barnacle/` — the adaptive leader count over an interface for the
-  three base rules, all under a statement/proof partition (`Model/`,
-  `<Result>/Statement.lean`, `<Result>/Proof.lean`); `Network/` — the composed
+  three base rules, and `Hydrozoan/` — the dual-path rule under hybrid
+  faults, with its own fault model and universe, all under a
+  statement/proof partition (`Model/`, `<Result>/Statement.lean`,
+  `<Result>/Proof.lean`); `Network/` — the composed
   denial-of-service capstones; `Integration/` — how the arcs compose).
 - `LeanDag.lean` — root import file.
 - `LeanDagTest/` — `decide` witnesses and concrete models, mirroring the
@@ -341,6 +371,7 @@ the set of declarations changes. `make help` lists them.
 | [`docs/minnow.md`](docs/minnow.md) | the minimal commit rule: the two readings its own sentences force, and the two defects that survive both |
 | [`docs/finwhale.md`](docs/finwhale.md) | the fast path at `n = 3f + 2p − 1`: the committee and its tightness, the validity clause the fast path needs, liveness from the block-creation conditions, what a validator guarantees, and what the paper should change |
 | [`docs/barnacle.md`](docs/barnacle.md) | the adaptive leader count: the interface A1–A4, the configuration-sequence model and why it needs no fixpoint, the liveness clause and its margin, the heads descent, the three instantiations, and the findings |
+| [`docs/hydrozoan.md`](docs/hydrozoan.md) | the dual-path rule under hybrid faults: the thresholds and their table, the two-case consistency argument as one statement, the slow path as the guaranteed one, the liveness package and its grounding, and the findings |
 | [`docs/integration.md`](docs/integration.md) | composing the arcs: the invariant interface, and what composition revealed |
 | [`docs/related.md`](docs/related.md) | a survey of consensus on uncertified DAGs |
 | [`docs/style.md`](docs/style.md) | writing conventions for the documents and the source |
@@ -353,8 +384,12 @@ the set of declarations changes. `make help` lists them.
   foundation and its intersection lemma, the wave-two commit rule,
   agreement without side conditions, liveness at `n ≥ 2f+1`, and the
   three-validator witness model. He also contributed the wave-robin
-  schedule ([#3](https://github.com/gdanezis/lean-dag/pull/3)) and the
-  Mahi-Mahi arc ([#5](https://github.com/gdanezis/lean-dag/pull/5)).
+  schedule ([#3](https://github.com/gdanezis/lean-dag/pull/3)), the
+  Mahi-Mahi arc ([#5](https://github.com/gdanezis/lean-dag/pull/5)), the
+  Barnacle arc ([#7](https://github.com/gdanezis/lean-dag/pull/7)), and
+  the Hydrozoan arc (`LeanDag/Hydrozoan/`): the dual-path commit rule
+  under hybrid faults, its safety from the threshold table alone and its
+  liveness through the slow path.
 
 - [Lefteris Kokoris-Kogias](https://github.com/LefKok) — the resilient
   checkpoint arc (`LeanDag/Hybrid/Checkpoint/`,
