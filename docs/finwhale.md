@@ -392,7 +392,7 @@ only for a *reliable* leader's block, which is one block by
 `correct_single`, and `selects_votes` asks not that a held vote be a
 parent but that some parent by the same validator votes, which is what
 the certificate counts. The C3 case departs from the paper's, which runs through the
-fastest `n − 2f` honest validators; §12 gives the two counting problems
+fastest `n − 2f` honest validators; §13 gives the two counting problems
 with that route, neither of which the induction has.
 
 **Lemma 20 and Theorem 21 follow by counting.** `lemma20_of_creation`
@@ -578,7 +578,51 @@ liveness interface names its certificates as reliable validators' blocks
 assumed: its view is what it holds, its verdicts are the reverse pass,
 and every slot below the horizon is decided.
 
-## 12. What the paper should change
+## 12. What the protocol guarantees
+
+Everything above is stated over whatever it needs: a verdict assignment
+and its well-formedness, a view and its closure, a horizon and a bound.
+That is the right shape for a proof and the wrong shape for a reader, who
+wants to know what FinWhale guarantees and under what.
+
+`Protocol.lean` is the layer that says so. `Run` collects one execution —
+the blocks, the schedule and network that carried them, the rotation, the
+tie-break, the self-parent edge, and the liveness input §10 supplies —
+and three definitions read a validator off it: `view v` is what it holds
+once the network has delivered, `verdicts` are the reverse pass on that
+view, and `delivers` is the sequence it outputs, the causal histories of
+its committed leader blocks in order.
+
+The four properties are then stated in those terms and nothing else.
+
+| | statement |
+|:---|:---|
+| `Run.agreement` | two correct validators deliver the same sequence |
+| `Run.totalOrder` | one's sequence is a prefix of the other's, at any two horizons |
+| `Run.integrity` | no block is delivered twice |
+| `Run.validity` | a correct validator's block is delivered |
+
+Their hypotheses are which validators are correct and how far the horizon
+reaches — `max k stable + (3f + 5) ≤ liveHorizon`, the window Lemma 22
+needs plus the two rounds an anchor sits above, past the round the
+network stabilised. No verdict assignment, view, well-formedness or
+finiteness condition appears in any of them.
+
+Nothing is proved here that was not proved before. `Run.decided` is
+Lemma 23, `agreement` is Theorem 24, `totalOrder` Theorem 14 over Lemma
+13, `integrity` Theorem 15, `validity` Theorem 26. Five short facts sit
+between them and the machinery — that a validator's holdings are a view,
+that its verdicts follow the pass, that a committed verdict names a slot
+block, that nothing above the horizon is decided, and that it holds every
+reliable block below the horizon — each an instance of a theorem proved
+elsewhere.
+
+Fast termination is not among them, because it is not a statement about
+delivery: Theorem 21 says a commit pattern exists in the DAG, and
+`fastCommit_latency` says when. Both are stated in §10, where the
+schedule is.
+
+## 13. What the paper should change
 
 No statement of the paper is false on the reading this arc takes. Four of
 its proofs need work, two in each half, and the liveness results rest on
@@ -705,14 +749,14 @@ protocol.
 
 Lemmas 16 and 17 are the exception in the other direction: they are
 neither confirmed nor contradicted here, because timeouts and message
-delivery are not modelled at all. §13 says what stands in their place.
+delivery are not modelled at all. §14 says what stands in their place.
 
-## 13. What is not modelled, and what is not done
+## 14. What is not modelled, and what is not done
 
-The capstones state their own side conditions. §8 discharged the
-ordering hypothesis, §11 the view conditions and the holdings behind
-them, §7 the reverse pass, and §9 exhibits an execution that is a
-schedule. Three gaps remain, and they are of a
+The capstones state their own side conditions, and §12 removes them from
+what a reader has to check: §8 discharged the ordering hypothesis, §11
+the view conditions and the holdings behind them, §7 the reverse pass,
+and §9 exhibits an execution that is a schedule. Three gaps remain, and they are of a
 different kind from the ones that closed: each is a piece of the protocol
 this development does not model at all.
 

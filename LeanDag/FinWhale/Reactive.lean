@@ -78,9 +78,7 @@ theorem spCommit_of_reactive (rm : ReactiveM U T N)
     (hgst : rm.gst ≤ R) (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
     (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
-    ∃ certs : Finset Validator, certs ⊆ T ∧ spQuorum Validator ≤ certs.card ∧
-      ∀ v ∈ certs, ∃ b ∈ blocksAt D ((D.block L).round + 2),
-        (D.block b).creator = v ∧ SPCertificate D b L := by
+    SPCommitBy D L T := by
   have hcert := rm.certifies hT hcard hgst hto hR hN hlead hL
   have hpop := rm.toPaceCore.populatedOn hcard (S.slotRound k + 2) (by omega)
   have hLround : (D.block L).round = S.slotRound k := by rw [hblk]; exact hL.2.1

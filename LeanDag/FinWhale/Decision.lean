@@ -55,6 +55,21 @@ set_option synthInstance.maxSize 1000 in
 instance (D : Dag Validator BlockId Payload) (l : BlockId) :
     Decidable (SPCommit D l) := by unfold SPCommit; infer_instance
 
+/-- **A slow-path commit witnessed by `T`**: the certificates it counts
+are blocks of validators in `T`. `SPCommit` is this without the
+restriction; the liveness routes produce it at `T = Correct`, which is
+what a validator's view can be shown to hold. -/
+def SPCommitBy (D : Dag Validator BlockId Payload) (l : BlockId) (T : Finset Validator) : Prop :=
+  ∃ certs ⊆ T, spQuorum Validator ≤ certs.card ∧
+    ∀ v ∈ certs, ∃ b ∈ blocksAt D ((D.block l).round + 2),
+      (D.block b).creator = v ∧ SPCertificate D b l
+
+/-- Naming the witnesses is a restriction, not a weakening. -/
+theorem spCommit_of_spCommitBy {l : BlockId} {T : Finset Validator}
+    (h : SPCommitBy D l T) : SPCommit D l := by
+  obtain ⟨certs, -, hcard, hcertb⟩ := h
+  exact ⟨certs, hcard, hcertb⟩
+
 /-- **The direct commit rule**: either path. -/
 def DirectCommit (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
   FastCommit D l ∨ SPCommit D l

@@ -122,17 +122,14 @@ pacing disciplines supply this — the full-timeout one through coverage
 (`FinWhale.Reactive`) — and nothing below cares which. -/
 def CommitsCorrectLeaders (D : Dag Validator BlockId Payload) (R N : ℕ) : Prop :=
   ∀ s, R ≤ s → s + 2 ≤ N → D.leader s ∈ (Correct : Finset Validator) →
-    ∃ l ∈ slotBlocks D s, ∃ certs : Finset Validator,
-      certs ⊆ (Correct : Finset Validator) ∧ spQuorum Validator ≤ certs.card ∧
-      ∀ v ∈ certs, ∃ b ∈ blocksAt D ((D.block l).round + 2),
-        (D.block b).creator = v ∧ SPCertificate D b l
+    ∃ l ∈ slotBlocks D s, SPCommitBy D l (Correct : Finset Validator)
 
 /-- The commit the interface carries. -/
 theorem directCommit_of_commits {R N : ℕ} (h : CommitsCorrectLeaders D R N) {s : ℕ}
     (hR : R ≤ s) (hN : s + 2 ≤ N) (hlead : D.leader s ∈ (Correct : Finset Validator)) :
     ∃ l ∈ slotBlocks D s, DirectCommit D l := by
-  obtain ⟨l, hslot, certs, -, hcard, hcertb⟩ := h s hR hN hlead
-  exact ⟨l, hslot, Or.inr ⟨certs, hcard, hcertb⟩⟩
+  obtain ⟨l, hslot, hby⟩ := h s hR hN hlead
+  exact ⟨l, hslot, Or.inr (spCommit_of_spCommitBy hby)⟩
 
 /-- **What Lemma 23 consumes**: the deciding validator *sees* a direct
 commit at every correct-led slot below the horizon. One clause where

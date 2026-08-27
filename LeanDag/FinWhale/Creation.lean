@@ -353,9 +353,7 @@ theorem lemma20_of_creation (cr : Creation U T N D.leader)
     (hR : R ≤ n) (hN : n + 2 ≤ N)
     {L : BlockId} (hL : L ∈ D.ids) (hLr : (D.block L).round = n)
     (hLc : (D.block L).creator = D.leader n) (hlead : D.leader n ∈ T) :
-    ∃ certs : Finset Validator, certs ⊆ T ∧ spQuorum Validator ≤ certs.card ∧
-      ∀ v ∈ certs, ∃ b ∈ blocksAt D ((D.block L).round + 2),
-        (D.block b).creator = v ∧ SPCertificate D b L := by
+    SPCommitBy D L T := by
   have hLu : L ∈ U.ids := hids ▸ hL
   have hLrU : (U.block L).round = n := by rw [← hblk]; exact hLr
   have hcert := cr.lemma19 hcard hgst hto hR hN hLu hLrU
@@ -380,10 +378,8 @@ theorem commits_of_creation (cr : Creation U T N D.leader)
   intro s hR hN hsc
   obtain ⟨L, hL, hLc, hLr⟩ :=
     cr.toPaceCore.populatedOn card_correct s (by omega) (D.leader s) hsc
-  obtain ⟨certs, hcertsub, hcard, hcertb⟩ :=
-    lemma20_of_creation cr hids hblk card_correct hgst hto hR hN
-      (hids ▸ hL) (by rw [hblk]; exact hLr) (by rw [hblk]; exact hLc) hsc
-  refine ⟨L, ?_, certs, hcertsub, hcard, hcertb⟩
+  refine ⟨L, ?_, lemma20_of_creation cr hids hblk card_correct hgst hto hR hN
+    (hids ▸ hL) (by rw [hblk]; exact hLr) (by rw [hblk]; exact hLc) hsc⟩
   simp only [slotBlocks, blocksAt, Finset.mem_filter, hids, hblk]
   exact ⟨⟨hL, hLr⟩, hLc⟩
 
