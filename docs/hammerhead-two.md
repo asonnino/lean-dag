@@ -486,8 +486,8 @@ witnesses.
 
 **HH8 (the configuration sequence exists).** If `LiveOn (Sched m)` holds
 for every `m` in `[1, maxLeaders]`, then on a universe synchronised over
-a reliable quorum and populated above `Rnd` a total run exists on the
-full view:
+a reliable quorum and populated above `Rnd` a run of every height exists
+on the full view — the prefix form, the only one there is (§5):
 
 ```lean
 theorem configRun_exists (hlive : ∀ m (hm : 0 < m) (hmax : m ≤ P.maxLeaders), R.LiveOn (Sched m …))
@@ -502,7 +502,11 @@ the second; the least such slot is the anchor; the rule gives the next
 state, and `count_pos`/`count_le` hold by HH7 for `Aimd.rule` (the
 theorem is stated for rules that keep the count in range). The paper's
 Configuration Progress is the inductive step; its Liveness is the
-existence of the total run together with HH5.
+existence of runs of every height together with HH5. Population at
+every round above `Rnd` is what a finite universe cannot supply for
+every height at once; the statement will carry a horizon, as every
+base liveness statement does, with the height it reaches a function of
+the horizon.
 
 Two things are deliberately not in HH8. Ranges below `Rnd` are not
 decided by the clause — the run's `closed` for those ranges is taken as
