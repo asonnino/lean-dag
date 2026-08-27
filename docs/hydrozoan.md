@@ -419,8 +419,9 @@ strengthened hypothesis fails the build by arity or type.
   `f = 0`, `c = 2`, crashed at positions 0 and 3, provably starves every
   correct three-run.
 - **The axioms tripwire** (`Axioms.lean`): every `holds` pinned by
-  `#guard_msgs` to `propext`, `Classical.choice`, `Quot.sound` — a
-  build failure, not a script, on drift.
+  `#guard_msgs` to its exact axiom list, within `propext`,
+  `Classical.choice`, `Quot.sound` — a build failure, not a script, on
+  drift.
 
 ## 10. Layout and discipline
 
