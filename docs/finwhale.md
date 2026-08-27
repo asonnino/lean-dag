@@ -64,6 +64,19 @@ the paper's model gives.
 additively so that `omega` never meets a truncated subtraction. Three
 quantities follow, and the arc keeps them apart:
 
+`p` is a threshold parameter, not a second class of fault. There is one
+fault set here, `Faults.byzantine`, bounded by `f`; `p` never partitions
+it. Safety assumes nothing about `p` — `lemma4` takes a fast commit and
+the standing bound `|byzantine| ≤ f` and holds however many validators
+actually failed. Only fast-path liveness assumes `|byzantine| ≤ p`
+(`fastCommit_of_reactive`), as a counting step: the correct validators
+all vote past GST, there are `n − |byzantine|` of them, and that clears
+`n − p` exactly when `|byzantine| ≤ p`. Above `p` failures the fast path
+stays sound and does not fire. So `p` counts missing round-`(r+1)` votes
+whatever their cause — a crash, a withheld vote, a vote for a conflicting
+block — since the threshold counts distinct authors that did vote and
+does not ask why the rest did not.
+
 | Quantity | Value | Where it is used |
 |:---|:---|:---|
 | `quorumCard` | `n − f` | block validity: how many parents a block carries |
