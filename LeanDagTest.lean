@@ -78,3 +78,7 @@ import LeanDagTest.Hydrozoan.EventualDecision
 import LeanDagTest.Hydrozoan.LivenessHardening
 import LeanDagTest.Hydrozoan.Grounding
 import LeanDagTest.Hydrozoan.Axioms
+import LeanDagTest.OptimalHydrozoan.Thresholds
+import LeanDagTest.OptimalHydrozoan.ThresholdArithmetic
+import LeanDagTest.OptimalHydrozoan.Universe
+import LeanDagTest.OptimalHydrozoan.Decided
