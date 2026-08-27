@@ -387,7 +387,8 @@ the set of declarations changes. `make help` lists them.
   schedule ([#3](https://github.com/gdanezis/lean-dag/pull/3)), the
   Mahi-Mahi arc ([#5](https://github.com/gdanezis/lean-dag/pull/5)), the
   Barnacle arc ([#7](https://github.com/gdanezis/lean-dag/pull/7)), and
-  the Hydrozoan arc (`LeanDag/Hydrozoan/`): the dual-path commit rule
+  the Hydrozoan arc (`LeanDag/Hydrozoan/`,
+  [#8](https://github.com/gdanezis/lean-dag/pull/8)): the dual-path commit rule
   under hybrid faults, its safety from the threshold table alone and its
   liveness through the slow path.
 
