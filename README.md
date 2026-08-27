@@ -418,7 +418,9 @@ the set of declarations changes. `make help` lists them.
   [#8](https://github.com/gdanezis/lean-dag/pull/8)): the dual-path commit rule
   under hybrid faults, its safety from the threshold table alone and its
   liveness through the slow path — and its Optimal variant
-  (`LeanDag/OptimalHydrozoan/`), the fast path at Hydrangea's bound.
+  (`LeanDag/OptimalHydrozoan/`,
+  [#9](https://github.com/gdanezis/lean-dag/pull/9)), the fast path at
+  Hydrangea's bound.
 
 - [Lefteris Kokoris-Kogias](https://github.com/LefKok) — the resilient
   checkpoint arc (`LeanDag/Hybrid/Checkpoint/`,
