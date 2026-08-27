@@ -259,9 +259,9 @@ leader append the blocks of its causal history that have not been
 delivered. Theorem 14 is that a longer leader sequence extends the
 delivery order rather than revising it, because `linearise` only appends;
 Theorem 15 is that no block is delivered twice, because each leader
-appends only what the accumulator does not already hold. `safety`
-composes Lemma 12, Lemma 13 and Theorem 14 into one statement about two
-validators of one DAG.
+appends only what the accumulator does not already hold. §12 composes
+Lemma 12, Lemma 13 and Theorem 14 into one statement about two
+validators of one run.
 
 The list a leader contributes is its causal history: `histOf` is
 `historyFrom` sorted by identifier, `mem_histOf` says it lists everything
@@ -395,12 +395,12 @@ the certificate counts. The C3 case departs from the paper's, which runs through
 fastest `n − 2f` honest validators; §13 gives the two counting problems
 with that route, neither of which the induction has.
 
-**Lemma 20 and Theorem 21 follow by counting.** `lemma20_of_creation`
+**Lemma 20 and Theorem 21 follow by counting.** `Creation.lemma20`
 assembles the certificates: every reliable validator's round-`(r+2)`
 block certifies a reliable leader's block, and they number
-`n − f ≥ 2f + p`. `theorem21_of_creation` is the fast path — where at
-most `p` validators are actually Byzantine, the reliable validators
-number `n − p`, and their votes alone are a fast commit.
+`n − f ≥ 2f + p`. `Creation.theorem21` is the fast path — where at most
+`p` validators are actually Byzantine, the reliable validators number
+`n − p`, and their votes alone are a fast commit.
 
 **Two routes, one interface.** `CommitsCorrectLeaders` is where liveness
 meets the decision layer: every correct-led slot below the horizon
@@ -621,6 +621,11 @@ Fast termination is not among them, because it is not a statement about
 delivery: Theorem 21 says a commit pattern exists in the DAG, and
 `fastCommit_latency` says when. Both are stated in §10, where the
 schedule is.
+
+The bundle is inhabited, which is what keeps the properties from being
+vacuous: `fwRun` in the witness layer is the grown execution with its
+schedule, its rotation, its self-parent edge and `chooseLeast` as the
+tie-break, and agreement and integrity are read off it.
 
 ## 13. What the paper should change
 

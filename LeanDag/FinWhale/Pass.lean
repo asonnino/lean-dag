@@ -85,25 +85,10 @@ def decOf (D : Dag Validator BlockId Payload)
 variable {D : Dag Validator BlockId Payload} {choose : BlockId → ℕ → Option BlockId} {N : ℕ}
 
 /-- Above the horizon nothing is decided. -/
-theorem passFrom_of_gt {s : ℕ} (h : N < s) : passFrom D choose N s = fun _ => Verdict.undecided := by
+theorem passFrom_of_gt {s : ℕ} (h : N < s) :
+    passFrom D choose N s = fun _ => Verdict.undecided := by
   rw [passFrom]
   simp [h]
-
-/-- Below the slot the pass has reached, nothing is decided yet. -/
-theorem passFrom_of_lt : ∀ k s r : ℕ, N + 1 - s ≤ k → r < s →
-    passFrom D choose N s r = Verdict.undecided := by
-  intro k
-  induction k with
-  | zero =>
-    intro s r hk hr
-    rw [passFrom, dif_pos (by omega)]
-  | succ k ih =>
-    intro s r hk hr
-    rcases Nat.lt_or_ge N s with h | h
-    · rw [passFrom_of_gt h]
-    · rw [passFrom, dif_neg (by omega)]
-      simp only [if_neg (by omega : ¬ r = s)]
-      exact ih (s + 1) r (by omega) (by omega)
 
 /-- At or above the slot the pass has reached, the pass is the pass from
 that slot. -/

@@ -4,6 +4,7 @@ import LeanDag.FinWhale.View
 import LeanDag.FinWhale.Reactive
 import LeanDag.FinWhale.Validity
 import LeanDag.FinWhale.Creation
+import LeanDag.FinWhale.Protocol
 
 /-!
 # FinWhale witnesses — the pacing structure under liveness
@@ -428,9 +429,66 @@ def fwCreation (N : ℕ) : Creation (Ugrow N) {1, 2, 3} N (Dreact N).leader :=
 
 /-- **The liveness interface, from the creation rule.** No wait clause is
 assumed: the votes and the certificates come out of C1 and C3. -/
-example (N : ℕ) : CommitsCorrectLeaders (Dreact N) 0 N :=
+theorem fwCommits (N : ℕ) : CommitsCorrectLeaders (Dreact N) 0 N :=
   commits_of_creation (D := Dreact N) (fwCreation N) rfl rfl (by decide)
     (Nat.le_refl _) (fun n _ => Nat.le_refl _)
+
+/-- The rotation of this execution is round robin. -/
+theorem fwDreactRoundRobin (N : ℕ) : RoundRobin (Dreact N).leader := by
+  refine ⟨Equiv.refl (Fin 4), fun r => ?_⟩
+  apply Fin.ext
+  show r % 4 = ZMod.val ((r : ZMod 4))
+  exact (ZMod.val_natCast (n := 4) r).symm
+
+/-! ## A run of the protocol
+
+Everything the four properties are stated over, on this execution: the
+blocks, the schedule that carried them, the rotation, the self-parent
+edge, and the tie-break — which need not be assumed either, `chooseLeast`
+being one.
+
+That the bundle is inhabited is the point. `Run` gathers ten conditions,
+and a structure nothing satisfies would make every property above it
+vacuous. -/
+noncomputable def fwRun (N : ℕ) : Run (Fin 4) ℕ Unit where
+  dag := Dreact N
+  paced := Ugrow N
+  ids_eq := rfl
+  block_eq := rfl
+  horizon := N
+  rounds_le := by
+    intro b hb
+    simp only [dgrowFor_ids, ugrow_ids, Finset.mem_range] at hb
+    simp only [dgrowFor_block, ugrow_block, rrBlock_round]
+    omega
+  paceHorizon := N
+  pace := fwPaceCore N
+  rounds_advance := by
+    intro u _ n _
+    simp only [fwPaceCore_built]
+    omega
+  stable := 0
+  gst_le := Nat.le_refl _
+  liveHorizon := N
+  commits := fwCommits N
+  live_le := Nat.le_refl _
+  roundRobin := fwDreactRoundRobin N
+  selfParented := selfParented_Dreact N
+  choose := chooseLeast (Dreact N)
+  chooseSound := chooseSound_least
+
+/-- **Agreement on data.** Two correct validators of the run deliver the
+same sequence. The horizon is what Lemma 22's window asks for: `3f + 5`
+rounds above the slot, with `f = 1` here. -/
+example (N : ℕ) (hN : 9 ≤ N) {v w : Fin 4} (hv : v ∈ (Correct : Finset (Fin 4)))
+    (hw : w ∈ (Correct : Finset (Fin 4))) :
+    (fwRun N).delivers hv 1 = (fwRun N).delivers hw 1 :=
+  (fwRun N).agreement hv hw (by show max 1 0 + (3 * 1 + 5) ≤ N; omega)
+
+/-- **Integrity on data**, which asks nothing of the run at all. -/
+example (N : ℕ) {v : Fin 4} (hv : v ∈ (Correct : Finset (Fin 4))) (k : ℕ) :
+    ((fwRun N).delivers hv k).Nodup :=
+  (fwRun N).integrity hv k
 
 /-! ## The arc's axioms, on the routes this file supplies -/
 
@@ -438,6 +496,10 @@ example (N : ℕ) : CommitsCorrectLeaders (Dreact N) 0 N :=
 #print axioms LeanDag.FinWhale.Creation.lemma19
 #print axioms LeanDag.FinWhale.commits_of_creation
 #print axioms LeanDag.FinWhale.theorem26_of_selfParent
+#print axioms LeanDag.FinWhale.Run.agreement
+#print axioms LeanDag.FinWhale.Run.totalOrder
+#print axioms LeanDag.FinWhale.Run.integrity
+#print axioms LeanDag.FinWhale.Run.validity
 
 end FinWhalePace
 

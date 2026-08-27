@@ -206,7 +206,8 @@ theorem lemma18 {R n : ℕ} (hcard : quorumCard Validator ≤ T.card)
     have hheld : L ∈ cr.holds v (cr.built v (n + 1)) := by
       rcases htrig : cr.trigger v (n + 1) with _ | _ | _
       · exact cr.c1_leader v hv n hN htrig L hL hLr hLc
-      · exact cr.holds_of_timeout hcard hgst hto hR hN hv (cr.c2_wait v hv n htrig) hL (by rw [hLc]; exact hlead) hLr
+      · exact cr.holds_of_timeout hcard hgst hto hR hN hv (cr.c2_wait v hv n htrig) hL
+          (by rw [hLc]; exact hlead) hLr
       · -- the round's own quorum meets the reliable set twice over
         obtain ⟨S, hS, hSb⟩ := cr.c3_quorum v hv n hN htrig
         have hmeet := card_add_card_le_card_inter_add_card S T
@@ -340,13 +341,13 @@ variable {D : Dag Validator BlockId Payload}
 /-- The universe's reading of a certificate is the DAG's. -/
 theorem spCertificate_of_certifiesSP (hblk : D.block = U.block) {c L : BlockId}
     (h : CertifiesSP U c L) : SPCertificate D c L := by
-  show spQuorum Validator ≤ (parentsVoting D c L).card
+  change spQuorum Validator ≤ (parentsVoting D c L).card
   simpa only [CertifiesSP, parentsVoting, hblk] using h
 
 /-- **Lemma 20, from the creation rule.** A reliable leader's block is
 committed by the slow path: every reliable validator's round-`(r+2)`
 block certifies it, and they are `n − f ≥ 2f + p`. -/
-theorem lemma20_of_creation (cr : Creation U T N D.leader)
+theorem Creation.lemma20 (cr : Creation U T N D.leader)
     (hids : D.ids = U.ids) (hblk : D.block = U.block)
     (hcard : quorumCard Validator ≤ T.card) {R n : ℕ}
     (hgst : cr.gst ≤ R) (hto : ∀ m, R ≤ m → 2 * cr.delay + cr.proc ≤ cr.timeout m)
@@ -378,14 +379,14 @@ theorem commits_of_creation (cr : Creation U T N D.leader)
   intro s hR hN hsc
   obtain ⟨L, hL, hLc, hLr⟩ :=
     cr.toPaceCore.populatedOn card_correct s (by omega) (D.leader s) hsc
-  refine ⟨L, ?_, lemma20_of_creation cr hids hblk card_correct hgst hto hR hN
+  refine ⟨L, ?_, cr.lemma20 hids hblk card_correct hgst hto hR hN
     (hids ▸ hL) (by rw [hblk]; exact hLr) (by rw [hblk]; exact hLc) hsc⟩
   simp only [slotBlocks, blocksAt, Finset.mem_filter, hids, hblk]
   exact ⟨⟨hL, hLr⟩, hLc⟩
 
 /-- **Theorem 21, from the creation rule.** Where at most `p` validators
 are Byzantine, the reliable validators' votes alone are a fast commit. -/
-theorem theorem21_of_creation (cr : Creation U T N D.leader)
+theorem Creation.theorem21 (cr : Creation U T N D.leader)
     (hids : D.ids = U.ids) (hblk : D.block = U.block)
     (hTeq : T = (Correct : Finset Validator)) (hfew : F.byzantine.card ≤ P.p)
     {R n : ℕ} (hgst : cr.gst ≤ R)

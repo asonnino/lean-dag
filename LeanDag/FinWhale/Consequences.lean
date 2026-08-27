@@ -98,14 +98,6 @@ theorem lemma8 {l l' : BlockId} (hconf : Conflicting D l l')
   rw [Finset.mem_inter] at hv
   exact not_voter_of_conflicting hconf v hv.2 hvc hv.1
 
-/-- **Lemma 9 and Lemma 10, the direct halves.** A block with a quorum of
-votes excludes any other block of its slot from a direct commit, fast or
-slow, since either path needs a quorum of its own. -/
-theorem no_conflicting_direct_commit {l l' : BlockId} (hconf : Conflicting D l l')
-    (h : spQuorum Validator ≤ (voters D l).card)
-    (h' : spQuorum Validator ≤ (voters D l').card) : False :=
-  lemma8 hconf h h'
-
 /-- A fast commit carries a quorum of votes, so it feeds the above. -/
 theorem spQuorum_le_of_fastCommit {l : BlockId} (hfast : FastCommit D l) :
     spQuorum Validator ≤ (voters D l).card :=

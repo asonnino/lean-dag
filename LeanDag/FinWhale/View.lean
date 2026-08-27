@@ -234,7 +234,7 @@ sees the fast commit the universe sees. -/
 theorem fastCommit_of_holds {l : BlockId}
     (hV1 : blocksAt D ((D.block l).round + 1) ⊆ V) (h : FastCommit D l) :
     FastCommit (restrict D V hV) l := by
-  show fastCard Validator ≤ (voters (restrict D V hV) l).card
+  change fastCard Validator ≤ (voters (restrict D V hV) l).card
   rw [voters_restrict_eq hV1]
   exact h
 

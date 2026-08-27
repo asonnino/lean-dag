@@ -673,7 +673,6 @@ example (choose : Fin 27 → ℕ → Option (Fin 27)) :
 /-! ## The arc's axioms -/
 
 #print axioms LeanDag.FinWhale.lemma12
-#print axioms LeanDag.FinWhale.safety
 #print axioms LeanDag.FinWhale.lemma22
 #print axioms LeanDag.FinWhale.agreement_of_commits
 #print axioms LeanDag.FinWhale.safety_of_views

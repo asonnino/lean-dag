@@ -63,7 +63,7 @@ that vote, and FinWhale asks for `2f + p` where the validity quorum is
 `n − f`, which is no smaller. -/
 theorem spCertificate_of_certifies (hblk : D.block = U.block) {c : BlockId}
     (h : Certifies U c L) : SPCertificate D c L := by
-  show spQuorum Validator ≤ (parentsVoting D c L).card
+  change spQuorum Validator ≤ (parentsVoting D c L).card
   have heq : parentsVoting D c L = creatorsOf U.block (votesIn U c L) := by
     simp only [parentsVoting, votesIn, hblk]
   rw [heq]

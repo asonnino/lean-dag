@@ -134,55 +134,6 @@ theorem theorem15 (hist : BlockId → List BlockId) (hnd : ∀ l, (hist l).Nodup
       exact hnot (hab ▸ ha)
   exact key ls [] List.nodup_nil
 
-section EndToEnd
-
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-variable [F : Faults Validator] [P : Params Validator]
-variable {Payload : Type*} {D : Dag Validator BlockId Payload}
-
-/-- **Safety, end to end.** Two validators running the reverse pass on
-sub-DAGs of one valid DAG deliver prefix-comparable sequences.
-
-Everything the statement assumes is either a fact about the DAG or a
-faithfulness condition on the model: `hwf`/`hwf'` say each validator
-follows the decision rule, `hdc`/`hdc'`/`hds`/`hds'` say a view's direct
-verdict is a direct verdict of the universe, `hch` says the tie-break
-picks among the anchor's candidates, `hslot`/`hslot'` say a committed
-verdict names a block of its own slot, `hbound` says both validators have
-finitely many decided slots, and `hk`/`hk'` say each commit sequence stops
-at its first undecided slot. -/
-theorem safety {dc dc' : ℕ → BlockId → Prop} {ds ds' : ℕ → Prop}
-    {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
-    (hwf : WellFormed dc ds choose dec) (hwf' : WellFormed dc' ds' choose dec')
-    (hch : ChooseSound D choose)
-    (hdc : ∀ r l, dc r l → l ∈ slotBlocks D r ∧ DirectCommit D l)
-    (hdc' : ∀ r l, dc' r l → l ∈ slotBlocks D r ∧ DirectCommit D l)
-    (hds : ∀ r, ds r → DirectSkip D r) (hds' : ∀ r, ds' r → DirectSkip D r)
-    (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks D r)
-    (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks D r)
-    {N : ℕ} (hbound : ∀ s, N ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)
-    {k k' : ℕ} (hk : ∀ s, s < k → dec s ≠ Verdict.undecided)
-    (hk' : ∀ s, s < k' → dec' s ≠ Verdict.undecided)
-    (hist : BlockId → List BlockId) :
-    linearise hist (commitSeq dec k) <+: linearise hist (commitSeq dec' k') ∨
-      linearise hist (commitSeq dec' k') <+: linearise hist (commitSeq dec k) := by
-  -- a committed verdict names a block of its slot, which is a block of
-  -- the DAG at that round; above `r + 2` that is what `Above` asks for
-  have habove : ∀ (dq : ℕ → Verdict BlockId),
-      (∀ r A, dq r = Verdict.commit A → A ∈ slotBlocks D r) →
-      ∀ r a A, r + 2 < a → dq a = Verdict.commit A → A ∈ D.ids ∧ r + 3 ≤ (D.block A).round := by
-    intro dq hq r a A hra hcom
-    have := hq a A hcom
-    simp only [slotBlocks, blocksAt, Finset.mem_filter] at this
-    exact ⟨this.1.1, by omega⟩
-  rcases lemma13
-      (lemma12 hwf hwf' (exclusions_of_dag hch hdc hdc' hds hds')
-        (habove dec hslot) (habove dec' hslot') hbound) hk hk' with h | h
-  · exact Or.inl (theorem14 hist h)
-  · exact Or.inr (theorem14 hist h)
-
-end EndToEnd
-
 end FinWhale
 
 end LeanDag
