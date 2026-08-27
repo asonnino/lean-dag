@@ -152,4 +152,11 @@ import LeanDag.HammerheadTwo.Model.Live
 import LeanDag.HammerheadTwo.Progress.Statement
 import LeanDag.HammerheadTwo.Helpers.Progress
 import LeanDag.HammerheadTwo.Progress.Proof
+import LeanDag.HammerheadTwo.Model.Heads
+import LeanDag.HammerheadTwo.Heads.Statement
+import LeanDag.HammerheadTwo.Helpers.Heads
+import LeanDag.HammerheadTwo.Heads.Proof
+import LeanDag.HammerheadTwo.MysticetiLive.Statement
+import LeanDag.HammerheadTwo.Helpers.MysticetiLive
+import LeanDag.HammerheadTwo.MysticetiLive.Proof
 import LeanDag.Minnow.Blocking

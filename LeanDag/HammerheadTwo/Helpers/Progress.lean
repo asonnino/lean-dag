@@ -48,20 +48,20 @@ theorem progress_exists (hR : R.Laws) (hupd : UpdBounded P upd) {c K Rnd N : ℕ
     (Rn : PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K)
     (hlive : R.LiveOn (Sched getLeader hk (Rn.count K) (Rn.count_pos K) (Rn.count_le K)) c)
     (hgood : R.Good U Rnd N) (hRnd : Rnd ≤ Rn.start K + 1)
-    (hN : Rn.start K + P.interval + 1 + c + R.waveLength ≤ N) :
+    (hN : Rn.start K + P.interval + 1 + 2 * c + R.waveLength ≤ N) :
     ∃ Rn' : PartialRun R.toBaseRule P getLeader hk upd U (R.full U) (K + 1),
       Rn'.start (K + 1) ≤ Rn.start K + P.interval + 1 + c := by
   obtain ⟨h1, h2⟩ := hlive U Rnd N hgood
   -- Clause 1 with the rounds read as quotients.
-  have h1' : ∀ κ, Rnd ≤ κ / Rn.count K → κ / Rn.count K + R.waveLength ≤ N →
+  have h1' : ∀ κ, Rnd ≤ κ / Rn.count K → κ / Rn.count K + c + R.waveLength ≤ N →
       ∃ v, R.Decided (Rn.sched K) (R.full U) κ v := by
     intro κ a b
     exact h1 κ (by simpa using a) (by simpa using b)
   -- The verdicts of the new range, chosen from clause 1; `none` off the good rounds.
   let v : ℕ → Option BlockId := fun κ =>
-    if h : Rnd ≤ κ / Rn.count K ∧ κ / Rn.count K + R.waveLength ≤ N then
+    if h : Rnd ≤ κ / Rn.count K ∧ κ / Rn.count K + c + R.waveLength ≤ N then
       Classical.choose (h1' κ h.1 h.2) else none
-  have hv : ∀ κ, Rnd ≤ κ / Rn.count K → κ / Rn.count K + R.waveLength ≤ N →
+  have hv : ∀ κ, Rnd ≤ κ / Rn.count K → κ / Rn.count K + c + R.waveLength ≤ N →
       R.Decided (Rn.sched K) (R.full U) κ (v κ) := by
     intro κ a b
     simp only [v, dif_pos (And.intro a b)]
@@ -124,7 +124,7 @@ theorem progress_exists (hR : R.Laws) (hupd : UpdBounded P upd) {c K Rnd N : ℕ
       have hk1 : ¬ (k + 1 ≤ k) := by omega
       simp only [le_refl, if_true, hk1, if_false] at hlo hhi ⊢
       have hround : Rnd ≤ κ / Rn.count k := by omega
-      have hround' : κ / Rn.count k + R.waveLength ≤ N := by omega
+      have hround' : κ / Rn.count k + c + R.waveLength ≤ N := by omega
       have hd := hv κ hround hround'
       rwa [PartialRun.sched, Sched_congr getLeader hk (show Rn.count k = Rn.count k from rfl)
         (Rn.count_pos k) (Rn.count_le k)] at hd
@@ -186,7 +186,7 @@ theorem progress (hR : R.Laws) (hupd : UpdBounded P upd) {c K Rnd N : ℕ}
     (Rn : PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K)
     (hlive : R.LiveOn (Sched getLeader hk (Rn.count K) (Rn.count_pos K) (Rn.count_le K)) c)
     (hgood : R.Good U Rnd N) (hRnd : Rnd ≤ Rn.start K + 1)
-    (hN : Rn.start K + P.interval + 1 + c + R.waveLength ≤ N) :
+    (hN : Rn.start K + P.interval + 1 + 2 * c + R.waveLength ≤ N) :
     Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) (K + 1)) :=
   let ⟨Rn', _⟩ := progress_exists hR hupd Rn hlive hgood hRnd hN
   ⟨Rn'⟩
@@ -201,7 +201,7 @@ theorem everyHeight_bound (hR : R.Laws) (hupd : UpdBounded P upd) {c : ℕ}
         Rn.start K ≤ K * (P.interval + 1 + c)
   | 0, _ => ⟨PartialRun.zero _ P getLeader hk upd U (R.full U), Nat.zero_le _⟩
   | K + 1, hN => by
-    have hN' : (K + 1) * (P.interval + 1 + c) + R.waveLength ≤ N := hN
+    have hN' : (K + 1) * (P.interval + 1 + c) + c + R.waveLength ≤ N := hN
     rw [Nat.succ_mul] at hN'
     have hhor : horizon P R c K ≤ N := by unfold horizon; omega
     obtain ⟨Rn, hstart⟩ := everyHeight_bound hR hupd hlive hgood hRnd K hhor

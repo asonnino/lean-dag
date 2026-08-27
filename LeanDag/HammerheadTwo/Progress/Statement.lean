@@ -44,8 +44,9 @@ def ProgressStmt (R : LiveRule Validator BlockId Payload) (P : Params)
     -- … on a DAG good from `Rnd` to `N`, where the current configuration's
     -- range starts at or after `Rnd` …
     R.Good U Rnd N → Rnd ≤ Rn.start K + 1 →
-    -- … and the horizon leaves room for the threshold, the gap and one wave:
-    Rn.start K + P.interval + 1 + c + R.waveLength ≤ N →
+    -- … and the horizon leaves room for the threshold, the gap to the
+    -- anchor, and the gap and one wave above it:
+    Rn.start K + P.interval + 1 + 2 * c + R.waveLength ≤ N →
     -- there is a run of height `K + 1`.
     Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) (K + 1))
 

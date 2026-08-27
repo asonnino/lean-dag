@@ -18,10 +18,15 @@ of `LiveOn`, the clause the liveness results consume, and each
 instantiation defines it from its own predicates.
 
 `LiveOn S c` is A4-liveness on one schedule: on a good DAG, every slot
-whose wave fits under the horizon is decided on the full view, and from
-every round a committed slot lies within `c` rounds. The gap `c` is what
-lets the leader-count mechanism find each configuration's anchor before
-the horizon; a schedule's own liveness theorem supplies it.
+with `c` rounds and a wave under the horizon is decided on the full
+view, and from every round a committed slot lies within `c` rounds. The
+gap `c` is what lets the leader-count mechanism find each
+configuration's anchor before the horizon, and it is also the margin a
+slot needs above it to be decided: a slot the direct rule does not
+settle is decided by a committed anchor at least a wave above it, whose
+own wave must fit under the horizon, so no rule decides every slot up to
+`N − waveLength` (`hammerhead-two.md` §11, F9). A schedule's own
+liveness theorem supplies `c`.
 
 **Trusted core of the arc: definitions only.**
 -/
@@ -47,9 +52,9 @@ def LiveRule.LiveOn (R : LiveRule Validator BlockId Payload) (S : Slots Validato
     Prop :=
   -- On every DAG good from `Rnd` to `N` …
   ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
-    -- … every slot at a round from `Rnd` whose wave fits under the horizon
-    -- is decided on the full view …
-    (∀ κ, Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
+    -- … every slot at a round from `Rnd`, with `c` rounds and a wave still
+    -- under the horizon, is decided on the full view …
+    (∀ κ, Rnd ≤ S.slotRound κ → S.slotRound κ + c + R.waveLength ≤ N →
       ∃ v, R.Decided S (R.full U) κ v) ∧
     -- … and from every round `r` at or after `Rnd`, with `c` rounds and a
     -- wave still under the horizon, some slot at a round in `[r, r + c]`
@@ -66,10 +71,10 @@ def UpdBounded {R : BaseRule Validator BlockId Payload} (P : Params) (upd : Upda
 
 /-- The horizon a run of height `K` needs from a synchrony round at
 genesis: each configuration's anchor lies within `interval + 1 + c`
-rounds of the previous start, and the last range needs one wave to be
-decided. -/
+rounds of the previous start, and the last range needs the gap and one
+wave above it to be decided. -/
 def horizon (P : Params) (R : LiveRule Validator BlockId Payload) (c K : ℕ) : ℕ :=
-  K * (P.interval + 1 + c) + R.waveLength
+  K * (P.interval + 1 + c) + c + R.waveLength
 
 end HammerheadTwo
 

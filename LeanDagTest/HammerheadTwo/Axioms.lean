@@ -4,6 +4,8 @@ import LeanDag.HammerheadTwo.Agreement.Proof
 import LeanDag.HammerheadTwo.Ledger.Proof
 import LeanDag.HammerheadTwo.Conservativity.Proof
 import LeanDag.HammerheadTwo.Progress.Proof
+import LeanDag.HammerheadTwo.Heads.Proof
+import LeanDag.HammerheadTwo.MysticetiLive.Proof
 import LeanDag.HammerheadTwo.Aimd.Proof
 
 /-!
@@ -20,4 +22,6 @@ bespoke axiom would show here before anywhere else.
 #print axioms LeanDag.HammerheadTwo.Ledger.holds
 #print axioms LeanDag.HammerheadTwo.Conservativity.holds
 #print axioms LeanDag.HammerheadTwo.Progress.holds
+#print axioms LeanDag.HammerheadTwo.Heads.holds
+#print axioms LeanDag.HammerheadTwo.MysticetiLive.holds
 #print axioms LeanDag.HammerheadTwo.Aimd.holds

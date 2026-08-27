@@ -22,8 +22,9 @@ What the file exhibits:
   values are forced on every inhabitant of the type by `update` and
   HH3, which is the strongest reading a `Nonempty` conclusion admits.
 * **Progress from height one.** At interval `1` a height-`1` run on the
-  full view extends to height `2` by the theorem, at gap `0` and at gap
-  `1` alike, and HH3 identifies the result with `runP1`.
+  full view extends to height `2` by the theorem at gap `0`, and HH3
+  identifies the result with `runP1`; at gap `1` the margin `2c + w`
+  above the threshold no longer fits under `8`.
 * **A gap that matters.** `Usk` is `Usun` with one block referenced by
   its author alone, so slot `2` is directly skipped: `LiveOn` at gap
   `0` is *false* there and at gap `1` true, and the theorem's anchor —
@@ -199,15 +200,14 @@ example : ¬ UpdBounded hhP (fun _ _ _ _ => ((5, 0) : ℕ × ℕ) : UpdateRule h
 /-! ## Progress from height one, at interval one
 
 `runP1v` is `runP1'` on the full view. At interval `1` its configuration
-`1` starts at round `2`, and `2 + 1 + 1 + c + 3 ≤ 8` for `c ≤ 1`: the
-theorem extends it at gap `0` and at gap `1` — the latter with the
-clause answered at the top of its window — and HH3 identifies the
-result with `runP1` at height `2`. -/
+`1` starts at round `2`, and `2 + 1 + 1 + 2 · c + 3 ≤ 8` at gap `0`: the
+theorem extends it and HH3 identifies the result with `runP1` at height
+`2`; at gap `1` the margin no longer fits. -/
 
 theorem hhLive_liveOn1 : hhLive.LiveOn sched1 1 := by
   rintro U Rnd N ⟨rfl, rfl, rfl⟩
   have hw : hhLive.waveLength = 3 := rfl
-  refine ⟨(hhLive_liveOn Usun 1 8 ⟨rfl, rfl, rfl⟩).1, ?_⟩
+  refine ⟨fun κ h1 h2 => (hhLive_liveOn Usun 1 8 ⟨rfl, rfl, rfl⟩).1 κ h1 (by omega), ?_⟩
   intro r h1 h2
   have : r = 1 ∨ r = 2 ∨ r = 3 ∨ r = 4 := by omega
   rcases this with rfl | rfl | rfl | rfl
@@ -283,18 +283,9 @@ example :
     Usun (hhLive.full Usun) Vsun 2 2 Rn2 runP1 1 (by decide)
   exact ⟨h.1, h.2.1, h.2.2.1, (h1.2.2.2 (by decide)).1⟩
 
--- gap 1: 2 + 1 + 1 + 1 + 3 = 8 ≤ 8, the horizon exactly
-example :
-    ∃ Rn2 : PartialRun hhLive.toBaseRule hhP1 hhLeader hhWin hhUpd1 Usun (hhLive.full Usun) 2,
-    Rn2.start 2 = 4 ∧ Rn2.count 2 = 1 ∧ Rn2.backoff 2 = 2 ∧ Rn2.anchor 1 = 4 := by
-  obtain ⟨Rn2⟩ := (Progress.holds (Fin 4) (Fin 32) Unit hhLive laws32 hhP1 hhLeader hhWin hhUpd1
-    hhUpd1_bounded 1).1 Usun 1 8 1 runP1v hhLive_liveOn1 ⟨rfl, rfl, rfl⟩ (by decide) (by decide)
-  refine ⟨Rn2, ?_⟩
-  have h := (Agreement.holds (Fin 4) (Fin 32) Unit hhRule32 laws32 hhP1 hhLeader hhWin _)
-    Usun (hhLive.full Usun) Vsun 2 2 Rn2 runP1 2 (by decide)
-  have h1 := (Agreement.holds (Fin 4) (Fin 32) Unit hhRule32 laws32 hhP1 hhLeader hhWin _)
-    Usun (hhLive.full Usun) Vsun 2 2 Rn2 runP1 1 (by decide)
-  exact ⟨h.1, h.2.1, h.2.2.1, (h1.2.2.2 (by decide)).1⟩
+-- Gap 1 does not fit at height 1: the margin `2 · c + w` above the
+-- threshold makes `2 + 1 + 1 + 2 + 3 = 9 > 8`.
+example : ¬ (runP1.start 1 + hhP1.interval + 1 + 2 * 1 + hhLive.waveLength ≤ 8) := by decide
 
 -- Height 3 at interval 1 is out of the horizon: 4 + 1 + 1 + 0 + 3 = 9 > 8.
 example : ¬ (runP1.start 2 + hhP1.interval + 1 + 0 + hhLive.waveLength ≤ 8) := by decide

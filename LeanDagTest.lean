@@ -50,6 +50,7 @@ import LeanDagTest.BlackMarlin.ViewLiveness
 import LeanDagTest.HammerheadTwo.Model
 import LeanDagTest.HammerheadTwo.Agreement
 import LeanDagTest.HammerheadTwo.Progress
+import LeanDagTest.HammerheadTwo.Heads
 import LeanDagTest.HammerheadTwo.Axioms
 import LeanDagTest.Minnow.Deadlock
 import LeanDagTest.Minnow.Skip

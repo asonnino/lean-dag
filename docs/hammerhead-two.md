@@ -526,52 +526,85 @@ runs `m` up to five.
 
 **The descent.** Only the *head* of a round — its slot at offset `0` —
 matters. For a slot `σ` at round `ρ'`, the eligible anchors begin at
-round `ρ' + g` (`g = 3` for Mysticeti, `2` for the two-round rules), and
-the head of that round precedes every other eligible slot. If the head
-is directly committed then it is the least eligible committed slot, the
-set of eligible intermediates is empty, and `σ` is decided by the
-indirect rule outright, whatever its own direct evidence. So:
+round `ρ' + w` (`w` the wave length, which is the eligibility gap of
+every rule of this development), and the head of that round precedes
+every other eligible slot. If the head is committed then it is the
+least eligible committed slot, the set of eligible intermediates is
+empty, and `σ` is decided by the indirect rule outright, whatever its
+own direct evidence. Two facts of the base protocol carry this, stated
+as a second law structure so that `Laws` stays as frozen
+(`Model/Heads.lean`, D14):
 
 ```lean
-/-- A stretch of rounds all of whose heads are `T`-led. -/
-def HeadsRun (S : Slots Validator) (T : Finset Validator) (c : ℕ) : Prop :=
-  ∀ r, ∃ ρ, r ≤ ρ ∧ ∀ i, i < c → S.leader (S.head (ρ + i)) ∈ T
+structure LiveRule.Descent (R : LiveRule Validator BlockId Payload) (slack : ℕ) : Prop where
+  goodLeaders : ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
+    ∃ T : Finset Validator, Fintype.card Validator ≤ T.card + slack ∧
+      ∀ (S : Slots Validator) (κ : ℕ), Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
+        S.leader κ ∈ T → ∃ L, R.Decided S (R.full U) κ (some L)
+  indirect : ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (i j : ℕ) (A : BlockId),
+    S.slotRound i + R.waveLength ≤ S.slotRound j → R.Decided S V j (some A) →
+    (∀ i', i < i' → i' < j → S.slotRound i + R.waveLength ≤ S.slotRound i' →
+      R.Decided S V i' none) →
+    ∃ v, R.Decided S V i v
 ```
 
-**HH9a (decided stretch descent).** The base descent, weakened: a
-stretch of consecutive slots all *decided*, whose top slot is committed,
-spanning eligibility for everything below it, decides everything below
-it. The base proof goes through unchanged — the intermediates the
-minimality argument meets are decided and not committed, hence skipped —
-and the weakening is what lets Byzantine-led slots sit inside the
-stretch.
+`goodLeaders` is the paper's A4 — after GST an honest leader's slot is
+decided directly — with the good set `T` missing at most `slack`
+validators; `indirect` is A3's indirect rule. For Mysticeti the first
+is L4 (`decided_of_leader_mem`) at `slack = f`, the second the two
+indirect constructors of `Decided`.
 
-**HH9b (heads decide the stretch).** If the heads of rounds
-`ρ + g, …, ρ + 2g − 1` are `T`-led then, above the synchrony round, every
-slot at rounds `ρ, …, ρ + g − 1` is decided on the full view, and the
-head of `ρ + g` is committed: the stretch from the first slot of `ρ` to
-that head satisfies HH9a's hypotheses.
+```lean
+def HeadsRun (getLeader : ℕ → Validator) (T : Finset Validator) (g c₀ : ℕ) : Prop :=
+  ∀ r, ∃ ρ, r ≤ ρ ∧ ρ + g ≤ r + c₀ ∧ ∀ i, i < g → getLeader (ρ + i) ∈ T
+```
 
-**HH9c (`LiveOn` from `HeadsRun`).** `HeadsRun (Sched m) T g` implies
-`R.LiveOn (Sched m)` — HH9b at every `r`, then HH9a.
+Under `Sched m` the head of round `ρ` is slot `m · ρ`, led by
+`getLeader ρ` whatever the count: one clause serves every configuration
+(D16).
 
-**HH9d (round-robin places heads).** Under `getLeader r = r % n`, the
-head of round `r` is led by `r % n` *whatever the count*, so `HeadsRun`
-is one arithmetic statement for every configuration: `g` consecutive
-`T`-led residues exist in every cycle when `|Tᶜ| ≤ f` and `n` is at
-least `(g − 1) f + f + 1`. For Mysticeti, `n ≥ 3f + 1` and `g = 3`; for
-the two-round rules, `g = 2` at `n ≥ 5f + 1` and `n ≥ 2f + 1`. The
-pigeonhole is the arc-counting argument the `FairRunOn` docstring
-records and the wave-aligned schedule was introduced to avoid; it is
-needed here because the paper's schedule is per-round rotation.
+**HH9a (the stretch descent).** The base descent, weakened: a stretch of
+consecutive slots all *decided*, whose top slot is committed, and whose
+top lies a full wave above everything below the stretch, decides
+everything below it. From `indirect` alone; the intermediates the
+minimality argument meets are decided and not committed, hence skipped.
 
-HH9c and HH9d together discharge HH8's `hlive` for the paper's own
-schedule at every count, which is the paper's A4 for multi-leader
-rounds — assumed there, proved here (§11, F3). HH9a–c are stated on the
-interface with `g` a field (`gap`), and the per-protocol content is the
-one lemma "a directly committed head anchors every slot `g` rounds
-below with no intermediates", which is the eligibility arithmetic each
-protocol already has (`eligible_iff`, `spansEligible_two`).
+**HH9b (heads decide).** If the heads of rounds `ρ, …, ρ + w − 1` are
+`T`-led, `Rnd ≤ ρ` and `ρ + 2w ≤ N + 1`, then every slot at a round `r`
+with `r < ρ ≤ r + w` is decided on the full view and the head of `ρ` is
+committed: each such slot's wave-up head is one of the `T`-led heads,
+committed directly, with no eligible slot between (D18).
+
+**HH9c (`LiveOn` from `HeadsRun`).** A run of heads with gap `c₀` for
+every set missing at most `slack` validators gives
+`R.LiveOn (Sched getLeader hk m hm hmax) c₀` at every count: clause 1
+by `HeadsRun` at `r + 1`, HH9b, then HH9a on the stretch from the first
+slot of `ρ' − w` to the head of `ρ'`; clause 2 by `HeadsRun` at `r`.
+
+**HH9d (round-robin has runs of heads).** For every `T` on `Fin n` with
+`n ≤ T.card + slack` and `g · slack + 1 ≤ n`,
+`HeadsRun (roundRobin n hn) T g (n + g − 1)`: if no window of `g`
+consecutive residues starting in a cycle lay inside `T`, choosing for
+each start a residue outside `T` within its window would inject `Fin n`
+into `Fin g × Tᶜ`, so `n ≤ g · slack < n` (D17). This is the
+arc-counting argument the `FairRunOn` docstring records and the
+wave-aligned schedule was introduced to avoid; it is needed here because
+the paper's schedule is per-round rotation, and it is sharp: Mysticeti's
+committee bound `3f + 1 ≤ n` is exactly `g · slack + 1 ≤ n` at `g = 3`,
+`slack = f`.
+
+**HH9e (round-robin is live).** A live rule with descent laws at `slack`
+on `n ≥ w · slack + 1` validators is live under round-robin at every
+count, with gap `n + w − 1`.
+
+**Mysticeti (`MysticetiLive/`).** `mysticetiLive` is Mysticeti with the
+base development's own liveness interface as `Good` — a correct quorum
+synchronised from `Rnd` and populating the rounds to `N` — and the
+result is its descent laws at slack `f` together with
+`LiveOn (Sched (roundRobin n hn) hk m hm hmax) (n + 2)` at every count:
+the paper's A4 for Mysticeti under its own schedule, assumed there,
+proved here (§11, F3). The two-round rules follow in Phase 5 with
+`w = 2`.
 
 ## 9. Witnesses (`LeanDagTest/HammerheadTwo/`)
 
@@ -669,8 +702,16 @@ author comment when confirmed.
   anchor itself.*
 - **F3 — A4 under multiple leaders.** Run fairness fails for the paper's
   schedule at `m ≥ 2` and small `n`; liveness holds by the heads
-  descent, and the paper's A4 is a theorem for its own schedule
-  (HH9). *Phase 4.*
+  descent, and the paper's A4 is a theorem for its own schedule:
+  Mysticeti under round-robin is live at every count with gap `n + 2`
+  (`MysticetiLive.holds`). *Proved in Phase 4; for the Lean appendix.*
+- **F9 — the liveness clause needs a margin.** A slot the direct rule
+  does not settle is decided by a committed anchor a wave above it,
+  whose own wave must fit under the horizon; so no rule decides every
+  slot up to `N − w`, and the clause's first half carries the gap `c`
+  as a margin above the slot. The Phase 3 statement lacked it and was
+  unsatisfiable under Mysticeti's natural `Good` for every `c`; found
+  and repaired in Phase 4. *Phase 4.*
 - **F4 — A5 is unnecessary.** The proof outline's "any leader committed
   after `r_i` has the anchor in its causal history" is not consumed:
   agreement is the base agreement theorem under one fixed schedule plus
@@ -740,6 +781,18 @@ Settled 2026-08-27 for Phase 3, on the recommendations:
 - **D13 — bounded rules.** Extending a run consumes `UpdBounded`
   (recommended), or the run structure drops its `count_pos`/`count_le`
   clauses and every consumer re-derives them.
+
+Settled 2026-08-27 for Phase 4, on the recommendations:
+
+- **D14 — the descent laws** are a second law structure, `Descent`
+  (recommended), or fields of the frozen `Laws`.
+- **D15 — the eligibility gap is the wave length**; no separate field.
+- **D16 — heads, not runs**: `HeadsRun`, one clause for every count
+  (recommended), or a per-count fairness clause.
+- **D17 — the pigeonhole at general `n`**, by an injection into
+  `Fin g × Tᶜ` (recommended), or witnessed only on small committees.
+- **D18 — the gap is `c₀`**: HH9b on the heads themselves and `HeadsRun`
+  called one round up (recommended), or `c₀ + w` with the offset form.
 
 ## 13. Out of scope
 
