@@ -122,14 +122,40 @@ pacing disciplines supply this — the full-timeout one through coverage
 (`FinWhale.Reactive`) — and nothing below cares which. -/
 def CommitsCorrectLeaders (D : Dag Validator BlockId Payload) (R N : ℕ) : Prop :=
   ∀ s, R ≤ s → s + 2 ≤ N → D.leader s ∈ (Correct : Finset Validator) →
-    ∃ l, l ∈ slotBlocks D s ∧ DirectCommit D l
+    ∃ l ∈ slotBlocks D s, ∃ certs : Finset Validator,
+      certs ⊆ (Correct : Finset Validator) ∧ spQuorum Validator ≤ certs.card ∧
+      ∀ v ∈ certs, ∃ b ∈ blocksAt D ((D.block l).round + 2),
+        (D.block b).creator = v ∧ SPCertificate D b l
+
+/-- The commit the interface carries. -/
+theorem directCommit_of_commits {R N : ℕ} (h : CommitsCorrectLeaders D R N) {s : ℕ}
+    (hR : R ≤ s) (hN : s + 2 ≤ N) (hlead : D.leader s ∈ (Correct : Finset Validator)) :
+    ∃ l ∈ slotBlocks D s, DirectCommit D l := by
+  obtain ⟨l, hslot, certs, -, hcard, hcertb⟩ := h s hR hN hlead
+  exact ⟨l, hslot, Or.inr ⟨certs, hcard, hcertb⟩⟩
+
+/-- **What Lemma 23 consumes**: the deciding validator *sees* a direct
+commit at every correct-led slot below the horizon. One clause where
+there were two — a commit in the universe, and the view seeing it —
+because the second is where a view's holdings enter and the first is
+where the schedule does. -/
+def SeesCommits (D : Dag Validator BlockId Payload) (dc : ℕ → BlockId → Prop) (R N : ℕ) :
+    Prop :=
+  ∀ s, R ≤ s → s + 2 ≤ N → D.leader s ∈ (Correct : Finset Validator) →
+    ∃ l, l ∈ slotBlocks D s ∧ dc s l
+
+/-- A validator reading the whole universe sees them all. -/
+theorem sees_of_commits {R N : ℕ} (h : CommitsCorrectLeaders D R N) :
+    SeesCommits D (fun r l => l ∈ slotBlocks D r ∧ DirectCommit D l) R N := by
+  intro s hR hN hlead
+  obtain ⟨l, hslot, hcom⟩ := directCommit_of_commits h hR hN hlead
+  exact ⟨l, hslot, hslot, hcom⟩
 
 /-- **A committed triple above every round.** -/
 theorem committed_triple {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed dc ds choose dec) {R N t : ℕ}
-    (hsees : ∀ r l, r + 2 ≤ N → l ∈ slotBlocks D r → DirectCommit D l → dc r l)
-    (hcommits : CommitsCorrectLeaders D R N)
+    (hsees : SeesCommits D dc R N)
     (hrr : RoundRobin D.leader) (hR : R ≤ t) (hN : t + (3 * F.f + 5) ≤ N) :
     ∃ a, t < a ∧ a + 4 ≤ N ∧
       ∀ s, a ≤ s → s ≤ a + 2 →
@@ -139,8 +165,8 @@ theorem committed_triple {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
   have hsc : D.leader s ∈ (Correct : Finset Validator) := by
     rcases (by omega : s = a ∨ s = a + 1 ∨ s = a + 2) with rfl | rfl | rfl
     exacts [h0, h1, h2]
-  obtain ⟨l, hslot, hcom⟩ := hcommits s (by omega) (by omega) hsc
-  rw [hwf.direct_commit s l (hsees s l (by omega) hslot hcom)]
+  obtain ⟨l, -, hdcl⟩ := hsees s (by omega) (by omega) hsc
+  rw [hwf.direct_commit s l hdcl]
   exact ⟨by simp, by simp⟩
 
 /-- **Lemma 23, composed.** Every slot below the horizon is decided —
@@ -151,12 +177,11 @@ which is why `R` enters through a maximum rather than as a floor on
 theorem all_decided {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed dc ds choose dec) {R N r : ℕ}
-    (hsees : ∀ r l, r + 2 ≤ N → l ∈ slotBlocks D r → DirectCommit D l → dc r l)
-    (hcommits : CommitsCorrectLeaders D R N)
+    (hsees : SeesCommits D dc R N)
     (hrr : RoundRobin D.leader) (hN : max r R + (3 * F.f + 5) ≤ N) :
     dec r ≠ Verdict.undecided := by
   obtain ⟨a, hlo, -, htri⟩ :=
-    committed_triple hwf hsees hcommits hrr (le_max_right r R) hN
+    committed_triple hwf hsees hrr (le_max_right r R) hN
   exact lemma23 hwf (lt_of_le_of_lt (le_max_left r R) hlo) htri
 
 end Triple
@@ -293,7 +318,7 @@ The two finiteness conditions sit together rather than in conflict —
 `hbound` says nothing above `M` is decided, and the horizon is placed
 below what the DAG's own reach decides. -/
 theorem agreement_of_commits {R N : ℕ}
-    (hcommits : CommitsCorrectLeaders D R N) (hrr : RoundRobin D.leader)
+    (hrr : RoundRobin D.leader)
     {dc dc' : ℕ → BlockId → Prop} {ds ds' : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
     (hwf : WellFormed dc ds choose dec) (hwf' : WellFormed dc' ds' choose dec')
@@ -301,8 +326,7 @@ theorem agreement_of_commits {R N : ℕ}
     (hdc : ∀ r l, dc r l → l ∈ slotBlocks D r ∧ DirectCommit D l)
     (hdc' : ∀ r l, dc' r l → l ∈ slotBlocks D r ∧ DirectCommit D l)
     (hds : ∀ r, ds r → DirectSkip D r) (hds' : ∀ r, ds' r → DirectSkip D r)
-    (hsees : ∀ r l, r + 2 ≤ N → l ∈ slotBlocks D r → DirectCommit D l → dc r l)
-    (hsees' : ∀ r l, r + 2 ≤ N → l ∈ slotBlocks D r → DirectCommit D l → dc' r l)
+    (hsees : SeesCommits D dc R N) (hsees' : SeesCommits D dc' R N)
     (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks D r)
     (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks D r)
     {M : ℕ} (hbound : ∀ s, M ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)
@@ -319,10 +343,10 @@ theorem agreement_of_commits {R N : ℕ}
   refine theorem24
     (lemma12 hwf hwf' (exclusions_of_dag hch hdc hdc' hds hds')
       (habove dec hslot) (habove dec' hslot') hbound)
-    (fun s hs => all_decided hwf hsees hcommits hrr (by
+    (fun s hs => all_decided hwf hsees hrr (by
       have : max s R ≤ max k R := max_le_max (by omega) le_rfl
       omega))
-    (fun s hs => all_decided hwf' hsees' hcommits hrr (by
+    (fun s hs => all_decided hwf' hsees' hrr (by
       have : max s R ≤ max k R := max_le_max (by omega) le_rfl
       omega))
     hist

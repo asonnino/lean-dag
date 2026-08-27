@@ -78,11 +78,14 @@ theorem spCommit_of_reactive (rm : ReactiveM U T N)
     (hgst : rm.gst ≤ R) (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
     (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
-    SPCommit D L := by
+    ∃ certs : Finset Validator, certs ⊆ T ∧ spQuorum Validator ≤ certs.card ∧
+      ∀ v ∈ certs, ∃ b ∈ blocksAt D ((D.block L).round + 2),
+        (D.block b).creator = v ∧ SPCertificate D b L := by
   have hcert := rm.certifies hT hcard hgst hto hR hN hlead hL
   have hpop := rm.toPaceCore.populatedOn hcard (S.slotRound k + 2) (by omega)
   have hLround : (D.block L).round = S.slotRound k := by rw [hblk]; exact hL.2.1
-  refine ⟨T, le_trans (spQuorum_le_quorumCard (Validator := Validator)) hcard, fun v hv => ?_⟩
+  refine ⟨T, Finset.Subset.refl T,
+    le_trans (spQuorum_le_quorumCard (Validator := Validator)) hcard, fun v hv => ?_⟩
   obtain ⟨b, hb, hbc, hbr⟩ := hpop v hv
   refine ⟨b, ?_, by rw [hblk]; exact hbc,
     spCertificate_of_certifies hblk (hcert v hv b hb hbc hbr)⟩
@@ -178,8 +181,10 @@ theorem commits_of_reactive (rm : ReactiveM U T N)
   obtain ⟨L, hL, hLc, hLr⟩ :=
     rm.toPaceCore.populatedOn card_correct s (by omega) (D.leader s) hsc
   have hLb : IsLeaderBlock U s L := ⟨hL, by rw [hLr, hround], by rw [hLc, hleader]⟩
-  refine ⟨L, ?_, Or.inr (spCommit_of_reactive rm hids hblk (fun _ h => h) card_correct hgst hto
-    (by rw [hround]; exact hR) (by rw [hround]; omega) (by rw [hleader]; exact hsc) hLb)⟩
+  obtain ⟨certs, hcertsub, hcard, hcertb⟩ :=
+    spCommit_of_reactive rm hids hblk (fun _ h => h) card_correct hgst hto
+      (by rw [hround]; exact hR) (by rw [hround]; omega) (by rw [hleader]; exact hsc) hLb
+  refine ⟨L, ?_, certs, hcertsub, hcard, hcertb⟩
   simp only [slotBlocks, blocksAt, Finset.mem_filter, hids, hblk]
   exact ⟨⟨hL, hLr⟩, hLc⟩
 

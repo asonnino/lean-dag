@@ -482,6 +482,37 @@ theorem safety_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView 
   · exact Or.inl (theorem14 hist h)
   · exact Or.inr (theorem14 hist h)
 
+/-- **A view holding the reliable blocks sees the commits.** The liveness
+interface names its certificates as reliable validators' blocks, and a
+view holds those; the leader's own block is reliable too, the slot being
+correct-led. Nothing is asked of the view about Byzantine authors, which
+is as much as a schedule can give. -/
+theorem sees_of_commits_of_held {V : Finset BlockId} (hV : IsView D V) {R N : ℕ}
+    (hcommits : CommitsCorrectLeaders D R N)
+    (hheld : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
+      (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V) :
+    SeesCommits D (viewCommit D V hV) R N := by
+  intro s hR hN hlead
+  obtain ⟨l, hslot, certs, hsub, hcard, hcertb⟩ := hcommits s hR hN hlead
+  have hlu : l ∈ blocksAt D s ∧ (D.block l).creator = D.leader s := by
+    simp only [slotBlocks, Finset.mem_filter] at hslot
+    exact hslot
+  have hlround : (D.block l).round = s := by
+    simp only [blocksAt, Finset.mem_filter] at hlu
+    exact hlu.1.2
+  have hlV : l ∈ V := hheld s hR (by omega) l hlu.1 (by rw [hlu.2]; exact hlead)
+  refine ⟨l, hslot, ?_, Or.inr ⟨certs, hcard, fun v hv => ?_⟩⟩
+  · simp only [slotBlocks, blocksAt, restrict_ids, restrict_block, restrict_leader,
+      Finset.mem_filter]
+    exact ⟨⟨hlV, hlround⟩, hlu.2⟩
+  · obtain ⟨b, hb, hbc, hcert⟩ := hcertb v hv
+    have hbV : b ∈ V :=
+      hheld ((D.block l).round + 2) (by omega) (by omega) b hb (by rw [hbc]; exact hsub hv)
+    refine ⟨b, ?_, hbc, hcert⟩
+    simp only [blocksAt, restrict_ids, restrict_block, Finset.mem_filter]
+    simp only [blocksAt, Finset.mem_filter] at hb
+    exact ⟨hbV, hb.2⟩
+
 /-- **Lemma 23, on a view.** A validator whose view holds the blocks up
 to the horizon decides every slot below it. `hsees` is discharged by
 `directCommit_of_holds`: holding the two rounds above a slot is seeing
@@ -489,21 +520,12 @@ whatever direct commit is there. -/
 theorem all_decided_of_view {V : Finset BlockId} (hV : IsView D V)
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed (viewCommit D V hV) (viewSkip D V hV) choose dec) {R N r : ℕ}
-    (hheld : ∀ n, n ≤ N → blocksAt D n ⊆ V)
+    (hheld : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
+      (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V)
     (hcommits : CommitsCorrectLeaders D R N)
     (hrr : RoundRobin D.leader) (hN : max r R + (3 * F.f + 5) ≤ N) :
-    dec r ≠ Verdict.undecided := by
-  refine all_decided hwf (fun s l hs hslot hcom => ⟨?_, ?_⟩) hcommits hrr hN
-  · have hmem := hslot
-    simp only [slotBlocks, blocksAt, Finset.mem_filter] at hmem
-    simp only [slotBlocks, blocksAt, restrict_ids, restrict_block, restrict_leader,
-      Finset.mem_filter]
-    exact ⟨⟨hheld s (by omega) (by
-      simp only [blocksAt, Finset.mem_filter]; exact hmem.1), hmem.1.2⟩, hmem.2⟩
-  · have hround : (D.block l).round = s := by
-      simp only [slotBlocks, blocksAt, Finset.mem_filter] at hslot; exact hslot.1.2
-    exact directCommit_of_holds (by rw [hround]; exact hheld (s + 1) (by omega))
-      (by rw [hround]; exact hheld (s + 2) (by omega)) hcom
+    dec r ≠ Verdict.undecided :=
+  all_decided hwf (sees_of_commits_of_held hV hcommits hheld) hrr hN
 
 /-- **Theorem 24, on two views.** Two validators that have caught up to
 the horizon deliver the same sequence. -/
@@ -516,7 +538,10 @@ theorem agreement_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsVi
     (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks D r)
     {M : ℕ} (hbound : ∀ s, M ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)
     {R N k : ℕ}
-    (hheld : ∀ n, n ≤ N → blocksAt D n ⊆ V) (hheld' : ∀ n, n ≤ N → blocksAt D n ⊆ V')
+    (hheld : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
+      (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V)
+    (hheld' : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
+      (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V')
     (hcommits : CommitsCorrectLeaders D R N)
     (hrr : RoundRobin D.leader) (hkN : max k R + (3 * F.f + 5) ≤ N)
     (hist : BlockId → List BlockId) :

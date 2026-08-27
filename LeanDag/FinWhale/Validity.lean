@@ -83,8 +83,7 @@ theorem theorem26_of_selfParent (hself : SelfParented D)
     {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed dc ds choose dec) {R N : ℕ}
-    (hsees : ∀ r l, r + 2 ≤ N → l ∈ slotBlocks D r → DirectCommit D l → dc r l)
-    (hcommits : CommitsCorrectLeaders D R N)
+    (hsees : SeesCommits D dc R N)
     (hrr : RoundRobin D.leader) [LinearOrder BlockId]
     {b : BlockId} {k : ℕ} (hb : b ∈ D.ids)
     (hbc : (D.block b).creator ∈ (Correct : Finset Validator))
@@ -94,7 +93,7 @@ theorem theorem26_of_selfParent (hself : SelfParented D)
   -- the rotation names the author a leader within the cycle above `b`
   obtain ⟨s, hlo, hhi, hlead⟩ :=
     exists_round_led_by hrr ((D.block b).creator) (max ((D.block b).round) R)
-  obtain ⟨l, hslot, hcom⟩ := hcommits s (le_trans (le_max_right _ R) hlo) (by omega)
+  obtain ⟨l, hslot, hdcl⟩ := hsees s (le_trans (le_max_right _ R) hlo) (by omega)
     (by rw [hlead]; exact hbc)
   have hlu : l ∈ D.ids ∧ (D.block l).round = s ∧ (D.block l).creator = D.leader s := by
     simp only [slotBlocks, blocksAt, Finset.mem_filter] at hslot
@@ -104,7 +103,7 @@ theorem theorem26_of_selfParent (hself : SelfParented D)
     reaches_of_same_creator hself hb hlu.1 hbc (by rw [hlu.2.2, hlead])
       (by have := le_max_left ((D.block b).round) R; omega)
   exact theorem26 (r := s) (l := l) (by omega)
-    (hwf.direct_commit s l (hsees s l (by omega) hslot hcom)) (mem_histOf hlu.1 hreach)
+    (hwf.direct_commit s l hdcl) (mem_histOf hlu.1 hreach)
 
 end FinWhale
 

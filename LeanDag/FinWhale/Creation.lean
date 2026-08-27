@@ -353,12 +353,15 @@ theorem lemma20_of_creation (cr : Creation U T N D.leader)
     (hR : R ≤ n) (hN : n + 2 ≤ N)
     {L : BlockId} (hL : L ∈ D.ids) (hLr : (D.block L).round = n)
     (hLc : (D.block L).creator = D.leader n) (hlead : D.leader n ∈ T) :
-    SPCommit D L := by
+    ∃ certs : Finset Validator, certs ⊆ T ∧ spQuorum Validator ≤ certs.card ∧
+      ∀ v ∈ certs, ∃ b ∈ blocksAt D ((D.block L).round + 2),
+        (D.block b).creator = v ∧ SPCertificate D b L := by
   have hLu : L ∈ U.ids := hids ▸ hL
   have hLrU : (U.block L).round = n := by rw [← hblk]; exact hLr
   have hcert := cr.lemma19 hcard hgst hto hR hN hLu hLrU
     (by rw [← hblk]; exact hLc) hlead
-  refine ⟨T, le_trans (spQuorum_le_quorumCard (Validator := Validator)) hcard, fun v hv => ?_⟩
+  refine ⟨T, Finset.Subset.refl T,
+    le_trans (spQuorum_le_quorumCard (Validator := Validator)) hcard, fun v hv => ?_⟩
   obtain ⟨b, hb, hbc, hbr⟩ := cr.toPaceCore.populatedOn hcard (n + 2) (by omega) v hv
   refine ⟨b, ?_, by rw [hblk]; exact hbc,
     spCertificate_of_certifiesSP hblk (hcert v hv b hb hbc hbr)⟩
@@ -377,8 +380,10 @@ theorem commits_of_creation (cr : Creation U T N D.leader)
   intro s hR hN hsc
   obtain ⟨L, hL, hLc, hLr⟩ :=
     cr.toPaceCore.populatedOn card_correct s (by omega) (D.leader s) hsc
-  refine ⟨L, ?_, Or.inr (lemma20_of_creation cr hids hblk card_correct hgst hto hR hN
-    (hids ▸ hL) (by rw [hblk]; exact hLr) (by rw [hblk]; exact hLc) hsc)⟩
+  obtain ⟨certs, hcertsub, hcard, hcertb⟩ :=
+    lemma20_of_creation cr hids hblk card_correct hgst hto hR hN
+      (hids ▸ hL) (by rw [hblk]; exact hLr) (by rw [hblk]; exact hLc) hsc
+  refine ⟨L, ?_, certs, hcertsub, hcard, hcertb⟩
   simp only [slotBlocks, blocksAt, Finset.mem_filter, hids, hblk]
   exact ⟨⟨hL, hLr⟩, hLc⟩
 

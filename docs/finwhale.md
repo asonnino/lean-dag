@@ -394,7 +394,14 @@ number `n − p`, and their votes alone are a fast commit.
 
 **Two routes, one interface.** `CommitsCorrectLeaders` is where liveness
 meets the decision layer: every correct-led slot below the horizon
-carries a direct commit. `commits_of_creation` is the route above.
+carries a slow-path commit *whose certificates are reliable validators'
+blocks*. The certificates are named rather than only their existence,
+because a validator's view has to see them, and what a view can be shown
+to hold is what reliable validators produced. `SeesCommits` is the form
+Lemma 23 consumes — the deciding validator sees a direct commit at every
+correct-led slot — and `sees_of_commits` and `sees_of_commits_of_held`
+supply it for a validator reading the whole universe and for one reading
+its own holdings. `commits_of_creation` is the route above.
 `commits_of_reactive` takes `ReactivePace`'s wait clauses as given
 instead — that a block either votes or waited the timeout out, which is
 what Lemmas 18 and 19 conclude — and reuses the core's reactive
@@ -543,9 +550,23 @@ slow one — which is what Non-FP-evidence denies.
 `exclusions_of_views` assembles the nine fields from two views of one
 DAG, and `safety_of_views`, `all_decided_of_view` and
 `agreement_of_views` are the capstones with the view conditions supplied
-rather than assumed. On the liveness side `directCommit_of_holds`
-discharges the last of them: a view holding the two rounds above a slot
-sees whatever direct commit is there, which is what catching up means.
+rather than assumed.
+
+**And a view is a validator's holdings.** `Holdings.lean` closes the last
+of it. `PaceCore.holds` is what a validator has at an instant, and its
+two store clauses — holdings are part of the universe, holdings are
+closed under references — are exactly what `IsView` asks, so
+`isView_holds` makes the holdings a view and `restrict` makes them a DAG
+the rules run on. What the network delivers is `held_of_pace`: past GST
+every reliable block of every round up to the horizon has arrived by
+`settled`, one instant, by `holds_roundBlocks` and monotonicity. Byzantine
+authors are not covered and no schedule covers them, which is why the
+liveness interface names its certificates as reliable validators' blocks
+(§10) — a view can be shown to hold those and nothing else.
+
+`all_decided_of_pass` is the result with nothing about the validator
+assumed: its view is what it holds, its verdicts are the reverse pass,
+and every slot below the horizon is decided.
 
 ## 12. What the paper should change
 
@@ -679,8 +700,9 @@ delivery are not modelled at all. §13 says what stands in their place.
 ## 13. What is not modelled, and what is not done
 
 The capstones state their own side conditions. §8 discharged the
-ordering hypothesis, §11 the view conditions, and §9 exhibits an
-execution that is a schedule. Three gaps remain, and they are of a
+ordering hypothesis, §11 the view conditions and the holdings behind
+them, §7 the reverse pass, and §9 exhibits an execution that is a
+schedule. Three gaps remain, and they are of a
 different kind from the ones that closed: each is a piece of the protocol
 this development does not model at all.
 
