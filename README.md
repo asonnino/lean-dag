@@ -269,7 +269,8 @@ the set of declarations changes. `make help` lists them.
   one message; `Adaptive/` — adaptive leader schedules; `Hybrid/` —
   Byzantine and crash faults apart; `Nemo/` — crash-fault consensus at
   a majority quorum; `FinWhale/` — the fast path at
-  `n = 3f + 2p − 1`; `MahiMahi/` — the asynchronous rule at wave `w`,
+  `n = 3f + 2p − 1`, whose `Model/` holds every definition of the
+  protocol and no proof; `MahiMahi/` — the asynchronous rule at wave `w`,
   and `BlackMarlin/` — the three-round rule with an anchor every round,
   both under a statement/proof partition (`Model/`,
   `<Result>/Statement.lean`, `<Result>/Proof.lean`); `Network/` — the composed

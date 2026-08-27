@@ -1,4 +1,5 @@
 import LeanDag.FinWhale.Holdings
+import LeanDag.FinWhale.Model.Protocol
 import LeanDag.FinWhale.Validity
 
 /-!
@@ -30,57 +31,9 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] [LinearOrder BlockId] {Payload : Type*}
 
-/-- **A run of FinWhale.** The blocks every correct validator ever holds,
-the schedule and network that carried them, and the two rules a
-validator applies: the rotation that names leaders and the tie-break that
-resolves an anchor's candidates. -/
-structure Run (Validator BlockId Payload : Type*) [Fintype Validator] [DecidableEq Validator]
-    [Faults Validator] [Params Validator] [DecidableEq BlockId] [LinearOrder BlockId] where
-  /-- Every block any correct validator holds. -/
-  dag : Dag Validator BlockId Payload
-  /-- The same blocks, as the pacing line reads them. -/
-  paced : BlockUniverse Validator BlockId Payload
-  /-- The two readings describe the same blocks. -/
-  ids_eq : dag.ids = paced.ids
-  /-- And denote them the same way. -/
-  block_eq : dag.block = paced.block
-  /-- No block sits above this round. -/
-  horizon : ℕ
-  /-- Which is a horizon. -/
-  rounds_le : ∀ b ∈ dag.ids, (dag.block b).round ≤ horizon
-  /-- The rounds the schedule reaches. -/
-  paceHorizon : ℕ
-  /-- The schedule and the network. -/
-  pace : PaceCore paced (Correct : Finset Validator) paceHorizon
-  /-- Rounds advance real time. -/
-  rounds_advance : ∀ u ∈ (Correct : Finset Validator), ∀ n ≤ pace.top u, n ≤ pace.built u n
-  /-- The network has stabilised by this round. -/
-  stable : ℕ
-  /-- Which is past GST. -/
-  gst_le : pace.gst ≤ stable
-  /-- Below this round the liveness argument applies. -/
-  liveHorizon : ℕ
-  /-- Every correct-led slot below it carries a commit — the input §10
-  supplies, by either route. -/
-  commits : CommitsCorrectLeaders dag stable liveHorizon
-  /-- The schedule reaches that far. -/
-  live_le : liveHorizon ≤ paceHorizon
-  /-- Leaders rotate. -/
-  roundRobin : RoundRobin dag.leader
-  /-- Every block references its author's previous block. -/
-  selfParented : SelfParented dag
-  /-- The deterministic rule among an anchor's candidates. -/
-  choose : BlockId → ℕ → Option BlockId
-  /-- Which names only candidates, and names one where there is one. -/
-  chooseSound : ChooseSound dag choose
-
 namespace Run
 
 variable (run : Run Validator BlockId Payload) {v w : Validator}
-
-/-- **What a validator holds**, once the network has delivered every
-reliable block of every round the schedule reaches. -/
-def view (v : Validator) : Finset BlockId := run.pace.holds v (settled run.pace)
 
 /-- And what it holds is a view: part of the run, closed under
 references. -/

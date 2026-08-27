@@ -1,5 +1,6 @@
 import LeanDag.FinWhale.Decided
 import LeanDag.FinWhale.Rotation
+import LeanDag.FinWhale.Model.Schedule
 
 /-!
 # FinWhale — Validity, on any schedule
@@ -26,6 +27,7 @@ includes an edge that references the previous block created by the same
 validator".
 -/
 
+
 namespace LeanDag
 
 namespace FinWhale
@@ -34,12 +36,6 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {D : Dag Validator BlockId Payload}
-
-/-- **The self-parent clause**, which the paper's block structure has and
-`ValidHere` omits. -/
-def SelfParented (D : Dag Validator BlockId Payload) : Prop :=
-  ∀ b ∈ D.ids, 0 < (D.block b).round →
-    ∃ q ∈ (D.block b).refs, (D.block q).creator = (D.block b).creator
 
 /-- **A correct validator's blocks form a chain.** Each of its blocks
 reaches all its earlier ones: the self-parent edge steps down one round,

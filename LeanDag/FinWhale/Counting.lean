@@ -1,4 +1,4 @@
-import LeanDag.FinWhale.Model.Params
+import LeanDag.FinWhale.Committee
 
 /-!
 # FinWhale — the counting behind the fast path

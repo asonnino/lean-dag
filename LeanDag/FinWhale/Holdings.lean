@@ -1,4 +1,5 @@
 import LeanDag.FinWhale.Pass
+import LeanDag.FinWhale.Model.Liveness
 import LeanDag.ViewPace
 
 /-!
@@ -40,11 +41,6 @@ clause and `holds_closed` the closure clause. -/
 theorem isView_holds (pc : PaceCore U T M) (hids : D.ids = U.ids) (hblk : D.block = U.block)
     {v : Validator} (hv : v ∈ T) (t : ℕ) : IsView D (pc.holds v t) :=
   ⟨by rw [hids]; exact pc.holds_sub v t, by rw [hblk, hids] at *; exact pc.holds_closed v hv t⟩
-
-/-- The instant by which every reliable block of every round up to `M`
-has arrived: the latest build of any of those rounds, plus one delay. -/
-def settled (pc : PaceCore U T M) : ℕ :=
-  (Finset.range (M + 1)).sup (fun n => pc.latest n + pc.delay)
 
 /-- **And by then the view holds every reliable block from the coverage
 round up.** Byzantine authors are not covered, and no schedule covers

@@ -1,34 +1,24 @@
 import LeanDag.FinWhale.Propagation
-import Mathlib.Data.Fintype.Powerset
+import LeanDag.FinWhale.Model.Decision
 
 /-!
-# FinWhale — the direct decision rule, and how far Lemma 12 gets
+# FinWhale — what a direct verdict excludes
 
-Lemma 12 says two honest validators never decide a slot differently. Its
+Lemma 12 says two validators never decide a slot differently, and its
 proof splits: either one of them decided **directly**, and the direct
-rules exclude each other; or both decided **indirectly**, and the
-argument is that by maximality they committed the same anchor, and the
-same anchor gives the same decisions.
+rules exclude each other, or both decided from an anchor. This file
+settles the first branch; `Consistency.lean` settles the second.
 
-This file settles the first branch and states the second's requirement.
-
-**The first branch is proved.** A direct commit, fast or slow, carries a
-quorum of round-`(r+1)` voters — for the fast path by threshold, for the
-slow path because an SP-certificate *references* that quorum
-(`voters_of_spCommit`). One quorum of voters excludes another for a
-conflicting block (Lemma 8), and excludes the SP-skip half of the skip
-rule (Lemma 6). So `direct_commit_unique` and `no_directSkip_of_commit`
-close every case where either validator decided directly, and neither
-needs the FP-evidence half of the skip rule at all.
-
-**The second branch is not.** It rests on the indirect rule being a
-function of the anchor's causal history, which this arc does not model:
-`AnchorDetermined` states it, `lemma12_of_anchorDetermined` shows Lemma
-12 follows from it and the first branch, and nothing here discharges it.
-That is the honest shape of the gap. It is also where the Black Marlin
-arc found what it found — its commit rule was sound and its descent was
-not — so the requirement is worth naming rather than absorbing.
+Every direct commit carries a quorum of round-`(r+1)` voters — the fast
+path by its threshold, the slow path because an SP-certificate
+*references* that quorum (`voters_of_spCertificate`). One quorum of
+voters excludes another for a conflicting block (Lemma 8) and excludes
+the SP-skip half of the skip rule (Lemma 6), so `direct_commit_unique`
+and `no_directSkip_of_commit` close every case where either validator
+decided directly, and neither needs the FP-evidence half of the skip rule
+at all. `lemma12_direct` is the branch assembled.
 -/
+
 
 namespace LeanDag
 
@@ -39,55 +29,11 @@ variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {D : Dag Validator BlockId Payload}
 
-/-- The blocks of the leader slot of round `r`. There may be several, if
-the leader equivocates. -/
-def slotBlocks (D : Dag Validator BlockId Payload) (r : ℕ) : Finset BlockId :=
-  (blocksAt D r).filter (fun b => (D.block b).creator = D.leader r)
-
-/-- **The slow-path direct commit**: a quorum of SP-certificates from
-distinct validators at round `r + 2`. -/
-def SPCommit (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
-  ∃ certs : Finset Validator, spQuorum Validator ≤ certs.card ∧
-    ∀ v ∈ certs, ∃ b ∈ blocksAt D ((D.block l).round + 2),
-      (D.block b).creator = v ∧ SPCertificate D b l
-
-set_option synthInstance.maxSize 1000 in
-instance (D : Dag Validator BlockId Payload) (l : BlockId) :
-    Decidable (SPCommit D l) := by unfold SPCommit; infer_instance
-
-/-- **A slow-path commit witnessed by `T`**: the certificates it counts
-are blocks of validators in `T`. `SPCommit` is this without the
-restriction; the liveness routes produce it at `T = Correct`, which is
-what a validator's view can be shown to hold. -/
-def SPCommitBy (D : Dag Validator BlockId Payload) (l : BlockId) (T : Finset Validator) : Prop :=
-  ∃ certs ⊆ T, spQuorum Validator ≤ certs.card ∧
-    ∀ v ∈ certs, ∃ b ∈ blocksAt D ((D.block l).round + 2),
-      (D.block b).creator = v ∧ SPCertificate D b l
-
 /-- Naming the witnesses is a restriction, not a weakening. -/
 theorem spCommit_of_spCommitBy {l : BlockId} {T : Finset Validator}
     (h : SPCommitBy D l T) : SPCommit D l := by
   obtain ⟨certs, -, hcard, hcertb⟩ := h
   exact ⟨certs, hcard, hcertb⟩
-
-/-- **The direct commit rule**: either path. -/
-def DirectCommit (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
-  FastCommit D l ∨ SPCommit D l
-
-instance (D : Dag Validator BlockId Payload) (l : BlockId) :
-    Decidable (DirectCommit D l) := inferInstanceAs (Decidable (_ ∨ _))
-
-/-- **The direct skip rule**: an SP-skip pattern at every block of the
-slot, and a quorum of Non-FP-evidence blocks at round `r + 2`. -/
-def DirectSkip (D : Dag Validator BlockId Payload) (r : ℕ) : Prop :=
-  (∀ l ∈ slotBlocks D r, SPSkip D l) ∧
-    ∃ nonev : Finset Validator, spQuorum Validator ≤ nonev.card ∧
-      ∀ v ∈ nonev, ∃ b ∈ blocksAt D (r + 2),
-        (D.block b).creator = v ∧ NonFPEvidence D b (slotBlocks D r)
-
-set_option synthInstance.maxSize 1000 in
-instance (D : Dag Validator BlockId Payload) (r : ℕ) :
-    Decidable (DirectSkip D r) := by unfold DirectSkip; infer_instance
 
 /-- **An SP-certificate exhibits the voters it certifies.** Its parents
 voting for `l` are round-`(r+1)` blocks referencing `l`, so a certificate

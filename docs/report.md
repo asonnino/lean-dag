@@ -7768,7 +7768,25 @@ direction: they are neither confirmed nor contradicted here, because
 timeouts and message delivery are not modelled, and `PaceCore` stands in
 their place.
 
-### 20.9 The witnesses
+### 20.9 The partition, and the witnesses
+
+`LeanDag/FinWhale/Model/` holds every definition of the protocol and
+nothing else, in thirteen files: the committee and the thresholds, block
+validity and the evidence the fast path counts, the two halves of the
+skip rule, the direct verdicts, the indirect rule, verdicts and the
+tie-break, the reverse pass as a procedure, the committed sequence and
+the delivery order, views, the rotation and the self-parent clause, the
+block-creation conditions, the interfaces the layers pass between them,
+and `Run`. `scripts/check-arc-holes.py` enforces the split over the arc,
+as it does for §17 and §18: no proof holes anywhere, and no theorem in a
+`Model/` file. The layer is closed — every `Model/` file imports only
+other `Model/` files, three core modules and Mathlib — so the protocol
+can be read without reading a proof. Four definitions sit outside it,
+each because it takes a proof as an argument: `Run.verdicts` and
+`Run.delivers` need the holdings to be a view, and the two `ofDoSValid`
+constructions need the bridge's own theorems. What the arc does not carry
+is the other half of the discipline of §17.5: results here are stated
+where they are proved.
 
 `LeanDagTest/FinWhale/Model.lean` settles every definition by `decide` on
 concrete executions before anything is proved from it, at `f = 2` and
@@ -15252,7 +15270,7 @@ def FastCommit (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
 
 #### `nonVoters`
 
-*def, `FinWhale.Skip.lean`*
+*def, `FinWhale.Model.Skip.lean`*
 
 ```lean
 def nonVoters (D : Dag Validator BlockId Payload) (l : BlockId) : Finset Validator :=
@@ -15264,7 +15282,7 @@ The validators whose round-`(r+1)` block declines to vote for `l`.
 
 #### `NonFPEvidence`
 
-*def, `FinWhale.Skip.lean`*
+*def, `FinWhale.Model.Skip.lean`*
 
 ```lean
 def NonFPEvidence (D : Dag Validator BlockId Payload) (b : BlockId) (slot : Finset BlockId) :
@@ -15276,7 +15294,7 @@ def NonFPEvidence (D : Dag Validator BlockId Payload) (b : BlockId) (slot : Fins
 
 #### `SPSkip`
 
-*def, `FinWhale.Skip.lean`*
+*def, `FinWhale.Model.Skip.lean`*
 
 ```lean
 def SPSkip (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
@@ -15287,7 +15305,7 @@ def SPSkip (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
 
 #### `slotBlocks`
 
-*def, `FinWhale.Decision.lean`*
+*def, `FinWhale.Model.Decision.lean`*
 
 ```lean
 def slotBlocks (D : Dag Validator BlockId Payload) (r : ℕ) : Finset BlockId :=
@@ -15298,7 +15316,7 @@ The blocks of the leader slot of round `r`. There may be several, if the leader 
 
 #### `SPCommit`
 
-*def, `FinWhale.Decision.lean`*
+*def, `FinWhale.Model.Decision.lean`*
 
 ```lean
 def SPCommit (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
@@ -15313,7 +15331,7 @@ set_option synthInstance.maxSize 1000 in
 
 #### `SPCommitBy`
 
-*def, `FinWhale.Decision.lean`*
+*def, `FinWhale.Model.Decision.lean`*
 
 ```lean
 def SPCommitBy (D : Dag Validator BlockId Payload) (l : BlockId) (T : Finset Validator) : Prop :=
@@ -15326,7 +15344,7 @@ def SPCommitBy (D : Dag Validator BlockId Payload) (l : BlockId) (T : Finset Val
 
 #### `DirectCommit`
 
-*def, `FinWhale.Decision.lean`*
+*def, `FinWhale.Model.Decision.lean`*
 
 ```lean
 def DirectCommit (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
@@ -15337,7 +15355,7 @@ def DirectCommit (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
 
 #### `DirectSkip`
 
-*def, `FinWhale.Decision.lean`*
+*def, `FinWhale.Model.Decision.lean`*
 
 ```lean
 def DirectSkip (D : Dag Validator BlockId Payload) (r : ℕ) : Prop :=
@@ -15353,7 +15371,7 @@ set_option synthInstance.maxSize 1000 in
 
 #### `IndirectCommit`
 
-*def, `FinWhale.Anchor.lean`*
+*def, `FinWhale.Model.Anchor.lean`*
 
 ```lean
 def IndirectCommit (D : Dag Validator BlockId Payload) (A : BlockId) (r : ℕ) (b : BlockId) :
@@ -15369,7 +15387,7 @@ def IndirectCommit (D : Dag Validator BlockId Payload) (A : BlockId) (r : ℕ) (
 
 #### `IndirectCommitOn`
 
-*def, `FinWhale.Anchor.lean`*
+*def, `FinWhale.Model.Anchor.lean`*
 
 ```lean
 def IndirectCommitOn (D : Dag Validator BlockId Payload) (A : BlockId) (r : ℕ) (b : BlockId) :
@@ -15385,7 +15403,7 @@ def IndirectCommitOn (D : Dag Validator BlockId Payload) (A : BlockId) (r : ℕ)
 
 #### `Verdict`
 
-*inductive, `FinWhale.Consistency.lean`*
+*inductive, `FinWhale.Model.Verdict.lean`*
 
 ```lean
 inductive Verdict (BlockId : Type*) where
@@ -15402,7 +15420,7 @@ A validator's verdict for a leader slot.
 
 #### `Anchor`
 
-*def, `FinWhale.Consistency.lean`*
+*def, `FinWhale.Model.Verdict.lean`*
 
 ```lean
 def Anchor (dec : ℕ → Verdict BlockId) (r a : ℕ) : Prop :=
@@ -15413,7 +15431,7 @@ def Anchor (dec : ℕ → Verdict BlockId) (r a : ℕ) : Prop :=
 
 #### `WellFormed`
 
-*structure, `FinWhale.Consistency.lean`*
+*structure, `FinWhale.Model.Verdict.lean`*
 
 ```lean
 structure WellFormed (dcommit : ℕ → BlockId → Prop) (dskip : ℕ → Prop)
@@ -15440,7 +15458,7 @@ structure WellFormed (dcommit : ℕ → BlockId → Prop) (dskip : ℕ → Prop)
 
 #### `Exclusions`
 
-*structure, `FinWhale.Consistency.lean`*
+*structure, `FinWhale.Model.Verdict.lean`*
 
 ```lean
 structure Exclusions (dc dc' : ℕ → BlockId → Prop) (ds ds' : ℕ → Prop)
@@ -15471,7 +15489,7 @@ structure Exclusions (dc dc' : ℕ → BlockId → Prop) (ds ds' : ℕ → Prop)
 
 #### `ChooseSound`
 
-*structure, `FinWhale.Consistency.lean`*
+*structure, `FinWhale.Model.Verdict.lean`*
 
 ```lean
 structure ChooseSound (D : Dag Validator BlockId Payload)
@@ -15486,7 +15504,7 @@ structure ChooseSound (D : Dag Validator BlockId Payload)
 
 #### `chooseLeast`
 
-*def, `FinWhale.Consistency.lean`*
+*def, `FinWhale.Model.Verdict.lean`*
 
 ```lean
 noncomputable def chooseLeast [LinearOrder BlockId] (D : Dag Validator BlockId Payload)
@@ -15500,35 +15518,9 @@ noncomputable def chooseLeast [LinearOrder BlockId] (D : Dag Validator BlockId P
 
 Soundness and totality are all any result here reads, and both hold of it by construction. It is a function of the anchor and the round, so two validators holding the same anchor make the same choice, which is what `finwhale.md` §6 turns on.
 
-#### `commitSeq`
-
-*def, `FinWhale.Order.lean`*
-
-```lean
-def commitSeq (dec : ℕ → Verdict BlockId) : ℕ → List BlockId
-  | 0 => []
-  | k + 1 => commitSeq dec k ++ (match dec k with
-      | Verdict.commit b => [b]
-      | Verdict.skip => []
-      | Verdict.undecided => [])
-```
-
-**The committed leader sequence** of the first `k` slots.
-
-#### `linearise`
-
-*def, `FinWhale.Order.lean`*
-
-```lean
-def linearise (hist : BlockId → List BlockId) (ls : List BlockId) : List BlockId :=
-  ls.foldl (fun acc l => acc ++ (hist l).filter (fun b => b ∉ acc)) []
-```
-
-**The delivery order.** Each committed leader contributes the blocks of its causal history that no earlier leader delivered.
-
 #### `directCommits`
 
-*def, `FinWhale.Pass.lean`*
+*def, `FinWhale.Model.Pass.lean`*
 
 ```lean
 def directCommits (D : Dag Validator BlockId Payload) (r : ℕ) : Finset BlockId :=
@@ -15539,7 +15531,7 @@ The blocks of a slot that are directly committed. At most one, by `direct_commit
 
 #### `anchorCands`
 
-*def, `FinWhale.Pass.lean`*
+*def, `FinWhale.Model.Pass.lean`*
 
 ```lean
 def anchorCands (N : ℕ) (above : ℕ → Verdict BlockId) (r : ℕ) : Finset ℕ :=
@@ -15550,7 +15542,7 @@ The candidates for the anchor of `r`: the slots above `r + 2` and below the hori
 
 #### `anchorVerdict`
 
-*def, `FinWhale.Pass.lean`*
+*def, `FinWhale.Model.Pass.lean`*
 
 ```lean
 def anchorVerdict (choose : BlockId → ℕ → Option BlockId) (N : ℕ)
@@ -15569,7 +15561,7 @@ def anchorVerdict (choose : BlockId → ℕ → Option BlockId) (N : ℕ)
 
 #### `slotVerdict`
 
-*def, `FinWhale.Pass.lean`*
+*def, `FinWhale.Model.Pass.lean`*
 
 ```lean
 def slotVerdict (D : Dag Validator BlockId Payload)
@@ -15584,7 +15576,7 @@ def slotVerdict (D : Dag Validator BlockId Payload)
 
 #### `passFrom`
 
-*def, `FinWhale.Pass.lean`*
+*def, `FinWhale.Model.Pass.lean`*
 
 ```lean
 def passFrom (D : Dag Validator BlockId Payload)
@@ -15601,7 +15593,7 @@ decreasing_by all_goals omega
 
 #### `decOf`
 
-*def, `FinWhale.Pass.lean`*
+*def, `FinWhale.Model.Pass.lean`*
 
 ```lean
 def decOf (D : Dag Validator BlockId Payload)
@@ -15611,9 +15603,49 @@ def decOf (D : Dag Validator BlockId Payload)
 
 **The verdicts of a validator whose view is `D`.**
 
+#### `commitSeq`
+
+*def, `FinWhale.Model.Order.lean`*
+
+```lean
+def commitSeq (dec : ℕ → Verdict BlockId) : ℕ → List BlockId
+  | 0 => []
+  | k + 1 => commitSeq dec k ++ (match dec k with
+      | Verdict.commit b => [b]
+      | Verdict.skip => []
+      | Verdict.undecided => [])
+```
+
+**The committed leader sequence** of the first `k` slots.
+
+#### `linearise`
+
+*def, `FinWhale.Model.Order.lean`*
+
+```lean
+def linearise (hist : BlockId → List BlockId) (ls : List BlockId) : List BlockId :=
+  ls.foldl (fun acc l => acc ++ (hist l).filter (fun b => b ∉ acc)) []
+```
+
+**The delivery order.** Each committed leader contributes the blocks of its causal history that no earlier leader delivered.
+
+#### `histOf`
+
+*def, `FinWhale.Model.Order.lean`*
+
+```lean
+def histOf [LinearOrder BlockId] (D : Dag Validator BlockId Payload) (l : BlockId) :
+    List BlockId :=
+  (historyFrom D.block l).sort (· ≤ ·)
+```
+
+**The delivery order's input, concretely.** A leader contributes its causal history, which `historyFrom` computes from the references alone, listed in the identifier order.
+
+The paper asks only for "a deterministic sort", and what Theorems 24 and 26 read is that the list is a function of the block and lists its causal history once each. Sorting by identifier is the cheapest such function and keeps the definition computable; a causal order would serve equally and is not what any result here consumes.
+
 #### `IsView`
 
-*structure, `FinWhale.View.lean`*
+*structure, `FinWhale.Model.View.lean`*
 
 ```lean
 structure IsView (D : Dag Validator BlockId Payload) (V : Finset BlockId) : Prop where
@@ -15627,7 +15659,7 @@ structure IsView (D : Dag Validator BlockId Payload) (V : Finset BlockId) : Prop
 
 #### `restrict`
 
-*def, `FinWhale.View.lean`*
+*def, `FinWhale.Model.View.lean`*
 
 ```lean
 def restrict (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsView D V) :
@@ -15644,7 +15676,7 @@ def restrict (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsVi
 
 #### `viewCommit`
 
-*def, `FinWhale.View.lean`*
+*def, `FinWhale.Model.View.lean`*
 
 ```lean
 def viewCommit (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsView D V)
@@ -15656,7 +15688,7 @@ The direct commit rule as a validator with view `V` evaluates it.
 
 #### `viewSkip`
 
-*def, `FinWhale.View.lean`*
+*def, `FinWhale.Model.View.lean`*
 
 ```lean
 def viewSkip (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsView D V)
@@ -15666,48 +15698,9 @@ def viewSkip (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsVi
 
 And the direct skip rule.
 
-#### `CommitsCorrectLeaders`
-
-*def, `FinWhale.Decided.lean`*
-
-```lean
-def CommitsCorrectLeaders (D : Dag Validator BlockId Payload) (R N : ℕ) : Prop :=
-  ∀ s, R ≤ s → s + 2 ≤ N → D.leader s ∈ (Correct : Finset Validator) →
-    ∃ l ∈ slotBlocks D s, SPCommitBy D l (Correct : Finset Validator)
-```
-
-**The liveness input, as an interface.** Every correct-led slot past the coverage round and below the horizon carries a direct commit. Two routes supply it — `commits_of_reactive`, from the reactive schedule's wait clauses, and `commits_of_creation`, from the block-creation conditions themselves — and nothing below cares which.
-
-#### `SeesCommits`
-
-*def, `FinWhale.Decided.lean`*
-
-```lean
-def SeesCommits (D : Dag Validator BlockId Payload) (dc : ℕ → BlockId → Prop) (R N : ℕ) :
-    Prop :=
-  ∀ s, R ≤ s → s + 2 ≤ N → D.leader s ∈ (Correct : Finset Validator) →
-    ∃ l, l ∈ slotBlocks D s ∧ dc s l
-```
-
-**What Lemma 23 consumes**: the deciding validator *sees* a direct commit at every correct-led slot below the horizon. One clause where there were two — a commit in the universe, and the view seeing it — because the second is where a view's holdings enter and the first is where the schedule does.
-
-#### `histOf`
-
-*def, `FinWhale.Decided.lean`*
-
-```lean
-def histOf [LinearOrder BlockId] (D : Dag Validator BlockId Payload) (l : BlockId) :
-    List BlockId :=
-  (historyFrom D.block l).sort (· ≤ ·)
-```
-
-**The delivery order's input, concretely.** A leader contributes its causal history, which `historyFrom` computes from the references alone, listed in the identifier order.
-
-The paper asks only for "a deterministic sort", and what Theorems 24 and 26 read is that the list is a function of the block and lists its causal history once each. Sorting by identifier is the cheapest such function and keeps the definition computable; a causal order would serve equally and is not what any result here consumes.
-
 #### `SelfParented`
 
-*def, `FinWhale.Validity.lean`*
+*def, `FinWhale.Model.Schedule.lean`*
 
 ```lean
 def SelfParented (D : Dag Validator BlockId Payload) : Prop :=
@@ -15719,7 +15712,7 @@ def SelfParented (D : Dag Validator BlockId Payload) : Prop :=
 
 #### `RoundRobin`
 
-*def, `FinWhale.Rotation.lean`*
+*def, `FinWhale.Model.Schedule.lean`*
 
 ```lean
 def RoundRobin (leader : ℕ → Validator) : Prop :=
@@ -15731,7 +15724,7 @@ def RoundRobin (leader : ℕ → Validator) : Prop :=
 
 #### `Trigger`
 
-*inductive, `FinWhale.Creation.lean`*
+*inductive, `FinWhale.Model.Creation.lean`*
 
 ```lean
 inductive Trigger where
@@ -15748,7 +15741,7 @@ Which of the three conditions created a block.
 
 #### `Creation`
 
-*structure, `FinWhale.Creation.lean`*
+*structure, `FinWhale.Model.Creation.lean`*
 
 ```lean
 structure Creation (U : BlockUniverse Validator BlockId Payload)
@@ -15817,7 +15810,7 @@ structure Creation (U : BlockUniverse Validator BlockId Payload)
 
 #### `CertifiesSP`
 
-*def, `FinWhale.Creation.lean`*
+*def, `FinWhale.Model.Creation.lean`*
 
 ```lean
 def CertifiesSP (U : BlockUniverse Validator BlockId Payload) (c L : BlockId) : Prop :=
@@ -15827,9 +15820,34 @@ def CertifiesSP (U : BlockUniverse Validator BlockId Payload) (c L : BlockId) : 
 
 A block whose parents voting for `L` are a slow-path quorum — `SPCertificate`, in the universe's vocabulary.
 
+#### `CommitsCorrectLeaders`
+
+*def, `FinWhale.Model.Liveness.lean`*
+
+```lean
+def CommitsCorrectLeaders (D : Dag Validator BlockId Payload) (R N : ℕ) : Prop :=
+  ∀ s, R ≤ s → s + 2 ≤ N → D.leader s ∈ (Correct : Finset Validator) →
+    ∃ l ∈ slotBlocks D s, SPCommitBy D l (Correct : Finset Validator)
+```
+
+**The liveness input, as an interface.** Every correct-led slot past the coverage round and below the horizon carries a direct commit. Two routes supply it — `commits_of_reactive`, from the reactive schedule's wait clauses, and `commits_of_creation`, from the block-creation conditions themselves — and nothing below cares which.
+
+#### `SeesCommits`
+
+*def, `FinWhale.Model.Liveness.lean`*
+
+```lean
+def SeesCommits (D : Dag Validator BlockId Payload) (dc : ℕ → BlockId → Prop) (R N : ℕ) :
+    Prop :=
+  ∀ s, R ≤ s → s + 2 ≤ N → D.leader s ∈ (Correct : Finset Validator) →
+    ∃ l, l ∈ slotBlocks D s ∧ dc s l
+```
+
+**What Lemma 23 consumes**: the deciding validator *sees* a direct commit at every correct-led slot below the horizon. One clause where there were two — a commit in the universe, and the view seeing it — because the second is where a view's holdings enter and the first is where the schedule does.
+
 #### `settled`
 
-*def, `FinWhale.Holdings.lean`*
+*def, `FinWhale.Model.Liveness.lean`*
 
 ```lean
 def settled (pc : PaceCore U T M) : ℕ :=
@@ -15840,7 +15858,7 @@ The instant by which every reliable block of every round up to `M` has arrived: 
 
 #### `Run`
 
-*structure, `FinWhale.Protocol.lean`*
+*structure, `FinWhale.Model.Protocol.lean`*
 
 ```lean
 structure Run (Validator BlockId Payload : Type*) [Fintype Validator] [DecidableEq Validator]
@@ -15888,7 +15906,7 @@ structure Run (Validator BlockId Payload : Type*) [Fintype Validator] [Decidable
 
 #### `view`
 
-*def, `FinWhale.Protocol.lean`*
+*def, `FinWhale.Model.Protocol.lean`*
 
 ```lean
 def view (v : Validator) : Finset BlockId := run.pace.holds v (settled run.pace)
@@ -16812,7 +16830,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 620 theorems that either another module of the
+The 617 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -23738,39 +23756,6 @@ theorem holds : Statement
 
 ### FinWhale: the two-round commit rule
 
-#### `params_arith`
-
-*theorem, `FinWhale.Model.Params.lean`*
-
-```lean
-theorem params_arith :
-    (Correct : Finset Validator).card + F.byzantine.card = Fintype.card Validator ∧
-      F.byzantine.card ≤ F.f ∧ 1 ≤ P.p ∧ P.p ≤ F.f ∧
-      Fintype.card Validator + 1 = 3 * F.f + 2 * P.p
-```
-
-**The standing arithmetic of the committee**, in the form `omega` consumes it: the correct and Byzantine sets partition the validators, at most `f` are Byzantine, `1 ≤ p ≤ f`, and `n + 1 = 3f + 2p`.
-
-#### `spQuorum_le_fastCard`
-
-*theorem, `FinWhale.Model.Params.lean`*
-
-```lean
-theorem spQuorum_le_fastCard : spQuorum Validator ≤ fastCard Validator
-```
-
-The fast-path threshold clears the slow-path quorum, so a fast commit carries a quorum of votes with it. This is what lets the slow-path arguments be reused against a fast commit.
-
-#### `spQuorum_le_quorumCard`
-
-*theorem, `FinWhale.Model.Params.lean`*
-
-```lean
-theorem spQuorum_le_quorumCard : spQuorum Validator ≤ quorumCard Validator
-```
-
-**The slow-path quorum is below the parent threshold.** `n − f` is `2f + 2p − 1` at this committee and `spQuorum` is `2f + p`, so at `p ≥ 2` a block's parent set is strictly larger than an SP-certificate quorum. The two coincide only at `p = 1`, where FinWhale's committee is the core's. Every argument that intersects a parent set with a quorum uses this direction.
-
 #### `card_add_card_le_card_inter_add_card`
 
 *theorem, `FinWhale.Counting.lean`*
@@ -25033,7 +25018,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 602 lemmas used only within the file that proves
+The 605 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -25911,12 +25896,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_suppAnchorsOf_of_committed` | A committed anchor of the cone is one of the supported anchors of the cone. |
 | `mem_suppCandidates` | — |
 
-### `FinWhale/Model/Params.lean` (2)
+### `FinWhale/Committee.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
+| `params_arith` | The standing arithmetic of the committee, in the form `omega` consumes it: the correct and Byzantine sets … |
 | `quorumCard_le_fastCard` | The parent threshold is itself below the fast-path threshold, since `p ≤ f`. |
 | `spQuorum_eq_ceil` | The paper's `⌈(n+f+1)/2⌉` is `2f + p` at this committee. |
+| `spQuorum_le_fastCard` | The fast-path threshold clears the slow-path quorum, so a fast commit carries a quorum of votes with it. … |
+| `spQuorum_le_quorumCard` | The slow-path quorum is below the parent threshold. `n − f` is `2f + 2p − 1` at this committee and … |
 
 ### `FinWhale/Counting.lean` (2)
 

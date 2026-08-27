@@ -1,17 +1,12 @@
 import LeanDag.FinWhale.Consequences
+import LeanDag.FinWhale.Model.Skip
 
 /-!
-# FinWhale — the skip rule, and why a commit rules it out
-
-The direct decision rule marks a slot **to-skip** when both hold: an
-SP-skip pattern at round `r + 1`, meaning every block of the slot has a
-quorum of round-`(r+1)` validators declining to vote for it; and `2f + p`
-**Non-FP-evidence** blocks from distinct validators at round `r + 2`,
-where a block is Non-FP-evidence when it is FP-evidence for no block of
-the slot.
+# FinWhale — why a commit rules the skip out
 
 Lemmas 6 and 7 say a commit and a skip cannot both happen. Two counting
-arguments, and the second is the one worth being careful about.
+arguments over the rule of `Model/Skip.lean`, and the second is the one
+worth being careful about.
 
 **The slow-path side is quorum intersection over validators.** A commit
 carries `2f + p` validators voting for `l`; a skip carries `2f + p`
@@ -31,6 +26,7 @@ nothing (`no_skip_of_fpEvidence`). The margin is exactly one validator
 wide.
 -/
 
+
 namespace LeanDag
 
 namespace FinWhale
@@ -39,29 +35,6 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {D : Dag Validator BlockId Payload}
-
-/-- The validators whose round-`(r+1)` block declines to vote for `l`. -/
-def nonVoters (D : Dag Validator BlockId Payload) (l : BlockId) : Finset Validator :=
-  creatorsOf D.block ((blocksAt D ((D.block l).round + 1)).filter
-    (fun q => l ∉ (D.block q).refs))
-
-/-- **Non-FP-evidence**: a round-`(r+2)` block that is FP-evidence for no
-block of the slot. -/
-def NonFPEvidence (D : Dag Validator BlockId Payload) (b : BlockId) (slot : Finset BlockId) :
-    Prop :=
-  ∀ l ∈ slot, ¬ FPEvidence D b l
-
-instance (D : Dag Validator BlockId Payload) (b : BlockId) (slot : Finset BlockId) :
-    Decidable (NonFPEvidence D b slot) :=
-  inferInstanceAs (Decidable (∀ l ∈ slot, ¬ FPEvidence D b l))
-
-/-- **The SP-skip half of the direct skip rule**, at one block of the
-slot: a quorum of round-`(r+1)` validators decline to vote for it. -/
-def SPSkip (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
-  spQuorum Validator ≤ (nonVoters D l).card
-
-instance (D : Dag Validator BlockId Payload) (l : BlockId) :
-    Decidable (SPSkip D l) := inferInstanceAs (Decidable (_ ≤ _))
 
 /-- **No correct validator both votes and declines.** Its round-`(r+1)`
 block is one block, and either references `l` or does not. -/

@@ -1,4 +1,6 @@
 import LeanDag.FinWhale.Model.Rule
+import LeanDag.FinWhale.Committee
+import LeanDag.FinWhale.Counting
 
 /-!
 # FinWhale — Lemma 4 in the shape the paper states it, and what follows

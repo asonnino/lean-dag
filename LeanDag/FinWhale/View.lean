@@ -1,4 +1,5 @@
 import LeanDag.FinWhale.Decided
+import LeanDag.FinWhale.Model.View
 
 /-!
 # FinWhale — views, and the direct rules relative to one
@@ -41,6 +42,7 @@ condition, the quorum of Non-FP-evidence blocks, which is what makes the
 missing block visible.
 -/
 
+
 namespace LeanDag
 
 namespace FinWhale
@@ -49,24 +51,6 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {D : Dag Validator BlockId Payload} {V : Finset BlockId}
-
-/-- **A view**: part of the universe, closed under references. -/
-structure IsView (D : Dag Validator BlockId Payload) (V : Finset BlockId) : Prop where
-  /-- Only blocks that exist. -/
-  subset : V ⊆ D.ids
-  /-- And everything they reference. -/
-  closed : ∀ i ∈ V, ∀ j ∈ (D.block i).refs, j ∈ V
-
-/-- **A view is a DAG.** Validity and non-equivocation are inherited; the
-view's completeness is its closure. -/
-def restrict (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsView D V) :
-    Dag Validator BlockId Payload where
-  ids := V
-  block := D.block
-  leader := D.leader
-  complete := hV.closed
-  valid := fun i hi => D.valid i (hV.subset hi)
-  correct_single := fun i hi j hj => D.correct_single i (hV.subset hi) j (hV.subset hj)
 
 variable {hV : IsView D V}
 
@@ -393,18 +377,6 @@ theorem no_indirectCommit_of_directSkip_view {A : BlockId} {r : ℕ} {b : BlockI
     exact mem_view_of_parentsVoting hV (heq ▸ hc₂V)
       (parentsVoting_nonempty_of_fpEvidence hc₁fp)
 
-/-! ## The exclusions, on two views -/
-
-/-- The direct commit rule as a validator with view `V` evaluates it. -/
-def viewCommit (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsView D V)
-    (r : ℕ) (l : BlockId) : Prop :=
-  l ∈ slotBlocks (restrict D V hV) r ∧ DirectCommit (restrict D V hV) l
-
-/-- And the direct skip rule. -/
-def viewSkip (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsView D V)
-    (r : ℕ) : Prop :=
-  DirectSkip (restrict D V hV) r
-
 /-- **Lemma 12's side conditions, on two views of one DAG.** Nothing is
 assumed about how the views relate to the universe beyond their being
 views: the direct rules are evaluated on them, and every field is a
@@ -563,6 +535,7 @@ theorem agreement_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsVi
       have : max s R ≤ max k R := max_le_max (by omega) le_rfl
       omega))
     hist
+
 
 end FinWhale
 

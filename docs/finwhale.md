@@ -839,3 +839,51 @@ an algorithm.
 **How far a commit sequence runs is a choice.** `hk` says it stops at the
 first undecided slot. That is not derived: it is the horizon the caller
 picks, and `all_decided` is what makes a given horizon legitimate.
+
+## 15. The partition: what defines the protocol, and what proves things about it
+
+`LeanDag/FinWhale/Model/` holds every definition of the protocol and
+nothing else. `scripts/check-arc-holes.py` enforces two rules over the
+arc, as it does for Mahi-Mahi and Black Marlin: no proof holes anywhere —
+no `sorry`, no bespoke axiom, no `native_decide` — and no theorem, lemma
+or example in a `Model/` file.
+
+Thirteen files, in the order a reader meets them.
+
+| file | what it defines |
+|:---|:---|
+| `Model/Params.lean` | the committee `n = 3f + 2p − 1`, and the three thresholds |
+| `Model/Rule.lean` | block validity, votes, FP-evidence, SP-certificates, the fast commit |
+| `Model/Skip.lean` | the two halves of the direct skip rule |
+| `Model/Decision.lean` | the slot's blocks, and the direct commit and skip verdicts |
+| `Model/Anchor.lean` | the indirect rule, and its decidable form |
+| `Model/Verdict.lean` | verdicts, the reverse pass as a condition, and the tie-break |
+| `Model/Pass.lean` | the reverse pass as a procedure |
+| `Model/Order.lean` | the committed sequence, the delivery order, and a leader's list |
+| `Model/View.lean` | a view, and the direct rules relative to one |
+| `Model/Schedule.lean` | round robin, and the self-parent clause |
+| `Model/Creation.lean` | C1, C2, C3, and parent selection |
+| `Model/Liveness.lean` | the interfaces the layers pass between them |
+| `Model/Protocol.lean` | `Run`, and what a validator holds |
+
+**The model layer is closed.** Every `Model/` file imports only other
+`Model/` files, `LeanDag.Validators`, `LeanDag.Causality`,
+`LeanDag.ViewPace` and Mathlib. The protocol can therefore be read
+without reading a proof, and no part of it depends on a result about it.
+`Committee.lean` is what that costs: the arithmetic of the committee —
+`params_arith` and the ordering of the thresholds — was stated beside the
+definitions and is now proved beside the rest.
+
+**Four definitions sit outside `Model/`, each because it takes a proof as
+an argument.** `Run.verdicts` and `Run.delivers` run the reverse pass on
+`restrict`, which needs the holdings to be a view; that proof is
+`Run.isView`, and the two sit beside it in `Protocol.lean`.
+`Dag.ofDoSValid` and `Run.ofDoSValid` are built from
+`leaderClause_of_dosValid` and `selfParented_ofDoSValid`, and sit beside
+them in `DoSBridge.lean`.
+
+**What the arc does not have** is the other half of the discipline
+Mahi-Mahi and Black Marlin carry: `<Result>/Statement.lean` files that
+are proof-free, with the proofs generated beside them. Results here are
+stated where they are proved. The checker's statement-file rule is
+therefore vacuous over this arc; its model rule is not.

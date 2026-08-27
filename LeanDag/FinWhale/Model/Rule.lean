@@ -1,4 +1,4 @@
-import LeanDag.FinWhale.Counting
+import LeanDag.FinWhale.Model.Params
 import LeanDag.Causality
 
 /-!

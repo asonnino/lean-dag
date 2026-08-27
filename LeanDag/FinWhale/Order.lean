@@ -1,4 +1,5 @@
 import LeanDag.FinWhale.Consistency
+import LeanDag.FinWhale.Model.Order
 
 /-!
 # FinWhale — commit sequences and the delivered order
@@ -26,19 +27,12 @@ parameter, so they say what the paper's proofs say: the order is a
 function of the committed leader sequence and nothing else.
 -/
 
+
 namespace LeanDag
 
 namespace FinWhale
 
 variable {BlockId : Type*} [DecidableEq BlockId]
-
-/-- **The committed leader sequence** of the first `k` slots. -/
-def commitSeq (dec : ℕ → Verdict BlockId) : ℕ → List BlockId
-  | 0 => []
-  | k + 1 => commitSeq dec k ++ (match dec k with
-      | Verdict.commit b => [b]
-      | Verdict.skip => []
-      | Verdict.undecided => [])
 
 omit [DecidableEq BlockId] in
 /-- Verdicts agreeing below `k` give the same sequence. -/
@@ -82,11 +76,6 @@ theorem lemma13 {dec dec' : ℕ → Verdict BlockId} {k k' : ℕ}
   · refine Or.inr ?_
     rw [← commitSeq_congr k' fun s hs => hagree s (hk s (by omega)) (hk' s hs)]
     exact commitSeq_prefix dec hle
-
-/-- **The delivery order.** Each committed leader contributes the blocks
-of its causal history that no earlier leader delivered. -/
-def linearise (hist : BlockId → List BlockId) (ls : List BlockId) : List BlockId :=
-  ls.foldl (fun acc l => acc ++ (hist l).filter (fun b => b ∉ acc)) []
 
 /-- The accumulator only grows at its end. -/
 theorem linearise_foldl_append (hist : BlockId → List BlockId) :

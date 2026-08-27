@@ -1,4 +1,5 @@
 import LeanDag.FinWhale.Order
+import LeanDag.FinWhale.Model.Liveness
 import Mathlib.Data.Finset.Sort
 import LeanDag.FinWhale.Rotation
 
@@ -115,31 +116,12 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {Payload : Type*} {D : Dag Validator BlockId Payload}
 
-/-- **The liveness input, as an interface.** Every correct-led slot past
-the coverage round and below the horizon carries a direct commit. Two
-routes supply it — `commits_of_reactive`, from the reactive schedule's
-wait clauses, and `commits_of_creation`, from the block-creation
-conditions themselves — and nothing below cares which. -/
-def CommitsCorrectLeaders (D : Dag Validator BlockId Payload) (R N : ℕ) : Prop :=
-  ∀ s, R ≤ s → s + 2 ≤ N → D.leader s ∈ (Correct : Finset Validator) →
-    ∃ l ∈ slotBlocks D s, SPCommitBy D l (Correct : Finset Validator)
-
 /-- The commit the interface carries. -/
 theorem directCommit_of_commits {R N : ℕ} (h : CommitsCorrectLeaders D R N) {s : ℕ}
     (hR : R ≤ s) (hN : s + 2 ≤ N) (hlead : D.leader s ∈ (Correct : Finset Validator)) :
     ∃ l ∈ slotBlocks D s, DirectCommit D l := by
   obtain ⟨l, hslot, hby⟩ := h s hR hN hlead
   exact ⟨l, hslot, Or.inr (spCommit_of_spCommitBy hby)⟩
-
-/-- **What Lemma 23 consumes**: the deciding validator *sees* a direct
-commit at every correct-led slot below the horizon. One clause where
-there were two — a commit in the universe, and the view seeing it —
-because the second is where a view's holdings enter and the first is
-where the schedule does. -/
-def SeesCommits (D : Dag Validator BlockId Payload) (dc : ℕ → BlockId → Prop) (R N : ℕ) :
-    Prop :=
-  ∀ s, R ≤ s → s + 2 ≤ N → D.leader s ∈ (Correct : Finset Validator) →
-    ∃ l, l ∈ slotBlocks D s ∧ dc s l
 
 /-- A validator reading the whole universe sees them all. -/
 theorem sees_of_commits {R N : ℕ} (h : CommitsCorrectLeaders D R N) :
@@ -259,19 +241,6 @@ section Order
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {Payload : Type*} {D : Dag Validator BlockId Payload}
-
-/-- **The delivery order's input, concretely.** A leader contributes its
-causal history, which `historyFrom` computes from the references alone,
-listed in the identifier order.
-
-The paper asks only for "a deterministic sort", and what Theorems 24 and
-26 read is that the list is a function of the block and lists its causal
-history once each. Sorting by identifier is the cheapest such function
-and keeps the definition computable; a causal order would serve equally
-and is not what any result here consumes. -/
-def histOf [LinearOrder BlockId] (D : Dag Validator BlockId Payload) (l : BlockId) :
-    List BlockId :=
-  (historyFrom D.block l).sort (· ≤ ·)
 
 /-- `histOf` is the causal history: the faithfulness condition Theorem 26
 asks for, discharged. -/

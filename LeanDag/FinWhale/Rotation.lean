@@ -1,4 +1,5 @@
 import LeanDag.FinWhale.Liveness
+import LeanDag.FinWhale.Model.Schedule
 import Mathlib.Data.ZMod.Basic
 import Mathlib.Tactic.Ring
 
@@ -34,19 +35,13 @@ one, and both are here.
 where `3f + 3` is exactly `n + 2` — and the second at `p ≥ 2`.
 -/
 
+
 namespace LeanDag
 
 namespace FinWhale
 
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
-
-/-- **Round robin.** The leader of round `r` is the `r`-th validator of a
-fixed cyclic order, so the schedule is `n`-periodic and each cycle names
-every validator once. -/
-def RoundRobin (leader : ℕ → Validator) : Prop :=
-  ∃ e : ZMod (Fintype.card Validator) ≃ Validator,
-    ∀ r : ℕ, leader r = e (r : ZMod (Fintype.card Validator))
 
 /-- The committee is nonempty, which is what `ZMod n` needs to be the
 cyclic group of order `n`. -/
