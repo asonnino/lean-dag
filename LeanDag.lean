@@ -263,3 +263,10 @@ import LeanDag.OptimalHydrozoan.Helpers.DirectRules
 import LeanDag.OptimalHydrozoan.Helpers.IndirectRules
 import LeanDag.OptimalHydrozoan.Helpers.Counting
 import LeanDag.OptimalHydrozoan.Helpers.Decided
+import LeanDag.OptimalHydrozoan.DirectSafety.Statement
+import LeanDag.OptimalHydrozoan.DirectSafety.Proof
+import LeanDag.OptimalHydrozoan.SlotAgreement.Statement
+import LeanDag.OptimalHydrozoan.Helpers.SlotAgreement
+import LeanDag.OptimalHydrozoan.SlotAgreement.Proof
+import LeanDag.OptimalHydrozoan.PrefixAgreement.Statement
+import LeanDag.OptimalHydrozoan.PrefixAgreement.Proof

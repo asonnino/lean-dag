@@ -86,3 +86,6 @@ import LeanDagTest.OptimalHydrozoan.Thresholds
 import LeanDagTest.OptimalHydrozoan.ThresholdArithmetic
 import LeanDagTest.OptimalHydrozoan.Universe
 import LeanDagTest.OptimalHydrozoan.Decided
+import LeanDagTest.OptimalHydrozoan.DirectSafety
+import LeanDagTest.OptimalHydrozoan.SlotAgreement
+import LeanDagTest.OptimalHydrozoan.PrefixAgreement
