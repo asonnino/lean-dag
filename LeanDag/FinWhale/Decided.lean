@@ -263,12 +263,6 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {Payload : Type*} {D : Dag Validator BlockId Payload}
 
-/-- **A FinWhale DAG is a causal structure.** Its two conditions are the
-DAG's closure under references and validity's predecessor clause. -/
-theorem causalStructure (D : Dag Validator BlockId Payload) :
-    CausalStructure D.block D.ids :=
-  ⟨D.complete, fun i hi j hj => (D.valid i hi).predecessor j hj⟩
-
 /-- **The delivery order's input, concretely.** A leader contributes its
 causal history, which `historyFrom` computes from the references alone,
 listed in the identifier order.

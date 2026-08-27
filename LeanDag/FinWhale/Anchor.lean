@@ -53,6 +53,45 @@ def IndirectCommit (D : Dag Validator BlockId Payload) (A : BlockId) (r : ℕ) (
         ∀ v ∈ ev, ∃ c ∈ blocksAt D (r + 2), ReachesFrom D.block A c ∧
           (D.block c).creator = v ∧ FPEvidence D c b))
 
+/-- **The same condition, decidably.** `ReachesFrom` is a reflexive
+transitive closure and settles nothing by computation;
+`historyFrom` is the same relation as a `Finset`, computed from the
+references with the round as its fuel. On a block of the DAG the two
+agree (`mem_history_iff`), so this is the rule a concrete model can
+check. -/
+def IndirectCommitOn (D : Dag Validator BlockId Payload) (A : BlockId) (r : ℕ) (b : BlockId) :
+    Prop :=
+  b ∈ slotBlocks D r ∧
+    ((∃ c ∈ blocksAt D (r + 2), c ∈ historyFrom D.block A ∧ SPCertificate D c b) ∨
+      (∃ ev : Finset Validator, spQuorum Validator ≤ ev.card ∧
+        ∀ v ∈ ev, ∃ c ∈ blocksAt D (r + 2), c ∈ historyFrom D.block A ∧
+          (D.block c).creator = v ∧ FPEvidence D c b))
+
+instance (D : Dag Validator BlockId Payload) (A : BlockId) (r : ℕ) (b : BlockId) :
+    Decidable (IndirectCommitOn D A r b) := by
+  unfold IndirectCommitOn; infer_instance
+
+/-- **And they are the same condition**, for an anchor of the DAG. -/
+theorem indirectCommitOn_iff {A : BlockId} (hA : A ∈ D.ids) {r : ℕ} {b : BlockId} :
+    IndirectCommitOn D A r b ↔ IndirectCommit D A r b := by
+  have hiff : ∀ c, c ∈ historyFrom D.block A ↔ ReachesFrom D.block A c := fun c =>
+    (causalStructure D).mem_history_iff hA
+  constructor
+  · rintro ⟨hb, hroute⟩
+    refine ⟨hb, ?_⟩
+    rcases hroute with ⟨c, hc, hreach, hcert⟩ | ⟨ev, hev, hevb⟩
+    · exact Or.inl ⟨c, hc, (hiff c).1 hreach, hcert⟩
+    · refine Or.inr ⟨ev, hev, fun v hv => ?_⟩
+      obtain ⟨c, hc, hreach, hcv, hfp⟩ := hevb v hv
+      exact ⟨c, hc, (hiff c).1 hreach, hcv, hfp⟩
+  · rintro ⟨hb, hroute⟩
+    refine ⟨hb, ?_⟩
+    rcases hroute with ⟨c, hc, hreach, hcert⟩ | ⟨ev, hev, hevb⟩
+    · exact Or.inl ⟨c, hc, (hiff c).2 hreach, hcert⟩
+    · refine Or.inr ⟨ev, hev, fun v hv => ?_⟩
+      obtain ⟨c, hc, hreach, hcv, hfp⟩ := hevb v hv
+      exact ⟨c, hc, (hiff c).2 hreach, hcv, hfp⟩
+
 /-- **The tie-break reads only the anchor.** A validator whose view holds
 the anchor holds every block the anchor reaches, so the whole condition
 is evaluable there and gives the same answer as anywhere else. This is

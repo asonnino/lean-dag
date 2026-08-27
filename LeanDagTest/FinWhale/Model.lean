@@ -144,6 +144,19 @@ indirect rule's first route. -/
 example : IndirectCommit Dfast 27 0 0 :=
   ⟨by decide, Or.inl ⟨18, by decide, ReachesFrom.single (by decide), by decide⟩⟩
 
+/-- **And the rule settles by computation**, through the decidable form:
+`historyFrom` is reachability as a `Finset`, so a model can check the
+whole indirect rule rather than exhibit a path. -/
+example : IndirectCommitOn Dfast 27 0 0 := by decide
+
+example : IndirectCommit Dfast 27 0 0 :=
+  indirectCommitOn_iff (by decide) |>.1 (by decide)
+
+/-- Anti-vacuity: the rule is not settled by the slot condition alone.
+No round-2 block is an anchor for its own slot, having nothing above it
+to reach. -/
+example : ¬ IndirectCommitOn Dfast 18 2 18 := by decide
+
 /-! ## `Dequiv` — the leader equivocates
 
 Three rounds of nine blocks, plus id `27`: a second round-0 block by

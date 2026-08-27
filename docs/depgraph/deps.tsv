@@ -3072,6 +3072,24 @@ EDGE	LeanDag.FinWhale.decOf	LeanDag.FinWhale.Verdict
 EDGE	LeanDag.FinWhale.decOf	LeanDag.FinWhale.Params
 EDGE	LeanDag.FinWhale.decOf	LeanDag.FinWhale.passFrom
 EDGE	LeanDag.FinWhale.decOf	LeanDag.FinWhale.Dag
+NODE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.FinWhale.Anchor	thm
+EDGE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.Faults
+EDGE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.CausalStructure.mem_history_iff
+EDGE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.FinWhale.Dag.ids
+EDGE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.FinWhale.IndirectCommitOn
+EDGE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.FinWhale.SPCertificate
+EDGE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.FinWhale.Dag.block
+EDGE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.FinWhale.IndirectCommit
+EDGE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.ReachesFrom
+EDGE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.historyFrom
+EDGE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.FinWhale.FPEvidence
+EDGE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.FinWhale.slotBlocks
+EDGE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.FinWhale.spQuorum
+EDGE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.FinWhale.blocksAt
+EDGE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.FinWhale.Dag
+EDGE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.FinWhale.causalStructure
+EDGE	LeanDag.FinWhale.indirectCommitOn_iff	LeanDag.Block.creator
 NODE	LeanDag.FinWhale.lemma23._proof_1_6	LeanDag.FinWhale.Decided	thm
 EDGE	LeanDag.FinWhale.lemma23._proof_1_6	LeanDag.FinWhale.Verdict.undecided
 EDGE	LeanDag.FinWhale.lemma23._proof_1_6	LeanDag.FinWhale.instDecidableEqVerdict
@@ -13259,6 +13277,18 @@ EDGE	LeanDag.FinWhale.parents_all_fpEvidence._proof_1_1	LeanDag.FinWhale.Dag.blo
 EDGE	LeanDag.FinWhale.parents_all_fpEvidence._proof_1_1	LeanDag.FinWhale.Params
 EDGE	LeanDag.FinWhale.parents_all_fpEvidence._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.FinWhale.parents_all_fpEvidence._proof_1_1	LeanDag.FinWhale.Dag
+NODE	LeanDag.FinWhale.IndirectCommitOn	LeanDag.FinWhale.Anchor	def
+EDGE	LeanDag.FinWhale.IndirectCommitOn	LeanDag.Faults
+EDGE	LeanDag.FinWhale.IndirectCommitOn	LeanDag.FinWhale.SPCertificate
+EDGE	LeanDag.FinWhale.IndirectCommitOn	LeanDag.FinWhale.Dag.block
+EDGE	LeanDag.FinWhale.IndirectCommitOn	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.IndirectCommitOn	LeanDag.historyFrom
+EDGE	LeanDag.FinWhale.IndirectCommitOn	LeanDag.FinWhale.FPEvidence
+EDGE	LeanDag.FinWhale.IndirectCommitOn	LeanDag.FinWhale.slotBlocks
+EDGE	LeanDag.FinWhale.IndirectCommitOn	LeanDag.FinWhale.spQuorum
+EDGE	LeanDag.FinWhale.IndirectCommitOn	LeanDag.FinWhale.blocksAt
+EDGE	LeanDag.FinWhale.IndirectCommitOn	LeanDag.FinWhale.Dag
+EDGE	LeanDag.FinWhale.IndirectCommitOn	LeanDag.Block.creator
 NODE	LeanDagTest.ustarvePace._proof_14	LeanDagTest.Unbounded	thm
 NODE	LeanDag.hB1uniq_of_correct	LeanDag.SafeSkip.Basic	thm
 EDGE	LeanDag.hB1uniq_of_correct	LeanDag.Faults
@@ -24753,6 +24783,21 @@ EDGE	LeanDagTest.Uexcl._proof_3	LeanDag.Block.creator
 NODE	LeanDagTest.Uexcl._proof_1	LeanDagTest.DoS.Exclusion	thm
 EDGE	LeanDagTest.Uexcl._proof_1	LeanDagTest.lkx
 EDGE	LeanDagTest.Uexcl._proof_1	LeanDag.Block.refs
+NODE	LeanDag.FinWhale.instDecidableIndirectCommitOn	LeanDag.FinWhale.Anchor	def
+EDGE	LeanDag.FinWhale.instDecidableIndirectCommitOn	LeanDag.Faults
+EDGE	LeanDag.FinWhale.instDecidableIndirectCommitOn	LeanDag.FinWhale.instDecidableSPCertificate
+EDGE	LeanDag.FinWhale.instDecidableIndirectCommitOn	LeanDag.FinWhale.IndirectCommitOn
+EDGE	LeanDag.FinWhale.instDecidableIndirectCommitOn	LeanDag.FinWhale.SPCertificate
+EDGE	LeanDag.FinWhale.instDecidableIndirectCommitOn	LeanDag.FinWhale.Dag.block
+EDGE	LeanDag.FinWhale.instDecidableIndirectCommitOn	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhale.instDecidableIndirectCommitOn	LeanDag.historyFrom
+EDGE	LeanDag.FinWhale.instDecidableIndirectCommitOn	LeanDag.FinWhale.FPEvidence
+EDGE	LeanDag.FinWhale.instDecidableIndirectCommitOn	LeanDag.FinWhale.slotBlocks
+EDGE	LeanDag.FinWhale.instDecidableIndirectCommitOn	LeanDag.FinWhale.spQuorum
+EDGE	LeanDag.FinWhale.instDecidableIndirectCommitOn	LeanDag.FinWhale.blocksAt
+EDGE	LeanDag.FinWhale.instDecidableIndirectCommitOn	LeanDag.FinWhale.Dag
+EDGE	LeanDag.FinWhale.instDecidableIndirectCommitOn	LeanDag.FinWhale.instDecidableFPEvidence
+EDGE	LeanDag.FinWhale.instDecidableIndirectCommitOn	LeanDag.Block.creator
 NODE	LeanDag.FinWhale.no_directSkip_of_commit_view	LeanDag.FinWhale.View	thm
 EDGE	LeanDag.FinWhale.no_directSkip_of_commit_view	LeanDag.FinWhale.restrict
 EDGE	LeanDag.FinWhale.no_directSkip_of_commit_view	LeanDag.FinWhale.Dag.correct_single
@@ -28249,7 +28294,7 @@ EDGE	LeanDag.Odontoceti.instDecidableDirectCommit	LeanDag.Odontoceti.instDecidab
 EDGE	LeanDag.Odontoceti.instDecidableDirectCommit	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.instDecidableDirectCommit	LeanDag.Odontoceti.DirectCommit
 EDGE	LeanDag.Odontoceti.instDecidableDirectCommit	LeanDag.Faults5.toFaults
-NODE	LeanDag.FinWhale.causalStructure	LeanDag.FinWhale.Decided	thm
+NODE	LeanDag.FinWhale.causalStructure	LeanDag.FinWhale.Evidence	thm
 EDGE	LeanDag.FinWhale.causalStructure	LeanDag.Faults
 EDGE	LeanDag.FinWhale.causalStructure	LeanDag.FinWhale.Dag.complete
 EDGE	LeanDag.FinWhale.causalStructure	LeanDag.FinWhale.Dag.ids

@@ -35,6 +35,12 @@ theorem parent_round {b i : BlockId} (hb : b ∈ D.ids) (hi : i ∈ (D.block b).
     (D.block i).round + 1 = (D.block b).round :=
   (D.valid b hb).predecessor i hi
 
+/-- **A FinWhale DAG is a causal structure.** Its two conditions are the
+DAG's closure under references and validity's predecessor clause. -/
+theorem causalStructure (D : Dag Validator BlockId Payload) :
+    CausalStructure D.block D.ids :=
+  ⟨D.complete, fun i hi j hj => (D.valid i hi).predecessor j hj⟩
+
 /-- **No block references two blocks of one author.** Validity's
 `distinct_creators` says so directly, and it is why `selects_leader` and
 `selects_votes` below are guarded: a selection clause that obliged a

@@ -161,6 +161,14 @@ That is the shape of the defect the Black Marlin arc reports (report
 §18): a support-blind deterministic choice among an equivocator's blocks.
 FinWhale escapes it, for two reasons that are separate.
 
+**The rule is decidable, on a block of the DAG.** `ReachesFrom` is a
+reflexive transitive closure and settles nothing by computation, so
+`IndirectCommitOn` states the same condition over `historyFrom` — the
+same relation as a `Finset`, computed from the references with the round
+as its fuel. `indirectCommitOn_iff` is the equivalence, for an anchor of
+the DAG, and it is what lets a model check the indirect rule rather than
+exhibit a path through it.
+
 **The tie-break's input is the anchor's causal history and nothing else.**
 `IndirectCommit` is a predicate of the anchor, the slot and the candidate;
 no view occurs in it. A validator holding the anchor holds everything the
@@ -274,7 +282,9 @@ Three executions, because the rules exclude one another.
 
 - `Dfast`, four rounds: the round-0 leader block is committed by both
   paths, every round-2 block is FP-evidence for it (Lemma 4 on data), and
-  a round-3 block reaches a certificate in one step.
+  a round-3 block reaches a certificate in one step. The indirect rule is
+  settled there by `decide`, through the decidable form of §6, and a
+  round-2 block is shown not to be an anchor for its own slot.
 - `Dequiv`, three rounds and a second round-0 block by the Byzantine
   leader: neither version is committed or skipped, and the two branches of
   FP-evidence separate — block `18` has seen both versions and carries the
