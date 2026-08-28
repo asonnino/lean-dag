@@ -273,6 +273,11 @@ or refines are updated at the last phase.
 15. **Hygiene.** §5 cites `sec:fastunlock`, `sec:fastfinality`,
     `lem:ackuniqueness`, `lem:fullcertuniqueness`, none defined;
     `3.RelatedWork.tex` and `9.parallelCertification .tex` are empty.
+16. **Tightness has a side condition.** "Moreover, this threshold is
+    tight" holds for `f ≤ C ≤ n` only: for `C > n` no certificate can
+    form and `R = 0` suffices; for `C < f` the threshold `n + f − C + 1`
+    exceeds `n` and cannot be met. RS1's `Tight` carries the condition
+    (confirmed by the mechanisation: both sides are refuted by witnesses).
 
 ## 4. Out of scope
 

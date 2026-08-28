@@ -57,7 +57,13 @@ def Sufficient (P : Profile Validator Value) (x : Value) (C : ℕ) : Prop :=
 
 /-- **A collection of `Q` voters exposes one side at `R`**: every set of
 `Q` validators that have voted contains at least `R` supporters of `x`
-or at least `R` opposers of `x`. -/
+or at least `R` opposers of `x`.
+
+A Byzantine voter of `S` that voted both ways is counted on both sides,
+so for one profile this is more permissive than what a validator holding
+`S`'s votes observes; `ExposureIff` quantifies over every profile and is
+exactly the paper's theorem, but a protocol consuming exposure locally
+must count one vote per validator itself. -/
 def Exposes (P : Profile Validator Value) (x : Value) (Q R : ℕ) : Prop :=
   ∀ S : Finset Validator, S ⊆ voters P → S.card = Q →
     R ≤ (S ∩ supporters P x).card ∨ R ≤ (S ∩ opposers P x).card
