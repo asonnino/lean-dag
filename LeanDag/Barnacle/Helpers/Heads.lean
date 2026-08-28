@@ -124,7 +124,7 @@ theorem decided_of_head_committed (hD : R.Descent slack)
 
 /-- **BN9b.** Heads of rounds `ρ + w, …, ρ + 2w − 1` `T`-led (with `T` from `goodLeaders`)
 and their waves under `N`: every slot at rounds `[ρ, ρ + w)` is decided and the head of `ρ + w`
-is committed, on the full view. -/
+is committed, on the view `V` the caller supplies. -/
 theorem headsDecide (hD : R.Descent slack) (hw : 0 < R.waveLength)
     {U : R.Universe} (V : R.View U) {Rnd N : ℕ} {T : Finset Validator}
     (hT : ∀ (S : Slots Validator) (κ : ℕ), Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
