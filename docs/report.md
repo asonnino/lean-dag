@@ -8127,7 +8127,29 @@ an object no validator has. The ledger
 follows (**BN5**): two runs read one committed sequence as far as both
 reach, a run's ledger to a lower height is a prefix of its ledger to a
 higher one, and no block appears twice — the paper's Agreement, Total
-Order and Integrity. Under the constant rule the arc collapses onto the
+Order and Integrity.
+
+**BN14** adds the fourth property the rest of this development proves of
+a commit rule and the paper does not claim: a good author's block is
+*delivered*. A run commits an anchor at each configuration it closes, at
+the round the next one starts, and `LiveRule.Delivers` — coverage read as
+reachability — puts every good block two rounds below that anchor in its
+causal history, whoever authored the anchor. §20 reaches the same
+property through the self-parent edge: a correct validator's blocks form
+a chain, round robin makes it a leader again, and that leader block
+commits. The route here is shorter and asks less. It needs no self-parent
+clause, which this interface does not have and which not every base
+protocol carries; it needs no rotation hypothesis; and it does not need
+the author's *own* slot to commit, which under multiple leaders would
+restrict delivery to authors both inside the good set and scheduled. The
+author need never lead again. Mysticeti and Odontoceti satisfy the law
+from the core's persistence result (T3) and coverage; Nemo-Nemo does not
+yet, its own persistence lemma concluding from a block exactly two rounds
+above where the core's concludes from every block at two rounds or more —
+a gap one descent closes, and the only thing between the crash rule and
+the same property.
+
+Under the constant rule the arc collapses onto the
 base development at one leader (**BN6**), and the AIMD rule keeps its
 count in `[1, maxLeaders]` and is the integer test the implementation
 runs (**BN7**).
@@ -9412,6 +9434,7 @@ reused.
 | BN11 | and so the mechanism over each of them, under round-robin, reaches every height with no clause left assumed, on any view caught up to the horizon | `Barnacle.Live.holds`, `coversUpto_full` *(Barnacle/Live/Proof, Barnacle/Helpers/Cover)* |
 | BN12 | a healthy window is counted as healthy, and the rule then raises the count: the loop cannot back off where every scoring slot committed | `Barnacle.Healthy.holds` *(Barnacle/Healthy/Proof)* |
 | BN13 | BN11 on data: runs of every height on the grown family under the real rule, with nothing assumed | `real_runs` witnesses *(LeanDagTest/Barnacle/Real)* |
+| BN14 | validity: a good author's block lies in the history of the block a closed configuration's anchor commits; the two Byzantine rules deliver | `Barnacle.Validity.holds`, `mysticetiLive_delivers`, `odontocetiLive_delivers` *(Barnacle/Validity/Proof, Barnacle/Helpers/Delivery)* |
 
 ---
 
@@ -17144,6 +17167,26 @@ def UpdBounded {R : BaseRule Validator BlockId Payload} (P : Params) (upd : Upda
 
 An update rule keeps the count in `[1, maxLeaders]`, whatever it is given — what extending a run needs of it; BN7a for the AIMD rule.
 
+#### `LiveRule.Delivers`
+
+*structure, `Barnacle.Model.Live.lean`*
+
+```lean
+structure LiveRule.Delivers (R : LiveRule Validator BlockId Payload) (slack : ℕ) : Prop where
+  /-- A good author's block is in the history of every block two rounds
+  above it. -/
+  reaches : ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
+    ∃ T : Finset Validator, Fintype.card Validator ≤ T.card + slack ∧
+      ∀ b ∈ R.ids U, (R.block U b).creator ∈ T → Rnd ≤ (R.block U b).round →
+        (R.block U b).round + 1 ≤ N →
+        ∀ c ∈ R.ids U, (R.block U b).round + 2 ≤ (R.block U c).round →
+          b ∈ historyFrom (R.block U) c
+```
+
+**What a good DAG delivers.** On a DAG good from `Rnd` to `N` there is a set `T` of validators, all but at most `slack`, whose blocks are *reached* by everything two rounds above them: a `T`-authored block at a round from `Rnd`, with its own next round under the horizon, lies in the causal history of every block two rounds up — whoever authored that block.
+
+This is the base protocol's coverage read as delivery, and it is what turns a committed anchor into a delivered block. It is the second law a live rule carries, beside `Descent`: `Descent` says a good leader's slot commits, this says a good author's block is carried by whatever commits above it. Both are facts of the base protocol, and neither mentions the mechanism.
+
 #### `horizon`
 
 *def, `Barnacle.Model.Live.lean`*
@@ -18137,6 +18180,48 @@ def Statement : Prop := MysticetiRuns ∧ OdontocetiRuns ∧ NemoRuns
 
 The three protocols, end to end.
 
+#### `Delivered`
+
+*def, `Barnacle.Validity.Statement.lean`*
+
+```lean
+def Delivered (R : LiveRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
+    (upd : UpdateRule R.toBaseRule) (slack : ℕ) : Prop :=
+  -- Given the base protocol's delivery law …
+  R.Delivers slack →
+  -- … on any run over a good DAG …
+  ∀ (U : R.Universe) (V : R.View U) (K : ℕ)
+    (Rn : PartialRun R.toBaseRule P getLeader hk upd U V K) (Rnd N : ℕ),
+    R.Good U Rnd N →
+    -- … there is a good set, all but at most `slack` validators, …
+    ∃ T : Finset Validator, Fintype.card Validator ≤ T.card + slack ∧
+      -- … each of whose blocks, past the synchrony round and under the
+      -- horizon, and two rounds below a closed configuration's anchor, …
+      ∀ b ∈ R.ids U, (R.block U b).creator ∈ T → Rnd ≤ (R.block U b).round →
+        (R.block U b).round + 1 ≤ N →
+        ∀ k, k < K → (R.block U b).round + 2 ≤ Rn.start (k + 1) →
+          -- … is in the history of the block that configuration commits.
+          ∃ A, Rn.vdct k (Rn.anchor k) = some A ∧ b ∈ historyFrom (R.block U) A
+```
+
+**BN14, validity.** In a run of height `K`, a good author's block two rounds below the anchor of a configuration the run closed lies in the causal history of the block that configuration commits.
+
+#### `Statement`
+
+*def, `Barnacle.Validity.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [DecidableEq BlockId] (R : LiveRule Validator BlockId Payload), R.Laws →
+    ∀ (P : Params) (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
+      (upd : UpdateRule R.toBaseRule) (slack : ℕ),
+      Delivered R P getLeader hk upd slack
+```
+
+Validity, for every live rule satisfying the laws.
+
 #### `descendD`
 
 *def, `BlackMarlin.Model.Recursion.lean`*
@@ -18793,7 +18878,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 667 theorems that either another module of the
+The 670 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -27367,9 +27452,44 @@ theorem coversUpto_full (hR : R.Laws) (U : R.Universe) (N : ℕ) :
 
 **The full view is caught up to every horizon.**
 
+#### `mysticetiLive_delivers`
+
+*theorem, `Barnacle.Helpers.Delivery.lean`*
+
+```lean
+theorem mysticetiLive_delivers [F : Faults Validator] :
+    (mysticetiLive (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)).Delivers F.f where
+  reaches
+```
+
+**Mysticeti delivers**, at slack `f`.
+
+#### `odontocetiLive_delivers`
+
+*theorem, `Barnacle.Helpers.Delivery.lean`*
+
+```lean
+theorem odontocetiLive_delivers {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+    [F : Faults5 Validator] {BlockId : Type} [LinearOrder BlockId] {Payload : Type} :
+    (odontocetiLive (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)).Delivers F.f where
+  reaches
+```
+
+**Odontoceti delivers**, at slack `f`; the argument is the same, its `Good` being the same predicate. Its block identifiers carry an order, so the binders are restated rather than taken from the section.
+
 #### `holds`
 
 *theorem, `Barnacle.Live.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Barnacle.Validity.Proof.lean`*
 
 ```lean
 theorem holds : Statement
@@ -27548,7 +27668,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 615 lemmas used only within the file that proves
+The 616 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -28674,6 +28794,12 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `populated_and_card_viewUpto_le` | The capstone, unconditional. `EventuallyDelivers` is gone: production plus the enforceable budget plus the … |
 | `populated_and_card_viewUpto_le'` | The composed statement — DoS resistance in one theorem. One set of hypotheses — production, post-`R` … |
+
+### `Barnacle/Helpers/Delivery.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `mem_history_of_good` | A reliable block is reached from two rounds up. Coverage gives it a quorum of supporters one round above, … |
 
 ### `Hybrid/Checkpoint/RecoveryProofs.lean` (14)
 

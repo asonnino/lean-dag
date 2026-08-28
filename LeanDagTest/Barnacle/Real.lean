@@ -1,5 +1,7 @@
 import LeanDagTest.Barnacle.Model
 import LeanDag.Barnacle.Live.Proof
+import LeanDag.Barnacle.Validity.Proof
+import LeanDag.Barnacle.Helpers.Delivery
 import LeanDag.Barnacle.Aimd.Proof
 import LeanDagTest.Growth
 
@@ -88,6 +90,29 @@ example (K k : ℕ) (hk : k < K) (κ : ℕ)
         ((real_runs K).some.count_le k))
       (realRule.full (Ugrow (11 * K + 9))) κ ((real_runs K).some.vdct k κ) :=
   (real_runs K).some.closed k hk κ h₁ h₂
+
+/-! ## BN14 on the same run: a correct validator's block is delivered
+
+The run above commits an anchor at each configuration it closes. Every
+block of the good set two rounds below such an anchor is in that anchor's
+causal history, so the run delivers it — no rotation hypothesis, and the
+author need never lead again. -/
+
+theorem real_delivers (K : ℕ) :
+    ∃ T : Finset (Fin 4), Fintype.card (Fin 4) ≤ T.card + Faults.f (Fin 4) ∧
+      ∀ b ∈ (Ugrow (11 * K + 9)).ids, ((Ugrow (11 * K + 9)).block b).creator ∈ T →
+        ((Ugrow (11 * K + 9)).block b).round + 1 ≤ 11 * K + 9 →
+        ∀ k, k < K → ((Ugrow (11 * K + 9)).block b).round + 2 ≤ (real_runs K).some.start (k + 1) →
+          ∃ A, (real_runs K).some.vdct k ((real_runs K).some.anchor k) = some A ∧
+            b ∈ historyFrom (Ugrow (11 * K + 9)).block A := by
+  obtain ⟨T, hcard, hT⟩ :=
+    Validity.holds (Fin 4) ℕ Unit realRule (Mysticeti.holds (Fin 4) ℕ Unit) bnP bnLeader bnWin
+      realUpd (Faults.f (Fin 4)) mysticetiLive_delivers (Ugrow (11 * K + 9))
+      (realRule.full (Ugrow (11 * K + 9))) K (real_runs K).some 0 (11 * K + 9)
+      (ugrow_good _)
+  exact ⟨T, hcard, fun b hb hbT hN k hk hround => hT b hb hbT (Nat.zero_le _) hN k hk hround⟩
+
+#print axioms real_delivers
 
 #print axioms real_runs
 

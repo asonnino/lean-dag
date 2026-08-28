@@ -11,6 +11,8 @@ import LeanDag.Barnacle.Nemo.Proof
 import LeanDag.Barnacle.Aimd.Proof
 import LeanDag.Barnacle.Live.Proof
 import LeanDag.Barnacle.Healthy.Proof
+import LeanDag.Barnacle.Validity.Proof
+import LeanDag.Barnacle.Helpers.Delivery
 
 /-!
 # Barnacle — axiom audit
@@ -33,3 +35,6 @@ bespoke axiom would show here before anywhere else.
 #print axioms LeanDag.Barnacle.Aimd.holds
 #print axioms LeanDag.Barnacle.Live.holds
 #print axioms LeanDag.Barnacle.Healthy.holds
+#print axioms LeanDag.Barnacle.Validity.holds
+#print axioms LeanDag.Barnacle.mysticetiLive_delivers
+#print axioms LeanDag.Barnacle.odontocetiLive_delivers

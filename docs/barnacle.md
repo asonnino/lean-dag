@@ -863,6 +863,18 @@ uninhabited (F7, Phase 2).
   wave length; all three instantiated protocols are pipelined.
 - **Certified DAGs.** The paper says the measurement applies; the model
   has no certified-DAG base.
+- **Validity, for the two Byzantine rules.** BN14: a good author's block
+  lies in the causal history of the block a closed configuration's anchor
+  commits, so the run delivers it. The route is coverage rather than the
+  self-parent edge report §20 uses — no self-parent clause, which this
+  interface does not carry; no rotation hypothesis; and the author's own
+  slot need never commit. Nemo-Nemo is outstanding: its persistence
+  lemmas conclude from a block *exactly* two rounds above where the
+  core's conclude from every block at two rounds or more, and closing
+  that needs a descent the crash arc does not have. BN14 consumes only
+  the law, so the crash rule joins by proving that descent and nothing
+  else.
+
 - **The real rule on data.** BN11 discharges the liveness clause, so the
   synthetic test rule is no longer the only way to run BN8 on data:
   `LeanDagTest/Barnacle/Real.lean` gives runs of every height on the

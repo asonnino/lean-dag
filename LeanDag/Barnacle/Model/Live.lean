@@ -69,6 +69,29 @@ def UpdBounded {R : BaseRule Validator BlockId Payload} (P : Params) (upd : Upda
     Prop :=
   ∀ m b U V A, 0 < (upd m b U V A).1 ∧ (upd m b U V A).1 ≤ P.maxLeaders
 
+/-- **What a good DAG delivers.** On a DAG good from `Rnd` to `N` there
+is a set `T` of validators, all but at most `slack`, whose blocks are
+*reached* by everything two rounds above them: a `T`-authored block at a
+round from `Rnd`, with its own next round under the horizon, lies in the
+causal history of every block two rounds up — whoever authored that
+block.
+
+This is the base protocol's coverage read as delivery, and it is what
+turns a committed anchor into a delivered block. It is the second law a
+live rule carries, beside `Descent`: `Descent` says a good leader's slot
+commits, this says a good author's block is carried by whatever commits
+above it. Both are facts of the base protocol, and neither mentions the
+mechanism. -/
+structure LiveRule.Delivers (R : LiveRule Validator BlockId Payload) (slack : ℕ) : Prop where
+  /-- A good author's block is in the history of every block two rounds
+  above it. -/
+  reaches : ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
+    ∃ T : Finset Validator, Fintype.card Validator ≤ T.card + slack ∧
+      ∀ b ∈ R.ids U, (R.block U b).creator ∈ T → Rnd ≤ (R.block U b).round →
+        (R.block U b).round + 1 ≤ N →
+        ∀ c ∈ R.ids U, (R.block U b).round + 2 ≤ (R.block U c).round →
+          b ∈ historyFrom (R.block U) c
+
 /-- The horizon a run of height `K` needs from a synchrony round at
 genesis: each configuration's anchor lies within `interval + 1 + c`
 rounds of the previous start, and the last range needs the gap and one
