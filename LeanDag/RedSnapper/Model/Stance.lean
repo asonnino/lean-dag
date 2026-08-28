@@ -64,7 +64,14 @@ def StanceIs (U : Universe Validator BlockId Tx Obj) (id : Validator) (o : Obj) 
 
 /-- `id` ACKed some transaction on `o` at or below `b` (the paper's
 `AckedBefore`): some block of `id` in `b`'s history reads a stance of
-`ack tx`. What tells an unlock vote from a skip vote. -/
+`ack tx`. What tells an unlock vote from a skip vote.
+
+Under D7 the stance a declaring block reads at itself is its own
+declaration — a block reaches no other block of its round, so it is the
+unique latest declarer below itself — and `AckedBefore` is therefore
+equivalent to "some block of `id` in `b`'s history declares `ack tx`".
+The equivocation-voiding of `StanceIs` does no filtering here; the
+paper's form is kept for fidelity. -/
 def AckedBefore (U : Universe Validator BlockId Tx Obj) (id : Validator) (o : Obj)
     (b : BlockId) : Prop :=
   ∃ b' tx, b' ∈ U.ids ∧ (U.block b').author = id ∧ Reaches U b b' ∧

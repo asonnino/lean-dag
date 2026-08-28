@@ -30,6 +30,16 @@ declarations a sequence (`docs/red-snapper.md`, Phase 3 choice 1). Both
 are guarded by `Correct`; Byzantine validators are unconstrained, so a
 Byzantine validator may skip rounds, equivocate, or reference either
 twin of its own.
+
+The self-parent chain is indispensable, not a convenience: it is what
+puts a correct validator's earlier ACK inside every later block of its
+own, so that a skip vote — `⊥` from a validator that never ACKed — can
+be told from an unlock vote by reading the DAG, which the ack-versus-skip
+exclusivity argument needs. With `predecessor` and `no_equivocation` it
+entails that a correct validator with a block at round `r` has a block
+at every round below `r`, each in the later one's history — the paper's
+"honest validators propose in every round", stated once here
+(`docs/red-snapper.md` §3, finding 17).
 -/
 
 namespace LeanDag
