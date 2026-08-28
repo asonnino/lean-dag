@@ -9,6 +9,7 @@ import LeanDag.Barnacle.MysticetiLive.Proof
 import LeanDag.Barnacle.Odontoceti.Proof
 import LeanDag.Barnacle.Nemo.Proof
 import LeanDag.Barnacle.Aimd.Proof
+import LeanDag.Barnacle.Live.Proof
 
 /-!
 # Barnacle — axiom audit
@@ -29,3 +30,4 @@ bespoke axiom would show here before anywhere else.
 #print axioms LeanDag.Barnacle.Odontoceti.holds
 #print axioms LeanDag.Barnacle.Nemo.holds
 #print axioms LeanDag.Barnacle.Aimd.holds
+#print axioms LeanDag.Barnacle.Live.holds

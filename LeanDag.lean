@@ -148,6 +148,8 @@ import LeanDag.Barnacle.Conservativity.Statement
 import LeanDag.Barnacle.Conservativity.Proof
 import LeanDag.Barnacle.Aimd.Statement
 import LeanDag.Barnacle.Aimd.Proof
+import LeanDag.Barnacle.Live.Statement
+import LeanDag.Barnacle.Live.Proof
 import LeanDag.Barnacle.Model.Live
 import LeanDag.Barnacle.Progress.Statement
 import LeanDag.Barnacle.Helpers.Progress

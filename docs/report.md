@@ -9338,6 +9338,7 @@ reused.
 | BN8 | progress: a run past the synchrony round extends by one configuration; runs of every height exist under the horizon | `Barnacle.Progress.holds` *(Barnacle/Progress/Proof)* |
 | BN9 | the heads descent: the liveness clause from the descent laws and a run of heads; round-robin has runs of heads by pigeonhole and is live at every count | `Barnacle.Heads.holds` *(Barnacle/Heads/Proof)* |
 | BN10 | the three rules satisfy the laws and the descent laws, and are live under round-robin at every count | `Barnacle.Mysticeti.holds`, `Barnacle.MysticetiLive.holds`, `Barnacle.Odontoceti.holds`, `Barnacle.Nemo.holds` *(Barnacle/Mysticeti/Proof, Barnacle/MysticetiLive/Proof, Barnacle/Odontoceti/Proof, Barnacle/Nemo/Proof)* |
+| BN11 | and so the mechanism over each of them, under round-robin, reaches every height with no clause left assumed | `Barnacle.Live.holds` *(Barnacle/Live/Proof)* |
 
 ---
 
