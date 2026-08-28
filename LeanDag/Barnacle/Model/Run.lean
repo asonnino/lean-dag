@@ -85,7 +85,7 @@ structure PartialRun (R : BaseRule Validator BlockId Payload) (P : Params)
   start_succ : ∀ k, k < K → start (k + 1) = anchor k / count k
   /-- The next configuration is the rule's. -/
   update : ∀ k, k < K → ∀ A, vdct k (anchor k) = some A →
-    (count (k + 1), backoff (k + 1)) = upd (count k) (backoff k) U A
+    (count (k + 1), backoff (k + 1)) = upd (count k) (backoff k) U V A
 
 variable {R : BaseRule Validator BlockId Payload} {P : Params}
 variable {getLeader : ℕ → Validator} {hk : Keyed getLeader P.maxLeaders}

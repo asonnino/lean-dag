@@ -76,8 +76,8 @@ example : observed bnOdo bnPo bnLeader6' bnWin6' Uodo 20 3 (by decide) (by decid
   decide
 example : expected bnOdo bnPo 1 = 2 := by decide
 example : expected bnOdo bnPo 3 = 6 := by decide
-example : Aimd.rule bnOdo bnPo bnLeader6' bnWin6' 1 0 Uodo 20 = (2, 0) := by decide
-example : Aimd.rule bnOdo bnPo bnLeader6' bnWin6' 6 0 Uodo 20 = (6, 0) := by decide
+example : Aimd.rule bnOdo bnPo bnLeader6' bnWin6' 1 0 Uodo (View.full Uodo) 20 = (2, 0) := by decide
+example : Aimd.rule bnOdo bnPo bnLeader6' bnWin6' 6 0 Uodo (View.full Uodo) 20 = (6, 0) := by decide
 
 /-! ## Odontoceti's `Good` on `Uodo`, and its descent law -/
 
@@ -222,7 +222,7 @@ def bnPn : Params := ⟨3, 3, 96, 100, by decide, by decide⟩
 example : observed bnNemo bnPn bnLeader3 bnWin3 Unemo 11 1 (by decide) (by decide) = 1 := by
   decide
 example : expected bnNemo bnPn 1 = 2 := by decide
-example : Aimd.rule bnNemo bnPn bnLeader3 bnWin3 1 0 Unemo 11 = (1, 1) := by decide
+example : Aimd.rule bnNemo bnPn bnLeader3 bnWin3 1 0 Unemo (LeanDag.Nemo.View.full Unemo) 11 = (1, 1) := by decide
 -- At count `3` every validator leads every round: round `1` scores three
 -- slots, round `2` two (validator `2` has no block), round `3` none.
 example : observed bnNemo bnPn bnLeader3 bnWin3 Unemo 11 3 (by decide) (by decide) = 5 := by

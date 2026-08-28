@@ -702,7 +702,7 @@
 <rect x="294.0" y="3068.0" width="158" height="36" rx="5" fill="#fbe9d7" stroke="#b5652a" stroke-width="1.2"/>
 <text class="lbl" x="373.0" y="3080.0" text-anchor="middle">BN3</text>
 <text class="nm" x="373.0" y="3094.0" text-anchor="middle">holds</text></g>
-<g><title>LeanDag.Barnacle.Aimd.holds — the AIMD rule keeps its count in range, steps as the paper says, and is the integer test</title>
+<g><title>LeanDag.Barnacle.Aimd.holds — the AIMD rule keeps its count in range, steps as the paper says, is the integer test, and is anchored — it does not read the view, so two validators take one step</title>
 <rect x="294.0" y="3116.0" width="158" height="36" rx="5" fill="#fbe9d7" stroke="#b5652a" stroke-width="1.2"/>
 <text class="lbl" x="373.0" y="3128.0" text-anchor="middle">BN7</text>
 <text class="nm" x="373.0" y="3142.0" text-anchor="middle">holds</text></g>

@@ -131,9 +131,9 @@ example :
     bnUpd_bounded 0).1 Usun (bnLive.full Usun) 1 8 0 (coversUpto_full laws32 Usun 8) run0 bnLive_liveOn
     (show bnLive.Good Usun 1 8 from ⟨rfl, rfl, rfl⟩) (by decide) (by decide)
   refine ⟨Rn1, ?_⟩
-  have h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _)
+  have h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
     Usun (bnLive.full Usun) Vsun 1 1 Rn1 run2 1 (by decide)
-  have h0 := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _)
+  have h0 := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
     Usun (bnLive.full Usun) Vsun 1 1 Rn1 run2 0 (by decide)
   exact ⟨h.2.1, h.1, (h0.2.2.2 (by decide)).1⟩
 
@@ -213,10 +213,10 @@ example : ¬ (horizon bnP bnLive 0 2 ≤ 8) := by decide
 
 /-! ## Rules that leave the range are not bounded -/
 
-example : ¬ UpdBounded bnP (fun _ _ _ _ => ((0, 0) : ℕ × ℕ) : UpdateRule bnRule32) :=
-  fun h => absurd (h 1 0 Usun 0).1 (by decide)
-example : ¬ UpdBounded bnP (fun _ _ _ _ => ((5, 0) : ℕ × ℕ) : UpdateRule bnRule32) :=
-  fun h => absurd (h 1 0 Usun 0).2 (by decide)
+example : ¬ UpdBounded bnP (fun _ _ _ _ _ => ((0, 0) : ℕ × ℕ) : UpdateRule bnRule32) :=
+  fun h => absurd (h 1 0 Usun (View.full Usun) 0).1 (by decide)
+example : ¬ UpdBounded bnP (fun _ _ _ _ _ => ((5, 0) : ℕ × ℕ) : UpdateRule bnRule32) :=
+  fun h => absurd (h 1 0 Usun (View.full Usun) 0).2 (by decide)
 
 
 /-! ## Progress from height one, at interval one
@@ -301,9 +301,9 @@ example :
     bnUpd1_bounded 0).1 Usun (bnLive.full Usun) 1 8 1 (coversUpto_full laws32 Usun 8) runP1v bnLive_liveOn
     ⟨rfl, rfl, rfl⟩ (by decide) (by decide)
   refine ⟨Rn2, ?_⟩
-  have h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _)
+  have h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
     Usun (bnLive.full Usun) Vsun 2 2 Rn2 runP1 2 (by decide)
-  have h1 := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _)
+  have h1 := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
     Usun (bnLive.full Usun) Vsun 2 2 Rn2 runP1 1 (by decide)
   exact ⟨h.1, h.2.1, h.2.2.1, (h1.2.2.2 (by decide)).1⟩
 
@@ -463,7 +463,7 @@ def run0sk : PartialRun bnLiveSk.toBaseRule bnP1 bnLeader bnWin bnUpdSk Usk (bnL
 
 -- The rule at anchor 15, interval 1: nothing scores, unhealthy.
 example : observed bnRule32 bnP1 bnLeader bnWin Usk 15 1 (by decide) (by decide) = 0 := by decide
-example : Aimd.rule bnRule32 bnP1 bnLeader bnWin 1 0 Usk 15 = (1, 1) := by decide
+example : Aimd.rule bnRule32 bnP1 bnLeader bnWin 1 0 Usk (View.full Usk) 15 = (1, 1) := by decide
 
 def vdSk : ℕ → ℕ → Option (Fin 32) :=
   fun _ κ => if κ = 1 then some 5 else if κ = 3 then some 15 else none
@@ -529,9 +529,9 @@ example :
     (coversUpto_full laws32 Usk 8) run0sk bnLiveSk_liveOn1 ⟨rfl, rfl, rfl⟩
     (by decide) (by decide)
   refine ⟨Rn1, ?_⟩
-  have h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _)
+  have h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
     Usk (bnLiveSk.full Usk) (bnLiveSk.full Usk) 1 1 Rn1 runSk 1 (by decide)
-  have h0 := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _)
+  have h0 := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
     Usk (bnLiveSk.full Usk) (bnLiveSk.full Usk) 1 1 Rn1 runSk 0 (by decide)
   have hv := (h0.2.2.2 (by decide)).2 2
   rw [h0.1, h0.2.1, h.1] at hv

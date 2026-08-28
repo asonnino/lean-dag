@@ -55,14 +55,20 @@ was itself a function of verdicts.
 
 Three consequences shape the plan.
 
-- **Safety holds for any update rule.** The `(k+1)`-st count is a
-  function of the universe, the anchor block and the previous state; the
-  anchor is the least committed slot past the threshold in a schedule
-  both validators share; the verdicts of the range are agreed by the base
-  rule's own agreement theorem. So two validators agree on every
-  configuration and every verdict for **any** deterministic update, with
-  no synchrony or fairness hypothesis — the AIMD rule is one instance
-  (BN3).
+- **Safety holds for any update rule a validator can run.** An update
+  rule takes the validator's own view, and nothing then makes two of them
+  agree — a rule reading its view freely could hand two correct
+  validators different counts. `Anchored` is the condition that rules
+  that out: the step must not depend on which view computes it. It costs
+  nothing, because the window a rule measures on is the anchor's causal
+  history, which BN2 shows every view holding the anchor holds whole and
+  restricts identically; the AIMD rule satisfies it by not reading the
+  view at all (BN7e). Given that, the `(k+1)`-st count is a function of
+  the anchor block and the previous state; the anchor is the least
+  committed slot past the threshold in a schedule both validators share;
+  and the verdicts of the range are agreed by the base rule's own
+  agreement theorem. So two validators agree on every configuration and
+  every verdict, with no synchrony or fairness hypothesis (BN3).
 - **Liveness is the existence of the configuration sequence.** Each
   range closes because the base rule decides every slot of a fixed
   schedule on the full view; the next anchor exists because committed
@@ -741,8 +747,10 @@ author comment when confirmed.
   convergence. *Phase 2.*
 - **F5 — safety for any update rule.** The paper's Leader-Count
   Agreement is stated for the AIMD rule; it holds for any deterministic
-  function of the universe and the anchor, which is a stronger and
-  simpler statement for the Lean appendix. *Phase 2.*
+  rule whose step does not depend on which view computes it
+  (`Anchored`) — which is every rule reading only the anchor's window,
+  AIMD among them — a stronger and simpler statement for the Lean
+  appendix. *Phase 2.*
 - **F8 — safety inside liveness.** Configuration Progress consumes
   the agreement law: the verdict the liveness clause chooses for the
   anchor's slot and the commit it provides for it are identified by

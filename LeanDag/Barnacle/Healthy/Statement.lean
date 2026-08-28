@@ -72,10 +72,10 @@ scoring slot committed as a reason to back off. -/
 def Raises (R : BaseRule Validator BlockId Payload) (P : Params)
     (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) : Prop :=
   ∀ (U : R.Universe) (A : BlockId) (hA : A ∈ R.ids U) (m : ℕ) (hm : 0 < m)
-    (hmax : m ≤ P.maxLeaders) (backoff : ℕ),
+    (hmax : m ≤ P.maxLeaders) (backoff : ℕ) (V : R.View U),
     P.num ≤ P.den → R.waveLength ≤ P.interval → P.interval ≤ (R.block U A).round →
     WindowHealthy R P getLeader hk U A hA m hm hmax →
-    Aimd.rule R P getLeader hk m backoff U A = (min (m + 1) P.maxLeaders, 0)
+    Aimd.rule R P getLeader hk m backoff U V A = (min (m + 1) P.maxLeaders, 0)
 
 /-- The count of a healthy window, and the step it produces. -/
 def Statement : Prop :=

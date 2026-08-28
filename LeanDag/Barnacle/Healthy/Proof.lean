@@ -40,7 +40,7 @@ theorem holds : Statement := by
       exact Finset.card_le_card hsub
     omega
   refine ⟨hcount, ?_⟩
-  intro U A hA m hm hmax backoff hnd hwi hint hH
+  intro U A hA m hm hmax backoff V hnd hwi hint hH
   have hge : expected R P m ≤ observed R P getLeader hk U A m hm hmax :=
     hcount U A hA m hm hmax hwi hint hH
   have htest : P.num * expected R P m ≤ P.den * observed R P getLeader hk U A m hm hmax :=

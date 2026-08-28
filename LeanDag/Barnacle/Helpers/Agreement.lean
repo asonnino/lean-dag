@@ -68,7 +68,8 @@ theorem anchor_agree (hR : R.Laws) (R₁ : PartialRun R P getLeader hk upd U V�
 
 /-- Agreement at `k` carries to `k + 1`: the anchors agree, so the anchor
 blocks agree, so one update of one state yields one configuration. -/
-theorem configAgree_succ (hR : R.Laws) (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
+theorem configAgree_succ (hR : R.Laws) (hanc : Anchored R upd)
+    (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
     (R₂ : PartialRun R P getLeader hk upd U V₂ K₂) {k : ℕ} (h : ConfigAgree R₁ R₂ k)
     (hk₁ : k < K₁) (hk₂ : k < K₂) : ConfigAgree R₁ R₂ (k + 1) := by
   have ha := anchor_agree hR R₁ R₂ h hk₁ hk₂
@@ -82,17 +83,18 @@ theorem configAgree_succ (hR : R.Laws) (R₁ : PartialRun R P getLeader hk upd U
   have e₁ := R₁.update k hk₁ A hA
   have e₂ := R₂.update k hk₂ A hA₂
   rw [hc, hb] at e₁
-  have e := e₁.trans e₂.symm
+  have e := e₁.trans ((hanc U V₁ V₂ (R₂.count k) (R₂.backoff k) A).trans e₂.symm)
   refine ⟨?_, (Prod.mk.inj e).1, (Prod.mk.inj e).2⟩
   rw [R₁.start_succ k hk₁, R₂.start_succ k hk₂, ha, hc]
 
 /-- **Configurations agree** up to the lower height, by induction. -/
-theorem configAgree (hR : R.Laws) (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
+theorem configAgree (hR : R.Laws) (hanc : Anchored R upd)
+    (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
     (R₂ : PartialRun R P getLeader hk upd U V₂ K₂) :
     ∀ k, k ≤ min K₁ K₂ → ConfigAgree R₁ R₂ k
   | 0, _ => ⟨by rw [R₁.init.1, R₂.init.1], by rw [R₁.init.2.1, R₂.init.2.1],
       by rw [R₁.init.2.2, R₂.init.2.2]⟩
-  | k + 1, h => configAgree_succ hR R₁ R₂ (configAgree hR R₁ R₂ k (by omega))
+  | k + 1, h => configAgree_succ hR hanc R₁ R₂ (configAgree hR hanc R₁ R₂ k (by omega))
       (by omega) (by omega)
 
 end Barnacle

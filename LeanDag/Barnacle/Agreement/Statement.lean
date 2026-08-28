@@ -44,6 +44,7 @@ def PartialRunAgreement (R : BaseRule Validator BlockId Payload) (P : Params)
   -- One universe; two validators, holding views `V₁` and `V₂` of it, whose
   -- runs are closed up to heights `K₁` and `K₂` — they need not have
   -- decided equally far.
+  Anchored R upd →
   ∀ (U : R.Universe) (V₁ V₂ : R.View U) (K₁ K₂ : ℕ)
     (R₁ : PartialRun R P getLeader hk upd U V₁ K₁) (R₂ : PartialRun R P getLeader hk upd U V₂ K₂),
     -- For every configuration both have reached …

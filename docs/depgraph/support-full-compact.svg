@@ -639,7 +639,7 @@
 <g><title>LeanDag.Barnacle.Agreement.holds — the configuration sequence is agreed, for any update rule: two runs to any heights agree on every configuration and verdict of their common ranges</title>
 <rect x="134.0" y="2115.0" width="62" height="24" rx="5" fill="#fbe9d7" stroke="#b5652a" stroke-width="1.2"/>
 <text class="lbl" x="165.0" y="2127.0" text-anchor="middle">BN3</text></g>
-<g><title>LeanDag.Barnacle.Aimd.holds — the AIMD rule keeps its count in range, steps as the paper says, and is the integer test</title>
+<g><title>LeanDag.Barnacle.Aimd.holds — the AIMD rule keeps its count in range, steps as the paper says, is the integer test, and is anchored — it does not read the view, so two validators take one step</title>
 <rect x="134.0" y="2148.0" width="62" height="24" rx="5" fill="#fbe9d7" stroke="#b5652a" stroke-width="1.2"/>
 <text class="lbl" x="165.0" y="2160.0" text-anchor="middle">BN7</text></g>
 <g><title>LeanDag.Barnacle.Conservativity.holds — under the constant rule the count never moves and every verdict is a one-leader verdict</title>

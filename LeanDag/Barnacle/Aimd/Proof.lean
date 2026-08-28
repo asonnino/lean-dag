@@ -17,9 +17,9 @@ namespace Aimd
 theorem holds : Statement := by
   intro Validator BlockId Payload _ _ _ R P getLeader hk
   have hpow : ∀ b : ℕ, 1 ≤ 2 ^ b := fun b => Nat.one_le_two_pow
-  refine ⟨?_, ⟨?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_⟩
+  refine ⟨?_, ⟨?_, ?_⟩, ⟨?_, ?_, ?_⟩, ?_, ?_⟩
   · -- BN7a: bounds.
-    intro m backoff U A
+    intro m backoff U V A
     unfold rule
     split_ifs with hm
     · unfold update
@@ -51,9 +51,13 @@ theorem holds : Statement := by
     rw [Nat.sub_eq_zero_of_le this]
     rfl
   · -- BN7d: the test.
-    intro m backoff hm hmax U A
+    intro m backoff hm hmax U V A
     unfold rule
     rw [dif_pos ⟨hm, hmax⟩]
+
+  · -- BN7e: the rule ignores the view.
+    intro _ _ _ _ _ _
+    rfl
 
 end Aimd
 

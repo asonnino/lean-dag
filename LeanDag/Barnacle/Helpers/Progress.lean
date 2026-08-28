@@ -87,11 +87,11 @@ theorem progress_exists (hR : R.Laws) (hupd : UpdBounded P upd) {c K Rnd N : ℕ
   have ha_round : a / Rn.count K ≤ Rn.start K + P.interval + 1 + c :=
     le_trans (Nat.div_le_div_right ha_le) hκ₀'
   -- The next configuration, by the rule at the anchor block.
-  let next : ℕ × ℕ := (v a).elim (1, 0) (fun A => upd (Rn.count K) (Rn.backoff K) U A)
+  let next : ℕ × ℕ := (v a).elim (1, 0) (fun A => upd (Rn.count K) (Rn.backoff K) U V A)
   have hnext : 0 < next.1 ∧ next.1 ≤ P.maxLeaders := by
     obtain ⟨_, A, hA⟩ := ha_spec
     simp only [next, hA, Option.elim_some]
-    exact hupd _ _ _ _
+    exact hupd _ _ _ _ _
   refine ⟨{
     start := fun k => if k ≤ K then Rn.start k else a / Rn.count K
     count := fun k => if k ≤ K then Rn.count k else if k = K + 1 then next.1 else 1

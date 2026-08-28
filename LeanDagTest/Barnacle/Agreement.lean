@@ -87,7 +87,7 @@ def vd2 : ℕ → ℕ → Option (Fin 32) :=
 example : observed bnRule32 bnP bnLeader bnWin Usun 21 1 (by decide) (by decide) = 2 := by
   decide
 example : expected bnRule32 bnP 1 = 2 := by decide
-example : Aimd.rule bnRule32 bnP bnLeader bnWin 1 0 Usun 21 = (2, 0) := by decide
+example : Aimd.rule bnRule32 bnP bnLeader bnWin 1 0 Usun (View.full Usun) 21 = (2, 0) := by decide
 
 /-! ## The run whose count rises -/
 
@@ -198,11 +198,11 @@ abbrev laws32 : bnRule32.Laws := Mysticeti.holds (Fin 4) (Fin 32) Unit
 /-- BN3 on `run2` and `run2'`: the two views hold one configuration `1`
 and one anchor. -/
 example : run2.count 1 = run2'.count 1 ∧ run2.start 1 = run2'.start 1 :=
-  let h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _)
+  let h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
     Usun Vsun Vsun' 1 1 run2 run2' 1 (by decide)
   ⟨h.2.1, h.1⟩
 example : run2.anchor 0 = run2'.anchor 0 :=
-  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _)
+  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
     Usun Vsun Vsun' 1 1 run2 run2' 0 (by decide)).2.2.2 (by decide) |>.1
 
 /-- BN2 on `Usun`: the smaller view holds the anchor, hence its history. -/
@@ -211,9 +211,10 @@ example : historyFrom Usun.block 21 ⊆ Vsun'.ids :=
 
 /-- BN7a on the witness parameters: the rule stays in range at the values
 the run meets. -/
-example : 0 < (Aimd.rule bnRule32 bnP bnLeader bnWin 1 0 Usun 21).1 ∧
-    (Aimd.rule bnRule32 bnP bnLeader bnWin 1 0 Usun 21).1 ≤ bnP.maxLeaders :=
-  (Aimd.holds (Fin 4) (Fin 32) Unit bnRule32 bnP bnLeader bnWin).1 1 0 Usun 21
+example : 0 < (Aimd.rule bnRule32 bnP bnLeader bnWin 1 0 Usun (View.full Usun) 21).1 ∧
+    (Aimd.rule bnRule32 bnP bnLeader bnWin 1 0 Usun (View.full Usun) 21).1 ≤ bnP.maxLeaders :=
+  (Aimd.holds (Fin 4) (Fin 32) Unit bnRule32 bnP bnLeader bnWin).1 1 0 Usun
+    (View.full Usun) 21
 -- BN7b: below the cap, one more leader.
 example : Aimd.update bnP 3 0 true = (4, 0) :=
   (Aimd.holds (Fin 4) (Fin 32) Unit bnRule32 bnP bnLeader bnWin).2.1.1 3 0 (by decide)
@@ -228,20 +229,20 @@ example : (Aimd.update bnP 1 3 false).1 = 1 :=
 -- BN7d: the rule at anchor `21`, count `2`, is the step of the integer
 -- test — `96 · 4 ≤ 100 · 4` here, healthy; at interval one and anchor
 -- `20` the test fails, `96 · 1 ≤ 100 · 0`.
-example : Aimd.rule bnRule32 bnP bnLeader bnWin 2 0 Usun 21 =
+example : Aimd.rule bnRule32 bnP bnLeader bnWin 2 0 Usun (View.full Usun) 21 =
     Aimd.update bnP 2 0 (decide (bnP.num * expected bnRule32 bnP 2 ≤
       bnP.den * observed bnRule32 bnP bnLeader bnWin Usun 21 2 (by decide) (by decide))) :=
-  (Aimd.holds (Fin 4) (Fin 32) Unit bnRule32 bnP bnLeader bnWin).2.2.2 2 0 (by decide) (by decide)
-    Usun 21
-example : Aimd.rule bnRule32 bnP bnLeader bnWin 2 0 Usun 21 = (3, 0) := by decide
-example : Aimd.rule bnRule32 bnP1 bnLeader bnWin 1 1 Usun 20 =
+  (Aimd.holds (Fin 4) (Fin 32) Unit bnRule32 bnP bnLeader bnWin).2.2.2.1 2 0 (by decide)
+    (by decide) Usun (View.full Usun) 21
+example : Aimd.rule bnRule32 bnP bnLeader bnWin 2 0 Usun (View.full Usun) 21 = (3, 0) := by decide
+example : Aimd.rule bnRule32 bnP1 bnLeader bnWin 1 1 Usun (View.full Usun) 20 =
     Aimd.update bnP1 1 1 (decide (bnP1.num * expected bnRule32 bnP1 1 ≤
       bnP1.den * observed bnRule32 bnP1 bnLeader bnWin Usun 20 1 (by decide) (by decide))) :=
-  (Aimd.holds (Fin 4) (Fin 32) Unit bnRule32 bnP1 bnLeader bnWin).2.2.2 1 1 (by decide) (by decide)
-    Usun 20
+  (Aimd.holds (Fin 4) (Fin 32) Unit bnRule32 bnP1 bnLeader bnWin).2.2.2.1 1 1 (by decide)
+    (by decide) Usun (View.full Usun) 20
 -- On `Usun` at anchor `21` the window is healthy at every count: the
 -- count climbs to the cap and stays there.
-example : Aimd.rule bnRule32 bnP bnLeader bnWin 4 0 Usun 21 = (4, 0) := by decide
+example : Aimd.rule bnRule32 bnP bnLeader bnWin 4 0 Usun (View.full Usun) 21 = (4, 0) := by decide
 
 /-- BN2b on two views: the views differ, the windows do not. -/
 example : historyFrom Usun.block 21 ∩ Vsun.ids = historyFrom Usun.block 21 ∩ Vsun'.ids :=
@@ -308,7 +309,7 @@ def run2x : PartialRun bnRule32 bnP bnLeader bnWin (Aimd.rule bnRule32 bnP bnLea
     decide
 
 example : run2.vdct 0 3 = run2x.vdct 0 3 :=
-  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _)
+  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
     Usun Vsun Vsun' 1 1 run2 run2x 0 (by decide)).2.2.2 (by decide) |>.2 3 (by decide) (by decide)
 example : run2.vdct 0 9 ≠ run2x.vdct 0 9 := by decide
 
@@ -426,11 +427,11 @@ example : runP1.backoff 0 = 0 ∧ runP1.backoff 1 = 1 ∧ runP1.backoff 2 = 2 �
 -- BN3 at heights `2` and `1`: agreement on configuration `1` — not pinned by `init` —
 -- and on the verdicts of range `0`; `k = 2` is not offered (`2 ≤ min 2 1` fails).
 example : runP1.backoff 1 = runP1'.backoff 1 ∧ runP1.start 1 = runP1'.start 1 :=
-  let h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _)
+  let h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
     Usun Vsun Vsun' 2 1 runP1 runP1' 1 (by decide)
   ⟨h.2.2.1, h.1⟩
 example : runP1.vdct 0 2 = runP1'.vdct 0 2 :=
-  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _)
+  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
     Usun Vsun Vsun' 2 1 runP1 runP1' 0 (by decide)).2.2.2 (by decide) |>.2 2 (by decide) (by decide)
 
 
@@ -444,19 +445,19 @@ without repetition. -/
 example : run2.rangeLedger 0 = [5, 10, 15, 16, 21] := by decide
 example : run2.ledgerUpto 1 = [5, 10, 15, 16, 21] := by decide
 example : run2.ledgerUpto 1 = run2'.ledgerUpto 1 :=
-  ((Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _).1
+  ((Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl)).1
     Usun Vsun Vsun' 1 1 run2 run2').2 1 (by decide)
 example : run2.ledgerUpto 0 <+: run2.ledgerUpto 1 :=
-  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _).2.1
+  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl)).2.1
     Usun Vsun 1 run2 0 1 (by decide)
 example : (run2.ledgerUpto 1).Nodup :=
-  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _).2.2
+  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl)).2.2
     Usun Vsun 1 run2 1 le_rfl
 -- Two ranges at interval one: `[5, 10]` then `[15, 16]`, one list without
 -- repetition.
 example : runP1.ledgerUpto 2 = [5, 10, 15, 16] := by decide
 example : (runP1.ledgerUpto 2).Nodup :=
-  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _).2.2
+  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl)).2.2
     Usun Vsun 2 runP1 2 le_rfl
 
 /-! ## Conservativity, through the theorem -/

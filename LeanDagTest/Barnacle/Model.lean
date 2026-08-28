@@ -174,7 +174,7 @@ example : Aimd.update bnP 1 3 false = (1, 4) := by decide
 -- On `U7` at count `2` the window is unhealthy (`100 · 3 < 96 · 4`); at
 -- count `4` too (`100 · 5 < 96 · 8`); at count `1` it is healthy
 -- (`100 · 2 ≥ 96 · 2`).
-example : Aimd.rule bnRule bnP bnLeader bnWin 2 0 U7 20 = (1, 1) := by decide
+example : Aimd.rule bnRule bnP bnLeader bnWin 2 0 U7 (View.full U7) 20 = (1, 1) := by decide
 
 /-! ## BN12 on data: a healthy window, and the step it forces
 
@@ -195,9 +195,10 @@ theorem u7_window_healthy :
 /-- **BN12b applied**: the rule raises the count to `2` and resets the
 back-off, because the window is healthy — not because the arithmetic was
 computed. -/
-example : Aimd.rule bnRule bnP bnLeader bnWin 1 0 U7 20 = (2, 0) :=
+example : Aimd.rule bnRule bnP bnLeader bnWin 1 0 U7 (View.full U7) 20 = (2, 0) :=
   (Healthy.holds (Fin 4) (Fin 24) Unit bnRule bnP bnLeader bnWin).2 U7 20 (by decide) 1
-    (by decide) (by decide) 0 (by decide) (by decide) (by decide) u7_window_healthy
+    (by decide) (by decide) 0 (View.full U7) (by decide) (by decide) (by decide)
+    u7_window_healthy
 
 /-- And `observed` meets `expected` there, which is BN12a. -/
 example : expected bnRule bnP 1 ≤ observed bnRule bnP bnLeader bnWin U7 20 1
@@ -206,16 +207,16 @@ example : expected bnRule bnP 1 ≤ observed bnRule bnP bnLeader bnWin U7 20 1
     (by decide) (by decide) (by decide) (by decide) u7_window_healthy
 
 #print axioms LeanDag.Barnacle.Healthy.holds
-example : Aimd.rule bnRule bnP bnLeader bnWin 4 0 U7 20 = (3, 1) := by decide
-example : Aimd.rule bnRule bnP bnLeader bnWin 1 0 U7 20 = (2, 0) := by decide
+example : Aimd.rule bnRule bnP bnLeader bnWin 4 0 U7 (View.full U7) 20 = (3, 1) := by decide
+example : Aimd.rule bnRule bnP bnLeader bnWin 1 0 U7 (View.full U7) 20 = (2, 0) := by decide
 -- At the floor, an unhealthy window (anchor `12`, nothing scores at
 -- count `1`) leaves the count at one and doubles the back-off.
-example : Aimd.rule bnRule bnP bnLeader bnWin 1 3 U7 12 = (1, 4) := by decide
+example : Aimd.rule bnRule bnP bnLeader bnWin 1 3 U7 (View.full U7) 12 = (1, 4) := by decide
 -- Outside `[1, maxLeaders]` the rule returns the initial state.
-example : Aimd.rule bnRule bnP bnLeader bnWin 5 0 U7 20 = (1, 0) := by decide
+example : Aimd.rule bnRule bnP bnLeader bnWin 5 0 U7 (View.full U7) 20 = (1, 0) := by decide
 
 -- The constant rule reconfigures nothing.
-example : constRule bnRule 2 3 U7 20 = (2, 3) := by decide
+example : constRule bnRule 2 3 U7 (View.full U7) 20 = (2, 3) := by decide
 
 -- The ledger of a slot interval: `lo` inclusive, `hi` exclusive, skips dropped.
 example : ledgerOf (fun k => if k = 3 then some (7 : Fin 24) else if k = 5 then some 9 else none)
@@ -245,8 +246,8 @@ example : observed bnRule6 bnP6 bnLeader6 bnWin6 Uodo 20 6 (by decide) (by decid
   decide
 example : expected bnRule6 bnP6 6 = 6 := by decide
 -- Healthy at every count: the count rises, and stays capped at six.
-example : Aimd.rule bnRule6 bnP6 bnLeader6 bnWin6 1 0 Uodo 20 = (2, 0) := by decide
-example : Aimd.rule bnRule6 bnP6 bnLeader6 bnWin6 6 0 Uodo 20 = (6, 0) := by decide
+example : Aimd.rule bnRule6 bnP6 bnLeader6 bnWin6 1 0 Uodo (View.full Uodo) 20 = (2, 0) := by decide
+example : Aimd.rule bnRule6 bnP6 bnLeader6 bnWin6 6 0 Uodo (View.full Uodo) 20 = (6, 0) := by decide
 
 /-! ## Slots against blocks: the equivocator of `U6`
 

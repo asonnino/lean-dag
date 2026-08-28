@@ -67,7 +67,7 @@ def LiveRule.LiveOn (R : LiveRule Validator BlockId Payload) (S : Slots Validato
 given — what extending a run needs of it; BN7a for the AIMD rule. -/
 def UpdBounded {R : BaseRule Validator BlockId Payload} (P : Params) (upd : UpdateRule R) :
     Prop :=
-  ∀ m b U A, 0 < (upd m b U A).1 ∧ (upd m b U A).1 ≤ P.maxLeaders
+  ∀ m b U V A, 0 < (upd m b U V A).1 ∧ (upd m b U V A).1 ≤ P.maxLeaders
 
 /-- The horizon a run of height `K` needs from a synchrony round at
 genesis: each configuration's anchor lies within `interval + 1 + c`

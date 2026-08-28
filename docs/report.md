@@ -8093,6 +8093,7 @@ views, to any two heights, agree:
 ```lean
 def PartialRunAgreement (R : BaseRule Validator BlockId Payload) (P : Params)
     (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) (upd : UpdateRule R) : Prop :=
+  Anchored R upd →
   ∀ (U : R.Universe) (V₁ V₂ : R.View U) (K₁ K₂ : ℕ)
     (R₁ : PartialRun R P getLeader hk upd U V₁ K₁) (R₂ : PartialRun R P getLeader hk upd U V₂ K₂),
     ∀ k, k ≤ min K₁ K₂ →
@@ -8103,8 +8104,26 @@ def PartialRunAgreement (R : BaseRule Validator BlockId Payload) (P : Params)
           R₁.vdct k κ = R₂.vdct k κ)
 ```
 
-The theorem carries no synchrony or fairness hypothesis and quantifies
-over **every** update rule: the AIMD rule is one instance. The ledger
+The theorem carries no synchrony or fairness hypothesis, and its one
+condition on the update rule is the one that makes the question
+well-posed. An update rule takes the validator's own view —
+
+```lean
+abbrev UpdateRule (R : BaseRule Validator BlockId Payload) : Type :=
+  ℕ → ℕ → (U : R.Universe) → R.View U → BlockId → ℕ × ℕ
+```
+
+— which is what a validator has, and nothing then makes two of them
+agree: a rule reading its view freely could hand two correct validators
+different counts and break the configuration sequence outright.
+`Anchored` rules that out, asking that the step not depend on which view
+computes it. It is no restriction in practice, and BN2 is why: the window
+a rule measures on is the anchor's causal history, which every view
+holding the anchor holds whole and restricts identically, so a rule
+computing from its own copy of that history qualifies. The AIMD rule
+does, by not reading the view at all (**BN7e**). The generality is
+therefore over rules a validator can run, rather than over functions of
+an object no validator has. The ledger
 follows (**BN5**): two runs read one committed sequence as far as both
 reach, a run's ledger to a lower height is a prefix of its ledger to a
 higher one, and no block appears twice — the paper's Agreement, Total
@@ -9373,7 +9392,7 @@ reused.
 | BN3 | the configuration sequence is agreed, for any update rule: two runs to any heights agree on every configuration and verdict of their common ranges | `Barnacle.Agreement.holds` *(Barnacle/Agreement/Proof)* |
 | BN5 | the ledger is agreed as far as both runs reach, grows by prefixes, and holds each block once | `Barnacle.Ledger.holds` *(Barnacle/Ledger/Proof)* |
 | BN6 | under the constant rule the count never moves and every verdict is a one-leader verdict | `Barnacle.Conservativity.holds` *(Barnacle/Conservativity/Proof)* |
-| BN7 | the AIMD rule keeps its count in range, steps as the paper says, and is the integer test | `Barnacle.Aimd.holds` *(Barnacle/Aimd/Proof)* |
+| BN7 | the AIMD rule keeps its count in range, steps as the paper says, is the integer test, and is anchored — it does not read the view, so two validators take one step | `Barnacle.Aimd.holds` *(Barnacle/Aimd/Proof)* |
 | BN8 | progress: a run past the synchrony round extends by one configuration; runs of every height exist under the horizon | `Barnacle.Progress.holds` *(Barnacle/Progress/Proof)* |
 | BN9 | the heads descent: the liveness clause from the descent laws and a run of heads; round-robin has runs of heads by pigeonhole and is live at every count | `Barnacle.Heads.holds` *(Barnacle/Heads/Proof)* |
 | BN10 | the three rules satisfy the laws and the descent laws, and are live under round-robin at every count | `Barnacle.Mysticeti.holds`, `Barnacle.MysticetiLive.holds`, `Barnacle.Odontoceti.holds`, `Barnacle.Nemo.holds` *(Barnacle/Mysticeti/Proof, Barnacle/MysticetiLive/Proof, Barnacle/Odontoceti/Proof, Barnacle/Nemo/Proof)* |
@@ -16813,10 +16832,24 @@ structure Laws (R : BaseRule Validator BlockId Payload) : Prop where
 
 ```lean
 abbrev UpdateRule (R : BaseRule Validator BlockId Payload) : Type :=
-  ℕ → ℕ → R.Universe → BlockId → ℕ × ℕ
+  ℕ → ℕ → (U : R.Universe) → R.View U → BlockId → ℕ × ℕ
 ```
 
 **An update rule**: from the current leader count and back-off, the universe and the anchor block, the next count and back-off. Safety is stated for every such function (`barnacle.md` §1); the paper's AIMD rule is one instance (`Model/Window.lean`).
+
+#### `Anchored`
+
+*def, `Barnacle.Model.Rule.lean`*
+
+```lean
+def Anchored (R : BaseRule Validator BlockId Payload) (upd : UpdateRule R) : Prop :=
+  ∀ (U : R.Universe) (V₁ V₂ : R.View U) (m b : ℕ) (A : BlockId),
+    upd m b U V₁ A = upd m b U V₂ A
+```
+
+**A rule a validator can run without disagreeing.** The step depends on the count, the back-off and the anchor, and on the *view* only through what every view holding the anchor shares.
+
+The type above lets a rule read the view, which is what a validator actually has. Nothing then makes two validators agree, and nothing should: a rule reading its own view freely could return different counts to two correct validators and break the configuration sequence outright. `Anchored` is the condition that rules that out, and it is not a restriction in practice — the window a rule measures on is the anchor's causal history, which BN2 shows every view holding the anchor holds whole and restricts identically. A rule computing from its own copy of that history satisfies this; the AIMD rule of `Model/Window.lean` does, by not reading the view at all.
 
 #### `Keyed`
 
@@ -16936,7 +16969,7 @@ def update (P : Params) (m backoff : ℕ) (healthy : Bool) : ℕ × ℕ :=
 def rule (R : BaseRule Validator BlockId Payload) (P : Params)
     (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) :
     UpdateRule R :=
-  fun m backoff U A =>
+  fun m backoff U _V A =>
     if hm : 0 < m ∧ m ≤ P.maxLeaders then
       update P m backoff
         (decide (P.num * expected R P m ≤
@@ -16952,7 +16985,7 @@ def rule (R : BaseRule Validator BlockId Payload) (P : Params)
 
 ```lean
 def constRule (R : BaseRule Validator BlockId Payload) : UpdateRule R :=
-  fun m b _ _ => (m, b)
+  fun m b _ _ _ => (m, b)
 ```
 
 The constant rule: reconfigure nothing. The conservativity anchor — under it the arc collapses onto the base development at one leader.
@@ -16994,7 +17027,7 @@ structure PartialRun (R : BaseRule Validator BlockId Payload) (P : Params)
   start_succ : ∀ k, k < K → start (k + 1) = anchor k / count k
   /-- The next configuration is the rule's. -/
   update : ∀ k, k < K → ∀ A, vdct k (anchor k) = some A →
-    (count (k + 1), backoff (k + 1)) = upd (count k) (backoff k) U A
+    (count (k + 1), backoff (k + 1)) = upd (count k) (backoff k) U V A
 ```
 
 **A run closed up to height `K`.** Configurations `0, …, K` are determined, and the ranges of configurations below `K` are decided in full.
@@ -17092,7 +17125,7 @@ def LiveRule.LiveOn (R : LiveRule Validator BlockId Payload) (S : Slots Validato
 ```lean
 def UpdBounded {R : BaseRule Validator BlockId Payload} (P : Params) (upd : UpdateRule R) :
     Prop :=
-  ∀ m b U A, 0 < (upd m b U A).1 ∧ (upd m b U A).1 ≤ P.maxLeaders
+  ∀ m b U V A, 0 < (upd m b U V A).1 ∧ (upd m b U V A).1 ≤ P.maxLeaders
 ```
 
 An update rule keeps the count in `[1, maxLeaders]`, whatever it is given — what extending a run needs of it; BN7a for the AIMD rule.
@@ -17195,6 +17228,7 @@ def PartialRunAgreement (R : BaseRule Validator BlockId Payload) (P : Params)
   -- One universe; two validators, holding views `V₁` and `V₂` of it, whose
   -- runs are closed up to heights `K₁` and `K₂` — they need not have
   -- decided equally far.
+  Anchored R upd →
   ∀ (U : R.Universe) (V₁ V₂ : R.View U) (K₁ K₂ : ℕ)
     (R₁ : PartialRun R P getLeader hk upd U V₁ K₁) (R₂ : PartialRun R P getLeader hk upd U V₂ K₂),
     -- For every configuration both have reached …
@@ -17292,7 +17326,7 @@ def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload), R.Laws →
     ∀ (P : Params) (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
-      (upd : UpdateRule R),
+      (upd : UpdateRule R), Anchored R upd →
       LedgerAgreement R P getLeader hk upd ∧ LedgerPrefix R P getLeader hk upd ∧
         LedgerNodup R P getLeader hk upd
 ```
@@ -17360,9 +17394,9 @@ Conservativity, for every base rule, parameter set and keyed leader function. No
 ```lean
 def RuleBounds (R : BaseRule Validator BlockId Payload) (P : Params)
     (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) : Prop :=
-  ∀ (m backoff : ℕ) (U : R.Universe) (A : BlockId),
-    0 < (rule R P getLeader hk m backoff U A).1 ∧
-      (rule R P getLeader hk m backoff U A).1 ≤ P.maxLeaders
+  ∀ (m backoff : ℕ) (U : R.Universe) (V : R.View U) (A : BlockId),
+    0 < (rule R P getLeader hk m backoff U V A).1 ∧
+      (rule R P getLeader hk m backoff U V A).1 ≤ P.maxLeaders
 ```
 
 **BN7a, bounds**: the rule's count lies in `[1, maxLeaders]` for every input — a run under the AIMD rule never leaves the range `Sched` is defined on.
@@ -17400,13 +17434,26 @@ def Unhealthy (P : Params) : Prop :=
 ```lean
 def Test (R : BaseRule Validator BlockId Payload) (P : Params)
     (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) : Prop :=
-  ∀ (m backoff : ℕ) (hm : 0 < m) (hmax : m ≤ P.maxLeaders) (U : R.Universe) (A : BlockId),
-    rule R P getLeader hk m backoff U A =
+  ∀ (m backoff : ℕ) (hm : 0 < m) (hmax : m ≤ P.maxLeaders) (U : R.Universe)
+    (V : R.View U) (A : BlockId),
+    rule R P getLeader hk m backoff U V A =
       update P m backoff
         (decide (P.num * expected R P m ≤ P.den * observed R P getLeader hk U A m hm hmax))
 ```
 
 **BN7d, the test**: for a count in range, the rule takes the healthy step exactly when `den · observed ≥ num · expected`.
+
+#### `RuleAnchored`
+
+*def, `Barnacle.Aimd.Statement.lean`*
+
+```lean
+def RuleAnchored (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) : Prop :=
+  Anchored R (rule R P getLeader hk)
+```
+
+**BN7e, the rule is anchored.** It does not read the view, so two validators holding the anchor take the same step — the condition BN3 asks of an update rule now that the type lets one read its own view. The window it does read is the anchor's causal history, which BN2 shows every view holding the anchor holds whole.
 
 #### `Statement`
 
@@ -17417,7 +17464,8 @@ def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload)
     (P : Params) (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders),
-    RuleBounds R P getLeader hk ∧ Healthy P ∧ Unhealthy P ∧ Test R P getLeader hk
+    RuleBounds R P getLeader hk ∧ Healthy P ∧ Unhealthy P ∧ Test R P getLeader hk ∧
+      RuleAnchored R P getLeader hk
 ```
 
 The AIMD rule, for every base rule, parameter set and keyed leader function. No law of the rule is consumed.
@@ -17976,10 +18024,10 @@ def Counted (R : BaseRule Validator BlockId Payload) (P : Params)
 def Raises (R : BaseRule Validator BlockId Payload) (P : Params)
     (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) : Prop :=
   ∀ (U : R.Universe) (A : BlockId) (hA : A ∈ R.ids U) (m : ℕ) (hm : 0 < m)
-    (hmax : m ≤ P.maxLeaders) (backoff : ℕ),
+    (hmax : m ≤ P.maxLeaders) (backoff : ℕ) (V : R.View U),
     P.num ≤ P.den → R.waveLength ≤ P.interval → P.interval ≤ (R.block U A).round →
     WindowHealthy R P getLeader hk U A hA m hm hmax →
-    Aimd.rule R P getLeader hk m backoff U A = (min (m + 1) P.maxLeaders, 0)
+    Aimd.rule R P getLeader hk m backoff U V A = (min (m + 1) P.maxLeaders, 0)
 ```
 
 **BN12b, and the rule then increases.** At a threshold of at most one — the paper's `num / den ≤ 1`, which every deployment satisfies — a healthy window raises the count by one, capped at `maxLeaders`, and resets the back-off. So the loop cannot read a window in which every scoring slot committed as a reason to back off.
@@ -26966,12 +27014,13 @@ The anchors agree: the lesser of two anchors is, in the other run, a committed s
 *theorem, `Barnacle.Helpers.Agreement.lean`*
 
 ```lean
-theorem configAgree (hR : R.Laws) (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
+theorem configAgree (hR : R.Laws) (hanc : Anchored R upd)
+    (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
     (R₂ : PartialRun R P getLeader hk upd U V₂ K₂) :
     ∀ k, k ≤ min K₁ K₂ → ConfigAgree R₁ R₂ k
   | 0, _ => ⟨by rw [R₁.init.1, R₂.init.1], by rw [R₁.init.2.1, R₂.init.2.1],
       by rw [R₁.init.2.2, R₂.init.2.2]⟩
-  | k + 1, h => configAgree_succ hR R₁ R₂ (configAgree hR R₁ R₂ k (by omega))
+  | k + 1, h => configAgree_succ hR hanc R₁ R₂ (configAgree hR hanc R₁ R₂ k (by omega))
       (by omega) (by omega)
 ```
 

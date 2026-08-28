@@ -77,7 +77,7 @@ def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload), R.Laws →
     ∀ (P : Params) (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
-      (upd : UpdateRule R),
+      (upd : UpdateRule R), Anchored R upd →
       LedgerAgreement R P getLeader hk upd ∧ LedgerPrefix R P getLeader hk upd ∧
         LedgerNodup R P getLeader hk upd
 

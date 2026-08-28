@@ -107,7 +107,7 @@ that it is total. -/
 def rule (R : BaseRule Validator BlockId Payload) (P : Params)
     (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) :
     UpdateRule R :=
-  fun m backoff U A =>
+  fun m backoff U _V A =>
     if hm : 0 < m ∧ m ≤ P.maxLeaders then
       update P m backoff
         (decide (P.num * expected R P m ≤
@@ -119,7 +119,7 @@ end Aimd
 /-- The constant rule: reconfigure nothing. The conservativity anchor —
 under it the arc collapses onto the base development at one leader. -/
 def constRule (R : BaseRule Validator BlockId Payload) : UpdateRule R :=
-  fun m b _ _ => (m, b)
+  fun m b _ _ _ => (m, b)
 
 end Barnacle
 
