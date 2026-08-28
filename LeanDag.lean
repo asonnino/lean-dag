@@ -275,3 +275,13 @@ import LeanDag.RedSnapper.Model.Revocation
 import LeanDag.RedSnapper.Revocation.Statement
 import LeanDag.RedSnapper.Helpers.Revocation
 import LeanDag.RedSnapper.Revocation.Proof
+import LeanDag.RedSnapper.Model.Block
+import LeanDag.RedSnapper.Model.Universe
+import LeanDag.RedSnapper.Model.View
+import LeanDag.RedSnapper.Model.CausalHistory
+import LeanDag.RedSnapper.Model.Transaction
+import LeanDag.RedSnapper.Model.Stance
+import LeanDag.RedSnapper.Helpers.Block
+import LeanDag.RedSnapper.Helpers.CausalHistory
+import LeanDag.RedSnapper.Helpers.History
+import LeanDag.RedSnapper.Helpers.Stance

@@ -93,3 +93,6 @@ import LeanDagTest.OptimalHydrozoan.Axioms
 import LeanDagTest.RedSnapper.Model
 import LeanDagTest.RedSnapper.Revocation
 import LeanDagTest.RedSnapper.Axioms
+import LeanDagTest.RedSnapper.Universe
+import LeanDagTest.RedSnapper.CausalHistory
+import LeanDagTest.RedSnapper.Stance
