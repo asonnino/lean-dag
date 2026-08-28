@@ -16,7 +16,10 @@ once visible stays visible in every descendant.
 **Fidelity gap** (D3, `docs/red-snapper.md`): the paper's `Candidates`
 also requires the version to be *spendable* at `b` — the previous
 version decided in `b`'s history. Object versions are opaque here, so the
-gate is dropped; no safety claim reads it.
+gate is dropped; no safety claim reads it. Dropping it enlarges
+`Candidates` and so `Conflicted`: skip and unlock votes become available
+in more states than the paper's, which is the conservative direction
+for the safety claims.
 
 With one owned input per transaction (D2), the paper's `RecoveryObjs(b)`
 — conflicted versions closed under the inputs of dead candidates —

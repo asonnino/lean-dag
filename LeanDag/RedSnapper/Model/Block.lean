@@ -25,7 +25,11 @@ too (D3): `Obj` is the type of versions, with no successor structure.
 **Fidelity gaps** (stated once, here): parents point only to the
 immediately preceding round, so the paper's `RoundParents(b)` is
 `b.parents` — the model has no weak links; and a transaction has exactly
-one owned input, so the paper's `OwnedInputs(tx)` is `{input tx}`.
+one owned input, so the paper's `OwnedInputs(tx)` is `{input tx}`. The
+first removes a Byzantine capability the paper allows: a block cannot
+shape its causal history by referencing an old block directly, so every
+reachability fact is a chain through consecutive rounds. The safety
+results are stated for this adversary.
 -/
 
 namespace LeanDag
