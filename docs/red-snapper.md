@@ -77,9 +77,9 @@ Three consequences shape the arc.
 |:---|:---|
 | System model, `f`, correct validators (`2.Prelim.tex`) | `Model/Faults.lean` — `Faults`, `quorum`, `half`, `Five`, `Correct` |
 | §10 Fundamental limits of vote revocation | `Model/Revocation.lean` — `Profile`, `supporters`, `opposers`, `voters`; `Revocation/` (RS1) |
-| Blocks, `Link`, `RoundParents`, `Includes` (`Alg:FastPathPredicates`) | `Model/{Block, Universe, View, CausalHistory}.lean` |
-| Transactions, `OwnedInputs`, `Candidates`, `ConflictedObjs` | `Model/Transaction.lean` |
-| `Stance`, `AckedBefore` | `Model/Stance.lean` |
+| Blocks, `Link`, `RoundParents` (`Alg:FastPathPredicates`) | `Model/{Block, Universe, View, CausalHistory}.lean` — `Block`, `ValidWrt`, `Universe`, `View`, `Reaches` |
+| Transactions, `OwnedInputs`, `Includes`, `Candidates`, `ConflictedObjs` | `Model/{Block, Transaction}.lean` — `Transactions`, `Conflict`, `Owned`, `Includes`, `IsCandidate`, `Conflicted` |
+| `Stance`, `AckedBefore`; the `held` automaton of §7 | `Model/Stance.lean` — `StanceIs`, `AckedBefore`, `StanceDiscipline` |
 | `IsFastVoteTX`, `IsSkipVoteObj`, `IsUnlockVoteObj` | `Model/Votes.lean` |
 | `IsFastCertTX`, `HasCertTX`, `CertVisible`, `IsSkipCertObj`, `IsUnlockCertObj` | `Model/Certificates.lean` |
 | Lemmas single-ack, cert-unique, univalent, fast-unlock-exclusion, cert-propagation | `CertificateExclusion/` (RS2) |
@@ -278,6 +278,14 @@ or refines are updated at the last phase.
     form and `R = 0` suffices; for `C < f` the threshold `n + f − C + 1`
     exceeds `n` and cannot be met. RS1's `Tight` carries the condition
     (confirmed by the mechanisation: both sides are refuted by witnesses).
+17. **The self-parent chain is an assumption the model never states.**
+    The proofs use that a correct validator's blocks form a chain ("as it
+    links its own block in every round"); the Preliminaries do not say
+    so. It is indispensable, not convenient: without it a correct
+    validator's earlier ACK can lie outside its later block's history,
+    and the ack-versus-skip argument ("a skip voter never ACKed") does
+    not close. The arc states it as `Universe.self_parent`, from which
+    every correct validator has a block at every round below its own.
 
 ## 4. Out of scope
 
