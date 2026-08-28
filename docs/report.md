@@ -8113,6 +8113,29 @@ base development at one leader (**BN6**), and the AIMD rule keeps its
 count in `[1, maxLeaders]` and is the integer test the implementation
 runs (**BN7**).
 
+Safety and liveness are unconditional in the count — BN3 holds for every
+update rule and BN8 at whatever count the run reaches — which is the
+right design and leaves one thing unsaid: nothing in either forbids the
+measurement reading a window in which *every* scoring slot committed as
+unhealthy, and so nothing forbids the rule driving the count to one and
+holding it there. The mechanism would be safe, live and inert. **BN12**
+closes that. A window is *healthy* when every slot of every scoring round
+is directly committed on the anchor's history, and the scoring rounds are
+determined by the evidence: a commit at round `r` rests on round
+`r + waveLength − 1`, so the anchor at `ra` can carry it only from
+`d ≥ waveLength − 1` for `r = ra − d`, and the round at
+`d = waveLength − 1` has the anchor as its only certifier and never
+scores. That leaves `waveLength ≤ d ≤ interval`, which is `expected`
+divided by the count — so `expected` is exactly the count of a healthy
+window, and BN12a says the measurement reaches it. BN12b then reads the
+threshold: at `num ≤ den`, which every deployment satisfies, a healthy
+window raises the count by one and resets the back-off. What BN12 does
+not claim is that a *good DAG* makes a window healthy; that needs the
+anchor's history to carry the good validators' blocks below it, a
+property of the base protocol rather than of the mechanism, and slots led
+outside the good set do not commit in any case, so the bound there is
+partial rather than `expected`.
+
 **There is no total run.** Every configuration commits an anchor at its
 own round and a universe is finite, so a run with a configuration for
 every `k` would inject `ℕ` into the universe's ids. A total structure
@@ -8269,6 +8292,10 @@ here.
 - **Safety holds for any update rule**, a stronger and simpler
   statement than the paper's for AIMD; and the paper's count over
   leader *blocks* equals a count over slots, by agreement.
+- **The measurement has a property**, which the paper states and does not
+  prove: `expected` is exactly the count of a window whose scoring slots
+  all commit, so a healthy window is read as healthy and the count rises
+  (BN12). Without it the loop is safe and live but may be inert.
 - **There is no total run**; the sequence of configurations is the
   family of its prefixes.
 - **The safety law is consumed inside liveness**, at the anchor's slot.
@@ -9351,6 +9378,7 @@ reused.
 | BN9 | the heads descent: the liveness clause from the descent laws and a run of heads; round-robin has runs of heads by pigeonhole and is live at every count | `Barnacle.Heads.holds` *(Barnacle/Heads/Proof)* |
 | BN10 | the three rules satisfy the laws and the descent laws, and are live under round-robin at every count | `Barnacle.Mysticeti.holds`, `Barnacle.MysticetiLive.holds`, `Barnacle.Odontoceti.holds`, `Barnacle.Nemo.holds` *(Barnacle/Mysticeti/Proof, Barnacle/MysticetiLive/Proof, Barnacle/Odontoceti/Proof, Barnacle/Nemo/Proof)* |
 | BN11 | and so the mechanism over each of them, under round-robin, reaches every height with no clause left assumed, on any view caught up to the horizon | `Barnacle.Live.holds`, `coversUpto_full` *(Barnacle/Live/Proof, Barnacle/Helpers/Cover)* |
+| BN12 | a healthy window is counted as healthy, and the rule then raises the count: the loop cannot back off where every scoring slot committed | `Barnacle.Healthy.holds` *(Barnacle/Healthy/Proof)* |
 
 ---
 
@@ -17908,6 +17936,68 @@ The causal history of a block of a crash-fault universe, as a view.
 
 ### Not otherwise grouped
 
+#### `WindowHealthy`
+
+*def, `Barnacle.Healthy.Statement.lean`*
+
+```lean
+def WindowHealthy (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
+    (U : R.Universe) (A : BlockId) (hA : A ∈ R.ids U)
+    (m : ℕ) (hm : 0 < m) (hmax : m ≤ P.maxLeaders) : Prop :=
+  ∀ d, R.waveLength ≤ d → d ≤ P.interval → ∀ l, l < m →
+    R.SlotDirect (Sched getLeader hk m hm hmax) U (R.historyView U A hA)
+      (m * ((R.block U A).round - d) + l)
+```
+
+**A healthy window**: every slot of every scoring round of the window is directly committed on the anchor's causal history.
+
+#### `Counted`
+
+*def, `Barnacle.Healthy.Statement.lean`*
+
+```lean
+def Counted (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) : Prop :=
+  ∀ (U : R.Universe) (A : BlockId) (hA : A ∈ R.ids U) (m : ℕ) (hm : 0 < m)
+    (hmax : m ≤ P.maxLeaders),
+    R.waveLength ≤ P.interval → P.interval ≤ (R.block U A).round →
+    WindowHealthy R P getLeader hk U A hA m hm hmax →
+    expected R P m ≤ observed R P getLeader hk U A m hm hmax
+```
+
+**BN12a, a healthy window reaches the expected count.**
+
+#### `Raises`
+
+*def, `Barnacle.Healthy.Statement.lean`*
+
+```lean
+def Raises (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) : Prop :=
+  ∀ (U : R.Universe) (A : BlockId) (hA : A ∈ R.ids U) (m : ℕ) (hm : 0 < m)
+    (hmax : m ≤ P.maxLeaders) (backoff : ℕ),
+    P.num ≤ P.den → R.waveLength ≤ P.interval → P.interval ≤ (R.block U A).round →
+    WindowHealthy R P getLeader hk U A hA m hm hmax →
+    Aimd.rule R P getLeader hk m backoff U A = (min (m + 1) P.maxLeaders, 0)
+```
+
+**BN12b, and the rule then increases.** At a threshold of at most one — the paper's `num / den ≤ 1`, which every deployment satisfies — a healthy window raises the count by one, capped at `maxLeaders`, and resets the back-off. So the loop cannot read a window in which every scoring slot committed as a reason to back off.
+
+#### `Statement`
+
+*def, `Barnacle.Healthy.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders),
+    Counted R P getLeader hk ∧ Raises R P getLeader hk
+```
+
+The count of a healthy window, and the step it produces.
+
 #### `RunsExist`
 
 *def, `Barnacle.Live.Statement.lean`*
@@ -18641,7 +18731,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 665 theorems that either another module of the
+The 667 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -27197,6 +27287,25 @@ theorem holds : Statement
 
 #### `holds`
 
+*theorem, `Barnacle.Healthy.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `coversUpto_full`
+
+*theorem, `Barnacle.Helpers.Cover.lean`*
+
+```lean
+theorem coversUpto_full (hR : R.Laws) (U : R.Universe) (N : ℕ) :
+    R.CoversUpto U (R.full U) N
+```
+
+**The full view is caught up to every horizon.**
+
+#### `holds`
+
 *theorem, `Barnacle.Live.Proof.lean`*
 
 ```lean
@@ -27376,7 +27485,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 616 lemmas used only within the file that proves
+The 615 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -28502,12 +28611,6 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `populated_and_card_viewUpto_le` | The capstone, unconditional. `EventuallyDelivers` is gone: production plus the enforceable budget plus the … |
 | `populated_and_card_viewUpto_le'` | The composed statement — DoS resistance in one theorem. One set of hypotheses — production, post-`R` … |
-
-### `Barnacle/Helpers/Cover.lean` (1)
-
-| Lemma | Role |
-|:---|:---|
-| `coversUpto_full` | The full view is caught up to every horizon. |
 
 ### `Hybrid/Checkpoint/RecoveryProofs.lean` (14)
 

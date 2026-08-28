@@ -4,6 +4,7 @@ import LeanDag.Barnacle.Model.Run
 import LeanDag.Barnacle.Mysticeti.Proof
 import LeanDag.Barnacle.Helpers.Schedule
 import LeanDag.Barnacle.Helpers.Cover
+import LeanDag.Barnacle.Healthy.Proof
 
 /-!
 # Barnacle witnesses — the definitions on data
@@ -174,6 +175,37 @@ example : Aimd.update bnP 1 3 false = (1, 4) := by decide
 -- count `4` too (`100 · 5 < 96 · 8`); at count `1` it is healthy
 -- (`100 · 2 ≥ 96 · 2`).
 example : Aimd.rule bnRule bnP bnLeader bnWin 2 0 U7 20 = (1, 1) := by decide
+
+/-! ## BN12 on data: a healthy window, and the step it forces
+
+At count `1` the anchor `20` scores both of its scoring rounds — `d = 3`
+and `d = 4`, the wave and the interval — so the window is healthy in the
+sense of `Healthy.WindowHealthy`, and BN12 turns that into the count's
+rise with no appeal to `decide` on the rule itself. -/
+
+theorem u7_window_healthy :
+    Healthy.WindowHealthy bnRule bnP bnLeader bnWin U7 20 (by decide) 1
+      (by decide) (by decide) := by
+  intro d h1 h2 l hl
+  change 3 ≤ d at h1
+  change d ≤ 4 at h2
+  change l < 1 at hl
+  interval_cases d <;> interval_cases l <;> decide
+
+/-- **BN12b applied**: the rule raises the count to `2` and resets the
+back-off, because the window is healthy — not because the arithmetic was
+computed. -/
+example : Aimd.rule bnRule bnP bnLeader bnWin 1 0 U7 20 = (2, 0) :=
+  (Healthy.holds (Fin 4) (Fin 24) Unit bnRule bnP bnLeader bnWin).2 U7 20 (by decide) 1
+    (by decide) (by decide) 0 (by decide) (by decide) (by decide) u7_window_healthy
+
+/-- And `observed` meets `expected` there, which is BN12a. -/
+example : expected bnRule bnP 1 ≤ observed bnRule bnP bnLeader bnWin U7 20 1
+    (by decide) (by decide) :=
+  (Healthy.holds (Fin 4) (Fin 24) Unit bnRule bnP bnLeader bnWin).1 U7 20 (by decide) 1
+    (by decide) (by decide) (by decide) (by decide) u7_window_healthy
+
+#print axioms LeanDag.Barnacle.Healthy.holds
 example : Aimd.rule bnRule bnP bnLeader bnWin 4 0 U7 20 = (3, 1) := by decide
 example : Aimd.rule bnRule bnP bnLeader bnWin 1 0 U7 20 = (2, 0) := by decide
 -- At the floor, an unhealthy window (anchor `12`, nothing scores at

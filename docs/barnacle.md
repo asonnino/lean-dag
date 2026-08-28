@@ -856,7 +856,13 @@ uninhabited (F7, Phase 2).
 - **Certified DAGs.** The paper says the measurement applies; the model
   has no certified-DAG base.
 - **Performance (R2).** The paper's evaluation claims are outside the
-  formal model, as the paper says.
+  formal model, as the paper says. What *is* now inside it is that the
+  loop is not inert: BN12 shows `expected` is exactly the count of a
+  window whose scoring slots all commit, so a healthy window is read as
+  healthy and the rule raises the count. What remains outside is the step
+  from a *good DAG* to a healthy window, which needs the anchor's history
+  to carry the good validators' blocks below it and is bounded by the
+  good set rather than by `expected`.
 - **Byzantine bias of the measurement.** The paper notes a Byzantine
   leader can lower the direct rate within a window; that the damage is
   bounded to one interval is a quantitative claim not attempted here.

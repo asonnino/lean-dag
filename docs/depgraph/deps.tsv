@@ -4,6 +4,12 @@ EDGE	LeanDag.chop._proof_5	LeanDag.chopBlock
 EDGE	LeanDag.chop._proof_5	LeanDag.BlockUniverse.block
 EDGE	LeanDag.chop._proof_5	LeanDag.Block.round
 EDGE	LeanDag.chop._proof_5	LeanDag.BlockUniverse
+NODE	LeanDag.Barnacle.expected.eq_1	LeanDag.Barnacle.Healthy.Proof	thm
+EDGE	LeanDag.Barnacle.expected.eq_1	LeanDag.Barnacle.BaseRule.waveLength
+EDGE	LeanDag.Barnacle.expected.eq_1	LeanDag.Barnacle.Params
+EDGE	LeanDag.Barnacle.expected.eq_1	LeanDag.Barnacle.expected
+EDGE	LeanDag.Barnacle.expected.eq_1	LeanDag.Barnacle.Params.interval
+EDGE	LeanDag.Barnacle.expected.eq_1	LeanDag.Barnacle.BaseRule
 NODE	LeanDagTest.checkpointTwo.eq_1	LeanDagTest.HybridCheckpoint	thm
 EDGE	LeanDagTest.checkpointTwo.eq_1	LeanDag.Hybrid.Checkpoint.CheckpointData.mk
 EDGE	LeanDagTest.checkpointTwo.eq_1	LeanDag.Hybrid.Checkpoint.CheckpointData
@@ -944,6 +950,20 @@ EDGE	LeanDag.Hybrid.instDecidableDirectCommit	LeanDag.HybridFaults.toFaults
 EDGE	LeanDag.Hybrid.instDecidableDirectCommit	LeanDag.Hybrid.DirectCommit
 EDGE	LeanDag.Hybrid.instDecidableDirectCommit	LeanDag.Hybrid.instDecidableDirectCommit._aux_1
 EDGE	LeanDag.Hybrid.instDecidableDirectCommit	LeanDag.BlockUniverse
+NODE	LeanDag.Barnacle.Healthy.Counted	LeanDag.Barnacle.Healthy.Statement	def
+EDGE	LeanDag.Barnacle.Healthy.Counted	LeanDag.Barnacle.Params.maxLeaders
+EDGE	LeanDag.Barnacle.Healthy.Counted	LeanDag.Barnacle.BaseRule.Universe
+EDGE	LeanDag.Barnacle.Healthy.Counted	LeanDag.Barnacle.BaseRule.block
+EDGE	LeanDag.Barnacle.Healthy.Counted	LeanDag.Barnacle.BaseRule.waveLength
+EDGE	LeanDag.Barnacle.Healthy.Counted	LeanDag.Barnacle.Params
+EDGE	LeanDag.Barnacle.Healthy.Counted	LeanDag.Barnacle.BaseRule.ids
+EDGE	LeanDag.Barnacle.Healthy.Counted	LeanDag.Barnacle.expected
+EDGE	LeanDag.Barnacle.Healthy.Counted	LeanDag.Barnacle.Healthy.WindowHealthy
+EDGE	LeanDag.Barnacle.Healthy.Counted	LeanDag.Barnacle.observed
+EDGE	LeanDag.Barnacle.Healthy.Counted	LeanDag.Block.round
+EDGE	LeanDag.Barnacle.Healthy.Counted	LeanDag.Barnacle.Keyed
+EDGE	LeanDag.Barnacle.Healthy.Counted	LeanDag.Barnacle.Params.interval
+EDGE	LeanDag.Barnacle.Healthy.Counted	LeanDag.Barnacle.BaseRule
 NODE	LeanDagTest.censBlk._proof_1	LeanDagTest.Quality.Model	thm
 NODE	LeanDag.PaceCore.le_top_of_built	LeanDag.ViewPace	thm
 EDGE	LeanDag.PaceCore.le_top_of_built	LeanDag.Faults
@@ -5868,6 +5888,15 @@ EDGE	LeanDag.Integration.chopMsg	LeanDag.Integration.chopMsg._proof_20
 EDGE	LeanDag.Integration.chopMsg	LeanDag.SkipMsg.B1
 NODE	LeanDag.FinWhale.Params	LeanDag.FinWhale.Model.Params	ind
 EDGE	LeanDag.FinWhale.Params	LeanDag.Faults
+NODE	LeanDag.Barnacle.Healthy.holds._proof_1_2	LeanDag.Barnacle.Healthy.Proof	thm
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_2	LeanDag.Barnacle.Params.maxLeaders
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_2	LeanDag.Barnacle.BaseRule.Universe
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_2	LeanDag.Barnacle.BaseRule.block
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_2	LeanDag.Barnacle.BaseRule.waveLength
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_2	LeanDag.Barnacle.Params
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_2	LeanDag.Barnacle.Params.interval
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_2	LeanDag.Barnacle.BaseRule
 NODE	LeanDag.exists_pedigree._proof_1_3	LeanDag.DoS.Pedigree	thm
 EDGE	LeanDag.exists_pedigree._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.exists_pedigree._proof_1_3	LeanDag.BlockUniverse.block
@@ -11639,6 +11668,18 @@ EDGE	LeanDag.FinWhale.Dag.complete	LeanDag.Block.refs
 EDGE	LeanDag.FinWhale.Dag.complete	LeanDag.FinWhale.Dag.block
 EDGE	LeanDag.FinWhale.Dag.complete	LeanDag.FinWhale.Params
 EDGE	LeanDag.FinWhale.Dag.complete	LeanDag.FinWhale.Dag
+NODE	LeanDag.Barnacle.Healthy.holds._proof_1_6	LeanDag.Barnacle.Healthy.Proof	thm
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_6	LeanDag.Barnacle.Params.maxLeaders
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_6	LeanDag.Barnacle.BaseRule.Universe
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_6	LeanDag.Barnacle.BaseRule.block
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_6	LeanDag.Barnacle.BaseRule.waveLength
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_6	LeanDag.Barnacle.Params
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_6	LeanDag.Barnacle.expected
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_6	LeanDag.Barnacle.observed
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_6	LeanDag.Block.round
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_6	LeanDag.Barnacle.Keyed
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_6	LeanDag.Barnacle.Params.interval
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_6	LeanDag.Barnacle.BaseRule
 NODE	LeanDag.BlackMarlin.pick_mem	LeanDag.BlackMarlin.Helpers.Descent	thm
 EDGE	LeanDag.BlackMarlin.pick_mem	LeanDag.BlackMarlin.pick
 NODE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_3	LeanDag.SafeSkip.Jump	thm
@@ -23122,6 +23163,41 @@ EDGE	LeanDag.FinWhale.not_fpEvidence_of_spCertificate	LeanDag.FinWhale.Dag
 EDGE	LeanDag.FinWhale.not_fpEvidence_of_spCertificate	LeanDag.FinWhale.params_arith
 EDGE	LeanDag.FinWhale.not_fpEvidence_of_spCertificate	LeanDag.FinWhale.Dag.leader
 EDGE	LeanDag.FinWhale.not_fpEvidence_of_spCertificate	LeanDag.Block.creator
+NODE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Healthy.Proof	thm
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Params.maxLeaders
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.expected.eq_1
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Healthy.holds._proof_1_4
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.BaseRule.Universe
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Healthy.holds._proof_1_6
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.BaseRule.block
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Healthy.Raises
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Healthy.Counted
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.BaseRule.waveLength
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Params
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Aimd.rule
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.BaseRule.ids
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.expected
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Params.den
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.BaseRule.instDecidableSlotDirect
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Healthy.WindowHealthy
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.observed.eq_1
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Healthy.holds._proof_1_2
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Aimd.update
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Aimd.rule._proof_1
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.observed
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.BaseRule.SlotDirect
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Block.round
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.BaseRule.historyView
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Sched
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Aimd.update.eq_1
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Healthy.holds._proof_1_3
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Keyed
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Aimd.rule.eq_1
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Params.num
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Healthy.Statement
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Params.interval
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.Aimd.rule._proof_2
+EDGE	LeanDag.Barnacle.Healthy.holds	LeanDag.Barnacle.BaseRule
 NODE	LeanDag.Barnacle.BaseRule.ids	LeanDag.Barnacle.Model.Rule	def
 EDGE	LeanDag.Barnacle.BaseRule.ids	LeanDag.Barnacle.BaseRule.Universe
 EDGE	LeanDag.Barnacle.BaseRule.ids	LeanDag.Barnacle.BaseRule
@@ -27449,6 +27525,16 @@ EDGE	LeanDag.PedigreeTo.below.step	LeanDag.BlockUniverse
 EDGE	LeanDag.PedigreeTo.below.step	LeanDag.AdoptedUnder
 EDGE	LeanDag.PedigreeTo.below.step	LeanDag.PedigreeTo.step
 EDGE	LeanDag.PedigreeTo.below.step	LeanDag.Block.creator
+NODE	LeanDag.Barnacle.Healthy.holds._proof_1_3	LeanDag.Barnacle.Healthy.Proof	thm
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_3	LeanDag.Barnacle.Params.maxLeaders
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_3	LeanDag.Barnacle.BaseRule.Universe
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_3	LeanDag.Barnacle.BaseRule.block
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_3	LeanDag.Barnacle.BaseRule.waveLength
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_3	LeanDag.Barnacle.Params
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_3	LeanDag.Barnacle.expected
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_3	LeanDag.Barnacle.Params.interval
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_3	LeanDag.Barnacle.BaseRule
 NODE	LeanDag.MahiMahi.mem_blamers._simp_1_4	LeanDag.MahiMahi.Helpers.Rules	thm
 EDGE	LeanDag.MahiMahi.mem_blamers._simp_1_4	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.mem_blamers._simp_1_4	LeanDag.BlockUniverse.ids
@@ -30645,6 +30731,20 @@ EDGE	LeanDag.exists_correct_of_card	LeanDag.Correct
 EDGE	LeanDag.exists_correct_of_card	LeanDag.Faults.f
 EDGE	LeanDag.exists_correct_of_card	LeanDag.mem_correct._simp_1
 EDGE	LeanDag.exists_correct_of_card	LeanDag.Faults.card_byzantine
+NODE	LeanDag.Barnacle.Healthy.WindowHealthy	LeanDag.Barnacle.Healthy.Statement	def
+EDGE	LeanDag.Barnacle.Healthy.WindowHealthy	LeanDag.Barnacle.Params.maxLeaders
+EDGE	LeanDag.Barnacle.Healthy.WindowHealthy	LeanDag.Barnacle.BaseRule.Universe
+EDGE	LeanDag.Barnacle.Healthy.WindowHealthy	LeanDag.Barnacle.BaseRule.block
+EDGE	LeanDag.Barnacle.Healthy.WindowHealthy	LeanDag.Barnacle.BaseRule.waveLength
+EDGE	LeanDag.Barnacle.Healthy.WindowHealthy	LeanDag.Barnacle.Params
+EDGE	LeanDag.Barnacle.Healthy.WindowHealthy	LeanDag.Barnacle.BaseRule.ids
+EDGE	LeanDag.Barnacle.Healthy.WindowHealthy	LeanDag.Barnacle.BaseRule.SlotDirect
+EDGE	LeanDag.Barnacle.Healthy.WindowHealthy	LeanDag.Block.round
+EDGE	LeanDag.Barnacle.Healthy.WindowHealthy	LeanDag.Barnacle.BaseRule.historyView
+EDGE	LeanDag.Barnacle.Healthy.WindowHealthy	LeanDag.Barnacle.Sched
+EDGE	LeanDag.Barnacle.Healthy.WindowHealthy	LeanDag.Barnacle.Keyed
+EDGE	LeanDag.Barnacle.Healthy.WindowHealthy	LeanDag.Barnacle.Params.interval
+EDGE	LeanDag.Barnacle.Healthy.WindowHealthy	LeanDag.Barnacle.BaseRule
 NODE	LeanDag.card_authorsAt_of_succ	LeanDag.Liveness	thm
 EDGE	LeanDag.card_authorsAt_of_succ	LeanDag.creatorsOf
 EDGE	LeanDag.card_authorsAt_of_succ	LeanDag.Faults
@@ -31304,6 +31404,21 @@ EDGE	LeanDag.FinWhale.SPCertificate	LeanDag.FinWhale.parentsVoting
 EDGE	LeanDag.FinWhale.SPCertificate	LeanDag.FinWhale.Params
 EDGE	LeanDag.FinWhale.SPCertificate	LeanDag.FinWhale.spQuorum
 EDGE	LeanDag.FinWhale.SPCertificate	LeanDag.FinWhale.Dag
+NODE	LeanDag.Barnacle.Healthy.Raises	LeanDag.Barnacle.Healthy.Statement	def
+EDGE	LeanDag.Barnacle.Healthy.Raises	LeanDag.Barnacle.Params.maxLeaders
+EDGE	LeanDag.Barnacle.Healthy.Raises	LeanDag.Barnacle.BaseRule.Universe
+EDGE	LeanDag.Barnacle.Healthy.Raises	LeanDag.Barnacle.BaseRule.block
+EDGE	LeanDag.Barnacle.Healthy.Raises	LeanDag.Barnacle.BaseRule.waveLength
+EDGE	LeanDag.Barnacle.Healthy.Raises	LeanDag.Barnacle.Params
+EDGE	LeanDag.Barnacle.Healthy.Raises	LeanDag.Barnacle.Aimd.rule
+EDGE	LeanDag.Barnacle.Healthy.Raises	LeanDag.Barnacle.BaseRule.ids
+EDGE	LeanDag.Barnacle.Healthy.Raises	LeanDag.Barnacle.Params.den
+EDGE	LeanDag.Barnacle.Healthy.Raises	LeanDag.Barnacle.Healthy.WindowHealthy
+EDGE	LeanDag.Barnacle.Healthy.Raises	LeanDag.Block.round
+EDGE	LeanDag.Barnacle.Healthy.Raises	LeanDag.Barnacle.Keyed
+EDGE	LeanDag.Barnacle.Healthy.Raises	LeanDag.Barnacle.Params.num
+EDGE	LeanDag.Barnacle.Healthy.Raises	LeanDag.Barnacle.Params.interval
+EDGE	LeanDag.Barnacle.Healthy.Raises	LeanDag.Barnacle.BaseRule
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.validated_prefix_select	LeanDag.Hybrid.Checkpoint.RecoveryProofs	thm
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.validated_prefix_select	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.height_le_select
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.validated_prefix_select	LeanDag.HybridFaults
@@ -32103,6 +32218,21 @@ EDGE	LeanDag.Nemo.decidableCertifiedIn._aux_1	LeanDag.Nemo.Universe.block
 EDGE	LeanDag.Nemo.decidableCertifiedIn._aux_1	LeanDag.Nemo.history
 EDGE	LeanDag.Nemo.decidableCertifiedIn._aux_1	LeanDag.Block.refs
 EDGE	LeanDag.Nemo.decidableCertifiedIn._aux_1	LeanDag.Block.round
+NODE	LeanDag.Barnacle.observed.eq_1	LeanDag.Barnacle.Healthy.Proof	thm
+EDGE	LeanDag.Barnacle.observed.eq_1	LeanDag.Barnacle.Params.maxLeaders
+EDGE	LeanDag.Barnacle.observed.eq_1	LeanDag.Barnacle.BaseRule.Universe
+EDGE	LeanDag.Barnacle.observed.eq_1	LeanDag.Barnacle.BaseRule.block
+EDGE	LeanDag.Barnacle.observed.eq_1	LeanDag.Barnacle.Params
+EDGE	LeanDag.Barnacle.observed.eq_1	LeanDag.Barnacle.BaseRule.ids
+EDGE	LeanDag.Barnacle.observed.eq_1	LeanDag.Barnacle.BaseRule.instDecidableSlotDirect
+EDGE	LeanDag.Barnacle.observed.eq_1	LeanDag.Barnacle.observed
+EDGE	LeanDag.Barnacle.observed.eq_1	LeanDag.Barnacle.BaseRule.SlotDirect
+EDGE	LeanDag.Barnacle.observed.eq_1	LeanDag.Block.round
+EDGE	LeanDag.Barnacle.observed.eq_1	LeanDag.Barnacle.BaseRule.historyView
+EDGE	LeanDag.Barnacle.observed.eq_1	LeanDag.Barnacle.Sched
+EDGE	LeanDag.Barnacle.observed.eq_1	LeanDag.Barnacle.Keyed
+EDGE	LeanDag.Barnacle.observed.eq_1	LeanDag.Barnacle.Params.interval
+EDGE	LeanDag.Barnacle.observed.eq_1	LeanDag.Barnacle.BaseRule
 NODE	LeanDagTest.mmSlotsL._proof_2	LeanDagTest.MahiMahi.Liveness	thm
 NODE	LeanDag.PaceCore	LeanDag.ViewPace	ind
 EDGE	LeanDag.PaceCore	LeanDag.Faults
@@ -32799,6 +32929,20 @@ EDGE	LeanDag.Nemo.decided_of_leader_mem	LeanDag.Nemo.directCommitIn_full
 EDGE	LeanDag.Nemo.decided_of_leader_mem	LeanDag.Nemo.DirectCommit
 EDGE	LeanDag.Nemo.decided_of_leader_mem	LeanDag.Slots
 EDGE	LeanDag.Nemo.decided_of_leader_mem	LeanDag.Nemo.SynchronisedOn
+NODE	LeanDag.Barnacle.Aimd.rule.eq_1	LeanDag.Barnacle.Healthy.Proof	thm
+EDGE	LeanDag.Barnacle.Aimd.rule.eq_1	LeanDag.Barnacle.Params.maxLeaders
+EDGE	LeanDag.Barnacle.Aimd.rule.eq_1	LeanDag.Barnacle.BaseRule.Universe
+EDGE	LeanDag.Barnacle.Aimd.rule.eq_1	LeanDag.Barnacle.Params
+EDGE	LeanDag.Barnacle.Aimd.rule.eq_1	LeanDag.Barnacle.Aimd.rule
+EDGE	LeanDag.Barnacle.Aimd.rule.eq_1	LeanDag.Barnacle.expected
+EDGE	LeanDag.Barnacle.Aimd.rule.eq_1	LeanDag.Barnacle.Params.den
+EDGE	LeanDag.Barnacle.Aimd.rule.eq_1	LeanDag.Barnacle.Aimd.update
+EDGE	LeanDag.Barnacle.Aimd.rule.eq_1	LeanDag.Barnacle.Aimd.rule._proof_1
+EDGE	LeanDag.Barnacle.Aimd.rule.eq_1	LeanDag.Barnacle.observed
+EDGE	LeanDag.Barnacle.Aimd.rule.eq_1	LeanDag.Barnacle.Keyed
+EDGE	LeanDag.Barnacle.Aimd.rule.eq_1	LeanDag.Barnacle.Params.num
+EDGE	LeanDag.Barnacle.Aimd.rule.eq_1	LeanDag.Barnacle.Aimd.rule._proof_2
+EDGE	LeanDag.Barnacle.Aimd.rule.eq_1	LeanDag.Barnacle.BaseRule
 NODE	LeanDag.Accepted.subset_ids	LeanDag.DoS.Acceptance	thm
 EDGE	LeanDag.Accepted.subset_ids	LeanDag.Faults
 EDGE	LeanDag.Accepted.subset_ids	LeanDag.BlockUniverse.ids
@@ -38464,6 +38608,22 @@ EDGE	LeanDag.Slots.chop_slotRound	LeanDag.Slots.slotRound
 EDGE	LeanDag.Slots.chop_slotRound	LeanDag.Slots.chop
 EDGE	LeanDag.Slots.chop_slotRound	LeanDag.Slots
 NODE	LeanDagTest.mmFullBlk._proof_4	LeanDagTest.MahiMahi.Model	thm
+NODE	LeanDagTest.Barnacle.u7_window_healthy	LeanDagTest.Barnacle.Model	thm
+EDGE	LeanDagTest.Barnacle.u7_window_healthy	LeanDag.Barnacle.Params.maxLeaders
+EDGE	LeanDagTest.Barnacle.u7_window_healthy	LeanDag.Barnacle.BaseRule.block
+EDGE	LeanDagTest.Barnacle.u7_window_healthy	LeanDagTest.Barnacle.bnWin
+EDGE	LeanDagTest.Barnacle.u7_window_healthy	LeanDagTest.Barnacle.bnLeader
+EDGE	LeanDagTest.Barnacle.u7_window_healthy	LeanDag.Barnacle.BaseRule.waveLength
+EDGE	LeanDagTest.Barnacle.u7_window_healthy	LeanDag.Barnacle.BaseRule.ids
+EDGE	LeanDagTest.Barnacle.u7_window_healthy	LeanDag.Barnacle.BaseRule.instDecidableSlotDirect
+EDGE	LeanDagTest.Barnacle.u7_window_healthy	LeanDag.Barnacle.Healthy.WindowHealthy
+EDGE	LeanDagTest.Barnacle.u7_window_healthy	LeanDag.Barnacle.BaseRule.SlotDirect
+EDGE	LeanDagTest.Barnacle.u7_window_healthy	LeanDag.Block.round
+EDGE	LeanDagTest.Barnacle.u7_window_healthy	LeanDag.Barnacle.BaseRule.historyView
+EDGE	LeanDagTest.Barnacle.u7_window_healthy	LeanDagTest.Barnacle.bnRule
+EDGE	LeanDagTest.Barnacle.u7_window_healthy	LeanDag.Barnacle.Sched
+EDGE	LeanDagTest.Barnacle.u7_window_healthy	LeanDag.Barnacle.Params.interval
+EDGE	LeanDagTest.Barnacle.u7_window_healthy	LeanDagTest.Barnacle.bnP
 NODE	LeanDagTest.Barnacle.run2._proof_4	LeanDagTest.Barnacle.Agreement	thm
 EDGE	LeanDagTest.Barnacle.run2._proof_4	LeanDag.Barnacle.Params.interval
 EDGE	LeanDagTest.Barnacle.run2._proof_4	LeanDagTest.Barnacle.bnP
@@ -39766,6 +39926,16 @@ EDGE	LeanDag.Integration.history_addGenesis	LeanDag.history
 EDGE	LeanDag.Integration.history_addGenesis	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.history_addGenesis	LeanDag.Block.creator
 EDGE	LeanDag.Integration.history_addGenesis	LeanDag.Reaches
+NODE	LeanDag.Barnacle.Healthy.holds._proof_1_4	LeanDag.Barnacle.Healthy.Proof	thm
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_4	LeanDag.Barnacle.Params.maxLeaders
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_4	LeanDag.Barnacle.BaseRule.Universe
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_4	LeanDag.Barnacle.BaseRule.block
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_4	LeanDag.Barnacle.BaseRule.waveLength
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_4	LeanDag.Barnacle.Params
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_4	LeanDag.Barnacle.expected
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_4	LeanDag.Barnacle.Params.interval
+EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_4	LeanDag.Barnacle.BaseRule
 NODE	LeanDag.exists_partialRun._proof_1_7	LeanDag.Adaptive.Liveness	thm
 EDGE	LeanDag.exists_partialRun._proof_1_7	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.exists_partialRun._proof_1_7	LeanDag.Faults
@@ -49659,6 +49829,13 @@ EDGE	LeanDag.Minnow.ValidHere.rec	LeanDag.Faults.f
 EDGE	LeanDag.Minnow.ValidHere.rec	LeanDag.Minnow.ValidHere
 EDGE	LeanDag.Minnow.ValidHere.rec	LeanDag.Block.creator
 NODE	LeanDagTest.rrSlots._proof_2	LeanDagTest.Quantitative	thm
+NODE	LeanDag.Barnacle.Healthy.Statement	LeanDag.Barnacle.Healthy.Statement	def
+EDGE	LeanDag.Barnacle.Healthy.Statement	LeanDag.Barnacle.Params.maxLeaders
+EDGE	LeanDag.Barnacle.Healthy.Statement	LeanDag.Barnacle.Healthy.Raises
+EDGE	LeanDag.Barnacle.Healthy.Statement	LeanDag.Barnacle.Healthy.Counted
+EDGE	LeanDag.Barnacle.Healthy.Statement	LeanDag.Barnacle.Params
+EDGE	LeanDag.Barnacle.Healthy.Statement	LeanDag.Barnacle.Keyed
+EDGE	LeanDag.Barnacle.Healthy.Statement	LeanDag.Barnacle.BaseRule
 NODE	LeanDag.creatorsOf_correctBlocksAt_subset	LeanDag.CommonCore	thm
 EDGE	LeanDag.creatorsOf_correctBlocksAt_subset	LeanDag.creatorsOf
 EDGE	LeanDag.creatorsOf_correctBlocksAt_subset	LeanDag.mem_creatorsOf
