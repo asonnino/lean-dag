@@ -270,3 +270,8 @@ import LeanDag.OptimalHydrozoan.EventualDecision.Proof
 import LeanDag.OptimalHydrozoan.Grounding.Statement
 import LeanDag.OptimalHydrozoan.Helpers.Grounding
 import LeanDag.OptimalHydrozoan.Grounding.Proof
+import LeanDag.RedSnapper.Model.Faults
+import LeanDag.RedSnapper.Model.Revocation
+import LeanDag.RedSnapper.Revocation.Statement
+import LeanDag.RedSnapper.Helpers.Revocation
+import LeanDag.RedSnapper.Revocation.Proof
