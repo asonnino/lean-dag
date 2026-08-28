@@ -102,3 +102,6 @@ import LeanDagTest.OptimalHydrozoan.EventualDecision
 import LeanDagTest.OptimalHydrozoan.Validity
 import LeanDagTest.OptimalHydrozoan.Grounding
 import LeanDagTest.OptimalHydrozoan.Axioms
+import LeanDagTest.RedSnapper.Model
+import LeanDagTest.RedSnapper.Revocation
+import LeanDagTest.RedSnapper.Axioms
