@@ -47,6 +47,13 @@ import LeanDagTest.BlackMarlin.Ledger
 import LeanDagTest.BlackMarlin.Divergence
 import LeanDagTest.BlackMarlin.Counting
 import LeanDagTest.BlackMarlin.ViewLiveness
+import LeanDagTest.Barnacle.Model
+import LeanDagTest.Barnacle.Agreement
+import LeanDagTest.Barnacle.Progress
+import LeanDagTest.Barnacle.Heads
+import LeanDagTest.Barnacle.Instances
+import LeanDagTest.Barnacle.Majority
+import LeanDagTest.Barnacle.Axioms
 import LeanDagTest.Minnow.Deadlock
 import LeanDagTest.Minnow.Skip
 import LeanDagTest.Minnow.Safety

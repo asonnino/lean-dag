@@ -176,7 +176,7 @@ proof effort with no corresponding proof content.
    refinement into LiDO-DAG. What is claimed is the *form* of the account —
    theirs is operational, quantified over traces and instants; here liveness is
    stated as a condition on the DAG, and the dependence on time is
-   confined below a `Prop`-valued interface (§6.7, §24).
+   confined below a `Prop`-valued interface (§6.7, §25).
 
 4. **A derivation** of the structural property from **view convergence**
    (§6.9), together with the protocol's build rules, and nothing beyond
@@ -192,7 +192,7 @@ proof effort with no corresponding proof content.
    coverage and production alike; every other condition is a clause of the
    protocol, which a designer controls. In particular reference coverage
    is derived rather than assumed, and the one point at which a network parameter
-   constrains the specification is the wait threshold of §23.1.
+   constrains the specification is the wait threshold of §24.1.
 
 6. **Quantitative forms** (§6.10): the round from which coverage holds, given
    explicitly; a bound on the slot at which the next commit occurs; and an
@@ -397,6 +397,32 @@ is exhibited on four processes at `f = 1`, machine-checked, with the
 model held to the paper's own validity rule and its own reading of each
 clause (§19.1).
 
+**Barnacle adapts the number of leaders per round** (§21), a
+control loop that measures on the agreed DAG the fraction of leader
+slots the base protocol decided directly and drives the count with an
+additive-increase, multiplicative-decrease rule. It is proved safe and
+live over an explicit interface rendering the paper's assumptions
+A1–A4, instantiated on Mysticeti, Odontoceti and Nemo-Nemo. Safety —
+agreement of the configuration sequence and of the ledger — holds for
+**any** update rule, with no synchrony or fairness hypothesis
+(`Agreement.holds` (BN3), `Ledger.holds` (BN5)), because the
+algorithm decides under the count in force and only then switches, so
+each configuration's verdicts are derivations against one fixed
+schedule. There is no total run: a finite universe closes finitely
+many configurations, and the paper's sequence of configurations is
+what every prefix of it agrees on. Liveness is the paper's
+Configuration Progress at the run's own count and runs of every height
+under a horizon (`Progress.holds` (BN8)), from a clause on a schedule
+that the paper assumes of its base protocols — and that its own
+rotation does not meet by the route this development takes, a run of
+correct-led slots, which has no instance at two leaders and four
+validators. The clause holds by a descent through the *heads* of
+rounds and a pigeonhole on residues (`Heads.holds` (BN9)), so each of
+the three rules is live under round-robin at **every** leader count
+(`MysticetiLive.holds`, `Odontoceti.holds`, `Nemo.holds` (BN10)) —
+the paper's A4 for its schedule, proved. Findings for the paper are
+listed in §21.5.
+
 ### 1.4 Scope and non-goals
 
 The development is deliberately bounded in four respects — a fifth, the
@@ -424,7 +450,7 @@ first.
   are shown agreed; totally ordering the blocks released by a single commit
   requires a tie-break which the development declines to assume (§5.6).
 - **No wall-clock latency.** The wait bound of §6.11 is a duration, but the total
-  elapsed time to a commit is not derived (§23.6).
+  elapsed time to a commit is not derived (§24.6).
 
 ### 1.5 Organisation
 
@@ -453,15 +479,16 @@ fault tolerance (`Hybrid.decided_unique` (H6),
 (`hybrid_agree_stack` (I7)) and collects the deployment conditions
 their composition reveals.
 
-§§17–20 analyse four protocols of the family against this development:
+§§17–21 analyse five protocols of the family against this development:
 Mahi-Mahi's asynchronous rule at wave `w` (`MahiMahi.Safety.holds`
 (MM1)), Black Marlin's three-round rule (`BlackMarlin.Safety.holds`
-(BM1)), Minnow's minimal rule, and FinWhale's two-round fast path
-(`lemma4` (FW1), `Run.agreement` (FW12)).
+(BM1)), Minnow's minimal rule, FinWhale's two-round fast path
+(`lemma4` (FW1), `Run.agreement` (FW12)), and Barnacle's adaptive leader
+count (`Barnacle.Agreement.holds` (BN3), `Barnacle.Heads.holds` (BN9)).
 
-§21 exhibits the witness models. §22 describes the mechanisation, §23
+§22 exhibits the witness models. §23 describes the mechanisation, §24
 discusses the formulation, the lessons of the extensions, and the
-limitations, §24 surveys related work, and §25 concludes. Appendix A indexes every
+limitations, §25 surveys related work, and §26 concludes. Appendix A indexes every
 principal statement against its Lean name and module. Throughout, displayed
 Lean is drawn from the source; binders are occasionally elided for layout,
 and `…` marks an elision.
@@ -844,8 +871,8 @@ computing base (§4.3). Assumed.
 
 Logically all of these are antecedents: each is a field of a structure or class,
 and every theorem quantifying over a block universe or over the relevant
-instances carries it. None is an axiom in the sense of §22, and their joint
-satisfiability is a proof obligation discharged by exhibition (§21) rather than
+instances carries it. None is an axiom in the sense of §23, and their joint
+satisfiability is a proof obligation discharged by exhibition (§22) rather than
 something the logic must be trusted for. The distinction drawn here is
 epistemic, not logical, and it is what determines where the trust boundary of
 the system actually falls.
@@ -899,7 +926,7 @@ P10 is a joint condition rather than a pure specification: the schedule is the
 designer's, but which validators are reliable is not. Round-robin discharges it
 whenever the reliable set is of quorum size, since at most `f` of every `n`
 consecutive leaders then lie outside it; `rrSlots` witnesses this with a window
-of `f + 1` (§21).
+of `f + 1` (§22).
 
 **P8 deserves the most emphasis of any clause here**, and is easily mistaken for
 a routine one. It states that a correct validator holding a quorum at round `r`
@@ -960,7 +987,7 @@ the model constrains it, `Correct` being a set complement (§2.1).
 P9 is the clause whose *sufficiency* is not under the designer's control: the
 timeout may be chosen freely, but whether the chosen value is long enough
 depends on the network. §6.10 determines the threshold it must meet — the
-constant `2Δ + proc` — and §23.1 discusses the consequences.
+constant `2Δ + proc` — and §24.1 discusses the consequences.
 
 P11 is the second pacemaker rule, and the counterpart of `advances`: where
 P8 forces a validator forward on a *quorum*, P11 forces it forward on a
@@ -1045,7 +1072,7 @@ differences matter more than they appear to.
 
 `held v n` is what `v` had in hand *at the moment it built its
 round-`(n+1)` block* — not what it eventually receives. That build-time
-index is the essential modelling device (§23.1): a block's references are
+index is the essential modelling device (§24.1): a block's references are
 frozen at construction, so what bears on the DAG's shape is what was held
 when the builder acted. `View.ids` is a finite set of identifiers with no
 index of either kind, which is why no formulation is stated over it.
@@ -1108,7 +1135,7 @@ rather than inside it.
 #### Where they are consumed
 
 Neither role is discharged where its name suggests, and the extracted
-support graph (§22) makes the pattern checkable rather than asserted.
+support graph (§23) makes the pattern checkable rather than asserted.
 
 Production is consumed as a `PopulatedOn` hypothesis: L6, the
 committed-run results, the quantitative results and the capstones of
@@ -1157,7 +1184,7 @@ together with clauses of the protocol:
 | Production | N2 (`converges`) with P8 and genesis | `ViewPace.populatedOn` (V17) |
 
 It is stated as a hypothesis of L4 and L6 in order to keep those arguments free
-of temporal notions (§6.8), and supplied to them by the results above. §23
+of temporal notions (§6.8), and supplied to them by the results above. §24
 discusses the formulation.
 
 **What "derived" does and does not mean here.** Coverage is derived
@@ -1583,7 +1610,7 @@ enter it within the processing bound.
 Reference coverage is not among them. It is not a clause a validator could
 execute, since it refers to `Correct`, which no validator can observe; it is
 what (a) and (b) *produce* against a synchronous network, and it is derived
-accordingly (§4.4, §23.2).
+accordingly (§4.4, §24.2).
 
 The chapter is organised around two interface predicates, and every
 result above them consumes them as hypotheses rather than reaching for a
@@ -1626,7 +1653,7 @@ structure Delivery (U) where
 
 The indexing of `held` is essential: `held v n` denotes what `v` had in hand *at
 the moment it built its round-`(n+1)` block*, not what `v` eventually receives.
-This is the build-time index which a view cannot supply (§23.1). Between holding
+This is the build-time index which a view cannot supply (§24.1). Between holding
 and referencing sits **acceptance** — at most one block per author, correct
 blocks always taken — which is deliberately where the protocol may refuse:
 the DoS arc's novelty budget (§8) is a rule about `accepted`, and the
@@ -1641,7 +1668,7 @@ are stated over it, `EventuallyDelivers` (§6.4) feeds their post-`R`
 increments, and P7's untimed incarnation is its `includes` clause. The
 liveness development never reads it — production and coverage come from
 the timed route of §6.9, whose `holds` is indexed by *time* rather than by
-round, which is exactly the index this structure cannot supply (§23.1).
+round, which is exactly the index this structure cannot supply (§24.1).
 
 ### 6.3 Progress, and the horizon
 
@@ -1672,7 +1699,7 @@ formulation demanding blocks at every round unconditionally would require
 infinitely many distinct blocks in a finite set, so that no universe
 satisfies it and every theorem assuming it is vacuous. An early
 formulation of the production clause had exactly that flaw, caught by
-sitting down to write its witness (§21).
+sitting down to write its witness (§22).
 
 Three consequences follow.
 
@@ -1732,7 +1759,7 @@ The predicate is antitone in `T` (`SynchronisedOn.mono`), which allows results
 established at `T := Correct` to be supplied to the quorum-relative statements of
 §6.6.
 
-The condition is derived, not assumed (§4.4); §23 discusses its formulation.
+The condition is derived, not assumed (§4.4); §24 discusses its formulation.
 
 ### 6.5 Monotonicity and propagation
 
@@ -1899,7 +1926,7 @@ incremental bounds. Neither is consumed by any liveness result.
 
 ### 6.8 The layering
 
-![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §22 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
+![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §23 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
 
 No theorem above `SynchronisedOn` mentions time, and no theorem below it
 mentions certificates. The diagram also locates the trust boundary: the
@@ -2352,7 +2379,7 @@ already is, and the adversary's whole freedom is the single layer it may
 build the instant a quorum forms beneath it —
 `PaceCore.round_le_top_succ`: no valid block's round exceeds some
 reliable `top` by more than one. On the running witness the floor is met
-with equality (§21).
+with equality (§22).
 
 The clause itself is asserted only from `gst` (§4.1), so what it demands
 coincides with what the clamped author-blind rule delivers: pre-GST it
@@ -2563,7 +2590,7 @@ each with a round-`δ` block in `ledgerSet`. No synchrony, no delivery
 model, no populated rounds appear in any hypothesis.
 
 **The boundary, witnessed.** Aggregate coverage is *not* individual
-inclusion. The witness model `Ucens` (CQ8) (§21) runs six rounds in which
+inclusion. The witness model `Ucens` (CQ8) (§22) runs six rounds in which
 three validators reference only each other and commit with the full
 certificate pattern, while a fourth — correct, building validly, never
 referenced — is the missing author of **every** layer of **every**
@@ -2708,7 +2735,7 @@ theorem creators_refs_eq_correct (hdos : DoSValid U) (hb : b ∈ U.ids)
 and the commit chain still operates over
 them: the witness model `Uexcl` carries a
 direct commit whose three rounds all lie after the exclusion of its
-equivocator (§21). Nor does exclusion depend on favourable circumstances:
+equivocator (§22). Nor does exclusion depend on favourable circumstances:
 *density* establishes that a
 cone can be selectively blind to at most `f` correct authors per round, even
 below Byzantine blocks, because the quorum clause forces every layer of
@@ -2741,7 +2768,7 @@ theorem card_history_le' (hdos : DoSValid U) (hb : b ∈ U.ids) :
 ```
 
 The exponential constant is not an artefact of the proof: a matching family of
-witnesses (`Udouble` (C5), §21) realises `2^(e−2)` growth from `e` equivocators,
+witnesses (`Udouble` (C5), §22) realises `2^(e−2)` growth from `e` equivocators,
 so any bound obtainable from reference-validity conditions alone carries a
 constant exponential in `f`. This is the assessment of the exposure
 mechanism as a *storage* defence: it is the right accountability layer — it
@@ -2878,7 +2905,7 @@ exclusion terminates it. On data,
 the budget is satisfiable at its exact constant: the witness schedule
 `Dtwin` satisfies `UniformBudget 3` with its costliest acceptance costing
 exactly `3`, and `ByzBudget 0` — nothing Byzantine accepted after the
-genesis round (§21).
+genesis round (§22).
 
 How should the parameter `T` be set? Any `T ≥ 1` admits every correct block
 post-`R` (the sandwich's `f·κ + 1` with `κ = 0` would be the correct-only
@@ -2942,7 +2969,7 @@ limitations**: an equivocation whose witnessing pair falls strictly below
 the cut is forgiven — in `chop U G` its author is no longer exposed — while
 a pair *at* the cut survives into the base layer. §9.5 prices the
 forgiveness; the witness file exhibits it on data, an exposure present in
-the full universe and absent from its truncation (§21).
+the full universe and absent from its truncation (§22).
 
 ### 9.2 Verdicts survive the cut
 
@@ -3082,7 +3109,7 @@ correct store, the store rides into its keeper's next block
 (`viewUpto_subset_history` (B7), §8.4), and the backbone carries that block into
 every correct round-`t` cone — a cone *is* an attestation. The lag is tight
 on data: at `t = m + 1` the witness exhibits an accepted equivocation half
-missing from the base (§21). Consequently the joiner's assembly — base as
+missing from the base (§22). Consequently the joiner's assembly — base as
 genesis layer plus a correct peer's window strictly above the cut — is a
 bona-fide view of the truncation (`joinView`; downward closure is the
 content: window references above the cut stay in the window, references *at*
@@ -3176,7 +3203,7 @@ continues to apply to the same types. The stronger bound is consumed in
 exactly two proofs (O2 and O4′ below) — the two-round rule's *direct* safety
 already holds at `3f+1`. The witness file proves the reuse claim as a
 computation: a quorum-5 universe over six validators satisfies the untouched
-`BlockUniverse` by `decide` (§21). Nothing outside `LeanDag/Odontoceti/`
+`BlockUniverse` by `decide` (§22). Nothing outside `LeanDag/Odontoceti/`
 was modified.
 
 ### 10.2 The rule layer, and the arithmetic core
@@ -3305,7 +3332,7 @@ from both passing the test at one anchor. The counting that would be needed
 valid six-validator universe, a Byzantine leader's two round-0 twins each
 gather exactly three supporters (disjoint correct pairs plus the
 equivocator's own split), and a round-3 block sees all of round 1 — **both
-twins pass `ThickLink` against it**, by `decide` (`utwin6_both_pass` (O11), §21).
+twins pass `ThickLink` against it**, by `decide` (`utwin6_both_pass` (O11), §22).
 An indirect rule that commits "some passing candidate" therefore admits
 derivations committing either twin: agreement is *refutable*.
 
@@ -3545,7 +3572,7 @@ processing per round.
 
 ### 11.4 The witness, and a constant it corrected
 
-`ugrowReactive` (§21) runs the Mysticeti structure on the round-robin
+`ugrowReactive` (§22) runs the Mysticeti structure on the round-robin
 schedule at build spacing `6` inside a timeout of `9 = 2Δ + proc` — the
 drift-free backoff met with equality: every fallback branch untaken, the
 commit, the latency bound and the strictly-inside-deadline conclusion
@@ -3554,7 +3581,7 @@ processing constant is honest rather than generous: `proc = 5` is the
 least value `prompt_vote` admits on this model, because a validator's
 shortcut to its *own* round-`r` block lets the trigger fire one tick
 before the slowest peer's block would force it. The witness refused to
-compile at `4` — the house rule of §21 catching an over-tight constant
+compile at `4` — the house rule of §22 catching an over-tight constant
 in a clause that read as obviously right.
 
 ### 11.5 Inclusion without coverage: the rotation backbone
@@ -3862,7 +3889,7 @@ theorem decided_fill_agree {V : View Validator BlockId Payload U}
 
 ### 12.4 The witness
 
-`Ucrash N` (SS7, §21) is the round-robin family with validator `3`
+`Ucrash N` (SS7, §22) is the round-robin family with validator `3`
 crashed after its genesis block: three validators run full lines whose
 references omit the absent author, and `3` owns exactly one block. The
 message `ucrashMsg` targets validator `1`'s line, and the development's
@@ -4282,7 +4309,7 @@ expects, so nothing is restated on the way.
 
 ### 13.7 The witness, and what remains
 
-`demotePolicy` (AL8, §21) is genuinely adaptive at epoch length one —
+`demotePolicy` (AL8, §22) is genuinely adaptive at epoch length one —
 a slot whose verdict two below was a skip is handed to a fixed
 replacement — and the witness exhibits the phenomena the theorems govern:
 the same DAG under a reassigned leader commits a *different block* for
@@ -4470,7 +4497,7 @@ no liveness argument counts an equivocator — and every statement holds
 at *every* threshold `k`: only agreement prices the interval. And the
 tight committee has no slack: at `n = 5·fb + 3·fc + 1` the correct
 class numbers exactly `q`, so the reliable set must be all of it — the
-hybrid analogue of §21's remark that at `f = 1` every correct
+hybrid analogue of §22's remark that at `f = 1` every correct
 validator is needed for a quorum.
 
 ### 14.5 Conservativity
@@ -4515,7 +4542,7 @@ least sufficient committee.
 
 ### 14.7 The witnesses
 
-`Uhyb4` (H9, §21) is the arc's principal witness: `fb = 0, fc = 1,
+`Uhyb4` (H9, §22) is the arc's principal witness: `fb = 0, fc = 1,
 n = 4` — the classical `3f + 1` committee with two-round finality when
 the single tolerated fault is a crash. Validator `3` halts after its
 genesis block; the survivors run three rounds at quorum `3`, slots
@@ -4693,7 +4720,7 @@ pairwise non-adjacent on a cycle of `2f + 1`.
 
 ### 15.5 The witness
 
-`Unemo` (NN9, §21) is the arc on data: three validators at the tight
+`Unemo` (NN9, §22) is the arc on data: three validators at the tight
 committee, fourteen blocks, validator `2` authoring rounds 0–1 and
 then halting, the live pair carrying the DAG to round 5 with the
 parent quorum at exactly `majority` from round 3 on. Slots 0, 1, 3
@@ -4768,7 +4795,7 @@ are `FairScheduleOn` and `FairRunOn` (§6.6), `SpansEligible`, and
 §13.4's `PlacesRuns`.
 
 That every theorem of §§5–14 is stated against some subset of this list
-is checked rather than assumed: the extraction of §22 is queried for
+is checked rather than assumed: the extraction of §23 is queried for
 hypothesis-position identifiers of thirteen capstones, and the
 dependency is that the layering is closed. Two corrections came out of
 that check. The schedule layer appears in five capstones and belongs in
@@ -4839,7 +4866,7 @@ block references a fresh identifier*; coverage asks the opposite, that
 every reliable block at round `n+1` reference every reliable block at
 round `n`. One fact, two consequences: the fill can manufacture neither
 a commit nor coverage. The hypotheses are exhibited satisfiable on
-`Ucrash` (§21), so the refutation is not vacuous.
+`Ucrash` (§22), so the refutation is not vacuous.
 
 **It is preserved for any reliable set that excludes the recovering
 validator** (`synchronisedOn_skipFill_of_notMem`). The filled blocks
@@ -7973,7 +8000,291 @@ its parents' votes and so exposes the equivocation, and that block's
 parents are authored by the other three validators — the leader clause's
 second branch, forced by the DoS condition rather than assumed.
 
-## 21. Satisfiability
+## 21. Barnacle: the adaptive leader count
+
+*(modules `LeanDag/Barnacle/`; the design record is
+`barnacle.md`; the protocol is Barnacle, a control loop on
+the number of leaders per round of a DAG-based protocol, layered on
+Mysticeti, Odontoceti and Nemo-Nemo)*
+
+Multi-leader rounds cut queuing latency and are unused in production
+because of head-of-line blocking: one slow leader's slot is not decided
+by the direct rule, and every later slot of the sequence waits.
+Barnacle adapts the number of leaders per round to observed
+conditions. Every `interval` rounds, upon committing the first leader
+whose round exceeds `lastRound + interval` — the *anchor* — a validator
+takes the anchor's causal history over the last `interval` rounds as
+its *window*, counts the slots the direct rule decides within it,
+compares the count with the number expected under the current leader
+count, and moves the count up by one or down by `2^backoff` — additive
+increase, multiplicative decrease. The new count applies to the rounds
+after the anchor. The paper abstracts the protocol it runs on as four
+assumptions, A1–A4: rounds and slots, causal completeness, a direct
+decision predicate local to a wave, and safety and liveness for every
+fixed configuration.
+
+This chapter proves the mechanism safe and live over an explicit
+interface rendering A1–A4, instantiated three times, and states what
+the paper's own schedule needs of its base protocols. Its results carry
+**BN**-labels; the arc is the third under the statement/proof partition
+of §17. The structural observation that shapes it is that the paper's
+algorithm **decides under the count in force and only then switches**:
+the verdicts of one configuration's range are derivations of the base
+relation against one fixed schedule, so the dependency between
+configurations is well-founded by induction, and the fixpoint
+machinery of §13 is not needed.
+
+### 21.1 The interface
+
+A base rule is data — universe and view types, a direct commit
+predicate, a decision relation parametric in the schedule — and laws:
+
+```lean
+structure Laws (R : BaseRule Validator BlockId Payload) : Prop where
+  view_subset : ∀ {U : R.Universe} (V : R.View U), R.viewIds V ⊆ R.ids U
+  view_complete : ∀ {U : R.Universe} (V : R.View U),
+    ∀ i ∈ R.viewIds V, ∀ j ∈ (R.block U i).refs, j ∈ R.viewIds V
+  full_ids : ∀ U, R.viewIds (R.full U) = R.ids U
+  historyView_ids : ∀ U A (hA : A ∈ R.ids U),
+    R.viewIds (R.historyView U A hA) = historyFrom (R.block U) A
+  agree : ∀ (S : Slots Validator) {U : R.Universe} (V₁ V₂ : R.View U) (k : ℕ)
+    (v₁ v₂ : Option BlockId), R.Decided S V₁ k v₁ → R.Decided S V₂ k v₂ → v₁ = v₂
+  decided_of_directCommitIn : ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U)
+    (k : ℕ) (L : BlockId), R.IsLeaderBlock S U k L →
+    R.DirectCommitIn V L (S.slotRound k) → R.Decided S V k (some L)
+  candidates : ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (k : ℕ) (L : BlockId),
+    R.Decided S V k (some L) → R.IsLeaderBlock S U k L
+```
+
+`view_subset` and `view_complete` are the paper's A2, `agree` the
+safety half of A4, and the two candidate laws tie the direct predicate
+to the relation; the liveness half of A4 is a clause on a schedule,
+below. Each rule's fault class lives on its instantiation and none on
+the interface, which is what lets Nemo-Nemo — whose safety needs no
+fault class — instantiate it without one. The schedule of a
+configuration with `m` leaders is `Sched m`, the uniform pipelined
+schedule of §3 with slot `(r, l)` led by `getLeader (r + l)`, the
+paper's `GetLeader`, so that only which slots exist changes across
+configurations. The window count reads the anchor's history as a view
+and counts slots with a directly committed candidate (BN2 makes it a
+function of the universe and the anchor):
+
+```lean
+def observed (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
+    (U : R.Universe) (A : BlockId) (m : ℕ) (hm : 0 < m) (hmax : m ≤ P.maxLeaders) : ℕ :=
+  if hA : A ∈ R.ids U then
+    ((Finset.range (P.interval + 1) ×ˢ Finset.range m).filter (fun dl : ℕ × ℕ =>
+      dl.1 ≤ (R.block U A).round ∧
+      R.SlotDirect (Sched getLeader hk m hm hmax) U (R.historyView U A hA)
+        (m * ((R.block U A).round - dl.1) + dl.2))).card
+  else 0
+```
+
+### 21.2 Safety, for any update rule
+
+A run closed to height `K` (`PartialRun`) holds `K` configurations —
+start round, leader count, back-off, anchor — with every slot of each
+range decided against the configuration's schedule, the anchor the
+least committed slot past the threshold, and the next configuration
+the update rule's. **BN3** — two runs over one universe, from any two
+views, to any two heights, agree:
+
+```lean
+def PartialRunAgreement (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) (upd : UpdateRule R) : Prop :=
+  ∀ (U : R.Universe) (V₁ V₂ : R.View U) (K₁ K₂ : ℕ)
+    (R₁ : PartialRun R P getLeader hk upd U V₁ K₁) (R₂ : PartialRun R P getLeader hk upd U V₂ K₂),
+    ∀ k, k ≤ min K₁ K₂ →
+      R₁.start k = R₂.start k ∧ R₁.count k = R₂.count k ∧ R₁.backoff k = R₂.backoff k ∧
+      (k < min K₁ K₂ →
+        R₁.anchor k = R₂.anchor k ∧
+        ∀ κ, R₁.start k < κ / R₁.count k → κ / R₁.count k ≤ R₁.start (k + 1) →
+          R₁.vdct k κ = R₂.vdct k κ)
+```
+
+The theorem carries no synchrony or fairness hypothesis and quantifies
+over **every** update rule: the AIMD rule is one instance. The ledger
+follows (**BN5**): two runs read one committed sequence as far as both
+reach, a run's ledger to a lower height is a prefix of its ledger to a
+higher one, and no block appears twice — the paper's Agreement, Total
+Order and Integrity. Under the constant rule the arc collapses onto the
+base development at one leader (**BN6**), and the AIMD rule keeps its
+count in `[1, maxLeaders]` and is the integer test the implementation
+runs (**BN7**).
+
+**There is no total run.** Every configuration commits an anchor at its
+own round and a universe is finite, so a run with a configuration for
+every `k` would inject `ℕ` into the universe's ids. A total structure
+was drafted, proved uninhabited on review, and withdrawn; the paper's
+*sequence of configurations* is what every prefix of it agrees on, and
+its safety theorem is agreement of prefixes.
+
+### 21.3 Liveness, and what it asks of the base protocol
+
+Liveness is structural, as everywhere in this development, and carries
+a horizon. A live rule adds one field, `Good U Rnd N` — the rule's own
+notion of a DAG good from a round to a horizon, for the rules here a
+reliable quorum synchronised from `Rnd` and populated to `N` — and A4's
+liveness half is a clause on a schedule with a commit gap `c`:
+
+```lean
+def LiveRule.LiveOn (R : LiveRule Validator BlockId Payload) (S : Slots Validator) (c : ℕ) :
+    Prop :=
+  ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
+    (∀ κ, Rnd ≤ S.slotRound κ → S.slotRound κ + c + R.waveLength ≤ N →
+      ∃ v, R.Decided S (R.full U) κ v) ∧
+    (∀ r, Rnd ≤ r → r + c + R.waveLength ≤ N →
+      ∃ κ, r ≤ S.slotRound κ ∧ S.slotRound κ ≤ r + c ∧
+        ∃ L, R.Decided S (R.full U) κ (some L))
+```
+
+The gap is also the margin a slot needs above it: a slot the direct
+rule does not settle is decided by a committed anchor a wave above,
+whose own wave must fit under the horizon, so no rule decides every
+slot up to `N − waveLength`. **BN8** is the paper's Configuration
+Progress and Liveness in the only form a finite universe admits: a run
+whose current configuration lies past the synchrony round extends by
+one, needing the clause at its own count only —
+
+```lean
+def ProgressStmt (R : LiveRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
+    (upd : UpdateRule R.toBaseRule) (c : ℕ) : Prop :=
+  ∀ (U : R.Universe) (Rnd N K : ℕ)
+    (Rn : PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K),
+    R.LiveOn (Sched getLeader hk (Rn.count K) (Rn.count_pos K) (Rn.count_le K)) c →
+    R.Good U Rnd N → Rnd ≤ Rn.start K + 1 →
+    Rn.start K + P.interval + 1 + 2 * c + R.waveLength ≤ N →
+    Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) (K + 1))
+```
+
+— and from a synchrony round at genesis, runs of every height exist
+under the horizon `K · (interval + 1 + c) + c + waveLength`. The safety
+law is consumed inside the liveness proof: the verdict chosen for the
+anchor's slot and the commit the clause supplies for it are identified
+by `agree`.
+
+### 21.4 The clause, discharged for the paper's schedule
+
+The paper assumes A4 of its base protocols. Under its own rotation,
+`getLeader (r + l) = (r + l) % n`, and two or more leaders, the route
+this development takes to liveness — a run of consecutive correct-led
+slots spanning a wave (`FairRunOn`, §6) — has no instance at `n = 4`,
+`f = 1`, `m = 2`: three consecutive rounds name every validator. What
+exists is a run of correct-led *heads*, the first slots of consecutive
+rounds, and a head committed a wave above a slot decides it with no
+eligible slot between. Two facts of the base protocol carry this,
+stated as a second law structure over a live rule:
+
+```lean
+structure LiveRule.Descent (R : LiveRule Validator BlockId Payload) (slack : ℕ) : Prop where
+  goodLeaders : ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
+    ∃ T : Finset Validator, Fintype.card Validator ≤ T.card + slack ∧
+      ∀ (S : Slots Validator) (κ : ℕ), Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
+        S.leader κ ∈ T → ∃ L, R.Decided S (R.full U) κ (some L)
+  indirect : ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (i j : ℕ) (A : BlockId),
+    S.slotRound i + R.waveLength ≤ S.slotRound j → R.Decided S V j (some A) →
+    (∀ i', i < i' → i' < j → S.slotRound i + R.waveLength ≤ S.slotRound i' →
+      R.Decided S V i' none) →
+    ∃ v, R.Decided S V i v
+```
+
+`goodLeaders` is A4's direct half — after stabilisation a good leader's
+slot commits — with the good set missing at most `slack` validators;
+`indirect` is A3's indirect rule; the eligibility gap of every rule here
+is its wave length. A run of heads is the schedule clause, one for
+every count since the head of round `ρ` is led by `getLeader ρ`
+whatever the count:
+
+```lean
+def HeadsRun (getLeader : ℕ → Validator) (T : Finset Validator) (g c₀ : ℕ) : Prop :=
+  ∀ r, ∃ ρ, r ≤ ρ ∧ ρ + g ≤ r + c₀ ∧ ∀ i, i < g → getLeader (ρ + i) ∈ T
+```
+
+**BN9.** From the descent laws, a stretch of consecutive decided slots
+with a committed top decides everything a wave below it; `waveLength`
+consecutive good-led heads decide every slot up to a wave below the
+first and commit it; a run of heads with gap `c₀` makes every count's
+schedule live with gap `c₀`; and round-robin on `n` validators has such
+runs, with `c₀ = n + waveLength − 1`, for every good set missing at
+most `slack` whenever `waveLength · slack + 1 ≤ n` — by pigeonhole: if
+no window of `waveLength` consecutive residues lay inside the good
+set, choosing for each start a residue outside it within its window
+would inject `Fin n` into `Fin waveLength × Tᶜ`. The bound is sharp:
+Mysticeti's committee bound `3f + 1 ≤ n` is exactly this at
+`waveLength = 3`, `slack = f`.
+
+**BN10.** Mysticeti, Odontoceti and Nemo-Nemo each satisfy the laws and
+the descent laws — Odontoceti's indirect law commits the least
+candidate with a thick link, the canonicity clause of §10; Nemo-Nemo's
+good set is any synchronised majority, which misses `n − majority`
+validators, so its slack is that and not `f`, and its liveness under
+the mechanism consumes the crash bound nowhere — and each is **live
+under round-robin at every leader count**: Mysticeti with gap `n + 2`,
+the two-round rules with gap `n + 1`. For Mysticeti:
+
+```lean
+def RoundRobinLive : Prop :=
+  ∀ (n : ℕ) (hn : 0 < n) [Faults (Fin n)] (BlockId Payload : Type) [DecidableEq BlockId]
+    (w : ℕ) (hk : Keyed (roundRobin n hn) w) (m : ℕ) (hm : 0 < m) (hmax : m ≤ w),
+    (mysticetiLive (Validator := Fin n) (BlockId := BlockId) (Payload := Payload)).LiveOn
+      (Sched (roundRobin n hn) hk m hm hmax) (n + 2)
+```
+
+This is the paper's A4 for its own schedule, assumed there and proved
+here.
+
+### 21.5 Findings for the paper
+
+- **The anchor's round is ambiguous in the pseudocode.** Algorithm 2
+  returns at the anchor and restarts from `r_committed + 1`; whether the
+  slots of the anchor's round after the anchor are committed at all,
+  and under which count, is not determined. The formalisation takes
+  the text's reading — the previous count through the anchor's round —
+  under which safety needs no further assumption about the base
+  protocol: the paper's planned lemma that later committed leaders
+  reach the anchor is not consumed.
+- **`expected` is right for a reason the paper does not give.** The
+  window's decidable rounds, by the stated reason, number
+  `interval − waveLength + 2`; the anchor's own round holds one block,
+  so the round a wave below it has a single certifier in the window and
+  never scores, and the count is the paper's `interval − waveLength +
+  1`. Settled on data.
+- **A4 is not automatic under multiple leaders**, and holds for the
+  paper's schedule by the heads descent (§21.4), at every count, from
+  the committee bound alone.
+- **Safety holds for any update rule**, a stronger and simpler
+  statement than the paper's for AIMD; and the paper's count over
+  leader *blocks* equals a count over slots, by agreement.
+- **There is no total run**; the sequence of configurations is the
+  family of its prefixes.
+- **The safety law is consumed inside liveness**, at the anchor's slot.
+- **The liveness clause needs a margin** above the slot, `c +
+  waveLength`, without which it is unsatisfiable for every rule with a
+  Byzantine leader.
+
+### 21.6 Witnesses
+
+Every definition is exercised by `decide` before anything is proved
+from it, on `U7` and two new universes over four validators: `Usun`,
+eight rounds fully connected, on which a run's count rises from one to
+two at the anchor and two views' runs are identified through BN3, and
+`Usk`, `Usun` with one block referenced by its author alone, on which a
+slot is directly skipped past the threshold and the theorems' anchors
+skip it. `LiveOn` cannot be decided in general — it quantifies over
+every good DAG — and a *test rule* whose `Good` pins one universe makes
+it finite, so that Progress is applied on data and produces the healthy
+step. The real theorems with the real `Good` produce verdicts on
+`U44`, eleven rounds; the heads descent produces the skipped slot's
+verdict on `Usk`; and the Nemo slack is attacked on a three-validator
+DAG good over a bare majority with an adversarial live validator
+outside it, the theorem's verdicts pinned and the slack shown exact.
+Two of the Phase-review findings entered the witnesses as negatives: a
+run of heads fails for a set violating the committee bound, and a good
+DAG one round further is not live at gap zero.
+
+## 22. Satisfiability
 
 Every structure carrying conditions is exhibited satisfiable by a concrete model
 over four validators at `f = 1`. This is a substantive component of the
@@ -7994,6 +8305,7 @@ every theorem above it vacuous, and vacuity is not otherwise detectable.
 | `waveRobin n` | `Slots` at *every* `n`: the wave-aligned rotation, whose `FairRunOn Correct 3` and `SpansEligible 3` are theorems with no premise beyond the fault model (L12) — the one schedule family not pinned to a committee |
 | `Model.lean` | six `BlockUniverse` instances exercising the safety definitions |
 | `Ucrash N`, `ucrashMsg` | `SkipMsg`: a crashed line, the message against it, and the fill (SS7) |
+| `Usun`, `Usk`, `U44`, `U3` | `PartialRun` with a rising count, a skipped slot past the threshold, the real `Good` with the theorems yielding verdicts, and a bare majority under attack (BN3, BN8, BN9, BN10) |
 | `ucrashJump` | `JumpMsg`: the compact core of `ucrashMsg`, elaborating to the same fill (SS11) |
 | `demotePolicy`, `run7` | `AdaptivePolicy`, `AdaptiveRun`, `PlacesRuns`: a genuinely adapting policy and its total runs (AL8) |
 | `Uhyb4`, `Uhyb9` | `HybridFaults`, `HonestNoEquiv`: one crash at four validators; the tight hybrid committee (H9) |
@@ -8069,11 +8381,11 @@ rather than an unsatisfiable hypothesis.
 
 ---
 
-## 22. Mechanisation
+## 23. Mechanisation
 
 The development comprises approximately 27,000 lines of Lean 4 (v4.32.2)
 against Mathlib, of which some 18,000 constitute the library and 7,500 the
-models of §21 and the witness files of the arcs. A full build reports no
+models of §22 and the witness files of the arcs. A full build reports no
 errors.
 
 **Axiom audit.** Every principal result — among them
@@ -8182,10 +8494,16 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `BlackMarlin/Model/Repair.lean` | the support-preferring side-condition, and a descent that meets it |
 | `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/`, `BlackMarlin/Descent/`, `BlackMarlin/Order/`, `BlackMarlin/Repair/` | the eight statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6, BME1–BME5, BMO1–BMO9, BMP1–BMP13, BMV1–BMV3, BMT1–BMT3) |
 | `BlackMarlin/Helpers/` | the generated lemma layer |
+| `Barnacle/Model/Rule.lean` | the base-protocol interface: data and laws (A1–A4), the candidate predicate, update rules |
+| `Barnacle/Model/Schedule.lean`, `Barnacle/Model/Window.lean`, `Barnacle/Model/Run.lean` | the schedule of a configuration; the window count and the AIMD rule; the run and the ledger |
+| `Barnacle/Model/Live.lean`, `Barnacle/Model/Heads.lean` | the liveness clause with its gap; the descent laws and runs of heads |
+| `Barnacle/Window/`, `Barnacle/Agreement/`, `Barnacle/Ledger/`, `Barnacle/Conservativity/`, `Barnacle/Aimd/`, `Barnacle/Progress/`, `Barnacle/Heads/` | the seven statements and their proofs (BN2, BN3, BN5, BN6, BN7, BN8, BN9) |
+| `Barnacle/Mysticeti/`, `Barnacle/MysticetiLive/`, `Barnacle/Odontoceti/`, `Barnacle/Nemo/` | the three rules as base and live rules, their laws, and their liveness under round-robin (BN10) |
+| `Barnacle/Helpers/` | the generated lemma layer |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
 | `Quality/Capstone.lean` | the windowed bounds and `chain_quality` (CQ7) |
-| `LeanDagTest/` | the models of §21 and the witness files of every arc |
+| `LeanDagTest/` | the models of §22 and the witness files of every arc |
 
 **The support graph, extracted.** The dependency structure of the
 development is not documented by hand: `scripts/DepGraph.lean` walks
@@ -8236,13 +8554,13 @@ literature. Every statement in this report is drawn from the source.
 
 ---
 
-## 23. Discussion
+## 24. Discussion
 
 The first four subsections concern the core account's central design
-choice — where the synchrony assumption lives; §23.5 draws the lessons of
-the three extensions; §23.6 records what remains open.
+choice — where the synchrony assumption lives; §24.5 draws the lessons of
+the three extensions; §24.6 records what remains open.
 
-### 23.1 Locating the synchrony assumption
+### 24.1 Locating the synchrony assumption
 
 The synchrony assumption may be stated in terms of views:
 
@@ -8303,7 +8621,7 @@ is `2Δ`.
 Because Δ is not known to an implementation, no constant can be fixed in
 advance. A backoff is the specification's response — a search for a sufficient
 constant, written into the algorithm — and its only relevant property is that
-the search terminates (§23.2).
+the search terminates (§24.2).
 
 **The network guarantee must be indexed to the moment of building.** A block's
 references are fixed at its construction, so what bears on the derivation is not
@@ -8316,7 +8634,7 @@ for liveness, indexed by the instant, with `built` ordering the two. The
 requirement is the index, not the vehicle. This is an observation about formalisation, and it is the
 reason `SynchronisedOn` is stated on `refs`.
 
-### 23.2 Why coverage is derived rather than specified
+### 24.2 Why coverage is derived rather than specified
 
 Reference coverage could not have been made a clause of the protocol, which is
 the deeper reason it appears as a derived property. `SynchronisedOn` refers to
@@ -8343,7 +8661,7 @@ from some round onwards — with no condition on shape, rate, or driving
 signal. §6.10 carries this to its conclusion: with Δ known, a constant
 timeout of `2Δ + proc` suffices and the loop disappears.
 
-### 23.3 Consequences of the abstraction
+### 24.3 Consequences of the abstraction
 
 1. The consensus argument is purely combinatorial, involving round indices and
    finite-set cardinalities. Under a message-level assumption every statement
@@ -8355,7 +8673,7 @@ timeout of `2Δ + proc` suffices and the loop disappears.
 4. The condition composes with the safety development, mentioning only `U.ids`,
    `U.block` and `refs` — the vocabulary that development already employs.
 
-### 23.4 Costs
+### 24.4 Costs
 
 Δ does not appear above the interface. Introducing it would require views indexed
 by an instant and every statement quantified over instants, for no proof content.
@@ -8368,7 +8686,7 @@ chain must terminate at a network assumption; what the reformulation achieves
 is to place that assumption where it belongs — on the network, as one clause
 over views — and to keep it out of every statement above.
 
-### 23.5 Lessons from the extensions
+### 24.5 Lessons from the extensions
 
 Three lessons generalise beyond the particular arcs.
 
@@ -8417,13 +8735,13 @@ behind the canonicity gap fits in six validators and twenty-five blocks;
 what was needed to find it was not scale but the obligation to state the
 indirect rule precisely enough to fail to prove it.
 
-### 23.6 Limitations
+### 24.6 Limitations
 
 The quantitative bounds are established (§6.10). The following remain open.
 
 **The backoff loop.** `Rated` and the threshold of R4 are stipulated as clauses
 of the specification; no realistic adaptive scheme is shown to satisfy them, and
-the feedback mechanism of §23.2 is not modelled. Moreover
+the feedback mechanism of §24.2 is not modelled. Moreover
 `ViewPace.timeout : ℕ → ℕ` is indexed by round and common to the reliable set, so
 that a per-validator backoff — in which validators increase their timeouts at
 different moments — cannot be expressed, let alone shown to converge. This
@@ -8478,7 +8796,7 @@ much they say.
 
 ---
 
-## 24. Related work
+## 25. Related work
 
 **Hybrid fault models.** Orcaella [KS26] derives the tight committee
 `n ≥ 5f + 3c + 1` for two-round commitment under separate Byzantine
@@ -8583,11 +8901,11 @@ pacemaker by refinement. The account here is structural, and no theorem above
 dependence of liveness on the round-jumping clause surfaces as a named hypothesis
 of a single lemma rather than as a condition inside a transition relation. The
 cost is that the theorems of [QXS26] cannot be stated here at all, "within
-bounded time" not being expressible in this vocabulary (§23.6).
+bounded time" not being expressible in this vocabulary (§24.6).
 
 ---
 
-## 25. Conclusion
+## 26. Conclusion
 
 This report has given a machine-checked account of uncertified DAG consensus
 organised around one idea: state the liveness condition on the object the
@@ -8613,7 +8931,7 @@ without consensus, and — in the one place the formalization diverged from a
 published argument by necessity — the observation that Odontoceti's
 agreement rests on a canonical candidate order that its paper never states.
 
-What remains open is catalogued in §23.6: the backoff dynamics, wall-clock
+What remains open is catalogued in §24.6: the backoff dynamics, wall-clock
 latency, block-level total order, and liveness below the growth clause.
 Beyond those, two directions suggest themselves. The commit-free,
 evidence-based horizon rule sketched in the garbage-collection document
@@ -8662,7 +8980,7 @@ the consumption map of §4.8 and the support diagrams of §6.10 refer to
 results through them. The series are alphabetic by area: T and M for
 the safety core, L for liveness, V for the view-convergence family, CU
 for catch-up, RS for the reactive schedule, SS for safe skip, AL for adaptive
-leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, BM, BML, BMR, BMA, BMD, BME, BMO and BMP for Black Marlin, FW for FinWhale, CQ for chain
+leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, BM, BML, BMR, BMA, BMD, BME, BMO and BMP for Black Marlin, FW for FinWhale, BN for Barnacle, CQ for chain
 quality, C, D,
 B and E for the denial-of-service arc, G for garbage collection, O for
 Odontoceti; P, N and R name clauses of the trust boundary rather than
@@ -9007,6 +9325,19 @@ reused.
 | FW12 | what a validator guarantees: agreement, total order, integrity, validity | `Run.agreement`, `Run.totalOrder`, `Run.integrity`, `Run.validity` *(FinWhale/Protocol)* |
 | FW13 | a DoS-valid universe is a FinWhale DAG at any leader schedule | `leaderClause_of_dosValid`, `Dag.ofDoSValid`, `selfParented_ofDoSValid` *(FinWhale/DoSBridge)* |
 | FW14 | and on the reactive schedule it is a run, at every horizon; the condition never leaves a builder short of citable authors | `Run.ofDoSValidReactive`, `citable_of_correct`, `quorumCard_le_citable` *(FinWhale/DoSBridge)* |
+
+**Barnacle** (§21):
+
+| Label | Statement | Lean |
+|:---|:---|:---|
+| BN2 | the window is agreed: a view holding the anchor holds its history, and two views restrict it to one set | `Barnacle.Window.holds` *(Barnacle/Window/Proof)* |
+| BN3 | the configuration sequence is agreed, for any update rule: two runs to any heights agree on every configuration and verdict of their common ranges | `Barnacle.Agreement.holds` *(Barnacle/Agreement/Proof)* |
+| BN5 | the ledger is agreed as far as both runs reach, grows by prefixes, and holds each block once | `Barnacle.Ledger.holds` *(Barnacle/Ledger/Proof)* |
+| BN6 | under the constant rule the count never moves and every verdict is a one-leader verdict | `Barnacle.Conservativity.holds` *(Barnacle/Conservativity/Proof)* |
+| BN7 | the AIMD rule keeps its count in range, steps as the paper says, and is the integer test | `Barnacle.Aimd.holds` *(Barnacle/Aimd/Proof)* |
+| BN8 | progress: a run past the synchrony round extends by one configuration; runs of every height exist under the horizon | `Barnacle.Progress.holds` *(Barnacle/Progress/Proof)* |
+| BN9 | the heads descent: the liveness clause from the descent laws and a run of heads; round-robin has runs of heads by pigeonhole and is live at every count | `Barnacle.Heads.holds` *(Barnacle/Heads/Proof)* |
+| BN10 | the three rules satisfy the laws and the descent laws, and are live under round-robin at every count | `Barnacle.Mysticeti.holds`, `Barnacle.MysticetiLive.holds`, `Barnacle.Odontoceti.holds`, `Barnacle.Nemo.holds` *(Barnacle/Mysticeti/Proof, Barnacle/MysticetiLive/Proof, Barnacle/Odontoceti/Proof, Barnacle/Nemo/Proof)* |
 
 ---
 
@@ -16135,6 +16466,31 @@ def Run.ofDoSValid [LinearOrder BlockId] (U : BlockUniverse Validator BlockId Pa
 
 **A run over a DoS-valid universe.** The same data a `Run` asks for, less three: the DAG *is* the universe, so `ids_eq` and `block_eq` are `rfl`, and the self-parent edge is the core's.
 
+#### `Run.ofDoSValidReactive`
+
+*def, `FinWhale.DoSBridge.lean`*
+
+```lean
+noncomputable def Run.ofDoSValidReactive [LinearOrder BlockId]
+    (U : BlockUniverse Validator BlockId Payload) (hdos : DoSValid U) {N : ℕ}
+    (rm : ReactiveM U (Correct : Finset Validator) N)
+    (hround : ∀ k, S.slotRound k = k) (hrr : RoundRobin S.leader)
+    (horizon : ℕ) (rounds_le : ∀ b ∈ U.ids, (U.block b).round ≤ horizon)
+    (rounds_advance : ∀ u ∈ (Correct : Finset Validator), ∀ n ≤ rm.top u,
+      n ≤ rm.built u n)
+    (stable : ℕ) (hgst : rm.gst ≤ stable)
+    (hto : ∀ n, stable ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n) :
+    Run Validator BlockId Payload :=
+  Run.ofDoSValid U S.leader hdos horizon rounds_le N rm.toPaceCore rounds_advance
+    stable hgst N
+    (commits_of_reactive rm rfl rfl hround (fun _ => rfl) rfl hgst hto)
+    (le_refl N) hrr (chooseLeast _) chooseSound_least
+```
+
+**A DoS-valid universe on the reactive schedule is a run.** The DAG is the universe, the pace is the reactive one, and the liveness input is `commits_of_reactive`; the tie-break is `chooseLeast`. Four of `Run`'s fields that a caller would otherwise discharge are `rfl` or theorems here: the two readings of the blocks, the self-parent edge, and the schedule's leader being the DAG's.
+
+The horizon of the schedule serves as the horizon of the liveness argument, so no relation between them is asked for.
+
 ### Minnow: the minimal commit rule
 
 #### `ValidHere`
@@ -16311,6 +16667,1212 @@ def CommittedAt (D : Dag Validator BlockId Payload) (L : ℕ → Slot Validator)
 **`crs*`** (Definition 9), by recursion on the position in `leaders`. `CommittedAt D L k l` is the pattern `Ps*` enabled for the vertex `l` occupying the `k`-th leader slot: a quorum points to it, and every earlier slot is *resolved* — some vertex of that slot lies in `l`'s causal past, or is concurrent with `l` and either committed or skipped.
 
 The existential over `v` is the paper's: "there is a vertex `v′` in slot `s′` in `D` such that …". One vertex of a slot resolving it is what makes `minnow.md` §3 possible.
+
+### Barnacle: the adaptive leader count
+
+#### `BaseRule`
+
+*structure, `Barnacle.Model.Rule.lean`*
+
+```lean
+structure BaseRule (Validator : Type) [Fintype Validator] [DecidableEq Validator]
+    (BlockId : Type) [DecidableEq BlockId] (Payload : Type) where
+  /-- The universe type of the base development. -/
+  Universe : Type
+  /-- The view type, indexed by universe. -/
+  View : Universe → Type
+  /-- The block an id denotes: round, creator and references. -/
+  block : Universe → BlockId → Block Validator BlockId Payload
+  /-- The ids of the universe. -/
+  ids : Universe → Finset BlockId
+  /-- The ids a view holds. -/
+  viewIds : ∀ {U : Universe}, View U → Finset BlockId
+  /-- The full view: every block of the universe. -/
+  full : ∀ U : Universe, View U
+  /-- The causal history of a block of the universe, as a view. -/
+  historyView : ∀ (U : Universe) (A : BlockId), A ∈ ids U → View U
+  /-- **A3.** The length of a wave: the rounds the direct rule reads from a
+  slot's proposal. Three for Mysticeti, two for the two-round rules. -/
+  waveLength : ℕ
+  /-- **A3.** The direct commit predicate, as judged from a view: block `L`
+  proposed at round `r` is directly committed. -/
+  DirectCommitIn : ∀ {U : Universe}, View U → BlockId → ℕ → Prop
+  /-- The direct predicate is decidable, so a validator — and a witness —
+  can compute the window count. -/
+  decDirect : ∀ {U : Universe} (V : View U) (L : BlockId) (r : ℕ),
+    Decidable (DirectCommitIn V L r)
+  /-- The decision relation under a schedule: on view `V`, slot `k` is
+  decided with verdict `v` — `some L` a commit, `none` a skip. -/
+  Decided : Slots Validator → ∀ {U : Universe}, View U → ℕ → Option BlockId → Prop
+```
+
+**The base protocol, as the paper assumes it — the data.** A universe of blocks with its views, the direct decision predicate, and a decision relation parametric in the schedule. The laws these must satisfy are `BaseRule.Laws` below, a proposition each instantiation is proved to meet in its own `Statement`/`Proof` pair.
+
+`historyView` is the view a validator measures on — the anchor's causal history, which the paper's `GetSubDag` computes. An instantiation may build it however it likes: the law `historyView_ids` pins its ids to `historyFrom`, the shared history function of `Causality.lean`, so that the window is a function of the universe and the anchor alone.
+
+#### `IsLeaderBlock`
+
+*def, `Barnacle.Model.Rule.lean`*
+
+```lean
+def IsLeaderBlock (R : BaseRule Validator BlockId Payload) (S : Slots Validator)
+    (U : R.Universe) (k : ℕ) (L : BlockId) : Prop :=
+  L ∈ R.ids U ∧ (R.block U L).round = S.slotRound k ∧ (R.block U L).creator = S.leader k
+```
+
+`L` is a candidate block for slot `k` of schedule `S`: the right round, the right author. The same conjunction every rule of this development states, here over the interface's `block` and `ids` so that the arc has one candidate predicate for all three.
+
+#### `Laws`
+
+*structure, `Barnacle.Model.Rule.lean`*
+
+```lean
+structure Laws (R : BaseRule Validator BlockId Payload) : Prop where
+  /-- A view holds only blocks of the universe. -/
+  view_subset : ∀ {U : R.Universe} (V : R.View U), R.viewIds V ⊆ R.ids U
+  /-- **A2.** A view is closed downward: it holds what its blocks reference. -/
+  view_complete : ∀ {U : R.Universe} (V : R.View U),
+    ∀ i ∈ R.viewIds V, ∀ j ∈ (R.block U i).refs, j ∈ R.viewIds V
+  /-- The full view holds exactly the universe. -/
+  full_ids : ∀ U, R.viewIds (R.full U) = R.ids U
+  /-- The history view holds exactly the history. -/
+  historyView_ids : ∀ U A (hA : A ∈ R.ids U),
+    R.viewIds (R.historyView U A hA) = historyFrom (R.block U) A
+  /-- **A4, safety.** For a fixed schedule, verdicts agree across views. -/
+  agree : ∀ (S : Slots Validator) {U : R.Universe} (V₁ V₂ : R.View U) (k : ℕ)
+    (v₁ v₂ : Option BlockId), R.Decided S V₁ k v₁ → R.Decided S V₂ k v₂ → v₁ = v₂
+  /-- A directly committed candidate of a slot is a commit verdict. -/
+  decided_of_directCommitIn : ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U)
+    (k : ℕ) (L : BlockId), R.IsLeaderBlock S U k L →
+    R.DirectCommitIn V L (S.slotRound k) → R.Decided S V k (some L)
+  /-- A committed block is a candidate of its slot: the right round, the
+  right author. The other half of "verdicts are about candidates", and
+  what makes a block appear at most once in the ledger. -/
+  candidates : ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (k : ℕ) (L : BlockId),
+    R.Decided S V k (some L) → R.IsLeaderBlock S U k L
+```
+
+**The laws of a base rule** — what the leader-count mechanism consumes of the protocol, and what each instantiation is proved to satisfy. `view_subset` and `view_complete` are the paper's A2 (a validator holds a block only with its whole causal history); `agree` is the safety half of A4 (for a fixed schedule, verdicts agree across views); `decided_of_directCommitIn` ties the direct predicate to the relation, which is what makes the window count a count of *verdicts*: two directly committed candidates of one slot are one block, by `agree`; `candidates` is its converse, a committed block is a candidate of its slot. The liveness half of A4 is stated in Phase 3 over an extension of the data.
+
+#### `UpdateRule`
+
+*abbrev, `Barnacle.Model.Rule.lean`*
+
+```lean
+abbrev UpdateRule (R : BaseRule Validator BlockId Payload) : Type :=
+  ℕ → ℕ → R.Universe → BlockId → ℕ × ℕ
+```
+
+**An update rule**: from the current leader count and back-off, the universe and the anchor block, the next count and back-off. Safety is stated for every such function (`barnacle.md` §1); the paper's AIMD rule is one instance (`Model/Window.lean`).
+
+#### `Keyed`
+
+*def, `Barnacle.Model.Schedule.lean`*
+
+```lean
+def Keyed (getLeader : ℕ → Validator) (w : ℕ) : Prop :=
+  ∀ m, 0 < m → m ≤ w → ∀ κ₁ κ₂, κ₁ / m = κ₂ / m →
+    getLeader (κ₁ / m + κ₁ % m) = getLeader (κ₂ / m + κ₂ % m) → κ₁ = κ₂
+```
+
+**The leaders of a round are distinct**, at every count `m` up to `w`: two slots of one round (`κ₁ / m = κ₂ / m`) with one leader are one slot. Exactly the `hblock` obligation of `Slots.uniform`, and so exactly `Slots.keyed` for the schedule below.
+
+#### `Sched`
+
+*def, `Barnacle.Model.Schedule.lean`*
+
+```lean
+@[reducible] def Sched (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLeader w)
+    (m : ℕ) (hm : 0 < m) (hmax : m ≤ w) : Slots Validator :=
+  Slots.uniform 1 m Nat.one_pos hm (fun κ => getLeader (κ / m + κ % m)) (hk m hm hmax)
+```
+
+**The schedule of a configuration with `m` leaders**: slot `κ` is proposed at round `κ / m` with offset `κ % m`, led by `getLeader (κ / m + κ % m)`. Pipelined, so `Slots.uniform` at period one. Reducible, so that `simp` reads `slotRound` through `Slots.uniform_slotRound`.
+
+#### `roundRobin`
+
+*def, `Barnacle.Model.Schedule.lean`*
+
+```lean
+def roundRobin (n : ℕ) (hn : 0 < n) : ℕ → Fin n :=
+  fun r => ⟨r % n, Nat.mod_lt r hn⟩
+```
+
+Round-robin over `n` validators: round `r`'s first leader is `r % n`, and slot `(r, l)` is led by `(r + l) % n`. The paper's `GetLeader`, and the arc's witness schedule.
+
+#### `Params`
+
+*structure, `Barnacle.Model.Window.lean`*
+
+```lean
+structure Params where
+  /-- Rounds between reconfigurations. -/
+  interval : ℕ
+  /-- The upper bound on the leader count. -/
+  maxLeaders : ℕ
+  /-- The threshold's numerator. -/
+  num : ℕ
+  /-- The threshold's denominator. -/
+  den : ℕ
+  interval_pos : 0 < interval
+  max_pos : 0 < maxLeaders
+```
+
+The mechanism's parameters: the reconfiguration interval in rounds, the cap on the leader count, and the health threshold `num / den`.
+
+#### `SlotDirect`
+
+*def, `Barnacle.Model.Window.lean`*
+
+```lean
+def SlotDirect (R : BaseRule Validator BlockId Payload) (S : Slots Validator)
+    (U : R.Universe) (V : R.View U) (κ : ℕ) : Prop :=
+  ∃ L ∈ R.ids U, R.IsLeaderBlock S U κ L ∧ R.DirectCommitIn V L (S.slotRound κ)
+```
+
+Slot `κ` of schedule `S` has a candidate directly committed on view `V`. The unit the window count counts.
+
+#### `observed`
+
+*def, `Barnacle.Model.Window.lean`*
+
+```lean
+def observed (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
+    (U : R.Universe) (A : BlockId) (m : ℕ) (hm : 0 < m) (hmax : m ≤ P.maxLeaders) : ℕ :=
+  if hA : A ∈ R.ids U then
+    ((Finset.range (P.interval + 1) ×ˢ Finset.range m).filter (fun dl : ℕ × ℕ =>
+      dl.1 ≤ (R.block U A).round ∧
+      R.SlotDirect (Sched getLeader hk m hm hmax) U (R.historyView U A hA)
+        (m * ((R.block U A).round - dl.1) + dl.2))).card
+  else 0
+```
+
+**The window count** (`CountDirectCommits`): the slots `(r', l)`, for `r'` in the `interval + 1` rounds up to the anchor's and `l` below the count `m`, whose candidate is directly committed on the anchor's history view. Slot `(r', l)` is slot `m * r' + l` of `Sched m`. Zero when the anchor is not a block of the universe.
+
+The clause `d ≤ round` keeps truncated subtraction from counting round `0` once per excess `d`; inside a run the anchor's round exceeds the interval and the clause is vacuous.
+
+#### `expected`
+
+*def, `Barnacle.Model.Window.lean`*
+
+```lean
+def expected (R : BaseRule Validator BlockId Payload) (P : Params) (m : ℕ) : ℕ :=
+  (P.interval - R.waveLength + 1) * m
+```
+
+**The expected count** (`ExpectedCommits`): the decidable slots of the window under count `m`, `interval − waveLength + 1` rounds of `m` slots. Below `waveLength ≤ interval` the subtraction truncates; the results that bound the count carry that hypothesis.
+
+#### `update`
+
+*def, `Barnacle.Model.Window.lean`*
+
+```lean
+def update (P : Params) (m backoff : ℕ) (healthy : Bool) : ℕ × ℕ :=
+  if healthy then (min (m + 1) P.maxLeaders, 0)
+  else (max (m - 2 ^ backoff) 1, backoff + 1)
+```
+
+**Additive increase, multiplicative decrease.** A healthy window raises the count by one, capped at `maxLeaders`, and resets the back-off; an unhealthy one lowers it by `2^backoff`, floored at one, and doubles the next step.
+
+#### `rule`
+
+*def, `Barnacle.Model.Window.lean`*
+
+```lean
+def rule (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) :
+    UpdateRule R :=
+  fun m backoff U A =>
+    if hm : 0 < m ∧ m ≤ P.maxLeaders then
+      update P m backoff
+        (decide (P.num * expected R P m ≤
+          P.den * observed R P getLeader hk U A m hm.1 hm.2))
+    else (1, 0)
+```
+
+**The paper's `UpdateLeaders`** as an update rule: healthy when `den · observed ≥ num · expected`. A count outside `[1, maxLeaders]` cannot arise from a run; the rule returns the initial state there so that it is total.
+
+#### `constRule`
+
+*def, `Barnacle.Model.Window.lean`*
+
+```lean
+def constRule (R : BaseRule Validator BlockId Payload) : UpdateRule R :=
+  fun m b _ _ => (m, b)
+```
+
+The constant rule: reconfigure nothing. The conservativity anchor — under it the arc collapses onto the base development at one leader.
+
+#### `PartialRun`
+
+*structure, `Barnacle.Model.Run.lean`*
+
+```lean
+structure PartialRun (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
+    (upd : UpdateRule R) (U : R.Universe) (V : R.View U) (K : ℕ) where
+  /-- The round after which configuration `k` is in force. -/
+  start : ℕ → ℕ
+  /-- The leader count of configuration `k`. -/
+  count : ℕ → ℕ
+  /-- The back-off of configuration `k`. -/
+  backoff : ℕ → ℕ
+  /-- The slot, in `Sched (count k)`, of the anchor that closes
+  configuration `k`. -/
+  anchor : ℕ → ℕ
+  /-- `vdct k κ`: the verdict of slot `κ` of `Sched (count k)`. -/
+  vdct : ℕ → ℕ → Option BlockId
+  /-- The initial configuration: one leader after round `0`. -/
+  init : start 0 = 0 ∧ count 0 = 1 ∧ backoff 0 = 0
+  count_pos : ∀ k, 0 < count k
+  count_le : ∀ k, count k ≤ P.maxLeaders
+  /-- Every slot of the range is decided against the configuration's
+  schedule. -/
+  closed : ∀ k, k < K → ∀ κ, start k < κ / count k → κ / count k ≤ start (k + 1) →
+    R.Decided (Sched getLeader hk (count k) (count_pos k) (count_le k)) V κ (vdct k κ)
+  /-- The anchor is committed, past the threshold … -/
+  anchor_commits : ∀ k, k < K →
+    (∃ A, vdct k (anchor k) = some A) ∧ start k + P.interval < anchor k / count k
+  /-- … and is the least such slot. -/
+  anchor_least : ∀ k, k < K → ∀ κ, κ < anchor k →
+    start k + P.interval < κ / count k → vdct k κ = none
+  /-- The next configuration is in force after the anchor's round. -/
+  start_succ : ∀ k, k < K → start (k + 1) = anchor k / count k
+  /-- The next configuration is the rule's. -/
+  update : ∀ k, k < K → ∀ A, vdct k (anchor k) = some A →
+    (count (k + 1), backoff (k + 1)) = upd (count k) (backoff k) U A
+```
+
+**A run closed up to height `K`.** Configurations `0, …, K` are determined, and the ranges of configurations below `K` are decided in full.
+
+`closed` is the paper's `TryDecide`: every slot of the range — the rounds after `start k`, through the anchor's round `start (k + 1)` — decided against the configuration's schedule. `anchor_commits` and `anchor_least` are `TryCommit`'s trigger: the anchor is the least committed slot whose round exceeds `start k + interval`. `update` is `UpdateLeaders`, for an arbitrary rule. `count_pos` and `count_le` are clauses of the run because the rule is arbitrary; for the AIMD rule they are theorems.
+
+#### `PartialRun.sched`
+
+*abbrev, `Barnacle.Model.Run.lean`*
+
+```lean
+abbrev PartialRun.sched {K : ℕ} (Rn : PartialRun R P getLeader hk upd U V K) (k : ℕ) :
+    Slots Validator :=
+  Sched getLeader hk (Rn.count k) (Rn.count_pos k) (Rn.count_le k)
+```
+
+The schedule of configuration `k`.
+
+#### `ledgerOf`
+
+*def, `Barnacle.Model.Run.lean`*
+
+```lean
+def ledgerOf (v : ℕ → Option BlockId) (lo hi : ℕ) : List BlockId :=
+  (List.range' lo (hi - lo)).filterMap v
+```
+
+The committed blocks of the slots `[lo, hi)`, in slot order.
+
+#### `PartialRun.rangeLedger`
+
+*def, `Barnacle.Model.Run.lean`*
+
+```lean
+def PartialRun.rangeLedger {K : ℕ} (Rn : PartialRun R P getLeader hk upd U V K) (k : ℕ) :
+    List BlockId :=
+  ledgerOf (Rn.vdct k) (Rn.count k * (Rn.start k + 1)) (Rn.count k * (Rn.start (k + 1) + 1))
+```
+
+The ledger of configuration `k`: its range's committed blocks, from the first slot after `start k` to the last slot of round `start (k + 1)`. Meaningful for the closed configurations, `k < K`.
+
+#### `PartialRun.ledgerUpto`
+
+*def, `Barnacle.Model.Run.lean`*
+
+```lean
+def PartialRun.ledgerUpto {K : ℕ} (Rn : PartialRun R P getLeader hk upd U V K) (K' : ℕ) :
+    List BlockId :=
+  (List.range K').flatMap Rn.rangeLedger
+```
+
+The ledger through configuration `K' − 1`: the ranges' ledgers, concatenated in configuration order. Meaningful for `K' ≤ K`.
+
+#### `LiveRule`
+
+*structure, `Barnacle.Model.Live.lean`*
+
+```lean
+structure LiveRule (Validator : Type) [Fintype Validator] [DecidableEq Validator]
+    (BlockId : Type) [DecidableEq BlockId] (Payload : Type)
+    extends BaseRule Validator BlockId Payload where
+  /-- The DAG is good from round `Rnd` to horizon `N`. -/
+  Good : Universe → ℕ → ℕ → Prop
+```
+
+**A base rule with a notion of a good DAG.** `Good U Rnd N`: the DAG `U` is good from round `Rnd` to horizon `N` — what the base liveness route asks of it, as the rule defines it.
+
+#### `LiveRule.LiveOn`
+
+*def, `Barnacle.Model.Live.lean`*
+
+```lean
+def LiveRule.LiveOn (R : LiveRule Validator BlockId Payload) (S : Slots Validator) (c : ℕ) :
+    Prop :=
+  -- On every DAG good from `Rnd` to `N` …
+  ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
+    -- … every slot at a round from `Rnd`, with `c` rounds and a wave still
+    -- under the horizon, is decided on the full view …
+    (∀ κ, Rnd ≤ S.slotRound κ → S.slotRound κ + c + R.waveLength ≤ N →
+      ∃ v, R.Decided S (R.full U) κ v) ∧
+    -- … and from every round `r` at or after `Rnd`, with `c` rounds and a
+    -- wave still under the horizon, some slot at a round in `[r, r + c]`
+    -- is committed on the full view.
+    (∀ r, Rnd ≤ r → r + c + R.waveLength ≤ N →
+      ∃ κ, r ≤ S.slotRound κ ∧ S.slotRound κ ≤ r + c ∧
+        ∃ L, R.Decided S (R.full U) κ (some L))
+```
+
+**A4, liveness, on one schedule with commit gap `c`.**
+
+#### `UpdBounded`
+
+*def, `Barnacle.Model.Live.lean`*
+
+```lean
+def UpdBounded {R : BaseRule Validator BlockId Payload} (P : Params) (upd : UpdateRule R) :
+    Prop :=
+  ∀ m b U A, 0 < (upd m b U A).1 ∧ (upd m b U A).1 ≤ P.maxLeaders
+```
+
+An update rule keeps the count in `[1, maxLeaders]`, whatever it is given — what extending a run needs of it; BN7a for the AIMD rule.
+
+#### `horizon`
+
+*def, `Barnacle.Model.Live.lean`*
+
+```lean
+def horizon (P : Params) (R : LiveRule Validator BlockId Payload) (c K : ℕ) : ℕ :=
+  K * (P.interval + 1 + c) + c + R.waveLength
+```
+
+The horizon a run of height `K` needs from a synchrony round at genesis: each configuration's anchor lies within `interval + 1 + c` rounds of the previous start, and the last range needs the gap and one wave above it to be decided.
+
+#### `LiveRule.Descent`
+
+*structure, `Barnacle.Model.Heads.lean`*
+
+```lean
+structure LiveRule.Descent (R : LiveRule Validator BlockId Payload) (slack : ℕ) : Prop where
+  /-- **A4, direct commits.** On a DAG good from `Rnd` to `N` there is a
+  set `T` of validators, all but at most `slack`, such that on any
+  schedule a `T`-led slot at a round from `Rnd` whose wave fits under
+  `N` is committed on the full view. -/
+  goodLeaders : ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
+    ∃ T : Finset Validator, Fintype.card Validator ≤ T.card + slack ∧
+      ∀ (S : Slots Validator) (κ : ℕ), Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
+        S.leader κ ∈ T → ∃ L, R.Decided S (R.full U) κ (some L)
+  /-- **A3, the indirect rule.** If slot `j`, a full wave above slot `i`,
+  is committed on `V`, and every slot strictly between them that is a
+  full wave above `i` is skipped on `V`, then `i` is decided on `V`. -/
+  indirect : ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (i j : ℕ) (A : BlockId),
+    S.slotRound i + R.waveLength ≤ S.slotRound j → R.Decided S V j (some A) →
+    (∀ i', i < i' → i' < j → S.slotRound i + R.waveLength ≤ S.slotRound i' →
+      R.Decided S V i' none) →
+    ∃ v, R.Decided S V i v
+```
+
+**The descent laws** of a live rule, with `slack` the number of validators the good set may miss.
+
+#### `HeadsRun`
+
+*def, `Barnacle.Model.Heads.lean`*
+
+```lean
+def HeadsRun (getLeader : ℕ → Validator) (T : Finset Validator) (g c₀ : ℕ) : Prop :=
+  ∀ r, ∃ ρ, r ≤ ρ ∧ ρ + g ≤ r + c₀ ∧ ∀ i, i < g → getLeader (ρ + i) ∈ T
+```
+
+**A run of heads**: from every round `r`, within `c₀` rounds, `g` consecutive rounds whose heads — first slots, led by `getLeader` of the round — are led by members of `T`.
+
+#### `HistoryInView`
+
+*def, `Barnacle.Window.Statement.lean`*
+
+```lean
+def HistoryInView (R : BaseRule Validator BlockId Payload) : Prop :=
+  ∀ (U : R.Universe) (V : R.View U) (A : BlockId),
+    A ∈ R.viewIds V → historyFrom (R.block U) A ⊆ R.viewIds V
+```
+
+**BN2a, the history is in view**: a view holding a block holds its whole causal history. A2 is what carries it — views are closed under references, and the history is what references reach.
+
+#### `WindowAgreement`
+
+*def, `Barnacle.Window.Statement.lean`*
+
+```lean
+def WindowAgreement (R : BaseRule Validator BlockId Payload) : Prop :=
+  ∀ (U : R.Universe) (V₁ V₂ : R.View U) (A : BlockId),
+    A ∈ R.viewIds V₁ → A ∈ R.viewIds V₂ →
+    historyFrom (R.block U) A ∩ R.viewIds V₁ = historyFrom (R.block U) A ∩ R.viewIds V₂
+```
+
+**BN2b, window agreement**: two validators holding the anchor compute the same window — the anchor's history restricted to either view is the history itself, so the two restrictions coincide.
+
+#### `Statement`
+
+*def, `Barnacle.Window.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload), R.Laws →
+    HistoryInView R ∧ WindowAgreement R
+```
+
+The window is agreed, for every base rule satisfying the laws.
+
+#### `PartialRunAgreement`
+
+*def, `Barnacle.Agreement.Statement.lean`*
+
+```lean
+def PartialRunAgreement (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) (upd : UpdateRule R) : Prop :=
+  -- One universe; two validators, holding views `V₁` and `V₂` of it, whose
+  -- runs are closed up to heights `K₁` and `K₂` — they need not have
+  -- decided equally far.
+  ∀ (U : R.Universe) (V₁ V₂ : R.View U) (K₁ K₂ : ℕ)
+    (R₁ : PartialRun R P getLeader hk upd U V₁ K₁) (R₂ : PartialRun R P getLeader hk upd U V₂ K₂),
+    -- For every configuration both have reached …
+    ∀ k, k ≤ min K₁ K₂ →
+      -- … they agree on when it starts, how many leaders it has, and its
+      -- back-off — the paper's "same switch point" and "same value".
+      R₁.start k = R₂.start k ∧ R₁.count k = R₂.count k ∧ R₁.backoff k = R₂.backoff k ∧
+      -- And for every configuration both have *closed* — found its anchor —
+      (k < min K₁ K₂ →
+        -- they agree on which slot the anchor is …
+        R₁.anchor k = R₂.anchor k ∧
+        -- … and on the verdict of every slot `κ` of the range: rounds
+        -- strictly after `start k` (`κ / count k` is `κ`'s round), up to and
+        -- including the anchor's round, which is `start (k + 1)`.
+        ∀ κ, R₁.start k < κ / R₁.count k → κ / R₁.count k ≤ R₁.start (k + 1) →
+          R₁.vdct k κ = R₂.vdct k κ)
+```
+
+**BN3, partial runs agree.** Two partial runs over one universe — whatever views, whatever heights `K₁`, `K₂` — agree on `start`, `count` and `backoff` up to `min K₁ K₂`, and below it on the anchor and on every verdict of the range. The paper's Leader-Count Agreement, with the "same value" half the outline found missing.
+
+#### `Statement`
+
+*def, `Barnacle.Agreement.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload), R.Laws →
+    ∀ (P : Params) (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
+      (upd : UpdateRule R),
+      PartialRunAgreement R P getLeader hk upd
+```
+
+Agreement of the configuration sequence and the verdicts, for every base rule satisfying the laws, every parameter set, every keyed leader function and **every update rule**.
+
+#### `LedgerAgreement`
+
+*def, `Barnacle.Ledger.Statement.lean`*
+
+```lean
+def LedgerAgreement (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) (upd : UpdateRule R) : Prop :=
+  -- One universe; two validators' runs, from any two views, closed to
+  -- heights `K₁` and `K₂`.
+  ∀ (U : R.Universe) (V₁ V₂ : R.View U) (K₁ K₂ : ℕ)
+    (R₁ : PartialRun R P getLeader hk upd U V₁ K₁) (R₂ : PartialRun R P getLeader hk upd U V₂ K₂),
+    -- Every range both have closed yields the same committed blocks, in the
+    -- same order …
+    (∀ k, k < min K₁ K₂ → R₁.rangeLedger k = R₂.rangeLedger k) ∧
+      -- … so the ledger to any height both reach — ranges `0` to `K − 1`,
+      -- concatenated — is one list.
+      ∀ K, K ≤ min K₁ K₂ → R₁.ledgerUpto K = R₂.ledgerUpto K
+```
+
+**BN5a, the ledger is agreed**: two runs over one universe read the same committed sequence from every range both have closed, hence the same list to every height both reach.
+
+#### `LedgerPrefix`
+
+*def, `Barnacle.Ledger.Statement.lean`*
+
+```lean
+def LedgerPrefix (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) (upd : UpdateRule R) : Prop :=
+  -- One run, any height;
+  ∀ (U : R.Universe) (V : R.View U) (K : ℕ) (Rn : PartialRun R P getLeader hk upd U V K)
+    -- its ledger to a lower height is a prefix (`<+:`) of its ledger to a
+    -- higher one: later ranges only append.
+    (K₁ K₂ : ℕ), K₁ ≤ K₂ → Rn.ledgerUpto K₁ <+: Rn.ledgerUpto K₂
+```
+
+**BN5b, the ledger grows**: to a lower height it is a prefix of itself to a higher one — nothing committed is ever reordered or withdrawn.
+
+#### `LedgerNodup`
+
+*def, `Barnacle.Ledger.Statement.lean`*
+
+```lean
+def LedgerNodup (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) (upd : UpdateRule R) : Prop :=
+  -- One run of height `K`;
+  ∀ (U : R.Universe) (V : R.View U) (K : ℕ) (Rn : PartialRun R P getLeader hk upd U V K)
+    -- its ledger to any height it has closed holds no block twice — within
+    -- a range by `Slots.keyed`, across ranges by disjoint rounds.
+    (K' : ℕ), K' ≤ K → (Rn.ledgerUpto K').Nodup
+```
+
+**BN5c, integrity**: no block appears twice in the ledger, to any height the run reaches.
+
+#### `Statement`
+
+*def, `Barnacle.Ledger.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload), R.Laws →
+    ∀ (P : Params) (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
+      (upd : UpdateRule R),
+      LedgerAgreement R P getLeader hk upd ∧ LedgerPrefix R P getLeader hk upd ∧
+        LedgerNodup R P getLeader hk upd
+```
+
+The ledger is agreed, grows, and holds each block once, for every base rule satisfying the laws and every update rule.
+
+#### `ConstCount`
+
+*def, `Barnacle.Conservativity.Statement.lean`*
+
+```lean
+def ConstCount (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) : Prop :=
+  -- Any run — any universe, any view, any height — whose update rule is
+  -- `constRule`, the rule that returns the count and back-off it was given.
+  ∀ (U : R.Universe) (V : R.View U) (K : ℕ)
+    (Rn : PartialRun R P getLeader hk (constRule R) U V K),
+    -- Every configuration the run determines — `0` to `K` — is the initial
+    -- one: one leader, no back-off. (Above `K` the run holds no data.)
+    ∀ k, k ≤ K → Rn.count k = 1 ∧ Rn.backoff k = 0
+```
+
+**BN6a, the count never moves** under the constant rule.
+
+#### `ConstDecided`
+
+*def, `Barnacle.Conservativity.Statement.lean`*
+
+```lean
+def ConstDecided (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) : Prop :=
+  -- The same runs.
+  ∀ (U : R.Universe) (V : R.View U) (K : ℕ)
+    (Rn : PartialRun R P getLeader hk (constRule R) U V K),
+    -- For every closed configuration `k` and every slot `κ` of its range —
+    -- at one leader per round slot `κ` *is* round `κ`, so the range is the
+    -- rounds after `start k`, up to the anchor —
+    ∀ k, k < K → ∀ κ, Rn.start k < κ → κ ≤ Rn.anchor k →
+      -- the run's verdict is a verdict of the one-leader schedule
+      -- `Sched 1`, the base development's own. (`Nat.one_pos` and
+      -- `P.max_pos` discharge `0 < 1` and `1 ≤ maxLeaders`.)
+      R.Decided (Sched getLeader hk 1 Nat.one_pos P.max_pos) V κ (Rn.vdct k κ)
+```
+
+**BN6b, the verdicts are the base verdicts**: every verdict of a run under the constant rule is a verdict of the one-leader schedule.
+
+#### `Statement`
+
+*def, `Barnacle.Conservativity.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload)
+    (P : Params) (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders),
+    ConstCount R P getLeader hk ∧ ConstDecided R P getLeader hk
+```
+
+Conservativity, for every base rule, parameter set and keyed leader function. No law of the rule is consumed.
+
+#### `RuleBounds`
+
+*def, `Barnacle.Aimd.Statement.lean`*
+
+```lean
+def RuleBounds (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) : Prop :=
+  ∀ (m backoff : ℕ) (U : R.Universe) (A : BlockId),
+    0 < (rule R P getLeader hk m backoff U A).1 ∧
+      (rule R P getLeader hk m backoff U A).1 ≤ P.maxLeaders
+```
+
+**BN7a, bounds**: the rule's count lies in `[1, maxLeaders]` for every input — a run under the AIMD rule never leaves the range `Sched` is defined on.
+
+#### `Healthy`
+
+*def, `Barnacle.Aimd.Statement.lean`*
+
+```lean
+def Healthy (P : Params) : Prop :=
+  (∀ m backoff, m < P.maxLeaders → update P m backoff true = (m + 1, 0)) ∧
+    ∀ backoff, update P P.maxLeaders backoff true = (P.maxLeaders, 0)
+```
+
+**BN7b, healthy**: below the cap the count rises by one and the back-off resets; at the cap it stays.
+
+#### `Unhealthy`
+
+*def, `Barnacle.Aimd.Statement.lean`*
+
+```lean
+def Unhealthy (P : Params) : Prop :=
+  (∀ m backoff, 1 < m → (update P m backoff false).1 < m ∧
+    (update P m backoff false).2 = backoff + 1) ∧
+  (∀ m backoff, 2 ^ backoff < m → (update P m backoff false).1 = m - 2 ^ backoff) ∧
+    ∀ backoff, (update P 1 backoff false).1 = 1
+```
+
+**BN7c, unhealthy**: above the floor the count falls, by `2^backoff` when that keeps it above one, and the back-off is incremented; at the floor the count stays.
+
+#### `Test`
+
+*def, `Barnacle.Aimd.Statement.lean`*
+
+```lean
+def Test (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) : Prop :=
+  ∀ (m backoff : ℕ) (hm : 0 < m) (hmax : m ≤ P.maxLeaders) (U : R.Universe) (A : BlockId),
+    rule R P getLeader hk m backoff U A =
+      update P m backoff
+        (decide (P.num * expected R P m ≤ P.den * observed R P getLeader hk U A m hm hmax))
+```
+
+**BN7d, the test**: for a count in range, the rule takes the healthy step exactly when `den · observed ≥ num · expected`.
+
+#### `Statement`
+
+*def, `Barnacle.Aimd.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload)
+    (P : Params) (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders),
+    RuleBounds R P getLeader hk ∧ Healthy P ∧ Unhealthy P ∧ Test R P getLeader hk
+```
+
+The AIMD rule, for every base rule, parameter set and keyed leader function. No law of the rule is consumed.
+
+#### `ProgressStmt`
+
+*def, `Barnacle.Progress.Statement.lean`*
+
+```lean
+def ProgressStmt (R : LiveRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
+    (upd : UpdateRule R.toBaseRule) (c : ℕ) : Prop :=
+  -- A run of height `K` on the full view of `U` …
+  ∀ (U : R.Universe) (Rnd N K : ℕ)
+    (Rn : PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K),
+    -- … whose current configuration's schedule is live with gap `c` …
+    R.LiveOn (Sched getLeader hk (Rn.count K) (Rn.count_pos K) (Rn.count_le K)) c →
+    -- … on a DAG good from `Rnd` to `N`, where the current configuration's
+    -- range starts at or after `Rnd` …
+    R.Good U Rnd N → Rnd ≤ Rn.start K + 1 →
+    -- … and the horizon leaves room for the threshold, the gap to the
+    -- anchor, and the gap and one wave above it:
+    Rn.start K + P.interval + 1 + 2 * c + R.waveLength ≤ N →
+    -- there is a run of height `K + 1`.
+    Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) (K + 1))
+```
+
+**BN8a, progress**: a run past the synchrony round extends by one configuration.
+
+#### `EveryHeight`
+
+*def, `Barnacle.Progress.Statement.lean`*
+
+```lean
+def EveryHeight (R : LiveRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
+    (upd : UpdateRule R.toBaseRule) (c : ℕ) : Prop :=
+  -- If every configuration's schedule is live with gap `c` …
+  (∀ m (hm : 0 < m) (hmax : m ≤ P.maxLeaders), R.LiveOn (Sched getLeader hk m hm hmax) c) →
+  -- … then on a DAG good from round `1` (or `0`) to `N` …
+  ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N → Rnd ≤ 1 →
+    -- … every height whose horizon fits under `N` is reached.
+    ∀ K, horizon P R c K ≤ N →
+      Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K)
+```
+
+**BN8b, every height**: from a synchrony round at genesis, a run of every height exists under the horizon that height needs.
+
+#### `Statement`
+
+*def, `Barnacle.Progress.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [DecidableEq BlockId] (R : LiveRule Validator BlockId Payload), R.Laws →
+    ∀ (P : Params) (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
+      (upd : UpdateRule R.toBaseRule), UpdBounded P upd → ∀ c,
+      ProgressStmt R P getLeader hk upd c ∧ EveryHeight R P getLeader hk upd c
+```
+
+Progress and every height, for every live rule satisfying the laws, every parameter set, every keyed leader function, every update rule that keeps the count in range, and every gap.
+
+#### `StretchDescent`
+
+*def, `Barnacle.Heads.Statement.lean`*
+
+```lean
+def StretchDescent (R : LiveRule Validator BlockId Payload) (slack : ℕ) : Prop :=
+  R.Descent slack →
+  -- Any schedule, any view;
+  ∀ (S : Slots Validator) (U : R.Universe) (V : R.View U) (b top : ℕ),
+    -- a stretch of slots `[b, top]` whose top lies a full wave above every
+    -- slot below `b` …
+    (∀ i, i < b → S.slotRound i + R.waveLength ≤ S.slotRound top) →
+    -- … every slot of which is decided …
+    (∀ j, b ≤ j → j ≤ top → ∃ v, R.Decided S V j v) →
+    -- … and whose top is committed …
+    (∃ B, R.Decided S V top (some B)) →
+    -- … decides every slot below `b`.
+    ∀ i, i < b → ∃ v, R.Decided S V i v
+```
+
+**BN9a, the stretch descent**: from `indirect` alone.
+
+#### `HeadsDecide`
+
+*def, `Barnacle.Heads.Statement.lean`*
+
+```lean
+def HeadsDecide (R : LiveRule Validator BlockId Payload) (slack : ℕ)
+    (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLeader w) : Prop :=
+  R.Descent slack → 0 < R.waveLength →
+  ∀ (U : R.Universe) (Rnd N : ℕ) (T : Finset Validator),
+    -- Given what `goodLeaders` gives for `T` on `U` from `Rnd` to `N`,
+    (∀ (S : Slots Validator) (κ : ℕ), Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
+      S.leader κ ∈ T → ∃ L, R.Decided S (R.full U) κ (some L)) →
+    -- for every count `m` and every round `ρ` from `Rnd` whose `waveLength`
+    -- heads have their waves under `N` …
+    ∀ (m : ℕ) (hm : 0 < m) (hmax : m ≤ w) (ρ : ℕ), Rnd ≤ ρ →
+      ρ + R.waveLength + R.waveLength ≤ N + 1 →
+      -- … if the heads of rounds `ρ, …, ρ + waveLength − 1` are `T`-led …
+      (∀ i, i < R.waveLength → getLeader (ρ + i) ∈ T) →
+      -- … then every slot at a round below `ρ` and at most a wave below it
+      -- is decided on the full view …
+      (∀ κ, (Sched getLeader hk m hm hmax).slotRound κ < ρ →
+        ρ ≤ (Sched getLeader hk m hm hmax).slotRound κ + R.waveLength →
+        ∃ v, R.Decided (Sched getLeader hk m hm hmax) (R.full U) κ v) ∧
+      -- … and the head of `ρ`, slot `m · ρ`, is committed.
+      ∃ L, R.Decided (Sched getLeader hk m hm hmax) (R.full U) (m * ρ) (some L)
+```
+
+**BN9b, heads decide**: under `Sched m`, `waveLength` consecutive good-led heads from round `ρ` decide every slot at a round in `[ρ − waveLength, ρ)` and commit the head of `ρ`.
+
+#### `LiveOnOfHeads`
+
+*def, `Barnacle.Heads.Statement.lean`*
+
+```lean
+def LiveOnOfHeads (R : LiveRule Validator BlockId Payload) (slack : ℕ)
+    (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLeader w) (c₀ : ℕ) : Prop :=
+  R.Descent slack → 0 < R.waveLength →
+  -- If every set missing at most `slack` validators has a run of heads …
+  (∀ T : Finset Validator, Fintype.card Validator ≤ T.card + slack →
+    HeadsRun getLeader T R.waveLength c₀) →
+  -- … then every count's schedule is live with gap `c₀`.
+  ∀ (m : ℕ) (hm : 0 < m) (hmax : m ≤ w), R.LiveOn (Sched getLeader hk m hm hmax) c₀
+```
+
+**BN9c, live from heads**: a run of good-led heads with gap `c₀`, for the good set of every good DAG, makes every count's schedule live with gap `c₀`.
+
+#### `RoundRobinHeads`
+
+*def, `Barnacle.Heads.Statement.lean`*
+
+```lean
+def RoundRobinHeads : Prop :=
+  ∀ (n : ℕ) (hn : 0 < n) (T : Finset (Fin n)) (slack g : ℕ),
+    n ≤ T.card + slack → g * slack + 1 ≤ n →
+    HeadsRun (roundRobin n hn) T g (n + g - 1)
+```
+
+**BN9d, round-robin has runs of heads**: on `n` validators, for every set missing at most `slack`, when `g · slack + 1 ≤ n` — within `n + g − 1` rounds.
+
+#### `LiveOnRoundRobin`
+
+*def, `Barnacle.Heads.Statement.lean`*
+
+```lean
+def LiveOnRoundRobin : Prop :=
+  ∀ (n : ℕ) (hn : 0 < n) (BlockId Payload : Type) [DecidableEq BlockId]
+    (R : LiveRule (Fin n) BlockId Payload) (slack : ℕ), R.Descent slack →
+    0 < R.waveLength → R.waveLength * slack + 1 ≤ n →
+    ∀ (w : ℕ) (hk : Keyed (roundRobin n hn) w) (m : ℕ) (hm : 0 < m) (hmax : m ≤ w),
+      R.LiveOn (Sched (roundRobin n hn) hk m hm hmax) (n + R.waveLength - 1)
+```
+
+**BN9e, round-robin is live**: a live rule with descent laws at `slack`, on `n ≥ waveLength · slack + 1` validators, is live under round-robin at every count, with gap `n + waveLength − 1`.
+
+#### `Statement`
+
+*def, `Barnacle.Heads.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  (∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [DecidableEq BlockId] (R : LiveRule Validator BlockId Payload) (slack : ℕ)
+    (getLeader : ℕ → Validator) (w : ℕ) (hk : Keyed getLeader w) (c₀ : ℕ),
+    StretchDescent R slack ∧ HeadsDecide R slack getLeader hk ∧
+      LiveOnOfHeads R slack getLeader hk c₀) ∧
+  RoundRobinHeads ∧ LiveOnRoundRobin
+```
+
+The heads descent, for every live rule with descent laws, every keyed leader function, and round-robin on every committee.
+
+#### `mysticeti`
+
+*def, `Barnacle.Mysticeti.Statement.lean`*
+
+```lean
+def mysticeti [Faults Validator] : BaseRule Validator BlockId Payload where
+  Universe := BlockUniverse Validator BlockId Payload
+  View := fun U => LeanDag.View Validator BlockId Payload U
+  block := fun U => U.block
+  ids := fun U => U.ids
+  viewIds := fun V => V.ids
+  full := fun U => LeanDag.View.full U
+  historyView := fun U A hA => historyViewOf U A hA
+  waveLength := 3
+  DirectCommitIn := fun V L r => LeanDag.DirectCommitIn _ V L r
+  decDirect := fun V L r => decidableDirectCommitIn V L r
+  Decided := fun S {U} V k v => @LeanDag.Decided _ _ _ _ _ _ _ S U V k v
+```
+
+**Mysticeti as a base rule** — the data. Wave length three; the direct commit predicate counts certificates.
+
+#### `Statement`
+
+*def, `Barnacle.Mysticeti.Statement.lean`*
+
+```lean
+def Statement : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [DecidableEq BlockId],
+    BaseRule.Laws (mysticeti (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+```
+
+**Mysticeti satisfies the interface**, over every committee and every block universe: its views are causally complete, the history view is the history, verdicts agree across views for a fixed schedule (M6), and a directly committed candidate is a commit verdict.
+
+#### `mysticetiLive`
+
+*def, `Barnacle.MysticetiLive.Statement.lean`*
+
+```lean
+def mysticetiLive [Faults Validator] : LiveRule Validator BlockId Payload :=
+  { mysticeti with
+    Good := fun U Rnd N => ∃ T ⊆ (Correct : Finset Validator),
+      quorumCard Validator ≤ T.card ∧ SynchronisedOn U T Rnd ∧
+      ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn U T r }
+```
+
+**Mysticeti as a live rule.** A DAG is good from `Rnd` to `N` when some quorum of correct validators is synchronised from `Rnd` and populates every round from `Rnd` to `N`.
+
+#### `Descent`
+
+*def, `Barnacle.MysticetiLive.Statement.lean`*
+
+```lean
+def Descent : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [F : Faults Validator] [DecidableEq BlockId],
+    (mysticetiLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent F.f
+```
+
+**Mysticeti has the descent laws at slack `f`.**
+
+#### `RoundRobinLive`
+
+*def, `Barnacle.MysticetiLive.Statement.lean`*
+
+```lean
+def RoundRobinLive : Prop :=
+  ∀ (n : ℕ) (hn : 0 < n) [Faults (Fin n)] (BlockId Payload : Type) [DecidableEq BlockId]
+    (w : ℕ) (hk : Keyed (roundRobin n hn) w) (m : ℕ) (hm : 0 < m) (hmax : m ≤ w),
+    (mysticetiLive (Validator := Fin n) (BlockId := BlockId) (Payload := Payload)).LiveOn
+      (Sched (roundRobin n hn) hk m hm hmax) (n + 2)
+```
+
+**Mysticeti under round-robin is live at every count** — the paper's A4 for its own schedule, with gap `n + 2`.
+
+#### `Statement`
+
+*def, `Barnacle.MysticetiLive.Statement.lean`*
+
+```lean
+def Statement : Prop := Descent ∧ RoundRobinLive
+```
+
+The descent laws, and liveness under round-robin at every count.
+
+#### `odontoceti`
+
+*def, `Barnacle.Odontoceti.Statement.lean`*
+
+```lean
+def odontoceti [Faults5 Validator] : BaseRule Validator BlockId Payload where
+  Universe := BlockUniverse Validator BlockId Payload
+  View := fun U => LeanDag.View Validator BlockId Payload U
+  block := fun U => U.block
+  ids := fun U => U.ids
+  viewIds := fun V => V.ids
+  full := fun U => LeanDag.View.full U
+  historyView := fun U A hA => historyViewOf U A hA
+  waveLength := 2
+  DirectCommitIn := fun V L r => Odontoceti.DirectCommitIn _ V L r
+  decDirect := fun _ _ _ => inferInstance
+  Decided := fun S {U} V k v => @Odontoceti.Decided _ _ _ _ _ _ _ S U V k v
+```
+
+**Odontoceti as a base rule** — the data. Wave length two; the direct commit predicate counts supporters at the next round.
+
+#### `odontocetiLive`
+
+*def, `Barnacle.Odontoceti.Statement.lean`*
+
+```lean
+def odontocetiLive [Faults5 Validator] : LiveRule Validator BlockId Payload :=
+  { odontoceti with
+    Good := fun U Rnd N => ∃ T ⊆ (Correct : Finset Validator),
+      quorumCard Validator ≤ T.card ∧ SynchronisedOn U T Rnd ∧
+      ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn U T r }
+```
+
+**Odontoceti as a live rule**: a DAG is good when a correct quorum is synchronised from `Rnd` and populates the rounds to `N`.
+
+#### `Laws`
+
+*def, `Barnacle.Odontoceti.Statement.lean`*
+
+```lean
+def Laws : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults5 Validator] [LinearOrder BlockId],
+    BaseRule.Laws (odontoceti (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+```
+
+**Odontoceti satisfies the laws**: O5 is the agreement law.
+
+#### `Descent`
+
+*def, `Barnacle.Odontoceti.Statement.lean`*
+
+```lean
+def Descent : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [F : Faults5 Validator] [LinearOrder BlockId],
+    (odontocetiLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent F.f
+```
+
+**Odontoceti has the descent laws at slack `f`**: O7 is the direct commit of a good leader's slot; the indirect rule commits the least candidate with a thick link, or skips.
+
+#### `RoundRobinLive`
+
+*def, `Barnacle.Odontoceti.Statement.lean`*
+
+```lean
+def RoundRobinLive : Prop :=
+  ∀ (n : ℕ) (hn : 0 < n) [Faults5 (Fin n)] (BlockId Payload : Type) [LinearOrder BlockId]
+    (w : ℕ) (hk : Keyed (roundRobin n hn) w) (m : ℕ) (hm : 0 < m) (hmax : m ≤ w),
+    (odontocetiLive (Validator := Fin n) (BlockId := BlockId) (Payload := Payload)).LiveOn
+      (Sched (roundRobin n hn) hk m hm hmax) (n + 1)
+```
+
+**Odontoceti under round-robin is live at every count**, with gap `n + 1`.
+
+#### `Statement`
+
+*def, `Barnacle.Odontoceti.Statement.lean`*
+
+```lean
+def Statement : Prop := Laws ∧ Descent ∧ RoundRobinLive
+```
+
+The laws, the descent laws, and liveness under round-robin.
+
+#### `nemo`
+
+*def, `Barnacle.Nemo.Statement.lean`*
+
+```lean
+def nemo : BaseRule Validator BlockId Payload where
+  Universe := Nemo.Universe Validator BlockId Payload
+  View := fun U => Nemo.View Validator BlockId Payload U
+  block := fun U => U.block
+  ids := fun U => U.ids
+  viewIds := fun V => V.ids
+  full := fun U => Nemo.View.full U
+  historyView := fun U A hA => nemoHistoryViewOf U A hA
+  waveLength := 2
+  DirectCommitIn := fun V L r => Nemo.DirectCommitIn _ V L r
+  decDirect := fun _ _ _ => inferInstance
+  Decided := fun S {U} V k v => @Nemo.Decided _ _ _ _ _ _ S U V k v
+```
+
+**Nemo-Nemo as a base rule** — the data. Wave length two; the direct commit predicate counts a majority of supporters at the next round. No fault class: the crash-fault universe's safety needs none.
+
+#### `nemoLive`
+
+*def, `Barnacle.Nemo.Statement.lean`*
+
+```lean
+def nemoLive [Nemo.CrashFaults Validator] : LiveRule Validator BlockId Payload :=
+  { nemo with
+    Good := fun U Rnd N => ∃ T ⊆ Nemo.Live Validator,
+      Nemo.majority Validator ≤ T.card ∧ Nemo.SynchronisedOn U T Rnd ∧
+      ∀ r, Rnd ≤ r → r ≤ N → Nemo.PopulatedOn U T r }
+```
+
+**Nemo-Nemo as a live rule**: a DAG is good when a majority of live validators is synchronised from `Rnd` and populates the rounds to `N`.
+
+#### `Laws`
+
+*def, `Barnacle.Nemo.Statement.lean`*
+
+```lean
+def Laws : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [DecidableEq BlockId],
+    BaseRule.Laws (nemo (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+```
+
+**Nemo-Nemo satisfies the laws**, with no fault class in sight.
+
+#### `Descent`
+
+*def, `Barnacle.Nemo.Statement.lean`*
+
+```lean
+def Descent : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [LeanDag.Nemo.CrashFaults Validator] [DecidableEq BlockId],
+    (nemoLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent
+      (Fintype.card Validator - LeanDag.Nemo.majority Validator)
+```
+
+**Nemo-Nemo has the descent laws at the slack a majority may miss**, `n − majority`: its good set is any synchronised majority of the live validators, which misses `n − majority` of them — at `n = 2f + 1` exactly `f`, and more above the bound. The crash bound enters liveness only through `Good` being satisfiable, the live set being a majority.
+
+#### `RoundRobinLive`
+
+*def, `Barnacle.Nemo.Statement.lean`*
+
+```lean
+def RoundRobinLive : Prop :=
+  ∀ (n : ℕ) (hn : 0 < n) [LeanDag.Nemo.CrashFaults (Fin n)] (BlockId Payload : Type)
+    [DecidableEq BlockId] (w : ℕ) (hk : Keyed (roundRobin n hn) w) (m : ℕ) (hm : 0 < m)
+    (hmax : m ≤ w),
+    (nemoLive (Validator := Fin n) (BlockId := BlockId) (Payload := Payload)).LiveOn
+      (Sched (roundRobin n hn) hk m hm hmax) (n + 1)
+```
+
+**Nemo-Nemo under round-robin is live at every count**, with gap `n + 1`, for every `n`: the pigeonhole's bound `2 · (n − majority) + 1 ≤ n` holds unconditionally.
+
+#### `Statement`
+
+*def, `Barnacle.Nemo.Statement.lean`*
+
+```lean
+def Statement : Prop := Laws ∧ Descent ∧ RoundRobinLive
+```
+
+The laws, the descent laws, and liveness under round-robin.
+
+#### `WindowInjective`
+
+*def, `Barnacle.Helpers.Schedule.lean`*
+
+```lean
+def WindowInjective (getLeader : ℕ → Validator) (w : ℕ) : Prop :=
+  ∀ r l₁ l₂, l₁ < w → l₂ < w → getLeader (r + l₁) = getLeader (r + l₂) → l₁ = l₂
+```
+
+`getLeader` is injective on every window of `w` consecutive naturals.
+
+#### `historyViewOf`
+
+*def, `Barnacle.Helpers.Mysticeti.lean`*
+
+```lean
+def historyViewOf (U : BlockUniverse Validator BlockId Payload) (A : BlockId)
+    (hA : A ∈ U.ids) : LeanDag.View Validator BlockId Payload U where
+  ids := history U A
+  subset_ids := history_subset_ids hA
+  complete := fun _ hi _ hj =>
+    (mem_history_iff hA).mpr (((mem_history_iff hA).mp hi).trans (Reaches.single hj))
+```
+
+The causal history of a block of the universe, as a view.
+
+#### `ConfigAgree`
+
+*def, `Barnacle.Helpers.Agreement.lean`*
+
+```lean
+def ConfigAgree (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
+    (R₂ : PartialRun R P getLeader hk upd U V₂ K₂) (k : ℕ) : Prop :=
+  R₁.start k = R₂.start k ∧ R₁.count k = R₂.count k ∧ R₁.backoff k = R₂.backoff k
+```
+
+Configuration `k` agrees between two runs.
+
+#### `PartialRun.zero`
+
+*def, `Barnacle.Helpers.Progress.lean`*
+
+```lean
+def PartialRun.zero (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
+    (upd : UpdateRule R) (U : R.Universe) (V : R.View U) :
+    PartialRun R P getLeader hk upd U V 0 where
+  start := fun _ => 0
+  count := fun _ => 1
+  backoff := fun _ => 0
+  anchor := fun _ => 0
+  vdct := fun _ _ => none
+  init := ⟨rfl, rfl, rfl⟩
+  count_pos := fun _ => Nat.one_pos
+  count_le := fun _ => P.max_pos
+  closed := fun _ h => absurd h (Nat.not_lt_zero _)
+  anchor_commits := fun _ h => absurd h (Nat.not_lt_zero _)
+  anchor_least := fun _ h => absurd h (Nat.not_lt_zero _)
+  start_succ := fun _ h => absurd h (Nat.not_lt_zero _)
+  update := fun _ h => absurd h (Nat.not_lt_zero _)
+```
+
+The height-`0` run: `init` only.
+
+#### `nemoHistoryViewOf`
+
+*def, `Barnacle.Helpers.Nemo.lean`*
+
+```lean
+def nemoHistoryViewOf (U : Nemo.Universe Validator BlockId Payload) (A : BlockId)
+    (hA : A ∈ U.ids) : Nemo.View Validator BlockId Payload U where
+  ids := Nemo.history U A
+  subset_ids := U.causal.history_subset_ids hA
+  complete := fun _ hi _ hj =>
+    (Nemo.mem_history_iff hA).mpr (((Nemo.mem_history_iff hA).mp hi).trans (ReachesFrom.single hj))
+```
+
+The causal history of a block of a crash-fault universe, as a view.
 
 ### Not otherwise grouped
 
@@ -16970,7 +18532,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 617 theorems that either another module of the
+The 664 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -20319,6 +21881,18 @@ theorem lt_of_eligible {k j : ℕ} (h : Eligible Validator k j) : k < j
 
 An eligible anchor is a later slot.
 
+#### `isLeaderBlock_of_decided`
+
+*theorem, `Odontoceti.Decision.lean`*
+
+```lean
+theorem isLeaderBlock_of_decided {V : View Validator BlockId Payload U}
+    {j : ℕ} {A : BlockId} (h : Decided U V j (some A)) :
+    IsLeaderBlock U j A
+```
+
+A committed slot's block is a candidate of that slot.
+
 #### `decided_unique`
 
 *theorem, `Odontoceti.Decision.lean`*
@@ -22272,6 +23846,17 @@ theorem isLeaderBlock_unique {k : ℕ} {L₁ L₂ : BlockId}
 
 **A slot has at most one candidate.** The crash simplification that retires the Byzantine arcs' twin-uniqueness machinery (M5′/H5): universal `no_equivocation` identifies two blocks sharing the slot's round and leader before any question of commitment arises.
 
+#### `isLeaderBlock_of_decided`
+
+*theorem, `Nemo.Decision.lean`*
+
+```lean
+theorem isLeaderBlock_of_decided {V : View Validator BlockId Payload U} {j : ℕ} {A : BlockId}
+    (h : Decided U V j (some A)) : IsLeaderBlock U j A
+```
+
+Whatever route it took, a committed verdict names a genuine candidate for that slot.
+
 #### `decided_unique`
 
 *theorem, `Nemo.Decision.lean`*
@@ -23896,6 +25481,39 @@ theorem holds : Statement
 
 ### FinWhale: the two-round commit rule
 
+#### `params_arith`
+
+*theorem, `FinWhale.Committee.lean`*
+
+```lean
+theorem params_arith :
+    (Correct : Finset Validator).card + F.byzantine.card = Fintype.card Validator ∧
+      F.byzantine.card ≤ F.f ∧ 1 ≤ P.p ∧ P.p ≤ F.f ∧
+      Fintype.card Validator + 1 = 3 * F.f + 2 * P.p
+```
+
+**The standing arithmetic of the committee**, in the form `omega` consumes it: the correct and Byzantine sets partition the validators, at most `f` are Byzantine, `1 ≤ p ≤ f`, and `n + 1 = 3f + 2p`.
+
+#### `spQuorum_le_fastCard`
+
+*theorem, `FinWhale.Committee.lean`*
+
+```lean
+theorem spQuorum_le_fastCard : spQuorum Validator ≤ fastCard Validator
+```
+
+The fast-path threshold clears the slow-path quorum, so a fast commit carries a quorum of votes with it. This is what lets the slow-path arguments be reused against a fast commit.
+
+#### `spQuorum_le_quorumCard`
+
+*theorem, `FinWhale.Committee.lean`*
+
+```lean
+theorem spQuorum_le_quorumCard : spQuorum Validator ≤ quorumCard Validator
+```
+
+**The slow-path quorum is below the parent threshold.** `n − f` is `2f + 2p − 1` at this committee and `spQuorum` is `2f + p`, so at `p ≥ 2` a block's parent set is strictly larger than an SP-certificate quorum. The two coincide only at `p = 1`, where FinWhale's committee is the core's. Every argument that intersects a parent set with a quorum uses this direction.
+
 #### `card_add_card_le_card_inter_add_card`
 
 *theorem, `FinWhale.Counting.lean`*
@@ -23963,6 +25581,40 @@ theorem equivocating_margin (f p n m : ℕ) (hp : 1 ≤ p) (_hpf : p ≤ f)
 **The committee bound is tight.** The equivocating branch counts the honest parents of a block that excludes the equivocating leader, `n − 2f + 1`, less the correct non-voters, at most `p`. At `n = 3f + 2p − 1` that is exactly `f + p`, the threshold the FP-evidence definition asks for, with nothing to spare. One validator fewer and it is `f + p − 1`, one short, for every `f` and `p` in range.
 
 So the committee is not chosen with slack: it is the least at which Lemma 4 holds.
+
+#### `window_margin`
+
+*theorem, `FinWhale.Counting.lean`*
+
+```lean
+theorem window_margin (f p n : ℕ) (hp : 1 ≤ p) (hn : n + 1 = 3 * f + 2 * p) :
+    3 * f + 3 + 2 * p = n + 4 ∧ (n + 2 ≤ 3 * f + 3 ↔ p ≤ 1)
+```
+
+**Lemma 22's window against the cycle.** Its proof reads a window of `3f + 3` rounds as "a full cycle of `n` rounds plus the first two rounds of the next". The difference `3f + 3 − n` is `4 − 2p` and does not involve `f`, so the reading is available exactly at `p ≤ 1`: a cycle plus two rounds at `p = 1`, one cycle at `p = 2`, and short of a cycle beyond.
+
+#### `c3_reachable`
+
+*theorem, `FinWhale.Counting.lean`*
+
+```lean
+theorem c3_reachable (f n j : ℕ) (hn : 2 * f ≤ n) :
+    n - f ≤ j + 1 + f ↔ n - 2 * f - 1 ≤ j
+```
+
+**When C3 becomes reachable.** A validator with `j` honest validators ahead of it holds at most `j + 1 + f` blocks of its own round, so C3's threshold of `n − f` is within reach exactly from `j = n − 2f − 1`. The validators that certainly cannot use C3 are therefore the fastest `n − 2f − 1`, one fewer than the `n − 2f` the paper's set has.
+
+#### `c3_margin`
+
+*theorem, `FinWhale.Counting.lean`*
+
+```lean
+theorem c3_margin (f p n : ℕ) (hp : 1 ≤ p) (hn : n + 1 = 3 * f + 2 * p) :
+    (n - 2 * f) + 1 = f + 2 * p ∧ (n - 2 * f - 1) + 2 = f + 2 * p ∧
+      (p = 1 → n - 2 * f - 1 = f)
+```
+
+**And what that one member costs.** The pigeonhole margin over the `f` faulty authors is `|H| − f`. At the paper's `|H| = n − 2f` it is `2p − 1`, positive at every `p`; at the correct `|H| = n − 2f − 1` it is `2p − 2`, and at `p = 1` the set has exactly `f` members, so the intersection bound is zero and the argument names no block.
 
 #### `parent_round`
 
@@ -24777,6 +26429,23 @@ theorem no_timeout_of_fast (rc : ReactivePace U T N)
 
 **And the timeout never fires**, where actual delivery beats it. This is Definition 1's "momentarily synchronous" clause: the fallback branch of the vote rule is dead, and the round advances at network speed.
 
+#### `commits_of_reactive`
+
+*theorem, `FinWhale.Reactive.lean`*
+
+```lean
+theorem commits_of_reactive (rm : ReactiveM U T N)
+    (hids : D.ids = U.ids) (hblk : D.block = U.block)
+    (hround : ∀ k, S.slotRound k = k) (hleader : ∀ k, S.leader k = D.leader k)
+    (hTeq : T = (Correct : Finset Validator))
+    (hgst : rm.gst ≤ R) (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n) :
+    CommitsCorrectLeaders D R N
+```
+
+**The reactive route supplies the liveness interface.** Every correct-led slot below the horizon carries a direct commit, with the schedule's two wait clauses in place of coverage.
+
+`hround` and `hleader` say the ambient slot schedule is the DAG's: one slot per round, and the same leader.
+
 #### `driftOn_of_catchup`
 
 *theorem, `FinWhale.Creation.lean`*
@@ -24983,6 +26652,436 @@ theorem leaderClause_of_dosValid (hdos : DoSValid U) (leader : ℕ → Validator
 
 **The DoS condition implies the leader clause.** If a block's parents are not leader-consistent, the two conflicting versions they reference are both in its causal history, so the leader is exposed in it — and an exposed author may not be cited.
 
+#### `selfParented_ofDoSValid`
+
+*theorem, `FinWhale.DoSBridge.lean`*
+
+```lean
+theorem selfParented_ofDoSValid {leader : ℕ → Validator} (hdos : DoSValid U) :
+    SelfParented (Dag.ofDoSValid U leader hdos)
+```
+
+**And the self-parent edge comes with it**, which the FinWhale model drops and Validity asks for. Theorem 26 needs no hypothesis here.
+
+#### `citable_of_correct`
+
+*theorem, `FinWhale.DoSBridge.lean`*
+
+```lean
+theorem citable_of_correct {b : BlockId} (hb : b ∈ U.ids) {X : Validator}
+    (hX : X ∈ (Correct : Finset Validator)) : ¬ ExposedIn U b X
+```
+
+**Correct authors are always citable.** An exposed author has equivocated, so it is Byzantine; the DoS condition therefore never forbids citing a correct validator, which is every block either reactive clause obliges a builder to reference.
+
+#### `quorumCard_le_citable`
+
+*theorem, `FinWhale.DoSBridge.lean`*
+
+```lean
+theorem quorumCard_le_citable {b : BlockId} (hb : b ∈ U.ids) :
+    quorumCard Validator ≤ ((exposedTo U b)ᶜ).card
+```
+
+**The condition never exhausts a builder's parents.** Validity asks for `n − f` parents by distinct authors, and `DoSValid` withdraws the authors a block's own history convicts. Those are equivocators, hence Byzantine, hence at most `f`; the correct validators are never among them and number at least `n − f`. So the authors a block may cite always include a validity quorum, and the two conditions cannot squeeze a builder between them.
+
+The margin is nil, not small: at exactly `f` Byzantine validators the citable authors are the `n − f` correct ones and no others, so every one of them has to be cited. That is a condition on what has arrived rather than on what may be cited, and it is what the pacing structure supplies past GST.
+
+### Barnacle: the adaptive leader count
+
+#### `roundRobin_keyed`
+
+*theorem, `Barnacle.Helpers.Schedule.lean`*
+
+```lean
+theorem roundRobin_keyed (n : ℕ) (hn : 0 < n) : Keyed (roundRobin n hn) n
+```
+
+Round-robin is keyed at every count up to `n`.
+
+#### `Sched_slotRound`
+
+*theorem, `Barnacle.Helpers.Schedule.lean`*
+
+```lean
+@[simp] theorem Sched_slotRound (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLeader w)
+    (m : ℕ) (hm : 0 < m) (hmax : m ≤ w) (κ : ℕ) :
+    (Sched getLeader hk m hm hmax).slotRound κ = κ / m
+```
+
+`Sched`'s round is the quotient by the count.
+
+#### `Sched_leader`
+
+*theorem, `Barnacle.Helpers.Schedule.lean`*
+
+```lean
+theorem Sched_leader (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLeader w)
+    (m : ℕ) (hm : 0 < m) (hmax : m ≤ w) (κ : ℕ) :
+    (Sched getLeader hk m hm hmax).leader κ = getLeader (κ / m + κ % m)
+```
+
+`Sched`'s leader.
+
+#### `Sched_congr`
+
+*theorem, `Barnacle.Helpers.Schedule.lean`*
+
+```lean
+theorem Sched_congr (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLeader w)
+    {m₁ m₂ : ℕ} (h : m₁ = m₂) (h₁ : 0 < m₁) (h₁' : m₁ ≤ w) (h₂ : 0 < m₂) (h₂' : m₂ ≤ w) :
+    Sched getLeader hk m₁ h₁ h₁' = Sched getLeader hk m₂ h₂ h₂'
+```
+
+Two schedules with equal counts are equal, whatever their proof arguments — the transport every agreement argument needs, since a run's count is a projection and cannot be substituted.
+
+#### `vdct_agree`
+
+*theorem, `Barnacle.Helpers.Agreement.lean`*
+
+```lean
+theorem vdct_agree (hR : R.Laws) (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
+    (R₂ : PartialRun R P getLeader hk upd U V₂ K₂) {k : ℕ} (hc : R₁.count k = R₂.count k)
+    (hk₁ : k < K₁) (hk₂ : k < K₂) {κ : ℕ}
+    (h₁ : R₁.start k < κ / R₁.count k) (h₁' : κ / R₁.count k ≤ R₁.start (k + 1))
+    (h₂ : R₂.start k < κ / R₂.count k) (h₂' : κ / R₂.count k ≤ R₂.start (k + 1)) :
+    R₁.vdct k κ = R₂.vdct k κ
+```
+
+Verdicts of a slot both runs have closed agree — the base rule's agreement law, once the two schedules are seen to be one.
+
+#### `anchor_agree`
+
+*theorem, `Barnacle.Helpers.Agreement.lean`*
+
+```lean
+theorem anchor_agree (hR : R.Laws) (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
+    (R₂ : PartialRun R P getLeader hk upd U V₂ K₂) {k : ℕ} (h : ConfigAgree R₁ R₂ k)
+    (hk₁ : k < K₁) (hk₂ : k < K₂) : R₁.anchor k = R₂.anchor k
+```
+
+The anchors agree: the lesser of two anchors is, in the other run, a committed slot past the threshold below its anchor.
+
+#### `configAgree`
+
+*theorem, `Barnacle.Helpers.Agreement.lean`*
+
+```lean
+theorem configAgree (hR : R.Laws) (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
+    (R₂ : PartialRun R P getLeader hk upd U V₂ K₂) :
+    ∀ k, k ≤ min K₁ K₂ → ConfigAgree R₁ R₂ k
+  | 0, _ => ⟨by rw [R₁.init.1, R₂.init.1], by rw [R₁.init.2.1, R₂.init.2.1],
+      by rw [R₁.init.2.2, R₂.init.2.2]⟩
+  | k + 1, h => configAgree_succ hR R₁ R₂ (configAgree hR R₁ R₂ k (by omega))
+      (by omega) (by omega)
+```
+
+**Configurations agree** up to the lower height, by induction.
+
+#### `ledgerOf_congr`
+
+*theorem, `Barnacle.Helpers.Ledger.lean`*
+
+```lean
+theorem ledgerOf_congr {v w : ℕ → Option BlockId} {lo hi : ℕ}
+    (h : ∀ κ, lo ≤ κ → κ < hi → v κ = w κ) : ledgerOf v lo hi = ledgerOf w lo hi
+```
+
+`ledgerOf` depends on the verdicts of the interval only.
+
+#### `round_of_mem_interval`
+
+*theorem, `Barnacle.Helpers.Ledger.lean`*
+
+```lean
+theorem round_of_mem_interval (Rn : PartialRun R P getLeader hk upd U V K) {k κ : ℕ}
+    (h1 : Rn.count k * (Rn.start k + 1) ≤ κ) (h2 : κ < Rn.count k * (Rn.start (k + 1) + 1)) :
+    Rn.start k < κ / Rn.count k ∧ κ / Rn.count k ≤ Rn.start (k + 1)
+```
+
+A slot of the interval of range `k` lies in the range's rounds.
+
+#### `rangeLedger_nodup`
+
+*theorem, `Barnacle.Helpers.Ledger.lean`*
+
+```lean
+theorem rangeLedger_nodup (hR : R.Laws) (Rn : PartialRun R P getLeader hk upd U V K)
+    {k : ℕ} (hk : k < K) : (Rn.rangeLedger k).Nodup
+```
+
+A closed range's ledger has no repetition.
+
+#### `rangeLedger_disjoint`
+
+*theorem, `Barnacle.Helpers.Ledger.lean`*
+
+```lean
+theorem rangeLedger_disjoint (hR : R.Laws) (Rn : PartialRun R P getLeader hk upd U V K)
+    {k k' : ℕ} (h : k < k') (hK : k' < K) : (Rn.rangeLedger k).Disjoint (Rn.rangeLedger k')
+```
+
+Two closed ranges' ledgers are disjoint: their blocks have rounds in disjoint intervals.
+
+#### `progress`
+
+*theorem, `Barnacle.Helpers.Progress.lean`*
+
+```lean
+theorem progress (hR : R.Laws) (hupd : UpdBounded P upd) {c K Rnd N : ℕ}
+    (Rn : PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K)
+    (hlive : R.LiveOn (Sched getLeader hk (Rn.count K) (Rn.count_pos K) (Rn.count_le K)) c)
+    (hgood : R.Good U Rnd N) (hRnd : Rnd ≤ Rn.start K + 1)
+    (hN : Rn.start K + P.interval + 1 + 2 * c + R.waveLength ≤ N) :
+    Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) (K + 1))
+```
+
+#### `everyHeight`
+
+*theorem, `Barnacle.Helpers.Progress.lean`*
+
+```lean
+theorem everyHeight (hR : R.Laws) (hupd : UpdBounded P upd) {c : ℕ}
+    (hlive : ∀ m (hm : 0 < m) (hmax : m ≤ P.maxLeaders),
+      R.LiveOn (Sched getLeader hk m hm hmax) c)
+    {Rnd N : ℕ} (hgood : R.Good U Rnd N) (hRnd : Rnd ≤ 1) (K : ℕ)
+    (hK : horizon P R c K ≤ N) :
+    Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K)
+```
+
+#### `stretchDescent`
+
+*theorem, `Barnacle.Helpers.Heads.lean`*
+
+```lean
+theorem stretchDescent (hD : R.Descent slack) (S : Slots Validator) {U : R.Universe}
+    (V : R.View U) {b top : ℕ}
+    (hspan : ∀ i, i < b → S.slotRound i + R.waveLength ≤ S.slotRound top)
+    (hdec : ∀ j, b ≤ j → j ≤ top → ∃ v, R.Decided S V j v)
+    (htop : ∃ B, R.Decided S V top (some B)) :
+    ∀ i, i < b → ∃ v, R.Decided S V i v
+```
+
+**BN9a, the stretch descent.**
+
+#### `headsDecide_at`
+
+*theorem, `Barnacle.Helpers.Heads.lean`*
+
+```lean
+theorem headsDecide_at (hD : R.Descent slack) (hw : 0 < R.waveLength)
+    {U : R.Universe} {Rnd N : ℕ} {T : Finset Validator}
+    (hT : ∀ (S : Slots Validator) (κ : ℕ), Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
+      S.leader κ ∈ T → ∃ L, R.Decided S (R.full U) κ (some L))
+    (ρ : ℕ) (hRnd : Rnd ≤ ρ) (hN : ρ + R.waveLength + R.waveLength ≤ N + 1)
+    (hheads : ∀ i, i < R.waveLength → getLeader (ρ + i) ∈ T) :
+    (∀ κ, (Sched getLeader hk m hm hmax).slotRound κ < ρ →
+      ρ ≤ (Sched getLeader hk m hm hmax).slotRound κ + R.waveLength →
+      ∃ v, R.Decided (Sched getLeader hk m hm hmax) (R.full U) κ v) ∧
+    ∃ L, R.Decided (Sched getLeader hk m hm hmax) (R.full U) (m * ρ) (some L)
+```
+
+**BN9b′, subtraction-free.** Heads of rounds `ρ, …, ρ + w − 1` `T`-led, waves under `N`: every slot at a round `r` with `r < ρ ≤ r + w` is decided, and the head of `ρ` is committed.
+
+#### `liveOn_of_headsRun`
+
+*theorem, `Barnacle.Helpers.Heads.lean`*
+
+```lean
+theorem liveOn_of_headsRun (hD : R.Descent slack) (hw : 0 < R.waveLength)
+    (hheads : ∀ T : Finset Validator, Fintype.card Validator ≤ T.card + slack →
+      HeadsRun getLeader T R.waveLength c₀) :
+    R.LiveOn (Sched getLeader hk m hm hmax) c₀
+```
+
+**BN9c′ at gap `c₀`**: `HeadsRun` called at `r + 1`.
+
+#### `roundRobin_headsRun`
+
+*theorem, `Barnacle.Helpers.Heads.lean`*
+
+```lean
+theorem roundRobin_headsRun (n : ℕ) (hn : 0 < n) (T : Finset (Fin n)) (slack g : ℕ)
+    (hT : n ≤ T.card + slack) (hbound : g * slack + 1 ≤ n) :
+    HeadsRun (roundRobin n hn) T g (n + g - 1)
+```
+
+**The pigeonhole.** If no window of `g` consecutive residues starting in a cycle lay inside `T`, choosing for each start a residue outside `T` within its window would inject `Fin n` into `Fin g × Tᶜ`.
+
+#### `liveOn_roundRobin`
+
+*theorem, `Barnacle.Helpers.Heads.lean`*
+
+```lean
+theorem liveOn_roundRobin {n : ℕ} (hn : 0 < n) {BlockId : Type} [DecidableEq BlockId]
+    {Payload : Type} (R : LiveRule (Fin n) BlockId Payload) {slack : ℕ} (hD : R.Descent slack)
+    (hw : 0 < R.waveLength) (hbound : R.waveLength * slack + 1 ≤ n)
+    {W : ℕ} (hk : Keyed (roundRobin n hn) W) (m : ℕ) (hm : 0 < m) (hmax : m ≤ W) :
+    R.LiveOn (Sched (roundRobin n hn) hk m hm hmax) (n + R.waveLength - 1)
+```
+
+**Round-robin is live** at every count, with gap `n + waveLength − 1`.
+
+#### `mysticetiLive_descent`
+
+*theorem, `Barnacle.Helpers.MysticetiLive.lean`*
+
+```lean
+theorem mysticetiLive_descent [F : Faults Validator] :
+    (mysticetiLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent
+      F.f where
+  goodLeaders
+```
+
+#### `odontoceti_laws`
+
+*theorem, `Barnacle.Helpers.Odontoceti.lean`*
+
+```lean
+theorem odontoceti_laws [Faults5 Validator] :
+    BaseRule.Laws (odontoceti (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
+  view_subset
+```
+
+The laws, for Odontoceti.
+
+#### `odontocetiLive_descent`
+
+*theorem, `Barnacle.Helpers.Odontoceti.lean`*
+
+```lean
+theorem odontocetiLive_descent [F : Faults5 Validator] :
+    (odontocetiLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent
+      F.f where
+  goodLeaders
+```
+
+The descent laws, for Odontoceti at slack `f`.
+
+#### `nemo_laws`
+
+*theorem, `Barnacle.Helpers.NemoLive.lean`*
+
+```lean
+theorem nemo_laws :
+    BaseRule.Laws (nemo (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
+  view_subset
+```
+
+The laws, for Nemo-Nemo.
+
+#### `nemoLive_descent`
+
+*theorem, `Barnacle.Helpers.NemoLive.lean`*
+
+```lean
+theorem nemoLive_descent [Nemo.CrashFaults Validator] :
+    (nemoLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent
+      (Fintype.card Validator - Nemo.majority Validator) where
+  goodLeaders
+```
+
+The descent laws, for Nemo-Nemo, at the slack a majority may miss: `n − majority`.
+
+#### `majority_bound`
+
+*theorem, `Barnacle.Helpers.NemoLive.lean`*
+
+```lean
+theorem majority_bound (n : ℕ) (hn : 0 < n) :
+    2 * (n - Nemo.majority (Fin n)) + 1 ≤ n
+```
+
+The pigeonhole's committee bound holds for the majority slack at every `n`: `2 · (n − majority) + 1 ≤ n`.
+
+#### `holds`
+
+*theorem, `Barnacle.Window.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Barnacle.Agreement.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Barnacle.Ledger.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Barnacle.Conservativity.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Barnacle.Aimd.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Barnacle.Progress.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Barnacle.Heads.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Barnacle.Mysticeti.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Barnacle.MysticetiLive.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Barnacle.Odontoceti.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Barnacle.Nemo.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
 ### Not otherwise grouped
 
 #### `holds`
@@ -25158,7 +27257,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 605 lemmas used only within the file that proves
+The 615 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -25565,7 +27664,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `not_correct_of_supports_two` | A validator supporting two *distinct* same-author blocks is not correct: one supporting block cannot … |
 | `thickLink_of_directCommit_aux` | — |
 
-### `Odontoceti/Decision.lean` (10)
+### `Odontoceti/Decision.lean` (9)
 
 | Lemma | Role |
 |:---|:---|
@@ -25574,7 +27673,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `directSkip_of_directSkipIn` | A view can only under-report: its direct skip is genuine. |
 | `eq_of_directCommitIn` | Cross-view O1′: two direct commits for one slot agree. |
 | `eq_of_directCommitIn_of_thickLink` | O4′, from a view: a view-level direct commit is the only same-slot candidate that can pass the indirect … |
-| `isLeaderBlock_of_decided` | A committed slot's block is a candidate of that slot. |
 | `not_directSkipIn_of_directCommitIn` | Cross-view O1: one validator cannot directly commit what another directly skips. |
 | `not_thickLink_of_directSkipIn` | O2, from a view: a view-level direct skip fails the indirect test everywhere. |
 | `thickLink_of_directCommitIn` | O3, from a view: a view-level direct commit passes the indirect test at every block two rounds up. |
@@ -25835,14 +27933,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifiedIn_of_reaches` | Cone monotonicity: whatever an anchor certifies, everything above the anchor certifies too. |
 | `exists_vote_ref_of_directCommit` | The base case. A directly committed leader has a vote among the references of every round-`(r+2)` block: … |
 
-### `Nemo/Decision.lean` (6)
+### `Nemo/Decision.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
 | `anchor_round_le` | The anchor's round clears the slot's decision round by one — exactly the `r + 2` clearance that link … |
 | `certifiedIn_of_directCommitIn_at_anchor` | The visibility lemma. A view-level direct commit is certified at any committed anchor of any eligible slot … |
 | `directCommit_of_directCommitIn` | A view can only under-report: its direct commit is genuine. |
-| `isLeaderBlock_of_decided` | Whatever route it took, a committed verdict names a genuine candidate for that slot. |
 | `slot_eq_of_decided_commit` | A committed block belongs to one slot. The ledger reads verdicts off in slot order, so without this a … |
 | `slot_eq_of_isLeaderBlock` | A block is the candidate of at most one slot — what `Slots.keyed` yields: two slots sharing a round are … |
 
@@ -26036,15 +28133,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_suppAnchorsOf_of_committed` | A committed anchor of the cone is one of the supported anchors of the cone. |
 | `mem_suppCandidates` | — |
 
-### `FinWhale/Committee.lean` (5)
+### `FinWhale/Committee.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
-| `params_arith` | The standing arithmetic of the committee, in the form `omega` consumes it: the correct and Byzantine sets … |
 | `quorumCard_le_fastCard` | The parent threshold is itself below the fast-path threshold, since `p ≤ f`. |
 | `spQuorum_eq_ceil` | The paper's `⌈(n+f+1)/2⌉` is `2f + p` at this committee. |
-| `spQuorum_le_fastCard` | The fast-path threshold clears the slow-path quorum, so a fast commit carries a quorum of votes with it. … |
-| `spQuorum_le_quorumCard` | The slow-path quorum is below the parent threshold. `n − f` is `2f + 2p − 1` at this committee and … |
 
 ### `FinWhale/Counting.lean` (2)
 
@@ -26185,11 +28279,10 @@ subsection per module, in the layer order of Appendices B and C.
 | `leader_injOn` | Round robin is injective within a cycle. Two rounds of one cycle with the same leader are the same round. |
 | `neZero_card` | The committee is nonempty, which is what `ZMod n` needs to be the cyclic group of order `n`. |
 
-### `FinWhale/Reactive.lean` (2)
+### `FinWhale/Reactive.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
-| `commits_of_reactive` | The reactive route supplies the liveness interface. Every correct-led slot below the horizon carries a … |
 | `spCertificate_of_certifies` | Mysticeti's certificate is FinWhale's. Both count the parents that vote, and FinWhale asks for `2f + p` … |
 
 ### `FinWhale/Creation.lean` (3)
@@ -26225,7 +28318,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `populated_of_viewPace` | Production, from the pacing line. Every correct validator authors a block at every round below the … |
 | `synchronised_of_viewPace` | Coverage, from the pacing line. From any round past GST, once the timeout clears `2∆ + proc`, every … |
 
-### `FinWhale/DoSBridge.lean` (5)
+### `FinWhale/DoSBridge.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
@@ -26233,7 +28326,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `ofDoSValid_block` | — |
 | `ofDoSValid_ids` | — |
 | `ofDoSValid_leader` | — |
-| `selfParented_ofDoSValid` | And the self-parent edge comes with it, which the FinWhale model drops and Validity asks for. Theorem 26 … |
 
 ### `Minnow/Blocking.lean` (3)
 
@@ -26242,6 +28334,48 @@ subsection per module, in the layer order of Appendices B and C.
 | `not_committedAt_of_dead` | A dead slot blocks every later leader. If every vertex of the `j`-th leader slot lies outside `l`'s causal … |
 | `not_committedAt_of_not_quorum` | A vertex with no quorum is never committed. |
 | `quorum_of_committedAt` | A commit needs a quorum, at every position in `leaders`. |
+
+### `Barnacle/Helpers/Schedule.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `keyed_of_windowInjective` | Window-injectivity gives `Keyed`: two slots of one round with one leader have equal offsets (both below `m … |
+| `roundRobin_windowInjective` | Round-robin is injective on every window of `n` consecutive rounds: the residues `(r + l) % n` for `l < n` … |
+
+### `Barnacle/Helpers/Agreement.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `configAgree_succ` | Agreement at `k` carries to `k + 1`: the anchors agree, so the anchor blocks agree, so one update of one … |
+
+### `Barnacle/Helpers/Ledger.lean` (5)
+
+| Lemma | Role |
+|:---|:---|
+| `mem_ledgerOf` | Membership in `ledgerOf`: some slot of the interval commits the block. |
+| `round_of_mem_rangeLedger` | A block of range `k`'s ledger has a round in the range. |
+| `slot_unique_of_rangeLedger` | Within a range a block is committed by one slot: two committing slots share the block's round and author, … |
+| `start_lt_succ` | `start` grows strictly across a closed configuration: the next start is the anchor's round, past the … |
+| `start_mono` | `start` is monotone over the determined configurations. |
+
+### `Barnacle/Helpers/Progress.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `everyHeight_bound` | (D) |
+| `progress_exists` | Configuration progress, with the bound on the new start. |
+
+### `Barnacle/Helpers/Heads.lean` (7)
+
+| Lemma | Role |
+|:---|:---|
+| `Sched_head_above` | What BN9b needs. For a slot `κ` at round `r` and the head `h := m * (r + w)` of round `r + w`: `κ`'s round … |
+| `Sched_leader_head` | The head of round `ρ` is led by `getLeader ρ`, whatever the count. |
+| `Sched_lt_head_of_slotRound_lt` | A slot at a round below `ρ` sits below the head of `ρ`. |
+| `Sched_slotRound_head` | The head of round `ρ` is slot `m * ρ`. |
+| `Sched_slotRound_lt_of_lt_head` | A slot below the head of `ρ` sits at a round below `ρ`. |
+| `decided_of_head_committed` | A slot is decided once the head a wave above it is committed: the intermediates are vacuous. From … |
+| `headsDecide` | BN9b. Heads of rounds `ρ + w, …, ρ + 2w − 1` `T`-led (with `T` from `goodLeaders`) and their waves under … |
 
 ### `Network/Quorum.lean` (2)
 
