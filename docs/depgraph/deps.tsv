@@ -485,7 +485,7 @@ EDGE	LeanDag.card_historyBlocksOf_le'._proof_1_4	LeanDag.Faults.f
 NODE	LeanDagTest.Barnacle.bnLeader6'	LeanDagTest.Barnacle.Instances	def
 EDGE	LeanDagTest.Barnacle.bnLeader6'	LeanDagTest.Barnacle.bnLeader6'._proof_2
 EDGE	LeanDagTest.Barnacle.bnLeader6'	LeanDag.Barnacle.roundRobin
-NODE	LeanDag.certificatesIn.eq_1	LeanDag.ViewPace	thm
+NODE	LeanDag.certificatesIn.eq_1	LeanDag.Liveness	thm
 EDGE	LeanDag.certificatesIn.eq_1	LeanDag.Faults
 EDGE	LeanDag.certificatesIn.eq_1	LeanDag.certificatesIn
 EDGE	LeanDag.certificatesIn.eq_1	LeanDag.View.ids
@@ -1538,6 +1538,7 @@ EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_7	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_7	LeanDag.Faults.f
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_7	LeanDag.AdaptivePolicy
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_7	LeanDag.Slots
+EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_7	LeanDag.View
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_7	LeanDag.Faults5.toFaults
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_7	LeanDag.AdaptivePolicy.inj
 NODE	LeanDagTest.Barnacle.Utwin6'	LeanDagTest.Barnacle.Instances	def
@@ -2941,6 +2942,7 @@ EDGE	LeanDag.AdaptivePolicy.base_prefix	LeanDag.epochOf
 EDGE	LeanDag.AdaptivePolicy.base_prefix	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.base_prefix	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy.base_prefix	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.base_prefix	LeanDag.View
 NODE	LeanDag.FinWhale.three_correct_of_roundRobin._proof_1_1	LeanDag.FinWhale.Rotation	thm
 NODE	LeanDag.BlackMarlin.suppCandidates	LeanDag.BlackMarlin.Model.Repair	def
 EDGE	LeanDag.BlackMarlin.suppCandidates	LeanDag.Faults
@@ -2967,6 +2969,7 @@ EDGE	LeanDag.AdaptivePolicy.mk.injEq	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.mk.injEq	LeanDag.AdaptivePolicy.mk
 EDGE	LeanDag.AdaptivePolicy.mk.injEq	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy.mk.injEq	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.mk.injEq	LeanDag.View
 NODE	LeanDag.partialRun_agree._proof_1_2	LeanDag.Adaptive.Run	thm
 EDGE	LeanDag.partialRun_agree._proof_1_2	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.partialRun_agree._proof_1_2	LeanDag.Faults
@@ -6243,7 +6246,6 @@ EDGE	LeanDag.exists_partialRun	LeanDag.epochOf_lt_iff
 EDGE	LeanDag.exists_partialRun	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.exists_partialRun	LeanDag.PartialRun.mk
 EDGE	LeanDag.exists_partialRun	LeanDag.Faults
-EDGE	LeanDag.exists_partialRun	LeanDag.View.full
 EDGE	LeanDag.exists_partialRun	LeanDag.Slots.slotRound
 EDGE	LeanDag.exists_partialRun	LeanDag.exists_partialRun._proof_1_1
 EDGE	LeanDag.exists_partialRun	LeanDag.AdaptivePolicy.W_pos
@@ -6264,12 +6266,14 @@ EDGE	LeanDag.exists_partialRun	LeanDag.exists_partialRun._proof_1_5
 EDGE	LeanDag.exists_partialRun	LeanDag.PartialRun.vdct
 EDGE	LeanDag.exists_partialRun	LeanDag.exists_partialRun._proof_1_3
 EDGE	LeanDag.exists_partialRun	LeanDag.PlacesRuns
+EDGE	LeanDag.exists_partialRun	LeanDag.View.CoversUpto
 EDGE	LeanDag.exists_partialRun	LeanDag.decidedWithin_congr
 EDGE	LeanDag.exists_partialRun	LeanDag.AdaptivePolicy
 EDGE	LeanDag.exists_partialRun	LeanDag.SynchronisedOn
 EDGE	LeanDag.exists_partialRun	LeanDag.Slots
 EDGE	LeanDag.exists_partialRun	LeanDag.Slots.mono
 EDGE	LeanDag.exists_partialRun	LeanDag.exists_partialRun._proof_1_10
+EDGE	LeanDag.exists_partialRun	LeanDag.View
 EDGE	LeanDag.exists_partialRun	LeanDag.AdaptivePolicy.adapted
 EDGE	LeanDag.exists_partialRun	LeanDag.SpansEligible
 EDGE	LeanDag.exists_partialRun	LeanDag.exists_partialRun._proof_1_2
@@ -8951,6 +8955,7 @@ EDGE	LeanDag.epoch_closes._proof_1_7	LeanDag.BlockUniverse
 EDGE	LeanDag.epoch_closes._proof_1_7	LeanDag.Faults.f
 EDGE	LeanDag.epoch_closes._proof_1_7	LeanDag.AdaptivePolicy
 EDGE	LeanDag.epoch_closes._proof_1_7	LeanDag.Slots
+EDGE	LeanDag.epoch_closes._proof_1_7	LeanDag.View
 EDGE	LeanDag.epoch_closes._proof_1_7	LeanDag.AdaptivePolicy.inj
 NODE	LeanDag.Barnacle.BaseRule.casesOn	LeanDag.Barnacle.Model.Rule	def
 EDGE	LeanDag.Barnacle.BaseRule.casesOn	LeanDag.Block
@@ -9698,6 +9703,27 @@ EDGE	LeanDag.FinWhale.theorem26_of_selfParent._proof_1_4	LeanDag.Block.round
 EDGE	LeanDag.FinWhale.theorem26_of_selfParent._proof_1_4	LeanDag.FinWhale.Dag
 EDGE	LeanDag.FinWhale.theorem26_of_selfParent._proof_1_4	LeanDag.FinWhale.Dag.leader
 EDGE	LeanDag.FinWhale.theorem26_of_selfParent._proof_1_4	LeanDag.Block.creator
+NODE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.Odontoceti.Liveness	thm
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.Faults5
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.creatorsOf
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.Odontoceti.DirectCommitIn.eq_1
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.Odontoceti.supportersIn.eq_1
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.Block.refs
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.View.ids
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.Odontoceti.DirectCommitIn
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.Block.round
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.BlockUniverse
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.blocksAt
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.Faults.f
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.Odontoceti.supportersIn
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.View.CoversUpto
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.Slots
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.Odontoceti.DirectCommit
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.View
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.Faults5.toFaults
+EDGE	LeanDag.Odontoceti.directCommitIn_of_coversUpto	LeanDag.mem_blocksAt
 NODE	LeanDag.FinWhale.anchorCands.eq_1	LeanDag.FinWhale.Pass	thm
 EDGE	LeanDag.FinWhale.anchorCands.eq_1	LeanDag.FinWhale.instDecidableEqVerdict
 EDGE	LeanDag.FinWhale.anchorCands.eq_1	LeanDag.FinWhale.Verdict
@@ -10260,6 +10286,10 @@ EDGE	LeanDag.FinWhale.safety_of_views._proof_1_2	LeanDag.Block.round
 EDGE	LeanDag.FinWhale.safety_of_views._proof_1_2	LeanDag.FinWhale.Dag
 EDGE	LeanDag.FinWhale.safety_of_views._proof_1_2	LeanDag.FinWhale.Dag.leader
 EDGE	LeanDag.FinWhale.safety_of_views._proof_1_2	LeanDag.Block.creator
+NODE	LeanDagTest.run7small._proof_5	LeanDagTest.Adaptive	thm
+EDGE	LeanDagTest.run7small._proof_5	LeanDag.AdaptivePolicy.pick
+EDGE	LeanDagTest.run7small._proof_5	LeanDagTest.demotePolicy
+EDGE	LeanDagTest.run7small._proof_5	LeanDagTest.vd7
 NODE	LeanDag.BlackMarlin.flushRecord_isAnchor	LeanDag.BlackMarlin.Helpers.Descent	thm
 EDGE	LeanDag.BlackMarlin.flushRecord_isAnchor	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.flushRecord_isAnchor	LeanDag.BlackMarlin.descentUpto_mem_ids
@@ -10784,6 +10814,7 @@ EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.Faults.f
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.AdaptivePolicy
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.Slots
+EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.View
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.Faults5.toFaults
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.AdaptivePolicy.inj
 NODE	LeanDagTest.ugrowStuckPace._proof_14	LeanDagTest.ViewPace	thm
@@ -15843,12 +15874,12 @@ EDGE	LeanDagTest.FinWhalePace.fwRun._proof_7	LeanDagTest.FinWhalePace.fwPaceCore
 NODE	LeanDagTest.mem_omitRefs._simp_1_1	LeanDagTest.Unbounded	thm
 NODE	LeanDagTest.run7small	LeanDagTest.Adaptive	def
 EDGE	LeanDagTest.run7small	LeanDag.AdaptiveRun
+EDGE	LeanDagTest.run7small	LeanDagTest.run7small._proof_5
 EDGE	LeanDagTest.run7small	LeanDag.AdaptivePolicy.pick
 EDGE	LeanDagTest.run7small	LeanDagTest.run7small._proof_4
 EDGE	LeanDagTest.run7small	LeanDagTest.demotePolicy
 EDGE	LeanDagTest.run7small	LeanDagTest.vd7
 EDGE	LeanDagTest.run7small	LeanDag.AdaptiveRun.mk
-EDGE	LeanDagTest.run7small	LeanDagTest.run7._proof_6
 NODE	LeanDag.MahiMahi.decided_below_of_committed_run._proof_1_4	LeanDag.MahiMahi.Helpers.Liveness	thm
 EDGE	LeanDag.MahiMahi.decided_below_of_committed_run._proof_1_4	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.decided_below_of_committed_run._proof_1_4	LeanDag.MahiMahi.instDecidableEligible
@@ -16639,6 +16670,25 @@ NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload.noConfusionTyp
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload.noConfusionType	LeanDag.Hybrid.Checkpoint.CheckpointData
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload.noConfusionType	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload.casesOn
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload.noConfusionType	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload
+NODE	LeanDag.directCommitIn_of_coversUpto	LeanDag.Liveness	thm
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.creatorsOf
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.Faults
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.certificatesIn
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.DirectCommit
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.certificatesIn.eq_1
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.mem_certificates
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.Certifies
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.BlockUniverse.block
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.View.ids
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.Block.round
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.DirectCommitIn
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.BlockUniverse
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.Faults.f
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.View.CoversUpto
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.certificates
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.View
+EDGE	LeanDag.directCommitIn_of_coversUpto	LeanDag.DirectCommitIn.eq_1
 NODE	LeanDag.MahiMahi.mem_blamers._simp_1_3	LeanDag.MahiMahi.Helpers.Rules	thm
 NODE	LeanDagTest.unemo_round_le	LeanDagTest.Nemo	thm
 EDGE	LeanDagTest.unemo_round_le	LeanDagTest.Unemo
@@ -18165,6 +18215,14 @@ EDGE	LeanDagTest.Barnacle.bnUpd1_bounded	LeanDagTest.Barnacle.bnUpd1
 EDGE	LeanDagTest.Barnacle.bnUpd1_bounded	LeanDag.Barnacle.Aimd.Healthy
 EDGE	LeanDagTest.Barnacle.bnUpd1_bounded	LeanDag.Barnacle.UpdBounded
 EDGE	LeanDagTest.Barnacle.bnUpd1_bounded	LeanDagTest.Barnacle.bnP1
+NODE	LeanDag.View.CoversUpto	LeanDag.Liveness	def
+EDGE	LeanDag.View.CoversUpto	LeanDag.Faults
+EDGE	LeanDag.View.CoversUpto	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.View.CoversUpto	LeanDag.BlockUniverse.block
+EDGE	LeanDag.View.CoversUpto	LeanDag.View.ids
+EDGE	LeanDag.View.CoversUpto	LeanDag.Block.round
+EDGE	LeanDag.View.CoversUpto	LeanDag.BlockUniverse
+EDGE	LeanDag.View.CoversUpto	LeanDag.View
 NODE	LeanDagTest.ugrowReactive._proof_15	LeanDagTest.Reactive	thm
 EDGE	LeanDagTest.ugrowReactive._proof_15	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowReactive._proof_15	LeanDag.BlockUniverse.block
@@ -18566,6 +18624,7 @@ EDGE	LeanDag.AdaptivePolicy.mk.noConfusion	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.mk.noConfusion	LeanDag.AdaptivePolicy.mk
 EDGE	LeanDag.AdaptivePolicy.mk.noConfusion	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy.mk.noConfusion	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.mk.noConfusion	LeanDag.View
 EDGE	LeanDag.AdaptivePolicy.mk.noConfusion	LeanDag.AdaptivePolicy.noConfusion
 NODE	LeanDagTest.BlackMarlin.vFlush	LeanDagTest.BlackMarlin.Divergence	def
 EDGE	LeanDagTest.BlackMarlin.vFlush	LeanDag.BlackMarlin.Flush
@@ -19719,6 +19778,14 @@ EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.PaceCore.proc
 EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.BlackMarlin.CommittedIn
 EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.View
 EDGE	LeanDag.BlackMarlin.Agreement.Delivered	LeanDag.PaceCore.delay
+NODE	LeanDag.View.coversUpto_full	LeanDag.Liveness	thm
+EDGE	LeanDag.View.coversUpto_full	LeanDag.Faults
+EDGE	LeanDag.View.coversUpto_full	LeanDag.View.full
+EDGE	LeanDag.View.coversUpto_full	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.View.coversUpto_full	LeanDag.BlockUniverse.block
+EDGE	LeanDag.View.coversUpto_full	LeanDag.Block.round
+EDGE	LeanDag.View.coversUpto_full	LeanDag.BlockUniverse
+EDGE	LeanDag.View.coversUpto_full	LeanDag.View.CoversUpto
 NODE	LeanDag.AdoptedUnder	LeanDag.DoS.Pedigree	def
 EDGE	LeanDag.AdoptedUnder	LeanDag.Faults
 EDGE	LeanDag.AdoptedUnder	LeanDag.Block.refs
@@ -21537,6 +21604,7 @@ EDGE	LeanDag.Integration.horizonStable_const_zero	LeanDag.chop
 EDGE	LeanDag.Integration.horizonStable_const_zero	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.horizonStable_const_zero	LeanDag.Integration.HorizonStable
 EDGE	LeanDag.Integration.horizonStable_const_zero	LeanDag.Slots
+EDGE	LeanDag.Integration.horizonStable_const_zero	LeanDag.View
 NODE	LeanDagTest.Ucrash._simp_1	LeanDagTest.SafeSkip	thm
 NODE	LeanDag.correct_mem_base._proof_1_2	LeanDag.GC.AttestedBase	thm
 EDGE	LeanDag.correct_mem_base._proof_1_2	LeanDag.Faults
@@ -23773,6 +23841,14 @@ EDGE	LeanDag.FinWhale.DirectSkip	LeanDag.FinWhale.SPSkip
 EDGE	LeanDag.FinWhale.DirectSkip	LeanDag.FinWhale.blocksAt
 EDGE	LeanDag.FinWhale.DirectSkip	LeanDag.FinWhale.Dag
 EDGE	LeanDag.FinWhale.DirectSkip	LeanDag.Block.creator
+NODE	LeanDag.View.CoversUpto.mono	LeanDag.Liveness	thm
+EDGE	LeanDag.View.CoversUpto.mono	LeanDag.Faults
+EDGE	LeanDag.View.CoversUpto.mono	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.View.CoversUpto.mono	LeanDag.BlockUniverse.block
+EDGE	LeanDag.View.CoversUpto.mono	LeanDag.Block.round
+EDGE	LeanDag.View.CoversUpto.mono	LeanDag.BlockUniverse
+EDGE	LeanDag.View.CoversUpto.mono	LeanDag.View.CoversUpto
+EDGE	LeanDag.View.CoversUpto.mono	LeanDag.View
 NODE	LeanDag.card_viewUpto_le_of_allExposed'	LeanDag.DoS.Composition	thm
 EDGE	LeanDag.card_viewUpto_le_of_allExposed'	LeanDag.Delivery
 EDGE	LeanDag.card_viewUpto_le_of_allExposed'	LeanDag.ByzBudget
@@ -26456,6 +26532,7 @@ EDGE	LeanDag.AdaptivePolicy.mk	LeanDag.epochOf
 EDGE	LeanDag.AdaptivePolicy.mk	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.mk	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy.mk	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.mk	LeanDag.View
 NODE	LeanDag.Barnacle.Conservativity.holds._proof_1_2	LeanDag.Barnacle.Conservativity.Proof	thm
 EDGE	LeanDag.Barnacle.Conservativity.holds._proof_1_2	LeanDag.Barnacle.Params.maxLeaders
 EDGE	LeanDag.Barnacle.Conservativity.holds._proof_1_2	LeanDag.Barnacle.PartialRun.backoff
@@ -28234,6 +28311,7 @@ EDGE	LeanDag.AdaptivePolicy.noConfusion	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.noConfusion	LeanDag.AdaptivePolicy.noConfusionType
 EDGE	LeanDag.AdaptivePolicy.noConfusion	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy.noConfusion	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.noConfusion	LeanDag.View
 NODE	LeanDag.ReferencesAccepted	LeanDag.DoS.Exclusion	def
 EDGE	LeanDag.ReferencesAccepted	LeanDag.Delivery
 EDGE	LeanDag.ReferencesAccepted	LeanDag.Faults
@@ -28730,6 +28808,7 @@ EDGE	LeanDag.epoch_closes._proof_1_10	LeanDag.BlockUniverse
 EDGE	LeanDag.epoch_closes._proof_1_10	LeanDag.Faults.f
 EDGE	LeanDag.epoch_closes._proof_1_10	LeanDag.AdaptivePolicy
 EDGE	LeanDag.epoch_closes._proof_1_10	LeanDag.Slots
+EDGE	LeanDag.epoch_closes._proof_1_10	LeanDag.View
 EDGE	LeanDag.epoch_closes._proof_1_10	LeanDag.AdaptivePolicy.inj
 NODE	LeanDag.FinWhale.commits_of_reactive._simp_1_2	LeanDag.FinWhale.Reactive	thm
 NODE	LeanDag.votesIn.eq_1	LeanDag.Mysticeti	thm
@@ -33451,6 +33530,7 @@ EDGE	LeanDag.AdaptivePolicy.mk.sizeOf_spec	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.mk.sizeOf_spec	LeanDag.AdaptivePolicy.mk
 EDGE	LeanDag.AdaptivePolicy.mk.sizeOf_spec	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy.mk.sizeOf_spec	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.mk.sizeOf_spec	LeanDag.View
 EDGE	LeanDag.AdaptivePolicy.mk.sizeOf_spec	LeanDag.AdaptivePolicy._sizeOf_inst
 NODE	LeanDagTest.ugrowTimingPace._proof_12	LeanDagTest.Growth	thm
 EDGE	LeanDagTest.ugrowTimingPace._proof_12	LeanDagTest.Ugrow
@@ -33838,6 +33918,7 @@ EDGE	LeanDag.AdaptivePolicy.noConfusionType	LeanDag.epochOf
 EDGE	LeanDag.AdaptivePolicy.noConfusionType	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.noConfusionType	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy.noConfusionType	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.noConfusionType	LeanDag.View
 NODE	LeanDag.CausalStructure.refs_empty_of_round_zero._proof_1_1	LeanDag.Causality	thm
 EDGE	LeanDag.CausalStructure.refs_empty_of_round_zero._proof_1_1	LeanDag.Block
 EDGE	LeanDag.CausalStructure.refs_empty_of_round_zero._proof_1_1	LeanDag.Block.round
@@ -34592,6 +34673,7 @@ EDGE	LeanDag.AdaptivePolicy._sizeOf_1	LeanDag.epochOf
 EDGE	LeanDag.AdaptivePolicy._sizeOf_1	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy._sizeOf_1	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy._sizeOf_1	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy._sizeOf_1	LeanDag.View
 NODE	LeanDag.MahiMahi.Liveness.CommitsWithin	LeanDag.MahiMahi.Liveness.Statement	def
 EDGE	LeanDag.MahiMahi.Liveness.CommitsWithin	LeanDag.MahiMahi.decisionRound
 EDGE	LeanDag.MahiMahi.Liveness.CommitsWithin	LeanDag.MahiMahi.UnpredictableWithin
@@ -37214,6 +37296,7 @@ NODE	LeanDagTest.demotePolicy._proof_1	LeanDagTest.Adaptive	thm
 EDGE	LeanDagTest.demotePolicy._proof_1	LeanDagTest.demotePolicy._proof_2
 EDGE	LeanDagTest.demotePolicy._proof_1	LeanDag.epochOf
 EDGE	LeanDagTest.demotePolicy._proof_1	LeanDag.BlockUniverse
+EDGE	LeanDagTest.demotePolicy._proof_1	LeanDag.View
 NODE	LeanDag.Odontoceti.epoch_closes._proof_1_6	LeanDag.Adaptive.Odontoceti	thm
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_6	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_6	LeanDag.AdaptivePolicy.W
@@ -38228,6 +38311,7 @@ EDGE	LeanDag.epoch_closes._proof_1_8	LeanDag.BlockUniverse
 EDGE	LeanDag.epoch_closes._proof_1_8	LeanDag.Faults.f
 EDGE	LeanDag.epoch_closes._proof_1_8	LeanDag.AdaptivePolicy
 EDGE	LeanDag.epoch_closes._proof_1_8	LeanDag.Slots
+EDGE	LeanDag.epoch_closes._proof_1_8	LeanDag.View
 EDGE	LeanDag.epoch_closes._proof_1_8	LeanDag.AdaptivePolicy.inj
 NODE	LeanDagTest.ugrowTimingPace._proof_26	LeanDagTest.Growth	thm
 EDGE	LeanDagTest.ugrowTimingPace._proof_26	LeanDagTest.ugrowTimingPace._proof_17
@@ -38627,6 +38711,7 @@ EDGE	LeanDag.AdaptivePolicy.pick	LeanDag.Faults
 EDGE	LeanDag.AdaptivePolicy.pick	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.pick	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy.pick	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.pick	LeanDag.View
 NODE	LeanDagTest.run7small._proof_4	LeanDagTest.Adaptive	thm
 EDGE	LeanDagTest.run7small._proof_4	LeanDagTest.u7_round_le
 EDGE	LeanDagTest.run7small._proof_4	LeanDag.decidableDirectSkipIn
@@ -40254,7 +40339,6 @@ NODE	LeanDag.Odontoceti.epoch_closes	LeanDag.Adaptive.Odontoceti	thm
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.epochOf_lt_iff
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.AdaptivePolicy.W
-EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.View.full
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Slots.slotRound
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.AdaptivePolicy.W_pos
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.epoch_closes._proof_1_6
@@ -40262,7 +40346,9 @@ EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.epoch_closes._proof_1_4
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.AdaptivePolicy.pick
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.slotsOf_leader
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.epoch_closes._proof_1_7
+EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.directCommitIn_of_coversUpto
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.slotsOf
+EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.View.CoversUpto.mono
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Slots.leader
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.epoch_closes._proof_1_8
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Correct
@@ -40276,11 +40362,11 @@ EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.PopulatedOn
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Faults.f
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.decidedWithin_below_of_committed_run
-EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.directCommitIn_full
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.DecidedWithin.mono
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.IsLeaderBlock
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.PlacesRuns
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.DecidedWithin.directCommit
+EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.View.CoversUpto
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.epoch_closes._proof_1_9
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.SpansEligible
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.AdaptivePolicy
@@ -40289,6 +40375,7 @@ EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.epoch_closes._proof_1_11
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.DirectCommit
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Slots.mono
+EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.View
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Faults5.toFaults
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.DecidedWithin
 EDGE	LeanDag.Odontoceti.epoch_closes	LeanDag.Odontoceti.epoch_closes._proof_1_2
@@ -42105,6 +42192,7 @@ EDGE	LeanDag.AdaptivePolicy.adapted	LeanDag.epochOf
 EDGE	LeanDag.AdaptivePolicy.adapted	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.adapted	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy.adapted	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.adapted	LeanDag.View
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.ChkWitness.recorded	LeanDag.Hybrid.Checkpoint.BaseSpec	thm
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.ChkWitness.recorded	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.ChkWitness.recorded	LeanDag.Hybrid.Checkpoint.CheckpointData
@@ -42171,6 +42259,7 @@ EDGE	LeanDag.AdaptivePolicy.rec	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.rec	LeanDag.AdaptivePolicy.mk
 EDGE	LeanDag.AdaptivePolicy.rec	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy.rec	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.rec	LeanDag.View
 NODE	LeanDag.MahiMahi.mem_candidatesAt	LeanDag.MahiMahi.Helpers.Rules	thm
 EDGE	LeanDag.MahiMahi.mem_candidatesAt	LeanDag.MahiMahi.mem_candidatesAt._simp_1_3
 EDGE	LeanDag.MahiMahi.mem_candidatesAt	LeanDag.Faults
@@ -43186,6 +43275,7 @@ EDGE	LeanDag.PlacesRuns	LeanDag.AdaptivePolicy.pick
 EDGE	LeanDag.PlacesRuns	LeanDag.BlockUniverse
 EDGE	LeanDag.PlacesRuns	LeanDag.AdaptivePolicy
 EDGE	LeanDag.PlacesRuns	LeanDag.Slots
+EDGE	LeanDag.PlacesRuns	LeanDag.View
 NODE	LeanDagTest.gst_is_forced_pace	LeanDagTest.Unbounded	thm
 EDGE	LeanDagTest.gst_is_forced_pace	LeanDag.ViewPace.toPaceCore
 EDGE	LeanDagTest.gst_is_forced_pace	LeanDag.DriftOn
@@ -43372,7 +43462,6 @@ EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.epochOf_lt_iff
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Odontoceti.exists_partialRun._proof_1_6
-EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.View.full
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Slots.slotRound
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.AdaptivePolicy.W_pos
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Odontoceti.exists_partialRun._proof_1_2
@@ -43396,6 +43485,7 @@ EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Odontoceti.epoch_closes
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.PlacesRuns
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Odontoceti.exists_partialRun._proof_1_7
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Odontoceti.exists_partialRun._proof_1_4
+EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.View.CoversUpto
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Odontoceti.SpansEligible
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.AdaptivePolicy
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.SynchronisedOn
@@ -43403,6 +43493,7 @@ EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Odontoceti.PartialRun.mk
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Odontoceti.exists_partialRun._proof_1_5
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Slots.mono
+EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.View
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Faults5.toFaults
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.AdaptivePolicy.adapted
 EDGE	LeanDag.Odontoceti.exists_partialRun	LeanDag.Odontoceti.DecidedWithin
@@ -43696,6 +43787,7 @@ EDGE	LeanDag.AdaptivePolicy.const._proof_2	LeanDag.Slots.leader
 EDGE	LeanDag.AdaptivePolicy.const._proof_2	LeanDag.epochOf
 EDGE	LeanDag.AdaptivePolicy.const._proof_2	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.const._proof_2	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.const._proof_2	LeanDag.View
 NODE	LeanDagTest.Barnacle.run2._proof_3	LeanDagTest.Barnacle.Agreement	thm
 NODE	LeanDagTest.ugapPace._simp_7	LeanDagTest.Unbounded	thm
 NODE	LeanDag.BlackMarlin.Pace.gst_le_built._proof_1_1	LeanDag.BlackMarlin.Helpers.Agreement	thm
@@ -43959,6 +44051,7 @@ EDGE	LeanDag.AdaptivePolicy.const_pick	LeanDag.AdaptivePolicy.pick
 EDGE	LeanDag.AdaptivePolicy.const_pick	LeanDag.Slots.leader
 EDGE	LeanDag.AdaptivePolicy.const_pick	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.const_pick	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.const_pick	LeanDag.View
 NODE	LeanDag.FinWhale.Dag.mk.noConfusion	LeanDag.FinWhale.Model.Rule	def
 EDGE	LeanDag.FinWhale.Dag.mk.noConfusion	LeanDag.Block
 EDGE	LeanDag.FinWhale.Dag.mk.noConfusion	LeanDag.Faults
@@ -46671,6 +46764,7 @@ EDGE	LeanDag.AdaptivePolicy.mk._flat_ctor	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.mk._flat_ctor	LeanDag.AdaptivePolicy.mk
 EDGE	LeanDag.AdaptivePolicy.mk._flat_ctor	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy.mk._flat_ctor	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.mk._flat_ctor	LeanDag.View
 NODE	LeanDag.Barnacle.rangeLedger_nodup	LeanDag.Barnacle.Helpers.Ledger	thm
 EDGE	LeanDag.Barnacle.rangeLedger_nodup	LeanDag.Barnacle.Params.maxLeaders
 EDGE	LeanDag.Barnacle.rangeLedger_nodup	LeanDag.Barnacle.PartialRun.rangeLedger
@@ -48105,6 +48199,7 @@ EDGE	LeanDag.AdaptivePolicy.recOn	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.recOn	LeanDag.AdaptivePolicy.mk
 EDGE	LeanDag.AdaptivePolicy.recOn	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy.recOn	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.recOn	LeanDag.View
 NODE	LeanDag.Hybrid.DirectSkipIn	LeanDag.Hybrid.Decision	def
 EDGE	LeanDag.Hybrid.DirectSkipIn	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.DirectSkipIn	LeanDag.HybridFaults.toFaults
@@ -48779,6 +48874,7 @@ EDGE	LeanDag.AdaptivePolicy.const	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.const	LeanDag.AdaptivePolicy.mk
 EDGE	LeanDag.AdaptivePolicy.const	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy.const	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.const	LeanDag.View
 NODE	LeanDag.MahiMahi.instDecidableCertifies._aux_1	LeanDag.MahiMahi.Model.Rules	def
 EDGE	LeanDag.MahiMahi.instDecidableCertifies._aux_1	LeanDag.creatorsOf
 EDGE	LeanDag.MahiMahi.instDecidableCertifies._aux_1	LeanDag.Faults
@@ -49251,7 +49347,7 @@ EDGE	LeanDag.FinWhale.Trigger.roundQuorum.sizeOf_spec	LeanDag.FinWhale.Trigger
 NODE	LeanDag.Nemo.ValidWrt	LeanDag.Nemo.Basic	ind
 EDGE	LeanDag.Nemo.ValidWrt	LeanDag.Block
 NODE	LeanDag.slotRound_le_of_lt._proof_1_1	LeanDag.Quantitative	thm
-NODE	LeanDag.Odontoceti.supportersIn.eq_1	LeanDag.Barnacle.Helpers.Odontoceti	thm
+NODE	LeanDag.Odontoceti.supportersIn.eq_1	LeanDag.Odontoceti.Liveness	thm
 EDGE	LeanDag.Odontoceti.supportersIn.eq_1	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.supportersIn.eq_1	LeanDag.creatorsOf
 EDGE	LeanDag.Odontoceti.supportersIn.eq_1	LeanDag.Block.refs
@@ -49319,6 +49415,7 @@ EDGE	LeanDag.epoch_closes._proof_1_9	LeanDag.BlockUniverse
 EDGE	LeanDag.epoch_closes._proof_1_9	LeanDag.Faults.f
 EDGE	LeanDag.epoch_closes._proof_1_9	LeanDag.AdaptivePolicy
 EDGE	LeanDag.epoch_closes._proof_1_9	LeanDag.Slots
+EDGE	LeanDag.epoch_closes._proof_1_9	LeanDag.View
 EDGE	LeanDag.epoch_closes._proof_1_9	LeanDag.AdaptivePolicy.inj
 NODE	LeanDag.FinWhale.Run.liveHorizon	LeanDag.FinWhale.Model.Protocol	def
 EDGE	LeanDag.FinWhale.Run.liveHorizon	LeanDag.Faults
@@ -49466,6 +49563,7 @@ EDGE	LeanDag.Integration.HorizonStable	LeanDag.chop
 EDGE	LeanDag.Integration.HorizonStable	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.HorizonStable	LeanDag.AdaptivePolicy
 EDGE	LeanDag.Integration.HorizonStable	LeanDag.Slots
+EDGE	LeanDag.Integration.HorizonStable	LeanDag.View
 NODE	LeanDag.populated_chop._proof_1_1	LeanDag.GC.Window	thm
 NODE	LeanDag.MahiMahi.votingRound_three	LeanDag.MahiMahi.Helpers.Rules	thm
 EDGE	LeanDag.MahiMahi.votingRound_three	LeanDag.MahiMahi.votingRound_three._proof_1_1
@@ -50131,6 +50229,7 @@ EDGE	LeanDagTest.demotePolicy	LeanDag.AdaptivePolicy.mk
 EDGE	LeanDagTest.demotePolicy	LeanDagTest.demotePolicy._proof_3
 EDGE	LeanDagTest.demotePolicy	LeanDagTest.demotePolicy._proof_1
 EDGE	LeanDagTest.demotePolicy	LeanDag.AdaptivePolicy
+EDGE	LeanDagTest.demotePolicy	LeanDag.View
 NODE	LeanDag.MahiMahi.Votes.mem_history	LeanDag.MahiMahi.Helpers.Rules	thm
 EDGE	LeanDag.MahiMahi.Votes.mem_history	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.Votes.mem_history	LeanDag.BlockUniverse.ids
@@ -51422,7 +51521,6 @@ EDGE	LeanDag.adaptiveRun_exists	LeanDag.epochOf_lt_iff
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.AdaptiveRun
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.Faults
-EDGE	LeanDag.adaptiveRun_exists	LeanDag.View.full
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.Slots.slotRound
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.AdaptivePolicy.W_pos
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.Populated
@@ -51442,10 +51540,12 @@ EDGE	LeanDag.adaptiveRun_exists	LeanDag.BlockUniverse
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.Faults.f
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.PartialRun.vdct
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.PlacesRuns
+EDGE	LeanDag.adaptiveRun_exists	LeanDag.View.CoversUpto
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.decidedWithin_congr
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.AdaptivePolicy
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.SynchronisedOn
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.Slots
+EDGE	LeanDag.adaptiveRun_exists	LeanDag.View
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.partialRun_agree
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.AdaptivePolicy.adapted
 EDGE	LeanDag.adaptiveRun_exists	LeanDag.AdaptiveRun.mk
@@ -51473,7 +51573,6 @@ EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.Odontoceti.PartialRun.assign
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.epochOf_lt_iff
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.AdaptivePolicy.W
-EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.View.full
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.Slots.slotRound
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.AdaptivePolicy.W_pos
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.Populated
@@ -51496,11 +51595,13 @@ EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.Odontoceti.exists_partialRun
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.Odontoceti.PartialRun.coherent
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.Odontoceti.partialRun_agree
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.PlacesRuns
+EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.View.CoversUpto
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.Odontoceti.SpansEligible
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.AdaptivePolicy
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.SynchronisedOn
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.Odontoceti.AdaptiveRun
+EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.View
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.Faults5.toFaults
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.AdaptivePolicy.adapted
 EDGE	LeanDag.Odontoceti.adaptiveRun_exists	LeanDag.Odontoceti.DecidedWithin
@@ -51724,6 +51825,7 @@ NODE	LeanDagTest.demotePolicy._proof_3	LeanDagTest.Adaptive	thm
 EDGE	LeanDagTest.demotePolicy._proof_3	LeanDag.Slots.leader
 EDGE	LeanDagTest.demotePolicy._proof_3	LeanDag.epochOf
 EDGE	LeanDagTest.demotePolicy._proof_3	LeanDag.BlockUniverse
+EDGE	LeanDagTest.demotePolicy._proof_3	LeanDag.View
 NODE	LeanDag.Barnacle.Aimd.RuleBounds	LeanDag.Barnacle.Aimd.Statement	def
 EDGE	LeanDag.Barnacle.Aimd.RuleBounds	LeanDag.Barnacle.Params.maxLeaders
 EDGE	LeanDag.Barnacle.Aimd.RuleBounds	LeanDag.Barnacle.BaseRule.Universe
@@ -52002,6 +52104,7 @@ EDGE	LeanDagTest.demote_placesRuns	LeanDag.AdaptivePolicy.pick
 EDGE	LeanDagTest.demote_placesRuns	LeanDag.BlockUniverse
 EDGE	LeanDagTest.demote_placesRuns	LeanDagTest.demotePolicy
 EDGE	LeanDagTest.demote_placesRuns	LeanDag.PlacesRuns
+EDGE	LeanDagTest.demote_placesRuns	LeanDag.View
 NODE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds._proof_1_5	LeanDag.BlackMarlin.Helpers.Reactive	thm
 EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds._proof_1_5	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds._proof_1_5	LeanDag.BlockUniverse.block
@@ -54522,6 +54625,7 @@ EDGE	LeanDag.AdaptivePolicy.const._proof_1	LeanDag.Slots.leader
 EDGE	LeanDag.AdaptivePolicy.const._proof_1	LeanDag.epochOf
 EDGE	LeanDag.AdaptivePolicy.const._proof_1	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.const._proof_1	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.const._proof_1	LeanDag.View
 NODE	LeanDag.Barnacle.Nemo.Descent	LeanDag.Barnacle.Nemo.Statement	def
 EDGE	LeanDag.Barnacle.Nemo.Descent	LeanDag.Nemo.majority
 EDGE	LeanDag.Barnacle.Nemo.Descent	LeanDag.Barnacle.nemoLive
@@ -54814,7 +54918,6 @@ EDGE	LeanDag.epoch_closes	LeanDag.epochOf_lt_iff
 EDGE	LeanDag.epoch_closes	LeanDag.AdaptivePolicy.W
 EDGE	LeanDag.epoch_closes	LeanDag.directCommit_of_leader_mem
 EDGE	LeanDag.epoch_closes	LeanDag.Faults
-EDGE	LeanDag.epoch_closes	LeanDag.View.full
 EDGE	LeanDag.epoch_closes	LeanDag.Slots.slotRound
 EDGE	LeanDag.epoch_closes	LeanDag.AdaptivePolicy.W_pos
 EDGE	LeanDag.epoch_closes	LeanDag.epoch_closes._proof_1_12
@@ -54824,13 +54927,14 @@ EDGE	LeanDag.epoch_closes	LeanDag.AdaptivePolicy.pick
 EDGE	LeanDag.epoch_closes	LeanDag.slotsOf_leader
 EDGE	LeanDag.epoch_closes	LeanDag.epoch_closes._proof_1_5
 EDGE	LeanDag.epoch_closes	LeanDag.slotsOf
+EDGE	LeanDag.epoch_closes	LeanDag.View.CoversUpto.mono
 EDGE	LeanDag.epoch_closes	LeanDag.epoch_closes._proof_1_3
 EDGE	LeanDag.epoch_closes	LeanDag.Slots.leader
+EDGE	LeanDag.epoch_closes	LeanDag.directCommitIn_of_coversUpto
 EDGE	LeanDag.epoch_closes	LeanDag.Correct
 EDGE	LeanDag.epoch_closes	LeanDag.DecidedWithin.mono
 EDGE	LeanDag.epoch_closes	LeanDag.epoch_closes._proof_1_1
 EDGE	LeanDag.epoch_closes	LeanDag.epoch_closes._proof_1_13
-EDGE	LeanDag.epoch_closes	LeanDag.directCommitIn_full
 EDGE	LeanDag.epoch_closes	LeanDag.epoch_closes._proof_1_7
 EDGE	LeanDag.epoch_closes	LeanDag.epochOf
 EDGE	LeanDag.epoch_closes	LeanDag.PopulatedOn
@@ -54845,12 +54949,14 @@ EDGE	LeanDag.epoch_closes	LeanDag.decidedWithin_below_of_committed_run
 EDGE	LeanDag.epoch_closes	LeanDag.IsLeaderBlock
 EDGE	LeanDag.epoch_closes	LeanDag.epoch_closes._proof_1_9
 EDGE	LeanDag.epoch_closes	LeanDag.PlacesRuns
+EDGE	LeanDag.epoch_closes	LeanDag.View.CoversUpto
 EDGE	LeanDag.epoch_closes	LeanDag.AdaptivePolicy
 EDGE	LeanDag.epoch_closes	LeanDag.spansEligible_slotsOf
 EDGE	LeanDag.epoch_closes	LeanDag.SynchronisedOn
 EDGE	LeanDag.epoch_closes	LeanDag.epoch_closes._proof_1_11
 EDGE	LeanDag.epoch_closes	LeanDag.Slots
 EDGE	LeanDag.epoch_closes	LeanDag.Slots.mono
+EDGE	LeanDag.epoch_closes	LeanDag.View
 EDGE	LeanDag.epoch_closes	LeanDag.SpansEligible
 EDGE	LeanDag.epoch_closes	LeanDag.AdaptivePolicy.inj
 NODE	LeanDagTest.ugrowCatchPace._proof_3	LeanDagTest.Catchup	thm
@@ -55220,6 +55326,7 @@ EDGE	LeanDag.AdaptivePolicy.casesOn	LeanDag.BlockUniverse
 EDGE	LeanDag.AdaptivePolicy.casesOn	LeanDag.AdaptivePolicy.mk
 EDGE	LeanDag.AdaptivePolicy.casesOn	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy.casesOn	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.casesOn	LeanDag.View
 NODE	LeanDag.Integration.fairScheduleOn_chop._proof_1_1	LeanDag.Integration.ScheduleShape	thm
 EDGE	LeanDag.Integration.fairScheduleOn_chop._proof_1_1	LeanDag.Slots.slotRound
 EDGE	LeanDag.Integration.fairScheduleOn_chop._proof_1_1	LeanDag.Slots
@@ -56099,6 +56206,7 @@ EDGE	LeanDag.AdaptivePolicy.mk.inj	LeanDag.AdaptivePolicy.mk.noConfusion
 EDGE	LeanDag.AdaptivePolicy.mk.inj	LeanDag.AdaptivePolicy.mk
 EDGE	LeanDag.AdaptivePolicy.mk.inj	LeanDag.AdaptivePolicy
 EDGE	LeanDag.AdaptivePolicy.mk.inj	LeanDag.Slots
+EDGE	LeanDag.AdaptivePolicy.mk.inj	LeanDag.View
 NODE	LeanDagTest.Barnacle.bnLive_liveOn._proof_1_1	LeanDagTest.Barnacle.Progress	thm
 EDGE	LeanDagTest.Barnacle.bnLive_liveOn._proof_1_1	LeanDagTest.Barnacle.bnLive
 EDGE	LeanDagTest.Barnacle.bnLive_liveOn._proof_1_1	LeanDag.Barnacle.BaseRule.waveLength

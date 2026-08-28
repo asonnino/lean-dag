@@ -53,8 +53,9 @@ structure PartialRun (P : AdaptivePolicy Validator BlockId Payload)
   closed : ∀ k, epochOf P.W k < E →
     DecidedWithin (S := slotsOf P.inj assign) U V
       (P.W * (epochOf P.W k + 2)) k (vdct k)
-  /-- The assignment is the policy's, as far as the derivations read it. -/
-  coherent : ∀ m, epochOf P.W m < E + 1 → assign m = P.pick U vdct m
+  /-- The assignment is the policy's, computed on this view, as far as
+  the derivations read it. -/
+  coherent : ∀ m, epochOf P.W m < E + 1 → assign m = P.pick U V vdct m
 
 /-- A total run: the adaptive fixpoint itself. -/
 structure AdaptiveRun (P : AdaptivePolicy Validator BlockId Payload)
@@ -67,8 +68,8 @@ structure AdaptiveRun (P : AdaptivePolicy Validator BlockId Payload)
   /-- Every slot is decided inside its epoch window. -/
   closed : ∀ k, DecidedWithin (S := slotsOf P.inj assign) U V
     (P.W * (epochOf P.W k + 2)) k (vdct k)
-  /-- The assignment is the policy's, everywhere. -/
-  coherent : ∀ m, assign m = P.pick U vdct m
+  /-- The assignment is the policy's, computed on this view, everywhere. -/
+  coherent : ∀ m, assign m = P.pick U V vdct m
 
 /-- A total run is partial at every height. -/
 def AdaptiveRun.toPartial {P : AdaptivePolicy Validator BlockId Payload}
@@ -80,8 +81,9 @@ def AdaptiveRun.toPartial {P : AdaptivePolicy Validator BlockId Payload}
   coherent := fun m _ => R.coherent m
 
 /-- **The master agreement lemma.** Two partial runs over one universe —
-whatever views, whatever heights — agree on the verdicts of their common
-epochs and on the assignments those verdicts determine.
+whatever views, each computing its schedule on its own, whatever heights
+— agree on the verdicts of their common epochs and on the assignments
+those verdicts determine.
 
 The strong induction the module docstring describes: verdict agreement
 below an epoch forces assignment agreement through the epoch above it
@@ -106,7 +108,7 @@ theorem partialRun_agree {P : AdaptivePolicy Validator BlockId Payload}
       have hme : epochOf P.W m < epochOf P.W k + 2 :=
         (epochOf_lt_iff P.W_pos).mpr hm
       rw [R₁.coherent m (by omega), R₂.coherent m (by omega)]
-      refine P.adapted U R₁.vdct R₂.vdct m (fun j hj => ?_)
+      refine P.adapted U V₁ V₂ R₁.vdct R₂.vdct m (fun j hj => ?_)
       exact ih (epochOf P.W j) (by omega) j rfl (by omega)
     -- Both derivations live in one instance; agreement is M6.
     have h₁ := R₁.closed k (by omega)
@@ -121,7 +123,7 @@ theorem partialRun_assign_agree {P : AdaptivePolicy Validator BlockId Payload}
     ∀ m, epochOf P.W m < min E₁ E₂ + 1 → R₁.assign m = R₂.assign m := by
   intro m hm
   rw [R₁.coherent m (by omega), R₂.coherent m (by omega)]
-  refine P.adapted U R₁.vdct R₂.vdct m (fun j hj => ?_)
+  refine P.adapted U V₁ V₂ R₁.vdct R₂.vdct m (fun j hj => ?_)
   exact partialRun_agree R₁ R₂ j (by omega)
 
 /-- **Safety: the adaptive fixpoint is unique.** Two total runs over one

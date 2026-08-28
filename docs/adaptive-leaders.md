@@ -107,22 +107,28 @@ clauses it owes:
 ```lean
 structure Policy (Validator : Type*) [Slots Validator] where
   W : ℕ                       -- epoch length
-  pick : BlockUniverse Validator BlockId Payload →
-    (ℕ → Option BlockId) → ℕ → Validator
-  adapted : ∀ U v w k, (∀ j, epochOf W j + 2 ≤ epochOf W k → v j = w j) →
-    pick U v k = pick U w k
+  pick : (U : BlockUniverse Validator BlockId Payload) →
+    View Validator BlockId Payload U → (ℕ → Option BlockId) → ℕ → Validator
+  adapted : ∀ U (V₁ V₂ : View Validator BlockId Payload U) v w k,
+    (∀ j, epochOf W j + 2 ≤ epochOf W k → v j = w j) →
+    pick U V₁ v k = pick U V₂ w k
   keyed : …                   -- per-round leader distinctness, every output
-  base_prefix : ∀ U v k, epochOf W k < 2 → pick U v k = Slots.leader k
+  base_prefix : ∀ U V v k, epochOf W k < 2 → pick U V v k = Slots.leader k
 ```
 
 `adapted` is the measurability clause and the heart of the safety
 argument: the leader of slot `k` is a function of the verdicts of
-epochs `≤ epochOf k − 2` and of nothing else. `pick` also receives the
-universe, so reputation may consult the committed blocks themselves —
-certification patterns, timestamps in payloads — not merely the verdict
-vector; in this model the universe is the shared ground truth, so no
-agreement question arises from that argument. (What a *deployed*
-validator may consult is its committed prefix only; as with the
+epochs `≤ epochOf k − 2` and of nothing else — the view included.
+`pick` receives the universe and the validator's own view of it, so
+reputation may consult the committed blocks themselves — certification
+patterns, timestamps in payloads — not merely the verdict vector. The
+view is what a validator actually has; a rule reading it freely could
+hand two correct validators different leaders, and `adapted` is what
+rules that out. It is no restriction in practice: the committed prefix
+is what every view holding those verdicts holds whole, by causal
+completeness, and a rule computing from its own copy of it satisfies
+the clause. (What a *deployed* validator may consult is its committed
+prefix only; as with the
 enforceability discussion of report §4, the model states the
 mathematical condition and the implementation owes the discipline.)
 
@@ -149,7 +155,7 @@ structure AdaptiveRun (P : Policy Validator)
   vdct : ℕ → Option BlockId
   closed : ∀ k, DecidedWithin (S := slotsOf P assign)
     (P.W * (epochOf P.W k + 2)) U V k (vdct k)
-  coherent : ∀ k, assign k = P.pick U vdct k
+  coherent : ∀ k, assign k = P.pick U V vdct k
 ```
 
 Existence and uniqueness are deliberately separated, mirroring the base
@@ -188,7 +194,13 @@ per the house rule that a new relation must instantiate to the old one.
 **AL5 (liveness: the fixpoint exists).** Under the standard interface —
 `SynchronisedOn` and `PopulatedOn`, supplied by view convergence
 unchanged — and the policy's fairness clause, an `AdaptiveRun` exists on
-the full view. The fairness clause is the adaptive counterpart of
+any view caught up to the horizon (`View.CoversUpto`: the view holds
+every block at a round up to `N`). The full view is caught up to every
+horizon, so the whole-universe reading is the special case; under
+eventual DAG synchrony (`liveness.md` §4.2) every correct validator's
+view is caught up once delivery has reached the horizon, which is what
+makes the statement one about validators rather than about what exists.
+The fairness clause is the adaptive counterpart of
 `FairRunOn`: every assignment the policy emits contains, in each epoch,
 `c` consecutive `T`-led slots positioned so that their span anchors the
 whole epoch below (`SpansEligible c` at the run's top). Construction by

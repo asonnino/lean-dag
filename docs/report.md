@@ -4145,23 +4145,27 @@ structure AdaptivePolicy (Validator : Type*) [Fintype Validator]
     [DecidableEq BlockId] (Payload : Type*) [S : Slots Validator] where
   W : ℕ
   …
-  pick : BlockUniverse Validator BlockId Payload →
-    (ℕ → Option BlockId) → ℕ → Validator
-  adapted : ∀ U v w k,
+  pick : (U : BlockUniverse Validator BlockId Payload) →
+    View Validator BlockId Payload U → (ℕ → Option BlockId) → ℕ → Validator
+  adapted : ∀ U (V₁ V₂ : View Validator BlockId Payload U) v w k,
     (∀ j, epochOf W j + 2 ≤ epochOf W k → v j = w j) →
-    pick U v k = pick U w k
-  base_prefix : ∀ U v k, epochOf W k < 2 → pick U v k = S.leader k
+    pick U V₁ v k = pick U V₂ w k
+  base_prefix : ∀ U V v k, epochOf W k < 2 → pick U V v k = S.leader k
 ```
 
 `adapted` is the measurability clause and the heart of the safety
 argument: the leader of slot `k` is a function of the verdicts of
-epochs `≤ epochOf k − 2` and of nothing else. `pick` receives the
-universe so that a reputation rule may consult the committed blocks
-themselves — certification patterns, payload contents — and not merely
-the verdict vector; in this model the universe is the shared ground
-truth, so no agreement question arises from that argument. What a
-*deployed* validator may consult is its committed prefix only: as with
-the enforceability discussion of §4.7, the model states the
+epochs `≤ epochOf k − 2` and of nothing else — the view included.
+`pick` receives the universe and the validator's own view of it, so
+that a reputation rule may consult the committed blocks themselves —
+certification patterns, payload contents — and not merely the verdict
+vector. The view is what a validator actually has, and a rule reading
+it freely could hand two correct validators different leaders;
+`adapted` rules that out, and is no restriction in practice, since
+the committed prefix is what every view holding those verdicts holds
+whole.
+What a *deployed* validator may consult is its committed prefix only:
+as with the enforceability discussion of §4.7, the model states the
 mathematical condition and the implementation owes the discipline.
 Fairness is deliberately absent from the structure — safety must hold
 for policies that violate it.
@@ -4178,7 +4182,7 @@ structure AdaptiveRun (P : AdaptivePolicy Validator BlockId Payload)
   vdct : ℕ → Option BlockId
   closed : ∀ k, DecidedWithin (S := slotsOf P.inj assign) U V
     (P.W * (epochOf P.W k + 2)) k (vdct k)
-  coherent : ∀ m, assign m = P.pick U vdct m
+  coherent : ∀ m, assign m = P.pick U V vdct m
 ```
 
 Existence and uniqueness are deliberately separated, mirroring the
@@ -4222,9 +4226,10 @@ leader — plus the one clause that prices the policy:
 ```lean
 def PlacesRuns (P : AdaptivePolicy Validator BlockId Payload)
     (T : Finset Validator) (c : ℕ) : Prop :=
-  ∀ (U : BlockUniverse Validator BlockId Payload) (v : ℕ → Option BlockId)
-    (e : ℕ), ∃ b, P.W * (e + 1) ≤ b ∧ b + c ≤ P.W * (e + 2) ∧
-      ∀ i, i < c → P.pick U v (b + i) ∈ T
+  ∀ (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
+    (v : ℕ → Option BlockId) (e : ℕ),
+    ∃ b, P.W * (e + 1) ≤ b ∧ b + c ≤ P.W * (e + 2) ∧
+      ∀ i, i < c → P.pick U V v (b + i) ∈ T
 ```
 
 Every assignment the policy can emit places, in each epoch past the
@@ -4242,13 +4247,21 @@ theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r, Populated U r) :
-    Nonempty (AdaptiveRun P U (View.full U))
+    (hpop : ∀ r, Populated U r)
+    (V : View Validator BlockId Payload U) (hcov : ∀ N, V.CoversUpto N) :
+    Nonempty (AdaptiveRun P U V)
 ```
 
-The construction instantiates the base machinery once per epoch and
-counts nothing anew: the run `PlacesRuns` puts in epoch `e + 1` commits
-directly (L4 at the induced instance), the committed-run descent —
+The statement is on a validator's own view, caught up to the horizon —
+`View.CoversUpto U V N`: `V` holds every block of `U` at a round up to
+`N` — which the full view is at every `N` (`View.coversUpto_full`), so
+the whole-universe reading is the special case; under eventual DAG
+synchrony (§2) every correct validator's view is caught up once
+delivery has reached the horizon. The construction instantiates the
+base machinery once per epoch and counts nothing anew: the run
+`PlacesRuns` puts in epoch `e + 1` commits directly (L4 at the induced
+instance, its certificates under the horizon and so in the view), the
+committed-run descent —
 restated with the anchors' bound carried through, the base proof
 already anchoring at or below the run's top — clears the epoch below
 it, and `exists_partialRun` stacks epochs under a finite horizon,
@@ -4256,8 +4269,9 @@ re-reading the schedule off the verdicts so far at each stage. Partial
 runs at every height then glue into a total run along the diagonal,
 with `partialRun_agree` supplying the coherence that the
 stage-by-stage choices need not. A total run decides every slot there
-is, which is why its growth hypothesis is `∀ r, Populated U r`; the
-finite-horizon statement is `exists_partialRun`, and it is the
+is, which is why its growth hypothesis is `∀ r, Populated U r` and its
+view is caught up to every horizon; the finite-horizon statement is
+`exists_partialRun`, on a view caught up to `N`, and it is the
 witnessable form.
 
 Hammerhead [Tsi+23] — the reputation-based schedule deployed in Sui
@@ -4905,10 +4919,11 @@ whether a joiner can *produce* that shifted assignment, which is
 
 ```lean
 def HorizonStable (P : AdaptivePolicy Validator BlockId Payload) (d G : ℕ)
-    (pick' : BlockUniverse Validator BlockId Payload →
-      (ℕ → Option BlockId) → ℕ → Validator) : Prop :=
-  ∀ (U : BlockUniverse Validator BlockId Payload) (v : ℕ → Option BlockId)
-    (k : ℕ), pick' (chop U G) (fun m => v (d + m)) k = P.pick U v (d + k)
+    (pick' : (U' : BlockUniverse Validator BlockId Payload) →
+      View Validator BlockId Payload U' → (ℕ → Option BlockId) → ℕ → Validator) : Prop :=
+  ∀ (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
+    (V' : View Validator BlockId Payload (chop U G)) (v : ℕ → Option BlockId)
+    (k : ℕ), pick' (chop U G) V' (fun m => v (d + m)) k = P.pick U V v (d + k)
 ```
 
 Under it a joiner computes exactly the leaders the network is using
@@ -10226,6 +10241,17 @@ def View.full (U : BlockUniverse Validator BlockId Payload) :
 
 Every correct validator's *eventual* view. Downward-closed by `U.complete`.
 
+#### `View.CoversUpto`
+
+*def, `Liveness.lean`*
+
+```lean
+def View.CoversUpto (V : View Validator BlockId Payload U) (N : ℕ) : Prop :=
+  ∀ b ∈ U.ids, (U.block b).round ≤ N → b ∈ V.ids
+```
+
+**A view caught up to round `N`**: it holds every block of the universe at a round at or below `N`. What a validator that has received everything up to `N` holds — under eventual DAG synchrony (`liveness.md` §4.2) every correct validator's view, once delivery has caught up that far — and the hypothesis under which a liveness result holds of a validator's own view rather than of the full view. The full view satisfies it at every `N`.
+
 #### `VotesAt`
 
 *def, `Liveness.lean`*
@@ -11997,10 +12023,11 @@ noncomputable def denote [DecidableEq BlockId] : BlockUniverse Validator BlockId
 
 ```lean
 def HorizonStable (P : AdaptivePolicy Validator BlockId Payload) (d G : ℕ)
-    (pick' : BlockUniverse Validator BlockId Payload →
-      (ℕ → Option BlockId) → ℕ → Validator) : Prop :=
-  ∀ (U : BlockUniverse Validator BlockId Payload) (v : ℕ → Option BlockId)
-    (k : ℕ), pick' (chop U G) (fun m => v (d + m)) k = P.pick U v (d + k)
+    (pick' : (U' : BlockUniverse Validator BlockId Payload) →
+      View Validator BlockId Payload U' → (ℕ → Option BlockId) → ℕ → Validator) : Prop :=
+  ∀ (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
+    (V' : View Validator BlockId Payload (chop U G)) (v : ℕ → Option BlockId)
+    (k : ℕ), pick' (chop U G) V' (fun m => v (d + m)) k = P.pick U V v (d + k)
 ```
 
 **Horizon-stability.** The joiner's rule, run on the truncation with the joiner's own slot indices, returns what the network's policy returns on the full history at the corresponding slot.
@@ -12649,17 +12676,17 @@ structure AdaptivePolicy (Validator : Type*) [Fintype Validator]
   W_pos : 0 < W
   /-- One leader per round, for the whole arc. -/
   inj : Function.Injective S.slotRound
-  /-- The reassignment rule: from the universe and a verdict function,
-  the leader of each slot. -/
-  pick : BlockUniverse Validator BlockId Payload →
-    (ℕ → Option BlockId) → ℕ → Validator
+  /-- The reassignment rule: from the universe, the validator's view of
+  it and a verdict function, the leader of each slot. -/
+  pick : (U : BlockUniverse Validator BlockId Payload) →
+    View Validator BlockId Payload U → (ℕ → Option BlockId) → ℕ → Validator
   /-- **Adaptedness.** The leader of slot `k` reads the verdicts of
-  epochs `≤ epochOf k − 2` and nothing else. -/
-  adapted : ∀ U v w k,
+  epochs `≤ epochOf k − 2` and nothing else — not the view either. -/
+  adapted : ∀ U (V₁ V₂ : View Validator BlockId Payload U) v w k,
     (∀ j, epochOf W j + 2 ≤ epochOf W k → v j = w j) →
-    pick U v k = pick U w k
+    pick U V₁ v k = pick U V₂ w k
   /-- Epochs `0` and `1` run the base schedule. -/
-  base_prefix : ∀ U v k, epochOf W k < 2 → pick U v k = S.leader k
+  base_prefix : ∀ U V v k, epochOf W k < 2 → pick U V v k = S.leader k
 ```
 
 A Hammerhead-style reassignment policy: epoch length, the rule, and the clauses it owes. Fairness — the clause liveness will price — is deliberately *not* here: safety must hold for arbitrary, even adversarial, adapted policies, and stating fairness where liveness consumes it keeps that separation visible.
@@ -12674,9 +12701,9 @@ def const (W : ℕ) (hW : 0 < W) (hinj : Function.Injective S.slotRound) :
   W := W
   W_pos := hW
   inj := hinj
-  pick _ _ k := S.leader k
-  adapted _ _ _ _ _ := rfl
-  base_prefix _ _ _ _ := rfl
+  pick _ _ _ k := S.leader k
+  adapted _ _ _ _ _ _ _ := rfl
+  base_prefix _ _ _ _ _ := rfl
 ```
 
 The constant policy: reassign nothing. The conservativity anchor — under it the adaptive development must collapse onto the base one.
@@ -12698,8 +12725,9 @@ structure PartialRun (P : AdaptivePolicy Validator BlockId Payload)
   closed : ∀ k, epochOf P.W k < E →
     DecidedWithin (S := slotsOf P.inj assign) U V
       (P.W * (epochOf P.W k + 2)) k (vdct k)
-  /-- The assignment is the policy's, as far as the derivations read it. -/
-  coherent : ∀ m, epochOf P.W m < E + 1 → assign m = P.pick U vdct m
+  /-- The assignment is the policy's, computed on this view, as far as
+  the derivations read it. -/
+  coherent : ∀ m, epochOf P.W m < E + 1 → assign m = P.pick U V vdct m
 ```
 
 A run closed up to epoch height `E`: verdicts derived for every slot of epochs `< E`, the schedule coherent as far as those derivations read it (epochs `< E + 1`). What a validator holds mid-execution.
@@ -12719,8 +12747,8 @@ structure AdaptiveRun (P : AdaptivePolicy Validator BlockId Payload)
   /-- Every slot is decided inside its epoch window. -/
   closed : ∀ k, DecidedWithin (S := slotsOf P.inj assign) U V
     (P.W * (epochOf P.W k + 2)) k (vdct k)
-  /-- The assignment is the policy's, everywhere. -/
-  coherent : ∀ m, assign m = P.pick U vdct m
+  /-- The assignment is the policy's, computed on this view, everywhere. -/
+  coherent : ∀ m, assign m = P.pick U V vdct m
 ```
 
 A total run: the adaptive fixpoint itself.
@@ -12748,9 +12776,10 @@ A total run is partial at every height.
 ```lean
 def PlacesRuns (P : AdaptivePolicy Validator BlockId Payload)
     (T : Finset Validator) (c : ℕ) : Prop :=
-  ∀ (U : BlockUniverse Validator BlockId Payload) (v : ℕ → Option BlockId)
-    (e : ℕ), ∃ b, P.W * (e + 1) ≤ b ∧ b + c ≤ P.W * (e + 2) ∧
-      ∀ i, i < c → P.pick U v (b + i) ∈ T
+  ∀ (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
+    (v : ℕ → Option BlockId) (e : ℕ),
+    ∃ b, P.W * (e + 1) ≤ b ∧ b + c ≤ P.W * (e + 2) ∧
+      ∀ i, i < c → P.pick U V v (b + i) ∈ T
 ```
 
 **The adaptive fairness clause.** Every assignment the policy can emit places, in each epoch past the base prefix, a run of `c` consecutive `T`-led slots. The clause liveness prices and safety never sees: `adaptiveRun_agree` holds for policies that violate it.
@@ -12806,7 +12835,7 @@ structure PartialRun (P : AdaptivePolicy Validator BlockId Payload)
     DecidedWithin (S := slotsOf P.inj assign) U V
       (P.W * (epochOf P.W k + 2)) k (vdct k)
   /-- The assignment is the policy's, as far as the derivations read it. -/
-  coherent : ∀ m, epochOf P.W m < E + 1 → assign m = P.pick U vdct m
+  coherent : ∀ m, epochOf P.W m < E + 1 → assign m = P.pick U V vdct m
 ```
 
 A run closed up to epoch height `E`, two-round rule.
@@ -12827,7 +12856,7 @@ structure AdaptiveRun (P : AdaptivePolicy Validator BlockId Payload)
   closed : ∀ k, DecidedWithin (S := slotsOf P.inj assign) U V
     (P.W * (epochOf P.W k + 2)) k (vdct k)
   /-- The assignment is the policy's, everywhere. -/
-  coherent : ∀ m, assign m = P.pick U vdct m
+  coherent : ∀ m, assign m = P.pick U V vdct m
 ```
 
 A total run: the adaptive fixpoint, two-round rule.
@@ -18878,7 +18907,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 670 theorems that either another module of the
+The 671 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -20242,6 +20271,17 @@ theorem decided_full {V : View Validator BlockId Payload U} {k : ℕ}
 **L3 — commit propagation.** Whatever any validator decides on any view, the same verdict holds on the full view.
 
 Since the full view is every correct validator's eventual view (`liveness.md` §4.2), this *is* "all correct validators eventually reach the same decision".
+
+#### `View.coversUpto_full`
+
+*theorem, `Liveness.lean`*
+
+```lean
+theorem View.coversUpto_full (U : BlockUniverse Validator BlockId Payload) (N : ℕ) :
+    (View.full U).CoversUpto N
+```
+
+The full view is caught up to every horizon.
 
 #### `votesAt_of_synchronisedOn`
 
@@ -22970,10 +23010,11 @@ theorem spansEligible_chop (S : Slots Validator) (hd : G ≤ S.slotRound d)
 
 ```lean
 theorem joiner_assign_agree {V : View Validator BlockId Payload U}
-    {pick' : BlockUniverse Validator BlockId Payload →
-      (ℕ → Option BlockId) → ℕ → Validator}
-    (hs : HorizonStable P d G pick') (R : AdaptiveRun P U V) (k : ℕ) :
-    pick' (chop U G) (fun m => R.vdct (d + m)) k = R.assign (d + k)
+    {pick' : (U' : BlockUniverse Validator BlockId Payload) →
+      View Validator BlockId Payload U' → (ℕ → Option BlockId) → ℕ → Validator}
+    (hs : HorizonStable P d G pick') (R : AdaptiveRun P U V)
+    (V' : View Validator BlockId Payload (chop U G)) (k : ℕ) :
+    pick' (chop U G) V' (fun m => R.vdct (d + m)) k = R.assign (d + k)
 ```
 
 **I9, the assignment half.** Under a horizon-stable rule a joiner computes exactly the leaders the network is using: its assignment at its own slot `k` is the full-history run's assignment at slot `d + k`.
@@ -23758,7 +23799,7 @@ theorem partialRun_agree {P : AdaptivePolicy Validator BlockId Payload}
     ∀ k, epochOf P.W k < min E₁ E₂ → R₁.vdct k = R₂.vdct k
 ```
 
-**The master agreement lemma.** Two partial runs over one universe — whatever views, whatever heights — agree on the verdicts of their common epochs and on the assignments those verdicts determine.
+**The master agreement lemma.** Two partial runs over one universe — whatever views, each computing its schedule on its own, whatever heights — agree on the verdicts of their common epochs and on the assignments those verdicts determine.
 
 The strong induction the module docstring describes: verdict agreement below an epoch forces assignment agreement through the epoch above it (`adapted`), which forces verdict agreement at the epoch itself (`decidedWithin_congr`, then M6 through the embedding).
 
@@ -23813,14 +23854,16 @@ theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (v : ℕ → Option BlockId) (E : ℕ)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
+    (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N)
+    (v : ℕ → Option BlockId) (E : ℕ)
     (hN : S.slotRound (P.W * (E + 2)) + 2 ≤ N) :
     ∀ k, epochOf P.W k < E + 1 →
-      ∃ w, DecidedWithin (S := slotsOf P.inj (fun m => P.pick U v m)) U
-        (View.full U) (P.W * (E + 2)) k w
+      ∃ w, DecidedWithin (S := slotsOf P.inj (fun m => P.pick U V v m)) U
+        V (P.W * (E + 2)) k w
 ```
 
-**One epoch closes.** Against the schedule an arbitrary verdict function induces, every slot of epoch `E` is decided inside its window: the run `PlacesRuns` puts in epoch `E + 1` commits directly, and the bounded descent clears everything below it.
+**One epoch closes.** On a view caught up to the horizon, against the schedule an arbitrary verdict function induces, every slot of epoch `E` is decided inside its window: the run `PlacesRuns` puts in epoch `E + 1` commits directly — its certificates sit under the horizon, so the view holds them — and the bounded descent clears everything below it.
 
 #### `exists_partialRun`
 
@@ -23832,12 +23875,13 @@ theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (E : ℕ)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
+    (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N) (E : ℕ)
     (hN : S.slotRound (P.W * (E + 1)) + 2 ≤ N) :
-    Nonempty (PartialRun P U (View.full U) E)
+    Nonempty (PartialRun P U V E)
 ```
 
-**Partial runs exist at every height** — the witnessable, finite- horizon form of existence, by induction on the height: each stage re-reads the schedule off the verdicts so far and closes one more epoch.
+**Partial runs exist at every height** — the witnessable, finite- horizon form of existence, on a view caught up to the horizon, by induction on the height: each stage re-reads the schedule off the verdicts so far and closes one more epoch.
 
 #### `adaptiveRun_exists`
 
@@ -23849,11 +23893,12 @@ theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r, Populated U r) :
-    Nonempty (AdaptiveRun P U (View.full U))
+    (hpop : ∀ r, Populated U r)
+    (V : View Validator BlockId Payload U) (hcov : ∀ N, V.CoversUpto N) :
+    Nonempty (AdaptiveRun P U V)
 ```
 
-**AL5: the adaptive fixpoint exists.** On a DAG synchronised over a quorum of reliable validators and populated at every round, under a policy that places runs, a total adaptive run exists on the full view — partial runs at every height glued along the diagonal, `partialRun_agree` making the stage-by-stage choices cohere. With `adaptiveRun_agree` it is THE fixpoint: adaptive Mysticeti decides every slot, and uniquely.
+**AL5: the adaptive fixpoint exists.** On a DAG synchronised over a quorum of reliable validators and populated at every round, under a policy that places runs, a total adaptive run exists on every view caught up to every horizon — the full view, up to naming, since a total run decides every slot there is — partial runs at every height glued along the diagonal, `partialRun_agree` making the stage-by-stage choices cohere. With `adaptiveRun_agree` it is THE fixpoint: adaptive Mysticeti decides every slot, and uniquely.
 
 #### `toDecided`
 
@@ -23915,14 +23960,16 @@ theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible Validator c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (v : ℕ → Option BlockId) (E : ℕ)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
+    (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N)
+    (v : ℕ → Option BlockId) (E : ℕ)
     (hN : S.slotRound (P.W * (E + 2)) + 1 ≤ N) :
     ∀ k, epochOf P.W k < E + 1 →
-      ∃ w, DecidedWithin (S := slotsOf P.inj (fun m => P.pick U v m)) U
-        (View.full U) (P.W * (E + 2)) k w
+      ∃ w, DecidedWithin (S := slotsOf P.inj (fun m => P.pick U V v m)) U
+        V (P.W * (E + 2)) k w
 ```
 
-One epoch closes, two-round rule: O7 commits the placed run — two populated rounds where Mysticeti needs three — and the bounded descent clears the epoch below.
+One epoch closes, two-round rule, on a view caught up to the horizon: O7 commits the placed run — two populated rounds where Mysticeti needs three, its supporters under the horizon so the view holds them — and the bounded descent clears the epoch below.
 
 #### `exists_partialRun`
 
@@ -23934,12 +23981,13 @@ theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible Validator c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (E : ℕ)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
+    (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N) (E : ℕ)
     (hN : S.slotRound (P.W * (E + 1)) + 1 ≤ N) :
-    Nonempty (PartialRun P U (View.full U) E)
+    Nonempty (PartialRun P U V E)
 ```
 
-Partial runs exist at every height, two-round rule.
+Partial runs exist at every height, two-round rule, on a view caught up to the horizon.
 
 #### `adaptiveRun_exists`
 
@@ -23951,11 +23999,12 @@ theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible Validator c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r, Populated U r) :
-    Nonempty (AdaptiveRun P U (View.full U))
+    (hpop : ∀ r, Populated U r)
+    (V : View Validator BlockId Payload U) (hcov : ∀ N, V.CoversUpto N) :
+    Nonempty (AdaptiveRun P U V)
 ```
 
-**AL7: adaptive Odontoceti is safe and live.** The fixpoint exists on the full view — glued along the diagonal exactly as on the three-round side — and by `Odontoceti.adaptiveRun_agree` it is unique.
+**AL7: adaptive Odontoceti is safe and live.** The fixpoint exists on every view caught up to every horizon — glued along the diagonal exactly as on the three-round side — and by `Odontoceti.adaptiveRun_agree` it is unique.
 
 ### Nemo-Nemo: crash-fault consensus in two rounds
 
@@ -27668,7 +27717,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 616 lemmas used only within the file that proves
+The 619 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -27775,7 +27824,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `PopulatedFrom.mono` | Population is antitone: a smaller set is easier to populate. |
 | `SynchronisedFrom.mono` | Coverage is antitone too: mutual coverage among a larger set implies it among any subset. |
 
-### `Liveness.lean` (19)
+### `Liveness.lean` (21)
 
 | Lemma | Role |
 |:---|:---|
@@ -27783,6 +27832,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `FairToEach.fairScheduleOn` | Per-validator fairness is fairness. |
 | `PopulatedOn.mono` | Population is antitone: a smaller set is easier to populate. This is what lets L1 keep concluding about … |
 | `SynchronisedOn.mono` | Coverage is antitone too: mutual coverage among a larger set implies it among any subset. So existing … |
+| `View.CoversUpto.mono` | Caught up to `N` is caught up to every lower horizon. |
 | `all_decided_below_of_fairRun_correct` | L10 at `T := Correct`. |
 | `card_authorsAt_of_populated` | A populated round carries a quorum of authors — the step that feeds a production induction back into its … |
 | `card_authorsAt_of_succ` | One step of L0: a block at round `n+1` forces a quorum of authors at round `n`. |
@@ -27790,6 +27840,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifies_of_synchronisedOn` | A correct round-`(r+2)` block certifies any correct round-`r` block, once round `r+1` is populated and … |
 | `decided_none_of_no_candidate` | L5, in the form the `Decided` constructor wants. |
 | `directCommitIn_mono` | A larger view can only see more certificates. |
+| `directCommitIn_of_coversUpto` | A view caught up to the certificate round sees every certificate, so a direct commit in the universe is a … |
 | `directCommit_of_synchronisedOn` | L4, at the round level. A correct block at round `r` is directly committed, given coverage from `r` and … |
 | `directSkipIn_mono` | A larger view can only see more blame. |
 | `exists_eligible` | Every slot has an eligible anchor somewhere. |
@@ -28089,12 +28140,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `thickLink_of_directCommitIn` | O3, from a view: a view-level direct commit passes the indirect test at every block two rounds up. |
 | `thickLink_of_directCommitIn_at_anchor` | Visibility from an anchor. A slot committed directly carries a thick link at any eligible anchor above it … |
 
-### `Odontoceti/Liveness.lean` (3)
+### `Odontoceti/Liveness.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
 | `all_decided_below_of_fairRun_correct` | O10 at `T := Correct`. |
 | `decided_of_leader_of_populated` | O7 against a horizon, the two-round counterpart of `decided_of_leader_of_populated`: the rule needs the … |
+| `directCommitIn_of_coversUpto` | A view caught up to the decision round sees every supporter, so a direct commit in the universe is a … |
 | `supportersIn_full` | The full view sees every supporter. |
 
 ### `Reactive/Basic.lean` (1)
