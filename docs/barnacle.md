@@ -520,14 +520,14 @@ waveLength`: BN8a iterated, the induction carrying `start K ≤ K ·
 
 Both statements are on any view caught up to the horizon, so a run is
 what a validator holding everything up to `N` reaches, not merely what
-exists in the universe (D6). Two things the covering condition does not
-give. It asks for every block up to `N`, Byzantine-authored ones
-included, where the proofs consume only certificates authored by the
-good set — so the hypothesis is stronger than the argument needs. And
-the statement is structural: the time-indexed form, where a validator
-decides on its own view at an explicit time and the horizon is a
-function of when it looks, needs the pacing structures of report §5 and
-is not attempted.
+exists in the universe (D6). Under eventual DAG synchrony
+(`liveness.md` §4.2: whatever one correct validator holds, all
+eventually hold, whoever authored it) every correct validator's view
+satisfies the covering condition, so the statements cover every correct
+validator. What remains structural is the time: the time-indexed form,
+where a validator decides on its own view at an explicit time and the
+horizon is a function of when it looks, needs the pacing structures of
+report §5 and is not attempted.
 
 ## 8. Liveness, the descent under multiple leaders
 
