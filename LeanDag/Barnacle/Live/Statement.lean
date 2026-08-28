@@ -33,13 +33,15 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 
 /-- **Runs of every height, with no clause left over.** BN8b's
 conclusion: on a DAG good from genesis, every height whose horizon fits
-under `N` is reached. -/
+under `N` is reached — on any view caught up to `N`, which is what a
+validator that has received everything up to the horizon holds. -/
 def RunsExist (R : LiveRule Validator BlockId Payload) (P : Params)
     (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
     (upd : UpdateRule R.toBaseRule) (c : ℕ) : Prop :=
-  ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N → Rnd ≤ 1 →
+  ∀ (U : R.Universe) (V : R.View U) (Rnd N : ℕ), R.Good U Rnd N →
+    R.toBaseRule.CoversUpto U V N → Rnd ≤ 1 →
     ∀ K, horizon P R c K ≤ N →
-      Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K)
+      Nonempty (PartialRun R.toBaseRule P getLeader hk upd U V K)
 
 /-- **BN11a** — Barnacle over Mysticeti, under round-robin, at gap
 `n + 2`. -/

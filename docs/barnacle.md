@@ -774,9 +774,15 @@ below); the Phase 1 sources implement them as written.
   from the slot after the anchor.
 - **D5 — the count.** Over slots, with the block count shown equal
   (recommended), or over blocks as the pseudocode iterates.
-- **D6 — local liveness.** BN8 on the full view, local form deferred
-  (recommended for this arc), or the time-indexed local statement in
-  scope from the start.
+- **D6 — local liveness.** BN8 on the full view, local form deferred, or
+  the time-indexed local statement in scope from the start. **Revisited**:
+  the liveness clause, the descent law and BN8 are now stated over any
+  view *caught up to the horizon* (`CoversUpto U V N`), so a run is what a
+  validator holding everything up to `N` reaches. The full view satisfies
+  the condition at every `N` (`coversUpto_full`), so the earlier reading
+  is the special case and nothing downstream weakened. Still not
+  attempted is the time-indexed form, where the horizon is a function of
+  when the validator looks.
 - **D7 — the initial configuration.** `(0, 1)` as Algorithm 1
   initialises (recommended), or an initial count as a parameter.
 - **D8 — the leader function.** Abstract `getLeader` with the

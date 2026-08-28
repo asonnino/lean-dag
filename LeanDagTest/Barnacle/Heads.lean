@@ -125,8 +125,10 @@ residue, so some slot among them commits — through `MysticetiLive.holds`.
 The conclusion is as weak as an existential `T` allows. -/
 example : ∃ κ, 1 ≤ κ ∧ κ ≤ 4 ∧
     ∃ L, bnRule32.Decided sched1 (View.full Usun) κ (some L) := by
-  obtain ⟨T, hcard, hT⟩ :=
+  obtain ⟨T, hcard, hT0⟩ :=
     (MysticetiLive.holds.1 (Fin 4) (Fin 32) Unit).goodLeaders Usun 1 7 usun_good
+  have hT := fun S κ => hT0 S (View.full Usun) κ
+    (coversUpto_full (Mysticeti.holds (Fin 4) (Fin 32) Unit) Usun 7)
   have h3 : 3 ≤ T.card := by
     have h4 : Fintype.card (Fin 4) = 4 := Fintype.card_fin 4
     have hf : Faults.f (Fin 4) = 1 := rfl
@@ -203,7 +205,11 @@ theorem usk_goodT : ∀ (S : Slots (Fin 4)) (κ : ℕ),
 theorem bnLiveSk_descent : bnLiveSk.Descent 1 where
   goodLeaders := by
     rintro U Rnd N ⟨rfl, rfl, rfl⟩
-    exact ⟨{0, 1, 3}, by decide, fun S κ h1 h2 h3 => usk_goodT S κ h1 h2 h3⟩
+    refine ⟨{0, 1, 3}, by decide, fun S V κ hcov h1 h2 h3 => ?_⟩
+    obtain ⟨L, hL⟩ := usk_goodT S κ h1 h2 h3
+    -- every block of `Usk` lies at a round the view covers
+    have hround : ∀ b ∈ Usk.ids, (Usk.block b).round ≤ 8 := by decide
+    exact ⟨L, decided_mono (S := S) (fun b hb => hcov b hb (hround b hb)) hL⟩
   indirect := mysticetiLive_descent.indirect
 
 /-- Slot `2` of `Sched 1` is directly skipped on `Usk`. -/
@@ -222,7 +228,7 @@ example : ∃ v₀ v₁ v₂ L,
     v₀ = some 0 ∧ v₁ = some 5 ∧ v₂ = none ∧ L = 15 := by
   obtain ⟨hdec, L, hL⟩ :=
     (Heads.holds.1 (Fin 4) (Fin 32) Unit bnLiveSk 1 bnLeader 4 bnWin 0).2.1
-    bnLiveSk_descent (Nat.succ_pos 2) Usk 1 8 {0, 1, 3}
+    bnLiveSk_descent (Nat.succ_pos 2) Usk (bnLiveSk.full Usk) 1 8 {0, 1, 3}
     (fun S κ h1 h2 h3 => usk_goodT S κ h1 h2 h3) 1 (by decide) (by decide) 3 (by decide)
     (by decide) (by decide)
   obtain ⟨v₀, h0⟩ := hdec 0 (by decide) (by decide)
@@ -321,12 +327,14 @@ some slot at a round in `[1, 7]` of `U44` is committed. -/
 example : ∃ κ, 1 ≤ sched2_44.slotRound κ ∧ sched2_44.slotRound κ ≤ 1 + 6 ∧
     ∃ L, rule44.Decided sched2_44 (View.full U44) κ (some L) :=
   ((MysticetiLive.holds.2 4 (by omega) (Fin 44) Unit 4 (roundRobin_keyed 4 (by omega)) 2
-    (by decide) (by decide)) U44 1 10 u44_good).2 1 (by omega) (by decide)
+    (by decide) (by decide)) U44 (View.full U44) 1 10 u44_good
+    (coversUpto_full (Mysticeti.holds (Fin 4) (Fin 44) Unit) U44 10)).2 1 (by omega) (by decide)
 
 -- And clause 1: slot 2 (round 1, head) is decided by the theorem.
 example : ∃ v, rule44.Decided sched2_44 (View.full U44) 2 v :=
   ((MysticetiLive.holds.2 4 (by omega) (Fin 44) Unit 4 (roundRobin_keyed 4 (by omega)) 2
-    (by decide) (by decide)) U44 1 10 u44_good).1 2 (by decide) (by decide)
+    (by decide) (by decide)) U44 (View.full U44) 1 10 u44_good
+    (coversUpto_full (Mysticeti.holds (Fin 4) (Fin 44) Unit) U44 10)).1 2 (by decide) (by decide)
 
 -- One direct commit by `decide` on Fin 44: slot 2 = (round 1, offset 0), leader 1, block 5.
 theorem u44_commit2 : rule44.Decided sched2_44 (View.full U44) 2 (some 5) :=

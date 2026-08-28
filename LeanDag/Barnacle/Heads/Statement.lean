@@ -53,10 +53,11 @@ good-led heads from round `ρ` decide every slot at a round in
 def HeadsDecide (R : LiveRule Validator BlockId Payload) (slack : ℕ)
     (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLeader w) : Prop :=
   R.Descent slack → 0 < R.waveLength →
-  ∀ (U : R.Universe) (Rnd N : ℕ) (T : Finset Validator),
-    -- Given what `goodLeaders` gives for `T` on `U` from `Rnd` to `N`,
+  ∀ (U : R.Universe) (V : R.View U) (Rnd N : ℕ) (T : Finset Validator),
+    -- Given what `goodLeaders` gives for `T` on `U` from `Rnd` to `N`, on
+    -- any view caught up to `N`,
     (∀ (S : Slots Validator) (κ : ℕ), Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
-      S.leader κ ∈ T → ∃ L, R.Decided S (R.full U) κ (some L)) →
+      S.leader κ ∈ T → ∃ L, R.Decided S V κ (some L)) →
     -- for every count `m` and every round `ρ` from `Rnd` whose `waveLength`
     -- heads have their waves under `N` …
     ∀ (m : ℕ) (hm : 0 < m) (hmax : m ≤ w) (ρ : ℕ), Rnd ≤ ρ →
@@ -64,12 +65,12 @@ def HeadsDecide (R : LiveRule Validator BlockId Payload) (slack : ℕ)
       -- … if the heads of rounds `ρ, …, ρ + waveLength − 1` are `T`-led …
       (∀ i, i < R.waveLength → getLeader (ρ + i) ∈ T) →
       -- … then every slot at a round below `ρ` and at most a wave below it
-      -- is decided on the full view …
+      -- is decided on that view …
       (∀ κ, (Sched getLeader hk m hm hmax).slotRound κ < ρ →
         ρ ≤ (Sched getLeader hk m hm hmax).slotRound κ + R.waveLength →
-        ∃ v, R.Decided (Sched getLeader hk m hm hmax) (R.full U) κ v) ∧
+        ∃ v, R.Decided (Sched getLeader hk m hm hmax) V κ v) ∧
       -- … and the head of `ρ`, slot `m · ρ`, is committed.
-      ∃ L, R.Decided (Sched getLeader hk m hm hmax) (R.full U) (m * ρ) (some L)
+      ∃ L, R.Decided (Sched getLeader hk m hm hmax) V (m * ρ) (some L)
 
 /-- **BN9c, live from heads**: a run of good-led heads with gap `c₀`, for
 the good set of every good DAG, makes every count's schedule live with

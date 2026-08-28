@@ -100,8 +100,10 @@ slot of round `1`, and a member of `T` leads one of them. -/
 example : ∃ κ, (Sched bnLeader6' bnWin6' 6 (by decide) (by decide)).slotRound κ = 1 ∧
     ∃ L, bnOdo.Decided (Sched bnLeader6' bnWin6' 6 (by decide) (by decide)) (View.full Uodo)
       κ (some L) := by
-  obtain ⟨T, hcard, hT⟩ :=
+  obtain ⟨T, hcard, hT0⟩ :=
     (Odontoceti.holds.2.1 (Fin 6) (Fin 24) Unit).goodLeaders Uodo 1 3 uodo_good
+  have hT := fun S κ => hT0 S (View.full Uodo) κ
+    (coversUpto_full (Odontoceti.holds.1 (Fin 6) (Fin 24) Unit) Uodo 3)
   have h5 : 5 ≤ T.card := by
     have h := hcard
     simp only [Fintype.card_fin] at h
@@ -246,8 +248,10 @@ leads one; the crashed validator's round-`1` block is supported too. -/
 example : ∃ κ, (Sched bnLeader3 bnWin3 3 (by decide) (by decide)).slotRound κ = 1 ∧
     ∃ L, bnNemo.Decided (Sched bnLeader3 bnWin3 3 (by decide) (by decide))
       (LeanDag.Nemo.View.full Unemo) κ (some L) := by
-  obtain ⟨T, hcard, hT⟩ :=
+  obtain ⟨T, hcard, hT0⟩ :=
     (Nemo.holds.2.1 (Fin 3) (Fin 14) Unit).goodLeaders Unemo 1 5 unemo_good
+  have hT := fun S κ => hT0 S (LeanDag.Nemo.View.full Unemo) κ
+    (coversUpto_full (Nemo.holds.1 (Fin 3) (Fin 14) Unit) Unemo 5)
   have h2 : 2 ≤ T.card := by
     have h := hcard
     simp only [Fintype.card_fin] at h

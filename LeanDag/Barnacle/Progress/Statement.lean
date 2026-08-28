@@ -8,7 +8,8 @@ The paper's Configuration Progress lemma and Liveness theorem
 admits (§5): a run whose current configuration lies past the synchrony
 round extends by one configuration, and from a synchrony round at
 genesis runs of every height exist, each under the horizon its height
-needs. Both on the full view; the local form is deferred (D6).
+needs. Both on any view caught up to the horizon — a validator's own
+holdings, the full view included (`CoversUpto`).
 
 The safety law `agree` is consumed inside liveness: the verdict chosen
 for the anchor's slot and the commit the liveness clause provides for it
@@ -36,9 +37,11 @@ configuration. -/
 def ProgressStmt (R : LiveRule Validator BlockId Payload) (P : Params)
     (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
     (upd : UpdateRule R.toBaseRule) (c : ℕ) : Prop :=
-  -- A run of height `K` on the full view of `U` …
-  ∀ (U : R.Universe) (Rnd N K : ℕ)
-    (Rn : PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K),
+  -- A run of height `K` on any view of `U` caught up to the horizon —
+  -- what a validator that has received everything up to `N` holds …
+  ∀ (U : R.Universe) (V : R.View U) (Rnd N K : ℕ),
+    R.toBaseRule.CoversUpto U V N →
+    ∀ (Rn : PartialRun R.toBaseRule P getLeader hk upd U V K),
     -- … whose current configuration's schedule is live with gap `c` …
     R.LiveOn (Sched getLeader hk (Rn.count K) (Rn.count_pos K) (Rn.count_le K)) c →
     -- … on a DAG good from `Rnd` to `N`, where the current configuration's
@@ -48,7 +51,7 @@ def ProgressStmt (R : LiveRule Validator BlockId Payload) (P : Params)
     -- anchor, and the gap and one wave above it:
     Rn.start K + P.interval + 1 + 2 * c + R.waveLength ≤ N →
     -- there is a run of height `K + 1`.
-    Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) (K + 1))
+    Nonempty (PartialRun R.toBaseRule P getLeader hk upd U V (K + 1))
 
 /-- **BN8b, every height**: from a synchrony round at genesis, a run of
 every height exists under the horizon that height needs. -/
@@ -58,10 +61,12 @@ def EveryHeight (R : LiveRule Validator BlockId Payload) (P : Params)
   -- If every configuration's schedule is live with gap `c` …
   (∀ m (hm : 0 < m) (hmax : m ≤ P.maxLeaders), R.LiveOn (Sched getLeader hk m hm hmax) c) →
   -- … then on a DAG good from round `1` (or `0`) to `N` …
-  ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N → Rnd ≤ 1 →
-    -- … every height whose horizon fits under `N` is reached.
+  ∀ (U : R.Universe) (V : R.View U) (Rnd N : ℕ), R.Good U Rnd N →
+    R.toBaseRule.CoversUpto U V N → Rnd ≤ 1 →
+    -- … every height whose horizon fits under `N` is reached, on any view
+    -- caught up to `N`.
     ∀ K, horizon P R c K ≤ N →
-      Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K)
+      Nonempty (PartialRun R.toBaseRule P getLeader hk upd U V K)
 
 /-- Progress and every height, for every live rule satisfying the laws,
 every parameter set, every keyed leader function, every update rule that

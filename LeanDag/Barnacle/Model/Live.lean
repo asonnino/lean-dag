@@ -51,17 +51,17 @@ structure LiveRule (Validator : Type) [Fintype Validator] [DecidableEq Validator
 def LiveRule.LiveOn (R : LiveRule Validator BlockId Payload) (S : Slots Validator) (c : ℕ) :
     Prop :=
   -- On every DAG good from `Rnd` to `N` …
-  ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
+  ∀ (U : R.Universe) (V : R.View U) (Rnd N : ℕ), R.Good U Rnd N → R.toBaseRule.CoversUpto U V N →
     -- … every slot at a round from `Rnd`, with `c` rounds and a wave still
-    -- under the horizon, is decided on the full view …
+    -- under the horizon, is decided on any view caught up to `N` …
     (∀ κ, Rnd ≤ S.slotRound κ → S.slotRound κ + c + R.waveLength ≤ N →
-      ∃ v, R.Decided S (R.full U) κ v) ∧
+      ∃ v, R.Decided S V κ v) ∧
     -- … and from every round `r` at or after `Rnd`, with `c` rounds and a
     -- wave still under the horizon, some slot at a round in `[r, r + c]`
     -- is committed on the full view.
     (∀ r, Rnd ≤ r → r + c + R.waveLength ≤ N →
       ∃ κ, r ≤ S.slotRound κ ∧ S.slotRound κ ≤ r + c ∧
-        ∃ L, R.Decided S (R.full U) κ (some L))
+        ∃ L, R.Decided S V κ (some L))
 
 /-- An update rule keeps the count in `[1, maxLeaders]`, whatever it is
 given — what extending a run needs of it; BN7a for the AIMD rule. -/

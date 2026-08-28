@@ -131,6 +131,7 @@ import LeanDag.BlackMarlin.ViewOrder.Proof
 import LeanDag.Barnacle.Model.Rule
 import LeanDag.Barnacle.Model.Schedule
 import LeanDag.Barnacle.Helpers.Schedule
+import LeanDag.Barnacle.Helpers.Cover
 import LeanDag.Barnacle.Model.Window
 import LeanDag.Barnacle.Model.Run
 import LeanDag.Barnacle.Helpers.Mysticeti

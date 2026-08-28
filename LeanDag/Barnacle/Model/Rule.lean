@@ -107,6 +107,15 @@ instance instDecidableIsLeaderBlock (R : BaseRule Validator BlockId Payload)
   inferInstanceAs (Decidable (L ∈ R.ids U ∧ (R.block U L).round = S.slotRound k ∧
     (R.block U L).creator = S.leader k))
 
+/-- **A view caught up to round `N`**: it holds every block of the
+universe at a round at or below `N`. This is what a validator that has
+received everything up to `N` holds, and the condition under which the
+liveness results hold of its own view rather than of the whole
+universe. The full view satisfies it at every `N`. -/
+def CoversUpto (R : BaseRule Validator BlockId Payload) (U : R.Universe)
+    (V : R.View U) (N : ℕ) : Prop :=
+  ∀ b ∈ R.ids U, (R.block U b).round ≤ N → b ∈ R.viewIds V
+
 /-- **The laws of a base rule** — what the leader-count mechanism
 consumes of the protocol, and what each instantiation is proved to
 satisfy. `view_subset` and `view_complete` are the paper's A2 (a

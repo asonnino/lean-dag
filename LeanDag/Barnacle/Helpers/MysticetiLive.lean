@@ -22,12 +22,20 @@ theorem mysticetiLive_descent [F : Faults Validator] :
     intro U Rnd N hgood
     obtain ⟨T, -, hcard, hsync, hpop⟩ := hgood
     refine ⟨T, by omega, ?_⟩
-    intro S κ hRnd hN hlead
+    intro S V κ hcov hRnd hN hlead
     letI := S
     change S.slotRound κ + 3 ≤ N at hN
-    obtain ⟨L, -, hdec⟩ := decided_of_leader_mem hcard hsync hRnd
+    obtain ⟨L, hLb, hdc⟩ := directCommit_of_leader_mem hcard hsync hRnd
       (hpop _ hRnd (by omega)) (hpop _ (by omega) (by omega)) (hpop _ (by omega) (by omega)) hlead
-    exact ⟨L, hdec⟩
+    refine ⟨L, Decided.directCommit hLb ?_⟩
+    -- the certificates sit at `slotRound κ + 2`, a round the view covers
+    have hsub : certificates U L (S.slotRound κ) ⊆ V.ids := by
+      intro c hc
+      rw [certificates, Finset.mem_filter, mem_blocksAt] at hc
+      obtain ⟨⟨hcids, hcr⟩, -⟩ := hc
+      exact hcov c hcids (by show (U.block c).round ≤ N; omega)
+    show quorumCard Validator ≤ (creatorsOf U.block (certificatesIn U V L (S.slotRound κ))).card
+    rwa [certificatesIn, Finset.inter_eq_left.2 hsub]
   indirect := by
     intro S U V i j A hij hj hmid
     letI := S

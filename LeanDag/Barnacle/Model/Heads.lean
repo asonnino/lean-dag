@@ -43,11 +43,13 @@ structure LiveRule.Descent (R : LiveRule Validator BlockId Payload) (slack : ℕ
   /-- **A4, direct commits.** On a DAG good from `Rnd` to `N` there is a
   set `T` of validators, all but at most `slack`, such that on any
   schedule a `T`-led slot at a round from `Rnd` whose wave fits under
-  `N` is committed on the full view. -/
+  `N` is committed — on any view caught up to `N`, the full view
+  included, the commit's evidence lying a wave below `N`. -/
   goodLeaders : ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
     ∃ T : Finset Validator, Fintype.card Validator ≤ T.card + slack ∧
-      ∀ (S : Slots Validator) (κ : ℕ), Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
-        S.leader κ ∈ T → ∃ L, R.Decided S (R.full U) κ (some L)
+      ∀ (S : Slots Validator) (V : R.View U) (κ : ℕ), R.toBaseRule.CoversUpto U V N →
+        Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
+        S.leader κ ∈ T → ∃ L, R.Decided S V κ (some L)
   /-- **A3, the indirect rule.** If slot `j`, a full wave above slot `i`,
   is committed on `V`, and every slot strictly between them that is a
   full wave above `i` is skipped on `V`, then `i` is decided on `V`. -/

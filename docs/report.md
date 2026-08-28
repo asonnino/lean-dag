@@ -8126,17 +8126,22 @@ Liveness is structural, as everywhere in this development, and carries
 a horizon. A live rule adds one field, `Good U Rnd N` — the rule's own
 notion of a DAG good from a round to a horizon, for the rules here a
 reliable quorum synchronised from `Rnd` and populated to `N` — and A4's
-liveness half is a clause on a schedule with a commit gap `c`:
+liveness half is a clause on a schedule with a commit gap `c`. It is
+stated over any view **caught up to the horizon**, `CoversUpto U V N`,
+which is what a validator that has received everything up to `N` holds;
+the full view satisfies it at every `N` (`coversUpto_full`), so the
+whole-universe reading is the special case:
 
 ```lean
 def LiveRule.LiveOn (R : LiveRule Validator BlockId Payload) (S : Slots Validator) (c : ℕ) :
     Prop :=
-  ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
+  ∀ (U : R.Universe) (V : R.View U) (Rnd N : ℕ), R.Good U Rnd N →
+    R.toBaseRule.CoversUpto U V N →
     (∀ κ, Rnd ≤ S.slotRound κ → S.slotRound κ + c + R.waveLength ≤ N →
-      ∃ v, R.Decided S (R.full U) κ v) ∧
+      ∃ v, R.Decided S V κ v) ∧
     (∀ r, Rnd ≤ r → r + c + R.waveLength ≤ N →
       ∃ κ, r ≤ S.slotRound κ ∧ S.slotRound κ ≤ r + c ∧
-        ∃ L, R.Decided S (R.full U) κ (some L))
+        ∃ L, R.Decided S V κ (some L))
 ```
 
 The gap is also the margin a slot needs above it: a slot the direct
@@ -8145,18 +8150,22 @@ whose own wave must fit under the horizon, so no rule decides every
 slot up to `N − waveLength`. **BN8** is the paper's Configuration
 Progress and Liveness in the only form a finite universe admits: a run
 whose current configuration lies past the synchrony round extends by
-one, needing the clause at its own count only —
+one, needing the clause at its own count only. The run is on a
+validator's own view rather than on the universe — any view caught up to
+the horizon — so the statement is about what a validator reaches and not
+only about what exists —
 
 ```lean
 def ProgressStmt (R : LiveRule Validator BlockId Payload) (P : Params)
     (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
     (upd : UpdateRule R.toBaseRule) (c : ℕ) : Prop :=
-  ∀ (U : R.Universe) (Rnd N K : ℕ)
-    (Rn : PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K),
+  ∀ (U : R.Universe) (V : R.View U) (Rnd N K : ℕ),
+    R.toBaseRule.CoversUpto U V N →
+    ∀ (Rn : PartialRun R.toBaseRule P getLeader hk upd U V K),
     R.LiveOn (Sched getLeader hk (Rn.count K) (Rn.count_pos K) (Rn.count_le K)) c →
     R.Good U Rnd N → Rnd ≤ Rn.start K + 1 →
     Rn.start K + P.interval + 1 + 2 * c + R.waveLength ≤ N →
-    Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) (K + 1))
+    Nonempty (PartialRun R.toBaseRule P getLeader hk upd U V (K + 1))
 ```
 
 — and from a synchrony round at genesis, runs of every height exist
@@ -8181,8 +8190,9 @@ stated as a second law structure over a live rule:
 structure LiveRule.Descent (R : LiveRule Validator BlockId Payload) (slack : ℕ) : Prop where
   goodLeaders : ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
     ∃ T : Finset Validator, Fintype.card Validator ≤ T.card + slack ∧
-      ∀ (S : Slots Validator) (κ : ℕ), Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
-        S.leader κ ∈ T → ∃ L, R.Decided S (R.full U) κ (some L)
+      ∀ (S : Slots Validator) (V : R.View U) (κ : ℕ), R.toBaseRule.CoversUpto U V N →
+        Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
+        S.leader κ ∈ T → ∃ L, R.Decided S V κ (some L)
   indirect : ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (i j : ℕ) (A : BlockId),
     S.slotRound i + R.waveLength ≤ S.slotRound j → R.Decided S V j (some A) →
     (∀ i', i < i' → i' < j → S.slotRound i + R.waveLength ≤ S.slotRound i' →
@@ -8191,7 +8201,9 @@ structure LiveRule.Descent (R : LiveRule Validator BlockId Payload) (slack : ℕ
 ```
 
 `goodLeaders` is A4's direct half — after stabilisation a good leader's
-slot commits — with the good set missing at most `slack` validators;
+slot commits, on any view caught up to the horizon, the commit's evidence
+lying a wave below it — with the good set missing at most `slack`
+validators;
 `indirect` is A3's indirect rule; the eligibility gap of every rule here
 is its wave length. A run of heads is the schedule clause, one for
 every count since the head of round `ρ` is led by `getLeader ρ`
@@ -9338,7 +9350,7 @@ reused.
 | BN8 | progress: a run past the synchrony round extends by one configuration; runs of every height exist under the horizon | `Barnacle.Progress.holds` *(Barnacle/Progress/Proof)* |
 | BN9 | the heads descent: the liveness clause from the descent laws and a run of heads; round-robin has runs of heads by pigeonhole and is live at every count | `Barnacle.Heads.holds` *(Barnacle/Heads/Proof)* |
 | BN10 | the three rules satisfy the laws and the descent laws, and are live under round-robin at every count | `Barnacle.Mysticeti.holds`, `Barnacle.MysticetiLive.holds`, `Barnacle.Odontoceti.holds`, `Barnacle.Nemo.holds` *(Barnacle/Mysticeti/Proof, Barnacle/MysticetiLive/Proof, Barnacle/Odontoceti/Proof, Barnacle/Nemo/Proof)* |
-| BN11 | and so the mechanism over each of them, under round-robin, reaches every height with no clause left assumed | `Barnacle.Live.holds` *(Barnacle/Live/Proof)* |
+| BN11 | and so the mechanism over each of them, under round-robin, reaches every height with no clause left assumed, on any view caught up to the horizon | `Barnacle.Live.holds`, `coversUpto_full` *(Barnacle/Live/Proof, Barnacle/Helpers/Cover)* |
 
 ---
 
@@ -16723,6 +16735,18 @@ def IsLeaderBlock (R : BaseRule Validator BlockId Payload) (S : Slots Validator)
 
 `L` is a candidate block for slot `k` of schedule `S`: the right round, the right author. The same conjunction every rule of this development states, here over the interface's `block` and `ids` so that the arc has one candidate predicate for all three.
 
+#### `CoversUpto`
+
+*def, `Barnacle.Model.Rule.lean`*
+
+```lean
+def CoversUpto (R : BaseRule Validator BlockId Payload) (U : R.Universe)
+    (V : R.View U) (N : ℕ) : Prop :=
+  ∀ b ∈ R.ids U, (R.block U b).round ≤ N → b ∈ R.viewIds V
+```
+
+**A view caught up to round `N`**: it holds every block of the universe at a round at or below `N`. This is what a validator that has received everything up to `N` holds, and the condition under which the liveness results hold of its own view rather than of the whole universe. The full view satisfies it at every `N`.
+
 #### `Laws`
 
 *structure, `Barnacle.Model.Rule.lean`*
@@ -17018,17 +17042,17 @@ structure LiveRule (Validator : Type) [Fintype Validator] [DecidableEq Validator
 def LiveRule.LiveOn (R : LiveRule Validator BlockId Payload) (S : Slots Validator) (c : ℕ) :
     Prop :=
   -- On every DAG good from `Rnd` to `N` …
-  ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
+  ∀ (U : R.Universe) (V : R.View U) (Rnd N : ℕ), R.Good U Rnd N → R.toBaseRule.CoversUpto U V N →
     -- … every slot at a round from `Rnd`, with `c` rounds and a wave still
-    -- under the horizon, is decided on the full view …
+    -- under the horizon, is decided on any view caught up to `N` …
     (∀ κ, Rnd ≤ S.slotRound κ → S.slotRound κ + c + R.waveLength ≤ N →
-      ∃ v, R.Decided S (R.full U) κ v) ∧
+      ∃ v, R.Decided S V κ v) ∧
     -- … and from every round `r` at or after `Rnd`, with `c` rounds and a
     -- wave still under the horizon, some slot at a round in `[r, r + c]`
     -- is committed on the full view.
     (∀ r, Rnd ≤ r → r + c + R.waveLength ≤ N →
       ∃ κ, r ≤ S.slotRound κ ∧ S.slotRound κ ≤ r + c ∧
-        ∃ L, R.Decided S (R.full U) κ (some L))
+        ∃ L, R.Decided S V κ (some L))
 ```
 
 **A4, liveness, on one schedule with commit gap `c`.**
@@ -17065,11 +17089,13 @@ structure LiveRule.Descent (R : LiveRule Validator BlockId Payload) (slack : ℕ
   /-- **A4, direct commits.** On a DAG good from `Rnd` to `N` there is a
   set `T` of validators, all but at most `slack`, such that on any
   schedule a `T`-led slot at a round from `Rnd` whose wave fits under
-  `N` is committed on the full view. -/
+  `N` is committed — on any view caught up to `N`, the full view
+  included, the commit's evidence lying a wave below `N`. -/
   goodLeaders : ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
     ∃ T : Finset Validator, Fintype.card Validator ≤ T.card + slack ∧
-      ∀ (S : Slots Validator) (κ : ℕ), Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
-        S.leader κ ∈ T → ∃ L, R.Decided S (R.full U) κ (some L)
+      ∀ (S : Slots Validator) (V : R.View U) (κ : ℕ), R.toBaseRule.CoversUpto U V N →
+        Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
+        S.leader κ ∈ T → ∃ L, R.Decided S V κ (some L)
   /-- **A3, the indirect rule.** If slot `j`, a full wave above slot `i`,
   is committed on `V`, and every slot strictly between them that is a
   full wave above `i` is skipped on `V`, then `i` is decided on `V`. -/
@@ -17376,9 +17402,11 @@ The AIMD rule, for every base rule, parameter set and keyed leader function. No 
 def ProgressStmt (R : LiveRule Validator BlockId Payload) (P : Params)
     (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
     (upd : UpdateRule R.toBaseRule) (c : ℕ) : Prop :=
-  -- A run of height `K` on the full view of `U` …
-  ∀ (U : R.Universe) (Rnd N K : ℕ)
-    (Rn : PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K),
+  -- A run of height `K` on any view of `U` caught up to the horizon —
+  -- what a validator that has received everything up to `N` holds …
+  ∀ (U : R.Universe) (V : R.View U) (Rnd N K : ℕ),
+    R.toBaseRule.CoversUpto U V N →
+    ∀ (Rn : PartialRun R.toBaseRule P getLeader hk upd U V K),
     -- … whose current configuration's schedule is live with gap `c` …
     R.LiveOn (Sched getLeader hk (Rn.count K) (Rn.count_pos K) (Rn.count_le K)) c →
     -- … on a DAG good from `Rnd` to `N`, where the current configuration's
@@ -17388,7 +17416,7 @@ def ProgressStmt (R : LiveRule Validator BlockId Payload) (P : Params)
     -- anchor, and the gap and one wave above it:
     Rn.start K + P.interval + 1 + 2 * c + R.waveLength ≤ N →
     -- there is a run of height `K + 1`.
-    Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) (K + 1))
+    Nonempty (PartialRun R.toBaseRule P getLeader hk upd U V (K + 1))
 ```
 
 **BN8a, progress**: a run past the synchrony round extends by one configuration.
@@ -17404,10 +17432,12 @@ def EveryHeight (R : LiveRule Validator BlockId Payload) (P : Params)
   -- If every configuration's schedule is live with gap `c` …
   (∀ m (hm : 0 < m) (hmax : m ≤ P.maxLeaders), R.LiveOn (Sched getLeader hk m hm hmax) c) →
   -- … then on a DAG good from round `1` (or `0`) to `N` …
-  ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N → Rnd ≤ 1 →
-    -- … every height whose horizon fits under `N` is reached.
+  ∀ (U : R.Universe) (V : R.View U) (Rnd N : ℕ), R.Good U Rnd N →
+    R.toBaseRule.CoversUpto U V N → Rnd ≤ 1 →
+    -- … every height whose horizon fits under `N` is reached, on any view
+    -- caught up to `N`.
     ∀ K, horizon P R c K ≤ N →
-      Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K)
+      Nonempty (PartialRun R.toBaseRule P getLeader hk upd U V K)
 ```
 
 **BN8b, every height**: from a synchrony round at genesis, a run of every height exists under the horizon that height needs.
@@ -17457,10 +17487,11 @@ def StretchDescent (R : LiveRule Validator BlockId Payload) (slack : ℕ) : Prop
 def HeadsDecide (R : LiveRule Validator BlockId Payload) (slack : ℕ)
     (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLeader w) : Prop :=
   R.Descent slack → 0 < R.waveLength →
-  ∀ (U : R.Universe) (Rnd N : ℕ) (T : Finset Validator),
-    -- Given what `goodLeaders` gives for `T` on `U` from `Rnd` to `N`,
+  ∀ (U : R.Universe) (V : R.View U) (Rnd N : ℕ) (T : Finset Validator),
+    -- Given what `goodLeaders` gives for `T` on `U` from `Rnd` to `N`, on
+    -- any view caught up to `N`,
     (∀ (S : Slots Validator) (κ : ℕ), Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
-      S.leader κ ∈ T → ∃ L, R.Decided S (R.full U) κ (some L)) →
+      S.leader κ ∈ T → ∃ L, R.Decided S V κ (some L)) →
     -- for every count `m` and every round `ρ` from `Rnd` whose `waveLength`
     -- heads have their waves under `N` …
     ∀ (m : ℕ) (hm : 0 < m) (hmax : m ≤ w) (ρ : ℕ), Rnd ≤ ρ →
@@ -17468,12 +17499,12 @@ def HeadsDecide (R : LiveRule Validator BlockId Payload) (slack : ℕ)
       -- … if the heads of rounds `ρ, …, ρ + waveLength − 1` are `T`-led …
       (∀ i, i < R.waveLength → getLeader (ρ + i) ∈ T) →
       -- … then every slot at a round below `ρ` and at most a wave below it
-      -- is decided on the full view …
+      -- is decided on that view …
       (∀ κ, (Sched getLeader hk m hm hmax).slotRound κ < ρ →
         ρ ≤ (Sched getLeader hk m hm hmax).slotRound κ + R.waveLength →
-        ∃ v, R.Decided (Sched getLeader hk m hm hmax) (R.full U) κ v) ∧
+        ∃ v, R.Decided (Sched getLeader hk m hm hmax) V κ v) ∧
       -- … and the head of `ρ`, slot `m · ρ`, is committed.
-      ∃ L, R.Decided (Sched getLeader hk m hm hmax) (R.full U) (m * ρ) (some L)
+      ∃ L, R.Decided (Sched getLeader hk m hm hmax) V (m * ρ) (some L)
 ```
 
 **BN9b, heads decide**: under `Sched m`, `waveLength` consecutive good-led heads from round `ρ` decide every slot at a round in `[ρ − waveLength, ρ)` and commit the head of `ρ`.
@@ -17876,6 +17907,83 @@ def nemoHistoryViewOf (U : Nemo.Universe Validator BlockId Payload) (A : BlockId
 The causal history of a block of a crash-fault universe, as a view.
 
 ### Not otherwise grouped
+
+#### `RunsExist`
+
+*def, `Barnacle.Live.Statement.lean`*
+
+```lean
+def RunsExist (R : LiveRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
+    (upd : UpdateRule R.toBaseRule) (c : ℕ) : Prop :=
+  ∀ (U : R.Universe) (V : R.View U) (Rnd N : ℕ), R.Good U Rnd N →
+    R.toBaseRule.CoversUpto U V N → Rnd ≤ 1 →
+    ∀ K, horizon P R c K ≤ N →
+      Nonempty (PartialRun R.toBaseRule P getLeader hk upd U V K)
+```
+
+**Runs of every height, with no clause left over.** BN8b's conclusion: on a DAG good from genesis, every height whose horizon fits under `N` is reached — on any view caught up to `N`, which is what a validator that has received everything up to the horizon holds.
+
+#### `MysticetiRuns`
+
+*def, `Barnacle.Live.Statement.lean`*
+
+```lean
+def MysticetiRuns : Prop :=
+  ∀ (n : ℕ) (hn : 0 < n) [Faults (Fin n)] (BlockId Payload : Type) [DecidableEq BlockId]
+    (P : Params) (hk : Keyed (roundRobin n hn) P.maxLeaders)
+    (upd : UpdateRule (mysticetiLive (Validator := Fin n) (BlockId := BlockId)
+      (Payload := Payload)).toBaseRule),
+    UpdBounded P upd →
+    RunsExist (mysticetiLive (Validator := Fin n) (BlockId := BlockId) (Payload := Payload))
+      P (roundRobin n hn) hk upd (n + 2)
+```
+
+**BN11a** — Barnacle over Mysticeti, under round-robin, at gap `n + 2`.
+
+#### `OdontocetiRuns`
+
+*def, `Barnacle.Live.Statement.lean`*
+
+```lean
+def OdontocetiRuns : Prop :=
+  ∀ (n : ℕ) (hn : 0 < n) [Faults5 (Fin n)] (BlockId Payload : Type) [LinearOrder BlockId]
+    (P : Params) (hk : Keyed (roundRobin n hn) P.maxLeaders)
+    (upd : UpdateRule (odontocetiLive (Validator := Fin n) (BlockId := BlockId)
+      (Payload := Payload)).toBaseRule),
+    UpdBounded P upd →
+    RunsExist (odontocetiLive (Validator := Fin n) (BlockId := BlockId) (Payload := Payload))
+      P (roundRobin n hn) hk upd (n + 1)
+```
+
+**BN11b** — Barnacle over Odontoceti, at gap `n + 1`.
+
+#### `NemoRuns`
+
+*def, `Barnacle.Live.Statement.lean`*
+
+```lean
+def NemoRuns : Prop :=
+  ∀ (n : ℕ) (hn : 0 < n) [LeanDag.Nemo.CrashFaults (Fin n)] (BlockId Payload : Type)
+    [DecidableEq BlockId] (P : Params) (hk : Keyed (roundRobin n hn) P.maxLeaders)
+    (upd : UpdateRule (nemoLive (Validator := Fin n) (BlockId := BlockId)
+      (Payload := Payload)).toBaseRule),
+    UpdBounded P upd →
+    RunsExist (nemoLive (Validator := Fin n) (BlockId := BlockId) (Payload := Payload))
+      P (roundRobin n hn) hk upd (n + 1)
+```
+
+**BN11c** — Barnacle over Nemo-Nemo, at gap `n + 1`. The crash bound is consumed nowhere: the slack is `n − majority`.
+
+#### `Statement`
+
+*def, `Barnacle.Live.Statement.lean`*
+
+```lean
+def Statement : Prop := MysticetiRuns ∧ OdontocetiRuns ∧ NemoRuns
+```
+
+The three protocols, end to end.
 
 #### `descendD`
 
@@ -18533,7 +18641,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 664 theorems that either another module of the
+The 665 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -26830,11 +26938,12 @@ Two closed ranges' ledgers are disjoint: their blocks have rounds in disjoint in
 
 ```lean
 theorem progress (hR : R.Laws) (hupd : UpdBounded P upd) {c K Rnd N : ℕ}
-    (Rn : PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K)
+    {V : R.View U} (hcov : R.toBaseRule.CoversUpto U V N)
+    (Rn : PartialRun R.toBaseRule P getLeader hk upd U V K)
     (hlive : R.LiveOn (Sched getLeader hk (Rn.count K) (Rn.count_pos K) (Rn.count_le K)) c)
     (hgood : R.Good U Rnd N) (hRnd : Rnd ≤ Rn.start K + 1)
     (hN : Rn.start K + P.interval + 1 + 2 * c + R.waveLength ≤ N) :
-    Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) (K + 1))
+    Nonempty (PartialRun R.toBaseRule P getLeader hk upd U V (K + 1))
 ```
 
 #### `everyHeight`
@@ -26845,9 +26954,10 @@ theorem progress (hR : R.Laws) (hupd : UpdBounded P upd) {c K Rnd N : ℕ}
 theorem everyHeight (hR : R.Laws) (hupd : UpdBounded P upd) {c : ℕ}
     (hlive : ∀ m (hm : 0 < m) (hmax : m ≤ P.maxLeaders),
       R.LiveOn (Sched getLeader hk m hm hmax) c)
-    {Rnd N : ℕ} (hgood : R.Good U Rnd N) (hRnd : Rnd ≤ 1) (K : ℕ)
+    {Rnd N : ℕ} {V : R.View U} (hcov : R.toBaseRule.CoversUpto U V N)
+    (hgood : R.Good U Rnd N) (hRnd : Rnd ≤ 1) (K : ℕ)
     (hK : horizon P R c K ≤ N) :
-    Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K)
+    Nonempty (PartialRun R.toBaseRule P getLeader hk upd U V K)
 ```
 
 #### `stretchDescent`
@@ -26871,15 +26981,15 @@ theorem stretchDescent (hD : R.Descent slack) (S : Slots Validator) {U : R.Unive
 
 ```lean
 theorem headsDecide_at (hD : R.Descent slack) (hw : 0 < R.waveLength)
-    {U : R.Universe} {Rnd N : ℕ} {T : Finset Validator}
+    {U : R.Universe} (V : R.View U) {Rnd N : ℕ} {T : Finset Validator}
     (hT : ∀ (S : Slots Validator) (κ : ℕ), Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
-      S.leader κ ∈ T → ∃ L, R.Decided S (R.full U) κ (some L))
+      S.leader κ ∈ T → ∃ L, R.Decided S V κ (some L))
     (ρ : ℕ) (hRnd : Rnd ≤ ρ) (hN : ρ + R.waveLength + R.waveLength ≤ N + 1)
     (hheads : ∀ i, i < R.waveLength → getLeader (ρ + i) ∈ T) :
     (∀ κ, (Sched getLeader hk m hm hmax).slotRound κ < ρ →
       ρ ≤ (Sched getLeader hk m hm hmax).slotRound κ + R.waveLength →
-      ∃ v, R.Decided (Sched getLeader hk m hm hmax) (R.full U) κ v) ∧
-    ∃ L, R.Decided (Sched getLeader hk m hm hmax) (R.full U) (m * ρ) (some L)
+      ∃ v, R.Decided (Sched getLeader hk m hm hmax) V κ v) ∧
+    ∃ L, R.Decided (Sched getLeader hk m hm hmax) V (m * ρ) (some L)
 ```
 
 **BN9b′, subtraction-free.** Heads of rounds `ρ, …, ρ + w − 1` `T`-led, waves under `N`: every slot at a round `r` with `r < ρ ≤ r + w` is decided, and the head of `ρ` is committed.
@@ -27087,6 +27197,14 @@ theorem holds : Statement
 
 #### `holds`
 
+*theorem, `Barnacle.Live.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
 *theorem, `BlackMarlin.ViewLiveness.Proof.lean`*
 
 ```lean
@@ -27258,7 +27376,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 615 lemmas used only within the file that proves
+The 616 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -28384,6 +28502,12 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `populated_and_card_viewUpto_le` | The capstone, unconditional. `EventuallyDelivers` is gone: production plus the enforceable budget plus the … |
 | `populated_and_card_viewUpto_le'` | The composed statement — DoS resistance in one theorem. One set of hypotheses — production, post-`R` … |
+
+### `Barnacle/Helpers/Cover.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `coversUpto_full` | The full view is caught up to every horizon. |
 
 ### `Hybrid/Checkpoint/RecoveryProofs.lean` (14)
 

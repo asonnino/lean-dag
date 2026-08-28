@@ -39,12 +39,22 @@ theorem nemoLive_descent [Nemo.CrashFaults Validator] :
     refine ⟨T, ?_, ?_⟩
     · have := Nat.sub_le (Fintype.card Validator) (Nemo.majority Validator)
       omega
-    intro S κ hRnd hN hlead
+    intro S V κ hcov hRnd hN hlead
     letI := S
     change S.slotRound κ + 2 ≤ N at hN
-    obtain ⟨L, -, hdec⟩ := Nemo.decided_of_leader_mem hcard hsync hRnd
+    obtain ⟨L, hLb, hdc⟩ := Nemo.directCommit_of_leader_mem hcard hsync hRnd
       (hpop _ hRnd (by omega)) (hpop _ (by omega) (by omega)) hlead
-    exact ⟨L, hdec⟩
+    refine ⟨L, Nemo.Decided.directCommit hLb ?_⟩
+    -- the supporters sit one round up, which the view covers
+    have hsub : (Nemo.blocksAt U (S.slotRound κ + 1)).filter
+        (fun p => L ∈ (U.block p).refs) ⊆ V.ids := by
+      intro q hq
+      rw [Finset.mem_filter, Nemo.mem_blocksAt] at hq
+      obtain ⟨⟨hqids, hqr⟩, -⟩ := hq
+      exact hcov q hqids (by show (U.block q).round ≤ N; omega)
+    show Nemo.majority Validator ≤ (Nemo.supportersIn U V L (S.slotRound κ)).card
+    rw [Nemo.supportersIn, Finset.inter_eq_left.2 hsub]
+    exact hdc
   indirect := by
     intro S U V i j A hij hj hmid
     letI := S

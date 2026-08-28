@@ -64,38 +64,54 @@ example : ¬ bnLive.Good Usun 1 9 := fun h => absurd h.2.2 (by decide)
 
 abbrev sched1 : Slots (Fin 4) := Sched bnLeader bnWin 1 (by decide) (by decide)
 
+/-- **The full view's verdicts transport to any view caught up to `8`.**
+Every block of `Usun` lies at a round at or below `8`, so a view covering
+that far holds the whole universe and `decided_mono` carries each verdict
+across. This is what lets the checks below stay `decide`-shaped while the
+statement quantifies over a validator's own view. -/
+theorem transport_full {V : bnLive.View Usun}
+    (hcov : bnLive.toBaseRule.CoversUpto Usun V 8) {S : Slots (Fin 4)} {κ : ℕ}
+    {v : Option (Fin 32)} (h : Decided (S := S) Usun (View.full Usun) κ v) :
+    Decided (S := S) Usun V κ v := by
+  have hround : ∀ b ∈ Usun.ids, (Usun.block b).round ≤ 8 := by decide
+  exact decided_mono (S := S) (fun b hb => hcov b hb (hround b hb)) h
+
 /-- `LiveOn` at count `1`, gap `0`, on `Usun`: slots `1`–`5` commit directly. -/
 theorem bnLive_liveOn : bnLive.LiveOn sched1 0 := by
-  rintro U Rnd N ⟨rfl, rfl, rfl⟩
+  rintro U V Rnd N ⟨rfl, rfl, rfl⟩ hcov
   have hw : bnLive.waveLength = 3 := rfl
+  -- every block of `Usun` lies at a round the view covers, so the view holds
+  -- the whole universe and the full-view verdicts transport to it
+  have hcom : ∀ (κ : ℕ) (L : Fin 32), bnLive.Decided sched1 (bnLive.full Usun) κ (some L) →
+      bnLive.Decided sched1 V κ (some L) := fun _ _ h => transport_full hcov h
+  have h1 : bnLive.Decided sched1 (bnLive.full Usun) 1 (some 5) :=
+    Decided.directCommit (S := sched1) (by decide) (by decide)
+  have h2 : bnLive.Decided sched1 (bnLive.full Usun) 2 (some 10) :=
+    Decided.directCommit (S := sched1) (by decide) (by decide)
+  have h3 : bnLive.Decided sched1 (bnLive.full Usun) 3 (some 15) :=
+    Decided.directCommit (S := sched1) (by decide) (by decide)
+  have h4 : bnLive.Decided sched1 (bnLive.full Usun) 4 (some 16) :=
+    Decided.directCommit (S := sched1) (by decide) (by decide)
+  have h5 : bnLive.Decided sched1 (bnLive.full Usun) 5 (some 21) :=
+    Decided.directCommit (S := sched1) (by decide) (by decide)
   refine ⟨?_, ?_⟩
-  · intro κ h1 h2
-    simp only [Sched_slotRound, Nat.div_one] at h1 h2
+  · intro κ ha hb
+    simp only [Sched_slotRound, Nat.div_one] at ha hb
     have : κ = 1 ∨ κ = 2 ∨ κ = 3 ∨ κ = 4 ∨ κ = 5 := by omega
     rcases this with rfl | rfl | rfl | rfl | rfl
-    · exact ⟨some 5, Decided.directCommit (S := sched1)
-        (by decide) (by decide)⟩
-    · exact ⟨some 10, Decided.directCommit (S := sched1)
-        (by decide) (by decide)⟩
-    · exact ⟨some 15, Decided.directCommit (S := sched1)
-        (by decide) (by decide)⟩
-    · exact ⟨some 16, Decided.directCommit (S := sched1)
-        (by decide) (by decide)⟩
-    · exact ⟨some 21, Decided.directCommit (S := sched1)
-        (by decide) (by decide)⟩
-  · intro r h1 h2
+    · exact ⟨some 5, hcom _ _ h1⟩
+    · exact ⟨some 10, hcom _ _ h2⟩
+    · exact ⟨some 15, hcom _ _ h3⟩
+    · exact ⟨some 16, hcom _ _ h4⟩
+    · exact ⟨some 21, hcom _ _ h5⟩
+  · intro r ha hb
     have : r = 1 ∨ r = 2 ∨ r = 3 ∨ r = 4 ∨ r = 5 := by omega
     rcases this with rfl | rfl | rfl | rfl | rfl
-    · exact ⟨1, by simp, by simp, 5, Decided.directCommit (S := sched1)
-        (by decide) (by decide)⟩
-    · exact ⟨2, by simp, by simp, 10, Decided.directCommit (S := sched1)
-        (by decide) (by decide)⟩
-    · exact ⟨3, by simp, by simp, 15, Decided.directCommit (S := sched1)
-        (by decide) (by decide)⟩
-    · exact ⟨4, by simp, by simp, 16, Decided.directCommit (S := sched1)
-        (by decide) (by decide)⟩
-    · exact ⟨5, by simp, by simp, 21, Decided.directCommit (S := sched1)
-        (by decide) (by decide)⟩
+    · exact ⟨1, by simp, by simp, 5, hcom _ _ h1⟩
+    · exact ⟨2, by simp, by simp, 10, hcom _ _ h2⟩
+    · exact ⟨3, by simp, by simp, 15, hcom _ _ h3⟩
+    · exact ⟨4, by simp, by simp, 16, hcom _ _ h4⟩
+    · exact ⟨5, by simp, by simp, 21, hcom _ _ h5⟩
 
 abbrev bnUpd : UpdateRule bnLive.toBaseRule := Aimd.rule bnRule32 bnP bnLeader bnWin
 
@@ -112,7 +128,7 @@ example :
     ∃ Rn1 : PartialRun bnLive.toBaseRule bnP bnLeader bnWin bnUpd Usun (bnLive.full Usun) 1,
     Rn1.count 1 = 2 ∧ Rn1.start 1 = 5 ∧ Rn1.anchor 0 = 5 := by
   obtain ⟨Rn1⟩ := (Progress.holds (Fin 4) (Fin 32) Unit bnLive laws32 bnP bnLeader bnWin bnUpd
-    bnUpd_bounded 0).1 Usun 1 8 0 run0 bnLive_liveOn
+    bnUpd_bounded 0).1 Usun (bnLive.full Usun) 1 8 0 (coversUpto_full laws32 Usun 8) run0 bnLive_liveOn
     (show bnLive.Good Usun 1 8 from ⟨rfl, rfl, rfl⟩) (by decide) (by decide)
   refine ⟨Rn1, ?_⟩
   have h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _)
@@ -125,7 +141,7 @@ example :
 example :
     ∃ Rn1 : PartialRun bnLive.toBaseRule bnP bnLeader bnWin bnUpd Usun (bnLive.full Usun) 1,
     Rn1.start 1 ≤ 0 + 4 + 1 + 0 :=
-  progress_exists laws32 bnUpd_bounded run0 bnLive_liveOn
+  progress_exists laws32 bnUpd_bounded (coversUpto_full laws32 Usun 8) run0 bnLive_liveOn
     (show bnLive.Good Usun 1 8 from ⟨rfl, rfl, rfl⟩) (by decide) (by decide)
 
 -- horizon values
@@ -137,7 +153,7 @@ theorem bnLive_liveOn_all : ∀ m (hm : 0 < m) (hmax : m ≤ bnP.maxLeaders),
     bnLive.LiveOn (Sched bnLeader bnWin m hm hmax) 0 := by
   intro m hm hmax
   have hmax' : m ≤ 4 := hmax
-  rintro U Rnd N ⟨rfl, rfl, rfl⟩
+  rintro U V Rnd N ⟨rfl, rfl, rfl⟩ hcov
   have hw : bnLive.waveLength = 3 := rfl
   refine ⟨?_, ?_⟩
   · intro κ h1 h2
@@ -147,19 +163,23 @@ theorem bnLive_liveOn_all : ∀ m (hm : 0 < m) (hmax : m ≤ bnP.maxLeaders),
     interval_cases m
     · obtain ⟨hlo, hhi⟩ : 1 ≤ κ ∧ κ < 6 := by omega
       interval_cases κ <;>
-        exact Decided.directCommit (S := Sched bnLeader bnWin 1 (by decide) (by decide))
+        exact transport_full hcov <| Decided.directCommit
+          (S := Sched bnLeader bnWin 1 (by decide) (by decide))
           (by decide) (by decide)
     · obtain ⟨hlo, hhi⟩ : 2 ≤ κ ∧ κ < 12 := by omega
       interval_cases κ <;>
-        exact Decided.directCommit (S := Sched bnLeader bnWin 2 (by decide) (by decide))
+        exact transport_full hcov <| Decided.directCommit
+          (S := Sched bnLeader bnWin 2 (by decide) (by decide))
           (by decide) (by decide)
     · obtain ⟨hlo, hhi⟩ : 3 ≤ κ ∧ κ < 18 := by omega
       interval_cases κ <;>
-        exact Decided.directCommit (S := Sched bnLeader bnWin 3 (by decide) (by decide))
+        exact transport_full hcov <| Decided.directCommit
+          (S := Sched bnLeader bnWin 3 (by decide) (by decide))
           (by decide) (by decide)
     · obtain ⟨hlo, hhi⟩ : 4 ≤ κ ∧ κ < 24 := by omega
       interval_cases κ <;>
-        exact Decided.directCommit (S := Sched bnLeader bnWin 4 (by decide) (by decide))
+        exact transport_full hcov <| Decided.directCommit
+          (S := Sched bnLeader bnWin 4 (by decide) (by decide))
           (by decide) (by decide)
   · intro r h1 h2
     refine ⟨m * r, ?_, ?_, ⟨(4 * r + r % 4) % 32, Nat.mod_lt _ (by decide)⟩, ?_⟩
@@ -167,24 +187,26 @@ theorem bnLive_liveOn_all : ∀ m (hm : 0 < m) (hmax : m ≤ bnP.maxLeaders),
     · simp only [Sched_slotRound, Nat.mul_div_cancel_left _ hm]; omega
     · obtain ⟨hlo, hhi⟩ : 1 ≤ r ∧ r ≤ 5 := by omega
       interval_cases m <;> interval_cases r <;>
-        exact Decided.directCommit
-        (S := Sched bnLeader bnWin _ (by decide) (by decide)) (by decide) (by decide)
+        exact transport_full hcov <| Decided.directCommit
+          (S := Sched bnLeader bnWin _ (by decide) (by decide)) (by decide) (by decide)
 
 /-- BN8b applied on data: height `1` under horizon `8`. -/
 example :
     Nonempty (PartialRun bnLive.toBaseRule bnP bnLeader bnWin bnUpd Usun (bnLive.full Usun) 1) :=
-  everyHeight laws32 bnUpd_bounded bnLive_liveOn_all
+  everyHeight laws32 bnUpd_bounded bnLive_liveOn_all (coversUpto_full laws32 Usun 8)
     (show bnLive.Good Usun 1 8 from ⟨rfl, rfl, rfl⟩) le_rfl 1 (by decide)
 
 -- Through `holds`.
 example :
     Nonempty (PartialRun bnLive.toBaseRule bnP bnLeader bnWin bnUpd Usun (bnLive.full Usun) 1) :=
   ((Progress.holds (Fin 4) (Fin 32) Unit bnLive laws32 bnP bnLeader bnWin bnUpd bnUpd_bounded 0).2
-    bnLive_liveOn_all Usun 1 8 ⟨rfl, rfl, rfl⟩ le_rfl 1 (by decide))
+    bnLive_liveOn_all Usun (bnLive.full Usun) 1 8 ⟨rfl, rfl, rfl⟩ (coversUpto_full laws32 Usun 8) le_rfl 1
+    (by decide))
 example :
     Nonempty (PartialRun bnLive.toBaseRule bnP bnLeader bnWin bnUpd Usun (bnLive.full Usun) 1) :=
   ((Progress.holds (Fin 4) (Fin 32) Unit bnLive laws32 bnP bnLeader bnWin bnUpd bnUpd_bounded 0).1
-    Usun 1 8 0 run0 bnLive_liveOn ⟨rfl, rfl, rfl⟩ (by decide) (by decide))
+    Usun (bnLive.full Usun) 1 8 0 (coversUpto_full laws32 Usun 8) run0 bnLive_liveOn ⟨rfl, rfl, rfl⟩
+    (by decide) (by decide))
 
 -- Height 2 at interval 4 is out of the horizon: `13 ≤ 8` is false.
 example : ¬ (horizon bnP bnLive 0 2 ≤ 8) := by decide
@@ -205,19 +227,20 @@ theorem extends it and BN3 identifies the result with `runP1` at height
 `2`; at gap `1` the margin no longer fits. -/
 
 theorem bnLive_liveOn1 : bnLive.LiveOn sched1 1 := by
-  rintro U Rnd N ⟨rfl, rfl, rfl⟩
+  rintro U V Rnd N ⟨rfl, rfl, rfl⟩ hcov
   have hw : bnLive.waveLength = 3 := rfl
-  refine ⟨fun κ h1 h2 => (bnLive_liveOn Usun 1 8 ⟨rfl, rfl, rfl⟩).1 κ h1 (by omega), ?_⟩
+  refine ⟨fun κ h1 h2 =>
+    (bnLive_liveOn Usun V 1 8 ⟨rfl, rfl, rfl⟩ hcov).1 κ h1 (by omega), ?_⟩
   intro r h1 h2
   have : r = 1 ∨ r = 2 ∨ r = 3 ∨ r = 4 := by omega
   rcases this with rfl | rfl | rfl | rfl
-  · exact ⟨2, by simp, by simp, 10, Decided.directCommit
+  · exact ⟨2, by simp, by simp, 10, transport_full hcov <| Decided.directCommit
         (S := sched1) (by decide) (by decide)⟩
-  · exact ⟨3, by simp, by simp, 15, Decided.directCommit
+  · exact ⟨3, by simp, by simp, 15, transport_full hcov <| Decided.directCommit
         (S := sched1) (by decide) (by decide)⟩
-  · exact ⟨4, by simp, by simp, 16, Decided.directCommit
+  · exact ⟨4, by simp, by simp, 16, transport_full hcov <| Decided.directCommit
         (S := sched1) (by decide) (by decide)⟩
-  · exact ⟨5, by simp, by simp, 21, Decided.directCommit
+  · exact ⟨5, by simp, by simp, 21, transport_full hcov <| Decided.directCommit
         (S := sched1) (by decide) (by decide)⟩
 
 /-! ## (i) Progress from height `1` at interval `1` on `Usun` -/
@@ -275,7 +298,8 @@ example :
     ∃ Rn2 : PartialRun bnLive.toBaseRule bnP1 bnLeader bnWin bnUpd1 Usun (bnLive.full Usun) 2,
     Rn2.start 2 = 4 ∧ Rn2.count 2 = 1 ∧ Rn2.backoff 2 = 2 ∧ Rn2.anchor 1 = 4 := by
   obtain ⟨Rn2⟩ := (Progress.holds (Fin 4) (Fin 32) Unit bnLive laws32 bnP1 bnLeader bnWin bnUpd1
-    bnUpd1_bounded 0).1 Usun 1 8 1 runP1v bnLive_liveOn ⟨rfl, rfl, rfl⟩ (by decide) (by decide)
+    bnUpd1_bounded 0).1 Usun (bnLive.full Usun) 1 8 1 (coversUpto_full laws32 Usun 8) runP1v bnLive_liveOn
+    ⟨rfl, rfl, rfl⟩ (by decide) (by decide)
   refine ⟨Rn2, ?_⟩
   have h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _)
     Usun (bnLive.full Usun) Vsun 2 2 Rn2 runP1 2 (by decide)
@@ -296,7 +320,8 @@ example :
     Nonempty (PartialRun bnLive.toBaseRule bnP1 bnLeader bnWin bnUpd1 Usun (bnLive.full Usun) 2) :=
   ((Progress.holds (Fin 4) (Fin 32) Unit bnLive laws32 bnP1 bnLeader bnWin bnUpd1
     bnUpd1_bounded 0).2
-    bnLive_liveOn_all Usun 1 8 ⟨rfl, rfl, rfl⟩ le_rfl 2 (by decide))
+    bnLive_liveOn_all Usun (bnLive.full Usun) 1 8 ⟨rfl, rfl, rfl⟩ (coversUpto_full laws32 Usun 8) le_rfl 2
+    (by decide))
 example : ¬ (horizon bnP1 bnLive 0 3 ≤ 8) := by decide
 
 /-! ## Not live one round further
@@ -328,7 +353,7 @@ theorem no_commit6 : ∀ L, ¬ bnRule32.Decided sched1 (bnLive9.full Usun) 6 (so
 
 theorem bnLive9_not_liveOn0 : ¬ bnLive9.LiveOn sched1 0 := by
   intro h
-  obtain ⟨-, h2⟩ := h Usun 1 9 ⟨rfl, rfl, rfl⟩
+  obtain ⟨-, h2⟩ := h Usun (View.full Usun) 1 9 ⟨rfl, rfl, rfl⟩ (coversUpto_full laws32 Usun 9)
   obtain ⟨κ, hlo, hhi, L, hL⟩ := h2 6 (by decide) (by decide)
   simp only [Sched_slotRound, Nat.div_one] at hlo hhi
   have hκ : κ = 6 := by omega
@@ -380,7 +405,7 @@ example : bnRule32.Decided sched1 (bnLiveSk.full Usk) 3 (some 15) :=
 
 theorem bnLiveSk_not_liveOn0 : ¬ bnLiveSk.LiveOn sched1 0 := by
   intro h
-  obtain ⟨-, h2⟩ := h Usk 1 8 ⟨rfl, rfl, rfl⟩
+  obtain ⟨-, h2⟩ := h Usk (View.full Usk) 1 8 ⟨rfl, rfl, rfl⟩ (coversUpto_full laws32 Usk 8)
   obtain ⟨κ, hlo, hhi, L, hL⟩ := h2 2 (by decide) (by decide)
   simp only [Sched_slotRound, Nat.div_one] at hlo hhi
   have hκ : κ = 2 := by omega
@@ -389,35 +414,43 @@ theorem bnLiveSk_not_liveOn0 : ¬ bnLiveSk.LiveOn sched1 0 := by
     Decided.directSkip (S := sched1) (fun L hL => by have := hallSk L hL; subst this; decide)
   exact Option.some_ne_none L (laws32.agree sched1 _ _ 2 _ _ hL hskip)
 
+/-- The same transport on `Usk`, whose blocks also lie at rounds up to `8`. -/
+theorem transport_full_sk {V : bnLiveSk.View Usk}
+    (hcov : bnLiveSk.toBaseRule.CoversUpto Usk V 8) {S : Slots (Fin 4)} {κ : ℕ}
+    {v : Option (Fin 32)} (h : Decided (S := S) Usk (View.full Usk) κ v) :
+    Decided (S := S) Usk V κ v := by
+  have hround : ∀ b ∈ Usk.ids, (Usk.block b).round ≤ 8 := by decide
+  exact decided_mono (S := S) (fun b hb => hcov b hb (hround b hb)) h
+
 /-- Gap `1`: the round-`2` window is answered by slot `3`. -/
 theorem bnLiveSk_liveOn1 : bnLiveSk.LiveOn sched1 1 := by
-  rintro U Rnd N ⟨rfl, rfl, rfl⟩
+  rintro U V Rnd N ⟨rfl, rfl, rfl⟩ hcov
   have hw : bnLiveSk.waveLength = 3 := rfl
   refine ⟨?_, ?_⟩
   · intro κ h1 h2
     simp only [Sched_slotRound, Nat.div_one] at h1 h2
     have : κ = 1 ∨ κ = 2 ∨ κ = 3 ∨ κ = 4 ∨ κ = 5 := by omega
     rcases this with rfl | rfl | rfl | rfl | rfl
-    · exact ⟨some 5, Decided.directCommit
+    · exact ⟨some 5, transport_full_sk hcov <| Decided.directCommit
         (S := sched1) (by decide) (by decide)⟩
-    · exact ⟨none, Decided.directSkip (S := sched1)
+    · exact ⟨none, transport_full_sk hcov <| Decided.directSkip (S := sched1)
         (fun L hL => by have := hallSk L hL; subst this; decide)⟩
-    · exact ⟨some 15, Decided.directCommit
+    · exact ⟨some 15, transport_full_sk hcov <| Decided.directCommit
         (S := sched1) (by decide) (by decide)⟩
-    · exact ⟨some 16, Decided.directCommit
+    · exact ⟨some 16, transport_full_sk hcov <| Decided.directCommit
         (S := sched1) (by decide) (by decide)⟩
-    · exact ⟨some 21, Decided.directCommit
+    · exact ⟨some 21, transport_full_sk hcov <| Decided.directCommit
         (S := sched1) (by decide) (by decide)⟩
   · intro r h1 h2
     have : r = 1 ∨ r = 2 ∨ r = 3 ∨ r = 4 := by omega
     rcases this with rfl | rfl | rfl | rfl
-    · exact ⟨1, by simp, by simp, 5, Decided.directCommit
+    · exact ⟨1, by simp, by simp, 5, transport_full_sk hcov <| Decided.directCommit
         (S := sched1) (by decide) (by decide)⟩
-    · exact ⟨3, by simp, by simp, 15, Decided.directCommit
+    · exact ⟨3, by simp, by simp, 15, transport_full_sk hcov <| Decided.directCommit
         (S := sched1) (by decide) (by decide)⟩
-    · exact ⟨3, by simp, by simp, 15, Decided.directCommit
+    · exact ⟨3, by simp, by simp, 15, transport_full_sk hcov <| Decided.directCommit
         (S := sched1) (by decide) (by decide)⟩
-    · exact ⟨4, by simp, by simp, 16, Decided.directCommit
+    · exact ⟨4, by simp, by simp, 16, transport_full_sk hcov <| Decided.directCommit
         (S := sched1) (by decide) (by decide)⟩
 
 abbrev bnUpdSk : UpdateRule bnLiveSk.toBaseRule := Aimd.rule bnRule32 bnP1 bnLeader bnWin
@@ -492,7 +525,8 @@ example :
     Rn1.anchor 0 = 3 ∧ Rn1.start 1 = 3 ∧ Rn1.count 1 = 1 ∧ Rn1.backoff 1 = 1 ∧
       Rn1.vdct 0 2 = none ∧ Rn1.start 0 + bnP1.interval < 2 / Rn1.count 0 := by
   obtain ⟨Rn1⟩ := (Progress.holds (Fin 4) (Fin 32) Unit bnLiveSk laws32 bnP1 bnLeader bnWin
-    bnUpdSk bnUpdSk_bounded 1).1 Usk 1 8 0 run0sk bnLiveSk_liveOn1 ⟨rfl, rfl, rfl⟩
+    bnUpdSk bnUpdSk_bounded 1).1 Usk (bnLiveSk.full Usk) 1 8 0
+    (coversUpto_full laws32 Usk 8) run0sk bnLiveSk_liveOn1 ⟨rfl, rfl, rfl⟩
     (by decide) (by decide)
   refine ⟨Rn1, ?_⟩
   have h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _)

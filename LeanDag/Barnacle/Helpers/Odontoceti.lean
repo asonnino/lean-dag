@@ -36,12 +36,21 @@ theorem odontocetiLive_descent [F : Faults5 Validator] :
     intro U Rnd N hgood
     obtain ⟨T, -, hcard, hsync, hpop⟩ := hgood
     refine ⟨T, by omega, ?_⟩
-    intro S κ hRnd hN hlead
+    intro S V κ hcov hRnd hN hlead
     letI := S
     change S.slotRound κ + 2 ≤ N at hN
-    obtain ⟨L, -, hdec⟩ := Odontoceti.decided_of_leader_mem hcard hsync hRnd
+    obtain ⟨L, hLb, hdc⟩ := Odontoceti.directCommit_of_leader_mem hcard hsync hRnd
       (hpop _ hRnd (by omega)) (hpop _ (by omega) (by omega)) hlead
-    exact ⟨L, hdec⟩
+    refine ⟨L, Odontoceti.Decided.directCommit hLb ?_⟩
+    -- the supporters sit one round up, which the view covers
+    have hsub : (blocksAt U (S.slotRound κ + 1)).filter (fun q => L ∈ (U.block q).refs) ⊆ V.ids := by
+      intro q hq
+      rw [Finset.mem_filter, mem_blocksAt] at hq
+      obtain ⟨⟨hqids, hqr⟩, -⟩ := hq
+      exact hcov q hqids (by show (U.block q).round ≤ N; omega)
+    show quorumCard Validator ≤ (Odontoceti.supportersIn U V L (S.slotRound κ)).card
+    rw [Odontoceti.supportersIn, Finset.inter_eq_left.2 hsub]
+    exact hdc
   indirect := by
     intro S U V i j A hij hj hmid
     letI := S
