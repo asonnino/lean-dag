@@ -85,7 +85,7 @@ adaptive schedule, and a validator pruned past its own history is a
 reader until it re-genesises, counting against the fault budget
 meanwhile.
 
-The development comprises roughly 26,500 lines of Lean 4 over Mathlib. Every
+The development comprises roughly 52,000 lines of Lean 4 over Mathlib. Every
 principal result depends on exactly Lean's three standard axioms; every
 definition is exercised on concrete models by `decide` before anything is
 proved from it. All displayed Lean in this report is drawn from the source
@@ -8448,10 +8448,10 @@ rather than an unsatisfiable hypothesis.
 
 ## 23. Mechanisation
 
-The development comprises approximately 27,000 lines of Lean 4 (v4.32.2)
-against Mathlib, of which some 18,000 constitute the library and 7,500 the
-models of §22 and the witness files of the arcs. A full build reports no
-errors.
+The development comprises approximately 52,000 lines of Lean 4 (v4.32.2)
+against Mathlib, of which some 37,000 constitute the library and 15,000
+the models of §22 and the witness files of the arcs. A full build reports
+no errors.
 
 **Axiom audit.** Every principal result — among them
 `reaches_of_quorum_support`, `exists_common_correct_ancestor`,
@@ -9050,8 +9050,14 @@ quality, C, D,
 B and E for the denial-of-service arc, G for garbage collection, O for
 Odontoceti; P, N and R name clauses of the trust boundary rather than
 results. Labels resolving to witness models rather than library
-theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7, SS11, AL8, H9, H10) are
-excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7, BMA5, BMD7, BME6, BMO10, BMO11 and BMP14. Appendix C displays every indexed
+theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7, SS11, AL8, H9, H10, BN13) are
+excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7, BMA5, BMD7, BME6, BMO10, BMO11 and BMP14. Two labels are
+absent from the Barnacle rows below and are named here rather than left
+to be noticed: **BN1**, that `Sched m` is a lawful `Slots` instance at
+every count, is a fact about the schedule that the design record carries
+and no result of the arc consumes as a named step; and **BN4** was
+withdrawn — there is no total run, and what was to be stated of one is
+BN3 at equal heights (§21.2). Appendix C displays every indexed
 result in full.
 
 ### Safety
