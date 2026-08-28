@@ -1,0 +1,96 @@
+import LeanDagTest.Barnacle.Model
+import LeanDag.Barnacle.Live.Proof
+import LeanDag.Barnacle.Aimd.Proof
+import LeanDagTest.Growth
+
+/-!
+# Barnacle witnesses — progress against the real rule
+
+`Progress.lean` exercises BN8 on `bnLive`, a *test* rule whose `Good`
+pins one universe so that `LiveOn` becomes finite and a witness can
+supply it. That was the only way to run BN8 on data while its liveness
+clause was a hypothesis: the clause quantifies over every good DAG and
+cannot be decided.
+
+BN11 removes the need. It discharges the clause as a theorem — round
+robin is live at every count, from the committee bound alone — so the
+real Mysticeti rule with its real `Good` can be run on data with nothing
+assumed. This file does that.
+
+The DAG is the development's own grown family, `Ugrow N`: four
+validators, every block referencing the whole round below, defined at
+every `N`. Its synchrony and population are proved once and for all
+(`ugrow_synchronised`, `ugrow_populated`), so no height needs `decide`,
+and `mysticetiLive.Good (Ugrow N) 0 N` follows at every `N` with the
+correct validators as the quorum. The schedule is `bnLeader`, which *is*
+`roundRobin 4`, so BN11 applies to it directly.
+
+The result is runs of every height on a real DAG under the real rule,
+where the run's own horizon fixes how tall the DAG must be: height `K`
+needs `11K + 9` rounds at `bnP`'s four-round interval and Mysticeti's
+gap of `n + 2 = 6`.
+-/
+
+namespace LeanDagTest
+
+namespace Barnacle
+
+open LeanDag LeanDag.Barnacle
+
+/-- Mysticeti as a live rule over the grown family's types. -/
+abbrev realRule : LiveRule (Fin 4) ℕ Unit := mysticetiLive
+
+/-- **The grown family is good, at every height.** The correct validators
+are a quorum, the family is synchronised from round `0`, and it is
+populated at every round up to `N`. -/
+theorem ugrow_good (N : ℕ) : realRule.Good (Ugrow N) 0 N :=
+  ⟨(Correct : Finset (Fin 4)), Finset.Subset.refl _, card_correct,
+    ugrow_synchronised N, fun _ _ hr => ugrow_populated hr⟩
+
+/-- The AIMD rule over the real base rule. -/
+noncomputable abbrev realUpd : UpdateRule realRule.toBaseRule :=
+  Aimd.rule realRule.toBaseRule bnP bnLeader bnWin
+
+theorem realUpd_bounded : UpdBounded bnP realUpd :=
+  (Aimd.holds (Fin 4) ℕ Unit realRule.toBaseRule bnP bnLeader bnWin).1
+
+/-- **BN11 on data, with the real rule and the real `Good`.** A run of
+every height exists on the grown family, at the height's own horizon —
+`11K + 9` rounds. Nothing is assumed: the liveness clause comes from
+BN11, the bound from BN7a, and the goodness from the family itself. -/
+theorem real_runs (K : ℕ) :
+    Nonempty (PartialRun realRule.toBaseRule bnP bnLeader bnWin realUpd
+      (Ugrow (11 * K + 9)) (realRule.full (Ugrow (11 * K + 9))) K) :=
+  Live.holds.1 4 (by omega) ℕ Unit bnP bnWin realUpd realUpd_bounded
+    (Ugrow (11 * K + 9)) (realRule.full (Ugrow (11 * K + 9))) 0 (11 * K + 9)
+    (ugrow_good _)
+    (coversUpto_full (Mysticeti.holds (Fin 4) ℕ Unit) _ _) (by omega) K (by show K * (4 + 1 + 6) + 6 + 3 ≤ 11 * K + 9; omega)
+
+/-- **The horizon is exact.** The family stops at `N`: a taller run needs
+a taller DAG, so the `11K + 9` above is the height's cost and not a
+convenience. -/
+example (K : ℕ) : ¬ Populated (Ugrow (11 * K + 9)) (11 * K + 9 + 1) :=
+  ugrow_not_populated_succ _
+
+/-- And what comes back is a run: its first configuration is Algorithm
+1's, one leader after round `0`. -/
+example (K : ℕ) : (real_runs K).some.count 0 = 1 ∧ (real_runs K).some.start 0 = 0 :=
+  ⟨(real_runs K).some.init.2.1, (real_runs K).some.init.1⟩
+
+/-- Its every range is decided against its own configuration's schedule —
+the `closed` field, which is what makes the run a run rather than a
+sequence of numbers. -/
+example (K k : ℕ) (hk : k < K) (κ : ℕ)
+    (h₁ : (real_runs K).some.start k < κ / (real_runs K).some.count k)
+    (h₂ : κ / (real_runs K).some.count k ≤ (real_runs K).some.start (k + 1)) :
+    realRule.Decided
+      (Sched bnLeader bnWin ((real_runs K).some.count k) ((real_runs K).some.count_pos k)
+        ((real_runs K).some.count_le k))
+      (realRule.full (Ugrow (11 * K + 9))) κ ((real_runs K).some.vdct k κ) :=
+  (real_runs K).some.closed k hk κ h₁ h₂
+
+#print axioms real_runs
+
+end Barnacle
+
+end LeanDagTest

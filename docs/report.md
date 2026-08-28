@@ -8333,7 +8333,14 @@ slot is directly skipped past the threshold and the theorems' anchors
 skip it. `LiveOn` cannot be decided in general — it quantifies over
 every good DAG — and a *test rule* whose `Good` pins one universe makes
 it finite, so that Progress is applied on data and produces the healthy
-step. The real theorems with the real `Good` produce verdicts on
+step. With BN11 the clause is a theorem rather than a hypothesis, so the
+**real** rule with its **real** `Good` runs on data too: the grown family
+of §22 is good at every height by lemmas proved once (`ugrow_good`), and
+`real_runs` gives a run of every height `K` on it, at the horizon that
+height costs — `11K + 9` rounds at a four-round interval and Mysticeti's
+gap of `n + 2`. The family stops at its horizon, so the cost is exact,
+and the run's ranges are decided against its own configurations'
+schedules. The real theorems with the real `Good` produce verdicts on
 `U44`, eleven rounds; the heads descent produces the skipped slot's
 verdict on `Usk`; and the Nemo slack is attacked on a three-validator
 DAG good over a bare majority with an adversarial live validator
@@ -9398,6 +9405,7 @@ reused.
 | BN10 | the three rules satisfy the laws and the descent laws, and are live under round-robin at every count | `Barnacle.Mysticeti.holds`, `Barnacle.MysticetiLive.holds`, `Barnacle.Odontoceti.holds`, `Barnacle.Nemo.holds` *(Barnacle/Mysticeti/Proof, Barnacle/MysticetiLive/Proof, Barnacle/Odontoceti/Proof, Barnacle/Nemo/Proof)* |
 | BN11 | and so the mechanism over each of them, under round-robin, reaches every height with no clause left assumed, on any view caught up to the horizon | `Barnacle.Live.holds`, `coversUpto_full` *(Barnacle/Live/Proof, Barnacle/Helpers/Cover)* |
 | BN12 | a healthy window is counted as healthy, and the rule then raises the count: the loop cannot back off where every scoring slot committed | `Barnacle.Healthy.holds` *(Barnacle/Healthy/Proof)* |
+| BN13 | BN11 on data: runs of every height on the grown family under the real rule, with nothing assumed | `real_runs` witnesses *(LeanDagTest/Barnacle/Real)* |
 
 ---
 

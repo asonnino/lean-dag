@@ -62,3 +62,4 @@ import LeanDagTest.FinWhale.Model
 import LeanDagTest.FinWhale.Pace
 import LeanDagTest.FinWhale.DoS
 import LeanDagTest.FinWhale.Equivocation
+import LeanDagTest.Barnacle.Real

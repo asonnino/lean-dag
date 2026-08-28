@@ -863,6 +863,12 @@ uninhabited (F7, Phase 2).
   wave length; all three instantiated protocols are pipelined.
 - **Certified DAGs.** The paper says the measurement applies; the model
   has no certified-DAG base.
+- **The real rule on data.** BN11 discharges the liveness clause, so the
+  synthetic test rule is no longer the only way to run BN8 on data:
+  `LeanDagTest/Barnacle/Real.lean` gives runs of every height on the
+  grown family under the real Mysticeti rule with its real `Good`, at the
+  horizon each height costs.
+
 - **Performance (R2).** The paper's evaluation claims are outside the
   formal model, as the paper says. What *is* now inside it is that the
   loop is not inert: BN12 shows `expected` is exactly the count of a
