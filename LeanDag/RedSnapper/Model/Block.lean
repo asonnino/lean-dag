@@ -102,6 +102,11 @@ structure Block (Validator BlockId Tx Obj : Type*) where
   block makes, if any. `none` is no declaration — the author's earlier
   declaration, if any, stays in effect. -/
   declares : Obj → Option (Stance Tx)
+  /-- The freeze markers of the `5f+1` recovery (§8's `b.freeze`): for
+  each object version, the trigger anchor this block freezes on, if
+  any. Defaults to none everywhere — the `3f+1` protocol never reads
+  the field, and only `Model/Five/Freeze.lean` consumes it. -/
+  freezes : Obj → Option BlockId := fun _ => none
 
 section Authors
 

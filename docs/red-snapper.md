@@ -88,10 +88,11 @@ Three consequences shape the arc.
 | Theorem commit-safety, Lemma mixed-object safety | `TxAgreement/` (RS3) — `VerdictAgreement`, `NoConflictingFinal`, `MixedViaAnchor` |
 | Lemmas fp-liveness, equiv-live; `CastVotes` | `Model/{Liveness, HonestVoting}.lean` — `PopulatedOn`, `SynchronisedOn`, `VotingRule`; `Uncontested/` (RS4) — `FastLiveness`, `FastVerdict`; `ConflictResolution/` (RS5) — `Trichotomy`, `AnchorDecides` |
 | §8 certificates, refutations, moves (`Alg:FastPathPredicates5f+1`) | `Model/Five/{Certificates, Moves}.lean` — `IsAntiVote`, `IsFullCert`, `IsHalfCert`, `IsRefutation`, `IsFullUnlockCert`, `MoveDiscipline` |
-| §8 freeze, `Triggers`, `Resolves` | `Model/Five/Freeze.lean` (Phase 8) |
+| §8 freeze, `Triggers`, `TriggerAnchor`, `Frozen`, `Resolves`; `ResolveOnCommitObj`'s `F`, `W` | `Model/Five/Freeze.lean` — `AtLeastV`, `OwnedCandidate`, `Triggers`, `TriggerAt`, `Frozen`, `FreezeQuorum`, `ResolvesFiveAt`, `EligibleFive`, `FreezeDiscipline`; `Block.freezes` |
+| `TryFullDecideTX`, `TryFullUnlockObj`, `ResolveOnCommitObj` | `Model/Five/Verdict.lean` — `VerdictFive` over a linear-order parameter `prio` (the min-hash tie-break, D8-style) |
 | Lemmas single-stance-5f … full-cert-unique | `Five/FullCertSafety/` (RS6) — `SingleStance`, `CommitExcludesRefutation`, `UnlockExcludesRefutation`, `CommitExcludesUnlock`, `FullCertUniqueness` |
-| Lemmas recovery-determinism, recovery-reflects, recovery-safety | `Five/RecoverySafety/` (RS7) |
-| Theorem safety-5f | `Five/Agreement/` (RS8) |
+| Lemmas recovery-determinism, recovery-reflects, recovery-safety | `Five/RecoverySafety/` (RS7) — `ResolutionUnique`, `RecoveryReflects`, `RecoverySafetyBot`, `RecoverySafetyWin` |
+| Theorem safety-5f | `Five/Agreement/` (RS8) — `VerdictAgreement`, `NoConflictingFinal` |
 | Lemmas coin-success, recovery-termination | `Five/CoinAgreement/`, `Five/RecoveryTermination/` (RS9) |
 
 Names follow the paper's where it has them (`Candidates`, `Stance`,
@@ -211,7 +212,7 @@ except thresholds and the honest-move rule.
 | 5 | `Model/{Anchors, Dead, Verdict}.lean`; `TxAgreement/Statement.lean` | RS3: verdict uniqueness across views and routes; no two conflicting transactions finalised; one finalised transaction per object; the mixed corollary |
 | 6 | `Model/{Liveness, HonestVoting}.lean`; `Uncontested/`, `ConflictResolution/` | RS4: a sole candidate reaches fast finality in two synchronised rounds; RS5: by `r + 2` every synchronised block holds an ack certificate or an unlock certificate in its history, so every synchronised anchor above `r + 2` resolves the object |
 | 7 | `Model/Five/{Certificates, Moves}.lean`; `Five/FullCertSafety/` | RS6: single stance; a full certificate excludes refutations of its ACK, a full unlock certificate excludes refutations of `⊥`, the two certificates exclude each other, and conflicting full certificates never coexist — all at `n ≥ 3f + 1` (finding 19) |
-| 8 | `Model/Five/Freeze.lean`; `Five/RecoverySafety/`, `Five/Agreement/` | RS7–RS8 |
+| 8 | `Model/{Block (the defaulted `freezes` field), Five/Freeze, Five/Verdict}.lean`; `Five/RecoverySafety/`, `Five/Agreement/` | RS7: resolution uniqueness; a hidden commit is reflected (`W = {tx}`, candidacy derived — finding 21); an empty election forbids any full certificate; no rival certificate above a resolution. RS8: verdict agreement and no conflicting finalisation across views and routes |
 | 9 | `Five/CoinAgreement/`, `Five/RecoveryTermination/` | RS9 |
 | 10 | this record's final position; report chapter; README; the tripwire | |
 
@@ -322,6 +323,23 @@ or refines are updated at the last phase.
     `n − 3f − 1 ≥ 2f + 1` validators fill a refutation — so the paper's
     fixed threshold carries a hidden *upper* bound on `n` that D1's
     `quorum = n − f` removes (compare finding 14).
+20. **The recovery layer is where `5f + 1` is load-bearing.**
+    Complementing finding 19: Lemma recovery-reflects and claim 1 of
+    recovery-safety consume the bound — the frozen set omits at most
+    `f` validators, so `|F ∩ S| ≥ 2f + 1` needs `|F| ≥ 4f + 1`, hence
+    `n ≥ 5f + 1`. Claim 2 does not: an eligible transaction's `2f + 1`
+    frozen supporters contain `f + 1` permanently correct ones at any
+    committee. RS7 takes `Five` as a hypothesis exactly where it is
+    consumed; RS8 inherits it through the reflection claim alone.
+21. **Lemma recovery-reflects holds without its candidacy premise, at
+    any round.** The paper assumes `tx ∈ Candidates(A, o^j)`;
+    mechanised, candidacy is *derived*: a frozen correct supporter's
+    marker block declares the ACK, the `Adopt` guard makes the
+    transaction a candidate of the marker block, and inclusion travels
+    into the resolving anchor's history. The strengthened form also
+    relates the certificate's round to the resolution not at all, which
+    closes Theorem safety-5f's cross-route cases — including the step
+    finding 9 flags — with no case analysis on rounds.
 
 ## 4. Out of scope
 

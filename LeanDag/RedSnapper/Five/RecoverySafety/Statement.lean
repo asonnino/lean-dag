@@ -1,0 +1,108 @@
+import LeanDag.RedSnapper.Model.Five.Freeze
+import LeanDag.RedSnapper.Model.Five.Moves
+
+/-!
+# Recovery safety — statement
+
+RS7: the safety of §8's deterministic fallback — Lemmas
+recovery-determinism (in its in-model form), recovery-reflects, and
+recovery-safety.
+
+Recovery-determinism in the paper says all correct validators compute
+the same trigger anchor, frozen set, `W` and `win`; under D4 the
+anchors are one global value and every recovery quantity is a function
+of `(U, A)`, so cross-validator agreement is definitional — what
+remains, and what `ResolutionUnique` states, is that the *relations*
+rendering them are functional: one resolving index pair per object, one
+`prio`-minimal winner. Recovery-reflects is stated without the paper's
+candidacy premise — candidacy at the resolving anchor is *derived*,
+through `FreezeDiscipline.ack_candidate`, from the frozen ACKs the
+certificate forces — which is the strengthening RS8's cross-route cases
+need.
+
+Where the committee bound finally bites: `RecoveryReflects` and
+`RecoverySafetyBot`'s conflicted case count `|F ∩ S| ≥ |S| − f` and
+`|F| − 2f`, which need `n ≥ 5f + 1` — the first results of the arc to
+consume `Five`, taken as an explicit hypothesis exactly there.
+`RecoverySafetyWin` needs only the `half` frozen supporters of the
+winner (`f + 1` of them correct and permanent) and holds at any
+committee, like all of RS6 (finding 19).
+
+* **Resolution uniqueness**: at most one `(i, j)` resolves an object,
+  and at most one eligible transaction is `prio`-minimal.
+* **Recovery reflects a hidden commit** (Lemma recovery-reflects): if
+  an owned transaction on the resolved object holds a full certificate
+  anywhere — at any round, before or after the resolution — then it is
+  eligible and uniquely so: `W = {tx}`.
+* **Recovery safety, release** (Lemma recovery-safety, claim 1): if
+  nothing is eligible at the resolution, no owned transaction on the
+  object ever holds a full certificate.
+* **Recovery safety, winner** (Lemma recovery-safety, claim 2): a
+  conflicting rival of any eligible transaction holds no full
+  certificate above the resolving anchor's round.
+-/
+
+namespace LeanDag
+
+namespace RedSnapper
+
+namespace RecoverySafety
+
+variable {Validator BlockId Tx Obj : Type*} [Fintype Validator] [DecidableEq Validator]
+  [F : Faults Validator] [T : Transactions Tx Obj]
+
+/-- **Resolution uniqueness**: one index pair per object, one
+`prio`-minimal winner. -/
+def ResolutionUnique (U : Universe Validator BlockId Tx Obj) (A : Anchors U)
+    (prio : Tx → Tx → Prop) : Prop :=
+  (∀ (o : Obj) (i j i' j' : ℕ),
+    ResolvesFiveAt U A o i j → ResolvesFiveAt U A o i' j' → i = i' ∧ j = j') ∧
+  ∀ (aₖ a : BlockId) (o : Obj) (tx tx' : Tx),
+    EligibleFive U aₖ a o tx → (∀ t, EligibleFive U aₖ a o t → prio tx t) →
+    EligibleFive U aₖ a o tx' → (∀ t, EligibleFive U aₖ a o t → prio tx' t) →
+    tx = tx'
+
+/-- **Recovery reflects a hidden commit**: a full certificate anywhere
+makes its transaction the unique eligible one. -/
+def RecoveryReflects (U : Universe Validator BlockId Tx Obj) (A : Anchors U) : Prop :=
+  ∀ (o : Obj) (i j : ℕ) (aₖ a : BlockId) (tx : Tx),
+    ResolvesFiveAt U A o i j → A.seq[i]? = some aₖ → A.seq[j]? = some a →
+    Owned tx → T.input tx = o →
+    (∃ C ∈ U.ids, IsFullCert U C tx) →
+    EligibleFive U aₖ a o tx ∧ ∀ tx', EligibleFive U aₖ a o tx' → tx' = tx
+
+/-- **Recovery safety, release**: an empty election forbids a full
+certificate for any owned transaction on the object, at any round. -/
+def RecoverySafetyBot (U : Universe Validator BlockId Tx Obj) (A : Anchors U) : Prop :=
+  ∀ (o : Obj) (i j : ℕ) (aₖ a : BlockId),
+    ResolvesFiveAt U A o i j → A.seq[i]? = some aₖ → A.seq[j]? = some a →
+    (∀ tx, ¬ EligibleFive U aₖ a o tx) →
+    ∀ tx, Owned tx → T.input tx = o → ∀ C ∈ U.ids, ¬ IsFullCert U C tx
+
+/-- **Recovery safety, winner**: no rival of an eligible transaction
+reaches a full certificate above the resolving anchor's round. -/
+def RecoverySafetyWin (U : Universe Validator BlockId Tx Obj) (A : Anchors U) : Prop :=
+  ∀ (o : Obj) (i j : ℕ) (aₖ a : BlockId) (tx : Tx),
+    ResolvesFiveAt U A o i j → A.seq[i]? = some aₖ → A.seq[j]? = some a →
+    EligibleFive U aₖ a o tx →
+    ∀ tx', Conflict tx tx' →
+      ∀ C ∈ U.ids, (U.block a).round < (U.block C).round → ¬ IsFullCert U C tx'
+
+/-- Recovery safety, over every fault configuration, transaction data,
+universe and anchor sequence the model admits: uniqueness for any
+linear order, and — under the move and freeze rules — the winner claim
+at any committee, the reflection and release claims at `n ≥ 5f + 1`. -/
+def Statement : Prop :=
+  ∀ (Validator BlockId Tx Obj : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [Transactions Tx Obj]
+    (U : Universe Validator BlockId Tx Obj) (A : Anchors U),
+    (∀ prio : Tx → Tx → Prop, IsLinearOrder Tx prio → ResolutionUnique U A prio) ∧
+      (MoveDiscipline U → FreezeDiscipline U →
+        RecoverySafetyWin U A ∧
+          (Five Validator → RecoveryReflects U A ∧ RecoverySafetyBot U A))
+
+end RecoverySafety
+
+end RedSnapper
+
+end LeanDag
