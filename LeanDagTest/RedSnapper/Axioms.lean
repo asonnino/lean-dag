@@ -1,4 +1,5 @@
 import LeanDag.RedSnapper.Revocation.Proof
+import LeanDag.RedSnapper.CertificateExclusion.Proof
 
 /-!
 # The axioms tripwire
@@ -15,3 +16,9 @@ info: 'LeanDag.RedSnapper.Revocation.holds' depends on axioms: [propext, Classic
 -/
 #guard_msgs in
 #print axioms LeanDag.RedSnapper.Revocation.holds
+
+/--
+info: 'LeanDag.RedSnapper.CertificateExclusion.holds' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms LeanDag.RedSnapper.CertificateExclusion.holds
