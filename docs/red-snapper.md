@@ -80,9 +80,9 @@ Three consequences shape the arc.
 | Blocks, `Link`, `RoundParents` (`Alg:FastPathPredicates`) | `Model/{Block, Universe, View, CausalHistory}.lean` — `Block`, `ValidWrt`, `Universe`, `View`, `Reaches` |
 | Transactions, `OwnedInputs`, `Includes`, `Candidates`, `ConflictedObjs` | `Model/{Block, Transaction}.lean` — `Transactions`, `Conflict`, `Owned`, `Includes`, `IsCandidate`, `Conflicted` |
 | `Stance`, `AckedBefore`; the `held` automaton of §7 | `Model/Stance.lean` — `StanceIs`, `AckedBefore`, `StanceDiscipline` |
-| `IsFastVoteTX`, `IsSkipVoteObj`, `IsUnlockVoteObj` | `Model/Votes.lean` |
-| `IsFastCertTX`, `HasCertTX`, `CertVisible`, `IsSkipCertObj`, `IsUnlockCertObj` | `Model/Certificates.lean` |
-| Lemmas single-ack, cert-unique, univalent, fast-unlock-exclusion, cert-propagation | `CertificateExclusion/` (RS2) |
+| `IsFastVoteTX`, `IsSkipVoteObj`, `IsUnlockVoteObj` | `Model/Votes.lean` — `IsFastVote`, `IsBotVote`, `IsSkipVote`, `IsUnlockVote` |
+| `IsFastCertTX`, `HasCertTX`, `CertVisible`, `IsSkipCertObj`, `IsUnlockCertObj`; `DAG[r]` | `Model/Certificates.lean` — `AtLeast`, `blocksAt`, `IsFastCert`, `HasCert`, `CertVisible`, `IsSkipCert`, `IsUnlockCert`, `FastQuorumAt` |
+| Lemmas single-ack, cert-unique, univalent, fast-unlock-exclusion, cert-propagation | `CertificateExclusion/` (RS2) — `HonestSingleAck`, `CertUniqueness`, `AckSkipExclusion`, `AckUnlockExclusionBelow`, `CertPropagation` |
 | Consensus interface (C1)–(C4), `Dead`, `Resolves` | `Model/{Anchors, Dead}.lean` |
 | `TryFastDecideTX`, `TrySkipDecideObj`, `FinalizeOnCommitTX`, `ResolveOnCommitObj` | `Model/Verdict.lean` — `Verdict` |
 | Theorem commit-safety, Lemma mixed-object safety | `TxAgreement/` (RS3) |
