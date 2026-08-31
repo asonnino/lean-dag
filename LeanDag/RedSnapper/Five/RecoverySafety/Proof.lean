@@ -39,10 +39,10 @@ theorem resolutionUnique {prio : Tx → Tx → Prop} (hord : IsLinearOrder Tx pr
     refine ⟨rfl, ?_⟩
     rcases lt_trichotomy j j' with hlt | heq | hgt
     · obtain ⟨aₖ, a, hlk, hla, hq⟩ := h.2.2.1
-      exact absurd hq (h'.2.2.2 j h.2.1 hlt aₖ a hlk hla)
+      exact absurd hq (h'.2.2.2 j hlt aₖ a hlk hla)
     · exact heq
     · obtain ⟨aₖ, a, hlk, hla, hq⟩ := h'.2.2.1
-      exact absurd hq (h.2.2.2 j' h'.2.1 hgt aₖ a hlk hla)
+      exact absurd hq (h.2.2.2 j' hgt aₖ a hlk hla)
   · intro aₖ a o tx tx' he hmin he' hmin'
     haveI := hord
     exact antisymm (hmin tx' he') (hmin' tx he)
