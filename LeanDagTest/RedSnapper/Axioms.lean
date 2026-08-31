@@ -3,6 +3,7 @@ import LeanDag.RedSnapper.CertificateExclusion.Proof
 import LeanDag.RedSnapper.TxAgreement.Proof
 import LeanDag.RedSnapper.Uncontested.Proof
 import LeanDag.RedSnapper.ConflictResolution.Proof
+import LeanDag.RedSnapper.Five.FullCertSafety.Proof
 
 /-!
 # The axioms tripwire
@@ -43,3 +44,9 @@ info: 'LeanDag.RedSnapper.ConflictResolution.holds' depends on axioms: [propext,
 -/
 #guard_msgs in
 #print axioms LeanDag.RedSnapper.ConflictResolution.holds
+
+/--
+info: 'LeanDag.RedSnapper.FullCertSafety.holds' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms LeanDag.RedSnapper.FullCertSafety.holds

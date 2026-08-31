@@ -87,8 +87,9 @@ Three consequences shape the arc.
 | `TryFastDecideTX`, `TrySkipDecideObj`, `FinalizeOnCommitTX`, `ResolveOnCommitObj` | `Model/Verdict.lean` — `Fate`, `FastQuorumAtInView`, `SkipQuorumAtInView`, `TxVerdict` |
 | Theorem commit-safety, Lemma mixed-object safety | `TxAgreement/` (RS3) — `VerdictAgreement`, `NoConflictingFinal`, `MixedViaAnchor` |
 | Lemmas fp-liveness, equiv-live; `CastVotes` | `Model/{Liveness, HonestVoting}.lean` — `PopulatedOn`, `SynchronisedOn`, `VotingRule`; `Uncontested/` (RS4) — `FastLiveness`, `FastVerdict`; `ConflictResolution/` (RS5) — `Trichotomy`, `AnchorDecides` |
-| §8 certificates, refutations, moves, freeze, `Triggers`, `Resolves` | `Model/Five/{Certificates, Moves, Freeze}.lean` |
-| Lemmas single-stance-5f … full-cert-unique | `Five/FullCertSafety/` (RS6) |
+| §8 certificates, refutations, moves (`Alg:FastPathPredicates5f+1`) | `Model/Five/{Certificates, Moves}.lean` — `IsAntiVote`, `IsFullCert`, `IsHalfCert`, `IsRefutation`, `IsFullUnlockCert`, `MoveDiscipline` |
+| §8 freeze, `Triggers`, `Resolves` | `Model/Five/Freeze.lean` (Phase 8) |
+| Lemmas single-stance-5f … full-cert-unique | `Five/FullCertSafety/` (RS6) — `SingleStance`, `CommitExcludesRefutation`, `UnlockExcludesRefutation`, `CommitExcludesUnlock`, `FullCertUniqueness` |
 | Lemmas recovery-determinism, recovery-reflects, recovery-safety | `Five/RecoverySafety/` (RS7) |
 | Theorem safety-5f | `Five/Agreement/` (RS8) |
 | Lemmas coin-success, recovery-termination | `Five/CoinAgreement/`, `Five/RecoveryTermination/` (RS9) |
@@ -209,9 +210,10 @@ except thresholds and the honest-move rule.
 | 4 | `Model/{Votes, Certificates}.lean`; `CertificateExclusion/Statement.lean` | RS2: honest single ACK, certificate uniqueness, ack/skip exclusivity, a fast commit excludes an unlock certificate, certificate propagation |
 | 5 | `Model/{Anchors, Dead, Verdict}.lean`; `TxAgreement/Statement.lean` | RS3: verdict uniqueness across views and routes; no two conflicting transactions finalised; one finalised transaction per object; the mixed corollary |
 | 6 | `Model/{Liveness, HonestVoting}.lean`; `Uncontested/`, `ConflictResolution/` | RS4: a sole candidate reaches fast finality in two synchronised rounds; RS5: by `r + 2` every synchronised block holds an ack certificate or an unlock certificate in its history, so every synchronised anchor above `r + 2` resolves the object |
-| 7 | `Model/Five/{Certificates, Moves, Freeze}.lean`; `Five/FullCertSafety/`, `Five/RecoverySafety/`, `Five/Agreement/` | RS6–RS8 |
-| 8 | `Five/CoinAgreement/`, `Five/RecoveryTermination/` | RS9 |
-| 9 | this record's final position; report chapter; README; the tripwire | |
+| 7 | `Model/Five/{Certificates, Moves}.lean`; `Five/FullCertSafety/` | RS6: single stance; a full certificate excludes refutations of its ACK, a full unlock certificate excludes refutations of `⊥`, the two certificates exclude each other, and conflicting full certificates never coexist — all at `n ≥ 3f + 1` (finding 19) |
+| 8 | `Model/Five/Freeze.lean`; `Five/RecoverySafety/`, `Five/Agreement/` | RS7–RS8 |
+| 9 | `Five/CoinAgreement/`, `Five/RecoveryTermination/` | RS9 |
+| 10 | this record's final position; report chapter; README; the tripwire | |
 
 Phases 1 and 2 are reviewed together: the statement fixes what the
 model must carry. Each phase runs as statements → review → freeze →
@@ -261,7 +263,9 @@ or refines are updated at the last phase.
    leaves `⊥` only on a half certificate; the algorithm's `Movable` uses
    a refutation of `⊥` — `2f + 1` non-`⊥` stances, possibly split across
    transactions. The counting closes either way; the text describes an
-   older algorithm.
+   older algorithm. RS6 takes the algorithm's form (confirmed by the
+   mechanisation: `U6Ref`'s refutation of `⊥` is split two rival ACKs
+   against two, and neither rival reaches a half certificate).
 9. **Theorem safety-5f cites the wrong lemma.** "A full unlock
    certificate before `A` would have made `W` empty by Lemma
    full-excludes-unlock" needs unlock-excludes-half: permanent `⊥`
@@ -287,14 +291,6 @@ or refines are updated at the last phase.
     form and `R = 0` suffices; for `C < f` the threshold `n + f − C + 1`
     exceeds `n` and cannot be met. RS1's `Tight` carries the condition
     (confirmed by the mechanisation: both sides are refuted by witnesses).
-18. **The uncontested-liveness premise counts invalid rivals, and
-    globally.** Lemma fp-liveness assumes "no conflicting transaction";
-    RS4 transcribes it as no conflicting transaction *included anywhere
-    in the universe*, which an included invalid rival voids (witnessed)
-    although the algorithm and the conclusion are untouched, and which a
-    rival first included far above the decision round voids too. The
-    premise should read: no *valid* conflicting transaction included
-    before certification.
 17. **The self-parent chain is an assumption the model never states.**
     The proofs use that a correct validator's blocks form a chain ("as it
     links its own block in every round"); the Preliminaries do not say
@@ -303,6 +299,29 @@ or refines are updated at the last phase.
     and the ack-versus-skip argument ("a skip voter never ACKed") does
     not close. The arc states it as `Universe.self_parent`, from which
     every correct validator has a block at every round below its own.
+18. **The uncontested-liveness premise counts invalid rivals, and
+    globally.** Lemma fp-liveness assumes "no conflicting transaction";
+    RS4 transcribes it as no conflicting transaction *included anywhere
+    in the universe*, which an included invalid rival voids (witnessed)
+    although the algorithm and the conclusion are untouched, and which a
+    rival first included far above the decision round voids too. The
+    premise should read: no *valid* conflicting transaction included
+    before certification.
+19. **The `5f + 1` certificate-safety lemmas need only `3f + 1`.**
+    Lemmas single-stance-5f through full-cert-unique close at any
+    committee `n ≥ 3f + 1`: the persisting core of a full certificate
+    has `n − 2f` correct members, the rest of the committee cannot fill
+    a refutation (`2f < 2f + 1`) nor a rival quorum (`2f < n − f`), and
+    no step uses `n ≥ 5f + 1`. RS6 is stated and proved without the
+    `Five` mixin. The wide committee buys *exposure* — a quorum of
+    votes always leaves the refutation reachable (§10's corollary,
+    RS1's `ExposureAtQuorum`) — that is, the liveness of revocation,
+    not its safety; the paper could say so. The parameterisation is
+    load-bearing: with the literal `4f + 1` threshold the lemmas fail
+    for `n ≥ 5f + 2` — the correct core is `3f + 1` and the remaining
+    `n − 3f − 1 ≥ 2f + 1` validators fill a refutation — so the paper's
+    fixed threshold carries a hidden *upper* bound on `n` that D1's
+    `quorum = n − f` removes (compare finding 14).
 
 ## 4. Out of scope
 
