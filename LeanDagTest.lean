@@ -105,3 +105,5 @@ import LeanDagTest.RedSnapper.Liveness
 import LeanDagTest.RedSnapper.LivenessHardening
 import LeanDagTest.RedSnapper.FiveCerts
 import LeanDagTest.RedSnapper.FiveCertsHardening
+import LeanDagTest.RedSnapper.Freeze
+import LeanDagTest.RedSnapper.FreezeHardening
