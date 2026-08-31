@@ -30,11 +30,15 @@ each index; that `ReleasedBelow i` coincides with "some anchor below `i`
 is ready" is proved in `Helpers/`, not assumed.
 
 Two fidelity notes. The paper's `Dead` reads the *strict* history
-(`b' ≠ b`) so that `CastVotes` can evaluate it while writing `b`; at a
-committed anchor the block is fixed, so the reflexive `HasCert`/`Reaches`
-are used — the liveness phase, where the strictness matters, states its
-own form. And "an earlier anchor" is the committed order (indices), the
-paper's `Link(A, b)` reading being equivalent through `Anchors.chained`
+(`b' ≠ b`) so that `CastVotes` can evaluate it while writing `b`; here
+the reflexive `HasCert`/`Reaches` are used. The two differ exactly when
+the anchor itself is the certificate or skip certificate, and no anchor
+verdict changes under the stance discipline: each divergence scenario
+needs two certificates for one object or a skip certificate beside an
+ack certificate, both excluded by RS2. The liveness phase, where the
+strictness matters, states its own form. And "an earlier anchor" is the
+committed order (indices), the paper's `Link(A, b)` reading being
+equivalent through `Anchors.chained`
 (`docs/red-snapper.md` §3, finding 3).
 -/
 

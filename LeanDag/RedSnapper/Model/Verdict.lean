@@ -29,9 +29,13 @@ Three transcription notes, each provable rather than assumed. In
 conflict on the input (releases included, through `Anchors.chained`).
 In `resolveCommit`, the paper commits "the unique transaction in `H`" —
 here any member of `H`, whose uniqueness is a consequence of certificate
-uniqueness. And a candidate first included *after* its object's release
-anchor receives no drop verdict (the paper drops it operationally at a
-later anchor); it stays undecided, and no agreement claim weakens.
+uniqueness. And the guard-emitted drops of the paper — a candidate
+first included after its object's release anchor, and the drops the
+`decidedObj` guard and `FinalizeOnCommitTX`'s first loop record once a
+rival is finalized or the object decided — receive no verdict here:
+those transactions stay undecided, which only shrinks the set of
+derivable verdicts the agreement theorem covers, and their consistency
+with any finalization is certificate uniqueness.
 -/
 
 namespace LeanDag
