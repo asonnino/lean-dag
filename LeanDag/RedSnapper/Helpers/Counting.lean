@@ -76,6 +76,11 @@ theorem quorum_pos : 0 < quorum Validator := by
   unfold quorum
   omega
 
+/-- The half threshold is positive. -/
+theorem half_pos : 0 < half Validator := by
+  unfold half
+  omega
+
 /-- A block's parent set carries a trivial `AtLeast` at the quorum. -/
 theorem atLeast_parents_true {U : Universe Validator BlockId Tx Obj} {b : BlockId}
     (hb : b ∈ U.ids) (hr : 0 < (U.block b).round) :

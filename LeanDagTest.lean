@@ -99,3 +99,5 @@ import LeanDagTest.RedSnapper.Stance
 import LeanDagTest.RedSnapper.Votes
 import LeanDagTest.RedSnapper.Certificates
 import LeanDagTest.RedSnapper.CertificateHardening
+import LeanDagTest.RedSnapper.Verdict
+import LeanDagTest.RedSnapper.VerdictHardening

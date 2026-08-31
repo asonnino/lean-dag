@@ -294,3 +294,12 @@ import LeanDag.RedSnapper.Helpers.Counting
 import LeanDag.RedSnapper.Helpers.Chain
 import LeanDag.RedSnapper.Helpers.Exclusion
 import LeanDag.RedSnapper.CertificateExclusion.Proof
+import LeanDag.RedSnapper.Model.Anchors
+import LeanDag.RedSnapper.Model.Dead
+import LeanDag.RedSnapper.Model.Verdict
+import LeanDag.RedSnapper.Helpers.Anchors
+import LeanDag.RedSnapper.Helpers.Dead
+import LeanDag.RedSnapper.TxAgreement.Statement
+import LeanDag.RedSnapper.Helpers.Propagation
+import LeanDag.RedSnapper.Helpers.Verdict
+import LeanDag.RedSnapper.TxAgreement.Proof
