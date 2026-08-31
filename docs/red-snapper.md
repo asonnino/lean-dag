@@ -86,7 +86,7 @@ Three consequences shape the arc.
 | Consensus interface (C1)–(C4), `Dead`, `Resolves` | `Model/{Anchors, Dead}.lean` — `Anchors`, `DeadGiven`, `ResolveReadyGiven`, `ReleasedBelow`, `ResolvesAt`, `DeadAt` |
 | `TryFastDecideTX`, `TrySkipDecideObj`, `FinalizeOnCommitTX`, `ResolveOnCommitObj` | `Model/Verdict.lean` — `Fate`, `FastQuorumAtInView`, `SkipQuorumAtInView`, `TxVerdict` |
 | Theorem commit-safety, Lemma mixed-object safety | `TxAgreement/` (RS3) — `VerdictAgreement`, `NoConflictingFinal`, `MixedViaAnchor` |
-| Lemmas fp-liveness, equiv-live | `Model/{Liveness, HonestVoting}.lean`; `Uncontested/` (RS4), `ConflictResolution/` (RS5) |
+| Lemmas fp-liveness, equiv-live; `CastVotes` | `Model/{Liveness, HonestVoting}.lean` — `PopulatedOn`, `SynchronisedOn`, `VotingRule`; `Uncontested/` (RS4) — `FastLiveness`, `FastVerdict`; `ConflictResolution/` (RS5) — `Trichotomy`, `AnchorDecides` |
 | §8 certificates, refutations, moves, freeze, `Triggers`, `Resolves` | `Model/Five/{Certificates, Moves, Freeze}.lean` |
 | Lemmas single-stance-5f … full-cert-unique | `Five/FullCertSafety/` (RS6) |
 | Lemmas recovery-determinism, recovery-reflects, recovery-safety | `Five/RecoverySafety/` (RS7) |
@@ -136,7 +136,11 @@ it. The arc treats an object version as an opaque element of `Obj`;
 `Candidates(b, o)` is every valid transaction in `b`'s causal history
 spending `o`. Consequence: the object-reuse lemma (`o^{j+1}` becomes
 spendable once `o^j` is decided) is out of scope, and the gap is
-recorded on the definition.
+recorded on the definition. The direction of the gap flips with the
+side of a claim: enlarging `Candidates` is conservative inside the
+safety statements, but inside the hypothesis-predicate `VotingRule` it
+narrows applicability — an execution whose sole included candidate is
+unspendable satisfies the paper's rule and not the arc's.
 
 **D4 — Consensus as a chained anchor sequence.** The universe carries
 the committed anchors as a sequence of block ids in the universe,
@@ -283,6 +287,14 @@ or refines are updated at the last phase.
     form and `R = 0` suffices; for `C < f` the threshold `n + f − C + 1`
     exceeds `n` and cannot be met. RS1's `Tight` carries the condition
     (confirmed by the mechanisation: both sides are refuted by witnesses).
+18. **The uncontested-liveness premise counts invalid rivals, and
+    globally.** Lemma fp-liveness assumes "no conflicting transaction";
+    RS4 transcribes it as no conflicting transaction *included anywhere
+    in the universe*, which an included invalid rival voids (witnessed)
+    although the algorithm and the conclusion are untouched, and which a
+    rival first included far above the decision round voids too. The
+    premise should read: no *valid* conflicting transaction included
+    before certification.
 17. **The self-parent chain is an assumption the model never states.**
     The proofs use that a correct validator's blocks form a chain ("as it
     links its own block in every round"); the Preliminaries do not say

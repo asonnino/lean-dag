@@ -50,6 +50,27 @@ theorem reaches_own_of_round_le {b p : BlockId} (hb : b ∈ U.ids) (hp : p ∈ U
             (by omega) rfl
         exact Reaches.of_mem_parents hj this
 
+/-- A correct author's block has an own reachable block at every round
+at most its own — the no-gap consequence of the self-parent chain. -/
+theorem exists_own_block_of_le {b : BlockId} {m : ℕ} (hb : b ∈ U.ids)
+    (hc : (U.block b).author ∈ (Correct : Finset Validator))
+    (hm : m ≤ (U.block b).round) :
+    ∃ p, p ∈ U.ids ∧ (U.block p).author = (U.block b).author ∧
+      (U.block p).round = m ∧ Reaches U b p := by
+  obtain ⟨n, hn⟩ : ∃ n, (U.block b).round = n := ⟨_, rfl⟩
+  induction n using Nat.strong_induction_on generalizing b with
+  | _ n ih =>
+      subst hn
+      by_cases heq : (U.block b).round = m
+      · exact ⟨b, hb, rfl, heq, Reaches.refl⟩
+      · have hpos : 0 < (U.block b).round := by omega
+        obtain ⟨j, hj, haj⟩ := U.self_parent b hb hc hpos
+        have hjid := U.complete b hb j hj
+        have hjr := round_of_mem_parents hb hj
+        obtain ⟨p, hp, hap, hrp, hreach⟩ :=
+          ih (U.block j).round (by omega) hjid (haj.symm ▸ hc) (by omega) rfl
+        exact ⟨p, hp, hap.trans haj, hrp, Reaches.of_mem_parents hj hreach⟩
+
 /-- Two blocks of one correct author are comparable by reachability. -/
 theorem own_comparable {b p : BlockId} (hb : b ∈ U.ids) (hp : p ∈ U.ids)
     (hc : (U.block b).author ∈ (Correct : Finset Validator))

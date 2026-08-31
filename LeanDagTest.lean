@@ -101,3 +101,5 @@ import LeanDagTest.RedSnapper.Certificates
 import LeanDagTest.RedSnapper.CertificateHardening
 import LeanDagTest.RedSnapper.Verdict
 import LeanDagTest.RedSnapper.VerdictHardening
+import LeanDagTest.RedSnapper.Liveness
+import LeanDagTest.RedSnapper.LivenessHardening
