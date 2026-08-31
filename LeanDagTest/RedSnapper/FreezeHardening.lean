@@ -39,14 +39,12 @@ universes alone do not pin.
   Byzantine freezer that re-declares above its marker steers the real
   election one way while a mutant reading the marker block's
   declaration elects the other — the read point separated.
-* **`U6RecPre`** — deviation pin (queued for the record): the paper's
-  `Resolves` refuses a resolution if *any* earlier committed anchor
-  carries a marker quorum; `ResolvesFiveAt`'s one-shot clause scans
-  only strictly between trigger and resolution, so a universe whose
+* **`U6RecPre`** — the one-shot clause is paper-exact: a universe whose
   markers sit in the trigger's own history (unreachable under the real
-  protocol, where markers causally follow the trigger's commit)
-  resolves here and not in the paper. Safety is unaffected; if the
-  clause is widened to all `j' < j`, this pin flips.
+  protocol, where markers causally follow the trigger's commit) sees a
+  marker quorum at the trigger anchor itself, and the resolution
+  refuses to fire — `Resolves` scans every committed anchor before
+  `j`, the trigger included.
 * **`U6RecNoDecl` / `U6RecBadAck`** — `FreezeDiscipline` refuted clause
   by clause: a correct bare marker refutes `freeze_declares`, a correct
   first ACK of an invalid transaction refutes `ack_candidate` (with
@@ -585,7 +583,7 @@ example : VerdictFive U6Mut AMut (View.full U6Mut) (· ≤ ·) 0 Fate.finalized 
     ((eligibleFive_iff (by decide)).mpr (by decide))
     (fun _ _ => Fin.zero_le _)
 
-/-! ### The one-shot clause scans strictly between trigger and resolution (deviation pin) -/
+/-! ### The one-shot clause scans every anchor before the resolution (paper-exact) -/
 
 /-- Genesis 0 declares `ack 0` (it carries `tx 0`, so candidacy holds);
 genesis 1–4 declare `⊥`; all five freeze on block 6 already at
@@ -656,10 +654,11 @@ example : FreezeDiscipline U6RecPre := freezeDiscipline_iff.mpr (by decide)
 example : TriggerAt U6RecPre ARecPre 0 1 := triggerAt_iff.mpr (by decide)
 example : FreezeQuorum U6RecPre 6 0 6 := (freezeQuorum_iff (by decide)).mpr (by decide)
 
--- ... yet the resolution still fires at (1, 2): the least-j clause
--- never looks at indices ≤ i, where the paper's Resolves scans every
--- preceding committed anchor and would refuse all of them.
-example : ResolvesFiveAt U6RecPre ARecPre 0 1 2 := resolvesFiveAt_iff.mpr (by decide)
+-- ... and the resolution refuses to fire at (1, 2): the one-shot
+-- clause scans every committed anchor before `j`, the trigger itself
+-- included — the paper's Resolves, exactly.
+example : ¬ ResolvesFiveAt U6RecPre ARecPre 0 1 2 := fun h =>
+  absurd (resolvesFiveAt_iff.mp h) (by decide)
 
 /-! ### FreezeDiscipline refuted clause by clause -/
 

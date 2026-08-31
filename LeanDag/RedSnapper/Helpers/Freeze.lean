@@ -63,7 +63,7 @@ instance (A : Anchors U) (o : Obj) (i : ℕ) : Decidable (TriggerAtDec U A o i) 
 def ResolvesFiveAtDec (A : Anchors U) (o : Obj) (i j : ℕ) : Prop :=
   TriggerAtDec U A o i ∧ i < j ∧
     (∃ aₖ, A.seq[i]? = some aₖ ∧ ∃ a, A.seq[j]? = some a ∧ FreezeQuorumDec U aₖ o a) ∧
-    ∀ j' < j, i < j' → ∀ aₖ, A.seq[i]? = some aₖ → ∀ a, A.seq[j']? = some a →
+    ∀ j' < j, ∀ aₖ, A.seq[i]? = some aₖ → ∀ a, A.seq[j']? = some a →
       ¬ FreezeQuorumDec U aₖ o a
 
 set_option synthInstance.maxSize 4096 in
@@ -315,11 +315,11 @@ theorem resolvesFiveAt_iff {A : Anchors U} {o : Obj} {i j : ℕ} :
   constructor
   · rintro ⟨ht, hij, ⟨aₖ, a, hlk, hla, hq⟩, hleast⟩
     exact ⟨ht, hij, ⟨aₖ, hlk, a, hla, (freezeQuorum_iff (anchor_mem hla)).mp hq⟩,
-      fun j' h2 h1 aₖ' hlk' a' hla' hq' => hleast j' h1 h2 aₖ' a' hlk' hla'
+      fun j' hj aₖ' hlk' a' hla' hq' => hleast j' hj aₖ' a' hlk' hla'
         ((freezeQuorum_iff (anchor_mem hla')).mpr hq')⟩
   · rintro ⟨ht, hij, ⟨aₖ, hlk, a, hla, hq⟩, hleast⟩
     exact ⟨ht, hij, ⟨aₖ, a, hlk, hla, (freezeQuorum_iff (anchor_mem hla)).mpr hq⟩,
-      fun j' h1 h2 aₖ' a' hlk' hla' hq' => hleast j' h2 h1 aₖ' hlk' a' hla'
+      fun j' hj aₖ' a' hlk' hla' hq' => hleast j' hj aₖ' hlk' a' hla'
         ((freezeQuorum_iff (anchor_mem hla')).mp hq')⟩
 
 theorem eligibleFive_iff {aₖ a : BlockId} {o : Obj} {tx : Tx} (ha : a ∈ U.ids) :

@@ -87,14 +87,16 @@ def FreezeQuorum (U : Universe Validator BlockId Tx Obj) (aₖ : BlockId) (o : O
   AtLeastV (quorum Validator) fun id => Frozen U aₖ id o b
 
 /-- The recovery resolves `o` at the index pair `(i, j)` (the paper's
-`Resolves`): the trigger sits at `i`, and `j` is the least later index
-whose anchor sees a quorum of freeze markers for it — one-shot. The
-paper's `Link(A_k, A)` test is implied by `Anchors.chained`. -/
+`Resolves`): the trigger sits at `i`, `j` is a later index whose anchor
+sees a quorum of freeze markers for it, and no committed anchor before
+`j` — the trigger itself included — sees one: the paper's one-shot
+clause, exactly. The paper's `Link(A_k, A)` test is implied by
+`Anchors.chained`. -/
 def ResolvesFiveAt (U : Universe Validator BlockId Tx Obj) (A : Anchors U) (o : Obj)
     (i j : ℕ) : Prop :=
   TriggerAt U A o i ∧ i < j ∧
     (∃ aₖ a, A.seq[i]? = some aₖ ∧ A.seq[j]? = some a ∧ FreezeQuorum U aₖ o a) ∧
-    ∀ j', i < j' → j' < j → ∀ aₖ a, A.seq[i]? = some aₖ → A.seq[j']? = some a →
+    ∀ j' < j, ∀ aₖ a, A.seq[i]? = some aₖ → A.seq[j']? = some a →
       ¬ FreezeQuorum U aₖ o a
 
 /-- `tx` is eligible at the resolving anchor `a` under trigger `aₖ`
