@@ -12,12 +12,15 @@ consume the five clauses here, and nothing else of the algorithm.
 
 Scope, stated once. The rule models validators that have **not yet
 decided** the object: the paper's decided-stop (`held = decided`, no
-further declarations) is not modelled, so `conflicted_declares` can fail
-in a universe where a validator decided early and fell silent — the
-liveness claims are conditional on the rule and do not apply there,
-the honest analogue of `SynchronisedOn` being an assumption. The
-phase-2 retraction-on-`Dead` clause is not modelled either: no claim of
-this arc consumes it.
+further declarations) is not modelled. A validator that decides an
+object before ever declaring on it then falls silent where
+`conflicted_declares` — or, deciding before adopting, `ack_sole` —
+demands a stance; and the rule is one predicate over all objects and
+rounds, so a single such validator anywhere voids it for the whole
+universe. The liveness claims are conditional on the rule and simply do
+not apply there — the honest analogue of `SynchronisedOn` being an
+assumption. The phase-2 retraction-on-`Dead` clause is not modelled
+either: no claim of this arc consumes it.
 -/
 
 namespace LeanDag
@@ -40,7 +43,10 @@ structure VotingRule (U : Universe Validator BlockId Tx Obj) : Prop where
     ∀ o : Obj, (U.block b).declares o = some Stance.bot → Conflicted U b o
   /-- The uncontested path (phase 3, with persistence folded into the
   stance read): where a sole candidate is visible and the author does
-  not stand at `⊥`, it stands at the candidate. -/
+  not stand at `⊥`, it stands at the candidate. The `⊥` premise is
+  redundant under `bot_conflicted` — a `⊥` read needs a visible
+  conflict, contradicting soleness — and kept for fidelity to the
+  paper's `held ∈ {none, tx}` guard. -/
   ack_sole : ∀ b ∈ U.ids, (U.block b).author ∈ (Correct : Finset Validator) →
     ∀ (o : Obj) (tx : Tx), IsCandidate U b o tx →
       (∀ tx', IsCandidate U b o tx' → tx' = tx) →

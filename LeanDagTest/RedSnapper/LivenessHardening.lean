@@ -210,11 +210,21 @@ example : PopulatedOn ULiveInv (Correct : Finset (Fin 4)) 2 ∧
   unfold PopulatedOn; decide
 -- The conclusion still holds: the invalid rival changes nothing.
 example : FastQuorumAt ULiveInv 3 0 := fastQuorumAt_iff.mpr (by decide)
--- But the premise is void: the invalid rival is "included".
+-- The UNGATED premise of finding 18 is void — the invalid rival is
+-- "included" — which is why RS4's premise gates rivals by validity:
 example : ¬ (∀ tx' : Fin 4, Conflict (0 : Fin 4) tx' →
     ∀ b ∈ ULiveInv.ids, ¬ Includes ULiveInv b tx') := by
   intro h
   exact h 3 (by decide) 6 (by decide) ((mem_txsIn_iff (by decide)).mp (by decide))
+
+-- ... while the gated premise holds here, so the fixed RS4 applies.
+example : ∀ tx' : Fin 4, Transactions.Valid tx' → Conflict (0 : Fin 4) tx' →
+    ∀ b ∈ ULiveInv.ids, ¬ Includes ULiveInv b tx' := by
+  intro tx' hv hc b hb h
+  have hmem : tx' ∈ txsIn ULiveInv b := (mem_txsIn_iff hb).mpr h
+  clear h
+  revert b tx'
+  decide
 
 /-- Genesis 0–3 plus one round-1 block by correct validator 1; the
 round-1 block's content is the parameter. -/

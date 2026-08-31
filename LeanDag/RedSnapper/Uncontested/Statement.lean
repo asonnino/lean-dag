@@ -6,8 +6,11 @@ import LeanDag.RedSnapper.Model.Verdict
 # Uncontested liveness — statement
 
 RS4: the paper's Lemma fp-liveness, structurally — a valid transaction
-with no rival anywhere, carried by a correct block at round `r₀`, reaches
-a consensusless quorum of certificates two synchronised rounds later.
+with no valid rival anywhere, carried by a correct block at round `r₀`,
+reaches a consensusless quorum of certificates two synchronised rounds
+later. The rival quantifier is gated by validity (record finding 18):
+an included invalid rival is never a candidate and must not void the
+claim.
 
 The shape of the claim: under the stance discipline and the voting rule,
 with `Correct` populated at rounds `r₀ + 1` and `r₀ + 2` and
@@ -40,9 +43,9 @@ def FastLiveness (U : Universe Validator BlockId Tx Obj) : Prop :=
   VotingRule U →                      -- the liveness-side CastVotes clauses
   ∀ (tx : Tx) (r₀ R : ℕ) (b₀ : BlockId),
     T.Valid tx →                      -- a valid transaction ...
-    (∀ tx', Conflict tx tx' → ∀ b ∈ U.ids, ¬ Includes U b tx') →
-                                      -- ... with no rival included anywhere in the
-                                      -- universe: the sole candidate of its input
+    (∀ tx', T.Valid tx' → Conflict tx tx' → ∀ b ∈ U.ids, ¬ Includes U b tx') →
+                                      -- ... with no valid rival included anywhere:
+                                      -- the sole candidate of its input (finding 18)
     b₀ ∈ U.ids → (U.block b₀).author ∈ (Correct : Finset Validator) →
     (U.block b₀).round = r₀ →
     Includes U b₀ tx →                -- carried by a correct round-r₀ block;
@@ -64,7 +67,7 @@ def FastVerdict (U : Universe Validator BlockId Tx Obj) : Prop :=
   ∀ (tx : Tx) (r₀ R : ℕ) (b₀ : BlockId),
     Owned tx →                        -- the consensusless route's gate (D9)
     T.Valid tx →
-    (∀ tx', Conflict tx tx' → ∀ b ∈ U.ids, ¬ Includes U b tx') →
+    (∀ tx', T.Valid tx' → Conflict tx tx' → ∀ b ∈ U.ids, ¬ Includes U b tx') →
     b₀ ∈ U.ids → (U.block b₀).author ∈ (Correct : Finset Validator) →
     (U.block b₀).round = r₀ → Includes U b₀ tx →
     R ≤ r₀ → SynchronisedOn U (Correct : Finset Validator) R →
