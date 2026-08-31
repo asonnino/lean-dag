@@ -83,9 +83,9 @@ Three consequences shape the arc.
 | `IsFastVoteTX`, `IsSkipVoteObj`, `IsUnlockVoteObj` | `Model/Votes.lean` — `IsFastVote`, `IsBotVote`, `IsSkipVote`, `IsUnlockVote` |
 | `IsFastCertTX`, `HasCertTX`, `CertVisible`, `IsSkipCertObj`, `IsUnlockCertObj`; `DAG[r]` | `Model/Certificates.lean` — `AtLeast`, `blocksAt`, `IsFastCert`, `HasCert`, `CertVisible`, `IsSkipCert`, `IsUnlockCert`, `FastQuorumAt` |
 | Lemmas single-ack, cert-unique, univalent, fast-unlock-exclusion, cert-propagation | `CertificateExclusion/` (RS2) — `HonestSingleAck`, `CertUniqueness`, `AckSkipExclusion`, `AckUnlockExclusionBelow`, `CertPropagation` |
-| Consensus interface (C1)–(C4), `Dead`, `Resolves` | `Model/{Anchors, Dead}.lean` |
-| `TryFastDecideTX`, `TrySkipDecideObj`, `FinalizeOnCommitTX`, `ResolveOnCommitObj` | `Model/Verdict.lean` — `Verdict` |
-| Theorem commit-safety, Lemma mixed-object safety | `TxAgreement/` (RS3) |
+| Consensus interface (C1)–(C4), `Dead`, `Resolves` | `Model/{Anchors, Dead}.lean` — `Anchors`, `DeadGiven`, `ResolveReadyGiven`, `ReleasedBelow`, `ResolvesAt`, `DeadAt` |
+| `TryFastDecideTX`, `TrySkipDecideObj`, `FinalizeOnCommitTX`, `ResolveOnCommitObj` | `Model/Verdict.lean` — `Fate`, `FastQuorumAtInView`, `SkipQuorumAtInView`, `TxVerdict` |
+| Theorem commit-safety, Lemma mixed-object safety | `TxAgreement/` (RS3) — `VerdictAgreement`, `NoConflictingFinal`, `MixedViaAnchor` |
 | Lemmas fp-liveness, equiv-live | `Model/{Liveness, HonestVoting}.lean`; `Uncontested/` (RS4), `ConflictResolution/` (RS5) |
 | §8 certificates, refutations, moves, freeze, `Triggers`, `Resolves` | `Model/Five/{Certificates, Moves, Freeze}.lean` |
 | Lemmas single-stance-5f … full-cert-unique | `Five/FullCertSafety/` (RS6) |
@@ -111,7 +111,12 @@ correct validator above `n = 3f + 1`, so the paper's constants do not
 generalise and `n − f` is what every argument counts; this is the
 core's convention. Consequence: the `5f + 1` section is proved for
 every `n ≥ 5f + 1`, and RS1's corollaries are stated at `quorum` and
-`half` so that the exposure bound *is* the `Five` premise.
+`half` so that the exposure bound *is* the `Five` premise. The two
+consensusless finality quorums — the fast route's certificates and the
+skip route's skip certificates, both `2f + 1` blocks in the paper — are
+read at `quorum`: what certificate propagation counts, and, above
+`n = 3f + 1`, a deliberate strengthening of the skip route's premise
+that any skip-route liveness claim must meet.
 
 **D2 — One owned input per transaction.** §8 defines `IsOwned` as
 exactly one input; §7's `Dead` and the transaction-closed fixpoint
