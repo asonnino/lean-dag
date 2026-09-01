@@ -309,6 +309,37 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   A peer arc importing the Hydrozoan arc read-only, and the second
   developed in `asonnino/mysticeti`.
 
+- **RedSnapper** (`LeanDag/RedSnapper/`): the owned-object fast path of
+  the RedSnapper paper ("Snapper"), at both of its committees, over an
+  uncertified DAG whose consensus is a black-box sequence of committed
+  anchors. Validators publish a *stance* per object version in the
+  blocks they already produce; transaction, skip and unlock
+  certificates are read from the DAG; at `n ≥ 3f + 1` the univalent
+  conflicts are decided from the DAG and the bivalent one at an anchor,
+  while at `n ≥ 5f + 1` a validator revokes an earlier vote on
+  `2f + 1` opposing stances, a common coin coordinates the moves, and a
+  freeze-and-count election at an anchor bounds the resolution. The
+  revocation arithmetic is stated once, protocol-independently, as the
+  seam both protocols consume: the threshold `n + f − C + 1`, tight for
+  `f ≤ C ≤ n`, is *exposed* by every quorum exactly when `n ≥ 5f + 1`.
+  Safety at `3f + 1` consumes only stance monotonicity, verdicts agree
+  across views and routes, and the liveness pair closes under the
+  structural synchrony. The `5f + 1` layer's headline is that its
+  safety needs no `5f + 1`: every certificate exclusion closes at
+  `n ≥ 3f + 1`, and the wide committee is consumed exactly where the
+  paper's own seam says — exposure, the frozen set's overlap with a
+  hidden commit, and the coin round's universal movability, each gate
+  refuted by witness at the small committee. The coin is modelled as
+  its output, with the success probability as a cardinality — at least
+  `2f + 1` good targets, fixed measurably before a post-round draw —
+  and the recovery election's min-hash tie-break is a linear-order
+  parameter that provably carries no safety weight. Twenty-one findings
+  for the paper, among them the corrected trichotomy of conflict
+  resolution, the algorithm-versus-lemma-text refutation form, and that
+  the literal `4f + 1` threshold hides an *upper* bound on `n` that
+  parameterising by `n − f` removes. The arc consumes nothing from the
+  core; its record is `docs/red-snapper.md`.
+
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on
 exactly Lean's three standard axioms (`propext`, `Classical.choice`,
@@ -352,7 +383,9 @@ the set of declarations changes. `make help` lists them.
   three base rules, `Hydrozoan/` — the dual-path rule under hybrid
   faults, with its own fault model and universe, and
   `OptimalHydrozoan/` — its fast path at Hydrangea's bound, a peer arc
-  importing the first, all under a statement/proof partition (`Model/`, `<Result>/Statement.lean`,
+  importing the first, and `RedSnapper/` — the owned-object fast path
+  at `3f + 1` and `5f + 1`, with its own model of stances over an
+  uncertified DAG, all under a statement/proof partition (`Model/`, `<Result>/Statement.lean`,
   `<Result>/Proof.lean`); `Network/` — the composed
   denial-of-service capstones; `Integration/` — how the arcs compose).
 - `LeanDag.lean` — root import file.
