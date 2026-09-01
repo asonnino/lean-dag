@@ -24,7 +24,7 @@ variable {Validator BlockId Tx Obj : Type*} [Fintype Validator] [DecidableEq Val
 
 omit [DecidableEq BlockId] in
 theorem fastLiveness : FastLiveness U := by
-  intro hdisc hrule tx r₀ R b₀ hval hsole hb₀ hc₀ hr₀ hinc₀ hRr hsync hpop1 hpop2
+  intro hrule tx r₀ R b₀ hval hsole hb₀ hc₀ hr₀ hinc₀ hRr hsync hpop1 hpop2
   apply atLeast_of_correct_blocks quorum_le_card_correct
   intro v hv
   obtain ⟨b₂, hb₂, hab₂, hrb₂⟩ := hpop2 v hv
@@ -52,9 +52,9 @@ theorem fastLiveness : FastLiveness U := by
     fast_vote_of_sole hrule hval hsole hb₁ hwc₁ hinc₁⟩
 
 theorem fastVerdict : FastVerdict U := by
-  intro hdisc hrule tx r₀ R b₀ hown hval hsole hb₀ hc₀ hr₀ hinc₀ hRr hsync hpop1 hpop2
+  intro hrule tx r₀ R b₀ hown hval hsole hb₀ hc₀ hr₀ hinc₀ hRr hsync hpop1 hpop2
     A V hVfull
-  have hq := fastLiveness hdisc hrule tx r₀ R b₀ hval hsole hb₀ hc₀ hr₀ hinc₀ hRr
+  have hq := fastLiveness hrule tx r₀ R b₀ hval hsole hb₀ hc₀ hr₀ hinc₀ hRr
     hsync hpop1 hpop2
   refine TxVerdict.fastFinal (r := r₀ + 2) hown ?_
   unfold FastQuorumAtInView

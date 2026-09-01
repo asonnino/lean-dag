@@ -20,7 +20,9 @@ every route-level agreement claim rests on.
   certificate for `tx` and an unlock certificate for its input at a
   round at most the certificate's never both exist. Above the
   certificate's round the claim needs the voting rule, not the
-  discipline; it returns in a later phase.
+  discipline; the arc does not restate it — the anchor route resolves
+  the bivalent case instead (RS3), and the revised paper's
+  unconditional form is finding 22 of the record.
 * **Certificate propagation** (Lemma cert-propagation): once a quorum of
   blocks at one round certify `tx`, every block above that round has a
   certificate for `tx` in its causal history.

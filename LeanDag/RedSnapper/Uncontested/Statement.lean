@@ -12,7 +12,8 @@ later. The rival quantifier is gated by validity (record finding 18):
 an included invalid rival is never a candidate and must not void the
 claim.
 
-The shape of the claim: under the stance discipline and the voting rule,
+The shape of the claim: under the voting rule alone — the arc-wide audit found the
+safety automaton dead in both proofs and it was dropped —,
 with `Correct` populated at rounds `r₀ + 1` and `r₀ + 2` and
 synchronised from some `R ≤ r₀`, every correct block at `r₀ + 1` is a
 fast vote (the transaction spreads through synchrony; the sole-candidate
@@ -39,8 +40,9 @@ variable {Validator BlockId Tx Obj : Type*} [Fintype Validator] [DecidableEq Val
 /-- **Fast liveness**: an unrivalled valid transaction, carried by a
 correct round-`r₀` block, has a quorum of certificates at `r₀ + 2`. -/
 def FastLiveness (U : Universe Validator BlockId Tx Obj) : Prop :=
-  StanceDiscipline U →                -- the safety-side automaton (D5)
-  VotingRule U →                      -- the liveness-side CastVotes clauses
+  VotingRule U →                      -- the liveness-side CastVotes clauses;
+                                      -- the safety automaton is not consumed
+                                      -- (arc audit: dropped as dead)
   ∀ (tx : Tx) (r₀ R : ℕ) (b₀ : BlockId),
     T.Valid tx →                      -- a valid transaction ...
     (∀ tx', T.Valid tx' → Conflict tx tx' → ∀ b ∈ U.ids, ¬ Includes U b tx') →
@@ -63,7 +65,7 @@ def FastLiveness (U : Universe Validator BlockId Tx Obj) : Prop :=
 verdict follows in any view holding the whole universe, over every
 anchor sequence. -/
 def FastVerdict (U : Universe Validator BlockId Tx Obj) : Prop :=
-  StanceDiscipline U → VotingRule U →
+  VotingRule U →
   ∀ (tx : Tx) (r₀ R : ℕ) (b₀ : BlockId),
     Owned tx →                        -- the consensusless route's gate (D9)
     T.Valid tx →

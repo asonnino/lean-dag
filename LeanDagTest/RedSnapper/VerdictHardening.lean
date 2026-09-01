@@ -251,6 +251,30 @@ def VSkipPart : View USkip2 where
 example : ¬ SkipQuorumAtInView USkip2 VSkipPart 2 0 := fun h =>
   absurd (skipQuorumAtInView_iff.mp h) (by decide)
 
+/-! ### Arc audit: UCert/ACert: unpinned discriminating facts on the committed
+bivalent-retraction universe. -/
+
+-- The unlock certificate at anchor 18 does NOT kill tx 0 (the
+-- "unlock is bivalent, never witnesses death" clause of DeadGiven —
+-- a mutant adding IsUnlockCert to DeadGiven passes the current suite).
+example : ¬ DeadAt UCert ACert 1 0 := fun h => absurd (deadAt_iff.mp h) (by decide)
+
+-- Anchor 18 has the conflict, the unlock evidence, and a certified
+-- ALIVE candidate: not release-ready — the middle conjunct of
+-- ResolveReadyGiven biting on its own (never exercised in the suite).
+example : ¬ ResolveReadyAt UCert ACert 1 0 := fun h =>
+  absurd (resolveReadyAt_iff.mp h) (by decide)
+example : ¬ ReleasedBelow UCert ACert 2 0 := fun h =>
+  absurd ((releasedBelow_iff 2 0).mp h) (by decide)
+
+-- CertVisible through a parent's HasCert ONLY: id 18's parents are all
+-- ⊥ voters (no fast-vote quorum), yet the certificate is in a parent's
+-- history — the second disjunct exercised alone for the first time.
+example : CertVisible UCert 18 0 := (certVisible_iff (by decide)).mpr (by decide)
+example : ¬ AtLeast UCert (quorum (Fin 4)) (UCert.block 18).parents
+    (fun b => IsFastVoteDec UCert b 0) := fun h =>
+  absurd (atLeast_iff_filter.mp h) (by decide)
+
 end RedSnapper
 
 end LeanDagTest

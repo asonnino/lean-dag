@@ -63,8 +63,9 @@ yields a resolving index in between. -/
 def ResolutionExists (U : Universe Validator BlockId Tx Obj) (A : Anchors U) : Prop :=
   ∀ (o : Obj) (i j : ℕ) (aₖ a : BlockId),
     TriggerAt U A o i →                   -- the trigger at index i ...
-    A.seq[i]? = some aₖ → A.seq[j]? = some a → i < j →
-                                          -- ... and a later committed anchor (C4)
+    A.seq[i]? = some aₖ → A.seq[j]? = some a →
+                                          -- ... and a committed anchor (C4; that
+                                          -- j > i follows from the premises)
     (∀ i' ≤ i, ∀ a', A.seq[i']? = some a' → ¬ FreezeQuorum U aₖ o a') →
                                           -- no quorum at or before the trigger: the
                                           -- structural "markers causally follow the
@@ -79,7 +80,7 @@ def ResolutionExists (U : Universe Validator BlockId Tx Obj) (A : Anchors U) : P
 anchor receives a verdict, in every view. -/
 def RecoveryDecides (U : Universe Validator BlockId Tx Obj) (A : Anchors U) : Prop :=
   ∀ (prio : Tx → Tx → Prop), IsLinearOrder Tx prio →
-                                          -- the shared tie-break order (F4)
+                                          -- the shared tie-break order (D8)
   ∀ (V : View U) (o : Obj) (i j : ℕ) (a : BlockId) (tx : Tx),
     ResolvesFiveAt U A o i j →            -- a resolution ...
     A.seq[j]? = some a →

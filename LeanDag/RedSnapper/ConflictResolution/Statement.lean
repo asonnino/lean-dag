@@ -41,8 +41,10 @@ variable {Validator BlockId Tx Obj : Type*} [Fintype Validator] [DecidableEq Val
 /-- **The trichotomy at `r + 2`**: a certified candidate in the history,
 or an unlock certificate at the block itself. -/
 def Trichotomy (U : Universe Validator BlockId Tx Obj) : Prop :=
-  StanceDiscipline U →                -- the safety-side automaton (D5)
-  VotingRule U →                      -- the liveness-side CastVotes clauses
+  VotingRule U →                      -- the liveness-side CastVotes clauses;
+                                      -- the safety automaton is not consumed here
+                                      -- (arc audit: dropped as dead); AnchorDecides
+                                      -- below does consume it, through RS2
   ∀ (o : Obj) (r R : ℕ) (b₀ : BlockId),
     b₀ ∈ U.ids → (U.block b₀).author ∈ (Correct : Finset Validator) →
     (U.block b₀).round = r →

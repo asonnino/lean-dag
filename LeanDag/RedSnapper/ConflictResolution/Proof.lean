@@ -32,7 +32,7 @@ open CertificateExclusion
 
 omit [DecidableEq BlockId] in
 theorem trichotomy : Trichotomy U := by
-  intro hdisc hrule o r R b₀ hb₀ hc₀ hr₀ hconf₀ hRr hsync hpop1 b hb hcb hrb
+  intro hrule o r R b₀ hb₀ hc₀ hr₀ hconf₀ hRr hsync hpop1 b hb hcb hrb
   by_cases hack : ∃ b₁ ∈ U.ids, (U.block b₁).author ∈ (Correct : Finset Validator) ∧
       (U.block b₁).round = r + 1 ∧ ∃ tx, (U.block b₁).declares o = some (Stance.ack tx)
   · obtain ⟨b₁, hb₁, hc₁, hr₁, tx, hd⟩ := hack
@@ -88,7 +88,7 @@ theorem anchorDecides : AnchorDecides U := by
     push Not at hlive
     obtain ⟨p, hp, hap, hrp, hreach⟩ := exists_own_block_of_le haid hca (m := r + 2) hra
     have hpc : (U.block p).author ∈ (Correct : Finset Validator) := hap.symm ▸ hca
-    have htri := trichotomy hdisc hrule o r R b₀ hb₀ hc₀ hr₀ hconf₀ hRr hsync hpop1
+    have htri := trichotomy hrule o r R b₀ hb₀ hc₀ hr₀ hconf₀ hRr hsync hpop1
       p hp hpc hrp
     have hready : ResolveReadyAt U A i o ∨ ReleasedBelow U A i o := by
       rcases htri with ⟨tx, hcand_p, hcert_p⟩ | huc

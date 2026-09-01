@@ -7,11 +7,12 @@ import LeanDag.RedSnapper.Helpers.Freeze
 Generated proof layer; not part of the audit surface. Uniqueness is
 least-index logic plus antisymmetry. The reflection claim is
 `frozen_stance_eq_ack` — the certificate's correct core reads `ack tx`
-wherever its markers are visible — intersected with the resolving
-anchor's marker quorum (`|F ∩ S| ≥ 2f + 1` needs `Five`); its
-uniqueness half and the winner claim are `not_atLeastV_of_disjoint`
-counts at any committee; the release claim is the reflection claim's
-contrapositive.
+wherever its markers are visible — intersected with the marker quorum
+(`|F ∩ S| ≥ 2f + 1` needs `Five`); its uniqueness half and the winner
+claim are `not_atLeastV_of_disjoint` counts at any committee; the
+release claim is the reflection claim's contrapositive.
+`recoveryReflects_at` re-packages the reflection claim at a resolution,
+the shape RS8 consumes.
 -/
 
 namespace LeanDag
@@ -22,10 +23,9 @@ namespace RecoverySafety
 
 variable {Validator BlockId Tx Obj : Type*} [Fintype Validator] [DecidableEq Validator]
   [F : Faults Validator] [T : Transactions Tx Obj] {U : Universe Validator BlockId Tx Obj}
-  {A : Anchors U}
 
-theorem resolutionUnique {prio : Tx → Tx → Prop} (hord : IsLinearOrder Tx prio) :
-    ResolutionUnique U A prio := by
+theorem resolutionUnique {A : Anchors U} {prio : Tx → Tx → Prop}
+    (hord : IsLinearOrder Tx prio) : ResolutionUnique U A prio := by
   constructor
   · intro o i j i' j' h h'
     have hi : i = i' := by
@@ -48,19 +48,14 @@ theorem resolutionUnique {prio : Tx → Tx → Prop} (hord : IsLinearOrder Tx pr
     exact antisymm (hmin tx' he') (hmin' tx he)
 
 theorem recoveryReflects (hmove : MoveDiscipline U) (hfd : FreezeDiscipline U)
-    (hfive : Five Validator) : RecoveryReflects U A := by
-  intro o i j aₖ a tx hres hlk hla hown hin ⟨C, hC, hfull⟩
+    (hfive : Five Validator) : RecoveryReflects U := by
+  intro o aₖ a tx ha hq hown hin ⟨C, hC, hfull⟩
   subst hin
-  have ha : a ∈ U.ids := anchor_mem hla
   have hn := F.card_validators
   have h5 := hfive.card_validators
   obtain ⟨S, hS, hk, hfroz⟩ := frozen_stance_eq_ack hmove hfd hC hfull
-  -- the marker quorum at the resolving anchor
-  obtain ⟨aₖ', a', hlk', hla', hq⟩ := hres.2.2.1
-  rw [hlk] at hlk'
-  rw [hla] at hla'
-  rw [← Option.some.inj hlk', ← Option.some.inj hla'] at hq
-  -- its overlap with the certificate's core: frozen and standing at tx
+  -- the marker quorum's overlap with the certificate's core: frozen and
+  -- standing at tx
   obtain ⟨t, htS, hfr_t, hcard⟩ := atLeastV_inter (S := S) hq
   have hhalf : half Validator ≤ t.card := by
     unfold quorum at hk hcard
@@ -69,7 +64,9 @@ theorem recoveryReflects (hmove : MoveDiscipline U) (hfd : FreezeDiscipline U)
   have hstance : ∀ v ∈ t, Frozen U aₖ v (T.input tx) a ∧
       StanceIs U v (T.input tx) a (some (Stance.ack tx)) := fun v hv =>
     ⟨hfr_t v hv, hfroz v (htS hv) aₖ a ha (hfr_t v hv)⟩
-  have hne : t.Nonempty := Finset.card_pos.mp (by have := half_pos (Validator := Validator); omega)
+  have hne : t.Nonempty := Finset.card_pos.mp (by
+    have := half_pos (Validator := Validator)
+    omega)
   obtain ⟨v₀, hv₀⟩ := hne
   have helig : EligibleFive U aₖ a (T.input tx) tx := by
     refine ⟨⟨hown, candidate_of_stance_ack hfd (hS (htS hv₀)) (hstance v₀ hv₀).2⟩,
@@ -88,15 +85,13 @@ theorem recoveryReflects (hmove : MoveDiscipline U) (hfd : FreezeDiscipline U)
   exact hne' this
 
 theorem recoverySafetyBot (hmove : MoveDiscipline U) (hfd : FreezeDiscipline U)
-    (hfive : Five Validator) : RecoverySafetyBot U A := by
-  intro o i j aₖ a hres hlk hla hempty tx hown hin C hC hfull
-  exact hempty tx (recoveryReflects hmove hfd hfive o i j aₖ a tx hres hlk hla hown hin
+    (hfive : Five Validator) : RecoverySafetyBot U := by
+  intro o aₖ a ha hq hempty tx hown hin C hC hfull
+  exact hempty tx (recoveryReflects hmove hfd hfive o aₖ a tx ha hq hown hin
     ⟨C, hC, hfull⟩).1
 
-theorem recoverySafetyWin (_hmove : MoveDiscipline U) (hfd : FreezeDiscipline U) :
-    RecoverySafetyWin U A := by
-  intro o i j aₖ a tx hres hlk hla helig tx' hconf C hC hround hfull'
-  have ha : a ∈ U.ids := anchor_mem hla
+theorem recoverySafetyWin (hfd : FreezeDiscipline U) : RecoverySafetyWin U := by
+  intro o aₖ a tx ha helig tx' hconf C hC hround hfull'
   have hn := F.card_validators
   obtain ⟨⟨hown, hcand⟩, w, hw, hwcard⟩ := helig
   have ho : T.input tx = o := hcand.2.1
@@ -128,7 +123,7 @@ theorem recoverySafetyWin (_hmove : MoveDiscipline U) (hfd : FreezeDiscipline U)
   obtain ⟨hfr, hst⟩ := hw v hvw
   obtain ⟨m, hm, ham, hrm, hmk⟩ := hfr
   have hcm : (U.block m).author ∈ (Correct : Finset Validator) := ham.symm ▸ hvc
-  -- the marker's declaration is `ack tx`, read at the anchor
+  -- the marker's declaration is `ack tx`, read at the electing block
   obtain ⟨s, hds, hsta⟩ := stance_at_of_frozen hfd hm ha hcm hrm hmk
   have hs : s = Stance.ack tx := by
     have := stanceIs_unique (ham ▸ hsta) hst
@@ -151,11 +146,27 @@ theorem recoverySafetyWin (_hmove : MoveDiscipline U) (hfd : FreezeDiscipline U)
   simp only [Option.some.injEq, Stance.ack.injEq] at this
   exact hconf.1 this
 
+/-- The reflection claim re-packaged at a resolution — the shape RS8
+consumes: the resolving anchor's marker quorum is extracted from
+`ResolvesFiveAt`'s third clause. -/
+theorem recoveryReflects_at {A : Anchors U} (hmove : MoveDiscipline U)
+    (hfd : FreezeDiscipline U) (hfive : Five Validator) {o : Obj} {i j : ℕ}
+    {aₖ a : BlockId} {tx : Tx} (hres : ResolvesFiveAt U A o i j)
+    (hlk : A.seq[i]? = some aₖ) (hla : A.seq[j]? = some a)
+    (hown : Owned tx) (hin : T.input tx = o)
+    (hcert : ∃ C ∈ U.ids, IsFullCert U C tx) :
+    EligibleFive U aₖ a o tx ∧ ∀ tx', EligibleFive U aₖ a o tx' → tx' = tx := by
+  obtain ⟨aₖ', a', hlk', hla', hq⟩ := hres.2.2.1
+  rw [hlk] at hlk'
+  rw [hla] at hla'
+  rw [← Option.some.inj hlk', ← Option.some.inj hla'] at hq
+  exact recoveryReflects hmove hfd hfive o aₖ a tx (anchor_mem hla) hq hown hin hcert
+
 theorem holds : Statement := by
-  intro Validator BlockId Tx Obj _ _ _ _ U A
-  exact ⟨fun prio hord => resolutionUnique hord,
-    fun hmove hfd => ⟨recoverySafetyWin hmove hfd,
-      fun hfive => ⟨recoveryReflects hmove hfd hfive,
+  intro Validator BlockId Tx Obj _ _ _ _ U
+  exact ⟨fun A prio hord => resolutionUnique hord,
+    fun hfd => ⟨recoverySafetyWin hfd,
+      fun hmove hfive => ⟨recoveryReflects hmove hfd hfive,
         recoverySafetyBot hmove hfd hfive⟩⟩⟩
 
 end RecoverySafety

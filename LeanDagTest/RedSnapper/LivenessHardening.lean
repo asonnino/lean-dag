@@ -342,6 +342,64 @@ example : ¬ PopulatedOn UQ (Correct : Finset (Fin 7)) 1 := by
   unfold PopulatedOn; decide
 example : quorum (Fin 7) ≤ (authorsOf UQ.block (blocksAt UQ 1)).card := by decide
 
+/-! ### Arc audit: `VotingRule.conflicted_declares` has no clause-attributed
+negative: ¬VotingRule UBiv also breaks ack_sole. UN5 isolates it. -/
+
+def UN5 : Universe (Fin 4) (Fin 6) (Fin 4) (Fin 2) where
+  ids := Finset.univ.erase 5
+  block := lk1 {0, 1} none
+  complete := by decide
+  valid := by decide
+  no_equivocation := by decide
+  self_parent := by decide
+
+-- conflicted_declares fails ...
+example : ¬ (∀ b ∈ UN5.ids, (UN5.block b).author ∈ (Correct : Finset (Fin 4)) →
+    ∀ o : Fin 2, 1 < (candidates UN5 b o).card → (UN5.block b).declares o ≠ none) := by
+  decide
+example : ¬ VotingRule UN5 := fun h => absurd (votingRule_iff.mp h) (by decide)
+
+-- ... while the other four clauses hold: clause-attributed.
+example : (∀ b ∈ UN5.ids, (UN5.block b).author ∈ (Correct : Finset (Fin 4)) →
+    ∀ (o : Fin 2) (tx : Fin 4), (UN5.block b).declares o = some (Stance.ack tx) →
+      tx ∈ candidates UN5 b o) ∧
+    (∀ b ∈ UN5.ids, (UN5.block b).author ∈ (Correct : Finset (Fin 4)) →
+    ∀ o : Fin 2, (UN5.block b).declares o = some Stance.bot →
+      1 < (candidates UN5 b o).card) ∧
+    (∀ b ∈ UN5.ids, (UN5.block b).author ∈ (Correct : Finset (Fin 4)) →
+    ∀ (o : Fin 2) (tx : Fin 4), tx ∈ candidates UN5 b o →
+      (∀ tx' ∈ candidates UN5 b o, tx' = tx) →
+      ¬ StanceSomeDec UN5 (UN5.block b).author o b Stance.bot →
+      StanceSomeDec UN5 (UN5.block b).author o b (Stance.ack tx)) ∧
+    (∀ b ∈ UN5.ids, (UN5.block b).author ∈ (Correct : Finset (Fin 4)) →
+    ∀ (o : Fin 2) (tx : Fin 4), 1 < (candidates UN5 b o).card →
+      (UN5.block b).declares o = some (Stance.ack tx) →
+      CertVisibleDec UN5 b tx) := by decide
+
+-- And ack_sole indeed ALSO fails on UBiv (block 7: sole candidate tx 1,
+-- author silent): the committed ¬VotingRule UBiv is not attributable to
+-- conflicted_declares.
+example : ¬ (∀ b ∈ UBiv.ids, (UBiv.block b).author ∈ (Correct : Finset (Fin 4)) →
+    ∀ (o : Fin 2) (tx : Fin 4), tx ∈ candidates UBiv b o →
+      (∀ tx' ∈ candidates UBiv b o, tx' = tx) →
+      ¬ StanceSomeDec UBiv (UBiv.block b).author o b Stance.bot →
+      StanceSomeDec UBiv (UBiv.block b).author o b (Stance.ack tx)) := by decide
+/-! ### Arc audit: RS5's AnchorDecides LEFT disjunct is never exhibited under
+live premises: UKeep2 (VotingRule holds) has no anchors. Anchor 14
+finalizes the kept candidate by resolveCommit. -/
+
+def AKeep2 : Anchors UKeep2 where
+  seq := [14]
+  mem := by decide
+  chained := by simp
+
+example : TxVerdict UKeep2 AKeep2 (View.full UKeep2) 0 .finalized :=
+  TxVerdict.resolveCommit (i := 0) (a := 14) rfl
+    ((conflicted_iff (by decide)).mpr (by decide))
+    ((mem_candidates_iff (by decide)).mp (by decide))
+    ((hasCert_iff (by decide)).mpr (by decide))
+    (fun h => absurd (deadAt_iff.mp h) (by decide))
+
 end RedSnapper
 
 end LeanDagTest

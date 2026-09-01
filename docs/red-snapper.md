@@ -31,16 +31,16 @@ consume. Results carry **RS**-labels; everything lives in
 the core.
 
 This record was written at Phase 0 as the plan; this is the final
-position. Everything planned is proved: RS1–RS9, nine `holds` theorems
+position. Everything planned is proved: RS1–RS9, ten `holds` theorems
 each pinned by the axiom tripwire to `[propext, Classical.choice,
 Quot.sound]`, over a trusted core the reader can audit without reading
 a proof. The headline the mechanisation adds to the paper: **the
 `5f + 1` rules' safety needs only `n ≥ 3f + 1`** — every certificate
 exclusion closes at the small committee (finding 19), and the wide one
-is consumed exactly three times, all on the liveness side: the frozen
-set's overlap with a hidden commit (finding 20), the fragmented coin
-round's universal movability, and RS1's exposure itself, the seam §10
-of the paper draws.
+is consumed exactly three times: the frozen set's overlap with a
+hidden commit (finding 20 — a safety count, serving RS8 through the
+reflection claim), the fragmented coin round's universal movability,
+and RS1's exposure itself, the seam §10 of the paper draws.
 
 ## 0. Overview
 
@@ -249,13 +249,15 @@ assumed anywhere.
   ack/unlock exclusion, and certificate propagation, at `n ≥ 3f + 1`
   under `StanceDiscipline` alone — the `held` automaton's monotonicity,
   nothing about when a validator votes.
-- **RS3 `TxAgreement/`** — verdict agreement across views and routes,
-  no two conflicting finalisations, and the mixed corollary, under
-  `StanceDiscipline`; the anchors are one global value (D4), so
+- **RS3 `TxAgreement/`** — verdict agreement across views and routes
+  and no two conflicting finalisations under `StanceDiscipline`; the
+  mixed corollary with no hypothesis at all (arc audit); the anchors are one global value (D4), so
   cross-validator agreement about the anchor route is definitional and
   the theorem's content is route-pair exclusion.
 - **RS4 `Uncontested/` and RS5 `ConflictResolution/`** — the `3f + 1`
-  liveness pair under `VotingRule` and the structural synchrony of
+  liveness pair under `VotingRule` alone (the safety automaton is not
+  consumed — arc audit; `AnchorDecides` still takes it, through RS2)
+  and the structural synchrony of
   `PopulatedOn`/`SynchronisedOn`: a sole valid candidate reaches fast
   finality two synchronised rounds after its carrier (the no-rival
   premise gated by validity, finding 18), and a conflict resolves at
@@ -269,13 +271,14 @@ assumed anywhere.
   other at any round pair, and conflicting full certificates never
   coexist — **all at `n ≥ 3f + 1`** (finding 19).
 - **RS7 `Five/RecoverySafety/`** — resolution uniqueness for any linear
-  order; under `MoveDiscipline` and `FreezeDiscipline`, a full
-  certificate anywhere makes its transaction the unique eligible one at
-  the resolving anchor (candidacy derived, round-unconditional —
+  order; the election claims stated, after the arc audit, at a bare
+  marker quorum with no resolution in sight: under `MoveDiscipline` and
+  `FreezeDiscipline` a full certificate anywhere makes its transaction
+  the unique eligible one (candidacy derived, round-unconditional —
   finding 21; needs `Five`), an empty election forbids any full
-  certificate ever (needs `Five`), and no rival of an eligible
-  transaction certifies above the resolution (no `Five`, no
-  `MoveDiscipline`).
+  certificate ever (needs `Five`), and — under `FreezeDiscipline`
+  alone, at any block — no rival of an eligible transaction certifies
+  above it (no `Five`, no `MoveDiscipline`, no anchors).
 - **RS8 `Five/Agreement/`** — Theorem safety-5f: verdict agreement and
   no conflicting finalisation across views for the order-free
   `VerdictFive`, under `Five`, both disciplines, and the shared
@@ -339,7 +342,9 @@ mechanisation's own.
 3. **"Earlier anchor" by `Link`.** `Dead` and `Spendable` test an
    earlier anchor by `Link(A, b)`; the proofs reason by commit order and
    local state. The two agree only if earlier anchors lie in later
-   anchors' histories — true of Mysticeti, stated nowhere (D4).
+   anchors' histories — true of Mysticeti, stated nowhere (D4). The
+   2026-09-01 revision formalised (C1)–(C4) with Mysticeti citations
+   and still omits chaining — the natural place for it.
 4. **Fast commit and the unlock certificate.** The lemma's title says
    "while an unlock certificate exists"; its proof covers rounds `≤ r`,
    and the round-counting is not the reason: a correct validator at `⊥`
@@ -398,6 +403,11 @@ mechanisation's own.
 15. **Hygiene.** §5 cites `sec:fastunlock`, `sec:fastfinality`,
     `lem:ackuniqueness`, `lem:fullcertuniqueness`, none defined;
     `3.RelatedWork.tex` and `9.parallelCertification .tex` are empty.
+    The 2026-09-01 revision adds: a `\ref{def:AtomicBroadcast}` whose
+    label is now `def:cab`; `IsFullUnlockCertTX` in Lemma
+    full-excludes-unlock where the algorithm defines `…Obj`; a
+    redundant `decidedObj` guard in `ResolveOnCommitObj`; "inlcudes"
+    and a leftover `\fatima` note in the proofs.
 16. **Tightness has a side condition.** "Moreover, this threshold is
     tight" holds for `f ≤ C ≤ n` only: for `C > n` no certificate can
     form and `R = 0` suffices; for `C < f` the threshold `n + f − C + 1`
@@ -460,6 +470,46 @@ mechanisation's own.
     specification with no stated reduction from the protocol's results
     (the arc's RS3/RS8 give Conflict safety and RS4 Honest Liveness;
     no reduction is mechanised either — recorded out of scope).
+25. **Theorem three-safety's totality clause is a liveness claim**
+    (2026-09-01 revision). "All correct validators *eventually agree on
+    one of the following outcomes*" rests on eventual observation and
+    (C4)/(C5); the theorem's second sentence is RS3 exactly, but no
+    mechanised result — and no pure-safety argument — yields the
+    eventual-outcome half, which RS4/RS5 deliver only under the voting
+    rule and synchrony. Flag the clause as liveness or drop it from the
+    safety statement.
+26. **A mixed transaction can be fully certified, and nothing
+    consensusless consumes it.** The paper's `5f + 1` predicates carry
+    `IsOwned` down to the fast vote and the `Adopt` guard, so a correct
+    validator never stands at a mixed ACK; the arc's shared `IsFastVote`
+    has no owned gate, and a witness (`UMixSix`) exhibits a full
+    certificate for the mixed transaction that no `VerdictFive` route
+    finalises — `fullFinal`'s D9 gate alone stands in the way. In the
+    arc this is a modelling seam (the coin lemma's "a certificate is
+    witnessed" is decision-effective only for owned stances); for the
+    paper it is a reminder that the `IsOwned` gates on the `5f + 1`
+    vote predicates are load-bearing and worth a sentence.
+27. **Several hypotheses in the paper's lemmas are dead, mechanically.**
+    The arc-wide audit re-proved and restated: the `3f + 1` liveness
+    pair consumes the voting rule only — the stance automaton is not
+    used by fp-liveness or the trichotomy; the mixed-object corollary
+    consumes no behavioural hypothesis at all; and the `5f + 1`
+    election claims hold at a bare marker quorum — recovery-reflects
+    and recovery-safety need no trigger, no one-shot, and (for the
+    winner claim) no move rule and no resolution whatsoever. The
+    paper's proofs could say so; the arc's statements now do.
+28. **Two protocol-independent readings of §10, both favourable.** The
+    arc's `Exposes` lets a both-ways Byzantine voter count on both
+    sides (the paper partitions votes), making the mechanised
+    sufficiency direction weaker and necessity stronger — a consumer
+    counting one vote per validator recovers the paper's form; and the
+    arc's revocation threshold aggregates opposing votes across all
+    rivals where Theorem vote-revocation names a single `x′` — strictly
+    stronger, and the form the `5f + 1` split refutation needs. Also:
+    RS5's anchor resolution is stated at a *correct-authored* committed
+    anchor (its proof walks the anchor's own chain); the paper's lemma
+    does not say so, though the formalised (C4) makes such anchors the
+    ones consensus guarantees.
 20. **The recovery layer is where `5f + 1` is load-bearing.**
     Complementing finding 19: Lemma recovery-reflects and claim 1 of
     recovery-safety consume the bound — the frozen set omits at most
@@ -541,6 +591,21 @@ read from the constrained block — circular, hence vacuous, on the
 target's own block — to the target's referenced round-parent, the
 algorithm's pre-write read (the Phase 9 audit compiled a universe where
 the original form holds and the concentrated coin lemma is false).
+The arc-wide audit then amended five frozen statements once more, on
+the author's go, dropping hypotheses their proofs never used: the
+liveness pair and the trichotomy lost `StanceDiscipline`, the mixed
+corollary moved outside the discipline arrow, the three RS7 election
+claims lost the resolution apparatus (and the winner claim the move
+rule), and `ResolutionExists` lost a derivable index bound — each drop
+a strictly stronger theorem, recorded as finding 27.
+
+**Checker scope.** `check-arc-holes.py` bars `theorem`/`lemma`/
+`example` from `Model/` and additionally `instance` from
+`Statement.lean`; Model-file instances are permitted repo-wide (other
+arcs carry `inferInstanceAs` decidability instances), so a
+tactic-proved instance in a Model file would pass the checker — the arc
+keeps its Model files instance-free, and the axioms tripwire backstops
+every headline.
 
 **Relation to the core.** None consumed: the arc carries its own fault
 model, blocks, universe and reachability, so that its trusted core is

@@ -96,11 +96,11 @@ private theorem fate_exclusive {V V' : View U} {prio : Tx → Tx → Prop}
           exact commitExcludesUnlock hmove _ (V.subset_ids hC₁) _ (V'.subset_ids hC₂)
             tx hcert hunlock
       | recoveryDropLoser hres hlk hla hcand helig' hmin' hne' =>
-          obtain ⟨-, huniq⟩ := recoveryReflects hmove hfd hfive _ _ _ _ _ tx hres hlk hla
+          obtain ⟨-, huniq⟩ := recoveryReflects_at hmove hfd hfive hres hlk hla
             hown rfl ⟨_, V.subset_ids hC₁, hcert⟩
           exact hne' (huniq _ helig').symm
       | recoveryDropBot hres hlk hla hcand hempty =>
-          obtain ⟨helig, -⟩ := recoveryReflects hmove hfd hfive _ _ _ _ _ tx hres hlk hla
+          obtain ⟨helig, -⟩ := recoveryReflects_at hmove hfd hfive hres hlk hla
             hown rfl ⟨_, V.subset_ids hC₁, hcert⟩
           exact hempty tx helig
   | recoveryFinal hres hlk hla helig hmin =>
@@ -151,13 +151,13 @@ theorem noConflictingFinal {prio : Tx → Tx → Prop} (hord : IsLinearOrder Tx 
           exact fullCertUniqueness hmove _ (V.subset_ids hC₁) _ (V'.subset_ids hC₂)
             tx tx' hconf hcert hcert'
       | recoveryFinal hres hlk hla helig hmin =>
-          obtain ⟨-, huniq⟩ := recoveryReflects hmove hfd hfive _ _ _ _ _ tx hres hlk hla
+          obtain ⟨-, huniq⟩ := recoveryReflects_at hmove hfd hfive hres hlk hla
             hown hconf.2 ⟨_, V.subset_ids hC₁, hcert⟩
           exact hconf.1 (huniq _ helig).symm
   | recoveryFinal hres hlk hla helig hmin =>
       cases h₂ with
       | fullFinal hown' hC₂ hcert' =>
-          obtain ⟨-, huniq⟩ := recoveryReflects hmove hfd hfive _ _ _ _ _ tx' hres hlk hla
+          obtain ⟨-, huniq⟩ := recoveryReflects_at hmove hfd hfive hres hlk hla
             hown' hconf.2.symm ⟨_, V'.subset_ids hC₂, hcert'⟩
           exact hconf.1 (huniq _ helig)
       | recoveryFinal hres' hlk' hla' helig' hmin' =>

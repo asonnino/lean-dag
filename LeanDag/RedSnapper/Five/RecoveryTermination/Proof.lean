@@ -42,7 +42,7 @@ theorem triggerExists : TriggerExists U A := by
 
 omit [DecidableEq BlockId] in
 theorem resolutionExists : ResolutionExists U A := by
-  intro o i j aₖ a htrig hlk hla hij hnopre hfrozen
+  intro o i j aₖ a htrig hlk hla hnopre hfrozen
   classical
   have hq : FreezeQuorum U aₖ o a :=
     ⟨(Correct : Finset Validator), fun v hv => hfrozen v hv, quorum_le_card_correct⟩

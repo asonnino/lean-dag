@@ -26,7 +26,11 @@ Where the committee bound finally bites: `RecoveryReflects` and
 consume `Five`, taken as an explicit hypothesis exactly there.
 `RecoverySafetyWin` needs only the `half` frozen supporters of the
 winner (`f + 1` of them correct and permanent) and holds at any
-committee, like all of RS6 (finding 19).
+committee, like all of RS6 (finding 19) — and, the arc-wide audit
+found, under the freeze rule alone, at any block, with no resolution in
+sight: the three election claims are stated at a bare marker quorum (or
+bare eligibility, for the winner), which every resolving anchor
+supplies a fortiori.
 
 * **Resolution uniqueness**: at most one `(i, j)` resolves an object,
   and at most one eligible transaction is `prio`-minimal.
@@ -63,43 +67,54 @@ def ResolutionUnique (U : Universe Validator BlockId Tx Obj) (A : Anchors U)
     tx = tx'
 
 /-- **Recovery reflects a hidden commit**: a full certificate anywhere
-makes its transaction the unique eligible one. -/
-def RecoveryReflects (U : Universe Validator BlockId Tx Obj) (A : Anchors U) : Prop :=
-  ∀ (o : Obj) (i j : ℕ) (aₖ a : BlockId) (tx : Tx),
-    ResolvesFiveAt U A o i j → A.seq[i]? = some aₖ → A.seq[j]? = some a →
+makes its transaction the unique eligible one — at *any* block carrying
+a marker quorum. The arc-wide audit found the resolution apparatus
+(`ResolvesFiveAt`'s trigger and one-shot clauses) dead in the proof and
+dropped it: the quorum of markers is all the claim consumes, so it
+covers every resolving anchor a fortiori. -/
+def RecoveryReflects (U : Universe Validator BlockId Tx Obj) : Prop :=
+  ∀ (o : Obj) (aₖ a : BlockId) (tx : Tx),
+    a ∈ U.ids → FreezeQuorum U aₖ o a →
     Owned tx → T.input tx = o →
     (∃ C ∈ U.ids, IsFullCert U C tx) →
     EligibleFive U aₖ a o tx ∧ ∀ tx', EligibleFive U aₖ a o tx' → tx' = tx
 
-/-- **Recovery safety, release**: an empty election forbids a full
-certificate for any owned transaction on the object, at any round. -/
-def RecoverySafetyBot (U : Universe Validator BlockId Tx Obj) (A : Anchors U) : Prop :=
-  ∀ (o : Obj) (i j : ℕ) (aₖ a : BlockId),
-    ResolvesFiveAt U A o i j → A.seq[i]? = some aₖ → A.seq[j]? = some a →
+/-- **Recovery safety, release**: an empty election at a marker quorum
+forbids a full certificate for any owned transaction on the object, at
+any round. -/
+def RecoverySafetyBot (U : Universe Validator BlockId Tx Obj) : Prop :=
+  ∀ (o : Obj) (aₖ a : BlockId),
+    a ∈ U.ids → FreezeQuorum U aₖ o a →
     (∀ tx, ¬ EligibleFive U aₖ a o tx) →
     ∀ tx, Owned tx → T.input tx = o → ∀ C ∈ U.ids, ¬ IsFullCert U C tx
 
 /-- **Recovery safety, winner**: no rival of an eligible transaction
-reaches a full certificate above the resolving anchor's round. -/
-def RecoverySafetyWin (U : Universe Validator BlockId Tx Obj) (A : Anchors U) : Prop :=
-  ∀ (o : Obj) (i j : ℕ) (aₖ a : BlockId) (tx : Tx),
-    ResolvesFiveAt U A o i j → A.seq[i]? = some aₖ → A.seq[j]? = some a →
+reaches a full certificate above the electing block's round. Like the
+reflection claim, stated at any block — and, the audit found, needing
+neither the resolution nor the move rule: the winner's frozen
+supporters alone carry it. -/
+def RecoverySafetyWin (U : Universe Validator BlockId Tx Obj) : Prop :=
+  ∀ (o : Obj) (aₖ a : BlockId) (tx : Tx),
+    a ∈ U.ids →
     EligibleFive U aₖ a o tx →
     ∀ tx', Conflict tx tx' →
       ∀ C ∈ U.ids, (U.block a).round < (U.block C).round → ¬ IsFullCert U C tx'
 
 /-- Recovery safety, over every fault configuration, transaction data,
 universe and anchor sequence the model admits: uniqueness for any
-linear order, and — under the move and freeze rules — the winner claim
-at any committee, the reflection and release claims at `n ≥ 5f + 1`. -/
+linear order; under the freeze rule alone, the winner claim at any
+committee; and, adding the move rule and `n ≥ 5f + 1`, the reflection
+and release claims. -/
 def Statement : Prop :=
   ∀ (Validator BlockId Tx Obj : Type) [Fintype Validator] [DecidableEq Validator]
     [Faults Validator] [Transactions Tx Obj]
-    (U : Universe Validator BlockId Tx Obj) (A : Anchors U),
-    (∀ prio : Tx → Tx → Prop, IsLinearOrder Tx prio → ResolutionUnique U A prio) ∧
-      (MoveDiscipline U → FreezeDiscipline U →
-        RecoverySafetyWin U A ∧
-          (Five Validator → RecoveryReflects U A ∧ RecoverySafetyBot U A))
+    (U : Universe Validator BlockId Tx Obj),
+    (∀ (A : Anchors U) (prio : Tx → Tx → Prop), IsLinearOrder Tx prio →
+      ResolutionUnique U A prio) ∧
+      (FreezeDiscipline U →
+        RecoverySafetyWin U ∧
+          (MoveDiscipline U → Five Validator →
+            RecoveryReflects U ∧ RecoverySafetyBot U))
 
 end RecoverySafety
 
