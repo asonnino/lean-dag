@@ -14,7 +14,12 @@ the marker quorum is filled by `Correct` alone at any committee.
   where neither consensusless route ever fires — no full certificate
   for any owned transaction on the object and no full unlock
   certificate, the "not resolved consensuslessly" hypothesis, taken
-  globally — triggers; the least such index is the trigger index.
+  globally — triggers; the least such index is the trigger index. The
+  global form is strictly stronger than the paper's temporal reading
+  (there certificate-absence is *derived* from the routes never
+  firing); the model has no route-fired event to condition on, and for
+  a termination lemma the stronger premise is the honest side to err
+  on.
 * **The resolution exists**: with the trigger at `i` and a later anchor
   seeing markers from every correct validator, some index in between
   (bounds included on the right) resolves — the first marker quorum.

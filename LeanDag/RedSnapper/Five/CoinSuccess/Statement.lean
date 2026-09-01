@@ -44,7 +44,12 @@ The hypotheses are the attempt's conditioning: the freeze rule (for the
 `ρ + 1`, synchrony from `ρ` on, and every correct validator stanced at
 `ρ` — the paper's premises, structurally. No hypothesis about rounds
 after `ρ + 1` is needed: the conclusion quantifies over the round-
-`(ρ + 2)` blocks that exist.
+`(ρ + 2)` blocks that exist — vacuously, in a universe with none; a
+consumer wanting a certificate in hand adds population at `ρ + 2`.
+And `CoinSuccessCount`'s good set is existential: that the proofs
+choose it from the transferred ingredients — the holder sets, or
+`Correct` — is what ties it to `CoinMeasurable`, by inspection rather
+than by statement.
 -/
 
 namespace LeanDag

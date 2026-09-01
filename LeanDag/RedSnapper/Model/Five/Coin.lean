@@ -75,7 +75,11 @@ structure CoinRule (U : Universe Validator BlockId Tx Obj) (w : Validator) (o : 
   `Adopt` candidacy guard. The algorithm evaluates `Stance(w, o, b)`
   *before* writing `b`'s entry, i.e. over the referenced DAG; reading at
   `b` itself would make the clause circular — hence vacuous — on the
-  target's own block, which reads its own declaration (D7). -/
+  target's own block, which reads its own declaration (D7). For a
+  *Byzantine* target silent at its round-`ρ` block, the `q`-read can
+  differ from the paper's full-history read (older declarations
+  reachable outside `q`'s cone); the coin lemmas instantiate the rule
+  only at correct targets, where the two coincide. -/
   adopt_ack : ∀ b ∈ U.ids, (U.block b).author ∈ (Correct : Finset Validator) →
     (U.block b).round = ρ + 1 →
     ∀ p ∈ (U.block b).parents, (U.block p).author = (U.block b).author →
