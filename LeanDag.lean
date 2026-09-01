@@ -324,3 +324,9 @@ import LeanDag.RedSnapper.Five.Agreement.Statement
 import LeanDag.RedSnapper.Helpers.Freeze
 import LeanDag.RedSnapper.Five.RecoverySafety.Proof
 import LeanDag.RedSnapper.Five.Agreement.Proof
+import LeanDag.RedSnapper.Model.Five.Coin
+import LeanDag.RedSnapper.Five.CoinSuccess.Statement
+import LeanDag.RedSnapper.Five.RecoveryTermination.Statement
+import LeanDag.RedSnapper.Helpers.Coin
+import LeanDag.RedSnapper.Five.CoinSuccess.Proof
+import LeanDag.RedSnapper.Five.RecoveryTermination.Proof

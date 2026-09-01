@@ -6,6 +6,8 @@ import LeanDag.RedSnapper.ConflictResolution.Proof
 import LeanDag.RedSnapper.Five.FullCertSafety.Proof
 import LeanDag.RedSnapper.Five.RecoverySafety.Proof
 import LeanDag.RedSnapper.Five.Agreement.Proof
+import LeanDag.RedSnapper.Five.CoinSuccess.Proof
+import LeanDag.RedSnapper.Five.RecoveryTermination.Proof
 
 /-!
 # The axioms tripwire
@@ -64,3 +66,15 @@ info: 'LeanDag.RedSnapper.FiveAgreement.holds' depends on axioms: [propext, Clas
 -/
 #guard_msgs in
 #print axioms LeanDag.RedSnapper.FiveAgreement.holds
+
+/--
+info: 'LeanDag.RedSnapper.CoinSuccess.holds' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms LeanDag.RedSnapper.CoinSuccess.holds
+
+/--
+info: 'LeanDag.RedSnapper.RecoveryTermination.holds' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms LeanDag.RedSnapper.RecoveryTermination.holds
