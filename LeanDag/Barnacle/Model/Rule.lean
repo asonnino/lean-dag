@@ -11,16 +11,19 @@ configuration. `BaseRule` is that abstraction as a Lean structure — its
 data — and `BaseRule.Laws` the proposition the data must satisfy. The
 arc never counts anything and never inspects a quorum: the leader-count
 mechanism is stated over an arbitrary `BaseRule` satisfying `Laws`, and
-the three commit rules of this development — Mysticeti, Odontoceti (the
-paper's Blue Bottle) and Nemo — are each shown to, as a result with a
-`Statement` and a `Proof` (`Mysticeti/`, and Phase 5's two).
+the four commit rules of this development — Mysticeti, Odontoceti (the
+paper's Blue Bottle), Nemo and Orcaella (the hybrid rule) — are each
+shown to, as a result with a `Statement` and a `Proof` (`Mysticeti/`,
+Phase 5's two, and `Orcaella/`).
 
 The universe and view types are *fields*, bundled in `Type`, because
-the three rules do not share them: the Byzantine rules use
+the four rules do not share them: the Byzantine rules use
 `BlockUniverse` and `View`, the crash rule its own `Nemo.Universe` and
-`Nemo.View`. Bundling puts each rule's fault class on its instantiation
-and nothing on the interface, which is what lets Nemo — whose safety
-needs no fault class at all — instantiate it without one.
+`Nemo.View`, and the hybrid rule the subtype of universes satisfying
+`HonestNoEquiv`. Bundling puts each rule's fault class on its
+instantiation and nothing on the interface, which is what lets Nemo —
+whose safety needs no fault class at all — instantiate it without one,
+and Orcaella carry a hypothesis the interface has no slot for.
 
 The schedule is an explicit argument of `Decided` rather than an
 instance: the arc's whole subject is several `Slots` instances on one
@@ -96,7 +99,7 @@ instance instDecidableDirectCommitIn (R : BaseRule Validator BlockId Payload)
 /-- `L` is a candidate block for slot `k` of schedule `S`: the right round,
 the right author. The same conjunction every rule of this development
 states, here over the interface's `block` and `ids` so that the arc has
-one candidate predicate for all three. -/
+one candidate predicate for all four. -/
 def IsLeaderBlock (R : BaseRule Validator BlockId Payload) (S : Slots Validator)
     (U : R.Universe) (k : ℕ) (L : BlockId) : Prop :=
   L ∈ R.ids U ∧ (R.block U L).round = S.slotRound k ∧ (R.block U L).creator = S.leader k

@@ -242,7 +242,7 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   number of leaders per round with an additive-increase,
   multiplicative-decrease rule — proved safe and live over an explicit
   interface rendering the paper's assumptions A1–A4, and instantiated
-  on Mysticeti, Odontoceti and Nemo-Nemo. Safety is agreement of the
+  on Mysticeti, Odontoceti, Nemo-Nemo and Orcaella. Safety is agreement of the
   configuration sequence and of the ledger for **any** update rule,
   under no synchrony or fairness hypothesis (`Agreement.holds`,
   `Ledger.holds`): the algorithm decides under the count in force and
@@ -260,7 +260,13 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   paper's A4 for its schedule, proved. Seven findings for the paper,
   among them that its liveness clause needs a margin above the slot and
   that Nemo-Nemo's slack is what a majority may miss, not the crash
-  bound. The arc is the third under the statement/proof partition.
+  bound. The Orcaella instantiation holds at **every admissible
+  indirect threshold**, over the subtype of universes whose honest —
+  crash-prone included — class does not equivocate, at slack
+  `fb + fc` and gap `n + 1`; its witnesses include one DAG the
+  interval's two ends decide differently, the twin-canonicity case at
+  the genuinely mixed committee, and the slack proved exact. The arc
+  is the third under the statement/proof partition.
 
 Every definition is exercised on concrete models by `decide` before
 anything is proved from it, and every principal result depends on
@@ -302,7 +308,7 @@ the set of declarations changes. `make help` lists them.
   protocol and no proof; `MahiMahi/` — the asynchronous rule at wave `w`,
   `BlackMarlin/` — the three-round rule with an anchor every round, and
   `Barnacle/` — the adaptive leader count over an interface for the
-  three base rules, all under a statement/proof partition (`Model/`,
+  four base rules, all under a statement/proof partition (`Model/`,
   `<Result>/Statement.lean`, `<Result>/Proof.lean`); `Network/` — the composed
   denial-of-service capstones; `Integration/` — how the arcs compose).
 - `LeanDag.lean` — root import file.
@@ -340,7 +346,7 @@ the set of declarations changes. `make help` lists them.
 | [`docs/black-marlin.md`](docs/black-marlin.md) | the three-round commit rule: the link clause, the run of two, what the reactive exit costs, agreement, the delivered order the descent computes, the sequence it outputs, where Agreement fails, and a repair |
 | [`docs/minnow.md`](docs/minnow.md) | the minimal commit rule: the two readings its own sentences force, and the two defects that survive both |
 | [`docs/finwhale.md`](docs/finwhale.md) | the fast path at `n = 3f + 2p − 1`: the committee and its tightness, the validity clause the fast path needs, liveness from the block-creation conditions, what a validator guarantees, and what the paper should change |
-| [`docs/barnacle.md`](docs/barnacle.md) | the adaptive leader count: the interface A1–A4, the configuration-sequence model and why it needs no fixpoint, the liveness clause and its margin, the heads descent, the three instantiations, and the findings |
+| [`docs/barnacle.md`](docs/barnacle.md) | the adaptive leader count: the interface A1–A4, the configuration-sequence model and why it needs no fixpoint, the liveness clause and its margin, the heads descent, the four instantiations, and the findings |
 | [`docs/integration.md`](docs/integration.md) | composing the arcs: the invariant interface, and what composition revealed |
 | [`docs/related.md`](docs/related.md) | a survey of consensus on uncertified DAGs |
 | [`docs/style.md`](docs/style.md) | writing conventions for the documents and the source |
