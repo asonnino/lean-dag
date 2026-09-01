@@ -325,10 +325,17 @@ mechanisation's own.
    `committedTX`/`droppedTX`; the algorithm has
    `fastCommittedTX`/`skippedTX`. Theorem commit-safety names
    `TryDirectDecide`, `TryIndirectDecide`, `ResolveOnCommitTX`.
+   *Mostly fixed by the 2026-09-01 revision* (the offending lemmas were
+   rewritten or commented out); one new instance appeared — the
+   Preliminaries' consensus-projection sentence lists the opaque fields
+   as `txs`, `nacks`, `unlocks`, where the schema is `Stance`.
 2. **Routes count blocks, not authors.** `TryFastDecideTX` and
    `TrySkipDecideObj` test `|{b ∈ B : …}| ≥ 2f + 1`; the prose says
    "from distinct validators". Byzantine twins inflate a block count.
-   The arc counts authors.
+   The arc counts authors. The 2026-09-01 revision adds sites: the
+   rewritten `Spendable` counts blocks, and Theorem three-safety says a
+   "certificate-carrying block is correct" — authors are correct,
+   blocks are not.
 3. **"Earlier anchor" by `Link`.** `Dead` and `Spendable` test an
    earlier anchor by `Link(A, b)`; the proofs reason by commit order and
    local state. The two agree only if earlier anchors lie in later
@@ -338,20 +345,31 @@ mechanisation's own.
    and the round-counting is not the reason: a correct validator at `⊥`
    never returns to `tx`. The `> r` half holds by a different argument
    (the certificate is visible from `r + 1` on, so ACKers keep their
-   ACK and at most `2f` validators can retract).
+   ACK and at most `2f` validators can retract). *Addressed by the
+   2026-09-01 revision*: the new Lemma fast-excludes-unlock covers both
+   halves with exactly this argument — but its second half thereby
+   consumes the voting rule, not the stance automaton; see finding 22.
 5. **Case 3 of conflict resolution.** The lemma claims an unlock
    certificate forms at `r + 2`. With `f + 1` correct ACKers and
    Byzantine ACKs shown to one of them, that validator certifies and
    keeps, the others retract, and no `2f + 1` retractions exist. What
    holds, and what RS5 states, is the disjunction: an ack certificate
    in every synchronised `r + 2` block's history, or an unlock
-   certificate at `r + 2`.
+   certificate at `r + 2`. *Resolved by the 2026-09-01 revision*: the
+   rewritten Lemma equiv-live drops the claim and its two cases match
+   RS5's trichotomy (the keep case resolves through the certificate at
+   the anchor, the no-keep case through the unlock certificate, with
+   the all-skip fast special case); two nits remain under finding 23.
 6. **Certificate propagation.** The proof's "a correct validator's block
    fails to link its own block" is not the argument; the induction on
    rounds with quorum intersection over authors and non-equivocation of
    correct validators is.
 7. **(C5) is undefined.** Lemma recovery-termination and Theorem
-   latency-5f assume it; only (C1)–(C4) exist.
+   latency-5f assume it; only (C1)–(C4) exist — now formalised with
+   Mysticeti citations by the 2026-09-01 revision, which also makes
+   (C5) central to the `3f + 1` analysis: the rewritten Lemma
+   equiv-live invokes it twice with an implicit "a committed anchor
+   contains a given block within `κ` rounds" meaning. See finding 23.
 8. **Half certificate versus refutation of `⊥`.** Lemmas
    unlock-excludes-half and full-excludes-unlock say a correct validator
    leaves `⊥` only on a half certificate; the algorithm's `Movable` uses
@@ -416,6 +434,32 @@ mechanisation's own.
     `n − 3f − 1 ≥ 2f + 1` validators fill a refutation — so the paper's
     fixed threshold carries a hidden *upper* bound on `n` that D1's
     `quorum = n − f` removes (compare finding 14).
+22. **The revised fast-commit/unlock exclusion is not a pure-safety
+    lemma** (2026-09-01 revision). Lemma fast-excludes-unlock's
+    "after round `r`" half argues `CertVisible` → "will not vote `⊥`" —
+    the keep branch of `CastVotes`, i.e. the honest *voting rule*.
+    Under the stance automaton alone the unconditional claim is false,
+    and the arc's committed witness refutes it: `UCert` carries a fast
+    quorum of certificates at round 2, an unlock certificate at round
+    5, and satisfies `StanceDiscipline`. Since Lemma
+    three-anchor-safety cites the unconditional form, the revised
+    `3f + 1` safety theorem silently consumes honest voting behaviour.
+    The dependence is avoidable: RS3 proves the same agreement from the
+    automaton alone, resolving the bivalent case at the anchor with the
+    round-conditioned exclusion (RS2). Either state the voting-rule
+    hypothesis on the lemma, or revert to the round-conditioned form
+    plus the anchor argument.
+23. **(C5) once names a synchrony fact** (2026-09-01 revision). In the
+    rewritten Lemma equiv-live, "by (C5), every correct round-`(r+2)`
+    block sees all `2f + 1` of these votes" is Lemma round-sync's
+    synchrony, not a consensus property; the lemma's other (C5) use and
+    those of recovery-termination and latency-5f need the definition
+    finding 7 asks for.
+24. **Small revision nits.** "restract" in Lemma equiv-live; the new
+    Conditional Atomic Broadcast definition is a top-level
+    specification with no stated reduction from the protocol's results
+    (the arc's RS3/RS8 give Conflict safety and RS4 Honest Liveness;
+    no reduction is mechanised either — recorded out of scope).
 20. **The recovery layer is where `5f + 1` is load-bearing.**
     Complementing finding 19: Lemma recovery-reflects and claim 1 of
     recovery-safety consume the bound — the frozen set omits at most
