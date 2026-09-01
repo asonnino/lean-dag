@@ -41,6 +41,23 @@ theorem kTight_eq_of_fc_zero (h : H.fc = 0) :
     kTight Validator = 2 * H.fb + 1 := by
   unfold kTight; omega
 
+/-- **At `fc = 0` the strengthened clause is free.** With no crash
+class, honest *is* correct — the union class is the Byzantine class
+alone — so the base structure's `no_equivocation` already yields
+`HonestNoEquiv`: the hybrid model's one genuinely new assumption
+restricts nothing in the crash-free case, and Orcaella's subtype
+universe is full. The counterpart of `Ubad`
+(`LeanDagTest/Barnacle/Orcaella.lean`), which shows the clause is a
+real restriction as soon as a crash class exists. -/
+theorem honestNoEquiv_of_fc_zero {BlockId Payload : Type*} (h : H.fc = 0)
+    (U : BlockUniverse Validator BlockId Payload) : HonestNoEquiv U := by
+  intro i hi j hj hbyz hc hr
+  refine U.no_equivocation i hi j hj ?_ hc hr
+  have hcrash : H.crash = ∅ :=
+    Finset.card_eq_zero.mp (Nat.le_zero.mp (h ▸ H.card_crash))
+  rw [mem_correct, hybrid_byzantine, hcrash, Finset.union_empty]
+  exact hbyz
+
 end Collapse
 
 /-- Two `Faults` instances with one bound and one Byzantine set are one

@@ -402,7 +402,8 @@ control loop that measures on the agreed DAG the fraction of leader
 slots the base protocol decided directly and drives the count with an
 additive-increase, multiplicative-decrease rule. It is proved safe and
 live over an explicit interface rendering the paper's assumptions
-A1–A4, instantiated on Mysticeti, Odontoceti and Nemo-Nemo. Safety —
+A1–A4, instantiated on Mysticeti, Odontoceti, Nemo-Nemo and Orcaella
+(§14's hybrid rule, at every admissible threshold). Safety —
 agreement of the configuration sequence and of the ledger — holds for
 **any** update rule, with no synchrony or fairness hypothesis
 (`Agreement.holds` (BN3), `Ledger.holds` (BN5)), because the
@@ -418,8 +419,9 @@ rotation does not meet by the route this development takes, a run of
 correct-led slots, which has no instance at two leaders and four
 validators. The clause holds by a descent through the *heads* of
 rounds and a pigeonhole on residues (`Heads.holds` (BN9)), so each of
-the three rules is live under round-robin at **every** leader count
-(`MysticetiLive.holds`, `Odontoceti.holds`, `Nemo.holds` (BN10)) —
+the four rules is live under round-robin at **every** leader count
+(`MysticetiLive.holds`, `Odontoceti.holds`, `Nemo.holds`,
+`Orcaella.holds` (BN10)) —
 the paper's A4 for its schedule, proved. Findings for the paper are
 listed in §21.5.
 
@@ -8028,7 +8030,7 @@ second branch, forced by the DoS condition rather than assumed.
 *(modules `LeanDag/Barnacle/`; the design record is
 `barnacle.md`; the protocol is Barnacle, a control loop on
 the number of leaders per round of a DAG-based protocol, layered on
-Mysticeti, Odontoceti and Nemo-Nemo)*
+Mysticeti, Odontoceti, Nemo-Nemo and Orcaella)*
 
 Multi-leader rounds cut queuing latency and are unused in production
 because of head-of-line blocking: one slow leader's slot is not decided
@@ -8047,7 +8049,7 @@ decision predicate local to a wave, and safety and liveness for every
 fixed configuration.
 
 This chapter proves the mechanism safe and live over an explicit
-interface rendering A1–A4, instantiated three times, and states what
+interface rendering A1–A4, instantiated four times, and states what
 the paper's own schedule needs of its base protocols. Its results carry
 **BN**-labels; the arc is the third under the statement/proof partition
 of §17. The structural observation that shapes it is that the paper's
@@ -8314,14 +8316,20 @@ would inject `Fin n` into `Fin waveLength × Tᶜ`. The bound is sharp:
 Mysticeti's committee bound `3f + 1 ≤ n` is exactly this at
 `waveLength = 3`, `slack = f`.
 
-**BN10.** Mysticeti, Odontoceti and Nemo-Nemo each satisfy the laws and
-the descent laws — Odontoceti's indirect law commits the least
-candidate with a thick link, the canonicity clause of §10; Nemo-Nemo's
-good set is any synchronised majority, which misses `n − majority`
-validators, so its slack is that and not `f`, and its liveness under
-the mechanism consumes the crash bound nowhere — and each is **live
-under round-robin at every leader count**: Mysticeti with gap `n + 2`,
-the two-round rules with gap `n + 1`. For Mysticeti:
+**BN10.** Mysticeti, Odontoceti, Nemo-Nemo and Orcaella each satisfy
+the laws and the descent laws — Odontoceti's indirect law commits the
+least candidate with a thick link, the canonicity clause of §10;
+Nemo-Nemo's good set is any synchronised majority, which misses
+`n − majority` validators, so its slack is that and not `f`, and its
+liveness under the mechanism consumes the crash bound nowhere;
+Orcaella's universe is the subtype bundling `HonestNoEquiv` (the
+interface's `agree` has no slot for §14's one new hypothesis), its
+statements hold at every admissible indirect threshold, and its slack
+is `fb + fc` — the only place the mixed bound enters, through the
+reliable set being the fully-correct class at quorum `n − fb − fc` —
+and each is **live under round-robin at every leader count**:
+Mysticeti with gap `n + 2`, the two-round rules with gap `n + 1`. For
+Mysticeti:
 
 ```lean
 def RoundRobinLive : Prop :=
@@ -8608,7 +8616,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Barnacle/Model/Schedule.lean`, `Barnacle/Model/Window.lean`, `Barnacle/Model/Run.lean` | the schedule of a configuration; the window count and the AIMD rule; the run and the ledger |
 | `Barnacle/Model/Live.lean`, `Barnacle/Model/Heads.lean` | the liveness clause with its gap; the descent laws and runs of heads |
 | `Barnacle/Window/`, `Barnacle/Agreement/`, `Barnacle/Ledger/`, `Barnacle/Conservativity/`, `Barnacle/Aimd/`, `Barnacle/Progress/`, `Barnacle/Heads/` | the seven statements and their proofs (BN2, BN3, BN5, BN6, BN7, BN8, BN9) |
-| `Barnacle/Mysticeti/`, `Barnacle/MysticetiLive/`, `Barnacle/Odontoceti/`, `Barnacle/Nemo/` | the three rules as base and live rules, their laws, and their liveness under round-robin (BN10) |
+| `Barnacle/Mysticeti/`, `Barnacle/MysticetiLive/`, `Barnacle/Odontoceti/`, `Barnacle/Nemo/`, `Barnacle/Orcaella/` | the four rules as base and live rules, their laws, and their liveness under round-robin (BN10) |
 | `Barnacle/Helpers/` | the generated lemma layer |
 | `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |

@@ -174,6 +174,9 @@ import LeanDag.Barnacle.Helpers.Nemo
 import LeanDag.Barnacle.Nemo.Statement
 import LeanDag.Barnacle.Helpers.NemoLive
 import LeanDag.Barnacle.Nemo.Proof
+import LeanDag.Barnacle.Orcaella.Statement
+import LeanDag.Barnacle.Helpers.Orcaella
+import LeanDag.Barnacle.Orcaella.Proof
 import LeanDag.Minnow.Blocking
 import LeanDag.FinWhale.Model.Params
 import LeanDag.FinWhale.Model.Rule

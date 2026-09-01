@@ -53,6 +53,9 @@ import LeanDagTest.Barnacle.Progress
 import LeanDagTest.Barnacle.Heads
 import LeanDagTest.Barnacle.Instances
 import LeanDagTest.Barnacle.Majority
+import LeanDagTest.Barnacle.Orcaella
+import LeanDagTest.Barnacle.OrcaellaIndirect
+import LeanDagTest.Barnacle.OrcaellaLive
 import LeanDagTest.Barnacle.Axioms
 import LeanDagTest.Minnow.Deadlock
 import LeanDagTest.Minnow.Skip

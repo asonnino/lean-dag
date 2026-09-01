@@ -17,9 +17,11 @@ paper (`\sysname` in the manuscript) — every few seconds,
 measure on the agreed DAG the fraction of leader slots the base protocol
 decided directly, and drive the number of leaders per round with an
 additive-increase, multiplicative-decrease rule — is safe and live over
-each of the three base protocols this development already formalises:
+each of the four base protocols this development already formalises:
 Mysticeti (report §3), Odontoceti, which the paper calls Blue Bottle
-(report §10), and Nemo-Nemo (report §15). Results carry **BN**-labels;
+(report §10), Nemo-Nemo (report §15), and Orcaella, the hybrid
+two-round rule at `n ≥ 5·fb + 3·fc + 1` (report §14; instantiated
+after the arc closed — §15). Results carry **BN**-labels;
 everything lives in `LeanDag/Barnacle/` under the statement/proof
 partition (§10), with `decide` witnesses in `LeanDagTest/Barnacle/`,
 consuming the core read-only.
@@ -85,9 +87,9 @@ Three consequences shape the plan.
   new base-protocol theory.
 
 The arc is generic over the base protocol through an explicit interface
-(§2), instantiated three times (Phase 5); the paper's Lean appendix can
-then say, accurately, that everything is proved from A1–A4 and not from
-Mysticeti.
+(§2), instantiated four times (Phase 5, and §15's later Orcaella
+addition); the paper's Lean appendix can then say, accurately, that
+everything is proved from A1–A4 and not from Mysticeti.
 
 ### 0.1 Correspondence with the paper
 
@@ -132,10 +134,12 @@ range `k`, in slot order of `Sched m_k`.
 The arc never counts anything. What it needs of a base protocol is a
 decision relation parametric in the schedule, agreement across views for
 a fixed schedule, and — for the measurement — the direct-commit
-predicate. The three protocols differ in their universe and view types
+predicate. The four protocols differ in their universe and view types
 (Nemo has `Nemo.Universe` and `Nemo.View`; the Byzantine rules share
-`BlockUniverse` and `View`) and in their fault classes — Mysticeti needs
-`Faults`, Odontoceti `Faults5` and a linear order on ids, Nemo's safety
+`BlockUniverse` and `View`; Orcaella's universe is the subtype bundling
+`HonestNoEquiv`) and in their fault classes — Mysticeti needs
+`Faults`, Odontoceti `Faults5` and a linear order on ids, Orcaella
+`HybridFaults` with an admissible indirect threshold, Nemo's safety
 none at all — so the interface bundles the types and puts each rule's
 fault class on its instantiation, never on the interface
 (`Model/Rule.lean`):
@@ -674,10 +678,10 @@ stated.
 - **The heads descent.** A DAG with a Byzantine head undecided directly
   and decided by the head three rounds above; `HeadsRun` for round-robin
   at `n = 4` by `decide` over one cycle.
-- **The three instantiations.** `BaseRule` for Mysticeti, Odontoceti
+- **The four instantiations.** `BaseRule` for Mysticeti, Odontoceti
   and Nemo, each on its existing test model (`U7`, the Odontoceti model,
   the three-validator Nemo model), with the window count computed under
-  each rule.
+  each rule; Orcaella's witnesses (§15) live in their own three files.
 
 ## 10. Layout and discipline
 
@@ -879,7 +883,7 @@ uninhabited (F7, Phase 2).
 - **Garbage collection.** A joiner reading the window from a truncated
   universe; the analogue of `HorizonStable` (report §16, I5).
 - **Non-pipelined base protocols**, where `expected` is divided by the
-  wave length; all three instantiated protocols are pipelined.
+  wave length; all four instantiated protocols are pipelined.
 - **Certified DAGs.** The paper says the measurement applies; the model
   has no certified-DAG base.
 - **Validity, for the two Byzantine rules.** BN14: a good author's block
@@ -911,3 +915,58 @@ uninhabited (F7, Phase 2).
 - **Byzantine bias of the measurement.** The paper notes a Byzantine
   leader can lower the direct rate within a window; that the damage is
   bounded to one interval is a quantitative claim not attempted here.
+
+## 15. Addendum: the fourth instantiation (2026-09-01)
+
+Orcaella — the hybrid two-round rule of `LeanDag/Hybrid/` at
+`n ≥ 5·fb + 3·fc + 1` (report §14) — joins the interface as
+`Barnacle/Orcaella/`, closing the gap with the paper's Lean section,
+which lists four base protocols. The instantiation is the Odontoceti
+trio one parameter and one subtype away, with two decisions that carry
+the hybrid model's shape rather than mirroring Odontoceti's:
+
+- **The universe bundles `HonestNoEquiv`.** The hybrid model's one
+  genuinely new assumption — a crash-prone validator authors at most
+  one block per round too — is a hypothesis of every hybrid safety
+  theorem, and `BaseRule.Laws.agree` has no slot for it; per §2's
+  design, the fault class lives on the instantiation, so the universe
+  is `{U : BlockUniverse … // HonestNoEquiv U}`. At `fc = 0` the
+  subtype is provably full (`honestNoEquiv_of_fc_zero`,
+  `Hybrid/Conservativity.lean`), so the crash-free collapse onto
+  Odontoceti loses no universes; `Ubad`
+  (`LeanDagTest/Barnacle/Orcaella.lean`) shows the clause bites as
+  soon as a crash class exists.
+- **The indirect threshold is a parameter.** The hybrid indirect rule
+  works at any `k` in the admissible interval
+  `2·fb + fc + 1 ≤ k ≤ n − 3·fb − 2·fc`, whose nonemptiness *is* the
+  committee bound, so `orcaella (k)` and every statement quantify over
+  an admissible `k`; the paper's link size is the top end `kRel`.
+
+The statements mirror BN10's shape: the laws at every admissible
+threshold, the descent laws at slack `fb + fc` — the only place the
+mixed bound enters, through the reliable set being the fully-correct
+class at quorum `q = n − fb − fc` — and round-robin liveness at every
+leader count with gap `n + 1` (`Orcaella/Statement.lean`, proofs in
+`Orcaella/Proof.lean` and `Helpers/Orcaella.lean`).
+
+The witnesses span three files, none of which may import
+`LeanDagTest.Model`'s competing `Faults (Fin 4)` instance (each file's
+header says so, and instance pins guard the resolution):
+
+- `LeanDagTest/Barnacle/Orcaella.lean` — the subtype formed on
+  `Uhyb4`; the window count under a crash (healthy at count one,
+  backing off from four); `Good` and the descent law by pigeonhole
+  (the reliable set may contain the crashed validator, so the sunny
+  Odontoceti script does not transfer); the slack `fb + fc` proved
+  exact (`not_descent_zero`); and `Ubad`.
+- `LeanDagTest/Barnacle/OrcaellaIndirect.lean` — the indirect rule at
+  admissible thresholds, previously witnessed nowhere: `U5`
+  (`n = 5, fb = 0, fc = 1`, the first non-singleton interval
+  `[2, 3]`), one DAG that commits its split slot at threshold `2` and
+  skips it at `3`; and `UhybX` (`n = 9`, `fb = fc = 1`, five rounds),
+  the first `Good` at `fb, fc > 0` and the twin-canonicity witness —
+  both Byzantine twins pass at the anchor, the least commits.
+- `LeanDagTest/Barnacle/OrcaellaLive.lean` — a nine-round crash model
+  tall enough for the gap, `RoundRobinLive` applied at counts one and
+  two with both clauses non-vacuous and verdicts pinned through
+  `agree`.

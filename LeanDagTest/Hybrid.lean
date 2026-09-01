@@ -189,6 +189,36 @@ example : (Faults5.toHybrid : HybridFaults (Fin 6)).fc = 0 := rfl
 example : (HybridFaults.toFaults (H := (Faults5.toHybrid : HybridFaults (Fin 6)))) =
     Faults5.toFaults := toHybrid_toFaults
 
+/-! ## The crash-free corner: the strengthened clause is free
+
+At `fc = 0` the subtype Orcaella's universe bundles restricts nothing:
+`HonestNoEquiv` follows from the base `no_equivocation` through the
+collapse lemma, with no appeal to the concrete data — and the same
+clause is cross-checked on data. -/
+
+instance hyb11 : HybridFaults (Fin 11) where
+  fb := 1
+  fc := 0
+  byzantine := {0}
+  crash := ∅
+  disjoint := by decide
+  card_byzantine := by decide
+  card_crash := by decide
+  card_validators := by decide
+
+/-- A genesis-only universe over the crash-free committee. -/
+def U11 : BlockUniverse (Fin 11) (Fin 11) Unit where
+  ids := Finset.univ
+  block := fun i => { round := 0, creator := i, refs := ∅, payload := () }
+  complete := by decide
+  valid := by decide
+  no_equivocation := by decide
+
+-- Through the collapse lemma — no `decide` on the clause itself …
+example : HonestNoEquiv U11 := honestNoEquiv_of_fc_zero rfl U11
+-- … and on data.
+example : HonestNoEquiv U11 := by decide
+
 #print axioms LeanDag.Hybrid.decided_unique
 #print axioms LeanDag.Hybrid.safety
 #print axioms LeanDag.Hybrid.all_decided_below_of_fairRun
