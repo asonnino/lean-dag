@@ -179,9 +179,12 @@ example (R k : ℕ) :
       ∀ (U : Nemo.Universe (Fin 3) (Fin 14) Unit) (N : ℕ),
         (∀ r ≤ N, Populated U r) → Synchronised U R →
         nemoSlots.slotRound (b + 2 - 1) + 1 ≤ N →
-        ∀ i, i < b → ∃ v, Decided U (View.full U) i v :=
-  Nemo.all_decided_below_of_fairRun_live (by omega)
-    (Nemo.spansEligible_two nemoSlots_slotRound) nemo_fairRun R k
+        ∀ i, i < b → ∃ v, Decided U (View.full U) i v := by
+  obtain ⟨b, hk, hR, hrest⟩ :=
+    Nemo.all_decided_below_of_fairRun_live (BlockId := Fin 14) (Payload := Unit)
+      (by omega) (Nemo.spansEligible_two nemoSlots_slotRound) nemo_fairRun R k
+  exact ⟨b, hk, hR, fun U N hpop hs hN =>
+    hrest U N (Nemo.View.full U) hpop hs hN (Nemo.View.coversUpto_full U N)⟩
 
 /-! ## Axiom hygiene
 

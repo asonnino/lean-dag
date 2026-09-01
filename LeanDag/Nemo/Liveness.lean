@@ -41,13 +41,20 @@ the intended schedule: round-robin over `n = 2f + 1` with at most `f`
 crashed always has two adjacent live leaders, since `f + 1` live validators
 cannot be pairwise non-adjacent on a cycle of `2f + 1`.
 
-The participation vocabulary (`PopulatedOn`, `SynchronisedOn`, `View.full`)
-is restated over the crash `Universe`; the schedule vocabulary
-(`FairScheduleOn`, `FairRunOn`) is fault-agnostic and reused from the core;
-`SpansEligible` is restated at this arc's wavelength-two `Eligible`. The
-descent is the *core's* simple form — `isLeaderBlock_unique` leaves no twins
-to tie-break, so the hybrid arc's canonicity block and its `[LinearOrder
-BlockId]` never appear.
+The participation vocabulary (`PopulatedOn`, `SynchronisedOn`, `View.full`,
+`View.CoversUpto`) is restated over the crash `Universe`; the schedule
+vocabulary (`FairScheduleOn`, `FairRunOn`) is fault-agnostic and reused from
+the core; `SpansEligible` is restated at this arc's wavelength-two
+`Eligible`. The descent is the *core's* simple form — `isLeaderBlock_unique`
+leaves no twins to tie-break, so the hybrid arc's canonicity block and its
+`[LinearOrder BlockId]` never appear.
+
+Every decision-valued statement concludes on a validator's own view,
+caught up to the horizon it reads (`View.CoversUpto`): the supporters sit
+one round above the leader, so a caught-up view holds them
+(`directCommitIn_of_coversUpto`), and the descent is view-parametric. The
+full view is caught up to every horizon (`View.coversUpto_full`), so the
+whole-universe reading is the special case (`liveness.md` §4.2).
 -/
 
 namespace LeanDag
@@ -143,6 +150,27 @@ def View.full (U : Universe Validator BlockId Payload) :
   subset_ids := Finset.Subset.rfl
   complete := U.complete
 
+omit [DecidableEq BlockId] in
+/-- **A view caught up to round `N`**: it holds every block of the
+universe at a round at or below `N` — the crash arc's copy of the
+core's `View.CoversUpto`, the hypothesis under which a liveness result
+holds of a validator's own view rather than of the full view. The full
+view satisfies it at every `N`. -/
+def View.CoversUpto (V : View Validator BlockId Payload U) (N : ℕ) : Prop :=
+  ∀ b ∈ U.ids, (U.block b).round ≤ N → b ∈ V.ids
+
+omit [DecidableEq BlockId] in
+/-- The full view is caught up to every horizon. -/
+theorem View.coversUpto_full (U : Universe Validator BlockId Payload) (N : ℕ) :
+    (View.full U).CoversUpto N :=
+  fun _ hb _ => hb
+
+omit [DecidableEq BlockId] in
+/-- Caught up to `N` is caught up to every lower horizon. -/
+theorem View.CoversUpto.mono {V : View Validator BlockId Payload U} {M N : ℕ}
+    (h : V.CoversUpto N) (hMN : M ≤ N) : V.CoversUpto M :=
+  fun b hb hr => h b hb (le_trans hr hMN)
+
 /-! ## Decisions are monotone in the view -/
 
 variable [S : Slots Validator]
@@ -202,32 +230,33 @@ theorem directCommit_of_leader_mem
   exact le_trans hcard (Finset.card_le_card hsub)
 
 omit S in
-/-- The full view sees every supporter. -/
-theorem supportersIn_full {r : ℕ} :
-    supportersIn U (View.full U) L r = supporters U L (r + 1) := by
-  unfold supportersIn supporters
-  congr 1
-  refine Finset.inter_eq_left.mpr ?_
-  intro p hp
-  exact (mem_blocksAt.mp (Finset.mem_filter.mp hp).1).1
-
-omit S in
-theorem directCommitIn_full {r : ℕ} (h : DirectCommit U L r) :
-    DirectCommitIn U (View.full U) L r := by
-  rw [DirectCommitIn, supportersIn_full]
+/-- A view caught up to the decision round sees every supporter, so a
+direct commit in the universe is a direct commit in the view. -/
+theorem directCommitIn_of_coversUpto {V : View Validator BlockId Payload U} {r : ℕ}
+    (h : DirectCommit U L r) (hcov : V.CoversUpto (r + 1)) :
+    DirectCommitIn U V L r := by
+  have hsub : (blocksAt U (r + 1)).filter (fun p => L ∈ (U.block p).refs) ⊆ V.ids := by
+    intro p hp
+    obtain ⟨hp, -⟩ := Finset.mem_filter.mp hp
+    obtain ⟨hpids, hpr⟩ := mem_blocksAt.mp hp
+    exact hcov p hpids (le_of_eq hpr)
+  rw [DirectCommitIn, supportersIn, Finset.inter_eq_left.2 hsub]
   exact h
 
-/-- The commit half, as a decision. -/
+/-- The commit half, as a decision — on any view caught up to the
+decision round. -/
 theorem decided_of_leader_mem
     (hcard : majority Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound s)
     (hpop0 : PopulatedOn U T (S.slotRound s))
     (hpop1 : PopulatedOn U T (S.slotRound s + 1))
+    (V : View Validator BlockId Payload U)
+    (hcov : V.CoversUpto (S.slotRound s + 1))
     (hlead : S.leader s ∈ T) :
-    ∃ L, IsLeaderBlock U s L ∧ Decided U (View.full U) s (some L) := by
+    ∃ L, IsLeaderBlock U s L ∧ Decided U V s (some L) := by
   obtain ⟨L, hLb, hdc⟩ :=
     directCommit_of_leader_mem hcard hs hR hpop0 hpop1 hlead
-  exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_full hdc)⟩
+  exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_of_coversUpto hdc hcov)⟩
 
 /-! ## A run of two spans eligibility -/
 
@@ -315,11 +344,12 @@ theorem decided_of_leader_of_populated (hT : T ⊆ Live Validator)
     (hcard : majority Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound s)
     (hpop : ∀ r ≤ N, Populated U r) (hN : S.slotRound s + 1 ≤ N)
+    (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N)
     (hlead : S.leader s ∈ T) :
-    ∃ L, IsLeaderBlock U s L ∧ Decided U (View.full U) s (some L) :=
+    ∃ L, IsLeaderBlock U s L ∧ Decided U V s (some L) :=
   decided_of_leader_mem hcard hs hR
     (PopulatedOn.mono hT (hpop _ (by omega)))
-    (PopulatedOn.mono hT (hpop _ (by omega))) hlead
+    (PopulatedOn.mono hT (hpop _ (by omega))) V (hcov.mono hN) hlead
 
 /-- **Liveness.** Under post-`R` coverage, growth to the horizon, and a
 recurring run of `c` reliable-led slots, every slot below the run is
@@ -335,18 +365,19 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (hspan : SpansEligible Validator c)
     (fair : FairRunOn T c) (R : ℕ) (s : ℕ) :
     ∃ b, s ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : Universe Validator BlockId Payload) (N : ℕ),
+      ∀ (U : Universe Validator BlockId Payload) (N : ℕ)
+        (V : View Validator BlockId Payload U),
         (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
-        S.slotRound (b + c - 1) + 1 ≤ N →
-        ∀ i, i < b → ∃ v, Decided U (View.full U) i v := by
+        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
+        ∀ i, i < b → ∃ v, Decided U V i v := by
   obtain ⟨k₀, hk₀⟩ := S.unbounded R
   obtain ⟨b, hb, hrunT⟩ := fair (max s k₀)
   have hRb : R ≤ S.slotRound b :=
     le_trans hk₀ (S.mono (le_trans (le_max_right s k₀) hb))
   refine ⟨b, le_trans (le_max_left _ _) hb, hRb, ?_⟩
-  intro U N hpop hs hN
+  intro U N V hpop hs hN hcov
   have hrun : ∀ j, b ≤ j → j ≤ b + c - 1 →
-      ∃ B, Decided U (View.full U) j (some B) := by
+      ∃ B, Decided U V j (some B) := by
     intro j hj1 hj2
     have hlead : S.leader j ∈ T := by
       have := hrunT (j - b) (by omega)
@@ -354,7 +385,7 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     have hRj : R ≤ S.slotRound j := le_trans hRb (S.mono hj1)
     have hjr : S.slotRound j ≤ S.slotRound (b + c - 1) := S.mono (by omega)
     obtain ⟨L, _, hdec⟩ :=
-      decided_of_leader_of_populated hT hcard hs hRj hpop (by omega) hlead
+      decided_of_leader_of_populated hT hcard hs hRj hpop (by omega) V hcov hlead
     exact ⟨L, hdec⟩
   exact decided_below_of_committed_run (by omega)
     (fun i hi => hspan b i hi) hrun
@@ -365,10 +396,11 @@ theorem all_decided_below_of_fairRun_live {c : ℕ} (hc : 0 < c)
     (hspan : SpansEligible Validator c)
     (fair : FairRunOn (Live Validator) c) (R : ℕ) (s : ℕ) :
     ∃ b, s ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : Universe Validator BlockId Payload) (N : ℕ),
+      ∀ (U : Universe Validator BlockId Payload) (N : ℕ)
+        (V : View Validator BlockId Payload U),
         (∀ r ≤ N, Populated U r) → Synchronised U R →
-        S.slotRound (b + c - 1) + 1 ≤ N →
-        ∀ i, i < b → ∃ v, Decided U (View.full U) i v :=
+        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
+        ∀ i, i < b → ∃ v, Decided U V i v :=
   all_decided_below_of_fairRun hc Finset.Subset.rfl majority_le_card_live hspan
     fair R s
 

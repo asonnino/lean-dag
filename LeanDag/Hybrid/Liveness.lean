@@ -23,6 +23,14 @@ At the tight committee `n = 5·fb + 3·fc + 1` the correct class is
 exactly `q`: the reliable set must be *all* of it, the hybrid analogue
 of the base development's remark that at `f = 1` every correct
 validator is needed for a quorum.
+
+Every decision-valued statement concludes on a validator's own view,
+caught up to the horizon it reads (the core `View.CoversUpto` — the
+arc shares the core's `View`): the supporters sit one round above the
+leader, so a caught-up view holds them
+(`directCommitIn_of_coversUpto`), and the descent is view-parametric.
+The full view is caught up to every horizon (`View.coversUpto_full`),
+so the whole-universe reading is the special case (`liveness.md` §4.2).
 -/
 
 namespace LeanDag
@@ -69,41 +77,45 @@ theorem directCommit_of_leader_mem
       L hL hLr (by rw [hLc]; exact hlead)
   exact le_trans hcard (Finset.card_le_card hsub)
 
-/-- The full view sees every supporter. -/
-theorem supportersIn_full {r : ℕ} :
-    supportersIn U (View.full U) L r = supporters U L (r + 1) := by
-  unfold supportersIn supporters
-  congr 1
-  refine Finset.inter_eq_left.mpr ?_
-  intro p hp
-  exact (mem_blocksAt.mp (Finset.mem_filter.mp hp).1).1
-
-theorem directCommitIn_full {r : ℕ} (h : DirectCommit U L r) :
-    DirectCommitIn U (View.full U) L r := by
-  rw [DirectCommitIn, supportersIn_full]
+/-- A view caught up to the decision round sees every supporter, so a
+direct commit in the universe is a direct commit in the view. -/
+theorem directCommitIn_of_coversUpto {V : View Validator BlockId Payload U} {r : ℕ}
+    (h : DirectCommit U L r) (hcov : V.CoversUpto (r + 1)) :
+    DirectCommitIn U V L r := by
+  have hsub : (blocksAt U (r + 1)).filter (fun p => L ∈ (U.block p).refs) ⊆ V.ids := by
+    intro p hp
+    obtain ⟨hp, -⟩ := Finset.mem_filter.mp hp
+    obtain ⟨hpids, hpr⟩ := mem_blocksAt.mp hp
+    exact hcov p hpids (le_of_eq hpr)
+  rw [DirectCommitIn, supportersIn, Finset.inter_eq_left.2 hsub]
   exact h
 
-/-- **H7, as a decision** — at every threshold `k`. -/
+/-- **H7, as a decision** — at every threshold `k`, on any view caught
+up to the decision round. -/
 theorem decided_of_leader_mem
     (hcard : q Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound s)
     (hpop0 : PopulatedOn U T (S.slotRound s))
     (hpop1 : PopulatedOn U T (S.slotRound s + 1))
+    (V : View Validator BlockId Payload U)
+    (hcov : V.CoversUpto (S.slotRound s + 1))
     (hlead : S.leader s ∈ T) :
-    ∃ L, IsLeaderBlock U s L ∧ Decided k U (View.full U) s (some L) := by
+    ∃ L, IsLeaderBlock U s L ∧ Decided k U V s (some L) := by
   obtain ⟨L, hLb, hdc⟩ :=
     directCommit_of_leader_mem hcard hs hR hpop0 hpop1 hlead
-  exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_full hdc)⟩
+  exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_of_coversUpto hdc hcov)⟩
 
 /-- H7 against a horizon: two rounds read off it. -/
 theorem decided_of_leader_of_populated (_hT : T ⊆ (Correct : Finset Validator))
     (hcard : q Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound s)
     (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (hN : S.slotRound s + 1 ≤ N)
+    (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N)
     (hlead : S.leader s ∈ T) :
-    ∃ L, IsLeaderBlock U s L ∧ Decided k U (View.full U) s (some L) :=
+    ∃ L, IsLeaderBlock U s L ∧ Decided k U V s (some L) :=
   decided_of_leader_mem hcard hs hR
-    (hpop _ (by omega) (by omega)) (hpop _ (by omega) (by omega)) hlead
+    (hpop _ (by omega) (by omega)) (hpop _ (by omega) (by omega))
+    V (hcov.mono hN) hlead
 
 /-! ## H7b — a run of two spans eligibility -/
 
@@ -183,28 +195,29 @@ theorem decided_below_of_committed_run
 
 /-- **H7 (O10's mirror).** Under post-`R` coverage, growth to the
 horizon, and a recurring run of `c` reliable-led slots, every slot
-below the run is decided — at every threshold `k`, the run placed past
-both the target and `R` by fairness. The reliable set excludes the
-crash-prone by construction: `T ⊆ Correct` reads through the derived
-instance. -/
+below the run is decided on any view caught up to the horizon — at
+every threshold `k`, the run placed past both the target and `R` by
+fairness. The reliable set excludes the crash-prone by construction:
+`T ⊆ Correct` reads through the derived instance. -/
 theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (hT : T ⊆ (Correct : Finset Validator))
     (hcard : q Validator ≤ T.card)
     (hspan : SpansEligible Validator c)
     (fair : FairRunOn T c) (R : ℕ) (s : ℕ) :
     ∃ b, s ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
+        (V : View Validator BlockId Payload U),
         (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
-        S.slotRound (b + c - 1) + 1 ≤ N →
-        ∀ i, i < b → ∃ v, Decided k U (View.full U) i v := by
+        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
+        ∀ i, i < b → ∃ v, Decided k U V i v := by
   obtain ⟨k₀, hk₀⟩ := S.unbounded R
   obtain ⟨b, hb, hrunT⟩ := fair (max s k₀)
   have hRb : R ≤ S.slotRound b :=
     le_trans hk₀ (S.mono (le_trans (le_max_right s k₀) hb))
   refine ⟨b, le_trans (le_max_left _ _) hb, hRb, ?_⟩
-  intro U N hpop hs hN
+  intro U N V hpop hs hN hcov
   have hrun : ∀ j, b ≤ j → j ≤ b + c - 1 →
-      ∃ B, Decided k U (View.full U) j (some B) := by
+      ∃ B, Decided k U V j (some B) := by
     intro j hj1 hj2
     have hlead : S.leader j ∈ T := by
       have := hrunT (j - b) (by omega)
@@ -212,7 +225,7 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     have hRj : R ≤ S.slotRound j := le_trans hRb (S.mono hj1)
     have hjr : S.slotRound j ≤ S.slotRound (b + c - 1) := S.mono (by omega)
     obtain ⟨L, _, hdec⟩ :=
-      decided_of_leader_of_populated hT hcard hs hRj hpop (by omega) hlead
+      decided_of_leader_of_populated hT hcard hs hRj hpop (by omega) V hcov hlead
     exact ⟨L, hdec⟩
   exact decided_below_of_committed_run (by omega)
     (fun i hi => hspan b i hi) hrun
@@ -223,10 +236,11 @@ theorem all_decided_below_of_fairRun_correct {c : ℕ} (hc : 0 < c)
     (hspan : SpansEligible Validator c)
     (fair : FairRunOn (Correct : Finset Validator) c) (R : ℕ) (s : ℕ) :
     ∃ b, s ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
+        (V : View Validator BlockId Payload U),
         (∀ r, R ≤ r → r ≤ N → Populated U r) → Synchronised U R →
-        S.slotRound (b + c - 1) + 1 ≤ N →
-        ∀ i, i < b → ∃ v, Decided k U (View.full U) i v :=
+        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
+        ∀ i, i < b → ∃ v, Decided k U V i v :=
   all_decided_below_of_fairRun hc Finset.Subset.rfl q_le_card_correct hspan
     fair R s
 

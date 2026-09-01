@@ -3388,14 +3388,18 @@ theorem all_decided_below_of_fairRun (hc : 0 < c) (hT : T ⊆ Correct)
     (hcard : quorumCard Validator ≤ T.card)
     (hspan : SpansEligible Validator c) (fair : FairRunOn T c) (R k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ U N, (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
-        S.slotRound (b + c - 1) + 1 ≤ N →
-        ∀ i, i < b → ∃ v, Decided U (View.full U) i v
+      ∀ U N V, (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
+        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
+        ∀ i, i < b → ∃ v, Decided U V i v
 ```
 
 Note the horizon: the run's last slot needs rounds up to `slotRound + 1` —
 one round of certificates fewer than the §6 analogue, again the two-round
-structure showing through.
+structure showing through. The conclusion is on any view caught up to the
+horizon (`View.CoversUpto`, §13's idiom): the supporters sit one round
+above each leader, so a caught-up view holds them
+(`Odontoceti.directCommitIn_of_coversUpto`), and the full view is the
+special case (`View.coversUpto_full`).
 
 ---
 
@@ -4500,8 +4504,10 @@ theorem decided_of_leader_mem
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound s)
     (hpop0 : PopulatedOn U T (S.slotRound s))
     (hpop1 : PopulatedOn U T (S.slotRound s + 1))
+    (V : View Validator BlockId Payload U)
+    (hcov : V.CoversUpto (S.slotRound s + 1))
     (hlead : S.leader s ∈ T) :
-    ∃ L, IsLeaderBlock U s L ∧ Decided k U (View.full U) s (some L)
+    ∃ L, IsLeaderBlock U s L ∧ Decided k U V s (some L)
 ```
 
 with the run machinery (`decided_below_of_committed_run`,
@@ -4708,8 +4714,10 @@ theorem decided_of_leader_mem
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound s)
     (hpop0 : PopulatedOn U T (S.slotRound s))
     (hpop1 : PopulatedOn U T (S.slotRound s + 1))
+    (V : View Validator BlockId Payload U)
+    (hcov : V.CoversUpto (S.slotRound s + 1))
     (hlead : S.leader s ∈ T) :
-    ∃ L, IsLeaderBlock U s L ∧ Decided U (View.full U) s (some L)
+    ∃ L, IsLeaderBlock U s L ∧ Decided U V s (some L)
 ```
 
 and the composed statement **NN8** (`all_decided_below_of_fairRun`,
@@ -13206,6 +13214,17 @@ def View.full (U : Universe Validator BlockId Payload) :
 
 Every live validator's *eventual* view. Downward-closed by `U.complete`.
 
+#### `View.CoversUpto`
+
+*def, `Nemo.Liveness.lean`*
+
+```lean
+def View.CoversUpto (V : View Validator BlockId Payload U) (N : ℕ) : Prop :=
+  ∀ b ∈ U.ids, (U.block b).round ≤ N → b ∈ V.ids
+```
+
+**A view caught up to round `N`**: it holds every block of the universe at a round at or below `N` — the crash arc's copy of the core's `View.CoversUpto`, the hypothesis under which a liveness result holds of a validator's own view rather than of the full view. The full view satisfies it at every `N`.
+
 #### `SpansEligible`
 
 *def, `Nemo.Liveness.lean`*
@@ -17176,7 +17195,7 @@ def LiveRule.LiveOn (R : LiveRule Validator BlockId Payload) (S : Slots Validato
       ∃ v, R.Decided S V κ v) ∧
     -- … and from every round `r` at or after `Rnd`, with `c` rounds and a
     -- wave still under the horizon, some slot at a round in `[r, r + c]`
-    -- is committed on the full view.
+    -- is committed on that view.
     (∀ r, Rnd ≤ r → r + c + R.waveLength ≤ N →
       ∃ κ, r ≤ S.slotRound κ ∧ S.slotRound κ ≤ r + c ∧
         ∃ L, R.Decided S V κ (some L))
@@ -18907,7 +18926,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 671 theorems that either another module of the
+The 673 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -20368,6 +20387,18 @@ theorem directCommitIn_full (h : DirectCommit U L r) :
 ```
 
 A universe-level direct commit is one the full view also sees.
+
+#### `directCommitIn_of_coversUpto`
+
+*theorem, `Liveness.lean`*
+
+```lean
+theorem directCommitIn_of_coversUpto {V : View Validator BlockId Payload U}
+    (h : DirectCommit U L r) (hcov : V.CoversUpto (r + 2)) :
+    DirectCommitIn U V L r
+```
+
+A view caught up to the certificate round sees every certificate, so a direct commit in the universe is a direct commit in the view.
 
 #### `decided_of_leader_mem`
 
@@ -22336,14 +22367,17 @@ theorem directCommit_of_leader_mem
 
 **O7, commit half (thesis Lemma 8 + Corollary 9).** Post-`R`, a `T`-led slot is directly committed: `SynchronisedOn` makes every `T` block at the decision round reference the leader's block, and `T` carries a quorum. Two populated rounds — propose and decide — and one synchronised step, routed through the targeted interface.
 
-#### `directCommitIn_full`
+#### `directCommitIn_of_coversUpto`
 
 *theorem, `Odontoceti.Liveness.lean`*
 
 ```lean
-theorem directCommitIn_full {r : ℕ} (h : DirectCommit U L r) :
-    DirectCommitIn U (View.full U) L r
+theorem directCommitIn_of_coversUpto {V : View Validator BlockId Payload U} {r : ℕ}
+    (h : DirectCommit U L r) (hcov : V.CoversUpto (r + 1)) :
+    DirectCommitIn U V L r
 ```
+
+A view caught up to the decision round sees every supporter, so a direct commit in the universe is a direct commit in the view.
 
 #### `decided_of_leader_mem`
 
@@ -22355,11 +22389,13 @@ theorem decided_of_leader_mem
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
     (hpop0 : PopulatedOn U T (S.slotRound k))
     (hpop1 : PopulatedOn U T (S.slotRound k + 1))
+    (V : View Validator BlockId Payload U)
+    (hcov : V.CoversUpto (S.slotRound k + 1))
     (hlead : S.leader k ∈ T) :
-    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
+    ∃ L, IsLeaderBlock U k L ∧ Decided U V k (some L)
 ```
 
-**O7, as a decision.**
+**O7, as a decision** — on any view caught up to the decision round.
 
 #### `decided_of_correct_leader`
 
@@ -22370,8 +22406,10 @@ theorem decided_of_correct_leader (hs : Synchronised U R)
     (hR : R ≤ S.slotRound k)
     (hpop0 : Populated U (S.slotRound k))
     (hpop1 : Populated U (S.slotRound k + 1))
+    (V : View Validator BlockId Payload U)
+    (hcov : V.CoversUpto (S.slotRound k + 1))
     (hlead : S.leader k ∈ (Correct : Finset Validator)) :
-    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
+    ∃ L, IsLeaderBlock U k L ∧ Decided U V k (some L)
 ```
 
 The same at `T := Correct`.
@@ -22412,13 +22450,14 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (hspan : SpansEligible Validator c)
     (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
+        (V : View Validator BlockId Payload U),
         (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
-        S.slotRound (b + c - 1) + 1 ≤ N →
-        ∀ i, i < b → ∃ v, Decided U (View.full U) i v
+        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
+        ∀ i, i < b → ∃ v, Decided U V i v
 ```
 
-**O10 (thesis Theorem 12).** Under production and post-`R` synchrony, a recurring run of `c` correct-led slots decides every slot below it — with the run placed past both the target and `R` by fairness. Note the horizon: the run's last slot needs rounds up to its `slotRound + 1` only.
+**O10 (thesis Theorem 12).** Under production and post-`R` synchrony, a recurring run of `c` correct-led slots decides every slot below it, on any view caught up to the horizon — with the run placed past both the target and `R` by fairness. Note the horizon: the run's last slot needs rounds up to its `slotRound + 1` only.
 
 ### The reactive schedule
 
@@ -22662,11 +22701,12 @@ theorem reactive_decided (rc : ReactivePace U T N)
     (hgst : rc.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rc.delay + rc.proc ≤ rc.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
+    (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N)
     (hlead : S.leader k ∈ T) :
-    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
+    ∃ L, IsLeaderBlock U k L ∧ Decided U V k (some L)
 ```
 
-**Reactive liveness (Odontoceti).** A reliable-led slot past GST is committed by every view — the conclusion of the two-round `decided_of_leader_mem`, from the single reactive wait clause and the trunk's derived production. One delivery separates a fast leader from its commit.
+**Reactive liveness (Odontoceti).** A reliable-led slot past GST is committed by every view caught up to the horizon — the conclusion of the two-round `decided_of_leader_mem`, from the single reactive wait clause and the trunk's derived production. One delivery separates a fast leader from its commit.
 
 ### Safe Skip: crash recovery in one message
 
@@ -23635,11 +23675,13 @@ theorem decided_of_leader_mem
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound s)
     (hpop0 : PopulatedOn U T (S.slotRound s))
     (hpop1 : PopulatedOn U T (S.slotRound s + 1))
+    (V : View Validator BlockId Payload U)
+    (hcov : V.CoversUpto (S.slotRound s + 1))
     (hlead : S.leader s ∈ T) :
-    ∃ L, IsLeaderBlock U s L ∧ Decided k U (View.full U) s (some L)
+    ∃ L, IsLeaderBlock U s L ∧ Decided k U V s (some L)
 ```
 
-**H7, as a decision** — at every threshold `k`.
+**H7, as a decision** — at every threshold `k`, on any view caught up to the decision round.
 
 #### `spansEligible_two`
 
@@ -23677,13 +23719,14 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (hspan : SpansEligible Validator c)
     (fair : FairRunOn T c) (R : ℕ) (s : ℕ) :
     ∃ b, s ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
+        (V : View Validator BlockId Payload U),
         (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
-        S.slotRound (b + c - 1) + 1 ≤ N →
-        ∀ i, i < b → ∃ v, Decided k U (View.full U) i v
+        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
+        ∀ i, i < b → ∃ v, Decided k U V i v
 ```
 
-**H7 (O10's mirror).** Under post-`R` coverage, growth to the horizon, and a recurring run of `c` reliable-led slots, every slot below the run is decided — at every threshold `k`, the run placed past both the target and `R` by fairness. The reliable set excludes the crash-prone by construction: `T ⊆ Correct` reads through the derived instance.
+**H7 (O10's mirror).** Under post-`R` coverage, growth to the horizon, and a recurring run of `c` reliable-led slots, every slot below the run is decided on any view caught up to the horizon — at every threshold `k`, the run placed past both the target and `R` by fairness. The reliable set excludes the crash-prone by construction: `T ⊆ Correct` reads through the derived instance.
 
 #### `toHybrid_toFaults`
 
@@ -24367,6 +24410,17 @@ theorem outputAt_agree {V₁ V₂ : View Validator BlockId Payload U} {n : ℕ}
 
 **And validators agree on which slot that is.**
 
+#### `View.coversUpto_full`
+
+*theorem, `Nemo.Liveness.lean`*
+
+```lean
+theorem View.coversUpto_full (U : Universe Validator BlockId Payload) (N : ℕ) :
+    (View.full U).CoversUpto N
+```
+
+The full view is caught up to every horizon.
+
 #### `decided_mono`
 
 *theorem, `Nemo.Liveness.lean`*
@@ -24416,11 +24470,13 @@ theorem decided_of_leader_mem
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound s)
     (hpop0 : PopulatedOn U T (S.slotRound s))
     (hpop1 : PopulatedOn U T (S.slotRound s + 1))
+    (V : View Validator BlockId Payload U)
+    (hcov : V.CoversUpto (S.slotRound s + 1))
     (hlead : S.leader s ∈ T) :
-    ∃ L, IsLeaderBlock U s L ∧ Decided U (View.full U) s (some L)
+    ∃ L, IsLeaderBlock U s L ∧ Decided U V s (some L)
 ```
 
-The commit half, as a decision.
+The commit half, as a decision — on any view caught up to the decision round.
 
 #### `spansEligible_two`
 
@@ -24460,10 +24516,11 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (hspan : SpansEligible Validator c)
     (fair : FairRunOn T c) (R : ℕ) (s : ℕ) :
     ∃ b, s ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : Universe Validator BlockId Payload) (N : ℕ),
+      ∀ (U : Universe Validator BlockId Payload) (N : ℕ)
+        (V : View Validator BlockId Payload U),
         (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
-        S.slotRound (b + c - 1) + 1 ≤ N →
-        ∀ i, i < b → ∃ v, Decided U (View.full U) i v
+        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
+        ∀ i, i < b → ∃ v, Decided U V i v
 ```
 
 **Liveness.** Under post-`R` coverage, growth to the horizon, and a recurring run of `c` reliable-led slots, every slot below the run is decided — the run placed past both the target and `R` by fairness.
@@ -27717,7 +27774,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 619 lemmas used only within the file that proves
+The 615 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -27824,7 +27881,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `PopulatedFrom.mono` | Population is antitone: a smaller set is easier to populate. |
 | `SynchronisedFrom.mono` | Coverage is antitone too: mutual coverage among a larger set implies it among any subset. |
 
-### `Liveness.lean` (21)
+### `Liveness.lean` (20)
 
 | Lemma | Role |
 |:---|:---|
@@ -27840,7 +27897,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifies_of_synchronisedOn` | A correct round-`(r+2)` block certifies any correct round-`r` block, once round `r+1` is populated and … |
 | `decided_none_of_no_candidate` | L5, in the form the `Decided` constructor wants. |
 | `directCommitIn_mono` | A larger view can only see more certificates. |
-| `directCommitIn_of_coversUpto` | A view caught up to the certificate round sees every certificate, so a direct commit in the universe is a … |
 | `directCommit_of_synchronisedOn` | L4, at the round level. A correct block at round `r` is directly committed, given coverage from `r` and … |
 | `directSkipIn_mono` | A larger view can only see more blame. |
 | `exists_eligible` | Every slot has an eligible anchor somewhere. |
@@ -28140,14 +28196,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `thickLink_of_directCommitIn` | O3, from a view: a view-level direct commit passes the indirect test at every block two rounds up. |
 | `thickLink_of_directCommitIn_at_anchor` | Visibility from an anchor. A slot committed directly carries a thick link at any eligible anchor above it … |
 
-### `Odontoceti/Liveness.lean` (4)
+### `Odontoceti/Liveness.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `all_decided_below_of_fairRun_correct` | O10 at `T := Correct`. |
 | `decided_of_leader_of_populated` | O7 against a horizon, the two-round counterpart of `decided_of_leader_of_populated`: the rule needs the … |
-| `directCommitIn_of_coversUpto` | A view caught up to the decision round sees every supporter, so a direct commit in the universe is a … |
-| `supportersIn_full` | The full view sees every supporter. |
 
 ### `Reactive/Basic.lean` (1)
 
@@ -28308,15 +28362,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `thickLink_of_directCommitIn` | H4, from a view: a view-level direct commit passes the indirect test at every block two rounds up. |
 | `thickLink_of_directCommitIn_at_anchor` | Visibility from an anchor. A slot committed directly carries a thick link at any eligible anchor above it … |
 
-### `Hybrid/Liveness.lean` (5)
+### `Hybrid/Liveness.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
 | `all_decided_below_of_fairRun_correct` | H7 at `T := Correct` — the whole fully-correct class, which the tight committee requires exactly. |
 | `decided_of_leader_of_populated` | H7 against a horizon: two rounds read off it. |
-| `directCommitIn_full` | — |
+| `directCommitIn_of_coversUpto` | A view caught up to the decision round sees every supporter, so a direct commit in the universe is a … |
 | `q_le_card_correct` | The fully-correct class carries the hybrid quorum: liveness's card hypothesis is satisfiable at `T := … |
-| `supportersIn_full` | The full view sees every supporter. |
 
 ### `Hybrid/Conservativity.lean` (4)
 
@@ -28412,13 +28465,13 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `PopulatedOn.mono` | Population is antitone: a smaller set is easier to populate. |
 | `SynchronisedOn.mono` | Coverage is antitone too. |
+| `View.CoversUpto.mono` | Caught up to `N` is caught up to every lower horizon. |
 | `all_decided_below_of_fairRun_live` | Liveness at `T := Live` — the whole live class, which the tight committee `n = 2f + 1` requires exactly. |
 | `decided_of_leader_of_populated` | The commit half against a horizon: two rounds read off it. `T ⊆ Live` is consumed here and only here, … |
-| `directCommitIn_full` | — |
 | `directCommitIn_mono` | A larger view can only see more supporters. |
+| `directCommitIn_of_coversUpto` | A view caught up to the decision round sees every supporter, so a direct commit in the universe is a … |
 | `majority_le_card_live` | The bridge — the arc's only consumer of the fault bound: the live class carries the majority quorum, since … |
 | `mem_live` | — |
-| `supportersIn_full` | The full view sees every supporter. |
 
 ### `MahiMahi/Helpers/Rules.lean` (9)
 

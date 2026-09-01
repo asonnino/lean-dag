@@ -45,8 +45,9 @@ with no certificate round.
 - **Liveness** (`Odontoceti.all_decided_below_of_fairRun`): under
   `Live`, `DeliversQuorum`, post-`R` synchrony, and a recurring run of
   **two** consecutive correct-led slots, every slot below the run is
-  decided — with commit latency one round shorter than Mysticeti's at
-  every step of the composition.
+  decided on any view caught up to the horizon (`View.CoversUpto`) —
+  with commit latency one round shorter than Mysticeti's at every step
+  of the composition.
 - **The generalization held**: everything is proved at `n ≥ 5f+1` with
   direct thresholds `n − f` and indirect threshold `n − 3f`,
   specializing to the thesis's `4f+1` / `2f+1` at the boundary. The
@@ -368,6 +369,11 @@ exactly where hand proofs about uncertified DAGs tend to be thinnest.
   step, and `Correct` carries a quorum. **Two populated rounds**
   (propose and decide) against the Mysticeti analogue's three — the
   protocol's latency advantage, visible as a shorter hypothesis list.
+  The decision-valued forms conclude on any view caught up to the
+  decision round (`View.CoversUpto`, `directCommitIn_of_coversUpto`) —
+  the supporters sit one round above the leader, so a caught-up view
+  holds them; the full view is the special case
+  (`View.coversUpto_full`).
 - **O8** (`SpansEligible`, `spansEligible_two`; thesis Lemma 10's
   content). Under a pipelined identity-round schedule, a run of **two**
   consecutive committed slots spans eligibility for everything below:
@@ -384,9 +390,10 @@ exactly where hand proofs about uncertified DAGs tend to be thinnest.
   `all_decided_below_of_fairRun_correct`; thesis Theorem 12). The
   composition, under enforceable hypotheses only: `Live`,
   `DeliversQuorum`, `SynchronisedOn`, and a `FairRunOn` run of `c`
-  correct-led slots placed past both the target and `R` by fairness.
-  The horizon asks for rounds up to the run's `slotRound + 1` — one
-  round fewer than Mysticeti's `+ 2`, the latency advantage again.
+  correct-led slots placed past both the target and `R` by fairness —
+  concluding on any view caught up to the horizon. The horizon asks
+  for rounds up to the run's `slotRound + 1` — one round fewer than
+  Mysticeti's `+ 2`, the latency advantage again.
 
 **The schedule fact is hypothesized, not derived** — liveness takes
 "runs of two consecutive correct-led slots recur" as `FairRunOn`, in
