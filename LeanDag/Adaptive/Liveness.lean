@@ -26,10 +26,20 @@ at every height glue into a total run along the diagonal, with
 `partialRun_agree` supplying the coherence that the stage-by-stage
 choices need not.
 
+Every statement is on a validator's own view, caught up to the horizon
+(`View.CoversUpto`) — the view whose `DirectCommitIn` the run's verdicts
+are derived in, and the view its schedule is computed on. The full view
+is caught up to every horizon (`View.coversUpto_full`), so the
+whole-universe reading is the special case; under eventual DAG synchrony
+(`liveness.md` §4.2) every correct validator's view is caught up once
+delivery has reached the horizon, which is what makes the statement one
+about validators.
+
 The witnessable form is `exists_partialRun`, whose growth hypothesis is
 a horizon like every base liveness statement's; the total run
-(`adaptiveRun_exists`) needs the DAG populated at every round, as it
-must — a total run decides every slot there is.
+(`adaptiveRun_exists`) needs the DAG populated at every round and the
+view caught up to every horizon, as it must — a total run decides every
+slot there is.
 -/
 
 namespace LeanDag
@@ -91,9 +101,10 @@ consecutive `T`-led slots. The clause liveness prices and safety never
 sees: `adaptiveRun_agree` holds for policies that violate it. -/
 def PlacesRuns (P : AdaptivePolicy Validator BlockId Payload)
     (T : Finset Validator) (c : ℕ) : Prop :=
-  ∀ (U : BlockUniverse Validator BlockId Payload) (v : ℕ → Option BlockId)
-    (e : ℕ), ∃ b, P.W * (e + 1) ≤ b ∧ b + c ≤ P.W * (e + 2) ∧
-      ∀ i, i < c → P.pick U v (b + i) ∈ T
+  ∀ (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
+    (v : ℕ → Option BlockId) (e : ℕ),
+    ∃ b, P.W * (e + 1) ≤ b ∧ b + c ≤ P.W * (e + 2) ∧
+      ∀ i, i < c → P.pick U V v (b + i) ∈ T
 
 omit [Fintype Validator] [DecidableEq Validator] F [DecidableEq BlockId] in
 /-- Eligibility reads only the round structure, which reassignment fixes:
@@ -108,28 +119,32 @@ section Existence
 variable {P : AdaptivePolicy Validator BlockId Payload}
 variable {T : Finset Validator} {c R N : ℕ}
 
-/-- **One epoch closes.** Against the schedule an arbitrary verdict
-function induces, every slot of epoch `E` is decided inside its window:
-the run `PlacesRuns` puts in epoch `E + 1` commits directly, and the
-bounded descent clears everything below it. -/
+/-- **One epoch closes.** On a view caught up to the horizon, against
+the schedule an arbitrary verdict function induces, every slot of epoch
+`E` is decided inside its window: the run `PlacesRuns` puts in epoch
+`E + 1` commits directly — its certificates sit under the horizon, so
+the view holds them — and the bounded descent clears everything below
+it. -/
 theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
     (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (v : ℕ → Option BlockId) (E : ℕ)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
+    (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N)
+    (v : ℕ → Option BlockId) (E : ℕ)
     (hN : S.slotRound (P.W * (E + 2)) + 2 ≤ N) :
     ∀ k, epochOf P.W k < E + 1 →
-      ∃ w, DecidedWithin (S := slotsOf P.inj (fun m => P.pick U v m)) U
-        (View.full U) (P.W * (E + 2)) k w := by
-  obtain ⟨b, hb1, hb2, hbT⟩ := hruns U v E
+      ∃ w, DecidedWithin (S := slotsOf P.inj (fun m => P.pick U V v m)) U
+        V (P.W * (E + 2)) k w := by
+  obtain ⟨b, hb1, hb2, hbT⟩ := hruns U V v E
   have hWpos := P.W_pos
   -- Every run slot is directly committed, inside the window.
   have hrun : ∀ j, b ≤ j → j ≤ b + c - 1 →
-      ∃ B', DecidedWithin (S := slotsOf P.inj (fun m => P.pick U v m)) U
-        (View.full U) (b + c - 1 + 1) j (some B') := by
+      ∃ B', DecidedWithin (S := slotsOf P.inj (fun m => P.pick U V v m)) U
+        V (b + c - 1 + 1) j (some B') := by
     intro j hj1 hj2
-    have hlead : (slotsOf P.inj (fun m => P.pick U v m)).leader j ∈ T := by
+    have hlead : (slotsOf P.inj (fun m => P.pick U V v m)).leader j ∈ T := by
       have := hbT (j - b) (by omega)
       rw [slotsOf_leader]
       have hjb : b + (j - b) = j := by omega
@@ -143,44 +158,46 @@ theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
       have := S.mono hj3
       omega
     obtain ⟨L, hL, hdc⟩ :=
-      directCommit_of_leader_mem (S := slotsOf P.inj (fun m => P.pick U v m))
+      directCommit_of_leader_mem (S := slotsOf P.inj (fun m => P.pick U V v m))
         hcard hs hRj
         (hpop _ (by omega) (by omega))
         (hpop _ (by omega) (by omega))
         (hpop _ (by omega) (by omega)) hlead
     exact ⟨L, DecidedWithin.directCommit
-      (S := slotsOf P.inj (fun m => P.pick U v m)) (by omega) hL
-      (directCommitIn_full hdc)⟩
+      (S := slotsOf P.inj (fun m => P.pick U V v m)) (by omega) hL
+      (directCommitIn_of_coversUpto hdc (hcov.mono hround))⟩
   -- The bounded descent clears everything below the run — all of epoch `E`.
   have hbelow :=
-    decidedWithin_below_of_committed_run (V := View.full U)
-      (S := slotsOf P.inj (fun m => P.pick U v m))
+    decidedWithin_below_of_committed_run (V := V)
+      (S := slotsOf P.inj (fun m => P.pick U V v m))
       (b := b) (n := b + c - 1) (by omega)
       (fun i hi => spansEligible_slotsOf hspans b i hi) hrun
   intro k hk
   have hkb : k < b :=
     lt_of_lt_of_le ((epochOf_lt_iff hWpos).mp hk) hb1
   obtain ⟨w, hw⟩ := hbelow k hkb
-  exact ⟨w, DecidedWithin.mono (S := slotsOf P.inj (fun m => P.pick U v m))
+  exact ⟨w, DecidedWithin.mono (S := slotsOf P.inj (fun m => P.pick U V v m))
     hw (by omega)⟩
 
 /-- **Partial runs exist at every height** — the witnessable, finite-
-horizon form of existence, by induction on the height: each stage
-re-reads the schedule off the verdicts so far and closes one more epoch. -/
+horizon form of existence, on a view caught up to the horizon, by
+induction on the height: each stage re-reads the schedule off the
+verdicts so far and closes one more epoch. -/
 theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
     (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (E : ℕ)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
+    (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N) (E : ℕ)
     (hN : S.slotRound (P.W * (E + 1)) + 2 ≤ N) :
-    Nonempty (PartialRun P U (View.full U) E) := by
+    Nonempty (PartialRun P U V E) := by
   classical
   revert hN
   induction E with
   | zero =>
       intro hN
-      exact ⟨{ assign := fun m => P.pick U (fun _ => none) m
+      exact ⟨{ assign := fun m => P.pick U V (fun _ => none) m
                vdct := fun _ => none
                closed := fun k hk => absurd hk (by omega)
                coherent := fun _ _ => rfl }⟩
@@ -193,7 +210,7 @@ theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
         omega
       obtain ⟨R₀⟩ := ih hNprev
       have hclose := epoch_closes hT hcard hc hruns hspans hs hRW hpop
-        R₀.vdct E hN
+        V hcov R₀.vdct E hN
       -- The new verdicts: epoch `E` freshly decided, everything below kept.
       set v' : ℕ → Option BlockId := fun k =>
         if h : epochOf P.W k = E then (hclose k (by omega)).choose
@@ -204,14 +221,14 @@ theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
         simp only [hv', dif_neg (by omega : ¬ epochOf P.W j = E)]
       -- The two induced schedules agree below epoch `E + 2`.
       have hsched : ∀ m, m < P.W * (E + 2) →
-          P.pick U R₀.vdct m = P.pick U v' m := by
+          P.pick U V R₀.vdct m = P.pick U V v' m := by
         intro m hm
-        refine P.adapted U R₀.vdct v' m (fun j hj => ?_)
+        refine P.adapted U V V R₀.vdct v' m (fun j hj => ?_)
         have hjE : epochOf P.W j < E := by
           have := (epochOf_lt_iff P.W_pos).mpr hm
           omega
         exact (hagree j hjE).symm
-      refine ⟨{ assign := fun m => P.pick U v' m
+      refine ⟨{ assign := fun m => P.pick U V v' m
                 vdct := v'
                 closed := ?_
                 coherent := fun _ _ => rfl }⟩
@@ -227,12 +244,12 @@ theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
         have hkE' : epochOf P.W k < E := by omega
         have hold := R₀.closed k hkE'
         have hsched' : ∀ m, m < P.W * (epochOf P.W k + 2) →
-            R₀.assign m = P.pick U v' m := by
+            R₀.assign m = P.pick U V v' m := by
           intro m hm
           have hmE : epochOf P.W m < epochOf P.W k + 2 :=
             (epochOf_lt_iff P.W_pos).mpr hm
           rw [R₀.coherent m (by omega)]
-          refine P.adapted U R₀.vdct v' m (fun j hj => ?_)
+          refine P.adapted U V V R₀.vdct v' m (fun j hj => ?_)
           exact (hagree j (by omega)).symm
         have := decidedWithin_congr hsched' hold
         rw [hagree k hkE']
@@ -240,23 +257,27 @@ theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
 
 /-- **AL5: the adaptive fixpoint exists.** On a DAG synchronised over a
 quorum of reliable validators and populated at every round, under a
-policy that places runs, a total adaptive run exists on the full view —
-partial runs at every height glued along the diagonal, `partialRun_agree`
-making the stage-by-stage choices cohere. With `adaptiveRun_agree` it is
-THE fixpoint: adaptive Mysticeti decides every slot, and uniquely. -/
+policy that places runs, a total adaptive run exists on every view
+caught up to every horizon — the full view, up to naming, since a total
+run decides every slot there is — partial runs at every height glued
+along the diagonal, `partialRun_agree` making the stage-by-stage choices
+cohere. With `adaptiveRun_agree` it is THE fixpoint: adaptive Mysticeti
+decides every slot, and uniquely. -/
 theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
     (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hspans : SpansEligible (Validator := Validator) c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r, Populated U r) :
-    Nonempty (AdaptiveRun P U (View.full U)) := by
+    (hpop : ∀ r, Populated U r)
+    (V : View Validator BlockId Payload U) (hcov : ∀ N, V.CoversUpto N) :
+    Nonempty (AdaptiveRun P U V) := by
   classical
   -- A partial run at every height, chosen arbitrarily.
-  have hex : ∀ E, Nonempty (PartialRun P U (View.full U) E) := fun E =>
+  have hex : ∀ E, Nonempty (PartialRun P U V E) := fun E =>
     exists_partialRun hT hcard hc hruns hspans hs hRW
-      (N := S.slotRound (P.W * (E + 1)) + 2) (fun r _ _ => PopulatedOn.mono hT (hpop r)) E (le_refl _)
-  set Rs : ∀ E, PartialRun P U (View.full U) E :=
+      (N := S.slotRound (P.W * (E + 1)) + 2) (fun r _ _ => PopulatedOn.mono hT (hpop r))
+      V (hcov _) E (le_refl _)
+  set Rs : ∀ E, PartialRun P U V E :=
     fun E => (hex E).some with hRs
   -- The diagonal: each slot's verdict read from the first height above it.
   set vd : ℕ → Option BlockId := fun k => (Rs (epochOf P.W k + 1)).vdct k with hvd
@@ -264,7 +285,7 @@ theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
   have hdiag : ∀ E j, epochOf P.W j < E → (Rs E).vdct j = vd j := by
     intro E j hj
     exact partialRun_agree (Rs E) (Rs (epochOf P.W j + 1)) j (by omega)
-  refine ⟨{ assign := fun m => P.pick U vd m
+  refine ⟨{ assign := fun m => P.pick U V vd m
             vdct := vd
             closed := ?_
             coherent := fun _ => rfl }⟩
@@ -273,7 +294,7 @@ theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
   refine decidedWithin_congr (fun m hm => ?_) hclosed
   have hmE : epochOf P.W m < epochOf P.W k + 2 := (epochOf_lt_iff P.W_pos).mpr hm
   rw [(Rs (epochOf P.W k + 1)).coherent m (by omega)]
-  refine P.adapted U (Rs (epochOf P.W k + 1)).vdct vd m (fun j hj => ?_)
+  refine P.adapted U V V (Rs (epochOf P.W k + 1)).vdct vd m (fun j hj => ?_)
   exact hdiag _ j (by omega)
 
 end Existence

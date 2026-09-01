@@ -111,10 +111,11 @@ cannot satisfy this, which is the substantive content — such a policy
 is incompatible with garbage collection, and saying so precisely is the
 point of I9. -/
 def HorizonStable (P : AdaptivePolicy Validator BlockId Payload) (d G : ℕ)
-    (pick' : BlockUniverse Validator BlockId Payload →
-      (ℕ → Option BlockId) → ℕ → Validator) : Prop :=
-  ∀ (U : BlockUniverse Validator BlockId Payload) (v : ℕ → Option BlockId)
-    (k : ℕ), pick' (chop U G) (fun m => v (d + m)) k = P.pick U v (d + k)
+    (pick' : (U' : BlockUniverse Validator BlockId Payload) →
+      View Validator BlockId Payload U' → (ℕ → Option BlockId) → ℕ → Validator) : Prop :=
+  ∀ (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
+    (V' : View Validator BlockId Payload (chop U G)) (v : ℕ → Option BlockId)
+    (k : ℕ), pick' (chop U G) V' (fun m => v (d + m)) k = P.pick U V v (d + k)
 
 /-- **I9, the assignment half.** Under a horizon-stable rule a joiner
 computes exactly the leaders the network is using: its assignment at
@@ -125,25 +126,27 @@ validators do not *disagree about who leads*, which is the premise any
 agreement argument between them must have and the thing garbage
 collection threatened. -/
 theorem joiner_assign_agree {V : View Validator BlockId Payload U}
-    {pick' : BlockUniverse Validator BlockId Payload →
-      (ℕ → Option BlockId) → ℕ → Validator}
-    (hs : HorizonStable P d G pick') (R : AdaptiveRun P U V) (k : ℕ) :
-    pick' (chop U G) (fun m => R.vdct (d + m)) k = R.assign (d + k) := by
-  rw [hs U R.vdct k, R.coherent (d + k)]
+    {pick' : (U' : BlockUniverse Validator BlockId Payload) →
+      View Validator BlockId Payload U' → (ℕ → Option BlockId) → ℕ → Validator}
+    (hs : HorizonStable P d G pick') (R : AdaptiveRun P U V)
+    (V' : View Validator BlockId Payload (chop U G)) (k : ℕ) :
+    pick' (chop U G) V' (fun m => R.vdct (d + m)) k = R.assign (d + k) := by
+  rw [hs U V V' R.vdct k, R.coherent (d + k)]
 
 /-- The joiner's schedule *is* the network's, seen from another origin:
 combining the assignment agreement with `slotsChop_slotsOf`, the two
 `Slots` instances name the same leader at every slot. -/
 theorem joiner_leader_agree {V : View Validator BlockId Payload U}
     (hd : G ≤ S.slotRound d) (hinj : Function.Injective S.slotRound)
-    {pick' : BlockUniverse Validator BlockId Payload →
-      (ℕ → Option BlockId) → ℕ → Validator}
-    (hs : HorizonStable P d G pick') (R : AdaptiveRun P U V) (k : ℕ) :
+    {pick' : (U' : BlockUniverse Validator BlockId Payload) →
+      View Validator BlockId Payload U' → (ℕ → Option BlockId) → ℕ → Validator}
+    (hs : HorizonStable P d G pick') (R : AdaptiveRun P U V)
+    (V' : View Validator BlockId Payload (chop U G)) (k : ℕ) :
     (slotsOf (S := S.chop G d hd) (injective_slotRound_chop hd hinj)
-        (fun m => pick' (chop U G) (fun j => R.vdct (d + j)) m)).leader k
+        (fun m => pick' (chop U G) V' (fun j => R.vdct (d + j)) m)).leader k
       = (slotsOf hinj R.assign).leader (d + k) := by
   simp only [slotsOf_leader]
-  exact joiner_assign_agree hs R k
+  exact joiner_assign_agree hs R V' k
 
 /-- The constant policy is horizon-stable exactly when the base slot is
 the origin — which is the degenerate case, and the point is the
@@ -154,8 +157,8 @@ own slot numbering. -/
 theorem horizonStable_const_zero {W : ℕ} {hW : 0 < W}
     {hinj : Function.Injective S.slotRound} :
     HorizonStable (AdaptivePolicy.const (BlockId := BlockId) (Payload := Payload)
-      W hW hinj) 0 G (fun _ _ k => S.leader k) := by
-  intro _ _ k
+      W hW hinj) 0 G (fun _ _ _ k => S.leader k) := by
+  intro _ _ _ _ k
   show S.leader k = S.leader (0 + k)
   rw [Nat.zero_add]
 

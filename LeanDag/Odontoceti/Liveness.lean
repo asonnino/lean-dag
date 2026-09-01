@@ -93,6 +93,19 @@ theorem directCommitIn_full {r : ℕ} (h : DirectCommit U L r) :
   rw [DirectCommitIn, supportersIn_full]
   exact h
 
+/-- A view caught up to the decision round sees every supporter, so a
+direct commit in the universe is a direct commit in the view. -/
+theorem directCommitIn_of_coversUpto {V : View Validator BlockId Payload U} {r : ℕ}
+    (h : DirectCommit U L r) (hcov : V.CoversUpto (r + 1)) :
+    DirectCommitIn U V L r := by
+  have hsub : (blocksAt U (r + 1)).filter (fun q => L ∈ (U.block q).refs) ⊆ V.ids := by
+    intro q hq
+    obtain ⟨hq, -⟩ := Finset.mem_filter.mp hq
+    obtain ⟨hqids, hqr⟩ := mem_blocksAt.mp hq
+    exact hcov q hqids (le_of_eq hqr)
+  rw [DirectCommitIn, supportersIn, Finset.inter_eq_left.2 hsub]
+  exact h
+
 /-- **O7, as a decision.** -/
 theorem decided_of_leader_mem
     (hcard : quorumCard Validator ≤ T.card)

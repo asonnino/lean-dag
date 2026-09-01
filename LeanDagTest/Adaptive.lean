@@ -114,15 +114,15 @@ def demotePolicy : AdaptivePolicy (Fin 4) (Fin 24) Unit where
   W := 1
   W_pos := Nat.one_pos
   inj := u7_inj
-  pick := fun _ v k => if k < 2 then 0 else if v (k - 2) = none then 1 else 0
+  pick := fun _ _ v k => if k < 2 then 0 else if v (k - 2) = none then 1 else 0
   adapted := by
-    intro U v w k hvw
+    intro U V₁ V₂ v w k hvw
     by_cases h2 : k < 2
     · simp only [if_pos h2]
     · have hj : v (k - 2) = w (k - 2) := hvw (k - 2) (by simp only [epochOf]; omega)
       simp only [if_neg h2, hj]
   base_prefix := by
-    intro U v k hk
+    intro U V v k hk
     have h2 : k < 2 := by simpa [epochOf] using hk
     simp only [if_pos h2]
     rfl
@@ -134,7 +134,7 @@ def vd7 : ℕ → Option (Fin 24) :=
 
 /-- The adaptive run over the full view. -/
 def run7 : AdaptiveRun demotePolicy U7 V7 where
-  assign := fun k => demotePolicy.pick U7 vd7 k
+  assign := fun k => demotePolicy.pick U7 V7 vd7 k
   vdct := vd7
   closed := by
     intro k
@@ -151,7 +151,7 @@ def run7 : AdaptiveRun demotePolicy U7 V7 where
           (u7_decidedWithin_slot1.mono (by omega))
     | (k + 2) =>
         refine DecidedWithin.directSkip
-          (S := slotsOf demotePolicy.inj (fun k => demotePolicy.pick U7 vd7 k))
+          (S := slotsOf demotePolicy.inj (fun k => demotePolicy.pick U7 V7 vd7 k))
           ?_ (fun L hL => ?_)
         · have hW : demotePolicy.W = 1 := rfl
           simp only [hW, epochOf, Nat.div_one, Nat.one_mul]
@@ -163,7 +163,7 @@ def run7 : AdaptiveRun demotePolicy U7 V7 where
 
 /-- The same run over the trimmed view `V7small`. -/
 def run7small : AdaptiveRun demotePolicy U7 V7small where
-  assign := fun k => demotePolicy.pick U7 vd7 k
+  assign := fun k => demotePolicy.pick U7 V7small vd7 k
   vdct := vd7
   closed := by
     intro k
@@ -187,7 +187,7 @@ def run7small : AdaptiveRun demotePolicy U7 V7small where
             (by omega) (by decide) (by decide)).mono (by omega))
     | (k + 2) =>
         refine DecidedWithin.directSkip
-          (S := slotsOf demotePolicy.inj (fun k => demotePolicy.pick U7 vd7 k))
+          (S := slotsOf demotePolicy.inj (fun k => demotePolicy.pick U7 V7small vd7 k))
           ?_ (fun L hL => ?_)
         · have hW : demotePolicy.W = 1 := rfl
           simp only [hW, epochOf, Nat.div_one, Nat.one_mul]
@@ -225,13 +225,13 @@ theorem u7_spansEligible : SpansEligible (Validator := Fin 4) 1 := by
 reads, so it places a (one-slot) run in every epoch for `T = {0, 1}`:
 `PlacesRuns`, witnessed. -/
 theorem demote_placesRuns : PlacesRuns demotePolicy {0, 1} 1 := by
-  intro U v e
+  intro U V v e
   have hW : demotePolicy.W = 1 := rfl
   refine ⟨e + 1, by rw [hW]; omega, by rw [hW]; omega, ?_⟩
   intro i hi
   have hi0 : i = 0 := by omega
   subst hi0
-  have hp : demotePolicy.pick U v (e + 1 + 0) =
+  have hp : demotePolicy.pick U V v (e + 1 + 0) =
       if e + 1 + 0 < 2 then 0 else if v (e + 1 + 0 - 2) = none then 1 else 0 := rfl
   rw [hp]
   split_ifs <;> decide

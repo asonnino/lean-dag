@@ -352,6 +352,29 @@ theorem decided_full {V : View Validator BlockId Payload U} {k : ℕ}
     {v : Option BlockId} (h : Decided U V k v) : Decided U (View.full U) k v :=
   decided_mono V.subset_ids h
 
+omit [DecidableEq BlockId] in
+/-- **A view caught up to round `N`**: it holds every block of the
+universe at a round at or below `N`. What a validator that has received
+everything up to `N` holds — under eventual DAG synchrony
+(`liveness.md` §4.2) every correct validator's view, once delivery has
+caught up that far — and the hypothesis under which a liveness result
+holds of a validator's own view rather than of the full view. The full
+view satisfies it at every `N`. -/
+def View.CoversUpto (V : View Validator BlockId Payload U) (N : ℕ) : Prop :=
+  ∀ b ∈ U.ids, (U.block b).round ≤ N → b ∈ V.ids
+
+omit S [DecidableEq BlockId] in
+/-- The full view is caught up to every horizon. -/
+theorem View.coversUpto_full (U : BlockUniverse Validator BlockId Payload) (N : ℕ) :
+    (View.full U).CoversUpto N :=
+  fun _ hb _ => hb
+
+omit S [DecidableEq BlockId] in
+/-- Caught up to `N` is caught up to every lower horizon. -/
+theorem View.CoversUpto.mono {V : View Validator BlockId Payload U} {M N : ℕ}
+    (h : V.CoversUpto N) (hMN : M ≤ N) : V.CoversUpto M :=
+  fun b hb hr => h b hb (le_trans hr hMN)
+
 /-! ## L4 — a correct leader commits
 
 `liveness.md` §6. The one substantive proof in the liveness plan.
@@ -526,6 +549,19 @@ omit S in
 theorem directCommitIn_full (h : DirectCommit U L r) :
     DirectCommitIn U (View.full U) L r := by
   rw [DirectCommitIn, certificatesIn_full]
+  exact h
+
+omit S in
+/-- A view caught up to the certificate round sees every certificate, so
+a direct commit in the universe is a direct commit in the view. -/
+theorem directCommitIn_of_coversUpto {V : View Validator BlockId Payload U}
+    (h : DirectCommit U L r) (hcov : V.CoversUpto (r + 2)) :
+    DirectCommitIn U V L r := by
+  have hsub : certificates U L r ⊆ V.ids := by
+    intro C hC
+    rw [mem_certificates] at hC
+    exact hcov C hC.1 (le_of_eq hC.2.1)
+  rw [DirectCommitIn, certificatesIn, Finset.inter_eq_left.2 hsub]
   exact h
 
 /-- **L4, as a decision.** What L6 consumes and L3 propagates. -/
