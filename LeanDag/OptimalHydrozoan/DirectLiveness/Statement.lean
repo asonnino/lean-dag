@@ -47,7 +47,9 @@ variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
 quorum-sized set of correct replicas, populated through the wave's three
 rounds and synchronised from some `R` at or before the wave, commits its
 correct leader — the slow-commit threshold is met, and the decision logic
-outputs the commit verdict at the eventual view.
+outputs the commit verdict on any view caught up to the decision round
+(the certificates sit there, so a caught-up view holds them; the eventual
+view is caught up to every horizon).
 
 `SlowCommit` here is a threshold fact, not a route: the fast path may also
 fire in the same universe — this is the one the guaranteed quorum always
@@ -62,18 +64,22 @@ def CommitLiveness (U : OptUniverse Replica BlockId) : Prop :=
     PopulatedOn U.toBlockUniverse T (S.slotRound k + 1) →  -- ... the voting round ...
     PopulatedOn U.toBlockUniverse T (S.slotRound k + 2) →  -- ... and the decision round,
     S.leader k ∈ T →                     -- and the slot's leader is in T:
-    ∃ L, IsLeaderBlock U.toBlockUniverse k L ∧           -- then a candidate exists,
+    ∀ V : View U.toBlockUniverse,        -- then, on any view caught up
+      V.CoversUpto (S.slotRound k + 2) → -- ... to the decision round:
+    ∃ L, IsLeaderBlock U.toBlockUniverse k L ∧           -- a candidate exists,
       SlowCommit U.toBlockUniverse L (S.slotRound k) ∧   -- the slow threshold is met,
-      DecidedOpt U (View.full U.toBlockUniverse) k (some L)  -- and its verdict is committed
+      DecidedOpt U V k (some L)          -- and its verdict is committed
 
 /-- **Skip liveness** (the arc's addition): a slot with no candidate is
 directly skipped by any quorum-sized set of correct replicas that fills
 its voting and decision rounds — every voting-round block of `T` blames
 the slot, every decision-round block of `T` is fast evidence for no
-candidate, and `q_cert ≤ q ≤ |T|` — and the skip verdict is output at the
-eventual view. No synchrony and no fault-count hypothesis: blames and
-no-evidence reference nothing. `q ≤ |T|` is deliberately the DAG quorum,
-uniform with `CommitLiveness`, although `q_cert ≤ |T|` would suffice. -/
+candidate, and `q_cert ≤ q ≤ |T|` — and the skip verdict is output on any
+view caught up to the decision round (the blames and the no-evidence
+quorum both sit at or below it). No synchrony and no fault-count
+hypothesis: blames and no-evidence reference nothing. `q ≤ |T|` is
+deliberately the DAG quorum, uniform with `CommitLiveness`, although
+`q_cert ≤ |T|` would suffice. -/
 def SkipLiveness (U : OptUniverse Replica BlockId) : Prop :=
   ∀ (T : Finset Replica) (k : ℕ),        -- for any set T and slot k:
     T ⊆ (Correct : Finset Replica) →     -- T holds only correct replicas ...
@@ -81,8 +87,10 @@ def SkipLiveness (U : OptUniverse Replica BlockId) : Prop :=
     PopulatedOn U.toBlockUniverse T (S.slotRound k + 1) →  -- T fills the voting round ...
     PopulatedOn U.toBlockUniverse T (S.slotRound k + 2) →  -- ... and the decision round,
     (∀ L, ¬ IsLeaderBlock U.toBlockUniverse k L) →         -- and no candidate exists:
-    SkippedLeaderOpt U.toBlockUniverse k ∧                 -- then the slot skips directly,
-      DecidedOpt U (View.full U.toBlockUniverse) k none    -- and the verdict is output
+    ∀ V : View U.toBlockUniverse,        -- then, on any view caught up
+      V.CoversUpto (S.slotRound k + 2) → -- ... to the decision round:
+    SkippedLeaderOpt U.toBlockUniverse k ∧  -- the slot skips directly,
+      DecidedOpt U V k none              -- and the verdict is output
 
 /-- Direct liveness of Optimal-Hydrozoan, over every fault configuration,
 schedule, and universe the model admits. -/

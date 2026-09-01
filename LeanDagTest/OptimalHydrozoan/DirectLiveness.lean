@@ -69,7 +69,7 @@ example :
     ∃ L, IsLeaderBlock UC 0 L ∧ SlowCommit UC L 0 ∧ DecidedOpt OC (View.full UC) 0 (some L) :=
   (OptimalHydrozoan.DirectLiveness.holds (Fin 3) (Fin 9) OC).1 (Correct : Finset (Fin 3)) 0 0
     (by decide) (by decide) uc_synchronised (by decide) (by decide) (by decide) (by decide)
-    (by decide)
+    (by decide) (View.full UC) (View.coversUpto_full UC _)
 
 -- Skip liveness on slot 1 (leader 0, crashed, no candidate): guaranteed
 -- by the correct pair alone — no synchrony, no fault-count premise.
@@ -79,6 +79,7 @@ example : (∀ L, ¬ IsLeaderBlock UC 1 L) ∧ blames UC 1 = {1, 2} ∧ ¬ Skipp
 example : SkippedLeaderOpt UC 1 ∧ DecidedOpt OC (View.full UC) 1 none :=
   (OptimalHydrozoan.DirectLiveness.holds (Fin 3) (Fin 9) OC).2 (Correct : Finset (Fin 3)) 1
     (by decide) (by decide) (by decide) (by decide) (by decide)
+    (View.full UC) (View.coversUpto_full UC _)
 
 -- Fast latency: one crashed replica fits pOpt = 1 — and would not fit
 -- Hydrozoan's p = 0. (At this configuration the bounds force the fault
@@ -98,10 +99,12 @@ example :
     SkippedLeaderOpt UD 4 ∧ DecidedOpt OD (View.full UD) 4 none :=
   (OptimalHydrozoan.DirectLiveness.holds (Fin 4) (Fin 30) OD).2 {1, 2, 3} 4
     (by decide) (by decide) (by decide) (by decide) (by decide)
+    (View.full UD) (View.coversUpto_full UD _)
 example :
     SkippedLeaderOpt UD 5 ∧ DecidedOpt OD (View.full UD) 5 none :=
   (OptimalHydrozoan.DirectLiveness.holds (Fin 4) (Fin 30) OD).2 {1, 2, 3} 5
     (by decide) (by decide) (by decide) (by decide) (by decide)
+    (View.full UD) (View.coversUpto_full UD _)
 
 -- The premises bite. OD is not {1, 2, 3}-synchronised: at round 2 → 3,
 -- replica 1's block 12 omits replica 1's own round-2 block 8.

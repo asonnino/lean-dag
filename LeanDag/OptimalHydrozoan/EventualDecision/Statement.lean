@@ -57,7 +57,9 @@ def RunDecidesBelow (U : OptUniverse Replica BlockId) : Prop :=
     (∀ r, S.slotRound b ≤ r →            -- and T fills every round from
       r ≤ S.slotRound (b + c - 1) + 2 →  -- the run's propose round to its
       PopulatedOn U.toBlockUniverse T r) →  -- last decision round:
-    ∀ i, i < b → ∃ v, DecidedOpt U (View.full U.toBlockUniverse) i v  -- all below decided.
+    ∀ V : View U.toBlockUniverse,        -- then, on any view caught up
+      V.CoversUpto (S.slotRound (b + c - 1) + 2) →  -- ... to that round:
+    ∀ i, i < b → ∃ v, DecidedOpt U V i v  -- all below decided.
 
 /-- Eventual decision of Optimal-Hydrozoan, over every fault
 configuration, schedule, and universe the model admits — together with

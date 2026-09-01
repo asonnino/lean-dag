@@ -78,7 +78,9 @@ def HypothesesRealizable : Prop :=
 /-- **Grounded progress.** Under wave-aligned round-robin, the composed
 Optimal liveness conclusion is achievable with no premise at all: past
 every point, some Optimal universe commits a bound with every slot below
-it decided. An achievability claim, as in Hydrozoan — the statement
+it decided — on any view caught up to the bound's decision round
+(`b + 4` under the wave-aligned schedule; the eventual view instantiates
+the claim). An achievability claim, as in Hydrozoan — the statement
 asserts the conclusion's satisfiability, not the route to it (a universe
 may reach these verdicts by any of the six `DecidedOpt` routes). Each
 horizon is witnessed by its own finite universe, and the bound `b`
@@ -95,10 +97,12 @@ def GroundedProgress : Prop :=
     letI : Slots (Fin n) := waveRobin n hn    -- under wave-aligned rotation,
     ∀ k : ℕ, ∃ b, k ≤ b ∧                     -- past any slot k,
       ∃ U : OptUniverse (Fin n) ℕ,            -- some Optimal universe
-        (∀ i ∈ U.ids, (U.block i).author ∈ Correct) ∧  -- of correct authors only
-        (∃ L, DecidedOpt U (View.full U.toBlockUniverse) b (some L)) ∧  -- commits b
+        (∀ i ∈ U.ids, (U.block i).author ∈ Correct) ∧  -- of correct authors only:
+        ∀ V : View U.toBlockUniverse,         -- on any view caught up to
+          V.CoversUpto (b + 4) →              -- ... the decision round, it
+        (∃ L, DecidedOpt U V b (some L)) ∧    -- commits b
         ∀ i, i < b → ∃ v,                     -- with every slot below
-          DecidedOpt U (View.full U.toBlockUniverse) i v  -- decided.
+          DecidedOpt U V i v                  -- decided.
 
 /-- Grounding of the Optimal arc, over every replica count and fault
 configuration the model admits: Hydrozoan's fairness claim, and the two

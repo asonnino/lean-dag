@@ -29,9 +29,9 @@ variable {Replica BlockId : Type} [Fintype Replica] [DecidableEq Replica]
 /-- The composition: direct liveness commits each run slot, and the
 indirect descent settles every slot below the run. -/
 theorem runDecidesBelow (U : OptUniverse Replica BlockId) : RunDecidesBelow U := by
-  intro T R b c hT hcard hsync hc hspan hRb hlead hpop i hi
+  intro T R b c hT hcard hsync hc hspan hRb hlead hpop V hcov i hi
   have hrun : ∀ j, b ≤ j → j ≤ b + c - 1 →
-      ∃ B, DecidedOpt U (View.full U.toBlockUniverse) j (some B) := by
+      ∃ B, DecidedOpt U V j (some B) := by
     intro j h1 h2
     have hleadj : S.leader j ∈ T := by
       have := hlead (j - b) (by omega)
@@ -42,7 +42,7 @@ theorem runDecidesBelow (U : OptUniverse Replica BlockId) : RunDecidesBelow U :=
     obtain ⟨L, -, -, hdec⟩ :=
       (OptimalHydrozoan.DirectLiveness.holds Replica BlockId U).1 T R j hT hcard hsync hRj
         (hpop _ hbj (by omega)) (hpop _ (by omega) (by omega))
-        (hpop _ (by omega) (by omega)) hleadj
+        (hpop _ (by omega) (by omega)) hleadj V (hcov.mono (by omega))
     exact ⟨L, hdec⟩
   exact decidedOpt_below_of_committed_run (by omega)
     (fun i' hi' => hspan b i' hi') hrun i hi
@@ -54,7 +54,8 @@ theorem holds : Statement := by
 /-- **The ledger does not stall** (the composed corollary): under a fair
 schedule, past every slot `k` and round `R` there is a bound `b` such
 that any Optimal universe in which `T` is synchronised and fills the
-run's span has every slot below `b` decided at the eventual view. -/
+run's span has every slot below `b` decided on any view caught up to
+the run's last decision round. -/
 theorem ledgerProgress :
     ∀ (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
       [DecidableEq BlockId] [OptimalFaults Replica] [S : Slots Replica],
@@ -67,11 +68,13 @@ theorem ledgerProgress :
           SynchronisedOn U.toBlockUniverse T R →
           (∀ r, S.slotRound b ≤ r → r ≤ S.slotRound (b + c - 1) + 2 →
             PopulatedOn U.toBlockUniverse T r) →
-          ∀ i, i < b → ∃ v, DecidedOpt U (View.full U.toBlockUniverse) i v := by
+          ∀ V : View U.toBlockUniverse,
+            V.CoversUpto (S.slotRound (b + c - 1) + 2) →
+          ∀ i, i < b → ∃ v, DecidedOpt U V i v := by
   intro Replica BlockId _ _ _ _ S T R k c hT hcard hc hspan hfair
   obtain ⟨b, hkb, hRb, hlead⟩ := Hydrozoan.EventualDecision.runsRecur Replica T c k R hfair
-  exact ⟨b, hkb, hRb, fun U hsync hpop =>
-    runDecidesBelow U T R b c hT hcard hsync hc hspan hRb hlead hpop⟩
+  exact ⟨b, hkb, hRb, fun U hsync hpop V hcov =>
+    runDecidesBelow U T R b c hT hcard hsync hc hspan hRb hlead hpop V hcov⟩
 
 end EventualDecision
 

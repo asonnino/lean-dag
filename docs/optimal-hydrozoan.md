@@ -245,13 +245,19 @@ def SkipLiveness (U : OptUniverse Replica BlockId) : Prop :=
     PopulatedOn U.toBlockUniverse T (S.slotRound k + 1) →
     PopulatedOn U.toBlockUniverse T (S.slotRound k + 2) →
     (∀ L, ¬ IsLeaderBlock U.toBlockUniverse k L) →
+    ∀ V : View U.toBlockUniverse,
+      V.CoversUpto (S.slotRound k + 2) →
     SkippedLeaderOpt U.toBlockUniverse k ∧
-      DecidedOpt U (View.full U.toBlockUniverse) k none
+      DecidedOpt U V k none
 ```
 
 No synchrony and no fault-count hypothesis: blames and no-evidence
-reference nothing. `FastLatency` at `pOpt` stays outside `Statement`,
-one more actual fault than Hydrozoan's admits.
+reference nothing. Both claims conclude on any view caught up to the
+decision round (`View.CoversUpto`, Hydrozoan's, over the projected
+universe) — the blames, the no-evidence quorum and the certificates all
+sit at or below it, and the eventual view is the special case.
+`FastLatency` at `pOpt` stays outside `Statement`, one more actual
+fault than Hydrozoan's admits.
 
 **OH6 — indirect liveness** (`IndirectLiveness/`): totality without the
 tie-break — the evidence rung fires on any candidate clearing it, and

@@ -166,8 +166,9 @@ example :
     letI := waveRobin 7 (by omega)
     ∃ b, 5 ≤ b ∧ ∃ U : OptUniverse (Fin 7) ℕ,
     (∀ i ∈ U.ids, (U.block i).author ∈ (Correct : Finset (Fin 7))) ∧
-    (∃ L, DecidedOpt U (View.full U.toBlockUniverse) b (some L)) ∧
-    ∀ i, i < b → ∃ v, DecidedOpt U (View.full U.toBlockUniverse) i v :=
+    ∀ V : View U.toBlockUniverse, V.CoversUpto (b + 4) →
+    (∃ L, DecidedOpt U V b (some L)) ∧
+    ∀ i, i < b → ∃ v, DecidedOpt U V i v :=
   OptimalHydrozoan.Grounding.holds.2.2 7 (by omega) 5
 
 -- ... at the k = 0 boundary, second configuration. The bound is opaque:
@@ -178,8 +179,9 @@ example :
     letI := waveRobin 4 (by omega)
     ∃ b, 0 ≤ b ∧ ∃ U : OptUniverse (Fin 4) ℕ,
     (∀ i ∈ U.ids, (U.block i).author ∈ (Correct : Finset (Fin 4))) ∧
-    (∃ L, DecidedOpt U (View.full U.toBlockUniverse) b (some L)) ∧
-    ∀ i, i < b → ∃ v, DecidedOpt U (View.full U.toBlockUniverse) i v :=
+    ∀ V : View U.toBlockUniverse, V.CoversUpto (b + 4) →
+    (∃ L, DecidedOpt U V b (some L)) ∧
+    ∀ i, i < b → ∃ v, DecidedOpt U V i v :=
   OptimalHydrozoan.Grounding.holds.2.2 4 (by omega) 0
 
 -- ... and at the smallest committee, crash-only: two correct replicas
@@ -188,8 +190,9 @@ example :
     letI := waveRobin 3 (by omega)
     ∃ b, 0 ≤ b ∧ ∃ U : OptUniverse (Fin 3) ℕ,
     (∀ i ∈ U.ids, (U.block i).author ∈ (Correct : Finset (Fin 3))) ∧
-    (∃ L, DecidedOpt U (View.full U.toBlockUniverse) b (some L)) ∧
-    ∀ i, i < b → ∃ v, DecidedOpt U (View.full U.toBlockUniverse) i v :=
+    ∀ V : View U.toBlockUniverse, V.CoversUpto (b + 4) →
+    (∃ L, DecidedOpt U V b (some L)) ∧
+    ∀ i, i < b → ∃ v, DecidedOpt U V i v :=
   OptimalHydrozoan.Grounding.holds.2.2 3 (by omega) 0
 
 end OptimalHydrozoan

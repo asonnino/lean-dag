@@ -25,14 +25,14 @@ variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
 theorem holds : Statement := by
   intro Replica BlockId _ _ _ _ _ U
   refine ⟨?_, ?_⟩
-  · intro T R k hT hcard hs hRk hpop0 hpop1 hpop2 hlead
+  · intro T R k hT hcard hs hRk hpop0 hpop1 hpop2 hlead V hcov
     obtain ⟨L, hL⟩ := exists_isLeaderBlock_of_populated hpop0 hlead
     have hslow := slowCommit_of_synchronised hcard hs hRk hpop1 hpop2 hL
       (by rw [hL.2.2]; exact hlead)
     exact ⟨L, hL, hslow,
-      DecidedOpt.directSlow hL (slowCommitInView_full_of_slowCommit hslow)⟩
-  · intro T k hT hcard hpop1 hpop2 hnolead
-    have hskip := skippedLeaderOptInView_full_of_populated hcard hpop1 hpop2 hnolead
+      DecidedOpt.directSlow hL (slowCommitInView_of_coversUpto hslow hcov)⟩
+  · intro T k hT hcard hpop1 hpop2 hnolead V hcov
+    have hskip := skippedLeaderOptInView_of_coversUpto hcard hpop1 hpop2 hnolead hcov
     exact ⟨skippedLeaderOpt_of_skippedLeaderOptInView hskip, DecidedOpt.directSkip hskip⟩
 
 theorem fastLatency :

@@ -118,7 +118,7 @@ example : ∀ i, i < 2 → ∃ v, DecidedOpt OS (View.full US) i v :=
     (by intro i hi
         have : i = 0 ∨ i = 1 ∨ i = 2 := by omega
         rcases this with rfl | rfl | rfl <;> decide)
-    us_populated
+    us_populated (View.full US) (View.coversUpto_full US _)
 
 -- The same run at R = 2 = slotRound b — the exact boundary of
 -- `R ≤ slotRound b` (synchrony-from-2 restricts from the round-0 fact).
@@ -130,7 +130,7 @@ example : ∀ i, i < 2 → ∃ v, DecidedOpt OS (View.full US) i v :=
     (by intro i hi
         have : i = 0 ∨ i = 1 ∨ i = 2 := by omega
         rcases this with rfl | rfl | rfl <;> decide)
-    us_populated
+    us_populated (View.full US) (View.coversUpto_full US _)
 
 /-- The full view, typed at the projection. -/
 def VS : View OS.toBlockUniverse := View.full US
@@ -224,7 +224,7 @@ example : ∀ i, i < 2 → ∃ v, DecidedOpt OS' (View.full US') i v :=
     (by intro i hi
         have : i = 0 ∨ i = 1 ∨ i = 2 := by omega
         rcases this with rfl | rfl | rfl <;> decide)
-    us'_populated
+    us'_populated (View.full US') (View.coversUpto_full US' _)
 
 -- A fairness negative: consecutive slots never share a leader, so a
 -- singleton T is starved at c = 2 — FairRunOn is not trivially true.
@@ -261,9 +261,13 @@ example : ∃ b, 5 ≤ b ∧ 3 ≤ Slots.slotRound (Replica := Fin 4) b ∧
       (∀ r, Slots.slotRound (Replica := Fin 4) b ≤ r →
         r ≤ Slots.slotRound (Replica := Fin 4) (b + 3 - 1) + 2 →
         PopulatedOn U.toBlockUniverse {1, 2, 3} r) →
-      ∀ i, i < b → ∃ v, DecidedOpt U (View.full U.toBlockUniverse) i v :=
-  OptimalHydrozoan.EventualDecision.ledgerProgress (Fin 4) (Fin 22) {1, 2, 3} 3 5 3
-    (by decide) (by decide) (by omega) spansEligible_fourOpt fairRun_fourOpt
+      ∀ i, i < b → ∃ v, DecidedOpt U (View.full U.toBlockUniverse) i v := by
+  obtain ⟨b, hk, hR, hrest⟩ :=
+    OptimalHydrozoan.EventualDecision.ledgerProgress (Fin 4) (Fin 22) {1, 2, 3} 3 5 3
+      (by decide) (by decide) (by omega) spansEligible_fourOpt fairRun_fourOpt
+  exact ⟨b, hk, hR, fun U hsync hpop =>
+    hrest U hsync hpop (View.full U.toBlockUniverse)
+      (View.coversUpto_full U.toBlockUniverse _)⟩
 
 end OptimalHydrozoan
 

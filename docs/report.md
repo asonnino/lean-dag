@@ -9140,8 +9140,10 @@ def SkipLiveness (U : OptUniverse Replica BlockId) : Prop :=
     PopulatedOn U.toBlockUniverse T (S.slotRound k + 1) →  -- T fills the voting round ...
     PopulatedOn U.toBlockUniverse T (S.slotRound k + 2) →  -- ... and the decision round,
     (∀ L, ¬ IsLeaderBlock U.toBlockUniverse k L) →         -- and no candidate exists:
-    SkippedLeaderOpt U.toBlockUniverse k ∧                 -- then the slot skips directly,
-      DecidedOpt U (View.full U.toBlockUniverse) k none    -- and the verdict is output
+    ∀ V : View U.toBlockUniverse,        -- then, on any view caught up
+      V.CoversUpto (S.slotRound k + 2) → -- ... to the decision round:
+    SkippedLeaderOpt U.toBlockUniverse k ∧  -- the slot skips directly,
+      DecidedOpt U V k none              -- and the verdict is output
 ```
 
 In Hydrozoan the same skip needs `qFast` blames, which only `Correct` can
@@ -9203,10 +9205,12 @@ def GroundedProgress : Prop :=
     letI : Slots (Fin n) := waveRobin n hn    -- under wave-aligned rotation,
     ∀ k : ℕ, ∃ b, k ≤ b ∧                     -- past any slot k,
       ∃ U : OptUniverse (Fin n) ℕ,            -- some Optimal universe
-        (∀ i ∈ U.ids, (U.block i).author ∈ Correct) ∧  -- of correct authors only
-        (∃ L, DecidedOpt U (View.full U.toBlockUniverse) b (some L)) ∧  -- commits b
+        (∀ i ∈ U.ids, (U.block i).author ∈ Correct) ∧  -- of correct authors only:
+        ∀ V : View U.toBlockUniverse,         -- on any view caught up to
+          V.CoversUpto (b + 4) →              -- ... the decision round, it
+        (∃ L, DecidedOpt U V b (some L)) ∧    -- commits b
         ∀ i, i < b → ∃ v,                     -- with every slot below
-          DecidedOpt U (View.full U.toBlockUniverse) i v  -- decided.
+          DecidedOpt U V i v                  -- decided.
 ```
 
 ### 23.5 Findings for the paper
@@ -20979,12 +20983,14 @@ def CommitLiveness (U : OptUniverse Replica BlockId) : Prop :=
     PopulatedOn U.toBlockUniverse T (S.slotRound k + 1) →  -- ... the voting round ...
     PopulatedOn U.toBlockUniverse T (S.slotRound k + 2) →  -- ... and the decision round,
     S.leader k ∈ T →                     -- and the slot's leader is in T:
-    ∃ L, IsLeaderBlock U.toBlockUniverse k L ∧           -- then a candidate exists,
+    ∀ V : View U.toBlockUniverse,        -- then, on any view caught up
+      V.CoversUpto (S.slotRound k + 2) → -- ... to the decision round:
+    ∃ L, IsLeaderBlock U.toBlockUniverse k L ∧           -- a candidate exists,
       SlowCommit U.toBlockUniverse L (S.slotRound k) ∧   -- the slow threshold is met,
-      DecidedOpt U (View.full U.toBlockUniverse) k (some L)  -- and its verdict is committed
+      DecidedOpt U V k (some L)          -- and its verdict is committed
 ```
 
-**Commit liveness** (Hydrozoan's, harvested as `DecidedOpt`): a quorum-sized set of correct replicas, populated through the wave's three rounds and synchronised from some `R` at or before the wave, commits its correct leader — the slow-commit threshold is met, and the decision logic outputs the commit verdict at the eventual view.
+**Commit liveness** (Hydrozoan's, harvested as `DecidedOpt`): a quorum-sized set of correct replicas, populated through the wave's three rounds and synchronised from some `R` at or before the wave, commits its correct leader — the slow-commit threshold is met, and the decision logic outputs the commit verdict on any view caught up to the decision round (the certificates sit there, so a caught-up view holds them; the eventual view is caught up to every horizon).
 
 `SlowCommit` here is a threshold fact, not a route: the fast path may also fire in the same universe — this is the one the guaranteed quorum always reaches.
 
@@ -21000,11 +21006,13 @@ def SkipLiveness (U : OptUniverse Replica BlockId) : Prop :=
     PopulatedOn U.toBlockUniverse T (S.slotRound k + 1) →  -- T fills the voting round ...
     PopulatedOn U.toBlockUniverse T (S.slotRound k + 2) →  -- ... and the decision round,
     (∀ L, ¬ IsLeaderBlock U.toBlockUniverse k L) →         -- and no candidate exists:
-    SkippedLeaderOpt U.toBlockUniverse k ∧                 -- then the slot skips directly,
-      DecidedOpt U (View.full U.toBlockUniverse) k none    -- and the verdict is output
+    ∀ V : View U.toBlockUniverse,        -- then, on any view caught up
+      V.CoversUpto (S.slotRound k + 2) → -- ... to the decision round:
+    SkippedLeaderOpt U.toBlockUniverse k ∧  -- the slot skips directly,
+      DecidedOpt U V k none              -- and the verdict is output
 ```
 
-**Skip liveness** (the arc's addition): a slot with no candidate is directly skipped by any quorum-sized set of correct replicas that fills its voting and decision rounds — every voting-round block of `T` blames the slot, every decision-round block of `T` is fast evidence for no candidate, and `q_cert ≤ q ≤ |T|` — and the skip verdict is output at the eventual view. No synchrony and no fault-count hypothesis: blames and no-evidence reference nothing. `q ≤ |T|` is deliberately the DAG quorum, uniform with `CommitLiveness`, although `q_cert ≤ |T|` would suffice.
+**Skip liveness** (the arc's addition): a slot with no candidate is directly skipped by any quorum-sized set of correct replicas that fills its voting and decision rounds — every voting-round block of `T` blames the slot, every decision-round block of `T` is fast evidence for no candidate, and `q_cert ≤ q ≤ |T|` — and the skip verdict is output on any view caught up to the decision round (the blames and the no-evidence quorum both sit at or below it). No synchrony and no fault-count hypothesis: blames and no-evidence reference nothing. `q ≤ |T|` is deliberately the DAG quorum, uniform with `CommitLiveness`, although `q_cert ≤ |T|` would suffice.
 
 #### `Statement`
 
@@ -21104,7 +21112,9 @@ def RunDecidesBelow (U : OptUniverse Replica BlockId) : Prop :=
     (∀ r, S.slotRound b ≤ r →            -- and T fills every round from
       r ≤ S.slotRound (b + c - 1) + 2 →  -- the run's propose round to its
       PopulatedOn U.toBlockUniverse T r) →  -- last decision round:
-    ∀ i, i < b → ∃ v, DecidedOpt U (View.full U.toBlockUniverse) i v  -- all below decided.
+    ∀ V : View U.toBlockUniverse,        -- then, on any view caught up
+      V.CoversUpto (S.slotRound (b + c - 1) + 2) →  -- ... to that round:
+    ∀ i, i < b → ∃ v, DecidedOpt U V i v  -- all below decided.
 ```
 
 **A committed-to-be run decides everything below it.** The workhorse with the run location `b` explicit: direct liveness commits each of the `c` run slots (through the unchanged slow path), and the indirect descent settles every slot below.
@@ -21152,13 +21162,15 @@ def GroundedProgress : Prop :=
     letI : Slots (Fin n) := waveRobin n hn    -- under wave-aligned rotation,
     ∀ k : ℕ, ∃ b, k ≤ b ∧                     -- past any slot k,
       ∃ U : OptUniverse (Fin n) ℕ,            -- some Optimal universe
-        (∀ i ∈ U.ids, (U.block i).author ∈ Correct) ∧  -- of correct authors only
-        (∃ L, DecidedOpt U (View.full U.toBlockUniverse) b (some L)) ∧  -- commits b
+        (∀ i ∈ U.ids, (U.block i).author ∈ Correct) ∧  -- of correct authors only:
+        ∀ V : View U.toBlockUniverse,         -- on any view caught up to
+          V.CoversUpto (b + 4) →              -- ... the decision round, it
+        (∃ L, DecidedOpt U V b (some L)) ∧    -- commits b
         ∀ i, i < b → ∃ v,                     -- with every slot below
-          DecidedOpt U (View.full U.toBlockUniverse) i v  -- decided.
+          DecidedOpt U V i v                  -- decided.
 ```
 
-**Grounded progress.** Under wave-aligned round-robin, the composed Optimal liveness conclusion is achievable with no premise at all: past every point, some Optimal universe commits a bound with every slot below it decided. An achievability claim, as in Hydrozoan — the statement asserts the conclusion's satisfiability, not the route to it (a universe may reach these verdicts by any of the six `DecidedOpt` routes). Each horizon is witnessed by its own finite universe, and the bound `b` itself must COMMIT — an all-skip universe does not qualify.
+**Grounded progress.** Under wave-aligned round-robin, the composed Optimal liveness conclusion is achievable with no premise at all: past every point, some Optimal universe commits a bound with every slot below it decided — on any view caught up to the bound's decision round (`b + 4` under the wave-aligned schedule; the eventual view instantiates the claim). An achievability claim, as in Hydrozoan — the statement asserts the conclusion's satisfiability, not the route to it (a universe may reach these verdicts by any of the six `DecidedOpt` routes). Each horizon is witnessed by its own finite universe, and the bound `b` itself must COMMIT — an all-skip universe does not qualify.
 
 The universe is authored by CORRECT replicas alone. Without that clause the claim would never consult the fault sets: a universe in which every replica, faulty or not, authors every round satisfies the conclusion at any configuration. With it, the faulty replicas contribute nothing, and the claim is that the correct ones suffice — which is what "no premise beyond the fault model" is meant to say.
 
@@ -21761,12 +21773,14 @@ def CommitLiveness (U : OptUniverse Replica BlockId) : Prop :=
     PopulatedOn U.toBlockUniverse T (S.slotRound k + 1) →  -- ... the voting round ...
     PopulatedOn U.toBlockUniverse T (S.slotRound k + 2) →  -- ... and the decision round,
     S.leader k ∈ T →                     -- and the slot's leader is in T:
-    ∃ L, IsLeaderBlock U.toBlockUniverse k L ∧           -- then a candidate exists,
+    ∀ V : View U.toBlockUniverse,        -- then, on any view caught up
+      V.CoversUpto (S.slotRound k + 2) → -- ... to the decision round:
+    ∃ L, IsLeaderBlock U.toBlockUniverse k L ∧           -- a candidate exists,
       SlowCommit U.toBlockUniverse L (S.slotRound k) ∧   -- the slow threshold is met,
-      DecidedOpt U (View.full U.toBlockUniverse) k (some L)  -- and its verdict is committed
+      DecidedOpt U V k (some L)          -- and its verdict is committed
 ```
 
-**Commit liveness** (Hydrozoan's, harvested as `DecidedOpt`): a quorum-sized set of correct replicas, populated through the wave's three rounds and synchronised from some `R` at or before the wave, commits its correct leader — the slow-commit threshold is met, and the decision logic outputs the commit verdict at the eventual view.
+**Commit liveness** (Hydrozoan's, harvested as `DecidedOpt`): a quorum-sized set of correct replicas, populated through the wave's three rounds and synchronised from some `R` at or before the wave, commits its correct leader — the slow-commit threshold is met, and the decision logic outputs the commit verdict on any view caught up to the decision round (the certificates sit there, so a caught-up view holds them; the eventual view is caught up to every horizon).
 
 `SlowCommit` here is a threshold fact, not a route: the fast path may also fire in the same universe — this is the one the guaranteed quorum always reaches.
 
@@ -21782,11 +21796,13 @@ def SkipLiveness (U : OptUniverse Replica BlockId) : Prop :=
     PopulatedOn U.toBlockUniverse T (S.slotRound k + 1) →  -- T fills the voting round ...
     PopulatedOn U.toBlockUniverse T (S.slotRound k + 2) →  -- ... and the decision round,
     (∀ L, ¬ IsLeaderBlock U.toBlockUniverse k L) →         -- and no candidate exists:
-    SkippedLeaderOpt U.toBlockUniverse k ∧                 -- then the slot skips directly,
-      DecidedOpt U (View.full U.toBlockUniverse) k none    -- and the verdict is output
+    ∀ V : View U.toBlockUniverse,        -- then, on any view caught up
+      V.CoversUpto (S.slotRound k + 2) → -- ... to the decision round:
+    SkippedLeaderOpt U.toBlockUniverse k ∧  -- the slot skips directly,
+      DecidedOpt U V k none              -- and the verdict is output
 ```
 
-**Skip liveness** (the arc's addition): a slot with no candidate is directly skipped by any quorum-sized set of correct replicas that fills its voting and decision rounds — every voting-round block of `T` blames the slot, every decision-round block of `T` is fast evidence for no candidate, and `q_cert ≤ q ≤ |T|` — and the skip verdict is output at the eventual view. No synchrony and no fault-count hypothesis: blames and no-evidence reference nothing. `q ≤ |T|` is deliberately the DAG quorum, uniform with `CommitLiveness`, although `q_cert ≤ |T|` would suffice.
+**Skip liveness** (the arc's addition): a slot with no candidate is directly skipped by any quorum-sized set of correct replicas that fills its voting and decision rounds — every voting-round block of `T` blames the slot, every decision-round block of `T` is fast evidence for no candidate, and `q_cert ≤ q ≤ |T|` — and the skip verdict is output on any view caught up to the decision round (the blames and the no-evidence quorum both sit at or below it). No synchrony and no fault-count hypothesis: blames and no-evidence reference nothing. `q ≤ |T|` is deliberately the DAG quorum, uniform with `CommitLiveness`, although `q_cert ≤ |T|` would suffice.
 
 #### `Statement`
 
@@ -21886,7 +21902,9 @@ def RunDecidesBelow (U : OptUniverse Replica BlockId) : Prop :=
     (∀ r, S.slotRound b ≤ r →            -- and T fills every round from
       r ≤ S.slotRound (b + c - 1) + 2 →  -- the run's propose round to its
       PopulatedOn U.toBlockUniverse T r) →  -- last decision round:
-    ∀ i, i < b → ∃ v, DecidedOpt U (View.full U.toBlockUniverse) i v  -- all below decided.
+    ∀ V : View U.toBlockUniverse,        -- then, on any view caught up
+      V.CoversUpto (S.slotRound (b + c - 1) + 2) →  -- ... to that round:
+    ∀ i, i < b → ∃ v, DecidedOpt U V i v  -- all below decided.
 ```
 
 **A committed-to-be run decides everything below it.** The workhorse with the run location `b` explicit: direct liveness commits each of the `c` run slots (through the unchanged slow path), and the indirect descent settles every slot below.
@@ -21934,13 +21952,15 @@ def GroundedProgress : Prop :=
     letI : Slots (Fin n) := waveRobin n hn    -- under wave-aligned rotation,
     ∀ k : ℕ, ∃ b, k ≤ b ∧                     -- past any slot k,
       ∃ U : OptUniverse (Fin n) ℕ,            -- some Optimal universe
-        (∀ i ∈ U.ids, (U.block i).author ∈ Correct) ∧  -- of correct authors only
-        (∃ L, DecidedOpt U (View.full U.toBlockUniverse) b (some L)) ∧  -- commits b
+        (∀ i ∈ U.ids, (U.block i).author ∈ Correct) ∧  -- of correct authors only:
+        ∀ V : View U.toBlockUniverse,         -- on any view caught up to
+          V.CoversUpto (b + 4) →              -- ... the decision round, it
+        (∃ L, DecidedOpt U V b (some L)) ∧    -- commits b
         ∀ i, i < b → ∃ v,                     -- with every slot below
-          DecidedOpt U (View.full U.toBlockUniverse) i v  -- decided.
+          DecidedOpt U V i v                  -- decided.
 ```
 
-**Grounded progress.** Under wave-aligned round-robin, the composed Optimal liveness conclusion is achievable with no premise at all: past every point, some Optimal universe commits a bound with every slot below it decided. An achievability claim, as in Hydrozoan — the statement asserts the conclusion's satisfiability, not the route to it (a universe may reach these verdicts by any of the six `DecidedOpt` routes). Each horizon is witnessed by its own finite universe, and the bound `b` itself must COMMIT — an all-skip universe does not qualify.
+**Grounded progress.** Under wave-aligned round-robin, the composed Optimal liveness conclusion is achievable with no premise at all: past every point, some Optimal universe commits a bound with every slot below it decided — on any view caught up to the bound's decision round (`b + 4` under the wave-aligned schedule; the eventual view instantiates the claim). An achievability claim, as in Hydrozoan — the statement asserts the conclusion's satisfiability, not the route to it (a universe may reach these verdicts by any of the six `DecidedOpt` routes). Each horizon is witnessed by its own finite universe, and the bound `b` itself must COMMIT — an all-skip universe does not qualify.
 
 The universe is authored by CORRECT replicas alone. Without that clause the claim would never consult the fault sets: a universe in which every replica, faulty or not, authors every round satisfies the conclusion at any configuration. With it, the faulty replicas contribute nothing, and the claim is that the correct ones suffice — which is what "no premise beyond the fault model" is meant to say.
 
@@ -22897,7 +22917,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 744 theorems that either another module of the
+The 797 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -32808,20 +32828,21 @@ theorem qFastOpt_le_card_correct
 
 With at most `pOpt` actual faults, the correct replicas alone reach the Optimal fast quorum.
 
-#### `skippedLeaderOptInView_full_of_populated`
+#### `skippedLeaderOptInView_of_coversUpto`
 
 *theorem, `OptimalHydrozoan.Helpers.DirectLiveness.lean`*
 
 ```lean
-theorem skippedLeaderOptInView_full_of_populated
+theorem skippedLeaderOptInView_of_coversUpto
     (hcard : q Replica ≤ T.card)
     (hpop1 : PopulatedOn U T (S.slotRound k + 1))
     (hpop2 : PopulatedOn U T (S.slotRound k + 2))
-    (hnolead : ∀ L, ¬ IsLeaderBlock U k L) :
-    SkippedLeaderOptInView U (View.full U) k
+    (hnolead : ∀ L, ¬ IsLeaderBlock U k L)
+    (hcov : V.CoversUpto (S.slotRound k + 2)) :
+    SkippedLeaderOptInView U V k
 ```
 
-**The guaranteed skip**: a candidate-less slot whose voting and decision rounds are filled by a quorum of correct replicas is directly skipped, in the full view.
+**The guaranteed skip**: a candidate-less slot whose voting and decision rounds are filled by a quorum of correct replicas is directly skipped, in any view caught up to the decision round.
 
 #### `holds`
 
@@ -33255,20 +33276,21 @@ theorem qFastOpt_le_card_correct
 
 With at most `pOpt` actual faults, the correct replicas alone reach the Optimal fast quorum.
 
-#### `skippedLeaderOptInView_full_of_populated`
+#### `skippedLeaderOptInView_of_coversUpto`
 
 *theorem, `OptimalHydrozoan.Helpers.DirectLiveness.lean`*
 
 ```lean
-theorem skippedLeaderOptInView_full_of_populated
+theorem skippedLeaderOptInView_of_coversUpto
     (hcard : q Replica ≤ T.card)
     (hpop1 : PopulatedOn U T (S.slotRound k + 1))
     (hpop2 : PopulatedOn U T (S.slotRound k + 2))
-    (hnolead : ∀ L, ¬ IsLeaderBlock U k L) :
-    SkippedLeaderOptInView U (View.full U) k
+    (hnolead : ∀ L, ¬ IsLeaderBlock U k L)
+    (hcov : V.CoversUpto (S.slotRound k + 2)) :
+    SkippedLeaderOptInView U V k
 ```
 
-**The guaranteed skip**: a candidate-less slot whose voting and decision rounds are filled by a quorum of correct replicas is directly skipped, in the full view.
+**The guaranteed skip**: a candidate-less slot whose voting and decision rounds are filled by a quorum of correct replicas is directly skipped, in any view caught up to the decision round.
 
 #### `holds`
 
@@ -33606,7 +33628,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 680 lemmas used only within the file that proves
+The 702 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -34905,8 +34927,8 @@ subsection per module, in the layer order of Appendices B and C.
 
 | Lemma | Role |
 |:---|:---|
-| `noEvidenceQuorumInView_full_of_populated` | Every `T`-authored decision-round block is (vacuously) fast evidence for nothing at a candidate-less slot, … |
-| `subset_blamesInView_full_of_populated` | Every `T`-authored voting-round block blames a candidate-less slot, in the full view. |
+| `noEvidenceQuorumInView_of_coversUpto` | Every `T`-authored decision-round block is (vacuously) fast evidence for nothing at a candidate-less slot, … |
+| `subset_blamesInView_of_coversUpto` | Every `T`-authored voting-round block blames a candidate-less slot, in any view caught up to the voting round. |
 
 ### `OptimalHydrozoan/DirectLiveness/Proof.lean` (1)
 
@@ -34991,8 +35013,8 @@ subsection per module, in the layer order of Appendices B and C.
 
 | Lemma | Role |
 |:---|:---|
-| `noEvidenceQuorumInView_full_of_populated` | Every `T`-authored decision-round block is (vacuously) fast evidence for nothing at a candidate-less slot, … |
-| `subset_blamesInView_full_of_populated` | Every `T`-authored voting-round block blames a candidate-less slot, in the full view. |
+| `noEvidenceQuorumInView_of_coversUpto` | Every `T`-authored decision-round block is (vacuously) fast evidence for nothing at a candidate-less slot, … |
+| `subset_blamesInView_of_coversUpto` | Every `T`-authored voting-round block blames a candidate-less slot, in any view caught up to the voting round. |
 
 ### `OptimalHydrozoan/DirectLiveness/Proof.lean` (1)
 
