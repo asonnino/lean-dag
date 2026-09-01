@@ -8706,12 +8706,15 @@ replica building on the first quorum it holds can miss a slow correct
 block forever, and what makes the property true in good periods is the
 protocol's waiting rule, whose derivation from delivery primitives is
 out of scope. `View.full` is the eventual view, the whole universe as a
-view.
+view; `View.CoversUpto` is the view a replica caught up to a horizon
+actually holds, and it is what the liveness statements conclude on —
+the eventual view is caught up to every horizon, so the whole-universe
+reading is the special case.
 
 **HZ5.** A quorum-sized correct *T*, synchronised from some *R* at or
 before the wave and populated through its three rounds, commits its
-correct leader through the slow path, and the verdict is derivable at
-the eventual view:
+correct leader through the slow path, and the verdict is derivable on
+any view caught up to the decision round:
 
 ```lean
 def CommitLiveness (U : BlockUniverse Replica BlockId) : Prop :=
@@ -8724,9 +8727,11 @@ def CommitLiveness (U : BlockUniverse Replica BlockId) : Prop :=
     PopulatedOn U T (S.slotRound k + 1) →  -- ... the voting round ...
     PopulatedOn U T (S.slotRound k + 2) →  -- ... and the decision round,
     S.leader k ∈ T →                     -- and the slot's leader is in T:
-    ∃ L, IsLeaderBlock U k L ∧           -- then a candidate exists,
+    ∀ V : View U,                        -- then, on any view caught up
+      V.CoversUpto (S.slotRound k + 2) → -- ... to the decision round:
+    ∃ L, IsLeaderBlock U k L ∧           -- a candidate exists,
       SlowCommit U L (S.slotRound k) ∧   -- the slow threshold is met,
-      Decided U (View.full U) k (some L)  -- and its verdict is committed
+      Decided U V k (some L)             -- and its verdict is committed
 ```
 
 The guaranteed path is the slow one, and that is the design decision
@@ -8806,12 +8811,15 @@ def RunDecidesBelow (U : BlockUniverse Replica BlockId) : Prop :=
     (∀ r, S.slotRound b ≤ r →            -- and T fills every round from
       r ≤ S.slotRound (b + c - 1) + 2 →  -- the run's propose round to its
       PopulatedOn U T r) →               -- last decision round:
-    ∀ i, i < b → ∃ v, Decided U (View.full U) i v  -- all below decided.
+    ∀ V : View U,                        -- then, on any view caught up
+      V.CoversUpto (S.slotRound (b + c - 1) + 2) →  -- ... to that round:
+    ∀ i, i < b → ∃ v, Decided U V i v    -- all below decided.
 ```
 
 The composed form — for every slot a bound past it with every slot
-below the bound decided at the eventual view — is `ledgerProgress` on
-the proof side; the audited content is the two Props. Fairness is a
+below the bound decided on any view caught up to the run's last
+decision round — is `ledgerProgress` on the proof side; the audited
+content is the two Props. Fairness is a
 hypothesis on the schedule rather than a theorem about it because
 per-slot rotation does not provide it at the hybrid bound: liveness
 needs three consecutive correct-led slots, and crashed replicas spaced
@@ -8859,10 +8867,12 @@ def HypothesesRealizable : Prop :=
 def GroundedProgress : Prop :=
   ∀ (n : ℕ) (hn : 0 < n) [Faults (Fin n)],
     ∀ k : ℕ, ∃ b, k ≤ b ∧                     -- past any slot k,
-      ∃ U : BlockUniverse (Fin n) ℕ,          -- some universe commits b
-        (∃ L, Decided (S := waveRobin n hn) U (View.full U) b (some L)) ∧
+      ∃ U : BlockUniverse (Fin n) ℕ,          -- some universe commits b:
+        ∀ V : View U,                         -- on any view caught up to
+          V.CoversUpto (b + 4) →              -- ... the decision round,
+        (∃ L, Decided (S := waveRobin n hn) U V b (some L)) ∧
         ∀ i, i < b → ∃ v,                     -- with every slot below
-          Decided (S := waveRobin n hn) U (View.full U) i v  -- decided.
+          Decided (S := waveRobin n hn) U V i v  -- decided.
 ```
 
 The last is an achievability claim, satisfiability of the conclusion
@@ -17413,7 +17423,7 @@ def IsLeaderBlock (R : BaseRule Validator BlockId Payload) (S : Slots Validator)
   L ∈ R.ids U ∧ (R.block U L).round = S.slotRound k ∧ (R.block U L).creator = S.leader k
 ```
 
-`L` is a candidate block for slot `k` of schedule `S`: the right round, the right author. The same conjunction every rule of this development states, here over the interface's `block` and `ids` so that the arc has one candidate predicate for all three.
+`L` is a candidate block for slot `k` of schedule `S`: the right round, the right author. The same conjunction every rule of this development states, here over the interface's `block` and `ids` so that the arc has one candidate predicate for all four.
 
 #### `CoversUpto`
 
@@ -19230,7 +19240,19 @@ def View.full (U : BlockUniverse Replica BlockId) : View U :=
   ⟨U.ids, Finset.Subset.rfl, U.complete⟩
 ```
 
-Every correct replica's *eventual* view: the whole universe, packaged as a `View`. The structural rendering of "eventually every correct replica holds everything" — liveness theorems conclude here, and decision monotonicity transports any view's verdicts into it. Adds no information beyond `U` itself.
+Every correct replica's *eventual* view: the whole universe, packaged as a `View`. The structural rendering of "eventually every correct replica holds everything" — decision monotonicity transports any view's verdicts into it, and it discharges every `CoversUpto` hypothesis. Adds no information beyond `U` itself.
+
+#### `View.CoversUpto`
+
+*def, `Hydrozoan.Model.Liveness.lean`*
+
+```lean
+def View.CoversUpto {U : BlockUniverse Replica BlockId}
+    (V : View U) (N : ℕ) : Prop :=
+  ∀ b ∈ U.ids, (U.block b).round ≤ N → b ∈ V.ids
+```
+
+**A view caught up to round `N`**: it holds every block of the universe at a round at or below `N`. What a replica that has received everything up to `N` holds — and the hypothesis under which a liveness result holds of a replica's own view rather than of the eventual view. The eventual view satisfies it at every `N` (`coversUpto_full`, `Helpers/DirectLiveness.lean`).
 
 #### `EligibleAsAnchor`
 
@@ -19706,12 +19728,14 @@ def CommitLiveness (U : BlockUniverse Replica BlockId) : Prop :=
     PopulatedOn U T (S.slotRound k + 1) →  -- ... the voting round ...
     PopulatedOn U T (S.slotRound k + 2) →  -- ... and the decision round,
     S.leader k ∈ T →                     -- and the slot's leader is in T:
-    ∃ L, IsLeaderBlock U k L ∧           -- then a candidate exists,
+    ∀ V : View U,                        -- then, on any view caught up
+      V.CoversUpto (S.slotRound k + 2) → -- ... to the decision round:
+    ∃ L, IsLeaderBlock U k L ∧           -- a candidate exists,
       SlowCommit U L (S.slotRound k) ∧   -- the slow threshold is met,
-      Decided U (View.full U) k (some L)  -- and its verdict is committed
+      Decided U V k (some L)             -- and its verdict is committed
 ```
 
-**Commit liveness**: a quorum-sized set of correct replicas, populated through the wave's three rounds and synchronised from some `R` at or before the wave, commits its correct leader — the slow-commit threshold is met, and the decision logic outputs the commit verdict at the eventual view (the harvest form the later phases consume).
+**Commit liveness**: a quorum-sized set of correct replicas, populated through the wave's three rounds and synchronised from some `R` at or before the wave, commits its correct leader — the slow-commit threshold is met, and the decision logic outputs the commit verdict on any view caught up to the decision round (the harvest form the later phases consume). The certificates sit at the decision round, so a caught-up view holds them; the eventual view is caught up to every horizon.
 
 `SlowCommit` here is a threshold fact, not a route: the fast path may also fire in the same universe (the rule predicates are not exclusive) — this is the one the guaranteed quorum always reaches.
 
@@ -19864,7 +19888,9 @@ def RunDecidesBelow (U : BlockUniverse Replica BlockId) : Prop :=
     (∀ r, S.slotRound b ≤ r →            -- and T fills every round from
       r ≤ S.slotRound (b + c - 1) + 2 →  -- the run's propose round to its
       PopulatedOn U T r) →               -- last decision round:
-    ∀ i, i < b → ∃ v, Decided U (View.full U) i v  -- all below decided.
+    ∀ V : View U,                        -- then, on any view caught up
+      V.CoversUpto (S.slotRound (b + c - 1) + 2) →  -- ... to that round:
+    ∀ i, i < b → ∃ v, Decided U V i v    -- all below decided.
 ```
 
 **A committed-to-be run decides everything below it.** The workhorse with the run location `b` explicit: direct liveness commits each of the `c` run slots, and the indirect descent settles every slot below.
@@ -20021,13 +20047,15 @@ The `T`-only clause makes the claim self-supporting — no outside authors pad t
 def GroundedProgress : Prop :=
   ∀ (n : ℕ) (hn : 0 < n) [Faults (Fin n)],
     ∀ k : ℕ, ∃ b, k ≤ b ∧                     -- past any slot k,
-      ∃ U : BlockUniverse (Fin n) ℕ,          -- some universe commits b
-        (∃ L, Decided (S := waveRobin n hn) U (View.full U) b (some L)) ∧
+      ∃ U : BlockUniverse (Fin n) ℕ,          -- some universe commits b:
+        ∀ V : View U,                         -- on any view caught up to
+          V.CoversUpto (b + 4) →              -- ... the decision round,
+        (∃ L, Decided (S := waveRobin n hn) U V b (some L)) ∧
         ∀ i, i < b → ∃ v,                     -- with every slot below
-          Decided (S := waveRobin n hn) U (View.full U) i v  -- decided.
+          Decided (S := waveRobin n hn) U V i v  -- decided.
 ```
 
-**Grounded progress.** Under wave-aligned round-robin, the composed liveness conclusion is achievable with no premise at all: past every point, some universe commits a bound with every slot below it decided. An achievability claim — the statement asserts the conclusion's satisfiability, not the route to it (a universe may reach these verdicts by any rule). Each horizon is witnessed by its own finite universe (`U.ids` is a `Finset`, so no single universe decides all slots), and the bound `b` itself must COMMIT — an all-skip universe, where every slot is decided by blame alone, does not qualify.
+**Grounded progress.** Under wave-aligned round-robin, the composed liveness conclusion is achievable with no premise at all: past every point, some universe commits a bound with every slot below it decided — on any view caught up to the bound's decision round (`b + 4 = slotRound (b + 2) + 2` under the wave-aligned schedule; the eventual view is caught up to every horizon, so it instantiates the claim). An achievability claim — the statement asserts the conclusion's satisfiability, not the route to it (a universe may reach these verdicts by any rule). Each horizon is witnessed by its own finite universe (`U.ids` is a `Finset`, so no single universe decides all slots), and the bound `b` itself must COMMIT — an all-skip universe, where every slot is decided by blame alone, does not qualify.
 
 #### `Statement`
 
@@ -20180,6 +20208,95 @@ def Statement : Prop := MysticetiRuns ∧ OdontocetiRuns ∧ NemoRuns
 ```
 
 The three protocols, end to end.
+
+#### `orcaella`
+
+*def, `Barnacle.Orcaella.Statement.lean`*
+
+```lean
+def orcaella [HybridFaults Validator] (k : ℕ) : BaseRule Validator BlockId Payload where
+  Universe := {U : BlockUniverse Validator BlockId Payload // HonestNoEquiv U}
+  View := fun U => LeanDag.View Validator BlockId Payload U.val
+  block := fun U => U.val.block
+  ids := fun U => U.val.ids
+  viewIds := fun V => V.ids
+  full := fun U => LeanDag.View.full U.val
+  historyView := fun U A hA => historyViewOf U.val A hA
+  waveLength := 2
+  DirectCommitIn := fun {U} V L r => Hybrid.DirectCommitIn U.val V L r
+  decDirect := fun _ _ _ => inferInstance
+  Decided := fun S {U} V s v => letI := S; Hybrid.Decided k U.val V s v
+```
+
+**Orcaella as a base rule** — the data, at indirect threshold `k`. The universe is the subtype of block universes whose honest class — crash-prone validators included — does not equivocate; wave length two; the direct commit predicate counts supporters at the next round against the hybrid quorum `q = n − fb − fc`.
+
+#### `orcaellaLive`
+
+*def, `Barnacle.Orcaella.Statement.lean`*
+
+```lean
+def orcaellaLive [HybridFaults Validator] (k : ℕ) : LiveRule Validator BlockId Payload :=
+  { orcaella k with
+    Good := fun U Rnd N => ∃ T ⊆ (Correct : Finset Validator),
+      Hybrid.q Validator ≤ T.card ∧ SynchronisedOn U.val T Rnd ∧
+      ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn U.val T r }
+```
+
+**Orcaella as a live rule**: a DAG is good when a fully-correct hybrid quorum is synchronised from `Rnd` and populates the rounds to `N`. `Correct` here is the derived instance's class — the validators neither Byzantine nor crash-prone — and `Hybrid.q` is its quorum `n − fb − fc`, the derived `quorumCard`.
+
+#### `Laws`
+
+*def, `Barnacle.Orcaella.Statement.lean`*
+
+```lean
+def Laws : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [HybridFaults Validator] [LinearOrder BlockId] (k : ℕ),
+    Hybrid.Admissible Validator k →
+    BaseRule.Laws (orcaella (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k)
+```
+
+**Orcaella satisfies the laws** at every admissible threshold: agreement is the hybrid safety theorem, consuming the bundled `HonestNoEquiv` and the admissibility of `k`.
+
+#### `Descent`
+
+*def, `Barnacle.Orcaella.Statement.lean`*
+
+```lean
+def Descent : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [H : HybridFaults Validator] [LinearOrder BlockId] (k : ℕ),
+    Hybrid.Admissible Validator k →
+    (orcaellaLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k).Descent
+      (H.fb + H.fc)
+```
+
+**Orcaella has the descent laws at slack `fb + fc`**: the direct commit of a good leader's slot needs only the reliable set — this is the one place the mixed bound enters — and the indirect rule commits the least candidate with a `k`-thick link, or skips.
+
+#### `RoundRobinLive`
+
+*def, `Barnacle.Orcaella.Statement.lean`*
+
+```lean
+def RoundRobinLive : Prop :=
+  ∀ (n : ℕ) (hn : 0 < n) [HybridFaults (Fin n)] (BlockId Payload : Type) [LinearOrder BlockId]
+    (k : ℕ), Hybrid.Admissible (Fin n) k →
+    ∀ (w : ℕ) (hk : Keyed (roundRobin n hn) w) (m : ℕ) (hm : 0 < m) (hmax : m ≤ w),
+    (orcaellaLive (Validator := Fin n) (BlockId := BlockId) (Payload := Payload) k).LiveOn
+      (Sched (roundRobin n hn) hk m hm hmax) (n + 1)
+```
+
+**Orcaella under round-robin is live at every count**, with gap `n + 1`.
+
+#### `Statement`
+
+*def, `Barnacle.Orcaella.Statement.lean`*
+
+```lean
+def Statement : Prop := Laws ∧ Descent ∧ RoundRobinLive
+```
+
+The laws, the descent laws, and liveness under round-robin — each at every admissible threshold.
 
 #### `Delivered`
 
@@ -20879,7 +20996,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 673 theorems that either another module of the
+The 744 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -29655,6 +29772,30 @@ theorem eligibleAsAnchor_iff {k j : ℕ} :
 
 Eligibility in propose-round arithmetic: the anchor's round is at least three past the candidate's.
 
+#### `certifiedIn_iff_history`
+
+*theorem, `Hydrozoan.Helpers.IndirectRules.lean`*
+
+```lean
+theorem certifiedIn_iff_history {A L : BlockId} {r : ℕ} (hA : A ∈ U.ids) :
+    CertifiedIn U A L r ↔ (certificates U L r ∩ history U A).Nonempty
+```
+
+Rung 1 through the history surrogate: decidable on concrete data.
+
+#### `weakLinked_iff_history`
+
+*theorem, `Hydrozoan.Helpers.IndirectRules.lean`*
+
+```lean
+theorem weakLinked_iff_history {A L : BlockId} {r : ℕ} (hA : A ∈ U.ids) :
+    WeakLinked U A L r ↔
+      qWeak Replica ≤ (authorsOf U.block ((blocksAt U (r + 1)).filter
+        fun b => IsVote U b L ∧ b ∈ history U A)).card
+```
+
+Rung 2 through the history surrogate: the anchor-linked vote filter is the canonical witness set, so the existential form collapses to a decidable cardinality bound.
+
 #### `mem_authorsOf`
 
 *theorem, `Hydrozoan.Helpers.Counting.lean`*
@@ -30106,17 +30247,29 @@ theorem slowCommit_of_synchronised
 
 The guaranteed quorum slow-commits its leader.
 
-#### `slowCommitInView_full_of_slowCommit`
+#### `View.coversUpto_full`
 
 *theorem, `Hydrozoan.Helpers.DirectLiveness.lean`*
 
 ```lean
-theorem slowCommitInView_full_of_slowCommit
-    {U : BlockUniverse Replica BlockId} {L : BlockId} {r : ℕ}
-    (h : SlowCommit U L r) : SlowCommitInView U (View.full U) L r
+theorem View.coversUpto_full (U : BlockUniverse Replica BlockId) (N : ℕ) :
+    (View.full U).CoversUpto N
 ```
 
-A universe-level slow commit is a slow commit at the eventual view.
+The eventual view is caught up to every horizon.
+
+#### `slowCommitInView_of_coversUpto`
+
+*theorem, `Hydrozoan.Helpers.DirectLiveness.lean`*
+
+```lean
+theorem slowCommitInView_of_coversUpto
+    {U : BlockUniverse Replica BlockId} {V : View U} {L : BlockId} {r : ℕ}
+    (h : SlowCommit U L r) (hcov : V.CoversUpto (r + 2)) :
+    SlowCommitInView U V L r
+```
+
+A view caught up to the decision round holds every certificate, so a universe-level slow commit is a slow commit in that view.
 
 #### `holds`
 
@@ -30313,6 +30466,14 @@ theorem holds : Statement
 
 #### `holds`
 
+*theorem, `Barnacle.Orcaella.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
 *theorem, `Barnacle.Validity.Proof.lean`*
 
 ```lean
@@ -30492,7 +30653,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 678 lemmas used only within the file that proves
+The 680 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -31089,11 +31250,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `directCommitIn_of_coversUpto` | A view caught up to the decision round sees every supporter, so a direct commit in the universe is a … |
 | `q_le_card_correct` | The fully-correct class carries the hybrid quorum: liveness's card hypothesis is satisfiable at `T := … |
 
-### `Hybrid/Conservativity.lean` (4)
+### `Hybrid/Conservativity.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
 | `Faults.ext'` | Two `Faults` instances with one bound and one Byzantine set are one instance: the proof fields are … |
+| `honestNoEquiv_of_fc_zero` | At `fc = 0` the strengthened clause is free. With no crash class, honest *is* correct — the union class is … |
 | `kRel_eq_of_fc_zero` | At `fc = 0` the `n`-relative threshold is Odontoceti's `n − 3f`. |
 | `kTight_eq_of_fc_zero` | At `fc = 0` the tight threshold is the thesis's `2f + 1`. |
 | `q_eq_of_fc_zero` | At `fc = 0` the hybrid quorum is the Byzantine quorum. |
@@ -31618,12 +31780,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `populated_and_card_viewUpto_le` | The capstone, unconditional. `EventuallyDelivers` is gone: production plus the enforceable budget plus the … |
 | `populated_and_card_viewUpto_le'` | The composed statement — DoS resistance in one theorem. One set of hypotheses — production, post-`R` … |
 
-### `Barnacle/Helpers/Delivery.lean` (1)
-
-| Lemma | Role |
-|:---|:---|
-| `mem_history_of_good` | A reliable block is reached from two rounds up. Coverage gives it a quorum of supporters one round above, … |
-
 ### `Hydrozoan/Helpers/Faults.lean` (2)
 
 | Lemma | Role |
@@ -31656,13 +31812,6 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `one_hblock` | With one leader per round-group, any election is collision-free. |
-
-### `Hydrozoan/Helpers/IndirectRules.lean` (2)
-
-| Lemma | Role |
-|:---|:---|
-| `certifiedIn_iff_history` | Rung 1 through the history surrogate: decidable on concrete data. |
-| `weakLinked_iff_history` | Rung 2 through the history surrogate: the anchor-linked vote filter is the canonical witness set, so the … |
 
 ### `Hydrozoan/Helpers/Counting.lean` (1)
 
@@ -31710,10 +31859,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `prefixConsistency` | — |
 | `seqAgreement` | — |
 
-### `Hydrozoan/Helpers/DirectLiveness.lean` (4)
+### `Hydrozoan/Helpers/DirectLiveness.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
+| `View.CoversUpto.mono` | Caught up to `N` is caught up to every lower horizon. |
 | `certificates_subset_ids` | Certificates are universe members. |
 | `isCertificate_of_synchronised` | Every `T`-authored decision block certifies the leader. |
 | `qCert_le_q` | `q_cert ≤ q` — Phase 2's "slow path collectible" row, as a lemma. |
@@ -31761,6 +31911,19 @@ subsection per module, in the layer order of Appendices B and C.
 | `horizonUniverse_ids` | — |
 | `horizonUniverse_populated` | The horizon universe populates every round up to its horizon. |
 | `horizonUniverse_synchronised` | The horizon universe is internally synchronised from round `0`: every block's parents are ALL of the … |
+
+### `Barnacle/Helpers/Delivery.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `mem_history_of_good` | A reliable block is reached from two rounds up. Coverage gives it a quorum of supporters one round above, … |
+
+### `Barnacle/Helpers/Orcaella.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `orcaellaLive_descent` | The descent laws, for Orcaella at slack `fb + fc`. |
+| `orcaella_laws` | The laws, for Orcaella at an admissible threshold. |
 
 ### `Hybrid/Checkpoint/RecoveryProofs.lean` (14)
 

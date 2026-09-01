@@ -87,7 +87,7 @@ Three consequences shape the arc.
 | Waves and pipelining, `ProposeRound`, `VotingRound`, `DecisionRound`, `GetLeaderBlocks` | `Model/Slots.lean` — `Slots`, `votingRound`, `decisionRound`, `IsLeaderBlock` |
 | `IsVote`, `IsCertificate`, `FastCommittedLeader`, `SlowCommittedLeader`, `SkippedLeader` | `Model/DirectRules.lean` |
 | `TryIndirectDecide`, `DecideFromAnchor` | `Model/IndirectRules.lean` (`EligibleAsAnchor`, `CertifiedIn`, `WeakLinked`), `Model/Decided.lean` (`Decided`) |
-| after GST | `Model/Liveness.lean` — `PopulatedOn`, `SynchronisedOn`, `View.full` |
+| after GST | `Model/Liveness.lean` — `PopulatedOn`, `SynchronisedOn`, `View.full`, `View.CoversUpto` |
 | `lem:thresholds` (the slack-cap table) | `ThresholdArithmetic/` (HZ1) |
 | slot safety, the two-case consistency argument | `DirectSafety/` (HZ2), `SlotAgreement/` (HZ3) |
 | `ExtendCommitSeq`, `LinearizeSubDags`, prefix consistency | `PrefixAgreement/` (HZ4) |
@@ -302,7 +302,10 @@ delivery primitives is out of scope (§12).
 **HZ5 — direct liveness** (`DirectLiveness/`). A quorum-sized correct
 `T`, synchronised from some `R` at or before the wave and populated
 through its three rounds, commits its correct leader through the slow
-path, and the verdict is derivable at the eventual view:
+path, and the verdict is derivable on any view caught up to the
+decision round (`View.CoversUpto` — the certificates sit there, so a
+caught-up view holds them; the eventual view is caught up to every
+horizon, so the whole-universe reading is the special case):
 
 ```lean
 def CommitLiveness (U : BlockUniverse Replica BlockId) : Prop :=
@@ -315,9 +318,11 @@ def CommitLiveness (U : BlockUniverse Replica BlockId) : Prop :=
     PopulatedOn U T (S.slotRound k + 1) →
     PopulatedOn U T (S.slotRound k + 2) →
     S.leader k ∈ T →
+    ∀ V : View U,
+      V.CoversUpto (S.slotRound k + 2) →
     ∃ L, IsLeaderBlock U k L ∧
       SlowCommit U L (S.slotRound k) ∧
-      Decided U (View.full U) k (some L)
+      Decided U V k (some L)
 ```
 
 `FastLatency` and `SkipLatency` are stated in the same file and kept
@@ -348,8 +353,9 @@ def FairRunOn (T : Finset Replica) (c : ℕ) : Prop :=
 ```
 
 The composed form — for every slot `k` a bound `b ≥ k` with every slot
-below `b` decided at the eventual view — is `ledgerProgress` on the
-proof side; the audited content is the two Props.
+below `b` decided on any view caught up to the run's last decision
+round — is `ledgerProgress` on the proof side; the audited content is
+the two Props.
 
 ## 8. Grounding
 
@@ -366,10 +372,10 @@ period is a consistent scenario of the model at every scale, and the
 `T`-only clause is what earns the `q ≤ |T|` premise, since a `T`-only
 universe cannot validly populate a round below quorum size.
 `GroundedProgress`: under the wave-aligned rotation, past every slot
-some universe commits a bound with every slot below it decided. The
-last is an achievability claim — satisfiability of the conclusion, not
-the route — and its universe is not constrained to correct authors
-(§11).
+some universe commits a bound with every slot below it decided, on any
+view caught up to the bound's decision round. The last is an
+achievability claim — satisfiability of the conclusion, not the
+route — and its universe is not constrained to correct authors (§11).
 
 ## 9. Witnesses (`LeanDagTest/Hydrozoan/`)
 
