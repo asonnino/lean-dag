@@ -1,0 +1,103 @@
+import LeanDagTest.RedSnapper.Coin
+import LeanDag.RedSnapper.Five.Agreement.Proof
+import LeanDag.RedSnapper.Five.RecoveryTermination.Proof
+import LeanDagTest.RedSnapper.FreezeHardening
+
+/-!
+# Witness hardening: recovery termination
+
+Adopted from the Phase 9 vacuity audit: `ResolutionExists` without the
+no-quorum-below premise is false (on `U6RecPre`, where the markers sit
+in the trigger's own history and the paper-exact one-shot refuses every
+index); `RecoveryDecides` on `U6Rec` lands on the *left* disjunct
+non-vacuously — RS8's agreement refutes the dropped side; and on
+`U6RecTie` the election's `exists_prio_min` runs over a genuine
+two-element `W`.
+-/
+
+namespace LeanDagTest
+
+namespace RedSnapper
+
+open LeanDag LeanDag.RedSnapper
+
+set_option maxRecDepth 32768
+set_option synthInstance.maxSize 4096
+
+/-! ### No-quorum-below necessity; disjunct correspondence; the tie -/
+
+/-! ## G: ResolutionExists' no-quorum-below premise is load-bearing -/
+
+-- The trigger sits at 1, anchor 17 sits later at 2 ...
+example : TriggerAt U6RecPre ARecPre 0 1 := triggerAt_iff.mpr (by decide)
+example : (ARecPre.seq)[1]? = some 6 ∧ (ARecPre.seq)[2]? = some 17 ∧ (1 : ℕ) < 2 := by
+  decide
+
+-- ... every correct validator's marker is visible at it ...
+private theorem pre_frozen_all : ∀ v ∈ (Correct : Finset (Fin 6)),
+    FrozenDec U6RecPre 6 v 0 17 := by decide
+example : ∀ v ∈ (Correct : Finset (Fin 6)), Frozen U6RecPre 6 v 0 17 :=
+  fun v hv => (frozen_iff (by decide)).mpr (pre_frozen_all v hv)
+
+-- ... but the dropped premise is false — a quorum already at the
+-- trigger itself ...
+example : FreezeQuorum U6RecPre 6 0 6 := (freezeQuorum_iff (by decide)).mpr (by decide)
+
+-- ... and the conclusion FAILS: no index in (1, 2] resolves.
+example : ¬ ∃ j', 1 < j' ∧ j' ≤ 2 ∧ ResolvesFiveAt U6RecPre ARecPre 0 1 j' := by
+  rintro ⟨j', h1, h2, hres⟩
+  have hj : j' = 2 := by omega
+  subst hj
+  exact absurd (resolvesFiveAt_iff.mp hres) (by decide)
+
+/-! ## H: RecoveryDecides on U6Rec, and the left disjunct is the real one -/
+
+-- The theorem applies end-to-end on the committed witness.
+example : VerdictFive U6Rec ARec (View.full U6Rec) (· ≤ ·) 0 Fate.finalized ∨
+    VerdictFive U6Rec ARec (View.full U6Rec) (· ≤ ·) 0 Fate.dropped :=
+  RecoveryTermination.recoveryDecides (· ≤ ·) inferInstance (View.full U6Rec) 0 1 2 17 0
+    (resolvesFiveAt_iff.mpr (by decide)) (by decide)
+    ⟨by decide, (mem_candidates_iff (by decide)).mp (by decide)⟩
+
+-- The RIGHT disjunct is refuted: the committed `recoveryFinal` pin
+-- plus RS8's verdict agreement.
+example : ¬ VerdictFive U6Rec ARec (View.full U6Rec) (· ≤ ·) 0 Fate.dropped := fun h =>
+  absurd
+    (FiveAgreement.verdictAgreement (U := U6Rec) (A := ARec)
+      (prio := (· ≤ ·)) inferInstance (inferInstance : Five (Fin 6))
+      (moveDiscipline_iff.mpr (by decide)) (freezeDiscipline_iff.mpr (by decide))
+      (View.full U6Rec) (View.full U6Rec) 0 Fate.finalized Fate.dropped
+      (.recoveryFinal (i := 1) (j := 2) (aₖ := 6) (a := 17)
+        (resolvesFiveAt_iff.mpr (by decide)) (by decide) (by decide)
+        ((eligibleFive_iff (by decide)).mpr (by decide))
+        (fun _ _ => Fin.zero_le _))
+      h)
+    (by decide)
+
+/-! ## I: the premises instantiate on the two-member-W tie -/
+
+-- Both candidates are owned candidates at the resolving anchor, so the
+-- theorem's disjunction is produced for each — over an eligible set of
+-- size two, exercising `exists_prio_min`'s choice.
+example : VerdictFive U6RecTie ARecTie (View.full U6RecTie) (· ≤ ·) 0 Fate.finalized ∨
+    VerdictFive U6RecTie ARecTie (View.full U6RecTie) (· ≤ ·) 0 Fate.dropped :=
+  RecoveryTermination.recoveryDecides (· ≤ ·) inferInstance (View.full U6RecTie)
+    0 1 2 17 0
+    (resolvesFiveAt_iff.mpr (by decide)) (by decide)
+    ⟨by decide, (mem_candidates_iff (by decide)).mp (by decide)⟩
+
+example : VerdictFive U6RecTie ARecTie (View.full U6RecTie) (· ≤ ·) 1 Fate.finalized ∨
+    VerdictFive U6RecTie ARecTie (View.full U6RecTie) (· ≤ ·) 1 Fate.dropped :=
+  RecoveryTermination.recoveryDecides (· ≤ ·) inferInstance (View.full U6RecTie)
+    0 1 2 17 1
+    (resolvesFiveAt_iff.mpr (by decide)) (by decide)
+    ⟨by decide, (mem_candidates_iff (by decide)).mp (by decide)⟩
+
+-- The eligible set genuinely has two members.
+example : EligibleFive U6RecTie 6 17 0 0 ∧ EligibleFive U6RecTie 6 17 0 1 :=
+  ⟨(eligibleFive_iff (by decide)).mpr (by decide),
+   (eligibleFive_iff (by decide)).mpr (by decide)⟩
+
+end RedSnapper
+
+end LeanDagTest

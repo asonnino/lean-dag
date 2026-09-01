@@ -93,7 +93,9 @@ Three consequences shape the arc.
 | Lemmas single-stance-5f … full-cert-unique | `Five/FullCertSafety/` (RS6) — `SingleStance`, `CommitExcludesRefutation`, `UnlockExcludesRefutation`, `CommitExcludesUnlock`, `FullCertUniqueness` |
 | Lemmas recovery-determinism, recovery-reflects, recovery-safety | `Five/RecoverySafety/` (RS7) — `ResolutionUnique`, `RecoveryReflects`, `RecoverySafetyBot`, `RecoverySafetyWin` |
 | Theorem safety-5f | `Five/Agreement/` (RS8) — `VerdictAgreement`, `NoConflictingFinal` |
-| Lemmas coin-success, recovery-termination | `Five/CoinAgreement/`, `Five/RecoveryTermination/` (RS9) |
+| Phase 3 of `CastVotes` (`Alg:Voting5f+1`), the coin | `Model/Five/Coin.lean` — `CoinRule` (the coin as its output `w`, D8), `StancedAt`, `AgreeUpto` (measurability, Mahi-Mahi's MM2′ pattern) |
+| Lemma coin-success | `Five/CoinSuccess/` (RS9a) — `CoinConcentrated`, `CoinFragmented`, `CoinSuccessCount` (the probability bound as its numerator: a good-target set of at least `half`), `CoinMeasurable` |
+| Lemma recovery-termination | `Five/RecoveryTermination/` (RS9b) — `TriggerExists`, `ResolutionExists`, `RecoveryDecides` |
 
 Names follow the paper's where it has them (`Candidates`, `Stance`,
 `HasCert`); faulty validators are Byzantine, the rest correct.
@@ -213,7 +215,7 @@ except thresholds and the honest-move rule.
 | 6 | `Model/{Liveness, HonestVoting}.lean`; `Uncontested/`, `ConflictResolution/` | RS4: a sole candidate reaches fast finality in two synchronised rounds; RS5: by `r + 2` every synchronised block holds an ack certificate or an unlock certificate in its history, so every synchronised anchor above `r + 2` resolves the object |
 | 7 | `Model/Five/{Certificates, Moves}.lean`; `Five/FullCertSafety/` | RS6: single stance; a full certificate excludes refutations of its ACK, a full unlock certificate excludes refutations of `⊥`, the two certificates exclude each other, and conflicting full certificates never coexist — all at `n ≥ 3f + 1` (finding 19) |
 | 8 | `Model/{Block (the defaulted `freezes` field), Five/Freeze, Five/Verdict}.lean`; `Five/RecoverySafety/`, `Five/Agreement/` | RS7: resolution uniqueness; a hidden commit is reflected (`W = {tx}`, candidacy derived — finding 21); an empty election forbids any full certificate; no rival certificate above a resolution. RS8: verdict agreement and no conflicting finalisation across views and routes |
-| 9 | `Five/CoinAgreement/`, `Five/RecoveryTermination/` | RS9 |
+| 9 | `Model/Five/Coin.lean`; `Five/CoinSuccess/`, `Five/RecoveryTermination/` | RS9: the coin round unifies the committee — the concentrated case at any committee, the fragmented case (all movable at once) under `Five`, at least `half` good targets, and the good set fixed before a post-round draw (`AgreeUpto`); the trigger, the resolution, and a verdict for every candidate exist under the structural C4/C5 |
 | 10 | this record's final position; report chapter; README; the tripwire | |
 
 Phases 1 and 2 are reviewed together: the statement fixes what the
@@ -350,6 +352,15 @@ or refines are updated at the last phase.
   (D2); **probabilities and the expected latency** (D8).
 - **The consensus protocol itself.** Anchors are given (D4); deriving
   them from the core's Mysticeti is a possible grounding phase.
+- **The probabilistic and timing remainder of §4's liveness.** Lemma
+  coin-success is mechanised as its deterministic core plus the
+  cardinality of the good-target set (RS9a): under a uniform draw the
+  bound `half / n` is the stated numerator over the committee, and
+  `CoinMeasurable` fixes the good set before a post-round draw; the
+  division, independence across attempts, the geometric expectation,
+  and Theorem latency-5f's round bookkeeping stay on paper. Lemma
+  uncontended-liveness at `5f + 1` is isomorphic to RS4 and not
+  restated; Lemma reuse-5f lives on `Spendable`, dropped by D3.
 - **Execution, reverts, epoch change**, and the paper's §5 liveness
   claim for shared objects.
 
