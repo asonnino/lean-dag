@@ -30,8 +30,17 @@ consume. Results carry **RS**-labels; everything lives in
 `decide` witnesses in `LeanDagTest/RedSnapper/`, consuming nothing from
 the core.
 
-This record is written at Phase 0 and states the plan; the final
-position is recorded at the last phase.
+This record was written at Phase 0 as the plan; this is the final
+position. Everything planned is proved: RS1–RS9, nine `holds` theorems
+each pinned by the axiom tripwire to `[propext, Classical.choice,
+Quot.sound]`, over a trusted core the reader can audit without reading
+a proof. The headline the mechanisation adds to the paper: **the
+`5f + 1` rules' safety needs only `n ≥ 3f + 1`** — every certificate
+exclusion closes at the small committee (finding 19), and the wide one
+is consumed exactly three times, all on the liveness side: the frozen
+set's overlap with a hidden commit (finding 20), the fragmented coin
+round's universal movability, and RS1's exposure itself, the seam §10
+of the paper draws.
 
 ## 0. Overview
 
@@ -216,17 +225,99 @@ except thresholds and the honest-move rule.
 | 7 | `Model/Five/{Certificates, Moves}.lean`; `Five/FullCertSafety/` | RS6: single stance; a full certificate excludes refutations of its ACK, a full unlock certificate excludes refutations of `⊥`, the two certificates exclude each other, and conflicting full certificates never coexist — all at `n ≥ 3f + 1` (finding 19) |
 | 8 | `Model/{Block (the defaulted `freezes` field), Five/Freeze, Five/Verdict}.lean`; `Five/RecoverySafety/`, `Five/Agreement/` | RS7: resolution uniqueness; a hidden commit is reflected (`W = {tx}`, candidacy derived — finding 21); an empty election forbids any full certificate; no rival certificate above a resolution. RS8: verdict agreement and no conflicting finalisation across views and routes |
 | 9 | `Model/Five/Coin.lean`; `Five/CoinSuccess/`, `Five/RecoveryTermination/` | RS9: the coin round unifies the committee — the concentrated case at any committee, the fragmented case (all movable at once) under `Five`, at least `half` good targets, and the good set fixed before a post-round draw (`AgreeUpto`); the trigger, the resolution, and a verdict for every candidate exist under the structural C4/C5 |
-| 10 | this record's final position; report chapter; README; the tripwire | |
+| 10 | this record's final position; the paper appendix (`appendix-mechanisation.tex` in the paper repo); README; the tripwire completeness check; the pull request | |
 
 Phases 1 and 2 are reviewed together: the statement fixes what the
 model must carry. Each phase runs as statements → review → freeze →
 proofs and witnesses, with a cold-context vacuity auditor over the
 frozen files in parallel → commit.
 
+### 2.1 The results
+
+Each result names the behavioural hypotheses it consumes and the
+committee bound it actually uses; nothing else about validators is
+assumed anywhere.
+
+- **RS1 `Revocation/`** — the paper's §10, protocol-independent: the
+  support bound, the revocation threshold `n + f − C + 1` and its
+  tightness for `f ≤ C ≤ n` (finding 16), and the exposure
+  characterisation — among any `C ≥ n − f` votes one side reaches the
+  threshold exactly when `n ≥ 5f + 1`. Pure arithmetic over vote
+  profiles; no DAG, no behaviour.
+- **RS2 `CertificateExclusion/`** — honest single ACK, certificate
+  uniqueness, ack/skip exclusivity, the round-conditioned
+  ack/unlock exclusion, and certificate propagation, at `n ≥ 3f + 1`
+  under `StanceDiscipline` alone — the `held` automaton's monotonicity,
+  nothing about when a validator votes.
+- **RS3 `TxAgreement/`** — verdict agreement across views and routes,
+  no two conflicting finalisations, and the mixed corollary, under
+  `StanceDiscipline`; the anchors are one global value (D4), so
+  cross-validator agreement about the anchor route is definitional and
+  the theorem's content is route-pair exclusion.
+- **RS4 `Uncontested/` and RS5 `ConflictResolution/`** — the `3f + 1`
+  liveness pair under `VotingRule` and the structural synchrony of
+  `PopulatedOn`/`SynchronisedOn`: a sole valid candidate reaches fast
+  finality two synchronised rounds after its carrier (the no-rival
+  premise gated by validity, finding 18), and a conflict resolves at
+  every synchronised anchor above `r + 2` through the corrected
+  trichotomy (finding 5).
+- **RS6 `Five/FullCertSafety/`** — single stance unconditionally; under
+  `MoveDiscipline` (a declared change carries a refutation of the old
+  value), a full certificate excludes refutations of its ACK, a full
+  unlock certificate excludes refutations of `⊥` (the algorithm's
+  split-refutation form, finding 8), the two certificates exclude each
+  other at any round pair, and conflicting full certificates never
+  coexist — **all at `n ≥ 3f + 1`** (finding 19).
+- **RS7 `Five/RecoverySafety/`** — resolution uniqueness for any linear
+  order; under `MoveDiscipline` and `FreezeDiscipline`, a full
+  certificate anywhere makes its transaction the unique eligible one at
+  the resolving anchor (candidacy derived, round-unconditional —
+  finding 21; needs `Five`), an empty election forbids any full
+  certificate ever (needs `Five`), and no rival of an eligible
+  transaction certifies above the resolution (no `Five`, no
+  `MoveDiscipline`).
+- **RS8 `Five/Agreement/`** — Theorem safety-5f: verdict agreement and
+  no conflicting finalisation across views for the order-free
+  `VerdictFive`, under `Five`, both disciplines, and the shared
+  tie-break order; the algorithm's `decidedObj`/`skippedTX` guards and
+  route precedence are discharged as theorems, and finding 9's miscited
+  step closes through RS7's round-unconditional reflection.
+- **RS9 `Five/CoinSuccess/`, `Five/RecoveryTermination/`** — the coin
+  round unifies the committee: the concentrated case at any committee,
+  the fragmented case under `Five` (universal movability is exactly
+  `n ≥ 5f + 1`), at least `half` good targets — the numerator of the
+  paper's probability bound — and the good set fixed before a
+  post-round draw (`AgreeUpto`, Mahi-Mahi's measurability pattern);
+  the trigger, the first-quorum resolution, and a verdict for every
+  candidate exist under the structural C4/C5 hypotheses, with no `Five`
+  anywhere in termination.
+
+### 2.2 The witnesses (`LeanDagTest/RedSnapper/`)
+
+Every definition is exercised by `decide` on concrete committees before
+anything is proved from it — `Fin 4` and `Fin 7` for the `3f + 1`
+protocol and the thresholds' coincidence at the tight committee,
+`Fin 6` (`quorum = 5 ≠ half = 3`, one Byzantine) for everything at
+`5f + 1`, `Fin 11` for the tight `Five` committee. The base files build
+the happy paths: `UCert`/`USkip` (certificates form, propagate, and are
+retracted), `ULive`/`UTri` (the liveness pair end to end),
+`U6Full`/`U6Ref`/`U6Unlock` (the four `5f + 1` certificate shapes, the
+two legal move shapes — including the `⊥ → ack` coin move that
+`StanceDiscipline` forbids), `U6Rec`/`U6RecBot` (the recovery pipeline
+with a committed winner and with an empty election), `U6Coin`/`U6Frag`
+(both coin cases through to their certificates). The hardening files
+carry the audit-adopted mutants: threshold boundaries at exactly
+`half`/`quorum` and one below, equivocation-voided stances and
+anti-votes, stale refutations at the wrong block, Byzantine marker
+shapes, the one-shot and least-index clauses, the `prio` winner flip on
+a two-member election, the `Five` gates refuted at the `3f + 1`
+committee, and per-clause refutations of every behavioural hypothesis.
+
 ## 3. Findings for the paper
 
-Recorded at Phase 0 from the reading; those the mechanisation confirms
-or refines are updated at the last phase.
+Recorded at Phase 0 from the reading and updated as the mechanisation
+confirmed, refined, or added to them; findings 16 and 18–21 are the
+mechanisation's own.
 
 1. **Stale schema in the proofs.** Lemma univalent-exclusive and the
    Preliminaries refer to `noacks`/`nacks`/`unlocks` fields; the
@@ -384,7 +475,7 @@ LeanDagTest/RedSnapper/  witness models; audited
 Results: `Revocation` (RS1), `CertificateExclusion` (RS2),
 `TxAgreement` (RS3), `Uncontested` (RS4), `ConflictResolution` (RS5),
 `Five/FullCertSafety` (RS6), `Five/RecoverySafety` (RS7),
-`Five/Agreement` (RS8), `Five/CoinAgreement` and
+`Five/Agreement` (RS8), `Five/CoinSuccess` and
 `Five/RecoveryTermination` (RS9).
 
 **The freeze protocol.** For each phase, the audit surface — `Model/`
@@ -395,6 +486,17 @@ over the frozen files and the witnesses in parallel, hunting vacuous
 claims and missing witnesses; its findings are relayed, fixes to frozen
 files need the go again, and the phase is committed green.
 Human-readable and machine-checked content never share a file.
+
+Three frozen statements were amended after their freeze, each proposed
+with its reason and applied on the author's explicit go, and each now
+pinned by a hardening witness: RS4's no-rival premise gained the
+validity gate (finding 18); `ResolvesFiveAt`'s one-shot clause was
+widened from strictly-between to every earlier committed anchor, the
+paper's exact form; and `CoinRule`'s adopt clauses moved the target's
+read from the constrained block — circular, hence vacuous, on the
+target's own block — to the target's referenced round-parent, the
+algorithm's pre-write read (the Phase 9 audit compiled a universe where
+the original form holds and the concentrated coin lemma is false).
 
 **Relation to the core.** None consumed: the arc carries its own fault
 model, blocks, universe and reachability, so that its trusted core is
