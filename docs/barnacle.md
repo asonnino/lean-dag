@@ -71,10 +71,10 @@ Three consequences shape the plan.
   every verdict, with no synchrony or fairness hypothesis (BN3).
 - **Liveness is the existence of the configuration sequence.** Each
   range closes because the base rule decides every slot of a fixed
-  schedule on the full view; the next anchor exists because committed
-  slots recur; the sequence is built by recursion on `k` (BN8). What the
-  arc consumes from the base is exactly the paper's A4, stated as a
-  clause on a schedule (§7).
+  schedule on any view caught up to the horizon; the next anchor exists
+  because committed slots recur; the sequence is built by recursion on
+  `k` (BN8). What the arc consumes from the base is exactly the paper's
+  A4, stated as a clause on a schedule (§7).
 - **A4 is not automatic under multiple leaders.** With the paper's
   own rotation, `GetLeader(r + l)`, and `m ≥ 2` leaders, the run
   fairness the development's liveness route consumes (`FairRunOn`,
@@ -468,18 +468,24 @@ inspects it. A4 is then a clause on a schedule, with a commit gap `c`
 ```lean
 def LiveRule.LiveOn (R : LiveRule Validator BlockId Payload) (S : Slots Validator) (c : ℕ) :
     Prop :=
-  ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
-    (∀ κ, Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
-      ∃ v, R.Decided S (R.full U) κ v) ∧
+  ∀ (U : R.Universe) (V : R.View U) (Rnd N : ℕ), R.Good U Rnd N →
+      R.toBaseRule.CoversUpto U V N →
+    (∀ κ, Rnd ≤ S.slotRound κ → S.slotRound κ + c + R.waveLength ≤ N →
+      ∃ v, R.Decided S V κ v) ∧
     (∀ r, Rnd ≤ r → r + c + R.waveLength ≤ N →
       ∃ κ, r ≤ S.slotRound κ ∧ S.slotRound κ ≤ r + c ∧
-        ∃ L, R.Decided S (R.full U) κ (some L))
+        ∃ L, R.Decided S V κ (some L))
 ```
 
-No view-monotonicity field: only the local form of liveness needs it
-(D6, deferred), and Odontoceti has none. Extending a run by a
-configuration needs the update rule to keep the count in range,
-`UpdBounded P upd` (D13), which BN7a supplies for the AIMD rule.
+`CoversUpto U V N` (`Model/Rule.lean`) is the condition on the view: it
+holds every block of `U` at a round up to `N`, which is what a validator
+that has received everything up to the horizon holds. Still no
+view-monotonicity field — the covering condition does that work, and
+Odontoceti has none. `coversUpto_full` (`Helpers/Cover.lean`) gives the
+condition for `R.full U` at every `N`, so the whole-universe reading is
+the special case. Extending a run by a configuration needs the update
+rule to keep the count in range, `UpdBounded P upd` (D13), which BN7a
+supplies for the AIMD rule.
 
 **BN8a (progress).** The paper's Configuration Progress, at the run's
 own count (D12): a run whose current configuration's range lies at or
@@ -488,12 +494,13 @@ good to a horizon leaving room for the threshold, the gap and one wave,
 extends by one configuration:
 
 ```lean
-  ∀ (U : R.Universe) (Rnd N K : ℕ)
-    (Rn : PartialRun R.toBaseRule P getLeader hk upd U (R.full U) K),
+  ∀ (U : R.Universe) (V : R.View U) (Rnd N K : ℕ),
+    R.toBaseRule.CoversUpto U V N →
+    ∀ (Rn : PartialRun R.toBaseRule P getLeader hk upd U V K),
     R.LiveOn (Sched getLeader hk (Rn.count K) (Rn.count_pos K) (Rn.count_le K)) c →
     R.Good U Rnd N → Rnd ≤ Rn.start K + 1 →
-    Rn.start K + P.interval + 1 + c + R.waveLength ≤ N →
-    Nonempty (PartialRun R.toBaseRule P getLeader hk upd U (R.full U) (K + 1))
+    Rn.start K + P.interval + 1 + 2 * c + R.waveLength ≤ N →
+    Nonempty (PartialRun R.toBaseRule P getLeader hk upd U V (K + 1))
 ```
 
 The new range's slots lie at rounds above `start K`, hence at or after
@@ -507,14 +514,20 @@ liveness. The rule gives the next state, in range by `UpdBounded`.
 
 **BN8b (every height).** From a synchrony round at genesis and the
 clause at every count, a run of every height exists under the horizon
-its height needs, `horizon P R c K := K · (interval + 1 + c) +
+its height needs, `horizon P R c K := K · (interval + 1 + c) + c +
 waveLength`: BN8a iterated, the induction carrying `start K ≤ K ·
 (interval + 1 + c)`. The paper's Liveness, in the prefix form.
 
-Both statements are on the full view; the local form — every reliable
-validator decides on its own view at an explicit time — needs the
-pacing structures of report §5 and view-monotonicity, and is deferred
-(D6).
+Both statements are on any view caught up to the horizon, so a run is
+what a validator holding everything up to `N` reaches, not merely what
+exists in the universe (D6). Under eventual DAG synchrony
+(`liveness.md` §4.2: whatever one correct validator holds, all
+eventually hold, whoever authored it) every correct validator's view
+satisfies the covering condition, so the statements cover every correct
+validator. What remains structural is the time: the time-indexed form,
+where a validator decides on its own view at an explicit time and the
+horizon is a function of when it looks, needs the pacing structures of
+report §5 and is not attempted.
 
 ## 8. Liveness, the descent under multiple leaders
 
@@ -546,8 +559,9 @@ as a second law structure so that `Laws` stays as frozen
 structure LiveRule.Descent (R : LiveRule Validator BlockId Payload) (slack : ℕ) : Prop where
   goodLeaders : ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
     ∃ T : Finset Validator, Fintype.card Validator ≤ T.card + slack ∧
-      ∀ (S : Slots Validator) (κ : ℕ), Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
-        S.leader κ ∈ T → ∃ L, R.Decided S (R.full U) κ (some L)
+      ∀ (S : Slots Validator) (V : R.View U) (κ : ℕ), R.toBaseRule.CoversUpto U V N →
+        Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
+        S.leader κ ∈ T → ∃ L, R.Decided S V κ (some L)
   indirect : ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (i j : ℕ) (A : BlockId),
     S.slotRound i + R.waveLength ≤ S.slotRound j → R.Decided S V j (some A) →
     (∀ i', i < i' → i' < j → S.slotRound i + R.waveLength ≤ S.slotRound i' →
@@ -558,8 +572,13 @@ structure LiveRule.Descent (R : LiveRule Validator BlockId Payload) (slack : ℕ
 `goodLeaders` is the paper's A4 — after GST an honest leader's slot is
 decided directly — with the good set `T` missing at most `slack`
 validators; `indirect` is A3's indirect rule. For Mysticeti the first
-is L4 (`decided_of_leader_mem`) at `slack = f`, the second the two
-indirect constructors of `Decided`.
+is L4 at `slack = f`, through `directCommit_of_leader_mem` rather than
+`decided_of_leader_mem`: the latter concludes on the full view, so the
+verdict is rebuilt inside `V` instead, which works because the
+certificates sit a wave below the horizon and a covering view therefore
+holds them (`certificates ∩ V.ids = certificates`; the supporter sets
+of the two-round rules are the same shape). The second is the two
+indirect constructors of `Decided`, which were view-parametric already.
 
 ```lean
 def HeadsRun (getLeader : ℕ → Validator) (T : Finset Validator) (g c₀ : ℕ) : Prop :=
@@ -578,9 +597,9 @@ minimality argument meets are decided and not committed, hence skipped.
 
 **BN9b (heads decide).** If the heads of rounds `ρ, …, ρ + w − 1` are
 `T`-led, `Rnd ≤ ρ` and `ρ + 2w ≤ N + 1`, then every slot at a round `r`
-with `r < ρ ≤ r + w` is decided on the full view and the head of `ρ` is
-committed: each such slot's wave-up head is one of the `T`-led heads,
-committed directly, with no eligible slot between (D18).
+with `r < ρ ≤ r + w` is decided on any view caught up to `N` and the
+head of `ρ` is committed: each such slot's wave-up head is one of the
+`T`-led heads, committed directly, with no eligible slot between (D18).
 
 **BN9c (`LiveOn` from `HeadsRun`).** A run of heads with gap `c₀` for
 every set missing at most `slack` validators gives

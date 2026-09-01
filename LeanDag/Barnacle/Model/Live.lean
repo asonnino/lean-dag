@@ -18,8 +18,9 @@ of `LiveOn`, the clause the liveness results consume, and each
 instantiation defines it from its own predicates.
 
 `LiveOn S c` is A4-liveness on one schedule: on a good DAG, every slot
-with `c` rounds and a wave under the horizon is decided on the full
-view, and from every round a committed slot lies within `c` rounds. The
+with `c` rounds and a wave under the horizon is decided on any view
+caught up to the horizon (`BaseRule.CoversUpto`), and from every round a
+committed slot lies within `c` rounds — on that same view. The
 gap `c` is what lets the leader-count mechanism find each
 configuration's anchor before the horizon, and it is also the margin a
 slot needs above it to be decided: a slot the direct rule does not
@@ -58,7 +59,7 @@ def LiveRule.LiveOn (R : LiveRule Validator BlockId Payload) (S : Slots Validato
       ∃ v, R.Decided S V κ v) ∧
     -- … and from every round `r` at or after `Rnd`, with `c` rounds and a
     -- wave still under the horizon, some slot at a round in `[r, r + c]`
-    -- is committed on the full view.
+    -- is committed on that view.
     (∀ r, Rnd ≤ r → r + c + R.waveLength ≤ N →
       ∃ κ, r ≤ S.slotRound κ ∧ S.slotRound κ ≤ r + c ∧
         ∃ L, R.Decided S V κ (some L))
