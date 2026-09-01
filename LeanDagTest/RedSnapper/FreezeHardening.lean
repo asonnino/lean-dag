@@ -444,14 +444,14 @@ example : FreezeQuorum U4 5 0 12 := (freezeQuorum_iff (by decide)).mpr (by decid
 -- ... and yet W is empty: the reflection fails at 3f+1.
 private theorem u4_empty : ∀ tx : Fin 4, ¬ EligibleFiveDec U4 5 12 0 tx := by decide
 
-example : ¬ RecoverySafety.RecoveryReflects U4 A4 := fun h =>
+example : ¬ RecoverySafety.RecoveryReflects U4 := fun h =>
   u4_empty 0 ((eligibleFive_iff (by decide)).mp
-    (h 0 0 1 5 12 0 (resolvesFiveAt_iff.mpr (by decide)) (by decide) (by decide)
+    (h 0 5 12 0 (by decide) ((freezeQuorum_iff (by decide)).mpr (by decide))
       (by decide) (by decide) ⟨8, by decide,
         (isFullCert_iff (by decide)).mpr (by decide)⟩).1)
 
-example : ¬ RecoverySafety.RecoverySafetyBot U4 A4 := fun h =>
-  h 0 0 1 5 12 (resolvesFiveAt_iff.mpr (by decide)) (by decide) (by decide)
+example : ¬ RecoverySafety.RecoverySafetyBot U4 := fun h =>
+  h 0 5 12 (by decide) ((freezeQuorum_iff (by decide)).mpr (by decide))
     (fun tx he => u4_empty tx ((eligibleFive_iff (by decide)).mp he))
     0 (by decide) (by decide) 8 (by decide)
     ((isFullCert_iff (by decide)).mpr (by decide))
@@ -459,9 +459,8 @@ example : ¬ RecoverySafety.RecoverySafetyBot U4 A4 := fun h =>
 -- The winner claim, by contrast, needs no committee bound: its premise
 -- (an eligible transaction) is simply unsatisfiable here, and the
 -- generic theorem applies at 3f+1 as stated.
-example : RecoverySafety.RecoverySafetyWin U4 A4 :=
-  RecoverySafety.recoverySafetyWin (moveDiscipline_iff.mpr (by decide))
-    (freezeDiscipline_iff.mpr (by decide))
+example : RecoverySafety.RecoverySafetyWin U4 :=
+  RecoverySafety.recoverySafetyWin (freezeDiscipline_iff.mpr (by decide))
 
 /-! ### The stance is read at the anchor, not at the marker -/
 
@@ -698,6 +697,93 @@ def U6RecBadAck : Universe (Fin 6) (Fin 24) (Fin 4) (Fin 2) where
 example : MoveDiscipline U6RecBadAck := moveDiscipline_iff.mpr (by decide)
 example : ¬ FreezeDiscipline U6RecBadAck := fun h =>
   absurd (freezeDiscipline_iff.mp h) (by decide)
+
+/-! ### Arc audit: The D9 `Owned` gate is never exercised on the 5f+1 side:
+no Fin-6 universe carries the mixed `tx 2`. A mixed transaction CAN be
+fully certified (IsFullCert has no Owned conjunct); only the
+constructor gate keeps fullFinal shut. -/
+
+/-- Thirteen ids over `sixValidators`: genesis 0 carries the mixed
+`tx 2` (input `o1`); round 1: the five correct validators ACK it,
+Byzantine 5 declares `⊥`; round 2: block 12 over the five ACKs. -/
+def lkMixSix : Fin 13 → Block (Fin 6) (Fin 13) (Fin 4) (Fin 2) := fun i =>
+  if h : (i : ℕ) < 6 then
+    { round := 0, author := ⟨i, by omega⟩, parents := ∅,
+      txs := if (i : ℕ) = 0 then {2} else ∅, declares := fun _ => none }
+  else if h : (i : ℕ) < 11 then
+    { round := 1, author := ⟨(i : ℕ) - 6, by omega⟩, parents := {0, 1, 2, 3, 4}, txs := ∅,
+      declares := fun o => if o = 1 then some (.ack 2) else none }
+  else if (i : ℕ) = 11 then
+    { round := 1, author := 5, parents := {1, 2, 3, 4, 5}, txs := ∅,
+      declares := fun o => if o = 1 then some .bot else none }
+  else
+    { round := 2, author := 0, parents := {6, 7, 8, 9, 10}, txs := ∅,
+      declares := fun _ => none }
+
+def UMixSix : Universe (Fin 6) (Fin 13) (Fin 4) (Fin 2) where
+  ids := Finset.univ
+  block := lkMixSix
+  complete := by decide
+  valid := by decide
+  no_equivocation := by decide
+  self_parent := by decide
+
+example : MoveDiscipline UMixSix := moveDiscipline_iff.mpr (by decide)
+
+-- The mixed transaction is fully certified ...
+example : Transactions.Mixed (2 : Fin 4) ∧ ¬ Owned (2 : Fin 4) := by decide
+example : IsFullCert UMixSix 12 2 := (isFullCert_iff (by decide)).mpr (by decide)
+
+-- ... it is a candidate but NOT an owned candidate (the 5f+1 recovery's
+-- gate, currently without any negative witness in the suite) ...
+example : IsCandidate UMixSix 12 1 2 := (mem_candidates_iff (by decide)).mp (by decide)
+example : ¬ OwnedCandidate UMixSix 12 1 2 := fun h => h.1 (by decide)
+
+-- ... and only the constructor's Owned gate keeps the consensusless
+-- 5f+1 route shut: with no anchors, no finalized verdict is derivable.
+def AMixSix : Anchors UMixSix where
+  seq := []
+  mem := by simp
+  chained := List.Pairwise.nil
+
+example : ¬ VerdictFive UMixSix AMixSix (View.full UMixSix) (· ≤ ·) 2 Fate.finalized := by
+  intro h
+  cases h with
+  | fullFinal ho _ _ => exact ho (by decide)
+  | recoveryFinal hres hi hj helig hmin => simp [AMixSix] at hi
+/-! ### Arc audit: `EligibleFive`'s `Frozen` conjunct is never discriminating:
+a mutant counting bare standers passes the committed suite. -/
+
+/-- `lkRecBare` with validator 2's round-2 block declaring `ack 0` but
+carrying NO marker: three validators stand at `ack 0` at anchor 17, but
+only two of them frozen. -/
+def lkRecNoF : Fin 24 → Block (Fin 6) (Fin 24) (Fin 4) (Fin 2) := fun i =>
+  if (i : ℕ) = 14 then
+    { round := 2, author := 2, parents := {6, 7, 8, 9, 10}, txs := ∅,
+      declares := fun o => if o = 0 then some (.ack 0) else none }
+  else lkRecBare i
+
+def U6RecNoF : Universe (Fin 6) (Fin 24) (Fin 4) (Fin 2) where
+  ids := Finset.univ.erase 23
+  block := lkRecNoF
+  complete := by decide
+  valid := by decide
+  no_equivocation := by decide
+  self_parent := by decide
+
+-- Real definition: only two frozen supporters — not eligible.
+example : ¬ EligibleFive U6RecNoF 6 17 0 0 := fun h =>
+  absurd ((eligibleFive_iff (by decide)).mp h) (by decide)
+
+-- Mutant (Frozen conjunct dropped): three bare standers reach `half`.
+example : (Owned (0 : Fin 4) ∧ (0 : Fin 4) ∈ candidates U6RecNoF 17 0) ∧
+    half (Fin 6) ≤ (Finset.univ.filter fun id =>
+      StanceSomeDec U6RecNoF id (0 : Fin 2) 17 (Stance.ack 0)).card := by decide
+/-! ### Arc audit: The two behavioural hypotheses coexist: the committed U6Rec
+satisfies StanceDiscipline as well as Move+Freeze (never pinned). -/
+
+example : StanceDiscipline U6Rec :=
+  stanceDiscipline_iff.mpr (by unfold NoReturnDec NoSwitchDec; decide)
 
 end RedSnapper
 

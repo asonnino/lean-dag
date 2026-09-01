@@ -42,10 +42,13 @@ fixed, plus the count:
 The hypotheses are the attempt's conditioning: the freeze rule (for the
 `Adopt` candidacy gate), the coin round itself, population at `ρ` and
 `ρ + 1`, synchrony from `ρ` on, and every correct validator stanced at
-`ρ` — the paper's premises, structurally. No hypothesis about rounds
-after `ρ + 1` is needed: the conclusion quantifies over the round-
-`(ρ + 2)` blocks that exist — vacuously, in a universe with none; a
-consumer wanting a certificate in hand adds population at `ρ + 2`.
+`ρ` — the paper's premises, structurally. Of the freeze rule, only the
+`ack_candidate` clause is consumed. No *population* is assumed past
+`ρ + 1`: the conclusion quantifies over the round-`(ρ + 2)` blocks that
+exist — vacuously, in a universe with none; a consumer wanting a
+certificate in hand adds population at `ρ + 2`. (`SynchronisedOn` does
+constrain every correct block above `ρ`, including at `ρ + 2` — its
+referencing half is what the conclusion's counting reads.)
 And `CoinSuccessCount`'s good set is existential: that the proofs
 choose it from the transferred ingredients — the holder sets, or
 `Correct` — is what ties it to `CoinMeasurable`, by inspection rather

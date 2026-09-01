@@ -176,6 +176,13 @@ example : AckedBefore UKeep 1 0 8 := (ackedBefore_iff (by decide)).mpr (by decid
 example : ¬ AckedBefore UKeep 2 0 9 := fun h =>
   absurd ((ackedBefore_iff (by decide)).mp h) (by decide)
 
+/-! ### Arc audit: `stanceIs_none_iff` is never used in the .mp polarity:
+no witness refutes a `none` stance where a unique latest declarer
+exists. -/
+
+example : ¬ StanceIs U 1 0 6 none := fun h =>
+  absurd ((stanceIs_none_iff (by decide)).mp h) (by decide)
+
 end RedSnapper
 
 end LeanDagTest

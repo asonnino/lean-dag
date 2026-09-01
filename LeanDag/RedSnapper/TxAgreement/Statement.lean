@@ -23,8 +23,10 @@ corollary — the headline safety of the fast path.
   `Owned` gate keeps it off the consensusless route, so it was ordered
   before it finalised.
 
-All three consume the stance discipline of correct validators and
-nothing else about behaviour.
+The first two consume the stance discipline of correct validators and
+nothing else about behaviour; the mixed corollary consumes nothing at
+all — it is a fact about the routes' shapes, and the arc-wide audit
+moved it outside the discipline arrow accordingly.
 -/
 
 namespace LeanDag
@@ -62,8 +64,8 @@ def Statement : Prop :=
   ∀ (Validator BlockId Tx Obj : Type) [Fintype Validator] [DecidableEq Validator]
     [DecidableEq BlockId] [Faults Validator] [Transactions Tx Obj]
     (U : Universe Validator BlockId Tx Obj) (A : Anchors U),
-    StanceDiscipline U →
-    VerdictAgreement U A ∧ NoConflictingFinal U A ∧ MixedViaAnchor U A
+    (StanceDiscipline U → VerdictAgreement U A ∧ NoConflictingFinal U A) ∧
+      MixedViaAnchor U A
 
 end TxAgreement
 

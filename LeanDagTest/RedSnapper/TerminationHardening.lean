@@ -98,6 +98,36 @@ example : EligibleFive U6RecTie 6 17 0 0 ∧ EligibleFive U6RecTie 6 17 0 1 :=
   ⟨(eligibleFive_iff (by decide)).mpr (by decide),
    (eligibleFive_iff (by decide)).mpr (by decide)⟩
 
+/-! ### Arc audit: `Triggers`' certificate-absence conjuncts are never negatively
+discriminated: a conflict-only mutant passes the committed suite. -/
+
+/-- The mutant: `Triggers` reduced to its conflict conjunct. -/
+def TriggersMut {Validator BlockId Tx Obj : Type*} [Fintype Validator]
+    [DecidableEq Validator] [DecidableEq BlockId] [DecidableEq Tx] [DecidableEq Obj]
+    [Faults Validator] [T : Transactions Tx Obj]
+    (U : Universe Validator BlockId Tx Obj) (a : BlockId) (o : Obj) : Prop :=
+  ∃ tx ∈ candidates U a o, Owned tx ∧ ∃ tx' ∈ candidates U a o, Owned tx' ∧ tx ≠ tx'
+
+instance {Validator BlockId Tx Obj : Type*} [Fintype Validator]
+    [DecidableEq Validator] [DecidableEq BlockId] [DecidableEq Tx] [DecidableEq Obj]
+    [Faults Validator] [Transactions Tx Obj]
+    (U : Universe Validator BlockId Tx Obj) (a : BlockId) (o : Obj) :
+    Decidable (TriggersMut U a o) := by
+  unfold TriggersMut; infer_instance
+
+-- Missing witness 1: anchor 17 of U6RecFull has the full certificate
+-- (block 12) in its history, so it does NOT trigger — the mutant says
+-- it does.
+example : ¬ Triggers U6RecFull 17 0 := fun h =>
+  absurd ((triggers_iff (by decide)).mp h) (by decide)
+example : TriggersMut U6RecFull 17 0 := by decide
+
+-- Missing witness 2: block 17 of U6Frag IS a full unlock certificate
+-- (reflexive Reaches), so it does not trigger — the mutant says it does.
+example : ¬ Triggers U6Frag 17 0 := fun h =>
+  absurd ((triggers_iff (by decide)).mp h) (by decide)
+example : TriggersMut U6Frag 17 0 := by decide
+
 end RedSnapper
 
 end LeanDagTest

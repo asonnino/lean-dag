@@ -83,8 +83,8 @@ theorem mixedViaAnchor {A : Anchors U} : MixedViaAnchor U A := by
   | @resolveCommit i a hi hconf hcand hcert hlive => exact ⟨i, a, hi, hcert⟩
 
 theorem holds : Statement := by
-  intro Validator BlockId Tx Obj _ _ _ _ _ U A hdisc
-  exact ⟨verdictAgreement hdisc, noConflictingFinal hdisc, mixedViaAnchor⟩
+  intro Validator BlockId Tx Obj _ _ _ _ _ U A
+  exact ⟨fun hdisc => ⟨verdictAgreement hdisc, noConflictingFinal hdisc⟩, mixedViaAnchor⟩
 
 end TxAgreement
 

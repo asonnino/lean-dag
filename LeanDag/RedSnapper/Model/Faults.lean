@@ -59,8 +59,8 @@ variable (Validator : Type*) [Fintype Validator] [DecidableEq Validator] [F : Fa
 
 /-- `quorum = n − f`: the number of distinct authors a transaction
 certificate counts at `n ≥ 3f + 1`, and a full certificate or a full
-unlock certificate at `n ≥ 5f + 1`. Also the number of round parents a
-block references. -/
+unlock certificate at `n ≥ 5f + 1`. Also the least number of distinct
+round-parent authors a block references (`ValidWrt.quorum`). -/
 def quorum : ℕ := Fintype.card Validator - F.f
 
 /-- `half = 2f + 1`: the number of distinct authors a skip certificate or

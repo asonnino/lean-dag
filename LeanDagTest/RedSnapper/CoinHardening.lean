@@ -36,13 +36,6 @@ Adopted from the Phase 9 vacuity audit.
   every target, and both `CoinFragmented` and `CoinSuccessCount` are
   false — the paper's `(4f+1) − 2f ≥ 2f+1` movability argument failing
   below `5f + 1`, in DAG form.
-* **Termination** — `ResolutionExists` without the no-quorum-below
-  premise is false (on `U6RecPre`, where the markers sit in the
-  trigger's own history and the paper-exact one-shot refuses every
-  index); `RecoveryDecides` on `U6Rec` lands on the *left* disjunct
-  non-vacuously (RS8's agreement refutes the dropped side); on
-  `U6RecTie` the election's `exists_prio_min` runs over a genuine
-  two-element `W`.
 * **`CertifiedAt`** pins its disjunct: a full unlock certificate does
   not certify an ACK value, nor a full certificate `⊥`.
 -/
@@ -470,6 +463,10 @@ example : CertifiedAt U6Frag 0 .bot 3 ∧ ¬ CertifiedAt U6Frag 0 (.ack 0) 3 :=
 
 example : CertifiedAt U6Coin 0 (.ack 0) 3 ∧ ¬ CertifiedAt U6Coin 0 .bot 3 :=
   ⟨certifiedAt_iff.mpr (by decide), fun h => absurd (certifiedAt_iff.mp h) (by decide)⟩
+
+-- The `StancedAt` half of the measurability transfer, pinned on the
+-- committed `AgreeUpto` pair.
+example : StancedAtDec U6Coin 0 1 ∧ StancedAtDec U6CoinBad 0 1 := by decide
 
 end RedSnapper
 
