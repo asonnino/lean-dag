@@ -49,24 +49,26 @@ theorem reactive_directCommit (rc : ReactivePace U T N)
     (rc.votes hT hcard hgst hto hR hN hlead hL)
 
 /-- **Reactive liveness (Odontoceti).** A reliable-led slot past GST is
-committed by every view — the conclusion of the two-round
-`decided_of_leader_mem`, from the single reactive wait clause and the
-trunk's derived production. One delivery separates a fast leader from
-its commit. -/
+committed by every view caught up to the horizon — the conclusion of
+the two-round `decided_of_leader_mem`, from the single reactive wait
+clause and the trunk's derived production. One delivery separates a
+fast leader from its commit. -/
 theorem reactive_decided (rc : ReactivePace U T N)
     (hT : T ⊆ (Correct : Finset Validator))
     (hcard : quorumCard Validator ≤ T.card)
     (hgst : rc.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rc.delay + rc.proc ≤ rc.timeout n)
     (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 1 ≤ N)
+    (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N)
     (hlead : S.leader k ∈ T) :
-    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) := by
+    ∃ L, IsLeaderBlock U k L ∧ Decided U V k (some L) := by
   obtain ⟨L, hLmem, hLc, hLr⟩ :=
     rc.toPaceCore.populatedOn hcard (S.slotRound k) (by omega) (S.leader k) hlead
   have hL : IsLeaderBlock U k L := ⟨hLmem, hLr, hLc⟩
   exact ⟨L, hL, Decided.directCommit hL
-    (directCommitIn_full
-      (reactive_directCommit rc hT hcard hgst hto hR hN hlead hL))⟩
+    (directCommitIn_of_coversUpto
+      (reactive_directCommit rc hT hcard hgst hto hR hN hlead hL)
+      (hcov.mono hN))⟩
 
 end Odontoceti
 

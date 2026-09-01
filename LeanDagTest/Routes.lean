@@ -140,8 +140,9 @@ example {c : ℕ} (hc : 0 < c) (hspan : Odontoceti.SpansEligible Validator c)
     Odontoceti.all_decided_below_of_fairRun (BlockId := BlockId) (Payload := Payload)
       hc Finset.Subset.rfl card_correct hspan fair R k
   exact ⟨b, hk, hR, fun hN =>
-    hrest U N (fun r _ hr => vp.populatedOn card_correct r hr)
-      (vp.synchronisedOn_of_converges card_correct hgst hbackoff) hN⟩
+    hrest U N (View.full U) (fun r _ hr => vp.populatedOn card_correct r hr)
+      (vp.synchronisedOn_of_converges card_correct hgst hbackoff) hN
+      (View.coversUpto_full U N)⟩
 
 end Odontoceti
 

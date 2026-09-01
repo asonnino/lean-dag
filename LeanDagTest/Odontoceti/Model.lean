@@ -309,7 +309,8 @@ example : ∃ L, IsLeaderBlock Uodo 2 L ∧
     Odontoceti.Decided Uodo (View.full Uodo) 2 (some L) :=
   Odontoceti.decided_of_correct_leader (R := 0) uodo_synchronised
     (by simp) (by simpa using uodo_populated 2 (by omega))
-    (by simpa using uodo_populated 3 (by omega)) (by decide)
+    (by simpa using uodo_populated 3 (by omega))
+    (View.full Uodo) (View.coversUpto_full Uodo _) (by decide)
 
 /-- **O8 applied**: the pipelined identity schedule spans at `c = 2`. -/
 example : Odontoceti.SpansEligible (Fin 6) 2 :=
