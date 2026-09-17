@@ -19,7 +19,9 @@ in the lower one, `floorRule_not_banded`, so `hb` alone does not yield `Banded`
 (`bandLaws_not_banded`).
 
 The ladders `av3` and `av4`, the schedules and the wave are those of `VaryingWave`; only the rule
-and the direction of the band change.
+and the direction of the band change. `floorRule` commits any leader block its view holds whose
+author is validator `2`, reading no vote at all, so a protocol's rule is not meant here either,
+only a rule the structure admits.
 -/
 
 namespace LeanDagTest
@@ -63,7 +65,7 @@ theorem floorRule_bandLaws : floorRule.BandLaws where
   skip_band := fun _ _ _ _ _ _ hs => hs.elim
   link_band := fun {S S' U U' lo hi g g' A L k k' i} hab hA hAlo hAhi hsch _ hklo _ _ _ => by
     obtain ⟨hr, -⟩ := AnchoredRule.band_block hab hA hAlo hAhi
-    show (S'.slotRound k' < (U'.block A).round ∧ L ∈ (U'.block A).refs) ↔
+    change (S'.slotRound k' < (U'.block A).round ∧ L ∈ (U'.block A).refs) ↔
       (S.slotRound k < (U.block A).round ∧ L ∈ (U.block A).refs)
     by_cases hlt : S.slotRound k < (U.block A).round
     · rw [AnchoredRule.band_refs hab hA (by omega) hAhi]
@@ -177,6 +179,7 @@ theorem bandLaws_not_banded :
 Nothing here should ever acquire an axiom beyond the standard three. -/
 
 #print axioms floorRule_bandLaws
+#print axioms floorRule_persist
 #print axioms floorRule_not_banded
 #print axioms bandLaws_not_banded
 
