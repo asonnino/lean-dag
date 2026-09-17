@@ -41,6 +41,12 @@ set_option maxRecDepth 4096
 one. -/
 def altWave : ℕ → ℕ := fun r => if r % 2 = 0 then 1 else 0
 
+/-- **The wave repeats every two rounds.** It varies, but it is periodic, which is what a rule
+reading a wavelength function supplies. -/
+theorem altWave_periodic (r : ℕ) : altWave (r + 2) = altWave r := by
+  unfold altWave
+  rw [Nat.add_mod_right]
+
 /-- One slot per round, slot `k` at round `k`, led by `(k + 1) % 4`. -/
 @[reducible]
 def altSlots : Slots (Fin 4) := Slots.identity (fun k => ⟨(k + 1) % 4, Nat.mod_lt _ (by omega)⟩)

@@ -773,7 +773,12 @@ with a rule whose wave enters through eligibility alone and whose direct
 commit, direct skip and rung therefore survive a shift of the band
 (`floorRule_bandLaws`). Its verdict in the upper frame has no
 counterpart a round down, so the band laws do not yield `Banded` by
-themselves (`bandLaws_not_banded`). What the band yields with no offset
+themselves (`bandLaws_not_banded`). That rule's wave repeats every two
+rounds, so periodicity does not rescue the hypothesis either
+(`periodic_bandLaws_not_banded`): `Banded` quantifies its two offsets
+over every pair, and a periodic wave survives only the pairs whose
+difference is a multiple of the period. What the band yields with no
+offset
 survives the varying wave all the same, through the extension laws
 (`altRule_persist`, `floorRule_persist`), and eligibility spans at a
 bound on the wave in place of a constant (`altRule_spansEligible`).

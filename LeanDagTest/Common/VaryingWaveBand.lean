@@ -18,6 +18,11 @@ or above, where no block references it. The indirect commit of the upper frame h
 in the lower one, `floorRule_not_banded`, so `hb` alone does not yield `Banded`
 (`bandLaws_not_banded`).
 
+The wave is `altWave`, which repeats every two rounds, so the same witness reads as
+`periodic_bandLaws_not_banded`: periodicity is not what `banded` is missing. `Banded` quantifies
+its two offsets over every pair and a periodic wave survives only the pairs whose difference is a
+multiple of the period, so no hypothesis of periodicity can replace the constancy one.
+
 The ladders `av3` and `av4`, the schedules and the wave are those of `VaryingWave`; only the rule
 and the direction of the band change. `floorRule` commits any leader block its view holds whose
 author is validator `2`, reading no vote at all, so a protocol's rule is not meant here either,
@@ -50,6 +55,10 @@ example : floorRule.waveAt 1 = 0 := rfl
 example : ¬ ∀ r r', floorRule.waveAt r = floorRule.waveAt r' := fun h => by
   have := h 0 1
   simp [floorRule, altWave] at this
+
+/-- **The wave repeats every two rounds**, `altWave`'s own period. -/
+theorem floorRule_waveAt_periodic (r : ℕ) : floorRule.waveAt (r + 2) = floorRule.waveAt r :=
+  altWave_periodic r
 
 /-! ## The band laws hold at the varying wave -/
 
@@ -174,6 +183,15 @@ theorem bandLaws_not_banded :
       R.BandLaws ∧ ¬ Banded R.toDagRule :=
   ⟨floorRule, floorRule_bandLaws, floorRule_not_banded⟩
 
+/-- **A wave of period two with the band laws is still not banded.** `Banded` quantifies its two
+offsets over every pair, while a periodic wave survives only the pairs whose difference is a
+multiple of its period, so no hypothesis of periodicity gives `Banded` and `banded`'s constancy
+cannot be weakened to one. -/
+theorem periodic_bandLaws_not_banded :
+    ∃ R : AnchoredRule (Fin 4) (Fin 20) Unit ValidWrt (Correct : Finset (Fin 4)),
+      (∀ r, R.waveAt (r + 2) = R.waveAt r) ∧ R.BandLaws ∧ ¬ Banded R.toDagRule :=
+  ⟨floorRule, floorRule_waveAt_periodic, floorRule_bandLaws, floorRule_not_banded⟩
+
 /-! ## Axioms
 
 Nothing here should ever acquire an axiom beyond the standard three. -/
@@ -182,6 +200,7 @@ Nothing here should ever acquire an axiom beyond the standard three. -/
 #print axioms floorRule_persist
 #print axioms floorRule_not_banded
 #print axioms bandLaws_not_banded
+#print axioms periodic_bandLaws_not_banded
 
 end VaryingWaveBand
 
