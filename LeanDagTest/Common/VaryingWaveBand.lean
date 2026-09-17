@@ -3,9 +3,10 @@ import LeanDagTest.Common.VaryingWave
 # A rule with the band laws whose wave varies is not banded
 
 `AnchoredRule.banded` takes two hypotheses: `hb : R.BandLaws` and `hw`, that the wave be the same
-at every round. `VaryingWave.altRule` is not banded, but it has no band laws either: its direct
-commit reads a block at `r + altWave r`, which a shift of the rounds moves, so `commit_band` fails
-on the very frames that refute it. That removes both hypotheses at once.
+at every round. `VaryingWave.altRule` is not banded, but it has no band laws either
+(`VaryingWave.altRule_not_bandLaws`): its direct commit reads a block at `r + altWave r`, which a
+shift of the rounds moves, so `commit_band` fails on the very frames that refute it. That removes
+both hypotheses at once.
 
 This file removes only `hw`. `floorRule` reads its wave through eligibility alone: the direct commit
 looks at the slot's own round (a candidate by validator `2` that the view holds commits outright),

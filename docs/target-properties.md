@@ -767,7 +767,8 @@ automatically satisfied: `LeanDagTest/Common/VaryingWave.lean` builds a
 rule whose wave alternates, decides a slot in one frame, and leaves the
 same slot undecided in that frame moved one round up, the two universes
 agreeing on every band (`altRule_not_banded`). That rule has no band
-laws either, so it refutes both of `banded`'s hypotheses at once;
+laws either (`altRule_not_bandLaws`), so it refutes both of `banded`'s
+hypotheses at once;
 `LeanDagTest/Common/VaryingWaveBand.lean` drops only the constancy one,
 with a rule whose wave enters through eligibility alone and whose direct
 commit, direct skip and rung therefore survive a shift of the band

@@ -159,9 +159,23 @@ theorem alt_agreeBand (top : ℕ) : AgreeBand altRule.toDagRule av3 av4 1 (top +
   block := fun b hb _ => av_block_shift b hb
   refs := fun b hb hlo _ => av_refs_shift b hb hlo
 
+/-- **The rule has no band laws.** Its direct commit reads a block at `r + altWave r`, and the two
+frames put that read at different rounds: the same band that carries slot `0`'s candidate carries
+no committing block for it a round up, since the wave there is zero and the blocks at the slot's
+own round reference the fresh genesis layer. So `commit_band` fails on the very frames that refute
+`Banded`, and `altRule` removes both of `banded`'s hypotheses at once rather than isolating one. -/
+theorem altRule_not_bandLaws : ¬ altRule.BandLaws := by
+  intro hb
+  have hc : altRule.Commit av3 (View.full av3) 1 (altSlots.slotRound 0) := by decide
+  have hcb := hb.commit_band (S := altSlots) (S' := altSlots') (V := View.full av3)
+    (V' := View.full av4) (k := 0) (k' := 0) (L := 1) (alt_agreeBand 1) rfl rfl rfl (by decide)
+    (fun b _ _ _ => Finset.mem_univ b) (by decide) hc
+  exact absurd hcb (by decide)
+
 /-- **A rule whose wave varies with the round is not banded**: the band shifts by a constant and a
-wave read at the slot's round does not. The rule has no band laws either, so that `banded`'s
-constancy hypothesis cannot be dropped is `VaryingWaveBand.bandLaws_not_banded`. -/
+wave read at the slot's round does not. The rule has no band laws either (`altRule_not_bandLaws`),
+so that `banded`'s constancy hypothesis cannot be dropped is
+`VaryingWaveBand.bandLaws_not_banded`. -/
 theorem altRule_not_banded : ¬ Banded altRule.toDagRule := by
   intro hb
   obtain ⟨top, ht⟩ := hb altSlots av3 (View.full av3) 0 (some 1) alt_decided
@@ -208,6 +222,7 @@ Nothing here should ever acquire an axiom beyond the standard three. -/
 
 #print axioms av3
 #print axioms av4
+#print axioms altRule_not_bandLaws
 #print axioms altRule_not_banded
 #print axioms altRule_persist
 
