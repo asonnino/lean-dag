@@ -17,9 +17,9 @@ variable {Validator Value : Type*}
 variable [Fintype Validator] [DecidableEq Validator]
 variable [H : HybridFaults Validator]
 
-namespace Model
+namespace FlexibleFaults
 
-variable (M : Model Validator Value)
+variable (M : FlexibleFaults Validator Value)
 
 namespace Execution
 
@@ -136,6 +136,6 @@ end RecoveryRound
 
 end Execution
 
-end Model
+end FlexibleFaults
 
 end LeanDag.Hybrid.Checkpoint

@@ -39,13 +39,14 @@ structure ChkProp (Validator Value : Type*) where
   checkpoint : CheckpointData Value
   deriving DecidableEq
 
-/-- Checkpoint-specific extension of the imported `HybridFaults` model:
-`H` supplies the Byzantine/crash classes and bounds, this structure adds
-the AbC class and the stronger checkpoint resilience bound. The
-disjointness fields are unused by current safety derivations, whose
-cardinality arguments use union upper bounds valid even if classes
-overlap. -/
-structure Model (Validator Value : Type*) [Fintype Validator]
+/-- The flexible fault model: the imported `HybridFaults` classes plus
+alive-but-corrupt validators. `H` supplies the Byzantine/crash classes
+and bounds, this structure adds the AbC class and the stronger
+checkpoint resilience bound; `abc = ∅` recovers the base hybrid model
+without removing crash faults. The disjointness fields are unused by
+current safety derivations, whose cardinality arguments use union upper
+bounds valid even if classes overlap. -/
+structure FlexibleFaults (Validator Value : Type*) [Fintype Validator]
     [DecidableEq Validator] [H : HybridFaults Validator] where
   /-- Alive-but-corrupt fault bound. -/
   fabc : ℕ
@@ -63,9 +64,9 @@ structure Model (Validator Value : Type*) [Fintype Validator]
   resilient :
     fabc + 3 * H.fb + 2 * H.fc < Fintype.card Validator
 
-namespace Model
+namespace FlexibleFaults
 
-variable (M : Model Validator Value)
+variable (M : FlexibleFaults Validator Value)
 
 /-- Validators whose checkpoint protocol state is enforced. -/
 def ReliableSigner : Finset Validator :=
@@ -153,8 +154,8 @@ end CertificatePayload
 /-- A second-phase witness says `sender` received and validated a
 concrete first-phase certificate for exactly `checkpoint`, retained in
 the message object so later proofs can inspect it directly. For a
-recovery-correct sender, `recorded` requires durable storage before the
-witness is emitted, so a finality quorum yields an honest, available
+recovery-correct sender, `recorded` requires durable storage as part of
+supplying the witness, so a finality quorum yields an honest, available
 resubmitter during recovery; other sender classes make no such
 promise. -/
 structure ChkWitness (checkpoint : CheckpointData Value) where
@@ -162,31 +163,31 @@ structure ChkWitness (checkpoint : CheckpointData Value) where
   sender : Validator
   /-- The concrete first-phase certificate received by the sender. Its
   dependent type binds the witness to this exact `checkpoint`. -/
-  certificate : Model.Execution.CheckpointQC M E checkpoint
+  certificate : FlexibleFaults.Execution.CheckpointQC M E checkpoint
   /-- If the sender follows recovery and remains available, it stored
   the checkpoint before witnessing it. No condition is imposed when the
   sender is outside `RecoveryCorrect`. -/
   recorded :
     sender ∈ M.RecoveryCorrect → E.recorded sender checkpoint
 
-/-- A finality certificate is a quorum of actual witness messages for
-one checkpoint, rather than an arbitrary possession predicate. -/
+/-- A finality certificate supplies a quorum of authenticated witnesses
+for one checkpoint, rather than an arbitrary possession predicate. -/
 structure FinalityQC (checkpoint : CheckpointData Value) where
   /-- A concrete first-phase certificate for the finalized content. -/
-  checkpointQC : Model.Execution.CheckpointQC M E checkpoint
+  checkpointQC : FlexibleFaults.Execution.CheckpointQC M E checkpoint
   /-- Distinct witness senders. -/
   witnesses : Finset Validator
   /-- The witness phase uses the hybrid quorum. -/
   quorum : Hybrid.q Validator ≤ witnesses.card
-  /-- Every listed sender emitted a concrete validated witness. -/
+  /-- Every listed sender is represented by a concrete validated witness. -/
   messages :
-    ∀ v ∈ witnesses, Model.Execution.ChkWitness M E checkpoint
+    ∀ v ∈ witnesses, FlexibleFaults.Execution.ChkWitness M E checkpoint
   /-- Witness authentication binds each message to its listed sender. -/
   sender_eq : ∀ v (hv : v ∈ witnesses), (messages v hv).sender = v
 
 end Execution
 
-end Model
+end FlexibleFaults
 
 /-- Two checkpoint histories are consistent when either extends the
 other. -/
