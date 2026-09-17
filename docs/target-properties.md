@@ -766,10 +766,17 @@ asks that `waveAt` be the same at every round. That hypothesis is not
 automatically satisfied: `LeanDagTest/Common/VaryingWave.lean` builds a
 rule whose wave alternates, decides a slot in one frame, and leaves the
 same slot undecided in that frame moved one round up, the two universes
-agreeing on every band (`altRule_not_banded`). What the band yields with
-no offset survives the varying wave all the same, through the extension
-laws (`altRule_persist`), and eligibility spans at a bound on the wave
-in place of a constant (`altRule_spansEligible`).
+agreeing on every band (`altRule_not_banded`). That rule has no band
+laws either, so it refutes both of `banded`'s hypotheses at once;
+`LeanDagTest/Common/VaryingWaveBand.lean` drops only the constancy one,
+with a rule whose wave enters through eligibility alone and whose direct
+commit, direct skip and rung therefore survive a shift of the band
+(`floorRule_bandLaws`). Its verdict in the upper frame has no
+counterpart a round down, so the band laws do not yield `Banded` by
+themselves (`bandLaws_not_banded`). What the band yields with no offset
+survives the varying wave all the same, through the extension laws
+(`altRule_persist`, `floorRule_persist`), and eligibility spans at a
+bound on the wave in place of a constant (`altRule_spansEligible`).
 
 | rule | the rounds it reads | offset band |
 |---|---|---|

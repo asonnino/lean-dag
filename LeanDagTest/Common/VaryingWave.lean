@@ -7,10 +7,12 @@ import LeanDag.Common.Anchored.Band
 constant. This file supplies the instance that is not constant, so that the hypotheses a varying
 wave forces are neither empty nor free:
 
-* `banded` asks the wave to be the same at every round, and `altRule_not_banded` shows why: the
-  band shifts every round by a constant, and a rule reading its wave at the round it is asked
-  about does not survive that shift. The witness decides a slot in one frame and leaves it
-  undecided in the same frame moved one round up, with the two universes agreeing on every band;
+* `banded` asks the wave to be the same at every round, and `altRule_not_banded` shows what goes
+  wrong: the band shifts every round by a constant, and a rule reading its wave at the round it is
+  asked about does not survive that shift. The witness decides a slot in one frame and leaves it
+  undecided in the same frame moved one round up, with the two universes agreeing on every band.
+  `banded` takes the band laws as well, which `altRule` has not, so that the constancy hypothesis
+  cannot be dropped is `VaryingWaveBand.bandLaws_not_banded`;
 * what the band gives with no offset survives all the same, `altRule_extendLaws` and
   `altRule_persist`;
 * and `spansEligible_of_identity` takes a bound in place of a constant, `altRule_spansEligible`.
@@ -151,8 +153,9 @@ theorem alt_agreeBand (top : ℕ) : AgreeBand altRule.toDagRule av3 av4 1 (top +
   block := fun b hb _ => av_block_shift b hb
   refs := fun b hb hlo _ => av_refs_shift b hb hlo
 
-/-- **A rule whose wave varies with the round is not banded**: the hypothesis `banded` takes,
-that the wave be the same at every round, cannot be dropped. -/
+/-- **A rule whose wave varies with the round is not banded**: the band shifts by a constant and a
+wave read at the slot's round does not. The rule has no band laws either, so that `banded`'s
+constancy hypothesis cannot be dropped is `VaryingWaveBand.bandLaws_not_banded`. -/
 theorem altRule_not_banded : ¬ Banded altRule.toDagRule := by
   intro hb
   obtain ⟨top, ht⟩ := hb altSlots av3 (View.full av3) 0 (some 1) alt_decided
