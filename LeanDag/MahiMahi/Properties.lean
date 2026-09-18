@@ -232,18 +232,18 @@ carry across a band covering the slot's wave, and a candidate the band
 did not carry is certified from no old anchor. -/
 theorem mahiMahiBandLaws (hw : 2 ≤ w) :
     (MahiMahi.mahiMahiAnchored Validator BlockId Payload w).BandLaws where
-  commit_band := fun h hkk _ hlo hhi hV hL hc =>
+  commit_band := fun h hkk _ _ hlo hhi hV hL hc =>
     directCommitIn_band h hw hV hL.1 hL.2.1 hkk (by omega)
       (by simp only [MahiMahi.mahiMahiAnchored_waveAt] at hhi; omega) hc
-  skip_band := fun h hkk hlk hlo hhi hV hs => by
+  skip_band := fun h hkk hlk _ hlo hhi hV hs => by
     show MahiMahi.DirectSkipIn _ _ _ _ _
     rw [← hlk]
     exact directSkipIn_band h hw hV hkk (by omega)
       (by simp only [MahiMahi.mahiMahiAnchored_waveAt] at hhi; omega) hs
-  link_band := fun h hA hAlo hAhi hkk _ hlo hhi _ hL =>
+  link_band := fun h hA hAlo hAhi hkk _ _ hlo hhi _ hL =>
     certifiedIn_band h hw hA hAlo hAhi hL.1 hL.2.1 hkk hlo
       (by simp only [MahiMahi.mahiMahiAnchored_waveAt] at hhi; omega)
-  link_novel := fun h hA hAlo hAhi hkk _ hlo hhi _ hL hLo =>
+  link_novel := fun h hA hAlo hAhi hkk _ _ hlo hhi _ hL hLo =>
     not_certifiedIn_band_novel h hw hA hAlo hAhi hLo hL.2.1 hkk hlo
       (by simp only [MahiMahi.mahiMahiAnchored_waveAt] at hhi; omega)
 
@@ -252,7 +252,7 @@ for. -/
 theorem banded (hw : 2 ≤ w) :
     Banded (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) w) :=
-  AnchoredRule.banded (mahiMahiBandLaws hw) (fun _ _ => rfl)
+  AnchoredRule.banded (mahiMahiBandLaws hw)
 
 /-! ## The two liveness properties
 
@@ -300,7 +300,7 @@ def mmSupport (w : ℕ) : Support (mahiMahiRule (Validator := Validator) (BlockI
 theorem mmSupport_local {w : ℕ} (hw : 2 ≤ w) :
     Support.Local (R := mahiMahiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) w) (mmSupport w) := by
-  intro U U' G R₀ h c L hc hcr hL hLr
+  intro U U' G R₀ h c L _ hc hcr hL hLr
   change R₀ + (w - 1) ≤ (BlockRecord.block U c).round at hcr
   change (BlockRecord.block U L).round + (w - 1) = (BlockRecord.block U c).round at hLr
   exact certifies_band (agreeBand_of_rebasedAbove h (BlockRecord.block U c).round R₀ le_rfl)
@@ -315,7 +315,7 @@ every quorum block at the decision round certifies. -/
 theorem mmSupport_ofCoverage {w : ℕ} (hw : 4 ≤ w) :
     Timed.OfCoverage (R := mahiMahiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) w) (mmSupport w) (coreReliability Validator) := by
-  intro U T hq r L hpop hct hL hLr hLc C hC hCc hCr
+  intro U T hq r _ L hpop hct hL hLr hLc C hC hCc hCr
   have hcard : quorumCard Validator ≤ T.card := by
     have h2 := hq.2
     change Fintype.card Validator - Faults.f Validator ≤ T.card at h2
@@ -369,7 +369,7 @@ theorem mmSupport_commits {w : ℕ} (hw : 2 ≤ w) :
   have hin : MahiMahi.DirectCommitIn U V w L (S.slotRound k) :=
     directCommitIn_of_coversUpto hdc (by rw [hdr]; exact hcov)
   refine ⟨L, by omega, MahiMahi.Decided.directCommit ⟨hLmem, hLr', hLc'⟩ hin, ?_⟩
-  intro S' hround hlead'
+  intro S' hround hlead' _
   refine MahiMahi.Decided.directCommit (S := S') ⟨hLmem, ?_, ?_⟩ ?_
   · rw [hround]; exact hLr'
   · rw [hlead' k (by omega)]; exact hLc'
@@ -381,7 +381,7 @@ open Classical in
 tie to break — two certificates at one slot name the same candidate. -/
 theorem indirect {w : ℕ} (hw : 1 ≤ w) :
     Indirect (mahiMahiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) w)
-      (fun sr i j => sr i + w ≤ sr j) :=
+      (fun S i j => S.slotRound i + w ≤ S.slotRound j) :=
   (AnchoredRule.indirect ((MahiMahi.mahiMahiAnchored Validator BlockId Payload w).linkCongr_of_round
     (fun _ U A L r => MahiMahi.CertifiedIn U w A L r) fun _ _ _ _ _ _ => rfl)
     fun hi h => MahiMahi.exists_least hi h).congr
@@ -397,8 +397,8 @@ theorem descent {w : ℕ} (hw : 4 ≤ w) :
       (w - 1 + 1) (coreReliability Validator).slack :=
   Timed.descent_of_support _ _ _ (mmSupport w) (mmSupport_ofCoverage hw)
     (mmSupport_commits (by omega))
-    ((indirect (by omega)).congr fun sr i j => by
-      change sr i + w ≤ sr j ↔ sr i + (w - 1 + 1) ≤ sr j
+    ((indirect (by omega)).congr fun S i j => by
+      change S.slotRound i + w ≤ S.slotRound j ↔ S.slotRound i + (w - 1 + 1) ≤ S.slotRound j
       omega)
     (fun _ => by change w - 1 ≤ w - 1 + 1; omega) fun _ _ _ h => h
 

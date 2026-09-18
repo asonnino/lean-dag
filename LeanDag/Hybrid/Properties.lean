@@ -44,21 +44,21 @@ covering the slot's wave, and a candidate the band did not carry is
 thick-linked from no old anchor. -/
 theorem hybridBandLaws {kt : ℕ} (hpos : 0 < kt) :
     (Hybrid.hybridAnchored Validator BlockId Payload kt).BandLaws where
-  commit_band := fun h hkk _ hlo hhi hV _ hc =>
+  commit_band := fun h hkk _ _ hlo hhi hV _ hc =>
     AnchoredRule.holdsAtLeast_votesFor_band h hV (by omega) (by omega)
       (by simp only [Hybrid.hybridAnchored_waveAt] at hhi; omega) hc
-  skip_band := fun h hkk hlk hlo hhi hV hs =>
+  skip_band := fun h hkk hlk _ hlo hhi hV hs =>
     le_trans hs (Finset.card_le_card (AnchoredRule.slotBlamesIn_band h hkk hlk hlo.le
       (by simp only [Hybrid.hybridAnchored_waveAt] at hhi; omega) hV))
   link_band := by
-    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk _ hlo hhi _ _
+    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk _ _ hlo hhi _ _
     simp only [Hybrid.hybridAnchored_waveAt] at hhi
     show Hybrid.ThickLink kt U' A L (S'.slotRound k') ↔ Hybrid.ThickLink kt U A L (S.slotRound k)
     unfold Hybrid.ThickLink coneLink
     rw [AnchoredRule.coneSupporters_band h hA hAlo hAhi (n := S.slotRound k + 1) (by omega) (by omega)
       (by omega)]
   link_novel := by
-    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk _ hlo hhi _ _ hL ht
+    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk _ _ hlo hhi _ _ hL ht
     simp only [Hybrid.hybridAnchored_waveAt] at hhi
     change Hybrid.ThickLink kt U' A L (S'.slotRound k') at ht
     unfold Hybrid.ThickLink coneLink at ht
@@ -71,7 +71,7 @@ under `HonestNoEquiv`. -/
 theorem banded {kt : ℕ} (hpos : 0 < kt) :
     Banded (hybridRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) kt) :=
-  AnchoredRule.bandedOn (hybridBandLaws hpos) (fun _ _ => rfl)
+  AnchoredRule.bandedOn (hybridBandLaws hpos)
 
 /-! ## The two liveness properties, and the skip -/
 
@@ -116,7 +116,7 @@ theorem voteSupport_commits (kt : ℕ) :
   have hin : Hybrid.DirectCommitIn U.val V L (S.slotRound k) :=
     Hybrid.directCommitIn_of_coversUpto hdc hcov
   refine ⟨L, by omega, Hybrid.Decided.directCommit ⟨hLmem, hLr, hLc⟩ hin, ?_⟩
-  intro S' hround hlead'
+  intro S' hround hlead' _
   refine Hybrid.Decided.directCommit (S := S') ⟨hLmem, by rw [hround]; exact hLr,
     by rw [hlead' k (by omega)]; exact hLc⟩ ?_
   rw [hround]; exact hin
@@ -125,8 +125,9 @@ theorem voteSupport_commits (kt : ℕ) :
 the least thick-linked candidate. -/
 theorem indirect (kt : ℕ) :
     Indirect (hybridRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) kt)
-      (fun sr i j =>
-        sr i + (Hybrid.hybridAnchored Validator BlockId Payload kt).waveAt (sr i) + 1 ≤ sr j) :=
+      (fun S i j => S.slotRound i +
+        (Hybrid.hybridAnchored Validator BlockId Payload kt).waveAt (S.kind i) + 1 ≤
+          S.slotRound j) :=
   AnchoredRule.indirectOn ((Hybrid.hybridAnchored Validator BlockId Payload kt).linkCongr_of_round
     (fun _ U A L r => Hybrid.ThickLink kt U A L r) fun _ _ _ _ _ _ => rfl)
     fun hi h => Hybrid.exists_least hi h

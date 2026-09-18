@@ -61,8 +61,8 @@ def mahiMahiAnchored (Validator BlockId Payload : Type) [Fintype Validator]
     [DecidableEq Validator] [Faults Validator] [LinearOrder BlockId] (w : ℕ) :
     AnchoredRule Validator BlockId Payload ValidWrt Correct where
   waveAt := fun _ => w - 1
-  Commit := fun U V L r => MahiMahi.DirectCommitIn U V w L r
-  decCommit := fun _ _ _ _ => inferInstance
+  Commit := fun U V L r _ => MahiMahi.DirectCommitIn U V w L r
+  decCommit := fun _ _ _ _ _ => inferInstance
   Skip := fun U V S k => MahiMahi.DirectSkipIn U V w (S.leader k) (S.slotRound k)
   rungs := 1
   Link := fun _ U A L S k => MahiMahi.CertifiedIn U w A L (S.slotRound k)
@@ -84,8 +84,8 @@ namespace Decided
 export AnchoredRule.Decided (directCommit directSkip indirectCommit indirectSkip)
 end Decided
 
-instance {V : View Validator BlockId Payload U} (w : ℕ) (L : BlockId) (r : ℕ) :
-    Decidable ((mahiMahiAnchored Validator BlockId Payload w).Commit U V L r) :=
+instance {V : View Validator BlockId Payload U} (w : ℕ) (L : BlockId) (r κ : ℕ) :
+    Decidable ((mahiMahiAnchored Validator BlockId Payload w).Commit U V L r κ) :=
   inferInstanceAs (Decidable (MahiMahi.DirectCommitIn U V w L r))
 
 instance {V : View Validator BlockId Payload U} (w k : ℕ) :

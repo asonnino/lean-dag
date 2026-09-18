@@ -88,7 +88,7 @@ def hzSupport : Support (rule (Replica := Replica) (BlockId := BlockId)) where
 refs, and each parent keeps its refs and its creator. -/
 theorem hzSupport_local :
     Support.Local (R := rule (Replica := Replica) (BlockId := BlockId)) hzSupport := by
-  intro U U' G R₀ h c L hc hcr _ _
+  intro U U' G R₀ h c L _ hc hcr _ _
   change R₀ + 2 ≤ (U.block c).round at hcr
   have hrefs : (U'.block c).refs = (U.block c).refs :=
     h.refs c hc (by change R₀ < (U.block c).round; omega)
@@ -111,7 +111,7 @@ with its antecedent cut to what it reads. -/
 theorem hzSupport_ofCoverage :
     Timed.OfCoverage (R := rule (Replica := Replica) (BlockId := BlockId)) hzSupport
       (hzReliability Replica) := by
-  intro U T hq r L hpop hct hL hLr hLc C hC hCc hCr
+  intro U T hq r _ L hpop hct hL hLr hLc C hC hCc hCr
   have hcard : LeanDag.Hydrozoan.q Replica ≤ T.card := by
     have h2 := hq.2
     change Fintype.card Replica - (LeanDag.Hydrozoan.Faults.f Replica + LeanDag.Hydrozoan.Faults.c Replica) ≤ T.card at h2
@@ -139,7 +139,7 @@ theorem hzSupport_commits :
   have hin : LeanDag.Hydrozoan.SlowCommitInView U V L (S.slotRound k) :=
     slowCommitInView_of_coversUpto hslow hcov
   refine ⟨L, by omega, LeanDag.Hydrozoan.Decided.directCommit hL (Or.inr hin), ?_⟩
-  intro S' hround hlead'
+  intro S' hround hlead' _
   refine LeanDag.Hydrozoan.Decided.directCommit (S := S') ⟨hL.1, ?_, ?_⟩ (Or.inr ?_)
   · change (U.block L).round = S'.slotRound k
     rw [hround]; exact hL.2.1
@@ -172,7 +172,7 @@ theorem hzSupport_live_of_hzLive {S : LeanDag.Slots Replica}
   have hNk : S.slotRound k + 2 ≤ N := hN k hK
   refine ⟨fun n h1 h2 => hpop' n (by omega) (by change n ≤ S.slotRound k + 2 at h2; omega), ?_⟩
   rintro L ⟨hLmem, hLr, hLc⟩ v hv c hc hcc hcr
-  exact hzSupport_ofCoverage U T hq (S.slotRound k) L
+  exact hzSupport_ofCoverage U T hq (S.slotRound k) (S.kind k) L
     (fun n h1 h2 => hpop' n (by omega) (by change n ≤ S.slotRound k + 2 at h2; omega))
     (Timed.coversToward_of_synchronisedOn hs hRk) hLmem hLr (by rw [hLc]; exact hlead)
     c hc (by rw [hcc]; exact hv) hcr
@@ -248,7 +248,7 @@ theorem voteSupport_fast_commits
   have hin : LeanDag.Hydrozoan.FastCommitInView U V L (S.slotRound k) :=
     fastCommitInView_of_coversUpto hfast hcov
   refine ⟨L, by omega, LeanDag.Hydrozoan.Decided.directCommit hL (Or.inl hin), ?_⟩
-  intro S' hround hlead'
+  intro S' hround hlead' _
   refine LeanDag.Hydrozoan.Decided.directCommit (S := S') ⟨hL.1, ?_, ?_⟩ (Or.inl ?_)
   · change (U.block L).round = S'.slotRound k
     rw [hround]; exact hL.2.1
@@ -265,7 +265,7 @@ theorem voteSupport_fast_commits
 graded rule's rung choices, read at the three-round eligibility. -/
 theorem indirect :
     Indirect (rule (Replica := Replica) (BlockId := BlockId))
-      (fun sr i j => sr i + 3 ≤ sr j) :=
+      (fun S i j => S.slotRound i + 3 ≤ S.slotRound j) :=
   (AnchoredRule.indirect SlotAgreement.hydrozoanLaws.link_congr fun hi h => exists_least hi h).congr
     (fun _ _ _ => by simp only [hydrozoanAnchored_waveAt])
 
@@ -297,7 +297,7 @@ theorem commitsCandidate :
 predicate — which is a *disjunction*, the fast path or the slow one. -/
 theorem commitsDirect :
     Properties.CommitsDirect (rule (Replica := Replica) (BlockId := BlockId))
-      (fun {U} V L r => LeanDag.Hydrozoan.FastCommitInView U V L r ∨
+      (fun {U} V L r _ => LeanDag.Hydrozoan.FastCommitInView U V L r ∨
         LeanDag.Hydrozoan.SlowCommitInView U V L r) :=
   AnchoredRule.commitsDirect
 

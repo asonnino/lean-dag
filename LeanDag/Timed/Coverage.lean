@@ -85,18 +85,18 @@ does not owe it. -/
 /-- **Coverage certifies**, for a support. -/
 def OfCoverage (sp : Support R) (rel : Reliability Validator) : Prop :=
   ∀ (U : R.Universe) (T : Finset Validator), rel.IsQuorum T →
-    ∀ (r : ℕ) (L : BlockId),
-    (∀ n, r ≤ n → n ≤ r + sp.waveAt r → Properties.PopulatedOn R U T n) →
-    CoversToward R U T r (sp.waveAt r) L →
+    ∀ (r κ : ℕ) (L : BlockId),
+    (∀ n, r ≤ n → n ≤ r + sp.waveAt κ → Properties.PopulatedOn R U T n) →
+    CoversToward R U T r (sp.waveAt κ) L →
     L ∈ R.ids U → (R.block U L).round = r → (R.block U L).creator ∈ T →
-    ∀ c, c ∈ R.ids U → (R.block U c).creator ∈ T → (R.block U c).round = r + sp.waveAt r →
+    ∀ c, c ∈ R.ids U → (R.block U c).creator ∈ T → (R.block U c).round = r + sp.waveAt κ →
       sp.Certifies U c L
 
 /-- **For vote support**, coverage toward the candidate at its own round
 is the vote. -/
 theorem voteSupport_ofCoverage (rel : Reliability Validator) :
     OfCoverage (voteSupport R) rel := by
-  intro U T _ r L _ hct hL hLr hLc c hc hcc hcr
+  intro U T _ r _ L _ hct hL hLr hLc c hc hcc hcr
   change (R.block U c).round = r + 1 at hcr
   exact hct r le_rfl (by change r < r + 1; omega) c hc hcc hcr L hL hLc hLr
     Relation.ReflTransGen.refl
@@ -111,7 +111,7 @@ theorem live_of_coverage (sp : Support R) {rel : Reliability Validator}
     (hpop : ∀ r, Rnd ≤ r → r ≤ N → Properties.PopulatedOn R U T r)
     (S : Slots Validator) (V : R.View U) {lo K : ℕ} (hV : CoversUpto R V N)
     (hRnd : Rnd ≤ S.slotRound lo)
-    (hN : ∀ k, k < K → S.slotRound k + sp.waveAt (S.slotRound k) ≤ N) :
+    (hN : ∀ k, k < K → S.slotRound k + sp.waveAt (S.kind k) ≤ N) :
     sp.live rel S V T lo K := by
   refine ⟨hq, N, hV, hN, ?_⟩
   intro k hlo hK hlead
@@ -119,7 +119,7 @@ theorem live_of_coverage (sp : Support R) {rel : Reliability Validator}
   have hkN := hN k hK
   refine ⟨fun n h1 h2 => hpop n (by omega) (by omega), ?_⟩
   intro L hL v hv c hc hcc hcr
-  exact hcov U T hq _ L (fun n h1 h2 => hpop n (by omega) (by omega))
+  exact hcov U T hq _ (S.kind k) L (fun n h1 h2 => hpop n (by omega) (by omega))
     (coversToward_of_synchronisedOn hs hRk) hL.1 hL.2.1 (by rw [hL.2.2]; exact hlead)
     c hc (by rw [hcc]; exact hv) hcr
 
@@ -132,7 +132,7 @@ theorem exists_decided_of_coverage (sp : Support R) {rel : Reliability Validator
     (hpop : ∀ r, Rnd ≤ r → r ≤ N → Properties.PopulatedOn R U T r)
     (S : Slots Validator) (V : R.View U) (k : ℕ) (hV : CoversUpto R V N)
     (hRnd : Rnd ≤ S.slotRound k)
-    (hN : ∀ j, j ≤ k → S.slotRound j + sp.waveAt (S.slotRound j) ≤ N)
+    (hN : ∀ j, j ≤ k → S.slotRound j + sp.waveAt (S.kind j) ≤ N)
     (hlead : S.leader k ∈ T) :
     ∃ L, DecidedBelow R S (k + 1) V k (some L) :=
   sp.leaderCommits hlc S V T k (k + 1)
@@ -152,7 +152,7 @@ theorem decidedBelow_of_fairRun (sp : Support R) {rel : Reliability Validator}
       ∀ {U : R.Universe} (V : R.View U) (N : ℕ),
         SynchronisedOn R U T Rnd → (∀ r, Rnd ≤ r → r ≤ N → Properties.PopulatedOn R U T r) →
         CoversUpto R V N →
-        (∀ j, j < b + c → S.slotRound j + sp.waveAt (S.slotRound j) ≤ N) →
+        (∀ j, j < b + c → S.slotRound j + sp.waveAt (S.kind j) ≤ N) →
         ∀ i, i < b → ∃ v, DecidedBelow R S (b + c) V i v := by
   obtain ⟨k₀, hk₀⟩ := S.unbounded Rnd
   obtain ⟨b, hb, h⟩ := sp.decidedBelow_of_fairRun hlc hd fair (max k k₀)
@@ -164,11 +164,11 @@ theorem decidedBelow_of_fairRun (sp : Support R) {rel : Reliability Validator}
 
 /-- The per-slot bound `decidedBelow_of_fairRun` asks, from one bound at the run's top slot
 and a ceiling the wave never exceeds: what a rule with a constant wave has to hand. -/
-theorem slotBound_of_top (sp : Support R) {w : ℕ} (hw : ∀ r, sp.waveAt r ≤ w)
+theorem slotBound_of_top (sp : Support R) {w : ℕ} (hw : ∀ κ, sp.waveAt κ ≤ w)
     {S : Slots Validator} {b c N : ℕ} (hN : S.slotRound (b + c - 1) + w ≤ N) :
-    ∀ j, j < b + c → S.slotRound j + sp.waveAt (S.slotRound j) ≤ N := fun j hj => by
+    ∀ j, j < b + c → S.slotRound j + sp.waveAt (S.kind j) ≤ N := fun j hj => by
   have := S.mono (show j ≤ b + c - 1 by omega)
-  have := hw (S.slotRound j)
+  have := hw (S.kind j)
   omega
 
 /-! ## A good DAG -/
@@ -190,8 +190,8 @@ theorem descent_of_support (R : Properties.DagRule Validator BlockId Payload)
     (Good : R.Universe → ℕ → ℕ → Prop) (g : ℕ)
     (sp : Properties.Support R) {rel : Reliability Validator}
     (hcov : OfCoverage sp rel) (hlc : sp.Commits rel)
-    (hind : Properties.Indirect R (fun sr i j => sr i + g ≤ sr j))
-    (hwave : ∀ r, sp.waveAt r ≤ g)
+    (hind : Properties.Indirect R (fun S i j => S.slotRound i + g ≤ S.slotRound j))
+    (hwave : ∀ κ, sp.waveAt κ ≤ g)
     (hgood : ∀ U Rnd N, Good U Rnd N → Timed.Good R rel U Rnd N) :
     Properties.Descent R Good g rel.slack where
   goodLeaders := by
@@ -201,7 +201,7 @@ theorem descent_of_support (R : Properties.DagRule Validator BlockId Payload)
     intro S V κ hcovV hRnd hN hlead
     obtain ⟨L, hL⟩ := exists_decided_of_coverage sp hcov hlc hq hs hpop S V κ
       (fun b hb hr => hcovV b hb hr) hRnd
-      (fun j hj => by have := hwave (S.slotRound j); have := S.mono hj; omega) hlead
+      (fun j hj => by have := hwave (S.kind j); have := S.mono hj; omega) hlead
     exact ⟨L, hL.2.1⟩
   indirect := by
     intro S U V i j A hij hj hmid

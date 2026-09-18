@@ -112,8 +112,8 @@ def odontocetiAnchored (Validator BlockId Payload : Type) [Fintype Validator]
     [DecidableEq Validator] [Faults5 Validator] [LinearOrder BlockId] :
     AnchoredRule Validator BlockId Payload ValidWrt Correct where
   waveAt := fun _ => 1
-  Commit := fun U V L r => Odontoceti.DirectCommitIn U V L r
-  decCommit := fun _ _ _ _ => inferInstance
+  Commit := fun U V L r _ => Odontoceti.DirectCommitIn U V L r
+  decCommit := fun _ _ _ _ _ => inferInstance
   Skip := fun U V S k => DirectSkipSlotIn (S := S) U V k
   rungs := 1
   Link := fun _ U A L S k => ThickLink U A L (S.slotRound k)
@@ -126,8 +126,8 @@ omit S in
 @[simp] theorem odontocetiAnchored_rungs :
     (odontocetiAnchored Validator BlockId Payload).rungs = 1 := rfl
 
-instance {V : View Validator BlockId Payload U} (L : BlockId) (r : ℕ) :
-    Decidable ((odontocetiAnchored Validator BlockId Payload).Commit U V L r) :=
+instance {V : View Validator BlockId Payload U} (L : BlockId) (r κ : ℕ) :
+    Decidable ((odontocetiAnchored Validator BlockId Payload).Commit U V L r κ) :=
   inferInstanceAs (Decidable (Odontoceti.DirectCommitIn U V L r))
 
 instance {V : View Validator BlockId Payload U} (k : ℕ) :
@@ -176,7 +176,7 @@ theorem odontocetiLaws : (odontocetiAnchored Validator BlockId Payload).Laws whe
       (not_lt.mp (show ¬ L₁ < L₂ from hm₂ L₁ hL₁ hl₁))
   commit_mono := fun _ hsub h => HoldsAtLeast.mono hsub h
   skip_mono := fun _ hsub h => HoldsAtLeast.mono hsub h
-  skip_congr := fun _ hround hk h => blameSkip_congr hround hk h
+  skip_congr := fun _ hround hk _ h => blameSkip_congr hround hk h
   link_congr := (odontocetiAnchored Validator BlockId Payload).linkCongr_of_round
     (fun _ U A L r => ThickLink U A L r) fun _ _ _ _ _ _ => rfl
 

@@ -367,9 +367,9 @@ about 700 of the 1466 lines.
 
 **What landed (step 9, `docs/target-properties.md` §11.36) is not one
 bundled call.** `Barnacle.ofAnchored R hw` (`Barnacle/Model/Anchored.lean`)
-builds the `BaseRule` alone, under `hw : ∀ r, R.waveAt r = R.waveAt 0`,
-which is what makes the wave length read at round `0` the rule's wave at
-every round; `ofAnchored_laws` proves the laws
+builds the `BaseRule` alone, under `hw : ∀ κ, R.waveAt κ = R.waveAt 0`,
+which is what makes the wave length read at kind `0` the rule's wave at
+every kind, one gap for the descent laws; `ofAnchored_laws` proves the laws
 separately, from `Common/Anchored/Band.lean`'s agreement, candidate and
 direct-commit properties; `descent_of_support` (renamed from
 `descent_of_properties`, §11.36) is its own call at the rule's support.

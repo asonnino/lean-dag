@@ -70,7 +70,7 @@ of the disjunction fires for its candidate — the count must not score a
 skip as a commit. -/
 
 example : R7.DirectCommitIn (U := LeanDagTest.Hydrozoan.U3)
-    LeanDagTest.Hydrozoan.Vfull3 24 3 := by decide
+    LeanDagTest.Hydrozoan.Vfull3 24 3 0 := by decide
 example : R7.SlotDirect S7 LeanDagTest.Hydrozoan.U3 LeanDagTest.Hydrozoan.Vfull3 3 := by decide
 example : ¬ R7.SlotDirect S7 LeanDagTest.Hydrozoan.U3 LeanDagTest.Hydrozoan.Vfull3 2 := by decide
 

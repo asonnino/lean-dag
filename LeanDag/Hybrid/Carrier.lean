@@ -62,7 +62,7 @@ theorem commitsCandidate (k : ℕ) : CommitsCandidate
 predicate. -/
 theorem commitsDirect (k : ℕ) : CommitsDirect
     (hybridRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k)
-    (fun {U} V L r => Hybrid.DirectCommitIn U.val V L r) :=
+    (fun {U} V L r _ => Hybrid.DirectCommitIn U.val V L r) :=
   AnchoredRule.commitsDirectOn
 
 end HybridProperties

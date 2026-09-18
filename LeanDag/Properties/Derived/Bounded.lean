@@ -33,16 +33,19 @@ theorem lt_bound (h : DecidedBelow R S B V k v) : k < B := h.1
 leaders, so it is a weaker claim. -/
 theorem mono (h : DecidedBelow R S B V k v) (hBB : B ≤ B') : DecidedBelow R S B' V k v := by
   obtain ⟨hk, hd, ht⟩ := h
-  exact ⟨by omega, hd, fun S' hround hlead => ht S' hround (fun m hm => hlead m (by omega))⟩
+  exact ⟨by omega, hd, fun S' hround hlead hkind =>
+    ht S' hround (fun m hm => hlead m (by omega)) (fun m hm => hkind m (by omega))⟩
 
 /-- **Locality in the schedule**, which was a property to prove and is
 now a theorem: two schedules with one round structure, agreeing on the
 leaders below the bound, carry the same bounded verdicts. -/
 theorem reschedule (h : DecidedBelow R S B V k v) {S' : Slots Validator}
-    (hround : S'.slotRound = S.slotRound) (hlead : ∀ m, m < B → S'.leader m = S.leader m) :
+    (hround : S'.slotRound = S.slotRound) (hlead : ∀ m, m < B → S'.leader m = S.leader m)
+    (hkind : ∀ m, m < B → S'.kind m = S.kind m) :
     DecidedBelow R S' B V k v :=
-  ⟨h.1, h.2.2 S' hround hlead, fun S'' hround' hlead' =>
-    h.2.2 S'' (by rw [hround', hround]) (fun m hm => by rw [hlead' m hm, hlead m hm])⟩
+  ⟨h.1, h.2.2 S' hround hlead hkind, fun S'' hround' hlead' hkind' =>
+    h.2.2 S'' (by rw [hround', hround]) (fun m hm => by rw [hlead' m hm, hlead m hm])
+      (fun m hm => by rw [hkind' m hm, hkind m hm])⟩
 
 /-- Two bounded verdicts agree, at any bounds — `Agree` through the
 first component. -/

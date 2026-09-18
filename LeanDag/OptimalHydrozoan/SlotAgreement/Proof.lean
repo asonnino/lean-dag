@@ -82,14 +82,14 @@ theorem optimalLaws :
     · exact evidenceLinked_unique hL₁ hL₂ hl₁ hl₂
     · exact absurd hi (by change ¬ (i + 1 + 1 < 2); omega)
   commit_mono := by
-    intro S U V V' L r _ hsub h
+    intro S U V V' L r κ _ hsub h
     rcases h with h | h
     · exact Or.inl (HoldsAtLeast.mono hsub h)
     · exact Or.inr (HoldsAtLeast.mono hsub h)
   skip_mono := fun _ hsub h => skippedLeaderOptInView_mono hsub h
-  skip_congr := fun _ hround hk h => skippedLeaderOptInView_congr hround hk h
+  skip_congr := fun _ hround hk _ h => skippedLeaderOptInView_congr hround hk h
   link_congr := by
-    intro S₁ S₂ U A L i k hround hk h
+    intro S₁ S₂ U A L i k hround hk _ h
     rcases i with _ | i
     · change LeanDag.Hydrozoan.CertifiedIn U A L (S₁.slotRound k) at h
       change LeanDag.Hydrozoan.CertifiedIn U A L (S₂.slotRound k)

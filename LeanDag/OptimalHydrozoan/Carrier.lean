@@ -71,7 +71,7 @@ theorem commitsCandidate :
 predicate — a *disjunction*, the fast path or the slow one. -/
 theorem commitsDirect :
     CommitsDirect (optimalRule (Replica := Replica) (BlockId := BlockId))
-      (fun {U} V L r => LeanDag.OptimalHydrozoan.FastCommitOptInView U.toBlockRecord V L r ∨
+      (fun {U} V L r _ => LeanDag.OptimalHydrozoan.FastCommitOptInView U.toBlockRecord V L r ∨
         LeanDag.Hydrozoan.SlowCommitInView U.toBlockRecord V L r) :=
   AnchoredRule.commitsDirectVia
 
@@ -81,7 +81,7 @@ theorem commitsDirect :
 laws, which are Hydrozoan's direct layer and rung `0` and Optimal's fast
 path and evidence rung. -/
 theorem banded : Banded (optimalRule (Replica := Replica) (BlockId := BlockId)) :=
-  AnchoredRule.bandedVia LeanDag.OptimalHydrozoan.optimalBandLaws (fun _ _ => rfl)
+  AnchoredRule.bandedVia LeanDag.OptimalHydrozoan.optimalBandLaws
 
 /-! ## The two liveness properties
 
@@ -117,15 +117,15 @@ def optSupport : Support (optimalRule (Replica := Replica) (BlockId := BlockId))
 /-- **Law 1**, Hydrozoan's at the underlying universe. -/
 theorem optSupport_local [LinearOrder BlockId] :
     Support.Local (R := optimalRule (Replica := Replica) (BlockId := BlockId)) optSupport := by
-  intro U U' G R₀ h c L hc hcr hL hLr
+  intro U U' G R₀ h c L κ hc hcr hL hLr
   exact LeanDag.Hydrozoan.hzSupport_local (U := U.toBlockRecord) (U' := U'.toBlockRecord)
-    ⟨h.mem, h.round, h.creator, h.refs⟩ c L hc hcr hL hLr
+    ⟨h.mem, h.round, h.creator, h.refs⟩ c L κ hc hcr hL hLr
 
 /-- **Law 2**, Hydrozoan's at the underlying universe. -/
 theorem optSupport_ofCoverage :
     Timed.OfCoverage (R := optimalRule (Replica := Replica) (BlockId := BlockId)) optSupport
       (LeanDag.Hydrozoan.hzReliability Replica) := by
-  intro U T hq r L hpop hct hL hLr hLc c hc hcc hcr
+  intro U T hq r _ L hpop hct hL hLr hLc c hc hcc hcr
   have hcard : LeanDag.Hydrozoan.q Replica ≤ T.card := by
     have h2 := hq.2
     change Fintype.card Replica -
@@ -153,7 +153,7 @@ theorem optSupport_commits :
   have hin : LeanDag.Hydrozoan.SlowCommitInView U.toBlockRecord V L (S.slotRound k) :=
     LeanDag.Hydrozoan.slowCommitInView_of_coversUpto hslow hcov
   refine ⟨L, by omega, LeanDag.OptimalHydrozoan.DecidedOpt.directCommit hL (Or.inr hin), ?_⟩
-  intro S' hround hlead'
+  intro S' hround hlead' _
   refine LeanDag.OptimalHydrozoan.DecidedOpt.directCommit
     (S := S') ⟨hL.1, ?_, ?_⟩ (Or.inr ?_)
   · change (U.toBlockRecord.block L).round = S'.slotRound k
@@ -186,7 +186,7 @@ theorem optSupport_live_of_optLive {S : LeanDag.Slots Replica}
   have hNk : S.slotRound k + 2 ≤ N := hN k hK
   refine ⟨fun n h1 h2 => hpop' n (by omega) (by change n ≤ S.slotRound k + 2 at h2; omega), ?_⟩
   rintro L ⟨hLmem, hLr, hLc⟩ v hv c hc hcc hcr
-  exact optSupport_ofCoverage U T hq (S.slotRound k) L
+  exact optSupport_ofCoverage U T hq (S.slotRound k) (S.kind k) L
     (fun n h1 h2 => hpop' n (by omega) (by change n ≤ S.slotRound k + 2 at h2; omega))
     (Timed.coversToward_of_synchronisedOn hs hRk) hLmem hLr (by rw [hLc]; exact hlead)
     c hc (by rw [hcc]; exact hv) hcr
@@ -248,7 +248,7 @@ theorem voteSupport_fast_commits
     HoldsAtLeast.of_coversUpto
       (fun b hb => ⟨(mem_votesFor.mp hb).1, (mem_votesFor.mp hb).2.1.le⟩) hcov hfast
   refine ⟨L, by omega, LeanDag.OptimalHydrozoan.DecidedOpt.directCommit hL (Or.inl hin), ?_⟩
-  intro S' hround hlead'
+  intro S' hround hlead' _
   refine LeanDag.OptimalHydrozoan.DecidedOpt.directCommit
     (S := S') ⟨hL.1, ?_, ?_⟩ (Or.inl ?_)
   · change (U.toBlockRecord.block L).round = S'.slotRound k
@@ -265,7 +265,7 @@ anchor's history, and none moves when the leaders of other slots are
 reassigned — the relation's `link_congr`. -/
 theorem indirect :
     Indirect (optimalRule (Replica := Replica) (BlockId := BlockId))
-      (fun sr i j => sr i + 3 ≤ sr j) :=
+      (fun S i j => S.slotRound i + 3 ≤ S.slotRound j) :=
   (AnchoredRule.indirectVia LeanDag.OptimalHydrozoan.SlotAgreement.optimalLaws.link_congr
     fun hi h => LeanDag.OptimalHydrozoan.exists_least hi h).congr
     (fun _ _ _ => by simp only [LeanDag.OptimalHydrozoan.optimalAnchored_waveAt])

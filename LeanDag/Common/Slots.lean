@@ -38,6 +38,10 @@ class Slots (Validator : Type*) where
   unbounded : ∀ n, ∃ k, n ≤ slotRound k
   /-- Distinct slots differ in round or in leader. -/
   keyed : Function.Injective (fun k => (slotRound k, leader k))
+  /-- The decision kind of slot `k`: what a rule whose wave varies reads
+  its wave from. One kind, `0`, unless a schedule says otherwise, and a
+  rebase carries it with the leader. -/
+  kind : ℕ → ℕ := fun _ => 0
 
 
 /-! ## Schedule constructors
@@ -179,8 +183,12 @@ end Slots
 /-- **The identity schedule** with a given leader map: one slot per round.
 The three laws are immediate. -/
 @[reducible]
-def Slots.identity {Validator : Type*} (leader : ℕ → Validator) : Slots Validator :=
-  ⟨id, leader, fun _ _ h => h, fun n => ⟨n, le_rfl⟩, fun _ _ h => congrArg Prod.fst h⟩
+def Slots.identity {Validator : Type*} (leader : ℕ → Validator) : Slots Validator where
+  slotRound := id
+  leader := leader
+  mono := fun _ _ h => h
+  unbounded := fun n => ⟨n, le_rfl⟩
+  keyed := fun _ _ h => congrArg Prod.fst h
 
 /-- **The wave-aligned round-robin schedule** on `n` validators:
 pipelined, with the leader holding for a whole wave of three slots
@@ -205,10 +213,11 @@ cycle are led by validator `v`. -/
 theorem waveRobin_leader_val {n : ℕ} {hn : 0 < n} (k : ℕ) :
     ((waveRobin n hn).leader k).val = k / 3 % n := rfl
 
-/-- Two schedules with the same rounds and the same leaders are the same
+/-- Two schedules with the same rounds, leaders and kinds are the same
 schedule: what remains of `Slots` is propositions. -/
 theorem Slots.ext' {Validator : Type*} {S T : Slots Validator}
-    (hr : S.slotRound = T.slotRound) (hl : S.leader = T.leader) : S = T := by
-  cases S; cases T; cases hr; cases hl; rfl
+    (hr : S.slotRound = T.slotRound) (hl : S.leader = T.leader) (hk : S.kind = T.kind) :
+    S = T := by
+  cases S; cases T; cases hr; cases hl; cases hk; rfl
 
 end LeanDag

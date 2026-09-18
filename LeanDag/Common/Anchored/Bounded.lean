@@ -35,7 +35,7 @@ inductive DecidedWithin (U : BlockRecord Validator BlockId Payload P honest) (V 
     (B : ℕ) : ℕ → Option BlockId → Prop
   /-- The direct rule commits a candidate outright. -/
   | directCommit {k : ℕ} {L : BlockId} :
-      k < B → IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) →
+      k < B → IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) (S.kind k) →
       DecidedWithin U V B k (some L)
   /-- The direct rule skips the slot. -/
   | directSkip {k : ℕ} :
@@ -164,45 +164,58 @@ direct skip only at its slot, and the links not at all. -/
 theorem decidedWithin_congr_of_slotRound (hl : R.Laws I) {S₁ S₂ : Slots Validator} (hI : I S₁ U)
     (hround : S₁.slotRound = S₂.slotRound) {V : U.View} {B k : ℕ} {v : Option BlockId}
     (ha : ∀ m, m < B → S₁.leader m = S₂.leader m)
+    (hkind : ∀ m, m < B → S₁.kind m = S₂.kind m)
     (h : R.DecidedWithin (S := S₁) U V B k v) : R.DecidedWithin (S := S₂) U V B k v := by
-  obtain ⟨sr, ld, hmono, hunb, hkeyed⟩ := S₁
-  obtain ⟨sr', ld', hmono', hunb', hkeyed'⟩ := S₂
-  simp only at hround
+  obtain ⟨sr, ld, hmono, hunb, hkeyed, kd⟩ := S₁
+  obtain ⟨sr', ld', hmono', hunb', hkeyed', kd'⟩ := S₂
+  simp only at hround hkind
   subst hround
+  have hel : ∀ {k j : ℕ}, k < B → (R.Eligible (S := ⟨sr, ld, hmono, hunb, hkeyed, kd⟩) k j ↔
+      R.Eligible (S := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩) k j) := by
+    intro k j hkB
+    simp only [Eligible, EligibleAt]
+    rw [← hkind k hkB]
   induction h with
   | @directCommit k L hk hL hdc =>
-      exact DecidedWithin.directCommit (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hk
-        (isLeaderBlock_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
-          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k hk) hL) hdc
+      exact DecidedWithin.directCommit (S := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩) hk
+        (isLeaderBlock_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed, kd⟩)
+          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩) rfl (ha k hk) hL)
+        (by simpa only [hkind k hk] using hdc)
   | @directSkip k hk hall =>
-      exact DecidedWithin.directSkip (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hk
-        (hl.skip_congr hI (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
-          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k hk) hall)
+      exact DecidedWithin.directSkip (S := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩) hk
+        (hl.skip_congr hI (S₁ := ⟨sr, ld, hmono, hunb, hkeyed, kd⟩)
+          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩) rfl (ha k hk) (hkind k hk) hall)
   | @indirectCommit k j A L i hkj hj helig _ _ hi hemp hL hlink hmin ihj ihmid =>
-      refine DecidedWithin.indirectCommit (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hkj hj helig
-        ihj (fun m h1 h2 h3 => ihmid m h1 h2 h3) hi ?_
-        (isLeaderBlock_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
-          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k (by omega)) hL)
-        (hl.link_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
-          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k (by omega)) hlink) ?_
+      refine DecidedWithin.indirectCommit (S := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩) hkj hj
+        ((hel (by omega)).mp helig) ihj (fun m h1 h2 h3 => ihmid m h1 h2 ((hel (by omega)).mpr h3))
+        hi ?_
+        (isLeaderBlock_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed, kd⟩)
+          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩) rfl (ha k (by omega)) hL)
+        (hl.link_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed, kd⟩)
+          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩) rfl (ha k (by omega))
+          (hkind k (by omega)) hlink) ?_
       · intro i' hi' L' hL' hlink'
-        exact hemp i' hi' L' (isLeaderBlock_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
-          (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hL')
-          (hl.link_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
-            (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hlink')
+        exact hemp i' hi' L' (isLeaderBlock_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩)
+          (S₂ := ⟨sr, ld, hmono, hunb, hkeyed, kd⟩) rfl (ha k (by omega)).symm hL')
+          (hl.link_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩)
+            (S₂ := ⟨sr, ld, hmono, hunb, hkeyed, kd⟩) rfl (ha k (by omega)).symm
+            (hkind k (by omega)).symm hlink')
       · intro L' hL' hlink'
-        exact hmin L' (isLeaderBlock_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
-          (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hL')
-          (hl.link_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
-            (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hlink')
+        exact hmin L' (isLeaderBlock_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩)
+          (S₂ := ⟨sr, ld, hmono, hunb, hkeyed, kd⟩) rfl (ha k (by omega)).symm hL')
+          (hl.link_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩)
+            (S₂ := ⟨sr, ld, hmono, hunb, hkeyed, kd⟩) rfl (ha k (by omega)).symm
+            (hkind k (by omega)).symm hlink')
   | @indirectSkip k j A hkj hj helig _ _ hnone ihj ihmid =>
-      refine DecidedWithin.indirectSkip (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hkj hj helig
-        ihj (fun m h1 h2 h3 => ihmid m h1 h2 h3) ?_
+      refine DecidedWithin.indirectSkip (S := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩) hkj hj
+        ((hel (by omega)).mp helig) ihj (fun m h1 h2 h3 => ihmid m h1 h2 ((hel (by omega)).mpr h3))
+        ?_
       intro i hi L hL hlink
-      exact hnone i hi L (isLeaderBlock_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
-        (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hL)
-        (hl.link_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
-          (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hlink)
+      exact hnone i hi L (isLeaderBlock_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩)
+        (S₂ := ⟨sr, ld, hmono, hunb, hkeyed, kd⟩) rfl (ha k (by omega)).symm hL)
+        (hl.link_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩)
+          (S₂ := ⟨sr, ld, hmono, hunb, hkeyed, kd⟩) rfl (ha k (by omega)).symm
+          (hkind k (by omega)).symm hlink)
 
 /-! ## The tie-break's choice -/
 
@@ -398,9 +411,9 @@ namespace AnchoredRule
 theorem decidedBelow_of_decidedWithin (hl : R.Laws I) (hI : I S U) {V : U.View}
     {B k : ℕ} {v : Option BlockId} (h : R.DecidedWithin (S := S) U V B k v) :
     DecidedBelow R.toDagRule S B V k v :=
-  ⟨h.lt_bound, h.toDecided, fun S' hround hlead =>
+  ⟨h.lt_bound, h.toDecided, fun S' hround hlead hkind =>
     (decidedWithin_congr_of_slotRound hl hI (S₁ := S) (S₂ := S') hround.symm
-      (fun m hm => (hlead m hm).symm) h).toDecided⟩
+      (fun m hm => (hlead m hm).symm) (fun m hm => (hkind m hm).symm) h).toDecided⟩
 
 end AnchoredRule
 

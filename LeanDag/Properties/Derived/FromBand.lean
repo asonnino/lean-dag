@@ -30,6 +30,8 @@ theorem Persist.of_banded (h : Banded R) : Persist R := by
       subst this; rfl)
     (fun m m' hm _ => by have : m = m' := by omega
                          subst this; rfl)
+    (fun m m' hm _ => by have : m = m' := by omega
+                         subst this; rfl)
     (AgreeBand.of_extends he _ _) (fun b hb _ _ => hV hb)
 
 /-- **And monotonicity in the view.** Fix the universe and the band
@@ -43,6 +45,8 @@ theorem decided_mono_of_banded (h : Banded R) {S : Slots Validator} {U : R.Unive
   exact htop 0 0 0 0 S U V' k (by omega) (fun m m' hm _ => by
       have : m = m' := by omega
       subst this; rfl)
+    (fun m m' hm _ => by have : m = m' := by omega
+                         subst this; rfl)
     (fun m m' hm _ => by have : m = m' := by omega
                          subst this; rfl)
     AgreeBand.refl (fun b hb _ _ => hsub hb)
@@ -62,8 +66,8 @@ theorem exists_decidedBelow (h : Banded R) {S : Slots Validator} {U : R.Universe
   obtain ⟨top, ht⟩ := h S U V k v hd
   obtain ⟨B₀, hB₀⟩ := S.unbounded (top + 1)
   refine ⟨max (k + 1) B₀, lt_of_lt_of_le (Nat.lt_succ_self k) (le_max_left _ _), hd, ?_⟩
-  intro S' hround hlead
-  refine ht 0 0 0 0 S' U V k (by omega) ?_ ?_ AgreeBand.refl (fun b hb _ _ => hb)
+  intro S' hround hlead hkind
+  refine ht 0 0 0 0 S' U V k (by omega) ?_ ?_ ?_ AgreeBand.refl (fun b hb _ _ => hb)
   · intro m m' hm _
     have hmm : m = m' := by omega
     subst hmm
@@ -73,6 +77,15 @@ theorem exists_decidedBelow (h : Banded R) {S : Slots Validator} {U : R.Universe
     have hmm : m = m' := by omega
     subst hmm
     refine (hlead m ?_).symm
+    by_contra hge
+    push_neg at hge
+    have hB : B₀ ≤ m := le_trans (le_max_right _ _) hge
+    have := S.mono hB
+    omega
+  · intro m m' hm hb
+    have hmm : m = m' := by omega
+    subst hmm
+    refine (hkind m ?_).symm
     by_contra hge
     push_neg at hge
     have hB : B₀ ≤ m := le_trans (le_max_right _ _) hge
@@ -96,12 +109,13 @@ theorem exists_roundLocal (h : Banded R) {S : Slots Validator} {U : R.Universe}
       ∀ S' : Slots Validator,
         (∀ m, S.slotRound m < B → S'.slotRound m = S.slotRound m) →
         (∀ m, S.slotRound m < B → S'.leader m = S.leader m) →
+        (∀ m, S.slotRound m < B → S'.kind m = S.kind m) →
         R.Decided S' V k v := by
   obtain ⟨top, ht⟩ := h S U V k v hd
   refine ⟨max (S.slotRound k + 1) (top + 1), lt_of_lt_of_le (Nat.lt_succ_self _)
     (le_max_left _ _), ?_⟩
-  intro S' hround hlead
-  refine ht 0 0 0 0 S' U V k (by omega) ?_ ?_ AgreeBand.refl (fun b hb _ _ => hb)
+  intro S' hround hlead hkind
+  refine ht 0 0 0 0 S' U V k (by omega) ?_ ?_ ?_ AgreeBand.refl (fun b hb _ _ => hb)
   · intro m m' hm hbnd
     have hmm : m = m' := by omega
     subst hmm
@@ -112,6 +126,11 @@ theorem exists_roundLocal (h : Banded R) {S : Slots Validator} {U : R.Universe}
     have hmm : m = m' := by omega
     subst hmm
     exact (hlead m (lt_of_le_of_lt hbnd (lt_of_lt_of_le (Nat.lt_succ_self _)
+      (le_max_right _ _)))).symm
+  · intro m m' hm hbnd
+    have hmm : m = m' := by omega
+    subst hmm
+    exact (hkind m (lt_of_le_of_lt hbnd (lt_of_lt_of_le (Nat.lt_succ_self _)
       (le_max_right _ _)))).symm
 
 end Properties

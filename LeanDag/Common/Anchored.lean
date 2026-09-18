@@ -86,18 +86,20 @@ end EligibleAt
 structure AnchoredRule (Validator : Type*) (BlockId : Type*) (Payload : Type*)
     (P : Validity Validator BlockId Payload) (honest : Finset Validator) where
   /-- The rounds a slot's direct rules read above its proposal, less one, as
-  a function of the slot's round: an anchor of a slot proposed at round `r`
-  must sit strictly above `r + waveAt r`. Constant for every rule in the
-  tree; a rule whose wavelength alternates with the round supplies a
-  function of it. -/
+  a function of the slot's kind (`Slots.kind`): an anchor of a slot of kind
+  `κ` proposed at round `r` must sit strictly above `r + waveAt κ`. Constant
+  for every rule in the tree; a rule whose wavelength varies reads it from
+  the kind the schedule assigns, which a rebase carries with the leader. -/
   waveAt : ℕ → ℕ
-  /-- The direct commit, judged from a view: `Commit U V L r` says the
-  candidate `L` proposed at round `r` is committed by what `V` holds. -/
-  Commit : (U : BlockRecord Validator BlockId Payload P honest) → U.View → BlockId → ℕ → Prop
+  /-- The direct commit, judged from a view: `Commit U V L r κ` says the
+  candidate `L` proposed at round `r`, at a slot of kind `κ`, is committed
+  by what `V` holds. A rule with one wave ignores `κ`; a rule whose wave
+  varies reads it there, as `Skip` and `Link` read `S.kind k`. -/
+  Commit : (U : BlockRecord Validator BlockId Payload P honest) → U.View → BlockId → ℕ → ℕ → Prop
   /-- The direct commit is decidable: a validator computes it from its
   view, and so does a witness. -/
   decCommit : ∀ (U : BlockRecord Validator BlockId Payload P honest) (V : U.View) (L : BlockId)
-    (r : ℕ), Decidable (Commit U V L r)
+    (r κ : ℕ), Decidable (Commit U V L r κ)
   /-- The direct skip of a slot, judged from a view. -/
   Skip : (U : BlockRecord Validator BlockId Payload P honest) → U.View → Slots Validator → ℕ → Prop
   /-- The number of rungs of the indirect test. -/
@@ -114,9 +116,9 @@ namespace AnchoredRule
 
 /-- The rule's own decidability of its direct commit, as an instance. -/
 instance instDecidableCommit {R : AnchoredRule Validator BlockId Payload P honest}
-    (U : BlockRecord Validator BlockId Payload P honest) (V : U.View) (L : BlockId) (r : ℕ) :
-    Decidable (R.Commit U V L r) :=
-  R.decCommit U V L r
+    (U : BlockRecord Validator BlockId Payload P honest) (V : U.View) (L : BlockId) (r κ : ℕ) :
+    Decidable (R.Commit U V L r κ) :=
+  R.decCommit U V L r κ
 
 variable (R : AnchoredRule Validator BlockId Payload P honest)
 variable [S : Slots Validator]
@@ -124,13 +126,13 @@ variable [S : Slots Validator]
 /-! ## Eligibility -/
 
 /-- The round at which a slot's direct verdict is settled. -/
-def decisionRound (k : ℕ) : ℕ := S.slotRound k + R.waveAt (S.slotRound k)
+def decisionRound (k : ℕ) : ℕ := S.slotRound k + R.waveAt (S.kind k)
 
-/-- **`j` may anchor `k`**: eligibility at the wave of `k`'s round. -/
-abbrev Eligible (k j : ℕ) : Prop := EligibleAt (S := S) (R.waveAt (S.slotRound k)) k j
+/-- **`j` may anchor `k`**: eligibility at the wave of `k`'s kind. -/
+abbrev Eligible (k j : ℕ) : Prop := EligibleAt (S := S) (R.waveAt (S.kind k)) k j
 
 theorem eligible_iff {k j : ℕ} :
-    R.Eligible k j ↔ S.slotRound k + R.waveAt (S.slotRound k) + 1 ≤ S.slotRound j :=
+    R.Eligible k j ↔ S.slotRound k + R.waveAt (S.kind k) + 1 ≤ S.slotRound j :=
   eligibleAt_iff
 
 /-- An eligible anchor is a later slot. -/
@@ -140,15 +142,15 @@ theorem lt_of_eligible {k j : ℕ} (h : R.Eligible k j) : k < j := lt_of_eligibl
 theorem exists_eligible (k : ℕ) : ∃ j, R.Eligible k j := exists_eligibleAt _ k
 
 /-- **A run of `c` slots reaches past everything below it**, each slot at
-the wave of its own round. -/
+the wave of its own kind. -/
 abbrev SpansEligible (c : ℕ) : Prop := ∀ b i : ℕ, i < b → R.Eligible i (b + c - 1)
 
 /-- Under an identity-round schedule, `w + 1` consecutive slots span, for
 any `w` the wave never exceeds. -/
 theorem spansEligible_of_identity (hid : ∀ s, S.slotRound s = s) {w : ℕ}
-    (hw : ∀ r, R.waveAt r ≤ w) : R.SpansEligible (w + 1) := by
+    (hw : ∀ κ, R.waveAt κ ≤ w) : R.SpansEligible (w + 1) := by
   intro b i hi
-  have := hw i
+  have := hw (S.kind i)
   rw [eligible_iff, hid, hid]
   omega
 
@@ -157,7 +159,7 @@ variable {U : BlockRecord Validator BlockId Payload P honest}
 /-- The anchor's round clears the slot's decision round. -/
 theorem anchor_round_le {k j : ℕ} {A : BlockId} (hA : IsLeaderBlock U j A)
     (helig : R.Eligible k j) :
-    S.slotRound k + R.waveAt (S.slotRound k) + 1 ≤ (U.block A).round := by
+    S.slotRound k + R.waveAt (S.kind k) + 1 ≤ (U.block A).round := by
   rw [hA.2.1]
   exact R.eligible_iff.mp helig
 
@@ -183,7 +185,7 @@ inductive Decided (U : BlockRecord Validator BlockId Payload P honest) (V : U.Vi
     ℕ → Option BlockId → Prop
   /-- The direct rule commits a candidate outright. -/
   | directCommit {k : ℕ} {L : BlockId} :
-      IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) →
+      IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) (S.kind k) →
       Decided U V k (some L)
   /-- The direct rule skips the slot. -/
   | directSkip {k : ℕ} :
@@ -247,11 +249,12 @@ def DecidedBelowRun (U : BlockRecord Validator BlockId Payload P honest) : Prop 
 /-! ## What a rule owes -/
 
 omit S in
-/-- **A rung's link reads the schedule only at its own slot.** -/
+/-- **A rung's link reads the schedule only at its own slot**: its round,
+its leader and its kind. -/
 abbrev LinkCongr : Prop :=
   ∀ {S₁ S₂ : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
     {A L : BlockId} {i k : ℕ}, S₁.slotRound k = S₂.slotRound k → S₁.leader k = S₂.leader k →
-    R.Link i U A L S₁ k → R.Link i U A L S₂ k
+    S₁.kind k = S₂.kind k → R.Link i U A L S₁ k → R.Link i U A L S₂ k
 
 omit S in
 /-- A link that reads the schedule only through the slot's round is
@@ -260,9 +263,22 @@ theorem linkCongr_of_round
     (f : ℕ → (U : BlockRecord Validator BlockId Payload P honest) → BlockId → BlockId → ℕ → Prop)
     (h : ∀ i U A L (S : Slots Validator) k, R.Link i U A L S k = f i U A L (S.slotRound k)) :
     R.LinkCongr := by
-  intro S₁ S₂ U A L i k hround _ hl
+  intro S₁ S₂ U A L i k hround _ _ hl
   rw [h] at hl ⊢
   rwa [← hround]
+
+omit S in
+/-- A link that reads the schedule only through the slot's round and kind
+is congruent. -/
+theorem linkCongr_of_round_kind
+    (f : ℕ → (U : BlockRecord Validator BlockId Payload P honest) → BlockId → BlockId → ℕ → ℕ →
+      Prop)
+    (h : ∀ i U A L (S : Slots Validator) k,
+      R.Link i U A L S k = f i U A L (S.slotRound k) (S.kind k)) :
+    R.LinkCongr := by
+  intro S₁ S₂ U A L i k hround _ hkind hl
+  rw [h] at hl ⊢
+  rwa [← hround, ← hkind]
 
 /-- **The laws of an anchored rule** — what the direct predicates and the
 rungs must satisfy for agreement, on the records satisfying an invariant
@@ -274,16 +290,18 @@ structure Laws (I : Slots Validator → BlockRecord Validator BlockId Payload P 
   commit_unique : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
     {V₁ V₂ : U.View} {k : ℕ} {L₁ L₂ : BlockId},
     I S U → IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ →
-    R.Commit U V₁ L₁ (S.slotRound k) → R.Commit U V₂ L₂ (S.slotRound k) → L₁ = L₂
+    R.Commit U V₁ L₁ (S.slotRound k) (S.kind k) →
+    R.Commit U V₂ L₂ (S.slotRound k) (S.kind k) → L₁ = L₂
   /-- A direct commit and a direct skip of one slot cannot both hold. -/
   commit_skip : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
     {V₁ V₂ : U.View} {k : ℕ} {L : BlockId},
-    I S U → IsLeaderBlock U k L → R.Commit U V₁ L (S.slotRound k) → R.Skip U V₂ S k → False
+    I S U → IsLeaderBlock U k L → R.Commit U V₁ L (S.slotRound k) (S.kind k) →
+    R.Skip U V₂ S k → False
   /-- **Visibility.** A direct commit is linked, at some rung, from any
   candidate anchor of any eligible slot. -/
   commit_link : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
     {V : U.View} {k j : ℕ} {L A : BlockId},
-    I S U → IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) →
+    I S U → IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) (S.kind k) →
     IsLeaderBlock U j A → R.Eligible k j →
     ∃ i, i < R.rungs ∧ R.Link i U A L S k
   /-- A direct commit and the tie-break's choice at any rung, from any
@@ -291,7 +309,8 @@ structure Laws (I : Slots Validator → BlockRecord Validator BlockId Payload P 
   commit_link_unique : ∀ {S : Slots Validator}
     {U : BlockRecord Validator BlockId Payload P honest}
     {V : U.View} {k j i : ℕ} {L₁ L₂ A : BlockId},
-    I S U → IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ → R.Commit U V L₁ (S.slotRound k) →
+    I S U → IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ →
+    R.Commit U V L₁ (S.slotRound k) (S.kind k) →
     IsLeaderBlock U j A → R.Eligible k j → i < R.rungs →
     (∀ i', i' < i → R.RungEmpty U A i' k) →
     R.Link i U A L₂ S k → R.Least U A i k L₂ → L₁ = L₂
@@ -308,15 +327,15 @@ structure Laws (I : Slots Validator → BlockRecord Validator BlockId Payload P 
     R.Least U A i k L₁ → R.Least U A i k L₂ → L₁ = L₂
   /-- A larger view can only see more of a direct commit. -/
   commit_mono : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
-    {V V' : U.View} {L : BlockId} {r : ℕ},
-    I S U → V.ids ⊆ V'.ids → R.Commit U V L r → R.Commit U V' L r
+    {V V' : U.View} {L : BlockId} {r κ : ℕ},
+    I S U → V.ids ⊆ V'.ids → R.Commit U V L r κ → R.Commit U V' L r κ
   /-- And of a direct skip. -/
   skip_mono : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
     {V V' : U.View} {k : ℕ}, I S U → V.ids ⊆ V'.ids → R.Skip U V S k → R.Skip U V' S k
   /-- The direct skip reads the schedule only at its own slot. -/
   skip_congr : ∀ {S₁ S₂ : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
     {V : U.View} {k : ℕ}, I S₁ U → S₁.slotRound k = S₂.slotRound k → S₁.leader k = S₂.leader k →
-    R.Skip U V S₁ k → R.Skip U V S₂ k
+    S₁.kind k = S₂.kind k → R.Skip U V S₁ k → R.Skip U V S₂ k
   /-- And so does every rung's link. -/
   link_congr : R.LinkCongr
 

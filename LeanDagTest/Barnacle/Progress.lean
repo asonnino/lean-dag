@@ -438,7 +438,7 @@ def bnLiveSk : LiveRule (Fin 4) (Fin 32) Unit :=
 -- Slot 2's candidate is block 10, blamed by 12, 13, 15.
 theorem hallSk : ∀ L : Fin 32, bnRule32.IsLeaderBlock sched1 Usk 2 L → L = 10 := by decide
 example : bnRule32.IsLeaderBlock sched1 Usk 2 10 := by decide
-example : ¬ bnRule32.DirectCommitIn (bnLiveSk.full Usk) 10 2 := by decide
+example : ¬ bnRule32.DirectCommitIn (bnLiveSk.full Usk) 10 2 0 := by decide
 example : bnRule32.Decided sched1 (bnLiveSk.full Usk) 2 none :=
   Decided.directSkip (S := sched1) (by decide)
 -- Slot 3 (block 15) commits.

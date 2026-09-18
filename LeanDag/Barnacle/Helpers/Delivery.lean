@@ -50,7 +50,7 @@ theorem mem_history_of_good [Faults Validator]
 /-- **Every core rule delivers**, at slack `f`. -/
 theorem delivers_core [F : Faults Validator]
     (R : AnchoredRule Validator BlockId Payload ValidWrt (Correct : Finset Validator))
-    (hw : ∀ r, R.waveAt r = R.waveAt 0) :
+    (hw : ∀ κ, R.waveAt κ = R.waveAt 0) :
     (liveOfAnchored R hw (coreReliability Validator)).Delivers F.f where
   reaches := by
     rintro U Rnd N ⟨T, ⟨-, hcard⟩, hsync, hpop⟩

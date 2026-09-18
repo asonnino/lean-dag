@@ -27,8 +27,8 @@ section Decidable
 
 variable {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
 
-instance (V : LeanDag.Hydrozoan.View U) (L : BlockId) (r : ℕ) :
-    Decidable ((optimalAnchored Replica BlockId).Commit U V L r) :=
+instance (V : LeanDag.Hydrozoan.View U) (L : BlockId) (r κ : ℕ) :
+    Decidable ((optimalAnchored Replica BlockId).Commit U V L r κ) :=
   inferInstanceAs (Decidable (FastCommitOptInView U V L r ∨ SlowCommitInView U V L r))
 
 instance [Fintype BlockId] (V : LeanDag.Hydrozoan.View U) (S : Slots Replica) (k : ℕ) :

@@ -63,8 +63,8 @@ variable [LinearOrder BlockId]
 
 @[simp] theorem hydrozoanAnchored_rungs : (hydrozoanAnchored Replica BlockId).rungs = 2 := rfl
 
-instance (V : View U) (L : BlockId) (r : ℕ) :
-    Decidable ((hydrozoanAnchored Replica BlockId).Commit U V L r) :=
+instance (V : View U) (L : BlockId) (r κ : ℕ) :
+    Decidable ((hydrozoanAnchored Replica BlockId).Commit U V L r κ) :=
   inferInstanceAs (Decidable (FastCommitInView U V L r ∨ SlowCommitInView U V L r))
 
 instance (V : View U) (S : Slots Replica) (k : ℕ) :

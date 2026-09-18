@@ -101,6 +101,9 @@ theorem trans (h : Rebases S S' G₁ d₁) (h' : Rebases S' S'' G₂ d₂) :
   leader := fun k => by
     have e : d₁ + (d₂ + k) = d₁ + d₂ + k := by omega
     rw [h'.leader k, h.leader (d₂ + k), e]
+  kind := fun k => by
+    have e : d₁ + (d₂ + k) = d₁ + d₂ + k := by omega
+    rw [h'.kind k, h.kind (d₂ + k), e]
   base := by
     have h1 := h.slotRound d₂
     have h2 := h'.base
@@ -120,6 +123,8 @@ theorem unique {S S₁ S₂ : Slots Validator} {G d : ℕ}
     omega
   have hl : S₁.leader = S₂.leader := by
     funext k; rw [h₁.leader k, h₂.leader k]
+  have hk : S₁.kind = S₂.kind := by
+    funext k; rw [h₁.kind k, h₂.kind k]
   cases S₁; cases S₂; congr
 
 end Rebases
@@ -147,6 +152,7 @@ structure Rebased (R : DagRule Validator BlockId Payload) (U U' : R.Universe)
 theorem Rebases.refl {S : Slots Validator} : Rebases S S 0 0 where
   slotRound := fun k => by simp
   leader := fun k => by simp
+  kind := fun k => by simp
   base := Nat.zero_le _
 
 namespace Rebased
@@ -191,7 +197,7 @@ theorem decided_of_rebased (h : Banded R) (hr : Rebased R U U' S S' G R₀ d)
   constructor
   · intro hdec
     obtain ⟨top, htop⟩ := h S U V (d + k) v hdec
-    refine htop 0 G d 0 S' U' V' k (by omega) ?_ ?_ ?_ ?_
+    refine htop 0 G d 0 S' U' V' k (by omega) ?_ ?_ ?_ ?_ ?_
     · intro m m' hm
       have hmm : m = m' + d := by omega
       subst hmm
@@ -205,6 +211,12 @@ theorem decided_of_rebased (h : Banded R) (hr : Rebased R U U' S S' G R₀ d)
       have hc : m' + d = d + m' := by omega
       rw [hc]
       exact (hr.leader m').symm
+    · intro m m' hm _
+      have hmm : m = m' + d := by omega
+      subst hmm
+      have hc : m' + d = d + m' := by omega
+      rw [hc]
+      exact (hr.kind m').symm
     · refine ⟨?_, ?_, ?_⟩
       · intro b hb h1 h2
         exact ((hr.mem b).mp ⟨hb, by omega⟩).1
@@ -220,7 +232,7 @@ theorem decided_of_rebased (h : Banded R) (hr : Rebased R U U' S S' G R₀ d)
       exact (hv b (R.viewSound V hbV) (by omega)).mp hbV
   · intro hdec
     obtain ⟨top, htop⟩ := h S' U' V' k v hdec
-    refine htop G 0 0 d S U V (d + k) (by omega) ?_ ?_ ?_ ?_
+    refine htop G 0 0 d S U V (d + k) (by omega) ?_ ?_ ?_ ?_ ?_
     · intro m m' hm
       have hmm : m' = m + d := by omega
       subst hmm
@@ -234,6 +246,12 @@ theorem decided_of_rebased (h : Banded R) (hr : Rebased R U U' S S' G R₀ d)
       have hc : m + d = d + m := by omega
       rw [hc]
       exact hr.leader m
+    · intro m m' hm _
+      have hmm : m' = m + d := by omega
+      subst hmm
+      have hc : m + d = d + m := by omega
+      rw [hc]
+      exact hr.kind m
     · refine ⟨?_, ?_, ?_⟩
       · intro b hb h1 h2
         exact (hr.of_mem' hb (by omega)).1

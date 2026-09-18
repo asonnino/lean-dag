@@ -49,8 +49,8 @@ the anchor's cone, with no tie to break since a slot has one candidate. -/
 def nemoAnchored (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [DecidableEq BlockId] : AnchoredRule Validator BlockId Payload ValidWrt Finset.univ where
   waveAt := fun _ => 1
-  Commit := fun U V L r => Nemo.DirectCommitIn U V L r
-  decCommit := fun _ _ _ _ => inferInstance
+  Commit := fun U V L r _ => Nemo.DirectCommitIn U V L r
+  decCommit := fun _ _ _ _ _ => inferInstance
   Skip := fun _ _ _ _ => False
   rungs := 1
   Link := fun _ U A L S k => CertifiedIn U A L (S.slotRound k)
@@ -64,8 +64,8 @@ omit S in
 
 /-- The rule's direct predicates are decidable, so concrete models can
 settle a derivation's premises by `decide`. -/
-instance {V : View Validator BlockId Payload U} (L : BlockId) (r : ℕ) :
-    Decidable ((nemoAnchored Validator BlockId Payload).Commit U V L r) :=
+instance {V : View Validator BlockId Payload U} (L : BlockId) (r κ : ℕ) :
+    Decidable ((nemoAnchored Validator BlockId Payload).Commit U V L r κ) :=
   inferInstanceAs (Decidable (DirectCommitIn U V L r))
 
 instance {V : View Validator BlockId Payload U} (k : ℕ) :
@@ -111,7 +111,7 @@ theorem nemoLaws : (nemoAnchored Validator BlockId Payload).Laws where
   link_unique := fun _ hL₁ hL₂ _ _ _ _ _ _ _ _ => isLeaderBlock_unique_of_honest (Finset.mem_univ _) hL₁ hL₂
   commit_mono := fun _ hsub h => HoldsAtLeast.mono hsub h
   skip_mono := fun _ _ h => h
-  skip_congr := fun _ _ _ h => h
+  skip_congr := fun _ _ _ _ h => h
   link_congr := (nemoAnchored Validator BlockId Payload).linkCongr_of_round
     (fun _ U A L r => Nemo.CertifiedIn U A L r) fun _ _ _ _ _ _ => rfl
 

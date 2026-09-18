@@ -345,7 +345,7 @@ example : Finset.univ.filter (fun L => bnRule13.IsLeaderBlock bnSched1 U6 0 L) =
   decide
 example : bnRule13.SlotDirect bnSched1 U6 (bnRule13.full U6) 0 := by decide
 example : Finset.univ.filter (fun L => bnRule13.IsLeaderBlock bnSched1 U6 0 L ∧
-    bnRule13.DirectCommitIn (bnRule13.full U6) L 0) = {0} := by decide
+    bnRule13.DirectCommitIn (bnRule13.full U6) L 0 0) = {0} := by decide
 
 /-! ## The laws, exercised through the interface
 

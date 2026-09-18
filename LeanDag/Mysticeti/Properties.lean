@@ -324,20 +324,20 @@ skip and the certificate in the anchor's cone carry across a band
 covering the slot's wave, and a candidate the band did not carry is
 certified from no old anchor. -/
 theorem coreBandLaws : (coreAnchored Validator BlockId Payload).BandLaws where
-  commit_band := fun h hkk _ hlo hhi hV _ hc =>
+  commit_band := fun h hkk _ _ hlo hhi hV _ hc =>
     AnchoredRule.holdsAtLeast_certificatesAt_band h hV (by omega) (by omega)
       (by simp only [coreAnchored_waveAt] at hhi; omega)
       (AnchoredRule.isVote_band_at h (by omega)
         (by simp only [coreAnchored_waveAt] at hhi; omega)) hc
-  skip_band := fun h hkk hlk hlo hhi hV hs =>
+  skip_band := fun h hkk hlk _ hlo hhi hV hs =>
     le_trans hs (Finset.card_le_card (AnchoredRule.slotBlamesIn_band h hkk hlk hlo.le
       (by simp only [coreAnchored_waveAt] at hhi; omega) hV))
-  link_band := fun h hA hAlo hAhi hkk _ hlo hhi _ _ =>
+  link_band := fun h hA hAlo hAhi hkk _ _ hlo hhi _ _ =>
     AnchoredRule.linkedVia_certificatesAt_band h hA hAlo hAhi (by omega) (by omega)
       (by simp only [coreAnchored_waveAt] at hhi; omega)
       (AnchoredRule.isVote_band_at h (by omega) (by simp only [coreAnchored_waveAt] at hhi; omega))
   link_novel := by
-    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk _ hlo hhi _ _ hL
+    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk _ _ hlo hhi _ _ hL
     simp only [coreAnchored_waveAt] at hhi
     exact AnchoredRule.not_linkedVia_certificatesAt_band_novel h hA hAlo hAhi
       (n := S.slotRound k + 2) (by omega) (by omega) (by omega)
@@ -346,7 +346,7 @@ theorem coreBandLaws : (coreAnchored Validator BlockId Payload).BandLaws where
 /-- **The core reads a band.** -/
 theorem banded : Banded
     (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
-  AnchoredRule.banded coreBandLaws (fun _ _ => rfl)
+  AnchoredRule.banded coreBandLaws
 
 /-- The carrier's coverage predicate is the core's, on the nose. -/
 theorem coversUpto_eq {U : BlockUniverse Validator BlockId Payload}
@@ -364,7 +364,7 @@ theorem commitsCandidate : CommitsCandidate
 predicate: `Decided.directCommit` under the property's name. -/
 theorem commitsDirect : CommitsDirect
     (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-    (fun {U} V L r => DirectCommitIn U V L r) :=
+    (fun {U} V L r _ => DirectCommitIn U V L r) :=
   fun S _ _ _ _ hc hd => Decided.directCommit (S := S) hc hd
 
 /-- **The core persists unconditionally**, as an evidence-backed rule
@@ -544,7 +544,7 @@ theorem leaderCommits_cert :
   have hin : DirectCommitIn U V L (S.slotRound k) :=
     directCommitIn_of_coversUpto hdc (hcov.mono (hN k hK))
   refine ⟨L, by omega, Decided.directCommit hL hin, ?_⟩
-  intro S' hround hlead'
+  intro S' hround hlead' _
   refine Decided.directCommit (S := S') ⟨hLmem, by rw [hround]; exact hLr,
     by rw [hlead' k (by omega)]; exact hLc⟩ ?_
   rw [hround]; exact hin
@@ -591,7 +591,7 @@ references strictly above it, which `RebasedAbove` preserves. -/
 theorem coreSupport_local :
     Support.Local (R := mysticetiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload)) coreSupport := by
-  intro U U' G R₀ h c L hc hcr _ _
+  intro U U' G R₀ h c L _ hc hcr _ _
   exact certifies_of_sustains h hc (by change R₀ + 2 ≤ (U.block c).round at hcr; omega)
 
 /-- **Law 2.** Coverage toward the candidate over two layers: every
@@ -601,7 +601,7 @@ are the whole quorum. -/
 theorem coreSupport_ofCoverage :
     Timed.OfCoverage (R := mysticetiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload)) coreSupport (coreReliability Validator) := by
-  intro U T hq r L hpop hct hL hLr hLc c hc hcc hcr
+  intro U T hq r _ L hpop hct hL hLr hLc c hc hcc hcr
   have hcard : quorumCard Validator ≤ T.card := by
     have h2 := hq.2
     change Fintype.card Validator - Faults.f Validator ≤ T.card at h2
@@ -656,7 +656,7 @@ theorem coreSupport_commits :
 with no tie to break, read at the three-round eligibility. -/
 theorem indirect :
     Indirect (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-      (fun sr i j => sr i + 3 ≤ sr j) :=
+      (fun S i j => S.slotRound i + 3 ≤ S.slotRound j) :=
   (AnchoredRule.indirect coreLaws.link_congr fun hi h => exists_least hi h).congr
     (fun _ _ _ => by simp only [coreAnchored_waveAt] <;> omega)
 

@@ -62,7 +62,7 @@ theorem commitsCandidate : CommitsCandidate
 predicate. -/
 theorem commitsDirect : CommitsDirect
     (odontocetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-    (fun {U} V L r => Odontoceti.DirectCommitIn U V L r) :=
+    (fun {U} V L r _ => Odontoceti.DirectCommitIn U V L r) :=
   AnchoredRule.commitsDirect
 
 end OdontocetiProperties

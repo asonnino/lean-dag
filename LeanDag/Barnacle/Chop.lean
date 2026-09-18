@@ -89,6 +89,7 @@ theorem rebases_chop : Properties.Rebases C.sched (C.chop G).sched G (C.cum G) w
     show C.lead (G + (C.chop G).roundOf k) _ = C.lead (G + (C.chop G).roundOf k) _
     congr 1
     omega
+  kind := fun _ => rfl
   base := by
     have := C.roundOf_cum G
     show G ≤ C.roundOf (C.cum G)
