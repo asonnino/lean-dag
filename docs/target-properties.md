@@ -4763,6 +4763,11 @@ the kind, so the hypothesis is gone and the composition theorem asks
 nothing of the wave. The seven rules' support laws take one more
 binder each.
 
+**How a rule uses it** is `docs/kinds.md`: where the common layer reads
+the kind, the six files a varying-wave rule edits, checked on a port of
+Steelhead (#21) that then has `banded`, `localTruncate` and `safety`,
+and the two spellings of a schedule's kind.
+
 **What did not change.** Barnacle's
 `ofAnchored` keeps `hw : ∀ κ, R.waveAt κ = R.waveAt 0`: a base rule has
 one wave length, `LiveRule.Descent` reads one gap at every schedule its
