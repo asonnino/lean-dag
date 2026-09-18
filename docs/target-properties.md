@@ -110,9 +110,10 @@ its certifiers sit, and what certifying is.
 
 ```lean
 structure Support (R : DagRule Validator BlockId Payload) where
-  /-- The wavelength at a candidate's round: certifiers of a candidate proposed at `r` sit
-  `waveAt r` rounds above it. Constant for every rule in the tree; a rule whose wavelength
-  alternates with the round supplies a function of it. -/
+  /-- The wavelength at a slot's kind: certifiers of a candidate of a slot of kind `κ` sit
+  `waveAt κ` rounds above it. Constant for every rule in the tree; a rule whose wavelength
+  varies reads it from the kind the schedule assigns the slot, as the rule's own `waveAt`
+  does. -/
   waveAt : ℕ → ℕ
   /-- `Certifies U c L`: block `c` certifies candidate `L`. -/
   Certifies : R.Universe → BlockId → BlockId → Prop
@@ -125,8 +126,8 @@ old certifier is unchanged across any `RebasedAbove` (§0.6), which is
 ```lean
 def Local : Prop :=
   ∀ {U U' : R.Universe} {G R₀ : ℕ}, RebasedAbove R U U' G R₀ →
-    ∀ c L, c ∈ R.ids U → R₀ + sp.waveAt (R.block U L).round ≤ (R.block U c).round →
-      L ∈ R.ids U → (R.block U L).round + sp.waveAt (R.block U L).round = (R.block U c).round →
+    ∀ c L κ, c ∈ R.ids U → R₀ + sp.waveAt κ ≤ (R.block U c).round →
+      L ∈ R.ids U → (R.block U L).round + sp.waveAt κ = (R.block U c).round →
       (sp.Certifies U' c L ↔ sp.Certifies U c L)
 ```
 
@@ -139,9 +140,9 @@ the leaders at or above `k + 1`.
 def Commits (rel : Reliability Validator) : Prop :=
   ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (T : Finset Validator) (k : ℕ),
     rel.IsQuorum T →
-    (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.waveAt (S.slotRound k) → PopulatedOn R U T n) →
-    (∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) L) →
-    CoversUpto R V (S.slotRound k + sp.waveAt (S.slotRound k)) →
+    (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.waveAt (S.kind k) → PopulatedOn R U T n) →
+    (∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) (S.kind k) L) →
+    CoversUpto R V (S.slotRound k + sp.waveAt (S.kind k)) →
     S.leader k ∈ T →
     ∃ L, DecidedBelow R S (k + 1) V k (some L)
 ```
@@ -202,7 +203,7 @@ theorem live_of_coverage (sp : Support R) {rel : Reliability Validator}
     (hpop : ∀ r, Rnd ≤ r → r ≤ N → Properties.PopulatedOn R U T r)
     (S : Slots Validator) (V : R.View U) {lo K : ℕ} (hV : CoversUpto R V N)
     (hRnd : Rnd ≤ S.slotRound lo)
-    (hN : ∀ k, k < K → S.slotRound k + sp.waveAt (S.slotRound k) ≤ N) :
+    (hN : ∀ k, k < K → S.slotRound k + sp.waveAt (S.kind k) ≤ N) :
     sp.live rel S V T lo K
 ```
 
@@ -4744,9 +4745,18 @@ predicate reads the wave of the round, stays a non-example, now of the
 right thing: a rule that reads its wave from the round rather than the
 kind.
 
-**What did not change.** `Support.waveAt` is still a function of the
-round, and so is the liveness side's certification; a support of a
-varying-wave rule is the next thing to key on the kind. Barnacle's
+**The support follows.** `Support.waveAt` is a function of the kind
+too: `certifiesAt U T r κ L` asks for certifiers at `r + waveAt κ`,
+`Commits` and `live` read `waveAt (S.kind k)`, `Local` and `OfCoverage`
+quantify over the kind, and `descent_of_support` bounds the wave over
+kinds. `certifiesAt_of_rebased`, `live_of_truncates`, `live_of_rebased`
+and `Stack.safe_and_live` had carried a hypothesis that the support's
+wave is the same at a round and at its shift by `G`; the rebase carries
+the kind, so the hypothesis is gone and the composition theorem asks
+nothing of the wave. The seven rules' support laws take one more
+binder each.
+
+**What did not change.** Barnacle's
 `ofAnchored` keeps `hw : ∀ κ, R.waveAt κ = R.waveAt 0`: a base rule has
 one wave length, `LiveRule.Descent` reads one gap at every schedule its
 `indirect` quantifies over, and `Descent.indirect` is not monotone in

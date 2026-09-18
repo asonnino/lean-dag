@@ -37,9 +37,10 @@ variable {R : DagRule Validator BlockId Payload}
 /-- **A rule's support shape**: how far above a candidate its certifiers
 sit, and what it means for one of them to certify it. -/
 structure Support (R : DagRule Validator BlockId Payload) where
-  /-- The wavelength at a candidate's round: certifiers of a candidate proposed at `r` sit
-  `waveAt r` rounds above it. Constant for every rule in the tree; a rule whose wavelength
-  alternates with the round supplies a function of it. -/
+  /-- The wavelength at a slot's kind: certifiers of a candidate of a slot of kind `κ` sit
+  `waveAt κ` rounds above it. Constant for every rule in the tree; a rule whose wavelength
+  varies reads it from the kind the schedule assigns the slot, as the rule's own `waveAt`
+  does. -/
   waveAt : ℕ → ℕ
   /-- `Certifies U c L`: block `c` certifies candidate `L`. -/
   Certifies : R.Universe → BlockId → BlockId → Prop
@@ -48,11 +49,11 @@ namespace Support
 
 variable (sp : Support R)
 
-/-- **The reliable set certifies `L` from round `r`**: every `T`-block a
-wave above `r` certifies it. -/
-def certifiesAt (U : R.Universe) (T : Finset Validator) (r : ℕ) (L : BlockId) : Prop :=
+/-- **The reliable set certifies `L` from round `r` at kind `κ`**: every
+`T`-block a wave of `κ` above `r` certifies it. -/
+def certifiesAt (U : R.Universe) (T : Finset Validator) (r κ : ℕ) (L : BlockId) : Prop :=
   ∀ v ∈ T, ∀ c, c ∈ R.ids U → (R.block U c).creator = v →
-    (R.block U c).round = r + sp.waveAt r → sp.Certifies U c L
+    (R.block U c).round = r + sp.waveAt κ → sp.Certifies U c L
 
 end Support
 
@@ -82,8 +83,8 @@ across any `RebasedAbove`, a certifier whose whole window sits at or
 above the settling round certifies the same candidates. -/
 def Local : Prop :=
   ∀ {U U' : R.Universe} {G R₀ : ℕ}, RebasedAbove R U U' G R₀ →
-    ∀ c L, c ∈ R.ids U → R₀ + sp.waveAt (R.block U L).round ≤ (R.block U c).round →
-      L ∈ R.ids U → (R.block U L).round + sp.waveAt (R.block U L).round = (R.block U c).round →
+    ∀ c L κ, c ∈ R.ids U → R₀ + sp.waveAt κ ≤ (R.block U c).round →
+      L ∈ R.ids U → (R.block U L).round + sp.waveAt κ = (R.block U c).round →
       (sp.Certifies U' c L ↔ sp.Certifies U c L)
 
 /-- **Law 2 — certification commits.** A slot whose every candidate a
@@ -94,9 +95,9 @@ bound on `Certifies`. -/
 def Commits (rel : Reliability Validator) : Prop :=
   ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (T : Finset Validator) (k : ℕ),
     rel.IsQuorum T →
-    (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.waveAt (S.slotRound k) → PopulatedOn R U T n) →
-    (∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) L) →
-    CoversUpto R V (S.slotRound k + sp.waveAt (S.slotRound k)) →
+    (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.waveAt (S.kind k) → PopulatedOn R U T n) →
+    (∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) (S.kind k) L) →
+    CoversUpto R V (S.slotRound k + sp.waveAt (S.kind k)) →
     S.leader k ∈ T →
     ∃ L, DecidedBelow R S (k + 1) V k (some L)
 
@@ -117,7 +118,7 @@ def voteSupport (R : DagRule Validator BlockId Payload) : Support R where
 /-- **Law 1 for vote support.** A block strictly above the settling
 round keeps its references. -/
 theorem voteSupport_local : (voteSupport R).Local := by
-  intro U U' G R₀ h c L hc hcr _ _
+  intro U U' G R₀ h c L _ hc hcr _ _
   change R₀ + 1 ≤ (R.block U c).round at hcr
   change L ∈ (R.block U' c).refs ↔ L ∈ (R.block U c).refs
   rw [h.refs c hc (by omega)]

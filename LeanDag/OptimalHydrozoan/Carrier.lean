@@ -117,15 +117,15 @@ def optSupport : Support (optimalRule (Replica := Replica) (BlockId := BlockId))
 /-- **Law 1**, Hydrozoan's at the underlying universe. -/
 theorem optSupport_local [LinearOrder BlockId] :
     Support.Local (R := optimalRule (Replica := Replica) (BlockId := BlockId)) optSupport := by
-  intro U U' G R₀ h c L hc hcr hL hLr
+  intro U U' G R₀ h c L κ hc hcr hL hLr
   exact LeanDag.Hydrozoan.hzSupport_local (U := U.toBlockRecord) (U' := U'.toBlockRecord)
-    ⟨h.mem, h.round, h.creator, h.refs⟩ c L hc hcr hL hLr
+    ⟨h.mem, h.round, h.creator, h.refs⟩ c L κ hc hcr hL hLr
 
 /-- **Law 2**, Hydrozoan's at the underlying universe. -/
 theorem optSupport_ofCoverage :
     Timed.OfCoverage (R := optimalRule (Replica := Replica) (BlockId := BlockId)) optSupport
       (LeanDag.Hydrozoan.hzReliability Replica) := by
-  intro U T hq r L hpop hct hL hLr hLc c hc hcc hcr
+  intro U T hq r _ L hpop hct hL hLr hLc c hc hcc hcr
   have hcard : LeanDag.Hydrozoan.q Replica ≤ T.card := by
     have h2 := hq.2
     change Fintype.card Replica -
@@ -186,7 +186,7 @@ theorem optSupport_live_of_optLive {S : LeanDag.Slots Replica}
   have hNk : S.slotRound k + 2 ≤ N := hN k hK
   refine ⟨fun n h1 h2 => hpop' n (by omega) (by change n ≤ S.slotRound k + 2 at h2; omega), ?_⟩
   rintro L ⟨hLmem, hLr, hLc⟩ v hv c hc hcc hcr
-  exact optSupport_ofCoverage U T hq (S.slotRound k) L
+  exact optSupport_ofCoverage U T hq (S.slotRound k) (S.kind k) L
     (fun n h1 h2 => hpop' n (by omega) (by change n ≤ S.slotRound k + 2 at h2; omega))
     (Timed.coversToward_of_synchronisedOn hs hRk) hLmem hLr (by rw [hLc]; exact hlead)
     c hc (by rw [hcc]; exact hv) hcr

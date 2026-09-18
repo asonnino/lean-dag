@@ -591,7 +591,7 @@ references strictly above it, which `RebasedAbove` preserves. -/
 theorem coreSupport_local :
     Support.Local (R := mysticetiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload)) coreSupport := by
-  intro U U' G R₀ h c L hc hcr _ _
+  intro U U' G R₀ h c L _ hc hcr _ _
   exact certifies_of_sustains h hc (by change R₀ + 2 ≤ (U.block c).round at hcr; omega)
 
 /-- **Law 2.** Coverage toward the candidate over two layers: every
@@ -601,7 +601,7 @@ are the whole quorum. -/
 theorem coreSupport_ofCoverage :
     Timed.OfCoverage (R := mysticetiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload)) coreSupport (coreReliability Validator) := by
-  intro U T hq r L hpop hct hL hLr hLc c hc hcc hcr
+  intro U T hq r _ L hpop hct hL hLr hLc c hc hcc hcr
   have hcard : quorumCard Validator ≤ T.card := by
     have h2 := hq.2
     change Fintype.card Validator - Faults.f Validator ≤ T.card at h2

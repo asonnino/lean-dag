@@ -300,7 +300,7 @@ def mmSupport (w : ℕ) : Support (mahiMahiRule (Validator := Validator) (BlockI
 theorem mmSupport_local {w : ℕ} (hw : 2 ≤ w) :
     Support.Local (R := mahiMahiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) w) (mmSupport w) := by
-  intro U U' G R₀ h c L hc hcr hL hLr
+  intro U U' G R₀ h c L _ hc hcr hL hLr
   change R₀ + (w - 1) ≤ (BlockRecord.block U c).round at hcr
   change (BlockRecord.block U L).round + (w - 1) = (BlockRecord.block U c).round at hLr
   exact certifies_band (agreeBand_of_rebasedAbove h (BlockRecord.block U c).round R₀ le_rfl)
@@ -315,7 +315,7 @@ every quorum block at the decision round certifies. -/
 theorem mmSupport_ofCoverage {w : ℕ} (hw : 4 ≤ w) :
     Timed.OfCoverage (R := mahiMahiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) w) (mmSupport w) (coreReliability Validator) := by
-  intro U T hq r L hpop hct hL hLr hLc C hC hCc hCr
+  intro U T hq r _ L hpop hct hL hLr hLc C hC hCc hCr
   have hcard : quorumCard Validator ≤ T.card := by
     have h2 := hq.2
     change Fintype.card Validator - Faults.f Validator ≤ T.card at h2

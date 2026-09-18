@@ -88,7 +88,7 @@ def hzSupport : Support (rule (Replica := Replica) (BlockId := BlockId)) where
 refs, and each parent keeps its refs and its creator. -/
 theorem hzSupport_local :
     Support.Local (R := rule (Replica := Replica) (BlockId := BlockId)) hzSupport := by
-  intro U U' G R₀ h c L hc hcr _ _
+  intro U U' G R₀ h c L _ hc hcr _ _
   change R₀ + 2 ≤ (U.block c).round at hcr
   have hrefs : (U'.block c).refs = (U.block c).refs :=
     h.refs c hc (by change R₀ < (U.block c).round; omega)
@@ -111,7 +111,7 @@ with its antecedent cut to what it reads. -/
 theorem hzSupport_ofCoverage :
     Timed.OfCoverage (R := rule (Replica := Replica) (BlockId := BlockId)) hzSupport
       (hzReliability Replica) := by
-  intro U T hq r L hpop hct hL hLr hLc C hC hCc hCr
+  intro U T hq r _ L hpop hct hL hLr hLc C hC hCc hCr
   have hcard : LeanDag.Hydrozoan.q Replica ≤ T.card := by
     have h2 := hq.2
     change Fintype.card Replica - (LeanDag.Hydrozoan.Faults.f Replica + LeanDag.Hydrozoan.Faults.c Replica) ≤ T.card at h2
@@ -172,7 +172,7 @@ theorem hzSupport_live_of_hzLive {S : LeanDag.Slots Replica}
   have hNk : S.slotRound k + 2 ≤ N := hN k hK
   refine ⟨fun n h1 h2 => hpop' n (by omega) (by change n ≤ S.slotRound k + 2 at h2; omega), ?_⟩
   rintro L ⟨hLmem, hLr, hLc⟩ v hv c hc hcc hcr
-  exact hzSupport_ofCoverage U T hq (S.slotRound k) L
+  exact hzSupport_ofCoverage U T hq (S.slotRound k) (S.kind k) L
     (fun n h1 h2 => hpop' n (by omega) (by change n ≤ S.slotRound k + 2 at h2; omega))
     (Timed.coversToward_of_synchronisedOn hs hRk) hLmem hLr (by rw [hLc]; exact hlead)
     c hc (by rw [hcc]; exact hv) hcr

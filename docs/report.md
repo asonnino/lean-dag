@@ -1026,7 +1026,7 @@ own: Mahi-Mahi's per-candidate skip, FinWhale's evidence rules, the
 second rungs of Hydrozoan and Optimal-Hydrozoan.
 
 The relation itself is stated once, over any such record. `R.Eligible k j`
-is `EligibleAt (R.waveAt (S.slotRound k)) k j`; `R.RungEmpty U A i k` says no candidate of `k`
+is `EligibleAt (R.waveAt (S.kind k)) k j`; `R.RungEmpty U A i k` says no candidate of `k`
 is linked at rung `i` from `A`; `R.Least U A i k L` says no linked
 candidate is preferred to `L` by the rung's tie:
 
@@ -5161,9 +5161,9 @@ structure Support (R : DagRule Validator BlockId Payload) where
 def Commits (rel : Reliability Validator) : Prop :=
   ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (T : Finset Validator) (k : ℕ),
     rel.IsQuorum T →
-    (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.waveAt (S.slotRound k) → PopulatedOn R U T n) →
-    (∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) L) →
-    CoversUpto R V (S.slotRound k + sp.waveAt (S.slotRound k)) →
+    (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.waveAt (S.kind k) → PopulatedOn R U T n) →
+    (∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) (S.kind k) L) →
+    CoversUpto R V (S.slotRound k + sp.waveAt (S.kind k)) →
     S.leader k ∈ T →
     ∃ L, DecidedBelow R S (k + 1) V k (some L)
 ```
@@ -5183,7 +5183,7 @@ theorem live_of_coverage (sp : Support R) {rel : Reliability Validator}
     (hpop : ∀ r, Rnd ≤ r → r ≤ N → Properties.PopulatedOn R U T r)
     (S : Slots Validator) (V : R.View U) {lo K : ℕ} (hV : CoversUpto R V N)
     (hRnd : Rnd ≤ S.slotRound lo)
-    (hN : ∀ k, k < K → S.slotRound k + sp.waveAt (S.slotRound k) ≤ N) :
+    (hN : ∀ k, k < K → S.slotRound k + sp.waveAt (S.kind k) ≤ N) :
     sp.live rel S V T lo K
 ```
 
@@ -15824,11 +15824,11 @@ def LeaderCommits (R : DagRule Validator BlockId Payload)
 def live (rel : Reliability Validator) (S : Slots Validator) {U : R.Universe}
     (V : R.View U) (T : Finset Validator) (lo K : ℕ) : Prop :=
   rel.IsQuorum T ∧
-    ∃ N, CoversUpto R V N ∧ (∀ k, k < K → S.slotRound k + sp.waveAt (S.slotRound k) ≤ N) ∧
+    ∃ N, CoversUpto R V N ∧ (∀ k, k < K → S.slotRound k + sp.waveAt (S.kind k) ≤ N) ∧
       ∀ k, lo ≤ k → k < K → S.leader k ∈ T →
-        (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.waveAt (S.slotRound k) →
+        (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.waveAt (S.kind k) →
           PopulatedOn R U T n) ∧
-        ∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) L
+        ∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) (S.kind k) L
 ```
 
 **The liveness precondition, in support terms.** A quorum, a horizon the view is caught up to with the window a wave under it, and at every quorum-led slot of the window production and certification.
@@ -16027,9 +16027,10 @@ Re-genesis, at the carrier.
 
 ```lean
 structure Support (R : DagRule Validator BlockId Payload) where
-  /-- The wavelength at a candidate's round: certifiers of a candidate proposed at `r` sit
-  `waveAt r` rounds above it. Constant for every rule in the tree; a rule whose wavelength
-  alternates with the round supplies a function of it. -/
+  /-- The wavelength at a slot's kind: certifiers of a candidate of a slot of kind `κ` sit
+  `waveAt κ` rounds above it. Constant for every rule in the tree; a rule whose wavelength
+  varies reads it from the kind the schedule assigns the slot, as the rule's own `waveAt`
+  does. -/
   waveAt : ℕ → ℕ
   /-- `Certifies U c L`: block `c` certifies candidate `L`. -/
   Certifies : R.Universe → BlockId → BlockId → Prop
@@ -16044,8 +16045,8 @@ structure Support (R : DagRule Validator BlockId Payload) where
 ```lean
 def Local : Prop :=
   ∀ {U U' : R.Universe} {G R₀ : ℕ}, RebasedAbove R U U' G R₀ →
-    ∀ c L, c ∈ R.ids U → R₀ + sp.waveAt (R.block U L).round ≤ (R.block U c).round →
-      L ∈ R.ids U → (R.block U L).round + sp.waveAt (R.block U L).round = (R.block U c).round →
+    ∀ c L κ, c ∈ R.ids U → R₀ + sp.waveAt κ ≤ (R.block U c).round →
+      L ∈ R.ids U → (R.block U L).round + sp.waveAt κ = (R.block U c).round →
       (sp.Certifies U' c L ↔ sp.Certifies U c L)
 ```
 
@@ -16059,9 +16060,9 @@ def Local : Prop :=
 def Commits (rel : Reliability Validator) : Prop :=
   ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (T : Finset Validator) (k : ℕ),
     rel.IsQuorum T →
-    (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.waveAt (S.slotRound k) → PopulatedOn R U T n) →
-    (∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) L) →
-    CoversUpto R V (S.slotRound k + sp.waveAt (S.slotRound k)) →
+    (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.waveAt (S.kind k) → PopulatedOn R U T n) →
+    (∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) (S.kind k) L) →
+    CoversUpto R V (S.slotRound k + sp.waveAt (S.kind k)) →
     S.leader k ∈ T →
     ∃ L, DecidedBelow R S (k + 1) V k (some L)
 ```
@@ -16174,11 +16175,11 @@ def CoversToward (R : DagRule Validator BlockId Payload) (U : R.Universe)
 ```lean
 def OfCoverage (sp : Support R) (rel : Reliability Validator) : Prop :=
   ∀ (U : R.Universe) (T : Finset Validator), rel.IsQuorum T →
-    ∀ (r : ℕ) (L : BlockId),
-    (∀ n, r ≤ n → n ≤ r + sp.waveAt r → Properties.PopulatedOn R U T n) →
-    CoversToward R U T r (sp.waveAt r) L →
+    ∀ (r κ : ℕ) (L : BlockId),
+    (∀ n, r ≤ n → n ≤ r + sp.waveAt κ → Properties.PopulatedOn R U T n) →
+    CoversToward R U T r (sp.waveAt κ) L →
     L ∈ R.ids U → (R.block U L).round = r → (R.block U L).creator ∈ T →
-    ∀ c, c ∈ R.ids U → (R.block U c).creator ∈ T → (R.block U c).round = r + sp.waveAt r →
+    ∀ c, c ∈ R.ids U → (R.block U c).creator ∈ T → (R.block U c).round = r + sp.waveAt κ →
       sp.Certifies U c L
 ```
 
@@ -22454,7 +22455,7 @@ theorem Stack.rebased {U U' : R.Universe} {S S' : Slots Validator} {G R₀ d : �
 ```lean
 theorem Stack.safe_and_live (hb : Banded R) (ha : Agree R) (sp : Support R) (hloc : sp.Local)
     (st : Stack R U S U' S' G R₀ d) {V : R.View U} {V' : R.View U'}
-    (hv : ViewAgreeAbove R V V' R₀) (hw : ∀ r, G ≤ r → sp.waveAt (r - G) = sp.waveAt r) :
+    (hv : ViewAgreeAbove R V V' R₀) :
     (∀ (k : ℕ) (v : Option BlockId), R₀ ≤ S.slotRound (d + k) →
         (R.Decided S V (d + k) v ↔ R.Decided S' V' k v)) ∧
     (∀ (W : R.View U') (k : ℕ) (w v : Option BlockId), R₀ ≤ S.slotRound (d + k) →
@@ -22465,7 +22466,7 @@ theorem Stack.safe_and_live (hb : Banded R) (ha : Agree R) (sp : Support R) (hlo
         sp.live rel S' V' T (lo - d) (K - d))
 ```
 
-**Every stack of mechanisms keeps safety and liveness**, for any rule with `Banded`, `Agree` and a support. Above the composite settling round: verdicts transport to the composite's numbering, any view of the composite agrees with the original, and the liveness precondition carries. Nothing is assumed about which mechanisms are stacked or in what order, only that the support's wave is the same at a round and at its shift by the composite's `G`.
+**Every stack of mechanisms keeps safety and liveness**, for any rule with `Banded`, `Agree` and a support. Above the composite settling round: verdicts transport to the composite's numbering, any view of the composite agrees with the original, and the liveness precondition carries. Nothing is assumed about which mechanisms are stacked or in what order: the composite carries each slot's kind, and with it the wave the support reads there.
 
 #### `decided_of_rebased`
 
@@ -22685,7 +22686,7 @@ theorem descent_of_support (R : Properties.DagRule Validator BlockId Payload)
     (sp : Properties.Support R) {rel : Reliability Validator}
     (hcov : OfCoverage sp rel) (hlc : sp.Commits rel)
     (hind : Properties.Indirect R (fun S i j => S.slotRound i + g ≤ S.slotRound j))
-    (hwave : ∀ r, sp.waveAt r ≤ g)
+    (hwave : ∀ κ, sp.waveAt κ ≤ g)
     (hgood : ∀ U Rnd N, Good U Rnd N → Timed.Good R rel U Rnd N) :
     Properties.Descent R Good g rel.slack where
   goodLeaders

@@ -200,7 +200,7 @@ voting parents are the same validators. -/
 theorem fwSupport_local :
     Support.Local (R := finWhaleRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload)) fwSupport := by
-  intro D D' G R₀ h c L hc hcr _ _
+  intro D D' G R₀ h c L _ hc hcr _ _
   change R₀ + 2 ≤ (BlockRecord.block D c).round at hcr
   have hrefs : (BlockRecord.block D' c).refs = (BlockRecord.block D c).refs :=
     h.refs c hc (by change R₀ < (BlockRecord.block D c).round; omega)
@@ -223,7 +223,7 @@ references each voter, and the quorum carries `spQuorum`. -/
 theorem fwSupport_ofCoverage :
     Timed.OfCoverage (R := finWhaleRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload)) fwSupport (coreReliability Validator) := by
-  intro D T hq r L hpop hct hL hLr hLc c hc hcc hcr
+  intro D T hq r _ L hpop hct hL hLr hLc c hc hcc hcr
   have hcard : quorumCard Validator ≤ T.card := by
     have h2 := hq.2
     change Fintype.card Validator - Faults.f Validator ≤ T.card at h2
