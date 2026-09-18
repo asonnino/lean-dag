@@ -324,20 +324,20 @@ skip and the certificate in the anchor's cone carry across a band
 covering the slot's wave, and a candidate the band did not carry is
 certified from no old anchor. -/
 theorem coreBandLaws : (coreAnchored Validator BlockId Payload).BandLaws where
-  commit_band := fun h hkk _ hlo hhi hV _ hc =>
+  commit_band := fun h hkk _ _ hlo hhi hV _ hc =>
     AnchoredRule.holdsAtLeast_certificatesAt_band h hV (by omega) (by omega)
       (by simp only [coreAnchored_waveAt] at hhi; omega)
       (AnchoredRule.isVote_band_at h (by omega)
         (by simp only [coreAnchored_waveAt] at hhi; omega)) hc
-  skip_band := fun h hkk hlk hlo hhi hV hs =>
+  skip_band := fun h hkk hlk _ hlo hhi hV hs =>
     le_trans hs (Finset.card_le_card (AnchoredRule.slotBlamesIn_band h hkk hlk hlo.le
       (by simp only [coreAnchored_waveAt] at hhi; omega) hV))
-  link_band := fun h hA hAlo hAhi hkk _ hlo hhi _ _ =>
+  link_band := fun h hA hAlo hAhi hkk _ _ hlo hhi _ _ =>
     AnchoredRule.linkedVia_certificatesAt_band h hA hAlo hAhi (by omega) (by omega)
       (by simp only [coreAnchored_waveAt] at hhi; omega)
       (AnchoredRule.isVote_band_at h (by omega) (by simp only [coreAnchored_waveAt] at hhi; omega))
   link_novel := by
-    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk _ hlo hhi _ _ hL
+    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk _ _ hlo hhi _ _ hL
     simp only [coreAnchored_waveAt] at hhi
     exact AnchoredRule.not_linkedVia_certificatesAt_band_novel h hA hAlo hAhi
       (n := S.slotRound k + 2) (by omega) (by omega) (by omega)
@@ -364,7 +364,7 @@ theorem commitsCandidate : CommitsCandidate
 predicate: `Decided.directCommit` under the property's name. -/
 theorem commitsDirect : CommitsDirect
     (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-    (fun {U} V L r => DirectCommitIn U V L r) :=
+    (fun {U} V L r _ => DirectCommitIn U V L r) :=
   fun S _ _ _ _ hc hd => Decided.directCommit (S := S) hc hd
 
 /-- **The core persists unconditionally**, as an evidence-backed rule

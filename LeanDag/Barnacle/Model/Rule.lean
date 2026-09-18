@@ -78,11 +78,11 @@ structure BaseRule (Validator : Type) [Fintype Validator] [DecidableEq Validator
   waveLength : ℕ
   /-- **A3.** The direct commit predicate, as judged from a view: block `L`
   proposed at round `r` is directly committed. -/
-  DirectCommitIn : ∀ {U : Universe}, View U → BlockId → ℕ → Prop
+  DirectCommitIn : ∀ {U : Universe}, View U → BlockId → ℕ → ℕ → Prop
   /-- The direct predicate is decidable, so a validator — and a witness —
   can compute the window count. -/
-  decDirect : ∀ {U : Universe} (V : View U) (L : BlockId) (r : ℕ),
-    Decidable (DirectCommitIn V L r)
+  decDirect : ∀ {U : Universe} (V : View U) (L : BlockId) (r κ : ℕ),
+    Decidable (DirectCommitIn V L r κ)
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
@@ -91,9 +91,9 @@ namespace BaseRule
 
 /-- The rule's own decidability of the direct predicate, as an instance. -/
 instance instDecidableDirectCommitIn (R : BaseRule Validator BlockId Payload)
-    {U : R.Universe} (V : R.View U) (L : BlockId) (r : ℕ) :
-    Decidable (R.DirectCommitIn V L r) :=
-  R.decDirect V L r
+    {U : R.Universe} (V : R.View U) (L : BlockId) (r κ : ℕ) :
+    Decidable (R.DirectCommitIn V L r κ) :=
+  R.decDirect V L r κ
 
 /-- `L` is a candidate block for slot `k` of schedule `S`: the right round,
 the right author. The same conjunction every rule of this development
@@ -134,7 +134,8 @@ structure Laws (R : BaseRule Validator BlockId Payload) : Prop where
   /-- **A4, safety.** For a fixed schedule, verdicts agree across views. -/
   agree : Properties.Agree R.toDagRule
   /-- A directly committed candidate of a slot is a commit verdict. -/
-  commitsDirect : Properties.CommitsDirect R.toDagRule (fun {U} V L r => R.DirectCommitIn V L r)
+  commitsDirect : Properties.CommitsDirect R.toDagRule
+    (fun {U} V L r κ => R.DirectCommitIn V L r κ)
   /-- A committed block is a candidate of its slot. -/
   candidates : Properties.CommitsCandidate R.toDagRule
 

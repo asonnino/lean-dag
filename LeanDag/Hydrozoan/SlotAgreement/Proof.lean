@@ -79,7 +79,7 @@ theorem hydrozoanLaws : (hydrozoanAnchored Replica BlockId).Laws where
         (not_lt.mp (show ¬ L₁ < L₂ from hm₂ L₁ hL₁ hl₁))
     · exact absurd hi (by change ¬ (i + 1 + 1 < 2); omega)
   commit_mono := by
-    intro S U V V' L r _ hsub h
+    intro S U V V' L r κ _ hsub h
     rcases h with h | h
     · exact Or.inl (HoldsAtLeast.mono hsub h)
     · exact Or.inr (HoldsAtLeast.mono hsub h)

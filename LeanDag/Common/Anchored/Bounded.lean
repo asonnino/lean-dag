@@ -35,7 +35,7 @@ inductive DecidedWithin (U : BlockRecord Validator BlockId Payload P honest) (V 
     (B : ℕ) : ℕ → Option BlockId → Prop
   /-- The direct rule commits a candidate outright. -/
   | directCommit {k : ℕ} {L : BlockId} :
-      k < B → IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) →
+      k < B → IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) (S.kind k) →
       DecidedWithin U V B k (some L)
   /-- The direct rule skips the slot. -/
   | directSkip {k : ℕ} :
@@ -179,7 +179,8 @@ theorem decidedWithin_congr_of_slotRound (hl : R.Laws I) {S₁ S₂ : Slots Vali
   | @directCommit k L hk hL hdc =>
       exact DecidedWithin.directCommit (S := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩) hk
         (isLeaderBlock_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed, kd⟩)
-          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩) rfl (ha k hk) hL) hdc
+          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩) rfl (ha k hk) hL)
+        (by simpa only [hkind k hk] using hdc)
   | @directSkip k hk hall =>
       exact DecidedWithin.directSkip (S := ⟨sr, ld', hmono', hunb', hkeyed', kd'⟩) hk
         (hl.skip_congr hI (S₁ := ⟨sr, ld, hmono, hunb, hkeyed, kd⟩)

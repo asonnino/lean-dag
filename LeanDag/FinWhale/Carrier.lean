@@ -66,7 +66,7 @@ theorem commitsCandidate : CommitsCandidate
 a view evaluates it, at every schedule. -/
 theorem commitsDirect : CommitsDirect
     (finWhaleRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-    (fun {_} V L _ => LeanDag.FinWhale.DirectCommit (V.toRecord) L) :=
+    (fun {_} V L _ _ => LeanDag.FinWhale.DirectCommit (V.toRecord) L) :=
   AnchoredRule.commitsDirect
 
 /-! ## Totality and the descent, relationally

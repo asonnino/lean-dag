@@ -44,8 +44,8 @@ set_option maxRecDepth 4096
 round, the rung reads the anchor's references, and neither mentions `altWave`. -/
 def floorRule : AnchoredRule (Fin 4) (Fin 20) Unit ValidWrt (Correct : Finset (Fin 4)) where
   waveAt := altWave
-  Commit := fun U V L _ => L ∈ V.ids ∧ (U.block L).creator = 2
-  decCommit := fun _ _ _ _ => inferInstance
+  Commit := fun U V L _ _ => L ∈ V.ids ∧ (U.block L).creator = 2
+  decCommit := fun _ _ _ _ _ => inferInstance
   Skip := fun _ _ _ _ => False
   rungs := 1
   Link := fun _ U A L S k => S.slotRound k < (U.block A).round ∧ L ∈ (U.block A).refs
@@ -84,13 +84,13 @@ def altSlotsC' : Slots (Fin 4) := { altSlots' with kind := fun k => k % 2 }
 carries with its author; a link reads the anchor's references strictly above the floor, which the
 band carries too; a candidate the band did not carry is referenced by no old anchor. -/
 theorem floorRule_bandLaws : floorRule.BandLaws where
-  commit_band := fun {S S' U U' lo hi g g' V V' k k' L} hab _ _ hlo hhi hV hL hc => by
+  commit_band := fun {S S' U U' lo hi g g' V V' k k' L} hab _ _ _ hlo hhi hV hL hc => by
     obtain ⟨hLV, hcr⟩ := hc
     have hround : (U.block L).round = S.slotRound k := hL.2.1
     obtain ⟨-, hcreator⟩ := AnchoredRule.band_block hab hL.1 (by omega) (by omega)
     exact ⟨hV L hLV (by omega) (by omega), by rw [hcreator]; exact hcr⟩
-  skip_band := fun _ _ _ _ _ _ hs => hs.elim
-  link_band := fun {S S' U U' lo hi g g' A L k k' i} hab hA hAlo hAhi hsch _ hklo _ _ _ => by
+  skip_band := fun _ _ _ _ _ _ _ hs => hs.elim
+  link_band := fun {S S' U U' lo hi g g' A L k k' i} hab hA hAlo hAhi hsch _ _ hklo _ _ _ => by
     obtain ⟨hr, -⟩ := AnchoredRule.band_block hab hA hAlo hAhi
     change (S'.slotRound k' < (U'.block A).round ∧ L ∈ (U'.block A).refs) ↔
       (S.slotRound k < (U.block A).round ∧ L ∈ (U.block A).refs)
@@ -99,7 +99,7 @@ theorem floorRule_bandLaws : floorRule.BandLaws where
       exact ⟨fun h => ⟨hlt, h.2⟩, fun h => ⟨by omega, h.2⟩⟩
     · exact ⟨fun h => absurd (by omega : S.slotRound k < (U.block A).round) hlt,
         fun h => absurd h.1 hlt⟩
-  link_novel := fun {S S' U U' lo hi g g' A L k k' i} hab hA hAlo hAhi hsch _ hklo _ _ _ hLo => by
+  link_novel := fun {S S' U U' lo hi g g' A L k k' i} hab hA hAlo hAhi hsch _ _ hklo _ _ _ hLo => by
     obtain ⟨hr, -⟩ := AnchoredRule.band_block hab hA hAlo hAhi
     rintro ⟨hlt, hmem⟩
     have hlt' : S.slotRound k < (U.block A).round := by omega
@@ -181,6 +181,50 @@ kind. -/
 theorem floorRule_banded : Banded floorRule.toDagRule :=
   AnchoredRule.banded floorRule_bandLaws
 
+/-! ## A rule whose direct commit reads the wave of the kind
+
+Steelhead's shape (`steelheadAnchored`): the direct predicates and the eligibility all read the
+wave of the slot, `Commit` from the kind it is handed and `Skip`, `Link` from `S.kind k`. Here the
+direct commit looks for a block of the view at `r + kindWave κ` referencing the candidate, at a wave
+of at least one round, so the block sits strictly above the band's floor and the band carries its
+references. -/
+
+/-- One round above a slot of kind `0`, two above any other. Never zero. -/
+def kindWave : ℕ → ℕ := fun κ => if κ = 0 then 1 else 2
+
+theorem kindWave_pos (κ : ℕ) : 0 < kindWave κ := by unfold kindWave; split <;> omega
+
+/-- **A rule reading one reference at the decision round of the slot's kind.** -/
+def kindRule : AnchoredRule (Fin 4) (Fin 20) Unit ValidWrt (Correct : Finset (Fin 4)) where
+  waveAt := kindWave
+  Commit := fun U V L r κ =>
+    ∃ c ∈ V.ids, (U.block c).round = r + kindWave κ ∧ L ∈ (U.block c).refs
+  decCommit := fun _ _ _ _ _ => inferInstance
+  Skip := fun _ _ _ _ => False
+  rungs := 0
+  Link := fun _ _ _ _ _ _ => False
+  tie := fun _ _ _ => False
+
+/-- **The rule has the band laws.** The referencing block sits `kindWave κ ≥ 1` rounds above the
+slot, so strictly above the band's floor, where the band carries its round, its author and its
+references; the two frames agree on the slot's kind, so on the wave it reads. -/
+theorem kindRule_bandLaws : kindRule.BandLaws where
+  commit_band := fun {S S' U U' lo hi g g' V V' k k' L} hab hkk _ hkind hlo hhi hV _ hc => by
+    obtain ⟨c, hcV, hcr, hcL⟩ := hc
+    have hpos := kindWave_pos (S.kind k)
+    have hhi' : S.slotRound k + kindWave (S.kind k) + g ≤ hi := hhi
+    obtain ⟨hr, -⟩ := AnchoredRule.band_block hab (V.subset_ids hcV) (by omega) (by omega)
+    refine ⟨c, hV c hcV (by omega) (by omega), ?_, ?_⟩
+    · rw [← hkind]; omega
+    · rw [AnchoredRule.band_refs hab (V.subset_ids hcV) (by omega) (by omega)]; exact hcL
+  skip_band := fun _ _ _ _ _ _ _ hs => hs.elim
+  link_band := fun _ _ _ _ _ _ _ _ _ hi _ => absurd hi (Nat.not_lt_zero _)
+  link_novel := fun _ _ _ _ _ _ _ _ _ hi _ _ => absurd hi (Nat.not_lt_zero _)
+
+/-- **And is banded**, its wave varying with the kind and read inside its direct commit. -/
+theorem kindRule_banded : Banded kindRule.toDagRule :=
+  AnchoredRule.banded kindRule_bandLaws
+
 /-- **The frame that recomputes its kinds is not a rebase of the lower frame**: it changes slot
 `0`'s kind, which a rebase carries. The two verdicts above disagree, and the band's schedule
 premise is what excludes the pair. -/
@@ -222,6 +266,8 @@ Nothing here should ever acquire an axiom beyond the standard three. -/
 #print axioms floorRule_persist
 #print axioms floorRule_banded
 #print axioms floor_frames_agree
+#print axioms kindRule_bandLaws
+#print axioms kindRule_banded
 
 end VaryingWaveBand
 

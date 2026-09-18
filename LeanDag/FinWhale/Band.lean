@@ -479,24 +479,24 @@ the theorems above. -/
 theorem finWhaleBandLaws [LinearOrder BlockId] :
     (finWhaleAnchored Validator BlockId Payload).BandLaws where
   commit_band := by
-    intro S S' U U' lo hi g g' V V' k k' L h hkk hlk hlo hhi hV hL hc
+    intro S S' U U' lo hi g g' V V' k k' L h hkk hlk _ hlo hhi hV hL hc
     simp only [finWhaleAnchored_waveAt] at hhi
     have hbV := AnchoredRule.agreeBand_view h hV
     have hLr : (U.block L).round = S.slotRound k := hL.2.1
     have hlink : ((V.toRecord).block L).round = (U.block L).round := rfl
     exact Band.directCommit hbV (mem_view_of_directCommit hc) (by omega) (by omega) hc
   skip_band := by
-    intro S S' U U' lo hi g g' V V' k k' h hkk hlk hlo hhi hV hs
+    intro S S' U U' lo hi g g' V V' k k' h hkk hlk _ hlo hhi hV hs
     simp only [finWhaleAnchored_waveAt] at hhi
     exact Band.directSkip (AnchoredRule.agreeBand_view h hV) hkk hlk (by omega) (by omega) hs
   link_band := by
-    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk hlk hlo hhi hi _
+    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk hlk _ hlo hhi hi _
     simp only [finWhaleAnchored_waveAt] at hhi
     rcases i with _ | i
     · exact Band.indirectCommit_iff h hkk hlk hlo (by omega) hA hAlo hAhi L
     · exact absurd hi (by change ¬ (i + 1 < 1); omega)
   link_novel := by
-    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk hlk hlo hhi hi _ hLo hlink
+    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk hlk _ hlo hhi hi _ hLo hlink
     simp only [finWhaleAnchored_waveAt] at hhi
     rcases i with _ | i
     · exact hLo (mem_slotBlocks.1

@@ -82,7 +82,7 @@ theorem optimalLaws :
     · exact evidenceLinked_unique hL₁ hL₂ hl₁ hl₂
     · exact absurd hi (by change ¬ (i + 1 + 1 < 2); omega)
   commit_mono := by
-    intro S U V V' L r _ hsub h
+    intro S U V V' L r κ _ hsub h
     rcases h with h | h
     · exact Or.inl (HoldsAtLeast.mono hsub h)
     · exact Or.inr (HoldsAtLeast.mono hsub h)

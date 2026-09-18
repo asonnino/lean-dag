@@ -297,7 +297,7 @@ theorem commitsCandidate :
 predicate — which is a *disjunction*, the fast path or the slow one. -/
 theorem commitsDirect :
     Properties.CommitsDirect (rule (Replica := Replica) (BlockId := BlockId))
-      (fun {U} V L r => LeanDag.Hydrozoan.FastCommitInView U V L r ∨
+      (fun {U} V L r _ => LeanDag.Hydrozoan.FastCommitInView U V L r ∨
         LeanDag.Hydrozoan.SlowCommitInView U V L r) :=
   AnchoredRule.commitsDirect
 

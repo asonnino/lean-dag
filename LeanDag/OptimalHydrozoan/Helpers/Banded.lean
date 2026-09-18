@@ -351,7 +351,7 @@ unchanged; the fast path and the evidence rung are this file's. -/
 omit S in
 theorem optimalBandLaws : (optimalAnchored Replica BlockId).BandLaws where
   commit_band := by
-    intro S S' U U' lo hi g g' V V' k k' L h hkk hlk hlo hhi hV _ hc
+    intro S S' U U' lo hi g g' V V' k k' L h hkk hlk _ hlo hhi hV _ hc
     simp only [optimalAnchored_waveAt] at hhi
     rcases hc with hc | hc
     · exact Or.inl (fastCommitOptInView_bnd h (fun b hb h1 h2 => hV b hb (by omega) (by omega))
@@ -359,12 +359,12 @@ theorem optimalBandLaws : (optimalAnchored Replica BlockId).BandLaws where
     · exact Or.inr (AnchoredRule.holdsAtLeast_certificatesAt_band h hV (by omega) (by omega)
         (by omega) (AnchoredRule.isVote_band_at h (by omega) (by omega)) hc)
   skip_band := by
-    intro S S' U U' lo hi g g' V V' k k' h hkk hlk hlo hhi hV hs
+    intro S S' U U' lo hi g g' V V' k k' h hkk hlk _ hlo hhi hV hs
     simp only [optimalAnchored_waveAt] at hhi
     exact skippedLeaderOptInView_bnd h (fun b hb h1 h2 => hV b hb (by omega) (by omega))
       hkk hlk (by omega) (by omega) hs
   link_band := by
-    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk hlk hlo hhi hi _
+    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk hlk _ hlo hhi hi _
     simp only [optimalAnchored_waveAt] at hhi
     rcases i with _ | _ | i
     · exact AnchoredRule.linkedVia_certificatesAt_band h hA hAlo hAhi (by omega) (by omega)
@@ -373,7 +373,7 @@ theorem optimalBandLaws : (optimalAnchored Replica BlockId).BandLaws where
         fun h' => evidenceLinked_bnd h hkk hlk (by omega) (by omega) hA hAlo hAhi h'⟩
     · exact absurd hi (by change ¬ (i + 1 + 1 < 2); omega)
   link_novel := by
-    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk hlk hlo hhi hi _ hLo
+    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk hlk _ hlo hhi hi _ hLo
     simp only [optimalAnchored_waveAt] at hhi
     rcases i with _ | _ | i
     · exact AnchoredRule.not_linkedVia_certificatesAt_band_novel h hA hAlo hAhi

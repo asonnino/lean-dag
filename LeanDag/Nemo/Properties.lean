@@ -84,13 +84,13 @@ end Band
 across a band covering the slot's wave, and a candidate the band did not
 carry is certified from no old anchor. -/
 theorem nemoBandLaws : (Nemo.nemoAnchored Validator BlockId Payload).BandLaws where
-  commit_band := fun h hkk _ hlo hhi hV _ hc =>
+  commit_band := fun h hkk _ _ hlo hhi hV _ hc =>
     AnchoredRule.holdsAtLeast_votesFor_band h hV (by omega) (by omega)
       (by simp only [Nemo.nemoAnchored_waveAt] at hhi; omega) hc
-  skip_band := fun _ _ _ _ _ _ h => h.elim
-  link_band := fun h hA hAlo hAhi hkk _ hlo hhi _ _ =>
+  skip_band := fun _ _ _ _ _ _ _ h => h.elim
+  link_band := fun h hA hAlo hAhi hkk _ _ hlo hhi _ _ =>
     certifiedIn_band h hA hAlo hAhi hkk hlo (by simp only [Nemo.nemoAnchored_waveAt] at hhi; omega)
-  link_novel := fun h hA hAlo hAhi hkk _ hlo hhi _ _ hL =>
+  link_novel := fun h hA hAlo hAhi hkk _ _ hlo hhi _ _ hL =>
     not_certifiedIn_band_novel h hA hAlo hAhi hkk hlo
       (by simp only [Nemo.nemoAnchored_waveAt] at hhi; omega) hL
 

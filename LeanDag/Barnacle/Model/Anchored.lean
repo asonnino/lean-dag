@@ -43,8 +43,8 @@ def ofAnchored (R : AnchoredRule Validator BlockId Payload P honest)
   full := fun U => View.full U
   historyView := fun U A hA => U.historyView A hA
   waveLength := R.waveAt 0 + 1
-  DirectCommitIn := fun {U} V L r => R.Commit U V L r
-  decDirect := fun {U} V L r => R.decCommit U V L r
+  DirectCommitIn := fun {U} V L r κ => R.Commit U V L r κ
+  decDirect := fun {U} V L r κ => R.decCommit U V L r κ
 
 /-- **An anchored rule read through a projection, as a base rule**: the
 universes are any type projecting to records. -/
@@ -56,8 +56,8 @@ def ofAnchoredVia (R : AnchoredRule Validator BlockId Payload P honest) {X : Typ
   full := fun U => View.full (f U)
   historyView := fun U A hA => (f U).historyView A hA
   waveLength := R.waveAt 0 + 1
-  DirectCommitIn := fun {U} V L r => R.Commit (f U) V L r
-  decDirect := fun {U} V L r => R.decCommit (f U) V L r
+  DirectCommitIn := fun {U} V L r κ => R.Commit (f U) V L r κ
+  decDirect := fun {U} V L r κ => R.decCommit (f U) V L r κ
 
 /-- **An anchored rule under an invariant, as a base rule.** -/
 abbrev ofAnchoredOn (R : AnchoredRule Validator BlockId Payload P honest)

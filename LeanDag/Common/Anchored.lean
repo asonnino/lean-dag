@@ -91,13 +91,15 @@ structure AnchoredRule (Validator : Type*) (BlockId : Type*) (Payload : Type*)
   for every rule in the tree; a rule whose wavelength varies reads it from
   the kind the schedule assigns, which a rebase carries with the leader. -/
   waveAt : ℕ → ℕ
-  /-- The direct commit, judged from a view: `Commit U V L r` says the
-  candidate `L` proposed at round `r` is committed by what `V` holds. -/
-  Commit : (U : BlockRecord Validator BlockId Payload P honest) → U.View → BlockId → ℕ → Prop
+  /-- The direct commit, judged from a view: `Commit U V L r κ` says the
+  candidate `L` proposed at round `r`, at a slot of kind `κ`, is committed
+  by what `V` holds. A rule with one wave ignores `κ`; a rule whose wave
+  varies reads it there, as `Skip` and `Link` read `S.kind k`. -/
+  Commit : (U : BlockRecord Validator BlockId Payload P honest) → U.View → BlockId → ℕ → ℕ → Prop
   /-- The direct commit is decidable: a validator computes it from its
   view, and so does a witness. -/
   decCommit : ∀ (U : BlockRecord Validator BlockId Payload P honest) (V : U.View) (L : BlockId)
-    (r : ℕ), Decidable (Commit U V L r)
+    (r κ : ℕ), Decidable (Commit U V L r κ)
   /-- The direct skip of a slot, judged from a view. -/
   Skip : (U : BlockRecord Validator BlockId Payload P honest) → U.View → Slots Validator → ℕ → Prop
   /-- The number of rungs of the indirect test. -/
@@ -114,9 +116,9 @@ namespace AnchoredRule
 
 /-- The rule's own decidability of its direct commit, as an instance. -/
 instance instDecidableCommit {R : AnchoredRule Validator BlockId Payload P honest}
-    (U : BlockRecord Validator BlockId Payload P honest) (V : U.View) (L : BlockId) (r : ℕ) :
-    Decidable (R.Commit U V L r) :=
-  R.decCommit U V L r
+    (U : BlockRecord Validator BlockId Payload P honest) (V : U.View) (L : BlockId) (r κ : ℕ) :
+    Decidable (R.Commit U V L r κ) :=
+  R.decCommit U V L r κ
 
 variable (R : AnchoredRule Validator BlockId Payload P honest)
 variable [S : Slots Validator]
@@ -183,7 +185,7 @@ inductive Decided (U : BlockRecord Validator BlockId Payload P honest) (V : U.Vi
     ℕ → Option BlockId → Prop
   /-- The direct rule commits a candidate outright. -/
   | directCommit {k : ℕ} {L : BlockId} :
-      IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) →
+      IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) (S.kind k) →
       Decided U V k (some L)
   /-- The direct rule skips the slot. -/
   | directSkip {k : ℕ} :
@@ -274,16 +276,18 @@ structure Laws (I : Slots Validator → BlockRecord Validator BlockId Payload P 
   commit_unique : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
     {V₁ V₂ : U.View} {k : ℕ} {L₁ L₂ : BlockId},
     I S U → IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ →
-    R.Commit U V₁ L₁ (S.slotRound k) → R.Commit U V₂ L₂ (S.slotRound k) → L₁ = L₂
+    R.Commit U V₁ L₁ (S.slotRound k) (S.kind k) →
+    R.Commit U V₂ L₂ (S.slotRound k) (S.kind k) → L₁ = L₂
   /-- A direct commit and a direct skip of one slot cannot both hold. -/
   commit_skip : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
     {V₁ V₂ : U.View} {k : ℕ} {L : BlockId},
-    I S U → IsLeaderBlock U k L → R.Commit U V₁ L (S.slotRound k) → R.Skip U V₂ S k → False
+    I S U → IsLeaderBlock U k L → R.Commit U V₁ L (S.slotRound k) (S.kind k) →
+    R.Skip U V₂ S k → False
   /-- **Visibility.** A direct commit is linked, at some rung, from any
   candidate anchor of any eligible slot. -/
   commit_link : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
     {V : U.View} {k j : ℕ} {L A : BlockId},
-    I S U → IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) →
+    I S U → IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) (S.kind k) →
     IsLeaderBlock U j A → R.Eligible k j →
     ∃ i, i < R.rungs ∧ R.Link i U A L S k
   /-- A direct commit and the tie-break's choice at any rung, from any
@@ -291,7 +295,8 @@ structure Laws (I : Slots Validator → BlockRecord Validator BlockId Payload P 
   commit_link_unique : ∀ {S : Slots Validator}
     {U : BlockRecord Validator BlockId Payload P honest}
     {V : U.View} {k j i : ℕ} {L₁ L₂ A : BlockId},
-    I S U → IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ → R.Commit U V L₁ (S.slotRound k) →
+    I S U → IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ →
+    R.Commit U V L₁ (S.slotRound k) (S.kind k) →
     IsLeaderBlock U j A → R.Eligible k j → i < R.rungs →
     (∀ i', i' < i → R.RungEmpty U A i' k) →
     R.Link i U A L₂ S k → R.Least U A i k L₂ → L₁ = L₂
@@ -308,8 +313,8 @@ structure Laws (I : Slots Validator → BlockRecord Validator BlockId Payload P 
     R.Least U A i k L₁ → R.Least U A i k L₂ → L₁ = L₂
   /-- A larger view can only see more of a direct commit. -/
   commit_mono : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
-    {V V' : U.View} {L : BlockId} {r : ℕ},
-    I S U → V.ids ⊆ V'.ids → R.Commit U V L r → R.Commit U V' L r
+    {V V' : U.View} {L : BlockId} {r κ : ℕ},
+    I S U → V.ids ⊆ V'.ids → R.Commit U V L r κ → R.Commit U V' L r κ
   /-- And of a direct skip. -/
   skip_mono : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
     {V V' : U.View} {k : ℕ}, I S U → V.ids ⊆ V'.ids → R.Skip U V S k → R.Skip U V' S k

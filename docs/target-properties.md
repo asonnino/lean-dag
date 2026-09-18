@@ -771,21 +771,28 @@ up, the two universes agreeing on every band (`altRule_not_banded`); the
 rule has no band laws either (`altRule_not_bandLaws`). So the wave is not
 read from the round. A schedule assigns each slot a kind, `Slots.kind`,
 beside its round and its leader; an anchored rule reads its wave at the
-slot's kind, `waveAt (S.kind k)`; and a rebase carries a slot's kind as
-it carries its leader (`Rebases.kind`), which `Banded` asks of its two
-schedules on the band as it asks the leaders. `AnchoredRule.banded` then
-takes the band laws and nothing else: a wave that varies is a wave the
-schedule says, and what the schedule says a rebase keeps.
-`LeanDagTest/Common/VaryingWaveBand.lean` is the rule whose wave enters
-through eligibility alone, with the parity of a round as its kind: it has
-the band laws (`floorRule_bandLaws`) and so the band
-(`floorRule_banded`). The frame that refuted the band when the wave was
-read from the round recomputes each slot's kind from its own rounds, and
-is not a rebase of the original (`altSlotsK'_not_rebases`); the frame
-that carries the kinds is one, and there the two frames decide alike
-(`floor_frames_agree`). Persistence needs no kind, an extension moving no
-round (`altRule_persist`, `floorRule_persist`), and eligibility spans at
-a bound on the wave in place of a constant (`altRule_spansEligible`).
+slot's kind, `waveAt (S.kind k)` in its eligibility and the kind handed
+to `Commit` in its direct commit, as `Skip` and `Link` read `S.kind k`;
+and a rebase carries a slot's kind as it carries its leader
+(`Rebases.kind`), which `Banded` asks of its two schedules on the band
+as it asks the leaders, and the band laws ask of the slot they concern.
+`AnchoredRule.banded` then takes the band laws and nothing else: a wave
+that varies is a wave the schedule says, and what the schedule says a
+rebase keeps. `LeanDagTest/Common/VaryingWaveBand.lean` has two such
+rules. `floorRule` reads its wave through eligibility alone, with the
+parity of a round as its kind: it has the band laws
+(`floorRule_bandLaws`) and so the band (`floorRule_banded`); the frame
+that refuted the band when the wave was read from the round recomputes
+each slot's kind from its own rounds, and is not a rebase of the
+original (`altSlotsK'_not_rebases`), while the frame that carries the
+kinds is one, and there the two frames decide alike
+(`floor_frames_agree`). `kindRule` is Steelhead's shape, its direct
+commit reading a block at the wave of the kind it is handed: the band
+laws (`kindRule_bandLaws`), and so the band (`kindRule_banded`), with
+no hypothesis on the wave. Persistence needs no kind, an extension
+moving no round (`altRule_persist`, `floorRule_persist`), and
+eligibility spans at a bound on the wave in place of a constant
+(`altRule_spansEligible`).
 
 | rule | the rounds it reads | offset band |
 |---|---|---|
@@ -4709,12 +4716,16 @@ a schedule says otherwise, so every schedule in the tree is built as
 before. `Rebases` carries it (`kind : S'.kind k = S.kind (d + k)`), and
 `Slots.chop`, the configuration's `rebases_chop`, `refl` and `trans`
 supply it. An anchored rule reads its wave at the kind:
-`decisionRound k = S.slotRound k + R.waveAt (S.kind k)`, and
-`Eligible` with it. `Banded` asks its two schedules to agree on the
-kinds of the band as on the leaders, and `DecidedBelow`, `Indirect` and
-`exists_roundLocal` hold the kinds fixed where they hold the leaders
-fixed; `Indirect`'s eligibility takes the schedule, since a round
-function no longer determines it.
+`decisionRound k = S.slotRound k + R.waveAt (S.kind k)`, `Eligible`
+with it, and `Commit U V L r κ` is handed the slot's kind beside its
+round, as `Skip` and `Link` are handed `S k`; a rule with one wave
+ignores it. `Banded` asks its two schedules to agree on the kinds of
+the band as on the leaders, the band laws ask it of the slot they
+concern, and `DecidedBelow`, `Indirect` and `exists_roundLocal` hold
+the kinds fixed where they hold the leaders fixed; `Indirect`'s
+eligibility takes the schedule, since a round function no longer
+determines it, and `CommitsDirect`'s direct predicate, with Barnacle's
+`DirectCommitIn`, takes the kind.
 
 **What follows.** `AnchoredRule.banded : R.BandLaws → Banded R.toDagRule`,
 with no wave hypothesis: in `banded_aux` the one rewrite that needed
@@ -4726,7 +4737,9 @@ that refuted the band with a wave of period two, `floorRule`, is banded
 (`floorRule_banded`); the frame that refuted it recomputed slot `0`'s
 kind from its own rounds and is no rebase of the original
 (`altSlotsK'_not_rebases`), and across the frame that carries the kinds
-the verdicts agree (`floor_frames_agree`). `altRule`, whose direct
+the verdicts agree (`floor_frames_agree`). `kindRule`, whose direct
+commit reads the wave of the kind it is handed, Steelhead's shape, has
+the band laws and the band (`kindRule_banded`). `altRule`, whose direct
 predicate reads the wave of the round, stays a non-example, now of the
 right thing: a rule that reads its wave from the round rather than the
 kind.
@@ -4740,8 +4753,9 @@ one wave length, `LiveRule.Descent` reads one gap at every schedule its
 the gap, so a bound would not do and a varying wave cannot pass through
 until the descent laws take a gap per kind. No rule in the tree sets a
 kind; Steelhead's `periodic ws wa k`, a function of `r % k`, is a
-schedule whose kind is `r % k` and a rule whose `waveAt` is a function
-of the kind, and needs neither a period nor a constancy hypothesis.
+schedule whose kind is `r % k` and a rule whose `waveAt`, `Commit`,
+`Skip` and `Link` read `w` at the kind, and needs neither a period nor
+a constancy hypothesis.
 
 ### 11.5 Next steps, in order
 

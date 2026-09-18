@@ -57,13 +57,13 @@ namespace BaseRule
 `V`. The unit the window count counts. -/
 def SlotDirect (R : BaseRule Validator BlockId Payload) (S : Slots Validator)
     (U : R.Universe) (V : R.View U) (κ : ℕ) : Prop :=
-  ∃ L ∈ R.ids U, R.IsLeaderBlock S U κ L ∧ R.DirectCommitIn V L (S.slotRound κ)
+  ∃ L ∈ R.ids U, R.IsLeaderBlock S U κ L ∧ R.DirectCommitIn V L (S.slotRound κ) (S.kind κ)
 
 instance instDecidableSlotDirect (R : BaseRule Validator BlockId Payload)
     (S : Slots Validator) (U : R.Universe) (V : R.View U) (κ : ℕ) :
     Decidable (R.SlotDirect S U V κ) :=
   inferInstanceAs (Decidable (∃ L ∈ R.ids U, R.IsLeaderBlock S U κ L ∧
-    R.DirectCommitIn V L (S.slotRound κ)))
+    R.DirectCommitIn V L (S.slotRound κ) (S.kind κ)))
 
 end BaseRule
 

@@ -71,7 +71,7 @@ theorem commitsCandidate :
 predicate — a *disjunction*, the fast path or the slow one. -/
 theorem commitsDirect :
     CommitsDirect (optimalRule (Replica := Replica) (BlockId := BlockId))
-      (fun {U} V L r => LeanDag.OptimalHydrozoan.FastCommitOptInView U.toBlockRecord V L r ∨
+      (fun {U} V L r _ => LeanDag.OptimalHydrozoan.FastCommitOptInView U.toBlockRecord V L r ∨
         LeanDag.Hydrozoan.SlowCommitInView U.toBlockRecord V L r) :=
   AnchoredRule.commitsDirectVia
 

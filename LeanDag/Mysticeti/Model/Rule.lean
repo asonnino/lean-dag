@@ -87,15 +87,15 @@ def coreAnchored (Validator BlockId Payload : Type*) [Fintype Validator]
     [DecidableEq Validator] [Faults Validator] [DecidableEq BlockId] :
     AnchoredRule Validator BlockId Payload ValidWrt Correct where
   waveAt := fun _ => 2
-  Commit := fun U V L r => DirectCommitIn U V L r
-  decCommit := fun _ _ _ _ => inferInstance
+  Commit := fun U V L r _ => DirectCommitIn U V L r
+  decCommit := fun _ _ _ _ _ => inferInstance
   Skip := fun U V S k => DirectSkipSlotIn (S := S) U V k
   rungs := 1
   Link := fun _ U A L S k => CertifiedIn U A L (S.slotRound k)
   tie := fun _ _ _ => False
 
-instance {V : View Validator BlockId Payload U} (L : BlockId) (r : ℕ) :
-    Decidable ((coreAnchored Validator BlockId Payload).Commit U V L r) :=
+instance {V : View Validator BlockId Payload U} (L : BlockId) (r κ : ℕ) :
+    Decidable ((coreAnchored Validator BlockId Payload).Commit U V L r κ) :=
   inferInstanceAs (Decidable (DirectCommitIn U V L r))
 
 instance {V : View Validator BlockId Payload U} (k : ℕ) :

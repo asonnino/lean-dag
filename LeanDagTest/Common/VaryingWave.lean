@@ -111,9 +111,9 @@ round `r` is committed where a block of the view sits at `r + altWave r` and ref
 direct skip and no rung, so a `some` verdict comes from the direct rule alone. -/
 def altRule : AnchoredRule (Fin 4) (Fin 20) Unit ValidWrt (Correct : Finset (Fin 4)) where
   waveAt := altWave
-  Commit := fun U V L r =>
+  Commit := fun U V L r _ =>
     ∃ c ∈ V.ids, (U.block c).round = r + altWave r ∧ L ∈ (U.block c).refs
-  decCommit := fun _ _ _ _ => inferInstance
+  decCommit := fun _ _ _ _ _ => inferInstance
   Skip := fun _ _ _ _ => False
   rungs := 0
   Link := fun _ _ _ _ _ _ => False
@@ -166,9 +166,10 @@ own round reference the fresh genesis layer. So `commit_band` fails on the very 
 `Banded`, and `altRule` removes both of `banded`'s hypotheses at once rather than isolating one. -/
 theorem altRule_not_bandLaws : ¬ altRule.BandLaws := by
   intro hb
-  have hc : altRule.Commit av3 (View.full av3) 1 (altSlots.slotRound 0) := by decide
+  have hc : altRule.Commit av3 (View.full av3) 1 (altSlots.slotRound 0) (altSlots.kind 0) := by
+    decide
   have hcb := hb.commit_band (S := altSlots) (S' := altSlots') (V := View.full av3)
-    (V' := View.full av4) (k := 0) (k' := 0) (L := 1) (alt_agreeBand 1) rfl rfl rfl (by decide)
+    (V' := View.full av4) (k := 0) (k' := 0) (L := 1) (alt_agreeBand 1) rfl rfl rfl rfl (by decide)
     (fun b _ _ _ => Finset.mem_univ b) (by decide) hc
   exact absurd hcb (by decide)
 

@@ -94,7 +94,7 @@ theorem commitsCandidate : CommitsCandidate
 predicate. -/
 theorem commitsDirect : CommitsDirect
     (nemoRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-    (fun {U} V L r => Nemo.DirectCommitIn U V L r) :=
+    (fun {U} V L r _ => Nemo.DirectCommitIn U V L r) :=
   AnchoredRule.commitsDirect
 
 end NemoProperties

@@ -232,18 +232,18 @@ carry across a band covering the slot's wave, and a candidate the band
 did not carry is certified from no old anchor. -/
 theorem mahiMahiBandLaws (hw : 2 ≤ w) :
     (MahiMahi.mahiMahiAnchored Validator BlockId Payload w).BandLaws where
-  commit_band := fun h hkk _ hlo hhi hV hL hc =>
+  commit_band := fun h hkk _ _ hlo hhi hV hL hc =>
     directCommitIn_band h hw hV hL.1 hL.2.1 hkk (by omega)
       (by simp only [MahiMahi.mahiMahiAnchored_waveAt] at hhi; omega) hc
-  skip_band := fun h hkk hlk hlo hhi hV hs => by
+  skip_band := fun h hkk hlk _ hlo hhi hV hs => by
     show MahiMahi.DirectSkipIn _ _ _ _ _
     rw [← hlk]
     exact directSkipIn_band h hw hV hkk (by omega)
       (by simp only [MahiMahi.mahiMahiAnchored_waveAt] at hhi; omega) hs
-  link_band := fun h hA hAlo hAhi hkk _ hlo hhi _ hL =>
+  link_band := fun h hA hAlo hAhi hkk _ _ hlo hhi _ hL =>
     certifiedIn_band h hw hA hAlo hAhi hL.1 hL.2.1 hkk hlo
       (by simp only [MahiMahi.mahiMahiAnchored_waveAt] at hhi; omega)
-  link_novel := fun h hA hAlo hAhi hkk _ hlo hhi _ hL hLo =>
+  link_novel := fun h hA hAlo hAhi hkk _ _ hlo hhi _ hL hLo =>
     not_certifiedIn_band_novel h hw hA hAlo hAhi hLo hL.2.1 hkk hlo
       (by simp only [MahiMahi.mahiMahiAnchored_waveAt] at hhi; omega)
 

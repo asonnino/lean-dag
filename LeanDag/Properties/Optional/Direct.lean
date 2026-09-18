@@ -23,9 +23,9 @@ variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 predicate — what counts as *direct* is the rule's business and not the
 carrier's, which is why `Direct` is an argument rather than a field. -/
 def CommitsDirect (R : DagRule Validator BlockId Payload)
-    (Direct : ∀ {U : R.Universe}, R.View U → BlockId → ℕ → Prop) : Prop :=
+    (Direct : ∀ {U : R.Universe}, R.View U → BlockId → ℕ → ℕ → Prop) : Prop :=
   ∀ (S : Slots Validator) (U : R.Universe) (V : R.View U) (k : ℕ) (L : BlockId),
-    R.IsCandidate S U k L → Direct V L (S.slotRound k) → R.Decided S V k (some L)
+    R.IsCandidate S U k L → Direct V L (S.slotRound k) (S.kind k) → R.Decided S V k (some L)
 
 end Properties
 

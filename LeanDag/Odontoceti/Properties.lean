@@ -64,21 +64,21 @@ slot's wave, and a candidate the band did not carry is thick-linked from
 no old anchor. -/
 theorem odontocetiBandLaws :
     (Odontoceti.odontocetiAnchored Validator BlockId Payload).BandLaws where
-  commit_band := fun h hkk _ hlo hhi hV _ hc =>
+  commit_band := fun h hkk _ _ hlo hhi hV _ hc =>
     AnchoredRule.holdsAtLeast_votesFor_band h hV (by omega) (by omega)
       (by simp only [Odontoceti.odontocetiAnchored_waveAt] at hhi; omega) hc
-  skip_band := fun h hkk hlk hlo hhi hV hs =>
+  skip_band := fun h hkk hlk _ hlo hhi hV hs =>
     le_trans hs (Finset.card_le_card (AnchoredRule.slotBlamesIn_band h hkk hlk hlo.le
       (by simp only [Odontoceti.odontocetiAnchored_waveAt] at hhi; omega) hV))
   link_band := by
-    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk _ hlo hhi _ _
+    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk _ _ hlo hhi _ _
     simp only [Odontoceti.odontocetiAnchored_waveAt] at hhi
     show Odontoceti.ThickLink U' A L (S'.slotRound k') ↔ Odontoceti.ThickLink U A L (S.slotRound k)
     unfold Odontoceti.ThickLink coneLink
     rw [AnchoredRule.coneSupporters_band h hA hAlo hAhi (n := S.slotRound k + 1) (by omega) (by omega)
       (by omega)]
   link_novel := by
-    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk _ hlo hhi _ _ hL ht
+    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk _ _ hlo hhi _ _ hL ht
     simp only [Odontoceti.odontocetiAnchored_waveAt] at hhi
     change Odontoceti.ThickLink U' A L (S'.slotRound k') at ht
     unfold Odontoceti.ThickLink coneLink at ht

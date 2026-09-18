@@ -63,7 +63,7 @@ predicate. -/
 theorem commitsDirect (w : ℕ) :
     CommitsDirect (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) w)
-      (fun {U} V L r => MahiMahi.DirectCommitIn U V w L r) :=
+      (fun {U} V L r _ => MahiMahi.DirectCommitIn U V w L r) :=
   AnchoredRule.commitsDirect
 
 end MahiMahiProperties
