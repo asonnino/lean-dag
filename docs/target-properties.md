@@ -760,6 +760,30 @@ that break the invariance. The known findings sit in an `ALLOW` list, so
 a genesis special case added later fails the script rather than silently
 making that rule's band unprovable.
 
+**A wave read at the slot's round breaks the invariance on its own**,
+whatever the direct predicates do, which is why `AnchoredRule.banded`
+asks that `waveAt` be the same at every round. That hypothesis is not
+automatically satisfied: `LeanDagTest/Common/VaryingWave.lean` builds a
+rule whose wave alternates, decides a slot in one frame, and leaves the
+same slot undecided in that frame moved one round up, the two universes
+agreeing on every band (`altRule_not_banded`). That rule has no band
+laws either (`altRule_not_bandLaws`), so it refutes both of `banded`'s
+hypotheses at once;
+`LeanDagTest/Common/VaryingWaveBand.lean` drops only the constancy one,
+with a rule whose wave enters through eligibility alone and whose direct
+commit, direct skip and rung therefore survive a shift of the band
+(`floorRule_bandLaws`). Its verdict in the upper frame has no
+counterpart a round down, so the band laws do not yield `Banded` by
+themselves (`bandLaws_not_banded`). That rule's wave repeats every two
+rounds, so periodicity does not rescue the hypothesis either
+(`periodic_bandLaws_not_banded`): `Banded` quantifies its two offsets
+over every pair, and a periodic wave survives only the pairs whose
+difference is a multiple of the period. What the band yields with no
+offset
+survives the varying wave all the same, through the extension laws
+(`altRule_persist`, `floorRule_persist`), and eligibility spans at a
+bound on the wave in place of a constant (`altRule_spansEligible`).
+
 | rule | the rounds it reads | offset band |
 |---|---|---|
 | core Mysticeti | `slotRound k`, `+1`, `+2` | proved |
