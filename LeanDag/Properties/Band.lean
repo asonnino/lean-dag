@@ -226,6 +226,7 @@ def Banded (R : DagRule Validator BlockId Payload) : Prop :=
         (∀ m m', m + d' = m' + d → S.slotRound m ≤ top →
           S.slotRound m + g = S'.slotRound m' + g') →
         (∀ m m', m + d' = m' + d → S.slotRound m ≤ top → S.leader m = S'.leader m') →
+        (∀ m m', m + d' = m' + d → S.slotRound m ≤ top → S.kind m = S'.kind m') →
         AgreeBand R U U' (S.slotRound k + g) (top + g) g g' →
         (∀ b, b ∈ R.viewIds V → S.slotRound k ≤ (R.block U b).round →
           (R.block U b).round ≤ top → b ∈ R.viewIds V') →

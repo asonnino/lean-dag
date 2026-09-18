@@ -190,7 +190,7 @@ theorem descent_of_support (R : Properties.DagRule Validator BlockId Payload)
     (Good : R.Universe → ℕ → ℕ → Prop) (g : ℕ)
     (sp : Properties.Support R) {rel : Reliability Validator}
     (hcov : OfCoverage sp rel) (hlc : sp.Commits rel)
-    (hind : Properties.Indirect R (fun sr i j => sr i + g ≤ sr j))
+    (hind : Properties.Indirect R (fun S i j => S.slotRound i + g ≤ S.slotRound j))
     (hwave : ∀ r, sp.waveAt r ≤ g)
     (hgood : ∀ U Rnd N, Good U Rnd N → Timed.Good R rel U Rnd N) :
     Properties.Descent R Good g rel.slack where

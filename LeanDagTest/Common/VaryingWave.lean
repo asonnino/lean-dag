@@ -172,15 +172,19 @@ theorem altRule_not_bandLaws : ¬ altRule.BandLaws := by
     (fun b _ _ _ => Finset.mem_univ b) (by decide) hc
   exact absurd hcb (by decide)
 
-/-- **A rule whose wave varies with the round is not banded**: the band shifts by a constant and a
-wave read at the slot's round does not. The rule has no band laws either (`altRule_not_bandLaws`),
-so that `banded`'s constancy hypothesis cannot be dropped is
-`VaryingWaveBand.bandLaws_not_banded`. -/
+/-- **A rule that reads its wave from the slot's round is not banded**: the band shifts rounds by
+a constant, and a wave read at the round moves with it, while the kinds of the two frames agree.
+A rule that reads its wave from the kind instead is banded whenever it has the band laws
+(`VaryingWaveBand.floorRule_banded`). -/
 theorem altRule_not_banded : ¬ Banded altRule.toDagRule := by
   intro hb
   obtain ⟨top, ht⟩ := hb altSlots av3 (View.full av3) 0 (some 1) alt_decided
-  refine alt_not_decided (ht 1 0 0 0 altSlots' av4 (View.full av4) 0 rfl ?_ ?_
+  refine alt_not_decided (ht 1 0 0 0 altSlots' av4 (View.full av4) 0 rfl ?_ ?_ ?_
     (alt_agreeBand top) (fun b _ _ _ => Finset.mem_univ b))
+  · intro m m' hm _
+    have : m = m' := by omega
+    subst this
+    rfl
   · intro m m' hm _
     have : m = m' := by omega
     subst this

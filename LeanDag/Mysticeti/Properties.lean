@@ -346,7 +346,7 @@ theorem coreBandLaws : (coreAnchored Validator BlockId Payload).BandLaws where
 /-- **The core reads a band.** -/
 theorem banded : Banded
     (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
-  AnchoredRule.banded coreBandLaws (fun _ _ => rfl)
+  AnchoredRule.banded coreBandLaws
 
 /-- The carrier's coverage predicate is the core's, on the nose. -/
 theorem coversUpto_eq {U : BlockUniverse Validator BlockId Payload}
@@ -544,7 +544,7 @@ theorem leaderCommits_cert :
   have hin : DirectCommitIn U V L (S.slotRound k) :=
     directCommitIn_of_coversUpto hdc (hcov.mono (hN k hK))
   refine ⟨L, by omega, Decided.directCommit hL hin, ?_⟩
-  intro S' hround hlead'
+  intro S' hround hlead' _
   refine Decided.directCommit (S := S') ⟨hLmem, by rw [hround]; exact hLr,
     by rw [hlead' k (by omega)]; exact hLc⟩ ?_
   rw [hround]; exact hin
@@ -656,7 +656,7 @@ theorem coreSupport_commits :
 with no tie to break, read at the three-round eligibility. -/
 theorem indirect :
     Indirect (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-      (fun sr i j => sr i + 3 ≤ sr j) :=
+      (fun S i j => S.slotRound i + 3 ≤ S.slotRound j) :=
   (AnchoredRule.indirect coreLaws.link_congr fun hi h => exists_least hi h).congr
     (fun _ _ _ => by simp only [coreAnchored_waveAt] <;> omega)
 

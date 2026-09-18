@@ -252,7 +252,7 @@ for. -/
 theorem banded (hw : 2 ≤ w) :
     Banded (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) w) :=
-  AnchoredRule.banded (mahiMahiBandLaws hw) (fun _ _ => rfl)
+  AnchoredRule.banded (mahiMahiBandLaws hw)
 
 /-! ## The two liveness properties
 
@@ -369,7 +369,7 @@ theorem mmSupport_commits {w : ℕ} (hw : 2 ≤ w) :
   have hin : MahiMahi.DirectCommitIn U V w L (S.slotRound k) :=
     directCommitIn_of_coversUpto hdc (by rw [hdr]; exact hcov)
   refine ⟨L, by omega, MahiMahi.Decided.directCommit ⟨hLmem, hLr', hLc'⟩ hin, ?_⟩
-  intro S' hround hlead'
+  intro S' hround hlead' _
   refine MahiMahi.Decided.directCommit (S := S') ⟨hLmem, ?_, ?_⟩ ?_
   · rw [hround]; exact hLr'
   · rw [hlead' k (by omega)]; exact hLc'
@@ -381,7 +381,7 @@ open Classical in
 tie to break — two certificates at one slot name the same candidate. -/
 theorem indirect {w : ℕ} (hw : 1 ≤ w) :
     Indirect (mahiMahiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) w)
-      (fun sr i j => sr i + w ≤ sr j) :=
+      (fun S i j => S.slotRound i + w ≤ S.slotRound j) :=
   (AnchoredRule.indirect ((MahiMahi.mahiMahiAnchored Validator BlockId Payload w).linkCongr_of_round
     (fun _ U A L r => MahiMahi.CertifiedIn U w A L r) fun _ _ _ _ _ _ => rfl)
     fun hi h => MahiMahi.exists_least hi h).congr
@@ -397,8 +397,8 @@ theorem descent {w : ℕ} (hw : 4 ≤ w) :
       (w - 1 + 1) (coreReliability Validator).slack :=
   Timed.descent_of_support _ _ _ (mmSupport w) (mmSupport_ofCoverage hw)
     (mmSupport_commits (by omega))
-    ((indirect (by omega)).congr fun sr i j => by
-      change sr i + w ≤ sr j ↔ sr i + (w - 1 + 1) ≤ sr j
+    ((indirect (by omega)).congr fun S i j => by
+      change S.slotRound i + w ≤ S.slotRound j ↔ S.slotRound i + (w - 1 + 1) ≤ S.slotRound j
       omega)
     (fun _ => by change w - 1 ≤ w - 1 + 1; omega) fun _ _ _ h => h
 

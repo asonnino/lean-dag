@@ -30,6 +30,8 @@ structure Rebases (S S' : Slots Validator) (G d : ℕ) : Prop where
   slotRound : ∀ k, S'.slotRound k + G = S.slotRound (d + k)
   /-- And each slot leads the same replica. -/
   leader : ∀ k, S'.leader k = S.leader (d + k)
+  /-- And keeps its kind: what the schedule says of a slot moves with it. -/
+  kind : ∀ k, S'.kind k = S.kind (d + k)
   /-- The horizon does not reach past the base slot. -/
   base : G ≤ S.slotRound d
 

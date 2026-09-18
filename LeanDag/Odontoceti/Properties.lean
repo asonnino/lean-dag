@@ -90,7 +90,7 @@ theorem odontocetiBandLaws :
 /-- **Odontoceti is banded**: the relation's band at its laws. -/
 theorem banded : Banded
     (odontocetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
-  AnchoredRule.banded odontocetiBandLaws (fun _ _ => rfl)
+  AnchoredRule.banded odontocetiBandLaws
 
 /-- **Odontoceti skips an unsupported slot from a correct quorum.**
 
@@ -144,7 +144,7 @@ theorem voteSupport_commits :
   have hin : Odontoceti.DirectCommitIn U V L (S.slotRound k) :=
     Odontoceti.directCommitIn_of_coversUpto hdc hcov
   refine ⟨L, by omega, Odontoceti.Decided.directCommit ⟨hLmem, hLr, hLc⟩ hin, ?_⟩
-  intro S' hround hlead'
+  intro S' hround hlead' _
   refine Odontoceti.Decided.directCommit (S := S') ⟨hLmem, by rw [hround]; exact hLr,
     by rw [hlead' k (by omega)]; exact hLc⟩ ?_
   rw [hround]; exact hin
@@ -153,8 +153,9 @@ theorem voteSupport_commits :
 the least thick-linked candidate. -/
 theorem indirect :
     Indirect (odontocetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-      (fun sr i j => sr i +
-        (Odontoceti.odontocetiAnchored Validator BlockId Payload).waveAt (sr i) + 1 ≤ sr j) :=
+      (fun S i j => S.slotRound i +
+        (Odontoceti.odontocetiAnchored Validator BlockId Payload).waveAt (S.kind i) + 1 ≤
+          S.slotRound j) :=
   AnchoredRule.indirect Odontoceti.odontocetiLaws.link_congr fun hi h => Odontoceti.exists_least hi h
 
 /-- **Odontoceti has the descent laws** at the core fault model's slack,

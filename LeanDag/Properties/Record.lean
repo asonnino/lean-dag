@@ -62,6 +62,7 @@ theorem rebases_chop {S : Slots Validator} {G d : ℕ} (hd : G ≤ S.slotRound d
     have := horizon_le_slotRound hd k
     omega
   leader := fun _ => rfl
+  kind := fun _ => rfl
   base := hd
 
 namespace DagRule.OnRecord

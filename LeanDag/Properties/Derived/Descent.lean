@@ -18,7 +18,7 @@ namespace Properties
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
-variable {R : DagRule Validator BlockId Payload} {Elig : (ℕ → ℕ) → ℕ → ℕ → Prop}
+variable {R : DagRule Validator BlockId Payload} {Elig : Slots Validator → ℕ → ℕ → Prop}
 
 /-- **A committed run decides everything below it.** `c` consecutive
 slots from `b`, each committed within `b + c`, decide every slot below
@@ -38,7 +38,7 @@ undecided: any one of them that committed would have been the least. -/
 theorem decidedBelow_of_committed_run (hind : Indirect R Elig)
     (S : Slots Validator) {U : R.Universe} {V : R.View U} {b n B : ℕ}
     (hbn : b ≤ n) (hnB : n < B)
-    (hspan : ∀ i, i < b → Elig S.slotRound i n)
+    (hspan : ∀ i, i < b → Elig S i n)
     (hrun : ∀ j, b ≤ j → j ≤ n → ∃ A, DecidedBelow R S B V j (some A)) :
     ∀ i, i < b → ∃ v, DecidedBelow R S B V i v := by
   classical
@@ -48,13 +48,13 @@ theorem decidedBelow_of_committed_run (hind : Indirect R Elig)
     | zero => intro i hi hd; omega
     | succ d ih =>
       intro i hi hd
-      have hex : ∃ j, Elig S.slotRound i j ∧ ∃ A, DecidedBelow R S B V j (some A) :=
+      have hex : ∃ j, Elig S i j ∧ ∃ A, DecidedBelow R S B V j (some A) :=
         ⟨n, hspan i hi, hrun n hbn le_rfl⟩
       have hle : Nat.find hex ≤ n := Nat.find_le ⟨hspan i hi, hrun n hbn le_rfl⟩
       set j := Nat.find hex with hj
-      obtain ⟨helig, A, hA⟩ : Elig S.slotRound i j ∧ ∃ A, DecidedBelow R S B V j (some A) :=
+      obtain ⟨helig, A, hA⟩ : Elig S i j ∧ ∃ A, DecidedBelow R S B V j (some A) :=
         Nat.find_spec hex
-      have hmid : ∀ i', i < i' → i' < j → Elig S.slotRound i i' →
+      have hmid : ∀ i', i < i' → i' < j → Elig S i i' →
           DecidedBelow R S B V i' none := by
         intro i' h1 h2 h3
         have hnc : ¬ ∃ C, DecidedBelow R S B V i' (some C) :=
@@ -66,13 +66,13 @@ theorem decidedBelow_of_committed_run (hind : Indirect R Elig)
         cases v with
         | none => exact hv
         | some C => exact absurd ⟨C, hv⟩ hnc
-      have hmid' : ∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S V i' none :=
+      have hmid' : ∀ i', i < i' → i' < j → Elig S i i' → R.Decided S V i' none :=
         fun i' h1 h2 h3 => (hmid i' h1 h2 h3).2.1
       obtain ⟨v, hv⟩ := hind S V i j A helig hA.2.1 hmid'
-      refine ⟨v, by omega, hv S rfl rfl hA.2.1 hmid', ?_⟩
-      intro S' hround hlead
-      exact hv S' hround (hlead i (by omega)) (hA.2.2 S' hround hlead)
-        (fun i' h1 h2 h3 => (hmid i' h1 h2 h3).2.2 S' hround hlead)
+      refine ⟨v, by omega, hv S rfl rfl rfl hA.2.1 hmid', ?_⟩
+      intro S' hround hlead hkind
+      exact hv S' hround (hlead i (by omega)) (hkind i (by omega)) (hA.2.2 S' hround hlead hkind)
+        (fun i' h1 h2 h3 => (hmid i' h1 h2 h3).2.2 S' hround hlead hkind)
   intro i hi
   exact key (b - i) i hi le_rfl
 
@@ -81,7 +81,7 @@ consecutive commits from `b`; its top is `b + c - 1`, and the spanning
 hypothesis is the protocol's own condition on the round structure —
 that every slot below `b` has the run's top eligible. -/
 theorem Descends.of_indirect (hind : Indirect R Elig) {S : Slots Validator} {c : ℕ}
-    (hc : 0 < c) (hspans : ∀ b i, i < b → Elig S.slotRound i (b + c - 1)) :
+    (hc : 0 < c) (hspans : ∀ b i, i < b → Elig S i (b + c - 1)) :
     Descends R S c := by
   intro U V b hrun i hi
   exact decidedBelow_of_committed_run hind S (b := b) (n := b + c - 1) (B := b + c)

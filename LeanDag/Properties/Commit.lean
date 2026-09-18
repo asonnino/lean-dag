@@ -38,35 +38,36 @@ where it was three protocol-specific inductions.
 Taking `S' := S` gives the plain rule, which is what a mechanism that
 does not track bounds consumes. -/
 def Indirect (R : DagRule Validator BlockId Payload)
-    (Elig : (ℕ → ℕ) → ℕ → ℕ → Prop) : Prop :=
+    (Elig : Slots Validator → ℕ → ℕ → Prop) : Prop :=
   ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (i j : ℕ) (A : BlockId),
-    Elig S.slotRound i j → R.Decided S V j (some A) →
-    (∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S V i' none) →
+    Elig S i j → R.Decided S V j (some A) →
+    (∀ i', i < i' → i' < j → Elig S i i' → R.Decided S V i' none) →
     ∃ v, ∀ S' : Slots Validator, S'.slotRound = S.slotRound → S'.leader i = S.leader i →
+      S'.kind i = S.kind i →
       R.Decided S' V j (some A) →
-      (∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S' V i' none) →
+      (∀ i', i < i' → i' < j → Elig S i i' → R.Decided S' V i' none) →
       R.Decided S' V i v
 
 /-- The indirect property transfers along an equivalence of eligibility
 relations. -/
 theorem Indirect.congr {R : DagRule Validator BlockId Payload}
-    {E₁ E₂ : (ℕ → ℕ) → ℕ → ℕ → Prop} (he : ∀ sr i j, E₁ sr i j ↔ E₂ sr i j)
+    {E₁ E₂ : Slots Validator → ℕ → ℕ → Prop} (he : ∀ S i j, E₁ S i j ↔ E₂ S i j)
     (h : Indirect R E₁) : Indirect R E₂ := by
   intro S U V i j A helig hj hmid
   obtain ⟨v, hv⟩ := h S V i j A ((he _ i j).mpr helig) hj
     (fun i' h1 h2 h3 => hmid i' h1 h2 ((he _ i i').mp h3))
-  exact ⟨v, fun S' hround hlead hj' hmid' => hv S' hround hlead hj'
+  exact ⟨v, fun S' hround hlead hkind hj' hmid' => hv S' hround hlead hkind hj'
     (fun i' h1 h2 h3 => hmid' i' h1 h2 ((he _ i i').mp h3))⟩
 
 /-- **The plain indirect rule**, at the schedule it was given. -/
 theorem Indirect.decided {R : DagRule Validator BlockId Payload}
-    {Elig : (ℕ → ℕ) → ℕ → ℕ → Prop} (h : Indirect R Elig)
+    {Elig : Slots Validator → ℕ → ℕ → Prop} (h : Indirect R Elig)
     (S : Slots Validator) {U : R.Universe} (V : R.View U) {i j : ℕ} {A : BlockId}
-    (he : Elig S.slotRound i j) (hj : R.Decided S V j (some A))
-    (hmid : ∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S V i' none) :
+    (he : Elig S i j) (hj : R.Decided S V j (some A))
+    (hmid : ∀ i', i < i' → i' < j → Elig S i i' → R.Decided S V i' none) :
     ∃ v, R.Decided S V i v := by
   obtain ⟨v, hv⟩ := h S V i j A he hj hmid
-  exact ⟨v, hv S rfl rfl hj hmid⟩
+  exact ⟨v, hv S rfl rfl rfl hj hmid⟩
 
 /-- **The descent laws** at gap `g` and slack `slack`, under a goodness
 predicate on the universe: what a protocol owes a schedule mechanism on

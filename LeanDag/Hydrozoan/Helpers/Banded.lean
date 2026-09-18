@@ -208,7 +208,7 @@ theorem hydrozoanBandLaws : (hydrozoanAnchored Replica BlockId).BandLaws where
 omit S in
 /-- **Hydrozoan reads a band**: the relation's band at its laws. -/
 theorem banded : Banded (rule (Replica := Replica) (BlockId := BlockId)) :=
-  AnchoredRule.banded hydrozoanBandLaws (fun _ _ => rfl)
+  AnchoredRule.banded hydrozoanBandLaws
 
 end Laws
 

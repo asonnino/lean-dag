@@ -47,6 +47,8 @@ theorem exists_coversUpto_decides (h : Banded R) {S : Slots Validator}
       subst this; rfl)
     (fun m m' hm _ => by have : m = m' := by omega
                          subst this; rfl)
+    (fun m m' hm _ => by have : m = m' := by omega
+                         subst this; rfl)
     AgreeBand.refl (fun b hb _ h2 => hcov b (R.viewSound W hb) h2)
 
 /-- **A view holds the reliable set's blocks over a window.** Weaker

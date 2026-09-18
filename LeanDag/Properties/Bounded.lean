@@ -28,7 +28,8 @@ def DecidedBelow (R : DagRule Validator BlockId Payload) (S : Slots Validator) (
     {U : R.Universe} (V : R.View U) (k : ℕ) (v : Option BlockId) : Prop :=
   k < B ∧ R.Decided S V k v ∧
     ∀ S' : Slots Validator, S'.slotRound = S.slotRound →
-      (∀ m, m < B → S'.leader m = S.leader m) → R.Decided S' V k v
+      (∀ m, m < B → S'.leader m = S.leader m) →
+      (∀ m, m < B → S'.kind m = S.kind m) → R.Decided S' V k v
 
 end Properties
 

@@ -139,7 +139,7 @@ theorem hzSupport_commits :
   have hin : LeanDag.Hydrozoan.SlowCommitInView U V L (S.slotRound k) :=
     slowCommitInView_of_coversUpto hslow hcov
   refine ⟨L, by omega, LeanDag.Hydrozoan.Decided.directCommit hL (Or.inr hin), ?_⟩
-  intro S' hround hlead'
+  intro S' hround hlead' _
   refine LeanDag.Hydrozoan.Decided.directCommit (S := S') ⟨hL.1, ?_, ?_⟩ (Or.inr ?_)
   · change (U.block L).round = S'.slotRound k
     rw [hround]; exact hL.2.1
@@ -248,7 +248,7 @@ theorem voteSupport_fast_commits
   have hin : LeanDag.Hydrozoan.FastCommitInView U V L (S.slotRound k) :=
     fastCommitInView_of_coversUpto hfast hcov
   refine ⟨L, by omega, LeanDag.Hydrozoan.Decided.directCommit hL (Or.inl hin), ?_⟩
-  intro S' hround hlead'
+  intro S' hround hlead' _
   refine LeanDag.Hydrozoan.Decided.directCommit (S := S') ⟨hL.1, ?_, ?_⟩ (Or.inl ?_)
   · change (U.block L).round = S'.slotRound k
     rw [hround]; exact hL.2.1
@@ -265,7 +265,7 @@ theorem voteSupport_fast_commits
 graded rule's rung choices, read at the three-round eligibility. -/
 theorem indirect :
     Indirect (rule (Replica := Replica) (BlockId := BlockId))
-      (fun sr i j => sr i + 3 ≤ sr j) :=
+      (fun S i j => S.slotRound i + 3 ≤ S.slotRound j) :=
   (AnchoredRule.indirect SlotAgreement.hydrozoanLaws.link_congr fun hi h => exists_least hi h).congr
     (fun _ _ _ => by simp only [hydrozoanAnchored_waveAt])
 

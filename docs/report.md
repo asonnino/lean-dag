@@ -5100,17 +5100,21 @@ def Banded (R : DagRule Validator BlockId Payload) : Prop :=
         k + d' = k' + d →
         (∀ m m', m + d' = m' + d → S.slotRound m + g = S'.slotRound m' + g') →
         (∀ m m', m + d' = m' + d → S.slotRound m ≤ top → S.leader m = S'.leader m') →
+        (∀ m m', m + d' = m' + d → S.slotRound m ≤ top → S.kind m = S'.kind m') →
         AgreeBand R U U' (S.slotRound k + g) (top + g) g g' →
         (∀ b, b ∈ R.viewIds V → S.slotRound k ≤ (R.block U b).round →
           (R.block U b).round ≤ top → b ∈ R.viewIds V') →
         R.Decided S' V' k' v
 ```
 
-`Agree`: two views of one universe under one schedule do not disagree,
-skips included. `CommitsCandidate`: a commit names the slot's candidate.
-`Indirect`: an eligible committed anchor with every eligible slot
-between skipped decides the slot, and the verdict survives reassignment
-of the other leaders.
+A schedule assigns each slot a kind beside its round and its leader,
+and a rule whose wave varies reads it at the slot's kind; the band asks
+the two schedules to agree on the kinds as on the leaders, and a rebase
+carries both. `Agree`: two views of one universe under one schedule do
+not disagree, skips included. `CommitsCandidate`: a commit names the
+slot's candidate. `Indirect`: an eligible committed anchor with every
+eligible slot between skipped decides the slot, and the verdict survives
+reassignment of the other leaders and kinds.
 
 ```lean
 def Agree (R : DagRule Validator BlockId Payload) : Prop :=
@@ -5126,13 +5130,14 @@ def CommitsCandidate (R : DagRule Validator BlockId Payload) : Prop :=
 
 ```lean
 def Indirect (R : DagRule Validator BlockId Payload)
-    (Elig : (ℕ → ℕ) → ℕ → ℕ → Prop) : Prop :=
+    (Elig : Slots Validator → ℕ → ℕ → Prop) : Prop :=
   ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (i j : ℕ) (A : BlockId),
-    Elig S.slotRound i j → R.Decided S V j (some A) →
-    (∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S V i' none) →
+    Elig S i j → R.Decided S V j (some A) →
+    (∀ i', i < i' → i' < j → Elig S i i' → R.Decided S V i' none) →
     ∃ v, ∀ S' : Slots Validator, S'.slotRound = S.slotRound → S'.leader i = S.leader i →
+      S'.kind i = S.kind i →
       R.Decided S' V j (some A) →
-      (∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S' V i' none) →
+      (∀ i', i < i' → i' < j → Elig S i i' → R.Decided S' V i' none) →
       R.Decided S' V i v
 ```
 
@@ -11349,6 +11354,7 @@ def Slots.chop (S : Slots Validator) (G d : ℕ) (hd : G ≤ S.slotRound d) :
     Slots Validator where
   slotRound k := S.slotRound (d + k) - G
   leader k := S.leader (d + k)
+  kind k := S.kind (d + k)
   mono _ _ h := Nat.sub_le_sub_right (S.mono (Nat.add_le_add_left h d)) G
   unbounded := by
     intro n
@@ -13140,7 +13146,7 @@ structure LiveRule.Delivers (R : LiveRule Validator BlockId Payload) (slack : �
 
 ```lean
 def ofAnchored (R : AnchoredRule Validator BlockId Payload P honest)
-    (_hw : ∀ r, R.waveAt r = R.waveAt 0) :
+    (_hw : ∀ κ, R.waveAt κ = R.waveAt 0) :
     BaseRule Validator BlockId Payload where
   toDagRule := R.toDagRule
   full := fun U => View.full U
@@ -13159,7 +13165,7 @@ def ofAnchored (R : AnchoredRule Validator BlockId Payload P honest)
 ```lean
 def ofAnchoredVia (R : AnchoredRule Validator BlockId Payload P honest) {X : Type}
     (f : X → BlockRecord Validator BlockId Payload P honest)
-    (_hw : ∀ r, R.waveAt r = R.waveAt 0) :
+    (_hw : ∀ κ, R.waveAt κ = R.waveAt 0) :
     BaseRule Validator BlockId Payload where
   toDagRule := R.toDagRuleVia f
   full := fun U => View.full (f U)
@@ -14431,10 +14437,10 @@ def EligibleAt (wave k j : ℕ) : Prop := S.slotRound k + wave < S.slotRound j
 structure AnchoredRule (Validator : Type*) (BlockId : Type*) (Payload : Type*)
     (P : Validity Validator BlockId Payload) (honest : Finset Validator) where
   /-- The rounds a slot's direct rules read above its proposal, less one, as
-  a function of the slot's round: an anchor of a slot proposed at round `r`
-  must sit strictly above `r + waveAt r`. Constant for every rule in the
-  tree; a rule whose wavelength alternates with the round supplies a
-  function of it. -/
+  a function of the slot's kind (`Slots.kind`): an anchor of a slot of kind
+  `κ` proposed at round `r` must sit strictly above `r + waveAt κ`. Constant
+  for every rule in the tree; a rule whose wavelength varies reads it from
+  the kind the schedule assigns, which a rebase carries with the leader. -/
   waveAt : ℕ → ℕ
   /-- The direct commit, judged from a view: `Commit U V L r` says the
   candidate `L` proposed at round `r` is committed by what `V` holds. -/
@@ -14463,10 +14469,10 @@ structure AnchoredRule (Validator : Type*) (BlockId : Type*) (Payload : Type*)
 *abbrev, `Common.Anchored.lean`*
 
 ```lean
-abbrev Eligible (k j : ℕ) : Prop := EligibleAt (S := S) (R.waveAt (S.slotRound k)) k j
+abbrev Eligible (k j : ℕ) : Prop := EligibleAt (S := S) (R.waveAt (S.kind k)) k j
 ```
 
-**`j` may anchor `k`**: eligibility at the wave of `k`'s round.
+**`j` may anchor `k`**: eligibility at the wave of `k`'s kind.
 
 #### `SpansEligible`
 
@@ -14476,7 +14482,7 @@ abbrev Eligible (k j : ℕ) : Prop := EligibleAt (S := S) (R.waveAt (S.slotRound
 abbrev SpansEligible (c : ℕ) : Prop := ∀ b i : ℕ, i < b → R.Eligible i (b + c - 1)
 ```
 
-**A run of `c` slots reaches past everything below it**, each slot at the wave of its own round.
+**A run of `c` slots reaches past everything below it**, each slot at the wave of its own kind.
 
 #### `Decided`
 
@@ -15024,6 +15030,10 @@ class Slots (Validator : Type*) where
   unbounded : ∀ n, ∃ k, n ≤ slotRound k
   /-- Distinct slots differ in round or in leader. -/
   keyed : Function.Injective (fun k => (slotRound k, leader k))
+  /-- The decision kind of slot `k`: what a rule whose wave varies reads
+  its wave from. One kind, `0`, unless a schedule says otherwise, and a
+  rebase carries it with the leader. -/
+  kind : ℕ → ℕ := fun _ => 0
 ```
 
 The leader schedule: which validator proposes at which round, as a sequence of slots. Slots need not be three rounds apart — under pipelining they are one round apart, and under multiple leaders per round they share one — so `slotRound` need only be monotone, and the separation M4's commit half needs is required instead at `Eligible` below. `unbounded` is assumed, not derivable from `mono` alone. `keyed` is a real condition once several leaders share a round: without it one block would be the candidate for two slots, and the ledger would deliver it twice.
@@ -15110,8 +15120,12 @@ def uniformSingle (p : ℕ) (hp : 0 < p) (elect : ℕ → Validator) : Slots Val
 *def, `Common.Slots.lean`*
 
 ```lean
-def Slots.identity {Validator : Type*} (leader : ℕ → Validator) : Slots Validator :=
-  ⟨id, leader, fun _ _ h => h, fun n => ⟨n, le_rfl⟩, fun _ _ h => congrArg Prod.fst h⟩
+def Slots.identity {Validator : Type*} (leader : ℕ → Validator) : Slots Validator where
+  slotRound := id
+  leader := leader
+  mono := fun _ _ h => h
+  unbounded := fun n => ⟨n, le_rfl⟩
+  keyed := fun _ _ h => congrArg Prod.fst h
 ```
 
 **The identity schedule** with a given leader map: one slot per round. The three laws are immediate.
@@ -15634,6 +15648,7 @@ def Banded (R : DagRule Validator BlockId Payload) : Prop :=
         (∀ m m', m + d' = m' + d → S.slotRound m ≤ top →
           S.slotRound m + g = S'.slotRound m' + g') →
         (∀ m m', m + d' = m' + d → S.slotRound m ≤ top → S.leader m = S'.leader m') →
+        (∀ m m', m + d' = m' + d → S.slotRound m ≤ top → S.kind m = S'.kind m') →
         AgreeBand R U U' (S.slotRound k + g) (top + g) g g' →
         (∀ b, b ∈ R.viewIds V → S.slotRound k ≤ (R.block U b).round →
           (R.block U b).round ≤ top → b ∈ R.viewIds V') →
@@ -15651,7 +15666,8 @@ def DecidedBelow (R : DagRule Validator BlockId Payload) (S : Slots Validator) (
     {U : R.Universe} (V : R.View U) (k : ℕ) (v : Option BlockId) : Prop :=
   k < B ∧ R.Decided S V k v ∧
     ∀ S' : Slots Validator, S'.slotRound = S.slotRound →
-      (∀ m, m < B → S'.leader m = S.leader m) → R.Decided S' V k v
+      (∀ m, m < B → S'.leader m = S.leader m) →
+      (∀ m, m < B → S'.kind m = S.kind m) → R.Decided S' V k v
 ```
 
 **A verdict decided below `B`**: the slot sits below the bound, the verdict holds, and it is unchanged by any reassignment of the leaders at or above the bound. The round structure is held fixed, which is what reassignment means.
@@ -15735,13 +15751,14 @@ structure RebasedAbove (R : DagRule Validator BlockId Payload)
 
 ```lean
 def Indirect (R : DagRule Validator BlockId Payload)
-    (Elig : (ℕ → ℕ) → ℕ → ℕ → Prop) : Prop :=
+    (Elig : Slots Validator → ℕ → ℕ → Prop) : Prop :=
   ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (i j : ℕ) (A : BlockId),
-    Elig S.slotRound i j → R.Decided S V j (some A) →
-    (∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S V i' none) →
+    Elig S i j → R.Decided S V j (some A) →
+    (∀ i', i < i' → i' < j → Elig S i i' → R.Decided S V i' none) →
     ∃ v, ∀ S' : Slots Validator, S'.slotRound = S.slotRound → S'.leader i = S.leader i →
+      S'.kind i = S.kind i →
       R.Decided S' V j (some A) →
-      (∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S' V i' none) →
+      (∀ i', i < i' → i' < j → Elig S i i' → R.Decided S' V i' none) →
       R.Decided S' V i v
 ```
 
@@ -19793,7 +19810,7 @@ theorem Config.uniform_sched (getLeader : ℕ → Validator) {w : ℕ} (hw : 0 <
 *theorem, `Barnacle.Helpers.Anchored.lean`*
 
 ```lean
-theorem ofAnchored_laws (hw : ∀ r, R.waveAt r = R.waveAt 0) (hl : R.Laws) :
+theorem ofAnchored_laws (hw : ∀ κ, R.waveAt κ = R.waveAt 0) (hl : R.Laws) :
     (ofAnchored R hw).Laws where
   full_ids
 ```
@@ -20769,7 +20786,7 @@ theorem coversUpto_full (hfull : ∀ U : R.Universe, R.viewIds (R.full U) = R.id
 ```lean
 theorem delivers_core [F : Faults Validator]
     (R : AnchoredRule Validator BlockId Payload ValidWrt (Correct : Finset Validator))
-    (hw : ∀ r, R.waveAt r = R.waveAt 0) :
+    (hw : ∀ κ, R.waveAt κ = R.waveAt 0) :
     (liveOfAnchored R hw (coreReliability Validator)).Delivers F.f where
   reaches
 ```
@@ -20813,7 +20830,7 @@ theorem indirect (hcongr : R.LinkCongr)
       (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k) →
       ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k ∧
         R.Least (S := S) U A i k L) :
-    Indirect R.toDagRule (fun sr i j => sr i + R.waveAt (sr i) + 1 ≤ sr j)
+    Indirect R.toDagRule (fun S i j => S.slotRound i + R.waveAt (S.kind i) + 1 ≤ S.slotRound j)
 ```
 
 **The indirect rule is a property.** Given the anchor, the verdict is determined by the rungs: the first rung holding a candidate commits the tie-break's choice, and no rung holding any skips. The verdict survives a reassignment of leaders elsewhere, since the case split reads only slot `i`'s candidates and the anchor's history. What it needs of the tie is that a nonempty rung has a choice, `hleast`.
@@ -20896,7 +20913,7 @@ Under a schedule whose consecutive slots are spaced past the wave, every later s
 
 ```lean
 theorem spansEligible_of_identity (hid : ∀ s, S.slotRound s = s) {w : ℕ}
-    (hw : ∀ r, R.waveAt r ≤ w) : R.SpansEligible (w + 1)
+    (hw : ∀ κ, R.waveAt κ ≤ w) : R.SpansEligible (w + 1)
 ```
 
 Under an identity-round schedule, `w + 1` consecutive slots span, for any `w` the wave never exceeds.
@@ -21188,7 +21205,7 @@ theorem agree : Agree (finWhaleRule (Validator := Validator) (BlockId := BlockId
 ```lean
 theorem indirect : Indirect
     (finWhaleRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-    (fun sr i j => sr i + 3 ≤ sr j)
+    (fun S i j => S.slotRound i + 3 ≤ S.slotRound j)
 ```
 
 **The indirect rule, with its bound.** The relation's indirect property at the rung's choice, read at the three-round eligibility: every rule FinWhale applies at a slot reads the schedule at that slot alone, which is the relation's `link_congr`.
@@ -21538,8 +21555,9 @@ theorem agree {k : ℕ} (hk : Hybrid.Admissible Validator k) :
 ```lean
 theorem indirect (kt : ℕ) :
     Indirect (hybridRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) kt)
-      (fun sr i j =>
-        sr i + (Hybrid.hybridAnchored Validator BlockId Payload kt).waveAt (sr i) + 1 ≤ sr j)
+      (fun S i j => S.slotRound i +
+        (Hybrid.hybridAnchored Validator BlockId Payload kt).waveAt (S.kind i) + 1 ≤
+          S.slotRound j)
 ```
 
 **H-A3 as a property**: the relation's indirect property, committing the least thick-linked candidate.
@@ -21601,7 +21619,7 @@ theorem agree : Agree (rule (Replica := Replica) (BlockId := BlockId))
 ```lean
 theorem indirect :
     Indirect (rule (Replica := Replica) (BlockId := BlockId))
-      (fun sr i j => sr i + 3 ≤ sr j)
+      (fun S i j => S.slotRound i + 3 ≤ S.slotRound j)
 ```
 
 **HZ6 as a property.** The relation's indirect property at the graded rule's rung choices, read at the three-round eligibility.
@@ -21703,7 +21721,7 @@ theorem agree {w : ℕ} (hw : 2 ≤ w) :
 ```lean
 theorem indirect {w : ℕ} (hw : 1 ≤ w) :
     Indirect (mahiMahiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) w)
-      (fun sr i j => sr i + w ≤ sr j)
+      (fun S i j => S.slotRound i + w ≤ S.slotRound j)
 ```
 
 **MM-A3 as a property**: the relation's indirect property, with no tie to break — two certificates at one slot name the same candidate.
@@ -21759,7 +21777,7 @@ theorem certLive_of_coreLive {S : Slots Validator}
 ```lean
 theorem indirect :
     Indirect (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-      (fun sr i j => sr i + 3 ≤ sr j)
+      (fun S i j => S.slotRound i + 3 ≤ S.slotRound j)
 ```
 
 **A3 as a property**: the relation's indirect property at the core, with no tie to break, read at the three-round eligibility.
@@ -21901,8 +21919,8 @@ theorem agree : Agree (nemoRule (Validator := Validator) (BlockId := BlockId)
 ```lean
 theorem indirect :
     Indirect (nemoRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-      (fun sr i j => sr i + (Nemo.nemoAnchored Validator BlockId Payload).waveAt (sr i) + 1
-        ≤ sr j)
+      (fun S i j => S.slotRound i +
+        (Nemo.nemoAnchored Validator BlockId Payload).waveAt (S.kind i) + 1 ≤ S.slotRound j)
 ```
 
 **A3 as a property**: the relation's indirect property, with no tie to break.
@@ -22005,8 +22023,9 @@ theorem agree : Agree (odontocetiRule (Validator := Validator) (BlockId := Block
 ```lean
 theorem indirect :
     Indirect (odontocetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-      (fun sr i j => sr i +
-        (Odontoceti.odontocetiAnchored Validator BlockId Payload).waveAt (sr i) + 1 ≤ sr j)
+      (fun S i j => S.slotRound i +
+        (Odontoceti.odontocetiAnchored Validator BlockId Payload).waveAt (S.kind i) + 1 ≤
+          S.slotRound j)
 ```
 
 **O-A3 as a property**: the relation's indirect property, committing the least thick-linked candidate.
@@ -22057,7 +22076,7 @@ theorem agree : Agree (optimalRule (Replica := Replica) (BlockId := BlockId))
 ```lean
 theorem indirect :
     Indirect (optimalRule (Replica := Replica) (BlockId := BlockId))
-      (fun sr i j => sr i + 3 ≤ sr j)
+      (fun S i j => S.slotRound i + 3 ≤ S.slotRound j)
 ```
 
 **The graded rule is total, at a bound**: the relation's indirect property at the rule's rung choices, read at the three-round eligibility. Every clause reads slot `k`'s own candidates and the anchor's history, and none moves when the leaders of other slots are reassigned — the relation's `link_congr`.
@@ -22485,7 +22504,7 @@ Two bounded verdicts agree, at any bounds — `Agree` through the first componen
 
 ```lean
 theorem Descends.of_indirect (hind : Indirect R Elig) {S : Slots Validator} {c : ℕ}
-    (hc : 0 < c) (hspans : ∀ b i, i < b → Elig S.slotRound i (b + c - 1)) :
+    (hc : 0 < c) (hspans : ∀ b i, i < b → Elig S i (b + c - 1)) :
     Descends R S c
 ```
 
@@ -22658,7 +22677,7 @@ theorem descent_of_support (R : Properties.DagRule Validator BlockId Payload)
     (Good : R.Universe → ℕ → ℕ → Prop) (g : ℕ)
     (sp : Properties.Support R) {rel : Reliability Validator}
     (hcov : OfCoverage sp rel) (hlc : sp.Commits rel)
-    (hind : Properties.Indirect R (fun sr i j => sr i + g ≤ sr j))
+    (hind : Properties.Indirect R (fun S i j => S.slotRound i + g ≤ S.slotRound j))
     (hwave : ∀ r, sp.waveAt r ≤ g)
     (hgood : ∀ U Rnd N, Good U Rnd N → Timed.Good R rel U Rnd N) :
     Properties.Descent R Good g rel.slack where

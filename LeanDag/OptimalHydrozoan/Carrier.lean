@@ -81,7 +81,7 @@ theorem commitsDirect :
 laws, which are Hydrozoan's direct layer and rung `0` and Optimal's fast
 path and evidence rung. -/
 theorem banded : Banded (optimalRule (Replica := Replica) (BlockId := BlockId)) :=
-  AnchoredRule.bandedVia LeanDag.OptimalHydrozoan.optimalBandLaws (fun _ _ => rfl)
+  AnchoredRule.bandedVia LeanDag.OptimalHydrozoan.optimalBandLaws
 
 /-! ## The two liveness properties
 
@@ -153,7 +153,7 @@ theorem optSupport_commits :
   have hin : LeanDag.Hydrozoan.SlowCommitInView U.toBlockRecord V L (S.slotRound k) :=
     LeanDag.Hydrozoan.slowCommitInView_of_coversUpto hslow hcov
   refine ⟨L, by omega, LeanDag.OptimalHydrozoan.DecidedOpt.directCommit hL (Or.inr hin), ?_⟩
-  intro S' hround hlead'
+  intro S' hround hlead' _
   refine LeanDag.OptimalHydrozoan.DecidedOpt.directCommit
     (S := S') ⟨hL.1, ?_, ?_⟩ (Or.inr ?_)
   · change (U.toBlockRecord.block L).round = S'.slotRound k
@@ -248,7 +248,7 @@ theorem voteSupport_fast_commits
     HoldsAtLeast.of_coversUpto
       (fun b hb => ⟨(mem_votesFor.mp hb).1, (mem_votesFor.mp hb).2.1.le⟩) hcov hfast
   refine ⟨L, by omega, LeanDag.OptimalHydrozoan.DecidedOpt.directCommit hL (Or.inl hin), ?_⟩
-  intro S' hround hlead'
+  intro S' hround hlead' _
   refine LeanDag.OptimalHydrozoan.DecidedOpt.directCommit
     (S := S') ⟨hL.1, ?_, ?_⟩ (Or.inl ?_)
   · change (U.toBlockRecord.block L).round = S'.slotRound k
@@ -265,7 +265,7 @@ anchor's history, and none moves when the leaders of other slots are
 reassigned — the relation's `link_congr`. -/
 theorem indirect :
     Indirect (optimalRule (Replica := Replica) (BlockId := BlockId))
-      (fun sr i j => sr i + 3 ≤ sr j) :=
+      (fun S i j => S.slotRound i + 3 ≤ S.slotRound j) :=
   (AnchoredRule.indirectVia LeanDag.OptimalHydrozoan.SlotAgreement.optimalLaws.link_congr
     fun hi h => LeanDag.OptimalHydrozoan.exists_least hi h).congr
     (fun _ _ _ => by simp only [LeanDag.OptimalHydrozoan.optimalAnchored_waveAt])

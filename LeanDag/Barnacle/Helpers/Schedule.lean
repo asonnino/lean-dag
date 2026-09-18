@@ -126,6 +126,7 @@ theorem cfg_local [Fintype Validator] [DecidableEq Validator]
       ∀ S' : Slots Validator,
         (∀ κ, C.roundOf κ < B → S'.slotRound κ = C.roundOf κ) →
         (∀ κ, C.roundOf κ < B → S'.leader κ = C.sched.leader κ) →
+        (∀ κ, C.roundOf κ < B → S'.kind κ = C.sched.kind κ) →
         R.Decided S' V g v :=
   Properties.exists_roundLocal hb hd
 
@@ -160,7 +161,7 @@ theorem Config.uniform_sched (getLeader : ℕ → Validator) {w : ℕ} (hw : 0 <
     (hk : Keyed getLeader w) (m : ℕ) (hm : 0 < m) (hmax : m ≤ w) (I : ℕ) :
     (Config.uniform (leadOf getLeader) (leadKeyed_of_keyed hw hk) m hm hmax I).sched
       = Sched getLeader hk m hm hmax := by
-  refine Slots.ext' (funext fun g => ?_) (funext fun g => ?_)
+  refine Slots.ext' (funext fun g => ?_) (funext fun g => ?_) rfl
   · rw [Config.sched_slotRound, Config.uniform_roundOf, Sched_slotRound]
   · rw [Sched_leader, Config.sched_leader, Config.uniform_lead,
       Config.uniform_roundOf, Config.uniform_cum]

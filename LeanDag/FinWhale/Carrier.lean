@@ -90,7 +90,7 @@ theorem decidedBelowRun {D : Dag Validator BlockId Payload} {S : Slots Validator
 /-- **FinWhale reads a band**: the relation's band at its band laws. -/
 theorem banded : Banded (finWhaleRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload)) :=
-  AnchoredRule.banded LeanDag.FinWhale.finWhaleBandLaws (fun _ _ => rfl)
+  AnchoredRule.banded LeanDag.FinWhale.finWhaleBandLaws
 
 /-- **The indirect rule, with its bound.** The relation's indirect
 property at the rung's choice, read at the three-round eligibility:
@@ -98,7 +98,7 @@ every rule FinWhale applies at a slot reads the schedule at that slot
 alone, which is the relation's `link_congr`. -/
 theorem indirect : Indirect
     (finWhaleRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-    (fun sr i j => sr i + 3 ≤ sr j) :=
+    (fun S i j => S.slotRound i + 3 ≤ S.slotRound j) :=
   (AnchoredRule.indirect LeanDag.FinWhale.finWhaleLaws.link_congr
     fun hi h => LeanDag.FinWhale.exists_least hi h).congr
     (fun _ _ _ => by simp only [LeanDag.FinWhale.finWhaleAnchored_waveAt])
@@ -272,7 +272,7 @@ theorem fwSupport_commits :
       simp only [BlockRecord.View.toRecord_ids, BlockRecord.View.toRecord_block]
       exact ⟨hbV, by rw [hbr', hLr']⟩
   refine ⟨L, by omega, LeanDag.FinWhale.Decided.directCommit hL hcom,
-    fun S' hround hlead' => ?_⟩
+    fun S' hround hlead' _ => ?_⟩
   exact LeanDag.FinWhale.Decided.directCommit (S := S')
     (isLeaderBlock_congr (S₁ := S) (S₂ := S') (congrFun hround k).symm
       (hlead' k (by omega)).symm hL) hcom
@@ -343,7 +343,7 @@ theorem voteSupport_fast_commits (h : F.byzantine.card ≤ P.p) :
       simp only [BlockRecord.View.toRecord_ids, BlockRecord.View.toRecord_block]
       exact ⟨⟨hbV, by rw [hbr', hLr']⟩, hcert L ⟨hLmem, hLr, hLc⟩ v hv b hb hbc hbr⟩
   refine ⟨L, by omega, LeanDag.FinWhale.Decided.directCommit hL hcom,
-    fun S' hround hlead' => ?_⟩
+    fun S' hround hlead' _ => ?_⟩
   exact LeanDag.FinWhale.Decided.directCommit (S := S')
     (isLeaderBlock_congr (S₁ := S) (S₂ := S') (congrFun hround k).symm
       (hlead' k (by omega)).symm hL) hcom

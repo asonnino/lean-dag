@@ -9,11 +9,13 @@ import LeanDag.Timed.Coverage
 universe, `View.full` and `BlockRecord.historyView` for the two views,
 `R.waveAt 0 + 1` for the wave length (the gap an anchor must clear), and
 `R.Commit` for the direct predicate. A base rule has one wave length,
-where a rule reads its own at every round, so the wave is read at round
-`0` and `hw : ∀ r, R.waveAt r = R.waveAt 0` is what makes that read the
-rule's wave everywhere. Every rule registered here closes it by `rfl`; a
-rule whose wave varies with the round cannot pass through, and is not
-banded either (`LeanDagTest/Common/VaryingWave.lean`).
+where a rule reads its own at every slot's kind, so the wave is read at
+kind `0`, the kind of every slot of a Barnacle schedule, and
+`hw : ∀ κ, R.waveAt κ = R.waveAt 0` is what makes that read the rule's
+wave at every schedule its descent laws quantify over. Every rule
+registered here closes it by `rfl`; a rule whose wave varies with the
+kind is banded (`Common/Anchored/Band.lean`) but has no one gap for
+`LiveRule.Descent`, and cannot pass through.
 `ofAnchoredVia R f hw` is the same over any type projecting to records,
 and `ofAnchoredOn R I hw` over the records satisfying an invariant `I`.
 `liveOfAnchored R hw rel` adds
@@ -35,7 +37,7 @@ variable {P : Validity Validator BlockId Payload} {honest : Finset Validator} [P
 /-- **An anchored rule as a base rule**, at a wave the rule reads alike
 at every round. -/
 def ofAnchored (R : AnchoredRule Validator BlockId Payload P honest)
-    (_hw : ∀ r, R.waveAt r = R.waveAt 0) :
+    (_hw : ∀ κ, R.waveAt κ = R.waveAt 0) :
     BaseRule Validator BlockId Payload where
   toDagRule := R.toDagRule
   full := fun U => View.full U
@@ -48,7 +50,7 @@ def ofAnchored (R : AnchoredRule Validator BlockId Payload P honest)
 universes are any type projecting to records. -/
 def ofAnchoredVia (R : AnchoredRule Validator BlockId Payload P honest) {X : Type}
     (f : X → BlockRecord Validator BlockId Payload P honest)
-    (_hw : ∀ r, R.waveAt r = R.waveAt 0) :
+    (_hw : ∀ κ, R.waveAt κ = R.waveAt 0) :
     BaseRule Validator BlockId Payload where
   toDagRule := R.toDagRuleVia f
   full := fun U => View.full (f U)
@@ -60,27 +62,27 @@ def ofAnchoredVia (R : AnchoredRule Validator BlockId Payload P honest) {X : Typ
 /-- **An anchored rule under an invariant, as a base rule.** -/
 abbrev ofAnchoredOn (R : AnchoredRule Validator BlockId Payload P honest)
     (I : BlockRecord Validator BlockId Payload P honest → Prop)
-    (hw : ∀ r, R.waveAt r = R.waveAt 0) :
+    (hw : ∀ κ, R.waveAt κ = R.waveAt 0) :
     BaseRule Validator BlockId Payload :=
   ofAnchoredVia R (fun U : {U : BlockRecord Validator BlockId Payload P honest // I U} => U.val) hw
 
 /-- **An anchored rule as a live rule**, at a fault model. -/
 def liveOfAnchored (R : AnchoredRule Validator BlockId Payload P honest)
-    (hw : ∀ r, R.waveAt r = R.waveAt 0) (rel : Reliability Validator) :
+    (hw : ∀ κ, R.waveAt κ = R.waveAt 0) (rel : Reliability Validator) :
     LiveRule Validator BlockId Payload :=
   { ofAnchored R hw with Good := Timed.Good R.toDagRule rel }
 
 /-- **An anchored rule read through a projection, as a live rule.** -/
 def liveOfAnchoredVia (R : AnchoredRule Validator BlockId Payload P honest) {X : Type}
     (f : X → BlockRecord Validator BlockId Payload P honest)
-    (hw : ∀ r, R.waveAt r = R.waveAt 0) (rel : Reliability Validator) :
+    (hw : ∀ κ, R.waveAt κ = R.waveAt 0) (rel : Reliability Validator) :
     LiveRule Validator BlockId Payload :=
   { ofAnchoredVia R f hw with Good := Timed.Good (R.toDagRuleVia f) rel }
 
 /-- **An anchored rule under an invariant, as a live rule.** -/
 abbrev liveOfAnchoredOn (R : AnchoredRule Validator BlockId Payload P honest)
     (I : BlockRecord Validator BlockId Payload P honest → Prop)
-    (hw : ∀ r, R.waveAt r = R.waveAt 0) (rel : Reliability Validator) :
+    (hw : ∀ κ, R.waveAt κ = R.waveAt 0) (rel : Reliability Validator) :
     LiveRule Validator BlockId Payload :=
   liveOfAnchoredVia R (fun U : {U : BlockRecord Validator BlockId Payload P honest // I U} => U.val)
     hw rel

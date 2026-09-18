@@ -97,7 +97,7 @@ theorem nemoBandLaws : (Nemo.nemoAnchored Validator BlockId Payload).BandLaws wh
 /-- **Nemo is banded**: the relation's band at Nemo's laws. -/
 theorem banded : Banded (nemoRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload)) :=
-  AnchoredRule.banded nemoBandLaws (fun _ _ => rfl)
+  AnchoredRule.banded nemoBandLaws
 
 /-! ## The liveness properties
 
@@ -128,7 +128,7 @@ theorem voteSupport_commits (hn : 0 < Fintype.card Validator) :
     exact mem_supporters.mpr ⟨b, hb, hbr, hcert L ⟨hLmem, hLr, hLc⟩ w hw b hb hbc hbr, hbc⟩
   have hin : Nemo.DirectCommitIn U V L (S.slotRound k) := Nemo.directCommitIn_of_coversUpto hdc hcov
   refine ⟨L, by omega, Nemo.Decided.directCommit ⟨hLmem, hLr, hLc⟩ hin, ?_⟩
-  intro S' hround hlead'
+  intro S' hround hlead' _
   refine Nemo.Decided.directCommit (S := S') ⟨hLmem, by rw [hround]; exact hLr,
     by rw [hlead' k (by omega)]; exact hLc⟩ ?_
   rw [hround]; exact hin
@@ -137,8 +137,8 @@ theorem voteSupport_commits (hn : 0 < Fintype.card Validator) :
 to break. -/
 theorem indirect :
     Indirect (nemoRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-      (fun sr i j => sr i + (Nemo.nemoAnchored Validator BlockId Payload).waveAt (sr i) + 1
-        ≤ sr j) :=
+      (fun S i j => S.slotRound i +
+        (Nemo.nemoAnchored Validator BlockId Payload).waveAt (S.kind i) + 1 ≤ S.slotRound j) :=
   AnchoredRule.indirect Nemo.nemoLaws.link_congr fun _ ⟨L, hL, hl⟩ => ⟨L, hL, hl, fun _ _ _ h => h⟩
 
 /-- **Nemo-Nemo has the descent laws** at the majority slack, at its

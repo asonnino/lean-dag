@@ -35,6 +35,7 @@ def Slots.chop (S : Slots Validator) (G d : ℕ) (hd : G ≤ S.slotRound d) :
     Slots Validator where
   slotRound k := S.slotRound (d + k) - G
   leader k := S.leader (d + k)
+  kind k := S.kind (d + k)
   mono _ _ h := Nat.sub_le_sub_right (S.mono (Nat.add_le_add_left h d)) G
   unbounded := by
     intro n
@@ -70,6 +71,11 @@ theorem Slots.chop_slotRound (S : Slots Validator) {d : ℕ}
 theorem Slots.chop_leader (S : Slots Validator) {d : ℕ}
     (hd : G ≤ S.slotRound d) (k : ℕ) :
     (S.chop G d hd).leader k = S.leader (d + k) := rfl
+
+@[simp]
+theorem Slots.chop_kind (S : Slots Validator) {d : ℕ}
+    (hd : G ≤ S.slotRound d) (k : ℕ) :
+    (S.chop G d hd).kind k = S.kind (d + k) := rfl
 
 variable [S : Slots Validator] {d : ℕ}
 

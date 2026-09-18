@@ -86,10 +86,10 @@ end EligibleAt
 structure AnchoredRule (Validator : Type*) (BlockId : Type*) (Payload : Type*)
     (P : Validity Validator BlockId Payload) (honest : Finset Validator) where
   /-- The rounds a slot's direct rules read above its proposal, less one, as
-  a function of the slot's round: an anchor of a slot proposed at round `r`
-  must sit strictly above `r + waveAt r`. Constant for every rule in the
-  tree; a rule whose wavelength alternates with the round supplies a
-  function of it. -/
+  a function of the slot's kind (`Slots.kind`): an anchor of a slot of kind
+  `κ` proposed at round `r` must sit strictly above `r + waveAt κ`. Constant
+  for every rule in the tree; a rule whose wavelength varies reads it from
+  the kind the schedule assigns, which a rebase carries with the leader. -/
   waveAt : ℕ → ℕ
   /-- The direct commit, judged from a view: `Commit U V L r` says the
   candidate `L` proposed at round `r` is committed by what `V` holds. -/
@@ -124,13 +124,13 @@ variable [S : Slots Validator]
 /-! ## Eligibility -/
 
 /-- The round at which a slot's direct verdict is settled. -/
-def decisionRound (k : ℕ) : ℕ := S.slotRound k + R.waveAt (S.slotRound k)
+def decisionRound (k : ℕ) : ℕ := S.slotRound k + R.waveAt (S.kind k)
 
-/-- **`j` may anchor `k`**: eligibility at the wave of `k`'s round. -/
-abbrev Eligible (k j : ℕ) : Prop := EligibleAt (S := S) (R.waveAt (S.slotRound k)) k j
+/-- **`j` may anchor `k`**: eligibility at the wave of `k`'s kind. -/
+abbrev Eligible (k j : ℕ) : Prop := EligibleAt (S := S) (R.waveAt (S.kind k)) k j
 
 theorem eligible_iff {k j : ℕ} :
-    R.Eligible k j ↔ S.slotRound k + R.waveAt (S.slotRound k) + 1 ≤ S.slotRound j :=
+    R.Eligible k j ↔ S.slotRound k + R.waveAt (S.kind k) + 1 ≤ S.slotRound j :=
   eligibleAt_iff
 
 /-- An eligible anchor is a later slot. -/
@@ -140,15 +140,15 @@ theorem lt_of_eligible {k j : ℕ} (h : R.Eligible k j) : k < j := lt_of_eligibl
 theorem exists_eligible (k : ℕ) : ∃ j, R.Eligible k j := exists_eligibleAt _ k
 
 /-- **A run of `c` slots reaches past everything below it**, each slot at
-the wave of its own round. -/
+the wave of its own kind. -/
 abbrev SpansEligible (c : ℕ) : Prop := ∀ b i : ℕ, i < b → R.Eligible i (b + c - 1)
 
 /-- Under an identity-round schedule, `w + 1` consecutive slots span, for
 any `w` the wave never exceeds. -/
 theorem spansEligible_of_identity (hid : ∀ s, S.slotRound s = s) {w : ℕ}
-    (hw : ∀ r, R.waveAt r ≤ w) : R.SpansEligible (w + 1) := by
+    (hw : ∀ κ, R.waveAt κ ≤ w) : R.SpansEligible (w + 1) := by
   intro b i hi
-  have := hw i
+  have := hw (S.kind i)
   rw [eligible_iff, hid, hid]
   omega
 
@@ -157,7 +157,7 @@ variable {U : BlockRecord Validator BlockId Payload P honest}
 /-- The anchor's round clears the slot's decision round. -/
 theorem anchor_round_le {k j : ℕ} {A : BlockId} (hA : IsLeaderBlock U j A)
     (helig : R.Eligible k j) :
-    S.slotRound k + R.waveAt (S.slotRound k) + 1 ≤ (U.block A).round := by
+    S.slotRound k + R.waveAt (S.kind k) + 1 ≤ (U.block A).round := by
   rw [hA.2.1]
   exact R.eligible_iff.mp helig
 
