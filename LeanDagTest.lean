@@ -83,6 +83,8 @@ import LeanDagTest.Hydrozoan.Liveness
 import LeanDagTest.Hydrozoan.DirectLiveness
 import LeanDagTest.Hydrozoan.IndirectLiveness
 import LeanDagTest.Hydrozoan.EventualDecision
+import LeanDagTest.Hydrozoan.Validity
+import LeanDagTest.Hydrozoan.ValidityHardening
 import LeanDagTest.Hydrozoan.LivenessHardening
 import LeanDagTest.Hydrozoan.Grounding
 import LeanDagTest.Hydrozoan.Axioms
@@ -97,5 +99,6 @@ import LeanDagTest.OptimalHydrozoan.Delivery
 import LeanDagTest.OptimalHydrozoan.DirectLiveness
 import LeanDagTest.OptimalHydrozoan.IndirectLiveness
 import LeanDagTest.OptimalHydrozoan.EventualDecision
+import LeanDagTest.OptimalHydrozoan.Validity
 import LeanDagTest.OptimalHydrozoan.Grounding
 import LeanDagTest.OptimalHydrozoan.Axioms

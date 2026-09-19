@@ -11,6 +11,7 @@ import LeanDag.Common.Causality
 import LeanDag.Common.Participation
 import LeanDag.Common.BlockDag
 import LeanDag.Common.CausalHistory
+import LeanDag.Common.SynchronisedReach
 import LeanDag.Common.Support
 import LeanDag.Common.Ledger
 import LeanDag.Common.Dedup
@@ -291,6 +292,9 @@ import LeanDag.Hydrozoan.IndirectLiveness.Proof
 import LeanDag.Hydrozoan.Helpers.EventualDecision
 import LeanDag.Hydrozoan.EventualDecision.Statement
 import LeanDag.Hydrozoan.EventualDecision.Proof
+import LeanDag.Hydrozoan.Helpers.Validity
+import LeanDag.Hydrozoan.Validity.Statement
+import LeanDag.Hydrozoan.Validity.Proof
 import LeanDag.Hydrozoan.Helpers.Grounding
 import LeanDag.Hydrozoan.Grounding.Statement
 import LeanDag.Hydrozoan.Grounding.Proof
@@ -322,6 +326,8 @@ import LeanDag.OptimalHydrozoan.IndirectLiveness.Statement
 import LeanDag.OptimalHydrozoan.IndirectLiveness.Proof
 import LeanDag.OptimalHydrozoan.EventualDecision.Statement
 import LeanDag.OptimalHydrozoan.EventualDecision.Proof
+import LeanDag.OptimalHydrozoan.Validity.Statement
+import LeanDag.OptimalHydrozoan.Validity.Proof
 import LeanDag.OptimalHydrozoan.Grounding.Statement
 import LeanDag.OptimalHydrozoan.Helpers.Grounding
 import LeanDag.OptimalHydrozoan.Grounding.Proof
