@@ -10555,6 +10555,7 @@ reused.
 | HZ7 | a synchronised, populated, correct-led run decides everything below it, and fairness places runs past every slot and round | `Hydrozoan.EventualDecision.holds` *(Hydrozoan/EventualDecision/Proof)* |
 | HZ8 | the wave-aligned rotation is fair with no premise, the hypothesis package is realizable at every horizon, and progress is achievable | `Hydrozoan.Grounding.holds` *(Hydrozoan/Grounding/Proof)* |
 | HZ9 | the delivered sequence — the ledger filtered by first occurrence of a key, the paper's set `H` — holds no key twice, is a prefix across views and horizons, and loses no key, for every key and every per-leader listing | `Hydrozoan.Delivery.holds` *(Hydrozoan/Delivery/Proof)* |
+| HZ10 | from the round of synchrony on, a `T`-led slot delivers every earlier block of `T` — its key under any key, the block itself under the paper's — on any view decided past the slot, for every listing of causal histories | `Hydrozoan.Validity.holds` *(Hydrozoan/Validity/Proof)* |
 
 **Optimal-Hydrozoan** (§23):
 
@@ -10569,6 +10570,7 @@ reused.
 | OH7 | a synchronised, populated, correct-led run decides everything below it, and fairness places runs past every slot and round | `OptimalHydrozoan.EventualDecision.holds` *(OptimalHydrozoan/EventualDecision/Proof)* |
 | OH8 | the wave-aligned rotation is fair with no premise, the hypothesis package is realizable at every horizon under every schedule by an `OptUniverse`, and progress is achievable by a correct-authored universe | `OptimalHydrozoan.Grounding.holds` *(OptimalHydrozoan/Grounding/Proof)* |
 | OH9 | the delivered sequence holds no key twice, is a prefix across views and horizons, and loses no key, for every key and every per-leader listing | `OptimalHydrozoan.Delivery.holds` *(OptimalHydrozoan/Delivery/Proof)* |
+| OH10 | from the round of synchrony on, a `T`-led slot delivers every earlier block of `T`, on any view decided past the slot, for every listing of causal histories | `OptimalHydrozoan.Validity.holds` *(OptimalHydrozoan/Validity/Proof)* |
 
 **Hydrozoan and Optimal-Hydrozoan through the properties** (§22.7, §23.7):
 
