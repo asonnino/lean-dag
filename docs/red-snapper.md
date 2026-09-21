@@ -631,8 +631,11 @@ mechanisation's own.
     reached the same winner through recovery does abort them. The paper
     claims termination per object only (Lemma recovery-termination,
     RS9b); dropping the `IsMixed` gate of the first loop and recording
-    the abort in `TryFullDecideTX`, as at `3f + 1`, closes the gap. Not
-    mechanised: the arc's `5f + 1` relation has no such drop either.
+    the abort in `TryFullDecideTX`, as at `3f + 1`, closes the gap. The
+    arc's `5f + 1` relation copies the algorithm's routes and has the
+    same hole, witnessed: on `U6RecFull` with the certificate block
+    committed, the finalized transaction's owned rival is a candidate of
+    the anchor and has no verdict of either fate.
 34. **Termination at `3f + 1` needs (C4), not (C5).** The lemma's proof
     sends a certificate under a committed anchor by (C5); mechanised,
     the correct-authored anchor four rounds above the carrier suffices,

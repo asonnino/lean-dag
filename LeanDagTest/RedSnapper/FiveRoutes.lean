@@ -154,6 +154,58 @@ example : VerdictFive U6Frag AFragUnlock (View.full U6Frag) (· ≤ ·) 0 Fate.d
     ((isFullUnlockCert_iff (by decide)).mpr (by decide)) (by decide)
     ((mem_candidates_iff (by decide)).mp (by decide))
 
+/-! ### What the `5f+1` relation does not decide: the loser of a fast commit
+
+Record finding 33, on data. On `U6RecFull` the owned `tx 0` holds a full
+certificate at block `12`; commit that block alone. The owned rival
+`tx 1` is valid and lies in the anchor's history — it is in the global
+order — and `tx 0` is finalized. No route gives `tx 1` a verdict: the
+relation has the paper's drops only, and none of them fires. -/
+
+/-- `U6RecFull`'s certificate block, committed alone. -/
+def ARecFullCert : Anchors U6RecFull where
+  seq := [12]
+  mem := by decide
+  chained := by simp
+
+example : Owned (1 : Fin 4) ∧ Transactions.Valid (1 : Fin 4) ∧ Conflict (0 : Fin 4) 1 := by
+  decide
+example : IsCandidate U6RecFull 12 0 1 := (mem_candidates_iff (by decide)).mp (by decide)
+example : VerdictFive U6RecFull ARecFullCert (View.full U6RecFull) (· ≤ ·) 0 Fate.finalized :=
+  .fullFinal (C := 12) (by decide) (by decide) ((isFullCert_iff (by decide)).mpr (by decide))
+
+private theorem recFull_no_unlock : ∀ C ∈ U6RecFull.ids, ¬ IsFullUnlockCertDec U6RecFull C 0 := by
+  decide
+private theorem recFull_no_cert_rival : ∀ C ∈ U6RecFull.ids, ¬ IsFullCertDec U6RecFull C 1 := by
+  decide
+private theorem recFullCert_no_pair {i j : ℕ} {aₖ a : Fin 24} (hij : i < j)
+    (hlk : ARecFullCert.seq[i]? = some aₖ) (hla : ARecFullCert.seq[j]? = some a) : False := by
+  have h1 := (List.getElem?_eq_some_iff.mp hlk).1
+  have h2 := (List.getElem?_eq_some_iff.mp hla).1
+  simp [ARecFullCert] at h1 h2
+  omega
+
+-- The loser is never dropped ...
+example : ¬ VerdictFive U6RecFull ARecFullCert (View.full U6RecFull) (· ≤ ·) 1 Fate.dropped := by
+  intro h
+  cases h with
+  | fullUnlockDrop hC hunlock _ _ =>
+      have hid := (View.full U6RecFull).subset_ids hC
+      exact recFull_no_unlock _ hid ((isFullUnlockCert_iff hid).mp hunlock)
+  | recoveryDropLoser hres hlk hla _ _ _ _ => exact recFullCert_no_pair hres.2.1 hlk hla
+  | recoveryDropBot hres hlk hla _ _ => exact recFullCert_no_pair hres.2.1 hlk hla
+
+-- ... and, of course, never finalized.
+example : ¬ VerdictFive U6RecFull ARecFullCert (View.full U6RecFull) (· ≤ ·) 1
+    Fate.finalized := by
+  intro h
+  cases h with
+  | fullFinal _ hC hcert =>
+      have hid := (View.full U6RecFull).subset_ids hC
+      exact recFull_no_cert_rival _ hid ((isFullCert_iff hid).mp hcert)
+  | mixedFinal hm _ _ _ _ _ => exact absurd hm (by decide)
+  | recoveryFinal hres hlk hla _ _ => exact recFullCert_no_pair hres.2.1 hlk hla
+
 end RedSnapper
 
 end LeanDagTest
