@@ -93,6 +93,7 @@ Three consequences shape the arc.
 | `ExtendCommitSeq`, prefix consistency | `PrefixAgreement/` (HZ4) |
 | `LinearizeSubDags` and its delivered set `H`; Integrity, Total Order | `Delivery/` (HZ9), over `Common/Dedup.lean` |
 | liveness | `DirectLiveness/` (HZ5), `IndirectLiveness/` (HZ6), `EventualDecision/` (HZ7), `Grounding/` (HZ8) |
+| `thm:validity` | `Validity/` (HZ10), over `Common/SynchronisedReach.lean` |
 
 Names follow the paper's: `qFast` for $q_{\mathit{fast}}$ and so on;
 faulty replicas are Byzantine or crashed, the rest correct.
@@ -382,6 +383,44 @@ below `b` decided on any view caught up to the run's last decision
 round — is `ledgerProgress` on the proof side; the audited content is
 the two Props.
 
+**HZ10 — validity** (`Validity/`), the fourth property of Byzantine
+atomic broadcast, asked only after GST as in Bullshark: from the round
+`R` of the liveness package on, every block of `T` is delivered. The
+route is the paper's (`thm:validity`) and FinWhale's Theorem 26 with two
+substitutions. FinWhale finds the author's own next leader block and
+walks down a self-parent chain; here any later `T`-led slot will do,
+because `SynchronisedOn` already makes a `T`-block a parent of every
+`T`-block of the next round, and `PopulatedOn` supplies the rounds in
+between (`Common/SynchronisedReach.lean`,
+`reaches_of_synchronisedOn`) — no self-parent edge is asked of the
+model. Direct liveness (HZ5) commits that slot's leader block; slot
+agreement (HZ3) carries the verdict to every view; `Faithful` (HZ9)
+says the filter loses no key. `Delivery` holds for every per-leader
+listing `lin`; validity cannot, and asks the one thing
+`LinearizeSubDags` gives: `ListsHistory`, that a leader's listing holds
+its causal history. Two claims, with the committing slot `k` explicit
+as HZ7 has its run: `RunDelivers` — for every key, the block's key is
+delivered — and `DeliversBlock` — under the paper's key, by a listing
+that stays inside the universe, the block itself is, no other block
+sharing the key of a correct author's. Both speak of any view and any
+verdict assignment decided past `k`, with no coverage asked of the view
+holding it: the commit is derived on the full view. This is not
+delivery on arbitrary views — that such an assignment exists needs a
+caught-up view (`CoversUpto`), which is HZ5's and HZ7's claim, and `validityProgress` on the proof side
+composes them: under a fair schedule, for every round bound there is a
+slot whose horizon delivers every `T`-block from `R` to the bound. The
+witness on `U10` delivers replica 0's round-1 block through slot 2
+under the listing of causal histories in identifier order, pins the
+delivered sequence, and shows a listing of the leader alone delivering
+the leaders and nothing else; further witnesses take a slot three
+rounds above the block, a strictly partial view, and a junk identifier
+sharing the block's key, which separates the two claims.
+`ValidityHardening.lean`, at eight replicas, takes `T` a proper subset
+of `Correct`: the claims are about blocks authored in `T`, and a
+correct replica outside it has its unreferenced block left undelivered
+— the paper's reading is `T = Correct`. Blocks below `R` are out of
+scope by the statement. Added after the freeze (issue #39).
+
 ## 8. Grounding
 
 The liveness arc consumes three kinds of assumed hypotheses; HZ8
@@ -478,7 +517,7 @@ LeanDagTest/Hydrozoan/  witness models; audited
 Results: `ThresholdArithmetic` (HZ1), `DirectSafety` (HZ2),
 `SlotAgreement` (HZ3), `PrefixAgreement` (HZ4), `DirectLiveness` (HZ5),
 `IndirectLiveness` (HZ6), `EventualDecision` (HZ7), `Grounding` (HZ8),
-`Delivery` (HZ9).
+`Delivery` (HZ9), `Validity` (HZ10).
 Auxiliary predicates a claim needs but the core should not carry
 (`SpansEligible`, `FairRunOn`, `commitSeq`) are defined in the
 `Statement.lean` that needs them, on the audited side.
@@ -580,6 +619,7 @@ namespaces re-homed under `LeanDag.Hydrozoan` and no other change.
 | 8–10 | `Model/Liveness.lean`; `DirectLiveness/`, `IndirectLiveness/`, `EventualDecision/` (HZ5–HZ7); the liveness hardening batch |
 | 11 | `Grounding/` (HZ8) |
 | 13 | `Common/Dedup.lean`; `Delivery/` (HZ9); the equivocating-twins delivery witness on `U5` |
+| 14 | `Common/SynchronisedReach.lean`; `Validity/` (HZ10); the validity witnesses on `U10`, and on `U12x` with `T` a proper subset of `Correct` |
 | 12 | this record; report §22; the reference pipeline |
 
 Each phase ran as statements → review → freeze → proofs → witnesses →

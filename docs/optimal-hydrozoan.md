@@ -94,6 +94,7 @@ Three consequences shape the arc.
 | prefix consistency | `PrefixAgreement/` (OH4) |
 | `LinearizeSubDags` with its set `H`; Integrity, Total Order | `Delivery/` (OH9) |
 | the Liveness paragraph | `DirectLiveness/` (OH5), `IndirectLiveness/` (OH6), `EventualDecision/` (OH7), `Grounding/` (OH8) |
+| Validity | `Validity/` (OH10) |
 
 Every Hydrozoan name the arc reuses — `q`, `qCert`, `qSlow`, `Correct`,
 `NonByzantine`, `BlockUniverse`, `View`, `Reaches`, `Slots`,
@@ -285,6 +286,15 @@ every universe meeting the package; and `GroundedProgress` over
 `DecidedOpt` by a universe **authored by correct replicas alone**, the
 clause Hydrozoan's statement lacks (`hydrozoan.md` §11).
 
+**OH10 — validity** (`Validity/`): Hydrozoan's `RunDelivers` and
+`DeliversBlock` over `DecidedOpt`; `ListsHistory` and `ListsWithin`
+speak of the block record alone and are reused, as is the reach lemma
+of `Common/SynchronisedReach.lean`. The Optimal validity clause
+constrains which parents a block may take but never stands in the
+route's way: `SynchronisedOn` is a hypothesis, so the references are
+given, and the committing slot is reached through the unchanged slow
+path (OH5). See `hydrozoan.md`, HZ10.
+
 ## 6. Witnesses (`LeanDagTest/OptimalHydrozoan/`)
 
 Every definition is exercised by `decide` before anything is proved
@@ -378,7 +388,7 @@ LeanDagTest/OptimalHydrozoan/  witness models; audited
 Results: `ThresholdArithmetic` (OH1), `DirectSafety` (OH2),
 `SlotAgreement` (OH3), `PrefixAgreement` (OH4), `DirectLiveness` (OH5),
 `IndirectLiveness` (OH6), `EventualDecision` (OH7), `Grounding` (OH8),
-`Delivery` (OH9).
+`Delivery` (OH9), `Validity` (OH10).
 
 **Relation to the Hydrozoan arc.** Read-only, by construction (D1):
 `OptUniverse` extends `BlockUniverse`, every rule predicate is applied
@@ -422,6 +432,7 @@ re-homed under `LeanDag.OptimalHydrozoan` and no other change.
 | OL3 | `EventualDecision/` (OH7); the steady-state universes |
 | OL4 | `Grounding/` (OH8); the quorum-separating and sub-quorum witnesses |
 | O8 | `Delivery/` (OH9); the delivery witness on `OD` |
+| O9 | `Validity/` (OH10); the validity witnesses on `OS` and `UO` |
 | OL5 | this record; report §23; the reference pipeline |
 
 Each phase ran as statements → review → freeze → proofs → witnesses →

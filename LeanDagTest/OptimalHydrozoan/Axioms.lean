@@ -6,6 +6,7 @@ import LeanDag.OptimalHydrozoan.Delivery.Proof
 import LeanDag.OptimalHydrozoan.DirectLiveness.Proof
 import LeanDag.OptimalHydrozoan.IndirectLiveness.Proof
 import LeanDag.OptimalHydrozoan.EventualDecision.Proof
+import LeanDag.OptimalHydrozoan.Validity.Proof
 import LeanDag.OptimalHydrozoan.Grounding.Proof
 /-!
 # Optimal-Hydrozoan: the axioms tripwire
@@ -70,6 +71,18 @@ info: 'LeanDag.OptimalHydrozoan.EventualDecision.holds' depends on axioms: [prop
 -/
 #guard_msgs in
 #print axioms LeanDag.OptimalHydrozoan.EventualDecision.holds
+
+/--
+info: 'LeanDag.OptimalHydrozoan.Validity.holds' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms LeanDag.OptimalHydrozoan.Validity.holds
+
+/--
+info: 'LeanDag.OptimalHydrozoan.Validity.validityProgress' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms LeanDag.OptimalHydrozoan.Validity.validityProgress
 
 /--
 info: 'LeanDag.OptimalHydrozoan.Grounding.holds' depends on axioms: [propext, Classical.choice, Quot.sound]

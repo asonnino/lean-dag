@@ -301,7 +301,9 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   prefix consistency of the committed sequences, and of the delivered
   sequence — the ledger filtered through the linearizer's persistent
   set, for any deduplication key — with Integrity: no key delivered
-  twice. Liveness above a
+  twice. Validity closes the four properties of atomic broadcast: from
+  the round of synchrony on, every block of the synchronised correct
+  set is delivered. Liveness above a
   structural rendering of synchrony routes through the slow path, the
   only one a quorum of correct replicas is sure to reach; the fast
   path and the direct skip are stated as performance facts outside the
