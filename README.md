@@ -365,7 +365,7 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   its output, with the success probability as a cardinality — at least
   `2f + 1` good targets, fixed measurably before a post-round draw —
   and the recovery election's min-hash tie-break is a linear-order
-  parameter that provably carries no safety weight. Thirty-two findings
+  parameter that provably carries no safety weight. Thirty-four findings
   for the paper, among them the corrected trichotomy of conflict
   resolution, the algorithm-versus-lemma-text refutation form, and that
   the literal `4f + 1` threshold hides an *upper* bound on `n` that

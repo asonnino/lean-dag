@@ -69,8 +69,21 @@ theorem trichotomy : Trichotomy U := by
         | ack tx => exact absurd hds (hack b₁ hb₁ hc₁ hrb₁ tx)
         | bot => exact ⟨stanceIs_self_of_declares hb₁ hds, hconf₁⟩
 
-theorem anchorDecides : AnchorDecides U := by
-  intro hdisc hrule o r R b₀ hb₀ hc₀ hr₀ hconf₀ hRr hsync hpop1 A i a V hia hca hra
+omit [DecidableEq BlockId] in
+/-- `AnchorDecides` with its first branch located: the candidate is
+certified under the given anchor and alive there — what `resolveCommit`
+consumes, and what drops the rivals at the same anchor. -/
+theorem anchorRoute (hdisc : StanceDiscipline U) (hrule : VotingRule U) {o : Obj}
+    {r R : ℕ} {b₀ : BlockId} (hb₀ : b₀ ∈ U.ids)
+    (hc₀ : (U.block b₀).author ∈ (Correct : Finset Validator))
+    (hr₀ : (U.block b₀).round = r) (hconf₀ : Conflicted U b₀ o) (hRr : R ≤ r)
+    (hsync : SynchronisedOn U (Correct : Finset Validator) R)
+    (hpop1 : PopulatedOn U (Correct : Finset Validator) (r + 1))
+    {A : Anchors U} {i : ℕ} {a : BlockId} (hia : A.seq[i]? = some a)
+    (hca : (U.block a).author ∈ (Correct : Finset Validator))
+    (hra : r + 2 ≤ (U.block a).round) :
+    (Conflicted U a o ∧ ∃ tx, IsCandidate U a o tx ∧ HasCert U a tx ∧ ¬ DeadAt U A i tx) ∨
+      ∃ j ≤ i, ResolvesAt U A j o := by
   have haid : a ∈ U.ids := anchor_mem_ids hia
   -- the anchor is conflicted, through its own round-(r+1) block
   have hconfa : Conflicted U a o := by
@@ -81,9 +94,7 @@ theorem anchorDecides : AnchorDecides U := by
       hsync p hp hpc (by omega) b₀ hb₀ hc₀ (by omega)
     exact conflicted_mono hreach (conflicted_mono (Reaches.single hpar₀) hconf₀)
   by_cases hlive : ∃ tx, IsCandidate U a o tx ∧ HasCert U a tx ∧ ¬ DeadAt U A i tx
-  · obtain ⟨tx, hcand, hcert, hlive'⟩ := hlive
-    exact Or.inl ⟨tx, hcand, TxVerdict.resolveCommit hia (hcand.2.1.symm ▸ hconfa)
-      (hcand.2.1.symm ▸ hcand) hcert hlive'⟩
+  · exact Or.inl ⟨hconfa, hlive⟩
   · right
     push Not at hlive
     obtain ⟨p, hp, hap, hrp, hreach⟩ := exists_own_block_of_le haid hca (m := r + 2) hra
@@ -120,6 +131,14 @@ theorem anchorDecides : AnchorDecides U := by
     · obtain ⟨j, hj, hready'⟩ := releasedBelow_iff_exists.mp h
       obtain ⟨j', hj', hres⟩ := exists_resolvesAt_of_ready hready'
       exact ⟨j', by omega, hres⟩
+
+theorem anchorDecides : AnchorDecides U := by
+  intro hdisc hrule o r R b₀ hb₀ hc₀ hr₀ hconf₀ hRr hsync hpop1 A i a V hia hca hra
+  rcases anchorRoute hdisc hrule hb₀ hc₀ hr₀ hconf₀ hRr hsync hpop1 hia hca hra with
+    ⟨hconfa, tx, hcand, hcert, hlive⟩ | hres
+  · exact Or.inl ⟨tx, hcand, TxVerdict.resolveCommit hia (hcand.2.1.symm ▸ hconfa)
+      (hcand.2.1.symm ▸ hcand) hcert hlive⟩
+  · exact Or.inr hres
 
 theorem holds : Statement := by
   intro Validator BlockId Tx Obj _ _ _ _ _ U

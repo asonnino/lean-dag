@@ -16,11 +16,13 @@ Owned and mixed transactions compete on their owned input, and the
 class decides only where a full certificate takes effect: an owned
 transaction finalises on one observation (`fullFinal`), a mixed one at
 a committed anchor whose history holds the certificate (`mixedFinal`),
-since it must be ordered first (D9). As in the `3f+1`
-relation, the guard-emitted drops of `FinalizeOnCommitTX` — a mixed
-transaction whose input is already in `decidedObj` — receive no
-verdict: those transactions stay undecided, which only shrinks the set
-of derivable verdicts the agreement theorem covers.
+since it must be ordered first (D9). The guard-emitted drops of
+`FinalizeOnCommitTX` — a mixed transaction whose input is already in
+`decidedObj` — receive no verdict here, unlike at `3f+1`, where
+`releasedDrop` renders them for RS11: no `5f+1` claim reads them, and
+the paper's algorithm has no such drop for an owned transaction at all
+(record finding 33). Those transactions stay undecided, which only
+shrinks the set of derivable verdicts the agreement theorem covers.
 
 The consensusless routes read a **view** and decide on a *single*
 observed certificate block — finality in one observation, unlike the

@@ -93,9 +93,10 @@ Three consequences shape the arc.
 | `IsFastCertTX`, `HasCertTX`, `CertVisible`, `IsSkipCertObj`, `IsUnlockCertObj`; `DAG[r]` | `Model/Certificates.lean` — `AtLeast`, `blocksAt`, `IsFastCert`, `HasCert`, `CertVisible`, `IsSkipCert`, `IsUnlockCert`, `FastQuorumAt` |
 | Lemmas single-ack, cert-unique, univalent, fast-unlock-exclusion, cert-propagation | `CertificateExclusion/` (RS2) — `HonestSingleAck`, `CertUniqueness`, `AckSkipExclusion`, `AckUnlockExclusionBelow`, `CertPropagation` |
 | Consensus interface (C1)–(C4), `Dead`, `Resolves` | `Model/{Anchors, Dead}.lean` — `Anchors`, `DeadGiven`, `ResolveReadyGiven`, `ReleasedBelow`, `ResolvesAt`, `DeadAt` |
-| `TryFastDecideTX`, `TrySkipDecideObj`, `FinalizeOnCommitTX`, `ResolveOnCommitObj` | `Model/Verdict.lean` — `Fate`, `FastQuorumAtInView`, `SkipQuorumAtInView`, `TxVerdict` |
+| `TryFastDecideTX`, `TrySkipDecideObj`, `FinalizeOnCommitTX` (both loops), `ResolveOnCommitObj` | `Model/Verdict.lean` — `Fate`, `FastQuorumAtInView`, `SkipQuorumAtInView`, `TxVerdict` (`releasedDrop` is the first loop's late candidate) |
 | Theorem commit-safety, Lemma mixed-object safety | `TxAgreement/` (RS3) — `VerdictAgreement`, `NoConflictingFinal`, `MixedViaAnchor` |
 | Lemmas fp-liveness, equiv-live; `CastVotes` | `Model/{Liveness, HonestVoting}.lean` — `PopulatedOn`, `SynchronisedOn`, `VotingRule`; `Uncontested/` (RS4) — `FastLiveness`, `FastVerdict`, `AnchorVerdict`; `ConflictResolution/` (RS5) — `Trichotomy`, `AnchorDecides` |
+| Lemma termination-3f; Termination of the Conditional State-Machine Replication definition | `Termination/` (RS11) — `DecidedAgainst`, `Decided`, `DecidedOrdered` |
 | §8 certificates, refutations, moves (`Alg:FastPathPredicates5f+1`) | `Model/Five/{Certificates, Moves}.lean` — `IsAntiVote`, `IsFullCert`, `IsHalfCert`, `IsRefutation`, `IsFullUnlockCert`, `MoveDiscipline` |
 | §8 freeze, `Triggers`, `TriggerAnchor`, `Frozen`, `Resolves`; `ResolveOnCommitObj`'s `F`, `W` | `Model/Five/Freeze.lean` — `AtLeastV`, `Triggers`, `TriggerAt`, `Frozen`, `FreezeQuorum`, `ResolvesFiveAt`, `EligibleFive`, `FreezeDiscipline`; `Block.freezes` |
 | `TryFullDecideTX`, `TryFullUnlockObj`, `FinalizeOnCommitTX`, `ResolveOnCommitObj` | `Model/Five/Verdict.lean` — `VerdictFive` (owned and mixed candidates; `mixedFinal` is the anchor route) over a linear-order parameter `prio` (the min-hash tie-break, D8-style) |
@@ -266,6 +267,26 @@ assumed anywhere.
   branch of fp-liveness (`AnchorVerdict`) — and a conflict resolves at
   every synchronised anchor above `r + 2` through the corrected
   trichotomy (finding 5).
+- **RS11 `Termination/`** — Lemma termination-3f, in its two halves.
+  *Decided against*: a candidate of a committed anchor is dropped when
+  its object resolved at or below the anchor, or when the anchor holds
+  the certificate of a finalized rival — under `StanceDiscipline`
+  alone, with no voting rule and no synchrony, which is what lets it
+  speak of runs where the correct validators decided the object and
+  fell silent (there `VotingRule` is false, and the second half says
+  nothing). *Decided*: a valid transaction included by a correct block
+  receives a verdict, under both `3f + 1` hypotheses and the structural
+  synchrony, given a correct-authored committed anchor four rounds above
+  (C4) — and no (C5): the anchor's own chain carries the evidence
+  (finding 34). No premise says whether the transaction is contested:
+  the proof splits on whether the anchor's own block two rounds above
+  the carrier includes a valid rival, reading RS4's no-rival premise at
+  that block only (finding 18). A third claim restates it from the
+  paper's "placed in the global order". It needed one more route in the
+  verdict relation, `releasedDrop` — a candidate first included above
+  its object's release, `FinalizeOnCommitTX`'s first loop; RS3 covers
+  the new route by the argument it already had, since a finalized
+  transaction's object is release-ready at no anchor.
 - **RS6 `Five/FullCertSafety/`** — single stance unconditionally; under
   `MoveDiscipline` (a declared change carries a refutation of the old
   value), a full certificate excludes refutations of its ACK, a full
@@ -342,12 +363,17 @@ beside frozen validators, with the move rule and the freeze rule each
 shown needed), `FiveLiveness` (the `5f + 1` voting rule, including a
 freeze-written `⊥` with no conflict in sight), `FiveRoutes` (the anchor
 route reads the universe and is class-gated) and `LiteralThreshold`
-(finding 19's constant, at `n = 7`).
+(finding 19's constant, at `n = 7`). `Termination` carries the late
+candidate — in the global order, its object released below, and
+`releasedDrop` the only route to a verdict — and RS11's hypotheses on
+an uncontested run, on a contested one, and on one where the rival is
+seen only at the anchor: the run that separates RS11's local no-rival
+premise from RS4's global one.
 
 ## 3. Findings for the paper
 
 Recorded at Phase 0 from the reading and updated as the mechanisation
-confirmed, refined, or added to them; findings 16, 18–21 and 29 are the
+confirmed, refined, or added to them; findings 16, 18–21, 29 and 34 are the
 mechanisation's own.
 
 1. **Stale schema in the proofs.** Lemma univalent-exclusive and the
@@ -589,6 +615,30 @@ mechanisation's own.
     Preliminaries. Open: 1 (the consensus-projection sentence still
     lists `nacks`, `unlocks`), 12, 16, 18, 22 (the lemma is now
     explicitly unconditional, the voting rule named only in its proof).
+33. **Per-transaction termination fails for the `5f + 1` algorithm as
+    written.** The only abort sites are `TryFullUnlockObj` and
+    `ResolveOnCommitObj`, each over the candidates it sees at that one
+    call and never again for the object, and `FinalizeOnCommitTX`'s
+    first loop, which is gated by `IsMixed`. `TryFullDecideTX` only
+    `continue`s on a decided object, where the `3f + 1` procedure
+    records an abort. So when an owned transaction is finalized on a
+    full certificate, its owned rivals — present from the start or
+    included later, by a Byzantine block or by a correct validator not
+    yet aware of the decision — are valid, lie under committed anchors,
+    and are never decided: the Termination property of the paper's
+    specification does not hold of them, and neither does the
+    "eventually" half of Agreement, since a validator that instead
+    reached the same winner through recovery does abort them. The paper
+    claims termination per object only (Lemma recovery-termination,
+    RS9b); dropping the `IsMixed` gate of the first loop and recording
+    the abort in `TryFullDecideTX`, as at `3f + 1`, closes the gap. Not
+    mechanised: the arc's `5f + 1` relation has no such drop either.
+34. **Termination at `3f + 1` needs (C4), not (C5).** The lemma's proof
+    sends a certificate under a committed anchor by (C5); mechanised,
+    the correct-authored anchor four rounds above the carrier suffices,
+    because its own chain passes through a certificate, or through a
+    block from which RS5 applies. The Lean (C5) would also have been
+    stronger than the paper's, which speaks of honest blocks only.
 
 ## 4. Out of scope
 
@@ -608,12 +658,13 @@ mechanisation's own.
   and Theorem latency-5f's round bookkeeping stay on paper. Lemma
   reuse-5f lives on `Spendable`, dropped by D3, and so does the new
   mixed disjunct of `Spendable`.
-- **The guard-emitted drops of `FinalizeOnCommitTX`** — a mixed
-  transaction whose input is already decided — receive no verdict, as
-  at `3f + 1`; and the lemmas of the 2026-09-10 revision that read
+- **The guard-emitted drops of `FinalizeOnCommitTX` at `5f + 1`** — a
+  mixed transaction whose input is already decided — receive no verdict
+  (at `3f + 1` they do, RS11); and the lemmas of the 2026-09-10 revision that read
   local state or execution: decision integrity (the verdict relations
-  are functional by RS3 and RS8), termination-3f, consistent
-  execution.
+  are functional by RS3 and RS8) and consistent execution. Per-object
+  termination at `5f + 1` is RS9b; per-transaction termination is
+  mechanised at `3f + 1` only (RS11).
 - **Execution, reverts, epoch change**, and the paper's §5 liveness
   claim for shared objects.
 

@@ -115,6 +115,31 @@ theorem fast_vote_of_sole (hrule : VotingRule U) {tx : Tx}
   fast_vote_of_sole_of hrule.ack_sole
     (fun e he hc o hd => ⟨e, hrule.bot_conflicted e he hc o hd⟩) hval hsole hb₁ hc₁ hinc
 
+/-- The sole-candidate step under the `3f+1` voting rule, with the rival
+premise read at the block alone: a correct block that includes a valid
+transaction and no valid rival is a fast vote for it. A `⊥` stance
+would trace to an own earlier block that saw a conflict, whose rival
+the block then includes too. -/
+theorem fast_vote_of_local_sole (hrule : VotingRule U) {tx : Tx} (hval : T.Valid tx)
+    {b₁ : BlockId} (hb₁ : b₁ ∈ U.ids)
+    (hc₁ : (U.block b₁).author ∈ (Correct : Finset Validator))
+    (hinc : Includes U b₁ tx)
+    (hsole : ∀ tx', T.Valid tx' → Conflict tx tx' → ¬ Includes U b₁ tx') :
+    IsFastVote U b₁ tx := by
+  have hcand : IsCandidate U b₁ (T.input tx) tx := ⟨hval, rfl, hinc⟩
+  have key : ∀ t, IsCandidate U b₁ (T.input tx) t → t = tx := by
+    intro t ht
+    by_contra hne
+    exact hsole t ht.1 ⟨fun h => hne h.symm, ht.2.1.symm⟩ ht.2.2
+  have hnobot : ¬ StanceIs U (U.block b₁).author (T.input tx) b₁ (some Stance.bot) := by
+    intro hbot
+    obtain ⟨e, he, hae, hre, hde⟩ := exists_bot_declarer hbot
+    obtain ⟨t₁, t₂, h₁, h₂, hne⟩ :=
+      hrule.bot_conflicted e he (hae.symm ▸ hc₁) (T.input tx) hde
+    exact hne ((key t₁ (isCandidate_mono hre h₁)).trans
+      (key t₂ (isCandidate_mono hre h₂)).symm)
+  exact ⟨hval, hinc, hrule.ack_sole b₁ hb₁ hc₁ (T.input tx) tx hcand key hnobot⟩
+
 /-- A visible certificate behind a fast vote is a certificate at or
 below the block. -/
 theorem hasCert_of_certVisible_of_fastVote {b : BlockId} {tx : Tx} (hb : b ∈ U.ids)

@@ -31,6 +31,39 @@ variable {Validator BlockId Tx Obj : Type*} [Fintype Validator] [DecidableEq Val
 
 open CertificateExclusion
 
+/-- The input of a finalized transaction is release-ready at no anchor:
+by the round quorum for the consensusless route, and for the anchor
+routes by the certificate under the anchor, with nothing released below
+it — an unconflicted anchor sees no earlier conflict, and an alive
+candidate no earlier release. -/
+theorem no_ready_of_finalized (hdisc : StanceDiscipline U) {A : Anchors U} {V : View U}
+    {tx : Tx} (h : TxVerdict U A V tx Fate.finalized) :
+    ∀ i, ¬ ResolveReadyAt U A i (T.input tx) := by
+  cases h with
+  | fastFinal ho hq =>
+      exact no_ready_of_fastQuorum hdisc (atLeast_mono Finset.inter_subset_left hq)
+  | @finalizeOnCommit j aj hj hcandj hncj hcertj =>
+      refine no_ready_of_anchor_cert hdisc hj hcertj (fun k hk hready => ?_)
+      obtain ⟨ak, hka, hconfk, -, -⟩ := hready
+      exact hncj (conflicted_mono (anchor_reaches (le_of_lt hk) hka hj) hconfk)
+  | @resolveCommit j aj hj hconfj hcandj hcertj hlivej =>
+      refine no_ready_of_anchor_cert hdisc hj hcertj (fun k hk hready => ?_)
+      exact hlivej ⟨aj, hj,
+        Or.inr (Or.inr (releasedBelow_iff_exists.mpr ⟨k, hk, hready⟩))⟩
+
+/-- A finalized transaction is dead at no anchor: no rival is certified,
+no skip certificate exists for its input, and the input is never
+released. -/
+theorem alive_of_finalized (hdisc : StanceDiscipline U) {A : Anchors U} {V : View U}
+    {tx : Tx} (h : TxVerdict U A V tx Fate.finalized) : ∀ i, ¬ DeadAt U A i tx := by
+  rintro i ⟨a, -, hdg⟩
+  obtain ⟨C, hC, hc⟩ := cert_of_finalized h
+  rcases hdg with ⟨tx', hconf', C', hC', hc', -⟩ | ⟨Cs, hCs, hskip, -⟩ | hrel
+  · exact certUniqueness hdisc C hC C' hC' tx tx' hconf' hc hc'
+  · exact ackSkipExclusion hdisc C hC Cs hCs tx hc hskip
+  · obtain ⟨k, -, hready⟩ := releasedBelow_iff_exists.mp hrel
+    exact no_ready_of_finalized hdisc h k hready
+
 /-- One transaction is never both finalized and dropped. -/
 theorem no_both (hdisc : StanceDiscipline U) {A : Anchors U} {V₁ V₂ : View U} {tx : Tx}
     (h1 : TxVerdict U A V₁ tx Fate.finalized)
@@ -45,19 +78,8 @@ theorem no_both (hdisc : StanceDiscipline U) {A : Anchors U} {V₁ V₂ : View U
       obtain ⟨tx0, hconf0, hcand0, hcert0, hlive0⟩ := hriv
       obtain ⟨C₁, hC₁, hc₁, -⟩ := hcert0
       exact certUniqueness hdisc C hCid C₁ hC₁ tx tx0 hconf0 hCert hc₁
-  | @resolveDrop i a hia hres hcand =>
-      cases h1 with
-      | fastFinal ho hq =>
-          exact no_ready_of_fastQuorum hdisc
-            (atLeast_mono Finset.inter_subset_left hq) i hres.1
-      | @finalizeOnCommit j aj hj hcandj hncj hcertj =>
-          refine no_ready_of_anchor_cert hdisc hj hcertj (fun k hk hready => ?_) i hres.1
-          obtain ⟨ak, hka, hconfk, -, -⟩ := hready
-          exact hncj (conflicted_mono (anchor_reaches (le_of_lt hk) hka hj) hconfk)
-      | @resolveCommit j aj hj hconfj hcandj hcertj hlivej =>
-          refine no_ready_of_anchor_cert hdisc hj hcertj (fun k hk hready => ?_) i hres.1
-          exact hlivej ⟨aj, hj,
-            Or.inr (Or.inr (releasedBelow_iff_exists.mpr ⟨k, hk, hready⟩))⟩
+  | releasedDrop hia hcand hji hres => exact no_ready_of_finalized hdisc h1 _ hres.1
+  | resolveDrop hia hres hcand => exact no_ready_of_finalized hdisc h1 _ hres.1
 
 theorem verdictAgreement (hdisc : StanceDiscipline U) {A : Anchors U} :
     VerdictAgreement U A := by

@@ -6,7 +6,8 @@ import LeanDag.RedSnapper.Model.View
 
 Trusted core: the four decision routes of the paper's `TryDecide`
 (`Alg:Snapper3f+1`) — `TryFastDecideTX`, `TrySkipDecideObj`,
-`FinalizeOnCommitTX`, `ResolveOnCommitObj` — as one order-free inductive
+`FinalizeOnCommitTX` (both of its loops), `ResolveOnCommitObj` — as one
+order-free inductive
 relation (D6 of `docs/red-snapper.md`): a constructor per route, any
 derivable verdict counts, and that all derivable verdicts agree is the
 theorem of `TxAgreement/`, never a side condition.
@@ -22,20 +23,25 @@ skip route drops owned and mixed candidates alike. The anchor routes
 read the global `(U, A)` of D4, so their cross-validator agreement is
 definitional.
 
-Three transcription notes, each provable rather than assumed. In
+Three transcription notes; the first two are provable rather than
+assumed, the third is a modelling choice. In
 `finalizeOnCommit`, the paper's `¬Dead` and
 `OwnedInputs ∩ RecoveryObjs = ∅` clauses reduce, under the constructor's
 `¬Conflicted`, to nothing: every disjunct of `Dead` forces a visible
 conflict on the input (releases included, through `Anchors.chained`).
 In `resolveCommit`, the paper commits "the unique transaction in `H`" —
 here any member of `H`, whose uniqueness is a consequence of certificate
-uniqueness. And the guard-emitted drops of the paper — a candidate
-first included after its object's release anchor, and the drops the
-`decidedObj` guard and `FinalizeOnCommitTX`'s first loop record once a
-rival is finalized or the object decided — receive no verdict here:
-those transactions stay undecided, which only shrinks the set of
-derivable verdicts the agreement theorem covers, and their consistency
-with any finalization is certificate uniqueness.
+uniqueness. `FinalizeOnCommitTX`'s first loop drops the candidates of
+an object already in `decidedObj`; that local set is rendered by what
+put the object there, globally: a release at an earlier anchor is
+`releasedDrop` — the candidate first included after its object's
+release, which in general no other route reaches (a witness has it as
+the only route to a verdict) — and a finalized rival is
+`resolveDropRival`, at whichever anchor holds the rival's certificate
+(RS11's `DecidedAgainst`). When the object was decided consensuslessly
+the relation drops the late candidate only at an anchor above the
+quorum's round, possibly later than the validator does; that such an
+anchor then always does so is argued in the record, not proved.
 -/
 
 namespace LeanDag
@@ -95,6 +101,14 @@ inductive TxVerdict (U : Universe Validator BlockId Tx Obj) (A : Anchors U) (V :
       ¬ Conflicted U a (T.input tx) →   -- OwnedInputs ∩ RecoveryObjs(A) = ∅ (D2); subsumes ¬Dead
       HasCert U a tx →                  -- HasCertTX(A, tx): a certificate below the anchor
       TxVerdict U A V tx Fate.finalized
+  /-- Drop of a late candidate (`FinalizeOnCommitTX`, first loop): a
+  candidate of an anchor whose input was released at an earlier one. -/
+  | releasedDrop {tx : Tx} {i j : ℕ} {a : BlockId} :
+      A.seq[i]? = some a →              -- a committed anchor
+      IsCandidate U a (T.input tx) tx → -- tx ∈ Candidates(A, o) ...
+      j < i →                           -- ... with o ∈ decidedObj: released at an
+      ResolvesAt U A j (T.input tx) →   -- earlier anchor (Resolves, there)
+      TxVerdict U A V tx Fate.dropped
   /-- Commit at an anchor, contested (`ResolveOnCommitObj`, first
   branch): a candidate of a conflicted input, certified in the anchor's
   history and alive there. -/
