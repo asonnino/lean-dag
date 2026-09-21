@@ -223,7 +223,7 @@ example : VerdictFive U6RecTie ARecTie (View.full U6RecTie) (· ≤ ·) 0 Fate.f
 example : VerdictFive U6RecTie ARecTie (View.full U6RecTie) (· ≤ ·) 1 Fate.dropped :=
   .recoveryDropLoser (tx' := 0) (i := 1) (j := 2) (aₖ := 6) (a := 17)
     (resolvesFiveAt_iff.mpr (by decide)) (by decide) (by decide)
-    ⟨by decide, (mem_candidates_iff (by decide)).mp (by decide)⟩
+    ((mem_candidates_iff (by decide)).mp (by decide))
     ((eligibleFive_iff (by decide)).mpr (by decide))
     (fun _ _ => Fin.zero_le _) (by decide)
 
@@ -237,7 +237,7 @@ example : VerdictFive U6RecTie ARecTie (View.full U6RecTie) (· ≥ ·) 1 Fate.f
 example : VerdictFive U6RecTie ARecTie (View.full U6RecTie) (· ≥ ·) 0 Fate.dropped :=
   .recoveryDropLoser (tx' := 1) (i := 1) (j := 2) (aₖ := 6) (a := 17)
     (resolvesFiveAt_iff.mpr (by decide)) (by decide) (by decide)
-    ⟨by decide, (mem_candidates_iff (by decide)).mp (by decide)⟩
+    ((mem_candidates_iff (by decide)).mp (by decide))
     ((eligibleFive_iff (by decide)).mpr (by decide))
     (fun tx' h => tie_elig tx' ((eligibleFive_iff (by decide)).mp h)) (by decide)
 
@@ -447,20 +447,14 @@ private theorem u4_empty : ∀ tx : Fin 4, ¬ EligibleFiveDec U4 5 12 0 tx := by
 example : ¬ RecoverySafety.RecoveryReflects U4 := fun h =>
   u4_empty 0 ((eligibleFive_iff (by decide)).mp
     (h 0 5 12 0 (by decide) ((freezeQuorum_iff (by decide)).mpr (by decide))
-      (by decide) (by decide) ⟨8, by decide,
+      (by decide) ⟨8, by decide,
         (isFullCert_iff (by decide)).mpr (by decide)⟩).1)
 
 example : ¬ RecoverySafety.RecoverySafetyBot U4 := fun h =>
   h 0 5 12 (by decide) ((freezeQuorum_iff (by decide)).mpr (by decide))
     (fun tx he => u4_empty tx ((eligibleFive_iff (by decide)).mp he))
-    0 (by decide) (by decide) 8 (by decide)
+    0 (by decide) 8 (by decide)
     ((isFullCert_iff (by decide)).mpr (by decide))
-
--- The winner claim, by contrast, needs no committee bound: its premise
--- (an eligible transaction) is simply unsatisfiable here, and the
--- generic theorem applies at 3f+1 as stated.
-example : RecoverySafety.RecoverySafetyWin U4 :=
-  RecoverySafety.recoverySafetyWin (freezeDiscipline_iff.mpr (by decide))
 
 /-! ### The stance is read at the anchor, not at the marker -/
 
@@ -554,7 +548,7 @@ example : ResolvesFiveAt U6Mut AMut 0 1 2 := resolvesFiveAt_iff.mpr (by decide)
 /-- The mutant: stances counted from the marker blocks' declarations. -/
 def EligibleFiveMarkerDec (U : Universe (Fin 6) (Fin 19) (Fin 4) (Fin 2))
     (aₖ a : Fin 19) (o : Fin 2) (tx : Fin 4) : Prop :=
-  (Owned tx ∧ tx ∈ candidates U a o) ∧
+  tx ∈ candidates U a o ∧
     half (Fin 6) ≤ (Finset.univ.filter fun id => ∃ m ∈ historyIn U a,
       (U.block m).author = id ∧ (U.block m).freezes o = some aₖ ∧
         (U.block m).declares o = some (Stance.ack tx)).card
@@ -698,10 +692,8 @@ example : MoveDiscipline U6RecBadAck := moveDiscipline_iff.mpr (by decide)
 example : ¬ FreezeDiscipline U6RecBadAck := fun h =>
   absurd (freezeDiscipline_iff.mp h) (by decide)
 
-/-! ### Arc audit: The D9 `Owned` gate is never exercised on the 5f+1 side:
-no Fin-6 universe carries the mixed `tx 2`. A mixed transaction CAN be
-fully certified (IsFullCert has no Owned conjunct); only the
-constructor gate keeps fullFinal shut. -/
+/-! ### The mixed route: a fully certified mixed transaction is final at
+a committed anchor above the certificate, and nowhere else. -/
 
 /-- Thirteen ids over `sixValidators`: genesis 0 carries the mixed
 `tx 2` (input `o1`); round 1: the five correct validators ACK it,
@@ -734,13 +726,12 @@ example : MoveDiscipline UMixSix := moveDiscipline_iff.mpr (by decide)
 example : Transactions.Mixed (2 : Fin 4) ∧ ¬ Owned (2 : Fin 4) := by decide
 example : IsFullCert UMixSix 12 2 := (isFullCert_iff (by decide)).mpr (by decide)
 
--- ... it is a candidate but NOT an owned candidate (the 5f+1 recovery's
--- gate, currently without any negative witness in the suite) ...
+-- ... and a candidate of the certificate block.
 example : IsCandidate UMixSix 12 1 2 := (mem_candidates_iff (by decide)).mp (by decide)
-example : ¬ OwnedCandidate UMixSix 12 1 2 := fun h => h.1 (by decide)
 
--- ... and only the constructor's Owned gate keeps the consensusless
--- 5f+1 route shut: with no anchors, no finalized verdict is derivable.
+-- With no committed anchor, no finalized verdict is derivable: the
+-- consensusless route is shut to a mixed transaction (D9), and the
+-- anchor route has no anchor.
 def AMixSix : Anchors UMixSix where
   seq := []
   mem := by simp
@@ -750,7 +741,48 @@ example : ¬ VerdictFive UMixSix AMixSix (View.full UMixSix) (· ≤ ·) 2 Fate.
   intro h
   cases h with
   | fullFinal ho _ _ => exact ho (by decide)
+  | mixedFinal _ hi _ _ _ _ => simp [AMixSix] at hi
   | recoveryFinal hres hi hj helig hmin => simp [AMixSix] at hi
+
+-- Commit the certificate block as an anchor, and `mixedFinal` fires.
+def AMixSixCert : Anchors UMixSix where
+  seq := [12]
+  mem := by decide
+  chained := by simp
+
+example : VerdictFive UMixSix AMixSixCert (View.full UMixSix) (· ≤ ·) 2 Fate.finalized :=
+  .mixedFinal (i := 0) (a := 12) (C := 12) (by decide) (by decide)
+    ((mem_candidates_iff (by decide)).mp (by decide)) (by decide) Reaches.refl
+    ((isFullCert_iff (by decide)).mpr (by decide))
+
+-- An anchor below the certificate does not: block 6 is a round-1 ACK,
+-- and nothing in its history carries the certificate.
+def AMixSixBelow : Anchors UMixSix where
+  seq := [6]
+  mem := by decide
+  chained := by simp
+
+private theorem mixSix_no_cert_below :
+    ∀ C ∈ historyIn UMixSix 6, ¬ IsFullCertDec UMixSix C 2 := by decide
+
+example : ¬ VerdictFive UMixSix AMixSixBelow (View.full UMixSix) (· ≤ ·) 2
+    Fate.finalized := by
+  intro h
+  cases h with
+  | fullFinal ho _ _ => exact ho (by decide)
+  | mixedFinal _ hi _ hC hr hcert =>
+      have ha := List.mem_of_getElem? hi
+      simp only [AMixSixBelow, List.mem_singleton] at ha
+      subst ha
+      exact mixSix_no_cert_below _ ((mem_historyIn_iff (by decide)).mpr ⟨hC, hr⟩)
+        ((isFullCert_iff hC).mp hcert)
+  | recoveryFinal hres hi hj helig hmin =>
+      obtain ⟨-, hij, ⟨aₖ, a, hlk, hla, -⟩, -⟩ := hres
+      have h1 := (List.getElem?_eq_some_iff.mp hlk).1
+      have h2 := (List.getElem?_eq_some_iff.mp hla).1
+      simp [AMixSixBelow] at h1 h2
+      omega
+
 /-! ### Arc audit: `EligibleFive`'s `Frozen` conjunct is never discriminating:
 a mutant counting bare standers passes the committed suite. -/
 
@@ -776,7 +808,7 @@ example : ¬ EligibleFive U6RecNoF 6 17 0 0 := fun h =>
   absurd ((eligibleFive_iff (by decide)).mp h) (by decide)
 
 -- Mutant (Frozen conjunct dropped): three bare standers reach `half`.
-example : (Owned (0 : Fin 4) ∧ (0 : Fin 4) ∈ candidates U6RecNoF 17 0) ∧
+example : (0 : Fin 4) ∈ candidates U6RecNoF 17 0 ∧
     half (Fin 6) ≤ (Finset.univ.filter fun id =>
       StanceSomeDec U6RecNoF id (0 : Fin 2) 17 (Stance.ack 0)).card := by decide
 /-! ### Arc audit: The two behavioural hypotheses coexist: the committed U6Rec

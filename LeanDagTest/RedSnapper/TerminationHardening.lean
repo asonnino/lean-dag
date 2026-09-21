@@ -9,10 +9,10 @@ import LeanDagTest.RedSnapper.FreezeHardening
 Adopted from the Phase 9 vacuity audit: `ResolutionExists` without the
 no-quorum-below premise is false (on `U6RecPre`, where the markers sit
 in the trigger's own history and the paper-exact one-shot refuses every
-index); `RecoveryDecides` on `U6Rec` lands on the *left* disjunct
-non-vacuously — RS8's agreement refutes the dropped side; and on
-`U6RecTie` the election's `exists_prio_min` runs over a genuine
-two-element `W`.
+index); RS8's hypotheses are co-inhabited with a derivable verdict on
+`U6Rec`, where agreement then refutes the dropped side; and `Triggers`'
+certificate-absence conjuncts discriminate against a conflict-only
+mutant.
 -/
 
 namespace LeanDagTest
@@ -50,17 +50,11 @@ example : ¬ ∃ j', 1 < j' ∧ j' ≤ 2 ∧ ResolvesFiveAt U6RecPre ARecPre 0 1
   subst hj
   exact absurd (resolvesFiveAt_iff.mp hres) (by decide)
 
-/-! ## H: RecoveryDecides on U6Rec, and the left disjunct is the real one -/
+/-! ## H: RS8's hypotheses are co-inhabited with a derivable verdict -/
 
--- The theorem applies end-to-end on the committed witness.
-example : VerdictFive U6Rec ARec (View.full U6Rec) (· ≤ ·) 0 Fate.finalized ∨
-    VerdictFive U6Rec ARec (View.full U6Rec) (· ≤ ·) 0 Fate.dropped :=
-  RecoveryTermination.recoveryDecides (· ≤ ·) inferInstance (View.full U6Rec) 0 1 2 17 0
-    (resolvesFiveAt_iff.mpr (by decide)) (by decide)
-    ⟨by decide, (mem_candidates_iff (by decide)).mp (by decide)⟩
-
--- The RIGHT disjunct is refuted: the committed `recoveryFinal` pin
--- plus RS8's verdict agreement.
+-- On `U6Rec` the order, the committee bound and both disciplines hold
+-- together with the committed `recoveryFinal` pin, so verdict agreement
+-- applies to real data: the winner has no dropped verdict.
 example : ¬ VerdictFive U6Rec ARec (View.full U6Rec) (· ≤ ·) 0 Fate.dropped := fun h =>
   absurd
     (FiveAgreement.verdictAgreement (U := U6Rec) (A := ARec)
@@ -74,30 +68,6 @@ example : ¬ VerdictFive U6Rec ARec (View.full U6Rec) (· ≤ ·) 0 Fate.dropped
       h)
     (by decide)
 
-/-! ## I: the premises instantiate on the two-member-W tie -/
-
--- Both candidates are owned candidates at the resolving anchor, so the
--- theorem's disjunction is produced for each — over an eligible set of
--- size two, exercising `exists_prio_min`'s choice.
-example : VerdictFive U6RecTie ARecTie (View.full U6RecTie) (· ≤ ·) 0 Fate.finalized ∨
-    VerdictFive U6RecTie ARecTie (View.full U6RecTie) (· ≤ ·) 0 Fate.dropped :=
-  RecoveryTermination.recoveryDecides (· ≤ ·) inferInstance (View.full U6RecTie)
-    0 1 2 17 0
-    (resolvesFiveAt_iff.mpr (by decide)) (by decide)
-    ⟨by decide, (mem_candidates_iff (by decide)).mp (by decide)⟩
-
-example : VerdictFive U6RecTie ARecTie (View.full U6RecTie) (· ≤ ·) 1 Fate.finalized ∨
-    VerdictFive U6RecTie ARecTie (View.full U6RecTie) (· ≤ ·) 1 Fate.dropped :=
-  RecoveryTermination.recoveryDecides (· ≤ ·) inferInstance (View.full U6RecTie)
-    0 1 2 17 1
-    (resolvesFiveAt_iff.mpr (by decide)) (by decide)
-    ⟨by decide, (mem_candidates_iff (by decide)).mp (by decide)⟩
-
--- The eligible set genuinely has two members.
-example : EligibleFive U6RecTie 6 17 0 0 ∧ EligibleFive U6RecTie 6 17 0 1 :=
-  ⟨(eligibleFive_iff (by decide)).mpr (by decide),
-   (eligibleFive_iff (by decide)).mpr (by decide)⟩
-
 /-! ### Arc audit: `Triggers`' certificate-absence conjuncts are never negatively
 discriminated: a conflict-only mutant passes the committed suite. -/
 
@@ -106,7 +76,7 @@ def TriggersMut {Validator BlockId Tx Obj : Type*} [Fintype Validator]
     [DecidableEq Validator] [DecidableEq BlockId] [DecidableEq Tx] [DecidableEq Obj]
     [Faults Validator] [T : Transactions Tx Obj]
     (U : Universe Validator BlockId Tx Obj) (a : BlockId) (o : Obj) : Prop :=
-  ∃ tx ∈ candidates U a o, Owned tx ∧ ∃ tx' ∈ candidates U a o, Owned tx' ∧ tx ≠ tx'
+  ∃ tx ∈ candidates U a o, ∃ tx' ∈ candidates U a o, tx ≠ tx'
 
 instance {Validator BlockId Tx Obj : Type*} [Fintype Validator]
     [DecidableEq Validator] [DecidableEq BlockId] [DecidableEq Tx] [DecidableEq Obj]

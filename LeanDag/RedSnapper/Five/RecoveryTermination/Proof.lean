@@ -32,8 +32,8 @@ theorem triggerExists : TriggerExists U A := by
     refine ⟨hconf, ?_, ?_⟩
     · rintro ⟨b, hb, -, hcert⟩
       exact hnounlock b hb hcert
-    · rintro ⟨tx, ⟨hown, hcand⟩, b, hb, -, hcert⟩
-      exact hnocert tx hown hcand.2.1 b hb hcert
+    · rintro ⟨tx, hcand, b, hb, -, hcert⟩
+      exact hnocert tx hcand.2.1 b hb hcert
   classical
   have hex : ∃ i', ∃ a', A.seq[i']? = some a' ∧ Triggers U a' o := ⟨i, a, hlk, htrig⟩
   refine ⟨Nat.find hex, Nat.find_min' hex ⟨a, hlk, htrig⟩,
@@ -64,7 +64,7 @@ omit [DecidableEq BlockId] in
 theorem recoveryDecides : RecoveryDecides U A := by
   intro prio hord V o i j a tx hres hla hcand
   classical
-  have ho : T.input tx = o := hcand.2.2.1
+  have ho : T.input tx = o := hcand.2.1
   subst ho
   obtain ⟨htrig, hij, ⟨aₖ, a', hlk, hla', hq⟩, hleast⟩ := hres
   rw [hla] at hla'
@@ -76,7 +76,7 @@ theorem recoveryDecides : RecoveryDecides U A := by
   · obtain ⟨tx₀, htx₀⟩ := helig
     have hmemE : ∀ tx', EligibleFive U aₖ a (T.input tx) tx' → tx' ∈ txsIn U a := by
       intro tx' h'
-      exact (mem_txsIn_iff ha).mpr h'.1.2.2.2
+      exact (mem_txsIn_iff ha).mpr h'.1.2.2
     have hE : ((txsIn U a).filter
         (fun tx' => EligibleFive U aₖ a (T.input tx) tx')).Nonempty :=
       ⟨tx₀, Finset.mem_filter.mpr ⟨hmemE tx₀ htx₀, htx₀⟩⟩
@@ -94,9 +94,45 @@ theorem recoveryDecides : RecoveryDecides U A := by
   · push Not at helig
     exact Or.inr (.recoveryDropBot hres' hlk hla hcand helig)
 
+omit [DecidableEq BlockId] in
+theorem conflictDecides : ConflictDecides U A := by
+  intro prio hord V o i a hfull hlk hconf hmixed hmarkers
+  classical
+  have ha : a ∈ U.ids := anchor_mem hlk
+  by_cases hun : ∃ C ∈ U.ids, IsFullUnlockCert U C o
+  · -- a full unlock certificate: the view drops a candidate of the anchor
+    obtain ⟨C, hC, hunl⟩ := hun
+    obtain ⟨tx, -, hc, -, -⟩ := hconf
+    obtain rfl : T.input tx = o := hc.2.1
+    exact ⟨tx, rfl, Or.inr (.fullUnlockDrop (hfull hC) hunl (hfull ha) hc)⟩
+  by_cases hce : ∃ tx, T.input tx = o ∧ ∃ C ∈ U.ids, IsFullCert U C tx
+  · -- a full certificate: final on observation if owned, under an anchor if mixed
+    obtain ⟨tx, rfl, C, hC, hcert⟩ := hce
+    refine ⟨tx, rfl, Or.inl ?_⟩
+    by_cases hm : T.Mixed tx
+    · obtain ⟨i', a', hlk', hr⟩ := hmixed tx hm rfl C hC hcert
+      exact .mixedFinal hm hlk' (isCandidate_mono hr (isCandidate_of_fullCert hcert))
+        hC hr hcert
+    · exact .fullFinal hm (hfull hC) hcert
+  · -- neither, anywhere: trigger, resolution, decision
+    have hnoun : ∀ C ∈ U.ids, ¬ IsFullUnlockCert U C o := fun C hC h => hun ⟨C, hC, h⟩
+    have hnoce : ∀ tx, T.input tx = o → ∀ C ∈ U.ids, ¬ IsFullCert U C tx :=
+      fun tx ho C hC h => hce ⟨tx, ho, C, hC, h⟩
+    obtain ⟨i', -, htrig⟩ := triggerExists o i a hlk hconf hnoun hnoce
+    obtain ⟨aₖ, hlkₖ, htr⟩ := htrig.1
+    obtain ⟨hnopre, j, a', hla', hfroz⟩ := hmarkers hnoun hnoce i' aₖ htrig hlkₖ
+    obtain ⟨j', hij', -, hres⟩ :=
+      resolutionExists o i' j aₖ a' htrig hlkₖ hla' hnopre hfroz
+    obtain ⟨-, a'', -, hla'', -⟩ := hres.2.2.1
+    -- the trigger's own candidates are candidates of the later resolving anchor
+    obtain ⟨c, -, hcc, -, -⟩ := htr.1
+    have hcand : IsCandidate U a'' o c :=
+      isCandidate_mono (anchor_reaches (Nat.le_of_lt hij') hlkₖ hla'') hcc
+    exact ⟨c, hcc.2.1, recoveryDecides prio hord V o i' j' a'' c hres hla'' hcand⟩
+
 theorem holds : Statement := by
   intro Validator BlockId Tx Obj _ _ _ _ _ U A
-  exact ⟨triggerExists, resolutionExists, recoveryDecides⟩
+  exact ⟨triggerExists, resolutionExists, recoveryDecides, conflictDecides⟩
 
 end RecoveryTermination
 

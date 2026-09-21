@@ -391,3 +391,7 @@ import LeanDag.RedSnapper.Five.RecoveryTermination.Statement
 import LeanDag.RedSnapper.Helpers.Coin
 import LeanDag.RedSnapper.Five.CoinSuccess.Proof
 import LeanDag.RedSnapper.Five.RecoveryTermination.Proof
+import LeanDag.RedSnapper.Model.Five.HonestVoting
+import LeanDag.RedSnapper.Five.Uncontested.Statement
+import LeanDag.RedSnapper.Helpers.VotingFive
+import LeanDag.RedSnapper.Five.Uncontested.Proof

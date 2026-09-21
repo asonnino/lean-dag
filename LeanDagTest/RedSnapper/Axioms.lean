@@ -8,6 +8,7 @@ import LeanDag.RedSnapper.Five.RecoverySafety.Proof
 import LeanDag.RedSnapper.Five.Agreement.Proof
 import LeanDag.RedSnapper.Five.CoinSuccess.Proof
 import LeanDag.RedSnapper.Five.RecoveryTermination.Proof
+import LeanDag.RedSnapper.Five.Uncontested.Proof
 
 /-!
 # The axioms tripwire
@@ -78,3 +79,9 @@ info: 'LeanDag.RedSnapper.RecoveryTermination.holds' depends on axioms: [propext
 -/
 #guard_msgs in
 #print axioms LeanDag.RedSnapper.RecoveryTermination.holds
+
+/--
+info: 'LeanDag.RedSnapper.FiveUncontested.holds' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms LeanDag.RedSnapper.FiveUncontested.holds

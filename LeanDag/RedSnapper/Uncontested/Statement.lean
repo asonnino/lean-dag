@@ -23,9 +23,12 @@ since `quorum ≤ |Correct|`. When the transaction is owned, the
 `fastFinal` verdict follows in any full view, over every anchor
 sequence.
 
-The paper's pre-GST fallback ("otherwise a committed anchor finalizes
-it") is the `finalizeOnCommit` route of RS3 and needs no synchrony; it
-is not restated here.
+A mixed transaction takes the consensus route instead: the same
+certificates, once under a committed anchor (C5, rendered structurally
+as an anchor reaching a correct round-`r₀ + 2` block), give the
+`finalizeOnCommit` verdict — the input is unconflicted at the anchor
+because no valid rival is included anywhere. The route has no class
+gate, so the claim is stated for any valid transaction.
 -/
 
 namespace LeanDag
@@ -83,13 +86,36 @@ def FastVerdict (U : Universe Validator BlockId Tx Obj) : Prop :=
                                       -- the fastFinal verdict: consensusless
                                       -- finality, no anchor consulted
 
+/-- **Anchor finality**: a committed anchor above a correct
+round-`r₀ + 2` block finalises the transaction, owned or mixed, in every
+view. -/
+def AnchorVerdict (U : Universe Validator BlockId Tx Obj) : Prop :=
+  VotingRule U →
+  ∀ (tx : Tx) (r₀ R : ℕ) (b₀ : BlockId),
+    T.Valid tx →
+    (∀ tx', T.Valid tx' → Conflict tx tx' → ∀ b ∈ U.ids, ¬ Includes U b tx') →
+    b₀ ∈ U.ids → (U.block b₀).author ∈ (Correct : Finset Validator) →
+    (U.block b₀).round = r₀ → Includes U b₀ tx →
+    R ≤ r₀ → SynchronisedOn U (Correct : Finset Validator) R →
+    PopulatedOn U (Correct : Finset Validator) (r₀ + 1) →
+                                      -- the FastLiveness hypotheses, less the
+                                      -- certificate round: its block is given below
+    ∀ (A : Anchors U) (V : View U) (i : ℕ) (a C : BlockId),
+      A.seq[i]? = some a →            -- a committed anchor ...
+      C ∈ U.ids → (U.block C).author ∈ (Correct : Finset Validator) →
+      (U.block C).round = r₀ + 2 →
+      Reaches U a C →                 -- ... above a correct certificate-round
+                                      -- block (C5):
+      TxVerdict U A V tx Fate.finalized
+                                      -- the finalizeOnCommit verdict
+
 /-- Uncontested liveness, over every fault configuration, transaction
 data, and universe the model admits. -/
 def Statement : Prop :=
   ∀ (Validator BlockId Tx Obj : Type) [Fintype Validator] [DecidableEq Validator]
     [DecidableEq BlockId] [Faults Validator] [Transactions Tx Obj]
     (U : Universe Validator BlockId Tx Obj),
-    FastLiveness U ∧ FastVerdict U
+    FastLiveness U ∧ FastVerdict U ∧ AnchorVerdict U
 
 end Uncontested
 

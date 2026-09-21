@@ -18,7 +18,10 @@ rendering them are functional: one resolving index pair per object, one
 candidacy premise — candidacy at the resolving anchor is *derived*,
 through `FreezeDiscipline.ack_candidate`, from the frozen ACKs the
 certificate forces — which is the strengthening RS8's cross-route cases
-need.
+need. The paper's second clause of recovery-reflects — a full unlock
+certificate empties the election — is stated beside it, and needs no
+wide committee: the unlocking core's `⊥` stances persist into the
+markers and leave no room for `half` frozen supporters.
 
 Where the committee bound finally bites: `RecoveryReflects` and
 `RecoverySafetyBot`'s conflicted case count `|F ∩ S| ≥ |S| − f` and
@@ -35,12 +38,15 @@ supplies a fortiori.
 * **Resolution uniqueness**: at most one `(i, j)` resolves an object,
   and at most one eligible transaction is `prio`-minimal.
 * **Recovery reflects a hidden commit** (Lemma recovery-reflects): if
-  an owned transaction on the resolved object holds a full certificate
-  anywhere — at any round, before or after the resolution — then it is
-  eligible and uniquely so: `W = {tx}`.
+  a transaction on the resolved object, owned or mixed, holds a full
+  certificate anywhere — at any round, before or after the resolution —
+  then it is eligible and uniquely so: `W = {tx}`.
+* **Recovery reflects a hidden release** (Lemma recovery-reflects,
+  second clause): if the object holds a full unlock certificate
+  anywhere, nothing is eligible: `W = ∅`.
 * **Recovery safety, release** (Lemma recovery-safety, claim 1): if
-  nothing is eligible at the resolution, no owned transaction on the
-  object ever holds a full certificate.
+  nothing is eligible at the resolution, no transaction on the object
+  ever holds a full certificate.
 * **Recovery safety, winner** (Lemma recovery-safety, claim 2): a
   conflicting rival of any eligible transaction holds no full
   certificate above the resolving anchor's round.
@@ -75,18 +81,27 @@ covers every resolving anchor a fortiori. -/
 def RecoveryReflects (U : Universe Validator BlockId Tx Obj) : Prop :=
   ∀ (o : Obj) (aₖ a : BlockId) (tx : Tx),
     a ∈ U.ids → FreezeQuorum U aₖ o a →
-    Owned tx → T.input tx = o →
+    T.input tx = o →
     (∃ C ∈ U.ids, IsFullCert U C tx) →
     EligibleFive U aₖ a o tx ∧ ∀ tx', EligibleFive U aₖ a o tx' → tx' = tx
 
+/-- **Recovery reflects a hidden release**: a full unlock certificate
+anywhere leaves nothing eligible, at any block — no marker quorum is
+consumed, and no wide committee. -/
+def UnlockEmptiesElection (U : Universe Validator BlockId Tx Obj) : Prop :=
+  ∀ (o : Obj) (aₖ a : BlockId),
+    a ∈ U.ids →
+    (∃ C ∈ U.ids, IsFullUnlockCert U C o) →
+    ∀ tx, ¬ EligibleFive U aₖ a o tx
+
 /-- **Recovery safety, release**: an empty election at a marker quorum
-forbids a full certificate for any owned transaction on the object, at
-any round. -/
+forbids a full certificate for any transaction on the object, at any
+round. -/
 def RecoverySafetyBot (U : Universe Validator BlockId Tx Obj) : Prop :=
   ∀ (o : Obj) (aₖ a : BlockId),
     a ∈ U.ids → FreezeQuorum U aₖ o a →
     (∀ tx, ¬ EligibleFive U aₖ a o tx) →
-    ∀ tx, Owned tx → T.input tx = o → ∀ C ∈ U.ids, ¬ IsFullCert U C tx
+    ∀ tx, T.input tx = o → ∀ C ∈ U.ids, ¬ IsFullCert U C tx
 
 /-- **Recovery safety, winner**: no rival of an eligible transaction
 reaches a full certificate above the electing block's round. Like the
@@ -103,8 +118,9 @@ def RecoverySafetyWin (U : Universe Validator BlockId Tx Obj) : Prop :=
 /-- Recovery safety, over every fault configuration, transaction data,
 universe and anchor sequence the model admits: uniqueness for any
 linear order; under the freeze rule alone, the winner claim at any
-committee; and, adding the move rule and `n ≥ 5f + 1`, the reflection
-and release claims. -/
+committee; adding the move rule, the hidden-release claim, still at any
+committee; and, adding `n ≥ 5f + 1`, the reflection and release
+claims. -/
 def Statement : Prop :=
   ∀ (Validator BlockId Tx Obj : Type) [Fintype Validator] [DecidableEq Validator]
     [Faults Validator] [Transactions Tx Obj]
@@ -113,8 +129,9 @@ def Statement : Prop :=
       ResolutionUnique U A prio) ∧
       (FreezeDiscipline U →
         RecoverySafetyWin U ∧
-          (MoveDiscipline U → Five Validator →
-            RecoveryReflects U ∧ RecoverySafetyBot U))
+          (MoveDiscipline U →
+            UnlockEmptiesElection U ∧
+              (Five Validator → RecoveryReflects U ∧ RecoverySafetyBot U)))
 
 end RecoverySafety
 

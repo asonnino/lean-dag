@@ -23,16 +23,22 @@ variable {Validator BlockId Tx Obj : Type*} [Fintype Validator] [DecidableEq Val
   {U : Universe Validator BlockId Tx Obj}
 
 omit [DecidableEq BlockId] in
-theorem fastLiveness : FastLiveness U := by
-  intro hrule tx r₀ R b₀ hval hsole hb₀ hc₀ hr₀ hinc₀ hRr hsync hpop1 hpop2
-  apply atLeast_of_correct_blocks quorum_le_card_correct
-  intro v hv
-  obtain ⟨b₂, hb₂, hab₂, hrb₂⟩ := hpop2 v hv
-  have hvc₂ : (U.block b₂).author ∈ (Correct : Finset Validator) := hab₂.symm ▸ hv
-  refine ⟨b₂, Finset.mem_filter.mpr ⟨hb₂, hrb₂⟩, hab₂, ?_⟩
+/-- Every correct round-`r₀ + 2` block is a certificate: it includes the
+transaction through its author's own `r₀ + 1` block, keeps its ACK, and
+references every correct `r₀ + 1` fast vote. -/
+theorem isFastCert_of_correct (hrule : VotingRule U) {tx : Tx} {r₀ R : ℕ} {b₀ : BlockId}
+    (hval : T.Valid tx)
+    (hsole : ∀ tx', T.Valid tx' → Conflict tx tx' → ∀ b ∈ U.ids, ¬ Includes U b tx')
+    (hb₀ : b₀ ∈ U.ids) (hc₀ : (U.block b₀).author ∈ (Correct : Finset Validator))
+    (hr₀ : (U.block b₀).round = r₀) (hinc₀ : Includes U b₀ tx) (hRr : R ≤ r₀)
+    (hsync : SynchronisedOn U (Correct : Finset Validator) R)
+    (hpop1 : PopulatedOn U (Correct : Finset Validator) (r₀ + 1))
+    {b₂ : BlockId} (hb₂ : b₂ ∈ U.ids)
+    (hvc₂ : (U.block b₂).author ∈ (Correct : Finset Validator))
+    (hrb₂ : (U.block b₂).round = r₀ + 2) : IsFastCert U b₂ tx := by
   -- b₂ includes tx through its author's own r₀+1 block and the carrier
-  obtain ⟨b₁ᵥ, hb₁ᵥ, hab₁ᵥ, hrb₁ᵥ⟩ := hpop1 v hv
-  have hvc₁ᵥ : (U.block b₁ᵥ).author ∈ (Correct : Finset Validator) := hab₁ᵥ.symm ▸ hv
+  obtain ⟨b₁ᵥ, hb₁ᵥ, hab₁ᵥ, hrb₁ᵥ⟩ := hpop1 _ hvc₂
+  have hvc₁ᵥ : (U.block b₁ᵥ).author ∈ (Correct : Finset Validator) := hab₁ᵥ.symm ▸ hvc₂
   have hpar₀ : b₀ ∈ (U.block b₁ᵥ).parents :=
     hsync b₁ᵥ hb₁ᵥ hvc₁ᵥ (by omega) b₀ hb₀ hc₀ (by omega)
   have hpar₁ : b₁ᵥ ∈ (U.block b₂).parents :=
@@ -51,6 +57,16 @@ theorem fastLiveness : FastLiveness U := by
   exact ⟨b₁, hsync b₂ hb₂ hvc₂ (by omega) b₁ hb₁ hwc₁ (by omega), hab₁,
     fast_vote_of_sole hrule hval hsole hb₁ hwc₁ hinc₁⟩
 
+omit [DecidableEq BlockId] in
+theorem fastLiveness : FastLiveness U := by
+  intro hrule tx r₀ R b₀ hval hsole hb₀ hc₀ hr₀ hinc₀ hRr hsync hpop1 hpop2
+  apply atLeast_of_correct_blocks quorum_le_card_correct
+  intro v hv
+  obtain ⟨b₂, hb₂, hab₂, hrb₂⟩ := hpop2 v hv
+  exact ⟨b₂, Finset.mem_filter.mpr ⟨hb₂, hrb₂⟩, hab₂,
+    isFastCert_of_correct hrule hval hsole hb₀ hc₀ hr₀ hinc₀ hRr hsync hpop1 hb₂
+      (hab₂.symm ▸ hv) hrb₂⟩
+
 theorem fastVerdict : FastVerdict U := by
   intro hrule tx r₀ R b₀ hown hval hsole hb₀ hc₀ hr₀ hinc₀ hRr hsync hpop1 hpop2
     A V hVfull
@@ -63,9 +79,18 @@ theorem fastVerdict : FastVerdict U := by
   rw [heq]
   exact hq
 
+theorem anchorVerdict : AnchorVerdict U := by
+  intro hrule tx r₀ R b₀ hval hsole hb₀ hc₀ hr₀ hinc₀ hRr hsync hpop1
+    A V i a C hlk hC hcC hrC hreach
+  have hcert : HasCert U a tx :=
+    ⟨C, hC, isFastCert_of_correct hrule hval hsole hb₀ hc₀ hr₀ hinc₀ hRr hsync hpop1
+      hC hcC hrC, hreach⟩
+  exact .finalizeOnCommit hlk (isCandidate_of_hasCert hcert)
+    (not_conflicted_of_sole hsole a) hcert
+
 theorem holds : Statement := by
   intro Validator BlockId Tx Obj _ _ _ _ _ U
-  exact ⟨fastLiveness, fastVerdict⟩
+  exact ⟨fastLiveness, fastVerdict, anchorVerdict⟩
 
 end Uncontested
 

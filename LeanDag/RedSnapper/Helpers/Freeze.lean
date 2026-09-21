@@ -44,9 +44,9 @@ instance (aₖ : BlockId) (o : Obj) (b : BlockId) : Decidable (FreezeQuorumDec U
 
 /-- The computable form of `Triggers`. -/
 def TriggersDec (a : BlockId) (o : Obj) : Prop :=
-  (∃ tx ∈ candidates U a o, Owned tx ∧ ∃ tx' ∈ candidates U a o, Owned tx' ∧ tx ≠ tx') ∧
+  (∃ tx ∈ candidates U a o, ∃ tx' ∈ candidates U a o, tx ≠ tx') ∧
     (¬ ∃ b ∈ historyIn U a, IsFullUnlockCertDec U b o) ∧
-    ¬ ∃ tx ∈ candidates U a o, Owned tx ∧ ∃ b ∈ historyIn U a, IsFullCertDec U b tx
+    ¬ ∃ tx ∈ candidates U a o, ∃ b ∈ historyIn U a, IsFullCertDec U b tx
 
 instance (a : BlockId) (o : Obj) : Decidable (TriggersDec U a o) := by
   unfold TriggersDec; infer_instance
@@ -72,7 +72,7 @@ instance (A : Anchors U) (o : Obj) (i j : ℕ) : Decidable (ResolvesFiveAtDec U 
 
 /-- The computable form of `EligibleFive`. -/
 def EligibleFiveDec (aₖ a : BlockId) (o : Obj) (tx : Tx) : Prop :=
-  (Owned tx ∧ tx ∈ candidates U a o) ∧
+  tx ∈ candidates U a o ∧
     half Validator ≤ (Finset.univ.filter fun id =>
       FrozenDec U aₖ id o a ∧ StanceSomeDec U id o a (Stance.ack tx)).card
 
@@ -271,28 +271,36 @@ theorem freezeQuorum_iff {aₖ : BlockId} {o : Obj} {b : BlockId} (hb : b ∈ U.
   unfold FreezeQuorum FreezeQuorumDec
   rw [atLeastV_congr fun id => frozen_iff hb, atLeastV_iff]
 
+omit [DecidableEq BlockId] [DecidableEq Tx] [DecidableEq Obj] in
+/-- A fully certified transaction is a candidate of the certificate
+block: its votes are valid and include it. -/
+theorem isCandidate_of_fullCert {C : BlockId} {tx : Tx} (h : IsFullCert U C tx) :
+    IsCandidate U C (T.input tx) tx := by
+  obtain ⟨p, hp, hv⟩ := exists_of_atLeast quorum_pos h
+  exact ⟨hv.1, rfl, includes_mono (Reaches.single hp) hv.2.1⟩
+
 theorem triggers_iff {a : BlockId} {o : Obj} (ha : a ∈ U.ids) :
     Triggers U a o ↔ TriggersDec U a o := by
-  unfold Triggers TriggersDec OwnedCandidate
+  unfold Triggers TriggersDec Conflicted
   constructor
-  · rintro ⟨⟨tx, tx', ⟨ho, hc⟩, ⟨ho', hc'⟩, hne⟩, hnu, hnf⟩
-    refine ⟨⟨tx, (mem_candidates_iff ha).mpr hc, ho,
-      tx', (mem_candidates_iff ha).mpr hc', ho', hne⟩, ?_, ?_⟩
+  · rintro ⟨⟨tx, tx', hc, hc', hne⟩, hnu, hnf⟩
+    refine ⟨⟨tx, (mem_candidates_iff ha).mpr hc,
+      tx', (mem_candidates_iff ha).mpr hc', hne⟩, ?_, ?_⟩
     · rintro ⟨b, hb, hcert⟩
       obtain ⟨hbid, hr⟩ := (mem_historyIn_iff ha).mp hb
       exact hnu ⟨b, hbid, hr, (isFullUnlockCert_iff hbid).mpr hcert⟩
-    · rintro ⟨tx'', htx'', ho'', b, hb, hcert⟩
+    · rintro ⟨tx'', htx'', b, hb, hcert⟩
       obtain ⟨hbid, hr⟩ := (mem_historyIn_iff ha).mp hb
-      exact hnf ⟨tx'', ⟨ho'', (mem_candidates_iff ha).mp htx''⟩, b, hbid, hr,
+      exact hnf ⟨tx'', (mem_candidates_iff ha).mp htx'', b, hbid, hr,
         (isFullCert_iff hbid).mpr hcert⟩
-  · rintro ⟨⟨tx, htx, ho, tx', htx', ho', hne⟩, hnu, hnf⟩
-    refine ⟨⟨tx, tx', ⟨ho, (mem_candidates_iff ha).mp htx⟩,
-      ⟨ho', (mem_candidates_iff ha).mp htx'⟩, hne⟩, ?_, ?_⟩
+  · rintro ⟨⟨tx, htx, tx', htx', hne⟩, hnu, hnf⟩
+    refine ⟨⟨tx, tx', (mem_candidates_iff ha).mp htx,
+      (mem_candidates_iff ha).mp htx', hne⟩, ?_, ?_⟩
     · rintro ⟨b, hbid, hr, hcert⟩
       exact hnu ⟨b, (mem_historyIn_iff ha).mpr ⟨hbid, hr⟩,
         (isFullUnlockCert_iff hbid).mp hcert⟩
-    · rintro ⟨tx'', ⟨ho'', hc''⟩, b, hbid, hr, hcert⟩
-      exact hnf ⟨tx'', (mem_candidates_iff ha).mpr hc'', ho'',
+    · rintro ⟨tx'', hc'', b, hbid, hr, hcert⟩
+      exact hnf ⟨tx'', (mem_candidates_iff ha).mpr hc'',
         b, (mem_historyIn_iff ha).mpr ⟨hbid, hr⟩, (isFullCert_iff hbid).mp hcert⟩
 
 theorem triggerAt_iff {A : Anchors U} {o : Obj} {i : ℕ} :
@@ -324,7 +332,7 @@ theorem resolvesFiveAt_iff {A : Anchors U} {o : Obj} {i j : ℕ} :
 
 theorem eligibleFive_iff {aₖ a : BlockId} {o : Obj} {tx : Tx} (ha : a ∈ U.ids) :
     EligibleFive U aₖ a o tx ↔ EligibleFiveDec U aₖ a o tx := by
-  unfold EligibleFive EligibleFiveDec OwnedCandidate
+  unfold EligibleFive EligibleFiveDec
   rw [mem_candidates_iff ha,
     atLeastV_congr fun id => and_congr (frozen_iff ha) (stanceSomeDec_iff ha),
     atLeastV_iff]

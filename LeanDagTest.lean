@@ -122,3 +122,8 @@ import LeanDagTest.RedSnapper.Coin
 import LeanDagTest.RedSnapper.CoinHardening
 import LeanDagTest.RedSnapper.TerminationHardening
 import LeanDagTest.RedSnapper.FreezeHardening
+import LeanDagTest.RedSnapper.FiveLiveness
+import LeanDagTest.RedSnapper.MixedRecovery
+import LeanDagTest.RedSnapper.UnlockElection
+import LeanDagTest.RedSnapper.LiteralThreshold
+import LeanDagTest.RedSnapper.FiveRoutes

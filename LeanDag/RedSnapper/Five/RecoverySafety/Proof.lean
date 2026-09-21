@@ -10,7 +10,9 @@ least-index logic plus antisymmetry. The reflection claim is
 wherever its markers are visible — intersected with the marker quorum
 (`|F ∩ S| ≥ 2f + 1` needs `Five`); its uniqueness half and the winner
 claim are `not_atLeastV_of_disjoint` counts at any committee; the
-release claim is the reflection claim's contrapositive.
+release claim is the reflection claim's contrapositive. The hidden-release
+claim is `no_unlock_of_eligible`, the `⊥` core against the winner's
+frozen supporters, which RS8 consumes too.
 `recoveryReflects_at` re-packages the reflection claim at a resolution,
 the shape RS8 consumes.
 -/
@@ -49,7 +51,7 @@ theorem resolutionUnique {A : Anchors U} {prio : Tx → Tx → Prop}
 
 theorem recoveryReflects (hmove : MoveDiscipline U) (hfd : FreezeDiscipline U)
     (hfive : Five Validator) : RecoveryReflects U := by
-  intro o aₖ a tx ha hq hown hin ⟨C, hC, hfull⟩
+  intro o aₖ a tx ha hq hin ⟨C, hC, hfull⟩
   subst hin
   have hn := F.card_validators
   have h5 := hfive.card_validators
@@ -69,7 +71,7 @@ theorem recoveryReflects (hmove : MoveDiscipline U) (hfd : FreezeDiscipline U)
     omega)
   obtain ⟨v₀, hv₀⟩ := hne
   have helig : EligibleFive U aₖ a (T.input tx) tx := by
-    refine ⟨⟨hown, candidate_of_stance_ack hfd (hS (htS hv₀)) (hstance v₀ hv₀).2⟩,
+    refine ⟨candidate_of_stance_ack hfd (hS (htS hv₀)) (hstance v₀ hv₀).2,
       t, hstance, hhalf⟩
   refine ⟨helig, fun tx' he' => ?_⟩
   by_contra hne'
@@ -86,14 +88,14 @@ theorem recoveryReflects (hmove : MoveDiscipline U) (hfd : FreezeDiscipline U)
 
 theorem recoverySafetyBot (hmove : MoveDiscipline U) (hfd : FreezeDiscipline U)
     (hfive : Five Validator) : RecoverySafetyBot U := by
-  intro o aₖ a ha hq hempty tx hown hin C hC hfull
-  exact hempty tx (recoveryReflects hmove hfd hfive o aₖ a tx ha hq hown hin
+  intro o aₖ a ha hq hempty tx hin C hC hfull
+  exact hempty tx (recoveryReflects hmove hfd hfive o aₖ a tx ha hq hin
     ⟨C, hC, hfull⟩).1
 
 theorem recoverySafetyWin (hfd : FreezeDiscipline U) : RecoverySafetyWin U := by
   intro o aₖ a tx ha helig tx' hconf C hC hround hfull'
   have hn := F.card_validators
-  obtain ⟨⟨hown, hcand⟩, w, hw, hwcard⟩ := helig
+  obtain ⟨hcand, w, hw, hwcard⟩ := helig
   have ho : T.input tx = o := hcand.2.1
   subst ho
   -- the winner's correct supporters: at least f + 1, frozen at `ack tx`
@@ -146,6 +148,64 @@ theorem recoverySafetyWin (hfd : FreezeDiscipline U) : RecoverySafetyWin U := by
   simp only [Option.some.injEq, Stance.ack.injEq] at this
   exact hconf.1 this
 
+/-- An eligible transaction's frozen supporters exclude a full unlock
+certificate for the object, at any round: before the resolution the `⊥`
+core would persist into the markers, after it the markers persist into
+the votes. -/
+theorem no_unlock_of_eligible (hmove : MoveDiscipline U)
+    (hfd : FreezeDiscipline U) {aₖ a : BlockId} {o : Obj} {tx : Tx} (ha : a ∈ U.ids)
+    (helig : EligibleFive U aₖ a o tx) : ∀ C' ∈ U.ids, ¬ IsFullUnlockCert U C' o := by
+  intro C' hC' hunlock
+  obtain ⟨-, w, hw, hwcard⟩ := helig
+  have hn := F.card_validators
+  obtain ⟨S, hS, hk, hall, hex⟩ := correct_core_exists hC' hunlock
+  have hρ : 0 < (U.block C').round := round_pos_of_atLeast hC' quorum_pos hunlock
+  have hcount : Fintype.card Validator < S.card + half Validator := by
+    unfold quorum at hk
+    unfold half
+    omega
+  have hpersist : ∀ v ∈ S, ∀ b ∈ U.ids, (U.block b).author = v →
+      (U.block C').round ≤ (U.block b).round + 1 →
+      StanceIs U v o b (some Stance.bot) := by
+    intro v hv b hb hab hr
+    refine stance_persists (ρ₀ := (U.block C').round - 1) hmove hS hcount
+      (fun x hx e he hae hre => ?_) hv hb hab (by omega)
+    exact hae ▸ hall x hx e he hae (by omega)
+  refine not_atLeastV_of_disjoint hcount (fun v hP hvS => ?_) ⟨w, hw, hwcard⟩
+  obtain ⟨hfr, hst⟩ := hP
+  have hvc : v ∈ (Correct : Finset Validator) := hS hvS
+  obtain ⟨m, hm, ham, hrm, hmk⟩ := hfr
+  have hcm : (U.block m).author ∈ (Correct : Finset Validator) := ham.symm ▸ hvc
+  obtain ⟨s, hds, hsta⟩ := stance_at_of_frozen hfd hm ha hcm hrm hmk
+  have hs : s = Stance.ack tx := Option.some.inj (stanceIs_unique (ham ▸ hsta) hst)
+  subst hs
+  rcases le_or_gt (U.block C').round ((U.block m).round + 1) with hcase | hcase
+  · -- the ⊥ core persists into the marker, which declares an ACK
+    have hbot := hpersist v hvS m hm ham hcase
+    have hself : StanceIs U v o m (some (Stance.ack tx)) :=
+      ham ▸ stanceIs_self_of_declares hm hds
+    have := stanceIs_unique hbot hself
+    simp at this
+  · -- the marker precedes the core's votes, which then read the ACK
+    obtain ⟨q, hq, haq, hqr, hPq⟩ := hex v hvS
+    have hcq : (U.block q).author ∈ (Correct : Finset Validator) := haq.symm ▸ hvc
+    have hrqm : Reaches U q m :=
+      reaches_own_of_round_le hq hm hcq (ham.trans haq.symm) (by omega)
+    obtain ⟨s', hds', hstq⟩ := stance_at_of_frozen hfd hm hq hcm hrqm hmk
+    have hss : s' = Stance.ack tx := Option.some.inj (hds' ▸ hds)
+    subst hss
+    have hbotq : StanceIs U (U.block m).author o q (some Stance.bot) := by
+      have := hPq
+      rw [haq, ← ham] at this
+      exact this
+    have := stanceIs_unique hstq hbotq
+    simp at this
+
+theorem unlockEmptiesElection (hmove : MoveDiscipline U) (hfd : FreezeDiscipline U) :
+    UnlockEmptiesElection U := by
+  intro o aₖ a ha ⟨C, hC, hunlock⟩ tx helig
+  exact no_unlock_of_eligible hmove hfd ha helig C hC hunlock
+
 /-- The reflection claim re-packaged at a resolution — the shape RS8
 consumes: the resolving anchor's marker quorum is extracted from
 `ResolvesFiveAt`'s third clause. -/
@@ -153,21 +213,22 @@ theorem recoveryReflects_at {A : Anchors U} (hmove : MoveDiscipline U)
     (hfd : FreezeDiscipline U) (hfive : Five Validator) {o : Obj} {i j : ℕ}
     {aₖ a : BlockId} {tx : Tx} (hres : ResolvesFiveAt U A o i j)
     (hlk : A.seq[i]? = some aₖ) (hla : A.seq[j]? = some a)
-    (hown : Owned tx) (hin : T.input tx = o)
+    (hin : T.input tx = o)
     (hcert : ∃ C ∈ U.ids, IsFullCert U C tx) :
     EligibleFive U aₖ a o tx ∧ ∀ tx', EligibleFive U aₖ a o tx' → tx' = tx := by
   obtain ⟨aₖ', a', hlk', hla', hq⟩ := hres.2.2.1
   rw [hlk] at hlk'
   rw [hla] at hla'
   rw [← Option.some.inj hlk', ← Option.some.inj hla'] at hq
-  exact recoveryReflects hmove hfd hfive o aₖ a tx (anchor_mem hla) hq hown hin hcert
+  exact recoveryReflects hmove hfd hfive o aₖ a tx (anchor_mem hla) hq hin hcert
 
 theorem holds : Statement := by
   intro Validator BlockId Tx Obj _ _ _ _ U
   exact ⟨fun A prio hord => resolutionUnique hord,
     fun hfd => ⟨recoverySafetyWin hfd,
-      fun hmove hfive => ⟨recoveryReflects hmove hfd hfive,
-        recoverySafetyBot hmove hfd hfive⟩⟩⟩
+      fun hmove => ⟨unlockEmptiesElection hmove hfd,
+        fun hfive => ⟨recoveryReflects hmove hfd hfive,
+          recoverySafetyBot hmove hfd hfive⟩⟩⟩⟩
 
 end RecoverySafety
 

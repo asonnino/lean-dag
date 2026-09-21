@@ -9,9 +9,9 @@ Trusted core: §8's fallback machinery (`Alg:FastPathPredicates5f+1`:
 `Triggers`, `TriggerAnchor`, `Frozen`, `Resolves`; `Alg:snapper5f`:
 `ResolveOnCommitObj`'s `F` and `W`) over the anchors of D4.
 
-The `5f+1` recovery works over the paper's `Candidates`, which carry
-the `IsOwned` gate (unlike §7's): `OwnedCandidate` restores it on top
-of the shared `IsCandidate`. An anchor *triggers* recovery for an
+The `5f+1` recovery works over the paper's `Candidates`, where owned
+and mixed transactions compete on their owned input: the shared
+`IsCandidate`, with no class gate. An anchor *triggers* recovery for an
 object when it sees the object conflicted and neither a full
 certificate for a candidate nor a full unlock certificate anywhere in
 its history. The **trigger anchor** is the first committed anchor that
@@ -52,20 +52,13 @@ variable {Validator BlockId Tx Obj : Type*} [Fintype Validator] [DecidableEq Val
 def AtLeastV (k : ℕ) (P : Validator → Prop) : Prop :=
   ∃ t : Finset Validator, (∀ v ∈ t, P v) ∧ k ≤ t.card
 
-/-- `tx` is a candidate for `o` at `b` in the `5f+1` sense: a candidate
-that is owned — §8's `Candidates` carries the `IsOwned` gate. -/
-def OwnedCandidate (U : Universe Validator BlockId Tx Obj) (b : BlockId) (o : Obj)
-    (tx : Tx) : Prop :=
-  Owned tx ∧ IsCandidate U b o tx
-
-/-- `a` triggers recovery for `o` (the paper's `Triggers`): `a` sees two
-distinct owned candidates, and neither a full unlock certificate for `o`
-nor a full certificate for any owned candidate anywhere in its
-history. -/
+/-- `a` triggers recovery for `o` (the paper's `Triggers`): `a` sees `o`
+conflicted, and neither a full unlock certificate for `o` nor a full
+certificate for any candidate anywhere in its history. -/
 def Triggers (U : Universe Validator BlockId Tx Obj) (a : BlockId) (o : Obj) : Prop :=
-  (∃ tx tx', OwnedCandidate U a o tx ∧ OwnedCandidate U a o tx' ∧ tx ≠ tx') ∧
+  Conflicted U a o ∧
     (¬ ∃ b ∈ U.ids, Reaches U a b ∧ IsFullUnlockCert U b o) ∧
-    ¬ ∃ tx, OwnedCandidate U a o tx ∧ ∃ b ∈ U.ids, Reaches U a b ∧ IsFullCert U b tx
+    ¬ ∃ tx, IsCandidate U a o tx ∧ ∃ b ∈ U.ids, Reaches U a b ∧ IsFullCert U b tx
 
 /-- The trigger anchor sits at index `i` (the paper's `TriggerAnchor`
 at `k = 0`): the least committed index whose anchor triggers. -/
@@ -100,11 +93,11 @@ def ResolvesFiveAt (U : Universe Validator BlockId Tx Obj) (A : Anchors U) (o : 
       ¬ FreezeQuorum U aₖ o a
 
 /-- `tx` is eligible at the resolving anchor `a` under trigger `aₖ`
-(membership in the paper's `W`): an owned candidate of `a` at which
-`half` of the frozen validators stand. -/
+(membership in the paper's `W`): a candidate of `a`, owned or mixed, at
+which `half` of the frozen validators stand. -/
 def EligibleFive (U : Universe Validator BlockId Tx Obj) (aₖ a : BlockId) (o : Obj)
     (tx : Tx) : Prop :=
-  OwnedCandidate U a o tx ∧
+  IsCandidate U a o tx ∧
     AtLeastV (half Validator) fun id =>
       Frozen U aₖ id o a ∧ StanceIs U id o a (some (Stance.ack tx))
 

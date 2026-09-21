@@ -183,7 +183,7 @@ example : VerdictFive U6Rec ARec (View.full U6Rec) (· ≤ ·) 0 Fate.finalized 
 example : VerdictFive U6Rec ARec (View.full U6Rec) (· ≤ ·) 1 Fate.dropped :=
   .recoveryDropLoser (tx' := 0) (i := 1) (j := 2) (aₖ := 6) (a := 17)
     (resolvesFiveAt_iff.mpr (by decide)) (by decide) (by decide)
-    ⟨by decide, (mem_candidates_iff (by decide)).mp (by decide)⟩
+    ((mem_candidates_iff (by decide)).mp (by decide))
     ((eligibleFive_iff (by decide)).mpr (by decide))
     (fun _ _ => Fin.zero_le _) (by decide)
 
@@ -252,12 +252,12 @@ private theorem recBot_empty : ∀ tx' : Fin 4, ¬ EligibleFiveDec U6RecBot 6 17
 example : VerdictFive U6RecBot ARecBot (View.full U6RecBot) (· ≤ ·) 0 Fate.dropped :=
   .recoveryDropBot (i := 1) (j := 2) (aₖ := 6) (a := 17)
     (resolvesFiveAt_iff.mpr (by decide)) (by decide) (by decide)
-    ⟨by decide, (mem_candidates_iff (by decide)).mp (by decide)⟩
+    ((mem_candidates_iff (by decide)).mp (by decide))
     (fun tx' h => recBot_empty tx' ((eligibleFive_iff (by decide)).mp h))
 example : VerdictFive U6RecBot ARecBot (View.full U6RecBot) (· ≤ ·) 1 Fate.dropped :=
   .recoveryDropBot (i := 1) (j := 2) (aₖ := 6) (a := 17)
     (resolvesFiveAt_iff.mpr (by decide)) (by decide) (by decide)
-    ⟨by decide, (mem_candidates_iff (by decide)).mp (by decide)⟩
+    ((mem_candidates_iff (by decide)).mp (by decide))
     (fun tx' h => recBot_empty tx' ((eligibleFive_iff (by decide)).mp h))
 
 /-- `lkRec` with validator 0 declaring the rival above its own marker:
@@ -296,7 +296,7 @@ example : VerdictFive U6Full AFull (View.full U6Full) (· ≤ ·) 0 Fate.finaliz
 example : VerdictFive U6Unlock AUnlock (View.full U6Unlock) (· ≤ ·) 0 Fate.dropped :=
   .fullUnlockDrop (C := 12) (b := 12) (by decide)
     ((isFullUnlockCert_iff (by decide)).mpr (by decide)) (by decide)
-    ⟨by decide, (mem_candidates_iff (by decide)).mp (by decide)⟩
+    ((mem_candidates_iff (by decide)).mp (by decide))
 
 end RedSnapper
 

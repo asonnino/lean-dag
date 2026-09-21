@@ -266,9 +266,9 @@ private theorem rec_frozen_all : ∀ v ∈ (Correct : Finset (Fin 6)),
 private theorem rec_noquorum_below : ∀ i' ≤ 1, ∀ a',
     (ARec.seq)[i']? = some a' → ¬ FreezeQuorumDec U6Rec 6 0 a' := by decide
 
-example : ∀ tx : Fin 4, Owned tx → LeanDag.RedSnapper.Transactions.input tx = 0 →
+example : ∀ tx : Fin 4, LeanDag.RedSnapper.Transactions.input tx = 0 →
     ∀ C ∈ U6Rec.ids, ¬ IsFullCert U6Rec C tx :=
-  fun tx _ _ C hC h => rec_nocert tx C hC ((isFullCert_iff hC).mp h)
+  fun tx _ C hC h => rec_nocert tx C hC ((isFullCert_iff hC).mp h)
 example : ∀ C ∈ U6Rec.ids, ¬ IsFullUnlockCert U6Rec C 0 :=
   fun C hC h => rec_nounlock C hC ((isFullUnlockCert_iff hC).mp h)
 example : ∀ v ∈ (Correct : Finset (Fin 6)), Frozen U6Rec 6 v 0 17 :=

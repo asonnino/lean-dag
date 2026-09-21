@@ -11,9 +11,10 @@ analysis, as in Theorem safety-5f: the certificate pairs close by RS6
 certificate-versus-recovery pairs by RS7's reflection (the round
 condition of the paper's miscited step — finding 9 — never arises,
 because the reflection claim is round-unconditional); the
-recovery-versus-unlock pair by the `⊥` core against the winner's frozen
-supporters; the recovery pairs by resolution uniqueness and
-antisymmetry.
+recovery-versus-unlock pair by RS7's `no_unlock_of_eligible`; the
+recovery pairs by resolution uniqueness and antisymmetry. The two
+certificate routes share their evidence (`evidence_of_final`), so the
+pair analysis never distinguishes an owned from a mixed transaction.
 -/
 
 namespace LeanDag
@@ -29,58 +30,18 @@ variable {Validator BlockId Tx Obj : Type*} [Fintype Validator] [DecidableEq Val
   {U : Universe Validator BlockId Tx Obj} {A : Anchors U}
 
 omit [DecidableEq BlockId] in
-/-- An eligible transaction's frozen supporters exclude a full unlock
-certificate for the object, at any round: before the resolution the `⊥`
-core would persist into the markers, after it the markers persist into
-the votes. -/
-private theorem no_unlock_of_eligible (hmove : MoveDiscipline U)
-    (hfd : FreezeDiscipline U) {aₖ a : BlockId} {o : Obj} {tx : Tx} (ha : a ∈ U.ids)
-    (helig : EligibleFive U aₖ a o tx) : ∀ C' ∈ U.ids, ¬ IsFullUnlockCert U C' o := by
-  intro C' hC' hunlock
-  obtain ⟨⟨hown, hcand⟩, w, hw, hwcard⟩ := helig
-  have hn := F.card_validators
-  obtain ⟨S, hS, hk, hall, hex⟩ := correct_core_exists hC' hunlock
-  have hρ : 0 < (U.block C').round := round_pos_of_atLeast hC' quorum_pos hunlock
-  have hcount : Fintype.card Validator < S.card + half Validator := by
-    unfold quorum at hk
-    unfold half
-    omega
-  have hpersist : ∀ v ∈ S, ∀ b ∈ U.ids, (U.block b).author = v →
-      (U.block C').round ≤ (U.block b).round + 1 →
-      StanceIs U v o b (some Stance.bot) := by
-    intro v hv b hb hab hr
-    refine stance_persists (ρ₀ := (U.block C').round - 1) hmove hS hcount
-      (fun x hx e he hae hre => ?_) hv hb hab (by omega)
-    exact hae ▸ hall x hx e he hae (by omega)
-  refine not_atLeastV_of_disjoint hcount (fun v hP hvS => ?_) ⟨w, hw, hwcard⟩
-  obtain ⟨hfr, hst⟩ := hP
-  have hvc : v ∈ (Correct : Finset Validator) := hS hvS
-  obtain ⟨m, hm, ham, hrm, hmk⟩ := hfr
-  have hcm : (U.block m).author ∈ (Correct : Finset Validator) := ham.symm ▸ hvc
-  obtain ⟨s, hds, hsta⟩ := stance_at_of_frozen hfd hm ha hcm hrm hmk
-  have hs : s = Stance.ack tx := Option.some.inj (stanceIs_unique (ham ▸ hsta) hst)
-  subst hs
-  rcases le_or_gt (U.block C').round ((U.block m).round + 1) with hcase | hcase
-  · -- the ⊥ core persists into the marker, which declares an ACK
-    have hbot := hpersist v hvS m hm ham hcase
-    have hself : StanceIs U v o m (some (Stance.ack tx)) :=
-      ham ▸ stanceIs_self_of_declares hm hds
-    have := stanceIs_unique hbot hself
-    simp at this
-  · -- the marker precedes the core's votes, which then read the ACK
-    obtain ⟨q, hq, haq, hqr, hPq⟩ := hex v hvS
-    have hcq : (U.block q).author ∈ (Correct : Finset Validator) := haq.symm ▸ hvc
-    have hrqm : Reaches U q m :=
-      reaches_own_of_round_le hq hm hcq (ham.trans haq.symm) (by omega)
-    obtain ⟨s', hds', hstq⟩ := stance_at_of_frozen hfd hm hq hcm hrqm hmk
-    have hss : s' = Stance.ack tx := Option.some.inj (hds' ▸ hds)
-    subst hss
-    have hbotq : StanceIs U (U.block m).author o q (some Stance.bot) := by
-      have := hPq
-      rw [haq, ← ham] at this
-      exact this
-    have := stanceIs_unique hstq hbotq
-    simp at this
+/-- What a finalising route rests on: a full certificate somewhere in
+the universe (`fullFinal`, `mixedFinal`), or a recovery win. -/
+private theorem evidence_of_final {V : View U} {prio : Tx → Tx → Prop} {tx : Tx}
+    (h : VerdictFive U A V prio tx Fate.finalized) :
+    (∃ C ∈ U.ids, IsFullCert U C tx) ∨
+      ∃ (i j : ℕ) (aₖ a : BlockId), ResolvesFiveAt U A (T.input tx) i j ∧
+        A.seq[i]? = some aₖ ∧ A.seq[j]? = some a ∧ EligibleFive U aₖ a (T.input tx) tx ∧
+        ∀ tx', EligibleFive U aₖ a (T.input tx) tx' → prio tx tx' := by
+  cases h with
+  | fullFinal _ hC hcert => exact Or.inl ⟨_, V.subset_ids hC, hcert⟩
+  | mixedFinal _ _ _ hC _ hcert => exact Or.inl ⟨_, hC, hcert⟩
+  | recoveryFinal hres hlk hla helig hmin => exact Or.inr ⟨_, _, _, _, hres, hlk, hla, helig, hmin⟩
 
 omit [DecidableEq BlockId] in
 /-- No transaction is both finalised and dropped. -/
@@ -89,44 +50,41 @@ private theorem fate_exclusive {V V' : View U} {prio : Tx → Tx → Prop}
     (hfd : FreezeDiscipline U) {tx : Tx}
     (h₁ : VerdictFive U A V prio tx Fate.finalized)
     (h₂ : VerdictFive U A V' prio tx Fate.dropped) : False := by
-  cases h₁ with
-  | fullFinal hown hC₁ hcert =>
-      cases h₂ with
-      | fullUnlockDrop hC₂ hunlock hb hcand =>
-          exact commitExcludesUnlock hmove _ (V.subset_ids hC₁) _ (V'.subset_ids hC₂)
-            tx hcert hunlock
-      | recoveryDropLoser hres hlk hla hcand helig' hmin' hne' =>
-          obtain ⟨-, huniq⟩ := recoveryReflects_at hmove hfd hfive hres hlk hla
-            hown rfl ⟨_, V.subset_ids hC₁, hcert⟩
-          exact hne' (huniq _ helig').symm
-      | recoveryDropBot hres hlk hla hcand hempty =>
-          obtain ⟨helig, -⟩ := recoveryReflects_at hmove hfd hfive hres hlk hla
-            hown rfl ⟨_, V.subset_ids hC₁, hcert⟩
-          exact hempty tx helig
-  | recoveryFinal hres hlk hla helig hmin =>
-      cases h₂ with
-      | fullUnlockDrop hC₂ hunlock hb hcand =>
-          exact no_unlock_of_eligible hmove hfd (anchor_mem hla) helig
-            _ (V'.subset_ids hC₂) hunlock
-      | recoveryDropLoser hres' hlk' hla' hcand helig' hmin' hne' =>
-          obtain ⟨hi, hj⟩ := (resolutionUnique (U := U) (A := A) hord).1
-            _ _ _ _ _ hres hres'
-          subst hi
-          subst hj
-          rw [hlk] at hlk'
-          rw [hla] at hla'
-          rw [← Option.some.inj hlk', ← Option.some.inj hla'] at helig' hmin'
-          haveI := hord
-          exact hne' (antisymm (hmin' _ helig) (hmin _ helig')).symm
-      | recoveryDropBot hres' hlk' hla' hcand hempty =>
-          obtain ⟨hi, hj⟩ := (resolutionUnique (U := U) (A := A) hord).1
-            _ _ _ _ _ hres hres'
-          subst hi
-          subst hj
-          rw [hlk] at hlk'
-          rw [hla] at hla'
-          rw [← Option.some.inj hlk', ← Option.some.inj hla'] at hempty
-          exact hempty tx helig
+  rcases evidence_of_final h₁ with ⟨C, hC, hcert⟩ | ⟨i, j, aₖ, a, hres, hlk, hla, helig, hmin⟩
+  · cases h₂ with
+    | fullUnlockDrop hC₂ hunlock hb hcand =>
+        exact commitExcludesUnlock hmove _ hC _ (V'.subset_ids hC₂) tx hcert hunlock
+    | recoveryDropLoser hres hlk hla hcand helig' hmin' hne' =>
+        obtain ⟨-, huniq⟩ := recoveryReflects_at hmove hfd hfive hres hlk hla
+          rfl ⟨C, hC, hcert⟩
+        exact hne' (huniq _ helig').symm
+    | recoveryDropBot hres hlk hla hcand hempty =>
+        obtain ⟨helig, -⟩ := recoveryReflects_at hmove hfd hfive hres hlk hla
+          rfl ⟨C, hC, hcert⟩
+        exact hempty tx helig
+  · cases h₂ with
+    | fullUnlockDrop hC₂ hunlock hb hcand =>
+        exact no_unlock_of_eligible hmove hfd (anchor_mem hla) helig
+          _ (V'.subset_ids hC₂) hunlock
+    | recoveryDropLoser hres' hlk' hla' hcand helig' hmin' hne' =>
+        obtain ⟨hi, hj⟩ := (resolutionUnique (U := U) (A := A) hord).1
+          _ _ _ _ _ hres hres'
+        subst hi
+        subst hj
+        rw [hlk] at hlk'
+        rw [hla] at hla'
+        rw [← Option.some.inj hlk', ← Option.some.inj hla'] at helig' hmin'
+        haveI := hord
+        exact hne' (antisymm (hmin' _ helig) (hmin _ helig')).symm
+    | recoveryDropBot hres' hlk' hla' hcand hempty =>
+        obtain ⟨hi, hj⟩ := (resolutionUnique (U := U) (A := A) hord).1
+          _ _ _ _ _ hres hres'
+        subst hi
+        subst hj
+        rw [hlk] at hlk'
+        rw [hla] at hla'
+        rw [← Option.some.inj hlk', ← Option.some.inj hla'] at hempty
+        exact hempty tx helig
 
 omit [DecidableEq BlockId] in
 theorem verdictAgreement {prio : Tx → Tx → Prop} (hord : IsLinearOrder Tx prio)
@@ -144,37 +102,44 @@ theorem noConflictingFinal {prio : Tx → Tx → Prop} (hord : IsLinearOrder Tx 
     (hfive : Five Validator) (hmove : MoveDiscipline U) (hfd : FreezeDiscipline U) :
     NoConflictingFinal U A prio := by
   intro V V' tx tx' hconf h₁ h₂
-  cases h₁ with
-  | fullFinal hown hC₁ hcert =>
-      cases h₂ with
-      | fullFinal hown' hC₂ hcert' =>
-          exact fullCertUniqueness hmove _ (V.subset_ids hC₁) _ (V'.subset_ids hC₂)
-            tx tx' hconf hcert hcert'
-      | recoveryFinal hres hlk hla helig hmin =>
-          obtain ⟨-, huniq⟩ := recoveryReflects_at hmove hfd hfive hres hlk hla
-            hown hconf.2 ⟨_, V.subset_ids hC₁, hcert⟩
-          exact hconf.1 (huniq _ helig).symm
-  | recoveryFinal hres hlk hla helig hmin =>
-      cases h₂ with
-      | fullFinal hown' hC₂ hcert' =>
-          obtain ⟨-, huniq⟩ := recoveryReflects_at hmove hfd hfive hres hlk hla
-            hown' hconf.2.symm ⟨_, V'.subset_ids hC₂, hcert'⟩
-          exact hconf.1 (huniq _ helig)
-      | recoveryFinal hres' hlk' hla' helig' hmin' =>
-          rw [← hconf.2] at hres' helig' hmin'
-          obtain ⟨hi, hj⟩ := (resolutionUnique (U := U) (A := A) hord).1
-            _ _ _ _ _ hres hres'
-          subst hi
-          subst hj
-          rw [hlk] at hlk'
-          rw [hla] at hla'
-          rw [← Option.some.inj hlk', ← Option.some.inj hla'] at helig' hmin'
-          haveI := hord
-          exact hconf.1 (antisymm (hmin _ helig') (hmin' _ helig))
+  rcases evidence_of_final h₁ with ⟨C, hC, hcert⟩ | ⟨i, j, aₖ, a, hres, hlk, hla, helig, hmin⟩
+  · rcases evidence_of_final h₂ with
+      ⟨C', hC', hcert'⟩ | ⟨i', j', aₖ', a', hres', hlk', hla', helig', hmin'⟩
+    · exact fullCertUniqueness hmove _ hC _ hC' tx tx' hconf hcert hcert'
+    · obtain ⟨-, huniq⟩ := recoveryReflects_at hmove hfd hfive hres' hlk' hla'
+        hconf.2 ⟨C, hC, hcert⟩
+      exact hconf.1 (huniq _ helig').symm
+  · rcases evidence_of_final h₂ with
+      ⟨C', hC', hcert'⟩ | ⟨i', j', aₖ', a', hres', hlk', hla', helig', hmin'⟩
+    · obtain ⟨-, huniq⟩ := recoveryReflects_at hmove hfd hfive hres hlk hla
+        hconf.2.symm ⟨C', hC', hcert'⟩
+      exact hconf.1 (huniq _ helig)
+    · rw [← hconf.2] at hres' helig' hmin'
+      obtain ⟨hi, hj⟩ := (resolutionUnique (U := U) (A := A) hord).1
+        _ _ _ _ _ hres hres'
+      subst hi
+      subst hj
+      rw [hlk] at hlk'
+      rw [hla] at hla'
+      rw [← Option.some.inj hlk', ← Option.some.inj hla'] at helig' hmin'
+      haveI := hord
+      exact hconf.1 (antisymm (hmin _ helig') (hmin' _ helig))
+
+omit [DecidableEq BlockId] in
+theorem mixedViaAnchor {prio : Tx → Tx → Prop} : MixedViaAnchor U A prio := by
+  intro V tx hmix h
+  cases h with
+  | fullFinal hown _ _ => exact absurd hmix hown
+  | mixedFinal _ hlk hcand hC hr hcert =>
+      exact ⟨_, _, hlk, hcand, Or.inl ⟨_, hC, hr, hcert⟩⟩
+  | recoveryFinal hres hlk hla helig _ =>
+      exact ⟨_, _, hla, helig.1, Or.inr ⟨_, _, hres, hlk, helig⟩⟩
 
 theorem holds : Statement := by
-  intro Validator BlockId Tx Obj _ _ _ _ _ U A prio hord hfive hmove hfd
-  exact ⟨verdictAgreement hord hfive hmove hfd, noConflictingFinal hord hfive hmove hfd⟩
+  intro Validator BlockId Tx Obj _ _ _ _ _ U A prio
+  exact ⟨fun hord hfive hmove hfd =>
+    ⟨verdictAgreement hord hfive hmove hfd, noConflictingFinal hord hfive hmove hfd⟩,
+    mixedViaAnchor⟩
 
 end FiveAgreement
 

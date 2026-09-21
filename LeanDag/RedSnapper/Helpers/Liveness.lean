@@ -60,11 +60,34 @@ theorem atLeast_of_correct_blocks {s : Finset BlockId} {P : BlockId → Prop} {k
   obtain ⟨b, hbs, hab, hPb⟩ := h v hv
   exact Finset.mem_image.mpr ⟨b, Finset.mem_filter.mpr ⟨hbs, hPb⟩, hab⟩
 
-/-- With no rival included anywhere, every correct block that includes a
-valid transaction is a fast vote for it: `⊥` would need a visible
-conflict, and the sole-candidate rule adopts. -/
-theorem fast_vote_of_sole (hrule : VotingRule U) {tx : Tx}
-    (hval : T.Valid tx)
+/-- With no valid rival included anywhere, the input is conflicted at no
+block. -/
+theorem not_conflicted_of_sole {tx : Tx}
+    (hsole : ∀ tx', T.Valid tx' → Conflict tx tx' → ∀ b ∈ U.ids, ¬ Includes U b tx')
+    (x : BlockId) : ¬ Conflicted U x (T.input tx) := by
+  rintro ⟨t₁, t₂, h₁, h₂, hne⟩
+  have key : ∀ t, IsCandidate U x (T.input tx) t → t ≠ tx → False := by
+    intro t ht hnet
+    obtain ⟨b', hb', hmem, -⟩ := ht.2.2
+    exact hsole t ht.1 ⟨fun h => hnet h.symm, ht.2.1.symm⟩ b' hb'
+      ⟨b', hb', hmem, Reaches.refl⟩
+  rcases eq_or_ne t₁ tx with h | h
+  · exact key t₂ h₂ fun h' => hne (h.trans h'.symm)
+  · exact key t₁ h₁ h
+
+/-- The sole-candidate step, over what it consumes of a voting rule: the
+uncontested clause, and a conflict somewhere behind every correct `⊥`.
+With no rival included anywhere, every correct block that includes a
+valid transaction is then a fast vote for it. -/
+theorem fast_vote_of_sole_of
+    (hack : ∀ b ∈ U.ids, (U.block b).author ∈ (Correct : Finset Validator) →
+      ∀ (o : Obj) (tx : Tx), IsCandidate U b o tx →
+        (∀ tx', IsCandidate U b o tx' → tx' = tx) →
+        ¬ StanceIs U (U.block b).author o b (some Stance.bot) →
+        StanceIs U (U.block b).author o b (some (Stance.ack tx)))
+    (hbot : ∀ e ∈ U.ids, (U.block e).author ∈ (Correct : Finset Validator) →
+      ∀ o : Obj, (U.block e).declares o = some Stance.bot → ∃ x, Conflicted U x o)
+    {tx : Tx} (hval : T.Valid tx)
     (hsole : ∀ tx', T.Valid tx' → Conflict tx tx' → ∀ b ∈ U.ids, ¬ Includes U b tx')
     {b₁ : BlockId} (hb₁ : b₁ ∈ U.ids)
     (hc₁ : (U.block b₁).author ∈ (Correct : Finset Validator))
@@ -75,14 +98,22 @@ theorem fast_vote_of_sole (hrule : VotingRule U) {tx : Tx}
     by_contra hne
     exact hsole tx' h'.1 ⟨fun h => hne h.symm, h'.2.1.symm⟩ b₁ hb₁ h'.2.2
   have hnobot : ¬ StanceIs U (U.block b₁).author (T.input tx) b₁ (some Stance.bot) := by
-    intro hbot
-    obtain ⟨e, he, hae, hre, hde⟩ := exists_bot_declarer hbot
-    obtain ⟨t₁, t₂, h₁, h₂, hne⟩ :=
-      hrule.bot_conflicted e he (hae.symm ▸ hc₁) (T.input tx) hde
-    rcases eq_or_ne t₁ tx with rfl | hne₁
-    · exact hsole t₂ h₂.1 ⟨fun h => hne h, h₂.2.1.symm⟩ e he h₂.2.2
-    · exact hsole t₁ h₁.1 ⟨fun h => hne₁ h.symm, h₁.2.1.symm⟩ e he h₁.2.2
-  exact ⟨hval, hinc, hrule.ack_sole b₁ hb₁ hc₁ (T.input tx) tx hcand hsole' hnobot⟩
+    intro hbot'
+    obtain ⟨e, he, hae, hre, hde⟩ := exists_bot_declarer hbot'
+    obtain ⟨x, hx⟩ := hbot e he (hae.symm ▸ hc₁) (T.input tx) hde
+    exact not_conflicted_of_sole hsole x hx
+  exact ⟨hval, hinc, hack b₁ hb₁ hc₁ (T.input tx) tx hcand hsole' hnobot⟩
+
+/-- The sole-candidate step under the `3f+1` voting rule: `⊥` needs a
+conflict visible from the declaring block. -/
+theorem fast_vote_of_sole (hrule : VotingRule U) {tx : Tx}
+    (hval : T.Valid tx)
+    (hsole : ∀ tx', T.Valid tx' → Conflict tx tx' → ∀ b ∈ U.ids, ¬ Includes U b tx')
+    {b₁ : BlockId} (hb₁ : b₁ ∈ U.ids)
+    (hc₁ : (U.block b₁).author ∈ (Correct : Finset Validator))
+    (hinc : Includes U b₁ tx) : IsFastVote U b₁ tx :=
+  fast_vote_of_sole_of hrule.ack_sole
+    (fun e he hc o hd => ⟨e, hrule.bot_conflicted e he hc o hd⟩) hval hsole hb₁ hc₁ hinc
 
 /-- A visible certificate behind a fast vote is a certificate at or
 below the block. -/

@@ -4,16 +4,27 @@ import LeanDag.RedSnapper.Model.Verdict
 /-!
 # The 5f+1 verdicts
 
-Trusted core: the three decision routes of `Alg:snapper5f`'s
+Trusted core: the four decision routes of `Alg:snapper5f`'s
 `TryDecide` — `TryFullDecideTX`, `TryFullUnlockObj`,
-`ResolveOnCommitObj` — as one order-free inductive relation, the D6
-pattern: a constructor per route, any derivable verdict counts, and
-that all derivable verdicts agree is RS8's theorem, never a side
-condition. `Fate` is shared with the `3f+1` verdict.
+`FinalizeOnCommitTX`, `ResolveOnCommitObj` — as one order-free
+inductive relation, the D6 pattern: a constructor per route, any
+derivable verdict counts, and that all derivable verdicts agree is
+RS8's theorem, never a side condition. `Fate` is shared with the `3f+1`
+verdict.
+
+Owned and mixed transactions compete on their owned input, and the
+class decides only where a full certificate takes effect: an owned
+transaction finalises on one observation (`fullFinal`), a mixed one at
+a committed anchor whose history holds the certificate (`mixedFinal`),
+since it must be ordered first (D9). As in the `3f+1`
+relation, the guard-emitted drops of `FinalizeOnCommitTX` — a mixed
+transaction whose input is already in `decidedObj` — receive no
+verdict: those transactions stay undecided, which only shrinks the set
+of derivable verdicts the agreement theorem covers.
 
 The consensusless routes read a **view** and decide on a *single*
 observed certificate block — finality in one observation, unlike the
-`3f+1` round quorum. The unlock route drops every owned candidate of
+`3f+1` round quorum. The unlock route drops every candidate of
 the object seen anywhere in the view (the algorithm's
 `K = ⋃_{b ∈ DAG[r]} Candidates(b, o)`, re-run each round: any candidate
 ever seen is eventually dropped; reading the whole view only enlarges
@@ -49,13 +60,23 @@ inductive VerdictFive (U : Universe Validator BlockId Tx Obj) (A : Anchors U) (V
       IsFullCert U C tx →               -- ... carrying a full certificate
       VerdictFive U A V prio tx Fate.finalized
   /-- Consensusless release (`TryFullUnlockObj`): one observed full
-  unlock certificate drops every owned candidate of the object. -/
+  unlock certificate drops every candidate of the object. -/
   | fullUnlockDrop {tx : Tx} {C b : BlockId} :
       C ∈ V.ids →                       -- a block of the view ...
       IsFullUnlockCert U C (T.input tx) →  -- ... unlocking the input
       b ∈ V.ids →                       -- and the dropped transaction is
-      OwnedCandidate U b (T.input tx) tx →  -- an owned candidate seen in the view
+      IsCandidate U b (T.input tx) tx → -- a candidate seen in the view
       VerdictFive U A V prio tx Fate.dropped
+  /-- Commit at an anchor (`FinalizeOnCommitTX`): a mixed transaction
+  the anchor includes, fully certified in the anchor's history. -/
+  | mixedFinal {tx : Tx} {i : ℕ} {a C : BlockId} :
+      T.Mixed tx →                      -- the IsMixed gate: the consensus route
+      A.seq[i]? = some a →              -- a committed anchor
+      IsCandidate U a (T.input tx) tx → -- Includes(A, tx), valid: implied by the
+                                        -- certificate below, kept as the paper has it
+      C ∈ U.ids → Reaches U a C →       -- ∃ b, Link(b, A) ...
+      IsFullCert U C tx →               -- ... carrying a full certificate
+      VerdictFive U A V prio tx Fate.finalized
   /-- The recovery commit (`ResolveOnCommitObj`, `win = tx`): at the
   resolving anchor, the transaction is eligible and `prio`-minimal
   among the eligible. -/
@@ -71,7 +92,7 @@ inductive VerdictFive (U : Universe Validator BlockId Tx Obj) (A : Anchors U) (V
   | recoveryDropLoser {tx tx' : Tx} {i j : ℕ} {aₖ a : BlockId} :
       ResolvesFiveAt U A (T.input tx) i j →
       A.seq[i]? = some aₖ → A.seq[j]? = some a →
-      OwnedCandidate U a (T.input tx) tx →      -- tx ∈ K ...
+      IsCandidate U a (T.input tx) tx →         -- tx ∈ K ...
       EligibleFive U aₖ a (T.input tx) tx' →    -- ... while the winner
       (∀ tx'', EligibleFive U aₖ a (T.input tx) tx'' → prio tx' tx'') →
       tx ≠ tx' →                                -- ... is someone else
@@ -81,7 +102,7 @@ inductive VerdictFive (U : Universe Validator BlockId Tx Obj) (A : Anchors U) (V
   | recoveryDropBot {tx : Tx} {i j : ℕ} {aₖ a : BlockId} :
       ResolvesFiveAt U A (T.input tx) i j →
       A.seq[i]? = some aₖ → A.seq[j]? = some a →
-      OwnedCandidate U a (T.input tx) tx →      -- tx ∈ K ...
+      IsCandidate U a (T.input tx) tx →         -- tx ∈ K ...
       (∀ tx', ¬ EligibleFive U aₖ a (T.input tx) tx') →  -- ... and W is empty
       VerdictFive U A V prio tx Fate.dropped
 
