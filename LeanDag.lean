@@ -397,3 +397,5 @@ import LeanDag.RedSnapper.Helpers.VotingFive
 import LeanDag.RedSnapper.Five.Uncontested.Proof
 import LeanDag.RedSnapper.Termination.Statement
 import LeanDag.RedSnapper.Termination.Proof
+import LeanDag.RedSnapper.Five.Termination.Statement
+import LeanDag.RedSnapper.Five.Termination.Proof

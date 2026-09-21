@@ -32,6 +32,12 @@ transaction and gives it no rival, so the scenario needs its own table:
   in anchor `17`'s history keeps it from triggering, which a mutant
   reading only owned certificates gets wrong; and `ConflictDecides`' C5
   input is live: the certificate lies under committed anchors.
+* **`UMixRecLate`** — `UMixRec` with a third transaction first included
+  above the resolving anchor: `resolvedDrop` drops it, every other drop
+  route is shut, and the winner, a candidate of the same later anchor,
+  is dropped by none.
+* **The loser of a mixed commit** — on `UMixRecFull`, `certifiedRivalDrop`
+  beside `mixedFinal`, in the empty view.
 -/
 
 namespace LeanDagTest
@@ -237,6 +243,158 @@ example : ∀ C ∈ UMixRecFull.ids, IsFullCertDec UMixRecFull C 0 →
     C ∈ historyIn UMixRecFull 17 ∨ C ∈ historyIn UMixRecFull 22 := by decide
 example : ¬ ∀ C ∈ UMixRecFull.ids, IsFullCertDec UMixRecFull C 0 →
     C ∈ historyIn UMixRecFull 17 := by decide
+
+/-! ### A candidate first included above the resolution
+
+`UMixRec` with `tx 2` — a third valid transaction on the same object —
+carried by validator `1`'s round-3 block `18`: not in the history of the
+resolving anchor `17`, in that of the later anchor `22`. It is in the
+global order, its object resolved below it with `tx 0` the winner, and
+`resolvedDrop` drops it, every other drop route being shut. The winner,
+a candidate of the same later anchor, is dropped by no route. -/
+
+/-- `lkMixRec` with block `18` carrying the late `tx 2`. -/
+def lkMixRecLate : Fin 24 → Block (Fin 6) (Fin 24) (Fin 3) (Fin 2) := fun i =>
+  if (i : ℕ) = 18 then
+    { round := 3, author := 1, parents := {12, 13, 14, 15, 16}, txs := {2},
+      declares := fun _ => none }
+  else lkMixRec i
+
+def UMixRecLate : Universe (Fin 6) (Fin 24) (Fin 3) (Fin 2) where
+  ids := Finset.univ.erase 23
+  block := lkMixRecLate
+  complete := by decide
+  valid := by decide
+  no_equivocation := by decide
+  self_parent := by decide
+
+/-- The committed anchors of `UMixRecLate`: `AMixRec`'s. -/
+def AMixRecLate : Anchors UMixRecLate where
+  seq := [0, 6, 17, 22]
+  mem := by decide
+  chained := by
+    refine List.Pairwise.cons (fun x hx => ?_) (List.Pairwise.cons (fun x hx => ?_)
+      (List.Pairwise.cons (fun x hx => ?_) (List.pairwise_singleton _ _)))
+    · rcases List.mem_cons.mp hx with rfl | hx
+      · exact (mem_history_iff (by decide)).mp (by decide)
+      rcases List.mem_cons.mp hx with rfl | hx
+      · exact (mem_history_iff (by decide)).mp (by decide)
+      rw [List.mem_singleton] at hx
+      subst hx
+      exact (mem_history_iff (by decide)).mp (by decide)
+    · rcases List.mem_cons.mp hx with rfl | hx
+      · exact (mem_history_iff (by decide)).mp (by decide)
+      rw [List.mem_singleton] at hx
+      subst hx
+      exact (mem_history_iff (by decide)).mp (by decide)
+    · rw [List.mem_singleton] at hx
+      subst hx
+      exact (mem_history_iff (by decide)).mp (by decide)
+
+example : MoveDiscipline UMixRecLate := moveDiscipline_iff.mpr (by decide)
+example : FreezeDiscipline UMixRecLate := freezeDiscipline_iff.mpr (by decide)
+
+-- The resolution is `UMixRec`'s, and the late transaction is a candidate
+-- of the last anchor only.
+example : ResolvesFiveAt UMixRecLate AMixRecLate 0 1 2 := resolvesFiveAt_iff.mpr (by decide)
+private theorem mixLate_only : ∀ b ∈ UMixRecLate.ids, (2 : Fin 3) ∈ candidates UMixRecLate b 0 →
+    b = 18 ∨ b = 22 := by decide
+private theorem mixLate_not_eligible : ¬ EligibleFiveDec UMixRecLate 6 17 0 2 := by decide
+
+-- It did not win the resolution, and the anchor above drops it.
+example : VerdictFive UMixRecLate AMixRecLate (View.full UMixRecLate) (· ≤ ·) 2 Fate.dropped :=
+  .resolvedDrop (i := 1) (j := 2) (m := 3) (aₖ := 6) (aⱼ := 17) (a := 22)
+    (resolvesFiveAt_iff.mpr (by decide)) (by decide) (by decide) (by decide) (by decide)
+    ((mem_candidates_iff (by decide)).mp (by decide))
+    (fun h => mixLate_not_eligible ((eligibleFive_iff (by decide)).mp h.1))
+
+-- RS12's premises on this run: no certificate of either kind exists, the
+-- conflict is seen by the committed anchor `6`, and the marker input
+-- holds as on `UMixRec`.
+private theorem mixLate_no_unlock : ∀ C ∈ UMixRecLate.ids,
+    ¬ IsFullUnlockCertDec UMixRecLate C 0 := by decide
+private theorem mixLate_no_cert : ∀ tx : Fin 3, ∀ C ∈ UMixRecLate.ids,
+    ¬ IsFullCertDec UMixRecLate C tx := by decide
+example : Conflicted UMixRecLate 6 0 := (conflicted_iff (by decide)).mpr (by decide)
+example : ∀ i' ≤ 1, ∀ a', AMixRecLate.seq[i']? = some a' →
+    ¬ FreezeQuorumDec UMixRecLate 6 0 a' := by decide
+example : ∀ v ∈ (Correct : Finset (Fin 6)), FrozenDec UMixRecLate 6 v 0 17 := by decide
+
+-- Every other drop route is shut for `tx 2`: no unlock certificate, no
+-- full certificate for a rival to drop it, and no resolving anchor has it
+-- among its candidates (its only anchor is `22`, index 3, where nothing
+-- resolves).
+example : ∀ C ∈ UMixRecLate.ids, ¬ IsFullUnlockCertDec UMixRecLate C 0 := mixLate_no_unlock
+example : ∀ tx : Fin 3, ∀ C ∈ UMixRecLate.ids, ¬ IsFullCertDec UMixRecLate C tx :=
+  mixLate_no_cert
+example : (22 : Fin 24) ∈ AMixRecLate.seq ∧ (18 : Fin 24) ∉ AMixRecLate.seq ∧
+    AMixRecLate.seq[3]? = some 22 := by decide
+example : ∀ i < 4, ¬ ResolvesFiveAtDec UMixRecLate AMixRecLate 0 i 3 := by decide
+
+-- The "not the winner" premise is what keeps the route off the winner:
+-- `tx 0` is a candidate of anchor `22` too, above the resolution it won,
+-- and no route drops it.
+private theorem mixLate_res : ∀ i < 4, ∀ j < 4,
+    ResolvesFiveAtDec UMixRecLate AMixRecLate 0 i j → i = 1 ∧ j = 2 := by decide
+private theorem mixLate_res_at {i j : ℕ} {aₖ aⱼ : Fin 24}
+    (hres : ResolvesFiveAt UMixRecLate AMixRecLate 0 i j)
+    (hlk : AMixRecLate.seq[i]? = some aₖ) (hlj : AMixRecLate.seq[j]? = some aⱼ) :
+    aₖ = 6 ∧ aⱼ = 17 := by
+  have hj := (List.getElem?_eq_some_iff.mp hlj).1
+  simp only [AMixRecLate, List.length_cons, List.length_nil] at hj
+  have hij := hres.2.1
+  obtain ⟨rfl, rfl⟩ := mixLate_res i (by omega) j (by omega) (resolvesFiveAt_iff.mp hres)
+  simp [AMixRecLate] at hlk hlj
+  exact ⟨hlk.symm, hlj.symm⟩
+private theorem mixLate_winner : EligibleFive UMixRecLate 6 17 0 0 :=
+  (eligibleFive_iff (by decide)).mpr (by decide)
+
+example : IsCandidate UMixRecLate 22 0 0 := (mem_candidates_iff (by decide)).mp (by decide)
+example : ¬ VerdictFive UMixRecLate AMixRecLate (View.full UMixRecLate) (· ≤ ·) 0
+    Fate.dropped := by
+  intro h
+  cases h with
+  | fullUnlockDrop hC hunlock _ _ =>
+      have hid := (View.full UMixRecLate).subset_ids hC
+      exact mixLate_no_unlock _ hid ((isFullUnlockCert_iff hid).mp hunlock)
+  | observedRivalDrop _ _ _ _ hC hcert =>
+      have hid := (View.full UMixRecLate).subset_ids hC
+      exact mixLate_no_cert _ _ hid ((isFullCert_iff hid).mp hcert)
+  | certifiedRivalDrop _ _ _ hC _ hcert =>
+      exact mixLate_no_cert _ _ hC ((isFullCert_iff hC).mp hcert)
+  | resolvedDrop hres hlk hlj _ _ _ hnw =>
+      obtain ⟨rfl, rfl⟩ := mixLate_res_at hres hlk hlj
+      exact hnw ⟨mixLate_winner, fun _ _ => Fin.zero_le _⟩
+  | recoveryDropLoser hres hlk hla _ _ hmin hne =>
+      obtain ⟨rfl, rfl⟩ := mixLate_res_at hres hlk hla
+      exact hne (Fin.le_zero_iff.mp (hmin 0 mixLate_winner)).symm
+  | recoveryDropBot hres hlk hla _ hempty =>
+      obtain ⟨rfl, rfl⟩ := mixLate_res_at hres hlk hla
+      exact hempty 0 mixLate_winner
+
+/-! ### The loser of a mixed commit
+
+On `UMixRecFull` the fully certified transaction is the *mixed* `tx 0`:
+final at anchor `17` by `mixedFinal` (above), and at that same anchor
+its owned rival `tx 1` is dropped by `certifiedRivalDrop` — in a view
+that holds nothing, since both routes read the anchor's history. -/
+
+/-- The empty view over `UMixRecFull`. -/
+def VMixRecFullNone : View UMixRecFull where
+  ids := ∅
+  subset_ids := by decide
+  complete := by decide
+
+example : VerdictFive UMixRecFull AMixRecFull VMixRecFullNone (· ≤ ·) 1 Fate.dropped :=
+  .certifiedRivalDrop (tx' := 0) (i := 2) (a := 17) (C := 12) (by decide)
+    ((mem_candidates_iff (by decide)).mp (by decide)) (by decide) (by decide)
+    ((mem_history_iff (by decide)).mp (by decide))
+    ((isFullCert_iff (by decide)).mpr (by decide))
+example : VerdictFive UMixRecFull AMixRecFull VMixRecFullNone (· ≤ ·) 0 Fate.finalized :=
+  .mixedFinal (i := 2) (a := 17) (C := 12) (by decide) (by decide)
+    ((mem_candidates_iff (by decide)).mp (by decide)) (by decide)
+    ((mem_history_iff (by decide)).mp (by decide))
+    ((isFullCert_iff (by decide)).mpr (by decide))
 
 end RedSnapper
 

@@ -15,7 +15,9 @@ every justifiable verdict, and the theorem shows route pairs never
 disagree — the certificate pairs by RS6 (`FullCertUniqueness`,
 `CommitExcludesUnlock`), the certificate-versus-recovery pairs by RS7
 (`RecoveryReflects` closes the paper's miscited step of finding 9), and
-the recovery pairs by resolution uniqueness. The two certificate routes
+the recovery pairs by resolution uniqueness. The three drops of
+`FinalizeOnCommitTX`'s first loop — beside an observed or a certified
+rival, above a resolution not won — close by the same lemmas. The two certificate routes
 — `fullFinal` for an owned transaction, `mixedFinal` for a mixed one —
 rest on the same evidence, a full certificate somewhere in the
 universe, so every pair above covers both. The theorem takes the

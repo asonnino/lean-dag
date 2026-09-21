@@ -20,6 +20,12 @@ import LeanDagTest.RedSnapper.FreezeHardening
 * **`FullVerdict` needs the certificate round.** On `ULiveT` — `ULive`
   cut after round 2 — every other hypothesis holds under the `5f+1`
   rule and no finalized verdict is derivable.
+* **The loser of a fast commit** (record finding 33). On `U6RecFull`,
+  the owned rival of a fully certified transaction is dropped once the
+  certificate is observed (`observedRivalDrop`) or lies under the anchor
+  (`certifiedRivalDrop`), has no verdict in a view and under an anchor
+  that hold neither, and with the recovery committed is dropped by three
+  routes at once.
 * **`ConflictDecides`, the unlock case, with no marker anywhere.** On
   `U6Frag` with anchors `[6, 17]` the trigger exists and no validator
   ever freezes: the marker input is false, and is not asked for, since
@@ -154,13 +160,19 @@ example : VerdictFive U6Frag AFragUnlock (View.full U6Frag) (· ≤ ·) 0 Fate.d
     ((isFullUnlockCert_iff (by decide)).mpr (by decide)) (by decide)
     ((mem_candidates_iff (by decide)).mp (by decide))
 
-/-! ### What the `5f+1` relation does not decide: the loser of a fast commit
+/-! ### The loser of a fast commit
 
 Record finding 33, on data. On `U6RecFull` the owned `tx 0` holds a full
-certificate at block `12`; commit that block alone. The owned rival
-`tx 1` is valid and lies in the anchor's history — it is in the global
-order — and `tx 0` is finalized. No route gives `tx 1` a verdict: the
-relation has the paper's drops only, and none of them fires. -/
+certificate at block `12`, and the owned rival `tx 1` is valid and a
+candidate of every committed anchor — it is in the global order. Until
+`FinalizeOnCommitTX`'s first loop covered owned transactions, no route
+gave it a verdict. Now: a validator that has observed the certificate
+drops it at any committed anchor, even one below the certificate
+(`observedRivalDrop`); an anchor that holds the certificate drops it in
+every view (`certifiedRivalDrop`); and a validator that holds neither —
+a view of rounds 0 and 1, an anchor below the certificate — justifies no
+verdict for it, of either fate. With the recovery committed as well,
+three routes drop the same loser and three finalise the same winner. -/
 
 /-- `U6RecFull`'s certificate block, committed alone. -/
 def ARecFullCert : Anchors U6RecFull where
@@ -168,43 +180,100 @@ def ARecFullCert : Anchors U6RecFull where
   mem := by decide
   chained := by simp
 
-example : Owned (1 : Fin 4) ∧ Transactions.Valid (1 : Fin 4) ∧ Conflict (0 : Fin 4) 1 := by
+/-- A round-1 block, below the certificate, committed alone. -/
+def ARecFullBelow : Anchors U6RecFull where
+  seq := [6]
+  mem := by decide
+  chained := by simp
+
+/-- The view of rounds 0 and 1: it holds anchor `6`, not the certificate. -/
+def VRecFullEarly : View U6RecFull where
+  ids := {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
+  subset_ids := by decide
+  complete := by decide
+
+example : Owned (1 : Fin 4) ∧ Transactions.Valid (1 : Fin 4) ∧ Conflict (1 : Fin 4) 0 := by
   decide
-example : IsCandidate U6RecFull 12 0 1 := (mem_candidates_iff (by decide)).mp (by decide)
+example : IsCandidate U6RecFull 6 0 1 := (mem_candidates_iff (by decide)).mp (by decide)
+example : Conflicted U6RecFull 6 0 := (conflicted_iff (by decide)).mpr (by decide)
 example : VerdictFive U6RecFull ARecFullCert (View.full U6RecFull) (· ≤ ·) 0 Fate.finalized :=
   .fullFinal (C := 12) (by decide) (by decide) ((isFullCert_iff (by decide)).mpr (by decide))
+
+-- The certificate observed: the loser is dropped at an anchor below it.
+example : VerdictFive U6RecFull ARecFullBelow (View.full U6RecFull) (· ≤ ·) 1 Fate.dropped :=
+  .observedRivalDrop (tx' := 0) (i := 0) (a := 6) (C := 12) (by decide)
+    ((mem_candidates_iff (by decide)).mp (by decide)) (by decide) (by decide) (by decide)
+    ((isFullCert_iff (by decide)).mpr (by decide))
+
+-- The certificate under the anchor: dropped in the early view too.
+example : VerdictFive U6RecFull ARecFullCert VRecFullEarly (· ≤ ·) 1 Fate.dropped :=
+  .certifiedRivalDrop (tx' := 0) (i := 0) (a := 12) (C := 12) (by decide)
+    ((mem_candidates_iff (by decide)).mp (by decide)) (by decide) (by decide) Reaches.refl
+    ((isFullCert_iff (by decide)).mpr (by decide))
 
 private theorem recFull_no_unlock : ∀ C ∈ U6RecFull.ids, ¬ IsFullUnlockCertDec U6RecFull C 0 := by
   decide
 private theorem recFull_no_cert_rival : ∀ C ∈ U6RecFull.ids, ¬ IsFullCertDec U6RecFull C 1 := by
   decide
-private theorem recFullCert_no_pair {i j : ℕ} {aₖ a : Fin 24} (hij : i < j)
-    (hlk : ARecFullCert.seq[i]? = some aₖ) (hla : ARecFullCert.seq[j]? = some a) : False := by
+private theorem recFull_no_cert_below : ∀ tx : Fin 4, ∀ C ∈ historyIn U6RecFull 6,
+    ¬ IsFullCertDec U6RecFull C tx := by decide
+private theorem recFull_no_cert_early : ∀ tx : Fin 4, ∀ C ∈ VRecFullEarly.ids,
+    ¬ IsFullCertDec U6RecFull C tx := by decide
+private theorem recFull_single {A : Anchors U6RecFull} (hA : A.seq.length = 1) {i j : ℕ}
+    {aₖ a : Fin 24} (hij : i < j) (hlk : A.seq[i]? = some aₖ) (hla : A.seq[j]? = some a) :
+    False := by
   have h1 := (List.getElem?_eq_some_iff.mp hlk).1
   have h2 := (List.getElem?_eq_some_iff.mp hla).1
-  simp [ARecFullCert] at h1 h2
   omega
 
--- The loser is never dropped ...
-example : ¬ VerdictFive U6RecFull ARecFullCert (View.full U6RecFull) (· ≤ ·) 1 Fate.dropped := by
+-- Neither observed nor under the anchor: no verdict of either fate.
+example : ¬ VerdictFive U6RecFull ARecFullBelow VRecFullEarly (· ≤ ·) 1 Fate.dropped := by
   intro h
   cases h with
   | fullUnlockDrop hC hunlock _ _ =>
-      have hid := (View.full U6RecFull).subset_ids hC
+      have hid := VRecFullEarly.subset_ids hC
       exact recFull_no_unlock _ hid ((isFullUnlockCert_iff hid).mp hunlock)
-  | recoveryDropLoser hres hlk hla _ _ _ _ => exact recFullCert_no_pair hres.2.1 hlk hla
-  | recoveryDropBot hres hlk hla _ _ => exact recFullCert_no_pair hres.2.1 hlk hla
+  | observedRivalDrop _ _ _ _ hC hcert =>
+      exact recFull_no_cert_early _ _ hC
+        ((isFullCert_iff (VRecFullEarly.subset_ids hC)).mp hcert)
+  | certifiedRivalDrop hia _ _ hC hr hcert =>
+      have ha := List.mem_of_getElem? hia
+      simp only [ARecFullBelow, List.mem_singleton] at ha
+      subst ha
+      exact recFull_no_cert_below _ _ ((mem_historyIn_iff (by decide)).mpr ⟨hC, hr⟩)
+        ((isFullCert_iff hC).mp hcert)
+  | resolvedDrop hres hlk hlj _ _ _ _ => exact recFull_single rfl hres.2.1 hlk hlj
+  | recoveryDropLoser hres hlk hla _ _ _ _ => exact recFull_single rfl hres.2.1 hlk hla
+  | recoveryDropBot hres hlk hla _ _ => exact recFull_single rfl hres.2.1 hlk hla
 
--- ... and, of course, never finalized.
-example : ¬ VerdictFive U6RecFull ARecFullCert (View.full U6RecFull) (· ≤ ·) 1
-    Fate.finalized := by
+example : ¬ VerdictFive U6RecFull ARecFullBelow VRecFullEarly (· ≤ ·) 1 Fate.finalized := by
   intro h
   cases h with
   | fullFinal _ hC hcert =>
-      have hid := (View.full U6RecFull).subset_ids hC
-      exact recFull_no_cert_rival _ hid ((isFullCert_iff hid).mp hcert)
+      exact recFull_no_cert_early _ _ hC
+        ((isFullCert_iff (VRecFullEarly.subset_ids hC)).mp hcert)
   | mixedFinal hm _ _ _ _ _ => exact absurd hm (by decide)
-  | recoveryFinal hres hlk hla _ _ => exact recFullCert_no_pair hres.2.1 hlk hla
+  | recoveryFinal hres hlk hla _ _ => exact recFull_single rfl hres.2.1 hlk hla
+
+-- With the recovery committed too (`ARecFull`), three routes drop the
+-- loser: the certificate strictly below anchor 17, the election at 17,
+-- and the first loop at anchor 22 above the resolution.
+example : VerdictFive U6RecFull ARecFull VRecFullEarly (· ≤ ·) 1 Fate.dropped :=
+  .certifiedRivalDrop (tx' := 0) (i := 2) (a := 17) (C := 12) (by decide)
+    ((mem_candidates_iff (by decide)).mp (by decide)) (by decide) (by decide)
+    ((mem_history_iff (by decide)).mp (by decide))
+    ((isFullCert_iff (by decide)).mpr (by decide))
+example : VerdictFive U6RecFull ARecFull VRecFullEarly (· ≤ ·) 1 Fate.dropped :=
+  .recoveryDropLoser (tx' := 0) (i := 1) (j := 2) (aₖ := 6) (a := 17)
+    (resolvesFiveAt_iff.mpr (by decide)) (by decide) (by decide)
+    ((mem_candidates_iff (by decide)).mp (by decide))
+    ((eligibleFive_iff (by decide)).mpr (by decide))
+    (fun _ _ => Fin.zero_le _) (by decide)
+example : VerdictFive U6RecFull ARecFull VRecFullEarly (· ≤ ·) 1 Fate.dropped :=
+  .resolvedDrop (i := 1) (j := 2) (m := 3) (aₖ := 6) (aⱼ := 17) (a := 22)
+    (resolvesFiveAt_iff.mpr (by decide)) (by decide) (by decide) (by decide) (by decide)
+    ((mem_candidates_iff (by decide)).mp (by decide))
+    (fun h => absurd ((eligibleFive_iff (by decide)).mp h.1) (by decide))
 
 end RedSnapper
 

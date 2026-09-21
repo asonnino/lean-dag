@@ -99,13 +99,14 @@ Three consequences shape the arc.
 | Lemma termination-3f; Termination of the Conditional State-Machine Replication definition | `Termination/` (RS11) — `DecidedAgainst`, `Decided`, `DecidedOrdered` |
 | §8 certificates, refutations, moves (`Alg:FastPathPredicates5f+1`) | `Model/Five/{Certificates, Moves}.lean` — `IsAntiVote`, `IsFullCert`, `IsHalfCert`, `IsRefutation`, `IsFullUnlockCert`, `MoveDiscipline` |
 | §8 freeze, `Triggers`, `TriggerAnchor`, `Frozen`, `Resolves`; `ResolveOnCommitObj`'s `F`, `W` | `Model/Five/Freeze.lean` — `AtLeastV`, `Triggers`, `TriggerAt`, `Frozen`, `FreezeQuorum`, `ResolvesFiveAt`, `EligibleFive`, `FreezeDiscipline`; `Block.freezes` |
-| `TryFullDecideTX`, `TryFullUnlockObj`, `FinalizeOnCommitTX`, `ResolveOnCommitObj` | `Model/Five/Verdict.lean` — `VerdictFive` (owned and mixed candidates; `mixedFinal` is the anchor route) over a linear-order parameter `prio` (the min-hash tie-break, D8-style) |
+| `TryFullDecideTX`, `TryFullUnlockObj`, `FinalizeOnCommitTX` (both loops), `ResolveOnCommitObj` | `Model/Five/Verdict.lean` — `VerdictFive` (owned and mixed candidates; `mixedFinal` is the anchor route; `observedRivalDrop`, `certifiedRivalDrop` and `resolvedDrop` the first loop's aborts) over a linear-order parameter `prio` (the min-hash tie-break, D8-style) |
 | Lemmas single-stance-5f … full-cert-unique | `Five/FullCertSafety/` (RS6) — `SingleStance`, `CommitExcludesRefutation`, `UnlockExcludesRefutation`, `CommitExcludesUnlock`, `FullCertUniqueness` |
 | Lemmas recovery-determinism, recovery-reflects, recovery-safety | `Five/RecoverySafety/` (RS7) — `ResolutionUnique`, `RecoveryReflects`, `UnlockEmptiesElection`, `RecoverySafetyBot`, `RecoverySafetyWin` |
 | Theorem safety-5f | `Five/Agreement/` (RS8) — `VerdictAgreement`, `NoConflictingFinal`, `MixedViaAnchor` |
 | Phase 3 of `CastVotes` (`Alg:Voting5f+1`), the coin | `Model/Five/Coin.lean` — `CoinRule` (the coin as its output `w`, D8), `StancedAt`, `AgreeUpto` (measurability, Mahi-Mahi's MM2′ pattern) |
 | Lemma coin-success | `Five/CoinSuccess/` (RS9a) — `CoinConcentrated`, `CoinFragmented`, `CoinSuccessCount` (the probability bound as its numerator: a good-target set of at least `half`), `CoinMeasurable` |
 | Lemma recovery-termination | `Five/RecoveryTermination/` (RS9b) — `TriggerExists`, `ResolutionExists`, `RecoveryDecides`, `ConflictDecides` |
+| Lemma termination-5f | `Five/Termination/` (RS12) — `Decided` |
 | Lemma uncontended-liveness; phases 2–4 of `CastVotes` (`Alg:Voting5f+1`) | `Model/Five/HonestVoting.lean` — `VotingRuleFive`; `Five/Uncontested/` (RS10) — `FullLiveness`, `FullVerdict`, `MixedVerdict` |
 
 Names follow the paper's where it has them (`Candidates`, `Stance`,
@@ -326,6 +327,22 @@ assumed anywhere.
   anywhere in termination; `ConflictDecides` composes them into the
   lemma's three cases, asking for the markers only where no certificate
   exists — a validator that decided on a certificate never freezes.
+- **RS12 `Five/Termination/`** — Lemma termination-5f, contested half
+  (the uncontested half is RS10): every candidate of a committed anchor
+  receives a verdict — the per-transaction form of RS9b's
+  `ConflictDecides`, under its two consensus-liveness inputs and, where
+  no certificate exists, a rival under a committed anchor too. The
+  algorithm has it only since `FinalizeOnCommitTX`'s first loop aborts
+  owned candidates too (finding 33); the relation renders that loop by
+  what decided the object: an owned rival's full certificate in the view
+  (`observedRivalDrop`, read as `fullFinal` reads it), a rival's full
+  certificate under the anchor (`certifiedRivalDrop`), or a resolution
+  below the anchor that the transaction did not win (`resolvedDrop`).
+  RS8 covers the three routes with the lemmas it already used —
+  certificate uniqueness, and the reflection claim, which makes a
+  certified transaction the only eligible one. Between RS10 and RS12
+  lies a run with no certificate where a valid rival is included
+  somewhere and never ordered.
 - **RS10 `Five/Uncontested/`** — Lemma uncontended-liveness in RS4's
   shape, under `VotingRuleFive`: a sole valid candidate is fully
   certified by every correct block two synchronised rounds after its
@@ -615,13 +632,14 @@ mechanisation's own.
     Preliminaries. Open: 1 (the consensus-projection sentence still
     lists `nacks`, `unlocks`), 12, 16, 18, 22 (the lemma is now
     explicitly unconditional, the voting rule named only in its proof).
-33. **Per-transaction termination fails for the `5f + 1` algorithm as
-    written.** The only abort sites are `TryFullUnlockObj` and
+33. **Per-transaction termination failed for the `5f + 1` algorithm**
+    (fixed in the paper, 2026-09-21, and mechanised as RS12). The only
+    abort sites were `TryFullUnlockObj` and
     `ResolveOnCommitObj`, each over the candidates it sees at that one
     call and never again for the object, and `FinalizeOnCommitTX`'s
-    first loop, which is gated by `IsMixed`. `TryFullDecideTX` only
+    first loop, which was gated by `IsMixed`. `TryFullDecideTX` only
     `continue`s on a decided object, where the `3f + 1` procedure
-    records an abort. So when an owned transaction is finalized on a
+    records an abort. So when an owned transaction was finalized on a
     full certificate, its owned rivals — present from the start or
     included later, by a Byzantine block or by a correct validator not
     yet aware of the decision — are valid, lie under committed anchors,
@@ -630,12 +648,13 @@ mechanisation's own.
     "eventually" half of Agreement, since a validator that instead
     reached the same winner through recovery does abort them. The paper
     claims termination per object only (Lemma recovery-termination,
-    RS9b); dropping the `IsMixed` gate of the first loop and recording
-    the abort in `TryFullDecideTX`, as at `3f + 1`, closes the gap. The
-    arc's `5f + 1` relation copies the algorithm's routes and has the
-    same hole, witnessed: on `U6RecFull` with the certificate block
-    committed, the finalized transaction's owned rival is a candidate of
-    the anchor and has no verdict of either fate.
+    RS9b). The fix is one line: the first loop ranges over every
+    candidate of the anchor, owned or mixed, as at `3f + 1`; the abort
+    in `TryFullDecideTX` is not needed, since that branch is unreachable
+    for a certified transaction. Witnessed on `U6RecFull`: the
+    finalized transaction's owned rival is dropped once the certificate
+    is observed or lies under the anchor, and has no verdict of either
+    fate where neither holds (before the fix it had none at all).
 34. **Termination at `3f + 1` needs (C4), not (C5).** The lemma's proof
     sends a certificate under a committed anchor by (C5); mechanised,
     the correct-authored anchor four rounds above the carrier suffices,
@@ -661,13 +680,14 @@ mechanisation's own.
   and Theorem latency-5f's round bookkeeping stay on paper. Lemma
   reuse-5f lives on `Spendable`, dropped by D3, and so does the new
   mixed disjunct of `Spendable`.
-- **The guard-emitted drops of `FinalizeOnCommitTX` at `5f + 1`** — a
-  mixed transaction whose input is already decided — receive no verdict
-  (at `3f + 1` they do, RS11); and the lemmas of the 2026-09-10 revision that read
+- **Timing of the first loop's aborts.** The relation renders the loop
+  up to one anchor, in both directions: the validator's loop runs before
+  the routes of the same anchor, so it aborts at the next anchor what
+  the relation drops at this one; and at `3f + 1` the relation drops a
+  late candidate at an anchor that holds the deciding evidence, possibly
+  later than a validator that observed it consensuslessly. And the lemmas of the 2026-09-10 revision that read
   local state or execution: decision integrity (the verdict relations
-  are functional by RS3 and RS8) and consistent execution. Per-object
-  termination at `5f + 1` is RS9b; per-transaction termination is
-  mechanised at `3f + 1` only (RS11).
+  are functional by RS3 and RS8) and consistent execution.
 - **Execution, reverts, epoch change**, and the paper's §5 liveness
   claim for shared objects.
 

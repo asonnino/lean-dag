@@ -12,7 +12,12 @@ certificate-versus-recovery pairs by RS7's reflection (the round
 condition of the paper's miscited step — finding 9 — never arises,
 because the reflection claim is round-unconditional); the
 recovery-versus-unlock pair by RS7's `no_unlock_of_eligible`; the
-recovery pairs by resolution uniqueness and antisymmetry. The two
+recovery pairs by resolution uniqueness and antisymmetry. The two drops
+of `FinalizeOnCommitTX`'s first loop close the same way: beside a
+certified rival, by certificate uniqueness or by the reflection claim,
+which makes the rival the only eligible transaction; above a resolution
+not won, by the reflection claim, which would have made a certified
+transaction the winner, or by resolution uniqueness. The two
 certificate routes share their evidence (`evidence_of_final`), so the
 pair analysis never distinguishes an owned from a mixed transaction.
 -/
@@ -62,6 +67,16 @@ private theorem fate_exclusive {V V' : View U} {prio : Tx → Tx → Prop}
         obtain ⟨helig, -⟩ := recoveryReflects_at hmove hfd hfive hres hlk hla
           rfl ⟨C, hC, hcert⟩
         exact hempty tx helig
+    | observedRivalDrop _ _ hconf _ hC' hcert' =>
+        exact fullCertUniqueness hmove _ hC _ (V'.subset_ids hC') _ _ hconf hcert hcert'
+    | certifiedRivalDrop _ _ hconf hC' _ hcert' =>
+        exact fullCertUniqueness hmove _ hC _ hC' _ _ hconf hcert hcert'
+    | resolvedDrop hres hlk hlj _ _ _ hnw =>
+        -- the certificate makes tx the unique eligible one, hence the winner
+        obtain ⟨helig, huniq⟩ := recoveryReflects_at hmove hfd hfive hres hlk hlj
+          rfl ⟨C, hC, hcert⟩
+        haveI := hord
+        exact hnw ⟨helig, fun tx' h' => huniq tx' h' ▸ refl_of prio tx⟩
   · cases h₂ with
     | fullUnlockDrop hC₂ hunlock hb hcand =>
         exact no_unlock_of_eligible hmove hfd (anchor_mem hla) helig
@@ -85,6 +100,24 @@ private theorem fate_exclusive {V V' : View U} {prio : Tx → Tx → Prop}
         rw [hla] at hla'
         rw [← Option.some.inj hlk', ← Option.some.inj hla'] at hempty
         exact hempty tx helig
+    | observedRivalDrop _ _ hconf _ hC' hcert' =>
+        -- the rival's certificate makes the rival the unique eligible one
+        obtain ⟨-, huniq⟩ := recoveryReflects_at hmove hfd hfive hres hlk hla
+          hconf.2.symm ⟨_, V'.subset_ids hC', hcert'⟩
+        exact hconf.1 (huniq _ helig)
+    | certifiedRivalDrop _ _ hconf hC' _ hcert' =>
+        obtain ⟨-, huniq⟩ := recoveryReflects_at hmove hfd hfive hres hlk hla
+          hconf.2.symm ⟨_, hC', hcert'⟩
+        exact hconf.1 (huniq _ helig)
+    | resolvedDrop hres' hlk' hlj' _ _ _ hnw =>
+        obtain ⟨hi, hj⟩ := (resolutionUnique (U := U) (A := A) hord).1
+          _ _ _ _ _ hres hres'
+        subst hi
+        subst hj
+        rw [hlk] at hlk'
+        rw [hla] at hlj'
+        rw [← Option.some.inj hlk', ← Option.some.inj hlj'] at hnw
+        exact hnw ⟨helig, hmin⟩
 
 omit [DecidableEq BlockId] in
 theorem verdictAgreement {prio : Tx → Tx → Prop} (hord : IsLinearOrder Tx prio)
