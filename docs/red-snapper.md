@@ -82,7 +82,7 @@ Three consequences shape the arc.
 
 ### 0.1 Correspondence with the paper
 
-| Paper (`redsnapper-paper/`) | Lean (planned) |
+| Paper (`redsnapper-paper/`) | Lean |
 |:---|:---|
 | System model, `f`, correct validators (`2.Prelim.tex`) | `Model/Faults.lean` — `Faults`, `quorum`, `half`, `Five`, `Correct` |
 | §10 Fundamental limits of vote revocation | `Model/Revocation.lean` — `Profile`, `supporters`, `opposers`, `voters`; `Revocation/` (RS1) |
@@ -95,16 +95,17 @@ Three consequences shape the arc.
 | Consensus interface (C1)–(C4), `Dead`, `Resolves` | `Model/{Anchors, Dead}.lean` — `Anchors`, `DeadGiven`, `ResolveReadyGiven`, `ReleasedBelow`, `ResolvesAt`, `DeadAt` |
 | `TryFastDecideTX`, `TrySkipDecideObj`, `FinalizeOnCommitTX`, `ResolveOnCommitObj` | `Model/Verdict.lean` — `Fate`, `FastQuorumAtInView`, `SkipQuorumAtInView`, `TxVerdict` |
 | Theorem commit-safety, Lemma mixed-object safety | `TxAgreement/` (RS3) — `VerdictAgreement`, `NoConflictingFinal`, `MixedViaAnchor` |
-| Lemmas fp-liveness, equiv-live; `CastVotes` | `Model/{Liveness, HonestVoting}.lean` — `PopulatedOn`, `SynchronisedOn`, `VotingRule`; `Uncontested/` (RS4) — `FastLiveness`, `FastVerdict`; `ConflictResolution/` (RS5) — `Trichotomy`, `AnchorDecides` |
+| Lemmas fp-liveness, equiv-live; `CastVotes` | `Model/{Liveness, HonestVoting}.lean` — `PopulatedOn`, `SynchronisedOn`, `VotingRule`; `Uncontested/` (RS4) — `FastLiveness`, `FastVerdict`, `AnchorVerdict`; `ConflictResolution/` (RS5) — `Trichotomy`, `AnchorDecides` |
 | §8 certificates, refutations, moves (`Alg:FastPathPredicates5f+1`) | `Model/Five/{Certificates, Moves}.lean` — `IsAntiVote`, `IsFullCert`, `IsHalfCert`, `IsRefutation`, `IsFullUnlockCert`, `MoveDiscipline` |
-| §8 freeze, `Triggers`, `TriggerAnchor`, `Frozen`, `Resolves`; `ResolveOnCommitObj`'s `F`, `W` | `Model/Five/Freeze.lean` — `AtLeastV`, `OwnedCandidate`, `Triggers`, `TriggerAt`, `Frozen`, `FreezeQuorum`, `ResolvesFiveAt`, `EligibleFive`, `FreezeDiscipline`; `Block.freezes` |
-| `TryFullDecideTX`, `TryFullUnlockObj`, `ResolveOnCommitObj` | `Model/Five/Verdict.lean` — `VerdictFive` over a linear-order parameter `prio` (the min-hash tie-break, D8-style) |
+| §8 freeze, `Triggers`, `TriggerAnchor`, `Frozen`, `Resolves`; `ResolveOnCommitObj`'s `F`, `W` | `Model/Five/Freeze.lean` — `AtLeastV`, `Triggers`, `TriggerAt`, `Frozen`, `FreezeQuorum`, `ResolvesFiveAt`, `EligibleFive`, `FreezeDiscipline`; `Block.freezes` |
+| `TryFullDecideTX`, `TryFullUnlockObj`, `FinalizeOnCommitTX`, `ResolveOnCommitObj` | `Model/Five/Verdict.lean` — `VerdictFive` (owned and mixed candidates; `mixedFinal` is the anchor route) over a linear-order parameter `prio` (the min-hash tie-break, D8-style) |
 | Lemmas single-stance-5f … full-cert-unique | `Five/FullCertSafety/` (RS6) — `SingleStance`, `CommitExcludesRefutation`, `UnlockExcludesRefutation`, `CommitExcludesUnlock`, `FullCertUniqueness` |
-| Lemmas recovery-determinism, recovery-reflects, recovery-safety | `Five/RecoverySafety/` (RS7) — `ResolutionUnique`, `RecoveryReflects`, `RecoverySafetyBot`, `RecoverySafetyWin` |
-| Theorem safety-5f | `Five/Agreement/` (RS8) — `VerdictAgreement`, `NoConflictingFinal` |
+| Lemmas recovery-determinism, recovery-reflects, recovery-safety | `Five/RecoverySafety/` (RS7) — `ResolutionUnique`, `RecoveryReflects`, `UnlockEmptiesElection`, `RecoverySafetyBot`, `RecoverySafetyWin` |
+| Theorem safety-5f | `Five/Agreement/` (RS8) — `VerdictAgreement`, `NoConflictingFinal`, `MixedViaAnchor` |
 | Phase 3 of `CastVotes` (`Alg:Voting5f+1`), the coin | `Model/Five/Coin.lean` — `CoinRule` (the coin as its output `w`, D8), `StancedAt`, `AgreeUpto` (measurability, Mahi-Mahi's MM2′ pattern) |
 | Lemma coin-success | `Five/CoinSuccess/` (RS9a) — `CoinConcentrated`, `CoinFragmented`, `CoinSuccessCount` (the probability bound as its numerator: a good-target set of at least `half`), `CoinMeasurable` |
-| Lemma recovery-termination | `Five/RecoveryTermination/` (RS9b) — `TriggerExists`, `ResolutionExists`, `RecoveryDecides` |
+| Lemma recovery-termination | `Five/RecoveryTermination/` (RS9b) — `TriggerExists`, `ResolutionExists`, `RecoveryDecides`, `ConflictDecides` |
+| Lemma uncontended-liveness; phases 2–4 of `CastVotes` (`Alg:Voting5f+1`) | `Model/Five/HonestVoting.lean` — `VotingRuleFive`; `Five/Uncontested/` (RS10) — `FullLiveness`, `FullVerdict`, `MixedVerdict` |
 
 Names follow the paper's where it has them (`Candidates`, `Stance`,
 `HasCert`); faulty validators are Byzantine, the rest correct.
@@ -260,7 +261,9 @@ assumed anywhere.
   and the structural synchrony of
   `PopulatedOn`/`SynchronisedOn`: a sole valid candidate reaches fast
   finality two synchronised rounds after its carrier (the no-rival
-  premise gated by validity, finding 18), and a conflict resolves at
+  premise gated by validity, finding 18) — or, owned or mixed, at a
+  committed anchor above a correct certificate-round block, the C5
+  branch of fp-liveness (`AnchorVerdict`) — and a conflict resolves at
   every synchronised anchor above `r + 2` through the corrected
   trichotomy (finding 5).
 - **RS6 `Five/FullCertSafety/`** — single stance unconditionally; under
@@ -275,8 +278,10 @@ assumed anywhere.
   marker quorum with no resolution in sight: under `MoveDiscipline` and
   `FreezeDiscipline` a full certificate anywhere makes its transaction
   the unique eligible one (candidacy derived, round-unconditional —
-  finding 21; needs `Five`), an empty election forbids any full
-  certificate ever (needs `Five`), and — under `FreezeDiscipline`
+  finding 21; needs `Five`), a full unlock certificate anywhere leaves
+  nothing eligible (the lemma's second clause; no `Five` — finding 29),
+  an empty election forbids any full certificate ever (needs `Five`),
+  and — under `FreezeDiscipline`
   alone, at any block — no rival of an eligible transaction certifies
   above it (no `Five`, no `MoveDiscipline`, no anchors).
 - **RS8 `Five/Agreement/`** — Theorem safety-5f: verdict agreement and
@@ -284,7 +289,11 @@ assumed anywhere.
   `VerdictFive`, under `Five`, both disciplines, and the shared
   tie-break order; the algorithm's `decidedObj`/`skippedTX` guards and
   route precedence are discharged as theorems, and finding 9's miscited
-  step closes through RS7's round-unconditional reflection.
+  step closes through RS7's round-unconditional reflection. Owned and
+  mixed candidates compete alike; the two certificate routes —
+  `fullFinal` on an observation, `mixedFinal` at a committed anchor —
+  rest on the same evidence, and a finalised mixed transaction is tied
+  to the anchor that finalised it, with no hypothesis.
 - **RS9 `Five/CoinSuccess/`, `Five/RecoveryTermination/`** — the coin
   round unifies the committee: the concentrated case at any committee,
   the fragmented case under `Five` (universal movability is exactly
@@ -293,7 +302,17 @@ assumed anywhere.
   post-round draw (`AgreeUpto`, Mahi-Mahi's measurability pattern);
   the trigger, the first-quorum resolution, and a verdict for every
   candidate exist under the structural C4/C5 hypotheses, with no `Five`
-  anywhere in termination.
+  anywhere in termination; `ConflictDecides` composes them into the
+  lemma's three cases, asking for the markers only where no certificate
+  exists — a validator that decided on a certificate never freezes.
+- **RS10 `Five/Uncontested/`** — Lemma uncontended-liveness in RS4's
+  shape, under `VotingRuleFive`: a sole valid candidate is fully
+  certified by every correct block two synchronised rounds after its
+  carrier, final on one observation if owned and at a committed anchor
+  above the certificate if mixed — at any `n ≥ 3f + 1`. The `5f + 1`
+  rule traces a `⊥` to a visible conflict or to an own freeze marker,
+  and a marker to an anchor that triggers; the `3f + 1` rule's
+  `bot_conflicted` has no justification in phase 2.
 
 ### 2.2 The witnesses (`LeanDagTest/RedSnapper/`)
 
@@ -315,11 +334,20 @@ anti-votes, stale refutations at the wrong block, Byzantine marker
 shapes, the one-shot and least-index clauses, the `prio` winner flip on
 a two-member election, the `Five` gates refuted at the `3f + 1`
 committee, and per-clause refutations of every behavioural hypothesis.
+The mixed route has its own files: `MixedRecovery` (a second
+transaction table, `threeTxs`, where a mixed and an owned transaction
+conflict — a mixed winner, and a mixed certificate agreeing with the
+recovery across routes), `UnlockElection` (a full unlock certificate
+beside frozen validators, with the move rule and the freeze rule each
+shown needed), `FiveLiveness` (the `5f + 1` voting rule, including a
+freeze-written `⊥` with no conflict in sight), `FiveRoutes` (the anchor
+route reads the universe and is class-gated) and `LiteralThreshold`
+(finding 19's constant, at `n = 7`).
 
 ## 3. Findings for the paper
 
 Recorded at Phase 0 from the reading and updated as the mechanisation
-confirmed, refined, or added to them; findings 16 and 18–21 are the
+confirmed, refined, or added to them; findings 16, 18–21 and 29 are the
 mechanisation's own.
 
 1. **Stale schema in the proofs.** Lemma univalent-exclusive and the
@@ -435,15 +463,36 @@ mechanisation's own.
     has `n − 2f` correct members, the rest of the committee cannot fill
     a refutation (`2f < 2f + 1`) nor a rival quorum (`2f < n − f`), and
     no step uses `n ≥ 5f + 1`. RS6 is stated and proved without the
-    `Five` mixin. The wide committee buys *exposure* — a quorum of
+    `Five` mixin. The wide committee provides *exposure* — a quorum of
     votes always leaves the refutation reachable (§10's corollary,
     RS1's `ExposureAtQuorum`) — that is, the liveness of revocation,
-    not its safety; the paper could say so. The parameterisation is
-    load-bearing: with the literal `4f + 1` threshold the lemmas fail
+    not its safety; the paper could say so. The parameterisation
+    matters: with the literal `4f + 1` threshold the lemmas fail
     for `n ≥ 5f + 2` — the correct core is `3f + 1` and the remaining
     `n − 3f − 1 ≥ 2f + 1` validators fill a refutation — so the paper's
     fixed threshold carries a hidden *upper* bound on `n` that D1's
-    `quorum = n − f` removes (compare finding 14).
+    `quorum = n − f` removes (compare finding 14). Witnessed at
+    `n = 7`, `f = 1` (`ULit`): five ACKs certify at the literal
+    threshold, and one round above, three anti-votes — two correct
+    `⊥` holders and the Byzantine ACKer turned — refute the ACK, with no
+    correct validator having moved.
+20. **The recovery layer is where `5f + 1` is indispensable.**
+    Complementing finding 19: Lemma recovery-reflects and claim 1 of
+    recovery-safety consume the bound — the frozen set omits at most
+    `f` validators, so `|F ∩ S| ≥ 2f + 1` needs `|F| ≥ 4f + 1`, hence
+    `n ≥ 5f + 1`. Claim 2 does not: an eligible transaction's `2f + 1`
+    frozen supporters contain `f + 1` permanently correct ones at any
+    committee. RS7 takes `Five` as a hypothesis exactly where it is
+    consumed; RS8 inherits it through the reflection claim alone.
+21. **Lemma recovery-reflects holds without its candidacy premise, at
+    any round.** The paper assumes `tx ∈ Candidates(A, o^j)`;
+    mechanised, candidacy is *derived*: a frozen correct supporter's
+    marker block declares the ACK, the `Adopt` guard makes the
+    transaction a candidate of the marker block, and inclusion travels
+    into the resolving anchor's history. The strengthened form also
+    relates the certificate's round to the resolution not at all, which
+    closes Theorem safety-5f's cross-route cases — including the step
+    finding 9 flags — with no case analysis on rounds.
 22. **The revised fast-commit/unlock exclusion is not a pure-safety
     lemma** (2026-09-01 revision). Lemma fast-excludes-unlock's
     "after round `r`" half argues `CertVisible` → "will not vote `⊥`" —
@@ -478,17 +527,15 @@ mechanisation's own.
     eventual-outcome half, which RS4/RS5 deliver only under the voting
     rule and synchrony. Flag the clause as liveness or drop it from the
     safety statement.
-26. **A mixed transaction can be fully certified, and nothing
-    consensusless consumes it.** The paper's `5f + 1` predicates carry
-    `IsOwned` down to the fast vote and the `Adopt` guard, so a correct
-    validator never stands at a mixed ACK; the arc's shared `IsFastVote`
-    has no owned gate, and a witness (`UMixSix`) exhibits a full
-    certificate for the mixed transaction that no `VerdictFive` route
-    finalises — `fullFinal`'s D9 gate alone stands in the way. In the
-    arc this is a modelling seam (the coin lemma's "a certificate is
-    witnessed" is decision-effective only for owned stances); for the
-    paper it is a reminder that the `IsOwned` gates on the `5f + 1`
-    vote predicates are load-bearing and worth a sentence.
+26. **Mixed transactions at `5f + 1`** (retired by the 2026-09-10
+    revision). The earlier predicates carried `IsOwned` down to the fast
+    vote while nothing consumed a fully certified mixed transaction;
+    the paper now lets owned and mixed transactions compete on their
+    owned input and finalises a certified mixed one at a committed
+    anchor (`FinalizeOnCommitTX`). The arc follows — `mixedFinal`, and
+    every recovery definition over `Candidates` as the paper has it —
+    and `UMixSix` now witnesses the route firing at an anchor above the
+    certificate and at no anchor below it.
 27. **Several hypotheses in the paper's lemmas are dead, mechanically.**
     The arc-wide audit re-proved and restated: the `3f + 1` liveness
     pair consumes the voting rule only — the stance automaton is not
@@ -510,23 +557,38 @@ mechanisation's own.
     anchor (its proof walks the anchor's own chain); the paper's lemma
     does not say so, though the formalised (C4) makes such anchors the
     ones consensus guarantees.
-20. **The recovery layer is where `5f + 1` is load-bearing.**
-    Complementing finding 19: Lemma recovery-reflects and claim 1 of
-    recovery-safety consume the bound — the frozen set omits at most
-    `f` validators, so `|F ∩ S| ≥ 2f + 1` needs `|F| ≥ 4f + 1`, hence
-    `n ≥ 5f + 1`. Claim 2 does not: an eligible transaction's `2f + 1`
-    frozen supporters contain `f + 1` permanently correct ones at any
-    committee. RS7 takes `Five` as a hypothesis exactly where it is
-    consumed; RS8 inherits it through the reflection claim alone.
-21. **Lemma recovery-reflects holds without its candidacy premise, at
-    any round.** The paper assumes `tx ∈ Candidates(A, o^j)`;
-    mechanised, candidacy is *derived*: a frozen correct supporter's
-    marker block declares the ACK, the `Adopt` guard makes the
-    transaction a candidate of the marker block, and inclusion travels
-    into the resolving anchor's history. The strengthened form also
-    relates the certificate's round to the resolution not at all, which
-    closes Theorem safety-5f's cross-route cases — including the step
-    finding 9 flags — with no case analysis on rounds.
+29. **The second clause of recovery-reflects needs no `5f + 1`**
+    (2026-09-10 revision). "A full unlock certificate makes `W` empty"
+    closes at any committee `n ≥ 3f + 1` under the move and freeze
+    rules: the certificate's correct `⊥` core and an eligible
+    transaction's correct frozen supporters must share a validator, whose
+    marker would declare both. Each rule is needed — a witness per rule
+    has the certificate and an eligible transaction side by side. Only
+    the first clause consumes the wide committee (finding 20).
+30. **Theorem safety-5f's recovery case argues from one validator's
+    state** (2026-09-10 revision). "Suppose `ResolveOnCommitObj`
+    finalizes `tx` at `A`" excludes an earlier drop by the local guard
+    `win ∉ skippedTX`; that another validator released the object
+    through `TryFullUnlockObj` is excluded nowhere. The new second
+    clause of recovery-reflects is the missing citation (RS8 closes the
+    pair with it).
+31. **The short algorithms are not the full ones.** The body's
+    simplified listings define the `3f + 1` certificate without the
+    block's own ACK, cast `⊥` without the conflict gate, commit at an
+    anchor with no `Dead` or recovery guard, and still call the `5f + 1`
+    candidates "owned". The arc mechanises the full algorithms of the
+    appendix; the body should say the listings are sketches.
+32. **Status against the 2026-09-21 paper.** Resolved: 5 (the corrected
+    trichotomy is what the rewritten lemma argues), 9 (the citation now
+    names recovery-reflects, but see 30), 25 ("eventually" removed).
+    Half resolved: 7 and 23 — (C5) is defined, and Lemma equiv-live
+    still uses it once for a synchrony fact, with an undefined `κ`; 8 —
+    the proofs speak of refutations, §8's prose and the short §4 still
+    of half certificates, and Lemma full-excludes-unlock's proof mixes
+    the two; 2, 3, 17 — now stated before the proofs, not in the
+    Preliminaries. Open: 1 (the consensus-projection sentence still
+    lists `nacks`, `unlocks`), 12, 16, 18, 22 (the lemma is now
+    explicitly unconditional, the voting rule named only in its proof).
 
 ## 4. Out of scope
 
@@ -544,8 +606,14 @@ mechanisation's own.
   `CoinMeasurable` fixes the good set before a post-round draw; the
   division, independence across attempts, the geometric expectation,
   and Theorem latency-5f's round bookkeeping stay on paper. Lemma
-  uncontended-liveness at `5f + 1` is isomorphic to RS4 and not
-  restated; Lemma reuse-5f lives on `Spendable`, dropped by D3.
+  reuse-5f lives on `Spendable`, dropped by D3, and so does the new
+  mixed disjunct of `Spendable`.
+- **The guard-emitted drops of `FinalizeOnCommitTX`** — a mixed
+  transaction whose input is already decided — receive no verdict, as
+  at `3f + 1`; and the lemmas of the 2026-09-10 revision that read
+  local state or execution: decision integrity (the verdict relations
+  are functional by RS3 and RS8), termination-3f, consistent
+  execution.
 - **Execution, reverts, epoch change**, and the paper's §5 liveness
   claim for shared objects.
 
