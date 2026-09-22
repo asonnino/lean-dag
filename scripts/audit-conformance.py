@@ -41,6 +41,7 @@ RULES = [
     ("Nemo",               ["NemoProperties.nemoRule"], None),
     ("Mahi-Mahi",          ["MahiMahiProperties.mahiMahiRule"],
                            "one carrier per wave width"),
+    ("Async BlueBottle",   ["AsyncBlueBottleProperties.asyncBlueBottleRule"], None),
     ("Hybrid / Orcaella",  ["HybridProperties.hybridRule"], "one carrier per threshold"),
     ("FinWhale",           ["FinWhaleProperties.finWhaleRule"],  "band transported one rule at a time (Band.lean)"),
     ("Steelhead",          ["SteelheadProperties.steelheadRule"],

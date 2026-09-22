@@ -373,6 +373,7 @@ Black Marlin has no carrier:
 | Odontoceti | `voteSupport` | direct, skip, quorate, self-parent, no-equiv | `safety`, `liveness` |
 | Hybrid / Orcaella | `voteSupport`, per threshold | direct, skip, quorate, self-parent, no-equiv | `safety`, `liveness` |
 | Mahi-Mahi | `mmSupport w` | direct, quorate, self-parent, no-equiv | `safety`, `liveness` |
+| Async BlueBottle | `abbSupport` | direct, quorate, self-parent, no-equiv | `safety`, `liveness` |
 | Nemo | `voteSupport` | direct, quorate, no-equiv | `safety`, `progress` |
 | FinWhale | `fwSupport`, and a fast path | direct, quorate, no-equiv | `safety`, `progress` |
 | Hydrozoan | `hzSupport`, and a fast path | direct, skip, quorate | `safety`, `progress` |

@@ -54,6 +54,7 @@ def series_group(label):
     if label.startswith('AL'): return 'adaptive'
     if label.startswith('NN'): return 'nemo'
     if label.startswith('MM'): return 'mahimahi'
+    if label.startswith('ABB'): return 'abb'
     if label.startswith('BN'): return 'bn'
     if label.startswith('HZ'): return 'hydrozoan'
     if label.startswith('OH'): return 'optimal'
@@ -81,6 +82,7 @@ GROUP_FILL = {
     'hybrid': ('#fdf0d5', '#b0894a'),
     'nemo': ('#d5efe9', '#3f8f7a'),
     'mahimahi': ('#e0ecf8', '#4a6fa5'),
+    'abb': ('#e4e0f4', '#5b4a9a'),
     'bn': ('#fbe9d7', '#b5652a'),
     'hydrozoan': ('#dfeee8', '#3d7a66'),
     'optimal': ('#e6f0e2', '#5a8a3d'),
@@ -98,6 +100,7 @@ GROUP_TITLE = {
     'hybrid': 'hybrid faults (§14)',
     'nemo': 'crash-fault consensus (§15)',
     'mahimahi': 'Mahi-Mahi (§17)',
+    'abb': 'Async BlueBottle (§24)',
     'bn': 'Barnacle (§21)',
     'hydrozoan': 'Hydrozoan (§22)',
     'optimal': 'Optimal-Hydrozoan (§23)',
