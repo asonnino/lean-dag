@@ -185,27 +185,75 @@ theorem exists_hop_index {x : ℕ → ℕ} {i j t : ℕ} (hij : i < j) (ht : x i
         exact ⟨k, by omega, hk2, hk3, hk4⟩
   exact aux (j - i) i (by omega) (by omega) ht
 
-omit F in
-/-- **Two landings of the floor chain never share a residue.** A chain that advances by at least
-`ws` rounds a hop, whose landings are led from outside `T` and whose rounds from a landing's floor
-up to the next landing are too, cannot have two landings at one residue: between two such landings
+/-- **A span of `q` cycles holds at most `q · ⌈n / p⌉` multiples of `p`.** Two multiples of `p`
+lie `p` apart, so the map carrying a multiple to its distance above the span's foot, divided by
+`p`, is injective into a range of that size. -/
+theorem card_multiples_le {n p : ℕ} (hp : 0 < p) (a q : ℕ) :
+    ((Finset.Ico a (a + n * q)).filter fun t => t % p = 0).card ≤ q * ((n + p - 1) / p) := by
+  set c := (n + p - 1) / p with hc
+  -- `p · ⌈n / p⌉` is at least `n`, so the span fits in `q · c` blocks of `p`
+  have hpc : n ≤ p * c := by
+    have h1 : p * c + (n + p - 1) % p = n + p - 1 := by rw [hc]; exact Nat.div_add_mod _ _
+    have h2 : (n + p - 1) % p < p := Nat.mod_lt _ hp
+    omega
+  have hspan : n * q ≤ q * c * p := by
+    calc n * q ≤ (p * c) * q := Nat.mul_le_mul_right q hpc
+      _ = q * c * p := by
+        rw [Nat.mul_comm (p * c) q, Nat.mul_comm p c, ← Nat.mul_assoc]
+  -- two distinct multiples of `p` sit at least `p` apart, so their quotients differ
+  have hsep : ∀ u v : ℕ, u % p = 0 → v % p = 0 → u < v → a ≤ u →
+      (u - a) / p < (v - a) / p := by
+    intro u v hu hv huv hau
+    have hdiff : p ≤ v - u := Nat.le_of_dvd (by omega)
+      (Nat.dvd_sub (Nat.dvd_of_mod_eq_zero hv) (Nat.dvd_of_mod_eq_zero hu))
+    calc (u - a) / p < (u - a) / p + 1 := Nat.lt_succ_self _
+      _ = (u - a + p) / p := (Nat.add_div_right _ hp).symm
+      _ ≤ (v - a) / p := Nat.div_le_div_right (by omega)
+  have hle : ((Finset.Ico a (a + n * q)).filter fun t => t % p = 0).card ≤
+      (Finset.range (q * c)).card := by
+    refine Finset.card_le_card_of_injOn (fun t => (t - a) / p) (fun t ht => ?_)
+      (fun t ht t' ht' heq => ?_)
+    · obtain ⟨hmem, -⟩ := Finset.mem_filter.mp ht
+      obtain ⟨hlo, hhi⟩ := Finset.mem_Ico.mp hmem
+      exact Finset.mem_range.mpr ((Nat.div_lt_iff_lt_mul hp).mpr (by omega))
+    · obtain ⟨hmem, hdvd⟩ := Finset.mem_filter.mp ht
+      obtain ⟨hmem', hdvd'⟩ := Finset.mem_filter.mp ht'
+      have hlo := (Finset.mem_Ico.mp hmem).1
+      have hlo' := (Finset.mem_Ico.mp hmem').1
+      rcases Nat.lt_trichotomy t t' with h | h | h
+      · exact absurd heq (Nat.ne_of_lt (hsep t t' hdvd hdvd' h hlo))
+      · exact h
+      · exact absurd heq.symm (Nat.ne_of_lt (hsep t' t hdvd' hdvd h hlo'))
+  rwa [Finset.card_range] at hle
+
+omit [DecidableEq Validator] F in
+/-- The committee a bijection from `Fin n` names has `n` members. -/
+theorem card_eq_of_bijective {n : ℕ} {lead : Fin n → Validator}
+    (hbij : Function.Bijective lead) : Fintype.card Validator = n := by
+  have := Fintype.card_of_bijective hbij
+  simpa using this.symm
+
+omit [Fintype Validator] [DecidableEq Validator] F in
+/-- **Two landings of the floor chain never share a residue**, with the rounds an exempt
+predicate covers left out of the count. A chain that advances by at least `ws` rounds a hop,
+whose landings are led from outside `T` and whose rounds from a landing's floor up to the next
+landing are too or exempt, cannot have two landings at one residue: between two such landings
 lies a whole number of cycles, each holding `T.card` reliably led rounds, and every one of them
-must fall in the `ws − 1` rounds a hop leaves free, which forces `n ≤ ws · (n − T.card)`. -/
-theorem roundRobin_residues_distinct {n ws m : ℕ} (hn : 0 < n) (hws : 1 ≤ ws) {T : Finset Validator}
-    {lead : Fin n → Validator} (hbij : Function.Bijective lead) {sched : ℕ → Validator}
-    (hsched : ∀ t, sched t = lead ⟨t % n, Nat.mod_lt t hn⟩) (hlt : ws * (n - T.card) < n)
+must fall in the `ws − 1` rounds a hop leaves free or among the `c` exempt rounds a cycle holds,
+which forces `n ≤ ws · (n − T.card) + ws · c`. The exemption is what a period costs: a round the
+coin leads is led by nobody the schedule names, so the count cannot claim it. -/
+theorem roundRobin_residues_distinct_exempt {n ws m c : ℕ} (hn : 0 < n) (hws : 1 ≤ ws)
+    {T : Finset Validator} {lead : Fin n → Validator} (hbij : Function.Bijective lead)
+    {sched : ℕ → Validator} (hsched : ∀ t, sched t = lead ⟨t % n, Nat.mod_lt t hn⟩)
+    {Ex : ℕ → Prop} [DecidablePred Ex]
+    (hex : ∀ a q, ((Finset.Ico a (a + n * q)).filter Ex).card ≤ q * c)
+    (hTcard : T.card ≤ n) (hlt : ws * (n - T.card) + ws * c < n)
     {x : ℕ → ℕ} (hstep : ∀ i, i < m → x i + ws ≤ x (i + 1))
     (hbad : ∀ i, i ≤ m → sched (x i) ∉ T)
-    (hmid : ∀ i, i < m → ∀ t, x i + ws ≤ t → t < x (i + 1) → sched t ∉ T) :
+    (hmid : ∀ i, i < m → ∀ t, x i + ws ≤ t → t < x (i + 1) → Ex t ∨ sched t ∉ T) :
     ∀ i j, i < j → j ≤ m → x i % n ≠ x j % n := by
   classical
   set e : Fin n ≃ Validator := Equiv.ofBijective lead hbij with he
-  have hcard : Fintype.card Validator = n := by
-    have := Fintype.card_of_bijective hbij
-    simpa using this.symm
-  have hTcard : T.card ≤ n := by
-    have := Finset.card_le_univ T
-    rwa [hcard] at this
   -- the chain advances by `ws` a hop
   have hgrow : ∀ d i, i + d ≤ m → x i + d * ws ≤ x (i + d) := by
     intro d
@@ -286,42 +334,61 @@ theorem roundRobin_residues_distinct {n ws m : ℕ} (hn : 0 < n) (hws : 1 ≤ ws
       have : c = c' := Nat.eq_of_mul_eq_mul_left hn hcc
       subst this
       rfl
-  -- and each of those rounds falls in the rounds one hop leaves free
-  have hup : Led.card ≤ (j - i) * (ws - 1) := by
-    have hsub : Led ⊆ (Finset.Ico i j).biUnion fun k => Finset.Ioo (x k) (x k + ws) := by
-      intro t ht
-      obtain ⟨htIco, htT⟩ := Finset.mem_filter.mp ht
-      obtain ⟨ht1, ht2⟩ := Finset.mem_Ico.mp htIco
-      obtain ⟨k, hk1, hk2, hk3, hk4⟩ := exists_hop_index hij ht1 ht2
-      refine Finset.mem_biUnion.mpr ⟨k, Finset.mem_Ico.mpr ⟨hk1, hk2⟩,
-        Finset.mem_Ioo.mpr ⟨?_, ?_⟩⟩
-      · rcases Nat.eq_or_lt_of_le hk3 with heq | hlt'
-        · exact absurd (heq ▸ htT) (hbad k (by omega))
-        · exact hlt'
-      · by_contra hge
-        exact hmid k (by omega) t (by omega) hk4 htT
-    refine le_trans (Finset.card_le_card hsub) (le_trans Finset.card_biUnion_le ?_)
-    calc ∑ k ∈ Finset.Ico i j, (Finset.Ioo (x k) (x k + ws)).card
-        ≤ ∑ _k ∈ Finset.Ico i j, (ws - 1) :=
-          Finset.sum_le_sum fun k _ => by rw [Nat.card_Ioo]; omega
-      _ = (j - i) * (ws - 1) := by rw [Finset.sum_const, Nat.card_Ico, smul_eq_mul]
-  -- the two counts meet only at `n ≤ ws · (n − T.card)`
+  -- and each of those rounds falls in the rounds one hop leaves free, or is exempt
+  set Exm : Finset ℕ := (Finset.Ico (x i) (x j)).filter Ex with hExm
+  have hup : Led.card ≤ (j - i) * (ws - 1) + Exm.card := by
+    have hfree : (Led.filter fun t => ¬ Ex t).card ≤ (j - i) * (ws - 1) := by
+      have hsub : (Led.filter fun t => ¬ Ex t) ⊆
+          (Finset.Ico i j).biUnion fun k => Finset.Ioo (x k) (x k + ws) := by
+        intro t ht
+        obtain ⟨htLed, htEx⟩ := Finset.mem_filter.mp ht
+        obtain ⟨htIco, htT⟩ := Finset.mem_filter.mp htLed
+        obtain ⟨ht1, ht2⟩ := Finset.mem_Ico.mp htIco
+        obtain ⟨k, hk1, hk2, hk3, hk4⟩ := exists_hop_index hij ht1 ht2
+        refine Finset.mem_biUnion.mpr ⟨k, Finset.mem_Ico.mpr ⟨hk1, hk2⟩,
+          Finset.mem_Ioo.mpr ⟨?_, ?_⟩⟩
+        · rcases Nat.eq_or_lt_of_le hk3 with heq | hlt'
+          · exact absurd (heq ▸ htT) (hbad k (by omega))
+          · exact hlt'
+        · by_contra hge
+          rcases hmid k (by omega) t (by omega) hk4 with hEx | hnT
+          · exact htEx hEx
+          · exact hnT htT
+      refine le_trans (Finset.card_le_card hsub) (le_trans Finset.card_biUnion_le ?_)
+      calc ∑ k ∈ Finset.Ico i j, (Finset.Ioo (x k) (x k + ws)).card
+          ≤ ∑ _k ∈ Finset.Ico i j, (ws - 1) :=
+            Finset.sum_le_sum fun k _ => by rw [Nat.card_Ioo]; omega
+        _ = (j - i) * (ws - 1) := by rw [Finset.sum_const, Nat.card_Ico, smul_eq_mul]
+    have hexm : (Led.filter Ex).card ≤ Exm.card :=
+      Finset.card_le_card fun t ht => by
+        obtain ⟨htLed, htEx⟩ := Finset.mem_filter.mp ht
+        exact Finset.mem_filter.mpr ⟨(Finset.mem_filter.mp htLed).1, htEx⟩
+    have hsplit := Finset.card_filter_add_card_filter_not (s := Led) (p := Ex)
+    omega
+  -- the exempt rounds of the span number at most `q · c`
+  have hexq : Exm.card ≤ q * c := by
+    have := hex (x i) q
+    rwa [show x i + n * q = x j by omega] at this
+  -- the two counts meet only at `n ≤ ws · (n − T.card) + ws · c`
   have hdn : (j - i) * ws ≤ n * q := by omega
-  have h1 : ws * (T.card * q) ≤ ws * ((j - i) * (ws - 1)) :=
-    Nat.mul_le_mul_left ws (le_trans hlow hup)
-  have h2 : ws * ((j - i) * (ws - 1)) = ((j - i) * ws) * (ws - 1) := by
-    rw [Nat.mul_comm ws ((j - i) * (ws - 1)), Nat.mul_assoc, Nat.mul_comm (ws - 1) ws,
-      ← Nat.mul_assoc]
+  have h1 : ws * (T.card * q) ≤ ws * ((j - i) * (ws - 1) + q * c) :=
+    Nat.mul_le_mul_left ws (le_trans hlow (by omega))
+  have h2 : ws * ((j - i) * (ws - 1) + q * c) = ((j - i) * ws) * (ws - 1) + q * (ws * c) := by
+    rw [Nat.mul_add]
+    congr 1
+    · rw [Nat.mul_comm ws ((j - i) * (ws - 1)), Nat.mul_assoc, Nat.mul_comm (ws - 1) ws,
+        ← Nat.mul_assoc]
+    · rw [← Nat.mul_assoc, Nat.mul_comm ws q, Nat.mul_assoc]
   have h3 : ((j - i) * ws) * (ws - 1) ≤ (n * q) * (ws - 1) :=
     Nat.mul_le_mul_right (ws - 1) hdn
-  have h4 : q * (ws * T.card) ≤ q * (n * (ws - 1)) := by
+  have h4 : q * (ws * T.card) ≤ q * (n * (ws - 1) + ws * c) := by
     have hleft : ws * (T.card * q) = q * (ws * T.card) := by
       rw [Nat.mul_comm T.card q, ← Nat.mul_assoc, Nat.mul_comm ws q, Nat.mul_assoc]
-    have hright : (n * q) * (ws - 1) = q * (n * (ws - 1)) := by
-      rw [Nat.mul_comm n q, Nat.mul_assoc]
+    have hright : (n * q) * (ws - 1) + q * (ws * c) = q * (n * (ws - 1) + ws * c) := by
+      rw [Nat.mul_add, Nat.mul_comm n q, Nat.mul_assoc]
     rw [← hleft, ← hright]
-    exact le_trans h1 (le_trans (le_of_eq h2) h3)
-  have h5 : ws * T.card ≤ n * (ws - 1) := Nat.le_of_mul_le_mul_left h4 (by omega)
+    exact le_trans h1 (le_trans (le_of_eq h2) (by omega))
+  have h5 : ws * T.card ≤ n * (ws - 1) + ws * c := Nat.le_of_mul_le_mul_left h4 (by omega)
   have h6 : n * (ws - 1) = n * ws - n := by
     rw [Nat.mul_sub, Nat.mul_one]
   have h7 : ws * (n - T.card) = ws * n - ws * T.card := Nat.mul_sub ws n T.card
@@ -329,6 +396,20 @@ theorem roundRobin_residues_distinct {n ws m : ℕ} (hn : 0 < n) (hws : 1 ≤ ws
   have h9 : ws * T.card ≤ ws * n := Nat.mul_le_mul_left ws hTcard
   have h10 : n ≤ n * ws := Nat.le_mul_of_pos_right n (by omega)
   omega
+
+omit [DecidableEq Validator] F in
+/-- **Two landings of the floor chain never share a residue.** The constant-wave case, where no
+round is exempt and the count keeps every cycle's `T.card` reliably led rounds. -/
+theorem roundRobin_residues_distinct {n ws m : ℕ} (hn : 0 < n) (hws : 1 ≤ ws) {T : Finset Validator}
+    {lead : Fin n → Validator} (hbij : Function.Bijective lead) {sched : ℕ → Validator}
+    (hsched : ∀ t, sched t = lead ⟨t % n, Nat.mod_lt t hn⟩) (hlt : ws * (n - T.card) < n)
+    {x : ℕ → ℕ} (hstep : ∀ i, i < m → x i + ws ≤ x (i + 1))
+    (hbad : ∀ i, i ≤ m → sched (x i) ∉ T)
+    (hmid : ∀ i, i < m → ∀ t, x i + ws ≤ t → t < x (i + 1) → sched t ∉ T) :
+    ∀ i j, i < j → j ≤ m → x i % n ≠ x j % n :=
+  roundRobin_residues_distinct_exempt (c := 0) hn hws hbij hsched (Ex := fun _ => False)
+    (fun _ _ => by simp) (by rw [← card_eq_of_bijective hbij]; exact Finset.card_le_univ T)
+    (by simpa using hlt) hstep hbad fun i hi t ht1 ht2 => Or.inr (hmid i hi t ht1 ht2)
 
 omit F in
 /-- The residues a set of validators occupies on the round-robin schedule, counted through the
@@ -341,17 +422,22 @@ theorem card_residues_of_bijective {n : ℕ} {lead : Fin n → Validator}
   obtain ⟨k, hk⟩ := hbij.2 v
   exact ⟨k, Finset.mem_filter.mpr ⟨Finset.mem_univ _, hk ▸ hv⟩, hk⟩
 
-omit F in
-/-- **The count that bounds the floor chain (SH6h).** The landings' residues are distinct
-(`roundRobin_residues_distinct`), and only the `n − T.card` residues outside `T` are open to
-them, so a chain of that many hops led from outside `T` throughout cannot exist. -/
-theorem roundRobin_hop_bound {n ws m : ℕ} (hn : 0 < n) (hws : 1 ≤ ws) {T : Finset Validator}
-    {lead : Fin n → Validator} (hbij : Function.Bijective lead) {sched : ℕ → Validator}
-    (hsched : ∀ t, sched t = lead ⟨t % n, Nat.mod_lt t hn⟩) (hm : m = n - T.card)
-    (hlt : ws * m < n) {x : ℕ → ℕ} (hstep : ∀ i, i < m → x i + ws ≤ x (i + 1))
+omit [Fintype Validator] [DecidableEq Validator] F in
+/-- **The count that bounds the floor chain (SH6h, SH6o).** The landings' residues are distinct
+(`roundRobin_residues_distinct_exempt`), and only the `n − T.card` residues outside `T` are open
+to them, so a chain of that many hops led from outside `T` throughout cannot exist. The exempt
+predicate is empty at a constant wave and the coin's rounds at a period. -/
+theorem roundRobin_hop_bound_exempt {n ws m c : ℕ} (hn : 0 < n) (hws : 1 ≤ ws)
+    {T : Finset Validator} {lead : Fin n → Validator} (hbij : Function.Bijective lead)
+    {sched : ℕ → Validator} (hsched : ∀ t, sched t = lead ⟨t % n, Nat.mod_lt t hn⟩)
+    {Ex : ℕ → Prop} [DecidablePred Ex]
+    (hex : ∀ a q, ((Finset.Ico a (a + n * q)).filter Ex).card ≤ q * c)
+    (hm : m = n - T.card) (hlt : ws * (n - T.card) + ws * c < n)
+    {x : ℕ → ℕ} (hstep : ∀ i, i < m → x i + ws ≤ x (i + 1))
     (hbad : ∀ i, i ≤ m → sched (x i) ∉ T)
-    (hmid : ∀ i, i < m → ∀ t, x i + ws ≤ t → t < x (i + 1) → sched t ∉ T) : False := by
+    (hmid : ∀ i, i < m → ∀ t, x i + ws ≤ t → t < x (i + 1) → Ex t ∨ sched t ∉ T) : False := by
   classical
+  letI : Fintype Validator := Fintype.ofBijective lead hbij
   have hcard : Fintype.card Validator = n := by
     have := Fintype.card_of_bijective hbij
     simpa using this.symm
@@ -379,22 +465,41 @@ theorem roundRobin_hop_bound {n ws m : ℕ} (hn : 0 < n) (hws : 1 ≤ ws) {T : F
   have hi' := Finset.mem_range.mp hi
   have hj' := Finset.mem_range.mp hj
   have hres : x i % n = x j % n := congrArg Fin.val heq
-  have key := roundRobin_residues_distinct hn hws hbij hsched (hm ▸ hlt) hstep hbad hmid
+  have key := roundRobin_residues_distinct_exempt hn hws hbij hsched hex
+    (by rw [← hcard]; exact Finset.card_le_univ T) hlt hstep hbad hmid
   rcases Nat.lt_or_ge i j with h | h
   · exact key i j h (by omega) hres
   · exact key j i (by omega) (by omega) hres.symm
 
-/-- **The count that bounds the floor chain by the Byzantine validators (SH6h′).** Landings led
-by Byzantine validators occupy at most `|byzantine|` residues, and the landings' residues are
-distinct (`roundRobin_residues_distinct`), so a chain of that many hops whose landings are all
-Byzantine-led cannot exist. -/
-theorem roundRobin_byzantine_hop_bound {n ws : ℕ} (hn : 0 < n) (hws : 1 ≤ ws)
+omit [Fintype Validator] [DecidableEq Validator] F in
+/-- **The count that bounds the floor chain (SH6h).** The constant-wave case of
+`roundRobin_hop_bound_exempt`, where no round is exempt. -/
+theorem roundRobin_hop_bound {n ws m : ℕ} (hn : 0 < n) (hws : 1 ≤ ws) {T : Finset Validator}
+    {lead : Fin n → Validator} (hbij : Function.Bijective lead) {sched : ℕ → Validator}
+    (hsched : ∀ t, sched t = lead ⟨t % n, Nat.mod_lt t hn⟩) (hm : m = n - T.card)
+    (hlt : ws * m < n) {x : ℕ → ℕ} (hstep : ∀ i, i < m → x i + ws ≤ x (i + 1))
+    (hbad : ∀ i, i ≤ m → sched (x i) ∉ T)
+    (hmid : ∀ i, i < m → ∀ t, x i + ws ≤ t → t < x (i + 1) → sched t ∉ T) : False :=
+  roundRobin_hop_bound_exempt (c := 0) hn hws hbij hsched (Ex := fun _ => False)
+    (fun _ _ => by simp) hm (by simpa using hm ▸ hlt) hstep hbad
+    fun i hi t ht1 ht2 => Or.inr (hmid i hi t ht1 ht2)
+
+/-- **The count that bounds the floor chain by the Byzantine validators (SH6h′, SH6p).** Landings
+led by Byzantine validators occupy at most `|byzantine|` residues, and the landings' residues are
+distinct (`roundRobin_residues_distinct_exempt`), so a chain of that many hops whose landings are
+all Byzantine-led cannot exist. The exempt predicate is empty at a constant wave and the coin's
+rounds at a period. -/
+theorem roundRobin_byzantine_hop_bound_exempt {n ws c : ℕ} (hn : 0 < n) (hws : 1 ≤ ws)
     {T : Finset Validator} (hT : T ⊆ (Correct : Finset Validator)) {lead : Fin n → Validator}
     (hbij : Function.Bijective lead) {sched : ℕ → Validator}
-    (hsched : ∀ t, sched t = lead ⟨t % n, Nat.mod_lt t hn⟩) (hlt : ws * (n - T.card) < n)
+    (hsched : ∀ t, sched t = lead ⟨t % n, Nat.mod_lt t hn⟩)
+    {Ex : ℕ → Prop} [DecidablePred Ex]
+    (hex : ∀ a q, ((Finset.Ico a (a + n * q)).filter Ex).card ≤ q * c)
+    (hlt : ws * (n - T.card) + ws * c < n)
     {x : ℕ → ℕ} (hstep : ∀ i, i < F.byzantine.card → x i + ws ≤ x (i + 1))
     (hbyz : ∀ i, i ≤ F.byzantine.card → sched (x i) ∈ F.byzantine)
-    (hmid : ∀ i, i < F.byzantine.card → ∀ t, x i + ws ≤ t → t < x (i + 1) → sched t ∉ T) :
+    (hmid : ∀ i, i < F.byzantine.card → ∀ t, x i + ws ≤ t → t < x (i + 1) →
+      Ex t ∨ sched t ∉ T) :
     False := by
   classical
   -- a Byzantine validator is not reliable
@@ -421,10 +526,66 @@ theorem roundRobin_byzantine_hop_bound {n ws : ℕ} (hn : 0 < n) (hws : 1 ≤ ws
   have hi' := Finset.mem_range.mp hi
   have hj' := Finset.mem_range.mp hj
   have hres : x i % n = x j % n := congrArg Fin.val heq
-  have key := roundRobin_residues_distinct hn hws hbij hsched hlt hstep hbad hmid
+  have key := roundRobin_residues_distinct_exempt hn hws hbij hsched hex
+    (by rw [← card_eq_of_bijective hbij]; exact Finset.card_le_univ T) hlt hstep hbad hmid
   rcases Nat.lt_or_ge i j with h | h
   · exact key i j h (by omega) hres
   · exact key j i (by omega) (by omega) hres.symm
+
+/-- **The count that bounds the floor chain by the Byzantine validators (SH6h′).** The
+constant-wave case of `roundRobin_byzantine_hop_bound_exempt`, where no round is exempt. -/
+theorem roundRobin_byzantine_hop_bound {n ws : ℕ} (hn : 0 < n) (hws : 1 ≤ ws)
+    {T : Finset Validator} (hT : T ⊆ (Correct : Finset Validator)) {lead : Fin n → Validator}
+    (hbij : Function.Bijective lead) {sched : ℕ → Validator}
+    (hsched : ∀ t, sched t = lead ⟨t % n, Nat.mod_lt t hn⟩) (hlt : ws * (n - T.card) < n)
+    {x : ℕ → ℕ} (hstep : ∀ i, i < F.byzantine.card → x i + ws ≤ x (i + 1))
+    (hbyz : ∀ i, i ≤ F.byzantine.card → sched (x i) ∈ F.byzantine)
+    (hmid : ∀ i, i < F.byzantine.card → ∀ t, x i + ws ≤ t → t < x (i + 1) → sched t ∉ T) :
+    False :=
+  roundRobin_byzantine_hop_bound_exempt (c := 0) hn hws hT hbij hsched (Ex := fun _ => False)
+    (fun _ _ => by simp) (by simpa using hlt) hstep hbyz
+    fun i hi t ht1 ht2 => Or.inr (hmid i hi t ht1 ht2)
+
+omit F in
+/-- **SH6n.** Every window of `n` rounds holds one round of each residue, so `T.card` of them are
+reliably led; at most `⌈n / p⌉` carry a coin instead (`card_multiples_le`), so one reliably led
+round of the window is synchronous. -/
+theorem periodicRoundRobinReliableSync {n p : ℕ} (hn : 0 < n) (hp : 0 < p) {T : Finset (Fin n)}
+    (hlt : (n + p - 1) / p < T.card) (r : ℕ) :
+    ∃ a, r ≤ a ∧ a ≤ r + (n - 1) ∧ periodicKind p a ≠ 1 ∧
+      (⟨a % n, Nat.mod_lt a hn⟩ : Fin n) ∈ T := by
+  classical
+  by_contra hcon
+  -- every reliably led round of the window carries a coin
+  have hall : ∀ a, r ≤ a → a ≤ r + (n - 1) → (⟨a % n, Nat.mod_lt a hn⟩ : Fin n) ∈ T →
+      a % p = 0 := by
+    intro a h1 h2 hmem
+    by_contra hzero
+    refine hcon ⟨a, h1, h2, ?_, hmem⟩
+    unfold periodicKind
+    rw [if_neg hzero]
+    decide
+  -- but the window holds one round of each residue, and too few coins to cover them all
+  have hinj : T.card ≤ ((Finset.Ico r (r + n)).filter fun t => t % p = 0).card := by
+    refine Finset.card_le_card_of_injOn (fun v : Fin n => r + ((v : ℕ) + n - r % n) % n)
+      (fun v hv => ?_) (fun v _ v' _ heq => ?_)
+    · obtain ⟨off, hoffeq, hoff⟩ : ∃ off, ((v : ℕ) + n - r % n) % n = off ∧ off < n :=
+        ⟨_, rfl, Nat.mod_lt _ hn⟩
+      have hres : (r + off) % n = (v : ℕ) := by
+        rw [← hoffeq]; exact mod_add_offset hn r v v.isLt
+      change r + ((v : ℕ) + n - r % n) % n ∈ _
+      rw [hoffeq]
+      refine Finset.mem_filter.mpr ⟨Finset.mem_Ico.mpr ⟨by omega, by omega⟩, ?_⟩
+      refine hall _ (by omega) (by omega) ?_
+      have hfin : (⟨(r + off) % n, Nat.mod_lt _ hn⟩ : Fin n) = v := Fin.ext hres
+      rw [hfin]
+      exact hv
+    · have h1 : (r + ((v : ℕ) + n - r % n) % n) % n = (v : ℕ) := mod_add_offset hn r v v.isLt
+      have h2 : (r + ((v' : ℕ) + n - r % n) % n) % n = (v' : ℕ) := mod_add_offset hn r v' v'.isLt
+      exact Fin.ext (by rw [← h1, ← h2]; exact congrArg (· % n) heq)
+  have hmul := card_multiples_le (n := n) (p := p) hp r 1
+  rw [Nat.mul_one, Nat.one_mul] at hmul
+  exact absurd (le_trans hinj hmul) (Nat.not_le.mpr hlt)
 
 section Slots
 
@@ -849,6 +1010,371 @@ theorem floorChainDecidesWithinRounds {U : BlockUniverse Validator BlockId Paylo
     hhop (hdec b le_rfl)
   have := floorChainDecides hw3 hid hT hcard hs hpop hV i x (by rw [hx0]; exact hR)
     (fun i' hi' => hhop i' (by omega)) hlead (hdec i hi)
+  rwa [hx0] at this
+
+/-! ## SH6m, SH6o, SH6p — the chain at a period
+
+At the paper's dial a landing may be a slot no schedule names, so two things change. The descent
+takes a commit in place of a reliable leader (SH6m), which lets the chain stop wherever the coin
+decided something; and the count that bounds the chain loses the coin's rounds (SH6o), since a
+round the coin leads is led by nobody the round robin knows. -/
+
+/-- **SH6m.** The descent alone: the last landing commits, and a landing whose successor commits
+is decided and left unskipped by its own hop, so it commits in turn and anchors the landing below
+it. No quorum, no synchrony and no horizon: those were only ever how SH6f came by the top
+commit. -/
+theorem floorChainDecidesFromCommit {U : BlockUniverse Validator BlockId Payload} {w : ℕ → ℕ}
+    (hw : ∀ r, 3 ≤ w r) (hid : ∀ t, S.slotRound t = t)
+    {V : View Validator BlockId Payload U} :
+    ∀ (h : ℕ) (x : ℕ → ℕ), (∀ i, i < h → FloorHop w U V (x i) (x (i + 1))) →
+      (∃ A, Decided w U V (x h) (some A)) → ∃ v, Decided w U V (x 0) v := by
+  intro h
+  induction h with
+  | zero =>
+    intro x _ hcom
+    obtain ⟨A, hA⟩ := hcom
+    exact ⟨some A, hA⟩
+  | succ h ih =>
+    intro x hhop hcom
+    have hhop0 : FloorHop w U V (x 0) (x 1) := hhop 0 (by omega)
+    obtain ⟨v, hv⟩ := ih (fun i => x (i + 1)) (fun i hi => hhop (i + 1) (by omega)) hcom
+    obtain ⟨A, rfl⟩ : ∃ A, v = some A := by
+      cases v with
+      | none => exact absurd hv hhop0.2.2
+      | some A => exact ⟨A, rfl⟩
+    exact decidedOfCommitAboveFloor hw hid hhop0.1 hv hhop0.2.1
+
+/-- **SH6o.** A landing of an asynchronous slot is decided by hypothesis and unskipped by its
+hop, so it is committed and the second disjunct holds; otherwise every landing is synchronous and
+led by the round robin, the skips between landings are exempt or not reliably led, and
+`roundRobin_hop_bound_exempt` contradicts the count. -/
+theorem floorChainReachesAtPeriod {U : BlockUniverse Validator BlockId Payload}
+    {ws wa p n : ℕ} (hn : 0 < n) (hp : 0 < p) (hws : 3 ≤ ws) (hwa : 3 ≤ wa)
+    (hid : ∀ t, S.slotRound t = t) (hkind : ∀ t, S.kind t = periodicKind p t)
+    {lead : Fin n → Validator}
+    (hsched : ∀ t, S.kind t = 0 → S.leader t = lead ⟨t % n, Nat.mod_lt t hn⟩)
+    {T : Finset Validator} {V : View Validator BlockId Payload U} {R N : ℕ}
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
+    (hs : SynchronisedOn U T R) (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
+    (hV : V.CoversUpto N) (hbij : Function.Bijective lead)
+    (hlt : ws * (n - T.card) + ws * ((n + p - 1) / p) < n) {x : ℕ → ℕ}
+    (hasync : ∀ t, x 0 ≤ t → S.kind t = 1 →
+      ∃ v, Decided (wavelength ws wa) U V t v)
+    (hR : R ≤ x 0) (hstart : ¬ Decided (wavelength ws wa) U V (x 0) none)
+    (hhop : ∀ i, i < n - T.card → FloorHop (wavelength ws wa) U V (x i) (x (i + 1)))
+    (hN : ∀ j, j ≤ x (n - T.card) →
+      (steelheadAnchored Validator BlockId Payload (wavelength ws wa)).decisionRound j ≤ N) :
+    ∃ i, i ≤ n - T.card ∧
+      (S.leader (x i) ∈ T ∨ ∃ A, Decided (wavelength ws wa) U V (x i) (some A)) := by
+  classical
+  set w := wavelength ws wa with hwdef
+  have hw3 : ∀ κ, 3 ≤ w κ := fun κ => by
+    rw [hwdef]; unfold wavelength; split <;> omega
+  set m := n - T.card with hm
+  by_contra hcon
+  have hno : ∀ i, i ≤ m → S.leader (x i) ∉ T ∧ ¬ ∃ A, Decided w U V (x i) (some A) := by
+    intro i hi
+    exact ⟨fun hmem => hcon ⟨i, hi, Or.inl hmem⟩, fun hex => hcon ⟨i, hi, Or.inr hex⟩⟩
+  -- the chain climbs, so every landing lies at or above its start
+  have hstep0 : ∀ i, i < m → x i + 1 ≤ x (i + 1) := by
+    intro i hi
+    have := (hhop i hi).1
+    have := hw3 (S.kind (x i))
+    omega
+  have hmono : ∀ a b, a ≤ b → b ≤ m → x a ≤ x b := by
+    intro a b hab hb
+    have hgrow : ∀ d i, i + d ≤ m → x i ≤ x (i + d) := by
+      intro d
+      induction d with
+      | zero => intro i _; simp
+      | succ d ih =>
+        intro i hi
+        have h1 := ih i (by omega)
+        have h2 := hstep0 (i + d) (by omega)
+        rw [show i + (d + 1) = i + d + 1 by omega]
+        omega
+    have := hgrow (b - a) a (by omega)
+    rwa [show a + (b - a) = b by omega] at this
+  -- no landing is skipped: the first by hypothesis, the others by the hop that reaches them
+  have hunskipped : ∀ i, i ≤ m → ¬ Decided w U V (x i) none := by
+    intro i hi
+    rcases Nat.eq_zero_or_pos i with rfl | hpos
+    · exact hstart
+    · obtain ⟨i', rfl⟩ : ∃ i', i = i' + 1 := ⟨i - 1, by omega⟩
+      exact (hhop i' (by omega)).2.2
+  -- so every landing is synchronous: an asynchronous one is decided, hence committed
+  have hsync : ∀ i, i ≤ m → S.kind (x i) = 0 := by
+    intro i hi
+    by_contra hk
+    have hk1 : S.kind (x i) = 1 := by
+      rw [hkind] at hk ⊢
+      by_contra hk1
+      exact hk (periodicKind_eq_zero_of_ne_one hk1)
+    obtain ⟨v, hv⟩ := hasync (x i) (hmono 0 i (by omega) hi) hk1
+    cases v with
+    | none => exact hunskipped i hi hv
+    | some A => exact (hno i hi).2 ⟨A, hv⟩
+  -- the chain advances by the synchronous wave a hop
+  have hstep : ∀ i, i < m → x i + ws ≤ x (i + 1) := by
+    intro i hi
+    have h := (hhop i hi).1
+    rwa [hsync i (by omega), hwdef, wavelength_zero] at h
+  -- the landings are led from outside T by the round robin
+  have hbad : ∀ i, i ≤ m → lead ⟨x i % n, Nat.mod_lt _ hn⟩ ∉ T := by
+    intro i hi
+    have := (hno i hi).1
+    rwa [hsched (x i) (hsync i hi)] at this
+  -- and the skips between them carry a coin or are led from outside T
+  have hmid : ∀ i, i < m → ∀ t, x i + ws ≤ t → t < x (i + 1) →
+      t % p = 0 ∨ lead ⟨t % n, Nat.mod_lt _ hn⟩ ∉ T := by
+    intro i hi t ht1 ht2
+    by_cases hasyncr : t % p = 0
+    · exact Or.inl hasyncr
+    refine Or.inr fun hmem => ?_
+    have hk0 : S.kind t = 0 := by rw [hkind]; unfold periodicKind; rw [if_neg hasyncr]
+    have hleadT : S.leader t ∈ T := by rwa [hsched t hk0]
+    have hskip : Decided w U V t none := by
+      have h := (hhop i hi).2.1 t (by rw [hsync i (by omega), hwdef, wavelength_zero]; omega) ht2
+      exact h
+    obtain ⟨L, -, -, hcommit⟩ := commitsOfSynchrony hw3 hT hcard hs hpop
+      (by rw [hid]
+          have := hmono 0 i (by omega) (by omega)
+          omega)
+      (fun j hj => hN j (le_trans hj (le_trans (le_of_lt ht2)
+        (hmono (i + 1) m (by omega) le_rfl)))) hV hleadT
+    have hagree := AnchoredRule.decided_agree
+      (steelheadLaws (fun r => by have := hw3 r; omega)) trivial hcommit hskip
+    simp at hagree
+  exact roundRobin_hop_bound_exempt (c := (n + p - 1) / p) hn (by omega) hbij
+    (sched := fun t => lead ⟨t % n, Nat.mod_lt t hn⟩) (fun _ => rfl)
+    (Ex := fun t => t % p = 0) (fun a q => card_multiples_le hp a q) hm hlt hstep hbad hmid
+
+/-- **SH6o at the Byzantine count**, the step SH6p takes: with every landing already known
+synchronous, a landing led by a crashed validator would be directly skipped (SH6c), so a landing
+led from outside `T` is Byzantine-led, and `roundRobin_byzantine_hop_bound_exempt` bounds the
+chain by the Byzantine validators with the coin's rounds exempt. -/
+theorem floorChainReachesAtPeriodWithinByzantine {U : BlockUniverse Validator BlockId Payload}
+    {ws wa p n : ℕ} (hn : 0 < n) (hp : 0 < p) (hws : 3 ≤ ws) (hwa : 3 ≤ wa)
+    (hid : ∀ t, S.slotRound t = t) (hkind : ∀ t, S.kind t = periodicKind p t)
+    {lead : Fin n → Validator}
+    (hsched : ∀ t, S.kind t = 0 → S.leader t = lead ⟨t % n, Nat.mod_lt t hn⟩)
+    {T : Finset Validator} {V : View Validator BlockId Payload U} {R N : ℕ}
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
+    (hs : SynchronisedOn U T R) (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
+    (hV : V.CoversUpto N)
+    (hcrash : ∀ v, v ∉ T → v ∉ F.byzantine →
+      ∀ L ∈ U.ids, R ≤ (U.block L).round → (U.block L).creator ≠ v)
+    (hbij : Function.Bijective lead)
+    (hlt : ws * (n - T.card) + ws * ((n + p - 1) / p) < n) {x : ℕ → ℕ}
+    (hR : R ≤ x 0) (hstart : ¬ Decided (wavelength ws wa) U V (x 0) none)
+    (hsyncs : ∀ i, i ≤ F.byzantine.card → S.kind (x i) = 0)
+    (hhop : ∀ i, i < F.byzantine.card → FloorHop (wavelength ws wa) U V (x i) (x (i + 1)))
+    (hN : ∀ j, j ≤ x F.byzantine.card →
+      (steelheadAnchored Validator BlockId Payload (wavelength ws wa)).decisionRound j ≤ N) :
+    ∃ i, i ≤ F.byzantine.card ∧ S.leader (x i) ∈ T := by
+  classical
+  set w := wavelength ws wa with hwdef
+  have hw3 : ∀ κ, 3 ≤ w κ := fun κ => by
+    rw [hwdef]; unfold wavelength; split <;> omega
+  by_contra hcon
+  have hno : ∀ i, i ≤ F.byzantine.card → S.leader (x i) ∉ T :=
+    fun i hi hmem => hcon ⟨i, hi, hmem⟩
+  have hstep : ∀ i, i < F.byzantine.card → x i + ws ≤ x (i + 1) := by
+    intro i hi
+    have h := (hhop i hi).1
+    rwa [hsyncs i (by omega), hwdef, wavelength_zero] at h
+  have hmono : ∀ a b, a ≤ b → b ≤ F.byzantine.card → x a ≤ x b := by
+    intro a b hab hb
+    have hgrow : ∀ d i, i + d ≤ F.byzantine.card → x i ≤ x (i + d) := by
+      intro d
+      induction d with
+      | zero => intro i _; simp
+      | succ d ih =>
+        intro i hi
+        have h1 := ih i (by omega)
+        have h2 := hstep (i + d) (by omega)
+        rw [show i + (d + 1) = i + d + 1 by omega]
+        omega
+    have := hgrow (b - a) a (by omega)
+    rwa [show a + (b - a) = b by omega] at this
+  have hunskipped : ∀ i, i ≤ F.byzantine.card → ¬ Decided w U V (x i) none := by
+    intro i hi
+    rcases Nat.eq_zero_or_pos i with rfl | hpos
+    · exact hstart
+    · obtain ⟨i', rfl⟩ : ∃ i', i = i' + 1 := ⟨i - 1, by omega⟩
+      exact (hhop i' (by omega)).2.2
+  -- no landing is led by a crashed validator: its slot would be directly skipped (SH6c)
+  have hbyz : ∀ i, i ≤ F.byzantine.card → S.leader (x i) ∈ F.byzantine := by
+    intro i hi
+    by_contra hnb
+    have hRi : R ≤ x i := le_trans hR (hmono 0 i (by omega) hi)
+    have hdec := hN (x i) (hmono i _ hi le_rfl)
+    simp only [AnchoredRule.decisionRound, steelheadAnchored_waveAt, hid, hsyncs i hi, hwdef,
+      wavelength_zero] at hdec
+    have hvote : R ≤ MahiMahi.votingRound (w (S.kind (x i))) (S.slotRound (x i)) ∧
+        MahiMahi.votingRound (w (S.kind (x i))) (S.slotRound (x i)) ≤ N := by
+      unfold MahiMahi.votingRound
+      rw [hid, hsyncs i hi, hwdef, wavelength_zero]
+      omega
+    refine hunskipped i hi (skipsCrashed hcard (fun L hL hLr => ?_) (hpop _ hvote.1 hvote.2)
+      (hV.mono hvote.2))
+    rw [hid] at hLr
+    exact hcrash _ (hno i hi) hnb L hL (by rw [hLr]; exact hRi)
+  -- and the skips between landings carry a coin or are led from outside T
+  have hmid : ∀ i, i < F.byzantine.card → ∀ t, x i + ws ≤ t → t < x (i + 1) →
+      t % p = 0 ∨ lead ⟨t % n, Nat.mod_lt _ hn⟩ ∉ T := by
+    intro i hi t ht1 ht2
+    by_cases hasyncr : t % p = 0
+    · exact Or.inl hasyncr
+    refine Or.inr fun hmem => ?_
+    have hk0 : S.kind t = 0 := by rw [hkind]; unfold periodicKind; rw [if_neg hasyncr]
+    have hleadT : S.leader t ∈ T := by rwa [hsched t hk0]
+    have hskip : Decided w U V t none :=
+      (hhop i hi).2.1 t (by rw [hsyncs i (by omega), hwdef, wavelength_zero]; omega) ht2
+    obtain ⟨L, -, -, hcommit⟩ := commitsOfSynchrony hw3 hT hcard hs hpop
+      (by rw [hid]
+          have := hmono 0 i (by omega) (by omega)
+          omega)
+      (fun j hj => hN j (le_trans hj (le_trans (le_of_lt ht2)
+        (hmono (i + 1) F.byzantine.card (by omega) le_rfl)))) hV hleadT
+    have hagree := AnchoredRule.decided_agree
+      (steelheadLaws (fun r => by have := hw3 r; omega)) trivial hcommit hskip
+    simp at hagree
+  exact roundRobin_byzantine_hop_bound_exempt (c := (n + p - 1) / p) hn (by omega) hT hbij
+    (sched := fun t => lead ⟨t % n, Nat.mod_lt t hn⟩) (fun _ => rfl)
+    (Ex := fun t => t % p = 0) (fun a q => card_multiples_le hp a q) hlt hstep
+    (fun i hi => by rw [← hsched (x i) (hsyncs i hi)]; exact hbyz i hi) hmid
+
+/-- **SH6p.** At the periodic round robin a reliably led synchronous round lies within `W` rounds
+above any floor; under synchrony it commits (SH6a) and so is not skipped, so the chain's landing
+lies at or below it and each hop from a synchronous slot climbs by at most `ws + W` rounds. The
+chain stops at the first asynchronous landing, which is decided by hypothesis and unskipped by
+its hop, hence committed, and SH6m descends from it; otherwise every landing is synchronous, one
+of the first `b + 1` is reliably led, and SH6f descends from its commit. -/
+theorem floorChainDecidesWithinRoundsAtPeriod {U : BlockUniverse Validator BlockId Payload}
+    {ws wa p n W : ℕ} (hn : 0 < n) (hp : 0 < p) (hws : 3 ≤ ws) (hwa : 3 ≤ wa)
+    (hid : ∀ t, S.slotRound t = t) (hkind : ∀ t, S.kind t = periodicKind p t)
+    {lead : Fin n → Validator}
+    (hsched : ∀ t, S.kind t = 0 → S.leader t = lead ⟨t % n, Nat.mod_lt t hn⟩)
+    {T : Finset Validator} {V : View Validator BlockId Payload U} {R N : ℕ}
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
+    (hs : SynchronisedOn U T R) (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
+    (hV : V.CoversUpto N)
+    (hcrash : ∀ v, v ∉ T → v ∉ F.byzantine →
+      ∀ L ∈ U.ids, R ≤ (U.block L).round → (U.block L).creator ≠ v)
+    (hbij : Function.Bijective lead)
+    (hlt : ws * (n - T.card) + ws * ((n + p - 1) / p) < n)
+    (hwait : ∀ r, ∃ a, r ≤ a ∧ a ≤ r + W ∧ S.kind a = 0 ∧ S.leader a ∈ T) {k : ℕ}
+    (hasync : ∀ t, k ≤ t → S.kind t = 1 → ∃ v, Decided (wavelength ws wa) U V t v)
+    (hR : R ≤ k) (hstart : ¬ Decided (wavelength ws wa) U V k none)
+    (hN : k + (F.byzantine.card + 1) * (ws + W) + wa ≤ N) :
+    ∃ v, Decided (wavelength ws wa) U V k v := by
+  classical
+  set w := wavelength ws wa with hwdef
+  have hw3 : ∀ κ, 3 ≤ w κ := fun κ => by
+    rw [hwdef]; unfold wavelength; split <;> omega
+  have hwle : ∀ κ, w κ ≤ wa ∨ w κ ≤ ws := fun κ => by
+    rw [hwdef]; unfold wavelength; split
+    · exact Or.inr le_rfl
+    · exact Or.inl le_rfl
+  have hwmax : ∀ κ, w κ ≤ ws + wa := fun κ => by
+    rcases hwle κ with h | h <;> omega
+  set b := F.byzantine.card with hb
+  -- every decision round below the budget lies under the horizon
+  have hdecN : ∀ j, j ≤ k + b * (ws + W) →
+      (steelheadAnchored Validator BlockId Payload w).decisionRound j ≤ N := by
+    intro j hj
+    have h1 : (b + 1) * (ws + W) = b * (ws + W) + (ws + W) := by rw [Nat.add_mul, Nat.one_mul]
+    have h2 := hw3 (S.kind j)
+    have h3 := hwmax (S.kind j)
+    simp only [AnchoredRule.decisionRound, steelheadAnchored_waveAt, hid]
+    omega
+  -- a hop from a synchronous slot lands within ws + W rounds of it
+  have hop : ∀ y, R ≤ y → S.kind y = 0 → y + ws + W ≤ k + b * (ws + W) →
+      FloorHop w U V y (floorLanding w U V y) ∧ floorLanding w U V y ≤ y + ws + W := by
+    intro y hy hky hyN
+    obtain ⟨a, ha1, ha2, hka, haT⟩ := hwait (y + ws)
+    obtain ⟨L, -, -, hcommit⟩ := commitsOfSynchrony hw3 hT hcard hs hpop (by rw [hid]; omega)
+      (fun j hj => hdecN j (by omega)) hV haT
+    have hna : ¬ Decided w U V a none := fun hskip => by
+      have hagree := AnchoredRule.decided_agree
+        (steelheadLaws (fun r => by have := hw3 r; omega)) trivial hcommit hskip
+      simp at hagree
+    obtain ⟨hhop, hle⟩ := floorHop_floorLanding (w := w) (V := V) (y := y) (z := a)
+      (by rw [hky, hwdef, wavelength_zero]; omega) hna
+    exact ⟨hhop, by omega⟩
+  -- the chain of floors, bounded while its landings stay synchronous
+  set x := floorChain w U V k with hx
+  have hx0 : x 0 = k := rfl
+  have hxs : ∀ i, x (i + 1) = floorLanding w U V (x i) := fun i => rfl
+  have hmain : ∀ i, i ≤ b → (∃ v, Decided w U V k v) ∨
+      (R ≤ x i ∧ k ≤ x i ∧ (∀ j, j ≤ i → x j ≤ k + j * (ws + W)) ∧
+        (∀ j, j ≤ i → S.kind (x j) = 0) ∧
+        ∀ j, j < i → FloorHop w U V (x j) (x (j + 1))) := by
+    intro i
+    induction i with
+    | zero =>
+      intro _
+      by_cases hk1 : S.kind k = 1
+      · exact Or.inl (hasync k le_rfl hk1)
+      · refine Or.inr ⟨by rw [hx0]; exact hR, by rw [hx0], fun j hj => ?_, fun j hj => ?_,
+          fun j hj => ?_⟩
+        · rw [show j = 0 by omega, hx0]; omega
+        · rw [show j = 0 by omega, hx0]
+          rw [hkind] at hk1 ⊢
+          exact periodicKind_eq_zero_of_ne_one hk1
+        · omega
+    | succ i ih =>
+      intro hi
+      rcases ih (by omega) with hdone | ⟨hRi, hki, hxj, hkinds, hhops⟩
+      · exact Or.inl hdone
+      have hxi := hxj i le_rfl
+      have h1 : (i + 1) * (ws + W) ≤ b * (ws + W) := Nat.mul_le_mul_right _ hi
+      have h2 : (i + 1) * (ws + W) = i * (ws + W) + (ws + W) := by rw [Nat.add_mul, Nat.one_mul]
+      obtain ⟨hhop, hle⟩ := hop (x i) hRi (hkinds i le_rfl) (by omega)
+      rw [← hxs] at hhop hle
+      have hlow : x i ≤ x (i + 1) := le_trans (Nat.le_add_right _ _) hhop.1
+      by_cases hk1 : S.kind (x (i + 1)) = 1
+      · -- an asynchronous landing is decided and unskipped, hence committed
+        obtain ⟨v, hv⟩ := hasync (x (i + 1)) (le_trans hki hlow) hk1
+        obtain ⟨A, rfl⟩ : ∃ A, v = some A := by
+          cases v with
+          | none => exact absurd hv hhop.2.2
+          | some A => exact ⟨A, rfl⟩
+        refine Or.inl ?_
+        have := floorChainDecidesFromCommit hw3 hid (i + 1) x
+          (fun j hj => by
+            rcases Nat.lt_or_ge j i with h | h
+            · exact hhops j h
+            · rw [show j = i by omega]; exact hhop) ⟨A, hv⟩
+        rwa [hx0] at this
+      · refine Or.inr ⟨le_trans hRi hlow, le_trans hki hlow, fun j hj => ?_, fun j hj => ?_,
+          fun j hj => ?_⟩
+        · rcases Nat.lt_or_ge j (i + 1) with h | h
+          · exact hxj j (by omega)
+          · rw [show j = i + 1 by omega]; omega
+        · rcases Nat.lt_or_ge j (i + 1) with h | h
+          · exact hkinds j (by omega)
+          · rw [show j = i + 1 by omega]
+            rw [hkind] at hk1 ⊢
+            exact periodicKind_eq_zero_of_ne_one hk1
+        · rcases Nat.lt_or_ge j i with h | h
+          · exact hhops j h
+          · rw [show j = i by omega]; exact hhop
+  rcases hmain b le_rfl with hdone | ⟨hRb, hkb, hxj, hkinds, hhops⟩
+  · exact hdone
+  -- every landing is synchronous, so one of the first b + 1 is reliably led
+  have hbudget : ∀ j, j ≤ b → x j ≤ k + b * (ws + W) := by
+    intro j hj
+    have h1 : j * (ws + W) ≤ b * (ws + W) := Nat.mul_le_mul_right _ hj
+    have := hxj j hj
+    omega
+  obtain ⟨i, hi, hlead⟩ := floorChainReachesAtPeriodWithinByzantine hn hp hws hwa hid hkind
+    hsched hT hcard hs hpop hV hcrash hbij hlt (x := x) (by rw [hx0]; exact hR)
+    (by rw [hx0]; exact hstart) hkinds hhops (fun j hj => hdecN j (le_trans hj (hbudget b le_rfl)))
+  have := floorChainDecides hw3 hid hT hcard hs hpop hV i x (by rw [hx0]; exact hR)
+    (fun i' hi' => hhops i' (by omega)) hlead
+    (fun j hj => hdecN j (le_trans hj (hbudget i hi)))
   rwa [hx0] at this
 
 omit S in

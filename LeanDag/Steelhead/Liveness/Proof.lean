@@ -16,7 +16,8 @@ namespace Liveness
 
 theorem holds : Statement := by
   intro Validator BlockId Payload _ _ _ _ S U w ws wa k
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
+    ?_, ?_⟩
   · intro T V R N k hw hT hcard hs hpop hR hN hV hlead
     exact commitsOfSynchrony hw hT hcard hs hpop hR hN hV hlead
   · intro T c hw hT hcard hspan fair R k
@@ -41,6 +42,18 @@ theorem holds : Statement := by
       hN
     exact floorChainDecidesWithinRounds hn hwr hws hid hT hcard hs hpop hV hcrash hbij hsched hlt
       hR hstart hN
+  · intro V h x hw hid hhop hcom
+    exact floorChainDecidesFromCommit hw hid h x hhop hcom
+  · intro n p hn T hp hlt r
+    exact periodicRoundRobinReliableSync hn hp hlt r
+  · intro T V R N ws wa p n hn lead x hws hwa hp hid hkind hsched hT hcard hs hpop hV hbij hlt
+      hasync hR hstart hhop hN
+    exact floorChainReachesAtPeriod hn hp hws hwa hid hkind hsched hT hcard hs hpop hV hbij hlt
+      hasync hR hstart hhop hN
+  · intro T V R N ws wa p n W hn lead k hws hwa hp hid hkind hsched hT hcard hs hpop hV hcrash
+      hbij hlt hwait hasync hR hstart hN
+    exact floorChainDecidesWithinRoundsAtPeriod hn hp hws hwa hid hkind hsched hT hcard hs hpop
+      hV hcrash hbij hlt hwait hasync hR hstart hN
   · intro T V N R k waits rs hw hT hcard hgst hto hR hwait hN hV hlead
     exact reactive_commits rs hw hT hcard hgst hto hR hwait hN hV hlead
   · intro T V N k vp hw hT hcard hrate N' hR hpop hN hV hlead

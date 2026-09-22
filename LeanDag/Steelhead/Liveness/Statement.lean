@@ -93,6 +93,47 @@ claims:
   A view holding `(b + 1) · (ws + (n − |T|))` rounds above an unskipped
   slot therefore decides it, the paper's `(b + 1)(ws + f)` at
   `f = n − |T|`;
+* **SH6m, a committed landing decides the chain's start** — SH6f with
+  its last landing's reliable leader weakened to a commit, whoever led
+  it. The chain is what the anchor search walks, and a commit is all the
+  descent needs at the top of it; a reliable leader was only ever the
+  way SH6f came by one. With the commit given, the claim asks for no
+  quorum, no synchrony and no horizon: it is the descent alone. This is
+  what lets the chain stop at a slot the coin decided rather than the
+  schedule;
+* **SH6n, the periodic round robin offers a reliable synchronous round**
+  — SH6g's second half at a period. Every window of `n` rounds holds one
+  round of each residue, so `T.card` of them are reliably led where the
+  leader is known; at most `⌈n / p⌉` carry a coin instead, so past every
+  round a reliable synchronous round lies within `n − 1` rounds once
+  `⌈n / p⌉ < |T|`. The bound is `n − 1` and not SH6g's `n − |T|`: a
+  reliable residue may fall on a coin round, and the schedule cannot say
+  which;
+* **SH6o, the floor chain reaches a reliably led or committed landing at
+  a period** — SH6h at the paper's dial rather than at a constant wave,
+  which is where the wavelength function stops being a formality. Two
+  things change. A landing may be a slot no coin governs and no schedule
+  names, so the claim asks that every asynchronous slot above the chain's
+  start be decided, which is what SH7a gives and what the schedule
+  cannot; such a landing is then committed, since a landing is by
+  definition unskipped, and the chain stops there. And SH6h's count
+  loses the coin's rounds: it counts, over a span of whole cycles, the
+  rounds the round robin leads from `T`, and a coin round is led by
+  nobody the schedule knows, so at most `⌈n / p⌉` of every `n` rounds
+  drop out of the count and the bound becomes
+  `ws · (n − |T|) + ws · ⌈n / p⌉ < n`. ⚠ At `ws = 3`, `n = 3f + 1` and a
+  bare reliable quorum `|T| = n − f` this is `3f + 3⌈n / p⌉ < 3f + 1`,
+  false for every period, so the claim is empty there and the coin, not
+  the schedule, carries the asynchronous slots; it holds as soon as
+  fewer than `f` validators lie outside `T`, or the committee has slack
+  (`LeanDagTest/Steelhead/Counterexamples/PeriodicFairness.lean`);
+* **SH6p, the floor chain decides within `(b + 1) · (ws + W)` rounds at
+  a period** — SH6j's round count at the dial, `W` the wait for a
+  reliably led synchronous round rather than the `n − |T|` of SH6g. The
+  paper writes `(b + 1)(ws + f)`; at a period `f` is the wrong second
+  factor, because a reliable residue may land on a coin round, and SH6n
+  supplies `n − 1` in its place. Everything else is SH6j's argument with
+  SH6o for the hop count and SH6m for the descent;
 * **SH6k, a reliable leader commits under the reactive discipline** —
   SH6a with the execution discipline named rather than assumed: a
   reactive schedule never waits past its timeout, and at the round above
@@ -158,10 +199,12 @@ claims:
   causal ordering and the wait is nonincreasing in `i`: delays never
   compound.
 
-SH6a, SH6b, SH6e and SH6f assume `3 ≤ w κ` everywhere, as the safety
-claims do, and SH6e and SH6f one slot per round; SH6g reads no DAG at
-all, only the schedule, and SH6h and SH6i, which read both, fix the wave at
-the constant `ws` the round-robin count needs; SH6c assumes nothing of the wave, and
+SH6a, SH6b, SH6e, SH6f and SH6m assume `3 ≤ w κ` everywhere, as the
+safety claims do, and SH6e, SH6f and SH6m one slot per round; SH6g and
+SH6n read no DAG at
+all, only the schedule, and SH6h, SH6i and SH6j, which read both, fix the wave at
+the constant `ws` the round-robin count needs, while SH6o and SH6p read
+it at `wavelength ws wa` under the kinds a period assigns; SH6c assumes nothing of the wave, and
 SH6d `4 ≤ w κ` at the slot's kind, so that the vote round lies two
 rounds up, where synchrony has carried the candidate. Neither asks the
 quorum to be correct: SH6c reads blames, which need no vote, and SH6d
@@ -390,6 +433,90 @@ def FloorChainDecidesWithinRounds (U : BlockUniverse Validator BlockId Payload) 
     -- then the slot is decided
     ∃ v, Decided w U V k v
 
+/-- **SH6m, a committed landing decides the chain's start.** -/
+def FloorChainDecidesFromCommit (U : BlockUniverse Validator BlockId Payload) (w : ℕ → ℕ) :
+    Prop :=
+  ∀ (V : View Validator BlockId Payload U) (h : ℕ) (x : ℕ → ℕ),
+    (∀ κ, 3 ≤ w κ) →
+    -- one slot per round, as Theorem 2 reads the chain
+    (∀ t, S.slotRound t = t) →
+    -- the chain hops h times and its last landing is committed, whoever led it
+    (∀ i, i < h → FloorHop w U V (x i) (x (i + 1))) →
+    (∃ A, Decided w U V (x h) (some A)) →
+    -- then the slot the chain started from is decided
+    ∃ v, Decided w U V (x 0) v
+
+/-- **SH6n, the periodic round robin offers a reliable synchronous round.** -/
+def PeriodicRoundRobinReliableSync : Prop :=
+  ∀ (n p : ℕ) (hn : 0 < n) (T : Finset (Fin n)),
+    -- the coin's rounds are too few to hide every reliable residue
+    0 < p → (n + p - 1) / p < T.card →
+    -- past every round the schedule leads a synchronous round from T within n − 1 rounds
+    ∀ r, ∃ a, r ≤ a ∧ a ≤ r + (n - 1) ∧ periodicKind p a ≠ 1 ∧
+      (⟨a % n, Nat.mod_lt a hn⟩ : Fin n) ∈ T
+
+/-- **SH6o, the floor chain reaches a reliably led or committed landing at a period.** -/
+def FloorChainReachesAtPeriod (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (T : Finset Validator) (V : View Validator BlockId Payload U) (R N ws wa p n : ℕ)
+    (hn : 0 < n) (lead : Fin n → Validator) (x : ℕ → ℕ),
+    3 ≤ ws → 3 ≤ wa → 0 < p →
+    -- one slot per round, of the paper's periodic kind, led by the round robin at the rounds
+    -- whose leader is known
+    (∀ t, S.slotRound t = t) → (∀ t, S.kind t = periodicKind p t) →
+    (∀ t, S.kind t = 0 → S.leader t = lead ⟨t % n, Nat.mod_lt t hn⟩) →
+    -- T is a reliable set: correct, and a quorum
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    -- T is synchronised from R and populates every round from R to the horizon N
+    SynchronisedOn U T R → (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → V.CoversUpto N →
+    Function.Bijective lead →
+    -- the validators outside T are few enough for the synchronous wave once the coin's rounds
+    -- are deducted: at most `⌈n / p⌉` of every `n` rounds carry one, and the count that bounds
+    -- the chain reads no leader at those
+    ws * (n - T.card) + ws * ((n + p - 1) / p) < n →
+    -- every asynchronous slot at or above the chain's start is decided, which is the coin's
+    -- business (SH7a) and not the schedule's
+    (∀ t, x 0 ≤ t → S.kind t = 1 → ∃ v, Decided (wavelength ws wa) U V t v) →
+    -- the chain starts at or past R at a slot the view does not skip, hops that many times, and
+    -- decides at or below the horizon
+    R ≤ x 0 → ¬ Decided (wavelength ws wa) U V (x 0) none →
+    (∀ i, i < n - T.card → FloorHop (wavelength ws wa) U V (x i) (x (i + 1))) →
+    (∀ j, j ≤ x (n - T.card) →
+      (steelheadAnchored Validator BlockId Payload (wavelength ws wa)).decisionRound j ≤ N) →
+    -- then one of those landings is reliably led, or committed outright
+    ∃ i, i ≤ n - T.card ∧
+      (S.leader (x i) ∈ T ∨ ∃ A, Decided (wavelength ws wa) U V (x i) (some A))
+
+/-- **SH6p, the floor chain decides within `(b + 1) · (ws + W)` rounds at a period.** -/
+def FloorChainDecidesWithinRoundsAtPeriod (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (T : Finset Validator) (V : View Validator BlockId Payload U) (R N ws wa p n W : ℕ)
+    (hn : 0 < n) (lead : Fin n → Validator) (k : ℕ),
+    3 ≤ ws → 3 ≤ wa → 0 < p →
+    -- one slot per round, of the paper's periodic kind, led by the round robin where known
+    (∀ t, S.slotRound t = t) → (∀ t, S.kind t = periodicKind p t) →
+    (∀ t, S.kind t = 0 → S.leader t = lead ⟨t % n, Nat.mod_lt t hn⟩) →
+    -- T is a reliable set: correct, and a quorum
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    -- T is synchronised from R and populates every round from R to the horizon N
+    SynchronisedOn U T R → (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → V.CoversUpto N →
+    -- every validator outside T that is not Byzantine has crashed: it has no block from R on
+    (∀ v, v ∉ T → v ∉ F.byzantine →
+      ∀ L ∈ U.ids, R ≤ (U.block L).round → (U.block L).creator ≠ v) →
+    Function.Bijective lead →
+    -- the count that bounds the chain, with the coin's rounds deducted
+    ws * (n - T.card) + ws * ((n + p - 1) / p) < n →
+    -- past every round the schedule leads a synchronous round from T within W rounds, which
+    -- SH6n supplies as `n − 1`; at a constant wave this is the `n − |T|` of SH6g
+    (∀ r, ∃ a, r ≤ a ∧ a ≤ r + W ∧ S.kind a = 0 ∧ S.leader a ∈ T) →
+    -- every asynchronous slot at or above the slot is decided
+    (∀ t, k ≤ t → S.kind t = 1 → ∃ v, Decided (wavelength ws wa) U V t v) →
+    -- the slot lies at or past R, the view does not skip it, and the horizon reaches
+    -- (b + 1) · (ws + W) rounds above it, plus the one asynchronous wave a decision round in
+    -- that range may carry
+    R ≤ k → ¬ Decided (wavelength ws wa) U V k none →
+    k + (F.byzantine.card + 1) * (ws + W) + wa ≤ N →
+    -- then the slot is decided
+    ∃ v, Decided (wavelength ws wa) U V k v
+
 /-- **SH6k, a reliable leader commits under the reactive discipline.** -/
 def CommitsOfReactivePace (U : BlockUniverse Validator BlockId Payload) (w : ℕ → ℕ) : Prop :=
   ∀ (T : Finset Validator) (V : View Validator BlockId Payload U) (N R k : ℕ)
@@ -544,6 +671,8 @@ def Statement : Prop :=
       SkipsCrashed U w ∧ CommitsOfDissemination U w ∧ DecidedOfReliableAboveFloor U w ∧
       FloorChainDecides U w ∧ RoundRobinFairRun ∧ FloorChainReachesReliable U w ∧
       FloorChainReachesReliableWithinByzantine U w ∧ FloorChainDecidesWithinRounds U w ∧
+      FloorChainDecidesFromCommit U w ∧ PeriodicRoundRobinReliableSync ∧
+      FloorChainReachesAtPeriod U ∧ FloorChainDecidesWithinRoundsAtPeriod U ∧
       CommitsOfReactivePace U w ∧ CommitsOfViewPace U w ∧
       ChainAllDecidedBelow U wa ∧
       ChainAllDecidedBelowOfSynchrony (Validator := Validator) (BlockId := BlockId)

@@ -56,6 +56,7 @@ import LeanDagTest.Steelhead.Counterexamples.Stall
 import LeanDagTest.Steelhead.Counterexamples.CoinDelay
 import LeanDagTest.Steelhead.Counterexamples.ByzantineFloor
 import LeanDagTest.Steelhead.Counterexamples.HopBound
+import LeanDagTest.Steelhead.Counterexamples.PeriodicFairness
 import LeanDagTest.Steelhead.Counterexamples.ReplayStartup
 import LeanDagTest.Steelhead.Counterexamples.ReplayShortWindow
 import LeanDagTest.Steelhead.Counterexamples.RotatingStall

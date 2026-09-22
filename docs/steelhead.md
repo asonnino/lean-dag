@@ -72,7 +72,15 @@ from coverage into certification; the unpredictable-leader clause.
   chain reaches such a landing within `n − |T|` hops, the paper's hop
   count (SH6h), within `b` hops once every other validator outside
   `T` has crashed (SH6i), and so within `(b + 1) · (ws + (n − |T|))`
-  rounds, the paper's `(b + 1)(ws + f)` (SH6j). Both execution
+  rounds, the paper's `(b + 1)(ws + f)` (SH6j). All three read the wave
+  at the constant `ws`; at the paper's dial the descent takes a commit
+  in place of a reliable leader (SH6m), the count deducts the coin's
+  rounds and becomes `ws · (n − |T|) + ws · ⌈n / p⌉ < n` (SH6o), a
+  reliably led synchronous round lies within `n − 1` rounds rather than
+  `n − |T|` (SH6n), and the round count is `(b + 1) · (ws + W)` at that
+  wait (SH6p). The deducted term is never zero, so at the tight
+  committee with a bare reliable quorum the count is empty and the chain
+  rests on the coin instead (§6.1, §7 finding 12). Both execution
   disciplines reach SH6a's hypothesis: the
   reactive one, where a builder never waits past its timeout and
   `SynchronisedOn` is false by design (SH6k), and the timed one, from a
@@ -257,7 +265,7 @@ from coverage into certification; the unpredictable-leader clause.
 | Corollary 1 (handover) | SH3 | stated against the relation's anchor search |
 | Theorem 1 (agreement) | SH2, SH16, SH21 | `AnchoredRule.decided_unique` at Steelhead's laws; at the interface level, any family of rules whose laws hold composes into one whose laws hold, and Steelhead is the composite of Mahi-Mahi's rule at each kind's wave. Both pairs the paper instantiates are on record: the `3f + 1` one as SH16c and the `5f + 1` one, Odontoceti at wave two with Async BlueBottle at wave three, as SH21, which discharges the clauses the paper's discharge table leaves open for it |
 | Corollary 2 (total order and integrity) | SH13 | in part: the relation's own ledger theorems at Steelhead's laws, over a settled prefix. Ordering the blocks a single commit releases is declined development-wide (report §1.4, §5.6) |
-| Theorem 2 (liveness under partial synchrony) | SH6a, SH6b, SH6c, SH6d, SH6e, SH6f, SH6g, SH6h, SH6i, SH6j, SH11j, SH11k, SH6k, SH6l | in part: the honest-leader commit by the direct rule, everything below a fair run, the crashed-leader skip from `n − f` blames, the remark that partial dissemination does not defer, for a leader that did not equivocate, and the anchor clause as the rule has it, a slot decided once every slot from its floor up to some reliably led slot is decided (SH6e) or once the chain of floors reaches a reliably led landing (SH6f), which is how the theorem now states its anchor clause; its earlier form, "once the first honest-led slot above its floor commits, at most `b` slots higher", was refuted on data, an equivocating leader at the floor being the anchor (§7, finding 7). What holds at the implementation's round-robin schedule is the hop count, a reliably led landing within `n − |T|` hops once `ws · (n − |T|) < n` (SH6h), within the paper's `b` hops once every other validator outside `T` has crashed (SH6i), and a round count, one reliable leader within `n − |T|` rounds and a reliable run of three past every round at `n = 3f + 1` (SH6g), which also discharges SH6b's fairness hypothesis there; and the theorem's `(b + 1)(ws + f)` rounds above a synchronous floor, as `(b + 1) · (ws + (n − |T|))` rounds above an unskipped slot at the schedule of SH6i (SH6j). No per-hop probability holds for the coin's slots, a landing of the search reading coins above it (`HopBound.lean`; §7, finding 9); what holds is SH11i, the tail below runs of `wa` good coins at period one, and its mean, the search waiting for at most `1 / p^wa` blocks of `wa` rounds in expectation, the `wa / p^wa` the theorem states (SH11j), at both waves, `n^wa` blocks at `wa ≥ 4` (SH11k). The ordering of the coin's slots holds in expectation and almost surely (SH15e), not for every coin sequence (§7, finding 5). SH6a's hypothesis is reached from either execution discipline, the reactive one (SH6k) and the timed one (SH6l); what neither bounds is a wall-clock latency, since a round is the only unit the model carries |
+| Theorem 2 (liveness under partial synchrony) | SH6a, SH6b, SH6c, SH6d, SH6e, SH6f, SH6g, SH6h, SH6i, SH6j, SH6m, SH6n, SH6o, SH6p, SH11j, SH11k, SH6k, SH6l | in part: the honest-leader commit by the direct rule, everything below a fair run, the crashed-leader skip from `n − f` blames, the remark that partial dissemination does not defer, for a leader that did not equivocate, and the anchor clause as the rule has it, a slot decided once every slot from its floor up to some reliably led slot is decided (SH6e) or once the chain of floors reaches a reliably led landing (SH6f), which is how the theorem now states its anchor clause; its earlier form, "once the first honest-led slot above its floor commits, at most `b` slots higher", was refuted on data, an equivocating leader at the floor being the anchor (§7, finding 7). What holds at the implementation's round-robin schedule is the hop count, a reliably led landing within `n − |T|` hops once `ws · (n − |T|) < n` (SH6h), within the paper's `b` hops once every other validator outside `T` has crashed (SH6i), and a round count, one reliable leader within `n − |T|` rounds and a reliable run of three past every round at `n = 3f + 1` (SH6g), which also discharges SH6b's fairness hypothesis there; and the theorem's `(b + 1)(ws + f)` rounds above a synchronous floor, as `(b + 1) · (ws + (n − |T|))` rounds above an unskipped slot at the schedule of SH6i (SH6j). Those three fix the wave at `ws`; at the paper's dial the descent takes a commit in place of a reliable leader (SH6m), the count deducts the coin's rounds and reads `ws · (n − |T|) + ws · ⌈n / p⌉ < n` (SH6o), the wait for a reliably led synchronous round is `n − 1` rather than `n − |T|` (SH6n), and the round count is `(b + 1) · (ws + W)` at that wait (SH6p); the deducted term is never zero, so at `n = 3f + 1` with a bare reliable quorum the count is empty and the chain rests on the coin (§7, finding 12). No per-hop probability holds for the coin's slots, a landing of the search reading coins above it (`HopBound.lean`; §7, finding 9); what holds is SH11i, the tail below runs of `wa` good coins at period one, and its mean, the search waiting for at most `1 / p^wa` blocks of `wa` rounds in expectation, the `wa / p^wa` the theorem states (SH11j), at both waves, `n^wa` blocks at `wa ≥ 4` (SH11k). The ordering of the coin's slots holds in expectation and almost surely (SH15e), not for every coin sequence (§7, finding 5). SH6a's hypothesis is reached from either execution discipline, the reactive one (SH6k) and the timed one (SH6l); what neither bounds is a wall-clock latency, since a round is the only unit the model carries |
 | Theorem 3 (i) (the control verdicts resolve, the period reaches `1`) | SH7a, SH7c, SH10c, SH10d, SH10e, SH11 | the control verdicts of a scan settle under Mahi-Mahi's run clause at that scan's schedule and, at the coin schedule, below any one run of `wa` good coins, a period is derived for each interval, and an anchor below which the agreed output committed nothing for `I` rounds hands the next interval period `1`, the failover the theorem's premise states and the implementation applies before the rule is consulted (`apply_period_update`; §7, finding 4). The coin is modelled by its effect and as a `PMF`: the commit probability `(n − f − b) / n` at `wa ≥ 5` (SH11a) and `1 / n` at `wa ≥ 4` (SH11b), and the tail at both waves (SH15a, SH15d). The "with probability `1`" is SH15e over a sequence of records, SH15a's tail on one, and "some scan finds its anchor" is SH15f, the same over the anchored interval |
 | Theorem 3 (ii) (at period `1` the ledger grows) | SH9a, SH9b, SH14a, SH14b, SH14c, SH15 | SH9b at period `1` under the run clause at the output schedule and below its horizon; SH14a for the adaptive output under the failover, given one anchored interval at least two past the slot's and one run of `wa` good coins above it; SH14b reads both off the run clause at every control schedule the period can name, SH14c off a good coin at an interval's first control round and a run above it; SH15a bounds the probability that some view has not derived the slot's period or leaves it undecided, over `M` blocks of `wa · K` coins opening every `q`-th interval above the slot's at `wa · K ≤ q · I`, by `2 · ((n^(wa·K) − (n − f − b)^(wa·K)) / n^(wa·K))^(M/2)`, which tends to zero (SH15c); and SH15e states the "with probability `1`" itself, over a sequence of records with the coin drawn as a process: for almost every coin some record decides the slot in every view holding its horizon, and SH15h every slot at once, each with its own sequence of records. SH15b and SH15g are the same two against an adversary that answers the draws already made and keeps a floor of committed candidates per round, by the adaptive block bound SH11h; SH15i gives the period sequence those claims quantify over. The growth of the ledger from the settled prefix is SH13 |
 | Asynchronous liveness, "a scan finds its anchor within an expected `1 / (1 − (1 − p)^c)` intervals" at `c = I / period` control slots | SH11l, SH11m | a scan's `c` slots all miss with probability at most `((f + b) / n)^c` at any strictly increasing schedule of rounds (SH11l), and the wait is the geometric series in that bound, summing to its inverse (SH11m). The paper reads `c` off the interval and the period; the statement takes the slot count as given, and the independence across intervals is the uniform draw's, as everywhere else in §4 |
@@ -1207,6 +1215,60 @@ chain's start (SH6f); every decision round the argument reads lies within
 `(b + 1) · (ws + (n − |T|))` rounds of the slot, which is what the view
 is asked to hold.
 
+### 6.1 The anchor search at a mixed period, SH6m to SH6p
+
+SH6h, SH6i and SH6j read the wave at the constant `ws`. The paper states
+Theorem 2's anchor clause at the dial itself, where a hop of the chain
+may land on a known-leader slot that no coin governs and on a coin slot
+no schedule names. Restating them there changes two things and leaves
+the rest of the argument alone.
+
+**The descent takes a commit.** SH6f gets the top of the chain committed
+from a reliable leader under synchrony. **SH6m**
+(`floorChainDecidesFromCommit`) asks for the commit itself instead, and
+then needs no quorum, no synchrony and no horizon: a landing whose
+successor commits is decided and left unskipped by its own hop, so it
+commits in turn and anchors the landing below it. That is what lets the
+chain stop wherever the coin decided something.
+
+**The count loses the coin's rounds.** SH6h counts, over a span of whole
+round-robin cycles, the rounds the schedule leads from `T`: at least
+`|T|` a cycle, each of which must fit in the `ws − 1` rounds a hop leaves
+free, which forces `ws · (n − |T|) < n`. At a period a coin round is led
+by nobody the schedule names, so those rounds drop out of the count. At
+most `⌈n / p⌉` of every `n` rounds carry a coin (`card_multiples_le`), so
+the bound becomes `ws · (n − |T|) + ws · ⌈n / p⌉ < n`
+(`roundRobin_residues_distinct_exempt`, which the constant-wave case is
+now an instance of, at the empty exemption).
+
+**SH6o** (`floorChainReachesAtPeriod`) is SH6h at the dial. It asks in
+addition that every asynchronous slot at or above the chain's start be
+decided, which is the coin's business (SH7a) and not the schedule's; such
+a landing is then committed, a landing being unskipped by definition, and
+the chain stops there. Otherwise every landing is synchronous and led by
+the round robin, and the count above applies. **SH6n**
+(`periodicRoundRobinReliableSync`) is SH6g's second half at the dial:
+every window of `n` rounds holds one round of each residue, so `|T|` of
+them are reliably led where the leader is known and at most `⌈n / p⌉`
+carry a coin, so a reliably led synchronous round lies within `n − 1`
+rounds of every round once `⌈n / p⌉ < |T|`. The bound is `n − 1` and not
+SH6g's `n − |T|`: a reliable residue may fall on a coin round, and the
+schedule cannot say which. **SH6p**
+(`floorChainDecidesWithinRoundsAtPeriod`) is the round count, in the
+paper's shape `(b + 1) · (ws + W)` with `W` the wait SH6n supplies, plus
+the one asynchronous wave a decision round in that range may carry.
+
+⚠ **The count is empty at the tight committee.** `⌈n / p⌉ ≥ 1` for every
+committee and every period, and at `ws = 3`, `n = 3f + 1` with a bare
+reliable quorum `|T| = n − f` the constant-wave bound `3f < 3f + 1` holds
+with exactly one round to spare, which the coin's rounds take. So SH6o
+and SH6p say nothing there, and the chain is bounded by the coin rather
+than by the schedule. The bound holds as soon as fewer than `f`
+validators lie outside `T`, or the committee is larger;
+`LeanDagTest/Steelhead/Counterexamples/PeriodicFairness.lean` has both
+the failure and two instances where it holds. The paper states the
+round count without a condition on the period, which is finding 12.
+
 ## 7. Findings for the paper
 
 1. **The control slots are fixed by rule, and the claims are per
@@ -1424,9 +1486,23 @@ is asked to hold.
     certificate into an anchor's history, so a faithful substrate is a
     core change, not an arc's.
 
+12. **Theorem 2's round count needs a condition on the period that the
+    body does not state.** The count rests on the round robin leading
+    `|T|` rounds of every cycle from the reliable set, and at a period a
+    coin round is led by nobody the schedule names. Deducting those
+    turns `ws · (n − |T|) < n` into
+    `ws · (n − |T|) + ws · ⌈n / p⌉ < n` (SH6o, SH6p), and since
+    `⌈n / p⌉ ≥ 1` always, the count says nothing at `ws = 3`,
+    `n = 3f + 1` with a bare reliable quorum, where the constant-wave
+    bound holds by exactly one round. There the chain is bounded by the
+    coin and not by the schedule. The second factor changes too: SH6g's
+    `n − |T|` becomes SH6n's `n − 1`, a reliable residue being able to
+    fall on a coin round. Both are on data in
+    `LeanDagTest/Steelhead/Counterexamples/PeriodicFairness.lean`.
+
 Findings 1, 4, 5, 6, 7, 8, 9 and 10 went to the authors and the paper's
 text is their result, so each is kept as the reason the paper now says
-what it says; 2, 3 and 11 describe divergences that stand.
+what it says; 2, 3, 11 and 12 describe divergences that stand.
 
 **Three behaviours of the implementation the arc does not reach**,
 recorded so that they are not taken for defects of either. The tail is
@@ -1464,6 +1540,7 @@ which a claim fails sit in `Counterexamples/`, one file per claim:
 | `I ≥ 2 · maxPeriod` makes a window hold a wave (§7, finding 8) | `ReplayShortWindow.lean` | `rw44_keeps_two` |
 | each hop of the anchor search costs `b/n` under the coin (§7, finding 9) | `HopBound.lean` | `hb36_hop_bound_fails` |
 | control slots read from the view give every validator the same anchor (issue #35, step 6; §7, finding 1) | `ControlSlotsFromView.lean` | `cv_anchors_differ` |
+| the fairness count that bounds the anchor search survives a mixed period at `n = 3f + 1` (§6.1; §7, finding 12) | `PeriodicFairness.lean` | `tight_committee_periodic_fails` |
 
 `Model.lean`: the wavelength arithmetic, the per-slot floors, the direct
 rules at each slot's own wave, the anchor route for the asynchronous slot
@@ -1649,6 +1726,7 @@ LeanDagTest/Steelhead/
   Counterexamples/
     Stall.lean  CoinDelay.lean  ByzantineFloor.lean  HopBound.lean  ReplayStartup.lean
     ReplayShortWindow.lean  RotatingStall.lean  ControlSlotsFromView.lean
+    PeriodicFairness.lean
 ```
 
 `scripts/check-arc-holes.py` enforces the partition: `Statement.lean`
