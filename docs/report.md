@@ -92,7 +92,7 @@ of rounds a horizon does not cut, and a validator pruned past its own history is
 a reader until it re-genesises, counting against the fault budget
 meanwhile.
 
-The development comprises roughly 68,000 lines of Lean 4 over Mathlib, of which 22,000 are witnesses. Every
+The development comprises roughly 75,000 lines of Lean 4 over Mathlib, of which 25,000 are witnesses. Every
 principal result depends on exactly Lean's three standard axioms; every
 definition is exercised on concrete models by `decide` before anything is
 proved from it. All displayed Lean in this report is drawn from the source
@@ -326,20 +326,7 @@ proof effort with no corresponding proof content.
    paper's `2/3` — and the core's per-candidate skip rule is weaker than
    the implementation's slot blame.
 
-18. **Async BlueBottle** (§24): the asynchronous variant of the
-   two-round rule — Odontoceti's arithmetic at a three-round wave with
-   the cone vote of Mahi-Mahi, decided by a single count at `r + 2` —
-   proved safe at `n ≥ 5f + 1` (`AsyncBlueBottle.Safety.holds` (ABB1–ABB5))
-   and live with **no synchrony hypothesis** under the same clause
-   (`AsyncBlueBottle.Liveness.holds` (ABB9)), the counting behind it
-   (`AsyncBlueBottle.goodCard` (ABB7)) giving `n − 3f` committed correct
-   candidates per wave at every `n ≥ 5f + 1` where the paper counts
-   `2f + 1` at the boundary. Two findings: agreement needs the canonical
-   candidate the paper's Observation 4 assumes away (ABB11), and the
-   paper's direct rule is order-dependent under equivocation (ABB12),
-   which the implementation's slot-level blame avoids.
-
-19. **Black Marlin** (§18): the three-round rule of a partially
+18. **Black Marlin** (§18): the three-round rule of a partially
    synchronous protocol with an anchor in every round and no certificate
    round, at the core's committee `n ≥ 3f + 1` — and **refuted**.
    §18.5 exhibits an execution, machine-checked at `n = 4`, `f = 1`, in
@@ -352,7 +339,20 @@ proof effort with no corresponding proof content.
    The arc is scoped to those refutations: a scheme this development has
    refuted is not one to integrate with §16's properties, so its safety,
    liveness, view-relative order and repair developments are not
-   carried, and it is the one rule of ten with no carrier.
+   carried, and it is the one rule of eleven with no carrier.
+
+19. **Async BlueBottle** (§24): the asynchronous variant of the
+   two-round rule — Odontoceti's arithmetic at a three-round wave with
+   the cone vote of Mahi-Mahi, decided by a single count at `r + 2` —
+   proved safe at `n ≥ 5f + 1` (`AsyncBlueBottle.Safety.holds` (ABB1–ABB5))
+   and live with **no synchrony hypothesis** under the same clause
+   (`AsyncBlueBottle.Liveness.holds` (ABB9)), the counting behind it
+   (`AsyncBlueBottle.goodCard` (ABB7)) giving `n − 3f` committed correct
+   candidates per wave at every `n ≥ 5f + 1` where the paper counts
+   `2f + 1` at the boundary. Two findings: agreement needs the canonical
+   candidate the paper's Observation 4 assumes away (ABB11), and the
+   paper's direct rule is order-dependent under equivocation (ABB12),
+   which the implementation's slot-level blame avoids.
 
 **Minnow's minimal commit rule fails in two ways** (§19). `crs*`, the
 rule proposed for eventual synchrony, decides a leader slot from the
@@ -10484,11 +10484,11 @@ the restatement rules out.
 
 `goodAt U r` is the set of validators whose round-`r` block is directly
 committed, §17.2's `good` with the wave fixed. **ABB6–ABB8**
-(`AsyncBlueBottle.Counting.holds`): under population by a reliable
-quorum `T` at the decision round, some correct validator's round-`r`
-block is committed (`AsyncBlueBottle.goodNonempty`) — the common core of
-§17.2 is reached by every round-`(r + 2)` block, and reaching a correct
-block is voting for it; under population at `r + 1` and `r + 2`,
+(`AsyncBlueBottle.Counting.holds`): under population by a quorum `T`
+at the decision round, correct or not, some correct validator's
+round-`r` block is committed (`AsyncBlueBottle.goodNonempty`) — the
+common core of §17.2 is reached by every round-`(r + 2)` block, and
+reaching a correct block is voting for it; under population at `r + 1` and `r + 2`,
 
     n ≤ |goodAt U r ∩ Correct| + 3f
 
@@ -10670,8 +10670,8 @@ rather than an unsatisfiable hypothesis.
 
 ## 26. Mechanisation
 
-The development comprises approximately 68,000 lines of Lean 4 (v4.32.2)
-against Mathlib, of which some 46,000 constitute the library and 22,000
+The development comprises approximately 75,000 lines of Lean 4 (v4.32.2)
+against Mathlib, of which some 49,000 constitute the library and 25,000
 the models of §25 and the witness files of the arcs. A full build reports
 no errors.
 
@@ -10886,9 +10886,9 @@ generalisation), `chain-quality.md` (§7), `dos-equivocation-and-growth.md`
 (§13), `hybrid-plan.md` (§14), `target-properties.md` (§16, whose
 opening part is the current statement of the properties), `mahi-mahi.md`
 (§17), `black-marlin.md` (§18), `minnow.md` (§19), `finwhale.md` (§20),
-`barnacle.md` (§21), `hydrozoan.md` (§22), `optimal-hydrozoan.md` (§23)
-and `bespoke-links.md` (the audit of what a mechanism reads), with
-`related.md` surveying the surrounding literature. Every statement in this report is drawn from the source.
+`barnacle.md` (§21), `hydrozoan.md` (§22), `optimal-hydrozoan.md` (§23),
+`async-bluebottle.md` (§24) and `bespoke-links.md` (the audit of what a
+mechanism reads), with `related.md` surveying the surrounding literature. Every statement in this report is drawn from the source.
 
 ---
 

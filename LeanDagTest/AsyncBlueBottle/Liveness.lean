@@ -45,7 +45,7 @@ example : good full6 1 = Finset.univ := by decide
 
 /-- The single-hit clause with windows of one: the only windows below the
 horizon `3` are at `k = 0, 1`. -/
-example : UnpredictableWithin full6 1 3 := by
+theorem full6_unpredictable : UnpredictableWithin full6 1 3 := by
   intro k hk
   have hk' : k ≤ 1 := by
     simp [AnchoredRule.decisionRound, asyncBlueBottleAnchored] at hk
@@ -55,7 +55,7 @@ example : UnpredictableWithin full6 1 3 := by
 
 /-- The run form with runs of two: below the horizon `4` the only window
 is `k = 0`, and slots `0, 1` are both good. -/
-example : UnpredictableRunWithin full6 1 2 4 := by
+theorem full6_unpredictableRun : UnpredictableRunWithin full6 1 2 4 := by
   intro k hk
   have hk' : k = 0 := by
     simp [AnchoredRule.decisionRound, asyncBlueBottleAnchored] at hk
@@ -71,7 +71,7 @@ example : UnpredictableRunWithin full6 1 2 4 := by
 -- whose round-robin leader is the starved validator.
 example : (1 : Fin 6) ∉ good aim6 0 := by decide
 
-example : ¬ UnpredictableWithin aim6 1 3 := by
+theorem aim6_not_unpredictable : ¬ UnpredictableWithin aim6 1 3 := by
   intro h
   obtain ⟨k', hk1, hk2, hgood⟩ := h 0 (by decide)
   have : k' = 0 := by omega
@@ -110,6 +110,8 @@ example : AsyncBlueBottle.Decided full6 (View.full full6) 0 (some 1) :=
 
 /-! ## Axioms -/
 
-#print axioms aim6
+#print axioms full6_unpredictable
+#print axioms full6_unpredictableRun
+#print axioms aim6_not_unpredictable
 
 end LeanDagTest

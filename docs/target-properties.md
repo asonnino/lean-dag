@@ -2192,6 +2192,7 @@ conformance `Statement` lists it.
 | Nemo | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | Hybrid / Orcaella | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Mahi-Mahi | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| Async BlueBottle | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | FinWhale | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | Steelhead | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | Black Marlin | — | — | — | — | — | — | — |

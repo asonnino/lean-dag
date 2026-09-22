@@ -237,7 +237,8 @@ and nothing else (`Counting/Statement.lean`):
   `r + 2`: some correct validator's round-`r` block is committed. The
   common core of round `r` is reached by every round-`(r + 2)` block,
   and reaching a correct block is voting for it. One populated round,
-  at `n ≥ 3f + 1`.
+  at `n ≥ 3f + 1`, and `T` need only be a quorum: its correctness is
+  not used, which is where ABB7 differs.
 - **ABB7, `GoodCard`.** With `T` populating `r + 1` and `r + 2`:
   `n ≤ |goodAt U r ∩ Correct| + 3f`. The paper's Lemmas 27–30 count, at
   `n = 5f + 1`, the correct round-`r` blocks referenced by `f + 1`

@@ -44,13 +44,14 @@ def CommonCore (U : BlockUniverse Validator BlockId Payload) : Prop :=
 
 /-- **ABB6, some correct candidate commits.** Some correct validator's
 round-`r` block is directly committed: the common core of round `r` is
-reached by every decision-round block, so every reliable decision-round
-block votes for it, and the reliable ones are a quorum. One populated
-round, and no use of the `5f + 1` committee. -/
+reached by every decision-round block, so every decision-round block of
+the populating quorum votes for it, whoever its author is. One populated
+round, a quorum that need not be correct (unlike ABB7's), and no use of
+the `5f + 1` committee. -/
 def GoodNonempty (U : BlockUniverse Validator BlockId Payload) : Prop :=
   ∀ (T : Finset Validator) (r : ℕ),
-    -- T is a reliable set: correct, and a quorum
-    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    -- T is a quorum; its correctness is not needed
+    quorumCard Validator ≤ T.card →
     -- every member of T has a block at the decision round r + 2 (so the
     -- common core exists, and the votes form a quorum)
     PopulatedOn U T (r + 2) →

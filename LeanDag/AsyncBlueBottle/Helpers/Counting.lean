@@ -47,7 +47,8 @@ theorem directCommit_of_reach {r : ℕ} {L : BlockId} {T : Finset Validator}
   exact ⟨q, hq, hqr, MahiMahi.votes_of_reaches hq hL hLc (hreach q hq hqr), hqc⟩
 
 /-- **ABB6.** The common core of round `r` is reached by every block two
-rounds up, so every reliable decision-round block votes for it. -/
+rounds up, so every decision-round block of the populating quorum votes
+for it — correct or not. -/
 theorem goodNonempty {T : Finset Validator} {r : ℕ}
     (hcard : quorumCard Validator ≤ T.card) (hpop : PopulatedOn U T (r + 2)) :
     (goodAt U r ∩ (Correct : Finset Validator)).Nonempty := by
