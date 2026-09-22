@@ -235,6 +235,17 @@ from coverage into certification; the unpredictable-leader clause.
   abstained, and the layer cake of the tail probabilities gives the
   appendix's `1 / P₂` rounds. No DAG and no consensus: the arrival model
   is the appendix's assumption, and only the arithmetic is checked.
+- **SH21, the `5f + 1` pair** (§3): the second pair the paper
+  instantiates, BlueBottle's two variants on one committee at
+  `n ≥ 5f + 1`, Odontoceti at wave two and Async BlueBottle at wave
+  three. Both halves satisfy the laws at their own wave, which is the
+  paper's clauses A2 and A3 for them (SH21a), and they agree on the rung
+  count and the tie-break, which is all a pair owes beyond the laws
+  (SH21b); so SH16a and SH16b apply and the composite's verdicts agree
+  across views (SH21c) and hand a direct commit over to an anchor decided
+  by the other rule (SH21d). Unlike the `3f + 1` pair the two halves are
+  two predicate families, and their floors differ, `r + 2` against
+  `r + 3` (SH21e).
 
 ### 0.1 Correspondence with the paper
 
@@ -244,7 +255,7 @@ from coverage into certification; the unpredictable-leader clause.
 | Lemma 1 (certificate uniqueness; a skipped block is never certified) | SH1a, SH1b | Mahi-Mahi's lemmas at the slot's wave |
 | Lemma 2 (quorum intersection across the wave) | SH1c | at `r + w κ` for a slot of kind `κ`, whatever the block's own wave |
 | Corollary 1 (handover) | SH3 | stated against the relation's anchor search |
-| Theorem 1 (agreement) | SH2, SH16 | `AnchoredRule.decided_unique` at Steelhead's laws; at the interface level, any family of rules whose laws hold composes into one whose laws hold, and Steelhead is the composite of Mahi-Mahi's rule at each kind's wave |
+| Theorem 1 (agreement) | SH2, SH16, SH21 | `AnchoredRule.decided_unique` at Steelhead's laws; at the interface level, any family of rules whose laws hold composes into one whose laws hold, and Steelhead is the composite of Mahi-Mahi's rule at each kind's wave. Both pairs the paper instantiates are on record: the `3f + 1` one as SH16c and the `5f + 1` one, Odontoceti at wave two with Async BlueBottle at wave three, as SH21, which discharges the clauses the paper's discharge table leaves open for it |
 | Corollary 2 (total order and integrity) | SH13 | in part: the relation's own ledger theorems at Steelhead's laws, over a settled prefix. Ordering the blocks a single commit releases is declined development-wide (report §1.4, §5.6) |
 | Theorem 2 (liveness under partial synchrony) | SH6a, SH6b, SH6c, SH6d, SH6e, SH6f, SH6g, SH6h, SH6i, SH6j, SH11j, SH11k, SH6k, SH6l | in part: the honest-leader commit by the direct rule, everything below a fair run, the crashed-leader skip from `n − f` blames, the remark that partial dissemination does not defer, for a leader that did not equivocate, and the anchor clause as the rule has it, a slot decided once every slot from its floor up to some reliably led slot is decided (SH6e) or once the chain of floors reaches a reliably led landing (SH6f), which is how the theorem now states its anchor clause; its earlier form, "once the first honest-led slot above its floor commits, at most `b` slots higher", was refuted on data, an equivocating leader at the floor being the anchor (§7, finding 7). What holds at the implementation's round-robin schedule is the hop count, a reliably led landing within `n − |T|` hops once `ws · (n − |T|) < n` (SH6h), within the paper's `b` hops once every other validator outside `T` has crashed (SH6i), and a round count, one reliable leader within `n − |T|` rounds and a reliable run of three past every round at `n = 3f + 1` (SH6g), which also discharges SH6b's fairness hypothesis there; and the theorem's `(b + 1)(ws + f)` rounds above a synchronous floor, as `(b + 1) · (ws + (n − |T|))` rounds above an unskipped slot at the schedule of SH6i (SH6j). No per-hop probability holds for the coin's slots, a landing of the search reading coins above it (`HopBound.lean`; §7, finding 9); what holds is SH11i, the tail below runs of `wa` good coins at period one, and its mean, the search waiting for at most `1 / p^wa` blocks of `wa` rounds in expectation, the `wa / p^wa` the theorem states (SH11j), at both waves, `n^wa` blocks at `wa ≥ 4` (SH11k). The ordering of the coin's slots holds in expectation and almost surely (SH15e), not for every coin sequence (§7, finding 5). SH6a's hypothesis is reached from either execution discipline, the reactive one (SH6k) and the timed one (SH6l); what neither bounds is a wall-clock latency, since a round is the only unit the model carries |
 | Theorem 3 (i) (the control verdicts resolve, the period reaches `1`) | SH7a, SH7c, SH10c, SH10d, SH10e, SH11 | the control verdicts of a scan settle under Mahi-Mahi's run clause at that scan's schedule and, at the coin schedule, below any one run of `wa` good coins, a period is derived for each interval, and an anchor below which the agreed output committed nothing for `I` rounds hands the next interval period `1`, the failover the theorem's premise states and the implementation applies before the rule is consulted (`apply_period_update`; §7, finding 4). The coin is modelled by its effect and as a `PMF`: the commit probability `(n − f − b) / n` at `wa ≥ 5` (SH11a) and `1 / n` at `wa ≥ 4` (SH11b), and the tail at both waves (SH15a, SH15d). The "with probability `1`" is SH15e over a sequence of records, SH15a's tail on one, and "some scan finds its anchor" is SH15f, the same over the anchored interval |
@@ -356,16 +367,36 @@ interface. `compose rules` (`Model/Compose.lean`) is the composite of a
 family of anchored rules, one per kind: a slot of kind `κ`
 takes its wave offset, direct predicates and rungs of link from
 `rules κ`, and the rung count and tie-break, which the relation reads
-without a slot, from the rule of kind `0`. **SH16**
+without a slot, from the rule of kind `0`. **SH16a** and **SH16b**
 (`Interface/Statement.lean`): if every rule of the family satisfies
 `AnchoredRule.Laws` and the family agrees on rungs and ties, the
 composite does (SH16a), each law at a slot being the slot's rule's, the
 anchor's rule never entering; the composite's verdicts then agree across
-views (SH16b); and `steelheadAnchored w` is the composite of Mahi-Mahi's
-rule read at `w κ`, by definition (SH16c), so SH2 is an instance. The
-laws are clauses A2 and A3 in the relation's terms; a pair the paper's
-discharge table leaves open is outside the theorem until they are
-discharged. **SH19** (`Interface/Statement.lean`) states the periodic
+views (SH16b). The laws are clauses A2 and A3 in the relation's terms.
+
+The two pairs the paper instantiates are stated in sibling directories,
+at the two families `Model/Pair.lean` names, so that neither is the
+interface's default. **SH16c** (`MahiMahiPair/Statement.lean`):
+`steelheadAnchored w` is the composite of `mahiMahiPair w`, Mahi-Mahi's
+rule read at `w κ`, by definition, so SH2 is an instance of SH16b.
+**SH21** (`BlueBottlePair/Statement.lean`) does the same for
+`blueBottlePair`, Odontoceti at wave two and Async BlueBottle at wave
+three on a `5f + 1` committee. Both halves already carry
+`AnchoredRule.Laws` in their own arcs, `odontocetiLaws` and
+`asyncBlueBottleLaws`, and both run one rung and break ties by the least
+candidate, so the family's two side conditions hold by `rfl` (SH21a,
+SH21b) and the composite's laws and agreement follow (SH21c). The
+handover (SH21d) is the one place the pair costs more than the `3f + 1`
+one: there the rung's link is a certificate, unique per slot, so the tie
+is empty and `indirectCommit_single` applies, while here each half lets
+several candidates pass and the commit has to be identified with the
+tie-break's choice, which each arc supplies as the strong form of its
+fourth law. The floors differ, `r + 2` against `r + 3` (SH21e), and
+`LeanDagTest/Steelhead/BlueBottlePair.lean` runs both halves on one
+universe under one schedule. What the paper's discharge table leaves
+open for this pair, clauses A2 and A3, is `commit_link` and `skip_link`
+of SH21a. **SH19**
+(`MahiMahiPair/Statement.lean`) states the periodic
 class: `wavelength ws wa`, the paper's dial read at the kinds a period
 assigns, is a wavelength function the results of this arc take, every
 kind's wave at least two and at most `max ws wa`, so an identity-round
@@ -1594,6 +1625,7 @@ LeanDag/Steelhead/
                             coinOfBlocksFrom, coinMeasure
   Model/Reactive.lean       ReactiveS
   Model/Compose.lean        compose
+  Model/Pair.lean           mahiMahiPair, blueBottlePair, blueBottlePairAnchored
   Model/Replay.lean         Evidence, Config, Timing, windowIds, ofAnchor, committedCount,
                             probeRate, timingAt, firstCommitAt, gateAt, score, prefer, best,
                             select, candidatesUpto, update, anchorUpdate
@@ -1603,7 +1635,9 @@ LeanDag/Steelhead/
   Period/Statement.lean     SH10, SH14a     Period/Proof.lean
   Coin/Statement.lean       SH11, SH15     Coin/Proof.lean
   Ledger/Statement.lean     SH13           Ledger/Proof.lean
-  Interface/Statement.lean  SH16, SH19     Interface/Proof.lean
+  Interface/Statement.lean  SH16a, SH16b   Interface/Proof.lean
+  MahiMahiPair/Statement.lean  SH16c, SH19 MahiMahiPair/Proof.lean
+  BlueBottlePair/Statement.lean  SH21      BlueBottlePair/Proof.lean
   Broadcast/Statement.lean  SH17           Broadcast/Proof.lean
   Replay/Statement.lean     SH18           Replay/Proof.lean
   Timeout/Statement.lean    SH20           Timeout/Proof.lean
@@ -1611,6 +1645,7 @@ LeanDag/Steelhead/
   Properties.lean           the carrier, its properties and support
 LeanDagTest/Steelhead/
   Model.lean  Period.lean  AdaptiveCoin.lean  Replay.lean  Failover.lean  Axioms.lean
+  BlueBottlePair.lean
   Counterexamples/
     Stall.lean  CoinDelay.lean  ByzantineFloor.lean  HopBound.lean  ReplayStartup.lean
     ReplayShortWindow.lean  RotatingStall.lean  ControlSlotsFromView.lean

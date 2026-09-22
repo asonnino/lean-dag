@@ -47,6 +47,7 @@ import LeanDagTest.MahiMahi.Axioms
 import LeanDagTest.MahiMahi.Counting
 import LeanDagTest.MahiMahi.Liveness
 import LeanDagTest.Steelhead.Model
+import LeanDagTest.Steelhead.BlueBottlePair
 import LeanDagTest.Steelhead.Period
 import LeanDagTest.Steelhead.AdaptiveCoin
 import LeanDagTest.Steelhead.Replay

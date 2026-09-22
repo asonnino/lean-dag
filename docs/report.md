@@ -9599,7 +9599,30 @@ being the slot's rule's, the anchor's rule never entering; its verdicts
 then agree across views (`Steelhead.compose_decided_unique`); and
 `steelheadAnchored w` is the composite of Mahi-Mahi's rule read at
 `w κ`, by definition (`Steelhead.steelheadAnchored_eq_compose`), so SH2
-is an instance. **SH19** (`Steelhead.periodicClass`) is the periodic
+is an instance.
+
+**The second pair** (SH21). The paper instantiates the interface twice,
+and the two instantiations sit in sibling directories at the two
+families `Model/Pair.lean` names, so neither is the interface's default.
+`blueBottlePair` is BlueBottle's own two variants on one `n ≥ 5f + 1`
+committee: Odontoceti at wave two (§10) at the synchronous kind, and
+Async BlueBottle at wave three (§25) elsewhere. **SH21**
+(`Steelhead.BlueBottlePair.holds`): both halves already carry the laws
+in their own arcs, `Odontoceti.odontocetiLaws` and
+`AsyncBlueBottle.asyncBlueBottleLaws`, which is what the paper's clauses
+A2 and A3 ask of them; both run a single rung and break ties by the
+least candidate, so the family's two side conditions hold by `rfl`; and
+the composite's laws and agreement are then SH16's at this family. The
+handover costs more here than at the `3f + 1` pair: there the rung's
+link is a certificate, unique per slot, so the tie is empty, while each
+half of this pair lets several candidates of one slot pass the indirect
+test, and the direct commit has to be identified with the tie-break's
+choice, which each arc supplies as the strong form of its fourth law.
+The two floors differ, `r + 2` above a synchronous slot against `r + 3`
+above an asynchronous one, and
+`LeanDagTest/Steelhead/BlueBottlePair.lean` runs both halves on one
+universe under one schedule, so neither is vacuous where the other
+fires. **SH19** (`Steelhead.periodicClass`) is the periodic
 class: the pair `wavelength ws wa`, the paper's dial read at the kinds a
 period assigns, is a wavelength function the arc's results take, every
 kind's wave at least two and at most `max ws wa`, so an identity-round
@@ -11758,10 +11781,11 @@ reused.
 | SH13 | the ledger: the committed-leader sequence and the ledger of a settled prefix are agreed, the ledger is monotone, a block enters at one slot which both views name, and a committed block belongs to one slot | `Steelhead.Ledger.holds` *(Steelhead/Ledger/Proof)* |
 | SH14a | output liveness under the failover: a slot below an anchored interval is decided once a run of `wa` coin-led commits above that interval is in view, since the agreed output waits below the slot and the failover then puts the period at `1` from the interval after the anchored one, where the run decides everything below it; under the run clause at every control schedule in range every slot far enough below the horizon is decided, and a good coin at the first control round of an interval past the slot's with `wa` good coins above it decide it | `Steelhead.output_liveness`, `Steelhead.all_decided`, `Steelhead.output_liveness_of_runs` *(Steelhead/Helpers/Period)* |
 | SH15 | the tail of the output: over the coins of `M` blocks of `wa · K` rounds opening every `q`-th interval after a slot's, at `wa · K ≤ q · I`, the slot stays undecided under the failover with probability at most `2 · ((n^(wa·K) − (n − f − |byzantine|)^(wa·K)) / n^(wa·K))^(M/2)`, which tends to zero, and at wave four with `1` in place of `n − f − |byzantine|`; and over a sequence of records with the coin drawn as a process, for almost every coin some record decides the slot in every view holding its horizon, some record anchors an interval above the slot's, and every slot at once, each with its own sequence of records; both against an adversary that answers the draws already made and keeps a floor of committed candidates per round; and a period sequence matching what a view derives exists | `Steelhead.undecidedProb_le`, `Steelhead.no_good_block_prob_le`, `Steelhead.undecided_tail_tendsto_zero`, `Steelhead.undecidedProb_le_four`, `Steelhead.undecided_tail_four_tendsto_zero`, `Steelhead.decidedAlmostSurely`, `Steelhead.anchoredAlmostSurely`, `Steelhead.allDecidedAlmostSurely`, `Steelhead.coinMeasure_blockCoins_mem`, `Steelhead.undecidedProb_le_adaptive`, `Steelhead.decidedAlmostSurely_adaptive`, `Steelhead.matchingPer_matches` *(Steelhead/Helpers/Coin)* |
-| SH16 | the interface composes: a family of rules whose laws hold, agreeing on rungs and ties, composes into a rule whose laws hold and whose verdicts agree across views; Steelhead's rule is the composite of Mahi-Mahi's at each kind's wave | `Steelhead.Interface.holds`, `Steelhead.compose_laws`, `Steelhead.compose_decided_unique`, `Steelhead.steelheadAnchored_eq_compose` *(Steelhead/Interface/Proof, Steelhead/Helpers/Compose)* |
+| SH16 | the interface composes: a family of rules whose laws hold, agreeing on rungs and ties, composes into a rule whose laws hold and whose verdicts agree across views; Steelhead's rule is the composite of Mahi-Mahi's at each kind's wave | `Steelhead.Interface.holds`, `Steelhead.compose_laws`, `Steelhead.compose_decided_unique`, `Steelhead.MahiMahiPair.holds`, `Steelhead.steelheadAnchored_eq_compose` *(Steelhead/Interface/Proof, Steelhead/Helpers/Compose, Steelhead/MahiMahiPair/Proof, Steelhead/Helpers/MahiMahiPair)* |
 | SH17 | atomic broadcast over settled prefixes: a delivered block is delivered by every view whose settled prefix is as long, is a block of the record entering at one slot, a reliable block is delivered with the first committed reliable leader two rounds up under synchrony and, under asynchrony, with the first committed slot above the round by which the reliable validators have referenced it, and two blocks enter at the same slots in every view | `Steelhead.Broadcast.holds`, `Steelhead.reaches_of_eventualReference` *(Steelhead/Broadcast/Proof, Steelhead/Helpers/Broadcast)* |
 | SH18 | the replay: the selection stays among the candidates and never worsens the score; a committed candidate of the window is certified and a skipped one is not; at a round of the window whose boost and decision rounds a quorum has populated within the anchor's history, at least `n − f − |byzantine|` authors are marked committed; Algorithm 3 keeps the period in range; the window's commit weight is the rule's commit probability on the window read as a record; a coprime canary always probes | `Steelhead.Replay.holds`, `Steelhead.Replay.select_mem`, `Steelhead.Replay.select_score_le`, `Steelhead.Replay.certified_of_commits`, `Steelhead.Replay.not_certified_of_skips`, `Steelhead.Replay.window_count`, `Steelhead.Replay.anchorUpdate_range`, `Steelhead.Replay.commitWeight_eq_commitProb`, `Steelhead.Replay.probe_exists` *(Steelhead/Replay/Proof, Steelhead/Helpers/Replay)* |
-| SH19 | the periodic class: the pair `wavelength ws wa`, the paper's dial read at the kinds a period assigns, is a wavelength function the arc's results take, every kind's wave at least two and at most `max ws wa`, so an identity-round schedule spans at that wave and agreement, the extension laws and the support's laws hold at it; and at `ws ≠ wa` the two kinds read two waves, both of which a period `k ≥ 2` assigns | `Steelhead.Interface.holds`, `Steelhead.periodicClass`, `Steelhead.wavelength_two_le`, `Steelhead.wavelength_le_max`, `Steelhead.wavelength_waveAt_ne`, `Steelhead.periodicKind_not_const` *(Steelhead/Interface/Proof, Steelhead/Helpers/Compose, Steelhead/Helpers/Decision)* |
+| SH19 | the periodic class: the pair `wavelength ws wa`, the paper's dial read at the kinds a period assigns, is a wavelength function the arc's results take, every kind's wave at least two and at most `max ws wa`, so an identity-round schedule spans at that wave and agreement, the extension laws and the support's laws hold at it; and at `ws ≠ wa` the two kinds read two waves, both of which a period `k ≥ 2` assigns | `Steelhead.MahiMahiPair.holds`, `Steelhead.periodicClass`, `Steelhead.wavelength_two_le`, `Steelhead.wavelength_le_max`, `Steelhead.wavelength_waveAt_ne`, `Steelhead.periodicKind_not_const` *(Steelhead/MahiMahiPair/Proof, Steelhead/Helpers/MahiMahiPair, Steelhead/Helpers/Decision)* |
+| SH21 | the `5f + 1` pair: BlueBottle's two variants on one committee, Odontoceti at wave two and Async BlueBottle at wave three, each satisfying the laws at its own wave, which is the paper's clauses A2 and A3 for it; the two agree on the rung count and the tie-break, so the composite's laws and agreement follow from SH16, a direct commit is handed over to an anchor decided by the other rule, and the two floors differ, `r + 2` against `r + 3` | `Steelhead.BlueBottlePair.holds`, `Steelhead.BlueBottlePair.halvesLawful`, `Steelhead.BlueBottlePair.pairAgreesOnRungsAndTie`, `Steelhead.BlueBottlePair.blueBottlePairLaws`, `Steelhead.BlueBottlePair.pairHandover`, `Steelhead.BlueBottlePair.pairWavesDiffer` *(Steelhead/BlueBottlePair/Proof, Steelhead/Helpers/BlueBottlePair)* |
 
 
 ---
@@ -11770,7 +11794,7 @@ reused.
 
 ## Appendix B. The definition reference
 
-The 361 definitions and structures the report names, in
+The 362 definitions and structures the report names, in
 the order a reader meets them. Each entry is the source text,
 unabridged, with the explanation the source carries. This
 appendix is generated from the compiled development by
@@ -13712,6 +13736,20 @@ structure ReactiveS (U : BlockUniverse Validator BlockId Payload) (T : Finset Va
 ```
 
 **Steelhead's reactive schedule** at the wavelength function `w`, the leader wait at the rounds `waits` names: the core's pace, the reactive ceiling, the leader wait at the round above a reliable leader of a waiting round, and the certificate wait at the wave of three. At two rounds above such a leader, any `T`-authored block either already certifies, or its builder waited the full timeout and references every reliable vote it holds. Above wave three the certificate clause says nothing: reachability carries the votes, so the discipline is the core's own.
+
+#### `blueBottlePair`
+
+*def, `Steelhead.Model.Pair.lean`*
+
+```lean
+def blueBottlePair (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults5 Validator] [LinearOrder BlockId] :
+    ℕ → AnchoredRule Validator BlockId Payload ValidWrt Correct :=
+  fun κ => if κ = 0 then Odontoceti.odontocetiAnchored Validator BlockId Payload
+    else AsyncBlueBottle.asyncBlueBottleAnchored Validator BlockId Payload
+```
+
+**The `5f + 1` pair as a family**: Odontoceti at the synchronous kind, wave two, and Async BlueBottle at every other kind, wave three. Unlike `mahiMahiPair` the two members are different rules, agreeing only on the rung count and the tie-break, which is what the interface asks of a family and all it asks.
 
 ### Async BlueBottle: the two-round rule at a three-round wave
 
@@ -17894,7 +17932,7 @@ def Good (R : DagRule Validator BlockId Payload) (rel : Reliability Validator)
 
 ## Appendix C. The theorem reference
 
-The 532 theorems the body or Appendix A names, each
+The 534 theorems the body or Appendix A names, each
 the source statement, unabridged. Generated with Appendix B;
 a theorem the report does not name is a step of an argument
 rather than a result it presents, and the source is its
@@ -20814,6 +20852,22 @@ theorem holds : Statement
 #### `holds`
 
 *theorem, `Steelhead.Interface.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.MahiMahiPair.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.BlueBottlePair.Proof.lean`*
 
 ```lean
 theorem holds : Statement

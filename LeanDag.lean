@@ -379,6 +379,13 @@ import LeanDag.Steelhead.Model.Compose
 import LeanDag.Steelhead.Interface.Statement
 import LeanDag.Steelhead.Helpers.Compose
 import LeanDag.Steelhead.Interface.Proof
+import LeanDag.Steelhead.Model.Pair
+import LeanDag.Steelhead.MahiMahiPair.Statement
+import LeanDag.Steelhead.Helpers.MahiMahiPair
+import LeanDag.Steelhead.MahiMahiPair.Proof
+import LeanDag.Steelhead.BlueBottlePair.Statement
+import LeanDag.Steelhead.Helpers.BlueBottlePair
+import LeanDag.Steelhead.BlueBottlePair.Proof
 import LeanDag.Steelhead.Broadcast.Statement
 import LeanDag.Steelhead.Helpers.Broadcast
 import LeanDag.Steelhead.Broadcast.Proof
