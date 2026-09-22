@@ -38,7 +38,7 @@ PROTOCOL = (
     "LeanDag.Nemo.", "LeanDag.Hybrid.", "LeanDag.MahiMahi.",
     "LeanDag.FinWhale.", "LeanDag.BlackMarlin.", "LeanDag.OptimalHydrozoan.",
     "LeanDag.Reactive.Mysticeti", "LeanDag.Reactive.Odontoceti",
-    "LeanDag.Minnow",
+    "LeanDag.Minnow", "LeanDag.AsyncBlueBottle.",
 )
 
 # The conformance layer: where a protocol states the properties it shows.
@@ -53,6 +53,7 @@ CONFORMANCE = (
     "LeanDag.Nemo.Carrier", "LeanDag.Nemo.Properties",
     "LeanDag.Hybrid.Carrier", "LeanDag.Hybrid.Properties",
     "LeanDag.OptimalHydrozoan.Carrier", "LeanDag.OptimalHydrozoan.Helpers.Banded",
+    "LeanDag.AsyncBlueBottle.Carrier", "LeanDag.AsyncBlueBottle.Properties",
     "LeanDag.Barnacle.Helpers.DagRule", "LeanDag.Barnacle.Helpers.Descent",
 )
 
@@ -64,6 +65,7 @@ CONFORMING = (
     "LeanDag.Common.Participation", "LeanDag.Hydrozoan.", "LeanDag.Odontoceti.",
     "LeanDag.Nemo.", "LeanDag.Hybrid.", "LeanDag.OptimalHydrozoan.",
     "LeanDag.Reactive.Mysticeti", "LeanDag.Reactive.Odontoceti",
+    "LeanDag.AsyncBlueBottle.",
 )
 
 # Every decision relation named by a protocol rather than by a carrier
@@ -73,7 +75,8 @@ RELATION = re.compile(
     r"^LeanDag\.(Decided|DecidedWithin"
     r"|Hydrozoan\.Decided|Odontoceti\.Decided|Odontoceti\.DecidedWithin"
     r"|Nemo\.Decided|Hybrid\.Decided|MahiMahi\.Decided"
-    r"|OptimalHydrozoan\.DecidedOpt)(\.|$)")
+    r"|OptimalHydrozoan\.DecidedOpt"
+    r"|AsyncBlueBottle\.Decided|AsyncBlueBottle\.DecidedWithin)(\.|$)")
 
 AUTO = ("._proof_", ".match_", "._simp_", "._eq_", "._sunfold", ".congr_simp",
         "._cstage", ".noConfusion", ".injEq", ".sizeOf_spec", "._sizeOf_",

@@ -80,7 +80,8 @@ the verdicts read, agreement, candidacy, the indirect rule, and a
 *support* saying what a commit counts — is enough for every mechanism
 to be proved against, and every rule with a carrier shows them: the
 core and its reactive execution, Odontoceti, Nemo-Nemo, Orcaella,
-Mahi-Mahi, FinWhale, Hydrozoan and Optimal-Hydrozoan. Two headline
+Mahi-Mahi, Async BlueBottle, FinWhale, Hydrozoan and Optimal-Hydrozoan.
+Two headline
 theorems then say what a rule gets — safety across any stack of cuts,
 fills and re-genesis, and liveness with certification as the only
 antecedent, so that a timed and a reactive execution share it — and
@@ -528,14 +529,16 @@ and Hydrozoan's dual-path rule under hybrid faults
 (`Hydrozoan.SlotAgreement.holds` (HZ3), `Hydrozoan.Grounding.holds` (HZ8)), and
 its Optimal variant's fast path at Hydrangea's bound
 (`OptimalHydrozoan.SlotAgreement.holds` (OH3), `OptimalHydrozoan.DirectLiveness.holds` (OH5)),
-and Steelhead's two rules at one wavelength function
-(`Steelhead.Safety.holds` (SH2), `Steelhead.stall` (SH8)).
+Steelhead's two rules at one wavelength function
+(`Steelhead.Safety.holds` (SH2), `Steelhead.stall` (SH8)),
+and Async BlueBottle's two-round rule at a three-round wave
+(`AsyncBlueBottle.Safety.holds` (ABB1), `AsyncBlueBottle.Liveness.holds` (ABB9)).
 
 **The development has four kinds of arc, and the source says which each
 is.** A **commit rule** carries a universe, a decision relation, the
 properties it shows and the mechanisms it earns: the core, Odontoceti,
-Nemo, Hybrid, Mahi-Mahi, Hydrozoan, Optimal-Hydrozoan, FinWhale, and the
-two refuted ones, Black Marlin and Minnow. A **universe transform**
+Nemo, Hybrid, Mahi-Mahi, Async BlueBottle, Hydrozoan, Optimal-Hydrozoan,
+FinWhale, and the two refuted ones, Black Marlin and Minnow. A **universe transform**
 rewrites the DAG and owes a witness that it does so lawfully —
 garbage collection's cut, Safe Skip's fill, re-genesis. A **schedule
 mechanism** rewrites the `Slots` a rule runs on and touches no universe
@@ -765,7 +768,7 @@ view can only under-report the record (`HoldsAtLeast.le`), that the full
 view holds everything (`HoldsAtLeast.full`) and that a view covering the
 set's rounds holds all of it (`HoldsAtLeast.of_coversUpto`) are each
 proved once and read at every rule: every `commit_mono` and `skip_mono`
-law of the eight rules is `HoldsAtLeast.mono`.
+law of the nine rules is `HoldsAtLeast.mono`.
 
 Non-equivocation is stated at the level of the universe, and must be. A
 per-view formulation is strictly weaker: two views could each satisfy "at most
@@ -5325,7 +5328,8 @@ def Includes : Prop :=
 
 Every rule instantiates both in one line — `MysticetiProperties.safety`
 and `MysticetiProperties.liveness` for the core and its reactive
-execution, and likewise for Odontoceti, Hybrid and Mahi-Mahi; Nemo,
+execution, and likewise for Odontoceti, Hybrid, Mahi-Mahi and Async
+BlueBottle; Nemo,
 FinWhale, Hydrozoan and Optimal-Hydrozoan, whose models carry no
 self-parent clause at the carrier, show `safety` and `progress`.
 
@@ -8136,7 +8140,8 @@ decision predicate local to a wave, and safety and liveness for every
 fixed configuration.
 
 This chapter proves the mechanism safe and live over an explicit
-interface rendering A1–A4, instantiated at every rule with a carrier, and states what
+interface rendering A1–A4, instantiated at every rule with a carrier but
+Async BlueBottle (a follow-up, `async-bluebottle.md` §10), and states what
 the paper's own schedule needs of its base protocols. Its results carry
 **BN**-labels; the arc is laid out under the statement/proof partition of §17.5. The structural observation that shapes it is that the paper's
 algorithm **decides under the count in force and only then switches**:
@@ -8459,7 +8464,7 @@ would inject `Fin n` into `Fin waveLength × Tᶜ`. The bound is sharp:
 Mysticeti's committee bound `3f + 1 ≤ n` is exactly this at
 `waveLength = 3`, `slack = f`.
 
-**BN10.** Every rule with a carrier instantiates the interface — Mysticeti, Odontoceti, Nemo-Nemo, Orcaella, Mahi-Mahi, FinWhale, Hydrozoan (§22.7) and Optimal-Hydrozoan (§23.7) — and the four discussed here each satisfy the laws and the descent laws — Odontoceti's indirect law commits the
+**BN10.** Every rule with a carrier but Async BlueBottle instantiates the interface — Mysticeti, Odontoceti, Nemo-Nemo, Orcaella, Mahi-Mahi, FinWhale, Hydrozoan (§22.7) and Optimal-Hydrozoan (§23.7); Async BlueBottle's instance is a follow-up (`async-bluebottle.md` §10) — and the four discussed here each satisfy the laws and the descent laws — Odontoceti's indirect law commits the
 least candidate with a thick link, the canonicity clause of §10;
 Nemo-Nemo's good set is any synchronised majority, which misses
 `n − majority` validators, so its slack is that and not `f`, and its
@@ -11266,7 +11271,7 @@ The same foundation carries every development after it unchanged —
 which is the strongest evidence the abstraction is placed correctly —
 and the developments are in turn carried by a second abstraction above
 them: four properties of a commit rule and a
-support, against which each mechanism is proved once and which nine
+support, against which each mechanism is proved once and which ten
 rules show (§16.1). The denial-of-service account reuses the delivery layer and
 the self-parent clause; garbage collection reuses every theorem verbatim on
 the truncated universe, because truncation is arranged to be a universe; and
@@ -11282,7 +11287,7 @@ latency, block-level total order, and liveness below the growth clause.
 Beyond those, two directions suggest themselves. The commit-free,
 evidence-based horizon rule sketched in the garbage-collection document
 would extend pruning into asynchrony; and the properties, having
-absorbed every mechanism here, are the interface a tenth rule would be
+absorbed every mechanism here, are the interface an eleventh rule would be
 written against — the cost of adding one is the band and the support, and everything else is a line.
 
 ---

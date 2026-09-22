@@ -149,8 +149,8 @@ def Commits (rel : Reliability Validator) : Prop :=
 
 `voteSupport` (wave one, certifying is referencing) has Law 1 for any
 rule, so Odontoceti, Nemo and Hybrid owe Law 2 alone. The core,
-Mahi-Mahi, FinWhale, Hydrozoan and Optimal-Hydrozoan have their own
-supports; the last three a second, fast-path one at a stronger fault
+Mahi-Mahi, Async BlueBottle, FinWhale, Hydrozoan and Optimal-Hydrozoan
+have their own supports; the last three a second, fast-path one at a stronger fault
 model.
 
 The precondition every liveness theorem reads is `Support.live rel S V
