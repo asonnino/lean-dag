@@ -288,7 +288,7 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   the canonical candidate the paper's Observation 4 assumes away, and
   the paper's `TryDirectDecide` is order-dependent under equivocation,
   which the implementation's slot-level blame avoids — both realised on
-  data.
+  data, and both already repaired in the paper's current draft.
 - **Black Marlin** (`LeanDag/BlackMarlin/`): the three-round commit rule
   of a partially synchronous protocol (DISC 2025) that uses neither
   reliable broadcast nor a common coin and elects an anchor in **every

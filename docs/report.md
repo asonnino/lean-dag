@@ -10453,28 +10453,32 @@ ABB4′), where `n ≥ 5f + 1` is required. **ABB1″**
 composition: the blame is Mahi-Mahi's at wave four, whose voting round is
 also `r + 2`, block for block.
 
-**The canonical candidate, again.** The paper's Observation 4 assumes
-that at most one block per author and round counts as valid, and its
-agreement argument (Lemmas 22 and 23) rests on it; the DAG of its own
-Figure 1 holds an equivocation, and so does the implementation, which
-breaks ties by digest. Without a tie, two twins can both pass the weak
-test at one anchor — the counting that would separate them needs
-`2(n − 3f) − f > n`, false at `n = 5f + 1` — and `twin6_both_pass`
-(ABB11) realises the configuration on six validators. The indirect
-commit therefore names the least passing candidate, as in §10.4, and
-the derivation on that universe commits it.
+**The canonical candidate, again.** The published text (arXiv v2)
+states the indirect commit as an existential over the leader's blocks,
+and its agreement argument (Lemmas 22 and 23) rests on an observation
+that at most one block per author and round counts as valid; the DAG of
+its own Figure 1 holds an equivocation. Without a tie, two twins can
+both pass the weak test at one anchor — the counting that would separate
+them needs `2(n − 3f) − f > n`, false at `n = 5f + 1` — and
+`twin6_both_pass` (ABB11) realises the configuration on six validators.
+The indirect commit therefore names the least passing candidate, as in
+§10.4, and the derivation on that universe commits it. The current draft
+of the paper already has the repair: its indirect rule commits the
+weakly certified candidate of smallest hash, and an anchored-determinism
+observation replaces the uniqueness assumption in the agreement proof.
+The witness confirms that the repair is necessary rather than cosmetic.
 
-**Algorithm 2's direct rule.** The paper's *TryDirectDecide* iterates
+**Algorithm 2's direct rule.** The published *TryDirectDecide* iterates
 the leader's blocks and returns `Skip` at the first with `4f + 1`
 non-votes before testing a twin's strong certificate; since the voters
 of one twin are non-voters of the other, a validator holding both twins
 may skip the slot while one holding only the certified twin commits it.
 `hazard6_skipped_twin` (ABB12) realises it: one twin directly committed,
-the other with a quorum of per-candidate non-voters. Under Observation 4
-the loop has one iteration; the hazard arises as soon as both twins are
-valid. The implementation blames the *slot* and tests the blame before
-the support, which is safe and is what the arc formalizes, for both
-variants of the rule.
+the other with a quorum of per-candidate non-voters. The implementation
+blames the *slot* and tests the blame before the support, which is safe
+and is what the arc formalizes; the current draft of the paper states
+the rule at the slot level in the same way, and the witness pins what
+the restatement rules out.
 
 ### 24.2 What a wave commits, with no network hypothesis
 

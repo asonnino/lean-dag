@@ -328,7 +328,13 @@ it.
 | `Liveness.lean` | clause | both forms hold on `full6`; `¬ UnpredictableWithin aim6 1 3` under round-robin while `FairScheduleOn Correct` holds; `SpansEligible 3` at one leader per round; ABB9a on data |
 | `Axioms.lean` | — | every `holds` depends on the three standard axioms |
 
-**Two findings for the paper.**
+**Two findings for the paper.** Both are against the published text
+(arXiv v2). The current draft of the paper already carries the repairs:
+`TryIndirectDecide` commits the weakly certified candidate of smallest
+hash and an anchored-determinism observation replaces Observation 4 in
+the agreement proof; `TryDirectDecide` tests a slot-level blame first
+and requires a unique strongly certified candidate. The witnesses below
+show that neither repair is cosmetic.
 
 - **Agreement needs a canonical candidate.** Observation 4 ("at most
   one block signed by `w` is counted as valid in round `r`") is not a

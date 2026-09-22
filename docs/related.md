@@ -277,7 +277,9 @@ the canonical candidate (Odontoceti's F1, realised on data at the
 three-round wave); and Algorithm 2's `TryDirectDecide` returns `Skip` or
 `Commit` for an equivocating leader according to which twin it examines
 first, a hazard the implementation avoids by blaming the slot and
-testing the blame first.
+testing the blame first. Both are against the arXiv text; the paper's
+current draft already carries the repairs, and the witnesses show they
+are necessary.
 
 ### 4.3 Starfish — and the liveness critique of uncertified DAGs
 
