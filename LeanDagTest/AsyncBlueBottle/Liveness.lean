@@ -82,7 +82,7 @@ theorem aim6_not_unpredictable : ¬ UnpredictableWithin aim6 1 3 := by
 
 /-- Round-robin names a correct leader arbitrarily far out — the core's
 fairness clause, on the same schedule the clause refutes. -/
-example : FairScheduleOn (S := abbSlotsL) (Correct : Finset (Fin 6)) := by
+theorem roundRobin_fair : FairScheduleOn (S := abbSlotsL) (Correct : Finset (Fin 6)) := by
   intro k
   refine ⟨6 * k, by omega, ?_⟩
   have hl : abbSlotsL.leader (6 * k) = (1 : Fin 6) := by
@@ -96,7 +96,7 @@ example : FairScheduleOn (S := abbSlotsL) (Correct : Finset (Fin 6)) := by
 /-- At one leader per round, a run of three slots spans eligibility: slot
 `i < b` has decision round `i + 2 < b + 2`, the round of the run's last
 slot. -/
-example : (asyncBlueBottleAnchored (Fin 6) (Fin 24) Unit).SpansEligible 3 := by
+theorem abb_spansEligible : (asyncBlueBottleAnchored (Fin 6) (Fin 24) Unit).SpansEligible 3 := by
   intro b i hi
   simp [AnchoredRule.Eligible, EligibleAt, asyncBlueBottleAnchored]
   omega
@@ -105,7 +105,7 @@ example : (asyncBlueBottleAnchored (Fin 6) (Fin 24) Unit).SpansEligible 3 := by
 
 -- A good leader's slot is committed from the full view.
 example : (1 : Fin 6) ∈ good full6 0 := by decide
-example : AsyncBlueBottle.Decided full6 (View.full full6) 0 (some 1) :=
+theorem full6_goodCommits : AsyncBlueBottle.Decided full6 (View.full full6) 0 (some 1) :=
   Decided.directCommit (by decide) (by decide)
 
 /-! ## Axioms -/
@@ -113,5 +113,8 @@ example : AsyncBlueBottle.Decided full6 (View.full full6) 0 (some 1) :=
 #print axioms full6_unpredictable
 #print axioms full6_unpredictableRun
 #print axioms aim6_not_unpredictable
+#print axioms roundRobin_fair
+#print axioms abb_spansEligible
+#print axioms full6_goodCommits
 
 end LeanDagTest

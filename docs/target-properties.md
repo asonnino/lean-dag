@@ -362,10 +362,9 @@ Rules whose model has no self-parent clause show `Progresses` alone.
 
 ### 0.8 The rules
 
-Nine carriers over eleven rules, of which ten show the four properties
-and a support, and every mechanism cell is an instance or derived
-(`scripts/audit-conformance.py`, `scripts/audit-mechanisms.py`).
-Black Marlin has no carrier:
+Nine carriers over eleven rules; ten show the four properties and a support,
+and every mechanism cell is an instance or derived
+(`scripts/audit-conformance.py`, `scripts/audit-mechanisms.py`):
 
 | rule | support | optional shown | headline |
 |---|---|---|---|
@@ -1630,7 +1629,7 @@ garbage collection and crash recovery are the core's `chop` and
 none: adaptive leaders is out of scope, Mahi-Mahi having no `BaseRule`
 instance, and the other three are collected.
 
-**Nine rules of ten now show the six.** Black Marlin is the last, and it
+**Ten rules of eleven now show the six.** Black Marlin is the last, and it
 is the one case where the recorded reason still holds: it commits by
 round with no slot-indexed decision relation, so there is nothing to
 state a property *at* until it has a schedule layer.
@@ -2577,7 +2576,7 @@ looked for and is not there.
   six, Odontoceti, Nemo, Mahi-Mahi, Optimal-Hydrozoan, Hybrid and
   FinWhale. All seven have since been instantiated. That was the gap
   testing whether the six obligations are the right six, and the answer
-  is that they are: nine rules of ten meet them, three needed a repair
+  is that they are: ten rules of eleven meet them, three needed a repair
   to do so (§3.2, §3.12, and Hybrid's), three met the same shape and did
   not (§3.13, §3.14, §3.16), and none needed a seventh property. Black
   Marlin is the last, and the reason it has none still holds: it commits
