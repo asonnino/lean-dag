@@ -29,8 +29,13 @@ for every rule of the family, since the composite's decision round and
 direct predicates at a slot are the slot's rule's (`Liveness/Statement.lean`,
 SH6a and SH6c).
 
-Theorem 3 reads two more, which the chain needs:
+Theorem 3 reads four more, which the chain and the period sequence need:
 
+* **`CommitLaws`** and **`ViewLaws`**: a commit is witnessed in the view
+  it is taken in, a direct commit putting its candidate there and a link
+  putting it in the anchor's history; `ViewLaws` adds that a direct skip
+  rests on a block of the view at or above the slot's round. What reading
+  an anchor's history inside the view that found it needs;
 * **`GoodCommits`**: the good set of a round, the validators whose
   round-`r` block the asynchronous rule directly commits, commits in every
   view holding the round's decision round. The counting lemma of each
@@ -104,6 +109,29 @@ def FloorHopOf (R : AnchoredRule Validator BlockId Payload ValidWrt Correct)
   x + R.waveAt (S.kind x) + 1 ≤ y ∧
     (∀ j, x + R.waveAt (S.kind x) + 1 ≤ j → j < y → R.Decided U V j none) ∧
     ¬ R.Decided U V y none
+
+omit S in
+/-- **A rule's commits are witnessed in the view they are taken in**: a direct commit puts its
+candidate in the view, and a link puts its candidate in the anchor's history. A view is closed
+under references, so an anchor the view holds brings the linked candidate with it. -/
+structure CommitLaws (R : AnchoredRule Validator BlockId Payload ValidWrt Correct) : Prop where
+  /-- A direct commit puts its candidate in the view. -/
+  commit_mem : ∀ {U : BlockUniverse Validator BlockId Payload}
+    {V : View Validator BlockId Payload U} {L : BlockId} {r κ : ℕ},
+    R.Commit U V L r κ → L ∈ V.ids
+  /-- A link puts its candidate in the anchor's history. -/
+  link_reaches : ∀ {i : ℕ} {U : BlockUniverse Validator BlockId Payload} {A L : BlockId}
+    {S : Slots Validator} {k : ℕ}, R.Link i U A L S k → Reaches U A L
+
+omit S in
+/-- **A rule's verdicts are witnessed in the view they are taken in**: its commits are
+(`CommitLaws`), and a direct skip rests on a block of the view at or above the slot's round. -/
+structure ViewLaws (R : AnchoredRule Validator BlockId Payload ValidWrt Correct) : Prop
+    extends CommitLaws R where
+  /-- A direct skip rests on a block of the view at or above the slot's round. -/
+  skip_round : ∀ {S : Slots Validator} {U : BlockUniverse Validator BlockId Payload}
+    {V : View Validator BlockId Payload U} {k : ℕ},
+    R.Skip U V S k → ∃ b ∈ V.ids, S.slotRound k ≤ (U.block b).round
 
 omit [LinearOrder BlockId] S in
 /-- **The good set commits**: every validator in `good U r` has a block at round `r` that the rule

@@ -17975,7 +17975,7 @@ def Good (R : DagRule Validator BlockId Payload) (rel : Reliability Validator)
 
 ## Appendix C. The theorem reference
 
-The 542 theorems the body or Appendix A names, each
+The 544 theorems the body or Appendix A names, each
 the source statement, unabridged. Generated with Appendix B;
 a theorem the report does not name is a step of an argument
 rather than a result it presents, and the source is its
@@ -20768,6 +20768,29 @@ No tie: any linked candidate is the rung's choice.
 *theorem, `Steelhead.Helpers.Period.lean`*
 
 ```lean
+theorem all_decided (hsl : p.sync.Laws) (hal : p.async.Laws) (hsll : LeastLinked p.sync)
+    (hall : LeastLinked p.async) (hac : CommitLaws p.async) (hgc : GoodCommits p.async good)
+    (hws : p.sync.waveAt 0 ≤ p.async.waveAt 1) (hwa : p.async.waveAt 1 + 1 = wa)
+    (hid : ∀ t, S.slotRound t = t) (hkind : ∀ t, S.kind t = adaptiveKind I per t) (hI : 0 < I)
+    (hlead : ∀ r, S.kind r = 1 → S.leader r = coin r)
+    (h₀ : 1 ≤ k₀) (hK : k₀ ≤ K) (hupd : ∀ A k, 1 ≤ k → k ≤ K → 1 ≤ upd A k ∧ upd A k ≤ K)
+    {c N : ℕ} (hcK : (c + wa) * K ≤ I)
+    (hrun : ∀ j k, 1 ≤ k → k ≤ K →
+      RunWithin (S := controlSlots coin I K j k) p.async good U c wa N)
+    (hV : V.CoversUpto N)
+    (hper : ∀ j, j ≤ intervalOf I N → ∃ st,
+      PeriodAt I K p.async coin upd k₀ U V (steelheadAt p) j st ∧ per j = st.period)
+    (s : ℕ) (h₁ : 1 ≤ s) (hN : (intervalOf I s + 3) * I + c + wa + (wa - 1) ≤ N) :
+    ∃ v, (steelheadAt p).Decided U V s v
+```
+
+**SH14b.** At the second interval after the slot's, the clause at the interval's own control schedule places a run of `wa` good control slots inside the interval: the run's first slot commits, and the run settles every control slot below it (SH7c), so the interval has an anchor at or below that slot; the clause at period `1` in the next interval, whose control schedule is every round up to its boundary, places the run of rounds SH14a needs.
+
+#### `all_decided`
+
+*theorem, `Steelhead.Helpers.MahiMahiPair.Period.lean`*
+
+```lean
 theorem all_decided (hws : 2 ≤ ws) (hle : ws ≤ wa) (hwa : 3 ≤ wa) (hid : ∀ t, S.slotRound t = t)
     (hkind : ∀ t, S.kind t = adaptiveKind I per t) (hI : 0 < I)
     (hlead : ∀ r, S.kind r = 1 → S.leader r = coin r)
@@ -20784,7 +20807,7 @@ theorem all_decided (hws : 2 ≤ ws) (hle : ws ≤ wa) (hwa : 3 ≤ wa) (hid : �
     ∃ v, Decided (wavelength ws wa) U V s v
 ```
 
-**SH14b.** At the second interval after the slot's, the clause at the interval's own control schedule places a run of `wa` good control slots inside the interval: the run's first slot commits, and the run settles every control slot below it (SH7a), so the interval has an anchor at or below that slot; the clause at period `1` in the next interval, whose control schedule is every round up to its boundary, places the run of rounds SH14a needs.
+**SH-MM14b.** SH14b at `mmPair ws wa`, the clause MM3c's at every control schedule.
 
 #### `le_built`
 
@@ -20904,6 +20927,14 @@ theorem holds : Statement
 #### `holds`
 
 *theorem, `Steelhead.Period.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.MahiMahiPair.Period.Proof.lean`*
 
 ```lean
 theorem holds : Statement

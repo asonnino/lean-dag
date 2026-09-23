@@ -1,7 +1,7 @@
 import LeanDagTest.Mysticeti.Growth
 import LeanDag.Steelhead.Helpers.Replay
 import LeanDag.Steelhead.Helpers.MahiMahiPair.Liveness
-import LeanDag.Steelhead.Helpers.Period
+import LeanDag.Steelhead.Helpers.MahiMahiPair.Period
 import LeanDag.Common.Ledger
 /-!
 # Steelhead counterexample: Algorithm 3 retains a stalled period through every horizon
@@ -274,7 +274,8 @@ theorem rt_stall (N : ℕ) (coin : ℕ → Fin 4) (V : View (Fin 4) ℕ Unit (rt
     (by decide) (by decide) (fun _ => rfl) (Q := fun j => j ≤ N) (fun j hj => rt_kind hper hj)
     (fun j _ hd => by
       have hjN := slotRound_le_of_decided (S := adaptiveSlots coin rtKnown 8 per)
-        (wavelength_two_le (ws := 3) (wa := 5) (by decide) (by decide))
+        (MahiMahiPair.viewLaws_steelhead
+          (wavelength_two_le (ws := 3) (wa := 5) (by decide) (by decide)))
         (fun b hb => rt_round_le (V.subset_ids hb)) hd
       exact hjN)
     (rt_hcert N coin per hper) (rt_hskip N coin V per hper) (by decide) h

@@ -1,5 +1,5 @@
 import LeanDag.Steelhead.Coin.Statement
-import LeanDag.Steelhead.Helpers.Period
+import LeanDag.Steelhead.Helpers.MahiMahiPair.Period
 import LeanDag.MahiMahi.Helpers.Counting
 import LeanDag.MahiMahi.Properties
 /-!
@@ -929,7 +929,8 @@ theorem settles_and_anchored_of_good_blocks {U : BlockUniverse Validator BlockId
           upd k₀ U V
         (steelheadAnchored _ _ _ (wavelength ws wa)) j st := by
     intro j hj
-    exact exists_periodAt_of_settled (S := adaptiveSlots coin known I per) (n := m₂ - 1) hw2
+    exact exists_periodAt_of_settled (S := adaptiveSlots coin known I per) (n := m₂ - 1)
+      (MahiMahiPair.viewLaws_steelhead hw2)
       (fun j' hj' k i hpos hmem => hsettle j' (by omega) k i hpos hmem) j (by omega)
   -- the run: the later block's first wa rounds
   obtain ⟨b, hb⟩ : ∃ b, b = m₂ * I + 1 := ⟨_, rfl⟩
@@ -990,8 +991,9 @@ theorem settles_and_anchored_of_good_blocks {U : BlockUniverse Validator BlockId
   unfold Settles
   rw [← hj₀]
   refine ⟨hstates j₀ (by omega), ?_⟩
-  exact output_liveness_of_runs (S := adaptiveSlots coin known I per) hws hle hwa (fun _ => rfl)
-    (fun _ => rfl) hI (fun r h => if_pos h) hper h₁ (j := m₁) (by omega) hk1 hkI hfirst
+  exact MahiMahiPair.output_liveness_of_runs (S := adaptiveSlots coin known I per) hws hle hwa
+    (fun _ => rfl) (fun _ => rfl) hI (fun r h => if_pos h) hper h₁ (j := m₁) (by omega) hk1 hkI
+    hfirst
     (by have := Nat.mul_le_mul_right I hm₁₂; omega) hgoodb
     (hV.mono (by unfold MahiMahi.decisionRoundAt; omega))
 
@@ -2109,13 +2111,16 @@ theorem matchingPer_matches {I K wa : ℕ} [NeZero K] {ws : ℕ} (hws : 2 ≤ ws
   have hagree : ∀ i, i < j → matchingPer I K wa coin known upd k₀ ws U V i = prev i := by
     intro i hi
     simp only [hprev, dif_pos hi]
-  have hst' := periodAt_congr_per hws (by omega) hst hagree
+  have hw2 := wavelength_two_le hws (by omega : 2 ≤ wa)
+  have hst' := periodAt_congr_per (steelheadLaws hw2) (MahiMahiPair.viewLaws_steelhead hw2) hst
+    hagree
   have hex : ∃ st, PeriodAt (S := adaptiveSlots coin known I prev) I K
       (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
       (steelheadAnchored _ _ _ (wavelength ws wa)) j st := ⟨st, hst'⟩
   rw [dif_pos hex]
   exact congrArg ScanState.period
-    (periodAt_unique (S := adaptiveSlots coin known I prev) hwa (Classical.choose_spec hex) hst')
+    (periodAt_unique (S := adaptiveSlots coin known I prev) (MahiMahi.mahiMahiLaws (by omega))
+      (Classical.choose_spec hex) hst')
 
 end Steelhead
 

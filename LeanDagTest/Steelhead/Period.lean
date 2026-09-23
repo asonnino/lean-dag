@@ -1,7 +1,7 @@
 import LeanDagTest.Steelhead.Model
 import LeanDag.Steelhead.Model.Period
 import LeanDag.Steelhead.Model.Coin
-import LeanDag.Steelhead.Helpers.Period
+import LeanDag.Steelhead.Helpers.MahiMahiPair.Period
 /-!
 # Steelhead witnesses: the period and the coin on data
 
@@ -105,7 +105,8 @@ theorem sh8_period1 : ∃ next' last',
     PeriodAt 4 4 (MahiMahi.mahiMahiAnchored _ _ _ 5) shCoin shDouble 1 sh8 (View.full sh8)
         (steelheadAnchored _ _ _ w4) 1 ⟨1, next', last'⟩ := by
   obtain ⟨next', last', hadv⟩ :=
-    AgreedAdvance.exists (U := sh8) (w := w4) w4_ge_two (A := 7) (by decide) 1 0
+    AgreedAdvance.exists (U := sh8) (R := steelheadAnchored _ _ _ w4)
+      (MahiMahiPair.viewLaws_steelhead w4_ge_two) (A := 7) (by decide) 1 0
   exact ⟨next', last', periodAt_warmUp (by decide) PeriodAt.zero sh8_anchor1 hadv⟩
 
 /-! ## The window, and the agreed output on data
