@@ -17971,7 +17971,7 @@ def Good (R : DagRule Validator BlockId Payload) (rel : Reliability Validator)
 
 ## Appendix C. The theorem reference
 
-The 536 theorems the body or Appendix A names, each
+The 542 theorems the body or Appendix A names, each
 the source statement, unabridged. Generated with Appendix B;
 a theorem the report does not name is a step of an argument
 rather than a result it presents, and the source is its
@@ -20866,6 +20866,22 @@ theorem holds : Statement
 
 #### `holds`
 
+*theorem, `Steelhead.MahiMahiPair.Safety.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.BlueBottlePair.Safety.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
 *theorem, `Steelhead.MahiMahiPair.Liveness.Proof.lean`*
 
 ```lean
@@ -20914,6 +20930,22 @@ theorem holds : Statement
 
 #### `holds`
 
+*theorem, `Steelhead.MahiMahiPair.Ledger.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.BlueBottlePair.Ledger.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
 *theorem, `Steelhead.MahiMahiPair.Proof.lean`*
 
 ```lean
@@ -20939,6 +20971,22 @@ theorem holds : Statement
 #### `holds`
 
 *theorem, `Steelhead.Replay.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.MahiMahiPair.Broadcast.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.BlueBottlePair.Broadcast.Proof.lean`*
 
 ```lean
 theorem holds : Statement

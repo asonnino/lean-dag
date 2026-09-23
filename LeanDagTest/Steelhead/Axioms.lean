@@ -12,6 +12,12 @@ import LeanDag.Steelhead.BlueBottlePair.Liveness.Proof
 import LeanDag.Steelhead.Broadcast.Proof
 import LeanDag.Steelhead.Replay.Proof
 import LeanDag.Steelhead.Timeout.Proof
+import LeanDag.Steelhead.MahiMahiPair.Safety.Proof
+import LeanDag.Steelhead.MahiMahiPair.Ledger.Proof
+import LeanDag.Steelhead.MahiMahiPair.Broadcast.Proof
+import LeanDag.Steelhead.BlueBottlePair.Safety.Proof
+import LeanDag.Steelhead.BlueBottlePair.Ledger.Proof
+import LeanDag.Steelhead.BlueBottlePair.Broadcast.Proof
 /-!
 # Steelhead — axiom audit
 
@@ -21,16 +27,22 @@ bespoke axiom would show here before anywhere else.
 -/
 
 #print axioms LeanDag.Steelhead.Safety.holds
+#print axioms LeanDag.Steelhead.MahiMahiPair.Safety.holds
+#print axioms LeanDag.Steelhead.BlueBottlePair.Safety.holds
 #print axioms LeanDag.Steelhead.Liveness.holds
 #print axioms LeanDag.Steelhead.MahiMahiPair.Liveness.holds
 #print axioms LeanDag.Steelhead.Period.holds
 #print axioms LeanDag.Steelhead.Coin.holds
 #print axioms LeanDag.Steelhead.Ledger.holds
+#print axioms LeanDag.Steelhead.MahiMahiPair.Ledger.holds
+#print axioms LeanDag.Steelhead.BlueBottlePair.Ledger.holds
 #print axioms LeanDag.Steelhead.Interface.holds
 #print axioms LeanDag.Steelhead.MahiMahiPair.holds
 #print axioms LeanDag.Steelhead.BlueBottlePair.holds
 #print axioms LeanDag.Steelhead.BlueBottlePair.Liveness.holds
 #print axioms LeanDag.Steelhead.Broadcast.holds
+#print axioms LeanDag.Steelhead.MahiMahiPair.Broadcast.holds
+#print axioms LeanDag.Steelhead.BlueBottlePair.Broadcast.holds
 #print axioms LeanDag.Steelhead.Replay.holds
 #print axioms LeanDag.Steelhead.Timeout.holds
 #print axioms LeanDag.SteelheadProperties.banded

@@ -358,7 +358,12 @@ import LeanDag.Steelhead.Model.Decision
 import LeanDag.Steelhead.Model.Chain
 import LeanDag.Steelhead.Safety.Statement
 import LeanDag.Steelhead.Helpers.Decision
+import LeanDag.Steelhead.Helpers.Safety
 import LeanDag.Steelhead.Safety.Proof
+import LeanDag.Steelhead.MahiMahiPair.Safety.Statement
+import LeanDag.Steelhead.MahiMahiPair.Safety.Proof
+import LeanDag.Steelhead.BlueBottlePair.Safety.Statement
+import LeanDag.Steelhead.BlueBottlePair.Safety.Proof
 import LeanDag.Steelhead.Properties
 import LeanDag.Steelhead.Model.Reactive
 import LeanDag.Steelhead.Model.Clauses
@@ -379,6 +384,10 @@ import LeanDag.Steelhead.Helpers.Coin
 import LeanDag.Steelhead.Coin.Proof
 import LeanDag.Steelhead.Ledger.Statement
 import LeanDag.Steelhead.Ledger.Proof
+import LeanDag.Steelhead.MahiMahiPair.Ledger.Statement
+import LeanDag.Steelhead.MahiMahiPair.Ledger.Proof
+import LeanDag.Steelhead.BlueBottlePair.Ledger.Statement
+import LeanDag.Steelhead.BlueBottlePair.Ledger.Proof
 import LeanDag.Steelhead.Model.Compose
 import LeanDag.Steelhead.Interface.Statement
 import LeanDag.Steelhead.Helpers.Compose
@@ -396,6 +405,10 @@ import LeanDag.Steelhead.BlueBottlePair.Liveness.Proof
 import LeanDag.Steelhead.Broadcast.Statement
 import LeanDag.Steelhead.Helpers.Broadcast
 import LeanDag.Steelhead.Broadcast.Proof
+import LeanDag.Steelhead.MahiMahiPair.Broadcast.Statement
+import LeanDag.Steelhead.MahiMahiPair.Broadcast.Proof
+import LeanDag.Steelhead.BlueBottlePair.Broadcast.Statement
+import LeanDag.Steelhead.BlueBottlePair.Broadcast.Proof
 import LeanDag.Steelhead.Model.Replay
 import LeanDag.Steelhead.Replay.Statement
 import LeanDag.Steelhead.Helpers.Replay
