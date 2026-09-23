@@ -1246,7 +1246,7 @@ an arc deleted five commits earlier. §21 also said the fixpoint machinery
 boundary and needs none either.
 
 **The report contradicted itself about its own size**, claiming 83,000
-lines in the abstract and 78,000 in §26 against an actual 67,603. Both
+lines in the abstract and 78,000 in §27 against an actual 67,603. Both
 were stale before this branch. Now 68,000, with the library and witness
 split corrected too, and the dependency graph's declaration and edge
 counts refreshed.
@@ -1264,8 +1264,8 @@ part of that document that describes the arc as it stands. Its §1–§11 name
 the same files and are covered by its own note that they describe earlier
 states.
 
-Smaller: §26's module rows now name `Boundary` and say the run is shared
-with §13; §25's witness row and prose name all four scores; and the axiom
+Smaller: §27's module rows now name `Boundary` and say the run is shared
+with §13; §26's witness row and prose name all four scores; and the axiom
 audit lists the headline theorems, which a reader checking what rests on
 what would otherwise not find.
 
@@ -1330,7 +1330,7 @@ score; the other was `example : X := proof_of_X`, `ConstScoreIsConstRule`
 being defined as the equation it stated. Both deleted.
 
 **Two asked for printed axioms.** No `Integration/` file carries them —
-the project checks axioms in report §26 — so the joiner is added to that
+the project checks axioms in report §27 — so the joiner is added to that
 list instead. The test file could not carry them: it was nine `example`s
 and no named declaration. Its two mechanism claims are now
 `ledger_across_fill` and `ledger_across_regenesis`, and printed.

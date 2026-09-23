@@ -100,7 +100,7 @@ GROUP_TITLE = {
     'hybrid': 'hybrid faults (§14)',
     'nemo': 'crash-fault consensus (§15)',
     'mahimahi': 'Mahi-Mahi (§17)',
-    'abb': 'Async BlueBottle (§24)',
+    'abb': 'Async BlueBottle (§25)',
     'bn': 'Barnacle (§21)',
     'hydrozoan': 'Hydrozoan (§22)',
     'optimal': 'Optimal-Hydrozoan (§23)',

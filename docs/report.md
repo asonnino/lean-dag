@@ -186,7 +186,7 @@ proof effort with no corresponding proof content.
    refinement into LiDO-DAG. What is claimed is the *form* of the account —
    theirs is operational, quantified over traces and instants; here liveness is
    stated as a condition on the DAG, and the dependence on time is
-   confined below a `Prop`-valued interface (§6.7, §28).
+   confined below a `Prop`-valued interface (§6.7, §29).
 
 4. **A derivation** of the structural property from **view convergence**
    (§6.9), together with the protocol's build rules, and nothing beyond
@@ -202,7 +202,7 @@ proof effort with no corresponding proof content.
    coverage and production alike; every other condition is a clause of the
    protocol, which a designer controls. In particular reference coverage
    is derived rather than assumed, and the one point at which a network parameter
-   constrains the specification is the wait threshold of §27.1.
+   constrains the specification is the wait threshold of §28.1.
 
 6. **Quantitative forms** (§6.10): the round from which coverage holds, given
    explicitly; a bound on the slot at which the next commit occurs; and an
@@ -342,7 +342,7 @@ proof effort with no corresponding proof content.
    liveness, view-relative order and repair developments are not
    carried, and it is the one rule of eleven with no carrier.
 
-19. **Async BlueBottle** (§24): the asynchronous variant of the
+19. **Async BlueBottle** (§25): the asynchronous variant of the
    two-round rule — Odontoceti's arithmetic at a three-round wave with
    the cone vote of Mahi-Mahi, decided by a single count at `r + 2` —
    proved safe at `n ≥ 5f + 1` (`AsyncBlueBottle.Safety.holds` (ABB1–ABB5))
@@ -490,7 +490,7 @@ often assumed to be one.
   are shown agreed; totally ordering the blocks released by a single commit
   requires a tie-break which the development declines to assume (§5.6).
 - **No wall-clock latency.** The wait bound of §6.11 is a duration, but the total
-  elapsed time to a commit is not derived (§27.6).
+  elapsed time to a commit is not derived (§28.6).
 
 ### 1.5 Organisation
 
@@ -519,7 +519,7 @@ fault tolerance (`Hybrid.hybridLaws` (H6),
 (`MysticetiProperties.safety`, `MysticetiProperties.liveness` (I7)) and
 collects the deployment conditions their composition reveals.
 
-§§17–24 analyse eight protocols of the family against this development:
+§§17–25 analyse nine protocols of the family against this development:
 Mahi-Mahi's asynchronous rule at wave `w` (`MahiMahi.Safety.holds`
 (MM1)), Black Marlin's three-round rule, refuted on data (BMO11, BMT4),
 Minnow's minimal rule, FinWhale's two-round fast path
@@ -552,9 +552,9 @@ and the other three consume, and what pairs two kinds at once — a
 schedule over a rule, or two transforms composed — is the integration
 layer.
 
-§25 exhibits the witness models. §26 describes the mechanisation, §27
+§26 exhibits the witness models. §27 describes the mechanisation, §28
 discusses the formulation, the lessons of the extensions, and the
-limitations, §28 surveys related work, and §29 concludes. Appendix A indexes every
+limitations, §29 surveys related work, and §30 concludes. Appendix A indexes every
 principal statement against its Lean name and module. Throughout, displayed
 Lean is drawn from the source; binders are occasionally elided for layout,
 and `…` marks an elision.
@@ -1102,7 +1102,7 @@ lives: a validator cannot tell "the leader published nothing" from "the
 leader's block has not reached me", and a skip taken on absence can be
 overturned by a block that arrives afterwards, the two verdicts then
 sitting in different universes where §5's uniqueness theorem does not
-compare them (`ugrow_commits_recur`, §25, exhibits the pattern). Where a
+compare them (`ugrow_commits_recur`, §26, exhibits the pattern). Where a
 candidate exists the two forms agree, since a block referencing no
 candidate references not that one (`directSkipIn_of_directSkipSlotIn`),
 so M1 and M3 and the whole of §5 apply to the counted form; where none
@@ -1185,8 +1185,8 @@ computing base (§4.3). Assumed.
 
 Logically all of these are antecedents: each is a field of a structure or class,
 and every theorem quantifying over a block universe or over the relevant
-instances carries it. None is an axiom in the sense of §26, and their joint
-satisfiability is a proof obligation discharged by exhibition (§25) rather than
+instances carries it. None is an axiom in the sense of §27, and their joint
+satisfiability is a proof obligation discharged by exhibition (§26) rather than
 something the logic must be trusted for. The distinction drawn here is
 epistemic, not logical, and it is what determines where the trust boundary of
 the system actually falls.
@@ -1241,7 +1241,7 @@ P10 is a joint condition rather than a pure specification: the schedule is the
 designer's, but which validators are reliable is not. Round-robin discharges it
 whenever the reliable set is of quorum size, since at most `f` of every `n`
 consecutive leaders then lie outside it; `rrSlots` witnesses this with a window
-of `f + 1` (§25).
+of `f + 1` (§26).
 
 **P8 deserves the most emphasis of any clause here**, and is easily mistaken for
 a routine one. It states that a correct validator holding a quorum at round `r`
@@ -1302,7 +1302,7 @@ the model constrains it, `Correct` being a set complement (§2.1).
 P9 is the clause whose *sufficiency* is not under the designer's control: the
 timeout may be chosen freely, but whether the chosen value is long enough
 depends on the network. §6.10 determines the threshold it must meet — the
-constant `2Δ + proc` — and §27.1 discusses the consequences.
+constant `2Δ + proc` — and §28.1 discusses the consequences.
 
 P11 is the second pacemaker rule, and the counterpart of `advances`: where
 P8 forces a validator forward on a *quorum*, P11 forces it forward on a
@@ -1387,7 +1387,7 @@ differences matter more than they appear to.
 
 `held v n` is what `v` had in hand *at the moment it built its
 round-`(n+1)` block* — not what it eventually receives. That build-time
-index is the essential modelling device (§27.1): a block's references are
+index is the essential modelling device (§28.1): a block's references are
 frozen at construction, so what bears on the DAG's shape is what was held
 when the builder acted. `View.ids` is a finite set of identifiers with no
 index of either kind, which is why no formulation is stated over it.
@@ -1449,7 +1449,7 @@ rather than inside it.
 #### Where they are consumed
 
 Neither role is discharged where its name suggests, and the extracted
-support graph (§26) makes the pattern checkable rather than asserted.
+support graph (§27) makes the pattern checkable rather than asserted.
 
 Production is consumed as a `PopulatedOn` hypothesis: L6, the
 committed-run results, the quantitative results and the capstones of
@@ -1498,7 +1498,7 @@ together with clauses of the protocol:
 | Production | N2 (`converges`) with P8 and genesis | `ViewPace.populatedOn` (V17) |
 
 It is stated as a hypothesis of L4 and L6 in order to keep those arguments free
-of temporal notions (§6.8), and supplied to them by the results above. §27
+of temporal notions (§6.8), and supplied to them by the results above. §28
 discusses the formulation.
 
 **What "derived" does and does not mean here.** Coverage is derived
@@ -1933,7 +1933,7 @@ enter it within the processing bound.
 Reference coverage is not among them. It is not a clause a validator could
 execute, since it refers to `Correct`, which no validator can observe; it is
 what (a) and (b) *produce* against a synchronous network, and it is derived
-accordingly (§4.4, §27.2).
+accordingly (§4.4, §28.2).
 
 The chapter is organised around two interface predicates, and every
 result above them consumes them as hypotheses rather than reaching for a
@@ -1976,7 +1976,7 @@ structure Delivery (U) where
 
 The indexing of `held` is essential: `held v n` denotes what `v` had in hand *at
 the moment it built its round-`(n+1)` block*, not what `v` eventually receives.
-This is the build-time index which a view cannot supply (§27.1). Between holding
+This is the build-time index which a view cannot supply (§28.1). Between holding
 and referencing sits **acceptance** — at most one block per author, correct
 blocks always taken — which is deliberately where the protocol may refuse:
 the DoS arc's novelty budget (§8) is a rule about `accepted`, and the
@@ -1991,7 +1991,7 @@ are stated over it, `EventuallyDelivers` (§6.4) feeds their post-`R`
 increments, and P7's untimed incarnation is its `includes` clause. The
 liveness development never reads it — production and coverage come from
 the timed route of §6.9, whose `holds` is indexed by *time* rather than by
-round, which is exactly the index this structure cannot supply (§27.1).
+round, which is exactly the index this structure cannot supply (§28.1).
 
 ### 6.3 Progress, and the horizon
 
@@ -2080,7 +2080,7 @@ The predicate is antitone in `T` (`SynchronisedOn.mono`), which allows results
 established at `T := Correct` to be supplied to the quorum-relative statements of
 §6.6.
 
-The condition is derived, not assumed (§4.4); §27 discusses its formulation.
+The condition is derived, not assumed (§4.4); §28 discusses its formulation.
 
 ### 6.5 Monotonicity and propagation
 
@@ -2255,7 +2255,7 @@ incremental bounds. Neither is consumed by any liveness result.
 
 ### 6.8 The layering
 
-![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §26 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
+![**The core account: what supports what.** Every arrow is extracted from the compiled Lean environment — `A → B` means `A` is used in the proof of `B`, directly or through unlabelled lemmas, with arrows implied by longer paths removed. Assumptions occupy the left column; each further column is one step from them. A box with no incoming arrow depends only on definitions and unlabelled lemmas; L4 is the notable case, taking its quorum as a hypothesis rather than from the fault model. §27 describes the extraction; a version carrying each result's Lean name is in `docs/depgraph/`.](depgraph/support-core-compact.svg)
 
 No theorem above `SynchronisedOn` mentions time, and no theorem below it
 mentions certificates. The diagram also locates the trust boundary: the
@@ -2707,7 +2707,7 @@ already is, and the adversary's whole freedom is the single layer it may
 build the instant a quorum forms beneath it —
 `PaceCore.round_le_top_succ`: no valid block's round exceeds some
 reliable `top` by more than one. On the running witness the floor is met
-with equality (§25).
+with equality (§26).
 
 The clause itself is asserted only from `gst` (§4.1), so what it demands
 coincides with what the clamped author-blind rule delivers: pre-GST it
@@ -2919,7 +2919,7 @@ each with a round-`δ` block in `ledgerSet`. No synchrony, no delivery
 model, no populated rounds appear in any hypothesis.
 
 **The boundary, witnessed.** Aggregate coverage is *not* individual
-inclusion. The witness model `Ucens` (CQ8) (§25) runs six rounds in which
+inclusion. The witness model `Ucens` (CQ8) (§26) runs six rounds in which
 three validators reference only each other and commit with the full
 certificate pattern, while a fourth — correct, building validly, never
 referenced — is the missing author of **every** layer of **every**
@@ -3066,7 +3066,7 @@ theorem creators_refs_eq_correct (hdos : DoSValid U) (hb : b ∈ U.ids)
 and the commit chain still operates over
 them: the witness model `Uexcl` carries a
 direct commit whose three rounds all lie after the exclusion of its
-equivocator (§25). Nor does exclusion depend on favourable circumstances:
+equivocator (§26). Nor does exclusion depend on favourable circumstances:
 *density* establishes that a
 cone can be selectively blind to at most `f` correct authors per round, even
 below Byzantine blocks, because the quorum clause forces every layer of
@@ -3099,7 +3099,7 @@ theorem card_history_le' (hdos : DoSValid U) (hb : b ∈ U.ids) :
 ```
 
 The exponential constant is not an artefact of the proof: a matching family of
-witnesses (`Udouble` (C5), §25) realises `2^(e−2)` growth from `e` equivocators,
+witnesses (`Udouble` (C5), §26) realises `2^(e−2)` growth from `e` equivocators,
 so any bound obtainable from reference-validity conditions alone carries a
 constant exponential in `f`. This is the assessment of the exposure
 mechanism as a *storage* defence: it is the right accountability layer — it
@@ -3236,7 +3236,7 @@ exclusion terminates it. On data,
 the budget is satisfiable at its exact constant: the witness schedule
 `Dtwin` satisfies `UniformBudget 3` with its costliest acceptance costing
 exactly `3`, and `ByzBudget 0` — nothing Byzantine accepted after the
-genesis round (§25).
+genesis round (§26).
 
 How should the parameter `T` be set? Any `T ≥ 1` admits every correct block
 post-`R` (the sandwich's `f·κ + 1` with `κ = 0` would be the correct-only
@@ -3307,7 +3307,7 @@ limitations**: an equivocation whose witnessing pair falls strictly below
 the cut is forgiven — in `chop U G` its author is no longer exposed — while
 a pair *at* the cut survives into the base layer. §9.5 prices the
 forgiveness; the witness file exhibits it on data, an exposure present in
-the full universe and absent from its truncation (§25).
+the full universe and absent from its truncation (§26).
 
 ### 9.2 Verdicts survive the cut
 
@@ -3441,7 +3441,7 @@ correct store, the store rides into its keeper's next block
 (`viewUpto_subset_history` (B7), §8.4), and the backbone carries that block into
 every correct round-`t` cone — a cone *is* an attestation. The lag is tight
 on data: at `t = m + 1` the witness exhibits an accepted equivocation half
-missing from the base (§25). Consequently the joiner's assembly — base as
+missing from the base (§26). Consequently the joiner's assembly — base as
 genesis layer plus a correct peer's window strictly above the cut — is a
 bona-fide view of the truncation (`joinView`; downward closure is the
 content: window references above the cut stay in the window, references *at*
@@ -3539,7 +3539,7 @@ continues to apply to the same types. The stronger bound is consumed in
 exactly two proofs (O2 and O4′ below) — the two-round rule's *direct* safety
 already holds at `3f+1`. The witness file proves the reuse claim as a
 computation: a quorum-5 universe over six validators satisfies the untouched
-`BlockUniverse` by `decide` (§25). 
+`BlockUniverse` by `decide` (§26). 
 
 ### 10.2 The rule layer, and the arithmetic core
 
@@ -3668,7 +3668,7 @@ from both passing the test at one anchor. The counting that would be needed
 valid six-validator universe, a Byzantine leader's two round-0 twins each
 gather exactly three supporters (disjoint correct pairs plus the
 equivocator's own split), and a round-3 block sees all of round 1 — **both
-twins pass `ThickLink` against it**, by `decide` (`utwin6_both_pass` (O11), §25).
+twins pass `ThickLink` against it**, by `decide` (`utwin6_both_pass` (O11), §26).
 An indirect rule that commits "some passing candidate" therefore admits
 derivations committing either twin: agreement is *refutable*.
 
@@ -3915,7 +3915,7 @@ processing per round.
 
 ### 11.4 The witness
 
-`ugrowReactive` (§25) runs the Mysticeti structure on the round-robin
+`ugrowReactive` (§26) runs the Mysticeti structure on the round-robin
 schedule at build spacing `6` inside a timeout of `9 = 2Δ + proc` — the
 drift-free backoff met with equality: every fallback branch untaken, the
 commit, the latency bound and the strictly-inside-deadline conclusion
@@ -4225,7 +4225,7 @@ theorem decided_fill_agree_of_properties [S : Slots Validator] (sk : SkipMsg U)
 
 ### 12.4 The witness
 
-`Ucrash N` (SS7, §25) is the round-robin family with validator `3`
+`Ucrash N` (SS7, §26) is the round-robin family with validator `3`
 crashed after its genesis block: three validators run full lines whose
 references omit the absent author, and `3` owns exactly one block. The
 message `ucrashMsg` targets validator `1`'s line, and the development's
@@ -4834,7 +4834,7 @@ no liveness argument counts an equivocator — and every statement holds
 at *every* threshold `k`: only agreement prices the interval. And the
 tight committee has no slack: at `n = 5·fb + 3·fc + 1` the correct
 class numbers exactly `q`, so the reliable set must be all of it — the
-hybrid analogue of §25's remark that at `f = 1` every correct
+hybrid analogue of §26's remark that at `f = 1` every correct
 validator is needed for a quorum.
 
 ### 14.5 Conservativity
@@ -4879,7 +4879,7 @@ least sufficient committee.
 
 ### 14.7 The witnesses
 
-`Uhyb4` (H9, §25) is the arc's principal witness: `fb = 0, fc = 1,
+`Uhyb4` (H9, §26) is the arc's principal witness: `fb = 0, fc = 1,
 n = 4` — the classical `3f + 1` committee with two-round finality when
 the single tolerated fault is a crash. Validator `3` halts after its
 genesis block; the survivors run three rounds at quorum `3`, slots
@@ -5057,7 +5057,7 @@ pairwise non-adjacent on a cycle of `2f + 1`.
 
 ### 15.5 The witness
 
-`Unemo` (NN9, §25) is the arc on data: three validators at the tight
+`Unemo` (NN9, §26) is the arc on data: three validators at the tight
 committee, fourteen blocks, validator `2` authoring rounds 0–1 and
 then halting, the live pair carrying the DAG to round 5 with the
 parent quorum at exactly `majority` from round 3 on. Slots 0, 1, 3
@@ -5095,7 +5095,7 @@ against which every mechanism is proved once, so that a rule showing
 them inherits every mechanism and the mechanisms compose through the
 same properties; two headline theorems say what a rule gets, safety
 across any stack of mechanisms and liveness with certification as the
-only antecedent. §16.2 is the matrix: eleven rules, every mechanism.
+only antecedent. §16.2 is the matrix: twelve rules, every mechanism.
 
 The remaining sections are facts about the mechanisms themselves that
 no property states, because they are not about verdicts. Coverage is
@@ -5337,15 +5337,15 @@ self-parent clause at the carrier, show `safety` and `progress`.
 
 `scripts/audit-conformance.py` and `scripts/audit-mechanisms.py` read
 the dependency graph and print what each rule shows and which mechanism
-cells exist. As of this writing: nine carriers over eleven rules; ten
-show the four properties and a support; every cell of cut, fill, re-genesis,
-adaptive leaders, prompt skip (where the rule skips) and chain quality
-is an instance, and liveness across each mechanism and across any stack
-is derived from the rule's support and its witnesses. `audit-bespoke.py`
-checks the other direction — no mechanism reaches a protocol's verdicts
-except through the properties — and reports no bespoke links. Black
-Marlin has no carrier, commits by round with no slot-indexed relation,
-and is out of scope by decision.
+cells exist. As of this writing: ten carriers over twelve rules, of
+which eleven show the five properties and a support; every cell of cut,
+fill, re-genesis, adaptive leaders, prompt skip (where the rule skips)
+and chain quality is an instance, and liveness across each mechanism
+and across any stack is derived from the rule's support and its
+witnesses. `audit-bespoke.py` checks the other direction — no mechanism
+reaches a protocol's verdicts except through the properties — and
+reports no bespoke links. Black Marlin has no carrier, commits by round
+with no slot-indexed relation, and is out of scope by decision.
 
 **Every cut, fill and re-genesis is one construction.** A rule's
 universe is the block record (§2.3) at its own validity, and
@@ -5410,7 +5410,7 @@ block references a fresh identifier*; coverage asks the opposite, that
 every reliable block at round `n+1` reference every reliable block at
 round `n`. One fact, two consequences: the fill can manufacture neither
 a commit nor coverage. The hypotheses are exhibited satisfiable on
-`Ucrash` (§25), so the refutation is not vacuous.
+`Ucrash` (§26), so the refutation is not vacuous.
 
 **It is preserved for any reliable set that excludes the recovering
 validator** (`synchronisedOn_skipFill_of_notMem`, from
@@ -8549,7 +8549,7 @@ skip it. `LiveOn` cannot be decided in general — it quantifies over
 every good DAG — and a *test rule* whose `Good` pins one universe makes
 it finite, so that Progress is applied on data and produces the healthy
 step. With BN11 the clause is a theorem rather than a hypothesis, so the
-**real** rule with its **real** `Good` runs on data too: the grown family `Ugrow` of §25 is good at every height by lemmas proved once (`ugrow_good`), and
+**real** rule with its **real** `Good` runs on data too: the grown family `Ugrow` of §26 is good at every height by lemmas proved once (`ugrow_good`), and
 `real_runs` gives a run of every height `K` on it, at the horizon that
 height costs — `11K + 9` rounds at a four-round interval and Mysticeti's
 gap of `n + 2`. The family stops at its horizon, so the cost is exact,
@@ -10396,7 +10396,7 @@ and `P₁`, the closed form `Pr[V = n] = p^(n−1)` and the measured rates
 stay outside the model.
 
 ---
-## 24. Async BlueBottle: the two-round rule at a three-round wave
+## 25. Async BlueBottle: the two-round rule at a three-round wave
 
 *(companion document: `async-bluebottle.md`; modules `LeanDag/AsyncBlueBottle/`;
 the protocol is BB-Core-Async, Appendix G of the BlueBottle paper [Van+25])*
@@ -10420,7 +10420,7 @@ with the wave fixed. It is not Mahi-Mahi at `w = 3`, which is the core's
 certificate rule; the single count at `r + 2` is what the committee of
 size `5f + 1` is required for.
 
-### 24.1 The rule, and safety
+### 25.1 The rule, and safety
 
 ```lean
 def WeakLink (U : BlockUniverse Validator BlockId Payload) (A L : BlockId) (r : ℕ) : Prop :=
@@ -10485,7 +10485,7 @@ and is what the arc formalizes; the current draft of the paper states
 the rule at the slot level in the same way, and the witness pins what
 the restatement rules out.
 
-### 24.2 What a wave commits, with no network hypothesis
+### 25.2 What a wave commits, with no network hypothesis
 
 `goodAt U r` is the set of validators whose round-`r` block is directly
 committed, §17.2's `good` with the wave fixed. **ABB6–ABB8**
@@ -10514,7 +10514,7 @@ threshold is then the paper's Lemma 31 (`p⋆ = 1` for `l > 3f`) at every
 count distinct correct authors, so an equivocating author's twins, which
 can split the voters, are never counted, as in §17.2.
 
-### 24.3 The clause, and liveness under it
+### 25.3 The clause, and liveness under it
 
 The clause is §17.3's at this wave:
 
@@ -10547,13 +10547,13 @@ wave length never entering, and under coverage from the start the clause
 is derived from `FairWithin`
 (`AsyncBlueBottle.unpredictableWithin_of_synchronisedOn`).
 
-On data (§25): the fully connected universe satisfies both forms of the
+On data (§26): the fully connected universe satisfies both forms of the
 clause under round-robin; the aiming pattern `aim6` — the leader's block
 present and kept out of every cone but its own — is directly skipped
 with exactly five blamers, satisfies `FairScheduleOn Correct` and
 violates the clause; and four leaders per round include a good one.
 
-### 24.4 Through the properties
+### 25.4 Through the properties
 
 The carrier `asyncBlueBottleRule` is banded
 (`AsyncBlueBottleProperties.banded`): the direct commit and skip
@@ -10572,7 +10572,7 @@ indirect property at gap three and the descent laws at slack `f`
 round-`(r + 1)` block. The arc is laid out under the partition of §17.5,
 with the arc listed in the checker.
 
-## 25. Satisfiability
+## 26. Satisfiability
 
 Every structure carrying conditions is exhibited satisfiable by a concrete model
 over four validators at `f = 1`. This is a substantive component of the
@@ -10673,11 +10673,11 @@ rather than an unsatisfiable hypothesis.
 
 ---
 
-## 26. Mechanisation
+## 27. Mechanisation
 
-The development comprises approximately 75,000 lines of Lean 4 (v4.32.2)
-against Mathlib, of which some 49,000 constitute the library and 25,000
-the models of §25 and the witness files of the arcs. A full build reports
+The development comprises approximately 88,000 lines of Lean 4 (v4.32.2)
+against Mathlib, of which some 60,000 constitute the library and 28,000
+the models of §26 and the witness files of the arcs. A full build reports
 no errors.
 
 **Axiom audit.** Every principal result — among them
@@ -10844,7 +10844,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Quality/Coverage.lean` | per-commit and ledger coverage (CQ1–CQ3) at the core, over `Arcs.coveredAt` |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
 | `Quality/Capstone.lean` | the windowed bounds and `chain_quality` (CQ7) |
-| `LeanDagTest/` | the models of §25 and the witness files of every arc |
+| `LeanDagTest/` | the models of §26 and the witness files of every arc |
 
 **The support graph, extracted.** The dependency structure of the
 development is not documented by hand: `scripts/DepGraph.lean` walks
@@ -10892,18 +10892,18 @@ generalisation), `chain-quality.md` (§7), `dos-equivocation-and-growth.md`
 opening part is the current statement of the properties), `mahi-mahi.md`
 (§17), `black-marlin.md` (§18), `minnow.md` (§19), `finwhale.md` (§20),
 `barnacle.md` (§21), `hydrozoan.md` (§22), `optimal-hydrozoan.md` (§23),
-`async-bluebottle.md` (§24) and `bespoke-links.md` (the audit of what a
+`steelhead.md` (§24), `async-bluebottle.md` (§25) and `bespoke-links.md` (the audit of what a
 mechanism reads), with `related.md` surveying the surrounding literature. Every statement in this report is drawn from the source.
 
 ---
 
-## 27. Discussion
+## 28. Discussion
 
 The first four subsections concern the core account's central design
-choice — where the synchrony assumption lives; §27.5 draws the lessons of
-the extensions; §27.6 records what remains open.
+choice — where the synchrony assumption lives; §28.5 draws the lessons of
+the extensions; §28.6 records what remains open.
 
-### 27.1 Locating the synchrony assumption
+### 28.1 Locating the synchrony assumption
 
 The synchrony assumption may be stated in terms of views:
 
@@ -10964,7 +10964,7 @@ is `2Δ`.
 Because Δ is not known to an implementation, no constant can be fixed in
 advance. A backoff is the specification's response — a search for a sufficient
 constant, written into the algorithm — and its only relevant property is that
-the search terminates (§27.2).
+the search terminates (§28.2).
 
 **The network guarantee must be indexed to the moment of building.** A block's
 references are fixed at its construction, so what bears on the derivation is not
@@ -10977,7 +10977,7 @@ for liveness, indexed by the instant, with `built` ordering the two. The
 requirement is the index, not the vehicle. This is an observation about formalisation, and it is the
 reason `SynchronisedOn` is stated on `refs`.
 
-### 27.2 Why coverage is derived rather than specified
+### 28.2 Why coverage is derived rather than specified
 
 Reference coverage could not have been made a clause of the protocol, which is
 the deeper reason it appears as a derived property. `SynchronisedOn` refers to
@@ -11004,7 +11004,7 @@ from some round onwards — with no condition on shape, rate, or driving
 signal. §6.10 carries this to its conclusion: with Δ known, a constant
 timeout of `2Δ + proc` suffices and the loop disappears.
 
-### 27.3 Consequences of the abstraction
+### 28.3 Consequences of the abstraction
 
 1. The consensus argument is purely combinatorial, involving round indices and
    finite-set cardinalities. Under a message-level assumption every statement
@@ -11016,7 +11016,7 @@ timeout of `2Δ + proc` suffices and the loop disappears.
 4. The condition composes with the safety development, mentioning only `U.ids`,
    `U.block` and `refs` — the vocabulary that development already employs.
 
-### 27.4 Costs
+### 28.4 Costs
 
 Δ does not appear above the interface. Introducing it would require views indexed
 by an instant and every statement quantified over instants, for no proof content.
@@ -11029,7 +11029,7 @@ chain must terminate at a network assumption; what the reformulation achieves
 is to place that assumption where it belongs — on the network, as one clause
 over views — and to keep it out of every statement above.
 
-### 27.5 Lessons from the extensions
+### 28.5 Lessons from the extensions
 
 Three lessons generalise beyond the particular arcs.
 
@@ -11075,13 +11075,13 @@ behind the canonicity gap fits in six validators and twenty-five blocks;
 what was needed to find it was not scale but the obligation to state the
 indirect rule precisely enough to fail to prove it.
 
-### 27.6 Limitations
+### 28.6 Limitations
 
 The quantitative bounds are established (§6.10). The following remain open.
 
 **The backoff loop.** `Rated` and the threshold of R4 are stipulated as clauses
 of the specification; no realistic adaptive scheme is shown to satisfy them, and
-the feedback mechanism of §27.2 is not modelled. Moreover
+the feedback mechanism of §28.2 is not modelled. Moreover
 `ViewPace.timeout : ℕ → ℕ` is indexed by round and common to the reliable set, so
 that a per-validator backoff — in which validators increase their timeouts at
 different moments — cannot be expressed, let alone shown to converge. This
@@ -11145,7 +11145,7 @@ much they say.
 
 ---
 
-## 28. Related work
+## 29. Related work
 
 **Hybrid fault models.** Orcaella [KS26] derives the tight committee
 `n ≥ 5f + 3c + 1` for two-round commitment under separate Byzantine
@@ -11250,11 +11250,11 @@ pacemaker by refinement. The account here is structural, and no theorem above
 dependence of liveness on the round-jumping clause surfaces as a named hypothesis
 of a single lemma rather than as a condition inside a transition relation. The
 cost is that the theorems of [QXS26] cannot be stated here at all, "within
-bounded time" not being expressible in this vocabulary (§27.6).
+bounded time" not being expressible in this vocabulary (§28.6).
 
 ---
 
-## 29. Conclusion
+## 30. Conclusion
 
 This report has given a machine-checked account of uncertified DAG consensus
 organised around one idea: state the liveness condition on the object the
@@ -11282,12 +11282,12 @@ without consensus, and — in the one place the formalization diverged from a
 published argument by necessity — the observation that Odontoceti's
 agreement rests on a canonical candidate order that its paper never states.
 
-What remains open is catalogued in §27.6: the backoff dynamics, wall-clock
+What remains open is catalogued in §28.6: the backoff dynamics, wall-clock
 latency, block-level total order, and liveness below the growth clause.
 Beyond those, two directions suggest themselves. The commit-free,
 evidence-based horizon rule sketched in the garbage-collection document
 would extend pruning into asynchrony; and the properties, having
-absorbed every mechanism here, are the interface an eleventh rule would be
+absorbed every mechanism here, are the interface a thirteenth rule would be
 written against — the cost of adding one is the band and the support, and everything else is a line.
 
 ---
@@ -11332,15 +11332,13 @@ the consumption map of §4.8 and the support diagrams of §6.10 refer to
 results through them. The series are alphabetic by area: T and M for
 the safety core, L for liveness, V for the view-convergence family, CU
 for catch-up, RS for the reactive schedule, SS for safe skip, AL for adaptive
-leaders, H for the hybrid fault model, I for integration, SH for Steelhead, MM for Mahi-Mahi, BM, BML, BMR, BMA, BMD, BME, BMO and BMP for Black Marlin, FW for FinWhale, BN for Barnacle, HZ for Hydrozoan, OH for Optimal-Hydrozoan, HI for the Hydrozoan integration, CQ for chain
-leaders, H for the hybrid fault model, I for integration, MM for Mahi-Mahi, ABB for Async BlueBottle, BM, BML, BMR, BMA, BMD, BME, BMO and BMP for Black Marlin, FW for FinWhale, BN for Barnacle, HZ for Hydrozoan, OH for Optimal-Hydrozoan, HI for the Hydrozoan integration, CQ for chain
+leaders, H for the hybrid fault model, I for integration, SH for Steelhead, MM for Mahi-Mahi, ABB for Async BlueBottle, BM, BML, BMR, BMA, BMD, BME, BMO and BMP for Black Marlin, FW for FinWhale, BN for Barnacle, HZ for Hydrozoan, OH for Optimal-Hydrozoan, HI for the Hydrozoan integration, CQ for chain
 quality, C, D,
 B and E for the denial-of-service arc, G for garbage collection, O for
 Odontoceti; P, N and R name clauses of the trust boundary rather than
 results. Labels resolving to witness models rather than library
 theorems (V10–V12, CU1, CU4, C5, CQ8, O11, SS7, SS11, AL8, H9, H10, BN13) are
-excluded from the diagrams, which show the library; so are MM4, BM8, BML6, BMR7, BMA5, BMD7, BME6, BMO10, BMO11, BMP14, SH1, SH4, SH11 and SH12. Two labels are
-excluded from the diagrams, which show the library; so are MM4, ABB11, ABB12, BM8, BML6, BMR7, BMA5, BMD7, BME6, BMO10, BMO11 and BMP14. Two labels are
+excluded from the diagrams, which show the library; so are MM4, ABB11, ABB12, BM8, BML6, BMR7, BMA5, BMD7, BME6, BMO10, BMO11, BMP14, SH1, SH4, SH11 and SH12. Two labels are
 absent from the Barnacle rows below and are named here rather than left
 to be noticed: **BN1**, that `Sched m` is a lawful `Slots` instance at
 every count, is a fact about the schedule that the design record carries
@@ -11567,7 +11565,7 @@ reused.
 | MM4 | the clause is satisfiable, refuted by round-robin on the aiming pattern, and independent of fairness | `aim4`, `full4` witnesses *(LeanDagTest/MahiMahi)* |
 | MM5 | under coverage at one round a reliable leader is good; the clause is derived from fairness | `MahiMahi.Synchrony.holds`, `MahiMahi.good_of_synchronisedOn`, `MahiMahi.unpredictableWithin_of_synchronisedOn` *(MahiMahi/Helpers/Synchrony)* |
 
-**Async BlueBottle** (§24):
+**Async BlueBottle** (§25):
 
 | Label | Statement | Lean |
 |:---|:---|:---|
@@ -11772,8 +11770,7 @@ reused.
 
 ## Appendix B. The definition reference
 
-The 347 definitions and structures the report names, in
-The 340 definitions and structures the report names, in
+The 361 definitions and structures the report names, in
 the order a reader meets them. Each entry is the source text,
 unabridged, with the explanation the source carries. This
 appendix is generated from the compiled development by
@@ -13715,6 +13712,7 @@ structure ReactiveS (U : BlockUniverse Validator BlockId Payload) (T : Finset Va
 ```
 
 **Steelhead's reactive schedule** at the wavelength function `w`, the leader wait at the rounds `waits` names: the core's pace, the reactive ceiling, the leader wait at the round above a reliable leader of a waiting round, and the certificate wait at the wave of three. At two rounds above such a leader, any `T`-authored block either already certifies, or its builder waited the full timeout and references every reliable vote it holds. Above wave three the certificate clause says nothing: reachability carries the votes, so the discipline is the core's own.
+
 ### Async BlueBottle: the two-round rule at a three-round wave
 
 #### `supporters`
@@ -17896,8 +17894,7 @@ def Good (R : DagRule Validator BlockId Payload) (rel : Reliability Validator)
 
 ## Appendix C. The theorem reference
 
-The 512 theorems the body or Appendix A names, each
-The 513 theorems the body or Appendix A names, each
+The 532 theorems the body or Appendix A names, each
 the source statement, unabridged. Generated with Appendix B;
 a theorem the report does not name is a step of an argument
 rather than a result it presents, and the source is its
@@ -20777,6 +20774,67 @@ theorem safety {w : ℕ → ℕ} (hw : ∀ κ, 2 ≤ w κ) :
 #### `holds`
 
 *theorem, `Steelhead.Safety.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.Liveness.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.Period.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.Coin.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.Ledger.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.Interface.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.Broadcast.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.Replay.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
 ### Async BlueBottle: the two-round rule at a three-round wave
 
 #### `not_directSkip_of_directCommit`
@@ -20886,59 +20944,12 @@ theorem holds : Statement
 
 #### `holds`
 
-*theorem, `Steelhead.Liveness.Proof.lean`*
 *theorem, `AsyncBlueBottle.Synchrony.Proof.lean`*
 
 ```lean
 theorem holds : Statement
 ```
 
-#### `holds`
-
-*theorem, `Steelhead.Period.Proof.lean`*
-
-```lean
-theorem holds : Statement
-```
-
-#### `holds`
-
-*theorem, `Steelhead.Coin.Proof.lean`*
-
-```lean
-theorem holds : Statement
-```
-
-#### `holds`
-
-*theorem, `Steelhead.Ledger.Proof.lean`*
-
-```lean
-theorem holds : Statement
-```
-
-#### `holds`
-
-*theorem, `Steelhead.Interface.Proof.lean`*
-
-```lean
-theorem holds : Statement
-```
-
-#### `holds`
-
-*theorem, `Steelhead.Broadcast.Proof.lean`*
-
-```lean
-theorem holds : Statement
-```
-
-#### `holds`
-
-*theorem, `Steelhead.Replay.Proof.lean`*
-
-```lean
-theorem holds : Statement
 #### `selfParent`
 
 *theorem, `AsyncBlueBottle.Carrier.lean`*

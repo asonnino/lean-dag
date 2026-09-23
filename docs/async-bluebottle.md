@@ -418,7 +418,7 @@ table, or a document.
 | 4 | `Model/Unpredictable.lean`, `Liveness/` (ABB9); the clause witnesses |
 | 5 | `Synchrony/` (ABB10) |
 | 6 | `Carrier.lean`, `Properties.lean`, `Record.lean` |
-| 7 | this record; report §24; `related.md`; README |
+| 7 | this record; report §25; `related.md`; README |
 
 Two reviewing agents read the frozen phases 1–3 against Odontoceti and
 Mahi-Mahi before phase 6; what they changed is recorded where it
