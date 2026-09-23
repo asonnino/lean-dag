@@ -225,7 +225,8 @@ theorem uniform_prob_mem {α : Type} [Fintype α] [Nonempty α] (G : Finset α) 
 
 /-- The coin of round `r` names a committed leader with probability `|goodAt U wa r| / n`. -/
 theorem commitProb_eq (U : BlockUniverse Validator BlockId Payload) (wa r : ℕ) :
-    commitProb U wa r = ((MahiMahi.goodAt U wa r).card : ℝ≥0∞) / Fintype.card Validator :=
+    commitProb (MahiMahi.goodAt U wa) r = ((MahiMahi.goodAt U wa r).card : ℝ≥0∞) / Fintype.card
+        Validator :=
   uniform_prob_mem _
 
 /-- **MM2 as a count**: at least `n − f − b` validators are committed at round `r`. -/
@@ -244,7 +245,7 @@ theorem ratio_le_commitProb {U : BlockUniverse Validator BlockId Payload} {wa : 
     (hwa : 5 ≤ wa) {T : Finset Validator} (hcard : quorumCard Validator ≤ T.card) {r : ℕ}
     (hpop₃ : PopulatedOn U T (r + 3)) (hpopd : PopulatedOn U T (MahiMahi.decisionRoundAt wa r)) :
     ((Fintype.card Validator - F.f - F.byzantine.card : ℕ) : ℝ≥0∞) / Fintype.card Validator ≤
-      commitProb U wa r := by
+      commitProb (MahiMahi.goodAt U wa) r := by
   rw [commitProb_eq]
   exact ENNReal.div_le_div_right (Nat.cast_le.mpr (card_goodAt_of_populated hwa hcard hpop₃ hpopd))
     _
@@ -267,7 +268,7 @@ theorem third_le_ratio :
 theorem third_le_commitProb {U : BlockUniverse Validator BlockId Payload} {wa : ℕ}
     (hwa : 5 ≤ wa) {T : Finset Validator} (hcard : quorumCard Validator ≤ T.card) {r : ℕ}
     (hpop₃ : PopulatedOn U T (r + 3)) (hpopd : PopulatedOn U T (MahiMahi.decisionRoundAt wa r)) :
-    (3 : ℝ≥0∞)⁻¹ ≤ commitProb U wa r :=
+    (3 : ℝ≥0∞)⁻¹ ≤ commitProb (MahiMahi.goodAt U wa) r :=
   le_trans third_le_ratio (ratio_le_commitProb hwa hcard hpop₃ hpopd)
 
 /-- **MM2's wave-four form as a count**: one committed candidate at round `r`. -/
@@ -282,7 +283,7 @@ theorem one_le_card_goodAt_of_populated {U : BlockUniverse Validator BlockId Pay
 theorem inv_card_le_commitProb {U : BlockUniverse Validator BlockId Payload} {wa : ℕ}
     (hwa : 4 ≤ wa) {T : Finset Validator} (hcard : quorumCard Validator ≤ T.card) {r : ℕ}
     (hpop₂ : PopulatedOn U T (r + 2)) (hpopd : PopulatedOn U T (MahiMahi.decisionRoundAt wa r)) :
-    (Fintype.card Validator : ℝ≥0∞)⁻¹ ≤ commitProb U wa r := by
+    (Fintype.card Validator : ℝ≥0∞)⁻¹ ≤ commitProb (MahiMahi.goodAt U wa) r := by
   rw [commitProb_eq, ← one_div]
   exact ENNReal.div_le_div_right
     (by exact_mod_cast one_le_card_goodAt_of_populated hwa hcard hpop₂ hpopd) _
@@ -360,7 +361,7 @@ theorem runProb_ge {U : BlockUniverse Validator BlockId Payload} {wa : ℕ} (hwa
     (hpop : ∀ i : Fin m, PopulatedOn U T (r₀ + i + 3) ∧
       PopulatedOn U T (MahiMahi.decisionRoundAt wa (r₀ + i))) :
     ((((Fintype.card Validator - F.f - F.byzantine.card : ℕ) : ℝ≥0∞) /
-      Fintype.card Validator) ^ m) ≤ runProb U wa r₀ m :=
+      Fintype.card Validator) ^ m) ≤ runProb (MahiMahi.goodAt U wa) r₀ m :=
   all_hit_prob_ge (fun i : Fin m => MahiMahi.goodAt U wa (r₀ + i)) fun i =>
     card_goodAt_of_populated hwa hcard (hpop i).1 (hpop i).2
 
@@ -416,7 +417,7 @@ theorem noCommitProb_le {U : BlockUniverse Validator BlockId Payload} {wa : ℕ}
     {T : Finset Validator} (hcard : quorumCard Validator ≤ T.card) {r₀ m : ℕ}
     (hpop : ∀ i : Fin m, PopulatedOn U T (r₀ + i + 3) ∧
       PopulatedOn U T (MahiMahi.decisionRoundAt wa (r₀ + i))) :
-    noCommitProb U wa r₀ m ≤
+    noCommitProb (MahiMahi.goodAt U wa) r₀ m ≤
       (((F.f + F.byzantine.card : ℕ) : ℝ≥0∞) / Fintype.card Validator) ^ m := by
   have h := no_hit_prob_le (fun i : Fin m => MahiMahi.goodAt U wa (r₀ + i)) fun i =>
     card_goodAt_of_populated hwa hcard (hpop i).1 (hpop i).2
@@ -842,9 +843,12 @@ theorem settles_and_anchored_of_good_blocks {U : BlockUniverse Validator BlockId
       MahiMahi.goodAt U wa (blockRound I q (intervalOf I s) j₂ i))
     (V : View Validator BlockId Payload U) (per : ℕ → ℕ)
     (hV : V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) M))
-    (hmatch : Matches I K wa coin known upd k₀ ws U V per) :
-    Settles I K wa coin known upd k₀ ws U V per s ∧
-      Anchored I K wa coin known upd k₀ ws U V per s := by
+    (hmatch : Matches I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+        (steelheadAnchored _ _ _ (wavelength ws wa)) coin known upd k₀ U V per) :
+    Settles I K (MahiMahi.mahiMahiAnchored _ _ _ wa) (steelheadAnchored _ _ _ (wavelength ws wa))
+        coin known upd k₀ U V per s ∧
+      Anchored I K (MahiMahi.mahiMahiAnchored _ _ _ wa) (steelheadAnchored _ _ _ (wavelength ws wa))
+          coin known upd k₀ U V per s := by
   have hKpos : 0 < K := pos_of_neZero
   have hwaK : wa ≤ wa * K := Nat.le_mul_of_pos_right wa hKpos
   have hKwa : K ≤ wa * K := Nat.le_mul_of_pos_left K (by omega)
@@ -1011,8 +1015,10 @@ theorem decided_of_good_blocks {U : BlockUniverse Validator BlockId Payload} {ws
       MahiMahi.goodAt U wa (blockRound I q (intervalOf I s) j₂ i))
     (V : View Validator BlockId Payload U) (per : ℕ → ℕ)
     (hV : V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) M))
-    (hmatch : Matches I K wa coin known upd k₀ ws U V per) :
-    Settles I K wa coin known upd k₀ ws U V per s :=
+    (hmatch : Matches I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+        (steelheadAnchored _ _ _ (wavelength ws wa)) coin known upd k₀ U V per) :
+    Settles I K (MahiMahi.mahiMahiAnchored _ _ _ wa) (steelheadAnchored _ _ _ (wavelength ws wa))
+        coin known upd k₀ U V per s :=
   (settles_and_anchored_of_good_blocks hws hle hwa hKI hwaI hq h₀ hK hupd h₁ hj hg₁ hg₂ V per hV
     hmatch).1
 
@@ -1030,8 +1036,10 @@ theorem anchored_of_good_blocks {U : BlockUniverse Validator BlockId Payload} {w
       MahiMahi.goodAt U wa (blockRound I q (intervalOf I s) j₂ i))
     (V : View Validator BlockId Payload U) (per : ℕ → ℕ)
     (hV : V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) M))
-    (hmatch : Matches I K wa coin known upd k₀ ws U V per) :
-    Anchored I K wa coin known upd k₀ ws U V per s :=
+    (hmatch : Matches I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+        (steelheadAnchored _ _ _ (wavelength ws wa)) coin known upd k₀ U V per) :
+    Anchored I K (MahiMahi.mahiMahiAnchored _ _ _ wa) (steelheadAnchored _ _ _ (wavelength ws wa))
+        coin known upd k₀ U V per s :=
   (settles_and_anchored_of_good_blocks hws hle hwa hKI hwaI hq h₀ hK hupd h₁ hj hg₁ hg₂ V per hV
     hmatch).2
 
@@ -1193,8 +1201,12 @@ theorem failure_subset_halves_adaptive {ws wa I q K : ℕ} [NeZero K] (hws : 2 �
     {g : Fin M → Fin (wa * K) → Validator | ¬ ∀ (V : View Validator BlockId Payload (σ g))
         (per : ℕ → ℕ),
         V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) M) →
-        Matches I K wa (coinOfBlocks I q (intervalOf I s) g d) known upd k₀ ws (σ g) V per →
-        Settles I K wa (coinOfBlocks I q (intervalOf I s) g d) known upd k₀ ws (σ g) V per s} ⊆
+        Matches I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) (coinOfBlocks I q (intervalOf I s) g d)
+            known upd k₀ (σ g) V per →
+        Settles I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) (coinOfBlocks I q (intervalOf I s) g d)
+            known upd k₀ (σ g) V per s} ⊆
       {g | ∀ j ∈ lowerHalf M, ∃ i : Fin (wa * K), g j i ∉ G g j i} ∪
         {g | ∀ j ∈ upperHalf M, ∃ i : Fin (wa * K), g j i ∉ G g j i} := by
   intro g hg
@@ -1216,9 +1228,10 @@ theorem undecidedProb_le_adaptive {ws wa I q K : ℕ} [NeZero K] (hws : 2 ≤ ws
     {known : ℕ → Validator} {d : Validator} {s M : ℕ}
     {σ : (Fin M → Fin (wa * K) → Validator) → BlockUniverse Validator BlockId Payload}
     {G : (Fin M → Fin (wa * K) → Validator) → Fin M → Fin (wa * K) → Finset Validator} (h₁ : 1 ≤ s)
-    (hσ : NonAnticipating σ G wa I q (intervalOf I s))
+    (hσ : NonAnticipating σ G (MahiMahi.goodAt · wa) I q (intervalOf I s))
     (hc : ∀ g j i, Fintype.card Validator - F.f - F.byzantine.card ≤ (G g j i).card) :
-    undecidedProbAgainst ws wa I q σ upd k₀ known d s ≤
+    undecidedProbAgainst (MahiMahi.mahiMahiAnchored _ _ _ wa)
+        (steelheadAnchored _ _ _ (wavelength ws wa)) wa I q σ upd k₀ known d s ≤
       2 * Coin.badBlockBound Validator (wa * K) ^ (M / 2) :=
   le_trans
     (MeasureTheory.measure_mono
@@ -1237,7 +1250,8 @@ theorem undecidedProb_le {U : BlockUniverse Validator BlockId Payload} {ws wa I 
     (hpop : ∀ (j : Fin M) (i : Fin (wa * K)),
       PopulatedOn U T (blockRound I q (intervalOf I s) j i + 3) ∧
       PopulatedOn U T (MahiMahi.decisionRoundAt wa (blockRound I q (intervalOf I s) j i))) :
-    undecidedProb U ws wa I q K upd k₀ known d s M ≤
+    undecidedProb U (MahiMahi.mahiMahiAnchored _ _ _ wa)
+        (steelheadAnchored _ _ _ (wavelength ws wa)) wa I q K upd k₀ known d s M ≤
       2 * Coin.badBlockBound Validator (wa * K) ^ (M / 2) := by
   classical
   set G : Fin M → Fin (wa * K) → Finset Validator :=
@@ -1248,8 +1262,12 @@ theorem undecidedProb_le {U : BlockUniverse Validator BlockId Payload} {ws wa I 
   have hsub : {g : Fin M → Fin (wa * K) → Validator | ¬ ∀ (V : View Validator BlockId Payload U)
         (per : ℕ → ℕ),
         V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) M) →
-        Matches I K wa (coinOfBlocks I q (intervalOf I s) g d) known upd k₀ ws U V per →
-        Settles I K wa (coinOfBlocks I q (intervalOf I s) g d) known upd k₀ ws U V per s} ⊆
+        Matches I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) (coinOfBlocks I q (intervalOf I s) g d)
+            known upd k₀ U V per →
+        Settles I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) (coinOfBlocks I q (intervalOf I s) g d)
+            known upd k₀ U V per s} ⊆
       {g | ∀ j ∈ lowerHalf M, ∃ i, g j i ∉ G j i} ∪
         {g | ∀ j ∈ upperHalf M, ∃ i, g j i ∉ G j i} := by
     intro g hg
@@ -1272,7 +1290,8 @@ theorem undecidedProb_le_four {U : BlockUniverse Validator BlockId Payload} {ws 
     (hpop : ∀ (j : Fin M) (i : Fin (wa * K)),
       PopulatedOn U T (blockRound I q (intervalOf I s) j i + 2) ∧
       PopulatedOn U T (MahiMahi.decisionRoundAt wa (blockRound I q (intervalOf I s) j i))) :
-    undecidedProb U ws wa I q K upd k₀ known d s M ≤
+    undecidedProb U (MahiMahi.mahiMahiAnchored _ _ _ wa)
+        (steelheadAnchored _ _ _ (wavelength ws wa)) wa I q K upd k₀ known d s M ≤
       2 * Coin.badBlockBoundOne Validator (wa * K) ^ (M / 2) := by
   classical
   set G : Fin M → Fin (wa * K) → Finset Validator :=
@@ -1283,8 +1302,12 @@ theorem undecidedProb_le_four {U : BlockUniverse Validator BlockId Payload} {ws 
   have hsub : {g : Fin M → Fin (wa * K) → Validator | ¬ ∀ (V : View Validator BlockId Payload U)
         (per : ℕ → ℕ),
         V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) M) →
-        Matches I K wa (coinOfBlocks I q (intervalOf I s) g d) known upd k₀ ws U V per →
-        Settles I K wa (coinOfBlocks I q (intervalOf I s) g d) known upd k₀ ws U V per s} ⊆
+        Matches I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) (coinOfBlocks I q (intervalOf I s) g d)
+            known upd k₀ U V per →
+        Settles I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) (coinOfBlocks I q (intervalOf I s) g d)
+            known upd k₀ U V per s} ⊆
       {g | ∀ j ∈ lowerHalf M, ∃ i, g j i ∉ G j i} ∪
         {g | ∀ j ∈ upperHalf M, ∃ i, g j i ∉ G j i} := by
     intro g hg
@@ -1337,7 +1360,7 @@ theorem undecided_tail_tendsto_zero {K : ℕ} :
 
 /-- The first good block lies at or below `M`. -/
 theorem firstGoodBlock_le {U : BlockUniverse Validator BlockId Payload} {wa b M : ℕ}
-    (g : Fin M → Fin wa → Validator) : firstGoodBlock U wa b g ≤ M := by
+    (g : Fin M → Fin wa → Validator) : firstGoodBlock (MahiMahi.goodAt U wa) wa b g ≤ M := by
   unfold firstGoodBlock
   split_ifs
   · exact le_of_lt (Fin.isLt _)
@@ -1346,29 +1369,30 @@ theorem firstGoodBlock_le {U : BlockUniverse Validator BlockId Payload} {wa b M 
 /-- A block below the first good one holds a bad coin. -/
 theorem exists_bad_of_lt_firstGoodBlock {U : BlockUniverse Validator BlockId Payload}
     {wa b M : ℕ} {g : Fin M → Fin wa → Validator} {j : Fin M}
-    (hj : (j : ℕ) < firstGoodBlock U wa b g) :
+    (hj : (j : ℕ) < firstGoodBlock (MahiMahi.goodAt U wa) wa b g) :
     ∃ i : Fin wa, g j i ∉ MahiMahi.goodAt U wa (b + j * wa + i) := by
   classical
   by_contra hall
-  have hmem : j ∈ goodBlocks U wa b g := by
+  have hmem : j ∈ goodBlocks (MahiMahi.goodAt U wa) wa b g := by
     unfold goodBlocks
     rw [Finset.mem_filter]
     refine ⟨Finset.mem_univ _, fun i => ?_⟩
     by_contra hi
     exact hall ⟨i, hi⟩
-  have hne : (goodBlocks U wa b g).Nonempty := ⟨j, hmem⟩
+  have hne : (goodBlocks (MahiMahi.goodAt U wa) wa b g).Nonempty := ⟨j, hmem⟩
   unfold firstGoodBlock at hj
   rw [dif_pos hne] at hj
   exact absurd hj (not_lt.mpr (Finset.min'_le _ _ hmem))
 
 /-- The block at the first good block's index, when the blocks hold one, is good throughout. -/
 theorem good_of_firstGoodBlock {U : BlockUniverse Validator BlockId Payload} {wa b M : ℕ}
-    {g : Fin M → Fin wa → Validator} {j : Fin M} (hj : (j : ℕ) = firstGoodBlock U wa b g) :
+    {g : Fin M → Fin wa → Validator} {j : Fin M}
+        (hj : (j : ℕ) = firstGoodBlock (MahiMahi.goodAt U wa) wa b g) :
     ∀ i : Fin wa, g j i ∈ MahiMahi.goodAt U wa (b + j * wa + i) := by
   classical
-  by_cases hne : (goodBlocks U wa b g).Nonempty
+  by_cases hne : (goodBlocks (MahiMahi.goodAt U wa) wa b g).Nonempty
   · have hmin := Finset.min'_mem _ hne
-    have hjm : j = (goodBlocks U wa b g).min' hne := by
+    have hjm : j = (goodBlocks (MahiMahi.goodAt U wa) wa b g).min' hne := by
       refine Fin.ext ?_
       rw [hj]
       unfold firstGoodBlock
@@ -1388,25 +1412,33 @@ slot below the blocks at period one: the block is a run of `wa` direct commits, 
 decides everything below it. -/
 theorem decided_of_firstGoodBlock {U : BlockUniverse Validator BlockId Payload} {ws wa : ℕ}
     {V : View Validator BlockId Payload U} {d : Validator} {s b M : ℕ} (hwa : 1 ≤ wa)
-    (hs : s < b) {g : Fin M → Fin wa → Validator} (hM : firstGoodBlock U wa b g < M)
-    (hV : V.CoversUpto (MahiMahi.decisionRoundAt wa (b + (firstGoodBlock U wa b g + 1) * wa - 1))) :
+    (hs : s < b) {g : Fin M → Fin wa → Validator}
+        (hM : firstGoodBlock (MahiMahi.goodAt U wa) wa b g < M)
+    (hV : V.CoversUpto
+        (MahiMahi.decisionRoundAt wa
+        (b + (firstGoodBlock (MahiMahi.goodAt U wa) wa b g + 1) * wa - 1))) :
     ∃ v, Decided (S := chainSlots (coinOfBlocksFrom b g d)) (wavelength ws wa) U V s v := by
-  have hj := good_of_firstGoodBlock (j := (⟨firstGoodBlock U wa b g, hM⟩ : Fin M)) rfl
+  have hj := good_of_firstGoodBlock
+      (j := (⟨firstGoodBlock (MahiMahi.goodAt U wa) wa b g, hM⟩ : Fin M)) rfl
   have hrun : ∀ i, i < wa → ∃ L, Decided (S := chainSlots (coinOfBlocksFrom b g d))
-      (wavelength ws wa) U V (b + firstGoodBlock U wa b g * wa + i) (some L) := by
+      (wavelength ws wa) U V (b + firstGoodBlock (MahiMahi.goodAt U wa) wa b g * wa + i) (some L) :=
+          by
     intro i hi
-    have hread : coinOfBlocksFrom b g d (b + firstGoodBlock U wa b g * wa + i) =
-        g ⟨firstGoodBlock U wa b g, hM⟩ ⟨i, hi⟩ :=
-      coinOfBlocksFrom_read (by omega) g d ⟨firstGoodBlock U wa b g, hM⟩ ⟨i, hi⟩
-    have hgood : coinOfBlocksFrom b g d (b + firstGoodBlock U wa b g * wa + i) ∈
-        MahiMahi.goodAt U wa (b + firstGoodBlock U wa b g * wa + i) := by
+    have hread : coinOfBlocksFrom b g d (b + firstGoodBlock (MahiMahi.goodAt U wa) wa b g * wa + i)
+        =
+        g ⟨firstGoodBlock (MahiMahi.goodAt U wa) wa b g, hM⟩ ⟨i, hi⟩ :=
+      coinOfBlocksFrom_read (by omega) g d ⟨firstGoodBlock (MahiMahi.goodAt U wa) wa b g, hM⟩
+          ⟨i, hi⟩
+    have hgood : coinOfBlocksFrom b g d (b + firstGoodBlock (MahiMahi.goodAt U wa) wa b g * wa + i)
+        ∈
+        MahiMahi.goodAt U wa (b + firstGoodBlock (MahiMahi.goodAt U wa) wa b g * wa + i) := by
       rw [hread]
       exact hj ⟨i, hi⟩
     obtain ⟨L, hLU, hLr, hLc, hdc⟩ := MahiMahi.mem_goodAt.mp hgood
     refine ⟨L, Decided.directCommit (S := chainSlots (coinOfBlocksFrom b g d))
       ⟨hLU, hLr, hLc⟩ ?_⟩
     change MahiMahi.DirectCommitIn U V (wavelength ws wa 1) L
-      (b + firstGoodBlock U wa b g * wa + i)
+      (b + firstGoodBlock (MahiMahi.goodAt U wa) wa b g * wa + i)
     rw [wavelength_one]
     refine MahiMahiProperties.directCommitIn_of_coversUpto hdc (hV.mono ?_)
     unfold MahiMahi.decisionRoundAt
@@ -1437,7 +1469,7 @@ theorem firstGoodBlock_ge_prob_le {U : BlockUniverse Validator BlockId Payload} 
       PopulatedOn U T (MahiMahi.decisionRoundAt wa (b + j * wa + i)))
     {m : ℕ} (hm : m ≤ M) :
     (PMF.uniformOfFintype (Fin M → Fin wa → Validator)).toOuterMeasure
-        {g : Fin M → Fin wa → Validator | m ≤ firstGoodBlock U wa b g} ≤
+        {g : Fin M → Fin wa → Validator | m ≤ firstGoodBlock (MahiMahi.goodAt U wa) wa b g} ≤
       Coin.badBlockBound Validator wa ^ m := by
   classical
   set G : Fin M → Fin wa → Finset Validator :=
@@ -1445,7 +1477,7 @@ theorem firstGoodBlock_ge_prob_le {U : BlockUniverse Validator BlockId Payload} 
   have hc : ∀ j i, Fintype.card Validator - F.f - F.byzantine.card ≤ (G j i).card :=
     fun j i => card_goodAt_of_populated hwa hcard (hpop j i).1 (hpop j i).2
   set H : Finset (Fin M) := Finset.univ.filter fun j : Fin M => (j : ℕ) < m with hH
-  have hsub : {g : Fin M → Fin wa → Validator | m ≤ firstGoodBlock U wa b g} ⊆
+  have hsub : {g : Fin M → Fin wa → Validator | m ≤ firstGoodBlock (MahiMahi.goodAt U wa) wa b g} ⊆
       {g | ∀ j ∈ H, ∃ i, g j i ∉ G j i} := by
     intro g hg j hj
     rw [hH, Finset.mem_filter] at hj
@@ -1495,7 +1527,7 @@ theorem expected_wait_eq {ι : Type} [Fintype ι] [Nonempty ι] {M : ℕ}
 /-- The wait is capped at the number of intervals. -/
 theorem firstGoodInterval_le {U : BlockUniverse Validator BlockId Payload} {wa M c : ℕ}
     (ρ : Fin M → Fin c → ℕ) (g : Fin M → Fin c → Validator) :
-    firstGoodInterval U wa ρ g ≤ M := by
+    firstGoodInterval (MahiMahi.goodAt U wa) ρ g ≤ M := by
   unfold firstGoodInterval
   split_ifs
   · exact le_of_lt (Fin.isLt _)
@@ -1505,15 +1537,15 @@ theorem firstGoodInterval_le {U : BlockUniverse Validator BlockId Payload} {wa M
 its scan names a committed candidate. -/
 theorem all_bad_of_lt_firstGoodInterval {U : BlockUniverse Validator BlockId Payload}
     {wa M c : ℕ} {ρ : Fin M → Fin c → ℕ} {g : Fin M → Fin c → Validator} {j : Fin M}
-    (hj : (j : ℕ) < firstGoodInterval U wa ρ g) :
+    (hj : (j : ℕ) < firstGoodInterval (MahiMahi.goodAt U wa) ρ g) :
     ∀ i : Fin c, g j i ∉ MahiMahi.goodAt U wa (ρ j i) := by
   classical
   intro i hi
-  have hmem : j ∈ goodIntervals U wa ρ g := by
+  have hmem : j ∈ goodIntervals (MahiMahi.goodAt U wa) ρ g := by
     unfold goodIntervals
     rw [Finset.mem_filter]
     exact ⟨Finset.mem_univ _, ⟨i, hi⟩⟩
-  have hne : (goodIntervals U wa ρ g).Nonempty := ⟨j, hmem⟩
+  have hne : (goodIntervals (MahiMahi.goodAt U wa) ρ g).Nonempty := ⟨j, hmem⟩
   unfold firstGoodInterval at hj
   rw [dif_pos hne] at hj
   exact absurd (Finset.min'_le _ _ hmem) (by exact_mod_cast Nat.not_le.mpr hj)
@@ -1534,7 +1566,7 @@ theorem noCommitProbOn_le {U : BlockUniverse Validator BlockId Payload} {wa : �
     {T : Finset Validator} (hcard : quorumCard Validator ≤ T.card) {c : ℕ} {ρ : Fin c → ℕ}
     (hpop : ∀ i : Fin c, PopulatedOn U T (ρ i + 3) ∧
       PopulatedOn U T (MahiMahi.decisionRoundAt wa (ρ i))) :
-    noCommitProbOn U wa ρ ≤
+    noCommitProbOn (MahiMahi.goodAt U wa) ρ ≤
       (((F.f + F.byzantine.card : ℕ) : ℝ≥0∞) / Fintype.card Validator) ^ c := by
   have h := no_hit_prob_le (fun i : Fin c => MahiMahi.goodAt U wa (ρ i)) fun i =>
     card_goodAt_of_populated hwa hcard (hpop i).1 (hpop i).2
@@ -1551,7 +1583,7 @@ theorem firstGoodInterval_ge_prob_le {U : BlockUniverse Validator BlockId Payloa
       PopulatedOn U T (MahiMahi.decisionRoundAt wa (ρ j i)))
     {m : ℕ} (hm : m ≤ M) :
     (PMF.uniformOfFintype (Fin M → Fin c → Validator)).toOuterMeasure
-        {g : Fin M → Fin c → Validator | m ≤ firstGoodInterval U wa ρ g} ≤
+        {g : Fin M → Fin c → Validator | m ≤ firstGoodInterval (MahiMahi.goodAt U wa) ρ g} ≤
       ((((F.f + F.byzantine.card : ℕ) : ℝ≥0∞) / Fintype.card Validator) ^ c) ^ m := by
   classical
   have hn0 := F.card_validators
@@ -1560,7 +1592,7 @@ theorem firstGoodInterval_ge_prob_le {U : BlockUniverse Validator BlockId Payloa
   have hcg : ∀ j i, Fintype.card Validator - F.f - F.byzantine.card ≤ (G j i).card :=
     fun j i => card_goodAt_of_populated hwa hcard (hpop j i).1 (hpop j i).2
   set H : Finset (Fin M) := Finset.univ.filter fun j : Fin M => (j : ℕ) < m with hH
-  have hsub : {g : Fin M → Fin c → Validator | m ≤ firstGoodInterval U wa ρ g} ⊆
+  have hsub : {g : Fin M → Fin c → Validator | m ≤ firstGoodInterval (MahiMahi.goodAt U wa) ρ g} ⊆
       {g | ∀ j ∈ H, ∀ i, g j i ∉ G j i} := by
     intro g hg j hj
     rw [hH, Finset.mem_filter] at hj
@@ -1581,12 +1613,12 @@ theorem expected_firstGoodInterval_le {U : BlockUniverse Validator BlockId Paylo
     (hpop : ∀ (j : Fin M) (i : Fin c), PopulatedOn U T (ρ j i + 3) ∧
       PopulatedOn U T (MahiMahi.decisionRoundAt wa (ρ j i))) :
     (∑ g : Fin M → Fin c → Validator, PMF.uniformOfFintype (Fin M → Fin c → Validator) g *
-        ((firstGoodInterval U wa ρ g + 1 : ℕ) : ℝ≥0∞)) ≤
+        ((firstGoodInterval (MahiMahi.goodAt U wa) ρ g + 1 : ℕ) : ℝ≥0∞)) ≤
       (1 - (((F.f + F.byzantine.card : ℕ) : ℝ≥0∞) / Fintype.card Validator) ^ c)⁻¹ := by
   rw [expected_wait_eq _ fun g => firstGoodInterval_le (U := U) (wa := wa) ρ g]
   calc ∑ m ∈ Finset.range (M + 1),
         (PMF.uniformOfFintype (Fin M → Fin c → Validator)).toOuterMeasure
-          {g : Fin M → Fin c → Validator | m ≤ firstGoodInterval U wa ρ g}
+          {g : Fin M → Fin c → Validator | m ≤ firstGoodInterval (MahiMahi.goodAt U wa) ρ g}
       ≤ ∑ m ∈ Finset.range (M + 1),
           ((((F.f + F.byzantine.card : ℕ) : ℝ≥0∞) / Fintype.card Validator) ^ c) ^ m := by
         refine Finset.sum_le_sum fun m hm => ?_
@@ -1626,10 +1658,10 @@ theorem one_sub_badBlockBound (wa : ℕ) :
 it reaches `m`, `expected_wait_eq` at the first good block. -/
 theorem expected_firstGoodBlock_eq {U : BlockUniverse Validator BlockId Payload} {wa b M : ℕ} :
     (∑ g : Fin M → Fin wa → Validator, PMF.uniformOfFintype (Fin M → Fin wa → Validator) g *
-        ((firstGoodBlock U wa b g + 1 : ℕ) : ℝ≥0∞)) =
+        ((firstGoodBlock (MahiMahi.goodAt U wa) wa b g + 1 : ℕ) : ℝ≥0∞)) =
       ∑ m ∈ Finset.range (M + 1),
         (PMF.uniformOfFintype (Fin M → Fin wa → Validator)).toOuterMeasure
-          {g : Fin M → Fin wa → Validator | m ≤ firstGoodBlock U wa b g} :=
+          {g : Fin M → Fin wa → Validator | m ≤ firstGoodBlock (MahiMahi.goodAt U wa) wa b g} :=
   expected_wait_eq _ fun g => firstGoodBlock_le (U := U) (b := b) g
 
 /-- **SH11j, first half.** The expected number of blocks the search waits for, the first good
@@ -1641,14 +1673,14 @@ theorem expected_firstGoodBlock_le {U : BlockUniverse Validator BlockId Payload}
     (hpop : ∀ (j : Fin M) (i : Fin wa), PopulatedOn U T (b + j * wa + i + 3) ∧
       PopulatedOn U T (MahiMahi.decisionRoundAt wa (b + j * wa + i))) :
     (∑ g : Fin M → Fin wa → Validator, PMF.uniformOfFintype (Fin M → Fin wa → Validator) g *
-        ((firstGoodBlock U wa b g + 1 : ℕ) : ℝ≥0∞)) ≤
+        ((firstGoodBlock (MahiMahi.goodAt U wa) wa b g + 1 : ℕ) : ℝ≥0∞)) ≤
       ((Fintype.card Validator : ℝ≥0∞) /
         ((Fintype.card Validator - F.f - F.byzantine.card : ℕ) : ℝ≥0∞)) ^ wa := by
   have hn0 := F.card_validators
   rw [expected_firstGoodBlock_eq]
   calc ∑ m ∈ Finset.range (M + 1),
         (PMF.uniformOfFintype (Fin M → Fin wa → Validator)).toOuterMeasure
-          {g : Fin M → Fin wa → Validator | m ≤ firstGoodBlock U wa b g}
+          {g : Fin M → Fin wa → Validator | m ≤ firstGoodBlock (MahiMahi.goodAt U wa) wa b g}
       ≤ ∑ m ∈ Finset.range (M + 1), Coin.badBlockBound Validator wa ^ m :=
         Finset.sum_le_sum fun m hm =>
           firstGoodBlock_ge_prob_le hwa hcard hpop (Nat.lt_succ_iff.mp (Finset.mem_range.mp hm))
@@ -1669,7 +1701,7 @@ theorem firstGoodBlock_ge_prob_le_four {U : BlockUniverse Validator BlockId Payl
       PopulatedOn U T (MahiMahi.decisionRoundAt wa (b + j * wa + i)))
     {m : ℕ} (hm : m ≤ M) :
     (PMF.uniformOfFintype (Fin M → Fin wa → Validator)).toOuterMeasure
-        {g : Fin M → Fin wa → Validator | m ≤ firstGoodBlock U wa b g} ≤
+        {g : Fin M → Fin wa → Validator | m ≤ firstGoodBlock (MahiMahi.goodAt U wa) wa b g} ≤
       Coin.badBlockBoundOne Validator wa ^ m := by
   classical
   set G : Fin M → Fin wa → Finset Validator :=
@@ -1677,7 +1709,7 @@ theorem firstGoodBlock_ge_prob_le_four {U : BlockUniverse Validator BlockId Payl
   have hc : ∀ j i, 1 ≤ (G j i).card :=
     fun j i => one_le_card_goodAt_of_populated hwa hcard (hpop j i).1 (hpop j i).2
   set H : Finset (Fin M) := Finset.univ.filter fun j : Fin M => (j : ℕ) < m with hH
-  have hsub : {g : Fin M → Fin wa → Validator | m ≤ firstGoodBlock U wa b g} ⊆
+  have hsub : {g : Fin M → Fin wa → Validator | m ≤ firstGoodBlock (MahiMahi.goodAt U wa) wa b g} ⊆
       {g | ∀ j ∈ H, ∃ i, g j i ∉ G j i} := by
     intro g hg j hj
     rw [hH, Finset.mem_filter] at hj
@@ -1719,11 +1751,12 @@ theorem expected_firstGoodBlock_le_four {U : BlockUniverse Validator BlockId Pay
     (hpop : ∀ (j : Fin M) (i : Fin wa), PopulatedOn U T (b + j * wa + i + 2) ∧
       PopulatedOn U T (MahiMahi.decisionRoundAt wa (b + j * wa + i))) :
     (∑ g : Fin M → Fin wa → Validator, PMF.uniformOfFintype (Fin M → Fin wa → Validator) g *
-        ((firstGoodBlock U wa b g + 1 : ℕ) : ℝ≥0∞)) ≤ (Fintype.card Validator : ℝ≥0∞) ^ wa := by
+        ((firstGoodBlock (MahiMahi.goodAt U wa) wa b g + 1 : ℕ) : ℝ≥0∞)) ≤
+            (Fintype.card Validator : ℝ≥0∞) ^ wa := by
   rw [expected_firstGoodBlock_eq]
   calc ∑ m ∈ Finset.range (M + 1),
         (PMF.uniformOfFintype (Fin M → Fin wa → Validator)).toOuterMeasure
-          {g : Fin M → Fin wa → Validator | m ≤ firstGoodBlock U wa b g}
+          {g : Fin M → Fin wa → Validator | m ≤ firstGoodBlock (MahiMahi.goodAt U wa) wa b g}
       ≤ ∑ m ∈ Finset.range (M + 1), Coin.badBlockBoundOne Validator wa ^ m :=
         Finset.sum_le_sum fun m hm => firstGoodBlock_ge_prob_le_four hwa hcard hpop
           (Nat.lt_succ_iff.mp (Finset.mem_range.mp hm))
@@ -1853,8 +1886,10 @@ theorem undecided_coin_le [MeasurableSpace Validator] [MeasurableSingletonClass 
       PopulatedOn U T (MahiMahi.decisionRoundAt wa (blockRound I q (intervalOf I s) j i))) :
     coinMeasure Validator {coin | ¬ ∀ (V : View Validator BlockId Payload U) (per : ℕ → ℕ),
         V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) M) →
-        Matches I K wa coin known upd k₀ ws U V per →
-        Settles I K wa coin known upd k₀ ws U V per s} ≤
+        Matches I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known upd k₀ U V per →
+        Settles I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known upd k₀ U V per s} ≤
       2 * Coin.badBlockBound Validator (wa * K) ^ (M / 2) := by
   classical
   set G : Fin M → Fin (wa * K) → Finset Validator :=
@@ -1864,8 +1899,10 @@ theorem undecided_coin_le [MeasurableSpace Validator] [MeasurableSingletonClass 
   -- a good block in each half decides the slot, so failing needs a bad half
   have hsub : {coin : ℕ → Validator | ¬ ∀ (V : View Validator BlockId Payload U) (per : ℕ → ℕ),
         V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) M) →
-        Matches I K wa coin known upd k₀ ws U V per →
-        Settles I K wa coin known upd k₀ ws U V per s} ⊆
+        Matches I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known upd k₀ U V per →
+        Settles I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known upd k₀ U V per s} ⊆
       {coin | blockCoins I q (intervalOf I s) M (wa * K) coin ∈
         {g | ∀ j ∈ lowerHalf M, ∃ i, g j i ∉ G j i} ∪
           {g | ∀ j ∈ upperHalf M, ∃ i, g j i ∉ G j i}} := by
@@ -1887,16 +1924,20 @@ theorem undecided_coin_le_adaptive [MeasurableSpace Validator]
     {known : ℕ → Validator} {s M : ℕ}
     {σ : (Fin M → Fin (wa * K) → Validator) → BlockUniverse Validator BlockId Payload}
     {G : (Fin M → Fin (wa * K) → Validator) → Fin M → Fin (wa * K) → Finset Validator} (h₁ : 1 ≤ s)
-    (hσ : NonAnticipating σ G wa I q (intervalOf I s))
+    (hσ : NonAnticipating σ G (MahiMahi.goodAt · wa) I q (intervalOf I s))
     (hc : ∀ g j i, Fintype.card Validator - F.f - F.byzantine.card ≤ (G g j i).card) :
     coinMeasure Validator {coin |
         ¬ ∀ (V : View Validator BlockId Payload
             (σ (blockCoins I q (intervalOf I s) M (wa * K) coin)))
           (per : ℕ → ℕ),
         V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) M) →
-        Matches I K wa coin known upd k₀ ws (σ (blockCoins I q (intervalOf I s) M (wa * K) coin))
+        Matches I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known upd k₀
+            (σ (blockCoins I q (intervalOf I s) M (wa * K) coin))
           V per →
-        Settles I K wa coin known upd k₀ ws (σ (blockCoins I q (intervalOf I s) M (wa * K) coin))
+        Settles I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known upd k₀
+            (σ (blockCoins I q (intervalOf I s) M (wa * K) coin))
           V per s} ≤
       2 * Coin.badBlockBound Validator (wa * K) ^ (M / 2) := by
   have hsub : {coin : ℕ → Validator |
@@ -1904,9 +1945,13 @@ theorem undecided_coin_le_adaptive [MeasurableSpace Validator]
             (σ (blockCoins I q (intervalOf I s) M (wa * K) coin)))
           (per : ℕ → ℕ),
         V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) M) →
-        Matches I K wa coin known upd k₀ ws (σ (blockCoins I q (intervalOf I s) M (wa * K) coin))
+        Matches I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known upd k₀
+            (σ (blockCoins I q (intervalOf I s) M (wa * K) coin))
           V per →
-        Settles I K wa coin known upd k₀ ws (σ (blockCoins I q (intervalOf I s) M (wa * K) coin))
+        Settles I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known upd k₀
+            (σ (blockCoins I q (intervalOf I s) M (wa * K) coin))
           V per s} ⊆
       {coin | blockCoins I q (intervalOf I s) M (wa * K) coin ∈
         ({g | ∀ j ∈ lowerHalf M, ∃ i : Fin (wa * K), g j i ∉ G g j i} ∪
@@ -1934,7 +1979,7 @@ theorem decidedAlmostSurely_adaptive [MeasurableSpace Validator]
     {upd : ℕ → UpdateRule BlockId} {k₀ : ℕ} (h₀ : 1 ≤ k₀) (hK : k₀ ≤ K)
     (hupd : ∀ m A k, 1 ≤ k → k ≤ K → 1 ≤ upd m A k ∧ upd m A k ≤ K)
     {known : ℕ → Validator} {s : ℕ} (h₁ : 1 ≤ s)
-    (hσ : ∀ m, NonAnticipating (σ m) (G m) wa I q (intervalOf I s))
+    (hσ : ∀ m, NonAnticipating (σ m) (G m) (MahiMahi.goodAt · wa) I q (intervalOf I s))
     (hc : ∀ (m : ℕ) (g : Fin m → Fin (wa * K) → Validator) (j : Fin m) (i : Fin (wa * K)),
       Fintype.card Validator - F.f - F.byzantine.card ≤ (G m g j i).card) :
     ∀ᵐ coin ∂(coinMeasure Validator), ∃ m,
@@ -1942,9 +1987,11 @@ theorem decidedAlmostSurely_adaptive [MeasurableSpace Validator]
           (σ m (blockCoins I q (intervalOf I s) m (wa * K) coin)))
         (per : ℕ → ℕ),
         V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) m) →
-        Matches I K wa coin known (upd m) k₀ ws
+        Matches I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known (upd m) k₀
           (σ m (blockCoins I q (intervalOf I s) m (wa * K) coin)) V per →
-        Settles I K wa coin known (upd m) k₀ ws
+        Settles I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known (upd m) k₀
           (σ m (blockCoins I q (intervalOf I s) m (wa * K) coin)) V per s := by
   rw [MeasureTheory.ae_iff]
   refine le_antisymm
@@ -1972,8 +2019,10 @@ theorem decidedAlmostSurely [MeasurableSpace Validator] [MeasurableSingletonClas
     ∀ᵐ coin ∂(coinMeasure Validator), ∃ m,
       ∀ (V : View Validator BlockId Payload (U m)) (per : ℕ → ℕ),
         V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) m) →
-        Matches I K wa coin known (upd m) k₀ ws (U m) V per →
-        Settles I K wa coin known (upd m) k₀ ws (U m) V per s := by
+        Matches I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known (upd m) k₀ (U m) V per →
+        Settles I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known (upd m) k₀ (U m) V per s := by
   rw [MeasureTheory.ae_iff]
   refine le_antisymm
     (ge_of_tendsto' (undecided_tail_tendsto_zero (Validator := Validator) (K := wa * K))
@@ -2001,8 +2050,10 @@ theorem unanchored_coin_le [MeasurableSpace Validator] [MeasurableSingletonClass
       PopulatedOn U T (MahiMahi.decisionRoundAt wa (blockRound I q (intervalOf I s) j i))) :
     coinMeasure Validator {coin | ¬ ∀ (V : View Validator BlockId Payload U) (per : ℕ → ℕ),
         V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) M) →
-        Matches I K wa coin known upd k₀ ws U V per →
-        Anchored I K wa coin known upd k₀ ws U V per s} ≤
+        Matches I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known upd k₀ U V per →
+        Anchored I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known upd k₀ U V per s} ≤
       2 * Coin.badBlockBound Validator (wa * K) ^ (M / 2) := by
   classical
   set G : Fin M → Fin (wa * K) → Finset Validator :=
@@ -2012,8 +2063,10 @@ theorem unanchored_coin_le [MeasurableSpace Validator] [MeasurableSingletonClass
   -- a good block in each half anchors the earlier one's interval, so failing needs a bad half
   have hsub : {coin : ℕ → Validator | ¬ ∀ (V : View Validator BlockId Payload U) (per : ℕ → ℕ),
         V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) M) →
-        Matches I K wa coin known upd k₀ ws U V per →
-        Anchored I K wa coin known upd k₀ ws U V per s} ⊆
+        Matches I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known upd k₀ U V per →
+        Anchored I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known upd k₀ U V per s} ⊆
       {coin | blockCoins I q (intervalOf I s) M (wa * K) coin ∈
         {g | ∀ j ∈ lowerHalf M, ∃ i, g j i ∉ G j i} ∪
           {g | ∀ j ∈ upperHalf M, ∃ i, g j i ∉ G j i}} := by
@@ -2041,8 +2094,10 @@ theorem anchoredAlmostSurely [MeasurableSpace Validator] [MeasurableSingletonCla
     ∀ᵐ coin ∂(coinMeasure Validator), ∃ m,
       ∀ (V : View Validator BlockId Payload (U m)) (per : ℕ → ℕ),
         V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) m) →
-        Matches I K wa coin known (upd m) k₀ ws (U m) V per →
-        Anchored I K wa coin known (upd m) k₀ ws (U m) V per s := by
+        Matches I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known (upd m) k₀ (U m) V per →
+        Anchored I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known (upd m) k₀ (U m) V per s := by
   rw [MeasureTheory.ae_iff]
   refine le_antisymm
     (ge_of_tendsto' (undecided_tail_tendsto_zero (Validator := Validator) (K := wa * K))
@@ -2070,8 +2125,11 @@ theorem allDecidedAlmostSurely [MeasurableSpace Validator] [MeasurableSingletonC
     ∀ᵐ coin ∂(coinMeasure Validator), ∀ s, 1 ≤ s → ∃ m,
       ∀ (V : View Validator BlockId Payload (U s m)) (per : ℕ → ℕ),
         V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) m) →
-        Matches I K wa coin known (upd s m) k₀ ws (U s m) V per →
-        Settles I K wa coin known (upd s m) k₀ ws (U s m) V per s := by
+        Matches I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known (upd s m) k₀ (U s m) V per →
+        Settles I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+            (steelheadAnchored _ _ _ (wavelength ws wa)) coin known (upd s m) k₀ (U s m) V per s :=
+            by
   rw [MeasureTheory.ae_all_iff]
   intro s
   by_cases h₁ : 1 ≤ s
@@ -2103,7 +2161,8 @@ read off; SH10a makes the two states one. -/
 theorem matchingPer_matches {I K wa : ℕ} [NeZero K] {ws : ℕ} (hws : 2 ≤ ws) (hwa : 3 ≤ wa)
     {coin known : ℕ → Validator} {upd : UpdateRule BlockId} {k₀ : ℕ}
     {U : BlockUniverse Validator BlockId Payload} {V : View Validator BlockId Payload U} :
-    Matches I K wa coin known upd k₀ ws U V (matchingPer I K wa coin known upd k₀ ws U V) := by
+    Matches I K (MahiMahi.mahiMahiAnchored _ _ _ wa) (steelheadAnchored _ _ _ (wavelength ws wa))
+        coin known upd k₀ U V (matchingPer I K wa coin known upd k₀ ws U V) := by
   intro j st hst
   rw [matchingPer]
   set prev : ℕ → ℕ :=

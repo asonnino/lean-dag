@@ -1,5 +1,6 @@
 import LeanDag.Steelhead.Model.Replay
 import LeanDag.Steelhead.Model.Coin
+import LeanDag.MahiMahi.Model.Good
 /-!
 # The replay — statement
 
@@ -195,7 +196,7 @@ def CommitWeightExact (U : BlockUniverse Validator BlockId Payload) (wa I : ℕ)
     -- then the share of the candidates the window marks committed is the probability that the
     -- coin names a committed leader on the anchor's history read as a record
     (committedCount (ofAnchor U A I) r wa : ℝ≥0∞) / Fintype.card Validator =
-      commitProb (U.historyView A hA).toRecord wa r
+      commitProb (MahiMahi.goodAt (U.historyView A hA).toRecord wa) r
 
 /-- **SH18j, a probe exists.** -/
 def ProbeExists : Prop :=

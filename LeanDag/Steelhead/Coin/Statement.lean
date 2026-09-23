@@ -1,4 +1,5 @@
 import LeanDag.Steelhead.Model.Coin
+import LeanDag.MahiMahi.Model.Good
 import Mathlib.Analysis.SpecificLimits.Basic
 /-!
 # The coin — statement
@@ -187,9 +188,9 @@ def CommitProbability (U : BlockUniverse Validator BlockId Payload) (wa : ℕ) :
     PopulatedOn U T (r + 3) → PopulatedOn U T (MahiMahi.decisionRoundAt wa r) →
     -- then the coin names a committed leader with probability at least (n − f − b) / n ...
     ((Fintype.card Validator - F.f - F.byzantine.card : ℕ) : ℝ≥0∞) / Fintype.card Validator ≤
-      commitProb U wa r ∧
+      commitProb (MahiMahi.goodAt U wa) r ∧
     -- ... and so at least 1/3
-    (3 : ℝ≥0∞)⁻¹ ≤ commitProb U wa r
+    (3 : ℝ≥0∞)⁻¹ ≤ commitProb (MahiMahi.goodAt U wa) r
 
 /-- **SH11b, the commit probability at wave four.** -/
 def CommitProbabilityFour (U : BlockUniverse Validator BlockId Payload) (wa : ℕ) : Prop :=
@@ -198,7 +199,7 @@ def CommitProbabilityFour (U : BlockUniverse Validator BlockId Payload) (wa : �
     4 ≤ wa → quorumCard Validator ≤ T.card →
     PopulatedOn U T (r + 2) → PopulatedOn U T (MahiMahi.decisionRoundAt wa r) →
     -- then the coin names a committed leader with probability at least 1 / n
-    (Fintype.card Validator : ℝ≥0∞)⁻¹ ≤ commitProb U wa r
+    (Fintype.card Validator : ℝ≥0∞)⁻¹ ≤ commitProb (MahiMahi.goodAt U wa) r
 
 /-- **SH11c, the coin names a Byzantine leader with probability `b / n`.** -/
 def ByzantineLeaderProbability : Prop :=
@@ -219,7 +220,7 @@ def RunProbability (U : BlockUniverse Validator BlockId Payload) (wa : ℕ) : Pr
     -- then every one of those rounds names a committed leader with probability at least
     -- ((n − f − b) / n)^m, which at m = wa is the run the paper asks a window for
     ((((Fintype.card Validator - F.f - F.byzantine.card : ℕ) : ℝ≥0∞) /
-      Fintype.card Validator) ^ m) ≤ runProb U wa r₀ m
+      Fintype.card Validator) ^ m) ≤ runProb (MahiMahi.goodAt U wa) r₀ m
 
 /-- **SH11e, a good coin commits the chain slot.** -/
 def CommitOfCoin (U : BlockUniverse Validator BlockId Payload) (wa : ℕ) : Prop :=
@@ -242,7 +243,7 @@ def NoCommitTail (U : BlockUniverse Validator BlockId Payload) (wa : ℕ) : Prop
     (∀ i : Fin m, PopulatedOn U T (r₀ + i + 3) ∧
       PopulatedOn U T (MahiMahi.decisionRoundAt wa (r₀ + i))) →
     -- then no chain slot of those rounds commits with probability at most ((f + b) / n)^m
-    noCommitProb U wa r₀ m ≤
+    noCommitProb (MahiMahi.goodAt U wa) r₀ m ≤
       (((F.f + F.byzantine.card : ℕ) : ℝ≥0∞) / Fintype.card Validator) ^ m
 
 /-- **SH11g, the tail vanishes.** -/
@@ -282,7 +283,9 @@ def UndecidedTail (U : BlockUniverse Validator BlockId Payload) (ws wa I K : ℕ
       PopulatedOn U T (MahiMahi.decisionRoundAt wa (blockRound I q (intervalOf I s) j i))) →
     -- then the slot stays undecided with probability at most twice the chance that each of M/2
     -- blocks holds a bad coin
-    undecidedProb U ws wa I q K upd k₀ known d s M ≤
+    undecidedProb U (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa)
+        (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) wa I q K upd k₀ known d
+        s M ≤
       2 * badBlockBound Validator (wa * K) ^ (M / 2)
 
 /-- **SH11i, the search under the coin.** Theorem 2's asynchronous-floor clause at period one. -/
@@ -314,13 +317,14 @@ def ExpectedWaitAtPeriodOne (U : BlockUniverse Validator BlockId Payload) (ws wa
     -- then the number of blocks the search waits for, the first good one included and capped at
     -- M, is in expectation at most (n / (n − f − b))^wa, the paper's 1 / p^wa ...
     (∑ g : Fin M → Fin wa → Validator, PMF.uniformOfFintype (Fin M → Fin wa → Validator) g *
-        ((firstGoodBlock U wa b g + 1 : ℕ) : ℝ≥0∞)) ≤
+        ((firstGoodBlock (MahiMahi.goodAt U wa) wa b g + 1 : ℕ) : ℝ≥0∞)) ≤
       ((Fintype.card Validator : ℝ≥0∞) /
         ((Fintype.card Validator - F.f - F.byzantine.card : ℕ) : ℝ≥0∞)) ^ wa ∧
     -- ... and once a view holds the decision rounds of the first good block, the slot is decided
     -- at period one on the chain schedule of those coins
-    (∀ g : Fin M → Fin wa → Validator, firstGoodBlock U wa b g < M →
-      V.CoversUpto (MahiMahi.decisionRoundAt wa (b + (firstGoodBlock U wa b g + 1) * wa - 1)) →
+    (∀ g : Fin M → Fin wa → Validator, firstGoodBlock (MahiMahi.goodAt U wa) wa b g < M →
+      V.CoversUpto (MahiMahi.decisionRoundAt wa
+        (b + (firstGoodBlock (MahiMahi.goodAt U wa) wa b g + 1) * wa - 1)) →
       ∃ v, Decided (S := chainSlots (coinOfBlocksFrom b g d)) (wavelength ws wa) U V s v)
 
 /-- **SH11l, a scan's control slots all miss.** The chance that no slot of a scan names a
@@ -333,7 +337,7 @@ def NoCommitOnScan (U : BlockUniverse Validator BlockId Payload) (wa : ℕ) : Pr
     (∀ i : Fin c, PopulatedOn U T (ρ i + 3) ∧
       PopulatedOn U T (MahiMahi.decisionRoundAt wa (ρ i))) →
     -- then every slot of the scan misses with probability at most ((f + b) / n)^c
-    noCommitProbOn U wa ρ ≤
+    noCommitProbOn (MahiMahi.goodAt U wa) ρ ≤
       (((F.f + F.byzantine.card : ℕ) : ℝ≥0∞) / Fintype.card Validator) ^ c
 
 /-- **SH11m, the expected number of scans before one anchors.** The paper's
@@ -348,7 +352,7 @@ def ExpectedIntervalsToAnchor (U : BlockUniverse Validator BlockId Payload) (wa 
     -- then the number of scans before one anchors, the anchoring scan included and capped at M,
     -- is in expectation at most 1 / (1 − ((f + b) / n)^c)
     (∑ g : Fin M → Fin c → Validator, PMF.uniformOfFintype (Fin M → Fin c → Validator) g *
-        ((firstGoodInterval U wa ρ g + 1 : ℕ) : ℝ≥0∞)) ≤
+        ((firstGoodInterval (MahiMahi.goodAt U wa) ρ g + 1 : ℕ) : ℝ≥0∞)) ≤
       (1 - (((F.f + F.byzantine.card : ℕ) : ℝ≥0∞) / Fintype.card Validator) ^ c)⁻¹
 
 /-- **SH11k, the expected wait of the search at period one, at wave four.** SH11j at `4 ≤ wa`,
@@ -365,11 +369,13 @@ def ExpectedWaitAtPeriodOneFour (U : BlockUniverse Validator BlockId Payload) (w
     -- then the number of blocks the search waits for, the first good one included and capped at
     -- M, is in expectation at most n^wa, the paper's 1 / p^wa at p = 1 / n ...
     (∑ g : Fin M → Fin wa → Validator, PMF.uniformOfFintype (Fin M → Fin wa → Validator) g *
-        ((firstGoodBlock U wa b g + 1 : ℕ) : ℝ≥0∞)) ≤ (Fintype.card Validator : ℝ≥0∞) ^ wa ∧
+        ((firstGoodBlock (MahiMahi.goodAt U wa) wa b g + 1 : ℕ) : ℝ≥0∞)) ≤
+            (Fintype.card Validator : ℝ≥0∞) ^ wa ∧
     -- ... and once a view holds the decision rounds of the first good block, the slot is decided
     -- at period one on the chain schedule of those coins
-    (∀ g : Fin M → Fin wa → Validator, firstGoodBlock U wa b g < M →
-      V.CoversUpto (MahiMahi.decisionRoundAt wa (b + (firstGoodBlock U wa b g + 1) * wa - 1)) →
+    (∀ g : Fin M → Fin wa → Validator, firstGoodBlock (MahiMahi.goodAt U wa) wa b g < M →
+      V.CoversUpto (MahiMahi.decisionRoundAt wa
+        (b + (firstGoodBlock (MahiMahi.goodAt U wa) wa b g + 1) * wa - 1)) →
       ∃ v, Decided (S := chainSlots (coinOfBlocksFrom b g d)) (wavelength ws wa) U V s v)
 
 /-- **SH11h, the adaptive block bound.** -/
@@ -401,11 +407,12 @@ def UndecidedTailAgainst (ws wa I K : ℕ) [NeZero K] : Prop :=
     1 ≤ k₀ → k₀ ≤ K → (∀ A k, 1 ≤ k → k ≤ K → 1 ≤ upd A k ∧ upd A k ≤ K) →
     -- the adversary builds its record from the coins already drawn, with a floor of committed
     -- candidates at every round of the blocks that the round's own coin cannot shrink ...
-    NonAnticipating σ G wa I q (intervalOf I s) →
+    NonAnticipating σ G (MahiMahi.goodAt · wa) I q (intervalOf I s) →
     -- ... and the floor holds at least n − f − b validators, the counting lemma's share
     (∀ g j i, Fintype.card Validator - F.f - F.byzantine.card ≤ (G g j i).card) →
     -- then the slot stays undecided with the probability SH15a gives against a fixed record
-    undecidedProbAgainst ws wa I q σ upd k₀ known d s ≤
+    undecidedProbAgainst (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa)
+        (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) wa I q σ upd k₀ known d s ≤
       2 * badBlockBound Validator (wa * K) ^ (M / 2)
 
 /-- **SH15c, the tail vanishes.** -/
@@ -432,7 +439,9 @@ def UndecidedTailFour (U : BlockUniverse Validator BlockId Payload) (ws wa I K :
       PopulatedOn U T (MahiMahi.decisionRoundAt wa (blockRound I q (intervalOf I s) j i))) →
     -- then the slot stays undecided with probability at most twice the chance that each of M/2
     -- blocks names no committed candidate at some round
-    undecidedProb U ws wa I q K upd k₀ known d s M ≤
+    undecidedProb U (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa)
+        (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) wa I q K upd k₀ known d
+        s M ≤
       2 * badBlockBoundOne Validator (wa * K) ^ (M / 2)
 
 /-- **SH15d, the tail at wave four vanishes.** -/
@@ -461,8 +470,12 @@ def DecidedAlmostSurely (ws wa I K : ℕ) [NeZero K] : Prop :=
     ∀ᵐ coin ∂(coinMeasure Validator), ∃ m,
       ∀ (V : View Validator BlockId Payload (U m)) (per : ℕ → ℕ),
         V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) m) →
-        Matches I K wa coin known (upd m) k₀ ws (U m) V per →
-        Settles I K wa coin known (upd m) k₀ ws (U m) V per s
+        Matches I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa)
+            (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) coin known (upd m) k₀
+            (U m) V per →
+        Settles I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa)
+            (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) coin known (upd m) k₀
+            (U m) V per s
 
 /-- **SH15g, almost surely against an adaptive adversary.** -/
 def DecidedAlmostSurelyAgainst (ws wa I K : ℕ) [NeZero K] : Prop :=
@@ -477,7 +490,7 @@ def DecidedAlmostSurelyAgainst (ws wa I K : ℕ) [NeZero K] : Prop :=
     -- the initial period lies in [1, K], and every update rule keeps a period there
     1 ≤ k₀ → k₀ ≤ K → (∀ m A k, 1 ≤ k → k ≤ K → 1 ≤ upd m A k ∧ upd m A k ≤ K) →
     -- every strategy of the sequence answers the draws already made, with its floor ...
-    (∀ m, NonAnticipating (σ m) (G m) wa I q (intervalOf I s)) →
+    (∀ m, NonAnticipating (σ m) (G m) (MahiMahi.goodAt · wa) I q (intervalOf I s)) →
     -- ... and every floor holds at least n − f − b validators
     (∀ (m : ℕ) (g : Fin m → Fin (wa * K) → Validator) (j : Fin m) (i : Fin (wa * K)),
       Fintype.card Validator - F.f - F.byzantine.card ≤ (G m g j i).card) →
@@ -488,9 +501,11 @@ def DecidedAlmostSurelyAgainst (ws wa I K : ℕ) [NeZero K] : Prop :=
           (σ m (blockCoins I q (intervalOf I s) m (wa * K) coin)))
         (per : ℕ → ℕ),
         V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) m) →
-        Matches I K wa coin known (upd m) k₀ ws
+        Matches I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa)
+            (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) coin known (upd m) k₀
           (σ m (blockCoins I q (intervalOf I s) m (wa * K) coin)) V per →
-        Settles I K wa coin known (upd m) k₀ ws
+        Settles I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa)
+            (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) coin known (upd m) k₀
           (σ m (blockCoins I q (intervalOf I s) m (wa * K) coin)) V per s
 
 /-- **SH15h, every slot is decided almost surely.** -/
@@ -514,8 +529,12 @@ def AllDecidedAlmostSurely (ws wa I K : ℕ) [NeZero K] : Prop :=
     ∀ᵐ coin ∂(coinMeasure Validator), ∀ s, 1 ≤ s → ∃ m,
       ∀ (V : View Validator BlockId Payload (U s m)) (per : ℕ → ℕ),
         V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) m) →
-        Matches I K wa coin known (upd s m) k₀ ws (U s m) V per →
-        Settles I K wa coin known (upd s m) k₀ ws (U s m) V per s
+        Matches I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa)
+            (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) coin known (upd s m) k₀
+            (U s m) V per →
+        Settles I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa)
+            (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) coin known (upd s m) k₀
+            (U s m) V per s
 
 /-- **SH15f, some interval is anchored almost surely.** Theorem 3 (i)'s "with probability `1`
 some scan finds its anchor": SH15e with the anchor in place of the decision. -/
@@ -540,8 +559,12 @@ def AnchoredAlmostSurely (ws wa I K : ℕ) [NeZero K] : Prop :=
     ∀ᵐ coin ∂(coinMeasure Validator), ∃ m,
       ∀ (V : View Validator BlockId Payload (U m)) (per : ℕ → ℕ),
         V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) m) →
-        Matches I K wa coin known (upd m) k₀ ws (U m) V per →
-        Anchored I K wa coin known (upd m) k₀ ws (U m) V per s
+        Matches I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa)
+            (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) coin known (upd m) k₀
+            (U m) V per →
+        Anchored I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa)
+            (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) coin known (upd m) k₀
+            (U m) V per s
 
 /-- **SH15i, a matching sequence exists.** -/
 def MatchesExists (U : BlockUniverse Validator BlockId Payload) (ws wa I K : ℕ) [NeZero K] :
@@ -551,7 +574,8 @@ def MatchesExists (U : BlockUniverse Validator BlockId Payload) (ws wa I K : ℕ
     2 ≤ ws → 3 ≤ wa →
     -- then some period sequence is the one the view derives, at every interval it derives a
     -- state for
-    ∃ per, Matches I K wa coin known upd k₀ ws U V per
+    ∃ per, Matches I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa)
+        (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) coin known upd k₀ U V per
 
 /-- The coin, over every fault configuration, block universe, asynchronous wave, interval and
 positive period bound the model admits. -/

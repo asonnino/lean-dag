@@ -429,7 +429,7 @@ theorem committedCount_eq_card_goodAt {wa I : ℕ} (hwa : 1 ≤ wa) {A : BlockId
 theorem commitWeight_eq_commitProb {wa I : ℕ} (hwa : 1 ≤ wa) {A : BlockId} (hA : A ∈ U.ids)
     {r : ℕ} (hr : windowBottom U A I ≤ r) :
     (committedCount (ofAnchor U A I) r wa : ℝ≥0∞) / Fintype.card Validator =
-      commitProb (U.historyView A hA).toRecord wa r := by
+      commitProb (MahiMahi.goodAt (U.historyView A hA).toRecord wa) r := by
   rw [committedCount_eq_card_goodAt hwa hA hr, commitProb_eq]
 
 /-! ## The passes -/

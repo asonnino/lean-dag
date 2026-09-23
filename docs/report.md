@@ -13573,10 +13573,10 @@ abbrev adaptiveSlots (coin known : ℕ → Validator) (I : ℕ) (per : ℕ → �
 *def, `Steelhead.Model.Coin.lean`*
 
 ```lean
-noncomputable def firstGoodBlock (U : BlockUniverse Validator BlockId Payload) (wa b : ℕ)
-    {M : ℕ} (g : Fin M → Fin wa → Validator) : ℕ :=
+noncomputable def firstGoodBlock (G : ℕ → Finset Validator) (wa b : ℕ) {M : ℕ}
+    (g : Fin M → Fin wa → Validator) : ℕ :=
   open Classical in
-  if h : (goodBlocks U wa b g).Nonempty then ((goodBlocks U wa b g).min' h : ℕ) else M
+  if h : (goodBlocks G wa b g).Nonempty then ((goodBlocks G wa b g).min' h : ℕ) else M
 ```
 
 **The first good block**, or `M` when none of the `M` blocks is good: the search at period one waits for `firstGoodBlock … g + 1` blocks of `wa` rounds, the good one included, and decides the slot below them by the drain (SH11i).
@@ -13612,15 +13612,13 @@ def coinOfBlocks {M K : ℕ} (I q j₀ : ℕ) (g : Fin M → Fin K → Validator
 *def, `Steelhead.Model.Coin.lean`*
 
 ```lean
-def Anchored (I K wa : ℕ) [NeZero K] (coin known : ℕ → Validator) (upd : UpdateRule BlockId)
-    (k₀ ws : ℕ) (U : BlockUniverse Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) (per : ℕ → ℕ) (s : ℕ) : Prop :=
+def Anchored (I K : ℕ) [NeZero K] (Ra R : AnchoredRule Validator BlockId Payload ValidWrt Correct)
+    (coin known : ℕ → Validator) (upd : UpdateRule BlockId) (k₀ : ℕ)
+    (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
+    (per : ℕ → ℕ) (s : ℕ) : Prop :=
   ∃ j st i A, intervalOf I s < j ∧
-    PeriodAt (S := adaptiveSlots coin known I per) I K
-        (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
-        (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) j st ∧
-    IntervalAnchor I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin U V j st.period
-        i A
+    PeriodAt (S := adaptiveSlots coin known I per) I K Ra coin upd k₀ U V R j st ∧
+    IntervalAnchor I K Ra coin U V j st.period i A
 ```
 
 **A view has anchored an interval above a slot's**, at a matching sequence: some interval past the slot's has a derived state and, at its period, an anchor. The event Theorem 3 (i) names when it says that some scan finds its anchor.
@@ -13630,17 +13628,18 @@ def Anchored (I K wa : ℕ) [NeZero K] (coin known : ℕ → Validator) (upd : U
 *def, `Steelhead.Model.Coin.lean`*
 
 ```lean
-noncomputable def undecidedProb (U : BlockUniverse Validator BlockId Payload) (ws wa I q K : ℕ)
-    [NeZero K] (upd : UpdateRule BlockId) (k₀ : ℕ) (known : ℕ → Validator) (d : Validator)
-    (s M : ℕ) : ℝ≥0∞ :=
+noncomputable def undecidedProb (U : BlockUniverse Validator BlockId Payload)
+    (Ra R : AnchoredRule Validator BlockId Payload ValidWrt Correct) (wa I q K : ℕ) [NeZero K]
+    (upd : UpdateRule BlockId) (k₀ : ℕ) (known : ℕ → Validator) (d : Validator) (s M : ℕ) :
+    ℝ≥0∞ :=
   (PMF.uniformOfFintype (Fin M → Fin (wa * K) → Validator)).toOuterMeasure
     {g | ¬ ∀ (V : View Validator BlockId Payload U) (per : ℕ → ℕ),
       V.CoversUpto (blocksHorizon I q wa K (intervalOf I s) M) →
-      Matches I K wa (coinOfBlocks I q (intervalOf I s) g d) known upd k₀ ws U V per →
-      Settles I K wa (coinOfBlocks I q (intervalOf I s) g d) known upd k₀ ws U V per s}
+      Matches I K Ra R (coinOfBlocks I q (intervalOf I s) g d) known upd k₀ U V per →
+      Settles I K Ra R (coinOfBlocks I q (intervalOf I s) g d) known upd k₀ U V per s}
 ```
 
-**The probability that slot `s` stays undecided**, over the uniform independent coins of `M` blocks of `wa · K` rounds opening every `q`-th interval from the second after the slot's: the measure of the coin maps under which some view holding the horizon, at some period sequence matching what it derives, either has not derived the state of the slot's interval or leaves `s` undecided at that sequence's wavelength and schedule. A sequence matching what the view derives is arbitrary where the scan has stalled, so a slot that counts as decided is decided under every such completion, from derived periods alone, and a scan that never reaches the slot's interval counts as a failure. The coins outside the blocks draw `d`.
+**The probability that slot `s` stays undecided**, over the uniform independent coins of `M` blocks of `wa · K` rounds opening every `q`-th interval from the second after the slot's: the measure of the coin maps under which some view holding the horizon, at some period sequence matching what it derives, either has not derived the state of the slot's interval or leaves `s` undecided at `R` on that sequence's schedule. A sequence matching what the view derives is arbitrary where the scan has stalled, so a slot that counts as decided is decided under every such completion, from derived periods alone, and a scan that never reaches the slot's interval counts as a failure. The coins outside the blocks draw `d`.
 
 #### `coinMeasure`
 
