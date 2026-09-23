@@ -275,6 +275,16 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   period at every anchor of the rotating stall, where no block above
   round `2` is ever output until the scan's failover hands the period
   to `1` and a run of the coin decides the stalled slot.
+  The theorems are also stated for any rules meeting the paper's
+  interface, read through the relation's laws and a few clauses (A4's
+  commit under synchrony, a silent leader's skip, a counting floor for
+  the coin), and instantiated twice: at the `3f + 1` pair, whose
+  statements above follow from them, and at BlueBottle's `5f + 1` pair,
+  Odontoceti at the synchronous kind and Async BlueBottle at the
+  asynchronous one, which gets Theorems 1 to 4, the ledger, atomic
+  broadcast, and the coin at the floor `n − 3f`, the paper's
+  `p ≥ (n − 3f) / n`. The replay's reading of its window and the timeout
+  appendix count certificates and stay with the `3f + 1` pair.
   The arc is under the statement/proof partition.
 - **Async BlueBottle** (`LeanDag/AsyncBlueBottle/`): the asynchronous
   variant of BB-Core (arXiv:2511.15361, Appendix G) — Odontoceti's
@@ -553,7 +563,7 @@ them: the universe and the rule under `Model/`, what it shows in
 | [`docs/barnacle.md`](docs/barnacle.md) | the adaptive leader count: the interface A1–A4, the configuration-sequence model and why it needs no fixpoint, the liveness clause and its margin, the heads descent, the four instantiations, and the findings |
 | [`docs/hydrozoan.md`](docs/hydrozoan.md) | the dual-path rule under hybrid faults: the thresholds and their table, the two-case consistency argument as one statement, the slow path as the guaranteed one, the liveness package and its grounding, and the findings |
 | [`docs/optimal-hydrozoan.md`](docs/optimal-hydrozoan.md) | the fast path at Hydrangea's bound: the validity rule and per-block fast evidence, the seam that consumes the rule once, the skip as a liveness claim and FinWhale's attack on it, and the always-fast parametrisation |
-| [`docs/steelhead.md`](docs/steelhead.md) | two rules at one wavelength function: the anchor floor, the stall and the chain verdict, the drain, the period sequence and its agreement, the coin, and the findings for the paper |
+| [`docs/steelhead.md`](docs/steelhead.md) | two rules at one wavelength function: the anchor floor, the stall and the chain verdict, the drain, the period sequence and its agreement, the coin, the findings for the paper, and the interface over a rule pair with its two instances |
 | [`docs/target-properties.md`](docs/target-properties.md) | the properties: what a rule shows and what it gets, the definitions displayed verbatim, the one-carrier-per-rule discipline, the audits, and the record of the passes that reached them |
 | [`docs/integration.md`](docs/integration.md) | the mechanisms at every rule: the cut and fill cells and the relation they witness, and the standing facts no property states — coverage under the fill, horizon placement, re-genesis, the exposure check, the storage budgets — with the deployment conditions they yield |
 | [`docs/hydrozoan-integration.md`](docs/hydrozoan-integration.md) | Hydrozoan and Optimal-Hydrozoan through the properties: the carriers and supports, the Barnacle instantiations and the committee bound round-robin needs, the schedule-free leader-exclusion clause, the native cut and fill |
