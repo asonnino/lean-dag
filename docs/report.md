@@ -17974,7 +17974,7 @@ def Good (R : DagRule Validator BlockId Payload) (rel : Reliability Validator)
 
 ## Appendix C. The theorem reference
 
-The 546 theorems the body or Appendix A names, each
+The 547 theorems the body or Appendix A names, each
 the source statement, unabridged. Generated with Appendix B;
 a theorem the report does not name is a step of an argument
 rather than a result it presents, and the source is its
@@ -20972,6 +20972,14 @@ theorem holds : Statement
 #### `holds`
 
 *theorem, `Steelhead.Coin.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.MahiMahiPair.Coin.Proof.lean`*
 
 ```lean
 theorem holds : Statement

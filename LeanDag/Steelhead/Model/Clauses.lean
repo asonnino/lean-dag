@@ -44,6 +44,15 @@ Theorem 3 reads four more, which the chain and the period sequence need:
   of `c` slots below a horizon, a run of `d` consecutive slots whose
   leaders are good.
 
+The coin reads one more, and a bundle:
+
+* **`GoodFloor`**, the counting lemma as the coin reads it: on the records
+  a population hypothesis holds of, the good set of a round holds at
+  least `floor` validators;
+* **`RulePair.Lawful`**: both rules of a pair satisfy the laws, their
+  verdicts are witnessed in their views, and their tie-breaks have a
+  choice.
+
 **Definitions only**, as in the other model files.
 -/
 
@@ -153,6 +162,33 @@ def RunWithin (R : AnchoredRule Validator BlockId Payload ValidWrt Correct)
     (U : BlockUniverse Validator BlockId Payload) (c d N : ℕ) : Prop :=
   ∀ k, R.decisionRound (k + c + d - 1) ≤ N →
     ∃ k', k ≤ k' ∧ k' < k + c ∧ ∀ i, i < d → S.leader (k' + i) ∈ good U (S.slotRound (k' + i))
+
+omit [LinearOrder BlockId] S in
+/-- **The counting lemma, as the coin reads it**: on a record and a set of validators the
+population hypothesis `Pop` holds of at round `r`, the good set of the round holds at least `floor`
+validators. -/
+def GoodFloor (good : BlockUniverse Validator BlockId Payload → ℕ → Finset Validator)
+    (Pop : BlockUniverse Validator BlockId Payload → Finset Validator → ℕ → Prop) (floor : ℕ) :
+    Prop :=
+  ∀ (U : BlockUniverse Validator BlockId Payload) (T : Finset Validator) (r : ℕ), Pop U T r →
+    floor ≤ (good U r).card
+
+omit S in
+/-- **A lawful pair**: both rules satisfy the anchored relation's laws, their verdicts are
+witnessed in their views, and their tie-breaks have a choice at every nonempty rung. -/
+structure RulePair.Lawful (p : RulePair Validator BlockId Payload) : Prop where
+  /-- The synchronous rule's laws. -/
+  sync_laws : p.sync.Laws
+  /-- The asynchronous rule's laws. -/
+  async_laws : p.async.Laws
+  /-- The synchronous rule's verdicts are witnessed in their views. -/
+  sync_view : ViewLaws p.sync
+  /-- The asynchronous rule's verdicts are witnessed in their views. -/
+  async_view : ViewLaws p.async
+  /-- The synchronous rule's tie-break has a choice. -/
+  sync_least : LeastLinked p.sync
+  /-- The asynchronous rule's tie-break has a choice. -/
+  async_least : LeastLinked p.async
 
 end Steelhead
 

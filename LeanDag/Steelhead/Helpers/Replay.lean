@@ -1,5 +1,5 @@
 import LeanDag.Steelhead.Replay.Statement
-import LeanDag.Steelhead.Helpers.Coin
+import LeanDag.Steelhead.Helpers.MahiMahiPair.Coin
 import Mathlib.Tactic.IntervalCases
 /-!
 # Helpers — the replay
@@ -346,7 +346,7 @@ theorem window_count {wa I : ℕ} {A : BlockId} (hA : A ∈ U.ids) {T : Finset V
     (hpopd : PopulatedOn (U.historyView A hA).toRecord T (MahiMahi.decisionRoundAt wa r)) :
     Fintype.card Validator - F.f - F.byzantine.card ≤ committedCount (ofAnchor U A I) r wa := by
   unfold committedCount
-  refine le_trans (card_goodAt_of_populated hwa hcard hpop3 hpopd)
+  refine le_trans (MahiMahiPair.card_goodAt_of_populated hwa hcard hpop3 hpopd)
     (Finset.card_le_card fun a ha => ?_)
   obtain ⟨L, hLW, hLr, hLc, hdc⟩ := MahiMahi.mem_goodAt.mp ha
   change L ∈ history U A at hLW
