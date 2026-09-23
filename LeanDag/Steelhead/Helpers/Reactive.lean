@@ -1,21 +1,22 @@
 import LeanDag.Steelhead.Model.Reactive
-import LeanDag.Steelhead.Helpers.Liveness
+import LeanDag.Steelhead.Properties
 import LeanDag.MahiMahi.Helpers.Synchrony
 /-!
 # Helpers — the pacing disciplines
 
-Generated lemma infrastructure for `Liveness/Statement.lean`'s two pacing claims; not part of the
-audit surface. Both routes meet at the certifiers `shSupport_directCommitIn` asks for, and the
-rest of the argument is the one SH6a already runs.
+Generated lemma infrastructure for `MahiMahiPair/Liveness/Statement.lean`'s reactive claim,
+SH-MM6k; not part of the audit surface. The route meets the timed one (SH6l, in
+`Helpers/Liveness.lean`) at the certifiers `shSupport_directCommitIn` asks for, and the rest of
+the argument is the one SH-MM6a already runs.
 
 The reactive route supplies those certifiers itself. Above the wave of three they come from
 reachability alone, since the vote round then sits two rounds or more below them; at the wave of
 three they come from `ReactiveS.cert_or_wait`, counted as the core's reactive Mysticeti counts
 them. The votes themselves come from `ReactiveS.vote_or_wait` at the rounds that carry the leader
 wait, by the core's argument for `ReactivePace.votes` restated on the Steelhead structure. The
-timed route instead discharges SH6a's `SynchronisedOn` from a `ViewPace` whose timeout grows at
-a rate that clears the delay (`synchronisedOn_of_rate`), so it says nothing new about the rule
-and everything about where the hypothesis comes from.
+timed route instead discharges the clause's `SynchronisedOn` from a `ViewPace` whose timeout
+grows at a rate that clears the delay (`synchronisedOn_of_rate`), so it says nothing new about
+the rule and everything about where the hypothesis comes from.
 -/
 
 namespace LeanDag
@@ -140,7 +141,7 @@ theorem reactive_certifies {U : BlockUniverse Validator BlockId Payload} {w : �
     have hqr := U.round_of_mem_refs hc hq
     exact hreach q hqids (by omega)
 
-/-- **SH6k.** A reliably led slot at a round that carries the leader wait commits by the direct
+/-- **SH-MM6k.** A reliably led slot at a round that carries the leader wait commits by the direct
 rule under the reactive discipline, in every view holding its decision round:
 `shSupport_directCommitIn` at the certifiers above. -/
 theorem reactive_commits {U : BlockUniverse Validator BlockId Payload} {w : ℕ → ℕ}
@@ -158,23 +159,6 @@ theorem reactive_commits {U : BlockUniverse Validator BlockId Payload} {w : ℕ 
         reactive_certifies rs hw hT hcard hgst hto hR hwait hN hlead hL' hv hc hcc hcr)
       hV hlead
   exact ⟨L, hL, Decided.directCommit hL hin⟩
-
-/-- **SH6l.** The timed route: a `ViewPace` whose timeout clears the delay at a rate synchronises
-the reliable set from `max (2Δ + proc, gst)` (`synchronisedOn_of_rate`), and SH6a takes it from
-there. The claim is only as strong as `ViewPace` is inhabited, which is a question about the core
-structure and not about this arc. -/
-theorem timed_commits {U : BlockUniverse Validator BlockId Payload} {w : ℕ → ℕ}
-    {T : Finset Validator} {V : View Validator BlockId Payload U} {N N' k : ℕ}
-    (vp : ViewPace U T N) (hw : ∀ κ, 3 ≤ w κ) (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : quorumCard Validator ≤ T.card) (hrate : Rated vp.timeout)
-    (hR : max (2 * vp.delay + vp.proc) vp.gst ≤ S.slotRound k)
-    (hpop : ∀ r, max (2 * vp.delay + vp.proc) vp.gst ≤ r → r ≤ N' → PopulatedOn U T r)
-    (hN : ∀ j, j ≤ k → (steelheadAnchored Validator BlockId Payload w).decisionRound j ≤ N')
-    (hV : V.CoversUpto N') (hlead : S.leader k ∈ T) :
-    ∃ L, IsLeaderBlock U k L ∧ Decided w U V k (some L) := by
-  obtain ⟨L, hL, -, hdec⟩ := commitsOfSynchrony hw hT hcard
-    (vp.synchronisedOn_of_rate hcard hrate) hpop hR hN hV hlead
-  exact ⟨L, hL, hdec⟩
 
 end Steelhead
 

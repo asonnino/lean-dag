@@ -1,5 +1,5 @@
 import LeanDag.Steelhead.Period.Statement
-import LeanDag.Steelhead.Helpers.Liveness
+import LeanDag.Steelhead.Helpers.MahiMahiPair.Liveness
 /-!
 # Helpers — the period layer
 
@@ -869,8 +869,8 @@ theorem control_all_of_clause (hwa : 1 ≤ wa) (hI : 0 < I) {V : View Validator 
     (hV : V.CoversUpto N) (hN : MahiMahi.decisionRoundAt wa ((j + 1) * I + (c + wa) * K) ≤ N) :
     ∀ i, intervalOf I (controlRound I K j k i) = j →
       ∃ v, ControlDecided I K wa coin j k U V i v := by
-  obtain ⟨b, hb, h⟩ := chainAllDecidedBelow hwa (controlRound_strictMono (I := I) (K := K) j k)
-    hrun hV ((j + 1) * I / k + 1) (by
+  obtain ⟨b, hb, h⟩ := MahiMahiPair.chainAllDecidedBelow hwa
+    (controlRound_strictMono (I := I) (K := K) j k) hrun hV ((j + 1) * I / k + 1) (by
       rw [controlSlots_slotRound]
       have hle := controlRound_le_of_gt (I := I) (K := K) (j := j) (k := k)
         (i := (j + 1) * I / k + 1 + c + wa - 1) (by omega)
@@ -1202,7 +1202,7 @@ theorem output_liveness (hws : 2 ≤ ws) (hle : ws ≤ wa) (hwa : 3 ≤ wa)
     have h2 : (intervalOf I s + 1) * I ≤ j₁ * I := Nat.mul_le_mul_right I (by omega)
     have h3 : j₁ * I ≤ (j₁ + 1) * I := Nat.mul_le_mul_right I (by omega)
     omega
-  exact allDecidedBelowOfRun
+  exact MahiMahiPair.allDecidedBelowOfRun
     (fun t => Nat.le_of_succ_le (wavelength_two_le hws (by omega) (S.kind t)))
     (fun t => wavelength_le hle (S.kind t)) hid hrun s hsb
 
@@ -1368,8 +1368,8 @@ theorem all_decided (hws : 2 ≤ ws) (hle : ws ≤ wa) (hwa : 3 ≤ wa) (hid : �
     have := controlRound_le_boundary_iff (I := I) (K := K) |>.mpr (hrun_le (wa - 1) (by omega))
     unfold MahiMahi.decisionRoundAt
     omega
-  have hall := allDecidedBelowOfGoodRun (by omega) (controlRound_strictMono (I := I) (K := K) j₂ k)
-    hg (hV.mono hcovrun)
+  have hall := MahiMahiPair.allDecidedBelowOfGoodRun (by omega)
+    (controlRound_strictMono (I := I) (K := K) j₂ k) hg (hV.mono hcovrun)
   obtain ⟨i₁, A, hA⟩ := IntervalAnchor.of_committed
     (by have := hlt_all 0 (by omega); omega) (hround_mem 0 (by omega)) hc
     fun i _ _ hi => hall i hi

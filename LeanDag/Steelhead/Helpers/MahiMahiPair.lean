@@ -4,7 +4,7 @@ import LeanDag.Steelhead.Helpers.Compose
 # Helpers — the `3f + 1` pair
 
 Generated lemma infrastructure for `MahiMahiPair/Statement.lean`; not
-part of the audit surface. SH16c is definitional. The periodic class
+part of the audit surface. SH-MM16c is definitional. The periodic class
 reads its bounds off the two waves, its spanning off the identity rounds,
 and its laws off the ones `Properties.lean` proves at any wavelength
 function of two rounds or more.
@@ -14,14 +14,14 @@ namespace LeanDag
 
 namespace Steelhead
 
-/-- **SH16c.** Field by field, by definition. -/
+/-- **SH-MM16c.** Field by field, by definition. -/
 theorem steelheadAnchored_eq_compose {Validator BlockId Payload : Type} [Fintype Validator]
     [DecidableEq Validator] [Faults Validator] [LinearOrder BlockId] (w : ℕ → ℕ) :
     steelheadAnchored Validator BlockId Payload w =
       compose (mahiMahiPair Validator BlockId Payload w) :=
   rfl
 
-/-! ## SH19, the periodic class -/
+/-! ## SH-MM19, the periodic class -/
 
 /-- **A period of two or more assigns both kinds**: round `0` is asynchronous and round `1` is
 not. -/
@@ -45,7 +45,7 @@ theorem wavelength_waveAt_ne {ws wa : ℕ} (hws : 2 ≤ ws) (hwa : 2 ≤ wa) (hn
   simp only [steelheadAnchored_waveAt, wavelength_zero, wavelength_one]
   omega
 
-/-- **SH19.** The bounds are the waves', the spanning is `spansEligible_of_le`, and the laws are
+/-- **SH-MM19.** The bounds are the waves', the spanning is `spansEligible_of_le`, and the laws are
 `Properties.lean`'s at the pair's wavelength. -/
 theorem periodicClass : MahiMahiPair.PeriodicClass Validator BlockId Payload := by
   intro ws wa k hws hwa
@@ -57,7 +57,11 @@ theorem periodicClass : MahiMahiPair.PeriodicClass Validator BlockId Payload := 
     SteelheadProperties.shSupport_commits (wavelength_two_le hws hwa),
     fun hws3 hwa3 => SteelheadProperties.shSupport_ofCoverage (wavelength_three_le hws3 hwa3)⟩
   intro S hid
-  exact spansEligible_of_le (S := S) (by omega) (fun s => wavelength_le_max ws wa (S.kind s)) hid
+  refine spansEligible_of_le (S := S) (fun s => ?_) hid
+  have := wavelength_le_max ws wa (S.kind s)
+  have := wavelength_two_le hws hwa (S.kind s)
+  simp only [steelheadAnchored_waveAt]
+  omega
 
 end PeriodicClass
 

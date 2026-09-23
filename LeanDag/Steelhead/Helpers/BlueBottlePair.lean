@@ -30,9 +30,9 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
   [F : Faults5 Validator] {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
 
-/-! ## SH21a and SH21b, the family -/
+/-! ## SH-BB16a and SH-BB16d, the family -/
 
-/-- **SH21a.** Odontoceti's laws at kind `0` and Async BlueBottle's elsewhere. -/
+/-- **SH-BB16a.** Odontoceti's laws at kind `0` and Async BlueBottle's elsewhere. -/
 theorem halvesLawful : HalvesLawful Validator BlockId Payload := by
   intro κ
   unfold blueBottlePair
@@ -52,7 +52,7 @@ theorem pair_tie (κ : ℕ) :
       (blueBottlePair Validator BlockId Payload 0).tie := by
   unfold blueBottlePair; split <;> rfl
 
-/-- **SH21b.** -/
+/-- **SH-BB16d.** -/
 theorem pairAgreesOnRungsAndTie : PairAgreesOnRungsAndTie Validator BlockId Payload :=
   ⟨pair_rungs, pair_tie⟩
 
@@ -60,18 +60,18 @@ theorem pairAgreesOnRungsAndTie : PairAgreesOnRungsAndTie Validator BlockId Payl
 @[simp] theorem pairAnchored_rungs :
     (blueBottlePairAnchored Validator BlockId Payload).rungs = 1 := rfl
 
-/-! ## SH21c, the composite's laws and agreement -/
+/-! ## SH-BB16b, the composite's laws and agreement -/
 
 /-- **The `5f + 1` pair's laws**, by SH16a at the family. -/
 theorem blueBottlePairLaws : (blueBottlePairAnchored Validator BlockId Payload).Laws :=
   compose_laws _ halvesLawful pair_rungs pair_tie
 
-/-- **SH21c.** -/
+/-- **SH-BB16b.** -/
 theorem pairAgreement [S : Slots Validator] : PairAgreement (S := S) U :=
   ⟨blueBottlePairLaws, fun _ V₂ _ _ v₂ h₁ h₂ =>
     AnchoredRule.decided_unique blueBottlePairLaws trivial h₁ V₂ v₂ h₂⟩
 
-/-! ## SH21d, handover -/
+/-! ## SH-BB3, handover -/
 
 section Handover
 
@@ -107,7 +107,7 @@ theorem least_of_commit {k : ℕ} {V : View Validator BlockId Payload U} {L A : 
   simp only [blueBottlePairAnchored, compose, blueBottlePair]
   split <;> exact lt_irrefl L'
 
-/-- **SH21d.** -/
+/-- **SH-BB3.** -/
 theorem pairHandover : PairHandover (S := S) U := by
   intro V₁ V₂ k L hL hc
   refine ⟨fun j A hkj helig hj hmid => ?_, fun hskip => ?_⟩
@@ -123,7 +123,7 @@ theorem pairHandover : PairHandover (S := S) U := by
 
 end Handover
 
-/-! ## SH21e, the two waves -/
+/-! ## SH-BB16e, the two waves -/
 
 /-- The synchronous kind reads Odontoceti's offset. -/
 theorem pairAnchored_waveAt_zero :
@@ -135,7 +135,7 @@ theorem pairAnchored_waveAt_of_ne {κ : ℕ} (hκ : κ ≠ 0) :
   simp only [blueBottlePairAnchored, compose, blueBottlePair, if_neg hκ]
   rfl
 
-/-- **SH21e.** The offsets are Odontoceti's one and Async BlueBottle's two, and the eligibility
+/-- **SH-BB16e.** The offsets are Odontoceti's one and Async BlueBottle's two, and the eligibility
 floor is `waveAt + 1` above the slot's round. -/
 theorem pairWavesDiffer : PairWavesDiffer Validator BlockId Payload := by
   refine ⟨pairAnchored_waveAt_zero, fun _ hκ => pairAnchored_waveAt_of_ne hκ, ?_, ?_⟩

@@ -11,7 +11,7 @@ link, is the datum of the rule of the slot's kind, which the schedule
 assigns (`docs/kinds.md`), while the number of rungs and the tie-break,
 which the relation reads without a slot, are the family's common ones.
 `steelheadAnchored w` is this composite at Mahi-Mahi's rule read at
-`w κ` (`Interface/Statement.lean`, SH16c).
+`w κ` (`Interface/Statement.lean`, SH-MM16c).
 
 **Definitions only**, as in the other model files.
 -/

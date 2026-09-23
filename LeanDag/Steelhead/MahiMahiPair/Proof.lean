@@ -2,8 +2,8 @@ import LeanDag.Steelhead.Helpers.MahiMahiPair
 /-!
 # The `3f + 1` pair — proof
 
-Generated proof layer; not part of the audit surface. SH16c is
-definitional and SH19 is the helper of the same name.
+Generated proof layer; not part of the audit surface. SH-MM16c is
+definitional and SH-MM19 is the helper of the same name.
 -/
 
 namespace LeanDag

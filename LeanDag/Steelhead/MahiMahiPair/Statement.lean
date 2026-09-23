@@ -6,10 +6,10 @@ import LeanDag.Steelhead.Properties
 The interface (SH16a, SH16b) instantiated at Mysticeti and Mahi-Mahi,
 the pair Steelhead ships (`steelhead.md` §3). Two claims:
 
-* **SH16c, Steelhead is a composite** — `steelheadAnchored w` is the
+* **SH-MM16c, Steelhead is a composite** — `steelheadAnchored w` is the
   composite of `mahiMahiPair w`, Mahi-Mahi's rule read at `w κ`, by
   definition, so SH2 is an instance of SH16b;
-* **SH19, the periodic class** — the paper's dial `w(r) = wa` at every
+* **SH-MM19, the periodic class** — the paper's dial `w(r) = wa` at every
   `k`-th round and `ws` elsewhere, read as `wavelength ws wa` at the
   kinds `periodicKind k` assigns (SH4), for any two waves of two rounds
   or more, is a wavelength function the results above take: every
@@ -38,14 +38,14 @@ namespace MahiMahiPair
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
   [F : Faults Validator] {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 
-/-- **SH16c, Steelhead is a composite.** -/
+/-- **SH-MM16c, Steelhead is a composite.** -/
 def SteelheadComposes (Validator BlockId Payload : Type) [Fintype Validator]
     [DecidableEq Validator] [Faults Validator] [LinearOrder BlockId] : Prop :=
   ∀ w : ℕ → ℕ,
     steelheadAnchored Validator BlockId Payload w =
       compose (mahiMahiPair Validator BlockId Payload w)
 
-/-- **SH19, the periodic class.** -/
+/-- **SH-MM19, the periodic class.** -/
 def PeriodicClass (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [Faults Validator] [LinearOrder BlockId] : Prop :=
   ∀ ws wa k : ℕ, 2 ≤ ws → 2 ≤ wa →

@@ -1,6 +1,6 @@
 import LeanDagTest.Mysticeti.Growth
 import LeanDag.Steelhead.Helpers.Replay
-import LeanDag.Steelhead.Helpers.Liveness
+import LeanDag.Steelhead.Helpers.MahiMahiPair.Liveness
 import LeanDag.Steelhead.Helpers.Period
 import LeanDag.Common.Ledger
 /-!
@@ -270,8 +270,8 @@ hypotheses asked at the slots below the horizon, which are the slots a view can 
 theorem rt_stall (N : ℕ) (coin : ℕ → Fin 4) (V : View (Fin 4) ℕ Unit (rtDag N)) (per : ℕ → ℕ)
     (hper : ∀ j, j ≤ intervalOf 8 N → per j = 4) (v : Option ℕ) :
     ¬ Decided (S := adaptiveSlots coin rtKnown 8 per) (wavelength 3 5) (rtDag N) V 3 v :=
-  fun h => Steelhead.stall_of_pred (S := adaptiveSlots coin rtKnown 8 per) (by decide) (by decide)
-    (fun _ => rfl) (Q := fun j => j ≤ N) (fun j hj => rt_kind hper hj)
+  fun h => Steelhead.MahiMahiPair.stall_of_pred (S := adaptiveSlots coin rtKnown 8 per)
+    (by decide) (by decide) (fun _ => rfl) (Q := fun j => j ≤ N) (fun j hj => rt_kind hper hj)
     (fun j _ hd => by
       have hjN := slotRound_le_of_decided (S := adaptiveSlots coin rtKnown 8 per)
         (wavelength_two_le (ws := 3) (wa := 5) (by decide) (by decide))

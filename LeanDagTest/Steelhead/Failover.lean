@@ -119,7 +119,7 @@ theorem rt_coin_unique {N r L' : ℕ} (_hL' : L' ∈ (rtDag N).ids)
 theorem rt_votes_coin {N r q : ℕ} (hq : q ∈ (rtDag N).ids) (hqr : q / 4 = r + 3) :
     MahiMahi.Votes (rtDag N) q (4 * r + 2) := by
   have hqN : q < 4 * (N + 1) := Finset.mem_range.mp hq
-  exact votes_of_reaches_of_unique hq (rt_mem_ids (by omega))
+  exact MahiMahiPair.votes_of_reaches_of_unique hq (rt_mem_ids (by omega))
     (fun L' hL' hr hc => rt_coin_unique hL' hr hc) (rt_reaches_coin hqr)
 
 /-- Every block four rounds up certifies it: it references the blocks of at least three
@@ -298,7 +298,7 @@ theorem rt_history_slot_le {N A : ℕ} (hA : A ∈ (rtDag N).ids)
 theorem rt_stall_history {N A : ℕ} (hA : A ∈ (rtDag N).ids)
     (hρ : ((rtDag N).block A).round ≤ 17) (v : Option ℕ) :
     ¬ Decided (S := rtSlots) rtW (rtDag N) ((rtDag N).historyView A hA) 3 v :=
-  fun hd => stall_of_pred (S := rtSlots) (by decide) (by decide) (fun _ => rfl)
+  fun hd => MahiMahiPair.stall_of_pred (S := rtSlots) (by decide) (by decide) (fun _ => rfl)
     (Q := fun j => j ≤ 16) (fun j hj => rtSlots_kind hj)
     (fun j u hj => rt_history_slot_le hA hρ rtW_ge_three hj)
     (rt_hcert16 N) (rt_hskip16 N _) (by decide) hd
@@ -307,8 +307,8 @@ theorem rt_stall_history {N A : ℕ} (hA : A ∈ (rtDag N).ids)
 theorem rt_sync_no_commit_history {N A : ℕ} (hA : A ∈ (rtDag N).ids) {s : ℕ} (hs : s ≤ 16)
     (hsync : ¬ IsAsync 4 s) (L : ℕ) :
     ¬ Decided (S := rtSlots) rtW (rtDag N) ((rtDag N).historyView A hA) s (some L) :=
-  fun hd => not_commit_sync_of_pred (S := rtSlots) (fun _ => rfl) (Q := fun j => j ≤ 16)
-    (rt_hcert16 N) hs
+  fun hd => MahiMahiPair.not_commit_sync_of_pred (S := rtSlots) (fun _ => rfl)
+    (Q := fun j => j ≤ 16) (rt_hcert16 N) hs
     (by
       rw [rtSlots_kind hs]
       exact periodicKind_eq_zero_of_ne_one fun h => hsync (periodicKind_eq_one_iff.mp h)) hd

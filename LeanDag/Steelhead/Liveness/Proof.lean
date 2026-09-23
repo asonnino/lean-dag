@@ -1,8 +1,7 @@
 import LeanDag.Steelhead.Liveness.Statement
 import LeanDag.Steelhead.Helpers.Liveness
-import LeanDag.Steelhead.Helpers.Reactive
 /-!
-# Liveness at a wavelength function — proof
+# Liveness at any lawful rule — proof
 
 Generated proof layer; not part of the audit surface. Each conjunct is
 the helper of the same name in `Helpers/Liveness.lean`.
@@ -15,63 +14,49 @@ namespace Steelhead
 namespace Liveness
 
 theorem holds : Statement := by
-  intro Validator BlockId Payload _ _ _ _ S U w ws wa k
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
-    ?_, ?_⟩
-  · intro T V R N k hw hT hcard hs hpop hR hN hV hlead
-    exact commitsOfSynchrony hw hT hcard hs hpop hR hN hV hlead
-  · intro T c hw hT hcard hspan fair R k
-    exact allDecidedBelowOfSynchrony hw hT hcard hspan fair R k
-  · intro T V k hcard hcrash hpop hV
-    exact skipsCrashed hcard hcrash hpop hV
-  · intro T V k L q hw hcard hL huniq hq hqr hqT hqL hs hpop hV
-    exact commitsOfDissemination hw hcard hL huniq hq hqr hqT hqL hs hpop hV
-  · intro T V R N k a hw hid hT hcard hs hpop hR hka hlead hdec hN hV
-    exact decidedOfReliableAboveFloor hw hid hT hcard hs hpop hR hka hlead hdec hN hV
-  · intro T V R N h x hw hid hT hcard hs hpop hR hhop hlead hN hV
-    exact floorChainDecides hw hid hT hcard hs hpop hV h x hR hhop hlead hN
+  intro Validator BlockId Payload _ _ _ _ S U R ws wa k
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · intro rules h
+    exact commitsUnderSync_compose h
+  · intro T c hleast hcu hT hcard hspan fair R₀ k
+    exact allDecidedBelowOfSynchrony hleast hcu hT hcard hspan fair R₀ k
+  · intro rules h
+    exact skipsSilent_compose h
+  · intro T V R₀ N k a hleast hcu hid hT hcard hs hpop hR hka hlead hdec hN hV
+    exact decidedOfReliableAboveFloor hleast hcu hid hT hcard hs hpop hR hka hlead hdec hN hV
+  · intro T V R₀ N h x hleast hcu hid hT hcard hs hpop hR hhop hlead hN hV
+    exact floorChainDecides hleast hcu hid hT hcard hs hpop hV h x hR hhop hlead hN
   · intro n hn T
     exact ⟨fun _ hlt => roundRobin_fairRun hn hlt, fun hT r => roundRobin_near hn hT r⟩
-  · intro T V R N ws n hn lead x hwr hws hid hT hcard hs hpop hV hbij hsched hlt hR hhop hN
-    exact floorChainReachesReliable hn hwr hws hid hT hcard hs hpop hV hbij hsched hlt hR hhop hN
-  · intro T V R N ws n hn lead x hwr hws hid hT hcard hs hpop hV hcrash hbij hsched hlt hR hstart
-      hhop hN
-    exact floorChainReachesReliableWithinByzantine hn hwr hws hid hT hcard hs hpop hV hcrash hbij
-      hsched hlt hR hstart hhop hN
-  · intro T V R N ws n hn lead k hwr hws hid hT hcard hs hpop hV hcrash hbij hsched hlt hR hstart
+  · intro T V R₀ N ws n hn lead x hl hcu hwr hid hT hcard hs hpop hV hbij hsched hlt hR hhop hN
+    exact floorChainReachesReliable hn hl hcu hwr hid hT hcard hs hpop hV hbij hsched hlt hR hhop
       hN
-    exact floorChainDecidesWithinRounds hn hwr hws hid hT hcard hs hpop hV hcrash hbij hsched hlt
-      hR hstart hN
-  · intro V h x hw hid hhop hcom
-    exact floorChainDecidesFromCommit hw hid h x hhop hcom
+  · intro T V R₀ N ws n hn lead x hl hcu hsk hwr hid hT hcard hs hpop hV hcrash hbij hsched hlt
+      hR hstart hhop hN
+    exact floorChainReachesReliableWithinByzantine hn hl hcu hsk hwr hid hT hcard hs hpop hV hcrash
+      hbij hsched hlt hR hstart hhop hN
+  · intro T V R₀ N ws n hn lead k hl hleast hcu hsk hwr hid hT hcard hs hpop hV hcrash hbij hsched
+      hlt hR hstart hN
+    exact floorChainDecidesWithinRounds hn hl hleast hcu hsk hwr hid hT hcard hs hpop hV hcrash
+      hbij hsched hlt hR hstart hN
+  · intro T V N k vp hcu hT hcard hrate N' hR hpop hN hV hlead
+    exact commitsOfViewPace hcu vp hT hcard hrate hR hpop hN hV hlead
+  · intro V h x hleast hid hhop hcom
+    exact floorChainDecidesFromCommit hleast hid h x hhop hcom
   · intro n p hn T hp hlt r
     exact periodicRoundRobinReliableSync hn hp hlt r
-  · intro T V R N ws wa p n hn lead x hws hwa hp hid hkind hsched hT hcard hs hpop hV hbij hlt
+  · intro T V R₀ N ws p n hn lead x hl hcu hw0 hp hid hkind hsched hT hcard hs hpop hV hbij hlt
       hasync hR hstart hhop hN
-    exact floorChainReachesAtPeriod hn hp hws hwa hid hkind hsched hT hcard hs hpop hV hbij hlt
+    exact floorChainReachesAtPeriod hn hp hl hcu hw0 hid hkind hsched hT hcard hs hpop hV hbij hlt
       hasync hR hstart hhop hN
-  · intro T V R N ws wa p n W hn lead k hws hwa hp hid hkind hsched hT hcard hs hpop hV hcrash
-      hbij hlt hwait hasync hR hstart hN
-    exact floorChainDecidesWithinRoundsAtPeriod hn hp hws hwa hid hkind hsched hT hcard hs hpop
-      hV hcrash hbij hlt hwait hasync hR hstart hN
-  · intro T V N R k waits rs hw hT hcard hgst hto hR hwait hN hV hlead
-    exact reactive_commits rs hw hT hcard hgst hto hR hwait hN hV hlead
-  · intro T V N k vp hw hT hcard hrate N' hR hpop hN hV hlead
-    exact timed_commits vp hw hT hcard hrate hR hpop hN hV hlead
-  · intro S' V c N hwa hmono hrun hV k hk
-    exact chainAllDecidedBelow hwa hmono hrun hV k hk
-  · intro S' T hwa hT hcard hmono fair R k
-    exact chainAllDecidedBelowOfSynchrony hwa hmono hT hcard fair R k
-  · intro coin V b hwa hgood hV
-    exact chainAllDecidedBelowOfRun hwa hgood hV
-  · intro V ws wa k hws hk hid hkind hcert hskip i hi v h
-    exact stall hws hk hid hkind hcert hskip hi h
-  · intro V b hw hle hid hrun
-    exact allDecidedBelowOfRun (fun s => hw (S.kind s)) (fun s => hle (S.kind s)) hid hrun
-  · intro V c N hwa hid hone hrun hV r hr
-    exact allDecidedBelowAtPeriodOne hwa hid hone hrun hV r hr
-  · intro hid hkind hws hwa r hr
-    exact asyncSlotCost hid hkind hws hwa hr
+  · intro T V R₀ N ws wa p n W hn lead k hl hleast hcu hsk hw0 hw1 hp hid hkind hsched hT hcard hs
+      hpop hV hcrash hbij hlt hwait hasync hR hstart hN
+    exact floorChainDecidesWithinRoundsAtPeriod hn hp hl hleast hcu hsk hw0 hw1 hid hkind hsched hT
+      hcard hs hpop hV hcrash hbij hlt hwait hasync hR hstart hN
+  · intro V b hleast hw hid hrun
+    exact allDecidedBelowOfRun hleast hw hid hrun
+  · intro hid hkind hw0 hw1 hwa r hr
+    exact asyncSlotCost hid hkind hw0 hw1 hwa hr
 
 end Liveness
 

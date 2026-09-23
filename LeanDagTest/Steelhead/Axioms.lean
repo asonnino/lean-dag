@@ -1,12 +1,14 @@
 import LeanDag.Steelhead.Properties
 import LeanDag.Steelhead.Safety.Proof
 import LeanDag.Steelhead.Liveness.Proof
+import LeanDag.Steelhead.MahiMahiPair.Liveness.Proof
 import LeanDag.Steelhead.Period.Proof
 import LeanDag.Steelhead.Coin.Proof
 import LeanDag.Steelhead.Ledger.Proof
 import LeanDag.Steelhead.Interface.Proof
 import LeanDag.Steelhead.MahiMahiPair.Proof
 import LeanDag.Steelhead.BlueBottlePair.Proof
+import LeanDag.Steelhead.BlueBottlePair.Liveness.Proof
 import LeanDag.Steelhead.Broadcast.Proof
 import LeanDag.Steelhead.Replay.Proof
 import LeanDag.Steelhead.Timeout.Proof
@@ -20,12 +22,14 @@ bespoke axiom would show here before anywhere else.
 
 #print axioms LeanDag.Steelhead.Safety.holds
 #print axioms LeanDag.Steelhead.Liveness.holds
+#print axioms LeanDag.Steelhead.MahiMahiPair.Liveness.holds
 #print axioms LeanDag.Steelhead.Period.holds
 #print axioms LeanDag.Steelhead.Coin.holds
 #print axioms LeanDag.Steelhead.Ledger.holds
 #print axioms LeanDag.Steelhead.Interface.holds
 #print axioms LeanDag.Steelhead.MahiMahiPair.holds
 #print axioms LeanDag.Steelhead.BlueBottlePair.holds
+#print axioms LeanDag.Steelhead.BlueBottlePair.Liveness.holds
 #print axioms LeanDag.Steelhead.Broadcast.holds
 #print axioms LeanDag.Steelhead.Replay.holds
 #print axioms LeanDag.Steelhead.Timeout.holds

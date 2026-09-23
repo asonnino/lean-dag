@@ -14,7 +14,7 @@ namespace BlueBottlePair
 
 theorem holds : Statement := by
   intro Validator BlockId Payload _ _ _ _ U _
-  exact ⟨halvesLawful, pairAgreesOnRungsAndTie, pairAgreement, pairHandover, pairWavesDiffer⟩
+  exact ⟨pairHandover, halvesLawful, pairAgreement, pairAgreesOnRungsAndTie, pairWavesDiffer⟩
 
 end BlueBottlePair
 

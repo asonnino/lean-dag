@@ -9847,7 +9847,7 @@ schedule and not on an arbitrary one (§24.6). **SH6j**
 `(b + 1)(ws + f)` above a synchronous floor at `f = n − |T|`: a reliably
 led round lies within `n − |T|` rounds above any floor (SH6g) and
 commits (SH6a), so a hop climbs by at most `ws + (n − |T|)` rounds
-(`Steelhead.floorHop_floorLanding`), one of the first `b + 1` landings
+(`Steelhead.floorHopOf_floorLandingOf`), one of the first `b + 1` landings
 is reliably led (SH6i), and its commit decides the chain's start (SH6f),
 so a view holding `(b + 1) · (ws + (n − |T|))` rounds above an unskipped
 slot decides it.
@@ -17971,7 +17971,7 @@ def Good (R : DagRule Validator BlockId Payload) (rel : Reliability Validator)
 
 ## Appendix C. The theorem reference
 
-The 534 theorems the body or Appendix A names, each
+The 536 theorems the body or Appendix A names, each
 the source statement, unabridged. Generated with Appendix B;
 a theorem the report does not name is a step of an argument
 rather than a result it presents, and the source is its
@@ -20859,6 +20859,22 @@ theorem holds : Statement
 #### `holds`
 
 *theorem, `Steelhead.Liveness.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.MahiMahiPair.Liveness.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.BlueBottlePair.Liveness.Proof.lean`*
 
 ```lean
 theorem holds : Statement

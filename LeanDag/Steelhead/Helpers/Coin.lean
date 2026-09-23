@@ -669,7 +669,7 @@ theorem undecidedAtPeriodOne_le {U : BlockUniverse Validator BlockId Payload} {w
       refine MahiMahiProperties.directCommitIn_of_coversUpto hdc (hV.mono ?_)
       unfold MahiMahi.decisionRoundAt
       omega
-    obtain ⟨v, hv⟩ := allDecidedBelowOfRun (S := chainSlots (coinOfBlocksFrom b g d))
+    obtain ⟨v, hv⟩ := MahiMahiPair.allDecidedBelowOfRun (S := chainSlots (coinOfBlocksFrom b g d))
       (fun _ => by change 1 ≤ wa; omega) (fun _ => le_of_eq rfl) (fun _ => rfl) hrun s
       (by omega)
     exact hg v hv
@@ -920,7 +920,7 @@ theorem settles_and_anchored_of_good_blocks {U : BlockUniverse Validator BlockId
       have := (hgroup (wa - 1) (by omega)).2
       unfold MahiMahi.decisionRoundAt
       omega
-    have hall := allDecidedBelowOfGoodRun (by omega)
+    have hall := MahiMahiPair.allDecidedBelowOfGoodRun (by omega)
       (controlRound_strictMono (I := I) (K := K) j' k) hgood (hV.mono hcov)
     exact hall i (by have := le_boundary_of_intervalOf hI hmem; omega)
   -- so the states are derived up to the later block's interval
@@ -1407,7 +1407,7 @@ theorem decided_of_firstGoodBlock {U : BlockUniverse Validator BlockId Payload} 
     unfold MahiMahi.decisionRoundAt
     rw [Nat.add_mul, Nat.one_mul]
     omega
-  exact allDecidedBelowOfRun (S := chainSlots (coinOfBlocksFrom b g d))
+  exact MahiMahiPair.allDecidedBelowOfRun (S := chainSlots (coinOfBlocksFrom b g d))
     (fun _ => by change 1 ≤ wa; omega) (fun _ => le_of_eq rfl) (fun _ => rfl) hrun s (by omega)
 
 omit [Fintype Validator] [DecidableEq Validator] F in

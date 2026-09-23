@@ -16,7 +16,7 @@ each live in the sibling directories `MahiMahiPair/` and
   `mahiMahiPair w`: Mahi-Mahi's rule read at the wave of the kind. It is
   one predicate family read at two numbers, since at wave three
   Mahi-Mahi's relation is the core's slot for slot (SH4), and
-  `steelheadAnchored w` is its composite by definition (SH16c).
+  `steelheadAnchored w` is its composite by definition (SH-MM16c).
 * **The `5f + 1` pair**, BlueBottle's two variants, is `blueBottlePair`:
   Odontoceti, the partially synchronous variant at wave two, at the
   synchronous kind, and Async BlueBottle at wave three elsewhere. Here
@@ -35,7 +35,7 @@ namespace LeanDag
 namespace Steelhead
 
 /-- **The `3f + 1` pair as a family**: Mahi-Mahi's rule at the wave the wavelength function `w`
-gives each kind. `steelheadAnchored w` is its composite (SH16c). -/
+gives each kind. `steelheadAnchored w` is its composite (SH-MM16c). -/
 def mahiMahiPair (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [Faults Validator] [LinearOrder BlockId] (w : ℕ → ℕ) :
     ℕ → AnchoredRule Validator BlockId Payload ValidWrt Correct :=

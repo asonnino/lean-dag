@@ -1208,7 +1208,7 @@ Theorem 2's round count, `(b + 1)(ws + f)` above a synchronous floor,
 with `f` read as `n − |T|`. A reliably led round lies within `n − |T|`
 rounds above any floor (SH6g), it commits under synchrony (SH6a) and so
 is not skipped, and the landing of a hop is the least unskipped slot at
-or above the floor (`floorHop_floorLanding`), so the chain of floors
+or above the floor (`floorHopOf_floorLandingOf`), so the chain of floors
 climbs by at most `ws + (n − |T|)` rounds a hop. One of its first `b + 1`
 landings is reliably led (SH6i), and that landing's commit decides the
 chain's start (SH6f); every decision round the argument reads lies within

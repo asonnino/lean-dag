@@ -8,37 +8,38 @@ BlueBottle at wave three, on one `n ≥ 5f + 1` committee. This is the
 second of the paper's two pairs, and the one the discharge table of the
 paper's Appendix B leaves open for clauses A2 and A3. Five claims:
 
-* **SH21a, the halves satisfy the clauses** — every rule of the family
+* **SH-BB3, handover** — SH3's analogue: a direct commit in one view is
+  committed by every view that finds the slot an anchor, whichever rule
+  decided that anchor, and no view skips it. Unlike the `3f + 1` pair
+  this passes through the tie-break rather than around it, the rung's
+  link not being unique per slot at either wave;
+* **SH-BB16a, the halves satisfy the clauses** — every rule of the family
   satisfies the anchored relation's laws at its own wave, of which
   `commit_link` is the paper's clause A2, a direct commit linked from
   every eligible anchor, and `skip_link` is clause A3, a direct skip
   leaving no anchor anything to link. Odontoceti supplies them at wave
   two and Async BlueBottle at wave three, each from its own arc,
   consumed read-only;
-* **SH21b, the pair is a family** — the two agree on the rung count, one,
+* **SH-BB16b, the pair's rule agrees** — SH16a and SH16b at this family:
+  `blueBottlePairAnchored` satisfies the laws, and two views deciding one
+  slot reach the same verdict whatever routes they took and whichever of
+  the two rules decided the slot or its anchors. The paper's Theorem 1
+  for the `5f + 1` pair, and SH2's analogue;
+* **SH-BB16d, the pair is a family** — the two agree on the rung count, one,
   and on the tie-break, the least candidate. That is everything the
   interface asks of a pair beyond the laws, and it is what makes the two
   rules composable at all: the relation reads the rung count and the tie
   without reference to a slot, so a pair disagreeing on either is outside
   Theorem 1 however lawful each half is;
-* **SH21c, the pair's rule agrees** — SH16a and SH16b at this family:
-  `blueBottlePairAnchored` satisfies the laws, and two views deciding one
-  slot reach the same verdict whatever routes they took and whichever of
-  the two rules decided the slot or its anchors. The paper's Theorem 1
-  for the `5f + 1` pair, and SH2's analogue;
-* **SH21d, handover** — SH3's analogue: a direct commit in one view is
-  committed by every view that finds the slot an anchor, whichever rule
-  decided that anchor, and no view skips it. Unlike the `3f + 1` pair
-  this passes through the tie-break rather than around it, the rung's
-  link not being unique per slot at either wave;
-* **SH21e, the pair reads two waves** — the wave offsets are one and two,
+* **SH-BB16e, the pair reads two waves** — the wave offsets are one and two,
   so an anchor sits at `r + 2` above a synchronous slot and at `r + 3`
   above an asynchronous one, and the two differ. The family is therefore
   not a constant wave in disguise, and unlike `mahiMahiPair` its two
   members are two predicate families and not one read at two numbers.
 
 Odontoceti and Async BlueBottle are consumed read-only; nothing of either
-arc is restated here.
+arc is restated here. Theorem 2 at the pair is `Liveness/Statement.lean`
+beside this file.
 
 Statements only; the proofs live in `Proof.lean`.
 -/
@@ -53,28 +54,7 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
   [F : Faults5 Validator] {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 variable [S : Slots Validator]
 
-/-- **SH21a, the halves satisfy the clauses.** -/
-def HalvesLawful (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
-    [Faults5 Validator] [LinearOrder BlockId] : Prop :=
-  ∀ κ, (blueBottlePair Validator BlockId Payload κ).Laws
-
-/-- **SH21b, the pair is a family.** -/
-def PairAgreesOnRungsAndTie (Validator BlockId Payload : Type) [Fintype Validator]
-    [DecidableEq Validator] [Faults5 Validator] [LinearOrder BlockId] : Prop :=
-  (∀ κ, (blueBottlePair Validator BlockId Payload κ).rungs =
-      (blueBottlePair Validator BlockId Payload 0).rungs) ∧
-    (∀ κ, (blueBottlePair Validator BlockId Payload κ).tie =
-      (blueBottlePair Validator BlockId Payload 0).tie)
-
-/-- **SH21c, the pair's rule agrees.** -/
-def PairAgreement (U : BlockUniverse Validator BlockId Payload) : Prop :=
-  (blueBottlePairAnchored Validator BlockId Payload).Laws ∧
-    ∀ (V₁ V₂ : View Validator BlockId Payload U) (k : ℕ) (v₁ v₂ : Option BlockId),
-      (blueBottlePairAnchored Validator BlockId Payload).Decided (S := S) U V₁ k v₁ →
-      (blueBottlePairAnchored Validator BlockId Payload).Decided (S := S) U V₂ k v₂ →
-      v₁ = v₂
-
-/-- **SH21d, handover.** -/
+/-- **SH-BB3, handover.** -/
 def PairHandover (U : BlockUniverse Validator BlockId Payload) : Prop :=
   ∀ (V₁ V₂ : View Validator BlockId Payload U) (k : ℕ) (L : BlockId),
     -- L is slot k's candidate, directly committed in V₁ under the rule of k's own kind
@@ -91,7 +71,28 @@ def PairHandover (U : BlockUniverse Validator BlockId Payload) : Prop :=
     -- ... and V₂ never skips k
     ¬ (blueBottlePairAnchored Validator BlockId Payload).Decided (S := S) U V₂ k none
 
-/-- **SH21e, the pair reads two waves.** -/
+/-- **SH-BB16a, the halves satisfy the clauses.** -/
+def HalvesLawful (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults5 Validator] [LinearOrder BlockId] : Prop :=
+  ∀ κ, (blueBottlePair Validator BlockId Payload κ).Laws
+
+/-- **SH-BB16b, the pair's rule agrees.** -/
+def PairAgreement (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  (blueBottlePairAnchored Validator BlockId Payload).Laws ∧
+    ∀ (V₁ V₂ : View Validator BlockId Payload U) (k : ℕ) (v₁ v₂ : Option BlockId),
+      (blueBottlePairAnchored Validator BlockId Payload).Decided (S := S) U V₁ k v₁ →
+      (blueBottlePairAnchored Validator BlockId Payload).Decided (S := S) U V₂ k v₂ →
+      v₁ = v₂
+
+/-- **SH-BB16d, the pair is a family.** -/
+def PairAgreesOnRungsAndTie (Validator BlockId Payload : Type) [Fintype Validator]
+    [DecidableEq Validator] [Faults5 Validator] [LinearOrder BlockId] : Prop :=
+  (∀ κ, (blueBottlePair Validator BlockId Payload κ).rungs =
+      (blueBottlePair Validator BlockId Payload 0).rungs) ∧
+    (∀ κ, (blueBottlePair Validator BlockId Payload κ).tie =
+      (blueBottlePair Validator BlockId Payload 0).tie)
+
+/-- **SH-BB16e, the pair reads two waves.** -/
 def PairWavesDiffer (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [Faults5 Validator] [LinearOrder BlockId] : Prop :=
   -- the synchronous kind reads Odontoceti's wave two and every other kind Async BlueBottle's
@@ -111,9 +112,8 @@ def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [Faults5 Validator] [LinearOrder BlockId] (U : BlockUniverse Validator BlockId Payload)
     [Slots Validator],
-    HalvesLawful Validator BlockId Payload ∧
-      PairAgreesOnRungsAndTie Validator BlockId Payload ∧ PairAgreement U ∧ PairHandover U ∧
-      PairWavesDiffer Validator BlockId Payload
+    PairHandover U ∧ HalvesLawful Validator BlockId Payload ∧ PairAgreement U ∧
+      PairAgreesOnRungsAndTie Validator BlockId Payload ∧ PairWavesDiffer Validator BlockId Payload
 
 end BlueBottlePair
 

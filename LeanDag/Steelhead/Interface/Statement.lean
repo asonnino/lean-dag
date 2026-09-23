@@ -25,9 +25,9 @@ ties, is outside Theorem 1.
 
 The two pairs the paper instantiates are stated in the sibling
 directories, at the families `Model/Pair.lean` names: `MahiMahiPair/`
-for Mysticeti and Mahi-Mahi at `n ≥ 3f + 1` (SH16c, SH19), and
+for Mysticeti and Mahi-Mahi at `n ≥ 3f + 1` (SH-MM16c, SH-MM19), and
 `BlueBottlePair/` for Odontoceti and Async BlueBottle at `n ≥ 5f + 1`
-(SH21). Nothing here mentions either.
+(SH-BB3, SH-BB16). Nothing here mentions either.
 
 Statements only; the proofs live in `Proof.lean`.
 -/
