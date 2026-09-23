@@ -21,6 +21,22 @@ theorem steelheadAnchored_eq_compose {Validator BlockId Payload : Type} [Fintype
       compose (mahiMahiPair Validator BlockId Payload w) :=
   rfl
 
+/-- **The `3f + 1` pair's rules are the family** at the pair's wavelength: Mahi-Mahi's rule at the
+wave of each kind. -/
+theorem mmPair_rules {Validator BlockId Payload : Type} [Fintype Validator]
+    [DecidableEq Validator] [Faults Validator] [LinearOrder BlockId] (ws wa : ℕ) :
+    (mmPair Validator BlockId Payload ws wa).rules =
+      mahiMahiPair Validator BlockId Payload (wavelength ws wa) := by
+  funext κ
+  exact (apply_ite (MahiMahi.mahiMahiAnchored Validator BlockId Payload) (κ = 0) ws wa).symm
+
+/-- **Steelhead at the `3f + 1` pair is `steelheadAnchored`** at the pair's wavelength. -/
+theorem steelheadAt_mmPair {Validator BlockId Payload : Type} [Fintype Validator]
+    [DecidableEq Validator] [Faults Validator] [LinearOrder BlockId] (ws wa : ℕ) :
+    steelheadAt (mmPair Validator BlockId Payload ws wa) =
+      steelheadAnchored Validator BlockId Payload (wavelength ws wa) :=
+  congrArg compose (mmPair_rules ws wa)
+
 /-! ## SH-MM19, the periodic class -/
 
 /-- **A period of two or more assigns both kinds**: round `0` is asynchronous and round `1` is

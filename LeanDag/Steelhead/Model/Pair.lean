@@ -1,4 +1,4 @@
-import LeanDag.Steelhead.Model.Compose
+import LeanDag.Steelhead.Model.RulePair
 import LeanDag.Steelhead.Model.Decision
 import LeanDag.Odontoceti.Decision
 import LeanDag.AsyncBlueBottle.Model.Decision
@@ -26,6 +26,10 @@ each live in the sibling directories `MahiMahiPair/` and
 
 Both are consumed read-only: no file of Odontoceti's or Async
 BlueBottle's arc is touched, and neither rule is restated here.
+
+Theorem 3 reads the asynchronous rule of a pair on its own, so each
+family is also a `RulePair`: `mmPair ws wa` and `bbPair`, whose rules are
+the families above.
 
 **Definitions only**, as in the other model files.
 -/
@@ -57,6 +61,21 @@ def blueBottlePairAnchored (Validator BlockId Payload : Type) [Fintype Validator
     [DecidableEq Validator] [Faults5 Validator] [LinearOrder BlockId] :
     AnchoredRule Validator BlockId Payload ValidWrt Correct :=
   compose (blueBottlePair Validator BlockId Payload)
+
+/-- **The `3f + 1` pair as a pair of rules**: Mahi-Mahi's rule at `ws` and at `wa`, which agree on
+the rung count and the tie-break by definition. Its composite is `steelheadAnchored (wavelength ws
+wa)`. -/
+def mmPair (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [LinearOrder BlockId] (ws wa : ℕ) : RulePair Validator BlockId Payload :=
+  ⟨MahiMahi.mahiMahiAnchored Validator BlockId Payload ws,
+    MahiMahi.mahiMahiAnchored Validator BlockId Payload wa, rfl, rfl⟩
+
+/-- **The `5f + 1` pair as a pair of rules**: Odontoceti and Async BlueBottle, which agree on the
+rung count and the tie-break by definition. Its rules are `blueBottlePair`. -/
+def bbPair (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults5 Validator] [LinearOrder BlockId] : RulePair Validator BlockId Payload :=
+  ⟨Odontoceti.odontocetiAnchored Validator BlockId Payload,
+    AsyncBlueBottle.asyncBlueBottleAnchored Validator BlockId Payload, rfl, rfl⟩
 
 end Steelhead
 

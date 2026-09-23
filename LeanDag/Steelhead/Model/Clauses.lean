@@ -1,4 +1,4 @@
-import LeanDag.Common.Anchored
+import LeanDag.Steelhead.Model.RulePair
 /-!
 # Steelhead — the liveness clauses a rule supplies
 
@@ -28,6 +28,16 @@ composite (`Model/Compose.lean`) the first two hold as soon as they hold
 for every rule of the family, since the composite's decision round and
 direct predicates at a slot are the slot's rule's (`Liveness/Statement.lean`,
 SH6a and SH6c).
+
+Theorem 3 reads two more, which the chain needs:
+
+* **`GoodCommits`**: the good set of a round, the validators whose
+  round-`r` block the asynchronous rule directly commits, commits in every
+  view holding the round's decision round. The counting lemma of each
+  rule bounds that set from below;
+* **`RunWithin`**, the paper's clause A5 in its run form: in every window
+  of `c` slots below a horizon, a run of `d` consecutive slots whose
+  leaders are good.
 
 **Definitions only**, as in the other model files.
 -/
@@ -94,6 +104,27 @@ def FloorHopOf (R : AnchoredRule Validator BlockId Payload ValidWrt Correct)
   x + R.waveAt (S.kind x) + 1 ≤ y ∧
     (∀ j, x + R.waveAt (S.kind x) + 1 ≤ j → j < y → R.Decided U V j none) ∧
     ¬ R.Decided U V y none
+
+omit [LinearOrder BlockId] S in
+/-- **The good set commits**: every validator in `good U r` has a block at round `r` that the rule
+directly commits, at every kind, in every view holding the decision round of that kind. -/
+def GoodCommits (R : AnchoredRule Validator BlockId Payload ValidWrt Correct)
+    (good : BlockUniverse Validator BlockId Payload → ℕ → Finset Validator) : Prop :=
+  ∀ (U : BlockUniverse Validator BlockId Payload) (r : ℕ) (v : Validator), v ∈ good U r →
+    ∃ L ∈ U.ids, (U.block L).round = r ∧ (U.block L).creator = v ∧
+      ∀ (κ : ℕ) (V : View Validator BlockId Payload U), V.CoversUpto (r + R.waveAt κ) →
+        R.Commit U V L r κ
+
+omit [LinearOrder BlockId] in
+/-- **Clause A5, the run form**, at the schedule in scope: in every window of `c` slots below the
+horizon `N`, a run of `d` consecutive slots whose leaders are good at their rounds. The bound
+reads the last slot of the latest possible run, so that a small universe is not covered for
+free. -/
+def RunWithin (R : AnchoredRule Validator BlockId Payload ValidWrt Correct)
+    (good : BlockUniverse Validator BlockId Payload → ℕ → Finset Validator)
+    (U : BlockUniverse Validator BlockId Payload) (c d N : ℕ) : Prop :=
+  ∀ k, R.decisionRound (k + c + d - 1) ≤ N →
+    ∃ k', k ≤ k' ∧ k' < k + c ∧ ∀ i, i < d → S.leader (k' + i) ∈ good U (S.slotRound (k' + i))
 
 end Steelhead
 

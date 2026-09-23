@@ -1,5 +1,6 @@
 import LeanDag.Steelhead.MahiMahiPair.Liveness.Statement
 import LeanDag.Steelhead.Helpers.Liveness
+import LeanDag.Steelhead.Helpers.MahiMahiPair
 import LeanDag.Steelhead.Properties
 import LeanDag.MahiMahi.Helpers.Liveness
 import LeanDag.Properties.Derived.Descent
@@ -442,74 +443,62 @@ theorem commitsOfDissemination {U : BlockUniverse Validator BlockId Payload} {w 
 
 end Slots
 
-/-! ## SH7 — the chain
+/-! ## SH-MM7 — the chain
 
-Stated at any schedule whose rounds strictly increase: the coin schedule and every control
-schedule. Consecutive slots of such a schedule lie at least one round apart, so `wa` of them span
-the wave, which is all the descent asks. -/
+SH7 at Mahi-Mahi's rule, whose good set is `MahiMahi.goodAt` and whose run clause is MM3c's
+`UnpredictableRunWithin`, the same proposition as `RunWithin` at that set. -/
 
-/-- A strictly increasing schedule puts slot `m` at least `m − i` rounds above slot `i`. -/
-theorem slotRound_add_le_of_strictMono {S' : Slots Validator} (hmono : StrictMono S'.slotRound)
-    {i m : ℕ} (h : i ≤ m) : S'.slotRound i + (m - i) ≤ S'.slotRound m := by
-  have := hmono.add_le_nat (m - i) i
-  rw [Nat.sub_add_cancel h] at this
-  omega
-
-/-- At a strictly increasing schedule a run of `wa` slots spans, at wave `wa`. -/
-theorem spansEligible_of_strictMono {wa : ℕ} (hwa : 1 ≤ wa) {S' : Slots Validator}
-    (hmono : StrictMono S'.slotRound) :
-    (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa).SpansEligible (S := S') wa := by
-  intro b i hi
-  rw [AnchoredRule.eligible_iff]
+/-- **Mahi-Mahi's committed candidates commit**: a block `goodAt` names commits directly in every
+view holding its decision round. -/
+theorem goodCommits_mahiMahi (wa : ℕ) :
+    GoodCommits (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa)
+      (fun U r => MahiMahi.goodAt U wa r) := by
+  intro U r v hv
+  obtain ⟨L, hL, hLr, hLc, hdc⟩ := MahiMahi.mem_goodAt.mp hv
+  refine ⟨L, hL, hLr, hLc, fun κ V hV => ?_⟩
+  refine MahiMahiProperties.directCommitIn_of_coversUpto hdc (hV.mono ?_)
   simp only [MahiMahi.mahiMahiAnchored_waveAt]
-  have := slotRound_add_le_of_strictMono hmono (show i ≤ b + wa - 1 by omega)
+  unfold MahiMahi.decisionRoundAt
   omega
 
-/-- **SH7c, at any strictly increasing schedule.** The core's descent below a run of direct
-commits: the run's slots are led by committed candidates, so they commit directly, and a view
-holding their decision rounds holds their certificates. -/
+/-- **Mahi-Mahi's rule has no tie**: every nonempty rung has a choice. -/
+theorem leastLinked_mahiMahi (wa : ℕ) :
+    LeastLinked (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) :=
+  fun hi h => MahiMahi.exists_least hi h
+
+/-- **SH-MM7c, at any strictly increasing schedule.** SH7c at Mahi-Mahi's rule. -/
 theorem allDecidedBelowOfGoodRun {U : BlockUniverse Validator BlockId Payload} {wa : ℕ}
     (hwa : 1 ≤ wa) {S' : Slots Validator} (hmono : StrictMono S'.slotRound)
     {V : View Validator BlockId Payload U} {b : ℕ}
     (hgood : ∀ i, i < wa → S'.leader (b + i) ∈ MahiMahi.good (S := S') U wa (b + i))
     (hV : V.CoversUpto (MahiMahi.decisionRoundAt wa (S'.slotRound (b + wa - 1)))) :
-    ∀ i, i < b → ∃ v, MahiMahi.Decided (S := S') wa U V i v := by
-  refine AnchoredRule.decided_below_of_run (S := S')
-    (fun hi h => MahiMahi.exists_least (S := S') hi h) hwa
-    (spansEligible_of_strictMono hwa hmono)
-    (Led := fun j => S'.leader j ∈ MahiMahi.good (S := S') U wa j) hgood
-    fun j _ hj2 hj => ?_
-  obtain ⟨L, hL, hLr, hLc, hdc⟩ := MahiMahi.mem_goodAt.mp hj
-  refine ⟨L, MahiMahi.Decided.directCommit (S := S') ⟨hL, hLr, hLc⟩
-    (MahiMahiProperties.directCommitIn_of_coversUpto hdc (hV.mono ?_))⟩
-  have := S'.mono hj2
-  unfold MahiMahi.decisionRoundAt
-  omega
+    ∀ i, i < b → ∃ v, MahiMahi.Decided (S := S') wa U V i v :=
+  decidedBelowOfGoodRun (leastLinked_mahiMahi wa) (goodCommits_mahiMahi wa)
+    (fun _ => by simp only [MahiMahi.mahiMahiAnchored_waveAt]; omega) hmono hgood
+    (hV.mono (by unfold MahiMahi.decisionRoundAt; omega))
 
-/-- **SH7c.** The descent at the coin schedule, the run named by rounds. -/
+/-- **SH-MM7c.** SH7c at Mahi-Mahi's rule. -/
 theorem chainAllDecidedBelowOfRun {U : BlockUniverse Validator BlockId Payload} {wa : ℕ}
     (hwa : 1 ≤ wa) {coin : ℕ → Validator} {V : View Validator BlockId Payload U} {b : ℕ}
     (hgood : ∀ i, i < wa → coin (b + i) ∈ MahiMahi.goodAt U wa (b + i))
     (hV : V.CoversUpto (MahiMahi.decisionRoundAt wa (b + wa - 1))) :
     ∀ i, i < b → ∃ v, ChainDecided (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V i v :=
-  allDecidedBelowOfGoodRun hwa (S' := chainSlots coin) strictMono_id hgood hV
+  Steelhead.chainAllDecidedBelowOfRun (leastLinked_mahiMahi wa) (goodCommits_mahiMahi wa)
+    (fun _ => by simp only [MahiMahi.mahiMahiAnchored_waveAt]; omega) hgood
+    (hV.mono (by unfold MahiMahi.decisionRoundAt; omega))
 
-/-- **SH7a.** MM3c at a strictly increasing schedule, in any view caught up to the horizon: the
-clause names a run past `k`, and SH7c settles everything below it. -/
+/-- **SH-MM7a.** SH7a at Mahi-Mahi's rule, the clause MM3c's. -/
 theorem chainAllDecidedBelow {U : BlockUniverse Validator BlockId Payload} {wa : ℕ}
     (hwa : 1 ≤ wa) {S' : Slots Validator} (hmono : StrictMono S'.slotRound)
     {V : View Validator BlockId Payload U} {c N : ℕ}
     (hrun : MahiMahi.UnpredictableRunWithin (S := S') U wa c wa N) (hV : V.CoversUpto N) (k : ℕ)
     (hk : MahiMahi.decisionRoundAt wa (S'.slotRound (k + c + wa - 1)) ≤ N) :
-    ∃ b, k ≤ b ∧ ∀ i, i < b → ∃ v, MahiMahi.Decided (S := S') wa U V i v := by
-  obtain ⟨k', hk1, hk2, hgood⟩ := hrun k (by
-    rw [MahiMahi.mahiMahiAnchored_decisionRound (S := S') hwa]; exact hk)
-  refine ⟨k', hk1, allDecidedBelowOfGoodRun hwa hmono hgood (hV.mono ?_)⟩
-  have := S'.mono (show k' + wa - 1 ≤ k + c + wa - 1 by omega)
-  unfold MahiMahi.decisionRoundAt at hk ⊢
-  omega
+    ∃ b, k ≤ b ∧ ∀ i, i < b → ∃ v, MahiMahi.Decided (S := S') wa U V i v :=
+  Steelhead.chainAllDecidedBelow (leastLinked_mahiMahi wa) (goodCommits_mahiMahi wa)
+    (fun _ => by simp only [MahiMahi.mahiMahiAnchored_waveAt]; omega) hmono hrun hV k
+    (by unfold MahiMahi.decisionRoundAt at hk; omega)
 
-/-- **SH7b.** The timed descent at Mahi-Mahi's support, at a strictly increasing schedule. -/
+/-- **SH-MM7b.** SH7b at Mahi-Mahi's rule, whose clause A4 is the pair's at a constant wave. -/
 theorem chainAllDecidedBelowOfSynchrony {wa : ℕ} (hwa : 4 ≤ wa) {S' : Slots Validator}
     (hmono : StrictMono S'.slotRound) {T : Finset Validator}
     (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
@@ -520,22 +509,13 @@ theorem chainAllDecidedBelowOfSynchrony {wa : ℕ} (hwa : 4 ≤ wa) {S' : Slots 
         SynchronisedOn U T R → (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) →
         V.CoversUpto N → MahiMahi.decisionRoundAt wa (S'.slotRound (b + wa - 1)) ≤ N →
         ∀ i, i < b → ∃ v, MahiMahi.Decided (S := S') wa U V i v := by
-  have hd : Descends (MahiMahiProperties.mahiMahiRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload) wa) S' wa :=
-    Descends.of_indirect (MahiMahiProperties.indirect (by omega)) (by omega) fun b i hi => by
-      change S'.slotRound i + wa ≤ S'.slotRound (b + wa - 1)
-      have := slotRound_add_le_of_strictMono hmono (show i ≤ b + wa - 1 by omega)
-      omega
-  obtain ⟨b, hb, hRb, h⟩ := Timed.decidedBelow_of_fairRun (MahiMahiProperties.mmSupport wa)
-    (MahiMahiProperties.mmSupport_ofCoverage hwa) (MahiMahiProperties.mmSupport_commits (by omega))
-    hd (isQuorum_core hT hcard) fair R k
-  refine ⟨b, hb, hRb, fun U V N hs hpop hV hN i hi => ?_⟩
-  obtain ⟨v, hv⟩ := h V N hs hpop hV (fun j hj => by
-    change S'.slotRound j + (wa - 1) ≤ N
-    have := S'.mono (show j ≤ b + wa - 1 by omega)
-    unfold MahiMahi.decisionRoundAt at hN
-    omega) i hi
-  exact ⟨v, hv.2.1⟩
+  obtain ⟨b, hb, hRb, h⟩ := Steelhead.chainAllDecidedBelowOfSynchrony
+    (leastLinked_mahiMahi (BlockId := BlockId) (Payload := Payload) wa)
+    (fun U => commitsUnderSync_steelhead (S := S') (w := fun _ => wa) (fun _ => by omega) U)
+    (fun _ => by simp only [MahiMahi.mahiMahiAnchored_waveAt]; omega) hT hcard hmono fair R k
+  refine ⟨b, hb, hRb, fun U V N hs hpop hV hN => h U V N hs hpop hV ?_⟩
+  unfold MahiMahi.decisionRoundAt at hN
+  omega
 
 /-! ## SH8 — the stall -/
 
@@ -580,29 +560,35 @@ theorem not_commit_sync (hid : ∀ s, S.slotRound s = s)
     (h : Decided (wavelength ws wa) U V j (some A)) : False :=
   not_commit_sync_of_pred hid (Q := fun _ => True) (fun j L _ => hcert j L) trivial hj h
 
-/-- An asynchronous round above `i + 1`, where `i ≡ k − 1`, lies a full
-period above `i`: the arithmetic `omega` cannot do at a variable modulus. -/
-theorem add_period_le_of_isAsync {i j : ℕ} (hk : 2 ≤ k) (hi : i % k = k - 1) (hj : IsAsync k j)
-    (hij : i + 2 ≤ j) : i + k + 1 ≤ j := by
-  unfold IsAsync at hj
-  have hi' := Nat.div_add_mod i k
-  have hj' := Nat.div_add_mod j k
-  rw [hi] at hi'
-  rw [hj] at hj'
-  have hlt : k * (i / k + 1) < k * (j / k) := by
-    have e : k * (i / k + 1) = k * (i / k) + k := by rw [Nat.mul_add, Nat.mul_one]
-    omega
-  have hq : i / k + 1 < j / k := Nat.lt_of_mul_lt_mul_left hlt
-  have : k * (i / k + 2) ≤ k * (j / k) := Nat.mul_le_mul_left k hq
-  rw [Nat.mul_add] at this
-  omega
+/-- **Steelhead at the pair decides as `Decided`** at the pair's wavelength. -/
+theorem decided_mmPair_iff {j : ℕ} {v : Option BlockId} :
+    (steelheadAt (mmPair Validator BlockId Payload ws wa)).Decided U V j v ↔
+      Decided (wavelength ws wa) U V j v := by
+  rw [steelheadAt_mmPair]
 
-/-- **SH8, at the slots a view can decide.** Induction on the derivation: a class-`(k − 1)`
-slot's direct verdicts are excluded outright, a synchronous anchor never commits, and an
-asynchronous anchor leaves the class-`(k − 1)` slot one period up as an eligible slot between,
-which must be skipped, which is the claim one period up. The certificate and skip hypotheses are
-asked at the slots `Q` names, which every slot a derivation in `V` mentions satisfies; on a view
-that reaches no further than some round, that is the slots below it. -/
+/-- **No uncertified candidate commits or links** at Mahi-Mahi's rule: the direct commit and the
+link both need a certificate. -/
+theorem not_commit_of_certificates (hid : ∀ s, S.slotRound s = s) {j : ℕ} {L : BlockId}
+    (h : MahiMahi.certificates U ws L j = ∅) :
+    (∀ V' : View Validator BlockId Payload U,
+      ¬ (MahiMahi.mahiMahiAnchored Validator BlockId Payload ws).Commit U V' L j 0) ∧
+      ∀ (i : ℕ) (A : BlockId),
+        ¬ (MahiMahi.mahiMahiAnchored Validator BlockId Payload ws).Link i U A L S j := by
+  refine ⟨fun V' hc => ?_, fun i A hl => ?_⟩
+  · have hne := MahiMahi.certificates_nonempty_of_directCommit
+      (MahiMahi.directCommit_of_directCommitIn (V := V') hc)
+    rw [h] at hne
+    exact Finset.not_nonempty_empty hne
+  · change MahiMahi.CertifiedIn U ws A L (S.slotRound j) at hl
+    rw [hid] at hl
+    have hne := MahiMahi.certificates_nonempty_of_certifiedIn hl
+    rw [h] at hne
+    exact Finset.not_nonempty_empty hne
+
+/-- **SH8 at the pair, at the slots a view can decide.** The generic stall at `mmPair ws wa`, whose
+synchronous rule neither commits nor links an uncertified candidate. The certificate and skip
+hypotheses are asked at the slots `Q` names, which every slot a derivation in `V` mentions
+satisfies; on a view that reaches no further than some round, that is the slots below it. -/
 theorem stall_of_pred (hws : 2 ≤ ws) (hk : ws ≤ k) (hid : ∀ s, S.slotRound s = s) {Q : ℕ → Prop}
     (hkind : ∀ s, Q s → S.kind s = periodicKind k s)
     (hQ : ∀ (j : ℕ) (v : Option BlockId), Decided (wavelength ws wa) U V j v → Q j)
@@ -611,56 +597,13 @@ theorem stall_of_pred (hws : 2 ≤ ws) (hk : ws ≤ k) (hid : ∀ s, S.slotRound
     (hskip : ∀ j, Q j → S.kind j = 0 → ¬ MahiMahi.DirectSkipIn U V ws (S.leader j) j)
     {i : ℕ} (hi : i % k = k - 1) {v : Option BlockId}
     (h : Decided (wavelength ws wa) U V i v) : False := by
-  have hk2 : 2 ≤ k := le_trans hws hk
-  -- a class-(k − 1) slot the view names is synchronous
-  have hsync_of_mod : ∀ {i : ℕ}, Q i → i % k = k - 1 → S.kind i = 0 := by
-    intro i hQi hi
-    rw [hkind i hQi]
-    unfold periodicKind
-    rw [if_neg]
-    omega
-  -- the middle slot of an asynchronous anchor's search is one period up
-  have hmid_of_async : ∀ {i j : ℕ}, Q i → Q j → i % k = k - 1 → S.kind j = 1 →
-      (steelheadAnchored Validator BlockId Payload (wavelength ws wa)).Eligible i j →
-      i < i + k ∧ i + k < j ∧
-        (steelheadAnchored Validator BlockId Payload (wavelength ws wa)).Eligible i (i + k) := by
-    intro i j hQi hQj hi hj helig
-    have hsync := hsync_of_mod hQi hi
-    have hasync : IsAsync k j := periodicKind_eq_one_iff.mp (hkind j hQj ▸ hj)
-    rw [AnchoredRule.eligible_iff] at helig ⊢
-    simp only [steelheadAnchored_waveAt, hid, hsync, wavelength_zero] at helig ⊢
-    have := add_period_le_of_isAsync hk2 hi hasync (by omega)
-    omega
-  revert hi
-  induction h with
-  | @directCommit j L hL hc =>
-    intro hi
-    have hQj := hQ j _ (Decided.directCommit hL hc)
-    exact not_commit_sync_of_pred hid hcert hQj (hsync_of_mod hQj hi) (Decided.directCommit hL hc)
-  | @directSkip j hs =>
-    intro hi
-    have hQj := hQ j none (Decided.directSkip hs)
-    have hj := hsync_of_mod hQj hi
-    change MahiMahi.DirectSkipIn U V (wavelength ws wa (S.kind j)) (S.leader j)
-      (S.slotRound j) at hs
-    rw [hid, hj, wavelength_zero] at hs
-    exact hskip j hQj hj hs
-  | @indirectCommit i j A L _ hkj helig hj hmid hi' hemp hL hlink hleast _ ihmid =>
-    intro hi
-    have hQi := hQ i _ (Decided.indirectCommit hkj helig hj hmid hi' hemp hL hlink hleast)
-    by_cases hasync : S.kind j = 1
-    · obtain ⟨h1, h2, h3⟩ := hmid_of_async hQi (hQ j _ hj) hi hasync helig
-      exact ihmid (i + k) h1 h2 h3 (by rw [Nat.add_mod_right]; exact hi)
-    · exact not_commit_sync_of_pred hid hcert (hQ j _ hj)
-        (by rw [hkind j (hQ j _ hj)] at hasync ⊢; exact periodicKind_eq_zero_of_ne_one hasync) hj
-  | @indirectSkip i j A hkj helig hj hmid hnone _ ihmid =>
-    intro hi
-    have hQi := hQ i _ (Decided.indirectSkip hkj helig hj hmid hnone)
-    by_cases hasync : S.kind j = 1
-    · obtain ⟨h1, h2, h3⟩ := hmid_of_async hQi (hQ j _ hj) hi hasync helig
-      exact ihmid (i + k) h1 h2 h3 (by rw [Nat.add_mod_right]; exact hi)
-    · exact not_commit_sync_of_pred hid hcert (hQ j _ hj)
-        (by rw [hkind j (hQ j _ hj)] at hasync ⊢; exact periodicKind_eq_zero_of_ne_one hasync) hj
+  refine Steelhead.stall_of_pred (p := mmPair Validator BlockId Payload ws wa)
+    (Nat.sub_add_cancel (by omega)) hws hk hid hkind
+    (fun j v hd => hQ j v (decided_mmPair_iff.mp hd))
+    (fun j L hQj hj hL => not_commit_of_certificates hid (hcert j L hQj hj hL))
+    (fun j hQj hj hs => hskip j hQj hj ?_) hi (decided_mmPair_iff.mpr h)
+  change MahiMahi.DirectSkipIn U V ws (S.leader j) (S.slotRound j) at hs
+  rwa [hid] at hs
 
 /-- **SH8.** `stall_of_pred` with nothing asked of the slots. -/
 theorem stall (hws : 2 ≤ ws) (hk : ws ≤ k) (hid : ∀ s, S.slotRound s = s)
@@ -689,27 +632,19 @@ theorem allDecidedBelowOfRun {w : ℕ → ℕ} {wa : ℕ} {V : View Validator Bl
   Steelhead.allDecidedBelowOfRun leastLinked_steelhead
     (fun s => by simp only [steelheadAnchored_waveAt]; have := hw s; have := hle s; omega) hid hrun
 
-/-- **SH9b.** SH7a's argument at the output schedule: the clause names a run of `wa` committed
-leaders past `r`, each committed directly in a view holding its decision round, and the run
-decides everything below it (SH9a). -/
+/-- **SH-MM9b.** SH9b at `mmPair ws wa`, whose asynchronous rule is Mahi-Mahi's at `wa`. -/
 theorem allDecidedBelowAtPeriodOne {ws wa : ℕ} (hwa : 1 ≤ wa) {V : View Validator BlockId Payload U}
     (hid : ∀ s, S.slotRound s = s) (hone : ∀ s, S.kind s = 1) {c N : ℕ}
     (hrun : MahiMahi.UnpredictableRunWithin (S := S) U wa c wa N) (hV : V.CoversUpto N) (r : ℕ)
     (hr : MahiMahi.decisionRoundAt wa (r + c + wa - 1) ≤ N) :
     ∃ b, r ≤ b ∧ ∀ i, i < b → ∃ v, Decided (wavelength ws wa) U V i v := by
-  obtain ⟨k', hk1, hk2, hgood⟩ := hrun r (by
-    rw [MahiMahi.mahiMahiAnchored_decisionRound (S := S) hwa, hid]; exact hr)
-  refine ⟨k', hk1, allDecidedBelowOfRun (fun s => by rw [hone, wavelength_one]; exact hwa)
-    (fun s => by rw [hone, wavelength_one]) hid fun i hi => ?_⟩
-  obtain ⟨L, hL, hLr, hLc, hdc⟩ := MahiMahi.mem_goodAt.mp (hgood i hi)
-  refine ⟨L, Decided.directCommit ⟨hL, hLr, hLc⟩ ?_⟩
-  change MahiMahi.DirectCommitIn U V (wavelength ws wa (S.kind (k' + i))) L
-    (S.slotRound (k' + i))
-  rw [hone, wavelength_one]
-  refine MahiMahiProperties.directCommitIn_of_coversUpto hdc (hV.mono ?_)
-  rw [hid]
-  unfold MahiMahi.decisionRoundAt at hr ⊢
-  omega
+  obtain ⟨b, hb, h⟩ := Steelhead.allDecidedBelowAtPeriodOne
+    (p := mmPair Validator BlockId Payload ws wa) (leastLinked_mahiMahi wa)
+    (goodCommits_mahiMahi wa) (Nat.sub_add_cancel hwa) hid hone hrun hV r
+    (by unfold MahiMahi.decisionRoundAt at hr; omega)
+  refine ⟨b, hb, fun i hi => ?_⟩
+  obtain ⟨v, hv⟩ := h i hi
+  exact ⟨v, decided_mmPair_iff.mp hv⟩
 
 /-- **SH-MM9c.** SH9c at the pair's rule, the synchronous slot there read at `fun _ => ws`. -/
 theorem asyncSlotCost {ws wa k : ℕ} (hid : ∀ s, S.slotRound s = s)

@@ -56,6 +56,12 @@ theorem pair_tie (κ : ℕ) :
 theorem pairAgreesOnRungsAndTie : PairAgreesOnRungsAndTie Validator BlockId Payload :=
   ⟨pair_rungs, pair_tie⟩
 
+/-- **Steelhead at the `5f + 1` pair is the family's composite**, by definition. -/
+theorem steelheadAt_bbPair :
+    steelheadAt (bbPair Validator BlockId Payload) =
+      blueBottlePairAnchored Validator BlockId Payload :=
+  rfl
+
 /-- The composite runs a single rung, both halves doing so. -/
 @[simp] theorem pairAnchored_rungs :
     (blueBottlePairAnchored Validator BlockId Payload).rungs = 1 := rfl

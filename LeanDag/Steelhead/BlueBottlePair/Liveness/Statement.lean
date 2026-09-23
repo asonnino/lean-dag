@@ -1,6 +1,8 @@
 import LeanDag.Steelhead.Model.Pair
 import LeanDag.Steelhead.Model.Clauses
 import LeanDag.Steelhead.Model.Reactive
+import LeanDag.Steelhead.Model.Chain
+import LeanDag.AsyncBlueBottle.Model.Unpredictable
 /-!
 # The `5f + 1` pair's liveness — statement
 
@@ -8,7 +10,8 @@ Theorem 2 at BlueBottle's two variants, Odontoceti at the synchronous kind
 and Async BlueBottle elsewhere, on one `n ≥ 5f + 1` committee. The
 generic statements of `Liveness/Statement.lean` read a rule only through
 its laws and the clauses of `Model/Clauses.lean`; this file states that
-the pair's composite has them and what Theorem 2 then says of it. Five
+the pair's composite has them and what Theorem 2 then says of it, and
+what the chain and period one say of the pair's asynchronous rule. Nine
 claims:
 
 * **SH-BB6a, the pair commits a reliable leader under synchrony** —
@@ -37,7 +40,19 @@ claims:
   slot when every slot is synchronous (SH6j at `p = ∞`, where
   `2 · (n − |T|) < n` holds for a bare reliable quorum at `n = 5f + 1`),
   and the round count `(b + 1) · (2 + W) + 3` at a period (SH6p at the
-  waves two and three).
+  waves two and three);
+* **SH-BB7a, chain liveness at Async BlueBottle** — SH7a at Async
+  BlueBottle's rule, the clause ABB9c's run form with runs of three slots,
+  its wave: at any schedule whose rounds strictly increase, past every slot
+  whose window decides below the horizon some slot below which every
+  verdict is settled;
+* **SH-BB7b, the chain under synchrony at Async BlueBottle** — SH7b there,
+  clause A4 being ABB10a's;
+* **SH-BB7c, one run settles the chain below it at Async BlueBottle** —
+  SH7c there: three consecutive rounds whose coins name committed
+  candidates settle every chain verdict below them;
+* **SH-BB9b, at period one every slot is decided** — SH9b at the pair, the
+  clause ABB9c's at the output schedule.
 
 Odontoceti and Async BlueBottle are consumed read-only.
 
@@ -146,6 +161,66 @@ def PairDecides (U : BlockUniverse Validator BlockId Payload) : Prop :=
     k + (F.byzantine.card + 1) * (2 + W) + 3 ≤ N →
     ∃ v, (blueBottlePairAnchored Validator BlockId Payload).Decided U V k v)
 
+/-- **SH-BB7a, chain liveness at Async BlueBottle.** -/
+def ChainAllDecidedBelow (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (S' : Slots Validator) (V : View Validator BlockId Payload U) (c N : ℕ),
+    -- the schedule's rounds strictly increase, as the coin schedule's and every control
+    -- schedule's do
+    StrictMono S'.slotRound →
+    -- ABB9c's run form of the clause at that schedule: in every window of c slots below the
+    -- horizon, three consecutive slots whose leaders are committed candidates
+    AsyncBlueBottle.UnpredictableRunWithin (S := S') U c 3 N →
+    -- the view holds every block up to the horizon
+    V.CoversUpto N →
+    -- then past every slot k whose window decides below the horizon ...
+    ∀ k, AsyncBlueBottle.decisionRoundAt (S'.slotRound (k + c + 2)) ≤ N →
+      -- ... there is a slot b at or past k below which every verdict is settled
+      ∃ b, k ≤ b ∧ ∀ i, i < b → ∃ v, AsyncBlueBottle.Decided (S := S') U V i v
+
+/-- **SH-BB7b, the chain under synchrony at Async BlueBottle.** The run is named by the coin
+alone, so the horizon cannot cap how far it reaches. -/
+def ChainAllDecidedBelowOfSynchrony : Prop :=
+  ∀ (S' : Slots Validator) (T : Finset Validator),
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    -- the schedule's rounds strictly increase, and past any slot it names T-leaders at three
+    -- consecutive slots
+    StrictMono S'.slotRound → FairRunOn (S := S') T 3 →
+    -- then past any slot k and any round R there is a slot b ...
+    ∀ (R k : ℕ), ∃ b, k ≤ b ∧ R ≤ S'.slotRound b ∧
+      -- ... below which every verdict is settled, on any DAG T has synchronised from R and
+      -- populated through the run's decision round
+      ∀ (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
+        (N : ℕ),
+        SynchronisedOn U T R → (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) →
+        V.CoversUpto N → AsyncBlueBottle.decisionRoundAt (S'.slotRound (b + 2)) ≤ N →
+        ∀ i, i < b → ∃ v, AsyncBlueBottle.Decided (S := S') U V i v
+
+/-- **SH-BB7c, one run settles the chain below it at Async BlueBottle.** -/
+def ChainAllDecidedBelowOfRun (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (coin : ℕ → Validator) (V : View Validator BlockId Payload U) (b : ℕ),
+    -- three consecutive rounds from b whose coins name committed candidates ...
+    (∀ i, i < 3 → coin (b + i) ∈ AsyncBlueBottle.goodAt U (b + i)) →
+    -- ... in a view holding their decision rounds
+    V.CoversUpto (AsyncBlueBottle.decisionRoundAt (b + 2)) →
+    -- then every chain verdict below b is settled
+    ∀ i, i < b → ∃ v,
+      ChainDecided (AsyncBlueBottle.asyncBlueBottleAnchored Validator BlockId Payload) coin U V i v
+
+/-- **SH-BB9b, at period one every slot is decided.** -/
+def AllDecidedBelowAtPeriodOne (U : BlockUniverse Validator BlockId Payload) : Prop :=
+  ∀ (V : View Validator BlockId Payload U) (c N : ℕ),
+    -- one slot per round, every slot of the asynchronous kind, as period one has it
+    (∀ s, S.slotRound s = s) → (∀ s, S.kind s = 1) →
+    -- ABB9c's run form of the clause at the output schedule
+    AsyncBlueBottle.UnpredictableRunWithin (S := S) U c 3 N →
+    -- the view holds every block up to the horizon
+    V.CoversUpto N →
+    -- then past every round r whose window decides below the horizon ...
+    ∀ r, AsyncBlueBottle.decisionRoundAt (r + c + 2) ≤ N →
+      -- ... there is a slot b at or past r below which the pair decides every slot
+      ∃ b, r ≤ b ∧ ∀ i, i < b →
+        ∃ v, (blueBottlePairAnchored Validator BlockId Payload).Decided U V i v
+
 /-- The `5f + 1` pair's liveness, over every fault configuration, schedule and block universe the
 model admits. -/
 def Statement : Prop :=
@@ -153,7 +228,10 @@ def Statement : Prop :=
     [Faults5 Validator] [LinearOrder BlockId] [Slots Validator]
     (U : BlockUniverse Validator BlockId Payload),
     CommitsUnderSyncAtPair U ∧ SkipsSilentAtPair U ∧ CommitsOfDisseminationAsync U ∧
-      CommitsOfReactivePace U ∧ PairDecides U
+      CommitsOfReactivePace U ∧ PairDecides U ∧ ChainAllDecidedBelow U ∧
+      ChainAllDecidedBelowOfSynchrony (Validator := Validator) (BlockId := BlockId)
+        (Payload := Payload) ∧
+      ChainAllDecidedBelowOfRun U ∧ AllDecidedBelowAtPeriodOne U
 
 end Liveness
 

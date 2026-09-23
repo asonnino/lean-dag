@@ -14,8 +14,8 @@ namespace Steelhead
 namespace Liveness
 
 theorem holds : Statement := by
-  intro Validator BlockId Payload _ _ _ _ S U R ws wa k
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  intro Validator BlockId Payload _ _ _ _ S U R p good ws wa k
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · intro rules h
     exact commitsUnderSync_compose h
   · intro T c hleast hcu hT hcard hspan fair R₀ k
@@ -53,8 +53,18 @@ theorem holds : Statement := by
       hpop hV hcrash hbij hlt hwait hasync hR hstart hN
     exact floorChainDecidesWithinRoundsAtPeriod hn hp hl hleast hcu hsk hw0 hw1 hid hkind hsched hT
       hcard hs hpop hV hcrash hbij hlt hwait hasync hR hstart hN
+  · intro S' V c N wa hleast hgc hw hmono hrun hV k hk
+    exact chainAllDecidedBelow hleast hgc (fun _ => hw _) hmono hrun hV k hk
+  · intro S' T wa hleast hcu hw hT hcard hmono fair R₀ k
+    exact chainAllDecidedBelowOfSynchrony hleast hcu (fun _ => hw _) hT hcard hmono fair R₀ k
+  · intro coin V b wa hleast hgc hw hgood hV
+    exact chainAllDecidedBelowOfRun hleast hgc hw hgood hV
+  · intro V ws k hw0 hws hk hid hkind hcl hskip i hi v h
+    exact stall hw0 hws hk hid hkind hcl hskip hi h
   · intro V b hleast hw hid hrun
     exact allDecidedBelowOfRun hleast hw hid hrun
+  · intro V c N wa hleast hgc hwa hid hone hrun hV r hr
+    exact allDecidedBelowAtPeriodOne hleast hgc hwa hid hone hrun hV r hr
   · intro hid hkind hw0 hw1 hwa r hr
     exact asyncSlotCost hid hkind hw0 hw1 hwa hr
 

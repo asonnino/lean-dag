@@ -84,7 +84,7 @@ LAYERS = [
       "Steelhead.MahiMahiPair.Liveness.Statement",
       "Steelhead.BlueBottlePair.Liveness.Statement",
       "Steelhead.Period.Statement", "Steelhead.Coin.Statement",
-      "Steelhead.Model.Pair",
+      "Steelhead.Model.RulePair", "Steelhead.Model.Pair",
       "Steelhead.Ledger.Statement", "Steelhead.Interface.Statement",
       "Steelhead.MahiMahiPair.Ledger.Statement", "Steelhead.BlueBottlePair.Ledger.Statement",
       "Steelhead.MahiMahiPair.Statement", "Steelhead.BlueBottlePair.Statement",

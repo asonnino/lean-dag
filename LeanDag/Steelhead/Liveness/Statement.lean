@@ -1,5 +1,5 @@
 import LeanDag.Steelhead.Model.Clauses
-import LeanDag.Steelhead.Model.Compose
+import LeanDag.Steelhead.Model.Chain
 import LeanDag.Steelhead.Model.Wavelength
 import LeanDag.Mysticeti.ViewPace
 /-!
@@ -12,7 +12,7 @@ anchor search descends from a commit above to every slot below
 `R` and reads it only through its laws and the clauses of
 `Model/Clauses.lean`; the two pairs the paper instantiates are the
 instances, the Mysticeti and Mahi-Mahi pair in `MahiMahiPair/Liveness/`
-and BlueBottle's in `BlueBottlePair/Liveness/`. Sixteen claims:
+and BlueBottle's in `BlueBottlePair/Liveness/`. Twenty-one claims:
 
 * **SH6a, the direct commit under synchrony composes** — if every rule of
   a family commits a reliably led slot once a reliable quorum has
@@ -74,8 +74,30 @@ and BlueBottle's in `BlueBottlePair/Liveness/`. Sixteen claims:
   period** — SH6j at the dial, `W` the wait for a reliably led
   synchronous round and `wa` the wave the rule reads at the asynchronous
   kind;
+* **SH7a, chain liveness** — at any schedule whose rounds strictly
+  increase, the coin schedule and every control schedule among them, the
+  run form of clause A5 decides every verdict of the asynchronous rule
+  below a run, in every view caught up to the horizon: `wa` consecutive
+  slots lie at least `wa` rounds apart, which spans the wave;
+* **SH7b, the chain under synchrony** — at such a schedule, past any slot
+  the schedule names reliable leaders at `wa` consecutive slots, and once
+  the DAG is covered through that run's decision rounds every verdict
+  below it is settled, the run committing by clause A4;
+* **SH7c, one run settles the chain below it** — `wa` consecutive rounds
+  whose coins name good candidates settle every chain verdict below the
+  first, in any view holding their decision rounds;
+* **SH8, the stall** — at a pair and a period `k` at least the
+  synchronous wave, if no synchronous candidate is ever directly
+  committed or linked and no synchronous slot is directly skipped, then no
+  slot at a round `≡ k − 1 (mod k)` is ever decided: an asynchronous
+  anchor above such a slot leaves the slot one period up between, which
+  is the claim again;
 * **SH9a, the drain** — `wa` consecutive committed slots decide every slot
   below them, at one slot per round, once no slot's wave exceeds `wa`;
+* **SH9b, at period one every slot is decided** — with every slot of the
+  asynchronous kind, the run form of clause A5 at the output schedule
+  decides every slot below a run, since at one kind the pair's composite
+  decides as its asynchronous rule (SH4);
 * **SH9c, the cost of an asynchronous slot** — at a period, an
   asynchronous slot decides `wa − ws` rounds later than a synchronous
   slot would, and the synchronous slot `i` rounds above it at most
@@ -375,6 +397,76 @@ def FloorChainDecidesWithinRoundsAtPeriod (U : BlockUniverse Validator BlockId P
     -- then the slot is decided
     ∃ v, R.Decided U V k v
 
+/-- **SH7a, chain liveness.** -/
+def ChainAllDecidedBelow (U : BlockUniverse Validator BlockId Payload)
+    (R : AnchoredRule Validator BlockId Payload ValidWrt Correct)
+    (good : BlockUniverse Validator BlockId Payload → ℕ → Finset Validator) : Prop :=
+  ∀ (S' : Slots Validator) (V : View Validator BlockId Payload U) (c N wa : ℕ),
+    -- the rule's tie-break has a choice, its good sets commit, and no kind's wave reaches wa
+    LeastLinked R → GoodCommits R good → (∀ κ, R.waveAt κ + 1 ≤ wa) →
+    -- the schedule's rounds strictly increase
+    StrictMono S'.slotRound →
+    -- the run form of the clause at that schedule, with runs of wa slots
+    RunWithin (S := S') R good U c wa N →
+    -- the view holds every block up to the horizon
+    V.CoversUpto N →
+    -- then past every slot k whose window decides below the horizon ...
+    ∀ k, S'.slotRound (k + c + wa - 1) + (wa - 1) ≤ N →
+      -- ... there is a slot b at or past k below which every verdict is settled
+      ∃ b, k ≤ b ∧ ∀ i, i < b → ∃ v, R.Decided (S := S') U V i v
+
+/-- **SH7b, the chain under synchrony.** The run is named by the schedule alone, so the horizon
+cannot cap how far it reaches. -/
+def ChainAllDecidedBelowOfSynchrony
+    (R : AnchoredRule Validator BlockId Payload ValidWrt Correct) : Prop :=
+  ∀ (S' : Slots Validator) (T : Finset Validator) (wa : ℕ),
+    -- the rule's tie-break has a choice, it commits a reliably led slot of the schedule on every
+    -- DAG, and no kind's wave reaches wa
+    LeastLinked R → (∀ U, CommitsUnderSync (S := S') R U) → (∀ κ, R.waveAt κ + 1 ≤ wa) →
+    T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
+    -- the schedule's rounds strictly increase, and past any slot it names T-leaders at wa
+    -- consecutive slots
+    StrictMono S'.slotRound → FairRunOn (S := S') T wa →
+    -- then past any slot k and any round R₀ there is a slot b ...
+    ∀ (R₀ k : ℕ), ∃ b, k ≤ b ∧ R₀ ≤ S'.slotRound b ∧
+      -- ... below which every verdict is settled, on any DAG T has synchronised from R₀ and
+      -- populated through the run's decision round
+      ∀ (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
+        (N : ℕ),
+        SynchronisedOn U T R₀ → (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U T r) →
+        V.CoversUpto N → S'.slotRound (b + wa - 1) + (wa - 1) ≤ N →
+        ∀ i, i < b → ∃ v, R.Decided (S := S') U V i v
+
+/-- **SH7c, one run settles the chain below it.** -/
+def ChainAllDecidedBelowOfRun (U : BlockUniverse Validator BlockId Payload)
+    (R : AnchoredRule Validator BlockId Payload ValidWrt Correct)
+    (good : BlockUniverse Validator BlockId Payload → ℕ → Finset Validator) : Prop :=
+  ∀ (coin : ℕ → Validator) (V : View Validator BlockId Payload U) (b wa : ℕ),
+    LeastLinked R → GoodCommits R good → (∀ κ, R.waveAt κ + 1 ≤ wa) →
+    -- wa consecutive rounds from b whose coins name good candidates ...
+    (∀ i, i < wa → coin (b + i) ∈ good U (b + i)) →
+    -- ... in a view holding their decision rounds
+    V.CoversUpto (b + wa - 1 + (wa - 1)) →
+    -- then every chain verdict below b is settled
+    ∀ i, i < b → ∃ v, ChainDecided R coin U V i v
+
+/-- **SH8, the stall.** -/
+def Stall (U : BlockUniverse Validator BlockId Payload) (p : RulePair Validator BlockId Payload) :
+    Prop :=
+  ∀ (V : View Validator BlockId Payload U) (ws k : ℕ),
+    -- the synchronous kind reads the wave ws, of at least two rounds and no longer than the period
+    p.sync.waveAt 0 + 1 = ws → 2 ≤ ws → ws ≤ k →
+    -- one slot per round, of the kind the period assigns its round
+    (∀ s, S.slotRound s = s) → (∀ s, S.kind s = periodicKind k s) →
+    -- no synchronous candidate is ever directly committed or linked ...
+    (∀ (j : ℕ) (L : BlockId), S.kind j = 0 → IsLeaderBlock U j L →
+      (∀ V' : View Validator BlockId Payload U, ¬ p.sync.Commit U V' L j 0) ∧
+        ∀ (i : ℕ) (A : BlockId), ¬ p.sync.Link i U A L S j) →
+    -- ... and no synchronous slot is directly skipped in V
+    (∀ j, S.kind j = 0 → ¬ p.sync.Skip U V S j) →
+    -- then no slot at a round ≡ k − 1 (mod k) is ever decided in V
+    ∀ i, i % k = k - 1 → ∀ v, ¬ (steelheadAt p).Decided U V i v
+
 /-- **SH9a, the drain.** -/
 def AllDecidedBelowOfRun (U : BlockUniverse Validator BlockId Payload)
     (R : AnchoredRule Validator BlockId Payload ValidWrt Correct) (wa : ℕ) : Prop :=
@@ -387,6 +479,24 @@ def AllDecidedBelowOfRun (U : BlockUniverse Validator BlockId Payload)
     (∀ i, i < wa → ∃ L, R.Decided U V (b + i) (some L)) →
     -- then every slot below b is decided in V
     ∀ i, i < b → ∃ v, R.Decided U V i v
+
+/-- **SH9b, at period one every slot is decided.** -/
+def AllDecidedBelowAtPeriodOne (U : BlockUniverse Validator BlockId Payload)
+    (p : RulePair Validator BlockId Payload)
+    (good : BlockUniverse Validator BlockId Payload → ℕ → Finset Validator) : Prop :=
+  ∀ (V : View Validator BlockId Payload U) (c N wa : ℕ),
+    -- the asynchronous rule's tie-break has a choice, its good sets commit, and its wave is wa
+    LeastLinked p.async → GoodCommits p.async good → p.async.waveAt 1 + 1 = wa →
+    -- one slot per round, every slot of the asynchronous kind, as period one has it
+    (∀ s, S.slotRound s = s) → (∀ s, S.kind s = 1) →
+    -- the run form of the clause at the output schedule, with runs of wa slots
+    RunWithin p.async good U c wa N →
+    -- the view holds every block up to the horizon
+    V.CoversUpto N →
+    -- then past every round r whose window decides below the horizon ...
+    ∀ r, r + c + wa - 1 + (wa - 1) ≤ N →
+      -- ... there is a slot b at or past r below which every slot is decided at period 1
+      ∃ b, r ≤ b ∧ ∀ i, i < b → ∃ v, (steelheadAt p).Decided U V i v
 
 /-- **SH9c, the cost of an asynchronous slot.** -/
 def AsyncSlotCost (R : AnchoredRule Validator BlockId Payload ValidWrt Correct)
@@ -403,19 +513,23 @@ def AsyncSlotCost (R : AnchoredRule Validator BlockId Payload ValidWrt Correct)
     ∀ i, 1 ≤ i → i < k → R.decisionRound r ≤ R.decisionRound (r + i) + (wa - ws - i)
 
 /-- Liveness at any rule, over every fault configuration, schedule, block universe, anchored
-rule, wave and period the model admits. -/
+rule, pair of rules, good set, wave and period the model admits. -/
 def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [Faults Validator] [LinearOrder BlockId] [Slots Validator]
     (U : BlockUniverse Validator BlockId Payload)
-    (R : AnchoredRule Validator BlockId Payload ValidWrt Correct) (ws wa k : ℕ),
+    (R : AnchoredRule Validator BlockId Payload ValidWrt Correct)
+    (p : RulePair Validator BlockId Payload)
+    (good : BlockUniverse Validator BlockId Payload → ℕ → Finset Validator) (ws wa k : ℕ),
     CommitsUnderSyncComposes U ∧ AllDecidedBelowOfSynchrony R ∧ SkipsSilentComposes U ∧
       DecidedOfReliableAboveFloor U R ∧ FloorChainDecides U R ∧ RoundRobinFairRun ∧
       FloorChainReachesReliable U R ∧ FloorChainReachesReliableWithinByzantine U R ∧
       FloorChainDecidesWithinRounds U R ∧ CommitsOfViewPace U R ∧
       FloorChainDecidesFromCommit U R ∧ PeriodicRoundRobinReliableSync ∧
       FloorChainReachesAtPeriod U R ∧ FloorChainDecidesWithinRoundsAtPeriod U R ∧
-      AllDecidedBelowOfRun U R wa ∧ AsyncSlotCost R ws wa k
+      ChainAllDecidedBelow U R good ∧ ChainAllDecidedBelowOfSynchrony R ∧
+      ChainAllDecidedBelowOfRun U R good ∧ Stall U p ∧
+      AllDecidedBelowOfRun U R wa ∧ AllDecidedBelowAtPeriodOne U p good ∧ AsyncSlotCost R ws wa k
 
 end Liveness
 

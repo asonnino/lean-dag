@@ -1,5 +1,6 @@
 import LeanDag.Steelhead.Liveness.Statement
 import LeanDag.Steelhead.Helpers.Decision
+import LeanDag.Steelhead.Helpers.Safety
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Algebra.Group.Action.Defs
 /-!
@@ -1346,6 +1347,258 @@ theorem asyncSlotCost {ws wa k : ℕ} (hid : ∀ s, S.slotRound s = s)
     omega
 
 end Slots
+
+
+/-! ## SH7 — the chain
+
+Stated at any schedule whose rounds strictly increase: the coin schedule and every control
+schedule. Consecutive slots of such a schedule lie at least one round apart, so `wa` of them span
+the wave, which is all the descent asks. -/
+
+section Chain
+
+variable {R : AnchoredRule Validator BlockId Payload ValidWrt Correct}
+  {good : BlockUniverse Validator BlockId Payload → ℕ → Finset Validator}
+
+omit [Fintype Validator] [DecidableEq Validator] F [LinearOrder BlockId] in
+/-- A strictly increasing schedule puts slot `m` at least `m − i` rounds above slot `i`. -/
+theorem slotRound_add_le_of_strictMono {S' : Slots Validator} (hmono : StrictMono S'.slotRound)
+    {i m : ℕ} (h : i ≤ m) : S'.slotRound i + (m - i) ≤ S'.slotRound m := by
+  have := hmono.add_le_nat (m - i) i
+  rw [Nat.sub_add_cancel h] at this
+  omega
+
+omit [LinearOrder BlockId] in
+/-- At a strictly increasing schedule a run of `wa` slots spans, once no slot's wave reaches
+`wa`. -/
+theorem spansEligible_of_strictMono {wa : ℕ} {S' : Slots Validator}
+    (hw : ∀ i, R.waveAt (S'.kind i) + 1 ≤ wa) (hmono : StrictMono S'.slotRound) :
+    R.SpansEligible (S := S') wa := by
+  intro b i hi
+  rw [AnchoredRule.eligible_iff]
+  have := hw i
+  have := slotRound_add_le_of_strictMono hmono (show i ≤ b + wa - 1 by omega)
+  omega
+
+/-- **SH7c, at any strictly increasing schedule.** The relation's descent below a run of good
+slots: each commits directly by `GoodCommits`, in a view holding the run's decision rounds. -/
+theorem decidedBelowOfGoodRun (hleast : LeastLinked R) (hgc : GoodCommits R good) {wa : ℕ}
+    {S' : Slots Validator} (hw : ∀ i, R.waveAt (S'.kind i) + 1 ≤ wa)
+    (hmono : StrictMono S'.slotRound) {U : BlockUniverse Validator BlockId Payload}
+    {V : View Validator BlockId Payload U} {b : ℕ}
+    (hgood : ∀ i, i < wa → S'.leader (b + i) ∈ good U (S'.slotRound (b + i)))
+    (hV : V.CoversUpto (S'.slotRound (b + wa - 1) + (wa - 1))) :
+    ∀ i, i < b → ∃ v, R.Decided (S := S') U V i v := by
+  have hwa : 0 < wa := by have := hw 0; omega
+  refine AnchoredRule.decided_below_of_run (S := S') (fun hi h => hleast hi h) hwa
+    (spansEligible_of_strictMono hw hmono)
+    (Led := fun j => S'.leader j ∈ good U (S'.slotRound j)) hgood fun j _ hj2 hj => ?_
+  obtain ⟨L, hL, hLr, hLc, hc⟩ := hgc U _ _ hj
+  refine ⟨L, AnchoredRule.Decided.directCommit (S := S') ⟨hL, hLr, hLc⟩ (hc _ V (hV.mono ?_))⟩
+  have := S'.mono hj2
+  have := hw j
+  omega
+
+/-- **SH7c.** The descent at the coin schedule, the run named by rounds. -/
+theorem chainAllDecidedBelowOfRun (hleast : LeastLinked R) (hgc : GoodCommits R good) {wa : ℕ}
+    (hw : ∀ κ, R.waveAt κ + 1 ≤ wa) {coin : ℕ → Validator}
+    {U : BlockUniverse Validator BlockId Payload} {V : View Validator BlockId Payload U} {b : ℕ}
+    (hgood : ∀ i, i < wa → coin (b + i) ∈ good U (b + i))
+    (hV : V.CoversUpto (b + wa - 1 + (wa - 1))) :
+    ∀ i, i < b → ∃ v, ChainDecided R coin U V i v :=
+  decidedBelowOfGoodRun (S' := chainSlots coin) hleast hgc (fun _ => hw _) strictMono_id hgood hV
+
+/-- **SH7a.** The clause names a run past `k` within the window, and SH7c settles everything
+below it. -/
+theorem chainAllDecidedBelow (hleast : LeastLinked R) (hgc : GoodCommits R good) {wa : ℕ}
+    {S' : Slots Validator} (hw : ∀ i, R.waveAt (S'.kind i) + 1 ≤ wa)
+    (hmono : StrictMono S'.slotRound) {U : BlockUniverse Validator BlockId Payload}
+    {V : View Validator BlockId Payload U} {c N : ℕ} (hrun : RunWithin (S := S') R good U c wa N)
+    (hV : V.CoversUpto N) (k : ℕ) (hk : S'.slotRound (k + c + wa - 1) + (wa - 1) ≤ N) :
+    ∃ b, k ≤ b ∧ ∀ i, i < b → ∃ v, R.Decided (S := S') U V i v := by
+  obtain ⟨k', hk1, hk2, hgood⟩ := hrun k (by
+    unfold AnchoredRule.decisionRound
+    have := hw (k + c + wa - 1)
+    omega)
+  refine ⟨k', hk1, decidedBelowOfGoodRun hleast hgc hw hmono hgood (hV.mono ?_)⟩
+  have := S'.mono (show k' + wa - 1 ≤ k + c + wa - 1 by omega)
+  omega
+
+/-- **SH7b.** SH6b at the schedule, whose strictly increasing rounds span the run. -/
+theorem chainAllDecidedBelowOfSynchrony (hleast : LeastLinked R) {S' : Slots Validator}
+    (hcu : ∀ U, CommitsUnderSync (S := S') R U) {wa : ℕ} (hw : ∀ i, R.waveAt (S'.kind i) + 1 ≤ wa)
+    {T : Finset Validator} (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card) (hmono : StrictMono S'.slotRound)
+    (fair : FairRunOn (S := S') T wa) (R₀ k : ℕ) :
+    ∃ b, k ≤ b ∧ R₀ ≤ S'.slotRound b ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
+        (N : ℕ),
+        SynchronisedOn U T R₀ → (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U T r) →
+        V.CoversUpto N → S'.slotRound (b + wa - 1) + (wa - 1) ≤ N →
+        ∀ i, i < b → ∃ v, R.Decided (S := S') U V i v := by
+  obtain ⟨b, hb, hRb, h⟩ := allDecidedBelowOfSynchrony (S := S') hleast hcu hT hcard
+    (spansEligible_of_strictMono hw hmono) fair R₀ k
+  refine ⟨b, hb, hRb, fun U V N hs hpop hV hN => h U V N hs hpop hV fun j hj => ?_⟩
+  unfold AnchoredRule.decisionRound
+  have := S'.mono (show j ≤ b + wa - 1 by omega)
+  have := hw j
+  omega
+
+end Chain
+
+/-! ## SH8, SH9b — the stall and period one -/
+
+/-- The rules of a pair agree on the rung count. -/
+theorem RulePair.rules_rungs (p : RulePair Validator BlockId Payload) (κ : ℕ) :
+    (p.rules κ).rungs = (p.rules 0).rungs := by
+  unfold RulePair.rules
+  split
+  · rfl
+  · exact p.rungs_eq
+
+/-- The rules of a pair agree on the tie-break. -/
+theorem RulePair.rules_tie (p : RulePair Validator BlockId Payload) (κ : ℕ) :
+    (p.rules κ).tie = (p.rules 0).tie := by
+  unfold RulePair.rules
+  split
+  · rfl
+  · exact p.tie_eq
+
+section Pair
+
+variable [S : Slots Validator] {U : BlockUniverse Validator BlockId Payload}
+  {V : View Validator BlockId Payload U} {p : RulePair Validator BlockId Payload}
+
+omit [Fintype Validator] [DecidableEq Validator] F [LinearOrder BlockId] S in
+/-- An asynchronous round above `i + 1`, where `i ≡ k − 1`, lies a full period above `i`: the
+arithmetic `omega` cannot do at a variable modulus. -/
+theorem add_period_le_of_isAsync {k i j : ℕ} (hk : 2 ≤ k) (hi : i % k = k - 1)
+    (hj : IsAsync k j) (hij : i + 2 ≤ j) : i + k + 1 ≤ j := by
+  unfold IsAsync at hj
+  have hi' := Nat.div_add_mod i k
+  have hj' := Nat.div_add_mod j k
+  rw [hi] at hi'
+  rw [hj] at hj'
+  have hlt : k * (i / k + 1) < k * (j / k) := by
+    have e : k * (i / k + 1) = k * (i / k) + k := by rw [Nat.mul_add, Nat.mul_one]
+    omega
+  have hq : i / k + 1 < j / k := Nat.lt_of_mul_lt_mul_left hlt
+  have : k * (i / k + 2) ≤ k * (j / k) := Nat.mul_le_mul_left k hq
+  rw [Nat.mul_add] at this
+  omega
+
+/-- **SH8, at the slots a view can decide.** Induction on the derivation: a class-`(k − 1)` slot
+is synchronous, so its direct verdicts are excluded outright and a synchronous anchor never commits
+it, since it is neither committed nor linked; an asynchronous anchor leaves the class-`(k − 1)`
+slot one period up as an eligible slot between, which must be skipped, which is the claim one
+period up. The hypotheses are asked at the slots `Q` names, which every slot a derivation in `V`
+mentions satisfies. -/
+theorem stall_of_pred {ws k : ℕ} (hw0 : p.sync.waveAt 0 + 1 = ws) (hws : 2 ≤ ws) (hk : ws ≤ k)
+    (hid : ∀ s, S.slotRound s = s) {Q : ℕ → Prop} (hkind : ∀ s, Q s → S.kind s = periodicKind k s)
+    (hQ : ∀ (j : ℕ) (v : Option BlockId), (steelheadAt p).Decided U V j v → Q j)
+    (hcl : ∀ (j : ℕ) (L : BlockId), Q j → S.kind j = 0 → IsLeaderBlock U j L →
+      (∀ V' : View Validator BlockId Payload U, ¬ p.sync.Commit U V' L j 0) ∧
+        ∀ (i : ℕ) (A : BlockId), ¬ p.sync.Link i U A L S j)
+    (hskip : ∀ j, Q j → S.kind j = 0 → ¬ p.sync.Skip U V S j) {i : ℕ} (hi : i % k = k - 1)
+    {v : Option BlockId} (h : (steelheadAt p).Decided U V i v) : False := by
+  have hk2 : 2 ≤ k := le_trans hws hk
+  have hsync_of_mod : ∀ {i : ℕ}, Q i → i % k = k - 1 → S.kind i = 0 := by
+    intro i hQi hi
+    rw [hkind i hQi]
+    unfold periodicKind
+    rw [if_neg]
+    omega
+  -- a synchronous slot is never committed: neither its direct commit nor a link holds
+  have hnocommit : ∀ {j : ℕ} {A : BlockId}, S.kind j = 0 →
+      (steelheadAt p).Decided U V j (some A) → False := by
+    intro j A hj hd
+    obtain ⟨hnc, hnl⟩ := hcl j A (hQ j _ hd) hj (AnchoredRule.isLeaderBlock_of_decided hd)
+    cases hd with
+    | directCommit _ hc =>
+      change (p.rules (S.kind j)).Commit U V A (S.slotRound j) (S.kind j) at hc
+      rw [hj, hid] at hc
+      exact hnc V hc
+    | indirectCommit _ _ _ _ _ _ _ hlink _ =>
+      change (p.rules (S.kind j)).Link _ U _ A S j at hlink
+      rw [hj] at hlink
+      exact hnl _ _ hlink
+  -- the middle slot of an asynchronous anchor's search is one period up
+  have hmid_of_async : ∀ {i j : ℕ}, Q i → Q j → i % k = k - 1 → S.kind j = 1 →
+      (steelheadAt p).Eligible i j →
+      i < i + k ∧ i + k < j ∧ (steelheadAt p).Eligible i (i + k) := by
+    intro i j hQi hQj hi hj helig
+    have hsync := hsync_of_mod hQi hi
+    have hasync : IsAsync k j := periodicKind_eq_one_iff.mp (hkind j hQj ▸ hj)
+    have hw : (steelheadAt p).waveAt (S.kind i) = p.sync.waveAt 0 := by
+      rw [hsync]
+      rfl
+    rw [AnchoredRule.eligible_iff, hid, hid, hw] at helig
+    have := add_period_le_of_isAsync hk2 hi hasync (by omega)
+    refine ⟨by omega, by omega, ?_⟩
+    rw [AnchoredRule.eligible_iff, hid, hid, hw]
+    omega
+  -- a synchronous anchor is committed, which `hnocommit` excludes
+  have hsync_anchor : ∀ {j : ℕ} {A : BlockId}, Q j → ¬ S.kind j = 1 →
+      (steelheadAt p).Decided U V j (some A) → False := fun hQj hasync hj =>
+    hnocommit (by rw [hkind _ hQj] at hasync ⊢; exact periodicKind_eq_zero_of_ne_one hasync) hj
+  revert hi
+  induction h with
+  | @directCommit j L hL hc =>
+    intro hi
+    have hd := AnchoredRule.Decided.directCommit hL hc
+    exact hnocommit (hsync_of_mod (hQ j _ hd) hi) hd
+  | @directSkip j hs =>
+    intro hi
+    have hQj := hQ j none (AnchoredRule.Decided.directSkip hs)
+    have hj := hsync_of_mod hQj hi
+    change (p.rules (S.kind j)).Skip U V S j at hs
+    rw [hj] at hs
+    exact hskip j hQj hj hs
+  | @indirectCommit i j A L _ hkj helig hj hmid hi' hemp hL hlink hleast _ ihmid =>
+    intro hi
+    have hQi := hQ i _
+      (AnchoredRule.Decided.indirectCommit hkj helig hj hmid hi' hemp hL hlink hleast)
+    by_cases hasync : S.kind j = 1
+    · obtain ⟨h1, h2, h3⟩ := hmid_of_async hQi (hQ j _ hj) hi hasync helig
+      exact ihmid (i + k) h1 h2 h3 (by rw [Nat.add_mod_right]; exact hi)
+    · exact hsync_anchor (hQ j _ hj) hasync hj
+  | @indirectSkip i j A hkj helig hj hmid hnone _ ihmid =>
+    intro hi
+    have hQi := hQ i _ (AnchoredRule.Decided.indirectSkip hkj helig hj hmid hnone)
+    by_cases hasync : S.kind j = 1
+    · obtain ⟨h1, h2, h3⟩ := hmid_of_async hQi (hQ j _ hj) hi hasync helig
+      exact ihmid (i + k) h1 h2 h3 (by rw [Nat.add_mod_right]; exact hi)
+    · exact hsync_anchor (hQ j _ hj) hasync hj
+
+/-- **SH8.** `stall_of_pred` with nothing asked of the slots. -/
+theorem stall {ws k : ℕ} (hw0 : p.sync.waveAt 0 + 1 = ws) (hws : 2 ≤ ws) (hk : ws ≤ k)
+    (hid : ∀ s, S.slotRound s = s) (hkind : ∀ s, S.kind s = periodicKind k s)
+    (hcl : ∀ (j : ℕ) (L : BlockId), S.kind j = 0 → IsLeaderBlock U j L →
+      (∀ V' : View Validator BlockId Payload U, ¬ p.sync.Commit U V' L j 0) ∧
+        ∀ (i : ℕ) (A : BlockId), ¬ p.sync.Link i U A L S j)
+    (hskip : ∀ j, S.kind j = 0 → ¬ p.sync.Skip U V S j) {i : ℕ} (hi : i % k = k - 1)
+    {v : Option BlockId} (h : (steelheadAt p).Decided U V i v) : False :=
+  stall_of_pred hw0 hws hk hid (Q := fun _ => True) (fun s _ => hkind s) (fun _ _ _ => trivial)
+    (fun j L _ => hcl j L) (fun j _ => hskip j) hi h
+
+/-- **SH9b.** SH7a's argument at the output schedule, whose every slot is asynchronous: the
+clause names a run past `r`, the asynchronous rule decides every slot below it, and at one kind
+the pair's composite decides as that rule (SH4). -/
+theorem allDecidedBelowAtPeriodOne {good : BlockUniverse Validator BlockId Payload → ℕ →
+    Finset Validator} (hleast : LeastLinked p.async) (hgc : GoodCommits p.async good) {wa : ℕ}
+    (hwa : p.async.waveAt 1 + 1 = wa) (hid : ∀ s, S.slotRound s = s) (hone : ∀ s, S.kind s = 1)
+    {c N : ℕ} (hrun : RunWithin p.async good U c wa N) (hV : V.CoversUpto N) (r : ℕ)
+    (hr : r + c + wa - 1 + (wa - 1) ≤ N) :
+    ∃ b, r ≤ b ∧ ∀ i, i < b → ∃ v, (steelheadAt p).Decided U V i v := by
+  have hmono : StrictMono S.slotRound := fun a b h => by rw [hid, hid]; exact h
+  obtain ⟨b, hb, h⟩ := chainAllDecidedBelow (S' := S) hleast hgc
+    (fun i => by rw [hone i, hwa]) hmono hrun hV r (by rw [hid]; exact hr)
+  refine ⟨b, hb, fun i hi => ?_⟩
+  obtain ⟨v, hv⟩ := h i hi
+  exact ⟨v, (compose_decided_iff (rules := p.rules) (κ := 1) (RulePair.rules_rungs p)
+    (RulePair.rules_tie p) hone).mpr hv⟩
+
+end Pair
 
 end Steelhead
 

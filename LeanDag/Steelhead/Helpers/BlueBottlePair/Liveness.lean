@@ -224,6 +224,77 @@ theorem pairDecides (U : BlockUniverse Validator BlockId Payload) :
 
 end Slots
 
+/-! ## SH-BB7, SH-BB9b — the chain and period one at Async BlueBottle -/
+
+/-- **Async BlueBottle's committed candidates commit**: a block `goodAt` names commits directly in
+every view holding its decision round. -/
+theorem goodCommits_asyncBlueBottle :
+    GoodCommits (AsyncBlueBottle.asyncBlueBottleAnchored Validator BlockId Payload)
+      (fun U r => AsyncBlueBottle.goodAt U r) := by
+  intro U r v hv
+  obtain ⟨L, hL, hLr, hLc, hdc⟩ := AsyncBlueBottle.mem_goodAt.mp hv
+  exact ⟨L, hL, hLr, hLc, fun _ _ hV => AsyncBlueBottle.directCommitIn_of_coversUpto hdc hV⟩
+
+/-- **Async BlueBottle breaks ties by the least candidate**, so every nonempty rung has a
+choice. -/
+theorem leastLinked_asyncBlueBottle :
+    LeastLinked (AsyncBlueBottle.asyncBlueBottleAnchored Validator BlockId Payload) :=
+  fun hi h => AsyncBlueBottle.exists_least hi h
+
+/-- **SH-BB7a.** SH7a at Async BlueBottle's rule, the clause ABB9c's. -/
+theorem chainAllDecidedBelow {U : BlockUniverse Validator BlockId Payload} {S' : Slots Validator}
+    (hmono : StrictMono S'.slotRound) {V : View Validator BlockId Payload U} {c N : ℕ}
+    (hrun : AsyncBlueBottle.UnpredictableRunWithin (S := S') U c 3 N) (hV : V.CoversUpto N)
+    (k : ℕ) (hk : AsyncBlueBottle.decisionRoundAt (S'.slotRound (k + c + 2)) ≤ N) :
+    ∃ b, k ≤ b ∧ ∀ i, i < b → ∃ v, AsyncBlueBottle.Decided (S := S') U V i v :=
+  Steelhead.chainAllDecidedBelow (wa := 3) leastLinked_asyncBlueBottle goodCommits_asyncBlueBottle
+    (fun _ => le_rfl) hmono hrun hV k (by
+      rw [show k + c + 3 - 1 = k + c + 2 by omega]
+      exact hk)
+
+/-- **SH-BB7b.** SH7b at Async BlueBottle's rule, clause A4 being ABB10a's. -/
+theorem chainAllDecidedBelowOfSynchrony {S' : Slots Validator} (hmono : StrictMono S'.slotRound)
+    {T : Finset Validator} (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card) (fair : FairRunOn (S := S') T 3) (R k : ℕ) :
+    ∃ b, k ≤ b ∧ R ≤ S'.slotRound b ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
+        (N : ℕ),
+        SynchronisedOn U T R → (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) →
+        V.CoversUpto N → AsyncBlueBottle.decisionRoundAt (S'.slotRound (b + 2)) ≤ N →
+        ∀ i, i < b → ∃ v, AsyncBlueBottle.Decided (S := S') U V i v := by
+  obtain ⟨b, hb, hRb, h⟩ := Steelhead.chainAllDecidedBelowOfSynchrony (wa := 3)
+    (leastLinked_asyncBlueBottle (BlockId := BlockId) (Payload := Payload))
+    (fun U => commitsUnderSync_asyncBlueBottle (S := S') U) (fun _ => le_rfl) hT hcard hmono fair
+    R k
+  refine ⟨b, hb, hRb, fun U V N hs hpop hV hN => h U V N hs hpop hV ?_⟩
+  rw [show b + 3 - 1 = b + 2 by omega]
+  exact hN
+
+/-- **SH-BB7c.** SH7c at Async BlueBottle's rule. -/
+theorem chainAllDecidedBelowOfRun {U : BlockUniverse Validator BlockId Payload}
+    {coin : ℕ → Validator} {V : View Validator BlockId Payload U} {b : ℕ}
+    (hgood : ∀ i, i < 3 → coin (b + i) ∈ AsyncBlueBottle.goodAt U (b + i))
+    (hV : V.CoversUpto (AsyncBlueBottle.decisionRoundAt (b + 2))) :
+    ∀ i, i < b → ∃ v, ChainDecided
+      (AsyncBlueBottle.asyncBlueBottleAnchored Validator BlockId Payload) coin U V i v :=
+  Steelhead.chainAllDecidedBelowOfRun (wa := 3) leastLinked_asyncBlueBottle
+    goodCommits_asyncBlueBottle (fun _ => le_rfl) hgood
+    (hV.mono (by unfold AsyncBlueBottle.decisionRoundAt; omega))
+
+/-- **SH-BB9b.** SH9b at `bbPair`, whose asynchronous rule is Async BlueBottle. -/
+theorem allDecidedBelowAtPeriodOne [S : Slots Validator]
+    {U : BlockUniverse Validator BlockId Payload} {V : View Validator BlockId Payload U}
+    (hid : ∀ s, S.slotRound s = s)
+    (hone : ∀ s, S.kind s = 1) {c N : ℕ}
+    (hrun : AsyncBlueBottle.UnpredictableRunWithin (S := S) U c 3 N) (hV : V.CoversUpto N)
+    (r : ℕ) (hr : AsyncBlueBottle.decisionRoundAt (r + c + 2) ≤ N) :
+    ∃ b, r ≤ b ∧ ∀ i, i < b →
+      ∃ v, (blueBottlePairAnchored Validator BlockId Payload).Decided U V i v := by
+  have h := Steelhead.allDecidedBelowAtPeriodOne (wa := 3) (p := bbPair Validator BlockId Payload)
+    leastLinked_asyncBlueBottle goodCommits_asyncBlueBottle rfl hid hone hrun hV r
+    (by unfold AsyncBlueBottle.decisionRoundAt at hr; omega)
+  rwa [steelheadAt_bbPair] at h
+
 end BlueBottlePair
 
 end Steelhead
