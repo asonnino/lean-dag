@@ -406,6 +406,9 @@ import LeanDag.Steelhead.BlueBottlePair.Proof
 import LeanDag.Steelhead.BlueBottlePair.Liveness.Statement
 import LeanDag.Steelhead.Helpers.BlueBottlePair.Liveness
 import LeanDag.Steelhead.BlueBottlePair.Liveness.Proof
+import LeanDag.Steelhead.BlueBottlePair.Period.Statement
+import LeanDag.Steelhead.Helpers.BlueBottlePair.Period
+import LeanDag.Steelhead.BlueBottlePair.Period.Proof
 import LeanDag.Steelhead.Broadcast.Statement
 import LeanDag.Steelhead.Helpers.Broadcast
 import LeanDag.Steelhead.Broadcast.Proof

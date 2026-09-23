@@ -17975,7 +17975,7 @@ def Good (R : DagRule Validator BlockId Payload) (rel : Reliability Validator)
 
 ## Appendix C. The theorem reference
 
-The 544 theorems the body or Appendix A names, each
+The 546 theorems the body or Appendix A names, each
 the source statement, unabridged. Generated with Appendix B;
 a theorem the report does not name is a step of an argument
 rather than a result it presents, and the source is its
@@ -20809,6 +20809,28 @@ theorem all_decided (hws : 2 ≤ ws) (hle : ws ≤ wa) (hwa : 3 ≤ wa) (hid : �
 
 **SH-MM14b.** SH14b at `mmPair ws wa`, the clause MM3c's at every control schedule.
 
+#### `all_decided`
+
+*theorem, `Steelhead.Helpers.BlueBottlePair.Period.lean`*
+
+```lean
+theorem all_decided {V : View Validator BlockId Payload U} {per : ℕ → ℕ}
+    (hid : ∀ t, S.slotRound t = t) (hkind : ∀ t, S.kind t = adaptiveKind I per t) (hI : 0 < I)
+    (hlead : ∀ r, S.kind r = 1 → S.leader r = coin r)
+    (h₀ : 1 ≤ k₀) (hK : k₀ ≤ K) (hupd : ∀ A k, 1 ≤ k → k ≤ K → 1 ≤ upd A k ∧ upd A k ≤ K)
+    {c N : ℕ} (hcK : (c + 3) * K ≤ I)
+    (hrun : ∀ j k, 1 ≤ k → k ≤ K →
+      AsyncBlueBottle.UnpredictableRunWithin (S := controlSlots coin I K j k) U c 3 N)
+    (hV : V.CoversUpto N)
+    (hper : ∀ j, j ≤ intervalOf I N → ∃ st,
+      PeriodAt I K (AsyncBlueBottle.asyncBlueBottleAnchored Validator BlockId Payload) coin upd k₀
+          U V (blueBottlePairAnchored Validator BlockId Payload) j st ∧ per j = st.period)
+    (s : ℕ) (h₁ : 1 ≤ s) (hN : (intervalOf I s + 3) * I + c + 3 + 2 ≤ N) :
+    ∃ v, (blueBottlePairAnchored Validator BlockId Payload).Decided U V s v
+```
+
+**SH-BB14b.** SH14b at `bbPair`, the good set Async BlueBottle's.
+
 #### `le_built`
 
 *theorem, `Steelhead.Helpers.Reactive.lean`*
@@ -20935,6 +20957,14 @@ theorem holds : Statement
 #### `holds`
 
 *theorem, `Steelhead.MahiMahiPair.Period.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.BlueBottlePair.Period.Proof.lean`*
 
 ```lean
 theorem holds : Statement
