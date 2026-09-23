@@ -1,15 +1,17 @@
-import LeanDag.Steelhead.Timeout.Statement
-import LeanDag.Steelhead.Helpers.Timeout
+import LeanDag.Steelhead.MahiMahiPair.Timeout.Statement
+import LeanDag.Steelhead.Helpers.MahiMahiPair.Timeout
 /-!
-# The mistimed leader timeout — proof
+# The `3f + 1` pair's mistimed leader timeout — proof
 
 Generated proof layer; not part of the audit surface. Each conjunct is the
-helper of the same name in `Helpers/Timeout.lean`.
+helper of the same name in `Helpers/MahiMahiPair/Timeout.lean`.
 -/
 
 namespace LeanDag
 
 namespace Steelhead
+
+namespace MahiMahiPair
 
 namespace Timeout
 
@@ -21,6 +23,8 @@ theorem holds : Statement := by
     exact tsum_tail_eq_inv hp1
 
 end Timeout
+
+end MahiMahiPair
 
 end Steelhead
 

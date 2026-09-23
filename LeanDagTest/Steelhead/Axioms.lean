@@ -15,7 +15,8 @@ import LeanDag.Steelhead.BlueBottlePair.Proof
 import LeanDag.Steelhead.BlueBottlePair.Liveness.Proof
 import LeanDag.Steelhead.Broadcast.Proof
 import LeanDag.Steelhead.Replay.Proof
-import LeanDag.Steelhead.Timeout.Proof
+import LeanDag.Steelhead.MahiMahiPair.Timeout.Proof
+import LeanDag.Steelhead.MahiMahiPair.Replay.Proof
 import LeanDag.Steelhead.MahiMahiPair.Safety.Proof
 import LeanDag.Steelhead.MahiMahiPair.Ledger.Proof
 import LeanDag.Steelhead.MahiMahiPair.Broadcast.Proof
@@ -52,7 +53,8 @@ bespoke axiom would show here before anywhere else.
 #print axioms LeanDag.Steelhead.MahiMahiPair.Broadcast.holds
 #print axioms LeanDag.Steelhead.BlueBottlePair.Broadcast.holds
 #print axioms LeanDag.Steelhead.Replay.holds
-#print axioms LeanDag.Steelhead.Timeout.holds
+#print axioms LeanDag.Steelhead.MahiMahiPair.Replay.holds
+#print axioms LeanDag.Steelhead.MahiMahiPair.Timeout.holds
 #print axioms LeanDag.SteelheadProperties.banded
 #print axioms LeanDag.SteelheadProperties.safety
 #print axioms LeanDag.SteelheadProperties.persist
