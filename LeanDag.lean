@@ -388,6 +388,9 @@ import LeanDag.Steelhead.Coin.Proof
 import LeanDag.Steelhead.MahiMahiPair.Coin.Statement
 import LeanDag.Steelhead.Helpers.MahiMahiPair.Coin
 import LeanDag.Steelhead.MahiMahiPair.Coin.Proof
+import LeanDag.Steelhead.BlueBottlePair.Coin.Statement
+import LeanDag.Steelhead.Helpers.BlueBottlePair.Coin
+import LeanDag.Steelhead.BlueBottlePair.Coin.Proof
 import LeanDag.Steelhead.Ledger.Statement
 import LeanDag.Steelhead.Ledger.Proof
 import LeanDag.Steelhead.MahiMahiPair.Ledger.Statement

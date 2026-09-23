@@ -1,4 +1,5 @@
 import LeanDag.Steelhead.BlueBottlePair.Liveness.Proof
+import LeanDag.Steelhead.Helpers.BlueBottlePair.Coin
 import Mathlib.Tactic.IntervalCases
 import LeanDagTest.AsyncBlueBottle.Model
 import LeanDagTest.Odontoceti.Model
@@ -121,6 +122,23 @@ example : (blueBottlePairAnchored (Fin 6) (Fin 24) Unit).decisionRound (S := pai
 example : (blueBottlePairAnchored (Fin 6) (Fin 24) Unit).decisionRound (S := pairSlots) 1 = 3 := by
   decide
 
+/-! ## The coin's floor fires (SH-BB11a)
+
+ABB7's population hypothesis holds on `full6` at round `1`: the five correct validators are a
+quorum and populate rounds `2` and `3`. SH-BB11a then puts the coin among the committed round-`1`
+candidates with probability at least `(6 − 3 · 1) / 6`. -/
+
+/-- **SH-BB11a's hypothesis on `full6`.** -/
+theorem full6_coinPopulated : BlueBottlePair.Coin.Populated full6 full6Correct 1 :=
+  ⟨by decide, by decide, full6_populatedOn 2 (by omega), full6_populatedOn 3 (by omega)⟩
+
+/-- **SH-BB11a on `full6`**: the coin names a committed round-`1` candidate with probability at
+least one half. -/
+theorem pair_full6_commitProb :
+    ((6 - 3 * 1 : ℕ) : ENNReal) / Fintype.card (Fin 6) ≤
+      commitProb (AsyncBlueBottle.goodAt full6) 1 :=
+  BlueBottlePair.floor_le_commitProb full6_coinPopulated
+
 /-! ## Axioms
 
 Nothing here should ever acquire an axiom beyond the standard three. -/
@@ -129,5 +147,6 @@ Nothing here should ever acquire an axiom beyond the standard three. -/
 #print axioms pair_full6_slot1
 #print axioms pair_full6_clause_sync
 #print axioms pair_full6_clause_async
+#print axioms pair_full6_commitProb
 
 end LeanDagTest

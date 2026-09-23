@@ -7,6 +7,7 @@ import LeanDag.Steelhead.MahiMahiPair.Period.Proof
 import LeanDag.Steelhead.BlueBottlePair.Period.Proof
 import LeanDag.Steelhead.Coin.Proof
 import LeanDag.Steelhead.MahiMahiPair.Coin.Proof
+import LeanDag.Steelhead.BlueBottlePair.Coin.Proof
 import LeanDag.Steelhead.Ledger.Proof
 import LeanDag.Steelhead.Interface.Proof
 import LeanDag.Steelhead.MahiMahiPair.Proof
@@ -39,6 +40,7 @@ bespoke axiom would show here before anywhere else.
 #print axioms LeanDag.Steelhead.BlueBottlePair.Period.holds
 #print axioms LeanDag.Steelhead.Coin.holds
 #print axioms LeanDag.Steelhead.MahiMahiPair.Coin.holds
+#print axioms LeanDag.Steelhead.BlueBottlePair.Coin.holds
 #print axioms LeanDag.Steelhead.Ledger.holds
 #print axioms LeanDag.Steelhead.MahiMahiPair.Ledger.holds
 #print axioms LeanDag.Steelhead.BlueBottlePair.Ledger.holds

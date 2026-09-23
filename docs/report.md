@@ -11833,7 +11833,7 @@ reused.
 
 ## Appendix B. The definition reference
 
-The 362 definitions and structures the report names, in
+The 363 definitions and structures the report names, in
 the order a reader meets them. Each entry is the source text,
 unabridged, with the explanation the source carries. This
 appendix is generated from the compiled development by
@@ -13778,6 +13778,19 @@ structure ReactiveS (U : BlockUniverse Validator BlockId Payload) (T : Finset Va
 ```
 
 **Steelhead's reactive schedule** at the wavelength function `w`, the leader wait at the rounds `waits` names: the core's pace, the reactive ceiling, the leader wait at the round above a reliable leader of a waiting round, and the certificate wait at the wave of three. At two rounds above such a leader, any `T`-authored block either already certifies, or its builder waited the full timeout and references every reliable vote it holds. Above wave three the certificate clause says nothing: reachability carries the votes, so the discipline is the core's own.
+
+#### `Populated`
+
+*def, `Steelhead.BlueBottlePair.Coin.Statement.lean`*
+
+```lean
+def Populated (U : BlockUniverse Validator BlockId Payload) (T : Finset Validator) (r : ℕ) :
+    Prop :=
+  T ⊆ (Correct : Finset Validator) ∧ quorumCard Validator ≤ T.card ∧
+    PopulatedOn U T (r + 1) ∧ PopulatedOn U T (r + 2)
+```
+
+**The population ABB7 reads**: a reliable quorum, correct and of quorum size, populating the two rounds above round `r`.
 
 #### `blueBottlePair`
 
@@ -17974,7 +17987,7 @@ def Good (R : DagRule Validator BlockId Payload) (rel : Reliability Validator)
 
 ## Appendix C. The theorem reference
 
-The 547 theorems the body or Appendix A names, each
+The 548 theorems the body or Appendix A names, each
 the source statement, unabridged. Generated with Appendix B;
 a theorem the report does not name is a step of an argument
 rather than a result it presents, and the source is its
@@ -20980,6 +20993,14 @@ theorem holds : Statement
 #### `holds`
 
 *theorem, `Steelhead.MahiMahiPair.Coin.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Steelhead.BlueBottlePair.Coin.Proof.lean`*
 
 ```lean
 theorem holds : Statement
