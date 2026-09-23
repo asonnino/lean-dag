@@ -79,12 +79,14 @@ def shDouble : UpdateRule (Fin 32) := fun _ k => 2 * k
 /-- Slot `1` of the scan of interval `0` at period `1` is round `1`, and it control-commits
 validator `3`'s block `7`: the coin names `3` there, and the whole of round `5` certifies the
 block. -/
-theorem sh8_control1 : ControlDecided 4 4 5 shCoin 0 1 sh8 (View.full sh8) 1 (some 7) :=
+theorem sh8_control1 : ControlDecided 4 4 (MahiMahi.mahiMahiAnchored _ _ _ 5) shCoin 0 1 sh8
+    (View.full sh8) 1 (some 7) :=
   AnchoredRule.Decided.directCommit (S := controlSlots shCoin 4 4 0 1) (by decide) (by decide)
 
 /-- Interval `0`'s anchor is the control commit at slot `1`, round `1`: it lies in the interval,
 and the only control slot below it is round `0`, which the scan never reads. -/
-theorem sh8_anchor1 : IntervalAnchor 4 4 5 shCoin sh8 (View.full sh8) 0 1 1 7 where
+theorem sh8_anchor1 : IntervalAnchor 4 4 (MahiMahi.mahiMahiAnchored _ _ _ 5) shCoin sh8
+    (View.full sh8) 0 1 1 7 where
   pos := by decide
   mem := by decide
   commit := sh8_control1
@@ -100,7 +102,8 @@ theorem w4_ge_two (κ : ℕ) : 2 ≤ w4 κ := by
 /-- Interval `1` keeps interval `0`'s period `1`, the warm-up, though the update rule would
 double it, wherever the agreed output stops (SH10m on data). -/
 theorem sh8_period1 : ∃ next' last',
-    PeriodAt 4 4 5 shCoin shDouble 1 sh8 (View.full sh8) w4 1 ⟨1, next', last'⟩ := by
+    PeriodAt 4 4 (MahiMahi.mahiMahiAnchored _ _ _ 5) shCoin shDouble 1 sh8 (View.full sh8)
+        (steelheadAnchored _ _ _ w4) 1 ⟨1, next', last'⟩ := by
   obtain ⟨next', last', hadv⟩ :=
     AgreedAdvance.exists (U := sh8) (w := w4) w4_ge_two (A := 7) (by decide) 1 0
   exact ⟨next', last', periodAt_warmUp (by decide) PeriodAt.zero sh8_anchor1 hadv⟩
@@ -132,7 +135,8 @@ theorem sh8_slot1_in_history :
 /-- An advance from slot `1` over that anchor passes it: the new cursor is undecided in the
 history and slot `1` is not, and the last commit is at or above slot `1`'s round. -/
 theorem sh8_advance28 {next' last' : ℕ}
-    (h : AgreedAdvance sh8 w4 28 (by decide) 1 next' 0 last') : 2 ≤ next' ∧ 1 ≤ last' := by
+    (h : AgreedAdvance sh8 (steelheadAnchored _ _ _ w4) 28 (by decide) 1 next' 0 last') : 2 ≤ next'
+        ∧ 1 ≤ last' := by
   have hnext : 2 ≤ next' := by
     rcases Nat.lt_or_ge next' 2 with hlt | hge
     · obtain rfl : next' = 1 := by have := h.le; omega

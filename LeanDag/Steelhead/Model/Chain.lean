@@ -30,16 +30,17 @@ the reference implementation's reading (`committer.rs`,
 as a skip, which the anchor search and the scan pass over exactly as
 they pass over a round that is no slot.
 
-**The control reading is the Mahi-Mahi arc at a sub-schedule.** The
-control rounds of a scan in order, each led by its coin, wave `wa`: the
-relation is Mahi-Mahi's `Decided wa` at `controlSlots coin I K j k`,
-nothing new. Its agreement is MM1c; its liveness is MM3 with the
-unpredictable-leader clause at that schedule, a run of `wa` consecutive
-control slots settling everything below it, since consecutive slots of
-any schedule lie at least one round apart. The **coin schedule**
-`chainSlots coin`, one slot per round led by the coin, every slot
-asynchronous, is the output schedule at period `1` (SH9b, SH11i) and the
-schedule a run of good rounds is read at (SH7c).
+**The control reading is the asynchronous rule at a sub-schedule.** The
+control rounds of a scan in order, each led by its coin, every slot of
+the asynchronous kind: the relation is the rule's own `Decided` at
+`controlSlots coin I K j k`, nothing new, so its agreement is the rule's
+and its liveness is the rule's run clause at that schedule, a run of
+consecutive control slots settling everything below it, since
+consecutive slots of any schedule lie at least one round apart. For the
+Mysticeti and Mahi-Mahi pair the rule is Mahi-Mahi's at `wa`. The **coin
+schedule** `chainSlots coin`, one slot per round led by the coin, every
+slot asynchronous, is the output schedule at period `1` (SH9b, SH11i)
+and the schedule a run of good rounds is read at (SH7c).
 
 **Definitions only**, as in the other model files.
 -/
@@ -61,13 +62,13 @@ statements is what a coin revealed after the votes makes true. -/
 abbrev chainSlots (coin : ℕ → Validator) : Slots Validator :=
   { Slots.identity coin with kind := fun _ => 1 }
 
-/-- **The coin verdict** at wave `wa` under the coin `coin`: Mahi-Mahi's
-relation at the coin schedule. `ChainDecided wa coin U V r v` is the
-verdict `v` of round `r`, read from the view `V`. -/
-abbrev ChainDecided (wa : ℕ) (coin : ℕ → Validator)
-    (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U) :
-    ℕ → Option BlockId → Prop :=
-  MahiMahi.Decided (S := chainSlots coin) wa U V
+/-- **The coin verdict** of the asynchronous rule `Ra` under the coin
+`coin`: the rule's relation at the coin schedule. `ChainDecided Ra coin U
+V r v` is the verdict `v` of round `r`, read from the view `V`. -/
+abbrev ChainDecided (Ra : AnchoredRule Validator BlockId Payload ValidWrt Correct)
+    (coin : ℕ → Validator) (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) : ℕ → Option BlockId → Prop :=
+  Ra.Decided (S := chainSlots coin) U V
 
 /-- **The round of control slot `i`** in the scan of interval `j` at period `k` and period bound
 `K`: the multiples of `k` up to the interval's boundary `(j + 1) · I`, then the multiples of `K`
@@ -121,13 +122,14 @@ def controlSlots (coin : ℕ → Validator) (I K j k : ℕ) [NeZero K] : Slots V
           _ ≤ ((j + 1) * I / K + (n + 1)) * K := Nat.le_mul_of_pos_right _ hK⟩
       keyed := fun _ _ h => hmono.injective (congrArg Prod.fst h) }
 
-/-- **The control verdict** of slot `i` of the scan of interval `j` at period `k`, at wave `wa`
-under the coin `coin`: Mahi-Mahi's relation at the control schedule. `ControlDecided I K wa coin
-j k U V i v` is the verdict `v` of the slot, read from the view `V`. -/
-abbrev ControlDecided (I K wa : ℕ) [NeZero K] (coin : ℕ → Validator) (j k : ℕ)
-    (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U) :
-    ℕ → Option BlockId → Prop :=
-  MahiMahi.Decided (S := controlSlots coin I K j k) wa U V
+/-- **The control verdict** of slot `i` of the scan of interval `j` at period `k`, of the
+asynchronous rule `Ra` under the coin `coin`: the rule's relation at the control schedule.
+`ControlDecided I K Ra coin j k U V i v` is the verdict `v` of the slot, read from the view
+`V`. -/
+abbrev ControlDecided (I K : ℕ) (Ra : AnchoredRule Validator BlockId Payload ValidWrt Correct)
+    [NeZero K] (coin : ℕ → Validator) (j k : ℕ) (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) : ℕ → Option BlockId → Prop :=
+  Ra.Decided (S := controlSlots coin I K j k) U V
 
 end Steelhead
 

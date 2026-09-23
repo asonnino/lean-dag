@@ -156,16 +156,18 @@ sequence's own, the sequence's period is the state's. Arbitrary where the scan h
 def Matches (I K wa : ℕ) [NeZero K] (coin known : ℕ → Validator) (upd : UpdateRule BlockId)
     (k₀ ws : ℕ) (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (per : ℕ → ℕ) : Prop :=
-  ∀ j st, PeriodAt (S := adaptiveSlots coin known I per) I K wa coin upd k₀ U V
-    (wavelength ws wa) j st → per j = st.period
+  ∀ j st, PeriodAt (S := adaptiveSlots coin known I per) I K
+      (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+    (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) j st → per j = st.period
 
 /-- **A view settles a slot at a matching sequence**: it derives the state of the slot's interval,
 and decides the slot on the sequence's schedule. -/
 def Settles (I K wa : ℕ) [NeZero K] (coin known : ℕ → Validator) (upd : UpdateRule BlockId)
     (k₀ ws : ℕ) (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (per : ℕ → ℕ) (s : ℕ) : Prop :=
-  (∃ st, PeriodAt (S := adaptiveSlots coin known I per) I K wa coin upd k₀ U V
-    (wavelength ws wa) (intervalOf I s) st) ∧
+  (∃ st, PeriodAt (S := adaptiveSlots coin known I per) I K
+      (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+    (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) (intervalOf I s) st) ∧
   ∃ v, Decided (S := adaptiveSlots coin known I per) (wavelength ws wa) U V s v
 
 /-- **A view has anchored an interval above a slot's**, at a matching sequence: some interval past
@@ -175,8 +177,11 @@ def Anchored (I K wa : ℕ) [NeZero K] (coin known : ℕ → Validator) (upd : U
     (k₀ ws : ℕ) (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (per : ℕ → ℕ) (s : ℕ) : Prop :=
   ∃ j st i A, intervalOf I s < j ∧
-    PeriodAt (S := adaptiveSlots coin known I per) I K wa coin upd k₀ U V (wavelength ws wa) j st ∧
-    IntervalAnchor I K wa coin U V j st.period i A
+    PeriodAt (S := adaptiveSlots coin known I per) I K
+        (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+        (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) j st ∧
+    IntervalAnchor I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin U V j st.period
+        i A
 
 /-- **The probability that slot `s` stays undecided**, over the uniform independent coins of `M`
 blocks of `wa · K` rounds opening every `q`-th interval from the second after the slot's: the

@@ -604,7 +604,8 @@ def ChainAllDecidedBelowOfRun (U : BlockUniverse Validator BlockId Payload) (wa 
     -- ... in a view holding their decision rounds
     V.CoversUpto (MahiMahi.decisionRoundAt wa (b + wa - 1)) →
     -- then every chain verdict below b is settled
-    ∀ i, i < b → ∃ v, ChainDecided wa coin U V i v
+    ∀ i, i < b →
+        ∃ v, ChainDecided (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin U V i v
 
 /-- **SH-MM8, the stall.** -/
 def Stall (U : BlockUniverse Validator BlockId Payload) : Prop :=

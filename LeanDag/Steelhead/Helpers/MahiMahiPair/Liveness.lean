@@ -491,7 +491,7 @@ theorem chainAllDecidedBelowOfRun {U : BlockUniverse Validator BlockId Payload} 
     (hwa : 1 ≤ wa) {coin : ℕ → Validator} {V : View Validator BlockId Payload U} {b : ℕ}
     (hgood : ∀ i, i < wa → coin (b + i) ∈ MahiMahi.goodAt U wa (b + i))
     (hV : V.CoversUpto (MahiMahi.decisionRoundAt wa (b + wa - 1))) :
-    ∀ i, i < b → ∃ v, ChainDecided wa coin U V i v :=
+    ∀ i, i < b → ∃ v, ChainDecided (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V i v :=
   allDecidedBelowOfGoodRun hwa (S' := chainSlots coin) strictMono_id hgood hV
 
 /-- **SH7a.** MM3c at a strictly increasing schedule, in any view caught up to the horizon: the

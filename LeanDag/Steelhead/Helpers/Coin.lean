@@ -893,7 +893,7 @@ theorem settles_and_anchored_of_good_blocks {U : BlockUniverse Validator BlockId
   -- of consecutive control slots above the scan's boundary
   have hsettle : ∀ j', j' < m₂ → ∀ k i, 1 ≤ controlRound I K j' k i →
       intervalOf I (controlRound I K j' k i) = j' →
-      ∃ v, ControlDecided I K wa coin j' k U V i v := by
+      ∃ v, ControlDecided I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin j' k U V i v := by
     intro j' hj' k i _ hmem
     have hb' : (j' + 1) * I ≤ m₂ * I := Nat.mul_le_mul_right I (by omega)
     have hgK : (j' + 1) * I / K < g₀ := by
@@ -925,8 +925,9 @@ theorem settles_and_anchored_of_good_blocks {U : BlockUniverse Validator BlockId
     exact hall i (by have := le_boundary_of_intervalOf hI hmem; omega)
   -- so the states are derived up to the later block's interval
   have hstates : ∀ j, j ≤ m₂ → ∃ st,
-      PeriodAt (S := adaptiveSlots coin known I per) I K wa coin upd k₀ U V
-        (wavelength ws wa) j st := by
+      PeriodAt (S := adaptiveSlots coin known I per) I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin
+          upd k₀ U V
+        (steelheadAnchored _ _ _ (wavelength ws wa)) j st := by
     intro j hj
     exact exists_periodAt_of_settled (S := adaptiveSlots coin known I per) (n := m₂ - 1) hw2
       (fun j' hj' k i hpos hmem => hsettle j' (by omega) k i hpos hmem) j (by omega)
@@ -935,8 +936,9 @@ theorem settles_and_anchored_of_good_blocks {U : BlockUniverse Validator BlockId
   have hint : intervalOf I (b + wa - 1) = m₂ :=
     intervalOf_eq_of_mul_lt_le (by omega) (by omega)
   have hper : ∀ j', j' ≤ intervalOf I (b + wa - 1) → ∃ st,
-      PeriodAt (S := adaptiveSlots coin known I per) I K wa coin upd k₀ U V
-        (wavelength ws wa) j' st ∧ per j' = st.period := by
+      PeriodAt (S := adaptiveSlots coin known I per) I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin
+          upd k₀ U V
+        (steelheadAnchored _ _ _ (wavelength ws wa)) j' st ∧ per j' = st.period := by
     intro j' hj'
     rw [hint] at hj'
     exact (hstates j' hj').imp fun st hst => ⟨hst, hmatch j' st hst⟩
@@ -969,7 +971,8 @@ theorem settles_and_anchored_of_good_blocks {U : BlockUniverse Validator BlockId
     rw [Nat.add_mul, Nat.one_mul]
     exact Nat.add_le_add_right (Nat.div_mul_le_self _ _) _
   obtain ⟨L, hL, hLr, hLc, hdc⟩ := MahiMahi.mem_goodAt.mp hfirst
-  have hanchor : IntervalAnchor I K wa coin U V m₁ st₁.period (m₁ * I / per m₁ + 1) L := by
+  have hanchor : IntervalAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V m₁ st₁.period
+      (m₁ * I / per m₁ + 1) L := by
     rw [← he₁]
     refine ⟨by rw [hcr]; exact hpos, by rw [hcr]; exact hmem, ?_, ?_⟩
     · refine MahiMahi.Decided.directCommit (S := controlSlots coin I K m₁ (per m₁))
@@ -2087,8 +2090,9 @@ noncomputable def matchingPer (I K wa : ℕ) [NeZero K] (coin known : ℕ → Va
     let prev : ℕ → ℕ :=
       fun i => if _hi : i < j then matchingPer I K wa coin known upd k₀ ws U V i else 0
     open Classical in
-    if h : ∃ st, PeriodAt (S := adaptiveSlots coin known I prev) I K wa coin upd k₀ U V
-        (wavelength ws wa) j st then (Classical.choose h).period else 0
+    if h : ∃ st, PeriodAt (S := adaptiveSlots coin known I prev) I K
+        (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+        (steelheadAnchored _ _ _ (wavelength ws wa)) j st then (Classical.choose h).period else 0
 termination_by j => j
 
 /-- **SH15i.** A derivation at the sequence built by `matchingPer` reads the sequence below its
@@ -2106,8 +2110,9 @@ theorem matchingPer_matches {I K wa : ℕ} [NeZero K] {ws : ℕ} (hws : 2 ≤ ws
     intro i hi
     simp only [hprev, dif_pos hi]
   have hst' := periodAt_congr_per hws (by omega) hst hagree
-  have hex : ∃ st, PeriodAt (S := adaptiveSlots coin known I prev) I K wa coin upd k₀ U V
-      (wavelength ws wa) j st := ⟨st, hst'⟩
+  have hex : ∃ st, PeriodAt (S := adaptiveSlots coin known I prev) I K
+      (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+      (steelheadAnchored _ _ _ (wavelength ws wa)) j st := ⟨st, hst'⟩
   rw [dif_pos hex]
   exact congrArg ScanState.period
     (periodAt_unique (S := adaptiveSlots coin known I prev) hwa (Classical.choose_spec hex) hst')

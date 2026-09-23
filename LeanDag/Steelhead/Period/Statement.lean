@@ -194,7 +194,10 @@ def PeriodAgreement (U : BlockUniverse Validator BlockId Payload) (I K wa : ℕ)
   ∀ (coin : ℕ → Validator) (upd : UpdateRule BlockId) (k₀ : ℕ)
     (V₁ V₂ : View Validator BlockId Payload U) (w : ℕ → ℕ) (j : ℕ) (st₁ st₂ : ScanState),
     3 ≤ wa →
-    PeriodAt I K wa coin upd k₀ U V₁ w j st₁ → PeriodAt I K wa coin upd k₀ U V₂ w j st₂ →
+    PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V₁
+        (steelheadAnchored Validator BlockId Payload w) j st₁ →
+        PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V₂
+        (steelheadAnchored Validator BlockId Payload w) j st₂ →
     st₁ = st₂
 
 /-- **SH10b, agreement of the output under the adaptive kinds.** -/
@@ -210,11 +213,15 @@ def AdaptiveAgreement (U : BlockUniverse Validator BlockId Payload) (ws wa I K :
     -- output on its own adaptive schedule, every slot of the kind its own sequence assigns, the
     -- coin at the rounds that sequence makes asynchronous and the known leader elsewhere
     (∀ j, j ≤ intervalOf I N → ∃ st,
-      PeriodAt (S := adaptiveSlots coin known I per₁) I K wa coin upd k₀ U V₁
-        (wavelength ws wa) j st ∧ per₁ j = st.period) →
+      PeriodAt (S := adaptiveSlots coin known I per₁) I K
+          (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V₁
+        (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) j st ∧ per₁ j = st.period)
+            →
     (∀ j, j ≤ intervalOf I N → ∃ st,
-      PeriodAt (S := adaptiveSlots coin known I per₂) I K wa coin upd k₀ U V₂
-        (wavelength ws wa) j st ∧ per₂ j = st.period) →
+      PeriodAt (S := adaptiveSlots coin known I per₂) I K
+          (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V₂
+        (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) j st ∧ per₂ j = st.period)
+            →
     -- and decided slot k on its own adaptive schedule
     Decided (S := adaptiveSlots coin known I per₁) (wavelength ws wa) U V₁ k v₁ →
     Decided (S := adaptiveSlots coin known I per₂) (wavelength ws wa) U V₂ k v₂ →
@@ -226,12 +233,15 @@ def ScanEnds (U : BlockUniverse Validator BlockId Payload) (I K wa : ℕ) [NeZer
   ∀ (coin : ℕ → Validator) (upd : UpdateRule BlockId) (k₀ : ℕ)
     (V : View Validator BlockId Payload U) (w : ℕ → ℕ) (j : ℕ) (st : ScanState),
     (∀ κ, 2 ≤ w κ) →
-    PeriodAt I K wa coin upd k₀ U V w j st →
+    PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+        (steelheadAnchored Validator BlockId Payload w) j st →
     -- every scanned control slot of the interval, at the interval's period, has a verdict in V
     (∀ i, 1 ≤ controlRound I K j st.period i → intervalOf I (controlRound I K j st.period i) = j →
-      ∃ v, ControlDecided I K wa coin j st.period U V i v) →
+      ∃ v, ControlDecided I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin j
+          st.period U V i v) →
     -- then V derives the next interval's state
-    ∃ st', PeriodAt I K wa coin upd k₀ U V w (j + 1) st'
+    ∃ st', PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+        (steelheadAnchored Validator BlockId Payload w) (j + 1) st'
 
 /-- **SH10d, the period advances under the clause.** -/
 def PeriodOfClause (U : BlockUniverse Validator BlockId Payload) (I K wa : ℕ) [NeZero K] :
@@ -252,7 +262,8 @@ def PeriodOfClause (U : BlockUniverse Validator BlockId Payload) (I K wa : ℕ) 
     -- horizon ...
     ∀ j, MahiMahi.decisionRoundAt wa ((j + 1) * I + (c + wa) * K) ≤ N →
       -- ... the view derives the next interval's state
-      ∃ st, PeriodAt I K wa coin upd k₀ U V w (j + 1) st
+      ∃ st, PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+          (steelheadAnchored Validator BlockId Payload w) (j + 1) st
 
 /-- **SH10e, the failover.** -/
 def PeriodOne (U : BlockUniverse Validator BlockId Payload) (I K wa : ℕ) [NeZero K] : Prop :=
@@ -261,11 +272,16 @@ def PeriodOne (U : BlockUniverse Validator BlockId Payload) (I K wa : ℕ) [NeZe
     (A : BlockId) (hA : A ∈ U.ids),
     -- interval j runs at st, V finds it an anchor at control slot i, and the agreed output
     -- advanced over the anchor's history committed nothing within I rounds below the anchor ...
-    PeriodAt I K wa coin upd k₀ U V w j st → IntervalAnchor I K wa coin U V j st.period i A →
-    AgreedAdvance U w A hA st.next next' st.lastCommit last' →
+    PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+        (steelheadAnchored Validator BlockId Payload w) j st →
+        IntervalAnchor I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin U V j
+        st.period i A →
+    AgreedAdvance U (steelheadAnchored Validator BlockId Payload w) A hA st.next next' st.lastCommit
+        last' →
     last' + I < controlRound I K j st.period i →
     -- ... then interval j + 1 runs at period 1
-    PeriodAt I K wa coin upd k₀ U V w (j + 1) ⟨1, next', last'⟩
+    PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+        (steelheadAnchored Validator BlockId Payload w) (j + 1) ⟨1, next', last'⟩
 
 /-- **SH10f, every interval holds two asynchronous rounds.** -/
 def TwoAsyncRounds (I : ℕ) : Prop :=
@@ -280,14 +296,16 @@ def PeriodInRange (U : BlockUniverse Validator BlockId Payload) (I K wa : ℕ) [
     1 ≤ k₀ → k₀ ≤ K →
     (∀ A k, 1 ≤ k → k ≤ K → 1 ≤ upd A k ∧ upd A k ≤ K) →
     -- then so does every derived period
-    PeriodAt I K wa coin upd k₀ U V w j st → 1 ≤ st.period ∧ st.period ≤ K
+    PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+        (steelheadAnchored Validator BlockId Payload w) j st → 1 ≤ st.period ∧ st.period ≤ K
 
 /-- **SH10h, the agreed output is a prefix of the output.** -/
 def AgreedPrefix (U : BlockUniverse Validator BlockId Payload) (I K wa : ℕ) [NeZero K] : Prop :=
   ∀ (coin : ℕ → Validator) (upd : UpdateRule BlockId) (k₀ : ℕ)
     (V : View Validator BlockId Payload U) (w : ℕ → ℕ) (j : ℕ) (st : ScanState),
     (∀ κ, 2 ≤ w κ) →
-    PeriodAt I K wa coin upd k₀ U V w j st →
+    PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+        (steelheadAnchored Validator BlockId Payload w) j st →
     -- every slot the agreed output consumed is decided in V
     ∀ s, 1 ≤ s → s < st.next → ∃ v, Decided w U V s v
 
@@ -299,7 +317,8 @@ def StalledBelowUndecided (U : BlockUniverse Validator BlockId Payload) (I K wa 
     (∀ κ, 2 ≤ w κ) →
     -- one slot per round
     (∀ t, S.slotRound t = t) →
-    PeriodAt I K wa coin upd k₀ U V w j st →
+    PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+        (steelheadAnchored Validator BlockId Payload w) j st →
     -- a slot at round one or above that V leaves undecided ...
     1 ≤ s → (∀ v, ¬ Decided w U V s v) →
     -- ... is never consumed, and the last commit lies at or below it
@@ -325,7 +344,9 @@ def ControlAgreement (U : BlockUniverse Validator BlockId Payload) (I K wa : ℕ
   ∀ (coin : ℕ → Validator) (j k : ℕ) (V₁ V₂ : View Validator BlockId Payload U) (i : ℕ)
     (v₁ v₂ : Option BlockId),
     3 ≤ wa →
-    ControlDecided I K wa coin j k U V₁ i v₁ → ControlDecided I K wa coin j k U V₂ i v₂ →
+    ControlDecided I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin j k U V₁ i v₁ →
+        ControlDecided I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin j k U V₂ i
+        v₂ →
     v₁ = v₂
 
 /-- **SH10m, the first interval keeps its period.** -/
@@ -336,10 +357,15 @@ def WarmUp (U : BlockUniverse Validator BlockId Payload) (I K wa : ℕ) [NeZero 
     -- the interval is positive, interval 0 runs at st, V finds it an anchor at control slot i, and
     -- the agreed output advances over the anchor's history ...
     0 < I →
-    PeriodAt I K wa coin upd k₀ U V w 0 st → IntervalAnchor I K wa coin U V 0 st.period i A →
-    AgreedAdvance U w A hA st.next next' st.lastCommit last' →
+    PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+        (steelheadAnchored Validator BlockId Payload w) 0 st →
+        IntervalAnchor I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin U V 0
+        st.period i A →
+    AgreedAdvance U (steelheadAnchored Validator BlockId Payload w) A hA st.next next' st.lastCommit
+        last' →
     -- ... then interval 1 runs at the same period, the output advanced
-    PeriodAt I K wa coin upd k₀ U V w 1 ⟨st.period, next', last'⟩
+    PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+        (steelheadAnchored Validator BlockId Payload w) 1 ⟨st.period, next', last'⟩
 
 /-- **SH10n, every window holds two asynchronous rounds.** -/
 def TwoAsyncRoundsInWindow (I : ℕ) : Prop :=
@@ -357,7 +383,8 @@ def PeriodDvd (U : BlockUniverse Validator BlockId Payload) (I K wa : ℕ) [NeZe
     -- the initial period divides K, and the update rule keeps a period a divisor of K
     k₀ ∣ K → (∀ A k, k ∣ K → upd A k ∣ K) →
     -- then so does every derived period
-    PeriodAt I K wa coin upd k₀ U V w j st → st.period ∣ K
+    PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+        (steelheadAnchored Validator BlockId Payload w) j st → st.period ∣ K
 
 /-- **SH10p, the control slots carry a coin.** -/
 def ControlSlotsAsync (I K : ℕ) [NeZero K] : Prop :=
@@ -377,12 +404,15 @@ def GatedByScan (U : BlockUniverse Validator BlockId Payload) (I K wa : ℕ) [Ne
   ∀ (coin : ℕ → Validator) (upd : UpdateRule BlockId) (k₀ : ℕ)
     (V : View Validator BlockId Payload U) (w : ℕ → ℕ) (j : ℕ) (st' : ScanState),
     -- a state derived for interval j + 1 ...
-    PeriodAt I K wa coin upd k₀ U V w (j + 1) st' →
+    PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+        (steelheadAnchored Validator BlockId Payload w) (j + 1) st' →
     -- ... carries a state for interval j, and the scan of j at that state's period has ended,
     -- with an anchor or with none
-    ∃ st, PeriodAt I K wa coin upd k₀ U V w j st ∧
-      ((∃ i A, IntervalAnchor I K wa coin U V j st.period i A) ∨
-        NoAnchor I K wa coin U V j st.period)
+    ∃ st, PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+        (steelheadAnchored Validator BlockId Payload w) j st ∧
+      ((∃ i A, IntervalAnchor I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin U V
+          j st.period i A) ∨
+        NoAnchor I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin U V j st.period)
 
 /-- **SH14a, output liveness under the failover.** -/
 def OutputLiveness (U : BlockUniverse Validator BlockId Payload) (ws wa I K : ℕ) [NeZero K] :
@@ -396,13 +426,17 @@ def OutputLiveness (U : BlockUniverse Validator BlockId Payload) (ws wa I K : �
     -- V derived the state of every interval up to the run's last round, reading its agreed
     -- output on the schedule it runs
     (∀ j, j ≤ intervalOf I (b + wa - 1) → ∃ st,
-      PeriodAt I K wa coin upd k₀ U V (wavelength ws wa) j st ∧ per j = st.period) →
+      PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+          (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) j st ∧ per j = st.period)
+          →
     -- the coin leads every asynchronous slot
     (∀ r, S.kind r = 1 → S.leader r = coin r) →
     -- the slot lies at round one or above, and an interval at least two past its own, so that
     -- its anchor lies more than I rounds above the slot, finds an anchor in V under the period
     -- the view derived for it ...
-    1 ≤ s → intervalOf I s + 1 < j₁ → IntervalAnchor I K wa coin U V j₁ (per j₁) i₁ A →
+    1 ≤ s → intervalOf I s + 1 < j₁ →
+        IntervalAnchor I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin U V j₁
+        (per j₁) i₁ A →
     -- ... and above that interval the coin names a committed candidate at wa consecutive
     -- rounds, in a view holding their decision rounds
     (j₁ + 1) * I < b →
@@ -431,7 +465,9 @@ def AllDecided (U : BlockUniverse Validator BlockId Payload) (ws wa I K : ℕ) [
     -- its agreed output on the schedule it runs
     V.CoversUpto N →
     (∀ j, j ≤ intervalOf I N → ∃ st,
-      PeriodAt I K wa coin upd k₀ U V (wavelength ws wa) j st ∧ per j = st.period) →
+      PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+          (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) j st ∧ per j = st.period)
+          →
     -- then every slot at round one or above and three intervals and a window below the horizon
     -- is decided
     ∀ s, 1 ≤ s → MahiMahi.decisionRoundAt wa ((intervalOf I s + 3) * I + c + wa) ≤ N →
@@ -449,7 +485,9 @@ def OutputLivenessOfRuns (U : BlockUniverse Validator BlockId Payload) (ws wa I 
     -- V derived the state of every interval up to the run's last round, reading its agreed
     -- output on the schedule it runs
     (∀ j', j' ≤ intervalOf I (b + wa - 1) → ∃ st,
-      PeriodAt I K wa coin upd k₀ U V (wavelength ws wa) j' st ∧ per j' = st.period) →
+      PeriodAt I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+          (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) j' st ∧
+          per j' = st.period) →
     -- the slot lies at round one or above; at least two intervals past its own, interval j
     -- runs at a period that puts its first control round inside it, and the coin there is
     -- good ...

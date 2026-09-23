@@ -13535,25 +13535,26 @@ abbrev UpdateRule (BlockId : Type) := BlockId → ℕ → ℕ
 *structure, `Steelhead.Model.Period.lean`*
 
 ```lean
-structure AgreedAdvance (U : BlockUniverse Validator BlockId Payload) (w : ℕ → ℕ) (A : BlockId)
-    (hA : A ∈ U.ids) (next next' last last' : ℕ) : Prop where
+structure AgreedAdvance (U : BlockUniverse Validator BlockId Payload)
+    (R : AnchoredRule Validator BlockId Payload ValidWrt Correct) (A : BlockId) (hA : A ∈ U.ids)
+    (next next' last last' : ℕ) : Prop where
   /-- The cursor does not move back. -/
   le : next ≤ next'
   /-- Every slot from the cursor up to the new one is decided in the history. -/
-  decided : ∀ s, next ≤ s → s < next' → ∃ v, Decided w U (U.historyView A hA) s v
+  decided : ∀ s, next ≤ s → s < next' → ∃ v, R.Decided (S := S) U (U.historyView A hA) s v
   /-- The new cursor is not. -/
-  stuck : ∀ v, ¬ Decided w U (U.historyView A hA) next' v
+  stuck : ∀ v, ¬ R.Decided (S := S) U (U.historyView A hA) next' v
   /-- The last commit does not move back. -/
   last_ge : last ≤ last'
   /-- It lies at or above every commit of the consumed prefix. -/
   last_le : ∀ (s : ℕ) (L : BlockId), next ≤ s → s < next' →
-    Decided w U (U.historyView A hA) s (some L) → S.slotRound s ≤ last'
+    R.Decided (S := S) U (U.historyView A hA) s (some L) → S.slotRound s ≤ last'
   /-- And it is the old one or the round of a commit of the consumed prefix. -/
   last_mem : last' = last ∨ ∃ (s : ℕ) (L : BlockId), next ≤ s ∧ s < next' ∧
-    Decided w U (U.historyView A hA) s (some L) ∧ S.slotRound s = last'
+    R.Decided (S := S) U (U.historyView A hA) s (some L) ∧ S.slotRound s = last'
 ```
 
-**The agreed output advances over an anchor's history**, read at the wavelength `w`: the slots from `next` up to `next'` are decided in the anchor's causal history, `next'` is not, and `last'` is the round of the last leader committed among them, or `last` when none is. The prefix is what the sequenced output releases, so a slot the history leaves undecided stops it.
+**The agreed output advances over an anchor's history**, read at the output rule `R`: the slots from `next` up to `next'` are decided in the anchor's causal history, `next'` is not, and `last'` is the round of the last leader committed among them, or `last` when none is. The prefix is what the sequenced output releases, so a slot the history leaves undecided stops it.
 
 #### `adaptiveSlots`
 
@@ -13615,8 +13616,11 @@ def Anchored (I K wa : ℕ) [NeZero K] (coin known : ℕ → Validator) (upd : U
     (k₀ ws : ℕ) (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (per : ℕ → ℕ) (s : ℕ) : Prop :=
   ∃ j st i A, intervalOf I s < j ∧
-    PeriodAt (S := adaptiveSlots coin known I per) I K wa coin upd k₀ U V (wavelength ws wa) j st ∧
-    IntervalAnchor I K wa coin U V j st.period i A
+    PeriodAt (S := adaptiveSlots coin known I per) I K
+        (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin upd k₀ U V
+        (steelheadAnchored Validator BlockId Payload (wavelength ws wa)) j st ∧
+    IntervalAnchor I K (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin U V j st.period
+        i A
 ```
 
 **A view has anchored an interval above a slot's**, at a matching sequence: some interval past the slot's has a derived state and, at its period, an anchor. The event Theorem 3 (i) names when it says that some scan finds its anchor.
@@ -20773,7 +20777,8 @@ theorem all_decided (hws : 2 ≤ ws) (hle : ws ≤ wa) (hwa : 3 ≤ wa) (hid : �
       MahiMahi.UnpredictableRunWithin (S := controlSlots coin I K j k) U wa c wa N)
     (hV : V.CoversUpto N)
     (hper : ∀ j, j ≤ intervalOf I N → ∃ st,
-      PeriodAt I K wa coin upd k₀ U V (wavelength ws wa) j st ∧ per j = st.period)
+      PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+          (steelheadAnchored _ _ _ (wavelength ws wa)) j st ∧ per j = st.period)
     (s : ℕ) (h₁ : 1 ≤ s)
     (hN : MahiMahi.decisionRoundAt wa ((intervalOf I s + 3) * I + c + wa) ≤ N) :
     ∃ v, Decided (wavelength ws wa) U V s v

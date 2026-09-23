@@ -135,21 +135,25 @@ theorem controlRounds (j k r : ℕ) :
 
 /-- **SH10l.** Two views agree on a control verdict of one scan: MM1c at the control schedule. -/
 theorem controlDecided_unique (hwa : 3 ≤ wa) {j k : ℕ} {V₁ V₂ : View Validator BlockId Payload U}
-    {i : ℕ} {v₁ v₂ : Option BlockId} (h₁ : ControlDecided I K wa coin j k U V₁ i v₁)
-    (h₂ : ControlDecided I K wa coin j k U V₂ i v₂) : v₁ = v₂ :=
+    {i : ℕ} {v₁ v₂ : Option BlockId}
+        (h₁ : ControlDecided I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin j k U V₁ i v₁)
+    (h₂ : ControlDecided I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin j k U V₂ i v₂) : v₁ = v₂ :=
   AnchoredRule.decided_unique (S := controlSlots coin I K j k) (MahiMahi.mahiMahiLaws (by omega))
     trivial h₁ V₂ v₂ h₂
 
 /-- An anchor in one view is never a skipped control slot in another. -/
 theorem IntervalAnchor.not_none (hwa : 3 ≤ wa) {V₁ V₂ : View Validator BlockId Payload U}
-    {j k i : ℕ} {A : BlockId} (h : IntervalAnchor I K wa coin U V₁ j k i A)
-    (hn : ControlDecided I K wa coin j k U V₂ i none) : False :=
+    {j k i : ℕ} {A : BlockId}
+        (h : IntervalAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V₁ j k i A)
+    (hn : ControlDecided I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin j k U V₂ i none) : False :=
   Option.some_ne_none A (controlDecided_unique hwa h.commit hn)
 
 /-- **The anchor is unique across views.** -/
 theorem IntervalAnchor.unique (hwa : 3 ≤ wa) {V₁ V₂ : View Validator BlockId Payload U}
-    {j k i₁ i₂ : ℕ} {A₁ A₂ : BlockId} (h₁ : IntervalAnchor I K wa coin U V₁ j k i₁ A₁)
-    (h₂ : IntervalAnchor I K wa coin U V₂ j k i₂ A₂) : i₁ = i₂ ∧ A₁ = A₂ := by
+    {j k i₁ i₂ : ℕ} {A₁ A₂ : BlockId}
+        (h₁ : IntervalAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V₁ j k i₁ A₁)
+    (h₂ : IntervalAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V₂ j k i₂ A₂) : i₁ = i₂ ∧
+        A₁ = A₂ := by
   rcases lt_trichotomy i₁ i₂ with h | h | h
   · exact absurd (h₂.below i₁ h₁.pos h₁.mem h) (fun hn => h₁.not_none hwa hn)
   · subst h
@@ -158,18 +162,21 @@ theorem IntervalAnchor.unique (hwa : 3 ≤ wa) {V₁ V₂ : View Validator Block
 
 /-- An anchor in one view excludes no anchor in another. -/
 theorem IntervalAnchor.not_noAnchor (hwa : 3 ≤ wa) {V₁ V₂ : View Validator BlockId Payload U}
-    {j k i : ℕ} {A : BlockId} (h : IntervalAnchor I K wa coin U V₁ j k i A)
-    (hn : NoAnchor I K wa coin U V₂ j k) : False :=
+    {j k i : ℕ} {A : BlockId}
+        (h : IntervalAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V₁ j k i A)
+    (hn : NoAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V₂ j k) : False :=
   h.not_none hwa (hn i h.pos h.mem)
 
 /-- The anchor's block lies in the record. -/
 theorem IntervalAnchor.mem_ids_U {V : View Validator BlockId Payload U} {j k i : ℕ}
-    {A : BlockId} (h : IntervalAnchor I K wa coin U V j k i A) : A ∈ U.ids :=
+    {A : BlockId} (h : IntervalAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V j k i A) : A
+        ∈ U.ids :=
   (AnchoredRule.isLeaderBlock_of_decided (S := controlSlots coin I K j k) h.commit).1
 
 /-- The anchor's block sits at the anchor's round. -/
 theorem IntervalAnchor.round_eq {V : View Validator BlockId Payload U} {j k i : ℕ} {A : BlockId}
-    (h : IntervalAnchor I K wa coin U V j k i A) : (U.block A).round = controlRound I K j k i :=
+    (h : IntervalAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V j k i A) :
+        (U.block A).round = controlRound I K j k i :=
   (AnchoredRule.isLeaderBlock_of_decided (S := controlSlots coin I K j k) h.commit).2.1
 
 /-! ## The anchor's history, inside the view that found it
@@ -236,7 +243,7 @@ theorem mem_ids_of_decided {w : ℕ → ℕ} {S : Slots Validator}
 
 /-- The anchor of an interval lies in the view that found it. -/
 theorem IntervalAnchor.mem_ids {V : View Validator BlockId Payload U} {j k i : ℕ} {A : BlockId}
-    (h : IntervalAnchor I K wa coin U V j k i A) : A ∈ V.ids :=
+    (h : IntervalAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V j k i A) : A ∈ V.ids :=
   mem_ids_of_mahiMahi_decided h.commit A rfl
 
 /-- The causal history of a block a view holds lies inside the view. -/
@@ -491,8 +498,9 @@ theorem voteRound_le_of_decided_historyView {w : ℕ → ℕ} (hw : ∀ r, 2 ≤
 and the last commit is the old one or the highest commit consumed. -/
 theorem AgreedAdvance.unique {w : ℕ → ℕ} {A : BlockId} {hA : A ∈ U.ids}
     {next last next₁ next₂ last₁ last₂ : ℕ}
-    (h₁ : AgreedAdvance U w A hA next next₁ last last₁)
-    (h₂ : AgreedAdvance U w A hA next next₂ last last₂) : next₁ = next₂ ∧ last₁ = last₂ := by
+    (h₁ : AgreedAdvance U (steelheadAnchored _ _ _ w) A hA next next₁ last last₁)
+    (h₂ : AgreedAdvance U (steelheadAnchored _ _ _ w) A hA next next₂ last last₂) : next₁ = next₂ ∧
+        last₁ = last₂ := by
   have hn : next₁ = next₂ := by
     rcases lt_trichotomy next₁ next₂ with h | h | h
     · obtain ⟨v, hv⟩ := h₂.decided next₁ h₁.le h
@@ -513,7 +521,8 @@ theorem AgreedAdvance.unique {w : ℕ → ℕ} {A : BlockId} {hA : A ∈ U.ids}
 undecided in the history, so the least undecided slot at or past the cursor exists, and the last
 commit is the larger of the old one and the highest commit consumed. -/
 theorem AgreedAdvance.exists {w : ℕ → ℕ} (hw : ∀ r, 2 ≤ w r) {A : BlockId} (hA : A ∈ U.ids)
-    (next last : ℕ) : ∃ next' last', AgreedAdvance U w A hA next next' last last' := by
+    (next last : ℕ) : ∃ next' last', AgreedAdvance U (steelheadAnchored _ _ _ w) A hA next next'
+        last last' := by
   classical
   have hex : ∃ s, next ≤ s ∧ ∀ v, ¬ Decided w U (U.historyView A hA) s v := by
     obtain ⟨t, ht⟩ := S.unbounded ((U.block A).round + 1)
@@ -554,8 +563,9 @@ theorem AgreedAdvance.congr_slots {S₁ S₂ : Slots Validator} {w : ℕ → ℕ
     {A : BlockId} (hA : A ∈ U.ids) (hround : ∀ t, S₁.slotRound t = S₂.slotRound t)
     (hlead : ∀ t, S₁.slotRound t ≤ (U.block A).round → S₁.leader t = S₂.leader t)
     (hkind : ∀ t, S₁.slotRound t ≤ (U.block A).round → S₁.kind t = S₂.kind t)
-    {next next' last last' : ℕ} (h : AgreedAdvance (S := S₁) U w A hA next next' last last') :
-    AgreedAdvance (S := S₂) U w A hA next next' last last' := by
+    {next next' last last' : ℕ}
+        (h : AgreedAdvance (S := S₁) U (steelheadAnchored _ _ _ w) A hA next next' last last') :
+    AgreedAdvance (S := S₂) U (steelheadAnchored _ _ _ w) A hA next next' last last' := by
   have hN : ∀ b ∈ (U.historyView A hA).ids, (U.block b).round ≤ (U.block A).round :=
     fun b hb => round_le_of_mem_history hA hb
   have fwd : ∀ {s : ℕ} {v : Option BlockId},
@@ -586,8 +596,10 @@ anchor is common, the advances over its history agree, so do the failover's test
 the update. -/
 theorem periodAt_unique (hwa : 3 ≤ wa) {upd : UpdateRule BlockId} {k₀ : ℕ}
     {V₁ V₂ : View Validator BlockId Payload U} {w : ℕ → ℕ} {j : ℕ} {st₁ st₂ : ScanState}
-    (h₁ : PeriodAt I K wa coin upd k₀ U V₁ w j st₁)
-    (h₂ : PeriodAt I K wa coin upd k₀ U V₂ w j st₂) : st₁ = st₂ := by
+    (h₁ : PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V₁
+        (steelheadAnchored _ _ _ w) j st₁)
+    (h₂ : PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V₂
+        (steelheadAnchored _ _ _ w) j st₂) : st₁ = st₂ := by
   induction h₁ generalizing st₂ with
   | zero => cases h₂; rfl
   | @anchor j i next' last' st A hA hp ha hadv ih =>
@@ -627,11 +639,13 @@ derivation of its state, each on its own schedule. -/
 theorem periodAt_congr_per {ws : ℕ} (hws : 2 ≤ ws) (hwa : 2 ≤ wa) {known : ℕ → Validator}
     {upd : UpdateRule BlockId} {k₀ : ℕ} {V : View Validator BlockId Payload U}
     {per₁ per₂ : ℕ → ℕ} {j : ℕ} {st : ScanState}
-    (hp : PeriodAt (S := adaptiveSlots coin known I per₁) I K wa coin upd k₀ U V
-      (wavelength ws wa) j st)
+    (hp : PeriodAt (S := adaptiveSlots coin known I per₁) I K (MahiMahi.mahiMahiAnchored _ _ _ wa)
+        coin upd k₀ U V
+      (steelheadAnchored _ _ _ (wavelength ws wa)) j st)
     (h : ∀ i, i < j → per₁ i = per₂ i) :
-    PeriodAt (S := adaptiveSlots coin known I per₂) I K wa coin upd k₀ U V
-      (wavelength ws wa) j st := by
+    PeriodAt (S := adaptiveSlots coin known I per₂) I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin
+        upd k₀ U V
+      (steelheadAnchored _ _ _ (wavelength ws wa)) j st := by
   induction hp with
   | zero => exact PeriodAt.zero (S := adaptiveSlots coin known I per₂)
   | @anchor j i next' last' st A hA hp ha hadv ih =>
@@ -669,11 +683,13 @@ theorem adaptive_periods_agree {ws : ℕ} (hws : 3 ≤ ws) (hwa : 3 ≤ wa) {kno
     {upd : UpdateRule BlockId} {k₀ N : ℕ} {V₁ V₂ : View Validator BlockId Payload U}
     {per₁ per₂ : ℕ → ℕ}
     (h₁ : ∀ j, j ≤ intervalOf I N → ∃ st,
-      PeriodAt (S := adaptiveSlots coin known I per₁) I K wa coin upd k₀ U V₁
-        (wavelength ws wa) j st ∧ per₁ j = st.period)
+      PeriodAt (S := adaptiveSlots coin known I per₁) I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin
+          upd k₀ U V₁
+        (steelheadAnchored _ _ _ (wavelength ws wa)) j st ∧ per₁ j = st.period)
     (h₂ : ∀ j, j ≤ intervalOf I N → ∃ st,
-      PeriodAt (S := adaptiveSlots coin known I per₂) I K wa coin upd k₀ U V₂
-        (wavelength ws wa) j st ∧ per₂ j = st.period) :
+      PeriodAt (S := adaptiveSlots coin known I per₂) I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin
+          upd k₀ U V₂
+        (steelheadAnchored _ _ _ (wavelength ws wa)) j st ∧ per₂ j = st.period) :
     ∀ j, j ≤ intervalOf I N → per₁ j = per₂ j := by
   intro j
   induction j using Nat.strong_induction_on with
@@ -694,11 +710,13 @@ theorem adaptive_decided_unique {ws : ℕ} (hws : 3 ≤ ws) (hwa : 3 ≤ wa) {kn
     {upd : UpdateRule BlockId} {k₀ N : ℕ} {V₁ V₂ : View Validator BlockId Payload U}
     {per₁ per₂ : ℕ → ℕ} (hN : ∀ b ∈ U.ids, (U.block b).round ≤ N) {k : ℕ} (hk : k ≤ N)
     (h₁ : ∀ j, j ≤ intervalOf I N → ∃ st,
-      PeriodAt (S := adaptiveSlots coin known I per₁) I K wa coin upd k₀ U V₁
-        (wavelength ws wa) j st ∧ per₁ j = st.period)
+      PeriodAt (S := adaptiveSlots coin known I per₁) I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin
+          upd k₀ U V₁
+        (steelheadAnchored _ _ _ (wavelength ws wa)) j st ∧ per₁ j = st.period)
     (h₂ : ∀ j, j ≤ intervalOf I N → ∃ st,
-      PeriodAt (S := adaptiveSlots coin known I per₂) I K wa coin upd k₀ U V₂
-        (wavelength ws wa) j st ∧ per₂ j = st.period)
+      PeriodAt (S := adaptiveSlots coin known I per₂) I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin
+          upd k₀ U V₂
+        (steelheadAnchored _ _ _ (wavelength ws wa)) j st ∧ per₂ j = st.period)
     {v₁ v₂ : Option BlockId}
     (d₁ : Decided (S := adaptiveSlots coin known I per₁) (wavelength ws wa) U V₁ k v₁)
     (d₂ : Decided (S := adaptiveSlots coin known I per₂) (wavelength ws wa) U V₂ k v₂) :
@@ -727,13 +745,14 @@ below that one has a verdict: the least committed one, at or below it. -/
 theorem IntervalAnchor.of_committed {V : View Validator BlockId Payload U} {j k i₀ : ℕ}
     {A₀ : BlockId} (hpos₀ : 1 ≤ controlRound I K j k i₀)
     (hmem₀ : intervalOf I (controlRound I K j k i₀) = j)
-    (hc₀ : ControlDecided I K wa coin j k U V i₀ (some A₀))
+    (hc₀ : ControlDecided I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin j k U V i₀ (some A₀))
     (hall : ∀ i, 1 ≤ controlRound I K j k i → intervalOf I (controlRound I K j k i) = j →
-      i < i₀ → ∃ v, ControlDecided I K wa coin j k U V i v) :
-    ∃ i A, IntervalAnchor I K wa coin U V j k i A := by
+      i < i₀ → ∃ v, ControlDecided I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin j k U V i v) :
+    ∃ i A, IntervalAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V j k i A := by
   classical
   have hex : ∃ i, 1 ≤ controlRound I K j k i ∧ intervalOf I (controlRound I K j k i) = j ∧
-      ∃ A, ControlDecided I K wa coin j k U V i (some A) := ⟨i₀, hpos₀, hmem₀, A₀, hc₀⟩
+      ∃ A, ControlDecided I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin j k U V i (some A) :=
+          ⟨i₀, hpos₀, hmem₀, A₀, hc₀⟩
   have hle : Nat.find hex ≤ i₀ := Nat.find_le ⟨hpos₀, hmem₀, A₀, hc₀⟩
   obtain ⟨hpos, hmem, A, hA⟩ := Nat.find_spec hex
   refine ⟨_, A, hpos, hmem, hA, fun i' hpos' hmem' hlt => ?_⟩
@@ -746,15 +765,17 @@ theorem IntervalAnchor.of_committed {V : View Validator BlockId Payload U} {j k 
 the agreed output advances, or there is none and every scanned control slot is skipped. -/
 theorem exists_periodAt_succ {w : ℕ → ℕ} (hw : ∀ r, 2 ≤ w r) {upd : UpdateRule BlockId} {k₀ : ℕ}
     {V : View Validator BlockId Payload U} {j : ℕ} {st : ScanState}
-    (hp : PeriodAt I K wa coin upd k₀ U V w j st)
+    (hp : PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+        (steelheadAnchored _ _ _ w) j st)
     (hall : ∀ i, 1 ≤ controlRound I K j st.period i →
       intervalOf I (controlRound I K j st.period i) = j →
-      ∃ v, ControlDecided I K wa coin j st.period U V i v) :
-    ∃ st', PeriodAt I K wa coin upd k₀ U V w (j + 1) st' := by
+      ∃ v, ControlDecided I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin j st.period U V i v) :
+    ∃ st', PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+        (steelheadAnchored _ _ _ w) (j + 1) st' := by
   classical
   by_cases hex : ∃ i, 1 ≤ controlRound I K j st.period i ∧
     intervalOf I (controlRound I K j st.period i) = j ∧
-    ∃ A, ControlDecided I K wa coin j st.period U V i (some A)
+    ∃ A, ControlDecided I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin j st.period U V i (some A)
   · obtain ⟨i₀, hpos₀, hmem₀, A₀, hc₀⟩ := hex
     obtain ⟨i, A, hA⟩ :=
       IntervalAnchor.of_committed hpos₀ hmem₀ hc₀ fun i hpos hmem _ => hall i hpos hmem
@@ -784,7 +805,8 @@ is, the warm-up keeps the period, and the update rule keeps the range. -/
 theorem periodAt_mem_range {w : ℕ → ℕ} {upd : UpdateRule BlockId} {k₀ : ℕ}
     {V : View Validator BlockId Payload U} (h₀ : 1 ≤ k₀) (hK : k₀ ≤ K)
     (hupd : ∀ A k, 1 ≤ k → k ≤ K → 1 ≤ upd A k ∧ upd A k ≤ K) {j : ℕ} {st : ScanState}
-    (hp : PeriodAt I K wa coin upd k₀ U V w j st) : 1 ≤ st.period ∧ st.period ≤ K := by
+    (hp : PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+        (steelheadAnchored _ _ _ w) j st) : 1 ≤ st.period ∧ st.period ≤ K := by
   induction hp with
   | zero => exact ⟨h₀, hK⟩
   | anchor _ _ _ ih =>
@@ -799,10 +821,12 @@ theorem periodAt_mem_range {w : ℕ → ℕ} {upd : UpdateRule BlockId} {k₀ : 
 interval both carry the state below and a closed scan at its period. -/
 theorem periodAt_gated {w : ℕ → ℕ} {upd : UpdateRule BlockId} {k₀ : ℕ}
     {V : View Validator BlockId Payload U} {j : ℕ} {st' : ScanState}
-    (hp : PeriodAt I K wa coin upd k₀ U V w (j + 1) st') :
-    ∃ st, PeriodAt I K wa coin upd k₀ U V w j st ∧
-      ((∃ i A, IntervalAnchor I K wa coin U V j st.period i A) ∨
-        NoAnchor I K wa coin U V j st.period) := by
+    (hp : PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+        (steelheadAnchored _ _ _ w) (j + 1) st') :
+    ∃ st, PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+        (steelheadAnchored _ _ _ w) j st ∧
+      ((∃ i A, IntervalAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V j st.period i A) ∨
+        NoAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V j st.period) := by
   cases hp with
   | anchor hprev hanch _ => exact ⟨_, hprev, Or.inl ⟨_, _, hanch⟩⟩
   | keep hprev hno => exact ⟨_, hprev, Or.inr hno⟩
@@ -812,7 +836,8 @@ failover's `1`, the warm-up keeps the period, and the update rule keeps divisors
 theorem periodAt_dvd {w : ℕ → ℕ} {upd : UpdateRule BlockId} {k₀ : ℕ}
     {V : View Validator BlockId Payload U} (h₀ : k₀ ∣ K)
     (hupd : ∀ A k, k ∣ K → upd A k ∣ K) {j : ℕ} {st : ScanState}
-    (hp : PeriodAt I K wa coin upd k₀ U V w j st) : st.period ∣ K := by
+    (hp : PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+        (steelheadAnchored _ _ _ w) j st) : st.period ∣ K := by
   induction hp with
   | zero => exact h₀
   | anchor _ _ _ ih =>
@@ -868,7 +893,7 @@ theorem control_all_of_clause (hwa : 1 ≤ wa) (hI : 0 < I) {V : View Validator 
     (hrun : MahiMahi.UnpredictableRunWithin (S := controlSlots coin I K j k) U wa c wa N)
     (hV : V.CoversUpto N) (hN : MahiMahi.decisionRoundAt wa ((j + 1) * I + (c + wa) * K) ≤ N) :
     ∀ i, intervalOf I (controlRound I K j k i) = j →
-      ∃ v, ControlDecided I K wa coin j k U V i v := by
+      ∃ v, ControlDecided I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin j k U V i v := by
   obtain ⟨b, hb, h⟩ := MahiMahiPair.chainAllDecidedBelow hwa
     (controlRound_strictMono (I := I) (K := K) j k) hrun hV ((j + 1) * I / k + 1) (by
       rw [controlSlots_slotRound]
@@ -898,7 +923,8 @@ theorem periodAt_of_clause (hwa : 1 ≤ wa) (hI : 0 < I) {w : ℕ → ℕ} (hw :
       MahiMahi.UnpredictableRunWithin (S := controlSlots coin I K j k) U wa c wa N)
     (hV : V.CoversUpto N) (j : ℕ)
     (hN : MahiMahi.decisionRoundAt wa ((j + 1) * I + (c + wa) * K) ≤ N) :
-    ∃ st, PeriodAt I K wa coin upd k₀ U V w (j + 1) st := by
+    ∃ st, PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+        (steelheadAnchored _ _ _ w) (j + 1) st := by
   induction j with
   | zero =>
     exact exists_periodAt_succ hw PeriodAt.zero fun i _ hi =>
@@ -914,11 +940,14 @@ theorem periodAt_of_clause (hwa : 1 ≤ wa) (hI : 0 < I) {w : ℕ → ℕ} (hw :
 /-- **SH10e.** The anchor step of the sequence, its test read off. -/
 theorem periodAt_one_of_anchor {w : ℕ → ℕ} {upd : UpdateRule BlockId} {k₀ : ℕ}
     {V : View Validator BlockId Payload U} {j i next' last' : ℕ} {st : ScanState} {A : BlockId}
-    {hA : A ∈ U.ids} (hp : PeriodAt I K wa coin upd k₀ U V w j st)
-    (ha : IntervalAnchor I K wa coin U V j st.period i A)
-    (hadv : AgreedAdvance U w A hA st.next next' st.lastCommit last')
+    {hA : A ∈ U.ids}
+        (hp : PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+        (steelheadAnchored _ _ _ w) j st)
+    (ha : IntervalAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V j st.period i A)
+    (hadv : AgreedAdvance U (steelheadAnchored _ _ _ w) A hA st.next next' st.lastCommit last')
     (h : last' + I < controlRound I K j st.period i) :
-    PeriodAt I K wa coin upd k₀ U V w (j + 1) ⟨1, next', last'⟩ := by
+    PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V (steelheadAnchored _ _ _ w)
+        (j + 1) ⟨1, next', last'⟩ := by
   have := PeriodAt.anchor hp ha hadv
   rwa [if_pos h] at this
 
@@ -926,10 +955,13 @@ theorem periodAt_one_of_anchor {w : ℕ → ℕ} {upd : UpdateRule BlockId} {k�
 failover's test fails, and the warm-up keeps the period. -/
 theorem periodAt_warmUp (hI : 0 < I) {w : ℕ → ℕ} {upd : UpdateRule BlockId} {k₀ : ℕ}
     {V : View Validator BlockId Payload U} {i next' last' : ℕ} {st : ScanState} {A : BlockId}
-    {hA : A ∈ U.ids} (hp : PeriodAt I K wa coin upd k₀ U V w 0 st)
-    (ha : IntervalAnchor I K wa coin U V 0 st.period i A)
-    (hadv : AgreedAdvance U w A hA st.next next' st.lastCommit last') :
-    PeriodAt I K wa coin upd k₀ U V w 1 ⟨st.period, next', last'⟩ := by
+    {hA : A ∈ U.ids}
+        (hp : PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+        (steelheadAnchored _ _ _ w) 0 st)
+    (ha : IntervalAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V 0 st.period i A)
+    (hadv : AgreedAdvance U (steelheadAnchored _ _ _ w) A hA st.next next' st.lastCommit last') :
+    PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V (steelheadAnchored _ _ _ w) 1
+        ⟨st.period, next', last'⟩ := by
   have hle := le_of_intervalOf hI ha.mem
   have := PeriodAt.anchor hp ha hadv
   rwa [if_neg (by omega), if_pos rfl] at this
@@ -949,8 +981,11 @@ a state for every interval up to `n + 1`, SH10c at each step. -/
 theorem exists_periodAt_of_settled {w : ℕ → ℕ} (hw : ∀ r, 2 ≤ w r) {upd : UpdateRule BlockId}
     {k₀ : ℕ} {V : View Validator BlockId Payload U} {n : ℕ}
     (hall : ∀ j, j ≤ n → ∀ k i, 1 ≤ controlRound I K j k i →
-      intervalOf I (controlRound I K j k i) = j → ∃ v, ControlDecided I K wa coin j k U V i v) :
-    ∀ j, j ≤ n + 1 → ∃ st, PeriodAt I K wa coin upd k₀ U V w j st := by
+      intervalOf I (controlRound I K j k i) = j →
+          ∃ v, ControlDecided I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin j k U V i v) :
+    ∀ j, j ≤ n + 1 →
+        ∃ st, PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+        (steelheadAnchored _ _ _ w) j st := by
   intro j
   induction j with
   | zero => exact fun _ => ⟨_, PeriodAt.zero⟩
@@ -981,7 +1016,8 @@ theorem two_async_rounds {j k : ℕ} (hk : 1 ≤ k) (hI : 2 * k ≤ I) :
 anchor's history, which lies inside the view, and verdicts are monotone in the view. -/
 theorem decided_of_lt_next {w : ℕ → ℕ} (hw : ∀ r, 2 ≤ w r) {upd : UpdateRule BlockId} {k₀ : ℕ}
     {V : View Validator BlockId Payload U} {j : ℕ} {st : ScanState}
-    (hp : PeriodAt I K wa coin upd k₀ U V w j st) :
+    (hp : PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+        (steelheadAnchored _ _ _ w) j st) :
     ∀ s, 1 ≤ s → s < st.next → ∃ v, Decided w U V s v := by
   induction hp with
   | zero =>
@@ -1005,7 +1041,8 @@ theorem AgreedAdvance.le_of_stalled {w : ℕ → ℕ} (hw : ∀ r, 2 ≤ w r)
     (hid : ∀ t, S.slotRound t = t) {V : View Validator BlockId Payload U} {A : BlockId}
     {hA : A ∈ U.ids} (hAV : A ∈ V.ids) {s : ℕ} (hund : ∀ v, ¬ Decided w U V s v)
     {next next' last last' : ℕ} (hnext : next ≤ s) (hlast : last ≤ s)
-    (h : AgreedAdvance U w A hA next next' last last') : next' ≤ s ∧ last' ≤ s := by
+    (h : AgreedAdvance U (steelheadAnchored _ _ _ w) A hA next next' last last') : next' ≤ s ∧
+        last' ≤ s := by
   have hmono : ∀ {t : ℕ} {v : Option BlockId}, Decided w U (U.historyView A hA) t v →
       Decided w U V t v :=
     fun hd => AnchoredRule.decided_mono (S := S)
@@ -1024,7 +1061,8 @@ theorem AgreedAdvance.le_of_stalled {w : ℕ → ℕ} (hw : ∀ r, 2 ≤ w r)
 theorem stalled_below_undecided {w : ℕ → ℕ} (hw : ∀ r, 2 ≤ w r)
     (hid : ∀ t, S.slotRound t = t) {upd : UpdateRule BlockId} {k₀ : ℕ}
     {V : View Validator BlockId Payload U} {j s : ℕ} {st : ScanState}
-    (hp : PeriodAt I K wa coin upd k₀ U V w j st) (h₁ : 1 ≤ s)
+    (hp : PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+        (steelheadAnchored _ _ _ w) j st) (h₁ : 1 ≤ s)
     (hund : ∀ v, ¬ Decided w U V s v) : st.next ≤ s ∧ st.lastCommit ≤ s := by
   induction hp with
   | zero => exact ⟨h₁, Nat.zero_le _⟩
@@ -1061,13 +1099,18 @@ theorem two_async_rounds_in_window {k top : ℕ} (hk : 1 ≤ k) (hI : 2 * k ≤ 
 /-- The derivation of an interval's state ends in an anchor step or a keep step. -/
 theorem PeriodAt.succ_cases {w : ℕ → ℕ} {upd : UpdateRule BlockId} {k₀ : ℕ}
     {V : View Validator BlockId Payload U} {j : ℕ} {st' : ScanState}
-    (h : PeriodAt I K wa coin upd k₀ U V w (j + 1) st') :
+    (h : PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+        (steelheadAnchored _ _ _ w) (j + 1) st') :
     (∃ (st : ScanState) (i : ℕ) (A : BlockId) (next' last' : ℕ) (hA : A ∈ U.ids),
-        PeriodAt I K wa coin upd k₀ U V w j st ∧ IntervalAnchor I K wa coin U V j st.period i A ∧
-        AgreedAdvance U w A hA st.next next' st.lastCommit last' ∧
+        PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+            (steelheadAnchored _ _ _ w) j st ∧
+            IntervalAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V j st.period i A ∧
+        AgreedAdvance U (steelheadAnchored _ _ _ w) A hA st.next next' st.lastCommit last' ∧
         st' = ⟨if last' + I < controlRound I K j st.period i then 1
           else if j = 0 then st.period else upd A st.period, next', last'⟩) ∨
-      ∃ st, PeriodAt I K wa coin upd k₀ U V w j st ∧ NoAnchor I K wa coin U V j st.period ∧
+      ∃ st, PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+          (steelheadAnchored _ _ _ w) j st ∧
+          NoAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V j st.period ∧
         st' = st := by
   cases h with
   | anchor hp hA hadv => exact Or.inl ⟨_, _, _, _, _, _, hp, hA, hadv, rfl⟩
@@ -1084,7 +1127,8 @@ theorem le_intervalOf_of_lt {j b : ℕ} (hI : 0 < I) (h : (j + 1) * I < b) :
 omit S in
 /-- An anchor of an interval two or more past a slot's lies more than `I` rounds above the slot. -/
 theorem lt_of_anchor_far {V : View Validator BlockId Payload U} (hI : 0 < I) {s j k i : ℕ}
-    {A : BlockId} (hj : intervalOf I s + 1 < j) (hA : IntervalAnchor I K wa coin U V j k i A) :
+    {A : BlockId} (hj : intervalOf I s + 1 < j)
+        (hA : IntervalAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V j k i A) :
     s + I < controlRound I K j k i := by
   have hsI := le_of_intervalOf hI (rfl : intervalOf I s = intervalOf I s)
   have hr : j * I + 1 ≤ controlRound I K j k i :=
@@ -1104,10 +1148,14 @@ derived for the interval, which every derivation of its state carries. -/
 theorem period_eq_one_of_anchor_far (hws : 2 ≤ ws) (hwa : 3 ≤ wa)
     (hid : ∀ t, S.slotRound t = t) (hI : 0 < I) {s j : ℕ} (h₁ : 1 ≤ s)
     (hund : ∀ v, ¬ Decided (wavelength ws wa) U V s v) (hj : intervalOf I s + 1 < j)
-    {st' : ScanState} (hp' : PeriodAt I K wa coin upd k₀ U V (wavelength ws wa) (j + 1) st')
+    {st' : ScanState}
+        (hp' : PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+        (steelheadAnchored _ _ _ (wavelength ws wa)) (j + 1) st')
     {k i : ℕ} {A : BlockId}
-    (hk : ∀ st, PeriodAt I K wa coin upd k₀ U V (wavelength ws wa) j st → st.period = k)
-    (hA : IntervalAnchor I K wa coin U V j k i A) : st'.period = 1 := by
+    (hk : ∀ st, PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+        (steelheadAnchored _ _ _ (wavelength ws wa)) j st → st.period = k)
+    (hA : IntervalAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V j k i A) : st'.period =
+        1 := by
   have hw2 : ∀ κ, 2 ≤ wavelength ws wa κ := wavelength_two_le hws (by omega)
   rcases hp'.succ_cases with ⟨st, i', A', next', last', hA', hp, hA'', hadv, rfl⟩ |
     ⟨st, hp, hn, rfl⟩
@@ -1128,10 +1176,12 @@ theorem output_liveness (hws : 2 ≤ ws) (hle : ws ≤ wa) (hwa : 3 ≤ wa)
     (hid : ∀ t, S.slotRound t = t) (hkind : ∀ t, S.kind t = adaptiveKind I per t) (hI : 0 < I)
     {b : ℕ}
     (hper : ∀ j, j ≤ intervalOf I (b + wa - 1) → ∃ st,
-      PeriodAt I K wa coin upd k₀ U V (wavelength ws wa) j st ∧ per j = st.period)
+      PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+          (steelheadAnchored _ _ _ (wavelength ws wa)) j st ∧ per j = st.period)
     (hlead : ∀ r, S.kind r = 1 → S.leader r = coin r)
     {s j₁ i₁ : ℕ} {A : BlockId} (h₁ : 1 ≤ s) (hs : intervalOf I s + 1 < j₁)
-    (hA : IntervalAnchor I K wa coin U V j₁ (per j₁) i₁ A) (hb : (j₁ + 1) * I < b)
+    (hA : IntervalAnchor I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin U V j₁ (per j₁) i₁ A)
+        (hb : (j₁ + 1) * I < b)
     (hgood : ∀ i, i < wa → coin (b + i) ∈ MahiMahi.goodAt U wa (b + i))
     (hV : V.CoversUpto (MahiMahi.decisionRoundAt wa (b + wa - 1))) :
     ∃ v, Decided (wavelength ws wa) U V s v := by
@@ -1143,7 +1193,8 @@ theorem output_liveness (hws : 2 ≤ ws) (hle : ws ≤ wa) (hwa : 3 ≤ wa)
   have hbj : j₁ + 1 ≤ intervalOf I b := le_intervalOf_of_lt hI hb
   have hbN : intervalOf I b ≤ intervalOf I (b + wa - 1) := intervalOf_mono (by omega)
   -- every derivation of the anchored interval's state carries the period the view derived
-  have hk : ∀ st, PeriodAt I K wa coin upd k₀ U V (wavelength ws wa) j₁ st →
+  have hk : ∀ st, PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+      (steelheadAnchored _ _ _ (wavelength ws wa)) j₁ st →
       st.period = per j₁ := by
     intro st hst
     obtain ⟨st₁, hp₁, he₁⟩ := hper j₁ (by omega)
@@ -1258,7 +1309,8 @@ theorem output_liveness_of_runs (hws : 2 ≤ ws) (hle : ws ≤ wa) (hwa : 3 ≤ 
     (hid : ∀ t, S.slotRound t = t) (hkind : ∀ t, S.kind t = adaptiveKind I per t) (hI : 0 < I)
     (hlead : ∀ r, S.kind r = 1 → S.leader r = coin r) {b : ℕ}
     (hper : ∀ j', j' ≤ intervalOf I (b + wa - 1) → ∃ st,
-      PeriodAt I K wa coin upd k₀ U V (wavelength ws wa) j' st ∧ per j' = st.period)
+      PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+          (steelheadAnchored _ _ _ (wavelength ws wa)) j' st ∧ per j' = st.period)
     {s j : ℕ} (h₁ : 1 ≤ s) (hs : intervalOf I s + 1 < j) (hk : 1 ≤ per j) (hkI : per j ≤ I)
     (hgood : coin (firstControlRound I j (per j)) ∈
       MahiMahi.goodAt U wa (firstControlRound I j (per j)))
@@ -1268,7 +1320,8 @@ theorem output_liveness_of_runs (hws : 2 ≤ ws) (hle : ws ≤ wa) (hwa : 3 ≤ 
   obtain ⟨hcr, hpos, hmem, hnone⟩ := firstControlRound_eq (I := I) (K := K) (j := j) hk hkI
   -- the coin at the first control round commits the first control slot
   obtain ⟨L, hL, hLr, hLc, hdc⟩ := MahiMahi.mem_goodAt.mp hgood
-  have hc : ControlDecided I K wa coin j (per j) U V (j * I / per j + 1) (some L) := by
+  have hc : ControlDecided I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin j (per j) U V
+      (j * I / per j + 1) (some L) := by
     refine MahiMahi.Decided.directCommit (S := controlSlots coin I K j (per j)) ?_ ?_
     · exact ⟨hL, by rw [controlSlots_slotRound, hcr]; exact hLr,
         by rw [controlSlots_leader, hcr]; exact hLc⟩
@@ -1297,7 +1350,8 @@ theorem all_decided (hws : 2 ≤ ws) (hle : ws ≤ wa) (hwa : 3 ≤ wa) (hid : �
       MahiMahi.UnpredictableRunWithin (S := controlSlots coin I K j k) U wa c wa N)
     (hV : V.CoversUpto N)
     (hper : ∀ j, j ≤ intervalOf I N → ∃ st,
-      PeriodAt I K wa coin upd k₀ U V (wavelength ws wa) j st ∧ per j = st.period)
+      PeriodAt I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin upd k₀ U V
+          (steelheadAnchored _ _ _ (wavelength ws wa)) j st ∧ per j = st.period)
     (s : ℕ) (h₁ : 1 ≤ s)
     (hN : MahiMahi.decisionRoundAt wa ((intervalOf I s + 3) * I + c + wa) ≤ N) :
     ∃ v, Decided (wavelength ws wa) U V s v := by
@@ -1358,7 +1412,8 @@ theorem all_decided (hws : 2 ≤ ws) (hle : ws ≤ wa) (hwa : 3 ≤ wa) (hid : �
     unfold MahiMahi.decisionRoundAt
     omega
   obtain ⟨L, hL, hLr, hLc, hdc⟩ := MahiMahi.mem_goodAt.mp hg0
-  have hc : ControlDecided I K wa coin j₂ k U V (k' + 0) (some L) :=
+  have hc : ControlDecided I K (MahiMahi.mahiMahiAnchored _ _ _ wa) coin j₂ k U V (k' + 0)
+      (some L) :=
     MahiMahi.Decided.directCommit (S := controlSlots coin I K j₂ k) ⟨hL, hLr, hLc⟩
       (MahiMahiProperties.directCommitIn_of_coversUpto hdc (hV.mono hcov0))
   -- and the run settles every control slot below it

@@ -158,7 +158,9 @@ every round, under any coin. -/
 def ChainAgreement (U : BlockUniverse Validator BlockId Payload) (wa : ℕ) : Prop :=
   ∀ (coin : ℕ → Validator) (V₁ V₂ : View Validator BlockId Payload U) (r : ℕ)
     (v₁ v₂ : Option BlockId),
-    2 ≤ wa → ChainDecided wa coin U V₁ r v₁ → ChainDecided wa coin U V₂ r v₂ → v₁ = v₂
+    2 ≤ wa → ChainDecided (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin U V₁ r v₁ →
+        ChainDecided (MahiMahi.mahiMahiAnchored Validator BlockId Payload wa) coin U V₂ r v₂ →
+        v₁ = v₂
 
 /-- **SH-MM5b, the direct verdicts coincide**: at a slot of the asynchronous
 kind proposed at its own round and led by the coin, the output's direct
