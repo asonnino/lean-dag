@@ -61,6 +61,7 @@ import LeanDagTest.Steelhead.Counterexamples.ReplayStartup
 import LeanDagTest.Steelhead.Counterexamples.ReplayShortWindow
 import LeanDagTest.Steelhead.Counterexamples.RotatingStall
 import LeanDagTest.Steelhead.Counterexamples.ControlSlotsFromView
+import LeanDagTest.Steelhead.Counterexamples.SyncDissemination
 import LeanDagTest.Steelhead.Axioms
 import LeanDagTest.AsyncBlueBottle.Model
 import LeanDagTest.AsyncBlueBottle.Twins

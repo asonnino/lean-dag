@@ -1,4 +1,5 @@
-import LeanDag.Steelhead.BlueBottlePair.Proof
+import LeanDag.Steelhead.BlueBottlePair.Liveness.Proof
+import Mathlib.Tactic.IntervalCases
 import LeanDagTest.AsyncBlueBottle.Model
 import LeanDagTest.Odontoceti.Model
 /-!
@@ -61,7 +62,7 @@ theorem pair_full6_slot1 :
 
 /-! ## The two floors differ
 
-SH21e as arithmetic; here it is on the schedule the two slots above run under. -/
+SH-BB16e as arithmetic; here it is on the schedule the two slots above run under. -/
 
 -- Slot `0` is synchronous, so round `2` is already eligible to anchor it.
 example : (blueBottlePairAnchored (Fin 6) (Fin 24) Unit).Eligible (S := pairSlots) 0 2 := by decide
@@ -72,11 +73,61 @@ example :
 
 example : (blueBottlePairAnchored (Fin 6) (Fin 24) Unit).Eligible (S := pairSlots) 1 4 := by decide
 
+/-! ## The pair's commit clause fires at both kinds (SH-BB6a)
+
+The clause is an implication, so its hypotheses are exhibited here on `full6`: the five correct
+validators are synchronised from round `0` and populate every round, and the clause then commits a
+slot of each kind in the full view, slot `2` by Odontoceti one round up and slot `1` by Async
+BlueBottle two rounds up. -/
+
+/-- The five correct validators of `full6`. -/
+def full6Correct : Finset (Fin 6) := {1, 2, 3, 4, 5}
+
+/-- Every block of `full6` references every block of the round below. -/
+theorem full6_refs_below :
+    ∀ a b : Fin 24, (full6.block a).round + 1 = (full6.block b).round →
+      a ∈ (full6.block b).refs := by
+  decide
+
+/-- Any set of validators is synchronised on `full6` from round `0`. -/
+theorem full6_synchronisedOn (T : Finset (Fin 6)) : SynchronisedOn full6 T 0 :=
+  fun _ _ b _ hbr _ a _ har _ => full6_refs_below a b (by rw [har, hbr])
+
+/-- The correct validators populate every round of `full6`. -/
+theorem full6_populatedOn (r : ℕ) (hr : r ≤ 3) : PopulatedOn full6 full6Correct r := by
+  interval_cases r <;> decide
+
+/-- **SH-BB6a at the synchronous kind**: slot `2`, led by validator `2`, commits. -/
+theorem pair_full6_clause_sync :
+    ∃ L, IsLeaderBlock (S := pairSlots) full6 2 L ∧
+      (blueBottlePairAnchored (Fin 6) (Fin 24) Unit).Commit full6 (View.full full6) L
+        (pairSlots.slotRound 2) (pairSlots.kind 2) :=
+  BlueBottlePair.commitsUnderSync_pair (S := pairSlots) full6 full6Correct (View.full full6) 0 3 2
+    (by decide) (by decide) (full6_synchronisedOn _) (fun r _ hr => full6_populatedOn r hr)
+    (by decide) (by decide) (View.coversUpto_full _ _) (by decide)
+
+/-- **SH-BB6a at the asynchronous kind**: slot `1`, led by validator `1`, commits. -/
+theorem pair_full6_clause_async :
+    ∃ L, IsLeaderBlock (S := pairSlots) full6 1 L ∧
+      (blueBottlePairAnchored (Fin 6) (Fin 24) Unit).Commit full6 (View.full full6) L
+        (pairSlots.slotRound 1) (pairSlots.kind 1) :=
+  BlueBottlePair.commitsUnderSync_pair (S := pairSlots) full6 full6Correct (View.full full6) 0 3 1
+    (by decide) (by decide) (full6_synchronisedOn _) (fun r _ hr => full6_populatedOn r hr)
+    (by decide) (by decide) (View.coversUpto_full _ _) (by decide)
+
+-- The two slots read two decision rounds, `2 + 1` and `1 + 2`, both at the top of `full6`.
+example : (blueBottlePairAnchored (Fin 6) (Fin 24) Unit).decisionRound (S := pairSlots) 2 = 3 := by
+  decide
+example : (blueBottlePairAnchored (Fin 6) (Fin 24) Unit).decisionRound (S := pairSlots) 1 = 3 := by
+  decide
+
 /-! ## Axioms
 
 Nothing here should ever acquire an axiom beyond the standard three. -/
 
 #print axioms pair_full6_slot0
 #print axioms pair_full6_slot1
+#print axioms pair_full6_clause_sync
+#print axioms pair_full6_clause_async
 
 end LeanDagTest
