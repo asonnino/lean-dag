@@ -53,7 +53,7 @@ def rw44 : BlockUniverse (Fin 4) (Fin 44) Unit where
   no_equivocation := by decide
 
 /-- The waves `3` and `5`, the canary `7`, and the known leader `(r + 1) mod 4`. -/
-def rwConfig : Config (Fin 4) := ⟨3, 5, some 7, fun r => ⟨(r + 1) % 4, by omega⟩⟩
+def rwConfig : Config (Fin 4) := ⟨3, 5, some 7, fun r => ⟨(r + 1) % 4, by omega⟩, false⟩
 
 /-- **The complete window**: the causal history of the anchor at round `7`, block `28`, at the
 rounds `7 − 4` and above. -/

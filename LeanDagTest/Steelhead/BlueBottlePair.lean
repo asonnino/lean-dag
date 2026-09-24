@@ -1,4 +1,5 @@
 import LeanDag.Steelhead.BlueBottlePair.Liveness.Proof
+import LeanDag.Steelhead.BlueBottlePair.Replay.Proof
 import LeanDag.Steelhead.Helpers.BlueBottlePair.Coin
 import Mathlib.Tactic.IntervalCases
 import LeanDagTest.AsyncBlueBottle.Model
@@ -21,11 +22,17 @@ The schedule is a `def` and every claim passes `(S := pairSlots)`: the
 Odontoceti witnesses this file imports declare a `Slots (Fin 6)`
 instance of their own, and synthesis would otherwise pick it and decide a
 different statement.
+
+The last section runs Algorithm 3 on the pair's window (SH-BB18): on a
+five-round universe of the same shape, the window of the round-`4` anchor
+commits every round-`1` and round-`2` candidate by Odontoceti's supporters
+one round up and every round-`1` candidate by Async BlueBottle's cone votes
+two rounds up, and the replay climbs from period `1` to period `4`.
 -/
 
 namespace LeanDagTest
 
-set_option maxRecDepth 4096
+set_option maxRecDepth 8192
 
 open LeanDag LeanDag.Steelhead
 
@@ -139,6 +146,69 @@ theorem pair_full6_commitProb :
       commitProb (AsyncBlueBottle.goodAt full6) 1 :=
   BlueBottlePair.floor_le_commitProb full6_coinPopulated
 
+/-! ## The replay reads the pair's support (SH-BB18)
+
+`full6` is too short for a window: the anchor's own round holds the anchor alone, so a wave-three
+commit needs two full rounds above the candidate inside the window. `tall6` is `full6` with a
+fifth round. Under merged certificates (`Config.merged`), waves `2` and `3`, no canary and the
+round-robin known leader, the window of block `24` (validator `0`, round `4`) at the rounds `1`
+to `4` marks committed every round-`1` and round-`2` candidate at wave two, by Odontoceti's
+supporters one round up, and every round-`1` candidate at wave three, by Async BlueBottle's cone
+votes two rounds up; a round-`2` candidate at wave three is not, its decision round being the
+window's top, which holds only the anchor. Period `1` scores `5`, period `2` scores `4` and period
+`4` scores `3`, and the replay climbs from period `1` to period `4` at hysteresis `1/10`. -/
+
+open LeanDag.Steelhead.Replay in
+/-- Block `6m + v` is validator `v`'s round-`m` block; five rounds, every non-genesis block
+referencing the whole round below. -/
+def tall6Blk : Fin 30 → Block (Fin 6) (Fin 30) Unit := fun i =>
+  { round := (i : ℕ) / 6, creator := ⟨(i : ℕ) % 6, Nat.mod_lt _ (by omega)⟩,
+    refs := if (i : ℕ) < 6 then ∅ else
+      (Finset.univ.filter fun j : Fin 30 => (j : ℕ) / 6 + 1 = (i : ℕ) / 6),
+    payload := () }
+
+/-- The fully connected universe over five rounds. -/
+def tall6 : BlockUniverse (Fin 6) (Fin 30) Unit where
+  ids := Finset.univ
+  block := tall6Blk
+  complete := by decide
+  valid := by decide
+  no_equivocation := by decide
+
+/-- Waves `2` and `3`, no canary, the known leader `r mod 6`, and merged certificates. -/
+def bbConfig : Steelhead.Replay.Config (Fin 6) := ⟨2, 3, none, fun r => ⟨r % 6, by omega⟩, true⟩
+
+/-- **The pair's window**: the causal history of block `24` of `tall6`, at round `4`, over four
+rounds. -/
+def bbWindow : Steelhead.Replay.Evidence (Fin 6) := BlueBottlePair.Replay.ofAnchor tall6 24 4
+
+/-- The window retains rounds `1` to `4`. -/
+theorem bbWindow_bounds : bbWindow.bottom = 1 ∧ bbWindow.top = 4 := by decide +kernel
+
+/-- **Odontoceti's commits at wave two**: every round-`1` and round-`2` candidate, by a quorum of
+supporters one round up. -/
+theorem bbWindow_sync_commits :
+    ∀ v : Fin 6, bbWindow.commits 1 2 v = true ∧ bbWindow.commits 2 2 v = true := by
+  decide +kernel
+
+/-- **Async BlueBottle's commits at wave three**: every round-`1` candidate, by a quorum of cone
+votes two rounds up; a round-`2` candidate's decision round is the window's top, which holds the
+anchor alone, so it is not committed. -/
+theorem bbWindow_async_commits :
+    ∀ v : Fin 6, bbWindow.commits 1 3 v = true ∧ bbWindow.commits 2 3 v = false := by
+  decide +kernel
+
+/-- **Period `1` scores `5`, period `2` scores `4`, period `4` scores `3`.** -/
+theorem bbWindow_scores :
+    Steelhead.Replay.score bbWindow bbConfig 1 = 5 ∧
+      Steelhead.Replay.score bbWindow bbConfig 2 = 4 ∧
+      Steelhead.Replay.score bbWindow bbConfig 4 = 3 := by
+  decide +kernel
+
+/-- **The replay climbs from period `1` to period `4`** at hysteresis `1/10`. -/
+theorem bbWindow_climbs : Steelhead.Replay.update bbWindow bbConfig [1, 2, 4] 1 (1 / 10) = 4 := by
+  decide +kernel
+
 /-! ## Axioms
 
 Nothing here should ever acquire an axiom beyond the standard three. -/
@@ -148,5 +218,7 @@ Nothing here should ever acquire an axiom beyond the standard three. -/
 #print axioms pair_full6_clause_sync
 #print axioms pair_full6_clause_async
 #print axioms pair_full6_commitProb
+#print axioms bbWindow_async_commits
+#print axioms bbWindow_climbs
 
 end LeanDagTest

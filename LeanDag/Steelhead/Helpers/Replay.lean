@@ -360,15 +360,27 @@ theorem Bounded.mono {E : Evidence Validator} {r j : ℕ} {t : Timing} (hrj : r 
   ⟨le_trans (by exact_mod_cast hrj) h.1, h.2.1, h.2.2⟩
 
 omit [Fintype Validator] [DecidableEq Validator] F [LinearOrder BlockId] in
+/-- The blame round lies below the decision round under either reading of the certificates. -/
+theorem Config.blame_le (C : Config Validator) (w : ℕ) : C.blame w ≤ w - 1 := by
+  unfold Config.blame
+  split_ifs <;> omega
+
+omit [Fintype Validator] [DecidableEq Validator] F [LinearOrder BlockId] in
 /-- A candidate's timing is bounded when its anchor's is and its decision round lies in the
 window. -/
-theorem bounded_candidateTiming {E : Evidence Validator} {r wave : ℕ} {v : Validator}
-    {anchor : Timing} (hwave : 2 ≤ wave) (hdec : r + wave - 1 ≤ E.top)
-    (ha : Bounded E r anchor) : Bounded E r (candidateTiming E r wave v anchor) := by
+theorem bounded_candidateTiming {E : Evidence Validator} {C : Config Validator} {r wave : ℕ}
+    {v : Validator} {anchor : Timing} (hwave : 2 ≤ wave) (hdec : r + wave - 1 ≤ E.top)
+    (ha : Bounded E r anchor) : Bounded E r (candidateTiming E C r wave v anchor) := by
   have hw : (2 : ℚ) ≤ wave := by exact_mod_cast hwave
   have htop : (r : ℚ) + wave - 1 ≤ E.top := by
     have h1 : ((r + wave - 1 : ℕ) : ℚ) ≤ E.top := by exact_mod_cast hdec
     rwa [Nat.cast_sub (by omega), Nat.cast_add, Nat.cast_one] at h1
+  have hblame : (r : ℚ) + C.blame wave ≤ E.top := by
+    have h1 : ((r + C.blame wave : ℕ) : ℚ) ≤ E.top := by
+      have := C.blame_le wave
+      exact_mod_cast (show r + C.blame wave ≤ E.top by omega)
+    rwa [Nat.cast_add] at h1
+  have hnn : (0 : ℚ) ≤ C.blame wave := Nat.cast_nonneg _
   unfold candidateTiming
   split_ifs with h1 h2 h3
   · refine ⟨?_, ?_, le_rfl⟩ <;> dsimp only <;> linarith
@@ -406,12 +418,13 @@ theorem bounded_roundTiming {E : Evidence Validator} {C : Config Validator} {per
     have hs0 : (0 : ℚ) ≤ probes.1 := Nat.cast_nonneg _
     have ha1 : (r : ℚ) ≤ ((r + C.ws - 1 : ℕ) : ℚ) := by
       exact_mod_cast (show r ≤ r + C.ws - 1 by omega)
-    have ha2 : (r : ℚ) ≤ ((r + C.ws - 2 : ℕ) : ℚ) := by
-      exact_mod_cast (show r ≤ r + C.ws - 2 by omega)
+    have hbl := C.blame_le C.ws
+    have ha2 : (r : ℚ) ≤ ((r + C.blame C.ws : ℕ) : ℚ) := by
+      exact_mod_cast (show r ≤ r + C.blame C.ws by omega)
     have hb1 : ((r + C.ws - 1 : ℕ) : ℚ) ≤ E.top := by
       exact_mod_cast (show r + C.ws - 1 ≤ E.top by omega)
-    have hb2 : ((r + C.ws - 2 : ℕ) : ℚ) ≤ E.top := by
-      exact_mod_cast (show r + C.ws - 2 ≤ E.top by omega)
+    have hb2 : ((r + C.blame C.ws : ℕ) : ℚ) ≤ E.top := by
+      exact_mod_cast (show r + C.blame C.ws ≤ E.top by omega)
     refine ⟨?_, ?_, ?_⟩
     · rw [le_div_iff₀ ht']
       nlinarith
@@ -455,7 +468,7 @@ theorem bounded_timingAt {E : Evidence Validator} {C : Config Validator} {period
   | zero => exact fun r hn hr => step r hr fun j hj hjt => absurd hjt (by omega)
   | succ n ih => exact fun r hn hr => step r hr fun j hj hjt => ih j (by omega) hjt
 
-omit F in
+omit [DecidableEq Validator] F in
 /-- At an asynchronous round every candidate is scored by the rule's own case, a committed one at
 the decision round and every other at or below the window's top, when the timings above the round
 are bounded. -/

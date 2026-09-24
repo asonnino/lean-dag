@@ -429,6 +429,9 @@ import LeanDag.Steelhead.Replay.Proof
 import LeanDag.Steelhead.MahiMahiPair.Replay.Statement
 import LeanDag.Steelhead.Helpers.MahiMahiPair.Replay
 import LeanDag.Steelhead.MahiMahiPair.Replay.Proof
+import LeanDag.Steelhead.BlueBottlePair.Replay.Statement
+import LeanDag.Steelhead.Helpers.BlueBottlePair.Replay
+import LeanDag.Steelhead.BlueBottlePair.Replay.Proof
 import LeanDag.Steelhead.Model.Timeout
 import LeanDag.Steelhead.MahiMahiPair.Timeout.Statement
 import LeanDag.Steelhead.Helpers.MahiMahiPair.Timeout

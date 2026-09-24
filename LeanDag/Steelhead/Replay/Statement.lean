@@ -60,13 +60,15 @@ window's evidence. Ten claims:
   (SH18a), which is what SH10o asks of an update rule.
 
 None of these reads the DAG: they hold of any `Evidence`, whichever rule
-pair's window filled it. How a window's evidence is read from the DAG is
-the pair's: the Mysticeti and Mahi-Mahi pair's window (`ofAnchor`) reads
-Mahi-Mahi's certificates and blames, and what that reading gives, the
-paper's Lemma 3 among it, is SH-MM18 in
-`MahiMahiPair/Replay/Statement.lean`. The BlueBottle pair has no
-certificate stage, and the evidence is indexed by wave where its two
-rules differ by kind, so no window of that pair is modelled.
+pair's window filled it, and at either place of the blame round
+(`Config.merged`). How a window's evidence is read from the DAG is the
+pair's: the Mysticeti and Mahi-Mahi pair's window (`ofAnchor`) reads
+Mahi-Mahi's certificates and blames, and BlueBottle's
+(`BlueBottlePair.Replay.ofAnchor`) the decision-round votes themselves,
+Odontoceti's at wave two and Async BlueBottle's otherwise. What each
+reading gives, the paper's Lemma 3 among it, is SH-MM18 in
+`MahiMahiPair/Replay/Statement.lean` and SH-BB18 in
+`BlueBottlePair/Replay/Statement.lean`.
 
 SH18e and SH18f ask `2 ≤ ws` and `ws < wa`, the waves of the `3f + 1`
 pair, so that a round's decision round lies at or above it and an

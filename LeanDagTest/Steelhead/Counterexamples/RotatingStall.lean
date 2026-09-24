@@ -69,7 +69,7 @@ def rtDag (N : ℕ) : BlockUniverse (Fin 4) ℕ Unit :=
       exact ⟨by omega, by omega⟩)
 
 /-- The waves `3` and `5`, a probe at every round, and the rotating known leader. -/
-def rtConfig : Config (Fin 4) := ⟨3, 5, some 1, rtKnown⟩
+def rtConfig : Config (Fin 4) := ⟨3, 5, some 1, rtKnown, false⟩
 
 /-- **Algorithm 3 at hysteresis `1/2`** on `rtDag N`, as an update rule. -/
 abbrev rtUpd (N : ℕ) : UpdateRule ℕ := anchorUpdate (rtDag N) 8 rtConfig [1, 2, 4] (1 / 2)
