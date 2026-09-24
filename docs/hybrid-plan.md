@@ -295,6 +295,7 @@ on it.
 | `LeanDagTest/Hybrid/Model.lean` | H9: the `n = 4` crash model and the `n = 9` hybrid model |
 | `LeanDagTest/Hybrid/Checkpoint.lean` | concrete checkpoint certificate, finality certificate and recovery output |
 | `LeanDagTest/Hybrid/CheckpointCommit.lean` | `Uhyb9`: a Byzantine-led commit carried through both signing phases at `hybridRule`, with a Byzantine fork attempt that gets no certificate; `Usync9`: a correct-led slot finalized from production and certification alone |
+| `LeanDagTest/Integration/BarnacleCheckpoint.lean` | `commitFinalized_barnacle` on data: a Barnacle run on `Usun` over two views finalizes the anchor slot `5`; the segmented run on `Usk` finalizes slot `3` from the configuration that outputs it and from one that only decides it; a Byzantine fork gets no certificate |
 
 ## 6. Out of scope
 

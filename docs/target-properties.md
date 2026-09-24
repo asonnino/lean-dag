@@ -4872,6 +4872,14 @@ as the properties; the `Usync9` liveness witness discharges
 `certifiesAt` by `decide` where it discharged `SynchronisedOn`.
 `LeanDagTest/Hybrid/Checkpoint.lean` instantiates `FlexibleFaults` as
 before and runs the safety and recovery layer at its `signing`.
+`LeanDagTest/Integration/BarnacleCheckpoint.lean` applies
+`commitFinalized_barnacle` to Mysticeti on four validators at both
+boundaries. At `Boundary.atAnchor`, `run2` and `run2'` on `Usun` hold
+different views and finalize the anchor slot `5`. At
+`Boundary.atThreshold`, `segRun` on `Usk` finalizes slot `3` from
+configuration `2`, which outputs it, and from configuration `0`, which
+decides it above its boundary and does not output it. A Byzantine
+validator proposes a forked checkpoint, and the fork has no certificate.
 
 ### 11.5 Next steps, in order
 

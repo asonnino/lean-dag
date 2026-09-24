@@ -15635,6 +15635,20 @@ def commitSeq (U : BlockUniverse Validator BlockId Payload) (τ : TopoSort U) :
 
 **L18–L32**, with fuel for the recursion: descend first, then emit `τ(past(B) \ D)`, then `B` itself. Returns what the invocation `ab-deliver`s and the delivered set it leaves behind, so successive invocations compose.
 
+#### `select`
+
+*def, `Checkpoint.RecoveryProofs.lean`*
+
+```lean
+noncomputable def select (receiver : Validator) :
+    CheckpointData Value :=
+  if hs : (R.validated receiver).Nonempty then
+    Classical.choose (exists_highest hs)
+  else epochGenesis M E epoch
+```
+
+Concrete highest-checkpoint selection. Classical choice implements the human-reviewed `IsSelected` semantics from `RecoverySpec.lean`.
+
 #### `toDagRule`
 
 *def, `Common.Anchored.Band.lean`*
@@ -16659,20 +16673,6 @@ noncomputable def chooseLeast [LinearOrder BlockId] (S : Slots Validator)
 ```
 
 **The deterministic rule, exhibited**: the least candidate in the identifier order, sound and total by construction, and a function of the anchor and the round alone, so two validators holding the same anchor make the same choice.
-
-#### `select`
-
-*def, `Hybrid.Checkpoint.RecoveryProofs.lean`*
-
-```lean
-noncomputable def select (receiver : Validator) :
-    CheckpointData Value :=
-  if hs : (R.validated receiver).Nonempty then
-    Classical.choose (exists_highest hs)
-  else epochGenesis M E epoch
-```
-
-Concrete highest-checkpoint selection. Classical choice implements the human-reviewed `IsSelected` semantics from `RecoverySpec.lean`.
 
 #### `hzSupport`
 
