@@ -119,7 +119,7 @@ theorem rt_coin_unique {N r L' : ℕ} (_hL' : L' ∈ (rtDag N).ids)
 theorem rt_votes_coin {N r q : ℕ} (hq : q ∈ (rtDag N).ids) (hqr : q / 4 = r + 3) :
     MahiMahi.Votes (rtDag N) q (4 * r + 2) := by
   have hqN : q < 4 * (N + 1) := Finset.mem_range.mp hq
-  exact votes_of_reaches_of_unique hq (rt_mem_ids (by omega))
+  exact MahiMahiPair.votes_of_reaches_of_unique hq (rt_mem_ids (by omega))
     (fun L' hL' hr hc => rt_coin_unique hL' hr hc) (rt_reaches_coin hqr)
 
 /-- Every block four rounds up certifies it: it references the blocks of at least three
@@ -175,7 +175,8 @@ theorem rt_good (N r : ℕ) (hr : r + 4 ≤ N) : rtCoin r ∈ MahiMahi.goodAt (r
 verdict of slot `i` commits validator `2`'s block of the slot's round, in the full view of a
 record holding that round's wave. -/
 theorem rt_control_decided (N j k i : ℕ) (hr : controlRound 8 4 j k i + 4 ≤ N) :
-    ControlDecided 8 4 5 rtCoin j k (rtDag N) (View.full (rtDag N)) i
+    ControlDecided 8 4 (MahiMahi.mahiMahiAnchored _ _ _ 5) rtCoin j k (rtDag N)
+        (View.full (rtDag N)) i
       (some (4 * controlRound 8 4 j k i + 2)) :=
   AnchoredRule.Decided.directCommit (S := controlSlots rtCoin 8 4 j k)
     ⟨rt_mem_ids (by omega),
@@ -193,7 +194,8 @@ period `1`, slot `17`, every round up to the boundary being a slot there. -/
 
 /-- Interval `0`'s anchor at period `4`: slot `1`, round `4`, block `18`. -/
 theorem rt_anchor0 (N : ℕ) (hN : 8 ≤ N) :
-    IntervalAnchor 8 4 5 rtCoin (rtDag N) (View.full (rtDag N)) 0 4 1 18 where
+    IntervalAnchor 8 4 (MahiMahi.mahiMahiAnchored _ _ _ 5) rtCoin (rtDag N) (View.full (rtDag N)) 0
+        4 1 18 where
   pos := by decide
   mem := by decide
   commit := by
@@ -207,7 +209,8 @@ theorem rt_anchor0 (N : ℕ) (hN : 8 ≤ N) :
 
 /-- Interval `1`'s anchor at period `4`: slot `3`, round `12`, block `50`. -/
 theorem rt_anchor1 (N : ℕ) (hN : 16 ≤ N) :
-    IntervalAnchor 8 4 5 rtCoin (rtDag N) (View.full (rtDag N)) 1 4 3 50 where
+    IntervalAnchor 8 4 (MahiMahi.mahiMahiAnchored _ _ _ 5) rtCoin (rtDag N) (View.full (rtDag N)) 1
+        4 3 50 where
   pos := by decide
   mem := by decide
   commit := by
@@ -220,7 +223,8 @@ theorem rt_anchor1 (N : ℕ) (hN : 16 ≤ N) :
 
 /-- Interval `2`'s anchor at period `1`: slot `17`, round `17`, block `70`. -/
 theorem rt_anchor2 (N : ℕ) (hN : 21 ≤ N) :
-    IntervalAnchor 8 4 5 rtCoin (rtDag N) (View.full (rtDag N)) 2 1 17 70 where
+    IntervalAnchor 8 4 (MahiMahi.mahiMahiAnchored _ _ _ 5) rtCoin (rtDag N) (View.full (rtDag N)) 2
+        1 17 70 where
   pos := by decide
   mem := by decide
   commit := by
@@ -288,8 +292,8 @@ theorem rt_history_slot_le {N A : ℕ} (hA : A ∈ (rtDag N).ids)
     (hρ : ((rtDag N).block A).round ≤ 17) {w : ℕ → ℕ} (hw : ∀ κ, 3 ≤ w κ) {j : ℕ}
     {v : Option ℕ} (hd : Decided (S := rtSlots) w (rtDag N) ((rtDag N).historyView A hA) j v) :
     j ≤ 16 := by
-  have := voteRound_le_of_decided_historyView (S := rtSlots) (fun κ => by have := hw κ; omega)
-    hA hd
+  have := MahiMahiPair.voteRound_le_of_decided_historyView (S := rtSlots)
+    (fun κ => by have := hw κ; omega) hA hd
   change j + w (rtSlots.kind j) - 2 ≤ ((rtDag N).block A).round at this
   have := hw (rtSlots.kind j)
   omega
@@ -298,7 +302,7 @@ theorem rt_history_slot_le {N A : ℕ} (hA : A ∈ (rtDag N).ids)
 theorem rt_stall_history {N A : ℕ} (hA : A ∈ (rtDag N).ids)
     (hρ : ((rtDag N).block A).round ≤ 17) (v : Option ℕ) :
     ¬ Decided (S := rtSlots) rtW (rtDag N) ((rtDag N).historyView A hA) 3 v :=
-  fun hd => stall_of_pred (S := rtSlots) (by decide) (by decide) (fun _ => rfl)
+  fun hd => MahiMahiPair.stall_of_pred (S := rtSlots) (by decide) (by decide) (fun _ => rfl)
     (Q := fun j => j ≤ 16) (fun j hj => rtSlots_kind hj)
     (fun j u hj => rt_history_slot_le hA hρ rtW_ge_three hj)
     (rt_hcert16 N) (rt_hskip16 N _) (by decide) hd
@@ -307,8 +311,8 @@ theorem rt_stall_history {N A : ℕ} (hA : A ∈ (rtDag N).ids)
 theorem rt_sync_no_commit_history {N A : ℕ} (hA : A ∈ (rtDag N).ids) {s : ℕ} (hs : s ≤ 16)
     (hsync : ¬ IsAsync 4 s) (L : ℕ) :
     ¬ Decided (S := rtSlots) rtW (rtDag N) ((rtDag N).historyView A hA) s (some L) :=
-  fun hd => not_commit_sync_of_pred (S := rtSlots) (fun _ => rfl) (Q := fun j => j ≤ 16)
-    (rt_hcert16 N) hs
+  fun hd => MahiMahiPair.not_commit_sync_of_pred (S := rtSlots) (fun _ => rfl)
+    (Q := fun j => j ≤ 16) (rt_hcert16 N) hs
     (by
       rw [rtSlots_kind hs]
       exact periodicKind_eq_zero_of_ne_one fun h => hsync (periodicKind_eq_one_iff.mp h)) hd
@@ -321,7 +325,8 @@ the old one. -/
 theorem rt_advance_stalled {N A : ℕ} (hA : A ∈ (rtDag N).ids)
     (hρ : ((rtDag N).block A).round ≤ 17) {next next' last last' : ℕ} (h1 : 1 ≤ next)
     (hnext : next ≤ 3)
-    (h : AgreedAdvance (S := rtSlots) (rtDag N) rtW A hA next next' last last') :
+    (h : AgreedAdvance (S := rtSlots) (rtDag N) (steelheadAnchored _ _ _ rtW) A hA next next' last
+        last') :
     1 ≤ next' ∧ next' ≤ 3 ∧ last' = last := by
   have hn : next' ≤ 3 := by
     by_contra hgt
@@ -339,10 +344,12 @@ warm-up (SH10m on data), and interval `2` runs at period `1`, the agreed output'
 `1`, `2` or `3` throughout and its last commit still at round `0`. -/
 theorem rt_failover (N : ℕ) (hN : 16 ≤ N) :
     (∃ next', 1 ≤ next' ∧ next' ≤ 3 ∧
-      PeriodAt (S := rtSlots) 8 4 5 rtCoin (rtUpd N) 4 (rtDag N) (View.full (rtDag N)) rtW 1
+      PeriodAt (S := rtSlots) 8 4 (MahiMahi.mahiMahiAnchored _ _ _ 5) rtCoin (rtUpd N) 4 (rtDag N)
+          (View.full (rtDag N)) (steelheadAnchored _ _ _ rtW) 1
         ⟨4, next', 0⟩) ∧
       ∃ next', 1 ≤ next' ∧ next' ≤ 3 ∧
-        PeriodAt (S := rtSlots) 8 4 5 rtCoin (rtUpd N) 4 (rtDag N) (View.full (rtDag N)) rtW 2
+        PeriodAt (S := rtSlots) 8 4 (MahiMahi.mahiMahiAnchored _ _ _ 5) rtCoin (rtUpd N) 4 (rtDag N)
+            (View.full (rtDag N)) (steelheadAnchored _ _ _ rtW) 2
           ⟨1, next', 0⟩ := by
   have hw2 : ∀ κ, 2 ≤ rtW κ := fun κ => by have := rtW_ge_three κ; omega
   have h18 : 18 ∈ (rtDag N).ids := rt_mem_ids (by omega)
@@ -350,16 +357,19 @@ theorem rt_failover (N : ℕ) (hN : 16 ≤ N) :
   -- interval 0: the anchor at round 4, over whose history the advance consumes no commit; the
   -- warm-up keeps the period
   obtain ⟨n₀, l₀, hadv₀⟩ :=
-    AgreedAdvance.exists (S := rtSlots) (U := rtDag N) (w := rtW) hw2 h18 1 0
+    AgreedAdvance.exists (S := rtSlots) (U := rtDag N) (R := steelheadAnchored _ _ _ rtW)
+      (MahiMahiPair.viewLaws_steelhead hw2) h18 1 0
   obtain ⟨hn₀, hn₀', rfl⟩ := rt_advance_stalled h18 (by change 18 / 4 ≤ 17; omega) le_rfl
     (by omega) hadv₀
-  have hp1 : PeriodAt (S := rtSlots) 8 4 5 rtCoin (rtUpd N) 4 (rtDag N) (View.full (rtDag N)) rtW 1
+  have hp1 : PeriodAt (S := rtSlots) 8 4 (MahiMahi.mahiMahiAnchored _ _ _ 5) rtCoin (rtUpd N) 4
+      (rtDag N) (View.full (rtDag N)) (steelheadAnchored _ _ _ rtW) 1
       ⟨4, n₀, 0⟩ :=
     periodAt_warmUp (by decide) PeriodAt.zero (rt_anchor0 N (by omega)) hadv₀
   -- interval 1: the anchor at round 12, over whose history the advance consumes no commit, and
   -- 0 + 8 < 12
   obtain ⟨n₁, l₁, hadv₁⟩ :=
-    AgreedAdvance.exists (S := rtSlots) (U := rtDag N) (w := rtW) hw2 h50 n₀ 0
+    AgreedAdvance.exists (S := rtSlots) (U := rtDag N) (R := steelheadAnchored _ _ _ rtW)
+      (MahiMahiPair.viewLaws_steelhead hw2) h50 n₀ 0
   obtain ⟨hn₁, hn₁', rfl⟩ := rt_advance_stalled h50 (by change 50 / 4 ≤ 17; omega) hn₀ hn₀'
     hadv₁
   exact ⟨⟨n₀, hn₀, hn₀', hp1⟩, n₁, hn₁, hn₁',
@@ -373,7 +383,8 @@ the first four intervals at the periods `4`, `4`, `1`, `1`, and decides slot `3`
 wavelength of that sequence. -/
 theorem rt_recovers (N : ℕ) (hN : 33 ≤ N) :
     (∀ j, j ≤ 3 → ∃ st,
-      PeriodAt (S := rtSlots) 8 4 5 rtCoin (rtUpd N) 4 (rtDag N) (View.full (rtDag N)) rtW j st ∧
+      PeriodAt (S := rtSlots) 8 4 (MahiMahi.mahiMahiAnchored _ _ _ 5) rtCoin (rtUpd N) 4 (rtDag N)
+          (View.full (rtDag N)) (steelheadAnchored _ _ _ rtW) j st ∧
         rtPer j = st.period) ∧
       ∃ v, Decided (S := rtSlots) rtW (rtDag N) (View.full (rtDag N)) 3 v := by
   have hw2 : ∀ κ, 2 ≤ rtW κ := fun κ => by have := rtW_ge_three κ; omega
@@ -381,12 +392,14 @@ theorem rt_recovers (N : ℕ) (hN : 33 ≤ N) :
   obtain ⟨⟨n₁, hn₁, hn₁', hp1⟩, n₂, hn₂, hn₂', hp2⟩ := rt_failover N (by omega)
   -- interval 2: the anchor at round 17, over whose history the advance consumes no commit
   obtain ⟨n₃, l₃, hadv₃⟩ :=
-    AgreedAdvance.exists (S := rtSlots) (U := rtDag N) (w := rtW) hw2 h70 n₂ 0
+    AgreedAdvance.exists (S := rtSlots) (U := rtDag N) (R := steelheadAnchored _ _ _ rtW)
+      (MahiMahiPair.viewLaws_steelhead hw2) h70 n₂ 0
   obtain ⟨-, -, rfl⟩ := rt_advance_stalled h70 (by change 70 / 4 ≤ 17; omega) hn₂ hn₂' hadv₃
   have hp3 := periodAt_one_of_anchor hp2 (rt_anchor2 N (by omega)) hadv₃
     (by change 0 + 8 < controlRound 8 4 2 1 17; decide)
   have hstates : ∀ j, j ≤ 3 → ∃ st,
-      PeriodAt (S := rtSlots) 8 4 5 rtCoin (rtUpd N) 4 (rtDag N) (View.full (rtDag N)) rtW j st ∧
+      PeriodAt (S := rtSlots) 8 4 (MahiMahi.mahiMahiAnchored _ _ _ 5) rtCoin (rtUpd N) 4 (rtDag N)
+          (View.full (rtDag N)) (steelheadAnchored _ _ _ rtW) j st ∧
         rtPer j = st.period := by
     intro j hj
     interval_cases j
@@ -395,11 +408,12 @@ theorem rt_recovers (N : ℕ) (hN : 33 ≤ N) :
     · exact ⟨_, hp2, rfl⟩
     · exact ⟨_, hp3, rfl⟩
   refine ⟨hstates, ?_⟩
-  -- SH14a: the anchored interval 2 lies two past slot 3's, and the coin runs at rounds 25 to 29
-  refine output_liveness (S := rtSlots) (by decide) (by decide) (by decide) (fun _ => rfl)
-    (fun _ => rfl) (by decide) (b := 25) (fun j hj => hstates j (by unfold intervalOf at hj; omega))
-    ?_ (s := 3) (by decide) (by decide) (rt_anchor2 N (by omega)) (by decide)
-    (fun i hi => rt_good N (25 + i) (by omega)) (View.coversUpto_full _ _)
+  -- SH-MM14a: the anchored interval 2 lies two past slot 3's, and the coin runs at rounds 25 to 29
+  refine MahiMahiPair.output_liveness (S := rtSlots) (by decide) (by decide) (by decide)
+    (fun _ => rfl) (fun _ => rfl) (by decide) (b := 25)
+    (fun j hj => hstates j (by unfold intervalOf at hj; omega)) ?_ (s := 3) (by decide)
+    (by decide) (rt_anchor2 N (by omega)) (by decide) (fun i hi => rt_good N (25 + i) (by omega))
+    (View.coversUpto_full _ _)
   intro r hr
   change (if adaptiveKind 8 rtPer r = 1 then rtCoin r else rtKnown r) = rtCoin r
   exact if_pos (show adaptiveKind 8 rtPer r = 1 from hr)

@@ -77,7 +77,7 @@ becomes `w (S.kind k)`; every `R.Commit U V L (S.slotRound k)` becomes
 kind agreement as a premise and rewrites with it; `link_congr` is
 `linkCongr_of_round_kind`, which takes the link as a function of the
 round and the kind. A claim that names a slot's mode — Steelhead's
-SH5b, that at an asynchronous slot the direct predicates are the
+SH-MM5b, that at an asynchronous slot the direct predicates are the
 chain's — asks that the slot carry the asynchronous kind,
 `S.kind r = 1`, beside `S.slotRound r = r`.
 
@@ -144,7 +144,7 @@ Every `decide` then settles as before.
 `1` for an asynchronous one. `Model/Wavelength.lean` names the two
 halves of the paper's formula, `wavelength ws wa : ℕ → ℕ` for the wave
 of a kind and `periodicKind p : ℕ → ℕ` for the kind of a round, keeps
-`periodic ws wa p` as the paper's `w(r)`, and SH4 carries the identity
+`periodic ws wa p` as the paper's `w(r)`, and SH-MM4 carries the identity
 between them, `wavelength ws wa (periodicKind p r) = periodic ws wa p r`.
 A schedule sets `kind k = periodicKind p (S.slotRound k)`, and `IsAsync
 p r` becomes `S.kind r = 1`. Kind `0` is what `Slots.kind` assigns when

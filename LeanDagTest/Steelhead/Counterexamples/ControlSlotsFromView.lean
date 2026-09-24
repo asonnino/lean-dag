@@ -148,7 +148,8 @@ theorem cv_rule_commits :
       MahiMahi.DirectCommitIn cv20 cvV₂ 3 (cvCand 1) 1 := by decide
 
 /-- **Under the rule interval `0`'s anchor is round `1` in `cvV₁`.** -/
-theorem cv_rule_anchor₁ : IntervalAnchor 4 4 3 cvCoin cv20 cvV₁ 0 1 1 (cvCand 1) where
+theorem cv_rule_anchor₁ : IntervalAnchor 4 4 (MahiMahi.mahiMahiAnchored _ _ _ 3) cvCoin cv20 cvV₁ 0
+    1 1 (cvCand 1) where
   pos := by decide
   mem := by decide
   commit := MahiMahi.Decided.directCommit (S := controlSlots cvCoin 4 4 0 1) (by decide) (by decide)
@@ -156,7 +157,8 @@ theorem cv_rule_anchor₁ : IntervalAnchor 4 4 3 cvCoin cv20 cvV₁ 0 1 1 (cvCan
 
 /-- **And in `cvV₂`**, the view that would not even count round `1` a control slot when reading
 its shares. -/
-theorem cv_rule_anchor₂ : IntervalAnchor 4 4 3 cvCoin cv20 cvV₂ 0 1 1 (cvCand 1) where
+theorem cv_rule_anchor₂ : IntervalAnchor 4 4 (MahiMahi.mahiMahiAnchored _ _ _ 3) cvCoin cv20 cvV₂ 0
+    1 1 (cvCand 1) where
   pos := by decide
   mem := by decide
   commit := MahiMahi.Decided.directCommit (S := controlSlots cvCoin 4 4 0 1) (by decide) (by decide)

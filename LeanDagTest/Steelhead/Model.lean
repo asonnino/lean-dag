@@ -84,7 +84,7 @@ def sh8 : BlockUniverse (Fin 4) (Fin 32) Unit where
 abbrev sh : AnchoredRule (Fin 4) (Fin 32) Unit ValidWrt Correct :=
   steelheadAnchored (Fin 4) (Fin 32) Unit w4
 
--- The rule is the composite of Mahi-Mahi's rule at each kind's wave, by definition (SH16c).
+-- The rule is the composite of Mahi-Mahi's rule at each kind's wave, by definition (SH-MM16c).
 example : sh = compose fun κ => MahiMahi.mahiMahiAnchored (Fin 4) (Fin 32) Unit (w4 κ) := rfl
 
 /-! ### Eligibility at each slot's own floor -/
@@ -210,7 +210,8 @@ def shCoin : ℕ → Fin 4 := fun r => ⟨(r + 2) % 4, by omega⟩
 -- Round `0`'s coin candidate is block `2`, certified by the whole of
 -- round `4` at wave `5`: chain-committed directly.
 example : IsLeaderBlock (S := chainSlots shCoin) sh8 0 2 := by decide
-theorem sh8_chain0 : ChainDecided 5 shCoin sh8 (View.full sh8) 0 (some 2) :=
+theorem sh8_chain0 : ChainDecided (MahiMahi.mahiMahiAnchored _ _ _ 5) shCoin sh8 (View.full sh8) 0
+    (some 2) :=
   AnchoredRule.Decided.directCommit (S := chainSlots shCoin) (by decide) (by decide)
 
 /-! ## Validity from the reference clause (SH17d)

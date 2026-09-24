@@ -831,7 +831,7 @@ The arc splits that formula in two. The schedule says which slots are
 asynchronous, `kind k = periodicKind p (slotRound k)`, and the rule reads
 `wavelength ws wa` at that kind: `waveAt κ = w κ − 1` in
 `steelheadAnchored`, and the same in `shSupport`. The two spellings agree
-at every round (`wavelength_periodicKind`, SH4), and since a rebase
+at every round (`wavelength_periodicKind`, SH-MM4), and since a rebase
 carries a slot's kind the rule reads a band at any offset, so `Banded`,
 `LocalTruncate`, `Persist` and the `Safe` headline all hold under the
 `2 ≤ w κ` its laws already ask (`LeanDag/Steelhead/Properties.lean`).

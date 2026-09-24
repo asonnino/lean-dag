@@ -1,4 +1,5 @@
 import LeanDag.Steelhead.Model.Period
+import LeanDag.Steelhead.Model.Pair
 import LeanDag.Common.History
 import Mathlib.Data.Rat.BigOperators
 import Mathlib.Data.Nat.Log
@@ -29,6 +30,20 @@ counts distinct validators, so that an equivocator is one author
 however many blocks it made. A missing anchor, a round outside the
 window and the recurrences' initial values read the window's top, the
 common penalty for an unresolved outcome, as the algorithm has it.
+
+The evidence is the rule's support, as the paper's Appendix B reads it:
+`n − f` supporters at the decision round commit, `n − f` blames at the
+rule's blame round skip, and the indirect threshold of supporters within
+the window stands in for the anchor's certificate. Each pair fills it
+from its own rules: the `3f + 1` pair's window (`ofAnchor`) counts
+Mahi-Mahi's certificates and blames at the slot's wave; BlueBottle's
+(`BlueBottlePair.Replay.ofAnchor`) counts the decision-round votes
+themselves, Odontoceti's references one round up at wave two and Async
+BlueBottle's cone votes two rounds up otherwise, with `n − 3f` of them
+the indirect threshold. Where the blame round lies is the one parameter
+of the replay itself: the vote round for the `3f + 1` pair and the
+decision round for BlueBottle's, the implementation's
+`merged_certificates` (`Config.merged`).
 
 **Definitions only**, as in the other model files.
 -/
@@ -64,12 +79,21 @@ structure Config (Validator : Type) where
   canary : Option ℕ
   /-- The known-leader schedule. -/
   known : ℕ → Validator
+  /-- Whether the decision-round votes are themselves the certificates, the implementation's
+  `merged_certificates`: BlueBottle's pair blames at the decision round, the `3f + 1` pair at
+  the vote round below it. -/
+  merged : Bool := false
 
 /-- **A canary round**: a multiple of the canary spacing; no round when the canary is off. -/
 def Config.canaried {Validator : Type} (C : Config Validator) (r : ℕ) : Bool :=
   match C.canary with
   | some c => r % c == 0
   | none => false
+
+/-- **The offset of the blame round** at a wave: the decision round `w − 1` under merged
+certificates, the vote round `w − 2` otherwise, the paper's `β(w)`. -/
+def Config.blame {Validator : Type} (C : Config Validator) (w : ℕ) : ℕ :=
+  if C.merged then w - 1 else w - 2
 
 /-- **A slot's expected decision and commit rounds**; the window's top stands for an outcome the
 window does not resolve. -/
@@ -129,12 +153,12 @@ def probeRate (E : Evidence Validator) (C : Config Validator) (period : ℕ) : �
 /-- The timing of an outcome the window does not resolve: its top, for decision and commit. -/
 def clipped (top : ℕ) : Timing := ⟨top, top⟩
 
-/-- **One candidate's timing**: a direct skip at the vote round with no commit, a direct commit
-at the decision round, or the anchor's decision with the anchor's commit if the window holds a
-certificate for the candidate and none otherwise. -/
-def candidateTiming (E : Evidence Validator) (r wave : ℕ) (author : Validator)
-    (anchor : Timing) : Timing :=
-  if E.skips r wave author then ⟨r + wave - 2, E.top⟩
+/-- **One candidate's timing**: a direct skip at the blame round with no commit, a direct commit
+at the decision round, or the anchor's decision with the anchor's commit if the window holds the
+indirect threshold of supporters for the candidate and none otherwise. -/
+def candidateTiming (E : Evidence Validator) (C : Config Validator) (r wave : ℕ)
+    (author : Validator) (anchor : Timing) : Timing :=
+  if E.skips r wave author then ⟨r + C.blame wave, E.top⟩
   else if E.commits r wave author then ⟨r + wave - 1, r + wave - 1⟩
   else ⟨anchor.decision, if E.certified r wave author then anchor.commit else E.top⟩
 
@@ -151,13 +175,13 @@ def roundTiming (E : Evidence Validator) (C : Config Validator) (period : ℕ) (
   else if ¬ async ∧ ¬ C.canaried r ∧ probes.2 > 0 then
     let s : ℚ := probes.1
     let t : ℚ := probes.2
-    ⟨(s * (r + C.ws - 1 : ℕ) + (t - s) * (r + C.ws - 2 : ℕ)) / t,
+    ⟨(s * (r + C.ws - 1 : ℕ) + (t - s) * (r + C.blame C.ws : ℕ)) / t,
       (s * (r + C.ws - 1 : ℕ) + (t - s) * E.top) / t⟩
   else
     let a := (rounds E).find? fun j => r + wave ≤ j && (higher j).commit < E.top
     let anchor := a.map higher |>.getD (clipped E.top)
     let authors := if async then Finset.univ else {C.known r}
-    let timing := fun v => candidateTiming E r wave v anchor
+    let timing := fun v => candidateTiming E C r wave v anchor
     ⟨(authors.sum fun v => (timing v).decision) / authors.card,
       (authors.sum fun v => (timing v).commit) / authors.card⟩
 
@@ -231,6 +255,65 @@ def anchorUpdate (U : BlockUniverse Validator BlockId Payload) (I : ℕ) (C : Co
   fun A current => update (ofAnchor U A I) C candidates current epsilon
 
 end Replay
+
+namespace BlueBottlePair
+
+namespace Replay
+
+open Steelhead.Replay
+
+variable {Validator BlockId Payload : Type} [Fintype Validator] [DecidableEq Validator]
+  [F : Faults5 Validator] [LinearOrder BlockId]
+
+/-- **Odontoceti's blames of a slot**: the round-`(r + 1)` blocks referencing no block of author
+`a` at round `r`, the core's `slotBlamers` indexed by round and author. -/
+def omitters (U : BlockUniverse Validator BlockId Payload) (a : Validator) (r : ℕ) :
+    Finset BlockId :=
+  (blocksAt U (r + 1)).filter fun q =>
+    ∀ j ∈ (U.block q).refs, ¬ ((U.block j).round = r ∧ (U.block j).creator = a)
+
+/-- **The pair's support blocks** for a candidate `L` at round `r`, at wave `w`: Odontoceti's
+references one round up at wave two, Async BlueBottle's cone votes two rounds up otherwise. -/
+def supportBlocks (U : BlockUniverse Validator BlockId Payload) (w : ℕ) (L : BlockId) (r : ℕ) :
+    Finset BlockId :=
+  if w = 2 then votesFor U L (r + 1) else AsyncBlueBottle.voters U L r
+
+/-- **The pair's blame blocks** of the slot `(a, r)` at wave `w`: Odontoceti's omitters one round
+up at wave two, Async BlueBottle's blamers two rounds up otherwise. -/
+def blameBlocks (U : BlockUniverse Validator BlockId Payload) (w : ℕ) (a : Validator) (r : ℕ) :
+    Finset BlockId :=
+  if w = 2 then omitters U a r else AsyncBlueBottle.blamerBlocks U a r
+
+/-- **The evidence of an anchor's window at BlueBottle's pair**: a candidate is a block of the
+author at the round inside the window; it is committed when a quorum of distinct validators
+support it within the window, skipped when a quorum of the window's decision-round blocks blame
+the author's slot, and certified when `n − 3f` distinct validators support it within the window,
+the pair's indirect threshold. The decision-round votes are the certificates, the
+implementation's `merged_certificates`; a wave of two reads Odontoceti, any other Async
+BlueBottle, whose decision round does not read the wave. -/
+def ofAnchor (U : BlockUniverse Validator BlockId Payload) (A : BlockId) (I : ℕ) :
+    Evidence Validator :=
+  let ids := windowIds U A I
+  let candidates := fun r a => (blocksAt U r).filter fun L => (U.block L).creator = a ∧ L ∈ ids
+  let support := fun r w L => creatorsOf U.block (supportBlocks U w L r ∩ ids)
+  { bottom := windowBottom U A I
+    top := (U.block A).round
+    commits := fun r w a => decide (∃ L ∈ candidates r a,
+      quorumCard Validator ≤ (support r w L).card)
+    skips := fun r w a => decide (quorumCard Validator ≤
+      (creatorsOf U.block (blameBlocks U w a r ∩ ids)).card)
+    certified := fun r w a => decide (∃ L ∈ candidates r a,
+      Fintype.card Validator - 3 * F.f ≤ (support r w L).card) }
+
+/-- **Algorithm 3 as an update rule at BlueBottle's pair**: the replay of the anchor's window
+read through the pair's support. -/
+def anchorUpdate (U : BlockUniverse Validator BlockId Payload) (I : ℕ) (C : Config Validator)
+    (candidates : List ℕ) (epsilon : ℚ) : UpdateRule BlockId :=
+  fun A current => update (ofAnchor U A I) C candidates current epsilon
+
+end Replay
+
+end BlueBottlePair
 
 end Steelhead
 

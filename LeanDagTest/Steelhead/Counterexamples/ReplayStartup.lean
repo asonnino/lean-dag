@@ -47,7 +47,7 @@ def rs36 : BlockUniverse (Fin 4) (Fin 36) Unit where
   no_equivocation := by decide
 
 /-- The waves `3` and `5`, the canary `7`, and the known leader `(r + 1) mod 4`. -/
-def rsConfig : Config (Fin 4) := ⟨3, 5, some 7, fun r => ⟨(r + 1) % 4, by omega⟩⟩
+def rsConfig : Config (Fin 4) := ⟨3, 5, some 7, fun r => ⟨(r + 1) % 4, by omega⟩, false⟩
 
 /-- **The startup window**: the causal history of the first anchor, block `16` at round `4`, at
 the rounds `4 − 8` and above, so from round `1`. -/

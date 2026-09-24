@@ -6,10 +6,9 @@ import LeanDag.Steelhead.Helpers.Liveness
 Generated lemma infrastructure for `Interface/Statement.lean`; not part
 of the audit surface. Each law of the composite is the law of the slot's
 own rule, once the composite's rung count and tie-break are rewritten to
-that rule's, which the family's agreement on them allows. The periodic
-class reads its bounds off the two waves, its spanning off the identity
-rounds, and its laws off the ones `Properties.lean` proves at any
-wavelength function of two rounds or more.
+that rule's, which the family's agreement on them allows. Nothing here
+names a pair; the two instantiations are in `Helpers/MahiMahiPair.lean`
+and `Helpers/BlueBottlePair.lean`.
 -/
 
 namespace LeanDag
@@ -79,53 +78,6 @@ theorem compose_decided_unique (rules : ℕ → AnchoredRule Validator BlockId P
     {v₁ v₂ : Option BlockId} (h₁ : (compose rules).Decided (S := S) U V₁ k v₁)
     (h₂ : (compose rules).Decided (S := S) U V₂ k v₂) : v₁ = v₂ :=
   AnchoredRule.decided_unique (compose_laws rules hl hr ht) trivial h₁ V₂ v₂ h₂
-
-/-- **SH16c.** Field by field, by definition. -/
-theorem steelheadAnchored_eq_compose {Validator BlockId Payload : Type} [Fintype Validator]
-    [DecidableEq Validator] [Faults Validator] [LinearOrder BlockId] (w : ℕ → ℕ) :
-    steelheadAnchored Validator BlockId Payload w =
-      compose fun κ => MahiMahi.mahiMahiAnchored Validator BlockId Payload (w κ) :=
-  rfl
-
-/-! ## SH19, the periodic class -/
-
-/-- **A period of two or more assigns both kinds**: round `0` is asynchronous and round `1` is
-not. -/
-theorem periodicKind_not_const {k : ℕ} (hk : 2 ≤ k) :
-    ∃ r r', periodicKind k r ≠ periodicKind k r' := by
-  refine ⟨0, 1, ?_⟩
-  unfold periodicKind
-  rw [Nat.zero_mod, if_pos rfl, Nat.mod_eq_of_lt (by omega : 1 < k), if_neg (by omega)]
-  decide
-
-section PeriodicClass
-
-variable {Validator : Type} [Fintype Validator] [DecidableEq Validator] [Faults Validator]
-  {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
-
-/-- **The pair's wave varies with the kind**: at two distinct waves the two kinds' wave offsets
-differ. -/
-theorem wavelength_waveAt_ne {ws wa : ℕ} (hws : 2 ≤ ws) (hwa : 2 ≤ wa) (hne : ws ≠ wa) :
-    (steelheadAnchored Validator BlockId Payload (wavelength ws wa)).waveAt 0 ≠
-      (steelheadAnchored Validator BlockId Payload (wavelength ws wa)).waveAt 1 := by
-  simp only [steelheadAnchored_waveAt, wavelength_zero, wavelength_one]
-  omega
-
-/-- **SH19.** The bounds are the waves', the spanning is `spansEligible_of_le`, and the laws are
-`Properties.lean`'s at the pair's wavelength. -/
-theorem periodicClass : Interface.PeriodicClass Validator BlockId Payload := by
-  intro ws wa k hws hwa
-  refine ⟨wavelength_two_le hws hwa, wavelength_le_max ws wa, ?_,
-    fun hne => wavelength_waveAt_ne hws hwa hne, fun hk => periodicKind_not_const hk,
-    SteelheadProperties.agree (wavelength_two_le hws hwa),
-    SteelheadProperties.steelheadExtendLaws (wavelength_two_le hws hwa),
-    SteelheadProperties.shSupport_local (wavelength_two_le hws hwa),
-    SteelheadProperties.shSupport_commits (wavelength_two_le hws hwa),
-    fun hws3 hwa3 => SteelheadProperties.shSupport_ofCoverage (wavelength_three_le hws3 hwa3)⟩
-  intro S hid
-  exact spansEligible_of_le (S := S) (by omega) (fun s => wavelength_le_max ws wa (S.kind s)) hid
-
-end PeriodicClass
 
 end Steelhead
 

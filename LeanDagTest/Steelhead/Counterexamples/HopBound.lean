@@ -1,5 +1,5 @@
 import LeanDagTest.Steelhead.Counterexamples.ByzantineFloor
-import LeanDag.Steelhead.Helpers.Coin
+import LeanDag.Steelhead.Helpers.MahiMahiPair.Coin
 /-!
 # Steelhead counterexample: the per-hop bound
 
@@ -316,12 +316,12 @@ theorem hb36_landings_first {coin : ℕ → Fin 4} (h3 : coin 3 = 0) (h6 : coin 
     floorChain (S := chainSlots coin) w3 hb36 (View.full hb36) 0 1 = 3 ∧
       floorChain (S := chainSlots coin) w3 hb36 (View.full hb36) 0 2 = 6 := by
   have l1 : floorLanding (S := chainSlots coin) w3 hb36 (View.full hb36) 0 = 3 :=
-    floorLanding_eq_floor (S := chainSlots coin) (hb36_slot3_undecided h3 h6 none)
+    MahiMahiPair.floorLanding_eq_floor (S := chainSlots coin) (hb36_slot3_undecided h3 h6 none)
   refine ⟨l1, ?_⟩
   change floorLanding (S := chainSlots coin) w3 hb36 (View.full hb36)
     (floorLanding (S := chainSlots coin) w3 hb36 (View.full hb36) 0) = 6
   rw [l1]
-  exact floorLanding_eq_floor (S := chainSlots coin) (hb36_slot6_undecided h6 none)
+  exact MahiMahiPair.floorLanding_eq_floor (S := chainSlots coin) (hb36_slot6_undecided h6 none)
 
 /-- **Under the second pattern the chain lands on `4` and then on `7`**: slot `3` is skipped and
 slot `4` undecided, so the hop from slot `0` passes its floor and stops at `4`; slot `7` is
@@ -346,7 +346,7 @@ theorem hb36_landings_second {coin : ℕ → Fin 4} (h3 : coin 3 = 0) (h6 : coin
   change floorLanding (S := chainSlots coin) w3 hb36 (View.full hb36)
     (floorLanding (S := chainSlots coin) w3 hb36 (View.full hb36) 0) = 7
   rw [l1]
-  exact floorLanding_eq_floor (S := chainSlots coin) (hb36_slot7_undecided h7 none)
+  exact MahiMahiPair.floorLanding_eq_floor (S := chainSlots coin) (hb36_slot7_undecided h7 none)
 
 /-! ## The probability of two Byzantine-led landings -/
 

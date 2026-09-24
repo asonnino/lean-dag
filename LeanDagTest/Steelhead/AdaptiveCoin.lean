@@ -1,5 +1,5 @@
 import LeanDagTest.Steelhead.Model
-import LeanDag.Steelhead.Coin.Proof
+import LeanDag.Steelhead.MahiMahiPair.Coin.Proof
 /-!
 # Steelhead witness: the good sets an adaptive adversary answers with
 
@@ -49,7 +49,7 @@ theorem ac_bound :
         {g | ∀ j ∈ (Finset.univ : Finset (Fin 2)), ∃ i, g j i ∉ acGood g j i} ≤
       ((((Fintype.card (Fin 4) ^ 1 - 2 ^ 1 : ℕ) : ℝ≥0∞) / (Fintype.card (Fin 4) : ℝ≥0∞) ^ 1) ^
         (Finset.univ : Finset (Fin 2)).card) :=
-  (Coin.holds (Fin 4) (Fin 32) Unit sh8 3 5 8 1).2.2.2.2.2.2.2.1 2 2 Finset.univ acGood
+  (MahiMahiPair.Coin.holds (Fin 4) (Fin 32) Unit sh8 3 5 8 1).2.2.2.2.2.2.2.1 2 2 Finset.univ acGood
     ac_nonAnticipating ac_card
 
 /-! ## Adaptation inside a block -/

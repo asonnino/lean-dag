@@ -57,31 +57,31 @@ rounds `round A − I` and above, round `0` excluded, as `collect_window` takes 
 def windowBottom (U : BlockUniverse Validator BlockId Payload) (A : BlockId) (I : ℕ) : ℕ :=
   max 1 ((U.block A).round - I)
 
-/-- **The anchor of interval `j` under period `k`**, read from the view `V`: control slot `i` of
-the scan's schedule lies in the interval at round `1` or above, its control verdict is a commit on
-`A`, and every control slot of the interval below it, round `0` excluded, is skipped. Which slots
-are control slots depends on `k`, the period in force at the interval, which the scan carries
-(`PeriodAt.anchor`). -/
-structure IntervalAnchor (I K wa : ℕ) [NeZero K] (coin : ℕ → Validator)
-    (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
-    (j k i : ℕ) (A : BlockId) : Prop where
+/-- **The anchor of interval `j` under period `k`**, read from the view `V` at the asynchronous
+rule `Ra`: control slot `i` of the scan's schedule lies in the interval at round `1` or above, its
+control verdict is a commit on `A`, and every control slot of the interval below it, round `0`
+excluded, is skipped. Which slots are control slots depends on `k`, the period in force at the
+interval, which the scan carries (`PeriodAt.anchor`). -/
+structure IntervalAnchor (I K : ℕ) (Ra : AnchoredRule Validator BlockId Payload ValidWrt Correct)
+    [NeZero K] (coin : ℕ → Validator) (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (j k i : ℕ) (A : BlockId) : Prop where
   /-- The anchor is a scanned round, round `0` never being one. -/
   pos : 1 ≤ controlRound I K j k i
   /-- It lies in the interval. -/
   mem : intervalOf I (controlRound I K j k i) = j
   /-- Its control verdict is a commit. -/
-  commit : ControlDecided I K wa coin j k U V i (some A)
+  commit : ControlDecided I K Ra coin j k U V i (some A)
   /-- Every scanned control slot of the interval below it is skipped. -/
   below : ∀ i', 1 ≤ controlRound I K j k i' → intervalOf I (controlRound I K j k i') = j →
-    i' < i → ControlDecided I K wa coin j k U V i' none
+    i' < i → ControlDecided I K Ra coin j k U V i' none
 
 /-- **No anchor**: every scanned control slot of the interval, round `0` excluded, is skipped;
 so in particular an interval holding no control slot. -/
-def NoAnchor (I K wa : ℕ) [NeZero K] (coin : ℕ → Validator)
-    (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
-    (j k : ℕ) : Prop :=
+def NoAnchor (I K : ℕ) (Ra : AnchoredRule Validator BlockId Payload ValidWrt Correct) [NeZero K]
+    (coin : ℕ → Validator) (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (j k : ℕ) : Prop :=
   ∀ i, 1 ≤ controlRound I K j k i → intervalOf I (controlRound I K j k i) = j →
-    ControlDecided I K wa coin j k U V i none
+    ControlDecided I K Ra coin j k U V i none
 
 /-- **The state a scan carries**: the period in force at the interval, the agreed output's next
 slot, and the round of its last committed leader, `0` before any. The implementation's
@@ -99,56 +99,59 @@ section Slots
 
 variable [S : Slots Validator]
 
-/-- **The agreed output advances over an anchor's history**, read at the wavelength `w`: the slots
-from `next` up to `next'` are decided in the anchor's causal history, `next'` is not, and `last'`
-is the round of the last leader committed among them, or `last` when none is. The prefix is what
-the sequenced output releases, so a slot the history leaves undecided stops it. -/
-structure AgreedAdvance (U : BlockUniverse Validator BlockId Payload) (w : ℕ → ℕ) (A : BlockId)
-    (hA : A ∈ U.ids) (next next' last last' : ℕ) : Prop where
+/-- **The agreed output advances over an anchor's history**, read at the output rule `R`: the
+slots from `next` up to `next'` are decided in the anchor's causal history, `next'` is not, and
+`last'` is the round of the last leader committed among them, or `last` when none is. The prefix
+is what the sequenced output releases, so a slot the history leaves undecided stops it. -/
+structure AgreedAdvance (U : BlockUniverse Validator BlockId Payload)
+    (R : AnchoredRule Validator BlockId Payload ValidWrt Correct) (A : BlockId) (hA : A ∈ U.ids)
+    (next next' last last' : ℕ) : Prop where
   /-- The cursor does not move back. -/
   le : next ≤ next'
   /-- Every slot from the cursor up to the new one is decided in the history. -/
-  decided : ∀ s, next ≤ s → s < next' → ∃ v, Decided w U (U.historyView A hA) s v
+  decided : ∀ s, next ≤ s → s < next' → ∃ v, R.Decided (S := S) U (U.historyView A hA) s v
   /-- The new cursor is not. -/
-  stuck : ∀ v, ¬ Decided w U (U.historyView A hA) next' v
+  stuck : ∀ v, ¬ R.Decided (S := S) U (U.historyView A hA) next' v
   /-- The last commit does not move back. -/
   last_ge : last ≤ last'
   /-- It lies at or above every commit of the consumed prefix. -/
   last_le : ∀ (s : ℕ) (L : BlockId), next ≤ s → s < next' →
-    Decided w U (U.historyView A hA) s (some L) → S.slotRound s ≤ last'
+    R.Decided (S := S) U (U.historyView A hA) s (some L) → S.slotRound s ≤ last'
   /-- And it is the old one or the round of a commit of the consumed prefix. -/
   last_mem : last' = last ∨ ∃ (s : ℕ) (L : BlockId), next ≤ s ∧ s < next' ∧
-    Decided w U (U.historyView A hA) s (some L) ∧ S.slotRound s = last'
+    R.Decided (S := S) U (U.historyView A hA) s (some L) ∧ S.slotRound s = last'
 
-/-- **The period sequence**, as a validator holding `V` derives it, its agreed output read at the
-wavelength `w`: `PeriodAt … j st` says interval `j` is decided under the state `st`. Interval `0`
-runs at `k₀` with the agreed output at slot `1` and no commit; interval `j + 1` runs at the
-failover's, the warm-up's or the update rule's answer when `j` has an anchor under `j`'s period,
-the agreed output advanced over the anchor's history, and at `j`'s state when `j` has none.
-*Waiting* is the absence of a derivation. The wavelength is a parameter, so that the agreement
-claims hold for any reading; the liveness claims instantiate it with the pair's, on the schedule
-whose kinds the derived sequence names. -/
-inductive PeriodAt (I K wa : ℕ) [NeZero K] (coin : ℕ → Validator) (upd : UpdateRule BlockId)
-    (k₀ : ℕ) (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
-    (w : ℕ → ℕ) : ℕ → ScanState → Prop
+/-- **The period sequence**, as a validator holding `V` derives it, the control verdicts read at
+the asynchronous rule `Ra` and its agreed output at the output rule `R`: `PeriodAt … j st` says
+interval `j` is decided under the state `st`. Interval `0` runs at `k₀` with the agreed output at
+slot `1` and no commit; interval `j + 1` runs at the failover's, the warm-up's or the update
+rule's answer when `j` has an anchor under `j`'s period, the agreed output advanced over the
+anchor's history, and at `j`'s state when `j` has none. *Waiting* is the absence of a derivation.
+The output rule is a parameter, so that the agreement claims hold for any reading; the liveness
+claims instantiate it with the pair's composite, on the schedule whose kinds the derived sequence
+names. -/
+inductive PeriodAt (I K : ℕ) (Ra : AnchoredRule Validator BlockId Payload ValidWrt Correct)
+    [NeZero K] (coin : ℕ → Validator) (upd : UpdateRule BlockId) (k₀ : ℕ)
+    (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
+    (R : AnchoredRule Validator BlockId Payload ValidWrt Correct) : ℕ → ScanState → Prop
   /-- The first interval runs at the initial period, the agreed output at slot `1`. -/
-  | zero : PeriodAt I K wa coin upd k₀ U V w 0 ⟨k₀, 1, 0⟩
+  | zero : PeriodAt I K Ra coin upd k₀ U V R 0 ⟨k₀, 1, 0⟩
   /-- An interval with an anchor advances the agreed output over the anchor's history and hands
   the next interval period `1` when the anchor lies more than `I` rounds above the round of that
   output's last commit, round `0` before any; its own period when it is the first interval, the
   warm-up, at whose anchors, of round `I` or below, the failover cannot fire; and the update
   rule's answer otherwise. -/
   | anchor {j i next' last' : ℕ} {st : ScanState} {A : BlockId} {hA : A ∈ U.ids} :
-      PeriodAt I K wa coin upd k₀ U V w j st →
-      IntervalAnchor I K wa coin U V j st.period i A →
-      AgreedAdvance U w A hA st.next next' st.lastCommit last' →
-      PeriodAt I K wa coin upd k₀ U V w (j + 1)
+      PeriodAt I K Ra coin upd k₀ U V R j st →
+      IntervalAnchor I K Ra coin U V j st.period i A →
+      AgreedAdvance U R A hA st.next next' st.lastCommit last' →
+      PeriodAt I K Ra coin upd k₀ U V R (j + 1)
         ⟨if last' + I < controlRound I K j st.period i then 1
           else if j = 0 then st.period else upd A st.period, next', last'⟩
   /-- An interval without an anchor keeps the state. -/
   | keep {j : ℕ} {st : ScanState} :
-      PeriodAt I K wa coin upd k₀ U V w j st → NoAnchor I K wa coin U V j st.period →
-      PeriodAt I K wa coin upd k₀ U V w (j + 1) st
+      PeriodAt I K Ra coin upd k₀ U V R j st → NoAnchor I K Ra coin U V j st.period →
+      PeriodAt I K Ra coin upd k₀ U V R (j + 1) st
 
 end Slots
 

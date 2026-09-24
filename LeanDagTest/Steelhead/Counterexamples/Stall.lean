@@ -1,5 +1,5 @@
 import LeanDagTest.Mysticeti.Model
-import LeanDag.Steelhead.Helpers.Liveness
+import LeanDag.Steelhead.Helpers.MahiMahiPair.Liveness
 import Mathlib.Tactic.IntervalCases
 /-!
 # Steelhead counterexample: the stall on data
@@ -169,8 +169,8 @@ theorem st20_hskip_view (V : View (Fin 4) (Fin 20) Unit st20) : ∀ j, stSlots.k
 asynchronous slots `0` and `4` do. -/
 theorem st20_stall_view (V : View (Fin 4) (Fin 20) Unit st20) (v : Option (Fin 20)) :
     ¬ Steelhead.Decided wst st20 V 3 v :=
-  fun h => Steelhead.stall (by decide) (by decide) (fun s => by change 1 * (s / 1) = s; simp)
-    (fun _ => rfl)
+  fun h => Steelhead.MahiMahiPair.stall (by decide) (by decide)
+    (fun s => by change 1 * (s / 1) = s; simp) (fun _ => rfl)
     st20_hcert
     (st20_hskip_view V) (by decide) h
 

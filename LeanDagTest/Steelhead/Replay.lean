@@ -27,7 +27,7 @@ open LeanDag LeanDag.Steelhead.Replay
 set_option maxRecDepth 8192
 
 /-- The waves `3` and `5`, the canary `7`, and the known leader `(r + 1) mod 4`. -/
-def rpConfig : Config (Fin 4) := ⟨3, 5, some 7, fun r => ⟨(r + 1) % 4, by omega⟩⟩
+def rpConfig : Config (Fin 4) := ⟨3, 5, some 7, fun r => ⟨(r + 1) % 4, by omega⟩, false⟩
 
 /-- **The window**: the causal history of block `28` of `sh8`, at round `7`, over seven rounds. -/
 def rpWindow : Evidence (Fin 4) := ofAnchor sh8 28 8
