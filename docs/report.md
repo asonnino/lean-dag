@@ -10073,7 +10073,9 @@ the probability that a uniform coin names a directly committed leader on
 the anchor's history read as a record
 (`Steelhead.MahiMahiPair.commitWeight_eq_commitProb`, SH-MM18i), the adaptive
 section's "exact when the window holds no probe" in the part that is a theorem; the
-anchor's term is the approximation the paper admits. And at a canary
+anchor's term is the approximation the paper admits. The `5f + 1` pair
+reads the same window through its own support, the decision-round votes,
+and gets the same claims (SH-BB18, §24.8). And at a canary
 spacing coprime to a candidate period of at least two, which odd
 spacings and powers of two are, a window holding two canary rounds whose
 decision round it retains holds a probe for the candidate
@@ -10505,8 +10507,9 @@ whose BlueBottle counterparts O1 to O4 and ABB1 to ABB4 the laws already
 consume; partial dissemination and the reactive discipline (SH-MM6d,
 SH-MM6k), which read the vote round; the family (SH-MM16c, SH-MM19); the
 replay's reading of the window (SH-MM18c, d, g, i, and the anchor forms
-SH-MM18h and SH-MM18n), which counts certificates; and the timeout
-appendix (SH-MM20), whose filter is the certificate layer.
+SH-MM18h and SH-MM18n), which counts certificates, the `5f + 1` pair
+having its own reading (SH-BB18); and the timeout appendix (SH-MM20),
+whose filter is the certificate layer.
 
 **The `5f + 1` pair** is `Steelhead.bbPair`, BlueBottle's two variants
 on one `n ≥ 5f + 1` committee: Odontoceti at wave two (§10) at the
@@ -10570,12 +10573,35 @@ figure for this pair, which is one half on `full6`
 almost sure decision are SH15's at the floor `n − 3f` and blocks of
 `3 · K` rounds (SH-BB15).
 
-The pair has no replay window and no timeout appendix. The window's
-evidence is indexed by wave and reads certificates, while this pair's
-two rules differ by kind and have no certificate stage, so no window of
-it is modelled; the replay's selection (SH18) would read one unchanged.
-The timeout appendix's filter is the certificate layer, which this pair
-lacks.
+**SH-BB18** (`Steelhead.BlueBottlePair.Replay.holds`) is the replay at
+the pair. The paper reads Algorithm 3 and Lemma 3 through the support of
+its Lemmas 1 and 2, `n − f` supporters at the decision round to commit,
+`n − f` blames at the rule's blame round to skip, and the indirect
+threshold of supporters within the window in place of the anchor's
+certificate; `Steelhead.BlueBottlePair.Replay.ofAnchor` is that reading
+at this pair, the decision-round votes themselves, Odontoceti's
+references one round up at wave two and Async BlueBottle's cone votes two
+rounds up otherwise, with `n − 3f` of them the indirect threshold, which
+is the implementation's `merged_certificates`. Where the blame round lies
+is the replay's one parameter (`Steelhead.Replay.Config.merged`), the
+decision round here and the vote round at the `3f + 1` pair. The window's
+reading gives SH-MM18's claims at this pair: a committed candidate is
+certified and a skipped one is not, a skipped slot's candidate keeping at
+most `2f` supporters (`Steelhead.BlueBottlePair.Replay.not_certified_of_skips`);
+at a round of the window whose two rounds above a correct quorum has
+populated within the anchor's history, at least `n − 3f` authors are
+marked committed at wave three, ABB7 read on the history as a record
+(`Steelhead.BlueBottlePair.Replay.window_count`); a window commit is a
+direct commit on the DAG under the wave's rule
+(`Steelhead.BlueBottlePair.Replay.commits_sound`); the selection keeps the
+range and answers a divisor of the period bound; and the commit weight at
+wave three is the coin's commit probability on the history as a record
+(`Steelhead.BlueBottlePair.Replay.commitWeight_eq_commitProb`). On a
+five-round universe the window commits every round-`1` and round-`2`
+candidate at wave two and every round-`1` candidate at wave three, and
+the replay climbs from period `1` to period `4` (`bbWindow_climbs`,
+SH12). The pair has no timeout appendix: its filter is the certificate
+layer, which this pair lacks.
 
 ---
 ## 25. Async BlueBottle: the two-round rule at a three-round wave
@@ -11937,7 +11963,7 @@ reused.
 | SH9 | the drain, every slot decided at period one under the run clause, and the cost of an asynchronous slot, at any rule | `Steelhead.allDecidedBelowOfRun`, `Steelhead.allDecidedBelowAtPeriodOne`, `Steelhead.asyncSlotCost` *(Steelhead/Helpers/Liveness)* |
 | SH10 | the scan's state at any control rule and any output rule: the period and the output agreed across views, the scan's end, the period under the clause, the failover, the range, the agreed output a prefix that stalls below an undecided slot, the window, and the control slots | `Steelhead.Period.holds`, `Steelhead.periodAt_unique`, `Steelhead.adaptive_decided_unique`, `Steelhead.exists_periodAt_succ`, `Steelhead.periodAt_of_clause`, `Steelhead.periodAt_one_of_anchor`, `Steelhead.two_async_rounds`, `Steelhead.periodAt_mem_range`, `Steelhead.decided_of_lt_next`, `Steelhead.stalled_below_undecided`, `Steelhead.window_resolves`, `Steelhead.controlRounds`, `Steelhead.controlDecided_unique`, `Steelhead.periodAt_warmUp` *(Steelhead/Period/Proof, Steelhead/Helpers/Period)* |
 | SH11 | the coin at any pair of rules, good set and counting floor: a chain slot commits with probability at least `floor / n`; the run probability and the tail; the block bound against an adaptive adversary; the search at period one, its expected wait `(n / floor)^wa` in blocks, and the scans | `Steelhead.Coin.holds`, `Steelhead.card_all_bad_le`, `Steelhead.card_all_good_ge`, `Steelhead.no_good_block_prob_le_adaptive` *(Steelhead/Coin/Proof, Steelhead/Helpers/Coin)* |
-| SH12 | on data: the anchor-floor counterexample, the period sequence kept by the warm-up at a concrete update rule, the stall DAG with its asynchronous commit, the coin streak that outputs nothing through any horizon, the Byzantine floor with the two hops of its floor chain and the round-robin schedule that bounds such a chain, the good sets an adaptive adversary answers with, a Byzantine validator's block delivered by a commit no reliable leader carried, and Algorithm 3 recovering from period `1` on a healthy window, keeping period `4` on a startup window and period `2` at every hysteresis on a complete window too short for a wave, and answering period `4` at every anchor of the rotating stall, where no block above round `2` is ever output; on that family under a coin that commits every control slot, the failover handing the third interval period `1` and the stalled slot decided once the coin runs; two views that read control slots off the shares they hold enumerating different control slots and anchoring on different rounds, where the rule anchors both on the same slot; and the fairness count that bounds the anchor search failing at `n = 3f + 1` for every period once the coin's rounds are deducted, though holding with slack in the committee; and the `5f + 1` pair running both halves on one universe, its commit clause firing at both kinds, its coin landing among the committed candidates with probability at least one half, and partial dissemination failing at its synchronous kind | `lowFloor_skip`, `sh8_period1`, `st20_stall`, `positive_no_output`, `bf30_slot0_undecided`, `bf30_floor_hops`, `rr_fairRun_three`, `ac_bound`, `sh8_ledger_zero`, `rpWindow_recovers`, `rs36_keeps_four`, `rw44_keeps_two`, `rt_update_four`, `rt_stall`, `rt_no_output_above_two`, `rt_chain_commit`, `rt_failover`, `rt_recovers`, `cv_control_differ`, `cv_anchors_differ`, `cv_rule_anchor₁`, `tight_committee_periodic_fails`, `slack_committee_periodic`, `pair_full6_slot0`, `pair_full6_slot1`, `pair_full6_clause_sync`, `pair_full6_clause_async`, `pair_full6_commitProb`, `dis6_slot0_not_committed` *(LeanDagTest/Steelhead/Model, LeanDagTest/Steelhead/Period, LeanDagTest/Steelhead/AdaptiveCoin, LeanDagTest/Steelhead/Replay, LeanDagTest/Steelhead/Failover, LeanDagTest/Steelhead/Counterexamples/Stall, LeanDagTest/Steelhead/Counterexamples/CoinDelay, LeanDagTest/Steelhead/Counterexamples/ByzantineFloor, LeanDagTest/Steelhead/Counterexamples/ReplayStartup, LeanDagTest/Steelhead/Counterexamples/ReplayShortWindow, LeanDagTest/Steelhead/Counterexamples/RotatingStall, LeanDagTest/Steelhead/Counterexamples/ControlSlotsFromView, LeanDagTest/Steelhead/Counterexamples/PeriodicFairness, LeanDagTest/Steelhead/BlueBottlePair, LeanDagTest/Steelhead/Counterexamples/SyncDissemination)* |
+| SH12 | on data: the anchor-floor counterexample, the period sequence kept by the warm-up at a concrete update rule, the stall DAG with its asynchronous commit, the coin streak that outputs nothing through any horizon, the Byzantine floor with the two hops of its floor chain and the round-robin schedule that bounds such a chain, the good sets an adaptive adversary answers with, a Byzantine validator's block delivered by a commit no reliable leader carried, and Algorithm 3 recovering from period `1` on a healthy window, keeping period `4` on a startup window and period `2` at every hysteresis on a complete window too short for a wave, and answering period `4` at every anchor of the rotating stall, where no block above round `2` is ever output; on that family under a coin that commits every control slot, the failover handing the third interval period `1` and the stalled slot decided once the coin runs; two views that read control slots off the shares they hold enumerating different control slots and anchoring on different rounds, where the rule anchors both on the same slot; and the fairness count that bounds the anchor search failing at `n = 3f + 1` for every period once the coin's rounds are deducted, though holding with slack in the committee; and the `5f + 1` pair running both halves on one universe, its commit clause firing at both kinds, its coin landing among the committed candidates with probability at least one half, partial dissemination failing at its synchronous kind, and its window climbing from period `1` to period `4` on a healthy five-round universe | `lowFloor_skip`, `sh8_period1`, `st20_stall`, `positive_no_output`, `bf30_slot0_undecided`, `bf30_floor_hops`, `rr_fairRun_three`, `ac_bound`, `sh8_ledger_zero`, `rpWindow_recovers`, `rs36_keeps_four`, `rw44_keeps_two`, `rt_update_four`, `rt_stall`, `rt_no_output_above_two`, `rt_chain_commit`, `rt_failover`, `rt_recovers`, `cv_control_differ`, `cv_anchors_differ`, `cv_rule_anchor₁`, `tight_committee_periodic_fails`, `slack_committee_periodic`, `pair_full6_slot0`, `pair_full6_slot1`, `pair_full6_clause_sync`, `pair_full6_clause_async`, `pair_full6_commitProb`, `dis6_slot0_not_committed`, `bbWindow_climbs` *(LeanDagTest/Steelhead/Model, LeanDagTest/Steelhead/Period, LeanDagTest/Steelhead/AdaptiveCoin, LeanDagTest/Steelhead/Replay, LeanDagTest/Steelhead/Failover, LeanDagTest/Steelhead/Counterexamples/Stall, LeanDagTest/Steelhead/Counterexamples/CoinDelay, LeanDagTest/Steelhead/Counterexamples/ByzantineFloor, LeanDagTest/Steelhead/Counterexamples/ReplayStartup, LeanDagTest/Steelhead/Counterexamples/ReplayShortWindow, LeanDagTest/Steelhead/Counterexamples/RotatingStall, LeanDagTest/Steelhead/Counterexamples/ControlSlotsFromView, LeanDagTest/Steelhead/Counterexamples/PeriodicFairness, LeanDagTest/Steelhead/BlueBottlePair, LeanDagTest/Steelhead/Counterexamples/SyncDissemination)* |
 | SH13 | the ledger at any lawful rule: the committed-leader sequence and the ledger of a settled prefix are agreed and monotone, and a block enters at one slot | `Steelhead.Ledger.holds` *(Steelhead/Ledger/Proof)* |
 | SH14 | output liveness under the failover at any pair of rules, under the run clause at every control schedule in range, and from a good coin and a good run | `Steelhead.output_liveness`, `Steelhead.all_decided`, `Steelhead.output_liveness_of_runs` *(Steelhead/Helpers/Period)* |
 | SH15 | the output's tail at any pair of rules and floor, against a fixed and an adaptive adversary, and the slot, an interval and every slot decided almost surely over a sequence of records | `Steelhead.undecidedProb_le`, `Steelhead.decidedAlmostSurely`, `Steelhead.allDecidedAlmostSurely`, `Steelhead.no_good_block_prob_le`, `Steelhead.coinMeasure_blockCoins_mem` *(Steelhead/Helpers/Coin)* |
@@ -11975,6 +12001,7 @@ reused.
 | SH-BB15 | the output's tail at the pair, at the floor `n − 3f` and blocks of `3 · K` rounds, and the slot decided almost surely | `Steelhead.BlueBottlePair.undecidedProb_le`, `Steelhead.BlueBottlePair.decidedAlmostSurely` *(Steelhead/Helpers/BlueBottlePair/Coin)* |
 | SH-BB16 | the `5f + 1` pair: BlueBottle's two variants on one committee, Odontoceti at wave two and Async BlueBottle at wave three, each satisfying the laws at its own wave, which is the paper's clauses A2 and A3 for it; the two agree on the rung count and the tie-break, so the composite's laws and agreement follow from SH16, and the two floors differ, `r + 2` against `r + 3` | `Steelhead.BlueBottlePair.holds`, `Steelhead.BlueBottlePair.halvesLawful`, `Steelhead.BlueBottlePair.pairAgreesOnRungsAndTie`, `Steelhead.BlueBottlePair.blueBottlePairLaws`, `Steelhead.BlueBottlePair.pairWavesDiffer` *(Steelhead/BlueBottlePair/Proof, Steelhead/Helpers/BlueBottlePair)* |
 | SH-BB17 | atomic broadcast at the pair's composite | `Steelhead.BlueBottlePair.Broadcast.holds` *(Steelhead/BlueBottlePair/Broadcast/Proof)* |
+| SH-BB18 | the replay's window at the pair, read through its support, the decision-round votes: a committed candidate of the window is certified and a skipped one is not; at a round of the window whose two rounds above a correct quorum has populated within the anchor's history, at least `n − 3f` authors are marked committed at wave three; a window commit is a commit on the DAG under the wave's rule; Algorithm 3 keeps the period in range at every anchor; the window's commit weight at wave three is the rule's commit probability on the window read as a record | `Steelhead.BlueBottlePair.Replay.holds`, `Steelhead.BlueBottlePair.Replay.certified_of_commits`, `Steelhead.BlueBottlePair.Replay.not_certified_of_skips`, `Steelhead.BlueBottlePair.Replay.window_count`, `Steelhead.BlueBottlePair.Replay.commits_sound`, `Steelhead.BlueBottlePair.Replay.anchorUpdate_range`, `Steelhead.BlueBottlePair.Replay.commitWeight_eq_commitProb` *(Steelhead/BlueBottlePair/Replay/Proof, Steelhead/Helpers/BlueBottlePair/Replay)* |
 
 
 ---
@@ -11983,7 +12010,7 @@ reused.
 
 ## Appendix B. The definition reference
 
-The 363 definitions and structures the report names, in
+The 365 definitions and structures the report names, in
 the order a reader meets them. Each entry is the source text,
 unabridged, with the explanation the source carries. This
 appendix is generated from the compiled development by
@@ -13817,6 +13844,10 @@ structure Config (Validator : Type) where
   canary : Option ℕ
   /-- The known-leader schedule. -/
   known : ℕ → Validator
+  /-- Whether the decision-round votes are themselves the certificates, the implementation's
+  `merged_certificates`: BlueBottle's pair blames at the decision round, the `3f + 1` pair at
+  the vote round below it. -/
+  merged : Bool := false
 ```
 
 **The replay's parameters**: the two waves, the canary spacing, none when no round carries the canary wait, and the known-leader schedule, read at every round whether or not it ran synchronously.
@@ -13892,6 +13923,40 @@ def anchorUpdate (U : BlockUniverse Validator BlockId Payload) (I : ℕ) (C : Co
 ```
 
 **Algorithm 3 as an update rule**: the replay of the anchor's window.
+
+#### `ofAnchor`
+
+*def, `Steelhead.Model.Replay.lean`*
+
+```lean
+def ofAnchor (U : BlockUniverse Validator BlockId Payload) (A : BlockId) (I : ℕ) :
+    Evidence Validator :=
+  let ids := windowIds U A I
+  let candidates := fun r a => (blocksAt U r).filter fun L => (U.block L).creator = a ∧ L ∈ ids
+  let support := fun r w L => creatorsOf U.block (supportBlocks U w L r ∩ ids)
+  { bottom := windowBottom U A I
+    top := (U.block A).round
+    commits := fun r w a => decide (∃ L ∈ candidates r a,
+      quorumCard Validator ≤ (support r w L).card)
+    skips := fun r w a => decide (quorumCard Validator ≤
+      (creatorsOf U.block (blameBlocks U w a r ∩ ids)).card)
+    certified := fun r w a => decide (∃ L ∈ candidates r a,
+      Fintype.card Validator - 3 * F.f ≤ (support r w L).card) }
+```
+
+**The evidence of an anchor's window at BlueBottle's pair**: a candidate is a block of the author at the round inside the window; it is committed when a quorum of distinct validators support it within the window, skipped when a quorum of the window's decision-round blocks blame the author's slot, and certified when `n − 3f` distinct validators support it within the window, the pair's indirect threshold. The decision-round votes are the certificates, the implementation's `merged_certificates`; a wave of two reads Odontoceti, any other Async BlueBottle, whose decision round does not read the wave.
+
+#### `anchorUpdate`
+
+*def, `Steelhead.Model.Replay.lean`*
+
+```lean
+def anchorUpdate (U : BlockUniverse Validator BlockId Payload) (I : ℕ) (C : Config Validator)
+    (candidates : List ℕ) (epsilon : ℚ) : UpdateRule BlockId :=
+  fun A current => update (ofAnchor U A I) C candidates current epsilon
+```
+
+**Algorithm 3 as an update rule at BlueBottle's pair**: the replay of the anchor's window read through the pair's support.
 
 #### `ReactiveS`
 
@@ -18136,7 +18201,7 @@ def Good (R : DagRule Validator BlockId Payload) (rel : Reliability Validator)
 
 ## Appendix C. The theorem reference
 
-The 549 theorems the body or Appendix A names, each
+The 550 theorems the body or Appendix A names, each
 the source statement, unabridged. Generated with Appendix B;
 a theorem the report does not name is a step of an argument
 rather than a result it presents, and the source is its
@@ -25224,6 +25289,14 @@ theorem committed_of_correct_block
 ```
 
 **RS5 — reactive inclusion.** The schedule fixes a `u`-led slot above any round `m` before an execution is named, and a sufficiently grown reactive execution commits it with a leader block whose cone contains `u`'s round-`m` block, so it lands in the agreed ledger.
+
+#### `holds`
+
+*theorem, `Steelhead.BlueBottlePair.Replay.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
 
 #### `SynchronisedOn.mono`
 

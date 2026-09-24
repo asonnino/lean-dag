@@ -274,7 +274,7 @@ without a restatement. The remarks describe the `3f + 1` pair.
 | Lemma 1 (certificate uniqueness; a skipped block is never certified) | — | SH-MM1a, SH-MM1b | — | Mahi-Mahi's lemmas at the slot's wave |
 | Lemma 2 (quorum intersection across the wave) | — | SH-MM1c | — | at `r + w κ` for a slot of kind `κ`, whatever the block's own wave |
 | Corollary 1 (handover) | SH3 | SH-MM3 | SH-BB3 | stated against the relation's anchor search |
-| Theorem 1 (agreement) | SH2, SH16a, SH16b | SH-MM2, SH-MM16c | SH-BB16a, SH-BB16b, SH-BB16d | `AnchoredRule.decided_unique` at Steelhead's laws; at the interface level, any family of rules whose laws hold composes into one whose laws hold, and Steelhead is the composite of Mahi-Mahi's rule at each kind's wave. Both pairs the paper instantiates are on record: the `3f + 1` one as SH-MM16c and the `5f + 1` one, Odontoceti at wave two with Async BlueBottle at wave three, as SH-BB16, which discharges the clauses the paper's discharge table leaves open for it |
+| Theorem 1 (agreement) | SH2, SH16a, SH16b | SH-MM2, SH-MM16c | SH-BB16a, SH-BB16b, SH-BB16d | `AnchoredRule.decided_unique` at Steelhead's laws; at the interface level, any family of rules whose laws hold composes into one whose laws hold, and Steelhead is the composite of Mahi-Mahi's rule at each kind's wave. Both pairs the paper instantiates are on record: the `3f + 1` one as SH-MM16c and the `5f + 1` one, Odontoceti at wave two with Async BlueBottle at wave three, as SH-BB16, whose laws are the paper's Lemmas 1 and 2 at this pair, as its discharge table cites them |
 | Corollary 2 (total order and integrity) | SH13 | SH-MM13 | SH-BB13 | in part: the relation's own ledger theorems at Steelhead's laws, over a settled prefix. Ordering the blocks a single commit releases is declined development-wide (report §1.4, §5.6) |
 | Theorem 2 (liveness under partial synchrony) | SH6a, SH6b, SH6c, SH6e, SH6f, SH6g, SH6h, SH6i, SH6j, SH6m, SH6n, SH6o, SH6p, SH11j, SH6l | SH-MM6a, SH-MM6b, SH-MM6c, SH-MM6d, SH-MM6e, SH-MM6f, SH-MM6g, SH-MM6h, SH-MM6i, SH-MM6j, SH-MM6m, SH-MM6n, SH-MM6o, SH-MM6p, SH-MM11j, SH-MM11k, SH-MM6k, SH-MM6l | SH-BB6, SH-BB6a, SH-BB6c, SH-BB6d, SH-BB6k, SH-BB11j | in part: the honest-leader commit by the direct rule, everything below a fair run, the crashed-leader skip from `n − f` blames, the remark that partial dissemination does not defer, for a leader that did not equivocate, and the anchor clause as the rule has it, a slot decided once every slot from its floor up to some reliably led slot is decided (SH-MM6e) or once the chain of floors reaches a reliably led landing (SH-MM6f), which is how the theorem now states its anchor clause; its earlier form, "once the first honest-led slot above its floor commits, at most `b` slots higher", was refuted on data, an equivocating leader at the floor being the anchor (§7, finding 7). What holds at the implementation's round-robin schedule is the hop count, a reliably led landing within `n − |T|` hops once `ws · (n − |T|) < n` (SH-MM6h), within the paper's `b` hops once every other validator outside `T` has crashed (SH-MM6i), and a round count, one reliable leader within `n − |T|` rounds and a reliable run of three past every round at `n = 3f + 1` (SH-MM6g), which also discharges SH-MM6b's fairness hypothesis there; and the theorem's `(b + 1)(ws + f)` rounds above a synchronous floor, as `(b + 1) · (ws + (n − |T|))` rounds above an unskipped slot at the schedule of SH-MM6i (SH-MM6j). Those three fix the wave at `ws`; at the paper's dial the descent takes a commit in place of a reliable leader (SH-MM6m), the count deducts the coin's rounds and reads `ws · (n − |T|) + ws · ⌈n / p⌉ < n` (SH-MM6o), the wait for a reliably led synchronous round is `n − 1` rather than `n − |T|` (SH-MM6n), and the round count is `(b + 1) · (ws + W)` at that wait (SH-MM6p); the deducted term is never zero, so at `n = 3f + 1` with a bare reliable quorum the count is empty and the chain rests on the coin (§7, finding 12). No per-hop probability holds for the coin's slots, a landing of the search reading coins above it (`HopBound.lean`; §7, finding 9); what holds is SH-MM11i, the tail below runs of `wa` good coins at period one, and its mean, the search waiting for at most `1 / p^wa` blocks of `wa` rounds in expectation, the `wa / p^wa` the theorem states (SH-MM11j), at both waves, `n^wa` blocks at `wa ≥ 4` (SH-MM11k). The ordering of the coin's slots holds in expectation and almost surely (SH-MM15e), not for every coin sequence (§7, finding 5). SH-MM6a's hypothesis is reached from either execution discipline, the reactive one (SH-MM6k) and the timed one (SH-MM6l); what neither bounds is a wall-clock latency, since a round is the only unit the model carries |
 | Theorem 3 (i) (the control verdicts resolve, the period reaches `1`) | SH7a, SH7c, SH10c, SH10d, SH10e, SH11 | SH-MM7a, SH-MM7c, SH-MM10c, SH-MM10d, SH-MM10e, SH-MM11 | SH-BB7a, SH-BB7c, SH-BB10d, SH-BB11a | the control verdicts of a scan settle under Mahi-Mahi's run clause at that scan's schedule and, at the coin schedule, below any one run of `wa` good coins, a period is derived for each interval, and an anchor below which the agreed output committed nothing for `I` rounds hands the next interval period `1`, the failover the theorem's premise states and the implementation applies before the rule is consulted (`apply_period_update`; §7, finding 4). The coin is modelled by its effect and as a `PMF`: the commit probability `(n − f − b) / n` at `wa ≥ 5` (SH-MM11a) and `1 / n` at `wa ≥ 4` (SH-MM11b), and the tail at both waves (SH-MM15a, SH-MM15d). The "with probability `1`" is SH-MM15e over a sequence of records, SH-MM15a's tail on one, and "some scan finds its anchor" is SH-MM15f, the same over the anchored interval |
@@ -285,7 +285,7 @@ without a restatement. The remarks describe the `3f + 1` pair.
 | Clause A5, the candidates fixed "before the round's coin can be learned" and the leader uniform "conditional on that history ... whatever the adversary learned from earlier coins" | SH15b, SH15g, SH11h | SH-MM15b, SH-MM15g, SH-MM11h | via SH-BB11 | the arc's floor of committed candidates is a subset of `good` at each round and is a function of the draws already made (`NonAnticipating`), so the per-round bound multiplies against an adversary free to rebuild the DAG at every draw; the model does not derive the floor, which is what the clause supplies. The paper restated A5 this way on 2026-09-22; Mahi-Mahi's own arc needs no such condition, taking a DAG-shape hypothesis in place of the product |
 | Theorem 4 (agreement of the period) | SH10a, SH10b, SH10k, SH10l | SH-MM10a, SH-MM10b, SH-MM10k, SH-MM10l | SH-BB10a, via SH-BB10 | for any deterministic update rule, per scan: the control slots of a scan are a function of the interval's period, the period bound and the boundary (SH-MM10k) and their verdicts agree across views (SH-MM10l); SH-MM10a at one wavelength and schedule on both sides, SH-MM10b at each validator's own derived wavelength and on the schedule its own sequence names, where the sequences agree below the record's top interval and the verdicts with them |
 | Appendix, the bounds `I ≥ 2 · maxPeriod` and `I ≥ maxPeriod + wa − 2`, and `1 ≤ k ≤ maxPeriod` | SH10f, SH10n, SH10g, SH10j, SH18h | SH-MM10f, SH-MM10n, SH-MM10g, SH-MM10j | via SH-BB10 | two asynchronous rounds per interval, and per window of an anchor at round `I` or above, at any `k ≥ 1` with `2k ≤ I`; the period stays in range when the initial period does and the update rule keeps it there, the failover's `1` included, which Algorithm 3's replay does whenever the candidates lie in `[1, K]` (SH18h). The bound admits `I < maxPeriod + wa − 2`, where a window of `I + 1` rounds holds the decision round of none of its asynchronous slots at some anchors and of one at others (SH-MM10j; §7, finding 8) |
-| Adaptive section, "the replay is exact when the window holds no probe" | — | SH-MM18i | — | in the part that is a theorem: at a round the window retains, the share of the `n` candidates the window marks committed is the probability that a uniform coin names a directly committed leader on the anchor's history read as a record, the paper's `c_r / n`, at `1 ≤ wa`. The anchor's term is the approximation the paper admits |
+| Adaptive section, "the replay is exact when the window holds no probe" | — | SH-MM18i | SH-BB18i | in the part that is a theorem: at a round the window retains, the share of the `n` candidates the window marks committed is the probability that a uniform coin names a directly committed leader on the anchor's history read as a record, the paper's `c_r / n`, at `1 ≤ wa`. The anchor's term is the approximation the paper admits |
 | Adaptive section, "with the canary odd and hence coprime to every candidate period, so that every candidate is probed" | SH18j, SH18m | — | — | at a canary spacing coprime to a candidate period of at least two, a window holding two canary rounds whose decision round it retains holds a probe for the candidate, since two consecutive multiples of the spacing cannot both be multiples of the period; an odd spacing is coprime to every candidate, the candidates being powers of two (SH18m) |
 | Adaptive section, "the multiples of maxPeriod are asynchronous slots under every candidate period, hence defined and coin-carrying whatever the scan decides", with "every candidate divides maxPeriod" | SH18n, SH10o, SH10p | SH-MM10o, SH-MM10p | via SH-BB10 | at a power-of-two bound every candidate divides it and Algorithm 3 answers a divisor of the bound from one (SH18n), so every derived period divides the bound (SH-MM10o), and every control slot of a scan that lies in its interval or above it is an asynchronous round of the adaptive schedule, led by the coin (SH-MM10p); with SH-MM5b the two readings agree on every such slot whenever either verdict is direct |
 | Algorithm 3, "hysteresis against noisy windows" and "ties keep the period, then favor the larger candidate" (the body defers both to the appendix) | SH18k, SH18l | — | — | the selection leaves the current period only for a candidate scoring below `1 − ε` times the current period's, and takes the best candidate whenever that one does; the best candidate scores no worse than the current period and than every candidate, is the current period at a tie with it, and is otherwise the largest candidate at its score, in whatever order the candidates are listed |
@@ -294,7 +294,7 @@ without a restatement. The remarks describe the `3f + 1` pair.
 | Protocol section, "the successor waits at most `max(0, wa − ws − 1)` rounds", "delays never compound" | SH9c | SH-MM9c | via SH9c | arithmetic on the decision rounds; output timing itself is not modelled |
 | Theorem 5 (conservativity) | SH4 | SH-MM4 | SH-BB4 | at a constant wavelength by `rfl`, period `1` by `Nat.mod_one`, and at wave three the derivations are exactly the core's, both directions |
 | Protocol section, the dial `w(r) = wa` at every `k`-th round and `ws` elsewhere | — | SH-MM19 | SH-BB16e | the pair's wavelength satisfies every hypothesis the results place on a wavelength function, `2 ≤ w κ ≤ max ws wa`, so the laws hold at every period, and at `ws ≠ wa` the two kinds read two waves, both of which a period `k ≥ 2` assigns: the wave the core's `waveAt` admits as a function of the kind is not a constant in disguise |
-| Lemma 3 (the replay cannot be starved) | SH11a, SH18f | SH-MM11a, SH-MM18d, SH-MM18g | SH-BB11a | `c_r ≥ n − f − b` on the DAG under any scheduling (SH-MM11a), and on the window once a quorum has populated the boost and decision rounds within it (SH-MM18d), which is what "populated" must mean for the replay, whose evidence is the window's (§7, finding 6); the replay's asynchronous term is at most the mean of the decision round over the `c_r` committed candidates and the window's top over the rest (SH18f), a bound and not a comparison with the rule's own latency, which is not modelled; a probe's success is a certificate quorum the DAG holds, so the adversary cannot forge one (SH-MM18g), while the probes' rate is extended to the unprobed synchronous slots and a scheduler serving the canary rounds alone raises that estimate (§7, finding 10). Both at `2 ≤ ws < wa` |
+| Lemma 3 (the replay cannot be starved) | SH11a, SH18f | SH-MM11a, SH-MM18d, SH-MM18g | SH-BB11a, SH-BB18d, SH-BB18g | `c_r ≥ n − f − b` on the DAG under any scheduling (SH-MM11a), and on the window once a quorum has populated the boost and decision rounds within it (SH-MM18d), which is what "populated" must mean for the replay, whose evidence is the window's (§7, finding 6), and `c_r ≥ n − 3f` at the `5f + 1` pair on the window once a correct quorum has populated the two rounds above within it (SH-BB18d); the replay's asynchronous term is at most the mean of the decision round over the `c_r` committed candidates and the window's top over the rest (SH18f), a bound and not a comparison with the rule's own latency, which is not modelled; a probe's success is a certificate quorum the DAG holds, so the adversary cannot forge one (SH-MM18g), while the probes' rate is extended to the unprobed synchronous slots and a scheduler serving the canary rounds alone raises that estimate (§7, finding 10). Both at `2 ≤ ws < wa` |
 | Appendix, "Period updates while output is stalled", and the Lean appendix's "the stall, a committed asynchronous slot deciding nothing below it" | SH8 | SH-MM8 | via SH8 | the argument of that paragraph as a theorem, for every `2 ≤ ws ≤ k` rather than the one period it walks through (§4) |
 
 ## 1. The wavelength function
@@ -412,9 +412,9 @@ several candidates pass and the commit has to be identified with the
 tie-break's choice, which each arc supplies as the strong form of its
 fourth law. The floors differ, `r + 2` against `r + 3` (SH-BB16e), and
 `LeanDagTest/Steelhead/BlueBottlePair.lean` runs both halves on one
-universe under one schedule. What the paper's discharge table leaves
-open for this pair, clauses A2 and A3, is `commit_link` and `skip_link`
-of SH-BB16a. **SH-MM19**
+universe under one schedule. The paper's Lemmas 1 and 2, which its
+discharge table cites for this pair's clauses A2 and A3, are
+`commit_link` and `skip_link` of SH-BB16a. **SH-MM19**
 (`MahiMahiPair/Statement.lean`) states the periodic
 class: `wavelength ws wa`, the paper's dial read at the kinds a period
 assigns, is a wavelength function the results of this arc take, every
@@ -991,7 +991,13 @@ causal history at the rounds `round A − I` and above, as
 candidate author, counting distinct validators (a candidate is committed
 when a quorum certify it within the window, skipped when a quorum of the
 window's vote-round blocks blame the author's slot, certified when the
-window holds one certificate); `score` is `REPLAY(W, k')`'s three passes
+window holds one certificate), the `3f + 1` pair's reading of the paper's
+support; `BlueBottlePair.Replay.ofAnchor` is the `5f + 1` pair's, the
+decision-round votes themselves, Odontoceti's references one round up at
+wave two and Async BlueBottle's cone votes two rounds up otherwise, with
+`n − 3f` of them the indirect threshold, the implementation's
+`merged_certificates`; where the blame round lies, the vote round or the
+decision round, is `Config.merged`; `score` is `REPLAY(W, k')`'s three passes
 over that evidence, in exact rationals, the probes of the canary rounds
 (`probeRate`) standing in for the unprobed synchronous slots; `select`
 is the hysteretic selection among the powers of two up to the largest
@@ -1718,9 +1724,11 @@ LeanDag/Steelhead/
                             ViewLaws, GoodCommits, RunWithin, GoodFloor, RulePair.Lawful
   Model/RulePair.lean       RulePair, RulePair.rules, steelheadAt
   Model/Pair.lean           mahiMahiPair, blueBottlePair, blueBottlePairAnchored, mmPair, bbPair
-  Model/Replay.lean         Evidence, Config, Timing, windowIds, ofAnchor, committedCount,
-                            probeRate, timingAt, firstCommitAt, gateAt, score, prefer, best,
-                            select, candidatesUpto, update, anchorUpdate
+  Model/Replay.lean         Evidence, Config, Config.blame, Timing, windowIds, ofAnchor,
+                            committedCount, probeRate, timingAt, firstCommitAt, gateAt, score,
+                            prefer, best, select, candidatesUpto, update, anchorUpdate;
+                            BlueBottlePair.Replay.{omitters, supportBlocks, blameBlocks,
+                            ofAnchor, anchorUpdate}
   Model/Timeout.lean        certProb
   Safety/Statement.lean     SH2–SH5a        Safety/Proof.lean
   Liveness/Statement.lean   SH6–SH9c        Liveness/Proof.lean
@@ -1736,8 +1744,8 @@ LeanDag/Steelhead/
                             Broadcast, Replay, Timeout; each with its Proof.lean
   BlueBottlePair/Statement.lean   SH-BB3, SH-BB16
   BlueBottlePair/<Result>/Statement.lean
-                            SH-BB4–SH-BB17, for Safety, Liveness, Period, Coin, Ledger,
-                            Broadcast; each with its Proof.lean
+                            SH-BB4–SH-BB18, for Safety, Liveness, Period, Coin, Ledger,
+                            Broadcast, Replay; each with its Proof.lean
   Helpers/*.lean            the generic lemma layers
   Helpers/MahiMahiPair/*.lean, Helpers/BlueBottlePair/*.lean
                             each pair's lemma layers
@@ -1831,8 +1839,8 @@ results, with no generic counterpart:
   own, SH-BB6d and SH-BB6k);
 - SH-MM16c and SH-MM19, the family and the periodic class;
 - SH-MM18c, d, g, i, and the anchor forms SH-MM18h and SH-MM18n: the
-  window's evidence, which reads Mahi-Mahi's certificates and blames and
-  is indexed by wave;
+  window's evidence, which reads Mahi-Mahi's certificates and blames (the
+  `5f + 1` pair has its own reading, SH-BB18);
 - SH-MM20, the timeout appendix, whose filter is the certificate layer.
 
 **The `5f + 1` pair** is `bbPair`, Odontoceti at the synchronous kind and
@@ -1871,12 +1879,29 @@ tail and almost sure decision are SH15's at that floor and blocks of
 `3 · K` rounds (SH-BB15a, SH-BB15e). The ledger and atomic broadcast are
 SH-BB13 and SH-BB17.
 
-**No replay window at the `5f + 1` pair.** `ofAnchor` marks a candidate
-committed, skipped or certified by Mahi-Mahi's certificates and blames at
-a wave, and the evidence is indexed by wave because the `3f + 1` pair's
-two rules are one family read at two waves. The `5f + 1` pair's rules
-differ by kind, and neither has a certificate stage, so a window of it
-would need evidence indexed by kind and a `certified` field with no
-counterpart in the paper or the implementation. SH18's selection,
-timings and probes read only the evidence and would apply to such a
-window unchanged.
+**The replay at the `5f + 1` pair, SH-BB18.** The paper reads Algorithm 3
+and Lemma 3 through the support of its Lemmas 1 and 2: `n − f` supporters
+at the decision round commit, `n − f` blames at the rule's blame round
+skip, and the indirect threshold of supporters within the window stands
+in for the anchor's certificate. `BlueBottlePair.Replay.ofAnchor` is that
+reading at this pair, the decision-round votes themselves, Odontoceti's
+references one round up at wave two and Async BlueBottle's cone votes two
+rounds up at any other wave, with `n − 3f` of them the indirect
+threshold; it is the implementation's `merged_certificates`, and where
+the blame round lies, the decision round here and the vote round at the
+`3f + 1` pair, is the replay's one parameter, `Config.merged`, read by
+the skip's timing. What the window's reading gives is SH-MM18's at this
+pair: a committed candidate is certified and a skipped one is not, a
+skipped slot's candidate keeping at most `2f` supporters (SH-BB18c); Lemma
+3's count on the window, `n − 3f` authors marked committed at wave three
+once a correct quorum has populated the two rounds above within the
+anchor's history, ABB7 read on the history as a record (SH-BB18d); a
+window commit is a direct commit on the DAG under the wave's rule
+(SH-BB18g); the selection keeps the range and answers a divisor of the
+period bound (SH-BB18h, SH-BB18n); and the commit weight at wave three is
+the coin's commit probability on the history as a record (SH-BB18i).
+`LeanDagTest/Steelhead/BlueBottlePair.lean` runs the replay on a
+five-round universe: the window commits every round-`1` and round-`2`
+candidate at wave two and every round-`1` candidate at wave three, and
+climbs from period `1` to period `4`. No timeout appendix is stated at
+the pair: its filter is the certificate layer, which this pair lacks.
