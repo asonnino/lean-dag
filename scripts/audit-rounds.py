@@ -34,6 +34,7 @@ RULES = {
     "Odontoceti": ["LeanDag.Odontoceti.Decided"],
     "Nemo": ["LeanDag.Nemo.Decided"],
     "Mahi-Mahi": ["LeanDag.MahiMahi.Decided"],
+    "Async BlueBottle": ["LeanDag.AsyncBlueBottle.Decided"],
     "Hybrid": ["LeanDag.Hybrid.Decided"],
     "Optimal-Hydrozoan": ["LeanDag.OptimalHydrozoan.DecidedOpt"],
     "FinWhale": ["LeanDag.FinWhale.DirectCommit", "LeanDag.FinWhale.DirectSkip",

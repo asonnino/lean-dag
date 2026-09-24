@@ -149,8 +149,8 @@ def Commits (rel : Reliability Validator) : Prop :=
 
 `voteSupport` (wave one, certifying is referencing) has Law 1 for any
 rule, so Odontoceti, Nemo and Hybrid owe Law 2 alone. The core,
-Mahi-Mahi, FinWhale, Hydrozoan and Optimal-Hydrozoan have their own
-supports; the last three a second, fast-path one at a stronger fault
+Mahi-Mahi, Async BlueBottle, FinWhale, Hydrozoan and Optimal-Hydrozoan
+have their own supports; the last three a second, fast-path one at a stronger fault
 model.
 
 The precondition every liveness theorem reads is `Support.live rel S V
@@ -362,7 +362,7 @@ Rules whose model has no self-parent clause show `Progresses` alone.
 
 ### 0.8 The rules
 
-Nine carriers over eleven rules, of which ten show the four properties
+Ten carriers over twelve rules, of which eleven show the five properties
 and a support, and every mechanism cell is an instance or derived
 (`scripts/audit-conformance.py`, `scripts/audit-mechanisms.py`).
 Black Marlin has no carrier:
@@ -373,6 +373,7 @@ Black Marlin has no carrier:
 | Odontoceti | `voteSupport` | direct, skip, quorate, self-parent, no-equiv | `safety`, `liveness` |
 | Hybrid / Orcaella | `voteSupport`, per threshold | direct, skip, quorate, self-parent, no-equiv | `safety`, `liveness` |
 | Mahi-Mahi | `mmSupport w` | direct, quorate, self-parent, no-equiv | `safety`, `liveness` |
+| Async BlueBottle | `abbSupport` | direct, quorate, self-parent, no-equiv | `safety`, `liveness` |
 | Nemo | `voteSupport` | direct, quorate, no-equiv | `safety`, `progress` |
 | FinWhale | `fwSupport`, and a fast path | direct, quorate, no-equiv | `safety`, `progress` |
 | Hydrozoan | `hzSupport`, and a fast path | direct, skip, quorate | `safety`, `progress` |
@@ -1629,7 +1630,7 @@ garbage collection and crash recovery are the core's `chop` and
 none: adaptive leaders is out of scope, Mahi-Mahi having no `BaseRule`
 instance, and the other three are collected.
 
-**Nine rules of ten now show the six.** Black Marlin is the last, and it
+**Eleven rules of twelve now show the six.** Black Marlin is the last, and it
 is the one case where the recorded reason still holds: it commits by
 round with no slot-indexed decision relation, so there is nothing to
 state a property *at* until it has a schedule layer.
@@ -2176,7 +2177,7 @@ one relation (§11.4d). Chain quality has no property of its own (§5).
 
 ### 11.2 Against part 2: two protocols, every mechanism
 
-**Eleven decision rules, nine carriers.** `scripts/audit-conformance.py`
+**Twelve decision rules, ten carriers.** `scripts/audit-conformance.py`
 recomputes this from `docs/decls.json`: a rule shows a property when
 some theorem concludes it at one of the rule's carriers, or when its
 conformance `Statement` lists it.
@@ -2191,6 +2192,7 @@ conformance `Statement` lists it.
 | Nemo | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | Hybrid / Orcaella | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Mahi-Mahi | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| Async BlueBottle | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | FinWhale | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | Steelhead | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | Black Marlin | — | — | — | — | — | — | — |
@@ -2575,7 +2577,7 @@ looked for and is not there.
   six, Odontoceti, Nemo, Mahi-Mahi, Optimal-Hydrozoan, Hybrid and
   FinWhale. All seven have since been instantiated. That was the gap
   testing whether the six obligations are the right six, and the answer
-  is that they are: nine rules of ten meet them, three needed a repair
+  is that they are: eleven rules of twelve meet them, three needed a repair
   to do so (§3.2, §3.12, and Hybrid's), three met the same shape and did
   not (§3.13, §3.14, §3.16), and none needed a seventh property. Black
   Marlin is the last, and the reason it has none still holds: it commits

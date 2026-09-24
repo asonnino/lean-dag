@@ -276,6 +276,19 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   round `2` is ever output until the scan's failover hands the period
   to `1` and a run of the coin decides the stalled slot.
   The arc is under the statement/proof partition.
+- **Async BlueBottle** (`LeanDag/AsyncBlueBottle/`): the asynchronous
+  variant of BB-Core (arXiv:2511.15361, Appendix G) — Odontoceti's
+  two-round arithmetic at a **three-round wave**, a round-`(r+2)` block
+  voting through its causal cone with Mahi-Mahi's canonical support —
+  proved safe at `n ≥ 5f+1` and live with **no synchrony hypothesis**
+  under Mahi-Mahi's clause: every populated wave directly commits at
+  least `n − 3f` correct validators' blocks (the paper's `2f + 1` at the
+  boundary, by a double count at every `n`), so `3f + 1` leaders per
+  round always include a committed one. Two findings: agreement needs
+  the canonical candidate the paper's Observation 4 assumes away, and
+  the paper's `TryDirectDecide` is order-dependent under equivocation,
+  which the implementation's slot-level blame avoids — both realised on
+  data, and both already repaired in the paper's current draft.
 - **Black Marlin** (`LeanDag/BlackMarlin/`): the three-round commit rule
   of a partially synchronous protocol (DISC 2025) that uses neither
   reliable broadcast nor a common coin and elects an anchor in **every
@@ -448,7 +461,7 @@ and its entry file says which:
 
 | kind | what it varies | arcs |
 |---|---|---|
-| **commit rule** | the decision relation | `Mysticeti/` (the core), `Odontoceti/`, `Nemo/`, `Hybrid/`, `MahiMahi/`, `Hydrozoan/`, `OptimalHydrozoan/`, `FinWhale/`, and the two refuted rules `BlackMarlin/` and `Minnow/` |
+| **commit rule** | the decision relation | `Mysticeti/` (the core), `Odontoceti/`, `Nemo/`, `Hybrid/`, `MahiMahi/`, `AsyncBlueBottle/`, `Hydrozoan/`, `OptimalHydrozoan/`, `FinWhale/`, and the two refuted rules `BlackMarlin/` and `Minnow/` |
 | **universe transform** | the DAG, owing a witness that it does so lawfully | `GC/` (the cut), `SafeSkip/` (the fill), re-genesis |
 | **schedule mechanism** | the `Slots` a rule runs on, and no universe at all | `Barnacle/` (how many leaders a round has), `Adaptive/` (which validators lead), `Reactive/` (when a validator builds), `Timed/` (the full-timeout baseline) |
 | **analysis** | nothing — it measures a DAG rather than deciding on one | `DoS/`, `Quality/`, `Network/` |
@@ -489,7 +502,8 @@ them: the universe and the rule under `Model/`, what it shows in
   `Minnow/` — the minimal commit rule and its counterexamples;
   `FinWhale/` — the fast path at `n = 3f + 2p − 1`, whose `Model/` holds
   every definition of the protocol and no proof; `MahiMahi/` — the
-  asynchronous rule at wave `w`, `BlackMarlin/` — the three-round rule
+  asynchronous rule at wave `w`, `AsyncBlueBottle/` — the two-round
+  rule at a three-round wave, `BlackMarlin/` — the three-round rule
   with an anchor every round, and `Barnacle/` — the adaptive leader
   count over an interface for the four base rules, `Hydrozoan/` — the
   dual-path rule under hybrid faults, with its own fault model and
@@ -532,6 +546,7 @@ them: the universe and the rule under `Model/`, what it shows in
 | [`docs/adaptive-leaders.md`](docs/adaptive-leaders.md) | adaptive leader schedules: the design record, the findings against the HammerHead paper, and the segmented arc that replaced the fixpoint one |
 | [`docs/hybrid-plan.md`](docs/hybrid-plan.md) | hybrid fault tolerance: the design record, built, kept as the reasoning behind report §14 |
 | [`docs/mahi-mahi.md`](docs/mahi-mahi.md) | the asynchronous rule at wave `w`: the clause, and the statement/proof partition |
+| [`docs/async-bluebottle.md`](docs/async-bluebottle.md) | the asynchronous variant of the two-round rule: the three-round wave with the cone vote, the `n − 3f` count, the two findings on the paper |
 | [`docs/black-marlin.md`](docs/black-marlin.md) | the three-round commit rule: the link clause, the run of two, what the reactive exit costs, agreement, the delivered order the descent computes, the sequence it outputs, where Agreement fails, and a repair |
 | [`docs/minnow.md`](docs/minnow.md) | the minimal commit rule: the two readings its own sentences force, and the two defects that survive both |
 | [`docs/finwhale.md`](docs/finwhale.md) | the fast path at `n = 3f + 2p − 1`: the committee and its tightness, the validity clause the fast path needs, liveness from the block-creation conditions, what a validator guarantees, and what the paper should change |

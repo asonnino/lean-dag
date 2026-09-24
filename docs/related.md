@@ -253,6 +253,34 @@ blocks-versus-authors ambiguity in the indirect test's count, and a
 counting step in its Lemma 2 that holds only via the exact complement
 identity.
 
+### 4.2.1 BlueBottle, and BB-Core-Async
+
+> P. Vander Vos, A. Sonnino, G. Tsimos, P. Jovanovic, L. Kokoris-Kogias.
+> *BlueBottle: Fast and Robust Blockchains through Subsystem
+> Specialization.* arXiv:2511.15361, 2025.
+
+BlueBottle's consensus core, BB-Core, is Odontoceti's rule; its
+Appendix G adds **BB-Core-Async**, the same rule at a three-round wave
+with merged certificates — votes at `r + 2` through the causal cone, the
+anchor floor at `r + 3`, a threshold common coin naming the leader after
+the wave — as the first `5f + 1` protocol live under full asynchrony.
+
+**Bearing on this development: formalized.** `LeanDag/AsyncBlueBottle/`
+(`async-bluebottle.md`) proves it safe at `n ≥ 5f + 1` and live under
+Mahi-Mahi's clause, the arc being a composition of the two: Odontoceti's
+arithmetic one round up with Mahi-Mahi's vote, and Mahi-Mahi's liveness
+at a fixed wave. The paper's core-set count (Lemmas 27–30, `2f + 1` at
+`n = 5f + 1`) is proved as `n − 3f` at every `n`, which makes its
+multi-leader determinism (`l > 3f`) hold at every `n` too. Two findings:
+Observation 4 assumes away equivocation, and without it agreement needs
+the canonical candidate (Odontoceti's F1, realised on data at the
+three-round wave); and Algorithm 2's `TryDirectDecide` returns `Skip` or
+`Commit` for an equivocating leader according to which twin it examines
+first, a hazard the implementation avoids by blaming the slot and
+testing the blame first. Both are against the arXiv text; the paper's
+current draft already carries the repairs, and the witnesses show they
+are necessary.
+
 ### 4.3 Starfish — and the liveness critique of uncertified DAGs
 
 > N. Polyanskii, S. Mueller, I. Vorobyev. *Making Uncertified DAG BFT Provably
@@ -496,6 +524,7 @@ is synchronous, and a counterexample separating the two.
 | **Mysticeti** | **yes** | **partial** | **every round** | **3 rounds** | **3f+1** |
 | Mahi-Mahi | yes | asynchronous | multiple per round | 4 or 5 hops | 3f+1 |
 | Odontoceti | yes | partial | every round | **2 rounds** | **5f+1** |
+| BB-Core-Async | yes | asynchronous | every round | 3 rounds | 5f+1 |
 | Starfish | yes | partial | every round | 3 rounds | 3f+1 |
 | Bluestreak | yes (sparse) | partial | every round | 3 rounds | 3f+1 |
 | Sailfish | no | partial | every round | 1 RBC + 1δ | 3f+1 |
@@ -516,7 +545,7 @@ Three observations for the report.
    liveness proof and admit post-GST desynchronisation; Shoal++ argues from the
    certified side that uncertified DAGs are less robust because availability is
    not guaranteed. The report's structural condition and its GST derivation land
-   squarely in this dispute; report §27 engages with both by name.
+   squarely in this dispute; report §29 engages with both by name.
 
 3. **A mechanised liveness proof of Mysticeti already exists** — Qiu, Xiao and
    Shao (§4.3.1), in Rocq, at S&P 2026. Priority of mechanisation is therefore
