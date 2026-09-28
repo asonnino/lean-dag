@@ -6,6 +6,7 @@ import LeanDag.Nemo.Carrier
 import LeanDag.Hybrid.Carrier
 import LeanDag.OptimalHydrozoan.Carrier
 import LeanDag.MahiMahi.Carrier
+import LeanDag.AsyncBlueBottle.Carrier
 /-!
 # Chain quality for a second and third rule
 
@@ -30,8 +31,8 @@ configuration, and CQ2 takes the extra condition as a hypothesis for
 exactly this reason. Optimal-Hydrozoan is the same universe and the
 same fault model, so it lands the same way.
 
-**Odontoceti** and **Hybrid** take the whole of it, both being the
-core's `BlockUniverse` at their own committees. **Nemo** takes it at a
+**Odontoceti**, **Hybrid** and **Async BlueBottle** take the whole of
+it, all three being the core's `BlockUniverse` at their own committees. **Nemo** takes it at a
 different shape again: crash-only, nobody equivocates, so the reliable
 set is everyone and the slack is what a majority may miss.
 
@@ -217,6 +218,34 @@ theorem mahiMahi_card_correct_le_two_mul (w : ℕ) (S : Slots Validator)
 
 end MahiMahi
 
+section AsyncBlueBottle
+
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable [F : Faults5 Validator]
+variable {B : Type} [LinearOrder B] {Payload : Type}
+
+/-- **CQ2 for Async BlueBottle.** Odontoceti's committee on the core's
+universe, so the fault model and the arithmetic are Odontoceti's. -/
+theorem asyncBlueBottle_card_correct_le_two_mul (S : Slots Validator)
+    {U : BlockUniverse Validator B Payload}
+    {V : LeanDag.View Validator B Payload U} {k : ℕ} {L : B} {δ : ℕ}
+    (h : (LeanDag.AsyncBlueBottleProperties.asyncBlueBottleRule (Payload := Payload)).Decided
+      S V k (some L))
+    (hδ : δ < (U.block L).round) :
+    (Correct : Finset Validator).card ≤
+      2 * (coveredAt
+        (LeanDag.AsyncBlueBottleProperties.asyncBlueBottleRule (Payload := Payload))
+        (coreReliability Validator) U L δ).card :=
+  card_correct_le_two_mul_coveredAt_of_decided
+    LeanDag.AsyncBlueBottleProperties.quorate
+    LeanDag.AsyncBlueBottleProperties.commitsCandidate
+    (by
+      simp only [coreReliability_correct, coreReliability_slack]
+      have := two_f_add_one_le_card_correct (Validator := Validator)
+      omega) h hδ
+
+end AsyncBlueBottle
+
 #print axioms LeanDagTest.finWhale_card_coveredAt_ge_of_decided
 #print axioms LeanDagTest.finWhale_card_correct_le_two_mul
 #print axioms LeanDagTest.hydrozoan_card_coveredAt_ge_of_decided
@@ -225,5 +254,6 @@ end MahiMahi
 #print axioms LeanDagTest.nemo_card_coveredAt_ge_of_decided
 #print axioms LeanDagTest.optimal_card_coveredAt_ge_of_decided
 #print axioms LeanDagTest.mahiMahi_card_correct_le_two_mul
+#print axioms LeanDagTest.asyncBlueBottle_card_correct_le_two_mul
 
 end LeanDagTest

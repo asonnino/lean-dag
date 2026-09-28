@@ -54,9 +54,13 @@ def series_group(label):
     if label.startswith('AL'): return 'adaptive'
     if label.startswith('NN'): return 'nemo'
     if label.startswith('MM'): return 'mahimahi'
+    if label.startswith('ABB'): return 'abb'
     if label.startswith('BN'): return 'bn'
     if label.startswith('HZ'): return 'hydrozoan'
     if label.startswith('OH'): return 'optimal'
+    if label.startswith('SH-MM'): return 'steelhead-mm'
+    if label.startswith('SH-BB'): return 'steelhead-bb'
+    if label.startswith('SH'): return 'steelhead'
     if label.startswith('H'): return 'hybrid'
     if label.startswith('I'): return 'integration'
     if label.startswith('E'): return 'dos'
@@ -80,10 +84,14 @@ GROUP_FILL = {
     'hybrid': ('#fdf0d5', '#b0894a'),
     'nemo': ('#d5efe9', '#3f8f7a'),
     'mahimahi': ('#e0ecf8', '#4a6fa5'),
+    'abb': ('#e4e0f4', '#5b4a9a'),
     'bn': ('#fbe9d7', '#b5652a'),
     'hydrozoan': ('#dfeee8', '#3d7a66'),
     'optimal': ('#e6f0e2', '#5a8a3d'),
     'integration': ('#dbe7e0', '#5f8a76'),
+    'steelhead': ('#e7e2f3', '#6a5aa8'),
+    'steelhead-mm': ('#e2e7f5', '#5a6fa8'),
+    'steelhead-bb': ('#efe2f3', '#8a5aa8'),
 }
 GROUP_TITLE = {
     'fault': 'fault model (§4.2)', 'protocol': 'protocol clauses (§4.1)',
@@ -96,10 +104,14 @@ GROUP_TITLE = {
     'hybrid': 'hybrid faults (§14)',
     'nemo': 'crash-fault consensus (§15)',
     'mahimahi': 'Mahi-Mahi (§17)',
+    'abb': 'Async BlueBottle (§25)',
     'bn': 'Barnacle (§21)',
     'hydrozoan': 'Hydrozoan (§22)',
     'optimal': 'Optimal-Hydrozoan (§23)',
     'integration': 'integration (§16)',
+    'steelhead': 'Steelhead (§24)',
+    'steelhead-mm': 'Steelhead, 3f+1 pair (§24)',
+    'steelhead-bb': 'Steelhead, 5f+1 pair (§24)',
 }
 
 # ---------------------------------------------------------------- input

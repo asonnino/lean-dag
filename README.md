@@ -115,28 +115,36 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   also proved **necessary**: one validator short, one view derives
   conflicting verdicts at every threshold
   (`hybrid_bound_necessary`).
-- **Resilient checkpoints** (`LeanDag/Hybrid/Checkpoint/`): explicit
+- **Resilient checkpoints** (`LeanDag/Checkpoint/`): explicit
   epoch-, height-, and history-bearing proposal messages are
-  emitted from append-only per-validator protocol state. The
-  `FlexibleFaults` model keeps the hybrid Byzantine and crash classes
-  and adds alive-but-corrupt signers; the standalone safety layer
-  accepts forked histories as execution inputs. `CommitSpec.lean` adds
-  the secure-base bridge at `abc = ∅`: a deterministic VM maps each
-  Hybrid commit to one checkpoint, and a `SigningRule` states the
-  protocol as two rules, sign what you commit on your own view and
-  witness what you proposed. `CommitProofs.lean` derives the quorum
-  from the inherited fault bound, ties every online correct validator's
-  proposal to a given commit through `Hybrid.decided_agree`, and
-  composes with `Hybrid.decided_of_leader_mem` so that DAG production
-  and coverage alone yield a finalized checkpoint for a correctly led
-  slot.
+  emitted from append-only per-validator protocol state. The layer is
+  a mechanism in the sense of `Properties/`: it names no protocol.
+  `SigningFaults` is what its counting needs of a fault model, a quorum
+  threshold, the reliable signers, the recovery-correct validators and
+  two bounds, as `Reliability` is for density; the standalone safety
+  layer accepts forked histories as execution inputs. `CommitSpec.lean`
+  is the bridge from any `DagRule`: a deterministic VM maps each commit
+  to one checkpoint, and a `SigningRule` states the protocol as two
+  rules, sign what you commit on your own view and witness what you
+  proposed. `CommitProofs.lean` ties every online correct validator's
+  proposal to a given commit through `Properties.Agree`, and composes
+  with a `Support`'s `Commits` law so that production and certification
+  alone yield a finalized checkpoint for a correctly led slot. Hybrid's
+  instance is `Integration/HybridCheckpoint.lean`: the paper's
+  `FlexibleFaults`, the hybrid classes plus alive-but-corrupt signers at
+  `fabc < n − 3·fb − 2·fc`, is one `SigningFaults`, and at `abc = ∅` the
+  online correct validators are a quorum of both the signing threshold
+  and the core reliability. The bridge composes with the schedule
+  mechanism through its own agreement theorems: one Barnacle `Run` per
+  validator, at any boundary, so the segmented adaptive run too,
+  finalizes what any of them commits in a configuration
+  (`Integration/BarnacleCheckpoint.lean`, by `configAgree`).
   The `*Spec.lean` files are the human-review trust boundary.
   `CommitSpec.lean` also states its theorems as `Prop`-valued claims, so
   `CommitProofs.lean` needs no reading; the safety and recovery pairs
   still keep theorem statements in their `*Proofs.lean` files, where
   the statements, not the bodies, require review.
-  Conditional on those inputs, at
-  `fabc < n - 3·fb - 2·fc`, quorum intersection derives same-height
+  Conditional on those inputs, quorum intersection derives same-height
   uniqueness and within-epoch prefix consistency; checkpoint safety is
   intentionally scoped to one epoch. Concrete witness messages prove
   that finality leaves a recovery-correct recorder. Recovery broadcasts
@@ -194,6 +202,103 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   implementation's slot blame. The arc is built under a
   statement/proof partition: definitions and statements are the audited
   surface, proofs are generated, and a checker enforces the split.
+- **Steelhead** (`LeanDag/Steelhead/`): two rules on one DAG, the
+  core's at `ws = 3` and Mahi-Mahi's at `wa`, every slot given a **kind**
+  by the schedule and reading the **wavelength** of that kind, an
+  undecided slot anchoring at its own, `r + w(κ)`. The two are one rule
+  read at two wavelengths: at three Mahi-Mahi's relation is the core's,
+  slot for slot, which is why the arc carries a single family of
+  predicates for the `3f + 1` pair. Verdicts agree across views and
+  routes and across the two rules, a direct commit under one handed over
+  to an anchor decided by the other, at every wavelength function of at
+  least two rounds, which is what the proofs consume. Three is the wave
+  at which the vote-and-certify pattern of the `3f + 1` pair first has a
+  round to put a certificate in: at two the vote round is the slot's own,
+  so no candidate is certified and every slot is directly skipped.
+  Reading the wave at the kind rather than at the round is what leaves
+  the rule banded, so safety and truncation-locality come with it. A
+  witness on data settles why an undecided slot reads the floor at its
+  own wave and not at its anchor's. Live under
+  synchrony at the slot's own wave, by the direct rule, and a slot is
+  decided once every slot from its floor up to a reliably led one is
+  decided. **A committed asynchronous slot does
+  not decide the synchronous slots below it**: a direct commit reaches a
+  lower slot only through a decided stretch, and at every period
+  `k ≥ ws` that stretch holds a synchronous slot the adversary keeps
+  undecided, the leader block delivered to exactly `f + 1` validators so
+  that neither quorum forms, on data at `n = 4`. The protocol therefore
+  drives its period from a second verdict, read at the control slots,
+  the coin rounds of each scan, after the reference implementation: the
+  Mahi-Mahi arc at a per-scan sub-schedule under a coin map, agreed per
+  scan, live under Mahi-Mahi's clause with a run of `wa` control slots,
+  and committing with the counting lemma's probability under a
+  uniform coin (`PMF`). The period sequence is stated afresh as a
+  relation over fixed intervals and is agreed under any deterministic
+  update rule, so the output at the adaptive wavelength is too, over the
+  intervals the record's own rounds fall in, and so are the ledger of a
+  settled prefix and the slot each block enters at. **The output is
+  live under the failover** the implementation applies, period `1`
+  at an anchor more than `I` rounds above the agreed output's last
+  commit: a slot two
+  intervals below an anchored one is decided once a run of `wa` good
+  coins above it is in view, and over the coins of `M` blocks of `K`
+  rounds a validator's scan stalls below the slot or leaves it undecided
+  with probability at most `2 · ((n^K − (n − f − b)^K) / n^K)^(M/2)`,
+  which vanishes, and over a sequence of records with the coin drawn as
+  a process the slot is decided almost surely, "with probability one"
+  as the paper states it, both against an adversary that builds its
+  record from the draws already made. A crashed leader is skipped, partial
+  dissemination does not defer, an equivocating Byzantine leader at a
+  slot's floor is its anchor and holds it undecided on data, the chain
+  of floors decides the slot it starts from once it reaches a reliably
+  led landing, the round-robin schedule the implementation runs leads
+  three consecutive rounds reliably past every round at `n = 3f + 1` and
+  brings the chain to such a landing within `n − |T|` hops, and within
+  `b` once the other validators outside the reliable set have crashed, a
+  reliably led slot commits under either execution discipline, the reactive
+  schedule's waits and the timed schedule's rated timeout,
+  a block the reliable validators have referenced is delivered by the
+  first committed slot above, whoever led it, any family
+  of rules whose laws hold composes into one whose laws hold (Steelhead's rule
+  the composite of Mahi-Mahi's at each kind's wave, by definition),
+  Definition 1 holds clause by clause over settled prefixes, and
+  Algorithm 3's replay is data whose selection stays among the
+  candidates, whose window counts the counting lemma's candidates once
+  a quorum has populated it, whose asynchronous term is at most the
+  rule's own value on the same data, whose commit weight is the rule's
+  commit probability on the window, whose probes succeed only on
+  certificate quorums the DAG holds and exist whenever the canary is
+  coprime to the candidate, and which keeps the period in range;
+  on data it recovers from period `1` on a healthy window, keeps its
+  period on a startup window and on a complete window too short for a
+  wave, which the paper's interval bound admits, and answers a stalled
+  period at every anchor of the rotating stall, where no block above
+  round `2` is ever output until the scan's failover hands the period
+  to `1` and a run of the coin decides the stalled slot.
+  The theorems are also stated for any rules meeting the paper's
+  interface, read through the relation's laws and a few clauses (A4's
+  commit under synchrony, a silent leader's skip, a counting floor for
+  the coin), and instantiated twice: at the `3f + 1` pair, whose
+  statements above follow from them, and at BlueBottle's `5f + 1` pair,
+  Odontoceti at the synchronous kind and Async BlueBottle at the
+  asynchronous one, which gets Theorems 1 to 4, the ledger, atomic
+  broadcast, and the coin at the floor `n − 3f`, the paper's
+  `p ≥ (n − 3f) / n`. The replay's reading of its window and the timeout
+  appendix count certificates and stay with the `3f + 1` pair.
+  The arc is under the statement/proof partition.
+- **Async BlueBottle** (`LeanDag/AsyncBlueBottle/`): the asynchronous
+  variant of BB-Core (arXiv:2511.15361, Appendix G) — Odontoceti's
+  two-round arithmetic at a **three-round wave**, a round-`(r+2)` block
+  voting through its causal cone with Mahi-Mahi's canonical support —
+  proved safe at `n ≥ 5f+1` and live with **no synchrony hypothesis**
+  under Mahi-Mahi's clause: every populated wave directly commits at
+  least `n − 3f` correct validators' blocks (the paper's `2f + 1` at the
+  boundary, by a double count at every `n`), so `3f + 1` leaders per
+  round always include a committed one. Two findings: agreement needs
+  the canonical candidate the paper's Observation 4 assumes away, and
+  the paper's `TryDirectDecide` is order-dependent under equivocation,
+  which the implementation's slot-level blame avoids — both realised on
+  data, and both already repaired in the paper's current draft.
 - **Black Marlin** (`LeanDag/BlackMarlin/`): the three-round commit rule
   of a partially synchronous protocol (DISC 2025) that uses neither
   reliable broadcast nor a common coin and elects an anchor in **every
@@ -339,6 +444,34 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   A peer arc importing the Hydrozoan arc read-only, and the second
   developed in `asonnino/mysticeti`.
 
+- **Bluestreak** (`LeanDag/Bluestreak/`): the sparse uncertified DAG
+  (IACR ePrint 2026/898), whose non-leader blocks carry two references
+  and whose round-`r+2` blocks *claim* the leader certified — by a
+  field, or for a leader block by the votes it carries — with the
+  `n − f` votes backing a claim outside the claiming block's causal
+  history. The rule is the core's with claims for certificates, proved
+  safe at `n ≥ 3f+1` under the trace the protocol's referenceability
+  discipline leaves on the record: every claim an honest block reaches
+  is certified (`Bluestreak.bluestreakLaws`). Stating it took one field
+  more of the anchored relation — what a committed anchor is known to
+  be — because the rule's own laws fail of an uncommitted anchor, on
+  data; and its per-candidate skip is strictly stronger than the core's
+  slot blame, on data. Liveness is stated on claims, not references,
+  and the pull pacemaker is a reactive schedule whose referencing
+  discipline is exactly the invariant safety assumes
+  (`Bluestreak.ReactiveB.disciplined`): every reliable validator decides
+  a reliable-led slot on its own view (`Bluestreak.ReactiveB.decided_local`),
+  and a sparse DAG grown to every horizon witnesses the schedule. The
+  arc shows the five properties over the disciplined records, the block
+  format being assumed of certified blocks rather than checked per slot,
+  since a validity predicate cannot read which slot a block sits in;
+  the band's novelty clause then reads the anchor, because a claim names
+  its candidate where every other rule's evidence references it. Chain
+  quality does not apply to a two-reference block. And garbage
+  collection is a protocol question here: referenceability asks that
+  every claim in a block's history be provable, which a validator that
+  prunes cannot do, so the rule must be read bounded — two rounds, a
+  claim's reach — and the cut then forgets the claims it orphans.
 - **RedSnapper** (`LeanDag/RedSnapper/`): the owned-object fast path of
   the RedSnapper paper ("Snapper"), at both of its committees, over an
   uncertified DAG whose consensus is a black-box sequence of committed
@@ -399,7 +532,7 @@ and its entry file says which:
 
 | kind | what it varies | arcs |
 |---|---|---|
-| **commit rule** | the decision relation | `Mysticeti/` (the core), `Odontoceti/`, `Nemo/`, `Hybrid/`, `MahiMahi/`, `Hydrozoan/`, `OptimalHydrozoan/`, `FinWhale/`, and the two refuted rules `BlackMarlin/` and `Minnow/` |
+| **commit rule** | the decision relation | `Mysticeti/` (the core), `Odontoceti/`, `Nemo/`, `Hybrid/`, `MahiMahi/`, `AsyncBlueBottle/`, `Hydrozoan/`, `OptimalHydrozoan/`, `FinWhale/`, `Bluestreak/`, and the two refuted rules `BlackMarlin/` and `Minnow/` |
 | **universe transform** | the DAG, owing a witness that it does so lawfully | `GC/` (the cut), `SafeSkip/` (the fill), re-genesis |
 | **schedule mechanism** | the `Slots` a rule runs on, and no universe at all | `Barnacle/` (how many leaders a round has), `Adaptive/` (which validators lead), `Reactive/` (when a validator builds), `Timed/` (the full-timeout baseline) |
 | **analysis** | nothing — it measures a DAG rather than deciding on one | `DoS/`, `Quality/`, `Network/` |
@@ -440,13 +573,15 @@ them: the universe and the rule under `Model/`, what it shows in
   `Minnow/` — the minimal commit rule and its counterexamples;
   `FinWhale/` — the fast path at `n = 3f + 2p − 1`, whose `Model/` holds
   every definition of the protocol and no proof; `MahiMahi/` — the
-  asynchronous rule at wave `w`, `BlackMarlin/` — the three-round rule
+  asynchronous rule at wave `w`, `AsyncBlueBottle/` — the two-round
+  rule at a three-round wave, `BlackMarlin/` — the three-round rule
   with an anchor every round, and `Barnacle/` — the adaptive leader
   count over an interface for the four base rules, `Hydrozoan/` — the
   dual-path rule under hybrid faults, with its own fault model and
   universe, and `OptimalHydrozoan/` — its fast path at Hydrangea's
-  bound, a peer arc importing the first, and `RedSnapper/` — the
-  owned-object fast path at `3f + 1` and `5f + 1`, with its own model
+  bound, a peer arc importing the first, `Steelhead/` — two rules
+  at one wavelength function, with the chain verdict, and `RedSnapper/` —
+  the owned-object fast path at `3f + 1` and `5f + 1`, with its own model
   of stances over an uncertified DAG, all under a statement/proof
   partition (`Model/`, `<Result>/Statement.lean`,
   `<Result>/Proof.lean`); `Network/` — the composed
@@ -484,12 +619,14 @@ them: the universe and the rule under `Model/`, what it shows in
 | [`docs/adaptive-leaders.md`](docs/adaptive-leaders.md) | adaptive leader schedules: the design record, the findings against the HammerHead paper, and the segmented arc that replaced the fixpoint one |
 | [`docs/hybrid-plan.md`](docs/hybrid-plan.md) | hybrid fault tolerance: the design record, built, kept as the reasoning behind report §14 |
 | [`docs/mahi-mahi.md`](docs/mahi-mahi.md) | the asynchronous rule at wave `w`: the clause, and the statement/proof partition |
+| [`docs/async-bluebottle.md`](docs/async-bluebottle.md) | the asynchronous variant of the two-round rule: the three-round wave with the cone vote, the `n − 3f` count, the two findings on the paper |
 | [`docs/black-marlin.md`](docs/black-marlin.md) | the three-round commit rule: the link clause, the run of two, what the reactive exit costs, agreement, the delivered order the descent computes, the sequence it outputs, where Agreement fails, and a repair |
 | [`docs/minnow.md`](docs/minnow.md) | the minimal commit rule: the two readings its own sentences force, and the two defects that survive both |
 | [`docs/finwhale.md`](docs/finwhale.md) | the fast path at `n = 3f + 2p − 1`: the committee and its tightness, the validity clause the fast path needs, liveness from the block-creation conditions, what a validator guarantees, and what the paper should change |
 | [`docs/barnacle.md`](docs/barnacle.md) | the adaptive leader count: the interface A1–A4, the configuration-sequence model and why it needs no fixpoint, the liveness clause and its margin, the heads descent, the four instantiations, and the findings |
 | [`docs/hydrozoan.md`](docs/hydrozoan.md) | the dual-path rule under hybrid faults: the thresholds and their table, the two-case consistency argument as one statement, the slow path as the guaranteed one, the liveness package and its grounding, and the findings |
 | [`docs/optimal-hydrozoan.md`](docs/optimal-hydrozoan.md) | the fast path at Hydrangea's bound: the validity rule and per-block fast evidence, the seam that consumes the rule once, the skip as a liveness claim and FinWhale's attack on it, and the always-fast parametrisation |
+| [`docs/steelhead.md`](docs/steelhead.md) | two rules at one wavelength function: the anchor floor, the stall and the chain verdict, the drain, the period sequence and its agreement, the coin, the findings for the paper, and the interface over a rule pair with its two instances |
 | [`docs/red-snapper.md`](docs/red-snapper.md) | the owned-object fast path of the Snapper paper at `3f + 1` and `5f + 1`: stances over an uncertified DAG, the revocation arithmetic, certificate exclusion and verdict agreement, the freeze-and-count recovery with owned and mixed candidates, liveness at both committees, and the findings for the paper |
 | [`docs/target-properties.md`](docs/target-properties.md) | the properties: what a rule shows and what it gets, the definitions displayed verbatim, the one-carrier-per-rule discipline, the audits, and the record of the passes that reached them |
 | [`docs/integration.md`](docs/integration.md) | the mechanisms at every rule: the cut and fill cells and the relation they witness, and the standing facts no property states — coverage under the fill, horizon placement, re-genesis, the exposure check, the storage budgets — with the deployment conditions they yield |
@@ -519,7 +656,7 @@ them: the universe and the rule under `Model/`, what it shows in
   owned-object fast path at `3f + 1` and `5f + 1`.
 
 - [Lefteris Kokoris-Kogias](https://github.com/LefKok) — the resilient
-  checkpoint arc (`LeanDag/Hybrid/Checkpoint/`,
+  checkpoint arc (`LeanDag/Checkpoint/`,
   [#4](https://github.com/gdanezis/lean-dag/pull/4)): the
   assume-guarantee model of epoch-bearing proposals over append-only
   validator state, same-height uniqueness and within-epoch prefix

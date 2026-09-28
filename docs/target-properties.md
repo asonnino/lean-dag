@@ -149,8 +149,8 @@ def Commits (rel : Reliability Validator) : Prop :=
 
 `voteSupport` (wave one, certifying is referencing) has Law 1 for any
 rule, so Odontoceti, Nemo and Hybrid owe Law 2 alone. The core,
-Mahi-Mahi, FinWhale, Hydrozoan and Optimal-Hydrozoan have their own
-supports; the last three a second, fast-path one at a stronger fault
+Mahi-Mahi, Async BlueBottle, FinWhale, Hydrozoan and Optimal-Hydrozoan
+have their own supports; the last three a second, fast-path one at a stronger fault
 model.
 
 The precondition every liveness theorem reads is `Support.live rel S V
@@ -362,9 +362,10 @@ Rules whose model has no self-parent clause show `Progresses` alone.
 
 ### 0.8 The rules
 
-Nine carriers over nine rules show the four properties and a support,
-and every mechanism cell is an instance or derived
-(`scripts/audit-conformance.py`, `scripts/audit-mechanisms.py`):
+Ten carriers over twelve rules, of which eleven show the five properties
+and a support, and every mechanism cell is an instance or derived
+(`scripts/audit-conformance.py`, `scripts/audit-mechanisms.py`).
+Black Marlin has no carrier:
 
 | rule | support | optional shown | headline |
 |---|---|---|---|
@@ -372,10 +373,12 @@ and every mechanism cell is an instance or derived
 | Odontoceti | `voteSupport` | direct, skip, quorate, self-parent, no-equiv | `safety`, `liveness` |
 | Hybrid / Orcaella | `voteSupport`, per threshold | direct, skip, quorate, self-parent, no-equiv | `safety`, `liveness` |
 | Mahi-Mahi | `mmSupport w` | direct, quorate, self-parent, no-equiv | `safety`, `liveness` |
+| Async BlueBottle | `abbSupport` | direct, quorate, self-parent, no-equiv | `safety`, `liveness` |
 | Nemo | `voteSupport` | direct, quorate, no-equiv | `safety`, `progress` |
 | FinWhale | `fwSupport`, and a fast path | direct, quorate, no-equiv | `safety`, `progress` |
 | Hydrozoan | `hzSupport`, and a fast path | direct, skip, quorate | `safety`, `progress` |
 | Optimal-Hydrozoan | `optSupport`, and a fast path | direct, quorate | `safety`, `progress` |
+| Steelhead | `shSupport w`, per wavelength function | direct, quorate, self-parent, no-equiv | `safety`, `liveness` |
 | Black Marlin | no carrier: commits by round, no slot-indexed relation | | |
 
 Nemo's model drops the self-parent clause by design and Hydrozoan's
@@ -806,6 +809,7 @@ eligibility spans at a bound on the wave in place of a constant
 | Optimal-Hydrozoan | `slotRound k`, `+1`, `+2` | reachable |
 | Mahi-Mahi | `slotRound k + w - 1`, `r + w - 2` | proved, under `2 ≤ w` (§3.16) |
 | FinWhale | ~~`leader (round b - 2)`~~ **fixed** | the read is gone, and the band followed (§3.13) |
+| Steelhead | `slotRound k + w (kind k) - 1` | proved, under `2 ≤ w κ` (§11.43) |
 
 **Mahi-Mahi's wave rounds truncate.** `votingRound w r = r + w - 2`,
 `decisionRoundAt w r = r + w - 1` and `decisionRound w k = slotRound k +
@@ -818,6 +822,22 @@ carrier instance is per-width and its band is conditional, `Banded
 unconditional. `Banded R` is a predicate on the rule alone, so the width
 has to be fixed before the property is stated rather than appear inside
 it.
+
+**Steelhead reads its wave at the slot's kind.** The paper's wavelength
+is a function of the round number, `w(r) = wa if r mod p = 0 else ws`,
+and a rule reading it there would have no band: a rebase shifts every
+round by a constant `g`, under which `r % p` and `(r + g) % p` differ.
+The arc splits that formula in two. The schedule says which slots are
+asynchronous, `kind k = periodicKind p (slotRound k)`, and the rule reads
+`wavelength ws wa` at that kind: `waveAt κ = w κ − 1` in
+`steelheadAnchored`, and the same in `shSupport`. The two spellings agree
+at every round (`wavelength_periodicKind`, SH-MM4), and since a rebase
+carries a slot's kind the rule reads a band at any offset, so `Banded`,
+`LocalTruncate`, `Persist` and the `Safe` headline all hold under the
+`2 ≤ w κ` its laws already ask (`LeanDag/Steelhead/Properties.lean`).
+`scripts/audit-rounds.py` reports the rule clean: its one truncated
+subtraction is of a kind, not of a round, and the modulus sits in
+`periodicKind`, which the relation does not reach.
 
 **FinWhale indexed its leader by an absolute round**, and no longer
 does. `ExposesEquivocation D b` read `D.leader ((D.block b).round - 2)`:
@@ -1610,7 +1630,7 @@ garbage collection and crash recovery are the core's `chop` and
 none: adaptive leaders is out of scope, Mahi-Mahi having no `BaseRule`
 instance, and the other three are collected.
 
-**Nine rules of ten now show the six.** Black Marlin is the last, and it
+**Eleven rules of twelve now show the six.** Black Marlin is the last, and it
 is the one case where the recorded reason still holds: it commits by
 round with no slot-indexed decision relation, so there is nothing to
 state a property *at* until it has a schedule layer.
@@ -2157,7 +2177,7 @@ one relation (§11.4d). Chain quality has no property of its own (§5).
 
 ### 11.2 Against part 2: two protocols, every mechanism
 
-**Ten decision rules, eight carriers.** `scripts/audit-conformance.py`
+**Twelve decision rules, ten carriers.** `scripts/audit-conformance.py`
 recomputes this from `docs/decls.json`: a rule shows a property when
 some theorem concludes it at one of the rule's carriers, or when its
 conformance `Statement` lists it.
@@ -2172,7 +2192,9 @@ conformance `Statement` lists it.
 | Nemo | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | Hybrid / Orcaella | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Mahi-Mahi | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| Async BlueBottle | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | FinWhale | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| Steelhead | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | Black Marlin | — | — | — | — | — | — | — |
 
 \* optional (`Properties/Optional/`): owed when a mechanism counts the
@@ -2555,7 +2577,7 @@ looked for and is not there.
   six, Odontoceti, Nemo, Mahi-Mahi, Optimal-Hydrozoan, Hybrid and
   FinWhale. All seven have since been instantiated. That was the gap
   testing whether the six obligations are the right six, and the answer
-  is that they are: nine rules of ten meet them, three needed a repair
+  is that they are: eleven rules of twelve meet them, three needed a repair
   to do so (§3.2, §3.12, and Hybrid's), three met the same shape and did
   not (§3.13, §3.14, §3.16), and none needed a seventh property. Black
   Marlin is the last, and the reason it has none still holds: it commits
@@ -3174,7 +3196,7 @@ learns which execution model produced the certificates. That is what
 from coverage in which bridge they take to `Support.live`, and in
 nothing after it.
 
-**All nine rules with a carrier now have a `Support`**, and the
+**All ten rules with a carrier now have a `Support`**, and the
 conformance table reads `supp yes` across the board.
 
 | rule | support | Law 1 | Law 2 | Law 3 |
@@ -3186,6 +3208,7 @@ conformance table reads `supp yes` across the board.
 | Optimal-Hydrozoan | `optSupport`, Hydrozoan's at `U.val` | Hydrozoan's | Hydrozoan's | Hydrozoan's slow commit in `DecidedOpt` |
 | FinWhale | `fwSupport`, wave 2 (slow path) | parents and grandparents kept | `spCommitBy_of_synchronisedOn` cut down | the SP-commit on the view, through the pass |
 | Mahi-Mahi | `mmSupport w`, wave `w − 1` | `certifies_band` at the band a `RebasedAbove` is | see below | the cone certificates, in view |
+| Steelhead | `shSupport w`, wave `w κ − 1` at a slot of kind `κ` | Mahi-Mahi's `certifies_band` at the candidate's own wave | the core's argument at wave three, Mahi-Mahi's above it | Mahi-Mahi's, at the slot's own decision round |
 
 **Mahi-Mahi was the test of `CoversToward`, and it passed without
 change to the predicate.** Its certifier sits `w − 1` rounds up and
@@ -4764,8 +4787,8 @@ nothing of the wave. The seven rules' support laws take one more
 binder each.
 
 **How a rule uses it** is `docs/kinds.md`: where the common layer reads
-the kind, the six files a varying-wave rule edits, checked on a port of
-Steelhead (#21) that then has `banded`, `localTruncate` and `safety`,
+the kind, the six files a varying-wave rule edits, checked on Steelhead
+(#21), which has `banded`, `localTruncate` and `safety` because of it,
 and the two spellings of a schedule's kind.
 
 **What did not change.** Barnacle's
@@ -4773,11 +4796,292 @@ and the two spellings of a schedule's kind.
 one wave length, `LiveRule.Descent` reads one gap at every schedule its
 `indirect` quantifies over, and `Descent.indirect` is not monotone in
 the gap, so a bound would not do and a varying wave cannot pass through
-until the descent laws take a gap per kind. No rule in the tree sets a
-kind; Steelhead's `periodic ws wa k`, a function of `r % k`, is a
-schedule whose kind is `r % k` and a rule whose `waveAt`, `Commit`,
-`Skip` and `Link` read `w` at the kind, and needs neither a period nor
-a constancy hypothesis.
+until the descent laws take a gap per kind. Steelhead is the one rule in
+the tree that sets a kind: its schedule marks the asynchronous slots,
+`kind k = periodicKind p (slotRound k)`, and its `waveAt`, `Commit`,
+`Skip` and `Link` read `wavelength ws wa` there, so it needs neither a
+period nor a constancy hypothesis.
+
+### 11.44 The checkpoint layer as a mechanism
+
+`Hybrid/Checkpoint/` was written against Hybrid: its fault model
+extended `HybridFaults` with an AbC class, its quorum was `Hybrid.q`,
+and its commit bridge read `Hybrid.Decided`, `Hybrid.hybridLaws` and
+`Hybrid.decided_of_leader_mem`. Nothing in it needed Hybrid. The
+counting lemmas need a threshold and two bounds; the bridge needs a
+verdict relation with agreement and a way to reach verdicts from
+production. Both are what `Properties/` already names.
+
+**What moved.** The six modules are `LeanDag/Checkpoint/`, namespace
+`LeanDag.Checkpoint`, importing nothing under `Hybrid/`. The layering
+rule of `Properties/Carrier.lean` applies to them as to garbage
+collection: a mechanism reads `DagRule` and the properties, and a
+protocol's instance lives under `Integration/`.
+
+**The fault model is a parameter.** `SigningFaults` is to the signing
+counts what `Reliability` is to density: the quorum threshold `q`, the
+`reliableSigner` set whose state is enforced, the `recoveryCorrect` set
+that also stays available, and two bounds, `n + |reliableSignerᶜ| < 2q`
+so that two quorums meet outside the unreliable validators and
+`|recoveryCorrectᶜ| < q` so that a quorum holds an available one. The
+three `exists_*_mem*` lemmas of `SafetyProofs.lean` are those two
+bounds; the derivations above them are unchanged. The paper's
+three-class `FlexibleFaults` is `Integration/HybridCheckpoint.lean`,
+and its `signing` instance is the resilience bound
+`fabc + 3·fb + 2·fc < n` read at `q = n − fb − fc`.
+
+**The bridge reads the properties.** `SigningRule` is over a `DagRule`,
+a schedule and a universe; `proposes` is stated at `R.Decided`.
+`CommitCertified`, `CommitFinalized` and `CommitCheckpointUnique` take
+`Agree R`, which is what `AnchoredRule.decided_agree` at Hybrid's laws
+was doing. `LiveCommitFinalized` takes a `Support` with `Commits rel`
+and `CommitsCandidate`, its wave read at the slot's kind (§11.43),
+and its hypotheses are the law's: production
+across the wave, certification of every candidate, views caught up to
+the wave, a quorum-member leader. `SynchronisedOn` is gone from the
+statement, as §11.16 requires of a mechanism. The `noAbC` field became
+`quorum : M.q ≤ M.recoveryCorrect.card`, the fact it was there to
+supply; Hybrid discharges it and `rel.IsQuorum` from `abc = ∅` in
+`FlexibleFaults.quorum_of_noAbC` and `isQuorum_of_noAbC`.
+
+**The schedule mechanism composes with the bridge as it is.** A
+Barnacle validator decides each configuration's slots against that
+configuration's schedule, at either boundary, and looked to need a
+`SigningRule` with a schedule per validator. It does not:
+`Barnacle.configAgree` makes every run's configuration `c` one
+configuration, `anchor_agree` its range and `vdct_agree` its verdict,
+so each validator's own `closed` clause is the settled-on-its-own-view
+hypothesis of `CommitFinalized` at the configuration's schedule.
+`Integration/BarnacleCheckpoint.lean` is that fact, twenty lines,
+reading `Agree` and nothing of the checkpoint layer beyond
+`commitFinalized`, and covering the segmented adaptive run since it is
+Barnacle's at a boundary. Slots restart per configuration, so the lemma
+is per configuration with that configuration's VM; a rebase-invariant
+slot index, which the DAG-transforming mechanisms would need too, is
+left for the block-content step, which puts proposals where a rebase
+moves them.
+
+**What the properties lacked.** `Properties.PopulatedOn`,
+`DagRule.IsCandidate` and `Support.certifiesAt` had no `Decidable`
+instances, so a concrete model could not settle the bridge's hypotheses
+by `decide` as it settles the record's. They have them now, the last
+under decidable certification, which `voteSupport` supplies.
+
+**The tests follow.** `LeanDagTest/Hybrid/CheckpointCommit.lean` runs
+the generic bridge at `hybridRule 4` over `Uhyb9` and `Usync9`, with
+`HybridProperties.agree`, `commitsCandidate` and `voteSupport_commits`
+as the properties; the `Usync9` liveness witness discharges
+`certifiesAt` by `decide` where it discharged `SynchronisedOn`.
+`LeanDagTest/Hybrid/Checkpoint.lean` instantiates `FlexibleFaults` as
+before and runs the safety and recovery layer at its `signing`.
+`LeanDagTest/Integration/BarnacleCheckpoint.lean` applies
+`commitFinalized_barnacle` to Mysticeti on four validators at both
+boundaries. At `Boundary.atAnchor`, `run2` and `run2'` on `Usun` hold
+different views and finalize the anchor slot `5`. At
+`Boundary.atThreshold`, `segRun` on `Usk` finalizes slot `3` from
+configuration `2`, which outputs it, and from configuration `0`, which
+decides it above its boundary and does not output it. A Byzantine
+validator proposes a forked checkpoint, and the fork has no certificate.
+
+### 11.45 Bluestreak, and what a committed anchor is
+
+Bluestreak (report §26) is the core's rule with the certificate replaced
+by a *claim*: a round-`(r + 2)` block names the leader block it saw
+certified, and the `n − f` votes that back the claim need not lie in
+the claiming block's causal history. Three things did not fit and were
+settled as follows; the fourth is a change to the common layer.
+
+**The claim is a map.** `Block` has no claim field and `Payload` is
+opaque; `Bluestreak.ClaimMap` fixes `claim : BlockId → Option BlockId`
+once per development, as `Slots` fixes the schedule. Views share the
+map as they share `U.block`.
+
+**Validity is role-dependent and outside the quorate family.** A
+non-leader block carries at most two references, so
+`Bluestreak.ValidWrt` is `ValidAt 0 (distinct.and selfParent)` and not
+`Quorate`; the leader's quorum depends on the schedule, which a
+`Validity` does not read, and sits in the laws' invariant
+`Disciplined` beside the trace of the referenceability discipline —
+every claim an honest block reaches is certified. The paper's
+references to blocks of earlier rounds are not modelled: a reference
+sits one round below, so the universe stays a `CausalStructure` and
+`Mechanised`, at the cost of the round a payload enters, not whether
+it does. `reaches_of_honest_support` — the quorum descent every other
+rule's visibility law uses — is unavailable with no quorum below the
+anchor; the self-chain descent `exists_reaches_self` (self-parent and
+non-equivocation) replaces it.
+
+**The laws quantified over anchors that are never committed.**
+`skip_link`, `link_unique` and `commit_link_unique` held of any leader
+block of an eligible slot. A Byzantine leader block whose history holds
+an unbacked claim links the claimed candidate while a quorum omits it
+(`LeanDagTest/Bluestreak/Model.lean`, `U2`), so under a claim-based
+link the laws were false and `decided_unique` true, the paper's proof
+anchoring on committed leaders only (its B.2–B.4). `AnchoredRule` now
+has `Anchor : U → BlockId → Prop`, `True` by default; `Laws` has
+`anchor_commit` and `anchor_link`, `trivial` at the default, and the
+three laws take `R.Anchor U A`; `anchor_of_decided` is Corollary B.4
+once for every rule, and `decided_unique` supplies it at its three
+uses. The nine instances changed by a binder in each of the three laws. Bluestreak's
+`Anchor` is `Certified`. Steelhead and Async BlueBottle, which landed
+after this record, change the same way. Steelhead's composite of a
+family of rules (SH16) reads the anchor from the rule of kind `0`, as it
+reads the rung count and tie-break, so `LawsCompose`,
+`ComposeAgreement` and `RulePair` ask the family to agree on it; both
+pairs agree by `rfl`, and the composite's `anchor_commit` and
+`anchor_link` are the slot's rule's through that agreement.
+
+**The skip is per-candidate.** The paper's slot skip is a quorum of
+voting-round blocks and, for each proposal held, a quorum omitting it
+— the quantifier form §3.5 of the report sets aside, sound here
+because of the count, and equal to the form quantified over the
+universe's candidates. It is strictly stronger than the core's
+`DirectSkipSlotIn` (`U3`: two twins, three omit each, two omit both),
+and safe by the same intersection per candidate.
+
+**What is not there.** Liveness under the pull pacemaker, which is a
+reactive builder with a claim-on-quorum clause at `r + 2`, and whose
+synchrony condition must be stated on what a builder held rather than
+on what its block references; the derivation of `Disciplined` from the
+build discipline in the pacing layer; and the properties, blocked by
+the schedule dependence of `leader_quorum`.
+
+**Measure.** The library and tests stand at 71,700 lines; the arc is
+341 lines of library and 195 of witnesses, and the common-layer change
+is `+48 −15`.
+
+### 11.46 Bluestreak's liveness: claims, and the pacemaker as the discipline
+
+The second step of the Bluestreak arc (report §26.6–26.8). Three things
+were settled.
+
+**The structural condition is on claims.** `SynchronisedOn` — every
+`T` block references every `T` block below — is false of a sparse DAG
+by construction, and the rule does not count references. `ClaimsAt U T
+r L` (every `T` block at `r + 2` claims `L`) and `ClaimsOn U T R` are
+what `decided_of_leader_mem` consumes, with production as before. The
+descent is the relation's `decided_below_of_run` with no tie at three
+consecutive `T`-led slots, which `spansEligible_of_identity` gives at
+wave two; `all_decided_below_of_fairRun` composes it with
+`Slots.exists_run_past`.
+
+**The trunk is now generic.** `PaceCore` was stated at
+`BlockUniverse` by the accident of its file's variables; its fields and
+its theorems (`reached`, `populatedOn`, `viewAt`, `holds_roundBlocks`,
+the drift collapse) read only a block record, and now take one, with
+`[P.Mechanised]` where `history` is used. `decided_local_of_certifiesAt`
+stays the core's. `ReactivePace` is split: `ReactiveCore` (the ceiling,
+`built_lt`, and `le_built`, `slotRound_le_top`, `driftOn_of_catchup`)
+at any record, and `ReactivePace` the core's two wait clauses over it.
+FinWhale's witness reaches the trunk through one more projection;
+nothing else changed.
+
+**The pacemaker is the discipline.** `ReactiveB` extends `ReactiveCore`
+with the leader quorum, two discipline clauses on every correct
+validator — references only what was `Referenceable` from its holdings
+at the build, claims only what its holdings `BackedIn` — and two wait
+clauses with "referenceable" for the core's "held". The discipline
+clauses derive `Disciplined` outright (`ReactiveB.disciplined`), so on an
+execution the safety laws need no invariant; and referenceability
+travels (`referenceable_of_converges`): a reliable block is referenceable
+at its author's build and referenceability is monotone in holdings, so
+convergence carries it. The paper's Lemma C.3 (timely referenceability)
+is this with `converges` in place of pull recovery. `votes` and
+`claimsAt` are the core's arithmetic at `2·delay + proc`, one round
+further; `decided_local` is V18's shape.
+
+**The witness.** `Usparse N` is the sparse DAG at every horizon on the
+round-robin layout, with `spReactive N` a `ReactiveB` at the core's
+constants (spacing `6`, timeout `9`), every wait clause on its exit, and
+the discipline by `backedIn_of_reaches_sp`: a claim in a held block's
+cone names the leader two rounds below the claimer, whose round above
+has arrived in full. `usparse_disciplined`, `sp_decided_local` and
+`sp_slot0` (the run at slots `1, 2, 3` deciding the Byzantine-led slot
+`0`) instantiate the three results.
+
+**Not modelled.** Pull recovery (advance messages, the self-contained
+response), and Lemma C.8's payload validity, which under one-round
+references is a leader referencing the round below.
+
+**Measure.** The library and tests stand at 72,557 lines; the arc is
+734 lines of library and 631 of witnesses; the trunk change is
+`+80 −54`.
+
+### 11.47 Bluestreak's carrier: what safety reads of the block format
+
+The third step of the Bluestreak arc (report §26.9). The obstacle was
+`Disciplined.leader_quorum`, a clause quantified over the *slots* of a
+schedule, where a carrier's `Agree` quantifies over every schedule the
+rule may be read under. Strengthening it to every block is false of a
+sparse DAG. What the safety proof actually consumes is the quorum of
+the block it anchors on, and an anchor is certified, so the clause
+became `certified_quorate : ∀ A ∈ U.ids, Certified U A → Quorate U A` —
+schedule-free, satisfied by the protocol because a non-leader block is
+referenced by at most its own successor and the next leader block. With
+that, `Disciplined` reads the record alone, `toDagRuleOn Disciplined` is
+a carrier, and `agreeOn` applies.
+
+**The band needed the same key.** `BandLaws.link_novel` says a
+candidate the band did not carry is linked from no old anchor. For
+every other rule the link is a *reference*, and an old block's
+references are old. Bluestreak's link is a *name*, so an old block may
+claim a block only the wider universe holds. The anchor rules it out:
+`Anchor U A` is now `Certified U A ∧ Backed U A` — `Backed` being "every
+claim in `A`'s cone is certified", which `backed_of_certified` derives
+from the invariant — and a certified candidate has a quorum of voters,
+which are old blocks referencing it. So `link_novel` takes
+`R.Anchor U A`, and `banded_aux` reads it through a new
+`AnchoredRule.AnchorsOn I`: on the records `I` admits, a committed block
+is an anchor. `anchorsOn_of_laws` gives it from a rule's laws; the eight
+existing rules pass `fun _ _ => trivial`, with no laws and no invariant,
+so their `banded` gains one argument and no proof. `commit_link` took
+the anchor too, which it can, since `decided_unique` applies it only at
+a committed anchor.
+
+**What the arc collects.** All five required properties (`Banded`,
+`Agree`, `CommitsCandidate`, `Indirect`, `Support`), `CommitsDirect`,
+`SelfParent`, `NoEquiv`, and the four derived. Not `Quorate` — a sparse
+block references two blocks, so chain quality does not apply and the
+arc claims none. Not the record cells: `Invariant.Mechanised` asks the
+invariant to survive the cut, and it does not, on data
+(`¬ Disciplined (BlockRecord.chop U1 2)`), because the cut drops the
+blocks a retained claim names along with the votes that back it. The
+deployment reading is a horizon constraint: prune no higher than two
+rounds below the claims the retained blocks carry.
+
+**What is left, and why.** Two clauses of the model stand in for block
+data the record does not own, and each is where a mechanism stops.
+
+*The format.* `ValidWrt` drops the receivers' format check, since it
+reads a block's role and a validity predicate cannot see which slot a
+block sits in. `certified_quorate` stands in for it, which makes it an
+assumption: nothing bounds how many blocks a block may reference, so at
+`n = 4`, `f = 1` one extra block referencing an ordinary block certifies
+it while it is sparse and the clause is false — and the copy fill does
+the same thing without any adversary, since the recovering validator's
+first block references its author's last pre-crash block. The repair is
+to give the block its own role: a tag in the block data, validity
+reading *tagged ⇒ quorate* and *untagged ⇒ every reference is the
+author's own or a tagged block*, and the rule reading the tag where a
+validator would have checked it. `certified_quorate` then goes, the
+escape closes, and `selfFill` — a chain of blocks each referencing only
+its predecessor, which a sparse format admits and `copyFill` is the
+wrong recovery for — discharges the fill.
+
+*The claim.* `honest_backed` is irreducibly non-local (it is about the
+claimed block's voters, outside the claimer's cone), and the cut breaks
+it: the retained blocks at the two lowest rounds claim leaders the cut
+dropped. The protocol reading is in `docs/report.md` §26.9 —
+referenceability is stated unbounded and must be read bounded, two
+rounds deep. Carrying that into the model means the record owning the
+claim and the cut blanking what it orphans, which the band must then
+relate: `AgreeBand` compares references strictly above the floor because
+a reference reaches one round, and a claim clause would compare claims
+from two above the floor for the same reason.
+
+**Measure.** The library and tests stand at 73,015 lines; the arc is
+1,112 lines of library, and the common-layer change across `Anchored.lean`
+and `Anchored/Band.lean` is `+62 −34`.
 
 ### 11.5 Next steps, in order
 

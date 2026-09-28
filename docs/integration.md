@@ -58,7 +58,7 @@ threshold and clause (`Mechanised.of_iff`); a carrier read as records
 (`DagRule.OnRecord`, `Properties/Record.lean`) then has every witness
 the properties read. The core, Nemo, FinWhale and Hydrozoan are records
 by definition, Hydrozoan's block being the shared block with no payload. Rules on the
-core's `BlockUniverse` (the core, Odontoceti, Mahi-Mahi) take the core's
+core's `BlockUniverse` (the core, Odontoceti, Mahi-Mahi, Async BlueBottle) take the core's
 `chop` and `skipFill` directly.
 
 **Each witness sits with its protocol.** A `<Protocol>/Record.lean`
@@ -72,6 +72,7 @@ over a rule, or mechanisms composed with one another.
 | `Mysticeti/Record.lean` | core | `MysticetiProperties.onRecord`, identity maps | the core's `chop`, `skipFill`, `addGenesis`, and the cut's `Truncates` witness |
 | `Odontoceti/Record.lean` | Odontoceti | `OdontocetiProperties.onRecord`, identity maps | the core's, through it |
 | `MahiMahi/Record.lean` | Mahi-Mahi | `MahiMahiProperties.onRecord`, identity maps | the core's, through it |
+| `AsyncBlueBottle/Record.lean` | Async BlueBottle | `AsyncBlueBottleProperties.onRecord`, identity maps | the core's, through it |
 | `Nemo/Record.lean` | Nemo | `NemoProperties.onRecord`, identity maps | the record's, through `NemoProperties.onRecord` |
 | `FinWhale/Record.lean` | FinWhale | `FinWhaleProperties.onRecord`, identity maps | the record's, through `FinWhaleProperties.onRecord` |
 | `Hybrid/Record.lean` | Orcaella | `HybridProperties.onRecord`, under `HonestNoEquiv` | `HybridProperties.fill` (the self-referencing fill with `honestNoEquiv_fill`); the prompt skip `HybridProperties.decided_none_fresh` |
