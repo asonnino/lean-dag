@@ -43,7 +43,7 @@
             <li>each reliable block references every reliable block of the round below.</li>
           </ul>
         </li>
-        <li>These follow from view convergence and the pacemaker's rules.</li>
+        <li>These follow from view convergence and the <span class="nd">pacemaker</span>'s rules.</li>
       </ul>
       <div class="uses"><b>Uses:</b> view convergence and the pacemaker's rules (slide 69).<br><b>Gives:</b> the support's precondition <code>live</code> (slide 61).</div>
     </div>
@@ -190,7 +190,7 @@
   <div class="body">
     <div class="text small">
       <ul>
-        <li><strong>Coverage</strong>: the history of every committed block contains, at every round below it, blocks of at least <code>|Correct| − f</code> correct validators. No timing assumption is needed.</li>
+        <li><strong>Coverage</strong>: the <span class="t-hull">history</span> of every <span class="t-leader">committed block</span> contains, at every round below it, blocks of <span class="count ok">at least <code>|Correct| − f</code></span> correct validators. No timing assumption is needed.</li>
         <li><strong>Inclusion</strong>: a correct validator's block is committed once a later slot it leads commits.</li>
         <li>Coverage holds for every rule except Bluestreak. Inclusion holds for the seven rules with SelfParent and NoEquiv.</li>
       </ul>
@@ -226,7 +226,7 @@
   <h2>Coverage does not give inclusion</h2>
   <div class="body wide-fig">
     <div class="text">
-      <p>Validators 0, 1, 2 reference only each other for six rounds; validator 3 is correct and no other validator references it. Each round of the commit has 2 correct creators, exactly the bound. None of validator 3's blocks enters the committed leader's history.</p>
+      <p>Validators 0, 1, 2 reference only each other for six rounds; validator 3 is correct and no other validator references it. Each round of the commit has <span class="count ok">2</span> correct creators, exactly the bound. None of <span class="t-blame">validator 3's blocks</span> enters the <span class="t-leader">committed leader</span>'s <span class="t-hull">history</span>.</p>
     </div>
     <figure class="dag">
       <script type="application/json">{
@@ -260,9 +260,9 @@
     <div class="text small">
       <ul>
         <li>Safety requires no restriction on equivocation; bounded storage does.</li>
-        <li>A creator is <strong>exposed</strong> in a block's history when the history holds two of its blocks in one round.</li>
+        <li>A creator is <strong>exposed</strong> in a block's history when the history holds <span class="t-twin">two of its blocks in one round</span>.</li>
         <li><strong>Rule</strong>: never reference a block whose creator is exposed in your own history.</li>
-        <li>This alone bounds a history, but with a constant that grows like <code>f^f</code>: one history can hold <code>2^e</code> chains of one creator.</li>
+        <li>This alone bounds a history, but with a constant that grows like <code>f^f</code>: one history can hold <span class="count bad"><code>2^e</code> chains</span> of one creator.</li>
       </ul>
       <div class="uses"><b>Uses:</b> no property of the rule; only which blocks a validator accepts.<br><b>Gives:</b> a bound on what a correct validator stores (next slide).</div>
     </div>
@@ -455,9 +455,9 @@
   <div class="body">
     <div class="text">
       <ul>
-        <li>A new validator adopts the round-<code>G</code> blocks that are reached from blocks of at least <code>f + 1</code> distinct creators at a later round <code>t</code>.</li>
-        <li>One of those creators is correct, so every base block is attested by a correct validator. No signatures are needed.</li>
-        <li>It then copies a correct peer's blocks above <code>G</code>. Its verdicts equal those of any validator with the full history.</li>
+        <li>A new validator adopts the <span class="t-evidence">round-<code>G</code> blocks</span> that are reached from <span class="t-anchor">blocks</span> of at least <code>f + 1</code> distinct creators at a later round <code>t</code>.</li>
+        <li>One of those creators is correct, so every <span class="t-evidence">base block</span> is attested by a correct validator. No signatures are needed.</li>
+        <li>It then copies a correct peer's <span class="t-fill">blocks above <code>G</code></span>. Its verdicts equal those of any validator with the full history.</li>
       </ul>
     </div>
     <figure class="dag">
@@ -545,9 +545,9 @@
   <div class="body stack">
     <div class="small">
       <ul>
-        <li>A validator <code>v₁</code> crashed after its block <code>B₁</code> and returns at round <code>r</code>. It cannot create a block: a valid block needs its own previous block one round below.</li>
-        <li>It sends one message: <code>B₁</code>, <code>r</code>, a donor validator <code>v₂</code>, and fresh identifiers.</li>
-        <li>Every receiver computes a <strong>filled</strong> block for <code>v₁</code> at each missed round: the donor's references and payload at that round, plus a reference to <code>v₁</code>'s previous block.</li>
+        <li>A validator <code>v₁</code> <span class="t-crash">crashed</span> after its block <span class="tagx ok"><code>B₁</code></span> and returns at round <code>r</code>. It cannot create a block: a valid block needs its own previous block one round below.</li>
+        <li>It sends one message: <code>B₁</code>, <code>r</code>, a <span class="tagx ok">donor</span> validator <code>v₂</code>, and fresh identifiers.</li>
+        <li>Every receiver computes a <strong class="t-fill">filled</strong> block for <code>v₁</code> at each missed round: the donor's references and payload at that round, plus <span class="t-path">a reference to <code>v₁</code>'s previous block</span>.</li>
       </ul>
     </div>
     <div class="body">
@@ -585,7 +585,7 @@
     <div class="text">
       <ol>
         <li data-step="1">The filled DAG is valid, and every old block is unchanged.</li>
-        <li data-step="2"><code>v₁</code> has a block at every missed round, so it can produce again.</li>
+        <li data-step="2"><code>v₁</code> has <span class="t-hull">a block at every missed round</span>, so it can produce again.</li>
         <li data-step="3">A slot led by <code>v₁</code> in the missed rounds is skipped at once, given a quorum one round above (the <strong>prompt skip</strong>). No later view can commit it.</li>
         <li data-step="4">Every verdict reached before the fill agrees with every verdict after it.</li>
       </ol>
@@ -619,7 +619,7 @@
     <div class="text">
       <ul>
         <li>A validator's own blocks form a chain, so the donor's whole line is fixed by its top block.</li>
-        <li>The fill depends only on <code>B₁</code>, the donor's top block <code>B₂</code>, and the fresh identifiers. The message carries only these.</li>
+        <li>The fill depends only on <span class="nd ok"><code>B₁</code></span>, the donor's top block <span class="nd ok"><code>B₂</code></span>, and the fresh identifiers. The <span class="nd accent">message</span> carries only these.</li>
         <li>A receiver that holds <code>B₂</code> holds the donor's whole line. After the one message, <code>v₁</code> has a block at every round up to <code>B₂</code>'s round, so it can produce at the next.</li>
       </ul>
     </div>
@@ -683,7 +683,7 @@
   <div class="body stack">
     <div class="small">
       <ul>
-        <li>With a horizon <code>Λ</code> rounds below, recovery in one message works for outages of at most <code>Λ</code> rounds; for longer ones <code>B₁</code> has been discarded.</li>
+        <li>With a horizon <code>Λ</code> rounds below, recovery in one message works for outages of at most <code>Λ</code> rounds; for longer ones <span class="nd bad"><code>B₁</code></span> has been discarded.</li>
         <li>No old block references a filled block, so <code>v₁</code> is not covered in the rounds it missed.</li>
         <li>The storage rule must be re-checked; with a donor line whose blocks all reach <code>B₁</code>, and <code>v₁</code> not equivocating, it is one reachability check per round.</li>
         <li>If the donor line is taken from blocks every receiver already holds, nothing else needs to be sent.</li>
@@ -752,8 +752,8 @@
     <div class="small">
       <ul>
         <li>If all of <code>v₁</code>'s blocks are below the horizon, its chain of own blocks cannot be continued.</li>
-        <li>Each validator adds a round-0 block for <code>v₁</code>, with no references, to its cut DAG. This needs no exception to the self-parent rule.</li>
-        <li>Procedure: (1) join from the attested base to read; (2) re-genesis to write; (3) one fill message from the genesis block to the current round.</li>
+        <li>Each validator adds <span class="t-anchor">a round-0 block</span> for <code>v₁</code>, with no references, to its cut DAG. This needs no exception to the self-parent rule.</li>
+        <li>Procedure: (1) join from the attested base to read; (2) re-genesis to write; (3) one <span class="t-fill">fill</span> message from the <span class="tagx ok">genesis</span> block to the current round.</li>
         <li>While a quorum still produces blocks, at most <code>f</code> validators can be in this state at once.</li>
       </ul>
     </div>
@@ -784,8 +784,8 @@
     <div class="text small">
       <ul>
         <li>Copying a donor's references would attribute to <code>v₁</code> claims it never made.</li>
-        <li>Each filled block references only <code>v₁</code>'s previous block and carries no tag and no claim. The message is <code>(v₁, B₁, r)</code>; no donor.</li>
-        <li>Verdicts do not change: slot 2 is committed and slot 3 skipped, before and after.</li>
+        <li>Each <span class="t-fill">filled block</span> references only <span class="t-path"><code>v₁</code>'s previous block</span> and carries no tag and no claim. The message is <code>(v₁, B₁, r)</code>; no donor.</li>
+        <li>Verdicts do not change: slot 2 is <span class="verdict commit">committed</span> and slot 3 <span class="verdict skip">skipped</span>, before and after.</li>
       </ul>
       <div class="uses"><b>Uses:</b> the same properties as the fill, and Bluestreak's claim discipline.<br><b>Gives:</b> recovery for a rule whose blocks carry claims.</div>
     </div>

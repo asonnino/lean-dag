@@ -37,9 +37,9 @@
   <div class="body stack">
     <div>
       <ul>
-        <li><strong>Protocols.</strong> Thirteen commit rules from the literature. Eleven are proved safe and live; two are shown unsafe or not live by counterexamples.</li>
-        <li><strong>Properties.</strong> One small interface — four properties and a “support” — that each of the eleven rules is proved to satisfy.</li>
-        <li><strong>Mechanisms.</strong> A pacemaker, chain quality, a storage bound, garbage collection, crash recovery, adaptive leaders and an adaptive leader count, checkpoints: each proved once against the interface, and composable.</li>
+        <li><span class="nd accent">Protocols</span>. Thirteen commit rules from the literature. Eleven are proved safe and live; two are shown unsafe or not live by counterexamples.</li>
+        <li><span class="nd accent">Properties</span>. One small interface — four properties and a “support” — that each of the eleven rules is proved to satisfy.</li>
+        <li><span class="nd accent">Mechanisms</span>. A pacemaker, chain quality, a storage bound, garbage collection, crash recovery, adaptive leaders and an adaptive leader count, checkpoints: each proved once against the interface, and composable.</li>
         <li>Safety theorems use no assumption about the network.</li>
       </ul>
     </div>
@@ -76,10 +76,10 @@
     <div class="text">
       <ul>
         <li><code>n</code> validators each keep a copy of one ordered log (a ledger).</li>
-        <li>Clients submit transactions to any validator.</li>
+        <li><span class="nd dashed">Clients</span> submit <span class="nd accent">transactions</span> to any validator.</li>
         <li><strong>Safety:</strong> no two validators output conflicting logs.</li>
         <li><strong>Liveness:</strong> every transaction from a correct client is eventually in every correct validator’s log.</li>
-        <li>Some validators may be faulty. The protocol must tolerate them without identifying them.</li>
+        <li>Some validators may be <span class="t-byz">faulty</span>. The protocol must tolerate them without identifying them.</li>
       </ul>
     </div>
     <figure class="diagram">
@@ -125,10 +125,10 @@
   <div class="body wide-fig">
     <div class="text small">
       <ul>
-        <li>A <strong>Byzantine</strong> validator may deviate arbitrarily from the protocol: send false messages, send none, or send different messages to different validators (equivocate).</li>
+        <li>A <span class="tagx bad">Byzantine</span> validator may deviate arbitrarily from the protocol: send false messages, send none, or send different messages to different validators (equivocate).</li>
         <li>A <strong>crashed</strong> validator stops and never resumes.</li>
         <li>With <code>n ≥ 3f + 1</code> validators, at most <code>f</code> Byzantine, a <strong>quorum</strong> is <code>n − f</code> validators.</li>
-        <li>Two quorums share at least <code>n − 2f ≥ f + 1</code> validators, so at least one correct validator.</li>
+        <li>Two quorums share at least <code>n − 2f ≥ f + 1</code> validators, so at least one <span class="tagx ok">correct</span> validator.</li>
         <li>A correct validator does not equivocate, so two quorums cannot support two conflicting statements.</li>
       </ul>
     </div>
@@ -175,7 +175,7 @@
       <ul>
         <li>Messages can be delayed arbitrarily, up to an unknown time GST (global stabilisation time).</li>
         <li>A <strong>reliable</strong> validator is a correct one that keeps producing blocks. Liveness assumes a quorum of them.</li>
-        <li>After GST, what one reliable validator holds reaches every reliable validator within <code>Δ</code>. This is called <strong>view convergence</strong>.</li>
+        <li>After GST, what one reliable validator holds reaches every reliable validator <span class="t-hull">within <code>Δ</code></span>. This is called <strong>view convergence</strong>.</li>
         <li>Safety is proved with no assumption about the network.</li>
         <li>Liveness is proved from view convergence and the protocol’s own rules.</li>
       </ul>
@@ -229,7 +229,7 @@
     <div class="text small">
       <ul>
         <li>Validators work in <strong>rounds</strong>. In each round each validator creates one <strong>block</strong>: a round number, its creator, references to earlier blocks, and a payload of transactions.</li>
-        <li>A valid block at round <code>r &gt; 0</code> references blocks of round <code>r − 1</code> from at least <code>n − f</code> distinct creators, one of them its own creator.</li>
+        <li>A <span class="t-hull">valid block</span> at round <code>r &gt; 0</code> references blocks of round <code>r − 1</code> from at least <code>n − f</code> distinct creators, one of them its own creator.</li>
         <li>The blocks and references form a directed acyclic graph (DAG). A block’s <strong>history</strong> is every block it reaches by references. A validator’s <strong>view</strong> is the set of blocks it holds, including their histories.</li>
         <li>Blocks are named by identifier (a hash), so two validators may hold different sets of blocks but agree on what each identifier means.</li>
       </ul>
@@ -264,9 +264,9 @@
   <div class="body">
     <div class="text small">
       <ul>
-        <li>In a certified DAG (Narwhal, Bullshark), each block receives a certificate, built by an extra exchange of signatures, before others may reference it.</li>
+        <li>In a certified DAG (Narwhal, Bullshark), each block receives a <span class="nd accent">certificate</span>, built by an extra exchange of signatures, before others may reference it.</li>
         <li>In an uncertified DAG (Mysticeti and this family), no certificate is sent.</li>
-        <li>A block two rounds above a leader <strong>is</strong> a certificate for it when its references include <code>n − f</code> blocks that reference the leader.</li>
+        <li>A block two rounds above a <span class="t-leader">leader</span> <strong>is</strong> a <span class="t-cert">certificate</span> for it when its references include <code>n − f</code> <span class="t-vote">blocks that reference the leader</span>.</li>
         <li>Every direct commit rule is then a threshold on a set of blocks found in the graph.</li>
       </ul>
       <figure class="diagram">
@@ -348,10 +348,10 @@
     <div class="text small">
       <p>A slot is decided in one of four ways:</p>
       <ol>
-        <li><strong>Direct commit</strong>: the rule’s commit condition holds in the validator’s view.</li>
-        <li><strong>Direct skip</strong>: the rule’s skip condition holds.</li>
-        <li><strong>Indirect commit</strong>: a later committed slot (the <strong>anchor</strong>) links a candidate.</li>
-        <li><strong>Indirect skip</strong>: the anchor links no candidate.</li>
+        <li><span class="nd ok"><strong>Direct commit</strong></span>: the rule’s commit condition holds in the validator’s view.</li>
+        <li><span class="nd bad"><strong>Direct skip</strong></span>: the rule’s skip condition holds.</li>
+        <li><span class="nd ok"><strong>Indirect commit</strong></span>: a later committed slot (the <span class="nd accent">anchor</span>) links a candidate.</li>
+        <li><span class="nd bad"><strong>Indirect skip</strong></span>: the anchor links no candidate.</li>
       </ol>
       <p>The anchor is the nearest eligible committed slot above; every eligible slot in between must be skipped.</p>
     </div>
@@ -438,8 +438,8 @@
   <div class="body">
     <div class="text small">
       <ul>
-        <li>An anchor at slot <code>j</code> is <strong>eligible</strong> for slot <code>k</code> when <code>round(k) + wave &lt; round(j)</code>.</li>
-        <li>A slot one round above <code>k</code> cannot reach a certificate for <code>k</code>’s leader. A slot two rounds above reaches one only if its own block is a certificate.</li>
+        <li>An <span class="t-anchor">anchor</span> at slot <code>j</code> is <span class="tagx ok">eligible</span> for slot <code>k</code> when <code>round(k) + wave &lt; round(j)</code>.</li>
+        <li>A slot one round above <code>k</code> (<span class="blk leader dim">5</span>) cannot reach a certificate for <code>k</code>’s leader. A slot two rounds above (<span class="blk leader dim">10</span>) reaches one only if its own block is a certificate.</li>
         <li>Anchoring at such slots would let one validator’s direct commit become another validator’s indirect skip.</li>
       </ul>
     </div>
@@ -478,7 +478,7 @@
   <div class="body stack">
     <div class="small">
       <ul>
-        <li>The absence of the leader’s block from a view is not a sound reason to skip: a validator cannot distinguish a silent leader from a leader whose block has not yet arrived.</li>
+        <li>The absence of the leader’s block <span class="blk absent">?</span> from a view is not a sound reason to <span class="verdict skip">skip</span>: a validator cannot distinguish a silent leader from a leader whose block has not yet arrived.</li>
         <li>In Mysticeti a direct skip needs <code>n − f</code> blocks of the round above that reference no candidate. Those blocks exist, and later blocks do not alter them.</li>
       </ul>
     </div>
@@ -556,7 +556,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <h2>The protocol family</h2>
   <div class="body wide-fig">
     <div class="text small">
-      <p>Each rule in this part changes Mysticeti in one or more ways:</p>
+      <p>Each rule in this part changes <span class="nd leader">Mysticeti</span> in one or more ways:</p>
       <table class="compact">
         <tr><th>Change</th><th>Rules</th></tr>
         <tr><td>Crash faults only, two rounds</td><td>Nemo-Nemo</td></tr>
@@ -686,9 +686,9 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <div class="body wide-fig">
     <div class="text small">
       <ul>
-        <li data-step="2">At round 2 only <code>v0</code>'s block is a certificate for <code>L</code>. One certificate is fewer than <code>q</code>, and one blame is fewer than <code>q</code>: no direct decision.</li>
-        <li data-step="3">The slot at round 3, led by <code>v0</code>, is eligible. It is committed directly by rounds 4 and 5.</li>
-        <li data-step="4">Its block references <code>v0</code>'s certificate, so <code>L</code> is <strong>committed indirectly</strong>.</li>
+        <li data-step="2">At round 2 only <code>v0</code>'s block <span class="blk cert">8</span> is a <span class="t-cert">certificate</span> for <code>L</code>. One certificate is fewer than <code>q</code>, and one <span class="t-blame">blame</span> is fewer than <code>q</code>: <span class="verdict undecided">no direct decision</span>.</li>
+        <li data-step="3">The slot at round 3, led by <code>v0</code> (<span class="blk leader anchor">12</span>), is eligible. It is <span class="verdict commit">committed directly</span> by rounds 4 and 5.</li>
+        <li data-step="4">Its block <span class="t-path">references</span> <code>v0</code>'s certificate <span class="blk cert">8</span>, so <code>L</code> is <span class="verdict commit">committed indirectly</span>.</li>
       </ul>
     </div>
     <figure class="dag">
@@ -811,10 +811,10 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <h2>Nemo-Nemo: the rules on a crash</h2>
   <div class="body">
     <div class="text small">
-      <p><code>n = 3</code>, majority 2. Validator 2 creates blocks in rounds 0 and 1, then crashes.</p>
+      <p><code>n = 3</code>, majority 2. Validator 2 creates blocks in rounds 0 and 1, then <span class="t-crash">crashes</span>.</p>
       <ul>
-        <li data-step="1">Slot 3 (round 3, leader <code>v0</code>): <code>v0</code> and <code>v1</code> vote at round 4. <code>2 ≥ 2</code>: <strong>commit</strong>.</li>
-        <li data-step="2">Slot 2 (round 2, leader <code>v2</code>) has no candidate. It has no direct skip; the anchor at slot 4 links nothing for it: <strong>indirect skip</strong>. Slot 3 is not eligible for slot 2.</li>
+        <li data-step="1">Slot 3 (round 3, leader <code>v0</code>, <span class="blk leader">8</span>): <code>v0</code> and <code>v1</code> <span class="t-vote">vote</span> at round 4. <span class="count accent">2 ≥ 2</span>: <span class="verdict commit">commit</span>.</li>
+        <li data-step="2">Slot 2 (round 2, leader <code>v2</code>) has no candidate. It has no direct skip; the anchor <span class="blk leader anchor">11</span> at slot 4 links nothing for it: <span class="verdict skip">indirect skip</span>. Slot 3 is not eligible for slot 2.</li>
       </ul>
     </div>
     <div class="body stack text">
@@ -894,11 +894,11 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <h2>Odontoceti: direct and indirect</h2>
   <div class="body wide-fig">
     <div class="text small">
-      <p><code>n = 6</code>, <code>f = 1</code>: direct threshold 5, indirect threshold 3. <code>v0</code> is Byzantine.</p>
+      <p><code>n = 6</code>, <code>f = 1</code>: direct threshold 5, indirect threshold 3. <code>v0</code> is <span class="t-byz">Byzantine</span>.</p>
       <ul>
-        <li data-step="1">Slot 0 (leader <code>v0</code>): 5 blames: <strong>direct skip</strong>.</li>
-        <li data-step="2">Slot 1: 3 votes, 3 blames: no direct decision. <span data-step="3">The anchor at slot 3 has voters <code>{1, 2, 3}</code> in its history, <code>3 ≥ 3</code>: <strong>indirect commit</strong>.</span></li>
-        <li data-step="4">Slot 2: 2 votes, 4 blames: no direct decision. The anchor at slot 4 links nothing: <strong>indirect skip</strong>.</li>
+        <li data-step="1">Slot 0 (leader <code>v0</code>, <span class="blk leader">0</span>): 5 <span class="t-blame">blames</span>, <span class="count bad">5 ≥ 5</span>: <span class="verdict skip">direct skip</span>.</li>
+        <li data-step="2">Slot 1: 3 <span class="t-vote">votes</span>, 3 <span class="t-blame">blames</span>: no direct decision. <span data-step="3">The anchor <span class="blk leader anchor">21</span> at slot 3 has <span class="t-hull">voters <code>{1, 2, 3}</code></span> in its history, <span class="count ok">3 ≥ 3</span>: <span class="verdict commit">indirect commit</span>.</span></li>
+        <li data-step="4">Slot 2: 2 <span class="t-vote">votes</span>, 4 <span class="t-blame">blames</span>: no direct decision. The anchor <span class="blk leader anchor">28</span> at slot 4 links nothing: <span class="verdict skip">indirect skip</span>.</li>
       </ul>
     </div>
     <figure class="dag">
@@ -960,10 +960,10 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <div class="body">
     <div class="text small">
       <ul>
-        <li>A Byzantine leader can make two blocks (twins) in one round.</li>
+        <li>A <span class="t-byz">Byzantine</span> leader can make two blocks (twins, <span class="blk leader">0</span> and <span class="blk leader">6</span>) in one round.</li>
         <li>Both twins can reach the <code>n − 3f</code> threshold inside one anchor's history.</li>
         <li>If each validator committed any passing twin, two validators could commit different twins.</li>
-        <li>The rule therefore commits the <strong>least</strong> passing candidate, an order every validator computes the same way.</li>
+        <li>The rule therefore commits the <strong>least</strong> passing candidate (<span class="blk leader">16</span>: <span class="verdict commit">commit</span>), an order every validator computes the same way.</li>
       </ul>
     </div>
     <figure class="dag">
@@ -1059,8 +1059,8 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <div class="body">
     <div class="text small">
       <ul>
-        <li><code>fb = 0</code>, <code>fc = 1</code>, <code>n = 4</code>, <code>q = 3</code>: validator 3 stops after round 0. Each slot led by a live validator receives 3 votes: <strong>direct commit</strong>.</li>
-        <li data-step="1"><code>fb = 0</code>, <code>fc = 1</code>, <code>n = 5</code>, <code>q = 4</code>, <code>k ∈ {2, 3}</code>: slot 1 receives 2 votes and 3 blames, so no direct decision. <span data-step="2">Both voters are in the history of the anchor at slot 3.</span> <span data-step="3">At <code>k = 2</code> slot 1 is <strong>committed</strong>; at <code>k = 3</code> it is <strong>skipped</strong>.</span></li>
+        <li><code>fb = 0</code>, <code>fc = 1</code>, <code>n = 4</code>, <code>q = 3</code>: validator 3 <span class="t-crash">stops</span> after round 0. Each slot led by a live validator receives 3 <span class="t-vote">votes</span>: <span class="verdict commit">direct commit</span>.</li>
+        <li data-step="1"><code>fb = 0</code>, <code>fc = 1</code>, <code>n = 5</code>, <code>q = 4</code>, <code>k ∈ {2, 3}</code>: slot 1 (<span class="blk leader">6</span>) receives 2 <span class="t-vote">votes</span> and 3 <span class="t-blame">blames</span>, so no direct decision. <span data-step="2">Both voters are in the <span class="t-hull">history</span> of the anchor <span class="blk leader anchor">18</span> at slot 3.</span> <span data-step="3">At <code>k = 2</code> slot 1 is <span class="verdict commit">committed</span>; at <code>k = 3</code> it is <span class="verdict skip">skipped</span>.</span></li>
       </ul>
     </div>
     <figure class="dag">
@@ -1112,7 +1112,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <h2>Hybrid: the committee bound is tight</h2>
   <div class="body">
     <div class="text small">
-      <p>With <code>fb = 1</code>, <code>fc = 1</code> and <code>n = 8</code> (one fewer than <code>5fb + 3fc + 1 = 9</code>), no <code>k</code> is admissible. For every <code>k</code>, one full view of one DAG derives both a commit and a skip for the same slot.</p>
+      <p>With <code>fb = 1</code>, <code>fc = 1</code> and <code>n = 8</code> (one fewer than <code>5fb + 3fc + 1 = 9</code>), no <code>k</code> is admissible. For every <code>k</code>, one full view of one DAG derives both a <span class="verdict commit">commit</span> and a <span class="verdict skip">skip</span> for the same slot.</p>
       <div class="legend"><span class="l-leader">candidate 1; anchor 17 (leader <code>v1</code>)</span><span class="l-vote">vote</span><span class="l-blame">blame</span><span class="l-anchor">anchor</span><span>shaded row: Byzantine <code>v0</code></span></div>
     </div>
       <figure class="dag">
@@ -1213,10 +1213,10 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <h2>FinWhale: fast and slow commit</h2>
   <div class="body">
     <div class="text small">
-      <p><code>f = 2</code>, <code>p = 2</code>, <code>n = 9</code>; validators 0 and 1 are Byzantine.</p>
+      <p><code>f = 2</code>, <code>p = 2</code>, <code>n = 9</code>; validators 0 and 1 are <span class="t-byz">Byzantine</span>.</p>
       <ul>
-        <li data-step="1"><strong>Fast.</strong> Seven round-1 blocks reference the leader's block: <code>7 ≥ 7</code>, commit at round 1.</li>
-        <li data-step="2"><strong>Slow.</strong> Every round-2 block references 7 votes; six such blocks suffice: <code>6 ≥ 6</code> certificates, commit at round 2.</li>
+        <li data-step="1"><strong>Fast.</strong> Seven round-1 blocks reference the leader's block <span class="blk leader">0</span>: <span class="count accent">7 ≥ 7</span>, <span class="verdict commit">commit</span> at round 1.</li>
+        <li data-step="2"><strong>Slow.</strong> Every round-2 block references 7 <span class="t-vote">votes</span>; six such blocks suffice: <span class="count accent">6 ≥ 6</span> <span class="t-cert">certificates</span>, <span class="verdict commit">commit</span> at round 2.</li>
       </ul>
       <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-cert">certificate</span><span>shaded: six certificates counted</span></div>
     </div>
@@ -1255,9 +1255,9 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <div class="body">
     <div class="text small">
       <ul>
-        <li>A round-<code>r+2</code> block is <strong>evidence</strong> for <code>l</code> when it references at least <code>f + p − 1</code> votes for <code>l</code>; if its references show the leader equivocating, at least <code>f + p</code> for <code>l</code> and at most <code>f + p − 1</code> for every other candidate.</li>
+        <li>A round-<code>r+2</code> block is <strong class="t-evidence">evidence</strong> for <code>l</code> when it references at least <code>f + p − 1</code> <span class="t-vote">votes</span> for <code>l</code>; if its references show the leader equivocating, at least <code>f + p</code> for <code>l</code> and at most <code>f + p − 1</code> for every other candidate.</li>
         <li><strong>Direct skip</strong>: <code>2f + p</code> blocks at <code>r + 1</code> reference no candidate, <strong>and</strong> <code>2f + p</code> blocks at <code>r + 2</code> are evidence for nothing.</li>
-        <li><strong>Indirect commit</strong>: the anchor's history holds a slow certificate for <code>l</code>, or <code>2f + p</code> evidence blocks for <code>l</code>. The least such <code>l</code> is committed.</li>
+        <li><strong>Indirect commit</strong>: the anchor's history holds a slow certificate for <code>l</code>, or <code>2f + p</code> <span class="t-evidence">evidence</span> blocks for <code>l</code>. The least such <code>l</code> is committed.</li>
         <li>Evidence is needed because a fast commit may leave no slow certificate.</li>
       </ul>
     </div>
@@ -1386,11 +1386,11 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <h2>Hydrozoan: why the second rung exists</h2>
   <div class="body wide-fig">
     <div class="text small">
-      <p><code>n = 7</code>; <code>v0</code> is Byzantine and equivocates; <code>v1</code> has crashed.</p>
+      <p><code>n = 7</code>; <code>v0</code> is <span class="t-byz">Byzantine</span> and <span class="t-twin">equivocates</span>; <code>v1</code> has <span class="t-crash">crashed</span>.</p>
       <ul>
-        <li data-step="1">The leader receives exactly <code>qFast = 6</code> votes: <strong>fast commit</strong>.</li>
-        <li data-step="2">No block is a certificate: each round-2 block references only 4 votes, one fewer than <code>qCert = 5</code>.</li>
-        <li data-step="3">A validator that missed the fast commit consults the anchor. Rung 1 finds no certificate. Rung 2 finds 4 voters, at least <code>qWeak = 3</code>: <strong>commit</strong>.</li>
+        <li data-step="1">The leader <span class="blk leader">2</span> receives exactly <code>qFast = 6</code> <span class="t-vote">votes</span>: <span class="verdict commit">fast commit</span>.</li>
+        <li data-step="2">No block is a certificate: each round-2 block references only <span class="count bad">4 votes</span>, one fewer than <code>qCert = 5</code>.</li>
+        <li data-step="3">A validator that missed the fast commit consults the anchor <span class="blk anchor">24</span>. Rung 1 finds no certificate. Rung 2 finds <span class="count ok">4 voters</span>, at least <code>qWeak = 3</code>: <span class="verdict commit">commit</span>.</li>
       </ul>
     </div>
     <figure class="dag">
@@ -1513,11 +1513,11 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <h2>Optimal-Hydrozoan: the evidence rung</h2>
   <div class="body wide-fig">
     <div class="text small">
-      <p><code>n = 4</code>. The leader equivocates (copies 4 and 5).</p>
+      <p><code>n = 4</code>. The leader equivocates (copies <span class="blk leader">4</span> and <span class="blk leader twin">5</span>).</p>
       <ul>
-        <li data-step="1">Copy 4 receives 3 votes: <strong>fast commit</strong>. No block is a certificate.</li>
-        <li data-step="2">Each round-<code>r+2</code> block sees both copies, references 2 votes for copy 4 and 1 for copy 5, and is evidence for copy 4.</li>
-        <li data-step="3">The anchor’s history holds the three evidence blocks: rung 2 <strong>commits</strong> copy 4.</li>
+        <li data-step="1">Copy 4 receives <span class="count accent">3</span> <span class="t-vote">votes</span>: <span class="verdict commit">fast commit</span>. No block is a certificate.</li>
+        <li data-step="2">Each round-<code>r+2</code> block sees both copies, references 2 votes for copy 4 and 1 for copy 5, and is <span class="t-evidence">evidence</span> for copy 4.</li>
+        <li data-step="3">The <span class="t-anchor">anchor</span>’s history holds the three <span class="t-evidence">evidence blocks</span>: rung 2 <span class="verdict commit">commits</span> copy 4.</li>
       </ul>
     </div>
     <figure class="dag">
@@ -1556,7 +1556,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="text small">
       <ul>
         <li><code>n ≥ 3f + 1</code>, quorum <code>n − f</code>.</li>
-        <li><strong>Sparse DAG</strong>: only leader blocks must reference <code>n − f</code> blocks. Other blocks reference their own previous block and, optionally, leader blocks.</li>
+        <li><strong>Sparse DAG</strong>: only <span class="t-leader">leader blocks</span> must reference <code>n − f</code> blocks. Other blocks reference their own previous block and, optionally, leader blocks.</li>
         <li>A round-<code>r+2</code> block <strong>claims</strong> <code>L</code> by naming it in its payload, or by referencing <code>n − f</code> votes for it.</li>
         <li><strong>Direct commit</strong>: <code>n − f</code> claims for a leader-tagged <code>L</code>.</li>
         <li><strong>Direct skip</strong>: <code>n − f</code> round-<code>r+1</code> blocks in view, and for each candidate <code>n − f</code> of them that omit it.</li>
@@ -1600,9 +1600,9 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="text small">
       <p><code>n = 4</code>, leader of slot <code>k</code> is <code>v(k mod 4)</code>.</p>
       <ul>
-        <li data-step="1">Slot 0 has 3 votes but only 2 claims (blocks 8 and 10): not decided directly.</li>
-        <li data-step="1">Slots 1–3 are committed directly.</li>
-        <li data-step="3">The anchor, block 15, references block 8, which claims block 0: slot 0 is <strong>committed indirectly</strong>.</li>
+        <li data-step="1">Slot 0 has 3 <span class="t-vote">votes</span><span data-step="2"> but only <span class="count bad">2 claims</span> (blocks <span class="blk">8</span> and <span class="blk leader">10</span>): <span class="verdict undecided">not decided directly</span></span>.</li>
+        <li data-step="1">Slots 1–3 are <span class="verdict commit">committed</span> directly.</li>
+        <li data-step="3">The <span class="t-anchor">anchor</span>, block <span class="blk leader anchor">15</span>, references block <span class="blk">8</span>, which <span class="t-claim">claims</span> block 0: slot 0 is <span class="verdict commit">committed indirectly</span>.</li>
       </ul>
     </div>
     <figure class="dag">
@@ -1642,8 +1642,8 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="text">
       <ul>
         <li>A claim names a block; the votes behind it need not be in the claimer’s history.</li>
-        <li data-step="2">A Byzantine block can claim a slot that a quorum skipped.</li>
-        <li data-step="3">So the indirect rule is safe only at a committed anchor: every committed anchor is certified, backed and leader-tagged. Of the rules here, only Bluestreak requires this field.</li>
+        <li data-step="2">A <span class="t-byz">Byzantine</span> block can <span class="t-claim">claim</span> a slot that a quorum <span class="verdict skip">skipped</span>.</li>
+        <li data-step="3">So the indirect rule is safe only at a committed <span class="t-anchor">anchor</span>: every committed anchor is certified, backed and leader-tagged. Of the rules here, only Bluestreak requires this field.</li>
       </ul>
     </div>
     <figure class="dag">
@@ -1678,7 +1678,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <div class="body stack">
     <div class="text">
       <ul>
-        <li>From round 2, a correct block’s claim must name a block certified exactly two rounds below.</li>
+        <li>From round 2, a <span class="nd accent">correct block</span>’s claim must name a <span class="nd leader">block certified</span> exactly two rounds below.</li>
         <li>Safety, liveness and every mechanism assume this discipline.</li>
         <li>Read two rounds deep, the discipline is preserved by garbage collection.</li>
       </ul>
@@ -1734,7 +1734,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
       <div class="compare"><b>Compared with Mysticeti:</b> a longer wave, votes found anywhere in the history, a skip per slot, and an unpredictable leader.</div>
       <div class="tradeoffs">
         <div class="plus">Live with no timing assumption about the network.</div>
-        <div class="minus">More rounds per commit; it needs an unpredictable leader (a common coin).</div>
+        <div class="minus">More rounds per commit; it needs an unpredictable leader (a <span class="nd accent">common coin</span>).</div>
       </div>
     </div>
   </div>
@@ -1754,7 +1754,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <div class="body stack">
     <div class="small">
       <ul>
-        <li>At <code>w ≥ 4</code> a history can contain two twins of the leader; a block votes only for the least.</li>
+        <li>At <code>w ≥ 4</code> a history can contain two <span class="t-twin">twins</span> of the leader; a block <span class="t-vote">votes</span> only for the least.</li>
         <li>At <code>w ≥ 4</code>, once a correct quorum produces through the wave, some correct validator’s block is directly committed.</li>
         <li>At <code>w ≥ 5</code>, at least <code>n − f − b</code> correct validators are <strong>good</strong>: their block would commit if chosen (<code>b</code> = number of Byzantine).</li>
         <li>An adversary that knows the leader in advance can prevent the leader’s block from entering the other validators’ histories.</li>
@@ -1778,8 +1778,8 @@ example : DirectCommit U3 0 0 := by decide</pre>
       </figure>
       <div class="text small">
         <ul>
-          <li><code>twin4</code>: twins 0 and 4 lie in block 8’s history; 8 votes for 0.</li>
-          <li><code>aim4</code>: block 5 enters no other history up to round 3. Good at <code>w = 4</code>: <code>{0, 2, 3}</code> (shaded); at <code>w = 5</code>: all.</li>
+          <li><code>twin4</code>: twins <span class="blk leader">0</span> and <span class="blk leader twin">4</span> lie in block <span class="blk vote">8</span>’s history; 8 votes for 0.</li>
+          <li><code>aim4</code>: block <span class="blk leader">5</span> enters no other history up to round 3. Good at <code>w = 4</code>: <code>{0, 2, 3}</code> (<span class="t-hull">shaded</span>); at <code>w = 5</code>: all.</li>
         </ul>
         <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-blame">blame</span></div>
       </div>
@@ -1865,9 +1865,9 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <div class="body stack">
     <div class="small">
       <ul>
-        <li><code>n = 6</code>: the leader’s block enters no history but its own. Five blames: <strong>direct skip</strong>. The schedule is fair, but the leader was known in advance.</li>
-        <li>Two twins can both pass the <code>n − 3f</code> test at one anchor: the least must be chosen.</li>
-        <li>The paper’s procedure skips per candidate, which can skip one twin while the other is committed.</li>
+        <li><code>n = 6</code>: the leader’s block <span class="blk leader">1</span> enters no history but its own. Five <span class="t-blame">blames</span>: <span class="verdict skip">direct skip</span>. The schedule is fair, but the leader was known in advance.</li>
+        <li>Two twins, <span class="blk leader">0</span> and <span class="blk leader twin">6</span>, can both pass the <code>n − 3f</code> test at one anchor: the least must be chosen.</li>
+        <li>The paper’s procedure skips per candidate, which can <span class="verdict skip">skip</span> one twin while the other is <span class="verdict commit">committed</span>.</li>
       </ul>
       <div class="legend"><span class="l-leader">leader block; 0 and 6 are twins of <code>v0</code></span><span class="l-vote">vote, for the least twin in its history</span><span class="l-blame">blame</span><span class="l-path">a vote’s path to the leader block</span></div>
     </div>
@@ -1914,8 +1914,8 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <div class="body">
     <div class="text small">
       <ul>
-        <li>Each slot has a <strong>kind</strong>: synchronous (a known leader, short wave <code>ws</code>) or asynchronous (an unpredictable leader, long wave <code>wa</code>).</li>
-        <li>A slot is decided by the rule of its kind, at its own wave; its anchor lies at or above <code>round + w(kind)</code>.</li>
+        <li>Each slot has a <strong>kind</strong>: <span class="nd">synchronous</span> (a known leader, short wave <code>ws</code>) or <span class="nd accent">asynchronous</span> (an unpredictable leader, long wave <code>wa</code>).</li>
+        <li>A slot is decided by the rule of its kind, at its own wave; its <span class="nd ok dashed">anchor</span> lies at or above <code>round + w(kind)</code>.</li>
         <li>A <strong>period</strong> <code>P</code> sets the kinds: round <code>r</code> is asynchronous when <code>r mod P = 0</code>. The period is adapted at intervals of <code>I</code> rounds.</li>
         <li>Two instances: Mysticeti with Mahi-Mahi (<code>n ≥ 3f + 1</code>, waves 3 and <code>wa ≥ 4</code>), and Odontoceti with Async BlueBottle (<code>n ≥ 5f + 1</code>, waves 2 and 3).</li>
       </ul>
@@ -1947,9 +1947,9 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <div class="body wide-fig">
     <div class="text small">
       <ul>
-        <li data-step="1">At any period <code>P ≥ ws</code>, an adversary delivers each synchronous leader’s block to exactly <code>f + 1</code> validators. Neither a commit nor a skip quorum forms.</li>
-        <li data-step="2">The synchronous slot just below each asynchronous round is then undecided in every view, and the output does not advance beyond it.</li>
-        <li data-step="3">A committed asynchronous slot does not decide the synchronous slots below it.</li>
+        <li data-step="1">At any period <code>P ≥ ws</code>, an adversary delivers each synchronous <span class="t-leader">leader’s block</span> to exactly <code>f + 1</code> validators. Neither a commit nor a skip quorum forms.</li>
+        <li data-step="2">The synchronous slot just below each asynchronous round is then <span class="verdict undecided">undecided</span> in every view, and the output does not advance beyond it.</li>
+        <li data-step="3">A <span class="verdict commit">committed</span> asynchronous slot does not decide the synchronous slots below it.</li>
         <li data-step="3">At period 1 every slot is proved to be decided.</li>
       </ul>
     </div>
@@ -1992,7 +1992,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="text small">
       <ul>
         <li>The period is changed by a second verdict, read at the asynchronous <strong>control</strong> slots of each interval.</li>
-        <li><strong>Failover</strong>: when the anchor is more than <code>I</code> rounds above the last committed output, the next interval runs at period 1.</li>
+        <li><strong>Failover</strong>: when the <span class="nd accent">anchor</span> is more than <code>I</code> rounds above the last committed <span class="nd">output</span>, the next interval runs at <span class="nd ok">period 1</span>.</li>
         <li>Under failover a stalled slot is decided almost surely. The probability it is still undecided after <code>M</code> blocks, each of <code>wa·K</code> coins, is at most
           <code>2 · ((n<sup>wa·K</sup> − (n − f − b)<sup>wa·K</sup>) / n<sup>wa·K</sup>)<sup>⌊M/2⌋</sup></code>, where <code>b</code> is the number of Byzantine validators and <code>K</code> bounds the period.</li>
       </ul>
@@ -2055,7 +2055,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="text">
       <ul>
         <li><code>n ≥ 3f + 1</code>; no self-parent rule.</li>
-        <li><strong>Commit</strong> a leader block <code>l</code> when <code>n − f</code> processes reference it from the round above, and every earlier leader slot is <strong>resolved</strong>: one of its blocks is in <code>l</code>'s history, or is concurrent with <code>l</code> and committed or skipped.</li>
+        <li><strong>Commit</strong> a <span class="nd leader">leader block</span> <code>l</code> when <code>n − f</code> processes reference it from the round above, and every <span class="nd ok">earlier leader slot</span> is <strong>resolved</strong>: one of its blocks is in <code>l</code>'s history, or is concurrent with <code>l</code> and committed or skipped.</li>
         <li><strong>Skip</strong> when <code>n − f</code> processes of the round above have no block that references it.</li>
         <li>The rule consults no later anchor.</li>
       </ul>
@@ -2101,10 +2101,10 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <h2>Minnow: an earlier leader committed after a later one</h2>
   <div class="body wide-fig">
     <div class="text small">
-      <p><code>n = 4</code>. Process 0 equivocates at round 0: blocks 0 and 4. Block 4 is referenced by process 1 only.</p>
+      <p><code>n = 4</code>. <span class="t-byz">Process 0</span> equivocates at round 0: blocks <span class="blk leader twin">0</span> and <span class="blk leader twin">4</span>. Block 4 is referenced by process 1 only.</p>
       <ul>
-        <li data-step="1">A validator missing block 5 sees the round-1 leader block 6 reach block 4, which resolves slot 0. Block 6 is <strong>committed</strong>, while slot 0 is still undecided.</li>
-        <li data-step="2">Block 5 arrives. Block 0 now has a quorum and is <strong>committed</strong> for slot 0, after the later leader.</li>
+        <li data-step="1">A validator missing block 5 sees the round-1 leader block <span class="blk leader">6</span> reach block <span class="blk leader twin">4</span>, which resolves slot 0. Block 6 is <span class="verdict commit">committed</span>, while slot 0 is still <span class="verdict undecided">undecided</span>.</li>
+        <li data-step="2">Block <span class="blk">5</span> arrives. Block <span class="blk leader twin">0</span> now has a quorum and is <span class="verdict commit">committed</span> for slot 0, after the later leader.</li>
       </ul>
     </div>
     <figure class="dag">
@@ -2167,9 +2167,9 @@ example : DirectCommit U3 0 0 := by decide</pre>
       }</script>
       <figcaption class="caption">Two leaders per round. Step 2, one leader per round: 11 reaches 0 and 6 (green) and is committed.</figcaption>
       <ul class="small">
-        <li>A leader referenced by 2 of 4 processes is neither committed nor skipped, and no later leader can be committed.</li>
+        <li>A <span class="t-leader">leader</span> referenced by 2 of 4 processes is neither committed nor skipped, and no later leader can be committed.</li>
         <li>With two leaders per round in round-robin, no leader is committed.</li>
-        <li data-step="2">With one leader per round, the same DAG does commit.</li>
+        <li data-step="2">With one leader per round, the same DAG does <span class="verdict commit">commit</span>.</li>
       </ul>
     </figure>
     <figure class="dag" data-step="1">
@@ -2188,7 +2188,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
       }</script>
       <figcaption class="caption">Two leaders per round; v0 is silent, so its slots at rounds 0 and 2 hold no block, and no slot is decided.</figcaption>
       <ul class="small">
-        <li>A silent leader's empty slot prevents every later leader from being committed.</li>
+        <li>A <span class="t-byz">silent leader</span>'s empty slot prevents every later leader from being committed.</li>
       </ul>
     </figure>
   </div>
@@ -2204,7 +2204,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="text">
       <ul>
         <li><code>n ≥ 3f + 1</code>; one anchor per round; no certificates.</li>
-        <li><strong>Commit</strong> an anchor <code>B</code> at round <code>r</code> when <code>n − f</code> validators reference it at round <code>r + 1</code>, and some anchor at <code>r + 1</code> references <code>B</code> and is itself referenced by <code>n − f</code> validators at <code>r + 2</code>.</li>
+        <li><strong>Commit</strong> an <span class="nd leader">anchor</span> <code>B</code> at round <code>r</code> when <code>n − f</code> validators reference it at round <code>r + 1</code>, and some <span class="nd leader">anchor</span> at <code>r + 1</code> references <code>B</code> and is itself referenced by <code>n − f</code> validators at <code>r + 2</code>.</li>
         <li>There is no skip. Anchors that are not committed are output through a descent from a later committed anchor.</li>
       </ul>
     </div>
@@ -2255,13 +2255,13 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <h2>Black Marlin: agreement fails</h2>
   <div class="body wide-fig">
     <div class="text small">
-      <p><code>n = 4</code>, <code>f = 1</code>. Validator 0 equivocates at round 2: blocks 8 and 12.</p>
+      <p><code>n = 4</code>, <code>f = 1</code>. <span class="t-byz">Validator 0</span> equivocates at round 2: blocks <span class="blk leader twin">8</span> and <span class="blk leader twin">12</span>.</p>
       <ul>
-        <li data-step="1">Block 8 is committed; block 12 is not supported.</li>
-        <li data-step="2">The committed anchor 19 at round 4 omits block 14.</li>
-        <li data-step="2">One validator outputs block 8 for round 2; another outputs block 12.</li>
+        <li data-step="1">Block <span class="blk leader twin">8</span> is <span class="verdict commit">committed</span>; block <span class="blk leader twin">12</span> is not supported.</li>
+        <li data-step="2">The committed anchor <span class="blk leader anchor">19</span> at round 4 omits block <span class="blk leader">14</span>.</li>
+        <li data-step="2">One validator outputs block <span class="blk leader twin">8</span> for round 2; another outputs block <span class="blk leader twin">12</span>.</li>
       </ul>
-      <p data-step="2">Total order also fails, on blocks 5 and 7 of correct validators.</p>
+      <p data-step="2">Total order also fails, on blocks <span class="blk">5</span> and <span class="blk leader">7</span> of correct validators.</p>
     </div>
     <figure class="dag">
       <script type="application/json">{
@@ -2388,7 +2388,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div>
       <p>Mechanisms such as garbage collection or crash recovery should not be proved once per rule. Instead:</p>
       <ul>
-        <li>each rule is proved to have a few <strong>properties</strong>;</li>
+        <li>each rule is proved to have a few <span class="nd accent">properties</span>;</li>
         <li>each mechanism is proved once, using only those properties.</li>
       </ul>
       <p>Eleven rules (all but Minnow and Black Marlin) have the properties.</p>
@@ -2429,7 +2429,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <h2>Banded: a verdict reads a finite band of rounds</h2>
   <div class="body stack">
     <div>
-      <p>Each verdict depends only on the blocks in a band of rounds, from the slot's round to some round <code>top</code>. Any other universe, view and schedule that match in the band — up to a shift of round and slot numbers — reach the same verdict.</p>
+      <p>Each verdict depends only on the blocks in a <span class="t-hull">band of rounds</span>, from the slot's round to some round <code>top</code>. Any other universe, view and schedule that match in the band — up to a shift of round and slot numbers — reach the same verdict.</p>
     </div>
     <div class="body">
       <figure class="dag">
@@ -2482,7 +2482,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
       <ul>
         <li><strong>Agree</strong>: two views of one universe never decide a slot differently, skips included.</li>
         <li><strong>CommitsCandidate</strong>: a committed block is a candidate of its slot.</li>
-        <li><strong>Indirect</strong>: a committed eligible anchor, with every eligible slot in between skipped, decides the slot; changing the other slots' leaders does not change that verdict.</li>
+        <li><strong>Indirect</strong>: a <span class="nd ok">committed eligible anchor</span>, with every eligible slot in between <span class="nd muted">skipped</span>, decides <span class="nd leader">the slot</span>; changing the other slots' leaders does not change that verdict.</li>
       </ul>
     </div>
     <figure class="diagram" data-step="1">
@@ -2502,7 +2502,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
       <ul>
         <li>A <strong>support</strong> names the wave and what it means for a block to certify a candidate.</li>
         <li><strong>Law 1 (local)</strong>: certification depends only on the wave's rounds, so it is unchanged by cutting or shifting rounds outside them.</li>
-        <li><strong>Law 2 (commits)</strong>: if a reliable quorum <code>T</code> leads a slot, produces through its wave and certifies every candidate, then a view that holds those rounds commits the slot.</li>
+        <li><strong>Law 2 (commits)</strong>: if a <span class="count ok">reliable quorum</span> <code>T</code> leads a slot, produces through its wave and <span class="t-cert">certifies</span> every candidate, then a view that holds those rounds commits the slot.</li>
         <li>Liveness needs exactly this, at every slot <code>T</code> leads. The network assumption is used only to establish it.</li>
       </ul>
     </div>
@@ -2569,7 +2569,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
       </ul>
     </div>
     <figure>
-      <p class="small" data-step="1">Derived, so no rule needs to prove them: <strong>Persist</strong> and <strong>LocalTruncate</strong> from Banded; <strong>LeaderCommits</strong> from Law 2; <strong>Descends</strong> from Indirect.</p>
+      <p class="small" data-step="1">Derived, so no rule needs to prove them: <span class="nd">Persist</span> and <span class="nd">LocalTruncate</span> from Banded; <span class="nd">LeaderCommits</span> from Law 2; <span class="nd">Descends</span> from Indirect.</p>
       <figure class="diagram" data-step="1">
         <script type="application/json">{"w": 630, "h": 320, "groups": [{"x": 6, "y": 0, "w": 178, "h": 316, "label": "each rule proves"}, {"x": 416, "y": 0, "w": 208, "h": 316, "label": "derived once"}], "nodes": [{"id": "B", "x": 20, "y": 72, "w": 150, "h": 46, "text": "Banded", "cls": "accent"}, {"id": "L2", "x": 20, "y": 172, "w": 150, "h": 46, "text": "Law 2", "cls": "accent"}, {"id": "I", "x": 20, "y": 256, "w": 150, "h": 46, "text": "Indirect", "cls": "accent"}, {"id": "P", "x": 430, "y": 36, "w": 180, "h": 46, "text": "Persist"}, {"id": "T", "x": 430, "y": 108, "w": 180, "h": 46, "text": "LocalTruncate"}, {"id": "LC", "x": 430, "y": 172, "w": 180, "h": 46, "text": "LeaderCommits"}, {"id": "D", "x": 430, "y": 256, "w": 180, "h": 46, "text": "Descends"}], "edges": [{"from": "B", "to": "P", "label": "under extension", "dy": -10}, {"from": "B", "to": "T", "label": "under a cut", "dy": 22}, {"from": "L2", "to": "LC", "label": "at reliable leaders"}, {"from": "I", "to": "D", "label": "below a committed run"}]}</script>
       </figure>
@@ -2614,7 +2614,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
       <p>From <strong>Law 2</strong>, <strong>CommitsCandidate</strong>, <strong>SelfParent</strong> and <strong>NoEquiv</strong>:</p>
       <ul>
         <li><strong>Progress</strong>: every slot below a run of reliably led slots is decided, and reliably led slots continue to be committed.</li>
-        <li><strong>Inclusion</strong>: every block of a reliable validator enters the ledger, through a later slot its creator leads.</li>
+        <li><strong>Inclusion</strong>: every <span class="nd accent">block</span> of a reliable validator enters the ledger, through a <span class="nd leader">later slot its creator leads</span>.</li>
       </ul>
       <p>Seven rules have both. Nemo, FinWhale, Hydrozoan and Optimal-Hydrozoan lack SelfParent and have progress only.</p>
     </div>
@@ -2745,7 +2745,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
             <li>each reliable block references every reliable block of the round below.</li>
           </ul>
         </li>
-        <li>These follow from view convergence and the pacemaker's rules.</li>
+        <li>These follow from view convergence and the <span class="nd">pacemaker</span>'s rules.</li>
       </ul>
       <div class="uses"><b>Uses:</b> view convergence and the pacemaker's rules (slide 69).<br><b>Gives:</b> the support's precondition <code>live</code> (slide 61).</div>
     </div>
@@ -2892,7 +2892,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <div class="body">
     <div class="text small">
       <ul>
-        <li><strong>Coverage</strong>: the history of every committed block contains, at every round below it, blocks of at least <code>|Correct| − f</code> correct validators. No timing assumption is needed.</li>
+        <li><strong>Coverage</strong>: the <span class="t-hull">history</span> of every <span class="t-leader">committed block</span> contains, at every round below it, blocks of <span class="count ok">at least <code>|Correct| − f</code></span> correct validators. No timing assumption is needed.</li>
         <li><strong>Inclusion</strong>: a correct validator's block is committed once a later slot it leads commits.</li>
         <li>Coverage holds for every rule except Bluestreak. Inclusion holds for the seven rules with SelfParent and NoEquiv.</li>
       </ul>
@@ -2928,7 +2928,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <h2>Coverage does not give inclusion</h2>
   <div class="body wide-fig">
     <div class="text">
-      <p>Validators 0, 1, 2 reference only each other for six rounds; validator 3 is correct and no other validator references it. Each round of the commit has 2 correct creators, exactly the bound. None of validator 3's blocks enters the committed leader's history.</p>
+      <p>Validators 0, 1, 2 reference only each other for six rounds; validator 3 is correct and no other validator references it. Each round of the commit has <span class="count ok">2</span> correct creators, exactly the bound. None of <span class="t-blame">validator 3's blocks</span> enters the <span class="t-leader">committed leader</span>'s <span class="t-hull">history</span>.</p>
     </div>
     <figure class="dag">
       <script type="application/json">{
@@ -2962,9 +2962,9 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="text small">
       <ul>
         <li>Safety requires no restriction on equivocation; bounded storage does.</li>
-        <li>A creator is <strong>exposed</strong> in a block's history when the history holds two of its blocks in one round.</li>
+        <li>A creator is <strong>exposed</strong> in a block's history when the history holds <span class="t-twin">two of its blocks in one round</span>.</li>
         <li><strong>Rule</strong>: never reference a block whose creator is exposed in your own history.</li>
-        <li>This alone bounds a history, but with a constant that grows like <code>f^f</code>: one history can hold <code>2^e</code> chains of one creator.</li>
+        <li>This alone bounds a history, but with a constant that grows like <code>f^f</code>: one history can hold <span class="count bad"><code>2^e</code> chains</span> of one creator.</li>
       </ul>
       <div class="uses"><b>Uses:</b> no property of the rule; only which blocks a validator accepts.<br><b>Gives:</b> a bound on what a correct validator stores (next slide).</div>
     </div>
@@ -3157,9 +3157,9 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <div class="body">
     <div class="text">
       <ul>
-        <li>A new validator adopts the round-<code>G</code> blocks that are reached from blocks of at least <code>f + 1</code> distinct creators at a later round <code>t</code>.</li>
-        <li>One of those creators is correct, so every base block is attested by a correct validator. No signatures are needed.</li>
-        <li>It then copies a correct peer's blocks above <code>G</code>. Its verdicts equal those of any validator with the full history.</li>
+        <li>A new validator adopts the <span class="t-evidence">round-<code>G</code> blocks</span> that are reached from <span class="t-anchor">blocks</span> of at least <code>f + 1</code> distinct creators at a later round <code>t</code>.</li>
+        <li>One of those creators is correct, so every <span class="t-evidence">base block</span> is attested by a correct validator. No signatures are needed.</li>
+        <li>It then copies a correct peer's <span class="t-fill">blocks above <code>G</code></span>. Its verdicts equal those of any validator with the full history.</li>
       </ul>
     </div>
     <figure class="dag">
@@ -3247,9 +3247,9 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <div class="body stack">
     <div class="small">
       <ul>
-        <li>A validator <code>v₁</code> crashed after its block <code>B₁</code> and returns at round <code>r</code>. It cannot create a block: a valid block needs its own previous block one round below.</li>
-        <li>It sends one message: <code>B₁</code>, <code>r</code>, a donor validator <code>v₂</code>, and fresh identifiers.</li>
-        <li>Every receiver computes a <strong>filled</strong> block for <code>v₁</code> at each missed round: the donor's references and payload at that round, plus a reference to <code>v₁</code>'s previous block.</li>
+        <li>A validator <code>v₁</code> <span class="t-crash">crashed</span> after its block <span class="tagx ok"><code>B₁</code></span> and returns at round <code>r</code>. It cannot create a block: a valid block needs its own previous block one round below.</li>
+        <li>It sends one message: <code>B₁</code>, <code>r</code>, a <span class="tagx ok">donor</span> validator <code>v₂</code>, and fresh identifiers.</li>
+        <li>Every receiver computes a <strong class="t-fill">filled</strong> block for <code>v₁</code> at each missed round: the donor's references and payload at that round, plus <span class="t-path">a reference to <code>v₁</code>'s previous block</span>.</li>
       </ul>
     </div>
     <div class="body">
@@ -3287,7 +3287,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="text">
       <ol>
         <li data-step="1">The filled DAG is valid, and every old block is unchanged.</li>
-        <li data-step="2"><code>v₁</code> has a block at every missed round, so it can produce again.</li>
+        <li data-step="2"><code>v₁</code> has <span class="t-hull">a block at every missed round</span>, so it can produce again.</li>
         <li data-step="3">A slot led by <code>v₁</code> in the missed rounds is skipped at once, given a quorum one round above (the <strong>prompt skip</strong>). No later view can commit it.</li>
         <li data-step="4">Every verdict reached before the fill agrees with every verdict after it.</li>
       </ol>
@@ -3321,7 +3321,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="text">
       <ul>
         <li>A validator's own blocks form a chain, so the donor's whole line is fixed by its top block.</li>
-        <li>The fill depends only on <code>B₁</code>, the donor's top block <code>B₂</code>, and the fresh identifiers. The message carries only these.</li>
+        <li>The fill depends only on <span class="nd ok"><code>B₁</code></span>, the donor's top block <span class="nd ok"><code>B₂</code></span>, and the fresh identifiers. The <span class="nd accent">message</span> carries only these.</li>
         <li>A receiver that holds <code>B₂</code> holds the donor's whole line. After the one message, <code>v₁</code> has a block at every round up to <code>B₂</code>'s round, so it can produce at the next.</li>
       </ul>
     </div>
@@ -3385,7 +3385,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <div class="body stack">
     <div class="small">
       <ul>
-        <li>With a horizon <code>Λ</code> rounds below, recovery in one message works for outages of at most <code>Λ</code> rounds; for longer ones <code>B₁</code> has been discarded.</li>
+        <li>With a horizon <code>Λ</code> rounds below, recovery in one message works for outages of at most <code>Λ</code> rounds; for longer ones <span class="nd bad"><code>B₁</code></span> has been discarded.</li>
         <li>No old block references a filled block, so <code>v₁</code> is not covered in the rounds it missed.</li>
         <li>The storage rule must be re-checked; with a donor line whose blocks all reach <code>B₁</code>, and <code>v₁</code> not equivocating, it is one reachability check per round.</li>
         <li>If the donor line is taken from blocks every receiver already holds, nothing else needs to be sent.</li>
@@ -3454,8 +3454,8 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="small">
       <ul>
         <li>If all of <code>v₁</code>'s blocks are below the horizon, its chain of own blocks cannot be continued.</li>
-        <li>Each validator adds a round-0 block for <code>v₁</code>, with no references, to its cut DAG. This needs no exception to the self-parent rule.</li>
-        <li>Procedure: (1) join from the attested base to read; (2) re-genesis to write; (3) one fill message from the genesis block to the current round.</li>
+        <li>Each validator adds <span class="t-anchor">a round-0 block</span> for <code>v₁</code>, with no references, to its cut DAG. This needs no exception to the self-parent rule.</li>
+        <li>Procedure: (1) join from the attested base to read; (2) re-genesis to write; (3) one <span class="t-fill">fill</span> message from the <span class="tagx ok">genesis</span> block to the current round.</li>
         <li>While a quorum still produces blocks, at most <code>f</code> validators can be in this state at once.</li>
       </ul>
     </div>
@@ -3486,8 +3486,8 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="text small">
       <ul>
         <li>Copying a donor's references would attribute to <code>v₁</code> claims it never made.</li>
-        <li>Each filled block references only <code>v₁</code>'s previous block and carries no tag and no claim. The message is <code>(v₁, B₁, r)</code>; no donor.</li>
-        <li>Verdicts do not change: slot 2 is committed and slot 3 skipped, before and after.</li>
+        <li>Each <span class="t-fill">filled block</span> references only <span class="t-path"><code>v₁</code>'s previous block</span> and carries no tag and no claim. The message is <code>(v₁, B₁, r)</code>; no donor.</li>
+        <li>Verdicts do not change: slot 2 is <span class="verdict commit">committed</span> and slot 3 <span class="verdict skip">skipped</span>, before and after.</li>
       </ul>
       <div class="uses"><b>Uses:</b> the same properties as the fill, and Bluestreak's claim discipline.<br><b>Gives:</b> recovery for a rule whose blocks carry claims.</div>
     </div>
@@ -3518,7 +3518,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <h2>Every mechanism is one relation</h2>
   <div class="body">
     <div class="text">
-      <p>Each mechanism relates the DAG it reads to the DAG it writes: the same blocks from a settling round on, renumbered by <code>G</code> rounds, with the same creators and payloads, and the same references strictly above the settling round.</p>
+      <p>Each mechanism relates the DAG it reads to the DAG it writes: <span class="t-hull">the same blocks</span> from a settling round on, renumbered by <code>G</code> rounds, with the same creators and payloads, and the same references strictly above the settling round.</p>
       <ul>
         <li>A cut is such a relation; so are a fill and a re-genesis (with <code>G = 0</code>).</li>
         <li>A sequence of them is again one.</li>
@@ -3603,7 +3603,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
       <ul>
         <li>A fixed schedule may continue to name a crashed leader.</li>
         <li>A <strong>configuration</strong> fixes the leaders of each round and an interval.</li>
-        <li>It decides up to its <strong>anchor</strong> (the first committed slot more than one interval past its start), but outputs only up to its boundary.</li>
+        <li>It decides up to its <strong class="t-anchor">anchor</strong> (the first committed slot more than one interval past its start), but <span class="t-hull">outputs</span> only up to its boundary.</li>
         <li>The next configuration is computed from the anchor's history and the verdicts just output.</li>
       </ul>
       <div class="uses"><b>Uses:</b> Agree (safety); Law 2 and Indirect (liveness).<br><b>Gives:</b> a schedule every validator computes the same way.</div>
@@ -3650,7 +3650,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <div class="body stack">
     <div class="text">
       <ul>
-        <li>Two validators that start from the same configuration agree on every configuration and every verdict.</li>
+        <li>Two validators that start from the same <span class="nd">configuration</span> agree on every configuration and every verdict.</li>
         <li>No timing, fairness or window assumption, and any score, provided the update reads the view only through the anchor's history.</li>
         <li>For liveness the score must continue to assign reliable validators runs of consecutive slots.</li>
       </ul>
@@ -3689,7 +3689,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="text">
       <ul>
         <li>A score that reads only the anchor's history is unaffected by crash recovery.</li>
-        <li>Under garbage collection the score must read verdicts relative to the configuration: a score that names an absolute slot number gives different answers before and after a cut.</li>
+        <li>Under garbage collection the score must read verdicts relative to the configuration: a score that names an <span class="nd bad">absolute slot number</span> gives different answers before and after a cut.</li>
       </ul>
     </div>
     <figure class="diagram">
@@ -3725,9 +3725,9 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <h2>The adaptive leader count</h2>
   <div class="body wide-fig">
     <div class="text small">
-      <p>More leaders per round lower latency, but one slow leader delays every later slot. At each anchor:</p>
+      <p>More leaders per round lower latency, but one slow leader delays every later slot. At each <span class="t-anchor">anchor</span>:</p>
       <ol>
-        <li>count the directly committed slots in the anchor's history;</li>
+        <li>count the <span class="count ok">directly committed slots</span> in the anchor's history;</li>
         <li>healthy if <code>num · expected ≤ den · observed</code>;</li>
         <li>healthy: one more leader; unhealthy: <code>2^backoff</code> fewer, between 1 and <code>maxLeaders</code>; the backoff resets when healthy and grows otherwise.</li>
       </ol>
@@ -3770,11 +3770,11 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <div class="body stack">
     <div class="text small">
       <ul>
-        <li>Correct online validators sign the checkpoint their deterministic state machine reaches after each commit in their own view, and witness certificates for what they signed.</li>
-        <li>A checkpoint certificate is at least <code>q</code> signatures on one proposal; a finality certificate is at least <code>q</code> witnesses of one.</li>
+        <li>Correct online validators sign the checkpoint their deterministic <span class="nd">state machine</span> reaches after each commit in their own view, and <span class="nd">witness</span> certificates for what they signed.</li>
+        <li>A checkpoint <span class="nd accent">certificate</span> is at least <code>q</code> signatures on one proposal; a <span class="nd accent">finality</span> certificate is at least <code>q</code> witnesses of one.</li>
         <li>Two checkpoint certificates at one epoch and height agree.</li>
         <li>A correctly led slot, with production and certification, is finalised.</li>
-        <li>At an epoch change, the highest validated checkpoint becomes the next epoch's genesis.</li>
+        <li>At an epoch change, the highest <span class="nd">validated</span> checkpoint becomes the next epoch's <span class="nd accent">genesis</span>.</li>
       </ul>
     </div>
     <figure class="diagram">
@@ -3813,8 +3813,8 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="body wide-fig">
     <div class="text small">
       <ul>
-        <li>Validators state a <strong>stance</strong> on each object version inside their ordinary blocks; certificates for transactions, skips and unlocks are read from the DAG.</li>
-        <li>At <code>n ≥ 3f + 1</code>, uncontested transactions are decided from the DAG; conflicts are resolved at a committed anchor.</li>
+        <li>Validators state a <strong class="t-vote">stance</strong> on each object version inside their ordinary blocks; <span class="t-cert">certificates</span> for transactions, skips and unlocks are read from the DAG.</li>
+        <li>At <code>n ≥ 3f + 1</code>, uncontested transactions are decided from the DAG (<span class="verdict commit">fast quorum</span>); conflicts are resolved at a <span class="t-anchor">committed anchor</span>.</li>
         <li>At <code>n ≥ 5f + 1</code>, a validator may change its vote on <code>2f + 1</code> opposing votes, coordinated by a coin.</li>
         <li>Among any <code>n − f</code> votes one side reaches <code>2f + 1</code> exactly when <code>n ≥ 5f + 1</code>. The <code>5f + 1</code> certificate lemmas themselves need only <code>n ≥ 3f + 1</code>.</li>
       </ul>
@@ -3893,8 +3893,8 @@ example : DirectCommit U3 0 0 := by decide</pre>
   <div class="body stack">
     <div class="text">
       <ul>
-        <li>One decision relation; eleven rules proved, two refuted.</li>
-        <li>Four properties and a support per rule; every mechanism proved once against them.</li>
+        <li>One decision relation; eleven rules proved, <span class="nd muted dashed">two refuted</span>.</li>
+        <li>Four <span class="nd accent">properties</span> and a <span class="nd">support</span> per rule; every <span class="nd accent">mechanism</span> proved once against them.</li>
         <li>Safety with no network assumption; liveness from view convergence.</li>
       </ul>
     </div>

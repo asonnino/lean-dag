@@ -26,9 +26,9 @@
   <div class="body stack">
     <div>
       <ul>
-        <li><strong>Protocols.</strong> Thirteen commit rules from the literature. Eleven are proved safe and live; two are shown unsafe or not live by counterexamples.</li>
-        <li><strong>Properties.</strong> One small interface — four properties and a “support” — that each of the eleven rules is proved to satisfy.</li>
-        <li><strong>Mechanisms.</strong> A pacemaker, chain quality, a storage bound, garbage collection, crash recovery, adaptive leaders and an adaptive leader count, checkpoints: each proved once against the interface, and composable.</li>
+        <li><span class="nd accent">Protocols</span>. Thirteen commit rules from the literature. Eleven are proved safe and live; two are shown unsafe or not live by counterexamples.</li>
+        <li><span class="nd accent">Properties</span>. One small interface — four properties and a “support” — that each of the eleven rules is proved to satisfy.</li>
+        <li><span class="nd accent">Mechanisms</span>. A pacemaker, chain quality, a storage bound, garbage collection, crash recovery, adaptive leaders and an adaptive leader count, checkpoints: each proved once against the interface, and composable.</li>
         <li>Safety theorems use no assumption about the network.</li>
       </ul>
     </div>
@@ -65,10 +65,10 @@
     <div class="text">
       <ul>
         <li><code>n</code> validators each keep a copy of one ordered log (a ledger).</li>
-        <li>Clients submit transactions to any validator.</li>
+        <li><span class="nd dashed">Clients</span> submit <span class="nd accent">transactions</span> to any validator.</li>
         <li><strong>Safety:</strong> no two validators output conflicting logs.</li>
         <li><strong>Liveness:</strong> every transaction from a correct client is eventually in every correct validator’s log.</li>
-        <li>Some validators may be faulty. The protocol must tolerate them without identifying them.</li>
+        <li>Some validators may be <span class="t-byz">faulty</span>. The protocol must tolerate them without identifying them.</li>
       </ul>
     </div>
     <figure class="diagram">
@@ -114,10 +114,10 @@
   <div class="body wide-fig">
     <div class="text small">
       <ul>
-        <li>A <strong>Byzantine</strong> validator may deviate arbitrarily from the protocol: send false messages, send none, or send different messages to different validators (equivocate).</li>
+        <li>A <span class="tagx bad">Byzantine</span> validator may deviate arbitrarily from the protocol: send false messages, send none, or send different messages to different validators (equivocate).</li>
         <li>A <strong>crashed</strong> validator stops and never resumes.</li>
         <li>With <code>n ≥ 3f + 1</code> validators, at most <code>f</code> Byzantine, a <strong>quorum</strong> is <code>n − f</code> validators.</li>
-        <li>Two quorums share at least <code>n − 2f ≥ f + 1</code> validators, so at least one correct validator.</li>
+        <li>Two quorums share at least <code>n − 2f ≥ f + 1</code> validators, so at least one <span class="tagx ok">correct</span> validator.</li>
         <li>A correct validator does not equivocate, so two quorums cannot support two conflicting statements.</li>
       </ul>
     </div>
@@ -164,7 +164,7 @@
       <ul>
         <li>Messages can be delayed arbitrarily, up to an unknown time GST (global stabilisation time).</li>
         <li>A <strong>reliable</strong> validator is a correct one that keeps producing blocks. Liveness assumes a quorum of them.</li>
-        <li>After GST, what one reliable validator holds reaches every reliable validator within <code>Δ</code>. This is called <strong>view convergence</strong>.</li>
+        <li>After GST, what one reliable validator holds reaches every reliable validator <span class="t-hull">within <code>Δ</code></span>. This is called <strong>view convergence</strong>.</li>
         <li>Safety is proved with no assumption about the network.</li>
         <li>Liveness is proved from view convergence and the protocol’s own rules.</li>
       </ul>
@@ -218,7 +218,7 @@
     <div class="text small">
       <ul>
         <li>Validators work in <strong>rounds</strong>. In each round each validator creates one <strong>block</strong>: a round number, its creator, references to earlier blocks, and a payload of transactions.</li>
-        <li>A valid block at round <code>r &gt; 0</code> references blocks of round <code>r − 1</code> from at least <code>n − f</code> distinct creators, one of them its own creator.</li>
+        <li>A <span class="t-hull">valid block</span> at round <code>r &gt; 0</code> references blocks of round <code>r − 1</code> from at least <code>n − f</code> distinct creators, one of them its own creator.</li>
         <li>The blocks and references form a directed acyclic graph (DAG). A block’s <strong>history</strong> is every block it reaches by references. A validator’s <strong>view</strong> is the set of blocks it holds, including their histories.</li>
         <li>Blocks are named by identifier (a hash), so two validators may hold different sets of blocks but agree on what each identifier means.</li>
       </ul>
@@ -253,9 +253,9 @@
   <div class="body">
     <div class="text small">
       <ul>
-        <li>In a certified DAG (Narwhal, Bullshark), each block receives a certificate, built by an extra exchange of signatures, before others may reference it.</li>
+        <li>In a certified DAG (Narwhal, Bullshark), each block receives a <span class="nd accent">certificate</span>, built by an extra exchange of signatures, before others may reference it.</li>
         <li>In an uncertified DAG (Mysticeti and this family), no certificate is sent.</li>
-        <li>A block two rounds above a leader <strong>is</strong> a certificate for it when its references include <code>n − f</code> blocks that reference the leader.</li>
+        <li>A block two rounds above a <span class="t-leader">leader</span> <strong>is</strong> a <span class="t-cert">certificate</span> for it when its references include <code>n − f</code> <span class="t-vote">blocks that reference the leader</span>.</li>
         <li>Every direct commit rule is then a threshold on a set of blocks found in the graph.</li>
       </ul>
       <figure class="diagram">
@@ -337,10 +337,10 @@
     <div class="text small">
       <p>A slot is decided in one of four ways:</p>
       <ol>
-        <li><strong>Direct commit</strong>: the rule’s commit condition holds in the validator’s view.</li>
-        <li><strong>Direct skip</strong>: the rule’s skip condition holds.</li>
-        <li><strong>Indirect commit</strong>: a later committed slot (the <strong>anchor</strong>) links a candidate.</li>
-        <li><strong>Indirect skip</strong>: the anchor links no candidate.</li>
+        <li><span class="nd ok"><strong>Direct commit</strong></span>: the rule’s commit condition holds in the validator’s view.</li>
+        <li><span class="nd bad"><strong>Direct skip</strong></span>: the rule’s skip condition holds.</li>
+        <li><span class="nd ok"><strong>Indirect commit</strong></span>: a later committed slot (the <span class="nd accent">anchor</span>) links a candidate.</li>
+        <li><span class="nd bad"><strong>Indirect skip</strong></span>: the anchor links no candidate.</li>
       </ol>
       <p>The anchor is the nearest eligible committed slot above; every eligible slot in between must be skipped.</p>
     </div>
@@ -427,8 +427,8 @@
   <div class="body">
     <div class="text small">
       <ul>
-        <li>An anchor at slot <code>j</code> is <strong>eligible</strong> for slot <code>k</code> when <code>round(k) + wave &lt; round(j)</code>.</li>
-        <li>A slot one round above <code>k</code> cannot reach a certificate for <code>k</code>’s leader. A slot two rounds above reaches one only if its own block is a certificate.</li>
+        <li>An <span class="t-anchor">anchor</span> at slot <code>j</code> is <span class="tagx ok">eligible</span> for slot <code>k</code> when <code>round(k) + wave &lt; round(j)</code>.</li>
+        <li>A slot one round above <code>k</code> (<span class="blk leader dim">5</span>) cannot reach a certificate for <code>k</code>’s leader. A slot two rounds above (<span class="blk leader dim">10</span>) reaches one only if its own block is a certificate.</li>
         <li>Anchoring at such slots would let one validator’s direct commit become another validator’s indirect skip.</li>
       </ul>
     </div>
@@ -467,7 +467,7 @@
   <div class="body stack">
     <div class="small">
       <ul>
-        <li>The absence of the leader’s block from a view is not a sound reason to skip: a validator cannot distinguish a silent leader from a leader whose block has not yet arrived.</li>
+        <li>The absence of the leader’s block <span class="blk absent">?</span> from a view is not a sound reason to <span class="verdict skip">skip</span>: a validator cannot distinguish a silent leader from a leader whose block has not yet arrived.</li>
         <li>In Mysticeti a direct skip needs <code>n − f</code> blocks of the round above that reference no candidate. Those blocks exist, and later blocks do not alter them.</li>
       </ul>
     </div>

@@ -4,7 +4,7 @@
   <h2>Every mechanism is one relation</h2>
   <div class="body">
     <div class="text">
-      <p>Each mechanism relates the DAG it reads to the DAG it writes: the same blocks from a settling round on, renumbered by <code>G</code> rounds, with the same creators and payloads, and the same references strictly above the settling round.</p>
+      <p>Each mechanism relates the DAG it reads to the DAG it writes: <span class="t-hull">the same blocks</span> from a settling round on, renumbered by <code>G</code> rounds, with the same creators and payloads, and the same references strictly above the settling round.</p>
       <ul>
         <li>A cut is such a relation; so are a fill and a re-genesis (with <code>G = 0</code>).</li>
         <li>A sequence of them is again one.</li>
@@ -89,7 +89,7 @@
       <ul>
         <li>A fixed schedule may continue to name a crashed leader.</li>
         <li>A <strong>configuration</strong> fixes the leaders of each round and an interval.</li>
-        <li>It decides up to its <strong>anchor</strong> (the first committed slot more than one interval past its start), but outputs only up to its boundary.</li>
+        <li>It decides up to its <strong class="t-anchor">anchor</strong> (the first committed slot more than one interval past its start), but <span class="t-hull">outputs</span> only up to its boundary.</li>
         <li>The next configuration is computed from the anchor's history and the verdicts just output.</li>
       </ul>
       <div class="uses"><b>Uses:</b> Agree (safety); Law 2 and Indirect (liveness).<br><b>Gives:</b> a schedule every validator computes the same way.</div>
@@ -136,7 +136,7 @@
   <div class="body stack">
     <div class="text">
       <ul>
-        <li>Two validators that start from the same configuration agree on every configuration and every verdict.</li>
+        <li>Two validators that start from the same <span class="nd">configuration</span> agree on every configuration and every verdict.</li>
         <li>No timing, fairness or window assumption, and any score, provided the update reads the view only through the anchor's history.</li>
         <li>For liveness the score must continue to assign reliable validators runs of consecutive slots.</li>
       </ul>
@@ -175,7 +175,7 @@
     <div class="text">
       <ul>
         <li>A score that reads only the anchor's history is unaffected by crash recovery.</li>
-        <li>Under garbage collection the score must read verdicts relative to the configuration: a score that names an absolute slot number gives different answers before and after a cut.</li>
+        <li>Under garbage collection the score must read verdicts relative to the configuration: a score that names an <span class="nd bad">absolute slot number</span> gives different answers before and after a cut.</li>
       </ul>
     </div>
     <figure class="diagram">
@@ -211,9 +211,9 @@
   <h2>The adaptive leader count</h2>
   <div class="body wide-fig">
     <div class="text small">
-      <p>More leaders per round lower latency, but one slow leader delays every later slot. At each anchor:</p>
+      <p>More leaders per round lower latency, but one slow leader delays every later slot. At each <span class="t-anchor">anchor</span>:</p>
       <ol>
-        <li>count the directly committed slots in the anchor's history;</li>
+        <li>count the <span class="count ok">directly committed slots</span> in the anchor's history;</li>
         <li>healthy if <code>num · expected ≤ den · observed</code>;</li>
         <li>healthy: one more leader; unhealthy: <code>2^backoff</code> fewer, between 1 and <code>maxLeaders</code>; the backoff resets when healthy and grows otherwise.</li>
       </ol>
@@ -256,11 +256,11 @@
   <div class="body stack">
     <div class="text small">
       <ul>
-        <li>Correct online validators sign the checkpoint their deterministic state machine reaches after each commit in their own view, and witness certificates for what they signed.</li>
-        <li>A checkpoint certificate is at least <code>q</code> signatures on one proposal; a finality certificate is at least <code>q</code> witnesses of one.</li>
+        <li>Correct online validators sign the checkpoint their deterministic <span class="nd">state machine</span> reaches after each commit in their own view, and <span class="nd">witness</span> certificates for what they signed.</li>
+        <li>A checkpoint <span class="nd accent">certificate</span> is at least <code>q</code> signatures on one proposal; a <span class="nd accent">finality</span> certificate is at least <code>q</code> witnesses of one.</li>
         <li>Two checkpoint certificates at one epoch and height agree.</li>
         <li>A correctly led slot, with production and certification, is finalised.</li>
-        <li>At an epoch change, the highest validated checkpoint becomes the next epoch's genesis.</li>
+        <li>At an epoch change, the highest <span class="nd">validated</span> checkpoint becomes the next epoch's <span class="nd accent">genesis</span>.</li>
       </ul>
     </div>
     <figure class="diagram">
@@ -299,8 +299,8 @@
     <div class="body wide-fig">
     <div class="text small">
       <ul>
-        <li>Validators state a <strong>stance</strong> on each object version inside their ordinary blocks; certificates for transactions, skips and unlocks are read from the DAG.</li>
-        <li>At <code>n ≥ 3f + 1</code>, uncontested transactions are decided from the DAG; conflicts are resolved at a committed anchor.</li>
+        <li>Validators state a <strong class="t-vote">stance</strong> on each object version inside their ordinary blocks; <span class="t-cert">certificates</span> for transactions, skips and unlocks are read from the DAG.</li>
+        <li>At <code>n ≥ 3f + 1</code>, uncontested transactions are decided from the DAG (<span class="verdict commit">fast quorum</span>); conflicts are resolved at a <span class="t-anchor">committed anchor</span>.</li>
         <li>At <code>n ≥ 5f + 1</code>, a validator may change its vote on <code>2f + 1</code> opposing votes, coordinated by a coin.</li>
         <li>Among any <code>n − f</code> votes one side reaches <code>2f + 1</code> exactly when <code>n ≥ 5f + 1</code>. The <code>5f + 1</code> certificate lemmas themselves need only <code>n ≥ 3f + 1</code>.</li>
       </ul>
@@ -379,8 +379,8 @@
   <div class="body stack">
     <div class="text">
       <ul>
-        <li>One decision relation; eleven rules proved, two refuted.</li>
-        <li>Four properties and a support per rule; every mechanism proved once against them.</li>
+        <li>One decision relation; eleven rules proved, <span class="nd muted dashed">two refuted</span>.</li>
+        <li>Four <span class="nd accent">properties</span> and a <span class="nd">support</span> per rule; every <span class="nd accent">mechanism</span> proved once against them.</li>
         <li>Safety with no network assumption; liveness from view convergence.</li>
       </ul>
     </div>

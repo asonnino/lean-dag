@@ -5,7 +5,7 @@
   <h2>The protocol family</h2>
   <div class="body wide-fig">
     <div class="text small">
-      <p>Each rule in this part changes Mysticeti in one or more ways:</p>
+      <p>Each rule in this part changes <span class="nd leader">Mysticeti</span> in one or more ways:</p>
       <table class="compact">
         <tr><th>Change</th><th>Rules</th></tr>
         <tr><td>Crash faults only, two rounds</td><td>Nemo-Nemo</td></tr>
@@ -135,9 +135,9 @@
   <div class="body wide-fig">
     <div class="text small">
       <ul>
-        <li data-step="2">At round 2 only <code>v0</code>'s block is a certificate for <code>L</code>. One certificate is fewer than <code>q</code>, and one blame is fewer than <code>q</code>: no direct decision.</li>
-        <li data-step="3">The slot at round 3, led by <code>v0</code>, is eligible. It is committed directly by rounds 4 and 5.</li>
-        <li data-step="4">Its block references <code>v0</code>'s certificate, so <code>L</code> is <strong>committed indirectly</strong>.</li>
+        <li data-step="2">At round 2 only <code>v0</code>'s block <span class="blk cert">8</span> is a <span class="t-cert">certificate</span> for <code>L</code>. One certificate is fewer than <code>q</code>, and one <span class="t-blame">blame</span> is fewer than <code>q</code>: <span class="verdict undecided">no direct decision</span>.</li>
+        <li data-step="3">The slot at round 3, led by <code>v0</code> (<span class="blk leader anchor">12</span>), is eligible. It is <span class="verdict commit">committed directly</span> by rounds 4 and 5.</li>
+        <li data-step="4">Its block <span class="t-path">references</span> <code>v0</code>'s certificate <span class="blk cert">8</span>, so <code>L</code> is <span class="verdict commit">committed indirectly</span>.</li>
       </ul>
     </div>
     <figure class="dag">
@@ -260,10 +260,10 @@
   <h2>Nemo-Nemo: the rules on a crash</h2>
   <div class="body">
     <div class="text small">
-      <p><code>n = 3</code>, majority 2. Validator 2 creates blocks in rounds 0 and 1, then crashes.</p>
+      <p><code>n = 3</code>, majority 2. Validator 2 creates blocks in rounds 0 and 1, then <span class="t-crash">crashes</span>.</p>
       <ul>
-        <li data-step="1">Slot 3 (round 3, leader <code>v0</code>): <code>v0</code> and <code>v1</code> vote at round 4. <code>2 ≥ 2</code>: <strong>commit</strong>.</li>
-        <li data-step="2">Slot 2 (round 2, leader <code>v2</code>) has no candidate. It has no direct skip; the anchor at slot 4 links nothing for it: <strong>indirect skip</strong>. Slot 3 is not eligible for slot 2.</li>
+        <li data-step="1">Slot 3 (round 3, leader <code>v0</code>, <span class="blk leader">8</span>): <code>v0</code> and <code>v1</code> <span class="t-vote">vote</span> at round 4. <span class="count accent">2 ≥ 2</span>: <span class="verdict commit">commit</span>.</li>
+        <li data-step="2">Slot 2 (round 2, leader <code>v2</code>) has no candidate. It has no direct skip; the anchor <span class="blk leader anchor">11</span> at slot 4 links nothing for it: <span class="verdict skip">indirect skip</span>. Slot 3 is not eligible for slot 2.</li>
       </ul>
     </div>
     <div class="body stack text">
@@ -343,11 +343,11 @@
   <h2>Odontoceti: direct and indirect</h2>
   <div class="body wide-fig">
     <div class="text small">
-      <p><code>n = 6</code>, <code>f = 1</code>: direct threshold 5, indirect threshold 3. <code>v0</code> is Byzantine.</p>
+      <p><code>n = 6</code>, <code>f = 1</code>: direct threshold 5, indirect threshold 3. <code>v0</code> is <span class="t-byz">Byzantine</span>.</p>
       <ul>
-        <li data-step="1">Slot 0 (leader <code>v0</code>): 5 blames: <strong>direct skip</strong>.</li>
-        <li data-step="2">Slot 1: 3 votes, 3 blames: no direct decision. <span data-step="3">The anchor at slot 3 has voters <code>{1, 2, 3}</code> in its history, <code>3 ≥ 3</code>: <strong>indirect commit</strong>.</span></li>
-        <li data-step="4">Slot 2: 2 votes, 4 blames: no direct decision. The anchor at slot 4 links nothing: <strong>indirect skip</strong>.</li>
+        <li data-step="1">Slot 0 (leader <code>v0</code>, <span class="blk leader">0</span>): 5 <span class="t-blame">blames</span>, <span class="count bad">5 ≥ 5</span>: <span class="verdict skip">direct skip</span>.</li>
+        <li data-step="2">Slot 1: 3 <span class="t-vote">votes</span>, 3 <span class="t-blame">blames</span>: no direct decision. <span data-step="3">The anchor <span class="blk leader anchor">21</span> at slot 3 has <span class="t-hull">voters <code>{1, 2, 3}</code></span> in its history, <span class="count ok">3 ≥ 3</span>: <span class="verdict commit">indirect commit</span>.</span></li>
+        <li data-step="4">Slot 2: 2 <span class="t-vote">votes</span>, 4 <span class="t-blame">blames</span>: no direct decision. The anchor <span class="blk leader anchor">28</span> at slot 4 links nothing: <span class="verdict skip">indirect skip</span>.</li>
       </ul>
     </div>
     <figure class="dag">
@@ -409,10 +409,10 @@
   <div class="body">
     <div class="text small">
       <ul>
-        <li>A Byzantine leader can make two blocks (twins) in one round.</li>
+        <li>A <span class="t-byz">Byzantine</span> leader can make two blocks (twins, <span class="blk leader">0</span> and <span class="blk leader">6</span>) in one round.</li>
         <li>Both twins can reach the <code>n − 3f</code> threshold inside one anchor's history.</li>
         <li>If each validator committed any passing twin, two validators could commit different twins.</li>
-        <li>The rule therefore commits the <strong>least</strong> passing candidate, an order every validator computes the same way.</li>
+        <li>The rule therefore commits the <strong>least</strong> passing candidate (<span class="blk leader">16</span>: <span class="verdict commit">commit</span>), an order every validator computes the same way.</li>
       </ul>
     </div>
     <figure class="dag">
@@ -508,8 +508,8 @@
   <div class="body">
     <div class="text small">
       <ul>
-        <li><code>fb = 0</code>, <code>fc = 1</code>, <code>n = 4</code>, <code>q = 3</code>: validator 3 stops after round 0. Each slot led by a live validator receives 3 votes: <strong>direct commit</strong>.</li>
-        <li data-step="1"><code>fb = 0</code>, <code>fc = 1</code>, <code>n = 5</code>, <code>q = 4</code>, <code>k ∈ {2, 3}</code>: slot 1 receives 2 votes and 3 blames, so no direct decision. <span data-step="2">Both voters are in the history of the anchor at slot 3.</span> <span data-step="3">At <code>k = 2</code> slot 1 is <strong>committed</strong>; at <code>k = 3</code> it is <strong>skipped</strong>.</span></li>
+        <li><code>fb = 0</code>, <code>fc = 1</code>, <code>n = 4</code>, <code>q = 3</code>: validator 3 <span class="t-crash">stops</span> after round 0. Each slot led by a live validator receives 3 <span class="t-vote">votes</span>: <span class="verdict commit">direct commit</span>.</li>
+        <li data-step="1"><code>fb = 0</code>, <code>fc = 1</code>, <code>n = 5</code>, <code>q = 4</code>, <code>k ∈ {2, 3}</code>: slot 1 (<span class="blk leader">6</span>) receives 2 <span class="t-vote">votes</span> and 3 <span class="t-blame">blames</span>, so no direct decision. <span data-step="2">Both voters are in the <span class="t-hull">history</span> of the anchor <span class="blk leader anchor">18</span> at slot 3.</span> <span data-step="3">At <code>k = 2</code> slot 1 is <span class="verdict commit">committed</span>; at <code>k = 3</code> it is <span class="verdict skip">skipped</span>.</span></li>
       </ul>
     </div>
     <figure class="dag">
@@ -561,7 +561,7 @@
   <h2>Hybrid: the committee bound is tight</h2>
   <div class="body">
     <div class="text small">
-      <p>With <code>fb = 1</code>, <code>fc = 1</code> and <code>n = 8</code> (one fewer than <code>5fb + 3fc + 1 = 9</code>), no <code>k</code> is admissible. For every <code>k</code>, one full view of one DAG derives both a commit and a skip for the same slot.</p>
+      <p>With <code>fb = 1</code>, <code>fc = 1</code> and <code>n = 8</code> (one fewer than <code>5fb + 3fc + 1 = 9</code>), no <code>k</code> is admissible. For every <code>k</code>, one full view of one DAG derives both a <span class="verdict commit">commit</span> and a <span class="verdict skip">skip</span> for the same slot.</p>
       <div class="legend"><span class="l-leader">candidate 1; anchor 17 (leader <code>v1</code>)</span><span class="l-vote">vote</span><span class="l-blame">blame</span><span class="l-anchor">anchor</span><span>shaded row: Byzantine <code>v0</code></span></div>
     </div>
       <figure class="dag">
@@ -662,10 +662,10 @@
   <h2>FinWhale: fast and slow commit</h2>
   <div class="body">
     <div class="text small">
-      <p><code>f = 2</code>, <code>p = 2</code>, <code>n = 9</code>; validators 0 and 1 are Byzantine.</p>
+      <p><code>f = 2</code>, <code>p = 2</code>, <code>n = 9</code>; validators 0 and 1 are <span class="t-byz">Byzantine</span>.</p>
       <ul>
-        <li data-step="1"><strong>Fast.</strong> Seven round-1 blocks reference the leader's block: <code>7 ≥ 7</code>, commit at round 1.</li>
-        <li data-step="2"><strong>Slow.</strong> Every round-2 block references 7 votes; six such blocks suffice: <code>6 ≥ 6</code> certificates, commit at round 2.</li>
+        <li data-step="1"><strong>Fast.</strong> Seven round-1 blocks reference the leader's block <span class="blk leader">0</span>: <span class="count accent">7 ≥ 7</span>, <span class="verdict commit">commit</span> at round 1.</li>
+        <li data-step="2"><strong>Slow.</strong> Every round-2 block references 7 <span class="t-vote">votes</span>; six such blocks suffice: <span class="count accent">6 ≥ 6</span> <span class="t-cert">certificates</span>, <span class="verdict commit">commit</span> at round 2.</li>
       </ul>
       <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-cert">certificate</span><span>shaded: six certificates counted</span></div>
     </div>
@@ -704,9 +704,9 @@
   <div class="body">
     <div class="text small">
       <ul>
-        <li>A round-<code>r+2</code> block is <strong>evidence</strong> for <code>l</code> when it references at least <code>f + p − 1</code> votes for <code>l</code>; if its references show the leader equivocating, at least <code>f + p</code> for <code>l</code> and at most <code>f + p − 1</code> for every other candidate.</li>
+        <li>A round-<code>r+2</code> block is <strong class="t-evidence">evidence</strong> for <code>l</code> when it references at least <code>f + p − 1</code> <span class="t-vote">votes</span> for <code>l</code>; if its references show the leader equivocating, at least <code>f + p</code> for <code>l</code> and at most <code>f + p − 1</code> for every other candidate.</li>
         <li><strong>Direct skip</strong>: <code>2f + p</code> blocks at <code>r + 1</code> reference no candidate, <strong>and</strong> <code>2f + p</code> blocks at <code>r + 2</code> are evidence for nothing.</li>
-        <li><strong>Indirect commit</strong>: the anchor's history holds a slow certificate for <code>l</code>, or <code>2f + p</code> evidence blocks for <code>l</code>. The least such <code>l</code> is committed.</li>
+        <li><strong>Indirect commit</strong>: the anchor's history holds a slow certificate for <code>l</code>, or <code>2f + p</code> <span class="t-evidence">evidence</span> blocks for <code>l</code>. The least such <code>l</code> is committed.</li>
         <li>Evidence is needed because a fast commit may leave no slow certificate.</li>
       </ul>
     </div>

@@ -6,7 +6,7 @@
     <div class="text">
       <ul>
         <li><code>n ≥ 3f + 1</code>; no self-parent rule.</li>
-        <li><strong>Commit</strong> a leader block <code>l</code> when <code>n − f</code> processes reference it from the round above, and every earlier leader slot is <strong>resolved</strong>: one of its blocks is in <code>l</code>'s history, or is concurrent with <code>l</code> and committed or skipped.</li>
+        <li><strong>Commit</strong> a <span class="nd leader">leader block</span> <code>l</code> when <code>n − f</code> processes reference it from the round above, and every <span class="nd ok">earlier leader slot</span> is <strong>resolved</strong>: one of its blocks is in <code>l</code>'s history, or is concurrent with <code>l</code> and committed or skipped.</li>
         <li><strong>Skip</strong> when <code>n − f</code> processes of the round above have no block that references it.</li>
         <li>The rule consults no later anchor.</li>
       </ul>
@@ -52,10 +52,10 @@
   <h2>Minnow: an earlier leader committed after a later one</h2>
   <div class="body wide-fig">
     <div class="text small">
-      <p><code>n = 4</code>. Process 0 equivocates at round 0: blocks 0 and 4. Block 4 is referenced by process 1 only.</p>
+      <p><code>n = 4</code>. <span class="t-byz">Process 0</span> equivocates at round 0: blocks <span class="blk leader twin">0</span> and <span class="blk leader twin">4</span>. Block 4 is referenced by process 1 only.</p>
       <ul>
-        <li data-step="1">A validator missing block 5 sees the round-1 leader block 6 reach block 4, which resolves slot 0. Block 6 is <strong>committed</strong>, while slot 0 is still undecided.</li>
-        <li data-step="2">Block 5 arrives. Block 0 now has a quorum and is <strong>committed</strong> for slot 0, after the later leader.</li>
+        <li data-step="1">A validator missing block 5 sees the round-1 leader block <span class="blk leader">6</span> reach block <span class="blk leader twin">4</span>, which resolves slot 0. Block 6 is <span class="verdict commit">committed</span>, while slot 0 is still <span class="verdict undecided">undecided</span>.</li>
+        <li data-step="2">Block <span class="blk">5</span> arrives. Block <span class="blk leader twin">0</span> now has a quorum and is <span class="verdict commit">committed</span> for slot 0, after the later leader.</li>
       </ul>
     </div>
     <figure class="dag">
@@ -118,9 +118,9 @@
       }</script>
       <figcaption class="caption">Two leaders per round. Step 2, one leader per round: 11 reaches 0 and 6 (green) and is committed.</figcaption>
       <ul class="small">
-        <li>A leader referenced by 2 of 4 processes is neither committed nor skipped, and no later leader can be committed.</li>
+        <li>A <span class="t-leader">leader</span> referenced by 2 of 4 processes is neither committed nor skipped, and no later leader can be committed.</li>
         <li>With two leaders per round in round-robin, no leader is committed.</li>
-        <li data-step="2">With one leader per round, the same DAG does commit.</li>
+        <li data-step="2">With one leader per round, the same DAG does <span class="verdict commit">commit</span>.</li>
       </ul>
     </figure>
     <figure class="dag" data-step="1">
@@ -139,7 +139,7 @@
       }</script>
       <figcaption class="caption">Two leaders per round; v0 is silent, so its slots at rounds 0 and 2 hold no block, and no slot is decided.</figcaption>
       <ul class="small">
-        <li>A silent leader's empty slot prevents every later leader from being committed.</li>
+        <li>A <span class="t-byz">silent leader</span>'s empty slot prevents every later leader from being committed.</li>
       </ul>
     </figure>
   </div>
@@ -155,7 +155,7 @@
     <div class="text">
       <ul>
         <li><code>n ≥ 3f + 1</code>; one anchor per round; no certificates.</li>
-        <li><strong>Commit</strong> an anchor <code>B</code> at round <code>r</code> when <code>n − f</code> validators reference it at round <code>r + 1</code>, and some anchor at <code>r + 1</code> references <code>B</code> and is itself referenced by <code>n − f</code> validators at <code>r + 2</code>.</li>
+        <li><strong>Commit</strong> an <span class="nd leader">anchor</span> <code>B</code> at round <code>r</code> when <code>n − f</code> validators reference it at round <code>r + 1</code>, and some <span class="nd leader">anchor</span> at <code>r + 1</code> references <code>B</code> and is itself referenced by <code>n − f</code> validators at <code>r + 2</code>.</li>
         <li>There is no skip. Anchors that are not committed are output through a descent from a later committed anchor.</li>
       </ul>
     </div>
@@ -206,13 +206,13 @@
   <h2>Black Marlin: agreement fails</h2>
   <div class="body wide-fig">
     <div class="text small">
-      <p><code>n = 4</code>, <code>f = 1</code>. Validator 0 equivocates at round 2: blocks 8 and 12.</p>
+      <p><code>n = 4</code>, <code>f = 1</code>. <span class="t-byz">Validator 0</span> equivocates at round 2: blocks <span class="blk leader twin">8</span> and <span class="blk leader twin">12</span>.</p>
       <ul>
-        <li data-step="1">Block 8 is committed; block 12 is not supported.</li>
-        <li data-step="2">The committed anchor 19 at round 4 omits block 14.</li>
-        <li data-step="2">One validator outputs block 8 for round 2; another outputs block 12.</li>
+        <li data-step="1">Block <span class="blk leader twin">8</span> is <span class="verdict commit">committed</span>; block <span class="blk leader twin">12</span> is not supported.</li>
+        <li data-step="2">The committed anchor <span class="blk leader anchor">19</span> at round 4 omits block <span class="blk leader">14</span>.</li>
+        <li data-step="2">One validator outputs block <span class="blk leader twin">8</span> for round 2; another outputs block <span class="blk leader twin">12</span>.</li>
       </ul>
-      <p data-step="2">Total order also fails, on blocks 5 and 7 of correct validators.</p>
+      <p data-step="2">Total order also fails, on blocks <span class="blk">5</span> and <span class="blk leader">7</span> of correct validators.</p>
     </div>
     <figure class="dag">
       <script type="application/json">{
@@ -339,7 +339,7 @@
     <div>
       <p>Mechanisms such as garbage collection or crash recovery should not be proved once per rule. Instead:</p>
       <ul>
-        <li>each rule is proved to have a few <strong>properties</strong>;</li>
+        <li>each rule is proved to have a few <span class="nd accent">properties</span>;</li>
         <li>each mechanism is proved once, using only those properties.</li>
       </ul>
       <p>Eleven rules (all but Minnow and Black Marlin) have the properties.</p>
@@ -380,7 +380,7 @@
   <h2>Banded: a verdict reads a finite band of rounds</h2>
   <div class="body stack">
     <div>
-      <p>Each verdict depends only on the blocks in a band of rounds, from the slot's round to some round <code>top</code>. Any other universe, view and schedule that match in the band — up to a shift of round and slot numbers — reach the same verdict.</p>
+      <p>Each verdict depends only on the blocks in a <span class="t-hull">band of rounds</span>, from the slot's round to some round <code>top</code>. Any other universe, view and schedule that match in the band — up to a shift of round and slot numbers — reach the same verdict.</p>
     </div>
     <div class="body">
       <figure class="dag">
@@ -433,7 +433,7 @@
       <ul>
         <li><strong>Agree</strong>: two views of one universe never decide a slot differently, skips included.</li>
         <li><strong>CommitsCandidate</strong>: a committed block is a candidate of its slot.</li>
-        <li><strong>Indirect</strong>: a committed eligible anchor, with every eligible slot in between skipped, decides the slot; changing the other slots' leaders does not change that verdict.</li>
+        <li><strong>Indirect</strong>: a <span class="nd ok">committed eligible anchor</span>, with every eligible slot in between <span class="nd muted">skipped</span>, decides <span class="nd leader">the slot</span>; changing the other slots' leaders does not change that verdict.</li>
       </ul>
     </div>
     <figure class="diagram" data-step="1">
@@ -453,7 +453,7 @@
       <ul>
         <li>A <strong>support</strong> names the wave and what it means for a block to certify a candidate.</li>
         <li><strong>Law 1 (local)</strong>: certification depends only on the wave's rounds, so it is unchanged by cutting or shifting rounds outside them.</li>
-        <li><strong>Law 2 (commits)</strong>: if a reliable quorum <code>T</code> leads a slot, produces through its wave and certifies every candidate, then a view that holds those rounds commits the slot.</li>
+        <li><strong>Law 2 (commits)</strong>: if a <span class="count ok">reliable quorum</span> <code>T</code> leads a slot, produces through its wave and <span class="t-cert">certifies</span> every candidate, then a view that holds those rounds commits the slot.</li>
         <li>Liveness needs exactly this, at every slot <code>T</code> leads. The network assumption is used only to establish it.</li>
       </ul>
     </div>
@@ -520,7 +520,7 @@
       </ul>
     </div>
     <figure>
-      <p class="small" data-step="1">Derived, so no rule needs to prove them: <strong>Persist</strong> and <strong>LocalTruncate</strong> from Banded; <strong>LeaderCommits</strong> from Law 2; <strong>Descends</strong> from Indirect.</p>
+      <p class="small" data-step="1">Derived, so no rule needs to prove them: <span class="nd">Persist</span> and <span class="nd">LocalTruncate</span> from Banded; <span class="nd">LeaderCommits</span> from Law 2; <span class="nd">Descends</span> from Indirect.</p>
       <figure class="diagram" data-step="1">
         <script type="application/json">{"w": 630, "h": 320, "groups": [{"x": 6, "y": 0, "w": 178, "h": 316, "label": "each rule proves"}, {"x": 416, "y": 0, "w": 208, "h": 316, "label": "derived once"}], "nodes": [{"id": "B", "x": 20, "y": 72, "w": 150, "h": 46, "text": "Banded", "cls": "accent"}, {"id": "L2", "x": 20, "y": 172, "w": 150, "h": 46, "text": "Law 2", "cls": "accent"}, {"id": "I", "x": 20, "y": 256, "w": 150, "h": 46, "text": "Indirect", "cls": "accent"}, {"id": "P", "x": 430, "y": 36, "w": 180, "h": 46, "text": "Persist"}, {"id": "T", "x": 430, "y": 108, "w": 180, "h": 46, "text": "LocalTruncate"}, {"id": "LC", "x": 430, "y": 172, "w": 180, "h": 46, "text": "LeaderCommits"}, {"id": "D", "x": 430, "y": 256, "w": 180, "h": 46, "text": "Descends"}], "edges": [{"from": "B", "to": "P", "label": "under extension", "dy": -10}, {"from": "B", "to": "T", "label": "under a cut", "dy": 22}, {"from": "L2", "to": "LC", "label": "at reliable leaders"}, {"from": "I", "to": "D", "label": "below a committed run"}]}</script>
       </figure>
@@ -565,7 +565,7 @@
       <p>From <strong>Law 2</strong>, <strong>CommitsCandidate</strong>, <strong>SelfParent</strong> and <strong>NoEquiv</strong>:</p>
       <ul>
         <li><strong>Progress</strong>: every slot below a run of reliably led slots is decided, and reliably led slots continue to be committed.</li>
-        <li><strong>Inclusion</strong>: every block of a reliable validator enters the ledger, through a later slot its creator leads.</li>
+        <li><strong>Inclusion</strong>: every <span class="nd accent">block</span> of a reliable validator enters the ledger, through a <span class="nd leader">later slot its creator leads</span>.</li>
       </ul>
       <p>Seven rules have both. Nemo, FinWhale, Hydrozoan and Optimal-Hydrozoan lack SelfParent and have progress only.</p>
     </div>

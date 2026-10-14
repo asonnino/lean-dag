@@ -62,6 +62,13 @@ content slides, as the outline does; part dividers are not numbered.
   and `<div class="tradeoffs"><div class="plus">…</div><div class="minus">…</div></div>`.
 - Mechanism slides end with `<div class="uses"><b>Uses:</b> … <br><b>Gives:</b> …</div>`.
 - Any element with `data-step="k"` appears from step `k` of its slide on.
+- Entities that the text shares with a figure are styled as the figure draws
+  them: `<span class="blk vote">8</span>` for a block (its figure marks),
+  `<span class="t-blame">blames</span>` for a term, `<span class="verdict commit">commit</span>`
+  for a badge, `<span class="count accent">3 ≥ q</span>` for a bracket count,
+  `<span class="tagx">L</span>` for a tag, `<span class="nd accent">certificate</span>` for a
+  diagram box. The classes are listed at the end of `theme.css`. A chip shows
+  the block's marks at the step where its text is visible.
 - Diagrams without a DAG use `.flow` / `.box` / `.arrow`, `.columns3`, tables,
   or a chart figure.
 
