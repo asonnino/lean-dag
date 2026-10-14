@@ -88,11 +88,11 @@
   <h2>Mysticeti: direct commit and direct skip</h2>
   <div class="body">
     <div class="text small">
-      <p><code>n = 4</code>, <code>f = 1</code>, <code>q = 3</code>. Slot 0 is led by <code>v0</code>; another slot by <code>v3</code>.</p>
+      <p><code>n = 4</code>, <code>f = 1</code>, <code>q = 3</code>. Slot 0 is led by <code>v0</code> (<span class="blk leader">0</span>, <span class="tagx">L</span>); another slot by <code>v3</code> (<span class="blk leader">3</span>).</p>
       <ul>
-        <li data-step="1">At round 1, <code>v0</code>, <code>v1</code>, <code>v2</code> vote for <code>v0</code>'s block; <code>v3</code>'s block does not.</li>
-        <li data-step="2">At round 2, the blocks of <code>v0</code>, <code>v1</code>, <code>v2</code> each reference those three votes: three certificates. <code>3 ≥ q</code>: <strong>commit</strong>.</li>
-        <li data-step="3">At round 1, <code>v0</code>, <code>v1</code>, <code>v2</code> reference no block of <code>v3</code> at round 0: three blames. <code>3 ≥ q</code>: <code>v3</code>'s slot is <strong>skipped</strong>.</li>
+        <li data-step="1">At round 1, <span class="blk vote">4</span> <span class="blk vote">5</span> <span class="blk vote">6</span> are <span class="t-vote">votes</span> for <span class="blk leader">0</span>; <code>v3</code>'s block 7 does not reference it. <span class="count accent">3 ≥ q</span></li>
+        <li data-step="2">At round 2, <span class="blk cert">8</span> <span class="blk cert">9</span> <span class="blk cert">10</span> each reference those three votes: three <span class="t-cert">certificates</span>. <span class="count accent">3 ≥ q</span>: <span class="verdict commit">commit</span>.</li>
+        <li data-step="3">At round 1, <span class="blk blame">4</span> <span class="blk blame">5</span> <span class="blk blame">6</span> reference no block of <code>v3</code> at round 0: three <span class="t-blame">blames</span>. <span class="count bad">3 ≥ q</span>: <code>v3</code>'s slot is <span class="verdict skip">skipped</span>.</li>
       </ul>
     </div>
     <figure class="dag">
