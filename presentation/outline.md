@@ -535,7 +535,11 @@ slot 0.
 > No step uses the network. Every rule that follows is proved safe by the same
 > five steps, with its own counts: these are the laws of slide 10.
 
-**Figure.** A chain of five boxes, 1 → 2 → 3, 4 → 5.
+**Figure.** The five steps as a diagram: step 1 (quorum intersection) supports
+steps 2, 3 and 4, and those three support step 5. Each arrow names what one
+step takes from another; steps 3 and 4 also count quorums
+(`exists_certificate_reaches_of_directCommit` uses
+`card_inter_correct_of_quorum`).
 
 **Notes.**
 1. `exists_correct_mem_inter` (LeanDag/Common/Validators.lean:152).

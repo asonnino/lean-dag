@@ -16,37 +16,38 @@
       </table>
       <p>Then two published rules that have no indirect rule, Minnow and Black Marlin, with counterexamples to both; and a summary of all the rules.</p>
     </div>
-    <figure>
-      <svg class="dag" viewBox="0 0 520 372" role="img">
-        <g>
-          <line class="edge strong" x1="100" y1="182" x2="190" y2="35"/>
-          <line class="edge strong" x1="100" y1="182" x2="190" y2="95"/>
-          <line class="edge strong" x1="100" y1="182" x2="190" y2="155"/>
-          <line class="edge strong" x1="100" y1="182" x2="190" y2="191"/>
-          <line class="edge strong" x1="100" y1="182" x2="190" y2="251"/>
-          <line class="edge strong" x1="100" y1="182" x2="190" y2="311"/>
-          <polyline class="edge strong" points="50,199 50,347 380,347"/>
-          <line class="edge strong" x1="310" y1="95" x2="380" y2="95"/>
-          <line class="edge strong" x1="310" y1="191" x2="380" y2="191"/>
-          <line class="edge strong" x1="310" y1="95" x2="380" y2="251"/>
-          <line class="edge strong" x1="310" y1="311" x2="380" y2="251"/>
-          <line class="edge strong" x1="310" y1="311" x2="380" y2="347"/>
-        </g>
-        <g>
-        </g>
-        <g class="block leader"><rect x="0" y="165" width="100" height="34" rx="5"/><text x="50" y="182">Mysticeti</text></g>
-        <g class="block"><rect x="190" y="20" width="120" height="30" rx="5"/><text x="250" y="35">Nemo-Nemo</text></g>
-        <g class="block"><rect x="190" y="80" width="120" height="30" rx="5"/><text x="250" y="95">Odontoceti</text></g>
-        <g class="block"><rect x="190" y="140" width="120" height="30" rx="5"/><text x="250" y="155">FinWhale</text></g>
-        <g class="block"><rect x="190" y="176" width="120" height="30" rx="5"/><text x="250" y="191">Hydrozoan</text></g>
-        <g class="block"><rect x="190" y="236" width="120" height="30" rx="5"/><text x="250" y="251">Bluestreak</text></g>
-        <g class="block"><rect x="190" y="296" width="120" height="30" rx="5"/><text x="250" y="311">Mahi-Mahi</text></g>
-        <g class="block"><rect x="380" y="80" width="140" height="30" rx="5"/><text x="450" y="95">Hybrid</text></g>
-        <g class="block"><rect x="380" y="176" width="140" height="30" rx="5"/><text x="450" y="191">Optimal-Hydrozoan</text></g>
-        <g class="block"><rect x="380" y="236" width="140" height="30" rx="5"/><text x="450" y="251">Async BlueBottle</text></g>
-        <g class="block"><rect x="380" y="332" width="140" height="30" rx="5"/><text x="450" y="347">Steelhead</text></g>
-      </svg>
-      <figcaption class="caption">Each line joins a rule to the rule it changes; the table names the change.</figcaption>
+    <figure class="diagram">
+      <script type="application/json">
+      {"w": 660, "h": 482, "size": "l", "groups": [{"x": 180, "y": 0, "w": 480, "h": 66, "label": "Crash faults only, two rounds"},
+         {"x": 180, "y": 76, "w": 480, "h": 112, "label": "A fast commit beside the slow one"},
+         {"x": 180, "y": 198, "w": 480, "h": 66, "label": "Fewer references per block"},
+         {"x": 180, "y": 274, "w": 480, "h": 66, "label": "A larger committee, two rounds"},
+         {"x": 180, "y": 350, "w": 480, "h": 132, "label": "No timing assumption"}],
+       "nodes": [{"id": "mys", "x": 0, "y": 218, "w": 120, "h": 40, "text": "Mysticeti", "cls": "leader"},
+         {"id": "nemo", "x": 200, "y": 22, "w": 150, "h": 36, "text": "Nemo-Nemo"},
+         {"id": "fin", "x": 200, "y": 98, "w": 150, "h": 36, "text": "FinWhale"},
+         {"id": "hyd", "x": 200, "y": 144, "w": 150, "h": 36, "text": "Hydrozoan"},
+         {"id": "opt", "x": 470, "y": 144, "w": 170, "h": 36, "text": "Optimal-Hydrozoan"},
+         {"id": "blue", "x": 200, "y": 220, "w": 150, "h": 36, "text": "Bluestreak"},
+         {"id": "odo", "x": 200, "y": 296, "w": 150, "h": 36, "text": "Odontoceti"},
+         {"id": "hyb", "x": 470, "y": 296, "w": 170, "h": 36, "text": "Hybrid"},
+         {"id": "mahi", "x": 200, "y": 372, "w": 150, "h": 36, "text": "Mahi-Mahi"},
+         {"id": "abb", "x": 470, "y": 372, "w": 170, "h": 36, "text": "Async BlueBottle"},
+         {"id": "steel", "x": 200, "y": 436, "w": 150, "h": 36, "text": "Steelhead"}],
+       "edges": [{"from": "mys", "to": "nemo", "route": "v", "fromSide": "t", "toSide": "l", "label": "majority quorum", "dx": 70, "dy": -97.0},
+         {"from": "mys", "to": "fin", "route": "v", "fromSide": "t", "toSide": "l", "label": "parameter p", "dx": 70, "dy": -59.0},
+         {"from": "mys", "to": "hyd", "route": "v", "fromSide": "t", "toSide": "l", "label": "crashes apart", "dx": 70, "dy": -36.0},
+         {"from": "mys", "to": "blue", "label": "claims"},
+         {"from": "mys", "to": "odo", "route": "v", "fromSide": "b", "toSide": "l", "label": "n ≥ 5f + 1", "dx": 70, "dy": 20.0},
+         {"from": "mys", "to": "mahi", "route": "v", "fromSide": "b", "toSide": "l", "label": "wave of w rounds", "dx": 70, "dy": 58.0},
+         {"from": "mys", "to": "steel", "route": "v", "fromSide": "b", "toSide": "l", "label": "composite", "dx": 70, "dy": 90.0},
+         {"from": "hyd", "to": "opt", "label": "pOpt = p + 1"},
+         {"from": "odo", "to": "hyb", "label": "crashes apart"},
+         {"from": "odo", "to": "abb", "fromSide": "b", "toSide": "t", "label": "vote at r + 2", "dx": 0, "dy": 13},
+         {"from": "mahi", "to": "abb", "label": "history votes", "dy": 16},
+         {"from": "mahi", "to": "steel", "fromSide": "b", "toSide": "t", "label": "composite", "dx": 42, "dy": 5}]}
+      </script>
+      <figcaption class="caption">An arrow joins a rule to a rule built on it and names the change; the bands are the rows of the table</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -103,17 +104,23 @@
          {"ids": [8, 9, 10], "cls": "cert", "step": 2},
          {"ids": [4, 5, 6], "cls": "blame", "step": 3}
        ],
+       "tags": [{"id": 0, "text": "L"}],
        "strong": [
          {"from": [4, 5, 6], "to": [0], "step": 1},
-         {"from": [8, 9, 10], "to": [4, 5, 6], "step": 2}
+         {"from": [8, 9, 10], "to": [4, 5, 6], "step": 2, "until": 3}
+       ],
+       "brackets": [
+         {"ids": [4, 5, 6], "text": "3 ≥ q", "kind": "accent", "step": 1, "until": 3},
+         {"ids": [8, 9, 10], "text": "3 ≥ q", "kind": "accent", "step": 2},
+         {"ids": [4, 5, 6], "text": "3 ≥ q", "kind": "bad", "step": 3}
        ],
        "badges": [
-         {"r": 0, "text": "v0's slot: commit", "kind": "commit", "step": 3},
-         {"r": 0, "text": "v3's slot: skip", "kind": "skip", "step": 3, "row": 1}
+         {"r": 0, "text": "v0's slot: commit", "kind": "commit", "step": 2, "at": 0},
+         {"r": 0, "text": "v3's slot: skip", "kind": "skip", "step": 3, "row": 1, "at": 3}
        ]}
       </script>
       <div class="legend"><span class="l-leader">candidate</span><span class="l-vote">vote for 0</span><span class="l-cert">certificate</span><span class="l-blame">blame for v3's slot</span></div>
-      <figcaption class="caption">Witness U3, LeanDagTest/Mysticeti/Model.lean</figcaption>
+      <figcaption class="caption">Witness U3, LeanDagTest/Mysticeti/Model.lean; each bracket counts its blocks against <code>q = 3</code></figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -143,18 +150,27 @@
          {"ids": [8], "cls": "cert", "step": 2},
          {"ids": [12], "cls": "leader anchor", "step": 3}
        ],
+       "tags": [
+         {"id": 0, "text": "L"},
+         {"id": 12, "text": "anchor", "kind": "ok", "step": 3}
+       ],
        "strong": [
          {"from": [4, 5, 6], "to": [0], "step": 1},
          {"from": [8], "to": [4, 5, 6], "step": 2}
        ],
+       "brackets": [
+         {"ids": [7], "text": "1 < q", "kind": "bad", "step": 2},
+         {"ids": [8], "text": "1 < q", "kind": "accent", "step": 2}
+       ],
        "paths": [{"ids": [12, 8, 4, 0], "step": 4}],
        "badges": [
-         {"r": 3, "text": "commit (direct)", "kind": "commit", "step": 3},
-         {"r": 0, "text": "commit (indirect)", "kind": "commit", "step": 4}
+         {"r": 0, "text": "no direct decision", "kind": "undecided", "step": 2, "until": 4, "at": 0},
+         {"r": 3, "text": "commit (direct)", "kind": "commit", "step": 3, "at": 12},
+         {"r": 0, "text": "commit (indirect)", "kind": "commit", "step": 4, "at": 0}
        ]}
       </script>
       <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-blame">blame</span><span class="l-cert">certificate</span><span class="l-anchor">anchor</span></div>
-      <figcaption class="caption">Witness U7, LeanDagTest/Mysticeti/Model.lean</figcaption>
+      <figcaption class="caption">Witness U7, LeanDagTest/Mysticeti/Model.lean; green: the path from anchor 12 through certificate 8 to <code>L</code></figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -166,7 +182,7 @@
 <!-- Slide 18 -->
 <section class="slide" data-part-label="Protocols · Mysticeti">
   <h2>Mysticeti: why it is safe</h2>
-  <div class="body stack">
+  <div class="body">
     <div class="text">
       <ol>
         <li>Two quorums share a correct validator.</li>
@@ -175,17 +191,29 @@
         <li>A direct skip leaves no certificate anywhere.</li>
         <li>So any two views decide every slot the same way, and their ledgers agree.</li>
       </ol>
-    </div>
-    <div class="flow">
-      <div class="box">1</div><span class="arrow">→</span>
-      <div class="box">2</div><span class="arrow">→</span>
-      <div class="box">3</div><span class="arrow">→</span>
-      <div class="box accent">5</div><span class="arrow">←</span>
-      <div class="box">4</div>
-    </div>
-    <div class="text">
       <p>No step uses the network. Every rule that follows is proved safe by the same five steps, with its own counts: these are the laws of slide 10.</p>
     </div>
+    <figure class="diagram">
+      <script type="application/json">
+      {"w": 540, "h": 360,
+       "nodes": [
+         {"id": "s1", "x": 170, "y": 0, "w": 200, "h": 56, "text": "1 · Quorums meet", "sub": "in a correct validator"},
+         {"id": "s2", "x": 0, "y": 152, "w": 165, "h": 56, "text": "2 · One certified", "sub": "candidate per slot"},
+         {"id": "s3", "x": 187, "y": 152, "w": 166, "h": 56, "text": "3 · Commit is seen", "sub": "from round r + 3"},
+         {"id": "s4", "x": 375, "y": 152, "w": 165, "h": 56, "text": "4 · Skip leaves", "sub": "no certificate"},
+         {"id": "s5", "x": 175, "y": 302, "w": 190, "h": 56, "text": "5 · Views agree", "sub": "same verdicts, same ledger", "cls": "accent"}
+       ],
+       "edges": [
+         {"from": "s1", "to": "s2", "route": "h", "fromSide": "l", "toSide": "t", "label": "a correct voter\nvotes once", "dx": -44, "dy": 62},
+         {"from": "s1", "to": "s3", "label": "q certificates meet\nany q references", "dy": 0},
+         {"from": "s1", "to": "s4", "route": "h", "fromSide": "r", "toSide": "t", "label": "q blames leave\nfewer than q votes", "dx": 44, "dy": 62},
+         {"from": "s2", "to": "s5", "route": "v", "fromSide": "b", "toSide": "l", "label": "anchors link\none block", "dy": 0},
+         {"from": "s3", "to": "s5", "label": "anchors find\nthe certificate", "dy": 0},
+         {"from": "s4", "to": "s5", "route": "v", "fromSide": "b", "toSide": "r", "label": "anchors find\nno certificate", "dy": 0}
+       ]}
+      </script>
+      <figcaption class="caption">The five steps; each arrow names what a step takes from the one before it</figcaption>
+    </figure>
   </div>
   <aside class="notes">
     1. <code>exists_correct_mem_inter</code> (<code>LeanDag/Common/Validators.lean:152</code>).
@@ -247,13 +275,15 @@
            {"ids": [10, 11], "cls": "vote", "step": 1},
            {"ids": [11], "cls": "leader anchor", "step": 2}
          ],
+         "tags": [{"id": 8, "text": "L", "step": 1}],
          "strong": [{"from": [10, 11], "to": [8], "step": 1}],
+         "brackets": [{"ids": [10, 11], "text": "2 ≥ 2", "kind": "accent", "step": 1}],
          "hulls": [{"ids": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], "step": 2}],
          "badges": [
-           {"r": 3, "text": "commit", "kind": "commit", "step": 1},
+           {"r": 3, "text": "commit", "kind": "commit", "step": 1, "at": 8},
            {"r": 2, "text": "skip", "kind": "skip", "step": 2}
          ]}
-        </script>
+      </script>
         <figcaption class="caption">Witness Unemo, LeanDagTest/Nemo/Model.lean; shaded: history of anchor 11</figcaption>
       </figure>
       <figure class="dag">
@@ -261,11 +291,11 @@
         {"w": "Ush", "rounds": [0, 5], "crashed": {"2": -1},
          "marks": [{"ids": [0, 4, 8], "cls": "leader"}],
          "badges": [
-           {"r": 0, "text": "commit", "kind": "commit"},
+           {"r": 0, "text": "commit", "kind": "commit", "at": 0},
            {"r": 1, "text": "undecided", "kind": "undecided"},
-           {"r": 2, "text": "commit", "kind": "commit"},
+           {"r": 2, "text": "commit", "kind": "commit", "at": 4},
            {"r": 3, "text": "undecided", "kind": "undecided"},
-           {"r": 4, "text": "commit", "kind": "commit"},
+           {"r": 4, "text": "commit", "kind": "commit", "at": 8},
            {"r": 5, "text": "undecided", "kind": "undecided"}
          ]}
         </script>
@@ -324,32 +354,47 @@
       <script type="application/json">
       {"w": "Uskip", "byz": [0],
        "marks": [
-         {"ids": [0], "cls": "leader", "step": 1},
-         {"ids": [7, 8, 9, 10, 11], "cls": "blame", "step": 1},
-         {"ids": [7], "cls": "leader", "step": 2},
-         {"ids": [13, 14, 15], "cls": "vote", "step": 2},
-         {"ids": [12, 16, 17], "cls": "blame", "step": 2},
-         {"ids": [21], "cls": "leader anchor", "step": 3},
+         {"ids": [0], "cls": "leader", "step": 1, "until": 2},
+         {"ids": [7, 8, 9, 10, 11], "cls": "blame", "step": 1, "until": 2},
+         {"ids": [7], "cls": "leader", "step": 2, "until": 4},
+         {"ids": [13, 14, 15], "cls": "vote", "step": 2, "until": 4},
+         {"ids": [12, 16, 17], "cls": "blame", "step": 2, "until": 4},
+         {"ids": [21], "cls": "leader anchor", "step": 3, "until": 4},
          {"ids": [14], "cls": "leader", "step": 4},
          {"ids": [20, 21], "cls": "vote", "step": 4},
          {"ids": [18, 19, 22, 23], "cls": "blame", "step": 4},
          {"ids": [28], "cls": "leader anchor", "step": 4}
        ],
-       "hulls": [{"ids": [12, 13, 14, 15, 16], "step": 3}],
+       "tags": [
+         {"id": 0, "text": "L", "step": 1, "until": 2},
+         {"id": 7, "text": "L", "step": 2, "until": 4},
+         {"id": 21, "text": "anchor", "kind": "ok", "step": 3, "until": 4},
+         {"id": 14, "text": "L", "step": 4},
+         {"id": 28, "text": "anchor", "kind": "ok", "step": 4}
+       ],
+       "hulls": [{"ids": [13, 14, 15], "step": 3, "until": 4}, {"ids": [20, 21], "step": 4}],
        "strong": [
-         {"from": [21], "step": 3},
+         {"from": [13, 14, 15], "to": [7], "step": 2, "until": 3},
+         {"from": [21], "to": [13, 14, 15], "step": 3, "until": 4},
+         {"from": [20, 21], "to": [14], "step": 4},
          {"from": [28], "to": [20, 21], "step": 4}
        ],
+       "brackets": [
+         {"ids": [7, 8, 9, 10, 11], "text": "5 ≥ 5", "kind": "bad", "step": 1, "until": 2},
+         {"ids": [13, 14, 15], "text": "3 < 5", "kind": "accent", "step": 2, "until": 3},
+         {"ids": [13, 14, 15], "text": "3 ≥ 3", "kind": "ok", "side": "left", "step": 3, "until": 4},
+         {"ids": [20, 21], "text": "2 < 3", "kind": "ok", "step": 4}
+       ],
        "badges": [
-         {"r": 0, "text": "skip", "kind": "skip", "step": 1},
-         {"r": 1, "text": "commit", "kind": "commit", "step": 3},
-         {"r": 3, "text": "commit", "kind": "commit", "step": 3},
-         {"r": 2, "text": "skip", "kind": "skip", "step": 4},
-         {"r": 4, "text": "commit", "kind": "commit", "step": 4}
+         {"r": 0, "text": "direct skip", "kind": "skip", "step": 1, "at": 0},
+         {"r": 1, "text": "indirect commit", "kind": "commit", "step": 3, "row": 1, "at": 7},
+         {"r": 3, "text": "direct commit", "kind": "commit", "step": 3, "row": 1, "at": 21},
+         {"r": 2, "text": "indirect skip", "kind": "skip", "step": 4, "at": 14},
+         {"r": 4, "text": "direct commit", "kind": "commit", "step": 4, "at": 28}
        ]}
       </script>
       <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-blame">blame</span><span class="l-anchor">anchor</span></div>
-      <figcaption class="caption">Witness Uskip, LeanDagTest/Odontoceti/Model.lean; shaded: the round-2 references of anchor 21</figcaption>
+      <figcaption class="caption">Witness Uskip, LeanDagTest/Odontoceti/Model.lean; shaded: the voters in the anchor's history; brackets: counts against 5 (direct) and 3 (indirect)</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -372,20 +417,24 @@
     </div>
     <figure class="dag">
       <script type="application/json">
-      {"w": "Utwin6", "byz": [0],
+      {"w": "Utwin6", "byz": [0], "rounds": [0, 1],
        "marks": [
          {"ids": [0, 6], "cls": "leader"},
-         {"ids": [7, 8, 9, 10, 11, 12], "cls": "vote"},
-         {"ids": [19], "cls": "anchor"}
+         {"ids": [7, 8, 9, 10, 11, 12], "cls": "vote"}
        ],
        "strong": [{"from": [7, 8, 9], "to": [0]}, {"from": [10, 11, 12], "to": [6]}],
-       "badges": [{"r": 0, "text": "both twins pass", "kind": "note"}]}
+       "brackets": [
+         {"ids": [7, 8, 9], "text": "3 ≥ 3", "kind": "accent"},
+         {"ids": [10, 11, 12], "text": "3 ≥ 3", "kind": "accent"}
+       ],
+       "badges": [{"r": 0, "text": "both twins pass", "kind": "note", "at": 6}]}
       </script>
-      <figcaption class="caption">Odontoceti, n = 6. Witness Utwin6, LeanDagTest/Odontoceti/Model.lean: twins 0 and 6, voters {0, 1, 2} and {3, 4, 5}, both 3 ≥ 3 in the history of block 19</figcaption>
+      <figcaption class="caption">Odontoceti: Utwin6, LeanDagTest/Odontoceti/Model.lean; all six voters are in the history of block 19</figcaption>
     </figure>
     <figure class="dag">
       <script type="application/json">
       {"w": "UhybX", "rounds": [1, 3], "byz": [0],
+       "rowOrder": [1, 2, 3, 4, 5, 6, 7, 0, 8],
        "only": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 27],
        "edges": "none",
        "marks": [
@@ -394,9 +443,13 @@
          {"ids": [27], "cls": "leader anchor"}
        ],
        "strong": [{"from": [18, 19, 20, 21], "to": [16]}, {"from": [22, 23, 24, 25], "to": [17]}, {"from": [27]}],
-       "badges": [{"r": 1, "text": "16: commit", "kind": "commit"}, {"r": 1, "text": "17: refused", "kind": "skip", "row": 1}]}
+       "brackets": [
+         {"ids": [18, 19, 20, 21], "text": "4 ≥ 4", "kind": "accent"},
+         {"ids": [22, 23, 24, 25], "text": "4 ≥ 4", "kind": "accent"}
+       ],
+       "badges": [{"r": 1, "text": "16: commit", "kind": "commit", "at": 16}, {"r": 1, "text": "17: refused", "kind": "skip", "row": 1, "at": 17}]}
       </script>
-      <figcaption class="caption">Hybrid, n = 9, k = 4. Witness x9 (UhybX), LeanDagTest/Barnacle/OrcaellaIndirect.lean: twins 16 and 17, voters {1, 2, 3, 4} and {5, 6, 7, 0}, both in the history of committed anchor 27</figcaption>
+      <figcaption class="caption">Hybrid, k = 4: x9, LeanDagTest/Barnacle/OrcaellaIndirect.lean</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -461,33 +514,40 @@
     </div>
     <figure class="dag">
       <script type="application/json">
-      {"w": "Uhyb4", "rounds": [0, 2], "crashed": {"3": 0},
+      {"w": "Uhyb4", "rounds": [1, 2], "crashed": {"3": 0},
        "marks": [
          {"ids": [5], "cls": "leader"},
          {"ids": [7, 8, 9], "cls": "vote"}
        ],
+       "tags": [{"id": 5, "text": "L"}],
        "strong": [{"from": [7, 8, 9], "to": [5]}],
-       "badges": [{"r": 1, "text": "commit", "kind": "commit"}]}
+       "brackets": [{"ids": [7, 8, 9], "text": "3 ≥ q", "kind": "accent"}],
+       "badges": [{"r": 1, "text": "commit", "kind": "commit", "at": 5}]}
       </script>
-      <figcaption class="caption">Witness Uhyb4, LeanDagTest/Hybrid/Model.lean: slot 1, 3 ≥ q = 3</figcaption>
+      <figcaption class="caption">Witness Uhyb4, LeanDagTest/Hybrid/Model.lean: slot 1, 3 votes, q = 3</figcaption>
     </figure>
     <figure class="dag">
       <script type="application/json">
-      {"w": "U5orc", "rounds": [0, 3],
+      {"w": "U5orc", "rounds": [1, 3],
        "marks": [
          {"ids": [6], "cls": "leader", "step": 1},
          {"ids": [11, 12], "cls": "vote", "step": 1},
          {"ids": [10, 13, 14], "cls": "blame", "step": 1},
          {"ids": [18], "cls": "leader anchor", "step": 2}
        ],
+       "tags": [{"id": 6, "text": "L", "step": 1}, {"id": 18, "text": "anchor", "kind": "ok", "step": 2}],
        "hulls": [{"ids": [11, 12, 13, 14], "step": 2}],
-       "strong": [{"from": [18], "step": 2}],
+       "strong": [{"from": [11, 12], "to": [6], "step": 1}, {"from": [18], "step": 2}],
+       "brackets": [
+         {"ids": [11, 12], "text": "2 < q", "kind": "accent", "side": "left", "step": 1},
+         {"ids": [11, 12], "text": "2 voters", "kind": "ok", "step": 2}
+       ],
        "badges": [
-         {"r": 1, "text": "k = 2: commit", "kind": "commit", "step": 3},
-         {"r": 1, "text": "k = 3: skip", "kind": "skip", "step": 3, "row": 1}
+         {"r": 1, "text": "k = 2: commit", "kind": "commit", "step": 3, "at": 6},
+         {"r": 1, "text": "k = 3: skip", "kind": "skip", "step": 3, "row": 1, "at": 6}
        ]}
       </script>
-      <figcaption class="caption">Witness U5, LeanDagTest/Barnacle/OrcaellaIndirect.lean; shaded: references of anchor 18</figcaption>
+      <figcaption class="caption">Witness U5, LeanDagTest/Barnacle/OrcaellaIndirect.lean: slot 1, 2 votes, q = 4; shaded: references of anchor 18</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -506,7 +566,8 @@
     </div>
       <figure class="dag">
         <script type="application/json">
-        {"w": "UtightA", "byz": [0],
+        {"w": "UtightA", "byz": [0], "rounds": [0, 2],
+         "rowOrder": [2, 3, 4, 5, 6, 0, 1, 7],
          "marks": [
            {"ids": [1], "cls": "leader"},
            {"ids": [9, 10, 16], "cls": "vote"},
@@ -514,29 +575,39 @@
            {"ids": [17], "cls": "leader anchor"}
          ],
          "strong": [{"from": [17], "to": [9, 10, 16]}],
+         "brackets": [
+           {"ids": [11, 12, 13, 14, 15, 8], "text": "6 ≥ q", "kind": "bad", "side": "left"},
+           {"ids": [9, 10, 16], "text": "3 ≥ k", "kind": "ok"}
+         ],
          "badges": [
-           {"r": 0, "text": "skip: 6 ≥ q = 6", "kind": "skip"},
-           {"r": 0, "text": "k ≤ 3: commit", "kind": "commit", "row": 1}
+           {"r": 0, "text": "skip: 6 ≥ q = 6", "kind": "skip", "at": 1},
+           {"r": 0, "text": "k ≤ 3: commit", "kind": "commit", "row": 1, "at": 1}
          ]}
         </script>
-        <figcaption class="caption">UtightA, LeanDagTest/Hybrid/Tight.lean: 6 blames; 3 voters in the history of anchor 17</figcaption>
+        <figcaption class="caption">UtightA, LeanDagTest/Hybrid/Tight.lean; rows grouped by vote and blame</figcaption>
       </figure>
       <figure class="dag">
         <script type="application/json">
-        {"w": "UtightB", "byz": [0],
+        {"w": "UtightB", "byz": [0], "rounds": [0, 2],
+         "rowOrder": [1, 2, 3, 4, 5, 0, 6, 7],
          "marks": [
            {"ids": [1], "cls": "leader"},
            {"ids": [8, 10, 11, 12, 13, 14], "cls": "vote"},
            {"ids": [9, 15, 16], "cls": "blame"},
            {"ids": [17], "cls": "leader anchor"}
          ],
+         "hulls": [{"ids": [10, 11, 12]}],
          "strong": [{"from": [17], "to": [10, 11, 12]}],
+         "brackets": [
+           {"ids": [10, 11, 12, 13, 14, 8], "text": "6 ≥ q", "kind": "accent", "side": "left"},
+           {"ids": [10, 11, 12], "text": "3 < k", "kind": "ok"}
+         ],
          "badges": [
-           {"r": 0, "text": "commit: 6 ≥ q = 6", "kind": "commit"},
-           {"r": 0, "text": "k ≥ 4: skip", "kind": "skip", "row": 1}
+           {"r": 0, "text": "commit: 6 ≥ q = 6", "kind": "commit", "at": 1},
+           {"r": 0, "text": "k ≥ 4: skip", "kind": "skip", "row": 1, "at": 1}
          ]}
         </script>
-        <figcaption class="caption">UtightB, LeanDagTest/Hybrid/Tight.lean: 6 votes; 3 voters in the history of anchor 17</figcaption>
+        <figcaption class="caption">UtightB, LeanDagTest/Hybrid/Tight.lean; rows grouped by vote and blame</figcaption>
       </figure>
   </div>
   <aside class="notes">
@@ -597,7 +668,6 @@
         <li data-step="2"><strong>Slow.</strong> Every round-2 block references 7 votes; six such blocks suffice: <code>6 ≥ 6</code> certificates, commit at round 2.</li>
       </ul>
       <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-cert">certificate</span><span>shaded: six certificates counted</span></div>
-      <p class="caption">Witness Dfast, LeanDagTest/FinWhale/Model.lean</p>
     </div>
     <figure class="dag">
       <script type="application/json">
@@ -607,13 +677,19 @@
          {"ids": [9, 10, 11, 12, 13, 14, 15], "cls": "vote", "step": 1},
          {"ids": [18, 19, 20, 21, 22, 23, 24, 25, 26], "cls": "cert", "step": 2}
        ],
+       "tags": [{"id": 0, "text": "L"}],
        "strong": [{"from": [9, 10, 11, 12, 13, 14, 15], "to": [0], "step": 1}],
        "hulls": [{"ids": [18, 19, 20, 21, 22, 23], "step": 2}],
+       "brackets": [
+         {"ids": [9, 10, 11, 12, 13, 14, 15], "text": "7 ≥ 7", "kind": "accent", "step": 1},
+         {"ids": [18, 19, 20, 21, 22, 23], "text": "6 ≥ 6", "kind": "accent", "step": 2}
+       ],
        "badges": [
-         {"r": 0, "text": "fast commit: 7 ≥ 7", "kind": "commit", "step": 3},
-         {"r": 0, "text": "slow commit: 6 ≥ 6", "kind": "commit", "step": 3, "row": 1}
+         {"r": 0, "text": "fast commit: 7 ≥ 7", "kind": "commit", "step": 1, "at": 0},
+         {"r": 0, "text": "slow commit: 6 ≥ 6", "kind": "commit", "step": 2, "row": 1, "at": 0}
        ]}
       </script>
+      <figcaption class="caption">Witness Dfast, LeanDagTest/FinWhale/Model.lean</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -643,31 +719,39 @@
          {"ids": [18, 19], "cls": "evidence"}
        ],
        "edges": "none",
-       "strong": [{"from": [18, 19, 20]}]}
+       "strong": [{"from": [18]}],
+       "brackets": [
+         {"ids": [10, 11, 12, 13], "text": "4 ≥ 4", "kind": "accent", "side": "left"},
+         {"ids": [14, 15], "text": "2 < 4", "kind": "bad", "side": "left"}
+       ]}
       </script>
       <div class="legend"><span class="l-vote">vote for 0</span><span class="l-evidence">evidence for 0</span></div>
-      <figcaption class="caption">Witness Dequiv, LeanDagTest/FinWhale/Model.lean. 14, 15 vote for twin 27. Block 18: 4 for 0, 2 for 27 (f + p = 4). Block 19 sees one twin: 5 ≥ 3. Block 20: 3 and 2, evidence for nothing.</figcaption>
+      <figcaption class="caption">Witness Dequiv, LeanDagTest/FinWhale/Model.lean. Block 18 sees both twins: 4 ≥ f + p votes for 0, 2 for twin 27. Block 19: 5 ≥ 3. Block 20: 3 &lt; 4, evidence for nothing.</figcaption>
     </figure>
     <figure class="dag">
       <script type="application/json">
-      {"w": "Dbare",
+      {"w": "Dbare", "rounds": [1, 3],
        "marks": [
-         {"ids": [0], "cls": "leader"},
          {"ids": [9, 10, 11, 12, 13, 14, 15], "cls": "vote", "step": 1},
          {"ids": [18, 19, 20, 21, 22, 23, 24, 25, 26], "cls": "evidence", "step": 2},
          {"ids": [30], "cls": "leader anchor", "step": 3}
        ],
        "strong": [
-         {"from": [9, 10, 11, 12, 13, 14, 15], "to": [0], "step": 1},
+         {"from": [18], "to": [9, 10, 11, 12, 13], "step": 2, "until": 3},
          {"from": [30], "step": 3}
        ],
+       "brackets": [
+         {"ids": [9, 10, 11, 12, 13, 14, 15], "text": "7 ≥ 7", "kind": "accent", "step": 1, "until": 2},
+         {"ids": [9, 10, 11, 12, 13], "text": "5 < 6", "kind": "accent", "step": 2, "until": 3},
+         {"ids": [18, 19, 20, 21, 22, 23, 24], "text": "7 ≥ 6", "kind": "ok", "side": "left", "step": 3}
+       ],
        "badges": [
-         {"r": 0, "text": "fast commit: 7 ≥ 7", "kind": "commit", "step": 1},
-         {"r": 2, "text": "5 votes < 6", "kind": "note", "step": 2, "row": 1},
-         {"r": 3, "text": "7 ≥ 6: commit", "kind": "commit", "step": 3}
+         {"r": 1, "text": "fast commit of 0", "kind": "commit", "step": 1},
+         {"r": 2, "text": "no certificate", "kind": "note", "step": 2, "row": 1},
+         {"r": 3, "text": "30 commits 0", "kind": "commit", "step": 3, "at": 30}
        ]}
       </script>
-      <figcaption class="caption">Witness Dbare, LeanDagTest/FinWhale/Model.lean. Round-2 blocks: evidence, no certificate. Anchor 30 references 7 evidence blocks.</figcaption>
+      <figcaption class="caption">Witness Dbare, LeanDagTest/FinWhale/Model.lean, from round 1: votes for the leader block 0; each round-2 block references 5 of them</figcaption>
     </figure>
   </div>
   <aside class="notes">

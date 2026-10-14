@@ -11,15 +11,35 @@
         <li>The rule consults no later anchor.</li>
       </ul>
     </div>
-    <figure>
-      <div class="flow vertical">
-        <div class="box"><code>n − f</code> processes, round <code>r + 1</code>: a block that references <code>l</code></div>
-        <div class="arrow">↓ references</div>
-        <div class="box accent">leader block <code>l</code>, round <code>r</code></div>
-        <div class="arrow">↓ history, or concurrent and decided</div>
-        <div class="box">earlier leader slot: <strong>✓ resolved</strong></div>
-      </div>
-      <figcaption class="caption">The commit condition of Minnow: a quorum in the round above, and every earlier leader slot resolved.</figcaption>
+    <figure class="diagram">
+      <script type="application/json">{
+        "w": 660, "h": 236,
+        "texts": [
+          {"x": 105, "y": 12, "text": "earlier rounds", "cls": "muted", "anchor": "middle"},
+          {"x": 300, "y": 12, "text": "round r", "cls": "muted", "anchor": "middle"},
+          {"x": 490, "y": 12, "text": "round r + 1", "cls": "muted", "anchor": "middle"},
+          {"x": 546, "y": 104, "text": "n − f processes"},
+          {"x": 105, "y": 134, "text": "or", "cls": "muted", "anchor": "middle"},
+          {"x": 300, "y": 160, "text": "⇒ commit l", "cls": "ok", "anchor": "middle"}
+        ],
+        "groups": [{"x": 446, "y": 26, "w": 88, "h": 156, "cls": "accent"}],
+        "nodes": [
+          {"id": "p0", "x": 460, "y": 34, "w": 60, "h": 36, "text": ""},
+          {"id": "p1", "x": 460, "y": 86, "w": 60, "h": 36, "text": ""},
+          {"id": "p2", "x": 460, "y": 138, "w": 60, "h": 36, "text": ""},
+          {"id": "p3", "x": 460, "y": 194, "w": 60, "h": 36, "text": "", "cls": "muted"},
+          {"id": "l", "x": 270, "y": 86, "w": 60, "h": 36, "text": "l", "cls": "leader"},
+          {"id": "e1", "x": 20, "y": 62, "w": 170, "h": 48, "text": "earlier slot", "sub": "✓ in l's history", "cls": "ok"},
+          {"id": "e2", "x": 20, "y": 156, "w": 170, "h": 48, "text": "earlier slot", "sub": "✓ concurrent, decided", "cls": "ok dashed"}
+        ],
+        "edges": [
+          {"from": "p0", "to": "l"},
+          {"from": "p1", "to": "l", "label": "references"},
+          {"from": "p2", "to": "l"},
+          {"from": "l", "to": "e1", "cls": "ok", "label": "history", "dy": -10}
+        ]
+      }</script>
+      <figcaption class="caption">Diagram. The commit condition of Minnow: <code>n − f</code> processes of round <code>r + 1</code> reference the leader block <code>l</code>, and every earlier leader slot is resolved, through <code>l</code>'s history or by its own verdict.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -30,7 +50,7 @@
 
 <section class="slide" data-part-label="Protocols · Refuted rules">
   <h2>Minnow: an earlier leader committed after a later one</h2>
-  <div class="body">
+  <div class="body wide-fig">
     <div class="text small">
       <p><code>n = 4</code>. Process 0 equivocates at round 0: blocks 0 and 4. Block 4 is referenced by process 1 only.</p>
       <ul>
@@ -40,36 +60,31 @@
     </div>
     <figure class="dag">
       <script type="application/json">{
-        "w": "Dpart",
-        "byz": [0],
-        "marks": [{"ids": [0, 4, 6, 11], "cls": "leader"}, {"ids": [0, 4], "cls": "twin"}],
-        "strong": [{"from": [6], "to": [4]}, {"from": [7, 8], "to": [0]}, {"from": [9, 10, 11], "to": [6], "step": 1}],
-        "paths": [{"ids": [6, 4], "step": 1}],
-        "badges": [
-          {"r": 0, "text": "undecided", "kind": "undecided", "step": 1},
-          {"r": 0, "text": "2 < q = 3", "kind": "note", "row": 1, "step": 1},
-          {"r": 1, "text": "commit 6", "kind": "commit", "step": 1},
-          {"r": 1, "text": "3 ≥ q = 3", "kind": "note", "row": 1, "step": 1}
-        ]
-      }</script>
-      <figcaption class="caption">Partial view <code>Dpart</code> (LeanDagTest/Minnow/Safety.lean). Row v0 is Byzantine; 0 and 4 are twins (red outline).</figcaption>
-    </figure>
-    <figure class="dag" data-step="2">
-      <script type="application/json">{
         "w": "Dfull",
         "byz": [0],
+        "rowOrder": [3, 2, 0, 1],
+        "size": "l",
+        "appear": [{"ids": [5, 12], "step": 2}],
         "marks": [{"ids": [0, 4, 6, 11], "cls": "leader"}, {"ids": [0, 4], "cls": "twin"}],
-        "strong": [{"from": [5, 7, 8], "to": [0]}],
+        "strong": [{"from": [6], "to": [4]}, {"from": [7, 8], "to": [0]}, {"from": [9, 10, 11], "to": [6], "step": 1}, {"from": [5], "to": [0], "step": 2}],
+        "paths": [{"ids": [6, 4], "step": 1}],
+        "brackets": [
+          {"ids": [7, 8], "text": "2 < q = 3", "kind": "bad", "until": 2},
+          {"ids": [9, 10, 11], "text": "3 ≥ q", "kind": "ok", "step": 1},
+          {"ids": [5, 7, 8], "text": "3 ≥ q", "kind": "ok", "step": 2}
+        ],
         "badges": [
-          {"r": 0, "text": "commit 0", "kind": "commit"},
-          {"r": 0, "text": "3 ≥ q = 3", "kind": "note", "row": 1}
+          {"r": 0, "text": "undecided", "kind": "undecided", "at": 0, "step": 1, "until": 2},
+          {"r": 0, "text": "commit 0", "kind": "commit", "at": 0, "step": 2},
+          {"r": 0, "text": "after commit 6", "kind": "note", "row": 1, "step": 2},
+          {"r": 1, "text": "commit 6", "kind": "commit", "at": 6, "step": 1}
         ]
       }</script>
-      <figcaption class="caption">Full view <code>Dfull</code> (same file): adds blocks 5 and 12.</figcaption>
+      <figcaption class="caption"><code>Dpart</code>, then <code>Dfull</code> from step 2, which adds blocks 5 and 12 (LeanDagTest/Minnow/Safety.lean). 0 and 4 are twins (red outline). Green: 6 reaches 4, which resolves slot 0. Brackets: the blocks that reference 0, and those that reference 6.</figcaption>
     </figure>
   </div>
   <aside class="notes">
-    <p>Initial state: the twins 0 and 4 and their references. Step 1: the partial view commits block 6. Step 2: the full view commits block 0 for the earlier slot.</p>
+    <p>Initial state: the twins 0 and 4 and their references, in the partial view. Step 1: the partial view commits block 6. Step 2: blocks 5 and 12 arrive; the full view commits block 0 for the earlier slot.</p>
     <p>LeanDagTest/Minnow/Safety.lean: <code>slotBlocks Dfull (0,0) = {0, 4}</code> (:86, 91); <code>Reaches Dpart 6 4</code>, <code>CommittedAt Dpart sfLead 1 6</code> (:112, 116); <code>Dfull</code> adds blocks 5 and 12 (:96, 126); block 4 is never committed (<code>¬ Quorum Dfull 4</code>, :179); the violated property is Safe-Commit (:134).</p>
   </aside>
 </section>
@@ -77,59 +92,54 @@
 <section class="slide" data-part-label="Protocols · Refuted rules">
   <h2>Minnow: slots that are never decided</h2>
   <div class="body">
-    <figure class="dag small">
-        <script type="application/json">{
-          "w": "Dm",
-          "rounds": [0, 3],
-          "byz": [0],
-          "marks": [{"ids": [0, 1, 6, 7, 8, 9, 14, 15], "cls": "leader"}],
-          "strong": [{"from": [4, 5], "to": [0]}],
-          "badges": [
-            {"r": 0, "text": "undecided", "kind": "undecided"},
-            {"r": 1, "text": "undecided", "kind": "undecided"},
-            {"r": 2, "text": "undecided", "kind": "undecided"},
-            {"r": 3, "text": "undecided", "kind": "undecided"}
-          ]
-        }</script>
-        <figcaption class="caption"><code>Dm</code> under <code>mLead</code>, two leaders per round (LeanDagTest/Minnow/Deadlock.lean).</figcaption>
-      <ul>
+    <figure class="dag">
+      <script type="application/json">{
+        "w": "Dm",
+        "rounds": [0, 3],
+        "byz": [0],
+        "size": "s",
+        "marks": [
+          {"ids": [0, 1, 6, 7, 8, 9, 14, 15], "cls": "leader", "until": 2},
+          {"ids": [0, 6, 11, 13], "cls": "leader", "step": 2}
+        ],
+        "strong": [{"from": [4, 5], "to": [0], "until": 2}, {"from": [12, 13, 14, 15], "to": [11], "step": 2}],
+        "paths": [{"ids": [11, 5, 0], "step": 2}, {"ids": [11, 6], "step": 2}],
+        "brackets": [
+          {"ids": [4, 5], "text": "2 refs < 3", "kind": "bad", "until": 2},
+          {"ids": [6, 7], "text": "2 non-refs < 3", "kind": "bad", "until": 2}
+        ],
+        "badges": [
+          {"r": 0, "text": "undecided", "kind": "undecided", "at": 0},
+          {"r": 1, "text": "undecided", "kind": "undecided", "at": 6},
+          {"r": 2, "text": "undecided", "kind": "undecided", "until": 2},
+          {"r": 2, "text": "commit 11", "kind": "commit", "at": 11, "step": 2},
+          {"r": 3, "text": "undecided", "kind": "undecided", "until": 2}
+        ]
+      }</script>
+      <figcaption class="caption"><code>Dm</code> under <code>mLead</code>, two leaders per round (LeanDagTest/Minnow/Deadlock.lean); at step 2 under <code>mFair</code>, one per round (Fair.lean). Green: 11 reaches slots 0 and 1.</figcaption>
+      <ul class="small">
         <li>A leader referenced by 2 of 4 processes is neither committed nor skipped, and no later leader can be committed.</li>
         <li>With two leaders per round in round-robin, no leader is committed.</li>
+        <li data-step="2">With one leader per round, the same DAG does commit.</li>
       </ul>
     </figure>
-    <figure class="dag small" data-step="1">
-        <script type="application/json">{
-          "w": "Ds",
-          "rounds": [0, 3],
-          "byz": [0],
-          "marks": [{"ids": [0, 4, 5, 6, 10, 11], "cls": "leader"}],
-          "badges": [
-            {"r": 0, "text": "undecided", "kind": "undecided"},
-            {"r": 1, "text": "undecided", "kind": "undecided"},
-            {"r": 2, "text": "undecided", "kind": "undecided"}
-          ]
-        }</script>
-        <figcaption class="caption"><code>Ds</code> under <code>mLead</code> (same file): v0 is silent, so its slots hold no block.</figcaption>
-      <ul>
+    <figure class="dag" data-step="1">
+      <script type="application/json">{
+        "w": "Ds",
+        "rounds": [0, 3],
+        "byz": [0],
+        "size": "s",
+        "marks": [{"ids": [0, 4, 5, 6, 10, 11], "cls": "leader"}],
+        "badges": [
+          {"r": 0, "text": "undecided", "kind": "undecided", "at": 0},
+          {"r": 1, "text": "undecided", "kind": "undecided"},
+          {"r": 2, "text": "undecided", "kind": "undecided", "at": 6},
+          {"r": 3, "text": "undecided", "kind": "undecided"}
+        ]
+      }</script>
+      <figcaption class="caption"><code>Ds</code> under <code>mLead</code> (LeanDagTest/Minnow/Deadlock.lean): v0 is silent, so its slots at rounds 0 and 2 hold no block.</figcaption>
+      <ul class="small">
         <li>A silent leader's empty slot prevents every later leader from being committed.</li>
-      </ul>
-    </figure>
-    <figure class="dag small" data-step="2">
-        <script type="application/json">{
-          "w": "Dm",
-          "rounds": [0, 3],
-          "byz": [0],
-          "marks": [{"ids": [0, 6, 11, 13], "cls": "leader"}],
-          "strong": [{"from": [12, 14, 15], "to": [11]}],
-          "badges": [
-            {"r": 0, "text": "undecided", "kind": "undecided"},
-            {"r": 1, "text": "undecided", "kind": "undecided"},
-            {"r": 2, "text": "commit 11", "kind": "commit"}
-          ]
-        }</script>
-        <figcaption class="caption"><code>Dm</code> under <code>mFair</code>, one leader per round (LeanDagTest/Minnow/Fair.lean).</figcaption>
-      <ul>
-        <li>With one leader per round, the same DAG does commit.</li>
       </ul>
     </figure>
   </div>
@@ -141,7 +151,7 @@
 
 <section class="slide" data-part-label="Protocols · Refuted rules">
   <h2>Black Marlin: the rule</h2>
-  <div class="body">
+  <div class="body wide-fig">
     <div class="text">
       <ul>
         <li><code>n ≥ 3f + 1</code>; one anchor per round; no certificates.</li>
@@ -149,15 +159,42 @@
         <li>There is no skip. Anchors that are not committed are output through a descent from a later committed anchor.</li>
       </ul>
     </div>
-    <figure>
-      <div class="flow vertical">
-        <div class="box">round <code>r + 2</code>: <code>n − f</code> validators reference <code>A</code></div>
-        <div class="arrow">↓</div>
-        <div class="box">round <code>r + 1</code>: <code>n − f</code> validators reference <code>B</code>, among them the anchor <code>A</code></div>
-        <div class="arrow">↓</div>
-        <div class="box accent">round <code>r</code>: anchor <code>B</code></div>
-      </div>
-      <figcaption class="caption">The commit condition of Black Marlin over three rounds. Arrows point to referenced blocks.</figcaption>
+    <figure class="diagram">
+      <script type="application/json">{
+        "w": 600, "h": 290,
+        "texts": [
+          {"x": 70, "y": 12, "text": "round r", "cls": "muted", "anchor": "middle"},
+          {"x": 270, "y": 12, "text": "round r + 1", "cls": "muted", "anchor": "middle"},
+          {"x": 470, "y": 12, "text": "round r + 2", "cls": "muted", "anchor": "middle"},
+          {"x": 270, "y": 262, "text": "n − f reference B", "anchor": "middle"},
+          {"x": 470, "y": 262, "text": "n − f reference A", "anchor": "middle"},
+          {"x": 70, "y": 112, "text": "⇒ commit B", "cls": "ok", "anchor": "middle"}
+        ],
+        "groups": [
+          {"x": 226, "y": 30, "w": 88, "h": 156, "cls": "accent"},
+          {"x": 426, "y": 30, "w": 88, "h": 156, "cls": "accent"}
+        ],
+        "nodes": [
+          {"id": "B", "x": 40, "y": 40, "w": 60, "h": 36, "text": "B", "cls": "leader"},
+          {"id": "A", "x": 240, "y": 40, "w": 60, "h": 36, "text": "A", "cls": "leader"},
+          {"id": "s1", "x": 240, "y": 92, "w": 60, "h": 36, "text": ""},
+          {"id": "s2", "x": 240, "y": 144, "w": 60, "h": 36, "text": ""},
+          {"id": "m1", "x": 240, "y": 200, "w": 60, "h": 36, "text": "", "cls": "muted"},
+          {"id": "t0", "x": 440, "y": 40, "w": 60, "h": 36, "text": ""},
+          {"id": "t1", "x": 440, "y": 92, "w": 60, "h": 36, "text": ""},
+          {"id": "t2", "x": 440, "y": 144, "w": 60, "h": 36, "text": ""},
+          {"id": "m2", "x": 440, "y": 200, "w": 60, "h": 36, "text": "", "cls": "muted"}
+        ],
+        "edges": [
+          {"from": "A", "to": "B", "cls": "accent", "label": "link"},
+          {"from": "s1", "to": "B"},
+          {"from": "s2", "to": "B"},
+          {"from": "t0", "to": "A", "label": "references"},
+          {"from": "t1", "to": "A"},
+          {"from": "t2", "to": "A"}
+        ]
+      }</script>
+      <figcaption class="caption">Diagram. The commit condition of Black Marlin over three rounds: <code>n − f</code> blocks of round <code>r + 1</code> reference the anchor <code>B</code>, among them the anchor <code>A</code>, which <code>n − f</code> blocks of round <code>r + 2</code> reference. Arrows point to referenced blocks.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -189,18 +226,26 @@
         "strong": [
           {"from": [14, 15, 16], "to": [8], "step": 1},
           {"from": [17, 18, 20], "to": [14], "step": 1},
-          {"from": [13], "to": [12], "step": 1}
+          {"from": [13], "to": [12], "step": 1},
+          {"from": [21, 22, 23, 24], "to": [19], "step": 2}
         ],
         "paths": [{"ids": [19, 13, 12, 7, 3], "step": 2}],
+        "brackets": [
+          {"ids": [13], "text": "1 < q", "kind": "bad", "step": 1},
+          {"ids": [14, 15, 16], "text": "3 ≥ q", "kind": "ok", "step": 1},
+          {"ids": [17, 18, 19, 20], "text": "3 ≥ q", "kind": "ok", "step": 1},
+          {"ids": [21, 22, 23, 24], "text": "4 ≥ q", "kind": "ok", "step": 2}
+        ],
+        "tags": [{"id": 13, "text": "descent", "kind": "ok", "step": 2}],
         "badges": [
-          {"r": 2, "text": "commit 8", "kind": "commit", "step": 1},
+          {"r": 2, "text": "commit 8", "kind": "commit", "at": 8, "step": 1},
           {"r": 2, "text": "v outputs 8", "kind": "note", "row": 1, "step": 2},
-          {"r": 4, "text": "commit 19", "kind": "commit", "step": 2},
-          {"r": 4, "text": "w outputs 12", "kind": "note", "row": 1, "step": 2}
+          {"r": 4, "text": "w outputs 12", "kind": "note", "row": 1, "step": 2},
+          {"r": 4, "text": "commit 19", "kind": "commit", "at": 19, "step": 2}
         ]
       }</script>
       <div class="legend"><span class="l-leader">anchor of its round</span><span class="l-anchor" data-step="2">committed anchor 19</span></div>
-      <figcaption class="caption"><code>Udiv</code> (LeanDagTest/BlackMarlin/Divergence.lean). Row v0 is Byzantine; 8 and 12 are twins (red outline). Green path: the descent from 19, which takes 12 at round 2.</figcaption>
+      <figcaption class="caption"><code>Udiv</code> (LeanDagTest/BlackMarlin/Divergence.lean). Row v0 is Byzantine; 8 and 12 are twins (red outline). Brackets count the blocks that reference 12 (round 3, bad), 8 (round 3), anchor 14 (round 4: 17, 18, 20, not 19) and 19 (round 5). Green path: the descent from 19, which takes 12 at round 2.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -299,18 +344,9 @@
       </ul>
       <p>Eleven rules (all but Minnow and Black Marlin) have the properties.</p>
     </div>
-    <figure>
-      <div class="flow">
-        <div class="box">Protocols</div>
-        <div class="arrow">→</div>
-        <div class="muted">each rule proves</div>
-        <div class="arrow">→</div>
-        <div class="box accent"><strong>Properties</strong></div>
-        <div class="arrow">→</div>
-        <div class="muted">each mechanism uses</div>
-        <div class="arrow">→</div>
-        <div class="box">Mechanisms</div>
-      </div>
+    <figure class="diagram">
+      <script type="application/json">{"w": 1100, "h": 222, "nodes": [{"id": "p0", "x": 0, "y": 10, "w": 190, "h": 40, "text": "Mysticeti", "cls": ""}, {"id": "p1", "x": 0, "y": 64, "w": 190, "h": 40, "text": "Bluestreak", "cls": ""}, {"id": "p2", "x": 0, "y": 118, "w": 190, "h": 40, "text": "Mahi-Mahi", "cls": ""}, {"id": "p3", "x": 0, "y": 172, "w": 190, "h": 40, "text": "⋯ eleven rules", "cls": "muted"}, {"id": "P", "x": 440, "y": 78, "w": 220, "h": 70, "text": "Properties", "sub": "Banded, Agree, …", "cls": "accent"}, {"id": "m0", "x": 910, "y": 10, "w": 190, "h": 40, "text": "garbage collection", "cls": ""}, {"id": "m1", "x": 910, "y": 64, "w": 190, "h": 40, "text": "crash recovery", "cls": ""}, {"id": "m2", "x": 910, "y": 118, "w": 190, "h": 40, "text": "pacemaker", "cls": ""}, {"id": "m3", "x": 910, "y": 172, "w": 190, "h": 40, "text": "⋯ mechanisms", "cls": "muted"}], "edges": [{"from": "p0", "to": "P"}, {"from": "p1", "to": "P", "label": "proves"}, {"from": "p2", "to": "P"}, {"from": "p3", "to": "P"}, {"from": "P", "to": "m0"}, {"from": "P", "to": "m1", "label": "uses"}, {"from": "P", "to": "m2"}, {"from": "P", "to": "m3"}]}</script>
+      <figcaption class="caption">Diagram. Each rule proves the properties once; each mechanism is proved once, from the properties alone.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -330,19 +366,9 @@
       </ul>
       <p class="small">Laws: a view holds only universe blocks; a view holds every block that its blocks reference; references go one round down.</p>
     </div>
-    <figure>
-      <div class="flow vertical">
-        <div class="flow"><div class="box">Universe</div><div class="arrow">⊇</div><div class="box">View</div></div>
-        <div class="arrow">↓ round, creator, references</div>
-        <div class="box">Block</div>
-      </div>
-      <p></p>
-      <div class="flow vertical">
-        <div class="box">(schedule <code>S</code>, view <code>V</code>, slot <code>k</code>)</div>
-        <div class="arrow">↓ Decided</div>
-        <div class="box accent">commit <code>L</code> | skip</div>
-      </div>
-      <figcaption class="caption">The carrier: two types, the block projection, and the decision relation.</figcaption>
+    <figure class="diagram">
+      <script type="application/json">{"w": 540, "h": 340, "groups": [{"x": 0, "y": 0, "w": 540, "h": 218, "label": "universe"}, {"x": 20, "y": 26, "w": 320, "h": 166, "label": "view", "cls": "accent"}], "nodes": [{"id": "b00", "x": 50, "y": 52, "w": 40, "h": 26, "text": ""}, {"id": "b01", "x": 50, "y": 102, "w": 40, "h": 26, "text": ""}, {"id": "b02", "x": 50, "y": 152, "w": 40, "h": 26, "text": ""}, {"id": "b10", "x": 150, "y": 52, "w": 40, "h": 26, "text": ""}, {"id": "b11", "x": 150, "y": 102, "w": 40, "h": 26, "text": ""}, {"id": "b12", "x": 150, "y": 152, "w": 40, "h": 26, "text": ""}, {"id": "b20", "x": 250, "y": 52, "w": 40, "h": 26, "text": ""}, {"id": "b21", "x": 250, "y": 102, "w": 40, "h": 26, "text": ""}, {"id": "b22", "x": 250, "y": 152, "w": 40, "h": 26, "text": ""}, {"id": "u0", "x": 420, "y": 66, "w": 40, "h": 26, "text": "", "cls": "dashed"}, {"id": "u1", "x": 420, "y": 136, "w": 40, "h": 26, "text": "", "cls": "dashed"}, {"id": "q", "x": 10, "y": 262, "w": 180, "h": 52, "text": "(S, V, k)", "sub": "schedule, view, slot"}, {"id": "c", "x": 370, "y": 240, "w": 150, "h": 40, "text": "commit L", "cls": "ok"}, {"id": "k", "x": 370, "y": 296, "w": 150, "h": 40, "text": "skip", "cls": "muted"}], "edges": [{"from": "b10", "to": "b00"}, {"from": "b11", "to": "b01"}, {"from": "b12", "to": "b02"}, {"from": "b11", "to": "b00"}, {"from": "b20", "to": "b10"}, {"from": "b21", "to": "b11"}, {"from": "b22", "to": "b12"}, {"from": "b20", "to": "b11"}, {"from": "u0", "to": "b20", "label": "one round down", "dy": -12}, {"from": "u1", "to": "b22"}, {"from": "q", "to": "c", "label": "Decided", "dy": -10}, {"from": "q", "to": "k"}], "texts": [{"x": 70, "y": 205, "text": "round 0", "cls": "muted small", "anchor": "middle"}, {"x": 170, "y": 205, "text": "round 1", "cls": "muted small", "anchor": "middle"}, {"x": 270, "y": 205, "text": "round 2", "cls": "muted small", "anchor": "middle"}, {"x": 440, "y": 205, "text": "round 3", "cls": "muted small", "anchor": "middle"}, {"x": 445, "y": 288, "text": "or", "cls": "muted", "anchor": "middle"}]}</script>
+      <figcaption class="caption">Diagram. The carrier: a view inside its universe, closed under references, which go one round down (dashed: universe blocks outside the view); below, the decision relation.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -360,23 +386,36 @@
       <figure class="dag">
         <script type="application/json">{
           "w": "Uexcl",
-          "byz": [0],
+          "rounds": [2, 5],
+          "rowOrder": [1, 2, 3, 0],
+          "size": "m",
           "marks": [{"ids": [11], "cls": "leader"}, {"ids": [14, 15, 16], "cls": "vote"}, {"ids": [17, 18, 19], "cls": "cert"}],
           "hulls": [{"ids": [11, 12, 13, 14, 15, 16, 17, 18, 19]}],
-          "badges": [{"r": 3, "text": "slot 1: commit 11", "kind": "commit"}]
+          "tags": [{"id": 11, "text": "slot 1", "kind": "accent"}, {"id": 17, "text": "top"}],
+          "brackets": [{"ids": [14, 15, 16], "text": "3 ≥ q", "kind": "accent"}],
+          "badges": [
+            {"r": 3, "text": "commit 11", "kind": "commit", "at": 11},
+            {"r": 4, "text": "band 3–5", "kind": "note"}
+          ]
         }</script>
-        <figcaption class="caption"><code>Uexcl</code> (LeanDagTest/DoS/Exclusion.lean); shaded: the band, rounds 3–5</figcaption>
+        <figcaption class="caption"><code>Uexcl</code>, rounds 2–5 (LeanDagTest/DoS/Exclusion.lean); shaded: the band.</figcaption>
       </figure>
       <figure class="dag">
         <script type="application/json">{
           "w": "UexclCut",
-          "rounds": [-2, 3],
-          "roundNames": {"-2": "", "-1": ""},
+          "rounds": [0, 3],
+          "rowOrder": [1, 2, 3, 0],
+          "size": "m",
           "marks": [{"ids": [11], "cls": "leader"}, {"ids": [14, 15, 16], "cls": "vote"}, {"ids": [17, 18, 19], "cls": "cert"}],
           "hulls": [{"ids": [11, 12, 13, 14, 15, 16, 17, 18, 19]}],
-          "badges": [{"r": 1, "text": "slot 0: commit 11", "kind": "commit"}]
+          "tags": [{"id": 11, "text": "slot 0", "kind": "accent"}, {"id": 17, "text": "top"}],
+          "brackets": [{"ids": [14, 15, 16], "text": "3 ≥ q", "kind": "accent"}],
+          "badges": [
+            {"r": 1, "text": "commit 11", "kind": "commit", "at": 11},
+            {"r": 2, "text": "band 1–3", "kind": "note"}
+          ]
         }</script>
-        <figcaption class="caption"><code>chop Uexcl 2</code>: rounds 2–5 renumbered 0–3 (LeanDagTest/GC/Chop.lean); shaded: the band, rounds 1–3</figcaption>
+        <figcaption class="caption"><code>chop Uexcl 2</code> (LeanDagTest/GC/Chop.lean); rounds shifted by 2.</figcaption>
       </figure>
     </div>
     <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-cert">certificate</span></div>
@@ -397,24 +436,9 @@
         <li><strong>Indirect</strong>: a committed eligible anchor, with every eligible slot in between skipped, decides the slot; changing the other slots' leaders does not change that verdict.</li>
       </ul>
     </div>
-    <figure data-step="1">
-      <div class="flow">
-        <div class="muted">schedule <code>S</code>:</div>
-        <div class="box">slot <code>i</code>: verdict <code>v</code></div>
-        <div class="box">slot <code>i + 1</code>: skip</div>
-        <div class="arrow">⋯</div>
-        <div class="box">slot <code>j − 1</code>: skip</div>
-        <div class="box">slot <code>j</code>: anchor committed</div>
-      </div>
-      <div class="flow" data-step="2">
-        <div class="muted">schedule <code>S′</code>:</div>
-        <div class="box">slot <code>i</code>: verdict <code>v</code></div>
-        <div class="box accent">slot <code>i + 1</code>: other leader, skip</div>
-        <div class="arrow">⋯</div>
-        <div class="box accent">slot <code>j − 1</code>: other leader, skip</div>
-        <div class="box">slot <code>j</code>: anchor committed</div>
-      </div>
-      <figcaption class="caption">Indirect: <code>S′</code> keeps the rounds and slot <code>i</code>'s leader and kind; the leaders of the other slots (highlighted) change; the verdict <code>v</code> of slot <code>i</code> is unchanged.</figcaption>
+    <figure class="diagram" data-step="1">
+      <script type="application/json">{"w": 960, "h": 240, "size": "m", "nodes": [{"id": "i", "x": 130, "y": 40, "w": 150, "h": 52, "text": "slot i", "cls": "leader", "sub": "verdict v"}, {"id": "a", "x": 320, "y": 40, "w": 150, "h": 52, "text": "slot i + 1", "cls": "muted", "sub": "skip"}, {"id": "d", "x": 500, "y": 40, "w": 60, "h": 52, "text": "⋯", "cls": "plain"}, {"id": "b", "x": 590, "y": 40, "w": 150, "h": 52, "text": "slot j − 1", "cls": "muted", "sub": "skip"}, {"id": "j", "x": 780, "y": 40, "w": 170, "h": 52, "text": "slot j", "cls": "ok", "sub": "anchor committed"}, {"id": "wj", "x": 864.0, "y": 120, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "wi", "x": 204.0, "y": 120, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "i'", "x": 130, "y": 156, "w": 150, "h": 52, "text": "slot i", "cls": "leader", "sub": "verdict v", "step": 2}, {"id": "a'", "x": 320, "y": 156, "w": 150, "h": 52, "text": "slot i + 1", "cls": "accent", "sub": "other leader, skip", "step": 2}, {"id": "d'", "x": 500, "y": 156, "w": 60, "h": 52, "text": "⋯", "cls": "plain", "step": 2}, {"id": "b'", "x": 590, "y": 156, "w": 150, "h": 52, "text": "slot j − 1", "cls": "accent", "sub": "other leader, skip", "step": 2}, {"id": "j'", "x": 780, "y": 156, "w": 170, "h": 52, "text": "slot j", "cls": "ok", "sub": "anchor committed", "step": 2}, {"id": "wj'", "x": 864.0, "y": 236, "w": 2, "h": 2, "text": "", "cls": "plain", "step": 2}, {"id": "wi'", "x": 204.0, "y": 236, "w": 2, "h": 2, "text": "", "cls": "plain", "step": 2}], "edges": [{"from": "j", "to": "wj", "fromSide": "b", "toSide": "t", "noArrow": true, "cls": "ok"}, {"from": "wj", "to": "wi", "fromSide": "l", "toSide": "r", "noArrow": true, "cls": "ok", "label": "decides slot i: v", "dy": -9}, {"from": "wi", "to": "i", "fromSide": "t", "toSide": "b", "cls": "ok"}, {"from": "j'", "to": "wj'", "fromSide": "b", "toSide": "t", "noArrow": true, "cls": "ok", "step": 2}, {"from": "wj'", "to": "wi'", "fromSide": "l", "toSide": "r", "noArrow": true, "cls": "ok", "label": "same verdict v", "dy": -9, "step": 2}, {"from": "wi'", "to": "i'", "fromSide": "t", "toSide": "b", "cls": "ok", "step": 2}], "texts": [{"x": 0, "y": 66, "text": "schedule S", "cls": "muted"}, {"x": 0, "y": 182, "text": "schedule S′", "cls": "muted", "step": 2}]}</script>
+      <figcaption class="caption">Diagram. Indirect: the committed anchor at slot <code>j</code> decides slot <code>i</code>. <code>S′</code> keeps the rounds and slot <code>i</code>'s leader and kind, and changes the other leaders (blue); the verdict <code>v</code> is unchanged.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -434,53 +458,48 @@
       </ul>
     </div>
     <figure>
-      <svg class="dag" viewBox="0 0 600 270" role="img"><g transform="translate(90,0)">
-        <rect class="band" x="42" y="26" width="370" height="150"></rect>
-        <text class="round-label" x="115" y="14" text-anchor="middle">round r</text>
-        <text class="round-label" x="225" y="14" text-anchor="middle">⋯</text>
-        <text class="round-label" x="335" y="14" text-anchor="middle">round r + wave</text>
-        <text class="row-label" x="4" y="51" dominant-baseline="central">v0</text>
-        <text class="row-label" x="4" y="101" dominant-baseline="central">v1</text>
-        <text class="row-label" x="4" y="151" dominant-baseline="central">v2</text>
-        <text class="row-label" x="4" y="201" dominant-baseline="central">v3</text>
-        <g>
-          <line class="edge" x1="205" y1="51" x2="135" y2="51"></line>
-          <line class="edge" x1="205" y1="101" x2="135" y2="51"></line>
-          <line class="edge" x1="205" y1="151" x2="135" y2="51"></line>
-          <line class="edge" x1="205" y1="101" x2="135" y2="101"></line>
-          <line class="edge" x1="205" y1="151" x2="135" y2="151"></line>
-          <line class="edge" x1="205" y1="201" x2="135" y2="201"></line>
-          <line class="edge" x1="315" y1="51" x2="245" y2="51"></line>
-          <line class="edge" x1="315" y1="51" x2="245" y2="101"></line>
-          <line class="edge" x1="315" y1="101" x2="245" y2="101"></line>
-          <line class="edge" x1="315" y1="101" x2="245" y2="151"></line>
-          <line class="edge" x1="315" y1="151" x2="245" y2="151"></line>
-          <line class="edge" x1="315" y1="151" x2="245" y2="51"></line>
-          <line class="edge" x1="315" y1="201" x2="245" y2="201"></line>
-        </g>
-        <g class="block leader"><rect x="95" y="36" width="40" height="30" rx="5"></rect><text x="115" y="51">L</text></g>
-        <g class="block"><rect x="95" y="86" width="40" height="30" rx="5"></rect></g>
-        <g class="block"><rect x="95" y="136" width="40" height="30" rx="5"></rect></g>
-        <g class="block"><rect x="95" y="186" width="40" height="30" rx="5"></rect></g>
-        <g class="block"><rect x="205" y="36" width="40" height="30" rx="5"></rect></g>
-        <g class="block"><rect x="205" y="86" width="40" height="30" rx="5"></rect></g>
-        <g class="block"><rect x="205" y="136" width="40" height="30" rx="5"></rect></g>
-        <g class="block"><rect x="205" y="186" width="40" height="30" rx="5"></rect></g>
-        <g class="block cert"><rect x="315" y="36" width="40" height="30" rx="5"></rect><text x="335" y="51">C</text></g>
-        <g class="block cert"><rect x="315" y="86" width="40" height="30" rx="5"></rect><text x="335" y="101">C</text></g>
-        <g class="block cert"><rect x="315" y="136" width="40" height="30" rx="5"></rect><text x="335" y="151">C</text></g>
-        <g class="block"><rect x="315" y="186" width="40" height="30" rx="5"></rect></g>
-        <text class="row-label" x="374" y="101" dominant-baseline="central">T</text>
-        <g class="badge commit" data-step="1"><rect x="65" y="236" width="100" height="24"></rect><text x="115" y="248">commit L</text></g>
-      </g></svg>
-      <div class="flow" data-step="2">
-        <div class="box">synchrony and coverage</div>
-        <div class="arrow">→</div>
-        <div class="box accent">live</div>
-        <div class="arrow">←</div>
-        <div class="box">reactive pacemaker</div>
-      </div>
-      <figcaption class="caption">Law 2 over the wave window. Shaded rows: the reliable quorum <code>T</code>, which leads the slot; C: a <code>T</code>-block that certifies <code>L</code>.</figcaption>
+      <svg class="dag size-m" viewBox="0 0 590 270" role="img" aria-label="Law 2 over the wave window: the reliable quorum T leads the slot of L and certifies L; the slot commits.">
+        <defs><marker id="support-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path class="arrowhead strong" d="M 0 1 L 9 5 L 0 9 z"></path></marker></defs>
+        <rect class="band" x="92" y="28" width="316" height="144" rx="10"></rect>
+        <text class="round-label" x="130" y="14" text-anchor="middle">round r</text>
+        <text class="round-label" x="250" y="14" text-anchor="middle">⋯</text>
+        <text class="round-label" x="370" y="14" text-anchor="middle">round r + wave</text>
+        <text class="row-label" x="40" y="50" dominant-baseline="central">v0</text>
+        <text class="row-label" x="40" y="100" dominant-baseline="central">v1</text>
+        <text class="row-label" x="40" y="150" dominant-baseline="central">v2</text>
+        <text class="row-label" x="40" y="200" dominant-baseline="central">v3</text>
+        <path class="edge" d="M 230 200 C 200 200, 180 200, 150 200"></path>
+        <path class="edge" d="M 230 100 C 200 100, 180 100, 150 100"></path>
+        <path class="edge" d="M 230 150 C 200 150, 180 150, 150 150"></path>
+        <path class="edge" d="M 350 200 C 320 200, 300 200, 270 200"></path>
+        <path class="edge" d="M 350 50 C 320 50, 300 100, 270 100"></path>
+        <path class="edge" d="M 350 100 C 320 100, 300 150, 270 150"></path>
+        <path class="edge" d="M 350 150 C 320 150, 300 50, 270 50"></path>
+        <path class="edge strong" d="M 350 50 C 320 50, 300 50, 270 50" marker-end="url(#support-arrow)"></path>
+        <path class="edge strong" d="M 230 50 C 200 50, 180 50, 150 50" marker-end="url(#support-arrow)"></path>
+        <path class="edge strong" d="M 350 100 C 320 100, 300 100, 270 100" marker-end="url(#support-arrow)"></path>
+        <path class="edge strong" d="M 230 100 C 200 100, 180 50, 150 50" marker-end="url(#support-arrow)"></path>
+        <path class="edge strong" d="M 350 150 C 320 150, 300 150, 270 150" marker-end="url(#support-arrow)"></path>
+        <path class="edge strong" d="M 230 150 C 200 150, 180 50, 150 50" marker-end="url(#support-arrow)"></path>
+        <g class="block leader"><rect x="110" y="35" width="40" height="30" rx="6"></rect><text x="130" y="50">L</text></g>
+        <g class="block "><rect x="110" y="85" width="40" height="30" rx="6"></rect></g>
+        <g class="block "><rect x="110" y="135" width="40" height="30" rx="6"></rect></g>
+        <g class="block "><rect x="110" y="185" width="40" height="30" rx="6"></rect></g>
+        <g class="block "><rect x="230" y="35" width="40" height="30" rx="6"></rect></g>
+        <g class="block "><rect x="230" y="85" width="40" height="30" rx="6"></rect></g>
+        <g class="block "><rect x="230" y="135" width="40" height="30" rx="6"></rect></g>
+        <g class="block "><rect x="230" y="185" width="40" height="30" rx="6"></rect></g>
+        <g class="block cert"><rect x="350" y="35" width="40" height="30" rx="6"></rect><text x="370" y="50">C</text></g>
+        <g class="block cert"><rect x="350" y="85" width="40" height="30" rx="6"></rect><text x="370" y="100">C</text></g>
+        <g class="block cert"><rect x="350" y="135" width="40" height="30" rx="6"></rect><text x="370" y="150">C</text></g>
+        <g class="block "><rect x="350" y="185" width="40" height="30" rx="6"></rect></g>
+        <g class="bracket ok"><path d="M 414 35 h 5 V 165 h -5"></path><rect x="426" y="90" width="134" height="20" rx="4"></rect><text x="432" y="100" dominant-baseline="central">T: a reliable quorum</text></g>
+        <g class="badge commit" data-step="1"><rect x="80" y="236" width="100" height="24" rx="12"></rect><text x="130" y="248.5" dominant-baseline="central">commit L</text></g>
+      </svg>
+      <figure class="diagram" data-step="2">
+        <script type="application/json">{"w": 640, "h": 60, "nodes": [{"id": "a", "x": 0, "y": 8, "w": 210, "h": 44, "text": "synchrony and coverage"}, {"id": "l", "x": 260, "y": 8, "w": 120, "h": 44, "text": "live", "cls": "accent"}, {"id": "b", "x": 430, "y": 8, "w": 210, "h": 44, "text": "reactive pacemaker"}], "edges": [{"from": "a", "to": "l", "label": "gives", "dy": -10}, {"from": "b", "to": "l", "label": "gives", "dy": -10}]}</script>
+      </figure>
+      <figcaption class="caption">Diagram. Law 2 over the wave window. Shaded: the reliable quorum <code>T</code>, which leads the slot; C: a <code>T</code>-block that certifies <code>L</code>, through <code>T</code>'s blocks of the rounds between. Step 2: the two network assumptions that give the premise <code>live</code>.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -502,12 +521,10 @@
     </div>
     <figure>
       <p class="small" data-step="1">Derived, so no rule needs to prove them: <strong>Persist</strong> and <strong>LocalTruncate</strong> from Banded; <strong>LeaderCommits</strong> from Law 2; <strong>Descends</strong> from Indirect.</p>
-      <div class="flow vertical" data-step="1">
-        <div class="flow"><div class="box accent">Banded</div><div class="arrow">→</div><div class="box">Persist</div><div class="box">LocalTruncate</div></div>
-        <div class="flow"><div class="box accent">Law 2</div><div class="arrow">→</div><div class="box">LeaderCommits</div></div>
-        <div class="flow"><div class="box accent">Indirect</div><div class="arrow">→</div><div class="box">Descends</div></div>
-      </div>
-      <figcaption class="caption" data-step="1">Derived properties and the property each is derived from.</figcaption>
+      <figure class="diagram" data-step="1">
+        <script type="application/json">{"w": 630, "h": 320, "groups": [{"x": 6, "y": 0, "w": 178, "h": 316, "label": "each rule proves"}, {"x": 416, "y": 0, "w": 208, "h": 316, "label": "derived once"}], "nodes": [{"id": "B", "x": 20, "y": 72, "w": 150, "h": 46, "text": "Banded", "cls": "accent"}, {"id": "L2", "x": 20, "y": 172, "w": 150, "h": 46, "text": "Law 2", "cls": "accent"}, {"id": "I", "x": 20, "y": 256, "w": 150, "h": 46, "text": "Indirect", "cls": "accent"}, {"id": "P", "x": 430, "y": 36, "w": 180, "h": 46, "text": "Persist"}, {"id": "T", "x": 430, "y": 108, "w": 180, "h": 46, "text": "LocalTruncate"}, {"id": "LC", "x": 430, "y": 172, "w": 180, "h": 46, "text": "LeaderCommits"}, {"id": "D", "x": 430, "y": 256, "w": 180, "h": 46, "text": "Descends"}], "edges": [{"from": "B", "to": "P", "label": "under extension", "dy": -10}, {"from": "B", "to": "T", "label": "under a cut", "dy": 22}, {"from": "L2", "to": "LC", "label": "at reliable leaders"}, {"from": "I", "to": "D", "label": "below a committed run"}]}</script>
+      </figure>
+      <figcaption class="caption" data-step="1">Diagram. Each derived property (right) is proved once from the property on its left; the arrow says where its verdicts hold.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -531,23 +548,9 @@
         <li>adding blocks never changes a verdict.</li>
       </ul>
     </div>
-    <figure>
-      <div class="flow">
-        <div class="box">source DAG</div>
-        <div class="arrow">→</div>
-        <div class="box">fill</div>
-        <div class="arrow">→</div>
-        <div class="box">cut</div>
-        <div class="arrow">→</div>
-        <div class="box">resulting DAG</div>
-      </div>
-      <p></p>
-      <div class="flow">
-        <div class="box">verdicts of the source DAG above the settling round</div>
-        <div class="arrow">=</div>
-        <div class="box accent">verdicts of the resulting DAG above the settling round</div>
-      </div>
-      <figcaption class="caption">Illustration of <code>safety</code> (LeanDag/Properties/Arcs/Headline.lean) for a fill followed by a cut.</figcaption>
+    <figure class="diagram">
+      <script type="application/json">{"w": 1100, "h": 214, "size": "s", "groups": [{"x": 0, "y": 0, "w": 300, "h": 212, "cls": "", "label": "source DAG"}, {"x": 400, "y": 0, "w": 300, "h": 212, "cls": "", "label": "after fill"}, {"x": 800, "y": 0, "w": 300, "h": 212, "cls": "accent", "label": "after cut"}], "nodes": [{"id": "n000", "x": 40, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n001", "x": 40, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n010", "x": 92, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n012", "x": 92, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n020", "x": 144, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n021", "x": 144, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n022", "x": 144, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n030", "x": 196, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n031", "x": 196, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n032", "x": 196, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n040", "x": 248, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n041", "x": 248, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n042", "x": 248, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "s0a", "x": 131, "y": 32, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "s0b", "x": 131, "y": 200, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "v02", "x": 136, "y": 160, "w": 44, "h": 28, "text": "✓", "cls": "ok"}, {"id": "v03", "x": 188, "y": 160, "w": 44, "h": 28, "text": "skip", "cls": "muted"}, {"id": "v04", "x": 240, "y": 160, "w": 44, "h": 28, "text": "✓", "cls": "ok"}, {"id": "o0", "x": 300, "y": 73, "w": 1, "h": 2, "text": "", "cls": "plain"}, {"id": "i0", "x": 399, "y": 73, "w": 1, "h": 2, "text": "", "cls": "plain"}, {"id": "n100", "x": 440, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n101", "x": 440, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n102", "x": 440, "y": 108, "w": 28, "h": 20, "text": "", "cls": "dashed accent"}, {"id": "n110", "x": 492, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n111", "x": 492, "y": 74, "w": 28, "h": 20, "text": "", "cls": "dashed accent"}, {"id": "n112", "x": 492, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n120", "x": 544, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n121", "x": 544, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n122", "x": 544, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n130", "x": 596, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n131", "x": 596, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n132", "x": 596, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n140", "x": 648, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n141", "x": 648, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n142", "x": 648, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "s1a", "x": 531, "y": 32, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "s1b", "x": 531, "y": 200, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "v12", "x": 536, "y": 160, "w": 44, "h": 28, "text": "✓", "cls": "ok"}, {"id": "v13", "x": 588, "y": 160, "w": 44, "h": 28, "text": "skip", "cls": "muted"}, {"id": "v14", "x": 640, "y": 160, "w": 44, "h": 28, "text": "✓", "cls": "ok"}, {"id": "o1", "x": 700, "y": 73, "w": 1, "h": 2, "text": "", "cls": "plain"}, {"id": "i1", "x": 799, "y": 73, "w": 1, "h": 2, "text": "", "cls": "plain"}, {"id": "n220", "x": 944, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n221", "x": 944, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n222", "x": 944, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n230", "x": 996, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n231", "x": 996, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n232", "x": 996, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n240", "x": 1048, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n241", "x": 1048, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n242", "x": 1048, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "s2a", "x": 931, "y": 32, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "s2b", "x": 931, "y": 200, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "v22", "x": 936, "y": 160, "w": 44, "h": 28, "text": "✓", "cls": "ok"}, {"id": "v23", "x": 988, "y": 160, "w": 44, "h": 28, "text": "skip", "cls": "muted"}, {"id": "v24", "x": 1040, "y": 160, "w": 44, "h": 28, "text": "✓", "cls": "ok"}], "edges": [{"from": "s0a", "to": "s0b", "fromSide": "b", "toSide": "t", "noArrow": true, "cls": "bad dashed"}, {"from": "o0", "to": "i0", "fromSide": "r", "toSide": "l", "cls": "accent", "label": "fill"}, {"from": "s1a", "to": "s1b", "fromSide": "b", "toSide": "t", "noArrow": true, "cls": "bad dashed"}, {"from": "o1", "to": "i1", "fromSide": "r", "toSide": "l", "cls": "accent", "label": "cut"}, {"from": "s2a", "to": "s2b", "fromSide": "b", "toSide": "t", "noArrow": true, "cls": "bad dashed"}], "texts": [{"x": 138, "y": 20, "text": "settling round", "cls": "small bad", "anchor": "start"}, {"x": 350, "y": 174, "text": "=", "cls": "ok", "anchor": "middle"}, {"x": 538, "y": 20, "text": "settling round", "cls": "small bad", "anchor": "start"}, {"x": 750, "y": 174, "text": "=", "cls": "ok", "anchor": "middle"}, {"x": 938, "y": 20, "text": "settling round", "cls": "small bad", "anchor": "start"}]}</script>
+      <figcaption class="caption">Diagram. A fill (dashed: filled holes), then a cut. The verdicts above the settling round (bottom row) are equal in all three DAGs (<code>safety</code>, LeanDag/Properties/Arcs/Headline.lean).</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -566,20 +569,9 @@
       </ul>
       <p>Seven rules have both. Nemo, FinWhale, Hydrozoan and Optimal-Hydrozoan lack SelfParent and have progress only.</p>
     </div>
-    <figure data-step="1">
-      <div class="flow">
-        <div class="box">block <code>b</code> of <code>v</code>, round <code>r</code></div>
-        <div class="arrow">←</div>
-        <div class="box">block of <code>v</code>, round <code>r + 1</code></div>
-        <div class="arrow">← ⋯ ←</div>
-        <div class="box accent">leader block of <code>v</code> at its next slot: commit</div>
-      </div>
-      <p></p>
-      <div class="flow">
-        <div class="arrow">⇒</div>
-        <div class="box"><code>b</code> enters the ledger</div>
-      </div>
-      <figcaption class="caption">Inclusion: a reliable validator <code>v</code>'s blocks, linked by self-parent references, enter the ledger with the commit of <code>v</code>'s next leader slot.</figcaption>
+    <figure class="diagram" data-step="1">
+      <script type="application/json">{"w": 880, "h": 196, "groups": [{"x": 70, "y": 104, "w": 800, "h": 88, "label": "ledger", "cls": "accent"}], "nodes": [{"id": "b", "x": 90, "y": 10, "w": 140, "h": 50, "text": "block b", "sub": "round r", "cls": "accent"}, {"id": "b1", "x": 330, "y": 10, "w": 140, "h": 50, "text": "block of v", "sub": "round r + 1"}, {"id": "d", "x": 540, "y": 10, "w": 40, "h": 50, "text": "⋯", "cls": "plain"}, {"id": "L", "x": 680, "y": 10, "w": 180, "h": 50, "text": "leader block", "sub": "v's next slot", "cls": "leader"}, {"id": "lb", "x": 90, "y": 136, "w": 140, "h": 40, "text": "b", "cls": "ok"}, {"id": "ld", "x": 360, "y": 136, "w": 80, "h": 40, "text": "⋯", "cls": "plain"}, {"id": "lL", "x": 680, "y": 136, "w": 180, "h": 40, "text": "leader block", "cls": "ok"}], "edges": [{"from": "b1", "to": "b", "label": "self-parent"}, {"from": "d", "to": "b1"}, {"from": "L", "to": "d", "label": "self-parent"}, {"from": "L", "to": "lL", "fromSide": "b", "toSide": "t", "cls": "ok", "label": "commit", "dx": 34, "dy": 4}, {"from": "b", "to": "lb", "fromSide": "b", "toSide": "t", "cls": "ok dashed", "label": "in its history", "dx": 56, "dy": 4}], "texts": [{"x": 0, "y": 35, "text": "validator v", "cls": "muted"}], "size": "xs"}</script>
+      <figcaption class="caption">Diagram. Inclusion: a reliable validator <code>v</code>'s blocks, linked by self-parent references, enter the ledger with the commit of <code>v</code>'s next leader slot.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -596,7 +588,7 @@
     <figure>
       <table class="compact">
         <thead>
-          <tr><th>Rule</th><th>SkipsUnsupported</th><th>Quorate</th><th>SelfParent</th><th>NoEquiv</th><th>Safe</th><th>Lives</th></tr>
+          <tr><th>Rule</th><th class="center">SkipsUnsupported</th><th class="center">Quorate</th><th class="center">SelfParent</th><th class="center">NoEquiv</th><th class="center">Safe</th><th class="center">Lives</th></tr>
         </thead>
         <tbody>
           <tr><td>Mysticeti</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>

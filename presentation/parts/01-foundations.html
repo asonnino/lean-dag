@@ -32,14 +32,14 @@
         <li>Safety theorems use no assumption about the network.</li>
       </ul>
     </div>
-    <figure>
-      <div class="flow">
-        <span class="box accent">Protocols</span>
-        <span class="arrow"><span class="small">each rule proves</span> →</span>
-        <span class="box accent">Properties</span>
-        <span class="arrow"><span class="small">each mechanism uses</span> →</span>
-        <span class="box accent">Mechanisms</span>
-      </div>
+    <figure class="diagram">
+      <script type="application/json">{"w": 980, "h": 74, "size": "xs",
+        "nodes": [{"id": "P", "x": 0, "y": 6, "w": 220, "h": 62, "text": "Protocols", "sub": "13 rules, 11 proved", "cls": "accent"},
+                  {"id": "Q", "x": 380, "y": 6, "w": 220, "h": 62, "text": "Properties", "sub": "4 properties + support", "cls": "accent"},
+                  {"id": "M", "x": 760, "y": 6, "w": 220, "h": 62, "text": "Mechanisms", "sub": "8, each proved once", "cls": "accent"}],
+        "edges": [{"from": "P", "to": "Q", "label": "each rule proves"},
+                  {"from": "Q", "to": "M", "label": "each mechanism uses"}]}</script>
+      <p class="caption">Diagram: the three parts of the development and how they depend on one another.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -71,14 +71,34 @@
         <li>Some validators may be faulty. The protocol must tolerate them without identifying them.</li>
       </ul>
     </div>
-    <figure>
-      <div class="flow vertical">
-        <div class="flow"><span class="box">v0</span><span class="arrow">:</span><span class="box accent">tx₁</span><span class="box accent">tx₂</span><span class="box accent">tx₃</span></div>
-        <div class="flow"><span class="box">v1</span><span class="arrow">:</span><span class="box accent">tx₁</span><span class="box accent">tx₂</span><span class="box accent">tx₃</span></div>
-        <div class="flow"><span class="box">v2</span><span class="arrow">:</span><span class="box accent">tx₁</span><span class="box accent">tx₂</span><span class="box accent">tx₃</span></div>
-        <div class="flow"><span class="box">v3</span><span class="arrow">:</span><span class="box">tx₁</span><span class="box">tx₉</span><span class="muted">faulty</span></div>
-      </div>
-      <p class="caption">Diagram: four validators and their logs; <code>v0</code>, <code>v1</code>, <code>v2</code> hold the same log, <code>v3</code> is faulty.</p>
+    <figure class="diagram">
+      <script type="application/json">{"w": 480, "h": 262,
+        "groups": [{"x": 110, "y": 24, "w": 278, "h": 160, "cls": "accent"},
+                   {"x": 110, "y": 196, "w": 278, "h": 62, "cls": "bad"}],
+        "texts": [{"x": 231, "y": 10, "text": "1", "cls": "muted small", "anchor": "middle"},
+                  {"x": 291, "y": 10, "text": "2", "cls": "muted small", "anchor": "middle"},
+                  {"x": 351, "y": 10, "text": "3", "cls": "muted small", "anchor": "middle"},
+                  {"x": 172, "y": 10, "text": "log position", "cls": "muted small", "anchor": "end"},
+                  {"x": 398, "y": 104, "text": "same log", "cls": "ok"},
+                  {"x": 398, "y": 227, "text": "faulty", "cls": "bad"}],
+        "nodes": [{"id": "c", "x": 0, "y": 84, "w": 62, "h": 40, "text": "client", "cls": "dashed"},
+                  {"id": "v0", "x": 120, "y": 34, "w": 52, "h": 40, "text": "v0"},
+                  {"id": "v1", "x": 120, "y": 84, "w": 52, "h": 40, "text": "v1"},
+                  {"id": "v2", "x": 120, "y": 134, "w": 52, "h": 40, "text": "v2"},
+                  {"id": "v3", "x": 120, "y": 207, "w": 52, "h": 40, "text": "v3"},
+                  {"id": "a1", "x": 206, "y": 34, "w": 50, "h": 40, "text": "tx₁", "cls": "accent"},
+                  {"id": "a2", "x": 266, "y": 34, "w": 50, "h": 40, "text": "tx₂", "cls": "accent"},
+                  {"id": "a3", "x": 326, "y": 34, "w": 50, "h": 40, "text": "tx₃", "cls": "accent"},
+                  {"id": "b1", "x": 206, "y": 84, "w": 50, "h": 40, "text": "tx₁", "cls": "accent"},
+                  {"id": "b2", "x": 266, "y": 84, "w": 50, "h": 40, "text": "tx₂", "cls": "accent"},
+                  {"id": "b3", "x": 326, "y": 84, "w": 50, "h": 40, "text": "tx₃", "cls": "accent"},
+                  {"id": "d1", "x": 206, "y": 134, "w": 50, "h": 40, "text": "tx₁", "cls": "accent"},
+                  {"id": "d2", "x": 266, "y": 134, "w": 50, "h": 40, "text": "tx₂", "cls": "accent"},
+                  {"id": "d3", "x": 326, "y": 134, "w": 50, "h": 40, "text": "tx₃", "cls": "accent"},
+                  {"id": "e1", "x": 206, "y": 207, "w": 50, "h": 40, "text": "tx₁"},
+                  {"id": "e2", "x": 266, "y": 207, "w": 50, "h": 40, "text": "tx₉", "cls": "bad"}],
+        "edges": [{"from": "c", "to": "v1", "label": "submit"}]}</script>
+      <p class="caption">Diagram: four validators and their logs. <code>v0</code>, <code>v1</code>, <code>v2</code> hold the same log; the faulty <code>v3</code> outputs <code>tx₉</code> at position 2.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -102,21 +122,27 @@
       </ul>
     </div>
     <figure>
-      <svg class="dag" viewBox="0 0 440 260" role="img">
-        <ellipse class="hull" cx="160" cy="130" rx="125" ry="85"/>
-        <ellipse class="hull" cx="280" cy="130" rx="125" ry="85"/>
-        <ellipse class="edge" cx="160" cy="130" rx="125" ry="85"/>
-        <ellipse class="edge" cx="280" cy="130" rx="125" ry="85"/>
-        <text class="row-label" x="70" y="30" text-anchor="middle">Q₁ = {v0, v1, v2}</text>
-        <text class="row-label" x="370" y="30" text-anchor="middle">Q₂ = {v1, v2, v3}</text>
-        <g class="block"><rect x="80" y="115" width="40" height="30" rx="5"/><text x="100" y="130">v0</text></g>
-        <g class="block blame"><rect x="200" y="85" width="40" height="30" rx="5"/><text x="220" y="100">v1</text></g>
-        <g class="block"><rect x="200" y="145" width="40" height="30" rx="5"/><text x="220" y="160">v2</text></g>
-        <g class="block"><rect x="320" y="115" width="40" height="30" rx="5"/><text x="340" y="130">v3</text></g>
-        <text class="row-label" x="220" y="245" text-anchor="middle">overlap: n − 2f = 2 ≥ f + 1 = 2</text>
+      <svg class="dag" viewBox="0 0 440 290" role="img" aria-label="Two quorums of three validators out of four share two validators, v1 and v2; v1 is Byzantine and v2 is correct.">
+        <defs><clipPath id="venn-q1"><ellipse cx="160" cy="140" rx="125" ry="85"/></clipPath></defs>
+        <ellipse class="round-band" cx="160" cy="140" rx="125" ry="85"/>
+        <ellipse class="round-band" cx="280" cy="140" rx="125" ry="85"/>
+        <ellipse class="band" cx="280" cy="140" rx="125" ry="85" clip-path="url(#venn-q1)"/>
+        <ellipse class="edge strong" cx="160" cy="140" rx="125" ry="85"/>
+        <ellipse class="edge strong" cx="280" cy="140" rx="125" ry="85"/>
+        <text class="row-label" x="70" y="22" text-anchor="middle">Q₁ = {v0, v1, v2}</text>
+        <text class="round-label" x="70" y="42" text-anchor="middle">|Q₁| = n − f = 3</text>
+        <text class="row-label" x="370" y="22" text-anchor="middle">Q₂ = {v1, v2, v3}</text>
+        <text class="round-label" x="370" y="42" text-anchor="middle">|Q₂| = n − f = 3</text>
+        <g class="block"><rect x="80" y="125" width="40" height="30" rx="6"/><text x="100" y="140">v0</text></g>
+        <g class="block"><rect x="200" y="95" width="40" height="30" rx="6"/><text x="220" y="110">v1</text></g>
+        <g class="block"><rect x="200" y="160" width="40" height="30" rx="6"/><text x="220" y="175">v2</text></g>
+        <g class="block"><rect x="320" y="125" width="40" height="30" rx="6"/><text x="340" y="140">v3</text></g>
+        <g class="tag bad"><rect x="180" y="75" width="80" height="16" rx="8"/><text x="220" y="83.5" text-anchor="middle" dominant-baseline="central">Byzantine</text></g>
+        <g class="tag ok"><rect x="188" y="140" width="64" height="16" rx="8"/><text x="220" y="148.5" text-anchor="middle" dominant-baseline="central">correct</text></g>
+        <text class="row-label" x="220" y="252" text-anchor="middle">Q₁ ∩ Q₂ = {v1, v2}</text>
+        <text class="round-label" x="220" y="276" text-anchor="middle">2 = n − 2f ≥ f + 1 = 2, so one is correct</text>
       </svg>
-      <div class="legend"><span class="l-blame">Byzantine (at most f = 1)</span></div>
-      <p class="caption">Diagram: <code>n = 4</code>, <code>f = 1</code>; two quorums of 3 share 2 validators, at most 1 of them Byzantine.</p>
+      <p class="caption">Diagram: <code>n = 4</code>, <code>f = 1</code>. Two quorums of 3 share 2 validators (shaded); at most 1 of them is Byzantine.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -144,25 +170,34 @@
       </ul>
     </div>
     <figure>
-      <svg class="dag" viewBox="0 0 900 170" role="img">
-        <line class="edge" x1="60" y1="40" x2="880" y2="40"/>
-        <line class="edge" x1="60" y1="120" x2="880" y2="120"/>
+      <svg class="dag" viewBox="0 0 920 196" role="img" aria-label="Two timelines w and v; before GST messages from w to v take arbitrary time, after GST each arrives within Delta.">
+        <defs><marker id="gst-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto" markerUnits="userSpaceOnUse"><path class="arrowhead strong" d="M 0 1 L 9 5 L 0 9 z"/></marker></defs>
+        <rect class="round-band" x="70" y="26" width="450" height="128"/>
+        <rect class="band" x="590" y="46" width="90" height="88"/>
+        <rect class="band" x="730" y="46" width="90" height="88"/>
+        <line class="edge strong" x1="70" y1="46" x2="890" y2="46" marker-end="url(#gst-arrow)"/>
+        <line class="edge strong" x1="70" y1="134" x2="890" y2="134" marker-end="url(#gst-arrow)"/>
+        <text class="round-label" x="900" y="46" dominant-baseline="central">t</text>
+        <text class="round-label" x="900" y="134" dominant-baseline="central">t</text>
         <text class="row-label" x="10" y="40" dominant-baseline="central">w</text>
-        <text class="row-label" x="10" y="120" dominant-baseline="central">v</text>
-        <rect class="band" x="560" y="40" width="70" height="80"/>
-        <rect class="band" x="720" y="40" width="70" height="80"/>
-        <line class="edge strong" x1="80" y1="40" x2="400" y2="120"/>
-        <line class="edge strong" x1="150" y1="40" x2="210" y2="120"/>
-        <line class="edge strong" x1="250" y1="40" x2="470" y2="120"/>
-        <line class="edge strong" x1="560" y1="40" x2="620" y2="120"/>
-        <line class="edge strong" x1="720" y1="40" x2="775" y2="120"/>
-        <line class="cut-line" x1="500" y1="20" x2="500" y2="140"/>
-        <text class="row-label" x="500" y="160" text-anchor="middle">GST</text>
-        <text class="row-label" x="280" y="160" text-anchor="middle">before GST: any delay</text>
-        <text class="row-label" x="595" y="160" text-anchor="middle">≤ Δ</text>
-        <text class="row-label" x="755" y="160" text-anchor="middle">≤ Δ</text>
+        <text class="row-tag" x="10" y="57" dominant-baseline="central">reliable</text>
+        <text class="row-label" x="10" y="128" dominant-baseline="central">v</text>
+        <text class="row-tag" x="10" y="145" dominant-baseline="central">reliable</text>
+        <line class="edge strong" x1="96" y1="46" x2="404" y2="132" marker-end="url(#gst-arrow)"/>
+        <line class="edge strong" x1="170" y1="46" x2="228" y2="132" marker-end="url(#gst-arrow)"/>
+        <line class="edge strong" x1="270" y1="46" x2="468" y2="132" marker-end="url(#gst-arrow)"/>
+        <line class="edge strong" x1="590" y1="46" x2="652" y2="132" marker-end="url(#gst-arrow)"/>
+        <line class="edge strong" x1="730" y1="46" x2="774" y2="132" marker-end="url(#gst-arrow)"/>
+        <line class="cut-line" x1="520" y1="20" x2="520" y2="160"/>
+        <text class="cut-label" x="520" y="12" text-anchor="middle">GST</text>
+        <g class="bracket"><path d="M 590 142 v 6 H 680 v -6"/></g>
+        <g class="bracket"><path d="M 730 142 v 6 H 820 v -6"/></g>
+        <text class="row-label" x="635" y="166" text-anchor="middle">Δ</text>
+        <text class="row-label" x="775" y="166" text-anchor="middle">Δ</text>
+        <text class="row-label" x="295" y="190" text-anchor="middle">before GST: any delay</text>
+        <text class="row-label" x="705" y="190" text-anchor="middle">after GST: arrival within Δ</text>
       </svg>
-      <p class="caption">Diagram: messages from <code>w</code> to <code>v</code> along a time axis; after GST each arrives within <code>Δ</code>.</p>
+      <p class="caption">Diagram: messages from a reliable <code>w</code> to a reliable <code>v</code>. After GST, what <code>w</code> holds at time <code>t</code> is held by <code>v</code> by <code>t + Δ</code> (shaded windows).</p>
     </figure>
   </div>
   <aside class="notes">
@@ -191,7 +226,9 @@
     <figure class="dag">
       <script type="application/json">{"w": "U3", "byz": [0],
         "hulls": [{"ids": [8]}],
-        "strong": [{"from": [8]}]}</script>
+        "strong": [{"from": [8]}],
+        "tags": [{"id": 4, "text": "own previous"}],
+        "badges": [{"r": 1, "text": "3 creators ≥ n − f = 3", "kind": "note"}]}</script>
       <p class="caption">Witness <code>U3</code> (LeanDagTest/Mysticeti/Model.lean), <code>n = 4</code>; shaded row: Byzantine. Block 8 (<code>v0</code>, round 2) references 4, 5, 6; block 4 is <code>v0</code>’s own previous block.</p>
     </figure>
   </div>
@@ -220,19 +257,27 @@
         <li>A block two rounds above a leader <strong>is</strong> a certificate for it when its references include <code>n − f</code> blocks that reference the leader.</li>
         <li>Every direct commit rule is then a threshold on a set of blocks found in the graph.</li>
       </ul>
-      <div class="flow">
-        <span class="box">block</span><span class="arrow">→</span>
-        <span class="box"><code>n − f</code> signatures</span><span class="arrow">→</span>
-        <span class="box accent">certificate</span>
-      </div>
-      <p class="caption">Illustration: one round of a certified DAG; the block is referenced after its certificate exists.</p>
+      <figure class="diagram">
+        <script type="application/json">{"w": 600, "h": 128, "size": "xs",
+          "groups": [{"x": 140, "y": 2, "w": 314, "h": 124, "label": "extra exchange", "cls": "accent"}],
+          "nodes": [{"id": "L", "x": 0, "y": 50, "w": 96, "h": 50, "text": "block L", "sub": "round r", "cls": "leader"},
+                    {"id": "S", "x": 150, "y": 50, "w": 130, "h": 50, "text": "n − f signatures", "sub": "on L"},
+                    {"id": "C", "x": 340, "y": 50, "w": 104, "h": 50, "text": "certificate", "sub": "a message", "cls": "accent"},
+                    {"id": "B", "x": 504, "y": 50, "w": 96, "h": 50, "text": "block", "sub": "round r + 1"}],
+          "edges": [{"from": "L", "to": "S", "label": "sign"},
+                    {"from": "S", "to": "C", "label": "aggregate"},
+                    {"from": "C", "to": "B", "label": "then cite", "cls": "accent"}]}</script>
+        <p class="caption">(a) Certified (illustration): the certificate is a separate message, built by an extra exchange before round <code>r + 1</code> may reference <code>L</code>.</p>
+      </figure>
     </div>
     <figure class="dag">
       <script type="application/json">{"w": "U3", "byz": [0],
         "marks": [{"ids": [0], "cls": "leader"}, {"ids": [4, 5, 6], "cls": "vote"}, {"ids": [8, 9, 10], "cls": "cert"}],
-        "strong": [{"from": [4, 5, 6], "to": [0]}, {"from": [8], "to": [4, 5, 6]}]}</script>
+        "strong": [{"from": [4, 5, 6], "to": [0]}, {"from": [8], "to": [4, 5, 6]}],
+        "tags": [{"id": 0, "text": "L"}, {"id": 8, "text": "certificate", "kind": "accent"}, {"id": 11, "text": "2 votes < q", "kind": "bad"}],
+        "badges": [{"r": 1, "text": "3 votes ≥ q = 3", "kind": "note"}]}</script>
       <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-cert">certificate</span></div>
-      <p class="caption">Witness <code>U3</code> (LeanDagTest/Mysticeti/Model.lean), uncertified; shaded row: Byzantine. Blocks 8, 9, 10 each reference the 3 votes 4, 5, 6.</p>
+      <p class="caption">(b) Uncertified, witness <code>U3</code> (LeanDagTest/Mysticeti/Model.lean); shaded row: Byzantine. No message is added: block 8 references the 3 votes 4, 5, 6 and so is a certificate; 9 and 10 likewise. Block 11 references only 2 votes.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -298,19 +343,26 @@
       </ol>
       <p>The anchor is the nearest eligible committed slot above; every eligible slot in between must be skipped.</p>
     </div>
-    <figure>
-      <div class="flow vertical">
-        <div class="flow"><span class="box">direct commit?</span><span class="arrow">yes →</span><span class="box accent">commit</span></div>
-        <div class="arrow">↓ no</div>
-        <div class="flow"><span class="box">direct skip?</span><span class="arrow">yes →</span><span class="box accent">skip</span></div>
-        <div class="arrow">↓ no</div>
-        <div class="flow"><span class="box">nearest eligible committed anchor above</span></div>
-        <div class="arrow">↓</div>
-        <div class="flow"><span class="box">links a candidate?</span></div>
-        <div class="flow"><span class="arrow">yes →</span><span class="box accent">commit (the least, if the rule has a tie-break)</span></div>
-        <div class="flow"><span class="arrow">no →</span><span class="box accent">skip</span></div>
-      </div>
-      <p class="caption">Diagram: the four cases, in the order used for presentation.</p>
+    <figure class="diagram">
+      <script type="application/json">{"w": 540, "h": 420,
+        "nodes": [{"id": "q1", "x": 0, "y": 0, "w": 230, "h": 50, "text": "direct commit?"},
+                  {"id": "q2", "x": 0, "y": 94, "w": 230, "h": 50, "text": "direct skip?"},
+                  {"id": "a", "x": 0, "y": 188, "w": 230, "h": 60, "text": "anchor j: nearest eligible\ncommitted slot above k", "cls": "accent"},
+                  {"id": "q3", "x": 0, "y": 292, "w": 230, "h": 50, "text": "j links a candidate?"},
+                  {"id": "c1", "x": 330, "y": 0, "w": 210, "h": 50, "text": "commit", "sub": "1 · direct", "cls": "ok"},
+                  {"id": "s2", "x": 330, "y": 94, "w": 210, "h": 50, "text": "skip", "sub": "2 · direct", "cls": "bad"},
+                  {"id": "c3", "x": 330, "y": 292, "w": 210, "h": 50, "text": "commit", "sub": "3 · indirect; least if tie-break", "cls": "ok"},
+                  {"id": "s4", "x": 330, "y": 370, "w": 210, "h": 50, "text": "skip", "sub": "4 · indirect", "cls": "bad"}],
+        "edges": [{"from": "q1", "to": "c1", "label": "yes"},
+                  {"from": "q1", "to": "q2", "label": "no", "dx": 16, "dy": 4},
+                  {"from": "q2", "to": "s2", "label": "yes"},
+                  {"from": "q2", "to": "a", "label": "no", "dx": 16, "dy": 4},
+                  {"from": "a", "to": "q3"},
+                  {"from": "q3", "to": "c3", "label": "yes"},
+                  {"from": "q3", "to": "s4", "route": "v", "fromSide": "b", "toSide": "l", "label": "no", "dx": 16, "dy": 4}],
+        "texts": [{"x": 248, "y": 208, "text": "eligible slots strictly", "cls": "muted small"},
+                  {"x": 248, "y": 226, "text": "between j and k: skipped", "cls": "muted small"}]}</script>
+      <p class="caption">Diagram: the four cases of <code>AnchoredRule.Decided</code> (LeanDag/Common/Anchored.lean), in the order used for presentation.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -335,21 +387,24 @@
       </ul>
       <p>Agreement and the agreement of ledgers are proved once, for every rule whose card satisfies a short list of laws.</p>
     </div>
-    <figure>
-      <div class="flow">
-        <span class="box muted">Nemo-Nemo</span><span class="box muted">Odontoceti</span><span class="box muted">Hybrid</span><span class="box muted">…</span>
-      </div>
-      <table>
-        <thead><tr><th colspan="2">Mysticeti</th></tr></thead>
-        <tbody>
-          <tr><th>wave</th><td>2</td></tr>
-          <tr><th>commit</th><td><code>q</code> certificates at <code>r + 2</code></td></tr>
-          <tr><th>skip</th><td><code>q</code> blocks at <code>r + 1</code> reference no candidate</td></tr>
-          <tr><th>link</th><td>one rung: a certificate for <code>L</code> in the anchor’s history</td></tr>
-          <tr><th>tie-break</th><td>none</td></tr>
-        </tbody>
-      </table>
-      <p class="caption">The Mysticeti card (slide 15); the other rules fill in the same five rows.</p>
+    <figure class="diagram">
+      <script type="application/json">{"w": 628, "h": 340,
+        "groups": [{"x": 88, "y": 0, "w": 540, "h": 250, "label": "…"},
+                   {"x": 66, "y": 22, "w": 540, "h": 250, "label": "Hybrid"},
+                   {"x": 44, "y": 44, "w": 540, "h": 250, "label": "Odontoceti"},
+                   {"x": 22, "y": 66, "w": 540, "h": 250, "label": "Nemo-Nemo"},
+                   {"x": 0, "y": 88, "w": 540, "h": 250, "label": "Mysticeti", "cls": "accent"}],
+        "nodes": [{"id": "k1", "x": 8, "y": 120, "w": 92, "h": 36, "text": "wave", "cls": "plain"},
+                  {"id": "v1", "x": 104, "y": 120, "w": 426, "h": 36, "text": "2"},
+                  {"id": "k2", "x": 8, "y": 164, "w": 92, "h": 36, "text": "commit", "cls": "plain"},
+                  {"id": "v2", "x": 104, "y": 164, "w": 426, "h": 36, "text": "q certificates at r + 2"},
+                  {"id": "k3", "x": 8, "y": 208, "w": 92, "h": 36, "text": "skip", "cls": "plain"},
+                  {"id": "v3", "x": 104, "y": 208, "w": 426, "h": 36, "text": "q blocks at r + 1 reference no candidate"},
+                  {"id": "k4", "x": 8, "y": 252, "w": 92, "h": 36, "text": "link", "cls": "plain"},
+                  {"id": "v4", "x": 104, "y": 252, "w": 426, "h": 36, "text": "one rung: a certificate for L in the anchor’s history"},
+                  {"id": "k5", "x": 8, "y": 296, "w": 92, "h": 36, "text": "tie-break", "cls": "plain"},
+                  {"id": "v5", "x": 104, "y": 296, "w": 426, "h": 36, "text": "none"}]}</script>
+      <p class="caption">Diagram: the Mysticeti card (<code>coreAnchored</code>, LeanDag/Mysticeti/Model/Rule.lean; slide 15) in front of the other rules’ cards, which fill in the same five rows.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -380,12 +435,16 @@
       <script type="application/json">{"w": "Ugrow6", "rounds": [0, 3],
         "roundNames": {"0": "r", "1": "r + 1", "2": "r + 2", "3": "r + 3"},
         "marks": [{"ids": [0, 5, 10, 15], "cls": "leader"}, {"ids": [5, 10], "cls": "dim"}, {"ids": [15], "cls": "anchor"}],
-        "badges": [{"r": 0, "text": "slot k", "kind": "note"},
-                   {"r": 1, "text": "not eligible", "kind": "undecided", "row": 1},
-                   {"r": 2, "text": "not eligible", "kind": "undecided"},
-                   {"r": 3, "text": "eligible anchor", "kind": "commit", "row": 1}]}</script>
+        "tags": [{"id": 0, "text": "slot k", "kind": "accent"},
+                 {"id": 5, "text": "no certificate below", "kind": "bad"},
+                 {"id": 10, "text": "certificate only if itself", "kind": "bad"},
+                 {"id": 15, "text": "eligible", "kind": "ok"}],
+        "badges": [{"r": 0, "text": "slot k, wave 2", "kind": "note"},
+                   {"r": 1, "text": "r + 2 ≮ r + 1", "kind": "skip", "row": 1},
+                   {"r": 2, "text": "r + 2 ≮ r + 2", "kind": "skip"},
+                   {"r": 3, "text": "r + 2 < r + 3", "kind": "commit", "row": 1}]}</script>
       <div class="legend"><span class="l-leader">leader block of a slot</span><span class="l-anchor">eligible anchor</span></div>
-      <p class="caption">Schedule <code>pipeSlots</code> (wave 2) drawn over witness <code>Ugrow 6</code>, rounds 0–3 (LeanDagTest/Mysticeti/Growth.lean).</p>
+      <p class="caption">Schedule <code>pipeSlots</code> (wave 2) drawn over witness <code>Ugrow 6</code>, rounds 0–3 (LeanDagTest/Mysticeti/Growth.lean). Under each round, the test <code>round(k) + wave &lt; round(j)</code>; it fails at <code>r + 1</code> and <code>r + 2</code>.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -413,23 +472,24 @@
     </div>
     <div class="body">
       <figure class="dag">
-        <script type="application/json">{"w": "Ugrow6", "rounds": [3, 8], "hide": [24, 25, 26, 27],
-          "marks": [{"ids": [13], "cls": "leader"}],
-          "badges": [{"r": 6, "text": "skip on absence?", "kind": "skip"},
-                     {"r": 7, "text": "0 < q = 3", "kind": "undecided", "row": 1}]}</script>
-        <p class="caption">(1) <code>Ugrow 5</code>: no block at rounds 6–8; slot 2 has no candidate, no votes and no blames.</p>
+        <script type="application/json">{"w": "Ugrow6", "rounds": [5, 8], "hide": [24, 25, 26, 27], "size": "m",
+          "roundNames": {"5": "round 5", "6": "6: slot 2", "7": "round 7", "8": "round 8"},
+          "badges": [{"r": 6, "text": "skip?", "kind": "skip"},
+                     {"r": 7, "text": "0 blames < q", "kind": "undecided"}]}</script>
+        <p class="caption">(1) <code>Ugrow 5</code> (LeanDagTest/Mysticeti/Growth.lean): no candidate.</p>
       </figure>
       <figure class="dag" data-step="1">
-        <script type="application/json">{"w": "Ugrow8", "rounds": [3, 8],
-          "marks": [{"ids": [13, 25], "cls": "leader"}, {"ids": [28, 29, 30, 31], "cls": "vote"}, {"ids": [32, 33, 34, 35], "cls": "cert"}],
-          "badges": [{"r": 6, "text": "commit", "kind": "commit"},
-                     {"r": 7, "text": "4 ≥ q = 3", "kind": "note", "row": 1},
-                     {"r": 8, "text": "4 ≥ q = 3", "kind": "note"}]}</script>
-        <p class="caption">(2) <code>Ugrow 8</code>: slot 2 has 4 votes and 4 certificates and is committed. A skip on absence would have been overturned.</p>
+        <script type="application/json">{"w": "Ugrow8", "rounds": [5, 8], "size": "m",
+          "roundNames": {"5": "round 5", "6": "6: slot 2", "7": "round 7", "8": "round 8"},
+          "marks": [{"ids": [25], "cls": "leader"}, {"ids": [28, 29, 30, 31], "cls": "vote"}, {"ids": [32, 33, 34, 35], "cls": "cert"}],
+          "strong": [{"from": [28, 29, 30, 31], "to": [25]}],
+          "tags": [{"id": 25, "text": "L"}],
+          "brackets": [{"ids": [28, 29, 30, 31], "text": "4 votes ≥ q", "kind": "accent"}],
+          "badges": [{"r": 6, "text": "commit", "kind": "commit"}, {"r": 8, "text": "4 certs ≥ q", "kind": "note"}]}</script>
+        <p class="caption">(2) <code>Ugrow 8</code>: committed; a skip on absence would be overturned.</p>
       </figure>
     </div>
   </div>
-  <div class="legend"><span class="l-leader">leader block (<code>v1</code>, slot <code>k</code> at round <code>3k</code>)</span><span class="l-vote">vote</span><span class="l-cert">certificate</span></div>
   <aside class="notes">
     <ul>
       <li><code>blameSkip q</code>, <code>slotBlamers</code> (LeanDag/Common/Leader.lean:99).</li>

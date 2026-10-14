@@ -47,17 +47,22 @@
       </ul>
       <div class="uses"><b>Uses:</b> view convergence and the pacemaker's rules (slide 69).<br><b>Gives:</b> the support's precondition <code>live</code> (slide 61).</div>
     </div>
-    <figure>
-      <div class="flow vertical">
-        <div class="box">network: view convergence</div>
-        <div class="arrow">↓</div>
-        <div class="box">pacemaker: production and coverage</div>
-        <div class="arrow">↓</div>
-        <div class="box">support: <code>live</code></div>
-        <div class="arrow">↓</div>
-        <div class="box accent">commits</div>
-      </div>
-      <figcaption class="caption">Each layer is derived from the layer above it.</figcaption>
+    <figure class="diagram">
+      <script type="application/json">{
+        "w": 470, "h": 400,
+        "nodes": [
+          {"id": "net", "x": 10, "y": 10, "w": 240, "h": 58, "text": "network", "sub": "view convergence"},
+          {"id": "pace", "x": 10, "y": 120, "w": 240, "h": 58, "text": "pacemaker", "sub": "four rules (slide 69)"},
+          {"id": "sup", "x": 10, "y": 230, "w": 240, "h": 58, "text": "support", "sub": "precondition live"},
+          {"id": "com", "x": 10, "y": 340, "w": 240, "h": 50, "text": "commits", "cls": "accent"}
+        ],
+        "edges": [
+          {"from": "net", "to": "pace", "label": "after GST", "dx": 48, "dy": 4},
+          {"from": "pace", "to": "sup", "label": "a block per round;\nall reliable refs below", "dx": 88, "dy": 4},
+          {"from": "sup", "to": "com", "label": "Law 2 (slide 61)", "dx": 64, "dy": 4}
+        ]
+      }</script>
+      <figcaption class="caption">The liveness argument in layers; each arrow is labelled with what the lower layer receives. Only the top layer refers to time.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -78,17 +83,22 @@
         <li><strong>Reference</strong>: a validator's block references every block of the previous round that it holds.</li>
       </ul>
     </div>
-    <figure>
-      <div class="flow vertical">
-        <div class="box">in a round below <code>n</code></div>
-        <div class="arrow">↓ <span class="small"><strong>Catch up</strong>: holds a reliable block of round <code>n</code>; within <code>proc</code></span></div>
-        <div class="box accent">in round <code>n</code><br><span class="muted"><strong>Wait</strong>: at least <code>timeout(n)</code></span></div>
-        <div class="arrow">↓ <span class="small"><strong>Advance</strong>: holds blocks of <code>n − f</code> creators at round <code>n</code></span></div>
-        <div class="box">builds its round-<code>(n + 1)</code> block<br><span class="muted"><strong>Reference</strong>: every round-<code>n</code> block it holds</span></div>
-        <div class="arrow">↓</div>
-        <div class="box accent">in round <code>n + 1</code></div>
-      </div>
-      <figcaption class="caption">One validator's round counter; each transition is labelled with the rule that governs it.</figcaption>
+    <figure class="diagram">
+      <script type="application/json">{
+        "w": 470, "h": 430, "size": "l",
+        "nodes": [
+          {"id": "below", "x": 10, "y": 10, "w": 250, "h": 50, "text": "in a round below n", "cls": "muted"},
+          {"id": "in", "x": 10, "y": 124, "w": 250, "h": 62, "text": "in round n", "sub": "Wait: at least timeout(n)", "cls": "accent"},
+          {"id": "build", "x": 10, "y": 250, "w": 250, "h": 62, "text": "builds its round-(n + 1) block", "sub": "Reference: every round-n block held"},
+          {"id": "next", "x": 10, "y": 376, "w": 250, "h": 50, "text": "in round n + 1", "cls": "accent"}
+        ],
+        "edges": [
+          {"from": "below", "to": "in", "label": "Catch up (after GST):\nholds a reliable round-n block;\nwithin proc", "dx": 112, "dy": 4},
+          {"from": "in", "to": "build", "label": "Advance:\nholds blocks of n − f\ncreators at round n", "dx": 82, "dy": 4},
+          {"from": "build", "to": "next", "label": "enters", "dx": 34, "dy": 4}
+        ]
+      }</script>
+      <figcaption class="caption">One validator's round counter; each arrow names the rule that governs it.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -111,14 +121,15 @@
       <script type="application/json">{
         "type": "lines", "xs": [0, 1, 2, 3, 4, 5],
         "series": [
-          {"name": "v0, v1", "ys": [0, 14, 19, 24, 29, 34], "dy": -8},
-          {"name": "v2", "ys": [1, 14, 19, 24, 29, 34], "color": 1, "dashed": true, "dy": 8},
-          {"name": "v3", "ys": [10, 17, 22, 27, 32, 37], "color": 3, "dy": -10}
+          {"name": "v0, v1", "ys": [0, 0, 0, 0, 0, 0], "dy": 10},
+          {"name": "v2", "ys": [1, 0, 0, 0, 0, 0], "color": 1, "dashed": true, "dy": -7},
+          {"name": "v3", "ys": [10, 3, 3, 3, 3, 3], "color": 3, "values": true, "dy": -18}
         ],
-        "ymax": 40, "yticks": [0, 10, 20, 30, 40],
-        "xlabel": "round", "ylabel": "time of entry"
+        "hlines": [{"y": 3, "text": "Δ + proc = 3"}],
+        "ymax": 12, "yticks": [0, 5, 10],
+        "xlabel": "round", "ylabel": "entry − earliest entry"
       }</script>
-      <figcaption class="caption">Witness <code>ugrowLag</code> (LeanDagTest/Reactive/Collapse.lean): GST = 12, Δ = 2, proc = 1. The spread is 10 at round 0 and 3 = Δ + proc from round 1 on.</figcaption>
+      <figcaption class="caption">Witness <code>ugrowLag</code> (LeanDagTest/Reactive/Collapse.lean): GST = 12, Δ = 2, proc = 1. Each validator's entry time into a round, minus the earliest entry into that round. Round 0 is entered before GST, with spread 10; from round 1 on the spread is 3 = Δ + proc.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -131,7 +142,7 @@
 <!-- Slide 71 -->
 <section class="slide" data-part-label="Mechanisms · Pacing">
   <h2>The reactive schedule, and local liveness</h2>
-  <div class="body">
+  <div class="body stack">
     <div class="text">
       <ul>
         <li>A validator waits only until it holds the leader's block, then votes; the timeout is a fallback.</li>
@@ -139,6 +150,7 @@
         <li>Every reliable validator decides from the blocks it holds, by an explicit time.</li>
       </ul>
     </div>
+    <div class="body">
     <figure>
       <table class="compact">
         <thead>
@@ -151,8 +163,19 @@
           <tr><td>v3</td><td>3</td><td>9</td><td>15</td><td>21</td><td>27</td><td class="yes">6</td><td class="no">9</td></tr>
         </tbody>
       </table>
-      <figcaption class="caption">Witness <code>ugrowReactive</code> (LeanDagTest/Reactive/Model.lean): build times <code>built v n = v + 6n</code>. Each validator spends 6 in every round, below the timeout <code>9 = 2Δ + proc</code>, so no timeout is reached.</figcaption>
+      <figcaption class="caption">Witness <code>ugrowReactive</code> (LeanDagTest/Reactive/Model.lean): build times <code>built v n = v + 6n</code>.</figcaption>
     </figure>
+    <figure class="chart">
+      <script type="application/json">{
+        "type": "lines", "xs": [0, 1, 2, 3],
+        "series": [{"name": "v0–v3", "ys": [6, 6, 6, 6], "values": true, "dy": -14}],
+        "hlines": [{"y": 9, "text": "timeout 9"}],
+        "ymax": 10, "yticks": [0, 3, 6, 9],
+        "xlabel": "round n", "ylabel": "time in round n"
+      }</script>
+      <figcaption class="caption">Time in each round: 6 for every validator, below the timeout <code>9 = 2Δ + proc</code>.</figcaption>
+    </figure>
+    </div>
   </div>
   <aside class="notes">
     <p><code>vote_or_wait</code>, <code>prompt_vote</code> (LeanDag/Reactive/Basic.lean:96, 106); <code>ReactiveM.cert_or_wait</code> (LeanDag/Reactive/Mysticeti.lean:31); <code>built_succ_le_of_fast</code> (Basic.lean:166, <code>D + δ + proc</code>); <code>built_succ_le_of_fast_gst</code> (:220, <code>Δ + δ + 2·proc</code>); <code>no_timeout_of_fast</code> (:194), <code>no_timeout_of_fast_gst</code> (:243).</p>
@@ -178,16 +201,17 @@
         "w": "Ucens", "rounds": [0, 3], "byz": [0],
         "marks": [{"ids": [13], "cls": "leader"}],
         "hulls": [{"ids": [0, 1, 2, 4, 5, 6, 8, 9, 10, 13]}],
+        "edges": "none",
         "strong": [{"from": [13, 8, 9, 10, 4, 5, 6]}],
-        "badges": [
-          {"r": 0, "text": "2 of 3", "kind": "note"},
-          {"r": 1, "text": "2 of 3", "kind": "note"},
-          {"r": 2, "text": "2 of 3", "kind": "note"},
-          {"r": 3, "text": "commit", "kind": "commit"}
-        ]
+        "brackets": [
+          {"ids": [1, 2], "text": "2 of 3 correct", "kind": "ok"},
+          {"ids": [5, 6], "text": "2 of 3 correct", "kind": "ok"},
+          {"ids": [9, 10], "text": "2 of 3 correct", "kind": "ok"}
+        ],
+        "badges": [{"r": 3, "text": "slot 1: commit", "kind": "commit", "at": 13}]
       }</script>
-      <div class="legend"><span class="l-leader">leader block 13</span><span>shaded region: its history</span><span>shaded row: Byzantine</span></div>
-      <figcaption class="caption">Witness <code>Ucens</code> (LeanDagTest/Quality/Model.lean), <code>n = 4</code>, <code>Correct = {1, 2, 3}</code>: at each round of the history, the correct creators v1, v2 counted; slot 1 commits block 13.</figcaption>
+      <div class="legend"><span class="l-leader">leader block 13</span><span class="l-hull">its history</span><span class="l-byz">Byzantine</span></div>
+      <figcaption class="caption">Witness <code>Ucens</code> (LeanDagTest/Quality/Model.lean), <code>n = 4</code>, <code>f = 1</code>, <code>Correct = {1, 2, 3}</code>. Slot 1 commits block 13; arrows are the references of its history. At each round below it the history holds blocks of the correct v1, v2: <code>2 = |Correct| − f</code>.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -210,10 +234,17 @@
         "marks": [{"ids": [13], "cls": "leader"}, {"ids": [3, 7, 11, 15, 19, 23], "cls": "blame"}],
         "hulls": [{"ids": [0, 1, 2, 4, 5, 6, 8, 9, 10, 13]}],
         "strong": [{"from": [13, 8, 9, 10, 4, 5, 6]}],
-        "badges": [{"r": 3, "text": "commit", "kind": "commit"}]
+        "paths": [{"ids": [23, 19, 15, 11, 7, 3]}],
+        "brackets": [
+          {"ids": [1, 2], "text": "2 = 3 − 1", "kind": "ok"},
+          {"ids": [5, 6], "text": "2 = 3 − 1", "kind": "ok"},
+          {"ids": [9, 10], "text": "2 = 3 − 1", "kind": "ok"}
+        ],
+        "tags": [{"id": 7, "text": "not in ledger", "kind": "bad"}],
+        "badges": [{"r": 3, "text": "slot 1: commit", "kind": "commit", "at": 13}]
       }</script>
-      <div class="legend"><span class="l-leader">leader block 13</span><span class="l-blame">blocks of validator 3</span><span>shaded region: history of 13</span><span>shaded row: Byzantine</span></div>
-      <figcaption class="caption">Witness <code>Ucens</code> (LeanDagTest/Quality/Model.lean): slot 1 commits block 13; only validator 3's own blocks reference validator 3.</figcaption>
+      <div class="legend"><span class="l-leader">leader block 13</span><span class="l-hull">history of 13</span><span class="l-blame">blocks of validator 3</span><span class="l-path">the only references to them</span><span class="l-byz">Byzantine</span></div>
+      <figcaption class="caption">Witness <code>Ucens</code> (LeanDagTest/Quality/Model.lean): slot 1 commits block 13. Each round of its history has the correct creators v1, v2, exactly <code>|Correct| − f = 3 − 1</code>; only validator 3's own blocks reference validator 3, so none of them is in the history.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -237,7 +268,7 @@
     </div>
     <figure class="dag">
       <script type="application/json">{
-        "w": "Udouble", "byz": [0, 1, 2, 3], "edges": "none",
+        "w": "Udouble", "byz": [0, 1, 2, 3], "edges": "none", "size": "l",
         "marks": [
           {"ids": [41], "cls": "anchor"},
           {"ids": [1, 13, 14, 15], "cls": "twin", "step": 2},
@@ -247,12 +278,13 @@
           {"from": [41], "to": [39, 40]}, {"from": [39], "to": [26, 27]}, {"from": [40], "to": [28, 29]},
           {"from": [26], "to": [1]}, {"from": [27], "to": [13]}, {"from": [28], "to": [14]}, {"from": [29], "to": [15]}
         ],
-        "badges": [
-          {"r": 0, "text": "4 blocks of v1", "kind": "note", "step": 2},
-          {"r": 2, "text": "e = 2 exposed: v1, v2", "kind": "note", "step": 2}
+        "badges": [{"r": 3, "text": "exposed: v1, v2", "kind": "skip", "at": 41, "step": 2}],
+        "brackets": [
+          {"ids": [1, 13, 14, 15], "text": "2^e = 4 chains", "kind": "bad", "step": 2},
+          {"ids": [27, 29], "text": "twins of v2", "kind": "bad", "step": 2}
         ]
       }</script>
-      <figcaption class="caption">Witness <code>Udouble</code> (LeanDagTest/DoS/Doubling.lean), <code>n = 13</code>, <code>f = 4</code>.</figcaption>
+      <figcaption class="caption">Witness <code>Udouble</code> (LeanDagTest/DoS/Doubling.lean), <code>n = 13</code>, <code>f = 4</code>, v0–v3 Byzantine. Arrows: paths from block 41 to v1's blocks 1, 13, 14, 15. The history of 41 exposes <code>e = 2</code> creators.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -277,7 +309,7 @@
       <script type="application/json">{
         "type": "lines", "xs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         "series": [
-          {"name": "store bound", "ys": [6, 18, 30, 42, 54, 66, 78, 90, 102, 114], "color": 0}
+          {"name": "store bound", "ys": [6, 18, 30, 42, 54, 66, 78, 90, 102, 114], "color": 0, "values": true}
         ],
         "ymax": 120, "yticks": [0, 30, 60, 90, 120],
         "xlabel": "round n", "ylabel": "blocks"
@@ -307,9 +339,9 @@
       <figure class="dag">
         <script type="application/json">{
           "w": "Uexcl",
-          "marks": [{"ids": [11], "cls": "leader"}],
-          "cut": {"r": 2, "step": 1},
-          "badges": [{"r": 3, "text": "commit", "kind": "commit"}]
+          "marks": [{"ids": [11], "cls": "leader"}, {"ids": [0, 1, 2, 3, 4, 5, 6, 7], "cls": "dim", "step": 1}],
+          "cut": {"r": 2, "step": 1, "text": "G"},
+          "badges": [{"r": 3, "text": "slot 1: commit", "kind": "commit", "at": 11}]
         }</script>
       </figure>
       <figure class="dag" data-step="2">
@@ -317,11 +349,12 @@
           "w": "UexclCut", "rounds": [-2, 3],
           "roundNames": {"-2": "", "-1": "", "0": "0 (was 2)", "1": "1 (was 3)", "2": "2 (was 4)", "3": "3 (was 5)"},
           "marks": [{"ids": [11], "cls": "leader"}],
-          "badges": [{"r": 1, "text": "commit", "kind": "commit"}]
+          "tags": [{"id": 8, "text": "no refs"}],
+          "badges": [{"r": 1, "text": "slot 0: commit", "kind": "commit", "at": 11}]
         }</script>
       </figure>
     </div>
-    <figcaption class="caption">Witness <code>Uexcl</code> (left) and <code>chop Uexcl 2</code> (right), LeanDagTest/GC/Chop.lean. With <code>G = 2</code> and <code>d = 1</code>, slot 1 of <code>Uexcl</code> is slot 0 of the cut; block 11 is committed in both.</figcaption>
+    <figcaption class="caption">Witness <code>Uexcl</code> (left) and <code>chop Uexcl 2</code> (right), LeanDagTest/GC/Chop.lean. Left: the horizon <code>G = 2</code>; the faded blocks are discarded. Right: rounds 2–5 renumbered 0–3, the round-0 blocks without references. With <code>d = 1</code>, slot 1 of <code>Uexcl</code> is slot 0 of the cut; block 11 is committed in both.</figcaption>
     <div class="uses"><b>Uses:</b> Banded, Agree, and Law 1 of the support. <b>Gives:</b> the same verdicts and liveness after the cut, and constant storage (next slide).</div>
   </div>
   <aside class="notes">
@@ -338,18 +371,77 @@
     <div class="text">
       <p>With the horizon at most <code>Λ</code> rounds below the current round, a correct validator keeps at most <code>C·(Λ + 1) + C·f + Λ·C·f·κ</code> blocks, whatever the round. Here <code>κ</code> bounds the number of new blocks that accepting one Byzantine block adds to the store. At <code>C = 3</code>, <code>f = 1</code>, <code>κ = 3</code>, <code>Λ = 5</code>: 66 blocks.</p>
     </div>
-    <figure>
-      <table class="compact">
-        <thead>
-          <tr><th>current round</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>store bound</th></tr>
-        </thead>
-        <tbody>
-          <tr data-step="1"><td><code>t = 5</code></td><td class="yes">■</td><td class="yes">■</td><td class="yes">■</td><td class="yes">■</td><td class="yes">■</td><td class="yes">■</td><td class="no">·</td><td class="no">·</td><td class="no">·</td><td class="no">·</td><td class="no">·</td><td class="no">·</td><td>66</td></tr>
-          <tr data-step="2"><td><code>t = 8</code></td><td class="no">·</td><td class="no">·</td><td class="no">·</td><td class="yes">■</td><td class="yes">■</td><td class="yes">■</td><td class="yes">■</td><td class="yes">■</td><td class="yes">■</td><td class="no">·</td><td class="no">·</td><td class="no">·</td><td>66</td></tr>
-          <tr data-step="3"><td><code>t = 11</code></td><td class="no">·</td><td class="no">·</td><td class="no">·</td><td class="no">·</td><td class="no">·</td><td class="no">·</td><td class="yes">■</td><td class="yes">■</td><td class="yes">■</td><td class="yes">■</td><td class="yes">■</td><td class="yes">■</td><td>66</td></tr>
-        </tbody>
-      </table>
-      <figcaption class="caption">Illustration of <code>card_retained_le</code> at <code>Λ = 5</code>, horizon <code>G = t − Λ</code>: ■ a retained round, · a discarded round. The window of <code>Λ + 1 = 6</code> rounds moves with <code>t</code>; the bound stays 66.</figcaption>
+    <figure class="diagram">
+      <script type="application/json">{
+        "w": 850,
+        "h": 220,
+        "nodes": [
+          {"id": "c5_0", "x": 90, "y": 40, "w": 44, "h": 30, "text": "G", "cls": "accent", "step": 1},
+          {"id": "c5_1", "x": 142, "y": 40, "w": 44, "h": 30, "text": "", "cls": "accent", "step": 1},
+          {"id": "c5_2", "x": 194, "y": 40, "w": 44, "h": 30, "text": "", "cls": "accent", "step": 1},
+          {"id": "c5_3", "x": 246, "y": 40, "w": 44, "h": 30, "text": "", "cls": "accent", "step": 1},
+          {"id": "c5_4", "x": 298, "y": 40, "w": 44, "h": 30, "text": "", "cls": "accent", "step": 1},
+          {"id": "c5_5", "x": 350, "y": 40, "w": 44, "h": 30, "text": "t", "cls": "accent", "step": 1},
+          {"id": "c5_6", "x": 402, "y": 40, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 1},
+          {"id": "c5_7", "x": 454, "y": 40, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 1},
+          {"id": "c5_8", "x": 506, "y": 40, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 1},
+          {"id": "c5_9", "x": 558, "y": 40, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 1},
+          {"id": "c5_10", "x": 610, "y": 40, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 1},
+          {"id": "c5_11", "x": 662, "y": 40, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 1},
+          {"id": "c8_0", "x": 90, "y": 100, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 2},
+          {"id": "c8_1", "x": 142, "y": 100, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 2},
+          {"id": "c8_2", "x": 194, "y": 100, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 2},
+          {"id": "c8_3", "x": 246, "y": 100, "w": 44, "h": 30, "text": "G", "cls": "accent", "step": 2},
+          {"id": "c8_4", "x": 298, "y": 100, "w": 44, "h": 30, "text": "", "cls": "accent", "step": 2},
+          {"id": "c8_5", "x": 350, "y": 100, "w": 44, "h": 30, "text": "", "cls": "accent", "step": 2},
+          {"id": "c8_6", "x": 402, "y": 100, "w": 44, "h": 30, "text": "", "cls": "accent", "step": 2},
+          {"id": "c8_7", "x": 454, "y": 100, "w": 44, "h": 30, "text": "", "cls": "accent", "step": 2},
+          {"id": "c8_8", "x": 506, "y": 100, "w": 44, "h": 30, "text": "t", "cls": "accent", "step": 2},
+          {"id": "c8_9", "x": 558, "y": 100, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 2},
+          {"id": "c8_10", "x": 610, "y": 100, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 2},
+          {"id": "c8_11", "x": 662, "y": 100, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 2},
+          {"id": "c11_0", "x": 90, "y": 160, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 3},
+          {"id": "c11_1", "x": 142, "y": 160, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 3},
+          {"id": "c11_2", "x": 194, "y": 160, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 3},
+          {"id": "c11_3", "x": 246, "y": 160, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 3},
+          {"id": "c11_4", "x": 298, "y": 160, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 3},
+          {"id": "c11_5", "x": 350, "y": 160, "w": 44, "h": 30, "text": "", "cls": "muted", "step": 3},
+          {"id": "c11_6", "x": 402, "y": 160, "w": 44, "h": 30, "text": "G", "cls": "accent", "step": 3},
+          {"id": "c11_7", "x": 454, "y": 160, "w": 44, "h": 30, "text": "", "cls": "accent", "step": 3},
+          {"id": "c11_8", "x": 506, "y": 160, "w": 44, "h": 30, "text": "", "cls": "accent", "step": 3},
+          {"id": "c11_9", "x": 558, "y": 160, "w": 44, "h": 30, "text": "", "cls": "accent", "step": 3},
+          {"id": "c11_10", "x": 610, "y": 160, "w": 44, "h": 30, "text": "", "cls": "accent", "step": 3},
+          {"id": "c11_11", "x": 662, "y": 160, "w": 44, "h": 30, "text": "t", "cls": "accent", "step": 3}
+        ],
+        "groups": [
+          {"x": 84, "y": 33, "w": 316, "h": 44, "cls": "accent", "step": 1},
+          {"x": 240, "y": 93, "w": 316, "h": 44, "cls": "accent", "step": 2},
+          {"x": 396, "y": 153, "w": 316, "h": 44, "cls": "accent", "step": 3}
+        ],
+        "texts": [
+          {"x": 0, "y": 14, "text": "round", "cls": "muted"},
+          {"x": 112, "y": 14, "text": "0", "cls": "muted", "anchor": "middle"},
+          {"x": 164, "y": 14, "text": "1", "cls": "muted", "anchor": "middle"},
+          {"x": 216, "y": 14, "text": "2", "cls": "muted", "anchor": "middle"},
+          {"x": 268, "y": 14, "text": "3", "cls": "muted", "anchor": "middle"},
+          {"x": 320, "y": 14, "text": "4", "cls": "muted", "anchor": "middle"},
+          {"x": 372, "y": 14, "text": "5", "cls": "muted", "anchor": "middle"},
+          {"x": 424, "y": 14, "text": "6", "cls": "muted", "anchor": "middle"},
+          {"x": 476, "y": 14, "text": "7", "cls": "muted", "anchor": "middle"},
+          {"x": 528, "y": 14, "text": "8", "cls": "muted", "anchor": "middle"},
+          {"x": 580, "y": 14, "text": "9", "cls": "muted", "anchor": "middle"},
+          {"x": 632, "y": 14, "text": "10", "cls": "muted", "anchor": "middle"},
+          {"x": 684, "y": 14, "text": "11", "cls": "muted", "anchor": "middle"},
+          {"x": 736, "y": 14, "text": "store bound", "cls": "muted"},
+          {"x": 0, "y": 55, "text": "t = 5", "step": 1},
+          {"x": 736, "y": 55, "text": "≤ 66 blocks", "cls": "ok", "step": 1},
+          {"x": 0, "y": 115, "text": "t = 8", "step": 2},
+          {"x": 736, "y": 115, "text": "≤ 66 blocks", "cls": "ok", "step": 2},
+          {"x": 0, "y": 175, "text": "t = 11", "step": 3},
+          {"x": 736, "y": 175, "text": "≤ 66 blocks", "cls": "ok", "step": 3}
+        ]
+      }</script>
+      <figcaption class="caption">Illustration of <code>card_retained_le</code> at <code>Λ = 5</code>: at current round <code>t</code> the horizon is <code>G = t − Λ</code>, and the shaded window of <code>Λ + 1 = 6</code> rounds is retained. The window moves with <code>t</code>; the bound stays 66.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -371,20 +463,21 @@
     <figure class="dag">
       <script type="application/json">{
         "w": "Uexcl",
-        "cut": {"r": 1},
+        "cut": {"r": 1, "text": "G"},
         "marks": [
           {"ids": [14, 15, 16], "cls": "anchor", "step": 1},
           {"ids": [5, 6, 7], "cls": "evidence", "step": 2},
           {"ids": [8, 9, 10], "cls": "fill", "step": 3}
         ],
+        "strong": [{"from": [14, 15, 16, 11, 12, 13, 8, 9, 10], "step": 2}],
         "hulls": [{"ids": [5, 6, 7], "step": 2}],
         "badges": [
           {"r": 1, "text": "base {5, 6, 7}", "kind": "note", "step": 2},
-          {"r": 4, "text": "attesters", "kind": "note", "step": 1}
+          {"r": 4, "text": "3 creators ≥ f + 1 = 2", "kind": "note", "step": 1}
         ]
       }</script>
       <div class="legend"><span class="l-anchor">round-4 attesters</span><span class="l-evidence">base</span><span class="l-fill">copied from a peer</span></div>
-      <figcaption class="caption">Witness <code>Uexcl</code> (LeanDagTest/GC/Bootstrap.lean), <code>n = 4</code>: the round-1 layer, attested from round 4. The joiner's blocks are <code>{5, 6, 7, 8, 9, 10}</code>.</figcaption>
+      <figcaption class="caption">Witness <code>Uexcl</code> (LeanDagTest/GC/Bootstrap.lean), <code>n = 4</code>, <code>f = 1</code>, <code>G = 1</code>, <code>t = 4</code>. The arrows reach every base block from all three attesters. The joiner's blocks are <code>{5, 6, 7, 8, 9, 10}</code>.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -397,6 +490,34 @@
 <section class="slide" data-part-label="Mechanisms · Garbage collection">
   <h2>Choosing the lag</h2>
   <div class="body stack">
+    <figure class="diagram">
+      <script type="application/json">{
+        "w": 900,
+        "h": 166,
+        "size": "xs",
+        "nodes": [
+          {"id": "bar0", "x": 200, "y": 32, "w": 540, "h": 32, "text": "", "cls": "accent"},
+          {"id": "bar1", "x": 200, "y": 76, "w": 448, "h": 32, "text": "", "cls": "accent"},
+          {"id": "bar2", "x": 200, "y": 120, "w": 356, "h": 32, "text": "", "cls": "accent"}
+        ],
+        "texts": [
+          {"x": 240, "y": 12, "text": "…", "cls": "muted", "anchor": "middle"},
+          {"x": 332, "y": 12, "text": "t − 4", "cls": "muted", "anchor": "middle"},
+          {"x": 424, "y": 12, "text": "t − 3", "cls": "muted", "anchor": "middle"},
+          {"x": 516, "y": 12, "text": "t − 2", "cls": "muted", "anchor": "middle"},
+          {"x": 608, "y": 12, "text": "t − 1", "cls": "muted", "anchor": "middle"},
+          {"x": 700, "y": 12, "text": "t", "cls": "muted", "anchor": "middle"},
+          {"x": 0, "y": 12, "text": "round", "cls": "muted"},
+          {"x": 0, "y": 48, "text": "G anywhere"},
+          {"x": 760, "y": 48, "text": "safety", "cls": "ok"},
+          {"x": 0, "y": 92, "text": "G ≤ t − 1"},
+          {"x": 760, "y": 92, "text": "peers' blocks retained", "cls": "ok"},
+          {"x": 0, "y": 136, "text": "G ≤ t − 2"},
+          {"x": 760, "y": 136, "text": "attested base complete", "cls": "ok"}
+        ]
+      }</script>
+      <figcaption class="caption">Where the horizon <code>G</code> may lie, relative to the current round <code>t</code>, for each guarantee of the table.</figcaption>
+    </figure>
     <figure>
       <table>
         <thead><tr><th>Horizon</th><th>Guarantee</th></tr></thead>
@@ -432,19 +553,22 @@
     <div class="body">
       <figure class="dag">
         <script type="application/json">{
-          "w": "Ucrash4", "rounds": [-1, 4], "roundNames": {"-1": ""}, "crashed": {"3": 0},
-          "marks": [{"ids": [3], "cls": "anchor"}]
+          "w": "Ucrash4", "crashed": {"3": 0}, "size": "s",
+          "marks": [{"ids": [3], "cls": "anchor"}],
+          "tags": [{"id": 3, "text": "B₁", "kind": "ok"}]
         }</script>
       </figure>
       <figure class="dag" data-step="2">
         <script type="application/json">{
-          "w": "UcrashFill", "rounds": [-1, 4], "roundNames": {"-1": ""},
-          "marks": [{"ids": [3], "cls": "anchor"}, {"ids": [21, 22, 23, 24], "cls": "fill"}, {"ids": [5, 9, 13], "cls": "evidence"}],
-          "strong": [{"from": [21, 22, 23, 24]}]
+          "w": "UcrashFill", "edges": "none", "size": "s",
+          "marks": [{"ids": [3], "cls": "anchor"}, {"ids": [21, 22, 23, 24], "cls": "fill"}, {"ids": [5, 9, 13, 17], "cls": "evidence"}],
+          "strong": [{"from": [21, 22, 23, 24], "to": [0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14]}],
+          "paths": [{"ids": [24, 23, 22, 21, 3]}],
+          "tags": [{"id": 3, "text": "B₁", "kind": "ok"}, {"id": 5, "text": "donor", "kind": "ok"}]
         }</script>
       </figure>
     </div>
-    <figcaption class="caption">Witness <code>Ucrash 4</code> (left) and its fill by <code>ucrashMsg 4 4</code> (right), LeanDagTest/SafeSkip/Model.lean: <code>N = 4</code>, <code>r = 4</code>, <code>B₁</code> = block 3 (green outline), donor <code>v₂ = v1</code> (green), filled blocks 21–24 (hatched). Block 21 references <code>{3, 0, 1, 2}</code>.</figcaption>
+    <figcaption class="caption">Witness <code>Ucrash 4</code> and its fill by <code>ucrashMsg 4 4</code> (LeanDagTest/SafeSkip/Model.lean): <code>v₁ = v3</code>, donor line 5, 9, 13, 17. A filled block (dashed) copies the donor's references (dark) and adds its own previous block (green): 21 references <code>{3, 0, 1, 2}</code>.</figcaption>
     <div class="uses"><b>Uses:</b> Banded (through Persist), Agree, SkipsUnsupported, Law 1. <b>Gives:</b> <code>v₁</code> producing again, with every earlier verdict unchanged.</div>
   </div>
   <aside class="notes">
@@ -470,11 +594,13 @@
       <script type="application/json">{
         "w": "UcrashFill",
         "marks": [{"ids": [3], "cls": "anchor"}, {"ids": [21, 22, 23, 24], "cls": "fill"}],
+        "paths": [{"ids": [24, 23, 22, 21, 3]}],
+        "tags": [{"id": 3, "text": "B₁", "kind": "ok"}],
         "hulls": [{"ids": [21, 22, 23, 24], "step": 2}],
         "badges": [{"r": 1, "text": "1: old blocks unchanged", "kind": "note", "step": 1, "row": 0},
-                   {"r": 3, "text": "2: v3 at rounds 1–4", "kind": "note", "step": 2, "row": 1}]
+                   {"r": 3, "text": "2: v3 at rounds 1–4", "kind": "note", "step": 2, "row": 1, "at": 23}]
       }</script>
-      <div class="legend"><span class="l-anchor">block 3</span><span class="l-fill">filled blocks</span></div>
+      <div class="legend"><span class="l-anchor"><code>B₁</code> = block 3</span><span class="l-fill">filled blocks</span><span class="l-path">self-references</span></div>
       <figcaption class="caption">The fill of <code>Ucrash 4</code> by <code>ucrashMsg 4 4</code> (LeanDagTest/SafeSkip/Model.lean), as on slide 80.</figcaption>
     </figure>
   </div>
@@ -489,7 +615,7 @@
 <!-- Slide 82 -->
 <section class="slide" data-part-label="Mechanisms · Crash recovery">
   <h2>Jumping rounds</h2>
-  <div class="body">
+  <div class="body stack">
     <div class="text">
       <ul>
         <li>A validator's own blocks form a chain, so the donor's whole line is fixed by its top block.</li>
@@ -497,17 +623,52 @@
         <li>A receiver that holds <code>B₂</code> holds the donor's whole line. After the one message, <code>v₁</code> has a block at every round up to <code>B₂</code>'s round, so it can produce at the next.</li>
       </ul>
     </div>
-    <figure>
-      <div class="flow vertical">
-        <div class="box accent">message <code>(v₁, B₁, v₂, B₂, fresh)</code></div>
-        <div class="arrow">↓ <span class="small">denotes</span></div>
-        <div class="box">line of <code>v₂</code>: <code>B₂</code> → its own previous block → … → the block one round above <code>B₁</code></div>
-        <div class="arrow">↓ <span class="small">one filled block per block of the line</span></div>
-        <div class="box">filled blocks of <code>v₁</code>, from the round above <code>B₁</code> to <code>B₂</code>'s round</div>
-        <div class="arrow">↓</div>
-        <div class="box"><code>v₁</code> produces at the round after <code>B₂</code>'s</div>
-      </div>
-      <figcaption class="caption">Illustration of <code>JumpMsg.denote</code> (LeanDag/SafeSkip/Jump.lean).</figcaption>
+    <figure class="diagram">
+      <script type="application/json">{
+        "w": 1000,
+        "h": 245,
+        "nodes": [
+          {"id": "msg", "x": 632, "y": 0, "w": 300, "h": 40, "text": "message (v₁, B₁, v₂, B₂, fresh)", "cls": "accent"},
+          {"id": "d5", "x": 300, "y": 80, "w": 64, "h": 40, "text": "5"},
+          {"id": "d9", "x": 450, "y": 80, "w": 64, "h": 40, "text": "9"},
+          {"id": "d13", "x": 600, "y": 80, "w": 64, "h": 40, "text": "13"},
+          {"id": "d17", "x": 750, "y": 80, "w": 64, "h": 40, "text": "17", "sub": "B₂", "cls": "ok"},
+          {"id": "b3", "x": 150, "y": 170, "w": 64, "h": 40, "text": "3", "sub": "B₁", "cls": "ok"},
+          {"id": "f21", "x": 300, "y": 170, "w": 64, "h": 40, "text": "21", "cls": "dashed"},
+          {"id": "f22", "x": 450, "y": 170, "w": 64, "h": 40, "text": "22", "cls": "dashed"},
+          {"id": "f23", "x": 600, "y": 170, "w": 64, "h": 40, "text": "23", "cls": "dashed"},
+          {"id": "f24", "x": 750, "y": 170, "w": 64, "h": 40, "text": "24", "cls": "dashed"},
+          {"id": "next", "x": 900, "y": 170, "w": 96, "h": 40, "text": "next block", "cls": "muted dashed"}
+        ],
+        "edges": [
+          {"from": "msg", "to": "d17", "label": "B₂", "dx": 18, "dy": 2, "cls": "accent"},
+          {"from": "d17", "to": "d13", "label": "own previous"},
+          {"from": "d13", "to": "d9"},
+          {"from": "d9", "to": "d5"},
+          {"from": "d5", "to": "f21", "label": "fill", "dx": 18, "dy": 4, "cls": "accent dashed"},
+          {"from": "d9", "to": "f22", "cls": "accent dashed"},
+          {"from": "d13", "to": "f23", "cls": "accent dashed"},
+          {"from": "d17", "to": "f24", "cls": "accent dashed"},
+          {"from": "f24", "to": "f23", "cls": "ok"},
+          {"from": "f23", "to": "f22", "cls": "ok"},
+          {"from": "f22", "to": "f21", "cls": "ok"},
+          {"from": "f21", "to": "b3", "label": "own previous", "cls": "ok"},
+          {"from": "next", "to": "f24", "cls": "ok dashed"}
+        ],
+        "texts": [
+          {"x": 0, "y": 100, "text": "donor v₂ = v1"},
+          {"x": 0, "y": 190, "text": "v₁ = v3"},
+          {"x": 0, "y": 232, "text": "round", "cls": "muted"},
+          {"x": 182, "y": 232, "text": "0", "cls": "muted", "anchor": "middle"},
+          {"x": 332, "y": 232, "text": "1", "cls": "muted", "anchor": "middle"},
+          {"x": 482, "y": 232, "text": "2", "cls": "muted", "anchor": "middle"},
+          {"x": 632, "y": 232, "text": "3", "cls": "muted", "anchor": "middle"},
+          {"x": 782, "y": 232, "text": "4", "cls": "muted", "anchor": "middle"},
+          {"x": 948, "y": 232, "text": "5", "cls": "muted", "anchor": "middle"}
+        ],
+        "size": "s"
+      }</script>
+      <figcaption class="caption"><code>JumpMsg.denote</code> (LeanDag/SafeSkip/Jump.lean) on <code>ucrashJump 4 4</code> (LeanDagTest/SafeSkip/Model.lean): <code>B₂ = 17</code> fixes the line 17, 13, 9, 5; the fill 21–24 is that of slide 80.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -528,18 +689,54 @@
         <li>If the donor line is taken from blocks every receiver already holds, nothing else needs to be sent.</li>
       </ul>
     </div>
-    <figure>
-      <table class="compact">
-        <thead>
-          <tr><th>round</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>retained (<code>G = 5</code>)</td><td class="no">·</td><td class="no">·</td><td class="no">·</td><td class="no">·</td><td class="no">·</td><td class="yes">■</td><td class="yes">■</td><td class="yes">■</td><td class="yes">■</td><td class="yes">■</td><td class="yes">■ <code>r</code></td></tr>
-          <tr data-step="1"><td><code>B₁</code> at round 5</td><td></td><td></td><td></td><td></td><td></td><td class="yes">kept</td><td colspan="5" class="muted">outage of 5 rounds: one message</td></tr>
-          <tr data-step="2"><td><code>B₁</code> at round 4</td><td></td><td></td><td></td><td></td><td class="no">✗</td><td colspan="6" class="muted">outage of 6 rounds: <code>B₁</code> discarded</td></tr>
-        </tbody>
-      </table>
-      <figcaption class="caption">Illustration of <code>outage_bounded_by_lag</code>: <code>r = 10</code>, <code>Λ = 5</code>, <code>G = 5</code>.</figcaption>
+    <figure class="diagram">
+      <script type="application/json">{
+        "w": 820,
+        "h": 222,
+        "size": "s",
+        "nodes": [
+          {"id": "s0", "x": 150, "y": 50, "w": 48, "h": 30, "text": "", "cls": "muted"},
+          {"id": "s1", "x": 210, "y": 50, "w": 48, "h": 30, "text": "", "cls": "muted"},
+          {"id": "s2", "x": 270, "y": 50, "w": 48, "h": 30, "text": "", "cls": "muted"},
+          {"id": "s3", "x": 330, "y": 50, "w": 48, "h": 30, "text": "", "cls": "muted"},
+          {"id": "s4", "x": 390, "y": 50, "w": 48, "h": 30, "text": "", "cls": "muted"},
+          {"id": "s5", "x": 450, "y": 50, "w": 48, "h": 30, "text": "G", "cls": "accent"},
+          {"id": "s6", "x": 510, "y": 50, "w": 48, "h": 30, "text": "", "cls": "accent"},
+          {"id": "s7", "x": 570, "y": 50, "w": 48, "h": 30, "text": "", "cls": "accent"},
+          {"id": "s8", "x": 630, "y": 50, "w": 48, "h": 30, "text": "", "cls": "accent"},
+          {"id": "s9", "x": 690, "y": 50, "w": 48, "h": 30, "text": "", "cls": "accent"},
+          {"id": "s10", "x": 750, "y": 50, "w": 48, "h": 30, "text": "r", "cls": "accent"},
+          {"id": "a5", "x": 450, "y": 110, "w": 48, "h": 30, "text": "B₁", "cls": "ok", "step": 1},
+          {"id": "a10", "x": 750, "y": 110, "w": 48, "h": 30, "text": "v₁", "cls": "accent", "step": 1},
+          {"id": "b4", "x": 390, "y": 170, "w": 48, "h": 30, "text": "B₁ ✗", "cls": "bad", "step": 2},
+          {"id": "b10", "x": 750, "y": 170, "w": 48, "h": 30, "text": "v₁", "cls": "accent", "step": 2}
+        ],
+        "edges": [
+          {"from": "a10", "to": "a5", "label": "outage of 5 rounds: one message", "cls": "ok", "step": 1},
+          {"from": "b10", "to": "b4", "label": "outage of 6 rounds: B₁ discarded", "cls": "bad dashed", "step": 2}
+        ],
+        "groups": [
+          {"x": 442, "y": 26, "w": 364, "h": 190, "cls": "accent", "label": "retained"}
+        ],
+        "texts": [
+          {"x": 0, "y": 12, "text": "round", "cls": "muted"},
+          {"x": 174, "y": 12, "text": "0", "cls": "muted", "anchor": "middle"},
+          {"x": 234, "y": 12, "text": "1", "cls": "muted", "anchor": "middle"},
+          {"x": 294, "y": 12, "text": "2", "cls": "muted", "anchor": "middle"},
+          {"x": 354, "y": 12, "text": "3", "cls": "muted", "anchor": "middle"},
+          {"x": 414, "y": 12, "text": "4", "cls": "muted", "anchor": "middle"},
+          {"x": 474, "y": 12, "text": "5", "cls": "muted", "anchor": "middle"},
+          {"x": 534, "y": 12, "text": "6", "cls": "muted", "anchor": "middle"},
+          {"x": 594, "y": 12, "text": "7", "cls": "muted", "anchor": "middle"},
+          {"x": 654, "y": 12, "text": "8", "cls": "muted", "anchor": "middle"},
+          {"x": 714, "y": 12, "text": "9", "cls": "muted", "anchor": "middle"},
+          {"x": 774, "y": 12, "text": "10", "cls": "muted", "anchor": "middle"},
+          {"x": 0, "y": 65, "text": "store, G = 5"},
+          {"x": 0, "y": 125, "text": "B₁ at round 5", "step": 1},
+          {"x": 0, "y": 185, "text": "B₁ at round 4", "step": 2}
+        ]
+      }</script>
+      <figcaption class="caption">Illustration of <code>outage_bounded_by_lag</code>: <code>r = 10</code>, <code>Λ = 5</code>, <code>G = 5</code>. The shaded rounds are retained; a fill message must name a retained <code>B₁</code>.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -560,30 +757,17 @@
         <li>While a quorum still produces blocks, at most <code>f</code> validators can be in this state at once.</li>
       </ul>
     </div>
-    <div class="body">
-      <figure class="dag" data-step="1">
-        <script type="application/json">{
-          "w": "Ucut", "rounds": [-1, 2], "roundNames": {"-1": "", "2": ""}
-        }</script>
-        <figcaption class="caption">(1) <code>Ucut</code>: no block of v3</figcaption>
-      </figure>
-      <figure class="dag" data-step="2">
-        <script type="application/json">{
-          "w": "Uregen", "rounds": [-1, 2], "roundNames": {"-1": "", "2": ""},
-          "marks": [{"ids": [999], "cls": "anchor"}]
-        }</script>
-        <figcaption class="caption">(2) <code>Uregen</code>: genesis block 999</figcaption>
-      </figure>
-      <figure class="dag" data-step="3">
-        <script type="application/json">{
-          "w": "Urecover", "rounds": [-1, 2], "roundNames": {"-1": "", "2": ""},
-          "marks": [{"ids": [999], "cls": "anchor"}, {"ids": [1001], "cls": "fill"}, {"ids": [5, 9], "cls": "evidence"}],
-          "strong": [{"from": [1001]}]
-        }</script>
-        <figcaption class="caption">(3) <code>urecover</code>: donor 1 (5, 9), fill to round 1</figcaption>
-      </figure>
-    </div>
-    <figcaption class="caption">Witness <code>Ucrash 2</code> cut at round 1 (LeanDagTest/Integration/Model.lean), <code>n = 4</code>: validator 3 crashed after its round-0 block.</figcaption>
+    <figure class="dag" data-step="1">
+      <script type="application/json">{
+        "w": "Urecover", "size": "s",
+        "appear": [{"ids": [999], "step": 2}, {"ids": [1001], "step": 3}],
+        "marks": [{"ids": [999], "cls": "anchor"}, {"ids": [1001], "cls": "fill"}, {"ids": [5, 9], "cls": "evidence", "step": 3}],
+        "strong": [{"from": [9], "step": 3}, {"from": [1001], "to": [4, 5, 6], "step": 3}],
+        "paths": [{"ids": [1001, 999], "step": 3}],
+        "tags": [{"id": 999, "text": "genesis", "kind": "ok", "step": 2}, {"id": 9, "text": "donor", "kind": "ok", "step": 3}]
+      }</script>
+      <figcaption class="caption"><code>Ucrash 2</code> cut at round 1 (LeanDagTest/Integration/Model.lean); v3 crashed after round 0. (1) <code>Ucut</code>: no block of v3. (2) <code>Uregen</code>: genesis block 999. (3) <code>urecover</code>: 1001 copies the references of donor block 9 and references 999.</figcaption>
+    </figure>
     <div class="uses"><b>Uses:</b> Banded, Agree, Law 1, and the attested base (slide 78). <b>Gives:</b> a validator back in production after any outage.</div>
   </div>
   <aside class="notes">
@@ -609,11 +793,13 @@
       <script type="application/json">{
         "w": "Ufill", "byz": [0],
         "marks": [{"ids": [10], "cls": "leader"}, {"ids": [7], "cls": "anchor"}, {"ids": [102, 103], "cls": "fill"}],
-        "strong": [{"from": [102, 103]}, {"from": [16, 17, 18]}],
+        "strong": [{"from": [16, 17, 18]}],
+        "paths": [{"ids": [103, 102, 7]}],
         "claims": [{"from": 12, "to": 5}, {"from": 13, "to": 5}, {"from": 14, "to": 5}, {"from": 17, "to": 10}, {"from": 18, "to": 10}],
-        "badges": [{"r": 2, "text": "commit", "kind": "commit"}, {"r": 3, "text": "skip", "kind": "skip"}]
+        "tags": [{"id": 7, "text": "B₁", "kind": "ok"}],
+        "badges": [{"r": 2, "text": "slot 2: commit", "kind": "commit", "at": 10}, {"r": 3, "text": "slot 3: skip", "kind": "skip", "at": 103, "row": 1}]
       }</script>
-      <div class="legend"><span class="l-leader">leader block 10</span><span class="l-anchor"><code>B₁</code> = block 7</span><span class="l-fill">filled blocks 102, 103</span><span>dotted: claim</span></div>
+      <div class="legend"><span class="l-leader">leader block 10</span><span class="l-fill">filled blocks 102, 103</span><span class="l-path">their only references</span><span class="l-claim">claim</span></div>
       <figcaption class="caption">Witness <code>Ufill</code>, the chain fill of <code>Ucr</code> (LeanDagTest/Bluestreak/Recovery.lean). Slot <code>k</code> is at round <code>k</code>: slot 2 commits block 10, slot 3 is skipped. Blocks 16, 17, 18 at round 4 do not reference 103.</figcaption>
     </figure>
   </div>

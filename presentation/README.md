@@ -67,7 +67,14 @@ content slides, as the outline does; part dividers are not numbered.
 
 ## Figures
 
-A `figure.dag` draws the blocks of one witness; its JSON fields are listed at
-the top of `dag.js`. Every block id, round and reference comes from
-`witnesses.js`, so a figure can show only what the witness contains. A
-`figure.chart` draws a line or bar chart from numbers given in its spec.
+Three kinds of figure, each specified in JSON; the fields are listed at the
+top of `dag.js`.
+
+- `figure.dag` draws the blocks of one witness. Every block id, round and
+  reference comes from `witnesses.js`, so a figure can show only what the
+  witness contains. Counts are drawn as brackets beside the counted blocks,
+  roles as tags, verdicts as badges connected to their slot.
+- `figure.chart` draws a line or bar chart from numbers in the spec, with
+  reference lines for thresholds.
+- `figure.diagram` draws boxes and labelled arrows on a grid, for mechanisms
+  that are not a DAG (flows, layers, state machines).

@@ -266,51 +266,130 @@ html, body {
 /* ---- DAG figures (SVG drawn by dag.js) ---- */
 
 svg.dag { width: 100%; height: auto; max-height: 520px; overflow: visible; font-family: var(--font); }
-svg.dag.size-xs, svg.chart.size-xs { max-height: 170px; }
-svg.dag.size-s, svg.chart.size-s { max-height: 250px; }
-svg.dag.size-m, svg.chart.size-m { max-height: 350px; }
-svg.dag.size-l, svg.chart.size-l { max-height: 460px; }
-svg.dag .row-label { font-size: 16px; fill: var(--muted); }
-svg.dag .round-label { font-size: 15px; fill: var(--muted); }
+svg.dag.size-xs, svg.chart.size-xs, svg.diagram.size-xs { max-height: 170px; }
+svg.dag.size-s, svg.chart.size-s, svg.diagram.size-s { max-height: 250px; }
+svg.dag.size-m, svg.chart.size-m, svg.diagram.size-m { max-height: 350px; }
+svg.dag.size-ml, svg.chart.size-ml, svg.diagram.size-ml { max-height: 400px; }
+svg.dag.size-l, svg.chart.size-l, svg.diagram.size-l { max-height: 460px; }
+
+svg.dag .round-band { fill: #f6f7f9; }
+svg.dag .round-label { font-size: 14px; fill: var(--muted); letter-spacing: 0.02em; }
+svg.dag .row-label { font-size: 16px; font-weight: 600; fill: var(--fg); }
+svg.dag .row-tag { font-size: 11px; letter-spacing: 0.03em; }
+svg.dag .row-tag.byz { fill: var(--blame); }
+svg.dag .row-tag.crash { fill: var(--muted); }
 svg.dag .row-byz { fill: var(--byz-row); }
-svg.dag .crash-mark { stroke: var(--crash); stroke-width: 2.5; }
-svg.dag .edge { stroke: var(--edge); stroke-width: 1.2; fill: none; }
-svg.dag .edge.strong { stroke: var(--edge-strong); stroke-width: 2; }
+svg.dag .crash-mark line { stroke: var(--crash); stroke-width: 2.5; stroke-linecap: round; }
+svg.dag .hull { fill: var(--accent-soft); stroke: #c9dcef; stroke-width: 1; }
+
+svg.dag .edge { stroke: var(--edge); stroke-width: 1.1; fill: none; }
+svg.dag .edge.strong { stroke: var(--edge-strong); stroke-width: 1.8; }
 svg.dag .edge.path { stroke: var(--anchor); stroke-width: 3; }
-svg.dag .edge.claim { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 2 4; }
+svg.dag .edge.claim { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 2 4; stroke-linecap: round; }
+svg .arrowhead.strong, svg .arrowhead.edge { fill: var(--edge-strong); }
+svg .arrowhead.path, svg .arrowhead.ok { fill: var(--anchor); }
+svg .arrowhead.claim, svg .arrowhead.accent { fill: var(--accent); }
+svg .arrowhead.bad { fill: var(--blame); }
+
 svg.dag .block rect { fill: var(--block); stroke: var(--block-stroke); stroke-width: 1.3; }
-svg.dag .block text { font-size: 15px; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+svg.dag .block text { font-size: 15px; fill: var(--muted); text-anchor: middle; dominant-baseline: central; font-variant-numeric: tabular-nums; }
 svg.dag .block.twin rect { stroke: var(--blame); stroke-width: 2; }
 svg.dag .block.leader rect { fill: var(--leader); stroke: #b8860b; }
+svg.dag .block.leader text { fill: #4a3500; font-weight: 600; }
 svg.dag .block.vote rect { stroke: var(--vote); stroke-width: 3; }
+svg.dag .block.vote text { fill: var(--vote); font-weight: 600; }
 svg.dag .block.cert rect { fill: var(--cert); stroke: var(--vote); }
+svg.dag .block.cert text { fill: #0e2f4d; font-weight: 600; }
 svg.dag .block.blame rect { stroke: var(--blame); stroke-width: 2.4; stroke-dasharray: 4 3; }
 svg.dag .block.anchor rect { stroke: var(--anchor); stroke-width: 3.5; }
-svg.dag .block.fill rect { fill: var(--fill); stroke-dasharray: 3 2; }
+svg.dag .block.fill rect { fill: var(--fill); stroke: #8b7fb8; stroke-dasharray: 3 2; }
 svg.dag .block.dim { opacity: 0.35; }
 svg.dag .block.evidence rect { fill: #d6ecdf; stroke: var(--anchor); }
-svg.dag .badge rect { rx: 6; }
-svg.dag .badge text { font-size: 14px; font-weight: 600; fill: #fff; text-anchor: middle; dominant-baseline: central; }
+
+svg.dag .tag rect { fill: var(--fg); }
+svg.dag .tag text { font-size: 12.5px; font-weight: 600; fill: #fff; }
+svg.dag .tag.ok rect { fill: var(--anchor); }
+svg.dag .tag.bad rect { fill: var(--blame); }
+svg.dag .tag.accent rect { fill: var(--accent); }
+
+svg.dag .bracket path { fill: none; stroke: var(--fg); stroke-width: 1.5; }
+svg.dag .bracket rect { fill: #fff; stroke: var(--rule); }
+svg.dag .bracket text { font-size: 13.5px; font-weight: 600; fill: var(--fg); }
+svg.dag .bracket.ok path { stroke: var(--anchor); }
+svg.dag .bracket.ok text { fill: var(--anchor); }
+svg.dag .bracket.bad path { stroke: var(--blame); }
+svg.dag .bracket.bad text { fill: var(--blame); }
+svg.dag .bracket.accent path { stroke: var(--vote); }
+svg.dag .bracket.accent text { fill: var(--vote); }
+
+svg.dag .cut-line { stroke: var(--blame); stroke-width: 2; stroke-dasharray: 6 4; }
+svg.dag .cut-label { font-size: 12px; fill: var(--blame); }
+svg.dag .badge rect { stroke: none; }
+svg.dag .badge text { font-size: 13.5px; font-weight: 600; fill: #fff; text-anchor: middle; }
 svg.dag .badge.commit rect { fill: var(--commit); }
 svg.dag .badge.skip rect { fill: var(--skip); }
 svg.dag .badge.undecided rect { fill: var(--undecided); }
 svg.dag .badge.note rect { fill: var(--accent); }
-svg.dag .cut-line { stroke: var(--blame); stroke-width: 2; stroke-dasharray: 6 4; }
+svg.dag .badge-link { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 3; }
 svg.dag .band { fill: var(--accent-soft); }
-svg.dag .hull { fill: var(--accent-soft); opacity: 0.8; }
+
+/* ---- Charts ---- */
 
 svg.chart { width: 100%; height: auto; max-height: 480px; font-family: var(--font); }
-svg.chart .axis { stroke: var(--muted); stroke-width: 1; }
+svg.chart .axis { stroke: var(--fg); stroke-width: 1.2; }
 svg.chart .grid { stroke: var(--rule); stroke-width: 1; }
-svg.chart .tick { font-size: 17px; fill: var(--muted); }
-svg.chart .series { fill: none; stroke-width: 2.5; }
+svg.chart .tick { font-size: 15px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+svg.chart .axis-title { font-size: 15px; fill: var(--fg); font-weight: 600; }
+svg.chart .series { fill: none; stroke-width: 2.6; stroke-linejoin: round; }
 svg.chart .s0 { stroke: var(--accent); fill: var(--accent); }
 svg.chart .s1 { stroke: var(--anchor); fill: var(--anchor); }
-svg.chart .s2 { stroke: var(--leader); fill: var(--leader); }
+svg.chart .s2 { stroke: #c28a00; fill: #c28a00; }
 svg.chart .s3 { stroke: var(--blame); fill: var(--blame); }
-svg.chart .label { font-size: 18px; fill: var(--fg); }
+svg.chart .label { font-size: 16px; font-weight: 600; }
+svg.chart .value { font-size: 13px; fill: var(--fg); font-variant-numeric: tabular-nums; }
+svg.chart .hline line { stroke: var(--blame); stroke-width: 1.5; stroke-dasharray: 6 4; }
+svg.chart .hline text { font-size: 14px; fill: var(--blame); }
 svg.chart .bar { fill: var(--accent); }
-svg.chart .bar.alt { fill: var(--faint); }
+svg.chart .bar.alt { fill: #c3c9d3; }
+
+/* ---- Diagrams (boxes and labelled arrows) ---- */
+
+svg.diagram { width: 100%; height: auto; max-height: 500px; font-family: var(--font); overflow: visible; }
+svg.diagram .node rect { fill: var(--block); stroke: var(--block-stroke); stroke-width: 1.4; }
+svg.diagram .node-text { font-size: 16px; fill: var(--fg); }
+svg.diagram .node-sub { font-size: 13px; fill: var(--muted); }
+svg.diagram .node.accent rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.8; }
+svg.diagram .node.accent .node-text { fill: #133f66; font-weight: 600; }
+svg.diagram .node.leader rect { fill: var(--leader); stroke: #b8860b; }
+svg.diagram .node.leader .node-text { font-weight: 600; fill: #4a3500; }
+svg.diagram .node.muted rect { fill: #f3f4f6; stroke: var(--faint); }
+svg.diagram .node.muted .node-text { fill: var(--muted); }
+svg.diagram .node.dashed rect { stroke-dasharray: 5 4; }
+svg.diagram .node.ok rect { fill: #e3f2ea; stroke: var(--anchor); stroke-width: 1.8; }
+svg.diagram .node.bad rect { fill: #fbe9ea; stroke: var(--blame); stroke-width: 1.8; }
+svg.diagram .node.plain rect { fill: none; stroke: none; }
+svg.diagram .link path { fill: none; stroke: var(--edge-strong); stroke-width: 1.6; }
+svg.diagram .link.dashed path { stroke-dasharray: 5 4; }
+svg.diagram .link.accent path { stroke: var(--accent); stroke-width: 2.2; }
+svg.diagram .link.ok path { stroke: var(--anchor); stroke-width: 2.2; }
+svg.diagram .link.bad path { stroke: var(--blame); stroke-width: 2.2; }
+svg.diagram .link-label { font-size: 13px; fill: var(--muted); stroke: var(--slide-bg); stroke-width: 5px; stroke-linejoin: round; font-style: italic; }
+svg.diagram .rule line { stroke: var(--muted); stroke-width: 1.4; }
+svg.diagram .rule.dashed line { stroke-dasharray: 6 4; }
+svg.diagram .rule.bad line { stroke: var(--blame); stroke-dasharray: 6 4; }
+svg.diagram .rule.ok line { stroke: var(--anchor); }
+svg.diagram .rule.accent line { stroke: var(--accent); }
+svg.diagram .rule-label { font-size: 13px; fill: var(--muted); }
+svg.diagram .rule.bad .rule-label { fill: var(--blame); }
+svg.diagram .group rect { fill: #f6f7f9; stroke: var(--rule); }
+svg.diagram .group.accent rect { fill: var(--accent-soft); stroke: #c9dcef; }
+svg.diagram .group.bad rect { fill: var(--byz-row); stroke: #f0c8cb; }
+svg.diagram .group-label { font-size: 12.5px; fill: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+svg.diagram .note { font-size: 14px; fill: var(--fg); }
+svg.diagram .note.muted { fill: var(--muted); }
+svg.diagram .note.small { font-size: 12px; }
+svg.diagram .note.ok { fill: var(--anchor); font-weight: 600; }
+svg.diagram .note.bad { fill: var(--blame); font-weight: 600; }
 
 .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 15px; color: var(--muted); justify-content: center; margin-top: 6px; }
 .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; margin-right: 5px; vertical-align: -1px; border: 1.5px solid var(--block-stroke); border-radius: 3px; background: var(--block); }

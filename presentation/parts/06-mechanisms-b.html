@@ -11,16 +11,35 @@
       </ul>
       <div class="uses"><b>Uses:</b> Banded, Agree, Law 1.<br><b>Gives:</b> safety and liveness for any combination of cuts, fills and re-geneses (next slide).</div>
     </div>
-    <figure>
-      <div class="flow vertical">
-        <div class="box">DAG <code>D</code></div>
-        <div class="arrow" data-step="1">↓ fill rounds 6–10 (<code>r = 10</code>)</div>
-        <div class="box" data-step="1">filled DAG</div>
-        <div class="arrow" data-step="2">↓ cut at <code>G = 15</code></div>
-        <div class="box" data-step="2">cut DAG, renumbered by <code>15</code> rounds</div>
-        <div class="box accent" data-step="3">the composite settles at <code>max(r + 1, G) = 15</code></div>
-      </div>
-      <figcaption class="caption">Illustration of <code>stack_core</code> (LeanDag/Integration/StackRules.lean), a fill followed by a cut.</figcaption>
+    <figure class="diagram">
+      <script type="application/json">{"w": 590, "h": 384,
+        "groups": [{"x": 444, "y": 48, "w": 144, "h": 256, "cls": "accent", "step": 3}],
+        "nodes": [{"id": "lD", "x": 0, "y": 56, "w": 100, "h": 40, "text": "D", "cls": "plain"},
+                  {"id": "D1", "x": 120, "y": 56, "w": 132, "h": 40, "text": "0–5"},
+                  {"id": "D2", "x": 252, "y": 56, "w": 110, "h": 40, "text": "v₁ absent", "cls": "muted dashed"},
+                  {"id": "D3", "x": 362, "y": 56, "w": 88, "h": 40, "text": "11–14"},
+                  {"id": "D4", "x": 450, "y": 56, "w": 132, "h": 40, "text": "15–20"},
+                  {"id": "lF", "x": 0, "y": 156, "w": 100, "h": 40, "text": "filled", "cls": "plain", "step": 1},
+                  {"id": "F1", "x": 120, "y": 156, "w": 132, "h": 40, "text": "0–5", "step": 1},
+                  {"id": "F2", "x": 252, "y": 156, "w": 110, "h": 40, "text": "v₁ filled", "cls": "accent", "step": 1},
+                  {"id": "F3", "x": 362, "y": 156, "w": 88, "h": 40, "text": "11–14", "step": 1},
+                  {"id": "F4", "x": 450, "y": 156, "w": 132, "h": 40, "text": "15–20", "step": 1},
+                  {"id": "lC", "x": 0, "y": 256, "w": 100, "h": 40, "text": "cut", "cls": "plain", "step": 2},
+                  {"id": "C0", "x": 120, "y": 256, "w": 330, "h": 40, "text": "dropped", "cls": "muted dashed", "step": 2},
+                  {"id": "C1", "x": 450, "y": 256, "w": 132, "h": 40, "text": "15–20 → 0–5", "step": 2},
+                  {"id": "s11", "x": 362, "y": 46, "w": 1, "h": 160, "text": "", "cls": "dashed", "step": 1},
+                  {"id": "s15", "x": 450, "y": 146, "w": 1, "h": 160, "text": "", "cls": "dashed", "step": 2},
+                  {"id": "K", "x": 120, "y": 330, "w": 462, "h": 44, "text": "composite: settles at max(r + 1, G) = 15", "cls": "accent", "step": 3}],
+        "edges": [{"from": "lD", "to": "lF", "label": "fill, r = 10", "dx": 42, "dy": 4, "step": 1},
+                  {"from": "lF", "to": "lC", "label": "cut, G = 15", "dx": 42, "dy": 4, "step": 2}],
+        "texts": [{"x": 100, "y": 20, "text": "round", "anchor": "end", "cls": "muted"},
+                  {"x": 120, "y": 20, "text": "0", "anchor": "middle", "cls": "muted"},
+                  {"x": 252, "y": 20, "text": "6", "anchor": "middle", "cls": "muted"},
+                  {"x": 362, "y": 20, "text": "11", "anchor": "middle", "cls": "muted"},
+                  {"x": 450, "y": 20, "text": "15", "anchor": "middle", "cls": "muted"},
+                  {"x": 368, "y": 126, "text": "settles at 11", "step": 1},
+                  {"x": 456, "y": 226, "text": "settles at 15", "step": 2}]}</script>
+      <figcaption class="caption">Illustration of <code>stack_core</code> (LeanDag/Integration/StackRules.lean): a fill of <code>v₁</code>'s blocks at rounds 6–10, then a cut at <code>G = 15</code>; the rows are drawn at the rounds of <code>D</code>, and the shaded rounds 15–20 hold the same blocks in all three.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -75,21 +94,35 @@
       </ul>
       <div class="uses"><b>Uses:</b> Agree (safety); Law 2 and Indirect (liveness).<br><b>Gives:</b> a schedule every validator computes the same way.</div>
     </div>
-    <figure>
-      <table>
-        <thead>
-          <tr><th>slot (= round)</th><th>1</th><th>2</th><th>3</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>configuration 0 decides</td><td>commit 5</td><td>skip</td><td>commit 15</td></tr>
-          <tr data-step="1"><td>boundary, anchor</td><td>boundary at round 1</td><td></td><td>anchor at slot 3</td></tr>
-          <tr data-step="2"><td>configuration 0 outputs</td><td>5</td><td>—</td><td>—</td></tr>
-          <tr data-step="3"><td>configuration 1 decides</td><td></td><td>skip</td><td>commit 15</td></tr>
-        </tbody>
-      </table>
-      <p class="small" data-step="2">Output of configuration 0: <code>[5]</code>.</p>
-      <p class="small" data-step="3">Slot 3 is decided again by the next configuration.</p>
-      <figcaption class="caption">Witness <code>segRun</code>, configuration 0, one leader per round and an interval of one (LeanDagTest/Adaptive/Asynchronous.lean).</figcaption>
+    <figure class="diagram">
+      <script type="application/json">{"w": 560, "h": 352,
+        "groups": [{"x": 124, "y": 40, "w": 112, "h": 62, "cls": "accent", "step": 2},
+                   {"x": 340, "y": 260, "w": 112, "h": 62, "cls": "accent", "step": 3}],
+        "nodes": [{"id": "l0", "x": 0, "y": 46, "w": 110, "h": 50, "text": "config 0", "cls": "plain"},
+                  {"id": "a1", "x": 130, "y": 46, "w": 100, "h": 50, "text": "5", "sub": "commit", "cls": "ok"},
+                  {"id": "a2", "x": 238, "y": 46, "w": 100, "h": 50, "text": "—", "sub": "skip", "cls": "bad"},
+                  {"id": "a3", "x": 346, "y": 46, "w": 100, "h": 50, "text": "15", "sub": "commit", "cls": "ok"},
+                  {"id": "b0", "x": 234, "y": 38, "w": 1, "h": 66, "text": "", "cls": "dashed", "step": 1},
+                  {"id": "l1", "x": 0, "y": 156, "w": 110, "h": 50, "text": "config 1", "cls": "plain", "step": 3},
+                  {"id": "c2", "x": 238, "y": 156, "w": 100, "h": 50, "text": "—", "sub": "skip", "cls": "bad", "step": 3},
+                  {"id": "c3", "x": 346, "y": 156, "w": 100, "h": 50, "text": "15", "sub": "commit · anchor", "cls": "ok", "step": 3},
+                  {"id": "b1", "x": 342, "y": 148, "w": 1, "h": 66, "text": "", "cls": "dashed", "step": 3},
+                  {"id": "l2", "x": 0, "y": 266, "w": 110, "h": 50, "text": "config 2", "cls": "plain", "step": 3},
+                  {"id": "d3", "x": 346, "y": 266, "w": 100, "h": 50, "text": "15", "sub": "commit", "cls": "ok", "step": 3},
+                  {"id": "d4", "x": 454, "y": 266, "w": 100, "h": 50, "text": "16", "sub": "commit · anchor", "cls": "ok", "step": 3},
+                  {"id": "b2", "x": 450, "y": 258, "w": 1, "h": 66, "text": "", "cls": "dashed", "step": 3}],
+        "edges": [{"from": "a3", "to": "c3", "label": "decided again", "cls": "accent dashed", "dy": 4, "step": 3}],
+        "texts": [{"x": 180, "y": 14, "text": "slot 1", "anchor": "middle", "cls": "muted"},
+                  {"x": 288, "y": 14, "text": "slot 2", "anchor": "middle", "cls": "muted"},
+                  {"x": 396, "y": 14, "text": "slot 3", "anchor": "middle", "cls": "muted"},
+                  {"x": 504, "y": 14, "text": "slot 4", "anchor": "middle", "cls": "muted"},
+                  {"x": 0, "y": 14, "text": "slot = round", "cls": "muted small"},
+                  {"x": 234, "y": 120, "text": "boundary", "anchor": "middle", "cls": "small", "step": 1},
+                  {"x": 456, "y": 71, "text": "← anchor", "cls": "ok", "step": 1},
+                  {"x": 55, "y": 116, "text": "outputs [5]", "anchor": "middle", "cls": "ok", "step": 2},
+                  {"x": 55, "y": 226, "text": "outputs [ ]", "anchor": "middle", "cls": "muted", "step": 3},
+                  {"x": 55, "y": 336, "text": "outputs [15]", "anchor": "middle", "cls": "ok", "step": 3}]}</script>
+      <figcaption class="caption">Witness <code>segRun</code> on <code>Usk</code>, one leader per round and an interval of one (LeanDagTest/Adaptive/Asynchronous.lean): the verdicts each configuration decides, its boundary (dashed) and anchor; shading marks what it outputs.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -108,18 +141,27 @@
         <li>For liveness the score must continue to assign reliable validators runs of consecutive slots.</li>
       </ul>
     </div>
-    <figure>
-      <table>
-        <thead>
-          <tr><th></th><th>configuration 0</th><th>configuration 1</th><th>configuration 2</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>validator <code>a</code></td><td><code>C₀</code>, anchor <code>a₀</code>, verdicts</td><td><code>C₁</code>, anchor <code>a₁</code>, verdicts</td><td><code>C₂</code>, anchor <code>a₂</code>, verdicts</td></tr>
-          <tr data-step="1"><td>validator <code>b</code></td><td><code>C₀</code>, anchor <code>a₀</code>, verdicts</td><td><code>C₁</code>, anchor <code>a₁</code>, verdicts</td><td><code>C₂</code>, anchor <code>a₂</code>, verdicts</td></tr>
-          <tr data-step="2"><td></td><td class="yes">=</td><td class="yes">=</td><td class="yes">=</td></tr>
-        </tbody>
-      </table>
-      <figcaption class="caption">Two validators' runs from the same configuration, equal segment by segment (<code>Barnacle.Agreement.holds</code>).</figcaption>
+    <figure class="diagram">
+      <script type="application/json">{"w": 1000, "h": 214, "size": "s",
+        "nodes": [{"id": "la", "x": 0, "y": 10, "w": 150, "h": 56, "text": "validator a", "sub": "view V", "cls": "plain"},
+                  {"id": "a0", "x": 180, "y": 10, "w": 210, "h": 56, "text": "C₀", "sub": "anchor a₀, verdicts"},
+                  {"id": "a1", "x": 460, "y": 10, "w": 210, "h": 56, "text": "C₁", "sub": "anchor a₁, verdicts"},
+                  {"id": "a2", "x": 740, "y": 10, "w": 210, "h": 56, "text": "C₂", "sub": "anchor a₂, verdicts"},
+                  {"id": "ae", "x": 960, "y": 10, "w": 40, "h": 56, "text": "…", "cls": "plain"},
+                  {"id": "lb", "x": 0, "y": 148, "w": 150, "h": 56, "text": "validator b", "sub": "view V′", "cls": "plain", "step": 1},
+                  {"id": "b0", "x": 180, "y": 148, "w": 210, "h": 56, "text": "C₀", "sub": "anchor b₀, verdicts", "step": 1},
+                  {"id": "b1", "x": 460, "y": 148, "w": 210, "h": 56, "text": "C₁′", "sub": "anchor b₁, verdicts", "step": 1},
+                  {"id": "b2", "x": 740, "y": 148, "w": 210, "h": 56, "text": "C₂′", "sub": "anchor b₂, verdicts", "step": 1},
+                  {"id": "be", "x": 960, "y": 148, "w": 40, "h": 56, "text": "…", "cls": "plain", "step": 1}],
+        "edges": [{"from": "a0", "to": "a1", "label": "update"},
+                  {"from": "a1", "to": "a2", "label": "update"},
+                  {"from": "b0", "to": "b1", "label": "update", "step": 1},
+                  {"from": "b1", "to": "b2", "label": "update", "step": 1},
+                  {"from": "a0", "to": "b0", "label": "same C₀", "cls": "dashed", "noArrow": true, "dy": 4, "step": 1, "until": 2},
+                  {"from": "a0", "to": "b0", "label": "a₀ = b₀, verdicts equal", "cls": "ok", "noArrow": true, "dy": 4, "step": 2},
+                  {"from": "a1", "to": "b1", "label": "C₁ = C₁′, a₁ = b₁, verdicts equal", "cls": "ok", "noArrow": true, "dy": 4, "step": 2},
+                  {"from": "a2", "to": "b2", "label": "C₂ = C₂′, a₂ = b₂, verdicts equal", "cls": "ok", "noArrow": true, "dy": 4, "step": 2}]}</script>
+      <figcaption class="caption">Two validators' runs on different views from the same configuration <code>C₀</code>; <code>Barnacle.Agreement.holds</code> (LeanDag/Barnacle/Agreement/Proof.lean) makes them equal segment by segment.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -129,20 +171,35 @@
 
 <section class="slide" data-part-label="Mechanisms · Adaptive leaders">
   <h2>What a score may read</h2>
-  <div class="body">
+  <div class="body stack">
     <div class="text">
       <ul>
         <li>A score that reads only the anchor's history is unaffected by crash recovery.</li>
         <li>Under garbage collection the score must read verdicts relative to the configuration: a score that names an absolute slot number gives different answers before and after a cut.</li>
       </ul>
     </div>
-    <figure>
-      <div class="flow vertical">
-        <div class="box accent">the score's read window: the anchor's history, verdicts numbered relative to the configuration</div>
-        <div class="arrow">– – – horizon – – –</div>
-        <div class="box" data-step="1"><s>absolute slot number <code>κ</code></s></div>
-      </div>
-      <figcaption class="caption">Illustration of <code>HorizonStable</code> (LeanDag/Adaptive/Helpers/Chop.lean) and its counterexample <code>commitScore_not_horizonStable</code> (LeanDagTest/Adaptive/Asynchronous.lean).</figcaption>
+    <figure class="diagram">
+      <script type="application/json">{"w": 1050, "h": 290,
+        "groups": [{"x": 376, "y": 62, "w": 360, "h": 210, "cls": "accent", "label": "read window: above the horizon"}],
+        "nodes": [{"id": "ln", "x": 0, "y": 92, "w": 160, "h": 52, "text": "network", "sub": "slots from round 0", "cls": "plain"},
+                  {"id": "n1", "x": 190, "y": 92, "w": 150, "h": 52, "text": "slot 1", "sub": "commit 5"},
+                  {"id": "n2", "x": 400, "y": 92, "w": 150, "h": 52, "text": "slot 2", "sub": "none"},
+                  {"id": "n3", "x": 570, "y": 92, "w": 150, "h": 52, "text": "slot 3", "sub": "none"},
+                  {"id": "lj", "x": 0, "y": 206, "w": 160, "h": 52, "text": "joiner", "sub": "slots from the cut", "cls": "plain"},
+                  {"id": "j1", "x": 190, "y": 206, "w": 150, "h": 52, "text": "pruned", "cls": "muted dashed"},
+                  {"id": "j2", "x": 400, "y": 206, "w": 150, "h": 52, "text": "slot 1", "sub": "none"},
+                  {"id": "j3", "x": 570, "y": 206, "w": 150, "h": 52, "text": "slot 2", "sub": "none"},
+                  {"id": "hz", "x": 360, "y": 56, "w": 1, "h": 222, "text": "", "cls": "dashed"},
+                  {"id": "n1x", "x": 190, "y": 92, "w": 150, "h": 52, "text": "slot 1", "sub": "commit 5", "cls": "bad", "step": 1},
+                  {"id": "j2x", "x": 400, "y": 206, "w": 150, "h": 52, "text": "slot 1", "sub": "none", "cls": "bad", "step": 1}],
+        "edges": [{"from": "n2", "to": "j2", "label": "same verdict, renumbered", "cls": "dashed", "noArrow": true, "dy": 4},
+                  {"from": "n3", "to": "j3", "cls": "dashed", "noArrow": true}],
+        "texts": [{"x": 360, "y": 44, "text": "horizon, G = 1", "anchor": "middle", "cls": "bad"},
+                  {"x": 760, "y": 108, "text": "commitScore reads slot 1: 5", "cls": "bad", "step": 1},
+                  {"x": 760, "y": 130, "text": "→ swaps two leaders", "cls": "muted", "step": 1},
+                  {"x": 760, "y": 222, "text": "commitScore reads slot 1: none", "cls": "bad", "step": 1},
+                  {"x": 760, "y": 244, "text": "→ keeps the leaders", "cls": "muted", "step": 1}]}</script>
+      <figcaption class="caption">Counterexample <code>commitScore_not_horizonStable</code> (LeanDagTest/Adaptive/Asynchronous.lean) to <code>HorizonStable</code> (LeanDag/Adaptive/Helpers/Chop.lean), at a cut at <code>G = 1</code>.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -161,13 +218,14 @@
         <li>healthy: one more leader; unhealthy: <code>2^backoff</code> fewer, between 1 and <code>maxLeaders</code>; the backoff resets when healthy and grows otherwise.</li>
       </ol>
       <figure class="dag" data-step="2">
-        <script type="application/json">{"w": "Usun", "rounds": [2, 7], "marks": [{"ids": [10, 15, 16], "cls": "leader"}, {"ids": [21], "cls": "anchor"}], "badges": [{"r": 4, "text": "count 1", "kind": "note"}, {"r": 6, "text": "count 2", "kind": "note"}]}</script>
+        <script type="application/json">{"w": "Usun", "size": "s", "rounds": [1, 5], "marks": [{"ids": [5, 10, 15, 16], "cls": "leader"}, {"ids": [21], "cls": "anchor"}], "brackets": [{"ids": [5], "text": "counted", "kind": "ok"}, {"ids": [10], "text": "counted", "kind": "ok"}], "badges": [{"r": 4, "text": "observed 2 = expected 2", "kind": "note", "at": 21}]}</script>
         <figcaption class="caption">Witness <code>Usun</code> (LeanDagTest/Barnacle/Agreement.lean), anchor 21.</figcaption>
       </figure>
     </div>
     <div class="text">
       <figure class="chart" data-step="1">
-        <script type="application/json">{"type": "lines", "xs": ["start", "healthy", "healthy", "unhealthy", "unhealthy", "healthy"], "ymax": 4, "yticks": [1, 2, 3, 4], "xlabel": "window (backoff 0, 0, 0, 1, 2)", "ylabel": "leaders per round", "series": [{"name": "maxLeaders = 4", "ys": [4, 4, 4, 4, 4, 4], "color": 3, "dashed": true}, {"name": "leader count", "ys": [1, 2, 3, 2, 1, 2], "color": 0}]}</script>
+        <script type="application/json">{"type": "lines", "xs": ["start", "healthy", "healthy", "unhealthy", "unhealthy", "healthy"], "ymin": 0, "ymax": 4.6, "yticks": [0, 1, 2, 3, 4], "xlabel": "window outcome (back-off 0, 0, 0, 1, 2)", "ylabel": "leaders per round", "hlines": [{"y": 4, "text": "maxLeaders = 4"}], "series": [{"name": "leader count", "ys": [1, 2, 3, 2, 1, 2], "color": 0, "values": true, "dy": 14}]}</script>
+        <figcaption class="caption">The leader count over five windows at <code>maxLeaders = 4</code>, checked by <code>decide</code> at <code>bnP</code> (LeanDagTest/Barnacle/Agreement.lean).</figcaption>
       </figure>
       <div class="uses"><b>Uses:</b> Agree, CommitsCandidate, CommitsDirect (the count reads direct commits).<br><b>Gives:</b> a leader count every validator computes the same way.</div>
     </div>
@@ -206,21 +264,28 @@
         <li>At an epoch change, the highest validated checkpoint becomes the next epoch's genesis.</li>
       </ul>
     </div>
-    <figure>
-      <div class="flow vertical">
-      <div class="flow">
-        <div class="box">commit</div><div class="arrow">→</div>
-        <div class="box">state machine</div><div class="arrow">→</div>
-        <div class="box">sign</div><div class="arrow">→</div>
-        <div class="box accent">certificate (<code>≥ q</code> signatures)</div><div class="arrow">→</div>
-        <div class="box">witness</div><div class="arrow">→</div>
-        <div class="box accent">finality (<code>≥ q</code> witnesses)</div>
-      </div>
-      <div class="flow" data-step="1">
-        <div class="box">epoch <code>e</code>: highest validated checkpoint</div><div class="arrow">→ epoch boundary →</div>
-        <div class="box accent">genesis of epoch <code>e + 1</code></div>
-      </div>
-      </div>
+    <figure class="diagram">
+      <script type="application/json">{"w": 1100, "h": 184, "size": "xs",
+        "nodes": [{"id": "c", "x": 0, "y": 14, "w": 130, "h": 56, "text": "commit", "sub": "in own view"},
+                  {"id": "m", "x": 194, "y": 14, "w": 130, "h": 56, "text": "state machine", "sub": "deterministic"},
+                  {"id": "s", "x": 388, "y": 14, "w": 130, "h": 56, "text": "sign", "sub": "own checkpoint"},
+                  {"id": "q", "x": 582, "y": 14, "w": 130, "h": 56, "text": "certificate", "sub": "≥ q signatures", "cls": "accent"},
+                  {"id": "w", "x": 776, "y": 14, "w": 130, "h": 56, "text": "witness", "sub": "for what it signed"},
+                  {"id": "f", "x": 970, "y": 14, "w": 130, "h": 56, "text": "finality", "sub": "≥ q witnesses", "cls": "accent"},
+                  {"id": "v", "x": 582, "y": 124, "w": 130, "h": 56, "text": "validated", "sub": "certificates of e", "step": 1},
+                  {"id": "g", "x": 900, "y": 124, "w": 170, "h": 56, "text": "genesis", "sub": "of epoch e + 1", "cls": "accent", "step": 1},
+                  {"id": "eb", "x": 806, "y": 104, "w": 1, "h": 80, "text": "", "cls": "dashed", "step": 1}],
+        "edges": [{"from": "c", "to": "m", "label": "apply"},
+                  {"from": "m", "to": "s", "label": "checkpoint"},
+                  {"from": "s", "to": "q", "label": "signatures"},
+                  {"from": "q", "to": "w", "label": "certificate"},
+                  {"from": "w", "to": "f", "label": "witnesses"},
+                  {"from": "q", "to": "v", "label": "broadcast", "dy": 4, "step": 1},
+                  {"from": "v", "to": "g", "label": "highest", "cls": "accent", "dx": -50, "step": 1}],
+        "texts": [{"x": 798, "y": 112, "text": "epoch e", "anchor": "end", "cls": "muted", "step": 1},
+                  {"x": 814, "y": 112, "text": "epoch e + 1", "cls": "muted", "step": 1},
+                  {"x": 806, "y": 92, "text": "epoch boundary", "anchor": "middle", "cls": "bad", "step": 1}]}</script>
+      <figcaption class="caption">Illustration of LeanDag/Checkpoint/: <code>SigningRule</code>, <code>CheckpointQC</code>, <code>FinalityQC</code>, <code>EpochTransition</code>.</figcaption>
     </figure>
     <div class="uses"><b>Uses:</b> Agree, CommitsCandidate, Law 2.<br><b>Gives:</b> finalised application state, and its recovery across epochs.</div>
   </div>
@@ -243,12 +308,12 @@
     </div>
     <div class="body">
       <figure class="dag">
-        <script type="application/json">{"w": "ULive", "rounds": [1, 3], "byz": [0], "marks": [{"ids": [4, 7, 8, 9], "cls": "vote"}, {"ids": [10, 11, 12], "cls": "cert"}], "badges": [{"r": 3, "text": "fast quorum", "kind": "commit"}]}</script>
-        <figcaption class="caption"><code>ULive</code>: one transaction, ACKed by validators 1, 2, 3; fast quorum at round 3.</figcaption>
+        <script type="application/json">{"w": "ULive", "rounds": [1, 3], "byz": [0], "marks": [{"ids": [4, 7, 8, 9], "cls": "vote"}, {"ids": [10, 11, 12], "cls": "cert"}], "strong": [{"from": [10], "to": [7, 8, 9]}], "brackets": [{"ids": [7, 8, 9], "text": "3 ACK", "kind": "accent", "side": "left"}, {"ids": [10, 11, 12], "text": "3 certs", "kind": "ok"}], "badges": [{"r": 3, "text": "fast quorum", "kind": "commit"}]}</script>
+        <figcaption class="caption"><code>ULive</code>: one transaction, ACKed by validators 1, 2, 3; 3 certificates (each over 3 ACKs, <code>q = 3</code>) form a fast quorum.</figcaption>
       </figure>
       <figure class="dag" data-step="1">
-        <script type="application/json">{"w": "UTri", "rounds": [1, 3], "byz": [0], "marks": [{"ids": [10, 11], "cls": "cert"}, {"ids": [12], "cls": "anchor"}], "badges": [{"r": 3, "text": "both dropped", "kind": "skip"}]}</script>
-        <figcaption class="caption"><code>UTri</code>: two conflicting transactions; every correct block declares ⊥; unlock at round 3; anchor 12 drops both.</figcaption>
+        <script type="application/json">{"w": "UTri", "rounds": [1, 3], "byz": [0], "marks": [{"ids": [10, 11], "cls": "cert"}, {"ids": [12], "cls": "anchor"}], "strong": [{"from": [10], "to": [7, 8, 9]}], "brackets": [{"ids": [7, 8, 9], "text": "3 ⊥", "kind": "bad", "side": "left"}], "badges": [{"r": 3, "text": "both dropped", "kind": "skip", "at": 12}]}</script>
+        <figcaption class="caption"><code>UTri</code>: two conflicting transactions; every correct block declares ⊥; 3 ⊥ votes make an unlock at round 3; anchor 12 drops both. Both in LeanDagTest/RedSnapper/Liveness.lean.</figcaption>
       </figure>
     </div>
   </div>
@@ -320,14 +385,22 @@
         <li>Safety with no network assumption; liveness from view convergence.</li>
       </ul>
     </div>
-    <figure>
-      <div class="flow">
-        <div class="box"><b>Protocols</b><br>Mysticeti, Nemo-Nemo,<br>Odontoceti, Hybrid,<br>FinWhale, Hydrozoan,<br>Optimal-Hydrozoan,<br>Bluestreak, Mahi-Mahi,<br>Async BlueBottle, Steelhead<br><span class="muted">refuted: Minnow, Black Marlin</span></div>
-        <div class="arrow">→<br><span class="small">each rule<br>proves</span></div>
-        <div class="box accent"><b>Properties</b><br>Banded, Agree,<br>CommitsCandidate,<br>Indirect;<br>support: Law 1, Law 2</div>
-        <div class="arrow">→<br><span class="small">each<br>mechanism<br>uses</span></div>
-        <div class="box"><b>Mechanisms</b><br>pacemaker, chain quality,<br>storage bound,<br>garbage collection,<br>crash recovery, re-genesis,<br>adaptive leaders,<br>adaptive leader count,<br>checkpoints, Red Snapper</div>
-      </div>
+    <figure class="diagram">
+      <script type="application/json">{"w": 1100, "h": 300,
+        "groups": [{"x": 0, "y": 64, "w": 280, "h": 234},
+                   {"x": 410, "y": 64, "w": 280, "h": 234, "cls": "accent"},
+                   {"x": 820, "y": 64, "w": 280, "h": 234}],
+        "nodes": [{"id": "P", "x": 0, "y": 0, "w": 280, "h": 54, "text": "Protocols", "sub": "11 proved, 2 refuted", "cls": "accent"},
+                  {"id": "Q", "x": 410, "y": 0, "w": 280, "h": 54, "text": "Properties", "sub": "4 properties + support", "cls": "accent"},
+                  {"id": "M", "x": 820, "y": 0, "w": 280, "h": 54, "text": "Mechanisms", "sub": "each proved once", "cls": "accent"},
+                  {"id": "Pl", "x": 10, "y": 72, "w": 260, "h": 160, "text": "Mysticeti, Nemo-Nemo\nOdontoceti, Hybrid\nFinWhale, Hydrozoan\nOptimal-Hydrozoan\nBluestreak, Mahi-Mahi\nAsync BlueBottle\nSteelhead", "cls": "plain"},
+                  {"id": "Pr", "x": 20, "y": 240, "w": 240, "h": 44, "text": "refuted: Minnow, Black Marlin", "cls": "muted dashed"},
+                  {"id": "Ql", "x": 420, "y": 80, "w": 260, "h": 100, "text": "Banded, Agree\nCommitsCandidate\nIndirect", "cls": "plain"},
+                  {"id": "Qs", "x": 440, "y": 210, "w": 220, "h": 44, "text": "support: Law 1, Law 2"},
+                  {"id": "Ml", "x": 830, "y": 72, "w": 260, "h": 210, "text": "pacemaker, chain quality\nstorage bound\ngarbage collection\ncrash recovery, re-genesis\nadaptive leaders\nadaptive leader count\ncheckpoints, Red Snapper", "cls": "plain"}],
+        "edges": [{"from": "P", "to": "Q", "label": "each rule proves", "cls": "accent"},
+                  {"from": "Q", "to": "M", "label": "each mechanism uses", "cls": "accent"}]}</script>
+      <figcaption class="caption">The three parts of slide 2, filled with the names used in the deck.</figcaption>
     </figure>
   </div>
   <aside class="notes">
