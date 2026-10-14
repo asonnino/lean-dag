@@ -1,0 +1,660 @@
+<!-- Part II, slides 49–56: the refuted rules Minnow and Black Marlin, and the rules side by side. Part III, slides 57–66: properties. -->
+
+<section class="slide" data-part-label="Protocols · Refuted rules">
+  <h2>Minnow: the rule</h2>
+  <div class="body wide-fig">
+    <div class="text">
+      <ul>
+        <li><code>n ≥ 3f + 1</code>; no self-parent rule.</li>
+        <li><strong>Commit</strong> a leader block <code>l</code> when <code>n − f</code> processes reference it from the round above, and every earlier leader slot is <strong>resolved</strong>: one of its blocks is in <code>l</code>'s history, or is concurrent with <code>l</code> and committed or skipped.</li>
+        <li><strong>Skip</strong> when <code>n − f</code> processes of the round above have no block that references it.</li>
+        <li>The rule consults no later anchor.</li>
+      </ul>
+    </div>
+    <figure>
+      <div class="flow vertical">
+        <div class="box"><code>n − f</code> processes, round <code>r + 1</code>: a block that references <code>l</code></div>
+        <div class="arrow">↓ references</div>
+        <div class="box accent">leader block <code>l</code>, round <code>r</code></div>
+        <div class="arrow">↓ history, or concurrent and decided</div>
+        <div class="box">earlier leader slot: <strong>✓ resolved</strong></div>
+      </div>
+      <figcaption class="caption">The commit condition of Minnow: a quorum in the round above, and every earlier leader slot resolved.</figcaption>
+    </figure>
+  </div>
+  <aside class="notes">
+    <p>A commit needs a quorum in the round above and every earlier slot resolved; the rule reads no later anchor.</p>
+    <p><code>Minnow.ValidHere</code> (LeanDag/Minnow/Model/Rule.lean:43); <code>Quorum</code> (:119); <code>Skipped</code> (:134; the vertex-counting reading <code>SkippedByVertex</code>, :145, lets one vertex be committed and skipped, LeanDagTest/Minnow/Skip.lean:60, 69); <code>CommittedAt</code> (:161).</p>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Protocols · Refuted rules">
+  <h2>Minnow: an earlier leader committed after a later one</h2>
+  <div class="body">
+    <div class="text small">
+      <p><code>n = 4</code>. Process 0 equivocates at round 0: blocks 0 and 4. Block 4 is referenced by process 1 only.</p>
+      <ul>
+        <li data-step="1">A validator missing block 5 sees the round-1 leader block 6 reach block 4, which resolves slot 0. Block 6 is <strong>committed</strong>, while slot 0 is still undecided.</li>
+        <li data-step="2">Block 5 arrives. Block 0 now has a quorum and is <strong>committed</strong> for slot 0, after the later leader.</li>
+      </ul>
+    </div>
+    <figure class="dag">
+      <script type="application/json">{
+        "w": "Dpart",
+        "byz": [0],
+        "marks": [{"ids": [0, 4, 6, 11], "cls": "leader"}, {"ids": [0, 4], "cls": "twin"}],
+        "strong": [{"from": [6], "to": [4]}, {"from": [7, 8], "to": [0]}, {"from": [9, 10, 11], "to": [6], "step": 1}],
+        "paths": [{"ids": [6, 4], "step": 1}],
+        "badges": [
+          {"r": 0, "text": "undecided", "kind": "undecided", "step": 1},
+          {"r": 0, "text": "2 < q = 3", "kind": "note", "row": 1, "step": 1},
+          {"r": 1, "text": "commit 6", "kind": "commit", "step": 1},
+          {"r": 1, "text": "3 ≥ q = 3", "kind": "note", "row": 1, "step": 1}
+        ]
+      }</script>
+      <figcaption class="caption">Partial view <code>Dpart</code> (LeanDagTest/Minnow/Safety.lean). Row v0 is Byzantine; 0 and 4 are twins (red outline).</figcaption>
+    </figure>
+    <figure class="dag" data-step="2">
+      <script type="application/json">{
+        "w": "Dfull",
+        "byz": [0],
+        "marks": [{"ids": [0, 4, 6, 11], "cls": "leader"}, {"ids": [0, 4], "cls": "twin"}],
+        "strong": [{"from": [5, 7, 8], "to": [0]}],
+        "badges": [
+          {"r": 0, "text": "commit 0", "kind": "commit"},
+          {"r": 0, "text": "3 ≥ q = 3", "kind": "note", "row": 1}
+        ]
+      }</script>
+      <figcaption class="caption">Full view <code>Dfull</code> (same file): adds blocks 5 and 12.</figcaption>
+    </figure>
+  </div>
+  <aside class="notes">
+    <p>Initial state: the twins 0 and 4 and their references. Step 1: the partial view commits block 6. Step 2: the full view commits block 0 for the earlier slot.</p>
+    <p>LeanDagTest/Minnow/Safety.lean: <code>slotBlocks Dfull (0,0) = {0, 4}</code> (:86, 91); <code>Reaches Dpart 6 4</code>, <code>CommittedAt Dpart sfLead 1 6</code> (:112, 116); <code>Dfull</code> adds blocks 5 and 12 (:96, 126); block 4 is never committed (<code>¬ Quorum Dfull 4</code>, :179); the violated property is Safe-Commit (:134).</p>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Protocols · Refuted rules">
+  <h2>Minnow: slots that are never decided</h2>
+  <div class="body">
+    <figure class="dag small">
+        <script type="application/json">{
+          "w": "Dm",
+          "rounds": [0, 3],
+          "byz": [0],
+          "marks": [{"ids": [0, 1, 6, 7, 8, 9, 14, 15], "cls": "leader"}],
+          "strong": [{"from": [4, 5], "to": [0]}],
+          "badges": [
+            {"r": 0, "text": "undecided", "kind": "undecided"},
+            {"r": 1, "text": "undecided", "kind": "undecided"},
+            {"r": 2, "text": "undecided", "kind": "undecided"},
+            {"r": 3, "text": "undecided", "kind": "undecided"}
+          ]
+        }</script>
+        <figcaption class="caption"><code>Dm</code> under <code>mLead</code>, two leaders per round (LeanDagTest/Minnow/Deadlock.lean).</figcaption>
+      <ul>
+        <li>A leader referenced by 2 of 4 processes is neither committed nor skipped, and no later leader can be committed.</li>
+        <li>With two leaders per round in round-robin, no leader is committed.</li>
+      </ul>
+    </figure>
+    <figure class="dag small" data-step="1">
+        <script type="application/json">{
+          "w": "Ds",
+          "rounds": [0, 3],
+          "byz": [0],
+          "marks": [{"ids": [0, 4, 5, 6, 10, 11], "cls": "leader"}],
+          "badges": [
+            {"r": 0, "text": "undecided", "kind": "undecided"},
+            {"r": 1, "text": "undecided", "kind": "undecided"},
+            {"r": 2, "text": "undecided", "kind": "undecided"}
+          ]
+        }</script>
+        <figcaption class="caption"><code>Ds</code> under <code>mLead</code> (same file): v0 is silent, so its slots hold no block.</figcaption>
+      <ul>
+        <li>A silent leader's empty slot prevents every later leader from being committed.</li>
+      </ul>
+    </figure>
+    <figure class="dag small" data-step="2">
+        <script type="application/json">{
+          "w": "Dm",
+          "rounds": [0, 3],
+          "byz": [0],
+          "marks": [{"ids": [0, 6, 11, 13], "cls": "leader"}],
+          "strong": [{"from": [12, 14, 15], "to": [11]}],
+          "badges": [
+            {"r": 0, "text": "undecided", "kind": "undecided"},
+            {"r": 1, "text": "undecided", "kind": "undecided"},
+            {"r": 2, "text": "commit 11", "kind": "commit"}
+          ]
+        }</script>
+        <figcaption class="caption"><code>Dm</code> under <code>mFair</code>, one leader per round (LeanDagTest/Minnow/Fair.lean).</figcaption>
+      <ul>
+        <li>With one leader per round, the same DAG does commit.</li>
+      </ul>
+    </figure>
+  </div>
+  <aside class="notes">
+    <p>The Byzantine process's blocks reach two processes of four: too few to commit, too many to skip. A slot that is resolved only by a block in a leader's history holds later leaders for two rounds.</p>
+    <p>LeanDagTest/Minnow/Deadlock.lean: 2 of 4 pointers (:86, 89); <code>mLead</code> (:79, 109–146); <code>Ds</code> (:205–223). LeanDagTest/Minnow/Fair.lean: <code>CommittedAt Dm mFair 2 11</code> (:92). <code>not_committedAt_of_dead</code> (LeanDag/Minnow/Blocking.lean:40). (informal) That <code>2f + 1</code> is the least safe skip threshold, so the gap cannot be closed.</p>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Protocols · Refuted rules">
+  <h2>Black Marlin: the rule</h2>
+  <div class="body">
+    <div class="text">
+      <ul>
+        <li><code>n ≥ 3f + 1</code>; one anchor per round; no certificates.</li>
+        <li><strong>Commit</strong> an anchor <code>B</code> at round <code>r</code> when <code>n − f</code> validators reference it at round <code>r + 1</code>, and some anchor at <code>r + 1</code> references <code>B</code> and is itself referenced by <code>n − f</code> validators at <code>r + 2</code>.</li>
+        <li>There is no skip. Anchors that are not committed are output through a descent from a later committed anchor.</li>
+      </ul>
+    </div>
+    <figure>
+      <div class="flow vertical">
+        <div class="box">round <code>r + 2</code>: <code>n − f</code> validators reference <code>A</code></div>
+        <div class="arrow">↓</div>
+        <div class="box">round <code>r + 1</code>: <code>n − f</code> validators reference <code>B</code>, among them the anchor <code>A</code></div>
+        <div class="arrow">↓</div>
+        <div class="box accent">round <code>r</code>: anchor <code>B</code></div>
+      </div>
+      <figcaption class="caption">The commit condition of Black Marlin over three rounds. Arrows point to referenced blocks.</figcaption>
+    </figure>
+  </div>
+  <aside class="notes">
+    <p><code>Rotation.anchor</code>, <code>IsAnchor</code>, <code>Supported</code>, <code>Linked</code>, <code>Committed</code> (LeanDag/BlackMarlin/Model/Rules.lean:37, 51, 63, 83, 94); <code>descend</code>, <code>flushRecord</code> (LeanDag/BlackMarlin/Model/Descent.lean:85, 100). Black Marlin has no carrier. (informal) "No reliable broadcast, no coin".</p>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Protocols · Refuted rules">
+  <h2>Black Marlin: agreement fails</h2>
+  <div class="body wide-fig">
+    <div class="text small">
+      <p><code>n = 4</code>, <code>f = 1</code>. Validator 0 equivocates at round 2: blocks 8 and 12.</p>
+      <ul>
+        <li data-step="1">Block 8 is committed; block 12 is not supported.</li>
+        <li data-step="2">The committed anchor 19 at round 4 omits block 14.</li>
+        <li data-step="2">One validator outputs block 8 for round 2; another outputs block 12.</li>
+      </ul>
+      <p data-step="2">Total order also fails, on blocks 5 and 7 of correct validators.</p>
+    </div>
+    <figure class="dag">
+      <script type="application/json">{
+        "w": "Udiv",
+        "byz": [0],
+        "marks": [
+          {"ids": [3, 7, 8, 12, 14, 19, 24, 26], "cls": "leader"},
+          {"ids": [8, 12], "cls": "twin"},
+          {"ids": [19], "cls": "anchor", "step": 2}
+        ],
+        "strong": [
+          {"from": [14, 15, 16], "to": [8], "step": 1},
+          {"from": [17, 18, 20], "to": [14], "step": 1},
+          {"from": [13], "to": [12], "step": 1}
+        ],
+        "paths": [{"ids": [19, 13, 12, 7, 3], "step": 2}],
+        "badges": [
+          {"r": 2, "text": "commit 8", "kind": "commit", "step": 1},
+          {"r": 2, "text": "v outputs 8", "kind": "note", "row": 1, "step": 2},
+          {"r": 4, "text": "commit 19", "kind": "commit", "step": 2},
+          {"r": 4, "text": "w outputs 12", "kind": "note", "row": 1, "step": 2}
+        ]
+      }</script>
+      <div class="legend"><span class="l-leader">anchor of its round</span><span class="l-anchor" data-step="2">committed anchor 19</span></div>
+      <figcaption class="caption"><code>Udiv</code> (LeanDagTest/BlackMarlin/Divergence.lean). Row v0 is Byzantine; 8 and 12 are twins (red outline). Green path: the descent from 19, which takes 12 at round 2.</figcaption>
+    </figure>
+  </div>
+  <aside class="notes">
+    <p>Initial state: the twins 8 and 12. Step 1: 8 is supported by 14, 15, 16 and linked through anchor 14; 12 has one supporter. Step 2: the validator that missed round 2 commits 19, whose descent takes 12.</p>
+    <p>LeanDagTest/BlackMarlin/Divergence.lean: <code>divBlk</code> (:71), twins (:57, 115), commit of 8 and non-support of 12 (:120), anchor 19 omits 14 (:124), <code>Committed Udiv 19 4</code> (:129), differing outputs (:135, 154, 182); total order (:261, 298). Sound lemmas: <code>eq_of_supported</code>, <code>reaches_of_supported</code>, <code>reaches_of_committed_of_le</code>, <code>quorum_authorsAt_of_lt</code> (LeanDag/BlackMarlin/Helpers/Rules.lean:40, 59, 77, 110).</p>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Protocols · Summary">
+  <h2>Every rule on one page</h2>
+  <div class="body stack">
+    <figure>
+      <table class="compact">
+        <thead>
+          <tr><th>Rule</th><th>Faults</th><th>Committee</th><th>Rounds to commit</th><th>Indirect rungs</th><th>Tie-break</th><th>Leader</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Mysticeti</td><td>Byzantine</td><td><code>n ≥ 3f + 1</code></td><td>3</td><td>1: certificate</td><td>none</td><td>scheduled</td></tr>
+          <tr><td>Nemo-Nemo</td><td>crash</td><td><code>n ≥ 2f + 1</code></td><td>2</td><td>1: one vote</td><td>none</td><td>scheduled</td></tr>
+          <tr><td>Odontoceti</td><td>Byzantine</td><td><code>n ≥ 5f + 1</code></td><td>2</td><td>1: <code>n − 3f</code> voters</td><td>least</td><td>scheduled</td></tr>
+          <tr><td>Hybrid</td><td>Byz. + crash</td><td><code>n ≥ 5fb + 3fc + 1</code></td><td>2</td><td>1: <code>k</code> voters</td><td>least</td><td>scheduled</td></tr>
+          <tr><td>FinWhale</td><td>Byzantine</td><td><code>n = 3f + 2p − 1</code></td><td>2 fast / 3 slow</td><td>1: certificate or evidence</td><td>least</td><td>scheduled</td></tr>
+          <tr><td>Hydrozoan</td><td>Byz. + crash</td><td><code>n ≥ 3f + 2c + k + 1</code></td><td>2 fast / 3 slow</td><td>2</td><td>second rung: least</td><td>scheduled</td></tr>
+          <tr><td>Opt-Hydrozoan</td><td>Byz. + crash</td><td>same, <code>f + c ≥ 1</code></td><td>2 fast / 3 slow</td><td>2</td><td>none</td><td>scheduled</td></tr>
+          <tr><td>Bluestreak</td><td>Byzantine</td><td><code>n ≥ 3f + 1</code></td><td>3</td><td>1: claim</td><td>none</td><td>scheduled</td></tr>
+          <tr><td>Mahi-Mahi</td><td>Byzantine</td><td><code>n ≥ 3f + 1</code></td><td><code>w</code> (live for <code>w ≥ 4</code>)</td><td>1: certificate</td><td>none</td><td>unpredictable</td></tr>
+          <tr><td>Async BlueBottle</td><td>Byzantine</td><td><code>n ≥ 5f + 1</code></td><td>3</td><td>1: <code>n − 3f</code> voters</td><td>least</td><td>unpredictable</td></tr>
+          <tr><td>Steelhead</td><td>Byzantine</td><td><code>3f + 1</code> / <code>5f + 1</code></td><td>by kind: 3 or <code>wa</code> / 2 or 3</td><td>1</td><td>none / least</td><td>both</td></tr>
+          <tr><td>Minnow (refuted)</td><td>Byzantine</td><td><code>n ≥ 3f + 1</code></td><td>2</td><td>none</td><td>—</td><td>scheduled</td></tr>
+          <tr><td>Black Marlin (refuted)</td><td>Byzantine</td><td><code>n ≥ 3f + 1</code></td><td>3</td><td>none</td><td>—</td><td>one anchor per round</td></tr>
+        </tbody>
+      </table>
+    </figure>
+  </div>
+  <aside class="notes">
+    <p>Rounds to commit = <code>waveAt + 1</code>; for Minnow and Black Marlin, the rounds their commit rules read (<code>Quorum</code>, LeanDag/Minnow/Model/Rule.lean:119; <code>Committed</code>, LeanDag/BlackMarlin/Model/Rules.lean:94). Sources: the rule records cited on each protocol's slide; FinWhale <code>LeanDag/FinWhale/Model/Decided.lean:24</code>; Hybrid's committee through <code>Admissible</code> (<code>HybridFaults</code> itself asks <code>3(fb + fc) + 1</code>, LeanDag/Hybrid/Faults.lean:38).</p>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Protocols · Summary">
+  <h2>What the formalisation found, by rule</h2>
+  <div class="body stack">
+    <figure>
+      <table>
+        <thead>
+          <tr><th>Rule</th><th>Finding</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Odontoceti, Hybrid, Async BlueBottle</td><td>two twins can pass the indirect test; the least must be chosen</td></tr>
+          <tr><td>Mahi-Mahi</td><td>the good-validator count is <code>n − f − b</code>, not <code>n − f</code></td></tr>
+          <tr><td>FinWhale</td><td>Lemma 22's argument covers only <code>p = 1</code>; Lemmas 18/19 and 6/7 need new proofs</td></tr>
+          <tr><td>Hydrozoan</td><td>the slack cap is unnecessary; one inequality must be strengthened</td></tr>
+          <tr><td>Bluestreak</td><td>the indirect rule needs a committed anchor; claims must be read two rounds deep</td></tr>
+          <tr><td>Steelhead</td><td>the stall; the failover is needed for liveness</td></tr>
+          <tr><td>Minnow</td><td>an earlier leader committed after a later one; slots that are never decided</td></tr>
+          <tr><td>Black Marlin</td><td>agreement and total order fail</td></tr>
+        </tbody>
+      </table>
+    </figure>
+  </div>
+  <aside class="notes">
+    <p>Each row is detailed, with its Lean evidence, on the rule's slides.</p>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Protocols · Summary">
+  <h2>Three recurring lessons</h2>
+  <div class="body">
+    <div class="text">
+      <ol>
+        <li><strong>Fix an order.</strong> Wherever two twins can pass a test, the choice between them must be made by an order every validator computes.</li>
+        <li><strong>Count, do not infer from absence.</strong> A skip must count blocks that exist.</li>
+        <li><strong>Use later evidence.</strong> Every rule proved safe here has an indirect rule that reads a later committed anchor; the two refuted rules have none.</li>
+      </ol>
+    </div>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li>1: <code>tie = (&lt;)</code> in Odontoceti, Hybrid, FinWhale, Hydrozoan (second rung), Async BlueBottle; Mahi-Mahi's <code>Votes</code> picks the least block.</li>
+      <li>2: <code>ugrow_not_directSkip</code> (LeanDagTest/Mysticeti/Growth.lean:308).</li>
+      <li>3: every carrier has <code>rungs ≥ 1</code>; Black Marlin and Minnow have no anchor rule. (informal) That the missing rule causes the failures.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide part"><div class="part-number">Part III</div><h1>Properties</h1></section>
+
+<section class="slide" data-part-label="Properties">
+  <h2>From rules to properties</h2>
+  <div class="body stack">
+    <div>
+      <p>Mechanisms such as garbage collection or crash recovery should not be proved once per rule. Instead:</p>
+      <ul>
+        <li>each rule is proved to have a few <strong>properties</strong>;</li>
+        <li>each mechanism is proved once, using only those properties.</li>
+      </ul>
+      <p>Eleven rules (all but Minnow and Black Marlin) have the properties.</p>
+    </div>
+    <figure>
+      <div class="flow">
+        <div class="box">Protocols</div>
+        <div class="arrow">→</div>
+        <div class="muted">each rule proves</div>
+        <div class="arrow">→</div>
+        <div class="box accent"><strong>Properties</strong></div>
+        <div class="arrow">→</div>
+        <div class="muted">each mechanism uses</div>
+        <div class="arrow">→</div>
+        <div class="box">Mechanisms</div>
+      </div>
+    </figure>
+  </div>
+  <aside class="notes">
+    <p>The diagram of slide 2, with the properties highlighted. The eleven carriers are listed in the notes of slide 2.</p>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Properties">
+  <h2>The carrier</h2>
+  <div class="body">
+    <div class="text">
+      <p>A mechanism accesses a rule only through its <strong>carrier</strong>:</p>
+      <ul>
+        <li>a type of universes (all blocks) and of views (what one validator holds);</li>
+        <li>the round, creator and references of each block;</li>
+        <li>the decision relation: under schedule <code>S</code>, view <code>V</code> decides slot <code>k</code> as <code>v</code>.</li>
+      </ul>
+      <p class="small">Laws: a view holds only universe blocks; a view holds every block that its blocks reference; references go one round down.</p>
+    </div>
+    <figure>
+      <div class="flow vertical">
+        <div class="flow"><div class="box">Universe</div><div class="arrow">⊇</div><div class="box">View</div></div>
+        <div class="arrow">↓ round, creator, references</div>
+        <div class="box">Block</div>
+      </div>
+      <p></p>
+      <div class="flow vertical">
+        <div class="box">(schedule <code>S</code>, view <code>V</code>, slot <code>k</code>)</div>
+        <div class="arrow">↓ Decided</div>
+        <div class="box accent">commit <code>L</code> | skip</div>
+      </div>
+      <figcaption class="caption">The carrier: two types, the block projection, and the decision relation.</figcaption>
+    </figure>
+  </div>
+  <aside class="notes">
+    <p><code>DagRule</code> (LeanDag/Properties/Carrier.lean:31); <code>Decided</code> is a relation <code>Slots → View U → ℕ → Option BlockId → Prop</code> (:56); <code>viewSound</code> (:45), <code>viewComplete</code> (:49), <code>causal</code> (:54). Eleven carriers (slide 2).</p>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Properties">
+  <h2>Banded: a verdict reads a finite band of rounds</h2>
+  <div class="body stack">
+    <div>
+      <p>Each verdict depends only on the blocks in a band of rounds, from the slot's round to some round <code>top</code>. Any other universe, view and schedule that match in the band — up to a shift of round and slot numbers — reach the same verdict.</p>
+    </div>
+    <div class="body">
+      <figure class="dag">
+        <script type="application/json">{
+          "w": "Uexcl",
+          "byz": [0],
+          "marks": [{"ids": [11], "cls": "leader"}, {"ids": [14, 15, 16], "cls": "vote"}, {"ids": [17, 18, 19], "cls": "cert"}],
+          "hulls": [{"ids": [11, 12, 13, 14, 15, 16, 17, 18, 19]}],
+          "badges": [{"r": 3, "text": "slot 1: commit 11", "kind": "commit"}]
+        }</script>
+        <figcaption class="caption"><code>Uexcl</code> (LeanDagTest/DoS/Exclusion.lean); shaded: the band, rounds 3–5</figcaption>
+      </figure>
+      <figure class="dag">
+        <script type="application/json">{
+          "w": "UexclCut",
+          "rounds": [-2, 3],
+          "roundNames": {"-2": "", "-1": ""},
+          "marks": [{"ids": [11], "cls": "leader"}, {"ids": [14, 15, 16], "cls": "vote"}, {"ids": [17, 18, 19], "cls": "cert"}],
+          "hulls": [{"ids": [11, 12, 13, 14, 15, 16, 17, 18, 19]}],
+          "badges": [{"r": 1, "text": "slot 0: commit 11", "kind": "commit"}]
+        }</script>
+        <figcaption class="caption"><code>chop Uexcl 2</code>: rounds 2–5 renumbered 0–3 (LeanDagTest/GC/Chop.lean); shaded: the band, rounds 1–3</figcaption>
+      </figure>
+    </div>
+    <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-cert">certificate</span></div>
+  </div>
+  <aside class="notes">
+    <p>The band of the slot of block 11 is rounds 3–5 of <code>Uexcl</code> and rounds 1–3 of the cut; the verdict is the same in both.</p>
+    <p><code>Banded</code> (LeanDag/Properties/Band.lean:227): the other view holds at least the original view's blocks inside the band; slot rounds, leaders and kinds match there. Used by <code>LocalTruncate.of_banded</code> (LeanDag/Properties/Derived/Truncate.lean:38), <code>Persist.of_banded</code> (LeanDag/Properties/Derived/FromBand.lean:25), <code>Stack.safe_and_live</code> (LeanDag/Properties/Arcs/Stack.lean:109), <code>safety</code> (LeanDag/Properties/Arcs/Headline.lean:63). Witness: <code>DirectCommit Uexcl 11 3</code>, <code>DirectCommit (chop Uexcl 2) 11 1</code> (LeanDagTest/GC/Chop.lean:60–61); slot 1 of <code>Uexcl</code> is slot 0 of the chopped schedule (:72–84).</p>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Properties">
+  <h2>Agree, CommitsCandidate, Indirect</h2>
+  <div class="body stack">
+    <div>
+      <ul>
+        <li><strong>Agree</strong>: two views of one universe never decide a slot differently, skips included.</li>
+        <li><strong>CommitsCandidate</strong>: a committed block is a candidate of its slot.</li>
+        <li><strong>Indirect</strong>: a committed eligible anchor, with every eligible slot in between skipped, decides the slot; changing the other slots' leaders does not change that verdict.</li>
+      </ul>
+    </div>
+    <figure data-step="1">
+      <div class="flow">
+        <div class="muted">schedule <code>S</code>:</div>
+        <div class="box">slot <code>i</code>: verdict <code>v</code></div>
+        <div class="box">slot <code>i + 1</code>: skip</div>
+        <div class="arrow">⋯</div>
+        <div class="box">slot <code>j − 1</code>: skip</div>
+        <div class="box">slot <code>j</code>: anchor committed</div>
+      </div>
+      <div class="flow" data-step="2">
+        <div class="muted">schedule <code>S′</code>:</div>
+        <div class="box">slot <code>i</code>: verdict <code>v</code></div>
+        <div class="box accent">slot <code>i + 1</code>: other leader, skip</div>
+        <div class="arrow">⋯</div>
+        <div class="box accent">slot <code>j − 1</code>: other leader, skip</div>
+        <div class="box">slot <code>j</code>: anchor committed</div>
+      </div>
+      <figcaption class="caption">Indirect: <code>S′</code> keeps the rounds and slot <code>i</code>'s leader and kind; the leaders of the other slots (highlighted) change; the verdict <code>v</code> of slot <code>i</code> is unchanged.</figcaption>
+    </figure>
+  </div>
+  <aside class="notes">
+    <p><code>Agree</code> (LeanDag/Properties/Agree.lean:22); <code>CommitsCandidate</code> (LeanDag/Properties/Candidate.lean:50); <code>Indirect</code> (LeanDag/Properties/Commit.lean:40). <code>Indirect</code> gives <code>Descends</code> (<code>Descends.of_indirect</code>, LeanDag/Properties/Derived/Descent.lean:83).</p>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Properties">
+  <h2>The support: the conditions for a commit</h2>
+  <div class="body wide-fig">
+    <div class="text small">
+      <ul>
+        <li>A <strong>support</strong> names the wave and what it means for a block to certify a candidate.</li>
+        <li><strong>Law 1 (local)</strong>: certification depends only on the wave's rounds, so it is unchanged by cutting or shifting rounds outside them.</li>
+        <li><strong>Law 2 (commits)</strong>: if a reliable quorum <code>T</code> leads a slot, produces through its wave and certifies every candidate, then a view that holds those rounds commits the slot.</li>
+        <li>Liveness needs exactly this, at every slot <code>T</code> leads. The network assumption is used only to establish it.</li>
+      </ul>
+    </div>
+    <figure>
+      <svg class="dag" viewBox="0 0 600 270" role="img"><g transform="translate(90,0)">
+        <rect class="band" x="42" y="26" width="370" height="150"></rect>
+        <text class="round-label" x="115" y="14" text-anchor="middle">round r</text>
+        <text class="round-label" x="225" y="14" text-anchor="middle">⋯</text>
+        <text class="round-label" x="335" y="14" text-anchor="middle">round r + wave</text>
+        <text class="row-label" x="4" y="51" dominant-baseline="central">v0</text>
+        <text class="row-label" x="4" y="101" dominant-baseline="central">v1</text>
+        <text class="row-label" x="4" y="151" dominant-baseline="central">v2</text>
+        <text class="row-label" x="4" y="201" dominant-baseline="central">v3</text>
+        <g>
+          <line class="edge" x1="205" y1="51" x2="135" y2="51"></line>
+          <line class="edge" x1="205" y1="101" x2="135" y2="51"></line>
+          <line class="edge" x1="205" y1="151" x2="135" y2="51"></line>
+          <line class="edge" x1="205" y1="101" x2="135" y2="101"></line>
+          <line class="edge" x1="205" y1="151" x2="135" y2="151"></line>
+          <line class="edge" x1="205" y1="201" x2="135" y2="201"></line>
+          <line class="edge" x1="315" y1="51" x2="245" y2="51"></line>
+          <line class="edge" x1="315" y1="51" x2="245" y2="101"></line>
+          <line class="edge" x1="315" y1="101" x2="245" y2="101"></line>
+          <line class="edge" x1="315" y1="101" x2="245" y2="151"></line>
+          <line class="edge" x1="315" y1="151" x2="245" y2="151"></line>
+          <line class="edge" x1="315" y1="151" x2="245" y2="51"></line>
+          <line class="edge" x1="315" y1="201" x2="245" y2="201"></line>
+        </g>
+        <g class="block leader"><rect x="95" y="36" width="40" height="30" rx="5"></rect><text x="115" y="51">L</text></g>
+        <g class="block"><rect x="95" y="86" width="40" height="30" rx="5"></rect></g>
+        <g class="block"><rect x="95" y="136" width="40" height="30" rx="5"></rect></g>
+        <g class="block"><rect x="95" y="186" width="40" height="30" rx="5"></rect></g>
+        <g class="block"><rect x="205" y="36" width="40" height="30" rx="5"></rect></g>
+        <g class="block"><rect x="205" y="86" width="40" height="30" rx="5"></rect></g>
+        <g class="block"><rect x="205" y="136" width="40" height="30" rx="5"></rect></g>
+        <g class="block"><rect x="205" y="186" width="40" height="30" rx="5"></rect></g>
+        <g class="block cert"><rect x="315" y="36" width="40" height="30" rx="5"></rect><text x="335" y="51">C</text></g>
+        <g class="block cert"><rect x="315" y="86" width="40" height="30" rx="5"></rect><text x="335" y="101">C</text></g>
+        <g class="block cert"><rect x="315" y="136" width="40" height="30" rx="5"></rect><text x="335" y="151">C</text></g>
+        <g class="block"><rect x="315" y="186" width="40" height="30" rx="5"></rect></g>
+        <text class="row-label" x="374" y="101" dominant-baseline="central">T</text>
+        <g class="badge commit" data-step="1"><rect x="65" y="236" width="100" height="24"></rect><text x="115" y="248">commit L</text></g>
+      </g></svg>
+      <div class="flow" data-step="2">
+        <div class="box">synchrony and coverage</div>
+        <div class="arrow">→</div>
+        <div class="box accent">live</div>
+        <div class="arrow">←</div>
+        <div class="box">reactive pacemaker</div>
+      </div>
+      <figcaption class="caption">Law 2 over the wave window. Shaded rows: the reliable quorum <code>T</code>, which leads the slot; C: a <code>T</code>-block that certifies <code>L</code>.</figcaption>
+    </figure>
+  </div>
+  <aside class="notes">
+    <p><code>Support</code> (LeanDag/Properties/Support.lean:39), <code>Local</code> (:92), <code>Commits</code> (:103). <code>Support.live</code> (LeanDag/Properties/Derived/LeaderCommits.lean:40): production and certification at the <code>T</code>-led slots of a window. <code>live_of_coverage</code> (LeanDag/Timed/Coverage.lean:108); <code>coreSupport_live_of_reactiveLive</code> (LeanDag/Reactive/MysticetiProperties.lean:59). No synchrony name appears under <code>LeanDag/Properties/</code> (checked by <code>scripts/check-arc-holes.py</code>, a Makefile step).</p>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Properties">
+  <h2>Optional and derived properties</h2>
+  <div class="body wide-fig">
+    <div class="text small">
+      <p>Optional, needed by one mechanism each:</p>
+      <ul>
+        <li><strong>CommitsDirect</strong>: a direct commit is a verdict (adaptive leader count).</li>
+        <li><strong>SkipsUnsupported</strong>: a slot is skipped when a large enough set, present one round above, references none of its candidates (prompt skip).</li>
+        <li><strong>Quorate</strong>: every block references <code>n − f</code> distinct creators (chain quality).</li>
+        <li><strong>SelfParent</strong>, <strong>NoEquiv</strong>: every block references its creator's previous block; a reliable creator makes one block per round (inclusion).</li>
+      </ul>
+    </div>
+    <figure>
+      <p class="small" data-step="1">Derived, so no rule needs to prove them: <strong>Persist</strong> and <strong>LocalTruncate</strong> from Banded; <strong>LeaderCommits</strong> from Law 2; <strong>Descends</strong> from Indirect.</p>
+      <div class="flow vertical" data-step="1">
+        <div class="flow"><div class="box accent">Banded</div><div class="arrow">→</div><div class="box">Persist</div><div class="box">LocalTruncate</div></div>
+        <div class="flow"><div class="box accent">Law 2</div><div class="arrow">→</div><div class="box">LeaderCommits</div></div>
+        <div class="flow"><div class="box accent">Indirect</div><div class="arrow">→</div><div class="box">Descends</div></div>
+      </div>
+      <figcaption class="caption" data-step="1">Derived properties and the property each is derived from.</figcaption>
+    </figure>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>CommitsDirect</code> (LeanDag/Properties/Optional/Direct.lean:25), used by LeanDag/Barnacle/Healthy/Statement.lean:101. <code>SkipsUnsupported</code> (Optional/Skip.lean:51). <code>Quorate</code> (Optional/Quorate.lean:33), for non-genesis blocks, <code>n − slack</code> with <code>slack = f</code> in the core reliability. <code>SelfParent</code>, <code>NoEquiv</code> (Optional/SelfParent.lean:23, 28).</li>
+      <li>Derivations: <code>Persist.of_banded</code>, <code>LocalTruncate.of_banded</code>, <code>Support.leaderCommits</code> (Derived/LeaderCommits.lean:50), <code>Descends.of_indirect</code>.</li>
+      <li>Some rules also prove them directly: Mysticeti proves <code>LeaderCommits</code> (<code>leaderCommits_cert</code>, LeanDag/Mysticeti/Properties.lean:534) and derives Law 2 from it (:634); Steelhead's <code>persist</code> (LeanDag/Steelhead/Properties.lean:158).</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Properties">
+  <h2>Safety, for every rule and every mechanism</h2>
+  <div class="body stack">
+    <div>
+      <p>From <strong>Banded</strong>, <strong>Agree</strong> and <strong>CommitsCandidate</strong>, across any sequence of cuts, recoveries and re-geneses:</p>
+      <ul>
+        <li>every verdict above the settling round is the same before and after;</li>
+        <li>any view after agrees with any view before, above the settling round;</li>
+        <li>every commit is a candidate, and no block is committed at two slots;</li>
+        <li>adding blocks never changes a verdict.</li>
+      </ul>
+    </div>
+    <figure>
+      <div class="flow">
+        <div class="box">source DAG</div>
+        <div class="arrow">→</div>
+        <div class="box">fill</div>
+        <div class="arrow">→</div>
+        <div class="box">cut</div>
+        <div class="arrow">→</div>
+        <div class="box">resulting DAG</div>
+      </div>
+      <p></p>
+      <div class="flow">
+        <div class="box">verdicts of the source DAG above the settling round</div>
+        <div class="arrow">=</div>
+        <div class="box accent">verdicts of the resulting DAG above the settling round</div>
+      </div>
+      <figcaption class="caption">Illustration of <code>safety</code> (LeanDag/Properties/Arcs/Headline.lean) for a fill followed by a cut.</figcaption>
+    </figure>
+  </div>
+  <aside class="notes">
+    <p><code>Safe</code> (LeanDag/Properties/Arcs/Headline.lean:46), <code>safety</code> (:63), <code>Safe.prefix_agree</code> (:76). The last bullet is the conjunct on <code>Extends</code>.</p>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Properties">
+  <h2>Liveness, for every rule</h2>
+  <div class="body stack">
+    <div>
+      <p>From <strong>Law 2</strong>, <strong>CommitsCandidate</strong>, <strong>SelfParent</strong> and <strong>NoEquiv</strong>:</p>
+      <ul>
+        <li><strong>Progress</strong>: every slot below a run of reliably led slots is decided, and reliably led slots continue to be committed.</li>
+        <li><strong>Inclusion</strong>: every block of a reliable validator enters the ledger, through a later slot its creator leads.</li>
+      </ul>
+      <p>Seven rules have both. Nemo, FinWhale, Hydrozoan and Optimal-Hydrozoan lack SelfParent and have progress only.</p>
+    </div>
+    <figure data-step="1">
+      <div class="flow">
+        <div class="box">block <code>b</code> of <code>v</code>, round <code>r</code></div>
+        <div class="arrow">←</div>
+        <div class="box">block of <code>v</code>, round <code>r + 1</code></div>
+        <div class="arrow">← ⋯ ←</div>
+        <div class="box accent">leader block of <code>v</code> at its next slot: commit</div>
+      </div>
+      <p></p>
+      <div class="flow">
+        <div class="arrow">⇒</div>
+        <div class="box"><code>b</code> enters the ledger</div>
+      </div>
+      <figcaption class="caption">Inclusion: a reliable validator <code>v</code>'s blocks, linked by self-parent references, enter the ledger with the commit of <code>v</code>'s next leader slot.</figcaption>
+    </figure>
+  </div>
+  <aside class="notes">
+    <p><code>Progresses</code> (Headline.lean:94), <code>Includes</code> (:105), <code>Lives</code> (:117), <code>liveness</code> (:139); <code>Progresses</code> takes <code>Descends</code> as a hypothesis. Progress only: LeanDag/Nemo/Properties.lean:242, LeanDag/FinWhale/Carrier.lean:360, LeanDag/Hydrozoan/Properties/Proof.lean:47, LeanDag/OptimalHydrozoan/Carrier.lean:290.</p>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Properties">
+  <h2>Which rule has which property</h2>
+  <div class="body stack">
+    <div class="small">
+      <p>All eleven rules have Banded, Agree, CommitsCandidate, Indirect, CommitsDirect, and a support with both laws.</p>
+    </div>
+    <figure>
+      <table class="compact">
+        <thead>
+          <tr><th>Rule</th><th>SkipsUnsupported</th><th>Quorate</th><th>SelfParent</th><th>NoEquiv</th><th>Safe</th><th>Lives</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Mysticeti</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Nemo-Nemo</td><td class="no">—</td><td class="yes">✓</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">progress</td></tr>
+          <tr><td>Odontoceti</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Hybrid</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>FinWhale</td><td class="no">—</td><td class="yes">✓</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">progress</td></tr>
+          <tr><td>Hydrozoan</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td><td class="yes">progress</td></tr>
+          <tr><td>Opt-Hydrozoan</td><td class="no">—</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td><td class="yes">progress</td></tr>
+          <tr><td>Bluestreak</td><td class="yes">✓</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Mahi-Mahi</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓ (<code>w ≥ 2</code>)</td><td class="yes">✓</td></tr>
+          <tr><td>Async BlueBottle</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Steelhead</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        </tbody>
+      </table>
+      <figcaption class="caption">✓ proved, — not shown.</figcaption>
+    </figure>
+  </div>
+  <aside class="notes">
+    <p>Locations (all under LeanDag/), in the column order Banded, Agree, CommitsCandidate, Indirect, Commits, SkipsUnsupported, Quorate, SelfParent, NoEquiv, Safe, Lives:</p>
+    <ul>
+      <li>Mysticeti/Properties.lean: 347, 483, 359, 657, 634, 407, 147, 153, 159, 799, 805.</li>
+      <li>Nemo: Properties 98, Carrier 84, Carrier 89, Properties 138, Properties 111, —, Carrier 63, —, Carrier 77, Properties 238, 242.</li>
+      <li>Odontoceti: Properties 91, Carrier 52, 57, Properties 154, 129, 106, Carrier 37, 42, 47, Properties 251, 255.</li>
+      <li>Hybrid: Properties 71, Carrier 52, 57, Properties 127, 100, 84, Carrier 35, 40, 45, Properties 160, 165.</li>
+      <li>FinWhale/Carrier.lean: 91, 56, 61, 99, 250, —, 44, —, 50, 356, 360.</li>
+      <li>Hydrozoan: Helpers/Banded 210, Helpers/Commit 42, 292, 266, 124, Helpers/Skippability 54, Helpers/Carrier 47, —, —, Properties/Proof 44, 47.</li>
+      <li>OptimalHydrozoan/Carrier.lean: 83, 61, 66, 267, 139, —, 49, —, —, 286, 290.</li>
+      <li>Bluestreak/Carrier.lean: 363, 52, 57, 70, 130, 101, —, 94, 86, 373, 380.</li>
+      <li>MahiMahi: Properties 252, Carrier 50, 56, Properties 382, 344, —, Carrier 34, 39, 44, Properties 407, 411.</li>
+      <li>AsyncBlueBottle: Properties 205, Carrier 47, 54, Properties 296, 262, —, Carrier 32, 37, 42, Properties 316, 320.</li>
+      <li>Steelhead/Properties.lean: 139, 60, 65, 81, 280, —, 45, 50, 55, 164, 301.</li>
+      <li><code>CommitsDirect</code> is proved for all eleven.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Properties">
+  <h2>The properties a user sees</h2>
+  <div class="body stack">
+    <figure>
+      <table>
+        <thead>
+          <tr><th>Guarantee</th><th>Needs</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Validators' ledgers agree</td><td>Banded, Agree, CommitsCandidate</td></tr>
+          <tr><td>Every slot is eventually decided</td><td>Law 2, Indirect</td></tr>
+          <tr><td>A validator decides from the blocks it holds</td><td>the pacemaker (slide 71)</td></tr>
+          <tr><td>A committed block's history contains blocks of many correct validators</td><td>Quorate, CommitsCandidate</td></tr>
+          <tr><td>Every correct validator's blocks are committed</td><td>SelfParent, NoEquiv, LeaderCommits</td></tr>
+          <tr><td>Storage stays linear under equivocation</td><td>the novelty budget (slide 75)</td></tr>
+          <tr><td>Storage stays constant</td><td>garbage collection (slide 77)</td></tr>
+        </tbody>
+      </table>
+    </figure>
+  </div>
+  <aside class="notes">
+    <p><code>Safe.prefix_agree</code>; <code>Progresses</code>; <code>decided_local</code> (LeanDag/Mysticeti/ViewPace.lean:507; LeanDag/Reactive/Mysticeti.lean:119; LeanDag/Bluestreak/Reactive.lean:245); <code>chain_quality</code> (LeanDag/Properties/Arcs/Quality.lean:223, also needs <code>2·slack ≤ |correct|</code>); <code>dos_resistance</code> (LeanDag/DoS/Novelty.lean:729); <code>card_retained_le</code> (LeanDag/GC/Window.lean:189). The last two are stated over the storage model, not the carrier.</p>
+  </aside>
+</section>

@@ -376,8 +376,8 @@ marked "eligible anchor".
 
 **Figure.** Stepped, two steps, on witness `Ugrow` (`n = 4`, every block
 references the whole previous round, slot `k` at round `3k` led by `v1`).
-(1) A small universe that stops below slot 2's voting round: no candidate is
-voted on, and a skip on absence would fire. (2) The larger universe `Ugrow 8`:
+(1) `Ugrow 5`, which stops before slot 2's round 6: no candidate exists, and
+a skip on absence would fire. (2) The larger universe `Ugrow 8`:
 slot 2 has 4 votes and 4 certificates and is committed. Caption: "a skip on
 absence would have been overturned".
 
@@ -784,8 +784,9 @@ commit" and "k = 3: skip".
 > commit and a skip for the same slot.
 
 **Figure.** Witnesses `UtightA` and `UtightB` side by side: leader `v1`
-(correct) with candidate block 1; Byzantine `v0` with two round-1 votes
-(blocks 8, 9); anchor block 17. `UtightA`: 6 blames against 3 voters in the
+(correct) with candidate block 1; Byzantine `v0` with two round-1 blocks
+(8 and 9), one of which votes for block 1 (9 in `UtightA`, 8 in `UtightB`);
+anchor block 17. `UtightA`: 6 blames against 3 voters in the
 anchor's history (for `k ≤ 3`, commit and skip). `UtightB`: 6 votes but only 3
 voters in the anchor's history (for `k ≥ 4`, commit and skip).
 
@@ -882,8 +883,8 @@ sees both twins, references 4 votes for 0 and 2 for 27, threshold
 evidence for nothing.
 Right, witness `Dbare`, stepped: (1) 7 votes, fast commit; (2) every round-2
 block references 5 votes, one short of a slow certificate, but is evidence;
-(3) the round-3 anchor (block 30) reaches six evidence blocks: indirect
-commit.
+(3) the round-3 anchor (block 30) references seven evidence blocks, at least
+`2f + p = 6`: indirect commit.
 
 **Notes.**
 - `FPEvidence` (LeanDag/FinWhale/Model/Rule.lean:135), branching on
@@ -1102,9 +1103,9 @@ highlighted as "proved separately".
 > **−** Blocks need not reference a quorum, so chain-quality coverage is not
 > shown. Claims require a discipline (slide 39).
 
-**Figure.** Rounds 0–3 of two witnesses side by side: Mysticeti `U3` (each
-block 3 references) and Bluestreak `U1` (non-leader blocks with 1–2
-references).
+**Figure.** Two witnesses side by side: Mysticeti `U3`, rounds 0–2 (each
+block 3 references), and Bluestreak `U1`, rounds 0–3 (non-leader blocks with
+1–2 references).
 
 **Notes.**
 - `roleClause` (LeanDag/Bluestreak/Rule.lean:45); `ValidWrt` with
@@ -1517,8 +1518,9 @@ has no carrier. (informal) "No reliable broadcast, no coin".
 >
 > Total order also fails, on blocks 5 and 7 of correct validators.
 
-**Figure.** Witness `Udiv`, stepped: (1) the twins 8 and 12; (2) the two
-descents, from the committed anchors, ending at different blocks.
+**Figure.** Witness `Udiv`, stepped: (1) the twins 8 and 12; (2) the commit of
+block 8; (3) the committed anchor 19 and its descent to block 12. One
+validator outputs block 8 itself; the other reaches block 12 by descent.
 
 **Notes.** LeanDagTest/BlackMarlin/Divergence.lean: `divBlk` (:71), twins
 (:57, 115), commit of 8 and non-support of 12 (:120), anchor 19 omits 14
@@ -1640,7 +1642,8 @@ relation `Slots → View U → ℕ → Option BlockId → Prop` (:56); `viewSoun
 > same verdict.
 
 **Figure.** Witness `Uexcl` and its cut `chop Uexcl 2` (as on slide 76): the
-band of slot 1 shaded identically in both; the same verdict badge.
+band shaded identically in both; the same verdict, at slot 1 before the cut
+and at slot 0 after it.
 
 **Notes.** `Banded` (LeanDag/Properties/Band.lean:227): the other view holds
 at least the original view's blocks inside the band; slot rounds, leaders and
@@ -1978,7 +1981,7 @@ not written; its inclusion is in `liveness`
 
 **Text.**
 > Validators 0, 1, 2 reference only each other for six rounds; validator 3 is
-> correct and never referenced. Each round of the commit has 2 correct
+> correct and no other validator references it. Each round of the commit has 2 correct
 > creators, exactly the bound. None of validator 3's blocks enters the
 > committed leader's history.
 
@@ -2026,8 +2029,9 @@ LeanDagTest/DoS/SafetyUnderDoS.lean.
 >   validator holds at most `C·((1 + fτ)·n + 1 + f)` blocks at round `n`.
 >   At `C = 3`, `f = 1`, `τ = 3`, round 9: 114 blocks.
 
-**Figure.** Store size against rounds: the exposure-only bound against the
-linear budget bound.
+**Figure.** The store bound `12n + 6` at `C = 3`, `f = 1`, `τ = 3`, rounds
+0–9, ending at 114. (The exposure-only bound of slide 74 bounds one block's
+history, not a store, and is not drawn on the same axes.)
 
 **Notes.** `UniformBudget` (LeanDag/DoS/Novelty.lean:192); `RefsAccepted`
 (:452); `dos_resistance` (:729); `dos_resistance_of_pace'`
@@ -2053,8 +2057,8 @@ Novelty.lean:432).
 
 **Figure.** Witness `Uexcl` cut at `G = 2`, stepped: (1) the DAG of rounds
 0–5 with a line at round 2; (2) rounds 2–5 renumbered 0–3, the round-2 blocks
-(e.g. block 8) with no references; the slot-1 commit of block 11 (round 3,
-now round 1) with the same verdict badge in both.
+(e.g. block 8) with no references; the commit of block 11 (round 3, now
+round 1), at slot 1 before the cut and at slot 0 after it.
 
 **Notes.** `BlockRecord.chop` (LeanDag/Common/Record/Chop.lean:20);
 `Slots.chop` (LeanDag/GC/ChopDecided.lean:34); `decided_chop_iff`
@@ -2142,8 +2146,8 @@ undecided slot leaves it undecided.
 > **Uses:** Banded (through Persist), Agree, SkipsUnsupported, Law 1.
 > **Gives:** `v₁` producing again, with every earlier verdict unchanged.
 
-**Figure.** Witness `ucrashMsg`, stepped: (1) `v3`'s row stops after block 3
-at round 0; (2) the filled blocks of `v3`, hatched, each copying the donor
+**Figure.** Witness `ucrashMsg 4 4` (on `Ucrash 4`), stepped: (1) `v3`'s row
+stops after block 3 at round 0; (2) the filled blocks of `v3`, hatched, each copying the donor
 `v1`'s references and adding a self-reference; the round-1 filled block
 references `{3, 0, 1, 2}`.
 
@@ -2163,8 +2167,9 @@ round trip per missed round".
 >   one round above (the **prompt skip**). No later view can commit it.
 > - Every verdict reached before the fill agrees with every verdict after it.
 
-**Figure.** The fill of witness `ucrashMsg` (slide 80) with the four
-guarantees as callouts.
+**Figure.** The fill of witness `ucrashMsg 4 4` (slide 80) with the four
+guarantees as callouts. The schedule of `Ucrash` places no slot led by `v3` in
+the gap, so the prompt skip is drawn on slide 85 (witness `Ucr`).
 
 **Notes.** `skipFill`, `skipFill_block_old`, `skipFill_populatedOn`
 (LeanDag/SafeSkip/Basic.lean:166, 171, 184). Prompt skip:

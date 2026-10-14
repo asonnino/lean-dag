@@ -1,0 +1,710 @@
+<!-- Slide 31 -->
+<section class="slide" data-part-label="Protocols · Hydrozoan">
+  <h2>Hydrozoan</h2>
+  <div class="body">
+    <div class="text small">
+      <ul>
+        <li><code>f</code> Byzantine, <code>c</code> crashed, a slack <code>k ≥ 0</code>: <code>n ≥ 3f + 2c + k + 1</code>.</li>
+        <li>Thresholds: <code>p = ⌊(c + k)/2⌋</code>, <code>q = n − f − c</code>, <code>qFast = n − p</code>,
+          <code>qCert = ⌊(n + f)/2⌋ + 1</code>, <code>qSlow = 2f + c + 1</code>, <code>qWeak = f + p + 1</code>.</li>
+        <li><strong>Fast commit</strong>: <code>qFast</code> votes at <code>r + 1</code>. <strong>Slow commit</strong>: <code>qSlow</code>
+          certificates at <code>r + 2</code>, each referencing <code>qCert</code> votes.</li>
+        <li><strong>Skip</strong>: <code>qFast</code> blames at <code>r + 1</code>.</li>
+        <li><strong>Indirect, two rungs</strong>: (1) a certificate in the anchor’s history;
+          (2) if no candidate has one, the least candidate with <code>qWeak</code> votes in the anchor’s history.</li>
+      </ul>
+    </div>
+    <figure>
+      <table class="compact">
+        <tr><th>threshold</th><th>definition</th><th>at <code>f = c = k = 1</code>, <code>n = 7</code></th></tr>
+        <tr><td><code>p</code></td><td><code>⌊(c + k)/2⌋</code></td><td>1</td></tr>
+        <tr><td><code>q</code></td><td><code>n − f − c</code></td><td>5</td></tr>
+        <tr><td><code>qFast</code></td><td><code>n − p</code></td><td>6</td></tr>
+        <tr><td><code>qCert</code></td><td><code>⌊(n + f)/2⌋ + 1</code></td><td>5</td></tr>
+        <tr><td><code>qSlow</code></td><td><code>2f + c + 1</code></td><td>4</td></tr>
+        <tr><td><code>qWeak</code></td><td><code>f + p + 1</code></td><td>3</td></tr>
+      </table>
+      <div class="compare"><b>Compared with Mysticeti:</b> crashes counted apart from Byzantine faults; a
+        fast commit at <code>r + 1</code>; a second indirect rung for slots committed only by the fast path.</div>
+      <div class="tradeoffs">
+        <div class="plus">Each crash fault adds 2 to the committee bound, against 3 for a Byzantine fault. Commits in two rounds when at most <code>p</code> are faulty.</div>
+        <div class="minus">Only the slow path is guaranteed to commit; the fast path is a latency result.</div>
+      </div>
+    </figure>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>Faults.card_replicas</code> (LeanDag/Hydrozoan/Model/Faults.lean:41); thresholds (:53–74).
+        <code>FastCommit</code> (LeanDag/Hydrozoan/Model/DirectRules.lean:45); <code>SlowCommit</code>, <code>IsCertificate</code>, <code>certificates</code> (:40, 50, 62);
+        <code>SkippedLeader</code> (:73). <code>hydrozoanAnchored</code> (LeanDag/Hydrozoan/Model/Decided.lean:28–42).
+        Rung-0-empty premise: <code>Decided.indirectCommit</code> (LeanDag/Common/Anchored.lean:201).</li>
+      <li>Values at <code>n = 7</code>: LeanDagTest/Hydrozoan/Model.lean:42–45.</li>
+      <li><code>FastLatency</code> (LeanDag/Hydrozoan/DirectLiveness/Proof.lean:28) is outside the liveness statement;
+        <code>CommitLiveness</code> (LeanDag/Hydrozoan/DirectLiveness/Statement.lean:29) is the guarantee.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- Slide 32 -->
+<section class="slide" data-part-label="Protocols · Hydrozoan">
+  <h2>Hydrozoan: why the second rung exists</h2>
+  <div class="body wide-fig">
+    <div class="text small">
+      <p><code>n = 7</code>; <code>v0</code> is Byzantine and equivocates; <code>v1</code> has crashed.</p>
+      <ul>
+        <li data-step="1">The leader receives exactly <code>qFast = 6</code> votes: <strong>fast commit</strong>.</li>
+        <li data-step="2">No block is a certificate: each round-2 block references only 4 votes, one fewer than <code>qCert = 5</code>.</li>
+        <li data-step="3">A validator that missed the fast commit consults the anchor. Rung 1 finds no certificate. Rung 2 finds 4 voters, at least <code>qWeak = 3</code>: <strong>commit</strong>.</li>
+      </ul>
+    </div>
+    <figure class="dag">
+      <script type="application/json">{"w": "U4hz", "byz": [0], "crashed": {"1": 0},
+        "marks": [{"ids": [2], "cls": "leader"}, {"ids": [8], "cls": "twin"},
+                  {"ids": [7, 9, 10, 11, 12, 13], "cls": "vote", "step": 1},
+                  {"ids": [24], "cls": "anchor", "step": 3}],
+        "strong": [{"from": [7, 9, 10, 11, 12, 13], "to": [2], "step": 1},
+                   {"from": [14, 15, 16, 17, 18, 19], "to": [9, 10, 11, 12], "step": 2},
+                   {"from": [24], "step": 3}],
+        "hulls": [{"ids": [9, 10, 11, 12], "step": 3}],
+        "badges": [{"r": 0, "text": "fast commit: 6 ≥ qFast = 6", "kind": "commit", "step": 1},
+                   {"r": 2, "text": "4 votes < qCert = 5", "kind": "note", "step": 2},
+                   {"r": 3, "text": "rung 2: 4 ≥ qWeak = 3, commit", "kind": "commit", "step": 3, "row": 1}]}</script>
+      <div class="legend"><span class="l-leader">leader block 2</span><span class="l-vote">vote</span><span class="l-anchor">anchor 24</span><span>7, 8: twins of <code>v0</code></span></div>
+      <p class="caption">Witness <code>U4</code>, view <code>V4</code> (LeanDagTest/Hydrozoan/DirectSafety.lean)</p>
+    </figure>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>U4</code>, <code>V4</code> (<code>lk4</code>, 32 blocks; LeanDagTest/Hydrozoan/DirectSafety.lean): <code>FastCommit U4 2 0</code>,
+        <code>certificates U4 2 0 = ∅</code>, <code>supporters U4 2 1 = {0, 2, 3, 4, 5, 6}</code>; the anchor reaches 4 voters
+        (checked by evaluation; the witness’s docstring states the same). <code>V4</code> withholds voter 13, so every direct rule fails in view.</li>
+      <li><code>WeakLinked</code> (LeanDag/Hydrozoan/Model/IndirectRules.lean).</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- Slide 33 -->
+<section class="slide" data-part-label="Protocols · Hydrozoan">
+  <h2>Hydrozoan: what the formalisation found</h2>
+  <div class="body">
+    <div class="text">
+      <ul>
+        <li>The six threshold inequalities hold for every slack <code>k ≥ 0</code>.</li>
+        <li>One of them must be strengthened to <code>qFast + q − n − f ≥ qWeak</code>, so that every eligible anchor sees at least <code>qWeak</code> votes of every fast commit.</li>
+        <li>Round-robin by slot is not fair inside the bound: at <code>n = 5</code>, <code>f = 0</code>, <code>c = 2</code>, it need not place three live leaders consecutively. A rotation aligned to waves is fair.</li>
+      </ul>
+    </div>
+    <figure>
+      <table class="compact">
+        <tr><th></th><th>inequality</th><th>every <code>k ≥ 0</code></th></tr>
+        <tr><td>1</td><td><code>2·qCert &gt; n + f</code></td><td class="yes">✓</td></tr>
+        <tr><td>2</td><td><code>2·qFast &gt; n + f</code></td><td class="yes">✓</td></tr>
+        <tr><td>3</td><td><code>qFast + qWeak &gt; n + f</code></td><td class="yes">✓</td></tr>
+        <tr><td>4</td><td><code>qCert ≤ q</code></td><td class="yes">✓</td></tr>
+        <tr><td>5</td><td><code>q + qSlow &gt; n + f</code></td><td class="yes">✓</td></tr>
+        <tr><td>6</td><td><code>qFast + q − n ≥ qWeak</code></td><td class="yes">✓</td></tr>
+        <tr><td>6′</td><td><strong><code>qFast + q − n − f ≥ qWeak</code></strong></td><td class="yes"><strong>proved separately</strong></td></tr>
+      </table>
+      <p class="caption">Row 6 is the form in the statement; row 6′ is the strengthened form the agreement proof uses.</p>
+    </figure>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>ThresholdArithmetic.Statement</code> / <code>holds</code> (LeanDag/Hydrozoan/ThresholdArithmetic/Statement.lean:61, Proof.lean:13).
+        Row 6 of the statement is the weaker <code>AnchorSeesFast</code> (Statement.lean:56); the strengthened form is
+        <code>n_add_qWeak_add_f_le_qFast_add_q</code> (LeanDag/Hydrozoan/Helpers/SlotAgreement.lean:52).</li>
+      <li>(informal) The paper’s cap <code>k ≤ 2f + c − 4</code> appears only in a docstring (LeanDagTest/OptimalHydrozoan/Thresholds.lean:232).</li>
+      <li><code>fiveCrashy</code>, <code>¬ FairRunOn (S := slotRobin) Correct 3</code> (LeanDagTest/Hydrozoan/Grounding.lean:135, 160);
+        <code>WaveRobinFair</code> (LeanDag/Hydrozoan/Grounding/Statement.lean).</li>
+      <li>Properties: <code>Agree</code>, <code>CommitsCandidate</code>, <code>SkipsUnsupported</code> (LeanDag/Hydrozoan/Properties/Statement.lean:27, Proof.lean:35),
+        <code>commitsDirect</code> (Helpers/Commit.lean:298), <code>quorate</code> (Helpers/Carrier.lean:47); <code>safety</code>, <code>progress</code> (Properties/Proof.lean:44–49).</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- Slide 34 -->
+<section class="slide" data-part-label="Protocols · Optimal-Hydrozoan">
+  <h2>Optimal-Hydrozoan</h2>
+  <div class="body">
+    <div class="text small">
+      <ul>
+        <li>Hydrozoan’s committee, with at least one tolerated fault (<code>f + c ≥ 1</code>).</li>
+        <li>The fast path tolerates one more fault: <code>pOpt = p + 1</code>, <code>qFastOpt = n − pOpt</code>.</li>
+        <li>FinWhale’s evidence: a round-<code>r+2</code> block is evidence for <code>L</code> when it references
+          <code>tPlain = n − (2f + c + pOpt)</code> votes for <code>L</code>; or, if it saw the leader equivocate,
+          <code>tEquiv = f + pOpt</code> votes with every rival below <code>tEquiv</code>.</li>
+        <li><strong>Skip</strong>: <code>qCert</code> blames and <code>qCert</code> round-<code>r+2</code> blocks that are evidence for nothing.</li>
+        <li><strong>Indirect</strong>: (1) a certificate; (2) <code>qCert</code> evidence blocks in the anchor’s history. No tie-break.</li>
+      </ul>
+    </div>
+    <figure>
+      <table class="compact">
+        <tr><th>at <code>n = 4</code></th><th>Hydrozoan</th><th>Optimal-Hydrozoan</th></tr>
+        <tr><td>fast quorum</td><td><code>qFast = 4</code></td><td><code>qFastOpt = 3</code></td></tr>
+        <tr><td>evidence, plain</td><td>—</td><td><code>tPlain = 1</code></td></tr>
+        <tr><td>evidence, equivocation</td><td>—</td><td><code>tEquiv = 2</code></td></tr>
+      </table>
+      <div class="compare"><b>Compared with Hydrozoan:</b> the fast path tolerates one more fault; the
+        second rung reads FinWhale’s evidence instead of weak votes.</div>
+      <div class="tradeoffs">
+        <div class="plus">At <code>n = 4</code>, <code>f = 1</code>: commits on 3 of 4 votes, where Hydrozoan needs 4. A guaranteed skip for slots with no candidate.</div>
+        <div class="minus">The skip is one round later than Hydrozoan’s. Validity needs leader exclusion.</div>
+      </div>
+    </figure>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>OptimalFaults</code> (LeanDag/OptimalHydrozoan/Model/Faults.lean:23–27); <code>pOpt</code> (:36), <code>qFastOpt</code> (:42), <code>tPlain</code> (:49), <code>tEquiv</code> (:55).</li>
+      <li><code>IsFastEvidence</code> (LeanDag/OptimalHydrozoan/Model/DirectRules.lean:55); <code>SkippedLeaderOpt</code> (:88, decision round :83–90);
+        <code>optimalAnchored</code> (Model/Decided.lean:29–41, <code>tie = False</code>); <code>EvidenceLinked</code> (Model/IndirectRules.lean:24).</li>
+      <li><code>fourReplicasOpt</code> (LeanDagTest/OptimalHydrozoan/Thresholds.lean:55–75).</li>
+      <li><code>SkipLiveness</code> (LeanDag/OptimalHydrozoan/DirectLiveness/Statement.lean:54); FinWhale’s attack on a slot with a candidate:
+        <code>OA</code>, ending in <code>¬ SkippedLeaderOpt UA 1</code> (LeanDagTest/OptimalHydrozoan/DirectLiveness.lean:122–162).</li>
+      <li><code>ValidOpt</code>, <code>LeaderExcluded</code> (LeanDag/OptimalHydrozoan/Model/Universe.lean:25, 91).</li>
+      <li>(informal) “Matches Hydrangea’s lower bound”.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- Slide 35 -->
+<section class="slide" data-part-label="Protocols · Optimal-Hydrozoan">
+  <h2>Optimal-Hydrozoan: the evidence rung</h2>
+  <div class="body wide-fig">
+    <div class="text small">
+      <p><code>n = 4</code>. The leader equivocates (copies 4 and 5).</p>
+      <ul>
+        <li data-step="1">Copy 4 receives 3 votes: <strong>fast commit</strong>. No block is a certificate.</li>
+        <li data-step="2">Each round-<code>r+2</code> block sees both copies, references 2 votes for copy 4 and 1 for copy 5, and is evidence for copy 4.</li>
+        <li data-step="3">The anchor’s history holds the three evidence blocks: rung 2 <strong>commits</strong> copy 4.</li>
+      </ul>
+    </div>
+    <figure class="dag">
+      <script type="application/json">{"w": "UE", "byz": [0],
+        "marks": [{"ids": [4, 5], "cls": "leader"}, {"ids": [5], "cls": "twin"},
+                  {"ids": [9, 10, 12], "cls": "vote", "step": 1},
+                  {"ids": [13, 14, 15], "cls": "evidence", "step": 2},
+                  {"ids": [18], "cls": "anchor", "step": 3}],
+        "strong": [{"from": [9, 10, 12], "to": [4], "step": 1},
+                   {"from": [11], "to": [5], "step": 1},
+                   {"from": [13, 14, 15], "to": [10, 11, 12], "step": 2},
+                   {"from": [18], "step": 3}],
+        "badges": [{"r": 1, "text": "fast commit: 3 ≥ qFastOpt = 3", "kind": "commit", "step": 1},
+                   {"r": 3, "text": "2 votes for 4, 1 for 5", "kind": "note", "step": 2, "row": 1},
+                   {"r": 4, "text": "rung 2: 3 ≥ qCert = 3, commit 4", "kind": "commit", "step": 3, "row": 2}]}</script>
+      <div class="legend"><span class="l-leader">copies 4, 5 of the leader</span><span class="l-vote">vote for copy 4</span><span class="l-evidence">evidence for copy 4</span><span class="l-anchor">anchor 18</span></div>
+      <p class="caption">Witness <code>OE</code> (universe <code>UE</code>, LeanDagTest/OptimalHydrozoan/SlotAgreement.lean)</p>
+    </figure>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>OE</code> (<code>lkE</code>; LeanDagTest/OptimalHydrozoan/SlotAgreement.lean:127, 162): <code>supporters UE 4 2 = {0, 1, 3}</code>,
+        <code>certificates UE 4 1 = ∅</code> (:175), <code>EvidenceLinked UE 18 4 1</code> (:181), <code>oe_slot1_evidence</code> (:186).</li>
+      <li>Block 11 votes for copy 5. The leader’s slot is at round <code>r = 1</code>; the evidence blocks are at round 3.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- Slide 36 -->
+<section class="slide" data-part-label="Protocols · Bluestreak">
+  <h2>Bluestreak</h2>
+  <div class="body">
+    <div class="text small">
+      <ul>
+        <li><code>n ≥ 3f + 1</code>, quorum <code>n − f</code>.</li>
+        <li><strong>Sparse DAG</strong>: only leader blocks must reference <code>n − f</code> blocks. Other blocks reference their own previous block and, optionally, leader blocks.</li>
+        <li>A round-<code>r+2</code> block <strong>claims</strong> <code>L</code> by naming it in its payload, or by referencing <code>n − f</code> votes for it.</li>
+        <li><strong>Direct commit</strong>: <code>n − f</code> claims for a leader-tagged <code>L</code>.</li>
+        <li><strong>Direct skip</strong>: <code>n − f</code> round-<code>r+1</code> blocks in view, and for each candidate <code>n − f</code> of them that omit it.</li>
+        <li><strong>Indirect</strong>: a claim for a tagged <code>L</code> in the anchor’s history.</li>
+      </ul>
+    </div>
+    <div class="text small">
+      <div class="body">
+        <figure class="dag">
+          <script type="application/json">{"w": "U3", "labels": false}</script>
+          <p class="caption">Mysticeti, <code>U3</code>: 3 references per block</p>
+        </figure>
+        <figure class="dag">
+          <script type="application/json">{"w": "BsU1", "rounds": [0, 3], "labels": false,
+            "marks": [{"ids": [0, 5, 10, 15], "cls": "leader"}]}</script>
+          <p class="caption">Bluestreak, <code>U1</code>: leader blocks (filled) reference 4</p>
+        </figure>
+      </div>
+      <div class="compare"><b>Compared with Mysticeti:</b> most blocks reference two blocks instead of <code>n − f</code>; a certificate is replaced by a claim, which only names the block.</div>
+      <div class="tradeoffs">
+        <div class="plus">Far fewer references per block. Three rounds at <code>n = 3f + 1</code>.</div>
+        <div class="minus">Blocks need not reference a quorum, so chain-quality coverage is not shown. Claims require a discipline (slide 39).</div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>roleClause</code> (LeanDag/Bluestreak/Rule.lean:45); <code>ValidWrt</code> with self-parent (:79). (informal) “At most two references” is a docstring (:77–78).</li>
+      <li><code>Claims</code> (:124), <code>claimers</code> (:131); <code>Commit = DirectCommitIn ∧ Tagged</code> (:138, 189); <code>DirectSkipIn</code> (:144);
+        <code>Link = ClaimedIn ∧ Tagged</code>, one rung, no tie (:192–194).</li>
+      <li><code>Quorate</code> is not shown for Bluestreak (LeanDag/Bluestreak/Carrier.lean:19–21).</li>
+      <li>Figures: <code>U3</code> (LeanDagTest/Mysticeti/Model.lean) has rounds 0–2 only; Bluestreak <code>U1</code> (LeanDagTest/Bluestreak/Model.lean:73) is drawn at rounds 0–3.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- Slide 37 -->
+<section class="slide" data-part-label="Protocols · Bluestreak">
+  <h2>Bluestreak: direct and indirect</h2>
+  <div class="body wide-fig">
+    <div class="text small">
+      <p><code>n = 4</code>, leader of slot <code>k</code> is <code>v(k mod 4)</code>.</p>
+      <ul>
+        <li data-step="1">Slot 0 has 3 votes but only 2 claims (blocks 8 and 10): not decided directly.</li>
+        <li data-step="1">Slots 1–3 are committed directly.</li>
+        <li data-step="3">The anchor, block 15, references block 8, which claims block 0: slot 0 is <strong>committed indirectly</strong>.</li>
+      </ul>
+    </div>
+    <figure class="dag">
+      <script type="application/json">{"w": "BsU1",
+        "marks": [{"ids": [0, 5, 10, 15, 16, 21], "cls": "leader"},
+                  {"ids": [4, 5, 7], "cls": "vote", "step": 1},
+                  {"ids": [15], "cls": "anchor", "step": 3}],
+        "strong": [{"from": [4, 5, 7], "to": [0], "step": 1},
+                   {"from": [10], "to": [4, 5, 7], "step": 2},
+                   {"from": [15], "to": [8], "step": 3}],
+        "claims": [{"from": 8, "to": 0, "step": 2}, {"from": 10, "to": 0, "step": 2}],
+        "badges": [{"r": 0, "text": "3 votes", "kind": "note", "step": 1},
+                   {"r": 1, "text": "commit", "kind": "commit", "step": 1},
+                   {"r": 2, "text": "commit", "kind": "commit", "step": 1},
+                   {"r": 3, "text": "commit", "kind": "commit", "step": 1},
+                   {"r": 0, "text": "2 claims < 3", "kind": "undecided", "step": 2, "row": 1},
+                   {"r": 0, "text": "indirect commit", "kind": "commit", "step": 3, "row": 2}]}</script>
+      <div class="legend"><span class="l-leader">leader-tagged block</span><span class="l-vote">vote for 0</span><span class="l-anchor">anchor 15</span><span>dotted: a claim for 0</span></div>
+      <p class="caption">Witness <code>U1</code>, ids <code>4·round + creator</code> (LeanDagTest/Bluestreak/Model.lean)</p>
+    </figure>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>U1</code> (LeanDagTest/Bluestreak/Model.lean:73): <code>Certified U1 0</code> (:84), <code>claimers U1 0 = {8, 10}</code> (:85),
+        no direct decision (:87), <code>U1_slot1/2/3</code> (:91–95), <code>U1_slot0</code> (:100).</li>
+      <li>Block 8 claims 0 in its payload; leader block 10 claims 0 by referencing its 3 votes 4, 5, 7.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- Slide 38 -->
+<section class="slide" data-part-label="Protocols · Bluestreak">
+  <h2>Bluestreak: an anchor must be committed</h2>
+  <div class="body">
+    <div class="text">
+      <ul>
+        <li>A claim names a block; the votes behind it need not be in the claimer’s history.</li>
+        <li data-step="2">A Byzantine block can claim a slot that a quorum skipped.</li>
+        <li data-step="3">So the indirect rule is safe only at a committed anchor: every committed anchor is certified, backed and leader-tagged. Of the rules here, only Bluestreak requires this field.</li>
+      </ul>
+    </div>
+    <figure class="dag">
+      <script type="application/json">{"w": "BsU2", "byz": [3],
+        "marks": [{"ids": [0, 5, 10, 15], "cls": "leader"},
+                  {"ids": [5, 6, 7], "cls": "blame", "step": 1},
+                  {"ids": [15], "cls": "anchor", "step": 3}],
+        "claims": [{"from": 11, "to": 0, "step": 2}],
+        "strong": [{"from": [15], "to": [11], "step": 3}],
+        "badges": [{"r": 0, "text": "skip", "kind": "skip", "step": 1},
+                   {"r": 3, "text": "15 not certified", "kind": "undecided", "step": 3}]}</script>
+      <div class="legend"><span class="l-leader">leader-tagged block</span><span class="l-blame">omits 0</span><span class="l-anchor">would-be anchor 15</span><span>dotted: claim by Byzantine block 11</span></div>
+      <p class="caption">Witness <code>U2</code> (LeanDagTest/Bluestreak/Model.lean)</p>
+    </figure>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>skip_link</code> (LeanDag/Common/Anchored.lean:324) has the premise <code>R.Anchor U A</code>; <code>bluestreakLaws</code> (LeanDag/Bluestreak/Safety.lean:183);
+        <code>Anchor = Certified ∧ Backed ∧ Tagged</code> (LeanDag/Bluestreak/Rule.lean:195), proved of committed anchors by <code>anchor_commit</code>,
+        <code>anchor_link</code> (Safety.lean:193–199). Default <code>Anchor = True</code> (Anchored.lean:118).</li>
+      <li><code>U2</code>: <code>DirectSkipIn</code> (LeanDagTest/Bluestreak/Model.lean:164), <code>ClaimedIn U2 15 0</code> (:167), <code>¬ Certified U2 15</code> (:168).
+        <code>U2</code> has no committed block. Validator 3 is Byzantine (<code>bsFaults2</code>); block 0 has one vote (block 4).</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- Slide 39 -->
+<section class="slide" data-part-label="Protocols · Bluestreak">
+  <h2>Bluestreak: the claim discipline</h2>
+  <div class="body stack">
+    <div class="text">
+      <ul>
+        <li>From round 2, a correct block’s claim must name a block certified exactly two rounds below.</li>
+        <li>Safety, liveness and every mechanism assume this discipline.</li>
+        <li>Read two rounds deep, the discipline is preserved by garbage collection.</li>
+      </ul>
+    </div>
+    <figure>
+      <table>
+        <tr><th>round <code>r</code></th><th>round <code>r + 1</code></th><th>round <code>r + 2</code></th></tr>
+        <tr>
+          <td><div class="flow vertical"><div class="box accent">block <code>L</code>, certified</div></div></td>
+          <td><div class="flow vertical"><div class="box"><code>n − f</code> votes for <code>L</code></div></div></td>
+          <td><div class="flow vertical"><div class="box">block <code>B</code>; its claim names <code>L</code></div></div></td>
+        </tr>
+        <tr><td colspan="3"><div class="flow vertical"><div class="box accent">the window of <code>B</code>’s claim: exactly two rounds below <code>B</code>, where <code>L</code> must be certified</div></div></td></tr>
+      </table>
+      <p class="caption">Illustration of <code>BackedClaim</code> and <code>Disciplined</code> (LeanDag/Bluestreak/Rule.lean)</p>
+    </figure>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>BackedClaim</code> (LeanDag/Bluestreak/Rule.lean:153), <code>Disciplined</code> (:175); <code>bluestreakLaws</code> under <code>Invariant := Disciplined</code>
+        (LeanDag/Bluestreak/Safety.lean:162–167); carrier is the <code>Disciplined</code> subtype (Carrier.lean:35); <code>ReactiveB.disciplined</code>
+        (LeanDag/Bluestreak/Reactive.lean:126); <code>disciplined_chop</code> (LeanDag/Bluestreak/Record.lean:50).</li>
+      <li>(informal) That the paper’s unbounded reading would make garbage collection impossible.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- Slide 40 -->
+<section class="slide" data-part-label="Protocols · Mahi-Mahi">
+  <h2>Mahi-Mahi</h2>
+  <div class="body stack">
+    <div class="text small">
+      <ul>
+        <li><code>n ≥ 3f + 1</code>. A wave of <code>w</code> rounds: propose at <code>r</code>, vote at <code>r + w − 2</code>, certify at <code>r + w − 1</code>. At <code>w = 3</code> this is Mysticeti.</li>
+        <li>A block <strong>votes</strong> for the least block of the leader’s round found in its history (not only among its direct references).</li>
+        <li>A direct skip blames the slot: the blamer has no block of the slot in its history.</li>
+        <li>The leader of a wave is revealed only after the wave, so the adversary cannot direct its message scheduling against it.</li>
+      </ul>
+    </div>
+    <figure>
+      <div class="flow">
+        <div class="box accent"><code>r</code>: proposal</div><div class="arrow">→</div>
+        <div class="box"><code>r + 1</code>, <code>r + 2</code>: propagation</div><div class="arrow">→</div>
+        <div class="box"><code>r + 3</code>: votes</div><div class="arrow">→</div>
+        <div class="box"><code>r + 4</code>: certificates</div><div class="arrow">→</div>
+        <div class="box accent">leader revealed</div>
+      </div>
+      <p class="caption">A wave at <code>w = 5</code></p>
+    </figure>
+    <div class="text small">
+      <div class="compare"><b>Compared with Mysticeti:</b> a longer wave, votes found anywhere in the history, a skip per slot, and an unpredictable leader.</div>
+      <div class="tradeoffs">
+        <div class="plus">Live with no timing assumption about the network.</div>
+        <div class="minus">More rounds per commit; it needs an unpredictable leader (a common coin).</div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>votingRound</code> (LeanDag/MahiMahi/Model/Rules.lean:34), <code>decisionRoundAt</code> (:40), <code>Votes</code> (:55), <code>Blames</code> (:63), <code>DirectSkip</code> (:110).</li>
+      <li><code>w = 3</code> equals Mysticeti: <code>DecidedConservative</code> (LeanDag/Steelhead/MahiMahiPair/Safety/Statement.lean:152).</li>
+      <li>Safety for <code>w ≥ 2</code> (<code>MahiMahiProperties.safety</code>, LeanDag/MahiMahi/Properties.lean:407); liveness for <code>w ≥ 4</code> (:315, 392).</li>
+      <li>Liveness hypothesis <code>UnpredictableWithin</code> (LeanDag/MahiMahi/Model/Unpredictable.lean:38). (informal) The coin itself is modelled only in the Steelhead arc.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- Slide 41 -->
+<section class="slide" data-part-label="Protocols · Mahi-Mahi">
+  <h2>Mahi-Mahi: votes and what a wave commits</h2>
+  <div class="body stack">
+    <div class="small">
+      <ul>
+        <li>At <code>w ≥ 4</code> a history can contain two twins of the leader; a block votes only for the least.</li>
+        <li>At <code>w ≥ 4</code>, once a correct quorum produces through the wave, some correct validator’s block is directly committed.</li>
+        <li>At <code>w ≥ 5</code>, at least <code>n − f − b</code> correct validators are <strong>good</strong>: their block would commit if chosen (<code>b</code> = number of Byzantine).</li>
+        <li>An adversary that knows the leader in advance can prevent the leader’s block from entering the other validators’ histories.</li>
+      </ul>
+    </div>
+    <div class="body">
+      <figure class="dag">
+        <script type="application/json">{"w": "twin4", "byz": [0],
+          "marks": [{"ids": [0, 4], "cls": "leader"}, {"ids": [4], "cls": "twin"}, {"ids": [8], "cls": "vote"}],
+          "paths": [{"ids": [8, 5, 0]}]}</script>
+        <p class="caption"><code>twin4</code> (LeanDagTest/MahiMahi/Model.lean)</p>
+      </figure>
+      <figure class="dag">
+        <script type="application/json">{"w": "aim4",
+          "marks": [{"ids": [5], "cls": "leader"}, {"ids": [13], "cls": "vote"}, {"ids": [12, 14, 15], "cls": "blame"}],
+          "paths": [{"ids": [13, 9, 5]}],
+          "hulls": [{"ids": [4, 6, 7]}],
+          "badges": [{"r": 1, "text": "w = 4: skip", "kind": "skip"},
+                     {"r": 1, "text": "w = 5: commit", "kind": "commit", "row": 1}]}</script>
+        <p class="caption"><code>aim4</code> (LeanDagTest/MahiMahi/Counting.lean)</p>
+      </figure>
+      <div class="text small">
+        <ul>
+          <li><code>twin4</code>: twins 0 and 4 lie in block 8’s history; 8 votes for 0.</li>
+          <li><code>aim4</code>: block 5 enters no other history up to round 3. Good at <code>w = 4</code>: <code>{0, 2, 3}</code> (shaded); at <code>w = 5</code>: all.</li>
+        </ul>
+        <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-blame">blame</span></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>twin4</code> (LeanDagTest/MahiMahi/Model.lean:151, 159, 162–163).</li>
+      <li><code>GoodNonempty</code> (LeanDag/MahiMahi/Counting/Statement.lean:47); <code>GoodCard</code> (:67, 81): <code>n − f ≤ |goodAt ∩ Correct| + |byzantine|</code>;
+        <code>goodAt</code> (LeanDag/MahiMahi/Model/Good.lean:29).</li>
+      <li><code>goodAt aim4 4 1 = {0, 2, 3}</code> (LeanDagTest/MahiMahi/Counting.lean:84); <code>goodAt aim4 5 1 = univ</code> (:102);
+        <code>¬ UnpredictableWithin aim4 4 1 5</code> with a fair schedule (LeanDagTest/MahiMahi/Liveness.lean:71, 82).</li>
+      <li>In <code>aim4</code> slot 1 (block 5) is directly skipped at <code>w = 4</code>: only block 13 votes, blocks 12, 14, 15 blame; at <code>w = 5</code> it is committed.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- Slide 42 -->
+<section class="slide" data-part-label="Protocols · Mahi-Mahi">
+  <h2>Mahi-Mahi: what the formalisation found</h2>
+  <div class="body">
+    <div class="text small">
+      <ul>
+        <li>The paper counts all <code>n − f</code> validators in the common core as good. Twins of Byzantine leaders can split the votes, so the proved count is <code>n − f − b</code>.</li>
+        <li>Proved commit probability per wave, at <code>w ≥ 5</code>: at least <code>(n − f − b)/n</code>, which is always at least <code>1/3</code>. At <code>n = 4</code>, <code>f = b = 1</code>: <code>1/2</code>.</li>
+        <li><code>2f + 1</code> leader slots per round guarantee a commit at <code>w ≥ 5</code>.</li>
+        <li>Mysticeti skips per candidate; Mahi-Mahi skips per slot.</li>
+      </ul>
+    </div>
+    <figure class="chart">
+      <script type="application/json">{"type": "bars", "max": 1,
+        "groups": [{"label": "n = 4, f = b = 1", "bars": [{"label": "3/4", "value": 0.75, "alt": true}, {"label": "1/2", "value": 0.5}]},
+                   {"label": "large n", "bars": [{"label": "2/3", "value": 0.6667, "alt": true}, {"label": "1/3", "value": 0.3333}]}]}</script>
+      <p class="caption">Commit probability per wave: grey, the paper’s <code>(2f + 1)/n</code>; blue, the proved bound</p>
+    </figure>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>GoodCard</code> as above. <code>CommitProbability</code> (LeanDag/Steelhead/MahiMahiPair/Coin/Statement.lean:193): <code>(n − f − b)/n ≤ commitProb</code> and
+        <code>1/3 ≤ commitProb</code> at <code>wa ≥ 5</code>; at <code>w = 4</code> only <code>1/n</code> (<code>CommitProbabilityFour</code>, :205).</li>
+      <li><code>MultiLeader</code> (LeanDag/MahiMahi/Counting/Statement.lean:88) proves <code>2f + 1</code> suffice. (informal) The paper’s <code>f + 1</code> and <code>2/3</code>.</li>
+      <li><code>DirectSkip</code> (Rules.lean:106–112); <code>mahiMahiAnchored</code> (LeanDag/MahiMahi/Model/Decision.lean:60).</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- Slide 43 -->
+<section class="slide" data-part-label="Protocols · Async BlueBottle">
+  <h2>Async BlueBottle</h2>
+  <div class="body">
+    <div class="text small">
+      <ul>
+        <li><code>n ≥ 5f + 1</code>. Propose at <code>r</code>; vote and decide at <code>r + 2</code>, with votes found in the history as in Mahi-Mahi; no certificates.</li>
+        <li><strong>Direct commit</strong>: <code>n − f</code> votes. <strong>Direct skip</strong>: <code>n − f</code> blames.</li>
+        <li><strong>Indirect</strong>: <code>n − 3f</code> voters in the anchor’s history; the least passing candidate is committed.</li>
+        <li>The leader is unpredictable, as in Mahi-Mahi.</li>
+      </ul>
+      <div class="compare"><b>Compared with Odontoceti:</b> the vote round moves from <code>r + 1</code> to <code>r + 2</code> and votes are found anywhere in the history, so that the rule is live with an unpredictable leader.</div>
+      <div class="tradeoffs">
+        <div class="plus">Live with no timing assumption, three rounds per wave; commit probability at least <code>(n − 3f)/n</code> per wave.</div>
+        <div class="minus">Six validators per fault and an unpredictable leader.</div>
+      </div>
+    </div>
+    <figure>
+      <div class="columns3">
+        <div class="col"><h3>round <code>r</code></h3>
+          <div class="flow vertical"><div class="box accent"><code>v0</code></div><div class="box accent"><code>v1</code>: <code>L</code></div><div class="box accent"><code>v2</code></div><div class="box accent"><code>v3</code></div><div class="box accent"><code>v4</code></div><div class="box accent"><code>v5</code></div></div></div>
+        <div class="col"><h3>round <code>r + 1</code></h3>
+          <div class="flow vertical"><div class="box accent"><code>v0</code></div><div class="box accent"><code>v1</code></div><div class="box accent"><code>v2</code></div><div class="box accent"><code>v3</code></div><div class="box accent"><code>v4</code></div><div class="box"><code>v5</code></div></div></div>
+        <div class="col"><h3>round <code>r + 2</code></h3>
+          <div class="flow vertical"><div class="box accent"><code>v0</code>: votes for <code>L</code></div><div class="box"><code>v1</code></div><div class="box"><code>v2</code></div><div class="box"><code>v3</code></div><div class="box"><code>v4</code></div><div class="box"><code>v5</code></div></div></div>
+      </div>
+      <p class="caption">Illustration at <code>n = 6</code>: shaded, the history of <code>v0</code>’s round-<code>r+2</code> block, which references <code>n − f = 5</code> blocks of round <code>r + 1</code>. <code>L</code> lies in it, so the block votes for <code>L</code>.</p>
+    </figure>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>card_validators5</code> (LeanDag/Odontoceti/Rules.lean:35); <code>AsyncBlueBottle.decisionRoundAt</code> (LeanDag/AsyncBlueBottle/Model/Rules.lean:35),
+        <code>voters</code> (:44), <code>DirectCommit</code> (:69), <code>DirectSkip</code> (:76), <code>coneSupporters</code> (:92), <code>WeakLink</code> (:99);
+        <code>tie = (&lt;)</code> (LeanDag/AsyncBlueBottle/Model/Decision.lean:58).</li>
+      <li><code>CommitProbability</code> (LeanDag/Steelhead/BlueBottlePair/Coin/Statement.lean:76).</li>
+      <li><code>SkipsUnsupported</code> is not established for this rule.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- Slide 44 -->
+<section class="slide" data-part-label="Protocols · Async BlueBottle">
+  <h2>Async BlueBottle: witnesses</h2>
+  <div class="body stack">
+    <div class="small">
+      <ul>
+        <li><code>n = 6</code>: the leader’s block enters no history but its own. Five blames: <strong>direct skip</strong>. The schedule is fair, but the leader was known in advance.</li>
+        <li>Two twins can both pass the <code>n − 3f</code> test at one anchor: the least must be chosen.</li>
+        <li>The paper’s procedure skips per candidate, which can skip one twin while the other is committed.</li>
+      </ul>
+    </div>
+    <div class="body">
+      <figure class="dag">
+        <script type="application/json">{"w": "aim6", "rounds": [0, 3], "roundNames": {"3": ""},
+          "marks": [{"ids": [1], "cls": "leader"}, {"ids": [13], "cls": "vote"}, {"ids": [12, 14, 15, 16, 17], "cls": "blame"}],
+          "paths": [{"ids": [13, 7, 1]}],
+          "badges": [{"r": 0, "text": "skip: 5 blames", "kind": "skip"}]}</script>
+        <p class="caption"><code>aim6</code> (…/AsyncBlueBottle/Model.lean)</p>
+      </figure>
+      <figure class="dag">
+        <script type="application/json">{"w": "twin6", "rounds": [0, 3], "byz": [0],
+          "marks": [{"ids": [0, 6], "cls": "leader"}, {"ids": [6], "cls": "twin"}, {"ids": [13, 14, 15, 16, 17, 18], "cls": "vote"}, {"ids": [19], "cls": "anchor"}],
+          "strong": [{"from": [19]}],
+          "badges": [{"r": 0, "text": "0 and 6 both pass: 3 ≥ 3", "kind": "note"}]}</script>
+        <p class="caption"><code>twin6</code> (…/AsyncBlueBottle/Twins.lean)</p>
+      </figure>
+      <figure class="dag">
+        <script type="application/json">{"w": "hazard6", "rounds": [0, 3], "roundNames": {"3": ""}, "byz": [0],
+          "marks": [{"ids": [0, 6], "cls": "leader"}, {"ids": [6], "cls": "twin"}, {"ids": [13, 14, 15, 16, 17, 18], "cls": "vote"}],
+          "badges": [{"r": 0, "text": "0: commit", "kind": "commit"}, {"r": 2, "text": "6: skip, per candidate", "kind": "skip"}]}</script>
+        <p class="caption"><code>hazard6</code> (…/AsyncBlueBottle/Twins.lean)</p>
+      </figure>
+    </div>
+  </div>
+  <div class="legend"><span class="l-leader">leader block (twins: 0, 6)</span><span class="l-vote">vote (for the least twin in its history)</span><span class="l-blame">blame</span><span class="l-anchor">anchor 19</span></div>
+  <aside class="notes">
+    <ul>
+      <li><code>aim6</code> (LeanDagTest/AsyncBlueBottle/Model.lean:132, 147–154): blamer blocks 12, 14, 15, 16, 17; only block 13 votes;
+        <code>roundRobin_fair</code>, <code>aim6_not_unpredictable</code> (LeanDagTest/AsyncBlueBottle/Liveness.lean:85, 74).</li>
+      <li><code>twin6_both_pass</code> (LeanDagTest/AsyncBlueBottle/Twins.lean:109): blocks 13–15 vote for 0, blocks 16–18 for 6, and anchor 19 sees all six;
+        <code>twin6_slot0</code> (:124). <code>hazard6_commit</code> (:177), <code>hazard6_skipped_twin</code> (:182): every round-2 history holds both twins and votes for 0.</li>
+      <li>A direct commit at exactly the quorum: witness <code>five6</code> (Model.lean).</li>
+      <li><code>GoodCard</code> at <code>n − 3f</code>, every <code>n ≥ 5f + 1</code> (LeanDag/AsyncBlueBottle/Counting/Statement.lean:69).</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- Slide 45 -->
+<section class="slide" data-part-label="Protocols · Steelhead">
+  <h2>Steelhead</h2>
+  <div class="body">
+    <div class="text small">
+      <ul>
+        <li>Each slot has a <strong>kind</strong>: synchronous (a known leader, short wave <code>ws</code>) or asynchronous (an unpredictable leader, long wave <code>wa</code>).</li>
+        <li>A slot is decided by the rule of its kind, at its own wave; its anchor lies at or above <code>round + w(kind)</code>.</li>
+        <li>A <strong>period</strong> <code>P</code> sets the kinds: round <code>r</code> is asynchronous when <code>r mod P = 0</code>. The period is adapted at intervals of <code>I</code> rounds.</li>
+        <li>Two instances: Mysticeti with Mahi-Mahi (<code>n ≥ 3f + 1</code>, waves 3 and <code>wa ≥ 4</code>), and Odontoceti with Async BlueBottle (<code>n ≥ 5f + 1</code>, waves 2 and 3).</li>
+      </ul>
+      <div class="compare"><b>Compared with Mysticeti:</b> two rules on one DAG, chosen per slot, and a controller that chooses how often the asynchronous rule runs.</div>
+      <div class="tradeoffs">
+        <div class="plus">Short waves while the network is synchronous; liveness under asynchrony.</div>
+        <div class="minus">Two rules, a coin, a period controller, and a failover (slide 47).</div>
+      </div>
+    </div>
+    <figure>
+      <table class="compact">
+        <tr><th>round</th><th>kind at <code>P = 3</code></th><th>slot 0</th><th>slot 1</th></tr>
+        <tr><td>0</td><td><strong>asynchronous</strong></td><td rowspan="5"><div class="flow vertical"><div class="box accent">wave <code>wa = 5</code>: rounds 0–4</div></div></td><td></td></tr>
+        <tr><td>1</td><td>synchronous</td><td rowspan="3"><div class="flow vertical"><div class="box">wave <code>ws = 3</code>: rounds 1–3</div></div></td></tr>
+        <tr><td>2</td><td>synchronous</td></tr>
+        <tr><td>3</td><td><strong>asynchronous</strong></td></tr>
+        <tr><td>4</td><td>synchronous</td><td>anchor ≥ round 4</td></tr>
+        <tr><td>5</td><td>synchronous</td><td>anchor ≥ round 5</td><td></td></tr>
+        <tr><td>6</td><td><strong>asynchronous</strong></td><td></td><td></td></tr>
+      </table>
+      <p class="caption">Illustration of <code>periodicKind</code> at <code>P = 3</code>, pair Mysticeti with Mahi-Mahi (<code>ws = 3</code>, <code>wa = 5</code>)</p>
+    </figure>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>wavelength</code> (LeanDag/Steelhead/Model/Wavelength.lean:40); <code>periodicKind</code>, <code>IsAsync</code> (:48, 59); <code>steelheadAnchored</code>
+        (LeanDag/Steelhead/Model/Decision.lean:48–54, <code>waveAt = w κ − 1</code>); <code>compose</code> (LeanDag/Steelhead/Model/Compose.lean:31);
+        <code>mahiMahiPair</code>, <code>blueBottlePair</code> (LeanDag/Steelhead/Model/Pair.lean:43, 52); <code>pair_tie</code> (least, for the <code>5f + 1</code> pair; LeanDag/Steelhead/Helpers/BlueBottlePair.lean).</li>
+      <li><code>PeriodAt</code> (LeanDag/Steelhead/Model/Period.lean); <code>anchorUpdate</code> (LeanDag/Steelhead/Model/Replay.lean:310) is one update rule; any is allowed.</li>
+      <li>Reading the anchor floor at <code>ws</code> for every slot is unsafe: <code>lowFloor</code> (LeanDagTest/Steelhead/Model.lean:170, 188, 194).</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- Slide 46 -->
+<section class="slide" data-part-label="Protocols · Steelhead">
+  <h2>Steelhead: the stall</h2>
+  <div class="body wide-fig">
+    <div class="text small">
+      <ul>
+        <li data-step="1">At any period <code>P ≥ ws</code>, an adversary delivers each synchronous leader’s block to exactly <code>f + 1</code> validators. Neither a commit nor a skip quorum forms.</li>
+        <li data-step="2">The synchronous slot just below each asynchronous round is then undecided in every view, and the output does not advance beyond it.</li>
+        <li data-step="3">A committed asynchronous slot does not decide the synchronous slots below it.</li>
+        <li data-step="3">At period 1 every slot is proved to be decided.</li>
+      </ul>
+    </div>
+    <figure class="dag">
+      <script type="application/json">{"w": "st20", "byz": [0],
+        "roundNames": {"0": "0 · async", "1": "1 · sync", "2": "2 · sync", "3": "3 · sync", "4": "4 · async"},
+        "marks": [{"ids": [1, 6, 11, 12], "cls": "leader"},
+                  {"ids": [9, 10, 14, 15, 16, 17], "cls": "vote", "step": 1},
+                  {"ids": [16, 17, 18, 19], "cls": "cert", "step": 3}],
+        "strong": [{"from": [9, 10], "to": [6], "step": 1},
+                   {"from": [14, 15], "to": [11], "step": 1},
+                   {"from": [16, 17], "to": [12], "step": 1}],
+        "badges": [{"r": 1, "text": "2 votes", "kind": "note", "step": 1},
+                   {"r": 2, "text": "2 votes", "kind": "note", "step": 1},
+                   {"r": 3, "text": "2 votes", "kind": "note", "step": 1},
+                   {"r": 0, "text": "commit", "kind": "commit", "step": 3},
+                   {"r": 3, "text": "undecided", "kind": "undecided", "step": 2, "row": 1}]}</script>
+      <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote for the synchronous leader one round below</span><span class="l-cert">certifies slot 0’s block 1 (wave 5)</span></div>
+      <p class="caption">Witness <code>st20</code>, period 4, <code>n = 4</code> (LeanDagTest/Steelhead/Counterexamples/Stall.lean)</p>
+    </figure>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>Stall</code> (LeanDag/Steelhead/MahiMahiPair/Liveness/Statement.lean:611): slots at rounds <code>≡ P − 1 (mod P)</code> are never decided, under
+        “no synchronous certificate and no synchronous direct skip”. <code>AllDecidedBelowAtPeriodOne</code> (:639). Nothing is stated for period 2.</li>
+      <li><code>st20</code> (LeanDagTest/Steelhead/Counterexamples/Stall.lean:70, 101–117, <code>st20_slot0</code> :129, <code>st20_stall_view</code> :170):
+        candidates 6, 11, 12 have voters {9, 10}, {14, 15}, {16, 17}; round 4 certifies block 1. Validator 0 is Byzantine.</li>
+      <li><code>rt_stall</code> (LeanDagTest/Steelhead/Counterexamples/RotatingStall.lean:270).</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- Slide 47 -->
+<section class="slide" data-part-label="Protocols · Steelhead">
+  <h2>Steelhead: control and failover</h2>
+  <div class="body">
+    <div class="text small">
+      <ul>
+        <li>The period is changed by a second verdict, read at the asynchronous <strong>control</strong> slots of each interval.</li>
+        <li><strong>Failover</strong>: when the anchor is more than <code>I</code> rounds above the last committed output, the next interval runs at period 1.</li>
+        <li>Under failover a stalled slot is decided almost surely. The probability it is still undecided after <code>M</code> blocks, each of <code>wa·K</code> coins, is at most
+          <code>2 · ((n<sup>wa·K</sup> − (n − f − b)<sup>wa·K</sup>) / n<sup>wa·K</sup>)<sup>⌊M/2⌋</sup></code>, where <code>b</code> is the number of Byzantine validators and <code>K</code> bounds the period.</li>
+      </ul>
+    </div>
+    <figure>
+      <figure class="chart">
+        <script type="application/json">{"type": "lines", "xs": ["0–7", "8–15", "16–23", "24–31"], "ymin": 0, "ymax": 4, "yticks": [1, 2, 3, 4],
+          "xlabel": "interval (rounds), I = 8", "ylabel": "period P",
+          "series": [{"name": "period", "ys": [4, 4, 1, 1]}]}</script>
+      </figure>
+      <table class="compact">
+        <tr><th>interval</th><th>event</th></tr>
+        <tr><td>1</td><td>anchor at round 12; last commit at round 0, and <code>0 + 8 &lt; 12</code>: failover</td></tr>
+        <tr><td>2</td><td>period 1; anchor at round 17</td></tr>
+        <tr><td>3</td><td>the coin names a committed candidate at rounds 25–29; slot 3 is decided in a view holding round 33</td></tr>
+      </table>
+      <p class="caption">Witness <code>Failover</code> on <code>rtDag</code> (LeanDagTest/Steelhead/Failover.lean)</p>
+    </figure>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>ControlDecided</code>, <code>controlRound</code>, <code>controlSlots</code> (LeanDag/Steelhead/Model/Chain.lean:79–129); <code>PeriodAt.anchor</code> (Model/Period.lean:144);
+        <code>PeriodOne</code> (LeanDag/Steelhead/MahiMahiPair/Period/Statement.lean:277).</li>
+      <li><code>UndecidedTail</code> (LeanDag/Steelhead/MahiMahiPair/Coin/Statement.lean:277), <code>badBlockBound</code> (:265); <code>K</code> is the period bound;
+        hypotheses <code>5 ≤ wa</code>, <code>K ≤ I</code>, <code>wa ≤ I</code>, <code>wa·K ≤ q·I</code>; <code>DecidedAlmostSurely</code> (:461).</li>
+      <li><code>rt_failover</code>, <code>rt_recovers</code> (LeanDagTest/Steelhead/Failover.lean:345, 384); <code>rtPer</code>: periods 4, 4, 1, 1; the coin names validator 2 at every round;
+        anchors <code>rt_anchor0/1/2</code> at rounds 4, 12, 17 (:196, 211, 225).</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- Slide 48 -->
+<section class="slide" data-part-label="Protocols · Steelhead">
+  <h2>Steelhead: what the formalisation found</h2>
+  <div class="body">
+    <div class="text">
+      <ul>
+        <li>The paper’s period update alone retains a stalled period; liveness requires the failover.</li>
+        <li>An equivocating leader at a slot’s anchor floor can hold the slot undecided.</li>
+        <li>The interval must satisfy <code>I ≥ 2·maxPeriod</code> and <code>I ≥ maxPeriod + wa − 2</code>.</li>
+        <li>In the paper’s timeout appendix, with exactly one vote missing, a certificate forms with probability <code>f/n</code>, not <code>(n − f)/n</code>.</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <ul>
+      <li><code>anchorUpdate_half_retains</code> (LeanDag/Steelhead/Helpers/Replay.lean:821); <code>rt_update_four</code>, <code>rt_no_output_above_two</code> (RotatingStall.lean:287, 302).</li>
+      <li><code>bf30_slot0_undecided</code> (LeanDagTest/Steelhead/Counterexamples/ByzantineFloor.lean:184).</li>
+      <li><code>TwoAsyncRounds</code>, <code>TwoAsyncRoundsInWindow</code> (Period/Statement.lean:295, 379); <code>WindowResolves</code> (:336);
+        <code>rw44_keeps_two</code> (LeanDagTest/Steelhead/Counterexamples/ReplayShortWindow.lean:98).</li>
+      <li><code>CertProbEdges</code> (LeanDag/Steelhead/MahiMahiPair/Timeout/Statement.lean:43).</li>
+      <li>(informal) How many findings the paper adopted.</li>
+    </ul>
+  </aside>
+</section>

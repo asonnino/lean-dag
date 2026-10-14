@@ -203,7 +203,8 @@ example : ¬ SPCommit Dbare 0 := by decide
 example : ∀ b ∈ blocksAt Dbare 2, FPEvidence Dbare b 0 := by decide
 
 /-- **The anchor commits through evidence alone**: the round-3 leader block
-reaches six evidence blocks of distinct authors, and no certificate. -/
+references seven evidence blocks of distinct authors, at least `2f + p = 6`,
+and reaches no certificate. -/
 example : IndirectCommitOn fwSched Dbare 30 0 0 := by decide
 
 example : ¬ ∃ c ∈ blocksAt Dbare 2, c ∈ historyFrom Dbare.block 30 ∧ SPCertificate Dbare c 0 := by
