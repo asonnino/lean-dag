@@ -1,0 +1,63 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Layout audit</title></head>
+<body><pre id="out">running</pre>
+<iframe id="f" src="../index.html" style="width:1300px;height:740px;border:0"></iframe>
+<script>
+// Loads the deck, visits every slide at every step, and reports:
+//  overflow  — an element extends outside the slide box
+//  overlap   — two text blocks of the slide intersect
+//  small     — a DAG figure whose block labels render below 11 px
+//  sparse    — content occupies less than 45% of the slide height
+const out = document.getElementById("out");
+document.getElementById("f").addEventListener("load", () => setTimeout(run, 1500));
+function rect(e) { return e.getBoundingClientRect(); }
+function run() {
+  const w = document.getElementById("f").contentWindow, d = w.document;
+  const slides = [...d.querySelectorAll("section.slide")];
+  const lines = [];
+  slides.forEach((s, i) => {
+    const n = s.dataset.number || `p${i + 1}`;
+    // visit the final step (all elements visible) and step 0
+    for (const step of [99, 0]) {
+      w.location.hash = `#p${i + 1}.${step}`;
+      w.dispatchEvent(new w.HashChangeEvent("hashchange"));
+      const sb = rect(s);
+      const scale = sb.width / 1280;
+      const issues = [];
+      const els = s.querySelectorAll("h2, p, li, table, figure, svg, .flow, .uses, .compare, .tradeoffs, pre, .caption, .legend");
+      let bottom = 0;
+      els.forEach((e) => {
+        if (e.closest(".notes") || e.classList.contains("step-hidden") || e.closest(".step-hidden")) return;
+        const r = rect(e);
+        if (r.width === 0 || r.height === 0) return;
+        bottom = Math.max(bottom, r.bottom);
+        const tol = 2 * scale;
+        if (r.right > sb.right + tol || r.left < sb.left - tol || r.bottom > sb.bottom - 30 * scale + tol || r.top < sb.top - tol)
+          issues.push(`overflow ${e.tagName.toLowerCase()}${e.className && typeof e.className === "string" ? "." + e.className.split(" ")[0] : ""} (${Math.round((r.bottom - sb.bottom) / scale)}px below)`);
+      });
+      // overlaps between top-level blocks of the body
+      const blocks = [...s.querySelectorAll(".body > *, .body > * > *")].filter((e) => !e.closest(".notes") && !e.closest(".step-hidden") && rect(e).height > 0);
+      for (let a = 0; a < blocks.length; a++) for (let b = a + 1; b < blocks.length; b++) {
+        if (blocks[a].contains(blocks[b]) || blocks[b].contains(blocks[a])) continue;
+        const A = rect(blocks[a]), B = rect(blocks[b]);
+        const ix = Math.min(A.right, B.right) - Math.max(A.left, B.left), iy = Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top);
+        if (ix > 6 * scale && iy > 6 * scale) issues.push(`overlap ${blocks[a].tagName.toLowerCase()} / ${blocks[b].tagName.toLowerCase()}`);
+      }
+      if (step === 99) {
+        s.querySelectorAll("svg.dag").forEach((g, k) => {
+          const t = g.querySelector(".block text");
+          if (!t) return;
+          const vb = g.viewBox.baseVal;
+          const k2 = Math.min(rect(g).width / vb.width, rect(g).height / vb.height);
+          const px = (parseFloat(w.getComputedStyle(t).fontSize) * k2) / scale;
+          if (px < 11) issues.push(`small dag#${k + 1} labels ${px.toFixed(1)}px`);
+        });
+        const used = (bottom - sb.top) / sb.height;
+        if (!s.classList.contains("part") && !s.classList.contains("title-slide") && used < 0.45) issues.push(`sparse ${Math.round(used * 100)}%`);
+      }
+      if (issues.length) lines.push(`${n}${step === 0 ? " (step 0)" : ""}: ${[...new Set(issues)].join("; ")}`);
+    }
+  });
+  out.textContent = "DONE\n" + lines.join("\n");
+}
+</script></body></html>

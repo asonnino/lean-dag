@@ -521,11 +521,6 @@ example : DirectCommit U3 0 0 := by decide</pre>
           <line class="edge strong" x1="310" y1="311" x2="380" y2="347"/>
         </g>
         <g>
-          <text class="row-label" x="190" y="14">crash faults only, two rounds</text>
-          <text class="row-label" x="190" y="74">a larger committee, two rounds</text>
-          <text class="row-label" x="190" y="134">a fast commit beside the slow one</text>
-          <text class="row-label" x="190" y="230">fewer references per block</text>
-          <text class="row-label" x="190" y="290">no timing assumption</text>
         </g>
         <g class="block leader"><rect x="0" y="165" width="100" height="34" rx="5"/><text x="50" y="182">Mysticeti</text></g>
         <g class="block"><rect x="190" y="20" width="120" height="30" rx="5"/><text x="250" y="35">Nemo-Nemo</text></g>
@@ -539,7 +534,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
         <g class="block"><rect x="380" y="236" width="140" height="30" rx="5"/><text x="450" y="251">Async BlueBottle</text></g>
         <g class="block"><rect x="380" y="332" width="140" height="30" rx="5"/><text x="450" y="347">Steelhead</text></g>
       </svg>
-      <figcaption class="caption">Each line joins a rule to the rule it changes; the label names the change.</figcaption>
+      <figcaption class="caption">Each line joins a rule to the rule it changes; the table names the change.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -589,7 +584,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
     </div>
     <figure class="dag">
       <script type="application/json">
-      {"w": "U3",
+      {"w": "U3", "byz": [0],
        "marks": [
          {"ids": [0, 3], "cls": "leader"},
          {"ids": [4, 5, 6], "cls": "vote", "step": 1},
@@ -628,7 +623,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
     </div>
     <figure class="dag">
       <script type="application/json">
-      {"w": "U7",
+      {"w": "U7", "byz": [0],
        "marks": [
          {"ids": [0], "cls": "leader"},
          {"ids": [4, 5, 6], "cls": "vote", "step": 1},
@@ -1415,7 +1410,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="text small">
       <div class="body">
         <figure class="dag">
-          <script type="application/json">{"w": "U3", "labels": false}</script>
+          <script type="application/json">{"w": "U3", "labels": false, "byz": [0]}</script>
           <p class="caption">Mysticeti, <code>U3</code>: 3 references per block</p>
         </figure>
         <figure class="dag">
@@ -1611,7 +1606,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
         <p class="caption"><code>twin4</code> (LeanDagTest/MahiMahi/Model.lean)</p>
       </figure>
       <figure class="dag">
-        <script type="application/json">{"w": "aim4",
+        <script type="application/json">{"w": "aim4", "rounds": [1, 3],
           "marks": [{"ids": [5], "cls": "leader"}, {"ids": [13], "cls": "vote"}, {"ids": [12, 14, 15], "cls": "blame"}],
           "paths": [{"ids": [13, 9, 5]}],
           "hulls": [{"ids": [4, 6, 7]}],
@@ -2868,7 +2863,6 @@ example : DirectCommit U3 0 0 := by decide</pre>
         <li>Keep the blocks of rounds <code>≥ G</code> and renumber round <code>G</code> as round 0, with no references. The result is again a valid DAG.</li>
         <li>Slot <code>d + k</code> of the full DAG and slot <code>k</code> of the cut DAG have the same verdict.</li>
       </ul>
-      <div class="uses"><b>Uses:</b> Banded, Agree, and Law 1 of the support. <b>Gives:</b> the same verdicts and liveness after the cut, and constant storage (next slide).</div>
     </div>
     <div class="body">
       <figure class="dag">
@@ -2889,6 +2883,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
       </figure>
     </div>
     <figcaption class="caption">Witness <code>Uexcl</code> (left) and <code>chop Uexcl 2</code> (right), LeanDagTest/GC/Chop.lean. With <code>G = 2</code> and <code>d = 1</code>, slot 1 of <code>Uexcl</code> is slot 0 of the cut; block 11 is committed in both.</figcaption>
+    <div class="uses"><b>Uses:</b> Banded, Agree, and Law 1 of the support. <b>Gives:</b> the same verdicts and liveness after the cut, and constant storage (next slide).</div>
   </div>
   <aside class="notes">
     <p><code>BlockRecord.chop</code> (LeanDag/Common/Record/Chop.lean:20); <code>Slots.chop</code> (LeanDag/GC/ChopDecided.lean:34); <code>decided_chop_iff</code> (LeanDag/Properties/Arcs/Record.lean:39, premise <code>G ≤ slotRound d</code>); <code>decided_agree_chop</code> (:46); <code>decided_agree_horizons</code> (LeanDag/Properties/Arcs/GC.lean:60); <code>chop_chop</code> (LeanDag/GC/Horizon.lean:57).</p>
@@ -3125,7 +3120,6 @@ example : DirectCommit U3 0 0 := by decide</pre>
         <li>Procedure: (1) join from the attested base to read; (2) re-genesis to write; (3) one fill message from the genesis block to the current round.</li>
         <li>While a quorum still produces blocks, at most <code>f</code> validators can be in this state at once.</li>
       </ul>
-      <div class="uses"><b>Uses:</b> Banded, Agree, Law 1, and the attested base (slide 78). <b>Gives:</b> a validator back in production after any outage.</div>
     </div>
     <div class="body">
       <figure class="dag" data-step="1">
@@ -3151,6 +3145,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
       </figure>
     </div>
     <figcaption class="caption">Witness <code>Ucrash 2</code> cut at round 1 (LeanDagTest/Integration/Model.lean), <code>n = 4</code>: validator 3 crashed after its round-0 block.</figcaption>
+    <div class="uses"><b>Uses:</b> Banded, Agree, Law 1, and the attested base (slide 78). <b>Gives:</b> a validator back in production after any outage.</div>
   </div>
   <aside class="notes">
     <p><code>no_blocks_of_no_genesis</code>, <code>severed_of_pruned_anchor</code> (LeanDag/Integration/Retention.lean:44, 65); <code>BlockRecord.addGenesis</code> (LeanDag/Common/Record/Genesis.lean:20); <code>addGenesis_of_severed</code> (LeanDag/Integration/ReGenesis.lean:95); <code>recoveryMsg</code>, <code>hB1uniq_of_addGenesis</code>, <code>rejoin_populated</code> (ReGenesis.lean); <code>card_severed_le</code> (LeanDag/Integration/Margin.lean:40).</p>

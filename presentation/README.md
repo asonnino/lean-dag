@@ -30,6 +30,17 @@ Rebuild after editing a part or a witness:
     python3 presentation/tools/build.py
 
 `tools/preview.sh` screenshots slides of one part file with headless Chrome.
+`tools/sheet.html?from=1&count=12` shows twelve slides at their final step as
+a contact sheet. `tools/layout-audit.html` visits every slide at every step and
+lists elements outside the slide, overlapping blocks, figure labels below
+11 px and sparse slides; run it with
+
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
+      --allow-file-access-from-files --virtual-time-budget=30000 \
+      --dump-dom "file://$PWD/presentation/tools/layout-audit.html"
+
+Slide numbers in the footer and in links (`#59`, `#59.2` for a step) count the
+content slides, as the outline does; part dividers are not numbered.
 
 ## Slide markup
 

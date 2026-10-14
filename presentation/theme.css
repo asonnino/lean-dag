@@ -113,6 +113,8 @@ html, body {
 .slide .body.stack { flex-direction: column; gap: 18px; }
 .slide .body.stack > figure { flex: 1 1 auto; min-height: 0; }
 .slide .body.stack > .text { flex: 0 0 auto; }
+/* The Uses / Gives line closes every mechanism slide, wherever it sits in the markup. */
+.slide .body.stack > .uses { order: 99; }
 .slide figure { margin: 0; }
 .slide .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
 .slide .body.wide-fig > .text { flex: 0 1 38%; }
@@ -268,8 +270,8 @@ svg.dag.size-xs, svg.chart.size-xs { max-height: 170px; }
 svg.dag.size-s, svg.chart.size-s { max-height: 250px; }
 svg.dag.size-m, svg.chart.size-m { max-height: 350px; }
 svg.dag.size-l, svg.chart.size-l { max-height: 460px; }
-svg.dag .row-label { font-size: 14px; fill: var(--muted); }
-svg.dag .round-label { font-size: 13px; fill: var(--muted); }
+svg.dag .row-label { font-size: 16px; fill: var(--muted); }
+svg.dag .round-label { font-size: 15px; fill: var(--muted); }
 svg.dag .row-byz { fill: var(--byz-row); }
 svg.dag .crash-mark { stroke: var(--crash); stroke-width: 2.5; }
 svg.dag .edge { stroke: var(--edge); stroke-width: 1.2; fill: none; }
@@ -277,7 +279,7 @@ svg.dag .edge.strong { stroke: var(--edge-strong); stroke-width: 2; }
 svg.dag .edge.path { stroke: var(--anchor); stroke-width: 3; }
 svg.dag .edge.claim { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 2 4; }
 svg.dag .block rect { fill: var(--block); stroke: var(--block-stroke); stroke-width: 1.3; }
-svg.dag .block text { font-size: 12px; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+svg.dag .block text { font-size: 15px; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
 svg.dag .block.twin rect { stroke: var(--blame); stroke-width: 2; }
 svg.dag .block.leader rect { fill: var(--leader); stroke: #b8860b; }
 svg.dag .block.vote rect { stroke: var(--vote); stroke-width: 3; }

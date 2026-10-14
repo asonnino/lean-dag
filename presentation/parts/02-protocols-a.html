@@ -33,11 +33,6 @@
           <line class="edge strong" x1="310" y1="311" x2="380" y2="347"/>
         </g>
         <g>
-          <text class="row-label" x="190" y="14">crash faults only, two rounds</text>
-          <text class="row-label" x="190" y="74">a larger committee, two rounds</text>
-          <text class="row-label" x="190" y="134">a fast commit beside the slow one</text>
-          <text class="row-label" x="190" y="230">fewer references per block</text>
-          <text class="row-label" x="190" y="290">no timing assumption</text>
         </g>
         <g class="block leader"><rect x="0" y="165" width="100" height="34" rx="5"/><text x="50" y="182">Mysticeti</text></g>
         <g class="block"><rect x="190" y="20" width="120" height="30" rx="5"/><text x="250" y="35">Nemo-Nemo</text></g>
@@ -51,7 +46,7 @@
         <g class="block"><rect x="380" y="236" width="140" height="30" rx="5"/><text x="450" y="251">Async BlueBottle</text></g>
         <g class="block"><rect x="380" y="332" width="140" height="30" rx="5"/><text x="450" y="347">Steelhead</text></g>
       </svg>
-      <figcaption class="caption">Each line joins a rule to the rule it changes; the label names the change.</figcaption>
+      <figcaption class="caption">Each line joins a rule to the rule it changes; the table names the change.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -101,7 +96,7 @@
     </div>
     <figure class="dag">
       <script type="application/json">
-      {"w": "U3",
+      {"w": "U3", "byz": [0],
        "marks": [
          {"ids": [0, 3], "cls": "leader"},
          {"ids": [4, 5, 6], "cls": "vote", "step": 1},
@@ -140,7 +135,7 @@
     </div>
     <figure class="dag">
       <script type="application/json">
-      {"w": "U7",
+      {"w": "U7", "byz": [0],
        "marks": [
          {"ids": [0], "cls": "leader"},
          {"ids": [4, 5, 6], "cls": "vote", "step": 1},
