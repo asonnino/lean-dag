@@ -38,6 +38,8 @@
 //   tags[].below  true                   place a tag below its block
 //   appear     [{ids, step}]             blocks drawn only from that step on
 //   size       "xs" | "s" | "m" | "ml" | "l"   maximum figure height
+//   absent     [{r, v, text, step}]      dashed outline in the cell of round r,
+//                                        validator v: a block not in the witness
 // Stepped marks accumulate: at step k a block shows every mark in force.
 (function () {
   "use strict";
@@ -248,6 +250,17 @@
         const from = Math.max(k, appearStep.get(b.id) || 0) || undefined;
         drawBlock(b, cls, idx === 0 ? gBlocks : gTop, from, points[idx + 1]);
       });
+    });
+
+    // Outlines of blocks that the witness does not contain.
+    (spec.absent || []).forEach((a) => {
+      if (!rowOf.has(a.v) || a.r < lo || a.r > hi) return;
+      const x = left + (a.r - lo) * colW + colW / 2, y = top + rowOf.get(a.v) * rowH + rowH / 2;
+      const g = el("g", { class: "absent" }, gTop);
+      el("rect", { x: x - bw / 2, y: y - bh / 2, width: bw, height: bh, rx: 6 }, g);
+      el("text", { x, y: y + 0.5 }, g).textContent = "?";
+      if (a.text) text(g, x, y + bh / 2 + 13, a.text, { class: "absent-label" });
+      stepAttr(g, a.step, a.until);
     });
 
     // Tags above blocks.

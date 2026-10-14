@@ -306,6 +306,9 @@ svg.dag .block.blame rect { stroke: var(--blame); stroke-width: 2.4; stroke-dash
 svg.dag .block.anchor rect { stroke: var(--anchor); stroke-width: 3.5; }
 svg.dag .block.fill rect { fill: var(--fill); stroke: #8b7fb8; stroke-dasharray: 3 2; }
 svg.dag .block.dim { opacity: 0.35; }
+svg.dag .absent rect { fill: none; stroke: var(--blame); stroke-width: 2; stroke-dasharray: 5 4; }
+svg.dag .absent text { font-size: 15px; font-weight: 600; fill: var(--blame); text-anchor: middle; dominant-baseline: central; }
+svg.dag .absent text.absent-label { font-size: 12.5px; font-weight: 400; }
 svg.dag .block.evidence rect { fill: #d6ecdf; stroke: var(--anchor); }
 
 svg.dag .tag rect { fill: var(--fg); }
