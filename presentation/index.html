@@ -2962,31 +2962,31 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="text small">
       <ul>
         <li>Safety requires no restriction on equivocation; bounded storage does.</li>
-        <li>A creator is <strong>exposed</strong> in a block's history when the history holds <span class="t-twin">two of its blocks in one round</span>.</li>
-        <li><strong>Rule</strong>: never reference a block whose creator is exposed in your own history.</li>
-        <li>This alone bounds a history, but with a constant that grows like <code>f^f</code>: one history can hold <span class="count bad"><code>2^e</code> chains</span> of one creator.</li>
+        <li data-step="1">A creator is <strong>exposed</strong> in a block's history when the history holds <span class="t-twin">two of its blocks in one round</span>.</li>
+        <li data-step="1"><strong>Rule</strong>: never reference a block whose creator is exposed in your own history.</li>
+        <li data-step="2">This alone bounds a history, but with a constant that grows like <code>f^f</code>: one history can hold <span class="count bad"><code>2^e</code> chains</span> of one creator.</li>
       </ul>
       <div class="uses"><b>Uses:</b> no property of the rule; only which blocks a validator accepts.<br><b>Gives:</b> a bound on what a correct validator stores (next slide).</div>
     </div>
     <figure class="dag">
       <script type="application/json">{
-        "w": "Udouble", "byz": [0, 1, 2, 3], "edges": "none", "size": "l",
+        "w": "Udouble", "byz": [0, 1, 2, 3], "edges": "none", "size": "l", "rowOrder": [0, 1, 2, 3, 4, 5],
         "marks": [
           {"ids": [41], "cls": "anchor"},
           {"ids": [1, 13, 14, 15], "cls": "twin", "step": 2},
-          {"ids": [27, 29], "cls": "twin", "step": 2}
+          {"ids": [27, 29], "cls": "twin", "step": 1}
         ],
         "strong": [
           {"from": [41], "to": [39, 40]}, {"from": [39], "to": [26, 27]}, {"from": [40], "to": [28, 29]},
           {"from": [26], "to": [1]}, {"from": [27], "to": [13]}, {"from": [28], "to": [14]}, {"from": [29], "to": [15]}
         ],
-        "badges": [{"r": 3, "text": "exposed: v1, v2", "kind": "skip", "at": 41, "step": 2}],
+        "badges": [{"r": 3, "text": "exposed: v1, v2", "kind": "skip", "at": 41, "step": 1}],
         "brackets": [
           {"ids": [1, 13, 14, 15], "text": "2^e = 4 chains", "kind": "bad", "step": 2},
-          {"ids": [27, 29], "text": "twins of v2", "kind": "bad", "step": 2}
+          {"ids": [27, 29], "text": "twins of v2", "kind": "bad", "step": 1}
         ]
       }</script>
-      <figcaption class="caption"><code>n = 13</code>, <code>f = 4</code>, v0–v3 Byzantine. Block 41 exposes <code>e = 2</code> creators; arrows reach <code>2^e = 4</code> round-0 blocks of v1.</figcaption>
+      <figcaption class="caption"><code>n = 13</code>, <code>f = 4</code>, v0–v3 Byzantine; rows v6–v12 omitted. Block 41 exposes <code>e = 2</code> creators; arrows reach <code>2^e = 4</code> round-0 blocks of v1.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -3248,8 +3248,8 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="small">
       <ul>
         <li>A validator <code>v₁</code> <span class="t-crash">crashed</span> after its block <span class="tagx ok"><code>B₁</code></span> and returns at round <code>r</code>. It cannot create a block: a valid block needs its own previous block one round below.</li>
-        <li>It sends one message: <code>B₁</code>, <code>r</code>, a <span class="tagx ok">donor</span> validator <code>v₂</code>, and fresh identifiers.</li>
-        <li>Every receiver computes a <strong class="t-fill">filled</strong> block for <code>v₁</code> at each missed round: the donor's references and payload at that round, plus <span class="t-path">a reference to <code>v₁</code>'s previous block</span>.</li>
+        <li data-step="1">It sends one message: <code>B₁</code>, <code>r</code>, a <span class="tagx ok">donor</span> validator <code>v₂</code>, and fresh identifiers.</li>
+        <li data-step="2">Every receiver computes a <strong class="t-fill">filled</strong> block for <code>v₁</code> at each missed round: the donor's references and payload at that round, plus <span class="t-path">a reference to <code>v₁</code>'s previous block</span>.</li>
       </ul>
     </div>
     <div class="body">

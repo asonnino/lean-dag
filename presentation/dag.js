@@ -140,8 +140,9 @@
     blocks.forEach((b) => {
       const group = cell.get(`${b.r}:${b.v}`);
       const j = group.indexOf(b.id), m = group.length;
-      const dx = m > 1 ? (j - (m - 1) / 2) * (bw * (m > 2 ? 0.45 : 0.62)) : 0;
-      const dy = m > 1 ? (j - (m - 1) / 2) * (bh * (m > 2 ? 0.55 : 0.82)) : 0;
+      // Two blocks: a diagonal pair; three or four: a 2 × 2 grid.
+      const dx = m > 2 ? ((j % 2) - 0.5) * bw * 1.1 : m > 1 ? (j - 0.5) * bw * 0.62 : 0;
+      const dy = m > 2 ? (Math.floor(j / 2) - 0.5) * bh * 1.1 : m > 1 ? (j - 0.5) * bh * 0.82 : 0;
       pos.set(b.id, {
         x: left + (b.r - lo) * colW + colW / 2 + dx,
         y: top + rowOf.get(b.v) * rowH + rowH / 2 + dy,
