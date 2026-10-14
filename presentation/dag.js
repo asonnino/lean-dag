@@ -140,9 +140,9 @@
     blocks.forEach((b) => {
       const group = cell.get(`${b.r}:${b.v}`);
       const j = group.indexOf(b.id), m = group.length;
-      // Two blocks: a diagonal pair; three or four: a 2 × 2 grid.
-      const dx = m > 2 ? ((j % 2) - 0.5) * bw * 1.1 : m > 1 ? (j - 0.5) * bw * 0.62 : 0;
-      const dy = m > 2 ? (Math.floor(j / 2) - 0.5) * bh * 1.1 : m > 1 ? (j - 0.5) * bh * 0.82 : 0;
+      // Two blocks: side by side, slightly staggered; three or four: a 2 × 2 grid.
+      const dx = m > 2 ? ((j % 2) - 0.5) * bw * 1.1 : m > 1 ? (j - 0.5) * bw * 1.1 : 0;
+      const dy = m > 2 ? (Math.floor(j / 2) - 0.5) * bh * 1.1 : m > 1 ? (j - 0.5) * bh * 0.3 : 0;
       pos.set(b.id, {
         x: left + (b.r - lo) * colW + colW / 2 + dx,
         y: top + rowOf.get(b.v) * rowH + rowH / 2 + dy,
@@ -285,13 +285,17 @@
       const g = el("g", { class: `bracket ${br.kind || ""}` }, gTop);
       const w = 7.8 * String(br.text).length + 14;
       const ym = (y0 + y1) / 2;
+      // Clear every block of the bracket's rounds in its vertical span (twins included).
+      const rs = new Set(br.ids.filter((i) => byId.has(i)).map((i) => byId.get(i).r));
+      const span = blocks.filter((b) => rs.has(b.r)).map((b) => pos.get(b.id))
+        .filter((p) => p.y + bh / 2 > y0 && p.y - bh / 2 < y1).concat(ps);
       if (leftSide) {
-        const x = Math.min(...ps.map((p) => p.x)) - bw / 2 - 5;
+        const x = Math.min(...span.map((p) => p.x)) - bw / 2 - 5;
         el("path", { d: `M ${x} ${y0} h -5 V ${y1} h 5` }, g);
         el("rect", { x: x - 8 - w, y: ym - 10, width: w, height: 20, rx: 4 }, g);
         text(g, x - 8 - w + 6, ym, br.text, { "dominant-baseline": "central" });
       } else {
-        const x = Math.max(...ps.map((p) => p.x)) + bw / 2 + 5;
+        const x = Math.max(...span.map((p) => p.x)) + bw / 2 + 5;
         el("path", { d: `M ${x} ${y0} h 5 V ${y1} h -5` }, g);
         el("rect", { x: x + 8, y: ym - 10, width: w, height: 20, rx: 4 }, g);
         text(g, x + 14, ym, br.text, { "dominant-baseline": "central" });

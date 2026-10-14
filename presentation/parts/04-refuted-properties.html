@@ -55,7 +55,7 @@
       <p><code>n = 4</code>. <span class="t-byz">Process 0</span> equivocates at round 0: blocks <span class="blk leader twin">0</span> and <span class="blk leader twin">4</span>. Block 4 is referenced by process 1 only.</p>
       <ul>
         <li data-step="1">A validator missing block 5 sees the round-1 leader block <span class="blk leader">6</span> reach block <span class="blk leader twin">4</span>, which resolves slot 0. Block 6 is <span class="verdict commit">committed</span>, while slot 0 is still <span class="verdict undecided">undecided</span>.</li>
-        <li data-step="2">Block <span class="blk">5</span> arrives. Block <span class="blk leader twin">0</span> now has a quorum and is <span class="verdict commit">committed</span> for slot 0, after the later leader.</li>
+        <li data-step="2">Blocks <span class="blk">5</span> and <span class="blk">12</span> arrive. Block <span class="blk leader twin">0</span> now has a quorum and is <span class="verdict commit">committed</span> for slot 0, after the later leader.</li>
       </ul>
     </div>
     <figure class="dag">
@@ -85,7 +85,7 @@
   </div>
   <aside class="notes">
     <p>Initial state: the twins 0 and 4 and their references, in the partial view. Step 1: the partial view commits block 6. Step 2: blocks 5 and 12 arrive; the full view commits block 0 for the earlier slot.</p>
-    <p>LeanDagTest/Minnow/Safety.lean: <code>slotBlocks Dfull (0,0) = {0, 4}</code> (:86, 91); <code>Reaches Dpart 6 4</code>, <code>CommittedAt Dpart sfLead 1 6</code> (:112, 116); <code>Dfull</code> adds blocks 5 and 12 (:96, 126); block 4 is never committed (<code>¬ Quorum Dfull 4</code>, :179); the violated property is Safe-Commit (:134).</p>
+    <p>LeanDagTest/Minnow/Safety.lean: <code>slotBlocks Dfull (0,0) = {0, 4}</code> (:86, 91); <code>Reaches Dpart 6 4</code>, <code>CommittedAt Dpart sfLead 1 6</code> (:112, 116); <code>Dpart</code> lacks blocks 5 and 12 (:70); <code>CommittedAt Dfull sfLead 0 0</code> (:126); block 4 is never committed (<code>¬ Quorum Dfull 4</code>, :179); the violated property is Safe-Commit (:134).</p>
   </aside>
 </section>
 
@@ -118,7 +118,7 @@
       }</script>
       <figcaption class="caption">Two leaders per round. Step 2, one leader per round: 11 reaches 0 and 6 (green) and is committed.</figcaption>
       <ul class="small">
-        <li>A <span class="t-leader">leader</span> referenced by 2 of 4 processes is neither committed nor skipped, and no later leader can be committed.</li>
+        <li>A <span class="t-leader">leader</span> referenced by 2 of 4 processes is neither committed nor skipped; no later leader whose history lacks it can be committed.</li>
         <li>With two leaders per round in round-robin, no leader is committed.</li>
         <li data-step="2">With one leader per round, the same DAG does <span class="verdict commit">commit</span>.</li>
       </ul>
@@ -130,6 +130,7 @@
         "byz": [0],
         "size": "s",
         "marks": [{"ids": [0, 4, 5, 6, 10, 11], "cls": "leader"}],
+        "absent": [{"r": 0, "v": 0, "text": "empty"}, {"r": 2, "v": 0, "text": "empty"}],
         "badges": [
           {"r": 0, "text": "undecided", "kind": "undecided", "at": 0},
           {"r": 1, "text": "undecided", "kind": "undecided"},
@@ -139,13 +140,13 @@
       }</script>
       <figcaption class="caption">Two leaders per round; v0 is silent, so its slots at rounds 0 and 2 hold no block, and no slot is decided.</figcaption>
       <ul class="small">
-        <li>A <span class="t-byz">silent leader</span>'s empty slot prevents every later leader from being committed.</li>
+        <li>The empty slot of a <span class="t-byz">silent leader</span> prevents every later leader from being committed.</li>
       </ul>
     </figure>
   </div>
   <aside class="notes">
     <p>The Byzantine process's blocks reach two processes of four: too few to commit, too many to skip. A slot that is resolved only by a block in a leader's history holds later leaders for two rounds.</p>
-    <p>LeanDagTest/Minnow/Deadlock.lean: 2 of 4 pointers (:86, 89); <code>mLead</code> (:79, 109–146); <code>Ds</code> (:205–223). LeanDagTest/Minnow/Fair.lean: <code>CommittedAt Dm mFair 2 11</code> (:92). <code>not_committedAt_of_dead</code> (LeanDag/Minnow/Blocking.lean:40). (informal) That <code>2f + 1</code> is the least safe skip threshold, so the gap cannot be closed.</p>
+    <p>LeanDagTest/Minnow/Deadlock.lean: 2 of 4 pointers (:86, 89); <code>mLead</code> (:79, 109–146); <code>Ds</code> (:205–223). LeanDagTest/Minnow/Fair.lean: <code>CommittedAt Dm mFair 2 11</code> (:92). <code>not_committedAt_of_dead</code> (LeanDag/Minnow/Blocking.lean:36). (informal) That <code>2f + 1</code> is the least safe skip threshold, so the gap cannot be closed.</p>
   </aside>
 </section>
 
@@ -217,9 +218,11 @@
     <figure class="dag">
       <script type="application/json">{
         "w": "Udiv",
+        "rounds": [0, 5],
+        "rowOrder": [0, 1, 3, 2],
         "byz": [0],
         "marks": [
-          {"ids": [3, 7, 8, 12, 14, 19, 24, 26], "cls": "leader"},
+          {"ids": [3, 7, 8, 12, 14, 19, 24], "cls": "leader"},
           {"ids": [8, 12], "cls": "twin"},
           {"ids": [19], "cls": "anchor", "step": 2}
         ],
@@ -233,7 +236,7 @@
         "brackets": [
           {"ids": [13], "text": "1 < q", "kind": "bad", "step": 1},
           {"ids": [14, 15, 16], "text": "3 ≥ q", "kind": "ok", "step": 1},
-          {"ids": [17, 18, 19, 20], "text": "3 ≥ q", "kind": "ok", "step": 1},
+          {"ids": [17, 18, 20], "text": "3 ≥ q", "kind": "ok", "step": 1},
           {"ids": [21, 22, 23, 24], "text": "4 ≥ q", "kind": "ok", "step": 2}
         ],
         "tags": [{"id": 13, "text": "descent", "kind": "ok", "step": 2}],
@@ -269,13 +272,13 @@
           <tr><td>Hybrid</td><td>Byz. + crash</td><td><code>n ≥ 5fb + 3fc + 1</code></td><td>2</td><td>1: <code>k</code> voters</td><td>least</td><td>scheduled</td></tr>
           <tr><td>FinWhale</td><td>Byzantine</td><td><code>n = 3f + 2p − 1</code></td><td>2 fast / 3 slow</td><td>1: certificate or evidence</td><td>least</td><td>scheduled</td></tr>
           <tr><td>Hydrozoan</td><td>Byz. + crash</td><td><code>n ≥ 3f + 2c + k + 1</code></td><td>2 fast / 3 slow</td><td>2</td><td>second rung: least</td><td>scheduled</td></tr>
-          <tr><td>Opt-Hydrozoan</td><td>Byz. + crash</td><td>same, <code>f + c ≥ 1</code></td><td>2 fast / 3 slow</td><td>2</td><td>none</td><td>scheduled</td></tr>
+          <tr><td>Optimal-Hydrozoan</td><td>Byz. + crash</td><td>same, <code>f + c ≥ 1</code></td><td>2 fast / 3 slow</td><td>2</td><td>none</td><td>scheduled</td></tr>
           <tr><td>Bluestreak</td><td>Byzantine</td><td><code>n ≥ 3f + 1</code></td><td>3</td><td>1: claim</td><td>none</td><td>scheduled</td></tr>
           <tr><td>Mahi-Mahi</td><td>Byzantine</td><td><code>n ≥ 3f + 1</code></td><td><code>w</code> (live for <code>w ≥ 4</code>)</td><td>1: certificate</td><td>none</td><td>unpredictable</td></tr>
           <tr><td>Async BlueBottle</td><td>Byzantine</td><td><code>n ≥ 5f + 1</code></td><td>3</td><td>1: <code>n − 3f</code> voters</td><td>least</td><td>unpredictable</td></tr>
           <tr><td>Steelhead</td><td>Byzantine</td><td><code>3f + 1</code> / <code>5f + 1</code></td><td>by kind: 3 or <code>wa</code> / 2 or 3</td><td>1</td><td>none / least</td><td>both</td></tr>
           <tr><td>Minnow (refuted)</td><td>Byzantine</td><td><code>n ≥ 3f + 1</code></td><td>2</td><td>none</td><td>—</td><td>scheduled</td></tr>
-          <tr><td>Black Marlin (refuted)</td><td>Byzantine</td><td><code>n ≥ 3f + 1</code></td><td>3</td><td>none</td><td>—</td><td>one anchor per round</td></tr>
+          <tr><td>Black Marlin (refuted)</td><td>Byzantine</td><td><code>n ≥ 3f + 1</code></td><td>3</td><td>none</td><td>—</td><td>scheduled</td></tr>
         </tbody>
       </table>
     </figure>
@@ -318,7 +321,7 @@
       <ol>
         <li><strong>Fix an order.</strong> Wherever two twins can pass a test, the choice between them must be made by an order every validator computes.</li>
         <li><strong>Count, do not infer from absence.</strong> A skip must count blocks that exist.</li>
-        <li><strong>Use later evidence.</strong> Every rule proved safe here has an indirect rule that reads a later committed anchor; the two refuted rules have none.</li>
+        <li><strong>Use later evidence.</strong> Every rule proved safe here has an indirect rule that reads a later committed anchor. Minnow has none; Black Marlin's descent reads a later committed anchor, but its outputs disagree (slide 53).</li>
       </ol>
     </div>
   </div>
@@ -345,12 +348,12 @@
       <p>Eleven rules (all but Minnow and Black Marlin) have the properties.</p>
     </div>
     <figure class="diagram">
-      <script type="application/json">{"w": 1100, "h": 222, "nodes": [{"id": "p0", "x": 0, "y": 10, "w": 190, "h": 40, "text": "Mysticeti", "cls": ""}, {"id": "p1", "x": 0, "y": 64, "w": 190, "h": 40, "text": "Bluestreak", "cls": ""}, {"id": "p2", "x": 0, "y": 118, "w": 190, "h": 40, "text": "Mahi-Mahi", "cls": ""}, {"id": "p3", "x": 0, "y": 172, "w": 190, "h": 40, "text": "⋯ eleven rules", "cls": "muted"}, {"id": "P", "x": 440, "y": 78, "w": 220, "h": 70, "text": "Properties", "sub": "Banded, Agree, …", "cls": "accent"}, {"id": "m0", "x": 910, "y": 10, "w": 190, "h": 40, "text": "garbage collection", "cls": ""}, {"id": "m1", "x": 910, "y": 64, "w": 190, "h": 40, "text": "crash recovery", "cls": ""}, {"id": "m2", "x": 910, "y": 118, "w": 190, "h": 40, "text": "pacemaker", "cls": ""}, {"id": "m3", "x": 910, "y": 172, "w": 190, "h": 40, "text": "⋯ mechanisms", "cls": "muted"}], "edges": [{"from": "p0", "to": "P"}, {"from": "p1", "to": "P", "label": "proves"}, {"from": "p2", "to": "P"}, {"from": "p3", "to": "P"}, {"from": "P", "to": "m0"}, {"from": "P", "to": "m1", "label": "uses"}, {"from": "P", "to": "m2"}, {"from": "P", "to": "m3"}]}</script>
+      <script type="application/json">{"w": 1100, "h": 222, "nodes": [{"id": "p0", "x": 0, "y": 10, "w": 190, "h": 40, "text": "Mysticeti", "cls": ""}, {"id": "p1", "x": 0, "y": 64, "w": 190, "h": 40, "text": "Bluestreak", "cls": ""}, {"id": "p2", "x": 0, "y": 118, "w": 190, "h": 40, "text": "Mahi-Mahi", "cls": ""}, {"id": "p3", "x": 0, "y": 172, "w": 190, "h": 40, "text": "⋯ eleven rules", "cls": "muted"}, {"id": "P", "x": 440, "y": 78, "w": 220, "h": 70, "text": "Properties", "sub": "Banded, Agree, …", "cls": "accent"}, {"id": "m0", "x": 910, "y": 10, "w": 190, "h": 40, "text": "garbage collection", "cls": ""}, {"id": "m1", "x": 910, "y": 64, "w": 190, "h": 40, "text": "crash recovery", "cls": ""}, {"id": "m2", "x": 910, "y": 118, "w": 190, "h": 40, "text": "chain quality", "cls": ""}, {"id": "m3", "x": 910, "y": 172, "w": 190, "h": 40, "text": "⋯ mechanisms", "cls": "muted"}], "edges": [{"from": "p0", "to": "P"}, {"from": "p1", "to": "P", "label": "proves"}, {"from": "p2", "to": "P"}, {"from": "p3", "to": "P"}, {"from": "P", "to": "m0"}, {"from": "P", "to": "m1", "label": "uses"}, {"from": "P", "to": "m2"}, {"from": "P", "to": "m3"}]}</script>
       <figcaption class="caption">Diagram. Each rule proves the properties once; each mechanism is proved once, from the properties alone.</figcaption>
     </figure>
   </div>
   <aside class="notes">
-    <p>The diagram of slide 2, with the properties highlighted. The eleven carriers are listed in the notes of slide 2.</p>
+    <p>Slide 2 shows the same three layers. The eleven carriers are listed in the notes of slide 2.</p>
   </aside>
 </section>
 
@@ -387,7 +390,7 @@
         <script type="application/json">{
           "w": "Uexcl",
           "rounds": [2, 5],
-          "rowOrder": [1, 2, 3, 0],
+          "rowOrder": [1, 2, 3],
           "size": "m",
           "marks": [{"ids": [11], "cls": "leader"}, {"ids": [14, 15, 16], "cls": "vote"}, {"ids": [17, 18, 19], "cls": "cert"}],
           "hulls": [{"ids": [11, 12, 13, 14, 15, 16, 17, 18, 19]}],
@@ -404,7 +407,7 @@
         <script type="application/json">{
           "w": "UexclCut",
           "rounds": [0, 3],
-          "rowOrder": [1, 2, 3, 0],
+          "rowOrder": [1, 2, 3],
           "size": "m",
           "marks": [{"ids": [11], "cls": "leader"}, {"ids": [14, 15, 16], "cls": "vote"}, {"ids": [17, 18, 19], "cls": "cert"}],
           "hulls": [{"ids": [11, 12, 13, 14, 15, 16, 17, 18, 19]}],
@@ -437,8 +440,8 @@
       </ul>
     </div>
     <figure class="diagram" data-step="1">
-      <script type="application/json">{"w": 960, "h": 240, "size": "m", "nodes": [{"id": "i", "x": 130, "y": 40, "w": 150, "h": 52, "text": "slot i", "cls": "leader", "sub": "verdict v"}, {"id": "a", "x": 320, "y": 40, "w": 150, "h": 52, "text": "slot i + 1", "cls": "muted", "sub": "skip"}, {"id": "d", "x": 500, "y": 40, "w": 60, "h": 52, "text": "⋯", "cls": "plain"}, {"id": "b", "x": 590, "y": 40, "w": 150, "h": 52, "text": "slot j − 1", "cls": "muted", "sub": "skip"}, {"id": "j", "x": 780, "y": 40, "w": 170, "h": 52, "text": "slot j", "cls": "ok", "sub": "anchor committed"}, {"id": "wj", "x": 864.0, "y": 120, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "wi", "x": 204.0, "y": 120, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "i'", "x": 130, "y": 156, "w": 150, "h": 52, "text": "slot i", "cls": "leader", "sub": "verdict v", "step": 2}, {"id": "a'", "x": 320, "y": 156, "w": 150, "h": 52, "text": "slot i + 1", "cls": "accent", "sub": "other leader, skip", "step": 2}, {"id": "d'", "x": 500, "y": 156, "w": 60, "h": 52, "text": "⋯", "cls": "plain", "step": 2}, {"id": "b'", "x": 590, "y": 156, "w": 150, "h": 52, "text": "slot j − 1", "cls": "accent", "sub": "other leader, skip", "step": 2}, {"id": "j'", "x": 780, "y": 156, "w": 170, "h": 52, "text": "slot j", "cls": "ok", "sub": "anchor committed", "step": 2}, {"id": "wj'", "x": 864.0, "y": 236, "w": 2, "h": 2, "text": "", "cls": "plain", "step": 2}, {"id": "wi'", "x": 204.0, "y": 236, "w": 2, "h": 2, "text": "", "cls": "plain", "step": 2}], "edges": [{"from": "j", "to": "wj", "fromSide": "b", "toSide": "t", "noArrow": true, "cls": "ok"}, {"from": "wj", "to": "wi", "fromSide": "l", "toSide": "r", "noArrow": true, "cls": "ok", "label": "decides slot i: v", "dy": -9}, {"from": "wi", "to": "i", "fromSide": "t", "toSide": "b", "cls": "ok"}, {"from": "j'", "to": "wj'", "fromSide": "b", "toSide": "t", "noArrow": true, "cls": "ok", "step": 2}, {"from": "wj'", "to": "wi'", "fromSide": "l", "toSide": "r", "noArrow": true, "cls": "ok", "label": "same verdict v", "dy": -9, "step": 2}, {"from": "wi'", "to": "i'", "fromSide": "t", "toSide": "b", "cls": "ok", "step": 2}], "texts": [{"x": 0, "y": 66, "text": "schedule S", "cls": "muted"}, {"x": 0, "y": 182, "text": "schedule S′", "cls": "muted", "step": 2}]}</script>
-      <figcaption class="caption">Diagram. Indirect: the committed anchor at slot <code>j</code> decides slot <code>i</code>. <code>S′</code> keeps the rounds and slot <code>i</code>'s leader and kind, and changes the other leaders (blue); the verdict <code>v</code> is unchanged.</figcaption>
+      <script type="application/json">{"w": 960, "h": 240, "size": "s", "nodes": [{"id": "i", "x": 130, "y": 40, "w": 150, "h": 52, "text": "slot i", "cls": "leader", "sub": "verdict v"}, {"id": "a", "x": 320, "y": 40, "w": 150, "h": 52, "text": "slot i + 1", "cls": "muted", "sub": "skip"}, {"id": "d", "x": 500, "y": 40, "w": 60, "h": 52, "text": "⋯", "cls": "plain"}, {"id": "b", "x": 590, "y": 40, "w": 150, "h": 52, "text": "slot j − 1", "cls": "muted", "sub": "skip"}, {"id": "j", "x": 780, "y": 40, "w": 170, "h": 52, "text": "slot j", "cls": "ok", "sub": "anchor committed"}, {"id": "wj", "x": 864.0, "y": 120, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "wi", "x": 204.0, "y": 120, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "i'", "x": 130, "y": 156, "w": 150, "h": 52, "text": "slot i", "cls": "leader", "sub": "verdict v", "step": 2}, {"id": "a'", "x": 320, "y": 156, "w": 150, "h": 52, "text": "slot i + 1", "cls": "accent", "sub": "other leader, skip", "step": 2}, {"id": "d'", "x": 500, "y": 156, "w": 60, "h": 52, "text": "⋯", "cls": "plain", "step": 2}, {"id": "b'", "x": 590, "y": 156, "w": 150, "h": 52, "text": "slot j − 1", "cls": "accent", "sub": "other leader, skip", "step": 2}, {"id": "j'", "x": 780, "y": 156, "w": 170, "h": 52, "text": "slot j", "cls": "ok", "sub": "anchor committed", "step": 2}, {"id": "wj'", "x": 864.0, "y": 236, "w": 2, "h": 2, "text": "", "cls": "plain", "step": 2}, {"id": "wi'", "x": 204.0, "y": 236, "w": 2, "h": 2, "text": "", "cls": "plain", "step": 2}], "edges": [{"from": "j", "to": "wj", "fromSide": "b", "toSide": "t", "noArrow": true, "cls": "ok"}, {"from": "wj", "to": "wi", "fromSide": "l", "toSide": "r", "noArrow": true, "cls": "ok", "label": "decides slot i: v", "dy": -9}, {"from": "wi", "to": "i", "fromSide": "t", "toSide": "b", "cls": "ok"}, {"from": "j'", "to": "wj'", "fromSide": "b", "toSide": "t", "noArrow": true, "cls": "ok", "step": 2}, {"from": "wj'", "to": "wi'", "fromSide": "l", "toSide": "r", "noArrow": true, "cls": "ok", "label": "same verdict v", "dy": -9, "step": 2}, {"from": "wi'", "to": "i'", "fromSide": "t", "toSide": "b", "cls": "ok", "step": 2}], "texts": [{"x": 0, "y": 66, "text": "schedule S", "cls": "muted"}, {"x": 0, "y": 182, "text": "schedule S′", "cls": "muted", "step": 2}]}</script>
+      <figcaption class="caption">Diagram. Indirect: the committed anchor at slot <code>j</code> decides slot <code>i</code>.<span data-step="2"> <code>S′</code> keeps the rounds and slot <code>i</code>'s leader and kind, and changes the other leaders (blue); the verdict <code>v</code> is unchanged.</span></figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -454,7 +457,7 @@
         <li>A <strong>support</strong> names the wave and what it means for a block to certify a candidate.</li>
         <li><strong>Law 1 (local)</strong>: certification depends only on the wave's rounds, so it is unchanged by cutting or shifting rounds outside them.</li>
         <li><strong>Law 2 (commits)</strong>: if a <span class="count ok">reliable quorum</span> <code>T</code> leads a slot, produces through its wave and <span class="t-cert">certifies</span> every candidate, then a view that holds those rounds commits the slot.</li>
-        <li>Liveness needs exactly this, at every slot <code>T</code> leads. The network assumption is used only to establish it.</li>
+        <li data-step="2">Liveness uses this premise, <code>live</code>, at every slot <code>T</code> leads; the two network assumptions are used only to establish it.</li>
       </ul>
     </div>
     <figure>
@@ -497,7 +500,7 @@
         <g class="badge commit" data-step="1"><rect x="80" y="236" width="100" height="24" rx="12"></rect><text x="130" y="248.5" dominant-baseline="central">commit L</text></g>
       </svg>
       <figure class="diagram" data-step="2">
-        <script type="application/json">{"w": 640, "h": 60, "nodes": [{"id": "a", "x": 0, "y": 8, "w": 210, "h": 44, "text": "synchrony and coverage"}, {"id": "l", "x": 260, "y": 8, "w": 120, "h": 44, "text": "live", "cls": "accent"}, {"id": "b", "x": 430, "y": 8, "w": 210, "h": 44, "text": "reactive pacemaker"}], "edges": [{"from": "a", "to": "l", "label": "gives", "dy": -10}, {"from": "b", "to": "l", "label": "gives", "dy": -10}]}</script>
+        <script type="application/json">{"w": 640, "h": 60, "nodes": [{"id": "a", "x": 0, "y": 8, "w": 210, "h": 44, "text": "synchrony and coverage"}, {"id": "l", "x": 260, "y": 8, "w": 120, "h": 44, "text": "live", "cls": "accent"}, {"id": "b", "x": 430, "y": 4, "w": 210, "h": 54, "text": "reactive pacemaker", "sub": "proved per rule"}], "edges": [{"from": "a", "to": "l", "label": "gives", "dy": -10}, {"from": "b", "to": "l", "label": "gives", "dy": -10}]}</script>
       </figure>
       <figcaption class="caption">Diagram. Law 2 over the wave window. Shaded: the reliable quorum <code>T</code>, which leads the slot; C: a <code>T</code>-block that certifies <code>L</code>, through <code>T</code>'s blocks of the rounds between. Step 2: the two network assumptions that give the premise <code>live</code>.</figcaption>
     </figure>
@@ -511,7 +514,7 @@
   <h2>Optional and derived properties</h2>
   <div class="body wide-fig">
     <div class="text small">
-      <p>Optional, needed by one mechanism each:</p>
+      <p>Optional, needed only by the mechanism named in parentheses:</p>
       <ul>
         <li><strong>CommitsDirect</strong>: a direct commit is a verdict (adaptive leader count).</li>
         <li><strong>SkipsUnsupported</strong>: a slot is skipped when a large enough set, present one round above, references none of its candidates (prompt skip).</li>
@@ -567,11 +570,11 @@
         <li><strong>Progress</strong>: every slot below a run of reliably led slots is decided, and reliably led slots continue to be committed.</li>
         <li><strong>Inclusion</strong>: every <span class="nd accent">block</span> of a reliable validator enters the ledger, through a <span class="nd leader">later slot its creator leads</span>.</li>
       </ul>
-      <p>Seven rules have both. Nemo, FinWhale, Hydrozoan and Optimal-Hydrozoan lack SelfParent and have progress only.</p>
+      <p>Seven rules have both. Nemo-Nemo, FinWhale, Hydrozoan and Optimal-Hydrozoan lack SelfParent and have progress only.</p>
     </div>
     <figure class="diagram" data-step="1">
-      <script type="application/json">{"w": 880, "h": 196, "groups": [{"x": 70, "y": 104, "w": 800, "h": 88, "label": "ledger", "cls": "accent"}], "nodes": [{"id": "b", "x": 90, "y": 10, "w": 140, "h": 50, "text": "block b", "sub": "round r", "cls": "accent"}, {"id": "b1", "x": 330, "y": 10, "w": 140, "h": 50, "text": "block of v", "sub": "round r + 1"}, {"id": "d", "x": 540, "y": 10, "w": 40, "h": 50, "text": "⋯", "cls": "plain"}, {"id": "L", "x": 680, "y": 10, "w": 180, "h": 50, "text": "leader block", "sub": "v's next slot", "cls": "leader"}, {"id": "lb", "x": 90, "y": 136, "w": 140, "h": 40, "text": "b", "cls": "ok"}, {"id": "ld", "x": 360, "y": 136, "w": 80, "h": 40, "text": "⋯", "cls": "plain"}, {"id": "lL", "x": 680, "y": 136, "w": 180, "h": 40, "text": "leader block", "cls": "ok"}], "edges": [{"from": "b1", "to": "b", "label": "self-parent"}, {"from": "d", "to": "b1"}, {"from": "L", "to": "d", "label": "self-parent"}, {"from": "L", "to": "lL", "fromSide": "b", "toSide": "t", "cls": "ok", "label": "commit", "dx": 34, "dy": 4}, {"from": "b", "to": "lb", "fromSide": "b", "toSide": "t", "cls": "ok dashed", "label": "in its history", "dx": 56, "dy": 4}], "texts": [{"x": 0, "y": 35, "text": "validator v", "cls": "muted"}], "size": "xs"}</script>
-      <figcaption class="caption">Diagram. Inclusion: a reliable validator <code>v</code>'s blocks, linked by self-parent references, enter the ledger with the commit of <code>v</code>'s next leader slot.</figcaption>
+      <script type="application/json">{"w": 880, "h": 196, "groups": [{"x": 70, "y": 104, "w": 800, "h": 88, "label": "ledger", "cls": "accent"}], "nodes": [{"id": "b", "x": 90, "y": 10, "w": 140, "h": 50, "text": "block b", "sub": "round r", "cls": "accent"}, {"id": "b1", "x": 330, "y": 10, "w": 140, "h": 50, "text": "block of v", "sub": "round r + 1"}, {"id": "d", "x": 540, "y": 10, "w": 40, "h": 50, "text": "⋯", "cls": "plain"}, {"id": "L", "x": 680, "y": 10, "w": 180, "h": 50, "text": "leader block", "sub": "a later slot v leads", "cls": "leader"}, {"id": "lb", "x": 90, "y": 136, "w": 140, "h": 40, "text": "b", "cls": "ok"}, {"id": "ld", "x": 360, "y": 136, "w": 80, "h": 40, "text": "⋯", "cls": "plain"}, {"id": "lL", "x": 680, "y": 136, "w": 180, "h": 40, "text": "leader block", "cls": "ok"}], "edges": [{"from": "b1", "to": "b", "label": "self-parent"}, {"from": "d", "to": "b1"}, {"from": "L", "to": "d", "label": "self-parent"}, {"from": "L", "to": "lL", "fromSide": "b", "toSide": "t", "cls": "ok", "label": "commit", "dx": 34, "dy": 4}, {"from": "b", "to": "lb", "fromSide": "b", "toSide": "t", "cls": "ok dashed", "label": "in its history", "dx": 56, "dy": 4}], "texts": [{"x": 0, "y": 35, "text": "validator v", "cls": "muted"}], "size": "xs"}</script>
+      <figcaption class="caption">Diagram. Inclusion: a reliable validator <code>v</code>'s blocks, linked by self-parent references, enter the ledger with the commit of a later slot that <code>v</code> leads.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -597,9 +600,9 @@
           <tr><td>Hybrid</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
           <tr><td>FinWhale</td><td class="no">—</td><td class="yes">✓</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">progress</td></tr>
           <tr><td>Hydrozoan</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td><td class="yes">progress</td></tr>
-          <tr><td>Opt-Hydrozoan</td><td class="no">—</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td><td class="yes">progress</td></tr>
+          <tr><td>Optimal-Hydrozoan</td><td class="no">—</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td><td class="yes">progress</td></tr>
           <tr><td>Bluestreak</td><td class="yes">✓</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>Mahi-Mahi</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓ (<code>w ≥ 2</code>)</td><td class="yes">✓</td></tr>
+          <tr><td>Mahi-Mahi</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓ (<code>w ≥ 2</code>)</td><td class="yes">✓ (<code>w ≥ 2</code>)</td></tr>
           <tr><td>Async BlueBottle</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
           <tr><td>Steelhead</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         </tbody>
@@ -638,8 +641,8 @@
           <tr><td>Validators' ledgers agree</td><td>Banded, Agree, CommitsCandidate</td></tr>
           <tr><td>Every slot is eventually decided</td><td>Law 2, Indirect</td></tr>
           <tr><td>A validator decides from the blocks it holds</td><td>the pacemaker (slide 71)</td></tr>
-          <tr><td>A committed block's history contains blocks of many correct validators</td><td>Quorate, CommitsCandidate</td></tr>
-          <tr><td>Every correct validator's blocks are committed</td><td>SelfParent, NoEquiv, LeaderCommits</td></tr>
+          <tr><td>A committed block's history contains blocks of at least half of the correct validators</td><td>Quorate, CommitsCandidate</td></tr>
+          <tr><td>Every correct validator's blocks are committed</td><td>SelfParent, NoEquiv, CommitsCandidate, LeaderCommits</td></tr>
           <tr><td>Storage stays linear under equivocation</td><td>the novelty budget (slide 75)</td></tr>
           <tr><td>Storage stays constant</td><td>garbage collection (slide 77)</td></tr>
         </tbody>

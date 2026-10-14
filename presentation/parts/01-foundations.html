@@ -14,7 +14,7 @@
   <aside class="notes">
     The development is in Lean 4 over Mathlib. Every theorem named in the deck is checked by the Lean kernel.
     Whether the definitions say what the papers mean is checked by human and LLM review only; the README's
-    provenance note applies. Background figure: witness <code>Ugrow 5</code> (LeanDagTest/Mysticeti/Growth.lean).
+    provenance note applies. Background figure: witness <code>Ugrow 5</code>, drawn as rounds 0–5 of <code>Ugrow 6</code> (LeanDagTest/Mysticeti/Growth.lean).
   </aside>
 </section>
 
@@ -26,9 +26,9 @@
   <div class="body stack">
     <div>
       <ul>
-        <li><span class="nd accent">Protocols</span>. Thirteen commit rules from the literature. Eleven are proved safe and live; two are shown unsafe or not live by counterexamples.</li>
+        <li><span class="nd accent">Protocols</span>. Thirteen commit rules from the literature. Eleven are proved safe and to make progress, and seven of these also to include every reliable validator’s blocks. Two are shown unsafe or not live by counterexamples.</li>
         <li><span class="nd accent">Properties</span>. One small interface — four properties and a “support” — that each of the eleven rules is proved to satisfy.</li>
-        <li><span class="nd accent">Mechanisms</span>. A pacemaker, chain quality, a storage bound, garbage collection, crash recovery, adaptive leaders and an adaptive leader count, checkpoints: each proved once against the interface, and composable.</li>
+        <li><span class="nd accent">Mechanisms</span>. Chain quality, a storage bound, garbage collection, crash recovery, adaptive leaders and an adaptive leader count, checkpoints: each proved once against the interface, and composable. A pacemaker, proved for each rule, gives the liveness premise. Red Snapper, a fast path for owned objects, reads only the sequence of committed anchors.</li>
         <li>Safety theorems use no assumption about the network.</li>
       </ul>
     </div>
@@ -36,7 +36,7 @@
       <script type="application/json">{"w": 980, "h": 74, "size": "xs",
         "nodes": [{"id": "P", "x": 0, "y": 6, "w": 220, "h": 62, "text": "Protocols", "sub": "13 rules, 11 proved", "cls": "accent"},
                   {"id": "Q", "x": 380, "y": 6, "w": 220, "h": 62, "text": "Properties", "sub": "4 properties + support", "cls": "accent"},
-                  {"id": "M", "x": 760, "y": 6, "w": 220, "h": 62, "text": "Mechanisms", "sub": "8, each proved once", "cls": "accent"}],
+                  {"id": "M", "x": 760, "y": 6, "w": 220, "h": 62, "text": "Mechanisms", "sub": "7 proved once, + pacemaker", "cls": "accent"}],
         "edges": [{"from": "P", "to": "Q", "label": "each rule proves"},
                   {"from": "Q", "to": "M", "label": "each mechanism uses"}]}</script>
       <p class="caption">Diagram: the three parts of the development and how they depend on one another.</p>
@@ -53,7 +53,7 @@
       <li>The two refuted rules: LeanDagTest/Minnow/Safety.lean, LeanDagTest/BlackMarlin/Divergence.lean.</li>
       <li>Safety without network hypotheses: <code>Properties.Safe</code> (LeanDag/Properties/Arcs/Headline.lean:46),
         <code>AnchoredRule.decided_agree</code> (LeanDag/Common/Anchored.lean:483).</li>
-      <li>“Live” means progress for all eleven; four of them do not prove inclusion (slide 64).</li>
+      <li>Progress holds for all eleven and inclusion for seven; Nemo, FinWhale, Hydrozoan and Optimal-Hydrozoan have progress only (slide 64).</li>
     </ul>
   </aside>
 </section>
@@ -116,7 +116,7 @@
       <ul>
         <li>A <span class="tagx bad">Byzantine</span> validator may deviate arbitrarily from the protocol: send false messages, send none, or send different messages to different validators (equivocate).</li>
         <li>A <strong>crashed</strong> validator stops and never resumes.</li>
-        <li>With <code>n ≥ 3f + 1</code> validators, at most <code>f</code> Byzantine, a <strong>quorum</strong> is <code>n − f</code> validators.</li>
+        <li>With <code>n ≥ 3f + 1</code> validators, at most <code>f</code> Byzantine, a <strong>quorum</strong> is <code>q = n − f</code> validators.</li>
         <li>Two quorums share at least <code>n − 2f ≥ f + 1</code> validators, so at least one <span class="tagx ok">correct</span> validator.</li>
         <li>A correct validator does not equivocate, so two quorums cannot support two conflicting statements.</li>
       </ul>
@@ -147,7 +147,7 @@
   </div>
   <aside class="notes">
     <ul>
-      <li><code>Faults</code> (LeanDag/Common/Validators.lean:23): <code>3 * f + 1 ≤ n</code>, <code>byzantine.card ≤ f</code>.
+      <li><code>Faults</code> (LeanDag/Common/Validators.lean:22): <code>3 * f + 1 ≤ n</code>, <code>byzantine.card ≤ f</code>.
         Quorum <code>quorumCard = n − f</code> (Validators.lean:39).</li>
       <li>Intersection: <code>exists_correct_mem_inter</code> (LeanDag/Common/Validators.lean:152).</li>
       <li><code>Correct</code> is the complement of <code>byzantine</code>; a crashed validator is in <code>Correct</code>.
@@ -218,7 +218,7 @@
     <div class="text small">
       <ul>
         <li>Validators work in <strong>rounds</strong>. In each round each validator creates one <strong>block</strong>: a round number, its creator, references to earlier blocks, and a payload of transactions.</li>
-        <li>A <span class="t-hull">valid block</span> at round <code>r &gt; 0</code> references blocks of round <code>r − 1</code> from at least <code>n − f</code> distinct creators, one of them its own creator.</li>
+        <li>A <span class="t-hull">valid block</span> at round <code>r &gt; 0</code> references only blocks of round <code>r − 1</code>, at most one per creator, from at least <code>n − f</code> creators, its own creator among them.</li>
         <li>The blocks and references form a directed acyclic graph (DAG). A block’s <strong>history</strong> is every block it reaches by references. A validator’s <strong>view</strong> is the set of blocks it holds, including their histories.</li>
         <li>Blocks are named by identifier (a hash), so two validators may hold different sets of blocks but agree on what each identifier means.</li>
       </ul>
@@ -255,7 +255,7 @@
       <ul>
         <li>In a certified DAG (Narwhal, Bullshark), each block receives a <span class="nd accent">certificate</span>, built by an extra exchange of signatures, before others may reference it.</li>
         <li>In an uncertified DAG (Mysticeti and this family), no certificate is sent.</li>
-        <li>A block two rounds above a <span class="t-leader">leader</span> <strong>is</strong> a <span class="t-cert">certificate</span> for it when its references include <code>n − f</code> <span class="t-vote">blocks that reference the leader</span>.</li>
+        <li>A block two rounds above a <span class="t-leader">leader</span> <strong>is</strong> a <span class="t-cert">certificate</span> for it when its references include <code>q = n − f</code> <span class="t-vote">votes</span> for it, that is, blocks that reference the leader.</li>
         <li>Every direct commit rule is then a threshold on a set of blocks found in the graph.</li>
       </ul>
       <figure class="diagram">
@@ -309,9 +309,9 @@
           <tr><th>round</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr>
         </thead>
         <tbody>
-          <tr><th>pipeSlots: leader</th><td>v0</td><td>v1</td><td>v2</td><td>v3</td><td>v0</td><td>v1</td><td>v2</td><td>v3</td><td>v0</td></tr>
+          <tr><th>one leader per round</th><td>v0</td><td>v1</td><td>v2</td><td>v3</td><td>v0</td><td>v1</td><td>v2</td><td>v3</td><td>v0</td></tr>
           <tr><td class="muted">slot</td><td class="muted">0</td><td class="muted">1</td><td class="muted">2</td><td class="muted">3</td><td class="muted">4</td><td class="muted">5</td><td class="muted">6</td><td class="muted">7</td><td class="muted">8</td></tr>
-          <tr><th>duoSlots: leaders</th><td>v0, v1</td><td>v2, v3</td><td>v0, v1</td><td>v2, v3</td><td>v0, v1</td><td>v2, v3</td><td>v0, v1</td><td>v2, v3</td><td>v0, v1</td></tr>
+          <tr><th>two leaders per round</th><td>v0, v1</td><td>v2, v3</td><td>v0, v1</td><td>v2, v3</td><td>v0, v1</td><td>v2, v3</td><td>v0, v1</td><td>v2, v3</td><td>v0, v1</td></tr>
           <tr><td class="muted">slots</td><td class="muted">0, 1</td><td class="muted">2, 3</td><td class="muted">4, 5</td><td class="muted">6, 7</td><td class="muted">8, 9</td><td class="muted">10, 11</td><td class="muted">12, 13</td><td class="muted">14, 15</td><td class="muted">16, 17</td></tr>
         </tbody>
       </table>
@@ -322,7 +322,7 @@
     <ul>
       <li><code>Slots</code> (LeanDag/Common/Slots.lean): <code>slotRound</code>, <code>leader</code>, a <code>kind</code> (default 0, :44),
         keyed by (round, leader) (:40).</li>
-      <li>Pipelined and two-leader schedules: <code>pipeSlots</code>, <code>duoSlots</code> (LeanDagTest/Mysticeti/Pipelined.lean:53).</li>
+      <li>Pipelined and two-leader schedules: <code>pipeSlots</code>, <code>duoSlots</code> (LeanDagTest/Mysticeti/Pipelined.lean:53, 279).</li>
       <li><code>IsLeaderBlock</code> (LeanDag/Common/Leader.lean:28). A Byzantine leader with two candidates: witness <code>U6</code>
         (LeanDagTest/Mysticeti/Model.lean).</li>
       <li>Ledger: <code>commitSeq</code>, <code>ledgerSet</code>, <code>OutputAt</code> (LeanDag/Common/Ledger.lean).</li>
@@ -415,7 +415,7 @@
         <code>Link</code>, <code>tie</code>, <code>Anchor</code>.</li>
       <li><code>AnchoredRule.Laws</code> (Anchored.lean:292) is a property of the rule relative to a record invariant. Proved once:
         <code>decided_agree</code> (:483), <code>decided_mono</code> (:502), <code>commitSeq_agree</code>, <code>ledgerSet_agree</code>,
-        <code>outputAt_agree</code> (:521, 528).</li>
+        <code>outputAt_agree</code> (:521, 528, 535).</li>
       <li>Card values: <code>coreAnchored</code> (LeanDag/Mysticeti/Model/Rule.lean:86–95).</li>
     </ul>
   </aside>
@@ -468,7 +468,7 @@
     <div class="small">
       <ul>
         <li>The absence of the leader’s block <span class="blk absent">?</span> from a view is not a sound reason to <span class="verdict skip">skip</span>: a validator cannot distinguish a silent leader from a leader whose block has not yet arrived.</li>
-        <li>In Mysticeti a direct skip needs <code>n − f</code> blocks of the round above that reference no candidate. Those blocks exist, and later blocks do not alter them.</li>
+        <li>In Mysticeti a direct skip needs <code>n − f</code> blocks of the round above that reference no candidate; each such block <span class="t-blame">blames</span> the slot. Those blocks exist, and later blocks do not alter them.</li>
       </ul>
     </div>
     <div class="body">
@@ -489,13 +489,13 @@
           "tags": [{"id": 25, "text": "L"}],
           "brackets": [{"ids": [28, 29, 30, 31], "text": "4 votes ≥ q", "kind": "accent"}],
           "badges": [{"r": 6, "text": "commit", "kind": "commit"}, {"r": 8, "text": "4 certs ≥ q", "kind": "note"}]}</script>
-        <p class="caption">(2) The same DAG at round 8: 4 votes and 4 certificates commit slot 2, which a skip on absence would contradict.</p>
+        <p class="caption">(2) The DAG grown to round 8: 4 votes and 4 certificates commit slot 2, which a skip on absence would contradict.</p>
       </figure>
     </div>
   </div>
   <aside class="notes">
     <ul>
-      <li><code>blameSkip q</code>, <code>slotBlamers</code> (LeanDag/Common/Leader.lean:99).</li>
+      <li><code>blameSkip q</code> (LeanDag/Common/Rules.lean:38), <code>slotBlamers</code> (LeanDag/Common/Leader.lean:99).</li>
       <li><code>ugrow_not_directSkip</code> (LeanDagTest/Mysticeti/Growth.lean:308) covers <code>Ugrow N</code> with <code>N &lt; 3k</code>;
         the left figure is <code>Ugrow 5</code>, slot 2. <code>ugrow_directCommit</code> (:272) gives the commit in <code>Ugrow 8</code>;
         <code>ugrow_commits_recur</code> (:332); <code>fairSlots</code> (:260–265).</li>
@@ -522,7 +522,7 @@
   no_equivocation := by decide
 
 example : DirectCommit U3 0 0 := by decide</pre>
-      <p class="caption">A DAG of 4 validators and rounds 0–2, and the statement that slot 0 commits directly in it.</p>
+      <p class="caption">A DAG of 4 validators and rounds 0–2, and the statement that its block 0, at round 0, is directly committed.</p>
     </div>
     <figure class="dag">
       <script type="application/json">{"w": "U3", "byz": [0],

@@ -62,12 +62,12 @@
           {"from": "sup", "to": "com", "label": "Law 2 (slide 61)", "dx": 64, "dy": 4}
         ]
       }</script>
-      <figcaption class="caption">The liveness argument in layers; each arrow is labelled with what the lower layer receives. Only the top layer refers to time.</figcaption>
+      <figcaption class="caption">The liveness argument in layers; each arrow is labelled with what the lower layer receives. Only the network and the pacemaker refer to time.</figcaption>
     </figure>
   </div>
   <aside class="notes">
     <p>The two facts are <code>PopulatedOn</code> (LeanDag/Common/Participation.lean:62) and <code>SynchronisedOn</code> (:80). The pacemaker is <code>PaceCore</code> (LeanDag/Mysticeti/ViewPace.lean:114).</p>
-    <p>Mysticeti's route: <code>certifiesAt_of_synchronisedOn</code> (LeanDag/Mysticeti/Liveness.lean:95) gives a direct commit; <code>Support.live</code> (LeanDag/Properties/Derived/LeaderCommits.lean:40).</p>
+    <p>Mysticeti's route: <code>certifiesAt_of_synchronisedOn</code> (LeanDag/Mysticeti/Liveness.lean:115) gives a direct commit; <code>Support.live</code> (LeanDag/Properties/Derived/LeaderCommits.lean:40).</p>
   </aside>
 </section>
 
@@ -77,9 +77,9 @@
   <div class="body">
     <div class="text">
       <ul>
-        <li><strong>Advance</strong>: a validator holding blocks of <code>n − f</code> creators at round <code>n</code> moves past round <code>n</code>.</li>
-        <li><strong>Catch up</strong>: after GST, a validator that holds a reliable block of round <code>n</code> enters round <code>n</code> within <code>proc</code>, the time to process and build a block.</li>
-        <li><strong>Wait</strong>: a validator spends at least <code>timeout(n)</code> in round <code>n</code>.</li>
+        <li><strong>Advance</strong>: a validator holding blocks of <code>n − f</code> creators at round <code>r</code> moves past round <code>r</code>.</li>
+        <li><strong>Catch up</strong>: after GST, a validator that holds a reliable block of round <code>r</code> enters round <code>r</code> within <code>proc</code>, the time to process and build a block.</li>
+        <li><strong>Wait</strong>: a validator spends at least <code>timeout(r)</code> in round <code>r</code>.</li>
         <li><strong>Reference</strong>: a validator's block references every block of the previous round that it holds.</li>
       </ul>
     </div>
@@ -87,14 +87,14 @@
       <script type="application/json">{
         "w": 470, "h": 430, "size": "l",
         "nodes": [
-          {"id": "below", "x": 10, "y": 10, "w": 250, "h": 50, "text": "in a round below n", "cls": "muted"},
-          {"id": "in", "x": 10, "y": 124, "w": 250, "h": 62, "text": "in round n", "sub": "Wait: at least timeout(n)", "cls": "accent"},
-          {"id": "build", "x": 10, "y": 250, "w": 250, "h": 62, "text": "builds its round-(n + 1) block", "sub": "Reference: every round-n block held"},
-          {"id": "next", "x": 10, "y": 376, "w": 250, "h": 50, "text": "in round n + 1", "cls": "accent"}
+          {"id": "below", "x": 10, "y": 10, "w": 250, "h": 50, "text": "in a round below r", "cls": "muted"},
+          {"id": "in", "x": 10, "y": 124, "w": 250, "h": 62, "text": "in round r", "sub": "Wait: at least timeout(r)", "cls": "accent"},
+          {"id": "build", "x": 10, "y": 250, "w": 250, "h": 62, "text": "builds its round-(r + 1) block", "sub": "Reference: every round-r block held"},
+          {"id": "next", "x": 10, "y": 376, "w": 250, "h": 50, "text": "in round r + 1", "cls": "accent"}
         ],
         "edges": [
-          {"from": "below", "to": "in", "label": "Catch up (after GST):\nholds a reliable round-n block;\nwithin proc", "dx": 112, "dy": 4},
-          {"from": "in", "to": "build", "label": "Advance:\nholds blocks of n − f\ncreators at round n", "dx": 82, "dy": 4},
+          {"from": "below", "to": "in", "label": "Catch up (after GST):\nholds a reliable round-r block;\nwithin proc", "dx": 112, "dy": 4},
+          {"from": "in", "to": "build", "label": "Advance:\nholds blocks of n − f\ncreators at round r", "dx": 82, "dy": 4},
           {"from": "build", "to": "next", "label": "enters", "dx": 34, "dy": 4}
         ]
       }</script>
@@ -129,7 +129,7 @@
         "ymax": 12, "yticks": [0, 5, 10],
         "xlabel": "round", "ylabel": "entry − earliest entry"
       }</script>
-      <figcaption class="caption">Entry into each round minus the earliest entry; GST = 12, Δ = 2, proc = 1. The spread is 10 before GST and 3 = Δ + proc from round 1.</figcaption>
+      <figcaption class="caption">Entry into each round minus the earliest entry; GST = 12, Δ = 2, proc = 1. The spread is 10 before GST and 3 = Δ + proc from round 1. v0 is Byzantine; its line is v1’s.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -163,7 +163,7 @@
           <tr><td>v3</td><td>3</td><td>9</td><td>15</td><td>21</td><td>27</td><td class="yes">6</td><td class="no">9</td></tr>
         </tbody>
       </table>
-      <figcaption class="caption">Validator <code>v</code> builds its round-<code>n</code> block at time <code>v + 6n</code>: 6 per round for every validator.</figcaption>
+      <figcaption class="caption">Validator <code>v</code> builds its round-<code>r</code> block at time <code>v + 6r</code>: 6 per round for every validator.</figcaption>
     </figure>
     <figure class="chart">
       <script type="application/json">{
@@ -171,7 +171,7 @@
         "series": [{"name": "v0–v3", "ys": [6, 6, 6, 6], "values": true, "dy": -14}],
         "hlines": [{"y": 9, "text": "timeout 9"}],
         "ymax": 10, "yticks": [0, 3, 6, 9],
-        "xlabel": "round n", "ylabel": "time in round n"
+        "xlabel": "round r", "ylabel": "time in round r"
       }</script>
       <figcaption class="caption">Time in each round: 6 for every validator, below the timeout <code>9 = 2Δ + proc</code>.</figcaption>
     </figure>
@@ -226,7 +226,7 @@
   <h2>Coverage does not give inclusion</h2>
   <div class="body wide-fig">
     <div class="text">
-      <p>Validators 0, 1, 2 reference only each other for six rounds; validator 3 is correct and no other validator references it. Each round of the commit has <span class="count ok">2</span> correct creators, exactly the bound. None of <span class="t-blame">validator 3's blocks</span> enters the <span class="t-leader">committed leader</span>'s <span class="t-hull">history</span>.</p>
+      <p>Validators 0, 1, 2 reference only each other for six rounds; validator 3 is correct and no other validator references it. Each round of block 13's history has <span class="count ok">2</span> correct creators, exactly the bound <code>|Correct| − f</code>. None of <span class="t-blame">validator 3's blocks</span> enters the <span class="t-leader">committed leader</span>'s <span class="t-hull">history</span>.</p>
     </div>
     <figure class="dag">
       <script type="application/json">{
@@ -302,7 +302,7 @@
       <ul>
         <li>Accept a block only if its history adds at most <code>τ</code> blocks you do not hold; reference only blocks you have accepted.</li>
         <li>The rule is independent of a block's creator.</li>
-        <li>Storage then grows linearly: with <code>C</code> correct validators, a correct validator holds at most <code>C·((1 + fτ)·n + 1 + f)</code> blocks at round <code>n</code>. At <code>C = 3</code>, <code>f = 1</code>, <code>τ = 3</code>, round 9: 114 blocks.</li>
+        <li>Storage then grows linearly: with <code>C</code> correct validators, a correct validator holds at most <code>C·((1 + fτ)·r + 1 + f)</code> blocks by round <code>r</code>. At <code>C = 3</code>, <code>f = 1</code>, <code>τ = 3</code>, round 9: 114 blocks.</li>
       </ul>
     </div>
     <figure class="chart">
@@ -312,9 +312,9 @@
           {"name": "store bound", "ys": [6, 18, 30, 42, 54, 66, 78, 90, 102, 114], "color": 0, "values": true}
         ],
         "ymax": 120, "yticks": [0, 30, 60, 90, 120],
-        "xlabel": "round n", "ylabel": "blocks"
+        "xlabel": "round r", "ylabel": "blocks"
       }</script>
-      <figcaption class="caption">The store bound at <code>C = 3</code>, <code>f = 1</code>, <code>τ = 3</code>: <code>3·((1 + 3)·n + 2) = 12n + 6</code> blocks, linear in <code>n</code>.</figcaption>
+      <figcaption class="caption">The store bound at <code>C = 3</code>, <code>f = 1</code>, <code>τ = 3</code>: <code>3·((1 + 3)·r + 2) = 12r + 6</code> blocks, linear in <code>r</code>.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -455,9 +455,9 @@
   <div class="body">
     <div class="text">
       <ul>
-        <li>A new validator adopts the <span class="t-evidence">round-<code>G</code> blocks</span> that are reached from <span class="t-anchor">blocks</span> of at least <code>f + 1</code> distinct creators at a later round <code>t</code>.</li>
-        <li>One of those creators is correct, so every <span class="t-evidence">base block</span> is attested by a correct validator. No signatures are needed.</li>
-        <li>It then copies a correct peer's <span class="t-fill">blocks above <code>G</code></span>. Its verdicts equal those of any validator with the full history.</li>
+        <li>A new validator adopts a round-<code>G</code> block when <span class="t-anchor">blocks</span> of at least <code>f + 1</code> distinct creators at a later round <code>t</code> reach it.</li>
+        <li data-step="1">One of those creators is correct, so every <span class="t-evidence">base block</span> is attested by a correct validator. No signatures are needed.</li>
+        <li data-step="2">It then copies a correct peer's <span class="t-fill">blocks above <code>G</code></span>. Its verdicts equal those of any validator with the full history.</li>
       </ul>
     </div>
     <figure class="dag">
@@ -465,15 +465,15 @@
         "w": "Uexcl",
         "cut": {"r": 1, "text": "G"},
         "marks": [
-          {"ids": [14, 15, 16], "cls": "anchor", "step": 1},
-          {"ids": [5, 6, 7], "cls": "evidence", "step": 2},
-          {"ids": [8, 9, 10], "cls": "fill", "step": 3}
+          {"ids": [14, 15, 16], "cls": "anchor"},
+          {"ids": [5, 6, 7], "cls": "evidence", "step": 1},
+          {"ids": [8, 9, 10], "cls": "fill", "step": 2}
         ],
-        "strong": [{"from": [14, 15, 16, 11, 12, 13, 8, 9, 10], "step": 2}],
-        "hulls": [{"ids": [5, 6, 7], "step": 2}],
+        "strong": [{"from": [14, 15, 16, 11, 12, 13, 8, 9, 10], "step": 1}],
+        "hulls": [{"ids": [5, 6, 7], "step": 1}],
         "badges": [
-          {"r": 1, "text": "base {5, 6, 7}", "kind": "note", "step": 2},
-          {"r": 4, "text": "3 creators ≥ f + 1 = 2", "kind": "note", "step": 1}
+          {"r": 1, "text": "base {5, 6, 7}", "kind": "note", "step": 1},
+          {"r": 4, "text": "3 creators ≥ f + 1 = 2", "kind": "note"}
         ]
       }</script>
       <div class="legend"><span class="l-anchor">round-4 attesters</span><span class="l-evidence">base</span><span class="l-fill">copied from a peer</span></div>
@@ -558,12 +558,13 @@
           "tags": [{"id": 3, "text": "B₁", "kind": "ok"}]
         }</script>
       </figure>
-      <figure class="dag" data-step="2">
+      <figure class="dag" data-step="1">
         <script type="application/json">{
           "w": "UcrashFill", "edges": "none", "size": "s",
+          "appear": [{"ids": [21, 22, 23, 24], "step": 2}],
           "marks": [{"ids": [3], "cls": "anchor"}, {"ids": [21, 22, 23, 24], "cls": "fill"}, {"ids": [5, 9, 13, 17], "cls": "evidence"}],
-          "strong": [{"from": [21, 22, 23, 24], "to": [0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14]}],
-          "paths": [{"ids": [24, 23, 22, 21, 3]}],
+          "strong": [{"from": [21, 22, 23, 24], "to": [0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14], "step": 2}],
+          "paths": [{"ids": [24, 23, 22, 21, 3], "step": 2}],
           "tags": [{"id": 3, "text": "B₁", "kind": "ok"}, {"id": 5, "text": "donor", "kind": "ok"}]
         }</script>
       </figure>
@@ -572,8 +573,8 @@
     <div class="uses"><b>Uses:</b> Banded (through Persist), Agree, SkipsUnsupported, Law 1. <b>Gives:</b> <code>v₁</code> producing again, with every earlier verdict unchanged.</div>
   </div>
   <aside class="notes">
-    <p><code>GapData.hgap</code> (LeanDag/SafeSkip/Data.lean:49); <code>SkipData</code> (:30–73); <code>SkipMsg</code> (LeanDag/SafeSkip/Basic.lean:52); <code>SkipData.fillBlock</code> (Data.lean:159); <code>Integration.fill_refs_eq</code> (LeanDag/Integration/CommonTarget.lean:74).</p>
-    <p>Witness <code>ucrashMsg</code> (LeanDagTest/SafeSkip/Model.lean:124, 178): <code>v1 = 3</code>, <code>B1 = 3</code>, donor line <code>v2 = 1</code> (blocks 5, 9, 13, 17), fresh ids <code>4(N + 1) + k</code>. The Lean example at :178 is the round-1 filled block of <code>ucrashMsg 2 2</code>, with references <code>{3, 0, 1, 2}</code>; the figure shows <code>Ucrash 4</code> and its fill by <code>ucrashMsg 4 4</code> (<code>N = r = 4</code>); block 21 references <code>{3, 0, 1, 2}</code>.</p>
+    <p><code>GapData.hgap</code> (LeanDag/SafeSkip/Data.lean:48); <code>GapData</code>, <code>SkipData</code> (:32–73); <code>SkipMsg</code> (LeanDag/SafeSkip/Basic.lean:54); <code>SkipData.fillBlock</code> (Data.lean:165); <code>Integration.fill_refs_eq</code> (LeanDag/Integration/CommonTarget.lean:74).</p>
+    <p>Witness <code>ucrashMsg</code> (LeanDagTest/SafeSkip/Model.lean:114, 165): <code>v1 = 3</code>, <code>B1 = 3</code>, donor line <code>v2 = 1</code> (blocks 5, 9, 13, 17), fresh ids <code>4(N + 1) + k</code>. The Lean example at :165 is the round-1 filled block of <code>ucrashMsg 2 2</code>, with references <code>{3, 0, 1, 2}</code>; the figure shows <code>Ucrash 4</code> and its fill by <code>ucrashMsg 4 4</code> (<code>N = r = 4</code>); block 21 references <code>{3, 0, 1, 2}</code>.</p>
     <p>(informal) "Rebuilding costs one round trip per missed round".</p>
   </aside>
 </section>
@@ -619,7 +620,7 @@
     <div class="text">
       <ul>
         <li>A validator's own blocks form a chain, so the donor's whole line is fixed by its top block.</li>
-        <li>The fill depends only on <span class="nd ok"><code>B₁</code></span>, the donor's top block <span class="nd ok"><code>B₂</code></span>, and the fresh identifiers. The <span class="nd accent">message</span> carries only these.</li>
+        <li>The fill depends only on <span class="nd ok"><code>B₁</code></span>, the donor's top block <span class="nd ok"><code>B₂</code></span>, and the fresh identifiers. The <span class="nd accent">message</span> carries these and the two validators <code>v₁</code>, <code>v₂</code>.</li>
         <li>A receiver that holds <code>B₂</code> holds the donor's whole line. After the one message, <code>v₁</code> has a block at every round up to <code>B₂</code>'s round, so it can produce at the next.</li>
       </ul>
     </div>
@@ -683,10 +684,11 @@
   <div class="body stack">
     <div class="small">
       <ul>
-        <li>With a horizon <code>Λ</code> rounds below, recovery in one message works for outages of at most <code>Λ</code> rounds; for longer ones <span class="nd bad"><code>B₁</code></span> has been discarded.</li>
-        <li>No old block references a filled block, so <code>v₁</code> is not covered in the rounds it missed.</li>
-        <li>The storage rule must be re-checked; with a donor line whose blocks all reach <code>B₁</code>, and <code>v₁</code> not equivocating, it is one reachability check per round.</li>
-        <li>If the donor line is taken from blocks every receiver already holds, nothing else needs to be sent.</li>
+        <li data-step="1">With the horizon <code>Λ</code> rounds below the current round, one message recovers from an outage of at most <code>Λ</code> rounds.</li>
+        <li data-step="2">After a longer outage, <span class="nd bad"><code>B₁</code></span> has been discarded.</li>
+        <li data-step="3">No old block references a filled block, so <code>v₁</code> is not covered in the rounds it missed.</li>
+        <li data-step="3">The storage rule must be re-checked; with a donor line whose blocks all reach <code>B₁</code>, and <code>v₁</code> not equivocating, it is one reachability check per round.</li>
+        <li data-step="3">If the donor line is taken from blocks every receiver already holds, nothing else needs to be sent.</li>
       </ul>
     </div>
     <figure class="diagram">
@@ -740,7 +742,7 @@
     </figure>
   </div>
   <aside class="notes">
-    <p><code>outage_bounded_by_lag</code> (LeanDag/Integration/Retention.lean:174), <code>anchor_pruned</code> (:27). <code>not_synchronisedOn_skipFill</code>, <code>synchronisedOn_skipFill_of_notMem</code> (LeanDag/Integration/Coverage.lean:37, 52).</p>
+    <p><code>outage_bounded_by_lag</code> (LeanDag/Integration/Retention.lean:174), <code>anchor_pruned</code> (:29). <code>not_synchronisedOn_skipFill</code>, <code>synchronisedOn_skipFill_of_notMem</code> (LeanDag/Integration/Coverage.lean:37, 52).</p>
     <p><code>history_B1_subset_fill</code>, <code>dosValid_skipFill_of_covered</code> (LeanDag/Integration/Exposure.lean:48, 170). <code>fill_refs_available</code> (LeanDag/Integration/CommonTarget.lean:63; it covers the copied references, not the self-reference).</p>
   </aside>
 </section>
@@ -752,26 +754,26 @@
     <div class="small">
       <ul>
         <li>If all of <code>v₁</code>'s blocks are below the horizon, its chain of own blocks cannot be continued.</li>
-        <li>Each validator adds <span class="t-anchor">a round-0 block</span> for <code>v₁</code>, with no references, to its cut DAG. This needs no exception to the self-parent rule.</li>
-        <li>Procedure: (1) join from the attested base to read; (2) re-genesis to write; (3) one <span class="t-fill">fill</span> message from the <span class="tagx ok">genesis</span> block to the current round.</li>
-        <li>While a quorum still produces blocks, at most <code>f</code> validators can be in this state at once.</li>
+        <li data-step="1">Each validator adds <span class="t-anchor">a round-0 block</span> for <code>v₁</code>, with no references, to its cut DAG. This needs no exception to the self-parent rule.</li>
+        <li data-step="2">Procedure: (1) join from the attested base to read; (2) re-genesis to write; (3) one <span class="t-fill">fill</span> message from the <span class="tagx ok">genesis</span> block to the current round.</li>
+        <li data-step="2">While a quorum still produces blocks, at most <code>f</code> validators can be in this state at once.</li>
       </ul>
     </div>
-    <figure class="dag" data-step="1">
+    <figure class="dag">
       <script type="application/json">{
         "w": "Urecover", "size": "s",
-        "appear": [{"ids": [999], "step": 2}, {"ids": [1001], "step": 3}],
-        "marks": [{"ids": [999], "cls": "anchor"}, {"ids": [1001], "cls": "fill"}, {"ids": [5, 9], "cls": "evidence", "step": 3}],
-        "strong": [{"from": [9], "step": 3}, {"from": [1001], "to": [4, 5, 6], "step": 3}],
-        "paths": [{"ids": [1001, 999], "step": 3}],
-        "tags": [{"id": 999, "text": "genesis", "kind": "ok", "step": 2}, {"id": 9, "text": "donor", "kind": "ok", "step": 3}]
+        "appear": [{"ids": [999], "step": 1}, {"ids": [1001], "step": 2}],
+        "marks": [{"ids": [999], "cls": "anchor"}, {"ids": [1001], "cls": "fill"}, {"ids": [5, 9], "cls": "evidence", "step": 2}],
+        "strong": [{"from": [9], "step": 2}, {"from": [1001], "to": [4, 5, 6], "step": 2}],
+        "paths": [{"ids": [1001, 999], "step": 2}],
+        "tags": [{"id": 999, "text": "genesis", "kind": "ok", "step": 1}, {"id": 9, "text": "donor", "kind": "ok", "step": 2}]
       }</script>
       <figcaption class="caption">v3 stopped after round 0; cut at round 1. (1) No block of v3. (2) Genesis block 999. (3) 1001 has donor block 9's references and 999.</figcaption>
     </figure>
     <div class="uses"><b>Uses:</b> Banded, Agree, Law 1, and the attested base (slide 78). <b>Gives:</b> a validator back in production after any outage.</div>
   </div>
   <aside class="notes">
-    <p><code>no_blocks_of_no_genesis</code>, <code>severed_of_pruned_anchor</code> (LeanDag/Integration/Retention.lean:44, 65); <code>BlockRecord.addGenesis</code> (LeanDag/Common/Record/Genesis.lean:20); <code>addGenesis_of_severed</code> (LeanDag/Integration/ReGenesis.lean:95); <code>recoveryMsg</code>, <code>hB1uniq_of_addGenesis</code>, <code>rejoin_populated</code> (ReGenesis.lean); <code>card_severed_le</code> (LeanDag/Integration/Margin.lean:40).</p>
+    <p><code>no_blocks_of_no_genesis</code>, <code>severed_of_pruned_anchor</code> (LeanDag/Integration/Retention.lean:45, 65); <code>BlockRecord.addGenesis</code> (LeanDag/Common/Record/Genesis.lean:20); <code>addGenesis_of_severed</code> (LeanDag/Integration/ReGenesis.lean:95); <code>recoveryMsg</code>, <code>hB1uniq_of_addGenesis</code>, <code>rejoin_populated</code> (ReGenesis.lean); <code>card_severed_le</code> (LeanDag/Integration/Margin.lean:40).</p>
     <p>Witness: <code>Ucut</code>, <code>ucut_severed</code>, <code>Uregen</code>, <code>urecover</code> (LeanDagTest/Integration/Model.lean:102–160): <code>Ucrash 2</code> cut at round 1, then (2) <code>Uregen</code>, (3) <code>urecover</code>. The filled block 1001 copies the references of the donor's block 9 and adds 999. The genesis block is valid only in a DAG cut at <code>G</code> or above.</p>
     <p>(informal) "Derived locally, not transmitted": <code>regenesis_converges</code> proves only that a later cut removes it.</p>
   </aside>
@@ -784,7 +786,7 @@
     <div class="text small">
       <ul>
         <li>Copying a donor's references would attribute to <code>v₁</code> claims it never made.</li>
-        <li>Each <span class="t-fill">filled block</span> references only <span class="t-path"><code>v₁</code>'s previous block</span> and carries no tag and no claim. The message is <code>(v₁, B₁, r)</code>; no donor.</li>
+        <li>Each <span class="t-fill">filled block</span> references only <span class="t-path"><code>v₁</code>'s previous block</span> and carries no tag and no claim. The message is <code>v₁</code>, <code>B₁</code>, <code>r</code> and fresh identifiers; it names no donor.</li>
         <li>Verdicts do not change: slot 2 is <span class="verdict commit">committed</span> and slot 3 <span class="verdict skip">skipped</span>, before and after.</li>
       </ul>
       <div class="uses"><b>Uses:</b> the same properties as the fill, and Bluestreak's claim discipline.<br><b>Gives:</b> recovery for a rule whose blocks carry claims.</div>
@@ -804,8 +806,8 @@
     </figure>
   </div>
   <aside class="notes">
-    <p><code>GapData.chainBlock</code> (LeanDag/SafeSkip/Data.lean:91); <code>chainFill</code> (LeanDag/Bluestreak/Record.lean:174); <code>disciplined_chainFill</code> (:231).</p>
-    <p>Witness <code>Ufill</code>, the chain fill of <code>Ucr</code>, LeanDagTest/Bluestreak/Recovery.lean: <code>rcFaults</code> (:28, validator 0 Byzantine), <code>rcGap</code> (:73, <code>v1 = 3</code>, <code>B1 = 7</code>, <code>r = 3</code>), blocks 102, 103 (:93), <code>Ucr_slot2</code>, <code>Ufill_slot2</code>, <code>Ucr_slot3</code>, <code>Ufill_slot3</code>, prompt skip (:134–150). Validator 3 is correct and silent from round 2; slot 3 is led by validator 3.</p>
+    <p><code>GapData.chainBlock</code> (LeanDag/SafeSkip/Data.lean:90); <code>chainFill</code> (LeanDag/Bluestreak/Record.lean:174); <code>disciplined_chainFill</code> (:231).</p>
+    <p>Witness <code>Ufill</code>, the chain fill of <code>Ucr</code>, LeanDagTest/Bluestreak/Recovery.lean: <code>rcFaults</code> (:27, validator 0 Byzantine), <code>rcGap</code> (:71, <code>v1 = 3</code>, <code>B1 = 7</code>, <code>r = 3</code>), blocks 102, 103 (:91), <code>Ucr_slot2</code>, <code>Ucr_slot3</code>, <code>Ufill_slot2</code>, <code>Ufill_slot3</code> (:101–114), prompt skip (:129–148). Validator 3 is correct and silent from round 2; slot 3 is led by validator 3.</p>
     <p>(informal) The motivation in the first bullet.</p>
   </aside>
 </section>

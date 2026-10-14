@@ -62,6 +62,8 @@ content slides, as the outline does; part dividers are not numbered.
   and `<div class="tradeoffs"><div class="plus">…</div><div class="minus">…</div></div>`.
 - Mechanism slides end with `<div class="uses"><b>Uses:</b> … <br><b>Gives:</b> …</div>`.
 - Any element with `data-step="k"` appears from step `k` of its slide on.
+  `data-until="k"` hides it from step `k` on. A hidden element keeps its space
+  unless it has class `swap`, so two figures with `swap` can take turns in one place.
 - Entities that the text shares with a figure are styled as the figure draws
   them: `<span class="blk vote">8</span>` for a block (its figure marks),
   `<span class="t-blame">blames</span>` for a term, `<span class="verdict commit">commit</span>`
