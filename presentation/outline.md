@@ -114,7 +114,7 @@ the deck is checked by the Lean kernel. Whether the definitions say what the
 papers mean is checked by human and LLM review only; the README's provenance
 note applies.
 
-### Slide 2 — What the course covers
+### Slide 2 — Scope
 
 **Text.**
 > - **Protocols.** Thirteen commit rules from the literature. Eleven are
@@ -159,8 +159,8 @@ Properties → Mechanisms labelled "each mechanism uses".
 > - **Safety:** no two validators output conflicting logs.
 > - **Liveness:** every transaction from a correct client is eventually in
 >   every correct validator's log.
-> - Some validators may be faulty. We must tolerate them without knowing who
->   they are.
+> - Some validators may be faulty. The protocol must tolerate them without
+>   identifying them.
 
 **Figure.** (diagram) Four validators, each holding a log of coloured boxes; three logs
 equal, one validator marked faulty.
@@ -173,15 +173,16 @@ ledgers is `AnchoredRule.commitSeq_agree`, `ledgerSet_agree`
 ### Slide 4 — Faults and quorums
 
 **Text.**
-> - A **Byzantine** validator may do anything: lie, stay silent, send
->   different messages to different validators (equivocate).
+> - A **Byzantine** validator may deviate arbitrarily from the protocol: send
+>   false messages, send none, or send different messages to different
+>   validators (equivocate).
 > - A **crashed** validator stops and never resumes.
 > - With `n ≥ 3f + 1` validators, at most `f` Byzantine, a **quorum** is
 >   `n − f` validators.
 > - Two quorums share at least `n − 2f ≥ f + 1` validators, so at least one
 >   correct validator.
-> - A correct validator never says two different things, so two quorums
->   cannot support two conflicting facts.
+> - A correct validator does not equivocate, so two quorums cannot support
+>   two conflicting statements.
 
 **Figure.** (diagram) `n = 4`, `f = 1`: two overlapping sets of 3 validators drawn as
 Venn circles. The overlap has 2 validators, of which at most 1 is Byzantine.
@@ -252,7 +253,7 @@ own previous block.
 ### Slide 7 — Certified and uncertified DAGs
 
 **Text.**
-> - In a certified DAG (Narwhal, Bullshark), each block gets a certificate,
+> - In a certified DAG (Narwhal, Bullshark), each block receives a certificate,
 >   built by an extra exchange of signatures, before others may reference it.
 > - In an uncertified DAG (Mysticeti and this family), no certificate is sent.
 > - A block two rounds above a leader **is** a certificate for it when its
@@ -346,8 +347,8 @@ with the other rules' cards shown as a stack of cards behind it.
 **Text.**
 > - An anchor at slot `j` is **eligible** for slot `k` when
 >   `round(k) + wave < round(j)`.
-> - A slot one round above `k` cannot see a certificate for `k`'s leader. A
->   slot two rounds above sees one only if its own block is a certificate.
+> - A slot one round above `k` cannot reach a certificate for `k`'s leader. A
+>   slot two rounds above reaches one only if its own block is a certificate.
 > - Anchoring at such slots would let one validator's direct commit become
 >   another validator's indirect skip.
 
@@ -366,11 +367,12 @@ marked "eligible anchor".
 ### Slide 12 — A skip must count blocks
 
 **Text.**
-> - "I hold no block of the leader" is not a safe reason to skip: a validator
->   cannot tell a silent leader from a leader whose block has not arrived.
+> - The absence of the leader's block from a view is not a sound reason to
+>   skip: a validator cannot distinguish a silent leader from a leader whose
+>   block has not yet arrived.
 > - In Mysticeti a direct skip needs `n − f` blocks of the round above that
->   reference no candidate. Those blocks exist, and nothing that arrives later
->   changes them.
+>   reference no candidate. Those blocks exist, and later blocks do not alter
+>   them.
 
 **Figure.** Stepped, two steps, on witness `Ugrow` (`n = 4`, every block
 references the whole previous round, slot `k` at round `3k` led by `v1`).
@@ -407,7 +409,7 @@ absence would have been overturned".
 
 # Part II — Protocols (slides 14–56)
 
-### Slide 14 — The protocol family at a glance
+### Slide 14 — The protocol family
 
 **Text.**
 > Each rule in this part changes Mysticeti in one or more ways:
@@ -557,7 +559,7 @@ slot 0.
 **Text.**
 > | | Mysticeti | Nemo-Nemo |
 > |---|---|---|
-> | Faults | `f` Byzantine | `f` crash; nobody equivocates |
+> | Faults | `f` Byzantine | `f` crash; no validator equivocates |
 > | Committee | `n ≥ 3f + 1` | `n ≥ 2f + 1` |
 > | Quorum | `n − f` | majority `⌊n/2⌋ + 1` |
 > | Rounds | propose, vote, certify | propose, vote |
@@ -565,8 +567,8 @@ slot 0.
 > | Direct skip | `q` blames | none |
 > | Indirect link | a certificate in history | one vote in history |
 >
-> **+** Two rounds per commit; `n = 2f + 1`; safety holds whatever the number
-> of crashes.
+> **+** Two rounds per commit; `n = 2f + 1`; safety holds for any number of
+> crashes.
 > **−** Crash faults only. A crashed leader's slot waits for an anchor.
 > Liveness needs committed leaders in **adjacent** rounds.
 
@@ -635,7 +637,7 @@ ever decided".
 > | Indirect link | a certificate in history | `n − 3f` distinct voters in the anchor's history |
 > | Tie-break | none | the least candidate |
 >
-> **+** One round less to commit. Liveness needs two rounds of production
+> **+** One round fewer per commit. Liveness needs two rounds of production
 > instead of three.
 > **−** Six validators to tolerate one fault, against four. Agreement depends
 > on a fixed order of candidates.
@@ -684,7 +686,7 @@ skip badge. Slots 3 and 4 carry direct-commit badges.
 **Text.**
 > - A Byzantine leader can make two blocks (twins) in one round.
 > - Both twins can reach the `n − 3f` threshold inside one anchor's history.
-> - If validators chose "a" passing twin, two validators could commit
+> - If each validator committed any passing twin, two validators could commit
 >   different twins.
 > - The rule therefore commits the **least** passing candidate, an order
 >   every validator computes the same way.
@@ -727,7 +729,8 @@ committed, the other refused.
 > **Compared with Odontoceti:** crash-prone validators are counted apart from
 > Byzantine ones, which lowers the committee; the link threshold `k` becomes a
 > parameter.
-> **+** One crash costs 4 validators; one Byzantine fault costs 6.
+> **+** Tolerating one crash requires 4 validators; tolerating one Byzantine
+> fault requires 6.
 > **−** Crash-prone validators must not equivocate. When the fault sets are
 > full, every correct validator is needed for liveness.
 
@@ -754,10 +757,10 @@ Beside it a table: `f = 1` Byzantine → `n = 6`; `fc = 1` → `n = 4`;
 
 **Text.**
 > - `fb = 0`, `fc = 1`, `n = 4`, `q = 3`: validator 3 stops after round 0.
->   Each slot led by a live validator gets 3 votes: **direct commit**.
-> - `fb = 0`, `fc = 1`, `n = 5`, `q = 4`, `k ∈ {2, 3}`: slot 1 gets 2 votes
->   and 3 blames, so no direct decision. The anchor at slot 3 holds both
->   voters. At `k = 2` slot 1 is **committed**; at `k = 3` it is
+>   Each slot led by a live validator receives 3 votes: **direct commit**.
+> - `fb = 0`, `fc = 1`, `n = 5`, `q = 4`, `k ∈ {2, 3}`: slot 1 receives 2
+>   votes and 3 blames, so no direct decision. Both voters are in the history
+>   of the anchor at slot 3. At `k = 2` slot 1 is **committed**; at `k = 3` it is
 >   **skipped**.
 
 **Figure.** Two panels. Left: witness `Uhyb4`, a direct commit on 3 votes,
@@ -809,7 +812,8 @@ voters in the anchor's history (for `k ≥ 4`, commit and skip).
 > **Compared with Mysticeti:** a second, faster commit rule at `r + 1`; the
 > skip and the indirect rule also read "evidence" (slide 29); a different
 > committee; leader exclusion instead of self-parent.
-> **+** One parameter trades committee size for fast-path tolerance.
+> **+** The parameter `p` sets both the committee size and the number of
+> faults the fast path tolerates.
 > **−** The committee grows with `p`. Beyond `p` faults only the slow path
 > commits. There is no self-parent rule, so inclusion of every block is not
 > proved.
@@ -868,7 +872,7 @@ counted; (3) both badges.
 > - **Direct skip**: `2f + p` blocks at `r + 1` reference no candidate, **and**
 >   `2f + p` blocks at `r + 2` are evidence for nothing.
 > - **Indirect commit**: the anchor's history holds a slow certificate for
->   `l`, or `2f + p` evidence blocks for `l`. The least such `l` wins.
+>   `l`, or `2f + p` evidence blocks for `l`. The least such `l` is committed.
 > - Evidence is needed because a fast commit may leave no slow certificate.
 
 **Figure.** Two panels.
@@ -901,14 +905,17 @@ commit.
 ### Slide 30 — FinWhale: what the formalisation found
 
 **Text.**
-> - Lemma 22's counting argument covers only `p = 1`. For `p ≥ 2` (smallest
->   case `n = 9`) the lemma is proved by a different, pigeonhole argument.
-> - The C3 case of Lemmas 18/19 has no margin at `p = 1`; the lemmas are
->   proved instead by induction on the time a block is built.
-> - Lemmas 6/7 cannot go through the slow skip when a validator holds no block
->   of the slot; they are proved through the evidence quorum.
-> - The latency of Definition 1 is proved, and the evidence count is exactly
->   tight at `n = 3f + 2p − 1` and one short at `n − 1`.
+> - The paper's counting argument for Lemma 22 covers only `p = 1`. For
+>   `p ≥ 2` (smallest case `n = 9`) the lemma is proved by a pigeonhole
+>   argument.
+> - In the paper's case C3 of Lemmas 18 and 19 the count has no margin at
+>   `p = 1`; the lemmas are proved instead by induction on the time a block
+>   is built.
+> - The paper's proofs of Lemmas 6 and 7 pass through the slow skip, which
+>   does not apply when a validator holds no block of the slot; they are
+>   proved through the evidence quorum.
+> - The paper's latency claim (Definition 1) is proved, and the evidence count
+>   is exactly tight at `n = 3f + 2p − 1` and one short at `n − 1`.
 
 **Figure.** None.
 
@@ -944,8 +951,8 @@ commit.
 > **Compared with Mysticeti:** crashes counted apart from Byzantine faults; a
 > fast commit at `r + 1`; a second indirect rung for slots committed only by
 > the fast path.
-> **+** A crash costs 2 validators, not 3. Commits in two rounds when at most
-> `p` are faulty.
+> **+** Each crash fault adds 2 to the committee bound, against 3 for a
+> Byzantine fault. Commits in two rounds when at most `p` are faulty.
 > **−** Only the slow path is guaranteed to commit; the fast path is a
 > latency result.
 
@@ -968,7 +975,7 @@ commit.
 
 **Text.**
 > `n = 7`; `v0` is Byzantine and equivocates; `v1` has crashed.
-> - The leader gets exactly `qFast = 6` votes: **fast commit**.
+> - The leader receives exactly `qFast = 6` votes: **fast commit**.
 > - No block is a certificate: each round-2 block references only 4 votes, one
 >   fewer than `qCert = 5`.
 > - A validator that missed the fast commit consults the anchor. Rung 1 finds
@@ -982,18 +989,18 @@ anchor (block 24) and its history, rung 1 empty, rung 2 counting 4 voters.
 - `U4`, `V4` (`lk4`, 32 blocks; LeanDagTest/Hydrozoan/DirectSafety.lean):
   `FastCommit U4 2 0`, `certificates U4 2 0 = ∅`,
   `supporters U4 2 1 = {0, 2, 3, 4, 5, 6}`; the anchor reaches 4 voters
-  (scratch check; the witness comment says the same).
+  (checked by evaluation; the witness's docstring states the same).
 - `WeakLinked` (LeanDag/Hydrozoan/Model/IndirectRules.lean).
 
 ### Slide 33 — Hydrozoan: what the formalisation found
 
 **Text.**
 > - The six threshold inequalities hold for every slack `k ≥ 0`.
-> - One of them must be strengthened to `qFast + q − n − f ≥ qWeak` for the
->   fast path's footprint to reach the anchor.
+> - One of them must be strengthened to `qFast + q − n − f ≥ qWeak`, so that
+>   every eligible anchor sees at least `qWeak` votes of every fast commit.
 > - Round-robin by slot is not fair inside the bound: at `n = 5`, `f = 0`,
->   `c = 2`, it can give no three consecutive live leaders. A rotation aligned
->   to waves is fair.
+>   `c = 2`, it need not place three live leaders consecutively. A rotation
+>   aligned to waves is fair.
 
 **Figure.** The six inequalities as a checklist, the strengthened one
 highlighted as "proved separately".
@@ -1061,7 +1068,7 @@ highlighted as "proved separately".
 
 **Text.**
 > `n = 4`. The leader equivocates (copies 4 and 5).
-> - Copy 4 gets 3 votes: **fast commit**. No block is a certificate.
+> - Copy 4 receives 3 votes: **fast commit**. No block is a certificate.
 > - Each round-`r+2` block sees both copies, references 2 votes for copy 4
 >   and 1 for copy 5, and is evidence for copy 4.
 > - The anchor's history holds the three evidence blocks: rung 2 **commits**
@@ -1134,8 +1141,8 @@ link.
 >   history.
 > - A Byzantine block can claim a slot that a quorum skipped.
 > - So the indirect rule is safe only at a committed anchor: every committed
->   anchor is certified, backed and leader-tagged. Bluestreak is the only rule
->   that needs this extra field.
+>   anchor is certified, backed and leader-tagged. Of the rules here, only
+>   Bluestreak requires this field.
 
 **Figure.** Witness `U2`: slot 0 directly skipped; Byzantine block 11 claims
 it; the uncertified would-be anchor 15 links that claim.
@@ -1156,7 +1163,7 @@ it; the uncertified would-be anchor 15 links that claim.
 > - From round 2, a correct block's claim must name a block certified exactly
 >   two rounds below.
 > - Safety, liveness and every mechanism assume this discipline.
-> - Read two rounds deep, the discipline survives garbage collection.
+> - Read two rounds deep, the discipline is preserved by garbage collection.
 
 **Figure.** (diagram) A claim with a two-round window drawn beneath it, the certified
 block inside the window.
@@ -1183,7 +1190,7 @@ block inside the window.
 > - A direct skip blames the slot: the blamer has no block of the slot in its
 >   history.
 > - The leader of a wave is revealed only after the wave, so the adversary
->   cannot aim at it.
+>   cannot direct its message scheduling against it.
 >
 > **Compared with Mysticeti:** a longer wave, votes found anywhere in the
 > history, a skip per slot, and an unpredictable leader.
@@ -1214,12 +1221,12 @@ at `r+3`, certificates at `r+4`, the leader revealed above `r+4`.
 >   validator's block is directly committed.
 > - At `w ≥ 5`, at least `n − f − b` correct validators are **good**: their
 >   block would commit if chosen (`b` = number of Byzantine).
-> - An adversary that knows the leader in advance can keep its block out of
->   the others' histories.
+> - An adversary that knows the leader in advance can prevent the leader's
+>   block from entering the other validators' histories.
 
 **Figure.** Two panels. Left: witness `twin4`, a history with twins 0 and 4;
 the vote arrow goes to 0. Right: witness `aim4` (`n = 4`, nobody equivocates):
-the scheduler keeps validator 1's round-1 block out of the other histories;
+the scheduler delivers validator 1's round-1 block into no other history;
 `good = {0, 2, 3}` at `w = 4`; at `w = 5` every validator is good.
 
 **Notes.**
@@ -1264,7 +1271,7 @@ proved `1/2`; a second pair for large `n`: `2/3` against `1/3`.
 >   in the history as in Mahi-Mahi; no certificates.
 > - **Direct commit**: `n − f` votes. **Direct skip**: `n − f` blames.
 > - **Indirect**: `n − 3f` voters in the anchor's history; the least passing
->   candidate wins.
+>   candidate is committed.
 > - The leader is unpredictable, as in Mahi-Mahi.
 >
 > **Compared with Odontoceti:** the vote round moves from `r + 1` to `r + 2`
@@ -1289,9 +1296,9 @@ a shaded cone back to round `r`.
 ### Slide 44 — Async BlueBottle: witnesses
 
 **Text.**
-> - `n = 6`: the leader's block is kept out of every history but its own.
->   Five blames: **direct skip**. The schedule is fair, yet the adversary
->   aimed at a known leader.
+> - `n = 6`: the leader's block enters no history but its own. Five blames:
+>   **direct skip**. The schedule is fair, but the leader was known in
+>   advance.
 > - Two twins can both pass the `n − 3f` test at one anchor: the least must
 >   be chosen.
 > - The paper's procedure skips per candidate, which can skip one twin while
@@ -1328,8 +1335,8 @@ passing at block 19); `hazard6` (one twin committed, the other skipped).
 >
 > **Compared with Mysticeti:** two rules on one DAG, chosen per slot, and a
 > controller that chooses how often the asynchronous rule runs.
-> **+** Short waves when the network behaves; asynchronous liveness when it
-> does not.
+> **+** Short waves while the network is synchronous; liveness under
+> asynchrony.
 > **−** Two rules, a coin, a period controller, and a failover (slide 47).
 
 **Figure.** (illustration of `periodicKind`) A strip of rounds coloured by
@@ -1354,7 +1361,7 @@ kind at `P = 3`, with the two waves drawn as brackets of 3 and 5 rounds.
 >   block to exactly `f + 1` validators. Neither a commit nor a skip quorum
 >   forms.
 > - The synchronous slot just below each asynchronous round is then undecided
->   in every view, and output stops there.
+>   in every view, and the output does not advance beyond it.
 > - A committed asynchronous slot does not decide the synchronous slots below
 >   it.
 > - At period 1 every slot is proved to be decided.
@@ -1399,13 +1406,13 @@ the asynchronous slot 0 committed directly; slot 3 undecided in every view.
 ### Slide 48 — Steelhead: what the formalisation found
 
 **Text.**
-> - The paper's period update alone keeps a stalled period; liveness needs the
->   failover.
+> - The paper's period update alone retains a stalled period; liveness
+>   requires the failover.
 > - An equivocating leader at a slot's anchor floor can hold the slot
 >   undecided.
 > - The interval must satisfy `I ≥ 2·maxPeriod` and `I ≥ maxPeriod + wa − 2`.
-> - With exactly one vote missing, a timeout certificate forms with
->   probability `f/n`, not `(n − f)/n`.
+> - In the paper's timeout appendix, with exactly one vote missing, a
+>   certificate forms with probability `f/n`, not `(n − f)/n`.
 
 **Figure.** None.
 
@@ -1432,7 +1439,7 @@ the asynchronous slot 0 committed directly; slot 3 undecided in every view.
 >   skipped.
 > - **Skip** when `n − f` processes of the round above have no block that
 >   references it.
-> - No later anchor is ever consulted.
+> - The rule consults no later anchor.
 
 **Figure.** (diagram) A two-round DAG with the "resolved" condition drawn as a check
 mark on the previous slot.
@@ -1466,9 +1473,10 @@ references; (2) the partial view, block 6 committed; (3) the full view, block
 
 **Text.**
 > - A leader referenced by 2 of 4 processes is neither committed nor skipped,
->   and blocks every later leader.
-> - With two leaders per round in round-robin, nothing is ever committed.
-> - A silent leader's empty slot blocks every later leader.
+>   and no later leader can be committed.
+> - With two leaders per round in round-robin, no leader is committed.
+> - A silent leader's empty slot prevents every later leader from being
+>   committed.
 > - With one leader per round, the same DAG does commit.
 
 **Figure.** Two panels: `mLead` (two leaders per round, no commits) and `Ds`
@@ -1601,13 +1609,13 @@ Hybrid's committee through `Admissible` (`HybridFaults` itself asks
 >
 > Eleven rules (all but Minnow and Black Marlin) have the properties.
 
-**Figure.** The Protocols → Properties → Mechanisms picture of slide 2, with
+**Figure.** The Protocols → Properties → Mechanisms diagram of slide 2, with
 the middle column highlighted.
 
 ### Slide 58 — The carrier
 
 **Text.**
-> A mechanism sees a rule only through a **carrier**:
+> A mechanism accesses a rule only through its **carrier**:
 > - a type of universes (all blocks) and of views (what one validator holds);
 > - the round, creator and references of each block;
 > - the decision relation: under schedule `S`, view `V` decides slot `k` as
@@ -1660,18 +1668,18 @@ the other leaders recoloured; slot `i`'s verdict unchanged.
 (LeanDag/Properties/Commit.lean:40). `Indirect` gives `Descends`
 (`Descends.of_indirect`, LeanDag/Properties/Derived/Descent.lean:83).
 
-### Slide 61 — The support: what makes a commit happen
+### Slide 61 — The support: the conditions for a commit
 
 **Text.**
 > - A **support** names the wave and what it means for a block to certify a
 >   candidate.
 > - **Law 1 (local)**: certification depends only on the wave's rounds, so it
->   survives cutting and shifting rounds outside them.
+>   is unchanged by cutting or shifting rounds outside them.
 > - **Law 2 (commits)**: if a reliable quorum `T` leads a slot, produces
 >   through its wave and certifies every candidate, then a view that holds
 >   those rounds commits the slot.
-> - Liveness needs exactly this, at every slot `T` leads. The network enters
->   only through how it is established.
+> - Liveness needs exactly this, at every slot `T` leads. The network
+>   assumption is used only to establish it.
 
 **Figure.** (diagram) A wave window over rounds `r … r + wave`, `T`'s rows highlighted,
 the commit badge. Two arrows into "live": "synchrony and coverage" and
@@ -1698,7 +1706,7 @@ Makefile step).
 > - **SelfParent**, **NoEquiv**: every block references its creator's previous
 >   block; a reliable creator makes one block per round (inclusion).
 >
-> Derived, never needed per rule: **Persist** and **LocalTruncate** from
+> Derived, so no rule needs to prove them: **Persist** and **LocalTruncate** from
 > Banded; **LeaderCommits** from Law 2; **Descends** from Indirect.
 
 **Figure.** (diagram) A derivation graph: Banded → Persist, LocalTruncate; Law 2 →
@@ -1739,7 +1747,7 @@ settling round.
 **Text.**
 > From **Law 2**, **CommitsCandidate**, **SelfParent** and **NoEquiv**:
 > - **Progress**: every slot below a run of reliably led slots is decided, and
->   reliably led slots keep committing.
+>   reliably led slots continue to be committed.
 > - **Inclusion**: every block of a reliable validator enters the ledger,
 >   through a later slot its creator leads.
 >
@@ -1807,8 +1815,8 @@ NoEquiv, Safe, Lives:
 > |---|---|
 > | Validators' ledgers agree | Banded, Agree, CommitsCandidate |
 > | Every slot is eventually decided | Law 2, Indirect |
-> | A validator decides on what it actually holds | the pacemaker (slide 71) |
-> | Commits carry blocks from many correct validators | Quorate, CommitsCandidate |
+> | A validator decides from the blocks it holds | the pacemaker (slide 71) |
+> | A committed block's history contains blocks of many correct validators | Quorate, CommitsCandidate |
 > | Every correct validator's blocks are committed | SelfParent, NoEquiv, LeaderCommits |
 > | Storage stays linear under equivocation | the novelty budget (slide 75) |
 > | Storage stays constant | garbage collection (slide 77) |
@@ -1830,19 +1838,19 @@ the storage model, not the carrier.
 Each mechanism: the problem; how it works; a worked example; the properties
 it uses and provides; its limits.
 
-### Slide 67 — Mechanisms at a glance
+### Slide 67 — The mechanisms
 
 **Text.**
 > | Mechanism | Problem it solves | Uses | Slides |
 > |---|---|---|---|
-> | Pacing | progress, with no clock in the rule | view convergence | 68–71 |
-> | Chain quality | whose blocks a commit carries | Quorate, CommitsCandidate, SelfParent, NoEquiv | 72–73 |
-> | Storage bound | equivocators filling storage | the acceptance rule only | 74–75 |
-> | Garbage collection | storage that grows forever | Banded, Agree, Law 1 | 76–79 |
-> | Crash recovery | a returning validator cannot produce | Banded, Agree, SkipsUnsupported, Law 1 | 80–85 |
+> | Pacing | progress, for a rule that does not refer to time | view convergence | 68–71 |
+> | Chain quality | which validators' blocks enter the ledger | Quorate, CommitsCandidate, SelfParent, NoEquiv | 72–73 |
+> | Storage bound | storage growth caused by equivocation | the acceptance rule only | 74–75 |
+> | Garbage collection | unbounded storage growth | Banded, Agree, Law 1 | 76–79 |
+> | Crash recovery | a recovering validator cannot produce blocks | Banded, Agree, SkipsUnsupported, Law 1 | 80–85 |
 > | Composition | several mechanisms at once | Banded, Agree, Law 1 | 86–87 |
-> | Adaptive schedules | bad leaders; how many leaders | Agree, CommitsDirect, Law 2, Indirect | 88–92 |
-> | Checkpoints, Red Snapper | uses beyond ordering | Agree, CommitsCandidate, Law 2 | 93–94 |
+> | Adaptive schedules | faulty leaders in the schedule; the number of leaders per round | Agree, CommitsDirect, Law 2, Indirect | 88–92 |
+> | Checkpoints, Red Snapper | applications beyond ordering | Agree, CommitsCandidate, Law 2 | 93–94 |
 
 **Figure.** The table, with each "Uses" entry linking back to its property
 slide in Part III.
@@ -1853,10 +1861,10 @@ no property of the rule.
 
 ## IV.1 Pacing (slides 68–71)
 
-### Slide 68 — Liveness without clocks in the rule
+### Slide 68 — Liveness, and the role of time
 
 **Text.**
-> - The commit rule counts references; it never mentions time.
+> - The commit rule counts references; it does not refer to time.
 > - Liveness is reduced to two facts about the DAG, from some round on:
 >   - every reliable validator has a block in each round;
 >   - each reliable block references every reliable block of the round below.
@@ -1920,8 +1928,8 @@ drift" has no Lean statement.
 >   timeout is a fallback.
 > - The vote round then takes at most drift + delivery + processing. When that
 >   sum is below the timeout, no timeout fires.
-> - Every reliable validator decides on the blocks it actually holds, at an
->   explicit time.
+> - Every reliable validator decides from the blocks it holds, by an explicit
+>   time.
 
 **Figure.** Witness `ugrowReactive`: four validators building at spacing 6
 inside a timeout of `9 = 2Δ + proc`; one timeline per validator, the timeout
@@ -1935,7 +1943,7 @@ drawn as a dashed bar that is never reached.
 (LeanDag/Mysticeti/ViewPace.lean:507), `commits_recur_local` (:534),
 `ReactiveM.decided_local` (Reactive/Mysticeti.lean:119). `ugrowReactive`
 (LeanDagTest/Reactive/Model.lean:50). The reactive
-schedule gives up coverage (docstring); inclusion is kept through the
+schedule does not provide coverage (docstring); inclusion is preserved through the
 rotation (LeanDag/Reactive/MysticetiProperties.lean:96).
 
 ## IV.2 Chain quality (slides 72–73)
@@ -1943,8 +1951,9 @@ rotation (LeanDag/Reactive/MysticetiProperties.lean:96).
 ### Slide 72 — Chain quality
 
 **Text.**
-> - **Coverage**: every commit carries, at every round below it, blocks from at
->   least `|Correct| − f` correct validators. No timing assumption.
+> - **Coverage**: the history of every committed block contains, at every
+>   round below it, blocks of at least `|Correct| − f` correct validators. No
+>   timing assumption is needed.
 > - **Inclusion**: a correct validator's block is committed once a later slot
 >   it leads commits.
 > - Coverage holds for every rule except Bluestreak. Inclusion holds for the
@@ -1952,7 +1961,8 @@ rotation (LeanDag/Reactive/MysticetiProperties.lean:96).
 >
 > **Uses:** Quorate and CommitsCandidate (coverage); SelfParent, NoEquiv and
 > LeaderCommits (inclusion).
-> **Gives:** which correct validators' blocks a commit carries.
+> **Gives:** lower bounds on which correct validators' blocks enter the
+> ledger.
 
 **Figure.** Witness `Ucens`, slot 1's committed history: at each round the
 correct creators counted, 2 of 3.
@@ -1985,7 +1995,7 @@ history (:364), block 7 not in the ledger (:393).
 ### Slide 74 — Equivocation and exposure
 
 **Text.**
-> - Safety needs no defence against equivocation; storage does.
+> - Safety requires no restriction on equivocation; bounded storage does.
 > - A creator is **exposed** in a block's history when the history holds two of
 >   its blocks in one round.
 > - **Rule**: never reference a block whose creator is exposed in your own
@@ -2011,7 +2021,7 @@ LeanDagTest/DoS/SafetyUnderDoS.lean.
 **Text.**
 > - Accept a block only if its history adds at most `τ` blocks you do not
 >   hold; reference only blocks you have accepted.
-> - The rule does not look at who created a block.
+> - The rule is independent of a block's creator.
 > - Storage then grows linearly: with `C` correct validators, a correct
 >   validator holds at most `C·((1 + fτ)·n + 1 + f)` blocks at round `n`.
 >   At `C = 3`, `f = 1`, `τ = 3`, round 9: 114 blocks.
@@ -2062,8 +2072,8 @@ after (:72–84).
 **Text.**
 > With the horizon at most `Λ` rounds below the current round, a correct
 > validator keeps at most `C·(Λ + 1) + C·f + Λ·C·f·κ` blocks, whatever the
-> round. Here `κ` bounds how many new blocks one Byzantine block may bring
-> with it. At `C = 3`, `f = 1`, `κ = 3`, `Λ = 5`: 66 blocks.
+> round. Here `κ` bounds the number of new blocks that accepting one
+> Byzantine block adds to the store. At `C = 3`, `f = 1`, `κ = 3`, `Λ = 5`: 66 blocks.
 
 **Figure.** (illustration of the bound) A window of width `Λ + 1` sliding
 right; the store size flat at 66.
@@ -2077,8 +2087,8 @@ correct validators.
 **Text.**
 > - A new validator adopts the round-`G` blocks that are reached from blocks of
 >   at least `f + 1` distinct creators at a later round `t`.
-> - One of those creators is correct, so the base is genuine. No signatures
->   are needed.
+> - One of those creators is correct, so every base block is attested by a
+>   correct validator. No signatures are needed.
 > - It then copies a correct peer's blocks above `G`. Its verdicts equal those
 >   of any validator with the full history.
 
@@ -2099,10 +2109,11 @@ Witness: `Base Uexcl 4 1 = {5, 6, 7}`, `joinIds Dexcl 1 2 4 1 =
 > | Horizon | Guarantee |
 > |---|---|
 > | anywhere | safety |
-> | at least 1 round below the current round | peers do not lose blocks they need |
+> | at least 1 round below the current round | every block a peer still requires is retained |
 > | at least 2 rounds below the current round | the attested base is complete |
 >
-> An equivocation whose two blocks both fall below the cut is forgotten.
+> An equivocation whose two blocks both fall below the cut is no longer
+> detected.
 
 **Figure.** The table.
 
@@ -2116,7 +2127,7 @@ undecided slot leaves it undecided.
 
 ## IV.5 Crash recovery in one message (slides 80–83)
 
-### Slide 80 — The message
+### Slide 80 — Crash recovery: the message
 
 **Text.**
 > - A validator `v₁` crashed after its block `B₁` and returns at round `r`. It
@@ -2172,7 +2183,7 @@ Hydrozoan (LeanDag/Integration/HydrozoanMechanisms.lean:79), Bluestreak
 > - A validator's own blocks form a chain, so the donor's whole line is fixed
 >   by its top block.
 > - The fill depends only on `B₁`, the donor's top block `B₂`, and the fresh
->   identifiers. The message carries just these.
+>   identifiers. The message carries only these.
 > - A receiver that holds `B₂` holds the donor's whole line. After the one
 >   message, `v₁` has a block at every round up to `B₂`'s round, so it can
 >   produce at the next.
@@ -2219,9 +2230,10 @@ not the self-reference).
 >   cannot be continued.
 > - Each validator adds a round-0 block for `v₁`, with no references, to its cut
 >   DAG. This needs no exception to the self-parent rule.
-> - Recipe: (1) join from the attested base to read; (2) re-genesis to write;
+> - Procedure: (1) join from the attested base to read; (2) re-genesis to write;
 >   (3) one fill message from the genesis block to the current round.
-> - While a quorum still produces, at most `f` validators can be cut off.
+> - While a quorum still produces blocks, at most `f` validators can be in
+>   this state at once.
 >
 > **Uses:** Banded, Agree, Law 1, and the attested base (slide 78).
 > **Gives:** a validator back in production after any outage.
@@ -2245,8 +2257,8 @@ transmitted": `regenesis_converges` proves only that a later cut removes it.
 ### Slide 85 — The chain fill (Bluestreak)
 
 **Text.**
-> - Copying a donor's references would make `v₁` cast Bluestreak claims it
->   never made.
+> - Copying a donor's references would attribute to `v₁` claims it never
+>   made.
 > - Each filled block references only `v₁`'s previous block and carries no tag
 >   and no claim. The message is `(v₁, B₁, r)`; no donor.
 > - Verdicts do not change: slot 2 is committed and slot 3 skipped, before and
@@ -2296,7 +2308,8 @@ composite settles at round 15.
 
 **Text.**
 > From Banded, Agree and Law 1: across any stack, verdicts above the settling
-> round carry over, views agree, and the liveness precondition carries over.
+> round are preserved, views agree, and the liveness precondition is
+> preserved.
 > The cut, fill and re-genesis are each built once, and serve ten of the
 > eleven rules.
 
@@ -2312,7 +2325,7 @@ Bluestreak, Mahi-Mahi, Async BlueBottle; none for Steelhead.
 ### Slide 88 — Leaders chosen from the committed prefix
 
 **Text.**
-> - A fixed schedule may keep naming a crashed leader.
+> - A fixed schedule may continue to name a crashed leader.
 > - A **configuration** fixes the leaders of each round and an interval.
 > - It decides up to its **anchor** (the first committed slot more than one
 >   interval past its start), but outputs only up to its boundary.
@@ -2340,8 +2353,8 @@ crashed-leader motivation.
 >   configuration and every verdict.
 > - No timing, fairness or window assumption, and any score, provided the
 >   update reads the view only through the anchor's history.
-> - For liveness the score must keep giving reliable validators enough
->   consecutive slots.
+> - For liveness the score must continue to assign reliable validators runs
+>   of consecutive slots.
 
 **Figure.** (diagram) Two validators' runs, configurations matching segment
 by segment.
@@ -2372,10 +2385,10 @@ absolute slot number below it.
 
 ## IV.9 An adaptive leader count (slides 91–92)
 
-### Slide 91 — The control loop
+### Slide 91 — The adaptive leader count
 
 **Text.**
-> More leaders per round lower latency, but one slow leader holds up every
+> More leaders per round lower latency, but one slow leader delays every
 > later slot. At each anchor:
 > 1. count the directly committed slots in the anchor's history;
 > 2. healthy if `num · expected ≤ den · observed`;
@@ -2404,7 +2417,7 @@ unhealthy, healthy): 1 → 2 → 3 → 2 → 1 → 2, backoff 0, 0, 0, 1, 2, wit
 **Text.**
 > - Safety holds for any anchored update rule, AIMD included.
 > - If the interval is shorter than the wave, the expected count is 0, the test
->   always passes, and the count only grows.
+>   always passes, and the count increases at every anchor.
 > - Liveness under several leaders per round is proved for round-robin when
 >   `waveLength · slack + 1 ≤ n`.
 
@@ -2446,7 +2459,7 @@ then the epoch boundary and recovery.
 (`checkpointQC_prefix`). Instances: LeanDag/Integration/HybridCheckpoint.lean,
 LeanDag/Integration/BarnacleCheckpoint.lean.
 
-### Slide 94 — Red Snapper: fast payments on owned objects
+### Slide 94 — Red Snapper: a fast path for owned objects
 
 **Text.**
 > - Validators state a **stance** on each object version inside their ordinary
@@ -2460,8 +2473,8 @@ LeanDag/Integration/BarnacleCheckpoint.lean.
 >   `n ≥ 5f + 1`. The `5f + 1` certificate lemmas themselves need only
 >   `n ≥ 3f + 1`.
 >
-> **Uses:** a committed anchor sequence from the underlying consensus,
-> treated as a black box.
+> **Uses:** only the committed anchor sequence of the underlying
+> consensus.
 > **Gives:** commits of owned-object transactions without waiting for
 > consensus, except under conflict.
 
@@ -2499,7 +2512,7 @@ under `MoveDiscipline`). Witnesses `ULive`, `UTri`
 no `onRecord`. `AuthenticatedBroadcast` (LeanDag/Checkpoint/RecoverySpec.lean:29)
 is an assumed contract. (informal) Barbouni is in `docs/barbouni.md` only.
 
-### Slide 96 — Where to find it
+### Slide 96 — The development
 
 **Text.**
 > - `LeanDag/Common/`: blocks, the decision relation, ledgers.
@@ -2526,4 +2539,4 @@ theorem's axioms are printed in the test files and are Lean's standard three
 >   against them.
 > - Safety with no network assumption; liveness from view convergence.
 
-**Figure.** The three-column picture of slide 2, filled with names.
+**Figure.** The three-column diagram of slide 2, filled with names.

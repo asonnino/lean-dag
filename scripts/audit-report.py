@@ -514,10 +514,12 @@ def main(argv):
                  (ROOT / "docs/target-properties.md", "## 0.")]
         # The register check covers every document in `docs/` except
         # `style.md`, which quotes the banned phrases in order to ban
-        # them. A new design record is covered the moment it is added.
+        # them, and the presentation outline. A new design record is
+        # covered the moment it is added.
         register_only = sorted(
             q for q in (ROOT / "docs").glob("*.md")
             if q.name not in ("report.md", "style.md"))
+        register_only += sorted((ROOT / "presentation").glob("*.md"))
     bad = sum(audit(p, decls, suffixes, h) for p, h in paths)
     bad += sum(audit_register(q) for q in register_only)
     sys.exit(1 if bad else 0)
