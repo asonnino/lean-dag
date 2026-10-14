@@ -42,6 +42,7 @@ import LeanDagTest.Integration.BarnacleCheckpoint
 import LeanDagTest.SafeSkip.Model
 import LeanDagTest.Mysticeti.Routes
 import LeanDagTest.Nemo.Model
+import LeanDagTest.Nemo.Shadow
 import LeanDagTest.MahiMahi.Model
 import LeanDagTest.MahiMahi.Axioms
 import LeanDagTest.MahiMahi.Counting

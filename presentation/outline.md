@@ -54,6 +54,11 @@ Taken on 2026-10-14:
    There are no external dependencies except one web font.
 5. **Stepped figures.** Commit-rule figures advance in large steps, at most
    four per figure.
+8. **Witnesses.** Every DAG figure is drawn from a Lean witness. Where none
+   existed, one was added: `Ush` (LeanDagTest/Nemo/Shadow.lean), `Dbare`
+   (LeanDagTest/FinWhale/Model.lean), and the AIMD sequence
+   (LeanDagTest/Barnacle/Agreement.lean). Figures with no DAG are marked
+   "(diagram)" or "(illustration of …)" with the theorem they illustrate.
 6. **Length.** Slides are merged where the result stays legible. Each
    protocol's trade-offs are on its overview slide. The deck has 94 slides.
 7. **Barbouni** is proposed, not built; it appears only on the "open work"
@@ -146,7 +151,7 @@ Properties → Mechanisms labelled "each mechanism uses".
 > - Some validators may be faulty. We must tolerate them without knowing who
 >   they are.
 
-**Figure.** Four validators, each holding a log of coloured boxes; three logs
+**Figure.** (diagram) Four validators, each holding a log of coloured boxes; three logs
 equal, one validator marked faulty.
 
 **Notes.** (informal) Background for the audience. In Lean the ledger is
@@ -167,7 +172,7 @@ ledgers is `AnchoredRule.commitSeq_agree`, `ledgerSet_agree`
 > - A correct validator never says two different things, so two quorums
 >   cannot support two conflicting facts.
 
-**Figure.** `n = 4`, `f = 1`: two overlapping sets of 3 validators drawn as
+**Figure.** (diagram) `n = 4`, `f = 1`: two overlapping sets of 3 validators drawn as
 Venn circles. The overlap has 2 validators, of which at most 1 is Byzantine.
 
 **Notes.**
@@ -188,7 +193,7 @@ Venn circles. The overlap has 2 validators, of which at most 1 is Byzantine.
 > - Safety is proved with no assumption about the network.
 > - Liveness is proved from view convergence and the protocol's own rules.
 
-**Figure.** A timeline: before GST arrows of arbitrary length; after GST
+**Figure.** (diagram) A timeline: before GST arrows of arbitrary length; after GST
 arrows of length at most `Δ`.
 
 **Notes.**
@@ -211,8 +216,9 @@ arrows of length at most `Δ`.
 > - Blocks are named by identifier (a hash), so two validators may hold
 >   different sets of blocks but agree on what each identifier means.
 
-**Figure.** A 4 × 3 DAG (`n = 4`). One block at round 2 is highlighted with
-its 3 references drawn bold, one of them its own previous block.
+**Figure.** Witness `U3`, rounds 0–2 (`n = 4`). Block 8 (`v0`, round 2) is
+highlighted with its 3 references (blocks 4, 5, 6) drawn bold; block 4 is its
+own previous block.
 
 **Notes.**
 - `Block` (LeanDag/Common/Block.lean:20); `ValidWrt` (Block.lean:61) has four
@@ -236,9 +242,9 @@ its 3 references drawn bold, one of them its own previous block.
 > - Every direct commit rule is then a threshold on a set of blocks found in
 >   the graph.
 
-**Figure.** Left: one round of a certified DAG with the extra signature
-exchange between proposal and reference. Right: the same round uncertified;
-the certificate is a pattern found two rounds later.
+**Figure.** (illustration) Left: one round of a certified DAG with the extra
+signature exchange between proposal and reference. Right: witness `U3`; the
+certificate is the pattern found at round 2.
 
 **Notes.**
 - (informal) Narwhal and Bullshark.
@@ -257,8 +263,8 @@ the certificate is a pattern found two rounds later.
 > - The ledger is the committed leaders in slot order, each followed by the
 >   blocks in its history not yet output.
 
-**Figure.** A schedule strip: rounds 0–8 across, one or two leader slots per
-round, slot indices `k = 0, 1, 2, …` underneath.
+**Figure.** Two schedule strips, rounds 0–8: `pipeSlots` (one leader per
+round) and `duoSlots` (two leaders per round), slot indices underneath.
 
 **Notes.**
 - `Slots` (LeanDag/Common/Slots.lean): `slotRound`, `leader`, a `kind`
@@ -283,7 +289,7 @@ round, slot indices `k = 0, 1, 2, …` underneath.
 > The anchor is the nearest eligible committed slot above; every eligible
 > slot in between must be skipped.
 
-**Figure.** Flowchart: "direct commit?" → commit; "direct skip?" → skip;
+**Figure.** (diagram) Flowchart: "direct commit?" → commit; "direct skip?" → skip;
 otherwise "nearest eligible committed anchor above" → "links a candidate?" →
 commit (the least, if the rule has a tie-break) / skip.
 
@@ -327,7 +333,7 @@ with the other rules' cards shown as a stack of cards behind it.
 > - Anchoring at such slots would let one validator's direct commit become
 >   another validator's indirect skip.
 
-**Figure.** A pipelined Mysticeti DAG with slots at every round. Slot `k` at
+**Figure.** Schedule `pipeSlots` over a Mysticeti DAG, slots at every round. Slot `k` at
 round `r`; slots at `r+1` and `r+2` greyed, "not eligible"; slot at `r+3`
 marked "eligible anchor".
 
@@ -371,8 +377,8 @@ absence would have been overturned".
 > - A **witness** is a small concrete DAG, usually 4 to 9 validators, on which
 >   Lean computes the verdicts. Witnesses show that hypotheses can be met and
 >   that bounds are tight; counterexamples show that a published claim fails.
-> - Every figure in this deck is drawn from a witness, unless it is marked
->   "illustration".
+> - Every DAG in this deck is drawn from a witness. Figures that are not are
+>   marked as diagrams.
 
 **Figure.** A Lean snippet: a witness DAG definition and one line
 `example : DirectCommit U3 0 0 := by decide`, next to the drawn DAG.
@@ -533,7 +539,8 @@ slot 0.
   `2f + 1` validators provides it by counting: `Steelhead.roundRobin_fairRun`
   (LeanDag/Steelhead/Helpers/Liveness.lean:44, hypothesis
   `c · (n − |T|) < n`, here `2f < 2f + 1`); on data `nemo_fairRun`
-  (LeanDagTest/Nemo/Model.lean:166).
+  (LeanDagTest/Nemo/Model.lean:166). Without adjacent live leaders, odd slots
+  are never decided: witness `Ush` (slide 19).
 - (informal) Why the implementation has no direct skip (its skip quorum is
   the full stake): docstring LeanDag/Nemo/Rules.lean:13–18.
 
@@ -548,9 +555,14 @@ slot 0.
 >   anchor at slot 4 links nothing for it: **indirect skip**. Slot 3 is not
 >   eligible for slot 2.
 
-**Figure.** Witness `Unemo`, rounds 0–5, `v2`'s row ending with a cross after
+**Figure.** Two panels.
+Left, witness `Unemo`, rounds 0–5, `v2`'s row ending with a cross after
 round 1. Stepped: (1) the slot-3 commit; (2) the empty slot 2, the slot-4
 anchor and its history, the skip badge.
+Right, witness `Ush`: the crashed `v2` leads every odd round, `v0` every even
+round. Slots 0, 2, 4 commit; slots 1, 3, 5 stay undecided, each waiting for
+the odd slot above it. Caption: "no two live leaders in a row: no odd slot is
+ever decided".
 
 **Notes.**
 - `Unemo`, `nemoBlk` (LeanDagTest/Nemo/Model.lean:60, 75);
@@ -558,8 +570,8 @@ anchor and its history, the skip badge.
   supporters are `{0, 1}`.
 - Slot 2 has no candidate (:112); `nemo_slot2` (:120), anchor slot 4
   (block 11).
-- (illustration only) "Commits at even rounds settle no odd slot" has no
-  witness; it is the docstring of LeanDag/Nemo/Liveness.lean:19–28.
+- `Ush` (LeanDagTest/Nemo/Shadow.lean:32): `sh_slot0/2/4` (:49–55);
+  `odd_undecided` (:74), in every view; `sh_not_fairRun` (:92).
 
 ## II.3 Odontoceti — two rounds at `n ≥ 5f + 1` (slides 20–22)
 
@@ -805,10 +817,15 @@ counted; (3) both badges.
 >   `l`, or `2f + p` evidence blocks for `l`. The least such `l` wins.
 > - Evidence is needed because a fast commit may leave no slow certificate.
 
-**Figure.** Witness `Dequiv` (`n = 9`): twins 0 and 27 of Byzantine `v0`.
-Block 18 sees both twins, references 4 votes for 0 and 2 for 27, threshold
+**Figure.** Two panels.
+Left, witness `Dequiv` (`n = 9`): twins 0 and 27 of Byzantine `v0`. Block 18
+sees both twins, references 4 votes for 0 and 2 for 27, threshold
 `f + p = 4`: evidence for 0. Block 19 sees one twin, threshold 3. Block 20 is
 evidence for nothing.
+Right, witness `Dbare`, stepped: (1) 7 votes, fast commit; (2) every round-2
+block references 5 votes, one short of a slow certificate, but is evidence;
+(3) the round-3 anchor (block 30) reaches six evidence blocks: indirect
+commit.
 
 **Notes.**
 - `FPEvidence` (LeanDag/FinWhale/Model/Rule.lean:135), branching on
@@ -821,10 +838,11 @@ evidence for nothing.
   Anchor at least 3 rounds above (Carrier.lean:99).
 - `Dequiv` (LeanDagTest/FinWhale/Model.lean:204, 212, 232–246). Not the
   `n = 4` witness of the same name in LeanDagTest/FinWhale/Equivocation.lean.
-- "A fast commit may leave no slow certificate": no witness in the
-  repository yet. A scratch check (`Dfast` with round-2 references
-  `{9, …, 13, 16, 17}`) confirms it by `decide`. Decision for discussion: add
-  this witness to LeanDagTest, or mark the bullet informal.
+- A fast commit with no slow certificate: witness `Dbare`
+  (LeanDagTest/FinWhale/Model.lean:164–210). `FastCommit Dbare 0` (:193);
+  every round-2 block references 5 votes and is no certificate (:197);
+  `¬ SPCommit` (:200); every round-2 block is evidence (:203); the round-3
+  leader block 30 commits through evidence alone (:207, 209).
 
 ### Slide 29 — FinWhale: what the formalisation found
 
@@ -1016,8 +1034,9 @@ highlighted as "proved separately".
 > **−** Blocks need not reference a quorum, so chain-quality coverage is not
 > shown. Claims require a discipline (slide 38).
 
-**Figure.** The same 4 validators over 4 rounds drawn twice: Mysticeti (each
-block 3 references) and Bluestreak (non-leader blocks with 1–2 references).
+**Figure.** Rounds 0–3 of two witnesses side by side: Mysticeti `U3` (each
+block 3 references) and Bluestreak `U1` (non-leader blocks with 1–2
+references).
 
 **Notes.**
 - `roleClause` (LeanDag/Bluestreak/Rule.lean:45); `ValidWrt` with
@@ -1078,7 +1097,7 @@ it; the uncertified would-be anchor 15 links that claim.
 > - Safety, liveness and every mechanism assume this discipline.
 > - Read two rounds deep, the discipline survives garbage collection.
 
-**Figure.** A claim with a two-round window drawn beneath it, the certified
+**Figure.** (diagram) A claim with a two-round window drawn beneath it, the certified
 block inside the window.
 
 **Notes.**
@@ -1109,7 +1128,7 @@ block inside the window.
 > **−** More rounds per commit; it needs an unpredictable leader (a common
 > coin).
 
-**Figure.** A `w = 5` wave: proposal at `r`, propagation at `r+1, r+2`, votes
+**Figure.** (diagram) A `w = 5` wave: proposal at `r`, propagation at `r+1, r+2`, votes
 at `r+3`, certificates at `r+4`, the leader revealed above `r+4`.
 
 **Notes.**
@@ -1189,7 +1208,7 @@ proved `1/2`; a second pair for large `n`: `2/3` against `1/3`.
 > probability at least `(n − 3f)/n` per wave.
 > **−** Six validators per fault and an unpredictable leader.
 
-**Figure.** A three-round wave with each round-`r+2` block's history drawn as
+**Figure.** (diagram) A three-round wave with each round-`r+2` block's history drawn as
 a shaded cone back to round `r`.
 
 **Notes.**
@@ -1245,8 +1264,8 @@ passing at block 19); `hazard6` (one twin committed, the other skipped).
 > does not.
 > **−** Two rules, a coin, a period controller, and a failover (slide 46).
 
-**Figure.** A strip of rounds coloured by kind at `p = 3`, with the two waves
-drawn as brackets of 3 and 5 rounds.
+**Figure.** (illustration of `periodicKind`) A strip of rounds coloured by
+kind at `p = 3`, with the two waves drawn as brackets of 3 and 5 rounds.
 
 **Notes.**
 - `wavelength` (LeanDag/Steelhead/Model/Wavelength.lean:40); `periodicKind`,
@@ -1409,7 +1428,7 @@ Hybrid's committee through `Admissible` (`HybridFaults` itself asks
 >   references it.
 > - No later anchor is ever consulted.
 
-**Figure.** A two-round DAG with the "resolved" condition drawn as a check
+**Figure.** (diagram) A two-round DAG with the "resolved" condition drawn as a check
 mark on the previous slot.
 
 **Notes.** `Minnow.ValidHere` (LeanDag/Minnow/Model/Rule.lean:43); `Quorum`
@@ -1466,7 +1485,7 @@ skip threshold, so the gap cannot be closed.
 > - There is no skip. Anchors that are not committed are output through a
 >   descent from a later committed anchor.
 
-**Figure.** Three rounds: anchor `B`, its supporters, the linking anchor and
+**Figure.** (diagram) Three rounds: anchor `B`, its supporters, the linking anchor and
 its supporters.
 
 **Notes.** `Rotation.anchor`, `IsAnchor`, `Supported`, `Linked`, `Committed`
@@ -1524,7 +1543,7 @@ the middle column highlighted.
 > Laws: a view holds only universe blocks; a view holds every block that its
 > blocks reference; references go one round down.
 
-**Figure.** Universe ⊇ View, both projecting into "Block"; an arrow "Decided"
+**Figure.** (diagram) Universe ⊇ View, both projecting into "Block"; an arrow "Decided"
 from (schedule, view, slot) to {commit `L`, skip}.
 
 **Notes.** `DagRule` (LeanDag/Properties/Carrier.lean:31); `Decided` is a
@@ -1539,8 +1558,8 @@ relation `Slots → View U → ℕ → Option BlockId → Prop` (:56); `viewSoun
 > that match in the band — up to a shift of round and slot numbers — reach the
 > same verdict.
 
-**Figure.** Two DAGs: the original, and a truncated and shifted copy. The
-band `[round(k), top]` shaded identically in both; the same verdict badge.
+**Figure.** Witness `Uexcl` and its cut `chop Uexcl 2` (as on slide 74): the
+band of slot 1 shaded identically in both; the same verdict badge.
 
 **Notes.** `Banded` (LeanDag/Properties/Band.lean:227): the other view holds
 at least the original view's blocks inside the band; slot rounds, leaders and
@@ -1560,7 +1579,7 @@ kinds match there. Used by `LocalTruncate.of_banded`
 >   between skipped, decides the slot; changing the other slots' leaders does
 >   not change that verdict.
 
-**Figure.** Indirect: an anchor at slot `j`, intermediate slots marked skip,
+**Figure.** (diagram) Indirect: an anchor at slot `j`, intermediate slots marked skip,
 the other leaders recoloured; slot `i`'s verdict unchanged.
 
 **Notes.** `Agree` (LeanDag/Properties/Agree.lean:22); `CommitsCandidate`
@@ -1581,7 +1600,7 @@ the other leaders recoloured; slot `i`'s verdict unchanged.
 > - Liveness needs exactly this, at every slot `T` leads. The network enters
 >   only through how it is established.
 
-**Figure.** A wave window over rounds `r … r + wave`, `T`'s rows highlighted,
+**Figure.** (diagram) A wave window over rounds `r … r + wave`, `T`'s rows highlighted,
 the commit badge. Two arrows into "live": "synchrony and coverage" and
 "reactive pacemaker".
 
@@ -1609,7 +1628,7 @@ Makefile step).
 > Derived, never needed per rule: **Persist** and **LocalTruncate** from
 > Banded; **LeaderCommits** from Law 2; **Descends** from Indirect.
 
-**Figure.** A derivation graph: Banded → Persist, LocalTruncate; Law 2 →
+**Figure.** (diagram) A derivation graph: Banded → Persist, LocalTruncate; Law 2 →
 LeaderCommits; Indirect → Descends.
 
 **Notes.**
@@ -1635,8 +1654,9 @@ LeaderCommits; Indirect → Descends.
 > - every commit is a candidate, and no block is committed at two slots;
 > - adding blocks never changes a verdict.
 
-**Figure.** A source DAG, a stack of transformations (fill, then cut), and
-the resulting DAG, with "=" between the verdicts above the settling round.
+**Figure.** (illustration) A source DAG, a stack of transformations (fill,
+then cut), and the resulting DAG, with "=" between the verdicts above the
+settling round.
 
 **Notes.** `Safe` (LeanDag/Properties/Arcs/Headline.lean:46), `safety` (:63),
 `Safe.prefix_agree` (:76). The last bullet is the conjunct on `Extends`.
@@ -1653,7 +1673,7 @@ the resulting DAG, with "=" between the verdicts above the settling round.
 > Seven rules have both. Nemo, FinWhale, Hydrozoan and Optimal-Hydrozoan lack
 > SelfParent and have progress only.
 
-**Figure.** A reliable validator's chain of own blocks, pulled into the
+**Figure.** (diagram) A reliable validator's chain of own blocks, pulled into the
 ledger when its next leader slot commits.
 
 **Notes.** `Progresses` (Headline.lean:94), `Includes` (:105), `Lives` (:117),
@@ -1748,7 +1768,7 @@ it uses and provides; its limits.
 >   - each reliable block references every reliable block of the round below.
 > - These follow from view convergence and the pacemaker's rules.
 
-**Figure.** Layers: network (view convergence) → pacemaker (production and
+**Figure.** (diagram) Layers: network (view convergence) → pacemaker (production and
 coverage) → support (`live`) → commits.
 
 **Notes.** `PopulatedOn` (LeanDag/Common/Participation.lean:62),
@@ -1768,7 +1788,7 @@ Mysticeti's route: `certifiesAt_of_synchronisedOn`
 > - **Reference**: a validator's block references every block of the previous
 >   round that it holds.
 
-**Figure.** One validator's round counter as a state machine with the four
+**Figure.** (diagram) One validator's round counter as a state machine with the four
 rules on its transitions.
 
 **Notes.** `PaceCore.advances` (LeanDag/Mysticeti/ViewPace.lean:171),
@@ -1805,8 +1825,9 @@ drift" has no Lean statement.
 > - Every reliable validator decides on the blocks it actually holds, at an
 >   explicit time.
 
-**Figure.** Two timelines for one round: the timed schedule waits the full
-timeout; the reactive one advances when the leader's block arrives.
+**Figure.** Witness `ugrowReactive`: four validators building at spacing 6
+inside a timeout of `9 = 2Δ + proc`; one timeline per validator, the timeout
+drawn as a dashed bar that is never reached.
 
 **Notes.** `vote_or_wait`, `prompt_vote` (LeanDag/Reactive/Basic.lean:96, 106);
 `ReactiveM.cert_or_wait` (LeanDag/Reactive/Mysticeti.lean:31);
@@ -1814,7 +1835,8 @@ timeout; the reactive one advances when the leader's block arrives.
 `built_succ_le_of_fast_gst` (:220, `Δ + δ + 2·proc`); `no_timeout_of_fast`
 (:194), `no_timeout_of_fast_gst` (:243). `decided_local`
 (LeanDag/Mysticeti/ViewPace.lean:507), `commits_recur_local` (:534),
-`ReactiveM.decided_local` (Reactive/Mysticeti.lean:119). The reactive
+`ReactiveM.decided_local` (Reactive/Mysticeti.lean:119). `ugrowReactive`
+(LeanDagTest/Reactive/Model.lean:50). The reactive
 schedule gives up coverage (docstring); inclusion is kept through the
 rotation (LeanDag/Reactive/MysticetiProperties.lean:96).
 
@@ -1830,8 +1852,8 @@ rotation (LeanDag/Reactive/MysticetiProperties.lean:96).
 > - Coverage holds for every rule except Bluestreak. Inclusion holds for the
 >   seven rules with SelfParent and NoEquiv.
 
-**Figure.** A committed leader's history; at each round the correct creators
-counted (`n = 4`: at least 2 of 3).
+**Figure.** Witness `Ucens`, slot 1's committed history: at each round the
+correct creators counted, 2 of 3.
 
 **Notes.** `card_coveredAt_ge_of_decided`
 (LeanDag/Properties/Arcs/Quality.lean:96); `mem_history_of_decided_commit`
@@ -1910,9 +1932,10 @@ Novelty.lean:432).
 > - Slot `d + k` of the full DAG and slot `k` of the cut DAG have the same
 >   verdict.
 
-**Figure.** Stepped: (1) a DAG of rounds 0–20 with a line at `G = 15`;
-(2) rounds 15–20 renumbered 0–5; a slot at round 17 (now 2) with the same
-verdict badge in both.
+**Figure.** Witness `Uexcl` cut at `G = 2`, stepped: (1) the DAG of rounds
+0–5 with a line at round 2; (2) rounds 2–5 renumbered 0–3, the round-2 blocks
+(e.g. block 8) with no references; the slot-1 commit of block 11 (round 3,
+now round 1) with the same verdict badge in both.
 
 **Notes.** `BlockRecord.chop` (LeanDag/Common/Record/Chop.lean:20);
 `Slots.chop` (LeanDag/GC/ChopDecided.lean:34); `decided_chop_iff`
@@ -1920,7 +1943,10 @@ verdict badge in both.
 `decided_agree_chop` (:46); `decided_agree_horizons`
 (LeanDag/Properties/Arcs/GC.lean:60); `chop_chop` (LeanDag/GC/Horizon.lean:57).
 Uses Banded (through LocalTruncate), Agree, and Law 1 (`live_of_truncates`,
-LeanDag/Properties/Arcs/Liveness.lean:146).
+LeanDag/Properties/Arcs/Liveness.lean:146). Witness: LeanDagTest/GC/Chop.lean:
+`chop Uexcl 2` (:46–49), `DirectCommit Uexcl 11 3` and
+`DirectCommit (chop Uexcl 2) 11 1` (:60–61), the decided slot before and
+after (:72–84).
 
 ### Slide 75 — Storage is constant
 
@@ -1929,7 +1955,8 @@ LeanDag/Properties/Arcs/Liveness.lean:146).
 > validator keeps at most `C·(Λ + 1) + C·f + Λ·C·f·κ` blocks, whatever the
 > round. At `C = 3`, `f = 1`, `κ = 3`, `Λ = 5`: 66 blocks.
 
-**Figure.** A window of width `Λ + 1` sliding right; the store size flat.
+**Figure.** (illustration of the bound) A window of width `Λ + 1` sliding
+right; the store size flat at 66.
 
 **Notes.** `card_retained_le` (LeanDag/GC/Window.lean:189), under
 `ByzBudget D κ`, `RefsAccepted D`, `G ≤ t ≤ G + Λ`. `C` is the number of
@@ -1945,12 +1972,16 @@ correct validators.
 > - It then copies a correct peer's blocks above `G`. Its verdicts equal those
 >   of any validator with the full history.
 
-**Figure.** The round-`G` layer, with arrows from 2 (= `f + 1`) round-`t`
-blocks reaching each base block.
+**Figure.** Witness `Uexcl` (`n = 4`): the round-1 layer, attested from
+round 4; the base is `{5, 6, 7}`, the joiner's blocks are
+`{5, 6, 7, 8, 9, 10}`.
 
 **Notes.** `Base` (LeanDag/GC/AttestedBase.lean:40);
 `exists_correct_attester_of_mem_base` (:55); `bootstrap_agree`
 (LeanDag/GC/Bootstrap.lean:169, needs `m + 2 ≤ t`); `joinIds` (:100).
+Witness: `Base Uexcl 4 1 = {5, 6, 7}`, `joinIds Dexcl 1 2 4 1 =
+{5, …, 10}` (LeanDagTest/GC/Bootstrap.lean:150, 153); `Base Utwin 1 0 =
+{1, 2, 3}` with both equivocation halves excluded (LeanDagTest/GC/Chop.lean:139).
 
 ### Slide 77 — Choosing the lag
 
@@ -2008,7 +2039,8 @@ round trip per missed round".
 >   one round above (the **prompt skip**). No later view can commit it.
 > - Every verdict reached before the fill agrees with every verdict after it.
 
-**Figure.** The filled DAG with the four guarantees as callouts.
+**Figure.** The fill of witness `ucrashMsg` (slide 78) with the four
+guarantees as callouts.
 
 **Notes.** `skipFill`, `skipFill_block_old`, `skipFill_populatedOn`
 (LeanDag/SafeSkip/Basic.lean:166, 171, 184). Prompt skip:
@@ -2032,7 +2064,7 @@ Hydrozoan (LeanDag/Integration/HydrozoanMechanisms.lean:79), Bluestreak
 >   message, `v₁` has a block at every round up to `B₂`'s round, so it can
 >   produce at the next.
 
-**Figure.** The message `(v₁, B₁, v₂, B₂, fresh)` and the line it denotes.
+**Figure.** (diagram) The message `(v₁, B₁, v₂, B₂, fresh)` and the line it denotes.
 
 **Notes.** `line_eq_lineOf` (LeanDag/SafeSkip/Jump.lean:174);
 `skipFill_eq_of_core` (:238); `JumpMsg` (:282), `JumpMsg.denote` (:345);
@@ -2053,8 +2085,9 @@ an identifier supply.
 > - If the donor line is taken from blocks every receiver already holds,
 >   nothing else needs to be sent.
 
-**Figure.** One axis with the outage and the horizon; `B₁` crossed out when
-the outage exceeds `Λ`.
+**Figure.** (illustration of `outage_bounded_by_lag`) One axis with the
+outage and the horizon: `r = 10`, `Λ = 5`, `G = 5`; `B₁` at round 5 kept,
+`B₁` at round 4 crossed out.
 
 **Notes.** `outage_bounded_by_lag` (LeanDag/Integration/Retention.lean:174),
 `anchor_pruned` (:27). `not_synchronisedOn_skipFill`,
@@ -2077,15 +2110,19 @@ not the self-reference).
 >   (3) one fill message from the genesis block to the current round.
 > - While a quorum still produces, at most `f` validators can be cut off.
 
-**Figure.** Stepped: (1) a cut DAG with validator 3's row empty; (2) the
-derived genesis block at round 0; (3) the fill up to the current round.
+**Figure.** Witness `Ucrash 2` (`n = 4`, validator 3 crashed after its
+round-0 block), stepped: (1) the cut at round 1 (`Ucut`), validator 3's row
+empty; (2) the re-genesis block 999 at round 0 (`Uregen`); (3) the recovery
+message `urecover` with donor 1 (blocks 5, 9), filling to round 1.
 
 **Notes.** `no_blocks_of_no_genesis`, `severed_of_pruned_anchor`
 (LeanDag/Integration/Retention.lean:44, 65); `BlockRecord.addGenesis`
 (LeanDag/Common/Record/Genesis.lean:20); `addGenesis_of_severed`
 (LeanDag/Integration/ReGenesis.lean:95); `recoveryMsg`,
 `hB1uniq_of_addGenesis`, `rejoin_populated` (ReGenesis.lean);
-`card_severed_le` (LeanDag/Integration/Margin.lean:40). The genesis block is
+`card_severed_le` (LeanDag/Integration/Margin.lean:40). Witness:
+`Ucut`, `ucut_severed`, `Uregen`, `urecover`
+(LeanDagTest/Integration/Model.lean:102–160). The genesis block is
 valid only in a DAG cut at `G` or above. (informal) "Derived locally, not
 transmitted": `regenesis_converges` proves only that a later cut removes it.
 
@@ -2143,8 +2180,8 @@ crashed-leader motivation.
 > - For liveness the score must keep giving reliable validators enough
 >   consecutive slots.
 
-**Figure.** Two validators' runs, configurations matching segment by
-segment.
+**Figure.** (diagram) Two validators' runs, configurations matching segment
+by segment.
 
 **Notes.** `Barnacle.Agreement.holds`
 (LeanDag/Barnacle/Agreement/Proof.lean:16; Statement.lean:47–90): hypotheses
@@ -2162,7 +2199,7 @@ segment.
 >   configuration: a score that names an absolute slot number gives different
 >   answers before and after a cut.
 
-**Figure.** A score's read window drawn above the horizon, with a crossed-out
+**Figure.** (diagram) A score's read window drawn above the horizon, with a crossed-out
 absolute slot number below it.
 
 **Notes.** `UpdStable` (LeanDag/Adaptive/Helpers/Mechanisms.lean:140),
@@ -2182,15 +2219,18 @@ absolute slot number below it.
 > 3. healthy: one more leader; unhealthy: `2^backoff` fewer, between 1 and
 >    `maxLeaders`; the backoff resets when healthy and grows otherwise.
 
-**Figure.** Leader count over anchors: 1 → 2 → 3 → 2 → 1 → 2 (illustration),
-with `maxLeaders = 4`. Inset: witness `Usun`, the count rising from 1 to 2.
+**Figure.** Leader count over five windows (healthy, healthy, unhealthy,
+unhealthy, healthy): 1 → 2 → 3 → 2 → 1 → 2, backoff 0, 0, 0, 1, 2, with
+`maxLeaders = 4`. Inset: witness `Usun`, the count rising from 1 to 2.
 
 **Notes.** `observed` (LeanDag/Barnacle/Model/Window.lean); `Aimd.rule`,
 `Aimd.count` (LeanDag/Barnacle/Aimd/Rule.lean). `expected` is
 `C.cum (r + 1 − waveLength) − C.cum (r − interval)`; at uniform width `m` and
 `r ≥ interval` it is `(interval − waveLength + 1)·m` (checked by `decide` at
 `m = 2`, `interval = 4`, `waveLength = 3`: 4). `Usun`
-(LeanDagTest/Barnacle/Agreement.lean:100). (informal) The latency motivation.
+(LeanDagTest/Barnacle/Agreement.lean:100). The plotted sequence is checked by
+`decide` at `bnP` (`maxLeaders = 4`; LeanDagTest/Barnacle/Agreement.lean:263).
+(informal) The latency motivation.
 
 ### Slide 88 — The leader count: findings
 
@@ -2220,8 +2260,9 @@ Optimal-Hydrozoan, Orcaella).
 > - A cut is such a relation; so are a fill and a re-genesis (with `G = 0`).
 > - A sequence of them is again one.
 
-**Figure.** A stack: fill rounds 6–10, then cut at `G = 15`; the composite
-settles at round 15.
+**Figure.** (illustration of `stack_core`, which settles at
+`max (r + 1, G)`) A stack: fill rounds 6–10, then cut at `G = 15`; the
+composite settles at round 15.
 
 **Notes.** `RebasedAbove` (LeanDag/Properties/Carrier.lean:68, references
 :81); `Truncates` (LeanDag/Properties/Truncate.lean:43); `Sustains`
@@ -2259,7 +2300,7 @@ Bluestreak, Mahi-Mahi, Async BlueBottle; none for Steelhead.
 > - At an epoch change, the highest validated checkpoint becomes the next
 >   epoch's genesis.
 
-**Figure.** Commit → state machine → sign → certificate → witness → finality;
+**Figure.** (diagram) Commit → state machine → sign → certificate → witness → finality;
 then the epoch boundary and recovery.
 
 **Notes.** `SigningRule.proposes`, `.witnesses`
@@ -2285,15 +2326,19 @@ LeanDag/Integration/BarnacleCheckpoint.lean.
 >   `n ≥ 5f + 1`. The `5f + 1` certificate lemmas themselves need only
 >   `n ≥ 3f + 1`.
 
-**Figure.** One object with two conflicting transactions; stances on the
-blocks of one round; the anchor resolving the conflict.
+**Figure.** Two panels, `n = 4`, validator 0 Byzantine. Left, witness
+`ULive`: one transaction, ACKed by validators 1, 2, 3, a fast quorum at round
+3. Right, witness `UTri`: two conflicting transactions on one object, every
+correct block declares `⊥`, an unlock at round 3, and anchor 12 releases the
+object, dropping both.
 
 **Notes.** `Faults.card_validators` (LeanDag/RedSnapper/Model/Faults.lean:52);
 `Uncontested`, `ConflictResolution` (LeanDag/RedSnapper/);
 `Revocation.ExposureAtQuorum` (LeanDag/RedSnapper/Revocation/Statement.lean:115:
 `half ≤ (quorum + 1)/2 ↔ 5f + 1 ≤ n`); `FullCertSafety`
 (LeanDag/RedSnapper/Five/FullCertSafety/Statement.lean:86, over `Faults`,
-under `MoveDiscipline`).
+under `MoveDiscipline`). Witnesses `ULive`, `UTri`
+(LeanDagTest/RedSnapper/Liveness.lean:82, 162).
 
 ## IV.11 Close (slides 93–94)
 

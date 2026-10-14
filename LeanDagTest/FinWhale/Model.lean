@@ -161,6 +161,54 @@ No round-2 block is an anchor for its own slot, having nothing above it
 to reach. -/
 example : ¬ IndirectCommitOn fwSched Dfast 18 2 18 := by decide
 
+/-! ## `Dbare` — a fast commit that leaves no slow certificate
+
+`Dfast` with its round-2 blocks pointed elsewhere: each references only
+five votes (validators `0`–`4`) and the two abstainers, one short of the
+slow-path quorum, so no SP-certificate exists anywhere. The slot is still
+committed by the fast path, and every round-2 block is FP-evidence, so an
+anchor reaches it through the evidence route alone. -/
+def bareBlk : Fin 36 → Block (Fin 9) (Fin 36) Unit := fun i =>
+  { round := (i : ℕ) / 9,
+    creator := ⟨(i : ℕ) % 9, Nat.mod_lt _ (by omega)⟩,
+    refs :=
+      if (i : ℕ) < 9 then ∅
+      else if (i : ℕ) < 16 then {0, 1, 2, 3, 4, 5, 6}
+      else if (i : ℕ) < 18 then {1, 2, 3, 4, 5, 6, 7}
+      else if (i : ℕ) < 27 then {9, 10, 11, 12, 13, 16, 17}
+      else {18, 19, 20, 21, 22, 23, 24},
+    payload := () }
+
+theorem bareValid : ∀ i : Fin 36, ValidHere bareBlk (bareBlk i) := by
+  intro i
+  refine ⟨?_, ?_, ?_, ?_⟩ <;> revert i <;> decide
+
+def Dbare : Dag (Fin 9) (Fin 36) Unit where
+  ids := Finset.univ
+  block := bareBlk
+  complete := by decide
+  valid := fun i _ => bareValid i
+  no_equivocation := by decide
+
+example : FastCommit Dbare 0 := by decide
+
+/-- **No slow certificate anywhere**: each round-2 block carries five
+voting parents, below `2f + p = 6`. -/
+example : ∀ b ∈ blocksAt Dbare 2, parentsVoting Dbare b 0 = {0, 1, 2, 3, 4} ∧
+    ¬ SPCertificate Dbare b 0 := by decide
+
+example : ¬ SPCommit Dbare 0 := by decide
+
+/-- Every round-2 block is FP-evidence for the committed block. -/
+example : ∀ b ∈ blocksAt Dbare 2, FPEvidence Dbare b 0 := by decide
+
+/-- **The anchor commits through evidence alone**: the round-3 leader block
+reaches six evidence blocks of distinct authors, and no certificate. -/
+example : IndirectCommitOn fwSched Dbare 30 0 0 := by decide
+
+example : ¬ ∃ c ∈ blocksAt Dbare 2, c ∈ historyFrom Dbare.block 30 ∧ SPCertificate Dbare c 0 := by
+  decide
+
 /-! ## `Dequiv` — the leader equivocates
 
 Three rounds of nine blocks, plus id `27`: a second round-0 block by
