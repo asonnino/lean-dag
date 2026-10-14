@@ -39,7 +39,7 @@
                   {"x": 450, "y": 20, "text": "15", "anchor": "middle", "cls": "muted"},
                   {"x": 368, "y": 126, "text": "settles at 11", "step": 1},
                   {"x": 456, "y": 226, "text": "settles at 15", "step": 2}]}</script>
-      <figcaption class="caption">Illustration of <code>stack_core</code> (LeanDag/Integration/StackRules.lean): a fill of <code>v₁</code>'s blocks at rounds 6–10, then a cut at <code>G = 15</code>; the rows are drawn at the rounds of <code>D</code>, and the shaded rounds 15–20 hold the same blocks in all three.</figcaption>
+      <figcaption class="caption">A fill of <code>v₁</code>'s rounds 6–10, then a cut at <code>G = 15</code>. Rows are drawn at <code>D</code>'s rounds; shaded rounds 15–20 hold the same blocks in all three.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -73,7 +73,7 @@
           <tr><td>Steelhead</td><td class="yes">✓</td><td class="no">open</td><td class="no">open</td><td class="no">—</td><td class="no">open</td><td class="yes">✓</td></tr>
         </tbody>
       </table>
-      <figcaption class="caption">✓ proved; — not shown; open: listed as open work (slide 95).</figcaption>
+      <figcaption class="caption">Mechanisms proved per rule: ✓ proved; — not shown; open: listed as open work (slide 95).</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -122,12 +122,12 @@
                   {"x": 55, "y": 116, "text": "outputs [5]", "anchor": "middle", "cls": "ok", "step": 2},
                   {"x": 55, "y": 226, "text": "outputs [ ]", "anchor": "middle", "cls": "muted", "step": 3},
                   {"x": 55, "y": 336, "text": "outputs [15]", "anchor": "middle", "cls": "ok", "step": 3}]}</script>
-      <figcaption class="caption">Witness <code>segRun</code> on <code>Usk</code>, one leader per round and an interval of one (LeanDagTest/Adaptive/Asynchronous.lean): the verdicts each configuration decides, its boundary (dashed) and anchor; shading marks what it outputs.</figcaption>
+      <figcaption class="caption">Three successive configurations, interval one: each decides up to its anchor and outputs (shaded) only up to its boundary (dashed).</figcaption>
     </figure>
   </div>
   <aside class="notes">
     <p>Configuration 0 starts at round 0 with its boundary at round 1; its anchor is slot 3 at round 3. Its verdicts at slots 1, 2, 3 are block 5, skip, block 15; its output is <code>[5]</code>. Configurations 1 and 2 decide slot 3 again as 15, and configuration 2 outputs <code>[15]</code>.</p>
-    <p><code>Barnacle.Config</code> (LeanDag/Barnacle/Config.lean:28); <code>Run.anchor_commits</code>, <code>anchor_least</code> (LeanDag/Barnacle/Model/Run.lean:90–96); <code>Run.rangeLedger</code> (:139); <code>Boundary.atThreshold</code> (LeanDag/Barnacle/Model/Rule.lean:204). <code>segRun</code> (LeanDagTest/Adaptive/Asynchronous.lean:46–113, 121). (informal) The crashed-leader motivation.</p>
+    <p><code>Barnacle.Config</code> (LeanDag/Barnacle/Config.lean:28); <code>Run.anchor_commits</code>, <code>anchor_least</code> (LeanDag/Barnacle/Model/Run.lean:90–96); <code>Run.rangeLedger</code> (:139); <code>Boundary.atThreshold</code> (LeanDag/Barnacle/Model/Rule.lean:204). <code>segRun</code> on <code>Usk</code>, one leader per round and an interval of one (LeanDagTest/Adaptive/Asynchronous.lean:46–113, 121). (informal) The crashed-leader motivation.</p>
   </aside>
 </section>
 
@@ -161,7 +161,7 @@
                   {"from": "a0", "to": "b0", "label": "a₀ = b₀, verdicts equal", "cls": "ok", "noArrow": true, "dy": 4, "step": 2},
                   {"from": "a1", "to": "b1", "label": "C₁ = C₁′, a₁ = b₁, verdicts equal", "cls": "ok", "noArrow": true, "dy": 4, "step": 2},
                   {"from": "a2", "to": "b2", "label": "C₂ = C₂′, a₂ = b₂, verdicts equal", "cls": "ok", "noArrow": true, "dy": 4, "step": 2}]}</script>
-      <figcaption class="caption">Two validators' runs on different views from the same configuration <code>C₀</code>; <code>Barnacle.Agreement.holds</code> (LeanDag/Barnacle/Agreement/Proof.lean) makes them equal segment by segment.</figcaption>
+      <figcaption class="caption">Validators a and b start from the same <code>C₀</code> on views <code>V</code> and <code>V′</code>; their configurations, anchors and verdicts agree segment by segment.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -199,7 +199,7 @@
                   {"x": 760, "y": 130, "text": "→ swaps two leaders", "cls": "muted", "step": 1},
                   {"x": 760, "y": 222, "text": "commitScore reads slot 1: none", "cls": "bad", "step": 1},
                   {"x": 760, "y": 244, "text": "→ keeps the leaders", "cls": "muted", "step": 1}]}</script>
-      <figcaption class="caption">Counterexample <code>commitScore_not_horizonStable</code> (LeanDagTest/Adaptive/Asynchronous.lean) to <code>HorizonStable</code> (LeanDag/Adaptive/Helpers/Chop.lean), at a cut at <code>G = 1</code>.</figcaption>
+      <figcaption class="caption">A cut at <code>G = 1</code> renumbers slots: a score reading slot 1 sees commit 5 on the network, none on the joiner, and chooses different leaders.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -222,10 +222,10 @@
     <div class="text">
       <figure class="dag" data-step="1">
         <script type="application/json">{"w": "Usun", "size": "s", "rounds": [1, 5], "marks": [{"ids": [5, 10, 15, 16], "cls": "leader"}, {"ids": [21], "cls": "anchor"}], "brackets": [{"ids": [5], "text": "counted", "kind": "ok"}, {"ids": [10], "text": "counted", "kind": "ok"}], "badges": [{"r": 4, "text": "observed 2 = expected 2", "kind": "note", "at": 21}]}</script>
-        <figcaption class="caption">Witness <code>Usun</code>, anchor 21 (LeanDagTest/Barnacle/Agreement.lean).</figcaption>
+        <figcaption class="caption">At anchor 21 the committed leaders 5 and 10 are counted: <code>observed = 2 = expected</code>, so the count rises to two.</figcaption>
       </figure>
       <figure class="chart" data-step="2">
-        <script type="application/json">{"type": "lines", "size": "s", "xs": ["start", "healthy", "healthy", "unhealthy", "unhealthy", "healthy"], "ymin": 0, "ymax": 4.6, "yticks": [0, 1, 2, 3, 4], "xlabel": "window outcome (back-off 0, 0, 0, 1, 2); checked at bnP", "ylabel": "leaders per round", "hlines": [{"y": 4, "text": "maxLeaders = 4"}], "series": [{"name": "leader count", "ys": [1, 2, 3, 2, 1, 2], "color": 0, "values": true, "dy": 14}]}</script>
+        <script type="application/json">{"type": "lines", "size": "s", "xs": ["start", "healthy", "healthy", "unhealthy", "unhealthy", "healthy"], "ymin": 0, "ymax": 4.6, "yticks": [0, 1, 2, 3, 4], "xlabel": "window outcome (back-off 0, 0, 0, 1, 2)", "ylabel": "leaders per round", "hlines": [{"y": 4, "text": "maxLeaders = 4"}], "series": [{"name": "leader count", "ys": [1, 2, 3, 2, 1, 2], "color": 0, "values": true, "dy": 14}]}</script>
       </figure>
     </div>
   </div>
@@ -284,7 +284,7 @@
         "texts": [{"x": 798, "y": 112, "text": "epoch e", "anchor": "end", "cls": "muted", "step": 1},
                   {"x": 814, "y": 112, "text": "epoch e + 1", "cls": "muted", "step": 1},
                   {"x": 806, "y": 92, "text": "epoch boundary", "anchor": "middle", "cls": "bad", "step": 1}]}</script>
-      <figcaption class="caption">Illustration of LeanDag/Checkpoint/: <code>SigningRule</code>, <code>CheckpointQC</code>, <code>FinalityQC</code>, <code>EpochTransition</code>.</figcaption>
+      <figcaption class="caption">From a commit to finality; at the epoch boundary the highest validated checkpoint of <code>e</code> becomes the genesis of <code>e + 1</code>.</figcaption>
     </figure>
     <div class="uses"><b>Uses:</b> Agree, CommitsCandidate, Law 2.<br><b>Gives:</b> finalised application state, and its recovery across epochs.</div>
   </div>
@@ -308,11 +308,11 @@
     <div class="body">
       <figure class="dag">
         <script type="application/json">{"w": "ULive", "rounds": [1, 3], "byz": [0], "marks": [{"ids": [4, 7, 8, 9], "cls": "vote"}, {"ids": [10, 11, 12], "cls": "cert"}], "strong": [{"from": [10], "to": [7, 8, 9]}], "brackets": [{"ids": [7, 8, 9], "text": "3 ACK", "kind": "accent", "side": "left"}, {"ids": [10, 11, 12], "text": "3 certs", "kind": "ok"}], "badges": [{"r": 3, "text": "fast quorum", "kind": "commit"}]}</script>
-        <figcaption class="caption"><code>ULive</code>: one transaction, ACKed by validators 1, 2, 3; 3 certificates (each over 3 ACKs, <code>q = 3</code>) form a fast quorum.</figcaption>
+        <figcaption class="caption">One transaction, ACKed by validators 1–3; three certificates, each over 3 ACKs (<code>q = 3</code>), form a fast quorum. Shaded row: Byzantine.</figcaption>
       </figure>
       <figure class="dag" data-step="1">
         <script type="application/json">{"w": "UTri", "rounds": [1, 3], "byz": [0], "marks": [{"ids": [10, 11], "cls": "cert"}, {"ids": [12], "cls": "anchor"}], "strong": [{"from": [10], "to": [7, 8, 9]}], "brackets": [{"ids": [7, 8, 9], "text": "3 ⊥", "kind": "bad", "side": "left"}], "badges": [{"r": 3, "text": "both dropped", "kind": "skip", "at": 12}]}</script>
-        <figcaption class="caption"><code>UTri</code>: two conflicting transactions; every correct block declares ⊥; 3 ⊥ votes make an unlock at round 3; anchor 12 drops both. Both in LeanDagTest/RedSnapper/Liveness.lean.</figcaption>
+        <figcaption class="caption">Two conflicting transactions: every correct block declares ⊥, 3 ⊥ votes make an unlock at round 3, and anchor 12 drops both.</figcaption>
       </figure>
     </div>
   </div>
@@ -399,7 +399,7 @@
                   {"id": "Ml", "x": 830, "y": 72, "w": 260, "h": 210, "text": "pacemaker, chain quality\nstorage bound\ngarbage collection\ncrash recovery, re-genesis\nadaptive leaders\nadaptive leader count\ncheckpoints, Red Snapper", "cls": "plain"}],
         "edges": [{"from": "P", "to": "Q", "label": "each rule proves", "cls": "accent"},
                   {"from": "Q", "to": "M", "label": "each mechanism uses", "cls": "accent"}]}</script>
-      <figcaption class="caption">The three parts of slide 2, filled with the names used in the deck.</figcaption>
+      <figcaption class="caption">The three parts of slide 2 filled in: each rule proves the properties, and each mechanism uses them.</figcaption>
     </figure>
   </div>
   <aside class="notes">

@@ -22,7 +22,7 @@
           <tr><td>Checkpoints, Red Snapper</td><td>applications beyond ordering</td><td>Agree, CommitsCandidate, Law 2</td><td>93–94</td></tr>
         </tbody>
       </table>
-      <figcaption class="caption">The properties in the “Uses” column are defined in Part III: Banded (slide 59); Agree, CommitsCandidate, Indirect (slide 60); Law 1, Law 2 (slide 61); the others (slide 62).</figcaption>
+      <figcaption class="caption">The “Uses” properties are defined on slides 59 (Banded), 60 (Agree, CommitsCandidate, Indirect), 61 (Law 1, 2), 62 (others).</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -129,7 +129,7 @@
         "ymax": 12, "yticks": [0, 5, 10],
         "xlabel": "round", "ylabel": "entry − earliest entry"
       }</script>
-      <figcaption class="caption">Witness <code>ugrowLag</code> (LeanDagTest/Reactive/Collapse.lean): GST = 12, Δ = 2, proc = 1. Each validator's entry time into a round, minus the earliest entry into that round. Round 0 is entered before GST, with spread 10; from round 1 on the spread is 3 = Δ + proc.</figcaption>
+      <figcaption class="caption">Entry into each round minus the earliest entry; GST = 12, Δ = 2, proc = 1. The spread is 10 before GST and 3 = Δ + proc from round 1.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -163,7 +163,7 @@
           <tr><td>v3</td><td>3</td><td>9</td><td>15</td><td>21</td><td>27</td><td class="yes">6</td><td class="no">9</td></tr>
         </tbody>
       </table>
-      <figcaption class="caption">Witness <code>ugrowReactive</code> (LeanDagTest/Reactive/Model.lean): build times <code>built v n = v + 6n</code>.</figcaption>
+      <figcaption class="caption">Validator <code>v</code> builds its round-<code>n</code> block at time <code>v + 6n</code>: 6 per round for every validator.</figcaption>
     </figure>
     <figure class="chart">
       <script type="application/json">{
@@ -211,13 +211,13 @@
         "badges": [{"r": 3, "text": "slot 1: commit", "kind": "commit", "at": 13}]
       }</script>
       <div class="legend"><span class="l-leader">leader block 13</span><span class="l-hull">its history</span><span class="l-byz">Byzantine</span></div>
-      <figcaption class="caption">Witness <code>Ucens</code> (LeanDagTest/Quality/Model.lean), <code>n = 4</code>, <code>f = 1</code>, <code>Correct = {1, 2, 3}</code>. Slot 1 commits block 13; arrows are the references of its history. At each round below it the history holds blocks of the correct v1, v2: <code>2 = |Correct| − f</code>.</figcaption>
+      <figcaption class="caption"><code>n = 4</code>, <code>f = 1</code>, v0 Byzantine. Slot 1 commits block 13; each round of its history (arrows) holds the correct v1, v2: <code>2 = |Correct| − f</code>.</figcaption>
     </figure>
   </div>
   <aside class="notes">
     <p><code>card_coveredAt_ge_of_decided</code> (LeanDag/Properties/Arcs/Quality.lean:96); <code>mem_history_of_decided_commit</code> (:150); <code>committed_of_correct_block</code> (:195); <code>chain_quality</code> (:223).</p>
     <p>Coverage instances: LeanDagTest/Quality/Generic.lean. Steelhead's coverage instance is not written; its inclusion is in <code>liveness</code> (LeanDag/Steelhead/Properties.lean:301).</p>
-    <p>The figure: slot 1 (round 3, leader 1) commits block 13 (<code>ucens_slot1</code>); its certificates lie at round 5, outside the drawn rounds.</p>
+    <p>The figure: witness <code>Ucens</code> (LeanDagTest/Quality/Model.lean), <code>Correct = {1, 2, 3}</code>; slot 1 (round 3, leader 1) commits block 13 (<code>ucens_slot1</code>); its certificates lie at round 5, outside the drawn rounds.</p>
   </aside>
 </section>
 
@@ -244,7 +244,7 @@
         "badges": [{"r": 3, "text": "slot 1: commit", "kind": "commit", "at": 13}]
       }</script>
       <div class="legend"><span class="l-leader">leader block 13</span><span class="l-hull">history of 13</span><span class="l-blame">blocks of validator 3</span><span class="l-path">the only references to them</span><span class="l-byz">Byzantine</span></div>
-      <figcaption class="caption">Witness <code>Ucens</code> (LeanDagTest/Quality/Model.lean): slot 1 commits block 13. Each round of its history has the correct creators v1, v2, exactly <code>|Correct| − f = 3 − 1</code>; only validator 3's own blocks reference validator 3, so none of them is in the history.</figcaption>
+      <figcaption class="caption">Each round of block 13's history has exactly <code>|Correct| − f = 2</code> correct creators; only v3's own blocks reference v3, so no block of v3 is in it.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -284,7 +284,7 @@
           {"ids": [27, 29], "text": "twins of v2", "kind": "bad", "step": 2}
         ]
       }</script>
-      <figcaption class="caption">Witness <code>Udouble</code> (LeanDagTest/DoS/Doubling.lean), <code>n = 13</code>, <code>f = 4</code>, v0–v3 Byzantine. Arrows: paths from block 41 to v1's blocks 1, 13, 14, 15. The history of 41 exposes <code>e = 2</code> creators.</figcaption>
+      <figcaption class="caption"><code>n = 13</code>, <code>f = 4</code>, v0–v3 Byzantine. Block 41 exposes <code>e = 2</code> creators; arrows reach <code>2^e = 4</code> round-0 blocks of v1.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -314,7 +314,7 @@
         "ymax": 120, "yticks": [0, 30, 60, 90, 120],
         "xlabel": "round n", "ylabel": "blocks"
       }</script>
-      <figcaption class="caption">The bound of <code>dos_resistance</code> at <code>C = 3</code>, <code>f = 1</code>, <code>τ = 3</code>: <code>3·((1 + 3)·n + 2) = 12n + 6</code> blocks, 114 at round 9.</figcaption>
+      <figcaption class="caption">The store bound at <code>C = 3</code>, <code>f = 1</code>, <code>τ = 3</code>: <code>3·((1 + 3)·n + 2) = 12n + 6</code> blocks, linear in <code>n</code>.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -354,7 +354,7 @@
         }</script>
       </figure>
     </div>
-    <figcaption class="caption">Witness <code>Uexcl</code> (left) and <code>chop Uexcl 2</code> (right), LeanDagTest/GC/Chop.lean. Left: the horizon <code>G = 2</code>; the faded blocks are discarded. Right: rounds 2–5 renumbered 0–3, the round-0 blocks without references. With <code>d = 1</code>, slot 1 of <code>Uexcl</code> is slot 0 of the cut; block 11 is committed in both.</figcaption>
+    <figcaption class="caption">Left: <code>G = 2</code>, faded blocks discarded. Right: rounds 2–5 renumbered 0–3; block 11 is committed by slot 1 before, slot 0 after (<code>d = 1</code>).</figcaption>
     <div class="uses"><b>Uses:</b> Banded, Agree, and Law 1 of the support. <b>Gives:</b> the same verdicts and liveness after the cut, and constant storage (next slide).</div>
   </div>
   <aside class="notes">
@@ -441,7 +441,7 @@
           {"x": 736, "y": 175, "text": "≤ 66 blocks", "cls": "ok", "step": 3}
         ]
       }</script>
-      <figcaption class="caption">Illustration of <code>card_retained_le</code> at <code>Λ = 5</code>: at current round <code>t</code> the horizon is <code>G = t − Λ</code>, and the shaded window of <code>Λ + 1 = 6</code> rounds is retained. The window moves with <code>t</code>; the bound stays 66.</figcaption>
+      <figcaption class="caption">At <code>Λ = 5</code>, the shaded rounds <code>G = t − 5</code> to <code>t</code> are retained. The window moves with <code>t</code>; the bound stays 66 blocks.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -477,7 +477,7 @@
         ]
       }</script>
       <div class="legend"><span class="l-anchor">round-4 attesters</span><span class="l-evidence">base</span><span class="l-fill">copied from a peer</span></div>
-      <figcaption class="caption">Witness <code>Uexcl</code> (LeanDagTest/GC/Bootstrap.lean), <code>n = 4</code>, <code>f = 1</code>, <code>G = 1</code>, <code>t = 4</code>. The arrows reach every base block from all three attesters. The joiner's blocks are <code>{5, 6, 7, 8, 9, 10}</code>.</figcaption>
+      <figcaption class="caption"><code>n = 4</code>, <code>f = 1</code>, <code>G = 1</code>, <code>t = 4</code>. Every base block is reached (arrows) from all three attesters; the joiner holds blocks 5–10.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -568,12 +568,12 @@
         }</script>
       </figure>
     </div>
-    <figcaption class="caption">Witness <code>Ucrash 4</code> and its fill by <code>ucrashMsg 4 4</code> (LeanDagTest/SafeSkip/Model.lean): <code>v₁ = v3</code>, donor line 5, 9, 13, 17. A filled block (dashed) copies the donor's references (dark) and adds its own previous block (green): 21 references <code>{3, 0, 1, 2}</code>.</figcaption>
+    <figcaption class="caption">Left: <code>v₁ = v3</code> stops after block 3. Right: each filled block (dashed) has donor v1's references (dark) and v3's previous block (green).</figcaption>
     <div class="uses"><b>Uses:</b> Banded (through Persist), Agree, SkipsUnsupported, Law 1. <b>Gives:</b> <code>v₁</code> producing again, with every earlier verdict unchanged.</div>
   </div>
   <aside class="notes">
     <p><code>GapData.hgap</code> (LeanDag/SafeSkip/Data.lean:49); <code>SkipData</code> (:30–73); <code>SkipMsg</code> (LeanDag/SafeSkip/Basic.lean:52); <code>SkipData.fillBlock</code> (Data.lean:159); <code>Integration.fill_refs_eq</code> (LeanDag/Integration/CommonTarget.lean:74).</p>
-    <p>Witness <code>ucrashMsg</code> (LeanDagTest/SafeSkip/Model.lean:124, 178): <code>v1 = 3</code>, <code>B1 = 3</code>, donor line <code>v2 = 1</code> (blocks 5, 9, 13, 17), fresh ids <code>4(N + 1) + k</code>. The Lean example at :178 is the round-1 filled block of <code>ucrashMsg 2 2</code>, with references <code>{3, 0, 1, 2}</code>; the figure uses <code>N = r = 4</code>.</p>
+    <p>Witness <code>ucrashMsg</code> (LeanDagTest/SafeSkip/Model.lean:124, 178): <code>v1 = 3</code>, <code>B1 = 3</code>, donor line <code>v2 = 1</code> (blocks 5, 9, 13, 17), fresh ids <code>4(N + 1) + k</code>. The Lean example at :178 is the round-1 filled block of <code>ucrashMsg 2 2</code>, with references <code>{3, 0, 1, 2}</code>; the figure shows <code>Ucrash 4</code> and its fill by <code>ucrashMsg 4 4</code> (<code>N = r = 4</code>); block 21 references <code>{3, 0, 1, 2}</code>.</p>
     <p>(informal) "Rebuilding costs one round trip per missed round".</p>
   </aside>
 </section>
@@ -601,14 +601,14 @@
                    {"r": 3, "text": "2: v3 at rounds 1–4", "kind": "note", "step": 2, "row": 1, "at": 23}]
       }</script>
       <div class="legend"><span class="l-anchor"><code>B₁</code> = block 3</span><span class="l-fill">filled blocks</span><span class="l-path">self-references</span></div>
-      <figcaption class="caption">The fill of <code>Ucrash 4</code> by <code>ucrashMsg 4 4</code> (LeanDagTest/SafeSkip/Model.lean), as on slide 80.</figcaption>
+      <figcaption class="caption">The DAG of slide 80 after the fill: blocks 21–24 give v3 a block at rounds 1–4, chained back to <code>B₁</code>.</figcaption>
     </figure>
   </div>
   <aside class="notes">
     <p><code>skipFill</code>, <code>skipFill_block_old</code>, <code>skipFill_populatedOn</code> (LeanDag/SafeSkip/Basic.lean:166, 171, 184).</p>
     <p>Prompt skip: <code>MysticetiProperties.decided_none_fresh</code> (LeanDag/Mysticeti/Record.lean:188); generic <code>Arcs.decided_none_of_novel</code>, <code>decided_none_of_novel_agree</code> (LeanDag/Properties/Arcs/SafeSkip.lean:32, 87), using SkipsUnsupported, and for the second, Agree and Banded. Instances: Mysticeti, Odontoceti (LeanDag/Odontoceti/Record.lean:61), Hybrid (LeanDag/Hybrid/Record.lean:67), Hydrozoan (LeanDag/Integration/HydrozoanMechanisms.lean:79), Bluestreak (LeanDag/Bluestreak/Record.lean:314).</p>
     <p>Verdicts: <code>decided_fill_of_persist</code>, <code>decided_fill_agree_of_properties</code> (LeanDag/Mysticeti/Record.lean:150, 159).</p>
-    <p>In this witness the schedule <code>rrSlots</code> places slots at rounds <code>3k</code>, so no slot in rounds 1–4 is led by validator 3; the prompt skip is exhibited on <code>Ucr</code> (slide 85).</p>
+    <p>The figure is the fill of <code>Ucrash 4</code> by <code>ucrashMsg 4 4</code> (LeanDagTest/SafeSkip/Model.lean). In this witness the schedule <code>rrSlots</code> places slots at rounds <code>3k</code>, so no slot in rounds 1–4 is led by validator 3; the prompt skip is exhibited on <code>Ucr</code> (slide 85).</p>
   </aside>
 </section>
 
@@ -668,7 +668,7 @@
         ],
         "size": "s"
       }</script>
-      <figcaption class="caption"><code>JumpMsg.denote</code> (LeanDag/SafeSkip/Jump.lean) on <code>ucrashJump 4 4</code> (LeanDagTest/SafeSkip/Model.lean): <code>B₂ = 17</code> fixes the line 17, 13, 9, 5; the fill 21–24 is that of slide 80.</figcaption>
+      <figcaption class="caption">The donor's top block <code>B₂ = 17</code> fixes its line 17, 13, 9, 5, and with it the fill 21–24 of slide 80.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -736,7 +736,7 @@
           {"x": 0, "y": 185, "text": "B₁ at round 4", "step": 2}
         ]
       }</script>
-      <figcaption class="caption">Illustration of <code>outage_bounded_by_lag</code>: <code>r = 10</code>, <code>Λ = 5</code>, <code>G = 5</code>. The shaded rounds are retained; a fill message must name a retained <code>B₁</code>.</figcaption>
+      <figcaption class="caption"><code>r = 10</code>, <code>Λ = 5</code>: rounds 5–10 are retained. A 5-round outage is recovered by one message; after 6 rounds <code>B₁</code> is discarded.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -766,13 +766,13 @@
         "paths": [{"ids": [1001, 999], "step": 3}],
         "tags": [{"id": 999, "text": "genesis", "kind": "ok", "step": 2}, {"id": 9, "text": "donor", "kind": "ok", "step": 3}]
       }</script>
-      <figcaption class="caption"><code>Ucrash 2</code> cut at round 1 (LeanDagTest/Integration/Model.lean); v3 crashed after round 0. (1) <code>Ucut</code>: no block of v3. (2) <code>Uregen</code>: genesis block 999. (3) <code>urecover</code>: 1001 copies the references of donor block 9 and references 999.</figcaption>
+      <figcaption class="caption">v3 stopped after round 0; cut at round 1. (1) No block of v3. (2) Genesis block 999. (3) 1001 has donor block 9's references and 999.</figcaption>
     </figure>
     <div class="uses"><b>Uses:</b> Banded, Agree, Law 1, and the attested base (slide 78). <b>Gives:</b> a validator back in production after any outage.</div>
   </div>
   <aside class="notes">
     <p><code>no_blocks_of_no_genesis</code>, <code>severed_of_pruned_anchor</code> (LeanDag/Integration/Retention.lean:44, 65); <code>BlockRecord.addGenesis</code> (LeanDag/Common/Record/Genesis.lean:20); <code>addGenesis_of_severed</code> (LeanDag/Integration/ReGenesis.lean:95); <code>recoveryMsg</code>, <code>hB1uniq_of_addGenesis</code>, <code>rejoin_populated</code> (ReGenesis.lean); <code>card_severed_le</code> (LeanDag/Integration/Margin.lean:40).</p>
-    <p>Witness: <code>Ucut</code>, <code>ucut_severed</code>, <code>Uregen</code>, <code>urecover</code> (LeanDagTest/Integration/Model.lean:102–160). The filled block 1001 copies the references of the donor's block 9 and adds 999. The genesis block is valid only in a DAG cut at <code>G</code> or above.</p>
+    <p>Witness: <code>Ucut</code>, <code>ucut_severed</code>, <code>Uregen</code>, <code>urecover</code> (LeanDagTest/Integration/Model.lean:102–160): <code>Ucrash 2</code> cut at round 1, then (2) <code>Uregen</code>, (3) <code>urecover</code>. The filled block 1001 copies the references of the donor's block 9 and adds 999. The genesis block is valid only in a DAG cut at <code>G</code> or above.</p>
     <p>(informal) "Derived locally, not transmitted": <code>regenesis_converges</code> proves only that a later cut removes it.</p>
   </aside>
 </section>
@@ -800,12 +800,12 @@
         "badges": [{"r": 2, "text": "slot 2: commit", "kind": "commit", "at": 10}, {"r": 3, "text": "slot 3: skip", "kind": "skip", "at": 103, "row": 1}]
       }</script>
       <div class="legend"><span class="l-leader">leader block 10</span><span class="l-fill">filled blocks 102, 103</span><span class="l-path">their only references</span><span class="l-claim">claim</span></div>
-      <figcaption class="caption">Witness <code>Ufill</code>, the chain fill of <code>Ucr</code> (LeanDagTest/Bluestreak/Recovery.lean). Slot <code>k</code> is at round <code>k</code>: slot 2 commits block 10, slot 3 is skipped. Blocks 16, 17, 18 at round 4 do not reference 103.</figcaption>
+      <figcaption class="caption">Slot <code>k</code> is at round <code>k</code>: slot 2 commits block 10; slot 3 is skipped, and no round-4 block references the filled block 103.</figcaption>
     </figure>
   </div>
   <aside class="notes">
     <p><code>GapData.chainBlock</code> (LeanDag/SafeSkip/Data.lean:91); <code>chainFill</code> (LeanDag/Bluestreak/Record.lean:174); <code>disciplined_chainFill</code> (:231).</p>
-    <p>LeanDagTest/Bluestreak/Recovery.lean: <code>rcFaults</code> (:28, validator 0 Byzantine), <code>rcGap</code> (:73, <code>v1 = 3</code>, <code>B1 = 7</code>, <code>r = 3</code>), blocks 102, 103 (:93), <code>Ucr_slot2</code>, <code>Ufill_slot2</code>, <code>Ucr_slot3</code>, <code>Ufill_slot3</code>, prompt skip (:134–150). Validator 3 is correct and silent from round 2; slot 3 is led by validator 3.</p>
+    <p>Witness <code>Ufill</code>, the chain fill of <code>Ucr</code>, LeanDagTest/Bluestreak/Recovery.lean: <code>rcFaults</code> (:28, validator 0 Byzantine), <code>rcGap</code> (:73, <code>v1 = 3</code>, <code>B1 = 7</code>, <code>r = 3</code>), blocks 102, 103 (:93), <code>Ucr_slot2</code>, <code>Ufill_slot2</code>, <code>Ucr_slot3</code>, <code>Ufill_slot3</code>, prompt skip (:134–150). Validator 3 is correct and silent from round 2; slot 3 is led by validator 3.</p>
     <p>(informal) The motivation in the first bullet.</p>
   </aside>
 </section>

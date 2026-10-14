@@ -120,7 +120,7 @@
        ]}
       </script>
       <div class="legend"><span class="l-leader">candidate</span><span class="l-vote">vote for 0</span><span class="l-cert">certificate</span><span class="l-blame">blame for v3's slot</span></div>
-      <figcaption class="caption">Witness U3, LeanDagTest/Mysticeti/Model.lean; each bracket counts its blocks against <code>q = 3</code></figcaption>
+      <figcaption class="caption">Three certificates commit slot 0; three blames skip <code>v3</code>'s slot. Brackets count against <code>q = 3</code></figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -170,7 +170,7 @@
        ]}
       </script>
       <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-blame">blame</span><span class="l-cert">certificate</span><span class="l-anchor">anchor</span></div>
-      <figcaption class="caption">Witness U7, LeanDagTest/Mysticeti/Model.lean; green: the path from anchor 12 through certificate 8 to <code>L</code></figcaption>
+      <figcaption class="caption">One certificate gives no direct decision; green: the path from anchor 12 through certificate 8 to <code>L</code></figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -212,7 +212,7 @@
          {"from": "s4", "to": "s5", "route": "v", "fromSide": "b", "toSide": "r", "label": "anchors find\nno certificate", "dy": 0}
        ]}
       </script>
-      <figcaption class="caption">The five steps; each arrow names what a step takes from the one before it</figcaption>
+      <figcaption class="caption">The five steps of the safety argument; each arrow names what a step takes from the one before it</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -284,7 +284,7 @@
            {"r": 2, "text": "skip", "kind": "skip", "step": 2}
          ]}
       </script>
-        <figcaption class="caption">Witness Unemo, LeanDagTest/Nemo/Model.lean; shaded: history of anchor 11</figcaption>
+        <figcaption class="caption">Slot 3 commits with 2 votes; shaded: the history of anchor 11, which holds no candidate for slot 2</figcaption>
       </figure>
       <figure class="dag">
         <script type="application/json">
@@ -299,7 +299,7 @@
            {"r": 5, "text": "undecided", "kind": "undecided"}
          ]}
         </script>
-        <figcaption class="caption">Witness Ush, LeanDagTest/Nemo/Shadow.lean: no two live leaders in a row: no odd slot is ever decided</figcaption>
+        <figcaption class="caption">Validator 2, crashed from the start, leads every odd slot: even slots commit, odd slots stay undecided</figcaption>
       </figure>
     </div>
   </div>
@@ -394,7 +394,7 @@
        ]}
       </script>
       <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-blame">blame</span><span class="l-anchor">anchor</span></div>
-      <figcaption class="caption">Witness Uskip, LeanDagTest/Odontoceti/Model.lean; shaded: the voters in the anchor's history; brackets: counts against 5 (direct) and 3 (indirect)</figcaption>
+      <figcaption class="caption">Direct skip (slot 0), indirect commit (slot 1), indirect skip (slot 2); shaded: voters in the anchor's history</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -429,7 +429,7 @@
        ],
        "badges": [{"r": 0, "text": "both twins pass", "kind": "note", "at": 6}]}
       </script>
-      <figcaption class="caption">Odontoceti: Utwin6, LeanDagTest/Odontoceti/Model.lean; all six voters are in the history of block 19</figcaption>
+      <figcaption class="caption">Odontoceti, <code>n = 6</code>: twins 0 and 6 have 3 voters each, all six in the history of round-3 block 19</figcaption>
     </figure>
     <figure class="dag">
       <script type="application/json">
@@ -449,12 +449,12 @@
        ],
        "badges": [{"r": 1, "text": "16: commit", "kind": "commit", "at": 16}, {"r": 1, "text": "17: refused", "kind": "skip", "row": 1, "at": 17}]}
       </script>
-      <figcaption class="caption">Hybrid, k = 4: x9, LeanDagTest/Barnacle/OrcaellaIndirect.lean</figcaption>
+      <figcaption class="caption">Hybrid, <code>n = 9</code>, <code>k = 4</code>: both twins have 4 voters in anchor 27's history; the lesser, 16, is committed</figcaption>
     </figure>
   </div>
   <aside class="notes">
-    <code>utwin6_both_pass</code> (<code>LeanDagTest/Odontoceti/Model.lean:250–260</code>). Block 19 is not the slot's committed anchor; at the actual anchor (slot 2, block 15) only twin 0 passes, and <code>utwin6_slot0</code> commits it (:268–273).
-    <code>x9_both_pass</code> (<code>LeanDagTest/Barnacle/OrcaellaIndirect.lean:249</code>), <code>x9_slot3</code> (:270), <code>x9_least</code> (:288), under the Hybrid rule <code>orcaella 4</code> on nine validators.
+    Witness <code>Utwin6</code>, <code>utwin6_both_pass</code> (<code>LeanDagTest/Odontoceti/Model.lean:250–260</code>). Block 19 is not the slot's committed anchor; at the actual anchor (slot 2, block 15) only twin 0 passes, and <code>utwin6_slot0</code> commits it (:268–273).
+    Witness <code>x9</code>: <code>x9_both_pass</code> (<code>LeanDagTest/Barnacle/OrcaellaIndirect.lean:249</code>), <code>x9_slot3</code> (:270), <code>x9_least</code> (:288), under the Hybrid rule <code>orcaella 4</code> on nine validators.
     The tie and its law: <code>tie</code>, <code>link_unique</code> in <code>odontocetiLaws</code> (<code>LeanDag/Odontoceti/Decision.lean:161, 173</code>).
     Counting authors, not blocks: <code>coneSupports</code> (<code>Odontoceti/Rules.lean:75</code>).
     (informal) That the thesis's argument picks "the" candidate.
@@ -524,7 +524,7 @@
        "brackets": [{"ids": [7, 8, 9], "text": "3 ≥ q", "kind": "accent"}],
        "badges": [{"r": 1, "text": "commit", "kind": "commit", "at": 5}]}
       </script>
-      <figcaption class="caption">Witness Uhyb4, LeanDagTest/Hybrid/Model.lean: slot 1, 3 votes, q = 3</figcaption>
+      <figcaption class="caption"><code>n = 4</code>, validator 3 stopped after round 0: slot 1 receives 3 ≥ <code>q</code> votes and commits directly</figcaption>
     </figure>
     <figure class="dag">
       <script type="application/json">
@@ -547,7 +547,7 @@
          {"r": 1, "text": "k = 3: skip", "kind": "skip", "step": 3, "row": 1, "at": 6}
        ]}
       </script>
-      <figcaption class="caption">Witness U5, LeanDagTest/Barnacle/OrcaellaIndirect.lean: slot 1, 2 votes, q = 4; shaded: references of anchor 18</figcaption>
+      <figcaption class="caption"><code>n = 5</code>: slot 1 has 2 &lt; <code>q</code> votes; shaded: the blocks anchor 18 references, both voters among them</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -584,7 +584,7 @@
            {"r": 0, "text": "k ≤ 3: commit", "kind": "commit", "row": 1, "at": 1}
          ]}
         </script>
-        <figcaption class="caption">UtightA, LeanDagTest/Hybrid/Tight.lean; rows grouped by vote and blame</figcaption>
+        <figcaption class="caption">Six blames skip candidate 1 directly; anchor 17 links 3 voters, a commit for <code>k ≤ 3</code>. Rows grouped by vote and blame</figcaption>
       </figure>
       <figure class="dag">
         <script type="application/json">
@@ -607,7 +607,7 @@
            {"r": 0, "text": "k ≥ 4: skip", "kind": "skip", "row": 1, "at": 1}
          ]}
         </script>
-        <figcaption class="caption">UtightB, LeanDagTest/Hybrid/Tight.lean; rows grouped by vote and blame</figcaption>
+        <figcaption class="caption">Six votes commit candidate 1 directly; anchor 17 links 3 voters, a skip for <code>k ≥ 4</code>. Rows grouped by vote and blame</figcaption>
       </figure>
   </div>
   <aside class="notes">
@@ -689,7 +689,7 @@
          {"r": 0, "text": "slow commit: 6 ≥ 6", "kind": "commit", "step": 2, "row": 1, "at": 0}
        ]}
       </script>
-      <figcaption class="caption">Witness Dfast, LeanDagTest/FinWhale/Model.lean</figcaption>
+      <figcaption class="caption">Fast: 7 votes at round 1. Slow: 6 certificates at round 2 (shaded).</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -726,7 +726,7 @@
        ]}
       </script>
       <div class="legend"><span class="l-vote">vote for 0</span><span class="l-evidence">evidence for 0</span></div>
-      <figcaption class="caption">Witness Dequiv, LeanDagTest/FinWhale/Model.lean. Block 18 sees both twins: 4 ≥ f + p votes for 0, 2 for twin 27. Block 19: 5 ≥ 3. Block 20: 3 &lt; 4, evidence for nothing.</figcaption>
+      <figcaption class="caption">Block 18 sees votes for both twins: 4 ≥ <code>f + p</code> for 0, 2 for twin 27. Block 19: 5 ≥ 3. Block 20: 3 &lt; 4, evidence for nothing</figcaption>
     </figure>
     <figure class="dag">
       <script type="application/json">
@@ -751,7 +751,7 @@
          {"r": 3, "text": "30 commits 0", "kind": "commit", "step": 3, "at": 30}
        ]}
       </script>
-      <figcaption class="caption">Witness Dbare, LeanDagTest/FinWhale/Model.lean, from round 1: votes for the leader block 0; each round-2 block references 5 of them</figcaption>
+      <figcaption class="caption">Block 0 commits fast; each round-2 block references 5 &lt; 6 votes, so anchor 30 commits 0 through evidence alone</figcaption>
     </figure>
   </div>
   <aside class="notes">

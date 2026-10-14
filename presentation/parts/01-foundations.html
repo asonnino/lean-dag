@@ -229,13 +229,14 @@
         "strong": [{"from": [8]}],
         "tags": [{"id": 4, "text": "own previous"}],
         "badges": [{"r": 1, "text": "3 creators ≥ n − f = 3", "kind": "note"}]}</script>
-      <p class="caption">Witness <code>U3</code> (LeanDagTest/Mysticeti/Model.lean), <code>n = 4</code>; shaded row: Byzantine. Block 8 (<code>v0</code>, round 2) references 4, 5, 6; block 4 is <code>v0</code>’s own previous block.</p>
+      <p class="caption"><code>n = 4</code>, rounds 0–2; shaded row: Byzantine. Block 8 (<code>v0</code>, round 2) references 3 blocks of round 1, among them <code>v0</code>’s own block 4.</p>
     </figure>
   </div>
   <aside class="notes">
     <ul>
       <li><code>Block</code> (LeanDag/Common/Block.lean:20); <code>ValidWrt</code> (Block.lean:61) has four clauses: predecessor
         (references at <code>r − 1</code>), distinct creators, quorum, self-parent (some block by the creator).</li>
+      <li>Figure: witness <code>U3</code> (LeanDagTest/Mysticeti/Model.lean:122).</li>
       <li>Identifiers: <code>BlockRecord.block</code> (LeanDag/Common/BlockRecord.lean:35).</li>
       <li>History: <code>Reaches</code>, <code>historyFrom</code> (LeanDag/Common/CausalHistory.lean, LeanDag/Common/History.lean).
         A view is closed under references (<code>viewComplete</code>, LeanDag/Properties/Carrier.lean:49).</li>
@@ -267,7 +268,7 @@
           "edges": [{"from": "L", "to": "S", "label": "sign"},
                     {"from": "S", "to": "C", "label": "aggregate"},
                     {"from": "C", "to": "B", "label": "then cite", "cls": "accent"}]}</script>
-        <p class="caption">(a) Certified (illustration): the certificate is a separate message, built by an extra exchange before round <code>r + 1</code> may reference <code>L</code>.</p>
+        <p class="caption">(a) Diagram, certified DAG: the certificate is a separate message, built from <code>n − f</code> signatures before round <code>r + 1</code> may reference <code>L</code>.</p>
       </figure>
     </div>
     <figure class="dag">
@@ -277,7 +278,7 @@
         "tags": [{"id": 0, "text": "L"}, {"id": 8, "text": "certificate", "kind": "accent"}, {"id": 11, "text": "2 votes < q", "kind": "bad"}],
         "badges": [{"r": 1, "text": "3 votes ≥ q = 3", "kind": "note"}]}</script>
       <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-cert">certificate</span></div>
-      <p class="caption">(b) Uncertified, witness <code>U3</code> (LeanDagTest/Mysticeti/Model.lean); shaded row: Byzantine. No message is added: block 8 references the 3 votes 4, 5, 6 and so is a certificate; 9 and 10 likewise. Block 11 references only 2 votes.</p>
+      <p class="caption">(b) Uncertified DAG; shaded row: Byzantine. Blocks 8, 9, 10 each reference the 3 votes for <code>L</code> and so are certificates; block 11 references 2.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -314,7 +315,7 @@
           <tr><td class="muted">slots</td><td class="muted">0, 1</td><td class="muted">2, 3</td><td class="muted">4, 5</td><td class="muted">6, 7</td><td class="muted">8, 9</td><td class="muted">10, 11</td><td class="muted">12, 13</td><td class="muted">14, 15</td><td class="muted">16, 17</td></tr>
         </tbody>
       </table>
-      <p class="caption">Schedules <code>pipeSlots</code> (one leader per round) and <code>duoSlots</code> (two leaders per round), LeanDagTest/Mysticeti/Pipelined.lean.</p>
+      <p class="caption">Two schedules for 4 validators, rounds 0–8: one leader per round (top) and two leaders per round (bottom), with slot numbers.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -362,7 +363,7 @@
                   {"from": "q3", "to": "s4", "route": "v", "fromSide": "b", "toSide": "l", "label": "no", "dx": 16, "dy": 4}],
         "texts": [{"x": 248, "y": 208, "text": "eligible slots strictly", "cls": "muted small"},
                   {"x": 248, "y": 226, "text": "between j and k: skipped", "cls": "muted small"}]}</script>
-      <p class="caption">Diagram: the four cases of <code>AnchoredRule.Decided</code> (LeanDag/Common/Anchored.lean), in the order used for presentation.</p>
+      <p class="caption">Diagram: the four ways a slot <code>k</code> is decided, as a flowchart; the order of the questions is for presentation.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -404,7 +405,7 @@
                   {"id": "v4", "x": 104, "y": 252, "w": 426, "h": 36, "text": "one rung: a certificate for L in the anchor’s history"},
                   {"id": "k5", "x": 8, "y": 296, "w": 92, "h": 36, "text": "tie-break", "cls": "plain"},
                   {"id": "v5", "x": 104, "y": 296, "w": 426, "h": 36, "text": "none"}]}</script>
-      <p class="caption">Diagram: the Mysticeti card (<code>coreAnchored</code>, LeanDag/Mysticeti/Model/Rule.lean; slide 15) in front of the other rules’ cards, which fill in the same five rows.</p>
+      <p class="caption">Diagram: the Mysticeti card (slide 15) in front of the cards of the other rules, which fill in the same five rows.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -444,7 +445,7 @@
                    {"r": 2, "text": "r + 2 ≮ r + 2", "kind": "skip"},
                    {"r": 3, "text": "r + 2 < r + 3", "kind": "commit", "row": 1}]}</script>
       <div class="legend"><span class="l-leader">leader block of a slot</span><span class="l-anchor">eligible anchor</span></div>
-      <p class="caption">Schedule <code>pipeSlots</code> (wave 2) drawn over witness <code>Ugrow 6</code>, rounds 0–3 (LeanDagTest/Mysticeti/Growth.lean). Under each round, the test <code>round(k) + wave &lt; round(j)</code>; it fails at <code>r + 1</code> and <code>r + 2</code>.</p>
+      <p class="caption">One leader per round, wave 2. The test <code>round(k) + wave &lt; round(j)</code> fails at <code>r + 1</code> and <code>r + 2</code> and holds at <code>r + 3</code>.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -455,7 +456,7 @@
       <li><code>Reaches</code> is reflexive (LeanDag/Common/CausalHistory.lean:35), which is why a round-<code>r+2</code> anchor that is
         itself a certificate does link.</li>
       <li>Pipelined.lean defines the schedule but no DAG; the figure places <code>pipeSlots</code> leaders (<code>k mod 4</code>) on the
-        <code>Ugrow 6</code> blocks.</li>
+        <code>Ugrow 6</code> blocks (LeanDagTest/Mysticeti/Growth.lean), rounds 0–3.</li>
     </ul>
   </aside>
 </section>
@@ -478,7 +479,7 @@
           "absent": [{"r": 6, "v": 1, "text": "leader: not received"}],
           "badges": [{"r": 6, "text": "no block: skip?", "kind": "skip"},
                      {"r": 6, "text": "0 blames < q", "kind": "undecided", "row": 1}]}</script>
-        <p class="caption">(1) <code>Ugrow 5</code>: the view ends at round 5; the leader’s block (dashed) is absent.</p>
+        <p class="caption">(1) A view that ends at round 5: the slot-2 leader block (dashed) has not arrived, and no block blames it.</p>
       </figure>
       <figure class="dag" data-step="1">
         <script type="application/json">{"w": "Ugrow8", "rounds": [5, 8], "size": "m",
@@ -488,7 +489,7 @@
           "tags": [{"id": 25, "text": "L"}],
           "brackets": [{"ids": [28, 29, 30, 31], "text": "4 votes ≥ q", "kind": "accent"}],
           "badges": [{"r": 6, "text": "commit", "kind": "commit"}, {"r": 8, "text": "4 certs ≥ q", "kind": "note"}]}</script>
-        <p class="caption">(2) <code>Ugrow 8</code>: committed; a skip on absence would be overturned.</p>
+        <p class="caption">(2) The same DAG at round 8: 4 votes and 4 certificates commit slot 2, which a skip on absence would contradict.</p>
       </figure>
     </div>
   </div>
@@ -521,14 +522,14 @@
   no_equivocation := by decide
 
 example : DirectCommit U3 0 0 := by decide</pre>
-      <p class="caption">LeanDagTest/Mysticeti/Model.lean:122, 264</p>
+      <p class="caption">A DAG of 4 validators and rounds 0–2, and the statement that slot 0 commits directly in it.</p>
     </div>
     <figure class="dag">
       <script type="application/json">{"w": "U3", "byz": [0],
         "marks": [{"ids": [0], "cls": "leader"}, {"ids": [4, 5, 6], "cls": "vote"}, {"ids": [8, 9, 10], "cls": "cert"}],
         "badges": [{"r": 0, "text": "commit", "kind": "commit"}]}</script>
       <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-cert">certificate</span></div>
-      <p class="caption">Witness <code>U3</code>, drawn from the same definition; shaded row: Byzantine.</p>
+      <p class="caption">The DAG defined at left; shaded row: Byzantine. Leader block 0 has 3 votes and 3 certificates, so slot 0 commits.</p>
     </figure>
   </div>
   <aside class="notes">

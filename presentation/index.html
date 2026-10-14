@@ -240,13 +240,14 @@
         "strong": [{"from": [8]}],
         "tags": [{"id": 4, "text": "own previous"}],
         "badges": [{"r": 1, "text": "3 creators ≥ n − f = 3", "kind": "note"}]}</script>
-      <p class="caption">Witness <code>U3</code> (LeanDagTest/Mysticeti/Model.lean), <code>n = 4</code>; shaded row: Byzantine. Block 8 (<code>v0</code>, round 2) references 4, 5, 6; block 4 is <code>v0</code>’s own previous block.</p>
+      <p class="caption"><code>n = 4</code>, rounds 0–2; shaded row: Byzantine. Block 8 (<code>v0</code>, round 2) references 3 blocks of round 1, among them <code>v0</code>’s own block 4.</p>
     </figure>
   </div>
   <aside class="notes">
     <ul>
       <li><code>Block</code> (LeanDag/Common/Block.lean:20); <code>ValidWrt</code> (Block.lean:61) has four clauses: predecessor
         (references at <code>r − 1</code>), distinct creators, quorum, self-parent (some block by the creator).</li>
+      <li>Figure: witness <code>U3</code> (LeanDagTest/Mysticeti/Model.lean:122).</li>
       <li>Identifiers: <code>BlockRecord.block</code> (LeanDag/Common/BlockRecord.lean:35).</li>
       <li>History: <code>Reaches</code>, <code>historyFrom</code> (LeanDag/Common/CausalHistory.lean, LeanDag/Common/History.lean).
         A view is closed under references (<code>viewComplete</code>, LeanDag/Properties/Carrier.lean:49).</li>
@@ -278,7 +279,7 @@
           "edges": [{"from": "L", "to": "S", "label": "sign"},
                     {"from": "S", "to": "C", "label": "aggregate"},
                     {"from": "C", "to": "B", "label": "then cite", "cls": "accent"}]}</script>
-        <p class="caption">(a) Certified (illustration): the certificate is a separate message, built by an extra exchange before round <code>r + 1</code> may reference <code>L</code>.</p>
+        <p class="caption">(a) Diagram, certified DAG: the certificate is a separate message, built from <code>n − f</code> signatures before round <code>r + 1</code> may reference <code>L</code>.</p>
       </figure>
     </div>
     <figure class="dag">
@@ -288,7 +289,7 @@
         "tags": [{"id": 0, "text": "L"}, {"id": 8, "text": "certificate", "kind": "accent"}, {"id": 11, "text": "2 votes < q", "kind": "bad"}],
         "badges": [{"r": 1, "text": "3 votes ≥ q = 3", "kind": "note"}]}</script>
       <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-cert">certificate</span></div>
-      <p class="caption">(b) Uncertified, witness <code>U3</code> (LeanDagTest/Mysticeti/Model.lean); shaded row: Byzantine. No message is added: block 8 references the 3 votes 4, 5, 6 and so is a certificate; 9 and 10 likewise. Block 11 references only 2 votes.</p>
+      <p class="caption">(b) Uncertified DAG; shaded row: Byzantine. Blocks 8, 9, 10 each reference the 3 votes for <code>L</code> and so are certificates; block 11 references 2.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -325,7 +326,7 @@
           <tr><td class="muted">slots</td><td class="muted">0, 1</td><td class="muted">2, 3</td><td class="muted">4, 5</td><td class="muted">6, 7</td><td class="muted">8, 9</td><td class="muted">10, 11</td><td class="muted">12, 13</td><td class="muted">14, 15</td><td class="muted">16, 17</td></tr>
         </tbody>
       </table>
-      <p class="caption">Schedules <code>pipeSlots</code> (one leader per round) and <code>duoSlots</code> (two leaders per round), LeanDagTest/Mysticeti/Pipelined.lean.</p>
+      <p class="caption">Two schedules for 4 validators, rounds 0–8: one leader per round (top) and two leaders per round (bottom), with slot numbers.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -373,7 +374,7 @@
                   {"from": "q3", "to": "s4", "route": "v", "fromSide": "b", "toSide": "l", "label": "no", "dx": 16, "dy": 4}],
         "texts": [{"x": 248, "y": 208, "text": "eligible slots strictly", "cls": "muted small"},
                   {"x": 248, "y": 226, "text": "between j and k: skipped", "cls": "muted small"}]}</script>
-      <p class="caption">Diagram: the four cases of <code>AnchoredRule.Decided</code> (LeanDag/Common/Anchored.lean), in the order used for presentation.</p>
+      <p class="caption">Diagram: the four ways a slot <code>k</code> is decided, as a flowchart; the order of the questions is for presentation.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -415,7 +416,7 @@
                   {"id": "v4", "x": 104, "y": 252, "w": 426, "h": 36, "text": "one rung: a certificate for L in the anchor’s history"},
                   {"id": "k5", "x": 8, "y": 296, "w": 92, "h": 36, "text": "tie-break", "cls": "plain"},
                   {"id": "v5", "x": 104, "y": 296, "w": 426, "h": 36, "text": "none"}]}</script>
-      <p class="caption">Diagram: the Mysticeti card (<code>coreAnchored</code>, LeanDag/Mysticeti/Model/Rule.lean; slide 15) in front of the other rules’ cards, which fill in the same five rows.</p>
+      <p class="caption">Diagram: the Mysticeti card (slide 15) in front of the cards of the other rules, which fill in the same five rows.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -455,7 +456,7 @@
                    {"r": 2, "text": "r + 2 ≮ r + 2", "kind": "skip"},
                    {"r": 3, "text": "r + 2 < r + 3", "kind": "commit", "row": 1}]}</script>
       <div class="legend"><span class="l-leader">leader block of a slot</span><span class="l-anchor">eligible anchor</span></div>
-      <p class="caption">Schedule <code>pipeSlots</code> (wave 2) drawn over witness <code>Ugrow 6</code>, rounds 0–3 (LeanDagTest/Mysticeti/Growth.lean). Under each round, the test <code>round(k) + wave &lt; round(j)</code>; it fails at <code>r + 1</code> and <code>r + 2</code>.</p>
+      <p class="caption">One leader per round, wave 2. The test <code>round(k) + wave &lt; round(j)</code> fails at <code>r + 1</code> and <code>r + 2</code> and holds at <code>r + 3</code>.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -466,7 +467,7 @@
       <li><code>Reaches</code> is reflexive (LeanDag/Common/CausalHistory.lean:35), which is why a round-<code>r+2</code> anchor that is
         itself a certificate does link.</li>
       <li>Pipelined.lean defines the schedule but no DAG; the figure places <code>pipeSlots</code> leaders (<code>k mod 4</code>) on the
-        <code>Ugrow 6</code> blocks.</li>
+        <code>Ugrow 6</code> blocks (LeanDagTest/Mysticeti/Growth.lean), rounds 0–3.</li>
     </ul>
   </aside>
 </section>
@@ -489,7 +490,7 @@
           "absent": [{"r": 6, "v": 1, "text": "leader: not received"}],
           "badges": [{"r": 6, "text": "no block: skip?", "kind": "skip"},
                      {"r": 6, "text": "0 blames < q", "kind": "undecided", "row": 1}]}</script>
-        <p class="caption">(1) <code>Ugrow 5</code>: the view ends at round 5; the leader’s block (dashed) is absent.</p>
+        <p class="caption">(1) A view that ends at round 5: the slot-2 leader block (dashed) has not arrived, and no block blames it.</p>
       </figure>
       <figure class="dag" data-step="1">
         <script type="application/json">{"w": "Ugrow8", "rounds": [5, 8], "size": "m",
@@ -499,7 +500,7 @@
           "tags": [{"id": 25, "text": "L"}],
           "brackets": [{"ids": [28, 29, 30, 31], "text": "4 votes ≥ q", "kind": "accent"}],
           "badges": [{"r": 6, "text": "commit", "kind": "commit"}, {"r": 8, "text": "4 certs ≥ q", "kind": "note"}]}</script>
-        <p class="caption">(2) <code>Ugrow 8</code>: committed; a skip on absence would be overturned.</p>
+        <p class="caption">(2) The same DAG at round 8: 4 votes and 4 certificates commit slot 2, which a skip on absence would contradict.</p>
       </figure>
     </div>
   </div>
@@ -532,14 +533,14 @@
   no_equivocation := by decide
 
 example : DirectCommit U3 0 0 := by decide</pre>
-      <p class="caption">LeanDagTest/Mysticeti/Model.lean:122, 264</p>
+      <p class="caption">A DAG of 4 validators and rounds 0–2, and the statement that slot 0 commits directly in it.</p>
     </div>
     <figure class="dag">
       <script type="application/json">{"w": "U3", "byz": [0],
         "marks": [{"ids": [0], "cls": "leader"}, {"ids": [4, 5, 6], "cls": "vote"}, {"ids": [8, 9, 10], "cls": "cert"}],
         "badges": [{"r": 0, "text": "commit", "kind": "commit"}]}</script>
       <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-cert">certificate</span></div>
-      <p class="caption">Witness <code>U3</code>, drawn from the same definition; shaded row: Byzantine.</p>
+      <p class="caption">The DAG defined at left; shaded row: Byzantine. Leader block 0 has 3 votes and 3 certificates, so slot 0 commits.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -670,7 +671,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
        ]}
       </script>
       <div class="legend"><span class="l-leader">candidate</span><span class="l-vote">vote for 0</span><span class="l-cert">certificate</span><span class="l-blame">blame for v3's slot</span></div>
-      <figcaption class="caption">Witness U3, LeanDagTest/Mysticeti/Model.lean; each bracket counts its blocks against <code>q = 3</code></figcaption>
+      <figcaption class="caption">Three certificates commit slot 0; three blames skip <code>v3</code>'s slot. Brackets count against <code>q = 3</code></figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -720,7 +721,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
        ]}
       </script>
       <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-blame">blame</span><span class="l-cert">certificate</span><span class="l-anchor">anchor</span></div>
-      <figcaption class="caption">Witness U7, LeanDagTest/Mysticeti/Model.lean; green: the path from anchor 12 through certificate 8 to <code>L</code></figcaption>
+      <figcaption class="caption">One certificate gives no direct decision; green: the path from anchor 12 through certificate 8 to <code>L</code></figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -762,7 +763,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
          {"from": "s4", "to": "s5", "route": "v", "fromSide": "b", "toSide": "r", "label": "anchors find\nno certificate", "dy": 0}
        ]}
       </script>
-      <figcaption class="caption">The five steps; each arrow names what a step takes from the one before it</figcaption>
+      <figcaption class="caption">The five steps of the safety argument; each arrow names what a step takes from the one before it</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -834,7 +835,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
            {"r": 2, "text": "skip", "kind": "skip", "step": 2}
          ]}
       </script>
-        <figcaption class="caption">Witness Unemo, LeanDagTest/Nemo/Model.lean; shaded: history of anchor 11</figcaption>
+        <figcaption class="caption">Slot 3 commits with 2 votes; shaded: the history of anchor 11, which holds no candidate for slot 2</figcaption>
       </figure>
       <figure class="dag">
         <script type="application/json">
@@ -849,7 +850,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
            {"r": 5, "text": "undecided", "kind": "undecided"}
          ]}
         </script>
-        <figcaption class="caption">Witness Ush, LeanDagTest/Nemo/Shadow.lean: no two live leaders in a row: no odd slot is ever decided</figcaption>
+        <figcaption class="caption">Validator 2, crashed from the start, leads every odd slot: even slots commit, odd slots stay undecided</figcaption>
       </figure>
     </div>
   </div>
@@ -944,7 +945,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
        ]}
       </script>
       <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-blame">blame</span><span class="l-anchor">anchor</span></div>
-      <figcaption class="caption">Witness Uskip, LeanDagTest/Odontoceti/Model.lean; shaded: the voters in the anchor's history; brackets: counts against 5 (direct) and 3 (indirect)</figcaption>
+      <figcaption class="caption">Direct skip (slot 0), indirect commit (slot 1), indirect skip (slot 2); shaded: voters in the anchor's history</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -979,7 +980,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
        ],
        "badges": [{"r": 0, "text": "both twins pass", "kind": "note", "at": 6}]}
       </script>
-      <figcaption class="caption">Odontoceti: Utwin6, LeanDagTest/Odontoceti/Model.lean; all six voters are in the history of block 19</figcaption>
+      <figcaption class="caption">Odontoceti, <code>n = 6</code>: twins 0 and 6 have 3 voters each, all six in the history of round-3 block 19</figcaption>
     </figure>
     <figure class="dag">
       <script type="application/json">
@@ -999,12 +1000,12 @@ example : DirectCommit U3 0 0 := by decide</pre>
        ],
        "badges": [{"r": 1, "text": "16: commit", "kind": "commit", "at": 16}, {"r": 1, "text": "17: refused", "kind": "skip", "row": 1, "at": 17}]}
       </script>
-      <figcaption class="caption">Hybrid, k = 4: x9, LeanDagTest/Barnacle/OrcaellaIndirect.lean</figcaption>
+      <figcaption class="caption">Hybrid, <code>n = 9</code>, <code>k = 4</code>: both twins have 4 voters in anchor 27's history; the lesser, 16, is committed</figcaption>
     </figure>
   </div>
   <aside class="notes">
-    <code>utwin6_both_pass</code> (<code>LeanDagTest/Odontoceti/Model.lean:250–260</code>). Block 19 is not the slot's committed anchor; at the actual anchor (slot 2, block 15) only twin 0 passes, and <code>utwin6_slot0</code> commits it (:268–273).
-    <code>x9_both_pass</code> (<code>LeanDagTest/Barnacle/OrcaellaIndirect.lean:249</code>), <code>x9_slot3</code> (:270), <code>x9_least</code> (:288), under the Hybrid rule <code>orcaella 4</code> on nine validators.
+    Witness <code>Utwin6</code>, <code>utwin6_both_pass</code> (<code>LeanDagTest/Odontoceti/Model.lean:250–260</code>). Block 19 is not the slot's committed anchor; at the actual anchor (slot 2, block 15) only twin 0 passes, and <code>utwin6_slot0</code> commits it (:268–273).
+    Witness <code>x9</code>: <code>x9_both_pass</code> (<code>LeanDagTest/Barnacle/OrcaellaIndirect.lean:249</code>), <code>x9_slot3</code> (:270), <code>x9_least</code> (:288), under the Hybrid rule <code>orcaella 4</code> on nine validators.
     The tie and its law: <code>tie</code>, <code>link_unique</code> in <code>odontocetiLaws</code> (<code>LeanDag/Odontoceti/Decision.lean:161, 173</code>).
     Counting authors, not blocks: <code>coneSupports</code> (<code>Odontoceti/Rules.lean:75</code>).
     (informal) That the thesis's argument picks "the" candidate.
@@ -1074,7 +1075,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
        "brackets": [{"ids": [7, 8, 9], "text": "3 ≥ q", "kind": "accent"}],
        "badges": [{"r": 1, "text": "commit", "kind": "commit", "at": 5}]}
       </script>
-      <figcaption class="caption">Witness Uhyb4, LeanDagTest/Hybrid/Model.lean: slot 1, 3 votes, q = 3</figcaption>
+      <figcaption class="caption"><code>n = 4</code>, validator 3 stopped after round 0: slot 1 receives 3 ≥ <code>q</code> votes and commits directly</figcaption>
     </figure>
     <figure class="dag">
       <script type="application/json">
@@ -1097,7 +1098,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
          {"r": 1, "text": "k = 3: skip", "kind": "skip", "step": 3, "row": 1, "at": 6}
        ]}
       </script>
-      <figcaption class="caption">Witness U5, LeanDagTest/Barnacle/OrcaellaIndirect.lean: slot 1, 2 votes, q = 4; shaded: references of anchor 18</figcaption>
+      <figcaption class="caption"><code>n = 5</code>: slot 1 has 2 &lt; <code>q</code> votes; shaded: the blocks anchor 18 references, both voters among them</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -1134,7 +1135,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
            {"r": 0, "text": "k ≤ 3: commit", "kind": "commit", "row": 1, "at": 1}
          ]}
         </script>
-        <figcaption class="caption">UtightA, LeanDagTest/Hybrid/Tight.lean; rows grouped by vote and blame</figcaption>
+        <figcaption class="caption">Six blames skip candidate 1 directly; anchor 17 links 3 voters, a commit for <code>k ≤ 3</code>. Rows grouped by vote and blame</figcaption>
       </figure>
       <figure class="dag">
         <script type="application/json">
@@ -1157,7 +1158,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
            {"r": 0, "text": "k ≥ 4: skip", "kind": "skip", "row": 1, "at": 1}
          ]}
         </script>
-        <figcaption class="caption">UtightB, LeanDagTest/Hybrid/Tight.lean; rows grouped by vote and blame</figcaption>
+        <figcaption class="caption">Six votes commit candidate 1 directly; anchor 17 links 3 voters, a skip for <code>k ≥ 4</code>. Rows grouped by vote and blame</figcaption>
       </figure>
   </div>
   <aside class="notes">
@@ -1239,7 +1240,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
          {"r": 0, "text": "slow commit: 6 ≥ 6", "kind": "commit", "step": 2, "row": 1, "at": 0}
        ]}
       </script>
-      <figcaption class="caption">Witness Dfast, LeanDagTest/FinWhale/Model.lean</figcaption>
+      <figcaption class="caption">Fast: 7 votes at round 1. Slow: 6 certificates at round 2 (shaded).</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -1276,7 +1277,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
        ]}
       </script>
       <div class="legend"><span class="l-vote">vote for 0</span><span class="l-evidence">evidence for 0</span></div>
-      <figcaption class="caption">Witness Dequiv, LeanDagTest/FinWhale/Model.lean. Block 18 sees both twins: 4 ≥ f + p votes for 0, 2 for twin 27. Block 19: 5 ≥ 3. Block 20: 3 &lt; 4, evidence for nothing.</figcaption>
+      <figcaption class="caption">Block 18 sees votes for both twins: 4 ≥ <code>f + p</code> for 0, 2 for twin 27. Block 19: 5 ≥ 3. Block 20: 3 &lt; 4, evidence for nothing</figcaption>
     </figure>
     <figure class="dag">
       <script type="application/json">
@@ -1301,7 +1302,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
          {"r": 3, "text": "30 commits 0", "kind": "commit", "step": 3, "at": 30}
        ]}
       </script>
-      <figcaption class="caption">Witness Dbare, LeanDagTest/FinWhale/Model.lean, from round 1: votes for the leader block 0; each round-2 block references 5 of them</figcaption>
+      <figcaption class="caption">Block 0 commits fast; each round-2 block references 5 &lt; 6 votes, so anchor 30 commits 0 through evidence alone</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -1411,7 +1412,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
                    {"r": 2, "text": "no certificate", "kind": "undecided", "step": 2},
                    {"r": 3, "text": "rung 2: commit", "kind": "commit", "step": 3, "row": 1}]}</script>
       <div class="legend"><span class="l-leader">leader block 2</span><span class="l-vote">vote for 2</span><span class="l-twin">twins 7, 8 of <code>v0</code></span><span class="l-hull">the votes in anchor 24’s history</span></div>
-      <p class="caption">Witness <code>U4</code> (LeanDagTest/Hydrozoan/DirectSafety.lean), rounds 0–3</p>
+      <p class="caption">Rounds 0–3, rows reordered: block 2 is fast-committed without a certificate, and anchor 24 commits it by rung 2</p>
     </figure>
   </div>
   <aside class="notes">
@@ -1536,7 +1537,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
                    {"r": 3, "text": "each: 2 for 4 ≥ tEquiv = 2; 1 for 5", "kind": "note", "step": 2, "row": 1},
                    {"r": 4, "text": "rung 2: commit 4", "kind": "commit", "step": 3}]}</script>
       <div class="legend"><span class="l-leader">copies 4, 5 of the leader</span><span class="l-vote">vote for copy 4</span><span class="l-evidence">evidence for copy 4</span><span class="l-anchor">anchor 18</span></div>
-      <p class="caption">Witness <code>OE</code> (universe <code>UE</code>, LeanDagTest/OptimalHydrozoan/SlotAgreement.lean), rounds 0–4 without blocks 16, 17; block 11 votes for copy 5</p>
+      <p class="caption">Rounds 0–4 without blocks 16, 17, rows reordered: block 11 votes for copy 5; anchor 18 commits copy 4 by rung 2</p>
     </figure>
   </div>
   <aside class="notes">
@@ -1566,12 +1567,12 @@ example : DirectCommit U3 0 0 := by decide</pre>
       <div class="body">
         <figure class="dag">
           <script type="application/json">{"w": "U3", "labels": false, "byz": [0]}</script>
-          <p class="caption">Mysticeti, <code>U3</code>: 3 references per block</p>
+          <p class="caption">Mysticeti, <code>n = 4</code>: each block references <code>n − f = 3</code> blocks of the round below</p>
         </figure>
         <figure class="dag">
           <script type="application/json">{"w": "BsU1", "rounds": [0, 3], "labels": false,
             "marks": [{"ids": [0, 5, 10, 15], "cls": "leader"}]}</script>
-          <p class="caption">Bluestreak, <code>U1</code>: leader blocks (filled) reference 4</p>
+          <p class="caption">Bluestreak, <code>n = 4</code>: leader blocks (filled) reference 4 blocks, the others 1 or 2</p>
         </figure>
       </div>
       <div class="compare"><b>Compared with Mysticeti:</b> most blocks reference two blocks instead of <code>n − f</code>; a certificate is replaced by a claim, which only names the block.</div>
@@ -1622,7 +1623,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
                    {"r": 0, "text": "undecided", "kind": "undecided", "step": 2, "row": 1},
                    {"r": 0, "text": "indirect commit", "kind": "commit", "step": 3, "row": 2}]}</script>
       <div class="legend"><span class="l-leader">leader-tagged block</span><span class="l-vote">vote for 0</span><span class="l-claim">claim for 0</span></div>
-      <p class="caption">Witness <code>U1</code>, ids <code>4·round + creator</code> (LeanDagTest/Bluestreak/Model.lean). Block 8 claims 0 in its payload; block 10 claims it by referencing the 3 votes.</p>
+      <p class="caption">Ids <code>4·round + creator</code>. Block 8 claims 0 in its payload, block 10 by referencing the 3 votes.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -1657,7 +1658,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
         "badges": [{"r": 0, "text": "skip: 3 omit 0 ≥ n − f", "kind": "skip", "step": 1},
                    {"r": 3, "text": "15 not certified", "kind": "undecided", "step": 3}]}</script>
       <div class="legend"><span class="l-leader">leader-tagged block</span><span class="l-vote">references 0</span><span class="l-blame">omits 0</span><span class="l-anchor">would-be anchor 15</span><span class="l-claim">claim by Byzantine block 11</span></div>
-      <p class="caption">Witness <code>U2</code> (LeanDagTest/Bluestreak/Model.lean): slot 0 is skipped directly, yet the uncertified block 15 references a claim for it</p>
+      <p class="caption">Slot 0 is skipped directly, yet the uncertified block 15 references Byzantine block 11’s claim for it</p>
     </figure>
   </div>
   <aside class="notes">
@@ -1700,7 +1701,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
         "edges": [{"from": "v1", "to": "L", "toSide": "t"}, {"from": "v2", "to": "L", "toSide": "t"}, {"from": "v3", "to": "L", "toSide": "t"},
                   {"from": "B", "to": "L", "cls": "accent", "label": "claim: two rounds below, allowed"},
                   {"from": "B", "to": "X", "fromSide": "b", "toSide": "r", "route": "v", "cls": "bad dashed", "label": "claim: three rounds below, not allowed", "dx": -330, "dy": 12}]}</script>
-      <p class="caption">Illustration of <code>BackedClaim</code> and <code>Disciplined</code> (LeanDag/Bluestreak/Rule.lean): from round 2, a correct block <code>B</code> claims only a block certified two rounds below it</p>
+      <p class="caption">From round 2, a correct block <code>B</code> claims only a block certified exactly two rounds below it</p>
     </figure>
   </div>
   <aside class="notes">
@@ -1727,7 +1728,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
     </div>
     <figure class="diagram">
       <script type="application/json">{"w": 826, "h": 200, "size": "xs", "groups": [{"x": 4, "y": 24, "w": 665, "h": 170, "label": "one wave, w = 5"}], "texts": [], "nodes": [{"id": "p", "x": 6.0, "y": 76, "w": 112, "h": 50, "text": "proposals", "cls": "leader"}, {"id": "a", "x": 141.0, "y": 76, "w": 112, "h": 50, "text": "propagation", "cls": "muted"}, {"id": "b", "x": 276.0, "y": 76, "w": 112, "h": 50, "text": "propagation", "cls": "muted"}, {"id": "v", "x": 411.0, "y": 76, "w": 112, "h": 50, "text": "votes"}, {"id": "c", "x": 546.0, "y": 76, "w": 112, "h": 50, "text": "certificates"}, {"id": "k", "x": 706.0, "y": 76, "w": 112, "h": 50, "text": "coin", "cls": "accent"}, {"id": "wb", "x": 62, "y": 158, "w": 0, "h": 0, "text": "", "cls": "plain"}, {"id": "wt", "x": 62, "y": 56, "w": 0, "h": 0, "text": "", "cls": "plain"}, {"id": "t0", "x": -88, "y": 1, "w": 300, "h": 18, "text": "r", "cls": "plain"}, {"id": "t1", "x": 47, "y": 1, "w": 300, "h": 18, "text": "r + 1", "cls": "plain"}, {"id": "t2", "x": 182, "y": 1, "w": 300, "h": 18, "text": "r + 2", "cls": "plain"}, {"id": "t3", "x": 317, "y": 1, "w": 300, "h": 18, "text": "r + w − 2", "cls": "plain"}, {"id": "t4", "x": 452, "y": 1, "w": 300, "h": 18, "text": "r + w − 1", "cls": "plain"}, {"id": "t5", "x": 612, "y": 1, "w": 300, "h": 18, "text": "after the wave", "cls": "plain"}, {"id": "t6", "x": 150, "y": 171, "w": 300, "h": 18, "text": "vote: the least leader-round block in the history", "cls": "plain"}, {"id": "t7", "x": 270, "y": 35, "w": 300, "h": 18, "text": "the coin names the leader", "cls": "plain"}], "edges": [{"from": "a", "to": "p"}, {"from": "b", "to": "a"}, {"from": "v", "to": "b"}, {"from": "c", "to": "v"}, {"from": "v", "to": "wb", "fromSide": "b", "toSide": "r", "route": "v", "cls": "accent", "noArrow": true}, {"from": "wb", "to": "p", "fromSide": "t", "toSide": "b", "cls": "accent"}, {"from": "k", "to": "wt", "fromSide": "t", "toSide": "r", "route": "v", "cls": "dashed", "noArrow": true}, {"from": "wt", "to": "p", "fromSide": "b", "toSide": "t", "cls": "dashed"}]}</script>
-      <p class="caption">A wave at <code>w = 5</code> (LeanDag/MahiMahi/Model/Rules.lean); arrows point from a block to blocks in its history, and a certificate references <code>n − f</code> votes</p>
+      <p class="caption">A wave at <code>w = 5</code>; arrows point from a block to blocks in its history; a certificate references <code>n − f</code> votes</p>
     </figure>
     <div class="text small">
       <div class="compare"><b>Compared with Mysticeti:</b> a longer wave, votes found anywhere in the history, a skip per slot, and an unpredictable leader.</div>
@@ -1764,7 +1765,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
         <script type="application/json">{"w": "twin4", "byz": [0],
           "marks": [{"ids": [0, 4], "cls": "leader"}, {"ids": [4], "cls": "twin"}, {"ids": [8], "cls": "vote"}],
           "paths": [{"ids": [8, 5, 0]}]}</script>
-        <p class="caption"><code>twin4</code> (LeanDagTest/MahiMahi/Model.lean)</p>
+        <p class="caption">Block 8 has the twins 0 and 4 in its history and votes for the least, 0</p>
       </figure>
       <figure class="dag">
         <script type="application/json">{"w": "aim4", "rounds": [1, 3],
@@ -1773,7 +1774,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
           "hulls": [{"ids": [4, 6, 7]}],
           "badges": [{"r": 1, "text": "w = 4: skip", "kind": "skip"},
                      {"r": 1, "text": "w = 5: commit", "kind": "commit", "row": 1}]}</script>
-        <p class="caption"><code>aim4</code> (LeanDagTest/MahiMahi/Counting.lean)</p>
+        <p class="caption">Block 5 reaches only <code>v1</code>’s blocks: skipped at <code>w = 4</code>, committed at <code>w = 5</code></p>
       </figure>
       <div class="text small">
         <ul>
@@ -1812,7 +1813,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
       <script type="application/json">{"type": "bars", "max": 1, "ylabel": "commit probability per wave",
         "groups": [{"label": "n = 4, f = b = 1", "bars": [{"label": "3/4", "name": "paper", "value": 0.75, "alt": true}, {"label": "1/2", "name": "proved", "value": 0.5}]},
                    {"label": "large n", "bars": [{"label": "2/3", "name": "paper", "value": 0.6667, "alt": true}, {"label": "1/3", "name": "proved", "value": 0.3333}]}]}</script>
-      <p class="caption">Commit probability per wave at <code>w ≥ 5</code>: grey, the paper’s <code>(2f + 1)/n</code>; blue, the proved lower bound <code>(n − f − b)/n</code> (<code>CommitProbability</code>)</p>
+      <p class="caption">Commit probability per wave at <code>w ≥ 5</code>: grey, the paper’s <code>(2f + 1)/n</code>; blue, the proved lower bound <code>(n − f − b)/n</code></p>
     </figure>
   </div>
   <aside class="notes">
@@ -1844,7 +1845,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
     </div>
     <figure class="diagram">
       <script type="application/json">{"w": 500, "h": 380, "groups": [{"x": 3, "y": 32, "w": 114, "h": 340, "cls": "accent"}, {"x": 183, "y": 32, "w": 114, "h": 282, "cls": "accent"}, {"x": 363, "y": 32, "w": 114, "h": 56, "cls": "accent"}], "texts": [{"x": 60, "y": 14, "text": "round r", "anchor": "middle", "cls": "muted"}, {"x": 240, "y": 14, "text": "round r + 1", "anchor": "middle", "cls": "muted"}, {"x": 420, "y": 14, "text": "round r + 2", "anchor": "middle", "cls": "muted"}, {"x": 420, "y": 170, "text": "B references\nn − f = 5 blocks\nof round r + 1", "anchor": "middle"}, {"x": 420, "y": 290, "text": "B votes for L,\nthe least block\nof round r\nin its history", "anchor": "middle", "cls": "ok"}], "nodes": [{"id": "n00", "x": 15, "y": 42, "w": 90, "h": 36, "text": "v0"}, {"id": "n01", "x": 15, "y": 100, "w": 90, "h": 36, "text": "L", "cls": "leader"}, {"id": "n02", "x": 15, "y": 158, "w": 90, "h": 36, "text": "v2"}, {"id": "n03", "x": 15, "y": 216, "w": 90, "h": 36, "text": "v3"}, {"id": "n04", "x": 15, "y": 274, "w": 90, "h": 36, "text": "v4"}, {"id": "n05", "x": 15, "y": 332, "w": 90, "h": 36, "text": "v5"}, {"id": "n10", "x": 195, "y": 42, "w": 90, "h": 36, "text": "v0"}, {"id": "n11", "x": 195, "y": 100, "w": 90, "h": 36, "text": "v1"}, {"id": "n12", "x": 195, "y": 158, "w": 90, "h": 36, "text": "v2"}, {"id": "n13", "x": 195, "y": 216, "w": 90, "h": 36, "text": "v3"}, {"id": "n14", "x": 195, "y": 274, "w": 90, "h": 36, "text": "v4"}, {"id": "n15", "x": 195, "y": 332, "w": 90, "h": 36, "text": "v5", "cls": "muted"}, {"id": "n20", "x": 375, "y": 42, "w": 90, "h": 36, "text": "v0: B", "cls": "accent"}], "edges": [{"from": "n20", "to": "n10"}, {"from": "n20", "to": "n12"}, {"from": "n20", "to": "n13"}, {"from": "n20", "to": "n14"}, {"from": "n20", "to": "n11", "cls": "accent"}, {"from": "n11", "to": "n01", "cls": "accent", "label": "L in history"}]}</script>
-      <p class="caption">Illustration at <code>n = 6</code>: shaded, the history of <code>v0</code>’s round-<code>r+2</code> block <code>B</code>, which references <code>n − f = 5</code> blocks of round <code>r + 1</code>. <code>L</code> lies in it, so <code>B</code> votes for <code>L</code> (<code>voters</code>, LeanDag/AsyncBlueBottle/Model/Rules.lean).</p>
+      <p class="caption"><code>n = 6</code>; shaded: the history of <code>v0</code>’s round-<code>r+2</code> block <code>B</code>. <code>L</code> lies in it, so <code>B</code> votes for <code>L</code>.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -1876,7 +1877,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
           "marks": [{"ids": [1], "cls": "leader"}, {"ids": [13], "cls": "vote"}, {"ids": [12, 14, 15, 16, 17], "cls": "blame"}],
           "paths": [{"ids": [13, 7, 1]}],
           "badges": [{"r": 1, "text": "skip: 5 blames ≥ n − f = 5", "kind": "skip"}]}</script>
-        <p class="caption"><code>aim6</code> (…/AsyncBlueBottle/Model.lean)</p>
+        <p class="caption">Leader 1 is in no other history: a direct skip</p>
       </figure>
       <figure class="dag">
         <script type="application/json">{"w": "twin6", "rounds": [0, 2], "size": "m",
@@ -1884,14 +1885,14 @@ example : DirectCommit U3 0 0 := by decide</pre>
           "paths": [{"ids": [13, 7, 0]}, {"ids": [16, 8, 6]}],
           "brackets": [{"ids": [13, 14, 15], "text": "3 for 0", "kind": "accent"}, {"ids": [16, 17, 18], "text": "3 for 6", "kind": "accent"}],
           "badges": [{"r": 1, "text": "anchor 19: both ≥ n − 3f", "kind": "note"}]}</script>
-        <p class="caption"><code>twin6</code> (…/AsyncBlueBottle/Twins.lean)</p>
+        <p class="caption">Twins 0, 6: both pass <code>n − 3f</code> at anchor 19</p>
       </figure>
       <figure class="dag">
         <script type="application/json">{"w": "hazard6", "rounds": [0, 2], "size": "m",
           "marks": [{"ids": [0, 6], "cls": "leader"}, {"ids": [6], "cls": "twin"}, {"ids": [13, 14, 15, 16, 17, 18], "cls": "vote"}],
           "brackets": [{"ids": [13, 14, 15, 16, 17, 18], "text": "6 for 0", "kind": "accent"}],
           "badges": [{"r": 0, "text": "0: commit", "kind": "commit"}, {"r": 2, "text": "6: skip", "kind": "skip"}]}</script>
-        <p class="caption"><code>hazard6</code> (…/Twins.lean), skip per candidate</p>
+        <p class="caption">0 commits; a per-candidate skip skips twin 6</p>
       </figure>
     </div>
   </div>
@@ -1926,7 +1927,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
     </div>
     <figure class="diagram">
       <script type="application/json">{"w": 680, "h": 262, "nodes": [{"id": "r0", "x": 96, "y": 30, "w": 76, "h": 54, "text": "0\nasync", "cls": "accent"}, {"id": "r1", "x": 178, "y": 30, "w": 76, "h": 54, "text": "1\nsync"}, {"id": "r2", "x": 260, "y": 30, "w": 76, "h": 54, "text": "2\nsync"}, {"id": "r3", "x": 342, "y": 30, "w": 76, "h": 54, "text": "3\nasync", "cls": "accent"}, {"id": "r4", "x": 424, "y": 30, "w": 76, "h": 54, "text": "4\nsync"}, {"id": "r5", "x": 506, "y": 30, "w": 76, "h": 54, "text": "5\nsync"}, {"id": "r6", "x": 588, "y": 30, "w": 76, "h": 54, "text": "6\nasync", "cls": "accent"}, {"id": "w0", "x": 96, "y": 110, "w": 404, "h": 38, "text": "wave wa = 5", "cls": "accent"}, {"id": "a0", "x": 506, "y": 110, "w": 158, "h": 38, "text": "anchor ≥ 5", "cls": "ok dashed"}, {"id": "w1", "x": 178, "y": 162, "w": 240, "h": 38, "text": "wave ws = 3", "cls": ""}, {"id": "a1", "x": 424, "y": 162, "w": 240, "h": 38, "text": "anchor ≥ 4", "cls": "ok dashed"}, {"id": "w2", "x": 260, "y": 214, "w": 240, "h": 38, "text": "wave ws = 3", "cls": ""}, {"id": "a2", "x": 506, "y": 214, "w": 158, "h": 38, "text": "anchor ≥ 5", "cls": "ok dashed"}], "texts": [{"x": 8, "y": 57, "text": "round\nkind", "cls": "muted"}, {"x": 8, "y": 129, "text": "slot 0", "cls": "muted"}, {"x": 8, "y": 181, "text": "slot 1", "cls": "muted"}, {"x": 8, "y": 233, "text": "slot 2", "cls": "muted"}]}</script>
-      <p class="caption">Illustration of <code>periodicKind</code> at <code>P = 3</code>, pair Mysticeti with Mahi-Mahi (<code>ws = 3</code>, <code>wa = 5</code>): each slot’s wave starts at its round and its anchor lies at or above <code>round + w(kind)</code></p>
+      <p class="caption">Mysticeti with Mahi-Mahi at <code>P = 3</code> (<code>ws = 3</code>, <code>wa = 5</code>): each slot’s wave starts at its round; its anchor lies at or above <code>round + w(kind)</code></p>
     </figure>
   </div>
   <aside class="notes">
@@ -1970,7 +1971,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
                    {"r": 0, "text": "commit", "kind": "commit", "step": 3},
                    {"r": 3, "text": "undecided", "kind": "undecided", "step": 2, "row": 1}]}</script>
       <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote for the synchronous leader one round below</span><span class="l-cert">certifies slot 0’s block 1 (wave 5)</span></div>
-      <p class="caption">Witness <code>st20</code>, period 4, <code>n = 4</code> (LeanDagTest/Steelhead/Counterexamples/Stall.lean)</p>
+      <p class="caption">Period 4, <code>n = 4</code>: each synchronous leader has 2 votes and 2 omissions, below 3; slot 3 stays undecided</p>
     </figure>
   </div>
   <aside class="notes">
@@ -2006,7 +2007,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
         <tr><td>2</td><td>period 1; anchor at round 17</td></tr>
         <tr><td>3</td><td>the coin names a committed candidate at rounds 25–29; slot 3 is decided in a view holding round 33</td></tr>
       </table>
-      <p class="caption">Witness <code>Failover</code> on <code>rtDag</code> (LeanDagTest/Steelhead/Failover.lean)</p>
+      <p class="caption">Intervals of <code>I = 8</code> rounds: the anchor at 12 exceeds the last output 0 by more than <code>I</code>, so period 1 follows</p>
     </figure>
   </div>
   <aside class="notes">
@@ -2015,7 +2016,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
         <code>PeriodOne</code> (LeanDag/Steelhead/MahiMahiPair/Period/Statement.lean:277).</li>
       <li><code>UndecidedTail</code> (LeanDag/Steelhead/MahiMahiPair/Coin/Statement.lean:277), <code>badBlockBound</code> (:265); <code>K</code> is the period bound;
         hypotheses <code>5 ≤ wa</code>, <code>K ≤ I</code>, <code>wa ≤ I</code>, <code>wa·K ≤ q·I</code>; <code>DecidedAlmostSurely</code> (:461).</li>
-      <li><code>rt_failover</code>, <code>rt_recovers</code> (LeanDagTest/Steelhead/Failover.lean:345, 384); <code>rtPer</code>: periods 4, 4, 1, 1; the coin names validator 2 at every round;
+      <li>Figure: witness <code>Failover</code> on <code>rtDag</code>. <code>rt_failover</code>, <code>rt_recovers</code> (LeanDagTest/Steelhead/Failover.lean:345, 384); <code>rtPer</code>: periods 4, 4, 1, 1; the coin names validator 2 at every round;
         anchors <code>rt_anchor0/1/2</code> at rounds 4, 12, 17 (:196, 211, 225).</li>
     </ul>
   </aside>
@@ -2128,7 +2129,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
           {"r": 1, "text": "commit 6", "kind": "commit", "at": 6, "step": 1}
         ]
       }</script>
-      <figcaption class="caption"><code>Dpart</code>, then <code>Dfull</code> from step 2, which adds blocks 5 and 12 (LeanDagTest/Minnow/Safety.lean). 0 and 4 are twins (red outline). Green: 6 reaches 4, which resolves slot 0. Brackets: the blocks that reference 0, and those that reference 6.</figcaption>
+      <figcaption class="caption">Twins 0 and 4 of process 0 (red outline). Step 1: block 6 reaches 4 (green) and is committed. Step 2 adds blocks 5 and 12, and 0 is committed.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -2164,7 +2165,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
           {"r": 3, "text": "undecided", "kind": "undecided", "until": 2}
         ]
       }</script>
-      <figcaption class="caption"><code>Dm</code> under <code>mLead</code>, two leaders per round (LeanDagTest/Minnow/Deadlock.lean); at step 2 under <code>mFair</code>, one per round (Fair.lean). Green: 11 reaches slots 0 and 1.</figcaption>
+      <figcaption class="caption">Two leaders per round. Step 2, one leader per round: 11 reaches 0 and 6 (green) and is committed.</figcaption>
       <ul class="small">
         <li>A leader referenced by 2 of 4 processes is neither committed nor skipped, and no later leader can be committed.</li>
         <li>With two leaders per round in round-robin, no leader is committed.</li>
@@ -2185,7 +2186,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
           {"r": 3, "text": "undecided", "kind": "undecided"}
         ]
       }</script>
-      <figcaption class="caption"><code>Ds</code> under <code>mLead</code> (LeanDagTest/Minnow/Deadlock.lean): v0 is silent, so its slots at rounds 0 and 2 hold no block.</figcaption>
+      <figcaption class="caption">Two leaders per round; v0 is silent, so its slots at rounds 0 and 2 hold no block, and no slot is decided.</figcaption>
       <ul class="small">
         <li>A silent leader's empty slot prevents every later leader from being committed.</li>
       </ul>
@@ -2293,7 +2294,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
         ]
       }</script>
       <div class="legend"><span class="l-leader">anchor of its round</span><span class="l-anchor" data-step="2">committed anchor 19</span></div>
-      <figcaption class="caption"><code>Udiv</code> (LeanDagTest/BlackMarlin/Divergence.lean). Row v0 is Byzantine; 8 and 12 are twins (red outline). Brackets count the blocks that reference 12 (round 3, bad), 8 (round 3), anchor 14 (round 4: 17, 18, 20, not 19) and 19 (round 5). Green path: the descent from 19, which takes 12 at round 2.</figcaption>
+      <figcaption class="caption">Row v0 is Byzantine; 8 and 12 are twins (red outline). Brackets count references; 19 omits anchor 14. Green: the descent from 19, through 12.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -2446,7 +2447,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
             {"r": 4, "text": "band 3–5", "kind": "note"}
           ]
         }</script>
-        <figcaption class="caption"><code>Uexcl</code>, rounds 2–5 (LeanDagTest/DoS/Exclusion.lean); shaded: the band.</figcaption>
+        <figcaption class="caption">Rounds 2–5 of a DAG; shaded: the band of slot 1, rounds 3–5, in which 11 is committed.</figcaption>
       </figure>
       <figure class="dag">
         <script type="application/json">{
@@ -2463,14 +2464,14 @@ example : DirectCommit U3 0 0 := by decide</pre>
             {"r": 2, "text": "band 1–3", "kind": "note"}
           ]
         }</script>
-        <figcaption class="caption"><code>chop Uexcl 2</code> (LeanDagTest/GC/Chop.lean); rounds shifted by 2.</figcaption>
+        <figcaption class="caption">The same DAG with rounds 0–1 cut and rounds shifted by 2: the band is rounds 1–3, and 11 commits slot 0.</figcaption>
       </figure>
     </div>
     <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-cert">certificate</span></div>
   </div>
   <aside class="notes">
     <p>The band of the slot of block 11 is rounds 3–5 of <code>Uexcl</code> and rounds 1–3 of the cut; the verdict is the same in both.</p>
-    <p><code>Banded</code> (LeanDag/Properties/Band.lean:227): the other view holds at least the original view's blocks inside the band; slot rounds, leaders and kinds match there. Used by <code>LocalTruncate.of_banded</code> (LeanDag/Properties/Derived/Truncate.lean:38), <code>Persist.of_banded</code> (LeanDag/Properties/Derived/FromBand.lean:25), <code>Stack.safe_and_live</code> (LeanDag/Properties/Arcs/Stack.lean:109), <code>safety</code> (LeanDag/Properties/Arcs/Headline.lean:63). Witness: <code>DirectCommit Uexcl 11 3</code>, <code>DirectCommit (chop Uexcl 2) 11 1</code> (LeanDagTest/GC/Chop.lean:60–61); slot 1 of <code>Uexcl</code> is slot 0 of the chopped schedule (:72–84).</p>
+    <p><code>Banded</code> (LeanDag/Properties/Band.lean:227): the other view holds at least the original view's blocks inside the band; slot rounds, leaders and kinds match there. Used by <code>LocalTruncate.of_banded</code> (LeanDag/Properties/Derived/Truncate.lean:38), <code>Persist.of_banded</code> (LeanDag/Properties/Derived/FromBand.lean:25), <code>Stack.safe_and_live</code> (LeanDag/Properties/Arcs/Stack.lean:109), <code>safety</code> (LeanDag/Properties/Arcs/Headline.lean:63). Witness: <code>Uexcl</code> (LeanDagTest/DoS/Exclusion.lean); <code>DirectCommit Uexcl 11 3</code>, <code>DirectCommit (chop Uexcl 2) 11 1</code> (LeanDagTest/GC/Chop.lean:60–61); slot 1 of <code>Uexcl</code> is slot 0 of the chopped schedule (:72–84).</p>
   </aside>
 </section>
 
@@ -2598,7 +2599,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
     </div>
     <figure class="diagram">
       <script type="application/json">{"w": 1100, "h": 214, "size": "s", "groups": [{"x": 0, "y": 0, "w": 300, "h": 212, "cls": "", "label": "source DAG"}, {"x": 400, "y": 0, "w": 300, "h": 212, "cls": "", "label": "after fill"}, {"x": 800, "y": 0, "w": 300, "h": 212, "cls": "accent", "label": "after cut"}], "nodes": [{"id": "n000", "x": 40, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n001", "x": 40, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n010", "x": 92, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n012", "x": 92, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n020", "x": 144, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n021", "x": 144, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n022", "x": 144, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n030", "x": 196, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n031", "x": 196, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n032", "x": 196, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n040", "x": 248, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n041", "x": 248, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n042", "x": 248, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "s0a", "x": 131, "y": 32, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "s0b", "x": 131, "y": 200, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "v02", "x": 136, "y": 160, "w": 44, "h": 28, "text": "✓", "cls": "ok"}, {"id": "v03", "x": 188, "y": 160, "w": 44, "h": 28, "text": "skip", "cls": "muted"}, {"id": "v04", "x": 240, "y": 160, "w": 44, "h": 28, "text": "✓", "cls": "ok"}, {"id": "o0", "x": 300, "y": 73, "w": 1, "h": 2, "text": "", "cls": "plain"}, {"id": "i0", "x": 399, "y": 73, "w": 1, "h": 2, "text": "", "cls": "plain"}, {"id": "n100", "x": 440, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n101", "x": 440, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n102", "x": 440, "y": 108, "w": 28, "h": 20, "text": "", "cls": "dashed accent"}, {"id": "n110", "x": 492, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n111", "x": 492, "y": 74, "w": 28, "h": 20, "text": "", "cls": "dashed accent"}, {"id": "n112", "x": 492, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n120", "x": 544, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n121", "x": 544, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n122", "x": 544, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n130", "x": 596, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n131", "x": 596, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n132", "x": 596, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n140", "x": 648, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n141", "x": 648, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n142", "x": 648, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "s1a", "x": 531, "y": 32, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "s1b", "x": 531, "y": 200, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "v12", "x": 536, "y": 160, "w": 44, "h": 28, "text": "✓", "cls": "ok"}, {"id": "v13", "x": 588, "y": 160, "w": 44, "h": 28, "text": "skip", "cls": "muted"}, {"id": "v14", "x": 640, "y": 160, "w": 44, "h": 28, "text": "✓", "cls": "ok"}, {"id": "o1", "x": 700, "y": 73, "w": 1, "h": 2, "text": "", "cls": "plain"}, {"id": "i1", "x": 799, "y": 73, "w": 1, "h": 2, "text": "", "cls": "plain"}, {"id": "n220", "x": 944, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n221", "x": 944, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n222", "x": 944, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n230", "x": 996, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n231", "x": 996, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n232", "x": 996, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n240", "x": 1048, "y": 40, "w": 28, "h": 20, "text": "", "cls": "leader"}, {"id": "n241", "x": 1048, "y": 74, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "n242", "x": 1048, "y": 108, "w": 28, "h": 20, "text": "", "cls": ""}, {"id": "s2a", "x": 931, "y": 32, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "s2b", "x": 931, "y": 200, "w": 2, "h": 2, "text": "", "cls": "plain"}, {"id": "v22", "x": 936, "y": 160, "w": 44, "h": 28, "text": "✓", "cls": "ok"}, {"id": "v23", "x": 988, "y": 160, "w": 44, "h": 28, "text": "skip", "cls": "muted"}, {"id": "v24", "x": 1040, "y": 160, "w": 44, "h": 28, "text": "✓", "cls": "ok"}], "edges": [{"from": "s0a", "to": "s0b", "fromSide": "b", "toSide": "t", "noArrow": true, "cls": "bad dashed"}, {"from": "o0", "to": "i0", "fromSide": "r", "toSide": "l", "cls": "accent", "label": "fill"}, {"from": "s1a", "to": "s1b", "fromSide": "b", "toSide": "t", "noArrow": true, "cls": "bad dashed"}, {"from": "o1", "to": "i1", "fromSide": "r", "toSide": "l", "cls": "accent", "label": "cut"}, {"from": "s2a", "to": "s2b", "fromSide": "b", "toSide": "t", "noArrow": true, "cls": "bad dashed"}], "texts": [{"x": 138, "y": 20, "text": "settling round", "cls": "small bad", "anchor": "start"}, {"x": 350, "y": 174, "text": "=", "cls": "ok", "anchor": "middle"}, {"x": 538, "y": 20, "text": "settling round", "cls": "small bad", "anchor": "start"}, {"x": 750, "y": 174, "text": "=", "cls": "ok", "anchor": "middle"}, {"x": 938, "y": 20, "text": "settling round", "cls": "small bad", "anchor": "start"}]}</script>
-      <figcaption class="caption">Diagram. A fill (dashed: filled holes), then a cut. The verdicts above the settling round (bottom row) are equal in all three DAGs (<code>safety</code>, LeanDag/Properties/Arcs/Headline.lean).</figcaption>
+      <figcaption class="caption">Diagram. A fill (dashed: filled holes), then a cut. The verdicts above the settling round (bottom row) are equal in all three DAGs.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -2723,7 +2724,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
           <tr><td>Checkpoints, Red Snapper</td><td>applications beyond ordering</td><td>Agree, CommitsCandidate, Law 2</td><td>93–94</td></tr>
         </tbody>
       </table>
-      <figcaption class="caption">The properties in the “Uses” column are defined in Part III: Banded (slide 59); Agree, CommitsCandidate, Indirect (slide 60); Law 1, Law 2 (slide 61); the others (slide 62).</figcaption>
+      <figcaption class="caption">The “Uses” properties are defined on slides 59 (Banded), 60 (Agree, CommitsCandidate, Indirect), 61 (Law 1, 2), 62 (others).</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -2830,7 +2831,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
         "ymax": 12, "yticks": [0, 5, 10],
         "xlabel": "round", "ylabel": "entry − earliest entry"
       }</script>
-      <figcaption class="caption">Witness <code>ugrowLag</code> (LeanDagTest/Reactive/Collapse.lean): GST = 12, Δ = 2, proc = 1. Each validator's entry time into a round, minus the earliest entry into that round. Round 0 is entered before GST, with spread 10; from round 1 on the spread is 3 = Δ + proc.</figcaption>
+      <figcaption class="caption">Entry into each round minus the earliest entry; GST = 12, Δ = 2, proc = 1. The spread is 10 before GST and 3 = Δ + proc from round 1.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -2864,7 +2865,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
           <tr><td>v3</td><td>3</td><td>9</td><td>15</td><td>21</td><td>27</td><td class="yes">6</td><td class="no">9</td></tr>
         </tbody>
       </table>
-      <figcaption class="caption">Witness <code>ugrowReactive</code> (LeanDagTest/Reactive/Model.lean): build times <code>built v n = v + 6n</code>.</figcaption>
+      <figcaption class="caption">Validator <code>v</code> builds its round-<code>n</code> block at time <code>v + 6n</code>: 6 per round for every validator.</figcaption>
     </figure>
     <figure class="chart">
       <script type="application/json">{
@@ -2912,13 +2913,13 @@ example : DirectCommit U3 0 0 := by decide</pre>
         "badges": [{"r": 3, "text": "slot 1: commit", "kind": "commit", "at": 13}]
       }</script>
       <div class="legend"><span class="l-leader">leader block 13</span><span class="l-hull">its history</span><span class="l-byz">Byzantine</span></div>
-      <figcaption class="caption">Witness <code>Ucens</code> (LeanDagTest/Quality/Model.lean), <code>n = 4</code>, <code>f = 1</code>, <code>Correct = {1, 2, 3}</code>. Slot 1 commits block 13; arrows are the references of its history. At each round below it the history holds blocks of the correct v1, v2: <code>2 = |Correct| − f</code>.</figcaption>
+      <figcaption class="caption"><code>n = 4</code>, <code>f = 1</code>, v0 Byzantine. Slot 1 commits block 13; each round of its history (arrows) holds the correct v1, v2: <code>2 = |Correct| − f</code>.</figcaption>
     </figure>
   </div>
   <aside class="notes">
     <p><code>card_coveredAt_ge_of_decided</code> (LeanDag/Properties/Arcs/Quality.lean:96); <code>mem_history_of_decided_commit</code> (:150); <code>committed_of_correct_block</code> (:195); <code>chain_quality</code> (:223).</p>
     <p>Coverage instances: LeanDagTest/Quality/Generic.lean. Steelhead's coverage instance is not written; its inclusion is in <code>liveness</code> (LeanDag/Steelhead/Properties.lean:301).</p>
-    <p>The figure: slot 1 (round 3, leader 1) commits block 13 (<code>ucens_slot1</code>); its certificates lie at round 5, outside the drawn rounds.</p>
+    <p>The figure: witness <code>Ucens</code> (LeanDagTest/Quality/Model.lean), <code>Correct = {1, 2, 3}</code>; slot 1 (round 3, leader 1) commits block 13 (<code>ucens_slot1</code>); its certificates lie at round 5, outside the drawn rounds.</p>
   </aside>
 </section>
 
@@ -2945,7 +2946,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
         "badges": [{"r": 3, "text": "slot 1: commit", "kind": "commit", "at": 13}]
       }</script>
       <div class="legend"><span class="l-leader">leader block 13</span><span class="l-hull">history of 13</span><span class="l-blame">blocks of validator 3</span><span class="l-path">the only references to them</span><span class="l-byz">Byzantine</span></div>
-      <figcaption class="caption">Witness <code>Ucens</code> (LeanDagTest/Quality/Model.lean): slot 1 commits block 13. Each round of its history has the correct creators v1, v2, exactly <code>|Correct| − f = 3 − 1</code>; only validator 3's own blocks reference validator 3, so none of them is in the history.</figcaption>
+      <figcaption class="caption">Each round of block 13's history has exactly <code>|Correct| − f = 2</code> correct creators; only v3's own blocks reference v3, so no block of v3 is in it.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -2985,7 +2986,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
           {"ids": [27, 29], "text": "twins of v2", "kind": "bad", "step": 2}
         ]
       }</script>
-      <figcaption class="caption">Witness <code>Udouble</code> (LeanDagTest/DoS/Doubling.lean), <code>n = 13</code>, <code>f = 4</code>, v0–v3 Byzantine. Arrows: paths from block 41 to v1's blocks 1, 13, 14, 15. The history of 41 exposes <code>e = 2</code> creators.</figcaption>
+      <figcaption class="caption"><code>n = 13</code>, <code>f = 4</code>, v0–v3 Byzantine. Block 41 exposes <code>e = 2</code> creators; arrows reach <code>2^e = 4</code> round-0 blocks of v1.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -3015,7 +3016,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
         "ymax": 120, "yticks": [0, 30, 60, 90, 120],
         "xlabel": "round n", "ylabel": "blocks"
       }</script>
-      <figcaption class="caption">The bound of <code>dos_resistance</code> at <code>C = 3</code>, <code>f = 1</code>, <code>τ = 3</code>: <code>3·((1 + 3)·n + 2) = 12n + 6</code> blocks, 114 at round 9.</figcaption>
+      <figcaption class="caption">The store bound at <code>C = 3</code>, <code>f = 1</code>, <code>τ = 3</code>: <code>3·((1 + 3)·n + 2) = 12n + 6</code> blocks, linear in <code>n</code>.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -3055,7 +3056,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
         }</script>
       </figure>
     </div>
-    <figcaption class="caption">Witness <code>Uexcl</code> (left) and <code>chop Uexcl 2</code> (right), LeanDagTest/GC/Chop.lean. Left: the horizon <code>G = 2</code>; the faded blocks are discarded. Right: rounds 2–5 renumbered 0–3, the round-0 blocks without references. With <code>d = 1</code>, slot 1 of <code>Uexcl</code> is slot 0 of the cut; block 11 is committed in both.</figcaption>
+    <figcaption class="caption">Left: <code>G = 2</code>, faded blocks discarded. Right: rounds 2–5 renumbered 0–3; block 11 is committed by slot 1 before, slot 0 after (<code>d = 1</code>).</figcaption>
     <div class="uses"><b>Uses:</b> Banded, Agree, and Law 1 of the support. <b>Gives:</b> the same verdicts and liveness after the cut, and constant storage (next slide).</div>
   </div>
   <aside class="notes">
@@ -3142,7 +3143,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
           {"x": 736, "y": 175, "text": "≤ 66 blocks", "cls": "ok", "step": 3}
         ]
       }</script>
-      <figcaption class="caption">Illustration of <code>card_retained_le</code> at <code>Λ = 5</code>: at current round <code>t</code> the horizon is <code>G = t − Λ</code>, and the shaded window of <code>Λ + 1 = 6</code> rounds is retained. The window moves with <code>t</code>; the bound stays 66.</figcaption>
+      <figcaption class="caption">At <code>Λ = 5</code>, the shaded rounds <code>G = t − 5</code> to <code>t</code> are retained. The window moves with <code>t</code>; the bound stays 66 blocks.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -3178,7 +3179,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
         ]
       }</script>
       <div class="legend"><span class="l-anchor">round-4 attesters</span><span class="l-evidence">base</span><span class="l-fill">copied from a peer</span></div>
-      <figcaption class="caption">Witness <code>Uexcl</code> (LeanDagTest/GC/Bootstrap.lean), <code>n = 4</code>, <code>f = 1</code>, <code>G = 1</code>, <code>t = 4</code>. The arrows reach every base block from all three attesters. The joiner's blocks are <code>{5, 6, 7, 8, 9, 10}</code>.</figcaption>
+      <figcaption class="caption"><code>n = 4</code>, <code>f = 1</code>, <code>G = 1</code>, <code>t = 4</code>. Every base block is reached (arrows) from all three attesters; the joiner holds blocks 5–10.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -3269,12 +3270,12 @@ example : DirectCommit U3 0 0 := by decide</pre>
         }</script>
       </figure>
     </div>
-    <figcaption class="caption">Witness <code>Ucrash 4</code> and its fill by <code>ucrashMsg 4 4</code> (LeanDagTest/SafeSkip/Model.lean): <code>v₁ = v3</code>, donor line 5, 9, 13, 17. A filled block (dashed) copies the donor's references (dark) and adds its own previous block (green): 21 references <code>{3, 0, 1, 2}</code>.</figcaption>
+    <figcaption class="caption">Left: <code>v₁ = v3</code> stops after block 3. Right: each filled block (dashed) has donor v1's references (dark) and v3's previous block (green).</figcaption>
     <div class="uses"><b>Uses:</b> Banded (through Persist), Agree, SkipsUnsupported, Law 1. <b>Gives:</b> <code>v₁</code> producing again, with every earlier verdict unchanged.</div>
   </div>
   <aside class="notes">
     <p><code>GapData.hgap</code> (LeanDag/SafeSkip/Data.lean:49); <code>SkipData</code> (:30–73); <code>SkipMsg</code> (LeanDag/SafeSkip/Basic.lean:52); <code>SkipData.fillBlock</code> (Data.lean:159); <code>Integration.fill_refs_eq</code> (LeanDag/Integration/CommonTarget.lean:74).</p>
-    <p>Witness <code>ucrashMsg</code> (LeanDagTest/SafeSkip/Model.lean:124, 178): <code>v1 = 3</code>, <code>B1 = 3</code>, donor line <code>v2 = 1</code> (blocks 5, 9, 13, 17), fresh ids <code>4(N + 1) + k</code>. The Lean example at :178 is the round-1 filled block of <code>ucrashMsg 2 2</code>, with references <code>{3, 0, 1, 2}</code>; the figure uses <code>N = r = 4</code>.</p>
+    <p>Witness <code>ucrashMsg</code> (LeanDagTest/SafeSkip/Model.lean:124, 178): <code>v1 = 3</code>, <code>B1 = 3</code>, donor line <code>v2 = 1</code> (blocks 5, 9, 13, 17), fresh ids <code>4(N + 1) + k</code>. The Lean example at :178 is the round-1 filled block of <code>ucrashMsg 2 2</code>, with references <code>{3, 0, 1, 2}</code>; the figure shows <code>Ucrash 4</code> and its fill by <code>ucrashMsg 4 4</code> (<code>N = r = 4</code>); block 21 references <code>{3, 0, 1, 2}</code>.</p>
     <p>(informal) "Rebuilding costs one round trip per missed round".</p>
   </aside>
 </section>
@@ -3302,14 +3303,14 @@ example : DirectCommit U3 0 0 := by decide</pre>
                    {"r": 3, "text": "2: v3 at rounds 1–4", "kind": "note", "step": 2, "row": 1, "at": 23}]
       }</script>
       <div class="legend"><span class="l-anchor"><code>B₁</code> = block 3</span><span class="l-fill">filled blocks</span><span class="l-path">self-references</span></div>
-      <figcaption class="caption">The fill of <code>Ucrash 4</code> by <code>ucrashMsg 4 4</code> (LeanDagTest/SafeSkip/Model.lean), as on slide 80.</figcaption>
+      <figcaption class="caption">The DAG of slide 80 after the fill: blocks 21–24 give v3 a block at rounds 1–4, chained back to <code>B₁</code>.</figcaption>
     </figure>
   </div>
   <aside class="notes">
     <p><code>skipFill</code>, <code>skipFill_block_old</code>, <code>skipFill_populatedOn</code> (LeanDag/SafeSkip/Basic.lean:166, 171, 184).</p>
     <p>Prompt skip: <code>MysticetiProperties.decided_none_fresh</code> (LeanDag/Mysticeti/Record.lean:188); generic <code>Arcs.decided_none_of_novel</code>, <code>decided_none_of_novel_agree</code> (LeanDag/Properties/Arcs/SafeSkip.lean:32, 87), using SkipsUnsupported, and for the second, Agree and Banded. Instances: Mysticeti, Odontoceti (LeanDag/Odontoceti/Record.lean:61), Hybrid (LeanDag/Hybrid/Record.lean:67), Hydrozoan (LeanDag/Integration/HydrozoanMechanisms.lean:79), Bluestreak (LeanDag/Bluestreak/Record.lean:314).</p>
     <p>Verdicts: <code>decided_fill_of_persist</code>, <code>decided_fill_agree_of_properties</code> (LeanDag/Mysticeti/Record.lean:150, 159).</p>
-    <p>In this witness the schedule <code>rrSlots</code> places slots at rounds <code>3k</code>, so no slot in rounds 1–4 is led by validator 3; the prompt skip is exhibited on <code>Ucr</code> (slide 85).</p>
+    <p>The figure is the fill of <code>Ucrash 4</code> by <code>ucrashMsg 4 4</code> (LeanDagTest/SafeSkip/Model.lean). In this witness the schedule <code>rrSlots</code> places slots at rounds <code>3k</code>, so no slot in rounds 1–4 is led by validator 3; the prompt skip is exhibited on <code>Ucr</code> (slide 85).</p>
   </aside>
 </section>
 
@@ -3369,7 +3370,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
         ],
         "size": "s"
       }</script>
-      <figcaption class="caption"><code>JumpMsg.denote</code> (LeanDag/SafeSkip/Jump.lean) on <code>ucrashJump 4 4</code> (LeanDagTest/SafeSkip/Model.lean): <code>B₂ = 17</code> fixes the line 17, 13, 9, 5; the fill 21–24 is that of slide 80.</figcaption>
+      <figcaption class="caption">The donor's top block <code>B₂ = 17</code> fixes its line 17, 13, 9, 5, and with it the fill 21–24 of slide 80.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -3437,7 +3438,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
           {"x": 0, "y": 185, "text": "B₁ at round 4", "step": 2}
         ]
       }</script>
-      <figcaption class="caption">Illustration of <code>outage_bounded_by_lag</code>: <code>r = 10</code>, <code>Λ = 5</code>, <code>G = 5</code>. The shaded rounds are retained; a fill message must name a retained <code>B₁</code>.</figcaption>
+      <figcaption class="caption"><code>r = 10</code>, <code>Λ = 5</code>: rounds 5–10 are retained. A 5-round outage is recovered by one message; after 6 rounds <code>B₁</code> is discarded.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -3467,13 +3468,13 @@ example : DirectCommit U3 0 0 := by decide</pre>
         "paths": [{"ids": [1001, 999], "step": 3}],
         "tags": [{"id": 999, "text": "genesis", "kind": "ok", "step": 2}, {"id": 9, "text": "donor", "kind": "ok", "step": 3}]
       }</script>
-      <figcaption class="caption"><code>Ucrash 2</code> cut at round 1 (LeanDagTest/Integration/Model.lean); v3 crashed after round 0. (1) <code>Ucut</code>: no block of v3. (2) <code>Uregen</code>: genesis block 999. (3) <code>urecover</code>: 1001 copies the references of donor block 9 and references 999.</figcaption>
+      <figcaption class="caption">v3 stopped after round 0; cut at round 1. (1) No block of v3. (2) Genesis block 999. (3) 1001 has donor block 9's references and 999.</figcaption>
     </figure>
     <div class="uses"><b>Uses:</b> Banded, Agree, Law 1, and the attested base (slide 78). <b>Gives:</b> a validator back in production after any outage.</div>
   </div>
   <aside class="notes">
     <p><code>no_blocks_of_no_genesis</code>, <code>severed_of_pruned_anchor</code> (LeanDag/Integration/Retention.lean:44, 65); <code>BlockRecord.addGenesis</code> (LeanDag/Common/Record/Genesis.lean:20); <code>addGenesis_of_severed</code> (LeanDag/Integration/ReGenesis.lean:95); <code>recoveryMsg</code>, <code>hB1uniq_of_addGenesis</code>, <code>rejoin_populated</code> (ReGenesis.lean); <code>card_severed_le</code> (LeanDag/Integration/Margin.lean:40).</p>
-    <p>Witness: <code>Ucut</code>, <code>ucut_severed</code>, <code>Uregen</code>, <code>urecover</code> (LeanDagTest/Integration/Model.lean:102–160). The filled block 1001 copies the references of the donor's block 9 and adds 999. The genesis block is valid only in a DAG cut at <code>G</code> or above.</p>
+    <p>Witness: <code>Ucut</code>, <code>ucut_severed</code>, <code>Uregen</code>, <code>urecover</code> (LeanDagTest/Integration/Model.lean:102–160): <code>Ucrash 2</code> cut at round 1, then (2) <code>Uregen</code>, (3) <code>urecover</code>. The filled block 1001 copies the references of the donor's block 9 and adds 999. The genesis block is valid only in a DAG cut at <code>G</code> or above.</p>
     <p>(informal) "Derived locally, not transmitted": <code>regenesis_converges</code> proves only that a later cut removes it.</p>
   </aside>
 </section>
@@ -3501,12 +3502,12 @@ example : DirectCommit U3 0 0 := by decide</pre>
         "badges": [{"r": 2, "text": "slot 2: commit", "kind": "commit", "at": 10}, {"r": 3, "text": "slot 3: skip", "kind": "skip", "at": 103, "row": 1}]
       }</script>
       <div class="legend"><span class="l-leader">leader block 10</span><span class="l-fill">filled blocks 102, 103</span><span class="l-path">their only references</span><span class="l-claim">claim</span></div>
-      <figcaption class="caption">Witness <code>Ufill</code>, the chain fill of <code>Ucr</code> (LeanDagTest/Bluestreak/Recovery.lean). Slot <code>k</code> is at round <code>k</code>: slot 2 commits block 10, slot 3 is skipped. Blocks 16, 17, 18 at round 4 do not reference 103.</figcaption>
+      <figcaption class="caption">Slot <code>k</code> is at round <code>k</code>: slot 2 commits block 10; slot 3 is skipped, and no round-4 block references the filled block 103.</figcaption>
     </figure>
   </div>
   <aside class="notes">
     <p><code>GapData.chainBlock</code> (LeanDag/SafeSkip/Data.lean:91); <code>chainFill</code> (LeanDag/Bluestreak/Record.lean:174); <code>disciplined_chainFill</code> (:231).</p>
-    <p>LeanDagTest/Bluestreak/Recovery.lean: <code>rcFaults</code> (:28, validator 0 Byzantine), <code>rcGap</code> (:73, <code>v1 = 3</code>, <code>B1 = 7</code>, <code>r = 3</code>), blocks 102, 103 (:93), <code>Ucr_slot2</code>, <code>Ufill_slot2</code>, <code>Ucr_slot3</code>, <code>Ufill_slot3</code>, prompt skip (:134–150). Validator 3 is correct and silent from round 2; slot 3 is led by validator 3.</p>
+    <p>Witness <code>Ufill</code>, the chain fill of <code>Ucr</code>, LeanDagTest/Bluestreak/Recovery.lean: <code>rcFaults</code> (:28, validator 0 Byzantine), <code>rcGap</code> (:73, <code>v1 = 3</code>, <code>B1 = 7</code>, <code>r = 3</code>), blocks 102, 103 (:93), <code>Ucr_slot2</code>, <code>Ufill_slot2</code>, <code>Ucr_slot3</code>, <code>Ufill_slot3</code>, prompt skip (:134–150). Validator 3 is correct and silent from round 2; slot 3 is led by validator 3.</p>
     <p>(informal) The motivation in the first bullet.</p>
   </aside>
 </section>
@@ -3552,7 +3553,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
                   {"x": 450, "y": 20, "text": "15", "anchor": "middle", "cls": "muted"},
                   {"x": 368, "y": 126, "text": "settles at 11", "step": 1},
                   {"x": 456, "y": 226, "text": "settles at 15", "step": 2}]}</script>
-      <figcaption class="caption">Illustration of <code>stack_core</code> (LeanDag/Integration/StackRules.lean): a fill of <code>v₁</code>'s blocks at rounds 6–10, then a cut at <code>G = 15</code>; the rows are drawn at the rounds of <code>D</code>, and the shaded rounds 15–20 hold the same blocks in all three.</figcaption>
+      <figcaption class="caption">A fill of <code>v₁</code>'s rounds 6–10, then a cut at <code>G = 15</code>. Rows are drawn at <code>D</code>'s rounds; shaded rounds 15–20 hold the same blocks in all three.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -3586,7 +3587,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
           <tr><td>Steelhead</td><td class="yes">✓</td><td class="no">open</td><td class="no">open</td><td class="no">—</td><td class="no">open</td><td class="yes">✓</td></tr>
         </tbody>
       </table>
-      <figcaption class="caption">✓ proved; — not shown; open: listed as open work (slide 95).</figcaption>
+      <figcaption class="caption">Mechanisms proved per rule: ✓ proved; — not shown; open: listed as open work (slide 95).</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -3635,12 +3636,12 @@ example : DirectCommit U3 0 0 := by decide</pre>
                   {"x": 55, "y": 116, "text": "outputs [5]", "anchor": "middle", "cls": "ok", "step": 2},
                   {"x": 55, "y": 226, "text": "outputs [ ]", "anchor": "middle", "cls": "muted", "step": 3},
                   {"x": 55, "y": 336, "text": "outputs [15]", "anchor": "middle", "cls": "ok", "step": 3}]}</script>
-      <figcaption class="caption">Witness <code>segRun</code> on <code>Usk</code>, one leader per round and an interval of one (LeanDagTest/Adaptive/Asynchronous.lean): the verdicts each configuration decides, its boundary (dashed) and anchor; shading marks what it outputs.</figcaption>
+      <figcaption class="caption">Three successive configurations, interval one: each decides up to its anchor and outputs (shaded) only up to its boundary (dashed).</figcaption>
     </figure>
   </div>
   <aside class="notes">
     <p>Configuration 0 starts at round 0 with its boundary at round 1; its anchor is slot 3 at round 3. Its verdicts at slots 1, 2, 3 are block 5, skip, block 15; its output is <code>[5]</code>. Configurations 1 and 2 decide slot 3 again as 15, and configuration 2 outputs <code>[15]</code>.</p>
-    <p><code>Barnacle.Config</code> (LeanDag/Barnacle/Config.lean:28); <code>Run.anchor_commits</code>, <code>anchor_least</code> (LeanDag/Barnacle/Model/Run.lean:90–96); <code>Run.rangeLedger</code> (:139); <code>Boundary.atThreshold</code> (LeanDag/Barnacle/Model/Rule.lean:204). <code>segRun</code> (LeanDagTest/Adaptive/Asynchronous.lean:46–113, 121). (informal) The crashed-leader motivation.</p>
+    <p><code>Barnacle.Config</code> (LeanDag/Barnacle/Config.lean:28); <code>Run.anchor_commits</code>, <code>anchor_least</code> (LeanDag/Barnacle/Model/Run.lean:90–96); <code>Run.rangeLedger</code> (:139); <code>Boundary.atThreshold</code> (LeanDag/Barnacle/Model/Rule.lean:204). <code>segRun</code> on <code>Usk</code>, one leader per round and an interval of one (LeanDagTest/Adaptive/Asynchronous.lean:46–113, 121). (informal) The crashed-leader motivation.</p>
   </aside>
 </section>
 
@@ -3674,7 +3675,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
                   {"from": "a0", "to": "b0", "label": "a₀ = b₀, verdicts equal", "cls": "ok", "noArrow": true, "dy": 4, "step": 2},
                   {"from": "a1", "to": "b1", "label": "C₁ = C₁′, a₁ = b₁, verdicts equal", "cls": "ok", "noArrow": true, "dy": 4, "step": 2},
                   {"from": "a2", "to": "b2", "label": "C₂ = C₂′, a₂ = b₂, verdicts equal", "cls": "ok", "noArrow": true, "dy": 4, "step": 2}]}</script>
-      <figcaption class="caption">Two validators' runs on different views from the same configuration <code>C₀</code>; <code>Barnacle.Agreement.holds</code> (LeanDag/Barnacle/Agreement/Proof.lean) makes them equal segment by segment.</figcaption>
+      <figcaption class="caption">Validators a and b start from the same <code>C₀</code> on views <code>V</code> and <code>V′</code>; their configurations, anchors and verdicts agree segment by segment.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -3712,7 +3713,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
                   {"x": 760, "y": 130, "text": "→ swaps two leaders", "cls": "muted", "step": 1},
                   {"x": 760, "y": 222, "text": "commitScore reads slot 1: none", "cls": "bad", "step": 1},
                   {"x": 760, "y": 244, "text": "→ keeps the leaders", "cls": "muted", "step": 1}]}</script>
-      <figcaption class="caption">Counterexample <code>commitScore_not_horizonStable</code> (LeanDagTest/Adaptive/Asynchronous.lean) to <code>HorizonStable</code> (LeanDag/Adaptive/Helpers/Chop.lean), at a cut at <code>G = 1</code>.</figcaption>
+      <figcaption class="caption">A cut at <code>G = 1</code> renumbers slots: a score reading slot 1 sees commit 5 on the network, none on the joiner, and chooses different leaders.</figcaption>
     </figure>
   </div>
   <aside class="notes">
@@ -3735,10 +3736,10 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="text">
       <figure class="dag" data-step="1">
         <script type="application/json">{"w": "Usun", "size": "s", "rounds": [1, 5], "marks": [{"ids": [5, 10, 15, 16], "cls": "leader"}, {"ids": [21], "cls": "anchor"}], "brackets": [{"ids": [5], "text": "counted", "kind": "ok"}, {"ids": [10], "text": "counted", "kind": "ok"}], "badges": [{"r": 4, "text": "observed 2 = expected 2", "kind": "note", "at": 21}]}</script>
-        <figcaption class="caption">Witness <code>Usun</code>, anchor 21 (LeanDagTest/Barnacle/Agreement.lean).</figcaption>
+        <figcaption class="caption">At anchor 21 the committed leaders 5 and 10 are counted: <code>observed = 2 = expected</code>, so the count rises to two.</figcaption>
       </figure>
       <figure class="chart" data-step="2">
-        <script type="application/json">{"type": "lines", "size": "s", "xs": ["start", "healthy", "healthy", "unhealthy", "unhealthy", "healthy"], "ymin": 0, "ymax": 4.6, "yticks": [0, 1, 2, 3, 4], "xlabel": "window outcome (back-off 0, 0, 0, 1, 2); checked at bnP", "ylabel": "leaders per round", "hlines": [{"y": 4, "text": "maxLeaders = 4"}], "series": [{"name": "leader count", "ys": [1, 2, 3, 2, 1, 2], "color": 0, "values": true, "dy": 14}]}</script>
+        <script type="application/json">{"type": "lines", "size": "s", "xs": ["start", "healthy", "healthy", "unhealthy", "unhealthy", "healthy"], "ymin": 0, "ymax": 4.6, "yticks": [0, 1, 2, 3, 4], "xlabel": "window outcome (back-off 0, 0, 0, 1, 2)", "ylabel": "leaders per round", "hlines": [{"y": 4, "text": "maxLeaders = 4"}], "series": [{"name": "leader count", "ys": [1, 2, 3, 2, 1, 2], "color": 0, "values": true, "dy": 14}]}</script>
       </figure>
     </div>
   </div>
@@ -3797,7 +3798,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
         "texts": [{"x": 798, "y": 112, "text": "epoch e", "anchor": "end", "cls": "muted", "step": 1},
                   {"x": 814, "y": 112, "text": "epoch e + 1", "cls": "muted", "step": 1},
                   {"x": 806, "y": 92, "text": "epoch boundary", "anchor": "middle", "cls": "bad", "step": 1}]}</script>
-      <figcaption class="caption">Illustration of LeanDag/Checkpoint/: <code>SigningRule</code>, <code>CheckpointQC</code>, <code>FinalityQC</code>, <code>EpochTransition</code>.</figcaption>
+      <figcaption class="caption">From a commit to finality; at the epoch boundary the highest validated checkpoint of <code>e</code> becomes the genesis of <code>e + 1</code>.</figcaption>
     </figure>
     <div class="uses"><b>Uses:</b> Agree, CommitsCandidate, Law 2.<br><b>Gives:</b> finalised application state, and its recovery across epochs.</div>
   </div>
@@ -3821,11 +3822,11 @@ example : DirectCommit U3 0 0 := by decide</pre>
     <div class="body">
       <figure class="dag">
         <script type="application/json">{"w": "ULive", "rounds": [1, 3], "byz": [0], "marks": [{"ids": [4, 7, 8, 9], "cls": "vote"}, {"ids": [10, 11, 12], "cls": "cert"}], "strong": [{"from": [10], "to": [7, 8, 9]}], "brackets": [{"ids": [7, 8, 9], "text": "3 ACK", "kind": "accent", "side": "left"}, {"ids": [10, 11, 12], "text": "3 certs", "kind": "ok"}], "badges": [{"r": 3, "text": "fast quorum", "kind": "commit"}]}</script>
-        <figcaption class="caption"><code>ULive</code>: one transaction, ACKed by validators 1, 2, 3; 3 certificates (each over 3 ACKs, <code>q = 3</code>) form a fast quorum.</figcaption>
+        <figcaption class="caption">One transaction, ACKed by validators 1–3; three certificates, each over 3 ACKs (<code>q = 3</code>), form a fast quorum. Shaded row: Byzantine.</figcaption>
       </figure>
       <figure class="dag" data-step="1">
         <script type="application/json">{"w": "UTri", "rounds": [1, 3], "byz": [0], "marks": [{"ids": [10, 11], "cls": "cert"}, {"ids": [12], "cls": "anchor"}], "strong": [{"from": [10], "to": [7, 8, 9]}], "brackets": [{"ids": [7, 8, 9], "text": "3 ⊥", "kind": "bad", "side": "left"}], "badges": [{"r": 3, "text": "both dropped", "kind": "skip", "at": 12}]}</script>
-        <figcaption class="caption"><code>UTri</code>: two conflicting transactions; every correct block declares ⊥; 3 ⊥ votes make an unlock at round 3; anchor 12 drops both. Both in LeanDagTest/RedSnapper/Liveness.lean.</figcaption>
+        <figcaption class="caption">Two conflicting transactions: every correct block declares ⊥, 3 ⊥ votes make an unlock at round 3, and anchor 12 drops both.</figcaption>
       </figure>
     </div>
   </div>
@@ -3912,7 +3913,7 @@ example : DirectCommit U3 0 0 := by decide</pre>
                   {"id": "Ml", "x": 830, "y": 72, "w": 260, "h": 210, "text": "pacemaker, chain quality\nstorage bound\ngarbage collection\ncrash recovery, re-genesis\nadaptive leaders\nadaptive leader count\ncheckpoints, Red Snapper", "cls": "plain"}],
         "edges": [{"from": "P", "to": "Q", "label": "each rule proves", "cls": "accent"},
                   {"from": "Q", "to": "M", "label": "each mechanism uses", "cls": "accent"}]}</script>
-      <figcaption class="caption">The three parts of slide 2, filled with the names used in the deck.</figcaption>
+      <figcaption class="caption">The three parts of slide 2 filled in: each rule proves the properties, and each mechanism uses them.</figcaption>
     </figure>
   </div>
   <aside class="notes">

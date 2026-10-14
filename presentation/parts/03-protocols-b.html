@@ -76,7 +76,7 @@
                    {"r": 2, "text": "no certificate", "kind": "undecided", "step": 2},
                    {"r": 3, "text": "rung 2: commit", "kind": "commit", "step": 3, "row": 1}]}</script>
       <div class="legend"><span class="l-leader">leader block 2</span><span class="l-vote">vote for 2</span><span class="l-twin">twins 7, 8 of <code>v0</code></span><span class="l-hull">the votes in anchor 24’s history</span></div>
-      <p class="caption">Witness <code>U4</code> (LeanDagTest/Hydrozoan/DirectSafety.lean), rounds 0–3</p>
+      <p class="caption">Rounds 0–3, rows reordered: block 2 is fast-committed without a certificate, and anchor 24 commits it by rung 2</p>
     </figure>
   </div>
   <aside class="notes">
@@ -201,7 +201,7 @@
                    {"r": 3, "text": "each: 2 for 4 ≥ tEquiv = 2; 1 for 5", "kind": "note", "step": 2, "row": 1},
                    {"r": 4, "text": "rung 2: commit 4", "kind": "commit", "step": 3}]}</script>
       <div class="legend"><span class="l-leader">copies 4, 5 of the leader</span><span class="l-vote">vote for copy 4</span><span class="l-evidence">evidence for copy 4</span><span class="l-anchor">anchor 18</span></div>
-      <p class="caption">Witness <code>OE</code> (universe <code>UE</code>, LeanDagTest/OptimalHydrozoan/SlotAgreement.lean), rounds 0–4 without blocks 16, 17; block 11 votes for copy 5</p>
+      <p class="caption">Rounds 0–4 without blocks 16, 17, rows reordered: block 11 votes for copy 5; anchor 18 commits copy 4 by rung 2</p>
     </figure>
   </div>
   <aside class="notes">
@@ -231,12 +231,12 @@
       <div class="body">
         <figure class="dag">
           <script type="application/json">{"w": "U3", "labels": false, "byz": [0]}</script>
-          <p class="caption">Mysticeti, <code>U3</code>: 3 references per block</p>
+          <p class="caption">Mysticeti, <code>n = 4</code>: each block references <code>n − f = 3</code> blocks of the round below</p>
         </figure>
         <figure class="dag">
           <script type="application/json">{"w": "BsU1", "rounds": [0, 3], "labels": false,
             "marks": [{"ids": [0, 5, 10, 15], "cls": "leader"}]}</script>
-          <p class="caption">Bluestreak, <code>U1</code>: leader blocks (filled) reference 4</p>
+          <p class="caption">Bluestreak, <code>n = 4</code>: leader blocks (filled) reference 4 blocks, the others 1 or 2</p>
         </figure>
       </div>
       <div class="compare"><b>Compared with Mysticeti:</b> most blocks reference two blocks instead of <code>n − f</code>; a certificate is replaced by a claim, which only names the block.</div>
@@ -287,7 +287,7 @@
                    {"r": 0, "text": "undecided", "kind": "undecided", "step": 2, "row": 1},
                    {"r": 0, "text": "indirect commit", "kind": "commit", "step": 3, "row": 2}]}</script>
       <div class="legend"><span class="l-leader">leader-tagged block</span><span class="l-vote">vote for 0</span><span class="l-claim">claim for 0</span></div>
-      <p class="caption">Witness <code>U1</code>, ids <code>4·round + creator</code> (LeanDagTest/Bluestreak/Model.lean). Block 8 claims 0 in its payload; block 10 claims it by referencing the 3 votes.</p>
+      <p class="caption">Ids <code>4·round + creator</code>. Block 8 claims 0 in its payload, block 10 by referencing the 3 votes.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -322,7 +322,7 @@
         "badges": [{"r": 0, "text": "skip: 3 omit 0 ≥ n − f", "kind": "skip", "step": 1},
                    {"r": 3, "text": "15 not certified", "kind": "undecided", "step": 3}]}</script>
       <div class="legend"><span class="l-leader">leader-tagged block</span><span class="l-vote">references 0</span><span class="l-blame">omits 0</span><span class="l-anchor">would-be anchor 15</span><span class="l-claim">claim by Byzantine block 11</span></div>
-      <p class="caption">Witness <code>U2</code> (LeanDagTest/Bluestreak/Model.lean): slot 0 is skipped directly, yet the uncertified block 15 references a claim for it</p>
+      <p class="caption">Slot 0 is skipped directly, yet the uncertified block 15 references Byzantine block 11’s claim for it</p>
     </figure>
   </div>
   <aside class="notes">
@@ -365,7 +365,7 @@
         "edges": [{"from": "v1", "to": "L", "toSide": "t"}, {"from": "v2", "to": "L", "toSide": "t"}, {"from": "v3", "to": "L", "toSide": "t"},
                   {"from": "B", "to": "L", "cls": "accent", "label": "claim: two rounds below, allowed"},
                   {"from": "B", "to": "X", "fromSide": "b", "toSide": "r", "route": "v", "cls": "bad dashed", "label": "claim: three rounds below, not allowed", "dx": -330, "dy": 12}]}</script>
-      <p class="caption">Illustration of <code>BackedClaim</code> and <code>Disciplined</code> (LeanDag/Bluestreak/Rule.lean): from round 2, a correct block <code>B</code> claims only a block certified two rounds below it</p>
+      <p class="caption">From round 2, a correct block <code>B</code> claims only a block certified exactly two rounds below it</p>
     </figure>
   </div>
   <aside class="notes">
@@ -392,7 +392,7 @@
     </div>
     <figure class="diagram">
       <script type="application/json">{"w": 826, "h": 200, "size": "xs", "groups": [{"x": 4, "y": 24, "w": 665, "h": 170, "label": "one wave, w = 5"}], "texts": [], "nodes": [{"id": "p", "x": 6.0, "y": 76, "w": 112, "h": 50, "text": "proposals", "cls": "leader"}, {"id": "a", "x": 141.0, "y": 76, "w": 112, "h": 50, "text": "propagation", "cls": "muted"}, {"id": "b", "x": 276.0, "y": 76, "w": 112, "h": 50, "text": "propagation", "cls": "muted"}, {"id": "v", "x": 411.0, "y": 76, "w": 112, "h": 50, "text": "votes"}, {"id": "c", "x": 546.0, "y": 76, "w": 112, "h": 50, "text": "certificates"}, {"id": "k", "x": 706.0, "y": 76, "w": 112, "h": 50, "text": "coin", "cls": "accent"}, {"id": "wb", "x": 62, "y": 158, "w": 0, "h": 0, "text": "", "cls": "plain"}, {"id": "wt", "x": 62, "y": 56, "w": 0, "h": 0, "text": "", "cls": "plain"}, {"id": "t0", "x": -88, "y": 1, "w": 300, "h": 18, "text": "r", "cls": "plain"}, {"id": "t1", "x": 47, "y": 1, "w": 300, "h": 18, "text": "r + 1", "cls": "plain"}, {"id": "t2", "x": 182, "y": 1, "w": 300, "h": 18, "text": "r + 2", "cls": "plain"}, {"id": "t3", "x": 317, "y": 1, "w": 300, "h": 18, "text": "r + w − 2", "cls": "plain"}, {"id": "t4", "x": 452, "y": 1, "w": 300, "h": 18, "text": "r + w − 1", "cls": "plain"}, {"id": "t5", "x": 612, "y": 1, "w": 300, "h": 18, "text": "after the wave", "cls": "plain"}, {"id": "t6", "x": 150, "y": 171, "w": 300, "h": 18, "text": "vote: the least leader-round block in the history", "cls": "plain"}, {"id": "t7", "x": 270, "y": 35, "w": 300, "h": 18, "text": "the coin names the leader", "cls": "plain"}], "edges": [{"from": "a", "to": "p"}, {"from": "b", "to": "a"}, {"from": "v", "to": "b"}, {"from": "c", "to": "v"}, {"from": "v", "to": "wb", "fromSide": "b", "toSide": "r", "route": "v", "cls": "accent", "noArrow": true}, {"from": "wb", "to": "p", "fromSide": "t", "toSide": "b", "cls": "accent"}, {"from": "k", "to": "wt", "fromSide": "t", "toSide": "r", "route": "v", "cls": "dashed", "noArrow": true}, {"from": "wt", "to": "p", "fromSide": "b", "toSide": "t", "cls": "dashed"}]}</script>
-      <p class="caption">A wave at <code>w = 5</code> (LeanDag/MahiMahi/Model/Rules.lean); arrows point from a block to blocks in its history, and a certificate references <code>n − f</code> votes</p>
+      <p class="caption">A wave at <code>w = 5</code>; arrows point from a block to blocks in its history; a certificate references <code>n − f</code> votes</p>
     </figure>
     <div class="text small">
       <div class="compare"><b>Compared with Mysticeti:</b> a longer wave, votes found anywhere in the history, a skip per slot, and an unpredictable leader.</div>
@@ -429,7 +429,7 @@
         <script type="application/json">{"w": "twin4", "byz": [0],
           "marks": [{"ids": [0, 4], "cls": "leader"}, {"ids": [4], "cls": "twin"}, {"ids": [8], "cls": "vote"}],
           "paths": [{"ids": [8, 5, 0]}]}</script>
-        <p class="caption"><code>twin4</code> (LeanDagTest/MahiMahi/Model.lean)</p>
+        <p class="caption">Block 8 has the twins 0 and 4 in its history and votes for the least, 0</p>
       </figure>
       <figure class="dag">
         <script type="application/json">{"w": "aim4", "rounds": [1, 3],
@@ -438,7 +438,7 @@
           "hulls": [{"ids": [4, 6, 7]}],
           "badges": [{"r": 1, "text": "w = 4: skip", "kind": "skip"},
                      {"r": 1, "text": "w = 5: commit", "kind": "commit", "row": 1}]}</script>
-        <p class="caption"><code>aim4</code> (LeanDagTest/MahiMahi/Counting.lean)</p>
+        <p class="caption">Block 5 reaches only <code>v1</code>’s blocks: skipped at <code>w = 4</code>, committed at <code>w = 5</code></p>
       </figure>
       <div class="text small">
         <ul>
@@ -477,7 +477,7 @@
       <script type="application/json">{"type": "bars", "max": 1, "ylabel": "commit probability per wave",
         "groups": [{"label": "n = 4, f = b = 1", "bars": [{"label": "3/4", "name": "paper", "value": 0.75, "alt": true}, {"label": "1/2", "name": "proved", "value": 0.5}]},
                    {"label": "large n", "bars": [{"label": "2/3", "name": "paper", "value": 0.6667, "alt": true}, {"label": "1/3", "name": "proved", "value": 0.3333}]}]}</script>
-      <p class="caption">Commit probability per wave at <code>w ≥ 5</code>: grey, the paper’s <code>(2f + 1)/n</code>; blue, the proved lower bound <code>(n − f − b)/n</code> (<code>CommitProbability</code>)</p>
+      <p class="caption">Commit probability per wave at <code>w ≥ 5</code>: grey, the paper’s <code>(2f + 1)/n</code>; blue, the proved lower bound <code>(n − f − b)/n</code></p>
     </figure>
   </div>
   <aside class="notes">
@@ -509,7 +509,7 @@
     </div>
     <figure class="diagram">
       <script type="application/json">{"w": 500, "h": 380, "groups": [{"x": 3, "y": 32, "w": 114, "h": 340, "cls": "accent"}, {"x": 183, "y": 32, "w": 114, "h": 282, "cls": "accent"}, {"x": 363, "y": 32, "w": 114, "h": 56, "cls": "accent"}], "texts": [{"x": 60, "y": 14, "text": "round r", "anchor": "middle", "cls": "muted"}, {"x": 240, "y": 14, "text": "round r + 1", "anchor": "middle", "cls": "muted"}, {"x": 420, "y": 14, "text": "round r + 2", "anchor": "middle", "cls": "muted"}, {"x": 420, "y": 170, "text": "B references\nn − f = 5 blocks\nof round r + 1", "anchor": "middle"}, {"x": 420, "y": 290, "text": "B votes for L,\nthe least block\nof round r\nin its history", "anchor": "middle", "cls": "ok"}], "nodes": [{"id": "n00", "x": 15, "y": 42, "w": 90, "h": 36, "text": "v0"}, {"id": "n01", "x": 15, "y": 100, "w": 90, "h": 36, "text": "L", "cls": "leader"}, {"id": "n02", "x": 15, "y": 158, "w": 90, "h": 36, "text": "v2"}, {"id": "n03", "x": 15, "y": 216, "w": 90, "h": 36, "text": "v3"}, {"id": "n04", "x": 15, "y": 274, "w": 90, "h": 36, "text": "v4"}, {"id": "n05", "x": 15, "y": 332, "w": 90, "h": 36, "text": "v5"}, {"id": "n10", "x": 195, "y": 42, "w": 90, "h": 36, "text": "v0"}, {"id": "n11", "x": 195, "y": 100, "w": 90, "h": 36, "text": "v1"}, {"id": "n12", "x": 195, "y": 158, "w": 90, "h": 36, "text": "v2"}, {"id": "n13", "x": 195, "y": 216, "w": 90, "h": 36, "text": "v3"}, {"id": "n14", "x": 195, "y": 274, "w": 90, "h": 36, "text": "v4"}, {"id": "n15", "x": 195, "y": 332, "w": 90, "h": 36, "text": "v5", "cls": "muted"}, {"id": "n20", "x": 375, "y": 42, "w": 90, "h": 36, "text": "v0: B", "cls": "accent"}], "edges": [{"from": "n20", "to": "n10"}, {"from": "n20", "to": "n12"}, {"from": "n20", "to": "n13"}, {"from": "n20", "to": "n14"}, {"from": "n20", "to": "n11", "cls": "accent"}, {"from": "n11", "to": "n01", "cls": "accent", "label": "L in history"}]}</script>
-      <p class="caption">Illustration at <code>n = 6</code>: shaded, the history of <code>v0</code>’s round-<code>r+2</code> block <code>B</code>, which references <code>n − f = 5</code> blocks of round <code>r + 1</code>. <code>L</code> lies in it, so <code>B</code> votes for <code>L</code> (<code>voters</code>, LeanDag/AsyncBlueBottle/Model/Rules.lean).</p>
+      <p class="caption"><code>n = 6</code>; shaded: the history of <code>v0</code>’s round-<code>r+2</code> block <code>B</code>. <code>L</code> lies in it, so <code>B</code> votes for <code>L</code>.</p>
     </figure>
   </div>
   <aside class="notes">
@@ -541,7 +541,7 @@
           "marks": [{"ids": [1], "cls": "leader"}, {"ids": [13], "cls": "vote"}, {"ids": [12, 14, 15, 16, 17], "cls": "blame"}],
           "paths": [{"ids": [13, 7, 1]}],
           "badges": [{"r": 1, "text": "skip: 5 blames ≥ n − f = 5", "kind": "skip"}]}</script>
-        <p class="caption"><code>aim6</code> (…/AsyncBlueBottle/Model.lean)</p>
+        <p class="caption">Leader 1 is in no other history: a direct skip</p>
       </figure>
       <figure class="dag">
         <script type="application/json">{"w": "twin6", "rounds": [0, 2], "size": "m",
@@ -549,14 +549,14 @@
           "paths": [{"ids": [13, 7, 0]}, {"ids": [16, 8, 6]}],
           "brackets": [{"ids": [13, 14, 15], "text": "3 for 0", "kind": "accent"}, {"ids": [16, 17, 18], "text": "3 for 6", "kind": "accent"}],
           "badges": [{"r": 1, "text": "anchor 19: both ≥ n − 3f", "kind": "note"}]}</script>
-        <p class="caption"><code>twin6</code> (…/AsyncBlueBottle/Twins.lean)</p>
+        <p class="caption">Twins 0, 6: both pass <code>n − 3f</code> at anchor 19</p>
       </figure>
       <figure class="dag">
         <script type="application/json">{"w": "hazard6", "rounds": [0, 2], "size": "m",
           "marks": [{"ids": [0, 6], "cls": "leader"}, {"ids": [6], "cls": "twin"}, {"ids": [13, 14, 15, 16, 17, 18], "cls": "vote"}],
           "brackets": [{"ids": [13, 14, 15, 16, 17, 18], "text": "6 for 0", "kind": "accent"}],
           "badges": [{"r": 0, "text": "0: commit", "kind": "commit"}, {"r": 2, "text": "6: skip", "kind": "skip"}]}</script>
-        <p class="caption"><code>hazard6</code> (…/Twins.lean), skip per candidate</p>
+        <p class="caption">0 commits; a per-candidate skip skips twin 6</p>
       </figure>
     </div>
   </div>
@@ -591,7 +591,7 @@
     </div>
     <figure class="diagram">
       <script type="application/json">{"w": 680, "h": 262, "nodes": [{"id": "r0", "x": 96, "y": 30, "w": 76, "h": 54, "text": "0\nasync", "cls": "accent"}, {"id": "r1", "x": 178, "y": 30, "w": 76, "h": 54, "text": "1\nsync"}, {"id": "r2", "x": 260, "y": 30, "w": 76, "h": 54, "text": "2\nsync"}, {"id": "r3", "x": 342, "y": 30, "w": 76, "h": 54, "text": "3\nasync", "cls": "accent"}, {"id": "r4", "x": 424, "y": 30, "w": 76, "h": 54, "text": "4\nsync"}, {"id": "r5", "x": 506, "y": 30, "w": 76, "h": 54, "text": "5\nsync"}, {"id": "r6", "x": 588, "y": 30, "w": 76, "h": 54, "text": "6\nasync", "cls": "accent"}, {"id": "w0", "x": 96, "y": 110, "w": 404, "h": 38, "text": "wave wa = 5", "cls": "accent"}, {"id": "a0", "x": 506, "y": 110, "w": 158, "h": 38, "text": "anchor ≥ 5", "cls": "ok dashed"}, {"id": "w1", "x": 178, "y": 162, "w": 240, "h": 38, "text": "wave ws = 3", "cls": ""}, {"id": "a1", "x": 424, "y": 162, "w": 240, "h": 38, "text": "anchor ≥ 4", "cls": "ok dashed"}, {"id": "w2", "x": 260, "y": 214, "w": 240, "h": 38, "text": "wave ws = 3", "cls": ""}, {"id": "a2", "x": 506, "y": 214, "w": 158, "h": 38, "text": "anchor ≥ 5", "cls": "ok dashed"}], "texts": [{"x": 8, "y": 57, "text": "round\nkind", "cls": "muted"}, {"x": 8, "y": 129, "text": "slot 0", "cls": "muted"}, {"x": 8, "y": 181, "text": "slot 1", "cls": "muted"}, {"x": 8, "y": 233, "text": "slot 2", "cls": "muted"}]}</script>
-      <p class="caption">Illustration of <code>periodicKind</code> at <code>P = 3</code>, pair Mysticeti with Mahi-Mahi (<code>ws = 3</code>, <code>wa = 5</code>): each slot’s wave starts at its round and its anchor lies at or above <code>round + w(kind)</code></p>
+      <p class="caption">Mysticeti with Mahi-Mahi at <code>P = 3</code> (<code>ws = 3</code>, <code>wa = 5</code>): each slot’s wave starts at its round; its anchor lies at or above <code>round + w(kind)</code></p>
     </figure>
   </div>
   <aside class="notes">
@@ -635,7 +635,7 @@
                    {"r": 0, "text": "commit", "kind": "commit", "step": 3},
                    {"r": 3, "text": "undecided", "kind": "undecided", "step": 2, "row": 1}]}</script>
       <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote for the synchronous leader one round below</span><span class="l-cert">certifies slot 0’s block 1 (wave 5)</span></div>
-      <p class="caption">Witness <code>st20</code>, period 4, <code>n = 4</code> (LeanDagTest/Steelhead/Counterexamples/Stall.lean)</p>
+      <p class="caption">Period 4, <code>n = 4</code>: each synchronous leader has 2 votes and 2 omissions, below 3; slot 3 stays undecided</p>
     </figure>
   </div>
   <aside class="notes">
@@ -671,7 +671,7 @@
         <tr><td>2</td><td>period 1; anchor at round 17</td></tr>
         <tr><td>3</td><td>the coin names a committed candidate at rounds 25–29; slot 3 is decided in a view holding round 33</td></tr>
       </table>
-      <p class="caption">Witness <code>Failover</code> on <code>rtDag</code> (LeanDagTest/Steelhead/Failover.lean)</p>
+      <p class="caption">Intervals of <code>I = 8</code> rounds: the anchor at 12 exceeds the last output 0 by more than <code>I</code>, so period 1 follows</p>
     </figure>
   </div>
   <aside class="notes">
@@ -680,7 +680,7 @@
         <code>PeriodOne</code> (LeanDag/Steelhead/MahiMahiPair/Period/Statement.lean:277).</li>
       <li><code>UndecidedTail</code> (LeanDag/Steelhead/MahiMahiPair/Coin/Statement.lean:277), <code>badBlockBound</code> (:265); <code>K</code> is the period bound;
         hypotheses <code>5 ≤ wa</code>, <code>K ≤ I</code>, <code>wa ≤ I</code>, <code>wa·K ≤ q·I</code>; <code>DecidedAlmostSurely</code> (:461).</li>
-      <li><code>rt_failover</code>, <code>rt_recovers</code> (LeanDagTest/Steelhead/Failover.lean:345, 384); <code>rtPer</code>: periods 4, 4, 1, 1; the coin names validator 2 at every round;
+      <li>Figure: witness <code>Failover</code> on <code>rtDag</code>. <code>rt_failover</code>, <code>rt_recovers</code> (LeanDagTest/Steelhead/Failover.lean:345, 384); <code>rtPer</code>: periods 4, 4, 1, 1; the coin names validator 2 at every round;
         anchors <code>rt_anchor0/1/2</code> at rounds 4, 12, 17 (:196, 211, 225).</li>
     </ul>
   </aside>
