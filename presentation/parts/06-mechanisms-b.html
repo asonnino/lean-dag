@@ -209,7 +209,7 @@
 
 <section class="slide" data-part-label="Mechanisms · Adaptive leader count">
   <h2>The adaptive leader count</h2>
-  <div class="body">
+  <div class="body wide-fig">
     <div class="text small">
       <p>More leaders per round lower latency, but one slow leader delays every later slot. At each anchor:</p>
       <ol>
@@ -217,17 +217,16 @@
         <li>healthy if <code>num · expected ≤ den · observed</code>;</li>
         <li>healthy: one more leader; unhealthy: <code>2^backoff</code> fewer, between 1 and <code>maxLeaders</code>; the backoff resets when healthy and grows otherwise.</li>
       </ol>
-      <figure class="dag" data-step="2">
-        <script type="application/json">{"w": "Usun", "size": "s", "rounds": [1, 5], "marks": [{"ids": [5, 10, 15, 16], "cls": "leader"}, {"ids": [21], "cls": "anchor"}], "brackets": [{"ids": [5], "text": "counted", "kind": "ok"}, {"ids": [10], "text": "counted", "kind": "ok"}], "badges": [{"r": 4, "text": "observed 2 = expected 2", "kind": "note", "at": 21}]}</script>
-        <figcaption class="caption">Witness <code>Usun</code> (LeanDagTest/Barnacle/Agreement.lean), anchor 21.</figcaption>
-      </figure>
+      <div class="uses"><b>Uses:</b> Agree, CommitsCandidate, CommitsDirect (the count reads direct commits).<br><b>Gives:</b> a leader count every validator computes the same way.</div>
     </div>
     <div class="text">
-      <figure class="chart" data-step="1">
-        <script type="application/json">{"type": "lines", "xs": ["start", "healthy", "healthy", "unhealthy", "unhealthy", "healthy"], "ymin": 0, "ymax": 4.6, "yticks": [0, 1, 2, 3, 4], "xlabel": "window outcome (back-off 0, 0, 0, 1, 2)", "ylabel": "leaders per round", "hlines": [{"y": 4, "text": "maxLeaders = 4"}], "series": [{"name": "leader count", "ys": [1, 2, 3, 2, 1, 2], "color": 0, "values": true, "dy": 14}]}</script>
-        <figcaption class="caption">The leader count over five windows at <code>maxLeaders = 4</code>, checked by <code>decide</code> at <code>bnP</code> (LeanDagTest/Barnacle/Agreement.lean).</figcaption>
+      <figure class="dag" data-step="1">
+        <script type="application/json">{"w": "Usun", "size": "s", "rounds": [1, 5], "marks": [{"ids": [5, 10, 15, 16], "cls": "leader"}, {"ids": [21], "cls": "anchor"}], "brackets": [{"ids": [5], "text": "counted", "kind": "ok"}, {"ids": [10], "text": "counted", "kind": "ok"}], "badges": [{"r": 4, "text": "observed 2 = expected 2", "kind": "note", "at": 21}]}</script>
+        <figcaption class="caption">Witness <code>Usun</code>, anchor 21 (LeanDagTest/Barnacle/Agreement.lean).</figcaption>
       </figure>
-      <div class="uses"><b>Uses:</b> Agree, CommitsCandidate, CommitsDirect (the count reads direct commits).<br><b>Gives:</b> a leader count every validator computes the same way.</div>
+      <figure class="chart" data-step="2">
+        <script type="application/json">{"type": "lines", "size": "s", "xs": ["start", "healthy", "healthy", "unhealthy", "unhealthy", "healthy"], "ymin": 0, "ymax": 4.6, "yticks": [0, 1, 2, 3, 4], "xlabel": "window outcome (back-off 0, 0, 0, 1, 2); checked at bnP", "ylabel": "leaders per round", "hlines": [{"y": 4, "text": "maxLeaders = 4"}], "series": [{"name": "leader count", "ys": [1, 2, 3, 2, 1, 2], "color": 0, "values": true, "dy": 14}]}</script>
+      </figure>
     </div>
   </div>
   <aside class="notes">
