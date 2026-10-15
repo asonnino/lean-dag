@@ -42,9 +42,16 @@
       <figcaption class="caption">Diagram. The commit condition of Minnow: <code>n − f</code> processes of round <code>r + 1</code> reference the leader block <code>l</code>, and every earlier leader slot is resolved, through <code>l</code>'s history or by its own verdict.</figcaption>
     </figure>
   </div>
+  <!-- Evidence: <p>A commit needs a quorum in the round above and every earlier slot resolved; the rule reads no later anchor.</p>
+    <p><code>Minnow.ValidHere</code> (LeanDag/Minnow/Model/Rule.lean:43); <code>Quorum</code> (:119); <code>Skipped</code> (:134; the vertex-counting reading <code>SkippedByVertex</code>, :145, lets one vertex be committed and skipped, LeanDagTest/Minnow/Skip.lean:60, 69); <code>CommittedAt</code> (:161).</p> -->
   <aside class="notes">
-    <p>A commit needs a quorum in the round above and every earlier slot resolved; the rule reads no later anchor.</p>
-    <p><code>Minnow.ValidHere</code> (LeanDag/Minnow/Model/Rule.lean:43); <code>Quorum</code> (:119); <code>Skipped</code> (:134; the vertex-counting reading <code>SkippedByVertex</code>, :145, lets one vertex be committed and skipped, LeanDagTest/Minnow/Skip.lean:60, 69); <code>CommittedAt</code> (:161).</p>
+    <ul>
+      <li>This slide states Minnow's commit and skip conditions; the next two slides refute the rule's safety and its liveness.</li>
+      <li>In the diagram, the three outlined blocks of round <code>r + 1</code> are <code>n − f</code> processes that reference the leader block <code>l</code>; the two green boxes on the left are the two ways in which an earlier leader slot can be resolved.</li>
+      <li>An earlier slot is resolved for <code>l</code> when some block of that slot is in <code>l</code>'s history, or is concurrent with <code>l</code> (neither block is in the other's history) and is itself committed or skipped. The condition asks for some block of the slot, which need not be the block that is committed.</li>
+      <li>A skip counts processes: <code>n − f</code> processes of round <code>r + 1</code> none of whose blocks references the leader block. If the skip counted blocks instead, one block could be committed and skipped at once; this is checked on a concrete DAG.</li>
+      <li>Minnow has no self-parent rule, and its commit rule reads only the round above the leader and the earlier slots; it consults no later anchor. The next slide shows what the existential over a slot's blocks permits when a leader equivocates.</li>
+    </ul>
   </aside>
 </section>
 
@@ -83,9 +90,17 @@
       <figcaption class="caption">Twins 0 and 4 of process 0 (red outline). Step 1: block 6 reaches 4 (green) and is committed. Step 2 adds blocks 5 and 12, and 0 is committed.</figcaption>
     </figure>
   </div>
+  <!-- Evidence: <p>Initial state: the twins 0 and 4 and their references, in the partial view. Step 1: the partial view commits block 6. Step 2: blocks 5 and 12 arrive; the full view commits block 0 for the earlier slot.</p>
+    <p>LeanDagTest/Minnow/Safety.lean: <code>slotBlocks Dfull (0,0) = {0, 4}</code> (:86, 91); <code>Reaches Dpart 6 4</code>, <code>CommittedAt Dpart sfLead 1 6</code> (:112, 116); <code>Dpart</code> lacks blocks 5 and 12 (:70); <code>CommittedAt Dfull sfLead 0 0</code> (:126); block 4 is never committed (<code>¬ Quorum Dfull 4</code>, :179); the violated property is Safe-Commit (:134).</p> -->
   <aside class="notes">
-    <p>Initial state: the twins 0 and 4 and their references, in the partial view. Step 1: the partial view commits block 6. Step 2: blocks 5 and 12 arrive; the full view commits block 0 for the earlier slot.</p>
-    <p>LeanDagTest/Minnow/Safety.lean: <code>slotBlocks Dfull (0,0) = {0, 4}</code> (:86, 91); <code>Reaches Dpart 6 4</code>, <code>CommittedAt Dpart sfLead 1 6</code> (:112, 116); <code>Dpart</code> lacks blocks 5 and 12 (:70); <code>CommittedAt Dfull sfLead 0 0</code> (:126); block 4 is never committed (<code>¬ Quorum Dfull 4</code>, :179); the violated property is Safe-Commit (:134).</p>
+    <ul>
+      <li>Under Minnow, one validator commits the round-1 leader while slot 0 is undecided, and in the full DAG a block is then committed for slot 0, after the later leader.</li>
+      <li>Initial state: <code>n = 4</code>, and process 0 is Byzantine. Blocks 0 and 4, outlined in red, are twins: two blocks of process 0 in slot <code>(0, 0)</code>, the first leader slot. Only process 1 references block 4.</li>
+      <li>Step 1: this validator's view lacks blocks 5 and 12. Block 0 has two references (bracket <code>2 &lt; q = 3</code>), and only one process does not reference it, so slot 0 is neither committed nor skipped. The round-1 leader block 6 reaches block 4 (green path), which resolves slot 0, and block 6 has three references, so block 6 is committed.</li>
+      <li>Step 2: with blocks 5 and 12 present, block 0 is referenced by processes 0, 2 and 3 and is committed for slot 0, after block 6 was committed. Block 4 never has a quorum, so it is never committed. Both views are checked on this DAG in Lean.</li>
+      <li>This violates the paper's Safe-Commit property: the first validator has output block 6 with slot 0 undecided, and no extension of its output places block 0 before block 6.</li>
+      <li>The published proof assumes that the block resolving the earlier slot is the block that could be committed. Here the slot holds two blocks: block 0 can be committed and is outside block 6's history, while block 4, in block 6's history, can never be committed. The next slide turns to liveness.</li>
+    </ul>
   </aside>
 </section>
 
@@ -119,7 +134,7 @@
       <figcaption class="caption">Two leaders per round. Step 2, one leader per round: 11 reaches 0 and 6 (green) and is committed.</figcaption>
       <ul class="small">
         <li>A <span class="t-leader">leader</span> referenced by 2 of 4 processes is neither committed nor skipped; no later leader whose history lacks it can be committed.</li>
-        <li>With two leaders per round in round-robin, no leader is committed.</li>
+        <li>With two leaders per round in round-robin, no leader of rounds 0–4 is committed.</li>
         <li data-step="2">With one leader per round, the same DAG does <span class="verdict commit">commit</span>.</li>
       </ul>
     </figure>
@@ -144,9 +159,17 @@
       </ul>
     </figure>
   </div>
+  <!-- Evidence: <p>The Byzantine process's blocks reach two processes of four: too few to commit, too many to skip. A slot that is resolved only by a block in a leader's history holds later leaders for two rounds.</p>
+    <p>LeanDagTest/Minnow/Deadlock.lean: 2 of 4 pointers (:86, 89); <code>mLead</code> (:79, 109–146); <code>Ds</code> (:205–223). LeanDagTest/Minnow/Fair.lean: <code>CommittedAt Dm mFair 2 11</code> (:92). <code>not_committedAt_of_dead</code> (LeanDag/Minnow/Blocking.lean:36). (informal) That <code>2f + 1</code> is the least safe skip threshold, so the gap cannot be closed.</p> -->
   <aside class="notes">
-    <p>The Byzantine process's blocks reach two processes of four: too few to commit, too many to skip. A slot that is resolved only by a block in a leader's history holds later leaders for two rounds.</p>
-    <p>LeanDagTest/Minnow/Deadlock.lean: 2 of 4 pointers (:86, 89); <code>mLead</code> (:79, 109–146); <code>Ds</code> (:205–223). LeanDagTest/Minnow/Fair.lean: <code>CommittedAt Dm mFair 2 11</code> (:92). <code>not_committedAt_of_dead</code> (LeanDag/Minnow/Blocking.lean:36). (informal) That <code>2f + 1</code> is the least safe skip threshold, so the gap cannot be closed.</p>
+    <ul>
+      <li>Under Minnow a slot can remain undecided in every view, and such a slot prevents the commit of every later leader whose history lacks it.</li>
+      <li>Initial state, left figure: <code>n = 4</code>, <code>f = 1</code>, process 0 Byzantine, two leaders per round in round robin. Process 0 sends each block to process 1 only, so each of its leader blocks has two references (bracket <code>2 refs &lt; 3</code>) and two non-references (bracket <code>2 non-refs &lt; 3</code>): too few to commit and too few to skip. Every round holds all four blocks, so neither count can change.</li>
+      <li>The second leader of round 0 is concurrent with block 0, and the two leaders of round 1 are processes 2 and 3, which did not reference it; so none of them can resolve slot 0. From round 2 on, block 0 is in every leader's history, but by then process 0 leads again. Proved in Lean: none of the first ten leader slots of this DAG is committed.</li>
+      <li>Step 1: the right figure shows a simpler attack. Process <code>v0</code> issues no blocks, so its slots at rounds 0 and 2 hold no block (dashed). The rule asks for some block of the slot, so an empty slot is never resolved and no later leader is committed. Rounds still advance, because <code>n − f = 3</code> blocks complete a round.</li>
+      <li>Step 2: the same DAG with one leader per round. Leader block 11 at round 2 reaches blocks 0 and 6 (green paths) and is committed, while slots 0 and 1 remain undecided. The commit uses the history condition, the condition that the previous slide showed to be unsafe when a slot holds two blocks.</li>
+      <li>The gap could be closed only by lowering the skip threshold below <code>2f + 1</code>. That <code>2f + 1</code> is the least safe skip threshold is argued, not proved here; present it as a claim.</li>
+    </ul>
   </aside>
 </section>
 
@@ -198,8 +221,15 @@
       <figcaption class="caption">Diagram. The commit condition of Black Marlin over three rounds: <code>n − f</code> blocks of round <code>r + 1</code> reference the anchor <code>B</code>, among them the anchor <code>A</code>, which <code>n − f</code> blocks of round <code>r + 2</code> reference. Arrows point to referenced blocks.</figcaption>
     </figure>
   </div>
+  <!-- Evidence: <p><code>Rotation.anchor</code>, <code>IsAnchor</code>, <code>Supported</code>, <code>Linked</code>, <code>Committed</code> (LeanDag/BlackMarlin/Model/Rules.lean:37, 51, 63, 83, 94); <code>descend</code>, <code>flushRecord</code> (LeanDag/BlackMarlin/Model/Descent.lean:85, 100). Black Marlin has no carrier. (informal) "No reliable broadcast, no coin".</p> -->
   <aside class="notes">
-    <p><code>Rotation.anchor</code>, <code>IsAnchor</code>, <code>Supported</code>, <code>Linked</code>, <code>Committed</code> (LeanDag/BlackMarlin/Model/Rules.lean:37, 51, 63, 83, 94); <code>descend</code>, <code>flushRecord</code> (LeanDag/BlackMarlin/Model/Descent.lean:85, 100). Black Marlin has no carrier. (informal) "No reliable broadcast, no coin".</p>
+    <ul>
+      <li>This slide states Black Marlin's commit rule: an anchor is committed by two consecutive quorums, without certificates and without a skip.</li>
+      <li>In the diagram, <code>B</code> is the anchor of round <code>r</code>. The outlined group of round <code>r + 1</code> is <code>n − f</code> blocks that reference <code>B</code>, among them the anchor <code>A</code> (arrow labelled link); the outlined group of round <code>r + 2</code> is <code>n − f</code> blocks that reference <code>A</code>.</li>
+      <li>An anchor of round <code>r</code> is a block of that round by the validator that the rotation elects for it; an equivocating validator may have several. <code>B</code> is supported when <code>n − f</code> distinct validators reference it from round <code>r + 1</code>, linked when a supported anchor of round <code>r + 1</code> references it, and committed when it is both.</li>
+      <li>There is no skip. From a committed anchor the descent moves to an anchor of the highest round in its history, choosing the anchor whose history has an anchor in the nearest round below it, and then the least identifier, and outputs the blocks below each anchor it visits.</li>
+      <li>The paper describes the rule as needing no reliable broadcast and no common coin; this is the paper's description, not a proved statement here. Black Marlin is not an instance of the properties interface of Part III. The next slide shows that its agreement fails.</li>
+    </ul>
   </aside>
 </section>
 
@@ -251,9 +281,17 @@
       <figcaption class="caption">Row v0 is Byzantine; 8 and 12 are twins (red outline). Brackets count references; 19 omits anchor 14. Green: the descent from 19, through 12.</figcaption>
     </figure>
   </div>
+  <!-- Evidence: <p>Initial state: the twins 8 and 12. Step 1: 8 is supported by 14, 15, 16 and linked through anchor 14; 12 has one supporter. Step 2: the validator that missed round 2 commits 19, whose descent takes 12.</p>
+    <p>LeanDagTest/BlackMarlin/Divergence.lean: <code>divBlk</code> (:71), twins (:57, 115), commit of 8 and non-support of 12 (:120), anchor 19 omits 14 (:124), <code>Committed Udiv 19 4</code> (:129), differing outputs (:135, 154, 182); total order (:261, 298). Sound lemmas: <code>eq_of_supported</code>, <code>reaches_of_supported</code>, <code>reaches_of_committed_of_le</code>, <code>quorum_authorsAt_of_lt</code> (LeanDag/BlackMarlin/Helpers/Rules.lean:40, 59, 77, 110).</p> -->
   <aside class="notes">
-    <p>Initial state: the twins 8 and 12. Step 1: 8 is supported by 14, 15, 16 and linked through anchor 14; 12 has one supporter. Step 2: the validator that missed round 2 commits 19, whose descent takes 12.</p>
-    <p>LeanDagTest/BlackMarlin/Divergence.lean: <code>divBlk</code> (:71), twins (:57, 115), commit of 8 and non-support of 12 (:120), anchor 19 omits 14 (:124), <code>Committed Udiv 19 4</code> (:129), differing outputs (:135, 154, 182); total order (:261, 298). Sound lemmas: <code>eq_of_supported</code>, <code>reaches_of_supported</code>, <code>reaches_of_committed_of_le</code>, <code>quorum_authorsAt_of_lt</code> (LeanDag/BlackMarlin/Helpers/Rules.lean:40, 59, 77, 110).</p>
+    <ul>
+      <li>Two correct validators following Black Marlin output different blocks for round 2, so agreement fails; total order fails as well.</li>
+      <li>Initial state: <code>n = 4</code>, <code>f = 1</code>, row <code>v0</code> Byzantine. The rotation elects validator 0 at round 2, and it issues two anchors there, the twins 8 and 12 (red outline).</li>
+      <li>Step 1: blocks 14, 15 and 16 reference block 8 (bracket <code>3 ≥ q</code>), and the round-3 anchor 14 references block 8 and is referenced by blocks 17, 18 and 20; so block 8 is committed. Block 12 is referenced by block 13 only (bracket <code>1 &lt; q</code>) and is not supported. Proved in Lean: at most one anchor of a round is supported, so the commit rule alone commits one twin.</li>
+      <li>Step 2: the round-4 anchor 19 omits block 14, which is valid since a block needs <code>n − f = 3</code> references, and block 19 is committed. A validator whose view lacked blocks 17, 18 and 20 at round 4 saw block 14 unsupported and did not commit block 8; it commits block 19 later. Its descent from block 19 finds no round-3 anchor, meets both twins at round 2, and its choice prefers block 12 (green path through 13).</li>
+      <li>Step 2: so one validator outputs block 8 for round 2 and the other outputs block 12; each output drops a second block of the same author and round, so neither validator ever outputs the other's twin. This is checked on the concrete DAG.</li>
+      <li>Step 2: total order fails on blocks 5 and 7 of correct validators, neither of which has a twin: the two validators output them in opposite orders, because block 5 is below block 8 and block 7 below block 12. A different rule for choosing among twins does not repair this. The commit rule's uniqueness and ordering lemmas are proved in Lean; the failure lies in the descent.</li>
+    </ul>
   </aside>
 </section>
 
@@ -283,8 +321,16 @@
       </table>
     </figure>
   </div>
+  <!-- Evidence: <p>Rounds to commit = <code>waveAt + 1</code>; for Minnow and Black Marlin, the rounds their commit rules read (<code>Quorum</code>, LeanDag/Minnow/Model/Rule.lean:119; <code>Committed</code>, LeanDag/BlackMarlin/Model/Rules.lean:94). Sources: the rule records cited on each protocol's slide; FinWhale <code>LeanDag/FinWhale/Model/Decided.lean:24</code>; Hybrid's committee through <code>Admissible</code> (<code>HybridFaults</code> itself asks <code>3(fb + fc) + 1</code>, LeanDag/Hybrid/Faults.lean:38).</p> -->
   <aside class="notes">
-    <p>Rounds to commit = <code>waveAt + 1</code>; for Minnow and Black Marlin, the rounds their commit rules read (<code>Quorum</code>, LeanDag/Minnow/Model/Rule.lean:119; <code>Committed</code>, LeanDag/BlackMarlin/Model/Rules.lean:94). Sources: the rule records cited on each protocol's slide; FinWhale <code>LeanDag/FinWhale/Model/Decided.lean:24</code>; Hybrid's committee through <code>Admissible</code> (<code>HybridFaults</code> itself asks <code>3(fb + fc) + 1</code>, LeanDag/Hybrid/Faults.lean:38).</p>
+    <ul>
+      <li>The table compares the thirteen rules of Part II, eleven proved and two refuted, on fault model, committee size, latency, indirect rule, tie-break and leader schedule.</li>
+      <li>Columns: Faults is the fault model; Committee is the required number of validators <code>n</code>; Rounds to commit counts the leader's round and the rounds of the blocks that commit it directly, one more than the rule's wave length.</li>
+      <li>Indirect rungs is the number of indirect steps and the evidence each reads; Tie-break says whether, when two twins pass a test, the least is chosen; Leader says whether leaders are scheduled in advance or unpredictable.</li>
+      <li>Odontoceti, Hybrid and Async BlueBottle require <code>n ≥ 5f + 1</code> or its hybrid analogue, and the first two commit in two rounds. FinWhale and Hydrozoan have a two-round fast path and a three-round slow path.</li>
+      <li>For Hybrid, <code>n ≥ 5fb + 3fc + 1</code> is the bound at which an admissible voter threshold <code>k</code> exists; the fault model alone asks only <code>n ≥ 3(fb + fc) + 1</code>.</li>
+      <li>For Minnow and Black Marlin the rounds are those their commit rules read; neither has an indirect rule. The next slide lists what the formalisation found for each rule.</li>
+    </ul>
   </aside>
 </section>
 
@@ -309,8 +355,15 @@
       </table>
     </figure>
   </div>
+  <!-- Evidence: <p>Each row is detailed, with its Lean evidence, on the rule's slides.</p> -->
   <aside class="notes">
-    <p>Each row is detailed, with its Lean evidence, on the rule's slides.</p>
+    <ul>
+      <li>Each row gives the defect or correction that the formalisation found in one rule; each is presented, with its evidence, on that rule's slides.</li>
+      <li>In Odontoceti, Hybrid and Async BlueBottle two twins can both pass the indirect test, so the rule must choose the least. In Mahi-Mahi the count of good validators is <code>n − f − b</code>, not <code>n − f</code>.</li>
+      <li>FinWhale and Hydrozoan rows concern the published proofs and bounds: Lemma 22 of FinWhale is argued only for <code>p = 1</code>, and Lemmas 18/19 and 6/7 need new proofs; Hydrozoan's slack cap is unnecessary, and one inequality must be strengthened.</li>
+      <li>Bluestreak and Steelhead rows concern the rules themselves: Bluestreak's indirect rule needs a committed anchor and must read claims two rounds deep; Steelhead stalls without its failover, which is needed for liveness.</li>
+      <li>The last two rows are the refutations of slides 49–53. The next slide states three lessons that recur across these rows.</li>
+    </ul>
   </aside>
 </section>
 
@@ -325,11 +378,18 @@
       </ol>
     </div>
   </div>
-  <aside class="notes">
-    <ul>
+  <!-- Evidence: <ul>
       <li>1: <code>tie = (&lt;)</code> in Odontoceti, Hybrid, FinWhale, Hydrozoan (second rung), Async BlueBottle; Mahi-Mahi's <code>Votes</code> picks the least block.</li>
       <li>2: <code>ugrow_not_directSkip</code> (LeanDagTest/Mysticeti/Growth.lean:308).</li>
       <li>3: every carrier has <code>rungs ≥ 1</code>; Black Marlin and Minnow have no anchor rule. (informal) That the missing rule causes the failures.</li>
+    </ul> -->
+  <aside class="notes">
+    <ul>
+      <li>Three requirements recur across the findings of the previous slide.</li>
+      <li>Fix an order: Odontoceti, Hybrid, FinWhale, Hydrozoan on its second rung, and Async BlueBottle choose the least of two twins that pass a test, and Mahi-Mahi's vote count chooses the least block.</li>
+      <li>Count, do not infer from absence: on a growing DAG checked in Lean, a slot whose leader has no block in some view is later committed, so a skip inferred from that absence would contradict the later commit. Mysticeti therefore skips a slot only on a count of blocks that are present.</li>
+      <li>Use later evidence: each of the eleven rules has at least one indirect rung that reads a later committed anchor. Minnow has no such rule; Black Marlin's descent reads a later committed anchor, but its outputs disagree (slide 53).</li>
+      <li>That the absence of such a rule causes the failures of Minnow and Black Marlin is an interpretation, not a proved statement; present it as such. Part III follows.</li>
     </ul>
   </aside>
 </section>
@@ -352,8 +412,15 @@
       <figcaption class="caption">Diagram. Each rule proves the properties once; each mechanism is proved once, from the properties alone.</figcaption>
     </figure>
   </div>
+  <!-- Evidence: <p>Slide 2 shows the same three layers. The eleven carriers are listed in the notes of slide 2.</p> -->
   <aside class="notes">
-    <p>Slide 2 shows the same three layers. The eleven carriers are listed in the notes of slide 2.</p>
+    <ul>
+      <li>Part III introduces an interface of properties, so that each mechanism is proved once for all eleven rules.</li>
+      <li>In the diagram, the rules on the left each prove the properties in the middle box, and the mechanisms on the right are each proved from the properties alone.</li>
+      <li>With this division, a new rule requires proofs of the properties only, and a new mechanism requires a proof from the properties only.</li>
+      <li>Minnow and Black Marlin are excluded: the previous slides refute them, and neither is given the properties.</li>
+      <li>Slide 2 shows the same three layers and lists the eleven rules. The next slide defines what a mechanism may read of a rule.</li>
+    </ul>
   </aside>
 </section>
 
@@ -374,8 +441,15 @@
       <figcaption class="caption">Diagram. The carrier: a view inside its universe, closed under references, which go one round down (dashed: universe blocks outside the view); below, the decision relation.</figcaption>
     </figure>
   </div>
+  <!-- Evidence: <p><code>DagRule</code> (LeanDag/Properties/Carrier.lean:31); <code>Decided</code> is a relation <code>Slots → View U → ℕ → Option BlockId → Prop</code> (:56); <code>viewSound</code> (:45), <code>viewComplete</code> (:49), <code>causal</code> (:54). Eleven carriers (slide 2).</p> -->
   <aside class="notes">
-    <p><code>DagRule</code> (LeanDag/Properties/Carrier.lean:31); <code>Decided</code> is a relation <code>Slots → View U → ℕ → Option BlockId → Prop</code> (:56); <code>viewSound</code> (:45), <code>viewComplete</code> (:49), <code>causal</code> (:54). Eleven carriers (slide 2).</p>
+    <ul>
+      <li>The carrier is the interface between rules and mechanisms: it is all that a mechanism may read of a rule.</li>
+      <li>In the diagram, the outer box is the universe, the set of all blocks; the blue box is one view, the blocks one validator holds; the dashed round-3 blocks are in the universe and outside the view. Every reference goes one round down.</li>
+      <li>The carrier gives the round, creator and references of each block, and the decision relation, drawn at the bottom: under a schedule <code>S</code>, which assigns each slot a round, a leader and a kind, view <code>V</code> decides slot <code>k</code> as a block <code>L</code> (commit) or as none (skip).</li>
+      <li>The decision relation is a relation, so a view may leave a slot undecided. Three laws hold for every rule: a view holds only universe blocks, a view holds every block its blocks reference, and each reference goes one round down.</li>
+      <li>The eleven rules are given carriers (slide 2). The next slides state the properties of the decision relation.</li>
+    </ul>
   </aside>
 </section>
 
@@ -423,9 +497,17 @@
     </div>
     <div class="legend"><span class="l-leader">leader block</span><span class="l-vote">vote</span><span class="l-cert">certificate</span></div>
   </div>
+  <!-- Evidence: <p>The band of the slot of block 11 is rounds 3–5 of <code>Uexcl</code> and rounds 1–3 of the cut; the verdict is the same in both.</p>
+    <p><code>Banded</code> (LeanDag/Properties/Band.lean:227): the other view holds at least the original view's blocks inside the band; slot rounds, leaders and kinds match there. Used by <code>LocalTruncate.of_banded</code> (LeanDag/Properties/Derived/Truncate.lean:38), <code>Persist.of_banded</code> (LeanDag/Properties/Derived/FromBand.lean:25), <code>Stack.safe_and_live</code> (LeanDag/Properties/Arcs/Stack.lean:109), <code>safety</code> (LeanDag/Properties/Arcs/Headline.lean:63). Witness: <code>Uexcl</code> (LeanDagTest/DoS/Exclusion.lean); <code>DirectCommit Uexcl 11 3</code>, <code>DirectCommit (chop Uexcl 2) 11 1</code> (LeanDagTest/GC/Chop.lean:60–61); slot 1 of <code>Uexcl</code> is slot 0 of the chopped schedule (:72–84).</p> -->
   <aside class="notes">
-    <p>The band of the slot of block 11 is rounds 3–5 of <code>Uexcl</code> and rounds 1–3 of the cut; the verdict is the same in both.</p>
-    <p><code>Banded</code> (LeanDag/Properties/Band.lean:227): the other view holds at least the original view's blocks inside the band; slot rounds, leaders and kinds match there. Used by <code>LocalTruncate.of_banded</code> (LeanDag/Properties/Derived/Truncate.lean:38), <code>Persist.of_banded</code> (LeanDag/Properties/Derived/FromBand.lean:25), <code>Stack.safe_and_live</code> (LeanDag/Properties/Arcs/Stack.lean:109), <code>safety</code> (LeanDag/Properties/Arcs/Headline.lean:63). Witness: <code>Uexcl</code> (LeanDagTest/DoS/Exclusion.lean); <code>DirectCommit Uexcl 11 3</code>, <code>DirectCommit (chop Uexcl 2) 11 1</code> (LeanDagTest/GC/Chop.lean:60–61); slot 1 of <code>Uexcl</code> is slot 0 of the chopped schedule (:72–84).</p>
+    <ul>
+      <li>Banded states that each verdict depends only on the blocks in a finite band of rounds above its slot.</li>
+      <li>Definition: for each verdict there is a round <code>top</code> such that any universe, view and schedule that agree with the original from the slot's round to <code>top</code> reach the same verdict. Agreement here means the same blocks, creators and references up to a shift of round numbers, the other view holding at least the original view's blocks in the band, and the same slot rounds, leaders and kinds up to a shift of slot numbers.</li>
+      <li>Left figure: rounds 2–5 of a Mysticeti DAG. Leader block 11 at round 3, votes 14–16 at round 4 (bracket <code>3 ≥ q</code>) and certificates 17–19 at round 5 commit slot 1; the shaded band is rounds 3–5.</li>
+      <li>Right figure: the same DAG with rounds 0–1 cut and rounds shifted down by 2. The band is rounds 1–3, and block 11 commits slot 0. Both commits are checked on this DAG in Lean.</li>
+      <li>Since the other view may hold extra blocks in the band, a rule that decides on the absence of a block does not have Banded. Each of the eleven rules is proved to have it (slide 65).</li>
+      <li>Persistence under extension and invariance under a cut are derived from Banded (slide 62); the mechanisms that cut, fill or shift rounds and the safety theorem (slide 63) use it.</li>
+    </ul>
   </aside>
 </section>
 
@@ -444,8 +526,16 @@
       <figcaption class="caption">Diagram. Indirect: the committed anchor at slot <code>j</code> decides slot <code>i</code>.<span data-step="2"> <code>S′</code> keeps the rounds and slot <code>i</code>'s leader and kind, and changes the other leaders (blue); the verdict <code>v</code> is unchanged.</span></figcaption>
     </figure>
   </div>
+  <!-- Evidence: <p><code>Agree</code> (LeanDag/Properties/Agree.lean:22); <code>CommitsCandidate</code> (LeanDag/Properties/Candidate.lean:50); <code>Indirect</code> (LeanDag/Properties/Commit.lean:40). <code>Indirect</code> gives <code>Descends</code> (<code>Descends.of_indirect</code>, LeanDag/Properties/Derived/Descent.lean:83).</p> -->
   <aside class="notes">
-    <p><code>Agree</code> (LeanDag/Properties/Agree.lean:22); <code>CommitsCandidate</code> (LeanDag/Properties/Candidate.lean:50); <code>Indirect</code> (LeanDag/Properties/Commit.lean:40). <code>Indirect</code> gives <code>Descends</code> (<code>Descends.of_indirect</code>, LeanDag/Properties/Derived/Descent.lean:83).</p>
+    <ul>
+      <li>Three further properties: verdicts agree across views, a commit names a real candidate, and a later committed anchor decides earlier slots.</li>
+      <li>Agree: under one schedule and over one universe, any two views that decide a slot reach the same verdict, a skip counted as a verdict. The safety theorem uses it.</li>
+      <li>CommitsCandidate: a committed block is a block of the universe, at the slot's round, by the slot's leader. It does not follow from Banded, which constrains which DAGs a verdict distinguishes and says nothing about what the committed identifier denotes. Safety, inclusion and chain quality use it.</li>
+      <li>Step 1: in the diagram, slot <code>j</code> holds a committed anchor that is eligible for slot <code>i</code>, where eligibility depends only on the rounds of the two slots; every eligible slot between them is skipped. Indirect states that slot <code>i</code> is then decided, with some verdict <code>v</code>.</li>
+      <li>Step 2: the second row is a schedule <code>S′</code> with the same rounds and the same leader and kind at slot <code>i</code>, but other leaders elsewhere (blue). If slot <code>j</code> still commits the anchor and the slots between are still skipped under <code>S′</code>, slot <code>i</code> receives the same verdict <code>v</code>.</li>
+      <li>Each rule proves Indirect by cases on slot <code>i</code>'s own candidate and the anchor's history, which a change of leaders elsewhere does not affect. From this stronger form, Descends is derived once (slide 62).</li>
+    </ul>
   </aside>
 </section>
 
@@ -505,8 +595,17 @@
       <figcaption class="caption">Diagram. Law 2 over the wave window. Shaded: the reliable quorum <code>T</code>, which leads the slot; C: a <code>T</code>-block that certifies <code>L</code>, through <code>T</code>'s blocks of the rounds between. Step 2: the two network assumptions that give the premise <code>live</code>.</figcaption>
     </figure>
   </div>
+  <!-- Evidence: <p><code>Support</code> (LeanDag/Properties/Support.lean:39), <code>Local</code> (:92), <code>Commits</code> (:103). <code>Support.live</code> (LeanDag/Properties/Derived/LeaderCommits.lean:40): production and certification at the <code>T</code>-led slots of a window. <code>live_of_coverage</code> (LeanDag/Timed/Coverage.lean:108); <code>coreSupport_live_of_reactiveLive</code> (LeanDag/Reactive/MysticetiProperties.lean:59). No synchrony name appears under <code>LeanDag/Properties/</code> (checked by <code>scripts/check-arc-holes.py</code>, a Makefile step).</p> -->
   <aside class="notes">
-    <p><code>Support</code> (LeanDag/Properties/Support.lean:39), <code>Local</code> (:92), <code>Commits</code> (:103). <code>Support.live</code> (LeanDag/Properties/Derived/LeaderCommits.lean:40): production and certification at the <code>T</code>-led slots of a window. <code>live_of_coverage</code> (LeanDag/Timed/Coverage.lean:108); <code>coreSupport_live_of_reactiveLive</code> (LeanDag/Reactive/MysticetiProperties.lean:59). No synchrony name appears under <code>LeanDag/Properties/</code> (checked by <code>scripts/check-arc-holes.py</code>, a Makefile step).</p>
+    <ul>
+      <li>A support describes what a rule's commit counts; two laws relate it to the rule's verdicts, and liveness is proved from them.</li>
+      <li>A support gives a wave length, the number of rounds between a candidate and its certifiers, and a relation stating when a block certifies a candidate. For Odontoceti, Nemo-Nemo and Hybrid the wave length is 1 and certification is a reference.</li>
+      <li>Law 1: across a cut or a shift that leaves the certifier's wave unchanged, a block certifies the same candidates as before.</li>
+      <li>Law 2, in the figure: <code>T</code> is a reliable quorum (bracket) that leads the slot of <code>L</code> (row <code>v0</code>), has a block at every round of the wave, and every <code>T</code>-block C at round <code>r + wave</code> certifies every candidate.</li>
+      <li>Step 1: a view that holds the rounds of the wave then commits the slot (badge <code>commit L</code>).</li>
+      <li>Step 2: the premise <code>live</code> requires this at every slot that <code>T</code> leads in a window, on a view that holds the window. Liveness uses only <code>live</code>.</li>
+      <li>Step 2: the lower diagram shows the two ways to establish <code>live</code>: from synchrony and coverage, by one theorem stated for every support, or from a reactive pacemaker execution, proved per rule. No synchrony assumption appears in the properties layer; a script checks this as part of the build.</li>
+    </ul>
   </aside>
 </section>
 
@@ -518,7 +617,7 @@
       <ul>
         <li><strong>CommitsDirect</strong>: a direct commit is a verdict (adaptive leader count).</li>
         <li><strong>SkipsUnsupported</strong>: a slot is skipped when a large enough set, present one round above, references none of its candidates (prompt skip).</li>
-        <li><strong>Quorate</strong>: every block references <code>n − f</code> distinct creators (chain quality).</li>
+        <li><strong>Quorate</strong>: every block above genesis references blocks of <code>n − f</code> distinct creators (chain quality).</li>
         <li><strong>SelfParent</strong>, <strong>NoEquiv</strong>: every block references its creator's previous block; a reliable creator makes one block per round (inclusion).</li>
       </ul>
     </div>
@@ -530,11 +629,19 @@
       <figcaption class="caption" data-step="1">Diagram. Each derived property (right) is proved once from the property on its left; the arrow says where its verdicts hold.</figcaption>
     </figure>
   </div>
-  <aside class="notes">
-    <ul>
+  <!-- Evidence: <ul>
       <li><code>CommitsDirect</code> (LeanDag/Properties/Optional/Direct.lean:25), used by LeanDag/Barnacle/Healthy/Statement.lean:101. <code>SkipsUnsupported</code> (Optional/Skip.lean:51). <code>Quorate</code> (Optional/Quorate.lean:33), for non-genesis blocks, <code>n − slack</code> with <code>slack = f</code> in the core reliability. <code>SelfParent</code>, <code>NoEquiv</code> (Optional/SelfParent.lean:23, 28).</li>
       <li>Derivations: <code>Persist.of_banded</code>, <code>LocalTruncate.of_banded</code>, <code>Support.leaderCommits</code> (Derived/LeaderCommits.lean:50), <code>Descends.of_indirect</code>.</li>
       <li>Some rules also prove them directly: Mysticeti proves <code>LeaderCommits</code> (<code>leaderCommits_cert</code>, LeanDag/Mysticeti/Properties.lean:534) and derives Law 2 from it (:634); Steelhead's <code>persist</code> (LeanDag/Steelhead/Properties.lean:158).</li>
+    </ul> -->
+  <aside class="notes">
+    <ul>
+      <li>Some properties are needed only by one mechanism; others are derived once from the core properties, so no rule has to prove them.</li>
+      <li>CommitsDirect: a candidate that passes the rule's direct-commit test is committed; adaptive leader count uses it. SkipsUnsupported: if a set of validators meeting the rule's size condition has blocks in the view one round above the slot and none of them references a candidate, the slot is skipped; prompt skip uses it.</li>
+      <li>Quorate: every non-genesis block references blocks of at least <code>n − f</code> distinct creators, under the standard fault model; chain quality uses it. SelfParent and NoEquiv: every non-genesis block references a block of its own creator, and a reliable creator has one block per round; inclusion uses them.</li>
+      <li>Step 1: in the diagram, Persist (a verdict survives extension of the universe and the view) and LocalTruncate (a replica that has pruned below a horizon reaches the same verdicts, at its own numbering) are derived from Banded.</li>
+      <li>Step 1: LeaderCommits (a slot led by a member of a reliable quorum is committed wherever <code>live</code> holds) is derived from Law 2, and Descends (below a run of consecutive committed slots, every slot is decided) is derived from Indirect.</li>
+      <li>Some rules also prove a derived property directly: Mysticeti proves LeaderCommits and derives Law 2 from it, and Steelhead proves persistence directly.</li>
     </ul>
   </aside>
 </section>
@@ -556,8 +663,15 @@
       <figcaption class="caption">Diagram. A fill (dashed: filled holes), then a cut. The verdicts above the settling round (bottom row) are equal in all three DAGs.</figcaption>
     </figure>
   </div>
+  <!-- Evidence: <p><code>Safe</code> (LeanDag/Properties/Arcs/Headline.lean:46), <code>safety</code> (:63), <code>Safe.prefix_agree</code> (:76). The last bullet is the conjunct on <code>Extends</code>.</p> -->
   <aside class="notes">
-    <p><code>Safe</code> (LeanDag/Properties/Arcs/Headline.lean:46), <code>safety</code> (:63), <code>Safe.prefix_agree</code> (:76). The last bullet is the conjunct on <code>Extends</code>.</p>
+    <ul>
+      <li>The safety theorem: every rule with Banded, Agree and CommitsCandidate is safe across any composition of mechanisms that cut, fill or re-genesis the DAG. It is proved once, in Lean, for all eleven rules.</li>
+      <li>The settling round is the round from which the original and the transformed DAG hold the same blocks, up to a shift of round numbers; below it the mechanisms change the DAG.</li>
+      <li>In the diagram: the source DAG, the DAG after a fill (dashed blue: filled holes), and the DAG after a cut. The bottom row, verdicts of the slots above the settling round, is equal in all three.</li>
+      <li>The four conclusions: verdicts above the settling round are the same before and after, at the shifted slot numbers; any view after agrees with any view before above that round; every commit is a candidate, and no block is committed at two slots; and when blocks are added to the universe, a view and any larger view agree at every slot.</li>
+      <li>The ledger reading: two validators' decided prefixes above the settling round are equal. The next slide states liveness.</li>
+    </ul>
   </aside>
 </section>
 
@@ -577,8 +691,15 @@
       <figcaption class="caption">Diagram. Inclusion: a reliable validator <code>v</code>'s blocks, linked by self-parent references, enter the ledger with the commit of a later slot that <code>v</code> leads.</figcaption>
     </figure>
   </div>
+  <!-- Evidence: <p><code>Progresses</code> (Headline.lean:94), <code>Includes</code> (:105), <code>Lives</code> (:117), <code>liveness</code> (:139); <code>Progresses</code> takes <code>Descends</code> as a hypothesis. Progress only: LeanDag/Nemo/Properties.lean:242, LeanDag/FinWhale/Carrier.lean:360, LeanDag/Hydrozoan/Properties/Proof.lean:47, LeanDag/OptimalHydrozoan/Carrier.lean:290.</p> -->
   <aside class="notes">
-    <p><code>Progresses</code> (Headline.lean:94), <code>Includes</code> (:105), <code>Lives</code> (:117), <code>liveness</code> (:139); <code>Progresses</code> takes <code>Descends</code> as a hypothesis. Progress only: LeanDag/Nemo/Properties.lean:242, LeanDag/FinWhale/Carrier.lean:360, LeanDag/Hydrozoan/Properties/Proof.lean:47, LeanDag/OptimalHydrozoan/Carrier.lean:290.</p>
+    <ul>
+      <li>The liveness theorem: from Law 2, CommitsCandidate, SelfParent and NoEquiv, a rule makes progress and includes every reliable validator's blocks, wherever the premise <code>live</code> holds.</li>
+      <li>Progress: if, past every point, the schedule has a run of consecutive slots led by members of a reliable quorum <code>T</code>, then every slot below such a run is decided, and slots led by <code>T</code> continue to be committed. Progress also assumes Descends, which is derived from Indirect.</li>
+      <li>Inclusion: under a schedule in which each reliable validator leads infinitely often, every block of a reliable validator enters the ledger.</li>
+      <li>Step 1: the diagram shows block <code>b</code> of a reliable validator <code>v</code> at round <code>r</code>; each later block of <code>v</code> references its predecessor (self-parent), up to the leader block of a later slot that <code>v</code> leads. When that slot is committed, <code>b</code> is in the leader block's history and enters the ledger. NoEquiv ensures that <code>b</code> is the only block of <code>v</code> at round <code>r</code>, so the chain passes through it.</li>
+      <li>Seven rules have both progress and inclusion. Nemo-Nemo, FinWhale, Hydrozoan and Optimal-Hydrozoan lack SelfParent and are proved to make progress only.</li>
+    </ul>
   </aside>
 </section>
 
@@ -610,8 +731,7 @@
       <figcaption class="caption">✓ proved, — not shown.</figcaption>
     </figure>
   </div>
-  <aside class="notes">
-    <p>Locations (all under LeanDag/), in the column order Banded, Agree, CommitsCandidate, Indirect, Commits, SkipsUnsupported, Quorate, SelfParent, NoEquiv, Safe, Lives:</p>
+  <!-- Evidence: <p>Locations (all under LeanDag/), in the column order Banded, Agree, CommitsCandidate, Indirect, Commits, SkipsUnsupported, Quorate, SelfParent, NoEquiv, Safe, Lives:</p>
     <ul>
       <li>Mysticeti/Properties.lean: 347, 483, 359, 657, 634, 407, 147, 153, 159, 799, 805.</li>
       <li>Nemo: Properties 98, Carrier 84, Carrier 89, Properties 138, Properties 111, —, Carrier 63, —, Carrier 77, Properties 238, 242.</li>
@@ -625,6 +745,14 @@
       <li>AsyncBlueBottle: Properties 205, Carrier 47, 54, Properties 296, 262, —, Carrier 32, 37, 42, Properties 316, 320.</li>
       <li>Steelhead/Properties.lean: 139, 60, 65, 81, 280, —, 45, 50, 55, 164, 301.</li>
       <li><code>CommitsDirect</code> is proved for all eleven.</li>
+    </ul> -->
+  <aside class="notes">
+    <ul>
+      <li>The table records which optional properties and which headline theorems each of the eleven rules has; the core properties hold for all of them.</li>
+      <li>The sentence above the table lists what all eleven have: Banded, Agree, CommitsCandidate, Indirect, CommitsDirect, and a support with both laws. In the table, ✓ means proved in Lean, and — means not proved here, which is a weaker statement than refuted.</li>
+      <li>The Safe column is complete, so the safety theorem of slide 63 applies to every rule. In the Lives column, the four rules without SelfParent have progress only.</li>
+      <li>Mahi-Mahi's theorems are proved for wave length <code>w ≥ 2</code>, as properties conditional on <code>live</code>; synchrony establishes <code>live</code> for Mahi-Mahi only when <code>w ≥ 4</code>, which is the bound on slide 54.</li>
+      <li>An optional property is needed only by its mechanism: prompt skip applies to the five rules with SkipsUnsupported, and chain quality to the ten rules with Quorate.</li>
     </ul>
   </aside>
 </section>
@@ -649,7 +777,14 @@
       </table>
     </figure>
   </div>
+  <!-- Evidence: <p><code>Safe.prefix_agree</code>; <code>Progresses</code>; <code>decided_local</code> (LeanDag/Mysticeti/ViewPace.lean:507; LeanDag/Reactive/Mysticeti.lean:119; LeanDag/Bluestreak/Reactive.lean:245); <code>chain_quality</code> (LeanDag/Properties/Arcs/Quality.lean:223, also needs <code>2·slack ≤ |correct|</code>); <code>dos_resistance</code> (LeanDag/DoS/Novelty.lean:729); <code>card_retained_le</code> (LeanDag/GC/Window.lean:189). The last two are stated over the storage model, not the carrier.</p> -->
   <aside class="notes">
-    <p><code>Safe.prefix_agree</code>; <code>Progresses</code>; <code>decided_local</code> (LeanDag/Mysticeti/ViewPace.lean:507; LeanDag/Reactive/Mysticeti.lean:119; LeanDag/Bluestreak/Reactive.lean:245); <code>chain_quality</code> (LeanDag/Properties/Arcs/Quality.lean:223, also needs <code>2·slack ≤ |correct|</code>); <code>dos_resistance</code> (LeanDag/DoS/Novelty.lean:729); <code>card_retained_le</code> (LeanDag/GC/Window.lean:189). The last two are stated over the storage model, not the carrier.</p>
+    <ul>
+      <li>The table maps each guarantee a user observes to the properties or mechanisms that provide it.</li>
+      <li>The first two rows are the headline theorems: ledgers agree by the safety theorem, and every slot is eventually decided by progress, which uses Law 2 and, through Descends, Indirect.</li>
+      <li>A validator decides from the blocks it holds: this is proved for the pacemakers of Mysticeti and Bluestreak (slide 71).</li>
+      <li>Chain quality, that a committed block's history contains blocks of at least half of the correct validators, also requires that twice the slack be at most the number of correct validators. Inclusion of every correct validator's blocks uses SelfParent, NoEquiv, CommitsCandidate and LeaderCommits.</li>
+      <li>The two storage bounds are stated over the storage model rather than over the carrier: the novelty budget keeps storage linear under equivocation (slide 75), and garbage collection keeps it constant (slide 77).</li>
+    </ul>
   </aside>
 </section>

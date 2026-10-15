@@ -25,8 +25,17 @@
       <figcaption class="caption">The “Uses” properties are defined on slides 59 (Banded), 60 (Agree, CommitsCandidate, Indirect), 61 (Law 1, 2), 62 (others).</figcaption>
     </figure>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p>Each row is detailed, with its Lean evidence, on the slides listed. The storage bound is stated over the delivery model (<code>LeanDag/DoS/</code>) and reads no property of the rule.</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>This slide lists the mechanisms of Part IV; each addresses a problem that the commit rule alone leaves open.</li>
+      <li>Each row gives the problem in the second column, the properties of the rule that the mechanism's proofs use in the third, and the slides that treat it in the last.</li>
+      <li>The properties in the “Uses” column are those defined on slides 59–62; the caption gives the slide for each.</li>
+      <li>The storage bound differs from the other rows: it is stated over the delivery of blocks and reads no property of the commit rule.</li>
+      <li>We begin with pacing: how a rule that only counts references makes progress in time.</li>
+    </ul>
   </aside>
 </section>
 
@@ -65,9 +74,18 @@
       <figcaption class="caption">The liveness argument in layers; each arrow is labelled with what the lower layer receives. Only the network and the pacemaker refer to time.</figcaption>
     </figure>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p>The two facts are <code>PopulatedOn</code> (LeanDag/Common/Participation.lean:62) and <code>SynchronisedOn</code> (:80). The pacemaker is <code>PaceCore</code> (LeanDag/Mysticeti/ViewPace.lean:114).</p>
     <p>Mysticeti's route: <code>certifiesAt_of_synchronisedOn</code> (LeanDag/Mysticeti/Liveness.lean:115) gives a direct commit; <code>Support.live</code> (LeanDag/Properties/Derived/LeaderCommits.lean:40).</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>The commit rule counts references and does not refer to time, so the liveness argument is built in layers, and only the lower layers refer to time.</li>
+      <li>Read the diagram from top to bottom: each arrow is labelled with what the layer below receives. The network gives view convergence after GST, the global stabilisation time after which every block reaches every reliable validator within the delay <code>Δ</code>.</li>
+      <li>The pacemaker turns view convergence into two facts about the DAG, from some round on: every reliable validator has a block in each round, and each reliable block references every reliable block of the round below. The reliable validators are a set of at least quorum size that follows the pacemaker.</li>
+      <li>These two facts are the support's precondition <code>live</code> (slide 61), and Law 2 turns <code>live</code> into commits. For Mysticeti it is proved in Lean that the two facts give a reliable leader a certificate, and hence a direct commit.</li>
+      <li>The next slide states the pacemaker's four rules.</li>
+    </ul>
   </aside>
 </section>
 
@@ -101,8 +119,17 @@
       <figcaption class="caption">One validator's round counter; each arrow names the rule that governs it.</figcaption>
     </figure>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p><code>PaceCore.advances</code> (LeanDag/Mysticeti/ViewPace.lean:171), <code>catchup</code> (:182), <code>ViewPace.waits</code> (:349: <code>built v n + timeout n ≤ built v (n+1)</code>), <code>references</code> (:351).</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>The pacemaker decides when a validator leaves a round; four rules govern it.</li>
+      <li>The diagram follows one validator's round counter from top to bottom; each arrow is labelled with the rule that governs it.</li>
+      <li>Catch up (top arrow): after GST, a validator that holds a reliable block of round <code>r</code> enters round <code>r</code> within <code>proc</code>, the time to process a block and build its own. Wait (the box “in round <code>r</code>”): it spends at least <code>timeout(r)</code> in round <code>r</code>.</li>
+      <li>Advance (middle arrow): a validator that holds blocks of <code>n − f</code> distinct creators at round <code>r</code> moves past round <code>r</code>. Reference: the block it then builds references every round-<code>r</code> block it holds.</li>
+      <li>Advance, with view convergence, gives every reliable validator a block in every round. Reference, with Wait and a large enough timeout, gives that each reliable block references every reliable block below. The next slide shows how large the timeout must be.</li>
+    </ul>
   </aside>
 </section>
 
@@ -132,10 +159,19 @@
       <figcaption class="caption">Entry into each round minus the earliest entry; GST = 12, Δ = 2, proc = 1. The spread is 10 before GST and 3 = Δ + proc from round 1. v0 is Byzantine; its line is v1’s.</figcaption>
     </figure>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p><code>PaceCore.drift_collapse</code> (ViewPace.lean:289), <code>driftOn_of_catchup</code> (:306, 428); <code>synchronisedOn_of_converges</code> (:461), <code>directCommit_of_wait</code> (:708), <code>decided_of_wait</code> (:721), each with <code>2·delay + proc ≤ timeout n</code>.</p>
     <p>Witness <code>ugrowLag</code> (LeanDagTest/Reactive/Collapse.lean:65: <code>gst = 12</code>, <code>delay = 2</code>, <code>proc = 1</code>, <code>timeout = 5</code>); <code>ugrowLag_collapse</code> (:208), <code>ugrowLag_decided</code> (:230, no spread hypothesis). v0 and v1 enter every round at the same time, so their lines coincide.</p>
     <p>(informal) "Waiting alone does not reduce drift" has no Lean statement.</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>Before GST the validators' round entry times may drift arbitrarily far apart; this slide shows that, at any round that every reliable validator enters after GST, the spread is at most <code>Δ + proc</code>.</li>
+      <li>In the chart the horizontal axis is the round and the vertical axis is each validator's entry time minus the earliest entry at that round. With GST = 12, <code>Δ = 2</code>, <code>proc = 1</code>, v3 enters round 0 ten units late, before GST; from round 1 it is 3 = <code>Δ + proc</code> late. v0 is Byzantine, and its line coincides with v1's.</li>
+      <li>The mechanism: after GST, the earliest validator's block reaches the last validator within <code>Δ</code>, and Catch up makes the last validator enter that round within <code>proc</code>. This is proved in Lean for any spread before GST.</li>
+      <li>Consequently a timeout of <code>2Δ + proc</code> suffices for each reliable block to reference every reliable block below, and the bound has no term for the spread before GST. In the example the timeout is <code>5 = 2·2 + 1</code>, and the decision of the slots is checked on the concrete DAG with no hypothesis on the spread.</li>
+      <li>The statement that waiting alone, without Catch up, does not reduce drift is informal: it has no Lean statement and is not proved.</li>
+    </ul>
   </aside>
 </section>
 
@@ -177,10 +213,19 @@
     </figure>
     </div>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p><code>vote_or_wait</code>, <code>prompt_vote</code> (LeanDag/Reactive/Basic.lean:96, 106); <code>ReactiveM.cert_or_wait</code> (LeanDag/Reactive/Mysticeti.lean:31); <code>built_succ_le_of_fast</code> (Basic.lean:166, <code>D + δ + proc</code>); <code>built_succ_le_of_fast_gst</code> (:220, <code>Δ + δ + 2·proc</code>); <code>no_timeout_of_fast</code> (:194), <code>no_timeout_of_fast_gst</code> (:243).</p>
     <p>Local liveness: <code>decided_local</code> (LeanDag/Mysticeti/ViewPace.lean:507), <code>commits_recur_local</code> (:534), <code>ReactiveM.decided_local</code> (Reactive/Mysticeti.lean:119).</p>
     <p>Witness <code>ugrowReactive</code> (LeanDagTest/Reactive/Model.lean:50): <code>delay = 2</code>, <code>proc = 5</code>, <code>timeout = 9</code>. The reactive schedule does not provide coverage (docstring); inclusion is preserved through the rotation (LeanDag/Reactive/MysticetiProperties.lean:96).</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>The reactive schedule shortens rounds: a validator waits only until it holds the leader's block, then votes, and the full timeout is a fallback.</li>
+      <li>In the table, validator <code>v</code> builds its round-<code>r</code> block at time <code>v + 6r</code>, so each validator spends 6 time units in every round. The chart plots this constant 6 against the timeout line at <code>9 = 2Δ + proc</code>, with <code>Δ = 2</code> and <code>proc = 5</code>.</li>
+      <li>Proved in Lean: when every reliable block of the leader's round reaches every reliable validator within <code>δ</code> of its creation, the round above is built within <code>D + δ + proc</code> of round entry, where <code>D</code> is the drift. When this sum is below the timeout, no timeout fires.</li>
+      <li>Local liveness: after GST, every reliable validator decides the slot from the blocks it holds itself, by an explicit time. This strengthens the earlier statement, which reads the whole DAG.</li>
+      <li>The reactive schedule gives up the guarantee that each reliable block references every reliable block of the round below. Inclusion of correct blocks, defined on the next slide, is still proved, along each validator's own chain once that validator leads a slot.</li>
+    </ul>
   </aside>
 </section>
 
@@ -214,10 +259,19 @@
       <figcaption class="caption"><code>n = 4</code>, <code>f = 1</code>, v0 Byzantine. Slot 1 commits block 13; each round of its history (arrows) holds the correct v1, v2: <code>2 = |Correct| − f</code>.</figcaption>
     </figure>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p><code>card_coveredAt_ge_of_decided</code> (LeanDag/Properties/Arcs/Quality.lean:96); <code>mem_history_of_decided_commit</code> (:150); <code>committed_of_correct_block</code> (:195); <code>chain_quality</code> (:223).</p>
     <p>Coverage instances: LeanDagTest/Quality/Generic.lean. Steelhead's coverage instance is not written; its inclusion is in <code>liveness</code> (LeanDag/Steelhead/Properties.lean:301).</p>
     <p>The figure: witness <code>Ucens</code> (LeanDagTest/Quality/Model.lean), <code>Correct = {1, 2, 3}</code>; slot 1 (round 3, leader 1) commits block 13 (<code>ucens_slot1</code>); its certificates lie at round 5, outside the drawn rounds.</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>Chain quality concerns which validators' blocks enter the ledger; two properties give lower bounds.</li>
+      <li>Coverage: the history of a committed leader block, that is, the set of blocks it reaches by references, holds at every round below it blocks of at least <code>|Correct| − f</code> correct validators. It is proved for any view and with no timing assumption, from Quorate and CommitsCandidate.</li>
+      <li>In the figure <code>n = 4</code>, <code>f = 1</code> and v0 is Byzantine, so <code>|Correct| = 3</code>. Slot 1 commits leader block 13; the shaded region is its history, and the brackets show the correct creators v1 and v2 at each of rounds 0–2, that is, <code>2 = |Correct| − f</code>.</li>
+      <li>Inclusion: a correct validator's blocks form a chain, by SelfParent and NoEquiv, so a committed leader block of that validator reaches all its earlier blocks. With LeaderCommits and a schedule that returns to every correct validator, every correct block enters the ledger.</li>
+      <li>Coverage is proved for every rule except Bluestreak, for which Quorate is not shown; inclusion is proved for the seven rules with SelfParent and NoEquiv. The next slide shows that coverage alone does not give inclusion.</li>
+    </ul>
   </aside>
 </section>
 
@@ -247,9 +301,18 @@
       <figcaption class="caption">Each round of block 13's history has exactly <code>|Correct| − f = 2</code> correct creators; only v3's own blocks reference v3, so no block of v3 is in it.</figcaption>
     </figure>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p><code>Ucens</code> (LeanDagTest/Quality/Model.lean:312–405): <code>Correct = {1, 2, 3}</code>; <code>ucens_slot1</code> (:339); <code>missingAt Ucens 13 r = {3}</code> (:345–347), of card <code>f</code> (:348); <code>coveredAt … 13 1 = {1, 2}</code> (:351); no block of 3 in slot 1's history (:364); block 7 not in the ledger (:393).</p>
     <p>Validator 3's blocks reference its own previous block and two of the others; no block of validators 0, 1, 2 references validator 3.</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>This slide shows a DAG in which coverage holds with equality and a correct validator's blocks are still absent from the ledger.</li>
+      <li>In the figure, validators 0, 1 and 2 reference only each other for six rounds. The marked blocks 3, 7, 11, 15, 19, 23 are validator 3's, and the drawn path is the only set of references to them: each is referenced only by validator 3's next block.</li>
+      <li>Slot 1 commits block 13. Each round of its history has exactly 2 correct creators, v1 and v2, which meets the bound <code>|Correct| − f = 3 − 1</code>.</li>
+      <li>Checked on this concrete DAG: no block of validator 3 is in slot 1's history, and block 7 is not in the ledger.</li>
+      <li>Coverage counts correct creators per round and does not determine which ones; inclusion therefore needs the separate argument along a validator's own chain from the previous slide.</li>
+    </ul>
   </aside>
 </section>
 
@@ -262,7 +325,7 @@
         <li>Safety requires no restriction on equivocation; bounded storage does.</li>
         <li data-step="1">A creator is <strong>exposed</strong> in a block's history when the history holds <span class="t-twin">two of its blocks in one round</span>.</li>
         <li data-step="1"><strong>Rule</strong>: never reference a block whose creator is exposed in your own history.</li>
-        <li data-step="2">This alone bounds a history, but with a constant that grows like <code>f^f</code>: one history can hold <span class="count bad"><code>2^e</code> chains</span> of one creator.</li>
+        <li data-step="2">This alone bounds a history, but with a constant that grows like <code>f^f</code>: one history can hold several chains of one creator (<span class="count bad"><code>2^e</code> chains</span> with <code>e = 2</code> in the figure).</li>
       </ul>
       <div class="uses"><b>Uses:</b> no property of the rule; only which blocks a validator accepts.<br><b>Gives:</b> a bound on what a correct validator stores (next slide).</div>
     </div>
@@ -287,10 +350,20 @@
       <figcaption class="caption"><code>n = 13</code>, <code>f = 4</code>, v0–v3 Byzantine; rows v6–v12 omitted. Block 41 exposes <code>e = 2</code> creators; arrows reach <code>2^e = 4</code> round-0 blocks of v1.</figcaption>
     </figure>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p><code>ExposedIn</code> (LeanDag/DoS/Exposure.lean:43); <code>DoSValid</code> (:77); <code>card_history_le'</code> (LeanDag/DoS/Pedigree.lean:723: <code>|H(b)| ≤ (n + (n − 1)·f^f)·(r + 1)</code>).</p>
     <p>Witness: <code>udouble_four_chains</code> (<code>topsOf Udouble 41 1 = {1, 13, 14, 15}</code>), <code>udouble_exposed</code> (<code>exposedTo Udouble 41 = {1, 2}</code>), <code>udouble_dosValid</code> (LeanDagTest/DoS/Doubling.lean:119, 122, 101). The figure: rows v0–v3 are Byzantine; the dark lines are paths from block 41 to validator 1's blocks 1, 13, 14, 15 (outlined red with validator 2's twins 27, 29). Block 39 is exposed to validator 1 but not to validator 2; block 41 holds both of validator 2's round-1 blocks 27 and 29.</p>
     <p>Safety results restated under <code>DoSValid</code> without using it: LeanDagTest/DoS/SafetyUnderDoS.lean.</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>Safety requires no restriction on equivocation, that is, on a validator creating two different blocks in one round; bounded storage does, and this slide introduces the restriction. The safety results are proved without it.</li>
+      <li>Step 1: a creator is exposed in a block's history when that history holds two of its blocks in one round. In the figure, block 41's history holds validator 2's twins 27 and 29 (red bracket), and the badge lists the two creators exposed in it, v1 and v2.</li>
+      <li>Step 1: the rule is that a block never references a block whose creator is exposed in the referencing block's own history. Every block of this DAG obeys it; this is checked on the concrete DAG.</li>
+      <li>Step 2: the rule alone bounds a history; proved in Lean, a block of round <code>r</code> has at most <code>(n + (n − 1)·f^f)·(r + 1)</code> blocks in its history. The constant grows like <code>f^f</code>.</li>
+      <li>Step 2: the figure shows why the constant is large. Block 41 exposes <code>e = 2</code> creators, and the dark arrows from it reach <code>2^e = 4</code> round-0 blocks of v1 (1, 13, 14, 15), so its history holds four chains of one creator. This is checked at <code>e = 2</code> on this DAG; the count <code>2^e</code> for general <code>e</code> is not proved.</li>
+      <li>The bound uses no property of the commit rule, only which blocks a validator accepts. The next slide makes it linear in the round.</li>
+    </ul>
   </aside>
 </section>
 
@@ -317,10 +390,20 @@
       <figcaption class="caption">The store bound at <code>C = 3</code>, <code>f = 1</code>, <code>τ = 3</code>: <code>3·((1 + 3)·r + 2) = 12r + 6</code> blocks, linear in <code>r</code>.</figcaption>
     </figure>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p><code>UniformBudget</code> (LeanDag/DoS/Novelty.lean:192); <code>RefsAccepted</code> (:452); <code>dos_resistance</code> (:729); <code>dos_resistance_of_pace'</code> (LeanDag/Mysticeti/PaceDelivery.lean:165).</p>
     <p>After a round <code>R</code>, a correct block's novelty is at most <code>f·κ + 1</code> (<code>card_novelty_le_of_byzBudget</code>, Novelty.lean:432).</p>
     <p>The chart evaluates the bound of <code>dos_resistance</code> in the factored form of <code>dos_resistance_of_pace'</code>, <code>C·((1 + fτ)·n + 1 + f)</code>.</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>The novelty budget makes storage grow linearly in the round, by limiting what one acceptance may add to a validator's store.</li>
+      <li>The novelty of a block, for a validator, is the set of blocks in its history that the validator does not hold. The rule: accept a block only if its novelty has at most <code>τ</code> blocks, and reference only accepted blocks. The rule does not depend on the block's creator, so a validator can enforce it without knowing which validators are Byzantine.</li>
+      <li>Proved in Lean, from round 0 and without timing assumptions: with <code>C</code> correct validators, a correct validator holds at most <code>C·((1 + fτ)·r + 1 + f)</code> blocks by round <code>r</code>.</li>
+      <li>The chart evaluates the bound at <code>C = 3</code>, <code>f = 1</code>, <code>τ = 3</code>: <code>12r + 6</code> blocks, from 6 at round 0 to 114 at round 9.</li>
+      <li>Also proved: once every correct block is delivered from some round on, a correct block's novelty is at most <code>f·κ + 1</code>, where <code>κ</code> bounds the novelty of an accepted Byzantine block.</li>
+      <li>The bound still grows with <code>r</code>; garbage collection, on the next slides, makes it constant.</li>
+    </ul>
   </aside>
 </section>
 
@@ -357,10 +440,20 @@
     <figcaption class="caption">Left: <code>G = 2</code>, faded blocks discarded. Right: rounds 2–5 renumbered 0–3; block 11 is committed by slot 1 before, slot 0 after (<code>d = 1</code>).</figcaption>
     <div class="uses"><b>Uses:</b> Banded, Agree, and Law 1 of the support. <b>Gives:</b> the same verdicts and liveness after the cut, and constant storage (next slide).</div>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p><code>BlockRecord.chop</code> (LeanDag/Common/Record/Chop.lean:20); <code>Slots.chop</code> (LeanDag/GC/ChopDecided.lean:34); <code>decided_chop_iff</code> (LeanDag/Properties/Arcs/Record.lean:39, premise <code>G ≤ slotRound d</code>); <code>decided_agree_chop</code> (:46); <code>decided_agree_horizons</code> (LeanDag/Properties/Arcs/GC.lean:60); <code>chop_chop</code> (LeanDag/GC/Horizon.lean:57).</p>
     <p>Uses Banded (through LocalTruncate), Agree, and Law 1 (<code>live_of_truncates</code>, LeanDag/Properties/Arcs/Liveness.lean:146).</p>
     <p>Witness, LeanDagTest/GC/Chop.lean: <code>chop Uexcl 2</code> (:46–49; block 8 at round 0 with no references); <code>DirectCommit Uexcl 11 3</code> and <code>DirectCommit (chop Uexcl 2) 11 1</code> (:60–61); the decided slot before and after (:72–84).</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>Garbage collection discards old blocks; the cut is the operation on the DAG that describes the result.</li>
+      <li>Each validator keeps a horizon <code>G</code> and discards every block below it; different validators may hold different horizons.</li>
+      <li>Step 1: in the left figure, <code>G = 2</code>; the faded blocks of rounds 0 and 1 are discarded.</li>
+      <li>Step 2: the right figure is the cut DAG. Rounds 2–5 are renumbered 0–3, and the round-2 blocks, such as block 8, become round-0 blocks with no references; the result is again a valid DAG.</li>
+      <li>Proved in Lean: when <code>G</code> is at most the round of slot <code>d</code>, slot <code>d + k</code> of the full DAG and slot <code>k</code> of the cut DAG have the same verdict, and validators with different horizons agree. In the figure <code>d = 1</code>: block 11 is committed by slot 1 before the cut and by slot 0 after it, checked on this DAG.</li>
+      <li>The proofs use Banded, Agree and Law 1, and give the same verdicts and liveness after the cut. The next slide bounds storage.</li>
+    </ul>
   </aside>
 </section>
 
@@ -444,8 +537,17 @@
       <figcaption class="caption">At <code>Λ = 5</code>, the shaded rounds <code>G = t − 5</code> to <code>t</code> are retained. The window moves with <code>t</code>; the bound stays 66 blocks.</figcaption>
     </figure>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p><code>card_retained_le</code> (LeanDag/GC/Window.lean:189), under <code>ByzBudget D κ</code>, <code>RefsAccepted D</code>, <code>G ≤ t ≤ G + Λ</code>. <code>C</code> is the number of correct validators. At the slide's values: <code>3·6 + 3·1 + 5·3·1·3 = 18 + 3 + 45 = 66</code>.</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>With garbage collection, the bound on storage no longer depends on the current round.</li>
+      <li>Proved in Lean: when the horizon <code>G</code> lies at most <code>Λ</code> rounds below the current round <code>t</code>, a correct validator keeps at most <code>C·(Λ + 1) + C·f + Λ·C·f·κ</code> blocks, where <code>C</code> is the number of correct validators and <code>κ</code> bounds the new blocks that accepting one Byzantine block adds.</li>
+      <li>Step 1: at <code>t = 5</code> the shaded rounds 0–5 are retained. Step 2: at <code>t = 8</code>, rounds 3–8. Step 3: at <code>t = 11</code>, rounds 6–11. The window moves with <code>t</code>, and the bound in the right column stays at 66.</li>
+      <li>At <code>C = 3</code>, <code>f = 1</code>, <code>κ = 3</code>, <code>Λ = 5</code> the bound is <code>3·6 + 3·1 + 5·3·1·3 = 18 + 3 + 45 = 66</code>.</li>
+      <li>The next slide treats a validator that starts with none of the discarded blocks.</li>
+    </ul>
   </aside>
 </section>
 
@@ -480,9 +582,18 @@
       <figcaption class="caption"><code>n = 4</code>, <code>f = 1</code>, <code>G = 1</code>, <code>t = 4</code>. Every base block is reached (arrows) from all three attesters; the joiner holds blocks 5–10.</figcaption>
     </figure>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p><code>Base</code> (LeanDag/GC/AttestedBase.lean:40); <code>exists_correct_attester_of_mem_base</code> (:55); <code>bootstrap_agree</code> (LeanDag/GC/Bootstrap.lean:169, needs <code>m + 2 ≤ t</code>); <code>joinIds</code> (:100).</p>
     <p>Witness: <code>Base Uexcl 4 1 = {5, 6, 7}</code>, <code>joinIds Dexcl 1 2 4 1 = {5, …, 10}</code> (LeanDagTest/GC/Bootstrap.lean:150, 153); <code>Base Utwin 1 0 = {1, 2, 3}</code> with both equivocation halves excluded (LeanDagTest/GC/Chop.lean:139). In <code>Uexcl</code>, validator 0 equivocates at round 0 (blocks 0 and 4).</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>A new validator cannot obtain the discarded history; this slide shows how it chooses a starting layer at round <code>G</code> without trusting any single peer.</li>
+      <li>It adopts a round-<code>G</code> block when blocks of at least <code>f + 1</code> distinct creators at a later round <code>t</code> reach it; the adopted blocks form the attested base. In the figure <code>G = 1</code>, <code>t = 4</code>, and the round-4 blocks 14, 15, 16 have three creators, <code>3 ≥ f + 1 = 2</code>.</li>
+      <li>Step 1: among <code>f + 1</code> creators at least one is correct, so every base block lies in the history of a correct validator's block, with no signatures required. Here the base is {5, 6, 7}, and every base block is reached from all three attesters; this is checked on the DAG.</li>
+      <li>Step 2: the validator then copies a correct peer's blocks above <code>G</code>, here 8, 9, 10, and holds blocks 5–10.</li>
+      <li>Step 2: proved in Lean: after the network synchronises, and when <code>t</code> is at least two rounds above the peer's latest round, the new validator's verdicts never conflict with those of any validator holding the full history.</li>
+    </ul>
   </aside>
 </section>
 
@@ -532,10 +643,20 @@
       <p>An equivocation whose two blocks both fall below the cut is no longer detected.</p>
     </div>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p>Safety: <code>decided_agree_chop</code>, <code>decided_agree_horizons</code>, <code>bootstrap_agree</code>. One round: <code>viewUpto_subset_viewUpto_succ</code>, <code>pruned_subset_peer_store</code> (LeanDag/GC/Horizon.lean:76, 94). Two rounds: <code>accepted_mem_base</code> (LeanDag/GC/Bootstrap.lean:44).</p>
     <p>Forgotten equivocation: <code>¬ ExposedIn (chop Umerge 1) 9 0</code> (LeanDagTest/GC/Chop.lean:105); <code>dosValid_chop</code> (LeanDag/GC/Chop.lean:110).</p>
     <p>(informal) A cut above an undecided slot leaves it undecided.</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>This slide relates the distance between the horizon and the current round to the guarantees that hold.</li>
+      <li>Each bar shows where the horizon <code>G</code> may lie relative to the current round <code>t</code>; the table restates the bars.</li>
+      <li>Top bar: with <code>G</code> anywhere, safety holds; the agreement results for the cut, for different horizons and for a joining validator need no bound on <code>G</code>.</li>
+      <li>Middle bar: with <code>G ≤ t − 1</code>, after the network synchronises, every block a correct validator discards is already held by every correct peer one round later. Bottom bar: with <code>G ≤ t − 2</code>, every round-<code>G</code> block a correct validator accepted is in the attested base.</li>
+      <li>An equivocation whose two blocks both fall below the cut is no longer detected: on a concrete DAG, the equivocating creator is not exposed in a block's history after the cut. The cut preserves the storage rule of slide 74; this is proved in Lean.</li>
+      <li>The statement that a cut above an undecided slot leaves it undecided is informal and not proved.</li>
+    </ul>
   </aside>
 </section>
 
@@ -572,10 +693,19 @@
     <figcaption class="caption">Left: <code>v₁ = v3</code> stops after block 3. Right: each filled block (dashed) has donor v1's references (dark) and v3's previous block (green).</figcaption>
     <div class="uses"><b>Uses:</b> Banded (through Persist), Agree, SkipsUnsupported, Law 1. <b>Gives:</b> <code>v₁</code> producing again, with every earlier verdict unchanged.</div>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p><code>GapData.hgap</code> (LeanDag/SafeSkip/Data.lean:48); <code>GapData</code>, <code>SkipData</code> (:32–73); <code>SkipMsg</code> (LeanDag/SafeSkip/Basic.lean:54); <code>SkipData.fillBlock</code> (Data.lean:165); <code>Integration.fill_refs_eq</code> (LeanDag/Integration/CommonTarget.lean:74).</p>
     <p>Witness <code>ucrashMsg</code> (LeanDagTest/SafeSkip/Model.lean:114, 165): <code>v1 = 3</code>, <code>B1 = 3</code>, donor line <code>v2 = 1</code> (blocks 5, 9, 13, 17), fresh ids <code>4(N + 1) + k</code>. The Lean example at :165 is the round-1 filled block of <code>ucrashMsg 2 2</code>, with references <code>{3, 0, 1, 2}</code>; the figure shows <code>Ucrash 4</code> and its fill by <code>ucrashMsg 4 4</code> (<code>N = r = 4</code>); block 21 references <code>{3, 0, 1, 2}</code>.</p>
     <p>(informal) "Rebuilding costs one round trip per missed round".</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>Crash recovery: a validator <code>v₁</code> that missed rounds cannot create a block, because a valid block needs its creator's previous block one round below. In the left figure, <code>v₁ = v3</code> stops after block 3, which is <code>B₁</code>.</li>
+      <li>Step 1: on its return at round <code>r</code>, it sends one message: <code>B₁</code>, <code>r</code>, a donor validator <code>v₂</code>, and fresh identifiers for the new blocks. In the right figure the donor is v1, with blocks 5, 9, 13, 17.</li>
+      <li>Step 2: every receiver computes a filled block for <code>v₁</code> at each missed round: the donor's references and payload at that round, plus a reference to <code>v₁</code>'s previous block. These are the dashed blocks 21–24; block 21 references {3, 0, 1, 2}, that is, block 3 together with the references of donor block 5.</li>
+      <li>The proofs use Banded (through Persist), Agree, SkipsUnsupported and Law 1, and give <code>v₁</code> producing again with every earlier verdict unchanged; the next slide lists the results.</li>
+      <li>The statement that rebuilding costs one round trip per missed round is informal and not proved.</li>
+    </ul>
   </aside>
 </section>
 
@@ -605,11 +735,21 @@
       <figcaption class="caption">The DAG of slide 80 after the fill: blocks 21–24 give v3 a block at rounds 1–4, chained back to <code>B₁</code>.</figcaption>
     </figure>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p><code>skipFill</code>, <code>skipFill_block_old</code>, <code>skipFill_populatedOn</code> (LeanDag/SafeSkip/Basic.lean:166, 171, 184).</p>
     <p>Prompt skip: <code>MysticetiProperties.decided_none_fresh</code> (LeanDag/Mysticeti/Record.lean:188); generic <code>Arcs.decided_none_of_novel</code>, <code>decided_none_of_novel_agree</code> (LeanDag/Properties/Arcs/SafeSkip.lean:32, 87), using SkipsUnsupported, and for the second, Agree and Banded. Instances: Mysticeti, Odontoceti (LeanDag/Odontoceti/Record.lean:61), Hybrid (LeanDag/Hybrid/Record.lean:67), Hydrozoan (LeanDag/Integration/HydrozoanMechanisms.lean:79), Bluestreak (LeanDag/Bluestreak/Record.lean:314).</p>
     <p>Verdicts: <code>decided_fill_of_persist</code>, <code>decided_fill_agree_of_properties</code> (LeanDag/Mysticeti/Record.lean:150, 159).</p>
     <p>The figure is the fill of <code>Ucrash 4</code> by <code>ucrashMsg 4 4</code> (LeanDagTest/SafeSkip/Model.lean). In this witness the schedule <code>rrSlots</code> places slots at rounds <code>3k</code>, so no slot in rounds 1–4 is led by validator 3; the prompt skip is exhibited on <code>Ucr</code> (slide 85).</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>This slide lists what the fill guarantees; each item is proved in Lean.</li>
+      <li>Step 1: the filled DAG is valid, and every old block is unchanged, so every store, view and certificate built on the old DAG reads the same data.</li>
+      <li>Step 2: <code>v₁</code> has a block at every missed round, the shaded blocks 21–24 at rounds 1–4, which is the production fact that liveness requires.</li>
+      <li>Step 3: the prompt skip. A slot led by <code>v₁</code> in the missed rounds has only filled blocks as candidates, and no old block references them; given a quorum of old blocks one round above, the slot is skipped at once (SkipsUnsupported), and with Agree and Banded no later view commits it. It is proved for Mysticeti, Odontoceti, Hybrid, Hydrozoan and Bluestreak.</li>
+      <li>Step 3: in this example the schedule places no slot led by v3 in rounds 1–4; the prompt skip is shown on slide 85.</li>
+      <li>Step 4: every verdict reached before the fill agrees with every verdict reached after it, from Persist and Agree.</li>
+    </ul>
   </aside>
 </section>
 
@@ -672,9 +812,18 @@
       <figcaption class="caption">The donor's top block <code>B₂ = 17</code> fixes its line 17, 13, 9, 5, and with it the fill 21–24 of slide 80.</figcaption>
     </figure>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p><code>line_eq_lineOf</code> (LeanDag/SafeSkip/Jump.lean:174); <code>skipFill_eq_of_core</code> (:238); <code>JumpMsg</code> (:282), <code>JumpMsg.denote</code> (:345); <code>lineOf_mem_view</code> (:363); <code>ucrashJump</code>, <code>ucrashJump_denote_eq</code> (LeanDagTest/SafeSkip/Model.lean:250).</p>
     <p>(informal) "Constant size": <code>fresh</code> is an identifier supply.</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>One message suffices for any number of missed rounds, because the donor's line of blocks is determined by its top block.</li>
+      <li>In the diagram the top row is the donor v1's line and the bottom row is v3's: <code>B₁ = 3</code> and the filled blocks 21–24. Dashed arrows show which donor block each filled block copies its references from; green arrows are self-references.</li>
+      <li>A validator's own blocks form a chain, so from <code>B₂ = 17</code> the previous own blocks 13, 9, 5 follow. Proved in Lean: the fill depends only on <code>B₁</code>, <code>B₂</code> and the fresh identifiers, so the message carries these and <code>v₁</code>, <code>v₂</code>.</li>
+      <li>A receiver that holds <code>B₂</code> holds the donor's whole line, since a view contains the history of each of its blocks. After the one message, <code>v₁</code> has a block at every round up to round 4, the round of <code>B₂</code>, and can produce at round 5.</li>
+      <li>The statement that the message has constant size is informal: the fresh identifiers are modelled as a supply, and no size bound is proved.</li>
+    </ul>
   </aside>
 </section>
 
@@ -741,9 +890,19 @@
       <figcaption class="caption"><code>r = 10</code>, <code>Λ = 5</code>: rounds 5–10 are retained. A 5-round outage is recovered by one message; after 6 rounds <code>B₁</code> is discarded.</figcaption>
     </figure>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p><code>outage_bounded_by_lag</code> (LeanDag/Integration/Retention.lean:174), <code>anchor_pruned</code> (:29). <code>not_synchronisedOn_skipFill</code>, <code>synchronisedOn_skipFill_of_notMem</code> (LeanDag/Integration/Coverage.lean:37, 52).</p>
     <p><code>history_B1_subset_fill</code>, <code>dosValid_skipFill_of_covered</code> (LeanDag/Integration/Exposure.lean:48, 170). <code>fill_refs_available</code> (LeanDag/Integration/CommonTarget.lean:63; it covers the copied references, not the self-reference).</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>This slide states the limits of the fill.</li>
+      <li>Step 1: with the horizon <code>Λ</code> rounds below the current round, one message recovers from an outage of at most <code>Λ</code> rounds; proved in Lean, <code>B₁</code> is retained exactly when the outage is at most <code>Λ</code>. In the figure <code>r = 10</code>, <code>Λ = 5</code>, rounds 5–10 are retained, and <code>B₁</code> at round 5 is reached.</li>
+      <li>Step 2: after a 6-round outage, <code>B₁</code> at round 4 has been discarded, and <code>v₁</code> has no block in the cut DAG; the next slide treats this case.</li>
+      <li>Step 3: no old block references a filled block, so if <code>v₁</code> is counted as reliable, the property that every reliable block references every reliable block of the round below fails at the missed rounds. With <code>v₁</code> excluded, that property is unchanged.</li>
+      <li>Step 3: the storage rule must be re-checked for the filled blocks. Proved: if each donor block reaches <code>B₁</code> and <code>v₁</code> never equivocated, the filled DAG satisfies the rule, so the check is one reachability test per round.</li>
+      <li>Step 3: if the donor line is one that every receiver holds, every copied reference lies in the history of every block two rounds above it, so nothing beyond the message is sent; the self-reference is to <code>v₁</code>'s own block.</li>
+    </ul>
   </aside>
 </section>
 
@@ -772,10 +931,20 @@
     </figure>
     <div class="uses"><b>Uses:</b> Banded, Agree, Law 1, and the attested base (slide 78). <b>Gives:</b> a validator back in production after any outage.</div>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p><code>no_blocks_of_no_genesis</code>, <code>severed_of_pruned_anchor</code> (LeanDag/Integration/Retention.lean:45, 65); <code>BlockRecord.addGenesis</code> (LeanDag/Common/Record/Genesis.lean:20); <code>addGenesis_of_severed</code> (LeanDag/Integration/ReGenesis.lean:95); <code>recoveryMsg</code>, <code>hB1uniq_of_addGenesis</code>, <code>rejoin_populated</code> (ReGenesis.lean); <code>card_severed_le</code> (LeanDag/Integration/Margin.lean:40).</p>
     <p>Witness: <code>Ucut</code>, <code>ucut_severed</code>, <code>Uregen</code>, <code>urecover</code> (LeanDagTest/Integration/Model.lean:102–160): <code>Ucrash 2</code> cut at round 1, then (2) <code>Uregen</code>, (3) <code>urecover</code>. The filled block 1001 copies the references of the donor's block 9 and adds 999. The genesis block is valid only in a DAG cut at <code>G</code> or above.</p>
     <p>(informal) "Derived locally, not transmitted": <code>regenesis_converges</code> proves only that a later cut removes it.</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>Re-genesis recovers a validator <code>v₁</code> all of whose blocks are below the horizon. Proved in Lean: a validator with no round-0 block in a DAG has no block in it at all, since every block's chain of own blocks descends to round 0.</li>
+      <li>Step 1: each validator adds a round-0 block for <code>v₁</code>, with no references, to its cut DAG; round-0 blocks have no references, so no exception to the self-parent rule is needed. In the figure this is block 999. Proved in Lean: adding the block preserves every verdict and the storage rule.</li>
+      <li>Step 1: the statement that each validator derives this block locally, without it being transmitted, is informal; what is proved is that a later cut removes it.</li>
+      <li>Step 2: the procedure is (1) join from the attested base of slide 78 to read the DAG, (2) re-genesis to be able to write, (3) one fill message from the genesis block to the current round. In the figure the filled block 1001 has the references of donor block 9, blocks 4, 5, 6, and references 999; this is checked on the concrete DAG.</li>
+      <li>Step 2: while a quorum produces blocks, at most <code>f</code> validators can be without blocks at once, since a producing set of quorum size contains none of them.</li>
+      <li>The proofs use Banded, Agree, Law 1 and the attested base, and give a validator back in production after an outage of any length.</li>
+    </ul>
   </aside>
 </section>
 
@@ -805,9 +974,18 @@
       <figcaption class="caption">Slot <code>k</code> is at round <code>k</code>: slot 2 commits block 10; slot 3 is skipped, and no round-4 block references the filled block 103.</figcaption>
     </figure>
   </div>
-  <aside class="notes">
+  <!-- Evidence:
     <p><code>GapData.chainBlock</code> (LeanDag/SafeSkip/Data.lean:90); <code>chainFill</code> (LeanDag/Bluestreak/Record.lean:174); <code>disciplined_chainFill</code> (:231).</p>
     <p>Witness <code>Ufill</code>, the chain fill of <code>Ucr</code>, LeanDagTest/Bluestreak/Recovery.lean: <code>rcFaults</code> (:27, validator 0 Byzantine), <code>rcGap</code> (:71, <code>v1 = 3</code>, <code>B1 = 7</code>, <code>r = 3</code>), blocks 102, 103 (:91), <code>Ucr_slot2</code>, <code>Ucr_slot3</code>, <code>Ufill_slot2</code>, <code>Ufill_slot3</code> (:101–114), prompt skip (:129–148). Validator 3 is correct and silent from round 2; slot 3 is led by validator 3.</p>
     <p>(informal) The motivation in the first bullet.</p>
+  -->
+  <aside class="notes">
+    <ul>
+      <li>Bluestreak's blocks carry claims, and the donor fill would attribute to <code>v₁</code> claims it never made; this motivation is informal and not proved.</li>
+      <li>The chain fill: each filled block references only <code>v₁</code>'s previous block and carries no leader tag and no claim. The message is <code>v₁</code>, <code>B₁</code>, <code>r</code> and fresh identifiers, and names no donor.</li>
+      <li>In the figure <code>n = 4</code>, <code>f = 1</code>, v0 is Byzantine and slot <code>k</code> is at round <code>k</code>. Validator 3 is correct and silent from round 2; <code>B₁ = 7</code>, and the filled blocks 102 and 103 chain back to it. The claim arrows point to the leader blocks 5 and 10.</li>
+      <li>Checked on this DAG: slot 2 commits block 10 and slot 3 is skipped, before and after the fill. After the fill, slot 3's candidate is block 103, which no round-4 block references; with the quorum {0, 1, 2} present at round 4 it is skipped at once, the prompt skip of slide 81.</li>
+      <li>Proved in Lean: when the filled blocks claim nothing, Bluestreak's claim discipline holds after the chain fill. With the properties used by the fill, this gives recovery for a rule whose blocks carry claims.</li>
+    </ul>
   </aside>
 </section>

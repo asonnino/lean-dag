@@ -51,13 +51,17 @@ content slides, as the outline does; part dividers are not numbered.
     <div class="text"> … </div>
     <figure class="dag"> <script type="application/json">{ … }</script> </figure>
   </div>
-  <aside class="notes"> … </aside>
+  <!-- Evidence: Lean declarations, files and witnesses behind the slide -->
+  <aside class="notes"><ul><li>Step 1: what the speaker says …</li></ul></aside>
 </section>
 ```
 
 - Part dividers: `<section class="slide part"><div class="part-number">Part II</div><h1>Protocols</h1></section>`.
 - Inline symbols: `<code>n ≥ 3f + 1</code>` (rendered in the body font). Lean
-  names and paths in the notes: `<code>…</code>` (rendered monospace).
+  names and paths: `<code class="lean">…</code>` (rendered monospace).
+- Speaker notes are bullets of what the speaker says, in step order ("Step k:"),
+  without Lean names. The Lean evidence for the slide is kept in the
+  `<!-- Evidence: … -->` comment before the notes.
 - Overview slides end with `<div class="compare"><b>Compared with …:</b> …</div>`
   and `<div class="tradeoffs"><div class="plus">…</div><div class="minus">…</div></div>`.
 - Mechanism slides end with `<div class="uses"><b>Uses:</b> … <br><b>Gives:</b> …</div>`.

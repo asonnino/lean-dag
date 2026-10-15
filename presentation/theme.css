@@ -130,13 +130,13 @@ html, body {
 .slide em { font-style: italic; }
 
 /* Inline symbols and formulas use the body font; file paths and Lean names
-   in the notes use the monospace font. */
+   (class "lean") use the monospace font. */
 .slide code, .slide .m {
   font-family: var(--font);
   font-size: 1em;
   white-space: nowrap;
 }
-.slide .notes code, .slide code.lean { font-family: var(--mono); font-size: 0.85em; }
+.slide code.lean { font-family: var(--mono); font-size: 0.85em; }
 
 .slide .small { font-size: var(--size-small); }
 .slide .muted { color: var(--muted); }
@@ -440,7 +440,7 @@ body.show-notes .slide.active .notes {
   border: 1px solid #e8e2b8;
   color: var(--fg);
 }
-body.show-notes .slide.active .notes code { font-size: 15px; white-space: normal; }
+body.show-notes .slide.active .notes code { font-size: 1em; white-space: normal; }
 
 /* ---- Progress ---- */
 
