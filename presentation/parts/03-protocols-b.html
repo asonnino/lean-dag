@@ -1,4 +1,3 @@
-<!-- Slide 31 -->
 <section class="slide" data-part-label="Protocols · Hydrozoan">
   <h2>Hydrozoan</h2>
   <div class="body">
@@ -55,7 +54,7 @@
   </aside>
 </section>
 
-<!-- Slide 32 -->
+<!-- Slide 30 -->
 <section class="slide" data-part-label="Protocols · Hydrozoan">
   <h2>Hydrozoan: why the second rung exists</h2>
   <div class="body wide-fig">
@@ -109,56 +108,7 @@
   </aside>
 </section>
 
-<!-- Slide 33 -->
-<section class="slide" data-part-label="Protocols · Hydrozoan">
-  <h2>Hydrozoan: what the formalisation found</h2>
-  <div class="body">
-    <div class="text">
-      <ul>
-        <li>The six threshold inequalities hold for every slack <code>k ≥ 0</code>.</li>
-        <li>One of them must be strengthened to <code>qFast + q − n − f ≥ qWeak</code>, so that every eligible anchor sees at least <code>qWeak</code> votes of every fast commit.</li>
-        <li>Round-robin by slot is not fair inside the bound: at <code>n = 5</code>, <code>f = 0</code>, <code>c = 2</code>, with <code>v0</code> and <code>v3</code> crashed, no three consecutive slots have correct leaders. A rotation aligned to waves is fair.</li>
-      </ul>
-    </div>
-    <figure>
-      <table class="compact">
-        <tr><th></th><th>inequality</th><th>every <code>k ≥ 0</code></th></tr>
-        <tr><td>1</td><td><code>2·qCert &gt; n + f</code></td><td class="yes">✓</td></tr>
-        <tr><td>2</td><td><code>2·qFast &gt; n + f</code></td><td class="yes">✓</td></tr>
-        <tr><td>3</td><td><code>qFast + qWeak &gt; n + f</code></td><td class="yes">✓</td></tr>
-        <tr><td>4</td><td><code>qCert ≤ q</code></td><td class="yes">✓</td></tr>
-        <tr><td>5</td><td><code>q + qSlow &gt; n + f</code></td><td class="yes">✓</td></tr>
-        <tr><td>6</td><td><code>qFast + q − n ≥ qWeak</code></td><td class="yes">✓</td></tr>
-        <tr><td>6′</td><td><strong><code>qFast + q − n − f ≥ qWeak</code></strong></td><td class="yes"><strong>proved separately</strong></td></tr>
-      </table>
-      <p class="caption">Row 6 is the form in the statement; row 6′ is the strengthened form the agreement proof uses.</p>
-    </figure>
-  </div>
-  <!-- Evidence:
-    <ul>
-      <li><code>ThresholdArithmetic.Statement</code> / <code>holds</code> (LeanDag/Hydrozoan/ThresholdArithmetic/Statement.lean:61, Proof.lean:14).
-        Row 6 of the statement is the weaker <code>AnchorSeesFast</code> (Statement.lean:56); the strengthened form is
-        <code>n_add_qWeak_add_f_le_qFast_add_q</code> (LeanDag/Hydrozoan/Helpers/SlotAgreement.lean:52).</li>
-      <li>(informal) The paper’s cap <code>k ≤ 2f + c − 4</code> appears only in a docstring (LeanDagTest/OptimalHydrozoan/Thresholds.lean:232).</li>
-      <li><code>fiveCrashy</code>, <code>¬ FairRunOn (S := slotRobin) Correct 3</code> (LeanDagTest/Hydrozoan/Grounding.lean:135, 160);
-        <code>WaveRobinFair</code> (LeanDag/Hydrozoan/Grounding/Statement.lean).</li>
-      <li>Properties: <code>Agree</code>, <code>CommitsCandidate</code>, <code>SkipsUnsupported</code> (LeanDag/Hydrozoan/Properties/Statement.lean:27, Proof.lean:35),
-        <code>commitsDirect</code> (Helpers/Commit.lean:298), <code>quorate</code> (Helpers/Carrier.lean:47); <code>safety</code>, <code>progress</code> (Properties/Proof.lean:44–49).</li>
-    </ul>
-  -->
-  <aside class="notes">
-    <ul>
-      <li>Hydrozoan's threshold arithmetic is proved for every slack, one inequality is strengthened for the agreement proof, and slot-by-slot round-robin is shown to be unfair.</li>
-      <li>Each row of the table is an inequality the agreement argument uses. A bound of the form <code>a + b &gt; n + f</code> says that two sets of sizes <code>a</code> and <code>b</code> share more than <code>f</code> validators, hence a non-Byzantine one. A tick means proved in Lean for every <code>k ≥ 0</code>.</li>
-      <li>Row 6 says that the fast quorum and an anchor's <code>q</code> parents share at least <code>qWeak</code> validators. Some of them may be Byzantine, and a Byzantine validator's block in the anchor's history may be a twin that does not vote, so the agreement proof uses row 6′, which subtracts <code>f</code>; row 6′ also holds for every <code>k ≥ 0</code>.</li>
-      <li>The paper caps the slack at <code>k ≤ 2f + c − 4</code>. That cap is the paper's claim, not a theorem here; the proofs here need no cap on <code>k</code>.</li>
-      <li>A leader schedule is called fair here when slots with three consecutive correct leaders recur. At <code>n = 5</code>, <code>f = 0</code>, <code>c = 2</code>, with <code>v0</code> and <code>v3</code> crashed, every three consecutive residues mod 5 contain 0 or 3, so round-robin by slot is not fair; this is checked on that instance. Rotating the leader once per wave is proved fair for every committee.</li>
-      <li>On this basis, agreement between views, commitment of the slot's own candidate, and the skip of a slot without support are proved for Hydrozoan.</li>
-    </ul>
-  </aside>
-</section>
-
-<!-- Slide 34 -->
+<!-- Slide 31 -->
 <section class="slide" data-part-label="Protocols · Optimal-Hydrozoan">
   <h2>Optimal-Hydrozoan</h2>
   <div class="body">
@@ -212,7 +162,6 @@
   </aside>
 </section>
 
-<!-- Slide 35 -->
 <section class="slide" data-part-label="Protocols · Optimal-Hydrozoan">
   <h2>Optimal-Hydrozoan: the evidence rung</h2>
   <div class="body wide-fig">
@@ -263,7 +212,7 @@
   </aside>
 </section>
 
-<!-- Slide 36 -->
+<!-- Slide 32 -->
 <section class="slide" data-part-label="Protocols · Bluestreak">
   <h2>Bluestreak</h2>
   <div class="body">
@@ -292,7 +241,7 @@
       <div class="compare"><b>Compared with Mysticeti:</b> only leader blocks reference <code>n − f</code> blocks; a certificate is replaced by a claim, which only names the block.</div>
       <div class="tradeoffs">
         <div class="plus">Only leader blocks must reference <code>n − f</code> blocks, with the direct commit at <code>r + 2</code> and <code>n ≥ 3f + 1</code>, as in Mysticeti.</div>
-        <div class="minus">Blocks need not reference a quorum, so chain quality is not shown. Claims require a discipline (slide 39).</div>
+        <div class="minus">Blocks need not reference a quorum, so chain quality is not shown. Claims require a discipline (slide 37).</div>
       </div>
     </div>
   </div>
@@ -312,12 +261,12 @@
       <li>The format: a leader-tagged block references blocks of <code>n − f</code> distinct validators; an ordinary block references its own previous block and, optionally, leader blocks. The paper's design gives an ordinary block at most two references; that bound is the paper's statement, not a theorem here.</li>
       <li>A round-<code>r + 2</code> block claims <code>L</code> when it names <code>L</code> in its payload or references <code>n − f</code> votes for <code>L</code>. Direct commit: <code>n − f</code> claims for a leader-tagged <code>L</code>. Direct skip: <code>n − f</code> round-<code>r + 1</code> blocks in view and, for each candidate, <code>n − f</code> of them that omit it. Indirect: one rung, a claim for a tagged <code>L</code> in the anchor's history, with no tie-break.</li>
       <li>Compared with Mysticeti: the same bound <code>n ≥ 3f + 1</code> and direct commit at <code>r + 2</code> with far fewer references per block, and a claim, which only names a block, in place of a certificate.</li>
-      <li>Disadvantages: ordinary blocks reference no quorum, so the property that every block references a quorum is not shown and the chain-quality results of this deck do not apply; and because a claim is only a name, the proofs need a condition on anchors (slide 38) and a discipline on claims (slide 39).</li>
+      <li>Disadvantages: ordinary blocks reference no quorum, so the property that every block references a quorum is not shown and the chain-quality results of this deck do not apply; and because a claim is only a name, the proofs need a condition on anchors (slide 36) and a discipline on claims (slide 37).</li>
     </ul>
   </aside>
 </section>
 
-<!-- Slide 37 -->
+<!-- Slide 33 -->
 <section class="slide" data-part-label="Protocols · Bluestreak">
   <h2>Bluestreak: direct and indirect</h2>
   <div class="body wide-fig">
@@ -369,7 +318,7 @@
   </aside>
 </section>
 
-<!-- Slide 38 -->
+<!-- Slide 34 -->
 <section class="slide" data-part-label="Protocols · Bluestreak">
   <h2>Bluestreak: an anchor must be committed</h2>
   <div class="body">
@@ -417,7 +366,7 @@
   </aside>
 </section>
 
-<!-- Slide 39 -->
+<!-- Slide 35 -->
 <section class="slide" data-part-label="Protocols · Bluestreak">
   <h2>Bluestreak: the claim discipline</h2>
   <div class="body stack">
@@ -468,7 +417,7 @@
   </aside>
 </section>
 
-<!-- Slide 40 -->
+<!-- Slide 36 -->
 <section class="slide" data-part-label="Protocols · Mahi-Mahi">
   <h2>Mahi-Mahi</h2>
   <div class="body stack">
@@ -511,7 +460,7 @@
   </aside>
 </section>
 
-<!-- Slide 41 -->
+<!-- Slide 37 -->
 <section class="slide" data-part-label="Protocols · Mahi-Mahi">
   <h2>Mahi-Mahi: votes and what a wave commits</h2>
   <div class="body stack">
@@ -569,46 +518,7 @@
   </aside>
 </section>
 
-<!-- Slide 42 -->
-<section class="slide" data-part-label="Protocols · Mahi-Mahi">
-  <h2>Mahi-Mahi: what the formalisation found</h2>
-  <div class="body">
-    <div class="text small">
-      <ul>
-        <li>The paper counts all <code>n − f</code> validators in the common core as good. Twins of Byzantine leaders can split the votes, so the proved count is <code>n − f − b</code>.</li>
-        <li>Proved commit probability per wave, at <code>w ≥ 5</code>: at least <code>(n − f − b)/n</code>, which is always at least <code>1/3</code>. At <code>n = 4</code>, <code>f = b = 1</code>: <code>1/2</code>.</li>
-        <li><code>2f + 1</code> leader slots per round guarantee a commit at <code>w ≥ 5</code>.</li>
-        <li>Mysticeti skips per candidate; Mahi-Mahi skips per slot.</li>
-      </ul>
-    </div>
-    <figure class="chart">
-      <script type="application/json">{"type": "bars", "max": 1, "ylabel": "commit probability per wave",
-        "groups": [{"label": "n = 4, f = b = 1", "bars": [{"label": "3/4", "name": "paper", "value": 0.75, "alt": true}, {"label": "1/2", "name": "proved", "value": 0.5}]},
-                   {"label": "large n", "bars": [{"label": "2/3", "name": "paper", "value": 0.6667, "alt": true}, {"label": "1/3", "name": "proved", "value": 0.3333}]}]}</script>
-      <p class="caption">Commit probability per wave at <code>w ≥ 5</code>: grey, the paper’s <code>(2f + 1)/n</code>; blue, the proved lower bound <code>(n − f − b)/n</code></p>
-    </figure>
-  </div>
-  <!-- Evidence:
-    <ul>
-      <li><code>GoodCard</code> as above. <code>CommitProbability</code> (LeanDag/Steelhead/MahiMahiPair/Coin/Statement.lean:193): <code>(n − f − b)/n ≤ commitProb</code> and
-        <code>1/3 ≤ commitProb</code> at <code>wa ≥ 5</code>; at <code>w = 4</code> only <code>1/n</code> (<code>CommitProbabilityFour</code>, :205).</li>
-      <li><code>MultiLeader</code> (LeanDag/MahiMahi/Counting/Statement.lean:88) proves <code>2f + 1</code> suffice. (informal) The paper’s <code>f + 1</code> and <code>2/3</code>.</li>
-      <li><code>DirectSkip</code> (Rules.lean:106–112); <code>mahiMahiAnchored</code> (LeanDag/MahiMahi/Model/Decision.lean:60).</li>
-    </ul>
-  -->
-  <aside class="notes">
-    <ul>
-      <li>The formalisation proves a smaller count of good validators than the paper uses, and hence a smaller commit probability per wave.</li>
-      <li>The paper counts all <code>n − f</code> validators of the common core as good; that count is the paper's claim, not a theorem here. The twins of a Byzantine leader can split the votes, so the proved count is of correct validators only, at least <code>n − f − b</code>.</li>
-      <li>Chart, per wave at <code>w ≥ 5</code>: grey bars are the paper's <code>(2f + 1)/n</code>, blue bars the proved lower bound <code>(n − f − b)/n</code>; at <code>n = 4</code>, <code>f = b = 1</code> they are <code>3/4</code> and <code>1/2</code>, and for large <code>n</code> <code>2/3</code> and <code>1/3</code>.</li>
-      <li>Proved in Lean, where the coin is modelled: the commit probability per wave is at least <code>(n − f − b)/n</code> and at least <code>1/3</code> at <code>w ≥ 5</code>; at <code>w = 4</code> only <code>1/n</code> is proved.</li>
-      <li>With <code>2f + 1</code> distinct leaders in one round and <code>w ≥ 5</code>, one of them is good for every schedule, since <code>f + 1</code> good validators and <code>2f + 1</code> leaders cannot be disjoint among <code>3f + 1</code>. The paper's <code>f + 1</code> leaders is the paper's claim, not a theorem here.</li>
-      <li>Mysticeti skips each candidate separately; Mahi-Mahi skips the slot, when <code>n − f</code> blocks hold no block of the slot in their histories. Async BlueBottle, next, uses the same vote with a <code>5f + 1</code> committee.</li>
-    </ul>
-  </aside>
-</section>
-
-<!-- Slide 43 -->
+<!-- Slide 38 -->
 <section class="slide" data-part-label="Protocols · Async BlueBottle">
   <h2>Async BlueBottle</h2>
   <div class="body">
@@ -621,7 +531,7 @@
       </ul>
       <div class="compare"><b>Compared with Odontoceti:</b> the vote round moves from <code>r + 1</code> to <code>r + 2</code> and votes are found anywhere in the history, so that the rule is live with an unpredictable leader.</div>
       <div class="tradeoffs">
-        <div class="plus">Live with no timing assumption (given such a schedule, slide 40), three rounds per wave; commit probability at least <code>(n − 3f)/n</code> per wave.</div>
+        <div class="plus">Live with no timing assumption (given such a schedule, slide 38), three rounds per wave; commit probability at least <code>(n − 3f)/n</code> per wave.</div>
         <div class="minus">Five validators per fault (<code>n ≥ 5f + 1</code>), against three for Mahi-Mahi, and an unpredictable leader.</div>
       </div>
     </div>
@@ -651,7 +561,7 @@
   </aside>
 </section>
 
-<!-- Slide 44 -->
+<!-- Slide 39 -->
 <section class="slide" data-part-label="Protocols · Async BlueBottle">
   <h2>Async BlueBottle: witnesses</h2>
   <div class="body stack">
@@ -709,7 +619,6 @@
   </aside>
 </section>
 
-<!-- Slide 45 -->
 <section class="slide" data-part-label="Protocols · Steelhead">
   <h2>Steelhead</h2>
   <div class="body">
@@ -723,7 +632,7 @@
       <div class="compare"><b>Compared with Mysticeti:</b> two rules on one DAG, chosen per slot, and a controller that chooses how often the asynchronous rule runs.</div>
       <div class="tradeoffs">
         <div class="plus">Short waves while the network is synchronous; liveness under asynchrony.</div>
-        <div class="minus">Two rules, a coin, a period controller, and a failover (slide 47).</div>
+        <div class="minus">Two rules, a coin, a period controller, and a failover (slide 44).</div>
       </div>
     </div>
     <figure class="diagram">
@@ -747,12 +656,12 @@
       <li>Diagram at <code>P = 3</code>, <code>ws = 3</code>, <code>wa = 5</code>: the top row gives rounds 0 to 6 and their kinds. Slot 0 is asynchronous, its wave spans 5 rounds and its anchor lies at round 5 or above; slots 1 and 2 are synchronous, with anchors at or above rounds 4 and 5. Each slot's anchor floor is its round plus the wave of its own kind.</li>
       <li>Reading the floor at <code>ws</code> for every slot is unsafe: on a counterexample DAG, one view derives both a commit and a skip for an asynchronous slot.</li>
       <li>Two instances are formalised: Mysticeti with Mahi-Mahi (<code>n ≥ 3f + 1</code>, waves 3 and <code>wa ≥ 4</code>) and Odontoceti with Async BlueBottle (<code>n ≥ 5f + 1</code>, waves 2 and 3). The rule that updates the period is a parameter of the proofs; the paper's update rule is modelled as one instance.</li>
-      <li>Advantages: short waves while the network is synchronous, and liveness under asynchrony. Disadvantages: two rules, a coin, a period controller, and a failover, which slide 47 presents.</li>
+      <li>Advantages: short waves while the network is synchronous, and liveness under asynchrony. Disadvantages: two rules, a coin, a period controller, and a failover, which slide 44 presents.</li>
     </ul>
   </aside>
 </section>
 
-<!-- Slide 46 -->
+<!-- Slide 40 -->
 <section class="slide" data-part-label="Protocols · Steelhead">
   <h2>Steelhead: the stall</h2>
   <div class="body wide-fig">
@@ -806,7 +715,7 @@
   </aside>
 </section>
 
-<!-- Slide 47 -->
+<!-- Slide 41 -->
 <section class="slide" data-part-label="Protocols · Steelhead">
   <h2>Steelhead: control and failover</h2>
   <div class="body">
@@ -853,37 +762,3 @@
   </aside>
 </section>
 
-<!-- Slide 48 -->
-<section class="slide" data-part-label="Protocols · Steelhead">
-  <h2>Steelhead: what the formalisation found</h2>
-  <div class="body">
-    <div class="text">
-      <ul>
-        <li>The paper’s period update alone retains a stalled period; liveness requires the failover.</li>
-        <li>An equivocating leader at a slot’s anchor floor can hold the slot undecided.</li>
-        <li>The proofs take <code>I ≥ 2·K</code> and <code>I ≥ K + wa − 2</code>, where <code>K</code> bounds the period. With only the first, the period update can keep a period under which no synchronous slot commits.</li>
-        <li>In the paper’s timeout appendix, with exactly one vote missing, a certificate forms with probability <code>f/n</code>, not <code>(n − f)/n</code>.</li>
-      </ul>
-    </div>
-  </div>
-  <!-- Evidence:
-    <ul>
-      <li><code>anchorUpdate_half_retains</code> (LeanDag/Steelhead/Helpers/Replay.lean:821); <code>rt_update_four</code>, <code>rt_no_output_above_two</code> (RotatingStall.lean:287, 302).</li>
-      <li><code>bf30_slot0_undecided</code> (LeanDagTest/Steelhead/Counterexamples/ByzantineFloor.lean:184).</li>
-      <li><code>TwoAsyncRounds</code>, <code>TwoAsyncRoundsInWindow</code> (Period/Statement.lean:295, 379); <code>WindowResolves</code> (:336);
-        <code>rw44_keeps_two</code> (LeanDagTest/Steelhead/Counterexamples/ReplayShortWindow.lean:98).</li>
-      <li><code>CertProbEdges</code> (LeanDag/Steelhead/MahiMahiPair/Timeout/Statement.lean:43).</li>
-      <li>(informal) How many findings the paper adopted.</li>
-    </ul>
-  -->
-  <aside class="notes">
-    <ul>
-      <li>The formalisation departs from the paper's Steelhead at four places.</li>
-      <li>First: on the stalling DAGs, extended to every height, with interval 8, candidate periods 1, 2 and 4 and hysteresis <code>1/2</code>, the paper's period update answers period 4 at every anchor, so no block above round 2 is ever output. Only the failover leaves that period.</li>
-      <li>Second: the paper's Theorem 2 says an asynchronous slot with an equivocating Byzantine leader is decided once the first honest-led slot above its floor commits. On a counterexample DAG, a slot at that floor whose Byzantine leader also equivocates is undecided, the anchor search stops at it, and the earlier slot stays undecided although honest-led slot 4 is committed.</li>
-      <li>Third: <code>I ≥ 2·K</code> makes every window hold two asynchronous rounds, and <code>I ≥ K + wa − 2</code> makes a window hold the decision round of an asynchronous slot. On a counterexample DAG at <code>I = 4</code>, <code>K = 2</code>, <code>wa = 5</code>, the first holds and the second fails, and the period update keeps period 2 at every hysteresis although no synchronous slot commits.</li>
-      <li>Fourth: in the timeout appendix, with references to a minimum quorum, a certificate forms with probability 1 when every block of the vote round voted and <code>f/n</code> when exactly one did not; the appendix's own numbers hold at <code>f/n</code>. This is proved as arithmetic on the appendix's formula; its assumptions on arrival order and independence are not modelled.</li>
-      <li>Whether the paper's authors adopted these findings is not established here.</li>
-    </ul>
-  </aside>
-</section>

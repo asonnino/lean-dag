@@ -1,4 +1,4 @@
-<!-- Part II, slides 49–56: the refuted rules Minnow and Black Marlin, and the rules side by side. Part III, slides 57–66: properties. -->
+<!-- Part II, slides 45–51: the refuted rules Minnow and Black Marlin, and the rules side by side. Part III, slides 52–61: properties. -->
 
 <section class="slide" data-part-label="Protocols · Refuted rules">
   <h2>Minnow: the rule</h2>
@@ -335,61 +335,66 @@
 </section>
 
 <section class="slide" data-part-label="Protocols · Summary">
-  <h2>What the formalisation found, by rule</h2>
+  <h2>What the formalisation found</h2>
   <div class="body stack">
     <figure>
-      <table>
+      <table class="compact findings">
         <thead>
           <tr><th>Rule</th><th>Finding</th></tr>
         </thead>
         <tbody>
           <tr><td>Odontoceti, Hybrid, Async BlueBottle</td><td>two twins can pass the indirect test; the least must be chosen</td></tr>
-          <tr><td>Mahi-Mahi</td><td>the good-validator count is <code>n − f − b</code>, not <code>n − f</code></td></tr>
-          <tr><td>FinWhale</td><td>Lemma 22's argument covers only <code>p = 1</code>; Lemmas 18/19 and 6/7 need new proofs</td></tr>
-          <tr><td>Hydrozoan</td><td>the slack cap is unnecessary; one inequality must be strengthened</td></tr>
+          <tr><td>FinWhale</td><td>Lemma 22's window is a leader cycle plus two rounds only at <code>p ≤ 1</code>, and the lemma is proved for every <code>p</code> by pigeonhole; Lemmas 18/19 and 6/7 need new proofs; the evidence count is exactly tight</td></tr>
+          <tr><td>Hydrozoan</td><td>the slack cap is unnecessary; inequality 6 must be strengthened to <code>qFast + q − n − f ≥ qWeak</code>; round-robin by slot is not fair, a rotation aligned to waves is</td></tr>
           <tr><td>Bluestreak</td><td>the indirect rule needs a committed anchor; claims must be read two rounds deep</td></tr>
-          <tr><td>Steelhead</td><td>the stall; the failover is needed for liveness</td></tr>
+          <tr><td>Mahi-Mahi</td><td>the good-validator count is <code>n − f − b</code>, not <code>n − f</code>: commit probability per wave at least <code>(n − f − b)/n ≥ 1/3</code>; it skips per slot, Mysticeti per candidate</td></tr>
+          <tr><td>Steelhead</td><td>the period update alone keeps a stalled period, so the failover is needed; the proofs take <code>I ≥ 2K</code> and <code>I ≥ K + wa − 2</code>; one timeout probability is <code>f/n</code>, not <code>(n − f)/n</code></td></tr>
           <tr><td>Minnow</td><td>an earlier leader committed after a later one; slots that are never decided</td></tr>
           <tr><td>Black Marlin</td><td>agreement and total order fail</td></tr>
+          <tr><td>Adaptive leader count</td><td>with an interval shorter than the wave the health test always passes</td></tr>
         </tbody>
       </table>
     </figure>
   </div>
-  <!-- Evidence: <p>Each row is detailed, with its Lean evidence, on the rule's slides.</p> -->
-  <aside class="notes">
-    <ul>
-      <li>Each row gives the defect or correction that the formalisation found in one rule; each is presented, with its evidence, on that rule's slides.</li>
-      <li>In Odontoceti, Hybrid and Async BlueBottle two twins can both pass the indirect test, so the rule must choose the least. In Mahi-Mahi the count of good validators is <code>n − f − b</code>, not <code>n − f</code>.</li>
-      <li>FinWhale and Hydrozoan rows concern the published proofs and bounds: Lemma 22 of FinWhale is argued only for <code>p = 1</code>, and Lemmas 18/19 and 6/7 need new proofs; Hydrozoan's slack cap is unnecessary, and one inequality must be strengthened.</li>
-      <li>Bluestreak and Steelhead rows concern the rules themselves: Bluestreak's indirect rule needs a committed anchor and must read claims two rounds deep; Steelhead stalls without its failover, which is needed for liveness.</li>
-      <li>The last two rows are the refutations of slides 49–53. The next slide states three lessons that recur across these rows.</li>
-    </ul>
-  </aside>
-</section>
-
-<section class="slide" data-part-label="Protocols · Summary">
-  <h2>Three recurring lessons</h2>
-  <div class="body">
-    <div class="text">
-      <ol>
-        <li><strong>Fix an order.</strong> Wherever two twins can pass a test, the choice between them must be made by an order every validator computes.</li>
-        <li><strong>Count, do not infer from absence.</strong> A skip must count blocks that exist.</li>
-        <li><strong>Use later evidence.</strong> Every rule proved safe here has an indirect rule that reads a later committed anchor. Minnow has none; Black Marlin's descent reads a later committed anchor, but its outputs disagree (slide 53).</li>
-      </ol>
-    </div>
-  </div>
-  <!-- Evidence: <ul>
+  <!-- Evidence: <p>Each row is detailed, with its Lean evidence, on the rule's slides.</p> Former findings slides, merged here: [FinWhale: what the formalisation found] <code>window_margin</code> (<code>LeanDag/FinWhale/Counting.lean:143</code>): the cyclic window works iff <code>p ≤ 1</code>. <code>lemma22</code> (<code>LeanDag/FinWhale/Rotation.lean:187</code>) holds for all <code>p</code>, through <code>three_correct_window</code> (:143).
+    <code>c3_margin</code> (<code>Counting.lean:156</code>), <code>c3_reachable</code> (:149); <code>lemma18</code>, <code>lemma19</code> (<code>LeanDag/FinWhale/Creation.lean:76, 128</code>).
+    <code>no_directSkip_of_commit_view</code> (<code>LeanDag/FinWhale/View.lean:216</code>), <code>no_indirectCommit_of_directSkip_view</code> (:265); witness <code>Vmiss</code> (<code>LeanDagTest/FinWhale/Equivocation.lean:247–270</code>).
+    <code>fastCommit_latency</code> (<code>Reactive.lean:98</code>). <code>equivocating_margin</code> (<code>Counting.lean:130</code>) is arithmetic tightness of the count, not a lower bound for every protocol.
+    (informal) Which of these the paper states without proof. [Hydrozoan: what the formalisation found] <ul>
+      <li><code>ThresholdArithmetic.Statement</code> / <code>holds</code> (LeanDag/Hydrozoan/ThresholdArithmetic/Statement.lean:61, Proof.lean:14).
+        Row 6 of the statement is the weaker <code>AnchorSeesFast</code> (Statement.lean:56); the strengthened form is
+        <code>n_add_qWeak_add_f_le_qFast_add_q</code> (LeanDag/Hydrozoan/Helpers/SlotAgreement.lean:52).</li>
+      <li>(informal) The paper’s cap <code>k ≤ 2f + c − 4</code> appears only in a docstring (LeanDagTest/OptimalHydrozoan/Thresholds.lean:232).</li>
+      <li><code>fiveCrashy</code>, <code>¬ FairRunOn (S := slotRobin) Correct 3</code> (LeanDagTest/Hydrozoan/Grounding.lean:135, 160);
+        <code>WaveRobinFair</code> (LeanDag/Hydrozoan/Grounding/Statement.lean).</li>
+      <li>Properties: <code>Agree</code>, <code>CommitsCandidate</code>, <code>SkipsUnsupported</code> (LeanDag/Hydrozoan/Properties/Statement.lean:27, Proof.lean:35),
+        <code>commitsDirect</code> (Helpers/Commit.lean:298), <code>quorate</code> (Helpers/Carrier.lean:47); <code>safety</code>, <code>progress</code> (Properties/Proof.lean:44–49).</li>
+    </ul> [Mahi-Mahi: what the formalisation found] <ul>
+      <li><code>GoodCard</code> as above. <code>CommitProbability</code> (LeanDag/Steelhead/MahiMahiPair/Coin/Statement.lean:193): <code>(n − f − b)/n ≤ commitProb</code> and
+        <code>1/3 ≤ commitProb</code> at <code>wa ≥ 5</code>; at <code>w = 4</code> only <code>1/n</code> (<code>CommitProbabilityFour</code>, :205).</li>
+      <li><code>MultiLeader</code> (LeanDag/MahiMahi/Counting/Statement.lean:88) proves <code>2f + 1</code> suffice. (informal) The paper’s <code>f + 1</code> and <code>2/3</code>.</li>
+      <li><code>DirectSkip</code> (Rules.lean:106–112); <code>mahiMahiAnchored</code> (LeanDag/MahiMahi/Model/Decision.lean:60).</li>
+    </ul> [Steelhead: what the formalisation found] <ul>
+      <li><code>anchorUpdate_half_retains</code> (LeanDag/Steelhead/Helpers/Replay.lean:821); <code>rt_update_four</code>, <code>rt_no_output_above_two</code> (RotatingStall.lean:287, 302).</li>
+      <li><code>bf30_slot0_undecided</code> (LeanDagTest/Steelhead/Counterexamples/ByzantineFloor.lean:184).</li>
+      <li><code>TwoAsyncRounds</code>, <code>TwoAsyncRoundsInWindow</code> (Period/Statement.lean:295, 379); <code>WindowResolves</code> (:336);
+        <code>rw44_keeps_two</code> (LeanDagTest/Steelhead/Counterexamples/ReplayShortWindow.lean:98).</li>
+      <li><code>CertProbEdges</code> (LeanDag/Steelhead/MahiMahiPair/Timeout/Statement.lean:43).</li>
+      <li>(informal) How many findings the paper adopted.</li>
+    </ul> [Three recurring lessons] <ul>
       <li>1: <code>tie = (&lt;)</code> in Odontoceti, Hybrid, FinWhale, Hydrozoan (second rung), Async BlueBottle; Mahi-Mahi's <code>Votes</code> picks the least block.</li>
       <li>2: <code>ugrow_not_directSkip</code> (LeanDagTest/Mysticeti/Growth.lean:308).</li>
       <li>3: every carrier has <code>rungs ≥ 1</code>; Black Marlin and Minnow have no anchor rule. (informal) That the missing rule causes the failures.</li>
-    </ul> -->
+    </ul> [The leader count: findings] <p><code>Barnacle.Agreement.holds</code> (as slide 89); <code>Healthy.Vacuous</code> (LeanDag/Barnacle/Healthy/Statement.lean); <code>Live.runsExist_roundRobin</code> (LeanDag/Barnacle/Live/Proof.lean:26). Base-rule witnesses: LeanDagTest/Barnacle/Rules (Hydrozoan, Mysticeti, Nemo, Odontoceti, Optimal-Hydrozoan, Orcaella).</p> -->
   <aside class="notes">
     <ul>
-      <li>Three requirements recur across the findings of the previous slide.</li>
-      <li>Fix an order: Odontoceti, Hybrid, FinWhale, Hydrozoan on its second rung, and Async BlueBottle choose the least of two twins that pass a test, and Mahi-Mahi's vote count chooses the least block.</li>
-      <li>Count, do not infer from absence: on a growing DAG checked in Lean, a slot whose leader has no block in some view is later committed, so a skip inferred from that absence would contradict the later commit. Mysticeti therefore skips a slot only on a count of blocks that are present.</li>
-      <li>Use later evidence: each of the eleven rules has at least one indirect rung that reads a later committed anchor. Minnow has no such rule; Black Marlin's descent reads a later committed anchor, but its outputs disagree (slide 53).</li>
-      <li>That the absence of such a rule causes the failures of Minnow and Black Marlin is an interpretation, not a proved statement; present it as such. Part III follows.</li>
+      <li>This table collects, rule by rule, the defects and corrections that the formalisation found; each is proved in Lean or shown by a concrete DAG.</li>
+      <li>Twins: in Odontoceti, Hybrid and Async BlueBottle two twins can both pass the indirect test, so the rule must choose the least by an order every validator computes.</li>
+      <li>Published proofs: FinWhale's Lemma 22 counts a window that is a full leader cycle plus two rounds only when <code>p ≤ 1</code>; the lemma holds for every <code>p</code> by a pigeonhole argument, and Lemmas 18/19 and 6/7 are proved by other routes. Hydrozoan's six inequalities hold without the slack cap, and the agreement proof needs inequality 6 with an extra <code>− f</code>.</li>
+      <li>Counts and probabilities: Mahi-Mahi's good validators number <code>n − f − b</code>, because twins of Byzantine leaders can split votes; the proved commit probability per wave is at least <code>(n − f − b)/n</code>, never below 1/3. In Steelhead's timeout appendix one probability is <code>f/n</code>, not <code>(n − f)/n</code>.</li>
+      <li>Rule changes: Bluestreak's indirect rule needs a committed anchor and claims read two rounds deep; Steelhead's period update can keep a stalled period, so liveness needs the failover, with intervals <code>I ≥ 2K</code> and <code>I ≥ K + wa − 2</code>. The adaptive leader count's health test passes vacuously when the interval is shorter than the wave.</li>
+      <li>Minnow and Black Marlin are refuted by the counterexamples of slides 45–49.</li>
+      <li>Three lessons recur: fix an order wherever two twins can pass a test; count blocks that exist instead of inferring from absence; decide indirectly from a later committed anchor.</li>
     </ul>
   </aside>
 </section>
@@ -505,8 +510,8 @@
       <li>Definition: for each verdict there is a round <code>top</code> such that any universe, view and schedule that agree with the original from the slot's round to <code>top</code> reach the same verdict. Agreement here means the same blocks, creators and references up to a shift of round numbers, the other view holding at least the original view's blocks in the band, and the same slot rounds, leaders and kinds up to a shift of slot numbers.</li>
       <li>Left figure: rounds 2–5 of a Mysticeti DAG. Leader block 11 at round 3, votes 14–16 at round 4 (bracket <code>3 ≥ q</code>) and certificates 17–19 at round 5 commit slot 1; the shaded band is rounds 3–5.</li>
       <li>Right figure: the same DAG with rounds 0–1 cut and rounds shifted down by 2. The band is rounds 1–3, and block 11 commits slot 0. Both commits are checked on this DAG in Lean.</li>
-      <li>Since the other view may hold extra blocks in the band, a rule that decides on the absence of a block does not have Banded. Each of the eleven rules is proved to have it (slide 65).</li>
-      <li>Persistence under extension and invariance under a cut are derived from Banded (slide 62); the mechanisms that cut, fill or shift rounds and the safety theorem (slide 63) use it.</li>
+      <li>Since the other view may hold extra blocks in the band, a rule that decides on the absence of a block does not have Banded. Each of the eleven rules is proved to have it (slide 60).</li>
+      <li>Persistence under extension and invariance under a cut are derived from Banded (slide 57); the mechanisms that cut, fill or shift rounds and the safety theorem (slide 58) use it.</li>
     </ul>
   </aside>
 </section>
@@ -534,7 +539,7 @@
       <li>CommitsCandidate: a committed block is a block of the universe, at the slot's round, by the slot's leader. It does not follow from Banded, which constrains which DAGs a verdict distinguishes and says nothing about what the committed identifier denotes. Safety, inclusion and chain quality use it.</li>
       <li>Step 1: in the diagram, slot <code>j</code> holds a committed anchor that is eligible for slot <code>i</code>, where eligibility depends only on the rounds of the two slots; every eligible slot between them is skipped. Indirect states that slot <code>i</code> is then decided, with some verdict <code>v</code>.</li>
       <li>Step 2: the second row is a schedule <code>S′</code> with the same rounds and the same leader and kind at slot <code>i</code>, but other leaders elsewhere (blue). If slot <code>j</code> still commits the anchor and the slots between are still skipped under <code>S′</code>, slot <code>i</code> receives the same verdict <code>v</code>.</li>
-      <li>Each rule proves Indirect by cases on slot <code>i</code>'s own candidate and the anchor's history, which a change of leaders elsewhere does not affect. From this stronger form, Descends is derived once (slide 62).</li>
+      <li>Each rule proves Indirect by cases on slot <code>i</code>'s own candidate and the anchor's history, which a change of leaders elsewhere does not affect. From this stronger form, Descends is derived once (slide 57).</li>
     </ul>
   </aside>
 </section>
@@ -750,8 +755,8 @@
     <ul>
       <li>The table records which optional properties and which headline theorems each of the eleven rules has; the core properties hold for all of them.</li>
       <li>The sentence above the table lists what all eleven have: Banded, Agree, CommitsCandidate, Indirect, CommitsDirect, and a support with both laws. In the table, ✓ means proved in Lean, and — means not proved here, which is a weaker statement than refuted.</li>
-      <li>The Safe column is complete, so the safety theorem of slide 63 applies to every rule. In the Lives column, the four rules without SelfParent have progress only.</li>
-      <li>Mahi-Mahi's theorems are proved for wave length <code>w ≥ 2</code>, as properties conditional on <code>live</code>; synchrony establishes <code>live</code> for Mahi-Mahi only when <code>w ≥ 4</code>, which is the bound on slide 54.</li>
+      <li>The Safe column is complete, so the safety theorem of slide 58 applies to every rule. In the Lives column, the four rules without SelfParent have progress only.</li>
+      <li>Mahi-Mahi's theorems are proved for wave length <code>w ≥ 2</code>, as properties conditional on <code>live</code>; synchrony establishes <code>live</code> for Mahi-Mahi only when <code>w ≥ 4</code>, which is the bound on slide 50.</li>
       <li>An optional property is needed only by its mechanism: prompt skip applies to the five rules with SkipsUnsupported, and chain quality to the ten rules with Quorate.</li>
     </ul>
   </aside>
@@ -768,11 +773,11 @@
         <tbody>
           <tr><td>Validators' ledgers agree</td><td>Banded, Agree, CommitsCandidate</td></tr>
           <tr><td>Every slot is eventually decided</td><td>Law 2, Indirect</td></tr>
-          <tr><td>A validator decides from the blocks it holds</td><td>the pacemaker (slide 71)</td></tr>
+          <tr><td>A validator decides from the blocks it holds</td><td>the pacemaker (slide 66)</td></tr>
           <tr><td>A committed block's history contains blocks of at least half of the correct validators</td><td>Quorate, CommitsCandidate</td></tr>
           <tr><td>Every correct validator's blocks are committed</td><td>SelfParent, NoEquiv, CommitsCandidate, LeaderCommits</td></tr>
-          <tr><td>Storage stays linear under equivocation</td><td>the novelty budget (slide 75)</td></tr>
-          <tr><td>Storage stays constant</td><td>garbage collection (slide 77)</td></tr>
+          <tr><td>Storage stays linear under equivocation</td><td>the novelty budget (slide 70)</td></tr>
+          <tr><td>Storage stays constant</td><td>garbage collection (slide 72)</td></tr>
         </tbody>
       </table>
     </figure>
@@ -782,9 +787,9 @@
     <ul>
       <li>The table maps each guarantee a user observes to the properties or mechanisms that provide it.</li>
       <li>The first two rows are the headline theorems: ledgers agree by the safety theorem, and every slot is eventually decided by progress, which uses Law 2 and, through Descends, Indirect.</li>
-      <li>A validator decides from the blocks it holds: this is proved for the pacemakers of Mysticeti and Bluestreak (slide 71).</li>
+      <li>A validator decides from the blocks it holds: this is proved for the pacemakers of Mysticeti and Bluestreak (slide 66).</li>
       <li>Chain quality, that a committed block's history contains blocks of at least half of the correct validators, also requires that twice the slack be at most the number of correct validators. Inclusion of every correct validator's blocks uses SelfParent, NoEquiv, CommitsCandidate and LeaderCommits.</li>
-      <li>The two storage bounds are stated over the storage model rather than over the carrier: the novelty budget keeps storage linear under equivocation (slide 75), and garbage collection keeps it constant (slide 77).</li>
+      <li>The two storage bounds are stated over the storage model rather than over the carrier: the novelty budget keeps storage linear under equivocation (slide 70), and garbage collection keeps it constant (slide 72).</li>
     </ul>
   </aside>
 </section>

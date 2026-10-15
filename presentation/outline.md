@@ -1,7 +1,9 @@
 # lean-dag presentation — slide outline
 
-Status: draft for discussion, revision 3 (2026-10-14). Nothing in
-`presentation/` is built yet.
+Status: revision 3 (2026-10-14), the plan from which the deck was built.
+The deck in `parts/` is now the authoritative text and has 91 slides: the
+findings slides 30, 33, 42, 48, 56 and 92 of this outline are merged into the
+table of slide 55 (deck slide 51), and later slide numbers shift accordingly.
 
 This document lists every planned slide. Each entry gives:
 

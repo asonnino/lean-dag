@@ -1,4 +1,4 @@
-<!-- Part IV, slides 86–97: composition, adaptive leaders, the adaptive leader count, checkpoints, Red Snapper, close. -->
+<!-- Part IV, slides 81–91: composition, adaptive leaders, the adaptive leader count, checkpoints, Red Snapper, close. -->
 
 <section class="slide" data-part-label="Mechanisms · Composition">
   <h2>Every mechanism is one relation</h2>
@@ -81,17 +81,17 @@
           <tr><td>Steelhead</td><td class="yes">✓</td><td class="no">open</td><td class="no">open</td><td class="no">—</td><td class="no">open</td><td class="yes">✓</td></tr>
         </tbody>
       </table>
-      <figcaption class="caption">Mechanisms proved per rule: ✓ proved; — not shown; open: listed as open work (slide 95).</figcaption>
+      <figcaption class="caption">Mechanisms proved per rule: ✓ proved; — not shown; open: listed as open work (slide 89).</figcaption>
     </figure>
   </div>
-  <!-- Evidence: <p><code>Stack.safe_and_live</code> (Stack.lean:109). <code>onRecord</code> instances for Nemo, Mysticeti, Odontoceti, Hybrid, FinWhale, Hydrozoan, Optimal-Hydrozoan, Bluestreak, Mahi-Mahi, Async BlueBottle; none for Steelhead. Steelhead's cut cell is its own <code>localTruncate</code> (LeanDag/Steelhead/Properties.lean:146).</p> <p>Grid sources: prompt skip where SkipsUnsupported holds (slides 65, 81: Mysticeti, Odontoceti, Hybrid, Hydrozoan, Bluestreak); coverage for every rule except Bluestreak, Steelhead's instance not written (slide 72; LeanDagTest/Quality/Generic.lean); inclusion for the seven rules with SelfParent and NoEquiv (slides 65, 72; Steelhead's in <code>liveness</code>, LeanDag/Steelhead/Properties.lean:301).</p> -->
+  <!-- Evidence: <p><code>Stack.safe_and_live</code> (Stack.lean:109). <code>onRecord</code> instances for Nemo, Mysticeti, Odontoceti, Hybrid, FinWhale, Hydrozoan, Optimal-Hydrozoan, Bluestreak, Mahi-Mahi, Async BlueBottle; none for Steelhead. Steelhead's cut cell is its own <code>localTruncate</code> (LeanDag/Steelhead/Properties.lean:146).</p> <p>Grid sources: prompt skip where SkipsUnsupported holds (slides 60, 76: Mysticeti, Odontoceti, Hybrid, Hydrozoan, Bluestreak); coverage for every rule except Bluestreak, Steelhead's instance not written (slide 67; LeanDagTest/Quality/Generic.lean); inclusion for the seven rules with SelfParent and NoEquiv (slides 60, 67; Steelhead's in <code>liveness</code>, LeanDag/Steelhead/Properties.lean:301).</p> -->
   <aside class="notes">
     <ul>
       <li>For any rule with Banded, Agree and a support, every stack of cuts, fills and re-geneses preserves safety and liveness above the composite settling round; this is proved in Lean.</li>
       <li>A stack is a finite sequence of mechanisms. The theorem has three conclusions: a verdict at a slot above the settling round is the same before and after the stack, at the renumbered slot; any view of the result agrees with the original view on those verdicts; and the liveness precondition of the support carries over to the renumbered slots.</li>
-      <li>The table has one row per rule and one column per mechanism: ✓ means proved for that rule, — means not shown, and “open” means listed as open work on slide 95.</li>
+      <li>The table has one row per rule and one column per mechanism: ✓ means proved for that rule, — means not shown, and “open” means listed as open work on slide 89.</li>
       <li>The cut, the fill and the re-genesis are each built once, on a common record of the DAG, and ten of the eleven rules provide that record. Steelhead does not: its cut is its own construction, and its fill and re-genesis are open.</li>
-      <li>The prompt skip is ticked for the five rules with SkipsUnsupported. Coverage and inclusion are the two halves of chain quality (slide 72): coverage is shown for every rule except Bluestreak and is open for Steelhead, and inclusion is ticked for the seven rules with SelfParent and NoEquiv.</li>
+      <li>The prompt skip is ticked for the five rules with SkipsUnsupported. Coverage and inclusion are the two halves of chain quality (slide 67): coverage is shown for every rule except Bluestreak and is open for Steelhead, and inclusion is ticked for the seven rules with SelfParent and NoEquiv.</li>
       <li>The next slides turn to a mechanism that changes the leader schedule itself.</li>
     </ul>
   </aside>
@@ -284,29 +284,6 @@
   </aside>
 </section>
 
-<section class="slide" data-part-label="Mechanisms · Adaptive leader count">
-  <h2>The leader count: findings</h2>
-  <div class="body">
-    <div class="text">
-      <ul>
-        <li>Safety holds for any anchored update rule, AIMD included.</li>
-        <li>If the interval is shorter than the wave, the expected count is 0, the test always passes, and the count increases at every anchor, up to <code>maxLeaders</code>.</li>
-        <li>Liveness under several leaders per round is proved for round-robin when <code>waveLength · slack + 1 ≤ n</code>.</li>
-      </ul>
-    </div>
-  </div>
-  <!-- Evidence: <p><code>Barnacle.Agreement.holds</code> (as slide 89); <code>Healthy.Vacuous</code> (LeanDag/Barnacle/Healthy/Statement.lean); <code>Live.runsExist_roundRobin</code> (LeanDag/Barnacle/Live/Proof.lean:26). Base-rule witnesses: LeanDagTest/Barnacle/Rules (Hydrozoan, Mysticeti, Nemo, Odontoceti, Optimal-Hydrozoan, Orcaella).</p> -->
-  <aside class="notes">
-    <ul>
-      <li>This slide states three results about the leader count.</li>
-      <li>Safety: the agreement theorem of slide 89 holds for every anchored update rule, and the AIMD rule reads the DAG only through the anchor's history, so two validators compute the same leader count.</li>
-      <li>If the interval is shorter than the wave, no round of the window is old enough to have been decided, so <code>expected = 0</code> at every anchor. The test then passes whatever the DAG contains, and the count rises by one at every anchor, up to <code>maxLeaders</code>. A deployment therefore needs <code>waveLength ≤ interval</code>; this is proved in Lean.</li>
-      <li>Liveness with several leaders per round is proved when the schedule is round-robin and <code>waveLength · slack + 1 ≤ n</code>, where <code>slack</code> is the number of validators outside the reliable set.</li>
-      <li>The next mechanism, checkpoints, builds on the committed sequence that these rules produce.</li>
-    </ul>
-  </aside>
-</section>
-
 <section class="slide" data-part-label="Mechanisms · Checkpoints">
   <h2>Checkpoints</h2>
   <div class="body stack">
@@ -351,7 +328,7 @@
       <li>Read the figure from left to right. A correct online validator applies each commit in its own view to a deterministic state machine and signs the checkpoint it reaches; at least <code>q</code> signatures on one proposal form a checkpoint certificate. Each validator then witnesses the certificate for what it signed, and at least <code>q</code> witnesses form a finality certificate.</li>
       <li>Safety: two checkpoint certificates at one epoch and height have the same content. Their quorums share a reliable signer, and that signer signs one state per height. This holds within one epoch and is proved in Lean.</li>
       <li>Liveness: a slot with a correct leader, under the production and certification conditions, is finalised; this is also proved.</li>
-      <li>Step 1: at an epoch change, certificates of epoch <code>e</code> are broadcast, and the highest validated checkpoint becomes the genesis of epoch <code>e + 1</code>. The broadcast is assumed, not modelled (slide 95).</li>
+      <li>Step 1: at an epoch change, certificates of epoch <code>e</code> are broadcast, and the highest validated checkpoint becomes the genesis of epoch <code>e + 1</code>. The broadcast is assumed, not modelled (slide 89).</li>
       <li>The construction uses Agree, CommitsCandidate and Law 2, and is instantiated for Hybrid and for the adaptive-leader runs.</li>
     </ul>
   </aside>
@@ -496,7 +473,7 @@
       <li>Middle column: four properties, Banded, Agree, CommitsCandidate and Indirect, and a support per rule with Law 1 and Law 2.</li>
       <li>Right column: each mechanism is proved once against those properties; the pacemaker is per rule, and Red Snapper uses only the anchors.</li>
       <li>Safety holds with no network assumption; liveness follows from view convergence.</li>
-      <li>Open: adaptive-leader instances for particular rules, Steelhead's fill, re-genesis and coverage, Barbouni, and a model of the checkpoint broadcast (slide 95).</li>
+      <li>Open: adaptive-leader instances for particular rules, Steelhead's fill, re-genesis and coverage, Barbouni, and a model of the checkpoint broadcast (slide 89).</li>
     </ul>
   </aside>
 </section>

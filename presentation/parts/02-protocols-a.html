@@ -225,7 +225,7 @@
         <li>A direct skip leaves no certificate anywhere.</li>
         <li>So any two views decide every slot the same way, and their ledgers agree.</li>
       </ol>
-      <p>No step uses the network. Each rule on slides 19–48 is proved safe by the same five steps, with its own counts; the steps are the laws of slide 10.</p>
+      <p>No step uses the network. Each rule on slides 19–44 is proved safe by the same five steps, with its own counts; the steps are the laws of slide 10.</p>
     </div>
     <figure class="diagram">
       <script type="application/json">
@@ -890,32 +890,3 @@
   </aside>
 </section>
 
-<!-- Slide 30 -->
-<section class="slide" data-part-label="Protocols · FinWhale">
-  <h2>FinWhale: what the formalisation found</h2>
-  <div class="body stack">
-    <div class="text">
-      <ul>
-        <li>The paper's window of <code>3f + 3</code> rounds is a full cycle of leaders plus two rounds exactly when <code>p ≤ 1</code>. Lemma 22 is proved for every <code>p</code> by a pigeonhole argument (smallest case beyond <code>p = 1</code>: <code>n = 9</code>).</li>
-        <li>In the paper's case C3 of Lemmas 18 and 19 the count has no margin at <code>p = 1</code>; the lemmas are proved instead by induction on the time a block is built.</li>
-        <li>The paper's proofs of Lemmas 6 and 7 pass through the slow skip, which does not apply when a validator holds no block of the slot; they are proved through the evidence quorum.</li>
-        <li>The latency bound <code>Δ + δ + 2·proc</code> of Definition 1 is proved, and the evidence count is exactly tight at <code>n = 3f + 2p − 1</code> and one short at <code>n − 1</code>.</li>
-      </ul>
-    </div>
-  </div>
-  <!-- Evidence: <code>window_margin</code> (<code>LeanDag/FinWhale/Counting.lean:143</code>): the cyclic window works iff <code>p ≤ 1</code>. <code>lemma22</code> (<code>LeanDag/FinWhale/Rotation.lean:187</code>) holds for all <code>p</code>, through <code>three_correct_window</code> (:143).
-    <code>c3_margin</code> (<code>Counting.lean:156</code>), <code>c3_reachable</code> (:149); <code>lemma18</code>, <code>lemma19</code> (<code>LeanDag/FinWhale/Creation.lean:76, 128</code>).
-    <code>no_directSkip_of_commit_view</code> (<code>LeanDag/FinWhale/View.lean:216</code>), <code>no_indirectCommit_of_directSkip_view</code> (:265); witness <code>Vmiss</code> (<code>LeanDagTest/FinWhale/Equivocation.lean:247–270</code>).
-    <code>fastCommit_latency</code> (<code>Reactive.lean:98</code>). <code>equivocating_margin</code> (<code>Counting.lean:130</code>) is arithmetic tightness of the count, not a lower bound for every protocol.
-    (informal) Which of these the paper states without proof. -->
-  <aside class="notes">
-    <ul>
-      <li>This slide lists four places where the proofs here differ from the paper's proofs of FinWhale; the paper's statements are proved.</li>
-      <li>Lemma 22: the paper's window of <code>3f + 3</code> rounds covers a full cycle of leaders plus two rounds exactly when <code>p ≤ 1</code>, an arithmetic fact proved in Lean. The lemma is proved for every <code>p</code> by a pigeonhole argument; the smallest case beyond the paper's count is <code>n = 9</code>.</li>
-      <li>Lemmas 18 and 19: in case C3, with the correct count, the pigeonhole margin is <code>2p − 2</code>, which is zero at <code>p = 1</code>. The lemmas are proved instead by induction on the time at which a block is built.</li>
-      <li>Lemmas 6 and 7: the paper's proofs go through the slow-skip condition, which holds vacuously for a validator that holds no block of the slot; a concrete view shows that this case occurs. The proofs here go through the evidence quorum instead.</li>
-      <li>The latency claim of Definition 1 is proved. The count of the equivocating evidence branch meets its threshold exactly at <code>n = 3f + 2p − 1</code> and misses it by one with one validator fewer; this is tightness of the count, not a lower bound for every protocol.</li>
-      <li>Whether the paper's proofs depend on these counts, and which steps the paper states without proof, is our reading of its text, not a theorem here.</li>
-    </ul>
-  </aside>
-</section>

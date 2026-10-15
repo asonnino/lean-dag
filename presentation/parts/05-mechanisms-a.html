@@ -1,8 +1,8 @@
-<!-- Part IV, slides 67–85: the mechanisms table, pacing, chain quality, storage, garbage collection, crash recovery, re-genesis, chain fill. -->
+<!-- Part IV, slides 62–80: the mechanisms table, pacing, chain quality, storage, garbage collection, crash recovery, re-genesis, chain fill. -->
 
 <section class="slide part"><div class="part-number">Part IV</div><h1>Mechanisms</h1></section>
 
-<!-- Slide 67 -->
+<!-- Slide 57 -->
 <section class="slide" data-part-label="Mechanisms · Overview">
   <h2>The mechanisms</h2>
   <div class="body stack">
@@ -22,7 +22,7 @@
           <tr><td>Checkpoints, Red Snapper</td><td>applications beyond ordering</td><td>Agree, CommitsCandidate, Law 2</td><td>93–94</td></tr>
         </tbody>
       </table>
-      <figcaption class="caption">The “Uses” properties are defined on slides 59 (Banded), 60 (Agree, CommitsCandidate, Indirect), 61 (Law 1, 2), 62 (others).</figcaption>
+      <figcaption class="caption">The “Uses” properties are defined on slides 54 (Banded), 60 (Agree, CommitsCandidate, Indirect), 61 (Law 1, 2), 62 (others).</figcaption>
     </figure>
   </div>
   <!-- Evidence:
@@ -32,14 +32,14 @@
     <ul>
       <li>This slide lists the mechanisms of Part IV; each addresses a problem that the commit rule alone leaves open.</li>
       <li>Each row gives the problem in the second column, the properties of the rule that the mechanism's proofs use in the third, and the slides that treat it in the last.</li>
-      <li>The properties in the “Uses” column are those defined on slides 59–62; the caption gives the slide for each.</li>
+      <li>The properties in the “Uses” column are those defined on slides 54–57; the caption gives the slide for each.</li>
       <li>The storage bound differs from the other rows: it is stated over the delivery of blocks and reads no property of the commit rule.</li>
       <li>We begin with pacing: how a rule that only counts references makes progress in time.</li>
     </ul>
   </aside>
 </section>
 
-<!-- Slide 68 -->
+<!-- Slide 58 -->
 <section class="slide" data-part-label="Mechanisms · Pacing">
   <h2>Liveness, and the role of time</h2>
   <div class="body">
@@ -54,21 +54,21 @@
         </li>
         <li>These follow from view convergence and the <span class="nd">pacemaker</span>'s rules.</li>
       </ul>
-      <div class="uses"><b>Uses:</b> view convergence and the pacemaker's rules (slide 69).<br><b>Gives:</b> the support's precondition <code>live</code> (slide 61).</div>
+      <div class="uses"><b>Uses:</b> view convergence and the pacemaker's rules (slide 64).<br><b>Gives:</b> the support's precondition <code>live</code> (slide 56).</div>
     </div>
     <figure class="diagram">
       <script type="application/json">{
         "w": 470, "h": 400,
         "nodes": [
           {"id": "net", "x": 10, "y": 10, "w": 240, "h": 58, "text": "network", "sub": "view convergence"},
-          {"id": "pace", "x": 10, "y": 120, "w": 240, "h": 58, "text": "pacemaker", "sub": "four rules (slide 69)"},
+          {"id": "pace", "x": 10, "y": 120, "w": 240, "h": 58, "text": "pacemaker", "sub": "four rules (slide 64)"},
           {"id": "sup", "x": 10, "y": 230, "w": 240, "h": 58, "text": "support", "sub": "precondition live"},
           {"id": "com", "x": 10, "y": 340, "w": 240, "h": 50, "text": "commits", "cls": "accent"}
         ],
         "edges": [
           {"from": "net", "to": "pace", "label": "after GST", "dx": 48, "dy": 4},
           {"from": "pace", "to": "sup", "label": "a block per round;\nall reliable refs below", "dx": 88, "dy": 4},
-          {"from": "sup", "to": "com", "label": "Law 2 (slide 61)", "dx": 64, "dy": 4}
+          {"from": "sup", "to": "com", "label": "Law 2 (slide 56)", "dx": 64, "dy": 4}
         ]
       }</script>
       <figcaption class="caption">The liveness argument in layers; each arrow is labelled with what the lower layer receives. Only the network and the pacemaker refer to time.</figcaption>
@@ -83,13 +83,13 @@
       <li>The commit rule counts references and does not refer to time, so the liveness argument is built in layers, and only the lower layers refer to time.</li>
       <li>Read the diagram from top to bottom: each arrow is labelled with what the layer below receives. The network gives view convergence after GST, the global stabilisation time after which every block reaches every reliable validator within the delay <code>Δ</code>.</li>
       <li>The pacemaker turns view convergence into two facts about the DAG, from some round on: every reliable validator has a block in each round, and each reliable block references every reliable block of the round below. The reliable validators are a set of at least quorum size that follows the pacemaker.</li>
-      <li>These two facts are the support's precondition <code>live</code> (slide 61), and Law 2 turns <code>live</code> into commits. For Mysticeti it is proved in Lean that the two facts give a reliable leader a certificate, and hence a direct commit.</li>
+      <li>These two facts are the support's precondition <code>live</code> (slide 56), and Law 2 turns <code>live</code> into commits. For Mysticeti it is proved in Lean that the two facts give a reliable leader a certificate, and hence a direct commit.</li>
       <li>The next slide states the pacemaker's four rules.</li>
     </ul>
   </aside>
 </section>
 
-<!-- Slide 69 -->
+<!-- Slide 59 -->
 <section class="slide" data-part-label="Mechanisms · Pacing">
   <h2>The pacemaker's rules</h2>
   <div class="body">
@@ -133,7 +133,7 @@
   </aside>
 </section>
 
-<!-- Slide 70 -->
+<!-- Slide 60 -->
 <section class="slide" data-part-label="Mechanisms · Pacing">
   <h2>Drift collapses in one round</h2>
   <div class="body wide-fig">
@@ -175,7 +175,7 @@
   </aside>
 </section>
 
-<!-- Slide 71 -->
+<!-- Slide 61 -->
 <section class="slide" data-part-label="Mechanisms · Pacing">
   <h2>The reactive schedule, and local liveness</h2>
   <div class="body stack">
@@ -229,7 +229,7 @@
   </aside>
 </section>
 
-<!-- Slide 72 -->
+<!-- Slide 62 -->
 <section class="slide" data-part-label="Mechanisms · Chain quality">
   <h2>Chain quality</h2>
   <div class="body">
@@ -275,7 +275,7 @@
   </aside>
 </section>
 
-<!-- Slide 73 -->
+<!-- Slide 63 -->
 <section class="slide" data-part-label="Mechanisms · Chain quality">
   <h2>Coverage does not give inclusion</h2>
   <div class="body wide-fig">
@@ -316,7 +316,7 @@
   </aside>
 </section>
 
-<!-- Slide 74 -->
+<!-- Slide 64 -->
 <section class="slide" data-part-label="Mechanisms · Storage">
   <h2>Equivocation and exposure</h2>
   <div class="body">
@@ -367,7 +367,7 @@
   </aside>
 </section>
 
-<!-- Slide 75 -->
+<!-- Slide 65 -->
 <section class="slide" data-part-label="Mechanisms · Storage">
   <h2>The novelty budget</h2>
   <div class="body">
@@ -407,7 +407,7 @@
   </aside>
 </section>
 
-<!-- Slide 76 -->
+<!-- Slide 66 -->
 <section class="slide" data-part-label="Mechanisms · Garbage collection">
   <h2>The cut</h2>
   <div class="body stack">
@@ -457,7 +457,7 @@
   </aside>
 </section>
 
-<!-- Slide 77 -->
+<!-- Slide 67 -->
 <section class="slide" data-part-label="Mechanisms · Garbage collection">
   <h2>Storage is constant</h2>
   <div class="body stack">
@@ -551,7 +551,7 @@
   </aside>
 </section>
 
-<!-- Slide 78 -->
+<!-- Slide 68 -->
 <section class="slide" data-part-label="Mechanisms · Garbage collection">
   <h2>Joining from an attested base</h2>
   <div class="body">
@@ -597,7 +597,7 @@
   </aside>
 </section>
 
-<!-- Slide 79 -->
+<!-- Slide 69 -->
 <section class="slide" data-part-label="Mechanisms · Garbage collection">
   <h2>Choosing the lag</h2>
   <div class="body stack">
@@ -654,13 +654,13 @@
       <li>Each bar shows where the horizon <code>G</code> may lie relative to the current round <code>t</code>; the table restates the bars.</li>
       <li>Top bar: with <code>G</code> anywhere, safety holds; the agreement results for the cut, for different horizons and for a joining validator need no bound on <code>G</code>.</li>
       <li>Middle bar: with <code>G ≤ t − 1</code>, after the network synchronises, every block a correct validator discards is already held by every correct peer one round later. Bottom bar: with <code>G ≤ t − 2</code>, every round-<code>G</code> block a correct validator accepted is in the attested base.</li>
-      <li>An equivocation whose two blocks both fall below the cut is no longer detected: on a concrete DAG, the equivocating creator is not exposed in a block's history after the cut. The cut preserves the storage rule of slide 74; this is proved in Lean.</li>
+      <li>An equivocation whose two blocks both fall below the cut is no longer detected: on a concrete DAG, the equivocating creator is not exposed in a block's history after the cut. The cut preserves the storage rule of slide 69; this is proved in Lean.</li>
       <li>The statement that a cut above an undecided slot leaves it undecided is informal and not proved.</li>
     </ul>
   </aside>
 </section>
 
-<!-- Slide 80 -->
+<!-- Slide 70 -->
 <section class="slide" data-part-label="Mechanisms · Crash recovery">
   <h2>Crash recovery: the message</h2>
   <div class="body stack">
@@ -709,7 +709,7 @@
   </aside>
 </section>
 
-<!-- Slide 81 -->
+<!-- Slide 71 -->
 <section class="slide" data-part-label="Mechanisms · Crash recovery">
   <h2>What the fill guarantees</h2>
   <div class="body">
@@ -732,14 +732,14 @@
                    {"r": 3, "text": "2: v3 at rounds 1–4", "kind": "note", "step": 2, "row": 1, "at": 23}]
       }</script>
       <div class="legend"><span class="l-anchor"><code>B₁</code> = block 3</span><span class="l-fill">filled blocks</span><span class="l-path">self-references</span></div>
-      <figcaption class="caption">The DAG of slide 80 after the fill: blocks 21–24 give v3 a block at rounds 1–4, chained back to <code>B₁</code>.</figcaption>
+      <figcaption class="caption">The DAG of slide 75 after the fill: blocks 21–24 give v3 a block at rounds 1–4, chained back to <code>B₁</code>.</figcaption>
     </figure>
   </div>
   <!-- Evidence:
     <p><code>skipFill</code>, <code>skipFill_block_old</code>, <code>skipFill_populatedOn</code> (LeanDag/SafeSkip/Basic.lean:166, 171, 184).</p>
     <p>Prompt skip: <code>MysticetiProperties.decided_none_fresh</code> (LeanDag/Mysticeti/Record.lean:188); generic <code>Arcs.decided_none_of_novel</code>, <code>decided_none_of_novel_agree</code> (LeanDag/Properties/Arcs/SafeSkip.lean:32, 87), using SkipsUnsupported, and for the second, Agree and Banded. Instances: Mysticeti, Odontoceti (LeanDag/Odontoceti/Record.lean:61), Hybrid (LeanDag/Hybrid/Record.lean:67), Hydrozoan (LeanDag/Integration/HydrozoanMechanisms.lean:79), Bluestreak (LeanDag/Bluestreak/Record.lean:314).</p>
     <p>Verdicts: <code>decided_fill_of_persist</code>, <code>decided_fill_agree_of_properties</code> (LeanDag/Mysticeti/Record.lean:150, 159).</p>
-    <p>The figure is the fill of <code>Ucrash 4</code> by <code>ucrashMsg 4 4</code> (LeanDagTest/SafeSkip/Model.lean). In this witness the schedule <code>rrSlots</code> places slots at rounds <code>3k</code>, so no slot in rounds 1–4 is led by validator 3; the prompt skip is exhibited on <code>Ucr</code> (slide 85).</p>
+    <p>The figure is the fill of <code>Ucrash 4</code> by <code>ucrashMsg 4 4</code> (LeanDagTest/SafeSkip/Model.lean). In this witness the schedule <code>rrSlots</code> places slots at rounds <code>3k</code>, so no slot in rounds 1–4 is led by validator 3; the prompt skip is exhibited on <code>Ucr</code> (slide 80).</p>
   -->
   <aside class="notes">
     <ul>
@@ -747,13 +747,13 @@
       <li>Step 1: the filled DAG is valid, and every old block is unchanged, so every store, view and certificate built on the old DAG reads the same data.</li>
       <li>Step 2: <code>v₁</code> has a block at every missed round, the shaded blocks 21–24 at rounds 1–4, which is the production fact that liveness requires.</li>
       <li>Step 3: the prompt skip. A slot led by <code>v₁</code> in the missed rounds has only filled blocks as candidates, and no old block references them; given a quorum of old blocks one round above, the slot is skipped at once (SkipsUnsupported), and with Agree and Banded no later view commits it. It is proved for Mysticeti, Odontoceti, Hybrid, Hydrozoan and Bluestreak.</li>
-      <li>Step 3: in this example the schedule places no slot led by v3 in rounds 1–4; the prompt skip is shown on slide 85.</li>
+      <li>Step 3: in this example the schedule places no slot led by v3 in rounds 1–4; the prompt skip is shown on slide 80.</li>
       <li>Step 4: every verdict reached before the fill agrees with every verdict reached after it, from Persist and Agree.</li>
     </ul>
   </aside>
 </section>
 
-<!-- Slide 82 -->
+<!-- Slide 72 -->
 <section class="slide" data-part-label="Mechanisms · Crash recovery">
   <h2>Jumping rounds</h2>
   <div class="body stack">
@@ -809,7 +809,7 @@
         ],
         "size": "s"
       }</script>
-      <figcaption class="caption">The donor's top block <code>B₂ = 17</code> fixes its line 17, 13, 9, 5, and with it the fill 21–24 of slide 80.</figcaption>
+      <figcaption class="caption">The donor's top block <code>B₂ = 17</code> fixes its line 17, 13, 9, 5, and with it the fill 21–24 of slide 75.</figcaption>
     </figure>
   </div>
   <!-- Evidence:
@@ -827,7 +827,7 @@
   </aside>
 </section>
 
-<!-- Slide 83 -->
+<!-- Slide 73 -->
 <section class="slide" data-part-label="Mechanisms · Crash recovery">
   <h2>Limits of the fill</h2>
   <div class="body stack">
@@ -906,7 +906,7 @@
   </aside>
 </section>
 
-<!-- Slide 84 -->
+<!-- Slide 74 -->
 <section class="slide" data-part-label="Mechanisms · Re-genesis">
   <h2>Re-genesis: recovering after a long outage</h2>
   <div class="body stack">
@@ -929,7 +929,7 @@
       }</script>
       <figcaption class="caption">v3 stopped after round 0; cut at round 1. (1) No block of v3. (2) Genesis block 999. (3) 1001 has donor block 9's references and 999.</figcaption>
     </figure>
-    <div class="uses"><b>Uses:</b> Banded, Agree, Law 1, and the attested base (slide 78). <b>Gives:</b> a validator back in production after any outage.</div>
+    <div class="uses"><b>Uses:</b> Banded, Agree, Law 1, and the attested base (slide 73). <b>Gives:</b> a validator back in production after any outage.</div>
   </div>
   <!-- Evidence:
     <p><code>no_blocks_of_no_genesis</code>, <code>severed_of_pruned_anchor</code> (LeanDag/Integration/Retention.lean:45, 65); <code>BlockRecord.addGenesis</code> (LeanDag/Common/Record/Genesis.lean:20); <code>addGenesis_of_severed</code> (LeanDag/Integration/ReGenesis.lean:95); <code>recoveryMsg</code>, <code>hB1uniq_of_addGenesis</code>, <code>rejoin_populated</code> (ReGenesis.lean); <code>card_severed_le</code> (LeanDag/Integration/Margin.lean:40).</p>
@@ -941,14 +941,14 @@
       <li>Re-genesis recovers a validator <code>v₁</code> all of whose blocks are below the horizon. Proved in Lean: a validator with no round-0 block in a DAG has no block in it at all, since every block's chain of own blocks descends to round 0.</li>
       <li>Step 1: each validator adds a round-0 block for <code>v₁</code>, with no references, to its cut DAG; round-0 blocks have no references, so no exception to the self-parent rule is needed. In the figure this is block 999. Proved in Lean: adding the block preserves every verdict and the storage rule.</li>
       <li>Step 1: the statement that each validator derives this block locally, without it being transmitted, is informal; what is proved is that a later cut removes it.</li>
-      <li>Step 2: the procedure is (1) join from the attested base of slide 78 to read the DAG, (2) re-genesis to be able to write, (3) one fill message from the genesis block to the current round. In the figure the filled block 1001 has the references of donor block 9, blocks 4, 5, 6, and references 999; this is checked on the concrete DAG.</li>
+      <li>Step 2: the procedure is (1) join from the attested base of slide 73 to read the DAG, (2) re-genesis to be able to write, (3) one fill message from the genesis block to the current round. In the figure the filled block 1001 has the references of donor block 9, blocks 4, 5, 6, and references 999; this is checked on the concrete DAG.</li>
       <li>Step 2: while a quorum produces blocks, at most <code>f</code> validators can be without blocks at once, since a producing set of quorum size contains none of them.</li>
       <li>The proofs use Banded, Agree, Law 1 and the attested base, and give a validator back in production after an outage of any length.</li>
     </ul>
   </aside>
 </section>
 
-<!-- Slide 85 -->
+<!-- Slide 75 -->
 <section class="slide" data-part-label="Mechanisms · Chain fill">
   <h2>The chain fill (Bluestreak)</h2>
   <div class="body wide-fig">
@@ -984,7 +984,7 @@
       <li>Bluestreak's blocks carry claims, and the donor fill would attribute to <code>v₁</code> claims it never made; this motivation is informal and not proved.</li>
       <li>The chain fill: each filled block references only <code>v₁</code>'s previous block and carries no leader tag and no claim. The message is <code>v₁</code>, <code>B₁</code>, <code>r</code> and fresh identifiers, and names no donor.</li>
       <li>In the figure <code>n = 4</code>, <code>f = 1</code>, v0 is Byzantine and slot <code>k</code> is at round <code>k</code>. Validator 3 is correct and silent from round 2; <code>B₁ = 7</code>, and the filled blocks 102 and 103 chain back to it. The claim arrows point to the leader blocks 5 and 10.</li>
-      <li>Checked on this DAG: slot 2 commits block 10 and slot 3 is skipped, before and after the fill. After the fill, slot 3's candidate is block 103, which no round-4 block references; with the quorum {0, 1, 2} present at round 4 it is skipped at once, the prompt skip of slide 81.</li>
+      <li>Checked on this DAG: slot 2 commits block 10 and slot 3 is skipped, before and after the fill. After the fill, slot 3's candidate is block 103, which no round-4 block references; with the quorum {0, 1, 2} present at round 4 it is skipped at once, the prompt skip of slide 76.</li>
       <li>Proved in Lean: when the filled blocks claim nothing, Bluestreak's claim discipline holds after the chain fill. With the properties used by the fill, this gives recovery for a rule whose blocks carry claims.</li>
     </ul>
   </aside>
