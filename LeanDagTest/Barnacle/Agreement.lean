@@ -257,6 +257,12 @@ example : Aimd.count bnP 4 1 false = 4 - 2 ^ 1 :=
     (by decide) (by decide)
 example : Aimd.count bnP 1 3 false = 1 :=
   (Aimd.holds (Fin 4) (Fin 32) Unit bnRule32 bnP bnLead bnLeadKeyed).2.2.1.2.2 3
+-- A run of five windows — healthy, healthy, unhealthy, unhealthy,
+-- healthy — takes the count 1 → 2 → 3 → 2 → 1 → 2, the back-off going
+-- 0, 0, 0, 1, 2 and resetting on the last.
+example : Aimd.count bnP 1 0 true = 2 ∧ Aimd.count bnP 2 0 true = 3 ∧
+    Aimd.count bnP 3 0 false = 2 ∧ Aimd.count bnP 2 1 false = 1 ∧
+    Aimd.count bnP 1 2 true = 2 := by decide
 -- BN7d: at anchor `21` and count `2` the integer test passes, so the
 -- rule takes the healthy step with the back-off reset; and the
 -- unhealthy branch of the same theorem is what a failing test gives.

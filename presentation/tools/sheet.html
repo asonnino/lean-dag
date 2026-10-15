@@ -1,0 +1,19 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Contact sheet</title>
+<style>
+  body { margin: 0; background: #ccc; font: 14px sans-serif; }
+  .grid { display: grid; grid-template-columns: repeat(3, 400px); gap: 8px; padding: 8px; }
+  .cell { width: 400px; height: 226px; overflow: hidden; position: relative; background: #fff; }
+  .cell iframe { width: 1280px; height: 720px; border: 0; transform: scale(0.3125); transform-origin: 0 0; }
+  .cell span { position: absolute; left: 4px; top: 2px; background: #000; color: #fff; padding: 0 4px; z-index: 2; }
+</style></head>
+<body><div class="grid" id="g"></div>
+<script>
+  // tools/sheet.html?from=1&count=12 shows deck positions (dividers included) at their final step.
+  const q = new URLSearchParams(location.search);
+  const from = +(q.get("from") || 1), count = +(q.get("count") || 12);
+  const g = document.getElementById("g");
+  for (let i = from; i < from + count; i++) {
+    g.insertAdjacentHTML("beforeend", `<div class="cell"><span>${i}</span><iframe src="../index.html#p${i}.99"></iframe></div>`);
+  }
+</script></body></html>

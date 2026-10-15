@@ -8108,10 +8108,13 @@ where they are proved.
 concrete executions before anything is proved from it, at `f = 2` and
 `p = 2`, so `n = 9`, the slow-path quorum is `6`, validity asks for `7`
 parents and the fast path for `7` votes. At `p = 1` the first two
-coincide and the gap between them would go untested. Three executions,
+coincide and the gap between them would go untested. Four executions,
 because the rules exclude one another: `Dfast`, where the round-0 leader
 block is committed by both paths, every round-2 block is FP-evidence for
-it and a round-3 block reaches a certificate in one step; `Dequiv`, with
+it and a round-3 block reaches a certificate in one step; `Dbare`, where
+the round-2 blocks carry five votes each, so the fast commit leaves no
+SP-certificate anywhere and the round-3 leader block commits the slot
+through the FP-evidence route alone; `Dequiv`, with
 a second round-0 block by the Byzantine leader, where neither version is
 committed or skipped and the two branches of FP-evidence separate — one
 block has seen both versions and carries the `f + p = 4` parents the
@@ -11615,6 +11618,7 @@ every theorem above it vacuous, and vacuity is not otherwise detectable.
 | `Uhyb4`, `Uhyb9` | `HybridFaults`, `HonestNoEquiv`: one crash at four validators; the tight hybrid committee (H9) |
 | `UtightA`, `UtightB` | the one-short committee: agreement refuted at every threshold (H10) |
 | `Unemo` | `CrashFaults` at the tight crash committee: three validators, one halted line, every decidable rule settled by `decide` (NN9) |
+| `Ush` | `FairRunOn _ 2` failing: the halted validator leads every odd round, the even slots commit, and no odd slot is decided in any view (`odd_undecided`) |
 | `skTight` | the fill of `Ucrash` at which coverage is refuted (I4) |
 | `Ucut`, `Uregen`, `urecover` | the severed validator, its re-genesis, and the catch-up message over it |
 | `Ucr`, `rcGap`, `Ufill` | Bluestreak's `GapData` and the chain fill: a validator silent through its own leader slot, its one-message recovery, the discipline kept, and both verdicts unchanged (BS21) |

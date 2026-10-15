@@ -1,0 +1,479 @@
+<!-- Part IV, slides 81–91: composition, adaptive leaders, the adaptive leader count, checkpoints, Red Snapper, close. -->
+
+<section class="slide" data-part-label="Mechanisms · Composition">
+  <h2>Every mechanism is one relation</h2>
+  <div class="body">
+    <div class="text">
+      <p>Each mechanism relates the DAG it reads to the DAG it writes: the same blocks from a settling round on, renumbered by <code>G</code> rounds, with the same creators and payloads, and the same references strictly above the settling round.</p>
+      <ul>
+        <li data-step="1">A cut is such a relation; so are a fill and a re-genesis (with <code>G = 0</code>).</li>
+        <li data-step="3">A sequence of them is again one: the composite keeps <span class="t-hull">the same blocks</span> from the later settling round on.</li>
+      </ul>
+      <div class="uses"><b>Uses:</b> Banded, Agree, Law 1.<br><b>Gives:</b> safety and liveness for any combination of cuts, fills and re-geneses (next slide).</div>
+    </div>
+    <figure class="diagram">
+      <script type="application/json">{"w": 590, "h": 384,
+        "groups": [{"x": 444, "y": 48, "w": 144, "h": 256, "cls": "accent", "step": 3}],
+        "nodes": [{"id": "lD", "x": 0, "y": 56, "w": 100, "h": 40, "text": "D", "cls": "plain"},
+                  {"id": "D1", "x": 120, "y": 56, "w": 132, "h": 40, "text": "0–5"},
+                  {"id": "D2", "x": 252, "y": 56, "w": 110, "h": 40, "text": "v₁ absent", "cls": "muted dashed"},
+                  {"id": "D3", "x": 362, "y": 56, "w": 88, "h": 40, "text": "11–14"},
+                  {"id": "D4", "x": 450, "y": 56, "w": 132, "h": 40, "text": "15–20"},
+                  {"id": "lF", "x": 0, "y": 156, "w": 100, "h": 40, "text": "filled", "cls": "plain", "step": 1},
+                  {"id": "F1", "x": 120, "y": 156, "w": 132, "h": 40, "text": "0–5", "step": 1},
+                  {"id": "F2", "x": 252, "y": 156, "w": 110, "h": 40, "text": "v₁ filled", "cls": "accent", "step": 1},
+                  {"id": "F3", "x": 362, "y": 156, "w": 88, "h": 40, "text": "11–14", "step": 1},
+                  {"id": "F4", "x": 450, "y": 156, "w": 132, "h": 40, "text": "15–20", "step": 1},
+                  {"id": "lC", "x": 0, "y": 256, "w": 100, "h": 40, "text": "cut", "cls": "plain", "step": 2},
+                  {"id": "C0", "x": 120, "y": 256, "w": 330, "h": 40, "text": "dropped", "cls": "muted dashed", "step": 2},
+                  {"id": "C1", "x": 450, "y": 256, "w": 132, "h": 40, "text": "15–20 → 0–5", "step": 2},
+                  {"id": "s11", "x": 362, "y": 46, "w": 1, "h": 160, "text": "", "cls": "dashed", "step": 1},
+                  {"id": "s15", "x": 450, "y": 146, "w": 1, "h": 160, "text": "", "cls": "dashed", "step": 2},
+                  {"id": "K", "x": 120, "y": 330, "w": 462, "h": 44, "text": "composite: settles at max(r + 1, G) = 15", "cls": "accent", "step": 3}],
+        "edges": [{"from": "lD", "to": "lF", "label": "fill, r = 10", "dx": 42, "dy": 4, "step": 1},
+                  {"from": "lF", "to": "lC", "label": "cut, G = 15", "dx": 42, "dy": 4, "step": 2}],
+        "texts": [{"x": 100, "y": 20, "text": "round", "anchor": "end", "cls": "muted"},
+                  {"x": 120, "y": 20, "text": "0", "anchor": "middle", "cls": "muted"},
+                  {"x": 252, "y": 20, "text": "6", "anchor": "middle", "cls": "muted"},
+                  {"x": 362, "y": 20, "text": "11", "anchor": "middle", "cls": "muted"},
+                  {"x": 450, "y": 20, "text": "15", "anchor": "middle", "cls": "muted"},
+                  {"x": 368, "y": 126, "text": "settles at 11", "step": 1},
+                  {"x": 456, "y": 226, "text": "settles at 15", "step": 2}]}</script>
+      <figcaption class="caption">A fill of <code>v₁</code>'s rounds 6–10, then a cut at <code>G = 15</code>. Rows are drawn at <code>D</code>'s rounds; shaded rounds 15–20 hold the same blocks in all three.</figcaption>
+    </figure>
+  </div>
+  <!-- Evidence: <p>A cut, a fill and a re-genesis are each a relation of this one form; a sequence of them is again one, settling at the later of the settling rounds. The figure: a fill of rounds 6–10 followed by a cut at <code>G = 15</code>; <code>stack_core</code> settles at <code>max (r + 1, G)</code>, here 15.</p> <p><code>RebasedAbove</code> (LeanDag/Properties/Carrier.lean:68, references :81); <code>Truncates</code> (LeanDag/Properties/Truncate.lean:43); <code>Sustains</code> (LeanDag/Properties/Sustain.lean:89); <code>Stack</code>, <code>Stack.rebased</code> (LeanDag/Properties/Arcs/Stack.lean:32, 40); <code>stack_core</code> (LeanDag/Integration/StackRules.lean:42).</p> -->
+  <aside class="notes">
+    <ul>
+      <li>This slide shows that a cut, a fill and a re-genesis are instances of one relation between the DAG a mechanism reads and the DAG it writes, and that a sequence of them is again an instance.</li>
+      <li>The relation has an offset <code>G</code> and a settling round. From the settling round on, the written DAG holds the same blocks at rounds lowered by <code>G</code>, with the same creators and payloads, and with the same references strictly above the settling round; below the settling round the relation says nothing.</li>
+      <li>The rows of the figure are drawn at <code>D</code>'s rounds 0–20. In the top row, <code>D</code> lacks validator <code>v₁</code>'s blocks at rounds 6–10.</li>
+      <li>Step 1: a fill with <code>r = 10</code> adds those blocks. It has offset 0 and settles at round <code>r + 1 = 11</code>; a re-genesis is also a relation with <code>G = 0</code>.</li>
+      <li>Step 2: a cut at <code>G = 15</code> drops rounds 0–14 and renumbers rounds 15–20 as 0–5. It settles at round 15.</li>
+      <li>Step 3: the composite of the fill and the cut is again one relation; it settles at <code>max(r + 1, G) = 15</code>, and the shaded rounds 15–20 hold the same blocks in all three rows. That a finite sequence of such relations is one relation is proved in Lean.</li>
+      <li>The next slide uses Banded, Agree and Law 1 to show what this gives: safety and liveness for every combination of cuts, fills and re-geneses.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Mechanisms · Composition">
+  <h2>Safe and live across any stack</h2>
+  <div class="body wide-fig">
+    <div class="text small">
+      <p>From Banded, Agree and Law 1: across any stack, verdicts above the settling round are preserved, views agree, and the liveness precondition is preserved.<br>The cut, fill and re-genesis are each built once, and serve ten of the eleven rules.</p>
+    </div>
+    <figure>
+      <table class="compact">
+        <thead>
+          <tr><th>Rule</th><th>cut</th><th>fill</th><th>re-genesis</th><th>prompt skip</th><th>coverage</th><th>inclusion</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Mysticeti</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Nemo-Nemo</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="yes">✓</td><td class="no">—</td></tr>
+          <tr><td>Odontoceti</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Hybrid</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>FinWhale</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="yes">✓</td><td class="no">—</td></tr>
+          <tr><td>Hydrozoan</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td></tr>
+          <tr><td>Opt-Hydrozoan</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="yes">✓</td><td class="no">—</td></tr>
+          <tr><td>Bluestreak</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="yes">✓</td></tr>
+          <tr><td>Mahi-Mahi</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Async BlueBottle</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Steelhead</td><td class="yes">✓</td><td class="no">open</td><td class="no">open</td><td class="no">—</td><td class="no">open</td><td class="yes">✓</td></tr>
+        </tbody>
+      </table>
+      <figcaption class="caption">Mechanisms proved per rule: ✓ proved; — not shown; open: listed as open work (slide 89).</figcaption>
+    </figure>
+  </div>
+  <!-- Evidence: <p><code>Stack.safe_and_live</code> (Stack.lean:109). <code>onRecord</code> instances for Nemo, Mysticeti, Odontoceti, Hybrid, FinWhale, Hydrozoan, Optimal-Hydrozoan, Bluestreak, Mahi-Mahi, Async BlueBottle; none for Steelhead. Steelhead's cut cell is its own <code>localTruncate</code> (LeanDag/Steelhead/Properties.lean:146).</p> <p>Grid sources: prompt skip where SkipsUnsupported holds (slides 60, 76: Mysticeti, Odontoceti, Hybrid, Hydrozoan, Bluestreak); coverage for every rule except Bluestreak, Steelhead's instance not written (slide 67; LeanDagTest/Quality/Generic.lean); inclusion for the seven rules with SelfParent and NoEquiv (slides 60, 67; Steelhead's in <code>liveness</code>, LeanDag/Steelhead/Properties.lean:301).</p> -->
+  <aside class="notes">
+    <ul>
+      <li>For any rule with Banded, Agree and a support, every stack of cuts, fills and re-geneses preserves safety and liveness above the composite settling round; this is proved in Lean.</li>
+      <li>A stack is a finite sequence of mechanisms. The theorem has three conclusions: a verdict at a slot above the settling round is the same before and after the stack, at the renumbered slot; any view of the result agrees with the original view on those verdicts; and the liveness precondition of the support carries over to the renumbered slots.</li>
+      <li>The table has one row per rule and one column per mechanism: ✓ means proved for that rule, — means not shown, and “open” means listed as open work on slide 89.</li>
+      <li>The cut, the fill and the re-genesis are each built once, on a common record of the DAG, and ten of the eleven rules provide that record. Steelhead does not: its cut is its own construction, and its fill and re-genesis are open.</li>
+      <li>The prompt skip is ticked for the five rules with SkipsUnsupported. Coverage and inclusion are the two halves of chain quality (slide 67): coverage is shown for every rule except Bluestreak and is open for Steelhead, and inclusion is ticked for the seven rules with SelfParent and NoEquiv.</li>
+      <li>The next slides turn to a mechanism that changes the leader schedule itself.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Mechanisms · Adaptive leaders">
+  <h2>Leaders chosen from the committed prefix</h2>
+  <div class="body">
+    <div class="text">
+      <ul>
+        <li>A fixed schedule may continue to name a crashed leader.</li>
+        <li>A <strong>configuration</strong> fixes the leaders of each round and an interval.</li>
+        <li data-step="1">It decides up to its <strong class="t-anchor">anchor</strong> (the first committed slot more than one interval past its start).</li>
+        <li data-step="2">It <span class="t-hull">outputs</span> only up to its boundary.</li>
+        <li data-step="3">The next configuration is computed from the anchor's history and the verdicts just output.</li>
+      </ul>
+      <div class="uses"><b>Uses:</b> Agree (safety); Law 2 and Indirect (liveness).<br><b>Gives:</b> a schedule every validator computes the same way.</div>
+    </div>
+    <figure class="diagram">
+      <script type="application/json">{"w": 560, "h": 352,
+        "groups": [{"x": 124, "y": 40, "w": 112, "h": 62, "cls": "accent", "step": 2},
+                   {"x": 340, "y": 260, "w": 112, "h": 62, "cls": "accent", "step": 3}],
+        "nodes": [{"id": "l0", "x": 0, "y": 46, "w": 110, "h": 50, "text": "config 0", "cls": "plain"},
+                  {"id": "a1", "x": 130, "y": 46, "w": 100, "h": 50, "text": "5", "sub": "commit", "cls": "ok"},
+                  {"id": "a2", "x": 238, "y": 46, "w": 100, "h": 50, "text": "—", "sub": "skip", "cls": "bad"},
+                  {"id": "a3", "x": 346, "y": 46, "w": 100, "h": 50, "text": "15", "sub": "commit", "cls": "ok"},
+                  {"id": "b0", "x": 234, "y": 38, "w": 1, "h": 66, "text": "", "cls": "dashed", "step": 1},
+                  {"id": "l1", "x": 0, "y": 156, "w": 110, "h": 50, "text": "config 1", "cls": "plain", "step": 3},
+                  {"id": "c2", "x": 238, "y": 156, "w": 100, "h": 50, "text": "—", "sub": "skip", "cls": "bad", "step": 3},
+                  {"id": "c3", "x": 346, "y": 156, "w": 100, "h": 50, "text": "15", "sub": "commit · anchor", "cls": "ok", "step": 3},
+                  {"id": "b1", "x": 342, "y": 148, "w": 1, "h": 66, "text": "", "cls": "dashed", "step": 3},
+                  {"id": "l2", "x": 0, "y": 266, "w": 110, "h": 50, "text": "config 2", "cls": "plain", "step": 3},
+                  {"id": "d3", "x": 346, "y": 266, "w": 100, "h": 50, "text": "15", "sub": "commit", "cls": "ok", "step": 3},
+                  {"id": "d4", "x": 454, "y": 266, "w": 100, "h": 50, "text": "16", "sub": "commit · anchor", "cls": "ok", "step": 3},
+                  {"id": "b2", "x": 450, "y": 258, "w": 1, "h": 66, "text": "", "cls": "dashed", "step": 3}],
+        "edges": [{"from": "a3", "to": "c3", "label": "decided again", "cls": "accent dashed", "dy": 4, "step": 3}],
+        "texts": [{"x": 180, "y": 14, "text": "slot 1", "anchor": "middle", "cls": "muted"},
+                  {"x": 288, "y": 14, "text": "slot 2", "anchor": "middle", "cls": "muted"},
+                  {"x": 396, "y": 14, "text": "slot 3", "anchor": "middle", "cls": "muted"},
+                  {"x": 504, "y": 14, "text": "slot 4", "anchor": "middle", "cls": "muted"},
+                  {"x": 0, "y": 14, "text": "slot = round", "cls": "muted small"},
+                  {"x": 234, "y": 120, "text": "boundary", "anchor": "middle", "cls": "small", "step": 1},
+                  {"x": 456, "y": 71, "text": "← anchor", "cls": "ok", "step": 1},
+                  {"x": 55, "y": 116, "text": "outputs [5]", "anchor": "middle", "cls": "ok", "step": 2},
+                  {"x": 55, "y": 226, "text": "outputs [ ]", "anchor": "middle", "cls": "muted", "step": 3},
+                  {"x": 55, "y": 336, "text": "outputs [15]", "anchor": "middle", "cls": "ok", "step": 3}]}</script>
+      <figcaption class="caption">Three successive configurations, interval one: each decides up to its anchor and outputs (shaded) only up to its boundary (dashed).</figcaption>
+    </figure>
+  </div>
+  <!-- Evidence: <p>Configuration 0 starts at round 0 with its boundary at round 1; its anchor is slot 3 at round 3. Its verdicts at slots 1, 2, 3 are block 5, skip, block 15; its output is <code>[5]</code>. Configurations 1 and 2 decide slot 3 again as 15, and configuration 2 outputs <code>[15]</code>.</p> <p><code>Barnacle.Config</code> (LeanDag/Barnacle/Config.lean:30); <code>Run.anchor_commits</code>, <code>anchor_least</code> (LeanDag/Barnacle/Model/Run.lean:90–96); <code>Run.rangeLedger</code> (:139); <code>Boundary.atThreshold</code> (LeanDag/Barnacle/Model/Rule.lean:204). <code>segRun</code> on <code>Usk</code>, one leader per round and an interval of one (LeanDagTest/Adaptive/Asynchronous.lean:46–113, 121). (informal) The crashed-leader motivation.</p> -->
+  <aside class="notes">
+    <ul>
+      <li>Adaptive leaders replace a fixed leader schedule by a sequence of configurations, each computed from what has already been committed.</li>
+      <li>The motivation, that a fixed schedule may continue to name a crashed leader, is an informal argument and is not proved.</li>
+      <li>A configuration fixes the leaders of each round and an interval, the number of rounds before the next reconfiguration is due. In the figure each row is one configuration, with one leader per round and interval one, so a slot is a round.</li>
+      <li>Step 1: configuration 0 starts at round 0. Its anchor is the first committed slot whose round is more than one interval past the start: slot 2 is skipped, so the anchor is slot 3, which commits block 15. The configuration decides every slot up to its anchor.</li>
+      <li>Step 2: it outputs only the slots up to its boundary at round <code>start + interval = 1</code>, so the shaded output is <code>[5]</code>.</li>
+      <li>Step 3: configuration 1 is computed from the anchor's history and the verdicts just output; it decides slot 3 again as 15 and outputs <code>[ ]</code>, and configuration 2 outputs <code>[15]</code>.</li>
+      <li>Safety uses Agree, and liveness uses Law 2 and Indirect; the next slide states the safety result.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Mechanisms · Adaptive leaders">
+  <h2>Safe for every anchored score</h2>
+  <div class="body stack">
+    <div class="text">
+      <ul>
+        <li>Two validators that start from the same <span class="nd">configuration</span> agree on every configuration and every verdict.</li>
+        <li>The theorem assumes no timing, fairness or window, and holds for every score that reads the view only through the anchor's history.</li>
+        <li>For liveness the score must continue to assign reliable validators runs of consecutive slots.</li>
+      </ul>
+    </div>
+    <figure class="diagram">
+      <script type="application/json">{"w": 1000, "h": 214, "size": "s",
+        "nodes": [{"id": "la", "x": 0, "y": 10, "w": 150, "h": 56, "text": "validator a", "sub": "view V", "cls": "plain"},
+                  {"id": "a0", "x": 180, "y": 10, "w": 210, "h": 56, "text": "C₀", "sub": "anchor a₀, verdicts"},
+                  {"id": "a1", "x": 460, "y": 10, "w": 210, "h": 56, "text": "C₁", "sub": "anchor a₁, verdicts"},
+                  {"id": "a2", "x": 740, "y": 10, "w": 210, "h": 56, "text": "C₂", "sub": "anchor a₂, verdicts"},
+                  {"id": "ae", "x": 960, "y": 10, "w": 40, "h": 56, "text": "…", "cls": "plain"},
+                  {"id": "lb", "x": 0, "y": 148, "w": 150, "h": 56, "text": "validator b", "sub": "view V′", "cls": "plain", "step": 1},
+                  {"id": "b0", "x": 180, "y": 148, "w": 210, "h": 56, "text": "C₀", "sub": "anchor b₀, verdicts", "step": 1},
+                  {"id": "b1", "x": 460, "y": 148, "w": 210, "h": 56, "text": "C₁′", "sub": "anchor b₁, verdicts", "step": 1},
+                  {"id": "b2", "x": 740, "y": 148, "w": 210, "h": 56, "text": "C₂′", "sub": "anchor b₂, verdicts", "step": 1},
+                  {"id": "be", "x": 960, "y": 148, "w": 40, "h": 56, "text": "…", "cls": "plain", "step": 1}],
+        "edges": [{"from": "a0", "to": "a1", "label": "update"},
+                  {"from": "a1", "to": "a2", "label": "update"},
+                  {"from": "b0", "to": "b1", "label": "update", "step": 1},
+                  {"from": "b1", "to": "b2", "label": "update", "step": 1},
+                  {"from": "a0", "to": "b0", "label": "same C₀", "cls": "dashed", "noArrow": true, "dy": 4, "step": 1, "until": 2},
+                  {"from": "a0", "to": "b0", "label": "a₀ = b₀, verdicts equal", "cls": "ok", "noArrow": true, "dy": 4, "step": 2},
+                  {"from": "a1", "to": "b1", "label": "C₁ = C₁′, a₁ = b₁, verdicts equal", "cls": "ok", "noArrow": true, "dy": 4, "step": 2},
+                  {"from": "a2", "to": "b2", "label": "C₂ = C₂′, a₂ = b₂, verdicts equal", "cls": "ok", "noArrow": true, "dy": 4, "step": 2}]}</script>
+      <figcaption class="caption">Validators a and b start from the same <code>C₀</code> on views <code>V</code> and <code>V′</code>; their configurations, anchors and verdicts agree segment by segment.</figcaption>
+    </figure>
+  </div>
+  <!-- Evidence: <p><code>Barnacle.Agreement.holds</code> (LeanDag/Barnacle/Agreement/Proof.lean:16; Statement.lean:44–79): hypotheses <code>Properties.Agree</code> and <code>Anchored R upd</code>. <code>Score.rule_anchored</code>, <code>Adaptive.score_safe</code> (LeanDag/Adaptive/Headline.lean:55); <code>Adaptive.score_live</code> (:102); <code>headsRun_of_cycle_weighted</code> (LeanDag/Barnacle/Helpers/Heads.lean:308).</p> -->
+  <aside class="notes">
+    <ul>
+      <li>Two validators that start from the same configuration agree on every later configuration, anchor and verdict, for every anchored update rule; this is proved in Lean.</li>
+      <li>An update rule is <em>anchored</em> when it returns the same configuration on any two views of one DAG, given the same anchor and the same verdicts. A score that reads the view only through the anchor's causal history is anchored.</li>
+      <li>The top row is validator <code>a</code> on view <code>V</code>, with configurations <code>C₀</code>, <code>C₁</code>, <code>C₂</code> linked by the update. Step 1: validator <code>b</code> on view <code>V′</code> starts from the same <code>C₀</code>.</li>
+      <li>Step 2: the vertical links state the theorem segment by segment: equal anchors and verdicts for <code>C₀</code>, and <code>C₁ = C₁′</code>, <code>C₂ = C₂′</code> with equal anchors and verdicts, for every configuration both validators have reached.</li>
+      <li>The only property of the base rule the theorem uses is Agree; it assumes no timing, fairness or window.</li>
+      <li>Liveness is proved under further conditions on the score: it keeps the number of slots per round and the interval, and the configurations it produces continue to give reliable validators runs of consecutive slots. The next slide asks what a score may read when a mechanism adds or removes blocks.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Mechanisms · Adaptive leaders">
+  <h2>What a score may read</h2>
+  <div class="body stack">
+    <div class="text">
+      <ul>
+        <li>A score that reads only the anchor's history is unaffected by crash recovery.</li>
+        <li>Under garbage collection the score must read verdicts relative to the configuration.</li>
+        <li data-step="1">A score that names an <span class="nd bad">absolute slot number</span> gives different answers before and after a cut.</li>
+      </ul>
+    </div>
+    <figure class="diagram">
+      <script type="application/json">{"w": 1050, "h": 290,
+        "groups": [{"x": 376, "y": 62, "w": 360, "h": 210, "cls": "accent", "label": "read window: above the horizon"}],
+        "nodes": [{"id": "ln", "x": 0, "y": 92, "w": 160, "h": 52, "text": "network", "sub": "slots from round 0", "cls": "plain"},
+                  {"id": "n1", "x": 190, "y": 92, "w": 150, "h": 52, "text": "slot 1", "sub": "commit 5"},
+                  {"id": "n2", "x": 400, "y": 92, "w": 150, "h": 52, "text": "slot 2", "sub": "none"},
+                  {"id": "n3", "x": 570, "y": 92, "w": 150, "h": 52, "text": "slot 3", "sub": "none"},
+                  {"id": "lj", "x": 0, "y": 206, "w": 160, "h": 52, "text": "joiner", "sub": "slots from the cut", "cls": "plain"},
+                  {"id": "j1", "x": 190, "y": 206, "w": 150, "h": 52, "text": "pruned", "cls": "muted dashed"},
+                  {"id": "j2", "x": 400, "y": 206, "w": 150, "h": 52, "text": "slot 1", "sub": "none"},
+                  {"id": "j3", "x": 570, "y": 206, "w": 150, "h": 52, "text": "slot 2", "sub": "none"},
+                  {"id": "hz", "x": 360, "y": 56, "w": 1, "h": 222, "text": "", "cls": "dashed"},
+                  {"id": "n1x", "x": 190, "y": 92, "w": 150, "h": 52, "text": "slot 1", "sub": "commit 5", "cls": "bad", "step": 1},
+                  {"id": "j2x", "x": 400, "y": 206, "w": 150, "h": 52, "text": "slot 1", "sub": "none", "cls": "bad", "step": 1}],
+        "edges": [{"from": "n2", "to": "j2", "label": "same verdict, renumbered", "cls": "dashed", "noArrow": true, "dy": 4},
+                  {"from": "n3", "to": "j3", "cls": "dashed", "noArrow": true}],
+        "texts": [{"x": 360, "y": 44, "text": "horizon, G = 1", "anchor": "middle", "cls": "bad"},
+                  {"x": 760, "y": 108, "text": "commitScore reads slot 1: 5", "cls": "bad", "step": 1},
+                  {"x": 760, "y": 130, "text": "→ swaps two leaders", "cls": "muted", "step": 1},
+                  {"x": 760, "y": 222, "text": "commitScore reads slot 1: none", "cls": "bad", "step": 1},
+                  {"x": 760, "y": 244, "text": "→ keeps the leaders", "cls": "muted", "step": 1}]}</script>
+      <figcaption class="caption">A cut at <code>G = 1</code> renumbers slots: a score reading slot 1 sees commit 5 on the network, none on the joiner, and chooses different leaders.</figcaption>
+    </figure>
+  </div>
+  <!-- Evidence: <p><code>UpdStable</code> (LeanDag/Adaptive/Helpers/Mechanisms.lean:140), <code>Score.stable_of_readsHistory</code> (:189); <code>swapScore_stable</code> (LeanDagTest/Adaptive/Asynchronous.lean:165); <code>HorizonStable</code> (LeanDag/Adaptive/Helpers/Chop.lean:86), <code>horizonStable_relabel</code> (:140); <code>commitScore_not_horizonStable</code> (LeanDagTest/Adaptive/Asynchronous.lean:226).</p> -->
+  <aside class="notes">
+    <ul>
+      <li>Crash recovery and garbage collection each restrict what a score may read.</li>
+      <li>Crash recovery, by a fill or a re-genesis, only adds blocks. A score that reads only the anchor's history returns the same configuration before and after; this is proved in Lean and checked for a concrete score.</li>
+      <li>Garbage collection cuts the DAG at a horizon <code>G</code>, and a joiner numbers its slots from the cut. The score must then be horizon-stable: on views that agree above <code>G</code>, the joiner's configuration is the network's with the rounds below <code>G</code> dropped. A score that only relabels leaders is horizon-stable at every cut.</li>
+      <li>In the figure the cut is at <code>G = 1</code>. The top row is the network, with slots numbered from round 0; the bottom row is the joiner, whose slots 1 and 2 are the network's slots 2 and 3, with the same verdicts.</li>
+      <li>Step 1: the score shown swaps two leaders when slot 1 committed block 5. The network reads its slot 1, sees commit 5 and swaps; the joiner reads its own slot 1, sees no commit and keeps the leaders. Checked on a concrete DAG, this score is not horizon-stable at <code>G = 1</code>.</li>
+      <li>A score that reads verdicts must therefore read them relative to the configuration it closes. The next mechanism uses the same anchors to change the number of leaders per round.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Mechanisms · Adaptive leader count">
+  <h2>The adaptive leader count</h2>
+  <div class="body wide-fig">
+    <div class="text small">
+      <p>More leaders per round lower latency, but one slow leader delays every later slot. At each <span class="t-anchor">anchor</span>:</p>
+      <ol>
+        <li>count the <span class="count ok">directly committed slots</span> in the anchor's history;</li>
+        <li>healthy if <code>num · expected ≤ den · observed</code>;</li>
+        <li>healthy: one more leader; unhealthy: <code>2^backoff</code> fewer, between 1 and <code>maxLeaders</code>; the backoff resets when healthy and grows otherwise.</li>
+      </ol>
+      <div class="uses"><b>Uses:</b> Agree, CommitsCandidate, CommitsDirect (the count reads direct commits).<br><b>Gives:</b> a leader count every validator computes the same way.</div>
+    </div>
+    <div class="text">
+      <figure class="dag swap" data-until="1">
+        <script type="application/json">{"w": "Usun", "size": "m", "rounds": [1, 5], "marks": [{"ids": [5, 10, 15, 16], "cls": "leader"}, {"ids": [21], "cls": "anchor"}], "brackets": [{"ids": [5], "text": "counted", "kind": "ok"}, {"ids": [10], "text": "counted", "kind": "ok"}], "badges": [{"r": 4, "text": "observed 2 = expected 2", "kind": "note", "at": 21}]}</script>
+        <figcaption class="caption">Anchor 21's history commits only 5 and 10 directly: <code>observed = 2 = expected</code>, so the count rises.</figcaption>
+      </figure>
+      <figure class="chart swap" data-step="1">
+        <script type="application/json">{"type": "lines", "size": "m", "xs": ["start", "healthy", "healthy", "unhealthy", "unhealthy", "healthy"], "ymin": 0, "ymax": 4.6, "yticks": [0, 1, 2, 3, 4], "xlabel": "window outcome (back-off 0, 0, 0, 1, 2)", "ylabel": "leaders per round", "hlines": [{"y": 4, "text": "maxLeaders = 4"}], "series": [{"name": "leader count", "ys": [1, 2, 3, 2, 1, 2], "color": 0, "values": true, "dy": 14}]}</script>
+      </figure>
+    </div>
+  </div>
+  <!-- Evidence: <p>The chart: five windows (healthy, healthy, unhealthy, unhealthy, healthy) take the count 1 → 2 → 3 → 2 → 1 → 2, backoff 0, 0, 0, 1, 2, <code>maxLeaders = 4</code>. The inset: on <code>Usun</code>, configuration 0 closes at anchor 21 (slot 5) with <code>observed = 2 = expected</code>, and configuration 1 has two leaders per round after round 5.</p> <p><code>observed</code> (LeanDag/Barnacle/Model/Window.lean); <code>Aimd.rule</code>, <code>Aimd.count</code> (LeanDag/Barnacle/Aimd/Rule.lean). <code>expected</code> is <code>C.cum (r + 1 − waveLength) − C.cum (r − interval)</code>; at uniform width <code>m</code> and <code>r ≥ interval</code> it is <code>(interval − waveLength + 1)·m</code> (checked by <code>decide</code> at <code>m = 2</code>, <code>interval = 4</code>, <code>waveLength = 3</code>: 4). <code>Usun</code> (LeanDagTest/Barnacle/Agreement.lean:55; counts :98–99). The plotted sequence is checked by <code>decide</code> at <code>bnP</code> (<code>maxLeaders = 4</code>; LeanDagTest/Barnacle/Agreement.lean:263). (informal) The latency motivation.</p> -->
+  <aside class="notes">
+    <ul>
+      <li>The adaptive leader count changes the number of leaders per round at each anchor, by additive increase and multiplicative decrease (AIMD).</li>
+      <li>The motivation, that more leaders lower latency and that one slow leader delays every later slot, is an informal argument and is not proved.</li>
+      <li><code>observed</code> is the number of slots in the window of <code>interval + 1</code> rounds up to the anchor's round that are directly committed in the anchor's history. <code>expected</code> is the number of slots in the rounds of that window old enough to have been decided; at one width <code>m</code> it is <code>(interval − waveLength + 1)·m</code>. The window is healthy if <code>num · expected ≤ den · observed</code>.</li>
+      <li>A healthy window adds one leader and resets the backoff to 0; an unhealthy window removes <code>2^backoff</code> leaders and increases the backoff by one. The count is kept between 1 and <code>maxLeaders</code>.</li>
+      <li>The DAG figure: interval 4, one leader per round, anchor 21 at round 5. In the anchor's history only the leaders 5 and 10 are directly committed, so <code>observed = 2 = expected</code>, the window is healthy, and the next configuration has two leaders per round. This is checked on the concrete DAG.</li>
+      <li>Step 1: the chart follows five windows, healthy, healthy, unhealthy, unhealthy, healthy. The count goes 1, 2, 3, 2, 1, 2 with backoff 0, 0, 0, 1, 2 before each window; <code>maxLeaders = 4</code> is not reached. The sequence is checked by computation in Lean.</li>
+      <li>The rule uses Agree, CommitsCandidate and CommitsDirect; CommitsDirect makes every slot counted as directly committed a committed slot.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Mechanisms · Checkpoints">
+  <h2>Checkpoints</h2>
+  <div class="body stack">
+    <div class="text small">
+      <ul>
+        <li>Correct online validators sign the checkpoint their deterministic <span class="nd">state machine</span> reaches after each commit in their own view, and <span class="nd">witness</span> certificates for what they signed.</li>
+        <li>A checkpoint <span class="nd accent">certificate</span> is at least <code>q</code> signatures on one proposal; a <span class="nd accent">finality</span> certificate is at least <code>q</code> witnesses of one.</li>
+        <li>Two checkpoint certificates at one epoch and height agree.</li>
+        <li>A correctly led slot, with production and certification, is finalised.</li>
+        <li data-step="1">At an epoch change, the highest <span class="nd">validated</span> checkpoint becomes the next epoch's <span class="nd accent">genesis</span>.</li>
+      </ul>
+    </div>
+    <figure class="diagram">
+      <script type="application/json">{"w": 1100, "h": 184, "size": "xs",
+        "nodes": [{"id": "c", "x": 0, "y": 14, "w": 130, "h": 56, "text": "commit", "sub": "in own view"},
+                  {"id": "m", "x": 194, "y": 14, "w": 130, "h": 56, "text": "state machine", "sub": "deterministic"},
+                  {"id": "s", "x": 388, "y": 14, "w": 130, "h": 56, "text": "sign", "sub": "own checkpoint"},
+                  {"id": "q", "x": 582, "y": 14, "w": 130, "h": 56, "text": "certificate", "sub": "≥ q signatures", "cls": "accent"},
+                  {"id": "w", "x": 776, "y": 14, "w": 130, "h": 56, "text": "witness", "sub": "for what it signed"},
+                  {"id": "f", "x": 970, "y": 14, "w": 130, "h": 56, "text": "finality", "sub": "≥ q witnesses", "cls": "accent"},
+                  {"id": "v", "x": 582, "y": 124, "w": 130, "h": 56, "text": "validated", "sub": "certificates of e", "step": 1},
+                  {"id": "g", "x": 900, "y": 124, "w": 170, "h": 56, "text": "genesis", "sub": "of epoch e + 1", "cls": "accent", "step": 1},
+                  {"id": "eb", "x": 806, "y": 104, "w": 1, "h": 80, "text": "", "cls": "dashed", "step": 1}],
+        "edges": [{"from": "c", "to": "m", "label": "apply"},
+                  {"from": "m", "to": "s", "label": "checkpoint"},
+                  {"from": "s", "to": "q", "label": "signatures"},
+                  {"from": "q", "to": "w", "label": "certificate"},
+                  {"from": "w", "to": "f", "label": "witnesses"},
+                  {"from": "q", "to": "v", "label": "broadcast", "dy": 4, "step": 1},
+                  {"from": "v", "to": "g", "label": "highest", "cls": "accent", "dx": -50, "step": 1}],
+        "texts": [{"x": 798, "y": 112, "text": "epoch e", "anchor": "end", "cls": "muted", "step": 1},
+                  {"x": 814, "y": 112, "text": "epoch e + 1", "cls": "muted", "step": 1},
+                  {"x": 806, "y": 92, "text": "epoch boundary", "anchor": "middle", "cls": "bad", "step": 1}]}</script>
+      <figcaption class="caption">From a commit to finality; at the epoch boundary the highest validated checkpoint of <code>e</code> becomes the genesis of <code>e + 1</code>.</figcaption>
+    </figure>
+    <div class="uses"><b>Uses:</b> Agree, CommitsCandidate, Law 2.<br><b>Gives:</b> finalised application state, and its recovery across epochs.</div>
+  </div>
+  <!-- Evidence: <p><code>SigningRule.proposes</code>, <code>.witnesses</code> (LeanDag/Checkpoint/CommitSpec.lean:66); <code>CheckpointQC</code>, <code>FinalityQC</code> (LeanDag/Checkpoint/BaseSpec.lean:117, 169); <code>checkpointQC_eq_of_same_height</code> (LeanDag/Checkpoint/SafetyProofs.lean:89); <code>liveCommitFinalized</code> (LeanDag/Checkpoint/CommitProofs.lean:88); <code>IsSelected</code>, <code>EpochTransition</code> (LeanDag/Checkpoint/RecoverySpec.lean). Safety is within one epoch (<code>checkpointQC_prefix</code>). Instances: LeanDag/Integration/HybridCheckpoint.lean, LeanDag/Integration/BarnacleCheckpoint.lean.</p> -->
+  <aside class="notes">
+    <ul>
+      <li>Checkpoints turn the committed sequence into certified application state, and carry that state from one epoch to the next.</li>
+      <li>Read the figure from left to right. A correct online validator applies each commit in its own view to a deterministic state machine and signs the checkpoint it reaches; at least <code>q</code> signatures on one proposal form a checkpoint certificate. Each validator then witnesses the certificate for what it signed, and at least <code>q</code> witnesses form a finality certificate.</li>
+      <li>Safety: two checkpoint certificates at one epoch and height have the same content. Their quorums share a reliable signer, and that signer signs one state per height. This holds within one epoch and is proved in Lean.</li>
+      <li>Liveness: a slot with a correct leader, under the production and certification conditions, is finalised; this is also proved.</li>
+      <li>Step 1: at an epoch change, certificates of epoch <code>e</code> are broadcast, and the highest validated checkpoint becomes the genesis of epoch <code>e + 1</code>. The broadcast is assumed, not modelled (slide 89).</li>
+      <li>The construction uses Agree, CommitsCandidate and Law 2, and is instantiated for Hybrid and for the adaptive-leader runs.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Mechanisms · Red Snapper">
+  <h2>Red Snapper: a fast path for owned objects</h2>
+  <div class="body stack">
+    <div class="body wide-fig">
+    <div class="text small">
+      <ul>
+        <li>Validators state a <strong class="t-vote">stance</strong> on each object version inside their ordinary blocks; <span class="t-cert">certificates</span> for transactions, skips and unlocks are read from the DAG.</li>
+        <li>At <code>n ≥ 3f + 1</code>, uncontested transactions are decided from the DAG (<span class="verdict commit">fast quorum</span>).</li>
+        <li data-step="1">Conflicts are resolved at a <span class="t-anchor">committed anchor</span>.</li>
+        <li>At <code>n ≥ 5f + 1</code>, a validator may change its vote on <code>2f + 1</code> opposing votes, coordinated by a coin.</li>
+        <li>Among any <code>n − f</code> votes on two sides, the larger side always has at least <code>2f + 1</code> exactly when <code>n ≥ 5f + 1</code>. The <code>5f + 1</code> certificate lemmas themselves need only <code>n ≥ 3f + 1</code>.</li>
+      </ul>
+    </div>
+    <div class="body">
+      <figure class="dag swap" data-until="1">
+        <script type="application/json">{"w": "ULive", "size": "m", "rounds": [1, 3], "byz": [0], "marks": [{"ids": [4, 7, 8, 9], "cls": "vote"}, {"ids": [10, 11, 12], "cls": "cert"}], "strong": [{"from": [10], "to": [7, 8, 9]}], "brackets": [{"ids": [7, 8, 9], "text": "3 ACK", "kind": "accent", "side": "left"}, {"ids": [10, 11, 12], "text": "3 certs", "kind": "ok"}], "badges": [{"r": 3, "text": "fast quorum", "kind": "commit"}]}</script>
+        <figcaption class="caption">One transaction, ACKed by validators 1–3; three certificates, each over 3 ACKs (<code>q = 3</code>), form a fast quorum. Shaded row: Byzantine.</figcaption>
+      </figure>
+      <figure class="dag swap" data-step="1">
+        <script type="application/json">{"w": "UTri", "size": "m", "rounds": [1, 3], "byz": [0], "marks": [{"ids": [10, 11], "cls": "cert"}, {"ids": [12], "cls": "anchor"}], "strong": [{"from": [10], "to": [7, 8, 9]}], "brackets": [{"ids": [7, 8, 9], "text": "3 ⊥", "kind": "bad", "side": "left"}], "badges": [{"r": 3, "text": "both dropped", "kind": "skip", "at": 12}]}</script>
+        <figcaption class="caption">Two conflicting transactions: every correct block declares ⊥, 3 ⊥ votes make an unlock at round 3, and anchor 12 drops both.</figcaption>
+      </figure>
+    </div>
+  </div>
+    <div class="uses"><b>Uses:</b> only the committed anchor sequence of the underlying consensus.<br><b>Gives:</b> commits of owned-object transactions without waiting for consensus, except under conflict.</div>
+  </div>
+  <!-- Evidence: <p>Both panels: <code>n = 4</code>, validator 0 Byzantine (no blocks after round 0). Left, <code>ULive</code>: block 4 (validator 1) carries and ACKs tx 0; rounds 2–3 every correct block stands at <code>ack 0</code>; <code>FastQuorumAt ULive 3 0</code>, verdict finalized with an empty anchor sequence. Right, <code>UTri</code>: the two conflicting transactions 0 and 1 on object 0, every correct block declares <code>⊥</code>; each correct round-3 block is an unlock certificate (<code>IsUnlockCert UTri 10 0</code>, <code>12 0</code>); anchor 12 releases the object and both transactions are dropped.</p> <p><code>Faults.card_validators</code> (LeanDag/RedSnapper/Model/Faults.lean:52); <code>Uncontested</code>, <code>ConflictResolution</code> (LeanDag/RedSnapper/); <code>Revocation.ExposureAtQuorum</code> (LeanDag/RedSnapper/Revocation/Statement.lean:114: <code>half ≤ (quorum + 1)/2 ↔ 5f + 1 ≤ n</code>); <code>FullCertSafety</code> (LeanDag/RedSnapper/Five/FullCertSafety/Statement.lean:86, over <code>Faults</code>, under <code>MoveDiscipline</code>). Witnesses <code>ULive</code>, <code>UTri</code> (LeanDagTest/RedSnapper/Liveness.lean:82, 162).</p> -->
+  <aside class="notes">
+    <ul>
+      <li>Red Snapper is a fast path for transactions on owned objects, run inside the ordinary DAG blocks; it uses only the committed anchor sequence of the underlying consensus.</li>
+      <li>Each block states a stance on each object version: an ACK of one transaction or <code>⊥</code>. A certificate is a block whose references hold enough stances: <code>n − f</code> ACKs for a transaction certificate, <code>2f + 1</code> <code>⊥</code> votes for a skip or unlock certificate.</li>
+      <li>Left figure: <code>n = 4</code>, validator 0 is Byzantine (shaded) and has no blocks after round 0. Block 4 carries and ACKs the transaction, blocks 7, 8 and 9 ACK it, and each round-3 block 10, 11, 12 is a certificate over 3 ACKs (<code>q = 3</code>). The three certificates form a fast quorum, and the transaction is final with no anchor yet; this is checked on the concrete DAG.</li>
+      <li>Step 1, right figure: two conflicting transactions on one object. Every correct block declares <code>⊥</code>, each correct round-3 block is an unlock certificate, and the committed anchor 12 releases the object and drops both transactions.</li>
+      <li>At <code>n ≥ 5f + 1</code> a validator may change its vote on <code>2f + 1</code> opposing votes, coordinated by a coin. It is proved that among any <code>n − f</code> votes the larger side reaches <code>2f + 1</code> exactly when <code>n ≥ 5f + 1</code>; the certificate safety lemmas of that protocol are proved at <code>n ≥ 3f + 1</code>.</li>
+      <li>The result: owned-object transactions commit without waiting for consensus, except under conflict.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Close">
+  <h2>Open work</h2>
+  <div class="body">
+    <div class="text">
+      <ul>
+        <li>Adaptive leaders are proved generically; no rule has its own instance yet, and no concrete score that gives one validator several positions of the cycle is shown live.</li>
+        <li>Steelhead: fill, re-genesis, and the coverage half of chain quality.</li>
+        <li>Barbouni (proposed): change the schedule only at verdicts already decided.</li>
+        <li>Checkpoints: the broadcast algorithm is assumed, not modelled.</li>
+      </ul>
+    </div>
+  </div>
+  <!-- Evidence: <p>Generic adaptive liveness: <code>liveOfAnchored</code> (LeanDag/Barnacle/Model/Anchored.lean:70); <code>Timed.descent_of_support</code> (LeanDag/Timed/Coverage.lean:189), applied at 9 rules. <code>swapScore</code> and <code>commitScore</code> are live as permutations (<code>liveOn_of_permuted</code>). Steelhead has no <code>onRecord</code>. <code>AuthenticatedBroadcast</code> (LeanDag/Checkpoint/RecoverySpec.lean:29) is an assumed contract. (informal) Barbouni is in <code>docs/barbouni.md</code> only.</p> -->
+  <aside class="notes">
+    <ul>
+      <li>This slide lists what the development does not yet prove.</li>
+      <li>Adaptive leaders: safety and liveness are proved for any rule with the required properties, but no rule has its own adaptive instance. The two concrete scores in the deck are shown live because each produces a permutation of the rotation; a score that gives one validator several positions of the cycle is not shown live.</li>
+      <li>Steelhead lacks the common record that the cut, fill and re-genesis are built on; its fill, re-genesis and the coverage half of chain quality are open.</li>
+      <li>Barbouni is a proposal, described in the documentation only: it would change the schedule only at verdicts already decided. Nothing about it is proved.</li>
+      <li>Checkpoints: the authenticated broadcast at an epoch change is an assumed contract, not a modelled algorithm.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Close">
+  <h2>The development</h2>
+  <div class="body">
+    <div class="text">
+      <ul>
+        <li><code class="lean">LeanDag/Common/</code>: blocks, the decision relation, ledgers.</li>
+        <li><code class="lean">LeanDag/Mysticeti/</code>, <code class="lean">LeanDag/Nemo/</code>, …: one directory per rule.</li>
+        <li><code class="lean">LeanDag/Properties/</code>: the properties and the safety and liveness headlines.</li>
+        <li><code class="lean">LeanDag/GC/</code>, <code class="lean">SafeSkip/</code>, <code class="lean">Reactive/</code>, <code class="lean">DoS/</code>, <code class="lean">Adaptive/</code>, <code class="lean">Barnacle/</code>, <code class="lean">Checkpoint/</code>, <code class="lean">RedSnapper/</code>, <code class="lean">Integration/</code>: the mechanisms.</li>
+        <li><code class="lean">LeanDagTest/</code>: every witness in this deck.</li>
+        <li><code class="lean">docs/report.md</code>: the full written account.</li>
+      </ul>
+    </div>
+    <figure>
+      <table class="compact">
+        <thead><tr><th>Directory</th><th>Part of the deck</th></tr></thead>
+        <tbody>
+          <tr><td><code class="lean">LeanDag/</code></td><td></td></tr>
+          <tr><td><code class="lean">├ Common/</code></td><td>I Foundations</td></tr>
+          <tr><td><code class="lean">├ Mysticeti/ … Steelhead/</code></td><td>II Protocols</td></tr>
+          <tr><td><code class="lean">├ Properties/</code></td><td>III Properties</td></tr>
+          <tr><td><code class="lean">└ GC/ SafeSkip/ Reactive/ DoS/</code><br><code class="lean">&nbsp;&nbsp;Adaptive/ Barnacle/</code><br><code class="lean">&nbsp;&nbsp;Checkpoint/ RedSnapper/</code><br><code class="lean">&nbsp;&nbsp;Integration/</code></td><td>IV Mechanisms</td></tr>
+          <tr><td><code class="lean">LeanDagTest/</code></td><td>every figure's witness</td></tr>
+          <tr><td><code class="lean">docs/report.md</code></td><td>the written account</td></tr>
+        </tbody>
+      </table>
+    </figure>
+  </div>
+  <!-- Evidence: <p><code>lake build</code> checks the library and the witnesses; every headline theorem's axioms are printed in the test files and are Lean's standard three (<code>propext</code>, <code>Classical.choice</code>, <code>Quot.sound</code>).</p> -->
+  <aside class="notes">
+    <ul>
+      <li>This slide maps the repository onto the parts of the deck.</li>
+      <li><code>LeanDag/Common/</code> holds blocks, the decision relation and ledgers (Part I); one directory per rule, from <code>Mysticeti/</code> to <code>Steelhead/</code>, holds the protocols (Part II); <code>Properties/</code> holds the properties and the safety and liveness theorems (Part III).</li>
+      <li><code>GC/</code>, <code>SafeSkip/</code>, <code>Reactive/</code>, <code>DoS/</code>, <code>Adaptive/</code>, <code>Barnacle/</code>, <code>Checkpoint/</code>, <code>RedSnapper/</code> and <code>Integration/</code> hold the mechanisms of Part IV.</li>
+      <li><code>LeanDagTest/</code> holds the concrete DAG behind every figure in the deck, and <code>docs/report.md</code> is the full written account.</li>
+      <li>One build checks the library and the witnesses. The axioms of every headline theorem are printed in the test files, and they are Lean's standard three: <code>propext</code>, <code>Classical.choice</code> and <code>Quot.sound</code>.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide" data-part-label="Close">
+  <h2>Summary</h2>
+  <div class="body stack">
+    <div class="text">
+      <ul>
+        <li>One decision relation; eleven rules proved, <span class="nd muted dashed">two refuted</span>.</li>
+        <li>Four <span class="nd accent">properties</span> and a <span class="nd">support</span> per rule; every <span class="nd accent">mechanism</span> proved once against them.</li>
+        <li>Safety with no network assumption; liveness from view convergence.</li>
+      </ul>
+    </div>
+    <figure class="diagram">
+      <script type="application/json">{"w": 1100, "h": 300,
+        "groups": [{"x": 0, "y": 64, "w": 280, "h": 234},
+                   {"x": 410, "y": 64, "w": 280, "h": 234, "cls": "accent"},
+                   {"x": 820, "y": 64, "w": 280, "h": 234}],
+        "nodes": [{"id": "P", "x": 0, "y": 0, "w": 280, "h": 54, "text": "Protocols", "sub": "11 proved, 2 refuted", "cls": "accent"},
+                  {"id": "Q", "x": 410, "y": 0, "w": 280, "h": 54, "text": "Properties", "sub": "4 properties + support", "cls": "accent"},
+                  {"id": "M", "x": 820, "y": 0, "w": 280, "h": 54, "text": "Mechanisms", "sub": "proved once; pacemaker per rule", "cls": "accent"},
+                  {"id": "Pl", "x": 10, "y": 72, "w": 260, "h": 160, "text": "Mysticeti, Nemo-Nemo\nOdontoceti, Hybrid\nFinWhale, Hydrozoan\nOptimal-Hydrozoan\nBluestreak, Mahi-Mahi\nAsync BlueBottle\nSteelhead", "cls": "plain"},
+                  {"id": "Pr", "x": 20, "y": 240, "w": 240, "h": 44, "text": "refuted: Minnow, Black Marlin", "cls": "muted dashed"},
+                  {"id": "Ql", "x": 420, "y": 80, "w": 260, "h": 100, "text": "Banded, Agree\nCommitsCandidate\nIndirect", "cls": "plain"},
+                  {"id": "Qs", "x": 440, "y": 210, "w": 220, "h": 44, "text": "support: Law 1, Law 2"},
+                  {"id": "Ml", "x": 830, "y": 72, "w": 260, "h": 210, "text": "pacemaker, chain quality\nstorage bound\ngarbage collection\ncrash recovery, re-genesis\nadaptive leaders\nadaptive leader count\ncheckpoints\nRed Snapper (anchors only)", "cls": "plain"}],
+        "edges": [{"from": "P", "to": "Q", "label": "each rule proves", "cls": "accent"},
+                  {"from": "Q", "to": "M", "label": "each mechanism uses", "cls": "accent"}]}</script>
+      <figcaption class="caption">The three parts of slide 2 filled in: each rule proves the properties, and each mechanism uses them.</figcaption>
+    </figure>
+  </div>
+  <!-- Evidence: <p>The three columns of slide 2, filled with the names used in the deck.</p> -->
+  <aside class="notes">
+    <ul>
+      <li>The summary fills in the three columns of slide 2: each rule proves the properties, and each mechanism uses them.</li>
+      <li>Left column: one decision relation, eleven rules proved, and two, Minnow and Black Marlin, refuted.</li>
+      <li>Middle column: four properties, Banded, Agree, CommitsCandidate and Indirect, and a support per rule with Law 1 and Law 2.</li>
+      <li>Right column: each mechanism is proved once against those properties; the pacemaker is per rule, and Red Snapper uses only the anchors.</li>
+      <li>Safety holds with no network assumption; liveness follows from view convergence.</li>
+      <li>Open: adaptive-leader instances for particular rules, Steelhead's fill, re-genesis and coverage, Barbouni, and a model of the checkpoint broadcast (slide 89).</li>
+    </ul>
+  </aside>
+</section>
